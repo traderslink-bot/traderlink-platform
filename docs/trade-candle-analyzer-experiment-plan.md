@@ -1,7 +1,7 @@
 # Trade Candle Analyzer Experiment Plan
 
-**Status:** Manual completed-trade connection in progress; acceptance review pending  
-**Branch:** `codex/trade-candle-analyzer-experiment`  
+**Status:** Manual-entry automatic review connection in progress; acceptance review pending  
+**Branch:** `main`  
 **Progress:** [trade-candle-analyzer-experiment-progress.md](./trade-candle-analyzer-experiment-progress.md)
 
 ## Goal
@@ -21,8 +21,8 @@ authority.
 
 - Route: `/analytics/lab/trade-candle-analysis` under the existing V3 dashboard
   shell.
-- Entry point: a clearly labelled Experiment card in Analytics Lab; no change to
-  the normal Trade Tracker or Round Trips review flow in this first slice.
+- Entry point: the existing Analytics Lab experiment, completed Round Trips,
+  and the normal Trade Tracker manual-entry flow.
 - Review layout: one full-width candlestick replay with entry, exit, peak, the
   primary 30-minute window, and the available 60-minute context; three compact
   evidence panels underneath.
@@ -30,8 +30,11 @@ authority.
   prices, `Yahoo candles (experimental)` for the market replay, and the candle
   interval/window used for every finding.
 - Completed Round Trips receive a compact `Candle review` status/link. The
-  detailed review owns the single `Analyze this trade` action; imports never
-  invoke Yahoo analysis automatically.
+  detailed review retains `Analyze this trade` for an existing round trip. When
+  the trader explicitly presses `Submit executions` in Trade Tracker manual
+  entry, the app automatically reviews only completed round trips created by
+  that submission. It does not auto-review bulk imports, open positions, or
+  unrelated saved trades.
 
 ## Evidence contract
 
@@ -190,9 +193,10 @@ volume, pattern completeness, location, and observed follow-through.
 4. **Read-only connection:** Connect selected governed completed round trips to
    the server-only Yahoo adapter; preserve no-feedback states.
    Save the derived result per completed trade and analysis version. Yahoo is
-   called only by the explicit `Analyze this trade` or `Refresh candle review`
-   action; a deliberate refresh is available after a one-minute per-trade
-   guard. Do not persist raw provider responses.
+   called by `Analyze this trade`, `Refresh candle review`, or the trader's
+   explicit `Submit executions` action in manual entry when that submission
+   creates a completed round trip. Reviews run sequentially and retain the
+   one-minute per-trade refresh guard. Do not persist raw provider responses.
 5. **Acceptance:** Run targeted checks only at the completed slice boundary,
    then present the isolated route for review. Do not merge or deploy without
    explicit approval.

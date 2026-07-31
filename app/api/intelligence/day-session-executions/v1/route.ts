@@ -5,7 +5,16 @@ import {
   authorizeTraderIntelligenceOwner,
   withTraderIntelligenceOwnerRoute,
 } from "@/src/lib/trader-intelligence-v3/auth";
-import { resolveConfiguredServerRawBrokerCsvImportService } from "@/src/lib/trader-intelligence-v3/ingestion";
+import { resolveConfiguredDashboardAnalytics } from "@/src/lib/trader-intelligence-v3/analytics/dashboard/configured-dashboard-analytics";
+import { resolveCompletedCandleReviewTrade } from "@/src/lib/trade-candle-analysis/completed-trade";
+import { runTradeCandleReview } from "@/src/lib/trade-candle-analysis/review-runner";
+import type { TraderIntelligenceOwnerContext } from "@/src/lib/trader-intelligence-v3/domain";
+import type { TraderIntelligenceDeploymentConfig } from "@/src/lib/trader-intelligence-v3/deployment";
+import {
+  readConfiguredImportCatalog,
+  resolveConfiguredServerRawBrokerCsvImportService,
+  writeConfiguredImportAuthorityBinding,
+} from "@/src/lib/trader-intelligence-v3/ingestion";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,6 +22,72 @@ export const dynamic = "force-dynamic";
 const modulePath =
   "app/api/intelligence/day-session-executions/v1/route.ts";
 const MAX_EXECUTIONS = 200;
+
+type AutomaticCandleReviewSummary = {
+  completedTradeCount: number;
+  noCoverageCount: number;
+  providerUnavailableCount: number;
+  saveFailedCount: number;
+  savedCount: number;
+};
+
+async function triggerCompletedTradeCandleReviews(args: {
+  owner: TraderIntelligenceOwnerContext;
+  executionDigests: readonly string[];
+  config: TraderIntelligenceDeploymentConfig;
+}): Promise<AutomaticCandleReviewSummary> {
+  const empty = (): AutomaticCandleReviewSummary => ({
+    completedTradeCount: 0,
+    noCoverageCount: 0,
+    providerUnavailableCount: 0,
+    saveFailedCount: 0,
+    savedCount: 0,
+  });
+  if (args.config.persistence.kind !== "file") return empty();
+  const analytics = resolveConfiguredDashboardAnalytics({
+    owner: args.owner,
+    config: args.config,
+    environment: process.env,
+  });
+  if (!analytics.ok) return empty();
+  const verified = analytics.value.source.readVerifiedDataset();
+  if (!verified.ok) return empty();
+  const submittedDigests = new Set(args.executionDigests);
+  const keys = verified.value.datasetReceipt.rows
+    .filter((row) =>
+      row.supportingExecutionDigests.some((digest) =>
+        submittedDigests.has(digest),
+      ),
+    )
+    .map((row) => row.semanticRoundTripKey);
+  const distinctKeys = [...new Set(keys)];
+  const summary = empty();
+  summary.completedTradeCount = distinctKeys.length;
+  for (const semanticRoundTripKey of distinctKeys) {
+    const trade = resolveCompletedCandleReviewTrade({
+      analytics: analytics.value,
+      semanticRoundTripKey,
+    });
+    if (!trade) continue;
+    const review = await runTradeCandleReview({
+      parentPath: args.config.persistence.parentPath,
+      trade,
+    });
+    if (review.kind === "provider_unavailable") {
+      summary.providerUnavailableCount += 1;
+      continue;
+    }
+    if (review.kind === "save_failed") {
+      summary.saveFailedCount += 1;
+      continue;
+    }
+    if (review.kind === "saved" || review.kind === "reused") {
+      summary.savedCount += 1;
+      if (review.record.status === "no_coverage") summary.noCoverageCount += 1;
+    }
+  }
+  return summary;
+}
 
 type ExecutionInput = {
   fees: string;
@@ -153,9 +228,35 @@ async function POSTHandler(request: Request): Promise<Response> {
     timestampPrecision: "second",
   });
   if (!persisted.ok) return response(400, persisted.error.code);
+  const stored = readConfiguredImportCatalog({
+    parentPath: authorization.config.persistence.parentPath,
+    canonicalOwnerKey: service.value.canonicalOwnerKey,
+    canonicalAccountKey: service.value.canonicalAccountKey,
+  });
+  const analyticsReady = writeConfiguredImportAuthorityBinding({
+    parentPath: authorization.config.persistence.parentPath,
+    records: stored.map(({ record }) => record),
+  });
+  const candleReviews = analyticsReady
+    ? await triggerCompletedTradeCandleReviews({
+        config: authorization.config,
+        owner: authorization.owner,
+        executionDigests: persisted.value.acceptedExecutions.map(
+          (execution) => execution.canonicalContentDigest,
+        ),
+      })
+    : {
+        completedTradeCount: 0,
+        noCoverageCount: 0,
+        providerUnavailableCount: 0,
+        saveFailedCount: 0,
+        savedCount: 0,
+      };
   return Response.json(
     {
       acceptedExecutionCount: persisted.value.acceptedExecutionCount,
+      analyticsReady,
+      candleReviews,
       persistenceDigest: persisted.value.persistenceDigest,
       status: "persisted",
     },

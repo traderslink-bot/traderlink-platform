@@ -1,20 +1,6 @@
-import { analyzeTradeCandles } from "@/src/lib/trade-candle-analysis/candle-analysis";
 import { resolveCompletedCandleReviewTrade } from "@/src/lib/trade-candle-analysis/completed-trade";
-import { selectExecutionRelevantPatterns } from "@/src/lib/trade-candle-analysis/execution-relevance";
-import {
-  calculateAdr20,
-  calculateIndicatorPoints,
-  indicatorSnapshot,
-} from "@/src/lib/trade-candle-analysis/indicator-context";
-import { detectMicroCapCandlePatterns } from "@/src/lib/trade-candle-analysis/pattern-detection";
-import {
-  readStoredTradeCandleReview,
-  reviewRefreshAvailable,
-  TRADE_CANDLE_REVIEW_VERSION,
-  writeStoredTradeCandleReview,
-  type StoredTradeCandleReview,
-} from "@/src/lib/trade-candle-analysis/review-store";
-import { fetchYahooDailyCandles, fetchYahooOneMinuteCandles } from "@/src/lib/trade-candle-analysis/yahoo-candles";
+import { runTradeCandleReview } from "@/src/lib/trade-candle-analysis/review-runner";
+import type { StoredTradeCandleReview } from "@/src/lib/trade-candle-analysis/review-store";
 import { resolveConfiguredDashboardAnalytics } from "@/src/lib/trader-intelligence-v3/analytics/dashboard/configured-dashboard-analytics";
 import {
   requireTraderIntelligenceOwnerPageAccess,
@@ -26,7 +12,6 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const ROUTE_PATH = "app/api/intelligence/trade-candle-analysis/review/route.ts";
-const REFRESH_COOLDOWN_MS = 60 * 1000;
 
 function unavailable(message: string, status = 422): Response {
   return Response.json({ status: "unavailable", message }, { status });
@@ -85,58 +70,17 @@ async function POSTHandler(request: Request): Promise<Response> {
   });
   if (!trade) return unavailable("That completed trade is not available for candle review.", 404);
 
-  const stored = readStoredTradeCandleReview({
+  const review = await runTradeCandleReview({
     parentPath: deployment.config.persistence.parentPath,
     trade,
   });
-  if (stored && !reviewRefreshAvailable(stored)) return responseFor(stored, true);
-
-  const analyzedAt = new Date().toISOString();
-  const refreshAvailableAt = new Date(Date.now() + REFRESH_COOLDOWN_MS).toISOString();
-  const yahoo = await fetchYahooOneMinuteCandles({
-    symbol: trade.symbol,
-    startTime: trade.entryTime - 30 * 60,
-    endTime: trade.exitTime + 60 * 60,
-  });
-  if (!yahoo.ok) {
+  if (review.kind === "provider_unavailable") {
     return unavailable("Yahoo candles are unavailable for this completed trade. Nothing was saved.", 503);
   }
-  const daily = await fetchYahooDailyCandles({
-    symbol: trade.symbol,
-    startTime: trade.exitTime - 180 * 24 * 60 * 60,
-    endTime: trade.exitTime,
-  });
-  const indicatorPoints = calculateIndicatorPoints(yahoo.candles);
-  const adr20 = daily.ok
-    ? calculateAdr20(daily.candles.map((candle) => candle.high - candle.low))
-    : null;
-  const result = analyzeTradeCandles({ candles: yahoo.candles, trade });
-  const noUsableCoverage = [
-    result.entryTiming,
-    result.exitTiming,
-    result.profitGiveback,
-  ].every((feedback) => feedback.kind === "no_feedback");
-  const record: StoredTradeCandleReview = Object.freeze({
-    analysis: result,
-    analysisVersion: TRADE_CANDLE_REVIEW_VERSION,
-    analyzedAt,
-    indicators: [
-      indicatorSnapshot({ adr20, phase: "entry", points: indicatorPoints, time: trade.entryTime }),
-      indicatorSnapshot({ adr20, phase: "exit", points: indicatorPoints, time: trade.exitTime }),
-    ].filter((snapshot): snapshot is NonNullable<typeof snapshot> => snapshot !== null),
-    observations: selectExecutionRelevantPatterns({
-      candles: yahoo.candles,
-      events: detectMicroCapCandlePatterns(yahoo.candles),
-      trade,
-    }),
-    refreshAvailableAt,
-    status: noUsableCoverage ? "no_coverage" : "ready",
-    trade,
-  });
-  if (!writeStoredTradeCandleReview({ parentPath: deployment.config.persistence.parentPath, record })) {
+  if (review.kind === "save_failed") {
     return unavailable("The candle review could not be saved. Try again shortly.", 503);
   }
-  return responseFor(record, false);
+  return responseFor(review.record, review.kind === "reused");
 }
 
 export const POST = withTraderIntelligenceOwnerRoute(ROUTE_PATH, POSTHandler);

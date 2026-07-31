@@ -1,7 +1,7 @@
 # Trade Candle Analyzer Experiment Progress
 
 **Plan:** [trade-candle-analyzer-experiment-plan.md](./trade-candle-analyzer-experiment-plan.md)  
-**Branch:** `codex/trade-candle-analyzer-experiment`
+**Branch:** `main`
 
 | Checkpoint | Status | Notes |
 | --- | --- | --- |
@@ -12,6 +12,6 @@
 | Candle adapter and deterministic analyzer module | Complete | Protected Yahoo adapter normalizes bounded one-minute OHLCV data; the three price-path analyzers remain evidence-gated and return no-feedback per incomplete window. |
 | Execution-context candle patterns | Complete | The five approved families now include definitions, compression-break observations, an extended-move requirement for high-volume exhaustion, and execution-zone relevance scoring. |
 | Indicator context | Complete | EMA 9/20, RSI 14, session VWAP, MACD, ATR 14, and exact 20-day ADR are derived only after a manual review request; unavailable lookback remains blank. |
-| Governed trade connection | In progress | Completed V3 round trips now have an `Analyze this trade` / `View review` / `No coverage` entry point. The detail surface resolves broker facts server-side, saves only derived feedback, and allows another Yahoo fetch after one minute. |
-| Focused verification and isolated review | In progress | Focused ESLint and TypeScript checks have passed. The local dashboard route still needs a final visual review once the protected runtime is available. |
-| Merge or deployment | Not started | Requires separate explicit approval. |
+| Governed trade connection | In progress | Completed V3 round trips have an `Analyze this trade` / `View review` / `No coverage` entry point. The detail surface resolves broker facts server-side, saves only derived feedback, and allows another Yahoo fetch after one minute. Manual Trade Tracker `Submit executions` now automatically requests reviews only for completed round trips created by that submission. |
+| Focused verification and isolated review | In progress | Targeted static checks are pending for the manual-entry trigger. The shared protected runtime on port 3010 must remain running and needs a final visual review. |
+| Merge or deployment | Complete (main integration) | The experiment is integrated into `main`. No production deployment was requested. |

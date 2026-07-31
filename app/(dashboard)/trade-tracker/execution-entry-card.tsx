@@ -75,7 +75,7 @@ export function ExecutionEntryCard({
   const [state, setState] = useState<
     | { kind: "idle" }
     | { kind: "saving" }
-    | { kind: "saved"; count: number }
+    | { kind: "saved"; count: number; candleReviewMessage: string | null }
     | { kind: "error"; message: string }
   >({ kind: "idle" });
 
@@ -128,6 +128,13 @@ export function ExecutionEntryCard({
     if (!complete || state.kind === "saving") return;
     setState({ kind: "saving" });
     try {
+      let candleReviews: {
+        completedTradeCount?: number;
+        noCoverageCount?: number;
+        providerUnavailableCount?: number;
+        saveFailedCount?: number;
+        savedCount?: number;
+      } | undefined;
       if (persist) {
         const response = await fetch(
           "/api/intelligence/day-session-executions/v1",
@@ -149,6 +156,13 @@ export function ExecutionEntryCard({
         );
         const result = (await response.json()) as {
           acceptedExecutionCount?: number;
+          candleReviews?: {
+            completedTradeCount?: number;
+            noCoverageCount?: number;
+            providerUnavailableCount?: number;
+            saveFailedCount?: number;
+            savedCount?: number;
+          };
           error?: { message?: string };
         };
         if (!response.ok || result.acceptedExecutionCount === undefined) {
@@ -156,9 +170,16 @@ export function ExecutionEntryCard({
             result.error?.message ?? "The executions could not be saved.",
           );
         }
+        candleReviews = result.candleReviews;
       }
       const recordedCount = rows.length;
-      setState({ kind: "saved", count: recordedCount });
+      const review = candleReviews;
+      const candleReviewMessage = review === undefined
+        ? null
+        : review.completedTradeCount === 0
+          ? "No completed round trip was created yet, so no Yahoo candle review was requested."
+          : `${review.savedCount ?? 0} completed trade${review.savedCount === 1 ? "" : "s"} analyzed automatically${(review.noCoverageCount ?? 0) > 0 ? `; ${review.noCoverageCount} had no usable candle coverage` : ""}${(review.providerUnavailableCount ?? 0) > 0 ? `; Yahoo was unavailable for ${review.providerUnavailableCount}` : ""}${(review.saveFailedCount ?? 0) > 0 ? `; ${review.saveFailedCount} could not be saved` : ""}.`;
+      setState({ kind: "saved", count: recordedCount, candleReviewMessage });
       onSubmitted(
         recordedCount,
         rows.map((row) => ({
@@ -201,6 +222,11 @@ export function ExecutionEntryCard({
               {submittedCount} execution{submittedCount === 1 ? "" : "s"}{" "}
               recorded
             </Typography>
+            {state.kind === "saved" && state.candleReviewMessage ? (
+              <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="caption">
+                {state.candleReviewMessage}
+              </Typography>
+            ) : null}
           </Box>
           <DashboardSecondaryAction
             onClick={() => onCollapsedChange(false)}

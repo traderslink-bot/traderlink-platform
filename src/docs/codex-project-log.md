@@ -1,3 +1,21 @@
+# 2026-07-30 - Trade Candle Analyzer manual-entry automatic review
+
+**Branch:** `main`.
+
+- Trade Tracker's `Submit executions` path persists the manual executions,
+  refreshes the configured V3 authority binding, then finds only the completed
+  round trips supported by those accepted execution digests.
+- Each eligible completed trade is reviewed sequentially through the existing
+  server-only Yahoo analyzer. Open positions and submissions with no completed
+  round trip make no Yahoo request. Provider failures, unavailable coverage,
+  and save failures are reported beside the submitted execution count without
+  blocking the successful manual import.
+- The manual-entry trigger retains the one-minute per-trade review reuse guard,
+  persists derived review data only, and does not change broker executions,
+  P/L, or raw Yahoo response storage.
+- Next: run focused static verification, then review the actual manual-entry
+  result on the protected main dashboard at `http://127.0.0.1:3010/trade-tracker`.
+
 # 2026-07-30 - Trade Candle Analyzer manual-review experiment
 
 **Branch:** `codex/trade-candle-analyzer-experiment` (isolated; not merged).
