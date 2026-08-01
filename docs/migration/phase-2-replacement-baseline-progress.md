@@ -3,7 +3,7 @@
 **Phase:** 2 - Replacement baseline
 **Status:** Phase 2 empty database foundation implemented, correction-verified, and technically accepted by the coordinating auditor under delegated owner authority
 **Authorized:** 2026-08-01, explicitly by the project owner
-**Current boundary:** Phase 2 foundation technical acceptance is complete. The next required operation is the separately scoped owner-bootstrap factual-input gate before Phase 3. Owner bootstrap, private/legacy data migration, Phase 3, UI, server restart, broad checks, push, deployment, and database mutation remain prohibited in this preservation checkpoint
+**Current boundary:** Phase 2 foundation technical acceptance is complete. The next required operation is the separately scoped local-only development-owner seed before Phase 3. The seed, private/legacy data migration, Phase 3, UI, broad checks, push, deployment, and database mutation remain prohibited in this preservation checkpoint
 
 ## Repository boundary
 
@@ -178,7 +178,7 @@ The accepted exact design boundary is:
 - empty Platform user/workspace/membership tables and empty Journal account/source-identity tables only;
 - canonical lowercase UUID-v4/RFC-variant and numeric UTC-millisecond database checks plus strict service validation;
 - corrected workspace-owned versus account-scoped isolation and same-workspace owner/admin account-creator authorization;
-- a separate later owner-bootstrap approval to create the real user, workspace, owner membership, and Journal account after empty initialization and before Phase 3;
+- a separate later ownership-seed approval to create the development user, workspace, owner membership, and Journal account after empty initialization and before Phase 3;
 - future Journal import, source-row, execution, provenance, Data Decision, round-trip/allocation, identity-alias, note, tag, rule, and review table names reserved but not created;
 - UTC/IANA-timezone, UUID, exact decimal, explicit currency, isolation, module ownership, and no-dual-write rules; and
 - the focused verification plan for migration identity/order, schema-digest stability and drift detection, runtime/initializer behavior, malformed UUID/timestamps, HMAC rotation, cross-workspace denial, and same-workspace authorization; and
@@ -251,7 +251,7 @@ Do not run broad ESLint, full-project TypeScript, complete Vitest, build, browse
 - [x] Exact replacement database schema and migration design prepared and linked.
 - [x] Owner accepted the schema direction and the initial single-owner/owner-admin/member permission decisions.
 - [x] Requested foundation corrections applied to the documentation review package.
-- [x] Owner accepted the corrected exact schema/migration design, including schema digest, migration identity, initialization recovery, versioned account fingerprinting, `WorkspaceAccessScope`, permission model, owner-bootstrap gate, verification plan, and exact implementation-file list.
+- [x] Owner accepted the corrected exact schema/migration design, including schema digest, migration identity, initialization recovery, versioned account fingerprinting, `WorkspaceAccessScope`, permission model, ownership-seed gate, verification plan, and exact implementation-file list.
 - [x] Schema design review is complete.
 - [x] Database-foundation implementation explicitly authorized; exact production/test file batch prepared and left unstaged.
 - [x] Static migration-file verification passed after an environment-only preload workaround; the earlier `ENOMEM` remains classified as a Node/Windows startup failure, not an application result.
@@ -260,6 +260,8 @@ Do not run broad ESLint, full-project TypeScript, complete Vitest, build, browse
 - [x] The accepted 37-path implementation package was preserved locally in commit `fea56307fbd0142ef99b9f13c020451a6a503cc7`; it was not pushed or deployed.
 - [x] Disposable empty-foundation database initialized and verified successfully.
 - [x] Real empty `development.sqlite` initialized and verified only after every preceding focused check passed.
-- [ ] Real owner/workspace/account bootstrap remains prohibited until its later separate approval after empty initialization.
+- [x] Phase 2 closed without owner/workspace/account rows; follow-on local-only preparation is tracked separately in [Development Owner Seed Progress](development-owner-seed-progress.md).
+- [x] Development seed preparation passed its static verifier and all three focused files/all ten tests with one worker; the coordinating technical auditor accepted the preparation.
+- [ ] Development user/workspace/account rows remain absent pending the exact preview, explicit technical confirmation, atomic seed, and post-write verification.
 
-The owner delegated technical code/database/test/Git checkpoint acceptance to the coordinating auditor. Personal owner involvement is reserved for personal factual input, irreversible or external actions, and final visual/product approval. The Phase 2 empty database foundation is technically complete; the next required operation is the owner-bootstrap factual-input gate before Phase 3, and it has not run.
+The owner delegated technical code/database/test/Git checkpoint acceptance to the coordinating auditor. Personal owner involvement is reserved for irreversible or external actions and final visual/product approval. The Phase 2 empty database foundation is technically complete. The local-only development seed preparation is accepted under its own tracker, but its database write has not run and Phase 3 remains blocked until the exact post-write evidence is accepted. Public login is intentionally deferred until go-live preparation.

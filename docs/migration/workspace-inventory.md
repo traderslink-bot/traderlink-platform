@@ -1,7 +1,7 @@
 # TraderLink Workspace Inventory
 
-**Phase:** Phase 1 inventory preserved; Phase 2 current-state boundary added
-**Status:** Read-only inventory complete; the independent replacement clone now exists and all cleanup dispositions still require owner approval
+**Phase:** Phase 1 inventory preserved; Phase 2 correction and preservation evidence added
+**Status:** Inventory complete; the independent replacement clone exists, the omitted unified-account beta is now preserved locally for reconciliation, and all cleanup dispositions still require owner approval
 **Root inspected:** `C:\Users\jerac\Documents\TraderLink`
 **Rule:** No folder, worktree, Git metadata, branch, process, database, or scheduled task was changed or removed.
 
@@ -60,14 +60,31 @@ All non-canonical registered worktrees were clean at inspection time. `Head-only
 
 Recommended disposition: **Reconcile**. Compare each unique commit to current product behavior and the controlling inventory. Port an accepted capability intentionally, preserve a branch/archive if still useful, or record an owner-approved rejection. Do not bulk merge old branches.
 
-### Clean and contained by current main: 25 removal-later candidates
+### Preserved recent unified-account beta: reconcile, do not remove
+
+The Phase 1 list incorrectly placed `codex/unified-accounts-beta` among clean,
+contained removal-later candidates. A direct audit found 14 tracked modifications
+and 29 untracked paths containing unfinished recent account and authentication
+work. The exact working state is now preserved on its existing branch at local
+commit `5305ee29a61ab44fa6238e2b4725957ad1917fe6` (`chore(accounts): preserve
+unfinished unified account beta`); the worktree was clean after preservation and
+nothing was pushed.
+
+The snapshot is reference input, not replacement-ready code. It includes drafts
+for user/workspace/account ownership, email/password, optional Discord identity,
+sessions, and account UI, but it had no completed focused verification and uses a
+different persistence approach. Do not bulk merge or cherry-pick it. Reconcile
+useful contracts selectively in Phase 5. Public login is deferred until the
+complete dashboard is preparing to go live, with Discord first and email/password
+optional. This worktree is **Preserve / Reconcile**, not a cleanup candidate.
+
+### Clean and contained by current main: 24 removal-later candidates
 
 Codex visualization worktrees:
 
 - `codex/trade-tracker-complete`.
 - `codex/round-trip-detector-ordering-fix`.
 - `codex/main-dashboard-integration`.
-- `codex/unified-accounts-beta`.
 - `codex/trade-candle-analyzer-experiment`.
 
 Sibling worktrees:

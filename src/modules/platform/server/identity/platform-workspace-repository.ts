@@ -42,7 +42,7 @@ function mapMembership(row: MembershipRow): PlatformWorkspaceMembershipRecord {
 export class PlatformWorkspaceRepository {
   constructor(private readonly database: Database.Database) {}
 
-  createWorkspaceWithOwner(input: Readonly<{
+  private validateWorkspaceWithOwnerInput(input: Readonly<{
     workspaceId: string;
     ownerUserId: string;
     displayName: string;
@@ -60,28 +60,54 @@ export class PlatformWorkspaceRepository {
     ) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED");
     }
+  }
+
+  createWorkspaceWithOwner(input: Readonly<{
+    workspaceId: string;
+    ownerUserId: string;
+    displayName: string;
+    defaultTradingTimezone: string;
+    createdAtUtc: string;
+  }>): void {
+    this.validateWorkspaceWithOwnerInput(input);
     const operation = this.database.transaction(() => {
-      this.database
-        .prepare(`INSERT INTO platform_workspaces (
+      this.insertWorkspaceWithOwnerInCurrentTransaction(input);
+    });
+    operation.immediate();
+  }
+
+  insertWorkspaceWithOwnerInCurrentTransaction(input: Readonly<{
+    workspaceId: string;
+    ownerUserId: string;
+    displayName: string;
+    defaultTradingTimezone: string;
+    createdAtUtc: string;
+  }>): void {
+    this.validateWorkspaceWithOwnerInput(input);
+    if (!this.database.inTransaction) {
+      platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+        check: "active_transaction_required",
+      });
+    }
+    this.database
+      .prepare(`INSERT INTO platform_workspaces (
   workspace_id, display_name, default_trading_timezone, status,
   created_at_utc, updated_at_utc
 ) VALUES (?, ?, ?, 'active', ?, ?)`)
-        .run(
-          input.workspaceId,
-          input.displayName,
-          input.defaultTradingTimezone,
-          input.createdAtUtc,
-          input.createdAtUtc,
-        );
-      this.insertMembership({
-        workspaceId: input.workspaceId,
-        userId: input.ownerUserId,
-        role: "owner",
-        createdByUserId: input.ownerUserId,
-        createdAtUtc: input.createdAtUtc,
-      });
+      .run(
+        input.workspaceId,
+        input.displayName,
+        input.defaultTradingTimezone,
+        input.createdAtUtc,
+        input.createdAtUtc,
+      );
+    this.insertMembership({
+      workspaceId: input.workspaceId,
+      userId: input.ownerUserId,
+      role: "owner",
+      createdByUserId: input.ownerUserId,
+      createdAtUtc: input.createdAtUtc,
     });
-    operation.immediate();
   }
 
   insertMembership(input: Readonly<{

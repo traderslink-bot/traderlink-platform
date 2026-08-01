@@ -1,6 +1,6 @@
 # Workspace and Worktree Cleanup Plan
 
-**Status:** Planning control updated for the active Phase 2 replacement candidate; no folder deletion is authorized.
+**Status:** Planning control updated for the active replacement candidate and the preserved unified-account beta correction; no folder deletion is authorized.
 **Scope:** `C:\Users\jerac\Documents\TraderLink` and Git worktrees registered to TraderLink repositories.
 **Purpose:** Make the development workspace understandable without losing features, commits, configuration, private data, or recovery options.
 
@@ -11,6 +11,13 @@ A read-only check on 2026-07-31 found 88 directories immediately under the Trade
 These counts confirm real workspace confusion, but they do not prove that any folder is disposable. The parent also contains separate projects and private-data areas that are not duplicate TraderLink applications and must not be swept into a cleanup.
 
 The Trade Tracker example demonstrates why evidence is required: `codex/trade-tracker-complete` is already an ancestor of `main`, so its feature commits are present in the canonical history, but its worktree still requires a dirty/untracked/data check before it can be proposed for removal.
+
+The corrected unified-account example demonstrates the same rule from the other
+direction. `codex/unified-accounts-beta` was initially misclassified as clean and
+contained; direct inspection found 43 changed paths. Its exact unfinished state is
+now preserved at local commit `5305ee29a61ab44fa6238e2b4725957ad1917fe6` and
+must be selectively reconciled before any cleanup proposal. A branch name or base
+commit never proves that working-tree feature work is redundant.
 
 ## Canonical rule
 

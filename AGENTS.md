@@ -22,24 +22,30 @@ replacement implementation candidate. The accepted independent-clone baseline
 is branch `codex/traderlink-platform-replacement` at
 `a3193e19806af955093aa236349d796171d9bf97`; this is a baseline record, not a
 claim about the branch's current HEAD. Read
-`docs/migration/migration-progress.md` and
-`docs/migration/phase-2-replacement-baseline-progress.md` for accepted commit
-records and checkpoint state, and verify the live HEAD directly with Git. The
+`docs/migration/migration-progress.md`,
+`docs/migration/phase-2-replacement-baseline-progress.md`, and
+`docs/migration/development-owner-seed-progress.md` for accepted commit
+records and current checkpoint state, and verify the live HEAD directly with Git. The
 owner-accepted Phase 2 database design is
 `docs/migration/replacement-database-schema-and-migrations.md`. Its exact
 schema digest, migration identity, initialization recovery, versioned account
-fingerprinting, `WorkspaceAccessScope`, permission model, owner-bootstrap gate,
+fingerprinting, `WorkspaceAccessScope`, permission model, ownership-seed gate,
 verification plan, and implementation-file list are implemented and
 correction-verified. The coordinating technical auditor accepted the code,
 database, and 10-file/53-test result under the owner's delegated technical
 checkpoint authority. The verified empty `development.sqlite` exists with two
-migration rows and five zero-row domain tables; owner bootstrap and private or
+migration rows and five zero-row domain tables; development seeding and private or
 legacy data migration have not run. The legacy `traderslink.pro` folder remains
-the preserved recovery/reference application. The next required operation is
-the separately scoped owner-bootstrap factual-input gate before Phase 3; do not
-perform it, mutate either database, or begin Phase 3 without its exact scope.
-Personal owner involvement is reserved for factual input, irreversible or
-external actions, and final visual/product approval.
+the preserved recovery/reference application. A private, local-only development
+owner seed is implemented, focused-verified, and technically accepted, but it has
+not been executed. The coordinating technical auditor may perform its exact
+preview/confirmation/verification boundary before Phase 3. Public dashboard login/account integration
+is deliberately deferred until the complete dashboard is preparing to go live:
+Discord is the first intended public login provider and email/password remains an
+optional future capability. Preserve stable Platform/Journal UUID ownership so
+that later authentication work does not rewrite Journal facts. Personal owner
+involvement is reserved for irreversible or external actions and final
+visual/product approval.
 
 - Trader Intelligence V3 is legacy implementation, not the architecture for
   future ordinary dashboards. Do not add a new normal dashboard dependency on

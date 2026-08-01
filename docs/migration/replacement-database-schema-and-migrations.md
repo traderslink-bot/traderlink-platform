@@ -3,7 +3,7 @@
 **Phase:** 2 - Replacement baseline
 **Status:** Corrected exact design owner-accepted; empty foundation and narrow technical-audit corrections implemented, focused-verification complete, and accepted by the coordinating technical auditor under delegated owner authority
 **Physical store:** One SQLite database per local environment with explicit Platform and module ownership
-**Implementation boundary:** This document is the accepted exact design and verification contract for the implemented empty ownership foundation only. It does not authorize owner bootstrap, legacy Journal data migration, Phase 3, or any later destructive migration.
+**Implementation boundary:** This document is the accepted exact design and verification contract for the implemented empty ownership foundation. The separate development-owner seed remains gated by its focused tracker; it does not authorize legacy Journal data migration, Phase 3, public authentication, or any later destructive migration.
 
 ## 1. Configuration and physical path
 
@@ -715,21 +715,23 @@ Only these facts may be created during Phase 2 after a separate owner authorizat
 
 This design checkpoint creates none of them.
 
-## 11. Separate owner-bootstrap checkpoint
+## 11. Development owner seed and deferred public login
 
 Empty initialization remains structurally empty. It does not create a real user, workspace, membership, Journal account, source identity, or any other private row.
 
-After empty database initialization is separately accepted, but before Phase 3 legacy data migration, the owner must authorize another explicit bootstrap checkpoint. Its proposed server-only operation is `src/modules/platform/server/bootstrap/bootstrap-initial-owner.ts`; the authenticated invocation surface is designed and approved at that later checkpoint rather than exposed as an unauthenticated script. The operation must:
+After empty database initialization was accepted, the separately scoped preparation checkpoint implemented the local-only operation at `src/modules/platform/server/bootstrap/seed-development-owner.ts`. It is not exposed as a route, UI, login flow, or production operation. The [Development Owner Seed Progress](development-owner-seed-progress.md) tracker governs focused verification and delegated technical review before execution. The operation must:
 
-1. map the currently authenticated provider identity through a server-controlled `auth_provider` adapter while retaining the provider's exact `auth_subject` contract;
-2. show the owner the proposed privacy-safe user, workspace, timezone, currency, and Journal account values before writing;
+1. require an explicit local enable flag and fail when Node or Vercel reports a production environment;
+2. preview non-sensitive development user, workspace, timezone, currency, and Journal account values before writing;
 3. require the five domain tables to be empty and the registry to exactly match the accepted two-migration manifest;
 4. create exactly one active `platform_users` row, one active `platform_workspaces` row, one active `owner` membership, and one active `journal_accounts` row in one `BEGIN IMMEDIATE` transaction;
 5. write no `journal_account_source_identities` row until a later authorized source-account matching operation has the applicable raw private evidence and versioned HMAC configuration;
 6. fail rather than overwrite, merge, or create a second bootstrap set when domain rows already exist; and
 7. produce a privacy-safe verification record containing only row counts, timestamps, and schema/migration digests, with identifiers redacted—never a user/workspace/account UUID, auth subject, raw broker account identifier, HMAC secret, or source statement value.
 
-No private identity may be hardcoded in migrations, documentation, fixtures, logs, tests, or source control. The schema design is accepted, but the owner-bootstrap checkpoint remains a later separate authorization after empty initialization.
+The temporary identity uses server-controlled provider `development_local` and a non-personal subject marker. It is never public authentication. The coordinating technical auditor may supply generic development labels and the accepted account defaults `America/New_York` and `USD`, review the privacy-safe preview, and submit the exact short-lived confirmation after focused verification. Phase 3 and private/legacy migration remain prohibited until that write is independently verified.
+
+Public login/account integration is deliberately deferred until the complete dashboard is preparing to go live. Discord is the first intended public provider; email/password is optional future work. A later Platform migration may introduce linked identities, but it must preserve the stable user/workspace/account UUIDs and all Journal ownership relationships created during development.
 
 ## 12. Accepted implementation verification plan and checkpoint timing
 
@@ -780,10 +782,12 @@ The initial implementation static migration-file verifier passed. Its final cons
 
 Independent technical audit then found missing accepted cases and evidence-contract gaps despite the green 41-test result. The narrow correction pass made the read-only verifier require all accepted pragmas, aligned its migration count with the manifest/explicit empty-foundation contract, derived the default repository boundary portably, expanded online-backup/restore and non-secret recovery-authority evidence, and added the missing cases inside the same ten files. The ordinary correction static-verifier command reproduced the same pre-application Node/Windows `uv_os_get_passwd ... ENOMEM`; the established command-local preload was used once and removed immediately. Static verification passed, and the first correction-focused Vitest run passed all 10 files and all 53 tests with one worker and no file parallelism. There was no correction-pass application test failure.
 
-Both the disposable target and real `development.sqlite` contain exactly two migration rows and the five empty domain tables. Their final expected/actual schema SHA-256 is `5a34f790164e9b8456db88a1052a9b9084bbfbeab4eae8c5eee1f49d5c7194c4`; all domain counts are zero; required pragmas and page geometry match; foreign-key, quick, and integrity checks are `ok`. No owner/private/legacy data was copied and the owner-bootstrap operation did not run.
+Both the disposable target and real `development.sqlite` contain exactly two migration rows and the five empty domain tables. Their final expected/actual schema SHA-256 is `5a34f790164e9b8456db88a1052a9b9084bbfbeab4eae8c5eee1f49d5c7194c4`; all domain counts are zero; required pragmas and page geometry match; foreign-key, quick, and integrity checks are `ok`. No owner/private/legacy data was copied and the development-owner seed did not run.
 
 ## Accepted design checkpoint and implementation gate
 
-The owner has accepted the corrected exact design in this document. Acceptance includes the single-active-owner rule; owner/admin all-active-account and member-denied-until-grants permission model; two empty migrations and five-table foundation; deterministic schema-digest/drift rule; global migration identity; initialization and recovery behavior; canonical validation; versioned account fingerprint/canonicalization/HMAC and secret-recovery rules; `WorkspaceAccessScope`; separate owner-bootstrap gate; focused verification plan; and exact implementation-file list.
+The owner has accepted the corrected exact design in this document. Acceptance includes the single-active-owner rule; owner/admin all-active-account and member-denied-until-grants permission model; two empty migrations and five-table foundation; deterministic schema-digest/drift rule; global migration identity; initialization and recovery behavior; canonical validation; versioned account fingerprint/canonicalization/HMAC and secret-recovery rules; `WorkspaceAccessScope`; separate ownership-seed gate; focused verification plan; and exact implementation-file list.
 
-Schema design review and the separately authorized empty database-foundation implementation/correction verification are complete. The coordinating technical auditor accepted the code, database boundary, and 10-file/53-test evidence under delegated owner authority; no separate personal owner technical review is required. The next required operation involving personal identity input is the separately scoped owner bootstrap before Phase 3. It has not run, and this implementation does not authorize it, private/legacy data migration, or Phase 3.
+Schema design review and the separately authorized empty database-foundation implementation/correction verification are complete. The coordinating technical auditor accepted the code, database boundary, and 10-file/53-test evidence under delegated owner authority; no separate personal owner technical review is required. The next required operation is the local-only development-owner seed before Phase 3. It has not run, and this implementation does not authorize it, public login, private/legacy data migration, or Phase 3.
+
+The development-owner seed preparation subsequently passed its focused static verifier and all three focused files/all ten tests with one Vitest worker and file parallelism disabled. The coordinating technical auditor accepted the preparation. The real database remained 94,208 bytes with SHA-256 `426DA6848F9FC8D65C20B239D9F2949133ABAB5CD745FE38014AE4035549CF1B`; no seed row was written during preparation verification.
