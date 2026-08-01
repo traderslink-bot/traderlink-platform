@@ -1,9 +1,9 @@
 # Phase 2 Replacement Baseline Progress
 
 **Phase:** 2 - Replacement baseline
-**Status:** In progress; the preservation/clone, corrected legacy backup/restore, and corrected exact replacement schema/migration design checkpoints are owner-accepted. Schema design review is complete; database-foundation implementation is the next separately authorized checkpoint
+**Status:** Phase 2 empty database foundation implemented, correction-verified, and technically accepted by the coordinating auditor under delegated owner authority
 **Authorized:** 2026-08-01, explicitly by the project owner
-**Current boundary:** Documentation acceptance only. Migration/database implementation has not started; do not create the replacement development database or implement migration code until that separate checkpoint is explicitly authorized
+**Current boundary:** Phase 2 foundation technical acceptance is complete. The next required operation is the separately scoped owner-bootstrap factual-input gate before Phase 3. Owner bootstrap, private/legacy data migration, Phase 3, UI, server restart, broad checks, push, deployment, and database mutation remain prohibited in this preservation checkpoint
 
 ## Repository boundary
 
@@ -54,8 +54,8 @@
 - Completed online backup: `C:\Users\jerac\Documents\TraderLink\private-data\legacy-app\backups\phase-2-20260801T053759Z\trading-rules-v1-online-backup.sqlite`.
 - Disposable restore-verification target: `C:\Users\jerac\Documents\TraderLink\private-data\legacy-app\restore-verification\phase-2-20260801T053759Z\trading-rules-v1-restored.sqlite`.
 - Selected replacement database: `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\development.sqlite`.
-- The selected replacement database remains absent. No schema or replacement data was created.
-- PID 3160 remained running and listening on `127.0.0.1:3000` throughout the first backup attempt. It was not stopped or restarted.
+- The selected replacement database exists with the verified two-migration, five-zero-row-domain-table empty foundation. Owner bootstrap and private/legacy data migration have not run.
+- The formerly recorded legacy process tree is stopped, and ports 3000, 3010, and 3011 are clear. Historical backup sections below retain the process state that applied during those dated operations.
 
 ## Online-backup record
 
@@ -153,7 +153,7 @@ Every table count matches across the source, completed backup, and restored targ
 
 ## Accepted replacement schema and migration checkpoint
 
-The owner accepted the corrected exact [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md) design. This acceptance completes schema design review; it does not authorize database creation or implementation.
+At the earlier design-only checkpoint, the owner accepted the corrected exact [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md) design. That dated acceptance completed schema design review but did not then authorize database creation or implementation; the later implementation and delegated-audit records below supersede that former current boundary.
 
 The owner has accepted these architectural directions:
 
@@ -185,6 +185,58 @@ The accepted exact design boundary is:
 
 The documentation correction affects the existing five-document review package plus `AGENTS.md`, `module-contracts.md`, and `database-ownership.md`. No historical Phase 1 handoff was rewritten. No database, application code, migration file, test, environment file, dependency, or process was changed for this proposal.
 
+## Database-foundation implementation checkpoint
+
+The owner explicitly authorized the accepted Phase 2 database-foundation implementation on 2026-08-01. Initial boundary verification found the exact replacement path, branch `codex/traderlink-platform-replacement`, accepted design HEAD `f577335d8ad9a6e2d5a8d02717e04e57d8d3977b`, intended remote, no upstream, one independent worktree, and a clean working tree. The replacement private-data directory and `development.sqlite` were absent. PID 3160 remained present, while ports 3000, 3010, and 3011 had no listener at the implementation start; Codex did not stop or restart any process.
+
+`npm ci --no-audit --no-fund` installed the exact lockfile once. `package.json` and `package-lock.json` remained unchanged, and `node_modules` remained ignored. The complete accepted production-file and ten-test batch was implemented and initially left unstaged for audit. No user, workspace, membership, Journal account, source identity, legacy data copy, environment file, server, or UI was created by the code-writing batch.
+
+The owner changed only the timing of broad verification for this checkpoint. Run the following sequence once, sequentially, after the complete batch is ready:
+
+1. `git diff --check`;
+2. the static migration-file verifier;
+3. the ten accepted files in one focused Vitest invocation;
+4. initialization and verification against one new disposable external database; and
+5. only after all prior steps succeed, initialization and verification of the real empty `development.sqlite`.
+
+Do not run broad ESLint, full-project TypeScript, complete Vitest, build, browser/E2E, or CI-equivalent checks during this checkpoint. Those checks remain required at the final replacement-acceptance boundary; their timing is deferred, not removed.
+
+### Focused verification results
+
+- `git diff --check` passed before the focused sequence.
+- The ordinary `npx.cmd tsx` static-verifier invocation reproduced the earlier Node 24.11.0 `uv_os_get_passwd ... ENOMEM` startup failure before TraderLink code loaded. The command-line data-URL shim did not reach this `tsx` version's isolated loader/child process. An equivalent temporary CommonJS preload outside the repository, supplied only through the verifier command's process environment, allowed the same installed `tsx` verifier to run. No project, global, or system setting changed.
+- The static migration-file verifier passed for `0001_platform_identity` and `0002_journal_account_boundary`, including exact filenames, literal IDs, namespaces, and global execution order.
+- The first accepted one-worker Vitest run completed with 9 files passing and one application test failing: the unmanaged-database runtime case returned `TRADERLINK_PLATFORM_INTEGRITY_FAILED` before `TRADERLINK_PLATFORM_UNMANAGED_SCHEMA`. Runtime validation was narrowly corrected to classify the managed schema before checking persistence pragmas.
+- The complete accepted command was rerun with `--reporter=dot --maxWorkers=1 --no-file-parallelism`: all 10 files and all 41 tests passed. No broad suite ran.
+- The owner-authorized legacy process tree was already stopped before verification: launcher PID 23608, legacy server PID 3160, and worker PID 29576 are absent. Ports 3000, 3010, and 3011 are clear. Codex did not restart them.
+
+### Independent audit correction results
+
+- The independent audit accepted the real empty-database evidence but identified missing focused cases, verifier pragma enforcement, machine-specific repository roots, and incomplete online-backup/recovery evidence.
+- The correction pass did not initialize, recreate, or write the disposable or real database. It did not start a server, bootstrap identity data, copy legacy/private data, or perform a Git action.
+- The read-only verifier now fails closed unless foreign keys, busy timeout, WAL, and synchronous `NORMAL` all match the accepted values. Its migration count follows the current manifest and the explicit empty-foundation table contract instead of a literal two-row check.
+- Default repository protection is derived from the active module location and can be supplied an exact explicit root list for moved-repository tests and legacy/replacement coexistence.
+- Online-backup evidence now records exact registry rows, every user-table count, expected/actual schema digests, pragma/WAL state, page geometry, integrity checks, timestamps, SQLite version, source/backup/restored file evidence, and byte identity for the backup/restored pair. It inventories non-superseded HMAC/canonicalizer version labels and requires a server-only recovery-authority callback without recording secrets or raw source identifiers. Maintenance state, destructive-plan acceptance, environment switching, and migration start remain later orchestrator responsibilities.
+- Missing cases were added inside the accepted ten files: checksum tampering, unknown/out-of-order history, changed explicit index, existing zero-byte and zero-table initialization, unmanaged initializer rejection, verifier pragma rejection, retained/current canonicalizer matching/rotation and missing-canonicalizer rejection, portable moved-root protection, and backup/recovery evidence gates.
+- The ordinary static-verifier invocation again failed in Node 24.11.0 startup with `uv_os_get_passwd ... ENOMEM` before TraderLink loaded. The established command-local preload was used only for the affected invocation and removed immediately; the static verifier then passed.
+- The first correction-focused application run passed all 10 accepted files and all 53 tests using `--reporter=dot --maxWorkers=1 --no-file-parallelism`. No correction-pass application test failed.
+
+### Disposable empty-foundation evidence
+
+- Path: `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\verification\phase-2-empty-foundation.sqlite`.
+- SQLite 3.53.0; 94,208-byte main file; 4,096-byte pages; 23 pages.
+- Migration 1 checksum `e2ccbc367e274162b0a9141dc73eddf68bf5624ff4fca4ca06f97efe6d00cbb8`, post-schema digest `46c3d210d8af289b8048ea14a86e43313cb8076944ba983874fcaccae3b64466`.
+- Migration 2 checksum `ff4bbc84114a8d99b5d06192fe3e3e094069c11a1a7eb1868fc35ce912c071d7`, final expected/actual schema digest `5a34f790164e9b8456db88a1052a9b9084bbfbeab4eae8c5eee1f49d5c7194c4`.
+- Five domain tables all contain zero rows. `foreign_keys=1`, `busy_timeout=5000`, journal mode `wal`, and synchronous mode `NORMAL` (`1`). Foreign-key, quick, and integrity checks are `ok`.
+- Main-file SHA-256 `0ABD8979FA56B099BBBC8EA2963E7AE44A5E3603694F41531A076D5627C0A4F0`. Read-only verification left a zero-byte WAL and 32,768-byte SHM sidecar.
+
+### Real empty development database evidence
+
+- Path: `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\development.sqlite`.
+- SQLite version, migration checksums/post-schema digests, schema digest, pragmas, integrity results, page geometry, file size, table inventory, and all five zero domain counts match the disposable foundation.
+- Main-file SHA-256 `426DA6848F9FC8D65C20B239D9F2949133ABAB5CD745FE38014AE4035549CF1B`. Read-only verification left a zero-byte WAL and 32,768-byte SHM sidecar.
+- No user, workspace, membership, Journal account, source identity, owner/private value, or legacy row was created or copied.
+
 ## Checkpoint result and stop boundary
 
 - [x] Preservation documentation committed without product code, private data, or logs.
@@ -200,5 +252,12 @@ The documentation correction affects the existing five-document review package p
 - [x] Requested foundation corrections applied to the documentation review package.
 - [x] Owner accepted the corrected exact schema/migration design, including schema digest, migration identity, initialization recovery, versioned account fingerprinting, `WorkspaceAccessScope`, permission model, owner-bootstrap gate, verification plan, and exact implementation-file list.
 - [x] Schema design review is complete.
-- [ ] Replacement `development.sqlite` creation and migration/database implementation remain the next separately authorized checkpoint and have not started.
+- [x] Database-foundation implementation explicitly authorized; exact production/test file batch prepared and left unstaged.
+- [x] Static migration-file verification passed after an environment-only preload workaround; the earlier `ENOMEM` remains classified as a Node/Windows startup failure, not an application result.
+- [x] Initial focused one-worker verification passed: 10 test files and the then-present 41 tests.
+- [x] Independent-audit corrections passed static verification and the expanded 10-file/53-test focused run; the coordinating technical auditor accepted the code, database boundary, and test evidence under delegated owner authority.
+- [x] Disposable empty-foundation database initialized and verified successfully.
+- [x] Real empty `development.sqlite` initialized and verified only after every preceding focused check passed.
 - [ ] Real owner/workspace/account bootstrap remains prohibited until its later separate approval after empty initialization.
+
+The owner delegated technical code/database/test/Git checkpoint acceptance to the coordinating auditor. Personal owner involvement is reserved for personal factual input, irreversible or external actions, and final visual/product approval. The Phase 2 empty database foundation is technically complete; the next required operation is the owner-bootstrap factual-input gate before Phase 3, and it has not run.

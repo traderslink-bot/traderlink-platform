@@ -1,6 +1,6 @@
 # TraderLink Platform Replacement Plan
 
-**Status:** Approved planning baseline. Phase 0 and Phase 1 were explicitly accepted. Phase 2 is in progress; the preservation/clone, corrected database backup/restore, and corrected exact replacement schema/migration design checkpoints are owner-accepted. Schema design review is complete; database-foundation implementation is the next separately authorized checkpoint and has not started.
+**Status:** Approved planning baseline. Phase 0 and Phase 1 were explicitly accepted. The Phase 2 empty database foundation is implemented, correction-verified, and technically accepted by the coordinating auditor under delegated owner authority. The verified empty `development.sqlite` exists; owner bootstrap and private/legacy data migration have not run. The next required operation is the separately scoped owner-bootstrap factual-input gate before Phase 3, not another owner code review.
 
 **Owner:** Project owner and Codex
 
@@ -194,7 +194,7 @@ Before a replacement database is created, inventory every current store and envi
 
 Phase 1 found no `v4-temp-sql` folder in the active repository or TraderLink parent because it was mistakenly created in `C:\Users\jerac\Documents\traderslink.pro back up july 29\v4-temp-sql`. That backup folder contains an early `dashboard-test.sqlite3`, a loader script, and the January CSV, but no active source or environment reference points to it. The owner has rejected it as a migration source; preserve the backup without wiring it into the replacement.
 
-The verified legacy source is `C:\Users\jerac\Documents\TraderLink\private-data\v3-dashboard\trading-rules-v1.sqlite`. It is acceptable migration input if it passes the backup, restore, and source-reconciliation gates. Phase 2 will create a separately named replacement development database outside either repository; it will not repurpose or share writes with the legacy source.
+The verified legacy source is `C:\Users\jerac\Documents\TraderLink\private-data\v3-dashboard\trading-rules-v1.sqlite`. It is acceptable migration input if it passes the backup, restore, and source-reconciliation gates. Phase 2 created the separately named replacement `development.sqlite` outside either repository with only the verified empty foundation; it does not repurpose or share writes with the legacy source.
 
 Database copies must use a SQLite online backup while the source is active. Every migration snapshot records source path, timestamp, hash, schema version, table counts, reconciliation output, and tested restore instructions.
 
@@ -268,13 +268,13 @@ The inventory is a controlling target list, not an "at minimum" list. It must cl
 | 6. Replacement acceptance | Browser review, focused and checkpoint testing, restore test, deployment rehearsal, and owner acceptance. | No active dependency on the legacy app remains. |
 | 7. Legacy retirement | Archive, verify recovery, and remove legacy assets only with explicit owner approval. | Replacement is the accepted complete app. |
 
-Within Phase 2, the owner has accepted the exact schema digest, migration identity, initialization recovery, versioned account fingerprinting, `WorkspaceAccessScope`, owner/admin/member permission model, separate owner-bootstrap gate, focused verification plan, and exact implementation-file list in [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md). This completes schema design review only. `development.sqlite` remains absent, and migration/database implementation requires the next separate authorization.
+Within Phase 2, the exact schema digest, migration identity, initialization recovery, versioned account fingerprinting, `WorkspaceAccessScope`, owner/admin/member permission model, separate owner-bootstrap gate, focused verification plan, and exact implementation-file list in [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md) are implemented and correction-verified. The coordinating technical auditor accepted the code, verified empty database, and 10-file/53-test result under the owner's delegated technical checkpoint authority. `development.sqlite` exists with exactly two migration rows and five zero-row domain tables. Owner bootstrap and private/legacy data migration have not run. The Phase 2 foundation is technically complete; the next required operation is the separately scoped owner-bootstrap factual-input gate before Phase 3.
 
 Any new or redesigned UI must be shown to the owner for visual approval before it is treated as an accepted feature slice. Broad tests, full builds, deployment, process stopping, database creation, and production changes occur only when their checkpoint requires them.
 
 ## 10. Chat and phase handoff protocol
 
-A migration phase is an approval and scope boundary, not a mandatory chat boundary. Multiple short phases may continue in one healthy-context chat when the preceding exit condition is satisfied and the owner explicitly accepts and authorizes the next phase. Conversely, one large phase may require a clearly labeled continuation chat.
+A migration phase is an approval and scope boundary, not a mandatory chat boundary. Multiple short phases may continue in one healthy-context chat when the preceding exit condition is satisfied and the applicable delegated technical authority or retained owner gate authorizes the next phase. Conversely, one large phase may require a clearly labeled continuation chat. The owner delegated technical code/database/test/Git checkpoint acceptance to the coordinating auditor; owner involvement remains required for personal factual input, irreversible or external actions, and final visual/product approval.
 
 At every completed phase, Codex must still offer the owner a ready-to-copy new-chat prompt. The owner may use it immediately, keep it as a recovery handoff, or continue in the current chat. Recommend a new chat when context is becoming large, the next phase is substantial, the risk or work type changes materially, or a fresh verification boundary would improve safety. Do not force a new chat for a small phase, and do not keep many large phases in one chat merely to avoid a handoff.
 
@@ -283,7 +283,7 @@ Before closing a completed phase, Codex must:
 1. update the master plan when a decision changed it;
 2. update `migration-progress.md`, the migration register, the phase-specific tracker, and any required inventories;
 3. record the canonical repository path, branch/commit state, database and process state, completed verification, unresolved items, owner decisions, and the exact authorized next scope;
-4. obtain and record the owner's phase acceptance rather than inferring it from implementation progress; and
+4. obtain and record acceptance from the coordinating technical auditor or the owner, according to the applicable retained gate, rather than inferring it from implementation progress; and
 5. provide the owner with a ready-to-copy optional new-chat prompt using [Phase Handoff Template](phase-handoff-template.md).
 
 If a new chat is used, the next Codex must read `AGENTS.md`, this master plan, the integrity contract, the migration register, the progress tracker, and the previous phase handoff before taking action. If the current chat continues, Codex must still acknowledge the newly authorized phase and keep the same scope boundary. Neither choice broadens authorization.
@@ -292,7 +292,7 @@ If a chat must end before its phase is complete, Codex provides a continuation p
 
 ## 11. Acceptance rules
 
-No capability may be marked complete merely because a component renders or a unit test passes. Completion requires the applicable implementation, focused verification, real local route or endpoint result, source reconciliation, visual review when UI changes, documented coverage, and owner acceptance.
+No capability may be marked complete merely because a component renders or a unit test passes. Completion requires the applicable implementation, focused verification, real local route or endpoint result, source reconciliation, visual review when UI changes, documented coverage, and acceptance by the applicable delegated technical authority or retained owner gate. Final visual/product acceptance remains the owner's decision.
 
 For every dashboard metric, acceptance includes:
 

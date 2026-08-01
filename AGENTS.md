@@ -14,8 +14,9 @@ V3 roadmap decision.
 
 The older Trader Intelligence Dashboard Baseline and Whole Site Source of Truth
 sections below govern maintenance of the preserved legacy application. They do
-not prescribe the replacement's future module architecture. Phase 2 is active,
-and the owner-accepted independent clone at
+not prescribe the replacement's future module architecture. The Phase 2 empty
+database foundation is technically complete and accepted, and the
+owner-accepted independent clone at
 `C:\Users\jerac\Documents\TraderLink\traderlink-platform` is the active
 replacement implementation candidate. The accepted independent-clone baseline
 is branch `codex/traderlink-platform-replacement` at
@@ -28,12 +29,17 @@ owner-accepted Phase 2 database design is
 `docs/migration/replacement-database-schema-and-migrations.md`. Its exact
 schema digest, migration identity, initialization recovery, versioned account
 fingerprinting, `WorkspaceAccessScope`, permission model, owner-bootstrap gate,
-verification plan, and implementation-file list are accepted. Schema design
-review is complete, but database-foundation implementation is the next
-separately authorized checkpoint. The legacy `traderslink.pro` folder remains
-the preserved recovery/reference application. The replacement database remains
-absent; do not create it or implement the accepted design without explicit
-continuation authorization.
+verification plan, and implementation-file list are implemented and
+correction-verified. The coordinating technical auditor accepted the code,
+database, and 10-file/53-test result under the owner's delegated technical
+checkpoint authority. The verified empty `development.sqlite` exists with two
+migration rows and five zero-row domain tables; owner bootstrap and private or
+legacy data migration have not run. The legacy `traderslink.pro` folder remains
+the preserved recovery/reference application. The next required operation is
+the separately scoped owner-bootstrap factual-input gate before Phase 3; do not
+perform it, mutate either database, or begin Phase 3 without its exact scope.
+Personal owner involvement is reserved for factual input, irreversible or
+external actions, and final visual/product approval.
 
 - Trader Intelligence V3 is legacy implementation, not the architecture for
   future ordinary dashboards. Do not add a new normal dashboard dependency on
@@ -55,9 +61,10 @@ continuation authorization.
   executions use their actual execution date/time, not the submission date;
   daily notes and reviews remain separate per trading date.
 - `traderslink.pro` remains the complete legacy reference until the owner
-  accepts a complete replacement. Do not create another replacement folder,
-  create the replacement database, start a replacement process, deploy, or
-  delete legacy code until the migration checkpoint authorizes the exact action.
+  accepts a complete replacement. Do not create another replacement folder or
+  database, mutate the verified empty replacement database, start a replacement
+  process, deploy, or delete legacy code until the migration checkpoint
+  authorizes the exact action.
 - The approved visual baseline is the light Material UI dashboard with its
   complete left navigation. A dark or reduced dashboard that omits Trades,
   Calendar with week/month views, Analytics, Analytics Lab, or Trading Rules is
@@ -82,10 +89,13 @@ continuation authorization.
   register and progress tracker current. Every new/reworked UI slice requires
   owner visual approval before acceptance.
 - Treat phases as approval/scope boundaries, not mandatory chat boundaries.
-  Multiple short phases may share a chat after explicit owner acceptance and
-  authorization; a large phase may span continuation chats. At every completed
-  phase, update all controlling documents and give the owner an optional
-  ready-to-copy next-chat prompt using
+  Multiple short phases may share a chat after the applicable delegated
+  technical acceptance or retained owner gate authorizes the next scope; a
+  large phase may span continuation chats. Technical code/database/test/Git
+  checkpoints may be accepted by the coordinating auditor under the owner's
+  delegation. At every completed phase, update all controlling documents and
+  give the applicable coordinator or owner an optional ready-to-copy next-chat
+  prompt using
   `docs/migration/phase-handoff-template.md`. Chat choice never broadens scope.
   If context ends mid-phase, create a continuation handoff and do not mark the
   phase complete.

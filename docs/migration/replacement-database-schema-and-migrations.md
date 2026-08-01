@@ -1,9 +1,9 @@
 # Replacement Database Schema and Migrations
 
 **Phase:** 2 - Replacement baseline
-**Status:** Corrected exact design owner-accepted; schema review complete; no database or implementation file has been created
+**Status:** Corrected exact design owner-accepted; empty foundation and narrow technical-audit corrections implemented, focused-verification complete, and accepted by the coordinating technical auditor under delegated owner authority
 **Physical store:** One SQLite database per local environment with explicit Platform and module ownership
-**Implementation boundary:** This document is the accepted exact design for the empty ownership foundation only. Acceptance does not authorize database creation or implementation. Legacy Journal data migration is not authorized by this checkpoint.
+**Implementation boundary:** This document is the accepted exact design and verification contract for the implemented empty ownership foundation only. It does not authorize owner bootstrap, legacy Journal data migration, Phase 3, or any later destructive migration.
 
 ## 1. Configuration and physical path
 
@@ -18,7 +18,7 @@ The selected local development value is exactly:
 Rules:
 
 1. `TRADERLINK_PLATFORM_DB_PATH` is required. Runtime code fails with `TRADERLINK_PLATFORM_DB_PATH_MISSING` when it is absent or blank.
-2. The configured value must resolve to an absolute `.sqlite` path outside both `C:\Users\jerac\Documents\TraderLink\traderslink.pro` and `C:\Users\jerac\Documents\TraderLink\traderlink-platform`. A relative path or repository-contained path fails before SQLite is opened.
+2. The configured value must resolve to an absolute `.sqlite` path outside every repository boundary supplied to the database configuration. The default boundary is derived portably from the active TraderLink Platform module location, so moving the checkout does not disable repository protection. Tests and operations that keep the legacy and replacement repositories side by side pass both exact repository roots explicitly. A relative path or repository-contained path fails before SQLite is opened.
 3. There is no fallback to `TRADER_INTELLIGENCE_DB_PATH`, a repository `data/` path, the current working directory, an in-memory database, or a V3/V4-named path.
 4. Ordinary application startup opens the configured file with `fileMustExist: true`, requires a managed registry that exactly matches the current manifest, and rejects an absent, empty, unmanaged, partially migrated, or tampered database. It never bootstraps or migrates a database as a startup side effect.
 5. Only the explicit initialization command may create an absent parent directory/database, bootstrap an empty target, or resume a partially applied managed target. It first applies the configuration, path-boundary, manifest, registry, and unknown-table checks defined below.
@@ -623,7 +623,7 @@ The later implementation checkpoint will create these code files and no substitu
 | `src/modules/platform/server/database/platform-migration-registry.ts` | Bootstrap and validate `platform_schema_migrations`, including required post-schema digests; reject unmanaged/tampered history |
 | `src/modules/platform/server/database/platform-migration-manifest.ts` | Statically import and globally order every module-owned migration |
 | `src/modules/platform/server/database/run-platform-migrations.ts` | Apply pending migrations transactionally, calculate/store each resulting schema digest, and run foreign-key/integrity checks |
-| `src/modules/platform/server/database/platform-database-backup.ts` | Create, hash, record, and restore-verify an online backup, including expected/actual schema-digest evidence, before a later destructive migration |
+| `src/modules/platform/server/database/platform-database-backup.ts` | Create, hash, record, and restore-verify an online backup; prove exact registry, every-table count, schema digest, pragma/WAL, page geometry, integrity, timestamp/SQLite/file evidence; and require non-secret HMAC/canonicalizer recovery-authority evidence before a later destructive migration |
 | `src/modules/platform/server/database/migrations/0001_platform_identity.ts` | Create the empty Platform ownership schema |
 | `src/modules/platform/contracts/workspace-access-scope.ts` | Publish server-derived `WorkspaceAccessScope` and narrowed `AccountScope` data contracts |
 | `src/modules/platform/server/identity/platform-user-repository.ts` | Platform-owned user identity persistence only |
@@ -696,6 +696,8 @@ Before a destructive replacement migration:
 6. inventory every non-superseded `hmac_key_version` and `source_account_canonicalization_version`, verify that the separately protected secrets and adapter implementations needed by those versions can be restored, without writing either secret or raw source identifier into the database evidence; and
 7. begin the migration only after the database restore, secret-recovery check, and destructive plan are accepted.
 
+`platform-database-backup.ts` implements steps 2 through 6 as an evidence helper. It inventories only version labels and calls a server-only recovery-authority verifier supplied by the later migration orchestrator; the callback confirms that the separately protected secrets and canonicalizer implementations for exactly those labels are recoverable without returning either secrets or raw source identifiers. The helper does not place the application in maintenance mode, authorize a destructive plan, switch an environment path, or start a migration. Those step-1 and step-7 responsibilities remain with the later explicitly accepted destructive-migration orchestrator/checkpoint.
+
 Migrations are forward-only; no automatic `down` SQL is executed. A failed migration rolls back its current transaction and can be retried after code correction. If an accepted destructive migration must be reversed, stop replacement writers, preserve the failed database as evidence, restore the verified pre-migration backup to a new path, restore the exact separately protected HMAC key versions required by that database, point `TRADERLINK_PLATFORM_DB_PATH` to that restored file through an explicit environment change, and run the application commit compatible with that registry state. Never restore over or write to the legacy source.
 
 `PRAGMA schema_version` may be recorded only as optional SQLite diagnostic context. It never establishes migration state, proves schema equivalence, replaces `post_schema_sha256`, or authorizes restore or recovery.
@@ -729,7 +731,7 @@ After empty database initialization is separately accepted, but before Phase 3 l
 
 No private identity may be hardcoded in migrations, documentation, fixtures, logs, tests, or source control. The schema design is accepted, but the owner-bootstrap checkpoint remains a later separate authorization after empty initialization.
 
-## 12. Accepted implementation verification plan - do not run at this checkpoint
+## 12. Accepted implementation verification plan and checkpoint timing
 
 The owner-accepted later implementation checkpoint plan includes these focused test files:
 
@@ -757,23 +759,31 @@ Required focused cases include:
 - cross-workspace account read/create/source-identity denial; and
 - same-workspace owner/admin account creation approval with member denial and `created_by_user_id` authorization.
 
-After separate implementation authorization, the accepted focused commands for that checkpoint are:
+Database-foundation implementation was separately authorized on 2026-08-01. The owner directed that the complete implementation batch be written before any checks and that this checkpoint now run one focused sequence only:
 
 ```powershell
 git diff --check
-npx.cmd eslint src/modules/platform src/modules/journal src/scripts/initialize-traderlink-platform-database.ts src/scripts/verify-traderlink-platform-migration-files.ts src/scripts/verify-traderlink-platform-database.ts
-npx.cmd tsc --noEmit --pretty false
 npx.cmd tsx src/scripts/verify-traderlink-platform-migration-files.ts
-npx.cmd vitest run src/modules/platform/server/database/platform-migrations.test.ts src/modules/platform/server/database/platform-schema-digest.test.ts src/modules/platform/server/database/platform-migration-file-contract.test.ts src/modules/platform/server/database/platform-database-config.test.ts src/modules/platform/server/database/platform-database-initialization-modes.test.ts src/modules/platform/server/database/platform-storage-validation.test.ts src/modules/platform/server/authorization/workspace-access-scope.test.ts src/modules/journal/server/accounts/journal-account-boundary.test.ts src/modules/journal/server/accounts/journal-account-fingerprint-rotation.test.ts src/modules/journal/server/accounts/journal-account-authorization.test.ts --reporter=dot
+npx.cmd vitest run src/modules/platform/server/database/platform-migrations.test.ts src/modules/platform/server/database/platform-schema-digest.test.ts src/modules/platform/server/database/platform-migration-file-contract.test.ts src/modules/platform/server/database/platform-database-config.test.ts src/modules/platform/server/database/platform-database-initialization-modes.test.ts src/modules/platform/server/database/platform-storage-validation.test.ts src/modules/platform/server/authorization/workspace-access-scope.test.ts src/modules/journal/server/accounts/journal-account-boundary.test.ts src/modules/journal/server/accounts/journal-account-fingerprint-rotation.test.ts src/modules/journal/server/accounts/journal-account-authorization.test.ts --reporter=dot --maxWorkers=1 --no-file-parallelism
 $env:TRADERLINK_PLATFORM_DB_PATH='C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\verification\phase-2-empty-foundation.sqlite'
 npx.cmd tsx src/scripts/initialize-traderlink-platform-database.ts --initialize-empty
 npx.cmd tsx src/scripts/verify-traderlink-platform-database.ts --expect-empty-foundation
 ```
 
-The disposable verification database must be a new path and must not be the selected `development.sqlite`. This design is accepted, but the real development database may be created only after the owner separately authorizes implementation. No command in this section was run during the design checkpoint.
+The disposable verification database must be a new path and must not be the selected `development.sqlite`. Only after `git diff --check`, the static verifier, all ten focused test files, and the disposable initialization/verifier succeed may the explicit initializer create and verify the real empty `development.sqlite`.
+
+Do not run broad ESLint, full-project `tsc --noEmit`, the complete Vitest suite, a production build, browser/Playwright checks, or CI-equivalent verification at this database-foundation checkpoint. Full regression, architecture, TypeScript, lint, build, browser/E2E, and CI-equivalent verification remain required at final replacement acceptance. This is a timing change only and does not weaken or remove those final acceptance requirements.
+
+### Phase 2 implementation verification result
+
+The initial implementation static migration-file verifier passed. Its final constrained Vitest run passed all 10 accepted files and all 41 then-present tests with one worker and no file parallelism. The earlier `uv_os_get_passwd ... ENOMEM` occurred in Node/tsx startup before TraderLink loaded and is recorded separately from application results. The first completed implementation test run found one runtime error-ordering defect; the implementation was narrowly corrected and its complete focused command then passed.
+
+Independent technical audit then found missing accepted cases and evidence-contract gaps despite the green 41-test result. The narrow correction pass made the read-only verifier require all accepted pragmas, aligned its migration count with the manifest/explicit empty-foundation contract, derived the default repository boundary portably, expanded online-backup/restore and non-secret recovery-authority evidence, and added the missing cases inside the same ten files. The ordinary correction static-verifier command reproduced the same pre-application Node/Windows `uv_os_get_passwd ... ENOMEM`; the established command-local preload was used once and removed immediately. Static verification passed, and the first correction-focused Vitest run passed all 10 files and all 53 tests with one worker and no file parallelism. There was no correction-pass application test failure.
+
+Both the disposable target and real `development.sqlite` contain exactly two migration rows and the five empty domain tables. Their final expected/actual schema SHA-256 is `5a34f790164e9b8456db88a1052a9b9084bbfbeab4eae8c5eee1f49d5c7194c4`; all domain counts are zero; required pragmas and page geometry match; foreign-key, quick, and integrity checks are `ok`. No owner/private/legacy data was copied and the owner-bootstrap operation did not run.
 
 ## Accepted design checkpoint and implementation gate
 
 The owner has accepted the corrected exact design in this document. Acceptance includes the single-active-owner rule; owner/admin all-active-account and member-denied-until-grants permission model; two empty migrations and five-table foundation; deterministic schema-digest/drift rule; global migration identity; initialization and recovery behavior; canonical validation; versioned account fingerprint/canonicalization/HMAC and secret-recovery rules; `WorkspaceAccessScope`; separate owner-bootstrap gate; focused verification plan; and exact implementation-file list.
 
-Schema design review is complete. Migration/database implementation has not started and is the next separately authorized checkpoint. Until that explicit continuation, `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\development.sqlite` and its parent replacement-data directory remain absent, and no migration or application code may be implemented.
+Schema design review and the separately authorized empty database-foundation implementation/correction verification are complete. The coordinating technical auditor accepted the code, database boundary, and 10-file/53-test evidence under delegated owner authority; no separate personal owner technical review is required. The next required operation involving personal identity input is the separately scoped owner bootstrap before Phase 3. It has not run, and this implementation does not authorize it, private/legacy data migration, or Phase 3.
