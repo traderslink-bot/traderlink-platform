@@ -1,0 +1,31 @@
+# TraderLink Platform Migration Register
+
+**Status:** Phase 1 inventory baseline. This register is updated for every migrated capability and is the deletion gate.  
+**Rule:** A legacy item cannot be removed until its row is `Owner accepted` and its legacy dependency check is complete.
+
+| Capability | Legacy location/disposition | Replacement owner | Source of truth | Current status | Owner accepted | Legacy deletion allowed |
+| --- | --- | --- | --- | --- | --- | --- |
+| Platform shell and shared identity | Root site shell, light Material dashboard template/layout, legacy Intelligence layout, Discord auth | Platform | Platform user and server-derived owner/account context | Light Material UI and complete left navigation accepted as preservation baseline; replacement contract proposed | Yes for visual baseline only | No |
+| Journal source rows and imports | Dashboard/legacy import pages; import/csv/intelligence handlers; trader-analytics/V3 ingestion | Journal | Preserved statement rows | Inventoried; replacement contract proposed | No | No |
+| Data Decisions and import repair | `/data-decisions`, import repair/decision handlers, legacy repair/review pages | Journal | Source rows plus trader decisions | Inventoried foundation; integrity contract specified | No | No |
+| Executions and round-trip reconstruction | Import repository, execution sources, V3 ingestion/analytics, dashboard/legacy trade routes | Journal | Accepted executions plus decisions | Inventoried; global chronological rebuild specified | No | No |
+| Manual executions and Trade Tracker | `/trade-tracker`, manual-entry foundation, and day-session execution route | Journal | Same canonical execution ledger with manual provenance | Data behavior specified; future multi-day UI deferred | No | No |
+| Trading-day notes and rule reviews | Date-specific Trade Tracker/Day Session paths | Journal | Owner/account/trading date | Preservation input; identity contract specified | No | No |
+| Core Journal analytics | 126-metric V3 registry, saved reports, configured dashboard analytics, dashboard/legacy pages | Journal Analytics | Eligible round trips plus coverage | Cataloged; first exact slice proposed; V3 authority rejected | No | No |
+| Workspace summary | `/workspace` and overview API | Platform plus module summaries | Module summary contracts | Current patch uncommitted/unverified; replacement isolation contract proposed | No | No |
+| Trades and trade detail | 24-page dashboard family plus 52-page legacy Intelligence family and trade APIs | Journal | Round trips and executions | Route/product inventory complete | No | No |
+| Rules, tags, notes, calendar, and reviews | Dashboard/legacy routes, rules DB, repository-local tag/Day Session DB | Journal | Journal records | Inventoried; stable identity/date contracts proposed | No | No |
+| Candle and level-analysis linking | Dashboard/legacy candle pages; Level Analysis handlers/tables/warehouse providers | Level Analysis plus Journal link | Provider deliveries plus Journal links | Inventoried; ownership contract proposed | No | No |
+| Academy and progress preservation | Academy routes/API/registry/progress store | Academy | Lesson-progress records | Inventoried; progress/slug preservation is mandatory | No | No |
+| Watchlist | Five pages, six handlers, Watchlist store/automation | Watchlist | Watchlist records | Inventoried; explicit storage owner required | No | No |
+| News and content | News/week-ahead/access/content routes, store, Big Time automation | News | Source/content records | Inventoried; scheduled-task state unknown | No | No |
+| Coach | Legacy Coach/Review pages and latest handlers | Coach | Published Journal/Analytics facts | Inventoried; item-level legacy capability review remains | No | No |
+| Account, referrals, and access | Account, Discord auth, referral store, product/access links | Platform/Account | Platform user and entitlements | Inventoried; explicit storage owner required | No | No |
+| `/intelligence` route family | 52 reachable pages plus its own layout/navigation | Legacy owners pending item-level mapping | Current legacy behavior/data | Classified as legacy reference; unique behavior mapping still required | No | No |
+| Environment variables and data paths | `.env.local`, module fallback chains, provider/CI/automation names | Platform operations plus module owners | Documented configuration | Inventory complete; replacement naming/config not implemented | No | No |
+| Current legacy SQLite source | `C:\Users\jerac\Documents\TraderLink\private-data\v3-dashboard\trading-rules-v1.sqlite` | Legacy Journal/data reference | Read-only Phase 1 source evidence | Configured path/counts verified; owner allows it as migration input if it passes plan gates; active writes remain legacy-only | Yes as gated input | No |
+| Replacement development SQLite | Planned `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\development.sqlite` | Platform physical store with logical module owners | Replacement migrations and accepted migrated facts | Path selected; does not exist; creation awaits Phase 2 authorization | Yes for path direction | No |
+| Schedules, scripts, deployments | Package/source scripts, three workflows, Big Time task source, deploy guard | Platform operations | Documented operations | Inventory complete; installed Windows task state unknown | No | No |
+| Parent folders, clones, and Git worktrees | 88 immediate folders, 43 canonical worktrees, dirty legacy repo/worktrees | Platform operations | Workspace inventory plus Git/data/dependency evidence | Full read-only classification drafted; original remains preserved reference and no cleanup is required for replacement | No | No |
+| Clean replacement checkout | Planned `C:\Users\jerac\Documents\TraderLink\traderlink-platform` | Platform operations | Accepted preservation commit in current Git lineage | Owner selected direction; path does not exist and creation awaits Phase 2 authorization | Yes for plan direction | No |
+| `v4-temp-sql` experimental backup | `C:\Users\jerac\Documents\traderslink.pro back up july 29\v4-temp-sql` | Backup evidence only | Not a migration source | Located, not configured, owner-rejected as replacement source; preserve privately | Yes | No |

@@ -4,7 +4,82 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
+## TraderLink Platform Replacement Direction - 2026-07-31
+
+The active future-product direction is the controlled platform replacement in
+`docs/migration/traderlink-platform-replacement-plan.md`. Read that plan, the
+Import Integrity and Data Decisions contract, the migration register, and the
+progress tracker before making a new platform, Journal, Journal Analytics, or
+V3 roadmap decision.
+
+The older Trader Intelligence Dashboard Baseline and Whole Site Source of Truth
+sections below govern maintenance of the preserved legacy application. They do
+not prescribe the replacement's future module architecture once a migration
+checkpoint authorizes implementation. Phase 1 records the owner's selected
+clean replacement path at
+`C:\Users\jerac\Documents\TraderLink\traderlink-platform`. It does not exist
+yet and must not be created until Phase 2 is explicitly authorized.
+
+- Trader Intelligence V3 is legacy implementation, not the architecture for
+  future ordinary dashboards. Do not add a new normal dashboard dependency on
+  V3 analytics, replay, digest, authority, or proof systems.
+- Preserve and port the useful safeguards: owner/account isolation, exact
+  financial values, source identity, correction precedence, timezone/session
+  scope, input validation, and visible data coverage.
+- Data Decisions is a required Journal foundation. The system identifies and
+  explains deterministic source/execution/round-trip issues; the trader makes
+  factual corrections, exclusions, and open-position classifications from
+  statement evidence. Do not silently exclude records or let an unresolved
+  record hide unrelated valid trades.
+- Broker-imported and Trade Tracker manual executions belong to one canonical
+  owner/account execution ledger with preserved source provenance. Statement
+  upload order is irrelevant. Rebuild the full affected chronological execution
+  chain so later or earlier uploads can close or correct existing round trips.
+- A round trip begins when position moves from zero to non-zero and closes when
+  it returns to zero. The next execution after zero begins a new trade. Manual
+  executions use their actual execution date/time, not the submission date;
+  daily notes and reviews remain separate per trading date.
+- `traderslink.pro` remains the complete legacy reference until the owner
+  accepts a complete replacement. Do not create a replacement folder,
+  database, process, deployment, or delete legacy code until the migration
+  checkpoint authorizes the exact action.
+- The approved visual baseline is the light Material UI dashboard with its
+  complete left navigation. A dark or reduced dashboard that omits Trades,
+  Calendar with week/month views, Analytics, Analytics Lab, or Trading Rules is
+  not the final dashboard.
+  Preserve the complete route/navigation inventory and obtain iterative owner
+  approval for any visible change.
+- The permanent architecture name is TraderLink Platform. `V4` is optional only
+  as a later release label, not as the module/database architecture or a reason
+  to create another duplicate folder. January IBKR data is development test
+  data, not a complete live customer dataset. `v4-temp-sql` was located only
+  inside `C:\Users\jerac\Documents\traderslink.pro back up july 29`; it is an
+  early experiment, is not configured, and is rejected as a migration source.
+- Once Phase 2 is authorized, new replacement implementation belongs only in
+  the clean, traceable full checkout at `traderlink-platform`, created from an
+  accepted preservation commit in the existing Git lineage. The original
+  `traderslink.pro` folder remains intact as the legacy recovery/reference
+  source and need not be deleted.
+- Workspace cleanup is evidence-gated by
+  `docs/migration/workspace-and-worktree-cleanup-plan.md`. Inventory unique
+  commits, dirty/untracked files, private data, processes, and dependencies;
+  show the owner exact proposed dispositions before deleting any folder.
+- New planning documents belong in `docs/migration/`; keep the migration
+  register and progress tracker current. Every new/reworked UI slice requires
+  owner visual approval before acceptance.
+- Treat phases as approval/scope boundaries, not mandatory chat boundaries.
+  Multiple short phases may share a chat after explicit owner acceptance and
+  authorization; a large phase may span continuation chats. At every completed
+  phase, update all controlling documents and give the owner an optional
+  ready-to-copy next-chat prompt using
+  `docs/migration/phase-handoff-template.md`. Chat choice never broadens scope.
+  If context ends mid-phase, create a continuation handoff and do not mark the
+  phase complete.
+
 ## Canonical App Rule — main is the only complete app
+
+This section governs the existing legacy application until the replacement
+plan's promotion checkpoint declares `traderlink-platform` canonical.
 
 `C:\Users\jerac\Documents\TraderLink\traderslink.pro` on branch `main` is the
 complete approved TraderLink app.
@@ -76,6 +151,10 @@ home for all new human-readable project documents.
 - See `docs/academy-progress-preservation.md` before changing Academy routing, lesson slugs, progress storage, or Vercel database environment variables.
 
 ## Whole Site Source Of Truth
+
+This section governs legacy maintenance and production until the accepted
+replacement is deliberately promoted under the migration plan. It does not
+cancel the owner-approved clean replacement-folder direction.
 
 - The permanent local source-of-truth repo is `C:\Users\jerac\Documents\TraderLink\traderslink.pro`.
 - Work on branches inside this repository. Do not make a sibling folder or a Codex visualization preview the active application just to work on a feature.

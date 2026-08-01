@@ -1,0 +1,258 @@
+# TraderLink Platform Module Contracts
+
+**Phase:** 1 - inventory and baseline  
+**Status:** Replacement boundary proposal for owner acceptance  
+**Architecture:** One Next.js modular monolith, one Platform identity, one physical database per environment when appropriate, and explicit logical ownership.
+
+## Contract rules
+
+1. A module owns its tables, migrations, server repositories, validation, mutations, and published data-transfer contracts.
+2. Another module calls the owner's server service; it does not query the owner's tables or import internal repository files.
+3. Server Components call server services directly. They do not call TraderLink's own Route Handlers merely to reach the same process.
+4. Server Actions are used for authenticated UI mutations when file upload/streaming/external HTTP is unnecessary.
+5. Route Handlers remain for statement uploads, external publishers/providers, OAuth/webhooks, streams, and browser requests that genuinely need HTTP.
+6. Every private call carries server-derived owner/account scope. Client-supplied ownership identifiers are never sufficient authorization.
+7. Cross-module summaries fail independently. A Watchlist or Academy failure cannot blank the Journal summary, and a pending Journal record cannot blank an unrelated metric.
+8. Contracts use exact decimal strings or minor units for financial values. JavaScript floating-point numbers are not the financial source of truth.
+9. All persisted mutations retain version/revision, actor, source, timestamp, and reason/evidence when applicable.
+10. Contract names describe product concepts, not the implementation generation. No new public contract uses `v3` or `v4` as its domain name.
+
+## Shared primitives
+
+| Primitive | Required shape/meaning |
+| --- | --- |
+| `OwnerScope` | Platform-derived `userId`, `workspaceId`, allowed `accountIds`, and active account selection; never trusted from request body alone |
+| `AccountScope` | Stable Journal trading-account ID, broker label/identity, base currency, account timezone, import timezone defaults, status |
+| `Decimal` | Canonical base-10 string with defined scale/rounding at display only |
+| `Money` | `{ amount: Decimal, currency: ISO-4217 code }`; no cross-currency summation without an explicit conversion fact |
+| `Quantity` | Canonical signed/unsigned decimal string as defined by the field; supports fractional quantity where the broker does |
+| `Instant` | UTC ISO timestamp plus preserved source timestamp/timezone evidence |
+| `TradingDate` | Calendar date in the metric/account's declared trading timezone |
+| `Coverage` | Candidate, included, open, pending-decision, excluded, unavailable counts plus machine reason codes and readable explanations |
+| `Revision` | Stable record ID, monotonically ordered version or revision token, actor, creation/update time, supersession link |
+| `Provenance` | Source kind, broker/manual/system identity, import batch/source row, original evidence reference, and correction/supersession chain |
+
+## Platform
+
+### Owns
+
+- User/session identity and authentication providers.
+- Workspaces, memberships, account access grants, preferences, navigation, shared shell, notifications, and module availability.
+- Server-derived `OwnerScope` and authorization/audit boundary.
+
+### Publishes
+
+- `requireOwnerContext()` for authenticated server work.
+- `requireAccountAccess(accountId)` and allowed-account listing.
+- `getWorkspaceComposition()` containing module availability/status, not module private records.
+- Stable shared UI/layout contracts and route-title/navigation configuration.
+
+### Does not own
+
+Broker executions, round trips, analytics calculations, lesson completions, Watchlist symbols, News articles, or provider market facts.
+
+## Journal
+
+### Owns facts
+
+- Broker statements/import files and retention metadata.
+- Immutable source rows and mappings.
+- Import batches/previews/acceptance/supersession.
+- Canonical executions from broker and manual sources.
+- Data Decisions, corrections, exclusions, duplicate resolution, opening inventory, and decision audit.
+- Derived round trips and stable round-trip identity/alias history.
+- Trading-day records, notes, trade notes, tags, setups, rules, reviews, and candle/Level Analysis associations.
+
+### Source-row contract
+
+Required: stable row ID; owner/account/import/source identity; original row number and preserved raw evidence reference; parsed fields; mapping/version; row state; issue codes; decision/supersession history. Raw private content is server-only and never logged or returned unnecessarily.
+
+### Execution contract
+
+Required facts:
+
+- stable execution ID and owner/account scope;
+- instrument identity and displayed symbol;
+- execution time in UTC plus source time/timezone evidence;
+- side and exact quantity/price;
+- currency;
+- commission/fees as exact optional facts with coverage state;
+- broker execution/order IDs when provided;
+- source kind and full provenance;
+- state: `accepted`, `needs_decision`, `excluded_by_trader`, or `superseded`;
+- revision/supersession history and deterministic ordering key.
+
+An accepted execution must have the minimum facts required to change position: account, instrument, time/order, side, quantity, and price. A missing optional fee does not invalidate position reconstruction; it makes fee/net metrics conditional.
+
+### Data Decision contract
+
+Required: affected source rows/executions/round-trip chain; detected issue and consequence; available factual actions; before/after preview; trader choice; actor/time/reason; rebuild status; resulting aliases/coverage. Supported actions include correct, add missing execution, exclude, resolve duplicate, confirm supported opening inventory, keep distinct, merge/supersede, and classify a supported position as legitimately open.
+
+The trader controls facts. The service rejects arithmetically impossible outcomes such as declaring a non-zero position closed without an execution/inventory fact that reaches zero.
+
+### Round-trip contract
+
+Required: stable ID; current deterministic identity plus aliases; owner/account/instrument/currency; direction; ordered execution allocations; exact open/close times; lifecycle state; exact gross P/L; charge facts/coverage; net P/L when supportable; maximum position quantity; entry/exit notionals when supportable; affected trading dates; decision/limitation reasons.
+
+The builder uses the approved zero-to-nonzero-to-zero rule, splits flips, rebuilds the complete affected chain after historical changes, and never groups by upload order.
+
+### Trading-day contract
+
+Required: owner/account/date/timezone; executions occurring that day; positions carried in/out; round trips closed that day; daily note; rule reviews; coverage. Realized P/L is attributed to closing trading date unless a metric explicitly declares a different basis.
+
+### Publishes
+
+- Import preview/accept/decision services.
+- Owner-scoped execution ledger queries.
+- Round-trip/open-position/ticker/calendar/day queries.
+- Notes/tags/rules/review mutations.
+- `JournalAnalyticsFactSet` for Analytics: only accepted facts plus explicit open/pending/excluded coverage and stable identities.
+- Bounded summary for `/workspace`.
+
+## Journal Analytics
+
+### Owns
+
+- Versioned metric definitions and formulas.
+- Eligibility rules per metric.
+- Exact shared aggregation over Journal-published facts.
+- Rebuildable materialized summaries only when performance evidence justifies them.
+- Filters/groupings, display metadata, coverage, limitations, and reconciliation output.
+
+### Input contract
+
+`JournalAnalyticsFactSet` includes:
+
+- filter scope: owner, allowed accounts, currency partition, time range and timezone/date basis;
+- accepted closed round-trip rows with exact facts;
+- legitimate open positions as a separate population;
+- pending/excluded/superseded counts and reason codes;
+- source/fee/quantity/notional/label/market-data coverage flags.
+
+Analytics never reads source tables directly and never reinterprets a trader decision.
+
+### Output contract
+
+Every metric result includes:
+
+- metric ID/version/title/unit/display format;
+- exact value or `unavailable`;
+- formula/date/currency/fee/open-trade policy identifiers;
+- filter scope;
+- included population and excluded/open/pending counts;
+- limitation/unavailable reasons;
+- last rebuilt/source revision.
+
+Every grouped response derives from the same accumulator/calculation functions as its total. Pages do not independently calculate financial values.
+
+### Publishes
+
+- `getAnalyticsOverview(scope, filters)`.
+- `getPerformanceAnalytics`, `getResultAnalytics`, `getTimingAnalytics`, `getExecutionAnalytics`.
+- Bounded totals/daily/ticker/time-of-day data for Workspace, Trades, Calendar, and Analytics.
+- Capability/availability metadata so the UI explains missing facts.
+
+## Academy
+
+### Owns
+
+Course/path/lesson registry, enrollment/progress/completion, quiz/assessment state, protected slug aliases, and Academy-specific preferences.
+
+### Publishes
+
+Owner-scoped progress summary, current path/lesson state, completion mutations, and a bounded Workspace summary. Platform owns the authenticated user/session; Academy owns lesson progress.
+
+## Watchlist
+
+### Owns
+
+Symbols, publisher ingestion, current lifecycle/health, archives, recap, and Watchlist-specific provider facts.
+
+### Publishes
+
+Current list/symbol/archive/recap queries, authenticated stream, ingestion boundary, and bounded Workspace summary. It does not write Journal executions based on a watched symbol.
+
+## News
+
+### Owns
+
+Article content, ingestion provenance, ticker/category metadata, publish/access state, and weekly source automation outputs.
+
+### Publishes
+
+Public and access-aware article/ticker queries plus bounded Workspace summary. Article ingestion is an authenticated external/operational HTTP boundary.
+
+## Level Analysis and market data
+
+### Owns
+
+Provider deliveries, normalized candle/level facts, symbol/timeframe/as-of provenance, validation/quarantine, provider/warehouse health, and reproducible provider versions.
+
+### Publishes
+
+Versioned symbol/as-of facts and delivery evidence. Journal owns the association between a delivery/fact set and a Journal execution/round trip. Analytics consumes a joined published view only for metrics whose market-data coverage is complete.
+
+It never owns or silently changes Journal executions, round trips, decisions, or realized broker P/L.
+
+## Coach and Review
+
+### Owns
+
+Coaching plans/prompts, review queues/workflows, user-authored lessons, acknowledged/dismissed recommendations, and explanation provenance.
+
+### Consumes
+
+Published Journal facts, Journal Analytics metrics/coverage, trader tags/rules/reviews, and optional Level Analysis facts. It may propose a review; it may not create a factual trade classification without a trader decision.
+
+### Publishes
+
+Bounded actionable review queues and Workspace summary. AI-generated language is labeled as assistance, never source truth.
+
+## Account and Affiliate
+
+### Owns
+
+Account profile/preferences, module access/subscription links, affiliate invites/referrals, and user-facing account relationships. Payment/commerce provider behavior is not currently a stored domain in this repository and requires a future contract if introduced.
+
+## Workspace composition contract
+
+`/workspace` calls each enabled module summary independently. The Platform response contains per-module states:
+
+- `ready`: summary data plus source revision.
+- `empty`: valid zero population.
+- `limited`: data plus coverage warning.
+- `unavailable`: module-specific safe error and retry/action.
+
+One module's `unavailable` state does not change another module's `ready` state. A valid zero is distinct from unavailable or not-yet-calculated.
+
+## Transactions and rebuilds
+
+- Import acceptance, correction, duplicate resolution, and manual execution creation write Journal facts and enqueue/mark the affected chain for deterministic rebuild in one database transaction where possible.
+- Round trips and analytics summaries are derived and reproducible; source evidence and trader decisions are durable facts.
+- The first implementation may rebuild synchronously for the current local dataset. If work later becomes asynchronous, the durable job/outbox state belongs to the initiating module and publishes explicit pending/failure status.
+- No silent dual-write to legacy and replacement databases is allowed.
+
+## Current-to-future boundary map
+
+| Current implementation | Future contract owner | Required action |
+| --- | --- | --- |
+| V3 owner/deployment auth | Platform | Preserve isolation/loopback outcomes, remove V3 dashboard coupling |
+| V3/trader-analytics import SQLite repository | Journal | Migrate evidence/executions/decisions; replace schema and services |
+| V3 configured dashboard analytics | Journal Analytics | Replace with metric-specific exact aggregation and coverage |
+| V3 rules types/replay | Journal | Preserve rule/version/lifecycle facts without V3 engine dependency |
+| Repository-local tags/Day Session DB | Journal | Migrate to Journal-owned schema and stable round-trip/day identities |
+| Academy/News/Watchlist/affiliate generic V3 DB fallback | Respective owners | Replace with explicit platform DB/module repositories |
+| Level Analysis shared V3 DB accessor | Level Analysis + Journal link | Separate logical migrations/contracts while allowing one physical DB |
+| Two dashboard shells/layouts | Platform | Preserve approved `/workspace` visual baseline; retire legacy shell only after mapping and owner approval |
+
+## Phase 2 start point proposed
+
+After Phase 1 acceptance and explicit Phase 2 authorization:
+
+1. preserve the accepted local Git state in a traceable source commit;
+2. create the clean full checkout at `C:\Users\jerac\Documents\TraderLink\traderlink-platform` from that source state and record its remote/branch;
+3. carry forward the approved light Material dashboard shell and complete left-navigation contract without redesigning it;
+4. establish Platform owner/account primitives and a separate replacement development database configuration; and
+5. implement Journal source/execution/decision/round-trip repositories behind these contracts.
+
+Do not start with analytics page proliferation. Do not remove or repurpose the original `traderslink.pro` folder; it remains the legacy recovery/reference source.

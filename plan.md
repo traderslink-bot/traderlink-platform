@@ -1,4 +1,23 @@
-# Trader Intelligence Plan Entry Point
+# Supersession Notice - TraderLink Platform Replacement
+
+For future platform, Journal, Journal Analytics, and V3 roadmap work, this V3
+entry point is historical reference only. The controlling planning documents
+are:
+
+1. `docs/migration/traderlink-platform-replacement-plan.md`
+2. `docs/migration/import-integrity-and-data-decisions-contract.md`
+3. `docs/migration/workspace-and-worktree-cleanup-plan.md`
+4. `docs/migration/phase-handoff-template.md`
+5. `docs/migration/migration-register.md`
+6. `docs/migration/migration-progress.md`
+
+The current application remains preserved as the legacy reference until the
+replacement is complete and owner-accepted. This notice does not authorize
+replacement implementation, a database copy, deployment, or deletion.
+
+---
+
+# Historical Trader Intelligence V3 Plan Entry Point
 
 **Last updated:** 2026-07-25 America/Toronto  
 **Active architecture:** Trader Intelligence v3  

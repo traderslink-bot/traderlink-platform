@@ -15442,7 +15442,7 @@ User noticed the clean workspace could show `ABCD`/`EFGH` sample trades after
 reset and reasonably worried the IBKR CSV upload had produced fake data. Local
 inspection showed the live SQLite/API state was empty (`trades=0`,
 `imports=0`) and the private IBKR artifact file was intact:
-`artifacts/real-csv-calibration/private/U21845737_202604_202604.csv` parses as
+`artifacts/real-csv-calibration/private/[redacted-account]_202604_202604.csv` parses as
 IBKR with 574 accepted executions, 207 grouped trade requests, and 79 unique
 symbols, with no `ABCD` or `EFGH`.
 
@@ -15559,7 +15559,7 @@ Verification:
 - `npx tsc --noEmit --pretty false` passed.
 - `npm run build` passed.
 - Live API preview of
-  `artifacts/real-csv-calibration/private/U21845737_202604_202604.csv` after
+  `artifacts/real-csv-calibration/private/[redacted-account]_202604_202604.csv` after
   restart returned `brokerKey=ibkr_activity_statement`, `requestCount=208`,
   `requiredDecisionCount=0`, and `canCommitNow=true`.
 - `/api/trades` is still empty and `/api/import-batches` has an empty active
@@ -17843,7 +17843,7 @@ Best next step:
   isolated local DB:
   `artifacts/may-ibkr-ui-qa/may-ui-qa.sqlite`.
 - Source file:
-  `C:\Users\jerac\Documents\IBKR activity statments\U21845737_202605_202605.csv`.
+  `C:\Users\jerac\Documents\IBKR activity statments\[redacted-account]_202605_202605.csv`.
 - Import result:
   - 523 statement rows,
   - 244 accepted executions,
@@ -18929,7 +18929,7 @@ Current best next step:
 - Continued May IBKR QA on updated `main` with isolated DB
   `.codex-dev-server/may-ibkr-main-qa-20260612/may-ibkr-main.sqlite` and May
   statement
-  `C:\Users\jerac\Documents\IBKR activity statments\U21845737_202605_202605.csv`.
+  `C:\Users\jerac\Documents\IBKR activity statments\[redacted-account]_202605_202605.csv`.
 - Root cause of the all-failed first May chart run: the Trader Intelligence v2
   fetch-client resolver opened the IBKR socket before constructing the
   warehouse-backed reader. With no listener on `127.0.0.1:7497`, jobs failed
@@ -20179,3 +20179,120 @@ Current best next step:
 - See `docs/import-repair-accuracy-and-bulk-review-progress-2026-07-30.md`,
   **Handoff note: current facts, fixes, and limits**, for the full diagnosis,
   verification boundary, untracked-file warning, and exact safe next steps.
+
+# 2026-07-31 TraderLink Platform replacement planning baseline
+
+- The project owner directed a controlled replacement of the V3-centered
+  application into a modular TraderLink Platform. The future direction is
+  documented in `docs/migration/traderlink-platform-replacement-plan.md` and
+  supersedes the V3 roadmap for new platform work; historical V3 records remain
+  preserved reference material.
+- Data Decisions is a required Journal foundation. The system preserves broker
+  evidence and identifies deterministic source-row, execution, and round-trip
+  issues; the trader makes factual corrections, exclusions, and open-position
+  classifications. A contained unresolved round trip must not hide unrelated
+  valid round trips, and unresolved data cannot enter a metric it cannot
+  support.
+- The January IBKR local development dataset is test data, not a live customer
+  migration source. Its current baseline is 1,072 normalized executions, 336
+  saved trades, 334 closed trades, and 2 open trades. The uncommitted Workspace
+  overview repair is not an accepted dashboard result.
+- At this planning checkpoint, no replacement folder, database, process,
+  deployment, or legacy deletion had been authorized. Phase 1 was authorized
+  later on 2026-07-31 and is recorded in the entries below.
+
+Current best next step:
+
+- Obtain owner review of the revised Phase 0 planning package. It now defines
+  one chronological execution ledger for broker and manual entries,
+  upload-order-independent round trips, actual-date Trade Tracker persistence,
+  and trading-date-specific notes. The multi-day entry screen and workflow are
+  intentionally deferred to a later owner-reviewed UI plan.
+- After approval, create the complete product, route, API, storage,
+  environment, analytics-capability, V3-dependency, workspace/folder, and
+  acceptance inventories before any replacement application, database, or
+  cleanup action is taken. At this checkpoint `v4-temp-sql` was unverified;
+  Phase 1 later proved that the named folder is absent and not configured.
+- Treat phases as approval boundaries rather than mandatory chat boundaries.
+  Short phases may share a healthy-context chat after explicit owner approval;
+  large phases may use continuation chats. At every accepted phase, update the
+  controlling records and give the owner an optional ready-to-copy next-chat
+  prompt from `docs/migration/phase-handoff-template.md`.
+
+# 2026-07-31 TraderLink Platform Phase 0 acceptance
+
+- The project owner explicitly approved Phase 0 on 2026-07-31. The approved
+  planning baseline remains
+  `docs/migration/traderlink-platform-replacement-plan.md`.
+- Phase 1 was subsequently authorized. Its optional new-chat handoff and verified Phase 0
+  closure facts are recorded in
+  `docs/migration/phase-0-planning-handoff.md`.
+- Phase 1 is inventory and baseline work only. It does not authorize feature
+  implementation, database writes/copies, process stops, folder/worktree
+  removal, branch/worktree creation, commit/push/merge/deploy, or UI changes.
+
+Current best next step:
+
+- Present the completed Phase 1 read-only inventory and exact replacement-start
+  checkpoint for owner approval. Do not begin Phase 2 until the owner separately
+  accepts Phase 1 and authorizes the Phase 2 mutation boundary.
+
+# 2026-07-31 TraderLink Platform Phase 1 inventory checkpoint
+
+- At this checkpoint, the read-only Phase 1 inventory was complete and awaited owner exit acceptance.
+  It records 96 pages, 61 Route Handlers, one Server Action module, 107 direct
+  V3 references, the full 126-metric legacy analytics catalog, and all 88
+  immediate folders under the TraderLink parent workspace.
+- `v4-temp-sql` is absent from the active repository/parent paths and has no
+  source/environment reference. It was later located inside the July 29 backup
+  and is not the configured database. The verified legacy source remains
+  `C:\Users\jerac\Documents\TraderLink\private-data\v3-dashboard\trading-rules-v1.sqlite`.
+- `/intelligence` is a reachable 52-page legacy V3 family with its own layout;
+  the dashboard family remains a real route family and is not redirected
+  wholesale to `/intelligence`.
+- No process, database, product code, route, folder, worktree, branch, commit,
+  remote, or deployment was changed during Phase 1. No test or server was run.
+- The two carried machine-state gates are the installed Big Time scheduled-task
+  target and the exact process owning the legacy database lock. They must be
+  proved before later automation/cleanup or process/database operations.
+- Owner clarification on 2026-08-01 established the light Material UI dashboard
+  with complete left navigation as the final visual baseline. Dark/reduced
+  dashboards that omit Trades, Analytics, Analytics Lab, or Trading Rules are
+  reference-only.
+- `v4-temp-sql` was located in
+  `C:\Users\jerac\Documents\traderslink.pro back up july 29`; it is an early,
+  unconfigured experiment and is rejected as a migration source. Preserve the
+  backup privately.
+- The planned clean replacement path is
+  `C:\Users\jerac\Documents\TraderLink\traderlink-platform`, created later as a
+  full traceable checkout after Phase 2 authorization. The current folder stays
+  intact as legacy recovery/reference. The selected replacement development DB
+  path is `private-data\traderlink-platform\development.sqlite`; it also does
+  not exist yet.
+- Big Time is preserved and deferred as low-priority News automation. Its
+  machine-state question does not block the core Journal/database replacement.
+
+Current best next step:
+
+- Owner reviews the Phase 1 package in `docs/migration/`, accepts or revises the
+  current legacy data source, backup-only V4 conclusion, route/folder classifications,
+  module contracts, analytics first slice, and Phase 2 start point. Only then may
+  Phase 2 be explicitly authorized.
+
+# 2026-08-01 TraderLink Platform Phase 1 accepted
+
+- The project owner explicitly accepted Phase 1 after confirming the visual
+  baseline: the light Material dashboard with the current complete left
+  navigation, including Calendar with week/month views, Trades, Analytics,
+  Analytics Lab, Trading Rules, and the remaining inventoried destinations.
+- Phase 1 is closed. Phase 2 has not been authorized in the current chat.
+- The optional next-chat prompt and exact repository/database/process handoff
+  are recorded in
+  `docs/migration/phase-1-inventory-and-baseline-handoff.md`.
+
+Current best next step:
+
+- Wait for explicit Phase 2 authorization. When authorized, preserve the
+  accepted Git state, create the planned clean `traderlink-platform` checkout
+  and separate development database, carry forward the approved dashboard
+  shell without redesign, and establish Platform plus Journal module baselines.
