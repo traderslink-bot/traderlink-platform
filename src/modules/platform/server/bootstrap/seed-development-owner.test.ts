@@ -16,6 +16,7 @@ import {
   DEVELOPMENT_OWNER_SEED_CONFIRMATION_ACTION,
   type DevelopmentOwnerSeedFacts,
   previewDevelopmentOwnerSeed,
+  verifyDevelopmentOwnerSeed,
 } from "./seed-development-owner";
 
 const roots: string[] = [];
@@ -275,6 +276,36 @@ describe("development owner seed", () => {
         }),
       ).toThrowError("TRADERLINK_DEVELOPMENT_OWNER_SEED_ALREADY_COMPLETED");
       for (const spy of spies) expect(spy).not.toHaveBeenCalled();
+    } finally {
+      database.close();
+    }
+  });
+
+  it("independently verifies the exact ownership relationships", () => {
+    const database = setup();
+    try {
+      confirm(database);
+      expect(
+        verifyDevelopmentOwnerSeed({
+          database,
+          facts,
+          now: () => new Date("2026-08-01T14:01:00.000Z"),
+        }),
+      ).toMatchObject({
+        status: "development_owner_seed_verified",
+        identifiersRedacted: true,
+        rowCounts: {
+          platform_users: 1,
+          platform_workspaces: 1,
+          platform_workspace_memberships: 1,
+          journal_accounts: 1,
+          journal_account_source_identities: 0,
+        },
+      });
+      database.prepare("UPDATE platform_users SET display_name = ?").run("Wrong");
+      expect(() => verifyDevelopmentOwnerSeed({ database, facts })).toThrowError(
+        "TRADERLINK_DEVELOPMENT_OWNER_SEED_FAILED",
+      );
     } finally {
       database.close();
     }

@@ -14,6 +14,10 @@ const TEST_FILES = Object.freeze([
   "src/modules/platform/server/bootstrap/seed-development-owner.test.ts",
 ]);
 
+const OPERATOR_FILES = Object.freeze([
+  "src/scripts/seed-traderlink-platform-development-owner.ts",
+]);
+
 const FORBIDDEN_PRODUCTION_PATTERNS = Object.freeze([
   /\bdiscord\b/iu,
   /\boauth\b/iu,
@@ -33,9 +37,9 @@ function requireText(
 
 export function verifyTraderLinkPlatformDevelopmentOwnerSeedFiles(
   repositoryRoot = process.cwd(),
-): Readonly<{ productionFiles: number; testFiles: number }> {
+): Readonly<{ productionFiles: number; testFiles: number; operatorFiles: number }> {
   const sources = new Map(
-    [...PRODUCTION_FILES, ...TEST_FILES].map((sourcePath) => [
+    [...PRODUCTION_FILES, ...TEST_FILES, ...OPERATOR_FILES].map((sourcePath) => [
       sourcePath,
       readFileSync(resolve(repositoryRoot, sourcePath), "utf8"),
     ]),
@@ -74,9 +78,19 @@ export function verifyTraderLinkPlatformDevelopmentOwnerSeedFiles(
   requireText(seed, /journal_account_source_identities:\s*0/u, PRODUCTION_FILES[2]);
   requireText(seed, /identifiersRedacted:\s*true/u, PRODUCTION_FILES[2]);
 
+  const operator = sources.get(OPERATOR_FILES[0]) ?? "";
+  requireText(operator, /openPlatformDatabase\(\{ mode: "runtime" \}\)/u, OPERATOR_FILES[0]);
+  requireText(operator, /arguments_\[0\]\s*===\s*"--preview"/u, OPERATOR_FILES[0]);
+  requireText(operator, /arguments_\[0\]\s*===\s*"--verify"/u, OPERATOR_FILES[0]);
+  requireText(operator, /--confirm-token=/u, OPERATOR_FILES[0]);
+  requireText(operator, /DEVELOPMENT_OWNER_SEED_CONFIRMATION_ACTION/u, OPERATOR_FILES[0]);
+  requireText(operator, /America\/New_York/u, OPERATOR_FILES[0]);
+  requireText(operator, /baseCurrency:\s*"USD"/u, OPERATOR_FILES[0]);
+
   return Object.freeze({
     productionFiles: PRODUCTION_FILES.length,
     testFiles: TEST_FILES.length,
+    operatorFiles: OPERATOR_FILES.length,
   });
 }
 

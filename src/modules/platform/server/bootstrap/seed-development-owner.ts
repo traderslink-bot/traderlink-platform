@@ -80,6 +80,17 @@ export type DevelopmentOwnerSeedEvidence = Readonly<{
   migrationHistorySha256: string;
 }>;
 
+export type DevelopmentOwnerSeedVerification = Readonly<{
+  status: "development_owner_seed_verified";
+  verifiedAtUtc: string;
+  identifiersRedacted: true;
+  temporaryInternalIdentity: true;
+  rowCounts: Readonly<Record<string, number>>;
+  expectedPostSchemaSha256: string;
+  actualSchemaSha256: string;
+  migrationHistorySha256: string;
+}>;
+
 function validateDisplayName(value: string, field: string): void {
   if (value.trim() !== value || value.length < 1 || value.length > 120) {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field });
@@ -135,7 +146,7 @@ function readDomainRowCounts(
   );
 }
 
-function requireEmptyFoundation(
+function readFoundationState(
   database: Database.Database,
 ): DevelopmentOwnerSeedFoundationState {
   verifyCompletedPlatformDatabase(database);
@@ -145,9 +156,6 @@ function requireEmptyFoundation(
     platformFailure("TRADERLINK_DEVELOPMENT_OWNER_SEED_FAILED");
   }
   const rowCounts = readDomainRowCounts(database);
-  if (Object.values(rowCounts).some((count) => count !== 0)) {
-    platformFailure("TRADERLINK_DEVELOPMENT_OWNER_SEED_ALREADY_COMPLETED");
-  }
   const expectedPostSchemaSha256 = migrations.at(-1)?.post_schema_sha256;
   const actualSchemaSha256 = calculatePlatformSchemaDigest(database);
   if (!expectedPostSchemaSha256 || expectedPostSchemaSha256 !== actualSchemaSha256) {
@@ -171,6 +179,16 @@ function requireEmptyFoundation(
     actualSchemaSha256,
     migrationHistorySha256,
   });
+}
+
+function requireEmptyFoundation(
+  database: Database.Database,
+): DevelopmentOwnerSeedFoundationState {
+  const foundation = readFoundationState(database);
+  if (Object.values(foundation.rowCounts).some((count) => count !== 0)) {
+    platformFailure("TRADERLINK_DEVELOPMENT_OWNER_SEED_ALREADY_COMPLETED");
+  }
+  return foundation;
 }
 
 function confirmationPayload(
@@ -209,6 +227,70 @@ function requireFinalCounts(
     platformFailure("TRADERLINK_DEVELOPMENT_OWNER_SEED_FAILED");
   }
   return counts;
+}
+
+function requireExpectedSeedRelationships(
+  database: Database.Database,
+  facts: DevelopmentOwnerSeedFacts,
+): void {
+  const row = database
+    .prepare<
+      [string, string, string, string, string, string, string],
+      { count: number }
+    >(`SELECT COUNT(*) AS count
+FROM platform_users AS user
+JOIN platform_workspace_memberships AS membership
+  ON membership.user_id = user.user_id
+JOIN platform_workspaces AS workspace
+  ON workspace.workspace_id = membership.workspace_id
+JOIN journal_accounts AS account
+  ON account.workspace_id = workspace.workspace_id
+WHERE user.auth_provider = ? AND user.auth_subject = ?
+  AND user.display_name = ? AND user.status = 'active'
+  AND workspace.display_name = ?
+  AND workspace.default_trading_timezone = ? AND workspace.status = 'active'
+  AND membership.role = 'owner' AND membership.status = 'active'
+  AND membership.created_by_user_id = user.user_id
+  AND account.display_name = ? AND account.base_currency = ?
+  AND account.trading_timezone = workspace.default_trading_timezone
+  AND account.created_by_user_id = user.user_id AND account.status = 'active'`)
+    .get(
+      DEVELOPMENT_OWNER_SEED_AUTH_PROVIDER,
+      DEVELOPMENT_OWNER_SEED_AUTH_SUBJECT,
+      facts.userDisplayName,
+      facts.workspaceDisplayName,
+      facts.defaultTradingTimezone,
+      facts.journalAccountDisplayName,
+      facts.baseCurrency,
+    );
+  if (row?.count !== 1) {
+    platformFailure("TRADERLINK_DEVELOPMENT_OWNER_SEED_FAILED");
+  }
+}
+
+export function verifyDevelopmentOwnerSeed(
+  options: Readonly<{
+    database: Database.Database;
+    facts: DevelopmentOwnerSeedFacts;
+    now?: () => Date;
+  }>,
+): DevelopmentOwnerSeedVerification {
+  const facts = validateFacts(options.facts);
+  const foundation = readFoundationState(options.database);
+  requirePlatformForeignKeyCheck(options.database);
+  requirePlatformQuickCheck(options.database);
+  const rowCounts = requireFinalCounts(options.database);
+  requireExpectedSeedRelationships(options.database, facts);
+  return Object.freeze({
+    status: "development_owner_seed_verified",
+    verifiedAtUtc: createCanonicalUtcTimestamp(options.now?.() ?? new Date()),
+    identifiersRedacted: true,
+    temporaryInternalIdentity: true,
+    rowCounts,
+    expectedPostSchemaSha256: foundation.expectedPostSchemaSha256,
+    actualSchemaSha256: foundation.actualSchemaSha256,
+    migrationHistorySha256: foundation.migrationHistorySha256,
+  });
 }
 
 export function previewDevelopmentOwnerSeed(
@@ -318,19 +400,20 @@ export function confirmDevelopmentOwnerSeed(
           tradingTimezone: facts.defaultTradingTimezone,
           now: new Date(timestamp),
         });
-        verifyCompletedPlatformDatabase(options.database);
-        requirePlatformForeignKeyCheck(options.database);
-        requirePlatformQuickCheck(options.database);
-        const rowCounts = requireFinalCounts(options.database);
+        const verification = verifyDevelopmentOwnerSeed({
+          database: options.database,
+          facts,
+          now: () => new Date(timestamp),
+        });
         return Object.freeze({
           status: "development_owner_seeded" as const,
           completedAtUtc: timestamp,
           identifiersRedacted: true as const,
           temporaryInternalIdentity: true as const,
-          rowCounts,
-          expectedPostSchemaSha256: foundation.expectedPostSchemaSha256,
-          actualSchemaSha256: foundation.actualSchemaSha256,
-          migrationHistorySha256: foundation.migrationHistorySha256,
+          rowCounts: verification.rowCounts,
+          expectedPostSchemaSha256: verification.expectedPostSchemaSha256,
+          actualSchemaSha256: verification.actualSchemaSha256,
+          migrationHistorySha256: verification.migrationHistorySha256,
         });
       })
       .immediate();

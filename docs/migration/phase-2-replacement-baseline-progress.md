@@ -3,7 +3,7 @@
 **Phase:** 2 - Replacement baseline
 **Status:** Phase 2 empty database foundation implemented, correction-verified, and technically accepted by the coordinating auditor under delegated owner authority
 **Authorized:** 2026-08-01, explicitly by the project owner
-**Current boundary:** Phase 2 foundation technical acceptance is complete. The next required operation is the separately scoped local-only development-owner seed before Phase 3. The seed, private/legacy data migration, Phase 3, UI, broad checks, push, deployment, and database mutation remain prohibited in this preservation checkpoint
+**Current boundary:** Phase 2 foundation technical acceptance and the separately tracked development-owner seed are complete. Phase 3 Journal integrity may proceed under its own tracker. Private/legacy trading-data migration must follow the Phase 3 contract; UI, broad checks, push, deployment, and legacy retirement remain separately gated
 
 ## Repository boundary
 
@@ -261,7 +261,7 @@ Do not run broad ESLint, full-project TypeScript, complete Vitest, build, browse
 - [x] Disposable empty-foundation database initialized and verified successfully.
 - [x] Real empty `development.sqlite` initialized and verified only after every preceding focused check passed.
 - [x] Phase 2 closed without owner/workspace/account rows; follow-on local-only preparation is tracked separately in [Development Owner Seed Progress](development-owner-seed-progress.md).
-- [x] Development seed preparation passed its static verifier and all three focused files/all ten tests with one worker; the coordinating technical auditor accepted the preparation.
-- [ ] Development user/workspace/account rows remain absent pending the exact preview, explicit technical confirmation, atomic seed, and post-write verification.
+- [x] Development seed and independent verifier passed the static contract and all three focused files/all eleven tests with one worker; the coordinating technical auditor accepted the result.
+- [x] Development seed backed up, previewed, explicitly confirmed, atomically executed, and independently verified at domain counts 1/1/1/1/0 with matching schema/migration digests.
 
-The owner delegated technical code/database/test/Git checkpoint acceptance to the coordinating auditor. Personal owner involvement is reserved for irreversible or external actions and final visual/product approval. The Phase 2 empty database foundation is technically complete. The local-only development seed preparation is accepted under its own tracker, but its database write has not run and Phase 3 remains blocked until the exact post-write evidence is accepted. Public login is intentionally deferred until go-live preparation.
+The owner delegated technical code/database/test/Git checkpoint acceptance to the coordinating auditor. Personal owner involvement is reserved for irreversible or external actions and final visual/product approval. The Phase 2 empty database foundation and local-only development seed are technically complete; Phase 3 is unblocked. Public login is intentionally deferred until go-live preparation.

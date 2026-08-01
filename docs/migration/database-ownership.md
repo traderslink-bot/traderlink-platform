@@ -2,7 +2,7 @@
 
 **Phase:** Phase 1 inventory preserved; Phase 2 empty database foundation technically complete
 **Status:** Legacy online backup/disposable restore and the replacement schema/migration design are accepted; the empty database foundation is implemented, correction-verified, and accepted by the coordinating technical auditor under delegated owner authority
-**Inspection rule:** The legacy source remains read-only. The verified replacement `development.sqlite` exists with two migration rows and five zero-row domain tables. Owner bootstrap and private/legacy data migration have not run.
+**Inspection rule:** The legacy source remains read-only. The verified replacement `development.sqlite` contains two migration rows and accepted development ownership counts 1/1/1/1/0. Public login and private/legacy trading-data migration have not run.
 
 ## Direct answer about `v4-temp-sql`
 
@@ -48,7 +48,7 @@ The replacement local development database exists at:
 
 `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\development.sqlite`
 
-That path is outside both source repositories, uses the permanent platform name rather than V3/V4 terminology, and contains one physical local database with the verified empty Platform/Journal foundation and explicit module-owned migrations. The coordinating technical auditor accepted its code, database evidence, and 10-file/53-test result. The local development-owner seed and legacy data migration remain separate later gates and have not run.
+That path is outside both source repositories, uses the permanent platform name rather than V3/V4 terminology, and contains one physical local database with the verified Platform/Journal foundation and explicit module-owned migrations. The coordinating technical auditor accepted its code, database evidence, and 10-file/53-test foundation result. The local development-owner seed is complete; legacy trading-data migration remains the Phase 3 gate and has not run.
 
 The current V3-named database is accepted as a possible **migration input**, not as the replacement working database. It must first pass online-backup, restore, provenance, and source-statement reconciliation gates.
 
@@ -234,7 +234,7 @@ One module must never infer ownership from a generic fallback to `TRADER_INTELLI
 
 The owner accepted the corrected exact [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md) design package. The coordinating technical auditor subsequently accepted the implemented and correction-verified code, empty database, and 10-file/53-test evidence under delegated owner authority. Acceptance includes deterministic post-migration schema-drift verification, global migration identity and recovery rules, versioned privacy-safe account fingerprinting, server-derived `WorkspaceAccessScope`, the owner/admin/member permission model, the separate ownership-seed gate, the focused verification plan, and the exact implementation-file list.
 
-The Phase 2 empty database foundation is technically complete. `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\development.sqlite` exists with exactly two migration rows, the five intended domain tables at zero rows, final schema digest `5a34f790164e9b8456db88a1052a9b9084bbfbeab4eae8c5eee1f49d5c7194c4`, and no owner/private/legacy data. The [Development Owner Seed Progress](development-owner-seed-progress.md) tracker records an implemented, focused-verified, technically accepted, but unexecuted local-only operation. It will create stable development UUID ownership without public login, a broker source identity, or copied trading data. Discord-first public login and optional email/password are deferred until the complete dashboard is preparing to go live.
+The Phase 2 empty database foundation and follow-on [Development Owner Seed Progress](development-owner-seed-progress.md) checkpoint are technically complete. `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\development.sqlite` contains exactly two migration rows and domain counts 1 user / 1 workspace / 1 owner membership / 1 Journal account / 0 source-account identities. Its expected and actual schema digest remains `5a34f790164e9b8456db88a1052a9b9084bbfbeab4eae8c5eee1f49d5c7194c4`; the main file is 94,208 bytes with post-seed SHA-256 `2497FA605828C9392233F712062CC9FBEDDAB0F2B5E2078AB1A0146494A99C26`. No broker identity or private/legacy trading data was copied. Discord-first public login and optional email/password are deferred until the complete dashboard is preparing to go live.
 
 ## Phase 1 conclusions
 
