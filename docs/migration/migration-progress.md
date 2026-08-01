@@ -1,6 +1,6 @@
 # TraderLink Platform Migration Progress
 
-**Current phase:** Phase 2 - Replacement baseline, in progress. The preservation/clone checkpoint is accepted and the corrected database backup/restore documentation checkpoint awaits owner review.
+**Current phase:** Phase 2 - Replacement baseline, in progress. The preservation/clone, corrected database backup/restore, and corrected exact replacement schema/migration design checkpoints are owner-accepted. Schema design review is complete; database-foundation implementation is the next separately authorized checkpoint.
 **Current implementation state:** The independent replacement checkout exists. The replacement database remains absent, and no product route, application process, deployment, or production state has changed.
 
 ## Completed planning decisions
@@ -22,7 +22,9 @@
 - The accepted Calendar has week/month views and sits under Trades in that same dashboard navigation.
 - The replacement is now in one clean, traceable full checkout at `C:\Users\jerac\Documents\TraderLink\traderlink-platform`. The current `traderslink.pro` folder remains intact as a recovery/reference archive and need not be deleted.
 - `v4-temp-sql` was located inside `C:\Users\jerac\Documents\traderslink.pro back up july 29`; it is an early experiment, not configured, and owner-rejected as a migration source.
-- The selected replacement development database path is `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\development.sqlite`; it remains absent and creation awaits owner acceptance of the current checkpoint plus explicit continuation.
+- The selected replacement development database path is `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\development.sqlite`; it remains absent. The corrected exact [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md) design is owner-accepted, but creation and implementation require a separate explicit continuation.
+- The owner accepted one active workspace owner, owner/admin access to every active account in the same workspace, member denial until grants are designed, two initial migrations, five empty domain tables, and empty initialization without private seed data.
+- The owner-accepted design uses `WorkspaceAccessScope`, versioned broker-account fingerprint/canonicalization/HMAC identities, globally unique migration IDs, exact post-migration schema digests with fail-closed drift detection, separate runtime/initializer modes, canonical UUID-v4/numeric UTC validation, workspace-versus-account isolation, a separate owner-bootstrap approval gate, the accepted focused verification plan, and the accepted exact implementation-file list.
 - Big Time weekly content automation is preserved but explicitly deferred as a low-priority News operation outside the core Journal/database replacement.
 
 ## Current verified local baseline
@@ -73,12 +75,14 @@ The owner explicitly authorized Phase 1 in the current chat on 2026-07-31. Phase
 
 - Legacy reference: `C:\Users\jerac\Documents\TraderLink\traderslink.pro`, `main` at `a3193e19806af955093aa236349d796171d9bf97`.
 - The legacy worktree retains exactly two tracked product modifications and 22 untracked preservation files. They remain outside the replacement checkout.
-- Replacement: `C:\Users\jerac\Documents\TraderLink\traderlink-platform`, branch `codex/traderlink-platform-replacement`, HEAD `a3193e19806af955093aa236349d796171d9bf97`, remote `https://github.com/traderslink-bot/traderslink-trader-improvement-system.git`.
+- Replacement: `C:\Users\jerac\Documents\TraderLink\traderlink-platform`, branch `codex/traderlink-platform-replacement`, remote `https://github.com/traderslink-bot/traderslink-trader-improvement-system.git`.
 - The replacement was clean at the accepted clone checkpoint. No upstream, push, deployment, dependency installation, environment copy, or server start occurred.
+- Accepted backup-baseline commit: `405acf08ce8ac7be6c984cb52082052d18642acc`. It records the corrected backup baseline in exactly eight documentation/agent files and was not pushed.
 - The selected replacement database `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\development.sqlite` remains absent.
 - The configured legacy source was backed up with the SQLite online backup API while PID 3160 remained running. The completed backup is `C:\Users\jerac\Documents\TraderLink\private-data\legacy-app\backups\phase-2-20260801T053759Z\trading-rules-v1-online-backup.sqlite`, SHA-256 `92B814735EFF41BAEAFB6BC1F2E8B7E0D4EFDD137416D0C0C80708DB50F5E737`.
 - The backup was restored to a separate disposable private-data target. All 24 table counts, four migration rows, schema DDL digest, page geometry, and `quick_check=ok` match the legacy source and completed backup.
 - No sidecars existed immediately after the main backup and restore operations. Later read-only verification of the WAL-mode files created zero-byte WAL and 32,768-byte SHM sidecars beside both new databases; the main database hashes remain unchanged and identical. The sidecars are preserved pending owner review.
 - Complete evidence and restore instructions are in [Phase 2 Replacement Baseline Progress](phase-2-replacement-baseline-progress.md).
+- The owner accepted that corrected backup/restore checkpoint and the corrected exact schema/migration design. The accepted [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md) package fixes the empty database foundation, migration registry and schema digest, Platform identity, Journal account boundary, versioned identity recovery, `WorkspaceAccessScope`, permission model, future Journal table map, separate owner-bootstrap gate, recovery rules, exact implementation files, and focused verification cases.
 
-Current stop boundary: owner review is required before creating `development.sqlite`. No feature code, source-database mutation, process stop, test, server, push, deployment, deletion, or production change is authorized by this tracker.
+Current stop boundary: schema design review is complete. Creating `development.sqlite` and implementing the accepted database foundation are the next separately authorized checkpoint and have not started. Owner bootstrap remains a later separate approval after empty initialization. No feature code, source-database mutation, process stop, test, server, push, deployment, deletion, or production change is authorized by this tracker.

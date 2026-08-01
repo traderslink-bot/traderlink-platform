@@ -1,10 +1,14 @@
 # TraderLink Platform Replacement Plan
 
-**Status:** Approved planning baseline. Phase 0 and Phase 1 were explicitly accepted. Phase 2 is in progress; the preservation/clone checkpoint is owner-accepted and the corrected database backup/restore documentation checkpoint awaits owner review.
-**Owner:** Project owner and Codex  
-**Prepared:** 2026-07-31  
-**Supersedes for future platform work:** the V3 implementation roadmap in `plan.md`. That document remains historical reference only.  
-**Related documents:** [Import Integrity and Data Decisions Contract](import-integrity-and-data-decisions-contract.md), [Product Inventory](product-inventory.md), [Route Ownership](route-ownership.md), [Database Ownership](database-ownership.md), [V3 Dependency Map](v3-dependency-map.md), [Module Contracts](module-contracts.md), [Analytics Capability Catalog](analytics-capability-catalog.md), [Operational and Configuration Inventory](operational-and-configuration-inventory.md), [Workspace Inventory](workspace-inventory.md), [Source Snapshot](source-snapshot-and-untracked-manifest.md), [Workspace and Worktree Cleanup Plan](workspace-and-worktree-cleanup-plan.md), [Risk Register](risk-register.md), [Acceptance Inventory](acceptance-inventory.md), [Phase 1 Progress](phase-1-inventory-and-baseline-progress.md), [Phase 2 Progress](phase-2-replacement-baseline-progress.md), [Phase Handoff Template](phase-handoff-template.md), [Phase 0 Handoff](phase-0-planning-handoff.md), [Phase 1 Handoff](phase-1-inventory-and-baseline-handoff.md), [Migration Register](migration-register.md), and [Migration Progress](migration-progress.md).
+**Status:** Approved planning baseline. Phase 0 and Phase 1 were explicitly accepted. Phase 2 is in progress; the preservation/clone, corrected database backup/restore, and corrected exact replacement schema/migration design checkpoints are owner-accepted. Schema design review is complete; database-foundation implementation is the next separately authorized checkpoint and has not started.
+
+**Owner:** Project owner and Codex
+
+**Prepared:** 2026-07-31
+
+**Supersedes for future platform work:** the V3 implementation roadmap in `plan.md`. That document remains historical reference only.
+
+**Related documents:** [Import Integrity and Data Decisions Contract](import-integrity-and-data-decisions-contract.md), [Product Inventory](product-inventory.md), [Route Ownership](route-ownership.md), [Database Ownership](database-ownership.md), [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md), [V3 Dependency Map](v3-dependency-map.md), [Module Contracts](module-contracts.md), [Analytics Capability Catalog](analytics-capability-catalog.md), [Operational and Configuration Inventory](operational-and-configuration-inventory.md), [Workspace Inventory](workspace-inventory.md), [Source Snapshot](source-snapshot-and-untracked-manifest.md), [Workspace and Worktree Cleanup Plan](workspace-and-worktree-cleanup-plan.md), [Risk Register](risk-register.md), [Acceptance Inventory](acceptance-inventory.md), [Phase 1 Progress](phase-1-inventory-and-baseline-progress.md), [Phase 2 Progress](phase-2-replacement-baseline-progress.md), [Phase Handoff Template](phase-handoff-template.md), [Phase 0 Handoff](phase-0-planning-handoff.md), [Phase 1 Handoff](phase-1-inventory-and-baseline-handoff.md), [Migration Register](migration-register.md), and [Migration Progress](migration-progress.md).
 
 ## 1. Mandate
 
@@ -36,7 +40,7 @@ A legacy or experimental dashboard that lacks the light Material treatment, the 
 
 ### Next.js module boundaries
 
-Server Components read through owner-scoped server module services directly; they do not call TraderLink's own HTTP routes merely to reach the same process. UI-only mutations use Server Actions when they fit the interaction. Route Handlers are reserved for file uploads, external/public integrations, webhooks, and client-side requests that genuinely require HTTP. Each module owns its server services and validated data-transfer contracts so screens do not reach directly into another module's tables.
+Server Components read through `WorkspaceAccessScope`-authorized or narrowed `AccountScope` server module services directly; they do not call TraderLink's own HTTP routes merely to reach the same process. UI-only mutations use Server Actions when they fit the interaction. Route Handlers are reserved for file uploads, external/public integrations, webhooks, and client-side requests that genuinely require HTTP. Each module owns its server services and validated data-transfer contracts so screens do not reach directly into another module's tables.
 
 ## 3. Data integrity is a product feature
 
@@ -263,6 +267,8 @@ The inventory is a controlling target list, not an "at minimum" list. It must cl
 | 5. Module transfer | Port remaining Journal capabilities, Academy, Watchlist, News, Coach, Account, and platform services. | Each inventory item is accepted or explicitly deferred by the owner. |
 | 6. Replacement acceptance | Browser review, focused and checkpoint testing, restore test, deployment rehearsal, and owner acceptance. | No active dependency on the legacy app remains. |
 | 7. Legacy retirement | Archive, verify recovery, and remove legacy assets only with explicit owner approval. | Replacement is the accepted complete app. |
+
+Within Phase 2, the owner has accepted the exact schema digest, migration identity, initialization recovery, versioned account fingerprinting, `WorkspaceAccessScope`, owner/admin/member permission model, separate owner-bootstrap gate, focused verification plan, and exact implementation-file list in [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md). This completes schema design review only. `development.sqlite` remains absent, and migration/database implementation requires the next separate authorization.
 
 Any new or redesigned UI must be shown to the owner for visual approval before it is treated as an accepted feature slice. Broad tests, full builds, deployment, process stopping, database creation, and production changes occur only when their checkpoint requires them.
 

@@ -1,7 +1,9 @@
 # TraderLink Platform Module Contracts
 
-**Phase:** 1 - inventory and baseline  
-**Status:** Replacement boundary proposal for owner acceptance  
+**Phase:** 1 - inventory and baseline
+
+**Status:** Phase 1 replacement boundary and the corrected exact Phase 2 schema/migration, access-scope, permission, recovery, fingerprinting, verification, and implementation-file design are owner-accepted; implementation has not started
+
 **Architecture:** One Next.js modular monolith, one Platform identity, one physical database per environment when appropriate, and explicit logical ownership.
 
 ## Contract rules
@@ -11,7 +13,7 @@
 3. Server Components call server services directly. They do not call TraderLink's own Route Handlers merely to reach the same process.
 4. Server Actions are used for authenticated UI mutations when file upload/streaming/external HTTP is unnecessary.
 5. Route Handlers remain for statement uploads, external publishers/providers, OAuth/webhooks, streams, and browser requests that genuinely need HTTP.
-6. Every private call carries server-derived owner/account scope. Client-supplied ownership identifiers are never sufficient authorization.
+6. Every private call carries a server-derived `WorkspaceAccessScope` or narrowed `AccountScope`. Client-supplied ownership identifiers are never sufficient authorization.
 7. Cross-module summaries fail independently. A Watchlist or Academy failure cannot blank the Journal summary, and a pending Journal record cannot blank an unrelated metric.
 8. Contracts use exact decimal strings or minor units for financial values. JavaScript floating-point numbers are not the financial source of truth.
 9. All persisted mutations retain version/revision, actor, source, timestamp, and reason/evidence when applicable.
@@ -21,7 +23,7 @@
 
 | Primitive | Required shape/meaning |
 | --- | --- |
-| `OwnerScope` | Platform-derived `userId`, `workspaceId`, allowed `accountIds`, and active account selection; never trusted from request body alone |
+| `WorkspaceAccessScope` | Platform-derived `userId`, `workspaceId`, workspace role, allowed `accountIds`, and active account selection; represents owners, admins, or members and is never trusted from request body alone |
 | `AccountScope` | Stable Journal trading-account ID, broker label/identity, base currency, account timezone, import timezone defaults, status |
 | `Decimal` | Canonical base-10 string with defined scale/rounding at display only |
 | `Money` | `{ amount: Decimal, currency: ISO-4217 code }`; no cross-currency summation without an explicit conversion fact |
@@ -38,11 +40,11 @@
 
 - User/session identity and authentication providers.
 - Workspaces, memberships, account access grants, preferences, navigation, shared shell, notifications, and module availability.
-- Server-derived `OwnerScope` and authorization/audit boundary.
+- Server-derived `WorkspaceAccessScope`, narrowed `AccountScope`, and authorization/audit boundary.
 
 ### Publishes
 
-- `requireOwnerContext()` for authenticated server work.
+- `requireWorkspaceAccessScope()` for authenticated server work.
 - `requireAccountAccess(accountId)` and allowed-account listing.
 - `getWorkspaceComposition()` containing module availability/status, not module private records.
 - Stable shared UI/layout contracts and route-title/navigation configuration.
@@ -245,14 +247,14 @@ One module's `unavailable` state does not change another module's `ready` state.
 | Level Analysis shared V3 DB accessor | Level Analysis + Journal link | Separate logical migrations/contracts while allowing one physical DB |
 | Two dashboard shells/layouts | Platform | Preserve approved `/workspace` visual baseline; retire legacy shell only after mapping and owner approval |
 
-## Phase 2 start point proposed
+## Phase 2 accepted design and next implementation checkpoint
 
-After Phase 1 acceptance and explicit Phase 2 authorization:
+Phase 2 preservation and design work has established:
 
-1. preserve the accepted local Git state in a traceable source commit;
-2. create the clean full checkout at `C:\Users\jerac\Documents\TraderLink\traderlink-platform` from that source state and record its remote/branch;
-3. carry forward the approved light Material dashboard shell and complete left-navigation contract without redesigning it;
-4. establish Platform owner/account primitives and a separate replacement development database configuration; and
-5. implement Journal source/execution/decision/round-trip repositories behind these contracts.
+1. the accepted local Git state in a traceable source commit;
+2. the clean full checkout at `C:\Users\jerac\Documents\TraderLink\traderlink-platform` with its recorded remote and branch;
+3. the approved light Material dashboard shell and complete left-navigation preservation contract;
+4. the owner-accepted exact empty Platform/Journal database foundation, global migration identity, deterministic schema-drift verification, initialization recovery, versioned account fingerprinting, server-derived `WorkspaceAccessScope`, owner/admin/member permission model, and separate owner-bootstrap gate; and
+5. the owner-accepted focused verification plan and exact implementation-file list in [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md).
 
-Do not start with analytics page proliferation. Do not remove or repurpose the original `traderslink.pro` folder; it remains the legacy recovery/reference source.
+Schema design review is complete. Creating `development.sqlite` and implementing the accepted migrations/repositories have not started and form the next separately authorized checkpoint. Do not start Analytics or legacy-data migration, execute the owner-bootstrap gate, or remove or repurpose the original `traderslink.pro` folder.

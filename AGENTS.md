@@ -17,11 +17,23 @@ sections below govern maintenance of the preserved legacy application. They do
 not prescribe the replacement's future module architecture. Phase 2 is active,
 and the owner-accepted independent clone at
 `C:\Users\jerac\Documents\TraderLink\traderlink-platform` is the active
-replacement implementation candidate. Its branch is
-`codex/traderlink-platform-replacement` at
-`a3193e19806af955093aa236349d796171d9bf97`. The legacy `traderslink.pro`
-folder remains the preserved recovery/reference application. The replacement
-database remains absent pending owner acceptance of the current checkpoint.
+replacement implementation candidate. The accepted independent-clone baseline
+is branch `codex/traderlink-platform-replacement` at
+`a3193e19806af955093aa236349d796171d9bf97`; this is a baseline record, not a
+claim about the branch's current HEAD. Read
+`docs/migration/migration-progress.md` and
+`docs/migration/phase-2-replacement-baseline-progress.md` for accepted commit
+records and checkpoint state, and verify the live HEAD directly with Git. The
+owner-accepted Phase 2 database design is
+`docs/migration/replacement-database-schema-and-migrations.md`. Its exact
+schema digest, migration identity, initialization recovery, versioned account
+fingerprinting, `WorkspaceAccessScope`, permission model, owner-bootstrap gate,
+verification plan, and implementation-file list are accepted. Schema design
+review is complete, but database-foundation implementation is the next
+separately authorized checkpoint. The legacy `traderslink.pro` folder remains
+the preserved recovery/reference application. The replacement database remains
+absent; do not create it or implement the accepted design without explicit
+continuation authorization.
 
 - Trader Intelligence V3 is legacy implementation, not the architecture for
   future ordinary dashboards. Do not add a new normal dashboard dependency on

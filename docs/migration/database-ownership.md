@@ -1,7 +1,7 @@
 # TraderLink Database Ownership
 
 **Phase:** Phase 1 inventory preserved; Phase 2 replacement baseline active
-**Status:** Legacy online backup and disposable restore verified; replacement development path selected but still absent pending owner checkpoint approval
+**Status:** Legacy online backup/disposable restore and the corrected exact replacement schema/migration design are owner-accepted; the replacement development path remains absent and implementation has not started
 **Inspection rule:** The legacy source remains read-only. Phase 2 created only the authorized private backup and disposable restore-verification target; it did not stop a process or create the replacement database.
 
 ## Direct answer about `v4-temp-sql`
@@ -48,7 +48,7 @@ The replacement local development database will be created at:
 
 `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\development.sqlite`
 
-That path remains absent during active Phase 2. It is outside both source repositories, uses the permanent platform name rather than V3/V4 terminology, and will contain one physical local database with explicit module-owned migrations and repositories. Creation, schema initialization, or data migration now requires owner acceptance of the backup/documentation checkpoint and explicit continuation.
+That path remains absent during active Phase 2. It is outside both source repositories, uses the permanent platform name rather than V3/V4 terminology, and will contain one physical local database with explicit module-owned migrations and repositories. Creation or schema initialization now requires owner acceptance of [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md) and explicit continuation. Private owner bootstrap and legacy data migration remain separate later approval gates.
 
 The current V3-named database is accepted as a possible **migration input**, not as the replacement working database. It must first pass online-backup, restore, provenance, and source-statement reconciliation gates.
 
@@ -192,8 +192,8 @@ TraderLink may use one physical local development SQLite database and one physic
 
 | Schema owner | Owns | May publish |
 | --- | --- | --- |
-| Platform | Users, sessions, preferences, access/account membership | Authenticated owner/account context |
-| Journal | Source evidence, imports, executions, decisions, round trips, notes, tags, rules, reviews | Stable owner-scoped execution/round-trip/day contracts |
+| Platform | Users, sessions, preferences, access/account membership | Authenticated `WorkspaceAccessScope` and narrowed `AccountScope` |
+| Journal | Source evidence, imports, executions, decisions, round trips, notes, tags, rules, reviews | Stable workspace/account-scoped execution, round-trip, and trading-day contracts |
 | Journal Analytics | Rebuildable metric definitions and materialized summaries when justified | Exact metric rows, aggregates, coverage, limitations |
 | Academy | Enrollment/progress/content-state records | Workspace summary and progress contracts |
 | Watchlist | Watchlist symbols, health, archives, ingestion state | Workspace summary and symbol contracts |
@@ -211,7 +211,7 @@ One module must never infer ownership from a generic fallback to `TRADER_INTELLI
 4. Prove whether the repository-local 15,368,192-byte file is byte/logically identical to the private configured source.
 5. Reconcile the January IBKR source statement to accepted executions, 334 closed/2 open round trips, contained decisions, and all coverage counts.
 6. Export/migrate the 4 current tag assignments and any surviving News/Watchlist/Academy/affiliate facts under their named owners.
-7. Create the replacement database only after the schema/module contract is owner-accepted; do not edit the legacy source in place or dual-write silently.
+7. The schema/module contract is owner-accepted. Create the replacement database only after the separate database-foundation implementation checkpoint is explicitly authorized; do not edit the legacy source in place or dual-write silently.
 
 ## Phase 2 online-backup and restore checkpoint
 
@@ -229,6 +229,12 @@ One module must never infer ownership from a generic fallback to `TRADER_INTELLI
 - Source, backup, and restored target have the same 34-object schema DDL digest, four ordered migration rows, all 24 table counts, 4,096-byte page size, 3,752 pages, and `quick_check=ok`.
 - `PRAGMA schema_version` is SQLite's internal schema-cache cookie, not TraderLink's migration version. SQLite's online backup implementation deliberately updates a new destination's schema cookie, so source value 34 and destination value 1 do not indicate schema loss. The authoritative migration evidence is the matching `schema_migrations` rows, schema DDL digest, table counts, page geometry, hashes, and integrity checks. See [SQLite PRAGMA documentation](https://sqlite.org/pragma.html#pragma_schema_version) and [SQLite backup implementation evidence](https://sqlite.org/matrix/ev/src/backup.html).
 - Full evidence and restore instructions are in [Phase 2 Replacement Baseline Progress](phase-2-replacement-baseline-progress.md).
+
+## Phase 2 replacement schema-design acceptance
+
+The owner accepted the corrected exact [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md) package. Acceptance includes deterministic post-migration schema-drift verification, global migration identity and recovery rules, versioned privacy-safe account fingerprinting, server-derived `WorkspaceAccessScope`, the owner/admin/member permission model, the separate owner-bootstrap gate, the focused verification plan, and the exact implementation-file list.
+
+Schema design review is complete. Migration/database implementation has not started and is the next separately authorized checkpoint. `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\development.sqlite` and its parent replacement-data directory remain absent.
 
 ## Phase 1 conclusions
 

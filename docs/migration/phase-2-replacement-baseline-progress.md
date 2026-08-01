@@ -1,9 +1,9 @@
 # Phase 2 Replacement Baseline Progress
 
 **Phase:** 2 - Replacement baseline
-**Status:** In progress; the preservation/clone checkpoint is owner-accepted and the corrected legacy backup/restore documentation checkpoint awaits owner review
+**Status:** In progress; the preservation/clone, corrected legacy backup/restore, and corrected exact replacement schema/migration design checkpoints are owner-accepted. Schema design review is complete; database-foundation implementation is the next separately authorized checkpoint
 **Authorized:** 2026-08-01, explicitly by the project owner
-**Current boundary:** Documentation and legacy SQLite online-backup/restore verification only; do not create the replacement development database until the next owner checkpoint
+**Current boundary:** Documentation acceptance only. Migration/database implementation has not started; do not create the replacement development database or implement migration code until that separate checkpoint is explicitly authorized
 
 ## Repository boundary
 
@@ -40,11 +40,13 @@
 - Path: `C:\Users\jerac\Documents\TraderLink\traderlink-platform`.
 - Branch: `codex/traderlink-platform-replacement`.
 - HEAD at the accepted clean-checkout checkpoint: `a3193e19806af955093aa236349d796171d9bf97`.
+- Accepted backup-baseline commit: `405acf08ce8ac7be6c984cb52082052d18642acc`, with message `docs(migration): record phase 2 backup baseline`.
 - Remote: `https://github.com/traderslink-bot/traderslink-trader-improvement-system.git`.
 - The checkout was clean when the owner accepted the clone checkpoint.
 - It is a full, non-shallow, independent clone with its own `.git` directory and object pack, no alternates, no hardlinks, and no registration in the legacy repository's worktree list.
 - No upstream was configured and no push, deployment, dependency installation, or server start occurred.
-- The backup documentation checkpoint initially added or updated this progress file, the master plan, `migration-progress.md`, and `migration-register.md`. The owner-requested correction also updates `AGENTS.md`, `database-ownership.md`, `workspace-inventory.md`, and `workspace-and-worktree-cleanup-plan.md`. These eight documentation changes remain uncommitted pending owner review.
+- That accepted backup-baseline commit contains exactly the eight owner-approved documentation/agent files and no product code, database, environment file, log, skill, temporary file, or superseded root draft.
+- The branch still has no upstream. Nothing was pushed or deployed.
 
 ## Database boundary
 
@@ -149,6 +151,40 @@ Every table count matches across the source, completed backup, and restored targ
 6. Compare the 34 schema objects and DDL digest, four ordered migration rows, 24 table counts, page size, and page count against this record.
 7. Keep the completed backup immutable. Any later production or replacement migration uses a new explicitly authorized target and never writes back to the legacy source.
 
+## Accepted replacement schema and migration checkpoint
+
+The owner accepted the corrected exact [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md) design. This acceptance completes schema design review; it does not authorize database creation or implementation.
+
+The owner has accepted these architectural directions:
+
+- the external `development.sqlite` path with no V3 fallback or copied legacy/private seed data;
+- one physical SQLite database with Platform-owned lifecycle and module-owned migrations;
+- two initial migrations and five empty domain tables;
+- one active workspace owner;
+- owners/admins may access every active account in their workspace, while members receive no account access until grants are deliberately designed;
+- exact decimal-string finance, explicit currency/timezone, WAL, foreign keys, forward-only migrations, and verified backup recovery; and
+- the future Journal direction for source rows, execution versions/provenance, Data Decisions, round trips/allocations, manual entries, trading days, notes, rules, tags, reviews, and aliases.
+
+The accepted exact design boundary is:
+
+- required path configuration `TRADERLINK_PLATFORM_DB_PATH`, with selected value `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\development.sqlite` and no V3 fallback;
+- `WorkspaceAccessScope` for owner/admin/member workspace access and narrowed `AccountScope` for account operations;
+- versioned fingerprint scheme, adapter canonicalization, and strong HMAC keys with fail-closed matching, rotation, backup, and recovery;
+- globally unique migration IDs, `migration_id` registry primary key, unique global execution order, and static filename/ID verification;
+- required per-migration `post_schema_sha256` values and deterministic `sqlite_schema` digest verification that fails closed on table, explicit-index, view, or trigger drift without using SQLite's internal `schema_version` cookie as authority;
+- ordinary startup that opens only a complete managed database and an explicit initializer that alone may create/bootstrap/resume;
+- migration order 1 `0001_platform_identity`, then order 2 `0002_journal_account_boundary`;
+- empty Platform user/workspace/membership tables and empty Journal account/source-identity tables only;
+- canonical lowercase UUID-v4/RFC-variant and numeric UTC-millisecond database checks plus strict service validation;
+- corrected workspace-owned versus account-scoped isolation and same-workspace owner/admin account-creator authorization;
+- a separate later owner-bootstrap approval to create the real user, workspace, owner membership, and Journal account after empty initialization and before Phase 3;
+- future Journal import, source-row, execution, provenance, Data Decision, round-trip/allocation, identity-alias, note, tag, rule, and review table names reserved but not created;
+- UTC/IANA-timezone, UUID, exact decimal, explicit currency, isolation, module ownership, and no-dual-write rules; and
+- the focused verification plan for migration identity/order, schema-digest stability and drift detection, runtime/initializer behavior, malformed UUID/timestamps, HMAC rotation, cross-workspace denial, and same-workspace authorization; and
+- the exact implementation-file list and responsibilities recorded in the accepted design.
+
+The documentation correction affects the existing five-document review package plus `AGENTS.md`, `module-contracts.md`, and `database-ownership.md`. No historical Phase 1 handoff was rewritten. No database, application code, migration file, test, environment file, dependency, or process was changed for this proposal.
+
 ## Checkpoint result and stop boundary
 
 - [x] Preservation documentation committed without product code, private data, or logs.
@@ -157,5 +193,12 @@ Every table count matches across the source, completed backup, and restored targ
 - [x] Completed backup hashed and verified.
 - [x] Backup restored to a disposable private-data target and reconciled.
 - [x] No source or destination main database content, process, application, environment file, dependency, server, or production state changed. Later read-only verification created only the documented empty WAL/SHM sidecars beside the new backup and restored targets.
-- [ ] Owner reviews and accepts this backup/restore checkpoint.
-- [ ] Replacement `development.sqlite` creation remains prohibited until that acceptance and explicit continuation.
+- [x] Owner accepted the corrected online-backup, restore-verification, and documentation checkpoint.
+- [x] The accepted eight-file backup baseline was committed as `405acf08ce8ac7be6c984cb52082052d18642acc`; it was not pushed.
+- [x] Exact replacement database schema and migration design prepared and linked.
+- [x] Owner accepted the schema direction and the initial single-owner/owner-admin/member permission decisions.
+- [x] Requested foundation corrections applied to the documentation review package.
+- [x] Owner accepted the corrected exact schema/migration design, including schema digest, migration identity, initialization recovery, versioned account fingerprinting, `WorkspaceAccessScope`, permission model, owner-bootstrap gate, verification plan, and exact implementation-file list.
+- [x] Schema design review is complete.
+- [ ] Replacement `development.sqlite` creation and migration/database implementation remain the next separately authorized checkpoint and have not started.
+- [ ] Real owner/workspace/account bootstrap remains prohibited until its later separate approval after empty initialization.
