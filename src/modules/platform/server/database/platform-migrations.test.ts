@@ -6,7 +6,11 @@ import Database from "better-sqlite3";
 
 import { openPlatformDatabase } from "./open-platform-database";
 import { createAndRestoreVerifyPlatformDatabaseBackup } from "./platform-database-backup";
-import { platformMigrationManifest } from "./platform-migration-manifest";
+import {
+  currentPlatformDomainTableNames,
+  currentPlatformTableNames,
+  platformMigrationManifest,
+} from "./platform-migration-manifest";
 import {
   type PlatformMigration,
   validatePlatformMigrationManifest,
@@ -35,7 +39,7 @@ function openInitializer(path: string): Database.Database {
 }
 
 describe("TraderLink Platform migrations", () => {
-  it("creates exactly the registry plus five empty domain tables and two rows", () => {
+  it("creates exactly the current registry and empty managed domain tables", () => {
     const database = openInitializer(newPath("foundation"));
     try {
       const result = runPlatformMigrations(database, {
@@ -44,25 +48,18 @@ describe("TraderLink Platform migrations", () => {
       expect(result.appliedMigrationIds).toEqual([
         "0001_platform_identity",
         "0002_journal_account_boundary",
+        "0003_journal_import_evidence",
+        "0004_journal_execution_ledger",
+        "0005_journal_data_decisions",
+        "0006_journal_round_trip_projection",
       ]);
-      expect(listPlatformUserTableNames(database)).toEqual([
-        "journal_account_source_identities",
-        "journal_accounts",
-        "platform_schema_migrations",
-        "platform_users",
-        "platform_workspace_memberships",
-        "platform_workspaces",
-      ]);
+      expect(listPlatformUserTableNames(database)).toEqual(
+        [...currentPlatformTableNames].sort(),
+      );
       expect(
         database.prepare("SELECT COUNT(*) AS count FROM platform_schema_migrations").get(),
-      ).toEqual({ count: 2 });
-      for (const table of [
-        "platform_users",
-        "platform_workspaces",
-        "platform_workspace_memberships",
-        "journal_accounts",
-        "journal_account_source_identities",
-      ]) {
+      ).toEqual({ count: 6 });
+      for (const table of currentPlatformDomainTableNames) {
         expect(database.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get()).toEqual({
           count: 0,
         });
@@ -110,6 +107,10 @@ describe("TraderLink Platform migrations", () => {
       expect(listPlatformUserTableNames(database)).not.toContain("should_rollback");
       expect(runPlatformMigrations(database).appliedMigrationIds).toEqual([
         "0002_journal_account_boundary",
+        "0003_journal_import_evidence",
+        "0004_journal_execution_ledger",
+        "0005_journal_data_decisions",
+        "0006_journal_round_trip_projection",
       ]);
     } finally {
       database.close();
@@ -170,7 +171,7 @@ WHERE migration_id = '0002_journal_account_boundary'`)
       database.transaction(() => {
         database
           .prepare(`UPDATE platform_schema_migrations
-SET execution_order = 3
+SET execution_order = 99
 WHERE migration_id = '0001_platform_identity'`)
           .run();
         database
@@ -181,7 +182,7 @@ WHERE migration_id = '0002_journal_account_boundary'`)
         database
           .prepare(`UPDATE platform_schema_migrations
 SET execution_order = 2
-WHERE migration_id = '0001_platform_identity'`)
+WHERE execution_order = 99`)
           .run();
       })();
       expect(() => runPlatformMigrations(database)).toThrowError(
@@ -214,7 +215,7 @@ WHERE migration_id = '0001_platform_identity'`)
     expect(evidence.backup.migrationRows).toEqual(evidence.restored.migrationRows);
     expect(evidence.source.tableCounts).toEqual(evidence.backup.tableCounts);
     expect(evidence.backup.tableCounts).toEqual(evidence.restored.tableCounts);
-    expect(Object.keys(evidence.source.tableCounts)).toHaveLength(6);
+    expect(Object.keys(evidence.source.tableCounts)).toHaveLength(25);
     expect(evidence.source.pragmas).toEqual({
       foreignKeys: 1,
       busyTimeout: 5000,

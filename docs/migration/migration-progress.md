@@ -1,7 +1,7 @@
 # TraderLink Platform Migration Progress
 
-**Current phase:** Phase 3 - Journal integrity Slice A (migration compatibility and schema). The Phase 2 foundation and local development ownership seed are technically accepted and complete under delegated owner authority.
-**Current implementation state:** The local-only seed passed its static verifier and all three focused files/all eleven tests with one worker, was backed up, previewed, atomically executed, and independently verified. The database contains domain counts 1/1/1/1/0 with matching schema/migration digests. The [Phase 3 plan](phase-3-journal-integrity-plan.md) and [tracker](phase-3-journal-integrity-progress.md) are technically accepted and define the migrations, evidence/ledger/decision/rebuild contracts, and private-source gates. Slice A is authorized; no Phase 3 code, migration, source-account identity, or private/legacy trading data has yet been added.
+**Current phase:** Phase 3 - Journal integrity Slice B (source evidence and canonical execution ledger). The Phase 2 foundation/seed and Phase 3 Slice A schema are technically accepted under delegated owner authority.
+**Current implementation state:** The [Phase 3 plan](phase-3-journal-integrity-plan.md) and [tracker](phase-3-journal-integrity-progress.md) are technically accepted. Slice A added four immutable Journal migration descriptors, the 24-table current managed schema, historical-prefix/current-manifest verifier separation, canonical storage validators, and a static Phase 3 guard. Seven focused files/all 53 tests passed with one worker; a corrected disposable six-migration database passed schema digest and integrity checks. The real database remains unchanged at the accepted two-migration seeded boundary. Slice B is active; no source-account identity or private/legacy trading data has been added.
 **Phase 2 foundation commit:** `fea56307fbd0142ef99b9f13c020451a6a503cc7` (`feat(platform): establish verified database foundation`), preserved locally without push or deployment.
 
 ## Completed planning decisions
@@ -29,6 +29,7 @@
 - Big Time weekly content automation is preserved but explicitly deferred as a low-priority News operation outside the core Journal/database replacement.
 - The Phase 3 planning evidence reconciles all 2,284 source records, including 1,072 Stock execution records and 542 preserved-but-unsupported Forex records. Zero-to-zero arithmetic produces 331 closed round trips, one statement-supported open chain, and one contained closing-position mismatch; legacy session/time-gap trade counts are not the target.
 - Before adding migration 3, verifier semantics must separate the immutable five-table Phase 2 ownership-foundation profile from the expanding current migration manifest. Ordinary runtime remains strict and never auto-migrates.
+- Slice A completed that verifier split and implemented migrations 3-6 in code only. The current manifest has six rows and 24 domain tables; the corrected disposable final schema digest is `1436d96512354914289b356ac8f7311a6237e242fe32ea34178da656ea62cb57`. The real seeded database remains on the accepted two-row Phase 2 prefix pending the later backup/restore gate.
 
 ## Current verified local baseline
 

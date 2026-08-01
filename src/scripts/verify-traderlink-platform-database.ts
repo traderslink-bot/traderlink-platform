@@ -10,8 +10,8 @@ import {
   validatePlatformDatabasePath,
 } from "@/src/modules/platform/server/database/platform-database-config";
 import {
-  completedPlatformTableNames,
-  platformEmptyFoundationDomainTableNames,
+  expectedPlatformDomainTableNamesForPrefix,
+  expectedPlatformTableNamesForPrefix,
   platformMigrationManifest,
 } from "@/src/modules/platform/server/database/platform-migration-manifest";
 import {
@@ -32,7 +32,12 @@ import {
 import { verifyCompletedPlatformDatabase } from "@/src/modules/platform/server/database/run-platform-migrations";
 
 export type PlatformDatabaseVerificationEvidence = Readonly<{
-  status: "verified_empty_foundation";
+  status: "verified_current_database" | "verified_manifest_prefix";
+  verificationProfile: Readonly<{
+    kind: "current" | "manifest_prefix";
+    migrationCount: number;
+    domainTablesExpectedEmpty: boolean;
+  }>;
   databasePath: string;
   sqliteVersion: string;
   migrationRows: readonly Readonly<{
@@ -76,10 +81,35 @@ export function verifyTraderLinkPlatformDatabase(
   options: Readonly<{
     environment?: NodeJS.ProcessEnv;
     databasePath?: string;
-    expectEmptyFoundation?: boolean;
+    profile?:
+      | Readonly<{ kind: "current"; expectDomainTablesEmpty?: boolean }>
+      | Readonly<{
+          kind: "manifest_prefix";
+          migrationCount: number;
+          expectDomainTablesEmpty?: boolean;
+        }>;
     forbiddenRepositoryRoots?: readonly string[];
   }> = {},
 ): PlatformDatabaseVerificationEvidence {
+  const profile = options.profile ?? Object.freeze({ kind: "current" as const });
+  const migrationCount =
+    profile.kind === "current"
+      ? platformMigrationManifest.length
+      : profile.migrationCount;
+  if (
+    !Number.isSafeInteger(migrationCount) ||
+    migrationCount < 1 ||
+    migrationCount > platformMigrationManifest.length
+  ) {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+      field: "migrationCount",
+    });
+  }
+  const verificationManifest = platformMigrationManifest.slice(0, migrationCount);
+  const expectedTableNames = expectedPlatformTableNamesForPrefix(migrationCount);
+  const expectedDomainTableNames =
+    expectedPlatformDomainTableNamesForPrefix(migrationCount);
+  const expectDomainTablesEmpty = profile.expectDomainTablesEmpty === true;
   const databasePath = options.databasePath
     ? validatePlatformDatabasePath(options.databasePath, options)
     : resolvePlatformDatabaseConfig({
@@ -95,20 +125,20 @@ export function verifyTraderLinkPlatformDatabase(
   try {
     database.pragma("foreign_keys = ON");
     database.pragma("busy_timeout = 5000");
-    verifyCompletedPlatformDatabase(database);
+    verifyCompletedPlatformDatabase(database, verificationManifest);
     const pragmas = verifyPlatformDatabaseConnectionPragmas(database);
     requirePlatformForeignKeyCheck(database);
     requirePlatformQuickCheck(database);
     requireIntegrityCheck(database);
     const tableNames = listPlatformUserTableNames(database);
     if (
-      tableNames.length !== completedPlatformTableNames.size ||
-      tableNames.some((tableName) => !completedPlatformTableNames.has(tableName))
+      tableNames.length !== expectedTableNames.size ||
+      tableNames.some((tableName) => !expectedTableNames.has(tableName))
     ) {
       platformFailure("TRADERLINK_PLATFORM_UNMANAGED_SCHEMA");
     }
     const tableCounts = Object.fromEntries(
-      platformEmptyFoundationDomainTableNames.map((tableName) => {
+      expectedDomainTableNames.map((tableName) => {
         const row = database
           .prepare<[], { count: number }>(`SELECT COUNT(*) AS count FROM ${tableName}`)
           .get();
@@ -116,13 +146,13 @@ export function verifyTraderLinkPlatformDatabase(
       }),
     );
     const migrations = readAppliedPlatformMigrations(database);
-    if (migrations.length !== platformMigrationManifest.length) {
+    if (migrations.length !== migrationCount) {
       platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
         check: "migration_manifest_alignment",
       });
     }
     if (
-      options.expectEmptyFoundation &&
+      expectDomainTablesEmpty &&
       Object.values(tableCounts).some((count) => count !== 0)
     ) {
       platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
@@ -139,7 +169,15 @@ export function verifyTraderLinkPlatformDatabase(
       .get()?.sqlite_version;
     if (!sqliteVersion) platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED");
     evidenceWithoutFile = Object.freeze({
-      status: "verified_empty_foundation",
+      status:
+        profile.kind === "current"
+          ? "verified_current_database"
+          : "verified_manifest_prefix",
+      verificationProfile: Object.freeze({
+        kind: profile.kind,
+        migrationCount,
+        domainTablesExpectedEmpty: expectDomainTablesEmpty,
+      }),
       databasePath,
       sqliteVersion,
       migrationRows: Object.freeze(
@@ -190,14 +228,27 @@ function isDirectExecution(): boolean {
 }
 
 if (isDirectExecution()) {
-  if (process.argv.length !== 3 || process.argv[2] !== "--expect-empty-foundation") {
+  const argument = process.argv[2];
+  const profile =
+    argument === "--verify-current"
+      ? Object.freeze({ kind: "current" as const })
+      : argument === "--expect-current-empty"
+        ? Object.freeze({ kind: "current" as const, expectDomainTablesEmpty: true })
+        : argument === "--expect-empty-foundation"
+          ? Object.freeze({
+              kind: "manifest_prefix" as const,
+              migrationCount: 2,
+              expectDomainTablesEmpty: true,
+            })
+          : null;
+  if (process.argv.length !== 3 || !profile) {
     console.error(JSON.stringify({ code: "TRADERLINK_VERIFIER_ARGUMENT_INVALID" }));
     process.exitCode = 1;
   } else {
     try {
       console.info(
         JSON.stringify(
-          verifyTraderLinkPlatformDatabase({ expectEmptyFoundation: true }),
+          verifyTraderLinkPlatformDatabase({ profile }),
           null,
           2,
         ),

@@ -8,7 +8,7 @@ import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/work
 
 import { verifyPlatformDatabaseConnectionPragmas } from "../database/open-platform-database";
 import {
-  platformEmptyFoundationDomainTableNames,
+  platformOwnershipFoundationDomainTableNames,
   platformMigrationManifest,
 } from "../database/platform-migration-manifest";
 import {
@@ -136,7 +136,7 @@ function readDomainRowCounts(
 ): Readonly<Record<string, number>> {
   return Object.freeze(
     Object.fromEntries(
-      platformEmptyFoundationDomainTableNames.map((tableName) => {
+      platformOwnershipFoundationDomainTableNames.map((tableName) => {
         const row = database
           .prepare<[], { count: number }>(`SELECT COUNT(*) AS count FROM ${tableName}`)
           .get();
@@ -214,15 +214,17 @@ function requireFinalCounts(
   database: Database.Database,
 ): Readonly<Record<string, number>> {
   const counts = readDomainRowCounts(database);
-  const expected: Readonly<Record<string, number>> = Object.freeze({
+  const expectedCore: Readonly<Record<string, number>> = Object.freeze({
     platform_users: 1,
     platform_workspaces: 1,
     platform_workspace_memberships: 1,
     journal_accounts: 1,
-    journal_account_source_identities: 0,
   });
   if (
-    Object.keys(expected).some((tableName) => counts[tableName] !== expected[tableName])
+    Object.keys(expectedCore).some(
+      (tableName) => counts[tableName] !== expectedCore[tableName],
+    ) ||
+    (counts.journal_account_source_identities ?? -1) < 0
   ) {
     platformFailure("TRADERLINK_DEVELOPMENT_OWNER_SEED_FAILED");
   }

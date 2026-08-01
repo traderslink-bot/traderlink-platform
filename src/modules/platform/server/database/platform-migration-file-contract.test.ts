@@ -17,6 +17,26 @@ describe("static platform migration file contract", () => {
         moduleNamespace: "journal",
         executionOrder: 2,
       }),
+      expect.objectContaining({
+        migrationId: "0003_journal_import_evidence",
+        moduleNamespace: "journal",
+        executionOrder: 3,
+      }),
+      expect.objectContaining({
+        migrationId: "0004_journal_execution_ledger",
+        moduleNamespace: "journal",
+        executionOrder: 4,
+      }),
+      expect.objectContaining({
+        migrationId: "0005_journal_data_decisions",
+        moduleNamespace: "journal",
+        executionOrder: 5,
+      }),
+      expect.objectContaining({
+        migrationId: "0006_journal_round_trip_projection",
+        moduleNamespace: "journal",
+        executionOrder: 6,
+      }),
     ]);
   });
 

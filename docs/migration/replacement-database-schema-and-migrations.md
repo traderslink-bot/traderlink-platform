@@ -621,6 +621,23 @@ Source rows, position facts,
 execution versions, decisions, and audit events are durable facts; round-trip
 versions and summaries are reproducible derivatives.
 
+### Phase 3 Slice A implementation result
+
+The four accepted Phase 3 migration descriptors are implemented in the static
+manifest but have not been applied to the real `development.sqlite`. The
+current code manifest has six migrations and 24 managed domain tables. The
+immutable Phase 2 five-table ownership profile remains separately verifiable.
+Static verification passed, and the complete focused Slice A run passed seven
+files/all 53 tests with one worker and no file parallelism.
+
+The corrected disposable database contains six migration rows and 24 empty
+domain tables with matching expected/actual schema SHA-256
+`1436d96512354914289b356ac8f7311a6237e242fe32ea34178da656ea62cb57`;
+foreign-key, quick, and integrity checks pass. Exact disposable paths, file
+evidence, the superseded first disposable attempt, and the unchanged real
+database boundary are recorded in [Phase 3 Journal Integrity
+Progress](phase-3-journal-integrity-progress.md).
+
 ## 8. Initialization and connection behavior
 
 ### Exact implementation files

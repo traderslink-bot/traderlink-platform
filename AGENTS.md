@@ -52,10 +52,12 @@ Phase 3 is controlled by
 `docs/migration/phase-3-journal-integrity-plan.md` and
 `docs/migration/phase-3-journal-integrity-progress.md`. Read both before any
 Journal schema, import, execution, Data Decisions, round-trip, private-source,
-or migration-verifier work. Do not begin Phase 3 implementation until the plan
-tracker records technical acceptance. In particular, separate the immutable
-five-table Phase 2 ownership-foundation verifier profile from the expanding
-current migration manifest before adding migration 3.
+or migration-verifier work. The plan and Slice A are technically accepted: the
+immutable five-table Phase 2 ownership profile is separated from the six-entry,
+24-domain-table current manifest, and migrations 3-6 are code/disposable-
+verified but not applied to the real database. Slice B source-evidence and
+execution-ledger services are active. Do not migrate the real database or touch
+the private statement before the later backup/restore and preview gates.
 
 - Trader Intelligence V3 is legacy implementation, not the architecture for
   future ordinary dashboards. Do not add a new normal dashboard dependency on

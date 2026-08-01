@@ -98,7 +98,7 @@ describe("runtime and explicit initializer modes", () => {
         databasePath: path,
         forbiddenRepositoryRoots: [],
       }).appliedThisRun,
-    ).toHaveLength(2);
+    ).toHaveLength(6);
     expect(
       initializeTraderLinkPlatformDatabase({
         databasePath: path,
@@ -121,7 +121,7 @@ describe("runtime and explicit initializer modes", () => {
         databasePath: zeroByte,
         forbiddenRepositoryRoots: [],
       }).appliedThisRun,
-    ).toHaveLength(2);
+    ).toHaveLength(6);
 
     const zeroTable = pathFor("initializer-zero-table");
     const zeroTableDatabase = new Database(zeroTable);
@@ -132,7 +132,60 @@ describe("runtime and explicit initializer modes", () => {
         databasePath: zeroTable,
         forbiddenRepositoryRoots: [],
       }).appliedThisRun,
-    ).toHaveLength(2);
+    ).toHaveLength(6);
+  });
+
+  it("verifies the accepted Phase 2 prefix without treating it as current runtime", () => {
+    const path = pathFor("phase-2-prefix");
+    const prefixDatabase = openPlatformDatabase({
+      mode: "initializer",
+      databasePath: path,
+      forbiddenRepositoryRoots: [],
+    });
+    runPlatformMigrations(prefixDatabase, {
+      manifest: platformMigrationManifest.slice(0, 2),
+      now: () => new Date("2026-08-01T12:00:00.000Z"),
+    });
+    prefixDatabase.close();
+
+    expect(
+      verifyTraderLinkPlatformDatabase({
+        databasePath: path,
+        profile: {
+          kind: "manifest_prefix",
+          migrationCount: 2,
+          expectDomainTablesEmpty: true,
+        },
+        forbiddenRepositoryRoots: [],
+      }),
+    ).toMatchObject({
+      status: "verified_manifest_prefix",
+      verificationProfile: {
+        kind: "manifest_prefix",
+        migrationCount: 2,
+        domainTablesExpectedEmpty: true,
+      },
+    });
+
+    expect(() =>
+      openPlatformDatabase({
+        mode: "runtime",
+        databasePath: path,
+        forbiddenRepositoryRoots: [],
+      }),
+    ).toThrowError("TRADERLINK_PLATFORM_MIGRATIONS_PENDING");
+
+    expect(
+      initializeTraderLinkPlatformDatabase({
+        databasePath: path,
+        forbiddenRepositoryRoots: [],
+      }).appliedThisRun,
+    ).toEqual([
+      "0003_journal_import_evidence",
+      "0004_journal_execution_ledger",
+      "0005_journal_data_decisions",
+      "0006_journal_round_trip_projection",
+    ]);
   });
 
   it("the explicit initializer rejects an unmanaged target without adopting it", () => {
@@ -172,7 +225,7 @@ describe("runtime and explicit initializer modes", () => {
     expect(() =>
       verifyTraderLinkPlatformDatabase({
         databasePath: path,
-        expectEmptyFoundation: true,
+        profile: { kind: "current", expectDomainTablesEmpty: true },
         forbiddenRepositoryRoots: [],
       }),
     ).toThrowError("TRADERLINK_PLATFORM_INTEGRITY_FAILED");

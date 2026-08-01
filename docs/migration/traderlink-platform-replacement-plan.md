@@ -1,6 +1,6 @@
 # TraderLink Platform Replacement Plan
 
-**Status:** Approved planning baseline. Phases 0 and 1 are accepted. The Phase 2 database foundation and local development-owner seed are implemented, focused-verified, independently verified, and technically accepted by the coordinating auditor. The exact Phase 3 Journal integrity plan is technically accepted and Slice A is active. Public login/account integration is deferred until the complete dashboard is preparing to go live.
+**Status:** Approved planning baseline. Phases 0 and 1 are accepted. The Phase 2 database foundation and local development-owner seed are implemented, focused-verified, independently verified, and technically accepted by the coordinating auditor. The exact Phase 3 Journal integrity plan and Slice A schema are technically accepted; Slice B source evidence and canonical execution-ledger services are active. Public login/account integration is deferred until the complete dashboard is preparing to go live.
 
 **Phase 2 foundation preservation:** Local commit `fea56307fbd0142ef99b9f13c020451a6a503cc7` (`feat(platform): establish verified database foundation`); not pushed or deployed.
 
@@ -275,12 +275,14 @@ The inventory is a controlling target list, not an "at minimum" list. It must cl
 
 Within Phase 2, the exact schema digest, migration identity, initialization recovery, versioned account fingerprinting, `WorkspaceAccessScope`, owner/admin/member permission model, separate ownership-seed gate, focused verification plan, and exact implementation-file list in [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md) are implemented and correction-verified. The coordinating technical auditor accepted the code, verified empty database, and 10-file/53-test result under the owner's delegated technical checkpoint authority. The follow-on [Development Owner Seed Progress](development-owner-seed-progress.md) checkpoint is also complete: the database was backed up, previewed, atomically seeded, and independently verified at domain counts 1/1/1/1/0 with matching schema/migration digests and no trading data. Phase 3 may proceed and is not blocked on public login. Discord-first login, optional email/password, and user-facing account management are reconciled in the Platform portion of Phase 5 before go-live without changing stable Journal ownership IDs.
 
-Phase 3 planning must also refactor the Phase 2 verifier boundary before adding
-new migrations. The five ownership-foundation table names remain an immutable
-historical profile; the complete managed-table set expands with the current
-manifest. Ordinary runtime continues to reject a historical prefix as pending,
-while explicit verification may inspect a named accepted prefix without
-silently migrating or adopting it.
+Phase 3 Slice A completed the required Phase 2 verifier refactor. The five
+ownership-foundation table names remain an immutable historical profile; the
+complete managed-table set now expands through six manifest migrations and 24
+domain tables. Ordinary runtime continues to reject a historical prefix as
+pending, while explicit verification may inspect a named accepted prefix
+without silently migrating or adopting it. The real seeded database remains on
+the two-migration prefix until the later backup/restore gate authorizes applying
+migrations 3-6.
 
 Any new or redesigned UI must be shown to the owner for visual approval before it is treated as an accepted feature slice. Broad tests, full builds, deployment, process stopping, database creation, and production changes occur only when their checkpoint requires them.
 
