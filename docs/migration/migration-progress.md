@@ -2,6 +2,7 @@
 
 **Current phase:** Phase 2 - Empty database foundation technically accepted and complete. The coordinating technical auditor accepted the corrected code, verified database boundary, and 10-file/53-test evidence under delegated owner authority.
 **Current implementation state:** The accepted production-file and ten-test batch is implemented and correction-verified. Locked dependencies left both package files unchanged. The verified disposable and real empty external databases remain in place; the real database was not recreated or mutated during correction. No owner/private/legacy data was copied and owner bootstrap did not run.
+**Phase 2 foundation commit:** `fea56307fbd0142ef99b9f13c020451a6a503cc7` (`feat(platform): establish verified database foundation`), preserved locally without push or deployment.
 
 ## Completed planning decisions
 
@@ -78,6 +79,7 @@ The owner explicitly authorized Phase 1 in the current chat on 2026-07-31. Phase
 - Replacement: `C:\Users\jerac\Documents\TraderLink\traderlink-platform`, branch `codex/traderlink-platform-replacement`, remote `https://github.com/traderslink-bot/traderslink-trader-improvement-system.git`.
 - The replacement was clean at the accepted clone checkpoint. No upstream, push, deployment, dependency installation, environment copy, or server start occurred.
 - Accepted backup-baseline commit: `405acf08ce8ac7be6c984cb52082052d18642acc`. It records the corrected backup baseline in exactly eight documentation/agent files and was not pushed.
+- Accepted empty-foundation implementation commit: `fea56307fbd0142ef99b9f13c020451a6a503cc7`. It records exactly 37 accepted source/test/script and controlling-documentation paths and contains no database, sidecar, private data, environment file, dependency tree, log, or unrelated file. It was not pushed or deployed.
 - The selected replacement database `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\development.sqlite` now contains only the verified two-migration, five-empty-domain-table foundation. Owner bootstrap remains separate and prohibited.
 - The configured legacy source was backed up with the SQLite online backup API while PID 3160 remained running. The completed backup is `C:\Users\jerac\Documents\TraderLink\private-data\legacy-app\backups\phase-2-20260801T053759Z\trading-rules-v1-online-backup.sqlite`, SHA-256 `92B814735EFF41BAEAFB6BC1F2E8B7E0D4EFDD137416D0C0C80708DB50F5E737`.
 - The backup was restored to a separate disposable private-data target. All 24 table counts, four migration rows, schema DDL digest, page geometry, and `quick_check=ok` match the legacy source and completed backup.

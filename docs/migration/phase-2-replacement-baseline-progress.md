@@ -41,6 +41,7 @@
 - Branch: `codex/traderlink-platform-replacement`.
 - HEAD at the accepted clean-checkout checkpoint: `a3193e19806af955093aa236349d796171d9bf97`.
 - Accepted backup-baseline commit: `405acf08ce8ac7be6c984cb52082052d18642acc`, with message `docs(migration): record phase 2 backup baseline`.
+- Accepted empty-foundation implementation commit: `fea56307fbd0142ef99b9f13c020451a6a503cc7`, with message `feat(platform): establish verified database foundation`. It contains exactly 37 accepted source/test/script and controlling-documentation paths and no database, sidecar, private data, environment file, `node_modules`, log, binary, or unrelated file.
 - Remote: `https://github.com/traderslink-bot/traderslink-trader-improvement-system.git`.
 - The checkout was clean when the owner accepted the clone checkpoint.
 - It is a full, non-shallow, independent clone with its own `.git` directory and object pack, no alternates, no hardlinks, and no registration in the legacy repository's worktree list.
@@ -256,6 +257,7 @@ Do not run broad ESLint, full-project TypeScript, complete Vitest, build, browse
 - [x] Static migration-file verification passed after an environment-only preload workaround; the earlier `ENOMEM` remains classified as a Node/Windows startup failure, not an application result.
 - [x] Initial focused one-worker verification passed: 10 test files and the then-present 41 tests.
 - [x] Independent-audit corrections passed static verification and the expanded 10-file/53-test focused run; the coordinating technical auditor accepted the code, database boundary, and test evidence under delegated owner authority.
+- [x] The accepted 37-path implementation package was preserved locally in commit `fea56307fbd0142ef99b9f13c020451a6a503cc7`; it was not pushed or deployed.
 - [x] Disposable empty-foundation database initialized and verified successfully.
 - [x] Real empty `development.sqlite` initialized and verified only after every preceding focused check passed.
 - [ ] Real owner/workspace/account bootstrap remains prohibited until its later separate approval after empty initialization.

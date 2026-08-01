@@ -2,6 +2,8 @@
 
 **Status:** Approved planning baseline. Phase 0 and Phase 1 were explicitly accepted. The Phase 2 empty database foundation is implemented, correction-verified, and technically accepted by the coordinating auditor under delegated owner authority. The verified empty `development.sqlite` exists; owner bootstrap and private/legacy data migration have not run. The next required operation is the separately scoped owner-bootstrap factual-input gate before Phase 3, not another owner code review.
 
+**Phase 2 foundation preservation:** Local commit `fea56307fbd0142ef99b9f13c020451a6a503cc7` (`feat(platform): establish verified database foundation`); not pushed or deployed.
+
 **Owner:** Project owner and Codex
 
 **Prepared:** 2026-07-31
