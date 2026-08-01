@@ -1,13 +1,13 @@
 # TraderLink Workspace Inventory
 
-**Phase:** 1 - inventory and baseline  
-**Status:** Read-only inventory complete; all cleanup dispositions are recommendations pending owner approval  
-**Root inspected:** `C:\Users\jerac\Documents\TraderLink`  
+**Phase:** Phase 1 inventory preserved; Phase 2 current-state boundary added
+**Status:** Read-only inventory complete; the independent replacement clone now exists and all cleanup dispositions still require owner approval
+**Root inspected:** `C:\Users\jerac\Documents\TraderLink`
 **Rule:** No folder, worktree, Git metadata, branch, process, database, or scheduled task was changed or removed.
 
 ## Planned replacement and external backup clarification
 
-- `C:\Users\jerac\Documents\TraderLink\traderlink-platform` does not exist. It is the owner-selected clean replacement path for a future full traceable Git checkout after Phase 2 authorization. It is not included in the 88-folder snapshot.
+- `C:\Users\jerac\Documents\TraderLink\traderlink-platform` now exists as the active replacement implementation candidate. It is a full independent clone on `codex/traderlink-platform-replacement` at `a3193e19806af955093aa236349d796171d9bf97`, with the recorded GitHub remote and no upstream, push, or deployment. It was created after the dated 88-folder Phase 1 snapshot and therefore is not included in that historical count.
 - `C:\Users\jerac\Documents\traderslink.pro back up july 29` sits outside the audited `TraderLink` parent and is an owner-identified backup. Its `v4-temp-sql` subfolder is an early experiment, not an active database. Preserve the entire backup; do not treat it as an implementation workspace or cleanup target.
 - `C:\Users\jerac\Documents\TraderLink\traderslink.pro` remains intact as the legacy recovery/reference folder throughout migration and may remain indefinitely after acceptance.
 
@@ -23,13 +23,14 @@ The parent workspace contains **88 immediate directories**. The confusion comes 
 - 9 orphaned Levels System worktree folders whose referenced Git directory no longer exists; and
 - 14 ordinary data, backup, tool, recovered, or unregistered project folders.
 
-These categories account for all 88 immediate directories without treating names as evidence that a folder is obsolete.
+These categories account for all 88 immediate directories in the dated Phase 1 snapshot without treating names as evidence that a folder is obsolete. The subsequently created `traderlink-platform` clone is recorded separately and does not retroactively change that snapshot.
 
-## Canonical repository
+## Preserved legacy repository and active replacement candidate
 
 | Path | Branch/HEAD | State | Disposition |
 | --- | --- | --- | --- |
-| `C:\Users\jerac\Documents\TraderLink\traderslink.pro` | `main` / `4e19f51cdd` | 5 tracked modified files and 32 untracked files at the Phase 1 snapshot; 70 commits ahead of `origin/main` | **Keep.** This is the only canonical application and replacement implementation location. Reconcile its current dirty state before any cleanup or Phase 2 database work. |
+| `C:\Users\jerac\Documents\TraderLink\traderslink.pro` | `main` / `a3193e1980` | Two tracked product modifications and 22 untracked preservation files; 72 commits ahead of the locally recorded `origin/main` | **Keep as legacy recovery/reference.** It remains the complete legacy/production reference and receives only explicitly approved emergency or preservation work during migration. |
+| `C:\Users\jerac\Documents\TraderLink\traderlink-platform` | `codex/traderlink-platform-replacement` / `a3193e1980` | Independent clone; clean at the owner-accepted clone checkpoint; current changes are documentation-only and uncommitted | **Keep as active replacement candidate.** All new replacement implementation belongs here within the authorized migration checkpoint. |
 
 ## Worktrees registered to the canonical repository: 43 total
 
@@ -196,8 +197,8 @@ Disposition: **Do not touch / Recover or compare**. Compare their source to `lev
 
 ## Cleanup order recommended to the owner
 
-1. Keep the canonical repository, `private-data`, backups, Playwright, separate bot/tool projects, and all dirty/unique workspaces unchanged.
-2. Reconcile and commit/archive the canonical repository's current product work before Phase 2.
+1. Keep the preserved legacy repository, active replacement candidate, `private-data`, backups, Playwright, separate bot/tool projects, and all dirty/unique workspaces unchanged.
+2. Preserve the legacy repository's current product work. Reconcile or commit/archive it only through a separate owner-approved emergency, preservation, or cleanup checkpoint; it is not the normal replacement implementation location.
 3. Reconcile the 17 canonical worktrees with head-only commits.
 4. Reconcile the dirty `trader-intelligence-v2` clone, its dirty worktrees, and the six active branches not contained by canonical main.
 5. Reconcile Levels System orphan/repaired/vendor sources.

@@ -1,7 +1,7 @@
 # Workspace and Worktree Cleanup Plan
 
-**Status:** Planning control; no folder deletion is authorized.  
-**Scope:** `C:\Users\jerac\Documents\TraderLink` and Git worktrees registered to TraderLink repositories.  
+**Status:** Planning control updated for the active Phase 2 replacement candidate; no folder deletion is authorized.
+**Scope:** `C:\Users\jerac\Documents\TraderLink` and Git worktrees registered to TraderLink repositories.
 **Purpose:** Make the development workspace understandable without losing features, commits, configuration, private data, or recovery options.
 
 ## Preliminary observation
@@ -14,9 +14,9 @@ The Trade Tracker example demonstrates why evidence is required: `codex/trade-tr
 
 ## Canonical rule
 
-`C:\Users\jerac\Documents\TraderLink\traderslink.pro` remains the canonical legacy reference until an owner-approved replacement checkpoint promotes a new path. A folder name, branch name, recent timestamp, running port, or local environment file cannot independently make another folder canonical.
+`C:\Users\jerac\Documents\TraderLink\traderslink.pro` remains the preserved legacy and current production reference until an owner-approved replacement checkpoint promotes the accepted replacement. A folder name, branch name, recent timestamp, running port, or local environment file cannot independently make another folder canonical.
 
-The owner has approved the **plan** for one clean replacement candidate at `C:\Users\jerac\Documents\TraderLink\traderlink-platform`; the folder does not exist and its creation still requires explicit Phase 2 authorization. It must be a full traceable checkout from an accepted preservation commit in the same repository lineage, not an ad hoc file copy or another temporary worktree. It becomes canonical only after final replacement acceptance. The original `traderslink.pro` folder remains an intact, non-running recovery/reference archive and need not be deleted.
+The owner authorized and accepted one clean replacement candidate at `C:\Users\jerac\Documents\TraderLink\traderlink-platform`. It now exists as a full independent clone from the accepted preservation state on `codex/traderlink-platform-replacement` at `a3193e19806af955093aa236349d796171d9bf97`; it is not an ad hoc file copy or temporary worktree. It is the active location for new replacement implementation but becomes the canonical production application only after final replacement acceptance. The original `traderslink.pro` folder remains the intact legacy recovery/reference application and need not be deleted.
 
 No other permanent sibling copy is created during cleanup. Temporary worktrees must have a named feature, branch, owner/status, review purpose, and removal condition in the workspace inventory.
 
@@ -66,4 +66,4 @@ Registered worktrees are removed through Git-aware worktree handling after verif
 5. **Removal review:** re-check paths and dependencies and request explicit deletion approval.
 6. **Cleanup:** remove only approved targets, then prune stale Git worktree metadata and update the inventory.
 
-Cleanup is not a prerequisite for replacement work. The completed Discovery inventory plus owner acceptance of the exact source commit/path/data boundary are prerequisites for creating `traderlink-platform`. Existing folder cleanup can occur much later or not at all; no deletion is required for replacement acceptance.
+Cleanup is not a prerequisite for replacement work. The completed Discovery inventory and owner acceptance of the exact source commit/path/data boundary authorized the independent `traderlink-platform` clone, which now exists. Existing folder cleanup can occur much later or not at all; no deletion is required for replacement acceptance.

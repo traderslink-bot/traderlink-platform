@@ -14,11 +14,14 @@ V3 roadmap decision.
 
 The older Trader Intelligence Dashboard Baseline and Whole Site Source of Truth
 sections below govern maintenance of the preserved legacy application. They do
-not prescribe the replacement's future module architecture once a migration
-checkpoint authorizes implementation. Phase 1 records the owner's selected
-clean replacement path at
-`C:\Users\jerac\Documents\TraderLink\traderlink-platform`. It does not exist
-yet and must not be created until Phase 2 is explicitly authorized.
+not prescribe the replacement's future module architecture. Phase 2 is active,
+and the owner-accepted independent clone at
+`C:\Users\jerac\Documents\TraderLink\traderlink-platform` is the active
+replacement implementation candidate. Its branch is
+`codex/traderlink-platform-replacement` at
+`a3193e19806af955093aa236349d796171d9bf97`. The legacy `traderslink.pro`
+folder remains the preserved recovery/reference application. The replacement
+database remains absent pending owner acceptance of the current checkpoint.
 
 - Trader Intelligence V3 is legacy implementation, not the architecture for
   future ordinary dashboards. Do not add a new normal dashboard dependency on
@@ -40,9 +43,9 @@ yet and must not be created until Phase 2 is explicitly authorized.
   executions use their actual execution date/time, not the submission date;
   daily notes and reviews remain separate per trading date.
 - `traderslink.pro` remains the complete legacy reference until the owner
-  accepts a complete replacement. Do not create a replacement folder,
-  database, process, deployment, or delete legacy code until the migration
-  checkpoint authorizes the exact action.
+  accepts a complete replacement. Do not create another replacement folder,
+  create the replacement database, start a replacement process, deploy, or
+  delete legacy code until the migration checkpoint authorizes the exact action.
 - The approved visual baseline is the light Material UI dashboard with its
   complete left navigation. A dark or reduced dashboard that omits Trades,
   Calendar with week/month views, Analytics, Analytics Lab, or Trading Rules is
@@ -55,11 +58,10 @@ yet and must not be created until Phase 2 is explicitly authorized.
   data, not a complete live customer dataset. `v4-temp-sql` was located only
   inside `C:\Users\jerac\Documents\traderslink.pro back up july 29`; it is an
   early experiment, is not configured, and is rejected as a migration source.
-- Once Phase 2 is authorized, new replacement implementation belongs only in
-  the clean, traceable full checkout at `traderlink-platform`, created from an
-  accepted preservation commit in the existing Git lineage. The original
-  `traderslink.pro` folder remains intact as the legacy recovery/reference
-  source and need not be deleted.
+- New replacement implementation belongs only in the clean, traceable full
+  checkout at `traderlink-platform`. The original `traderslink.pro` folder
+  remains intact as the legacy recovery/reference source and receives only
+  explicitly approved emergency or preservation work during migration.
 - Workspace cleanup is evidence-gated by
   `docs/migration/workspace-and-worktree-cleanup-plan.md`. Inventory unique
   commits, dirty/untracked files, private data, processes, and dependencies;
@@ -156,8 +158,9 @@ This section governs legacy maintenance and production until the accepted
 replacement is deliberately promoted under the migration plan. It does not
 cancel the owner-approved clean replacement-folder direction.
 
-- The permanent local source-of-truth repo is `C:\Users\jerac\Documents\TraderLink\traderslink.pro`.
-- Work on branches inside this repository. Do not make a sibling folder or a Codex visualization preview the active application just to work on a feature.
+- The preserved legacy and current production source-of-truth repo is `C:\Users\jerac\Documents\TraderLink\traderslink.pro`.
+- The active replacement implementation candidate is `C:\Users\jerac\Documents\TraderLink\traderlink-platform`; new replacement work occurs there only within the authorized migration checkpoint.
+- Work on branches inside the legacy repository only for explicitly approved emergency or preservation work. Do not make another sibling folder or a Codex visualization preview the active application just to work on a feature.
 - Codex visualization folders and extra worktrees are temporary review copies only. Before relying on, restarting, or deleting one, save its intended changes to a GitHub branch and bring that branch back into this repository.
 - Run the local dashboard from this repository once its branch has been integrated. Do not leave the user dependent on a temporary preview server or its private `.env.local` file.
 - Before removing any duplicate project folder, show the user the exact folder, confirm its intended changes are safely on GitHub or already in this repository, and receive explicit approval.

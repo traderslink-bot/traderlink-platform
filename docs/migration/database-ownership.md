@@ -1,8 +1,8 @@
 # TraderLink Database Ownership
 
-**Phase:** 1 - inventory and baseline  
-**Status:** Current local evidence recorded; replacement development path selected but not created  
-**Inspection rule:** All Phase 1 database inspection is read-only. No copy, migration, pragma change, process stop, or database write was performed.
+**Phase:** Phase 1 inventory preserved; Phase 2 replacement baseline active
+**Status:** Legacy online backup and disposable restore verified; replacement development path selected but still absent pending owner checkpoint approval
+**Inspection rule:** The legacy source remains read-only. Phase 2 created only the authorized private backup and disposable restore-verification target; it did not stop a process or create the replacement database.
 
 ## Direct answer about `v4-temp-sql`
 
@@ -48,7 +48,7 @@ The replacement local development database will be created at:
 
 `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\development.sqlite`
 
-That path does not exist at the Phase 1 checkpoint. It is outside both source repositories, uses the permanent platform name rather than V3/V4 terminology, and will contain one physical local database with explicit module-owned migrations and repositories. Creation, schema initialization, or data migration requires explicit Phase 2 authorization.
+That path remains absent during active Phase 2. It is outside both source repositories, uses the permanent platform name rather than V3/V4 terminology, and will contain one physical local database with explicit module-owned migrations and repositories. Creation, schema initialization, or data migration now requires owner acceptance of the backup/documentation checkpoint and explicit continuation.
 
 The current V3-named database is accepted as a possible **migration input**, not as the replacement working database. It must first pass online-backup, restore, provenance, and source-statement reconciliation gates.
 
@@ -212,6 +212,23 @@ One module must never infer ownership from a generic fallback to `TRADER_INTELLI
 5. Reconcile the January IBKR source statement to accepted executions, 334 closed/2 open round trips, contained decisions, and all coverage counts.
 6. Export/migrate the 4 current tag assignments and any surviving News/Watchlist/Academy/affiliate facts under their named owners.
 7. Create the replacement database only after the schema/module contract is owner-accepted; do not edit the legacy source in place or dual-write silently.
+
+## Phase 2 online-backup and restore checkpoint
+
+- Source: `C:\Users\jerac\Documents\TraderLink\private-data\v3-dashboard\trading-rules-v1.sqlite`.
+- Completed backup: `C:\Users\jerac\Documents\TraderLink\private-data\legacy-app\backups\phase-2-20260801T053759Z\trading-rules-v1-online-backup.sqlite`.
+- Disposable restored target: `C:\Users\jerac\Documents\TraderLink\private-data\legacy-app\restore-verification\phase-2-20260801T053759Z\trading-rules-v1-restored.sqlite`.
+- Backup method: existing `better-sqlite3` `Database.backup` binding over SQLite's online backup API, with the source opened read-only while PID 3160 remained running.
+- Backup and restored SHA-256: `92B814735EFF41BAEAFB6BC1F2E8B7E0D4EFDD137416D0C0C80708DB50F5E737`.
+- Immediately after the main backup and restore operations, no destination sidecars were observed. Later read-only verification of these WAL-mode databases created sidecars without changing either main database hash:
+  - backup WAL: 0 bytes, created `2026-08-01T05:39:42.5618474Z`;
+  - backup SHM: 32,768 bytes;
+  - restored WAL: 0 bytes, created `2026-08-01T05:40:59.0642485Z`; and
+  - restored SHM: 32,768 bytes.
+- Do not delete these sidecars during the current correction checkpoint.
+- Source, backup, and restored target have the same 34-object schema DDL digest, four ordered migration rows, all 24 table counts, 4,096-byte page size, 3,752 pages, and `quick_check=ok`.
+- `PRAGMA schema_version` is SQLite's internal schema-cache cookie, not TraderLink's migration version. SQLite's online backup implementation deliberately updates a new destination's schema cookie, so source value 34 and destination value 1 do not indicate schema loss. The authoritative migration evidence is the matching `schema_migrations` rows, schema DDL digest, table counts, page geometry, hashes, and integrity checks. See [SQLite PRAGMA documentation](https://sqlite.org/pragma.html#pragma_schema_version) and [SQLite backup implementation evidence](https://sqlite.org/matrix/ev/src/backup.html).
+- Full evidence and restore instructions are in [Phase 2 Replacement Baseline Progress](phase-2-replacement-baseline-progress.md).
 
 ## Phase 1 conclusions
 

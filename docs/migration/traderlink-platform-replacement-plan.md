@@ -1,10 +1,10 @@
 # TraderLink Platform Replacement Plan
 
-**Status:** Approved planning baseline. Phase 0 was explicitly accepted. Phase 1 was explicitly accepted by the project owner on 2026-08-01. Phase 2 has not been authorized.  
+**Status:** Approved planning baseline. Phase 0 and Phase 1 were explicitly accepted. Phase 2 is in progress; the preservation/clone checkpoint is owner-accepted and the corrected database backup/restore documentation checkpoint awaits owner review.
 **Owner:** Project owner and Codex  
 **Prepared:** 2026-07-31  
 **Supersedes for future platform work:** the V3 implementation roadmap in `plan.md`. That document remains historical reference only.  
-**Related documents:** [Import Integrity and Data Decisions Contract](import-integrity-and-data-decisions-contract.md), [Product Inventory](product-inventory.md), [Route Ownership](route-ownership.md), [Database Ownership](database-ownership.md), [V3 Dependency Map](v3-dependency-map.md), [Module Contracts](module-contracts.md), [Analytics Capability Catalog](analytics-capability-catalog.md), [Operational and Configuration Inventory](operational-and-configuration-inventory.md), [Workspace Inventory](workspace-inventory.md), [Source Snapshot](source-snapshot-and-untracked-manifest.md), [Workspace and Worktree Cleanup Plan](workspace-and-worktree-cleanup-plan.md), [Risk Register](risk-register.md), [Acceptance Inventory](acceptance-inventory.md), [Phase 1 Progress](phase-1-inventory-and-baseline-progress.md), [Phase Handoff Template](phase-handoff-template.md), [Phase 0 Handoff](phase-0-planning-handoff.md), [Phase 1 Handoff](phase-1-inventory-and-baseline-handoff.md), [Migration Register](migration-register.md), and [Migration Progress](migration-progress.md).
+**Related documents:** [Import Integrity and Data Decisions Contract](import-integrity-and-data-decisions-contract.md), [Product Inventory](product-inventory.md), [Route Ownership](route-ownership.md), [Database Ownership](database-ownership.md), [V3 Dependency Map](v3-dependency-map.md), [Module Contracts](module-contracts.md), [Analytics Capability Catalog](analytics-capability-catalog.md), [Operational and Configuration Inventory](operational-and-configuration-inventory.md), [Workspace Inventory](workspace-inventory.md), [Source Snapshot](source-snapshot-and-untracked-manifest.md), [Workspace and Worktree Cleanup Plan](workspace-and-worktree-cleanup-plan.md), [Risk Register](risk-register.md), [Acceptance Inventory](acceptance-inventory.md), [Phase 1 Progress](phase-1-inventory-and-baseline-progress.md), [Phase 2 Progress](phase-2-replacement-baseline-progress.md), [Phase Handoff Template](phase-handoff-template.md), [Phase 0 Handoff](phase-0-planning-handoff.md), [Phase 1 Handoff](phase-1-inventory-and-baseline-handoff.md), [Migration Register](migration-register.md), and [Migration Progress](migration-progress.md).
 
 ## 1. Mandate
 
@@ -202,9 +202,9 @@ Statements, source rows, executions, decisions, and notes are private owner data
 
 The current `traderslink.pro` checkout remains the complete legacy reference until final replacement acceptance. No source, route, database, or feature is deleted before then.
 
-The owner has selected a clean replacement folder so the new structure is visible and the legacy workspace cannot keep confusing implementation work. The planned Phase 2 path is `C:\Users\jerac\Documents\TraderLink\traderlink-platform`; it does not exist yet and must not be created until Phase 2 is explicitly authorized.
+The owner authorized and accepted the clean independent-clone checkpoint at `C:\Users\jerac\Documents\TraderLink\traderlink-platform`. It exists as the active replacement implementation candidate on branch `codex/traderlink-platform-replacement` at `a3193e19806af955093aa236349d796171d9bf97`, with the intended GitHub remote and no upstream, push, or deployment.
 
-This clean folder will be a full, traceable Git checkout from an accepted preservation commit in the existing repository lineage, with the intended GitHub remote and branch recorded. It is not an unexplained file copy, an unrelated second product, or another disposable worktree. During migration:
+This clean folder is a full, traceable, independent Git clone from the accepted preservation state in the existing repository lineage. It is not an unexplained file copy, an unrelated second product, or another disposable worktree. During migration:
 
 1. `C:\Users\jerac\Documents\TraderLink\traderslink.pro` remains the preserved legacy reference and recovery source.
 2. `C:\Users\jerac\Documents\TraderLink\traderlink-platform` is the clearly labeled replacement candidate and the only folder used for new replacement implementation after its creation.
@@ -223,11 +223,11 @@ Each in-repository replacement slice follows the same cutover rule:
 5. Obtain UI approval for any visible change, then switch the existing public route to the replacement service.
 6. Retain a documented rollback point until the slice is accepted; remove legacy code only through the migration-register deletion gate.
 
-The Phase 2 setup checkpoint must record the clean checkout's exact source commit, remote, branch, data boundary, process/port, and promotion/rollback lifecycle. The legacy and replacement folders must never both be presented as the active canonical application.
+The Phase 2 setup checkpoint records the clean checkout's exact source commit, remote, branch, data boundary, process/port, and promotion/rollback lifecycle in [Phase 2 Replacement Baseline Progress](phase-2-replacement-baseline-progress.md). The legacy application remains the preserved production/recovery reference while `traderlink-platform` is the sole active replacement implementation candidate; neither is presented as the other.
 
 The workspace cleanup procedure is controlled by [Workspace and Worktree Cleanup Plan](workspace-and-worktree-cleanup-plan.md). Nothing is deleted merely because its name looks old. Unique commits, dirty tracked files, untracked source, ignored/private data, environment dependencies, active processes, and deployed or scheduled dependencies must be preserved or deliberately reconciled first. The user sees the exact proposed action for every folder before any deletion.
 
-The accepted legacy behavior inventory is frozen as the preservation baseline; the canonical repository itself remains the controlled implementation location. Emergency legacy fixes require an entry in the migration register and an explicit decision whether the fix must also be ported to a replacement module.
+The accepted legacy behavior inventory is frozen as the preservation baseline. New replacement implementation belongs in `traderlink-platform`. The legacy `traderslink.pro` repository receives only explicitly approved emergency or preservation work, and every emergency fix requires a migration-register entry plus an explicit decision whether it must also be ported to a replacement module.
 
 ## 8. Inventory and route ownership
 

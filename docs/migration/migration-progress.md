@@ -1,7 +1,7 @@
 # TraderLink Platform Migration Progress
 
-**Current phase:** Phase 1 - Inventory and baseline, complete and explicitly accepted on 2026-08-01. Phase 2 is not yet authorized.  
-**Current implementation state:** No replacement folder, database, process, product route, or deployment has been changed by this planning package.
+**Current phase:** Phase 2 - Replacement baseline, in progress. The preservation/clone checkpoint is accepted and the corrected database backup/restore documentation checkpoint awaits owner review.
+**Current implementation state:** The independent replacement checkout exists. The replacement database remains absent, and no product route, application process, deployment, or production state has changed.
 
 ## Completed planning decisions
 
@@ -20,9 +20,9 @@
 - The current legacy application remains preserved until complete owner-approved replacement acceptance.
 - The approved dashboard preservation baseline is the light Material UI design with the complete left navigation. A dark or reduced legacy/experimental shell is not the final dashboard.
 - The accepted Calendar has week/month views and sits under Trades in that same dashboard navigation.
-- The replacement will be built in one clean, traceable full checkout planned at `C:\Users\jerac\Documents\TraderLink\traderlink-platform`. The current `traderslink.pro` folder remains intact as a recovery/reference archive and need not be deleted.
+- The replacement is now in one clean, traceable full checkout at `C:\Users\jerac\Documents\TraderLink\traderlink-platform`. The current `traderslink.pro` folder remains intact as a recovery/reference archive and need not be deleted.
 - `v4-temp-sql` was located inside `C:\Users\jerac\Documents\traderslink.pro back up july 29`; it is an early experiment, not configured, and owner-rejected as a migration source.
-- The selected replacement development database path is `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\development.sqlite`; it does not exist and awaits Phase 2 authorization.
+- The selected replacement development database path is `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\development.sqlite`; it remains absent and creation awaits owner acceptance of the current checkpoint plus explicit continuation.
 - Big Time weekly content automation is preserved but explicitly deferred as a low-priority News operation outside the core Journal/database replacement.
 
 ## Current verified local baseline
@@ -67,6 +67,18 @@ The owner explicitly authorized Phase 1 in the current chat on 2026-07-31. Phase
 
 1. The owner accepted the Phase 1 inventory, folder dispositions, current legacy source, backup-only V4 conclusion, approved dashboard/Calendar baseline, clean replacement path, module contracts, analytics first slice, risks, and replacement-start boundary on 2026-08-01.
 2. Carry the two machine-state unknowns forward with explicit evidence gates: the installed Big Time scheduled-task target must be proven only before that low-priority automation is changed/reactivated or its related folder is considered for cleanup, and the exact process holding the legacy database must be proven before a later authorized stop/copy.
-3. Phase 2 may begin only when the owner explicitly authorizes it, either in this chat or by using the ready-to-copy Phase 2 prompt in the Phase 1 handoff.
+3. The owner explicitly authorized Phase 2 and accepted its preservation-commit and independent-clone checkpoint on 2026-08-01.
 
-No feature code, database copy, process stop, replacement-folder creation, deployment, or deletion is authorized by this tracker.
+## Phase 2 preservation, clone, and database-backup checkpoint
+
+- Legacy reference: `C:\Users\jerac\Documents\TraderLink\traderslink.pro`, `main` at `a3193e19806af955093aa236349d796171d9bf97`.
+- The legacy worktree retains exactly two tracked product modifications and 22 untracked preservation files. They remain outside the replacement checkout.
+- Replacement: `C:\Users\jerac\Documents\TraderLink\traderlink-platform`, branch `codex/traderlink-platform-replacement`, HEAD `a3193e19806af955093aa236349d796171d9bf97`, remote `https://github.com/traderslink-bot/traderslink-trader-improvement-system.git`.
+- The replacement was clean at the accepted clone checkpoint. No upstream, push, deployment, dependency installation, environment copy, or server start occurred.
+- The selected replacement database `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\development.sqlite` remains absent.
+- The configured legacy source was backed up with the SQLite online backup API while PID 3160 remained running. The completed backup is `C:\Users\jerac\Documents\TraderLink\private-data\legacy-app\backups\phase-2-20260801T053759Z\trading-rules-v1-online-backup.sqlite`, SHA-256 `92B814735EFF41BAEAFB6BC1F2E8B7E0D4EFDD137416D0C0C80708DB50F5E737`.
+- The backup was restored to a separate disposable private-data target. All 24 table counts, four migration rows, schema DDL digest, page geometry, and `quick_check=ok` match the legacy source and completed backup.
+- No sidecars existed immediately after the main backup and restore operations. Later read-only verification of the WAL-mode files created zero-byte WAL and 32,768-byte SHM sidecars beside both new databases; the main database hashes remain unchanged and identical. The sidecars are preserved pending owner review.
+- Complete evidence and restore instructions are in [Phase 2 Replacement Baseline Progress](phase-2-replacement-baseline-progress.md).
+
+Current stop boundary: owner review is required before creating `development.sqlite`. No feature code, source-database mutation, process stop, test, server, push, deployment, deletion, or production change is authorized by this tracker.
