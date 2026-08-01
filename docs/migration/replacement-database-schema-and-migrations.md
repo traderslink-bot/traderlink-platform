@@ -585,15 +585,22 @@ The following names reserve the module-owned migration direction. None of these 
 
 | Future table | Durable purpose and identity |
 | --- | --- |
-| `journal_import_batches` | One immutable upload/preview/acceptance envelope per workspace/account/source with file digest, adapter/version, retention reference, and state |
+| `journal_import_batches` | Stable immutable upload identity plus an audited current-state pointer per workspace/account/source, with file digest, adapter/version, and retention reference |
+| `journal_import_events` | Append-only import-state, acceptance, supersession, and rebuild audit events |
 | `journal_source_rows` | Preserved row evidence, original order, raw private evidence reference, parsed values, mapping version, issue state, and supersession; never silently deleted to make analytics pass |
+| `journal_source_row_issues` | Versioned deterministic parser/mapping/row findings with blocking and contained-resolution state |
+| `journal_source_coverage_intervals` | Immutable complete/partial/point-only/unknown account/source/asset/time coverage facts so upload order and missing periods remain explicit |
+| `journal_instruments` | Workspace-owned normalized instrument identity without symbol-only authority |
+| `journal_position_facts` | Immutable opening, closing, and open-position quantities from statements or audited corrections |
 | `journal_executions` | Stable canonical execution identity and current accepted/needs-decision/excluded/superseded state |
 | `journal_execution_versions` | Immutable factual revisions with exact execution time, side, quantity, price, fees, currency, instrument, actor, reason, and supersession |
 | `journal_execution_provenance` | Many-to-many links from an execution version to import/source row, broker execution/order identity, manual entry, or system correction evidence |
 | `journal_data_decisions` | Current issue, affected chain, available factual actions, consequence, and rebuild state |
 | `journal_data_decision_events` | Append-only decision/audit history with actor, before/after facts, reason/evidence, timestamp, and resulting revision |
+| `journal_chain_rebuilds` | Append-only full-chain input/output digest, algorithm version, trigger, counts, and freshness evidence |
 | `journal_round_trips` | Rebuildable stable trade record for one workspace/account/instrument/currency zero-to-nonzero-to-zero chain, including open/closed/needs-decision state |
-| `journal_round_trip_execution_allocations` | Exact quantity allocated from ordered executions to a round trip, including split allocation when an execution crosses zero |
+| `journal_round_trip_versions` | Immutable projection versions for a stable round trip; Phase 4 derives metrics from their linked execution versions |
+| `journal_round_trip_execution_allocations` | Exact quantity allocated from ordered execution versions to a round-trip version, including split allocation when an execution crosses zero |
 | `journal_execution_identity_aliases` | Preserved broker/manual/correction identities that resolve to one stable execution without relying on upload order |
 | `journal_round_trip_identity_aliases` | Prior deterministic round-trip keys that resolve notes/tags/reviews to the stable current round-trip ID after rebuilds |
 | `journal_trading_days` | Stable workspace/account/trading-date/timezone record with carried position and coverage metadata |
@@ -606,7 +613,13 @@ The following names reserve the module-owned migration direction. None of these 
 | `journal_trading_day_rule_reviews` | Rule outcome and evidence keyed by workspace/account/trading date and rule version |
 | `journal_round_trip_reviews` | Trade-level factual review keyed by stable round-trip identity and version |
 
-Each later table requires its own authorized Journal migration, repository contract, exact constraints, reconciliation proof, and migration-register update. Source rows, decisions, and audit events are durable facts; round trips and summaries are reproducible derivatives.
+The exact migration split, constraints, algorithms, private-source gates, and
+verification sequence are now technically accepted in the [Phase 3 Journal
+Integrity Plan](phase-3-journal-integrity-plan.md). Slice A may proceed under its
+tracker; later database/private-source operations remain separately gated.
+Source rows, position facts,
+execution versions, decisions, and audit events are durable facts; round-trip
+versions and summaries are reproducible derivatives.
 
 ## 8. Initialization and connection behavior
 

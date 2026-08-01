@@ -53,6 +53,13 @@ Within an owner/account/instrument/currency chain, a round trip begins when net 
 
 Missing opening inventory, ambiguous execution ordering, or missing required facts contain the issue to the affected chain. Later historical uploads or trader corrections trigger reconstruction and may resolve it without changing unrelated trades.
 
+Containment is dependency-specific rather than an all-history symbol switch. A
+missing price affects its round trip and price-dependent metrics; a missing
+optional fee affects fee/net metrics; a missing position-changing fact affects
+only the interval whose position path cannot be proved. A supported position
+checkpoint or convergent deterministic path may re-establish position so valid
+later same-symbol round trips remain eligible.
+
 ## Blocking versus contained issues
 
 | Condition | Import result | Data Decisions result | Analytics result |

@@ -1,6 +1,6 @@
 # TraderLink Platform Replacement Plan
 
-**Status:** Approved planning baseline. Phases 0 and 1 are accepted. The Phase 2 database foundation and local development-owner seed are implemented, focused-verified, independently verified, and technically accepted by the coordinating auditor. Phase 3 Journal integrity is the active next boundary. Public login/account integration is deferred until the complete dashboard is preparing to go live.
+**Status:** Approved planning baseline. Phases 0 and 1 are accepted. The Phase 2 database foundation and local development-owner seed are implemented, focused-verified, independently verified, and technically accepted by the coordinating auditor. The exact Phase 3 Journal integrity plan is technically accepted and Slice A is active. Public login/account integration is deferred until the complete dashboard is preparing to go live.
 
 **Phase 2 foundation preservation:** Local commit `fea56307fbd0142ef99b9f13c020451a6a503cc7` (`feat(platform): establish verified database foundation`); not pushed or deployed.
 
@@ -10,7 +10,7 @@
 
 **Supersedes for future platform work:** the V3 implementation roadmap in `plan.md`. That document remains historical reference only.
 
-**Related documents:** [Import Integrity and Data Decisions Contract](import-integrity-and-data-decisions-contract.md), [Product Inventory](product-inventory.md), [Route Ownership](route-ownership.md), [Database Ownership](database-ownership.md), [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md), [V3 Dependency Map](v3-dependency-map.md), [Module Contracts](module-contracts.md), [Analytics Capability Catalog](analytics-capability-catalog.md), [Operational and Configuration Inventory](operational-and-configuration-inventory.md), [Workspace Inventory](workspace-inventory.md), [Source Snapshot](source-snapshot-and-untracked-manifest.md), [Workspace and Worktree Cleanup Plan](workspace-and-worktree-cleanup-plan.md), [Risk Register](risk-register.md), [Acceptance Inventory](acceptance-inventory.md), [Phase 1 Progress](phase-1-inventory-and-baseline-progress.md), [Phase 2 Progress](phase-2-replacement-baseline-progress.md), [Development Owner Seed Progress](development-owner-seed-progress.md), [Phase Handoff Template](phase-handoff-template.md), [Phase 0 Handoff](phase-0-planning-handoff.md), [Phase 1 Handoff](phase-1-inventory-and-baseline-handoff.md), [Migration Register](migration-register.md), and [Migration Progress](migration-progress.md).
+**Related documents:** [Import Integrity and Data Decisions Contract](import-integrity-and-data-decisions-contract.md), [Product Inventory](product-inventory.md), [Route Ownership](route-ownership.md), [Database Ownership](database-ownership.md), [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md), [Phase 3 Journal Integrity Plan](phase-3-journal-integrity-plan.md), [Phase 3 Journal Integrity Progress](phase-3-journal-integrity-progress.md), [V3 Dependency Map](v3-dependency-map.md), [Module Contracts](module-contracts.md), [Analytics Capability Catalog](analytics-capability-catalog.md), [Operational and Configuration Inventory](operational-and-configuration-inventory.md), [Workspace Inventory](workspace-inventory.md), [Source Snapshot](source-snapshot-and-untracked-manifest.md), [Workspace and Worktree Cleanup Plan](workspace-and-worktree-cleanup-plan.md), [Risk Register](risk-register.md), [Acceptance Inventory](acceptance-inventory.md), [Phase 1 Progress](phase-1-inventory-and-baseline-progress.md), [Phase 2 Progress](phase-2-replacement-baseline-progress.md), [Development Owner Seed Progress](development-owner-seed-progress.md), [Phase Handoff Template](phase-handoff-template.md), [Phase 0 Handoff](phase-0-planning-handoff.md), [Phase 1 Handoff](phase-1-inventory-and-baseline-handoff.md), [Migration Register](migration-register.md), and [Migration Progress](migration-progress.md).
 
 ## 1. Mandate
 
@@ -88,7 +88,10 @@ Overlapping statements and reimports are previewed before acceptance. A broker e
 
 For each owner, account, instrument, and currency:
 
-1. The position starts at zero, unless supported opening-inventory evidence says otherwise.
+1. The position starts from supported opening-inventory evidence. An explicit
+   zero is valid; when the earliest coverage boundary has no supported opening
+   fact, the system creates a contained Data Decision instead of silently
+   assuming zero.
 2. The first execution that changes the position from zero to non-zero starts a new round trip.
 3. Partial entries and exits remain in that round trip while the net position is non-zero.
 4. The execution that returns the position to zero closes the round trip.
@@ -264,13 +267,20 @@ The inventory is a controlling target list, not an "at minimum" list. It must cl
 | 0. Planning | Finalize this plan, integrity contract, register, and agent direction. | Owner approves the planning package. |
 | 1. Inventory and baseline | Complete the controlling inventory, source snapshot manifest, data/store map, analytics catalog, workspace/folder audit, and acceptance inventory. | Owner accepts the legacy baseline, folder dispositions, database source, and exact replacement start point. |
 | 2. Replacement baseline | Preserve the accepted legacy source state, create the planned clean `traderlink-platform` checkout in the same repository lineage, establish the module baseline and separate database, and carry forward the approved light Material shell without redesign. | Legacy and replacement paths are unambiguous, the replacement is traceable and independently runnable, and no product behavior is intentionally lost. |
-| 3. Journal integrity | Port source rows, imports, executions, round trips, and Data Decisions. | Repair decisions rebuild correctly and preserve evidence. |
+| 3. Journal integrity | Implement the accepted [Phase 3 Journal Integrity Plan](phase-3-journal-integrity-plan.md): preserve every source record, establish one versioned execution ledger, contain Data Decisions, and rebuild exact round trips from full chronological chains. | Source evidence and history are preserved; import/reimport/overlap/manual provenance is deterministic; decisions rebuild correctly; opening/closing inventory and open positions reconcile; one unresolved chain does not hide unrelated valid trades; private-source counts and focused/disposable/backup/restore evidence pass. |
 | 4. Core analytics | Implement the shared exact analytics slice and its coverage contract. | Real test data reconciles across Workspace, Trades, and Analytics. |
 | 5. Module transfer | Port remaining Journal capabilities, Academy, Watchlist, News, Coach, Account, and platform services. | Each inventory item is accepted or explicitly deferred by the owner. |
 | 6. Replacement acceptance | Browser review, focused and checkpoint testing, restore test, deployment rehearsal, and owner acceptance. | No active dependency on the legacy app remains. |
 | 7. Legacy retirement | Archive, verify recovery, and remove legacy assets only with explicit owner approval. | Replacement is the accepted complete app. |
 
 Within Phase 2, the exact schema digest, migration identity, initialization recovery, versioned account fingerprinting, `WorkspaceAccessScope`, owner/admin/member permission model, separate ownership-seed gate, focused verification plan, and exact implementation-file list in [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md) are implemented and correction-verified. The coordinating technical auditor accepted the code, verified empty database, and 10-file/53-test result under the owner's delegated technical checkpoint authority. The follow-on [Development Owner Seed Progress](development-owner-seed-progress.md) checkpoint is also complete: the database was backed up, previewed, atomically seeded, and independently verified at domain counts 1/1/1/1/0 with matching schema/migration digests and no trading data. Phase 3 may proceed and is not blocked on public login. Discord-first login, optional email/password, and user-facing account management are reconciled in the Platform portion of Phase 5 before go-live without changing stable Journal ownership IDs.
+
+Phase 3 planning must also refactor the Phase 2 verifier boundary before adding
+new migrations. The five ownership-foundation table names remain an immutable
+historical profile; the complete managed-table set expands with the current
+manifest. Ordinary runtime continues to reject a historical prefix as pending,
+while explicit verification may inspect a named accepted prefix without
+silently migrating or adopting it.
 
 Any new or redesigned UI must be shown to the owner for visual approval before it is treated as an accepted feature slice. Broad tests, full builds, deployment, process stopping, database creation, and production changes occur only when their checkpoint requires them.
 

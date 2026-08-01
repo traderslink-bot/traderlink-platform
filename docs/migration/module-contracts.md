@@ -55,10 +55,17 @@ Broker executions, round trips, analytics calculations, lesson completions, Watc
 
 ## Journal
 
+The exact Phase 3 persistence, reconciliation, reconstruction, and verification
+contract is defined in the [Phase 3 Journal Integrity
+Plan](phase-3-journal-integrity-plan.md). It refines this module boundary without
+moving Journal authority into V3, routes, pages, or browser code.
+
 ### Owns facts
 
 - Broker statements/import files and retention metadata.
 - Immutable source rows and mappings.
+- Immutable source coverage intervals; a missing statement period never means
+  zero activity, and a manual entry never claims full-account coverage.
 - Import batches/previews/acceptance/supersession.
 - Canonical executions from broker and manual sources.
 - Data Decisions, corrections, exclusions, duplicate resolution, opening inventory, and decision audit.
@@ -88,7 +95,7 @@ An accepted execution must have the minimum facts required to change position: a
 
 ### Data Decision contract
 
-Required: affected source rows/executions/round-trip chain; detected issue and consequence; available factual actions; before/after preview; trader choice; actor/time/reason; rebuild status; resulting aliases/coverage. Supported actions include correct, add missing execution, exclude, resolve duplicate, confirm supported opening inventory, keep distinct, merge/supersede, and classify a supported position as legitimately open.
+Required: affected source rows/executions/round-trip chain; detected issue and consequence; available factual actions; before/after preview; trader choice; actor/time/reason; rebuild status; resulting aliases/coverage. Supported actions include correct, add a missing execution with new manual/correction provenance, set an evidence-supported execution order, exclude, resolve duplicate, confirm supported opening inventory, keep distinct, merge/supersede, and classify a supported position as legitimately open.
 
 The trader controls facts. The service rejects arithmetically impossible outcomes such as declaring a non-zero position closed without an execution/inventory fact that reaches zero.
 

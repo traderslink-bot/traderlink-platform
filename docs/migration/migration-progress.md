@@ -1,7 +1,7 @@
 # TraderLink Platform Migration Progress
 
-**Current phase:** Phase 3 - Journal integrity planning and implementation boundary. The Phase 2 foundation and local development ownership seed are technically accepted and complete under delegated owner authority.
-**Current implementation state:** The local-only seed passed its static verifier and all three focused files/all eleven tests with one worker, was backed up, previewed, atomically executed, and independently verified. The database contains domain counts 1/1/1/1/0 with matching schema/migration digests. No public login, source-account identity, or private/legacy trading data was added.
+**Current phase:** Phase 3 - Journal integrity Slice A (migration compatibility and schema). The Phase 2 foundation and local development ownership seed are technically accepted and complete under delegated owner authority.
+**Current implementation state:** The local-only seed passed its static verifier and all three focused files/all eleven tests with one worker, was backed up, previewed, atomically executed, and independently verified. The database contains domain counts 1/1/1/1/0 with matching schema/migration digests. The [Phase 3 plan](phase-3-journal-integrity-plan.md) and [tracker](phase-3-journal-integrity-progress.md) are technically accepted and define the migrations, evidence/ledger/decision/rebuild contracts, and private-source gates. Slice A is authorized; no Phase 3 code, migration, source-account identity, or private/legacy trading data has yet been added.
 **Phase 2 foundation commit:** `fea56307fbd0142ef99b9f13c020451a6a503cc7` (`feat(platform): establish verified database foundation`), preserved locally without push or deployment.
 
 ## Completed planning decisions
@@ -27,6 +27,8 @@
 - The owner accepted one active workspace owner, owner/admin access to every active account in the same workspace, member denial until grants are designed, two initial migrations, five empty domain tables, and empty initialization without private seed data.
 - The owner-accepted design uses `WorkspaceAccessScope`, versioned broker-account fingerprint/canonicalization/HMAC identities, globally unique migration IDs, exact post-migration schema digests with fail-closed drift detection, separate runtime/initializer modes, canonical UUID-v4/numeric UTC validation, workspace-versus-account isolation, a separate ownership-seed approval gate, the accepted focused verification plan, and the accepted exact implementation-file list.
 - Big Time weekly content automation is preserved but explicitly deferred as a low-priority News operation outside the core Journal/database replacement.
+- The Phase 3 planning evidence reconciles all 2,284 source records, including 1,072 Stock execution records and 542 preserved-but-unsupported Forex records. Zero-to-zero arithmetic produces 331 closed round trips, one statement-supported open chain, and one contained closing-position mismatch; legacy session/time-gap trade counts are not the target.
+- Before adding migration 3, verifier semantics must separate the immutable five-table Phase 2 ownership-foundation profile from the expanding current migration manifest. Ordinary runtime remains strict and never auto-migrates.
 
 ## Current verified local baseline
 
