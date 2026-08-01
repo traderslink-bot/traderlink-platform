@@ -36,7 +36,7 @@ Important project rule:
 
 Private April statement used:
 
-- `artifacts/real-csv-calibration/private/U21845737_202604_202604.csv`
+- `artifacts/real-csv-calibration/private/[redacted-account]_202604_202604.csv`
 
 Isolated local QA DB:
 
