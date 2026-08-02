@@ -2,6 +2,8 @@
 
 **Status:** Complete and accepted; Slices A-D passed their technical gates and the owner visually approved Slice E on 2026-08-02
 **Controlling plan:** [Phase 4 Core Analytics Plan](phase-4-core-analytics-plan.md)
+**Handoff:** [Phase 4 Core Analytics Handoff](phase-4-core-analytics-handoff.md)
+**Implementation commit:** `4575dafd0fb62804ac090c4a149152506d8db7b1`
 **Entry repository:** `C:\Users\jerac\Documents\TraderLink\traderlink-platform`
 **Entry branch:** `codex/traderlink-platform-replacement`
 **Entry HEAD:** `624849bc89b33c5fe07da5566d40be6135dea1f4`

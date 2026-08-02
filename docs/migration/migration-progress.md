@@ -4,6 +4,7 @@
 **Historical pre-runtime implementation state:** The [Phase 3 plan](phase-3-journal-integrity-plan.md) and [tracker](phase-3-journal-integrity-progress.md) preserve the complete pre-runtime design and execution history. The accepted state immediately below supersedes former queued/unexecuted and 331/1/1 planning claims.
 **Phase 2 foundation commit:** `fea56307fbd0142ef99b9f13c020451a6a503cc7` (`feat(platform): establish verified database foundation`), preserved locally without push or deployment.
 **Phase 3 implementation commit:** `8f6a4d4e4dec20ef6edcd50f476b14d368bde505` (`feat(journal): complete phase 3 integrity foundation`), preserved locally without push or deployment.
+**Phase 4 implementation commit:** `4575dafd0fb62804ac090c4a149152506d8db7b1` (`feat(analytics): complete replacement route cutover`), preserved locally without push or deployment. See [Phase 4 Handoff](phase-4-core-analytics-handoff.md).
 
 **Accepted Phase 3 runtime state:** The exact 11-file focused suite passed all
 129 tests with one worker and no file parallelism; the static verifier passed;
