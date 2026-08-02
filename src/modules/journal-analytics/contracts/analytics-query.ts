@@ -14,6 +14,24 @@ export const JOURNAL_ANALYTICS_TIME_BUCKET_MINUTES = Object.freeze([
 export type JournalAnalyticsMoneyBasis = "gross" | "net";
 export type JournalAnalyticsDirection = "long" | "short";
 export type JournalAnalyticsOutcome = "win" | "loss" | "flat";
+export type JournalAnalyticsWeekday =
+  | "monday"
+  | "tuesday"
+  | "wednesday"
+  | "thursday"
+  | "friday"
+  | "saturday"
+  | "sunday";
+
+export type JournalAnalyticsDecimalRange = Readonly<{
+  minimumInclusive: string | null;
+  maximumInclusive: string | null;
+}>;
+
+export type JournalAnalyticsDurationRange = Readonly<{
+  minimumMillisecondsInclusive: number | null;
+  maximumMillisecondsInclusive: number | null;
+}>;
 export type JournalAnalyticsProvenanceGroup =
   | "broker_only"
   | "manual_only"
@@ -57,6 +75,12 @@ export type JournalAnalyticsQuery = Readonly<{
   directions: readonly JournalAnalyticsDirection[];
   provenance: readonly JournalAnalyticsProvenanceGroup[];
   outcomes: readonly JournalAnalyticsOutcome[];
+  entryWeekdays: readonly JournalAnalyticsWeekday[];
+  entryTimeBuckets: readonly string[];
+  holdingDurationRange: JournalAnalyticsDurationRange;
+  enteredQuantityRange: JournalAnalyticsDecimalRange;
+  maximumPositionRange: JournalAnalyticsDecimalRange;
+  entryNotionalRange: JournalAnalyticsDecimalRange;
   groupings: readonly JournalAnalyticsGrouping[];
   entryTimeBucketMinutes: (typeof JOURNAL_ANALYTICS_TIME_BUCKET_MINUTES)[number];
   asOfUtc: string;

@@ -48,8 +48,14 @@ export type NormalizedJournalAnalyticsRow = Readonly<{
   holdingDurationMilliseconds: number;
   isOvernight: boolean;
   uniqueExecutionCount: number;
+  uniqueExecutionIds: readonly string[];
   allocationCount: number;
+  allocationRoleCounts: Readonly<Record<
+    JournalAnalyticsAllocationFact["allocationRole"],
+    number
+  >>;
   provenanceGroup: JournalAnalyticsProvenanceGroup;
+  provenanceKinds: readonly JournalAnalyticsAllocationFact["provenanceKinds"][number][];
   hasOverlapEvidence: boolean;
   grossPnlDecimal: string;
   grossOutcome: JournalAnalyticsOutcome;
@@ -60,6 +66,7 @@ export type NormalizedJournalAnalyticsRow = Readonly<{
   netPnlDecimal: string | null;
   netOutcome: JournalAnalyticsOutcome | null;
   enteredQuantityDecimal: string;
+  exitQuantityDecimal: string;
   maximumPositionQuantityDecimal: string;
   entryNotionalDecimal: string;
   exitNotionalDecimal: string;
@@ -89,6 +96,7 @@ export type NormalizedJournalAnalyticsSet = Readonly<{
   legitimateOpenRoundTrips: readonly JournalAnalyticsRoundTripFact[];
   needsDecisionRoundTrips: readonly JournalAnalyticsRoundTripFact[];
   unavailableRoundTrips: readonly JournalAnalyticsUnavailableRoundTrip[];
+  pendingDecisionFacts: JournalAnalyticsFactSet["pendingDecisions"];
 }>;
 
 type AllocationChargeState =
@@ -288,6 +296,7 @@ function normalizeReadyClosed(
   }
   let grossPnlDecimal = "0";
   let enteredQuantityDecimal = "0";
+  let exitQuantityDecimal = "0";
   let entryNotionalDecimal = "0";
   let exitNotionalDecimal = "0";
   let runningPositionDecimal = "0";
@@ -296,7 +305,19 @@ function normalizeReadyClosed(
   let chargeCreditDecimal = "0";
   const chargeReasons = new Set<string>();
   const increasingRoles = new Set(["opening", "adding", "flip_opening"]);
+  const allocationRoleCounts: Record<
+    JournalAnalyticsAllocationFact["allocationRole"],
+    number
+  > = {
+    opening: 0,
+    adding: 0,
+    reducing: 0,
+    closing: 0,
+    flip_closing: 0,
+    flip_opening: 0,
+  };
   for (const allocation of roundTrip.allocations) {
+    allocationRoleCounts[allocation.allocationRole] += 1;
     if (allocation.priceDecimal === null) {
       platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
         check: "analytics_ready_closed_price",
@@ -333,6 +354,10 @@ function normalizeReadyClosed(
       );
       entryNotionalDecimal = addExactDecimals(entryNotionalDecimal, notional);
     } else {
+      exitQuantityDecimal = addExactDecimals(
+        exitQuantityDecimal,
+        allocation.allocatedQuantityDecimal,
+      );
       exitNotionalDecimal = addExactDecimals(exitNotionalDecimal, notional);
     }
     const charge = chargeByAllocation.get(allocation.allocationId);
@@ -389,6 +414,12 @@ function normalizeReadyClosed(
     tradingTimezone,
   );
   const source = classifyJournalAnalyticsProvenance(roundTrip.allocations);
+  const uniqueExecutionIds = Object.freeze([...new Set(
+    roundTrip.allocations.map((allocation) => allocation.executionId),
+  )].sort());
+  const provenanceKinds = Object.freeze([...new Set(
+    roundTrip.allocations.flatMap((allocation) => allocation.provenanceKinds),
+  )].sort());
   return Object.freeze({
     roundTripId: roundTrip.roundTripId,
     roundTripVersionId: roundTrip.roundTripVersionId,
@@ -404,10 +435,12 @@ function normalizeReadyClosed(
     closeLocal,
     holdingDurationMilliseconds,
     isOvernight: entryLocal.localDate !== closeLocal.localDate,
-    uniqueExecutionCount: new Set(roundTrip.allocations.map((allocation) =>
-      allocation.executionId)).size,
+    uniqueExecutionCount: uniqueExecutionIds.length,
+    uniqueExecutionIds,
     allocationCount: roundTrip.allocations.length,
+    allocationRoleCounts: Object.freeze(allocationRoleCounts),
     provenanceGroup: source.group,
+    provenanceKinds,
     hasOverlapEvidence: source.hasOverlapEvidence,
     grossPnlDecimal,
     grossOutcome: outcome(grossPnlDecimal),
@@ -418,6 +451,7 @@ function normalizeReadyClosed(
     netPnlDecimal,
     netOutcome: netPnlDecimal === null ? null : outcome(netPnlDecimal),
     enteredQuantityDecimal,
+    exitQuantityDecimal,
     maximumPositionQuantityDecimal,
     entryNotionalDecimal,
     exitNotionalDecimal,
@@ -430,6 +464,7 @@ function normalizationDigest(input: Readonly<{
   legitimateOpenRoundTrips: readonly JournalAnalyticsRoundTripFact[];
   needsDecisionRoundTrips: readonly JournalAnalyticsRoundTripFact[];
   unavailableRoundTrips: readonly JournalAnalyticsUnavailableRoundTrip[];
+  pendingDecisionFacts: JournalAnalyticsFactSet["pendingDecisions"];
 }>): string {
   return createHash("sha256").update(JSON.stringify({
     normalizationVersion: JOURNAL_ANALYTICS_NORMALIZATION_VERSION,
@@ -501,11 +536,13 @@ export function normalizeJournalAnalyticsFacts(
       legitimateOpenRoundTrips: frozenOpen,
       needsDecisionRoundTrips: frozenDecisions,
       unavailableRoundTrips: frozenUnavailable,
+      pendingDecisionFacts: factSet.pendingDecisions,
     }),
     accounts: factSet.accounts,
     realizedRows: frozenRows,
     legitimateOpenRoundTrips: frozenOpen,
     needsDecisionRoundTrips: frozenDecisions,
     unavailableRoundTrips: frozenUnavailable,
+    pendingDecisionFacts: factSet.pendingDecisions,
   });
 }

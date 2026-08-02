@@ -13,7 +13,10 @@ import {
   buildJournalAnalyticsPopulations,
   requireJournalAnalyticsQuery,
 } from "./analytics-population";
-import { calculateJournalAnalyticsResponse } from "./analytics-service";
+import {
+  calculateJournalAnalyticsResponse,
+  calculateJournalAnalyticsRoundTripTableResponse,
+} from "./analytics-service";
 import type {
   JournalAnalyticsUnavailableRoundTrip,
   NormalizedJournalAnalyticsRow,
@@ -89,8 +92,21 @@ function normalizedRow(
     holdingDurationMilliseconds: 1_800_000,
     isOvernight: false,
     uniqueExecutionCount: 2,
+    uniqueExecutionIds: Object.freeze([
+      `execution-${sequence}-1`,
+      `execution-${sequence}-2`,
+    ]),
     allocationCount: 2,
+    allocationRoleCounts: Object.freeze({
+      opening: 1,
+      adding: 0,
+      reducing: 0,
+      closing: 1,
+      flip_closing: 0,
+      flip_opening: 0,
+    }),
     provenanceGroup: "broker_only",
+    provenanceKinds: Object.freeze(["broker"] as const),
     hasOverlapEvidence: false,
     grossPnlDecimal: input.gross,
     grossOutcome: grossComparison > 0 ? "win" : grossComparison < 0 ? "loss" : "flat",
@@ -109,6 +125,7 @@ function normalizedRow(
           ? "loss"
           : "flat",
     enteredQuantityDecimal: "10",
+    exitQuantityDecimal: "10",
     maximumPositionQuantityDecimal: "10",
     entryNotionalDecimal: "100",
     exitNotionalDecimal: "100",
@@ -195,6 +212,7 @@ function normalizedSet(
       stateRoundTrip("decision-2", "needs_decision"),
     ]),
     unavailableRoundTrips: Object.freeze([unavailable]),
+    pendingDecisionFacts: Object.freeze([]),
   });
 }
 
@@ -238,6 +256,24 @@ function query(
     directions: Object.freeze([]),
     provenance: Object.freeze([]),
     outcomes: Object.freeze([]),
+    entryWeekdays: Object.freeze([]),
+    entryTimeBuckets: Object.freeze([]),
+    holdingDurationRange: Object.freeze({
+      minimumMillisecondsInclusive: null,
+      maximumMillisecondsInclusive: null,
+    }),
+    enteredQuantityRange: Object.freeze({
+      minimumInclusive: null,
+      maximumInclusive: null,
+    }),
+    maximumPositionRange: Object.freeze({
+      minimumInclusive: null,
+      maximumInclusive: null,
+    }),
+    entryNotionalRange: Object.freeze({
+      minimumInclusive: null,
+      maximumInclusive: null,
+    }),
     groupings: Object.freeze([
       "total",
       "closing_day",
@@ -423,6 +459,112 @@ describe("Journal Analytics population, accumulation and grouping", () => {
       .toBe(true);
   });
 
+  it("supports every accepted grouping without exposing internal account or instrument IDs", () => {
+    const population = buildJournalAnalyticsPopulations(normalizedSet(), query())[0];
+    const grouped = groupJournalAnalyticsPopulation(
+      population,
+      [
+        "closing_day",
+        "closing_iso_week",
+        "closing_month",
+        "closing_year",
+        "entry_weekday",
+        "entry_time_bucket",
+        "instrument",
+        "direction",
+        "account",
+        "provenance",
+        "holding_duration_bucket",
+        "entered_quantity_bucket",
+        "maximum_position_bucket",
+        "entry_notional_bucket",
+        "realized_outcome",
+      ],
+      ["total_trades", "gross_pnl"],
+      "gross",
+      15,
+    );
+    expect(grouped.reconciliation.status).toBe("reconciled");
+    expect(new Set(grouped.groups.map((group) => group.grouping)).size).toBe(15);
+    const serialized = JSON.stringify(grouped);
+    expect(serialized).not.toContain(accountId);
+    expect(serialized).not.toContain(instrumentA);
+    expect(serialized).not.toContain(instrumentB);
+    expect(grouped.groups.find((group) => group.grouping === "account"))
+      .toMatchObject({ groupKey: "account_1", label: "Account 1" });
+  });
+
+  it("uses ISO week-year boundaries rather than calendar-year labels", () => {
+    const rows = [
+      normalizedRow(1, { gross: "1", net: "1", date: "2025-12-29", weekday: "monday", bucket: "09:30", instrumentId: instrumentA, symbol: "AAA" }),
+      normalizedRow(2, { gross: "1", net: "1", date: "2026-01-01", weekday: "thursday", bucket: "09:30", instrumentId: instrumentA, symbol: "AAA" }),
+    ];
+    const population = buildJournalAnalyticsPopulations(normalizedSet(rows), query())[0];
+    const grouped = groupJournalAnalyticsPopulation(
+      population,
+      ["closing_iso_week"],
+      ["total_trades", "gross_pnl"],
+      "gross",
+    );
+    expect(grouped.groups).toHaveLength(1);
+    expect(grouped.groups[0]).toMatchObject({
+      groupKey: "2026-W01",
+      label: "2026-W01",
+    });
+  });
+
+  it("keeps grouped output digests stable when source row order changes", () => {
+    const original = normalizedSet().realizedRows;
+    const forwardPopulation = buildJournalAnalyticsPopulations(
+      normalizedSet(original),
+      query(),
+    )[0];
+    const reversePopulation = buildJournalAnalyticsPopulations(
+      normalizedSet([...original].reverse()),
+      query(),
+    )[0];
+    const collect = (population: typeof forwardPopulation) =>
+      groupJournalAnalyticsPopulation(
+        population,
+        ["closing_day", "instrument"],
+        ["total_trades", "gross_pnl"],
+        "gross",
+      ).groups.map((group) => Object.freeze({
+        grouping: group.grouping,
+        groupKey: group.groupKey,
+        digests: group.metrics.map((metric) => metric.resultDigestSha256),
+      }));
+    expect(collect(forwardPopulation)).toEqual(collect(reversePopulation));
+  });
+
+  it("applies weekday, time, duration, quantity and notional filters together", () => {
+    const populations = buildJournalAnalyticsPopulations(normalizedSet(), query({
+      entryWeekdays: Object.freeze(["monday"]),
+      entryTimeBuckets: Object.freeze(["09:30"]),
+      holdingDurationRange: Object.freeze({
+        minimumMillisecondsInclusive: 1_800_000,
+        maximumMillisecondsInclusive: 1_800_000,
+      }),
+      enteredQuantityRange: Object.freeze({
+        minimumInclusive: "10",
+        maximumInclusive: "10",
+      }),
+      maximumPositionRange: Object.freeze({
+        minimumInclusive: "10",
+        maximumInclusive: "10",
+      }),
+      entryNotionalRange: Object.freeze({
+        minimumInclusive: "100",
+        maximumInclusive: "100",
+      }),
+    }));
+    expect(populations).toHaveLength(1);
+    expect(populations[0].grossRows.map((row) => row.roundTripId))
+      .toEqual(["trade-1"]);
+    expect(populations[0].coverage.legitimateOpenCount).toBe(0);
+    expect(populations[0].coverage.needsDecisionCount).toBe(0);
+  });
+
   it("returns an honest empty partition and rejects unknown query contracts", () => {
     const nonEmptyFixture = normalizedSet([]);
     const empty: NormalizedJournalAnalyticsSet = Object.freeze({
@@ -442,6 +584,16 @@ describe("Journal Analytics population, accumulation and grouping", () => {
     expect(() => requireJournalAnalyticsQuery(empty, query({
       accountIds: Object.freeze(["00000000-0000-4000-8000-999999999999"]),
     }))).toThrowError("TRADERLINK_ACCOUNT_ACCESS_DENIED");
+    expect(() => requireJournalAnalyticsQuery(empty, {
+      ...query(),
+      unknownFilter: true,
+    } as JournalAnalyticsQuery)).toThrowError(
+      "TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED",
+    );
+    expect(() => requireJournalAnalyticsQuery(empty, query({
+      entryTimeBucketMinutes: 15,
+      entryTimeBuckets: Object.freeze(["09:10"]),
+    }))).toThrowError("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED");
   });
 });
 
@@ -576,5 +728,31 @@ describe("Journal Analytics shared service", () => {
     expect(response.partitions[0].groups).toHaveLength(5);
     expect(response.partitions[0].metrics.every((metric) =>
       metric.factSetRevisionSha256 === response.factSetRevisionSha256)).toBe(true);
+  });
+
+  it("paginates the full round-trip population with a stable private-safe cursor", () => {
+    const factSet = serviceFactSet();
+    const first = calculateJournalAnalyticsRoundTripTableResponse(factSet, query({
+      table: Object.freeze({ pageSize: 1, afterCursor: null }),
+    }));
+    expect(first).toMatchObject({
+      totalRowCount: 2,
+      limitations: ["rows_bounded"],
+    });
+    expect(first.rows).toHaveLength(1);
+    expect(first.continuationCursor).toMatch(/^[A-Za-z0-9_-]+$/u);
+    const second = calculateJournalAnalyticsRoundTripTableResponse(factSet, query({
+      table: Object.freeze({
+        pageSize: 1,
+        afterCursor: first.continuationCursor,
+      }),
+    }));
+    expect(second.rows).toHaveLength(1);
+    expect(second.rows[0].roundTripId).not.toBe(first.rows[0].roundTripId);
+    expect(second.continuationCursor).toBeNull();
+    const serialized = JSON.stringify([first, second]);
+    expect(serialized).not.toContain(accountId);
+    expect(serialized).not.toContain(instrumentA);
+    expect(serialized).not.toContain(instrumentB);
   });
 });

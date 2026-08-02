@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 
+import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
+
 import type { JournalAnalyticsMoneyBasis } from "../contracts/analytics-query";
 import type {
   JournalAnalyticsExactValue,
@@ -8,9 +10,11 @@ import type {
 } from "../contracts/analytics-result";
 import { JOURNAL_ANALYTICS_METRIC_REGISTRY_VERSION } from "../contracts/metric-registry";
 import {
-  requireJournalAnalyticsFirstSliceMetricDefinition,
+  JOURNAL_ANALYTICS_FIRST_SLICE_METRIC_IDS,
+  requireJournalAnalyticsMetricDefinition,
   type JournalAnalyticsFirstSliceMetricId,
 } from "./analytics-metric-registry";
+import { calculateExtendedJournalAnalyticsMetric } from "./analytics-extended-metrics";
 import type { JournalAnalyticsPopulation } from "./analytics-population";
 import {
   absoluteExactDecimal,
@@ -42,8 +46,8 @@ function basisValues(
   moneyBasis: JournalAnalyticsMoneyBasis,
 ): readonly string[] {
   return Object.freeze((moneyBasis === "gross"
-    ? population.basisRows.map((row) => row.grossPnlDecimal)
-    : population.basisRows.map((row) => row.netPnlDecimal!)));
+    ? population.grossRows.map((row) => row.grossPnlDecimal)
+    : population.netRows.map((row) => row.netPnlDecimal!)));
 }
 
 function netPartial(population: JournalAnalyticsPopulation): boolean {
@@ -186,6 +190,9 @@ function resultDigest(input: Readonly<{
   coverage: JournalAnalyticsPopulation["coverage"];
   limitations: readonly string[];
   factSetRevisionSha256: string;
+  queryDigestSha256: string;
+  populationKey: string;
+  asOfUtc: string | null;
 }>): string {
   return createHash("sha256").update(JSON.stringify(input), "utf8").digest("hex");
 }
@@ -195,13 +202,47 @@ export function accumulateJournalAnalyticsMetrics(
   metricIds: readonly string[],
   moneyBasis: JournalAnalyticsMoneyBasis,
 ): readonly JournalAnalyticsMetricResult[] {
+  const firstSliceIds = new Set<string>(JOURNAL_ANALYTICS_FIRST_SLICE_METRIC_IDS);
   return Object.freeze(metricIds.map((metricId) => {
-    const definition = requireJournalAnalyticsFirstSliceMetricDefinition(metricId);
-    const calculated = calculateMetric(
-      definition.metricId as JournalAnalyticsFirstSliceMetricId,
-      population,
-      moneyBasis,
-    );
+    const definition = requireJournalAnalyticsMetricDefinition(metricId);
+    const effectiveBasis = definition.moneyBasis === "gross" ||
+        definition.moneyBasis === "net"
+      ? definition.moneyBasis
+      : moneyBasis;
+    const calculated = definition.capabilityState === "unavailable"
+      ? unavailable(definition.unavailableReasonCode ?? "capability_unavailable")
+      : firstSliceIds.has(metricId)
+        ? calculateMetric(
+            definition.metricId as JournalAnalyticsFirstSliceMetricId,
+            population,
+            effectiveBasis,
+          )
+        : calculateExtendedJournalAnalyticsMetric(
+            metricId,
+            population,
+            effectiveBasis,
+          );
+    if (calculated === null) {
+      platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+        check: "analytics_metric_calculator_missing",
+        metricId,
+      });
+    }
+    const coveredCalculation = calculated.state === "complete" &&
+        effectiveBasis === "net" &&
+        definition.moneyBasis === "selectable" &&
+        population.coverage.feeIncompleteCount > 0
+      ? Object.freeze({
+          ...calculated,
+          state: "partial" as const,
+          limitationReasonCodes: Object.freeze([
+            ...new Set([
+              ...calculated.limitationReasonCodes,
+              "fee_coverage_partial",
+            ]),
+          ]),
+        })
+      : calculated;
     const resolvedBasis = definition.moneyBasis === "selectable"
       ? moneyBasis
       : definition.moneyBasis === "not_applicable"
@@ -209,20 +250,29 @@ export function accumulateJournalAnalyticsMetrics(
         : definition.moneyBasis;
     const limitations = Object.freeze([
       ...new Set([
-        ...calculated.limitationReasonCodes,
-        ...(calculated.state === "partial" ? population.limitations : []),
+        ...coveredCalculation.limitationReasonCodes,
+        ...(coveredCalculation.state === "partial" ? population.limitations : []),
       ]),
     ].sort());
     const digest = resultDigest({
       metricId,
-      value: calculated.value,
-      state: calculated.state,
+      value: coveredCalculation.value,
+      state: coveredCalculation.state,
       moneyBasis: resolvedBasis,
       currency: definition.valueKind === "money" ? population.currency : null,
       timezone: population.tradingTimezone,
       coverage: population.coverage,
       limitations,
       factSetRevisionSha256: population.factSetRevisionSha256,
+      queryDigestSha256: population.queryDigestSha256,
+      populationKey: population.partitionKey,
+      asOfUtc: metricId === "average_open_age" ||
+          metricId === "maximum_open_age" ||
+          metricId === "average_open_carried_days" ||
+          metricId === "average_pending_decision_age" ||
+          metricId === "maximum_pending_decision_age"
+        ? population.asOfUtc
+        : null,
     });
     return Object.freeze({
       metricId,
@@ -231,8 +281,8 @@ export function accumulateJournalAnalyticsMetrics(
       description: definition.description,
       valueKind: definition.valueKind,
       unit: definition.unit,
-      state: calculated.state,
-      value: calculated.value,
+      state: coveredCalculation.state,
+      value: coveredCalculation.value,
       moneyBasis: resolvedBasis,
       chargePolicy: resolvedBasis === "net"
         ? "complete_fee_rows_only_v1"

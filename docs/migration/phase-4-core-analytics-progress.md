@@ -1,6 +1,6 @@
 # Phase 4 Core Analytics Progress
 
-**Status:** Slices A-B are technically accepted under delegated owner authority; Slice C is active
+**Status:** Slices A-C are technically accepted under delegated owner authority; Slice D is active
 **Controlling plan:** [Phase 4 Core Analytics Plan](phase-4-core-analytics-plan.md)
 **Entry repository:** `C:\Users\jerac\Documents\TraderLink\traderlink-platform`
 **Entry branch:** `codex/traderlink-platform-replacement`
@@ -149,12 +149,65 @@ shared page-service calculation path.
 No real/private database, statement, route, UI, process, server, package,
 migration, push, deployment, production state or legacy repository changed.
 
+## Slice C result
+
+Slice C added the independent complete capability manifest, extended metric
+calculator, stable round-trip table, complete-registry and 10,000-execution
+scale tests, and the Phase 4 static verifier. It extended the existing query,
+normalization, population, grouping, accumulator and service paths instead of
+creating page-specific analytics copies.
+
+Accepted registry result:
+
+- 126/126 legacy migration candidates present;
+- 84 additional replacement capabilities present;
+- 210 unique definitions total;
+- 181 implemented or conditional on factual coverage;
+- 29 unavailable with exact missing-fact reason codes; and
+- registry SHA-256:
+  `bc49aaceebff2af7b2a35bc16f99f89e9c1d3ceb461b234d2ac21992cfd3049e`.
+
+The implemented/conditional families include activity, source/provenance,
+charges, outcomes, holding time, quantity/notional, calendar, streaks,
+realized-path drawdown/recovery/giveback, percentiles, exact population
+variance, rounded standard deviation, concentration, trade construction,
+legitimate-open lifecycle and privacy-safe Journal data-quality coverage.
+Unavailable families identify the absent commission component, accepted
+trader facts, account/equity/FX facts, market/order/session facts, Level
+Analysis/catalyst/benchmark facts or configured review-signal threshold. No
+sample result or motive label is emitted.
+
+The query now validates its complete field allowlist plus weekday, 5/15/30/60
+minute entry bucket, duration, quantity, maximum-position and entry-notional
+ranges. All accepted groupings reconcile through the same accumulator. The
+authenticated round-trip table uses stable keyset pagination, explicit
+continuation/`rows_bounded` state, full-population totals and a required single
+currency/timezone partition. Public aggregate/table DTOs do not expose account
+or instrument UUIDs.
+
+Verification on 2026-08-01:
+
+- targeted ESLint: passed;
+- dependency-scoped TypeScript for 22 roots/import closure: passed;
+- exact one-worker/no-file-parallelism Vitest gate: 8 files, 45 tests passed;
+- scale proof: 10,000 executions / 5,000 round trips, 1,010 milliseconds,
+  32,428,424 bytes measured heap growth; and
+- static verifier: passed with the counts and registry digest above.
+
+The ordinary verifier launch reproduced the known pre-application Node/Windows
+`uv_os_get_passwd` `ENOMEM`. The approved command-local preload was used for
+only the affected verifier process and removed immediately. No global/system
+setting or temporary file remains.
+
+No real/private database, statement, route, UI, persistent process, server,
+package, migration, push, deployment, production state or legacy repository
+changed.
+
 ## Next action
 
-Implement Slice C only: complete every currently supportable execution and
-round-trip capability from the accepted catalog in the machine-readable
-registry, add explicit unavailable entries for capabilities that need missing
-facts, and prove exact group-to-total reconciliation and output digests. Run the
-one-worker focused suite and Phase 4 static verifier. Do not start Slice D,
-private database verification, routes/UI, launcher or server work until that
-gate passes.
+Execute Slice D only: reverify branch/HEAD/tree, database hash/size/sidecars and
+ports; run the privacy-safe read-only verifier against the accepted database;
+independently reconstruct exact normalized Stock cash effects/headlines; and
+require 331 ready closed, zero legitimate open and two decision projections.
+The database main hash/size and non-empty-WAL state must remain unchanged. Do
+not start routes/UI, launcher or server work until that gate passes.

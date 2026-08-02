@@ -28,7 +28,34 @@ export type JournalAnalyticsGroupingResult = Readonly<{
 function groupDescriptor(
   row: NormalizedJournalAnalyticsRow,
   grouping: JournalAnalyticsGrouping,
+  moneyBasis: JournalAnalyticsMoneyBasis,
+  entryTimeBucketMinutes: 5 | 15 | 30 | 60,
+  accountOrdinals: ReadonlyMap<string, number>,
 ): Readonly<{ key: string; label: string }> {
+  const decimalBucket = (value: string) => {
+    if (compareExactDecimals(value, "0") === 0) {
+      return Object.freeze({ key: "zero", label: "0" });
+    }
+    for (const boundary of ["10", "100", "1000", "10000"]) {
+      if (compareExactDecimals(value, boundary) <= 0) {
+        return Object.freeze({
+          key: `up_to_${boundary}`,
+          label: `Up to ${boundary}`,
+        });
+      }
+    }
+    return Object.freeze({ key: "over_10000", label: "Over 10000" });
+  };
+  const isoWeek = (localDate: string) => {
+    const [year, month, day] = localDate.split("-").map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    const weekday = date.getUTCDay() || 7;
+    date.setUTCDate(date.getUTCDate() + 4 - weekday);
+    const isoYear = date.getUTCFullYear();
+    const yearStart = new Date(Date.UTC(isoYear, 0, 1));
+    const week = Math.ceil((((date.getTime() - yearStart.getTime()) / 86_400_000) + 1) / 7);
+    return `${isoYear}-W${String(week).padStart(2, "0")}`;
+  };
   switch (grouping) {
     case "closing_day":
       return Object.freeze({
@@ -37,14 +64,73 @@ function groupDescriptor(
       });
     case "instrument":
       return Object.freeze({
-        key: row.instrumentId,
+        key: row.displayedSymbol,
         label: row.displayedSymbol,
       });
     case "entry_time_bucket":
+      const bucketMinute = Math.floor(
+        row.entryLocal.minute / entryTimeBucketMinutes,
+      ) * entryTimeBucketMinutes;
       return Object.freeze({
-        key: row.entryLocal.bucket30Minute,
-        label: row.entryLocal.bucket30Minute,
+        key: `${String(row.entryLocal.hour).padStart(2, "0")}:${String(bucketMinute).padStart(2, "0")}`,
+        label: `${String(row.entryLocal.hour).padStart(2, "0")}:${String(bucketMinute).padStart(2, "0")}`,
       });
+    case "closing_iso_week": {
+      const value = isoWeek(row.closeLocal.localDate);
+      return Object.freeze({ key: value, label: value });
+    }
+    case "closing_month": {
+      const value = row.closeLocal.localDate.slice(0, 7);
+      return Object.freeze({ key: value, label: value });
+    }
+    case "closing_year": {
+      const value = row.closeLocal.localDate.slice(0, 4);
+      return Object.freeze({ key: value, label: value });
+    }
+    case "entry_weekday":
+      return Object.freeze({ key: row.entryLocal.weekday, label: row.entryLocal.weekday });
+    case "direction":
+      return Object.freeze({ key: row.direction, label: row.direction });
+    case "account": {
+      const ordinal = accountOrdinals.get(row.accountId);
+      if (ordinal === undefined) {
+        platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+          check: "analytics_account_group_ordinal",
+        });
+      }
+      return Object.freeze({
+        key: `account_${ordinal}`,
+        label: `Account ${ordinal}`,
+      });
+    }
+    case "provenance":
+      return Object.freeze({ key: row.provenanceGroup, label: row.provenanceGroup });
+    case "holding_duration_bucket": {
+      const minute = 60_000;
+      const hour = 60 * minute;
+      if (row.holdingDurationMilliseconds < minute) return Object.freeze({ key: "under_1m", label: "Under 1 minute" });
+      if (row.holdingDurationMilliseconds < 5 * minute) return Object.freeze({ key: "1m_to_5m", label: "1 to 5 minutes" });
+      if (row.holdingDurationMilliseconds < 15 * minute) return Object.freeze({ key: "5m_to_15m", label: "5 to 15 minutes" });
+      if (row.holdingDurationMilliseconds < 30 * minute) return Object.freeze({ key: "15m_to_30m", label: "15 to 30 minutes" });
+      if (row.holdingDurationMilliseconds < hour) return Object.freeze({ key: "30m_to_1h", label: "30 minutes to 1 hour" });
+      if (row.holdingDurationMilliseconds < 4 * hour) return Object.freeze({ key: "1h_to_4h", label: "1 to 4 hours" });
+      return Object.freeze({ key: "4h_or_more", label: "4 hours or more" });
+    }
+    case "entered_quantity_bucket":
+      return decimalBucket(row.enteredQuantityDecimal);
+    case "maximum_position_bucket":
+      return decimalBucket(row.maximumPositionQuantityDecimal);
+    case "entry_notional_bucket":
+      return decimalBucket(row.entryNotionalDecimal);
+    case "realized_outcome": {
+      const value = moneyBasis === "gross" ? row.grossOutcome : row.netOutcome;
+      if (value === null) {
+        platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+          check: "analytics_group_net_outcome",
+        });
+      }
+      return Object.freeze({ key: value, label: value });
+    }
     default:
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
         field: "grouping",
@@ -100,9 +186,28 @@ function populationForGroup(
     currency: population.currency,
     tradingTimezone: population.tradingTimezone,
     factSetRevisionSha256: population.factSetRevisionSha256,
+    queryDigestSha256: population.queryDigestSha256,
     grossRows: Object.freeze([...rows]),
     netRows: Object.freeze(netRows),
     basisRows: Object.freeze(basisRows),
+    legitimateOpenRoundTrips: Object.freeze([]),
+    needsDecisionRoundTrips: Object.freeze([]),
+    pendingDecisionFacts: Object.freeze([]),
+    asOfUtc: population.asOfUtc,
+    sourceCoverage: Object.freeze({
+      exactScope: false,
+      sourceRecordCount: 0,
+      importCount: 0,
+      decisionCount: 0,
+      positionFactCount: 0,
+      acceptedExecutionCount: 0,
+      importIssueCount: 0,
+      exactReimportEventCount: 0,
+      duplicateSourceRecordCount: 0,
+      acceptedSourceLimitationCount: 0,
+      completeCoverageIntervalCount: 0,
+      coverageGapCount: 0,
+    }),
     coverage: groupCoverage(rows, netRows, basisRows),
     limitations: Object.freeze([]),
   });
@@ -139,15 +244,24 @@ export function groupJournalAnalyticsPopulation(
   groupings: readonly JournalAnalyticsGrouping[],
   metricIds: readonly string[],
   moneyBasis: JournalAnalyticsMoneyBasis,
+  entryTimeBucketMinutes: 5 | 15 | 30 | 60 = 30,
 ): JournalAnalyticsGroupingResult {
   const groups: JournalAnalyticsGroupResult[] = [];
+  const accountOrdinals = new Map([...new Set(population.grossRows.map((row) =>
+    row.accountId))].sort().map((accountId, index) => [accountId, index + 1]));
   for (const grouping of groupings.filter((value) => value !== "total")) {
     const rowGroups = new Map<string, {
       label: string;
       rows: NormalizedJournalAnalyticsRow[];
     }>();
     for (const row of population.grossRows) {
-      const descriptor = groupDescriptor(row, grouping);
+      const descriptor = groupDescriptor(
+        row,
+        grouping,
+        moneyBasis,
+        entryTimeBucketMinutes,
+        accountOrdinals,
+      );
       const existing = rowGroups.get(descriptor.key) ?? {
         label: descriptor.label,
         rows: [],

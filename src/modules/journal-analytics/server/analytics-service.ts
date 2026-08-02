@@ -1,4 +1,5 @@
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
+import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
 import type { JournalAnalyticsFactSet } from "@/src/modules/journal/contracts/journal-analytics-fact-set";
 import type { JournalAnalyticsFactSetService } from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-service";
 
@@ -6,12 +7,15 @@ import type { JournalAnalyticsQuery } from "../contracts/analytics-query";
 import type {
   JournalAnalyticsPartitionedResponse,
   JournalAnalyticsResponse,
+  JournalAnalyticsRoundTripTableResponse,
 } from "../contracts/analytics-result";
 import { JOURNAL_ANALYTICS_RESULT_VERSION } from "../contracts/analytics-result";
 import { JOURNAL_ANALYTICS_METRIC_REGISTRY_VERSION } from "../contracts/metric-registry";
 import { accumulateJournalAnalyticsMetrics } from "./analytics-accumulator";
 import { groupJournalAnalyticsPopulation } from "./analytics-grouping";
+import { journalAnalyticsMetricRegistry } from "./analytics-metric-registry";
 import { buildJournalAnalyticsPopulations } from "./analytics-population";
+import { buildJournalAnalyticsRoundTripTable } from "./analytics-table";
 import { normalizeJournalAnalyticsFacts } from "./normalize-journal-analytics-facts";
 
 function selectedAccountSourceCoverage(
@@ -41,6 +45,7 @@ export function calculateJournalAnalyticsResponse(
       query.groupings,
       query.metricIds,
       query.moneyBasis,
+      query.entryTimeBucketMinutes,
     );
     const response: JournalAnalyticsResponse = Object.freeze({
       resultVersion: JOURNAL_ANALYTICS_RESULT_VERSION,
@@ -103,6 +108,26 @@ export function calculateJournalAnalyticsResponse(
   });
 }
 
+export function calculateJournalAnalyticsRoundTripTableResponse(
+  factSet: JournalAnalyticsFactSet,
+  query: JournalAnalyticsQuery,
+): JournalAnalyticsRoundTripTableResponse {
+  const normalized = normalizeJournalAnalyticsFacts(factSet);
+  const populations = buildJournalAnalyticsPopulations(normalized, query);
+  if (populations.length !== 1) {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+      field: "table.singlePartitionRequired",
+    });
+  }
+  return buildJournalAnalyticsRoundTripTable(
+    populations[0],
+    query.moneyBasis,
+    query.table.pageSize,
+    query.table.afterCursor,
+    factSet.generatedAtUtc,
+  );
+}
+
 export class JournalAnalyticsService {
   constructor(private readonly facts: JournalAnalyticsFactSetService) {}
 
@@ -149,6 +174,27 @@ export class JournalAnalyticsService {
     query: JournalAnalyticsQuery,
   ): JournalAnalyticsPartitionedResponse {
     return this.getAnalyticsOverview(scope, query);
+  }
+
+  getRoundTripAnalyticsTable(
+    scope: WorkspaceAccessScope,
+    query: JournalAnalyticsQuery,
+  ): JournalAnalyticsRoundTripTableResponse {
+    const factSet = this.facts.getJournalAnalyticsFactSet(scope, {
+      accountIds: query.accountIds,
+      closingDateRange: query.closingDateRange,
+      currencySelection: query.currency === null
+        ? Object.freeze({ kind: "all_partitions" as const })
+        : Object.freeze({
+            kind: "single_currency" as const,
+            currency: query.currency,
+          }),
+    });
+    return calculateJournalAnalyticsRoundTripTableResponse(factSet, query);
+  }
+
+  getAnalyticsCapabilityMetadata() {
+    return journalAnalyticsMetricRegistry;
   }
 
   getWorkspaceJournalAnalyticsSummary(

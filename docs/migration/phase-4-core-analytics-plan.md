@@ -1,6 +1,6 @@
 # Phase 4 Core Analytics Plan
 
-**Status:** Technically accepted under delegated owner authority; Slices A-B are technically accepted and Slice C is active
+**Status:** Technically accepted under delegated owner authority; Slices A-C are technically accepted and Slice D is active
 **Phase:** 4 - Core Analytics
 **Owner modules:** Journal publishes facts; Journal Analytics owns calculations
 **Replacement repository:** `C:\Users\jerac\Documents\TraderLink\traderlink-platform`
@@ -969,3 +969,57 @@ explicit unavailable registry entries for capabilities requiring missing
 trader/account/market facts. It must not start the private Slice D checkpoint,
 routes, launcher, server or UI work until the Slice C focused/static gate
 passes.
+
+## 27. Slice C implementation record
+
+Slice C is technically accepted under the owner's delegated checkpoint
+authority. It completed the independent replacement capability manifest without
+importing V3 runtime code. The machine-readable registry contains all 126
+legacy migration candidates plus 84 named replacement capabilities: 210 unique
+definitions total. Of those, 181 are implemented or conditional on factual
+coverage, and 29 are explicitly unavailable because the required commission,
+trader, account, instrument-session, order, market, benchmark, catalyst, level,
+or review-threshold fact does not exist.
+
+The supported calculation path now includes the remaining activity, source,
+charge, outcome, duration, quantity, notional, daily, streak, realized-path,
+drawdown, giveback, percentile, variance, standard-deviation, concentration,
+construction, open-position and Journal data-quality families. It preserves
+exact decimal/rational math, marks partial net populations, and retains exact
+missing-fact reasons. Pending decision timestamps and aggregate Journal
+coverage counts remain privacy-safe and support issue rates, decision ages,
+reimport/duplicate evidence and coverage-gap metrics.
+
+All accepted groupings now use the same accumulator: closing day/ISO
+week/month/year, entry weekday/time bucket, instrument, direction, privacy-safe
+account ordinal, provenance, duration/quantity/notional buckets and realized
+outcome. Group counts and gross/net money reconcile to the parent population.
+Bounded round-trip output uses a validated stable keyset cursor, reports the
+full eligible row count and `rows_bounded`, and requires one currency/timezone
+partition so a cursor cannot cross incompatible partitions. Aggregate output
+does not expose account or instrument UUIDs.
+
+The exact Slice C gate passed on 2026-08-01:
+
+- targeted ESLint over contracts, all Journal Analytics source/tests and the
+  Phase 4 static verifier;
+- dependency-scoped TypeScript over 22 roots and their imports;
+- eight focused Vitest files, one worker and no file parallelism: 45 tests
+  passed; and
+- the Phase 4 static verifier: 126 legacy IDs, 210 total capabilities, 181
+  implemented/conditional, 29 unavailable, registry digest
+  `bc49aaceebff2af7b2a35bc16f99f89e9c1d3ceb461b234d2ac21992cfd3049e`.
+
+The deterministic scale proof normalized and reconciled 10,000 executions into
+5,000 round trips in 1,010 milliseconds with 32,428,424 bytes measured heap
+growth. No cache or summary table is justified. The ordinary `tsx` verifier
+startup reproduced the known Windows `uv_os_get_passwd` `ENOMEM` before project
+code loaded. The plan's command-local CommonJS preload was used only for the
+affected verifier processes and removed immediately; no project, global or
+system setting remains.
+
+No private database, statement, route, UI, persistent process, server, package,
+schema migration, V3 analytics dependency, push, deployment, production state
+or legacy checkout changed. Slice D may now perform the privacy-safe read-only
+reconciliation against the accepted database. It must reverify the protected
+boundary first and stop before any route, launcher, server or UI work.

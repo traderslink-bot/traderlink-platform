@@ -1,3 +1,33 @@
+# 2026-08-01 - TraderLink Platform Phase 4 Slice C accepted
+
+**Branch:** `codex/traderlink-platform-replacement`.
+
+- Completed the independent replacement capability manifest: 126 legacy
+  migration candidates plus 84 named replacement capabilities, 210 unique
+  definitions total. The static verifier reports 181 implemented/conditional,
+  29 unavailable with exact missing-fact reasons, and registry digest
+  `bc49aaceebff2af7b2a35bc16f99f89e9c1d3ceb461b234d2ac21992cfd3049e`.
+- Extended the same exact accumulator across activity, provenance, charges,
+  outcomes, duration, quantity/notional, calendar, streak/path, distribution,
+  concentration, construction, legitimate-open and Journal data-quality
+  families. Added all accepted groupings and stable bounded round-trip
+  pagination without exposing account/instrument UUIDs in public DTOs.
+- Targeted ESLint and dependency-scoped TypeScript over 22 roots/imports passed.
+  The exact one-worker 8-file/45-test gate passed. Its 10,000-execution / 5,000
+  round-trip scale proof completed in 1,010 ms with 32,428,424 bytes measured
+  heap growth, so no cache/summary table is justified.
+- The known Node/Windows `uv_os_get_passwd` `ENOMEM` recurred before the static
+  verifier loaded project code. The command-local preload allowed the affected
+  verifier process to pass and was removed immediately; no setting or temp file
+  remains.
+- No private database, statement, route, UI, persistent process, server,
+  package, schema migration, V3 runtime dependency, push, deployment,
+  production state or legacy checkout changed.
+- Resume with Phase 4 Slice D only: reverify the protected database boundary,
+  run privacy-safe production-versus-independent read-only reconciliation, and
+  prove 331 ready closed / 0 legitimate open / 2 decisions without printing
+  private values. Do not begin routes/UI until that gate passes.
+
 # 2026-08-01 - TraderLink Platform Phase 4 Slice B accepted
 
 **Branch:** `codex/traderlink-platform-replacement`.

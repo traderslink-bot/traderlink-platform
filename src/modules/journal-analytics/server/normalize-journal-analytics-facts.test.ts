@@ -5,7 +5,10 @@ import type {
 } from "@/src/modules/journal/contracts/journal-analytics-fact-set";
 import { JOURNAL_ANALYTICS_FACT_SET_CONTRACT_VERSION } from "@/src/modules/journal/contracts/journal-analytics-fact-set";
 
-import { normalizeJournalAnalyticsFacts } from "./normalize-journal-analytics-facts";
+import {
+  journalAnalyticsLocalTimeFact,
+  normalizeJournalAnalyticsFacts,
+} from "./normalize-journal-analytics-facts";
 
 const ibkrCandidate = Object.freeze({
   sourceSystem: "ibkr",
@@ -25,6 +28,7 @@ function allocation(input: Readonly<{
   executionQuantity?: string;
   price: string;
   fees?: string | null;
+  feeCurrency?: string | null;
   feeSignConvention?: JournalAnalyticsAllocationFact["feeSignConvention"];
   atUtc: string;
 }>): JournalAnalyticsAllocationFact {
@@ -43,7 +47,7 @@ function allocation(input: Readonly<{
     executionQuantityDecimal: input.executionQuantity ?? input.quantity,
     priceDecimal: input.price,
     feesDecimal: fees,
-    feeCurrency: fees === null ? null : "USD",
+    feeCurrency: fees === null ? null : input.feeCurrency ?? "USD",
     feeSignConvention: input.feeSignConvention ??
       (fees === null ? "not_reported" : "broker_reported_signed"),
     factCompleteness: "complete",
@@ -172,6 +176,39 @@ function factSet(roundTrips: readonly JournalAnalyticsRoundTripFact[]): JournalA
 }
 
 describe("Journal Analytics normalization", () => {
+  it("uses IANA timezone facts across leap day and the DST spring boundary", () => {
+    expect(journalAnalyticsLocalTimeFact(
+      "2024-02-29T14:30:00.000Z",
+      "America/New_York",
+    )).toMatchObject({
+      localDate: "2024-02-29",
+      weekday: "thursday",
+      hour: 9,
+      minute: 30,
+      bucket30Minute: "09:30",
+    });
+    expect(journalAnalyticsLocalTimeFact(
+      "2026-03-08T06:55:00.000Z",
+      "America/New_York",
+    )).toMatchObject({
+      localDate: "2026-03-08",
+      weekday: "sunday",
+      hour: 1,
+      minute: 55,
+      bucket30Minute: "01:30",
+    });
+    expect(journalAnalyticsLocalTimeFact(
+      "2026-03-08T07:05:00.000Z",
+      "America/New_York",
+    )).toMatchObject({
+      localDate: "2026-03-08",
+      weekday: "sunday",
+      hour: 3,
+      minute: 5,
+      bucket30Minute: "03:00",
+    });
+  });
+
   it("normalizes a long round trip with exact gross, net, size and local time", () => {
     const input = factSet([roundTrip({
       id: "closed",
@@ -328,6 +365,45 @@ describe("Journal Analytics normalization", () => {
       chargeCoverage: "unavailable",
       chargeUnavailableReasonCodes: ["fee_not_reported"],
       chargeCostDecimal: null,
+      netPnlDecimal: null,
+    });
+  });
+
+  it("keeps gross facts but rejects cross-currency fees from net P/L", () => {
+    const result = normalizeJournalAnalyticsFacts(factSet([roundTrip({
+      id: "fee-currency",
+      openedAtUtc: "2026-01-05T14:30:00.000Z",
+      closedAtUtc: "2026-01-05T15:00:00.000Z",
+      allocations: [
+        allocation({
+          allocationId: "fee-currency-buy",
+          sequence: 1,
+          role: "opening",
+          executionId: "fee-currency-buy",
+          executionVersionId: "fee-currency-buy-v",
+          side: "buy",
+          quantity: "1",
+          price: "10",
+          feeCurrency: "CAD",
+          atUtc: "2026-01-05T14:30:00.000Z",
+        }),
+        allocation({
+          allocationId: "fee-currency-sell",
+          sequence: 2,
+          role: "closing",
+          executionId: "fee-currency-sell",
+          executionVersionId: "fee-currency-sell-v",
+          side: "sell",
+          quantity: "1",
+          price: "11",
+          atUtc: "2026-01-05T15:00:00.000Z",
+        }),
+      ],
+    })]));
+    expect(result.realizedRows[0]).toMatchObject({
+      grossPnlDecimal: "1",
+      chargeCoverage: "unavailable",
+      chargeUnavailableReasonCodes: ["fee_currency_mismatch"],
       netPnlDecimal: null,
     });
   });

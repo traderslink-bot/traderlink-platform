@@ -108,3 +108,36 @@ export type JournalAnalyticsPartitionedResponse = Readonly<{
   }>;
   limitations: readonly string[];
 }>;
+
+export type JournalAnalyticsRoundTripTableRow = Readonly<{
+  roundTripId: string;
+  displayedSymbol: string;
+  direction: "long" | "short";
+  openedAtUtc: string;
+  closedAtUtc: string;
+  entryLocalDate: string;
+  closeLocalDate: string;
+  provenance: string;
+  selectedPnlDecimal: string | null;
+  grossPnlDecimal: string;
+  chargeCoverage: "complete" | "unavailable";
+  chargeCostDecimal: string | null;
+  chargeCreditDecimal: string | null;
+  enteredQuantityDecimal: string;
+  maximumPositionQuantityDecimal: string;
+  entryNotionalDecimal: string;
+  holdingDurationMilliseconds: number;
+}>;
+
+export type JournalAnalyticsRoundTripTableResponse = Readonly<{
+  resultVersion: typeof JOURNAL_ANALYTICS_RESULT_VERSION;
+  factSetRevisionSha256: string;
+  generatedAtUtc: string;
+  moneyBasis: JournalAnalyticsMoneyBasis;
+  currency: string | null;
+  timezone: string;
+  totalRowCount: number;
+  rows: readonly JournalAnalyticsRoundTripTableRow[];
+  continuationCursor: string | null;
+  limitations: readonly string[];
+}>;
