@@ -7,6 +7,7 @@ rehearsal, real migrations, private preview/import/exact-reimport, append-only
 evidence vault, and independent database verification all passed. The package
 remains local, unpushed, and undeployed. Phase 4 Core Analytics planning is
 next.
+**Implementation commit:** `8f6a4d4e4dec20ef6edcd50f476b14d368bde505`
 **Controlling plan:** [Phase 3 Journal Integrity Plan](phase-3-journal-integrity-plan.md)
 
 ## 2026-08-01 runtime acceptance checkpoint
@@ -561,9 +562,11 @@ out of scope.
 
 ## Next action
 
-Preserve this Phase 3 implementation and evidence in a local checkpoint commit,
-with no private database, statement, configuration, vault object, or secret.
-Then perfect and accept the Phase 4 Core Analytics plan before implementation.
+The Phase 3 implementation and evidence are preserved in local commit
+`8f6a4d4e4dec20ef6edcd50f476b14d368bde505`, with no private database,
+statement, configuration, vault object, or secret. The complete closure is the
+[Phase 3 Journal Integrity Handoff](phase-3-journal-integrity-handoff.md).
+Next, perfect and accept the Phase 4 Core Analytics plan before implementation.
 Phase 4 must read the accepted Journal ledger/projection/coverage contracts,
 keep the two decision chains out of unsupported realized metrics without hiding
 their activity, and must not create a V3 analytics dependency. UI work remains

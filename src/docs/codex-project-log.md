@@ -2,6 +2,8 @@
 
 **Branch:** `codex/traderlink-platform-replacement`.
 
+**Implementation commit:** `8f6a4d4e4dec20ef6edcd50f476b14d368bde505`
+
 - Phase 3 Journal integrity is runtime-complete and technically accepted under
   delegated owner authority. The exact 11-file suite passed all 129 tests with
   one worker and no file parallelism; the static verifier passed with six
@@ -27,6 +29,8 @@
   occurred. The exact resume point is Phase 4 Core Analytics planning against
   the accepted Journal facts and coverage; no V3 analytics dependency is
   permitted.
+- The complete recovery and optional continuation record is
+  `docs/migration/phase-3-journal-integrity-handoff.md`.
 
 # 2026-08-01 - TraderLink Platform Phase 3 Slice B/C implementation checkpoint
 

@@ -11,13 +11,17 @@ Discord/email remain deferred.
 
 **Phase 2 foundation preservation:** Local commit `fea56307fbd0142ef99b9f13c020451a6a503cc7` (`feat(platform): establish verified database foundation`); not pushed or deployed.
 
+**Phase 3 Journal integrity implementation:** Local commit
+`8f6a4d4e4dec20ef6edcd50f476b14d368bde505`; technically accepted, not pushed
+or deployed. See [Phase 3 Handoff](phase-3-journal-integrity-handoff.md).
+
 **Owner:** Project owner and Codex
 
 **Prepared:** 2026-07-31
 
 **Supersedes for future platform work:** the V3 implementation roadmap in `plan.md`. That document remains historical reference only.
 
-**Related documents:** [Import Integrity and Data Decisions Contract](import-integrity-and-data-decisions-contract.md), [Product Inventory](product-inventory.md), [Route Ownership](route-ownership.md), [Database Ownership](database-ownership.md), [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md), [Phase 3 Journal Integrity Plan](phase-3-journal-integrity-plan.md), [Phase 3 Journal Integrity Progress](phase-3-journal-integrity-progress.md), [V3 Dependency Map](v3-dependency-map.md), [Module Contracts](module-contracts.md), [Analytics Capability Catalog](analytics-capability-catalog.md), [Operational and Configuration Inventory](operational-and-configuration-inventory.md), [Workspace Inventory](workspace-inventory.md), [Source Snapshot](source-snapshot-and-untracked-manifest.md), [Workspace and Worktree Cleanup Plan](workspace-and-worktree-cleanup-plan.md), [Risk Register](risk-register.md), [Acceptance Inventory](acceptance-inventory.md), [Phase 1 Progress](phase-1-inventory-and-baseline-progress.md), [Phase 2 Progress](phase-2-replacement-baseline-progress.md), [Development Owner Seed Progress](development-owner-seed-progress.md), [Phase Handoff Template](phase-handoff-template.md), [Phase 0 Handoff](phase-0-planning-handoff.md), [Phase 1 Handoff](phase-1-inventory-and-baseline-handoff.md), [Migration Register](migration-register.md), and [Migration Progress](migration-progress.md).
+**Related documents:** [Import Integrity and Data Decisions Contract](import-integrity-and-data-decisions-contract.md), [Product Inventory](product-inventory.md), [Route Ownership](route-ownership.md), [Database Ownership](database-ownership.md), [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md), [Phase 3 Journal Integrity Plan](phase-3-journal-integrity-plan.md), [Phase 3 Journal Integrity Progress](phase-3-journal-integrity-progress.md), [Phase 3 Handoff](phase-3-journal-integrity-handoff.md), [V3 Dependency Map](v3-dependency-map.md), [Module Contracts](module-contracts.md), [Analytics Capability Catalog](analytics-capability-catalog.md), [Operational and Configuration Inventory](operational-and-configuration-inventory.md), [Workspace Inventory](workspace-inventory.md), [Source Snapshot](source-snapshot-and-untracked-manifest.md), [Workspace and Worktree Cleanup Plan](workspace-and-worktree-cleanup-plan.md), [Risk Register](risk-register.md), [Acceptance Inventory](acceptance-inventory.md), [Phase 1 Progress](phase-1-inventory-and-baseline-progress.md), [Phase 2 Progress](phase-2-replacement-baseline-progress.md), [Development Owner Seed Progress](development-owner-seed-progress.md), [Phase Handoff Template](phase-handoff-template.md), [Phase 0 Handoff](phase-0-planning-handoff.md), [Phase 1 Handoff](phase-1-inventory-and-baseline-handoff.md), [Migration Register](migration-register.md), and [Migration Progress](migration-progress.md).
 
 ## 1. Mandate
 

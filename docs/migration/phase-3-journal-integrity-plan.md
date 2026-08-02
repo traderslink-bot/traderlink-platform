@@ -5,6 +5,7 @@
 **Owner modules:** Journal, with Platform owning the physical migration runner
 **Replacement repository:** `C:\Users\jerac\Documents\TraderLink\traderlink-platform`
 **Replacement database:** `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\development.sqlite`
+**Implementation commit:** `8f6a4d4e4dec20ef6edcd50f476b14d368bde505`
 
 ## 1. Outcome
 
@@ -1061,6 +1062,11 @@ verification passed foreign keys, quick/integrity checks, authority retention,
 source/evidence relationships, allocation conservation, rebuild freshness,
 idempotency, vault bytes, and privacy-safe counts. No server, push, deployment,
 or legacy mutation occurred.
+
+The accepted implementation is preserved in local commit
+`8f6a4d4e4dec20ef6edcd50f476b14d368bde505`. The complete closure and optional
+continuation prompt are in the
+[Phase 3 Journal Integrity Handoff](phase-3-journal-integrity-handoff.md).
 
 The final plan review corrected and accepted these material points before
 implementation:

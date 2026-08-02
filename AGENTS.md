@@ -33,7 +33,8 @@ fingerprinting, `WorkspaceAccessScope`, permission model, ownership-seed gate,
 verification plan, and implementation-file list are implemented and
 correction-verified. The coordinating technical auditor accepted the code,
 database, and 10-file/53-test result under the owner's delegated technical
-checkpoint authority. Phase 3 Journal integrity is now implemented,
+checkpoint authority. Phase 3 Journal integrity is now implemented at local
+commit `8f6a4d4e4dec20ef6edcd50f476b14d368bde505`,
 runtime-verified, and technically accepted under the owner's delegated
 technical checkpoint authority. `development.sqlite` contains six migration
 rows, the stable local development owner/workspace/account, one confirmed
@@ -69,6 +70,7 @@ in the tracker. Never print or commit the private statement name, broker account
 identifier, identity fingerprints, HMAC material, or internal UUIDs. Phase 4
 must consume the accepted Journal read contracts and coverage; it must not add a
 V3 analytics dependency or reinterpret either contained decision as a fact.
+Read `docs/migration/phase-3-journal-integrity-handoff.md` before Phase 4 work.
 
 - Trader Intelligence V3 is legacy implementation, not the architecture for
   future ordinary dashboards. Do not add a new normal dashboard dependency on
