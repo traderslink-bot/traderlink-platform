@@ -1,7 +1,7 @@
 # Journal Analytics Capability Catalog
 
-**Phase:** 1 - inventory and baseline  
-**Status:** Controlling capability direction; formulas for the first slice are proposed for Phase 1 acceptance  
+**Phase:** Phase 1 inventory preserved; Phase 4 implementation contract active
+**Status:** Controlling complete capability target; the exact Phase 4 registry/math/coverage plan is technically accepted
 **Goal:** Deliver every useful analytic that accepted facts can support, without making one bad record hide unrelated valid data and without inventing missing facts.
 
 ## Capability states

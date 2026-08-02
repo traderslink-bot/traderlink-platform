@@ -1,3 +1,22 @@
+# 2026-08-01 - TraderLink Platform Phase 4 Core Analytics plan acceptance
+
+**Branch:** `codex/traderlink-platform-replacement`.
+
+- The exact `docs/migration/phase-4-core-analytics-plan.md` plan is technically
+  accepted under delegated owner authority. No Phase 4 source, database, route,
+  process or UI change has started.
+- The plan fixes the Journal-owned single-snapshot fact set, exact
+  integer-scaled/rational financial math, exactly conserving split-fee policy,
+  versioned broker fee-sign policies, Stock-only value convention,
+  currency/timezone partitions, explicit `asOfUtc`, deduplicated provenance,
+  bounded queries/pagination, every-catalog-candidate registry state,
+  independent private reconciliation and fail-closed loopback development
+  scope.
+- Slice A is the exact next scope: fact/query/result/registry contracts,
+  Journal fact-set reader/service, source revision and focused synthetic tests.
+  It may not mutate the real database, start a server, change routes/UI, or
+  implement later metric slices.
+
 # 2026-08-01 - TraderLink Platform Phase 3 runtime acceptance
 
 **Branch:** `codex/traderlink-platform-replacement`.

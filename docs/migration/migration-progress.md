@@ -1,6 +1,6 @@
 # TraderLink Platform Migration Progress
 
-**Current phase:** Phase 4 - Core Analytics planning. Phases 0-3 are technically accepted under delegated owner authority.
+**Current phase:** Phase 4 - Core Analytics Slice A. The exact Phase 4 plan is technically accepted; Phases 0-3 remain accepted under delegated owner authority.
 **Historical pre-runtime implementation state:** The [Phase 3 plan](phase-3-journal-integrity-plan.md) and [tracker](phase-3-journal-integrity-progress.md) preserve the complete pre-runtime design and execution history. The accepted state immediately below supersedes former queued/unexecuted and 331/1/1 planning claims.
 **Phase 2 foundation commit:** `fea56307fbd0142ef99b9f13c020451a6a503cc7` (`feat(platform): establish verified database foundation`), preserved locally without push or deployment.
 **Phase 3 implementation commit:** `8f6a4d4e4dec20ef6edcd50f476b14d368bde505` (`feat(journal): complete phase 3 integrity foundation`), preserved locally without push or deployment.
@@ -179,8 +179,9 @@ The owner explicitly authorized Phase 1 in the current chat on 2026-07-31. Phase
 Current boundary: the coordinating technical auditor accepted the completed
 [Phase 3 Journal Integrity Progress](phase-3-journal-integrity-progress.md)
 runtime and database evidence; no separate personal owner review is required.
-Phase 4 may now perfect the Core Analytics contract and implementation plan
-against the accepted Journal facts and coverage. Public login/account integration
+Phase 4 may now implement Slice A of the technically accepted
+[Core Analytics plan](phase-4-core-analytics-plan.md): contracts and the
+Journal-owned read-only fact set only. Public login/account integration
 is not a prerequisite: Discord-first login is reconciled before go-live, with
 email/password left optional. Broad lint, full-project TypeScript, full
 regression, build, browser/E2E, and CI-equivalent checks remain deferred to the

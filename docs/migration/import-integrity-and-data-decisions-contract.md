@@ -1,6 +1,6 @@
 # Import Integrity and Data Decisions Contract
 
-**Status:** Accepted governing contract; Phase 3 implementation and focused verification are in progress.
+**Status:** Accepted governing contract; Phase 3 implementation/runtime verification is complete and Phase 4 analytics must preserve its eligibility boundaries.
 **Owner module:** Journal
 **Controls:** imports, source rows, executions, round trips, Data Decisions, and analytics eligibility.
 

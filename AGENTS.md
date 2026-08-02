@@ -43,7 +43,10 @@ immutable source records, 1,072 Stock executions, 542 preserved unsupported
 Forex records, 331 analytics-ready closed round trips, and two contained Data
 Decisions. No unresolved chain hides unrelated valid data. The legacy
 `traderslink.pro` folder remains the preserved recovery/reference application.
-Phase 4 Core Analytics planning is the active next boundary. Public dashboard
+The exact Phase 4 Core Analytics plan in
+`docs/migration/phase-4-core-analytics-plan.md` is technically accepted. Slice A
+contracts and the Journal-owned read-only analytics fact set are the active next
+boundary. Public dashboard
 login/account integration
 is deliberately deferred until the complete dashboard is preparing to go live:
 Discord is the first intended public login provider and email/password remains an
@@ -71,6 +74,9 @@ identifier, identity fingerprints, HMAC material, or internal UUIDs. Phase 4
 must consume the accepted Journal read contracts and coverage; it must not add a
 V3 analytics dependency or reinterpret either contained decision as a fact.
 Read `docs/migration/phase-3-journal-integrity-handoff.md` before Phase 4 work.
+Also read `docs/migration/phase-4-core-analytics-plan.md` and
+`docs/migration/phase-4-core-analytics-progress.md`. Do not start a later metric,
+route, launcher, server, or UI slice until the preceding Phase 4 gate passes.
 
 - Trader Intelligence V3 is legacy implementation, not the architecture for
   future ordinary dashboards. Do not add a new normal dashboard dependency on

@@ -1,7 +1,7 @@
 # TraderLink Replacement Acceptance Inventory
 
-**Phase:** 1 - inventory and baseline  
-**Status:** Controlling acceptance target list  
+**Phase:** 1 - inventory and baseline
+**Status:** Controlling acceptance target list
 **Rule:** Checkpoint scope determines what is implemented now. It does not remove later items from this inventory.
 
 ## Evidence levels
@@ -47,33 +47,33 @@ Phase 1 does not require tests, process stops, database copies, UI review, build
 
 ## Database and migration acceptance
 
-- [ ] Replacement development database path/name/schema owner is documented and owner-approved.
-- [ ] Legacy source is captured with SQLite online backup, timestamp, SHA-256, schema/migration rows, table counts, WAL state, and restore instructions.
-- [ ] Restore succeeds into a disposable target and counts/hashes/reconciliation are recorded.
-- [ ] Replacement never shares writes or silently dual-writes with legacy.
-- [ ] Every table has one logical module owner and migration namespace.
+- [x] Replacement development database path/name/schema owner is documented and owner-approved.
+- [x] Legacy source is captured with SQLite online backup, timestamp, SHA-256, schema/migration rows, table counts, WAL state, and restore instructions.
+- [x] Restore succeeds into a disposable target and counts/hashes/reconciliation are recorded.
+- [x] Replacement never shares writes or silently dual-writes with legacy.
+- [x] Every current Platform/Journal table has one logical module owner and migration namespace.
 - [ ] Academy/News/Watchlist/affiliate/Level Analysis/Journal storage cannot silently fall back to a different module's path.
-- [ ] No working DB, WAL, SHM, statement, secret, or raw private record is committed.
+- [x] No working DB, WAL, SHM, statement, secret, or raw private record is committed.
 
 ## Imports and source evidence acceptance
 
 - [ ] Supported broker formats and generic mapping behavior are inventoried and versioned.
 - [ ] Raw source evidence is preserved privately with retention/deletion/export policy.
-- [ ] File type, size, parser bounds, safe filenames/storage, and authenticated owner/account access are enforced.
-- [ ] Preview distinguishes systemic blockers from contained row/chain issues.
-- [ ] Exact reimport is idempotent; overlapping/conflicting rows produce traceable outcomes.
-- [ ] Upload order does not affect final accepted execution ledger/round trips.
-- [ ] Source rows, normalized/corrected values, mapping, issues, decisions, and supersession remain traceable.
-- [ ] Historical January statement source reconciles to the accepted execution count or every difference has a recorded reason.
+- [x] File type, size, parser bounds, safe filenames/storage, and authenticated owner/account access are enforced.
+- [x] Preview distinguishes systemic blockers from contained row/chain issues.
+- [x] Exact reimport is idempotent; overlapping/conflicting rows produce traceable outcomes.
+- [x] Upload order does not affect final accepted execution ledger/round trips.
+- [x] Source rows, normalized/corrected values, mapping, issues, decisions, and supersession remain traceable.
+- [x] Historical January statement source reconciles to the accepted execution count or every difference has a recorded reason.
 
 ## Canonical execution ledger acceptance
 
-- [ ] Broker and manual executions share one owner/account ledger with source provenance.
-- [ ] Required facts use exact decimal/time/currency/instrument representations.
-- [ ] Manual entries use actual execution time/date, not entry/submission date.
-- [ ] A broker row matching a manual row enters Data Decisions rather than silently duplicating or overwriting.
-- [ ] Corrections/exclusions/supersession are versioned and original evidence remains.
-- [ ] Account/instrument/currency chain queries are deterministic under equal timestamps.
+- [x] Broker and manual executions share one owner/account ledger with source provenance.
+- [x] Required facts use exact decimal/time/currency/instrument representations.
+- [x] Manual entries use actual execution time/date, not entry/submission date.
+- [x] A broker row matching a manual row enters Data Decisions rather than silently duplicating or overwriting.
+- [x] Corrections/exclusions/supersession are versioned and original evidence remains.
+- [x] Account/instrument/currency chain queries are deterministic under equal timestamps.
 
 ## Data Decisions acceptance
 
@@ -83,27 +83,27 @@ Phase 1 does not require tests, process stops, database copies, UI review, build
 - [ ] Decision records actor, time, reason, old/new facts, and rebuild result.
 - [ ] System rejects impossible “closed” outcomes while leaving factual final say with the trader.
 - [ ] Deep links connect coverage issue -> decision -> resulting trade/analytics.
-- [ ] One unresolved chain never hides unrelated valid records.
+- [x] One unresolved chain never hides unrelated valid records.
 - [ ] Any Data Decisions UI change receives iterative owner visual approval.
 
 ## Round-trip and open-position acceptance
 
-- [ ] Full history is ordered by owner/account/instrument/currency, execution time, and deterministic tie break.
-- [ ] Zero -> non-zero starts; partial entries/exits remain; return to zero closes; next execution begins a new round trip.
-- [ ] Flip execution allocation closes the old direction and opens the new direction exactly.
-- [ ] Random statement upload order and later historical correction rebuild identically.
-- [ ] Legitimate open positions remain visible and excluded only from unsupported realized metrics.
-- [ ] Missing opening inventory/ambiguous ordering contains the affected chain.
+- [x] Full history is ordered by owner/account/instrument/currency, execution time, and deterministic tie break.
+- [x] Zero -> non-zero starts; partial entries/exits remain; return to zero closes; next execution begins a new round trip.
+- [x] Flip execution allocation closes the old direction and opens the new direction exactly.
+- [x] Random statement upload order and later historical correction rebuild identically.
+- [x] Legitimate open positions remain visible and excluded only from unsupported realized metrics.
+- [x] Missing opening inventory/ambiguous ordering contains the affected chain.
 - [ ] Stable identity/aliases preserve notes, tags, rules, reviews, and Level Analysis links after rebuild.
-- [ ] 1,072 January executions reconcile to the owner-accepted closed/open/decision result; 334 closed/2 open are targets, not assumed truth.
+- [x] 1,072 January executions reconcile to 331 ready closed / 0 automatically legitimate open / 2 decisions; legacy 334 closed/2 open were not assumed truth.
 
 ## Trade Tracker and trading-day acceptance
 
-- [ ] Execution rows appear on their actual trading dates.
-- [ ] A round trip can span days while its executions remain visible on each date and its P/L defaults to close date.
+- [x] Execution rows persist on their actual trading dates; UI presentation remains pending.
+- [x] The data contract supports a round trip spanning days while executions retain actual dates and P/L defaults to close date.
 - [ ] Daily notes/rule reviews are owner/account/date-scoped and never merged because entered together.
 - [ ] Users can return to a specific trading date and see the factual day record.
-- [ ] Multi-day entry persistence works independent of final presentation.
+- [x] Multi-day entry persistence works independent of final presentation.
 - [ ] Separate future UI plan is perfected and approved before redesigning the multi-day flow.
 
 ## Journal Analytics acceptance
