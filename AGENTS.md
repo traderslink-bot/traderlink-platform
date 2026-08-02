@@ -45,12 +45,14 @@ Decisions. No unresolved chain hides unrelated valid data. The legacy
 `traderslink.pro` folder remains the preserved recovery/reference application.
 The exact Phase 4 Core Analytics plan in
 `docs/migration/phase-4-core-analytics-plan.md` is technically accepted. Slices
-A, B and C passed their exact focused gates. The replacement now has the
+A-D passed their exact focused and private read-only gates. The replacement now has the
 Journal-owned read-only fact set, exact normalization and charge allocation,
 explicit coverage/populations, 210 classified capabilities (181
 implemented/conditional and 29 unavailable with exact missing-fact reasons),
-all accepted groupings, and bounded round-trip pagination. Slice D private
-read-only reconciliation is the active next boundary. Public dashboard
+all accepted groupings, bounded round-trip pagination, and exact independent
+reconciliation against the accepted 331-ready/0-open/2-decision database.
+Slice E V3-free route cutover and local visual review is the active next
+boundary. Public dashboard
 login/account integration
 is deliberately deferred until the complete dashboard is preparing to go live:
 Discord is the first intended public login provider and email/password remains an
@@ -79,9 +81,11 @@ must consume the accepted Journal read contracts and coverage; it must not add a
 V3 analytics dependency or reinterpret either contained decision as a fact.
 Read `docs/migration/phase-3-journal-integrity-handoff.md` before Phase 4 work.
 Also read `docs/migration/phase-4-core-analytics-plan.md` and
-`docs/migration/phase-4-core-analytics-progress.md`. Slice D may read but must
-not mutate the accepted private database. Do not start routes, a launcher,
-server, or UI work until the Slice D reconciliation gate passes.
+`docs/migration/phase-4-core-analytics-progress.md`. Slice D passed without
+mutating the accepted private database. Slice E may now add only the planned
+development scope, replacement launcher, and named Workspace/Trades/Analytics
+route adapters before local visual review; it must preserve the accepted light
+Material shell and must not add a V3 runtime fallback.
 
 - Trader Intelligence V3 is legacy implementation, not the architecture for
   future ordinary dashboards. Do not add a new normal dashboard dependency on

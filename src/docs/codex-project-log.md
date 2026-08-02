@@ -1,3 +1,28 @@
+# 2026-08-01 - TraderLink Platform Phase 4 Slice D accepted
+
+**Branch:** `codex/traderlink-platform-replacement`.
+
+- Added a privacy-safe read-only Journal Analytics verifier and two focused
+  tests. Its independent scaled-integer calculation path reconstructs Stock
+  cash effects and split fees without calling the production normalizer, fee
+  allocator, exact-math helpers or metric accumulator.
+- The accepted private database gate proved 331 ready closed, zero legitimate
+  open, two contained decisions, 331 fee-complete rows, exact independent/
+  production digest agreement, six shared-revision page services and all 331
+  keyset-paginated rows exactly once.
+- The database main file remained 10,522,624 bytes with accepted SHA-256 and no
+  pending non-empty WAL. Verifier output contained only aggregate counts,
+  digests, states and timings.
+- Targeted ESLint, dependency-scoped TypeScript and the exact one-worker
+  1-file/2-test gate passed. The known `uv_os_get_passwd` `ENOMEM` required the
+  command-local preload for affected Node processes; it was removed.
+- No route, UI, launcher, server, package, schema, database content, private
+  source, push, deployment, production state or legacy checkout changed.
+- Resume with Phase 4 Slice E: read the local Next.js 16.2.6 guides, implement
+  the fail-closed development scope/launcher, cut the named Workspace/Trades/
+  Analytics routes to the replacement services without V3/sample fallbacks,
+  and present the light Material dashboard for owner visual review.
+
 # 2026-08-01 - TraderLink Platform Phase 4 Slice C accepted
 
 **Branch:** `codex/traderlink-platform-replacement`.

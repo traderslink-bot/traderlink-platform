@@ -1,6 +1,6 @@
 # Phase 4 Core Analytics Progress
 
-**Status:** Slices A-C are technically accepted under delegated owner authority; Slice D is active
+**Status:** Slices A-D are technically accepted under delegated owner authority; Slice E is active
 **Controlling plan:** [Phase 4 Core Analytics Plan](phase-4-core-analytics-plan.md)
 **Entry repository:** `C:\Users\jerac\Documents\TraderLink\traderlink-platform`
 **Entry branch:** `codex/traderlink-platform-replacement`
@@ -203,11 +203,50 @@ No real/private database, statement, route, UI, persistent process, server,
 package, migration, push, deployment, production state or legacy repository
 changed.
 
+Slice C was preserved locally at commit `0fb4889e135b184f2eff03f76b0bff46b420a62f`
+(`feat(analytics): complete capability registry`). It has not been pushed or
+deployed.
+
+## Slice D result
+
+Slice D added the private Journal Analytics verifier and two focused synthetic
+tests. Its independent calculation path uses its own integer-scaled decimal,
+notional and deterministic largest-remainder fee-allocation implementation; it
+does not call the production normalizer, fee allocator, exact-math module or
+metric accumulator. Only digests, aggregate counts, match states and timings
+are emitted.
+
+The real accepted database gate passed on 2026-08-01:
+
+- 331 ready closed, zero legitimate open and two contained decision rows;
+- 331 fee-complete and zero fee-incomplete realized rows;
+- production and independent row digest match:
+  `bd463c61e001542768e9905e4b1b0576677a734ff493dc29538b47863cd734cf`;
+- headline ready/fee counts, gross P/L, covered net P/L and charge totals match
+  exactly without printing financial values;
+- six page-service responses share fact-set revision
+  `28f31836ece098ce9da5848855f9f2492cf1c13a5fc0da9e4930bdb5b7b5b1a4`,
+  identical result/group digests and reconciled totals;
+- stable keyset pagination returned all 331 rows exactly once; and
+- final verification completed in 3,197 milliseconds while the database main file
+  remained 10,522,624 bytes with accepted SHA-256 and zero pending WAL.
+
+Targeted ESLint passed, dependency-scoped TypeScript passed, and the exact
+one-worker/no-file-parallelism test gate passed 1 file/2 tests. The known
+pre-application Windows `uv_os_get_passwd` `ENOMEM` required the approved
+command-local preload for the real verifier and TypeScript process. It was
+removed immediately; no temporary, repository, global or system setting
+remains.
+
+No route, UI, launcher, server, package, migration, database content, private
+source, push, deployment, production state or legacy repository changed.
+
 ## Next action
 
-Execute Slice D only: reverify branch/HEAD/tree, database hash/size/sidecars and
-ports; run the privacy-safe read-only verifier against the accepted database;
-independently reconstruct exact normalized Stock cash effects/headlines; and
-require 331 ready closed, zero legitimate open and two decision projections.
-The database main hash/size and non-empty-WAL state must remain unchanged. Do
-not start routes/UI, launcher or server work until that gate passes.
+Execute Slice E: read the relevant local Next.js 16.2.6 guides, implement the
+fail-closed development-only scope boundary and replacement launcher, and cut
+the named `/workspace`, `/trades/roundtrips`, `/analytics` and specialist
+Analytics routes to the new services without V3 or sample fallbacks. Preserve
+the accepted light Material shell. Run only focused route/architecture/
+TypeScript checks, start one loopback replacement server on a verified free
+port, and present the real-data pages for owner visual review.

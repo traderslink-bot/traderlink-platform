@@ -1,6 +1,6 @@
 # Phase 4 Core Analytics Plan
 
-**Status:** Technically accepted under delegated owner authority; Slices A-C are technically accepted and Slice D is active
+**Status:** Technically accepted under delegated owner authority; Slices A-D are technically accepted and Slice E is active
 **Phase:** 4 - Core Analytics
 **Owner modules:** Journal publishes facts; Journal Analytics owns calculations
 **Replacement repository:** `C:\Users\jerac\Documents\TraderLink\traderlink-platform`
@@ -1023,3 +1023,44 @@ schema migration, V3 analytics dependency, push, deployment, production state
 or legacy checkout changed. Slice D may now perform the privacy-safe read-only
 reconciliation against the accepted database. It must reverify the protected
 boundary first and stop before any route, launcher, server or UI work.
+
+## 28. Slice D implementation record
+
+Slice D is technically accepted under the owner's delegated checkpoint
+authority. It added a privacy-safe read-only verifier plus two focused
+independent-calculation tests. The verifier opens the accepted database
+read-only and query-only, validates the fixed Phase 3 main-file baseline, reads
+the production Journal fact set, and compares production normalization and
+page-service results against a separate integer-scaled `BigInt` implementation
+of execution notional, split-fee largest-remainder allocation, charge cash
+effect, gross P/L and covered net P/L. The independent path does not call the
+production normalizer, fee allocator, accumulator or exact-math helpers.
+
+The private gate passed on 2026-08-01 with privacy-safe output only:
+
+- 331 ready-closed Stock rows, zero legitimate-open rows and two contained
+  decision rows;
+- 331 fee-complete rows and zero fee-incomplete rows;
+- identical production and independent row digests
+  `bd463c61e001542768e9905e4b1b0576677a734ff493dc29538b47863cd734cf`;
+- exact agreement for ready/fee counts, gross P/L, covered net P/L, charge cost
+  and charge credit without emitting any of those private values;
+- six Workspace/Analytics service responses with one fact-set revision,
+  identical metric/group result digests and reconciled group totals;
+- all 331 table rows returned exactly once across stable keyset pages; and
+- unchanged 10,522,624-byte database main file with accepted SHA-256 and no
+  pending non-empty WAL.
+
+Targeted ESLint, a dependency-scoped TypeScript check over the verifier/test
+import closure, and two one-worker/no-file-parallelism focused tests passed. The
+ordinary `tsx` command again encountered the pre-application Windows
+`uv_os_get_passwd` `ENOMEM`; the command-local preload was used only for the
+affected verifier and TypeScript processes and was removed. No temporary file
+or global/system setting remains.
+
+No route, UI, launcher, server, package, schema, database content, private
+source, push, deployment, production state or legacy checkout changed. Slice E
+may now read the relevant local Next.js 16.2.6 guides, implement the planned
+fail-closed loopback development scope and replacement launcher, cut the named
+Workspace/Trades/Analytics routes to the new services without a V3 fallback,
+and present the preserved light Material dashboard for owner visual review.

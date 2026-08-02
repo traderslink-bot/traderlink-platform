@@ -1,6 +1,6 @@
 # TraderLink Platform Replacement Plan
 
-**Status:** Approved controlling plan. Phases 0-3 are technically accepted. Phase 3 passed its exact 11-file/129-test one-worker gate, static verifier, fresh disposable proof, protected backup/restore rehearsal, private preview/import/exact-reimport, append-only evidence-vault, and independent real-database verification. It leaves 331 analytics-ready closed round trips visible and contains two fact-dependent chains in Data Decisions. Phase 4 Slices A-C passed their exact focused/static gates and Slice D private read-only reconciliation is active. Public login/account integration remains deferred until the complete dashboard is preparing to go live.
+**Status:** Approved controlling plan. Phases 0-3 are technically accepted. Phase 3 passed its exact 11-file/129-test one-worker gate, static verifier, fresh disposable proof, protected backup/restore rehearsal, private preview/import/exact-reimport, append-only evidence-vault, and independent real-database verification. It leaves 331 analytics-ready closed round trips visible and contains two fact-dependent chains in Data Decisions. Phase 4 Slices A-D passed their exact focused/static/private read-only gates and Slice E route cutover/visual review is active. Public login/account integration remains deferred until the complete dashboard is preparing to go live.
 
 **Slice D source-account preparation:** Completed through the accepted
 development-only preparation boundary. The privacy-safe preview, sole-account
