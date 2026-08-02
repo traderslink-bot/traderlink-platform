@@ -3,7 +3,7 @@
 **Phase:** 2 - Replacement baseline
 **Status:** Corrected exact design owner-accepted; empty foundation and narrow technical-audit corrections implemented, focused-verification complete, and accepted by the coordinating technical auditor under delegated owner authority
 **Physical store:** One SQLite database per local environment with explicit Platform and module ownership
-**Implementation boundary:** This document is the accepted exact design and verification contract for the ownership foundation. The separate development-owner seed is complete. Phase 3 legacy Journal data work follows its own integrity contract; public authentication and destructive migration remain separately gated.
+**Implementation boundary:** This document is the accepted exact design and verification contract for the ownership foundation. The separate development-owner seed and Phase 3 Journal integrity migration are complete under their own trackers. Public authentication and destructive legacy retirement remain separately gated.
 
 ## 1. Configuration and physical path
 
@@ -812,7 +812,14 @@ The initial implementation static migration-file verifier passed. Its final cons
 
 Independent technical audit then found missing accepted cases and evidence-contract gaps despite the green 41-test result. The narrow correction pass made the read-only verifier require all accepted pragmas, aligned its migration count with the manifest/explicit empty-foundation contract, derived the default repository boundary portably, expanded online-backup/restore and non-secret recovery-authority evidence, and added the missing cases inside the same ten files. The ordinary correction static-verifier command reproduced the same pre-application Node/Windows `uv_os_get_passwd ... ENOMEM`; the established command-local preload was used once and removed immediately. Static verification passed, and the first correction-focused Vitest run passed all 10 files and all 53 tests with one worker and no file parallelism. There was no correction-pass application test failure.
 
-Both the disposable target and real `development.sqlite` contain exactly two migration rows and the five empty domain tables. Their final expected/actual schema SHA-256 is `5a34f790164e9b8456db88a1052a9b9084bbfbeab4eae8c5eee1f49d5c7194c4`; all domain counts are zero; required pragmas and page geometry match; foreign-key, quick, and integrity checks are `ok`. No owner/private/legacy data was copied and the development-owner seed did not run.
+At the Phase 2 empty-foundation checkpoint, both the disposable target and real
+`development.sqlite` contained exactly two migration rows and the five empty
+domain tables. Their expected/actual schema SHA-256 was
+`5a34f790164e9b8456db88a1052a9b9084bbfbeab4eae8c5eee1f49d5c7194c4`;
+all domain counts were zero; required pragmas and page geometry matched; and
+foreign-key, quick, and integrity checks were `ok`. This is immutable historical
+evidence; the development-owner seed and Phase 3 tracker record later accepted
+database state.
 
 ## Accepted design checkpoint and implementation gate
 

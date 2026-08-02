@@ -33,14 +33,17 @@ fingerprinting, `WorkspaceAccessScope`, permission model, ownership-seed gate,
 verification plan, and implementation-file list are implemented and
 correction-verified. The coordinating technical auditor accepted the code,
 database, and 10-file/53-test result under the owner's delegated technical
-checkpoint authority. `development.sqlite` contains two migration rows and the
-verified local development ownership counts 1 user / 1 workspace / 1 owner
-membership / 1 Journal account / 0 source-account identities; private or legacy
-trading-data migration has not run. The legacy `traderslink.pro` folder remains
-the preserved recovery/reference application. A private, local-only development
-owner seed is implemented, focused-verified, executed, independently verified,
-and technically accepted. Phase 3 Journal integrity work is the active next
-boundary. Public dashboard login/account integration
+checkpoint authority. Phase 3 Journal integrity is now implemented,
+runtime-verified, and technically accepted under the owner's delegated
+technical checkpoint authority. `development.sqlite` contains six migration
+rows, the stable local development owner/workspace/account, one confirmed
+source-account identity, one accepted-with-decisions statement import, 2,284
+immutable source records, 1,072 Stock executions, 542 preserved unsupported
+Forex records, 331 analytics-ready closed round trips, and two contained Data
+Decisions. No unresolved chain hides unrelated valid data. The legacy
+`traderslink.pro` folder remains the preserved recovery/reference application.
+Phase 4 Core Analytics planning is the active next boundary. Public dashboard
+login/account integration
 is deliberately deferred until the complete dashboard is preparing to go live:
 Discord is the first intended public login provider and email/password remains an
 optional future capability. Preserve stable Platform/Journal UUID ownership so
@@ -52,12 +55,20 @@ Phase 3 is controlled by
 `docs/migration/phase-3-journal-integrity-plan.md` and
 `docs/migration/phase-3-journal-integrity-progress.md`. Read both before any
 Journal schema, import, execution, Data Decisions, round-trip, private-source,
-or migration-verifier work. The plan and Slice A are technically accepted: the
-immutable five-table Phase 2 ownership profile is separated from the six-entry,
-24-domain-table current manifest, and migrations 3-6 are code/disposable-
-verified but not applied to the real database. Slice B source-evidence and
-execution-ledger services are active. Do not migrate the real database or touch
-the private statement before the later backup/restore and preview gates.
+or migration-verifier work. The accepted runtime checkpoint separates the
+immutable five-table Phase 2 ownership profile from the six-entry,
+24-domain-table current manifest; preserves source evidence and versioned
+executions; contains two fact-dependent chains in Data Decisions; and leaves
+331 unrelated closed round trips usable. The exact 11-file, 129-test focused
+suite passed with one worker and no file parallelism, the static verifier passed,
+and disposable initialization, backup/restore rehearsal, real migration,
+private preview/import/exact-reimport, append-only vault, and independent
+database verification all passed. Preserve the private database, backup,
+restore, verification, local authority, and evidence-vault boundaries recorded
+in the tracker. Never print or commit the private statement name, broker account
+identifier, identity fingerprints, HMAC material, or internal UUIDs. Phase 4
+must consume the accepted Journal read contracts and coverage; it must not add a
+V3 analytics dependency or reinterpret either contained decision as a fact.
 
 - Trader Intelligence V3 is legacy implementation, not the architecture for
   future ordinary dashboards. Do not add a new normal dashboard dependency on

@@ -3,7 +3,7 @@
 **Phase:** 2 - Replacement baseline
 **Status:** Phase 2 empty database foundation implemented, correction-verified, and technically accepted by the coordinating auditor under delegated owner authority
 **Authorized:** 2026-08-01, explicitly by the project owner
-**Current boundary:** Phase 2 foundation technical acceptance and the separately tracked development-owner seed are complete. Phase 3 Journal integrity may proceed under its own tracker. Private/legacy trading-data migration must follow the Phase 3 contract; UI, broad checks, push, deployment, and legacy retirement remain separately gated
+**Phase 2 closure boundary (historical):** Phase 2 foundation technical acceptance and the separately tracked development-owner seed are complete. Phase 3 later proceeded under its own tracker and is now accepted; this document remains the immutable Phase 2 baseline. UI, broad final checks, push, deployment, and legacy retirement remain separately gated.
 
 ## Repository boundary
 

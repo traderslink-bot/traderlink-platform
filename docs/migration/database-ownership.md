@@ -1,8 +1,8 @@
 # TraderLink Database Ownership
 
-**Phase:** Phase 1 inventory preserved; Phase 2 empty database foundation technically complete
-**Status:** Legacy online backup/disposable restore and the replacement schema/migration design are accepted; the empty database foundation is implemented, correction-verified, and accepted by the coordinating technical auditor under delegated owner authority
-**Inspection rule:** The legacy source remains read-only. The verified replacement `development.sqlite` contains two migration rows and accepted development ownership counts 1/1/1/1/0. Public login and private/legacy trading-data migration have not run.
+**Phase:** Phase 1 inventory preserved; replacement database accepted through Phase 3 Journal integrity
+**Status:** Legacy recovery evidence remains read-only. The replacement foundation, owner seed, six-migration Journal schema, private statement import, exact reimport, append-only evidence vault, and independent verification are technically accepted under delegated owner authority.
+**Inspection rule:** The legacy source remains read-only. The verified replacement `development.sqlite` contains six migration rows, stable development ownership, one source-account identity, one accepted-with-decisions import, and the accepted Phase 3 Journal evidence. Public login has not run and remains deferred.
 
 ## Direct answer about `v4-temp-sql`
 
@@ -48,7 +48,7 @@ The replacement local development database exists at:
 
 `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\development.sqlite`
 
-That path is outside both source repositories, uses the permanent platform name rather than V3/V4 terminology, and contains one physical local database with the verified Platform/Journal foundation and explicit module-owned migrations. The coordinating technical auditor accepted its code, database evidence, and 10-file/53-test foundation result. The local development-owner seed is complete; legacy trading-data migration remains the Phase 3 gate and has not run.
+That path is outside both source repositories, uses the permanent platform name rather than V3/V4 terminology, and contains one physical local database with the verified Platform/Journal foundation and explicit module-owned migrations. The coordinating technical auditor accepted its foundation, owner seed, and Phase 3 Journal runtime/database evidence. The private test statement is imported under the controlled Journal source identity and evidence-vault boundary; it is not a V3 database copy or dual write.
 
 The current V3-named database is accepted as a possible **migration input**, not as the replacement working database. It must first pass online-backup, restore, provenance, and source-statement reconciliation gates.
 
@@ -235,6 +235,42 @@ One module must never infer ownership from a generic fallback to `TRADER_INTELLI
 The owner accepted the corrected exact [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md) design package. The coordinating technical auditor subsequently accepted the implemented and correction-verified code, empty database, and 10-file/53-test evidence under delegated owner authority. Acceptance includes deterministic post-migration schema-drift verification, global migration identity and recovery rules, versioned privacy-safe account fingerprinting, server-derived `WorkspaceAccessScope`, the owner/admin/member permission model, the separate ownership-seed gate, the focused verification plan, and the exact implementation-file list.
 
 The Phase 2 empty database foundation and follow-on [Development Owner Seed Progress](development-owner-seed-progress.md) checkpoint are technically complete. `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\development.sqlite` contains exactly two migration rows and domain counts 1 user / 1 workspace / 1 owner membership / 1 Journal account / 0 source-account identities. Its expected and actual schema digest remains `5a34f790164e9b8456db88a1052a9b9084bbfbeab4eae8c5eee1f49d5c7194c4`; the main file is 94,208 bytes with post-seed SHA-256 `2497FA605828C9392233F712062CC9FBEDDAB0F2B5E2078AB1A0146494A99C26`. No broker identity or private/legacy trading data was copied. Discord-first public login and optional email/password are deferred until the complete dashboard is preparing to go live.
+
+The paragraph above is the immutable Phase 2 checkpoint, not current database
+state. Phase 3 subsequently used a fresh online backup/restore rehearsal before
+applying migrations 3-6 and importing the accepted private development
+statement. The current database has schema digest
+`75571914c5fa4bbfe7876c8e9a72cc7d584eab91704d70cf889bf5f1b374a55a`,
+main-file SHA-256
+`31101395dafb7bb14c2bf934e3288b40f63a5f8736a1da03cf549c996463af3b`,
+size 10,522,624 bytes, a zero-byte WAL, and a 32,768-byte SHM. It contains six
+migrations, the stable owner/workspace/account, one source identity, one
+accepted-with-decisions import, 2,284 source rows, 1,072 Stock executions, 231
+position facts, 542 preserved unsupported Forex records, 331 ready closed round
+trips, and two contained decisions.
+
+Local-only authority configuration is stored under
+`C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform-config`.
+Append-only statement evidence is stored under the non-overlapping sibling
+`C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform-import-artifacts`.
+Neither location belongs in Git. Never print or commit secret values, raw broker
+identifiers, identity fingerprints, internal UUIDs, or the private statement
+filename. Recovery evidence and exact paths are recorded in the
+[Phase 3 progress tracker](phase-3-journal-integrity-progress.md).
+
+The completed Slice D private-source preparation enforced that ownership
+boundary. It performed an unscoped privacy-safe parse preview and, only after
+verified backup and migrations, inventoried the seeded workspace. Initial
+source-identity creation required exactly one active Journal account, zero
+non-superseded identities for the source system, and no fingerprint conflict.
+Its post-link rerun proved the idempotent no-write path: exactly one identity
+resolved unambiguously under the complete configured retained HMAC authority to
+the same sole account. Every other account, multiple-identity,
+unavailable-authority, mismatch, conflict, or ambiguity path remains fail-closed
+for factual trader review or recovery. Exactly one link was verified before the
+scoped read-only preview. This broker source-account link is
+Journal data ownership, not login authentication; the local development owner
+remains authoritative while Discord/email integration is deferred.
 
 ## Phase 1 conclusions
 

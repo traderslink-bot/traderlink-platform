@@ -16,7 +16,11 @@ import {
   calculateSourceAccountFingerprint,
   JournalAccountService,
 } from "./journal-account-service";
-import { JournalAccountRepository } from "./journal-account-repository";
+import {
+  type JournalAccountSourceIdentityRecord,
+  JournalAccountRepository,
+  type SourceIdentityFingerprintTuple,
+} from "./journal-account-repository";
 
 const roots: string[] = [];
 afterEach(() => {
@@ -100,7 +104,58 @@ function setup(): {
   };
 }
 
+class HideFirstIdentityMatchRepository extends JournalAccountRepository {
+  private hideNextMatch = true;
+
+  override findSourceIdentityMatches(
+    workspaceId: string,
+    sourceSystem: string,
+    tuples: readonly SourceIdentityFingerprintTuple[],
+  ): readonly JournalAccountSourceIdentityRecord[] {
+    if (this.hideNextMatch) {
+      this.hideNextMatch = false;
+      return Object.freeze([]);
+    }
+    return super.findSourceIdentityMatches(workspaceId, sourceSystem, tuples);
+  }
+}
+
 describe("Journal account fingerprint rotation", () => {
+  it("does not promote an identity through a different workspace/account scope", () => {
+    const context = setup();
+    try {
+      const service = new JournalAccountService(
+        context.repository,
+        identityConfig("new-key"),
+      );
+      service.confirmSourceIdentityLink(context.scope, {
+        accountId: context.accountId,
+        sourceSystem: "ibkr",
+        rawSourceAccountId: "private-account",
+        privacySafeDisplay: "[redacted-account]",
+      });
+      const identity = context.database.prepare(`SELECT source_identity_id, last_seen_at_utc
+FROM journal_account_source_identities
+WHERE workspace_id = ? AND account_id = ?`).get(
+        context.scope.workspaceId,
+        context.accountId,
+      ) as { source_identity_id: string; last_seen_at_utc: string };
+      expect(() => context.repository.promoteAndTouchIdentity({
+        workspaceId: createCanonicalUuidV4(),
+        accountId: context.accountId,
+        sourceIdentityId: identity.source_identity_id,
+        updatedAtUtc: "2026-08-01T15:00:00.000Z",
+      })).toThrowError("TRADERLINK_ACCOUNT_NOT_FOUND");
+      expect(context.database.prepare(`SELECT last_seen_at_utc
+FROM journal_account_source_identities
+WHERE source_identity_id = ?`).get(identity.source_identity_id)).toEqual({
+        last_seen_at_utc: identity.last_seen_at_utc,
+      });
+    } finally {
+      context.database.close();
+    }
+  });
+
   it("matches with the retained key and additively rotates to the same stable account", () => {
     const context = setup();
     try {
@@ -309,6 +364,106 @@ describe("Journal account fingerprint rotation", () => {
         }),
       ).toThrowError("TRADERLINK_ACCOUNT_IDENTITY_CONFLICT");
       expect(context.repository.listActiveAccounts(context.scope.workspaceId)).toHaveLength(2);
+    } finally {
+      context.database.close();
+    }
+  });
+
+  it("re-resolves source identity matches after taking the immediate write lock", () => {
+    const context = setup();
+    try {
+      const originalService = new JournalAccountService(
+        context.repository,
+        identityConfig("new-key"),
+      );
+      originalService.confirmSourceIdentityLinkRecord(context.scope, {
+        accountId: context.accountId,
+        sourceSystem: "ibkr",
+        rawSourceAccountId: "private-account",
+        privacySafeDisplay: "[redacted-account]",
+      });
+      const secondAccount = originalService.createAccount(context.scope, {
+        workspaceId: context.scope.workspaceId,
+        displayName: "Second",
+        baseCurrency: "USD",
+        tradingTimezone: "America/Toronto",
+      });
+      const twoAccountScope: WorkspaceAccessScope = {
+        ...context.scope,
+        allowedAccountIds: [context.accountId, secondAccount.accountId],
+      };
+      const racingService = new JournalAccountService(
+        new HideFirstIdentityMatchRepository(context.database),
+        identityConfig("new-key"),
+      );
+      expect(() => racingService.confirmSourceIdentityLinkRecord(twoAccountScope, {
+        accountId: secondAccount.accountId,
+        sourceSystem: "ibkr",
+        rawSourceAccountId: "private-account",
+        privacySafeDisplay: "[redacted-account]",
+      })).toThrowError("TRADERLINK_ACCOUNT_IDENTITY_CONFLICT");
+      const identities = context.repository.listNonSupersededSourceIdentities(
+        context.scope.workspaceId,
+        "ibkr",
+      );
+      expect(identities).toHaveLength(1);
+      expect(identities[0]?.accountId).toBe(context.accountId);
+    } finally {
+      context.database.close();
+    }
+  });
+
+  it("returns only privacy-safe source-identity resolution fields", () => {
+    const context = setup();
+    try {
+      const service = new JournalAccountService(
+        context.repository,
+        identityConfig("new-key"),
+      );
+      const resolved = service.confirmSourceIdentityLinkRecord(context.scope, {
+        accountId: context.accountId,
+        sourceSystem: "ibkr",
+        rawSourceAccountId: "SYNTH-PRIVATE-ACCOUNT",
+        privacySafeDisplay: "Synthetic brokerage account",
+      });
+      expect(Object.keys(resolved).sort()).toEqual([
+        "accountId",
+        "sourceIdentityId",
+        "tradingTimezone",
+        "workspaceId",
+      ]);
+      expect(JSON.stringify(resolved)).not.toContain("SYNTH-PRIVATE-ACCOUNT");
+      expect(JSON.stringify(resolved)).not.toContain("sourceAccountFingerprint");
+      expect(JSON.stringify(resolved)).not.toContain("hmacKeyVersion");
+    } finally {
+      context.database.close();
+    }
+  });
+
+  it("rejects mixed valid and malformed percent escapes without rejecting safe labels", () => {
+    const context = setup();
+    try {
+      const service = new JournalAccountService(
+        context.repository,
+        identityConfig("new-key"),
+      );
+      const accepted = service.confirmSourceIdentityLinkRecord(context.scope, {
+        accountId: context.accountId,
+        sourceSystem: "ibkr",
+        rawSourceAccountId: "SYNTH-ACCOUNT",
+        privacySafeDisplay: "Synthetic account",
+      });
+      expect(accepted.accountId).toBe(context.accountId);
+      expect(() => service.confirmSourceIdentityLinkRecord(context.scope, {
+        accountId: context.accountId,
+        sourceSystem: "ibkr",
+        rawSourceAccountId: "SYNTH-ACCOUNT",
+        privacySafeDisplay: "SYNTH%2DACCOUNT%ZZ",
+      })).toThrowError("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED");
+      expect(context.repository.listNonSupersededSourceIdentities(
+        context.scope.workspaceId,
+        "ibkr",
+      )).toHaveLength(1);
     } finally {
       context.database.close();
     }

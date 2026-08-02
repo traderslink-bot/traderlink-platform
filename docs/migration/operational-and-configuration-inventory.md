@@ -1,7 +1,7 @@
 # TraderLink Operational and Configuration Inventory
 
 **Phase:** 1 - inventory and baseline  
-**Status:** Source inventory complete; installed machine schedule remains unresolved because Windows denied the read  
+**Status:** Legacy source inventory complete; accepted replacement configuration names are updated through Phase 3. Installed Big Time machine-schedule state remains deferred and is not a Journal blocker.
 **Safety:** Values of secrets, tokens, user IDs, account IDs, and private origins are intentionally omitted.
 
 ## Runtime and lifecycle commands
@@ -105,6 +105,29 @@ This inventory includes runtime configuration names read directly or indirectly 
 - `LIVE_WATCHLIST_DATABASE_URL`, `LIVE_WATCHLIST_DB_PATH`, `LIVE_WATCHLIST_STORAGE`.
 - `TRADER_INTELLIGENCE_DB_PATH`, `TRADER_INTELLIGENCE_RULES_DB_PATH`, `TRADER_INTELLIGENCE_JOURNAL_DB_PATH`, `TRADER_INTELLIGENCE_PRIVATE_DATA_ROOT`.
 
+### Accepted replacement Platform/Journal configuration
+
+- Database/repository boundary: `TRADERLINK_PLATFORM_DB_PATH`,
+  `TRADERLINK_PLATFORM_REPOSITORY_ROOT`.
+- Versioned broker-account identity authority:
+  `TRADERLINK_PLATFORM_ACCOUNT_IDENTITY_ACTIVE_KEY_VERSION`,
+  `TRADERLINK_PLATFORM_ACCOUNT_IDENTITY_HMAC_KEYS_JSON`.
+- Development-only Journal source gate:
+  `TRADERLINK_PLATFORM_JOURNAL_IMPORT_SOURCE_PATH`,
+  `TRADERLINK_PLATFORM_ALLOW_JOURNAL_SOURCE_IDENTITY_PREPARATION`,
+  `TRADERLINK_PLATFORM_ALLOW_JOURNAL_SOURCE_IMPORT`.
+- Append-only evidence boundary:
+  `TRADERLINK_PLATFORM_JOURNAL_EVIDENCE_VAULT_ROOT`,
+  `TRADERLINK_PLATFORM_JOURNAL_PROTECTED_STORAGE_ROOTS_JSON`.
+- Versioned Journal execution/content authority:
+  `TRADERLINK_PLATFORM_JOURNAL_HMAC_ACTIVE_KEY_VERSION`,
+  `TRADERLINK_PLATFORM_JOURNAL_HMAC_KEYS_JSON`.
+
+These are server-only names. Their values, statement path, raw account identity,
+fingerprints, and HMAC material must never enter Git, client output, logs, or
+migration documents. The accepted local authority record and evidence vault are
+outside both repositories and outside one another's protected storage roots.
+
 ### V3 deployment, owner, analytics, and ingestion
 
 - `TRADER_INTELLIGENCE_DEPLOYMENT_PROFILE`, `TRADER_INTELLIGENCE_HOSTING_MODE`, `TRADER_INTELLIGENCE_STORAGE_MODE`, `TRADER_INTELLIGENCE_DATA_MODE`.
@@ -143,7 +166,14 @@ These names are migration inputs. The replacement must use Platform/Journal name
 
 ## Current `.env.local` ownership finding
 
-Only the V3 private-owner/local SQLite configuration and owner/account/instrument/origin values were observed among the relevant storage settings. Academy/News/Watchlist/affiliate/general hosted database URLs and the Journal tag DB override were absent. This is why multiple modules can fall through to the single V3 database path locally. Exact secret values are not part of the migration documents.
+At the Phase 1 legacy checkpoint, only the V3 private-owner/local SQLite
+configuration and owner/account/instrument/origin values were observed among the
+relevant storage settings. Academy/News/Watchlist/affiliate/general hosted
+database URLs and the Journal tag DB override were absent, allowing several
+legacy modules to fall through to one V3 path. The replacement does not copy
+that `.env.local`; Phase 2/3 operations use the explicit replacement names above
+and a separately protected local authority record. Exact secret values are not
+part of the migration documents.
 
 ## External-service inventory
 

@@ -155,7 +155,7 @@ CREATE TABLE journal_round_trip_versions (
   closed_at_utc TEXT ${utcCheck("closed_at_utc")},
   final_position_decimal TEXT NOT NULL ${canonicalDecimalCheck("final_position_decimal")},
   projection_state TEXT NOT NULL CHECK (
-    projection_state IN ('ready_closed', 'legitimate_open', 'needs_decision', 'excluded_by_trader')
+    projection_state IN ('ready_closed', 'legitimate_open', 'needs_decision')
   ),
   coverage_reason_code TEXT CHECK (coverage_reason_code IS NULL OR (${tokenCheck("coverage_reason_code").replace(/^CHECK \(|\)$/gu, "")})),
   projection_fingerprint_sha256 TEXT NOT NULL ${sha256Check("projection_fingerprint_sha256")},
@@ -163,7 +163,7 @@ CREATE TABLE journal_round_trip_versions (
   CHECK (
     (projection_state = 'ready_closed' AND final_position_decimal = '0' AND closed_at_utc IS NOT NULL AND coverage_reason_code IS NULL)
     OR (projection_state = 'legitimate_open' AND final_position_decimal <> '0' AND closed_at_utc IS NULL AND coverage_reason_code IS NULL)
-    OR (projection_state IN ('needs_decision', 'excluded_by_trader') AND coverage_reason_code IS NOT NULL)
+    OR (projection_state = 'needs_decision' AND coverage_reason_code IS NOT NULL)
   ),
   CHECK (closed_at_utc IS NULL OR closed_at_utc >= opened_at_utc),
   UNIQUE (workspace_id, account_id, round_trip_id, round_trip_version_id),

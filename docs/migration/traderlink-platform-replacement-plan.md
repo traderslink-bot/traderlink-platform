@@ -1,6 +1,13 @@
 # TraderLink Platform Replacement Plan
 
-**Status:** Approved planning baseline. Phases 0 and 1 are accepted. The Phase 2 database foundation and local development-owner seed are implemented, focused-verified, independently verified, and technically accepted by the coordinating auditor. The exact Phase 3 Journal integrity plan and Slice A schema are technically accepted; Slice B source evidence and canonical execution-ledger services are active. Public login/account integration is deferred until the complete dashboard is preparing to go live.
+**Status:** Approved controlling plan. Phases 0-3 are technically accepted. Phase 3 passed its exact 11-file/129-test one-worker gate, static verifier, fresh disposable proof, protected backup/restore rehearsal, private preview/import/exact-reimport, append-only evidence-vault, and independent real-database verification. It leaves 331 analytics-ready closed round trips visible and contains two fact-dependent chains in Data Decisions. Phase 4 Core Analytics planning is next. Public login/account integration remains deferred until the complete dashboard is preparing to go live.
+
+**Slice D source-account preparation:** Completed through the accepted
+development-only preparation boundary. The privacy-safe preview, sole-account
+source link, scoped preview, vault promotion, atomic import, exact reimport, and
+independent verification passed. The source identity remains Journal source
+ownership, not login; the development-local owner remains authoritative and
+Discord/email remain deferred.
 
 **Phase 2 foundation preservation:** Local commit `fea56307fbd0142ef99b9f13c020451a6a503cc7` (`feat(platform): establish verified database foundation`); not pushed or deployed.
 
@@ -67,9 +74,9 @@ Imported source row or manual entry
 | Object | Required states | Meaning |
 | --- | --- | --- |
 | Import | preview, blocked, accepted, accepted_with_decisions, superseded | A systemic source problem can block acceptance; a contained record issue does not erase valid records. |
-| Source row | preserved, mapped, automatic_non_execution, needs_correction, excluded_by_trader | Every statement row stays traceable. |
+| Source row | mapped_execution, mapped_position_fact, mapped_coverage_fact, automatic_non_execution, unsupported, needs_correction | Every statement row stays immutable and traceable. Trader decisions change derived facts/disposition, never the preserved evidence row. `mapped_coverage_fact` is immutable trader-supplied statement-period evidence created through Data Decisions. |
 | Execution | accepted, needs_decision, excluded_by_trader, superseded | An execution cannot be analytically used unless its required facts are resolved. |
-| Round trip | ready_closed, legitimate_open, needs_decision, excluded_by_trader, superseded | A questionable execution makes the dependent round trip questionable; it does not invalidate unrelated round trips. |
+| Round trip | ready_closed, legitimate_open, needs_decision, superseded | A questionable execution makes the dependent round trip questionable; it does not invalidate unrelated round trips. Phase 3 exclusion is applied to source evidence/executions and reported explicitly; direct whole-trade exclusion waits for a stable UI/evidence contract. |
 | Metric eligibility | included, excluded_with_reason, not_applicable | Eligibility is evaluated per metric, not as a global dashboard switch. |
 
 `legitimate_open` is not an import failure. It is shown as an open position and excluded only from realized-P/L calculations.
@@ -97,7 +104,7 @@ For each owner, account, instrument, and currency:
 4. The execution that returns the position to zero closes the round trip.
 5. The next execution after zero starts a new round trip, even for the same symbol on the same day.
 6. An execution that crosses through zero is split mathematically: the portion that reaches zero closes the old round trip and the remainder opens the new opposite-direction round trip.
-7. Missing opening inventory, an ambiguous same-time ordering, or a missing required execution creates a contained Data Decision for the affected chain.
+7. Missing opening inventory, a same-time ordering that can actually change trade allocation, or a missing required execution creates a contained Data Decision for the affected chain.
 
 This means repeated completed FFAI trades are separate round trips whenever the trader returns to zero between them. A later purchase after zero begins a new trade.
 
@@ -118,6 +125,10 @@ Trade Tracker is the manual execution entry and day-review surface over the cano
 - The execution's actual date and time are authoritative, not the date the user visits TraderLink or presses Save.
 - The persistence contract must support executions from multiple trading dates, including executions entered days after they occurred. Whether the UI captures them in one batch, separate day workflows, or another presentation is intentionally deferred.
 - However they are entered, the Journal assigns executions to their actual trading dates and can present each affected day separately.
+- A manual execution initially proves only that execution and creates point-only
+  coverage. Data Decisions asks the trader separately for each trading date
+  whether the entered activity is complete or partial; confirmation is bound to
+  that exact date and does not silently assert zero opening inventory.
 - A date-specific Trade Tracker view represents exactly one trading day. The future navigation, undated-route behavior, and multi-day entry presentation require a separate UI plan and owner visual approval.
 - Daily notes and daily rule reviews are keyed to owner, account scope, and trading date. Monday, Tuesday, and Wednesday notes are never combined because they were entered on Wednesday.
 - Trade notes, tags, and trade-level reviews are keyed to the stable round-trip identity and survive deterministic rebuilds through an identity/alias record.
@@ -190,8 +201,13 @@ C:\Users\jerac\Documents\TraderLink\private-data\
   traderlink-platform\
     development.sqlite
     backups\
-    import-artifacts\
+  traderlink-platform-config\
+  traderlink-platform-import-artifacts\
 ```
+
+The configuration and evidence-vault roots are siblings of the database root.
+This keeps append-only source evidence and local HMAC authority outside the
+database directory and every backup/restore/verification tree.
 
 No repository may contain a working SQLite database, WAL, SHM, import statement, secret, or production data copy.
 
@@ -267,7 +283,7 @@ The inventory is a controlling target list, not an "at minimum" list. It must cl
 | 0. Planning | Finalize this plan, integrity contract, register, and agent direction. | Owner approves the planning package. |
 | 1. Inventory and baseline | Complete the controlling inventory, source snapshot manifest, data/store map, analytics catalog, workspace/folder audit, and acceptance inventory. | Owner accepts the legacy baseline, folder dispositions, database source, and exact replacement start point. |
 | 2. Replacement baseline | Preserve the accepted legacy source state, create the planned clean `traderlink-platform` checkout in the same repository lineage, establish the module baseline and separate database, and carry forward the approved light Material shell without redesign. | Legacy and replacement paths are unambiguous, the replacement is traceable and independently runnable, and no product behavior is intentionally lost. |
-| 3. Journal integrity | Implement the accepted [Phase 3 Journal Integrity Plan](phase-3-journal-integrity-plan.md): preserve every source record, establish one versioned execution ledger, contain Data Decisions, and rebuild exact round trips from full chronological chains. | Source evidence and history are preserved; import/reimport/overlap/manual provenance is deterministic; decisions rebuild correctly; opening/closing inventory and open positions reconcile; one unresolved chain does not hide unrelated valid trades; private-source counts and focused/disposable/backup/restore evidence pass. |
+| 3. Journal integrity - complete | Implement the accepted [Phase 3 Journal Integrity Plan](phase-3-journal-integrity-plan.md): preserve every source record, establish one versioned execution ledger, contain Data Decisions, and rebuild exact round trips from full chronological chains. | Accepted: source evidence/history, deterministic reimport and reconstruction, two contained decisions, 331 unrelated ready closed round trips, and focused/disposable/backup/restore/private-source verification all pass. |
 | 4. Core analytics | Implement the shared exact analytics slice and its coverage contract. | Real test data reconciles across Workspace, Trades, and Analytics. |
 | 5. Module transfer | Port remaining Journal capabilities, Academy, Watchlist, News, Coach, Account, and platform services. | Each inventory item is accepted or explicitly deferred by the owner. |
 | 6. Replacement acceptance | Browser review, focused and checkpoint testing, restore test, deployment rehearsal, and owner acceptance. | No active dependency on the legacy app remains. |
@@ -275,14 +291,29 @@ The inventory is a controlling target list, not an "at minimum" list. It must cl
 
 Within Phase 2, the exact schema digest, migration identity, initialization recovery, versioned account fingerprinting, `WorkspaceAccessScope`, owner/admin/member permission model, separate ownership-seed gate, focused verification plan, and exact implementation-file list in [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md) are implemented and correction-verified. The coordinating technical auditor accepted the code, verified empty database, and 10-file/53-test result under the owner's delegated technical checkpoint authority. The follow-on [Development Owner Seed Progress](development-owner-seed-progress.md) checkpoint is also complete: the database was backed up, previewed, atomically seeded, and independently verified at domain counts 1/1/1/1/0 with matching schema/migration digests and no trading data. Phase 3 may proceed and is not blocked on public login. Discord-first login, optional email/password, and user-facing account management are reconciled in the Platform portion of Phase 5 before go-live without changing stable Journal ownership IDs.
 
-Phase 3 Slice A completed the required Phase 2 verifier refactor. The five
+Phase 3 completed the required Phase 2 verifier refactor. The five
 ownership-foundation table names remain an immutable historical profile; the
 complete managed-table set now expands through six manifest migrations and 24
 domain tables. Ordinary runtime continues to reject a historical prefix as
 pending, while explicit verification may inspect a named accepted prefix
-without silently migrating or adopting it. The real seeded database remains on
-the two-migration prefix until the later backup/restore gate authorizes applying
-migrations 3-6.
+without silently migrating or adopting it. After a verified online backup,
+byte-identical restore, and successful restore rehearsal, migrations 3-6 were
+applied to the real development database.
+
+The accepted Phase 3 package implements the record-preserving import,
+unified broker/manual execution ledger, trader-controlled correction workflows,
+atomic decision/rebuild coordinator, and deterministic full-history round-trip
+projection. Its audit refined migration 0003 for explicit coverage evidence and
+source chain/time containment, migration 0005 for append-only correction and
+stale-finding events, and migration 0006 to keep exclusion execution-scoped.
+Because migration files are immutable after application, the earlier Slice A
+disposable remains preserved as historical evidence. The fresh six-migration
+disposable, exact 11-file/129-test suite, static verifier, backup/restore
+rehearsal, real preview/import/reimport, and independent verifier all passed.
+The accepted database contains 2,284 immutable source rows, 1,072 Stock
+executions, 542 preserved unsupported Forex records, 331 ready closed round
+trips, zero automatically legitimate-open round trips, and two contained Data
+Decisions. Phase 4 must preserve those coverage boundaries.
 
 Any new or redesigned UI must be shown to the owner for visual approval before it is treated as an accepted feature slice. Broad tests, full builds, deployment, process stopping, database creation, and production changes occur only when their checkpoint requires them.
 

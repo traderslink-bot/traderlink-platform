@@ -103,7 +103,9 @@ export class JournalAccountRepository {
   constructor(private readonly database: Database.Database) {}
 
   immediate<T>(operation: () => T): T {
-    return this.database.transaction(operation).immediate();
+    return this.database.inTransaction
+      ? operation()
+      : this.database.transaction(operation).immediate();
   }
 
   createAccount(input: JournalAccountRecord): JournalAccountRecord {
@@ -256,14 +258,22 @@ WHERE workspace_id = ? AND account_id = ? AND source_system = ?
       );
   }
 
-  promoteAndTouchIdentity(sourceIdentityId: string, updatedAtUtc: string): void {
-    assertCanonicalUuidV4(sourceIdentityId, "sourceIdentityId");
-    assertCanonicalUtcTimestamp(updatedAtUtc, "updatedAtUtc");
+  promoteAndTouchIdentity(input: Readonly<{
+    workspaceId: string;
+    accountId: string;
+    sourceIdentityId: string;
+    updatedAtUtc: string;
+  }>): void {
+    assertCanonicalUuidV4(input.workspaceId, "workspaceId");
+    assertCanonicalUuidV4(input.accountId, "accountId");
+    assertCanonicalUuidV4(input.sourceIdentityId, "sourceIdentityId");
+    assertCanonicalUtcTimestamp(input.updatedAtUtc, "updatedAtUtc");
     const result = this.database
       .prepare(`UPDATE journal_account_source_identities
 SET status = 'active_current', last_seen_at_utc = ?
-WHERE source_identity_id = ? AND status <> 'superseded'`)
-      .run(updatedAtUtc, sourceIdentityId);
+WHERE workspace_id = ? AND account_id = ? AND source_identity_id = ?
+  AND status <> 'superseded'`)
+      .run(input.updatedAtUtc, input.workspaceId, input.accountId, input.sourceIdentityId);
     if (result.changes !== 1) platformFailure("TRADERLINK_ACCOUNT_NOT_FOUND");
   }
 }

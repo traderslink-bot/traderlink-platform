@@ -1,3 +1,266 @@
+# 2026-08-01 - TraderLink Platform Phase 3 runtime acceptance
+
+**Branch:** `codex/traderlink-platform-replacement`.
+
+- Phase 3 Journal integrity is runtime-complete and technically accepted under
+  delegated owner authority. The exact 11-file suite passed all 129 tests with
+  one worker and no file parallelism; the static verifier passed with six
+  migrations, 24 domain tables, 50 required production/support files, and 11
+  focused test files.
+- A fresh disposable proof, protected online backup/restore rehearsal, real
+  migrations, privacy-safe private preview, sole-account source preparation,
+  append-only vault import, exact reimport, and independent database verifier
+  all passed. The first real verification rejected the historical 331/1/1
+  assumption; the database was restored, expectations were corrected, the full
+  gate was rerun, and the accepted result is 331 ready closed round trips, zero
+  automatically legitimate-open round trips, and two contained Data Decisions.
+- The final database has schema digest
+  `75571914c5fa4bbfe7876c8e9a72cc7d584eab91704d70cf889bf5f1b374a55a`,
+  main-file SHA-256
+  `31101395dafb7bb14c2bf934e3288b40f63a5f8736a1da03cf549c996463af3b`,
+  size 10,522,624 bytes, zero-byte WAL, and 32,768-byte SHM. It contains 2,284
+  immutable source rows, 1,072 Stock executions, 231 position facts, 542
+  preserved unsupported Forex records, one accepted-with-decisions import, and
+  one source identity. No private filename, account identifier, fingerprint,
+  UUID, or HMAC material is recorded here.
+- No dashboard server, push, deployment, production change, or legacy mutation
+  occurred. The exact resume point is Phase 4 Core Analytics planning against
+  the accepted Journal facts and coverage; no V3 analytics dependency is
+  permitted.
+
+# 2026-08-01 - TraderLink Platform Phase 3 Slice B/C implementation checkpoint
+
+**Branch:** `codex/traderlink-platform-replacement`.
+
+- Coordinator static acceptance now covers the complete but unexecuted Slice D
+  preview, preparation, vault, import, independent-verifier, and synthetic-test
+  source after correction of count semantics, the deterministic 331/1/1
+  fixture, immutable row/fact/execution/provenance comparison, temporary cleanup
+  and race/orphan behavior, Journal HMAC validation, the strict development
+  gate, full historical authority, and evidence-account fingerprint resolution.
+  This is not runtime, database, private-source, commit, or Phase 3 exit
+  acceptance. The existing exact eleven-file one-worker suite, Phase 3 static
+  verifier, fresh disposable six-migration/import/reimport/verifier proof, and
+  WAL/SHM runtime behavior remain the next gate. Only after they pass may the
+  verified backup/restore and real preparation/preview/import/reimport/verifier
+  sequence run; any failure requires restoration. Phase 4/dashboard work
+  remains gated by Phase 3 exit.
+- The active replacement remains
+  `C:\Users\jerac\Documents\TraderLink\traderlink-platform`; the legacy folder
+  remains recovery/reference only.
+- Unstaged Slice B/C code now covers record-preserving IBKR/manual imports, one
+  versioned execution ledger, trader-controlled Data Decisions, deterministic
+  full-history zero-to-zero reconstruction, stable round-trip versions and
+  allocations, trading-day identity, and privacy-safe aggregate coverage.
+- Import previews expose aggregate issue/coverage counts only; scoped previews
+  plan exact reimports and overlap without exposing raw account tokens, rows,
+  executions, or symbols or mutating identity state. Exact retries check the
+  accepted file digest before running current parser/mapping logic.
+- A static Slice D sequencing audit corrected the initial private source-account
+  boundary. The zero-identity seeded database first receives an unscoped,
+  privacy-safe parse preview. After backup and migrations, a future narrow
+  server-only preparation command may explicitly link the source only when the
+  locked database has one globally active workspace, its one seeded active
+  Journal account, exact identity counts, and no fingerprint conflict. A rerun
+  after the link is an idempotent no-write
+  resume only when the sole identity resolves under complete configured retained
+  HMAC authority to the same sole account; another account, multiple identities,
+  missing/unsupported authority, mismatch, conflict, or ambiguity stops for
+  factual review/recovery. Exactly one linked identity is then verified
+  before the scoped read-only preview. Normal imports never auto-link, and vault
+  promotion still precedes the atomic source import.
+- The bounded Slice D automation source is now written but unexecuted: a strict
+  unscoped `.csv` reader produces only allowlisted aggregate/file evidence, and
+  a development-only server command binds that accepted evidence to the exact
+  current six-migration schema and persisted sole owner/account state. Initial
+  linking rechecks exactly one globally active workspace and commits exactly one
+  identity under `BEGIN IMMEDIATE`; an exact sole-identity resume performs no
+  mutation. Both CLIs take the source path only from the required
+  `TRADERLINK_PLATFORM_JOURNAL_IMPORT_SOURCE_PATH` environment value and reject
+  source-path arguments. The source may remain in the preserved backup, while
+  the active repository remains unconditionally forbidden and database-like,
+  non-regular, malformed, oversize, evidence-mismatched, or descriptor-swapped
+  inputs fail without path output.
+- Focused synthetic source covers privacy, file/evidence gates, migration and
+  ownership/account/identity cardinality, cross-account conflict, rollback,
+  postcondition, idempotent resume, retained-key recovery, and redacted errors.
+  It has not run, and no database/private-source/vault/import action began.
+- The remaining gated Slice D source is also written but unexecuted. A separate
+  import command requires `NODE_ENV=development` exactly, re-reads the
+  environment-only source, and requires
+  the accepted same-byte parse/scoped count gate plus complete retained account
+  and execution/content HMAC authority, promotes only the hash-addressed relative
+  evidence object in an append-only external vault, and then calls the existing
+  normal Journal integrity command inside the atomic database boundary. Exact
+  rerun verifies the same object and import batch without new rows.
+- The new independent verifier opens the database read-only and fails closed on
+  schema/history/pragmas/integrity drift, ownership or identity mismatch,
+  missing referenced HMAC authority, unmanaged/missing/corrupt evidence,
+  append-only relationship or scope faults, allocation imbalance, rebuild forks
+  or staleness, trading-day/coverage mismatch, failed idempotency evidence,
+  sidecars, or concurrent main-file change. It compares every stored source row
+  by ordinal and verifies position facts, execution content, and provenance
+  against the reparsed vault bytes; retained account authority includes
+  historical referenced identity rows. Results contain aggregate counts,
+  hashes, controlled relative evidence identity, and accepted stable UUIDs only.
+- The former plan wording that expected the scoped read-only preview to prove
+  331 closed round trips, one supported open, and one contained mismatch was not
+  executable: those projections exist only after commit/rebuild. The pre-commit
+  gate now proves the complete accepted parse/planning baseline, while 331/1/1
+  is a mandatory post-import verifier gate whose failure requires restoring the
+  verified pre-import backup. Vault failures remove only unique pre-promotion
+  temporary files and distinguish a new unreferenced final object from an
+  already-present reference-unverified object. Dedicated synthetic source covers
+  vault faults, recoverable orphan rollback, exact reimport, relationship/fork/
+  allocation/rebuild/evidence corruption, stable failure checks, and zero
+  leakage. It includes a clean 331/1/1 verifier path but has not run. Read-only
+  WAL sidecar absence remains an explicit runtime risk, not a static proof. The static file
+  inventory now expects 50 unique files, 13 Slice D automation files, and 11
+  focused tests.
+- The broker source-account link is Journal ownership, not login authentication.
+  The accepted local `development_local` owner remains authoritative; Discord-
+  first public login and optional email login remain deferred. The preparation
+  source does not create or authenticate a Platform user and normal imports do
+  not inherit its one-owner migration exception.
+- Manual idempotency retries now compare the immutable normalized row payload;
+  a reused key with changed facts fails closed instead of returning stale data.
+- Manual executions create point-only coverage plus one evidence-bound review
+  per account-timezone trading date. A trader can confirm complete or partial
+  coverage only for that exact day; the review cannot imply a zero opening
+  position or silently certify other dates.
+- Broker-statement APIs now accept source bytes, hash the exact payload, and
+  decode UTF-8 in fatal mode before CSV parsing. Invalid encoding cannot be
+  silently replaced, and BOM bytes remain part of file identity.
+- Execution-time normalization now fails on daylight-saving gaps and emits a
+  contained source issue for repeated local times rather than guessing a UTC
+  offset. A trader correction may supply the verified UTC instant only when it
+  maps back to the preserved local timestamp and source timezone.
+- Source-row Data Decisions are evidence-bound to their own execution/position
+  evidence. Invalid position rows can be supplied from trader-reviewed
+  statement facts, while an accepted source limitation records the review
+  without inventing facts or complete coverage.
+- Source issues enforce an explicit action matrix, including matching
+  position-fact kinds and rejecting unrelated actions such as using an order
+  change to dismiss a missing-price finding. A source-row price correction can
+  supply only the missing price/completeness; it cannot rewrite the evidenced
+  symbol, timestamp, side, quantity, fee facts, or order.
+- An unmapped execution or position row now preserves any safely recoverable
+  chain and UTC scope. Rebuilds contain only dependent projections through the
+  next supported single-valued position checkpoint; a conflicting multi-fact
+  checkpoint does not end pending or accepted source-limitation containment.
+  Existing UTC/rank semantics remain unchanged, unknown time holds that known
+  chain, and unrelated symbols stay usable. Supplied corrections must match the
+  preserved chain/time scope, and accepting the limitation does not certify
+  those projections. A focused synthetic boundary regression is queued and
+  unexecuted.
+- Optional provider-identity validation failures remain visible deduplication
+  reviews but do not suppress otherwise valid execution arithmetic. Only
+  source findings that remove required execution/position facts receive the
+  additional chain/time containment hold.
+- Missing/conflicting statement periods can be resolved with a separate
+  evidence-bound `supply_coverage_fact` action, while position rows that cannot
+  be dated are retained as correction-needed evidence. Malformed header/data
+  field counts block authoritative commit without discarding the raw row.
+- Position facts now participate in chain discovery without requiring an
+  execution in the same import. A carried non-zero holding remains visible as
+  an explicit outside-coverage decision instead of disappearing.
+- Confirming a position-only carried holding records a distinct immutable fact
+  version and produces a legitimate open-position projection; missing entry
+  execution, entry price, and P/L remain explicitly unavailable.
+- Position-correction idempotency now binds the effective fact version in the
+  versioned `position_fact_mapping_v2` immutable payload, so an ordinary
+  correction cannot alias a confirmed-open fact under the same key. Exact
+  position facts require UTC/local-date agreement in the source timezone and,
+  when local timestamp text is supplied, full UTC/local-time agreement. Focused
+  coherent/mismatch/idempotency regression source is queued and unexecuted.
+- Full-account maintenance rebuilds now share one outer transaction; a failure
+  cannot leave only the first subset of chains rebuilt.
+- Chain discovery includes prior active projections so an instrument/currency
+  correction cannot leave a stale trade active in the execution's former chain.
+- Stable round-trip continuity remains active-first, but when the old chain is
+  rebuilt first and supersedes the prior projection, the new chain falls back
+  to sorted distinct superseded-current execution overlaps. One candidate is
+  reactivated; multiple candidates remain ambiguous. A deterministic synthetic
+  instrument-and-quantity correction regression is queued and unexecuted.
+- Aggregate chain health now counts every latest non-forked rebuild chain, not
+  only chains represented by active round trips. Zero-projection chains remain
+  affected for a rebuild needs-decision count, a pending chain decision, or a
+  pending/trader-accepted relevant execution/position source limitation; a
+  clean zero-projection rebuild is unaffected. The focused synthetic regression
+  is written and remains unexecuted under the static-only checkpoint. Latest
+  leaves are unique by actual instrument/currency scope, and each stored chain
+  hash must match its deterministic scoped derivation, so a corrupt hash cannot
+  conceal a fork; both guards have focused unexecuted regression source.
+- Trader same-time ordering uses a bounded numeric sequence and a server-derived
+  canonical key. Collisions and client-supplied arbitrary sort keys are rejected.
+  Manual batch order remains explicitly unverified until the trader supplies
+  such a sequence; submission order is not treated as execution evidence.
+- General fact correction now retains or server-derives the ordering key and
+  verifies that corrected UTC/local-time facts agree, preventing the generic
+  action from bypassing the dedicated same-time ordering workflow.
+- Same-time ambiguity is now evaluated by `zero_to_zero_v2` with the account's
+  complete chronological chain and current position facts. The adapter no
+  longer marks every mixed-side timestamp. Only a group whose side order can
+  change allocation opens one contained chain decision; non-consequential
+  mixed-side groups stay usable.
+- Source-issue decisions now keep their import batch's exact pending count and
+  current state synchronized. The last resolution appends the transition to
+  `accepted`, exact reimport does not reopen resolved source issues, and the
+  coverage read model exposes accepted source limitations by issue code.
+- Unbound `overlap_set` targets fail closed until persisted membership exists.
+  Phase 3 trader exclusion is execution-scoped, with excluded execution counts
+  reported in rebuild coverage; no unsupported whole-round-trip exclusion is
+  emitted.
+- Fact/order corrections preserve trader exclusions and reject superseded
+  executions; correction can no longer act as an implicit restore.
+- Strong provider fill identities now resolve their exact execution even when a
+  different identical fill owns the content-occurrence alias. Different strong
+  fill IDs with identical facts remain distinct, same-ID changed facts become a
+  contained conflict without a third execution, and broker overlap/enrichment
+  preserves trader exclusions.
+- Journal execution/content HMAC rotation now uses an active key version plus the
+  complete retained base64 key map, with deterministic purpose-separated
+  candidates. Overlap planning inventories every scoped alias/provenance scheme,
+  fails recovery-required when a retained key is unavailable, deduplicates
+  rotation-only content aliases, rejects cross-scheme ownership conflicts, and
+  promotes safe retained-key matches to active aliases on the same stable
+  execution. Immutable prior-key provenance keeps every referenced key in the
+  Phase 3 recovery authority indefinitely; alias promotion is not key retirement,
+  and a future evidence-migration/retention policy is explicitly out of scope.
+  Content-only planning also inventories all current canonical-fact matches, so
+  two provider-distinct identical fills remain an overlap decision even though
+  only one can own the content occurrence alias. Focused synthetic rotation,
+  recovery, cross-scheme conflict, and A/B/content-only ambiguity source is
+  written and remains unexecuted under the static-only checkpoint.
+- `keep_distinct` and supported duplicate merges activate privacy-safe provider
+  identity retained in provenance. Conflicting alias ownership fails closed,
+  and focused regression cases are written but unexecuted.
+- A reverse-order statement repair audit required a pre-real-migration change
+  to migration 0005: obsolete pending chain findings now receive an append-only
+  system supersession event. The previously verified Slice A disposable remains
+  immutable historical evidence and will not be altered or adopted.
+- Focused synthetic coverage is written for import/reimport/overlap, all trader
+  decision actions, source-row target isolation, honest source limitations,
+  stale revision rollback, atomic rollback, long/short/
+  partial/multi-day/repeated/flip grouping, cross-statement upload order,
+  missing coverage, same-time ambiguity, position containment/recovery, and
+  missing-price versus optional-fee behavior.
+- The current task instructions prohibit Vitest/other tests. The static
+  verifier and combined focused suite were not started, and no disposable or
+  real database, private statement, HMAC secret, evidence vault, server,
+  process, dependency, Git staging/commit, push, or deployment changed.
+- The real replacement database remains 94,208 bytes with SHA-256
+  `2497FA605828C9392233F712062CC9FBEDDAB0F2B5E2078AB1A0146494A99C26`,
+  the accepted seed timestamp, and no WAL/SHM sidecars.
+
+Current best next step:
+
+- When the testing restriction permits, run the Phase 3 static verifier and
+  combined Slice B/C focused suite with one worker and file parallelism off.
+  Correct every finding, then create a fresh disposable six-migration database
+  and prove schema digest, rollback, idempotency, and integrity before any
+  Slice D real-database or private-source operation.
+
 # 2026-07-30 - Trade Candle Analyzer manual-entry automatic review
 
 **Branch:** `main`.

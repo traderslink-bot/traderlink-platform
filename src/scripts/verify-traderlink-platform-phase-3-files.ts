@@ -25,6 +25,76 @@ const REQUIRED_SLICE_A_FILES = Object.freeze([
   "src/modules/journal/server/database/journal-integrity-migrations.test.ts",
 ]);
 
+const REQUIRED_ACCOUNT_FILES = Object.freeze([
+  "src/modules/journal/server/accounts/journal-account-repository.ts",
+  "src/modules/journal/server/accounts/journal-account-service.ts",
+  "src/modules/journal/server/accounts/journal-account-boundary.test.ts",
+  "src/modules/journal/server/accounts/journal-account-fingerprint-rotation.test.ts",
+  "src/modules/journal/server/accounts/journal-account-authorization.test.ts",
+]);
+
+const REQUIRED_SLICE_B_FILES = Object.freeze([
+  "src/modules/journal/contracts/journal-execution-contracts.ts",
+  "src/modules/journal/contracts/journal-import-contracts.ts",
+  "src/modules/journal/server/imports/record-preserving-csv.ts",
+  "src/modules/journal/server/imports/journal-value-normalization.ts",
+  "src/modules/journal/server/imports/ibkr-activity-statement-adapter.ts",
+  "src/modules/journal/server/imports/journal-import-repository.ts",
+  "src/modules/journal/server/imports/journal-import-service.ts",
+  "src/modules/journal/server/imports/synthetic-ibkr-fixtures.ts",
+  "src/modules/journal/server/executions/journal-execution-repository.ts",
+  "src/modules/journal/server/executions/journal-execution-service.ts",
+  "src/modules/journal/server/imports/record-preserving-csv.test.ts",
+  "src/modules/journal/server/imports/ibkr-activity-statement-adapter.test.ts",
+  "src/modules/journal/server/imports/journal-import-service.test.ts",
+]);
+
+const REQUIRED_SLICE_C_FILES = Object.freeze([
+  "src/modules/journal/contracts/journal-decision-contracts.ts",
+  "src/modules/journal/contracts/journal-integrity-coverage-contracts.ts",
+  "src/modules/journal/contracts/journal-round-trip-contracts.ts",
+  "src/modules/journal/server/decisions/journal-data-decision-repository.ts",
+  "src/modules/journal/server/decisions/journal-data-decision-service.ts",
+  "src/modules/journal/server/round-trips/journal-decimal-math.ts",
+  "src/modules/journal/server/round-trips/journal-round-trip-repository.ts",
+  "src/modules/journal/server/round-trips/journal-round-trip-service.ts",
+  "src/modules/journal/server/journal-integrity-command-service.ts",
+  "src/modules/journal/server/journal-integrity-read-repository.ts",
+  "src/modules/journal/server/journal-integrity-command-service.test.ts",
+]);
+
+const REQUIRED_SLICE_D_AUTOMATION_SOURCE_FILES = Object.freeze([
+  "src/modules/journal/server/accounts/ibkr-source-account-canonicalizer.ts",
+  "src/modules/journal/server/accounts/journal-development-owner-scope.ts",
+  "src/modules/journal/server/accounts/journal-source-identity-preparation.ts",
+  "src/modules/journal/server/accounts/journal-source-identity-preparation.test.ts",
+  "src/modules/journal/server/imports/journal-evidence-vault.ts",
+  "src/modules/journal/server/imports/journal-import-source-preview.ts",
+  "src/modules/journal/server/imports/journal-private-source-import.ts",
+  "src/modules/journal/server/imports/journal-private-source-automation.test.ts",
+  "src/modules/journal/server/verification/journal-integrity-verifier.ts",
+  "src/scripts/import-traderlink-platform-journal-source.ts",
+  "src/scripts/preview-traderlink-platform-journal-import.ts",
+  "src/scripts/prepare-traderlink-platform-journal-source-identity.ts",
+  "src/scripts/verify-traderlink-platform-journal-integrity.ts",
+]);
+
+const PHASE_3_VERIFIER_FILE =
+  "src/scripts/verify-traderlink-platform-phase-3-files.ts";
+
+const REQUIRED_PHASE_3_FILES = Object.freeze([
+  ...REQUIRED_SLICE_A_FILES,
+  ...REQUIRED_ACCOUNT_FILES,
+  ...REQUIRED_SLICE_B_FILES,
+  ...REQUIRED_SLICE_C_FILES,
+  ...REQUIRED_SLICE_D_AUTOMATION_SOURCE_FILES,
+  PHASE_3_VERIFIER_FILE,
+]);
+
+const PHASE_3_FOCUSED_TEST_FILES = Object.freeze(
+  REQUIRED_PHASE_3_FILES.filter((sourcePath) => sourcePath.endsWith(".test.ts")),
+);
+
 const EXPECTED_FOUNDATION_TABLES = Object.freeze([
   "platform_users",
   "platform_workspaces",
@@ -47,9 +117,21 @@ export function verifyTraderLinkPlatformPhase3Files(
   managedDomainTableCount: number;
   phase3MigrationFiles: number;
   sliceAFiles: number;
+  accountFiles: number;
+  sliceBFiles: number;
+  sliceCFiles: number;
+  sliceDAutomationSourceFiles: number;
+  requiredFiles: number;
+  focusedTestFiles: number;
 }> {
   verifyTraderLinkPlatformMigrationFiles(repositoryRoot);
   requireCondition(platformMigrationManifest.length === 6, "phase_3_manifest_count");
+  requireCondition(
+    JSON.stringify(platformMigrationManifest.slice(0, 2).map((migration) =>
+      migration.migrationId)) ===
+      JSON.stringify(["0001_platform_identity", "0002_journal_account_boundary"]),
+    "phase_2_historical_prefix",
+  );
   requireCondition(
     JSON.stringify(platformOwnershipFoundationDomainTableNames) ===
       JSON.stringify(EXPECTED_FOUNDATION_TABLES),
@@ -66,11 +148,48 @@ export function verifyTraderLinkPlatformPhase3Files(
     }),
     "phase_3_manifest_files",
   );
+  requireCondition(
+    new Set(REQUIRED_PHASE_3_FILES).size === REQUIRED_PHASE_3_FILES.length,
+    "phase_3_required_file_duplicates",
+  );
+  requireCondition(REQUIRED_PHASE_3_FILES.length === 50, "phase_3_required_file_count");
+  requireCondition(
+    REQUIRED_SLICE_D_AUTOMATION_SOURCE_FILES.length === 13,
+    "phase_3_slice_d_automation_source_file_count",
+  );
+  requireCondition(
+    PHASE_3_FOCUSED_TEST_FILES.length === 11,
+    "phase_3_focused_test_count",
+  );
 
-  for (const sourcePath of REQUIRED_SLICE_A_FILES) {
+  for (const sourcePath of REQUIRED_PHASE_3_FILES) {
     const source = readFileSync(resolve(repositoryRoot, sourcePath), "utf8");
+    if (sourcePath === PHASE_3_VERIFIER_FILE) {
+      requireCondition(
+        !/\bfrom\s+["'][^"']*(?:trader-intelligence-v3|v4-temp-sql|private-data)/iu
+          .test(source),
+        "phase_3_verifier_dependency",
+      );
+      continue;
+    }
     requireCondition(!/trader-intelligence-v3|trader_analytics|v4-temp-sql/iu.test(source),
       "phase_3_legacy_dependency");
+    requireCondition(
+      !/(?:^|[^a-z0-9_])[a-z]:[\\/]|private-data|\.codex|v3-dashboard|trading-rules-v1\.sqlite/iu
+        .test(source),
+      "phase_3_private_path_forbidden",
+    );
+    if (sourcePath === "src/modules/journal/server/imports/synthetic-ibkr-fixtures.ts") {
+      requireCondition(
+        source.includes("SYNTH-ACCOUNT") && source.includes("SYNTH-FILL-1"),
+        "phase_3_fixture_not_synthetic",
+      );
+    } else if (!sourcePath.endsWith(".test.ts")) {
+      requireCondition(
+        !source.includes("synthetic-ibkr-fixtures"),
+        "phase_3_fixture_production_dependency",
+      );
+    }
     if (PHASE_3_MIGRATION_FILES.includes(sourcePath)) {
       requireCondition(!/\bREAL\b/u.test(source), "phase_3_sql_real_forbidden");
     }
@@ -82,6 +201,12 @@ export function verifyTraderLinkPlatformPhase3Files(
     managedDomainTableCount: currentPlatformDomainTableNames.length,
     phase3MigrationFiles: PHASE_3_MIGRATION_FILES.length,
     sliceAFiles: REQUIRED_SLICE_A_FILES.length,
+    accountFiles: REQUIRED_ACCOUNT_FILES.length,
+    sliceBFiles: REQUIRED_SLICE_B_FILES.length,
+    sliceCFiles: REQUIRED_SLICE_C_FILES.length,
+    sliceDAutomationSourceFiles: REQUIRED_SLICE_D_AUTOMATION_SOURCE_FILES.length,
+    requiredFiles: REQUIRED_PHASE_3_FILES.length,
+    focusedTestFiles: PHASE_3_FOCUSED_TEST_FILES.length,
   });
 }
 

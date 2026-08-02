@@ -95,8 +95,9 @@ CREATE TABLE journal_data_decision_events (
       'opened', 'correct_execution_fact', 'add_missing_execution',
       'set_execution_order', 'exclude_execution', 'restore_execution',
       'merge_supported_duplicate', 'keep_distinct',
-      'supply_opening_inventory', 'correct_position_fact',
-      'confirm_legitimate_open_position'
+      'supply_opening_inventory', 'supply_position_fact', 'supply_coverage_fact',
+      'correct_position_fact', 'confirm_legitimate_open_position',
+      'accept_source_limitation', 'superseded_by_rebuild'
     )
   ),
   actor_kind TEXT NOT NULL CHECK (actor_kind IN ('system', 'user')),
@@ -107,12 +108,15 @@ CREATE TABLE journal_data_decision_events (
   resulting_execution_version_id TEXT ${uuidCheck("resulting_execution_version_id")},
   prior_position_fact_id TEXT ${uuidCheck("prior_position_fact_id")},
   resulting_position_fact_id TEXT ${uuidCheck("resulting_position_fact_id")},
+  resulting_coverage_interval_id TEXT ${uuidCheck("resulting_coverage_interval_id")},
   counterpart_execution_id TEXT ${uuidCheck("counterpart_execution_id")},
   resulting_state TEXT NOT NULL CHECK (resulting_state IN ('pending', 'resolved', 'superseded')),
   occurred_at_utc TEXT NOT NULL ${utcCheck("occurred_at_utc")},
   CHECK (
-    (actor_kind = 'system' AND actor_user_id IS NULL AND action = 'opened')
-    OR (actor_kind = 'user' AND actor_user_id IS NOT NULL AND action <> 'opened')
+    (actor_kind = 'system' AND actor_user_id IS NULL
+      AND action IN ('opened', 'superseded_by_rebuild'))
+    OR (actor_kind = 'user' AND actor_user_id IS NOT NULL
+      AND action NOT IN ('opened', 'superseded_by_rebuild'))
   ),
   UNIQUE (workspace_id, account_id, decision_id, event_sequence),
   UNIQUE (workspace_id, account_id, decision_event_id),
@@ -123,6 +127,7 @@ CREATE TABLE journal_data_decision_events (
   FOREIGN KEY (workspace_id, account_id, resulting_execution_version_id) REFERENCES journal_execution_versions(workspace_id, account_id, execution_version_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
   FOREIGN KEY (workspace_id, account_id, prior_position_fact_id) REFERENCES journal_position_facts(workspace_id, account_id, position_fact_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
   FOREIGN KEY (workspace_id, account_id, resulting_position_fact_id) REFERENCES journal_position_facts(workspace_id, account_id, position_fact_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+  FOREIGN KEY (workspace_id, account_id, resulting_coverage_interval_id) REFERENCES journal_source_coverage_intervals(workspace_id, account_id, coverage_interval_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
   FOREIGN KEY (workspace_id, account_id, counterpart_execution_id) REFERENCES journal_executions(workspace_id, account_id, execution_id) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) STRICT;
 

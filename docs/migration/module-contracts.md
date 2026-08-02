@@ -65,12 +65,38 @@ moving Journal authority into V3, routes, pages, or browser code.
 - Broker statements/import files and retention metadata.
 - Immutable source rows and mappings.
 - Immutable source coverage intervals; a missing statement period never means
-  zero activity, and a manual entry never claims full-account coverage.
+  zero activity, and a manual entry begins as point-only evidence rather than
+  claiming full-account coverage. A trader may confirm complete or partial
+  coverage only for the exact manual trading date through Data Decisions.
 - Import batches/previews/acceptance/supersession.
 - Canonical executions from broker and manual sources.
 - Data Decisions, corrections, exclusions, duplicate resolution, opening inventory, and decision audit.
 - Derived round trips and stable round-trip identity/alias history.
 - Trading-day records, notes, trade notes, tags, setups, rules, reviews, and candle/Level Analysis associations.
+
+### Source-account assignment contract
+
+Unscoped statement parsing may expose only privacy-safe aggregate preview
+evidence; a raw broker account identifier exists only transiently inside the
+server operation. Scoped preview and import require an explicit confirmed
+source-account identity and never auto-link in ordinary product paths.
+
+The one-owner private migration may use a future narrow server-only preparation
+command only after backup and migrations. It must prove exactly one active
+Journal account in the seeded workspace, zero non-superseded identities for the
+source system, no fingerprint conflict, and exactly one linked identity after a
+single transactional `confirmSourceIdentityLinkRecord()` operation. After a
+post-link interruption, one existing identity is an idempotent no-mutation
+resume only when the in-process statement fingerprint resolves under complete
+configured retained HMAC authority to that identity and the same sole active
+account. Another
+account, multiple identities, missing/unsupported authority, mismatch, conflict,
+or ambiguity requires factual trader review/recovery. Returned evidence contains
+counts and digests only, never the raw identifier.
+
+Source-account assignment is Journal data ownership, not Platform login
+authentication. The accepted local `development_local` owner remains
+authoritative; Discord-first and optional email/password login are deferred.
 
 ### Source-row contract
 
@@ -95,7 +121,7 @@ An accepted execution must have the minimum facts required to change position: a
 
 ### Data Decision contract
 
-Required: affected source rows/executions/round-trip chain; detected issue and consequence; available factual actions; before/after preview; trader choice; actor/time/reason; rebuild status; resulting aliases/coverage. Supported actions include correct, add a missing execution with new manual/correction provenance, set an evidence-supported execution order, exclude, resolve duplicate, confirm supported opening inventory, keep distinct, merge/supersede, and classify a supported position as legitimately open.
+Required: affected source rows/executions/round-trip chain; detected issue and consequence; available factual actions; before/after preview; trader choice; actor/time/reason; rebuild status; resulting aliases/coverage. Supported actions include correct, add a missing execution with new manual/correction provenance, set an evidence-supported execution order, exclude, resolve duplicate, confirm supported opening inventory, supply a missing position or statement-coverage fact, accept an unavailable source fact without inventing it, keep distinct, merge/supersede, and classify a supported position as legitimately open.
 
 The trader controls facts. The service rejects arithmetically impossible outcomes such as declaring a non-zero position closed without an execution/inventory fact that reaches zero.
 
@@ -254,7 +280,7 @@ One module's `unavailable` state does not change another module's `ready` state.
 | Level Analysis shared V3 DB accessor | Level Analysis + Journal link | Separate logical migrations/contracts while allowing one physical DB |
 | Two dashboard shells/layouts | Platform | Preserve approved `/workspace` visual baseline; retire legacy shell only after mapping and owner approval |
 
-## Phase 2 accepted foundation and next operation
+## Phase 2 accepted foundation and later operation
 
 Phase 2 preservation, design, and foundation implementation established:
 
@@ -265,4 +291,4 @@ Phase 2 preservation, design, and foundation implementation established:
 5. the implemented and correction-verified focused verification plan and exact implementation-file list in [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md); and
 6. the verified empty `development.sqlite` with exactly two migration rows and five zero-row domain tables, accepted with the 10-file/53-test result by the coordinating technical auditor.
 
-The Phase 2 empty database foundation and follow-on [Development Owner Seed Progress](development-owner-seed-progress.md) checkpoint are technically complete. The seed establishes stable development ownership independently from public authentication so Phase 3 facts do not depend on a temporary login implementation. Its independently verified domain counts are 1/1/1/1/0, with zero source-account identities and no trading data. Discord-first login and optional linked email/password identity are deferred until the complete dashboard is preparing to go live and must preserve these stable user/workspace/account UUIDs. Phase 3 Journal integrity may proceed; do not remove or repurpose the original `traderslink.pro` folder.
+The Phase 2 empty database foundation and follow-on [Development Owner Seed Progress](development-owner-seed-progress.md) checkpoint are technically complete. The seed established stable development ownership independently from public authentication so later Journal facts do not depend on a temporary login implementation. Its 1/1/1/1/0 counts are the historical seed boundary. Phase 3 subsequently added the accepted source identity and Journal facts under the [Phase 3 tracker](phase-3-journal-integrity-progress.md). Discord-first login and optional linked email/password identity remain deferred until the complete dashboard is preparing to go live and must preserve these stable user/workspace/account UUIDs. Phase 4 Core Analytics may proceed; do not remove or repurpose the original `traderslink.pro` folder.

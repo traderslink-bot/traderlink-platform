@@ -251,7 +251,8 @@ CREATE TABLE journal_source_rows (
   occurrence_ordinal INTEGER NOT NULL CHECK (occurrence_ordinal > 0),
   initial_classification TEXT NOT NULL CHECK (
     initial_classification IN (
-      'mapped_execution', 'mapped_position_fact', 'automatic_non_execution',
+      'mapped_execution', 'mapped_position_fact', 'mapped_coverage_fact',
+      'automatic_non_execution',
       'unsupported', 'needs_correction'
     )
   ),
@@ -276,6 +277,9 @@ CREATE TABLE journal_source_row_issues (
   account_id TEXT NOT NULL ${uuidCheck("account_id")},
   import_batch_id TEXT NOT NULL ${uuidCheck("import_batch_id")},
   source_row_id TEXT ${uuidCheck("source_row_id")},
+  instrument_id TEXT ${uuidCheck("instrument_id")},
+  trade_currency TEXT ${currencyCheck("trade_currency")},
+  effective_at_utc TEXT ${utcCheck("effective_at_utc")},
   issue_scope TEXT NOT NULL CHECK (issue_scope IN ('import', 'row', 'position_fact', 'execution', 'chain')),
   issue_code TEXT NOT NULL ${tokenCheck("issue_code")},
   severity TEXT NOT NULL CHECK (severity IN ('info', 'warning', 'error')),
@@ -288,13 +292,18 @@ CREATE TABLE journal_source_row_issues (
     OR (issue_scope = 'row' AND source_row_id IS NOT NULL)
     OR issue_scope IN ('position_fact', 'execution', 'chain')
   ),
+  CHECK ((instrument_id IS NULL) = (trade_currency IS NULL)),
   UNIQUE (workspace_id, account_id, source_issue_id),
   FOREIGN KEY (workspace_id, account_id, import_batch_id) REFERENCES journal_import_batches(workspace_id, account_id, import_batch_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
-  FOREIGN KEY (workspace_id, account_id, import_batch_id, source_row_id) REFERENCES journal_source_rows(workspace_id, account_id, import_batch_id, source_row_id) ON UPDATE RESTRICT ON DELETE RESTRICT
+  FOREIGN KEY (workspace_id, account_id, import_batch_id, source_row_id) REFERENCES journal_source_rows(workspace_id, account_id, import_batch_id, source_row_id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+  FOREIGN KEY (workspace_id, instrument_id) REFERENCES journal_instruments(workspace_id, instrument_id) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) STRICT;
 
 CREATE INDEX journal_source_row_issues_batch
   ON journal_source_row_issues(workspace_id, account_id, import_batch_id, is_blocking, severity);
+
+CREATE INDEX journal_source_row_issues_chain
+  ON journal_source_row_issues(workspace_id, account_id, instrument_id, trade_currency, issue_code);
 
 CREATE TABLE journal_source_coverage_intervals (
   coverage_interval_id TEXT PRIMARY KEY ${uuidCheck("coverage_interval_id")},

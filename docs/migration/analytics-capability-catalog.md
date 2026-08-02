@@ -27,11 +27,11 @@ Not dependable by default: order-submission/intended price, bid/ask/NBBO, full a
 
 ## First exact reconciliation slice
 
-Population: accepted `ready_closed` round trips for one owner, selected account set, single currency partition, selected date range, and declared trading timezone. `legitimate_open`, `needs_decision`, excluded, and superseded records are not realized-P/L rows but appear in coverage.
+Population: accepted `ready_closed` round trips for one owner, selected account set, single currency partition, selected date range, and declared trading timezone. `legitimate_open`, `needs_decision`, execution-excluded, and superseded records are not realized-P/L rows but appear in coverage.
 
 | Metric/output | Exact policy | State |
 | --- | --- | --- |
-| Coverage | Accepted executions, pending executions, excluded executions, closed round trips, legitimate open positions, pending round trips, excluded round trips, plus reasons | `first_slice` |
+| Coverage | Accepted executions, pending executions, excluded executions, closed round trips, legitimate open positions, pending round trips, rebuilds affected by exclusions, plus reasons | `first_slice` |
 | Closed trade count | Count of eligible closed round trips | `first_slice` |
 | Win/loss/flat counts | Compare exact selected P/L basis to zero | `first_slice` |
 | Win/loss/flat rates | Corresponding count divided by eligible closed count; unavailable when denominator is zero | `first_slice` |

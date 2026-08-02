@@ -1,4 +1,4 @@
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 import type {
   AccountScope,
@@ -23,6 +23,18 @@ import {
 } from "./journal-account-repository";
 
 export const ACCOUNT_FINGERPRINT_SCHEME_VERSION = "hmac-sha256-v1" as const;
+
+export type ResolvedJournalSourceIdentity = Readonly<{
+  accountId: string;
+  workspaceId: string;
+  tradingTimezone: string;
+  sourceIdentityId: string;
+}>;
+
+export type JournalSourceIdentityTarget = Readonly<{
+  accountId: string;
+  tradingTimezone: string;
+}>;
 
 export type SourceAccountCanonicalizer = (rawSourceAccountId: string) => string;
 
@@ -165,6 +177,69 @@ function requireIsoCurrency(value: string): void {
   }
 }
 
+function privacyComparisonForms(
+  value: string,
+  rejectMalformedPercentEscapes = false,
+): readonly string[] {
+  const normalized = value.normalize("NFKC").toLowerCase();
+  const decodedForms = [normalized];
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const current = decodedForms.at(-1) ?? normalized;
+    if (/%(?![0-9a-f]{2})/iu.test(current)) {
+      if (rejectMalformedPercentEscapes) {
+        platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+          field: "privacySafeDisplay",
+        });
+      }
+      break;
+    }
+    try {
+      const decoded = decodeURIComponent(current)
+        .normalize("NFKC")
+        .toLowerCase();
+      if (decoded === current) break;
+      decodedForms.push(decoded);
+    } catch {
+      if (rejectMalformedPercentEscapes) {
+        platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+          field: "privacySafeDisplay",
+        });
+      }
+      break;
+    }
+  }
+  return Object.freeze([...new Set(decodedForms
+    .flatMap((candidate) => [candidate, candidate.replace(/[^\p{L}\p{N}]/gu, "")])
+    .filter((candidate) => candidate.length > 0))]);
+}
+
+function containsPrivateAccountToken(
+  candidate: string,
+  privateTokens: readonly string[],
+): boolean {
+  const candidateForms = privacyComparisonForms(candidate, true);
+  const tokenForms = privateTokens.flatMap(privacyComparisonForms);
+  return candidateForms.some((candidateForm) =>
+    tokenForms.some((tokenForm) => candidateForm.includes(tokenForm)));
+}
+
+function equalHexDigest(left: string, right: string): boolean {
+  if (!/^[0-9a-f]{64}$/u.test(left) || !/^[0-9a-f]{64}$/u.test(right)) return false;
+  return timingSafeEqual(Buffer.from(left, "hex"), Buffer.from(right, "hex"));
+}
+
+function resolvedIdentityResult(
+  account: JournalAccountRecord,
+  sourceIdentity: JournalAccountSourceIdentityRecord,
+): ResolvedJournalSourceIdentity {
+  return Object.freeze({
+    accountId: account.accountId,
+    workspaceId: account.workspaceId,
+    tradingTimezone: account.tradingTimezone,
+    sourceIdentityId: sourceIdentity.sourceIdentityId,
+  });
+}
+
 export class JournalAccountService {
   constructor(
     private readonly repository: JournalAccountRepository,
@@ -189,7 +264,12 @@ export class JournalAccountService {
     }>,
   ): JournalAccountRecord {
     requireWorkspaceManager(scope, input.workspaceId);
-    if (input.displayName.trim().length < 1 || input.displayName.trim().length > 120) {
+    if (
+      input.displayName.trim() !== input.displayName ||
+      input.displayName.length < 1 ||
+      input.displayName.length > 120 ||
+      /[\u0000-\u001f\u007f]/u.test(input.displayName)
+    ) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
         field: "displayName",
       });
@@ -219,10 +299,18 @@ export class JournalAccountService {
     accountId: string,
   ): AccountScope {
     const accountScope = narrowWorkspaceAccessToAccount(scope, accountId);
-    if (!this.repository.findActiveAccount(scope.workspaceId, accountId)) {
-      platformFailure("TRADERLINK_ACCOUNT_NOT_FOUND");
-    }
+    this.requireAccountRecord(scope, accountId);
     return accountScope;
+  }
+
+  requireAccountRecord(
+    scope: WorkspaceAccessScope,
+    accountId: string,
+  ): JournalAccountRecord {
+    narrowWorkspaceAccessToAccount(scope, accountId);
+    const account = this.repository.findActiveAccount(scope.workspaceId, accountId);
+    if (!account) platformFailure("TRADERLINK_ACCOUNT_NOT_FOUND");
+    return account;
   }
 
   private buildFingerprintTuples(
@@ -274,7 +362,59 @@ export class JournalAccountService {
       privacySafeDisplay: string;
       now?: Date;
     }>,
-  ): JournalAccountRecord {
+  ): ResolvedJournalSourceIdentity {
+    return this.resolveSourceAccountIdentityRecord(scope, input);
+  }
+
+  inspectSourceAccountIdentity(
+    scope: WorkspaceAccessScope,
+    input: Readonly<{
+      sourceSystem: string;
+      rawSourceAccountId: string;
+    }>,
+  ): JournalSourceIdentityTarget {
+    requireWorkspaceManager(scope, scope.workspaceId);
+    assertLowercaseToken(input.sourceSystem, "sourceSystem");
+    const identities = this.repository.listNonSupersededSourceIdentities(
+      scope.workspaceId,
+      input.sourceSystem,
+    );
+    const tuples = this.buildFingerprintTuples(
+      identities,
+      input.sourceSystem,
+      input.rawSourceAccountId,
+    );
+    const matches = this.repository.findSourceIdentityMatches(
+      scope.workspaceId,
+      input.sourceSystem,
+      tuples,
+    );
+    const accountIds = new Set(matches.map((match) => match.accountId));
+    if (accountIds.size === 0) {
+      platformFailure("TRADERLINK_ACCOUNT_IDENTITY_CONFIRMATION_REQUIRED");
+    }
+    if (accountIds.size > 1) {
+      platformFailure("TRADERLINK_ACCOUNT_IDENTITY_CONFLICT");
+    }
+    const accountId = [...accountIds][0];
+    this.requireAccountScope(scope, accountId);
+    const account = this.repository.findActiveAccount(scope.workspaceId, accountId);
+    if (!account) platformFailure("TRADERLINK_ACCOUNT_NOT_FOUND");
+    return Object.freeze({
+      accountId: account.accountId,
+      tradingTimezone: account.tradingTimezone,
+    });
+  }
+
+  resolveSourceAccountIdentityRecord(
+    scope: WorkspaceAccessScope,
+    input: Readonly<{
+      sourceSystem: string;
+      rawSourceAccountId: string;
+      privacySafeDisplay: string;
+      now?: Date;
+    }>,
+  ): ResolvedJournalSourceIdentity {
     requireWorkspaceManager(scope, scope.workspaceId);
     assertLowercaseToken(input.sourceSystem, "sourceSystem");
     const identities = this.repository.listNonSupersededSourceIdentities(
@@ -301,16 +441,15 @@ export class JournalAccountService {
     const accountId = [...accountIds][0];
     const account = this.repository.findActiveAccount(scope.workspaceId, accountId);
     if (!account) platformFailure("TRADERLINK_ACCOUNT_NOT_FOUND");
-    this.writeCurrentIdentity(
+    const sourceIdentity = this.writeCurrentIdentity(
       scope,
       account,
       input.sourceSystem,
       input.rawSourceAccountId,
       input.privacySafeDisplay,
       input.now,
-      matches,
     );
-    return account;
+    return resolvedIdentityResult(account, sourceIdentity);
   }
 
   confirmSourceIdentityLink(
@@ -322,7 +461,20 @@ export class JournalAccountService {
       privacySafeDisplay: string;
       now?: Date;
     }>,
-  ): JournalAccountRecord {
+  ): ResolvedJournalSourceIdentity {
+    return this.confirmSourceIdentityLinkRecord(scope, input);
+  }
+
+  confirmSourceIdentityLinkRecord(
+    scope: WorkspaceAccessScope,
+    input: Readonly<{
+      accountId: string;
+      sourceSystem: string;
+      rawSourceAccountId: string;
+      privacySafeDisplay: string;
+      now?: Date;
+    }>,
+  ): ResolvedJournalSourceIdentity {
     requireWorkspaceManager(scope, scope.workspaceId);
     const account = this.repository.findActiveAccount(scope.workspaceId, input.accountId);
     if (!account) platformFailure("TRADERLINK_ACCOUNT_NOT_FOUND");
@@ -343,16 +495,36 @@ export class JournalAccountService {
     if (matches.some((match) => match.accountId !== input.accountId)) {
       platformFailure("TRADERLINK_ACCOUNT_IDENTITY_CONFLICT");
     }
-    this.writeCurrentIdentity(
+    const sourceIdentity = this.writeCurrentIdentity(
       scope,
       account,
       input.sourceSystem,
       input.rawSourceAccountId,
       input.privacySafeDisplay,
       input.now,
-      matches,
     );
-    return account;
+    return resolvedIdentityResult(account, sourceIdentity);
+  }
+
+  assertPrivacySafeSourceMetadata(input: Readonly<{
+    rawSourceAccountId: string;
+    candidateValues: readonly string[];
+  }>): void {
+    const configuration = validateIdentityConfiguration(this.identityConfiguration);
+    const privateTokens = [
+      input.rawSourceAccountId.trim(),
+      ...[...configuration.canonicalizers.values()].map((canonicalizer) =>
+        canonicalizer(input.rawSourceAccountId)),
+    ].filter((value) => value.length > 0);
+    if (
+      privateTokens.length === 0 ||
+      input.candidateValues.some((candidate) =>
+        containsPrivateAccountToken(candidate, privateTokens))
+    ) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+        field: "privacySafeDisplay",
+      });
+    }
   }
 
   private writeCurrentIdentity(
@@ -362,20 +534,24 @@ export class JournalAccountService {
     rawSourceAccountId: string,
     privacySafeDisplay: string,
     now: Date | undefined,
-    matches: readonly JournalAccountSourceIdentityRecord[],
-  ): void {
+  ): JournalAccountSourceIdentityRecord {
     requireWorkspaceManager(scope, account.workspaceId);
     assertLowercaseToken(sourceSystem, "sourceSystem");
+    const configuration = validateIdentityConfiguration(this.identityConfiguration);
     if (
+      privacySafeDisplay.trim() !== privacySafeDisplay ||
       privacySafeDisplay.trim().length < 1 ||
       privacySafeDisplay.trim().length > 120 ||
-      privacySafeDisplay === rawSourceAccountId
+      /[\u0000-\u001f\u007f]/u.test(privacySafeDisplay)
     ) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
         field: "privacySafeDisplay",
       });
     }
-    const configuration = validateIdentityConfiguration(this.identityConfiguration);
+    this.assertPrivacySafeSourceMetadata({
+      rawSourceAccountId,
+      candidateValues: [privacySafeDisplay],
+    });
     const currentTuple = this.buildFingerprintTuples([], sourceSystem, rawSourceAccountId).find(
       (tuple) =>
         tuple.canonicalizationVersion === configuration.activeCanonicalizationVersion &&
@@ -385,14 +561,31 @@ export class JournalAccountService {
       platformFailure("TRADERLINK_ACCOUNT_IDENTITY_CONFIGURATION_INVALID");
     }
     const timestamp = createCanonicalUtcTimestamp(now);
-    this.repository.immediate(() => {
-      let current = matches.find(
+    return this.repository.immediate(() => {
+      const lockedIdentities = this.repository.listNonSupersededSourceIdentities(
+        account.workspaceId,
+        sourceSystem,
+      );
+      const lockedTuples = this.buildFingerprintTuples(
+        lockedIdentities,
+        sourceSystem,
+        rawSourceAccountId,
+      );
+      const lockedMatches = this.repository.findSourceIdentityMatches(
+        account.workspaceId,
+        sourceSystem,
+        lockedTuples,
+      );
+      if (lockedMatches.some((match) => match.accountId !== account.accountId)) {
+        platformFailure("TRADERLINK_ACCOUNT_IDENTITY_CONFLICT");
+      }
+      let current = lockedMatches.find(
         (match) =>
           match.accountId === account.accountId &&
           match.sourceAccountCanonicalizationVersion ===
             currentTuple.canonicalizationVersion &&
           match.hmacKeyVersion === currentTuple.hmacKeyVersion &&
-          match.sourceAccountFingerprint === currentTuple.fingerprint,
+          equalHexDigest(match.sourceAccountFingerprint, currentTuple.fingerprint),
       );
       if (!current) {
         current = this.repository.createSourceIdentity(
@@ -413,7 +606,12 @@ export class JournalAccountService {
           }),
         );
       } else {
-        this.repository.promoteAndTouchIdentity(current.sourceIdentityId, timestamp);
+        this.repository.promoteAndTouchIdentity({
+          workspaceId: account.workspaceId,
+          accountId: account.accountId,
+          sourceIdentityId: current.sourceIdentityId,
+          updatedAtUtc: timestamp,
+        });
       }
       this.repository.markOtherIdentityRowsRetained({
         workspaceId: account.workspaceId,
@@ -422,6 +620,7 @@ export class JournalAccountService {
         currentSourceIdentityId: current.sourceIdentityId,
         updatedAtUtc: timestamp,
       });
+      return current;
     });
   }
 }
