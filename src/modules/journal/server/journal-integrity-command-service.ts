@@ -7,6 +7,7 @@ import type { JournalChainRebuildResult } from "../contracts/journal-round-trip-
 import { JournalDataDecisionService } from "./decisions/journal-data-decision-service";
 import {
   type IbkrStatementCommitInput,
+  type GenericMappedStatementCommitInput,
   type JournalImportCommitResult,
   type ManualExecutionBatchInput,
   JournalImportService,
@@ -33,6 +34,14 @@ export class JournalIntegrityCommandService {
   ): JournalIntegrityCommitResult {
     return this.commit(scope, input.now, () =>
       this.importService.commitIbkrStatement(scope, input));
+  }
+
+  commitGenericMappedStatement(
+    scope: WorkspaceAccessScope,
+    input: GenericMappedStatementCommitInput,
+  ): JournalIntegrityCommitResult {
+    return this.commit(scope, input.now, () =>
+      this.importService.commitGenericMappedStatement(scope, input));
   }
 
   commitManualExecutions(

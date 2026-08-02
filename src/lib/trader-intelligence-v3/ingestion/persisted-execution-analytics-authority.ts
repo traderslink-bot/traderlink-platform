@@ -322,13 +322,37 @@ export function createPersistedExecutionAnalyticsAuthoritySource(args: {
   readonly attachment: PersistedExecutionAnalyticsAuthorityAttachment;
 }): ReadOnlySnapshotAuthoritySource {
   let built: ReturnType<typeof buildPersistedExecutionAnalyticsAuthority> | null = null;
-  const activity = Object.freeze(
-    args.records.flatMap((record) => record.acceptedExecutions),
+  const activity: CanonicalExecutionEnvelope[] = [];
+  let activityValid = true;
+  for (const record of args.records) {
+    const verified = verifyPersistedRawBrokerCsvImport(record);
+    if (!verified.ok) {
+      activityValid = false;
+      break;
+    }
+    for (const item of verified.value.acceptedExecutions) {
+      const rebuilt = buildCanonicalExecution({
+        ...item.content,
+        validation: item.validation,
+      });
+      if (
+        !rebuilt.ok ||
+        rebuilt.value.canonicalContentDigest !== item.canonicalContentDigest
+      ) {
+        activityValid = false;
+        break;
+      }
+      activity.push(rebuilt.value);
+    }
+    if (!activityValid) break;
+  }
+  const acceptedExecutionActivity = Object.freeze(
+    activityValid ? activity : [],
   );
   return Object.freeze({
     sourceKey: PERSISTED_EXECUTION_ANALYTICS_AUTHORITY_VERSION,
     sourceVersion: "v1",
-    readAcceptedExecutionActivity: () => activity,
+    readAcceptedExecutionActivity: () => acceptedExecutionActivity,
     readExactAuthority: () => {
       built ??= buildPersistedExecutionAnalyticsAuthority(args);
       return built.ok

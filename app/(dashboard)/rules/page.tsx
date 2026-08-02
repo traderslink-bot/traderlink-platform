@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 
-import { requireTraderIntelligenceOwnerPageAccess } from "@/src/lib/trader-intelligence-v3/auth";
-import { readTradingRulesDashboard } from "@/src/lib/trader-intelligence-rules";
+import { withReadonlyJournalAnnotations } from "@/src/modules/journal/server/annotations/journal-annotation-runtime";
+import { readJournalTradingRulesDashboard } from "@/src/modules/journal/server/annotations/journal-trading-rules-dashboard";
+import {
+  currentJournalAccountSelectionRef,
+  requireTraderLinkPlatformPageScope,
+} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
 import { RulesClient } from "./rules-client";
-
-const MODULE_PATH = "app/(dashboard)/rules/page.tsx";
 
 export const metadata: Metadata = {
   title: "Trading Rules | Trader Intelligence",
@@ -17,8 +19,14 @@ export const fetchCache = "force-no-store";
 export const revalidate = 0;
 
 export default async function TradingRulesPage() {
-  const owner =
-    await requireTraderIntelligenceOwnerPageAccess(MODULE_PATH);
-  return <RulesClient initialView={readTradingRulesDashboard(owner)} />;
+  const scope = await requireTraderLinkPlatformPageScope();
+  const initialView = withReadonlyJournalAnnotations(
+    scope,
+    (service, account) => readJournalTradingRulesDashboard(
+      service,
+      account,
+      currentJournalAccountSelectionRef(scope),
+    ),
+  );
+  return <RulesClient initialView={initialView} />;
 }
-

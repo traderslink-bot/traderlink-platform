@@ -40,11 +40,9 @@ import type {
   TradingRulesTemplateView,
   ManualCustomRuleRecord,
   ManualCustomRuleStatus,
-} from "@/src/lib/trader-intelligence-rules";
-import type {
   ExecutionRuleDashboardCard,
   ExecutionRuleLifecycleStatus,
-} from "@/src/lib/trader-intelligence-v3/analytics/rules";
+} from "@/src/modules/journal/server/annotations/journal-trading-rules-dashboard";
 
 type RuleEditorState = Readonly<{
   mode: "create" | "revise";
@@ -168,9 +166,8 @@ function parameterHelperText(parameter: TradingRulesTemplateView["parameters"][n
 }
 
 function latestResultLabel(rule: ExecutionRuleDashboardCard): string {
-  return rule.latestEvaluation
-    ? rule.latestEvaluation.status.replaceAll("_", " ")
-    : "Ready when trade analytics are available";
+  void rule;
+  return "Review status is recorded by the trader in Trade Tracker";
 }
 
 export function RulesClient({
@@ -238,7 +235,10 @@ export function RulesClient({
     setError(null);
     try {
       const response = await fetch("/api/intelligence/rules", {
-        body: JSON.stringify(mutation),
+        body: JSON.stringify({
+          ...mutation,
+          expectedAccountSelectionRef: view.expectedAccountSelectionRef,
+        }),
         credentials: "same-origin",
         headers: { "content-type": "application/json" },
         method: "POST",
@@ -287,6 +287,7 @@ export function RulesClient({
           }
         : {
             action: "revise",
+            expectedRevision: editor.rule!.revision,
             ruleInstanceId: editor.rule!.ruleInstanceId,
             configuration: editorValues,
           };
@@ -304,6 +305,7 @@ export function RulesClient({
     await submitMutation(
       {
         action: "transition",
+        expectedRevision: rule.revision,
         expectedCurrentStatus: rule.status,
         newStatus,
         ruleInstanceId: rule.ruleInstanceId,
@@ -337,7 +339,7 @@ export function RulesClient({
             action: "revise_manual",
             ...manualValues,
             ruleId: manualEditor.rule!.ruleId,
-            expectedVersionOrdinal: manualEditor.rule!.versionOrdinal,
+            expectedRevision: manualEditor.rule!.revision,
           };
     const saved = await submitMutation(
       mutation,
@@ -353,6 +355,7 @@ export function RulesClient({
     await submitMutation(
       {
         action: "transition_manual",
+        expectedRevision: rule.revision,
         expectedCurrentStatus: rule.status,
         newStatus,
         ruleId: rule.ruleId,

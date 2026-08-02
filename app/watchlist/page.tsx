@@ -4,12 +4,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { AcademyShell } from "@/app/academy/academy-shell";
-import { getCurrentAcademySession } from "@/app/academy/academy-server-session";
-import {
-  hasPremiumWatchlistAccess,
-  isLocalWatchlistAuthBypassEnabled,
-} from "@/src/lib/live-watchlist/live-watchlist-auth";
 import { LiveWatchlistStore } from "@/src/lib/live-watchlist/live-watchlist-store";
+import { authorizeWatchlistPageAccess } from "@/src/modules/watchlist/server/access/watchlist-access-service";
 import {
   buildWatchlistPreviewMetadata,
   isWatchlistPreviewCrawlerUserAgent,
@@ -30,16 +26,18 @@ export default async function LiveWatchlistPage({
   const isPreviewCrawler = isWatchlistPreviewCrawlerUserAgent(
     requestHeaders.get("user-agent"),
   );
-  const session = await getCurrentAcademySession();
-  const authBypass = isLocalWatchlistAuthBypassEnabled();
-  if (!session && !authBypass) {
-    if (!authStatus && !isPreviewCrawler) {
+  const access = await authorizeWatchlistPageAccess();
+  if (!access.ok) {
+    if (access.reason === "login_required" && !authStatus && !isPreviewCrawler) {
       redirect(`/api/auth/discord/login?returnTo=${encodeURIComponent("/watchlist")}`);
     }
-    return <WatchlistAccessMessage authStatus={authStatus} kind="login" returnTo="/watchlist" />;
-  }
-  if (session && !hasPremiumWatchlistAccess(session)) {
-    return <WatchlistAccessMessage authStatus={authStatus} kind="premium" returnTo="/watchlist" />;
+    return (
+      <WatchlistAccessMessage
+        authStatus={authStatus}
+        kind={access.reason === "login_required" ? "login" : "premium"}
+        returnTo="/watchlist"
+      />
+    );
   }
 
   const state = await new LiveWatchlistStore().listSymbols();

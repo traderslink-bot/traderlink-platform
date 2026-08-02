@@ -3,13 +3,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AcademyShell } from "../../academy-shell";
-import { getCurrentAcademySession } from "../../academy-server-session";
+import {
+  getCurrentAcademyViewer,
+  listCurrentAcademyCompletedLessonSlugs,
+} from "../../academy-access";
 import {
   getAcademyCoursePage,
   getLaunchAcademyCourseIds,
   isAcademyCourseLaunchReady,
 } from "@/src/lib/academy/academy-content";
-import { AcademyProgressStore } from "@/src/lib/academy/academy-progress-store";
 import {
   buildAcademyMetadata,
   buildCourseJsonLd,
@@ -67,14 +69,10 @@ export default async function AcademyCoursePage({ params }: PageProps) {
     notFound();
   }
 
-  const academySession = await getCurrentAcademySession();
-  const completedLessonSlugs = academySession
-    ? new Set(
-        await new AcademyProgressStore().listCompletedLessonSlugs(
-          academySession.discordUserId,
-        ),
-      )
-    : new Set<string>();
+  const academyViewer = await getCurrentAcademyViewer();
+  const completedLessonSlugs = new Set(
+    await listCurrentAcademyCompletedLessonSlugs(academyViewer),
+  );
   const { course, modules, previousCourse, nextCourse } = page;
   const allLessons = modules.flatMap(({ lessons }) => lessons);
   const coreLessonCount = allLessons.filter(
@@ -185,7 +183,7 @@ export default async function AcademyCoursePage({ params }: PageProps) {
                     const isCompleted = completedLessonSlugs.has(
                       lesson.lesson_slug,
                     );
-                    const statusLabel = academySession
+                    const statusLabel = academyViewer
                       ? isCompleted
                         ? "Complete"
                         : "Incomplete"

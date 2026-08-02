@@ -12,7 +12,7 @@ import {
   IBKR_SOURCE_ACCOUNT_CANONICALIZERS,
   IBKR_SOURCE_ACCOUNT_CANONICALIZATION_VERSION,
 } from "../accounts/ibkr-source-account-canonicalizer";
-import { deriveDevelopmentOwnerJournalScope } from "../accounts/journal-development-owner-scope";
+import { deriveSoleDevelopmentOwnerJournalScope } from "../accounts/journal-development-owner-scope";
 import { JournalDataDecisionRepository } from "../decisions/journal-data-decision-repository";
 import { JournalDataDecisionService } from "../decisions/journal-data-decision-service";
 import { JournalExecutionRepository } from "../executions/journal-execution-repository";
@@ -52,14 +52,9 @@ export const JOURNAL_SOURCE_IMPORT_ENABLE_ENV =
   "TRADERLINK_PLATFORM_ALLOW_JOURNAL_SOURCE_IMPORT" as const;
 export const JOURNAL_SOURCE_IMPORT_ACTION = "import_journal_source" as const;
 
-const REQUIRED_MIGRATION_IDS = Object.freeze([
-  "0001_platform_identity",
-  "0002_journal_account_boundary",
-  "0003_journal_import_evidence",
-  "0004_journal_execution_ledger",
-  "0005_journal_data_decisions",
-  "0006_journal_round_trip_projection",
-]);
+const REQUIRED_MIGRATION_IDS = Object.freeze(
+  platformMigrationManifest.map((migration) => migration.migrationId),
+);
 
 export const ACCEPTED_DEVELOPMENT_OWNER_SOURCE_BASELINE = Object.freeze({
   preservedRowCount: 2_284,
@@ -79,7 +74,7 @@ export type TraderLinkJournalSourceImportResult = Readonly<{
     scopedPreviewSha256: string;
   }>;
   vaultObjectStatus: "created" | "already_present";
-  migrationCount: 6;
+  migrationCount: number;
   workspaceId: string;
   accountId: string;
   importBatchId: string;
@@ -140,11 +135,10 @@ function requireExactSixMigrationSchema(database: Database.Database): void {
     (row) => row.migration_id,
   );
   if (
-    platformMigrationManifest.length !== 6 ||
     JSON.stringify(appliedIds) !== JSON.stringify(REQUIRED_MIGRATION_IDS)
   ) {
     platformFailure("TRADERLINK_PLATFORM_SCHEMA_MISMATCH", {
-      check: "journal_source_import_six_migration_boundary",
+      check: "journal_source_import_migration_boundary",
     });
   }
 }
@@ -338,7 +332,7 @@ function importTraderLinkPlatformJournalSourceInternal(
             database as Database.Database,
             environment,
           );
-          const owner = deriveDevelopmentOwnerJournalScope(
+          const owner = deriveSoleDevelopmentOwnerJournalScope(
             database as Database.Database,
           );
           const identities = new JournalAccountRepository(
@@ -417,7 +411,7 @@ function importTraderLinkPlatformJournalSourceInternal(
               scopedPreviewSha256,
             }),
             vaultObjectStatus: promotion.status,
-            migrationCount: 6 as const,
+            migrationCount: REQUIRED_MIGRATION_IDS.length,
             workspaceId: owner.scope.workspaceId,
             accountId: owner.accountId,
             importBatchId: committed.importBatchId,

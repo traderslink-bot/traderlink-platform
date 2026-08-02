@@ -80,10 +80,14 @@ function databasePath(): string {
   if (configured) {
     return isAbsolute(configured)
       ? configured
-      : join(process.cwd(), configured);
+      : join(/* turbopackIgnore: true */ process.cwd(), configured);
   }
 
-  return join(process.cwd(), "data", "trader-intelligence.sqlite");
+  return join(
+    /* turbopackIgnore: true */ process.cwd(),
+    "data",
+    "trader-intelligence.sqlite",
+  );
 }
 
 function getNeonSql(): NeonSql {

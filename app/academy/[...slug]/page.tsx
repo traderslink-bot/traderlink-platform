@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getCurrentAcademySession } from "../academy-server-session";
+import { getCurrentAcademyViewer } from "../academy-access";
 import { AcademyShell } from "../academy-shell";
 import { LessonCompletionLink } from "../lesson-completion-link";
 import {
@@ -65,7 +65,7 @@ export default async function AcademyLessonPage({ params }: PageProps) {
     notFound();
   }
 
-  const academySession = await getCurrentAcademySession();
+  const academyViewer = await getCurrentAcademyViewer();
   const primaryContext = lesson.contexts[0] ?? null;
   const primaryCoursePage = primaryContext
     ? getAcademyCoursePage(primaryContext.courseId)
@@ -87,7 +87,7 @@ export default async function AcademyLessonPage({ params }: PageProps) {
       />
       <div className="academy-container-wide academy-grid-sidebar">
         <article className="academy-article">
-          {academySession ? null : (
+          {academyViewer ? null : (
             <div className="academy-progress-label">
               <p className="academy-progress-label-title">
                 Track your progress
@@ -139,7 +139,7 @@ export default async function AcademyLessonPage({ params }: PageProps) {
                 href={lesson.nextLesson.slug}
                 className="academy-nav-card academy-nav-card-accent"
                 lessonSlug={lesson.slug}
-                shouldTrack={Boolean(academySession)}
+                shouldTrack={Boolean(academyViewer)}
               >
                 <p className="academy-nav-label">Next lesson</p>
                 <p className="academy-nav-title">{lesson.nextLesson.title}</p>
@@ -149,7 +149,7 @@ export default async function AcademyLessonPage({ params }: PageProps) {
                 href="/academy/"
                 className="academy-nav-card academy-nav-card-accent"
                 lessonSlug={lesson.slug}
-                shouldTrack={Boolean(academySession)}
+                shouldTrack={Boolean(academyViewer)}
               >
                 <p className="academy-nav-label">Course complete</p>
                 <p className="academy-nav-title">Return to Academy</p>

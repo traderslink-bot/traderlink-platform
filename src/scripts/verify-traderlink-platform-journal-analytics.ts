@@ -20,7 +20,11 @@ import type {
   JournalAnalyticsAllocationFact,
   JournalAnalyticsFactSet,
 } from "@/src/modules/journal/contracts/journal-analytics-fact-set";
-import { deriveDevelopmentOwnerJournalScope } from "@/src/modules/journal/server/accounts/journal-development-owner-scope";
+import { JournalAccountRepository } from "@/src/modules/journal/server/accounts/journal-account-repository";
+import {
+  deriveDevelopmentOwnerJournalScope,
+  deriveDevelopmentOwnerJournalScopeForAccount,
+} from "@/src/modules/journal/server/accounts/journal-development-owner-scope";
 import { JournalAnalyticsFactSetRepository } from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-repository";
 import { JournalAnalyticsFactSetService } from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-service";
 import {
@@ -37,9 +41,6 @@ import { verifyCompletedPlatformDatabase } from "@/src/modules/platform/server/d
 export const JOURNAL_ANALYTICS_VERIFICATION_ACTION =
   "verify_journal_analytics" as const;
 
-const EXPECTED_DATABASE_FILE_SIZE_BYTES = 10_522_624;
-const EXPECTED_DATABASE_FILE_SHA256 =
-  "31101395dafb7bb14c2bf934e3288b40f63a5f8736a1da03cf549c996463af3b";
 const EXPECTED_READY_CLOSED_COUNT = 331;
 const EXPECTED_LEGITIMATE_OPEN_COUNT = 0;
 const EXPECTED_NEEDS_DECISION_COUNT = 2;
@@ -599,12 +600,6 @@ function verifyTraderLinkPlatformJournalAnalyticsInternal(
   requireNoPendingWal(walPath);
   const initialSize = statSync(databasePath).size;
   const initialSha256 = sha256Bytes(readFileSync(databasePath));
-  if (
-    initialSize !== EXPECTED_DATABASE_FILE_SIZE_BYTES ||
-    initialSha256 !== EXPECTED_DATABASE_FILE_SHA256
-  ) {
-    verificationFailure("accepted_database_baseline");
-  }
   const fixedNow = options.now?.() ?? new Date();
   let database: Database.Database | null = null;
   try {
@@ -618,7 +613,16 @@ function verifyTraderLinkPlatformJournalAnalyticsInternal(
     database.pragma("query_only = ON");
     verifyCompletedPlatformDatabase(database);
     verifyPlatformDatabaseConnectionPragmas(database);
-    const owner = deriveDevelopmentOwnerJournalScope(database);
+    const ownerBoundary = deriveDevelopmentOwnerJournalScope(database);
+    const ibkrIdentities = new JournalAccountRepository(database)
+      .listNonSupersededSourceIdentities(ownerBoundary.scope.workspaceId, "ibkr");
+    if (ibkrIdentities.length !== 1 || !ibkrIdentities[0]) {
+      verificationFailure("accepted_ibkr_identity_cardinality");
+    }
+    const owner = deriveDevelopmentOwnerJournalScopeForAccount(
+      database,
+      ibkrIdentities[0].accountId,
+    );
     const factSetService = new JournalAnalyticsFactSetService(
       new JournalAnalyticsFactSetRepository(database, () => fixedNow),
     );

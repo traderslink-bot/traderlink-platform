@@ -4,15 +4,14 @@ import Alert from "@mui/material/Alert";
 import Typography from "@mui/material/Typography";
 
 import { DashboardDataScopeChip, DashboardPage, DashboardPanel, DashboardUnavailableState } from "../../../dashboard-template";
-import { resolveConfiguredDashboardAnalytics } from "@/src/lib/trader-intelligence-v3/analytics/dashboard/configured-dashboard-analytics";
-import { requireTraderIntelligenceOwnerPageAccess } from "@/src/lib/trader-intelligence-v3/auth";
-import { validateTraderIntelligenceDeployment } from "@/src/lib/trader-intelligence-v3/deployment";
-import { resolveCompletedCandleReviewTrade } from "@/src/lib/trade-candle-analysis/completed-trade";
-import { readStoredTradeCandleReview } from "@/src/lib/trade-candle-analysis/review-store";
+import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { isCanonicalUuidV4 } from "@/src/modules/platform/server/database/platform-migration-contract";
 
+import { readCandleReviewPageModel } from "./candle-review-platform-runtime";
 import { TradeCandleReviewClient } from "./trade-candle-review-client";
 
-export const metadata: Metadata = { title: "Candle Review | Trader Intelligence" };
+export const metadata: Metadata = { title: "Candle Review | TraderLink Platform" };
+export const dynamic = "force-dynamic";
 
 export default async function TradeCandleReviewPage({
   searchParams,
@@ -20,13 +19,7 @@ export default async function TradeCandleReviewPage({
   searchParams: Promise<{ trade?: string }>;
 }) {
   const key = (await searchParams).trade;
-  const owner = await requireTraderIntelligenceOwnerPageAccess();
-  const deployment = validateTraderIntelligenceDeployment(process.env);
-  const analytics = deployment.ok
-    ? resolveConfiguredDashboardAnalytics({ owner, config: deployment.config, environment: process.env })
-    : null;
-
-  if (!key || !analytics?.ok || !deployment.ok || deployment.config.persistence.kind !== "file") {
+  if (!key || !isCanonicalUuidV4(key)) {
     return (
       <DashboardPage>
         <DashboardPanel title="Candle review">
@@ -39,45 +32,28 @@ export default async function TradeCandleReviewPage({
       </DashboardPage>
     );
   }
-  const trade = resolveCompletedCandleReviewTrade({
-    analytics: analytics.value,
-    semanticRoundTripKey: key,
-  });
-  if (!trade) {
+  const scope = await requireTraderLinkPlatformPageScope();
+  const model = readCandleReviewPageModel(scope, key);
+  if (!model) {
     return (
       <DashboardPage>
         <DashboardPanel title="Candle review">
-          <Alert severity="info">This completed trade is no longer available from the verified execution authority.</Alert>
+          <Alert severity="info">This completed trade is not available from the selected Journal account.</Alert>
         </DashboardPanel>
       </DashboardPage>
     );
   }
-  const stored = readStoredTradeCandleReview({
-    parentPath: deployment.config.persistence.parentPath,
-    trade,
-  });
   return (
     <DashboardPage>
       <div>
         <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">Trades</Typography>
         <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">Candle Review</Typography>
         <Typography color="text.secondary" sx={{ maxWidth: 760, mt: 1 }} variant="body2">
-          Evidence-gated price-path feedback for one verified completed round trip.
+          Evidence-gated price-path feedback for one completed Journal round trip.
         </Typography>
       </div>
       <DashboardDataScopeChip />
-      <TradeCandleReviewClient
-        initialReview={stored}
-        trade={{
-          direction: trade.direction,
-          entryPrice: trade.entryPrice,
-          entryTime: trade.entryTime,
-          exitPrice: trade.exitPrice,
-          exitTime: trade.exitTime,
-          semanticRoundTripKey: trade.semanticRoundTripKey,
-          symbol: trade.symbol,
-        }}
-      />
+      <TradeCandleReviewClient initialReview={model.review} selectionRef={model.expectedAccountSelectionRef} trade={model.target} />
     </DashboardPage>
   );
 }

@@ -1,15 +1,18 @@
 import { randomBytes } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { setAcademyCookie } from "@/src/lib/academy/academy-auth-cookies";
 import {
-  ACADEMY_OAUTH_PROMPT_COOKIE,
-  ACADEMY_OAUTH_RETURN_TO_COOKIE,
-  ACADEMY_OAUTH_STATE_COOKIE,
-  ACADEMY_SESSION_COOKIE,
-  AcademyProgressStore,
-  type AcademySession,
-} from "@/src/lib/academy/academy-progress-store";
+  setPlatformAuthCookie,
+} from "@/src/modules/platform/server/authentication/platform-auth-cookies";
+import {
+  PLATFORM_DISCORD_OAUTH_PROMPT_COOKIE,
+  PLATFORM_DISCORD_OAUTH_RETURN_TO_COOKIE,
+  PLATFORM_DISCORD_OAUTH_STATE_COOKIE,
+} from "@/src/modules/platform/server/authentication/platform-discord-oauth-cookies";
+import {
+  requireTraderLinkPlatformRequestIdentity,
+  type TraderLinkPlatformRequestIdentity,
+} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import {
   buildDiscordAuthResultUrl,
   isWatchlistAuthReturnTo,
@@ -20,7 +23,7 @@ import {
   type DiscordOAuthPrompt,
   getDiscordOAuthConfig,
 } from "@/src/lib/academy/discord-oauth";
-import { hasPremiumWatchlistAccess } from "@/src/lib/live-watchlist/live-watchlist-auth";
+import { hasPlatformDiscordPremiumAccess } from "@/src/modules/watchlist/server/access/platform-discord-watchlist-entitlement";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,20 +33,20 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const returnTo = normalizeDiscordAuthReturnTo(
     request.nextUrl.searchParams.get("returnTo"),
   );
-  let currentSession: AcademySession | null = null;
+  let currentIdentity: TraderLinkPlatformRequestIdentity | null = null;
 
   try {
-    currentSession = await new AcademyProgressStore().getSessionByToken(
-      request.cookies.get(ACADEMY_SESSION_COOKIE)?.value,
-    );
-  } catch (error) {
-    console.warn("Academy session reuse check failed", error);
+    currentIdentity = requireTraderLinkPlatformRequestIdentity(request.headers);
+  } catch {
+    currentIdentity = null;
   }
 
   if (
-    currentSession &&
+    currentIdentity &&
     (!isWatchlistAuthReturnTo(returnTo) ||
-      hasPremiumWatchlistAccess(currentSession))
+      currentIdentity.mode === "local_development" ||
+      (currentIdentity.discord !== null &&
+        hasPlatformDiscordPremiumAccess(currentIdentity.discord)))
   ) {
     return NextResponse.redirect(new URL(returnTo, origin));
   }
@@ -51,9 +54,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const config = getDiscordOAuthConfig(origin);
     const prompt =
-      currentSession &&
+      currentIdentity &&
       isWatchlistAuthReturnTo(returnTo) &&
-      !hasPremiumWatchlistAccess(currentSession)
+      currentIdentity.mode === "platform_session" &&
+      (currentIdentity.discord === null ||
+        !hasPlatformDiscordPremiumAccess(currentIdentity.discord))
         ? "consent"
         : getDiscordOAuthPrompt(request);
     const state = randomBytes(24).toString("base64url");
@@ -61,18 +66,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       buildDiscordAuthorizeUrl({ config, prompt, state }),
     );
 
-    setAcademyCookie(response, request, ACADEMY_OAUTH_STATE_COOKIE, state, 600);
-    setAcademyCookie(
+    setPlatformAuthCookie(response, request, PLATFORM_DISCORD_OAUTH_STATE_COOKIE, state, 600);
+    setPlatformAuthCookie(
       response,
       request,
-      ACADEMY_OAUTH_PROMPT_COOKIE,
+      PLATFORM_DISCORD_OAUTH_PROMPT_COOKIE,
       prompt,
       600,
     );
-    setAcademyCookie(
+    setPlatformAuthCookie(
       response,
       request,
-      ACADEMY_OAUTH_RETURN_TO_COOKIE,
+      PLATFORM_DISCORD_OAUTH_RETURN_TO_COOKIE,
       returnTo,
       600,
     );

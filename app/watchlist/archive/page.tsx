@@ -3,12 +3,8 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { AcademyShell } from "@/app/academy/academy-shell";
-import { getCurrentAcademySession } from "@/app/academy/academy-server-session";
-import {
-  hasPremiumWatchlistAccess,
-  isLocalWatchlistAuthBypassEnabled,
-} from "@/src/lib/live-watchlist/live-watchlist-auth";
 import { LiveWatchlistStore } from "@/src/lib/live-watchlist/live-watchlist-store";
+import { authorizeWatchlistPageAccess } from "@/src/modules/watchlist/server/access/watchlist-access-service";
 import { LiveWatchlistArchiveIndex } from "../live-watchlist-client";
 
 export const dynamic = "force-dynamic";
@@ -34,10 +30,10 @@ export default async function LiveWatchlistArchivePage({
 }) {
   const resolvedSearchParams = await searchParams;
   const authStatus = normalizeSearchParam(resolvedSearchParams.auth);
-  const session = await getCurrentAcademySession();
-  const authBypass = isLocalWatchlistAuthBypassEnabled();
-  if ((!session && !authBypass) || (session && !hasPremiumWatchlistAccess(session))) {
-    if (!session && !authBypass && !authStatus) {
+  const access = await authorizeWatchlistPageAccess();
+  if (!access.ok) {
+    const loginRequired = access.reason === "login_required";
+    if (loginRequired && !authStatus) {
       redirect(`/api/auth/discord/login?returnTo=${encodeURIComponent("/watchlist/archive")}`);
     }
     return (
@@ -47,12 +43,12 @@ export default async function LiveWatchlistArchivePage({
             <div className="academy-card watchlist-access-card">
               <p className="academy-eyebrow">Premium Watchlist</p>
               <h1 className="academy-title">
-                {session ? "Premium access required" : "Log in to view archived tickers"}
+                {loginRequired ? "Log in to view archived tickers" : "Premium access required"}
               </h1>
               <p className="academy-lede">
-                {session
-                  ? "The watchlist archive is available to Discord members with the premium role."
-                  : "Log in with your TradersLink Discord account to view archived tickers."}
+                {loginRequired
+                  ? "Log in with your TradersLink Discord account to view archived tickers."
+                  : access.error}
               </p>
               <Link
                 href={`/api/auth/discord/login?returnTo=${encodeURIComponent("/watchlist/archive")}`}

@@ -3,14 +3,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 
-import { getCurrentAcademySession } from "@/app/academy/academy-server-session";
+import {
+  getCurrentAcademyViewer,
+  listCurrentAcademyCompletedLessonSlugs,
+} from "@/app/academy/academy-access";
 import { SiteShell } from "@/src/components/site/site-shell";
 import {
   getAcademyCoursePage,
   getAcademyCourses,
   getLaunchAcademyCourseIds,
 } from "@/src/lib/academy/academy-content";
-import { AcademyProgressStore } from "@/src/lib/academy/academy-progress-store";
 import {
   getBigTimePennyArticle,
   getPublicCatalystArticleDate,
@@ -522,14 +524,10 @@ export default async function BigTimePennyArticlePage({ params }: PageProps) {
       return course && coursePage ? { course, coursePage } : null;
     })
     .filter((item) => item !== null);
-  const academySession = await getCurrentAcademySession();
-  const completedLessonSlugs = academySession
-    ? new Set(
-        await new AcademyProgressStore().listCompletedLessonSlugs(
-          academySession.discordUserId,
-        ),
-      )
-    : new Set<string>();
+  const academyViewer = await getCurrentAcademyViewer();
+  const completedLessonSlugs = new Set(
+    await listCurrentAcademyCompletedLessonSlugs(academyViewer),
+  );
   const displayTitle = getDisplayTitle(article);
   const structuredContent = getStructuredWeekAheadContent(article);
 
@@ -609,7 +607,7 @@ export default async function BigTimePennyArticlePage({ params }: PageProps) {
                           </div>
                           <div className="academy-course-progress">
                             <CourseProgressMeter
-                              isAuthenticated={Boolean(academySession)}
+                              isAuthenticated={Boolean(academyViewer)}
                               label={
                                 course.course_id === chartReadingCourseId
                                   ? "Core lessons"
@@ -619,7 +617,7 @@ export default async function BigTimePennyArticlePage({ params }: PageProps) {
                             />
                             {lessonGroupProgress.map((groupProgress) => (
                               <CourseProgressMeter
-                                isAuthenticated={Boolean(academySession)}
+                                isAuthenticated={Boolean(academyViewer)}
                                 key={groupProgress.label}
                                 label={groupProgress.label}
                                 progress={groupProgress}

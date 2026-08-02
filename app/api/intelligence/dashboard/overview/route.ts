@@ -3,7 +3,7 @@ import {
   buildJournalAnalyticsDashboardQuery,
   withJournalAnalyticsDashboardService,
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
-import { requireDevelopmentDashboardRequestScope } from "@/src/modules/platform/server/authentication/require-development-dashboard-scope";
+import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
 
 export const runtime = "nodejs";
@@ -20,7 +20,7 @@ const WORKSPACE_METRICS = [
 
 export async function GET(request: Request): Promise<Response> {
   try {
-    const scope = requireDevelopmentDashboardRequestScope(request.headers);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers);
     const query = buildJournalAnalyticsDashboardQuery(scope, {
       metricIds: WORKSPACE_METRICS.map(([, metricId]) => metricId),
     });

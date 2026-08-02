@@ -1,8 +1,18 @@
 import { randomBytes } from "node:crypto";
-import { mkdirSync } from "node:fs";
-import { dirname, isAbsolute, join } from "node:path";
+
 import { neon } from "@neondatabase/serverless";
+import DatabaseConstructor from "better-sqlite3";
 import type Database from "better-sqlite3";
+
+import { affiliateAttributionMigration } from "@/src/modules/affiliate/server/database/migrations/0016_affiliate_attribution";
+import { platformIdentityMigration } from "@/src/modules/platform/server/database/migrations/0001_platform_identity";
+import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
+import {
+  assertCanonicalUtcTimestamp,
+  assertCanonicalUuidV4,
+  platformFailure,
+} from "@/src/modules/platform/server/database/platform-migration-contract";
+import { requirePlatformSingleNodeSqliteStorage } from "@/src/modules/platform/server/database/platform-storage-backend";
 
 type SqliteDatabase = Database.Database;
 type NeonSql = ReturnType<typeof neon>;
@@ -11,19 +21,19 @@ export interface AffiliateInviteRecord {
   active: boolean;
   affiliateCode: string;
   affiliateName: string | null;
-  createdAt: string;
+  createdAtUtc: string;
   inviteCode: string;
-  updatedAt: string;
+  updatedAtUtc: string;
 }
 
-export interface AffiliateReferralRecord {
+export interface AffiliateAttributionRecord {
   affiliateCode: string;
-  createdAt: string;
-  discordUserId: string;
-  firstSeenAt: string;
+  createdAtUtc: string;
+  firstSeenAtUtc: string;
   inviteCode: string | null;
-  joinedAt: string | null;
-  lastSeenAt: string;
+  joinedAtUtc: string | null;
+  lastSeenAtUtc: string;
+  platformUserId: string;
   source: string;
 }
 
@@ -38,18 +48,13 @@ export function normalizeAffiliateCode(value: string | null | undefined): string
   try {
     const parsed = new URL(raw);
     const affiliateParam = parsed.searchParams.get("a");
-    if (affiliateParam) {
-      return normalizeAffiliateCode(affiliateParam);
-    }
+    if (affiliateParam) return normalizeAffiliateCode(affiliateParam);
   } catch {
     const match = raw.match(/[?&]a=([^&#\s]+)/i);
-    if (match?.[1]) {
-      return normalizeAffiliateCode(decodeURIComponent(match[1]));
-    }
+    if (match?.[1]) return normalizeAffiliateCode(decodeURIComponent(match[1]));
   }
 
   return raw
-    .trim()
     .replace(/^@+/, "")
     .replace(/^\?a=/i, "")
     .replace(/[^a-zA-Z0-9_.-]/g, "")
@@ -63,9 +68,15 @@ export function normalizeInviteCode(value: string | null | undefined): string {
   try {
     const parsed = new URL(trimmed);
     const parts = parsed.pathname.split("/").filter(Boolean);
-    return String(parts[parts.length - 1] ?? "").replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 96);
+    return String(parts.at(-1) ?? "")
+      .replace(/[^a-zA-Z0-9_-]/g, "")
+      .slice(0, 96);
   } catch {
-    return trimmed.replace(/^https?:\/\/(www\.)?(discord\.gg|discord(app)?\.com\/invite)\//i, "")
+    return trimmed
+      .replace(
+        /^https?:\/\/(www\.)?(discord\.gg|discord(app)?\.com\/invite)\//i,
+        "",
+      )
       .replace(/[^a-zA-Z0-9_-]/g, "")
       .slice(0, 96);
   }
@@ -75,157 +86,125 @@ export function buildWhopCheckoutUrl(args: {
   affiliateCode?: string | null;
   baseUrl?: string | null;
 }): string {
-  const fallback = "https://whop.com/traderslink-app/filtered-news-momentum-scanner-access/";
-  const baseUrl = String(args.baseUrl || process.env.TRADERSLINK_WHOP_PRODUCT_URL || fallback).trim();
+  const fallback =
+    "https://whop.com/traderslink-app/filtered-news-momentum-scanner-access/";
+  const baseUrl = String(
+    args.baseUrl || process.env.TRADERSLINK_WHOP_PRODUCT_URL || fallback,
+  ).trim();
   const affiliateCode = normalizeAffiliateCode(args.affiliateCode);
-
   const url = new URL(baseUrl || fallback);
-  if (affiliateCode) {
-    url.searchParams.set("a", affiliateCode);
-  }
+  if (affiliateCode) url.searchParams.set("a", affiliateCode);
   return url.toString();
 }
 
-function referralDatabaseUrl(): string | undefined {
-  return (
-    process.env.AFFILIATE_REFERRAL_DATABASE_URL ??
-    process.env.ACADEMY_DATABASE_URL ??
-    process.env.DATABASE_URL
-  );
+function databaseUrl(): string | undefined {
+  return process.env.AFFILIATE_REFERRAL_DATABASE_URL?.trim() || undefined;
 }
 
-function shouldUseSqliteFallback(): boolean {
-  if (process.env.AFFILIATE_REFERRAL_STORAGE === "sqlite") {
-    return true;
-  }
-
-  if (referralDatabaseUrl()) {
+function shouldUseSqlite(): boolean {
+  if (
+    process.env.NODE_ENV === "test" &&
+    process.env.AFFILIATE_REFERRAL_STORAGE === "neon"
+  ) {
+    if (!databaseUrl()) {
+      platformFailure("TRADERLINK_AFFILIATE_STORAGE_INVALID", {
+        reason: "hosted_url_missing",
+      });
+    }
     return false;
   }
-
-  if (process.env.NODE_ENV === "production") {
-    throw new Error(
-      "Affiliate referral storage requires AFFILIATE_REFERRAL_DATABASE_URL, ACADEMY_DATABASE_URL, or DATABASE_URL in production.",
-    );
-  }
-
+  requirePlatformSingleNodeSqliteStorage("TRADERLINK_AFFILIATE_STORAGE_INVALID");
   return true;
 }
 
-function databasePath(): string {
-  const configured = process.env.TRADER_INTELLIGENCE_DB_PATH;
-
-  if (configured) {
-    return isAbsolute(configured)
-      ? configured
-      : join(process.cwd(), configured);
+function explicitTestDatabasePath(): string | undefined {
+  const configured = process.env.AFFILIATE_REFERRAL_DB_PATH?.trim();
+  if (configured && process.env.NODE_ENV !== "test") {
+    platformFailure("TRADERLINK_AFFILIATE_STORAGE_INVALID", {
+      reason: "isolated_sqlite_path_test_only",
+    });
   }
-
-  return join(process.cwd(), "data", "trader-intelligence.sqlite");
+  return configured || undefined;
 }
 
-function getNeonSql(): NeonSql {
-  const databaseUrl = referralDatabaseUrl();
-  if (!databaseUrl) {
-    throw new Error("Affiliate referral database URL is not configured.");
+function initializeAffiliateTestDatabase(database: SqliteDatabase): void {
+  database.pragma("foreign_keys = ON");
+  database.pragma("busy_timeout = 5000");
+  for (const statement of [
+    ...platformIdentityMigration.statements,
+    ...affiliateAttributionMigration.statements,
+  ]) {
+    database.exec(statement);
   }
-  if (!sharedNeonSql) {
-    sharedNeonSql = neon(databaseUrl);
-  }
-  return sharedNeonSql;
 }
 
 async function getSqliteDatabase(): Promise<SqliteDatabase> {
-  if (sharedSqliteDatabase) {
-    return sharedSqliteDatabase;
+  if (sharedSqliteDatabase) return sharedSqliteDatabase;
+  const testPath = explicitTestDatabasePath();
+  if (testPath) {
+    const database = new DatabaseConstructor(testPath);
+    initializeAffiliateTestDatabase(database);
+    sharedSqliteDatabase = database;
+    return database;
   }
-
-  const { default: Database } = await import("better-sqlite3");
-  const filePath = databasePath();
-  mkdirSync(dirname(filePath), { recursive: true });
-  sharedSqliteDatabase = new Database(filePath);
-  runAffiliateReferralSqliteMigrations(sharedSqliteDatabase);
+  sharedSqliteDatabase = openPlatformDatabase({ mode: "runtime" });
   return sharedSqliteDatabase;
 }
 
-async function ensureNeonSchema(): Promise<void> {
-  if (sharedNeonSchemaPromise) {
-    return sharedNeonSchemaPromise;
+function getNeonSql(): NeonSql {
+  const url = databaseUrl();
+  if (!url) {
+    platformFailure("TRADERLINK_AFFILIATE_STORAGE_INVALID", {
+      reason: "hosted_url_missing",
+    });
   }
-
-  const sql = getNeonSql();
-  sharedNeonSchemaPromise = (async () => {
-    await sql`
-      CREATE TABLE IF NOT EXISTS affiliate_invites (
-        invite_code TEXT PRIMARY KEY,
-        affiliate_code TEXT NOT NULL,
-        affiliate_name TEXT,
-        active BOOLEAN NOT NULL DEFAULT TRUE,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
-        json TEXT NOT NULL
-      )
-    `;
-
-    await sql`
-      CREATE INDEX IF NOT EXISTS affiliate_invites_affiliate_code
-      ON affiliate_invites(affiliate_code)
-    `;
-
-    await sql`
-      CREATE TABLE IF NOT EXISTS affiliate_discord_referrals (
-        discord_user_id TEXT PRIMARY KEY,
-        affiliate_code TEXT NOT NULL,
-        invite_code TEXT,
-        joined_at TEXT,
-        first_seen_at TEXT NOT NULL,
-        last_seen_at TEXT NOT NULL,
-        source TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        json TEXT NOT NULL
-      )
-    `;
-
-    await sql`
-      CREATE INDEX IF NOT EXISTS affiliate_discord_referrals_affiliate_code
-      ON affiliate_discord_referrals(affiliate_code, first_seen_at)
-    `;
-  })();
-
-  return sharedNeonSchemaPromise;
+  sharedNeonSql ??= neon(url);
+  return sharedNeonSql;
 }
 
-export function runAffiliateReferralSqliteMigrations(db: SqliteDatabase): void {
-  db.pragma("journal_mode = WAL");
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS affiliate_invites (
-      invite_code TEXT PRIMARY KEY,
-      affiliate_code TEXT NOT NULL,
-      affiliate_name TEXT,
-      active INTEGER NOT NULL DEFAULT 1,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL,
-      json TEXT NOT NULL
+async function verifyNeonSchema(): Promise<void> {
+  if (sharedNeonSchemaPromise) return sharedNeonSchemaPromise;
+  const sql = getNeonSql();
+  sharedNeonSchemaPromise = Promise.all([
+    sql`
+      SELECT table_name, column_name
+      FROM information_schema.columns
+      WHERE table_schema = current_schema()
+        AND table_name IN ('affiliate_invites', 'affiliate_attributions')
+    `,
+    sql`
+      SELECT indexname
+      FROM pg_indexes
+      WHERE schemaname = current_schema()
+        AND indexname IN (
+          'affiliate_invites_affiliate_code_idx',
+          'affiliate_attributions_code_first_seen_idx'
+        )
+    `,
+  ]).then(([columnRows, indexRows]) => {
+    const columns = new Set(
+      (columnRows as Array<{ table_name?: unknown; column_name?: unknown }>).map(
+        (row) => `${String(row.table_name)}.${String(row.column_name)}`,
+      ),
     );
-
-    CREATE INDEX IF NOT EXISTS affiliate_invites_affiliate_code
-      ON affiliate_invites(affiliate_code);
-
-    CREATE TABLE IF NOT EXISTS affiliate_discord_referrals (
-      discord_user_id TEXT PRIMARY KEY,
-      affiliate_code TEXT NOT NULL,
-      invite_code TEXT,
-      joined_at TEXT,
-      first_seen_at TEXT NOT NULL,
-      last_seen_at TEXT NOT NULL,
-      source TEXT NOT NULL,
-      created_at TEXT NOT NULL,
-      json TEXT NOT NULL
-    );
-
-    CREATE INDEX IF NOT EXISTS affiliate_discord_referrals_affiliate_code
-      ON affiliate_discord_referrals(affiliate_code, first_seen_at);
-  `);
+    const required = [
+      "affiliate_invites.invite_code",
+      "affiliate_invites.affiliate_code",
+      "affiliate_attributions.user_id",
+      "affiliate_attributions.affiliate_code",
+      "affiliate_attributions.first_seen_at_utc",
+      "affiliate_attributions.last_seen_at_utc",
+    ];
+    if (
+      required.some((column) => !columns.has(column)) ||
+      (indexRows as Array<unknown>).length !== 2
+    ) {
+      platformFailure("TRADERLINK_AFFILIATE_STORAGE_INVALID", {
+        reason: "hosted_schema_incomplete",
+      });
+    }
+  });
+  return sharedNeonSchemaPromise;
 }
 
 export function resetAffiliateReferralStoreForTests(): void {
@@ -235,32 +214,78 @@ export function resetAffiliateReferralStoreForTests(): void {
   sharedNeonSchemaPromise = null;
 }
 
+function isSensitiveMetadataKey(key: string): boolean {
+  return /(authorization|cookie|password|secret|token|webhook|raw[_-]?user)/iu.test(
+    key,
+  );
+}
+
+function sanitizeMetadata(value: unknown, depth = 0): unknown {
+  if (depth > 6) return null;
+  if (!value || typeof value !== "object") return value;
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeMetadata(item, depth + 1));
+  }
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key]) => !isSensitiveMetadataKey(key))
+      .map(([key, nested]) => [key, sanitizeMetadata(nested, depth + 1)]),
+  );
+}
+
+function safeMetadataJson(value: unknown): string {
+  return JSON.stringify(sanitizeMetadata(value ?? {}));
+}
+
+function normalizeSource(value: string | null | undefined): string {
+  const source = String(value || "discord_invite").trim().toLowerCase();
+  if (!/^[a-z][a-z0-9_-]{0,63}$/u.test(source)) {
+    platformFailure("TRADERLINK_AFFILIATE_STORAGE_INVALID", {
+      field: "source",
+    });
+  }
+  return source;
+}
+
+function normalizeOptionalTimestamp(value: string | null | undefined): string | null {
+  const trimmed = String(value ?? "").trim();
+  if (!trimmed) return null;
+  const date = new Date(trimmed);
+  if (!Number.isFinite(date.getTime())) {
+    platformFailure("TRADERLINK_AFFILIATE_STORAGE_INVALID", {
+      field: "joinedAtUtc",
+    });
+  }
+  const timestamp = date.toISOString();
+  assertCanonicalUtcTimestamp(timestamp, "joinedAtUtc");
+  return timestamp;
+}
+
 function rowToInvite(row: Record<string, unknown>): AffiliateInviteRecord {
-  return {
-    active: Boolean(Number(row.active ?? 0)),
+  return Object.freeze({
+    active: Boolean(Number(row.active)),
     affiliateCode: String(row.affiliate_code),
-    affiliateName: typeof row.affiliate_name === "string" ? row.affiliate_name : null,
-    createdAt: String(row.created_at),
+    affiliateName:
+      typeof row.affiliate_name === "string" ? row.affiliate_name : null,
+    createdAtUtc: String(row.created_at_utc),
     inviteCode: String(row.invite_code),
-    updatedAt: String(row.updated_at),
-  };
+    updatedAtUtc: String(row.updated_at_utc),
+  });
 }
 
-function rowToReferral(row: Record<string, unknown>): AffiliateReferralRecord {
-  return {
+function rowToAttribution(
+  row: Record<string, unknown>,
+): AffiliateAttributionRecord {
+  return Object.freeze({
     affiliateCode: String(row.affiliate_code),
-    createdAt: String(row.created_at),
-    discordUserId: String(row.discord_user_id),
-    firstSeenAt: String(row.first_seen_at),
+    createdAtUtc: String(row.created_at_utc),
+    firstSeenAtUtc: String(row.first_seen_at_utc),
     inviteCode: typeof row.invite_code === "string" ? row.invite_code : null,
-    joinedAt: typeof row.joined_at === "string" ? row.joined_at : null,
-    lastSeenAt: String(row.last_seen_at),
+    joinedAtUtc: typeof row.joined_at_utc === "string" ? row.joined_at_utc : null,
+    lastSeenAtUtc: String(row.last_seen_at_utc),
+    platformUserId: String(row.user_id),
     source: String(row.source),
-  };
-}
-
-function safeJson(value: unknown): string {
-  return JSON.stringify(value ?? {});
+  });
 }
 
 export class AffiliateReferralStore {
@@ -274,206 +299,171 @@ export class AffiliateReferralStore {
     const affiliateCode = normalizeAffiliateCode(args.affiliateCode);
     const inviteCode = normalizeInviteCode(args.inviteCode);
     if (!affiliateCode || !inviteCode) {
-      throw new Error("affiliate_code_and_invite_code_required");
+      platformFailure("TRADERLINK_AFFILIATE_STORAGE_INVALID", {
+        field: "invite",
+      });
     }
-
     const now = new Date().toISOString();
     const active = args.active ?? true;
-    const json = safeJson({
-      affiliateCode,
-      affiliateName: args.affiliateName ?? null,
-      inviteCode,
-      metadata: args.metadata ?? null,
-    });
+    const metadataJson = safeMetadataJson(args.metadata);
 
-    if (!shouldUseSqliteFallback()) {
-      await ensureNeonSchema();
+    if (!shouldUseSqlite()) {
+      await verifyNeonSchema();
       const sql = getNeonSql();
-      await sql`
-        INSERT INTO affiliate_invites (
-          invite_code, affiliate_code, affiliate_name, active, created_at, updated_at, json
-        )
-        VALUES (
-          ${inviteCode}, ${affiliateCode}, ${args.affiliateName ?? null}, ${active},
-          ${now}, ${now}, ${json}
-        )
-        ON CONFLICT (invite_code) DO UPDATE SET
-          affiliate_code = EXCLUDED.affiliate_code,
-          affiliate_name = EXCLUDED.affiliate_name,
-          active = EXCLUDED.active,
-          updated_at = EXCLUDED.updated_at,
-          json = EXCLUDED.json
-      `;
-      return {
-        active,
-        affiliateCode,
-        affiliateName: args.affiliateName ?? null,
-        createdAt: now,
-        inviteCode,
-        updatedAt: now,
-      };
+      await sql`INSERT INTO affiliate_invites (
+  invite_code, affiliate_code, affiliate_name, active, created_at_utc,
+  updated_at_utc, metadata_json
+) VALUES (
+  ${inviteCode}, ${affiliateCode}, ${args.affiliateName ?? null}, ${active},
+  ${now}, ${now}, CAST(${metadataJson} AS jsonb)
+) ON CONFLICT (invite_code) DO UPDATE SET
+  affiliate_code = EXCLUDED.affiliate_code,
+  affiliate_name = EXCLUDED.affiliate_name,
+  active = EXCLUDED.active,
+  updated_at_utc = EXCLUDED.updated_at_utc,
+  metadata_json = EXCLUDED.metadata_json`;
+      return (await this.findInvite(inviteCode)) as AffiliateInviteRecord;
     }
 
-    const db = await getSqliteDatabase();
-    db.prepare(
-      `INSERT INTO affiliate_invites (
-        invite_code, affiliate_code, affiliate_name, active, created_at, updated_at, json
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(invite_code) DO UPDATE SET
-        affiliate_code = excluded.affiliate_code,
-        affiliate_name = excluded.affiliate_name,
-        active = excluded.active,
-        updated_at = excluded.updated_at,
-        json = excluded.json`,
-    ).run(inviteCode, affiliateCode, args.affiliateName ?? null, active ? 1 : 0, now, now, json);
-
-    return {
-      active,
-      affiliateCode,
-      affiliateName: args.affiliateName ?? null,
-      createdAt: now,
-      inviteCode,
-      updatedAt: now,
-    };
+    const database = await getSqliteDatabase();
+    database.prepare(`INSERT INTO affiliate_invites (
+  invite_code, affiliate_code, affiliate_name, active, created_at_utc,
+  updated_at_utc, metadata_json
+) VALUES (?, ?, ?, ?, ?, ?, ?)
+ON CONFLICT(invite_code) DO UPDATE SET
+  affiliate_code = excluded.affiliate_code,
+  affiliate_name = excluded.affiliate_name,
+  active = excluded.active,
+  updated_at_utc = excluded.updated_at_utc,
+  metadata_json = excluded.metadata_json`)
+      .run(
+        inviteCode,
+        affiliateCode,
+        args.affiliateName ?? null,
+        active ? 1 : 0,
+        now,
+        now,
+        metadataJson,
+      );
+    return (await this.findInvite(inviteCode)) as AffiliateInviteRecord;
   }
 
   async findInvite(inviteCode: string): Promise<AffiliateInviteRecord | null> {
     const normalized = normalizeInviteCode(inviteCode);
     if (!normalized) return null;
-
-    if (!shouldUseSqliteFallback()) {
-      await ensureNeonSchema();
+    if (!shouldUseSqlite()) {
+      await verifyNeonSchema();
       const sql = getNeonSql();
-      const rows = (await sql`
-        SELECT * FROM affiliate_invites
-        WHERE invite_code = ${normalized}
-        LIMIT 1
-      `) as Array<Record<string, unknown>>;
+      const rows = (await sql`SELECT * FROM affiliate_invites
+WHERE invite_code = ${normalized} LIMIT 1`) as Array<Record<string, unknown>>;
       return rows[0] ? rowToInvite(rows[0]) : null;
     }
-
-    const db = await getSqliteDatabase();
-    const row = db
+    const database = await getSqliteDatabase();
+    const row = database
       .prepare("SELECT * FROM affiliate_invites WHERE invite_code = ? LIMIT 1")
       .get(normalized) as Record<string, unknown> | undefined;
     return row ? rowToInvite(row) : null;
   }
 
-  async recordDiscordReferral(args: {
+  async recordAttribution(args: {
     affiliateCode?: string | null;
-    discordUserId: string;
+    platformUserId: string;
     inviteCode?: string | null;
-    joinedAt?: string | null;
+    joinedAtUtc?: string | null;
     metadata?: unknown;
     source?: string | null;
-  }): Promise<AffiliateReferralRecord> {
-    const discordUserId = String(args.discordUserId ?? "").trim();
+  }): Promise<AffiliateAttributionRecord> {
+    assertCanonicalUuidV4(args.platformUserId, "platformUserId");
     const inviteCode = normalizeInviteCode(args.inviteCode);
     let affiliateCode = normalizeAffiliateCode(args.affiliateCode);
-
     if (!affiliateCode && inviteCode) {
       const invite = await this.findInvite(inviteCode);
-      if (invite?.active) {
-        affiliateCode = invite.affiliateCode;
-      }
+      if (invite?.active) affiliateCode = invite.affiliateCode;
     }
-
-    if (!discordUserId || !affiliateCode) {
-      throw new Error("discord_user_id_and_affiliate_code_required");
+    if (!affiliateCode) {
+      platformFailure("TRADERLINK_AFFILIATE_STORAGE_INVALID", {
+        field: "affiliateCode",
+      });
     }
-
     const now = new Date().toISOString();
-    const joinedAt = args.joinedAt?.trim() || null;
-    const source = args.source?.trim() || "discord_invite";
-    const json = safeJson({
-      discordUserId,
-      affiliateCode,
-      inviteCode: inviteCode || null,
-      joinedAt,
-      metadata: args.metadata ?? null,
-      source,
-    });
+    const joinedAtUtc = normalizeOptionalTimestamp(args.joinedAtUtc);
+    const source = normalizeSource(args.source);
+    const metadataJson = safeMetadataJson(args.metadata);
 
-    if (!shouldUseSqliteFallback()) {
-      await ensureNeonSchema();
-      const sql = getNeonSql();
-      await sql`
-        INSERT INTO affiliate_discord_referrals (
-          discord_user_id, affiliate_code, invite_code, joined_at,
-          first_seen_at, last_seen_at, source, created_at, json
-        )
-        VALUES (
-          ${discordUserId}, ${affiliateCode}, ${inviteCode || null}, ${joinedAt},
-          ${now}, ${now}, ${source}, ${now}, ${json}
-        )
-        ON CONFLICT (discord_user_id) DO UPDATE SET
-          last_seen_at = EXCLUDED.last_seen_at
-      `;
-      const existing = await this.findReferralByDiscordUserId(discordUserId);
-      if (existing) return existing;
-    } else {
-      const db = await getSqliteDatabase();
-      db.prepare(
-        `INSERT INTO affiliate_discord_referrals (
-          discord_user_id, affiliate_code, invite_code, joined_at,
-          first_seen_at, last_seen_at, source, created_at, json
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(discord_user_id) DO UPDATE SET
-          last_seen_at = excluded.last_seen_at`,
-      ).run(
-        discordUserId,
-        affiliateCode,
-        inviteCode || null,
-        joinedAt,
-        now,
-        now,
-        source,
-        now,
-        json,
-      );
-
-      const existing = await this.findReferralByDiscordUserId(discordUserId);
-      if (existing) return existing;
+    try {
+      if (!shouldUseSqlite()) {
+        await verifyNeonSchema();
+        const sql = getNeonSql();
+        await sql`INSERT INTO affiliate_attributions (
+  user_id, affiliate_code, invite_code, joined_at_utc, first_seen_at_utc,
+  last_seen_at_utc, source, created_at_utc, metadata_json
+) VALUES (
+  ${args.platformUserId}, ${affiliateCode}, ${inviteCode || null},
+  ${joinedAtUtc}, ${now}, ${now}, ${source}, ${now},
+  CAST(${metadataJson} AS jsonb)
+) ON CONFLICT (user_id) DO UPDATE SET
+  last_seen_at_utc = GREATEST(
+    affiliate_attributions.last_seen_at_utc,
+    EXCLUDED.last_seen_at_utc
+  ),
+  joined_at_utc = COALESCE(
+    affiliate_attributions.joined_at_utc,
+    EXCLUDED.joined_at_utc
+  )`;
+      } else {
+        const database = await getSqliteDatabase();
+        database.prepare(`INSERT INTO affiliate_attributions (
+  user_id, affiliate_code, invite_code, joined_at_utc, first_seen_at_utc,
+  last_seen_at_utc, source, created_at_utc, metadata_json
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+ON CONFLICT(user_id) DO UPDATE SET
+  last_seen_at_utc = CASE
+    WHEN excluded.last_seen_at_utc > affiliate_attributions.last_seen_at_utc
+      THEN excluded.last_seen_at_utc
+    ELSE affiliate_attributions.last_seen_at_utc
+  END,
+  joined_at_utc = COALESCE(
+    affiliate_attributions.joined_at_utc,
+    excluded.joined_at_utc
+  )`)
+          .run(
+            args.platformUserId,
+            affiliateCode,
+            inviteCode || null,
+            joinedAtUtc,
+            now,
+            now,
+            source,
+            now,
+            metadataJson,
+          );
+      }
+    } catch (error) {
+      platformFailure("TRADERLINK_AFFILIATE_ATTRIBUTION_CONFLICT", {}, error);
     }
-
-    return {
-      affiliateCode,
-      createdAt: now,
-      discordUserId,
-      firstSeenAt: now,
-      inviteCode: inviteCode || null,
-      joinedAt,
-      lastSeenAt: now,
-      source,
-    };
+    return (await this.findAttributionByPlatformUserId(
+      args.platformUserId,
+    )) as AffiliateAttributionRecord;
   }
 
-  async findReferralByDiscordUserId(
-    discordUserId: string | null | undefined,
-  ): Promise<AffiliateReferralRecord | null> {
-    const normalized = String(discordUserId ?? "").trim();
+  async findAttributionByPlatformUserId(
+    platformUserId: string | null | undefined,
+  ): Promise<AffiliateAttributionRecord | null> {
+    const normalized = String(platformUserId ?? "").trim();
     if (!normalized) return null;
-
-    if (!shouldUseSqliteFallback()) {
-      await ensureNeonSchema();
+    assertCanonicalUuidV4(normalized, "platformUserId");
+    if (!shouldUseSqlite()) {
+      await verifyNeonSchema();
       const sql = getNeonSql();
-      const rows = (await sql`
-        SELECT * FROM affiliate_discord_referrals
-        WHERE discord_user_id = ${normalized}
-        LIMIT 1
-      `) as Array<Record<string, unknown>>;
-      return rows[0] ? rowToReferral(rows[0]) : null;
+      const rows = (await sql`SELECT * FROM affiliate_attributions
+WHERE user_id = ${normalized} LIMIT 1`) as Array<Record<string, unknown>>;
+      return rows[0] ? rowToAttribution(rows[0]) : null;
     }
-
-    const db = await getSqliteDatabase();
-    const row = db
-      .prepare(
-        "SELECT * FROM affiliate_discord_referrals WHERE discord_user_id = ? LIMIT 1",
-      )
+    const database = await getSqliteDatabase();
+    const row = database
+      .prepare("SELECT * FROM affiliate_attributions WHERE user_id = ? LIMIT 1")
       .get(normalized) as Record<string, unknown> | undefined;
-    return row ? rowToReferral(row) : null;
+    return row ? rowToAttribution(row) : null;
   }
 }
 

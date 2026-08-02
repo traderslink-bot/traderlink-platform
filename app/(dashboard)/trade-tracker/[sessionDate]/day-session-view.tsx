@@ -11,6 +11,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Alert,
   Box,
   Button,
   Card,
@@ -37,6 +38,7 @@ import {
   DashboardPrimaryAction,
   DashboardSecondaryAction,
 } from "../../../dashboard-template";
+import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 
 import type {
   DaySessionData,
@@ -70,7 +72,9 @@ async function api<T>(url: string, init: RequestInit): Promise<T> {
 
 function TradeTagEditor({
   availableTags,
+  disabled,
   designPreview,
+  expectedAccountSelectionRef,
   onCatalogChange,
   onManageTags,
   onTagsChange,
@@ -80,7 +84,9 @@ function TradeTagEditor({
   targetKind,
 }: {
   availableTags: DaySessionTradeTag[];
+  disabled: boolean;
   designPreview: boolean;
+  expectedAccountSelectionRef: string;
   onCatalogChange: (tags: DaySessionTradeTag[]) => void;
   onManageTags?: () => void;
   onTagsChange: (tags: DaySessionTradeTag[]) => void;
@@ -132,7 +138,10 @@ function TradeTagEditor({
         return;
       }
       const created = await api<DaySessionTradeTag>("/api/intelligence/trade-tags", {
-        body: JSON.stringify({ name: newName }),
+        body: JSON.stringify({
+          expectedAccountSelectionRef,
+          name: newName,
+        }),
         method: "POST",
       });
       onCatalogChange([...availableTags, created].sort((a, b) => a.name.localeCompare(b.name)));
@@ -174,7 +183,11 @@ function TradeTagEditor({
       const saved = await api<DaySessionTradeTag[]>(
         `/api/intelligence/trades/${encodeURIComponent(targetKey)}/tags`,
         {
-          body: JSON.stringify({ sessionDate, tagIds: selectedIds }),
+          body: JSON.stringify({
+            expectedAccountSelectionRef,
+            sessionDate,
+            tagIds: selectedIds,
+          }),
           method: "PUT",
         },
       );
@@ -203,6 +216,7 @@ function TradeTagEditor({
       <Stack direction="row" sx={{ alignItems: "center", flexWrap: "wrap", gap: 0.75, mt: 1.5 }}>
         {tags.map((tag) => <Chip key={tag.tagId} label={tag.name} size="small" />)}
         <Button
+          disabled={disabled}
           onClick={showEditor}
           size="small"
           variant="outlined"
@@ -285,11 +299,13 @@ function TradeTagEditor({
 }
 
 function ManageTagsDialog({
+  expectedAccountSelectionRef,
   onChange,
   onClose,
   open,
   tags,
 }: {
+  expectedAccountSelectionRef: string;
   onChange: (tags: DaySessionTradeTag[]) => void;
   onClose: () => void;
   open: boolean;
@@ -307,7 +323,11 @@ function ManageTagsDialog({
       const revised = await api<DaySessionTradeTag>(
         `/api/intelligence/trade-tags/${encodeURIComponent(tag.tagId)}`,
         {
-          body: JSON.stringify({ expectedRevision: tag.revision, name }),
+          body: JSON.stringify({
+            expectedAccountSelectionRef,
+            expectedRevision: tag.revision,
+            name,
+          }),
           method: "PATCH",
         },
       );
@@ -324,7 +344,7 @@ function ManageTagsDialog({
       !confirmed &&
       tag.assignmentCount > 0 &&
       window.confirm(
-        `Delete “${tag.name}” and remove it from ${tag.assignmentCount} trade${tag.assignmentCount === 1 ? "" : "s"}?`,
+        `Retire “${tag.name}” and hide it from ${tag.assignmentCount} current trade${tag.assignmentCount === 1 ? "" : "s"}? Its history will be preserved.`,
       )
     ) {
       await remove(tag, true);
@@ -339,6 +359,7 @@ function ManageTagsDialog({
         {
           body: JSON.stringify({
             confirmAssignedDeletion: confirmed,
+            expectedAccountSelectionRef,
             expectedRevision: tag.revision,
           }),
           method: "DELETE",
@@ -352,7 +373,7 @@ function ManageTagsDialog({
         typed.status === 409 &&
         typed.assignmentCount &&
         window.confirm(
-          `Delete “${tag.name}” and remove it from ${typed.assignmentCount} trade${typed.assignmentCount === 1 ? "" : "s"}?`,
+          `Retire “${tag.name}” and hide it from ${typed.assignmentCount} current trade${typed.assignmentCount === 1 ? "" : "s"}? Its history will be preserved.`,
         )
       ) {
         setBusyId(null);
@@ -411,7 +432,8 @@ function ManageTagsDialog({
   );
 }
 
-function money(value: string, currency: string): string {
+function money(value: string | null, currency: string): string {
+  if (value === null) return "Unavailable";
   const normalizedValue = value.startsWith(".")
     ? `0${value}`
     : value.startsWith("-.")
@@ -427,14 +449,9 @@ function money(value: string, currency: string): string {
     })
       .formatToParts(0)
       .find((part) => part.type === "currency")?.value ?? currency;
-  const sign = match[1] === "-" ? "-" : "+";
-  const whole = match[2].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  const suppliedFraction = match[3] ?? "";
-  const fraction =
-    suppliedFraction.length >= 2
-      ? suppliedFraction
-      : suppliedFraction.padEnd(2, "0");
-  return `${sign}${symbol}${whole}.${fraction}`;
+  const formatted = formatJournalAnalyticsDecimal(normalizedValue);
+  const negative = formatted.startsWith("-");
+  return `${negative ? "-" : "+"}${symbol}${negative ? formatted.slice(1) : formatted}`;
 }
 
 function dateLabel(date: string): string {
@@ -453,7 +470,8 @@ function price(value: string | null, currency: string): string {
 
 function percentage(value: string | null): string {
   if (value === null) return "Unavailable";
-  return `${value.startsWith("-") ? "" : "+"}${value}%`;
+  const formatted = formatJournalAnalyticsDecimal(value);
+  return `${formatted.startsWith("-") ? "" : "+"}${formatted}%`;
 }
 
 function shortDayLabel(date: string): string {
@@ -473,13 +491,15 @@ function timeLabel(value: string, timezone: string): string {
   });
 }
 
-function pnlColor(value: string): "success.main" | "error.main" | "text.primary" {
+function pnlColor(value: string | null): "success.main" | "error.main" | "text.primary" {
+  if (value === null) return "text.primary";
   if (/^-/.test(value) && !/^-0(?:\.0+)?$/.test(value)) return "error.main";
   if (/^0(?:\.0+)?$/.test(value)) return "text.primary";
   return "success.main";
 }
 
-function pnlBackground(value: string): string {
+function pnlBackground(value: string | null): string {
+  if (value === null) return "rgba(1, 30, 86, 0.05)";
   if (/^-/.test(value) && !/^-0(?:\.0+)?$/.test(value)) {
     return "rgba(211, 47, 47, 0.10)";
   }
@@ -519,11 +539,16 @@ function TradeReview({
   availableTags,
   currency,
   designPreview,
+  expectedAccountSelectionRef,
   onCatalogChange,
   onManageTags,
   onRuleStatusChange,
+  onSaveNotes,
   onTagsChange,
   onTechnicalNoteChange,
+  onTradeNoteChange,
+  noteState,
+  readOnly,
   roundTrip,
   sessionDate,
   tags,
@@ -532,14 +557,19 @@ function TradeReview({
   availableTags: DaySessionTradeTag[];
   currency: string;
   designPreview: boolean;
+  expectedAccountSelectionRef: string;
   onCatalogChange: (tags: DaySessionTradeTag[]) => void;
   onManageTags?: () => void;
   onRuleStatusChange: (
     rule: DaySessionRule,
     status: DaySessionRule["status"],
   ) => Promise<void>;
+  onSaveNotes: () => Promise<void>;
   onTagsChange: (tags: DaySessionTradeTag[]) => void;
   onTechnicalNoteChange: (value: string) => void;
+  onTradeNoteChange: (value: string) => void;
+  noteState: "idle" | "saving" | "saved" | "error";
+  readOnly: boolean;
   roundTrip: DaySessionRoundTrip;
   sessionDate: string;
   tags: DaySessionTradeTag[];
@@ -589,7 +619,7 @@ function TradeReview({
         ))}
       </TextField>
       <TextField
-        disabled={!selectedCustomRule}
+        disabled={readOnly || !selectedCustomRule}
         label="Result"
         onChange={(event) => {
           if (selectedCustomRule) {
@@ -669,35 +699,76 @@ function TradeReview({
         </Typography>
       </Box>
 
-      <TradeTagEditor
-        availableTags={availableTags}
-        designPreview={designPreview}
-        onCatalogChange={onCatalogChange}
-        onManageTags={onManageTags}
-        onTagsChange={onTagsChange}
-        sessionDate={sessionDate}
-        tags={tags}
-        targetKey={roundTrip.roundTripKey}
-        targetKind="round-trip"
-      />
+      {readOnly ? (
+        <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.75, mt: 1.5 }}>
+          {tags.length > 0 ? (
+            tags.map((tag) => <Chip key={tag.tagId} label={tag.name} size="small" />)
+          ) : (
+            <Typography color="text.secondary" variant="caption">
+              No trade tags saved.
+            </Typography>
+          )}
+        </Stack>
+      ) : (
+        <TradeTagEditor
+          availableTags={availableTags}
+          disabled={false}
+          designPreview={designPreview}
+          expectedAccountSelectionRef={expectedAccountSelectionRef}
+          onCatalogChange={onCatalogChange}
+          onManageTags={onManageTags}
+          onTagsChange={onTagsChange}
+          sessionDate={sessionDate}
+          tags={tags}
+          targetKey={roundTrip.roundTripKey}
+          targetKind="round-trip"
+        />
+      )}
 
-      <Box
-        sx={{
-          bgcolor: "rgba(1, 30, 86, 0.035)",
-          borderRadius: 1.5,
-          display: { xs: "none", md: "grid" },
-          gap: 1.5,
-          gridTemplateColumns: "minmax(0, 380px) minmax(0, 430px)",
-          justifyContent: "start",
-          mt: 1.5,
-          p: 1.5,
-        }}
-      >
+      {readOnly ? (
+        <Box
+          sx={{
+            bgcolor: "rgba(1, 30, 86, 0.035)",
+            borderRadius: 1.5,
+            mt: 1.5,
+            p: 1.5,
+          }}
+        >
+          {tradeRules.length === 0 ? (
+            <Typography color="text.secondary" variant="body2">No active trade rules.</Typography>
+          ) : (
+            <Stack spacing={1}>
+              {tradeRules.map((rule) => (
+                <Stack direction="row" key={rule.ruleId} sx={{ alignItems: "center", justifyContent: "space-between" }}>
+                  <Typography variant="body2">{rule.label}</Typography>
+                  <Chip
+                    color={rule.status === "followed" ? "success" : rule.status === "broken" ? "error" : "default"}
+                    label={rule.status === "not-reviewed" ? "Not reviewed" : rule.status === "followed" ? "Followed" : "Broken"}
+                    size="small"
+                    variant={rule.status === "not-reviewed" ? "outlined" : "filled"}
+                  />
+                </Stack>
+              ))}
+            </Stack>
+          )}
+        </Box>
+      ) : (
+        <Box
+          sx={{
+            bgcolor: "rgba(1, 30, 86, 0.035)",
+            borderRadius: 1.5,
+            display: { xs: "none", md: "grid" },
+            gap: 1.5,
+            gridTemplateColumns: "minmax(0, 380px) minmax(0, 430px)",
+            justifyContent: "start",
+            mt: 1.5,
+            p: 1.5,
+          }}
+        >
         <Box sx={{ minWidth: 0 }}>
           <Typography
             color="text.secondary"
-            display="block"
-            sx={{ mb: 0.75 }}
+            sx={{ display: "block", mb: 0.75 }}
             variant="caption"
           >
             Preset rules
@@ -736,6 +807,7 @@ function TradeReview({
           ) : (
             <Button
               component={Link}
+              disabled={readOnly}
               fullWidth
               href="/rules"
               rel="noopener noreferrer"
@@ -752,15 +824,15 @@ function TradeReview({
         <Box sx={{ minWidth: 0 }}>
           <Typography
             color="text.secondary"
-            display="block"
-            sx={{ mb: 0.75 }}
+            sx={{ display: "block", mb: 0.75 }}
             variant="caption"
           >
             Custom rules
           </Typography>
           {ruleControls}
         </Box>
-      </Box>
+        </Box>
+      )}
 
       <Box
         sx={{
@@ -772,18 +844,51 @@ function TradeReview({
           p: 1.5,
         }}
       >
-        <TextField
-          fullWidth
-          label="Technical notes"
-          minRows={3}
-          multiline
-          onChange={(event) => onTechnicalNoteChange(event.target.value)}
-          placeholder="Add setup, entry, exit, or execution observations."
-          value={roundTrip.journal.technicalNote}
-        />
+        {readOnly ? (
+          <Box>
+            <Typography color="text.secondary" variant="caption">Trade notes</Typography>
+            <Typography sx={{ mt: 0.5 }} variant="body2">
+              {roundTrip.journal.tradeNote || "No trade note saved."}
+            </Typography>
+            <Typography color="text.secondary" sx={{ display: "block", mt: 1.25 }} variant="caption">
+              Technical notes
+            </Typography>
+            <Typography sx={{ mt: 0.5 }} variant="body2">
+              {roundTrip.journal.technicalNote || "No technical note saved."}
+            </Typography>
+          </Box>
+        ) : (
+          <Stack spacing={1.25}>
+            <TextField
+              fullWidth
+              label="Trade notes"
+              minRows={3}
+              multiline
+              onChange={(event) => onTradeNoteChange(event.target.value)}
+              placeholder="Write what you want to remember about this trade."
+              value={roundTrip.journal.tradeNote}
+            />
+            <TextField
+              fullWidth
+              label="Technical notes"
+              minRows={3}
+              multiline
+              onChange={(event) => onTechnicalNoteChange(event.target.value)}
+              placeholder="Add setup, entry, exit, or execution observations."
+              value={roundTrip.journal.technicalNote}
+            />
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "flex-end" }}>
+              {noteState === "saved" ? <Typography color="success.main" variant="caption">Trade notes saved</Typography> : null}
+              {noteState === "error" ? <Typography color="error.main" variant="caption">Trade notes could not be saved</Typography> : null}
+              <Button disabled={noteState === "saving"} onClick={() => void onSaveNotes()} size="small" variant="contained">
+                {noteState === "saving" ? "Saving..." : "Save trade notes"}
+              </Button>
+            </Stack>
+          </Stack>
+        )}
       </Box>
 
-      <Accordion
+      {!readOnly ? <Accordion
         disableGutters
         elevation={0}
         sx={{
@@ -816,6 +921,16 @@ function TradeReview({
         >
           <TextField
             fullWidth
+            label="Trade notes"
+            minRows={3}
+            multiline
+            onChange={(event) => onTradeNoteChange(event.target.value)}
+            placeholder="Write what you want to remember about this trade."
+            value={roundTrip.journal.tradeNote}
+          />
+          <TextField
+            disabled={readOnly}
+            fullWidth
             label="Technical notes"
             minRows={3}
             multiline
@@ -823,6 +938,9 @@ function TradeReview({
             placeholder="Add setup, entry, exit, or execution observations."
             value={roundTrip.journal.technicalNote}
           />
+          <Button disabled={noteState === "saving"} onClick={() => void onSaveNotes()} size="small" sx={{ mt: 1 }} variant="contained">
+            {noteState === "saving" ? "Saving..." : "Save trade notes"}
+          </Button>
           <Divider sx={{ my: 1.5 }} />
           <Typography color="text.secondary" variant="caption">
             Rule review
@@ -842,7 +960,7 @@ function TradeReview({
           </Stack>
           <Box sx={{ mt: 1.5 }}>{ruleControls}</Box>
         </AccordionDetails>
-      </Accordion>
+      </Accordion> : null}
     </Box>
   );
 }
@@ -907,11 +1025,13 @@ export function DaySessionView({
   data,
   designPreview = false,
   pendingExecutions = false,
+  readOnly = false,
   topContent,
 }: {
   data: DaySessionData;
   designPreview?: boolean;
   pendingExecutions?: boolean;
+  readOnly?: boolean;
   topContent?: ReactNode;
 }) {
   const [availableTags, setAvailableTags] = useState<DaySessionTradeTag[]>(data.availableTags);
@@ -962,6 +1082,31 @@ export function DaySessionView({
         ),
       ),
   );
+  const [tradeNotes, setTradeNotes] = useState<Record<string, string>>(
+    () =>
+      Object.fromEntries(
+        data.tickers.flatMap((ticker) =>
+          ticker.roundTrips.map((roundTrip) => [
+            roundTrip.roundTripKey,
+            roundTrip.journal.tradeNote,
+          ]),
+        ),
+      ),
+  );
+  const [tradeNoteRevisions, setTradeNoteRevisions] = useState<
+    Record<string, string | null>
+  >(() =>
+    Object.fromEntries(
+      data.tickers.flatMap((ticker) =>
+        ticker.roundTrips.map((roundTrip) => [
+          roundTrip.roundTripKey,
+          roundTrip.journal.noteRevision,
+        ]),
+      ),
+    ));
+  const [tradeNoteStates, setTradeNoteStates] = useState<
+    Record<string, "idle" | "saving" | "saved" | "error">
+  >({});
   const [notesState, setNotesState] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
@@ -988,6 +1133,7 @@ export function DaySessionView({
     dayCustomRules[0];
 
   async function createCustomDayRule(): Promise<void> {
+    if (readOnly) return;
     if (!customDayRuleName.trim() || !customDayRuleStatement.trim()) return;
     setCustomDayRuleState("saving");
     try {
@@ -995,6 +1141,7 @@ export function DaySessionView({
         manualRules: Array<{
           reviewScope: "day_session" | "trade" | "both";
           ruleId: string;
+          ruleVersionId: string;
           status: "active" | "paused" | "retired";
           title: string;
           versionOrdinal: string;
@@ -1003,6 +1150,7 @@ export function DaySessionView({
         body: JSON.stringify({
           action: "create_manual",
           category: "process",
+          expectedAccountSelectionRef: data.expectedAccountSelectionRef,
           isFocus: true,
           reviewScope: "day_session",
           statement: customDayRuleStatement.trim(),
@@ -1025,7 +1173,7 @@ export function DaySessionView({
         label: created.title,
         revision: null,
         ruleId: created.ruleId,
-        ruleVersion: created.versionOrdinal,
+        ruleVersion: created.ruleVersionId,
         status: "not-reviewed",
         targetLabel: null,
         targetRoundTripKey: null,
@@ -1045,6 +1193,7 @@ export function DaySessionView({
     selectedRule: DaySessionRule,
     status: DaySessionRule["status"],
   ): Promise<void> {
+    if (readOnly) return;
     if (
       designPreview ||
       (pendingExecutions && selectedRule.applicability === "trade")
@@ -1067,6 +1216,7 @@ export function DaySessionView({
       {
         body: JSON.stringify({
           applicability: selectedRule.applicability,
+          expectedAccountSelectionRef: data.expectedAccountSelectionRef,
           expectedRevision: selectedRule.revision,
           ruleId: selectedRule.ruleId,
           ruleVersion: selectedRule.ruleVersion,
@@ -1086,7 +1236,47 @@ export function DaySessionView({
     );
   }
 
+  async function saveTradeNotes(roundTripKey: string): Promise<void> {
+    if (readOnly) return;
+    setTradeNoteStates((current) => ({ ...current, [roundTripKey]: "saving" }));
+    if (designPreview || pendingExecutions) {
+      setTradeNoteStates((current) => ({ ...current, [roundTripKey]: "saved" }));
+      return;
+    }
+    try {
+      const saved = await api<{
+        revision: string;
+        technicalNote: string;
+        tradeNote: string;
+      }>(`/api/intelligence/trades/${encodeURIComponent(roundTripKey)}/notes`, {
+        body: JSON.stringify({
+          expectedAccountSelectionRef: data.expectedAccountSelectionRef,
+          expectedRevision: tradeNoteRevisions[roundTripKey] ?? null,
+          technicalNote: technicalNotes[roundTripKey] ?? "",
+          tradeNote: tradeNotes[roundTripKey] ?? "",
+        }),
+        method: "PUT",
+      });
+      setTechnicalNotes((current) => ({
+        ...current,
+        [roundTripKey]: saved.technicalNote,
+      }));
+      setTradeNotes((current) => ({
+        ...current,
+        [roundTripKey]: saved.tradeNote,
+      }));
+      setTradeNoteRevisions((current) => ({
+        ...current,
+        [roundTripKey]: saved.revision,
+      }));
+      setTradeNoteStates((current) => ({ ...current, [roundTripKey]: "saved" }));
+    } catch {
+      setTradeNoteStates((current) => ({ ...current, [roundTripKey]: "error" }));
+    }
+  }
+
   async function saveDailyNotes(): Promise<void> {
+    if (readOnly) return;
     setNotesState("saving");
     if (designPreview) {
       setNotesState("saved");
@@ -1098,6 +1288,7 @@ export function DaySessionView({
         {
           body: JSON.stringify({
             ...dailyNote,
+            expectedAccountSelectionRef: data.expectedAccountSelectionRef,
             expectedRevision: dailyNote.revision,
           }),
           method: "PUT",
@@ -1113,6 +1304,19 @@ export function DaySessionView({
   return (
     <DashboardPage>
       {topContent}
+      {readOnly ? (
+        <Alert severity="info">
+          This historical trading day is read-only. Its saved Journal rules, tags, and notes are shown without allowing retrospective edits.
+        </Alert>
+      ) : null}
+      {data.needsDecisionCount > 0 ? (
+        <Alert
+          action={<Button color="inherit" component={Link} href="/data-decisions" size="small">Review Data Decisions</Button>}
+          severity="warning"
+        >
+          {data.needsDecisionCount} trade chain{data.needsDecisionCount === 1 ? " needs" : "s need"} a factual trader decision. Valid unrelated trades remain visible.
+        </Alert>
+      ) : null}
       <DashboardPanel title="This week">
         <Box
           sx={{
@@ -1255,6 +1459,88 @@ export function DaySessionView({
         </Box>
       </DashboardPanel>
 
+      {data.executionActivity.length > 0 ? (
+        <DashboardPanel title="Executions on this trading day">
+          <Stack divider={<Divider flexItem />}>
+            {data.executionActivity.map((execution) => (
+              <Box
+                key={execution.executionKey}
+                sx={{
+                  alignItems: { sm: "center" },
+                  display: "grid",
+                  gap: 1,
+                  gridTemplateColumns: {
+                    xs: "1fr 1fr",
+                    sm: "110px minmax(90px, 1fr) 90px 110px 130px auto",
+                  },
+                  py: 1.25,
+                }}
+              >
+                <Typography variant="body2">{timeLabel(execution.executedAt, data.timezone)}</Typography>
+                <Typography sx={{ fontWeight: 800 }}>{execution.symbol}</Typography>
+                <Typography sx={{ textTransform: "capitalize" }} variant="body2">{execution.side}</Typography>
+                <Typography sx={{ fontFamily: "var(--font-geist-mono)" }} variant="body2">{formatJournalAnalyticsDecimal(execution.quantity)} shares</Typography>
+                <Typography sx={{ fontFamily: "var(--font-geist-mono)" }} variant="body2">{price(execution.price, data.currency)}</Typography>
+                <Chip color={execution.needsDecision ? "warning" : "success"} label={execution.needsDecision ? "Needs decision" : "Accepted"} size="small" />
+              </Box>
+            ))}
+          </Stack>
+        </DashboardPanel>
+      ) : null}
+
+      {data.positionSnapshots.length > 0 ? (
+        <DashboardPanel title="Position carried through this day">
+          <Stack divider={<Divider flexItem />}>
+            {data.positionSnapshots.map((position) => (
+              <Box
+                key={position.positionKey}
+                sx={{
+                  alignItems: { sm: "center" },
+                  display: "grid",
+                  gap: 1,
+                  gridTemplateColumns: { xs: "1fr 1fr", sm: "minmax(90px, 1fr) 90px 130px 130px 160px" },
+                  py: 1.25,
+                }}
+              >
+                <Typography sx={{ fontWeight: 800 }}>{position.symbol}</Typography>
+                <Typography sx={{ textTransform: "capitalize" }} variant="body2">{position.direction}</Typography>
+                <Typography variant="body2">Open: {formatJournalAnalyticsDecimal(position.openingQuantity)}</Typography>
+                <Typography variant="body2">Close: {formatJournalAnalyticsDecimal(position.closingQuantity)}</Typography>
+                <Chip label={position.state.replaceAll("_", " ")} size="small" variant="outlined" />
+              </Box>
+            ))}
+          </Stack>
+        </DashboardPanel>
+      ) : null}
+
+      {data.decisionActivity.length > 0 ? (
+        <DashboardPanel title="Execution activity needing a decision">
+          <Stack divider={<Divider flexItem />}>
+            {data.decisionActivity.map((item) => (
+              <Box
+                key={item.roundTripKey}
+                sx={{
+                  alignItems: { sm: "center" },
+                  display: "flex",
+                  flexDirection: { xs: "column", sm: "row" },
+                  gap: 1,
+                  justifyContent: "space-between",
+                  py: 1.5,
+                }}
+              >
+                <Box>
+                  <Typography sx={{ fontWeight: 800 }}>{item.symbol}</Typography>
+                  <Typography color="text.secondary" variant="caption">
+                    {item.direction === "long" ? "Long" : "Short"} · {item.executionCount} execution{item.executionCount === 1 ? "" : "s"} on this day · Opened {timeLabel(item.openedAt, data.timezone)}
+                  </Typography>
+                </Box>
+                <Chip color="warning" label={item.reasonCodes.join(", ").replaceAll("_", " ") || "Trader decision required"} size="small" />
+              </Box>
+            ))}
+          </Stack>
+        </DashboardPanel>
+      ) : null}
+
       <Stack spacing={2}>
         {data.tickers.map((ticker) => (
           <Card key={ticker.stableInstrumentKey} variant="outlined">
@@ -1273,7 +1559,12 @@ export function DaySessionView({
                   p: { xs: 2, md: 2.5 },
                 }}
               >
-                <Typography sx={{ fontWeight: 900 }} variant="h4">
+                <Typography
+                  component={Link}
+                  href={`/trades/roundtrips?currency=${encodeURIComponent(data.currency)}&instrumentId=${encodeURIComponent(ticker.stableInstrumentKey)}&date=${encodeURIComponent(data.date)}`}
+                  sx={{ color: "inherit", fontWeight: 900, textDecoration: "none" }}
+                  variant="h4"
+                >
                   {ticker.symbol}
                 </Typography>
                 <Typography
@@ -1332,14 +1623,17 @@ export function DaySessionView({
                     availableTags={availableTags}
                     currency={data.currency}
                     designPreview={designPreview || pendingExecutions}
+                    expectedAccountSelectionRef={data.expectedAccountSelectionRef}
                     key={roundTrip.roundTripKey}
                     onCatalogChange={setAvailableTags}
                     onManageTags={
-                      designPreview
+                      designPreview || readOnly
                         ? undefined
                         : () => setManageTagsOpen(true)
                     }
+                    noteState={tradeNoteStates[roundTrip.roundTripKey] ?? "idle"}
                     onRuleStatusChange={saveRuleStatus}
+                    onSaveNotes={() => saveTradeNotes(roundTrip.roundTripKey)}
                     onTagsChange={(tags) =>
                       setTradeTags((current) => ({
                         ...current,
@@ -1347,17 +1641,37 @@ export function DaySessionView({
                       }))
                     }
                     onTechnicalNoteChange={(technicalNote) =>
-                      setTechnicalNotes((current) => ({
-                        ...current,
-                        [roundTrip.roundTripKey]: technicalNote,
-                      }))
+                      {
+                        setTechnicalNotes((current) => ({
+                          ...current,
+                          [roundTrip.roundTripKey]: technicalNote,
+                        }));
+                        setTradeNoteStates((current) => ({
+                          ...current,
+                          [roundTrip.roundTripKey]: "idle",
+                        }));
+                      }
                     }
+                    onTradeNoteChange={(tradeNote) => {
+                      setTradeNotes((current) => ({
+                        ...current,
+                        [roundTrip.roundTripKey]: tradeNote,
+                      }));
+                      setTradeNoteStates((current) => ({
+                        ...current,
+                        [roundTrip.roundTripKey]: "idle",
+                      }));
+                    }}
+                    readOnly={readOnly}
                     roundTrip={{
                       ...roundTrip,
                       journal: {
                         ...roundTrip.journal,
+                        noteRevision:
+                          tradeNoteRevisions[roundTrip.roundTripKey] ?? null,
                         technicalNote:
                           technicalNotes[roundTrip.roundTripKey] ?? "",
+                        tradeNote: tradeNotes[roundTrip.roundTripKey] ?? "",
                       },
                     }}
                     sessionDate={data.date}
@@ -1445,7 +1759,7 @@ export function DaySessionView({
                         Remaining quantity
                       </Typography>
                       <Typography sx={{ fontWeight: 850, mt: 0.35 }} variant="h6">
-                        {position.remainingQuantity} shares
+                        {formatJournalAnalyticsDecimal(position.remainingQuantity)} shares
                       </Typography>
                     </Box>
                     <Box>
@@ -1472,50 +1786,62 @@ export function DaySessionView({
                       </Typography>
                     </Box>
                   </Box>
-                  <TradeTagEditor
-                    availableTags={availableTags}
-                    designPreview={designPreview || pendingExecutions}
-                    onCatalogChange={setAvailableTags}
-                    onManageTags={
-                      designPreview
-                        ? undefined
-                        : () => setManageTagsOpen(true)
-                    }
-                    onTagsChange={(tags) =>
-                      setOpenPositionTags((current) => ({
-                        ...current,
-                        [position.positionKey]: tags,
-                      }))
-                    }
-                    sessionDate={data.date}
-                    tags={openPositionTags[position.positionKey] ?? []}
-                    targetKey={position.positionKey}
-                    targetKind="open-position"
-                  />
+                  {readOnly ? (
+                    <Typography color="text.secondary" sx={{ mt: 1.5 }} variant="body2">
+                      Open-position plans and tags are intentionally deferred to the dedicated swing/open-position workflow.
+                    </Typography>
+                  ) : (
+                    <TradeTagEditor
+                      availableTags={availableTags}
+                      disabled={false}
+                      designPreview={designPreview || pendingExecutions}
+                      expectedAccountSelectionRef={data.expectedAccountSelectionRef}
+                      onCatalogChange={setAvailableTags}
+                      onManageTags={
+                        designPreview ? undefined : () => setManageTagsOpen(true)
+                      }
+                      onTagsChange={(tags) =>
+                        setOpenPositionTags((current) => ({
+                          ...current,
+                          [position.positionKey]: tags,
+                        }))
+                      }
+                      sessionDate={data.date}
+                      tags={openPositionTags[position.positionKey] ?? []}
+                      targetKey={position.positionKey}
+                      targetKind="open-position"
+                    />
+                  )}
                   <Divider sx={{ my: 2 }} />
-                  <TextField
-                    helperText="Select open position type"
-                    label="Position plan"
-                    onChange={(event) =>
-                      setOpenPositionPlans((current) => ({
-                        ...current,
-                        [position.positionKey]: event.target.value as
-                          | "not-set"
-                          | "day-trade"
-                          | "swing"
-                          | "other",
-                      }))
-                    }
-                    select
-                    size="small"
-                    sx={{ maxWidth: 320, width: "100%" }}
-                    value={openPositionPlans[position.positionKey] ?? "not-set"}
-                  >
-                    <MenuItem value="not-set">Not set</MenuItem>
-                    <MenuItem value="day-trade">Day trade</MenuItem>
-                    <MenuItem value="swing">Swing</MenuItem>
-                    <MenuItem value="other">Other</MenuItem>
-                  </TextField>
+                  {readOnly ? (
+                    <Typography color="text.secondary" variant="body2">
+                      Position plan: not set in this Trade Tracker slice
+                    </Typography>
+                  ) : (
+                    <TextField
+                      helperText="Select open position type"
+                      label="Position plan"
+                      onChange={(event) =>
+                        setOpenPositionPlans((current) => ({
+                          ...current,
+                          [position.positionKey]: event.target.value as
+                            | "not-set"
+                            | "day-trade"
+                            | "swing"
+                            | "other",
+                        }))
+                      }
+                      select
+                      size="small"
+                      sx={{ maxWidth: 320, width: "100%" }}
+                      value={openPositionPlans[position.positionKey] ?? "not-set"}
+                    >
+                      <MenuItem value="not-set">Not set</MenuItem>
+                      <MenuItem value="day-trade">Day trade</MenuItem>
+                      <MenuItem value="swing">Swing</MenuItem>
+                      <MenuItem value="other">Other</MenuItem>
+                    </TextField>
+                  )}
                 </Box>
               </Box>
             </Card>
@@ -1524,6 +1850,24 @@ export function DaySessionView({
       ) : null}
 
       <DashboardPanel title="Rules">
+        {readOnly ? (
+          <Stack spacing={1} sx={{ mt: 1.5 }}>
+            {rules.filter((rule) => rule.applicability === "day").length === 0 ? (
+              <Typography color="text.secondary" variant="body2">No active day rules.</Typography>
+            ) : rules.filter((rule) => rule.applicability === "day").map((rule) => (
+              <Stack direction="row" key={rule.ruleId} sx={{ alignItems: "center", justifyContent: "space-between" }}>
+                <Typography variant="body2">{rule.label}</Typography>
+                <Chip
+                  color={rule.status === "followed" ? "success" : rule.status === "broken" ? "error" : "default"}
+                  label={rule.status === "not-reviewed" ? "Not reviewed" : rule.status === "followed" ? "Followed" : "Broken"}
+                  size="small"
+                  variant={rule.status === "not-reviewed" ? "outlined" : "filled"}
+                />
+              </Stack>
+            ))}
+          </Stack>
+        ) : (
+          <>
         <Box
           sx={{
             display: "grid",
@@ -1535,8 +1879,7 @@ export function DaySessionView({
           <Box sx={{ minWidth: 0 }}>
             <Typography
               color="text.secondary"
-              display="block"
-              sx={{ mb: 0.75 }}
+              sx={{ display: "block", mb: 0.75 }}
               variant="caption"
             >
               Preset day rules
@@ -1599,8 +1942,7 @@ export function DaySessionView({
           <Box sx={{ minWidth: 0 }}>
             <Typography
               color="text.secondary"
-              display="block"
-              sx={{ mb: 0.75 }}
+              sx={{ display: "block", mb: 0.75 }}
               variant="caption"
             >
               Custom day rules
@@ -1626,7 +1968,7 @@ export function DaySessionView({
                 ))}
               </TextField>
               <TextField
-                disabled={!selectedDayCustomRule}
+                disabled={readOnly || !selectedDayCustomRule}
                 label="Result"
                 onChange={(event) => {
                   if (selectedDayCustomRule) {
@@ -1647,6 +1989,7 @@ export function DaySessionView({
               </TextField>
             </Stack>
             <Button
+              disabled={readOnly}
               onClick={() => {
                 setCustomDayRuleState("idle");
                 setCustomDayRuleOpen(true);
@@ -1757,9 +2100,38 @@ export function DaySessionView({
             );
             })}
         </Stack>
+          </>
+        )}
       </DashboardPanel>
 
       <DashboardPanel title="Daily Notes">
+        {readOnly ? (
+          <Stack spacing={1.5} sx={{ mt: 1.5 }}>
+            {[
+              ["What worked", dailyNote.whatWorked],
+              ["What needs work", dailyNote.whatNeedsWork],
+              ["Technical recap", dailyNote.technicalRecap],
+              ["Tomorrow's focus", dailyNote.tomorrowsFocus],
+              ["Anything else", dailyNote.anythingElse],
+            ].some(([, value]) => value.trim().length > 0) ? (
+              [
+                ["What worked", dailyNote.whatWorked],
+                ["What needs work", dailyNote.whatNeedsWork],
+                ["Technical recap", dailyNote.technicalRecap],
+                ["Tomorrow's focus", dailyNote.tomorrowsFocus],
+                ["Anything else", dailyNote.anythingElse],
+              ].filter(([, value]) => value.trim().length > 0).map(([label, value]) => (
+                <Box key={label}>
+                  <Typography color="text.secondary" variant="caption">{label}</Typography>
+                  <Typography sx={{ whiteSpace: "pre-wrap" }} variant="body2">{value}</Typography>
+                </Box>
+              ))
+            ) : (
+              <Typography color="text.secondary" variant="body2">No daily notes saved.</Typography>
+            )}
+          </Stack>
+        ) : (
+          <>
         <Box
           sx={{
             display: "grid",
@@ -1769,6 +2141,7 @@ export function DaySessionView({
           }}
         >
           <TextField
+            disabled={readOnly}
             label="What worked"
             minRows={4}
             multiline
@@ -1783,6 +2156,7 @@ export function DaySessionView({
             value={dailyNote.whatWorked}
           />
           <TextField
+            disabled={readOnly}
             label="What needs work"
             minRows={4}
             multiline
@@ -1797,6 +2171,7 @@ export function DaySessionView({
             value={dailyNote.whatNeedsWork}
           />
           <TextField
+            disabled={readOnly}
             label="Technical recap (optional)"
             minRows={4}
             multiline
@@ -1811,6 +2186,7 @@ export function DaySessionView({
             value={dailyNote.technicalRecap}
           />
           <TextField
+            disabled={readOnly}
             label="Tomorrow's focus"
             minRows={4}
             multiline
@@ -1825,6 +2201,7 @@ export function DaySessionView({
             value={dailyNote.tomorrowsFocus}
           />
           <TextField
+            disabled={readOnly}
             label="Anything else"
             minRows={4}
             multiline
@@ -1853,15 +2230,18 @@ export function DaySessionView({
               </Typography>
             ) : null}
             <DashboardPrimaryAction
-              disabled={notesState === "saving"}
+              disabled={readOnly || notesState === "saving"}
               onClick={() => void saveDailyNotes()}
             >
               {notesState === "saving" ? "Saving Notes..." : "Save Notes"}
             </DashboardPrimaryAction>
           </Stack>
         </Box>
+          </>
+        )}
       </DashboardPanel>
       <ManageTagsDialog
+        expectedAccountSelectionRef={data.expectedAccountSelectionRef}
         onChange={(tags) => {
           const validIds = new Set(tags.map((tag) => tag.tagId));
           setAvailableTags(tags);

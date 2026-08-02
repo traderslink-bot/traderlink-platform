@@ -13,6 +13,7 @@ import { PlatformUserRepository } from "@/src/modules/platform/server/identity/p
 import { PlatformWorkspaceRepository } from "@/src/modules/platform/server/identity/platform-workspace-repository";
 import { JournalAccountRepository } from "../accounts/journal-account-repository";
 import { JournalAccountService } from "../accounts/journal-account-service";
+import { JOURNAL_SOURCE_ACCOUNT_CANONICALIZERS } from "../accounts/mapped-statement-source-account-canonicalizer";
 import { JournalExecutionRepository } from "../executions/journal-execution-repository";
 import { JournalExecutionService } from "../executions/journal-execution-service";
 import {
@@ -25,6 +26,8 @@ import {
   type ExistingImportBatch,
   JournalImportRepository,
 } from "./journal-import-repository";
+import { mappingContractFromSupportTable } from "./journal-generic-mapped-statement-adapter";
+import { createJournalMappingSupportPackage } from "../product/journal-mapping-support-package";
 import { syntheticIbkrStatement } from "./synthetic-ibkr-fixtures";
 
 const roots: string[] = [];
@@ -37,7 +40,10 @@ function createAccountService(
   return new JournalAccountService(new JournalAccountRepository(database), {
     ...privacyConfiguration,
     activeCanonicalizationVersion: "ibkr_v1",
-    canonicalizers: { ibkr_v1: (value) => value.trim().toUpperCase() },
+    canonicalizers: {
+      ibkr_v1: (value) => value.trim().toUpperCase(),
+      ...JOURNAL_SOURCE_ACCOUNT_CANONICALIZERS,
+    },
   });
 }
 
@@ -268,6 +274,116 @@ FROM journal_account_source_identities`).get()).toEqual(identityBefore);
     } finally { context.database.close(); }
   });
 
+  it("learns an exact account-scoped mapping without hiding valid rows", () => {
+    const context = setup();
+    try {
+      const firstBytes = new TextEncoder().encode([
+        "Trade Date,Trade Time,Ticker,Action,Shares,Fill Price,Commission,Fill ID",
+        "2026-07-01,09:30:00,AAA,BUY,10.5000,1.2300,0.4500,FILL-1",
+        "2026-07-01,not-a-time,AAA,SELL,2,1.4,0.12,FILL-2",
+      ].join("\n"));
+      const support = createJournalMappingSupportPackage({
+        sourceBytes: firstBytes,
+        brokerName: "Example Broker",
+        failureCode: "TRADERLINK_JOURNAL_IMPORT_MAPPING_FAILED",
+      });
+      const table = support.tables[0];
+      if (!table) throw new Error("expected_mapping_table");
+      const mapping = mappingContractFromSupportTable({
+        brokerName: "Example Broker",
+        sourceTimezone: "America/New_York",
+        defaultCurrency: "USD",
+        table,
+        delimiter: support.detectedDelimiter,
+        columns: {
+          date: "Trade Date",
+          time: "Trade Time",
+          symbol: "Ticker",
+          side: "Action",
+          quantity: "Shares",
+          price: "Fill Price",
+          fees: "Commission",
+          executionId: "Fill ID",
+        },
+      });
+      const preview = context.service.previewGenericMappedForWorkspace(context.scope, {
+        sourceBytes: firstBytes,
+        accountId: context.accountId,
+        mapping,
+      });
+      expect(preview).toMatchObject({
+        mappedExecutionCount: 1,
+        canCommit: true,
+        plannedNewExecutionCount: 1,
+      });
+      const committed = context.service.commitGenericMappedStatement(context.scope, {
+        sourceBytes: firstBytes,
+        accountId: context.accountId,
+        mapping,
+        sourceDisplayLabel: "Example Broker mapped statement",
+        evidenceObjectKey: `mapped_csv/${preview.sourceFileSha256}.csv`,
+        now: new Date("2026-08-01T12:05:00.000Z"),
+      });
+      expect(committed.createdExecutionCount).toBe(1);
+      expect(committed.pendingSourceDecisionCount).toBeGreaterThan(0);
+      const saved = context.service.findSavedGenericMappingForWorkspace(context.scope, {
+        accountId: context.accountId,
+        structuralSignatureSha256: table.structuralSignatureSha256,
+      });
+      expect(saved).toEqual(mapping);
+      if (!saved) throw new Error("expected_saved_mapping");
+
+      const laterBytes = new TextEncoder().encode([
+        "Trade Date,Trade Time,Ticker,Action,Shares,Fill Price,Commission,Fill ID",
+        "2026-07-02,10:15:00,BBB,SELL,3,8.75,0.20,FILL-3",
+      ].join("\n"));
+      const laterSupport = createJournalMappingSupportPackage({
+        sourceBytes: laterBytes,
+        brokerName: "Example Broker",
+        failureCode: "none",
+      });
+      expect(laterSupport.tables[0]?.structuralSignatureSha256)
+        .toBe(table.structuralSignatureSha256);
+      expect(context.service.previewGenericMappedForWorkspace(context.scope, {
+        sourceBytes: laterBytes,
+        accountId: context.accountId,
+        mapping: saved,
+      }).mappedExecutionCount).toBe(1);
+
+      const second = context.accounts.createAccount(context.scope, {
+        workspaceId: context.scope.workspaceId,
+        displayName: "Second journal",
+        baseCurrency: "USD",
+        tradingTimezone: "America/New_York",
+      });
+      const twoAccountScope: WorkspaceAccessScope = {
+        ...context.scope,
+        allowedAccountIds: [context.accountId, second.accountId],
+      };
+      expect(context.service.findSavedGenericMappingForWorkspace(twoAccountScope, {
+        accountId: second.accountId,
+        structuralSignatureSha256: table.structuralSignatureSha256,
+      })).toBeNull();
+
+      const changedSupport = createJournalMappingSupportPackage({
+        sourceBytes: new TextEncoder().encode([
+          "Trade Date,Trade Time,Ticker,Action,Shares,Average Fill Price,Commission,Fill ID",
+          "2026-07-03,10:15:00,CCC,BUY,1,2.5,0.10,FILL-4",
+        ].join("\n")),
+        brokerName: "Example Broker",
+        failureCode: "none",
+      });
+      const changedTable = changedSupport.tables[0];
+      if (!changedTable) throw new Error("expected_changed_mapping_table");
+      expect(changedSupport.tables[0]?.structuralSignatureSha256)
+        .not.toBe(table.structuralSignatureSha256);
+      expect(context.service.findSavedGenericMappingForWorkspace(context.scope, {
+        accountId: context.accountId,
+        structuralSignatureSha256: changedTable.structuralSignatureSha256,
+      })).toBeNull();
+    } finally { context.database.close(); }
+  });
+
   it("commits every source record and makes exact file reimport idempotent", () => {
     const context = setup();
     try {
@@ -287,6 +403,43 @@ FROM journal_account_source_identities`).get()).toEqual(identityBefore);
         plannedNewExecutionCount: 0,
         plannedMatchedExecutionCount: 2,
       });
+    } finally { context.database.close(); }
+  });
+
+  it("links a newly recognized IBKR account only after explicit selected-account confirmation", () => {
+    const context = setup();
+    try {
+      context.database.prepare("DELETE FROM journal_account_source_identities").run();
+      const sourceBytes = Buffer.from(syntheticIbkrStatement, "utf8");
+      expect(() => context.service.previewIbkrForWorkspace(context.scope, {
+        sourceBytes,
+        sourceTimezone: "America/New_York",
+      })).toThrowError("TRADERLINK_ACCOUNT_IDENTITY_CONFIRMATION_REQUIRED");
+      const preview = context.service.previewIbkrForWorkspace(context.scope, {
+        sourceBytes,
+        sourceTimezone: "America/New_York",
+        allowSelectedAccountIdentityConfirmation: true,
+      });
+      expect(preview).toMatchObject({
+        accountId: context.accountId,
+        canCommit: true,
+        sourceIdentityConfirmationRequired: true,
+      });
+      const input = {
+        sourceBytes,
+        sourceTimezone: "America/New_York",
+        privacySafeAccountDisplay: "Synthetic account",
+        sourceDisplayLabel: "Synthetic statement",
+        evidenceObjectKey: `ibkr/${preview.sourceFileSha256}.csv`,
+        now: new Date("2026-08-01T13:00:00.000Z"),
+      } as const;
+      expect(() => context.service.commitIbkrStatement(context.scope, input))
+        .toThrowError("TRADERLINK_ACCOUNT_IDENTITY_CONFIRMATION_REQUIRED");
+      expect(context.service.commitIbkrStatement(context.scope, {
+        ...input,
+        confirmedSourceIdentityAccountId: context.accountId,
+      }).status).toBe("committed");
+      expect(count(context.database, "journal_account_source_identities")).toBe(1);
     } finally { context.database.close(); }
   });
 
@@ -713,6 +866,24 @@ FROM journal_execution_versions ORDER BY executed_at_utc, source_order_key`).all
       expect(count(context.database, "journal_executions")).toBe(1);
       expect(count(context.database, "journal_execution_provenance")).toBe(2);
       expect(count(context.database, "journal_source_coverage_intervals", "WHERE coverage_kind = 'point_only'")).toBe(1);
+    } finally { context.database.close(); }
+  });
+
+  it("preserves trader-authored day-trade or swing intent with the manual source facts", () => {
+    const context = setup();
+    try {
+      context.service.commitManualExecutions(context.scope, {
+        accountId: context.accountId,
+        idempotencyKey: "manual-swing-intent-0001",
+        sourceDisplayLabel: "Manual swing execution",
+        entries: [{ ...manualEntry, tradeIntent: "swing" }],
+      });
+      const row = context.database.prepare(`SELECT raw_fields_json
+FROM journal_source_rows WHERE section_name = 'Manual Executions'`).get() as {
+        raw_fields_json: string;
+      };
+      const fields: unknown = JSON.parse(row.raw_fields_json);
+      expect(Array.isArray(fields) ? fields[15] : null).toBe("swing");
     } finally { context.database.close(); }
   });
 

@@ -36,12 +36,28 @@ const neonHarness = vi.hoisted(() => {
 
   async function sql(strings: TemplateStringsArray, ...values: unknown[]): Promise<unknown[]> {
     const query = strings.join("?").replace(/\s+/g, " ").trim();
-    if (
-      query.startsWith("CREATE TABLE") ||
-      query.startsWith("CREATE INDEX") ||
-      query.startsWith("ALTER TABLE")
-    ) {
-      return [];
+    if (query.startsWith("SELECT table_name, column_name FROM information_schema.columns")) {
+      return [
+        ["live_watchlist_symbols", ["symbol", "status", "updated_at", "state_json", "revision"]],
+        ["live_watchlist_health", ["key", "market_data_status", "market_data_updated_at"]],
+        ["live_watchlist_archives", [
+          "archive_id",
+          "symbol",
+          "archived_at",
+          "first_posted_at",
+          "last_active_updated_at",
+          "state_json",
+        ]],
+      ].flatMap(([tableName, columns]) =>
+        (columns as string[]).map((columnName) => ({
+          table_name: tableName,
+          column_name: columnName,
+        })),
+      );
+    }
+
+    if (query.startsWith("SELECT indexname FROM pg_indexes")) {
+      return [{ indexname: "live_watchlist_archives_symbol_archived_at_idx" }];
     }
 
     if (query.startsWith("SELECT state_json, revision FROM live_watchlist_symbols")) {

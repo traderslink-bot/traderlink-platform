@@ -1,32 +1,39 @@
-import { withTraderIntelligenceOwnerRoute } from "@/src/lib/trader-intelligence-v3/auth";
-
+import { narrowWorkspaceAccessToAccount } from "@/src/modules/platform/contracts/workspace-access-scope";
+import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import {
-  getJournalLevelAnalysisForTradeApi,
-  journalLevelAnalysisTradeLinkErrorResponse,
-} from "../../../../../src/lib/level-analysis/level-analysis-journal-delivery-trade-link-api-service";
-import { isLevelAnalysisTradeLinkApiEnabled } from "../../../../../src/lib/level-analysis/level-analysis-journal-delivery-trade-link-storage";
+  isCanonicalUuidV4,
+  platformFailure,
+} from "@/src/modules/platform/server/database/platform-migration-contract";
+import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
+import { JournalLevelAnalysisLinkRepository } from "@/src/modules/level-analysis/server/journal-level-analysis-link-repository";
+import { JournalLevelAnalysisLinkService } from "@/src/modules/level-analysis/server/journal-level-analysis-link-service";
+import { LevelAnalysisDeliveryRepository } from "@/src/modules/level-analysis/server/level-analysis-delivery-repository";
+import {
+  levelAnalysisErrorResponse,
+  requireConfiguredLevelAnalysisProviders,
+} from "@/src/modules/level-analysis/server/level-analysis-http";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function GETHandler(
-  _request: Request,
+export async function GET(
+  request: Request,
   context: { params: Promise<{ tradeId: string }> },
 ): Promise<Response> {
-  if (!isLevelAnalysisTradeLinkApiEnabled()) {
-    return journalLevelAnalysisTradeLinkErrorResponse(
-      404,
-      "feature_disabled",
-      "Level analysis trade-link API is disabled.",
-    );
+  try {
+    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    if (!scope.activeAccountId) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
+    const { tradeId } = await context.params;
+    if (!isCanonicalUuidV4(tradeId)) platformFailure("TRADERLINK_LEVEL_ANALYSIS_LINK_INVALID");
+    const accountScope = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId);
+    const providers = requireConfiguredLevelAnalysisProviders();
+    return Response.json(withReadonlyPlatformDatabase({}, (database) =>
+      new JournalLevelAnalysisLinkService(
+        new LevelAnalysisDeliveryRepository(database),
+        new JournalLevelAnalysisLinkRepository(database),
+        providers,
+      ).forTrade(accountScope, tradeId)));
+  } catch (error) {
+    return levelAnalysisErrorResponse(error);
   }
-
-  const params = await context.params;
-  return Response.json(
-    getJournalLevelAnalysisForTradeApi({
-      savedTradeId: params.tradeId,
-    }),
-  );
 }
-
-export const GET = withTraderIntelligenceOwnerRoute("app/api/trades/[tradeId]/level-analysis/route.ts", GETHandler);

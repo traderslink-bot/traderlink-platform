@@ -24,6 +24,7 @@
 | Primitive | Required shape/meaning |
 | --- | --- |
 | `WorkspaceAccessScope` | Platform-derived `userId`, `workspaceId`, workspace role, allowed `accountIds`, and active account selection; represents owners, admins, or members and is never trusted from request body alone |
+| Journal account selection | One user/workspace may contain multiple user-defined Journal accounts for any strategy, asset class, purpose or grouping. A Journal account may contain many broker/source identities and is not a one-broker container. An opaque HttpOnly local-review cookie selects only from the server-derived active-account allowlist; internal account IDs are not browser selectors. The selected scope controls every import, learned mapping, execution, decision, annotation and analytics query, and mutation requests carry an expected selection so stale tabs fail with a conflict |
 | `AccountScope` | Stable Journal trading-account ID, broker label/identity, base currency, account timezone, import timezone defaults, status |
 | `Decimal` | Canonical base-10 string with defined scale/rounding at display only |
 | `Money` | `{ amount: Decimal, currency: ISO-4217 code }`; no cross-currency summation without an explicit conversion fact |
@@ -195,7 +196,10 @@ Course/path/lesson registry, enrollment/progress/completion, quiz/assessment sta
 
 ### Publishes
 
-Owner-scoped progress summary, current path/lesson state, completion mutations, and a bounded Workspace summary. Platform owns the authenticated user/session; Academy owns lesson progress.
+User-scoped progress summary, current path/lesson state, completion mutations,
+and a bounded Workspace summary. Platform owns stable multi-provider identity
+and sessions; Academy owns canonical lesson completion state and immutable
+events. Progress follows the user across workspaces and Journal accounts.
 
 ## Watchlist
 
@@ -203,9 +207,20 @@ Owner-scoped progress summary, current path/lesson state, completion mutations, 
 
 Symbols, publisher ingestion, current lifecycle/health, archives, recap, and Watchlist-specific provider facts.
 
+Migration 0014 owns the local current-symbol, global-health and immutable
+archive tables. Watchlist state is shared premium content and is not scoped to
+a workspace or Journal account. Local and the accepted single-node hosted
+runtime use the explicit Platform database under Watchlist-owned migrations.
+Ordinary reads/writes verify schema and execute no DDL.
+
 ### Publishes
 
 Current list/symbol/archive/recap queries, authenticated stream, ingestion boundary, and bounded Workspace summary. It does not write Journal executions based on a watched symbol.
+
+Platform publishes the Premium access decision. The guarded development user
+is accepted locally; public access uses the Platform session and current
+bounded Discord membership. User access never
+authorizes publisher ingestion, recap or archive-reset commands.
 
 ## News
 
@@ -213,9 +228,18 @@ Current list/symbol/archive/recap queries, authenticated stream, ingestion bound
 
 Article content, ingestion provenance, ticker/category metadata, publish/access state, and weekly source automation outputs.
 
+Migration 0015 owns the current article projection and immutable article
+versions. News is public module content, not Journal-account data. Local and
+the accepted single-node hosted runtime use the protected Platform database.
+Ordinary requests verify schema and execute no DDL.
+
 ### Publishes
 
 Public and access-aware article/ticker queries plus bounded Workspace summary. Article ingestion is an authenticated external/operational HTTP boundary.
+
+The publisher token is required in every environment. Identical delivery is
+idempotent; a content change advances the revision and appends an immutable
+version. Public responses do not expose raw publisher payload or diagnostics.
 
 ## Level Analysis and market data
 
@@ -247,7 +271,14 @@ Bounded actionable review queues and Workspace summary. AI-generated language is
 
 ### Owns
 
-Account profile/preferences, module access/subscription links, affiliate invites/referrals, and user-facing account relationships. Payment/commerce provider behavior is not currently a stored domain in this repository and requires a future contract if introduced.
+Account profile/preferences, module access/subscription links, affiliate
+invites/attributions, and user-facing account relationships. Migration 0016
+keys first-touch attribution to stable Platform user ID. It is never scoped to
+a Journal account and never stores broker identity. Repeated events may advance
+last-seen/joined evidence but cannot silently replace the first affiliate.
+Hosted Discord relationships map through exact Platform identity; ambiguous or
+unmapped legacy referrals remain pending and are never guessed.
+Payment/commerce provider behavior requires a separate contract if introduced.
 
 ## Workspace composition contract
 
@@ -291,4 +322,4 @@ Phase 2 preservation, design, and foundation implementation established:
 5. the implemented and correction-verified focused verification plan and exact implementation-file list in [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md); and
 6. the verified empty `development.sqlite` with exactly two migration rows and five zero-row domain tables, accepted with the 10-file/53-test result by the coordinating technical auditor.
 
-The Phase 2 empty database foundation and follow-on [Development Owner Seed Progress](development-owner-seed-progress.md) checkpoint are technically complete. The seed established stable development ownership independently from public authentication so later Journal facts do not depend on a temporary login implementation. Its 1/1/1/1/0 counts are the historical seed boundary. Phase 3 subsequently added the accepted source identity and Journal facts under the [Phase 3 tracker](phase-3-journal-integrity-progress.md). Discord-first login and optional linked email/password identity remain deferred until the complete dashboard is preparing to go live and must preserve these stable user/workspace/account UUIDs. Phase 4 Core Analytics may proceed; do not remove or repurpose the original `traderslink.pro` folder.
+The Phase 2 empty database foundation and follow-on [Development Owner Seed Progress](development-owner-seed-progress.md) checkpoint are technically complete. The seed established stable development ownership independently from public authentication so later Journal facts do not depend on a temporary login implementation. Its 1/1/1/1/0 counts are the historical seed boundary. Phase 3 subsequently added the accepted source identity and Journal facts under the [Phase 3 tracker](phase-3-journal-integrity-progress.md). F6 implements Discord-first Platform sessions while preserving those stable user/workspace/account UUIDs; the exact initial-owner link and hosted-data adoption remain explicit pre-launch operations. Optional linked email/password identity remains deferred. Do not remove or repurpose the original `traderslink.pro` folder.

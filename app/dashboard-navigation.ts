@@ -1,4 +1,5 @@
 export type DashboardNavigationIconKey =
+  | "account"
   | "analytics"
   | "calendar"
   | "data"
@@ -126,6 +127,11 @@ export const DASHBOARD_STANDALONE_ITEMS: readonly DashboardNavigationItem[] =
       label: "Market Charts",
       icon: "analytics" as const,
     }),
+    Object.freeze({
+      href: "/account",
+      label: "Account",
+      icon: "account" as const,
+    }),
   ]);
 
 export const DASHBOARD_DATA_NAVIGATION_GROUP: DashboardNavigationGroup =
@@ -140,11 +146,6 @@ export const DASHBOARD_DATA_NAVIGATION_GROUP: DashboardNavigationGroup =
         icon: "import" as const,
       }),
       Object.freeze({
-        href: "/manual-entry",
-        label: "Manual Entry",
-        icon: "manualEntry" as const,
-      }),
-      Object.freeze({
         href: "/data-decisions",
         label: "Data Decisions",
         icon: "data" as const,
@@ -155,6 +156,7 @@ export const DASHBOARD_DATA_NAVIGATION_GROUP: DashboardNavigationGroup =
 export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
   Object.freeze({
     "/workspace": "Workspace",
+    "/workspace/readiness": "Platform Readiness",
     "/calendar": "Calendar",
     "/trades/roundtrips": "Round Trips",
     "/trade-tracker": "Trade Tracker",
@@ -172,6 +174,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/imports": "Import Trades",
     "/manual-entry": "Manual Entry",
     "/data-decisions": "Data Decisions",
+    "/account": "Account",
   });
 
 export const DASHBOARD_NAVIGATION_HREFS: readonly string[] = Object.freeze([

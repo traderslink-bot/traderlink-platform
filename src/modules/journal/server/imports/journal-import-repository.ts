@@ -59,6 +59,26 @@ WHERE workspace_id = ? AND account_id = ? AND manual_idempotency_key = ?`).get(w
     return row ? mapExistingBatch(row) : null;
   }
 
+  findLatestMappedStatementContract(
+    workspaceId: string,
+    accountId: string,
+    structuralSignatureSha256: string,
+  ): string | null {
+    const row = this.database.prepare<[string, string, string], {
+      mapping_contract_json: string;
+    }>(`SELECT mapping_contract_json
+FROM journal_import_batches
+WHERE workspace_id = ? AND account_id = ?
+  AND source_kind = 'broker_statement'
+  AND source_system = 'mapped_csv'
+  AND adapter_id = 'generic_mapped_statement'
+  AND current_state IN ('accepted', 'accepted_with_decisions')
+  AND json_extract(mapping_contract_json, '$.structuralSignatureSha256') = ?
+ORDER BY accepted_at_utc DESC, import_batch_id DESC
+LIMIT 1`).get(workspaceId, accountId, structuralSignatureSha256);
+    return row?.mapping_contract_json ?? null;
+  }
+
   requireSourceIdentity(workspaceId: string, accountId: string, sourceIdentityId: string): void {
     const row = this.database.prepare<[string, string, string], { found: number }>(`
 SELECT 1 AS found FROM journal_account_source_identities

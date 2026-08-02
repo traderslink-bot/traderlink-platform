@@ -25,6 +25,7 @@ import {
   JournalImportService,
 } from "./imports/journal-import-service";
 import { JournalImportRepository } from "./imports/journal-import-repository";
+import { JournalProductReadService } from "./product/journal-product-read-service";
 import { JournalRoundTripRepository } from "./round-trips/journal-round-trip-repository";
 import { JournalRoundTripService } from "./round-trips/journal-round-trip-service";
 import { JournalIntegrityCommandService } from "./journal-integrity-command-service";
@@ -1202,6 +1203,227 @@ END`);
 });
 
 describe("Journal Data Decisions", () => {
+  it("applies one exact manual-day coverage decision to every pending batch for that same account day", () => {
+    const context = setup();
+    try {
+      const commitDay = (input: Readonly<{
+        idempotencyKey: string;
+        date: string;
+        symbol: string;
+      }>) => context.command.commitManualExecutions(context.scope, {
+        accountId: context.accountScope.accountId,
+        idempotencyKey: input.idempotencyKey,
+        sourceDisplayLabel: `Manual ${input.symbol} entry`,
+        entries: [{
+          sourceTimestampText: `${input.date}, 09:30:00`,
+          sourceTimezone: "America/New_York",
+          normalizedSymbol: input.symbol,
+          tradeCurrency: "USD",
+          side: "buy",
+          quantityDecimal: "1",
+          priceDecimal: "10",
+          feesDecimal: null,
+          feeCurrency: null,
+          feeSignConvention: "not_reported",
+        }],
+      });
+      const first = commitDay({
+        idempotencyKey: "manual-coverage-same-day-01",
+        date: "2026-01-08",
+        symbol: "DAYA",
+      });
+      const second = commitDay({
+        idempotencyKey: "manual-coverage-same-day-02",
+        date: "2026-01-08",
+        symbol: "DAYB",
+      });
+      const other = commitDay({
+        idempotencyKey: "manual-coverage-other-day-01",
+        date: "2026-01-09",
+        symbol: "DAYC",
+      });
+      const pending = context.database.prepare(`SELECT decision.decision_id,
+ decision.revision, source_row.raw_fields_json
+FROM journal_data_decisions decision
+JOIN journal_source_row_issues issue
+  ON issue.source_issue_id = decision.source_issue_id
+JOIN journal_source_rows source_row
+  ON source_row.source_row_id = issue.source_row_id
+WHERE decision.state = 'pending'
+  AND issue.issue_code = 'manual_trading_day_coverage_unconfirmed'
+ORDER BY decision.decision_id`).all() as Array<{
+        decision_id: string;
+        revision: number;
+        raw_fields_json: string;
+      }>;
+      expect(pending).toHaveLength(3);
+      const selected = pending.find((row) =>
+        (JSON.parse(row.raw_fields_json) as unknown[])[5] === "2026-01-08"
+      )!;
+      context.decisions.resolve(context.accountScope, {
+        action: "supply_coverage_fact",
+        decisionId: selected.decision_id,
+        expectedRevision: selected.revision,
+        reasonCode: "manual_trading_day_verified_complete",
+        assetClass: "stock",
+        coverageKind: "complete",
+        localStartDate: "2026-01-08",
+        localEndDate: "2026-01-08",
+        sourceTimezone: "America/New_York",
+        idempotencyKey: "manual-coverage-cascade-01",
+        sourceDisplayLabel: "Verified complete manual trading day",
+      });
+      expect(count(
+        context.database,
+        "journal_data_decisions",
+        "WHERE state = 'resolved' AND issue_code = 'manual_trading_day_coverage_unconfirmed'",
+      )).toBe(2);
+      expect(count(
+        context.database,
+        "journal_data_decisions",
+        "WHERE state = 'pending' AND issue_code = 'manual_trading_day_coverage_unconfirmed'",
+      )).toBe(1);
+      const states = context.database.prepare(`SELECT import_batch_id,
+ current_state, pending_decision_count
+FROM journal_import_batches
+WHERE import_batch_id IN (?, ?, ?)
+ORDER BY import_batch_id`).all(
+        first.importBatchId,
+        second.importBatchId,
+        other.importBatchId,
+      ) as Array<{
+        import_batch_id: string;
+        current_state: string;
+        pending_decision_count: number;
+      }>;
+      expect(states.filter((row) =>
+        [first.importBatchId, second.importBatchId].includes(row.import_batch_id)
+      ).map((row) => [row.current_state, row.pending_decision_count])).toEqual([
+        ["accepted", 0],
+        ["accepted", 0],
+      ]);
+      expect(states.find((row) => row.import_batch_id === other.importBatchId))
+        .toMatchObject({
+          current_state: "accepted_with_decisions",
+          pending_decision_count: 1,
+        });
+    } finally {
+      context.database.close();
+    }
+  });
+
+  it("lets the trader confirm a manual swing position with an exact current-position fact", () => {
+    const context = setup();
+    try {
+      const manualBatch = context.command.commitManualExecutions(context.scope, {
+        accountId: context.accountScope.accountId,
+        idempotencyKey: "manual-swing-position-decision-01",
+        sourceDisplayLabel: "Manual swing entry",
+        now: new Date("2026-08-01T13:00:00.000Z"),
+        entries: [{
+          sourceTimestampText: "2026-01-08, 15:30:00",
+          sourceTimezone: "America/New_York",
+          normalizedSymbol: "SWING",
+          tradeCurrency: "USD",
+          side: "buy",
+          quantityDecimal: "10.5",
+          priceDecimal: "15.25",
+          feesDecimal: null,
+          feeCurrency: null,
+          feeSignConvention: "not_reported",
+          tradeIntent: "swing",
+        }],
+      });
+      const decision = (issueCode: string) => context.database.prepare(`SELECT
+ decision_id, revision FROM journal_data_decisions
+WHERE state = 'pending' AND issue_code = ?`).get(issueCode) as {
+        decision_id: string;
+        revision: number;
+      };
+      const instrument = context.database.prepare(`SELECT instrument_id
+FROM journal_instruments WHERE normalized_symbol = 'SWING'`).get() as {
+        instrument_id: string;
+      };
+      const opening = decision("opening_inventory_required");
+      context.decisions.resolve(context.accountScope, {
+        action: "supply_opening_inventory",
+        decisionId: opening.decision_id,
+        expectedRevision: opening.revision,
+        reasonCode: "trader_confirmed_zero_opening_inventory",
+        instrumentId: instrument.instrument_id,
+        currency: "USD",
+        effectiveLocalDate: "2026-01-08",
+        sourceTimezone: "America/New_York",
+        quantityDecimal: "0",
+        idempotencyKey: "manual-swing-opening-position-01",
+        sourceDisplayLabel: "Confirmed zero opening position",
+      });
+      const coverage = decision("manual_trading_day_coverage_unconfirmed");
+      context.decisions.resolve(context.accountScope, {
+        action: "supply_coverage_fact",
+        decisionId: coverage.decision_id,
+        expectedRevision: coverage.revision,
+        reasonCode: "manual_trading_day_verified_complete",
+        assetClass: "stock",
+        coverageKind: "complete",
+        localStartDate: "2026-01-08",
+        localEndDate: "2026-01-08",
+        sourceTimezone: "America/New_York",
+        idempotencyKey: "manual-swing-coverage-01",
+        sourceDisplayLabel: "Verified manual swing trading day",
+      });
+      const closing = decision("closing_position_unconfirmed");
+      const productDecision = new JournalProductReadService(context.database)
+        .listDataDecisions(context.accountScope).pending.find(
+          (item) => item.decisionId === closing.decision_id,
+        );
+      expect(productDecision?.allowedActions).toContain("supply_position_fact");
+      expect(productDecision?.importBatchIds).toContain(manualBatch.importBatchId);
+      expect(() => context.decisions.resolve(context.accountScope, {
+        action: "supply_position_fact",
+        decisionId: closing.decision_id,
+        expectedRevision: closing.revision,
+        reasonCode: "trader_confirmed_intentional_swing",
+        instrumentId: instrument.instrument_id,
+        currency: "USD",
+        factKind: "opening_balance",
+        effectiveLocalDate: "2026-01-08",
+        timePrecision: "day_start",
+        sourceTimezone: "America/New_York",
+        quantityDecimal: "10.5",
+        idempotencyKey: "manual-swing-invalid-opening-01",
+        sourceDisplayLabel: "Invalid swing position fact",
+      })).toThrowError("TRADERLINK_DATA_DECISION_INVALID_ACTION");
+      context.decisions.resolve(context.accountScope, {
+        action: "supply_position_fact",
+        decisionId: closing.decision_id,
+        expectedRevision: closing.revision,
+        reasonCode: "trader_confirmed_intentional_swing",
+        instrumentId: instrument.instrument_id,
+        currency: "USD",
+        factKind: "open_position",
+        effectiveLocalDate: "2026-01-08",
+        timePrecision: "day_end",
+        sourceTimezone: "America/New_York",
+        quantityDecimal: "10.5",
+        idempotencyKey: "manual-swing-open-position-01",
+        sourceDisplayLabel: "Confirmed manual swing position",
+      });
+      expect(context.database.prepare(`SELECT version.projection_state,
+ version.final_position_decimal, version.coverage_reason_code
+FROM journal_round_trips round_trip
+JOIN journal_round_trip_versions version
+  ON version.round_trip_version_id = round_trip.current_version_id
+WHERE round_trip.lifecycle_state = 'active'`).get()).toEqual({
+        projection_state: "legitimate_open",
+        final_position_decimal: "10.5",
+        coverage_reason_code: null,
+      });
+    } finally {
+      context.database.close();
+    }
+  });
+
   it("records opening inventory, rebuilds, and rejects a stale retry without partial writes", () => {
     const context = setup();
     try {

@@ -2,13 +2,15 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { AcademyShell } from "./academy-shell";
-import { getCurrentAcademySession } from "./academy-server-session";
+import {
+  getCurrentAcademyViewer,
+  listCurrentAcademyCompletedLessonSlugs,
+} from "./academy-access";
 import {
   getAcademyCoursePage,
   getAcademyCourses,
   getLaunchAcademyCourseIds,
 } from "@/src/lib/academy/academy-content";
-import { AcademyProgressStore } from "@/src/lib/academy/academy-progress-store";
 import {
   ACADEMY_HOME_DESCRIPTION,
   ACADEMY_HOME_TITLE,
@@ -71,14 +73,10 @@ export default async function AcademyHomePage({
 }: AcademyHomePageProps) {
   const authStatus = normalizeSearchParam((await searchParams).auth);
   const authNotice = getAuthNotice(authStatus);
-  const academySession = await getCurrentAcademySession();
-  const completedLessonSlugs = academySession
-    ? new Set(
-        await new AcademyProgressStore().listCompletedLessonSlugs(
-          academySession.discordUserId,
-        ),
-      )
-    : new Set<string>();
+  const academyViewer = await getCurrentAcademyViewer();
+  const completedLessonSlugs = new Set(
+    await listCurrentAcademyCompletedLessonSlugs(academyViewer),
+  );
   const courses = getAcademyCourses();
   const liveCourseIds = getLaunchAcademyCourseIds();
   const liveCourseIdSet = new Set(liveCourseIds);
@@ -101,7 +99,7 @@ export default async function AcademyHomePage({
     liveCourses.map((item) => item.course),
   );
   const shouldShowSaveProgressNote =
-    !academySession && authNotice?.tone !== "success";
+    !academyViewer && authNotice?.tone !== "success";
 
   return (
     <AcademyShell>
@@ -238,7 +236,7 @@ export default async function AcademyHomePage({
                       </div>
                       <div className="academy-course-progress">
                         <CourseProgressMeter
-                          isAuthenticated={Boolean(academySession)}
+                          isAuthenticated={Boolean(academyViewer)}
                           label={
                             course.course_id === chartReadingCourseId
                               ? "Core lessons"
@@ -249,7 +247,7 @@ export default async function AcademyHomePage({
                         {lessonGroupProgress.map((groupProgress) => (
                           <CourseProgressMeter
                             key={groupProgress.label}
-                            isAuthenticated={Boolean(academySession)}
+                            isAuthenticated={Boolean(academyViewer)}
                             label={groupProgress.label}
                             progress={groupProgress}
                           />

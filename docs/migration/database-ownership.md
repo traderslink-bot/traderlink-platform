@@ -1,8 +1,8 @@
 # TraderLink Database Ownership
 
-**Phase:** Phase 1 inventory preserved; replacement database accepted through Phase 3 Journal integrity
-**Status:** Legacy recovery evidence remains read-only. The replacement foundation, owner seed, six-migration Journal schema, private statement import, exact reimport, append-only evidence vault, and independent verification are technically accepted under delegated owner authority.
-**Inspection rule:** The legacy source remains read-only. The verified replacement `development.sqlite` contains six migration rows, stable development ownership, one source-account identity, one accepted-with-decisions import, and the accepted Phase 3 Journal evidence. Public login has not run and remains deferred.
+**Phase:** Phase 1 inventory preserved; replacement database accepted through the local Phase 5 Slice F6 schema/tooling checkpoint
+**Status:** Legacy recovery evidence remains read-only. The replacement foundation, owner seed, eighteen-migration module-owned schema, private statement import, exact reimport, append-only evidence vault, empty annotation/saved-view/market-fact/review/Level-Analysis/Academy/Watchlist/Affiliate/hosted-transfer foundations, one reconciled News article/version, and independent verification are technically accepted under delegated owner authority.
+**Inspection rule:** The legacy source remains read-only. The verified replacement `development.sqlite` contains 18 migration rows, stable development ownership, one backfilled development authentication identity, zero public sessions, zero Discord memberships, one source-account identity, one accepted-with-decisions import, the accepted Phase 3 Journal evidence, and zero hosted-transfer events. Public owner linking, production-source transfer and deployment have not run and remain deferred.
 
 ## Direct answer about `v4-temp-sql`
 
@@ -50,7 +50,26 @@ The replacement local development database exists at:
 
 That path is outside both source repositories, uses the permanent platform name rather than V3/V4 terminology, and contains one physical local database with the verified Platform/Journal foundation and explicit module-owned migrations. The coordinating technical auditor accepted its foundation, owner seed, and Phase 3 Journal runtime/database evidence. The private test statement is imported under the controlled Journal source identity and evidence-vault boundary; it is not a V3 database copy or dual write.
 
-The current V3-named database is accepted as a possible **migration input**, not as the replacement working database. It must first pass online-backup, restore, provenance, and source-statement reconciliation gates.
+The current V3-named database is preserved as verified **legacy recovery evidence**, not as the replacement working database. Its accepted statement facts were imported through the gated Journal process; legacy rules, tags, notes, assignments and old saved trades were test data and were not copied.
+
+At the accepted local Slice F6 schema/tooling checkpoint, the replacement main
+file is 11,304,960
+bytes with SHA-256
+`bcbd40986840e1afb6cd169ea6a26f0ffbb8db9a8b367bc5acd971a7b4430664`.
+Migrations 0017-0018 have immutable checksums
+`b9599e947b4e45a4b9e4ee730d701682ad2d5e23cf68ac1c6fcbb3f68a37c6f4`
+and `d79bb695d5c365343ad381801770281f8291a7c51d8212178b424747a3b8fca8`.
+The current post-schema digest is
+`7306385ce32329abe73a41fc3ec630c28dc4df7efaaad975b55f8f719dcdf4be`.
+The four Level Analysis delivery/link tables, five Candle Review/market-fact
+tables, two saved-view tables and all 13 annotation tables are empty. All accepted
+execution/import/decision/round-trip counts are unchanged; foreign-key,
+`quick_check` and `integrity_check` verification passed. Academy completion/
+event tables and all three Watchlist tables remain empty. News has one current
+article and one matching immutable version; both Affiliate tables, Discord
+membership/session tables and the hosted-transfer ledger are empty. Verified
+pre/post-0018 online backup and independent restore pairs are preserved. No
+legacy trade, execution, tag, rule or note is a hosted-transfer source.
 
 ## Current database/file inventory
 
@@ -97,8 +116,8 @@ The 336 saved trades include the previously observed 334 closed and 2 open trade
 | `data/v3-dashboard/trading-rules-v1-backup-2026-07-30.sqlite` | 1,757,184 bytes | 1 batch, 240 import rows, 138 issues/repair items, no normalized executions, saved trades, or reports | Historical pre-load backup candidate. Preserve until snapshot lineage is recorded. |
 | `data/v3-dashboard/trading-rules-v1.sqlite.2026-07-31T02-51-04-825Z.before-temporary-ibkr-load.bak` | 1,757,184 bytes | 24 tables; 1 batch, 240 import rows, 138 issues/repair items, no normalized executions, saved trades, links, reports, or route metadata | Timestamped backup made immediately before the temporary load. SHA-256 `76734F9E462BD8FDA687DB0DD417C9393E79E55B9B26DB7652DF013FD1002A18`; preserve as the clearest pre-load snapshot. |
 | `data/trader-intelligence.sqlite` | 348,160 bytes | 29 tables; one `news_articles` row; Journal/auth/reflection tables otherwise effectively empty in the observed counts | Mixed legacy local fallback. Do not treat as the Journal source. Preserve News evidence until reconciled. |
-| `data/live-watchlist.sqlite` | 32,768 bytes | `live_watchlist_symbols`, `live_watchlist_health`, and `live_watchlist_archives`; all observed counts zero | Watchlist local fallback. Preserve until Watchlist storage baseline is accepted. |
-| `data/private/trade-journal-v1.sqlite` | 49,152 bytes | 21 tag definitions, 4 tag assignments, 1 seed-state row; Day Session tables exist with no observed records | Current trade-tag/Day Session fallback. Journal-owned data requiring migration into the future Journal schema. |
+| `data/live-watchlist.sqlite` | 32,768 bytes | `live_watchlist_symbols`, `live_watchlist_health`, and `live_watchlist_archives`; all observed counts zero | Preserved legacy Watchlist evidence. F3 accepted explicit replacement storage and deliberately copied zero rows; do not use this file at runtime. |
+| `data/private/trade-journal-v1.sqlite` | 49,152 bytes | 21 tag definitions, 4 tag assignments, 1 seed-state row; Day Session tables exist with no observed records | Preserved legacy test-data evidence only. The owner explicitly rejected recovery of these tags, assignments and old annotated trades. |
 
 Associated `-wal` and `-shm` files are present for the repository-local databases. All observed WAL files were zero bytes. Working SQLite databases and their sidecars do not belong in the repository under the replacement plan, but no file may be moved or deleted until backup, provenance, reader/writer, and reconciliation gates are met.
 
@@ -162,33 +181,64 @@ Current owner: `src/lib/academy/academy-progress-store.ts`.
 
 Hosted resolution: `ACADEMY_DATABASE_URL`, then `DATABASE_URL`. Non-production SQLite fallback: `TRADER_INTELLIGENCE_DB_PATH`, then `data/trader-intelligence.sqlite`. Future owner: Platform identity for the user/session facts and Academy for lesson completion; the public module contract must hide physical table placement.
 
+Replacement F2 ownership is now explicit: Platform owns
+`platform_auth_identities` and `platform_auth_sessions`; Academy owns
+`academy_lesson_completions` and `academy_lesson_completion_events`. Local
+Academy access uses the guarded development Platform user and never uses a
+Journal-named database fallback. Public access now uses the same Platform
+identity/session boundary. Existing hosted Academy rows remain unchanged
+read-only transfer inputs until the authorized production adoption runs.
+
 ### News schema
 
-Current owner: `src/lib/news/news-article-store.ts`.
+Current owner: News migration/repository boundary in `src/modules/news` and
+`src/lib/news/news-article-store.ts`.
 
-- `news_articles`.
+- `news_articles`, `news_article_versions`.
 
-Hosted resolution includes News/Postgres/Neon/Academy/general URLs. Local resolution uses `TRADERSLINK_NEWS_DB_PATH`, then `TRADER_INTELLIGENCE_DB_PATH`, then `data/trader-intelligence.sqlite`. Future owner: News. Remove the dependency on a Journal-named fallback.
+F4 local resolution uses the protected `TRADERLINK_PLATFORM_DB_PATH`; the old
+`TRADERSLINK_NEWS_DB_PATH` is test-only isolation. The accepted single-node
+hosted runtime uses that same Platform database. Academy, generic
+Postgres/Neon, Journal-named and repository-local fallbacks are removed.
+Ordinary runtime verifies rather than creates or alters schema. The one local
+legacy article was reconciled into revision 1; existing hosted News rows remain
+read-only transfer inputs until authorized adoption runs.
 
 ### Watchlist schema
 
-Current owner: `src/lib/live-watchlist/live-watchlist-store.ts`.
+Current owner: Watchlist migration/repository boundary, with compatibility
+domain logic retained in `src/lib/live-watchlist/live-watchlist-store.ts`.
 
 - `live_watchlist_symbols`, `live_watchlist_health`, `live_watchlist_archives`.
 
-Hosted resolution: `LIVE_WATCHLIST_DATABASE_URL`, Academy URL, then general URL. Local resolution: `LIVE_WATCHLIST_DB_PATH`, then `TRADER_INTELLIGENCE_DB_PATH`, then `data/live-watchlist.sqlite`. Future owner: Watchlist. Remove the dependency on a Journal-named fallback.
+F3 local resolution uses the required external `TRADERLINK_PLATFORM_DB_PATH`;
+an explicit `LIVE_WATCHLIST_DB_PATH` is limited to non-production focused
+isolation and `:memory:` is test-only. The accepted single-node hosted runtime
+uses that same Platform database. Academy, generic, V3/Journal-named and
+repository-local fallbacks are removed. Ordinary requests verify rather than
+create/alter schema. Production hosted rows remain unchanged read-only transfer
+inputs until the authorized adoption runs.
 
 ### Affiliate schema
 
-Current owner: `src/lib/affiliate-referrals/affiliate-referral-store.ts`.
+Current owner: Platform/Affiliate migration boundary in `src/modules/affiliate`
+and `src/lib/affiliate-referrals/affiliate-referral-store.ts`.
 
-- `affiliate_invites`, `affiliate_discord_referrals`.
+- `affiliate_invites`, `affiliate_attributions`.
 
-Hosted resolution: affiliate URL, Academy URL, then general URL. Local resolution can use `TRADER_INTELLIGENCE_DB_PATH`. Future owner: Platform/Account pending product review. Remove the Journal-named fallback.
+F4 local resolution and the accepted single-node hosted runtime use the
+protected Platform database. Runtime DDL and Academy/generic/Journal-named/
+repository-local fallbacks are removed. Attribution is keyed to stable Platform
+user ID with immutable first touch. No local affiliate source table or row
+existed, so both replacement tables begin empty. The old hosted Discord table
+is a read-only transfer source; F6 maps only exact Platform identities and
+leaves unresolved rows pending.
 
 ## Replacement ownership decision
 
-TraderLink may use one physical local development SQLite database and one physical hosted SQL database, but logical ownership and migrations must be explicit:
+TraderLink uses one physical local development SQLite database and, for the
+accepted beta topology, one physical hosted SQLite database on a persistent
+single-writer volume. Logical ownership and migrations remain explicit:
 
 | Schema owner | Owns | May publish |
 | --- | --- | --- |
@@ -210,7 +260,7 @@ One module must never infer ownership from a generic fallback to `TRADER_INTELLI
 3. Record source path, timestamp, SHA-256, table counts, migration rows, WAL state, and tested restore steps.
 4. Prove whether the repository-local 15,368,192-byte file is byte/logically identical to the private configured source.
 5. Reconcile the January IBKR source statement to accepted executions, 334 closed/2 open round trips, contained decisions, and all coverage counts.
-6. Export/migrate the 4 current tag assignments and any surviving News/Watchlist/Academy/affiliate facts under their named owners.
+6. Keep the rejected legacy tag/rule/note/old-trade test data out of the replacement. Export or migrate only proven surviving News/Watchlist/Academy/affiliate facts under their named owners.
 7. The schema/module contract and separate database-foundation implementation checkpoint were authorized, implemented, correction-verified, and technically accepted. The replacement database now contains only the verified empty foundation; do not edit the legacy source in place or dual-write silently.
 
 ## Phase 2 online-backup and restore checkpoint
@@ -237,7 +287,8 @@ The owner accepted the corrected exact [Replacement Database Schema and Migratio
 The Phase 2 empty database foundation and follow-on [Development Owner Seed Progress](development-owner-seed-progress.md) checkpoint are technically complete. `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\development.sqlite` contains exactly two migration rows and domain counts 1 user / 1 workspace / 1 owner membership / 1 Journal account / 0 source-account identities. Its expected and actual schema digest remains `5a34f790164e9b8456db88a1052a9b9084bbfbeab4eae8c5eee1f49d5c7194c4`; the main file is 94,208 bytes with post-seed SHA-256 `2497FA605828C9392233F712062CC9FBEDDAB0F2B5E2078AB1A0146494A99C26`. No broker identity or private/legacy trading data was copied. Discord-first public login and optional email/password are deferred until the complete dashboard is preparing to go live.
 
 The paragraph above is the immutable Phase 2 checkpoint, not current database
-state. Phase 3 subsequently used a fresh online backup/restore rehearsal before
+state. The following paragraph is the immutable Phase 3 checkpoint, not the
+current F3 database state. Phase 3 used a fresh online backup/restore rehearsal before
 applying migrations 3-6 and importing the accepted private development
 statement. The current database has schema digest
 `75571914c5fa4bbfe7876c8e9a72cc7d584eab91704d70cf889bf5f1b374a55a`,

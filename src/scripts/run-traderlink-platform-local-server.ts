@@ -12,6 +12,8 @@ import {
   TRADERLINK_PLATFORM_LOCAL_DASHBOARD_TOKEN_ENV,
   validateDevelopmentDashboardInboundRequest,
 } from "../modules/platform/server/authentication/development-dashboard-network-boundary";
+import { loadTraderLinkPlatformLocalDevelopmentConfiguration } from "../modules/platform/server/authentication/local-development-configuration";
+import { TRADERLINK_LEVEL_ANALYSIS_ALLOWED_PROVIDERS_ENV } from "../modules/level-analysis/server/level-analysis-delivery-request";
 
 function argument(name: string): string | undefined {
   const index = process.argv.indexOf(name);
@@ -59,11 +61,15 @@ async function main(): Promise<void> {
   }
   const listenerHost = hostname();
   const listenerPort = port();
+  loadTraderLinkPlatformLocalDevelopmentConfiguration({
+    repositoryRoot: process.cwd(),
+  });
   const token = randomBytes(32).toString("base64url");
   Object.assign(process.env, { NODE_ENV: "development" });
   process.env[TRADERLINK_PLATFORM_ALLOW_DEVELOPMENT_DASHBOARD_ENV] = "true";
   process.env[TRADERLINK_PLATFORM_LOCAL_DASHBOARD_RUNTIME_ENV] = "1";
   process.env[TRADERLINK_PLATFORM_LOCAL_DASHBOARD_TOKEN_ENV] = token;
+  process.env[TRADERLINK_LEVEL_ANALYSIS_ALLOWED_PROVIDERS_ENV] ??= "ibkr";
   const application = next({
     dev: true,
     hostname: listenerHost,

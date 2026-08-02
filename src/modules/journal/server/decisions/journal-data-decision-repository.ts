@@ -280,6 +280,23 @@ ORDER BY position_fact_id`).all(workspaceId, accountId, issue.source_row_id)
     });
   }
 
+  listPendingSourceIssueDecisionsByIssueCode(
+    workspaceId: string,
+    accountId: string,
+    issueCode: string,
+  ): readonly JournalDataDecisionRecord[] {
+    const rows = this.database.prepare<[string, string, string], {
+      decision_id: string;
+    }>(`SELECT decision_id
+FROM journal_data_decisions
+WHERE workspace_id = ? AND account_id = ? AND state = 'pending'
+  AND target_kind = 'source_issue' AND issue_code = ?
+ORDER BY decision_id`).all(workspaceId, accountId, issueCode);
+    return Object.freeze(rows.map((row) =>
+      this.get(workspaceId, accountId, row.decision_id)!
+    ));
+  }
+
   listActionableSourceIssues(workspaceId: string, accountId: string, importBatchId: string): readonly Readonly<{
     sourceIssueId: string; issueCode: string;
   }>[] {

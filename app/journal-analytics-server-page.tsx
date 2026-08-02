@@ -30,7 +30,7 @@ import {
   buildJournalAnalyticsDashboardQuery,
   withJournalAnalyticsDashboardService,
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
-import { requireDevelopmentDashboardPageScope } from "@/src/modules/platform/server/authentication/require-development-dashboard-scope";
+import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
 export type AnalyticsServerPageKind =
   | "overview"
@@ -117,7 +117,7 @@ export async function AnalyticsServerPage({
   page: AnalyticsServerPageKind;
 }) {
   const definition = DEFINITIONS[page];
-  const scope = await requireDevelopmentDashboardPageScope();
+  const scope = await requireTraderLinkPlatformPageScope();
   const query = buildJournalAnalyticsDashboardQuery(scope, {
     metricIds: definition.metricIds,
     groupings: [definition.grouping],

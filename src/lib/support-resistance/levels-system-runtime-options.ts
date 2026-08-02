@@ -74,9 +74,9 @@ function findBundledLevelsSystemWarehouseDirectory(): string | undefined {
 
   return candidates.find(
     (candidate) =>
-      existsSync(join(candidate, "eodhd")) ||
-      existsSync(join(candidate, "ibkr")) ||
-      existsSync(join(candidate, "stub")),
+      existsSync(join(/* turbopackIgnore: true */ candidate, "eodhd")) ||
+      existsSync(join(/* turbopackIgnore: true */ candidate, "ibkr")) ||
+      existsSync(join(/* turbopackIgnore: true */ candidate, "stub")),
   );
 }
 
@@ -85,7 +85,9 @@ function findSiblingLevelsSystemWarehouseDirectory(
 ): string | undefined {
   const candidate = join(process.cwd(), "..", "levels-system", "data", "candles");
 
-  return existsSync(join(candidate, provider)) ? candidate : undefined;
+  return existsSync(join(/* turbopackIgnore: true */ candidate, provider))
+    ? candidate
+    : undefined;
 }
 
 function parseProviderName(

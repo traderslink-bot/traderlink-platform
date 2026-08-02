@@ -1,7 +1,10 @@
-import { mkdirSync } from "node:fs";
-import { dirname, isAbsolute, join } from "node:path";
 import { neon } from "@neondatabase/serverless";
 import type Database from "better-sqlite3";
+
+import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
+import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
+import { requirePlatformSingleNodeSqliteStorage } from "@/src/modules/platform/server/database/platform-storage-backend";
+import { watchlistStorageMigration } from "@/src/modules/watchlist/server/database/migrations/0014_watchlist_storage";
 
 import type {
   LiveWatchlistCardContent,
@@ -26,33 +29,43 @@ let sharedNeonSql: NeonSql | null = null;
 let sharedNeonSchemaPromise: Promise<void> | null = null;
 
 function databaseUrl(): string | undefined {
-  return process.env.LIVE_WATCHLIST_DATABASE_URL ?? process.env.ACADEMY_DATABASE_URL ?? process.env.DATABASE_URL;
+  return process.env.LIVE_WATCHLIST_DATABASE_URL?.trim() || undefined;
 }
 
 function shouldUseSqliteFallback(): boolean {
-  if (process.env.LIVE_WATCHLIST_STORAGE === "sqlite") {
-    return true;
-  }
-  if (databaseUrl()) {
+  if (
+    process.env.NODE_ENV === "test" &&
+    process.env.LIVE_WATCHLIST_STORAGE === "neon"
+  ) {
+    if (!databaseUrl()) {
+      platformFailure("TRADERLINK_WATCHLIST_STORAGE_INVALID", {
+        reason: "hosted_url_missing",
+      });
+    }
     return false;
   }
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("Live watchlist storage requires LIVE_WATCHLIST_DATABASE_URL or DATABASE_URL in production.");
-  }
+  requirePlatformSingleNodeSqliteStorage("TRADERLINK_WATCHLIST_STORAGE_INVALID");
   return true;
 }
 
-function databasePath(): string {
-  const configured = process.env.LIVE_WATCHLIST_DB_PATH ?? process.env.TRADER_INTELLIGENCE_DB_PATH;
-  if (configured) {
-    if (configured === ":memory:") {
-      return configured;
-    }
-    return isAbsolute(configured)
-      ? configured
-      : join(/* turbopackIgnore: true */ process.cwd(), configured);
+function explicitDatabasePath(): string | undefined {
+  const configured = process.env.LIVE_WATCHLIST_DB_PATH?.trim();
+  if (configured === ":memory:" && process.env.NODE_ENV !== "test") {
+    platformFailure("TRADERLINK_WATCHLIST_STORAGE_INVALID", {
+      reason: "memory_storage_test_only",
+    });
   }
-  return join(process.cwd(), "data", "live-watchlist.sqlite");
+  return configured || undefined;
+}
+
+function initializeWatchlistMemoryDatabaseForTests(
+  database: SqliteDatabase,
+): void {
+  database.pragma("foreign_keys = ON");
+  database.pragma("busy_timeout = 5000");
+  for (const statement of watchlistStorageMigration.statements) {
+    database.exec(statement);
+  }
 }
 
 async function getSqliteDatabase(): Promise<SqliteDatabase> {
@@ -60,39 +73,19 @@ async function getSqliteDatabase(): Promise<SqliteDatabase> {
     return sharedSqliteDatabase;
   }
 
-  const { default: DatabaseConstructor } = await import("better-sqlite3");
-  const path = databasePath();
-  mkdirSync(dirname(path), { recursive: true });
-  const db = new DatabaseConstructor(path);
-  db.pragma("journal_mode = WAL");
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS live_watchlist_symbols (
-      symbol TEXT PRIMARY KEY,
-      status TEXT NOT NULL,
-      updated_at INTEGER NOT NULL,
-      state_json TEXT NOT NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS live_watchlist_health (
-      key TEXT PRIMARY KEY,
-      market_data_status TEXT NOT NULL,
-      market_data_updated_at INTEGER
-    );
-
-    CREATE TABLE IF NOT EXISTS live_watchlist_archives (
-      archive_id TEXT PRIMARY KEY,
-      symbol TEXT NOT NULL,
-      archived_at INTEGER NOT NULL,
-      first_posted_at INTEGER,
-      last_active_updated_at INTEGER NOT NULL,
-      state_json TEXT NOT NULL
-    );
-
-    CREATE INDEX IF NOT EXISTS live_watchlist_archives_symbol_archived_at_idx
-      ON live_watchlist_archives (symbol, archived_at DESC);
-  `);
-  sharedSqliteDatabase = db;
-  return db;
+  const path = explicitDatabasePath();
+  if (path === ":memory:") {
+    const { default: DatabaseConstructor } = await import("better-sqlite3");
+    const database = new DatabaseConstructor(path);
+    initializeWatchlistMemoryDatabaseForTests(database);
+    sharedSqliteDatabase = database;
+    return database;
+  }
+  sharedSqliteDatabase = openPlatformDatabase({
+    mode: "runtime",
+    ...(path ? { databasePath: path } : {}),
+  });
+  return sharedSqliteDatabase;
 }
 
 function getNeonSql(): NeonSql {
@@ -104,55 +97,60 @@ function getNeonSql(): NeonSql {
   return sharedNeonSql;
 }
 
-async function ensureNeonSchema(): Promise<void> {
+async function verifyNeonSchema(): Promise<void> {
   if (sharedNeonSchemaPromise) {
     return sharedNeonSchemaPromise;
   }
 
   const sql = getNeonSql();
-  sharedNeonSchemaPromise = sql`
-    CREATE TABLE IF NOT EXISTS live_watchlist_symbols (
-      symbol TEXT PRIMARY KEY,
-      status TEXT NOT NULL,
-      updated_at BIGINT NOT NULL,
-      state_json TEXT NOT NULL,
-      revision BIGINT NOT NULL DEFAULT 0
-    )
-  `
-    .then(
-      () => sql`
-        ALTER TABLE live_watchlist_symbols
-        ADD COLUMN IF NOT EXISTS revision BIGINT NOT NULL DEFAULT 0
-      `,
-    )
-    .then(
-      () => sql`
-        CREATE TABLE IF NOT EXISTS live_watchlist_health (
-          key TEXT PRIMARY KEY,
-          market_data_status TEXT NOT NULL,
-          market_data_updated_at BIGINT
+  sharedNeonSchemaPromise = Promise.all([
+    sql`
+      SELECT table_name, column_name
+      FROM information_schema.columns
+      WHERE table_schema = current_schema()
+        AND table_name IN (
+          'live_watchlist_symbols',
+          'live_watchlist_health',
+          'live_watchlist_archives'
         )
-      `,
-    )
-    .then(
-      () => sql`
-        CREATE TABLE IF NOT EXISTS live_watchlist_archives (
-          archive_id TEXT PRIMARY KEY,
-          symbol TEXT NOT NULL,
-          archived_at BIGINT NOT NULL,
-          first_posted_at BIGINT,
-          last_active_updated_at BIGINT NOT NULL,
-          state_json TEXT NOT NULL
-        )
-      `,
-    )
-    .then(
-      () => sql`
-        CREATE INDEX IF NOT EXISTS live_watchlist_archives_symbol_archived_at_idx
-          ON live_watchlist_archives (symbol, archived_at DESC)
-      `,
-    )
-    .then(() => undefined);
+    `,
+    sql`
+      SELECT indexname
+      FROM pg_indexes
+      WHERE schemaname = current_schema()
+        AND indexname = 'live_watchlist_archives_symbol_archived_at_idx'
+    `,
+  ]).then(([columnRows, indexRows]) => {
+    const columns = new Set(
+      (columnRows as Array<{ table_name?: unknown; column_name?: unknown }>).map(
+        (row) => `${String(row.table_name)}.${String(row.column_name)}`,
+      ),
+    );
+    const requiredColumns = [
+      "live_watchlist_symbols.symbol",
+      "live_watchlist_symbols.status",
+      "live_watchlist_symbols.updated_at",
+      "live_watchlist_symbols.state_json",
+      "live_watchlist_symbols.revision",
+      "live_watchlist_health.key",
+      "live_watchlist_health.market_data_status",
+      "live_watchlist_health.market_data_updated_at",
+      "live_watchlist_archives.archive_id",
+      "live_watchlist_archives.symbol",
+      "live_watchlist_archives.archived_at",
+      "live_watchlist_archives.first_posted_at",
+      "live_watchlist_archives.last_active_updated_at",
+      "live_watchlist_archives.state_json",
+    ];
+    if (
+      requiredColumns.some((column) => !columns.has(column)) ||
+      (indexRows as Array<{ indexname?: unknown }>).length !== 1
+    ) {
+      platformFailure("TRADERLINK_WATCHLIST_STORAGE_INVALID", {
+        reason: "hosted_schema_incomplete",
+      });
+    }
+  });
   return sharedNeonSchemaPromise;
 }
 
@@ -889,7 +887,7 @@ async function mutateNeonSymbolState(
   symbol: string,
   mutate: (existing: LiveWatchlistSymbolState | null) => LiveWatchlistSymbolState,
 ): Promise<LiveWatchlistSymbolState> {
-  await ensureNeonSchema();
+      await verifyNeonSchema();
   const sql = getNeonSql();
 
   for (let attempt = 0; attempt < NEON_SYMBOL_WRITE_MAX_ATTEMPTS; attempt += 1) {
@@ -960,7 +958,7 @@ export class LiveWatchlistStore {
     marketDataUpdatedAt: number | null;
   }> {
     if (!shouldUseSqliteFallback()) {
-      await ensureNeonSchema();
+      await verifyNeonSchema();
       await getNeonSql()`
         INSERT INTO live_watchlist_health (key, market_data_status, market_data_updated_at)
         VALUES ('global', ${patch.marketDataStatus}, ${patch.marketDataUpdatedAt})
@@ -995,7 +993,7 @@ export class LiveWatchlistStore {
     marketDataUpdatedAt: number | null;
   }> {
     if (!shouldUseSqliteFallback()) {
-      await ensureNeonSchema();
+      await verifyNeonSchema();
       const rows = (await getNeonSql()`
         SELECT market_data_status, market_data_updated_at
         FROM live_watchlist_health
@@ -1054,12 +1052,13 @@ export class LiveWatchlistStore {
     const db = await getSqliteDatabase();
     db.prepare(
       `
-        INSERT INTO live_watchlist_symbols (symbol, status, updated_at, state_json)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO live_watchlist_symbols (symbol, status, updated_at, state_json, revision)
+        VALUES (?, ?, ?, ?, 0)
         ON CONFLICT(symbol) DO UPDATE SET
           status = excluded.status,
           updated_at = excluded.updated_at,
-          state_json = excluded.state_json
+          state_json = excluded.state_json,
+          revision = live_watchlist_symbols.revision + 1
       `,
     ).run(symbol, next.status, next.updatedAt, JSON.stringify(next));
     if (next.status === "deactivated" || movedToFollowup) {
@@ -1082,12 +1081,13 @@ export class LiveWatchlistStore {
     const db = await getSqliteDatabase();
     db.prepare(
       `
-        INSERT INTO live_watchlist_symbols (symbol, status, updated_at, state_json)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO live_watchlist_symbols (symbol, status, updated_at, state_json, revision)
+        VALUES (?, ?, ?, ?, 0)
         ON CONFLICT(symbol) DO UPDATE SET
           status = excluded.status,
           updated_at = excluded.updated_at,
-          state_json = excluded.state_json
+          state_json = excluded.state_json,
+          revision = live_watchlist_symbols.revision + 1
       `,
     ).run(symbol, next.status, next.updatedAt, JSON.stringify(next));
     return next;
@@ -1096,7 +1096,7 @@ export class LiveWatchlistStore {
   async getSymbol(symbolInput: string): Promise<LiveWatchlistSymbolState | null> {
     const symbol = normalizeSymbol(symbolInput);
     if (!shouldUseSqliteFallback()) {
-      await ensureNeonSchema();
+      await verifyNeonSchema();
       const rows = (await getNeonSql()`
         SELECT state_json FROM live_watchlist_symbols WHERE symbol = ${symbol} LIMIT 1
       `) as Array<{ state_json?: unknown }>;
@@ -1115,7 +1115,7 @@ export class LiveWatchlistStore {
     const health = await this.getHealth();
     let symbols: LiveWatchlistSymbolState[];
     if (!shouldUseSqliteFallback()) {
-      await ensureNeonSchema();
+      await verifyNeonSchema();
       const rows = (await getNeonSql()`
         SELECT state_json FROM live_watchlist_symbols ORDER BY updated_at DESC
       `) as Array<{ state_json?: unknown }>;
@@ -1144,7 +1144,7 @@ export class LiveWatchlistStore {
   async countArchives(): Promise<number> {
     await this.pruneExpiredArchives();
     if (!shouldUseSqliteFallback()) {
-      await ensureNeonSchema();
+      await verifyNeonSchema();
       const rows = (await getNeonSql()`
         SELECT COUNT(*)::int AS count FROM live_watchlist_archives
       `) as Array<{ count?: unknown }>;
@@ -1170,7 +1170,7 @@ export class LiveWatchlistStore {
       ? Math.max(0, Math.floor(options.offset))
       : 0;
     if (!shouldUseSqliteFallback()) {
-      await ensureNeonSchema();
+      await verifyNeonSchema();
       const rows = (limit === null
         ? await getNeonSql()`
             SELECT archive_id, symbol, archived_at, first_posted_at, last_active_updated_at, state_json
@@ -1223,7 +1223,7 @@ export class LiveWatchlistStore {
       return null;
     }
     if (!shouldUseSqliteFallback()) {
-      await ensureNeonSchema();
+      await verifyNeonSchema();
       const rows = (await getNeonSql()`
         SELECT archive_id, symbol, archived_at, first_posted_at, last_active_updated_at, state_json
         FROM live_watchlist_archives
@@ -1267,7 +1267,7 @@ export class LiveWatchlistStore {
     await this.pruneExpiredArchives();
     const symbol = normalizeSymbol(symbolInput);
     if (!shouldUseSqliteFallback()) {
-      await ensureNeonSchema();
+      await verifyNeonSchema();
       const rows = (await getNeonSql()`
         SELECT archive_id, symbol, archived_at, first_posted_at, last_active_updated_at, state_json
         FROM live_watchlist_archives
@@ -1311,7 +1311,7 @@ export class LiveWatchlistStore {
 
   async clearArchives(): Promise<number> {
     if (!shouldUseSqliteFallback()) {
-      await ensureNeonSchema();
+      await verifyNeonSchema();
       const rows = (await getNeonSql()`SELECT COUNT(*)::int AS count FROM live_watchlist_archives`) as Array<{
         count?: unknown;
       }>;
@@ -1328,7 +1328,7 @@ export class LiveWatchlistStore {
   async pruneExpiredArchives(now = this.now()): Promise<number> {
     const cutoff = now - LIVE_WATCHLIST_ARCHIVE_RETENTION_MS;
     if (!shouldUseSqliteFallback()) {
-      await ensureNeonSchema();
+      await verifyNeonSchema();
       const rows = (await getNeonSql()`
         DELETE FROM live_watchlist_archives
         WHERE archived_at < ${cutoff}
@@ -1350,7 +1350,7 @@ export class LiveWatchlistStore {
     const stateJson = JSON.stringify(state);
 
     if (!shouldUseSqliteFallback()) {
-      await ensureNeonSchema();
+      await verifyNeonSchema();
       await getNeonSql()`
         INSERT INTO live_watchlist_archives (
           archive_id, symbol, archived_at, first_posted_at, last_active_updated_at, state_json
@@ -1394,7 +1394,11 @@ function normalizeHealthRow(row: { market_data_status?: unknown; market_data_upd
   const timestamp = row?.market_data_updated_at;
   return {
     marketDataStatus:
-      status === "live" || status === "stale" || status === "offline" || status === "starting"
+      status === "live" ||
+      status === "stale" ||
+      status === "offline" ||
+      status === "starting" ||
+      status === "closed"
         ? status
         : "offline",
     marketDataUpdatedAt:

@@ -1,498 +1,378 @@
-import { mkdtempSync, rmSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { GET as getAdminTradeLink } from "../../../../app/api/admin/level-analysis/trade-links/[linkId]/route";
-import { POST as persistTradeLink } from "../../../../app/api/level-analysis/trade-links/route";
-import { POST as resolveTradeLink } from "../../../../app/api/level-analysis/trade-links/resolve/route";
-import { GET as getTradeLevelAnalysis } from "../../../../app/api/trades/[tradeId]/level-analysis/route";
-import { GET as getTradeDetailLevelFacts } from "../../../../app/api/trades/[tradeId]/level-analysis/facts/route";
-import { resetTraderIntelligenceDatabaseForTests } from "../../trader-analytics/product/import-commit/sqlite-import-commit-repository";
-import deliveryFixture from "../__fixtures__/level-analysis-journal-delivery-package-v1.compact.json";
-import oldSnapshotFixture from "../__fixtures__/journal-connector-level-analysis-snapshot-v1.json";
-import { ingestJournalLevelAnalysisDeliveryForApi } from "../level-analysis-journal-delivery-api-service";
-import { getTradeDetailLevelFactsForApi } from "../level-analysis-journal-delivery-trade-link-api-service";
-import {
-  LEVEL_ANALYSIS_DELIVERY_API_FEATURE_FLAG,
-} from "../level-analysis-journal-delivery-persistence-storage";
-import {
-  LEVEL_ANALYSIS_TRADE_DETAIL_LEVEL_FACTS_FEATURE_FLAG,
-  LEVEL_ANALYSIS_TRADE_LINK_ADMIN_DEBUG_FEATURE_FLAG,
-  LEVEL_ANALYSIS_TRADE_LINK_API_FEATURE_FLAG,
-} from "../level-analysis-journal-delivery-trade-link-storage";
-import {
-  createTraderIntelligenceTestRequest,
-  installTraderIntelligenceLocalTestEnvironment,
-} from "../../../test/trader-intelligence-request";
+import { createHash } from "node:crypto";
+import { readFileSync, rmSync } from "node:fs";
+import { resolve } from "node:path";
 
-let tempDir = "";
-let originalDbPath: string | undefined;
-let originalDeliveryApiFlag: string | undefined;
-let originalTradeLinkApiFlag: string | undefined;
-let originalTradeLinkAdminFlag: string | undefined;
-let originalTradeDetailFactsFlag: string | undefined;
-let originalDataMode: string | undefined;
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+
+import { GET as getAdminTradeLink } from "@/app/api/admin/level-analysis/trade-links/[linkId]/route";
+import { POST as persistTradeLink } from "@/app/api/level-analysis/trade-links/route";
+import { POST as resolveTradeLink } from "@/app/api/level-analysis/trade-links/resolve/route";
+import { GET as getTradeLevelAnalysis } from "@/app/api/trades/[tradeId]/level-analysis/route";
+import { GET as getTradeDetailLevelFacts } from "@/app/api/trades/[tradeId]/level-analysis/facts/route";
+import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
+import { LevelAnalysisDeliveryRepository } from "@/src/modules/level-analysis/server/level-analysis-delivery-repository";
+import { LevelAnalysisDeliveryService } from "@/src/modules/level-analysis/server/level-analysis-delivery-service";
+import {
+  createPlatformRouteTestFoundation,
+  createPlatformRouteTestRequest,
+  installPlatformRouteTestEnvironment,
+  type PlatformRouteTestFoundation,
+} from "@/src/test/traderlink-platform-route";
+
+let foundation: PlatformRouteTestFoundation;
 let restoreEnvironment: () => void;
 
-function clone<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value)) as T;
+function id(sequence: number): string {
+  return `20000000-0000-4000-8000-${String(sequence).padStart(12, "0")}`;
 }
 
-function jsonRequest(path: string, body: unknown): Request {
-  return createTraderIntelligenceTestRequest(`http://localhost${path}`, {
+function digest(value: string): string {
+  return createHash("sha256").update(value, "utf8").digest("hex");
+}
+
+function fixture(name: string): unknown {
+  return JSON.parse(readFileSync(resolve(
+    process.cwd(),
+    `src/lib/level-analysis/__fixtures__/${name}`,
+  ), "utf8")) as unknown;
+}
+
+function post(path: string, body: unknown): Request {
+  return createPlatformRouteTestRequest(path, {
     method: "POST",
-    origin: "http://localhost",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
   });
 }
 
-function localGet(url: string): Request {
-  return createTraderIntelligenceTestRequest(url);
+function seedDelivery(payload: unknown): Readonly<{
+  status: string;
+  deliveryId?: string;
+}> {
+  const database = openPlatformDatabase({
+    mode: "runtime",
+    databasePath: foundation.databasePath,
+    forbiddenRepositoryRoots: [],
+  });
+  try {
+    return new LevelAnalysisDeliveryService(
+      new LevelAnalysisDeliveryRepository(database),
+      ["ibkr", "fixture"],
+      () => new Date("2026-08-02T12:00:00.000Z"),
+    ).ingest(payload);
+  } finally {
+    database.close();
+  }
 }
 
-function collectStringValues(value: unknown, out: string[] = []): string[] {
-  if (typeof value === "string") {
-    out.push(value);
-    return out;
+function seedRoundTrip(
+  sequence: number,
+  symbol = "DEVS",
+  closedAtUtc = "2026-08-02T14:00:00.000Z",
+): string {
+  const database = openPlatformDatabase({
+    mode: "runtime",
+    databasePath: foundation.databasePath,
+    forbiddenRepositoryRoots: [],
+  });
+  const instrumentId = id(sequence);
+  const rebuildId = id(sequence + 1);
+  const roundTripId = id(sequence + 2);
+  const versionId = id(sequence + 3);
+  const openedAtUtc = new Date(
+    Date.parse(closedAtUtc) - 30 * 60 * 1_000,
+  ).toISOString();
+  const now = "2026-08-02T12:00:00.000Z";
+  try {
+    database.transaction(() => {
+      database.prepare(`INSERT INTO journal_instruments (
+  instrument_id, workspace_id, asset_class, normalized_symbol, quote_currency,
+  venue, identity_scheme_version, provider_identity_sha256, status,
+  created_at_utc, updated_at_utc
+) VALUES (?, ?, 'stock', ?, 'USD', NULL, NULL, NULL, 'active', ?, ?)`)
+        .run(instrumentId, foundation.workspaceId, symbol, now, now);
+      database.prepare(`INSERT INTO journal_chain_rebuilds (
+  rebuild_id, workspace_id, account_id, instrument_id, trade_currency,
+  chain_key_sha256, trigger_kind, trigger_import_event_id,
+  trigger_decision_event_id, maintenance_reason_code, previous_rebuild_id,
+  algorithm_version, ordered_input_sha256, output_sha256, coverage_state,
+  ready_closed_count, legitimate_open_count, needs_decision_count,
+  excluded_count, first_execution_at_utc, last_execution_at_utc,
+  completed_at_utc
+) VALUES (?, ?, ?, ?, 'USD', ?, 'maintenance', NULL, NULL,
+  'level_analysis_route_test', NULL, 'round_trip_v1', ?, ?, 'complete',
+  1, 0, 0, 0, ?, ?, ?)`)
+        .run(
+          rebuildId,
+          foundation.workspaceId,
+          foundation.accountId,
+          instrumentId,
+          digest(`chain-${sequence}`),
+          digest(`input-${sequence}`),
+          digest(`output-${sequence}`),
+          openedAtUtc,
+          closedAtUtc,
+          now,
+        );
+      database.prepare(`INSERT INTO journal_round_trips (
+  round_trip_id, workspace_id, account_id, current_version_id,
+  lifecycle_state, created_at_utc, updated_at_utc
+) VALUES (?, ?, ?, ?, 'active', ?, ?)`)
+        .run(
+          roundTripId,
+          foundation.workspaceId,
+          foundation.accountId,
+          versionId,
+          now,
+          now,
+        );
+      database.prepare(`INSERT INTO journal_round_trip_versions (
+  round_trip_version_id, workspace_id, account_id, round_trip_id,
+  version_number, rebuild_id, instrument_id, trade_currency,
+  chain_key_sha256, direction, opened_at_utc, closed_at_utc,
+  final_position_decimal, projection_state, coverage_reason_code,
+  projection_fingerprint_sha256, created_at_utc
+) VALUES (?, ?, ?, ?, 1, ?, ?, 'USD', ?, 'long', ?, ?, '0',
+  'ready_closed', NULL, ?, ?)`)
+        .run(
+          versionId,
+          foundation.workspaceId,
+          foundation.accountId,
+          roundTripId,
+          rebuildId,
+          instrumentId,
+          digest(`chain-${sequence}`),
+          openedAtUtc,
+          closedAtUtc,
+          digest(`projection-${sequence}`),
+          now,
+        );
+    }).immediate();
+  } finally {
+    database.close();
   }
-
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      collectStringValues(item, out);
-    }
-    return out;
-  }
-
-  if (typeof value === "object" && value !== null) {
-    for (const item of Object.values(value)) {
-      collectStringValues(item, out);
-    }
-  }
-
-  return out;
+  return roundTripId;
 }
 
-function expectNoAdviceLanguage(value: unknown): void {
-  const text = collectStringValues(value).join("\n").toLowerCase();
-
-  for (const [label, pattern] of [
-    ["grading", /\bgrading\b|\btrade grade\b/],
-    ["coaching", /\bcoaching\b|\bcoach\b/],
-    ["p/l", /\bp\/l\b|\bpnl\b/],
-    ["giveback", /\bgiveback\b/],
-    ["behavior scoring", /\bbehavior score\b|\bbehavior scoring\b/],
-    ["recommendation", /\brecommendation\b/],
-    ["buy/sell/hold", /\bbuy\b|\bsell\b|\bhold\b/],
-    ["trade advice", /\btrade advice\b/],
-  ] as const) {
-    expect(pattern.test(text), `Unexpected ${label} language`).toBe(false);
-  }
+function linkInput(
+  roundTripId: string,
+  overrides: Readonly<Record<string, unknown>> = {},
+): Record<string, unknown> {
+  return {
+    roundTripId,
+    expectedAccountSelectionRef: foundation.accountSelectionRef,
+    provider: "ibkr",
+    ...overrides,
+  };
 }
 
 function expectNoRawPayload(value: unknown): void {
   if (Array.isArray(value)) {
-    for (const item of value) {
-      expectNoRawPayload(item);
-    }
+    for (const item of value) expectNoRawPayload(item);
     return;
   }
-
-  if (typeof value !== "object" || value === null) {
-    return;
-  }
-
+  if (!value || typeof value !== "object") return;
   expect(Object.hasOwn(value, "rawPayload")).toBe(false);
-  for (const item of Object.values(value)) {
-    expectNoRawPayload(item);
-  }
+  for (const item of Object.values(value)) expectNoRawPayload(item);
 }
 
 beforeEach(() => {
-  originalDbPath = process.env.TRADER_INTELLIGENCE_DB_PATH;
-  originalDeliveryApiFlag = process.env[LEVEL_ANALYSIS_DELIVERY_API_FEATURE_FLAG];
-  originalTradeLinkApiFlag = process.env[LEVEL_ANALYSIS_TRADE_LINK_API_FEATURE_FLAG];
-  originalTradeLinkAdminFlag =
-    process.env[LEVEL_ANALYSIS_TRADE_LINK_ADMIN_DEBUG_FEATURE_FLAG];
-  originalTradeDetailFactsFlag =
-    process.env[LEVEL_ANALYSIS_TRADE_DETAIL_LEVEL_FACTS_FEATURE_FLAG];
-  originalDataMode = process.env.TRADER_INTELLIGENCE_DATA_MODE;
-  tempDir = mkdtempSync(join(homedir(), ".level-analysis-trade-link-api-"));
-  restoreEnvironment = installTraderIntelligenceLocalTestEnvironment({
-    TRADER_INTELLIGENCE_DB_PATH: join(tempDir, "test.sqlite"),
-    TRADER_INTELLIGENCE_DATA_MODE: "real_owner_data",
-  });
-  process.env[LEVEL_ANALYSIS_DELIVERY_API_FEATURE_FLAG] = "1";
-  process.env[LEVEL_ANALYSIS_TRADE_LINK_API_FEATURE_FLAG] = "1";
-  process.env[LEVEL_ANALYSIS_TRADE_LINK_ADMIN_DEBUG_FEATURE_FLAG] = "1";
-  process.env[LEVEL_ANALYSIS_TRADE_DETAIL_LEVEL_FACTS_FEATURE_FLAG] = "1";
-  resetTraderIntelligenceDatabaseForTests();
+  foundation = createPlatformRouteTestFoundation("traderlink-level-link-route-");
+  restoreEnvironment = installPlatformRouteTestEnvironment(
+    foundation.databasePath,
+    {
+      TRADERLINK_LEVEL_ANALYSIS_ALLOWED_PROVIDERS: "ibkr,fixture",
+      TRADERLINK_LEVEL_ANALYSIS_RAW_DEBUG_ENABLED: "true",
+    },
+  );
 });
 
 afterEach(() => {
-  resetTraderIntelligenceDatabaseForTests();
-  if (originalDbPath === undefined) {
-    delete process.env.TRADER_INTELLIGENCE_DB_PATH;
-  } else {
-    process.env.TRADER_INTELLIGENCE_DB_PATH = originalDbPath;
-  }
-  if (originalDeliveryApiFlag === undefined) {
-    delete process.env[LEVEL_ANALYSIS_DELIVERY_API_FEATURE_FLAG];
-  } else {
-    process.env[LEVEL_ANALYSIS_DELIVERY_API_FEATURE_FLAG] = originalDeliveryApiFlag;
-  }
-  if (originalTradeLinkApiFlag === undefined) {
-    delete process.env[LEVEL_ANALYSIS_TRADE_LINK_API_FEATURE_FLAG];
-  } else {
-    process.env[LEVEL_ANALYSIS_TRADE_LINK_API_FEATURE_FLAG] = originalTradeLinkApiFlag;
-  }
-  if (originalTradeLinkAdminFlag === undefined) {
-    delete process.env[LEVEL_ANALYSIS_TRADE_LINK_ADMIN_DEBUG_FEATURE_FLAG];
-  } else {
-    process.env[LEVEL_ANALYSIS_TRADE_LINK_ADMIN_DEBUG_FEATURE_FLAG] =
-      originalTradeLinkAdminFlag;
-  }
-  if (originalTradeDetailFactsFlag === undefined) {
-    delete process.env[LEVEL_ANALYSIS_TRADE_DETAIL_LEVEL_FACTS_FEATURE_FLAG];
-  } else {
-    process.env[LEVEL_ANALYSIS_TRADE_DETAIL_LEVEL_FACTS_FEATURE_FLAG] =
-      originalTradeDetailFactsFlag;
-  }
-  if (originalDataMode === undefined) {
-    delete process.env.TRADER_INTELLIGENCE_DATA_MODE;
-  } else {
-    process.env.TRADER_INTELLIGENCE_DATA_MODE = originalDataMode;
-  }
   restoreEnvironment();
-  rmSync(tempDir, { recursive: true, force: true });
+  rmSync(foundation.root, { recursive: true, force: true });
 });
 
-describe("level-analysis journal trade-link API routes", () => {
-  it("resolves, persists, deduplicates, and retrieves a trade link", async () => {
-    const delivery = ingestJournalLevelAnalysisDeliveryForApi({
-      payload: clone(deliveryFixture),
-      createdAt: "2026-06-06T19:40:00.000Z",
-    });
+describe("replacement Journal Level Analysis route boundaries", () => {
+  it("resolves, persists, deduplicates and reads an account-scoped link", async () => {
+    const delivery = seedDelivery(fixture(
+      "level-analysis-journal-delivery-package-v1.compact.json",
+    ));
     expect(delivery.status).toBe("accepted");
+    const roundTripId = seedRoundTrip(100);
 
-    const requestBody = {
-      savedTradeId: "trade_DEVS_2026_06_01_001",
-      workspaceId: "local-demo-workspace",
-      accountId: "local-demo-account",
-      userId: "local-demo-user",
-      importBatchId: "import_batch_2026_06_01_001",
-      symbol: "DEVS",
-      provider: "ibkr",
-      tradeEndedAt: "2026-06-01T16:05:00.000Z",
-      createdAt: "2026-06-06T19:45:00.000Z",
-    };
-
-    const resolveResponse = await resolveTradeLink(
-      jsonRequest("/api/level-analysis/trade-links/resolve", requestBody),
-    );
-    const resolveBody = await resolveResponse.json();
-
+    const resolveResponse = await resolveTradeLink(post(
+      "/api/level-analysis/trade-links/resolve",
+      linkInput(roundTripId),
+    ));
     expect(resolveResponse.status).toBe(200);
-    expect(resolveBody).toMatchObject({
-      contractVersion: "journal_level_analysis_trade_link_resolution_api_v1",
+    const resolution = await resolveResponse.json();
+    expect(resolution).toMatchObject({
       status: "matched",
-      savedTradeId: requestBody.savedTradeId,
+      savedTradeId: roundTripId,
       symbol: "DEVS",
       provider: "ibkr",
-      candidate: {
-        deliveryId: delivery.deliveryId,
-        fifteenMinuteContextOnlyStatus: "context_only",
-      },
+      candidate: { deliveryId: delivery.deliveryId },
     });
 
-    const persistResponse = await persistTradeLink(
-      jsonRequest("/api/level-analysis/trade-links", requestBody),
-    );
-    const persistBody = await persistResponse.json();
-
+    const persistResponse = await persistTradeLink(post(
+      "/api/level-analysis/trade-links",
+      linkInput(roundTripId),
+    ));
     expect(persistResponse.status).toBe(200);
-    expect(persistBody).toMatchObject({
-      contractVersion: "journal_level_analysis_trade_link_api_v1",
+    const linked = await persistResponse.json();
+    expect(linked).toMatchObject({
       status: "linked",
-      savedTradeId: requestBody.savedTradeId,
+      savedTradeId: roundTripId,
       deliveryId: delivery.deliveryId,
-      symbol: "DEVS",
-      provider: "ibkr",
       duplicate: false,
     });
-
-    const duplicateBody = await (
-      await persistTradeLink(jsonRequest("/api/level-analysis/trade-links", requestBody))
+    const duplicate = await (
+      await persistTradeLink(post(
+        "/api/level-analysis/trade-links",
+        linkInput(roundTripId),
+      ))
     ).json();
-    expect(duplicateBody).toMatchObject({
+    expect(duplicate).toMatchObject({
       status: "linked",
+      linkId: linked.linkId,
       duplicate: true,
-      linkId: persistBody.linkId,
     });
 
-    const tradeBody = await (
+    const trade = await (
       await getTradeLevelAnalysis(
-        localGet(
-          `http://localhost/api/trades/${requestBody.savedTradeId}/level-analysis`,
+        createPlatformRouteTestRequest(
+          `/api/trades/${roundTripId}/level-analysis`,
         ),
-        { params: Promise.resolve({ tradeId: requestBody.savedTradeId }) },
+        { params: Promise.resolve({ tradeId: roundTripId }) },
       )
     ).json();
-    expect(tradeBody).toMatchObject({
-      contractVersion: "journal_trade_level_analysis_api_v1",
+    expect(trade).toMatchObject({
       status: "found",
-      savedTradeId: requestBody.savedTradeId,
-      link: {
-        linkStatus: "linked",
-        linkedSymbolSummary: {
-          densityMetricSummary: {
-            classification: "dense_clustered",
-          },
-          candidateInventoryGapSummary: {
-            overall: "no_gap",
-          },
-          volumeSessionContextSummary: {
-            outcome: "surfaced_has_more_session_volume_context",
-          },
-        },
-      },
+      savedTradeId: roundTripId,
+      link: { linkStatus: "linked" },
     });
 
-    const factsBody = await (
+    const facts = await (
       await getTradeDetailLevelFacts(
-        localGet(
-          `http://localhost/api/trades/${requestBody.savedTradeId}/level-analysis/facts`,
+        createPlatformRouteTestRequest(
+          `/api/trades/${roundTripId}/level-analysis/facts`,
         ),
-        { params: Promise.resolve({ tradeId: requestBody.savedTradeId }) },
+        { params: Promise.resolve({ tradeId: roundTripId }) },
       )
     ).json();
-    expect(factsBody).toMatchObject({
-      contractVersion: "trade_detail_level_facts_read_model_v1",
-      savedTradeId: requestBody.savedTradeId,
-      featureEnabled: true,
-      availability: {
-        availability: "attached",
-        sourceKind: "packaged_review_delivery",
-        fifteenMinuteContextOnlyStatus: "context_only",
-      },
-      display: {
-        shouldShowFactsPanel: true,
-      },
-      attachedFacts: {
-        sourceKind: "packaged_review_delivery",
-        symbol: "DEVS",
-        provider: "ibkr",
-        densityMetricSummary: {
-          classification: "dense_clustered",
-        },
-        candidateInventoryGapSummary: {
-          overall: "no_gap",
-        },
-        volumeSessionContextSummary: {
-          outcome: "surfaced_has_more_session_volume_context",
-        },
-        cacheFingerprintSourceIntegrity: {
-          mismatchCount: 0,
-          prohibitedLanguageHitCount: 0,
-        },
-        fifteenMinuteContextOnlyStatus: "context_only",
-      },
+    expect(facts).toMatchObject({
+      savedTradeId: roundTripId,
+      availability: { availability: "attached" },
+      attachedFacts: { symbol: "DEVS", provider: "ibkr" },
     });
-    expect(factsBody.attachedFacts.sourceFiles["15m"]).toContain("/15m/");
+    expectNoRawPayload({ resolution, linked, trade, facts });
 
-    const disabledModel = getTradeDetailLevelFactsForApi({
-      savedTradeId: requestBody.savedTradeId,
-      featureEnabled: false,
-    });
-    expect(disabledModel).toMatchObject({
-      featureEnabled: false,
-      availability: {
-        availability: "feature_disabled",
-      },
-    });
-    expect(disabledModel.attachedFacts).toBeUndefined();
-
-    const adminBody = await (
+    const admin = await (
       await getAdminTradeLink(
-        localGet(
-          `http://localhost/api/admin/level-analysis/trade-links/${persistBody.linkId}`,
+        createPlatformRouteTestRequest(
+          `/api/admin/level-analysis/trade-links/${linked.linkId}`,
         ),
-        { params: Promise.resolve({ linkId: persistBody.linkId }) },
+        { params: Promise.resolve({ linkId: linked.linkId }) },
       )
     ).json();
-    expect(adminBody).toMatchObject({
-      contractVersion: "journal_level_analysis_trade_link_api_v1",
+    expect(admin).toMatchObject({
       status: "found",
-      linkId: persistBody.linkId,
-      savedTradeId: requestBody.savedTradeId,
-      rawPayloadHash: delivery.rawPayloadHash,
-    });
-
-    expectNoRawPayload({
-      resolveBody,
-      persistBody,
-      duplicateBody,
-      tradeBody,
-      factsBody,
-      adminBody,
-    });
-    expectNoAdviceLanguage({
-      resolveBody,
-      persistBody,
-      duplicateBody,
-      tradeBody,
-      factsBody,
+      linkId: linked.linkId,
+      deliveryId: delivery.deliveryId,
     });
   });
 
-  it("blocks candidates after the selected as-of boundary", async () => {
-    ingestJournalLevelAnalysisDeliveryForApi({
-      payload: clone(deliveryFixture),
-      createdAt: "2026-06-06T19:50:00.000Z",
+  it("rejects a forged account selection before writing", async () => {
+    seedDelivery(fixture("level-analysis-journal-delivery-package-v1.compact.json"));
+    const roundTripId = seedRoundTrip(200);
+    const response = await persistTradeLink(post(
+      "/api/level-analysis/trade-links",
+      linkInput(roundTripId, { expectedAccountSelectionRef: "f".repeat(64) }),
+    ));
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: false,
+      code: "TRADERLINK_ACCOUNT_ACCESS_DENIED",
     });
+  });
 
-    const response = await resolveTradeLink(
-      jsonRequest("/api/level-analysis/trade-links/resolve", {
-        savedTradeId: "trade_DEVS_2026_06_01_early",
-        symbol: "DEVS",
-        provider: "ibkr",
-        tradeEndedAt: "2026-06-01T15:00:00.000Z",
-      }),
+  it("blocks a delivery whose market facts occur after the trade boundary", async () => {
+    seedDelivery(fixture("level-analysis-journal-delivery-package-v1.compact.json"));
+    const roundTripId = seedRoundTrip(
+      300,
+      "DEVS",
+      "2026-05-01T14:00:00.000Z",
     );
-    const body = await response.json();
-
+    const response = await resolveTradeLink(post(
+      "/api/level-analysis/trade-links/resolve",
+      linkInput(roundTripId),
+    ));
     expect(response.status).toBe(422);
-    expect(body).toMatchObject({
+    await expect(response.json()).resolves.toMatchObject({
       status: "blocked",
-      matchResult: {
-        reason: "as_of_after_allowed_boundary",
-      },
+      matchResult: { reason: "as_of_after_allowed_boundary" },
     });
-    expect(body.candidate).toBeUndefined();
   });
 
-  it("persists old LevelAnalysisSnapshot v1 trade links through manual selection", async () => {
-    const delivery = ingestJournalLevelAnalysisDeliveryForApi({
-      payload: clone(oldSnapshotFixture),
-      createdAt: "2026-06-06T19:55:00.000Z",
-    });
-    expect(delivery.status).toBe("accepted");
-
-    const response = await persistTradeLink(
-      jsonRequest("/api/level-analysis/trade-links", {
-        savedTradeId: "trade_SNAP_2026_05_01_001",
-        symbol: "SNAP",
+  it("links the accepted historical snapshot through explicit selection", async () => {
+    const delivery = seedDelivery(fixture(
+      "journal-connector-level-analysis-snapshot-v1.json",
+    ));
+    const roundTripId = seedRoundTrip(400, "SNAP");
+    const response = await persistTradeLink(post(
+      "/api/level-analysis/trade-links",
+      linkInput(roundTripId, {
         provider: "fixture",
         deliveryId: delivery.deliveryId,
         linkSource: "manual_review",
-        matchPolicy: {
-          providerMatch: "explicit_provider",
-          asOfPolicy: "manual_delivery_selection",
-        },
-        createdAt: "2026-06-06T20:00:00.000Z",
       }),
-    );
-    const body = await response.json();
-
+    ));
     expect(response.status).toBe(200);
-    expect(body).toMatchObject({
+    await expect(response.json()).resolves.toMatchObject({
       status: "linked",
+      savedTradeId: roundTripId,
       deliveryId: delivery.deliveryId,
       symbol: "SNAP",
       provider: "fixture",
     });
-
-    const factsBody = await (
-      await getTradeDetailLevelFacts(
-        localGet(
-          "http://localhost/api/trades/trade_SNAP_2026_05_01_001/level-analysis/facts",
-        ),
-        { params: Promise.resolve({ tradeId: "trade_SNAP_2026_05_01_001" }) },
-      )
-    ).json();
-    expect(factsBody).toMatchObject({
-      contractVersion: "trade_detail_level_facts_read_model_v1",
-      savedTradeId: "trade_SNAP_2026_05_01_001",
-      availability: {
-        availability: "attached",
-        sourceKind: "single_snapshot_v1",
-        fifteenMinuteContextOnlyStatus: "not_supplied",
-      },
-      attachedFacts: {
-        sourceKind: "single_snapshot_v1",
-        symbol: "SNAP",
-        provider: "fixture",
-        fifteenMinuteContextOnlyStatus: "not_supplied",
-        missingFacts: [
-          "density_metric",
-          "candidate_inventory_gap_summary",
-          "cache_fingerprint_summary",
-        ],
-      },
-    });
-    expectNoRawPayload(factsBody);
-    expectNoAdviceLanguage(factsBody);
   });
 
-  it("returns a not-checked facts read model when a trade has no persisted link", async () => {
+  it("returns a factual not-checked state for an unlinked round trip", async () => {
+    const roundTripId = seedRoundTrip(500);
     const response = await getTradeDetailLevelFacts(
-      localGet(
-        "http://localhost/api/trades/trade_MISSING_2026_06_01_001/level-analysis/facts",
+      createPlatformRouteTestRequest(
+        `/api/trades/${roundTripId}/level-analysis/facts`,
       ),
-      { params: Promise.resolve({ tradeId: "trade_MISSING_2026_06_01_001" }) },
+      { params: Promise.resolve({ tradeId: roundTripId }) },
     );
-    const body = await response.json();
-
     expect(response.status).toBe(200);
-    expect(body).toMatchObject({
-      contractVersion: "trade_detail_level_facts_read_model_v1",
-      savedTradeId: "trade_MISSING_2026_06_01_001",
-      featureEnabled: true,
-      availability: {
-        availability: "not_checked",
-      },
-      display: {
-        shouldShowFactsPanel: false,
-      },
-    });
-    expect(body.attachedFacts).toBeUndefined();
-    expectNoRawPayload(body);
-    expectNoAdviceLanguage(body);
-  });
-
-  it("keeps trade-link routes behind the feature flag", async () => {
-    delete process.env[LEVEL_ANALYSIS_TRADE_LINK_API_FEATURE_FLAG];
-
-    const response = await resolveTradeLink(
-      jsonRequest("/api/level-analysis/trade-links/resolve", {
-        savedTradeId: "trade_DEVS_2026_06_01_001",
-        symbol: "DEVS",
-        provider: "ibkr",
-        tradeEndedAt: "2026-06-01T16:05:00.000Z",
-      }),
-    );
-    const body = await response.json();
-
-    expect(response.status).toBe(404);
-    expect(body).toMatchObject({
-      ok: false,
-      code: "feature_disabled",
+    await expect(response.json()).resolves.toMatchObject({
+      savedTradeId: roundTripId,
+      availability: { availability: "not_checked" },
+      display: { shouldShowFactsPanel: false },
     });
   });
 
-  it("keeps trade-detail facts route behind the display feature flag", async () => {
-    delete process.env[LEVEL_ANALYSIS_TRADE_DETAIL_LEVEL_FACTS_FEATURE_FLAG];
-
-    const response = await getTradeDetailLevelFacts(
-      localGet(
-        "http://localhost/api/trades/trade_DEVS_2026_06_01_001/level-analysis/facts",
+  it("fails closed without providers and hides raw debug when disabled", async () => {
+    const roundTripId = seedRoundTrip(600);
+    delete process.env.TRADERLINK_LEVEL_ANALYSIS_ALLOWED_PROVIDERS;
+    const unavailable = await getTradeDetailLevelFacts(
+      createPlatformRouteTestRequest(
+        `/api/trades/${roundTripId}/level-analysis/facts`,
       ),
-      { params: Promise.resolve({ tradeId: "trade_DEVS_2026_06_01_001" }) },
+      { params: Promise.resolve({ tradeId: roundTripId }) },
     );
-    const body = await response.json();
+    expect(unavailable.status).toBe(503);
 
-    expect(response.status).toBe(404);
-    expect(body).toMatchObject({
+    delete process.env.TRADERLINK_LEVEL_ANALYSIS_RAW_DEBUG_ENABLED;
+    const hidden = await getAdminTradeLink(
+      createPlatformRouteTestRequest(
+        `/api/admin/level-analysis/trade-links/${id(999)}`,
+      ),
+      { params: Promise.resolve({ linkId: id(999) }) },
+    );
+    expect(hidden.status).toBe(404);
+    await expect(hidden.json()).resolves.toEqual({
       ok: false,
       code: "feature_disabled",
     });

@@ -45,20 +45,15 @@ describe("TraderLink Platform migrations", () => {
       const result = runPlatformMigrations(database, {
         now: () => new Date("2026-08-01T12:00:00.000Z"),
       });
-      expect(result.appliedMigrationIds).toEqual([
-        "0001_platform_identity",
-        "0002_journal_account_boundary",
-        "0003_journal_import_evidence",
-        "0004_journal_execution_ledger",
-        "0005_journal_data_decisions",
-        "0006_journal_round_trip_projection",
-      ]);
+      expect(result.appliedMigrationIds).toEqual(
+        platformMigrationManifest.map((migration) => migration.migrationId),
+      );
       expect(listPlatformUserTableNames(database)).toEqual(
         [...currentPlatformTableNames].sort(),
       );
       expect(
         database.prepare("SELECT COUNT(*) AS count FROM platform_schema_migrations").get(),
-      ).toEqual({ count: 6 });
+      ).toEqual({ count: platformMigrationManifest.length });
       for (const table of currentPlatformDomainTableNames) {
         expect(database.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get()).toEqual({
           count: 0,
@@ -105,13 +100,9 @@ describe("TraderLink Platform migrations", () => {
         database.prepare("SELECT COUNT(*) AS count FROM platform_schema_migrations").get(),
       ).toEqual({ count: 1 });
       expect(listPlatformUserTableNames(database)).not.toContain("should_rollback");
-      expect(runPlatformMigrations(database).appliedMigrationIds).toEqual([
-        "0002_journal_account_boundary",
-        "0003_journal_import_evidence",
-        "0004_journal_execution_ledger",
-        "0005_journal_data_decisions",
-        "0006_journal_round_trip_projection",
-      ]);
+      expect(runPlatformMigrations(database).appliedMigrationIds).toEqual(
+        platformMigrationManifest.slice(1).map((migration) => migration.migrationId),
+      );
     } finally {
       database.close();
     }
@@ -215,7 +206,9 @@ WHERE execution_order = 99`)
     expect(evidence.backup.migrationRows).toEqual(evidence.restored.migrationRows);
     expect(evidence.source.tableCounts).toEqual(evidence.backup.tableCounts);
     expect(evidence.backup.tableCounts).toEqual(evidence.restored.tableCounts);
-    expect(Object.keys(evidence.source.tableCounts)).toHaveLength(25);
+    expect(Object.keys(evidence.source.tableCounts)).toHaveLength(
+      currentPlatformTableNames.size,
+    );
     expect(evidence.source.pragmas).toEqual({
       foreignKeys: 1,
       busyTimeout: 5000,
@@ -242,6 +235,24 @@ WHERE execution_order = 99`)
     expect(evidence.destructiveMigrationBoundary).toBe(
       "orchestrator_accepted_checkpoint_required",
     );
+  });
+
+  it("backs up and restore-verifies an accepted manifest prefix before its next migration", async () => {
+    const sourcePath = newPath("prefix-backup-source");
+    const database = openInitializer(sourcePath);
+    runPlatformMigrations(database, { manifest: platformMigrationManifest.slice(0, 8) });
+    database.close();
+    const evidence = await createAndRestoreVerifyPlatformDatabaseBackup({
+      sourcePath,
+      backupPath: newPath("prefix-backup-target"),
+      restoreVerificationPath: newPath("prefix-backup-restore"),
+      forbiddenRepositoryRoots: [],
+      verificationManifest: platformMigrationManifest.slice(0, 8),
+    });
+    expect(evidence.source.migrationRows).toHaveLength(8);
+    expect(evidence.exactRegistryMatch).toBe(true);
+    expect(evidence.exactTableCountsMatch).toBe(true);
+    expect(evidence.backupRestoreFileIdentityMatch).toBe(true);
   });
 
   it("requires exact non-secret HMAC and canonicalizer recovery authority", async () => {

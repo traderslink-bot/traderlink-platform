@@ -109,7 +109,8 @@ export function verifyTraderLinkPlatformDatabase(
   const expectedTableNames = expectedPlatformTableNamesForPrefix(migrationCount);
   const expectedDomainTableNames =
     expectedPlatformDomainTableNamesForPrefix(migrationCount);
-  const expectDomainTablesEmpty = profile.expectDomainTablesEmpty === true;
+  const expectDomainTablesEmpty = "expectDomainTablesEmpty" in profile &&
+    profile.expectDomainTablesEmpty === true;
   const databasePath = options.databasePath
     ? validatePlatformDatabasePath(options.databasePath, options)
     : resolvePlatformDatabaseConfig({

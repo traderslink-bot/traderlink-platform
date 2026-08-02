@@ -44,13 +44,17 @@ Approved initial module namespaces:
 - `platform`
 - `journal`
 
+The accepted manifest now also includes the deliberately added
+`level_analysis` namespace. This extension does not change the historical
+two-migration empty-foundation contract described below.
+
 A namespace must match `^[a-z][a-z0-9_]*$`. A future module adds its own namespace and migrations through the central manifest; it may not edit another module's migration or query another module's private tables.
 
 The runner statically imports migration descriptors. It does not scan arbitrary files at runtime. Every descriptor has exactly:
 
 ```ts
 type PlatformMigration = Readonly<{
-  moduleNamespace: "platform" | "journal";
+  moduleNamespace: "platform" | "journal" | "level_analysis";
   migrationId: string;
   executionOrder: number;
   statements: readonly string[];
@@ -67,6 +71,53 @@ Future namespace additions extend the type deliberately. Migration IDs match `^[
 | 2 | `journal` | `0002_journal_account_boundary` | `src/modules/journal/server/database/migrations/0002_journal_account_boundary.ts` | `journal_accounts`, `journal_account_source_identities`, and their indexes |
 
 The migration-registry bootstrap is runner infrastructure, not a numbered application migration. A successful empty initialization therefore records exactly two applied rows.
+
+### Current accepted manifest extension
+
+The immutable foundation above was extended only through separately reviewed
+module slices. The current accepted development manifest has 18 migrations,
+61 domain tables and 62 total application tables. Its final nine entries are:
+
+| Order | Module | Migration ID | Purpose |
+| ---: | --- | --- | --- |
+| 10 | `level_analysis` | `0010_level_analysis_deliveries` | Immutable provider deliveries and normalized accepted symbol facts |
+| 11 | `journal` | `0011_journal_level_analysis_links` | Stable selected-account round-trip links with immutable versions |
+| 12 | `platform` | `0012_platform_authentication_identities` | Stable multi-provider user identities and hashed revocable sessions |
+| 13 | `academy` | `0013_academy_progress` | User-level canonical lesson completions and immutable events |
+| 14 | `watchlist` | `0014_watchlist_storage` | Current symbols, global health, immutable archives and parity revision state |
+| 15 | `news` | `0015_news_content` | Current News articles plus immutable content revisions |
+| 16 | `affiliate` | `0016_affiliate_attribution` | Invites and stable-Platform-user first-touch attribution |
+| 17 | `platform` | `0017_platform_discord_memberships` | Current bounded Discord membership evidence for Platform entitlements |
+| 18 | `platform` | `0018_platform_hosted_transfer_events` | Append-only preview-bound hosted transfer execution and reconciliation evidence |
+
+Their immutable checksums are
+`88e1f5cc1e180c1ed0774358d2efb4cf0e8565779cdd5c9790d9b6ef2cba6e52`,
+`b8cc72242ebd7544ec29ca11ca0946a5eb16e9301652f4cc0cdab174b54473af`,
+`f933c39e9341d34d1697a6375034a6d5bf4efb19a9c911e556a1ecdb209927f3`,
+`5d36e7a28e9830d647db2ce9eac131b29ab1dde8a0b15b63813ac939321cfbb5`
+and
+`84c03b1338ef1c73bccb80e4ca68a6090f90fb0a608fbe56a1bf78325b4829b3`,
+`906df8ac278decbb4243da72589561643d48225bc4bed1f978c0b4c06e8fc31e`
+and
+`6ce7e7777ab1441e96757578af59527191f0e4a68915d243c3dc330edfa0e442`,
+`b9599e947b4e45a4b9e4ee730d701682ad2d5e23cf68ac1c6fcbb3f68a37c6f4`
+and
+`d79bb695d5c365343ad381801770281f8291a7c51d8212178b424747a3b8fca8`.
+The current authoritative post-schema digest is
+`7306385ce32329abe73a41fc3ec630c28dc4df7efaaad975b55f8f719dcdf4be`.
+The F2 migration deterministically backfilled the one existing
+`development_local` identity. Public sessions, Academy completions and Academy
+events began empty; no Discord identity, production Academy row, legacy trade,
+annotation or fixture data was copied. The F3 Watchlist migration added three
+empty module-owned tables; the separate legacy local Watchlist database also
+contained zero rows and was not copied.
+The F4 News migration accepted one verified local legacy article with one
+matching immutable version. The Affiliate migration began empty because the
+verified local source contained no affiliate tables or rows.
+The F6 Discord-membership and hosted-transfer-event migrations also began
+empty. The latter records only privacy-safe transfer authority, counts and
+digests; no legacy Journal trade, execution, tag, rule or note transfer is
+permitted.
 
 Filename-to-ID matching is a focused static repository rule, not runtime descriptor behavior. The proposed `src/scripts/verify-traderlink-platform-migration-files.ts` reads the statically configured migration paths and exported literal metadata, then requires each filename stem to equal its `migrationId`. The runtime descriptor has no source-filename field and never claims to infer where its module was loaded from.
 
@@ -621,9 +672,11 @@ Source rows, position facts,
 execution versions, decisions, and audit events are durable facts; round-trip
 versions and summaries are reproducible derivatives.
 
-### Phase 3 Slice A implementation result
+### Historical Phase 3 Slice A implementation result
 
-The four accepted Phase 3 migration descriptors are implemented in the static
+This section preserves the earlier Phase 3 checkpoint and is superseded for
+current-state counts by the Phase 5 tracker. At that checkpoint, the four
+accepted Phase 3 migration descriptors were implemented in the static
 manifest but have not been applied to the real `development.sqlite`. The
 current code manifest has six migrations and 24 managed domain tables. The
 immutable Phase 2 five-table ownership profile remains separately verifiable.
@@ -826,6 +879,19 @@ database state.
 The owner has accepted the corrected exact design in this document. Acceptance includes the single-active-owner rule; owner/admin all-active-account and member-denied-until-grants permission model; two empty migrations and five-table foundation; deterministic schema-digest/drift rule; global migration identity; initialization and recovery behavior; canonical validation; versioned account fingerprint/canonicalization/HMAC and secret-recovery rules; `WorkspaceAccessScope`; separate ownership-seed gate; focused verification plan; and exact implementation-file list.
 
 Schema design review and the separately authorized empty database-foundation implementation/correction verification are complete. The coordinating technical auditor accepted the code, database boundary, and 10-file/53-test evidence under delegated owner authority; no separate personal owner technical review is required.
+
+Later accepted module migrations extend this foundation without changing its
+identity/account invariants. At the Slice F6 checkpoint, the current manifest
+ends with `0017_platform_discord_memberships` and
+`0018_platform_hosted_transfer_events`. These add current bounded Discord
+membership evidence and an immutable privacy-safe hosted-transfer ledger.
+Their checksums are
+`b9599e947b4e45a4b9e4ee730d701682ad2d5e23cf68ac1c6fcbb3f68a37c6f4`
+and `d79bb695d5c365343ad381801770281f8291a7c51d8212178b424747a3b8fca8`;
+the resulting 18-migration schema digest is
+`7306385ce32329abe73a41fc3ec630c28dc4df7efaaad975b55f8f719dcdf4be`.
+The historical two-migration foundation evidence above remains immutable
+history, not a claim that the current database still has only two migrations.
 
 The development-owner seed passed its focused static verifier and all three focused files/all eleven tests with one Vitest worker and file parallelism disabled. Before mutation, the empty database was backed up byte-for-byte at `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\backups\pre-development-owner-seed-20260801T104212Z\development-empty.sqlite`, 94,208 bytes, SHA-256 `426DA6848F9FC8D65C20B239D9F2949133ABAB5CD745FE38014AE4035549CF1B`.
 

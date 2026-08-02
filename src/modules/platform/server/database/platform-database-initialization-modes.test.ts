@@ -98,7 +98,7 @@ describe("runtime and explicit initializer modes", () => {
         databasePath: path,
         forbiddenRepositoryRoots: [],
       }).appliedThisRun,
-    ).toHaveLength(6);
+    ).toHaveLength(platformMigrationManifest.length);
     expect(
       initializeTraderLinkPlatformDatabase({
         databasePath: path,
@@ -121,7 +121,7 @@ describe("runtime and explicit initializer modes", () => {
         databasePath: zeroByte,
         forbiddenRepositoryRoots: [],
       }).appliedThisRun,
-    ).toHaveLength(6);
+    ).toHaveLength(platformMigrationManifest.length);
 
     const zeroTable = pathFor("initializer-zero-table");
     const zeroTableDatabase = new Database(zeroTable);
@@ -132,7 +132,7 @@ describe("runtime and explicit initializer modes", () => {
         databasePath: zeroTable,
         forbiddenRepositoryRoots: [],
       }).appliedThisRun,
-    ).toHaveLength(6);
+    ).toHaveLength(platformMigrationManifest.length);
   });
 
   it("verifies the accepted Phase 2 prefix without treating it as current runtime", () => {
@@ -180,12 +180,9 @@ describe("runtime and explicit initializer modes", () => {
         databasePath: path,
         forbiddenRepositoryRoots: [],
       }).appliedThisRun,
-    ).toEqual([
-      "0003_journal_import_evidence",
-      "0004_journal_execution_ledger",
-      "0005_journal_data_decisions",
-      "0006_journal_round_trip_projection",
-    ]);
+    ).toEqual(
+      platformMigrationManifest.slice(2).map((migration) => migration.migrationId),
+    );
   });
 
   it("the explicit initializer rejects an unmanaged target without adopting it", () => {

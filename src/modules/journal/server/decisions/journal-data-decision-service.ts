@@ -472,17 +472,25 @@ function assertResolutionMatchesTarget(
       reason: "overlap_action_mismatch",
     });
   }
-  if (
-    decision.target.kind === "chain" &&
-    [
-      "accept_source_limitation",
-      "supply_position_fact",
-      "supply_coverage_fact",
-    ].includes(input.action)
-  ) {
-    platformFailure("TRADERLINK_DATA_DECISION_INVALID_ACTION", {
-      reason: "chain_action_mismatch",
-    });
+  if (decision.target.kind === "chain") {
+    const suppliesExpectedClosingPosition =
+      decision.issueCode === "closing_position_unconfirmed" &&
+      input.action === "supply_position_fact" &&
+      ["closing_balance", "open_position", "current_position"].includes(
+        input.factKind,
+      );
+    if (
+      !suppliesExpectedClosingPosition &&
+      [
+        "accept_source_limitation",
+        "supply_position_fact",
+        "supply_coverage_fact",
+      ].includes(input.action)
+    ) {
+      platformFailure("TRADERLINK_DATA_DECISION_INVALID_ACTION", {
+        reason: "chain_action_mismatch",
+      });
+    }
   }
 }
 
@@ -1069,6 +1077,12 @@ export class JournalDataDecisionService {
               effectiveAtUtc: positionResolutionEffectiveAtUtc(input),
             });
           }
+          assertChainTargetMatches(
+            decision,
+            scope,
+            input.instrumentId,
+            input.currency,
+          );
           const created = this.createPositionCorrection(scope, {
             instrumentId: input.instrumentId,
             currency: input.currency,
@@ -1180,11 +1194,59 @@ export class JournalDataDecisionService {
         counterpartExecutionId,
         timestamp,
       });
-      if (sourceIssue) {
+      const affectedImportBatchIds = new Set<string>();
+      if (sourceIssue) affectedImportBatchIds.add(sourceIssue.importBatchId);
+      if (
+        input.action === "supply_coverage_fact" &&
+        sourceIssue?.issueCode === "manual_trading_day_coverage_unconfirmed"
+      ) {
+        for (const related of this.decisions.listPendingSourceIssueDecisionsByIssueCode(
+          scope.workspaceId,
+          scope.accountId,
+          "manual_trading_day_coverage_unconfirmed",
+        )) {
+          if (related.target.kind !== "source_issue") continue;
+          const relatedIssue = this.decisions.sourceIssueResolutionContext(
+            scope.workspaceId,
+            scope.accountId,
+            related.target.sourceIssueId,
+          );
+          const relatedCoverage = relatedIssue
+            ? manualCoverageDate(relatedIssue)
+            : null;
+          if (
+            !relatedIssue ||
+            !relatedCoverage ||
+            relatedCoverage.localDate !== input.localStartDate ||
+            input.localStartDate !== input.localEndDate ||
+            relatedCoverage.sourceTimezone !== input.sourceTimezone
+          ) continue;
+          this.decisions.resolve({
+            decisionEventId: createCanonicalUuidV4(),
+            workspaceId: scope.workspaceId,
+            accountId: scope.accountId,
+            decisionId: related.decisionId,
+            expectedRevision: related.revision,
+            action: input.action,
+            actorUserId: scope.userId,
+            reasonCode: input.reasonCode,
+            reasonText: input.reasonText ?? null,
+            priorExecutionVersionId: null,
+            resultingExecutionVersionId: null,
+            priorPositionFactId: null,
+            resultingPositionFactId: null,
+            resultingCoverageIntervalId,
+            counterpartExecutionId: null,
+            timestamp,
+          });
+          affectedImportBatchIds.add(relatedIssue.importBatchId);
+        }
+      }
+      for (const importBatchId of affectedImportBatchIds) {
         this.imports.reconcileAcceptedBatchDecisions({
           workspaceId: scope.workspaceId,
           accountId: scope.accountId,
-          importBatchId: sourceIssue.importBatchId,
+          importBatchId,
           importEventId: createCanonicalUuidV4(),
           actorUserId: scope.userId,
           timestamp,

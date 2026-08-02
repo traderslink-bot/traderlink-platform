@@ -5,6 +5,7 @@ import { platformFailure } from "@/src/modules/platform/server/database/platform
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { JournalAnalyticsFactSetRepository } from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-repository";
 import { JournalAnalyticsFactSetService } from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-service";
+import type { JournalAnalyticsClosingDateRange } from "@/src/modules/journal/contracts/journal-analytics-fact-set";
 
 import {
   JOURNAL_ANALYTICS_QUERY_VERSION,
@@ -13,6 +14,7 @@ import {
   type JournalAnalyticsQuery,
 } from "../contracts/analytics-query";
 import { JournalAnalyticsService } from "./analytics-service";
+import { JournalDashboardReadModelService } from "./journal-dashboard-read-model-service";
 
 export function requireActiveJournalAnalyticsAccountId(
   scope: WorkspaceAccessScope,
@@ -34,6 +36,8 @@ export function buildJournalAnalyticsDashboardQuery(
     afterCursor?: string | null;
     pageSize?: number;
     asOfUtc?: string;
+    closingDateRange?: JournalAnalyticsClosingDateRange;
+    instrumentIds?: readonly string[];
   }>,
 ): JournalAnalyticsQuery {
   return Object.freeze({
@@ -41,9 +45,10 @@ export function buildJournalAnalyticsDashboardQuery(
     accountIds: Object.freeze([requireActiveJournalAnalyticsAccountId(scope)]),
     metricIds: Object.freeze([...new Set(input.metricIds)].sort()),
     moneyBasis: input.moneyBasis ?? "net",
-    closingDateRange: Object.freeze({ kind: "all_available" as const }),
+    closingDateRange: input.closingDateRange ??
+      Object.freeze({ kind: "all_available" as const }),
     currency: input.currency ?? null,
-    instrumentIds: Object.freeze([]),
+    instrumentIds: Object.freeze(input.instrumentIds ? [...input.instrumentIds] : []),
     symbols: Object.freeze([]),
     directions: Object.freeze([]),
     provenance: Object.freeze([]),
@@ -90,6 +95,7 @@ export function withJournalAnalyticsDashboardRuntime<T>(
   _scope: WorkspaceAccessScope,
   operation: (runtime: Readonly<{
     facts: JournalAnalyticsFactSetService;
+    dashboard: JournalDashboardReadModelService;
     service: JournalAnalyticsService;
   }>) => T,
 ): T {
@@ -99,6 +105,7 @@ export function withJournalAnalyticsDashboardRuntime<T>(
     );
     return operation(Object.freeze({
       facts,
+      dashboard: new JournalDashboardReadModelService(facts),
       service: new JournalAnalyticsService(facts),
     }));
   });

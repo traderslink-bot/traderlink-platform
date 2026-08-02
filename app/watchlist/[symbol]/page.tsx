@@ -4,12 +4,8 @@ import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
 import { AcademyShell } from "@/app/academy/academy-shell";
-import { getCurrentAcademySession } from "@/app/academy/academy-server-session";
-import {
-  hasPremiumWatchlistAccess,
-  isLocalWatchlistAuthBypassEnabled,
-} from "@/src/lib/live-watchlist/live-watchlist-auth";
 import { LiveWatchlistStore } from "@/src/lib/live-watchlist/live-watchlist-store";
+import { authorizeWatchlistPageAccess } from "@/src/modules/watchlist/server/access/watchlist-access-service";
 import {
   buildWatchlistPreviewMetadata,
   isWatchlistPreviewCrawlerUserAgent,
@@ -40,11 +36,10 @@ export default async function LiveWatchlistSymbolPage({
   const isPreviewCrawler = isWatchlistPreviewCrawlerUserAgent(
     requestHeaders.get("user-agent"),
   );
-  const session = await getCurrentAcademySession();
-  const authBypass = isLocalWatchlistAuthBypassEnabled();
-  if ((!session && !authBypass) || (session && !hasPremiumWatchlistAccess(session))) {
+  const access = await authorizeWatchlistPageAccess();
+  if (!access.ok) {
     const returnTo = `/watchlist/${encodeURIComponent(symbol.toUpperCase())}`;
-    if (!session && !authBypass && !authStatus && !isPreviewCrawler) {
+    if (access.reason === "login_required" && !authStatus && !isPreviewCrawler) {
       redirect(`/api/auth/discord/login?returnTo=${encodeURIComponent(returnTo)}`);
     }
     return (
@@ -53,9 +48,13 @@ export default async function LiveWatchlistSymbolPage({
           <section className="academy-hero">
             <div className="academy-card watchlist-access-card">
               <p className="academy-eyebrow">Premium Watchlist</p>
-              <h1 className="academy-title">Premium access required</h1>
+              <h1 className="academy-title">
+                {access.reason === "login_required" ? "Log in to view ticker details" : "Premium access required"}
+              </h1>
               <p className="academy-lede">
-                Log in with your premium TradersLink Discord account to view ticker details.
+                {access.reason === "login_required"
+                  ? "Log in with your TradersLink Discord account to view ticker details."
+                  : access.error}
               </p>
               <Link
                 href={`/api/auth/discord/login?returnTo=${encodeURIComponent(returnTo)}`}

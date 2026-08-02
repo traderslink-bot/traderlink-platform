@@ -18,6 +18,12 @@ export interface TraderIntelligenceRouteContainmentEntry {
   methods: readonly string[];
   realOwnerDataMethods: readonly string[];
   classification: TraderIntelligenceRouteClassification;
+  authorizationBoundary:
+    | "v3_owner_layout"
+    | "v3_owner_wrapper"
+    | "platform_page_layout"
+    | "platform_request_scope"
+    | "public_oauth_entry";
   authenticationRequirement: string;
   authorizationRequirement: string;
   mutationProtectionRequirement: string;
@@ -39,13 +45,17 @@ export interface TraderIntelligenceRouteContainmentEntry {
 }
 
 const OWNER_PAGE_MODULES = [
+  "app/(dashboard)/account/page.tsx",
   "app/(dashboard)/analytics/execution/page.tsx",
   "app/(dashboard)/analytics/lab/page.tsx",
+  "app/(dashboard)/analytics/lab/trade-candle-analysis/page.tsx",
   "app/(dashboard)/analytics/page.tsx",
   "app/(dashboard)/analytics/performance/page.tsx",
   "app/(dashboard)/analytics/results/page.tsx",
   "app/(dashboard)/analytics/timing/page.tsx",
+  "app/(dashboard)/calendar/page.tsx",
   "app/(dashboard)/charts/page.tsx",
+  "app/(dashboard)/data-decisions/page.tsx",
   "app/(dashboard)/imports/page.tsx",
   "app/(dashboard)/manual-entry/page.tsx",
   "app/(dashboard)/reflection-loop/page.tsx",
@@ -54,11 +64,13 @@ const OWNER_PAGE_MODULES = [
   "app/(dashboard)/trade-tracker/page.tsx",
   "app/(dashboard)/trades/day-sessions/page.tsx",
   "app/(dashboard)/trades/candle-review/page.tsx",
+  "app/(dashboard)/trades/day-session/[sessionDate]/page.tsx",
   "app/(dashboard)/trades/open/page.tsx",
   "app/(dashboard)/trades/page.tsx",
   "app/(dashboard)/trades/roundtrips/page.tsx",
   "app/(dashboard)/trades/ticker/page.tsx",
   "app/(dashboard)/workspace/page.tsx",
+  "app/(dashboard)/workspace/readiness/page.tsx",
   "app/intelligence/analytics/behavior/page.tsx",
   "app/intelligence/analytics/chart-evidence/page.tsx",
   "app/intelligence/analytics/details/page.tsx",
@@ -118,22 +130,13 @@ const LOCAL_PAGE_MODULES = [
 
 const OWNER_API_ROUTES = [
   ["app/api/analytics/latest/route.ts", ["GET"], "owner_read"],
-  ["app/api/coach/latest/route.ts", ["GET"], "owner_read"],
-  ["app/api/intelligence/day-session/[sessionDate]/notes/route.ts", ["PUT"], "owner_mutation"],
-  ["app/api/intelligence/day-session/[sessionDate]/rule-reviews/route.ts", ["PUT"], "owner_mutation"],
   ["app/api/intelligence/day-session-executions/v1/route.ts", ["POST"], "owner_mutation"],
-  ["app/api/intelligence/dashboard/overview/route.ts", ["GET"], "owner_read"],
   ["app/api/intelligence/trade-candle-analysis/simulations/route.ts", ["GET"], "owner_read"],
-  ["app/api/intelligence/trade-candle-analysis/review/route.ts", ["POST"], "owner_mutation"],
   ["app/api/csv-mapping-review/continue/route.ts", ["POST"], "owner_mutation"],
   ["app/api/intelligence/broker-csv-import/v1/history/route.ts", ["GET"], "owner_read"],
   ["app/api/intelligence/broker-csv-import/v1/route.ts", ["POST"], "owner_mutation"],
   ["app/api/intelligence/import-repair/v1/route.ts", ["GET", "POST", "DELETE"], "owner_mutation"],
   ["app/api/intelligence/execution-import/v1/route.ts", ["POST"], "owner_mutation"],
-  ["app/api/intelligence/rules/route.ts", ["POST"], "owner_mutation"],
-  ["app/api/intelligence/trade-tags/route.ts", ["GET", "POST"], "owner_mutation"],
-  ["app/api/intelligence/trade-tags/[tagId]/route.ts", ["PATCH", "DELETE"], "owner_mutation"],
-  ["app/api/intelligence/trades/[semanticRoundTripKey]/tags/route.ts", ["PUT"], "owner_mutation"],
   ["app/api/csv-mapping-templates/[templateId]/route.ts", ["PATCH", "DELETE"], "owner_mutation"],
   ["app/api/csv-mapping-templates/list/route.ts", ["GET"], "owner_read"],
   ["app/api/csv-mapping-templates/route.ts", ["POST"], "owner_mutation"],
@@ -145,9 +148,6 @@ const OWNER_API_ROUTES = [
   ["app/api/import-batches/[batchId]/route.ts", ["GET"], "owner_read"],
   ["app/api/import-batches/preview/route.ts", ["POST"], "owner_mutation"],
   ["app/api/import-batches/route.ts", ["GET"], "owner_read"],
-  ["app/api/review/latest/route.ts", ["GET"], "owner_read"],
-  ["app/api/trades/[tradeId]/level-analysis/facts/route.ts", ["GET"], "owner_read"],
-  ["app/api/trades/[tradeId]/level-analysis/route.ts", ["GET"], "owner_read"],
   ["app/api/trades/[tradeId]/mark-closed/route.ts", ["POST"], "owner_mutation"],
   ["app/api/trades/[tradeId]/notes/route.ts", ["POST"], "owner_mutation"],
   ["app/api/trades/[tradeId]/review-items/[itemId]/route.ts", ["POST"], "owner_mutation"],
@@ -156,22 +156,46 @@ const OWNER_API_ROUTES = [
   ["app/api/trades/route.ts", ["GET"], "owner_read"],
 ] as const;
 
+const PLATFORM_OWNER_API_ROUTES = [
+  ["app/api/admin/level-analysis/deliveries/[deliveryId]/raw/route.ts", ["GET"], "internal_diagnostics"],
+  ["app/api/admin/level-analysis/trade-links/[linkId]/route.ts", ["GET"], "internal_diagnostics"],
+  ["app/api/coach/latest/route.ts", ["GET"], "owner_read"],
+  ["app/api/intelligence/dashboard/overview/route.ts", ["GET"], "owner_read"],
+  ["app/api/intelligence/day-session/[sessionDate]/notes/route.ts", ["PUT"], "owner_mutation"],
+  ["app/api/intelligence/day-session/[sessionDate]/rule-reviews/route.ts", ["PUT"], "owner_mutation"],
+  ["app/api/intelligence/rules/route.ts", ["POST"], "owner_mutation"],
+  ["app/api/intelligence/trade-candle-analysis/review/route.ts", ["POST"], "owner_mutation"],
+  ["app/api/intelligence/trade-tags/[tagId]/route.ts", ["PATCH", "DELETE"], "owner_mutation"],
+  ["app/api/intelligence/trade-tags/route.ts", ["GET", "POST"], "owner_mutation"],
+  ["app/api/intelligence/trades/[semanticRoundTripKey]/notes/route.ts", ["PUT"], "owner_mutation"],
+  ["app/api/intelligence/trades/[semanticRoundTripKey]/tags/route.ts", ["PUT"], "owner_mutation"],
+  ["app/api/level-analysis/deliveries/latest/route.ts", ["GET"], "owner_read"],
+  ["app/api/level-analysis/deliveries/latest/symbols/[symbol]/route.ts", ["GET"], "owner_read"],
+  ["app/api/level-analysis/deliveries/route.ts", ["POST"], "owner_mutation"],
+  ["app/api/level-analysis/deliveries/validate/route.ts", ["POST"], "owner_mutation"],
+  ["app/api/level-analysis/trade-links/resolve/route.ts", ["POST"], "owner_mutation"],
+  ["app/api/level-analysis/trade-links/route.ts", ["POST"], "owner_mutation"],
+  ["app/api/platform/account-selection/route.ts", ["POST"], "owner_mutation"],
+  ["app/api/platform/journal/accounts/route.ts", ["POST"], "owner_mutation"],
+  ["app/api/platform/journal/data-decisions/route.ts", ["GET", "POST"], "owner_mutation"],
+  ["app/api/platform/journal/imports/commit/route.ts", ["POST"], "owner_mutation"],
+  ["app/api/platform/journal/imports/history/route.ts", ["GET"], "owner_read"],
+  ["app/api/platform/journal/imports/preview/route.ts", ["POST"], "owner_mutation"],
+  ["app/api/platform/journal/manual-executions/route.ts", ["POST"], "owner_mutation"],
+  ["app/api/review/latest/route.ts", ["GET"], "owner_read"],
+  ["app/api/trades/[tradeId]/level-analysis/facts/route.ts", ["GET"], "owner_read"],
+  ["app/api/trades/[tradeId]/level-analysis/route.ts", ["GET"], "owner_read"],
+] as const;
+
+const PUBLIC_OAUTH_API_ROUTES = [
+  ["app/api/auth/discord/login/route.ts", ["GET"], "public_safe_informational"],
+] as const;
+
 const INTERNAL_API_ROUTES = [
-  "app/api/admin/level-analysis/deliveries/[deliveryId]/raw/route.ts",
-  "app/api/admin/level-analysis/trade-links/[linkId]/route.ts",
   "app/api/execution-feedback/debug/route.ts",
   "app/api/import-dry-run/decision-review/route.ts",
   "app/api/trade-analysis/debug/route.ts",
   "app/api/trader-analytics/debug/route.ts",
-] as const;
-
-const LEGACY_PROVIDER_API_ROUTES = [
-  "app/api/level-analysis/deliveries/latest/route.ts",
-  "app/api/level-analysis/deliveries/latest/symbols/[symbol]/route.ts",
-  "app/api/level-analysis/deliveries/route.ts",
-  "app/api/level-analysis/deliveries/validate/route.ts",
-  "app/api/level-analysis/trade-links/resolve/route.ts",
-  "app/api/level-analysis/trade-links/route.ts",
 ] as const;
 
 function routePathFromModule(modulePath: string): string {
@@ -186,13 +210,19 @@ function pageEntry(
   classification: "owner_read" | "internal_diagnostics",
 ): TraderIntelligenceRouteContainmentEntry {
   const localOnly = classification === "internal_diagnostics";
+  const platformPage = modulePath.startsWith("app/(dashboard)/");
   return {
     modulePath,
     routePath: routePathFromModule(modulePath),
     methods: ["GET"],
     realOwnerDataMethods: [],
     classification,
-    authenticationRequirement: "v3 owner guard in the Intelligence layout",
+    authorizationBoundary: platformPage
+      ? "platform_page_layout"
+      : "v3_owner_layout",
+    authenticationRequirement: platformPage
+      ? "Platform request identity in the shared dashboard layout"
+      : "v3 owner guard in the Intelligence layout",
     authorizationRequirement: "exact configured owner; local adapter only in explicit local_only mode",
     mutationProtectionRequirement: "no state-changing page render",
     cachePolicy: "force-dynamic, private, no-store",
@@ -222,10 +252,9 @@ function pageEntry(
 function apiEntry(
   modulePath: string,
   methods: readonly string[],
-  classification: Exclude<
-    TraderIntelligenceRouteClassification,
-    "public_safe_informational"
-  >,
+  classification: TraderIntelligenceRouteClassification,
+  authorizationBoundary: TraderIntelligenceRouteContainmentEntry["authorizationBoundary"] =
+    "v3_owner_wrapper",
 ): TraderIntelligenceRouteContainmentEntry {
   const localOnly =
     classification === "internal_diagnostics" ||
@@ -248,7 +277,12 @@ function apiEntry(
           : ["POST"]
         : [],
     classification,
-    authenticationRequirement: "v3 server-side owner guard",
+    authorizationBoundary,
+    authenticationRequirement: authorizationBoundary === "platform_request_scope"
+      ? "Platform server-derived request scope"
+      : authorizationBoundary === "public_oauth_entry"
+        ? "public OAuth entry with bounded return target and server configuration"
+        : "v3 server-side owner guard",
     authorizationRequirement: "exact configured owner before handler and repository access",
     mutationProtectionRequirement: methods.some((method) => method !== "GET")
       ? "approved Origin required for every unsafe method"
@@ -292,10 +326,6 @@ function methodsForLocalApi(modulePath: string): readonly string[] {
   return ["GET"];
 }
 
-function methodsForProviderApi(modulePath: string): readonly string[] {
-  return modulePath.includes("deliveries/latest") ? ["GET"] : ["POST"];
-}
-
 export const TRADER_INTELLIGENCE_ROUTE_CONTAINMENT_MATRIX = [
   ...OWNER_PAGE_MODULES.map((modulePath) => pageEntry(modulePath, "owner_read")),
   ...LOCAL_PAGE_MODULES.map((modulePath) =>
@@ -304,15 +334,14 @@ export const TRADER_INTELLIGENCE_ROUTE_CONTAINMENT_MATRIX = [
   ...OWNER_API_ROUTES.map(([modulePath, methods, classification]) =>
     apiEntry(modulePath, methods, classification),
   ),
+  ...PLATFORM_OWNER_API_ROUTES.map(([modulePath, methods, classification]) =>
+    apiEntry(modulePath, methods, classification, "platform_request_scope"),
+  ),
+  ...PUBLIC_OAUTH_API_ROUTES.map(([modulePath, methods, classification]) =>
+    apiEntry(modulePath, methods, classification, "public_oauth_entry"),
+  ),
   ...INTERNAL_API_ROUTES.map((modulePath) =>
     apiEntry(modulePath, methodsForLocalApi(modulePath), "internal_diagnostics"),
-  ),
-  ...LEGACY_PROVIDER_API_ROUTES.map((modulePath) =>
-    apiEntry(
-      modulePath,
-      methodsForProviderApi(modulePath),
-      "local_only_or_disabled",
-    ),
   ),
 ] as const satisfies readonly TraderIntelligenceRouteContainmentEntry[];
 

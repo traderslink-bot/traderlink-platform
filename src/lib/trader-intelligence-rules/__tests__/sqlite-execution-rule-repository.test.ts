@@ -112,7 +112,7 @@ describe("SqliteManualCustomRuleRepository", () => {
     const databasePath = temporaryDatabasePath();
     const first = new SqliteManualCustomRuleRepository(databasePath);
     first.create({
-      ruleId: "manual-rule-one",
+      ruleId: "manual-rule-one-0001",
       owner,
       title: "Wait for confirmation",
       statement: "I wait for confirmation before I enter a trade.",
@@ -122,7 +122,7 @@ describe("SqliteManualCustomRuleRepository", () => {
       effectiveFrom: "2026-07-28T16:00:00.000000000Z",
     });
     first.revise({
-      ruleId: "manual-rule-one",
+      ruleId: "manual-rule-one-0001",
       owner,
       expectedVersionOrdinal: "1",
       title: "Wait for confirmation",
@@ -133,7 +133,7 @@ describe("SqliteManualCustomRuleRepository", () => {
       effectiveFrom: "2026-07-28T16:01:00.000000000Z",
     });
     first.transition({
-      ruleId: "manual-rule-one",
+      ruleId: "manual-rule-one-0001",
       owner,
       expectedCurrentStatus: "active",
       newStatus: "paused",
@@ -144,7 +144,7 @@ describe("SqliteManualCustomRuleRepository", () => {
     const restarted = new SqliteManualCustomRuleRepository(databasePath);
     expect(restarted.list(owner)).toEqual([
       expect.objectContaining({
-        ruleId: "manual-rule-one",
+        ruleId: "manual-rule-one-0001",
         status: "paused",
         versionOrdinal: "2",
         statement: "I wait for my full confirmation before I enter a trade.",

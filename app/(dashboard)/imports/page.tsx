@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 
-import { BrokerCsvImportClient } from "../../broker-csv-import-client";
 import { DashboardPage } from "../../dashboard-template";
 
+import { JournalImportClient } from "./journal-import-client";
+
 export const metadata: Metadata = {
-  title: "Import Trades | Trader Intelligence",
+  title: "Import Trades | TraderLink Platform",
 };
 
 export const dynamic = "force-dynamic";
@@ -12,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default function ImportsPage() {
   return (
     <DashboardPage>
-      <BrokerCsvImportClient />
+      <JournalImportClient />
     </DashboardPage>
   );
 }

@@ -1,77 +1,78 @@
+import type { JournalDailyNoteRecord } from "@/src/modules/journal/contracts/journal-annotation-contracts";
+import { withWritableJournalAnnotations } from "@/src/modules/journal/server/annotations/journal-annotation-runtime";
 import {
-  requireTraderIntelligenceOwnerPageAccess,
-  traderIntelligencePrivateJson,
-  withTraderIntelligenceOwnerRoute,
-} from "@/src/lib/trader-intelligence-v3/auth";
-import { SqliteDaySessionJournalRepository } from "@/src/lib/trader-intelligence-day-session-journal";
+  requireTraderLinkPlatformRequestScope,
+  requireExpectedJournalAccountSelection,
+} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import {
+  isTraderLinkPlatformError,
+  platformFailure,
+} from "@/src/modules/platform/server/database/platform-migration-contract";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const modulePath =
-  "app/api/intelligence/day-session/[sessionDate]/notes/route.ts";
+function record(value: unknown): Record<string, unknown> {
+  if (!value || Array.isArray(value) || typeof value !== "object") {
+    platformFailure("TRADERLINK_JOURNAL_ANNOTATION_INVALID");
+  }
+  return value as Record<string, unknown>;
+}
 
-async function PUTHandler(
+function nullableRevision(value: unknown): number | null {
+  if (value === null) return null;
+  const parsed = typeof value === "string" ? Number(value) : value;
+  if (!Number.isSafeInteger(parsed) || Number(parsed) <= 0) {
+    platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+  }
+  return Number(parsed);
+}
+
+function noteView(note: JournalDailyNoteRecord) {
+  return {
+    anythingElse: note.anythingElse,
+    revision: String(note.revision),
+    technicalRecap: note.technicalRecap,
+    tomorrowsFocus: note.tomorrowsFocus,
+    whatNeedsWork: note.whatNeedsWork,
+    whatWorked: note.whatWorked,
+  };
+}
+
+export async function PUT(
   request: Request,
   context: { params: Promise<{ sessionDate: string }> },
 ): Promise<Response> {
-  const owner = await requireTraderIntelligenceOwnerPageAccess(modulePath);
-  let body: Record<string, unknown>;
   try {
-    const value = await request.json();
-    if (typeof value !== "object" || value === null || Array.isArray(value)) {
-      throw new Error();
-    }
-    body = value as Record<string, unknown>;
-  } catch {
-    return traderIntelligencePrivateJson(
-      {
-        error: {
-          code: "ti_v3_day_session_notes_invalid_json",
-          message: "The daily notes could not be read.",
-        },
-      },
-      { status: 400 },
-    );
-  }
-  const { sessionDate } = await context.params;
-  const repository = new SqliteDaySessionJournalRepository();
-  try {
-    const note = repository.saveNote(
-      {
-        userId: owner.identity.ownerId,
-        workspaceId: "primary-workspace",
-      },
-      {
+    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const body = record(await request.json());
+    requireExpectedJournalAccountSelection(scope, body.expectedAccountSelectionRef);
+    const { sessionDate } = await context.params;
+    const data = withWritableJournalAnnotations(scope, (service, account) =>
+      noteView(service.saveDailyNote(account, {
         anythingElse: body.anythingElse,
-        expectedRevision: body.expectedRevision,
-        sessionDate,
+        expectedRevision: nullableRevision(body.expectedRevision),
         technicalRecap: body.technicalRecap,
         tomorrowsFocus: body.tomorrowsFocus,
+        tradingDate: sessionDate,
         whatNeedsWork: body.whatNeedsWork,
         whatWorked: body.whatWorked,
-      },
-    );
-    return traderIntelligencePrivateJson({ data: note });
+      })));
+    return Response.json({ ok: true, data });
   } catch (error) {
-    const conflict =
-      error instanceof Error && error.message.includes("revision_conflict");
-    return traderIntelligencePrivateJson(
-      {
-        error: {
-          code: conflict
-            ? "ti_v3_day_session_notes_revision_conflict"
-            : "ti_v3_day_session_notes_invalid",
-          message: conflict
-            ? "These notes changed in another request. Refresh and try again."
-            : "The daily notes were not accepted.",
-        },
+    const code = isTraderLinkPlatformError(error)
+      ? error.code
+      : "TRADERLINK_JOURNAL_ANNOTATION_INVALID";
+    const conflict = code === "TRADERLINK_JOURNAL_ANNOTATION_CONFLICT" ||
+      code === "TRADERLINK_ACCOUNT_SELECTION_CONFLICT";
+    return Response.json({
+      ok: false,
+      error: {
+        code,
+        message: conflict
+          ? "These notes or the Journal account changed. Refresh and try again."
+          : "The daily notes were not accepted.",
       },
-      { status: conflict ? 409 : 400 },
-    );
-  } finally {
-    repository.close();
+    }, { status: conflict ? 409 : 400 });
   }
 }
-
-export const PUT = withTraderIntelligenceOwnerRoute(modulePath, PUTHandler);

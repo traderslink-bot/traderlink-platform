@@ -1,39 +1,31 @@
-import { withTraderIntelligenceOwnerRoute } from "@/src/lib/trader-intelligence-v3/auth";
-
+import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
+import { LevelAnalysisDeliveryRepository } from "@/src/modules/level-analysis/server/level-analysis-delivery-repository";
+import { LevelAnalysisDeliveryService } from "@/src/modules/level-analysis/server/level-analysis-delivery-service";
+import { readBoundedLevelAnalysisDeliveryPayload } from "@/src/modules/level-analysis/server/level-analysis-delivery-request";
 import {
-  ingestJournalLevelAnalysisDeliveryForApi,
-  journalLevelAnalysisDeliveryErrorResponse,
-  readJournalLevelAnalysisDeliveryApiRequest,
-} from "../../../../src/lib/level-analysis/level-analysis-journal-delivery-api-service";
-import { isLevelAnalysisDeliveryApiEnabled } from "../../../../src/lib/level-analysis/level-analysis-journal-delivery-persistence-storage";
+  levelAnalysisErrorResponse,
+  requireConfiguredLevelAnalysisProviders,
+} from "@/src/modules/level-analysis/server/level-analysis-http";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function POSTHandler(request: Request): Promise<Response> {
-  if (!isLevelAnalysisDeliveryApiEnabled()) {
-    return journalLevelAnalysisDeliveryErrorResponse(
-      404,
-      "feature_disabled",
-      "Level analysis delivery API is disabled.",
-    );
-  }
-
+export async function POST(request: Request): Promise<Response> {
+  let database: ReturnType<typeof openPlatformDatabase> | null = null;
   try {
-    const input = await readJournalLevelAnalysisDeliveryApiRequest(request);
-    const response = ingestJournalLevelAnalysisDeliveryForApi(input);
-    return Response.json(response, {
-      status: response.status === "quarantined" ? 422 : 200,
-    });
+    requireTraderLinkPlatformRequestScope(request.headers);
+    const providers = requireConfiguredLevelAnalysisProviders();
+    const payload = await readBoundedLevelAnalysisDeliveryPayload(request);
+    database = openPlatformDatabase({ mode: "runtime" });
+    const response = new LevelAnalysisDeliveryService(
+      new LevelAnalysisDeliveryRepository(database),
+      providers,
+    ).ingest(payload);
+    return Response.json(response, { status: response.status === "accepted" ? 200 : 422 });
   } catch (error) {
-    return journalLevelAnalysisDeliveryErrorResponse(
-      400,
-      error instanceof Error && error.message.startsWith("Invalid JSON")
-        ? "invalid_json"
-        : "invalid_request",
-      error instanceof Error ? error.message : String(error),
-    );
+    return levelAnalysisErrorResponse(error);
+  } finally {
+    database?.close();
   }
 }
-
-export const POST = withTraderIntelligenceOwnerRoute("app/api/level-analysis/deliveries/route.ts", POSTHandler);

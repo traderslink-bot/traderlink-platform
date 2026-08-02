@@ -1,30 +1,33 @@
-import { withTraderIntelligenceOwnerRoute } from "@/src/lib/trader-intelligence-v3/auth";
-
-import { buildSavedOrSampleTraderAnalyticsViewModel } from "../../../../src/lib/trader-analytics/server/saved-trader-analytics-data";
-import { buildLatestSavedImportSourceCautionReadModel } from "../../../../src/lib/trader-analytics/server/saved-import-source-caution";
-import { resolveConfiguredOwnerWorkspaceImportContext } from "../../../../src/lib/trader-analytics/server/owner-workspace-context";
+import { parseCoachReflectionRequest } from "@/src/modules/coach/server/coach-reflection-request";
+import { readCoachReflection } from "@/src/modules/coach/server/coach-reflection-runtime";
+import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function GETHandler(): Promise<Response> {
-  const ownerContext = resolveConfiguredOwnerWorkspaceImportContext({});
-  const data = buildSavedOrSampleTraderAnalyticsViewModel({ userId: ownerContext.ownerId });
-
-  return Response.json({
-    contractVersion: "latest_coach_api_v1",
-    source: data.mode === "saved" ? "saved_sqlite" : "sample_fallback",
-    coach: data.viewModel.coachActionLoop.coachHome,
-    emptyState: data.viewModel.coachActionLoop.emptyState,
-    focusQueue: data.viewModel.focusQueue,
-    savedImportSourceCaution:
-      data.mode === "saved"
-        ? buildLatestSavedImportSourceCautionReadModel({
-            repository: data.repository,
-            accountId: ownerContext.account.id,
-          })
-        : null,
-  });
+export function GET(request: Request): Response {
+  try {
+    const url = new URL(request.url);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const coach = readCoachReflection(scope, parseCoachReflectionRequest({
+      period: url.searchParams.get("period"),
+      date: url.searchParams.get("date"),
+      currency: url.searchParams.get("currency"),
+    }));
+    return Response.json({
+      status: coach.state,
+      contractVersion: "traderlink_coach_latest_v1",
+      source: "journal_facts",
+      coach,
+    }, { headers: { "cache-control": "no-store" } });
+  } catch (error) {
+    const code = isTraderLinkPlatformError(error)
+      ? error.code
+      : "TRADERLINK_COACH_REFLECTION_UNAVAILABLE";
+    return Response.json(
+      { status: "unavailable", code },
+      { status: code.includes("ACCESS_DENIED") ? 403 : 503 },
+    );
+  }
 }
-
-export const GET = withTraderIntelligenceOwnerRoute("app/api/coach/latest/route.ts", GETHandler);

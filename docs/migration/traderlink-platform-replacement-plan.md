@@ -1,6 +1,23 @@
 # TraderLink Platform Replacement Plan
 
-**Status:** Approved controlling plan. Phases 0-4 are accepted; the Phase 4 replacement route cutover passed technical/runtime verification and owner visual approval on 2026-08-02. The Phase 5 module-transfer plan is accepted for implementation and Slice A read-only Journal route recovery is active. The current data boundary leaves 331 analytics-ready closed round trips visible and contains two fact-dependent chains in Data Decisions. Public login/account integration remains deferred until the complete dashboard is preparing to go live.
+**Status:** Approved controlling plan. Phases 0-6 are locally accepted; the Phase 4 replacement route cutover passed technical/runtime verification and owner visual approval on 2026-08-02, Phase 5 completed the module transfer, and Phase 6 passed sequential regression, production build, packaged-runtime, two-account browser/API/privacy and final backup/restore gates. F6 Discord-first identity, single-node hosted packaging and authorized hosted-transfer tooling are ready locally; actual owner linking, production-source transfer, Docker execution, Git publication, Railway deployment and DNS remain external pre-go-live gates. Slice D annotation tables, Slice E saved-view/market-fact/review/delivery/link tables, F2 Academy progress, F3 Watchlist and F4 Affiliate tables began empty and contain no copied legacy test data. F4 preserved the one reconciled legacy News article under versioned News ownership. F5 replaces fixture-driven readiness and maps all 52 preserved legacy pages away from V3 runtime entry. The accepted real data boundary remains 331 analytics-ready closed round trips with two fact-dependent chains contained in Data Decisions. Legacy trades, tags, rules and notes were test data and are not transferred; their replacement account-scoped feature contracts are verified. Phase 7 deletion/retirement remains prohibited without explicit owner approval.
+
+**Active Slice E contract:** [Analytics Lab, Candle Review and Level Analysis Plan](phase-5-slice-e-analytics-lab-candles-level-analysis-plan.md)
+
+**Completed Slice F5 contract:** [Platform Peers And Legacy Route Disposition Plan](phase-5-slice-f5-platform-peers-and-legacy-route-disposition-plan.md)
+
+**Active Slice F6 contract:** [Public Identity And Hosted Transfer Plan](phase-5-slice-f6-public-identity-and-hosted-transfer-plan.md) and [Hosted Beta Runbook](traderlink-platform-hosted-beta-runbook.md)
+
+**Completed Phase 6 contract:** [Replacement Acceptance Plan](phase-6-replacement-acceptance-plan.md), [progress tracker](phase-6-replacement-acceptance-progress.md), and [acceptance report](phase-6-replacement-acceptance-report.md)
+
+**Phase 7 preservation boundary:** [Legacy Retirement Progress](phase-7-legacy-retirement-progress.md)
+
+**Active Slice F contract:** [Remaining Modules Plan](phase-5-slice-f-remaining-modules-plan.md)
+
+**Completed Slice F3 contract:** [Watchlist Storage And Access Plan](phase-5-slice-f3-watchlist-storage-and-access-plan.md)
+**Completed Slice F4 contract:** [News Content And Affiliate Ownership Plan](phase-5-slice-f4-news-content-and-affiliate-plan.md)
+
+**Completed Slice F2 contract:** [Academy Identity And Progress Plan](phase-5-slice-f2-academy-identity-and-progress-plan.md)
 
 **Slice D source-account preparation:** Completed through the accepted
 development-only preparation boundary. The privacy-safe preview, sole-account
@@ -47,7 +64,7 @@ The permanent module boundaries are:
 
 ### Approved dashboard design baseline
 
-The final platform dashboard preserves the owner-approved **light Material UI design**. It is not a dark dashboard. Its identifying structure is the shared left navigation and the complete approved dashboard destination inventory, including Trades, the Calendar with week/month views, Analytics, Analytics Lab, Trading Rules, Workspace, Trade Tracker, imports, manual entry, Data Decisions, and the other accepted destinations recorded in `product-inventory.md` and `route-ownership.md`.
+The final platform dashboard preserves the owner-approved **light Material UI design**. It is not a dark dashboard. Its identifying structure is the shared left navigation and the complete approved dashboard destination inventory, including Trades, the Calendar with week/month views, Analytics, Analytics Lab, Trading Rules, Workspace, Trade Tracker with canonical manual entry, broker-neutral imports, Data Decisions, Account, and the other accepted destinations recorded in `product-inventory.md` and `route-ownership.md`.
 
 A legacy or experimental dashboard that lacks the light Material treatment, the left navigation, Trades, Calendar, Analytics, Analytics Lab, or Trading Rules is not the approved final dashboard. It may be used only as behavior/reference evidence. Any visible change to the approved baseline requires iterative owner visual approval before cutover.
 
@@ -127,17 +144,30 @@ The dashboard must show explicit coverage: included closed trades, open position
 Trade Tracker is the manual execution entry and day-review surface over the canonical ledger.
 
 - The execution's actual date and time are authoritative, not the date the user visits TraderLink or presses Save.
-- The persistence contract must support executions from multiple trading dates, including executions entered days after they occurred. Whether the UI captures them in one batch, separate day workflows, or another presentation is intentionally deferred.
+- The primary product window is the current trading day and current trading week, when the trader can still reliably record intent, tags, rules, and notes. Older dates remain factual read-only execution history; the product does not prompt the trader to invent subjective memories about old trades. Historical factual corrections remain available through Data Decisions.
+- The persistence contract supports executions from multiple trading dates, including current-week catch-up entry. The initial reviewed form chooses the actual trading date and keeps each date's notes and reviews separate.
+- One TraderLink login may manage multiple separate Journal accounts. The
+  dashboard must provide account creation/management and an explicit active
+  account selector. Imports, learned statement formats, executions, Data
+  Decisions, annotations and analytics stay account-scoped unless a later
+  cross-account view is deliberately labeled and designed.
+- Journal accounts are user-defined groupings, not one-to-one broker accounts.
+  A trader may organize them by strategy, purpose or asset class, and may link
+  multiple broker or brokerage-account source identities to the same Journal
+  account.
 - However they are entered, the Journal assigns executions to their actual trading dates and can present each affected day separately.
 - A manual execution initially proves only that execution and creates point-only
   coverage. Data Decisions asks the trader separately for each trading date
   whether the entered activity is complete or partial; confirmation is bound to
   that exact date and does not silently assert zero opening inventory.
-- A date-specific Trade Tracker view represents exactly one trading day. The future navigation, undated-route behavior, and multi-day entry presentation require a separate UI plan and owner visual approval.
+- The undated Trade Tracker opens the current account trading date/current week and keeps manual entry at the top. A date-specific view represents exactly one trading day. Historical dated routes remain available for factual review without encouraging retrospective subjective annotation.
 - Daily notes and daily rule reviews are keyed to owner, account scope, and trading date. Monday, Tuesday, and Wednesday notes are never combined because they were entered on Wednesday.
 - Trade notes, tags, and trade-level reviews are keyed to the stable round-trip identity and survive deterministic rebuilds through an identity/alias record.
 - A round trip may span days. Executions appear on the days when they occurred; carried positions are visible; realized round-trip P/L is attributed to the closing trading day unless a metric contract explicitly states another basis.
+- Day trade/Swing trade is explicit trader-authored lifecycle intent. The manual form permits the trader to identify intended swing activity; holding duration never assigns that label. `/trades/open` remains the factual Open Positions surface for every confirmed open lifecycle. The trader may classify a confirmed open position as an intentional swing, an unplanned hold or another status; unresolved execution chains stay in Data Decisions and are not presented as confirmed open positions.
 - If a later broker import appears to match a manual execution, the system shows the provenance and match in Data Decisions so the trader can merge/supersede, correct, or keep distinct records without double counting.
+
+All displayed execution, price, quantity, P/L, percentage, and other trading-data decimals use at most two decimal places. Canonical database values and editable broker/manual inputs remain lossless and are never rounded before persistence or calculation.
 
 The existing date-specific Trade Tracker and daily-note work is preservation input, not automatic acceptance. Trade Tracker will be reviewed and revised later under its own plan. This migration plan approves the data capability only; it does not approve a screen layout or multi-day entry workflow.
 
@@ -278,7 +308,7 @@ Before replacement feature work, create and maintain the following documents und
 
 The inventory is a controlling target list, not an "at minimum" list. It must classify every page, API route, server action, script, scheduled process, environment variable, table, migration, local-data path, shared component, external service, and untracked intentional source file.
 
-`/workspace`, `/trades`, `/analytics`, `/rules`, `/imports`, and Data Decisions are current Journal surfaces. Phase 1 proved that `/intelligence` is also reachable: it is a 52-page legacy V3 reference family with its own layout and navigation, not the future canonical shell. Its routes are inventoried by capability group and remain protected from deletion until each unique behavior receives a preserve, replace, compatibility, defer, or owner-reject disposition.
+`/workspace`, `/trades`, `/analytics`, `/rules`, `/imports`, and Data Decisions are current Journal surfaces. Phase 1 proved that `/intelligence` was also reachable: it is a 52-page legacy V3 reference family with its own layout and navigation, not the future canonical shell. F5 gives all 52 routes an exact typed preserve, replace, compatibility, operations-only or owner-reject disposition and intercepts ordinary requests before the legacy filesystem route. Source remains protected from deletion through final acceptance.
 
 ## 9. Checkpoints and approval gates
 
@@ -292,6 +322,21 @@ The inventory is a controlling target list, not an "at minimum" list. It must cl
 | 5. Module transfer | Port remaining Journal capabilities, Academy, Watchlist, News, Coach, Account, and platform services. | Each inventory item is accepted or explicitly deferred by the owner. |
 | 6. Replacement acceptance | Browser review, focused and checkpoint testing, restore test, deployment rehearsal, and owner acceptance. | No active dependency on the legacy app remains. |
 | 7. Legacy retirement | Archive, verify recovery, and remove legacy assets only with explicit owner approval. | Replacement is the accepted complete app. |
+
+Phase 6 is locally accepted. The final build generated all 126 pages; the
+146-file active replacement guard and all 18 migrations passed; primary and
+second-account browser/API checks proved account isolation, annotations,
+Data Decisions, broker-neutral mapping and at-most-two-decimal display; and the
+final online backup/independent restore pair passed. The real database retained
+its accepted main-file hash and zero-byte WAL. See the
+[Phase 6 Acceptance Report](phase-6-replacement-acceptance-report.md). Real
+hosted-source credentials/backups, owner Discord linking, Docker execution,
+Railway, DNS and Git publication remain external. Phase 7 cannot delete any
+legacy repository, database, backup or source without explicit owner approval.
+Phase 7 therefore establishes a preservation-only retirement boundary: the
+replacement is the canonical local development application, while the old
+repository stays intact as recovery/current-production reference until an
+authorized hosted cutover.
 
 Within Phase 2, the exact schema digest, migration identity, initialization recovery, versioned account fingerprinting, `WorkspaceAccessScope`, owner/admin/member permission model, separate ownership-seed gate, focused verification plan, and exact implementation-file list in [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md) are implemented and correction-verified. The coordinating technical auditor accepted the code, verified empty database, and 10-file/53-test result under the owner's delegated technical checkpoint authority. The follow-on [Development Owner Seed Progress](development-owner-seed-progress.md) checkpoint is also complete: the database was backed up, previewed, atomically seeded, and independently verified at domain counts 1/1/1/1/0 with matching schema/migration digests and no trading data. Phase 3 may proceed and is not blocked on public login. Discord-first login, optional email/password, and user-facing account management are reconciled in the Platform portion of Phase 5 before go-live without changing stable Journal ownership IDs.
 

@@ -9,12 +9,12 @@ import {
 
 describe("platform database configuration", () => {
   it("requires one nonblank explicit environment value", () => {
-    expect(() => resolvePlatformDatabaseConfig({ environment: {} })).toThrowError(
+    expect(() => resolvePlatformDatabaseConfig({ environment: { NODE_ENV: "test" } })).toThrowError(
       "TRADERLINK_PLATFORM_DB_PATH_MISSING",
     );
     expect(() =>
       resolvePlatformDatabaseConfig({
-        environment: { TRADERLINK_PLATFORM_DB_PATH: "   " },
+        environment: { NODE_ENV: "test", TRADERLINK_PLATFORM_DB_PATH: "   " },
       }),
     ).toThrowError("TRADERLINK_PLATFORM_DB_PATH_MISSING");
   });
@@ -37,7 +37,7 @@ describe("platform database configuration", () => {
 
   it("accepts an absolute external sqlite path without a V3 fallback", () => {
     const configured = resolvePlatformDatabaseConfig({
-      environment: { TRADERLINK_PLATFORM_DB_PATH: "C:\\private\\platform.sqlite" },
+      environment: { NODE_ENV: "test", TRADERLINK_PLATFORM_DB_PATH: "C:\\private\\platform.sqlite" },
       forbiddenRepositoryRoots: [],
     });
     expect(configured.databasePath.toLowerCase()).toBe("c:\\private\\platform.sqlite");

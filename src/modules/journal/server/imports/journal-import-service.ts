@@ -19,10 +19,18 @@ import {
   createCanonicalUtcTimestamp,
   createCanonicalUuidV4,
   platformFailure,
+  TraderLinkPlatformError,
 } from "@/src/modules/platform/server/database/platform-migration-contract";
 import type { JournalAccountService } from "../accounts/journal-account-service";
 import { JournalExecutionRepository } from "../executions/journal-execution-repository";
 import { previewIbkrActivityStatement } from "./ibkr-activity-statement-adapter";
+import {
+  type JournalGenericMappedStatementPreview,
+  type JournalGenericStatementMappingContract,
+  parseJournalGenericStatementMappingContract,
+  previewGenericMappedStatement,
+} from "./journal-generic-mapped-statement-adapter";
+import { MAPPED_STATEMENT_SOURCE_ACCOUNT_CANONICALIZATION_VERSION } from "../accounts/mapped-statement-source-account-canonicalizer";
 import {
   type ExistingImportBatch,
   JournalImportRepository,
@@ -194,12 +202,23 @@ export type ManualExecutionInput = Readonly<{
   feesDecimal: string | null;
   feeCurrency: string | null;
   feeSignConvention: "not_reported" | "broker_reported_signed" | "cash_effect";
+  tradeIntent?: "not_set" | "day_trade" | "swing";
 }>;
 
 export type IbkrStatementCommitInput = Readonly<{
   sourceBytes: Uint8Array;
   sourceTimezone: string;
   privacySafeAccountDisplay: string;
+  sourceDisplayLabel: string;
+  evidenceObjectKey: string;
+  confirmedSourceIdentityAccountId?: string;
+  now?: Date;
+}>;
+
+export type GenericMappedStatementCommitInput = Readonly<{
+  sourceBytes: Uint8Array;
+  accountId: string;
+  mapping: JournalGenericStatementMappingContract;
   sourceDisplayLabel: string;
   evidenceObjectKey: string;
   now?: Date;
@@ -276,6 +295,13 @@ function localDateAtUtc(executedAtUtc: string, tradingTimezone: string): string 
 export function createPrivacySafeIbkrPreview(
   preview: IbkrActivityStatementPreview,
 ): JournalImportPreview {
+  return createPrivacySafeAdapterPreview(preview, preview.rawSourceAccountId !== null);
+}
+
+function createPrivacySafeAdapterPreview(
+  preview: IbkrActivityStatementPreview | JournalGenericMappedStatementPreview,
+  hasSourceAccountIdentity: boolean,
+): JournalImportPreview {
   const rowsByClassification: JournalImportPreview["rowsByClassification"] = Object.freeze({
     mapped_execution: preview.rows.filter((row) => row.classification === "mapped_execution").length,
     mapped_position_fact: preview.rows.filter((row) => row.classification === "mapped_position_fact").length,
@@ -305,8 +331,8 @@ export function createPrivacySafeIbkrPreview(
     statementPeriodStartDate: preview.statementPeriodStartDate,
     statementPeriodEndDate: preview.statementPeriodEndDate,
     sourceTimezone: preview.sourceTimezone,
-    hasSourceAccountIdentity: preview.rawSourceAccountId !== null,
-    canCommit: preview.rawSourceAccountId !== null &&
+    hasSourceAccountIdentity,
+    canCommit: hasSourceAccountIdentity &&
       !preview.issues.some((issue) => issue.isBlocking),
     preservedRowCount: preview.rows.length,
     mappedExecutionCount: preview.executions.length,
@@ -382,6 +408,35 @@ export class JournalImportService {
     }
   }
 
+  findSavedGenericMappingForWorkspace(
+    scope: WorkspaceAccessScope,
+    input: Readonly<{
+      accountId: string;
+      structuralSignatureSha256: string;
+    }>,
+  ): JournalGenericStatementMappingContract | null {
+    this.accounts.requireAccountRecord(scope, input.accountId);
+    if (!/^[0-9a-f]{64}$/u.test(input.structuralSignatureSha256)) {
+      platformFailure("TRADERLINK_JOURNAL_IMPORT_MAPPING_FAILED", {
+        reason: "structural_signature_invalid",
+      });
+    }
+    const encoded = this.imports.findLatestMappedStatementContract(
+      scope.workspaceId,
+      input.accountId,
+      input.structuralSignatureSha256,
+    );
+    if (!encoded) return null;
+    try {
+      return parseJournalGenericStatementMappingContract(JSON.parse(encoded));
+    } catch (error) {
+      if (error instanceof TraderLinkPlatformError) throw error;
+      platformFailure("TRADERLINK_JOURNAL_IMPORT_MAPPING_FAILED", {
+        reason: "saved_mapping_contract_invalid",
+      }, error);
+    }
+  }
+
   previewIbkr(sourceBytes: Uint8Array, sourceTimezone: string): JournalImportPreview {
     const preview = previewIbkrActivityStatement({ sourceBytes, sourceTimezone });
     return createPrivacySafeIbkrPreview(preview);
@@ -389,7 +444,11 @@ export class JournalImportService {
 
   previewIbkrForWorkspace(
     scope: WorkspaceAccessScope,
-    input: Readonly<{ sourceBytes: Uint8Array; sourceTimezone: string }>,
+    input: Readonly<{
+      sourceBytes: Uint8Array;
+      sourceTimezone: string;
+      allowSelectedAccountIdentityConfirmation?: boolean;
+    }>,
   ): JournalScopedImportPreview {
     const preview = previewIbkrActivityStatement(input);
     const safePreview = createPrivacySafeIbkrPreview(preview);
@@ -404,6 +463,7 @@ export class JournalImportService {
         ...safePreview,
         canCommit: true,
         accountId: prior.accountId,
+        sourceIdentityConfirmationRequired: false,
         exactReimport: true,
         existingImportBatchId: prior.importBatchId,
         plannedNewExecutionCount: 0,
@@ -421,10 +481,30 @@ export class JournalImportService {
         reason: "blocking_preview_issue",
       });
     }
-    const account = this.accounts.inspectSourceAccountIdentity(scope, {
-      sourceSystem: "ibkr",
-      rawSourceAccountId: preview.rawSourceAccountId,
-    });
+    let sourceIdentityConfirmationRequired = false;
+    let account;
+    try {
+      account = this.accounts.inspectSourceAccountIdentity(scope, {
+        sourceSystem: "ibkr",
+        rawSourceAccountId: preview.rawSourceAccountId,
+      });
+    } catch (error) {
+      if (
+        !(error instanceof TraderLinkPlatformError) ||
+        error.code !== "TRADERLINK_ACCOUNT_IDENTITY_CONFIRMATION_REQUIRED" ||
+        input.allowSelectedAccountIdentityConfirmation !== true ||
+        !scope.activeAccountId
+      ) throw error;
+      const selected = this.accounts.requireAccountRecord(
+        scope,
+        scope.activeAccountId,
+      );
+      account = Object.freeze({
+        accountId: selected.accountId,
+        tradingTimezone: selected.tradingTimezone,
+      });
+      sourceIdentityConfirmationRequired = true;
+    }
     const planned = this.planExecutions(
       scope.workspaceId,
       account.accountId,
@@ -448,6 +528,7 @@ export class JournalImportService {
       ...safePreview,
       issues: scopedIssues,
       accountId: account.accountId,
+      sourceIdentityConfirmationRequired,
       exactReimport: false,
       existingImportBatchId: null,
       plannedNewExecutionCount: planned.filter((candidate) =>
@@ -502,12 +583,28 @@ export class JournalImportService {
         input.evidenceObjectKey,
       ],
     });
-    const identity = this.accounts.resolveSourceAccountIdentityRecord(scope, {
-      sourceSystem: "ibkr",
-      rawSourceAccountId: preview.rawSourceAccountId,
-      privacySafeDisplay: input.privacySafeAccountDisplay,
-      now: input.now,
-    });
+    if (
+      input.confirmedSourceIdentityAccountId !== undefined &&
+      input.confirmedSourceIdentityAccountId !== scope.activeAccountId
+    ) {
+      platformFailure("TRADERLINK_JOURNAL_IMPORT_CONFLICT", {
+        reason: "selected_account_mismatch",
+      });
+    }
+    const identity = input.confirmedSourceIdentityAccountId
+      ? this.accounts.confirmSourceIdentityLinkRecord(scope, {
+          accountId: input.confirmedSourceIdentityAccountId,
+          sourceSystem: "ibkr",
+          rawSourceAccountId: preview.rawSourceAccountId,
+          privacySafeDisplay: input.privacySafeAccountDisplay,
+          now: input.now,
+        })
+      : this.accounts.resolveSourceAccountIdentityRecord(scope, {
+          sourceSystem: "ibkr",
+          rawSourceAccountId: preview.rawSourceAccountId,
+          privacySafeDisplay: input.privacySafeAccountDisplay,
+          now: input.now,
+        });
     const accountId = identity.accountId;
     const accountContextIssues: JournalImportIssue[] =
       identity.tradingTimezone === preview.sourceTimezone
@@ -566,6 +663,188 @@ export class JournalImportService {
     });
   }
 
+  previewGenericMappedForWorkspace(
+    scope: WorkspaceAccessScope,
+    input: Readonly<{
+      sourceBytes: Uint8Array;
+      accountId: string;
+      mapping: JournalGenericStatementMappingContract;
+    }>,
+  ): JournalScopedImportPreview {
+    this.accounts.requireAccountRecord(scope, input.accountId);
+    const preview = previewGenericMappedStatement({
+      sourceBytes: input.sourceBytes,
+      mapping: input.mapping,
+    });
+    const safePreview = createPrivacySafeAdapterPreview(preview, true);
+    const prior = this.imports.findByFileDigest(
+      scope.workspaceId,
+      "mapped_csv",
+      preview.sourceFileSha256,
+    );
+    if (prior) {
+      this.accounts.requireAccountScope(scope, prior.accountId);
+      if (prior.accountId !== input.accountId) {
+        platformFailure("TRADERLINK_JOURNAL_IMPORT_CONFLICT", {
+          reason: "mapped_statement_account_mismatch",
+        });
+      }
+      return Object.freeze({
+        ...safePreview,
+        canCommit: true,
+        accountId: prior.accountId,
+        sourceIdentityConfirmationRequired: false,
+        exactReimport: true,
+        existingImportBatchId: prior.importBatchId,
+        plannedNewExecutionCount: 0,
+        plannedMatchedExecutionCount: this.imports.listExecutionIdsForBatch(
+          scope.workspaceId,
+          prior.accountId,
+          prior.importBatchId,
+        ).length,
+        plannedAmbiguousExecutionCount: 0,
+        expectedPendingSourceDecisionCount: prior.pendingDecisionCount,
+      });
+    }
+    if (!safePreview.canCommit) {
+      platformFailure("TRADERLINK_JOURNAL_IMPORT_MAPPING_FAILED", {
+        reason: "blocking_preview_issue",
+      });
+    }
+    const planned = this.planExecutions(
+      scope.workspaceId,
+      input.accountId,
+      preview.executions,
+      "broker_statement",
+    );
+    return Object.freeze({
+      ...safePreview,
+      accountId: input.accountId,
+      sourceIdentityConfirmationRequired: false,
+      exactReimport: false,
+      existingImportBatchId: null,
+      plannedNewExecutionCount: planned.filter((candidate) =>
+        candidate.matchedExecutionId === null).length,
+      plannedMatchedExecutionCount: planned.filter((candidate) =>
+        candidate.matchedExecutionId !== null).length,
+      plannedAmbiguousExecutionCount: planned.filter((candidate) =>
+        candidate.ambiguous).length,
+      expectedPendingSourceDecisionCount: preview.issues.filter((candidate) =>
+        !candidate.isBlocking && candidate.severity !== "info").length +
+        planned.filter((candidate) => candidate.ambiguous).length,
+    });
+  }
+
+  commitGenericMappedStatement(
+    scope: WorkspaceAccessScope,
+    input: GenericMappedStatementCommitInput,
+  ): JournalImportCommitResult {
+    safeLabel(input.sourceDisplayLabel);
+    const sourceEvidence = calculateSourceFileEvidence(input.sourceBytes);
+    const expectedEvidenceObjectKey = `mapped_csv/${sourceEvidence.sha256}.csv`;
+    if (
+      input.evidenceObjectKey !== expectedEvidenceObjectKey ||
+      input.evidenceObjectKey.length > 255
+    ) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+        field: "evidenceObjectKey",
+      });
+    }
+    const prior = this.imports.findByFileDigest(
+      scope.workspaceId,
+      "mapped_csv",
+      sourceEvidence.sha256,
+    );
+    if (prior) {
+      if (prior.accountId !== input.accountId) {
+        platformFailure("TRADERLINK_JOURNAL_IMPORT_CONFLICT", {
+          reason: "mapped_statement_account_mismatch",
+        });
+      }
+      return this.alreadyImportedResult(scope, prior);
+    }
+    const account = this.accounts.requireAccountRecord(scope, input.accountId);
+    const preview = previewGenericMappedStatement({
+      sourceBytes: input.sourceBytes,
+      mapping: input.mapping,
+    });
+    if (
+      preview.sourceFileSha256 !== sourceEvidence.sha256 ||
+      preview.sourceFileSizeBytes !== sourceEvidence.sizeBytes ||
+      preview.issues.some((candidate) => candidate.isBlocking)
+    ) {
+      platformFailure("TRADERLINK_JOURNAL_IMPORT_MAPPING_FAILED", {
+        reason: "blocking_preview_issue",
+      });
+    }
+    const sourceAccountReference = [
+      "mapped-statement-account-v1",
+      scope.workspaceId,
+      input.accountId,
+      input.mapping.brokerName.trim().normalize("NFKC").toLowerCase(),
+    ].join(":");
+    const identity = this.accounts.confirmSourceIdentityLinkRecord(scope, {
+      accountId: input.accountId,
+      sourceSystem: "mapped_csv",
+      rawSourceAccountId: sourceAccountReference,
+      privacySafeDisplay: account.displayName,
+      sourceAccountCanonicalizationVersion:
+        MAPPED_STATEMENT_SOURCE_ACCOUNT_CANONICALIZATION_VERSION,
+      now: input.now,
+    });
+    const planned = this.planExecutions(
+      scope.workspaceId,
+      input.accountId,
+      preview.executions,
+      "broker_statement",
+    );
+    const overlapIssues: JournalImportIssue[] = planned
+      .filter((candidate) => candidate.ambiguous)
+      .map((candidate) => Object.freeze({
+        recordOrdinal: candidate.execution.recordOrdinal,
+        issueScope: "execution" as const,
+        issueCode: candidate.factConflict
+          ? "overlap_fact_conflict"
+          : "overlap_count_ambiguous",
+        severity: "warning" as const,
+        isBlocking: false,
+        chainHint: Object.freeze({
+          normalizedSymbol: candidate.execution.normalizedSymbol,
+          assetClass: candidate.execution.assetClass,
+          tradeCurrency: candidate.execution.tradeCurrency,
+          effectiveAtUtc: candidate.execution.executedAtUtc,
+        }),
+      }));
+    return this.commitPreparedImport(scope, {
+      accountId: input.accountId,
+      sourceIdentityId: identity.sourceIdentityId,
+      sourceKind: "broker_statement",
+      sourceSystem: "mapped_csv",
+      sourceFileSha256: preview.sourceFileSha256,
+      sourceFileSizeBytes: preview.sourceFileSizeBytes,
+      sourceMimeType: "text/csv",
+      sourceEncoding: "utf-8",
+      sourceDisplayLabel: input.sourceDisplayLabel,
+      evidenceObjectKey: input.evidenceObjectKey,
+      manualIdempotencyKey: null,
+      adapterId: preview.adapterId,
+      adapterVersion: preview.adapterVersion,
+      parserVersion: preview.parserVersion,
+      mappingVersion: preview.mappingVersion,
+      mappingContractJson: JSON.stringify(preview.mappingContract),
+      statementPeriodStartDate: null,
+      statementPeriodEndDate: null,
+      sourceTimezone: preview.sourceTimezone,
+      rows: preview.rows,
+      issues: Object.freeze([...preview.issues, ...overlapIssues]),
+      coverageIntervals: preview.coverageIntervals,
+      positionFacts: preview.positionFacts,
+      plannedExecutions: planned,
+      sourceIdentityForRows: preview.sourceFileSha256,
+      now: input.now,
+    });
+  }
+
   commitManualExecutions(
     scope: WorkspaceAccessScope,
     input: ManualExecutionBatchInput,
@@ -589,6 +868,14 @@ export class JournalImportService {
       ) {
         platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
           field: "manualFeeFacts",
+        });
+      }
+      if (
+        entry.tradeIntent !== undefined &&
+        !["not_set", "day_trade", "swing"].includes(entry.tradeIntent)
+      ) {
+        platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+          field: "tradeIntent",
         });
       }
       const executedAtUtc = entry.executedAtUtc ??
@@ -634,7 +921,7 @@ export class JournalImportService {
         execution.normalizedSymbol, execution.side, execution.quantityDecimal,
         execution.priceDecimal ?? "", execution.feesDecimal ?? "",
         execution.feeCurrency ?? "", execution.feeSignConvention,
-        execution.tradeCurrency,
+        execution.tradeCurrency, input.entries[execution.recordOrdinal - 1]?.tradeIntent ?? "not_set",
       ]);
       const rawFieldsJson = JSON.stringify(fields);
       const fingerprint = sha256(rawFieldsJson);

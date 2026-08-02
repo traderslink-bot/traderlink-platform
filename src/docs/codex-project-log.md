@@ -1,3 +1,87 @@
+# 2026-08-02 - TraderLink Platform Phase 6 locally accepted
+
+- Completed sequential one-worker regression, full TypeScript/lint, the
+  146-file V3-free replacement guard, all 18 migration checks and the final
+  Next.js production build with 126 generated pages.
+- Passed disposable two-account browser/API verification for imports, manual
+  executions, contained Data Decisions, exact open-position confirmation,
+  annotations, Workspace calendar and at-most-two-decimal visible values.
+- Closed the Data Decisions navigation/impact gap: imports now open their
+  filtered decision queue; decisions show exact evidence/chain/downstream
+  impact without guessing post-save P/L and link to affected trades, day and
+  analytics. Focused 34/34 tests, TypeScript, lint, build and live route proof
+  passed.
+- Proved broker-neutral mapping-required/manual-map/saved-template/re-review
+  behavior and privacy-safe support output. IBKR remains the first verified
+  adapter, not the product boundary.
+- Preserved the real database at its accepted hash/size and zero-byte WAL.
+  Final online backup/independent restore, disposable Discord owner-link and
+  four-module hosted-transfer/rollback rehearsals passed.
+- Removed every Phase 6 disposable database/log/rehearsal directory and stopped
+  port 3010. No Git stage/commit/push, real hosted transfer, deployment, DNS or
+  legacy deletion occurred. Resume from the Phase 6 acceptance report and the
+  hosted beta runbook; external launch inputs remain unavailable.
+
+# 2026-08-02 - TraderLink Platform Phase 5 Slice F6 locally complete
+
+- Added guarded Discord-first Platform identity/session handling while keeping
+  login-free loopback review. Public sessions are hashed and revocable;
+  current Discord membership supplies bounded entitlement. New users receive
+  one workspace and one default user-defined Journal account. The seeded owner
+  can be linked only by the separate fail-closed owner command; it was not run.
+- Added the accepted single-node hosted package: standalone Next.js output,
+  private-data-safe Docker image, Railway service configuration, production
+  startup verification, safe health response and the exact `/data` volume
+  runbook.
+- Added migration `0018_platform_hosted_transfer_events` and privacy-safe
+  preview/authorized-execute/reconciliation tooling for Academy, Watchlist,
+  News and Affiliate. Legacy Journal executions, trades, tags, rules and notes
+  are owner-rejected test content and are never transfer inputs; replacement
+  annotations remain account-scoped and tied to stable days/round trips.
+- A disposable four-module/eight-row proof reconciled exactly and its second
+  preview was idempotent. Focused TypeScript, the 146-file active boundary,
+  migration verification, readiness and full read-only database verification
+  pass. The real database has 18 migrations, 61 domain tables plus the
+  registry, schema digest
+  `7306385ce32329abe73a41fc3ec630c28dc4df7efaaad975b55f8f719dcdf4be`
+  and zero public sessions, Discord memberships or hosted-transfer events.
+- Pre/post-0018 online backup and independent restore pairs are preserved. No
+  production source, Railway resource, secret, port, Git stage/commit/push or
+  deployment changed.
+
+Current best next step:
+
+- Enter Phase 6 integrated verification: resource-aware focused tests, full
+  TypeScript/lint/build, standalone/Docker startup and browser/privacy smoke
+  checks. Keep real owner linking, production-source transfer, deployment and
+  DNS changes behind the external pre-launch gate.
+
+# 2026-08-02 - TraderLink Platform Phase 5 Slice F5 complete
+
+- Replaced the old dark fixture/V3 `/platform-readiness` runtime with the
+  privacy-safe `/workspace/readiness` replacement page inside the approved
+  light Material dashboard.
+- Added an exact typed disposition for all 52 preserved `/intelligence` pages:
+  44 canonical redirects, two compatibility redirects, five operations-only
+  tools and one owner-rejected mock/test surface. Temporary redirects run
+  before filesystem routing and no destination returns to `/intelligence`.
+- Existing top-level aliases now go directly to replacement pages. All legacy
+  page source remains preserved; no deletion or V3 recovery occurred.
+- Focused TypeScript/lint/static verification passed. The read-only database
+  proof confirmed 16 migrations, 59 domain tables plus the registry, seven
+  module boundaries and stable owner/workspace/selected-account access. The
+  11,268,096-byte database SHA-256 remained
+  `9f14fade99348729336044c36f30edd4c9f0ad53a75dcb2de7b3eb5b9b9fae5d`.
+- One three-case registry test is written and policy-deferred to Phase 6. Port
+  3010 remains off; no Git stage/commit/push, deployment or production state
+  changed.
+
+Current best next step:
+
+- Audit and finalize F6 public Discord identity activation and hosted Academy,
+  Watchlist, News and Affiliate transfer contracts without rewriting stable
+  Platform or Journal ownership.
+
 # 2026-08-02 - TraderLink Platform Phase 4 accepted
 
 - The owner visually reviewed the replacement dashboard and confirmed that the
@@ -20726,3 +20810,200 @@ Current best next step:
 - Obtain owner visual approval of Workspace, Round Trips and the five standard
   Analytics pages. Correct visual/product findings, then execute Slice F's
   documentation/allowlist/commit checkpoint locally without push or deploy.
+
+# 2026-08-02 TraderLink Platform Phase 5 Slice E2 checkpoint
+
+- The active replacement checkout remains
+  `C:\Users\jerac\Documents\TraderLink\traderlink-platform` on
+  `codex/traderlink-platform-replacement`; no stage, commit, push or deployment
+  occurred.
+- Phase 5 Slices A-D, local multi-account integration, Analytics Lab E1 and
+  saved-view E2 are technically complete. Port 3010 remains off and combined
+  visual review stays deferred.
+- The active Analytics Lab uses the full 210-capability replacement Journal
+  Analytics registry/query service. Unavailable capabilities retain exact
+  missing-fact coverage rather than sample or zero values.
+- Migration `0008_journal_analytics_saved_views` adds two selected-account
+  tables for current saved-view identity and immutable versions. Both tables
+  begin empty; no legacy V3 JSON/test view was copied.
+- Pre-write online backup/restore, disposable migration, disposable
+  post-migration backup/restore and real migration verification passed.
+  The real database has eight migrations, 39 domain tables, post-schema digest
+  `040f2448fafb6d2d3122787b4b522f109bfa815cc79d7118741d4fc005b14a5c`,
+  size 10,870,784 bytes and SHA-256
+  `d7e89da29034b25ee18b3bec277fc3a4f8bb3c42b89de84a179be74c9795a2ef`.
+- Five focused files pass 24 tests with one Vitest worker. Narrow TypeScript,
+  targeted lint, the static eight-migration verifier, active V3-free verifier,
+  real Analytics Lab verifier and complete Phase 5 read-model reconciliation
+  pass.
+
+Current best next step:
+
+- Continue Phase 5 Slice E3 Candle Review. Resolve only selected-account stable
+  ready-closed round trips, request only symbol/interval/bounded time after an
+  explicit trader action, and design/prove versioned provider-fact persistence
+  before any real write. Keep the target ports off until the integrated visual
+  checkpoint.
+
+# 2026-08-02 TraderLink Platform Phase 5 Slice E3 complete
+
+- Phase 5 Slice E3 Candle Review completed in the replacement
+  checkout. Active page/API/runtime no longer use V3 analytics/auth/JSON.
+  Migration `0009_level_analysis_candle_review` is applied to the real
+  replacement database with five empty account/version-scoped market-fact and
+  review tables, checksum
+  `5e0fd37edd1b3310aa91fb2d5cae4c772675cc57481ff39c8a2d5cf3ecd77589`
+  and schema digest
+  `a1a9589a036194f1aa243198afe9577d7bf3447fae54a5a0b55417f2a07d6d10`.
+  The current file is 10,989,568 bytes with SHA-256
+  `6235ad2312cec303e1a49230f706b9ae1df5c8d1450dbcee6f512292af9ed76d`;
+  331 selected-account stock targets resolve, no provider request ran, all
+  earlier table counts reconcile, and 27 focused one-worker tests pass. A
+  disposable repeating-decimal finding established four-decimal half-up
+  derived weighted prices while source execution facts remain lossless.
+
+Current best next step:
+
+- Continue Phase 5 Slice E4 Level Analysis persistence and compatibility APIs.
+  Port 3010 stays off until the integrated visual checkpoint.
+
+# 2026-08-02 TraderLink Platform Phase 5 Slice E4 complete
+
+- Phase 5 Slice E4 replaced the ordinary/admin Level Analysis delivery,
+  symbol-fact, trade-link and trade-detail paths without V3 authentication or
+  the legacy shared database. The server derives Platform/Journal ownership;
+  the browser cannot supply workspace/account/user facts or the provider
+  allowlist.
+- Migrations `0010_level_analysis_deliveries` and
+  `0011_journal_level_analysis_links` are applied. The real replacement
+  database has 11 migrations, 48 domain tables, size 11,087,872 bytes, schema
+  digest
+  `c359134536e2583277efdb13199587e8b65084d4f73ed74fdb1a4d97b97d8bd4`
+  and SHA-256
+  `7c81fabba5fa4eac106cd7c4238011ac49ea8170f197bb9ad5408ac9fbdb00d0`.
+  All four new tables remain empty and every earlier domain count reconciles.
+- Focused TypeScript/lint, the 78-file active V3-free verifier, six focused
+  files/30 one-worker tests, online backup/restore, disposable migration and
+  restore, real Level Analysis verification, complete Phase 5 read models and
+  Analytics Lab's 210-capability proof pass. No provider request or legacy
+  delivery/link/annotation import occurred.
+
+Current best next step:
+
+- Begin Phase 5 Slice F with a fresh module-by-module inventory of Academy,
+  Watchlist, News/content, Coach/Review, remaining Account/Affiliate and
+  Platform peer services. Preserve real production data, classify test data
+  honestly, and choose the first bounded transfer slice from current evidence.
+  Keep port 3010 off until the next coherent integrated visual checkpoint.
+
+# 2026-08-02 TraderLink Platform Phase 5 Slice F1 implementation checkpoint
+
+- Reflection Loop and `GET /api/coach/latest` / `GET /api/review/latest` now
+  use one read-only replacement Coach service. It consumes published Journal
+  Analytics, Data Decisions and trader-authored annotation services under the
+  server-derived selected Journal account. V3 auth, legacy saved-report reads
+  and sample fallbacks are absent from the active path.
+- Daily, Monday-Sunday weekly and calendar-month views keep ready-closed P/L,
+  legitimate-open positions and needs-decision chains separate. Missing notes,
+  tags or rule reviews are incomplete trader reflection, never an automated
+  behavior conclusion.
+- Scoped TypeScript, targeted lint, the 85-file active dependency verifier and
+  real read-only reconciliation pass. The real result has 18 trading days, 331
+  ready-closed trades, zero legitimate-open positions, two Data Decisions and
+  zero replacement annotations. Database size/hash stayed 11,087,872 bytes and
+  `7c81fabba5fa4eac106cd7c4238011ac49ea8170f197bb9ad5408ac9fbdb00d0`.
+- Two focused files/seven tests are written, but the active repository policy
+  approval layer refused the one-worker Vitest command. No workaround ran; the
+  execution remains explicitly required at Phase 6.
+
+Current best next step:
+
+- Continue Slice F2 with the Academy production-progress, identity, storage and
+  protected-slug inventory. Do not change or migrate production progress until
+  source ownership and identity mapping are independently proven.
+
+# 2026-08-02 TraderLink Platform Phase 5 Slice F2 technical checkpoint
+
+- Migrations 0012-0013 add stable multi-provider Platform authentication
+  identity/session tables and Academy user-level completion/event tables.
+- The real database has 13 migrations, one backfilled development identity,
+  zero public sessions, zero Academy completion/event rows, schema digest
+  `050f62f2ec6d86419897dc2202df7b3ad6a5e0155c94994a8fb8da0577d389db`,
+  size 11,157,504 bytes and SHA-256
+  `858aec8c7ad77d86911889c5627934142c825809831c22ce4acc733b5d6ea913`.
+- All 1,072 executions, 333 round trips and two Data Decisions remain
+  unchanged. No legacy annotation test data, Discord identity or production
+  Academy progress was copied.
+- Academy local pages and completion mutation now resolve the guarded Platform
+  development user without Discord. Production Discord/hosted progress remains
+  unchanged compatibility until F6 exact mapping and activation.
+- Registry validation preserves 107 protected slugs and zero aliases. Focused
+  TypeScript/lint, static/disposable/real-database verification and pre/post
+  backup/restore checks pass. Two focused files/five tests are written but
+  remain policy-deferred to Phase 6.
+
+Current best next step:
+
+- Continue Slice F3 with Watchlist-owned storage and Platform access while
+  preserving production data and Premium policy. Remove Journal-named storage
+  fallbacks and keep port 3010 off until the integrated visual checkpoint.
+
+# 2026-08-02 TraderLink Platform Phase 5 Slice F3 technical checkpoint
+
+- Migration 0014 adds Watchlist-owned current-symbol, global-health and
+  immutable archive tables with SQLite/hosted revision parity. The real
+  replacement database now has 14 migrations, 55 domain tables, schema digest
+  `02c03c5e02ea31050b03f3c3662517da1813d240e004bff2658508acc67f6b25`,
+  size 11,190,272 bytes and SHA-256
+  `b0164b6f77ee91153b882a6a4a12caee210ce9423c949f3d971b15322b377afe`.
+- All three Watchlist tables remain empty. Journal stays at 1,072 executions,
+  333 round trips and two Data Decisions; Academy stays at zero completions.
+  The 32,768-byte legacy Watchlist database remains untouched test/preservation
+  evidence and its zero rows were not copied.
+- Runtime storage no longer falls back to Academy, generic, V3, Journal-named
+  or repository-local databases and ordinary requests execute no schema DDL.
+  Local runtime uses the protected Platform database; hosted runtime requires
+  `LIVE_WATCHLIST_DATABASE_URL`.
+- Watchlist pages/read/stream APIs now use a Watchlist access service with the
+  guarded local Platform identity and a temporary production Discord Premium
+  adapter. Publisher ingest/recap/archive-reset authority remains separate.
+- Pre/post online backup/restore, fresh initialization, full schema/integrity,
+  real count preservation and disposable health/symbol/archive/reset runtime
+  proofs pass. Focused TypeScript/lint and the 107-file active replacement gate
+  pass. Vitest remains policy-deferred to Phase 6.
+
+Current best next step:
+
+- Continue F5 with Platform readiness/peer surfaces and exact disposition of
+  every preserved `/intelligence` capability. Keep port 3010 off until the next
+  integrated visual checkpoint.
+
+# 2026-08-02 TraderLink Platform Phase 5 Slice F4 technical checkpoint
+
+- Migrations 0015-0016 add News current/immutable-version storage and stable
+  Platform-user Affiliate invite/first-touch attribution. The real database
+  now has 16 migrations, 59 domain tables plus the registry, schema digest
+  `0c70a9a63c5716034b2a68f80ba2965511c6fba5277680ef547febefccb20311`,
+  size 11,268,096 bytes and SHA-256
+  `9f14fade99348729336044c36f30edd4c9f0ad53a75dcb2de7b3eb5b9b9fae5d`.
+- The one local legacy News article was backed up/restored, copied with one
+  matching immutable version and reconciled at content digest
+  `fe75ca0625fd083af13e171e4fe08e4568055fb3599b3e911674e19ca6434058`.
+  A second import was idempotent. No local Affiliate table/row existed, so
+  Affiliate starts empty.
+- Local News/Affiliate runtime uses the protected Platform database; hosted
+  runtime accepts only named module URLs. Runtime DDL and broad Academy/
+  generic/V3/Journal-named/repository fallbacks are removed. Publisher token
+  is required in every environment.
+- News pages use Platform-aware Academy progress locally. Filtered-news
+  checkout uses stable Platform user locally and a named production Discord
+  compatibility adapter until F6 identity mapping.
+- Pre/post and legacy-source backup/restore pairs, fresh 16-migration
+  initialization, exact/idempotent import, full schema/integrity, disposable
+  versioning/first-touch behavior, focused TypeScript/lint and the 117-file
+  active replacement gate pass. Vitest remains policy-deferred to Phase 6.
+
+Current best next step:
+
+- Continue F5 with Platform peers and complete legacy-route disposition.
+  Delete nothing and keep port 3010 off until integrated visual review.

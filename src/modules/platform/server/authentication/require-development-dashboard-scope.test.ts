@@ -1,4 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { deriveJournalAccountSelectionRef } from "../../contracts/journal-account-selection";
+import {
+  currentJournalAccountSelectionRef,
+  requireExpectedJournalAccountSelection,
+} from "./journal-account-selection-authorization";
 
 import {
   TRADERLINK_PLATFORM_ALLOW_DEVELOPMENT_DASHBOARD_ENV,
@@ -32,6 +37,28 @@ function runtimeHeaders(): Headers {
 }
 
 describe("development dashboard request boundary", () => {
+  it("rejects stale and forged mutation selections without disclosing account IDs", () => {
+    const workspaceId = "11111111-1111-4111-8111-111111111111";
+    const accountA = "22222222-2222-4222-8222-222222222222";
+    const accountB = "33333333-3333-4333-8333-333333333333";
+    const scope = {
+      userId: "44444444-4444-4444-8444-444444444444",
+      workspaceId,
+      workspaceRole: "owner" as const,
+      allowedAccountIds: [accountA, accountB],
+      activeAccountId: accountA,
+    };
+    const activeRef = deriveJournalAccountSelectionRef(workspaceId, accountA);
+    expect(currentJournalAccountSelectionRef(scope)).toBe(activeRef);
+    expect(requireExpectedJournalAccountSelection(scope, activeRef)).toBe(activeRef);
+    expect(() => requireExpectedJournalAccountSelection(
+      scope,
+      deriveJournalAccountSelectionRef(workspaceId, accountB),
+    )).toThrowError("TRADERLINK_ACCOUNT_SELECTION_CONFLICT");
+    expect(() => requireExpectedJournalAccountSelection(scope, "f".repeat(64)))
+      .toThrowError("TRADERLINK_ACCOUNT_ACCESS_DENIED");
+  });
+
   it("accepts only the exact launcher assertion and synthesized loopback forwarding", () => {
     expect(validateDevelopmentDashboardRequest(
       runtimeHeaders(),

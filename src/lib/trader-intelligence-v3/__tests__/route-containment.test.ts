@@ -70,7 +70,7 @@ describe("Trader Intelligence route containment matrix", () => {
 
     expect(new Set(classifiedRoutes).size).toBe(classifiedRoutes.length);
     expect(classifiedRoutes).toEqual(actualRoutes);
-    expect(classifiedRoutes).toHaveLength(108);
+    expect(classifiedRoutes).toHaveLength(136);
   });
 
   it("uses AST inspection to require exact wrapper paths and complete method coverage", () => {
@@ -83,10 +83,14 @@ describe("Trader Intelligence route containment matrix", () => {
     ).toEqual([]);
   });
 
-  it("prohibits state-changing GET classifications", () => {
+  it("requires mutation classifications to include an unsafe HTTP method", () => {
     for (const entry of TRADER_INTELLIGENCE_ROUTE_CONTAINMENT_MATRIX) {
       if (entry.classification === "owner_mutation") {
-        expect(entry.methods).not.toContain("GET");
+        expect(
+          entry.methods.some(
+            (method) => !["GET", "HEAD", "OPTIONS"].includes(method),
+          ),
+        ).toBe(true);
       }
     }
   });
@@ -185,9 +189,7 @@ describe("Trader Intelligence route containment matrix", () => {
     expect(layoutSource).toContain("requireTraderIntelligenceOwnerPageAccess");
     expect(dashboardLayoutSource).toContain('dynamic = "force-dynamic"');
     expect(dashboardLayoutSource).toContain('fetchCache = "force-no-store"');
-    expect(dashboardLayoutSource).toContain(
-      "requireTraderIntelligenceOwnerPageAccess",
-    );
+    expect(dashboardLayoutSource).toContain("requireTraderLinkPlatformPageIdentity");
     expect(nextConfigSource).toContain('"/intelligence/:path*"');
     expect(nextConfigSource).toContain('"/workspace/:path*"');
     expect(nextConfigSource).toContain('"/trades/:path*"');

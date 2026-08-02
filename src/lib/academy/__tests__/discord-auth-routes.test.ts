@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { NextRequest } from "next/server";
@@ -10,42 +11,32 @@ import {
   ACADEMY_OAUTH_PROMPT_COOKIE,
   ACADEMY_OAUTH_RETURN_TO_COOKIE,
   ACADEMY_OAUTH_STATE_COOKIE,
-  ACADEMY_SESSION_COOKIE,
-  AcademyProgressStore,
 } from "../academy-progress-store";
+import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
+import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
+import { PlatformDiscordSignInService } from "@/src/modules/platform/server/authentication/platform-discord-sign-in-service";
+import { TRADERLINK_PLATFORM_SESSION_COOKIE } from "@/src/modules/platform/server/authentication/platform-session-service";
+
+const roots: string[] = [];
 
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
+  for (const root of roots.splice(0)) {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 describe("Discord Academy auth routes", () => {
-  it("keeps users with an active Academy session out of Discord OAuth", async () => {
-    vi.stubEnv("ACADEMY_PROGRESS_STORAGE", "sqlite");
-    vi.stubEnv(
-      "TRADER_INTELLIGENCE_DB_PATH",
-      join(tmpdir(), `traderslink-academy-auth-${randomUUID()}.sqlite`),
-    );
-
-    const store = new AcademyProgressStore();
-    await store.upsertUser({
-      discordUserId: "discord-1",
-      username: "academy-user",
-      globalName: "Academy User",
-      avatar: null,
-      guildId: "guild-1",
-      joinedAt: null,
-      rawUser: {},
-      rawMember: {},
-    });
-    const session = await store.createSession("discord-1");
+  it("keeps users with an active Platform session out of Discord OAuth", async () => {
+    const sessionToken = createPlatformSession({ roles: [] });
 
     const response = await loginGET(
       new NextRequest(
         "https://traderslink.pro/api/auth/discord/login?returnTo=%2Facademy%2F",
         {
           headers: {
-            cookie: `${ACADEMY_SESSION_COOKIE}=${session.token}`,
+            cookie: `${TRADERLINK_PLATFORM_SESSION_COOKIE}=${sessionToken}`,
           },
         },
       ),
@@ -82,34 +73,17 @@ describe("Discord Academy auth routes", () => {
   });
 
   it("refreshes Discord roles when an Academy member without Premium requests the watchlist", async () => {
-    vi.stubEnv("ACADEMY_PROGRESS_STORAGE", "sqlite");
-    vi.stubEnv(
-      "TRADER_INTELLIGENCE_DB_PATH",
-      join(tmpdir(), `traderslink-role-refresh-${randomUUID()}.sqlite`),
-    );
-    vi.stubEnv("TRADERSLINK_PREMIUM_DISCORD_ROLE_ID", "premium-role");
+    const sessionToken = createPlatformSession({ roles: [] });
+    vi.stubEnv("TRADERSLINK_PREMIUM_DISCORD_ROLE_ID", "200");
     vi.stubEnv("DISCORD_CLIENT_ID", "client-id");
     vi.stubEnv("DISCORD_CLIENT_SECRET", "client-secret");
-
-    const store = new AcademyProgressStore();
-    await store.upsertUser({
-      discordUserId: "discord-basic",
-      username: "basic-member",
-      globalName: "Basic Member",
-      avatar: null,
-      guildId: "guild-1",
-      joinedAt: null,
-      rawUser: {},
-      rawMember: { roles: [] },
-    });
-    const session = await store.createSession("discord-basic");
 
     const response = await loginGET(
       new NextRequest(
         "https://traderslink.pro/api/auth/discord/login?returnTo=%2Fwatchlist%2FALBT",
         {
           headers: {
-            cookie: `${ACADEMY_SESSION_COOKIE}=${session.token}`,
+            cookie: `${TRADERLINK_PLATFORM_SESSION_COOKIE}=${sessionToken}`,
           },
         },
       ),
@@ -125,32 +99,15 @@ describe("Discord Academy auth routes", () => {
   });
 
   it("reuses a Premium member session for the requested watchlist page", async () => {
-    vi.stubEnv("ACADEMY_PROGRESS_STORAGE", "sqlite");
-    vi.stubEnv(
-      "TRADER_INTELLIGENCE_DB_PATH",
-      join(tmpdir(), `traderslink-role-reuse-${randomUUID()}.sqlite`),
-    );
-    vi.stubEnv("TRADERSLINK_PREMIUM_DISCORD_ROLE_ID", "premium-role");
-
-    const store = new AcademyProgressStore();
-    await store.upsertUser({
-      discordUserId: "discord-premium",
-      username: "premium-member",
-      globalName: "Premium Member",
-      avatar: null,
-      guildId: "guild-1",
-      joinedAt: null,
-      rawUser: {},
-      rawMember: { roles: ["premium-role"] },
-    });
-    const session = await store.createSession("discord-premium");
+    const sessionToken = createPlatformSession({ roles: ["200"] });
+    vi.stubEnv("TRADERSLINK_PREMIUM_DISCORD_ROLE_ID", "200");
 
     const response = await loginGET(
       new NextRequest(
         "https://traderslink.pro/api/auth/discord/login?returnTo=%2Fwatchlist%2FALBT",
         {
           headers: {
-            cookie: `${ACADEMY_SESSION_COOKIE}=${session.token}`,
+            cookie: `${TRADERLINK_PLATFORM_SESSION_COOKIE}=${sessionToken}`,
           },
         },
       ),
@@ -182,9 +139,11 @@ describe("Discord Academy auth routes", () => {
     );
 
     const setCookieHeader = getSetCookieHeaders(response).join("\n");
-    expect(setCookieHeader).toContain(
-      `${ACADEMY_OAUTH_STATE_COOKIE}=; Path=/; Max-Age=0; Domain=.traderslink.pro`,
-    );
+    expect(getSetCookieHeaders(response).some((cookie) =>
+      cookie.includes(`${ACADEMY_OAUTH_STATE_COOKIE}=;`) &&
+      cookie.includes("Max-Age=0") &&
+      cookie.includes("Domain=.traderslink.pro")
+    )).toBe(true);
     expect(setCookieHeader).toContain(
       `${ACADEMY_OAUTH_STATE_COOKIE}=; Path=/; Max-Age=0`,
     );
@@ -207,14 +166,9 @@ describe("Discord Academy auth routes", () => {
   });
 
   it("allows every server member into Academy without requiring Premium", async () => {
+    createPlatformDatabase();
     stubDiscordOAuth({ roles: [] });
-    const storagePath = join(
-      tmpdir(),
-      `traderslink-academy-member-${randomUUID()}.sqlite`,
-    );
-    vi.stubEnv("ACADEMY_PROGRESS_STORAGE", "sqlite");
-    vi.stubEnv("TRADER_INTELLIGENCE_DB_PATH", storagePath);
-    vi.stubEnv("TRADERSLINK_PREMIUM_DISCORD_ROLE_ID", "premium-role");
+    vi.stubEnv("TRADERSLINK_PREMIUM_DISCORD_ROLE_ID", "200");
 
     const response = await callbackGET(
       callbackRequest("/academy/getting-started"),
@@ -224,18 +178,14 @@ describe("Discord Academy auth routes", () => {
       "https://traderslink.pro/academy/getting-started?auth=connected",
     );
     expect(getSetCookieHeaders(response).join("\n")).toContain(
-      ACADEMY_SESSION_COOKIE,
+      TRADERLINK_PLATFORM_SESSION_COOKIE,
     );
   });
 
   it("creates a site session but blocks a non-Premium member from the watchlist", async () => {
+    createPlatformDatabase();
     stubDiscordOAuth({ roles: [] });
-    vi.stubEnv("ACADEMY_PROGRESS_STORAGE", "sqlite");
-    vi.stubEnv(
-      "TRADER_INTELLIGENCE_DB_PATH",
-      join(tmpdir(), `traderslink-watchlist-basic-${randomUUID()}.sqlite`),
-    );
-    vi.stubEnv("TRADERSLINK_PREMIUM_DISCORD_ROLE_ID", "premium-role");
+    vi.stubEnv("TRADERSLINK_PREMIUM_DISCORD_ROLE_ID", "200");
 
     const response = await callbackGET(callbackRequest("/watchlist/ALBT"));
 
@@ -243,18 +193,14 @@ describe("Discord Academy auth routes", () => {
       "https://traderslink.pro/watchlist/ALBT?auth=premium-required",
     );
     expect(getSetCookieHeaders(response).join("\n")).toContain(
-      ACADEMY_SESSION_COOKIE,
+      TRADERLINK_PLATFORM_SESSION_COOKIE,
     );
   });
 
   it("returns a Premium server member to the requested watchlist page", async () => {
-    stubDiscordOAuth({ roles: ["premium-role"] });
-    vi.stubEnv("ACADEMY_PROGRESS_STORAGE", "sqlite");
-    vi.stubEnv(
-      "TRADER_INTELLIGENCE_DB_PATH",
-      join(tmpdir(), `traderslink-watchlist-premium-${randomUUID()}.sqlite`),
-    );
-    vi.stubEnv("TRADERSLINK_PREMIUM_DISCORD_ROLE_ID", "premium-role");
+    createPlatformDatabase();
+    stubDiscordOAuth({ roles: ["200"] });
+    vi.stubEnv("TRADERSLINK_PREMIUM_DISCORD_ROLE_ID", "200");
 
     const response = await callbackGET(callbackRequest("/watchlist/ALBT"));
 
@@ -262,18 +208,14 @@ describe("Discord Academy auth routes", () => {
       "https://traderslink.pro/watchlist/ALBT?auth=connected",
     );
     expect(getSetCookieHeaders(response).join("\n")).toContain(
-      ACADEMY_SESSION_COOKIE,
+      TRADERLINK_PLATFORM_SESSION_COOKIE,
     );
   });
 
   it("returns the Discord server owner to the requested watchlist page", async () => {
+    createPlatformDatabase();
     stubDiscordOAuth({ roles: [], owner: true });
-    vi.stubEnv("ACADEMY_PROGRESS_STORAGE", "sqlite");
-    vi.stubEnv(
-      "TRADER_INTELLIGENCE_DB_PATH",
-      join(tmpdir(), `traderslink-watchlist-owner-${randomUUID()}.sqlite`),
-    );
-    vi.stubEnv("TRADERSLINK_PREMIUM_DISCORD_ROLE_ID", "premium-role");
+    vi.stubEnv("TRADERSLINK_PREMIUM_DISCORD_ROLE_ID", "200");
 
     const response = await callbackGET(callbackRequest("/watchlist/ALBT"));
 
@@ -281,10 +223,59 @@ describe("Discord Academy auth routes", () => {
       "https://traderslink.pro/watchlist/ALBT?auth=connected",
     );
     expect(getSetCookieHeaders(response).join("\n")).toContain(
-      ACADEMY_SESSION_COOKIE,
+      TRADERLINK_PLATFORM_SESSION_COOKIE,
     );
   });
 });
+
+function createPlatformDatabase(): string {
+  const root = mkdtempSync(join(tmpdir(), "traderlink-discord-route-"));
+  roots.push(root);
+  const databasePath = join(root, `${randomUUID()}.sqlite`);
+  const database = openPlatformDatabase({
+    mode: "initializer",
+    databasePath,
+    forbiddenRepositoryRoots: [],
+  });
+  try {
+    runPlatformMigrations(database);
+  } finally {
+    database.close();
+  }
+  vi.stubEnv("NODE_ENV", "production");
+  vi.stubEnv("TRADERLINK_PLATFORM_DB_PATH", databasePath);
+  vi.stubEnv("DISCORD_GUILD_ID", "1433570740430573642");
+  return databasePath;
+}
+
+function createPlatformSession({
+  roles,
+  owner = false,
+}: {
+  roles: string[];
+  owner?: boolean;
+}): string {
+  const databasePath = createPlatformDatabase();
+  const database = openPlatformDatabase({
+    mode: "runtime",
+    databasePath,
+    forbiddenRepositoryRoots: [],
+  });
+  try {
+    return new PlatformDiscordSignInService(database).signIn({
+      authSubject: "123456789012345678",
+      username: "server-member",
+      globalDisplayName: "Server Member",
+      avatarHash: null,
+      guildId: "1433570740430573642",
+      roleIds: roles,
+      guildOwner: owner,
+      joinedAtUtc: "2026-07-21T00:00:00.000Z",
+    }).session.token;
+  } finally {
+    database.close();
+  }
+}
 
 function callbackRequest(returnTo: string): NextRequest {
   return new NextRequest(

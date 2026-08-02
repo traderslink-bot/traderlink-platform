@@ -218,7 +218,8 @@ function containsPrivateAccountToken(
   privateTokens: readonly string[],
 ): boolean {
   const candidateForms = privacyComparisonForms(candidate, true);
-  const tokenForms = privateTokens.flatMap(privacyComparisonForms);
+  const tokenForms = privateTokens.flatMap((token) =>
+    privacyComparisonForms(token));
   return candidateForms.some((candidateForm) =>
     tokenForms.some((tokenForm) => candidateForm.includes(tokenForm)));
 }
@@ -360,6 +361,7 @@ export class JournalAccountService {
       sourceSystem: string;
       rawSourceAccountId: string;
       privacySafeDisplay: string;
+      sourceAccountCanonicalizationVersion?: string;
       now?: Date;
     }>,
   ): ResolvedJournalSourceIdentity {
@@ -412,6 +414,7 @@ export class JournalAccountService {
       sourceSystem: string;
       rawSourceAccountId: string;
       privacySafeDisplay: string;
+      sourceAccountCanonicalizationVersion?: string;
       now?: Date;
     }>,
   ): ResolvedJournalSourceIdentity {
@@ -447,6 +450,7 @@ export class JournalAccountService {
       input.sourceSystem,
       input.rawSourceAccountId,
       input.privacySafeDisplay,
+      input.sourceAccountCanonicalizationVersion,
       input.now,
     );
     return resolvedIdentityResult(account, sourceIdentity);
@@ -459,6 +463,7 @@ export class JournalAccountService {
       sourceSystem: string;
       rawSourceAccountId: string;
       privacySafeDisplay: string;
+      sourceAccountCanonicalizationVersion?: string;
       now?: Date;
     }>,
   ): ResolvedJournalSourceIdentity {
@@ -472,6 +477,7 @@ export class JournalAccountService {
       sourceSystem: string;
       rawSourceAccountId: string;
       privacySafeDisplay: string;
+      sourceAccountCanonicalizationVersion?: string;
       now?: Date;
     }>,
   ): ResolvedJournalSourceIdentity {
@@ -501,6 +507,7 @@ export class JournalAccountService {
       input.sourceSystem,
       input.rawSourceAccountId,
       input.privacySafeDisplay,
+      input.sourceAccountCanonicalizationVersion,
       input.now,
     );
     return resolvedIdentityResult(account, sourceIdentity);
@@ -533,6 +540,7 @@ export class JournalAccountService {
     sourceSystem: string,
     rawSourceAccountId: string,
     privacySafeDisplay: string,
+    sourceAccountCanonicalizationVersion: string | undefined,
     now: Date | undefined,
   ): JournalAccountSourceIdentityRecord {
     requireWorkspaceManager(scope, account.workspaceId);
@@ -552,9 +560,18 @@ export class JournalAccountService {
       rawSourceAccountId,
       candidateValues: [privacySafeDisplay],
     });
+    const currentCanonicalizationVersion = sourceAccountCanonicalizationVersion ??
+      configuration.activeCanonicalizationVersion;
+    assertLowercaseToken(
+      currentCanonicalizationVersion,
+      "sourceAccountCanonicalizationVersion",
+    );
+    if (!configuration.canonicalizers.has(currentCanonicalizationVersion)) {
+      platformFailure("TRADERLINK_ACCOUNT_IDENTITY_CONFIGURATION_INVALID");
+    }
     const currentTuple = this.buildFingerprintTuples([], sourceSystem, rawSourceAccountId).find(
       (tuple) =>
-        tuple.canonicalizationVersion === configuration.activeCanonicalizationVersion &&
+        tuple.canonicalizationVersion === currentCanonicalizationVersion &&
         tuple.hmacKeyVersion === configuration.activeKeyVersion,
     );
     if (!currentTuple) {

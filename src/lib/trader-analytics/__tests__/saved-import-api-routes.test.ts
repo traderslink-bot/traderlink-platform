@@ -16,13 +16,23 @@ import { POST as setReviewStatus } from "../../../../app/api/trades/[tradeId]/re
 import { POST as setReviewItemStatus } from "../../../../app/api/trades/[tradeId]/review-items/[itemId]/route";
 import { POST as markTradeClosed } from "../../../../app/api/trades/[tradeId]/mark-closed/route";
 import { GET as latestAnalytics } from "../../../../app/api/analytics/latest/route";
-import { GET as latestCoach } from "../../../../app/api/coach/latest/route";
-import { GET as latestReview } from "../../../../app/api/review/latest/route";
+import { buildGuidedReviewSession } from "..";
 import {
   resetTraderIntelligenceDatabaseForTests,
   SqliteImportCommitRepository,
 } from "../product/import-commit/sqlite-import-commit-repository";
-import { runPersistedDecisionReviewJobs } from "../server/saved-decision-review-service";
+import {
+  buildSavedDecisionReviewReadModel,
+  runPersistedDecisionReviewJobs,
+} from "../server/saved-decision-review-service";
+import { buildLatestSavedImportSourceCautionReadModel } from "../server/saved-import-source-caution";
+import { buildSavedReviewQueueReadModel } from "../server/saved-review-queue";
+import { buildSavedOrSampleTraderAnalyticsViewModel } from "../server/saved-trader-analytics-data";
+import { resolveConfiguredOwnerWorkspaceImportContext } from "../server/owner-workspace-context";
+import {
+  canUseChartContext,
+  readTraderIntelligenceTierFromEnv,
+} from "../product/tier-config";
 import {
   buildSampleLevelsSystemSupportResistanceOptions,
 } from "../../support-resistance/__fixtures__/sample-levels-system-fetch-service";
@@ -89,6 +99,62 @@ function jsonRequest(body: unknown): Request {
 
 function localGet(url: string): Request {
   return createTraderIntelligenceTestRequest(url);
+}
+
+// These direct compatibility readers keep this V3 repository suite scoped to
+// its saved-import models. The public Coach and Review routes now belong to the
+// replacement Journal/Coach modules and have separate route coverage.
+function latestCoach(): Response {
+  const ownerContext = resolveConfiguredOwnerWorkspaceImportContext({});
+  const data = buildSavedOrSampleTraderAnalyticsViewModel({
+    userId: ownerContext.ownerId,
+  });
+  return Response.json({
+    source: data.mode === "saved" ? "saved_sqlite" : "sample_fallback",
+    coach: data.viewModel.coachActionLoop.coachHome,
+    emptyState: data.viewModel.coachActionLoop.emptyState,
+    focusQueue: data.viewModel.focusQueue,
+    savedImportSourceCaution: data.mode === "saved"
+      ? buildLatestSavedImportSourceCautionReadModel({
+          repository: data.repository,
+          accountId: ownerContext.account.id,
+        })
+      : null,
+  });
+}
+
+function latestReview(): Response {
+  const ownerContext = resolveConfiguredOwnerWorkspaceImportContext({});
+  const data = buildSavedOrSampleTraderAnalyticsViewModel({
+    userId: ownerContext.ownerId,
+  });
+  const chartContextAllowed = canUseChartContext(
+    readTraderIntelligenceTierFromEnv(),
+  );
+  return Response.json({
+    source: data.mode === "saved" ? "saved_sqlite" : "sample_fallback",
+    review: buildGuidedReviewSession({ analytics: data.viewModel }),
+    savedDecisionReview: data.mode === "saved" && chartContextAllowed
+      ? buildSavedDecisionReviewReadModel({
+          repository: data.repository,
+          accountId: ownerContext.account.id,
+        })
+      : null,
+    savedReviewQueue: data.mode === "saved"
+      ? buildSavedReviewQueueReadModel({
+          includeChartContext: chartContextAllowed,
+          repository: data.repository,
+          accountId: ownerContext.account.id,
+          userId: ownerContext.ownerId,
+        })
+      : null,
+    savedImportSourceCaution: data.mode === "saved"
+      ? buildLatestSavedImportSourceCautionReadModel({
+          repository: data.repository,
+          accountId: ownerContext.account.id,
+        })
+      : null,
+  });
 }
 
 beforeEach(() => {
@@ -251,11 +317,11 @@ describe("saved import API routes", () => {
     expect(analytics.source).toBe("saved_sqlite");
     expect(analytics.latestReport.sampleData).toBe(false);
 
-    const coach = await (await latestCoach(localGet("http://localhost/api/coach/latest"))).json();
+    const coach = await (await latestCoach()).json();
     expect(coach.source).toBe("saved_sqlite");
     expect(coach.emptyState.kind).not.toBe("sample_data");
 
-    const review = await (await latestReview(localGet("http://localhost/api/review/latest"))).json();
+    const review = await (await latestReview()).json();
     expect(review.source).toBe("saved_sqlite");
     expect(review.savedDecisionReview).toMatchObject({
       totalJobCount: 1,
@@ -283,7 +349,7 @@ describe("saved import API routes", () => {
     });
     expect(status.status).toBe(200);
 
-    const resolvedReview = await (await latestReview(localGet("http://localhost/api/review/latest"))).json();
+    const resolvedReview = await (await latestReview()).json();
     expect(resolvedReview.savedReviewQueue.allItems).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ symbol: "APIX", reviewStatus: "resolved" }),
@@ -380,7 +446,7 @@ describe("saved import API routes", () => {
     expect(reviewRun.completedSnapshotCount).toBe(1);
 
     process.env.TRADER_INTELLIGENCE_TIER = "chart_context";
-    const chartTierReview = await (await latestReview(localGet("http://localhost/api/review/latest"))).json();
+    const chartTierReview = await (await latestReview()).json();
     expect(chartTierReview.source).toBe("saved_sqlite");
     expect(chartTierReview.review).toMatchObject({
       title: "Guided Review Session",
@@ -400,7 +466,7 @@ describe("saved import API routes", () => {
     );
 
     process.env.TRADER_INTELLIGENCE_TIER = "free_execution";
-    const freeTierReview = await (await latestReview(localGet("http://localhost/api/review/latest"))).json();
+    const freeTierReview = await (await latestReview()).json();
     expect(freeTierReview.source).toBe("saved_sqlite");
     expect(freeTierReview.review).toMatchObject({
       title: "Guided Review Session",
@@ -483,7 +549,7 @@ describe("saved import API routes", () => {
     resetTraderIntelligenceDatabaseForTests();
 
     const trades = await (await listTrades(localGet("http://localhost/api/trades"))).json();
-    const review = await (await latestReview(localGet("http://localhost/api/review/latest"))).json();
+    const review = await (await latestReview()).json();
 
     expect(trades.source).toBe("saved_sqlite");
     expect(trades.trades).toEqual(
@@ -604,7 +670,7 @@ describe("saved import API routes", () => {
         "This saved import came from repaired CSV rows. Review repaired row values before trusting coaching evidence.",
     });
 
-    const coach = await (await latestCoach(localGet("http://localhost/api/coach/latest"))).json();
+    const coach = await (await latestCoach()).json();
     expect(coach.source).toBe("saved_sqlite");
     expect(coach.emptyState.kind).not.toBe("sample_data");
     expect(coach.savedImportSourceCaution).toMatchObject({
@@ -612,7 +678,7 @@ describe("saved import API routes", () => {
       relatedTradeIds: expect.arrayContaining([tradeId]),
     });
 
-    const review = await (await latestReview(localGet("http://localhost/api/review/latest"))).json();
+    const review = await (await latestReview()).json();
     expect(review.source).toBe("saved_sqlite");
     expect(review.savedImportSourceCaution).toMatchObject({
       repairedImport: true,
@@ -706,11 +772,11 @@ describe("saved import API routes", () => {
     expect(analytics.latestReport.sampleData).toBe(false);
     expect(JSON.stringify(analytics.latestReport)).toContain("GLNG");
 
-    const coach = await (await latestCoach(localGet("http://localhost/api/coach/latest"))).json();
+    const coach = await (await latestCoach()).json();
     expect(coach.source).toBe("saved_sqlite");
     expect(coach.emptyState.kind).not.toBe("sample_data");
 
-    const review = await (await latestReview(localGet("http://localhost/api/review/latest"))).json();
+    const review = await (await latestReview()).json();
     expect(review.source).toBe("saved_sqlite");
     expect(review.savedReviewQueue.allItems).toEqual(
       expect.arrayContaining([
@@ -847,7 +913,7 @@ describe("saved import API routes", () => {
     });
     expect(commit.status).toBe(200);
 
-    const review = await (await latestReview(localGet("http://localhost/api/review/latest"))).json();
+    const review = await (await latestReview()).json();
     expect(review.savedReviewQueue.allItems).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -886,7 +952,7 @@ describe("saved import API routes", () => {
       },
     });
 
-    const reviewAfterClose = await (await latestReview(localGet("http://localhost/api/review/latest"))).json();
+    const reviewAfterClose = await (await latestReview()).json();
     expect(reviewAfterClose.savedReviewQueue.allItems).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -938,8 +1004,8 @@ describe("saved import API routes", () => {
       preview: previewBody,
       trades: await (await listTrades(localGet("http://localhost/api/trades"))).json(),
       analytics: await (await latestAnalytics(localGet("http://localhost/api/analytics/latest"))).json(),
-      coach: await (await latestCoach(localGet("http://localhost/api/coach/latest"))).json(),
-      review: await (await latestReview(localGet("http://localhost/api/review/latest"))).json(),
+      coach: await (await latestCoach()).json(),
+      review: await (await latestReview()).json(),
     }).toLowerCase();
 
     for (const forbidden of [

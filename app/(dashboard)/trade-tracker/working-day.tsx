@@ -31,7 +31,6 @@ export function TradeTrackerWorkingDay({
         setSubmittedCount(count);
         setSubmittedExecutions(executions);
       }}
-      persist
       sessionDate={sessionDate}
       submittedCount={submittedCount}
     />

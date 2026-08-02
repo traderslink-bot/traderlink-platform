@@ -13,8 +13,8 @@ import type {
 } from "./calendar-types";
 
 export const metadata: Metadata = {
-  title: "Calendar | Trader Intelligence",
-  description: "Daily and ticker-level performance calendar from verified V3 execution data.",
+  title: "Calendar | TraderLink Platform",
+  description: "Daily and ticker-level performance from accepted Journal executions.",
 };
 
 export const dynamic = "force-dynamic";
@@ -40,6 +40,7 @@ function filters(search: Record<string, string | string[] | undefined>): Calenda
   const tradeCount = value(search.tradeCount);
   const pnlRange = value(search.pnlRange);
   return {
+    currency: value(search.currency)?.toUpperCase() ?? "all",
     direction: directionFilters.has(direction as CalendarDirectionFilter) ? direction as CalendarDirectionFilter : "all",
     endDate: validDate(value(search.endDate)) ?? "",
     performance: performanceFilters.has(performance as CalendarPerformanceFilter) ? performance as CalendarPerformanceFilter : "all",
@@ -63,6 +64,9 @@ export default async function CalendarPage({
   const initialView: CalendarView = value(query.view) === "week" ? "week" : "month";
   const initialFilters: CalendarFilterInput = {
     ...selectedFilters,
+    currency: selectedFilters.currency === "all"
+      ? initialData.currency ?? "all"
+      : selectedFilters.currency,
     endDate: selectedFilters.endDate || initialData.maximumDate,
     startDate: selectedFilters.startDate || initialData.minimumDate,
   };

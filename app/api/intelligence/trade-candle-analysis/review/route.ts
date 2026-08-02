@@ -1,89 +1,74 @@
-import { resolveCompletedCandleReviewTrade } from "@/src/lib/trade-candle-analysis/completed-trade";
-import { runTradeCandleReview } from "@/src/lib/trade-candle-analysis/review-runner";
-import type { StoredTradeCandleReview } from "@/src/lib/trade-candle-analysis/review-store";
-import { resolveConfiguredDashboardAnalytics } from "@/src/lib/trader-intelligence-v3/analytics/dashboard/configured-dashboard-analytics";
+import { narrowWorkspaceAccessToAccount } from "@/src/modules/platform/contracts/workspace-access-scope";
+import type { CandleReviewRecord } from "@/src/modules/level-analysis/contracts/candle-review-contracts";
+import { CandleReviewRepository } from "@/src/modules/level-analysis/server/candle-review-repository";
+import { CandleReviewService } from "@/src/modules/level-analysis/server/candle-review-service";
+import { YahooChartMarketDataProvider } from "@/src/modules/level-analysis/server/providers/yahoo-chart-market-data-provider";
 import {
-  requireTraderIntelligenceOwnerPageAccess,
-  withTraderIntelligenceOwnerRoute,
-} from "@/src/lib/trader-intelligence-v3/auth";
-import { validateTraderIntelligenceDeployment } from "@/src/lib/trader-intelligence-v3/deployment";
+  requireTraderLinkPlatformRequestScope,
+  requireExpectedJournalAccountSelection,
+} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import {
+  isCanonicalUuidV4,
+  isTraderLinkPlatformError,
+} from "@/src/modules/platform/server/database/platform-migration-contract";
+import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const ROUTE_PATH = "app/api/intelligence/trade-candle-analysis/review/route.ts";
-
 function unavailable(message: string, status = 422): Response {
-  return Response.json({ status: "unavailable", message }, { status });
+  return Response.json({ ok: false, message }, { status });
 }
 
-function responseFor(record: StoredTradeCandleReview, reused: boolean): Response {
-  return Response.json({
-    analysis: record.analysis,
-    analyzedAt: record.analyzedAt,
-    analysisVersion: record.analysisVersion,
-    observations: record.observations,
-    indicators: record.indicators,
-    refreshAvailableAt: record.refreshAvailableAt,
-    reused,
-    status: record.status,
-    trade: {
-      direction: record.trade.direction,
-      entryPrice: record.trade.entryPrice,
-      entryTime: record.trade.entryTime,
-      exitPrice: record.trade.exitPrice,
-      exitTime: record.trade.exitTime,
-      symbol: record.trade.symbol,
-    },
-  });
+function responseFor(record: CandleReviewRecord, reused: boolean): Response {
+  return Response.json({ ok: true, record, reused });
 }
 
-async function POSTHandler(request: Request): Promise<Response> {
+export async function POST(request: Request): Promise<Response> {
   let body: unknown;
   try {
     body = await request.json();
   } catch {
     return unavailable("Choose a completed trade to analyze.", 400);
   }
-  const semanticRoundTripKey =
-    typeof body === "object" && body !== null && !Array.isArray(body)
-      ? (body as Record<string, unknown>).semanticRoundTripKey
-      : null;
-  if (typeof semanticRoundTripKey !== "string" || semanticRoundTripKey.length > 512) {
+  const value = body && typeof body === "object" && !Array.isArray(body)
+    ? body as Record<string, unknown>
+    : {};
+  const roundTripId = value.roundTripId;
+  const expectedAccountSelectionRef = value.expectedAccountSelectionRef;
+  if (
+    typeof roundTripId !== "string" || !isCanonicalUuidV4(roundTripId) ||
+    typeof expectedAccountSelectionRef !== "string"
+  ) {
     return unavailable("Choose a completed trade to analyze.", 400);
   }
 
-  const deployment = validateTraderIntelligenceDeployment(process.env);
-  if (!deployment.ok || deployment.config.persistence.kind !== "file") {
-    return unavailable("Trade candle review is not configured for this dashboard.", 503);
+  let database: ReturnType<typeof openPlatformDatabase> | null = null;
+  try {
+    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    requireExpectedJournalAccountSelection(scope, expectedAccountSelectionRef);
+    if (!scope.activeAccountId) return unavailable("Select a Journal account.", 409);
+    const accountScope = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId);
+    database = openPlatformDatabase({ mode: "runtime" });
+    const result = await new CandleReviewService(
+      new CandleReviewRepository(database),
+      new YahooChartMarketDataProvider(),
+    ).run(accountScope, roundTripId);
+    return responseFor(result.record, result.reused);
+  } catch (error) {
+    if (isTraderLinkPlatformError(error)) {
+      if (error.code === "TRADERLINK_ACCOUNT_SELECTION_CONFLICT") {
+        return unavailable("The selected Journal account changed. Refresh before analyzing.", 409);
+      }
+      if (error.code === "TRADERLINK_CANDLE_REVIEW_INVALID") {
+        return unavailable("That completed trade is not available for candle review.", 404);
+      }
+      if (error.code === "TRADERLINK_CANDLE_REVIEW_CONFLICT") {
+        return unavailable("The trade changed while the candles were requested. Refresh and try again.", 409);
+      }
+    }
+    return unavailable("The candle review could not be completed or saved. Try again shortly.", 503);
+  } finally {
+    database?.close();
   }
-  const owner = await requireTraderIntelligenceOwnerPageAccess(ROUTE_PATH);
-  const analytics = resolveConfiguredDashboardAnalytics({
-    owner,
-    config: deployment.config,
-    environment: process.env,
-  });
-  if (!analytics.ok) return unavailable("Verified completed trades are not available yet.", 409);
-  const trade = resolveCompletedCandleReviewTrade({
-    analytics: analytics.value,
-    semanticRoundTripKey,
-  });
-  if (!trade) return unavailable("That completed trade is not available for candle review.", 404);
-
-  const review = await runTradeCandleReview({
-    parentPath: deployment.config.persistence.parentPath,
-    trade,
-  });
-  if (review.kind === "provider_unavailable") {
-    return unavailable(
-      "Yahoo could not be reached for this completed trade. Nothing was saved; try again shortly.",
-      503,
-    );
-  }
-  if (review.kind === "save_failed") {
-    return unavailable("The candle review could not be saved. Try again shortly.", 503);
-  }
-  return responseFor(review.record, review.kind === "reused");
 }
-
-export const POST = withTraderIntelligenceOwnerRoute(ROUTE_PATH, POSTHandler);

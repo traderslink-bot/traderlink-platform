@@ -4,9 +4,9 @@ import { WorkspaceDashboard } from "./workspace-dashboard";
 import { formatJournalAnalyticsPartitionedMetric } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import {
   buildJournalAnalyticsDashboardQuery,
-  withJournalAnalyticsDashboardService,
+  withJournalAnalyticsDashboardRuntime,
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
-import { requireDevelopmentDashboardPageScope } from "@/src/modules/platform/server/authentication/require-development-dashboard-scope";
+import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
 export const metadata: Metadata = {
   title: "Workspace | Trader Intelligence",
@@ -25,12 +25,27 @@ const WORKSPACE_METRICS = [
 ] as const;
 
 export default async function WorkspacePage() {
-  const scope = await requireDevelopmentDashboardPageScope();
+  const scope = await requireTraderLinkPlatformPageScope();
   const query = buildJournalAnalyticsDashboardQuery(scope, {
     metricIds: WORKSPACE_METRICS.map(([, metricId]) => metricId),
   });
-  const response = withJournalAnalyticsDashboardService(scope, (service) =>
-    service.getWorkspaceJournalAnalyticsSummary(scope, query));
+  const { calendar, response } = withJournalAnalyticsDashboardRuntime(
+    scope,
+    ({ dashboard, service }) => Object.freeze({
+      response: service.getWorkspaceJournalAnalyticsSummary(scope, query),
+      calendar: dashboard.getCalendar(scope, {
+        currency: null,
+        startDate: null,
+        endDate: null,
+        symbol: null,
+        direction: null,
+        performance: null,
+        pnlBand: null,
+        tradeCountBand: null,
+        session: null,
+      }),
+    }),
+  );
   return (
     <WorkspaceDashboard
       analyticsCoverage={response.crossPartitionCounts}
@@ -39,6 +54,7 @@ export default async function WorkspacePage() {
         caption,
         value: formatJournalAnalyticsPartitionedMetric(response, metricId),
       }))}
+      calendarData={calendar}
     />
   );
 }

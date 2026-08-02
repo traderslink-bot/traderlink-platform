@@ -1,38 +1,34 @@
-import { withTraderIntelligenceOwnerRoute } from "@/src/lib/trader-intelligence-v3/auth";
-
+import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
+import { LevelAnalysisDeliveryRepository } from "@/src/modules/level-analysis/server/level-analysis-delivery-repository";
 import {
-  getJournalLevelAnalysisRawPayloadForAdminApi,
-  journalLevelAnalysisDeliveryErrorResponse,
-} from "../../../../../../../src/lib/level-analysis/level-analysis-journal-delivery-api-service";
-import {
-  isLevelAnalysisDeliveryApiEnabled,
-  isLevelAnalysisDeliveryRawDebugEnabled,
-} from "../../../../../../../src/lib/level-analysis/level-analysis-journal-delivery-persistence-storage";
+  levelAnalysisErrorResponse,
+  levelAnalysisRawDebugEnabled,
+} from "@/src/modules/level-analysis/server/level-analysis-http";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function GETHandler(
-  _request: Request,
+export async function GET(
+  request: Request,
   context: { params: Promise<{ deliveryId: string }> },
 ): Promise<Response> {
-  if (
-    !isLevelAnalysisDeliveryApiEnabled() ||
-    !isLevelAnalysisDeliveryRawDebugEnabled()
-  ) {
-    return journalLevelAnalysisDeliveryErrorResponse(
-      404,
-      "feature_disabled",
-      "Level analysis delivery raw debug API is disabled.",
-    );
+  if (!levelAnalysisRawDebugEnabled()) {
+    return Response.json({ ok: false, code: "feature_disabled" }, { status: 404 });
   }
-
-  const params = await context.params;
-  return Response.json(
-    getJournalLevelAnalysisRawPayloadForAdminApi({
-      deliveryId: params.deliveryId,
-    }),
-  );
+  try {
+    requireTraderLinkPlatformRequestScope(request.headers);
+    const { deliveryId } = await context.params;
+    if (!/^(?:lad|laq)_[0-9a-f]{16}$/u.test(deliveryId)) {
+      return Response.json({ ok: false, code: "invalid_delivery" }, { status: 400 });
+    }
+    const record = withReadonlyPlatformDatabase({}, (database) =>
+      new LevelAnalysisDeliveryRepository(database).get(deliveryId));
+    return record ? Response.json({ status: "found", deliveryId: record.id,
+      rawPayloadHash: record.rawPayloadHash, sourceKind: record.sourceKind,
+      validationStatus: record.validationStatus, rawPayload: record.rawPayload })
+      : Response.json({ status: "not_found" }, { status: 404 });
+  } catch (error) {
+    return levelAnalysisErrorResponse(error);
+  }
 }
-
-export const GET = withTraderIntelligenceOwnerRoute("app/api/admin/level-analysis/deliveries/[deliveryId]/raw/route.ts", GETHandler);

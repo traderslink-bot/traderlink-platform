@@ -22,6 +22,8 @@ import {
   DashboardPanel,
   DashboardUnavailableState,
 } from "../../dashboard-template";
+import type { JournalCalendarReadModel } from "@/src/modules/journal-analytics/contracts/journal-dashboard-read-models";
+import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 
 export type WorkspaceMetric = Readonly<{
   label: string;
@@ -62,11 +64,25 @@ const unavailableMetrics: readonly WorkspaceMetric[] = [
   },
 ];
 
-const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
+function calendarMoney(value: string | null, currency: string | null): string {
+  if (value === null || currency === null) return "P/L unavailable";
+  const prefix = value.startsWith("-") ? "" : "+";
+  return `${currency} ${prefix}${formatJournalAnalyticsDecimal(value)}`;
+}
+
+function calendarDate(value: string): string {
+  return new Date(`${value}T12:00:00.000Z`).toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+    weekday: "short",
+  });
+}
 
 export function WorkspaceDashboard({
   analyticsCoverage,
   analyticsMetrics,
+  calendarData,
 }: {
   analyticsCoverage?: Readonly<{
     readyClosedCount: number;
@@ -76,8 +92,12 @@ export function WorkspaceDashboard({
     feeIncompleteCount: number;
   }>;
   analyticsMetrics?: readonly WorkspaceMetric[];
+  calendarData?: JournalCalendarReadModel;
 }) {
   const metrics = analyticsMetrics ?? unavailableMetrics;
+  const recentTradingDays = calendarData?.days
+    .filter((day) => day.tradeCount > 0)
+    .slice(-7) ?? [];
   return (
     <DashboardPage>
       <Stack
@@ -248,32 +268,61 @@ export function WorkspaceDashboard({
               Next
             </Button>
           </Stack>
-          <Box
-            sx={{
-              display: "grid",
-              gap: 0.75,
-              gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
-            }}
-          >
-            {weekdays.map((weekday) => (
-              <Typography
-                align="center"
-                color="text.secondary"
-                key={weekday}
-                sx={{ fontWeight: 700, py: 0.5 }}
-                variant="caption"
-              >
-                {weekday}
-              </Typography>
-            ))}
-          </Box>
-          <DashboardUnavailableState
-            actionHref="/imports"
-            actionLabel="Add trading history"
-            compact
-            description="Trading days, daily P/L, and round-trip counts will appear here when the Calendar receives the replacement Journal analytics contract."
-            title="No day sessions available"
-          />
+          {recentTradingDays.length > 0 ? (
+            <Box
+              sx={{
+                display: "grid",
+                gap: 1,
+                gridTemplateColumns: {
+                  xs: "repeat(2, minmax(0, 1fr))",
+                  sm: "repeat(4, minmax(0, 1fr))",
+                  xl: "repeat(7, minmax(0, 1fr))",
+                },
+              }}
+            >
+              {recentTradingDays.map((day) => (
+                <Box
+                  key={day.date}
+                  sx={{
+                    backgroundColor: day.pnlSign === -1
+                      ? "rgba(216, 91, 106, 0.07)"
+                      : day.pnlSign === 1
+                        ? "rgba(67, 184, 131, 0.075)"
+                        : "background.paper",
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 1.5,
+                    p: 1.5,
+                  }}
+                >
+                  <Typography color="text.secondary" variant="caption">
+                    {calendarDate(day.date)}
+                  </Typography>
+                  <Typography
+                    color={day.pnlSign === -1 ? "error.main" : "success.main"}
+                    sx={{ fontWeight: 850, mt: 0.5 }}
+                    variant="body2"
+                  >
+                    {calendarMoney(day.pnlDecimal, calendarData?.currency ?? null)}
+                  </Typography>
+                  <Typography color="text.secondary" variant="caption">
+                    {day.tradeCount} completed trade{day.tradeCount === 1 ? "" : "s"}
+                  </Typography>
+                  <Button href={`/trade-tracker/${day.date}`} size="small" sx={{ mt: 1 }}>
+                    Review day
+                  </Button>
+                </Box>
+              ))}
+            </Box>
+          ) : (
+            <DashboardUnavailableState
+              actionHref="/imports"
+              actionLabel="Add trading history"
+              compact
+              description="Trading days appear here after the selected Journal account has a confirmed completed trade. Open positions and decisions remain visible in their own workflows."
+              title="No completed trading days available"
+            />
+          )}
         </Stack>
       </DashboardPanel>
     </DashboardPage>

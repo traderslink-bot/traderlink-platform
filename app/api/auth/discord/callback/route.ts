@@ -1,17 +1,23 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
-  deleteAcademyCookie,
-  setAcademyCookie,
-} from "@/src/lib/academy/academy-auth-cookies";
+  deletePlatformAuthCookie,
+  setPlatformAuthCookie,
+} from "@/src/modules/platform/server/authentication/platform-auth-cookies";
 import {
-  ACADEMY_OAUTH_PROMPT_COOKIE,
-  ACADEMY_OAUTH_RETURN_TO_COOKIE,
-  ACADEMY_OAUTH_STATE_COOKIE,
-  ACADEMY_SESSION_COOKIE,
-  ACADEMY_SESSION_TTL_MS,
-  AcademyProgressStore,
-} from "@/src/lib/academy/academy-progress-store";
+  readProtectedInitialOwnerDiscordSubject,
+} from "@/src/modules/platform/server/authentication/platform-discord-configuration";
+import {
+  PLATFORM_DISCORD_OAUTH_PROMPT_COOKIE,
+  PLATFORM_DISCORD_OAUTH_RETURN_TO_COOKIE,
+  PLATFORM_DISCORD_OAUTH_STATE_COOKIE,
+} from "@/src/modules/platform/server/authentication/platform-discord-oauth-cookies";
+import { PlatformDiscordSignInService } from "@/src/modules/platform/server/authentication/platform-discord-sign-in-service";
+import {
+  TRADERLINK_PLATFORM_SESSION_COOKIE,
+  TRADERLINK_PLATFORM_SESSION_TTL_MS,
+} from "@/src/modules/platform/server/authentication/platform-session-service";
+import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import {
   buildDiscordAuthResultUrl,
   isWatchlistAuthReturnTo,
@@ -27,9 +33,9 @@ import {
   shouldRetryDiscordOAuthWithConsent,
 } from "@/src/lib/academy/discord-oauth";
 import {
-  hasPremiumWatchlistAccess,
+  hasPlatformDiscordPremiumAccess,
   isPremiumWatchlistRoleConfigured,
-} from "@/src/lib/live-watchlist/live-watchlist-auth";
+} from "@/src/modules/watchlist/server/access/platform-discord-watchlist-entitlement";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,10 +58,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const code = request.nextUrl.searchParams.get("code");
   const oauthError = request.nextUrl.searchParams.get("error");
   const state = request.nextUrl.searchParams.get("state");
-  const expectedState = request.cookies.get(ACADEMY_OAUTH_STATE_COOKIE)?.value;
-  const prompt = request.cookies.get(ACADEMY_OAUTH_PROMPT_COOKIE)?.value;
+  const expectedState = request.cookies.get(PLATFORM_DISCORD_OAUTH_STATE_COOKIE)?.value;
+  const prompt = request.cookies.get(PLATFORM_DISCORD_OAUTH_PROMPT_COOKIE)?.value;
   const returnTo = normalizeDiscordAuthReturnTo(
-    request.cookies.get(ACADEMY_OAUTH_RETURN_TO_COOKIE)?.value,
+    request.cookies.get(PLATFORM_DISCORD_OAUTH_RETURN_TO_COOKIE)?.value,
   );
 
   if (!state || !expectedState || state !== expectedState) {
@@ -104,41 +110,39 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return response;
     }
 
-    const watchlistReturn = isWatchlistAuthReturnTo(returnTo);
     let resolvedGuildMember = guildMember;
-    if (watchlistReturn) {
-      try {
-        const guilds = await fetchDiscordCurrentUserGuilds(token.access_token);
-        const currentGuild = guilds.find((guild) => guild.id === config.guildId);
-        if (currentGuild?.owner === true) {
-          resolvedGuildMember = { ...guildMember, guild_owner: true };
-        }
-      } catch {
-        // The member endpoint still provides the role-based access decision.
+    try {
+      const guilds = await fetchDiscordCurrentUserGuilds(token.access_token);
+      const currentGuild = guilds.find((guild) => guild.id === config.guildId);
+      if (currentGuild?.owner === true) {
+        resolvedGuildMember = { ...guildMember, guild_owner: true };
       }
+    } catch {
+      // The member endpoint still provides the role-based access decision.
     }
 
+    const watchlistReturn = isWatchlistAuthReturnTo(returnTo);
     let sessionToken: string;
-    let hasPremiumAccess = false;
 
     try {
-      const store = new AcademyProgressStore();
-      await store.upsertUser({
-        discordUserId: discordUser.id,
+      const signIn = withPlatformDatabase({ mode: "runtime" }, (database) =>
+        new PlatformDiscordSignInService(database, {
+          protectedInitialOwnerAuthSubject:
+            readProtectedInitialOwnerDiscordSubject(),
+        }).signIn({
+        authSubject: discordUser.id,
         username: discordUser.username,
-        globalName: discordUser.global_name ?? null,
-        avatar: discordUser.avatar ?? null,
+        globalDisplayName: discordUser.global_name ?? null,
+        avatarHash: discordUser.avatar ?? null,
         guildId: config.guildId,
-        joinedAt: resolvedGuildMember.joined_at ?? null,
-        rawUser: discordUser,
-        rawMember: resolvedGuildMember,
-      });
-      const session = await store.createSession(discordUser.id);
-      sessionToken = session.token;
-      hasPremiumAccess = hasPremiumWatchlistAccess(session.session);
+        joinedAtUtc: resolvedGuildMember.joined_at ?? null,
+        roleIds: resolvedGuildMember.roles ?? [],
+        guildOwner: resolvedGuildMember.guild_owner === true,
+      }));
+      sessionToken = signIn.session.token;
     } catch (error) {
       console.error(
-        "Discord Academy progress session failed",
+        "Discord Platform session failed",
         getSafeDiscordAuthErrorMessage(error),
       );
 
@@ -158,18 +162,24 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       !isPremiumWatchlistRoleConfigured()
     ) {
       authStatus = "premium-config";
-    } else if (watchlistReturn && !hasPremiumAccess) {
+    } else if (
+      watchlistReturn &&
+      !hasPlatformDiscordPremiumAccess({
+        guildOwner: resolvedGuildMember.guild_owner === true,
+        roleIds: resolvedGuildMember.roles ?? [],
+      })
+    ) {
       authStatus = "premium-required";
     }
     const response = authRedirect(request, returnTo, authStatus);
 
     clearDiscordOAuthCookies(response, request);
-    setAcademyCookie(
+    setPlatformAuthCookie(
       response,
       request,
-      ACADEMY_SESSION_COOKIE,
+      TRADERLINK_PLATFORM_SESSION_COOKIE,
       sessionToken,
-      Math.floor(ACADEMY_SESSION_TTL_MS / 1000),
+      Math.floor(TRADERLINK_PLATFORM_SESSION_TTL_MS / 1000),
     );
 
     return response;
@@ -189,7 +199,7 @@ function clearDiscordOAuthCookies(
   response: NextResponse,
   request: NextRequest,
 ): void {
-  deleteAcademyCookie(response, request, ACADEMY_OAUTH_STATE_COOKIE);
-  deleteAcademyCookie(response, request, ACADEMY_OAUTH_PROMPT_COOKIE);
-  deleteAcademyCookie(response, request, ACADEMY_OAUTH_RETURN_TO_COOKIE);
+  deletePlatformAuthCookie(response, request, PLATFORM_DISCORD_OAUTH_STATE_COOKIE);
+  deletePlatformAuthCookie(response, request, PLATFORM_DISCORD_OAUTH_PROMPT_COOKIE);
+  deletePlatformAuthCookie(response, request, PLATFORM_DISCORD_OAUTH_RETURN_TO_COOKIE);
 }

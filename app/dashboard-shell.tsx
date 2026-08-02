@@ -12,6 +12,7 @@ import GavelRoundedIcon from "@mui/icons-material/GavelRounded";
 import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import NoteAltRoundedIcon from "@mui/icons-material/NoteAltRounded";
+import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import QueryStatsRoundedIcon from "@mui/icons-material/QueryStatsRounded";
 import ScienceRoundedIcon from "@mui/icons-material/ScienceRounded";
 import ShowChartRoundedIcon from "@mui/icons-material/ShowChartRounded";
@@ -50,12 +51,17 @@ import {
   type DashboardNavigationIconKey,
   type DashboardNavigationItem,
 } from "./dashboard-navigation";
+import {
+  DashboardAccountSwitcher,
+  type DashboardJournalAccountOption,
+} from "./dashboard-account-switcher";
 
 const expandedWidth = 272;
 const collapsedWidth = 76;
 
 function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
   const icons: Record<DashboardNavigationIconKey, ReactNode> = {
+    account: <PersonRoundedIcon />,
     analytics: <AnalyticsRoundedIcon />,
     calendar: <CalendarMonthRoundedIcon />,
     data: <ViewDayRoundedIcon />,
@@ -157,7 +163,13 @@ function NavigationLink({
   );
 }
 
-export function DashboardShell({ children }: { children: ReactNode }) {
+export function DashboardShell({
+  children,
+  journalAccounts,
+}: {
+  children: ReactNode;
+  journalAccounts: readonly DashboardJournalAccountOption[];
+}) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -440,6 +452,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               </Typography>
             </Box>
             <Box sx={{ flexGrow: 1 }} />
+            <DashboardAccountSwitcher accounts={journalAccounts} />
             <Button
               component={Link}
               href="/imports"

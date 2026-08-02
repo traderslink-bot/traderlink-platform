@@ -1,53 +1,33 @@
-import { withTraderIntelligenceOwnerRoute } from "@/src/lib/trader-intelligence-v3/auth";
-
-import { buildGuidedReviewSession } from "../../../../src/lib/trader-analytics";
-import { buildSavedOrSampleTraderAnalyticsViewModel } from "../../../../src/lib/trader-analytics/server/saved-trader-analytics-data";
-import { buildSavedDecisionReviewReadModel } from "../../../../src/lib/trader-analytics/server/saved-decision-review-service";
-import { buildSavedReviewQueueReadModel } from "../../../../src/lib/trader-analytics/server/saved-review-queue";
-import { buildLatestSavedImportSourceCautionReadModel } from "../../../../src/lib/trader-analytics/server/saved-import-source-caution";
-import { resolveConfiguredOwnerWorkspaceImportContext } from "../../../../src/lib/trader-analytics/server/owner-workspace-context";
-import {
-  canUseChartContext,
-  readTraderIntelligenceTierFromEnv,
-} from "../../../../src/lib/trader-analytics/product/tier-config";
+import { parseCoachReflectionRequest } from "@/src/modules/coach/server/coach-reflection-request";
+import { readCoachReflection } from "@/src/modules/coach/server/coach-reflection-runtime";
+import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function GETHandler(): Promise<Response> {
-  const ownerContext = resolveConfiguredOwnerWorkspaceImportContext({});
-  const data = buildSavedOrSampleTraderAnalyticsViewModel({ userId: ownerContext.ownerId });
-  const activeTier = readTraderIntelligenceTierFromEnv();
-  const chartContextAllowed = canUseChartContext(activeTier);
-
-  return Response.json({
-    contractVersion: "latest_review_api_v1",
-    source: data.mode === "saved" ? "saved_sqlite" : "sample_fallback",
-    review: buildGuidedReviewSession({ analytics: data.viewModel }),
-    savedDecisionReview:
-      data.mode === "saved" && chartContextAllowed
-        ? buildSavedDecisionReviewReadModel({
-            repository: data.repository,
-            accountId: ownerContext.account.id,
-          })
-        : null,
-    savedReviewQueue:
-      data.mode === "saved"
-        ? buildSavedReviewQueueReadModel({
-            includeChartContext: chartContextAllowed,
-            repository: data.repository,
-            accountId: ownerContext.account.id,
-            userId: ownerContext.ownerId,
-          })
-        : null,
-    savedImportSourceCaution:
-      data.mode === "saved"
-        ? buildLatestSavedImportSourceCautionReadModel({
-            repository: data.repository,
-            accountId: ownerContext.account.id,
-          })
-        : null,
-  });
+export function GET(request: Request): Response {
+  try {
+    const url = new URL(request.url);
+    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const review = readCoachReflection(scope, parseCoachReflectionRequest({
+      period: url.searchParams.get("period"),
+      date: url.searchParams.get("date"),
+      currency: url.searchParams.get("currency"),
+    }));
+    return Response.json({
+      status: review.state,
+      contractVersion: "traderlink_review_latest_v1",
+      source: "journal_facts",
+      review,
+    }, { headers: { "cache-control": "no-store" } });
+  } catch (error) {
+    const code = isTraderLinkPlatformError(error)
+      ? error.code
+      : "TRADERLINK_COACH_REFLECTION_UNAVAILABLE";
+    return Response.json(
+      { status: "unavailable", code },
+      { status: code.includes("ACCESS_DENIED") ? 403 : 503 },
+    );
+  }
 }
-
-export const GET = withTraderIntelligenceOwnerRoute("app/api/review/latest/route.ts", GETHandler);

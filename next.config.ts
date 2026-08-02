@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+import { legacyIntelligenceRedirects } from "./src/modules/platform/contracts/legacy-intelligence-route-disposition";
+
 const privateNoStoreHeaders: { key: string; value: string }[] = [
   {
     key: "Cache-Control",
@@ -23,7 +25,111 @@ const privateTraderIntelligenceRoutes = [
   "/manual-entry",
 ] as const;
 
+const legacyTopLevelReplacementRedirects = [
+  {
+    source: "/platform-readiness",
+    destination: "/workspace/readiness",
+    permanent: false,
+  },
+  {
+    source: "/workspace/admin",
+    destination: "/workspace/readiness?capability=legacy-admin",
+    permanent: false,
+  },
+  {
+    source: "/coach/:path*",
+    destination: "/reflection-loop",
+    permanent: false,
+  },
+  {
+    source: "/review",
+    destination: "/reflection-loop",
+    permanent: false,
+  },
+  {
+    source: "/progress",
+    destination: "/reflection-loop",
+    permanent: false,
+  },
+  {
+    source: "/upload-csv",
+    destination: "/imports",
+    permanent: false,
+  },
+  {
+    source: "/trader-intelligence",
+    destination: "/workspace",
+    permanent: false,
+  },
+  {
+    source: "/import-dry-run",
+    destination: "/imports?mode=preview",
+    permanent: false,
+  },
+  {
+    source: "/import-health",
+    destination: "/imports",
+    permanent: false,
+  },
+  {
+    source: "/import-trials",
+    destination: "/workspace/readiness?capability=import-trials",
+    permanent: false,
+  },
+  {
+    source: "/repair-wizard",
+    destination: "/data-decisions",
+    permanent: false,
+  },
+  {
+    source: "/review-cockpit",
+    destination: "/reflection-loop?view=backlog",
+    permanent: false,
+  },
+  {
+    source: "/session-recap",
+    destination: "/reflection-loop?period=daily",
+    permanent: false,
+  },
+  {
+    source: "/compare-trades",
+    destination: "/analytics/lab?view=trade-comparison",
+    permanent: false,
+  },
+  {
+    source: "/calibration",
+    destination: "/analytics/lab?view=calibration",
+    permanent: false,
+  },
+  {
+    source: "/onboarding",
+    destination: "/imports",
+    permanent: false,
+  },
+  {
+    source: "/first-run",
+    destination: "/imports",
+    permanent: false,
+  },
+  {
+    source: "/debug/:path*",
+    destination: "/workspace/readiness?capability=legacy-debug",
+    permanent: false,
+  },
+  {
+    source: "/admin/broker-mappings",
+    destination: "/imports?mode=mapping",
+    permanent: false,
+  },
+  {
+    source: "/coaching",
+    destination: "/reflection-loop",
+    permanent: false,
+  },
+] as const;
+
 const nextConfig: NextConfig = {
+  output: "standalone",
   serverExternalPackages: ["levels-system-v2", "better-sqlite3"],
   async headers() {
     return privateTraderIntelligenceRoutes.map((source) => ({
@@ -44,101 +150,8 @@ const nextConfig: NextConfig = {
         destination: "https://traderslink.pro/:path*",
         permanent: true,
       },
-      {
-        source: "/workspace/admin",
-        destination: "/intelligence/admin",
-        permanent: true,
-      },
-      {
-        source: "/coach/:path*",
-        destination: "/intelligence/coach/:path*",
-        permanent: true,
-      },
-      {
-        source: "/review",
-        destination: "/intelligence/review",
-        permanent: true,
-      },
-      {
-        source: "/progress",
-        destination: "/intelligence/progress",
-        permanent: true,
-      },
-      {
-        source: "/upload-csv",
-        destination: "/intelligence/upload-csv",
-        permanent: true,
-      },
-      {
-        source: "/trader-intelligence",
-        destination: "/intelligence/trader-intelligence",
-        permanent: true,
-      },
-      {
-        source: "/import-dry-run",
-        destination: "/intelligence/import-dry-run",
-        permanent: true,
-      },
-      {
-        source: "/import-health",
-        destination: "/intelligence/import-health",
-        permanent: true,
-      },
-      {
-        source: "/import-trials",
-        destination: "/intelligence/import-trials",
-        permanent: true,
-      },
-      {
-        source: "/repair-wizard",
-        destination: "/intelligence/repair-wizard",
-        permanent: true,
-      },
-      {
-        source: "/review-cockpit",
-        destination: "/intelligence/review-cockpit",
-        permanent: true,
-      },
-      {
-        source: "/session-recap",
-        destination: "/intelligence/session-recap",
-        permanent: true,
-      },
-      {
-        source: "/compare-trades",
-        destination: "/intelligence/compare-trades",
-        permanent: true,
-      },
-      {
-        source: "/calibration",
-        destination: "/intelligence/calibration",
-        permanent: true,
-      },
-      {
-        source: "/onboarding",
-        destination: "/intelligence/onboarding",
-        permanent: true,
-      },
-      {
-        source: "/first-run",
-        destination: "/intelligence/first-run",
-        permanent: true,
-      },
-      {
-        source: "/debug/:path*",
-        destination: "/intelligence/debug/:path*",
-        permanent: true,
-      },
-      {
-        source: "/admin/broker-mappings",
-        destination: "/intelligence/admin/broker-mappings",
-        permanent: true,
-      },
-      {
-        source: "/coaching",
-        destination: "/intelligence/coach",
-        permanent: true,
-      },
+      ...legacyIntelligenceRedirects(),
+      ...legacyTopLevelReplacementRedirects,
       {
         source: "/academy/candlestick-deep-dive-lessons",
         destination: "/academy/candlestick-patterns",

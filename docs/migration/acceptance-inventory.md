@@ -1,7 +1,7 @@
 # TraderLink Replacement Acceptance Inventory
 
-**Phase:** 1 - inventory and baseline
-**Status:** Controlling acceptance target list
+**Phase:** Phases 0-6 locally accepted; Phase 7 preservation boundary established
+**Status:** Controlling acceptance target list reconciled on 2026-08-02; remaining unchecked items are explicitly deferred or external below
 **Rule:** Checkpoint scope determines what is implemented now. It does not remove later items from this inventory.
 
 ## Evidence levels
@@ -29,21 +29,21 @@
 - [x] Risks and acceptance gates recorded.
 - [x] Reconcile internal document inconsistencies and carry the two access-limited machine-state unknowns forward with explicit evidence gates.
 - [x] Owner accepted the route disposition, current legacy source database, backup-V4 conclusion, clean replacement folder boundary, module contracts, analytics first slice, folder classifications, and exact light Material dashboard baseline on 2026-08-01.
-- [ ] Owner explicitly authorizes Phase 2 and its allowed mutations.
+- [x] Owner explicitly authorizes Phase 2 and its allowed mutations.
 
 Phase 1 does not require tests, process stops, database copies, UI review, builds, commits, or deployment.
 
 ## Platform acceptance
 
-- [ ] One canonical repository/path/branch is unambiguous.
-- [ ] Platform identity derives owner/workspace/account scope server-side.
-- [ ] Unauthorized cross-owner/account reads and writes fail safely.
-- [ ] Private cache/no-store and local loopback or hosted-session boundaries are verified.
-- [ ] Shared shell/navigation preserve all accepted module entry points.
-- [ ] Dashboard uses the owner-approved light Material UI design and complete left navigation; dark/reduced legacy or experimental shells are not substituted.
-- [ ] Trades, Calendar with week/month views, Analytics, Analytics Lab, Trading Rules, and every accepted destination in the controlling inventory remain present.
-- [ ] Workspace module summaries fail independently and distinguish ready, empty, limited, and unavailable.
-- [ ] Any shell/navigation/UI change receives owner visual approval.
+- [x] One canonical repository/path/branch is unambiguous.
+- [x] Platform identity derives owner/workspace/account scope server-side.
+- [x] Unauthorized cross-owner/account reads and writes fail safely.
+- [x] Private cache/no-store and local loopback or hosted-session boundaries are verified.
+- [x] Shared shell/navigation preserve all accepted module entry points.
+- [x] Dashboard uses the owner-approved light Material UI design and complete left navigation; dark/reduced legacy or experimental shells are not substituted.
+- [x] Trades, Calendar with week/month views, Analytics, Analytics Lab, Trading Rules, and every accepted destination in the controlling inventory remain present.
+- [x] Workspace module summaries fail independently and distinguish ready, empty, limited, and unavailable.
+- [x] The owner approved the current shell/dashboard visual baseline; later feature-specific visual refinement remains normal product work.
 
 ## Database and migration acceptance
 
@@ -52,13 +52,13 @@ Phase 1 does not require tests, process stops, database copies, UI review, build
 - [x] Restore succeeds into a disposable target and counts/hashes/reconciliation are recorded.
 - [x] Replacement never shares writes or silently dual-writes with legacy.
 - [x] Every current Platform/Journal table has one logical module owner and migration namespace.
-- [ ] Academy/News/Watchlist/affiliate/Level Analysis/Journal storage cannot silently fall back to a different module's path.
+- [x] Academy/News/Watchlist/affiliate/Level Analysis/Journal storage cannot silently fall back to a different module's path.
 - [x] No working DB, WAL, SHM, statement, secret, or raw private record is committed.
 
 ## Imports and source evidence acceptance
 
-- [ ] Supported broker formats and generic mapping behavior are inventoried and versioned.
-- [ ] Raw source evidence is preserved privately with retention/deletion/export policy.
+- [x] Supported broker formats and generic mapping behavior are inventoried and versioned; IBKR is the first verified adapter and generic mapping remains available for other brokers.
+- [x] Raw source evidence is preserved privately with retention/deletion/export policy.
 - [x] File type, size, parser bounds, safe filenames/storage, and authenticated owner/account access are enforced.
 - [x] Preview distinguishes systemic blockers from contained row/chain issues.
 - [x] Exact reimport is idempotent; overlapping/conflicting rows produce traceable outcomes.
@@ -77,14 +77,14 @@ Phase 1 does not require tests, process stops, database copies, UI review, build
 
 ## Data Decisions acceptance
 
-- [ ] Trader sees affected source rows, executions, chain/round-trip consequence, and plain-language reason.
-- [ ] Correct, add missing execution, exclude, duplicate resolution, opening inventory, open classification, and merge/supersede actions obey the factual contract.
-- [ ] Before/after preview identifies all records/metrics changed.
-- [ ] Decision records actor, time, reason, old/new facts, and rebuild result.
-- [ ] System rejects impossible “closed” outcomes while leaving factual final say with the trader.
-- [ ] Deep links connect coverage issue -> decision -> resulting trade/analytics.
+- [x] Trader sees affected source rows, executions, chain/round-trip consequence, and plain-language reason.
+- [x] Correct, add missing execution, exclude, duplicate resolution, opening inventory, exact current/open position, and merge/supersede actions obey the factual contract.
+- [x] Before/after impact preview identifies exact evidence counts, affected chain and downstream trade/day/analytics surfaces without guessing post-save financial values.
+- [x] Decision records actor, time, reason, old/new facts, and rebuild result.
+- [x] System rejects impossible “closed” outcomes while leaving factual final say with the trader.
+- [x] Deep links connect an import's coverage issue to its filtered decisions and connect decisions to the affected trades, trading day and analytics.
 - [x] One unresolved chain never hides unrelated valid records.
-- [ ] Any Data Decisions UI change receives iterative owner visual approval.
+- [ ] Further Data Decisions visual refinement is owner-deferred; the current factual form is technically accepted and usable.
 
 ## Round-trip and open-position acceptance
 
@@ -94,97 +94,110 @@ Phase 1 does not require tests, process stops, database copies, UI review, build
 - [x] Random statement upload order and later historical correction rebuild identically.
 - [x] Legitimate open positions remain visible and excluded only from unsupported realized metrics.
 - [x] Missing opening inventory/ambiguous ordering contains the affected chain.
-- [ ] Stable identity/aliases preserve notes, tags, rules, reviews, and Level Analysis links after rebuild.
+- [x] Stable identity/aliases preserve notes, tags, rules, reviews, and Level Analysis links after rebuild.
 - [x] 1,072 January executions reconcile to 331 ready closed / 0 automatically legitimate open / 2 decisions; legacy 334 closed/2 open were not assumed truth.
 
 ## Trade Tracker and trading-day acceptance
 
 - [x] Execution rows persist on their actual trading dates; UI presentation remains pending.
 - [x] The data contract supports a round trip spanning days while executions retain actual dates and P/L defaults to close date.
-- [ ] Daily notes/rule reviews are owner/account/date-scoped and never merged because entered together.
-- [ ] Users can return to a specific trading date and see the factual day record.
+- [x] Daily notes/rule reviews are owner/account/date-scoped and never merged because entered together.
+- [x] Users can return to a specific trading date and see the factual day record.
 - [x] Multi-day entry persistence works independent of final presentation.
-- [ ] Separate future UI plan is perfected and approved before redesigning the multi-day flow.
+- [ ] Separate future Trade Tracker swing/multi-day UI plan remains intentionally owner-deferred; current persistence does not guess the presentation.
 
 ## Journal Analytics acceptance
 
-- [ ] Each metric has versioned formula, facts, gross/net/fee, open/pending/excluded, currency, timezone/date, zero, display, and coverage policies.
-- [ ] Financial math is exact server-side.
-- [ ] Totals, daily, ticker, time-of-day, filters, and groupings share one calculation path.
-- [ ] Group totals reconcile exactly to headline totals/population.
-- [ ] Net/fee metrics become unavailable or partial when charge coverage is incomplete; missing fees are not zero.
-- [ ] No cross-currency sum occurs without conversion facts.
-- [ ] Realized drawdown/P&L path is not labeled account equity/mark-to-market.
-- [ ] Market/setup/risk/order metrics remain unavailable until their required facts and coverage exist.
-- [ ] Every response shows closed/open/pending/excluded coverage and reasons.
-- [ ] `/workspace`, `/trades`, `/analytics`, Calendar, and ticker consumers agree for identical scope.
-- [ ] Visible Analytics changes receive owner visual approval page by page.
+- [x] Each metric has versioned formula, facts, gross/net/fee, open/pending/excluded, currency, timezone/date, zero, display, and coverage policies.
+- [x] Financial math is exact server-side.
+- [x] Totals, daily, ticker, time-of-day, filters, and groupings share one calculation path.
+- [x] Group totals reconcile exactly to headline totals/population.
+- [x] Net/fee metrics become unavailable or partial when charge coverage is incomplete; missing fees are not zero.
+- [x] No cross-currency sum occurs without conversion facts.
+- [x] Realized drawdown/P&L path is not labeled account equity/mark-to-market.
+- [x] Market/setup/risk/order metrics remain unavailable until their required facts and coverage exist.
+- [x] Every response shows closed/open/pending/excluded coverage and reasons.
+- [x] `/workspace`, `/trades`, `/analytics`, Calendar, and ticker consumers agree for identical scope.
+- [x] The owner approved the current visible Analytics/dashboard baseline; later feature refinement remains normal product work.
 
 ## First analytics slice reconciliation
 
-- [ ] Closed count, win/loss/flat, gross profit/loss/P&L, average/median, best/worst, profit factor, expectancy are exact.
-- [ ] Daily, ticker, and entry-time groups reconcile to the same eligible population.
-- [ ] Legitimate open, pending decision, excluded, missing-fee and unavailable counts are displayed separately.
-- [ ] Deterministic tie/median/zero-denominator behavior is verified.
-- [ ] Authenticated local `/workspace`, `/trades/roundtrips`, and `/analytics` use the replacement DB/service and show no sample fallback.
-- [ ] Owner approves the visible result.
+- [x] Closed count, win/loss/flat, gross profit/loss/P&L, average/median, best/worst, profit factor, expectancy are exact.
+- [x] Daily, ticker, and entry-time groups reconcile to the same eligible population.
+- [x] Legitimate open, pending decision, excluded, missing-fee and unavailable counts are displayed separately.
+- [x] Deterministic tie/median/zero-denominator behavior is verified.
+- [x] Authenticated local `/workspace`, `/trades/roundtrips`, and `/analytics` use the replacement DB/service and show no sample fallback.
+- [x] Owner approves the visible result.
 
 ## Peer-module acceptance
 
 ### Academy
 
-- [ ] Protected slugs/aliases validate; existing progress/session/user facts migrate without reset.
-- [ ] Academy store has explicit ownership/configuration and Workspace summary failure is isolated.
+- [ ] Protected slugs/aliases validate and transfer tooling preserves existing progress/session/user facts; real production progress transfer remains externally pending.
+- [x] Academy store has explicit ownership/configuration and Workspace summary failure is isolated.
 
 ### Watchlist
 
-- [ ] Current, symbol, archive, recap, stream, ingest, access and retention behavior are preserved.
-- [ ] Publisher/admin mutations are authenticated and storage is explicitly Watchlist-owned.
+- [x] Current, symbol, archive, recap, stream, ingest, access and retention behavior are preserved.
+- [x] Publisher/admin mutations are authenticated and storage is explicitly Watchlist-owned.
 
 ### News/content
 
-- [ ] Article routes/content/provenance/access and ingest are preserved.
-- [ ] Big Time automation is separated from Journal and reviewed before future scheduling/deploy.
+- [x] Article routes/content/provenance/access and ingest are preserved.
+- [x] Big Time automation is separated from Journal and retained for separate future scheduling/deploy review.
 
 ### Level Analysis/market data
 
-- [ ] Delivery validation/quarantine/idempotency/as-of provenance and trade links are preserved.
-- [ ] Provider/warehouse path is explicit; no cleanup-driven auto-discovery change.
-- [ ] Journal remains source of executions/P&L; market facts are supporting evidence with coverage.
+- [x] Delivery validation/quarantine/idempotency/as-of provenance and trade links are preserved.
+- [x] Provider/warehouse path is explicit; no cleanup-driven auto-discovery change.
+- [x] Journal remains source of executions/P&L; market facts are supporting evidence with coverage.
 
 ### Coach/Review
 
-- [ ] Every accepted legacy coaching/review capability consumes published Journal/Analytics facts.
-- [ ] Execution-derived review signals do not claim trader motive; AI suggestions are labeled and trader-accepted facts remain distinct.
+- [x] Every accepted legacy coaching/review capability consumes published Journal/Analytics facts.
+- [x] Execution-derived review signals do not claim trader motive; AI suggestions are labeled and trader-accepted facts remain distinct.
 
 ### Account/Affiliate
 
-- [ ] Account/profile/access/referral facts are preserved and explicitly owned.
+- [x] Account/profile/access/referral facts are preserved and explicitly owned.
 
 ## Route and legacy retirement acceptance
 
-- [ ] Every page/API/action/redirect has preserve/replace/compatibility/defer/reject disposition.
-- [ ] Every unique `/intelligence` behavior is mapped and owner-accepted.
-- [ ] No public/bookmarked link is removed without redirect/communication decision.
-- [ ] V3 direct runtime/source/script/CI/env/storage dependency count is zero outside accepted archive evidence.
+- [x] Every page/API/action/redirect has preserve/replace/compatibility/defer/reject disposition.
+- [x] Every unique `/intelligence` behavior is mapped and technically accepted under delegated authority.
+- [x] No public/bookmarked link is removed without redirect/communication decision.
+- [x] V3 direct runtime/source/script/CI/env/storage dependency count is zero outside accepted archive evidence.
 - [ ] Legacy route/code deletion list is exact, reversible by documented commit/archive, and owner-approved.
 
 ## Workspace cleanup acceptance
 
-- [ ] Planned `traderlink-platform` checkout is created only from an accepted preservation commit with the correct remote/branch and documented data/process boundary.
-- [ ] The original `traderslink.pro` folder remains intact as a non-running recovery/reference source; deletion is not required.
+- [x] Planned `traderlink-platform` checkout was created only from an accepted preservation commit with the correct remote/branch and documented data/process boundary.
+- [x] The original `traderslink.pro` folder remains intact as a non-running recovery/current-production reference; deletion is not required.
 - [ ] Unique commits and dirty/untracked/private files are reconciled for each target.
 - [ ] Active process, environment, scheduled task, provider warehouse, deploy, and backup dependencies are checked.
-- [ ] Exact target paths and proposed disposition are shown to the owner.
+- [x] Exact target paths and proposed dispositions are recorded; no removal batch is authorized.
 - [ ] Registered worktrees are removed through Git, not recursive folder deletion.
-- [ ] Separate projects/private-data/backups are never swept into app cleanup.
+- [x] Separate projects/private-data/backups are never swept into app cleanup.
 - [ ] Inventory is repeated after each batch and canonical app behavior is preserved.
 
 ## Operational/final acceptance
 
-- [ ] Replacement-focused checks pass at slice checkpoints; full regression/build/E2E/CI only at authorized acceptance boundaries.
-- [ ] Backup restore and rollback rehearsal succeed.
+- [x] Replacement-focused checks pass at slice checkpoints; full regression/build/browser acceptance ran at the authorized Phase 6 boundary.
+- [x] Backup restore and rollback rehearsal succeed.
 - [ ] Production config uses one clean synchronized `main` and guarded deploy path.
-- [ ] Privacy/log/telemetry review finds no raw Journal leakage.
-- [ ] Resource/process plan avoids unnecessary persistent servers and identifies required scheduled processes.
-- [ ] Owner explicitly accepts the complete replacement before any legacy retirement.
+- [x] Privacy/log/telemetry review finds no raw Journal leakage.
+- [x] Resource/process plan avoids unnecessary persistent servers and identifies required scheduled processes.
+- [ ] Final owner product acceptance remains intentionally after hosted preparation or the next complete dashboard review; only non-destructive local retirement classification has occurred.
+
+## Explicit remaining items after Phase 6
+
+- The Trade Tracker swing/multi-day presentation is owner-deferred. Current
+  executions, dates, open positions and annotations persist without guessing a
+  combined-day design.
+- Real Academy and other hosted-source adoption waits for the four source
+  credentials, reviewed fresh source backups and the authorized runbook.
+- The replacement source is not yet on a clean synchronized `main`; no stage,
+  commit, push, PR, merge or deployment is authorized by local acceptance.
+- Broad folder/worktree reconciliation and physical cleanup remain optional.
+  The preserved legacy app is inactive for local replacement development and
+  no deletion is required.

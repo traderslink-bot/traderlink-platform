@@ -57,6 +57,12 @@ export type JournalEvidenceVaultTestHooks = Readonly<{
   afterPromotion?: () => void;
 }>;
 
+export type JournalEvidenceNamespace = "ibkr" | "mapped_csv";
+
+function evidenceNamespace(value: JournalEvidenceNamespace | undefined): JournalEvidenceNamespace {
+  return value ?? "ibkr";
+}
+
 function comparablePath(value: string): string {
   const absolute = resolve(value);
   return process.platform === "win32" ? absolute.toLowerCase() : absolute;
@@ -91,7 +97,10 @@ function requireNoLinkComponents(path: string): void {
   let current = root;
   for (const segment of relative(root, absolute).split(sep).filter(Boolean)) {
     current = join(current, segment);
-    if (existsSync(current) && lstatSync(current).isSymbolicLink()) {
+    if (
+      existsSync(/* turbopackIgnore: true */ current) &&
+      lstatSync(/* turbopackIgnore: true */ current).isSymbolicLink()
+    ) {
       platformFailure("TRADERLINK_JOURNAL_EVIDENCE_VAULT_CONFIGURATION_INVALID", {
         check: "vault_reparse_component",
       });
@@ -143,17 +152,17 @@ export function resolveJournalEvidenceVaultBoundary(
     environment[TRADERLINK_PLATFORM_JOURNAL_EVIDENCE_VAULT_ROOT_ENV],
     "vault_root",
   );
-  if (!existsSync(rootPath)) {
+  if (!existsSync(/* turbopackIgnore: true */ rootPath)) {
     platformFailure("TRADERLINK_JOURNAL_EVIDENCE_VAULT_CONFIGURATION_INVALID", {
       check: "vault_root_missing",
     });
   }
   requireNoLinkComponents(rootPath);
-  const rootStatus = lstatSync(rootPath);
+  const rootStatus = lstatSync(/* turbopackIgnore: true */ rootPath);
   if (
     rootStatus.isSymbolicLink() ||
     !rootStatus.isDirectory() ||
-    comparablePath(realpathSync(rootPath)) !== comparablePath(rootPath)
+    comparablePath(realpathSync(/* turbopackIgnore: true */ rootPath)) !== comparablePath(rootPath)
   ) {
     platformFailure("TRADERLINK_JOURNAL_EVIDENCE_VAULT_CONFIGURATION_INVALID", {
       check: "vault_root_identity",
@@ -167,7 +176,7 @@ export function resolveJournalEvidenceVaultBoundary(
     resolve(ACTIVE_TRADERLINK_PLATFORM_REPOSITORY_ROOT),
     ...(options.additionalForbiddenRepositoryRoots ?? []).map((value) =>
       requireAbsoluteDirectoryPath(value, "forbidden_repository_root")),
-    dirname(requireAbsoluteDirectoryPath(options.databasePath, "database_path")),
+    requireAbsoluteDirectoryPath(options.databasePath, "database_path"),
     dirname(requireAbsoluteDirectoryPath(options.sourcePath, "source_path")),
     ...protectedStorageRoots,
   ];
@@ -184,22 +193,22 @@ function readAndVerifyEvidenceFile(
   sourceFileSha256: string,
   sourceFileSizeBytes: number,
 ): Uint8Array {
-  if (!existsSync(filePath)) {
+  if (!existsSync(/* turbopackIgnore: true */ filePath)) {
     platformFailure("TRADERLINK_JOURNAL_EVIDENCE_VAULT_CONFLICT", {
       check: "evidence_object_missing",
     });
   }
   requireNoLinkComponents(filePath);
-  const status = lstatSync(filePath);
+  const status = lstatSync(/* turbopackIgnore: true */ filePath);
   if (
     status.isSymbolicLink() ||
     !status.isFile() ||
     status.size !== sourceFileSizeBytes ||
-    comparablePath(realpathSync(filePath)) !== comparablePath(filePath)
+    comparablePath(realpathSync(/* turbopackIgnore: true */ filePath)) !== comparablePath(filePath)
   ) {
     platformFailure("TRADERLINK_JOURNAL_EVIDENCE_VAULT_CONFLICT");
   }
-  const descriptor = openSync(filePath, "r");
+  const descriptor = openSync(/* turbopackIgnore: true */ filePath, "r");
   try {
     const before = fstatSync(descriptor);
     if (
@@ -234,6 +243,7 @@ export function promoteJournalEvidenceObject(
     sourceBytes: Uint8Array;
     sourceFileSha256: string;
     sourceFileSizeBytes: number;
+    evidenceNamespace?: JournalEvidenceNamespace;
     testHooks?: JournalEvidenceVaultTestHooks;
   }>,
 ): JournalEvidenceVaultPromotion {
@@ -248,10 +258,17 @@ export function promoteJournalEvidenceObject(
       check: "vault_source_evidence",
     });
   }
-  const evidenceObjectKey = `ibkr/${input.sourceFileSha256}.csv`;
-  const objectDirectory = join(boundary.rootPath, "ibkr");
-  const objectPath = join(objectDirectory, `${input.sourceFileSha256}.csv`);
-  if (existsSync(objectPath)) {
+  const namespace = evidenceNamespace(input.evidenceNamespace);
+  const evidenceObjectKey = `${namespace}/${input.sourceFileSha256}.csv`;
+  const objectDirectory = join(
+    /* turbopackIgnore: true */ boundary.rootPath,
+    namespace,
+  );
+  const objectPath = join(
+    /* turbopackIgnore: true */ objectDirectory,
+    `${input.sourceFileSha256}.csv`,
+  );
+  if (existsSync(/* turbopackIgnore: true */ objectPath)) {
     readAndVerifyEvidenceFile(
       objectPath,
       input.sourceFileSha256,
@@ -265,26 +282,26 @@ export function promoteJournalEvidenceObject(
     });
   }
 
-  mkdirSync(objectDirectory, { recursive: true, mode: 0o700 });
+  mkdirSync(/* turbopackIgnore: true */ objectDirectory, { recursive: true, mode: 0o700 });
   requireNoLinkComponents(objectDirectory);
   if (
-    !lstatSync(objectDirectory).isDirectory() ||
-    comparablePath(realpathSync(objectDirectory)) !== comparablePath(objectDirectory)
+    !lstatSync(/* turbopackIgnore: true */ objectDirectory).isDirectory() ||
+    comparablePath(realpathSync(/* turbopackIgnore: true */ objectDirectory)) !== comparablePath(objectDirectory)
   ) {
     platformFailure("TRADERLINK_JOURNAL_EVIDENCE_VAULT_CONFIGURATION_INVALID", {
       check: "vault_object_directory",
     });
   }
   const temporaryPath = join(
-    objectDirectory,
+    /* turbopackIgnore: true */ objectDirectory,
     `.${input.sourceFileSha256}.${randomUUID()}.tmp`,
   );
   let descriptor: number | null = null;
   let promoted = false;
   let stage = "temporary_open";
   try {
-    descriptor = openSync(temporaryPath, "wx", 0o600);
-    chmodSync(temporaryPath, 0o600);
+    descriptor = openSync(/* turbopackIgnore: true */ temporaryPath, "wx", 0o600);
+    chmodSync(/* turbopackIgnore: true */ temporaryPath, 0o600);
     stage = "temporary_write";
     let offset = 0;
     while (offset < input.sourceBytes.byteLength) {
@@ -315,15 +332,18 @@ export function promoteJournalEvidenceObject(
     stage = "promotion";
     input.testHooks?.beforePromotion?.();
     try {
-      linkSync(temporaryPath, objectPath);
+      linkSync(
+        /* turbopackIgnore: true */ temporaryPath,
+        /* turbopackIgnore: true */ objectPath,
+      );
     } catch (error) {
-      if (!existsSync(objectPath)) throw error;
+      if (!existsSync(/* turbopackIgnore: true */ objectPath)) throw error;
       readAndVerifyEvidenceFile(
         objectPath,
         input.sourceFileSha256,
         input.sourceFileSizeBytes,
       );
-      unlinkSync(temporaryPath);
+      unlinkSync(/* turbopackIgnore: true */ temporaryPath);
       return Object.freeze({
         status: "already_present" as const,
         evidenceObjectKey,
@@ -332,7 +352,7 @@ export function promoteJournalEvidenceObject(
       });
     }
     promoted = true;
-    unlinkSync(temporaryPath);
+    unlinkSync(/* turbopackIgnore: true */ temporaryPath);
     readAndVerifyEvidenceFile(
       objectPath,
       input.sourceFileSha256,
@@ -387,14 +407,16 @@ export function verifyJournalEvidenceObject(
     evidenceObjectKey: string;
     sourceFileSha256: string;
     sourceFileSizeBytes: number;
+    evidenceNamespace?: JournalEvidenceNamespace;
   }>,
 ): void {
-  const expectedObjectKey = `ibkr/${input.sourceFileSha256}.csv`;
+  const namespace = evidenceNamespace(input.evidenceNamespace);
+  const expectedObjectKey = `${namespace}/${input.sourceFileSha256}.csv`;
   if (input.evidenceObjectKey !== expectedObjectKey) {
     platformFailure("TRADERLINK_JOURNAL_EVIDENCE_VAULT_CONFLICT");
   }
   readAndVerifyEvidenceFile(
-    join(boundary.rootPath, "ibkr", `${input.sourceFileSha256}.csv`),
+    join(boundary.rootPath, namespace, `${input.sourceFileSha256}.csv`),
     input.sourceFileSha256,
     input.sourceFileSizeBytes,
   );
@@ -406,14 +428,16 @@ export function readVerifiedJournalEvidenceObject(
     evidenceObjectKey: string;
     sourceFileSha256: string;
     sourceFileSizeBytes: number;
+    evidenceNamespace?: JournalEvidenceNamespace;
   }>,
 ): Uint8Array {
-  const expectedObjectKey = `ibkr/${input.sourceFileSha256}.csv`;
+  const namespace = evidenceNamespace(input.evidenceNamespace);
+  const expectedObjectKey = `${namespace}/${input.sourceFileSha256}.csv`;
   if (input.evidenceObjectKey !== expectedObjectKey) {
     platformFailure("TRADERLINK_JOURNAL_EVIDENCE_VAULT_CONFLICT");
   }
   return readAndVerifyEvidenceFile(
-    join(boundary.rootPath, "ibkr", `${input.sourceFileSha256}.csv`),
+    join(boundary.rootPath, namespace, `${input.sourceFileSha256}.csv`),
     input.sourceFileSha256,
     input.sourceFileSizeBytes,
   );

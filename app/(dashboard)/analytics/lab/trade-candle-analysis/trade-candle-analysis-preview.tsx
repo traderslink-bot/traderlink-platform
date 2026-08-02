@@ -222,7 +222,7 @@ function loadLightweightCharts(): Promise<LightweightChartsApi> {
 }
 
 function formatPrice(price: number): string {
-  return `$${price.toFixed(4)}`;
+  return `$${price.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 }
 
 function formatEasternTime(time: number): string {
@@ -345,23 +345,25 @@ export function TradeCandleAnalysisPreview() {
     DEFAULT_SIMULATION_CASE;
   const hasExitContinuation = Boolean(scenario.exitPrice && scenario.primaryHigh);
   const [liveResult, setLiveResult] = useState<LiveSimulationResult | null>(null);
+  const currentLiveResult = liveResult?.symbol === scenario.symbol
+    ? liveResult
+    : null;
   const displayedScenario =
-    liveResult?.status === "ready"
+    currentLiveResult?.status === "ready"
       ? {
           ...scenario,
-          candles: liveResult.replay,
-          entryPrice: liveResult.simulatedTrade.entryPrice,
-          entryTime: formatEasternTime(liveResult.simulatedTrade.entryTime),
-          exitPrice: liveResult.simulatedTrade.exitPrice,
-          exitTime: formatEasternTime(liveResult.simulatedTrade.exitTime),
+          candles: currentLiveResult.replay,
+          entryPrice: currentLiveResult.simulatedTrade.entryPrice,
+          entryTime: formatEasternTime(currentLiveResult.simulatedTrade.entryTime),
+          exitPrice: currentLiveResult.simulatedTrade.exitPrice,
+          exitTime: formatEasternTime(currentLiveResult.simulatedTrade.exitTime),
         }
       : scenario;
   const liveFindings =
-    liveResult?.status === "ready" ? liveResult.results : null;
+    currentLiveResult?.status === "ready" ? currentLiveResult.results : null;
 
   useEffect(() => {
     let active = true;
-    setLiveResult(null);
     void fetch(`/api/intelligence/trade-candle-analysis/simulations?symbol=${scenario.symbol}`, {
       cache: "no-store",
     })
@@ -416,26 +418,26 @@ export function TradeCandleAnalysisPreview() {
         30 minutes after exit are primary; the next 30 minutes add context.
       </Alert>
 
-      {liveResult ? (
-        <Alert severity={liveResult.status === "ready" ? "success" : "info"}>
-          {liveResult.status === "ready" ? (
+      {currentLiveResult ? (
+        <Alert severity={currentLiveResult.status === "ready" ? "success" : "info"}>
+          {currentLiveResult.status === "ready" ? (
             <Stack spacing={0.5}>
               <Typography sx={{ fontWeight: 700 }} variant="body2">
-                Current Yahoo result for {liveResult.symbol}
+                Current Yahoo result for {currentLiveResult.symbol}
               </Typography>
-              <Typography variant="body2">{liveResult.results.exitTiming.title}</Typography>
-              <Typography variant="body2">{liveResult.results.exitTiming.detail}</Typography>
+              <Typography variant="body2">{currentLiveResult.results.exitTiming.title}</Typography>
+              <Typography variant="body2">{currentLiveResult.results.exitTiming.detail}</Typography>
             </Stack>
           ) : (
-            `No live feedback for ${liveResult.symbol}: ${liveResult.reason}`
+            `No live feedback for ${currentLiveResult.symbol}: ${currentLiveResult.reason}`
           )}
         </Alert>
       ) : null}
 
-      {liveResult?.status === "ready" && liveResult.patternObservations.length > 0 ? (
+      {currentLiveResult?.status === "ready" && currentLiveResult.patternObservations.length > 0 ? (
         <DashboardPanel title="Execution context">
           <Stack spacing={1}>
-            {liveResult.patternObservations.map((observation) => (
+            {currentLiveResult.patternObservations.map((observation) => (
               <Typography key={`${observation.zone}-${observation.kind}-${observation.time}`} variant="body2">
                 {observation.zone === "held_peak" ? "Near the held-position peak" : `Near ${observation.zone}`}: {observation.kind.replaceAll("_", " ")} at {formatEasternTime(observation.time)}.
               </Typography>
@@ -473,7 +475,7 @@ export function TradeCandleAnalysisPreview() {
           sx={{ mt: 2 }}
         >
           <Observation label="Simulated entry">
-            {displayedScenario.entryTime} · {formatPrice(displayedScenario.entryPrice)}
+            {`${displayedScenario.entryTime} · ${formatPrice(displayedScenario.entryPrice)}`}
           </Observation>
           <Observation label="Simulated exit">
             {displayedScenario.exitTime && displayedScenario.exitPrice
@@ -482,7 +484,7 @@ export function TradeCandleAnalysisPreview() {
           </Observation>
           <Observation label="Primary review">First 30 minutes after exit</Observation>
           <Observation label="Volume context">
-            {liveResult?.status === "ready"
+            {currentLiveResult?.status === "ready"
               ? "Live Yahoo active-volume coverage"
               : scenario.volumeLabel}
           </Observation>

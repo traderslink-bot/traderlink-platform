@@ -2,6 +2,28 @@ import { previewIbkrActivityStatement } from "./ibkr-activity-statement-adapter"
 import { syntheticIbkrStatement } from "./synthetic-ibkr-fixtures";
 
 describe("IBKR Activity Statement adapter", () => {
+  it("returns a blocking IBKR preview for an unrelated flat broker CSV instead of throwing", () => {
+    const sourceBytes = Buffer.from([
+      "Trade Date,Fill Time,Ticker,Action,Shares,Fill Price,Commission,Currency,Fill ID",
+      "2026-08-02,09:31:00,GENR,BUY,2.3456,10.123456,0.123456,USD,G1",
+      "2026-08-02,10:02:00,GENR,SELL,2.3456,10.654321,0.234567,USD,G2",
+      "",
+    ].join("\r\n"), "utf8");
+    const preview = previewIbkrActivityStatement({
+      sourceBytes,
+      sourceTimezone: "America/New_York",
+    });
+    expect(preview.rawSourceAccountId).toBeNull();
+    expect(preview.rows).toHaveLength(3);
+    expect(preview.executions).toEqual([]);
+    expect(preview.issues.map((issue) => issue.issueCode)).toEqual(
+      expect.arrayContaining([
+        "source_account_identity_missing",
+        "statement_period_missing",
+      ]),
+    );
+  });
+
   it("preserves every record and maps only supported stock executions", () => {
     const preview = previewIbkrActivityStatement({
       sourceBytes: Buffer.from(syntheticIbkrStatement, "utf8"),

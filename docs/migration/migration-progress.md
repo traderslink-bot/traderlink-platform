@@ -1,12 +1,63 @@
 # TraderLink Platform Migration Progress
 
-**Current phase:** Phase 5 - Module Transfer, Slice A read-only Journal route recovery. The Phase 5 plan is accepted for implementation. Phase 4 is complete: Slices A-D passed their technical gates and the owner visually approved Slice E on 2026-08-02.
+**Current phase:** Phase 6 local acceptance is complete. Phases 0-6 now pass their local technical/product gates; the owner-approved light Material dashboard is preserved, port 3010 is off, and the real database remains at its accepted hash with a zero-byte WAL. Public owner linking, real hosted-source preview/transfer, Docker execution, Git publication, Railway deployment and DNS remain external. Phase 7 retirement cannot delete preserved assets without explicit owner approval.
 **Historical pre-runtime implementation state:** The [Phase 3 plan](phase-3-journal-integrity-plan.md) and [tracker](phase-3-journal-integrity-progress.md) preserve the complete pre-runtime design and execution history. The accepted state immediately below supersedes former queued/unexecuted and 331/1/1 planning claims.
 **Phase 2 foundation commit:** `fea56307fbd0142ef99b9f13c020451a6a503cc7` (`feat(platform): establish verified database foundation`), preserved locally without push or deployment.
 **Phase 3 implementation commit:** `8f6a4d4e4dec20ef6edcd50f476b14d368bde505` (`feat(journal): complete phase 3 integrity foundation`), preserved locally without push or deployment.
 **Phase 4 implementation commit:** `4575dafd0fb62804ac090c4a149152506d8db7b1` (`feat(analytics): complete replacement route cutover`), preserved locally without push or deployment. See [Phase 4 Handoff](phase-4-core-analytics-handoff.md).
 
-**Phase 5 plan:** [Phase 5 Module Transfer Plan](phase-5-module-transfer-plan.md) and [progress tracker](phase-5-module-transfer-progress.md) are accepted for implementation under delegated technical authority. Slice A read-only Journal route recovery is the active next boundary.
+**Phase 5 plan:** [Phase 5 Module Transfer Plan](phase-5-module-transfer-plan.md) and [progress tracker](phase-5-module-transfer-progress.md) are accepted for implementation under delegated technical authority. Slice A has exact replacement Calendar/Ticker/Open-Positions/Trade-Tracker reads, V3-free active adapters and at-most-two-decimal displays. Broker-neutral imports/Data Decisions, retry-safe manual executions, local account management and user-defined multi-account selection are connected. Slice D provides replacement Journal rules, tags, daily notes, trade notes and trader-authored reviews; its empty schema and focused persistence/isolation/rebuild gate passed, and legacy annotation test data is deliberately excluded. Slice E connects the complete 210-capability Analytics Lab registry/query surface, account-scoped immutable saved views, explicit account/version-scoped Candle Review, normalized immutable market facts, and immutable Level Analysis deliveries plus stable Journal round-trip link versions through migrations 0008-0011. Every new E2-E4 table intentionally began empty. `/account` remains login-free on loopback, while Discord-first public login is activated only before go-live. Port 3010 remains off until a broad integrated visual boundary.
+
+**Phase 6 acceptance:** [Replacement Acceptance Plan](phase-6-replacement-acceptance-plan.md), [progress tracker](phase-6-replacement-acceptance-progress.md), and [acceptance report](phase-6-replacement-acceptance-report.md) record the completed resource-aware local gate. Sequential one-worker regression, compile/lint/build, packaged runtime, browser/API/privacy, multi-account and final recovery rehearsal passed without authorizing production transfer or deployment.
+
+**Phase 7 boundary:** [Legacy Retirement Progress](phase-7-legacy-retirement-progress.md) makes `traderlink-platform` the canonical local development application and freezes `traderslink.pro` as recovery/current-production reference. No physical cleanup, Git publication or hosted cutover is authorized by that classification.
+
+Slice F1 now connects Reflection Loop and the latest Coach/Review APIs to one
+read-only replacement service using published Journal Analytics, Data
+Decisions and trader-authored annotation facts. No V3/sample fallback remains
+in those active files. TypeScript/lint/static and real-database reconciliation
+pass with the database hash unchanged. The written two-file/seven-test focused
+Vitest gate remains policy-deferred after the approval layer refused its
+execution; it is retained for Phase 6. F2 established migrations 0012-0013,
+stable multi-provider Platform identity, user-level Academy completion history,
+guarded login-free local access and unchanged protection for all 107 launch
+slugs. F3 established explicit Watchlist-owned storage and separate publisher
+authority; its legacy local source had zero rows and was not copied. F4
+established versioned News storage, copied the one reconciled local article
+exactly once, and keyed Affiliate first-touch attribution to stable Platform
+users. F6 has now replaced the temporary public identity/storage adapters and
+added exact hosted-transfer tooling; actual production transfer remains
+pending.
+
+At the F5 checkpoint, the fixture-driven dark `/platform-readiness` runtime was replaced with a
+privacy-safe `/workspace/readiness` page in the approved dashboard. Its typed
+registry gives every one of the 52 preserved `/intelligence` pages exactly one
+canonical, compatibility, operations-only or owner-rejected disposition.
+Temporary configuration redirects run before the filesystem, so ordinary
+browser requests no longer enter the V3 layout while all legacy source remains
+available for recovery. Focused TypeScript/lint/static verification passes over
+122 active V3-free files. The real read-only readiness proof confirms 16
+migrations, 59 domain tables plus the registry, stable owner/workspace/selected
+account access and an unchanged 11,268,096-byte database with SHA-256
+`9f14fade99348729336044c36f30edd4c9f0ad53a75dcb2de7b3eb5b9b9fae5d`.
+The focused registry test subsequently passed in the Phase 6 sequential gate.
+
+F6 now provides guarded loopback review plus hashed revocable Discord-first
+Platform sessions, exact new-user provisioning, current Discord-membership
+entitlement and a separate fail-closed initial-owner link command. The hosted
+package uses standalone Next.js, a private-data-safe Docker image, one Railway
+service/replica and one persistent `/data` volume, production startup
+verification and a safe health endpoint. Migration 0018 adds the immutable
+hosted-transfer-event ledger. Dedicated preview/execute/reconcile tooling can
+adopt accepted Academy, Watchlist, News and Affiliate facts only after exact
+backup/hash/source-snapshot authorization. It never reads or transfers legacy
+Journal executions, trades, tags, rules or notes; that content was test data
+and is excluded. A disposable four-module/eight-row proof reconciled exactly
+and its second preview was idempotent. The real database passes read-only
+schema/integrity/readiness verification at 18 migrations and 61 domain tables
+plus the registry, while Discord memberships, public sessions and hosted
+transfer events remain empty. No production source, Railway resource, secret,
+push or deployment changed.
 
 **Accepted Phase 3 runtime state:** The exact 11-file focused suite passed all
 129 tests with one worker and no file parallelism; the static verifier passed;
@@ -73,7 +124,8 @@ runtime gate, not a static proof.
 - Statement upload order is irrelevant; reconstruction uses the full chronological execution history for the affected account/instrument/currency chain.
 - A round trip starts when position leaves zero and closes when it returns to zero; the next execution after zero begins a new trade.
 - Broker-imported and manual Trade Tracker executions share one canonical ledger while preserving source provenance.
-- Manual executions use their actual execution date/time and never combine daily notes across trading dates. Their instants are assigned to the Journal account timezone and begin with point-only coverage; each account trading date requires an evidence-bound trader decision before complete/partial daily coverage is asserted, and opening inventory remains separate. The future multi-day Trade Tracker presentation is deliberately deferred for a separate UI plan and owner review.
+- Manual executions use their actual execution date/time and never combine daily notes across trading dates. Their instants are assigned to the Journal account timezone and begin with point-only coverage; each account trading date requires an evidence-bound trader decision before complete/partial daily coverage is asserted, and opening inventory remains separate. The visible Trade Tracker focuses on the current account trading day/week; older routes are factual read-only history. Optional Day trade/Swing trade intent is authored by the trader and is never inferred from duration.
+- Displayed trading-data decimals use at most two places while editable source/manual values and canonical calculations remain lossless.
 - January IBKR data is test data, not a complete live customer migration source.
 - The architecture is TraderLink Platform; V4 is optional only as a later release label.
 - Workspace/folder cleanup requires a user-visible Git and data audit before any removal.
@@ -82,7 +134,7 @@ runtime gate, not a static proof.
 - The accepted Calendar has week/month views and sits under Trades in that same dashboard navigation.
 - The replacement is now in one clean, traceable full checkout at `C:\Users\jerac\Documents\TraderLink\traderlink-platform`. The current `traderslink.pro` folder remains intact as a recovery/reference archive and need not be deleted.
 - `v4-temp-sql` was located inside `C:\Users\jerac\Documents\traderslink.pro back up july 29`; it is an early experiment, not configured, and owner-rejected as a migration source.
-- The selected replacement development database is `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\development.sqlite`; it now contains six accepted migration rows and the Phase 3 Journal evidence summarized above. The earlier two-migration/five-table foundation remains historical recovery evidence.
+- The selected replacement development database is `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\development.sqlite`; it now contains seven accepted migration rows, the Phase 3 Journal evidence summarized above and 13 empty Slice D annotation tables. Legacy annotation test data was not copied. The earlier two-migration/five-table foundation remains historical recovery evidence.
 - The owner accepted one active workspace owner, owner/admin access to every active account in the same workspace, member denial until grants are designed, two initial migrations, five empty domain tables, and empty initialization without private seed data.
 - The owner-accepted design uses `WorkspaceAccessScope`, versioned broker-account fingerprint/canonicalization/HMAC identities, globally unique migration IDs, exact post-migration schema digests with fail-closed drift detection, separate runtime/initializer modes, canonical UUID-v4/numeric UTC validation, workspace-versus-account isolation, a separate ownership-seed approval gate, the accepted focused verification plan, and the accepted exact implementation-file list.
 - Big Time weekly content automation is preserved but explicitly deferred as a low-priority News operation outside the core Journal/database replacement.
@@ -216,3 +268,24 @@ email/password left optional. Broad lint, full-project TypeScript, full
 regression, build, browser/E2E, and CI-equivalent checks remain deferred to the
 final replacement acceptance gate without being removed from it. No push,
 deployment, deletion, production change, or legacy retirement is authorized.
+
+Phase 5 broker-neutral import progress now includes a user-confirmed generic
+CSV mapper, immutable account-scoped exact template reuse, privacy-safe support
+packages after both failed and successful mapping, and active-account mismatch
+protection. The Platform boundary now supports multiple separately selected
+Journal accounts through an opaque server-resolved cookie, shared dashboard
+switcher, bounded account creation and stale-mutation conflicts. A newly
+recognized IBKR identity requires explicit confirmation into the selected
+account. Four focused import files pass 34 one-worker tests and five focused
+account files pass 16. Multiple IBKR/generic broker sources in one user-defined
+Journal account are disposable-proven. The Data Decisions product adapter
+exposes every currently permitted typed action and passes 2 focused tests; the
+underlying append-only command/decision engine passes 30 focused tests. The disposable
+write verifier also passed private exact reimport, canonical manual swing
+executions, partial-coverage resolution, generic mapped commit/template reuse,
+second-account isolation, stale-selection rejection, explicit new-broker
+linking, `quick_check=ok`, cleanup and unchanged real database evidence. The
+multi-account-aware read-model verifier also passed against the unchanged real
+database. A Windows upload-staging read-back defect was found and corrected
+before any real product-route write. Port 3010 remains off; no commit, push,
+deployment or real database mutation occurred.

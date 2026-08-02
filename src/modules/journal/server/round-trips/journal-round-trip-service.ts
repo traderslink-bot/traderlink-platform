@@ -107,7 +107,7 @@ function completeRanges(
     if (!prior || range.start > nextDate(prior.end)) merged.push({ ...range });
     else if (range.end > prior.end) prior.end = range.end;
   }
-  return Object.freeze(merged.map(Object.freeze));
+  return Object.freeze(merged.map((range) => Object.freeze({ ...range })));
 }
 
 function rangeCovered(ranges: readonly CoverageRange[], start: string, end: string): boolean {

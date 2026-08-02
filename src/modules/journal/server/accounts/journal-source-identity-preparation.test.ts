@@ -275,7 +275,7 @@ describe("Journal source identity preparation automation", () => {
     )).toThrowError("TRADERLINK_JOURNAL_IMPORT_PREVIEW_ARGUMENT_INVALID");
     expect(() => runTraderLinkPlatformJournalImportPreview(
       previewArguments,
-      {},
+      { NODE_ENV: "test" },
     )).toThrowError("TRADERLINK_JOURNAL_IMPORT_SOURCE_PATH_INVALID");
 
     const preparationArguments = [

@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { revalidatePath } from "next/cache";
 
 import {
@@ -23,22 +24,41 @@ function requestOrigin(request: Request): string {
   return `${url.protocol}//${url.host}`;
 }
 
-function isAuthorized(request: Request): boolean {
-  const expectedToken = process.env.NEWS_PUBLISH_TOKEN;
+type PublisherAuthorization = "authorized" | "unconfigured" | "unauthorized";
 
-  if (!expectedToken) {
-    return process.env.VERCEL_ENV !== "production";
-  }
+function tokensMatch(left: string, right: string): boolean {
+  const leftBuffer = Buffer.from(left, "utf8");
+  const rightBuffer = Buffer.from(right, "utf8");
+  return (
+    leftBuffer.length === rightBuffer.length &&
+    timingSafeEqual(leftBuffer, rightBuffer)
+  );
+}
+
+function authorizePublisher(request: Request): PublisherAuthorization {
+  const expectedToken = process.env.NEWS_PUBLISH_TOKEN?.trim();
+  if (!expectedToken) return "unconfigured";
 
   const authHeader = request.headers.get("authorization") || "";
   const bearerToken = authHeader.replace(/^Bearer\s+/i, "").trim();
   const headerToken = request.headers.get("x-news-publish-token") || "";
 
-  return bearerToken === expectedToken || headerToken === expectedToken;
+  return tokensMatch(bearerToken, expectedToken) ||
+    tokensMatch(headerToken, expectedToken)
+    ? "authorized"
+    : "unauthorized";
 }
 
 export async function POST(request: Request): Promise<Response> {
-  if (!isAuthorized(request)) {
+  const authorization = authorizePublisher(request);
+  if (authorization === "unconfigured") {
+    return jsonError(
+      503,
+      "news_publisher_unavailable",
+      "News publishing is not configured.",
+    );
+  }
+  if (authorization !== "authorized") {
     return jsonError(401, "unauthorized", "Invalid news publish token.");
   }
 
@@ -67,17 +87,28 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({
       ok: true,
       contractVersion: "traderslink_news_article_publish_v1",
-      article,
+      article: {
+        id: article.id,
+        ticker: article.ticker,
+        slug: article.slug,
+        publishedAt: article.publishedAt,
+        updatedAt: article.updatedAt,
+        revision: article.revision,
+        contentSha256: article.contentSha256,
+      },
       articlePath,
       articleUrl: `${requestOrigin(request)}${articlePath}`,
       freeArticlePath,
       freeArticleUrl: `${requestOrigin(request)}${freeArticlePath}`,
     });
   } catch (error) {
+    console.error("News article publish rejected.", {
+      errorName: error instanceof Error ? error.name : "UnknownError",
+    });
     return jsonError(
       400,
       "invalid_news_article",
-      error instanceof Error ? error.message : String(error),
+      "The News article could not be accepted.",
     );
   }
 }

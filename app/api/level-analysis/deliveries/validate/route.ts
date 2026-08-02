@@ -1,36 +1,21 @@
-import { withTraderIntelligenceOwnerRoute } from "@/src/lib/trader-intelligence-v3/auth";
-
+import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { LevelAnalysisDeliveryService } from "@/src/modules/level-analysis/server/level-analysis-delivery-service";
+import { readBoundedLevelAnalysisDeliveryPayload } from "@/src/modules/level-analysis/server/level-analysis-delivery-request";
 import {
-  journalLevelAnalysisDeliveryErrorResponse,
-  readJournalLevelAnalysisDeliveryApiRequest,
-  validateJournalLevelAnalysisDeliveryForApi,
-} from "../../../../../src/lib/level-analysis/level-analysis-journal-delivery-api-service";
-import { isLevelAnalysisDeliveryApiEnabled } from "../../../../../src/lib/level-analysis/level-analysis-journal-delivery-persistence-storage";
+  levelAnalysisErrorResponse,
+  requireConfiguredLevelAnalysisProviders,
+} from "@/src/modules/level-analysis/server/level-analysis-http";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function POSTHandler(request: Request): Promise<Response> {
-  if (!isLevelAnalysisDeliveryApiEnabled()) {
-    return journalLevelAnalysisDeliveryErrorResponse(
-      404,
-      "feature_disabled",
-      "Level analysis delivery API is disabled.",
-    );
-  }
-
+export async function POST(request: Request): Promise<Response> {
   try {
-    const input = await readJournalLevelAnalysisDeliveryApiRequest(request);
-    return Response.json(validateJournalLevelAnalysisDeliveryForApi(input));
+    requireTraderLinkPlatformRequestScope(request.headers);
+    const providers = requireConfiguredLevelAnalysisProviders();
+    const payload = await readBoundedLevelAnalysisDeliveryPayload(request);
+    return Response.json(new LevelAnalysisDeliveryService(null, providers).validate(payload));
   } catch (error) {
-    return journalLevelAnalysisDeliveryErrorResponse(
-      400,
-      error instanceof Error && error.message.startsWith("Invalid JSON")
-        ? "invalid_json"
-        : "invalid_request",
-      error instanceof Error ? error.message : String(error),
-    );
+    return levelAnalysisErrorResponse(error);
   }
 }
-
-export const POST = withTraderIntelligenceOwnerRoute("app/api/level-analysis/deliveries/validate/route.ts", POSTHandler);

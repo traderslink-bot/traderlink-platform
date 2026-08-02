@@ -20,15 +20,19 @@ import {
   loadAccountIdentityConfiguration,
 } from "../accounts/journal-account-service";
 import {
-  IBKR_SOURCE_ACCOUNT_CANONICALIZERS,
-  IBKR_SOURCE_ACCOUNT_CANONICALIZATION_VERSION,
-} from "../accounts/ibkr-source-account-canonicalizer";
-import { deriveDevelopmentOwnerJournalScope } from "../accounts/journal-development-owner-scope";
+  ALL_JOURNAL_SOURCE_ACCOUNT_CANONICALIZERS,
+  DEFAULT_JOURNAL_SOURCE_ACCOUNT_CANONICALIZATION_VERSION,
+} from "../accounts/journal-source-account-canonicalizers";
+import {
+  deriveDevelopmentOwnerJournalScope,
+  deriveDevelopmentOwnerJournalScopeForAccount,
+} from "../accounts/journal-development-owner-scope";
 import { JournalIntegrityReadRepository } from "../journal-integrity-read-repository";
 import { previewIbkrActivityStatement } from "../imports/ibkr-activity-statement-adapter";
 import {
   readVerifiedJournalEvidenceObject,
   resolveJournalEvidenceVaultBoundary,
+  verifyJournalEvidenceObject,
 } from "../imports/journal-evidence-vault";
 import {
   ACCEPTED_DEVELOPMENT_OWNER_SOURCE_BASELINE,
@@ -65,19 +69,14 @@ import { verifyCompletedPlatformDatabase } from "@/src/modules/platform/server/d
 export const JOURNAL_INTEGRITY_VERIFICATION_ACTION =
   "verify_journal_integrity" as const;
 
-const EXPECTED_MIGRATION_IDS = Object.freeze([
-  "0001_platform_identity",
-  "0002_journal_account_boundary",
-  "0003_journal_import_evidence",
-  "0004_journal_execution_ledger",
-  "0005_journal_data_decisions",
-  "0006_journal_round_trip_projection",
-]);
+const EXPECTED_MIGRATION_IDS = Object.freeze(
+  platformMigrationManifest.map((migration) => migration.migrationId),
+);
 
 export type TraderLinkJournalIntegrityVerificationResult = Readonly<{
   status: "journal_integrity_verified";
   identifiersRedacted: true;
-  migrationCount: 6;
+  migrationCount: number;
   migrationRows: readonly Readonly<{
     migrationId: string;
     checksumSha256: string;
@@ -86,10 +85,9 @@ export type TraderLinkJournalIntegrityVerificationResult = Readonly<{
   schemaSha256: string;
   databaseFileSha256: string;
   databaseFileSizeBytes: number;
-  workspaceId: string;
-  accountId: string;
-  sourceIdentityId: string;
-  importBatchId: string;
+  scopeRefSha256: string;
+  sourceIdentityRefSha256: string;
+  importBatchRefSha256: string;
   evidence: Readonly<{
     sourceFileSha256: string;
     sourceFileSizeBytes: number;
@@ -219,9 +217,6 @@ function requireExactMigrationBoundary(database: Database.Database): Readonly<{
   schemaSha256: string;
   migrationRows: TraderLinkJournalIntegrityVerificationResult["migrationRows"];
 }> {
-  if (platformMigrationManifest.length !== 6) {
-    integrityFailure("six_migration_manifest");
-  }
   verifyCompletedPlatformDatabase(database);
   verifyPlatformDatabaseConnectionPragmas(database);
   requirePlatformForeignKeyCheck(database);
@@ -229,11 +224,11 @@ function requireExactMigrationBoundary(database: Database.Database): Readonly<{
   requireIntegrityCheck(database);
   const rows = readAppliedPlatformMigrations(database);
   if (
-    rows.length !== 6 ||
+    rows.length !== EXPECTED_MIGRATION_IDS.length ||
     JSON.stringify(rows.map((row) => row.migration_id)) !==
       JSON.stringify(EXPECTED_MIGRATION_IDS)
   ) {
-    integrityFailure("six_migration_history");
+    integrityFailure("migration_history");
   }
   const schemaSha256 = calculatePlatformSchemaDigest(database);
   if (schemaSha256 !== rows.at(-1)?.post_schema_sha256) {
@@ -925,23 +920,37 @@ function requireVaultInventory(
   rootPath: string,
   expectedObjectKeys: readonly string[],
 ): void {
-  const expectedFiles = new Set(expectedObjectKeys.map((key) => key.slice("ibkr/".length)));
+  const expectedByNamespace = new Map<string, Set<string>>();
+  for (const key of expectedObjectKeys) {
+    const match = /^(ibkr|mapped_csv)\/([0-9a-f]{64}\.csv)$/u.exec(key);
+    if (!match?.[1] || !match[2]) integrityFailure("vault_object_key");
+    const files = expectedByNamespace.get(match[1]) ?? new Set<string>();
+    files.add(match[2]);
+    expectedByNamespace.set(match[1], files);
+  }
   const rootEntries = readdirSync(rootPath, { withFileTypes: true });
-  if (rootEntries.some((entry) =>
-    entry.name !== "ibkr" || !entry.isDirectory() || entry.isSymbolicLink())) {
+  if (
+    rootEntries.length !== expectedByNamespace.size ||
+    rootEntries.some((entry) =>
+      !expectedByNamespace.has(entry.name) ||
+      !entry.isDirectory() ||
+      entry.isSymbolicLink())
+  ) {
     integrityFailure("unmanaged_vault_root_object");
   }
-  const objectDirectory = join(rootPath, "ibkr");
-  if (!existsSync(objectDirectory) || lstatSync(objectDirectory).isSymbolicLink()) {
-    integrityFailure("vault_object_directory");
-  }
-  const actualFiles = readdirSync(objectDirectory, { withFileTypes: true });
-  if (
-    actualFiles.length !== expectedFiles.size ||
-    actualFiles.some((entry) =>
-      !entry.isFile() || entry.isSymbolicLink() || !expectedFiles.has(entry.name))
-  ) {
-    integrityFailure("unmanaged_or_missing_vault_object");
+  for (const [namespace, expectedFiles] of expectedByNamespace) {
+    const objectDirectory = join(rootPath, namespace);
+    if (!existsSync(objectDirectory) || lstatSync(objectDirectory).isSymbolicLink()) {
+      integrityFailure("vault_object_directory");
+    }
+    const actualFiles = readdirSync(objectDirectory, { withFileTypes: true });
+    if (
+      actualFiles.length !== expectedFiles.size ||
+      actualFiles.some((entry) =>
+        !entry.isFile() || entry.isSymbolicLink() || !expectedFiles.has(entry.name))
+    ) {
+      integrityFailure("unmanaged_or_missing_vault_object");
+    }
   }
 }
 
@@ -952,7 +961,6 @@ function verifyTraderLinkPlatformJournalIntegrityInternal(
   const environment = options.environment ?? process.env;
   const databasePath = options.databasePath
     ? validatePlatformDatabasePath(options.databasePath, {
-        environment,
         forbiddenRepositoryRoots: options.forbiddenRepositoryRoots,
       })
     : resolvePlatformDatabaseConfig({
@@ -981,21 +989,24 @@ function verifyTraderLinkPlatformJournalIntegrityInternal(
     database.pragma("busy_timeout = 5000");
     database.pragma("query_only = ON");
     const migration = requireExactMigrationBoundary(database);
-    const owner = deriveDevelopmentOwnerJournalScope(database);
-    const accountScope = narrowWorkspaceAccessToAccount(
-      owner.scope,
-      owner.accountId,
-    );
+    const ownerBoundary = deriveDevelopmentOwnerJournalScope(database);
     const identityRows = new JournalAccountRepository(database)
-      .listNonSupersededSourceIdentities(owner.scope.workspaceId, "ibkr");
+      .listNonSupersededSourceIdentities(ownerBoundary.scope.workspaceId, "ibkr");
     if (
       identityRows.length !== 1 ||
-      !identityRows[0] ||
-      identityRows[0].accountId !== owner.accountId
+      !identityRows[0]
     ) {
       integrityFailure("prepared_ibkr_identity_cardinality");
     }
     const sourceIdentity = identityRows[0];
+    const owner = deriveDevelopmentOwnerJournalScopeForAccount(
+      database,
+      sourceIdentity.accountId,
+    );
+    const accountScope = narrowWorkspaceAccessToAccount(
+      owner.scope,
+      owner.accountId,
+    );
     const brokerImports = database.prepare<[string, string], {
       import_batch_id: string;
       source_identity_id: string;
@@ -1018,6 +1029,7 @@ function verifyTraderLinkPlatformJournalIntegrityInternal(
        statement_period_end_date, source_timezone
 FROM journal_import_batches
 WHERE workspace_id = ? AND account_id = ? AND source_kind = 'broker_statement'
+  AND source_system = 'ibkr'
 ORDER BY import_batch_id`).all(owner.scope.workspaceId, owner.accountId);
     if (
       brokerImports.length !== 1 ||
@@ -1033,7 +1045,30 @@ ORDER BY import_batch_id`).all(owner.scope.workspaceId, owner.accountId);
       integrityFailure("broker_import_identity");
     }
     const brokerImport = brokerImports[0];
-    requireVaultInventory(vault.rootPath, [brokerImport.evidence_object_key]);
+    const acceptedEvidence = database.prepare<[string], {
+      source_system: "ibkr" | "mapped_csv";
+      source_file_sha256: string;
+      source_file_size_bytes: number;
+      evidence_object_key: string;
+    }>(`SELECT source_system, source_file_sha256, source_file_size_bytes,
+       evidence_object_key
+FROM journal_import_batches
+WHERE workspace_id = ? AND source_kind = 'broker_statement'
+  AND source_system IN ('ibkr', 'mapped_csv')
+  AND current_state IN ('accepted', 'accepted_with_decisions')
+ORDER BY account_id, accepted_at_utc, import_batch_id`).all(owner.scope.workspaceId);
+    requireVaultInventory(
+      vault.rootPath,
+      acceptedEvidence.map((row) => row.evidence_object_key),
+    );
+    for (const evidence of acceptedEvidence) {
+      verifyJournalEvidenceObject(vault, {
+        evidenceObjectKey: evidence.evidence_object_key,
+        sourceFileSha256: evidence.source_file_sha256,
+        sourceFileSizeBytes: evidence.source_file_size_bytes,
+        evidenceNamespace: evidence.source_system,
+      });
+    }
     const sourceBytes = readVerifiedJournalEvidenceObject(vault, {
       evidenceObjectKey: brokerImport.evidence_object_key,
       sourceFileSha256: brokerImport.source_file_sha256,
@@ -1079,8 +1114,8 @@ ORDER BY import_batch_id`).all(owner.scope.workspaceId, owner.accountId);
     }
     const accountConfiguration = loadAccountIdentityConfiguration(
       environment,
-      IBKR_SOURCE_ACCOUNT_CANONICALIZERS,
-      IBKR_SOURCE_ACCOUNT_CANONICALIZATION_VERSION,
+      ALL_JOURNAL_SOURCE_ACCOUNT_CANONICALIZERS,
+      DEFAULT_JOURNAL_SOURCE_ACCOUNT_CANONICALIZATION_VERSION,
     );
     const authority = requireAuthority(
       database,
@@ -1150,15 +1185,24 @@ ORDER BY import_batch_id`).all(owner.scope.workspaceId, owner.accountId);
     const result = Object.freeze({
       status: "journal_integrity_verified" as const,
       identifiersRedacted: true as const,
-      migrationCount: 6 as const,
+      migrationCount: EXPECTED_MIGRATION_IDS.length,
       migrationRows: migration.migrationRows,
       schemaSha256: migration.schemaSha256,
       databaseFileSha256: initialDatabaseFileSha256,
       databaseFileSizeBytes: initialDatabaseFileSizeBytes,
-      workspaceId: owner.scope.workspaceId,
-      accountId: owner.accountId,
-      sourceIdentityId: sourceIdentity.sourceIdentityId,
-      importBatchId: brokerImport.import_batch_id,
+      scopeRefSha256: sha256Text([
+        "traderlink:journal-integrity-scope:v1",
+        owner.scope.workspaceId,
+        owner.accountId,
+      ].join("\n")),
+      sourceIdentityRefSha256: sha256Text([
+        "traderlink:journal-integrity-source-identity:v1",
+        sourceIdentity.sourceIdentityId,
+      ].join("\n")),
+      importBatchRefSha256: sha256Text([
+        "traderlink:journal-integrity-import-batch:v1",
+        brokerImport.import_batch_id,
+      ].join("\n")),
       evidence: Object.freeze({
         sourceFileSha256: brokerImport.source_file_sha256,
         sourceFileSizeBytes: brokerImport.source_file_size_bytes,
@@ -1207,7 +1251,7 @@ ORDER BY import_batch_id`).all(owner.scope.workspaceId, owner.accountId);
     return result;
   } catch (error) {
     if (isTraderLinkPlatformError(error)) throw error;
-    platformFailure(
+    return platformFailure(
       "TRADERLINK_JOURNAL_INTEGRITY_VERIFICATION_FAILED",
       { check: "unexpected_verifier_failure" },
       error,

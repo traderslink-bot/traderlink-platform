@@ -37,7 +37,6 @@ interface DiscordTokenResponse {
 export type DiscordOAuthPrompt = "consent" | "none";
 
 const DISCORD_API_BASE = "https://discord.com/api/v10";
-const TRADERSLINK_DISCORD_GUILD_ID = "1433570740430573642";
 const DISCORD_OAUTH_SCOPES = "identify guilds guilds.members.read";
 const SILENT_OAUTH_RETRY_ERRORS = new Set([
   "account_selection_required",
@@ -49,7 +48,7 @@ const SILENT_OAUTH_RETRY_ERRORS = new Set([
 export function getDiscordOAuthConfig(origin: string): DiscordOAuthConfig {
   const clientId = process.env.DISCORD_CLIENT_ID;
   const clientSecret = process.env.DISCORD_CLIENT_SECRET;
-  const guildId = process.env.DISCORD_GUILD_ID ?? TRADERSLINK_DISCORD_GUILD_ID;
+  const guildId = resolveTraderLinkDiscordGuildId();
   const redirectUri =
     process.env.DISCORD_REDIRECT_URI ??
     new URL("/api/auth/discord/callback", origin).toString();
@@ -217,3 +216,4 @@ export async function resolveDiscordCurrentGuildMembership(args: {
 export function getSafeDiscordAuthErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Unknown Discord auth error.";
 }
+import { resolveTraderLinkDiscordGuildId } from "@/src/modules/platform/server/authentication/platform-discord-configuration";

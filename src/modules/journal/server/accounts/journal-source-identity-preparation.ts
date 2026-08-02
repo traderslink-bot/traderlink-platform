@@ -23,21 +23,16 @@ import {
   JournalAccountService,
   loadAccountIdentityConfiguration,
 } from "./journal-account-service";
-import { deriveDevelopmentOwnerJournalScope } from "./journal-development-owner-scope";
+import { deriveSoleDevelopmentOwnerJournalScope } from "./journal-development-owner-scope";
 
 export const JOURNAL_SOURCE_IDENTITY_PREPARATION_ENABLE_ENV =
   "TRADERLINK_PLATFORM_ALLOW_JOURNAL_SOURCE_IDENTITY_PREPARATION" as const;
 export const JOURNAL_SOURCE_IDENTITY_PREPARATION_ACTION =
   "prepare_journal_source_identity" as const;
 
-const REQUIRED_MIGRATION_IDS = Object.freeze([
-  "0001_platform_identity",
-  "0002_journal_account_boundary",
-  "0003_journal_import_evidence",
-  "0004_journal_execution_ledger",
-  "0005_journal_data_decisions",
-  "0006_journal_round_trip_projection",
-]);
+const REQUIRED_MIGRATION_IDS = Object.freeze(
+  platformMigrationManifest.map((migration) => migration.migrationId),
+);
 
 const SOURCE_SYSTEM = "ibkr" as const;
 const PRIVACY_SAFE_SOURCE_DISPLAY = "Broker source";
@@ -46,7 +41,7 @@ export type TraderLinkJournalSourceIdentityPreparationResult = Readonly<{
   status: "journal_source_identity_prepared" | "journal_source_identity_already_prepared";
   identifiersRedacted: true;
   evidence: JournalImportSourceEvidence;
-  migrationCount: 6;
+  migrationCount: number;
   activeDevelopmentOwnerCount: 1;
   activeWorkspaceCount: 1;
   activeJournalAccountCount: 1;
@@ -103,11 +98,10 @@ function requireExactSixMigrationSchema(database: Database.Database): void {
     (row) => row.migration_id,
   );
   if (
-    platformMigrationManifest.length !== 6 ||
     JSON.stringify(appliedIds) !== JSON.stringify(REQUIRED_MIGRATION_IDS)
   ) {
     platformFailure("TRADERLINK_PLATFORM_SCHEMA_MISMATCH", {
-      check: "journal_source_identity_six_migration_boundary",
+      check: "journal_source_identity_migration_boundary",
     });
   }
 }
@@ -119,7 +113,7 @@ function prepareWithinImmediateTransaction(
 ): Omit<TraderLinkJournalSourceIdentityPreparationResult, "evidence"> {
   requireExactSixMigrationSchema(database);
   const repository = new JournalAccountRepository(database);
-  const { scope, accountId } = deriveDevelopmentOwnerJournalScope(
+  const { scope, accountId } = deriveSoleDevelopmentOwnerJournalScope(
     database,
     repository,
   );
@@ -189,7 +183,7 @@ function prepareWithinImmediateTransaction(
         ? "journal_source_identity_prepared" as const
         : "journal_source_identity_already_prepared" as const,
     identifiersRedacted: true as const,
-    migrationCount: 6 as const,
+    migrationCount: REQUIRED_MIGRATION_IDS.length,
     activeDevelopmentOwnerCount: 1 as const,
     activeWorkspaceCount: 1 as const,
     activeJournalAccountCount: 1 as const,

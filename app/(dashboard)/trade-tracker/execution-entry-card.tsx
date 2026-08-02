@@ -28,7 +28,13 @@ export type ExecutionDraft = {
   side: "BUY" | "SELL";
   symbol: string;
   time: string;
+  tradeIntent: "not-set" | "day-trade" | "swing";
 };
+
+export type ExecutionSaveResult = Readonly<{
+  acceptedExecutionCount: number;
+  pendingDecisionCount: number;
+}>;
 
 function newExecution(id: number, side: "BUY" | "SELL"): ExecutionDraft {
   return {
@@ -39,6 +45,7 @@ function newExecution(id: number, side: "BUY" | "SELL"): ExecutionDraft {
     side,
     symbol: "",
     time: "",
+    tradeIntent: "not-set",
   };
 }
 
@@ -51,18 +58,25 @@ function normalizedDecimal(value: string): string {
 
 export function ExecutionEntryCard({
   collapsed,
+  dateEditable = false,
   initialExecutions = [],
   onCollapsedChange,
+  onSave,
   onSubmitted,
-  persist = false,
+  savingEnabled = true,
   sessionDate,
   submittedCount,
 }: {
   collapsed: boolean;
+  dateEditable?: boolean;
   initialExecutions?: ExecutionDraft[];
   onCollapsedChange: (collapsed: boolean) => void;
+  onSave?: (
+    sessionDate: string,
+    executions: readonly ExecutionDraft[],
+  ) => Promise<ExecutionSaveResult>;
   onSubmitted: (count: number, executions: ExecutionDraft[]) => void;
-  persist?: boolean;
+  savingEnabled?: boolean;
   sessionDate: string;
   submittedCount: number | null;
 }) {
@@ -83,6 +97,7 @@ export function ExecutionEntryCard({
       }
     | { kind: "error"; message: string }
   >({ kind: "idle" });
+  const [selectedSessionDate, setSelectedSessionDate] = useState(sessionDate);
 
   useEffect(() => {
     if (initialExecutions.length === 0) return;
@@ -91,6 +106,10 @@ export function ExecutionEntryCard({
       Math.max(...initialExecutions.map((execution) => execution.id)) + 1,
     );
   }, [initialExecutions]);
+
+  useEffect(() => {
+    setSelectedSessionDate(sessionDate);
+  }, [sessionDate]);
 
   function update(
     id: number,
@@ -130,78 +149,29 @@ export function ExecutionEntryCard({
   );
 
   async function saveExecutions() {
-    if (!complete || state.kind === "saving") return;
+    if (!savingEnabled || !complete || state.kind === "saving") return;
     setState({ kind: "saving" });
     try {
-      let candleReviews: {
-        completedTradeCount?: number;
-        completedTradeKeys?: readonly string[];
-        noCoverageCount?: number;
-        providerUnavailableCount?: number;
-        saveFailedCount?: number;
-        savedCount?: number;
-      } | undefined;
-      if (persist) {
-        const response = await fetch(
-          "/api/intelligence/day-session-executions/v1",
-          {
-            body: JSON.stringify({
-              date: sessionDate,
-              executions: rows.map((row) => ({
-                fees: normalizedDecimal(row.fees),
-                price: normalizedDecimal(row.price),
-                quantity: normalizedDecimal(row.quantity),
-                side: row.side,
-                symbol: row.symbol.trim().toUpperCase(),
-                time: row.time,
-              })),
-            }),
-            headers: { "Content-Type": "application/json" },
-            method: "POST",
-          },
-        );
-        const result = (await response.json()) as {
-          acceptedExecutionCount?: number;
-          candleReviews?: {
-            completedTradeCount?: number;
-            completedTradeKeys?: readonly string[];
-            noCoverageCount?: number;
-            providerUnavailableCount?: number;
-            saveFailedCount?: number;
-            savedCount?: number;
-          };
-          error?: { message?: string };
-        };
-        if (!response.ok || result.acceptedExecutionCount === undefined) {
-          throw new Error(
-            result.error?.message ?? "The executions could not be saved.",
-          );
-        }
-        candleReviews = result.candleReviews;
-      }
-      const recordedCount = rows.length;
-      const review = candleReviews;
-      const candleReviewMessage = review === undefined
-        ? null
-        : review.completedTradeCount === 0
-          ? "No completed round trip was created yet, so no Yahoo candle review was requested."
-          : `${review.savedCount ?? 0} completed trade${review.savedCount === 1 ? "" : "s"} analyzed automatically${(review.noCoverageCount ?? 0) > 0 ? `; ${review.noCoverageCount} had no usable candle coverage` : ""}${(review.providerUnavailableCount ?? 0) > 0 ? `; Yahoo was unavailable for ${review.providerUnavailableCount}` : ""}${(review.saveFailedCount ?? 0) > 0 ? `; ${review.saveFailedCount} could not be saved` : ""}.`;
+      const normalizedRows = rows.map((row) => ({
+        ...row,
+        fees: normalizedDecimal(row.fees),
+        price: normalizedDecimal(row.price),
+        quantity: normalizedDecimal(row.quantity),
+        symbol: row.symbol.trim().toUpperCase(),
+      }));
+      const saveResult = onSave
+        ? await onSave(selectedSessionDate, normalizedRows)
+        : null;
+      const recordedCount = saveResult?.acceptedExecutionCount ?? rows.length;
       setState({
         kind: "saved",
-        candleReviewKeys: review?.completedTradeKeys ?? [],
-        candleReviewMessage,
+        candleReviewKeys: [],
+        candleReviewMessage: saveResult && saveResult.pendingDecisionCount > 0
+          ? `${saveResult.pendingDecisionCount} item${saveResult.pendingDecisionCount === 1 ? "" : "s"} need review in Data Decisions.`
+          : null,
         count: recordedCount,
       });
-      onSubmitted(
-        recordedCount,
-        rows.map((row) => ({
-          ...row,
-          fees: normalizedDecimal(row.fees),
-          price: normalizedDecimal(row.price),
-          quantity: normalizedDecimal(row.quantity),
-          symbol: row.symbol.trim().toUpperCase(),
-        })),
-      );
+      onSubmitted(recordedCount, normalizedRows);
       onCollapsedChange(true);
     } catch (error) {
       setState({
@@ -265,12 +235,28 @@ export function ExecutionEntryCard({
 
   return (
     <DashboardPanel
-      eyebrow={sessionDate}
+      eyebrow="Manual execution entry"
       title="Enter trades"
     >
       <Typography color="text.secondary" variant="body2">
-        Completed trades and P/L are reconstructed after saving.
+        Use this during the current trading week. Choose each execution&apos;s actual trading date and mark Swing trade only when that is your intention. Completed trades and P/L are reconstructed from the shared Journal ledger after saving.
       </Typography>
+
+      {dateEditable ? (
+        <TextField
+          label="Trading date"
+          onChange={(event) => setSelectedSessionDate(event.target.value)}
+          size="small"
+          slotProps={{ inputLabel: { shrink: true } }}
+          sx={{ mt: 2.5, width: { xs: "100%", sm: 220 } }}
+          type="date"
+          value={selectedSessionDate}
+        />
+      ) : (
+        <Typography color="text.secondary" sx={{ mt: 1 }} variant="caption">
+          Trading date: {selectedSessionDate}
+        </Typography>
+      )}
 
       <Stack spacing={1.5} sx={{ mt: 2.5 }}>
         {rows.map((row, index) => (
@@ -286,7 +272,7 @@ export function ExecutionEntryCard({
               gap: 1.25,
               gridTemplateColumns: {
                 xs: "1fr 1fr",
-                md: "80px minmax(110px, .8fr) 110px minmax(110px, .7fr) minmax(100px, .65fr) minmax(100px, .65fr) minmax(90px, .55fr) 40px",
+                md: "80px minmax(105px, .75fr) 100px minmax(105px, .7fr) minmax(95px, .6fr) minmax(95px, .6fr) minmax(85px, .5fr) minmax(115px, .7fr) 40px",
               },
               p: 1.5,
             }}
@@ -357,6 +343,19 @@ export function ExecutionEntryCard({
               slotProps={{ htmlInput: { inputMode: "decimal", min: 0 } }}
               value={row.fees}
             />
+            <TextField
+              label="Trade plan"
+              onChange={(event) =>
+                update(row.id, "tradeIntent", event.target.value)
+              }
+              select
+              size="small"
+              value={row.tradeIntent}
+            >
+              <MenuItem value="not-set">Not set</MenuItem>
+              <MenuItem value="day-trade">Day trade</MenuItem>
+              <MenuItem value="swing">Swing trade</MenuItem>
+            </TextField>
             <IconButton
               aria-label={`Remove execution ${index + 1}`}
               disabled={rows.length === 1}
@@ -389,7 +388,7 @@ export function ExecutionEntryCard({
         }}
       >
         <Typography color="text.secondary" variant="body2">
-          Times use Eastern Time.
+          Times use Eastern Time. Editable quantities, prices, and fees retain every digit you enter; saved displays use at most two decimal places.
         </Typography>
         <Stack direction="row" spacing={1}>
           {submittedCount !== null ? (
@@ -398,13 +397,24 @@ export function ExecutionEntryCard({
             </DashboardSecondaryAction>
           ) : null}
           <DashboardPrimaryAction
-            disabled={!complete || state.kind === "saving"}
+            disabled={!savingEnabled || !complete || state.kind === "saving"}
             onClick={() => void saveExecutions()}
           >
-            {submittedCount === null ? "Submit executions" : "Update executions"}
+            {state.kind === "saving"
+              ? "Saving executions..."
+              : !savingEnabled
+              ? "Saving not connected yet"
+              : submittedCount === null
+                ? "Submit executions"
+                : "Update executions"}
           </DashboardPrimaryAction>
         </Stack>
       </Box>
+      {!savingEnabled ? (
+        <Typography color="text.secondary" sx={{ mt: 1.5 }} variant="caption">
+          This is the reviewable replacement form. Saving will be enabled only after the canonical manual-entry command and Data Decisions safeguards are verified.
+        </Typography>
+      ) : null}
       {state.kind === "error" ? (
         <Typography color="error.main" sx={{ mt: 1.5 }} variant="body2">
           {state.message}

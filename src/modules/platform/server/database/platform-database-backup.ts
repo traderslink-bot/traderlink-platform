@@ -9,6 +9,7 @@ import {
   createCanonicalUtcTimestamp,
   isTraderLinkPlatformError,
   platformFailure,
+  type PlatformMigration,
 } from "./platform-migration-contract";
 import {
   listPlatformUserTableNames,
@@ -116,8 +117,9 @@ function readSnapshotEvidence(
   database: Database.Database,
   path: string,
   now: () => Date,
+  verificationManifest?: readonly PlatformMigration[],
 ): PlatformDatabaseSnapshotEvidence {
-  verifyCompletedPlatformDatabase(database);
+  verifyCompletedPlatformDatabase(database, verificationManifest);
   const pragmas = verifyPlatformDatabaseConnectionPragmas(database);
   requirePlatformForeignKeyCheck(database);
   requirePlatformQuickCheck(database);
@@ -239,6 +241,7 @@ export async function createAndRestoreVerifyPlatformDatabaseBackup(
     verifyRecoveryAuthority?: (
       requirements: PlatformDatabaseRecoveryRequirements,
     ) => RecoveryAuthorityResult | Promise<RecoveryAuthorityResult>;
+    verificationManifest?: readonly PlatformMigration[];
   }>,
 ): Promise<PlatformDatabaseBackupEvidence> {
   const now = options.now ?? (() => new Date());
@@ -269,7 +272,7 @@ export async function createAndRestoreVerifyPlatformDatabaseBackup(
     source = new Database(sourcePath, { readonly: true, fileMustExist: true });
     source.pragma("foreign_keys = ON");
     source.pragma("busy_timeout = 5000");
-    verifyCompletedPlatformDatabase(source);
+    verifyCompletedPlatformDatabase(source, options.verificationManifest);
     verifyPlatformDatabaseConnectionPragmas(source);
     const recoveryRequirements = readRecoveryRequirements(source);
     const recoveryStatus = await verifyRecoveryAuthority(
@@ -279,13 +282,23 @@ export async function createAndRestoreVerifyPlatformDatabaseBackup(
 
     mkdirSync(dirname(backupPath), { recursive: true });
     mkdirSync(dirname(restoreVerificationPath), { recursive: true });
-    const sourceEvidence = readSnapshotEvidence(source, sourcePath, now);
+    const sourceEvidence = readSnapshotEvidence(
+      source,
+      sourcePath,
+      now,
+      options.verificationManifest,
+    );
     await source.backup(backupPath);
 
     backup = new Database(backupPath, { readonly: true, fileMustExist: true });
     backup.pragma("foreign_keys = ON");
     backup.pragma("busy_timeout = 5000");
-    const backupEvidence = readSnapshotEvidence(backup, backupPath, now);
+    const backupEvidence = readSnapshotEvidence(
+      backup,
+      backupPath,
+      now,
+      options.verificationManifest,
+    );
     await backup.backup(restoreVerificationPath);
 
     restored = new Database(restoreVerificationPath, {
@@ -298,6 +311,7 @@ export async function createAndRestoreVerifyPlatformDatabaseBackup(
       restored,
       restoreVerificationPath,
       now,
+      options.verificationManifest,
     );
 
     const exactRegistryMatch =
@@ -346,7 +360,7 @@ export async function createAndRestoreVerifyPlatformDatabaseBackup(
     });
   } catch (error) {
     if (isTraderLinkPlatformError(error)) throw error;
-    platformFailure("TRADERLINK_BACKUP_VERIFICATION_FAILED", {}, error);
+    return platformFailure("TRADERLINK_BACKUP_VERIFICATION_FAILED", {}, error);
   } finally {
     restored?.close();
     backup?.close();

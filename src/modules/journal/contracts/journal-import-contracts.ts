@@ -104,10 +104,10 @@ export type JournalImportPreviewIssueSummary = Readonly<{
 }>;
 
 export type JournalImportPreview = Readonly<{
-  adapterId: "ibkr_activity_statement";
-  adapterVersion: "ibkr_activity_statement_v1";
-  parserVersion: "record_preserving_csv_v1";
-  mappingVersion: "ibkr_activity_statement_mapping_v1";
+  adapterId: "ibkr_activity_statement" | "generic_mapped_statement";
+  adapterVersion: "ibkr_activity_statement_v1" | "generic_mapped_statement_v1";
+  parserVersion: "record_preserving_csv_v1" | "record_preserving_delimited_v1";
+  mappingVersion: "ibkr_activity_statement_mapping_v1" | "user_confirmed_statement_mapping_v1";
   sourceFileSha256: string;
   sourceFileSizeBytes: number;
   statementPeriodStartDate: string | null;
@@ -126,6 +126,7 @@ export type JournalImportPreview = Readonly<{
 
 export type JournalScopedImportPreview = JournalImportPreview & Readonly<{
   accountId: string;
+  sourceIdentityConfirmationRequired: boolean;
   exactReimport: boolean;
   existingImportBatchId: string | null;
   plannedNewExecutionCount: number;

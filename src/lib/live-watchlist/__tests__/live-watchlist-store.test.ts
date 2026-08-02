@@ -265,6 +265,23 @@ describe("LiveWatchlistStore", () => {
     expect(state.symbols[0]?.cards.liveTraderRead?.title).toBe("ABCD testing support");
   });
 
+  it("preserves the explicit closed-market health state", async () => {
+    process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
+    process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";
+    const store = new LiveWatchlistStore();
+
+    await store.upsertHealth({
+      type: "health",
+      marketDataStatus: "closed",
+      marketDataUpdatedAt: 3000,
+    });
+
+    await expect(store.getHealth()).resolves.toEqual({
+      marketDataStatus: "closed",
+      marketDataUpdatedAt: 3000,
+    });
+  });
+
   it("stores recent news and SEC filings cards independently", async () => {
     process.env.LIVE_WATCHLIST_STORAGE = "sqlite";
     process.env.LIVE_WATCHLIST_DB_PATH = ":memory:";

@@ -68,7 +68,7 @@ function observedCandlesInWindow(
 }
 
 function formatPrice(price: number): string {
-  return `$${price.toFixed(4)}`;
+  return `$${price.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 }
 
 function formatTime(time: number): string {

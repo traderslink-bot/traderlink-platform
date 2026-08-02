@@ -34,7 +34,7 @@ describe("TraderLink Platform dashboard template enforcement", () => {
     expect(layout).toContain(
       'import { TraderLinkPlatformDashboardTemplate } from "../dashboard-template"',
     );
-    expect(layout).toContain("<TraderLinkPlatformDashboardTemplate>");
+    expect(layout).toContain("<TraderLinkPlatformDashboardTemplate");
     expect(layout).toContain("</TraderLinkPlatformDashboardTemplate>");
   });
 

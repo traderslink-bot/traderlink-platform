@@ -1,14 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
-import { cookies } from "next/headers";
 import type { Metadata } from "next";
 
-import { ACADEMY_SESSION_COOKIE, AcademyProgressStore } from "@/src/lib/academy/academy-progress-store";
 import {
-  AffiliateReferralStore,
   buildWhopCheckoutUrl,
   normalizeAffiliateCode,
 } from "@/src/lib/affiliate-referrals/affiliate-referral-store";
+import { resolveCurrentAffiliateCheckoutViewer } from "@/src/modules/affiliate/server/attribution/current-affiliate-checkout-viewer";
 import { TRADERSLINK_TWITTER_HANDLE } from "@/src/lib/academy/academy-seo";
 
 export const runtime = "nodejs";
@@ -65,17 +63,8 @@ export default async function FilteredNewsMomentumScannerAccessPage({
 }: UpgradePageProps) {
   const params = await searchParams;
   const queryAffiliateCode = normalizeAffiliateCode(firstParam(params?.a));
-  const cookieStore = await cookies();
-  const academySession = await new AcademyProgressStore().getSessionByToken(
-    cookieStore.get(ACADEMY_SESSION_COOKIE)?.value,
-  );
-  const referral = academySession
-    ? await new AffiliateReferralStore().findReferralByDiscordUserId(
-        academySession.discordUserId,
-      )
-    : null;
-
-  const affiliateCode = queryAffiliateCode || referral?.affiliateCode || "";
+  const checkoutViewer = await resolveCurrentAffiliateCheckoutViewer();
+  const affiliateCode = queryAffiliateCode || checkoutViewer.affiliateCode;
   const checkoutUrl = buildWhopCheckoutUrl({ affiliateCode });
   const discordInviteUrl =
     process.env.TRADERSLINK_FREE_DISCORD_INVITE_URL || defaultDiscordInviteUrl;
@@ -83,7 +72,7 @@ export default async function FilteredNewsMomentumScannerAccessPage({
     ? `${pagePath}?a=${encodeURIComponent(queryAffiliateCode)}`
     : pagePath;
   const connectDiscordUrl = `/api/auth/discord/login?returnTo=${encodeURIComponent(returnToPath)}`;
-  const discordName = academySession?.user.globalName || academySession?.user.username || "";
+  const discordName = checkoutViewer.displayName;
 
   return (
     <main className="min-h-screen bg-[#071017] text-slate-100">
@@ -124,7 +113,7 @@ export default async function FilteredNewsMomentumScannerAccessPage({
               by market cap, the small-cap momentum scanner, the news momentum
               scanner, and instant real-time support and resistance levels.
             </p>
-            {!academySession ? (
+            {!checkoutViewer.authenticated ? (
               <div className="mt-7 rounded-lg border border-emerald-200/20 bg-emerald-950/16 p-5">
                 <p className="text-base font-semibold text-white">
                   To get started with paid access, log in with Discord.
@@ -146,7 +135,7 @@ export default async function FilteredNewsMomentumScannerAccessPage({
               </div>
             )}
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              {academySession ? (
+              {checkoutViewer.authenticated ? (
                 <a
                   className="rounded-md bg-emerald-300 px-5 py-3 text-center text-sm font-bold text-slate-950 transition hover:bg-emerald-200"
                   href={checkoutUrl}
@@ -189,7 +178,7 @@ export default async function FilteredNewsMomentumScannerAccessPage({
             </p>
             <div className="mt-5 border-t border-cyan-100/15 pt-5">
               <p className="text-sm font-semibold text-white">
-                {academySession
+                {checkoutViewer.authenticated
                   ? `Ready for checkout${discordName ? `: ${discordName}` : ""}`
                   : "Discord login required before checkout"}
               </p>

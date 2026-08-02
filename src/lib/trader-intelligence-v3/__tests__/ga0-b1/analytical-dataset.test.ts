@@ -616,7 +616,7 @@ describe("GA0-B1 snapshot-bound analytical dataset", () => {
     });
   });
 
-  it("reconciles exact open overlap and rejects partial overlap", () => {
+  it("keeps exact open evidence visible without hiding a valid reconstructed round trip and rejects partial overlap", () => {
     const executions = buildSyntheticGa0B1ClosedExecutions();
     const ledgerKey =
       "account_synthetic_primary:instrument_synthetic_equity:usd";
@@ -633,11 +633,11 @@ describe("GA0-B1 snapshot-bound analytical dataset", () => {
     expect(exact).toMatchObject({
       ok: true,
       value: {
-        candidateCount: "1",
-        includedCount: "0",
+        candidateCount: "2",
+        includedCount: "1",
         excludedCount: "1",
         excludedCandidates: [{
-          semanticRoundTripKey: expect.any(String),
+          semanticRoundTripKey: null,
           reasonCode: "ti_v3_analytics_open_or_incomplete_lifecycle",
           scopeState: "ledger_scoped",
           relatedExecutionDigests: expect.arrayContaining(
@@ -676,14 +676,15 @@ describe("GA0-B1 snapshot-bound analytical dataset", () => {
     });
   });
 
-  it("maps manifest reasons truthfully and counts an overlapping semantic candidate once", () => {
+  it("maps manifest reasons truthfully without letting one issue hide a valid reconstructed round trip", () => {
     const executions = buildSyntheticGa0B1ClosedExecutions();
     const result = readAnalyticalDataset(createSyntheticInMemoryReadOnlySource(buildSyntheticGa0B1Authority(executions, {
       manifestExclusions: [{ evidenceDigest: executions[0].canonicalContentDigest, reasonCode: "ti_v3_coverage_source_excluded" }],
     })));
     expect(result).toMatchObject({ ok: true, value: {
-      candidateCount: "1", includedCount: "0", excludedCount: "1",
+      candidateCount: "2", includedCount: "1", excludedCount: "1",
       excludedCandidates: [{
+        semanticRoundTripKey: null,
         reasonCode: "ti_v3_analytics_reconstruction_blocked",
         sourceReasonCode: "ti_v3_coverage_source_excluded",
         reasonMappingPolicyKey: "ti_v3_manifest_exclusion_reason_mapping",
@@ -692,7 +693,7 @@ describe("GA0-B1 snapshot-bound analytical dataset", () => {
     } });
   });
 
-  it("retains filter and manifest provenance under deterministic reason precedence", () => {
+  it("retains filter and manifest provenance as separate factual candidates", () => {
     const executions = buildSyntheticGa0B1ClosedExecutions();
     const result = readAnalyticalDataset(createSyntheticInMemoryReadOnlySource(
       buildSyntheticGa0B1Authority(executions, {
@@ -707,11 +708,19 @@ describe("GA0-B1 snapshot-bound analytical dataset", () => {
       ok: true,
       value: {
         includedCount: "0",
-        excludedCount: "1",
+        excludedCount: "2",
         excludedCandidates: [{
+          semanticRoundTripKey: null,
           reasonCode: "ti_v3_analytics_reconstruction_blocked",
-          secondaryReasonCodes: ["ti_v3_analytics_canonical_filter_excluded"],
+          secondaryReasonCodes: [],
           sourceReasonCodes: ["ti_v3_coverage_source_excluded"],
+          reasonLedgerPolicyKey: "ti_v3_analytical_exclusion_reason_ledger",
+          reasonLedgerPolicyVersion: "v1",
+        }, {
+          semanticRoundTripKey: expect.any(String),
+          reasonCode: "ti_v3_analytics_canonical_filter_excluded",
+          secondaryReasonCodes: [],
+          sourceReasonCodes: [],
           reasonLedgerPolicyKey: "ti_v3_analytical_exclusion_reason_ledger",
           reasonLedgerPolicyVersion: "v1",
         }],

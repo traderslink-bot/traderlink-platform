@@ -1,3 +1,9 @@
+import type {
+  JournalCalendarDayReadModel,
+  JournalCalendarReadModel,
+  JournalCalendarTickerReadModel,
+} from "@/src/modules/journal-analytics/contracts/journal-dashboard-read-models";
+
 export type CalendarView = "month" | "week";
 export type CalendarPerformanceFilter = "all" | "profitable" | "losing";
 export type CalendarDirectionFilter = "all" | "long" | "short";
@@ -6,6 +12,7 @@ export type CalendarTradeCountFilter = "all" | "1-3" | "4-6" | "7+";
 export type CalendarPnlFilter = "all" | "loss200" | "flat" | "profit200";
 
 export type CalendarFilterInput = {
+  currency: string;
   direction: CalendarDirectionFilter;
   endDate: string;
   performance: CalendarPerformanceFilter;
@@ -16,32 +23,6 @@ export type CalendarFilterInput = {
   tradeCount: CalendarTradeCountFilter;
 };
 
-export type CalendarTickerResult = {
-  pnl: number;
-  symbol: string;
-};
-
-export type CalendarDay = {
-  date: string;
-  peakGiveback: number | null;
-  pnl: number | null;
-  tickers: CalendarTickerResult[];
-  trades: number;
-  winRate: number | null;
-};
-
-export type CalendarData = {
-  activeDate: string;
-  currency: string | null;
-  days: CalendarDay[];
-  maximumDate: string;
-  minimumDate: string;
-  status: "ready" | "unavailable";
-  summary: {
-    netPnl: number;
-    tradingDays: number;
-    trades: number;
-    winRate: number | null;
-  };
-  symbols: string[];
-};
+export type CalendarTickerResult = JournalCalendarTickerReadModel;
+export type CalendarDay = JournalCalendarDayReadModel;
+export type CalendarData = JournalCalendarReadModel;

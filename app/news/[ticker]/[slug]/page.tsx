@@ -6,13 +6,15 @@ import { cache, type ReactNode } from "react";
 
 import { SiteShell } from "@/src/components/site/site-shell";
 import smokeysLessonsImage from "@/app/news/images/smokeys-lessons/smokeys-lessons-blue-news.png";
-import { getCurrentAcademySession } from "@/app/academy/academy-server-session";
+import {
+  getCurrentAcademyViewer,
+  listCurrentAcademyCompletedLessonSlugs,
+} from "@/app/academy/academy-access";
 import {
   getAcademyCoursePage,
   getAcademyCourses,
   getLaunchAcademyCourseIds,
 } from "@/src/lib/academy/academy-content";
-import { AcademyProgressStore } from "@/src/lib/academy/academy-progress-store";
 import {
   getNewsArticle,
   type NewsArticle,
@@ -344,14 +346,10 @@ export async function NewsArticleView({
       return course && coursePage ? { course, coursePage } : null;
     })
     .filter((item) => item !== null);
-  const academySession = await getCurrentAcademySession();
-  const completedLessonSlugs = academySession
-    ? new Set(
-        await new AcademyProgressStore().listCompletedLessonSlugs(
-          academySession.discordUserId,
-        ),
-      )
-    : new Set<string>();
+  const academyViewer = await getCurrentAcademyViewer();
+  const completedLessonSlugs = new Set(
+    await listCurrentAcademyCompletedLessonSlugs(academyViewer),
+  );
 
   return (
     <SiteShell sectionHref="/news" sectionLabel="News">
@@ -521,7 +519,7 @@ export async function NewsArticleView({
                           </div>
                           <div className="academy-course-progress">
                             <CourseProgressMeter
-                              isAuthenticated={Boolean(academySession)}
+                              isAuthenticated={Boolean(academyViewer)}
                               label={
                                 course.course_id === chartReadingCourseId
                                   ? "Core lessons"
@@ -531,7 +529,7 @@ export async function NewsArticleView({
                             />
                             {lessonGroupProgress.map((groupProgress) => (
                               <CourseProgressMeter
-                                isAuthenticated={Boolean(academySession)}
+                                isAuthenticated={Boolean(academyViewer)}
                                 key={groupProgress.label}
                                 label={groupProgress.label}
                                 progress={groupProgress}

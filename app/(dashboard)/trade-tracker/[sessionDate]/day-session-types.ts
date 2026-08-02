@@ -6,10 +6,12 @@ export type DaySessionTradeTag = {
 };
 
 export type DaySessionTradeJournal = {
+  noteRevision: string | null;
   ruleStatus: "followed" | "broken" | "not-reviewed";
   ruleSummary: string;
   tags: DaySessionTradeTag[];
   technicalNote: string;
+  tradeNote: string;
 };
 
 export type DaySessionRoundTrip = {
@@ -20,21 +22,21 @@ export type DaySessionRoundTrip = {
   exitPrice: string | null;
   gainLossPercent: string | null;
   journal: DaySessionTradeJournal;
-  netPnl: string;
+  netPnl: string | null;
   roundTripKey: string;
   timezone: string;
 };
 
 export type DaySessionTicker = {
   gainLossPercent: string | null;
-  netPnl: string;
+  netPnl: string | null;
   roundTrips: DaySessionRoundTrip[];
   stableInstrumentKey: string;
   symbol: string;
 };
 
 export type DaySessionOpenPosition = {
-  averageEntryPrice: string;
+  averageEntryPrice: string | null;
   direction: "long" | "short";
   openedAt: string;
   positionKey: string;
@@ -68,7 +70,7 @@ export type DaySessionDailyNote = {
 export type DaySessionWeekDay = {
   date: string;
   dailyNote: DaySessionDailyNote;
-  netPnl: string;
+  netPnl: string | null;
   tickerCount: number;
   tradeCount: number;
 };
@@ -76,7 +78,7 @@ export type DaySessionWeekDay = {
 export type DaySessionWeek = {
   currentSessionDate: string;
   days: DaySessionWeekDay[];
-  netPnl: string;
+  netPnl: string | null;
   tickerCount: number;
   tradeCount: number;
 };
@@ -84,12 +86,42 @@ export type DaySessionWeek = {
 export type DaySessionData = {
   availableTags: DaySessionTradeTag[];
   currency: string;
+  dailyNote: DaySessionDailyNote;
   date: string;
-  netPnl: string;
+  decisionActivity: Array<{
+    direction: "long" | "short";
+    executionCount: number;
+    openedAt: string;
+    reasonCodes: readonly string[];
+    roundTripKey: string;
+    symbol: string;
+  }>;
+  executionActivity: Array<{
+    executedAt: string;
+    executionKey: string;
+    needsDecision: boolean;
+    price: string | null;
+    quantity: string;
+    side: "buy" | "sell";
+    symbol: string;
+  }>;
+  expectedAccountSelectionRef: string;
+  netPnl: string | null;
+  needsDecisionCount: number;
   nextSessionDate: string | null;
   openPositions: DaySessionOpenPosition[];
+  positionSnapshots: Array<{
+    averageEntryPrice: string | null;
+    closingQuantity: string;
+    direction: "long" | "short";
+    openingQuantity: string;
+    positionKey: string;
+    state: "opened_and_carried_out" | "carried_in_and_closed" | "carried_through";
+    symbol: string;
+  }>;
   previousSessionDate: string | null;
   rules: DaySessionRule[];
   tickers: DaySessionTicker[];
+  timezone: string;
   week: DaySessionWeek;
 };

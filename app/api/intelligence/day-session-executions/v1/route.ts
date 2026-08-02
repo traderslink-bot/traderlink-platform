@@ -199,6 +199,9 @@ async function POSTHandler(request: Request): Promise<Response> {
   if (!authorization.ok) {
     return response(503, "ti_v3_day_session_execution_unavailable");
   }
+  if (authorization.config.persistence.kind !== "file") {
+    return response(503, "ti_v3_day_session_execution_unavailable");
+  }
   const source = csv(date, rows as ExecutionInput[]);
   const digest = createHash("sha256")
     .update(source, "utf8")

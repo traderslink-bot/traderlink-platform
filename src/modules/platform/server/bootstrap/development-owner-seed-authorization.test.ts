@@ -17,11 +17,12 @@ describe("development owner seed authorization", () => {
   });
 
   it("fails closed when the enable flag is absent or malformed", () => {
-    expect(() => authorizeDevelopmentOwnerSeed({})).toThrowError(
+    expect(() => authorizeDevelopmentOwnerSeed({ NODE_ENV: "development" })).toThrowError(
       "TRADERLINK_DEVELOPMENT_OWNER_SEED_AUTHORIZATION_REQUIRED",
     );
     expect(() =>
       authorizeDevelopmentOwnerSeed({
+        NODE_ENV: "development",
         TRADERLINK_PLATFORM_ALLOW_DEVELOPMENT_OWNER_SEED: "true",
       }),
     ).toThrowError("TRADERLINK_DEVELOPMENT_OWNER_SEED_AUTHORIZATION_REQUIRED");
@@ -37,6 +38,7 @@ describe("development owner seed authorization", () => {
     expect(() =>
       authorizeDevelopmentOwnerSeed({
         TRADERLINK_PLATFORM_ALLOW_DEVELOPMENT_OWNER_SEED: "1",
+        NODE_ENV: "development",
         VERCEL_ENV: "production",
       }),
     ).toThrowError("TRADERLINK_DEVELOPMENT_OWNER_SEED_AUTHORIZATION_REQUIRED");

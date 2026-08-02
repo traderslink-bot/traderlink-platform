@@ -22,20 +22,20 @@
 | `/` | Platform/site | Preserve |
 | `/account` | Platform/Account | Preserve |
 | `/platform-readiness` | Platform | Review; operational/product status surface |
-| `/academy` | Academy | Preserve |
-| `/academy/[...slug]` | Academy | Preserve |
-| `/academy/courses/[courseId]` | Academy | Preserve |
+| `/academy` | Academy | Stable Platform identity/progress connected for guarded local and public-session access; production progress transfer pending |
+| `/academy/[...slug]` | Academy | F2 local Platform identity/progress connected; protected slug preserved |
+| `/academy/courses/[courseId]` | Academy | F2 local Platform identity/progress connected |
 | `/academy/paths/[pathId]` | Academy | Preserve |
-| `/news` | News | Preserve |
-| `/news/[ticker]` | News | Preserve |
-| `/news/[ticker]/[slug]` | News | Preserve |
-| `/news/free/[ticker]/[slug]` | News | Preserve |
-| `/watchlist` | Watchlist | Preserve; authenticated |
-| `/watchlist/[symbol]` | Watchlist | Preserve; authenticated |
-| `/watchlist/archive` | Watchlist | Preserve; authenticated |
-| `/watchlist/archive/[archiveId]` | Watchlist | Preserve; authenticated |
+| `/news` | News | F4 versioned named storage connected |
+| `/news/[ticker]` | News | F4 versioned named storage connected |
+| `/news/[ticker]/[slug]` | News | F4 News storage plus Platform-aware Academy progress connected |
+| `/news/free/[ticker]/[slug]` | News | F4 News storage connected; free access presentation preserved |
+| `/watchlist` | Watchlist | F3 explicit storage and Platform access service connected |
+| `/watchlist/[symbol]` | Watchlist | F3 explicit storage and Platform access service connected |
+| `/watchlist/archive` | Watchlist | F3 explicit storage and Platform access service connected |
+| `/watchlist/archive/[archiveId]` | Watchlist | F3 explicit storage and Platform access service connected |
 | `/watchlist/how-it-works` | Watchlist | Preserve |
-| `/filtered-news-momentum-scanner-access` | News/access | Preserve pending access-contract review |
+| `/filtered-news-momentum-scanner-access` | Platform/Affiliate access | Stable Platform-user resolver connected for guarded local review and public Discord sessions; Affiliate remains independent of Journal account selection |
 | `/small-cap-stocks/week-ahead` | News/content | Preserve |
 | `/small-cap-stocks/week-ahead/[slug]` | News/content | Preserve |
 | `/smokeys-12-week-market-structure-plan` | Academy/content | Preserve pending final module placement |
@@ -63,15 +63,19 @@
 | `/analytics/lab` | Journal Analytics | Review, then preserve supported analysis |
 | `/analytics/lab/trade-candle-analysis` | Journal Analytics/Level Analysis | Review and preserve supported behavior |
 | `/charts` | Market tools | Platform target; define module contract |
-| `/reflection-loop` | Journal/Coach | Platform target; define ownership contract |
+| `/reflection-loop` | Journal/Coach | Replacement F1 connected to published Journal facts and trader-authored annotations; combined visual gate deferred |
 | `/rules` | Journal | Platform target |
 | `/imports` | Journal | Platform target |
 | `/manual-entry` | Journal | Platform target; canonical execution ledger |
 | `/data-decisions` | Journal | Platform target and foundational replacement capability |
 
-### Legacy `/intelligence` family: 52
+### Preserved legacy `/intelligence` family: 52
 
-Every route in this table is **Legacy review**. It remains preservation evidence until its behavior is assigned to Platform, Journal, Journal Analytics, Coach, Level Analysis, an operational-only tool, an explicit deferral, or an owner-approved rejection.
+F5 completed the exact item-level mapping in the
+[Platform Peers And Legacy Route Disposition Plan](phase-5-slice-f5-platform-peers-and-legacy-route-disposition-plan.md).
+Every ordinary route is intercepted before the filesystem by a temporary
+replacement redirect. The sources below remain preservation evidence and are
+not deleted; their V3 layout is no longer a replacement browser entrypoint.
 
 | Area | Routes |
 | --- | --- |
@@ -92,18 +96,18 @@ The methods below are exported by the current source. `Future handling` is the o
 
 | Methods | Route | Future handling |
 | --- | --- | --- |
-| `POST, DELETE` | `/api/academy/lessons/complete` | Academy: preserve |
-| `GET` | `/api/auth/discord/login` | Platform identity: preserve until auth plan replaces it |
-| `GET` | `/api/auth/discord/callback` | Platform identity: preserve until auth plan replaces it |
-| `POST` | `/api/auth/logout` | Platform identity: preserve |
-| `GET` | `/api/me` | Platform identity: preserve or replace behind same client contract |
+| `POST, DELETE` | `/api/academy/lessons/complete` | Academy: stable Platform-user mutation for guarded local and public-session access |
+| `GET` | `/api/auth/discord/login` | Platform identity: Discord-first login creates no owner claim and starts the bounded OAuth flow |
+| `GET` | `/api/auth/discord/callback` | Platform identity: exact identity resolution/provisioning plus hashed Platform session |
+| `POST` | `/api/auth/logout` | Platform identity: revoke Platform session and clear authentication cookies |
+| `GET` | `/api/me` | Platform identity: privacy-safe current Platform account/session contract |
 | `POST` | `/api/news/articles` | News ingest: preserve and owner-scope |
-| `GET` | `/api/live-watchlist` | Watchlist: preserve |
-| `POST` | `/api/live-watchlist/ingest` | Watchlist ingest: preserve |
-| `GET` | `/api/live-watchlist/stream` | Watchlist stream: preserve HTTP boundary |
-| `GET` | `/api/live-watchlist/recap` | Watchlist: preserve |
-| `GET` | `/api/live-watchlist/symbols/[symbol]` | Watchlist: preserve |
-| `POST` | `/api/live-watchlist/archive/reset` | Watchlist: preserve with authorization review |
+| `GET` | `/api/live-watchlist` | Watchlist F3: Platform access service connected |
+| `POST` | `/api/live-watchlist/ingest` | Watchlist F3: explicit publisher-token mutation |
+| `GET` | `/api/live-watchlist/stream` | Watchlist F3: Platform access; preserve HTTP stream boundary |
+| `GET` | `/api/live-watchlist/recap` | Watchlist F3: explicit publisher-token read |
+| `GET` | `/api/live-watchlist/symbols/[symbol]` | Watchlist F3: Platform access service connected |
+| `POST` | `/api/live-watchlist/archive/reset` | Watchlist F3: explicit publisher-token destructive command |
 | `POST` | `/api/level-analysis/deliveries` | Level Analysis integration: preserve |
 | `GET` | `/api/level-analysis/deliveries/latest` | Level Analysis integration: preserve |
 | `GET` | `/api/level-analysis/deliveries/latest/symbols/[symbol]` | Level Analysis integration: preserve |
@@ -156,8 +160,8 @@ The methods below are exported by the current source. `Future handling` is the o
 | `GET` | `/api/trades/[tradeId]/level-analysis` | Level Analysis/Journal: preserve |
 | `GET` | `/api/trades/[tradeId]/level-analysis/facts` | Level Analysis/Journal: preserve |
 | `GET` | `/api/analytics/latest` | Legacy analytics HTTP contract: map consumer and replace V3 internals |
-| `GET` | `/api/coach/latest` | Coach: map consumer and replace V3 internals |
-| `GET` | `/api/review/latest` | Review: map consumer and replace V3 internals |
+| `GET` | `/api/coach/latest` | Replacement F1 read-only Coach contract; V3/sample fallback removed |
+| `GET` | `/api/review/latest` | Replacement F1 read-only Review contract; V3/sample fallback removed |
 | `GET, POST` | `/api/execution-feedback/debug` | Operational/debug; no finished-product dependency |
 | `GET, POST` | `/api/trade-analysis/debug` | Operational/debug; no finished-product dependency |
 | `GET, POST` | `/api/trader-analytics/debug` | Operational/debug; retire after replacement proof if unused |
@@ -186,8 +190,13 @@ The methods below are exported by the current source. `Future handling` is the o
 ### Configuration redirects
 
 - `www.traderslink.pro/*` -> apex host.
-- `/workspace/admin` -> `/intelligence/admin`.
-- Legacy top-level coach/review/progress/import/calibration/onboarding/debug/admin aliases redirect into their `/intelligence` equivalents: `/coach/:path*`, `/review`, `/progress`, `/upload-csv`, `/trader-intelligence`, `/import-dry-run`, `/import-health`, `/import-trials`, `/repair-wizard`, `/review-cockpit`, `/session-recap`, `/compare-trades`, `/calibration`, `/onboarding`, `/first-run`, `/debug/:path*`, `/admin/broker-mappings`, and `/coaching`.
+- All 52 `/intelligence` page routes redirect before filesystem handling to the
+  F5 canonical, compatibility, operations-only or owner-rejected destination.
+- `/platform-readiness` -> `/workspace/readiness`.
+- `/workspace/admin` -> the operations-only Platform readiness disposition.
+- Legacy top-level coach/review/progress/import/calibration/onboarding/debug/
+  admin aliases now redirect directly to replacement destinations instead of
+  chaining through `/intelligence`.
 - Fourteen Academy legacy lesson/collection aliases redirect to current Academy slugs and are preservation requirements for progress/link compatibility.
 
 ## Documentation conflict to correct after acceptance
@@ -197,7 +206,7 @@ The methods below are exported by the current source. `Future handling` is the o
 ## Phase 1 route conclusions
 
 1. The dashboard route family is the best current same-URL target for Platform, Journal, and Journal Analytics replacement work.
-2. `/intelligence` is a legacy application, not an occasional redirect artifact. Its 52 pages require capability mapping before retirement.
+2. `/intelligence` is a preserved legacy application, not an occasional redirect artifact. F5 completed all 52 capability dispositions; deletion remains prohibited until Phase 6/final acceptance.
 3. Several dashboard pages and most Journal HTTP routes still depend directly on V3, so modern-looking URLs do not imply replacement internals.
 4. Legacy-prefixed endpoints can remain temporarily during service replacement when doing so reduces migration risk; route renaming is not an early-phase goal.
 5. No route is accepted merely because it renders. Replacement acceptance requires data reconciliation, coverage behavior, applicable access checks, and owner UI approval for visible changes.

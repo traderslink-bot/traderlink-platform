@@ -1,13 +1,25 @@
 import type { Metadata } from "next";
-import { requireTraderIntelligenceOwnerPageAccess } from "@/src/lib/trader-intelligence-v3/auth";
 
-import { getWorkingDayReviewConfiguration } from "./trade-tracker-data";
-import { TradeTrackerWorkingDay } from "./working-day";
+import {
+  DashboardPage,
+  DashboardUnavailableState,
+} from "../../dashboard-template";
+import {
+  currentJournalAccountSelectionRef,
+  requireTraderLinkPlatformPageScope,
+} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+
+import {
+  getReplacementDaySession,
+  getReplacementTradeTrackerAccount,
+} from "./trade-tracker-platform-data";
+import { ManualExecutionEntry } from "./manual-execution-entry";
 import { TradeTrackerWorkingDayPreview } from "./working-day-preview";
+import { DaySessionView } from "./[sessionDate]/day-session-view";
 
 export const metadata: Metadata = {
-  description: "Review the latest governed trading day.",
-  title: "Trade Tracker | Trader Intelligence",
+  description: "Enter and review the current trading week's Journal executions.",
+  title: "Trade Tracker | TraderLink Platform",
 };
 
 export const dynamic = "force-dynamic";
@@ -15,44 +27,66 @@ export const revalidate = 0;
 
 const DESIGN_PREVIEW_SESSION_DATE = "2026-07-28";
 
-function currentNewYorkDate(): string {
+function currentDateInTimezone(timezone: string): string {
   const parts = new Intl.DateTimeFormat("en-US", {
     day: "2-digit",
     month: "2-digit",
-    timeZone: "America/New_York",
+    timeZone: timezone,
     year: "numeric",
   }).formatToParts(new Date());
-  const value = Object.fromEntries(
-    parts
-      .filter((part) => part.type !== "literal")
-      .map((part) => [part.type, part.value]),
-  );
-  return `${value.year}-${value.month}-${value.day}`;
+  const part = (type: "day" | "month" | "year") =>
+    parts.find((candidate) => candidate.type === type)?.value ?? "";
+  return `${part("year")}-${part("month")}-${part("day")}`;
 }
 
 export default async function TradeTrackerPage({
   searchParams,
 }: {
-  searchParams: Promise<{ preview?: string }>;
+  searchParams: Promise<{ currency?: string; preview?: string }>;
 }) {
-  const designPreview =
-    process.env.NODE_ENV !== "production" &&
-    (await searchParams).preview === "design";
+  const query = await searchParams;
+  const designPreview = process.env.NODE_ENV !== "production" &&
+    query.preview === "design";
   if (designPreview) {
-    return (
-      <TradeTrackerWorkingDayPreview
-        sessionDate={DESIGN_PREVIEW_SESSION_DATE}
-      />
-    );
+    return <TradeTrackerWorkingDayPreview sessionDate={DESIGN_PREVIEW_SESSION_DATE} />;
   }
 
-  const owner = await requireTraderIntelligenceOwnerPageAccess(
-    "app/(dashboard)/trade-tracker/page.tsx",
-  );
-  return (
-    <TradeTrackerWorkingDay
-      reviewConfiguration={getWorkingDayReviewConfiguration(owner)}
-      sessionDate={currentNewYorkDate()}
+  const scope = await requireTraderLinkPlatformPageScope();
+  const account = getReplacementTradeTrackerAccount(scope);
+  const utcDate = new Date().toISOString().slice(0, 10);
+  const initialData = getReplacementDaySession(scope, {
+    date: utcDate,
+    currency: query.currency?.toUpperCase() ?? null,
+  });
+  const accountTimezone = account?.tradingTimezone ?? initialData?.timezone ?? "UTC";
+  const currentDate = currentDateInTimezone(accountTimezone);
+  const data = currentDate === utcDate
+    ? initialData
+    : getReplacementDaySession(scope, {
+        date: currentDate,
+        currency: query.currency?.toUpperCase() ?? null,
+      });
+  const topContent = (
+    <ManualExecutionEntry
+      accountCurrency={account?.baseCurrency ?? data?.currency ?? "USD"}
+      accountTimezone={accountTimezone}
+      defaultSessionDate={currentDate}
+      expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
     />
+  );
+  if (data) {
+    return <DaySessionView data={data} topContent={topContent} />;
+  }
+
+  return (
+    <DashboardPage>
+      {topContent}
+      <DashboardUnavailableState
+        actionHref="/imports"
+        actionLabel="Import trades"
+        description="No accepted execution activity is available for Trade Tracker. No V3 or sample rows are substituted."
+        title="No trading day available"
+      />
+    </DashboardPage>
   );
 }

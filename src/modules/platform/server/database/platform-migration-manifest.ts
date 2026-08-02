@@ -3,8 +3,20 @@ import { journalImportEvidenceMigration } from "@/src/modules/journal/server/dat
 import { journalExecutionLedgerMigration } from "@/src/modules/journal/server/database/migrations/0004_journal_execution_ledger";
 import { journalDataDecisionsMigration } from "@/src/modules/journal/server/database/migrations/0005_journal_data_decisions";
 import { journalRoundTripProjectionMigration } from "@/src/modules/journal/server/database/migrations/0006_journal_round_trip_projection";
+import { journalAnnotationsMigration } from "@/src/modules/journal/server/database/migrations/0007_journal_annotations";
+import { journalLevelAnalysisLinksMigration } from "@/src/modules/journal/server/database/migrations/0011_journal_level_analysis_links";
+import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
+import { levelAnalysisCandleReviewMigration } from "@/src/modules/level-analysis/server/database/migrations/0009_level_analysis_candle_review";
+import { levelAnalysisDeliveriesMigration } from "@/src/modules/level-analysis/server/database/migrations/0010_level_analysis_deliveries";
+import { academyProgressMigration } from "@/src/modules/academy/server/database/migrations/0013_academy_progress";
+import { watchlistStorageMigration } from "@/src/modules/watchlist/server/database/migrations/0014_watchlist_storage";
+import { newsContentMigration } from "@/src/modules/news/server/database/migrations/0015_news_content";
+import { affiliateAttributionMigration } from "@/src/modules/affiliate/server/database/migrations/0016_affiliate_attribution";
 
 import { platformIdentityMigration } from "./migrations/0001_platform_identity";
+import { platformAuthenticationIdentitiesMigration } from "./migrations/0012_platform_authentication_identities";
+import { platformDiscordMembershipsMigration } from "./migrations/0017_platform_discord_memberships";
+import { platformHostedTransferEventsMigration } from "./migrations/0018_platform_hosted_transfer_events";
 import {
   type PlatformMigration,
   validatePlatformMigrationManifest,
@@ -40,6 +52,54 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/journal/server/database/migrations/0006_journal_round_trip_projection.ts",
       migration: journalRoundTripProjectionMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/journal/server/database/migrations/0007_journal_annotations.ts",
+      migration: journalAnnotationsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views.ts",
+      migration: journalAnalyticsSavedViewsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/level-analysis/server/database/migrations/0009_level_analysis_candle_review.ts",
+      migration: levelAnalysisCandleReviewMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/level-analysis/server/database/migrations/0010_level_analysis_deliveries.ts",
+      migration: levelAnalysisDeliveriesMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/journal/server/database/migrations/0011_journal_level_analysis_links.ts",
+      migration: journalLevelAnalysisLinksMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0012_platform_authentication_identities.ts",
+      migration: platformAuthenticationIdentitiesMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/academy/server/database/migrations/0013_academy_progress.ts",
+      migration: academyProgressMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/watchlist/server/database/migrations/0014_watchlist_storage.ts",
+      migration: watchlistStorageMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/news/server/database/migrations/0015_news_content.ts",
+      migration: newsContentMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/affiliate/server/database/migrations/0016_affiliate_attribution.ts",
+      migration: affiliateAttributionMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0017_platform_discord_memberships.ts",
+      migration: platformDiscordMembershipsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0018_platform_hosted_transfer_events.ts",
+      migration: platformHostedTransferEventsMigration,
     }),
   ]);
 
@@ -84,6 +144,67 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "journal_round_trip_execution_allocations",
       "journal_round_trip_identity_aliases",
       "journal_trading_days",
+    ]),
+    "0007_journal_annotations": Object.freeze([
+      "journal_rules",
+      "journal_rule_versions",
+      "journal_rule_lifecycle_events",
+      "journal_rule_reviews",
+      "journal_rule_review_versions",
+      "journal_tags",
+      "journal_tag_versions",
+      "journal_round_trip_tag_assignments",
+      "journal_round_trip_tag_assignment_events",
+      "journal_daily_notes",
+      "journal_daily_note_revisions",
+      "journal_round_trip_notes",
+      "journal_round_trip_note_revisions",
+    ]),
+    "0008_journal_analytics_saved_views": Object.freeze([
+      "journal_analytics_saved_views",
+      "journal_analytics_saved_view_versions",
+    ]),
+    "0009_level_analysis_candle_review": Object.freeze([
+      "level_analysis_market_data_requests",
+      "level_analysis_normalized_candle_sets",
+      "level_analysis_normalized_candles",
+      "journal_round_trip_candle_reviews",
+      "journal_round_trip_candle_review_versions",
+    ]),
+    "0010_level_analysis_deliveries": Object.freeze([
+      "level_analysis_deliveries",
+      "level_analysis_delivery_symbol_facts",
+    ]),
+    "0011_journal_level_analysis_links": Object.freeze([
+      "journal_round_trip_level_analysis_links",
+      "journal_round_trip_level_analysis_link_versions",
+    ]),
+    "0012_platform_authentication_identities": Object.freeze([
+      "platform_auth_identities",
+      "platform_auth_sessions",
+    ]),
+    "0013_academy_progress": Object.freeze([
+      "academy_lesson_completion_events",
+      "academy_lesson_completions",
+    ]),
+    "0014_watchlist_storage": Object.freeze([
+      "live_watchlist_symbols",
+      "live_watchlist_health",
+      "live_watchlist_archives",
+    ]),
+    "0015_news_content": Object.freeze([
+      "news_articles",
+      "news_article_versions",
+    ]),
+    "0016_affiliate_attribution": Object.freeze([
+      "affiliate_invites",
+      "affiliate_attributions",
+    ]),
+    "0017_platform_discord_memberships": Object.freeze([
+      "platform_discord_memberships",
+    ]),
+    "0018_platform_hosted_transfer_events": Object.freeze([
+      "platform_hosted_transfer_events",
     ]),
   });
 

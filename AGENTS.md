@@ -14,7 +14,17 @@ V3 roadmap decision.
 
 The older Trader Intelligence Dashboard Baseline and Whole Site Source of Truth
 sections below govern maintenance of the preserved legacy application. They do
-not prescribe the replacement's future module architecture. The Phase 2 empty
+not prescribe the replacement's future module architecture.
+
+Phase 6 local replacement acceptance completed on 2026-08-02. Read
+`docs/migration/phase-6-replacement-acceptance-report.md` for the verified
+boundary. Do not revive V3 as an active runtime, import legacy test trades or
+annotations, or delete preserved repositories, databases or backups. Real
+hosted-source transfer, Discord owner linking, Git publication, Railway
+deployment, DNS and Phase 7 deletion remain explicit external or
+owner-controlled operations.
+
+The Phase 2 empty
 database foundation is technically complete and accepted, and the
 owner-accepted independent clone at
 `C:\Users\jerac\Documents\TraderLink\traderlink-platform` is the active
@@ -36,8 +46,9 @@ database, and 10-file/53-test result under the owner's delegated technical
 checkpoint authority. Phase 3 Journal integrity is now implemented at local
 commit `8f6a4d4e4dec20ef6edcd50f476b14d368bde505`,
 runtime-verified, and technically accepted under the owner's delegated
-technical checkpoint authority. `development.sqlite` contains six migration
-rows, the stable local development owner/workspace/account, one confirmed
+technical checkpoint authority. At the Phase 3 checkpoint,
+`development.sqlite` contained six migration rows, the stable local
+development owner/workspace/account, one confirmed
 source-account identity, one accepted-with-decisions statement import, 2,284
 immutable source records, 1,072 Stock executions, 542 preserved unsupported
 Forex records, 331 analytics-ready closed round trips, and two contained Data
@@ -55,28 +66,53 @@ Slice E implementation, focused verification and real loopback route checks
 also passed. Workspace, Round Trips, the compatibility overview API, and the
 five standard Analytics pages now use the replacement engine; Analytics Lab's
 old V3/sample runtime is inactive. The owner visually approved the preserved
-light Material dashboard on 2026-08-02, completing Phase 4. Calendar, Trade
-Tracker and Rules still cross inherited V3 access paths, while Ticker/Open
-Trades, Data Decisions, Manual Entry and Analytics Lab remain incomplete
-replacement surfaces; these are explicit Phase 5 work and must not be reported
-as complete. Public dashboard
-login/account integration
-is deliberately deferred until the complete dashboard is preparing to go live:
-Discord is the first intended public login provider and email/password remains an
-optional future capability. Preserve stable Platform/Journal UUID ownership so
-that later authentication work does not rewrite Journal facts. Personal owner
-involvement is reserved for irreversible or external actions and final
-visual/product approval.
+light Material dashboard on 2026-08-02, completing Phase 4. Phase 5 Slice A has
+now removed inherited V3 access from Calendar, Ticker, Open Positions and Trade
+Tracker reads. Slices B-E, local multi-account integration, Rules/annotations,
+Analytics Lab, Candle Review and Level Analysis are technically complete.
+Slice F1 replaces Reflection/Coach/Review active paths. Slice F2 adds Platform
+multi-provider identity/session tables and user-level Academy progress/events.
+Slice F4 adds versioned News-owned storage and stable-user first-touch Affiliate
+attribution; the current database has 16 migrations, one backfilled development
+identity, one reconciled News article/version, zero public sessions, zero Academy
+progress, zero Watchlist rows and zero Affiliate rows. F5 provides replacement
+Platform readiness and redirects all 52 preserved legacy pages before their V3
+filesystem routes. F6 public Discord identity and hosted transfer planning is
+active. The replacement Account page and loopback-only login-free local owner
+access are active.
+Discord is the first intended public login provider and email/password remains
+optional; production login activation is still a pre-go-live boundary. Preserve
+stable Platform/Journal UUID ownership so later authentication does not rewrite
+Journal facts. Personal owner involvement is reserved for irreversible or
+external actions and final visual/product approval.
 
 Phase 5 is controlled by
 `docs/migration/phase-5-module-transfer-plan.md` and
-`docs/migration/phase-5-module-transfer-progress.md`. Begin Slice A only: the
-read-only Calendar, Trades by Ticker, Open Positions and Trade Tracker query/
-route adapters. Imports move with Data Decisions in Slice B. Trade Tracker is
-the canonical manual execution experience in Slice C. Rules, tags, notes and
-reviews require the planned migration/legacy reconciliation in Slice D. Do not
-reconnect V3, start port 3010 before the visual checkpoint, or write the real
-database during Slice A.
+`docs/migration/phase-5-module-transfer-progress.md`. Slice A is technically
+complete. Imports moved with Data Decisions in Slice B and are broker-neutral:
+IBKR is the first verified adapter only; prior generic mapping UX may be ported
+without its V3 writer, and unsupported formats require evidence-safe intake
+with zero invented executions. Trade Tracker is the canonical manual execution
+experience in Slice C. Rules, tags, notes and reviews are complete in Slice D;
+legacy annotation/trade data was test-only and remains excluded. Slice E is
+technically complete. F1-F5 are technically complete and F6 public identity plus
+hosted transfer is the active bounded slice. Academy progress belongs to the stable Platform user,
+not a Journal account; production hosted progress and Discord activation stay
+unchanged until the F6 pre-go-live mapping boundary. Keep port 3010 off until
+the next integrated visual checkpoint.
+
+The Slice A owner review further established that every displayed trading-data
+decimal uses at most two places while editable and stored facts remain lossless.
+The undated Trade Tracker is a current-account-day/current-week workflow with
+the complete manual form at the top; older dated routes are factual read-only
+history and must not prompt reconstructed subjective notes. Day trade/Swing
+trade is explicit trader-authored lifecycle intent. `/trades/open` remains Open
+Positions: every factually confirmed open position stays visible, while the
+trader may classify it as an intentional swing, unplanned hold or another
+status. Unconfirmed execution chains remain in Data Decisions, and duration
+never assigns intent or status. Port
+3010 stays off during the revisions and focused checks and is restarted only
+for the next owner visual review.
 
 Phase 3 is controlled by
 `docs/migration/phase-3-journal-integrity-plan.md` and
@@ -84,7 +120,7 @@ Phase 3 is controlled by
 Journal schema, import, execution, Data Decisions, round-trip, private-source,
 or migration-verifier work. The accepted runtime checkpoint separates the
 immutable five-table Phase 2 ownership profile from the six-entry,
-24-domain-table current manifest; preserves source evidence and versioned
+24-domain-table Phase 3 checkpoint manifest; preserves source evidence and versioned
 executions; contains two fact-dependent chains in Data Decisions; and leaves
 331 unrelated closed round trips usable. The exact 11-file, 129-test focused
 suite passed with one worker and no file parallelism, the static verifier passed,
@@ -98,11 +134,10 @@ must consume the accepted Journal read contracts and coverage; it must not add a
 V3 analytics dependency or reinterpret either contained decision as a fact.
 Read `docs/migration/phase-3-journal-integrity-handoff.md` before Phase 4 work.
 Also read `docs/migration/phase-4-core-analytics-plan.md` and
-`docs/migration/phase-4-core-analytics-progress.md`. Slice D passed without
-mutating the accepted private database. Slice E may now add only the planned
-development scope, replacement launcher, and named Workspace/Trades/Analytics
-route adapters before local visual review; it must preserve the accepted light
-Material shell and must not add a V3 runtime fallback.
+`docs/migration/phase-4-core-analytics-progress.md`. That Phase 4 Slice D/E
+boundary is historical and complete. Current work follows the Phase 5 Slice F
+documents; preserve the accepted light Material shell and never add a V3
+runtime fallback.
 
 - Trader Intelligence V3 is legacy implementation, not the architecture for
   future ordinary dashboards. Do not add a new normal dashboard dependency on

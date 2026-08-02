@@ -73,9 +73,11 @@ export function createLocalExecutionSourceDocumentStore(
   }
   const read = (scope: Readonly<{ canonicalOwnerKey: string; canonicalAccountKey: string; persistenceDigest: CanonicalContentDigest }>) => {
     const file = fileFor(root, scope.persistenceDigest);
-    if (file === null || !existsSync(file)) return failure("ti_v3_execution_source_store_not_found", "$.persistenceDigest");
+    if (file === null || !existsSync(/* turbopackIgnore: true */ file)) return failure("ti_v3_execution_source_store_not_found", "$.persistenceDigest");
     try {
-      const parsed = parsePersistedRawBrokerCsvImport(readFileSync(file, "utf8"));
+      const parsed = parsePersistedRawBrokerCsvImport(
+        readFileSync(/* turbopackIgnore: true */ file, "utf8"),
+      );
       if (
         !parsed.ok ||
         parsed.value.persistenceDigest !== scope.persistenceDigest ||
@@ -103,7 +105,7 @@ export function createLocalExecutionSourceDocumentStore(
         const file = fileFor(root, scope.persistenceDigest);
         if (file === null) return failure("ti_v3_execution_source_store_path_invalid", "$.persistenceDigest");
         try {
-          unlinkSync(file);
+          unlinkSync(/* turbopackIgnore: true */ file);
           return { ok: true as const, value: Object.freeze({ persistenceDigest: scope.persistenceDigest }) };
         } catch {
           return failure("ti_v3_execution_source_store_delete_failed", "$.persistenceDigest");
@@ -114,8 +116,8 @@ export function createLocalExecutionSourceDocumentStore(
         const serialized = serializePersistedRawBrokerCsvImport(record);
         if (file === null || !serialized.ok) return failure("ti_v3_execution_source_store_path_invalid", "$.record");
         try {
-          mkdirSync(root, { recursive: true });
-          if (existsSync(file)) {
+          mkdirSync(/* turbopackIgnore: true */ root, { recursive: true });
+          if (existsSync(/* turbopackIgnore: true */ file)) {
             return read({
               canonicalOwnerKey: record.canonicalOwnerKey,
               canonicalAccountKey: record.canonicalAccountKey,
@@ -123,8 +125,11 @@ export function createLocalExecutionSourceDocumentStore(
             });
           }
           const temporary = join(root, "." + record.persistenceDigest.slice(-16) + ".pending");
-          writeFileSync(temporary, serialized.value, { encoding: "utf8", flag: "wx" });
-          renameSync(temporary, file);
+          writeFileSync(/* turbopackIgnore: true */ temporary, serialized.value, { encoding: "utf8", flag: "wx" });
+          renameSync(
+            /* turbopackIgnore: true */ temporary,
+            /* turbopackIgnore: true */ file,
+          );
           return { ok: true as const, value: record };
         } catch {
           return failure("ti_v3_execution_source_store_write_failed", "$.record");

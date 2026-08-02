@@ -24,7 +24,7 @@ import {
   buildJournalAnalyticsDashboardQuery,
   withJournalAnalyticsDashboardRuntime,
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
-import { requireDevelopmentDashboardPageScope } from "@/src/modules/platform/server/authentication/require-development-dashboard-scope";
+import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
 export const metadata: Metadata = {
   title: "Round Trips | TraderLink Platform",
@@ -52,8 +52,13 @@ export default async function RoundTripsPage({
   searchParams: RoundTripSearchParams;
 }) {
   const params = await searchParams;
-  const scope = await requireDevelopmentDashboardPageScope();
+  const scope = await requireTraderLinkPlatformPageScope();
   const requestedCurrency = one(params, "currency")?.toUpperCase() ?? null;
+  const instrumentId = one(params, "instrumentId") ?? null;
+  const requestedDate = one(params, "date");
+  const selectedDate = requestedDate && /^\d{4}-\d{2}-\d{2}$/u.test(requestedDate)
+    ? requestedDate
+    : null;
   const afterCursor = one(params, "after") ?? null;
   const result = withJournalAnalyticsDashboardRuntime(scope, ({ facts, service }) => {
     const overviewQuery = buildJournalAnalyticsDashboardQuery(scope, {
@@ -71,6 +76,14 @@ export default async function RoundTripsPage({
     const tableQuery = buildJournalAnalyticsDashboardQuery(scope, {
       metricIds: ["included_count"],
       currency,
+      closingDateRange: selectedDate
+        ? Object.freeze({
+            kind: "inclusive_closing_date" as const,
+            startDate: selectedDate,
+            endDate: selectedDate,
+          })
+        : undefined,
+      instrumentIds: instrumentId ? Object.freeze([instrumentId]) : undefined,
       pageSize: 200,
       afterCursor,
     });
@@ -117,7 +130,9 @@ export default async function RoundTripsPage({
           Round Trips
         </Typography>
         <Typography color="text.secondary" sx={{ maxWidth: 860, mt: 1 }} variant="body2">
-          Completed trades are reconstructed from the canonical Journal execution ledger. Items needing a factual trader decision are contained below and do not hide unrelated valid trades.
+          {instrumentId
+            ? `Completed history for the selected stable instrument${selectedDate ? ` on ${selectedDate}` : ""}, reconstructed from the canonical Journal execution ledger.`
+            : "Completed trades are reconstructed from the canonical Journal execution ledger. Items needing a factual trader decision are contained below and do not hide unrelated valid trades."}
         </Typography>
       </Box>
 
@@ -168,6 +183,7 @@ export default async function RoundTripsPage({
                 <TableCell align="right">Net P/L</TableCell>
                 <TableCell>Fees</TableCell>
                 <TableCell>Source</TableCell>
+                <TableCell align="right">Review</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -185,6 +201,11 @@ export default async function RoundTripsPage({
                   </TableCell>
                   <TableCell>{row.chargeCoverage === "complete" ? "Complete" : "Needs review"}</TableCell>
                   <TableCell>{row.provenance.replaceAll("_", " ")}</TableCell>
+                  <TableCell align="right">
+                    <Button href={`/trades/candle-review?trade=${encodeURIComponent(row.roundTripId)}`} size="small" variant="outlined">
+                      Candle Review
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -192,13 +213,13 @@ export default async function RoundTripsPage({
         </TableContainer>
         <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end", mt: 2 }}>
           {afterCursor ? (
-            <Button href={`/trades/roundtrips?currency=${encodeURIComponent(result.currency)}`} variant="outlined">
+            <Button href={`/trades/roundtrips?currency=${encodeURIComponent(result.currency)}${instrumentId ? `&instrumentId=${encodeURIComponent(instrumentId)}` : ""}${selectedDate ? `&date=${encodeURIComponent(selectedDate)}` : ""}`} variant="outlined">
               First page
             </Button>
           ) : null}
           {table.continuationCursor ? (
             <Button
-              href={`/trades/roundtrips?currency=${encodeURIComponent(result.currency)}&after=${encodeURIComponent(table.continuationCursor)}`}
+              href={`/trades/roundtrips?currency=${encodeURIComponent(result.currency)}${instrumentId ? `&instrumentId=${encodeURIComponent(instrumentId)}` : ""}${selectedDate ? `&date=${encodeURIComponent(selectedDate)}` : ""}&after=${encodeURIComponent(table.continuationCursor)}`}
               variant="contained"
             >
               Next page

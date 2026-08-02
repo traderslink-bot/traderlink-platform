@@ -285,6 +285,7 @@ export async function getGovernedDaySession(
           ...roundTripPrices(row),
           exitAt: row.finalExitAt,
           journal: {
+            noteRevision: null,
             ruleStatus: "not-reviewed" as const,
             ruleSummary: "No rule review recorded",
             tags: (tagsByRoundTrip[row.semanticRoundTripKey] ?? []).map((tag) => ({
@@ -294,6 +295,7 @@ export async function getGovernedDaySession(
               tagId: tag.tagId,
             })),
             technicalNote: "No technical note added.",
+            tradeNote: "",
           },
           netPnl: row.netPnl,
           roundTripKey: row.semanticRoundTripKey,
@@ -312,6 +314,14 @@ export async function getGovernedDaySession(
     const rows = weekRows.filter((row) => row.sessionDate === date);
     return {
       date,
+      dailyNote: {
+        anythingElse: "",
+        revision: null,
+        technicalRecap: "",
+        tomorrowsFocus: "",
+        whatNeedsWork: "",
+        whatWorked: "",
+      },
       netPnl: exactSum(rows.map((row) => row.netPnl)),
       tickerCount: new Set(rows.map((row) => row.stableInstrumentKey)).size,
       tradeCount: rows.length,
@@ -410,6 +420,9 @@ export async function getGovernedDaySession(
     })),
     currency: governed.currency,
     date: sessionDate,
+    decisionActivity: [],
+    executionActivity: [],
+    expectedAccountSelectionRef: "legacy-read-only",
     dailyNote: savedNote
       ? {
           anythingElse: savedNote.anythingElse,
@@ -428,11 +441,14 @@ export async function getGovernedDaySession(
           whatWorked: "",
         },
     netPnl: exactSum(dayRows.map((row) => row.netPnl)),
+    needsDecisionCount: 0,
     nextSessionDate: allDates[selectedIndex + 1] ?? null,
     openPositions: [],
+    positionSnapshots: [],
     previousSessionDate: allDates[selectedIndex - 1] ?? null,
     rules,
     tickers,
+    timezone: dayRows[0]?.timezone ?? "America/New_York",
     week: {
       currentSessionDate: allDates.at(-1) ?? sessionDate,
       days: weekDays,

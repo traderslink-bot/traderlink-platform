@@ -857,6 +857,25 @@ function deriveDataset(authority: VerifiedAuthority): ExactResult<AnalyticalData
       positionScope.stableInstrumentKey !== instrument ||
       positionScope.currency.toLowerCase() !== currency
     ) return failure("ti_v3_analytics_authority_mismatch", "$.manifest.openPositions");
+    const positionExecutionSet = new Set(position.executionDigests);
+    for (const reconstructed of roundTrips) {
+      const reconstructedExecutionSet = new Set(
+        reconstructed.roundTrip.executionDigests,
+      );
+      const overlaps = position.executionDigests.some((digest) =>
+        reconstructedExecutionSet.has(digest));
+      if (!overlaps) continue;
+      const isExactExecutionSet =
+        positionExecutionSet.size === reconstructedExecutionSet.size &&
+        [...positionExecutionSet].every((digest) =>
+          reconstructedExecutionSet.has(digest));
+      if (!isExactExecutionSet) {
+        return failure(
+          "ti_v3_analytics_authority_mismatch",
+          "$.candidateAccounting.partialOverlap",
+        );
+      }
+    }
     exclusions.push(exclusion(
       `open:${position.ledgerKey}`,
       null,

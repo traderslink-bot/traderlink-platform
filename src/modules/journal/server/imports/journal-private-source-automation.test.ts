@@ -560,7 +560,7 @@ describe("private Journal source import and verification automation", () => {
         environment: {
           ...wrongEnvironment.environment,
           NODE_ENV: nodeEnvironment,
-        },
+        } as unknown as NodeJS.ProcessEnv,
       })).toThrowError(
         "TRADERLINK_JOURNAL_SOURCE_IMPORT_AUTHORIZATION_REQUIRED",
       );
@@ -605,7 +605,9 @@ describe("private Journal source import and verification automation", () => {
       ),
     ).toMatchObject({
       status: "journal_integrity_verified",
-      importBatchId: first.importBatchId,
+      scopeRefSha256: expect.stringMatching(/^[0-9a-f]{64}$/u),
+      sourceIdentityRefSha256: expect.stringMatching(/^[0-9a-f]{64}$/u),
+      importBatchRefSha256: expect.stringMatching(/^[0-9a-f]{64}$/u),
       counts: {
         sourceRows: 2_284,
         executions: 1_072,

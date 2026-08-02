@@ -27,11 +27,12 @@ describe("development owner seed confirmation", () => {
     expect(() =>
       createDevelopmentOwnerSeedConfirmationAuthority({ key: Buffer.alloc(31) }),
     ).toThrowError("TRADERLINK_DEVELOPMENT_OWNER_SEED_CONFIGURATION_INVALID");
-    expect(() => loadDevelopmentOwnerSeedConfirmationKey({})).toThrowError(
+    expect(() => loadDevelopmentOwnerSeedConfirmationKey({ NODE_ENV: "test" })).toThrowError(
       "TRADERLINK_DEVELOPMENT_OWNER_SEED_CONFIGURATION_INVALID",
     );
     expect(
       loadDevelopmentOwnerSeedConfirmationKey({
+        NODE_ENV: "test",
         TRADERLINK_PLATFORM_DEVELOPMENT_OWNER_SEED_CONFIRMATION_KEY_BASE64:
           Buffer.alloc(32, 4).toString("base64"),
       }),

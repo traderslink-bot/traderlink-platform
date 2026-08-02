@@ -114,6 +114,38 @@ export class PlatformUserRepository {
     return row ? mapUser(row) : null;
   }
 
+  updateActiveDisplayName(input: Readonly<{
+    userId: string;
+    displayName: string;
+    updatedAtUtc: string;
+  }>): PlatformUserRecord {
+    assertCanonicalUuidV4(input.userId, "userId");
+    if (
+      input.displayName.trim() !== input.displayName ||
+      input.displayName.length < 1 ||
+      input.displayName.length > 120 ||
+      /[\u0000-\u001f\u007f]/u.test(input.displayName)
+    ) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+        field: "displayName",
+      });
+    }
+    assertCanonicalUtcTimestamp(input.updatedAtUtc, "updatedAtUtc");
+    const result = this.database.prepare(`UPDATE platform_users
+SET display_name = ?, updated_at_utc = ?
+WHERE user_id = ? AND status = 'active' AND updated_at_utc <= ?`)
+      .run(
+        input.displayName,
+        input.updatedAtUtc,
+        input.userId,
+        input.updatedAtUtc,
+      );
+    if (result.changes !== 1) {
+      platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+    }
+    return this.findById(input.userId) as PlatformUserRecord;
+  }
+
   findActiveByAuthIdentity(
     authProvider: string,
     authSubject: string,

@@ -7,6 +7,12 @@ import { deriveDevelopmentOwnerJournalScope } from "@/src/modules/journal/server
 import { platformFailure } from "../database/platform-migration-contract";
 import { withReadonlyPlatformDatabase } from "../database/open-readonly-platform-database";
 import { validateDevelopmentDashboardRequest } from "./development-dashboard-network-boundary";
+import { readJournalAccountSelectionCookie } from "./journal-account-selection-cookie";
+
+export {
+  currentJournalAccountSelectionRef,
+  requireExpectedJournalAccountSelection,
+} from "./journal-account-selection-authorization";
 
 export {
   TRADERLINK_PLATFORM_ALLOW_DEVELOPMENT_DASHBOARD_ENV,
@@ -31,8 +37,9 @@ export function requireDevelopmentDashboardRequestScope(
     options.environment,
   );
   if (!boundary.ok) platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+  const selectionRef = readJournalAccountSelectionCookie(requestHeaders);
   return withReadonlyPlatformDatabase(options, (database) =>
-    deriveDevelopmentOwnerJournalScope(database).scope);
+    deriveDevelopmentOwnerJournalScope(database, undefined, selectionRef).scope);
 }
 
 export async function requireDevelopmentDashboardPageScope(

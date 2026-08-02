@@ -6,38 +6,17 @@ import {
 
 describe("static platform migration file contract", () => {
   it("matches every configured filename, literal ID, namespace, and global order", () => {
-    expect(verifyTraderLinkPlatformMigrationFiles(process.cwd())).toEqual([
-      expect.objectContaining({
-        migrationId: "0001_platform_identity",
-        moduleNamespace: "platform",
-        executionOrder: 1,
-      }),
-      expect.objectContaining({
-        migrationId: "0002_journal_account_boundary",
-        moduleNamespace: "journal",
-        executionOrder: 2,
-      }),
-      expect.objectContaining({
-        migrationId: "0003_journal_import_evidence",
-        moduleNamespace: "journal",
-        executionOrder: 3,
-      }),
-      expect.objectContaining({
-        migrationId: "0004_journal_execution_ledger",
-        moduleNamespace: "journal",
-        executionOrder: 4,
-      }),
-      expect.objectContaining({
-        migrationId: "0005_journal_data_decisions",
-        moduleNamespace: "journal",
-        executionOrder: 5,
-      }),
-      expect.objectContaining({
-        migrationId: "0006_journal_round_trip_projection",
-        moduleNamespace: "journal",
-        executionOrder: 6,
-      }),
-    ]);
+    expect(verifyTraderLinkPlatformMigrationFiles(process.cwd())).toEqual(
+      platformMigrationFileEntries.map((entry) => ({
+        sourcePath: entry.sourcePath,
+        migrationId: entry.migration.migrationId,
+        moduleNamespace: entry.migration.moduleNamespace,
+        executionOrder: entry.migration.executionOrder,
+      })),
+    );
+    expect(platformMigrationFileEntries.at(-1)?.migration.migrationId).toBe(
+      "0018_platform_hosted_transfer_events",
+    );
   });
 
   it("rejects a filename that does not match the exported literal migration ID", () => {

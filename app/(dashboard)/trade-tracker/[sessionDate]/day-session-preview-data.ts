@@ -135,10 +135,12 @@ function previewFromExecutions(
               ? rounded((netPnl / cycle.entryNotional) * 100)
               : null,
           journal: {
+            noteRevision: null,
             ruleStatus: "not-reviewed",
             ruleSummary: "Automatic rule evaluation pending",
             tags: [],
             technicalNote: "",
+            tradeNote: "",
           },
           netPnl: rounded(netPnl),
           roundTripKey: `design-${symbol.toLowerCase()}-${roundTrips.length + 1}`,
@@ -236,6 +238,8 @@ function previewFromExecutions(
       DESIGN_TAGS.map((tag) => ({ ...tag })),
     currency: "USD",
     date,
+    decisionActivity: [],
+    executionActivity: [],
     dailyNote: {
       anythingElse: "",
       revision: null,
@@ -244,12 +248,16 @@ function previewFromExecutions(
       whatNeedsWork: "",
       whatWorked: "",
     },
+    expectedAccountSelectionRef: "design-preview",
     netPnl,
+    needsDecisionCount: 0,
     nextSessionDate: null,
     openPositions,
+    positionSnapshots: [],
     previousSessionDate: null,
     rules,
     tickers,
+    timezone: "America/New_York",
     week: {
       currentSessionDate: date,
       days: [
@@ -296,6 +304,8 @@ export function getDaySessionDesignPreview(
     availableTags: DESIGN_TAGS.map((tag) => ({ ...tag })),
     currency: "USD",
     date,
+    decisionActivity: [],
+    executionActivity: [],
     dailyNote: {
       anythingElse: "",
       revision: null,
@@ -304,7 +314,9 @@ export function getDaySessionDesignPreview(
       whatNeedsWork: "",
       whatWorked: "",
     },
+    expectedAccountSelectionRef: "design-preview",
     netPnl: "842.5",
+    needsDecisionCount: 0,
     nextSessionDate: currentSessionDate,
     openPositions: [
       {
@@ -318,6 +330,7 @@ export function getDaySessionDesignPreview(
         timezone: "America/New_York",
       },
     ],
+    positionSnapshots: [],
     previousSessionDate: previousTradeDate,
     rules: [
       {
@@ -391,6 +404,7 @@ export function getDaySessionDesignPreview(
             exitPrice: "144.04",
             gainLossPercent: "1.29",
             journal: {
+              noteRevision: null,
               ruleStatus: "followed",
               ruleSummary: "Waited for confirmation",
               tags: [
@@ -399,6 +413,7 @@ export function getDaySessionDesignPreview(
               ],
               technicalNote:
                 "Entered after the reclaim held. Stop stayed below the failed breakdown.",
+              tradeNote: "Stayed patient and followed the planned entry.",
             },
             netPnl: "184",
             roundTripKey: "preview_nvda_1",
@@ -412,6 +427,7 @@ export function getDaySessionDesignPreview(
             exitPrice: "145.72",
             gainLossPercent: "1.83",
             journal: {
+              noteRevision: null,
               ruleStatus: "followed",
               ruleSummary: "Position size within plan",
               tags: [
@@ -420,6 +436,7 @@ export function getDaySessionDesignPreview(
               ],
               technicalNote:
                 "Added only after the higher low formed and reduced into strength.",
+              tradeNote: "Good continuation trade with controlled adds.",
             },
             netPnl: "348",
             roundTripKey: "preview_nvda_2",
@@ -433,6 +450,7 @@ export function getDaySessionDesignPreview(
             exitPrice: "146.41",
             gainLossPercent: "0.56",
             journal: {
+              noteRevision: null,
               ruleStatus: "broken",
               ruleSummary: "Traded after the personal cutoff",
               tags: [
@@ -440,6 +458,7 @@ export function getDaySessionDesignPreview(
               ],
               technicalNote:
                 "The setup worked, but this trade was outside the planned trading window.",
+              tradeNote: "The late entry was outside the intended daily process.",
             },
             netPnl: "78",
             roundTripKey: "preview_nvda_3",
@@ -461,6 +480,7 @@ export function getDaySessionDesignPreview(
             exitPrice: "314.82",
             gainLossPercent: "1.12",
             journal: {
+              noteRevision: null,
               ruleStatus: "followed",
               ruleSummary: "Risk defined before entry",
               tags: [
@@ -469,6 +489,7 @@ export function getDaySessionDesignPreview(
               ],
               technicalNote:
                 "Entry followed the failed push. Covered at the planned support area.",
+              tradeNote: "Clear thesis and disciplined cover.",
             },
             netPnl: "286.5",
             roundTripKey: "preview_tsla_1",
@@ -482,6 +503,7 @@ export function getDaySessionDesignPreview(
             exitPrice: "316.88",
             gainLossPercent: "-0.22",
             journal: {
+              noteRevision: null,
               ruleStatus: "broken",
               ruleSummary: "Entered before confirmation",
               tags: [
@@ -490,6 +512,7 @@ export function getDaySessionDesignPreview(
               ],
               technicalNote:
                 "Anticipated the rejection instead of waiting for price to confirm it.",
+              tradeNote: "Entered too early and did not wait for confirmation.",
             },
             netPnl: "-54",
             roundTripKey: "preview_tsla_2",
@@ -498,23 +521,48 @@ export function getDaySessionDesignPreview(
         ],
       },
     ],
+    timezone: "America/New_York",
     week: {
       currentSessionDate,
       days: [
         {
           date: previousTradeDate,
+          dailyNote: {
+            anythingElse: "",
+            revision: null,
+            technicalRecap: "",
+            tomorrowsFocus: "",
+            whatNeedsWork: "",
+            whatWorked: "",
+          },
           netPnl: "-126",
           tickerCount: 1,
           tradeCount: 2,
         },
         {
           date,
+          dailyNote: {
+            anythingElse: "",
+            revision: null,
+            technicalRecap: "",
+            tomorrowsFocus: "",
+            whatNeedsWork: "",
+            whatWorked: "",
+          },
           netPnl: "842.5",
           tickerCount: 3,
           tradeCount: 5,
         },
         {
           date: currentSessionDate,
+          dailyNote: {
+            anythingElse: "",
+            revision: null,
+            technicalRecap: "",
+            tomorrowsFocus: "",
+            whatNeedsWork: "",
+            whatWorked: "",
+          },
           netPnl: "318",
           tickerCount: 2,
           tradeCount: 3,

@@ -38,7 +38,7 @@ const HTTP_METHODS = new Set([
 ]);
 
 const TRADER_INTELLIGENCE_DEPENDENCY =
-  /(?:trader-intelligence-v3|trader-analytics|trade-analysis|execution-feedback|level-analysis|raw-trade-timeline|execution-sources|pattern-detection|pattern-normalization|pattern-scoring|user-facing-behavior|user-facing-review|behavior-analysis|trade-coaching|(?:^|\/)coaching(?:\/|$)|import-commit|saved-trade|journal|manual-execution|period-reflection|real-coach|support-resistance)/i;
+  /(?:trader-intelligence-v3|trader-analytics|trade-analysis|execution-feedback|level-analysis|raw-trade-timeline|execution-sources|pattern-detection|pattern-normalization|pattern-scoring|user-facing-behavior|user-facing-review|behavior-analysis|trade-coaching|(?:^|\/)(?:coach|coaching)(?:\/|$)|import-commit|saved-trade|journal|manual-execution|period-reflection|real-coach|support-resistance)/i;
 
 function normalizedPath(path: string): string {
   return path.replaceAll("\\", "/");
@@ -64,9 +64,13 @@ function referenceMatchesRoute(reference: string, routePath: string): boolean {
   });
 }
 
-function exportedRouteMethods(sourceFile: ts.SourceFile): Map<string, ts.Expression | null> {
+type RouteMethodImplementation = ts.Expression | ts.FunctionDeclaration | null;
+
+function exportedRouteMethods(
+  sourceFile: ts.SourceFile,
+): Map<string, RouteMethodImplementation> {
   const localInitializers = new Map<string, ts.Expression | null>();
-  const exported = new Map<string, ts.Expression | null>();
+  const exported = new Map<string, RouteMethodImplementation>();
 
   for (const statement of sourceFile.statements) {
     if (ts.isVariableStatement(statement)) {
@@ -88,7 +92,7 @@ function exportedRouteMethods(sourceFile: ts.SourceFile): Map<string, ts.Express
       );
       localInitializers.set(statement.name.text, null);
       if (isExported && HTTP_METHODS.has(statement.name.text)) {
-        exported.set(statement.name.text, null);
+        exported.set(statement.name.text, statement);
       }
     } else if (ts.isExportDeclaration(statement) && statement.exportClause) {
       if (!ts.isNamedExports(statement.exportClause)) {
@@ -118,17 +122,70 @@ function unwrapExpression(expression: ts.Expression): ts.Expression {
   return current;
 }
 
-function wrapperCall(expression: ts.Expression | null): ts.CallExpression | null {
-  if (!expression) {
+function wrapperCall(
+  implementation: RouteMethodImplementation,
+): ts.CallExpression | null {
+  if (!implementation || ts.isFunctionDeclaration(implementation)) {
     return null;
   }
-  const unwrapped = unwrapExpression(expression);
+  const unwrapped = unwrapExpression(implementation);
   return ts.isCallExpression(unwrapped) &&
     ts.isIdentifier(unwrapped.expression) &&
     unwrapped.expression.text === "withTraderIntelligenceOwnerRoute"
     ? unwrapped
     : null;
 }
+
+function resolveStaticString(
+  sourceFile: ts.SourceFile,
+  expression: ts.Expression | undefined,
+): string | null {
+  if (!expression) return null;
+  const value = unwrapExpression(expression);
+  if (ts.isStringLiteral(value)) return value.text;
+  if (!ts.isIdentifier(value)) return null;
+  for (const statement of sourceFile.statements) {
+    if (!ts.isVariableStatement(statement)) continue;
+    for (const declaration of statement.declarationList.declarations) {
+      if (
+        ts.isIdentifier(declaration.name) &&
+        declaration.name.text === value.text &&
+        declaration.initializer &&
+        ts.isStringLiteral(unwrapExpression(declaration.initializer))
+      ) {
+        return (unwrapExpression(declaration.initializer) as ts.StringLiteral).text;
+      }
+    }
+  }
+  return null;
+}
+
+function containsCall(
+  implementation: RouteMethodImplementation,
+  acceptedNames: ReadonlySet<string>,
+): boolean {
+  if (!implementation) return false;
+  let found = false;
+  const visit = (node: ts.Node): void => {
+    if (found) return;
+    if (
+      ts.isCallExpression(node) &&
+      ts.isIdentifier(node.expression) &&
+      acceptedNames.has(node.expression.text)
+    ) {
+      found = true;
+      return;
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(implementation);
+  return found;
+}
+
+const PLATFORM_REQUEST_GUARDS = new Set([
+  "requireTraderLinkPlatformRequestIdentity",
+  "requireTraderLinkPlatformRequestScope",
+]);
 
 export function discoverTraderIntelligenceApiRoutes(args: {
   routeRecords: readonly TraderIntelligenceRouteSourceRecord[];
@@ -218,6 +275,20 @@ export function scanTraderIntelligenceRouteContainment(args: {
 
     let wrapperCallCount = 0;
     for (const [method, initializer] of exportedMethods) {
+      if (matrixEntry.authorizationBoundary === "public_oauth_entry") {
+        continue;
+      }
+      if (matrixEntry.authorizationBoundary === "platform_request_scope") {
+        if (!containsCall(initializer, PLATFORM_REQUEST_GUARDS)) {
+          findings.push({
+            code: "ti_v3_route_method_unwrapped",
+            path,
+            method,
+            detail: "platform_request_scope_missing",
+          });
+        }
+        continue;
+      }
       const call = wrapperCall(initializer);
       if (!call) {
         findings.push({
@@ -229,19 +300,13 @@ export function scanTraderIntelligenceRouteContainment(args: {
         continue;
       }
       wrapperCallCount += 1;
-      const modulePathArgument = call.arguments[0];
-      if (
-        !modulePathArgument ||
-        !ts.isStringLiteral(modulePathArgument) ||
-        modulePathArgument.text !== path
-      ) {
+      const modulePath = resolveStaticString(sourceFile, call.arguments[0]);
+      if (modulePath !== path) {
         findings.push({
           code: "ti_v3_route_wrapper_module_path_mismatch",
           path,
           method,
-          detail: ts.isStringLiteral(modulePathArgument)
-            ? modulePathArgument.text
-            : null,
+          detail: modulePath,
         });
       }
     }

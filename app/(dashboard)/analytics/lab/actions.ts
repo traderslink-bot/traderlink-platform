@@ -1,78 +1,117 @@
 "use server";
 
-import { buildAnalyticsLabPreview } from "./lab-query";
+import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
+
+import { runAnalyticsLabPlatformQuery } from "./analytics-lab-platform-service";
 import {
-  persistAnalyticsLabSavedView,
-  removeAnalyticsLabSavedView,
-} from "./lab-saved-views";
-import { normalizeAnalyticsLabQuery } from "./lab-query-validation";
-import { resolveAnalyticsLabRuntime } from "./lab-runtime";
+  createAnalyticsLabSavedView as createSavedView,
+  retireAnalyticsLabSavedView as retireSavedView,
+  updateAnalyticsLabSavedView as updateSavedView,
+} from "./analytics-lab-saved-view-runtime";
 import type {
-  AnalyticsLabDeleteSavedViewResult,
-  AnalyticsLabQueryResult,
-  AnalyticsLabSavedViewResult,
-} from "./lab-types";
+  AnalyticsLabPlatformQueryResult,
+  AnalyticsLabSavedViewMutationResult,
+} from "./analytics-lab-platform-types";
+
+function inputRecord(input: unknown): Record<string, unknown> {
+  if (!input || Array.isArray(input) || typeof input !== "object") return {};
+  return input as Record<string, unknown>;
+}
+
+function savedViewFailure(error: unknown): AnalyticsLabSavedViewMutationResult {
+  const conflict = isTraderLinkPlatformError(error) && (
+    error.code === "TRADERLINK_ACCOUNT_SELECTION_CONFLICT" ||
+    error.code === "TRADERLINK_ANALYTICS_SAVED_VIEW_CONFLICT"
+  );
+  return Object.freeze({
+    ok: false as const,
+    message: conflict
+      ? "This saved view changed or the selected Journal account changed. Refresh before trying again."
+      : "This saved view was not accepted. Check its name and analytics filters.",
+  });
+}
 
 export async function runAnalyticsLabQuery(
-  queryInput: unknown,
-): Promise<AnalyticsLabQueryResult> {
+  input: unknown,
+): Promise<AnalyticsLabPlatformQueryResult> {
   try {
-    const runtime = await resolveAnalyticsLabRuntime();
-    const query = normalizeAnalyticsLabQuery(queryInput);
-    return {
-      ok: true,
-      preview: buildAnalyticsLabPreview(query, runtime),
-    };
-  } catch {
-    return {
-      ok: false,
-      message: "That combination could not be calculated from the current V3 data.",
-    };
+    const scope = await requireTraderLinkPlatformPageScope();
+    return Object.freeze({
+      ok: true as const,
+      preview: runAnalyticsLabPlatformQuery(scope, input),
+    });
+  } catch (error) {
+    const conflict = isTraderLinkPlatformError(error) &&
+      error.code === "TRADERLINK_ACCOUNT_SELECTION_CONFLICT";
+    return Object.freeze({
+      ok: false as const,
+      message: conflict
+        ? "The selected Journal account changed. Refresh before running this view."
+        : "This analytics request was not accepted. Review the selected filters and coverage.",
+    });
   }
 }
 
-export async function saveAnalyticsLabView(
-  nameInput: unknown,
-  queryInput: unknown,
-): Promise<AnalyticsLabSavedViewResult> {
-  const name =
-    typeof nameInput === "string"
-      ? nameInput.trim().replace(/\s+/g, " ")
-      : "";
-  if (name.length === 0 || name.length > 80) {
-    return { ok: false, message: "Enter a view name up to 80 characters." };
-  }
+export async function createAnalyticsLabSavedView(
+  input: unknown,
+): Promise<AnalyticsLabSavedViewMutationResult> {
   try {
-    const runtime = await resolveAnalyticsLabRuntime();
-    const query = normalizeAnalyticsLabQuery(queryInput);
-    buildAnalyticsLabPreview(query, runtime);
-    const view = await persistAnalyticsLabSavedView(runtime, name, query);
-    return { ok: true, view };
-  } catch {
-    return { ok: false, message: "The view could not be saved." };
+    const value = inputRecord(input);
+    const scope = await requireTraderLinkPlatformPageScope();
+    const result = createSavedView(scope, {
+      name: value.name,
+      query: value.query,
+    });
+    return Object.freeze({
+      ok: true as const,
+      savedViews: result.savedViews,
+      selectedSavedViewId: result.savedViewId,
+    });
+  } catch (error) {
+    return savedViewFailure(error);
   }
 }
 
-export async function deleteAnalyticsLabView(
-  id: unknown,
-): Promise<AnalyticsLabDeleteSavedViewResult> {
-  if (
-    typeof id !== "string" ||
-    !/^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(
-      id,
-    )
-  ) {
-    return { ok: false, message: "The saved view could not be deleted." };
-  }
+export async function updateAnalyticsLabSavedView(
+  input: unknown,
+): Promise<AnalyticsLabSavedViewMutationResult> {
   try {
-    const runtime = await resolveAnalyticsLabRuntime();
-    const deleted = await removeAnalyticsLabSavedView(runtime, id);
-    return deleted
-      ? { ok: true, id }
-      : { ok: false, message: "The saved view no longer exists." };
-  } catch {
-    return { ok: false, message: "The saved view could not be deleted." };
+    const value = inputRecord(input);
+    const scope = await requireTraderLinkPlatformPageScope();
+    const savedViews = updateSavedView(scope, {
+      savedViewId: value.savedViewId,
+      expectedRevision: value.expectedRevision,
+      name: value.name,
+      query: value.query,
+    });
+    return Object.freeze({
+      ok: true as const,
+      savedViews,
+      selectedSavedViewId: value.savedViewId as string,
+    });
+  } catch (error) {
+    return savedViewFailure(error);
   }
 }
 
-
+export async function retireAnalyticsLabSavedView(
+  input: unknown,
+): Promise<AnalyticsLabSavedViewMutationResult> {
+  try {
+    const value = inputRecord(input);
+    const scope = await requireTraderLinkPlatformPageScope();
+    const savedViews = retireSavedView(scope, {
+      expectedAccountSelectionRef: value.expectedAccountSelectionRef,
+      savedViewId: value.savedViewId,
+      expectedRevision: value.expectedRevision,
+    });
+    return Object.freeze({
+      ok: true as const,
+      savedViews,
+      selectedSavedViewId: null,
+    });
+  } catch (error) {
+    return savedViewFailure(error);
+  }
+}
