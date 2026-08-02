@@ -1,6 +1,6 @@
 # TraderLink Platform Migration Progress
 
-**Current phase:** Phase 4 - Core Analytics Slice B. Slice A passed its exact focused gate; Phases 0-3 remain accepted under delegated owner authority.
+**Current phase:** Phase 4 - Core Analytics Slice C. Slices A-B passed their exact focused gates; Phases 0-3 remain accepted under delegated owner authority.
 **Historical pre-runtime implementation state:** The [Phase 3 plan](phase-3-journal-integrity-plan.md) and [tracker](phase-3-journal-integrity-progress.md) preserve the complete pre-runtime design and execution history. The accepted state immediately below supersedes former queued/unexecuted and 331/1/1 planning claims.
 **Phase 2 foundation commit:** `fea56307fbd0142ef99b9f13c020451a6a503cc7` (`feat(platform): establish verified database foundation`), preserved locally without push or deployment.
 **Phase 3 implementation commit:** `8f6a4d4e4dec20ef6edcd50f476b14d368bde505` (`feat(journal): complete phase 3 integrity foundation`), preserved locally without push or deployment.
@@ -179,12 +179,16 @@ The owner explicitly authorized Phase 1 in the current chat on 2026-07-31. Phase
 Current boundary: the coordinating technical auditor accepted the completed
 [Phase 3 Journal Integrity Progress](phase-3-journal-integrity-progress.md)
 runtime and database evidence; no separate personal owner review is required.
-Phase 4 Slice A is technically accepted after targeted lint,
-dependency-scoped TypeScript, and 2 focused files/9 tests with one worker. It
-implemented the frozen contracts and Journal-owned read-only fact set without
-touching the real database. Phase 4 may now implement Slice B of the technically
-accepted [Core Analytics plan](phase-4-core-analytics-plan.md): exact
-normalization, fee allocation, first metrics and shared groups only. Public
+Phase 4 Slices A-B are technically accepted. Slice A passed targeted lint,
+dependency-scoped TypeScript, and 2 focused files/9 tests with one worker. Slice
+B passed targeted lint, dependency-scoped TypeScript over 14 roots/imports, and
+6 focused files/34 tests with one worker and no file parallelism. The result is
+one Journal-owned fact set, exact normalized populations and fee handling, 22
+first-slice metrics, and reconciling daily/ticker/30-minute groups without
+touching the real database. Phase 4 may now implement Slice C of the technically
+accepted [Core Analytics plan](phase-4-core-analytics-plan.md): complete the
+supported execution/round-trip registry and explicit unavailable capability
+states only. Public
 login/account integration
 is not a prerequisite: Discord-first login is reconciled before go-live, with
 email/password left optional. Broad lint, full-project TypeScript, full

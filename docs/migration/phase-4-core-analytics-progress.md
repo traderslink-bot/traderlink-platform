@@ -1,6 +1,6 @@
 # Phase 4 Core Analytics Progress
 
-**Status:** Slice A is technically accepted under delegated owner authority; Slice B is active
+**Status:** Slices A-B are technically accepted under delegated owner authority; Slice C is active
 **Controlling plan:** [Phase 4 Core Analytics Plan](phase-4-core-analytics-plan.md)
 **Entry repository:** `C:\Users\jerac\Documents\TraderLink\traderlink-platform`
 **Entry branch:** `codex/traderlink-platform-replacement`
@@ -109,10 +109,52 @@ stale execution versions; forked rebuild history; and rebuild-count drift.
 No real/private database, statement, route, UI, process, server, package,
 migration, push, deployment, production state or legacy repository changed.
 
+## Slice B result
+
+Slice B added eight production files and four focused test files under Journal
+Analytics, extended the result contract with the partitioned response, and
+corrected the Slice A provenance fixture to the accepted IBKR adapter identity.
+
+The implementation provides:
+
+- exact scaled-integer decimal operations and reduced rational results, with
+  half-up rounding confined to versioned display output;
+- deterministic largest-remainder fee allocation that conserves the source
+  units across split and flip executions;
+- explicit fee cost/credit handling and fail-closed missing, conflicting,
+  unsupported-policy and currency-mismatch states;
+- Stock-only exact cash-effect normalization with scale-in, partial-exit,
+  short, flip, holding-time, size, notional and provenance facts;
+- separate realized, legitimate-open, needs-decision, unsupported and
+  fee-incomplete populations;
+- bounded filters with currency/account-timezone partitions and honest scope
+  limitations where source counts cannot be attributed to one partition;
+- a 22-metric first registry slice and one accumulator for gross/net counts,
+  rates, totals, averages, medians, extrema, profit factor and expectancy; and
+- daily, ticker and 30-minute entry groups that reconcile counts and gross/net
+  sums to their exact parent population.
+
+Verification on 2026-08-01:
+
+- targeted ESLint: passed;
+- dependency-scoped TypeScript for 14 roots/import closure: passed; and
+- exact one-worker/no-file-parallelism Vitest gate: 6 files, 34 tests passed.
+
+The focused gate covers exact long/short/scale/partial/flip behavior,
+deterministic allocation and result ties, medians, ratios, zero denominators,
+partial fees, multi-day grouping, currency/timezone separation, empty and
+partial coverage, open/decision containment, cross-account denial, and the
+shared page-service calculation path.
+
+No real/private database, statement, route, UI, process, server, package,
+migration, push, deployment, production state or legacy repository changed.
+
 ## Next action
 
-Implement Slice B only: exact math, exactly conserving charge allocation,
-normalized rows/populations, coverage, first headline metrics, and shared daily,
-ticker and 30-minute entry groups. Then run the combined Slice A/B focused suite
-with one worker and no file parallelism. Do not start Slice C, private database
-verification, routes/UI, launcher or server work until that gate passes.
+Implement Slice C only: complete every currently supportable execution and
+round-trip capability from the accepted catalog in the machine-readable
+registry, add explicit unavailable entries for capabilities that need missing
+facts, and prove exact group-to-total reconciliation and output digests. Run the
+one-worker focused suite and Phase 4 static verifier. Do not start Slice D,
+private database verification, routes/UI, launcher or server work until that
+gate passes.

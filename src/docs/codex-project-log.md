@@ -1,3 +1,27 @@
+# 2026-08-01 - TraderLink Platform Phase 4 Slice B accepted
+
+**Branch:** `codex/traderlink-platform-replacement`.
+
+- Implemented exact scaled-integer/rational analytics math, conserving
+  split-execution charge allocation, one normalized Journal fact path,
+  currency/timezone populations, a 22-metric first registry slice, one shared
+  accumulator/service, and reconciling daily/ticker/30-minute groups.
+- Gross facts remain available when fee facts are incomplete. Net results use
+  only covered trades and carry explicit partial/unavailable reasons. Open,
+  decision, excluded and unsupported facts remain visible coverage and do not
+  suppress valid ready-closed trades.
+- The gate proves long, short, scale-in, partial-exit, flip, multi-day,
+  currency/timezone, ties, medians, ratios and zero-denominator behavior.
+  Targeted ESLint, dependency-scoped TypeScript over 14 roots/imports, and the
+  exact one-worker 6-file/34-test suite passed.
+- No real/private database, statement, route, UI, process, server, package,
+  schema migration, V3 analytics dependency, push, deployment, production
+  state or legacy checkout changed.
+- Resume with Phase 4 Slice C only: complete supported catalog registry entries,
+  explicit unavailable capability entries, exact reconciliation/digest proof,
+  and the Phase 4 static verifier. Do not begin Slice D or route/UI work before
+  that gate passes.
+
 # 2026-08-01 - TraderLink Platform Phase 4 Slice A accepted
 
 **Branch:** `codex/traderlink-platform-replacement`.

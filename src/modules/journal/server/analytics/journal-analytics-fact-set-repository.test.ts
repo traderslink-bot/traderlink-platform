@@ -380,8 +380,8 @@ function seedGraph(database: Database.Database): void {
   issue_count, pending_decision_count, created_by_user_id, created_at_utc,
   updated_at_utc, accepted_at_utc
 ) VALUES (?, ?, ?, ?, 'broker_statement', 'ibkr', ?, 100, 'text/csv',
-  'utf-8', 'Statement', 'ibkr/evidence.csv', NULL, 'ibkr_activity',
-  'ibkr-activity-v1', 'test-parser-v1', 'test-mapping-v1', '{}',
+  'utf-8', 'Statement', 'ibkr/evidence.csv', NULL, 'ibkr_activity_statement',
+  'ibkr_activity_statement_v1', 'test-parser-v1', 'test-mapping-v1', '{}',
   '2026-01-01', '2026-01-31', 'America/New_York',
   'accepted_with_decisions', ?, 5, 4, 0, 0, 1, ?, ?, ?, ?)`)
       .run(
@@ -643,8 +643,8 @@ describe("Journal Analytics fact set", () => {
       expect(closed?.allocations[0]?.feePolicyCandidates).toEqual([
         {
           sourceSystem: "ibkr",
-          adapterId: "ibkr_activity",
-          adapterVersion: "ibkr-activity-v1",
+          adapterId: "ibkr_activity_statement",
+          adapterVersion: "ibkr_activity_statement_v1",
           provenanceKind: "broker",
         },
       ]);

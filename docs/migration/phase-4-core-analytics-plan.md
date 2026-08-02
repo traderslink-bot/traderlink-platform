@@ -1,6 +1,6 @@
 # Phase 4 Core Analytics Plan
 
-**Status:** Technically accepted under delegated owner authority; Slice A is technically accepted and Slice B is active
+**Status:** Technically accepted under delegated owner authority; Slices A-B are technically accepted and Slice C is active
 **Phase:** 4 - Core Analytics
 **Owner modules:** Journal publishes facts; Journal Analytics owns calculations
 **Replacement repository:** `C:\Users\jerac\Documents\TraderLink\traderlink-platform`
@@ -928,3 +928,44 @@ Slice B may now implement exact normalization, charge allocation, population,
 first reconciliation metrics, and the shared daily/ticker/30-minute groups. It
 must not start Slice C, real-database verification, routes, launcher, server or
 UI work until the combined Slice A/B focused gate passes.
+
+## 26. Slice B implementation record
+
+Slice B is technically accepted under the owner's delegated checkpoint
+authority. It added exact scaled-integer/rational math, deterministic conserving
+execution-charge allocation, one normalized Journal fact path, bounded
+population/filter handling, a machine-readable first-slice metric registry,
+one accumulator, and reconciling daily/ticker/30-minute groups. The shared page
+service exposes overview, performance, results, timing, execution and workspace
+methods without duplicating financial formulas.
+
+The implemented first slice contains 22 metrics covering explicit candidate,
+included and excluded populations; closed/outcome counts and rates; gross
+profit/loss/P&L; covered-row net P/L; gross and selected-basis averages/medians;
+best/worst trade; profit factor; and expectancy. Division preserves exact
+numerator/denominator facts and applies versioned view rounding only at the
+result boundary. Missing fee policy, fee currency mismatch, unsupported
+instrument value conventions and zero denominators return explicit unavailable
+or partial states rather than inferred values.
+
+The exact gate passed on 2026-08-01:
+
+- targeted ESLint over all Slice B production/test paths and the corrected
+  Slice A provenance fixture;
+- dependency-scoped TypeScript over 14 roots and their imports; and
+- six focused Vitest files, one worker and no file parallelism: 34 tests passed.
+
+The synthetic gate proves exact long, short, scale-in, partial-exit and flip
+normalization; deterministic fee remainders and ties; odd/even medians; exact
+ratios and zero-denominator unavailability; partial fee coverage; multi-day,
+currency and timezone separation; visible open/decision/unsupported coverage;
+group-to-population reconciliation; cross-account denial; and one shared
+service path. No private database, statement, route, UI, process, server,
+package, schema migration, V3 analytics dependency, push, deployment,
+production state or legacy checkout changed.
+
+Slice C may now complete the supported execution/round-trip registry and add
+explicit unavailable registry entries for capabilities requiring missing
+trader/account/market facts. It must not start the private Slice D checkpoint,
+routes, launcher, server or UI work until the Slice C focused/static gate
+passes.

@@ -85,3 +85,26 @@ export type JournalAnalyticsResponse = Readonly<{
     reasonCode: string | null;
   }>;
 }>;
+
+export type JournalAnalyticsPartitionedResponse = Readonly<{
+  resultVersion: typeof JOURNAL_ANALYTICS_RESULT_VERSION;
+  factSetRevisionSha256: string;
+  registryVersion: string;
+  generatedAtUtc: string;
+  partitions: readonly JournalAnalyticsResponse[];
+  selectedAccountSourceCoverage: Readonly<{
+    excludedExecutionCount: number;
+    unsupportedSourceRecordCount: number;
+    attribution: "selected_accounts_full_scope";
+  }>;
+  crossPartitionCounts: Readonly<{
+    candidateCount: number;
+    includedCount: number;
+    readyClosedCount: number;
+    legitimateOpenCount: number;
+    needsDecisionCount: number;
+    feeCompleteCount: number;
+    feeIncompleteCount: number;
+  }>;
+  limitations: readonly string[];
+}>;
