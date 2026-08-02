@@ -1,3 +1,24 @@
+# 2026-08-01 - TraderLink Platform Phase 4 Slice A accepted
+
+**Branch:** `codex/traderlink-platform-replacement`.
+
+- Preserved the exact Phase 4 plan locally at `1ee87450` without push or
+  deployment, then implemented only Slice A.
+- Added frozen Journal fact-set and Analytics query/result/registry contracts,
+  plus one Journal-owned account-isolated read transaction that loads the full
+  active allocation graph and publishes deterministic source revisions.
+- The reader fails closed on authorization, stale execution versions, rebuild
+  forks/drift, invalid ready/open/decision states, allocation order/direction,
+  or exact quantity loss. Provenance candidates are deduplicated and pending
+  decisions remain coverage rather than blocking unrelated closed facts.
+- Targeted ESLint, dependency-scoped TypeScript, and the exact one-worker
+  2-file/9-test gate passed. No real database, route, UI, process, server,
+  package, migration, push, deployment, production state or legacy checkout
+  changed.
+- Resume with Phase 4 Slice B only: exact normalization, charge allocation,
+  first reconciliation metrics, and shared daily/ticker/time groups. Do not
+  begin Slice C or route/UI work before the combined Slice A/B gate passes.
+
 # 2026-08-01 - TraderLink Platform Phase 4 Core Analytics plan acceptance
 
 **Branch:** `codex/traderlink-platform-replacement`.

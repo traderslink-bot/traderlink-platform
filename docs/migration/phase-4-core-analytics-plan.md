@@ -1,6 +1,6 @@
 # Phase 4 Core Analytics Plan
 
-**Status:** Technically accepted under delegated owner authority; Slice A contracts/fact-set implementation is authorized but has not started
+**Status:** Technically accepted under delegated owner authority; Slice A is technically accepted and Slice B is active
 **Phase:** 4 - Core Analytics
 **Owner modules:** Journal publishes facts; Journal Analytics owns calculations
 **Replacement repository:** `C:\Users\jerac\Documents\TraderLink\traderlink-platform`
@@ -890,5 +890,41 @@ The adversarial review corrected these material risks before acceptance:
 - the development dashboard scope fails closed outside explicit loopback
   development.
 
-No unresolved Phase 4 planning issue remains. Slice A may begin only inside the
-file, test, privacy, database and stop boundaries above.
+No unresolved Phase 4 planning issue remained. At planning acceptance, Slice A
+was authorized only inside the file, test, privacy, database and stop boundaries
+above.
+
+## 25. Slice A implementation record
+
+Slice A is technically accepted under the owner's delegated checkpoint
+authority. It added only the planned contracts, Journal-owned read-only fact-set
+reader/service, and two focused synthetic test files. It did not open or mutate
+the accepted private database, start a server, change a route/UI, add a schema
+migration, or import V3 analytics.
+
+The fact-set reader now:
+
+- requires an owner/admin server-derived workspace scope and an allowlisted,
+  non-empty bounded account selection;
+- uses one SQLite read transaction and loads the complete current active
+  allocation graph before later date/currency filtering;
+- verifies current execution versions, active latest rebuilds, fork absence,
+  rebuild population counts, ready/open/decision invariants, deterministic
+  allocation sequence/direction, and exact quantity conservation;
+- deduplicates provenance and publishes versioned source/adapter candidates
+  without exposing source rows, broker account identifiers or fingerprints;
+- carries account coverage and pending decisions without allowing them to hide
+  unrelated ready-closed rows; and
+- calculates a deterministic source revision that excludes generated time and
+  presentation filters.
+
+The exact gate passed on 2026-08-01:
+
+- targeted ESLint over all eight Slice A source/test files;
+- dependency-scoped TypeScript over those eight roots and their imports; and
+- two focused Vitest files, one worker and no file parallelism: 9 tests passed.
+
+Slice B may now implement exact normalization, charge allocation, population,
+first reconciliation metrics, and the shared daily/ticker/30-minute groups. It
+must not start Slice C, real-database verification, routes, launcher, server or
+UI work until the combined Slice A/B focused gate passes.

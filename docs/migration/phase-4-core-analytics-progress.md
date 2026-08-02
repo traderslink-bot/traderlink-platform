@@ -1,6 +1,6 @@
 # Phase 4 Core Analytics Progress
 
-**Status:** Exact plan technically accepted under delegated owner authority; Slice A is authorized and implementation has not started
+**Status:** Slice A is technically accepted under delegated owner authority; Slice B is active
 **Controlling plan:** [Phase 4 Core Analytics Plan](phase-4-core-analytics-plan.md)
 **Entry repository:** `C:\Users\jerac\Documents\TraderLink\traderlink-platform`
 **Entry branch:** `codex/traderlink-platform-replacement`
@@ -24,7 +24,7 @@
 - Ports 3000/3010/3011: no listener at planning entry.
 - No upstream, push, deployment, production mutation or legacy change.
 
-## Planning decisions drafted
+## Accepted planning decisions
 
 - Journal owns the read-only SQL fact set; Journal Analytics owns formulas.
 - No Phase 4 schema migration or summary table is planned.
@@ -70,10 +70,49 @@ explicit `asOfUtc`, open-position boundaries, query/pagination limits,
 independent private reconciliation, and fail-closed loopback authentication.
 No unresolved planning issue remains.
 
+## Planning preservation
+
+The accepted exact plan was preserved locally at commit
+`1ee87450544c98b991a21e99e9b3d61c95a180e7`
+(`docs(migration): accept phase 4 analytics plan`). It has not been pushed or
+deployed.
+
+## Slice A result
+
+Slice A added eight production/test files:
+
+- the Journal fact-set contract;
+- Analytics query, result and metric-registry contracts;
+- the Journal fact-set repository and service;
+- the focused fact-set repository test; and
+- the focused Analytics contract test.
+
+The reader is read-only and account-isolated. It opens one SQLite read
+transaction, loads the full current active allocation graph, verifies current
+execution/rebuild relationships and exact quantity conservation, deduplicates
+provenance, carries pending decisions and coverage, and computes a deterministic
+source revision. It does not filter away open/decision rows or let them suppress
+ready-closed rows.
+
+Verification on 2026-08-01:
+
+- targeted ESLint: passed;
+- dependency-scoped TypeScript for 8 roots/import closure: passed; and
+- exact one-worker/no-file-parallelism Vitest gate: 2 files, 9 tests passed.
+
+The synthetic gate covers ready-closed, legitimate-open and needs-decision
+populations; duplicate provenance deduplication; full-graph loading with bounded
+request metadata; stable/change-sensitive source revisions; frozen results;
+member, omitted-account and forged cross-workspace denial; allocation loss;
+stale execution versions; forked rebuild history; and rebuild-count drift.
+
+No real/private database, statement, route, UI, process, server, package,
+migration, push, deployment, production state or legacy repository changed.
+
 ## Next action
 
-Preserve the accepted planning package in a local documentation commit, with no
-push. Then implement Slice A only: frozen fact/query/result/registry contracts,
-the owner/account-isolated Journal fact-set reader/service, source revision and
-focused synthetic tests. Do not mutate the real database, start a server, change
-routes/UI, or implement later metric slices during Slice A.
+Implement Slice B only: exact math, exactly conserving charge allocation,
+normalized rows/populations, coverage, first headline metrics, and shared daily,
+ticker and 30-minute entry groups. Then run the combined Slice A/B focused suite
+with one worker and no file parallelism. Do not start Slice C, private database
+verification, routes/UI, launcher or server work until that gate passes.
