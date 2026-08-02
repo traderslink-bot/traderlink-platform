@@ -68,6 +68,16 @@ that later authentication work does not rewrite Journal facts. Personal owner
 involvement is reserved for irreversible or external actions and final
 visual/product approval.
 
+Phase 5 is controlled by
+`docs/migration/phase-5-module-transfer-plan.md` and
+`docs/migration/phase-5-module-transfer-progress.md`. Begin Slice A only: the
+read-only Calendar, Trades by Ticker, Open Positions and Trade Tracker query/
+route adapters. Imports move with Data Decisions in Slice B. Trade Tracker is
+the canonical manual execution experience in Slice C. Rules, tags, notes and
+reviews require the planned migration/legacy reconciliation in Slice D. Do not
+reconnect V3, start port 3010 before the visual checkpoint, or write the real
+database during Slice A.
+
 Phase 3 is controlled by
 `docs/migration/phase-3-journal-integrity-plan.md` and
 `docs/migration/phase-3-journal-integrity-progress.md`. Read both before any

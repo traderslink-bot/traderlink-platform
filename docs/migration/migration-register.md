@@ -1,8 +1,9 @@
 # TraderLink Platform Migration Register
 
-**Status:** Phases 0-4 are accepted. Phase 4 route cutover, runtime/browser verification, and owner visual approval passed. Phase 5 module-transfer planning is active. The accepted data boundary is 331 ready closed round trips, zero automatically legitimate-open round trips, and two contained Data Decisions. No push or deployment occurred.
+**Status:** Phases 0-4 are accepted. The Phase 5 plan is accepted for implementation and Slice A read-only Journal route recovery is active. The accepted data boundary is 331 ready closed round trips, zero automatically legitimate-open round trips, and two contained Data Decisions. No push or deployment occurred.
 **Phase 2 foundation commit:** `fea56307fbd0142ef99b9f13c020451a6a503cc7`; preserved locally, not pushed or deployed.
 **Phase 4 implementation commit:** `4575dafd0fb62804ac090c4a149152506d8db7b1`; preserved locally, not pushed or deployed. See [Phase 4 Handoff](phase-4-core-analytics-handoff.md).
+**Phase 5 plan:** [Phase 5 Module Transfer Plan](phase-5-module-transfer-plan.md) accepted for implementation; Slice A read-only route recovery is next.
 **Rule:** A legacy item cannot be removed until its row is `Owner accepted` and its legacy dependency check is complete.
 
 | Capability | Legacy location/disposition | Replacement owner | Source of truth | Current status | Owner accepted | Legacy deletion allowed |
