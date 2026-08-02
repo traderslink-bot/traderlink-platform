@@ -4,6 +4,7 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
+import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -18,65 +19,94 @@ import {
   DashboardPanel,
   DashboardUnavailableState,
 } from "../../../dashboard-template";
-import { requireTraderIntelligenceOwnerPageAccess } from "@/src/lib/trader-intelligence-v3/auth";
-import { resolveConfiguredDashboardAnalytics } from "@/src/lib/trader-intelligence-v3/analytics/dashboard/configured-dashboard-analytics";
-import { formatDashboardDecimal } from "@/src/lib/trader-intelligence-v3/analytics/dashboard/execution-analytics-dashboard-view-models";
-import { validateTraderIntelligenceDeployment } from "@/src/lib/trader-intelligence-v3/deployment";
-import { resolveCompletedCandleReviewTrade } from "@/src/lib/trade-candle-analysis/completed-trade";
-import { readStoredTradeCandleReview } from "@/src/lib/trade-candle-analysis/review-store";
+import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
+import {
+  buildJournalAnalyticsDashboardQuery,
+  withJournalAnalyticsDashboardRuntime,
+} from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
+import { requireDevelopmentDashboardPageScope } from "@/src/modules/platform/server/authentication/require-development-dashboard-scope";
 
 export const metadata: Metadata = {
-  title: "Round Trips | Trader Intelligence",
+  title: "Round Trips | TraderLink Platform",
 };
 
-const ACTIVITY_ROW_LIMIT = 100;
+export const dynamic = "force-dynamic";
 
-export default async function RoundTripsPage() {
-  const owner = await requireTraderIntelligenceOwnerPageAccess();
-  const deployment = validateTraderIntelligenceDeployment(process.env);
-  const analytics = deployment.ok
-    ? resolveConfiguredDashboardAnalytics({
-        owner,
-        config: deployment.config,
-        environment: process.env,
-      })
-    : null;
+type RoundTripSearchParams = Promise<Record<string, string | string[] | undefined>>;
 
-  if (analytics === null || !analytics.ok) {
+function one(
+  params: Record<string, string | string[] | undefined>,
+  key: string,
+): string | undefined {
+  const value = params[key];
+  return typeof value === "string" ? value : undefined;
+}
+
+function timestamp(value: string): string {
+  return value.replace("T", " ").replace(".000Z", " UTC");
+}
+
+export default async function RoundTripsPage({
+  searchParams,
+}: {
+  searchParams: RoundTripSearchParams;
+}) {
+  const params = await searchParams;
+  const scope = await requireDevelopmentDashboardPageScope();
+  const requestedCurrency = one(params, "currency")?.toUpperCase() ?? null;
+  const afterCursor = one(params, "after") ?? null;
+  const result = withJournalAnalyticsDashboardRuntime(scope, ({ facts, service }) => {
+    const overviewQuery = buildJournalAnalyticsDashboardQuery(scope, {
+      metricIds: ["included_count"],
+    });
+    const overview = service.getAnalyticsOverview(scope, overviewQuery);
+    const currencies = overview.partitions.flatMap((partition) =>
+      partition.currency ? [partition.currency] : []);
+    const currency = requestedCurrency && currencies.includes(requestedCurrency)
+      ? requestedCurrency
+      : currencies[0] ?? null;
+    if (currency === null) {
+      return Object.freeze({ overview, currency, table: null, decisions: [] });
+    }
+    const tableQuery = buildJournalAnalyticsDashboardQuery(scope, {
+      metricIds: ["included_count"],
+      currency,
+      pageSize: 200,
+      afterCursor,
+    });
+    const table = service.getRoundTripAnalyticsTable(scope, tableQuery);
+    const factSet = facts.getJournalAnalyticsFactSet(scope, {
+      accountIds: overviewQuery.accountIds,
+      closingDateRange: overviewQuery.closingDateRange,
+      currencySelection: Object.freeze({ kind: "all_partitions" as const }),
+    });
+    const decisions = factSet.roundTrips
+      .filter((roundTrip) => roundTrip.projectionState === "needs_decision")
+      .map((roundTrip) => Object.freeze({
+        roundTripId: roundTrip.roundTripId,
+        symbol: roundTrip.displayedSymbol,
+        direction: roundTrip.direction,
+        openedAtUtc: roundTrip.openedAtUtc,
+        reasonCodes: roundTrip.pendingDecisionReasonCodes,
+      }));
+    return Object.freeze({ overview, currency, table, decisions });
+  });
+
+  if (result.table === null || result.currency === null) {
     return (
       <DashboardPage>
-        <DashboardPanel title="Accepted executions">
+        <DashboardPanel title="Round trips">
           <DashboardUnavailableState
             actionHref="/imports"
             actionLabel="Import trades"
-            description="Accepted broker executions will appear here once a verified V3 statement is attached. No legacy or synthetic rows are substituted."
+            description="No analytics-ready round trips are available in the replacement Journal. No V3 or sample rows are substituted."
           />
         </DashboardPanel>
       </DashboardPage>
     );
   }
 
-  const rows = analytics.value.executionActivity.slice(0, ACTIVITY_ROW_LIMIT);
-  const completedReviews = analytics.value.source.readVerifiedDataset();
-  const completedRows = completedReviews.ok && deployment.ok && deployment.config.persistence.kind === "file"
-    ? completedReviews.value.datasetReceipt.rows
-        .flatMap((row) => {
-          const trade = resolveCompletedCandleReviewTrade({
-            analytics: analytics.value,
-            semanticRoundTripKey: row.semanticRoundTripKey,
-          });
-          return trade === null ? [] : [trade];
-        })
-        .sort((left, right) => right.exitTime - left.exitTime)
-        .slice(0, 24)
-        .map((trade) => ({
-          review: readStoredTradeCandleReview({
-            parentPath: deployment.config.persistence.parentPath,
-            trade,
-          }),
-          trade,
-        }))
-    : [];
+  const table = result.table;
   return (
     <DashboardPage>
       <Box>
@@ -87,95 +117,130 @@ export default async function RoundTripsPage() {
           Round Trips
         </Typography>
         <Typography color="text.secondary" sx={{ maxWidth: 860, mt: 1 }} variant="body2">
-          Accepted broker execution activity is shown below. A completed round trip and its P/L appear in analytics only when its opening and closing evidence can be verified.
+          Completed trades are reconstructed from the canonical Journal execution ledger. Items needing a factual trader decision are contained below and do not hide unrelated valid trades.
         </Typography>
       </Box>
-      <DashboardDataScopeChip />
-      <Alert severity="info">
-        {analytics.value.executionActivity.length} accepted broker executions are available. Rows with incomplete opening-history evidence remain visible as activity and do not contribute an unverified P/L result.
-      </Alert>
+
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+        <DashboardDataScopeChip />
+        {result.overview.partitions.map((partition) => (
+          <Chip
+            color={partition.currency === result.currency ? "primary" : "default"}
+            component="a"
+            href={`/trades/roundtrips?currency=${encodeURIComponent(partition.currency ?? "")}`}
+            key={`${partition.currency ?? "currency-unavailable"}-${partition.timezone ?? "timezone-unavailable"}`}
+            label={partition.currency ?? "Currency unavailable"}
+            size="small"
+            variant={partition.currency === result.currency ? "filled" : "outlined"}
+          />
+        ))}
+        <Chip label={`${table.totalRowCount} ready closed`} size="small" variant="outlined" />
+        <Chip label={`${result.decisions.length} need a decision`} size="small" variant="outlined" />
+      </Stack>
+
+      {result.decisions.length > 0 ? (
+        <Alert
+          action={(
+            <Button color="inherit" href="/data-decisions" size="small">
+              Review Data Decisions
+            </Button>
+          )}
+          severity="warning"
+        >
+          {result.decisions.length} trade chains need factual review. They are excluded only from calculations that depend on those unresolved facts.
+        </Alert>
+      ) : null}
+
       <DashboardPanel
-        action={<Chip label={`${completedRows.length} available`} size="small" variant="outlined" />}
-        title="Completed trades"
+        action={<Chip label={`${table.rows.length} on this page`} size="small" variant="outlined" />}
+        eyebrow={`${table.currency ?? "Currency unavailable"} · ${table.timezone}`}
+        title="Analytics-ready closed trades"
       >
-        {completedRows.length === 0 ? (
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Closed</TableCell>
+                <TableCell>Symbol</TableCell>
+                <TableCell>Direction</TableCell>
+                <TableCell align="right">Quantity</TableCell>
+                <TableCell align="right">Gross P/L</TableCell>
+                <TableCell align="right">Net P/L</TableCell>
+                <TableCell>Fees</TableCell>
+                <TableCell>Source</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {table.rows.map((row) => (
+                <TableRow key={row.roundTripId}>
+                  <TableCell>{timestamp(row.closedAtUtc)}</TableCell>
+                  <TableCell>{row.displayedSymbol}</TableCell>
+                  <TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell>
+                  <TableCell align="right">{formatJournalAnalyticsDecimal(row.enteredQuantityDecimal)}</TableCell>
+                  <TableCell align="right">{table.currency} {formatJournalAnalyticsDecimal(row.grossPnlDecimal)}</TableCell>
+                  <TableCell align="right">
+                    {row.selectedPnlDecimal === null
+                      ? "Unavailable"
+                      : `${table.currency} ${formatJournalAnalyticsDecimal(row.selectedPnlDecimal)}`}
+                  </TableCell>
+                  <TableCell>{row.chargeCoverage === "complete" ? "Complete" : "Needs review"}</TableCell>
+                  <TableCell>{row.provenance.replaceAll("_", " ")}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end", mt: 2 }}>
+          {afterCursor ? (
+            <Button href={`/trades/roundtrips?currency=${encodeURIComponent(result.currency)}`} variant="outlined">
+              First page
+            </Button>
+          ) : null}
+          {table.continuationCursor ? (
+            <Button
+              href={`/trades/roundtrips?currency=${encodeURIComponent(result.currency)}&after=${encodeURIComponent(table.continuationCursor)}`}
+              variant="contained"
+            >
+              Next page
+            </Button>
+          ) : null}
+        </Stack>
+      </DashboardPanel>
+
+      <DashboardPanel
+        action={<Chip label={`${result.decisions.length} contained`} size="small" variant="outlined" />}
+        title="Needs a trader decision"
+      >
+        {result.decisions.length === 0 ? (
           <Typography color="text.secondary" variant="body2">
-            No completed round trips with usable entry and exit prices are available for candle review.
+            No round-trip chain currently needs a trader decision.
           </Typography>
         ) : (
           <TableContainer>
             <Table size="small">
               <TableHead>
                 <TableRow>
+                  <TableCell>Opened</TableCell>
                   <TableCell>Symbol</TableCell>
                   <TableCell>Direction</TableCell>
-                  <TableCell>Exit</TableCell>
-                  <TableCell>Candle review</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Reason</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {completedRows.map(({ review, trade }) => (
-                  <TableRow key={trade.semanticRoundTripKey}>
-                    <TableCell>{trade.symbol}</TableCell>
-                    <TableCell sx={{ textTransform: "capitalize" }}>{trade.direction}</TableCell>
-                    <TableCell>{formatDashboardDecimal(String(trade.exitPrice))} {trade.currency ?? "USD"}</TableCell>
-                    <TableCell>
-                      <Button
-                        href={`/trades/candle-review?trade=${encodeURIComponent(trade.semanticRoundTripKey)}`}
-                        size="small"
-                        variant="text"
-                      >
-                          {review === null
-                            ? "Analyze this trade"
-                            : review.status === "ready"
-                              ? "View review"
-                              : "View no-coverage review"}
-                      </Button>
-                    </TableCell>
+                {result.decisions.map((row) => (
+                  <TableRow key={row.roundTripId}>
+                    <TableCell>{timestamp(row.openedAtUtc)}</TableCell>
+                    <TableCell>{row.symbol}</TableCell>
+                    <TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell>
+                    <TableCell>Trader decision required</TableCell>
+                    <TableCell>{row.reasonCodes.join(", ").replaceAll("_", " ")}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </TableContainer>
         )}
-      </DashboardPanel>
-      <DashboardPanel
-        action={<Chip label={`${rows.length} shown`} size="small" variant="outlined" />}
-        title="Accepted executions"
-      >
-        {analytics.value.executionActivity.length > rows.length ? (
-          <Typography color="text.secondary" sx={{ mb: 1.5 }} variant="body2">
-            Showing the latest {rows.length} of {analytics.value.executionActivity.length} accepted executions to keep this local dashboard responsive. The complete statement remains available in Data Decisions.
-          </Typography>
-        ) : null}
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Date</TableCell>
-                <TableCell>Time</TableCell>
-                <TableCell>Symbol</TableCell>
-                <TableCell>Side</TableCell>
-                <TableCell align="right">Quantity</TableCell>
-                <TableCell align="right">Price</TableCell>
-                <TableCell>Fees</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.map((row) => (
-                <TableRow key={row.executionDigest}>
-                  <TableCell>{row.date}</TableCell>
-                  <TableCell>{row.time}</TableCell>
-                  <TableCell>{row.symbol}</TableCell>
-                  <TableCell sx={{ textTransform: "capitalize" }}>{row.side}</TableCell>
-                  <TableCell align="right">{formatDashboardDecimal(row.quantity)}</TableCell>
-                  <TableCell align="right">{formatDashboardDecimal(row.price)} {row.currency}</TableCell>
-                  <TableCell>{row.chargeCoverageState === "complete" ? "Verified" : "Needs review"}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
       </DashboardPanel>
     </DashboardPage>
   );

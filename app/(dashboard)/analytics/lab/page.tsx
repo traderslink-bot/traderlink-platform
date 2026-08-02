@@ -1,64 +1,41 @@
 import type { Metadata } from "next";
-import AnalyticsLabClient from "./analytics-lab-client";
-import { buildAnalyticsLabPreview } from "./lab-query";
-import { resolveAnalyticsLabRuntime } from "./lab-runtime";
-import { listAnalyticsLabSavedViews } from "./lab-saved-views";
-import type { AnalyticsLabQuery } from "./lab-types";
+
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+
+import {
+  DashboardPage,
+  DashboardPanel,
+  DashboardUnavailableState,
+} from "../../../dashboard-template";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Analytics Lab | Trader Intelligence",
-  description:
-    "Explore execution performance through browser-safe Trader Intelligence V3 analytics packets.",
+  title: "Analytics Lab | TraderLink Platform",
+  description: "Build custom analytics views from replacement Journal facts.",
 };
 
-export default async function AnalyticsLabPage() {
-  const runtime = await resolveAnalyticsLabRuntime();
-  const defaultQuery: AnalyticsLabQuery = {
-    analysis: "performance",
-    metric: "net_pnl",
-    grouping: "day",
-    chart: "area",
-    comparison: "none",
-    evidenceRows: 6,
-    filters: {
-      symbol: "all",
-      direction: "all",
-      outcome: "all",
-      session: "all",
-      weekday: "all",
-      startDate: runtime.minimumDate,
-      endDate: runtime.maximumDate,
-      entryStart: "00:00",
-      entryEnd: "23:59",
-      holdingMinimum: "",
-      holdingMaximum: "",
-      sequenceMinimum: "",
-      sequenceMaximum: "",
-      previousOutcome: "all",
-      preEntryState: "all",
-      repeatAttemptMinimum: "",
-      repeatAttemptMaximum: "",
-      shareMinimum: "",
-      shareMaximum: "",
-      notionalMinimum: "",
-      notionalMaximum: "",
-    },
-  };
-  const initialSavedViews = await listAnalyticsLabSavedViews(runtime);
+export default function AnalyticsLabPage() {
   return (
-    <AnalyticsLabClient
-      filterOptions={{
-        symbols: runtime.symbols,
-        minimumDate: runtime.minimumDate,
-        maximumDate: runtime.maximumDate,
-      }}
-      initialPreview={buildAnalyticsLabPreview(defaultQuery, runtime)}
-      initialQuery={defaultQuery}
-      initialSavedViews={initialSavedViews}
-    />
+    <DashboardPage>
+      <Box>
+        <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">
+          Analytics
+        </Typography>
+        <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">
+          Analytics Lab
+        </Typography>
+        <Typography color="text.secondary" sx={{ maxWidth: 860, mt: 1 }} variant="body2">
+          The custom analytics builder is being connected to the replacement Journal Analytics registry.
+        </Typography>
+      </Box>
+      <DashboardPanel title="Custom analytics builder">
+        <DashboardUnavailableState
+          description="The former V3 and sample-data runtime is disabled here. The complete Analytics Lab interface will return in its own reviewed migration slice using only accepted Journal facts."
+          title="Replacement connection in progress"
+        />
+      </DashboardPanel>
+    </DashboardPage>
   );
 }
-
-

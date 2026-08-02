@@ -1,7 +1,7 @@
 import { Suspense, type ReactNode } from "react";
 
-import { V3DashboardTemplate } from "../dashboard-template";
-import { requireTraderIntelligenceOwnerPageAccess } from "@/src/lib/trader-intelligence-v3/auth";
+import { TraderLinkPlatformDashboardTemplate } from "../dashboard-template";
+import { requireDevelopmentDashboardPageScope } from "@/src/modules/platform/server/authentication/require-development-dashboard-scope";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -26,13 +26,15 @@ export default async function DashboardLayout({
 }: {
   children: ReactNode;
 }) {
-  await requireTraderIntelligenceOwnerPageAccess();
+  await requireDevelopmentDashboardPageScope();
 
   return (
     <Suspense
       fallback={<DashboardFrameFallback>{children}</DashboardFrameFallback>}
     >
-      <V3DashboardTemplate>{children}</V3DashboardTemplate>
+      <TraderLinkPlatformDashboardTemplate>
+        {children}
+      </TraderLinkPlatformDashboardTemplate>
     </Suspense>
   );
 }

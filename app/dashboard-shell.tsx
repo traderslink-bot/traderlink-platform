@@ -349,7 +349,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         ) : (
           <Box sx={{ px: 2, py: 1.5 }}>
             <Typography color="text.secondary" variant="caption">
-              Trader Intelligence v3
+              TraderLink Platform
             </Typography>
           </Box>
         )}

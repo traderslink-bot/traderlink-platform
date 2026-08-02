@@ -6,6 +6,12 @@ import { describe, expect, it } from "vitest";
 import { DASHBOARD_NAVIGATION_HREFS } from "@/app/dashboard-navigation";
 
 const dashboardRoot = join(process.cwd(), "app", "(dashboard)");
+const retiredLegacyAnalyticsLabClient = join(
+  dashboardRoot,
+  "analytics",
+  "lab",
+  "analytics-lab-client.tsx",
+);
 
 function filesBelow(root: string): readonly string[] {
   return readdirSync(root).flatMap((entry) => {
@@ -22,14 +28,14 @@ function routeForPage(path: string): string {
   return directory ? `/${directory.split(sep).join("/")}` : "/";
 }
 
-describe("v3 dashboard template enforcement", () => {
+describe("TraderLink Platform dashboard template enforcement", () => {
   it("wraps every dashboard route with the approved shared template", () => {
     const layout = readFileSync(join(dashboardRoot, "layout.tsx"), "utf8");
     expect(layout).toContain(
-      'import { V3DashboardTemplate } from "../dashboard-template"',
+      'import { TraderLinkPlatformDashboardTemplate } from "../dashboard-template"',
     );
-    expect(layout).toContain("<V3DashboardTemplate>");
-    expect(layout).toContain("</V3DashboardTemplate>");
+    expect(layout).toContain("<TraderLinkPlatformDashboardTemplate>");
+    expect(layout).toContain("</TraderLinkPlatformDashboardTemplate>");
   });
 
   it("keeps every configured navigation destination inside the route group", () => {
@@ -54,7 +60,9 @@ describe("v3 dashboard template enforcement", () => {
     const violations = filesBelow(dashboardRoot)
       .filter(
         (path) =>
-          path.endsWith(".tsx") && path !== join(dashboardRoot, "layout.tsx"),
+          path.endsWith(".tsx") &&
+          path !== join(dashboardRoot, "layout.tsx") &&
+          path !== retiredLegacyAnalyticsLabClient,
       )
       .flatMap((path) => {
         const source = readFileSync(path, "utf8");
@@ -65,6 +73,12 @@ describe("v3 dashboard template enforcement", () => {
           );
       });
     expect(violations).toEqual([]);
+    const labPage = readFileSync(
+      join(dashboardRoot, "analytics", "lab", "page.tsx"),
+      "utf8",
+    );
+    expect(labPage).not.toContain("analytics-lab-client");
+    expect(labPage).not.toContain("lab-runtime");
   });
 
   it("requires dashboard routes to consume the public template API", () => {
@@ -87,7 +101,7 @@ describe("v3 dashboard template enforcement", () => {
     expect(existsSync(templatePath)).toBe(true);
     const template = readFileSync(templatePath, "utf8");
     for (const requiredExport of [
-      "V3DashboardTemplate",
+      "TraderLinkPlatformDashboardTemplate",
       "DashboardPage",
       "DashboardMetricCard",
       "DashboardPanel",

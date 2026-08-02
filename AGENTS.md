@@ -51,8 +51,15 @@ explicit coverage/populations, 210 classified capabilities (181
 implemented/conditional and 29 unavailable with exact missing-fact reasons),
 all accepted groupings, bounded round-trip pagination, and exact independent
 reconciliation against the accepted 331-ready/0-open/2-decision database.
-Slice E V3-free route cutover and local visual review is the active next
-boundary. Public dashboard
+Slice E implementation, focused verification and real loopback route checks
+also passed. Workspace, Round Trips, the compatibility overview API, and the
+five standard Analytics pages now use the replacement engine; Analytics Lab's
+old V3/sample runtime is inactive. The owner visually approved the preserved
+light Material dashboard on 2026-08-02, completing Phase 4. Calendar, Trade
+Tracker and Rules still cross inherited V3 access paths, while Ticker/Open
+Trades, Data Decisions, Manual Entry and Analytics Lab remain incomplete
+replacement surfaces; these are explicit Phase 5 work and must not be reported
+as complete. Public dashboard
 login/account integration
 is deliberately deferred until the complete dashboard is preparing to go live:
 Discord is the first intended public login provider and email/password remains an

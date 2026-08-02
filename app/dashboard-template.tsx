@@ -20,6 +20,10 @@ export {
   DASHBOARD_STANDALONE_ITEMS,
 } from "./dashboard-navigation";
 
-export function V3DashboardTemplate({ children }: { children: ReactNode }) {
+export function TraderLinkPlatformDashboardTemplate({
+  children,
+}: {
+  children: ReactNode;
+}) {
   return <DashboardShell>{children}</DashboardShell>;
 }

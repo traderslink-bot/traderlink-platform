@@ -24,7 +24,7 @@ const privateTraderIntelligenceRoutes = [
 ] as const;
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["levels-system-v2"],
+  serverExternalPackages: ["levels-system-v2", "better-sqlite3"],
   async headers() {
     return privateTraderIntelligenceRoutes.map((source) => ({
       source,

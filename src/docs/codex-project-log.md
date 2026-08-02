@@ -1,3 +1,24 @@
+# 2026-08-02 - TraderLink Platform Phase 4 accepted
+
+- The owner visually reviewed the replacement dashboard and confirmed that the
+  light Material design is exactly the wanted design and looks good.
+- Workspace, Round Trips, the compatibility overview API, and the five standard
+  Analytics routes had already passed focused, static, real API, and browser
+  verification without V3 calculation/authentication/deployment fallback.
+- The owner also confirmed the Phase 5 entry evidence: Calendar, Trade Tracker
+  and Rules still fail through inherited V3 access; Ticker/Open Trades, Data
+  Decisions, Manual Entry and Analytics Lab remain incomplete replacement
+  surfaces.
+- The temporary replacement review process was stopped, its command-local
+  fallback file was removed, and port 3010 is not listening. Nothing was pushed
+  or deployed.
+
+Current best next step:
+
+- Preserve the accepted Phase 4 package locally, then plan Phase 5 as bounded
+  module transfers that migrate the remaining routes without redesigning the
+  approved dashboard or reconnecting V3 runtime authority.
+
 # 2026-08-01 - TraderLink Platform Phase 4 Slice D accepted
 
 **Branch:** `codex/traderlink-platform-replacement`.
@@ -20682,3 +20703,26 @@ Current best next step:
   accepted Git state, create the planned clean `traderlink-platform` checkout
   and separate development database, carry forward the approved dashboard
   shell without redesign, and establish Platform plus Journal module baselines.
+
+# 2026-08-01 TraderLink Platform Phase 4 Slice E visual gate
+
+- The active replacement checkout is
+  `C:\Users\jerac\Documents\TraderLink\traderlink-platform` on
+  `codex/traderlink-platform-replacement`.
+- Phase 4 Slices A-D are technically accepted. Slice E cut Workspace, Round
+  Trips, the compatibility overview API, and five standard Analytics routes
+  to the replacement Journal Analytics service without V3 calculation/auth/
+  deployment fallback.
+- Analytics Lab no longer runs the inherited V3/sample runtime; its complete
+  replacement UI remains a later separately reviewed slice.
+- Focused lint, scoped TypeScript, two files/11 one-worker tests, static
+  verification and real browser/API checks passed. The database remained at
+  the accepted 10,522,624-byte SHA-256 with zero-byte WAL.
+- A replacement review server was verified on loopback port 3010. Its current
+  process/port state must be checked live before use.
+
+Current best next step:
+
+- Obtain owner visual approval of Workspace, Round Trips and the five standard
+  Analytics pages. Correct visual/product findings, then execute Slice F's
+  documentation/allowlist/commit checkpoint locally without push or deploy.

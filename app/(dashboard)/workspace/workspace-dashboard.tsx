@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import DateRangeRoundedIcon from "@mui/icons-material/DateRangeRounded";
 import FileUploadRoundedIcon from "@mui/icons-material/FileUploadRounded";
 import Box from "@mui/material/Box";
+import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Card from "@mui/material/Card";
@@ -28,11 +27,6 @@ export type WorkspaceMetric = Readonly<{
   label: string;
   value: string;
   caption: string;
-}>;
-
-type WorkspaceAnalyticsResponse = Readonly<{
-  status: "ready" | "unavailable";
-  metrics?: readonly WorkspaceMetric[];
 }>;
 
 const unavailableMetrics: readonly WorkspaceMetric[] = [
@@ -71,42 +65,18 @@ const unavailableMetrics: readonly WorkspaceMetric[] = [
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 
 export function WorkspaceDashboard({
-  analyticsMetrics: initialAnalyticsMetrics,
+  analyticsCoverage,
+  analyticsMetrics,
 }: {
+  analyticsCoverage?: Readonly<{
+    readyClosedCount: number;
+    legitimateOpenCount: number;
+    needsDecisionCount: number;
+    feeCompleteCount: number;
+    feeIncompleteCount: number;
+  }>;
   analyticsMetrics?: readonly WorkspaceMetric[];
 }) {
-  const [analyticsMetrics, setAnalyticsMetrics] = useState(initialAnalyticsMetrics);
-  const [analyticsStatus, setAnalyticsStatus] = useState<
-    "loading" | "ready" | "unavailable"
-  >(initialAnalyticsMetrics ? "ready" : "loading");
-
-  useEffect(() => {
-    if (initialAnalyticsMetrics) return;
-    const controller = new AbortController();
-
-    void fetch("/api/intelligence/dashboard/overview", {
-      cache: "no-store",
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        if (!response.ok) return null;
-        return (await response.json()) as WorkspaceAnalyticsResponse;
-      })
-      .then((response) => {
-        if (response?.status === "ready" && response.metrics) {
-          setAnalyticsMetrics(response.metrics);
-          setAnalyticsStatus("ready");
-          return;
-        }
-        setAnalyticsStatus("unavailable");
-      })
-      .catch(() => setAnalyticsStatus("unavailable"));
-
-    return () => {
-      controller.abort();
-    };
-  }, [initialAnalyticsMetrics]);
-
   const metrics = analyticsMetrics ?? unavailableMetrics;
   return (
     <DashboardPage>
@@ -144,6 +114,25 @@ export function WorkspaceDashboard({
         ))}
       </Box>
 
+      {analyticsCoverage ? (
+        <Alert
+          action={analyticsCoverage.needsDecisionCount > 0 ? (
+            <Button color="inherit" href="/data-decisions" size="small">
+              Review Data Decisions
+            </Button>
+          ) : undefined}
+          severity={analyticsCoverage.needsDecisionCount > 0 ? "warning" : "success"}
+        >
+          {analyticsCoverage.readyClosedCount} closed round trips are available.
+          {` ${analyticsCoverage.legitimateOpenCount} positions are classified as open.`}
+          {` ${analyticsCoverage.needsDecisionCount} items need a trader decision.`}
+          {` Fees are complete for ${analyticsCoverage.feeCompleteCount} included trades`}
+          {analyticsCoverage.feeIncompleteCount > 0
+            ? ` and incomplete for ${analyticsCoverage.feeIncompleteCount}.`
+            : "."}
+        </Alert>
+      ) : null}
+
       <Box
         sx={{
           display: "grid",
@@ -167,23 +156,14 @@ export function WorkspaceDashboard({
           eyebrow="Account performance"
           title="Performance over time"
         >
-          {analyticsStatus === "ready" && analyticsMetrics ? (
+          {analyticsMetrics ? (
             <Stack spacing={1}>
               <Typography color="success.main" sx={{ fontWeight: 700 }}>
-                Verified v3 execution analytics are attached.
+                Replacement Journal analytics are connected.
               </Typography>
               <Typography color="text.secondary" variant="body2">
                 Open Performance details for exact daily, drawdown, streak,
                 outlier, and period packets.
-              </Typography>
-            </Stack>
-          ) : analyticsStatus === "loading" ? (
-            <Stack spacing={1}>
-              <Typography sx={{ fontWeight: 700 }}>
-                Calculating analytics
-              </Typography>
-              <Typography color="text.secondary" variant="body2">
-                Your dashboard is ready. Verified performance figures will fill in here as soon as the saved trading history finishes loading.
               </Typography>
             </Stack>
           ) : (
@@ -291,7 +271,7 @@ export function WorkspaceDashboard({
             actionHref="/imports"
             actionLabel="Add trading history"
             compact
-            description="Trading days, daily P/L, and round-trip counts will appear here after verified v3 history is available."
+            description="Trading days, daily P/L, and round-trip counts will appear here when the Calendar receives the replacement Journal analytics contract."
             title="No day sessions available"
           />
         </Stack>

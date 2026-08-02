@@ -1,6 +1,6 @@
 # TraderLink Platform Migration Progress
 
-**Current phase:** Phase 4 - Core Analytics Slice E. Slices A-D passed their exact focused/static/private gates; Phases 0-3 remain accepted under delegated owner authority.
+**Current phase:** Phase 5 - Module Transfer planning. Phase 4 is complete: Slices A-D passed their technical gates and the owner visually approved Slice E on 2026-08-02.
 **Historical pre-runtime implementation state:** The [Phase 3 plan](phase-3-journal-integrity-plan.md) and [tracker](phase-3-journal-integrity-progress.md) preserve the complete pre-runtime design and execution history. The accepted state immediately below supersedes former queued/unexecuted and 331/1/1 planning claims.
 **Phase 2 foundation commit:** `fea56307fbd0142ef99b9f13c020451a6a503cc7` (`feat(platform): establish verified database foundation`), preserved locally without push or deployment.
 **Phase 3 implementation commit:** `8f6a4d4e4dec20ef6edcd50f476b14d368bde505` (`feat(journal): complete phase 3 integrity foundation`), preserved locally without push or deployment.
@@ -196,10 +196,17 @@ file/2 tests with one worker, and the privacy-safe real-database verifier. It
 proved 331 ready closed, zero legitimate open, two contained decisions, 331
 fee-complete rows, identical production/independent exact row digests, six
 reconciling service reads, complete 331-row keyset pagination, unchanged main
-database hash/size and no non-empty WAL. Phase 4 may now execute Slice E of the
-technically accepted [Core Analytics plan](phase-4-core-analytics-plan.md): the
-development-only scope/launcher and V3-free named route cutover followed by
-owner visual review in the accepted light Material shell. Public
+database hash/size and no non-empty WAL. Slice E then implemented the
+development-only scope/launcher and cut Workspace, Round Trips, the overview
+API, and five standard Analytics routes to replacement services. Focused lint,
+scoped TypeScript, two files/11 one-worker tests, the static route verifier and
+real browser/API checks passed; the database hash/size and zero-byte WAL remain
+unchanged. The owner approved the preserved light Material dashboard on
+2026-08-02, closing the remaining Slice E gate. The temporary review process
+was stopped and port 3010 is not listening. The owner's review also confirmed
+the Phase 5 entry list: Calendar, Trade Tracker and Rules still depend on
+inherited V3 access; Ticker/Open Trades, Data Decisions, Manual Entry and
+Analytics Lab remain incomplete replacement surfaces. Public
 login/account integration
 is not a prerequisite: Discord-first login is reconciled before go-live, with
 email/password left optional. Broad lint, full-project TypeScript, full

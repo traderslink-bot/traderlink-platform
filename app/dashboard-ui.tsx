@@ -13,7 +13,7 @@ import type { ButtonProps } from "@mui/material/Button";
 export function DashboardPage({ children }: { children: ReactNode }) {
   return (
     <Stack
-      data-v3-dashboard-page
+      data-traderlink-platform-dashboard-page
       spacing={2.5}
       sx={{ minWidth: 0, width: "100%" }}
     >
@@ -49,7 +49,7 @@ export function DashboardMetricCard({
   value: string;
 }) {
   return (
-    <Card data-v3-dashboard-card="metric" sx={{ minWidth: 0 }}>
+    <Card data-traderlink-platform-dashboard-card="metric" sx={{ minWidth: 0 }}>
       <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
         <Typography color="text.secondary" noWrap variant="caption">
           {label}
@@ -87,7 +87,7 @@ export function DashboardPanel({
   title: string;
 }) {
   return (
-    <Card data-v3-dashboard-card="panel" sx={{ height: "100%", minWidth: 0 }}>
+    <Card data-traderlink-platform-dashboard-card="panel" sx={{ height: "100%", minWidth: 0 }}>
       <CardContent
         sx={{
           p: { xs: 2, sm: 2.5 },

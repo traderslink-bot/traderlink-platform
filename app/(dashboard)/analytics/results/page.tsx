@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { AnalyticsServerPage } from "../../../analytics-server-page";
+import { AnalyticsServerPage } from "../../../journal-analytics-server-page";
 
 export const metadata: Metadata = {
   title: "Results | Trader Intelligence",

@@ -1,0 +1,111 @@
+import type {
+  JournalAnalyticsExactValue,
+  JournalAnalyticsMetricResult,
+  JournalAnalyticsPartitionedResponse,
+} from "../contracts/analytics-result";
+
+function decimalParts(value: string): Readonly<{
+  negative: boolean;
+  units: bigint;
+  scale: number;
+}> {
+  const negative = value.startsWith("-");
+  const unsigned = negative ? value.slice(1) : value;
+  const [whole, fraction = ""] = unsigned.split(".");
+  return Object.freeze({
+    negative,
+    units: BigInt(`${whole}${fraction}`),
+    scale: fraction.length,
+  });
+}
+
+function groupWholeDigits(value: string): string {
+  return value.replace(/\B(?=(\d{3})+(?!\d))/gu, ",");
+}
+
+export function formatJournalAnalyticsDecimal(
+  value: string,
+  decimalPlaces = 2,
+): string {
+  const parts = decimalParts(value);
+  let units = parts.units;
+  let scale = parts.scale;
+  if (scale > decimalPlaces) {
+    const factor = BigInt(10) ** BigInt(scale - decimalPlaces);
+    let rounded = units / factor;
+    if ((units % factor) * BigInt(2) >= factor) rounded += BigInt(1);
+    units = rounded;
+    scale = decimalPlaces;
+  }
+  const digits = units.toString().padStart(scale + 1, "0");
+  const whole = scale === 0 ? digits : digits.slice(0, -scale);
+  const fraction = scale === 0
+    ? ""
+    : digits.slice(-scale).replace(/0+$/u, "");
+  const rendered = fraction.length > 0
+    ? `${groupWholeDigits(whole)}.${fraction}`
+    : groupWholeDigits(whole);
+  return parts.negative && units !== BigInt(0) ? `-${rendered}` : rendered;
+}
+
+function formatDuration(milliseconds: number): string {
+  if (milliseconds < 60_000) return `${Math.round(milliseconds / 1_000)} sec`;
+  if (milliseconds < 3_600_000) return `${Math.round(milliseconds / 60_000)} min`;
+  return `${formatJournalAnalyticsDecimal(String(milliseconds / 3_600_000))} hr`;
+}
+
+function formatExactValue(
+  value: JournalAnalyticsExactValue,
+  metric: JournalAnalyticsMetricResult,
+): string {
+  if (value.kind === "integer") return value.value.toLocaleString("en-US");
+  if (value.kind === "duration") return formatDuration(value.milliseconds);
+  if (value.kind === "text") return value.value;
+  const decimal = value.kind === "decimal"
+    ? value.valueDecimal
+    : value.roundedDecimal;
+  const formatted = formatJournalAnalyticsDecimal(decimal);
+  if (metric.unit === "percent") return `${formatted}%`;
+  if (metric.valueKind === "money" && metric.currency) {
+    return `${metric.currency} ${formatted}`;
+  }
+  return formatted;
+}
+
+export function formatJournalAnalyticsMetric(
+  metric: JournalAnalyticsMetricResult,
+): string {
+  return metric.value === null ? "Unavailable" : formatExactValue(metric.value, metric);
+}
+
+export function journalAnalyticsMetricCaption(
+  metric: JournalAnalyticsMetricResult,
+): string {
+  if (metric.state === "unavailable") {
+    return metric.limitationReasonCodes.length > 0
+      ? "Required facts unavailable"
+      : "Unavailable for this scope";
+  }
+  if (metric.state === "partial") return "Partial factual coverage";
+  if (metric.state === "empty") return "No matching trades";
+  return metric.description;
+}
+
+export function findJournalAnalyticsMetric(
+  response: JournalAnalyticsPartitionedResponse,
+  metricId: string,
+): readonly JournalAnalyticsMetricResult[] {
+  return Object.freeze(response.partitions.flatMap((partition) => {
+    const metric = partition.metrics.find((entry) => entry.metricId === metricId);
+    return metric ? [metric] : [];
+  }));
+}
+
+export function formatJournalAnalyticsPartitionedMetric(
+  response: JournalAnalyticsPartitionedResponse,
+  metricId: string,
+): string {
+  const metrics = findJournalAnalyticsMetric(response, metricId);
+  if (metrics.length === 0) return "Unavailable";
+  return metrics.map(formatJournalAnalyticsMetric).join(" / ");
+}

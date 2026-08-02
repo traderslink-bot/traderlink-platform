@@ -105,6 +105,42 @@ function main(): void {
       fail("forbidden_analytics_dependency");
     }
   }
+  const routeFiles = [
+    "app/(dashboard)/layout.tsx",
+    "app/(dashboard)/workspace/page.tsx",
+    "app/(dashboard)/workspace/workspace-dashboard.tsx",
+    "app/(dashboard)/trades/roundtrips/page.tsx",
+    "app/(dashboard)/analytics/page.tsx",
+    "app/(dashboard)/analytics/performance/page.tsx",
+    "app/(dashboard)/analytics/results/page.tsx",
+    "app/(dashboard)/analytics/timing/page.tsx",
+    "app/(dashboard)/analytics/execution/page.tsx",
+    "app/(dashboard)/analytics/lab/page.tsx",
+    "app/api/intelligence/dashboard/overview/route.ts",
+    "app/journal-analytics-server-page.tsx",
+  ] as const;
+  for (const relativePath of routeFiles) {
+    const source = readFileSync(path.join(repository, relativePath), "utf8");
+    if (
+      source.includes("trader-intelligence-v3") ||
+      source.includes("V3DashboardTemplate") ||
+      source.includes("resolveConfiguredDashboardAnalytics") ||
+      source.includes("validateTraderIntelligenceDeployment")
+    ) {
+      fail("route_v3_dependency");
+    }
+  }
+  const launcher = readFileSync(
+    path.join(repository, "src", "scripts", "run-traderlink-platform-local-server.ts"),
+    "utf8",
+  );
+  if (
+    launcher.includes("trader-intelligence-v3") ||
+    launcher.includes("run-trader-intelligence-local-server") ||
+    !launcher.includes("TRADERLINK_PLATFORM_ALLOW_DEVELOPMENT_DASHBOARD_ENV")
+  ) {
+    fail("replacement_launcher_boundary");
+  }
   const digest = createHash("sha256")
     .update(JSON.stringify(definitions), "utf8")
     .digest("hex");
@@ -116,6 +152,7 @@ function main(): void {
       definition.capabilityState !== "unavailable").length,
     unavailableCount: definitions.filter((definition) =>
       definition.capabilityState === "unavailable").length,
+    v3FreeRouteFileCount: routeFiles.length,
     registryDigestSha256: digest,
   }) + "\n");
 }

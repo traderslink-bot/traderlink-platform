@@ -1,6 +1,6 @@
 # Phase 4 Core Analytics Progress
 
-**Status:** Slices A-D are technically accepted under delegated owner authority; Slice E is active
+**Status:** Complete and accepted; Slices A-D passed their technical gates and the owner visually approved Slice E on 2026-08-02
 **Controlling plan:** [Phase 4 Core Analytics Plan](phase-4-core-analytics-plan.md)
 **Entry repository:** `C:\Users\jerac\Documents\TraderLink\traderlink-platform`
 **Entry branch:** `codex/traderlink-platform-replacement`
@@ -241,12 +241,54 @@ remains.
 No route, UI, launcher, server, package, migration, database content, private
 source, push, deployment, production state or legacy repository changed.
 
-## Next action
+## Slice E result
 
-Execute Slice E: read the relevant local Next.js 16.2.6 guides, implement the
-fail-closed development-only scope boundary and replacement launcher, and cut
-the named `/workspace`, `/trades/roundtrips`, `/analytics` and specialist
-Analytics routes to the new services without V3 or sample fallbacks. Preserve
-the accepted light Material shell. Run only focused route/architecture/
-TypeScript checks, start one loopback replacement server on a verified free
-port, and present the real-data pages for owner visual review.
+The named route cutover is implemented and technically verified. The active
+dashboard layout uses the replacement development scope; Workspace, the
+compatibility overview API, Round Trips, and Analytics Overview, Performance,
+Results, Timing and Execution use the new Journal Analytics services. None of
+the 12 active route/runtime files imports V3 analytics, V3 authentication or V3
+deployment code. Analytics Lab no longer executes its inherited V3/sample
+runtime and clearly records that its replacement UI is a later reviewed slice.
+
+This does not claim the entire inherited application is already V3-free. Ten
+preserved dashboard files still reference V3: three now-unreachable Analytics
+Lab support files plus active Calendar, Rules, Candle Review and Trade Tracker
+files. They remain explicit Phase 5 module-transfer work. They do not supply
+the Slice E Workspace/Round Trips/standard Analytics results and they cannot be
+treated as complete replacement routes until migrated and reviewed.
+
+Verification on 2026-08-01:
+
+- targeted ESLint: passed;
+- dependency-scoped TypeScript: passed;
+- one worker/no file parallelism: two files/11 tests passed;
+- static verifier: passed, including 12 V3-free route/runtime files;
+- browser: eight real routes returned HTTP 200 with meaningful content, no
+  framework overlay and no console error;
+- compatibility API: six replacement metrics and exact
+  331-ready/zero-open/two-decision/331-fee-complete coverage; and
+- database: unchanged 10,522,624-byte main file, accepted SHA-256, zero-byte
+  WAL.
+
+Windows again returned the pre-application `uv_os_get_passwd` `ENOMEM`. The
+same narrow Node user-info fallback was used only for affected verification and
+the active local review process. It changes no Windows setting and will be
+removed when the review server stops.
+
+## Owner acceptance and Phase 5 entry
+
+On 2026-08-02 the owner reviewed the replacement dashboard and confirmed that
+its design is exactly the wanted design and looks good. This accepts the
+preserved light Material shell and the Phase 4 Workspace, Round Trips and five
+standard Analytics route cutover. The temporary review process and launcher
+were stopped after review, the command-local fallback file was removed, and
+port 3010 is not listening. Nothing was pushed or deployed.
+
+The owner also inspected routes outside the Phase 4 cutover and provided useful
+Phase 5 evidence. Calendar, Trade Tracker and Rules still cross the inherited
+V3 authorization boundary; Trades by Ticker and Open Positions do not yet have
+their replacement read models; Data Decisions is not connected to its accepted
+Journal backend; Manual Entry remains disabled; and Analytics Lab remains an
+honest pending state. Phase 5 must replace those dependencies and unavailable
+states in controlled module slices without redesigning the accepted dashboard.
