@@ -21007,3 +21007,26 @@ Current best next step:
 
 - Continue F5 with Platform peers and complete legacy-route disposition.
   Delete nothing and keep port 3010 off until integrated visual review.
+
+# 2026-08-02 TraderLink Platform Phase 6 local preservation checkpoint
+
+- Phase 6 local acceptance is complete. The replacement application package is
+  preserved at local commit
+  `b9575e2ed8ba93c23c3c4b8e35d80c26f71477c6` on
+  `codex/traderlink-platform-replacement` with no upstream, push or deployment.
+- The commit contains 328 audited source, test, configuration and migration
+  documentation paths. It excludes databases, sidecars, environments, logs,
+  private statements and the intentionally untracked
+  `.codex-node-userinfo-fallback.cjs` process-memory workaround.
+- The legacy repository direction is preserved separately at local commit
+  `6d659281e37e86dccaed3dfd66edae7ee4054766`. Its two pre-existing product
+  modifications and 22 untracked preservation files remain untouched.
+- The real replacement database remains outside Git at the accepted Phase 6
+  hash with a zero-byte WAL. Ports 3000, 3010 and 3011 remain off.
+
+Current best next step:
+
+- Continue ordinary local replacement product work in `traderlink-platform`.
+  Treat hosted-source transfer, Discord owner linking, Git publication,
+  Railway/DNS deployment and any physical cleanup as separate external or
+  owner-controlled gates. Do not revive V3 or import legacy test annotations.

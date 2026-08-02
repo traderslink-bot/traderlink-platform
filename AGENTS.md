@@ -24,6 +24,12 @@ hosted-source transfer, Discord owner linking, Git publication, Railway
 deployment, DNS and Phase 7 deletion remain explicit external or
 owner-controlled operations.
 
+The complete Phase 6-accepted local source package is preserved at commit
+`b9575e2ed8ba93c23c3c4b8e35d80c26f71477c6` on
+`codex/traderlink-platform-replacement`. It has no upstream, push or
+deployment. The intentionally untracked `.codex-node-userinfo-fallback.cjs`
+is a local process-memory workaround and must never be committed.
+
 The Phase 2 empty
 database foundation is technically complete and accepted, and the
 owner-accepted independent clone at

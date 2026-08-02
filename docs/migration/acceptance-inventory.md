@@ -196,8 +196,9 @@ Phase 1 does not require tests, process stops, database copies, UI review, build
   combined-day design.
 - Real Academy and other hosted-source adoption waits for the four source
   credentials, reviewed fresh source backups and the authorized runbook.
-- The replacement source is not yet on a clean synchronized `main`; no stage,
-  commit, push, PR, merge or deployment is authorized by local acceptance.
+- The accepted replacement source is preserved locally at
+  `b9575e2ed8ba93c23c3c4b8e35d80c26f71477c6`, but is not yet on a clean
+  synchronized `main`. No push, PR, merge or deployment has occurred.
 - Broad folder/worktree reconciliation and physical cleanup remain optional.
   The preserved legacy app is inactive for local replacement development and
   no deletion is required.

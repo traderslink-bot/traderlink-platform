@@ -3,11 +3,11 @@
 **Phase:** Historical Phase 1 inventory preserved; Phase 6 acceptance and Phase 7 retirement classification added
 **Status:** Inventory complete; `traderlink-platform` is the canonical local development application, `traderslink.pro` is the preserved legacy/current-production reference, and all physical cleanup dispositions still require owner approval
 **Root inspected:** `C:\Users\jerac\Documents\TraderLink`
-**Rule:** No folder, worktree, Git metadata, branch, process, database, or scheduled task was changed or removed.
+**Rule:** No folder, worktree, branch, process, database, backup or scheduled task was changed or removed. The two owner-authorized local preservation commits recorded below changed Git metadata only; neither was pushed or deployed.
 
 ## Planned replacement and external backup clarification
 
-- `C:\Users\jerac\Documents\TraderLink\traderlink-platform` is the Phase 6-accepted canonical local development application. It is a full independent clone on `codex/traderlink-platform-replacement`; the earlier `a3193e19806af955093aa236349d796171d9bf97` value is its historical clone baseline, not current HEAD. It has no upstream, push or deployment and was created after the dated 88-folder Phase 1 snapshot.
+- `C:\Users\jerac\Documents\TraderLink\traderlink-platform` is the Phase 6-accepted canonical local development application. It is a full independent clone on `codex/traderlink-platform-replacement` at accepted source commit `b9575e2ed8ba93c23c3c4b8e35d80c26f71477c6`; the earlier `a3193e19806af955093aa236349d796171d9bf97` value is its historical clone baseline. It has no upstream, push or deployment and was created after the dated 88-folder Phase 1 snapshot.
 - `C:\Users\jerac\Documents\traderslink.pro back up july 29` sits outside the audited `TraderLink` parent and is an owner-identified backup. Its `v4-temp-sql` subfolder is an early experiment, not an active database. Preserve the entire backup; do not treat it as an implementation workspace or cleanup target.
 - `C:\Users\jerac\Documents\TraderLink\traderslink.pro` remains intact as the legacy recovery/reference folder throughout migration and may remain indefinitely after acceptance.
 
@@ -29,8 +29,8 @@ These categories account for all 88 immediate directories in the dated Phase 1 s
 
 | Path | Branch/HEAD | State | Disposition |
 | --- | --- | --- | --- |
-| `C:\Users\jerac\Documents\TraderLink\traderslink.pro` | `main` / `a3193e1980` | Two tracked product modifications and 22 untracked preservation files; 72 commits ahead of the locally recorded `origin/main` | **Keep as legacy recovery/reference.** It remains the complete legacy/production reference and receives only explicitly approved emergency or preservation work during migration. |
-| `C:\Users\jerac\Documents\TraderLink\traderlink-platform` | `codex/traderlink-platform-replacement` / live HEAD must be verified | Independent clone; Phase 6-accepted source package is currently unstaged/uncommitted and has no upstream or deployment | **Keep as canonical local development application.** All new replacement product work belongs here. |
+| `C:\Users\jerac\Documents\TraderLink\traderslink.pro` | `main` / `6d659281` | Two tracked product modifications and 22 untracked preservation files; 73 commits ahead of the locally recorded `origin/main` | **Keep as legacy recovery/reference.** It remains the complete legacy/production reference and receives only explicitly approved emergency or preservation work during migration. |
+| `C:\Users\jerac\Documents\TraderLink\traderlink-platform` | `codex/traderlink-platform-replacement` / `b9575e2e` accepted source checkpoint | Independent clone; Phase 6-accepted source package is committed locally and has no upstream, push or deployment | **Keep as canonical local development application.** All new replacement product work belongs here. |
 
 ## Worktrees registered to the canonical repository: 43 total
 

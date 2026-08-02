@@ -46,8 +46,12 @@ runtime authority.
 
 ## External and owner-controlled remainder
 
-- The replacement source package is unstaged and uncommitted at the current
-  checkpoint. No Git preservation/publication action is inferred.
+- The Phase 6-accepted replacement source package is preserved locally at
+  commit `b9575e2ed8ba93c23c3c4b8e35d80c26f71477c6`. The branch has no upstream,
+  push or deployment; this local recovery checkpoint is not Git publication.
+- The legacy direction marker is preserved locally at commit
+  `6d659281e37e86dccaed3dfd66edae7ee4054766`. The two pre-existing legacy
+  product modifications and 22 untracked preservation files remain untouched.
 - Real hosted-source preview/transfer needs four credentials plus reviewed fresh
   source backups; none is currently available locally.
 - Initial-owner Discord linking, Docker image execution, Railway resources,

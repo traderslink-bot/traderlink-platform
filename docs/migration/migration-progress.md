@@ -5,6 +5,7 @@
 **Phase 2 foundation commit:** `fea56307fbd0142ef99b9f13c020451a6a503cc7` (`feat(platform): establish verified database foundation`), preserved locally without push or deployment.
 **Phase 3 implementation commit:** `8f6a4d4e4dec20ef6edcd50f476b14d368bde505` (`feat(journal): complete phase 3 integrity foundation`), preserved locally without push or deployment.
 **Phase 4 implementation commit:** `4575dafd0fb62804ac090c4a149152506d8db7b1` (`feat(analytics): complete replacement route cutover`), preserved locally without push or deployment. See [Phase 4 Handoff](phase-4-core-analytics-handoff.md).
+**Phase 6 accepted source commit:** `b9575e2ed8ba93c23c3c4b8e35d80c26f71477c6` (`feat(platform): complete replacement application candidate`), preserved locally without upstream, push or deployment.
 
 **Phase 5 plan:** [Phase 5 Module Transfer Plan](phase-5-module-transfer-plan.md) and [progress tracker](phase-5-module-transfer-progress.md) are accepted for implementation under delegated technical authority. Slice A has exact replacement Calendar/Ticker/Open-Positions/Trade-Tracker reads, V3-free active adapters and at-most-two-decimal displays. Broker-neutral imports/Data Decisions, retry-safe manual executions, local account management and user-defined multi-account selection are connected. Slice D provides replacement Journal rules, tags, daily notes, trade notes and trader-authored reviews; its empty schema and focused persistence/isolation/rebuild gate passed, and legacy annotation test data is deliberately excluded. Slice E connects the complete 210-capability Analytics Lab registry/query surface, account-scoped immutable saved views, explicit account/version-scoped Candle Review, normalized immutable market facts, and immutable Level Analysis deliveries plus stable Journal round-trip link versions through migrations 0008-0011. Every new E2-E4 table intentionally began empty. `/account` remains login-free on loopback, while Discord-first public login is activated only before go-live. Port 3010 remains off until a broad integrated visual boundary.
 
@@ -287,5 +288,7 @@ second-account isolation, stale-selection rejection, explicit new-broker
 linking, `quick_check=ok`, cleanup and unchanged real database evidence. The
 multi-account-aware read-model verifier also passed against the unchanged real
 database. A Windows upload-staging read-back defect was found and corrected
-before any real product-route write. Port 3010 remains off; no commit, push,
-deployment or real database mutation occurred.
+before any real product-route write. At that verification checkpoint, port
+3010 remained off and no commit, push, deployment or real database mutation
+occurred. The accepted package was subsequently preserved in the Phase 6 local
+source commit recorded above; the database remained unchanged.
