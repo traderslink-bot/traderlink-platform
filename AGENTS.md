@@ -4,6 +4,30 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
+## Local Git Hygiene — Required
+
+The active replacement repository is
+C:\Users\jerac\Documents\TraderLink\traderlink-platform. Keep this working
+tree organized so it does not become an untraceable collection of local work.
+
+- Keep the project plan and the relevant feature progress record current while
+  work is underway.
+- At the end of each coherent, verified feature slice, create a narrow **local**
+  Git commit with a descriptive message. Local commits are required records of
+  completed work; they do not publish anything online.
+- Before every commit, inspect the working tree and stage only the explicit
+  files belonging to that slice. Never use git add -A or commit unrelated
+  edits merely because they are present.
+- When earlier work is already mixed in the tree, audit and separate it into
+  understandable feature commits before treating the tree as clean. Preserve
+  unknown or concurrent work; do not reset, overwrite, discard or absorb it
+  without identifying its scope.
+- Do not push, deploy, merge, rewrite history, or change the remote without
+  explicit owner authorization. A clean local commit is the normal checkpoint
+  after each accepted slice.
+- AGENTS.md belongs at this repository root. Do not move it into a feature
+  folder or duplicate it elsewhere.
+
 ## TraderLink Platform Replacement Direction - 2026-07-31
 
 The active future-product direction is the controlled platform replacement in
@@ -24,11 +48,35 @@ hosted-source transfer, Discord owner linking, Git publication, Railway
 deployment, DNS and Phase 7 deletion remain explicit external or
 owner-controlled operations.
 
-The complete Phase 6-accepted local source package is preserved at commit
+The complete Phase 6-accepted local source package was preserved at commit
 `b9575e2ed8ba93c23c3c4b8e35d80c26f71477c6` on
-`codex/traderlink-platform-replacement`. It has no upstream, push or
-deployment. The intentionally untracked `.codex-node-userinfo-fallback.cjs`
-is a local process-memory workaround and must never be committed.
+`codex/traderlink-platform-replacement`. On 2026-08-03 the accepted replacement
+lineage was published to `https://github.com/traderslink-bot/traderlink-platform`;
+local `origin` now names that repository, `legacy-origin` preserves the former
+repository, and published `main` is `c0c998d8e456b9e70433e73123e8024b13ece203`.
+The public Vercel project serves only the verified landing/Academy release at
+commit `2d7bdd2370b0781c8157ed11f54337c20a4e68cd`, production deployment
+`dpl_4MGMs3jqaYbQ7Wx3FQKdaHRxt6vW`. Do not describe that landing-only cutover as
+the hosted replacement dashboard: the complete replacement still requires its
+accepted single-node persistent `/data` runtime and has not completed Railway,
+production-source transfer, Discord-owner activation or DNS/application
+cutover. The intentionally untracked `.codex-node-userinfo-fallback.cjs` is a
+local process-memory workaround and must never be committed.
+
+The owner-requested Journal Administration feature is controlled by
+`docs/migration/journal-admin-dashboard-plan.md`. Its planned namespace is
+`/admin/journal`. It is separate from the owner's computer-run Watchlist admin,
+the preserved `/intelligence/admin` V3 QA console, historical
+`/workspace/admin` references and Level Analysis operations. Production uses
+Discord authentication plus owner evidence refreshed within five minutes for
+the configured TradersLink Discord server and the one active server-side
+`journal_owner_admin` grant. The owner is the only planned administrator;
+Discord login, server ownership, Premium entitlement, workspace roles or the
+grant alone cannot authorize access. Email/password admin login remains
+deferred. The plan completed its implementation-contract QA pass, is owner
+approved, and technical Admin 1-6 plus live browser acceptance now pass. Owner
+visual/product review, the production owner grant, Discord activation and real
+support-source configuration remain separate pre-go-live boundaries.
 
 The Phase 2 empty
 database foundation is technically complete and accepted, and the
@@ -98,27 +146,53 @@ Phase 5 is controlled by
 complete. Imports moved with Data Decisions in Slice B and are broker-neutral:
 IBKR is the first verified adapter only; prior generic mapping UX may be ported
 without its V3 writer, and unsupported formats require evidence-safe intake
-with zero invented executions. Trade Tracker is the canonical manual execution
-experience in Slice C. Rules, tags, notes and reviews are complete in Slice D;
+with zero invented executions. The Day Trade Tracker and Swing Trade Tracker are
+the two canonical manual execution experiences over one Journal ledger. Their
+earlier revision was live-browser verified; the later owner-approved review
+workflow corrections pass focused verification, the final production build and
+a fresh integrated browser checkpoint. Rules, tags, notes and reviews are complete in Slice D;
 legacy annotation/trade data was test-only and remains excluded. Slice E is
 technically complete. F1-F5 are technically complete and F6 public identity plus
 hosted transfer is the active bounded slice. Academy progress belongs to the stable Platform user,
 not a Journal account; production hosted progress and Discord activation stay
-unchanged until the F6 pre-go-live mapping boundary. Keep port 3010 off until
-the next integrated visual checkpoint.
+unchanged until the F6 pre-go-live mapping boundary. Port 3010 is active from
+the canonical replacement repository for the completed owner review checkpoint.
 
 The Slice A owner review further established that every displayed trading-data
 decimal uses at most two places while editable and stored facts remain lossless.
-The undated Trade Tracker is a current-account-day/current-week workflow with
-the complete manual form at the top; older dated routes are factual read-only
-history and must not prompt reconstructed subjective notes. Day trade/Swing
-trade is explicit trader-authored lifecycle intent. `/trades/open` remains Open
-Positions: every factually confirmed open position stays visible, while the
-trader may classify it as an intentional swing, unplanned hold or another
-status. Unconfirmed execution chains remain in Data Decisions, and duration
-never assigns intent or status. Port
-3010 stays off during the revisions and focused checks and is restarted only
-for the next owner visual review.
+The approved tracker revision is controlled by
+`docs/migration/day-and-swing-trade-tracker-plan.md`. `/trade-tracker` is the Day
+Trade Tracker and `/trade-tracker/swings` is the separate Swing Trade Tracker;
+both use one canonical Journal execution ledger. Manual rows use their own
+actual execution dates/times and a previewed start/continue/close trade boundary.
+Routine broker-import opening-inventory/day-coverage decisions do not apply to
+intentional manual capture, but genuine duplicates, contradictions and
+impossible arithmetic still enter Data Decisions. Day/Swing intent belongs to
+the stable trade/position and is never inferred from duration. Swing notes are
+separate by position and date. `/trades/open` remains Open Positions for every
+factually confirmed open lifecycle. Migration 0021 is applied and verified
+after Journal Administration migrations 0019 and 0020. Tracker reconciliation
+now creates time-tolerant manual/broker candidate sets, keeps manual executions
+active, withholds only provisional broker members, materializes exact Data
+Decisions, and supports trader-confirmed same, separate and
+quantity-conserving grouped-fill outcomes. Day, Swing and Open Positions UI
+integration is implemented. Five tracker/service/route files pass 75 tests,
+full TypeScript/lint/build and the 156-file active replacement guard pass, and
+clean live browser checks now pass for Day Tracker, Swing Tracker and Open
+Positions. Only the integrated owner visual/product review remains.
+When a later broker import may duplicate a manual execution, exact time is not
+a hard match requirement. Preserve unrelated import rows, keep the accepted
+manual execution active and withhold only the provisional imported candidate
+until the trader chooses same, separate, correct or later. Never replace or
+supersede manual facts before confirmation. One-to-one confirmation retains the
+manual identity with broker provenance; grouped-fill confirmation preserves the
+manual history while exact broker fills become canonical.
+Use plain trader-facing copy throughout these features. Manual entry should ask
+for the exact broker-shown time, price and quantity because accurate details
+improve later statement matching. Do not expose internal action/issue codes,
+engine terminology or system language in visible UI.
+Port 3010 is active from the canonical replacement repository for the completed
+owner visual/product review checkpoint.
 
 Phase 3 is controlled by
 `docs/migration/phase-3-journal-integrity-plan.md` and
