@@ -168,24 +168,26 @@ stop threshold as a possible violation. The trade that reaches a loss, gain,
 streak, or giveback threshold is evidence for the setting; it is not itself a
 broken-rule event.
 
-### B. Candidate presets ready from current round-trip facts
+### B. Owner-approved additions ready from current round-trip facts
 
 These are technically calculable now from confirmed closed Day-trade facts,
 but are **not** in the catalog. Each needs an owner-approved trader-facing
 definition, configuration contract, and complete evaluation/recommendation
 tests before it can appear in Rules or AI.
 
-| Candidate preset | Deterministic rule definition | Required existing facts | Main risk and required guard |
+| Preset | Deterministic rule definition | Required existing facts | Decision and false-positive guard |
 | --- | --- | --- | --- |
-| Cooldown before re-entering the same ticker | After a completed flat-to-flat trade in a ticker, do not begin a new attempt in that ticker for the selected number of minutes, regardless of the prior result. | Instrument identity, exact exit and next entry timestamps, local date | A planned re-entry may be valid. Suggest only when short same-ticker gaps repeatedly underperform longer gaps; never describe it as a setup-quality finding. |
-| Stop after a selected total number of losing trades in a day | Once the configured count of completed losses is reached, later Day-trade entries are broken even if wins interrupted the losses. | Chronological completed outcomes, local date, realized P/L | This is different from consecutive losses. It needs several threshold-reaching days and later trades, or it becomes a one-day reaction. |
-| No new Day trades before a selected time | A Day-trade entry at or before the configured local time is broken. | Exact entry timestamp and account timezone | Early trading may be a deliberate strategy. It can only be suggested after several days with comparable activity before and after a potential start time. |
-| Maximum Day-trade hold time | A completed Day trade held longer than the configured duration is broken. | Exact opening/closing timestamps, Day-trade classification | A longer hold is not inherently poor and could describe a valid strategy. Only consider this if a trader explicitly wants a time-management rule; do not make an automatic first recommendation. |
+| **Cooldown before re-entering the same ticker** | After a completed flat-to-flat Day trade in a ticker, do not begin another attempt in that ticker for the trader-selected number of minutes, regardless of the prior result. | Instrument identity, exact exit and next entry timestamps, local date | **Approved for catalog addition.** It addresses rapid repeat attempts of any outcome. A short re-entry after losses is a factual revenge-trading proxy only; it is never an emotion diagnosis. Suggest only when short same-ticker gaps repeatedly underperform longer gaps. |
+| **Stop after a selected total number of losing trades in a day** | Once the trader-selected count of completed daily losses is reached, later Day-trade entries are broken even if wins interrupted the losses. | Chronological completed outcomes, local date, realized P/L | **Approved for catalog addition.** This is distinct from the existing consecutive-loss rule and daily dollar-loss limit. It needs several threshold-reaching days and later trades, or it becomes a one-day reaction. |
+| No new Day trades before a selected time | A Day-trade entry at or before the configured local time is broken. | Exact entry timestamp and account timezone | Not approved for catalog addition. Early trading may be a deliberate strategy; only reconsider after a separate product decision. |
+| Maximum Day-trade hold time | A completed Day trade held longer than the configured duration is broken. | Exact opening/closing timestamps, Day-trade classification | Not approved for catalog addition. A longer hold is not inherently poor and should not be an automatic first recommendation. |
 
-These candidates use the existing confirmed round-trip projection and do not
-need a new ledger field. Their implementation must still use a server-owned
-cross-day fact reader rather than trying to combine browser cards or display
-values.
+The two approved additions use the existing confirmed round-trip projection and
+do not need a new ledger field. Their implementation must still use a
+server-owned cross-day fact reader rather than trying to combine browser cards
+or display values. They need exact validation, automatic evaluation,
+prospective activation, lifecycle treatment, and focused verification before
+they become available in the Rules catalog.
 
 ### C. Candidate presets that require a new deterministic execution-derived fact
 
@@ -236,6 +238,32 @@ recommendations until an explicit, separately governed data source exists.
 | Trade only a selected direction | Technically simple from the stored long/short direction, but it is a formerly removed preset. It remains unavailable until the owner explicitly restores it and defines whether it applies by trade direction, ticker, or day. |
 | Skip the next trade after an outcome | Technically sequenceable from completed outcomes and later entries, but it is a formerly removed preset. It remains unavailable until an explicit restoration decision and a precise outcome/configuration contract. |
 | Reduce the next trade to half size after a loss | Requires a formally selected size basis (maximum position quantity, entry notional, or another account/currency-aware measure) and is a formerly removed preset. It remains unavailable without explicit owner restoration and a new derived-size contract. |
+
+### Adverse-add evidence and historical cut simulation
+
+An **adverse add** means adding to a long position at a price below the
+position's current weighted-average entry, or adding to a short position at a
+price above its current weighted-average entry. In ordinary trader language,
+this is usually “adding to a losing trade.” It is a factual price relationship,
+not proof that the trader made a mistake.
+
+Once the execution-derived allocation fact exists, TraderLink can report:
+
+- how often an adverse add occurred;
+- eventual result of trades with adverse adds compared with otherwise similar
+  trades without them;
+- whether adverse adds tended to improve recovery, deepen losses, or show mixed
+  results for that trader;
+- how the final actual result compares with a clearly labelled **historical cut
+  simulation** that assumes the pre-add position was closed at the exact price
+  of the adverse-add execution.
+
+That last comparison is not “what would really have happened.” It is a limited,
+deterministic execution-price simulation: it assumes the existing position
+could close at the price actually recorded for the add, excludes the proposed
+additional shares, preserves known fees where possible, and discloses spread,
+liquidity and fill uncertainty. It must never use an invented exit price or
+claim the trader would certainly have cut at that point.
 
 ### Evidence ranking: what “would have been helpful” means
 

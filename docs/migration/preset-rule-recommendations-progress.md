@@ -11,6 +11,8 @@ have been audited; no catalog, detector, migration, UI, or Journal fact changed.
 
 - [ ] Owner approves activity-based eligibility and calibration gates.
 - [~] Audit present and formerly removed presets before catalog changes.
+- [ ] Add and verify the owner-approved same-ticker re-entry cooldown preset.
+- [ ] Add and verify the owner-approved total daily loss-count preset.
 - [ ] Implement deterministic candidate/evidence detection with focused proofs.
 - [ ] Implement recommendation decisions and Rule ideas UI.
 - [ ] Connect saved evidence to AI Chat and AI Reviews.
