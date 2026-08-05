@@ -2,6 +2,7 @@ import type {
   JournalRuleLifecycleState,
   JournalRuleRecord,
 } from "@/src/modules/journal/contracts/journal-annotation-contracts";
+import Decimal from "decimal.js";
 import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import type { JournalAccountSelectionRef } from "@/src/modules/platform/contracts/journal-account-selection";
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
@@ -21,7 +22,7 @@ export type TradingRulesTemplateView = Readonly<{
   templateId: string;
   label: string;
   description: string;
-  category: "frequency" | "timing" | "risk" | "size" | "scope";
+  category: "trade" | "trade_day" | "day";
   scope: "trade" | "ticker_day" | "day_session" | "trade_sequence";
   parameters: readonly TradingRulesParameterView[];
   exampleConfiguration: Readonly<Record<string, string>>;
@@ -88,20 +89,10 @@ function templateConfiguration(value: object): Readonly<Record<string, string>> 
 
 const JOURNAL_RULE_TEMPLATE_DEFINITIONS = [
     {
-      templateId: "allowed_direction_only",
-      label: "Trade only the selected direction",
-      description: "Review trades whose verified direction differs from the selected direction.",
-      category: "scope",
-      scope: "trade",
-      parameters: [parameter("allowedDirection", "Allowed direction", "enum", "direction", null, ["long", "short"])],
-      exampleConfiguration: { allowedDirection: "long" },
-      limitationSummary: "Requires complete direction facts; missing facts remain unavailable.",
-    },
-    {
       templateId: "exclude_entry_price_range",
       label: "Avoid an entry-price range",
-      description: "Review trades whose verified entry price falls inside the selected inclusive range.",
-      category: "scope",
+      description: "Checks whether a trade's weighted-average entry price falls inside the selected range.",
+      category: "trade",
       scope: "trade",
       parameters: [
         parameter("lowerEntryPrice", "Lower entry price", "positive_decimal", "$ per share"),
@@ -114,7 +105,7 @@ const JOURNAL_RULE_TEMPLATE_DEFINITIONS = [
       templateId: "maximum_attempts_per_ticker",
       label: "Maximum ticker attempts per day",
       description: "Review flat-to-flat attempts after the selected per-ticker limit.",
-      category: "frequency",
+      category: "trade_day",
       scope: "ticker_day",
       parameters: [parameter("maximumAttempts", "Maximum flat-to-flat attempts", "positive_integer", "attempts", "1000")],
       exampleConfiguration: { maximumAttempts: "2" },
@@ -124,7 +115,7 @@ const JOURNAL_RULE_TEMPLATE_DEFINITIONS = [
       templateId: "maximum_trades_per_day",
       label: "Maximum completed trades per day",
       description: "Review completed trades after the selected daily trade limit.",
-      category: "frequency",
+      category: "day",
       scope: "day_session",
       parameters: [parameter("maximumTrades", "Maximum completed trades", "positive_integer", "trades", "1000")],
       exampleConfiguration: { maximumTrades: "3" },
@@ -134,37 +125,17 @@ const JOURNAL_RULE_TEMPLATE_DEFINITIONS = [
       templateId: "no_new_trades_after_time",
       label: "No new trades after a selected time",
       description: "Review trades whose factual entry begins at or after the selected cutoff.",
-      category: "timing",
+      category: "trade",
       scope: "trade",
       parameters: [parameter("cutoffTime", "Latest allowed entry time", "wall_clock_time", "HH:mm:ss")],
       exampleConfiguration: { cutoffTime: "15:30:00" },
       limitationSummary: "Requires an accepted account timezone and exact entry timestamp.",
     },
     {
-      templateId: "reduce_next_trade_size_after_loss",
-      label: "Reduce the next trade to half size after a loss",
-      description: "After a losing trade, plan for the next trade to use half the usual size.",
-      category: "size",
-      scope: "trade_sequence",
-      parameters: [],
-      exampleConfiguration: {},
-      limitationSummary: "Automatic evaluation remains unavailable without complete size and outcome facts.",
-    },
-    {
-      templateId: "skip_next_trade_after_outcome",
-      label: "Skip the next trade after an outcome",
-      description: "Review one next eligible trade after the selected completed outcome.",
-      category: "risk",
-      scope: "trade_sequence",
-      parameters: [parameter("triggerOutcome", "Outcome that triggers the skipped trade", "enum", "outcome", null, ["loss", "gain", "flat"])],
-      exampleConfiguration: { triggerOutcome: "loss" },
-      limitationSummary: "Requires unambiguous completed outcomes and sequence.",
-    },
-    {
       templateId: "stop_after_consecutive_losses",
       label: "Stop after consecutive losses",
       description: "Review trades entered after the selected completed-loss streak.",
-      category: "risk",
+      category: "day",
       scope: "day_session",
       parameters: [parameter("consecutiveLossThreshold", "Consecutive loss limit", "positive_integer", "completed losses", "16")],
       exampleConfiguration: { consecutiveLossThreshold: "2" },
@@ -174,7 +145,7 @@ const JOURNAL_RULE_TEMPLATE_DEFINITIONS = [
       templateId: "stop_after_daily_realized_loss",
       label: "Stop after a daily realized loss limit",
       description: "Review trades entered after realized daily net P/L reaches the selected loss limit.",
-      category: "risk",
+      category: "day",
       scope: "day_session",
       parameters: [parameter("maximumDailyDrawdown", "Daily realized loss limit", "positive_decimal", "$")],
       exampleConfiguration: { maximumDailyDrawdown: "500" },
@@ -184,7 +155,7 @@ const JOURNAL_RULE_TEMPLATE_DEFINITIONS = [
       templateId: "stop_after_losing_ticker_attempts",
       label: "Stop a ticker after losing attempts",
       description: "Review later ticker attempts after the selected number of completed losing attempts.",
-      category: "risk",
+      category: "trade_day",
       scope: "ticker_day",
       parameters: [parameter("losingAttemptThreshold", "Losing ticker-attempt limit", "positive_integer", "completed losing attempts", "16")],
       exampleConfiguration: { losingAttemptThreshold: "2" },
@@ -194,21 +165,21 @@ const JOURNAL_RULE_TEMPLATE_DEFINITIONS = [
       templateId: "stop_after_profit_giveback",
       label: "Stop after a realized profit giveback",
       description: "Review trades entered after the selected giveback from realized daily peak P/L.",
-      category: "risk",
+      category: "day",
       scope: "day_session",
       parameters: [parameter("maximumProfitGiveback", "Maximum realized profit giveback", "positive_decimal", "$")],
       exampleConfiguration: { maximumProfitGiveback: "250" },
       limitationSummary: "Uses realized daily peak P/L only and never estimates unrealized giveback.",
     },
     {
-      templateId: "wait_after_loss",
-      label: "Wait after a losing trade",
-      description: "Review the next eligible trade when it begins before the selected cooldown expires.",
-      category: "timing",
-      scope: "trade_sequence",
-      parameters: [parameter("cooldownSeconds", "Cooldown after a completed loss", "positive_integer", "seconds", "86400")],
-      exampleConfiguration: { cooldownSeconds: "300" },
-      limitationSummary: "Requires an exact prior completion timestamp and unambiguous realized loss.",
+      templateId: "stop_after_daily_realized_gain_limit",
+      label: "Stop after a daily realized gain limit",
+      description: "Review trades entered after realized daily P/L reaches the selected gain limit.",
+      category: "day",
+      scope: "day_session",
+      parameters: [parameter("dailyRealizedGainLimit", "Daily realized gain limit", "positive_decimal", "$")],
+      exampleConfiguration: { dailyRealizedGainLimit: "500" },
+      limitationSummary: "Uses realized P/L only and does not estimate unrealized gain.",
     },
   ] satisfies readonly TradingRulesTemplateView[];
 
@@ -225,16 +196,113 @@ export const JOURNAL_RULE_TEMPLATE_CATALOG: readonly TradingRulesTemplateView[] 
       limitationSummary: item.limitationSummary,
     })));
 
+function knownTemplate(templateId: string): TradingRulesTemplateView | null {
+  return JOURNAL_RULE_TEMPLATE_CATALOG.find((item) => item.templateId === templateId) ?? null;
+}
+
 function template(templateId: string): TradingRulesTemplateView {
-  const found = JOURNAL_RULE_TEMPLATE_CATALOG.find((item) => item.templateId === templateId);
+  const found = knownTemplate(templateId);
   if (!found) platformFailure("TRADERLINK_JOURNAL_ANNOTATION_INVALID");
   return found;
+}
+
+function invalidConfiguration(field: string, reason: string): never {
+  return platformFailure("TRADERLINK_JOURNAL_ANNOTATION_INVALID", {
+    field,
+    reason,
+  });
+}
+
+function validatedTemplateConfiguration(
+  selected: TradingRulesTemplateView,
+  value: unknown,
+): Readonly<Record<string, string>> {
+  if (!value || Array.isArray(value) || typeof value !== "object") {
+    invalidConfiguration("configuration", "required");
+  }
+  const supplied = value as Record<string, unknown>;
+  const expectedKeys = new Set(selected.parameters.map((parameter) => parameter.key));
+  const suppliedKeys = Object.keys(supplied);
+  if (
+    suppliedKeys.length !== expectedKeys.size ||
+    suppliedKeys.some((key) => !expectedKeys.has(key))
+  ) {
+    invalidConfiguration("configuration", "unexpected_fields");
+  }
+  const result: Record<string, string> = {};
+  for (const parameter of selected.parameters) {
+    const raw = supplied[parameter.key];
+    if (typeof raw !== "string" || raw.trim().length === 0) {
+      invalidConfiguration(parameter.key, "required");
+    }
+    const normalized = raw.trim();
+    if (parameter.kind === "enum") {
+      if (!parameter.options.includes(normalized)) {
+        invalidConfiguration(parameter.key, "choose_option");
+      }
+      result[parameter.key] = normalized;
+      continue;
+    }
+    if (parameter.kind === "wall_clock_time") {
+      if (!/^([01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/u.test(normalized)) {
+        invalidConfiguration(parameter.key, "time");
+      }
+      result[parameter.key] = normalized.length === 5
+        ? `${normalized}:00`
+        : normalized;
+      continue;
+    }
+    if (parameter.kind === "positive_integer") {
+      if (!/^[1-9]\d*$/u.test(normalized)) {
+        invalidConfiguration(parameter.key, "positive_integer");
+      }
+      const numeric = new Decimal(normalized);
+      if (
+        !numeric.isInteger() ||
+        numeric.lte(0) ||
+        (parameter.maximum !== null && numeric.gt(parameter.maximum))
+      ) {
+        invalidConfiguration(parameter.key, "positive_integer");
+      }
+      result[parameter.key] = numeric.toFixed(0);
+      continue;
+    }
+    if (!/^(?:\d+(?:\.\d*)?|\.\d+)$/u.test(normalized)) {
+      invalidConfiguration(parameter.key, "positive_decimal");
+    }
+    const numeric = new Decimal(normalized);
+    if (!numeric.isFinite() || numeric.lte(0)) {
+      invalidConfiguration(parameter.key, "positive_decimal");
+    }
+    result[parameter.key] = numeric.toFixed();
+  }
+  if (
+    selected.templateId === "exclude_entry_price_range" &&
+    new Decimal(result.lowerEntryPrice!).gt(result.upperEntryPrice!)
+  ) {
+    invalidConfiguration("upperEntryPrice", "range_order");
+  }
+  return Object.freeze(result);
+}
+
+export function journalTradingRuleValidationMessage(field: unknown): string {
+  if (typeof field !== "string") {
+    return "Check the rule settings and try again.";
+  }
+  const label = JOURNAL_RULE_TEMPLATE_CATALOG
+    .flatMap((item) => item.parameters)
+    .find((parameter) => parameter.key === field)?.label;
+  return label
+    ? `Check “${label}” and try again.`
+    : "Check the rule settings and try again.";
 }
 
 function templateReviewScope(
   scope: TradingRulesTemplateView["scope"],
 ): "day" | "trade" | "both" {
-  return scope === "day_session" ? "day" : "trade";
+  if (scope === "day_session") return "day";
+  if (scope === "ticker_day") return "both";
+  return "trade";
 }
 
 function manualCategory(value: string): ManualCustomRuleRecord["category"] {
@@ -259,19 +327,23 @@ export function readJournalTradingRulesDashboard(
     packet: Object.freeze({
       rules: Object.freeze(rules
         .filter((rule) => rule.sourceKind === "template" && rule.templateKey)
-        .map((rule) => Object.freeze({
-          ruleInstanceId: rule.ruleId,
-          revision: rule.revision,
-          status: rule.lifecycleState,
-          template: template(rule.templateKey!),
-          currentVersion: Object.freeze({
-            ruleVersionId: rule.versionId,
-            versionOrdinal: String(rule.versionNumber),
-            configuration: rule.configuration,
-            effectiveFrom: rule.effectiveFromUtc,
-          }),
-          latestEvaluation: null,
-        }))),
+        .flatMap((rule) => {
+          const selected = knownTemplate(rule.templateKey!);
+          if (!selected) return [];
+          return [Object.freeze({
+            ruleInstanceId: rule.ruleId,
+            revision: rule.revision,
+            status: rule.lifecycleState,
+            template: selected,
+            currentVersion: Object.freeze({
+              ruleVersionId: rule.versionId,
+              versionOrdinal: String(rule.versionNumber),
+              configuration: rule.configuration,
+              effectiveFrom: rule.effectiveFromUtc,
+            }),
+            latestEvaluation: null,
+          })];
+        })),
     }),
     templates: JOURNAL_RULE_TEMPLATE_CATALOG,
     manualRules: Object.freeze(rules
@@ -319,6 +391,10 @@ export function mutateJournalTradingRules(
 ): void {
   if (mutation.action === "create") {
     const selected = template(string(mutation, "templateId"));
+    const configuration = validatedTemplateConfiguration(
+      selected,
+      mutation.configuration,
+    );
     service.createRule(scope, {
       sourceKind: "template",
       templateKey: selected.templateId,
@@ -327,7 +403,7 @@ export function mutateJournalTradingRules(
       category: selected.category,
       reviewScope: templateReviewScope(selected.scope),
       isFocus: false,
-      configuration: mutation.configuration,
+      configuration,
     });
     return;
   }
@@ -337,6 +413,14 @@ export function mutateJournalTradingRules(
     if (!current || current.sourceKind !== "template") {
       platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
     }
+    const selected = knownTemplate(current.templateKey!);
+    if (!selected) {
+      platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+    }
+    const configuration = validatedTemplateConfiguration(
+      selected,
+      mutation.configuration,
+    );
     service.reviseRule(scope, {
       ruleId,
       expectedRevision: integer(mutation, "expectedRevision"),
@@ -345,7 +429,7 @@ export function mutateJournalTradingRules(
       category: current.category,
       reviewScope: current.reviewScope,
       isFocus: current.isFocus,
-      configuration: mutation.configuration,
+      configuration,
     });
     return;
   }

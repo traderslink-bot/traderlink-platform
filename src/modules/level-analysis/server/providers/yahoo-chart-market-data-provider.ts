@@ -72,7 +72,10 @@ function metadata(result: YahooChartResult): Readonly<{
   });
 }
 
-function normalizeResult(result: YahooChartResult): MarketDataProviderResult {
+function normalizeResult(
+  result: YahooChartResult,
+  request: MarketDataRequest,
+): MarketDataProviderResult {
   const requestMetadata = metadata(result);
   const timestamps = result.timestamp;
   const quotes = result.indicators?.quote;
@@ -104,6 +107,9 @@ function normalizeResult(result: YahooChartResult): MarketDataProviderResult {
       return failure("invalid_payload", "provider_timestamps_not_strictly_increasing", requestMetadata);
     }
     previousTime = Number(time);
+    if (Number(time) < request.startTime || Number(time) > request.endTime) {
+      continue;
+    }
 
     const rawValues = [
       (open as unknown[])[index],
@@ -203,6 +209,6 @@ export class YahooChartMarketDataProvider implements MarketDataProvider {
     if (!Array.isArray(results) || results.length !== 1 || !results[0] || typeof results[0] !== "object") {
       return failure("invalid_payload", "provider_result_invalid");
     }
-    return normalizeResult(results[0] as YahooChartResult);
+    return normalizeResult(results[0] as YahooChartResult, input);
   }
 }

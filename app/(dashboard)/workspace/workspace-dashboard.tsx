@@ -24,6 +24,7 @@ import {
 } from "../../dashboard-template";
 import type { JournalCalendarReadModel } from "@/src/modules/journal-analytics/contracts/journal-dashboard-read-models";
 import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
+import { DismissibleDataDecisionNotice } from "../../dismissible-data-decision-notice";
 
 export type WorkspaceMetric = Readonly<{
   label: string;
@@ -65,9 +66,9 @@ const unavailableMetrics: readonly WorkspaceMetric[] = [
 ];
 
 function calendarMoney(value: string | null, currency: string | null): string {
-  if (value === null || currency === null) return "P/L unavailable";
-  const prefix = value.startsWith("-") ? "" : "+";
-  return `${currency} ${prefix}${formatJournalAnalyticsDecimal(value)}`;
+  if (value === null || currency === null) return "N/A";
+  const formatted = formatJournalAnalyticsDecimal(value, 2, true);
+  return formatted.startsWith("-") ? `-$${formatted.slice(1)}` : `+$${formatted}`;
 }
 
 function calendarDate(value: string): string {
@@ -80,10 +81,13 @@ function calendarDate(value: string): string {
 }
 
 export function WorkspaceDashboard({
+  accountSelectionRef,
   analyticsCoverage,
   analyticsMetrics,
   calendarData,
+  decisionNoticeRef,
 }: {
+  accountSelectionRef?: string;
   analyticsCoverage?: Readonly<{
     readyClosedCount: number;
     legitimateOpenCount: number;
@@ -93,6 +97,7 @@ export function WorkspaceDashboard({
   }>;
   analyticsMetrics?: readonly WorkspaceMetric[];
   calendarData?: JournalCalendarReadModel;
+  decisionNoticeRef?: string | null;
 }) {
   const metrics = analyticsMetrics ?? unavailableMetrics;
   const recentTradingDays = calendarData?.days
@@ -134,22 +139,20 @@ export function WorkspaceDashboard({
         ))}
       </Box>
 
-      {analyticsCoverage ? (
-        <Alert
-          action={analyticsCoverage.needsDecisionCount > 0 ? (
-            <Button color="inherit" href="/data-decisions" size="small">
-              Review Data Decisions
-            </Button>
-          ) : undefined}
-          severity={analyticsCoverage.needsDecisionCount > 0 ? "warning" : "success"}
+      {analyticsCoverage && analyticsCoverage.needsDecisionCount > 0 &&
+      accountSelectionRef && decisionNoticeRef ? (
+        <DismissibleDataDecisionNotice
+          accountSelectionRef={accountSelectionRef}
+          evidenceRef={decisionNoticeRef}
+          surface="workspace"
         >
           {analyticsCoverage.readyClosedCount} closed round trips are available.
           {` ${analyticsCoverage.legitimateOpenCount} positions are classified as open.`}
-          {` ${analyticsCoverage.needsDecisionCount} items need a trader decision.`}
-          {` Fees are complete for ${analyticsCoverage.feeCompleteCount} included trades`}
-          {analyticsCoverage.feeIncompleteCount > 0
-            ? ` and incomplete for ${analyticsCoverage.feeIncompleteCount}.`
-            : "."}
+        </DismissibleDataDecisionNotice>
+      ) : analyticsCoverage ? (
+        <Alert severity="success">
+          {analyticsCoverage.readyClosedCount} closed round trips are available.
+          {` ${analyticsCoverage.legitimateOpenCount} positions are classified as open.`}
         </Alert>
       ) : null}
 
@@ -212,7 +215,7 @@ export function WorkspaceDashboard({
               Add a manual trade
             </Typography>
             <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">
-              Enter the symbol, side, execution date and time, quantity, price,
+              Enter the ticker, side, execution date and time, quantity, price,
               and trading costs in the complete manual-entry form.
             </Typography>
             <Stack spacing={1.25} sx={{ mt: 2 }}>

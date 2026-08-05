@@ -475,6 +475,37 @@ ORDER BY provider_identity_scheme_version, provider_identity_sha256`).all(
     })));
   }
 
+  listProvenanceForExecution(
+    workspaceId: string,
+    accountId: string,
+    executionId: string,
+  ): readonly Readonly<{
+    importBatchId: string;
+    sourceRowId: string;
+    providerIdentitySchemeVersion: string | null;
+    providerIdentitySha256: string | null;
+  }>[] {
+    return Object.freeze(this.database.prepare<[string, string, string], {
+      import_batch_id: string;
+      source_row_id: string;
+      provider_identity_scheme_version: string | null;
+      provider_identity_sha256: string | null;
+    }>(`SELECT import_batch_id, source_row_id,
+ provider_identity_scheme_version, provider_identity_sha256
+FROM journal_execution_provenance
+WHERE workspace_id = ? AND account_id = ? AND execution_id = ?
+ORDER BY created_at_utc, execution_provenance_id`).all(
+      workspaceId,
+      accountId,
+      executionId,
+    ).map((row) => Object.freeze({
+      importBatchId: row.import_batch_id,
+      sourceRowId: row.source_row_id,
+      providerIdentitySchemeVersion: row.provider_identity_scheme_version,
+      providerIdentitySha256: row.provider_identity_sha256,
+    })));
+  }
+
   supersedeAlias(input: Readonly<{
     workspaceId: string;
     accountId: string;

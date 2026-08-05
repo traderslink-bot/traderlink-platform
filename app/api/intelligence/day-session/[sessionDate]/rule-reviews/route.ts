@@ -52,7 +52,11 @@ export async function PUT(
         candidate.ruleId === body.ruleId &&
         candidate.versionId === body.ruleVersion &&
         candidate.lifecycleState === "active");
-      if (!rule || (body.applicability !== "day" && body.applicability !== "trade")) {
+      if (
+        !rule ||
+        rule.sourceKind !== "custom" ||
+        (body.applicability !== "day" && body.applicability !== "trade")
+      ) {
         platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
       }
       const allowed = body.applicability === "day"
@@ -65,6 +69,9 @@ export async function PUT(
           ? body.targetRoundTripKey
           : null;
       if (!targetId) platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+      if (body.status !== "not-reviewed" && body.status !== "followed" && body.status !== "broken") {
+        platformFailure("TRADERLINK_JOURNAL_ANNOTATION_INVALID");
+      }
       return reviewView(service.saveRuleReview(account, {
         expectedRevision: nullableRevision(body.expectedRevision),
         ruleId: rule.ruleId,

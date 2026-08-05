@@ -117,15 +117,20 @@ export type JournalAnalyticsRoundTripTableRow = Readonly<{
   closedAtUtc: string;
   entryLocalDate: string;
   closeLocalDate: string;
+  tradeClassification: "day_trade" | "multi_day_trade";
   provenance: string;
   selectedPnlDecimal: string | null;
   grossPnlDecimal: string;
   chargeCoverage: "complete" | "unavailable";
   chargeCostDecimal: string | null;
   chargeCreditDecimal: string | null;
+  uniqueExecutionCount: number;
   enteredQuantityDecimal: string;
   maximumPositionQuantityDecimal: string;
   entryNotionalDecimal: string;
+  averageEntryPriceDecimal?: string | null;
+  averageExitPriceDecimal?: string | null;
+  returnPercentDecimal?: string | null;
   holdingDurationMilliseconds: number;
 }>;
 

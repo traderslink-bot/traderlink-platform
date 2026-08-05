@@ -79,13 +79,16 @@ export function DashboardPanel({
   action,
   children,
   eyebrow,
+  hideHeader = false,
   title,
 }: {
   action?: ReactNode;
   children: ReactNode;
   eyebrow?: string;
-  title: string;
+  hideHeader?: boolean;
+  title?: string;
 }) {
+  const hasHeader = !hideHeader && Boolean(action || eyebrow || title);
   return (
     <Card data-traderlink-platform-dashboard-card="panel" sx={{ height: "100%", minWidth: 0 }}>
       <CardContent
@@ -94,31 +97,31 @@ export function DashboardPanel({
           "&:last-child": { pb: { xs: 2, sm: 2.5 } },
         }}
       >
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={1}
-          sx={{
-            alignItems: { xs: "flex-start", sm: "center" },
-            justifyContent: "space-between",
-          }}
-        >
-          <Box>
-            {eyebrow ? (
-              <Typography
-                color="primary.main"
-                sx={{ fontWeight: 700 }}
-                variant="caption"
-              >
-                {eyebrow}
-              </Typography>
-            ) : null}
-            <Typography component="h2" variant="h2">
-              {title}
-            </Typography>
-          </Box>
-          {action}
-        </Stack>
-        <Box sx={{ mt: 2 }}>{children}</Box>
+        {hasHeader ? (
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1}
+            sx={{
+              alignItems: { xs: "flex-start", sm: "center" },
+              justifyContent: "space-between",
+            }}
+          >
+            <Box>
+              {eyebrow ? (
+                <Typography
+                  color="primary.main"
+                  sx={{ fontWeight: 700 }}
+                  variant="caption"
+                >
+                  {eyebrow}
+                </Typography>
+              ) : null}
+              {title ? <Typography component="h2" variant="h2">{title}</Typography> : null}
+            </Box>
+            {action}
+          </Stack>
+        ) : null}
+        <Box sx={{ mt: hasHeader ? 2 : 0 }}>{children}</Box>
       </CardContent>
     </Card>
   );
@@ -175,12 +178,5 @@ export function DashboardUnavailableState({
 }
 
 export function DashboardDataScopeChip() {
-  return (
-    <Chip
-      color="default"
-      label="Verified execution data"
-      size="small"
-      variant="outlined"
-    />
-  );
+  return null;
 }

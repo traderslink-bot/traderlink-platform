@@ -4,6 +4,7 @@ import {
 } from "@/src/modules/platform/contracts/workspace-access-scope";
 import type { JournalDataDecisionRecord } from "../contracts/journal-decision-contracts";
 import type { JournalChainRebuildResult } from "../contracts/journal-round-trip-contracts";
+import { createCanonicalUuidV4 } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { JournalDataDecisionService } from "./decisions/journal-data-decision-service";
 import {
   type IbkrStatementCommitInput,
@@ -69,10 +70,29 @@ export class JournalIntegrityCommandService {
           committed.importBatchId,
           now,
         ).filter((decision) => decision.state === "pending");
+        const currentReconciliationDecisions =
+          this.decisions.openImportReconciliationDecisions(
+            accountScope,
+            committed.importBatchId,
+            now,
+          ).filter((decision) => decision.state === "pending");
+        this.imports.reconcileAcceptedBatchDecisions({
+          workspaceId: accountScope.workspaceId,
+          accountId: accountScope.accountId,
+          importBatchId: committed.importBatchId,
+          importEventId: createCanonicalUuidV4(),
+          actorUserId: accountScope.userId,
+          timestamp: (now ?? new Date()).toISOString(),
+        });
         return Object.freeze({
           ...committed,
+          pendingSourceDecisionCount: new Set([
+            ...currentSourceDecisions,
+            ...currentReconciliationDecisions,
+          ].map((decision) => decision.decisionId)).size,
           relatedDecisionIds: Object.freeze(
-            currentSourceDecisions.map((decision) => decision.decisionId),
+            [...currentSourceDecisions, ...currentReconciliationDecisions]
+              .map((decision) => decision.decisionId),
           ),
           rebuilds: Object.freeze([]),
         });
@@ -82,6 +102,20 @@ export class JournalIntegrityCommandService {
         committed.importBatchId,
         now,
       );
+      const reconciliationDecisions =
+        this.decisions.openImportReconciliationDecisions(
+          accountScope,
+          committed.importBatchId,
+          now,
+        );
+      this.imports.reconcileAcceptedBatchDecisions({
+        workspaceId: accountScope.workspaceId,
+        accountId: accountScope.accountId,
+        importBatchId: committed.importBatchId,
+        importEventId: createCanonicalUuidV4(),
+        actorUserId: accountScope.userId,
+        timestamp: (now ?? new Date()).toISOString(),
+      });
       const rebuilds = this.roundTrips.rebuildAccount(accountScope, {
         kind: "import_event",
         triggerId: committed.importEventId,
@@ -94,8 +128,16 @@ export class JournalIntegrityCommandService {
       );
       return Object.freeze({
         ...committed,
+        pendingSourceDecisionCount: new Set([
+          ...sourceDecisions,
+          ...reconciliationDecisions,
+        ].map((decision) => decision.decisionId)).size,
         relatedDecisionIds: Object.freeze([
-          ...new Set([...sourceDecisions, ...chainDecisions]
+          ...new Set([
+            ...sourceDecisions,
+            ...reconciliationDecisions,
+            ...chainDecisions,
+          ]
             .map((decision: JournalDataDecisionRecord) => decision.decisionId)),
         ]),
         rebuilds,

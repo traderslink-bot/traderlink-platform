@@ -2,6 +2,10 @@ export type DashboardNavigationIconKey =
   | "account"
   | "analytics"
   | "calendar"
+  | "tradingDay"
+  | "swing"
+  | "roundTrips"
+  | "marketCharts"
   | "data"
   | "execution"
   | "import"
@@ -14,6 +18,7 @@ export type DashboardNavigationIconKey =
   | "rules"
   | "ticker"
   | "timing"
+  | "tradeExplorer"
   | "tradeGroup"
   | "trades"
   | "workspace";
@@ -51,18 +56,28 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
         }),
         Object.freeze({
           href: "/trade-tracker",
-          label: "Trade Tracker",
-          icon: "calendar" as const,
+          label: "Daily Trade Tracker",
+          icon: "tradingDay" as const,
+        }),
+        Object.freeze({
+          href: "/trade-tracker/swings",
+          label: "Swing Trade Tracker",
+          icon: "swing" as const,
         }),
         Object.freeze({
           href: "/trades/roundtrips",
           label: "Round Trips",
-          icon: "trades" as const,
+          icon: "roundTrips" as const,
         }),
         Object.freeze({
           href: "/trades/ticker",
           label: "Trades by Ticker",
           icon: "ticker" as const,
+        }),
+        Object.freeze({
+          href: "/analytics/trade-explorer",
+          label: "Trade Explorer",
+          icon: "tradeExplorer" as const,
         }),
         Object.freeze({
           href: "/trades/open",
@@ -125,7 +140,7 @@ export const DASHBOARD_STANDALONE_ITEMS: readonly DashboardNavigationItem[] =
     Object.freeze({
       href: "/charts",
       label: "Market Charts",
-      icon: "analytics" as const,
+      icon: "marketCharts" as const,
     }),
     Object.freeze({
       href: "/account",
@@ -159,7 +174,8 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/workspace/readiness": "Platform Readiness",
     "/calendar": "Calendar",
     "/trades/roundtrips": "Round Trips",
-    "/trade-tracker": "Trade Tracker",
+    "/trade-tracker": "Daily Trade Tracker",
+    "/trade-tracker/swings": "Swing Trade Tracker",
     "/trades/ticker": "Trades by Ticker",
     "/trades/open": "Open Positions",
     "/analytics": "Analytics Overview",
@@ -168,6 +184,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/analytics/timing": "Timing",
     "/analytics/execution": "Execution",
     "/analytics/lab": "Analytics Lab",
+    "/analytics/trade-explorer": "Trade Explorer",
     "/charts": "Market Charts",
     "/reflection-loop": "Reflection Loop",
     "/rules": "Trading Rules",

@@ -5,12 +5,18 @@ import { join } from "node:path";
 import type Database from "better-sqlite3";
 
 import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
+import { deriveJournalAccountSelectionRef } from "@/src/modules/platform/contracts/journal-account-selection";
 import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { runPlatformMigrations } from "@/src/modules/platform/server/database/run-platform-migrations";
 
 import { JournalAnnotationRepository } from "./journal-annotation-repository";
 import { JournalAnnotationService } from "./journal-annotation-service";
 import { JournalRuleRepository } from "./journal-rule-repository";
+import {
+  JOURNAL_RULE_TEMPLATE_CATALOG,
+  mutateJournalTradingRules,
+  readJournalTradingRulesDashboard,
+} from "./journal-trading-rules-dashboard";
 
 const roots: string[] = [];
 
@@ -242,6 +248,51 @@ FROM journal_tag_versions WHERE tag_id = ?`).get(renamed.tagId)).toEqual({
     context.database.close();
   });
 
+  it("creates selected preset tags atomically inside one Journal account", () => {
+    const context = setup();
+    const custom = context.service.createTag(context.first.scope, {
+      name: "My custom tag",
+      now: new Date(at),
+    });
+    const assigned = context.service.replaceRoundTripTagsWithPresets(
+      context.first.scope,
+      {
+        roundTripId: context.first.roundTripId,
+        tagIds: [custom.tagId],
+        presetKeys: ["setup_breakout", "emotion_calm"],
+        now: new Date(at),
+      },
+    );
+    expect(assigned.map((tag) => tag.name).sort()).toEqual([
+      "Breakout",
+      "Calm",
+      "My custom tag",
+    ]);
+    expect(context.service.listTags(context.first.scope)).toHaveLength(3);
+    expect(context.service.listTags(context.second.scope)).toHaveLength(0);
+
+    const repeated = context.service.replaceRoundTripTagsWithPresets(
+      context.first.scope,
+      {
+        roundTripId: context.first.roundTripId,
+        tagIds: [custom.tagId],
+        presetKeys: ["setup_breakout", "emotion_calm"],
+        now: new Date("2026-08-02T12:01:00.000Z"),
+      },
+    );
+    expect(repeated).toHaveLength(3);
+    expect(context.service.listTags(context.first.scope)).toHaveLength(3);
+    expect(() => context.service.replaceRoundTripTagsWithPresets(
+      context.first.scope,
+      {
+        roundTripId: context.first.roundTripId,
+        tagIds: [],
+        presetKeys: ["not_a_preset"],
+      },
+    )).toThrowError("TRADERLINK_JOURNAL_ANNOTATION_INVALID");
+    context.database.close();
+  });
+
   it("versions daily and individual-trade notes with stale-write rejection", () => {
     const context = setup();
     const first = context.service.saveDailyNote(context.first.scope, {
@@ -406,6 +457,72 @@ FROM journal_rule_versions WHERE rule_id = ?`).get(created.ruleId)).toEqual({
     expect(context.database.prepare(`SELECT COUNT(*) AS count
 FROM journal_rule_lifecycle_events WHERE rule_id = ?`).get(created.ruleId))
       .toEqual({ count: 2 });
+    context.database.close();
+  });
+
+  it("creates, revises, pauses, resumes, and retires every preset rule", () => {
+    const context = setup();
+    const selectionRef = deriveJournalAccountSelectionRef(
+      context.first.scope.workspaceId,
+      context.first.scope.accountId,
+    );
+
+    for (const template of JOURNAL_RULE_TEMPLATE_CATALOG) {
+      mutateJournalTradingRules(context.service, context.first.scope, {
+        action: "create",
+        templateId: template.templateId,
+        configuration: { ...template.exampleConfiguration },
+      });
+    }
+
+    let dashboard = readJournalTradingRulesDashboard(
+      context.service,
+      context.first.scope,
+      selectionRef,
+    );
+    expect(dashboard.packet.rules).toHaveLength(JOURNAL_RULE_TEMPLATE_CATALOG.length);
+
+    for (const original of dashboard.packet.rules) {
+      mutateJournalTradingRules(context.service, context.first.scope, {
+        action: "revise",
+        expectedRevision: original.revision,
+        ruleInstanceId: original.ruleInstanceId,
+        configuration: { ...original.template.exampleConfiguration },
+      });
+      let current = readJournalTradingRulesDashboard(
+        context.service,
+        context.first.scope,
+        selectionRef,
+      ).packet.rules.find((rule) => rule.ruleInstanceId === original.ruleInstanceId)!;
+      expect(current.currentVersion.versionOrdinal).toBe("2");
+
+      for (const [expectedCurrentStatus, newStatus] of [
+        ["active", "paused"],
+        ["paused", "active"],
+        ["active", "retired"],
+      ] as const) {
+        mutateJournalTradingRules(context.service, context.first.scope, {
+          action: "transition",
+          expectedRevision: current.revision,
+          expectedCurrentStatus,
+          newStatus,
+          ruleInstanceId: current.ruleInstanceId,
+        });
+        current = readJournalTradingRulesDashboard(
+          context.service,
+          context.first.scope,
+          selectionRef,
+        ).packet.rules.find((rule) => rule.ruleInstanceId === original.ruleInstanceId)!;
+        expect(current.status).toBe(newStatus);
+      }
+    }
+
+    dashboard = readJournalTradingRulesDashboard(
+      context.service,
+      context.first.scope,
+      selectionRef,
+    );
+    expect(dashboard.packet.rules.every((rule) => rule.status === "retired")).toBe(true);
     context.database.close();
   });
 });

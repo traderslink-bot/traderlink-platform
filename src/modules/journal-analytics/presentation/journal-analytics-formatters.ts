@@ -26,6 +26,7 @@ function groupWholeDigits(value: string): string {
 export function formatJournalAnalyticsDecimal(
   value: string,
   decimalPlaces = 2,
+  keepTrailingZeroes = false,
 ): string {
   const parts = decimalParts(value);
   let units = parts.units;
@@ -37,11 +38,17 @@ export function formatJournalAnalyticsDecimal(
     units = rounded;
     scale = decimalPlaces;
   }
+  if (keepTrailingZeroes && scale < decimalPlaces) {
+    units *= BigInt(10) ** BigInt(decimalPlaces - scale);
+    scale = decimalPlaces;
+  }
   const digits = units.toString().padStart(scale + 1, "0");
   const whole = scale === 0 ? digits : digits.slice(0, -scale);
   const fraction = scale === 0
     ? ""
-    : digits.slice(-scale).replace(/0+$/u, "");
+    : keepTrailingZeroes
+      ? digits.slice(-scale)
+      : digits.slice(-scale).replace(/0+$/u, "");
   const rendered = fraction.length > 0
     ? `${groupWholeDigits(whole)}.${fraction}`
     : groupWholeDigits(whole);
@@ -64,10 +71,10 @@ function formatExactValue(
   const decimal = value.kind === "decimal"
     ? value.valueDecimal
     : value.roundedDecimal;
-  const formatted = formatJournalAnalyticsDecimal(decimal);
+  const formatted = formatJournalAnalyticsDecimal(decimal, 2, metric.valueKind === "money");
   if (metric.unit === "percent") return `${formatted}%`;
   if (metric.valueKind === "money" && metric.currency) {
-    return `${metric.currency} ${formatted}`;
+    return formatted.startsWith("-") ? `-$${formatted.slice(1)}` : `$${formatted}`;
   }
   return formatted;
 }
@@ -75,7 +82,7 @@ function formatExactValue(
 export function formatJournalAnalyticsMetric(
   metric: JournalAnalyticsMetricResult,
 ): string {
-  return metric.value === null ? "Unavailable" : formatExactValue(metric.value, metric);
+  return metric.value === null ? "N/A" : formatExactValue(metric.value, metric);
 }
 
 export function journalAnalyticsMetricCaption(
@@ -83,8 +90,8 @@ export function journalAnalyticsMetricCaption(
 ): string {
   if (metric.state === "unavailable") {
     return metric.limitationReasonCodes.length > 0
-      ? "Required facts unavailable"
-      : "Unavailable for this scope";
+      ? "Required facts are missing"
+      : "N/A for this scope";
   }
   if (metric.state === "partial") return "Partial factual coverage";
   if (metric.state === "empty") return "No matching trades";
@@ -106,6 +113,6 @@ export function formatJournalAnalyticsPartitionedMetric(
   metricId: string,
 ): string {
   const metrics = findJournalAnalyticsMetric(response, metricId);
-  if (metrics.length === 0) return "Unavailable";
+  if (metrics.length === 0) return "N/A";
   return metrics.map(formatJournalAnalyticsMetric).join(" / ");
 }

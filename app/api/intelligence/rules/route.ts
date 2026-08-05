@@ -1,5 +1,6 @@
 import { withWritableJournalAnnotations } from "@/src/modules/journal/server/annotations/journal-annotation-runtime";
 import {
+  journalTradingRuleValidationMessage,
   mutateJournalTradingRules,
   readJournalTradingRulesDashboard,
 } from "@/src/modules/journal/server/annotations/journal-trading-rules-dashboard";
@@ -47,8 +48,9 @@ export async function POST(request: Request): Promise<Response> {
     });
     return Response.json({ ok: true, data });
   } catch (error) {
-    const code = isTraderLinkPlatformError(error)
-      ? error.code
+    const platformError = isTraderLinkPlatformError(error) ? error : null;
+    const code = platformError
+      ? platformError.code
       : "TRADERLINK_JOURNAL_ANNOTATION_INVALID";
     const conflict = code === "TRADERLINK_JOURNAL_ANNOTATION_CONFLICT" ||
       code === "TRADERLINK_ACCOUNT_SELECTION_CONFLICT";
@@ -58,7 +60,7 @@ export async function POST(request: Request): Promise<Response> {
         code,
         message: conflict
           ? "This rule or Journal account changed. Refresh and try again."
-          : "The rule change was not accepted.",
+          : journalTradingRuleValidationMessage(platformError?.safeContext.field),
       },
     }, { status: conflict ? 409 : 400 });
   }

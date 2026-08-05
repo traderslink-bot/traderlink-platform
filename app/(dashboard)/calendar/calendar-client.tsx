@@ -1,16 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import DateRangeRoundedIcon from "@mui/icons-material/DateRangeRounded";
+import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import FilterAltRoundedIcon from "@mui/icons-material/FilterAltRounded";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import {
   Alert,
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Button,
+  ButtonBase,
   CardActionArea,
+  Chip,
   Divider,
   Drawer,
   FormControl,
@@ -26,6 +33,7 @@ import {
 import { useRouter } from "next/navigation";
 
 import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
+import { DismissibleDataDecisionNotice } from "../../dismissible-data-decision-notice";
 
 import {
   DashboardDataScopeChip,
@@ -42,6 +50,8 @@ import type {
   CalendarPnlFilter,
   CalendarTradeCountFilter,
   CalendarView,
+  CalendarTickerResult,
+  CalendarWeekOption,
 } from "./calendar-types";
 
 type SavedView = {
@@ -49,12 +59,45 @@ type SavedView = {
   name: string;
 };
 
+type TickerTradeDetail = Readonly<{
+  executions: readonly Readonly<{
+    executed_at_utc: string;
+    price_decimal: string | null;
+    quantity_decimal: string;
+    side: "buy" | "sell";
+  }>[];
+  notes: readonly string[];
+  roundTripId: string;
+  tags: readonly string[];
+}>;
+
+type TickerDetailState = Readonly<{
+  status: "idle" | "loading" | "ready" | "error";
+  trades: readonly TickerTradeDetail[];
+}>;
+
 const weekdayLabels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
 function money(value: string | null, currency: string | null): string {
-  if (value === null || currency === null) return "—";
-  const prefix = value.startsWith("-") ? "" : "+";
-  return `${currency} ${prefix}${formatJournalAnalyticsDecimal(value)}`;
+  if (value === null || currency === null) return "N/A";
+  const formatted = formatJournalAnalyticsDecimal(value, 2, true);
+  return formatted.startsWith("-") ? `-$${formatted.slice(1)}` : `+$${formatted}`;
+}
+
+function price(value: string | null, currency: string | null): string {
+  if (value === null || currency === null) return "N/A";
+  const formatted = formatJournalAnalyticsDecimal(value, 2, true);
+  return formatted.startsWith("-") ? `-$${formatted.slice(1)}` : `$${formatted}`;
+}
+
+function executionTimestamp(value: string, timezone: string | null): string {
+  return new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    month: "short",
+    timeZone: timezone ?? "America/New_York",
+  }).format(new Date(value));
 }
 
 function percent(value: string | null): string {
@@ -66,24 +109,49 @@ function monthLabel(monthKey: string): string {
   return new Date(Date.UTC(year, month - 1, 1)).toLocaleDateString("en-US", {
     month: "long",
     timeZone: "UTC",
-    year: "numeric",
   });
 }
 
-function shiftMonth(monthKey: string, amount: number): string {
-  const [year, month] = monthKey.split("-").map(Number);
-  const shifted = new Date(Date.UTC(year, month - 1 + amount, 1));
-  return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, "0")}`;
+function weekStart(date: string): string {
+  const value = new Date(`${date}T12:00:00.000Z`);
+  value.setUTCDate(value.getUTCDate() - ((value.getUTCDay() + 6) % 7));
+  return value.toISOString().slice(0, 10);
+}
+
+function weekLabel(weekKey: string): string {
+  const start = new Date(`${weekKey}T12:00:00.000Z`);
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 4);
+  const format = new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+    year: "numeric",
+  });
+  return `${format.format(start)} - ${format.format(end)}`;
+}
+
+function currentWeekInTimezone(timezone: string | null): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: timezone ?? "America/New_York",
+    year: "numeric",
+  }).formatToParts(new Date());
+  const byType = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return weekStart(`${byType.year}-${byType.month}-${byType.day}`);
 }
 
 function emptyDay(date: string): CalendarDay {
   return {
     date,
+    hasDailyTracker: false,
     peakGivebackDecimal: null,
     pnlDecimal: null,
     pnlSign: null,
     tickers: [],
     tradeCount: 0,
+    reviewStatus: null,
     winRatePercentDecimal: null,
   };
 }
@@ -125,34 +193,75 @@ function daySurface(day: CalendarDay, selected: boolean) {
   return { backgroundColor: "background.paper" };
 }
 
+function pnlTone(sign: -1 | 0 | 1 | null) {
+  if (sign === -1) return { backgroundColor: "rgba(211, 47, 47, 0.10)", color: "error.main" };
+  if (sign === 1) return { backgroundColor: "rgba(46, 125, 50, 0.11)", color: "success.main" };
+  return { backgroundColor: "rgba(1, 30, 86, 0.05)", color: "text.primary" };
+}
+
+function TickerAnnotationChips({
+  compact,
+  noteCount,
+  ruleReviewCount,
+  tagCount,
+}: {
+  compact: boolean;
+  noteCount: number;
+  ruleReviewCount: number;
+  tagCount: number;
+}) {
+  const labels = [
+    noteCount > 0 ? compact ? "N" : "Notes" : null,
+    ruleReviewCount > 0 ? compact ? "R" : `Rules ${ruleReviewCount}` : null,
+    tagCount > 0 ? `${tagCount} Tags` : null,
+  ].filter((label): label is string => label !== null);
+  if (labels.length === 0) return null;
+  return (
+    <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>
+      {labels.map((label) => (
+        <Chip
+          key={label}
+          label={label}
+          size="small"
+          sx={{ height: compact ? 18 : 22, "& .MuiChip-label": { px: 0.75 } }}
+          variant="outlined"
+        />
+      ))}
+    </Stack>
+  );
+}
+
 function DayCell({
   day,
   mode,
   onSelect,
+  onTickerClick,
   selected,
+  showReviewStatus,
   currency,
 }: {
   day: CalendarDay;
   mode: CalendarView;
   onSelect: () => void;
+  onTickerClick: (ticker: CalendarTickerResult) => void;
   selected: boolean;
+  showReviewStatus: boolean;
   currency: string | null;
 }) {
   const dayDate = new Date(`${day.date}T12:00:00.000Z`);
-  const isEmpty = day.tradeCount === 0;
+  const hasJournalActivity = day.tickers.some((ticker) =>
+    ticker.noteCount > 0 || ticker.ruleReviewCount > 0 || ticker.tagCount > 0);
+  const isEmpty = day.tradeCount === 0 && !hasJournalActivity;
   return (
-    <CardActionArea
-      aria-label={`Open ${dayDate.toLocaleDateString("en-US", { day: "numeric", month: "long" })}`}
-      disabled={isEmpty}
-      onClick={onSelect}
-      sx={{ alignItems: "stretch", borderBottom: 1, borderColor: "divider", borderRight: 1, display: "flex", minHeight: mode === "week" ? 390 : 230 }}
+    <Box
+      onClick={isEmpty ? undefined : onSelect}
+      sx={{ borderBottom: 1, borderColor: "divider", borderRight: 1, cursor: isEmpty ? "default" : "pointer", display: "flex", flexDirection: "column", height: mode === "week" ? 480 : undefined, minHeight: mode === "week" ? 480 : 230, minWidth: 0, overflowY: mode === "week" ? "auto" : undefined, p: mode === "week" ? 2 : 1.5, width: "100%", ...daySurface(day, selected) }}
     >
-      <Box sx={{ display: "flex", flexDirection: "column", minWidth: 0, p: mode === "week" ? 2 : 1.5, width: "100%", ...daySurface(day, selected) }}>
         <Stack direction="row" sx={{ alignItems: "baseline", justifyContent: "space-between" }}>
           <Typography sx={{ fontWeight: 850 }} variant={mode === "week" ? "h5" : "subtitle1"}>
             {dayDate.getUTCDate()}
           </Typography>
-          {isEmpty ? null : (
+          {day.tradeCount === 0 || day.pnlDecimal === null ? null : (
             <Typography color={day.pnlSign === -1 ? "error.main" : "success.main"} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 850 }} variant={mode === "week" ? "h6" : "body2"}>
               {money(day.pnlDecimal, currency)}
             </Typography>
@@ -161,46 +270,253 @@ function DayCell({
         {isEmpty ? <Box sx={{ flexGrow: 1 }} /> : (
           <>
             <Typography color="text.secondary" sx={{ mt: 0.25 }} variant="caption">
-              {day.tradeCount} trades · {percent(day.winRatePercentDecimal)} win rate
+              {day.tradeCount > 0
+                ? `${day.tradeCount} trades · ${percent(day.winRatePercentDecimal)} win rate`
+                : "Swing journal activity"}
             </Typography>
             <Stack spacing={0.65} sx={{ flexGrow: 1, mt: mode === "week" ? 3 : 1.5 }}>
-              {day.tickers.slice(0, 4).map((ticker) => (
-                <Stack direction="row" key={ticker.symbol} sx={{ justifyContent: "space-between" }}>
-                  <Typography noWrap sx={{ fontWeight: 750 }} variant={mode === "week" ? "body2" : "caption"}>{ticker.symbol}</Typography>
-                  <Typography color={ticker.pnlSign === -1 ? "error.main" : "success.main"} noWrap sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 750 }} variant="caption">{money(ticker.pnlDecimal, currency)}</Typography>
+              {(mode === "week" ? day.tickers : day.tickers.slice(0, 4)).map((ticker) => (
+                <Stack key={ticker.symbol}>
+                  <ButtonBase
+                    aria-label={`View ${ticker.symbol} trades`}
+                    onClick={(event) => { event.stopPropagation(); onTickerClick(ticker); }}
+                    sx={{ borderRadius: 1, display: "block", textAlign: "left", width: "100%", "&:focus-visible": { outline: "2px solid #073b78", outlineOffset: 2 } }}
+                  >
+                    <Stack direction="row" sx={{ justifyContent: "space-between", width: "100%" }}>
+                      <Typography noWrap sx={{ fontWeight: 750 }} variant={mode === "week" ? "body2" : "caption"}>{ticker.symbol}</Typography>
+                      <Typography color={ticker.pnlSign === -1 ? "error.main" : "success.main"} noWrap sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 750 }} variant="caption">{money(ticker.pnlDecimal, currency)}</Typography>
+                    </Stack>
+                  </ButtonBase>
+                  <TickerAnnotationChips
+                    compact={mode === "month"}
+                    noteCount={ticker.noteCount}
+                    ruleReviewCount={ticker.ruleReviewCount}
+                    tagCount={ticker.tagCount}
+                  />
+                  {mode === "week" ? (
+                    <Stack spacing={0.25} sx={{ mt: 0.65 }}>
+                      {ticker.trades.slice(0, 2).map((trade, index) => (
+                        <Stack direction="row" key={trade.roundTripId} spacing={0.75} sx={{ alignItems: "baseline" }}>
+                          <Typography color="text.secondary" variant="caption">Trade {index + 1}</Typography>
+                          <Typography color={trade.pnlSign === -1 ? "error.main" : "success.main"} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 750 }} variant="caption">
+                            {money(trade.pnlDecimal, currency)}
+                          </Typography>
+                        </Stack>
+                      ))}
+                      {ticker.trades.length > 2 ? (
+                        <Typography color="text.secondary" variant="caption">
+                          {ticker.trades.length - 2} more trade{ticker.trades.length === 3 ? "" : "s"}
+                        </Typography>
+                      ) : null}
+                    </Stack>
+                  ) : null}
                 </Stack>
               ))}
             </Stack>
-            {day.peakGivebackDecimal === null ? null : (
-              <Typography color="text.secondary" sx={{ mt: 1 }} variant="caption">
-                Peak giveback {money(day.peakGivebackDecimal, currency)}
+            {mode === "month" && day.tickers.length > 4 ? (
+              <Typography color="text.secondary" sx={{ mt: "auto", pt: 0.75 }} variant="caption">
+                {day.tickers.length - 4} more ticker{day.tickers.length === 5 ? "" : "s"}
               </Typography>
-            )}
+            ) : null}
           </>
         )}
-      </Box>
-    </CardActionArea>
+        {showReviewStatus && day.hasDailyTracker && day.tradeCount > 0 && day.reviewStatus ? (
+          <Box sx={{ mt: "auto", pt: 1 }}>
+            <Chip
+              color={day.reviewStatus === "reviewed" ? "success" : "warning"}
+              label={day.reviewStatus === "reviewed" ? "Review completed" : "Review not completed"}
+              size="small"
+              sx={{ fontWeight: 750 }}
+            />
+          </Box>
+        ) : null}
+    </Box>
   );
 }
 
-export function CalendarClient({ initialData, initialFilters, initialView }: {
+function CalendarPeriodNavigation({
+  availableMonths,
+  availableWeeks,
+  availableWeekOptions = [],
+  month,
+  onNavigate,
+  view,
+  week,
+}: {
+  availableMonths: readonly string[];
+  availableWeeks: readonly string[];
+  availableWeekOptions: readonly CalendarWeekOption[];
+  month: string;
+  onNavigate: (view: CalendarView, period: string) => void;
+  view: CalendarView;
+  week: string;
+}) {
+  const resolvedWeekOptions = availableWeekOptions.length > 0
+    ? availableWeekOptions
+    : availableWeeks.map((week) => ({ months: [week.slice(0, 7)], week }));
+  const activePeriods = view === "month" ? availableMonths : availableWeeks;
+  const activePeriod = view === "month" ? month : week;
+  const activeIndex = activePeriods.indexOf(activePeriod);
+  const weekOption = resolvedWeekOptions.find((option) => option.week === week);
+  const selectableMonths = availableMonths;
+  const displayedMonth = view === "month" ? month : weekOption?.months.at(-1) ?? month;
+  const availableYears = [...new Set(selectableMonths.map((value) => value.slice(0, 4)))];
+  const selectedYear = displayedMonth.slice(0, 4);
+  const monthsInSelectedYear = selectableMonths.filter((value) =>
+    value.startsWith(`${selectedYear}-`));
+  const weeksInDisplayedMonth = resolvedWeekOptions
+    .filter((option) => option.months.includes(displayedMonth))
+    .map((option) => option.week);
+
+  const move = (amount: number) => {
+    const next = activePeriods[activeIndex + amount];
+    if (next) onNavigate(view, next);
+  };
+
+  const selectMonth = (nextMonth: string) => {
+    if (view === "month") {
+      onNavigate("month", nextMonth);
+      return;
+    }
+    const nextWeek = resolvedWeekOptions
+      .filter((option) => option.months.includes(nextMonth))
+      .map((option) => option.week)
+      .at(-1);
+    if (nextWeek) onNavigate("week", nextWeek);
+  };
+
+  return (
+    <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", flexWrap: "nowrap", mb: 2, minWidth: 0 }}>
+      <Button
+        aria-label={view === "month" ? "Previous month" : "Previous week"}
+        disabled={activeIndex <= 0}
+        onClick={() => move(-1)}
+        size="small"
+        sx={{ flexShrink: 0, minWidth: 36, px: 0.5 }}
+        variant="outlined"
+      >
+        <ChevronLeftRoundedIcon />
+      </Button>
+      <Stack direction="row" spacing={0.5} sx={{ display: view === "week" ? { xs: "none", sm: "flex" } : "flex", flexShrink: 0 }}>
+        <FormControl size="small" sx={{ flexShrink: 0, minWidth: { xs: 110, sm: 130 } }}>
+          <Select aria-label="Displayed month" onChange={(event) => selectMonth(event.target.value)} value={displayedMonth}>
+            {monthsInSelectedYear.map((value) => <MenuItem key={value} value={value}>{monthLabel(value)}</MenuItem>)}
+          </Select>
+        </FormControl>
+        <FormControl size="small" sx={{ flexShrink: 0, minWidth: { xs: 76, sm: 92 } }}>
+          <Select aria-label="Displayed year" onChange={(event) => {
+            const nextMonth = selectableMonths.find((value) =>
+              value.startsWith(`${event.target.value}-`));
+            if (nextMonth) selectMonth(nextMonth);
+          }} value={selectedYear}>
+            {availableYears.map((value) => <MenuItem key={value} value={value}>{value}</MenuItem>)}
+          </Select>
+        </FormControl>
+      </Stack>
+      {view === "week" ? (
+        <FormControl size="small" sx={{ flexGrow: { xs: 1, sm: 0 }, minWidth: { xs: 0, sm: 205 } }}>
+          <Select aria-label="Displayed week" onChange={(event) => onNavigate("week", event.target.value)} value={week}>
+            {weeksInDisplayedMonth.map((value) => <MenuItem key={value} value={value}>{weekLabel(value)}</MenuItem>)}
+          </Select>
+        </FormControl>
+      ) : null}
+      <Button
+        aria-label={view === "month" ? "Next month" : "Next week"}
+        disabled={activeIndex < 0 || activeIndex >= activePeriods.length - 1}
+        onClick={() => move(1)}
+        size="small"
+        sx={{ flexShrink: 0, minWidth: 36, px: 0.5 }}
+        variant="outlined"
+      >
+        <ChevronRightRoundedIcon />
+      </Button>
+    </Stack>
+  );
+}
+
+export function CalendarClient({
+  accountSelectionRef,
+  availableMonths,
+  availableWeeks,
+  availableWeekOptions = [],
+  decisionNoticeRef,
+  initialData,
+  initialFilters,
+  initialView,
+  selectedMonth,
+  selectedWeek,
+}: {
+  accountSelectionRef: string;
+  availableMonths: readonly string[];
+  availableWeeks: readonly string[];
+  availableWeekOptions: readonly CalendarWeekOption[];
+  decisionNoticeRef: string | null;
   initialData: CalendarData;
   initialFilters: CalendarFilterInput;
   initialView: CalendarView;
+  selectedMonth: string;
+  selectedWeek: string;
 }) {
   const router = useRouter();
   const [view, setView] = useState<CalendarView>(initialView);
-  const [activeMonth, setActiveMonth] = useState(initialData.activeDate.slice(0, 7));
+  const [activeMonth, setActiveMonth] = useState(selectedMonth);
   const [selectedDate, setSelectedDate] = useState(initialData.activeDate);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [expandedTickerId, setExpandedTickerId] = useState<string | null>(null);
+  const [tickerDetailState, setTickerDetailState] = useState<TickerDetailState>({
+    status: "idle",
+    trades: [],
+  });
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [savedViewsOpen, setSavedViewsOpen] = useState(false);
   const [savedViews, setSavedViews] = useState<SavedView[]>([]);
   const [filters, setFilters] = useState<CalendarFilterInput>(initialFilters);
-
+  const resolvedWeekOptions = availableWeekOptions.length > 0
+    ? availableWeekOptions
+    : availableWeeks.map((week) => ({ months: [week.slice(0, 7)], week }));
   const selected = initialData.days.find((day) => day.date === selectedDate) ?? emptyDay(selectedDate);
+  const expandedTicker = expandedTickerId === null
+    ? null
+    : selected.tickers.find((ticker) => ticker.instrumentId === expandedTickerId) ?? null;
+
+  useEffect(() => {
+    setActiveMonth(selectedMonth);
+    setSelectedDate(initialData.activeDate);
+    setDetailsOpen(false);
+    setExpandedTickerId(null);
+    setView(initialView);
+  }, [initialData.activeDate, initialView, selectedMonth]);
+
+  useEffect(() => {
+    if (!detailsOpen || !expandedTicker) {
+      setTickerDetailState({ status: "idle", trades: [] });
+      return;
+    }
+    const controller = new AbortController();
+    setTickerDetailState({ status: "loading", trades: [] });
+    const roundTripIds = expandedTicker.trades.map((trade) => trade.roundTripId);
+    void fetch(`/api/platform/journal/calendar/ticker-details?roundTripIds=${encodeURIComponent(roundTripIds.join(","))}`, {
+      cache: "no-store",
+      signal: controller.signal,
+    }).then(async (response) => {
+      if (!response.ok) throw new Error("ticker_details_unavailable");
+      return response.json() as Promise<Readonly<{ trades: readonly TickerTradeDetail[] }>>;
+    }).then((result) => {
+      setTickerDetailState({ status: "ready", trades: result.trades });
+    }).catch((error: unknown) => {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setTickerDetailState({ status: "error", trades: [] });
+    });
+    return () => controller.abort();
+  }, [detailsOpen, expandedTickerId, selectedDate]);
+
+  const tickerDetailsByRoundTripId = new Map(tickerDetailState.trades.map((trade) => [
+    trade.roundTripId,
+    trade,
+  ]));
   const monthGrid = buildMonthGrid(activeMonth, initialData.days);
-  const weekDays = buildWeek(selectedDate, initialData.days);
+  const weekDays = buildWeek(selectedWeek, initialData.days);
+  const showingCurrentWeek = selectedWeek === currentWeekInTimezone(initialData.timezone);
   const activeFilterCount = [
     filters.currency,
     filters.direction,
@@ -234,23 +550,39 @@ export function CalendarClient({ initialData, initialFilters, initialView }: {
     tradeCount: "all",
   });
 
+  const navigatePeriod = (nextView: CalendarView, period: string) => {
+    const query = new URLSearchParams({ view: nextView });
+    query.set(nextView === "month" ? "month" : "week", period);
+    router.push(`/calendar?${query.toString()}`);
+  };
+  const showLegacyCalendarControls = false;
+
   return (
     <DashboardPage>
       <Stack direction={{ xs: "column", lg: "row" }} spacing={1} sx={{ alignItems: { lg: "center" }, justifyContent: "space-between" }}>
-        <ToggleButtonGroup exclusive onChange={(_, value: CalendarView | null) => value && setView(value)} size="small" value={view}>
+        <ToggleButtonGroup exclusive onChange={(_, value: CalendarView | null) => {
+          if (!value) return;
+          if (value === "month") {
+            navigatePeriod("month", selectedWeek.slice(0, 7));
+            return;
+          }
+          const weekInDisplayedMonth = availableWeeks.filter((week) =>
+            week.startsWith(`${activeMonth}-`)).at(-1);
+          navigatePeriod("week", weekInDisplayedMonth ?? selectedWeek);
+        }} size="small" value={view}>
           <ToggleButton value="month">Month</ToggleButton>
           <ToggleButton value="week">Week</ToggleButton>
         </ToggleButtonGroup>
-        <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1 }}>
+        {showLegacyCalendarControls ? <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1 }}>
           <Button onClick={() => setFiltersOpen(true)} startIcon={<DateRangeRoundedIcon />} variant="outlined">Date range</Button>
           <Button onClick={() => setFiltersOpen(true)} startIcon={<FilterAltRoundedIcon />} variant="outlined">P/L and session filters{activeFilterCount ? ` (${activeFilterCount})` : ""}</Button>
           <Button onClick={() => setSavedViewsOpen(true)} startIcon={<SaveRoundedIcon />} variant="outlined">Saved views</Button>
-        </Stack>
+        </Stack> : null}
       </Stack>
 
       <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
         {initialData.state !== "unavailable" ? <DashboardDataScopeChip /> : null}
-        <Typography color="text.secondary" sx={{ alignSelf: "center" }} variant="caption">
+        <Typography color="text.secondary" sx={{ alignSelf: "center", display: initialData.state === "ready" ? "none" : undefined }} variant="caption">
           {initialData.state === "ready"
             ? `${initialData.currency} · accepted completed trades · ${initialData.timezone}`
             : initialData.state === "empty"
@@ -259,41 +591,38 @@ export function CalendarClient({ initialData, initialFilters, initialView }: {
         </Typography>
       </Stack>
 
-      {initialData.coverage.needsDecisionCount > 0 || initialData.coverage.feeIncompleteCount > 0 ? (
-        <Alert
-          action={initialData.coverage.needsDecisionCount > 0 ? (
-            <Button color="inherit" href="/data-decisions" size="small">
-              Review Data Decisions
-            </Button>
-          ) : undefined}
-          severity="warning"
+      {initialData.coverage.needsDecisionCount > 0 && decisionNoticeRef ? (
+        <DismissibleDataDecisionNotice
+          accountSelectionRef={accountSelectionRef}
+          evidenceRef={decisionNoticeRef}
+          surface="calendar"
         >
-          {initialData.coverage.needsDecisionCount > 0
-            ? `${initialData.coverage.needsDecisionCount} trade chain${initialData.coverage.needsDecisionCount === 1 ? "" : "s"} need a factual decision. Valid unrelated trades remain visible.`
-            : "Net P/L is unavailable for trades whose reported fees cannot be applied safely."}
-        </Alert>
+          {initialData.coverage.needsDecisionCount} trade chain{initialData.coverage.needsDecisionCount === 1 ? "" : "s"} need a factual decision. Valid unrelated trades remain visible.
+        </DismissibleDataDecisionNotice>
       ) : null}
 
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "repeat(1, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))" } }}>
-        <DashboardMetricCard caption="Selected period" label="Net P/L" value={initialData.state === "ready" ? money(initialData.summary.netPnlDecimal, initialData.currency) : "—"} />
+        <DashboardMetricCard caption="Selected period" label="P/L" value={initialData.state === "ready" ? money(initialData.summary.netPnlDecimal, initialData.currency) : "—"} />
         <DashboardMetricCard caption="Selected period" label="Trades" value={initialData.state === "ready" ? String(initialData.summary.tradeCount) : "—"} />
         <DashboardMetricCard caption="Selected period" label="Win rate" value={initialData.state === "ready" ? percent(initialData.summary.winRatePercentDecimal) : "—"} />
       </Box>
 
-      <DashboardPanel
-        action={<Stack direction="row" spacing={0.75}>
-          <Button aria-label="Previous period" onClick={() => view === "month" ? setActiveMonth((month) => shiftMonth(month, -1)) : setSelectedDate((date) => new Date(new Date(`${date}T12:00:00.000Z`).getTime() - 604800000).toISOString().slice(0, 10))} size="small" variant="outlined"><ChevronLeftRoundedIcon /></Button>
-          <Button onClick={() => { setActiveMonth(initialData.activeDate.slice(0, 7)); setSelectedDate(initialData.activeDate); }} size="small" variant="outlined">Today</Button>
-          <Button aria-label="Next period" onClick={() => view === "month" ? setActiveMonth((month) => shiftMonth(month, 1)) : setSelectedDate((date) => new Date(new Date(`${date}T12:00:00.000Z`).getTime() + 604800000).toISOString().slice(0, 10))} size="small" variant="outlined"><ChevronRightRoundedIcon /></Button>
-        </Stack>}
-        title={view === "week" ? "Trading week" : monthLabel(activeMonth)}
-      >
+      <DashboardPanel hideHeader>
+        <CalendarPeriodNavigation
+          availableMonths={availableMonths}
+          availableWeeks={availableWeeks}
+          availableWeekOptions={resolvedWeekOptions}
+          month={activeMonth}
+          onNavigate={navigatePeriod}
+          view={view}
+          week={selectedWeek}
+        />
         {view === "month" ? (
           <Box sx={{ overflowX: "auto" }}>
             <Box sx={{ minWidth: 900 }}>
               <Box sx={{ borderColor: "divider", borderLeft: 1, display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))" }}>
                 {weekdayLabels.map((label) => <Box key={label} sx={{ borderBottom: 1, borderColor: "divider", borderRight: 1, px: 1.5, py: 1 }}><Typography color="text.secondary" sx={{ fontWeight: 800 }} variant="caption">{label}</Typography></Box>)}
-                {monthGrid.map((day, index) => day === null ? <Box key={`blank-${index}`} sx={{ bgcolor: "rgba(246, 248, 252, 0.7)", borderBottom: 1, borderColor: "divider", borderRight: 1, minHeight: 230 }} /> : <DayCell currency={initialData.currency} day={day} key={day.date} mode="month" onSelect={() => { setSelectedDate(day.date); setDetailsOpen(true); }} selected={selectedDate === day.date} />)}
+                {monthGrid.map((day, index) => day === null ? <Box key={`blank-${index}`} sx={{ bgcolor: "rgba(246, 248, 252, 0.7)", borderBottom: 1, borderColor: "divider", borderRight: 1, minHeight: 230 }} /> : <DayCell currency={initialData.currency} day={day} key={day.date} mode="month" onSelect={() => { setSelectedDate(day.date); setExpandedTickerId(null); setDetailsOpen(true); }} onTickerClick={(ticker) => { setSelectedDate(day.date); setExpandedTickerId(ticker.instrumentId); setDetailsOpen(true); }} selected={selectedDate === day.date} showReviewStatus={false} />)}
               </Box>
             </Box>
           </Box>
@@ -302,7 +631,7 @@ export function CalendarClient({ initialData, initialFilters, initialView }: {
             <Box sx={{ minWidth: 1000 }}>
               <Box sx={{ borderColor: "divider", borderLeft: 1, display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))" }}>
                 {weekDays.map((day) => <Box key={`${day.date}-label`} sx={{ borderBottom: 1, borderColor: "divider", borderRight: 1, px: 2.25, py: 1.25 }}><Typography color="text.secondary" sx={{ fontWeight: 800 }} variant="caption">{new Date(`${day.date}T12:00:00.000Z`).toLocaleDateString("en-US", { day: "numeric", month: "short", weekday: "long" })}</Typography></Box>)}
-                {weekDays.map((day) => <DayCell currency={initialData.currency} day={day} key={day.date} mode="week" onSelect={() => { setSelectedDate(day.date); setDetailsOpen(true); }} selected={selectedDate === day.date} />)}
+                {weekDays.map((day) => <DayCell currency={initialData.currency} day={day} key={day.date} mode="week" onSelect={() => { setSelectedDate(day.date); setExpandedTickerId(null); setDetailsOpen(true); }} onTickerClick={(ticker) => { setSelectedDate(day.date); setExpandedTickerId(ticker.instrumentId); setDetailsOpen(true); }} selected={selectedDate === day.date} showReviewStatus={showingCurrentWeek} />)}
               </Box>
             </Box>
           </Box>
@@ -338,16 +667,89 @@ export function CalendarClient({ initialData, initialFilters, initialView }: {
         </Stack>
       </Drawer>
 
-      <Drawer anchor="right" onClose={() => setDetailsOpen(false)} open={detailsOpen} slotProps={{ paper: { sx: { p: 3, width: { xs: "100%", sm: 420 } } } }}>
+      <Drawer anchor="right" onClose={() => { setDetailsOpen(false); setExpandedTickerId(null); }} open={detailsOpen} slotProps={{ paper: { sx: { p: 3, width: { xs: "100%", sm: 520 } } } }}>
+        {detailsOpen ? (
+          <>
+            <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+              <Typography component="h2" variant="h5">{new Date(`${selected.date}T12:00:00.000Z`).toLocaleDateString("en-US", { day: "numeric", month: "long", weekday: "long" })}</Typography>
+              <Button aria-label="Close day details" onClick={() => { setDetailsOpen(false); setExpandedTickerId(null); }} size="small" startIcon={<CloseRoundedIcon />}>Close</Button>
+            </Stack>
+            <Stack direction="row" sx={{ alignItems: "baseline", justifyContent: "space-between", mt: 0.75 }}>
+              <Typography color="text.secondary" variant="body2">
+                {selected.tradeCount > 0 ? `${selected.tradeCount} trades · ${percent(selected.winRatePercentDecimal)} win rate` : "Swing journal activity"}
+              </Typography>
+              <Typography color={selected.pnlSign === -1 ? "error.main" : "success.main"} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 850 }}>
+                {money(selected.pnlDecimal, initialData.currency)}
+              </Typography>
+            </Stack>
+            {selected.tradeCount > 0 ? (
+              <Button href={`/trade-tracker/${selected.date}`} sx={{ mt: 2 }} variant="outlined">Trade tracker</Button>
+            ) : null}
+            <Stack spacing={1} sx={{ mt: 2 }}>
+              {selected.tickers.map((ticker) => (
+                <Accordion
+                  disableGutters
+                  elevation={0}
+                  expanded={expandedTickerId === ticker.instrumentId}
+                  key={ticker.instrumentId}
+                  onChange={(_, isExpanded) => setExpandedTickerId(isExpanded ? ticker.instrumentId : null)}
+                  sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, "&:before": { display: "none" }, overflow: "hidden" }}
+                >
+                  <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />} sx={{ bgcolor: pnlTone(ticker.pnlSign).backgroundColor, px: 1.5 }}>
+                    <Box sx={{ minWidth: 0, width: "100%" }}>
+                      <Stack direction="row" sx={{ alignItems: "baseline", justifyContent: "space-between", pr: 1 }}>
+                        <Typography sx={{ fontWeight: 850 }}>{ticker.symbol}</Typography>
+                        <Typography color={pnlTone(ticker.pnlSign).color} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 800 }}>{money(ticker.pnlDecimal, initialData.currency)}</Typography>
+                      </Stack>
+                      <Typography color="text.secondary" variant="caption">{ticker.trades.length} trade{ticker.trades.length === 1 ? "" : "s"}</Typography>
+                      <TickerAnnotationChips compact={false} noteCount={ticker.noteCount} ruleReviewCount={ticker.ruleReviewCount} tagCount={ticker.tagCount} />
+                    </Box>
+                  </AccordionSummary>
+                  <AccordionDetails sx={{ pt: 0 }}>
+                    {expandedTicker?.instrumentId === ticker.instrumentId && tickerDetailState.status === "loading" ? <Typography color="text.secondary" variant="body2">Loading trade details...</Typography> : null}
+                    {expandedTicker?.instrumentId === ticker.instrumentId && tickerDetailState.status === "error" ? <Typography color="error.main" variant="body2">Trade details could not be loaded.</Typography> : null}
+                    {expandedTicker?.instrumentId === ticker.instrumentId && tickerDetailState.status === "ready" ? (
+                      <Stack divider={<Divider flexItem />}>
+                        {ticker.trades.map((trade, index) => {
+                          const tone = pnlTone(trade.pnlSign);
+                          const detail = tickerDetailsByRoundTripId.get(trade.roundTripId);
+                          return <Box key={trade.roundTripId} sx={{ backgroundColor: tone.backgroundColor, borderRadius: 1, my: 0.75, px: 1.25, py: 1.5 }}>
+                            <Stack direction="row" sx={{ alignItems: "baseline", justifyContent: "space-between" }}>
+                              <Typography sx={{ fontWeight: 800 }}>Trade {index + 1}</Typography>
+                              <Typography color={tone.color} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 800 }}>{money(trade.pnlDecimal, initialData.currency)}</Typography>
+                            </Stack>
+                            {detail?.tags.length ? <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.5, mt: 1 }}>{detail.tags.map((tag) => <Chip key={tag} label={tag} size="small" variant="outlined" />)}</Stack> : null}
+                            {detail?.notes.map((note) => <Typography key={note} sx={{ mt: 1.25, whiteSpace: "pre-wrap" }} variant="body2">{note}</Typography>)}
+                            <Accordion disableGutters elevation={0} sx={{ "&:before": { display: "none" }, mt: 1 }}>
+                              <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>Show executions ({detail?.executions.length ?? 0})</AccordionSummary>
+                              <AccordionDetails sx={{ pb: 1, pl: 2.5, pr: 1 }}>
+                                <Stack divider={<Divider flexItem />} spacing={0.75}>
+                                  {detail?.executions.map((execution, index) => <Stack key={`${execution.executed_at_utc}-${execution.side}-${execution.quantity_decimal}-${execution.price_decimal ?? "none"}-${index}`} spacing={0.25} sx={{ py: 0.75 }}><Typography color="text.secondary" variant="caption">{executionTimestamp(execution.executed_at_utc, initialData.timezone)}</Typography><Typography variant="body2">{execution.side === "buy" ? "Buy" : "Sell"} {formatJournalAnalyticsDecimal(execution.quantity_decimal)} shares @ {price(execution.price_decimal, initialData.currency)}</Typography></Stack>)}
+                                </Stack>
+                              </AccordionDetails>
+                            </Accordion>
+                          </Box>;
+                        })}
+                      </Stack>
+                    ) : null}
+                  </AccordionDetails>
+                </Accordion>
+              ))}
+            </Stack>
+          </>
+        ) : null}
+      </Drawer>
+
+      <Drawer anchor="right" onClose={() => setDetailsOpen(false)} open={false} slotProps={{ paper: { sx: { p: 3, width: { xs: "100%", sm: 420 } } } }}>
         <Typography color="text.secondary" sx={{ fontWeight: 750 }} variant="caption">CALENDAR DAY</Typography>
         <Stack direction="row" sx={{ alignItems: "baseline", justifyContent: "space-between", mt: 0.75 }}>
           <Typography component="h2" variant="h5">{new Date(`${selected.date}T12:00:00.000Z`).toLocaleDateString("en-US", { day: "numeric", month: "long", weekday: "long" })}</Typography>
-          <Typography color={selected.pnlSign === -1 ? "error.main" : "success.main"} sx={{ fontWeight: 850 }} variant="h6">{money(selected.pnlDecimal, initialData.currency)}</Typography>
+          {selected.tradeCount > 0 ? <Typography color={selected.pnlSign === -1 ? "error.main" : "success.main"} sx={{ fontWeight: 850 }} variant="h6">{money(selected.pnlDecimal, initialData.currency)}</Typography> : null}
         </Stack>
-        <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">{selected.tradeCount} trades · {percent(selected.winRatePercentDecimal)} win rate · Peak giveback {money(selected.peakGivebackDecimal, initialData.currency)}</Typography>
+        <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">{selected.tradeCount > 0 ? `${selected.tradeCount} trades · ${percent(selected.winRatePercentDecimal)} win rate · Peak giveback ${money(selected.peakGivebackDecimal, initialData.currency)}` : "Swing journal activity"}</Typography>
         <Divider sx={{ my: 2.5 }} />
         <Typography sx={{ fontWeight: 800 }} variant="body2">Ticker results</Typography>
-        <Stack divider={<Divider flexItem />} sx={{ mt: 1 }}>{selected.tickers.map((ticker) => <Stack direction="row" key={ticker.instrumentId} sx={{ justifyContent: "space-between", py: 1.4 }}><Typography sx={{ fontWeight: 800 }}>{ticker.symbol}</Typography><Typography color={ticker.pnlSign === -1 ? "error.main" : "success.main"} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 800 }}>{money(ticker.pnlDecimal, initialData.currency)}</Typography></Stack>)}</Stack>
+        <Stack divider={<Divider flexItem />} sx={{ mt: 1 }}>{selected.tickers.map((ticker) => <Stack key={ticker.instrumentId} sx={{ py: 1.4 }}><Stack direction="row" sx={{ justifyContent: "space-between" }}><Typography sx={{ fontWeight: 800 }}>{ticker.symbol}</Typography><Typography color={ticker.pnlSign === -1 ? "error.main" : "success.main"} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 800 }}>{money(ticker.pnlDecimal, initialData.currency)}</Typography></Stack><TickerAnnotationChips compact={false} noteCount={ticker.noteCount} ruleReviewCount={ticker.ruleReviewCount} tagCount={ticker.tagCount} /></Stack>)}</Stack>
       </Drawer>
     </DashboardPage>
   );

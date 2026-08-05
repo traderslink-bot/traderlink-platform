@@ -5,6 +5,7 @@ import {
   requireExpectedJournalAccountSelection,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { serializeJournalAccountSelectionCookie } from "@/src/modules/platform/server/authentication/journal-account-selection-cookie";
+import { requireJournalMutationRequest } from "@/src/modules/platform/server/authentication/journal-mutation-request-security";
 import { isTraderLinkPlatformError, platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
 
 export const runtime = "nodejs";
@@ -27,6 +28,7 @@ function requiredString(
 
 export async function POST(request: Request): Promise<Response> {
   try {
+    requireJournalMutationRequest(request);
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
     const body: unknown = await request.json();
     if (!isRecord(body) || scope.allowedAccountIds.length >= 25) {

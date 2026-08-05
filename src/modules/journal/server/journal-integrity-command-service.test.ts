@@ -26,6 +26,7 @@ import {
 } from "./imports/journal-import-service";
 import { JournalImportRepository } from "./imports/journal-import-repository";
 import { JournalProductReadService } from "./product/journal-product-read-service";
+import { JournalExecutionReconciliationRepository } from "./reconciliation/journal-execution-reconciliation-repository";
 import { JournalRoundTripRepository } from "./round-trips/journal-round-trip-repository";
 import { JournalRoundTripService } from "./round-trips/journal-round-trip-service";
 import { JournalIntegrityCommandService } from "./journal-integrity-command-service";
@@ -152,6 +153,7 @@ function setup() {
       activeKeyVersion: "testkey",
       keysBase64: { testkey: key.toString("base64") },
     }),
+    new JournalExecutionReconciliationRepository(database),
   );
   const roundTrips = new JournalRoundTripService(new JournalRoundTripRepository(database));
   const decisions = new JournalDataDecisionService(
@@ -161,6 +163,7 @@ function setup() {
     executions,
     new JournalExecutionService(executions),
     roundTrips,
+    new JournalExecutionReconciliationRepository(database),
   );
   return Object.freeze({
     database,
@@ -210,6 +213,372 @@ function commitBroker(context: ReturnType<typeof setup>, csvText: string, minute
 }
 
 describe("Journal integrity command service", () => {
+  it("lets the trader confirm a broker row as the same execution without losing the manual identity", () => {
+    const context = setup();
+    try {
+      const manual = context.command.commitManualExecutions(context.scope, {
+        accountId: context.accountScope.accountId,
+        idempotencyKey: "manual-broker-reconcile-0001",
+        sourceDisplayLabel: "Current trade entry",
+        confirmedTraderBoundaries: true,
+        entries: [{
+          sourceTimestampText: "2026-01-08, 09:35:00",
+          sourceTimezone: "America/New_York",
+          normalizedSymbol: "RECON",
+          tradeCurrency: "USD",
+          side: "buy",
+          quantityDecimal: "50",
+          priceDecimal: "7.5",
+          feesDecimal: null,
+          feeCurrency: null,
+          feeSignConvention: "not_reported",
+        }],
+        now: new Date("2026-08-01T12:30:00.000Z"),
+      });
+      const manualExecutionId = manual.executionIds[0]!;
+      const broker = commitBroker(context, statement({
+        period: "January 1, 2026 - January 31, 2026",
+        trades: [{
+          symbol: "RECON",
+          timestamp: "2026-01-08, 09:36:00",
+          quantity: "50",
+          price: "7.5",
+          id: "RECON-BROKER-1",
+        }],
+        positions: [{ symbol: "RECON", prior: "0", current: "50" }],
+        openPositions: [{ symbol: "RECON", quantity: "50" }],
+      }), 5);
+      const product = new JournalProductReadService(context.database)
+        .listDataDecisions(context.accountScope);
+      const overlap = product.pending.find((item) =>
+        item.issueCode === "manual_broker_possible_duplicate");
+      expect(overlap).toMatchObject({
+        targetKind: "overlap_set",
+        effectCode: "provisional_import_withheld_manual_active",
+        allowedActions: [
+          "merge_supported_duplicate",
+          "keep_distinct",
+          "correct_execution_fact",
+        ],
+      });
+      expect(overlap?.executions.map((execution) => execution.sourceLabel)).toEqual([
+        "Manual entry",
+        "Broker statement",
+      ]);
+      const brokerEvidence = overlap?.executions.find((execution) =>
+        execution.sourceLabel === "Broker statement");
+      const manualEvidence = overlap?.executions.find((execution) =>
+        execution.sourceLabel === "Manual entry");
+      expect(manualEvidence?.executionId).toBe(manualExecutionId);
+      expect(broker.relatedDecisionIds).toContain(overlap?.decisionId);
+      const repeatedEvidence = commitBroker(context, statement({
+        period: "January 1, 2026 - February 28, 2026",
+        trades: [{
+          symbol: "RECON",
+          timestamp: "2026-01-08, 09:36:00",
+          quantity: "50",
+          price: "7.5",
+          id: "RECON-BROKER-1",
+        }],
+        positions: [{ symbol: "RECON", prior: "0", current: "50" }],
+        openPositions: [{ symbol: "RECON", quantity: "50" }],
+      }), 8);
+      expect(repeatedEvidence).toMatchObject({
+        pendingSourceDecisionCount: 1,
+        relatedDecisionIds: expect.arrayContaining([overlap?.decisionId]),
+      });
+      expect(context.database.prepare(`SELECT current_state, pending_decision_count
+FROM journal_import_batches WHERE import_batch_id = ?`).get(
+        repeatedEvidence.importBatchId,
+      )).toEqual({
+        current_state: "accepted_with_decisions",
+        pending_decision_count: 1,
+      });
+
+      context.decisions.resolve(context.accountScope, {
+        decisionId: overlap!.decisionId,
+        expectedRevision: overlap!.revision,
+        action: "merge_supported_duplicate",
+        duplicateExecutionId: brokerEvidence!.executionId,
+        retainedExecutionId: manualExecutionId,
+        expectedDuplicateVersionId: brokerEvidence!.currentVersionId,
+        reasonCode: "broker_matches_manual_entry",
+        now: new Date("2026-08-01T13:10:00.000Z"),
+      });
+
+      expect(context.database.prepare(`SELECT current_state FROM journal_executions
+WHERE execution_id = ?`).get(manualExecutionId)).toEqual({ current_state: "accepted" });
+      expect(context.database.prepare(`SELECT current_state FROM journal_executions
+WHERE execution_id = ?`).get(brokerEvidence!.executionId)).toEqual({ current_state: "superseded" });
+      expect(context.database.prepare(`SELECT version.executed_at_utc
+FROM journal_executions execution
+JOIN journal_execution_versions version
+  ON version.execution_version_id = execution.current_version_id
+WHERE execution.execution_id = ?`).get(manualExecutionId)).toEqual({
+        executed_at_utc: "2026-01-08T14:36:00.000Z",
+      });
+      expect(context.database.prepare(`SELECT state
+FROM journal_execution_reconciliation_sets`).get()).toEqual({ state: "same_execution" });
+      expect(context.database.prepare(`SELECT current_state, pending_decision_count
+FROM journal_import_batches WHERE import_batch_id = ?`).get(broker.importBatchId)).toEqual({
+        current_state: "accepted",
+        pending_decision_count: 0,
+      });
+      expect(context.database.prepare(`SELECT current_state, pending_decision_count
+FROM journal_import_batches WHERE import_batch_id = ?`).get(
+        repeatedEvidence.importBatchId,
+      )).toEqual({
+        current_state: "accepted",
+        pending_decision_count: 0,
+      });
+    } finally {
+      context.database.close();
+    }
+  });
+
+  it("lets the trader keep a possible broker match as a separate execution", () => {
+    const context = setup();
+    try {
+      context.command.commitManualExecutions(context.scope, {
+        accountId: context.accountScope.accountId,
+        idempotencyKey: "manual-broker-separate-0001",
+        sourceDisplayLabel: "Current trade entry",
+        confirmedTraderBoundaries: true,
+        entries: [{
+          sourceTimestampText: "2026-01-08, 09:35:00",
+          sourceTimezone: "America/New_York",
+          normalizedSymbol: "SEPARATE",
+          tradeCurrency: "USD",
+          side: "buy",
+          quantityDecimal: "50",
+          priceDecimal: "7.5",
+          feesDecimal: null,
+          feeCurrency: null,
+          feeSignConvention: "not_reported",
+        }],
+        now: new Date("2026-08-01T12:30:00.000Z"),
+      });
+      commitBroker(context, statement({
+        period: "January 1, 2026 - January 31, 2026",
+        trades: [{
+          symbol: "SEPARATE",
+          timestamp: "2026-01-08, 09:36:00",
+          quantity: "50",
+          price: "7.6",
+          id: "SEPARATE-BROKER-1",
+        }],
+        positions: [{ symbol: "SEPARATE", prior: "0", current: "100" }],
+        openPositions: [{ symbol: "SEPARATE", quantity: "100" }],
+      }), 6);
+      const overlap = new JournalProductReadService(context.database)
+        .listDataDecisions(context.accountScope).pending.find((item) =>
+          item.issueCode === "manual_broker_possible_duplicate")!;
+      const brokerEvidence = overlap.executions.find((execution) =>
+        execution.sourceLabel === "Broker statement")!;
+      context.decisions.resolve(context.accountScope, {
+        decisionId: overlap.decisionId,
+        expectedRevision: overlap.revision,
+        action: "keep_distinct",
+        executionId: brokerEvidence.executionId,
+        expectedCurrentVersionId: brokerEvidence.currentVersionId,
+        reasonCode: "confirmed_separate_execution",
+      });
+      expect(context.database.prepare(`SELECT current_state, COUNT(*) AS count
+FROM journal_executions GROUP BY current_state`).all()).toEqual([
+        { current_state: "accepted", count: 2 },
+      ]);
+      expect(context.database.prepare(`SELECT state
+FROM journal_execution_reconciliation_sets`).get()).toEqual({
+        state: "separate_executions",
+      });
+    } finally {
+      context.database.close();
+    }
+  });
+
+  it("uses exact broker fills after the trader confirms a grouped manual match", () => {
+    const context = setup();
+    try {
+      context.command.commitManualExecutions(context.scope, {
+        accountId: context.accountScope.accountId,
+        idempotencyKey: "manual-broker-grouped-0001",
+        sourceDisplayLabel: "Current swing entry",
+        confirmedTraderBoundaries: true,
+        entries: [{
+          sourceTimestampText: "2026-01-08, 09:35:00",
+          sourceTimezone: "America/New_York",
+          normalizedSymbol: "GROUPED",
+          tradeCurrency: "USD",
+          side: "buy",
+          quantityDecimal: "100",
+          priceDecimal: "7.5",
+          feesDecimal: null,
+          feeCurrency: null,
+          feeSignConvention: "not_reported",
+        }],
+        now: new Date("2026-08-01T12:30:00.000Z"),
+      });
+      commitBroker(context, statement({
+        period: "January 1, 2026 - January 31, 2026",
+        trades: [
+          {
+            symbol: "GROUPED",
+            timestamp: "2026-01-08, 09:36:00",
+            quantity: "40",
+            price: "7.49",
+            id: "GROUPED-BROKER-1",
+          },
+          {
+            symbol: "GROUPED",
+            timestamp: "2026-01-08, 09:36:02",
+            quantity: "60",
+            price: "7.51",
+            id: "GROUPED-BROKER-2",
+          },
+        ],
+        positions: [{ symbol: "GROUPED", prior: "0", current: "100" }],
+        openPositions: [{ symbol: "GROUPED", quantity: "100" }],
+      }), 7);
+      const overlap = new JournalProductReadService(context.database)
+        .listDataDecisions(context.accountScope).pending.find((item) =>
+          item.issueCode === "manual_broker_grouped_fill_candidate")!;
+      expect(overlap).toMatchObject({
+        allowedActions: [
+          "reconcile_grouped_fills",
+          "keep_distinct",
+          "correct_execution_fact",
+        ],
+      });
+      expect(overlap.executions.filter((execution) =>
+        execution.sourceLabel === "Broker statement")).toHaveLength(2);
+      context.decisions.resolve(context.accountScope, {
+        decisionId: overlap.decisionId,
+        expectedRevision: overlap.revision,
+        action: "reconcile_grouped_fills",
+        reasonCode: "confirmed_grouped_broker_fills",
+      });
+      expect(context.database.prepare(`SELECT current_state, COUNT(*) AS count
+FROM journal_executions GROUP BY current_state ORDER BY current_state`).all()).toEqual([
+        { current_state: "accepted", count: 2 },
+        { current_state: "superseded", count: 1 },
+      ]);
+      expect(count(
+        context.database,
+        "journal_data_decision_event_action_extensions",
+        "WHERE extended_action = 'reconcile_grouped_fills'",
+      )).toBe(1);
+      expect(context.database.prepare(`SELECT state
+FROM journal_execution_reconciliation_sets`).get()).toEqual({ state: "same_execution" });
+    } finally {
+      context.database.close();
+    }
+  });
+
+  it("keeps a corrected manual candidate open until the correction makes the executions distinct", () => {
+    const context = setup();
+    try {
+      context.command.commitManualExecutions(context.scope, {
+        accountId: context.accountScope.accountId,
+        idempotencyKey: "manual-broker-correct-0001",
+        sourceDisplayLabel: "Current trade entry",
+        confirmedTraderBoundaries: true,
+        entries: [{
+          sourceTimestampText: "2026-01-08, 09:35:00",
+          sourceTimezone: "America/New_York",
+          normalizedSymbol: "CORRECT",
+          tradeCurrency: "USD",
+          side: "buy",
+          quantityDecimal: "50",
+          priceDecimal: "7.5",
+          feesDecimal: null,
+          feeCurrency: null,
+          feeSignConvention: "not_reported",
+        }],
+        now: new Date("2026-08-01T12:30:00.000Z"),
+      });
+      const broker = commitBroker(context, statement({
+        period: "January 1, 2026 - January 31, 2026",
+        trades: [{
+          symbol: "CORRECT",
+          timestamp: "2026-01-08, 09:36:00",
+          quantity: "50",
+          price: "7.5",
+          id: "CORRECT-BROKER-1",
+        }],
+        positions: [{ symbol: "CORRECT", prior: "0", current: "50" }],
+        openPositions: [{ symbol: "CORRECT", quantity: "50" }],
+      }), 9);
+      const product = new JournalProductReadService(context.database);
+      const first = product.listDataDecisions(context.accountScope).pending.find((item) =>
+        item.issueCode === "manual_broker_possible_duplicate")!;
+      const manual = first.executions.find((execution) =>
+        execution.sourceLabel === "Manual entry")!;
+      const repository = new JournalExecutionRepository(context.database);
+      const firstVersion = repository.currentVersion(
+        manual.executionId,
+        context.accountScope.workspaceId,
+        context.accountScope.accountId,
+      )!;
+      const continued = context.decisions.resolve(context.accountScope, {
+        decisionId: first.decisionId,
+        expectedRevision: first.revision,
+        action: "correct_execution_fact",
+        executionId: manual.executionId,
+        expectedCurrentVersionId: manual.currentVersionId,
+        facts: { ...firstVersion, priceDecimal: "7.4" },
+        idempotencyKey: "manual-overlap-price-correction-01",
+        sourceDisplayLabel: "Corrected manual entry",
+        reasonCode: "correct_manual_entry",
+        now: new Date("2026-08-01T13:10:00.000Z"),
+      });
+      expect(continued.decision).toMatchObject({ state: "pending", revision: 2 });
+      expect(context.database.prepare(`SELECT state
+FROM journal_execution_reconciliation_sets`).get()).toEqual({ state: "pending" });
+      expect(context.database.prepare(`SELECT current_state, pending_decision_count
+FROM journal_import_batches WHERE import_batch_id = ?`).get(broker.importBatchId)).toEqual({
+        current_state: "accepted_with_decisions",
+        pending_decision_count: 1,
+      });
+
+      const second = product.listDataDecisions(context.accountScope).pending.find((item) =>
+        item.decisionId === first.decisionId)!;
+      const correctedManual = second.executions.find((execution) =>
+        execution.sourceLabel === "Manual entry")!;
+      const secondVersion = repository.currentVersion(
+        correctedManual.executionId,
+        context.accountScope.workspaceId,
+        context.accountScope.accountId,
+      )!;
+      const resolved = context.decisions.resolve(context.accountScope, {
+        decisionId: second.decisionId,
+        expectedRevision: second.revision,
+        action: "correct_execution_fact",
+        executionId: correctedManual.executionId,
+        expectedCurrentVersionId: correctedManual.currentVersionId,
+        facts: { ...secondVersion, quantityDecimal: "49" },
+        idempotencyKey: "manual-overlap-quantity-correction-01",
+        sourceDisplayLabel: "Corrected manual entry",
+        reasonCode: "correct_manual_entry",
+        now: new Date("2026-08-01T13:15:00.000Z"),
+      });
+      expect(resolved.decision.state).toBe("resolved");
+      expect(context.database.prepare(`SELECT state
+FROM journal_execution_reconciliation_sets`).get()).toEqual({ state: "corrected" });
+      expect(context.database.prepare(`SELECT current_state, pending_decision_count
+FROM journal_import_batches WHERE import_batch_id = ?`).get(broker.importBatchId)).toEqual({
+        current_state: "accepted",
+        pending_decision_count: 0,
+      });
+      expect(count(
+        context.database,
+        "journal_executions",
+        "WHERE current_state = 'accepted'",
+      )).toBe(2);
+    } finally {
+      context.database.close();
+    }
+  });
+
   it("keeps a statement-only open position visible when its execution is outside coverage", () => {
     const context = setup();
     try {
@@ -1166,6 +1535,85 @@ FROM journal_executions WHERE execution_id = ?`).get(
       expect(count(context.database, "journal_round_trips", "WHERE lifecycle_state = 'active'")).toBe(1);
       expect(count(context.database, "journal_round_trip_versions", "WHERE projection_state = 'ready_closed'")).toBe(1);
       expect(count(context.database, "journal_data_decisions", "WHERE state = 'pending' AND issue_code = 'conflicting_position_facts'")).toBe(1);
+    } finally {
+      context.database.close();
+    }
+  });
+
+  it("scopes a later open-position decision without showing an earlier closed trade", () => {
+    const context = setup();
+    try {
+      commitBroker(context, statement({
+        period: "January 1, 2026 - January 31, 2026",
+        trades: [
+          { symbol: "SCOPED", timestamp: "2026-01-20, 09:30:00", quantity: "100", price: "1", id: "SCOPE-1" },
+          { symbol: "SCOPED", timestamp: "2026-01-20, 09:31:00", quantity: "100", price: "1", id: "SCOPE-2" },
+          { symbol: "SCOPED", timestamp: "2026-01-20, 09:32:00", quantity: "100", price: "1", id: "SCOPE-3" },
+          { symbol: "SCOPED", timestamp: "2026-01-20, 09:33:00", quantity: "100", price: "1", id: "SCOPE-4" },
+          { symbol: "SCOPED", timestamp: "2026-01-20, 09:34:00", quantity: "20", price: "1", id: "SCOPE-5" },
+          { symbol: "SCOPED", timestamp: "2026-01-20, 09:35:00", quantity: "-420", price: "1.2", id: "SCOPE-6" },
+          { symbol: "SCOPED", timestamp: "2026-01-30, 10:00:00", quantity: "6", price: "2", id: "SCOPE-7" },
+          { symbol: "SCOPED", timestamp: "2026-01-30, 10:01:00", quantity: "1", price: "2", id: "SCOPE-8" },
+        ],
+        positions: [
+          { symbol: "SCOPED", prior: "0", current: "7" },
+          { symbol: "SCOPED", prior: "0", current: "0" },
+        ],
+        openPositions: [{ symbol: "SCOPED", quantity: "7" }],
+      }));
+
+      const projections = context.database.prepare(`SELECT projection_state,
+ opened_at_utc, closed_at_utc, final_position_decimal
+FROM journal_round_trip_versions
+ORDER BY opened_at_utc`).all();
+      expect(projections).toEqual([
+        expect.objectContaining({
+          projection_state: "ready_closed",
+          final_position_decimal: "0",
+        }),
+        expect.objectContaining({
+          projection_state: "needs_decision",
+          closed_at_utc: null,
+          final_position_decimal: "7",
+        }),
+      ]);
+
+      const decision = new JournalProductReadService(context.database)
+        .listDataDecisions(context.accountScope).pending.find((item) =>
+          item.issueCode === "conflicting_position_facts");
+      expect(decision).toMatchObject({
+        allowedActions: ["confirm_legitimate_open_position"],
+        openPositionConfirmation: { supportedQuantityDecimal: "7" },
+        question: "Does your broker account show 7 SCOPED shares still open?",
+        impactSummary: "An earlier completed trade in this ticker remains available. This decision applies only to the later open position.",
+      });
+      expect(decision?.executions).toHaveLength(2);
+      expect(decision?.executions.map((execution) => execution.quantityDecimal)).toEqual(["6", "1"]);
+      expect(decision?.positionFacts).toHaveLength(3);
+      expect(decision?.positionFacts.every((fact) => fact.effectiveLocalDate === "2026-01-31")).toBe(true);
+
+      context.decisions.resolve(context.accountScope, {
+        action: "correct_position_fact",
+        decisionId: decision!.decisionId,
+        expectedRevision: decision!.revision,
+        priorPositionFactId: decision!.openPositionConfirmation!.contradictoryPositionFactId,
+        quantityDecimal: "7",
+        idempotencyKey: "scoped-open-position-confirmation-01",
+        reasonCode: "broker_position_verified",
+        sourceDisplayLabel: "Confirmed current position",
+      });
+      expect(context.database.prepare(`SELECT version.projection_state, COUNT(*) AS count
+FROM journal_round_trips round_trip
+JOIN journal_round_trip_versions version
+  ON version.workspace_id = round_trip.workspace_id
+ AND version.account_id = round_trip.account_id
+ AND version.round_trip_version_id = round_trip.current_version_id
+WHERE round_trip.lifecycle_state = 'active'
+GROUP BY version.projection_state
+ORDER BY version.projection_state`).all()).toEqual([
+        { projection_state: "legitimate_open", count: 1 },
+        { projection_state: "ready_closed", count: 1 },
+      ]);
     } finally {
       context.database.close();
     }

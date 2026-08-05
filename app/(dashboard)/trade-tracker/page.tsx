@@ -19,7 +19,7 @@ import { DaySessionView } from "./[sessionDate]/day-session-view";
 
 export const metadata: Metadata = {
   description: "Enter and review the current trading week's Journal executions.",
-  title: "Trade Tracker | TraderLink Platform",
+  title: "Daily Trade Tracker | TraderLink Platform",
 };
 
 export const dynamic = "force-dynamic";
@@ -72,10 +72,16 @@ export default async function TradeTrackerPage({
       accountTimezone={accountTimezone}
       defaultSessionDate={currentDate}
       expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
+      key="manual-execution-entry"
     />
   );
   if (data) {
-    return <DaySessionView data={data} topContent={topContent} />;
+    return (
+      <DaySessionView
+        data={data}
+        topContent={topContent}
+      />
+    );
   }
 
   return (

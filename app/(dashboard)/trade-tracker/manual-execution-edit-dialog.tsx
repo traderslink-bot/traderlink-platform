@@ -1,0 +1,183 @@
+"use client";
+
+import {
+  Alert,
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  MenuItem,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
+
+export type EditableManualExecutionView = Readonly<{
+  editRef: string;
+  fees: string | null;
+  localDate: string;
+  localTime: string;
+  sourceTimezone: string;
+  tradeCurrency: string;
+}>;
+
+export type ManualExecutionEditView = Readonly<{
+  manualEdit: EditableManualExecutionView | null;
+  price: string | null;
+  quantity: string;
+  side: "buy" | "sell";
+  symbol: string;
+}>;
+
+type ManualExecutionEditDraft = {
+  fees: string;
+  localDate: string;
+  localTime: string;
+  price: string;
+  quantity: string;
+  side: "buy" | "sell";
+  sourceTimezone: string;
+  symbol: string;
+  tradeCurrency: string;
+};
+
+export function ManualExecutionEditDialog({
+  execution,
+  expectedAccountSelectionRef,
+}: {
+  execution: ManualExecutionEditView;
+  expectedAccountSelectionRef: string;
+}) {
+  const router = useRouter();
+  const editable = execution.manualEdit;
+  const initialDraft = (): ManualExecutionEditDraft => ({
+    fees: editable?.fees ?? "",
+    localDate: editable?.localDate ?? "",
+    localTime: editable?.localTime ?? "",
+    price: execution.price ?? "",
+    quantity: execution.quantity,
+    side: execution.side,
+    sourceTimezone: editable?.sourceTimezone ?? "",
+    symbol: execution.symbol,
+    tradeCurrency: editable?.tradeCurrency ?? "",
+  });
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState(initialDraft);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!editable) return null;
+  const editRef = editable.editRef;
+
+  const update = <Key extends keyof ManualExecutionEditDraft>(
+    field: Key,
+    value: ManualExecutionEditDraft[Key],
+  ) => setDraft((current) => ({ ...current, [field]: value }));
+
+  const openEditor = () => {
+    setDraft(initialDraft());
+    setError(null);
+    setOpen(true);
+  };
+
+  async function save() {
+    setSaving(true);
+    setError(null);
+    try {
+      const response = await fetch(
+        `/api/platform/journal/manual-executions/${editRef}`,
+        {
+          body: JSON.stringify({
+            expectedAccountSelectionRef,
+            feesDecimal: draft.fees.trim() || null,
+            idempotencyKey: crypto.randomUUID(),
+            localDate: draft.localDate,
+            localTime: draft.localTime,
+            normalizedSymbol: draft.symbol,
+            priceDecimal: draft.price,
+            quantityDecimal: draft.quantity,
+            side: draft.side,
+            sourceTimezone: draft.sourceTimezone,
+            tradeCurrency: draft.tradeCurrency,
+          }),
+          headers: {
+            "Content-Type": "application/json",
+            [JOURNAL_MUTATION_REQUEST_HEADER]: "1",
+          },
+          method: "POST",
+        },
+      );
+      const packet = await response.json() as { code?: string };
+      if (!response.ok) {
+        if (packet.code === "TRADERLINK_MANUAL_EXECUTION_EDIT_REQUIRES_DECISION") {
+          throw new Error("This execution is being compared with broker data. Review that match in Data Decisions before editing it here.");
+        }
+        if (packet.code === "TRADERLINK_MANUAL_EXECUTION_EDIT_CONFLICT") {
+          throw new Error("This execution changed since the page opened. Refresh the page and try again.");
+        }
+        throw new Error("Check the execution details and try again.");
+      }
+      setOpen(false);
+      router.refresh();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "The execution could not be updated.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <>
+      <Button
+        onClick={openEditor}
+        size="small"
+        sx={{ lineHeight: 1.2, minHeight: 26, minWidth: 0, px: 0.75, py: 0.2 }}
+        variant="outlined"
+      >
+        Edit
+      </Button>
+      <Dialog fullWidth maxWidth="md" onClose={() => setOpen(false)} open={open}>
+        <DialogTitle>Edit manual execution</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Typography color="text.secondary" variant="body2">
+              Use the exact details shown by your broker. Saving refreshes the affected trades while keeping the earlier entry in its history.
+            </Typography>
+            <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" } }}>
+              <TextField label="Date" onChange={(event) => update("localDate", event.target.value)} slotProps={{ inputLabel: { shrink: true } }} type="date" value={draft.localDate} />
+              <TextField label="Time" onChange={(event) => update("localTime", event.target.value)} slotProps={{ inputLabel: { shrink: true } }} type="time" value={draft.localTime.slice(0, 5)} />
+              <TextField label="Timezone" onChange={(event) => update("sourceTimezone", event.target.value)} value={draft.sourceTimezone} />
+              <TextField label="Ticker" onChange={(event) => update("symbol", event.target.value.toUpperCase())} value={draft.symbol} />
+              <TextField label="Currency" onChange={(event) => update("tradeCurrency", event.target.value.toUpperCase())} value={draft.tradeCurrency} />
+              <TextField label="Side" onChange={(event) => update("side", event.target.value as ManualExecutionEditDraft["side"])} select value={draft.side}><MenuItem value="buy">Buy</MenuItem><MenuItem value="sell">Sell</MenuItem></TextField>
+              <TextField label="Quantity" onChange={(event) => update("quantity", event.target.value)} value={draft.quantity} />
+              <TextField label="Price" onChange={(event) => update("price", event.target.value)} value={draft.price} />
+              <TextField helperText="Leave blank if your broker did not report fees." label="Fees" onChange={(event) => update("fees", event.target.value)} value={draft.fees} />
+            </Box>
+            {error ? (
+              <Alert
+                action={error.includes("Data Decisions") ? <Button color="inherit" component={Link} href="/data-decisions" size="small">Open Data Decisions</Button> : undefined}
+                severity="error"
+              >
+                {error}
+              </Alert>
+            ) : null}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button disabled={saving} onClick={() => setOpen(false)}>Cancel</Button>
+          <Button disabled={saving} onClick={() => void save()} variant="contained">
+            {saving ? "Saving..." : "Save changes"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
+}

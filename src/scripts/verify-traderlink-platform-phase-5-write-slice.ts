@@ -43,6 +43,7 @@ import {
 } from "../modules/journal/server/imports/journal-import-service";
 import { withStagedJournalUpload } from "../modules/journal/server/imports/journal-upload-staging";
 import { JournalIntegrityCommandService } from "../modules/journal/server/journal-integrity-command-service";
+import { JournalExecutionReconciliationRepository } from "../modules/journal/server/reconciliation/journal-execution-reconciliation-repository";
 import { JournalProductReadService } from "../modules/journal/server/product/journal-product-read-service";
 import { createJournalMappingSupportPackage } from "../modules/journal/server/product/journal-mapping-support-package";
 import { JournalRoundTripRepository } from "../modules/journal/server/round-trips/journal-round-trip-repository";
@@ -211,6 +212,7 @@ function main(): void {
       executionRepository,
       accountService,
       createJournalPrivacyDigester(loadJournalPrivacyHmacConfiguration(process.env)),
+      new JournalExecutionReconciliationRepository(database),
     );
     const roundTrips = new JournalRoundTripService(
       new JournalRoundTripRepository(database),
@@ -222,6 +224,7 @@ function main(): void {
       executionRepository,
       new JournalExecutionService(executionRepository),
       roundTrips,
+      new JournalExecutionReconciliationRepository(database),
     );
     const command = new JournalIntegrityCommandService(
       importRepository,

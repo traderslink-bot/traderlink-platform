@@ -140,6 +140,7 @@ function query(): JournalAnalyticsQuery {
     instrumentIds: Object.freeze([]),
     symbols: Object.freeze([]),
     directions: Object.freeze([]),
+    tradeClassifications: Object.freeze([]),
     provenance: Object.freeze([]),
     outcomes: Object.freeze([]),
     entryWeekdays: Object.freeze([]),

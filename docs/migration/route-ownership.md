@@ -40,14 +40,16 @@
 | `/small-cap-stocks/week-ahead/[slug]` | News/content | Preserve |
 | `/smokeys-12-week-market-structure-plan` | Academy/content | Preserve pending final module placement |
 
-### Dashboard and future Journal/Analytics family: 24
+### Dashboard and future Journal/Analytics family: 26
 
 | Route | Future owner | Disposition |
 | --- | --- | --- |
 | `/workspace` | Platform composition | Platform target; replace V3 data dependency |
 | `/calendar` | Journal | Platform target |
-| `/trade-tracker` | Journal | Platform target; UI workflow requires later owner review |
-| `/trade-tracker/[sessionDate]` | Journal | Platform target; one trading day |
+| `/trade-tracker` | Journal | Day Trade Tracker current/recent working canvas; approved revision planned |
+| `/trade-tracker/[sessionDate]` | Journal | Day Trade Tracker for exactly one trading day |
+| `/trade-tracker/swings` | Journal | Planned Swing Trade Tracker for active and recently completed intentional swings |
+| `/trade-tracker/swings/[positionRef]` | Journal | Planned stable swing lifecycle and dated-note detail |
 | `/trades` | Journal | Compatibility redirect to `/trades/roundtrips` |
 | `/trades/roundtrips` | Journal | Platform target |
 | `/trades/ticker` | Journal | Platform target |
@@ -88,9 +90,33 @@ not deleted; their V3 layout is no longer a replacement browser entrypoint.
 | Review/workflow | `/intelligence/calibration`, `/intelligence/compare-trades`, `/intelligence/first-run`, `/intelligence/onboarding`, `/intelligence/progress`, `/intelligence/review`, `/intelligence/review-cockpit`, `/intelligence/session-recap`, `/intelligence/trader-intelligence` |
 | Debug | `/intelligence/debug/execution-feedback`, `/intelligence/debug/trade-analysis`, `/intelligence/debug/trader-analytics` |
 
-## Route Handler inventory: 61 routes
+## Journal Administration namespace
 
-The methods below are exported by the current source. `Future handling` is the ownership/disposition, not permission to change the endpoint now.
+These routes are implemented in the active unstaged package under the
+[Journal Administration Dashboard Plan](journal-admin-dashboard-plan.md).
+They are not part of the historical 96-page source count. Full TypeScript,
+lint, production build and static/privacy acceptance pass; live browser review
+and production activation remain pending.
+
+| Route family | Owner | Boundary |
+| --- | --- | --- |
+| `/admin/journal` | Platform administration shell | Private owner overview; Discord authentication plus separate Platform operator grant |
+| `/admin/journal/users/**` | Platform identity plus Journal read models | Privacy-safe user and user-created Journal-account operations |
+| `/admin/journal/imports/**` | Journal administration | All broker upload attempts, committed import links and safe outcome timelines |
+| `/admin/journal/statement-formats/**` | Journal administration | Cross-user privacy-safe format candidate/development queue |
+| `/admin/journal/data-decisions` | Journal administration | Aggregate issue operations; no administrator resolution of trader facts |
+| `/admin/journal/system` | Platform operations | Safe runtime/database/backup/restore receipts |
+| `/admin/journal/audit` | Platform administration | Immutable sensitive-access/action ledger |
+| `/api/admin/journal/**` | Platform authorization plus named owner service | Fourteen private/no-store route handlers for bounded reads, audited detail access, format operations and consented downloads; no V3, Watchlist admin or Level Analysis authority |
+
+The separate computer-run Watchlist admin remains outside this namespace. The preserved `/intelligence/admin`, historical `/workspace/admin` references and `/api/admin/level-analysis/**` routes are not Journal Administration dependencies.
+
+## Historical baseline Route Handler inventory: 61 routes
+
+The table below is the preserved pre-admin baseline inventory. The active
+unstaged Journal Administration package adds 14 private route handlers listed
+by the namespace above. `Future handling` is the ownership/disposition, not
+permission to change an endpoint now.
 
 ### Platform and peer modules: 18
 
@@ -115,7 +141,7 @@ The methods below are exported by the current source. `Future handling` is the o
 | `POST` | `/api/level-analysis/trade-links` | Level Analysis/Journal link: replace internals behind contract |
 | `POST` | `/api/level-analysis/trade-links/resolve` | Level Analysis/Journal link: replace internals behind contract |
 
-### Journal import and Data Decisions: 22
+### Journal import, Data Decisions and tracker commands: 29
 
 | Methods | Route | Future handling |
 | --- | --- | --- |
@@ -136,9 +162,16 @@ The methods below are exported by the current source. `Future handling` is the o
 | `GET` | `/api/intelligence/broker-csv-import/v1/history` | Legacy-prefixed Journal endpoint; compatibility decision later |
 | `POST` | `/api/intelligence/execution-import/v1` | Journal import; replace internals |
 | `GET, POST, DELETE` | `/api/intelligence/import-repair/v1` | Journal Data Decisions; replace internals |
-| `POST` | `/api/intelligence/day-session-executions/v1` | Journal manual execution entry; preserve behavior, canonical ledger |
+| `POST` | `/api/intelligence/day-session-executions/v1` | Compatibility manual-entry boundary during cutover; replace with shared tracker preview/commit command |
 | `PUT` | `/api/intelligence/day-session/[sessionDate]/notes` | Journal daily notes; preserve behavior |
 | `PUT` | `/api/intelligence/day-session/[sessionDate]/rule-reviews` | Journal daily reviews; preserve behavior |
+| `POST` | `/api/platform/journal/manual-trades/preview` | Planned shared Day/Swing manual trade-boundary preview |
+| `POST` | `/api/platform/journal/manual-trades/commit` | Planned retry-safe canonical-ledger commit after confirmation |
+| `GET` | `/api/platform/journal/trade-tracker/day` | Planned Day Trade Tracker read model |
+| `GET` | `/api/platform/journal/trade-tracker/swings` | Planned active/recent Swing Trade Tracker read model |
+| `GET` | `/api/platform/journal/trade-tracker/swings/[positionRef]` | Planned stable swing lifecycle/detail read model |
+| `POST` | `/api/platform/journal/trade-style/[positionRef]` | Planned position-level Day/Swing/Other append-only transition |
+| `POST` | `/api/platform/journal/swings/[positionRef]/notes` | Planned stable-position/date swing-note revision |
 | `POST` | `/api/intelligence/rules` | Journal rules; replace V3 deployment/storage dependency |
 | `GET, POST` | `/api/intelligence/trade-tags` | Journal tags; preserve behavior |
 

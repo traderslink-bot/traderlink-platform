@@ -108,10 +108,10 @@ function SummaryCards({ preview }: { preview: AnalyticsLabPlatformPreview }) {
           .find((item) => item.metricId === metricId);
         return (
           <DashboardMetricCard
-            caption={metric ? journalAnalyticsMetricCaption(metric) : "Unavailable"}
+            caption={metric ? journalAnalyticsMetricCaption(metric) : "N/A"}
             key={metricId}
             label={metric?.title ?? humanize(metricId)}
-            value={values.length > 0 ? values.join(" / ") : "Unavailable"}
+            value={values.length > 0 ? values.join(" / ") : "N/A"}
           />
         );
       })}
@@ -352,6 +352,9 @@ export default function AnalyticsLabPlatformClient({
           <QuerySelect label="Result" onChange={(value) => patch("outcome", value === "all" ? null : value as "win" | "loss" | "flat")} value={query.outcome ?? "all"}>
             <MenuItem value="all">All results</MenuItem><MenuItem value="win">Win</MenuItem><MenuItem value="loss">Loss</MenuItem><MenuItem value="flat">Flat</MenuItem>
           </QuerySelect>
+          <QuerySelect label="Trade type" onChange={(value) => patch("tradeClassification", value === "all" ? null : value as AnalyticsLabPlatformQuery["tradeClassification"])} value={query.tradeClassification ?? "all"}>
+            <MenuItem value="all">All completed trades</MenuItem><MenuItem value="day_trade">Day trades</MenuItem><MenuItem value="multi_day_trade">Multi-day trades</MenuItem>
+          </QuerySelect>
           <QuerySelect label="Execution source" onChange={(value) => patch("provenance", value === "all" ? null : value as AnalyticsLabPlatformQuery["provenance"])} value={query.provenance ?? "all"}>
             <MenuItem value="all">All sources</MenuItem><MenuItem value="broker_only">Broker only</MenuItem><MenuItem value="manual_only">Manual only</MenuItem><MenuItem value="correction_only">Correction only</MenuItem><MenuItem value="mixed">Mixed</MenuItem><MenuItem value="unknown">Unknown</MenuItem>
           </QuerySelect>
@@ -431,7 +434,6 @@ export default function AnalyticsLabPlatformClient({
       <DashboardPanel title={preview.selectedMetric?.title ?? "Selected metric"}>
         <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", mb: 2 }}>
           <Chip label={`${preview.response.crossPartitionCounts.includedCount.toLocaleString("en-US")} included`} size="small" />
-          <Chip label={`${preview.response.crossPartitionCounts.needsDecisionCount.toLocaleString("en-US")} need decisions`} size="small" variant="outlined" />
           <Chip label={`${preview.response.crossPartitionCounts.feeIncompleteCount.toLocaleString("en-US")} fee-incomplete`} size="small" variant="outlined" />
           {preview.selectedMetric ? <Chip label={humanize(preview.selectedMetric.state)} size="small" variant="outlined" /> : null}
         </Stack>
@@ -457,7 +459,7 @@ export default function AnalyticsLabPlatformClient({
                     <TableCell>{row.closeLocalDate}</TableCell>
                     <TableCell>{row.displayedSymbol}</TableCell>
                     <TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell>
-                    <TableCell align="right">{row.selectedPnlDecimal === null ? "Unavailable" : `${preview.evidence?.currency ?? ""} ${formatJournalAnalyticsDecimal(row.selectedPnlDecimal)}`}</TableCell>
+                    <TableCell align="right">{row.selectedPnlDecimal === null ? "N/A" : (formatJournalAnalyticsDecimal(row.selectedPnlDecimal, 2, true).startsWith("-") ? `-$${formatJournalAnalyticsDecimal(row.selectedPnlDecimal, 2, true).slice(1)}` : `$${formatJournalAnalyticsDecimal(row.selectedPnlDecimal, 2, true)}`)}</TableCell>
                     <TableCell align="right">{formatJournalAnalyticsDecimal(row.enteredQuantityDecimal)}</TableCell>
                     <TableCell align="right">{formatJournalAnalyticsDecimal(String(row.holdingDurationMilliseconds / 60_000))} min</TableCell>
                     <TableCell>{row.chargeCoverage === "complete" ? "Fee covered" : "Fees unavailable"}</TableCell>

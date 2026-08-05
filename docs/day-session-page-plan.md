@@ -1,15 +1,45 @@
 # Day Session Page Plan
 
-Status: visual design approved; direct Trade Tracker route slice implemented
+Status: historical Day Session design baseline; the single mixed-tracker product
+contract is superseded by the approved Day/Swing split
 
 Progress tracker: [day-session-page-progress.md](./day-session-page-progress.md)
 
 Trade-tag subsystem:
 [trade-tag-system-plan.md](./trade-tag-system-plan.md)
 
+Current controlling product contract:
+[Day Trade Tracker And Swing Trade Tracker Plan](./migration/day-and-swing-trade-tracker-plan.md)
+
+## 2026-08-02 tracker split decision
+
+This document remains useful as the accepted visual and factual design input for
+the **Day Trade Tracker**. It no longer controls the whole tracker product:
+
+- `/trade-tracker` is the Day Trade Tracker for current/recent day-trade entry,
+  day-level review, tags, rules and notes.
+- `/trade-tracker/swings` is a separate Swing Trade Tracker for active and
+  recently completed intentional swing trades and their dated note history.
+- Both trackers write to and read from the same canonical Journal execution
+  ledger. They are separate workflows and projections, not separate trade
+  databases.
+- Manual rows carry their own actual execution dates/times. A bounded late
+  entry may include several trading dates without combining the dates' notes.
+- Day/Swing intent is trader-authored at the stable trade/position level, not
+  inferred from duration and not stored independently on unrelated executions.
+- Intentional manual capture uses a previewed trade-boundary assertion. It does
+  not automatically invoke the broker-import opening-inventory or whole-day
+  coverage workflow; genuine contradictions, duplicates and impossible
+  arithmetic still go to Data Decisions.
+
+Any older language below that assumes one mixed tracker, a single date for a
+manual batch, per-execution Day/Swing intent or routine import-coverage
+confirmation for intentional manual capture is superseded by the controlling
+split plan.
+
 ## Goal
 
-Build the factual single-day journal as the `Trade Tracker` experience inside
+Build the factual single-day journal as the `Day Trade Tracker` experience inside
 the approved V3 dashboard shell. `/trade-tracker` opens the latest traded day
 supplied by governed authority; `/trade-tracker/[sessionDate]` displays a
 specific governed traded day. There is no Day Sessions index or list in front

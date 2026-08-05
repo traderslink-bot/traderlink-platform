@@ -24,6 +24,26 @@ export type JournalCalendarTickerReadModel = Readonly<{
   symbol: string;
   pnlDecimal: string | null;
   pnlSign: -1 | 0 | 1 | null;
+  noteCount: number;
+  ruleReviewCount: number;
+  tagCount: number;
+  trades: readonly JournalCalendarTradeReadModel[];
+}>;
+
+export type JournalCalendarTradeReadModel = Readonly<{
+  executions: readonly JournalCalendarTradeExecutionReadModel[];
+  notes: readonly string[];
+  roundTripId: string;
+  pnlDecimal: string | null;
+  pnlSign: -1 | 0 | 1 | null;
+  tags: readonly string[];
+}>;
+
+export type JournalCalendarTradeExecutionReadModel = Readonly<{
+  executedAtUtc: string;
+  priceDecimal: string | null;
+  quantityDecimal: string;
+  side: "buy" | "sell";
 }>;
 
 export type JournalCalendarDayReadModel = Readonly<{
@@ -33,6 +53,7 @@ export type JournalCalendarDayReadModel = Readonly<{
   pnlSign: -1 | 0 | 1 | null;
   tickers: readonly JournalCalendarTickerReadModel[];
   tradeCount: number;
+  reviewStatus: "reviewed" | "needs_review" | null;
   winRatePercentDecimal: string | null;
 }>;
 
@@ -191,6 +212,7 @@ export type JournalTradingDayReadModel = Readonly<{
   timezone: string | null;
   netPnlDecimal: string | null;
   decisionActivity: readonly JournalTradingDayDecisionActivity[];
+  availableTradingDates: readonly string[];
   executionActivity: readonly JournalTradingDayExecutionActivity[];
   previousTradingDate: string | null;
   nextTradingDate: string | null;

@@ -90,6 +90,7 @@ function normalizedRow(
     entryLocal: local(input.date, input.weekday, input.bucket),
     closeLocal: local(input.date, input.weekday, input.bucket),
     holdingDurationMilliseconds: 1_800_000,
+    tradeClassification: "day_trade",
     isOvernight: false,
     uniqueExecutionCount: 2,
     uniqueExecutionIds: Object.freeze([
@@ -254,6 +255,7 @@ function query(
     instrumentIds: Object.freeze([]),
     symbols: Object.freeze([]),
     directions: Object.freeze([]),
+    tradeClassifications: Object.freeze([]),
     provenance: Object.freeze([]),
     outcomes: Object.freeze([]),
     entryWeekdays: Object.freeze([]),

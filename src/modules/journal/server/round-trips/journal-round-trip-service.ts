@@ -26,7 +26,7 @@ import {
   JournalRoundTripRepository,
 } from "./journal-round-trip-repository";
 
-const ALGORITHM_VERSION = "zero_to_zero_v2" as const;
+const ALGORITHM_VERSION = "zero_to_zero_v3" as const;
 const CHAIN_DECISION_REASON_PRIORITY = Object.freeze([
   "position_fact_mismatch",
   "conflicting_position_facts",
@@ -121,6 +121,7 @@ type ActiveProjection = {
   reasonCode: string | null;
   identityFallbackKey: string;
   confirmedPositionOnly: boolean;
+  manualBoundaryConfirmed: boolean;
 };
 
 function allocation(
@@ -200,6 +201,7 @@ function withReason(
       reasonCode,
       identityFallbackKey: projection.identityAliasSha256,
       confirmedPositionOnly: false,
+      manualBoundaryConfirmed: false,
     },
     closedAtUtc: projection.closedAtUtc,
     finalPositionDecimal: projection.finalPositionDecimal,
@@ -354,7 +356,7 @@ function buildLogicalProjections(input: Readonly<{
     if (!active) return;
     const startDate = localDateAt(active.openedAtUtc, input.tradingTimezone);
     const endDate = localDateAt(atUtc, input.tradingTimezone);
-    const coverageReason = rangeCovered(input.completeCoverage, startDate, endDate)
+    const coverageReason = active.manualBoundaryConfirmed || rangeCovered(input.completeCoverage, startDate, endDate)
       ? null
       : "source_coverage_incomplete";
     projections.push(makeProjection({
@@ -413,6 +415,7 @@ function buildLogicalProjections(input: Readonly<{
           reasonCode,
           identityFallbackKey: `${input.chainIdentity}\u001f${event.atUtc}`,
           confirmedPositionOnly,
+          manualBoundaryConfirmed: false,
         };
         if (!confirmedPositionOnly) chainReasonCodes.add(reasonCode);
       }
@@ -455,9 +458,12 @@ function buildLogicalProjections(input: Readonly<{
         direction: compareDecimal(signedQuantity, "0") > 0 ? "long" : "short",
         openedAtUtc: execution.executedAtUtc,
         allocations: [allocation(execution, "opening", execution.quantityDecimal)],
-        reasonCode: positionKnown ? executionReason : (executionReason ?? "opening_inventory_required"),
+        reasonCode: positionKnown || execution.manualBoundaryConfirmed
+          ? executionReason
+          : (executionReason ?? "opening_inventory_required"),
         identityFallbackKey: `${input.chainIdentity}\u001f${execution.executionId}`,
         confirmedPositionOnly: false,
+        manualBoundaryConfirmed: execution.manualBoundaryConfirmed,
       };
       position = nextPosition;
       continue;
@@ -468,11 +474,14 @@ function buildLogicalProjections(input: Readonly<{
         direction: compareDecimal(priorPosition, "0") > 0 ? "long" : "short",
         openedAtUtc: execution.executedAtUtc,
         allocations: [],
-        reasonCode: carriedPositionReason ?? (positionKnown ? null : "opening_inventory_required"),
+        reasonCode: carriedPositionReason ??
+          (positionKnown || execution.manualBoundaryConfirmed ? null : "opening_inventory_required"),
         identityFallbackKey: `${input.chainIdentity}\u001f${execution.executionId}`,
         confirmedPositionOnly: false,
+        manualBoundaryConfirmed: execution.manualBoundaryConfirmed,
       };
     }
+    if (execution.manualBoundaryConfirmed) active.manualBoundaryConfirmed = true;
     if (!active.reasonCode && executionReason) active.reasonCode = executionReason;
     const sameDirection = compareDecimal(priorPosition, "0") === compareDecimal(signedQuantity, "0");
     if (sameDirection) {
@@ -503,9 +512,12 @@ function buildLogicalProjections(input: Readonly<{
       direction: execution.side === "buy" ? "long" : "short",
       openedAtUtc: execution.executedAtUtc,
       allocations: [allocation(execution, "flip_opening", openingQuantity)],
-      reasonCode: positionKnown ? executionReason : (executionReason ?? "opening_inventory_required"),
+      reasonCode: positionKnown || execution.manualBoundaryConfirmed
+        ? executionReason
+        : (executionReason ?? "opening_inventory_required"),
       identityFallbackKey: `${input.chainIdentity}\u001f${execution.executionId}\u001fflip`,
       confirmedPositionOnly: false,
+      manualBoundaryConfirmed: execution.manualBoundaryConfirmed,
     };
     position = nextPosition;
   }
@@ -514,7 +526,7 @@ function buildLogicalProjections(input: Readonly<{
     const lastAt = input.executions.at(-1)?.executedAtUtc ?? active.openedAtUtc;
     const startDate = localDateAt(active.openedAtUtc, input.tradingTimezone);
     const endDate = localDateAt(lastAt, input.tradingTimezone);
-    const coverageReason = rangeCovered(input.completeCoverage, startDate, endDate)
+    const coverageReason = active.manualBoundaryConfirmed || rangeCovered(input.completeCoverage, startDate, endDate)
       ? null
       : "source_coverage_incomplete";
     const supportedOpen = latestSupportedOpenQuantity !== null &&
@@ -528,7 +540,7 @@ function buildLogicalProjections(input: Readonly<{
       closedAtUtc: null,
       finalPositionDecimal: position,
       openState: "open",
-      reasonCode: confirmedPositionOnly
+      reasonCode: confirmedPositionOnly || active.manualBoundaryConfirmed
         ? null
         : active.reasonCode ?? coverageReason ??
         (supportedOpen ? null : "closing_position_unconfirmed"),
@@ -612,6 +624,7 @@ function orderedInputDigest(input: Readonly<{
       executionId: entry.executionId,
       executionVersionId: entry.executionVersionId,
       state: entry.currentState,
+      manualBoundaryConfirmed: entry.manualBoundaryConfirmed,
       facts: {
         instrumentId: entry.instrumentId,
         currency: entry.tradeCurrency,

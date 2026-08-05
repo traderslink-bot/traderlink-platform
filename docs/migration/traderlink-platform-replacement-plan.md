@@ -1,6 +1,6 @@
 # TraderLink Platform Replacement Plan
 
-**Status:** Approved controlling plan. Phases 0-6 are locally accepted; the Phase 4 replacement route cutover passed technical/runtime verification and owner visual approval on 2026-08-02, Phase 5 completed the module transfer, and Phase 6 passed sequential regression, production build, packaged-runtime, two-account browser/API/privacy and final backup/restore gates. F6 Discord-first identity, single-node hosted packaging and authorized hosted-transfer tooling are ready locally; actual owner linking, production-source transfer, Docker execution, Git publication, Railway deployment and DNS remain external pre-go-live gates. Slice D annotation tables, Slice E saved-view/market-fact/review/delivery/link tables, F2 Academy progress, F3 Watchlist and F4 Affiliate tables began empty and contain no copied legacy test data. F4 preserved the one reconciled legacy News article under versioned News ownership. F5 replaces fixture-driven readiness and maps all 52 preserved legacy pages away from V3 runtime entry. The accepted real data boundary remains 331 analytics-ready closed round trips with two fact-dependent chains contained in Data Decisions. Legacy trades, tags, rules and notes were test data and are not transferred; their replacement account-scoped feature contracts are verified. Phase 7 deletion/retirement remains prohibited without explicit owner approval.
+**Status:** Approved controlling plan. Phases 0-6 are locally accepted; the Phase 4 replacement route cutover passed technical/runtime verification and owner visual approval on 2026-08-02, Phase 5 completed the module transfer, and Phase 6 passed sequential regression, production build, packaged-runtime, two-account browser/API/privacy and final backup/restore gates. F6 Discord-first identity, single-node hosted packaging and authorized hosted-transfer tooling are ready locally. The accepted source lineage was published on 2026-08-03 to `https://github.com/traderslink-bot/traderlink-platform`, with published `main` at `c0c998d8e456b9e70433e73123e8024b13ece203`. The public Vercel project now serves the verified landing page and preserved Academy from the narrow production release `2d7bdd2370b0781c8157ed11f54337c20a4e68cd` (`dpl_4MGMs3jqaYbQ7Wx3FQKdaHRxt6vW`). That is not the hosted replacement dashboard: actual owner linking, production-source transfer, Docker execution, Railway persistent-volume deployment and full application/DNS cutover remain external pre-go-live gates. Slice D annotation tables, Slice E saved-view/market-fact/review/delivery/link tables, F2 Academy progress, F3 Watchlist and F4 Affiliate tables began empty and contain no copied legacy test data. F4 preserved the one reconciled legacy News article under versioned News ownership. F5 replaces fixture-driven readiness and maps all 52 preserved legacy pages away from V3 runtime entry. The accepted real data boundary remains 331 analytics-ready closed round trips with two fact-dependent chains contained in Data Decisions. Legacy trades, tags, rules and notes were test data and are not transferred; their replacement account-scoped feature contracts are verified. Phase 7 deletion/retirement remains prohibited without explicit owner approval.
 
 **Active Slice E contract:** [Analytics Lab, Candle Review and Level Analysis Plan](phase-5-slice-e-analytics-lab-candles-level-analysis-plan.md)
 
@@ -11,6 +11,28 @@
 **Completed Phase 6 contract:** [Replacement Acceptance Plan](phase-6-replacement-acceptance-plan.md), [progress tracker](phase-6-replacement-acceptance-progress.md), and [acceptance report](phase-6-replacement-acceptance-report.md)
 
 **Phase 7 preservation boundary:** [Legacy Retirement Progress](phase-7-legacy-retirement-progress.md)
+
+**Approved Journal Administration:** [Journal Administration Dashboard Plan](journal-admin-dashboard-plan.md) with its active [implementation progress tracker](journal-admin-dashboard-progress.md). The implementation-contract QA pass and owner approval are complete. The plan reserves `/admin/journal`, keeps the separate computer-run Watchlist admin and preserved V3/operations admin surfaces out of scope, and permits only the owner's exact Discord-linked Platform user with configured-server ownership refreshed within five minutes plus the singleton active server-side owner-admin grant. Email/password admin login is deferred. Migrations 0019/0020 and technical Admin 1-6 are assembled in the active unstaged package: fail-closed authority/request security, import instrumentation/recovery, privacy-safe format learning, bounded operational read models, 14 private route handlers, audited lifecycle/merge/package/source actions and the complete light Material admin UI. The focused administration gate passes 15 files/31 tests, the 83-file static inventory/privacy verifier, full whole-project TypeScript, full lint with zero errors, the 126-page production build, all 21 migration-file checks and the expanded 156-file V3-free replacement guard. Live browser acceptance passes across Overview and all six Admin subsections, including clean console/overlay and sidebar-navigation checks; the production grant and real support-source root remain absent, owner visual/product review remains open, the supported-format registry intentionally remains empty until exact adapter/fixture evidence is deployed, and automatic orphan deletion remains report-only pending separate destructive-cleanup authorization.
+
+**Approved tracker split:** [Day Trade Tracker And Swing Trade Tracker Plan](day-and-swing-trade-tracker-plan.md). Day and swing workflows are separate product surfaces over one canonical Journal execution ledger. Migrations 0019-0021, manual multi-date preview/confirmation/save, shared style/Swing-note services, complete Day/Swing/Open Positions UI integration and manual/broker reconciliation are implemented. Same, separate, grouped-fill, repeat-evidence and explicit correct-manual-entry focused proofs pass; affected dates and stable Swing position references are returned after save. The integrated tracker/service/route gate passes five files/75 tests, shell/navigation enforcement, full TypeScript/lint/build and the 156-file active replacement guard. Live browser acceptance passes for Day Tracker, Swing Tracker and Open Positions; only integrated owner visual/product review remains.
+
+**2026-08-03 independent readiness QA:** A fresh full-route browser sweep found
+and corrected one Account status-chip hydration mismatch, then passed Account,
+the dashboard review inventory and all seven Journal Administration pages with
+zero browser page errors or framework overlays. Deterministic UTC display now
+covers Admin and saved Swing-note timestamps. Read-only database integrity,
+all 21 migrations, the Admin and active-replacement static guards, full
+TypeScript, zero-error full lint and the 126-page production build pass. Owner
+visual/product review remains the next product checkpoint; production Discord,
+owner grant, hosted transfer and full application cutover remain separate.
+
+**Second readiness QA:** A new clean session rechecked Account and 13 high-risk
+dashboard/Admin routes, their rendered content, financial precision, overlays,
+page-error record and non-destructive Import/Data Decisions/Admin navigation.
+All checks passed, no displayed numeric value exceeded two decimal places and
+the post-browser database again passed all 21 migrations and integrity checks.
+No statement, trade, decision, preview or commit was saved. Port 3010 is active
+temporarily for the owner's integrated review.
 
 **Active Slice F contract:** [Remaining Modules Plan](phase-5-slice-f-remaining-modules-plan.md)
 
@@ -38,7 +60,7 @@ or deployed. See [Phase 3 Handoff](phase-3-journal-integrity-handoff.md).
 
 **Supersedes for future platform work:** the V3 implementation roadmap in `plan.md`. That document remains historical reference only.
 
-**Related documents:** [Import Integrity and Data Decisions Contract](import-integrity-and-data-decisions-contract.md), [Product Inventory](product-inventory.md), [Route Ownership](route-ownership.md), [Database Ownership](database-ownership.md), [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md), [Phase 3 Journal Integrity Plan](phase-3-journal-integrity-plan.md), [Phase 3 Journal Integrity Progress](phase-3-journal-integrity-progress.md), [Phase 3 Handoff](phase-3-journal-integrity-handoff.md), [Phase 4 Core Analytics Plan](phase-4-core-analytics-plan.md), [Phase 4 Core Analytics Progress](phase-4-core-analytics-progress.md), [Phase 4 Handoff](phase-4-core-analytics-handoff.md), [Phase 5 Module Transfer Plan](phase-5-module-transfer-plan.md), [Phase 5 Module Transfer Progress](phase-5-module-transfer-progress.md), [V3 Dependency Map](v3-dependency-map.md), [Module Contracts](module-contracts.md), [Analytics Capability Catalog](analytics-capability-catalog.md), [Operational and Configuration Inventory](operational-and-configuration-inventory.md), [Workspace Inventory](workspace-inventory.md), [Source Snapshot](source-snapshot-and-untracked-manifest.md), [Workspace and Worktree Cleanup Plan](workspace-and-worktree-cleanup-plan.md), [Risk Register](risk-register.md), [Acceptance Inventory](acceptance-inventory.md), [Phase 1 Progress](phase-1-inventory-and-baseline-progress.md), [Phase 2 Progress](phase-2-replacement-baseline-progress.md), [Development Owner Seed Progress](development-owner-seed-progress.md), [Phase Handoff Template](phase-handoff-template.md), [Phase 0 Handoff](phase-0-planning-handoff.md), [Phase 1 Handoff](phase-1-inventory-and-baseline-handoff.md), [Migration Register](migration-register.md), and [Migration Progress](migration-progress.md).
+**Related documents:** [Import Integrity and Data Decisions Contract](import-integrity-and-data-decisions-contract.md), [Journal Review Workflow Corrections Plan](journal-review-workflow-corrections-plan.md), [Journal Review Workflow Corrections Progress](journal-review-workflow-corrections-progress.md), [Journal Corporate Actions and Share Adjustments Plan](journal-corporate-actions-plan.md), [Journal Corporate Actions and Share Adjustments Progress](journal-corporate-actions-progress.md), [Trade Explorer Plan](trade-explorer-platform-plan.md), [Trade Explorer Progress](trade-explorer-platform-progress.md), [Product Inventory](product-inventory.md), [Route Ownership](route-ownership.md), [Database Ownership](database-ownership.md), [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md), [Phase 3 Journal Integrity Plan](phase-3-journal-integrity-plan.md), [Phase 3 Journal Integrity Progress](phase-3-journal-integrity-progress.md), [Phase 3 Handoff](phase-3-journal-integrity-handoff.md), [Phase 4 Core Analytics Plan](phase-4-core-analytics-plan.md), [Phase 4 Core Analytics Progress](phase-4-core-analytics-progress.md), [Phase 4 Handoff](phase-4-core-analytics-handoff.md), [Phase 5 Module Transfer Plan](phase-5-module-transfer-plan.md), [Phase 5 Module Transfer Progress](phase-5-module-transfer-progress.md), [V3 Dependency Map](v3-dependency-map.md), [Module Contracts](module-contracts.md), [Analytics Capability Catalog](analytics-capability-catalog.md), [Operational and Configuration Inventory](operational-and-configuration-inventory.md), [Workspace Inventory](workspace-inventory.md), [Source Snapshot](source-snapshot-and-untracked-manifest.md), [Workspace and Worktree Cleanup Plan](workspace-and-worktree-cleanup-plan.md), [Risk Register](risk-register.md), [Acceptance Inventory](acceptance-inventory.md), [Phase 1 Progress](phase-1-inventory-and-baseline-progress.md), [Phase 2 Progress](phase-2-replacement-baseline-progress.md), [Development Owner Seed Progress](development-owner-seed-progress.md), [Phase Handoff Template](phase-handoff-template.md), [Phase 0 Handoff](phase-0-planning-handoff.md), [Phase 1 Handoff](phase-1-inventory-and-baseline-handoff.md), [Migration Register](migration-register.md), and [Migration Progress](migration-progress.md).
 
 ## 1. Mandate
 
@@ -64,9 +86,9 @@ The permanent module boundaries are:
 
 ### Approved dashboard design baseline
 
-The final platform dashboard preserves the owner-approved **light Material UI design**. It is not a dark dashboard. Its identifying structure is the shared left navigation and the complete approved dashboard destination inventory, including Trades, the Calendar with week/month views, Analytics, Analytics Lab, Trading Rules, Workspace, Trade Tracker with canonical manual entry, broker-neutral imports, Data Decisions, Account, and the other accepted destinations recorded in `product-inventory.md` and `route-ownership.md`.
+The final platform dashboard preserves the owner-approved **light Material UI design**. It is not a dark dashboard. Its identifying structure is the shared left navigation and the complete approved dashboard destination inventory, including Trades, the Calendar with week/month views, Analytics, Analytics Lab, Trading Rules, Workspace, separate Day Trade and Swing Trade Trackers over canonical manual entry, broker-neutral imports, Data Decisions, Account, and the other accepted destinations recorded in `product-inventory.md` and `route-ownership.md`.
 
-A legacy or experimental dashboard that lacks the light Material treatment, the left navigation, Trades, Calendar, Analytics, Analytics Lab, or Trading Rules is not the approved final dashboard. It may be used only as behavior/reference evidence. Any visible change to the approved baseline requires iterative owner visual approval before cutover.
+A legacy or experimental dashboard that lacks the light Material treatment, the left navigation, Trades, Calendar, Analytics, Analytics Lab, or Trading Rules is not the approved final dashboard. It may be used only as behavior/reference evidence. The owner explicitly deferred Day/Swing Tracker and Journal Administration review until their backend and complete UI are technically integrated; those plans use one final review rather than intermediate visual gates. Other unapproved visible replacements still require owner review before cutover.
 
 ### Next.js module boundaries
 
@@ -139,13 +161,16 @@ For correctness, the first implementation rebuilds the complete affected owner/a
 
 The dashboard must show explicit coverage: included closed trades, open positions, pending decisions, excluded records, and the reason a metric is unavailable. It must never fabricate zeroes or silently drop records.
 
-### Trade Tracker and trading-day records
+### Day Trade Tracker, Swing Trade Tracker and trading-day records
 
-Trade Tracker is the manual execution entry and day-review surface over the canonical ledger.
+The approved tracker split provides two focused workflows over the canonical
+Journal ledger. `/trade-tracker` is the Day Trade Tracker and
+`/trade-tracker/swings` is the Swing Trade Tracker. This is a presentation and
+annotation split, not a second execution system.
 
-- The execution's actual date and time are authoritative, not the date the user visits TraderLink or presses Save.
-- The primary product window is the current trading day and current trading week, when the trader can still reliably record intent, tags, rules, and notes. Older dates remain factual read-only execution history; the product does not prompt the trader to invent subjective memories about old trades. Historical factual corrections remain available through Data Decisions.
-- The persistence contract supports executions from multiple trading dates, including current-week catch-up entry. The initial reviewed form chooses the actual trading date and keeps each date's notes and reviews separate.
+- Each execution row's actual date and time are authoritative, not the date the user visits TraderLink or presses Save.
+- The primary capture window is the current trading day and recent trading days, when the trader can still reliably record intent, tags, rules, and notes. The initial implementation uses a seven-calendar-day late-entry window. Older dates remain factual read-only execution history, except that an active swing may include its true earlier opening execution and a completed swing may be entered when its closing execution is inside the recent-entry window. Historical factual corrections remain available through Data Decisions.
+- One previewed manual batch may contain executions from several trading dates. Every affected date remains separate for day notes and daily rule reviews.
 - One TraderLink login may manage multiple separate Journal accounts. The
   dashboard must provide account creation/management and an explicit active
   account selector. Imports, learned statement formats, executions, Data
@@ -156,20 +181,34 @@ Trade Tracker is the manual execution entry and day-review surface over the cano
   multiple broker or brokerage-account source identities to the same Journal
   account.
 - However they are entered, the Journal assigns executions to their actual trading dates and can present each affected day separately.
-- A manual execution initially proves only that execution and creates point-only
-  coverage. Data Decisions asks the trader separately for each trading date
-  whether the entered activity is complete or partial; confirmation is bound to
-  that exact date and does not silently assert zero opening inventory.
-- The undated Trade Tracker opens the current account trading date/current week and keeps manual entry at the top. A date-specific view represents exactly one trading day. Historical dated routes remain available for factual review without encouraging retrospective subjective annotation.
+- Intentional manual capture uses explicit previewed relationships such as
+  start, continue and close a tracked trade. A new trade must begin at a
+  supported zero boundary in the canonical ledger. This trade-boundary
+  assertion is not a claim that the trader supplied a complete brokerage day
+  and does not require routine broker-import opening-inventory confirmation.
+  True duplicates, missing facts, contradictory position math and source
+  conflicts remain contained in Data Decisions.
+- The undated Day Trade Tracker opens the current account trading date/current week and keeps manual entry at the top. A date-specific view represents exactly one trading day. Historical dated routes remain available for factual review without encouraging retrospective subjective annotation.
 - Daily notes and daily rule reviews are keyed to owner, account scope, and trading date. Monday, Tuesday, and Wednesday notes are never combined because they were entered on Wednesday.
 - Trade notes, tags, and trade-level reviews are keyed to the stable round-trip identity and survive deterministic rebuilds through an identity/alias record.
 - A round trip may span days. Executions appear on the days when they occurred; carried positions are visible; realized round-trip P/L is attributed to the closing trading day unless a metric contract explicitly states another basis.
-- Day trade/Swing trade is explicit trader-authored lifecycle intent. The manual form permits the trader to identify intended swing activity; holding duration never assigns that label. `/trades/open` remains the factual Open Positions surface for every confirmed open lifecycle. The trader may classify a confirmed open position as an intentional swing, an unplanned hold or another status; unresolved execution chains stay in Data Decisions and are not presented as confirmed open positions.
-- If a later broker import appears to match a manual execution, the system shows the provenance and match in Data Decisions so the trader can merge/supersede, correct, or keep distinct records without double counting.
+- Day/Swing style is explicit trader-authored lifecycle intent attached to a stable trade/position identity. Holding duration never assigns or changes that label. A Day trade that remains open stays visible as an open Day trade until the trader reclassifies it. An active Swing requires both a supported open position and an active Swing plan. Swing notes are keyed to that stable position and note date so each day remains distinct.
+- `/trades/open` remains the factual Open Positions surface for every confirmed open lifecycle, including active swings, open Day trades, unplanned holds and other confirmed opens. Unresolved execution chains stay in Data Decisions and are not presented as confirmed opens.
+- If a later broker import may match a manual execution, exact time is supporting
+  evidence rather than a hard identity requirement. The manual execution stays
+  active and only the provisional imported candidate is withheld while Data
+  Decisions offers same, separate, correct or decide-later. Unrelated statement
+  rows proceed. Nothing replaces the manual execution before confirmation;
+  confirmed one-to-one matches retain its identity and add broker provenance,
+  while confirmed grouped fills preserve its history but use the exact broker
+  fills as canonical facts.
 
 All displayed execution, price, quantity, P/L, percentage, and other trading-data decimals use at most two decimal places. Canonical database values and editable broker/manual inputs remain lossless and are never rounded before persistence or calculation.
 
-The existing date-specific Trade Tracker and daily-note work is preservation input, not automatic acceptance. Trade Tracker will be reviewed and revised later under its own plan. This migration plan approves the data capability only; it does not approve a screen layout or multi-day entry workflow.
+The existing date-specific Day Session work remains the visual and factual input
+for the Day Trade Tracker. The linked Day/Swing plan is now the controlling
+implementation contract for route ownership, recent entry, manual preview,
+style transitions, swing daily notes and Open Positions coexistence.
 
 ## 4. Journal Analytics replacement
 
@@ -261,7 +300,7 @@ Statements, source rows, executions, decisions, and notes are private owner data
 
 The current `traderslink.pro` checkout remains the complete legacy reference until final replacement acceptance. No source, route, database, or feature is deleted before then.
 
-The owner authorized and accepted the clean independent-clone checkpoint at `C:\Users\jerac\Documents\TraderLink\traderlink-platform`. It exists as the active replacement implementation candidate on branch `codex/traderlink-platform-replacement` at `a3193e19806af955093aa236349d796171d9bf97`, with the intended GitHub remote and no upstream, push, or deployment.
+The owner authorized and accepted the clean independent-clone checkpoint at `C:\Users\jerac\Documents\TraderLink\traderlink-platform`. That historical checkpoint was branch `codex/traderlink-platform-replacement` at `a3193e19806af955093aa236349d796171d9bf97`. The current replacement folder remains on that branch at published source commit `c0c998d8e456b9e70433e73123e8024b13ece203`, tracks the new repository's `origin/main`, and preserves the former repository as `legacy-origin`. Its active Tracker/Administration work remains unstaged and is not part of the live landing release.
 
 This clean folder is a full, traceable, independent Git clone from the accepted preservation state in the existing repository lineage. It is not an unexplained file copy, an unrelated second product, or another disposable worktree. During migration:
 
@@ -329,9 +368,11 @@ second-account browser/API checks proved account isolation, annotations,
 Data Decisions, broker-neutral mapping and at-most-two-decimal display; and the
 final online backup/independent restore pair passed. The real database retained
 its accepted main-file hash and zero-byte WAL. See the
-[Phase 6 Acceptance Report](phase-6-replacement-acceptance-report.md). Real
-hosted-source credentials/backups, owner Discord linking, Docker execution,
-Railway, DNS and Git publication remain external. Phase 7 cannot delete any
+[Phase 6 Acceptance Report](phase-6-replacement-acceptance-report.md). Source
+publication and the narrow public landing/Academy Vercel cutover completed on
+2026-08-03. Real hosted-source credentials/backups, owner Discord linking,
+Docker execution, Railway persistent-volume hosting and full application/DNS
+cutover remain external. Phase 7 cannot delete any
 legacy repository, database, backup or source without explicit owner approval.
 Phase 7 therefore establishes a preservation-only retirement boundary: the
 replacement is the canonical local development application, while the old

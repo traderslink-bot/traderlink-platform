@@ -11,6 +11,11 @@ export type CalendarSessionFilter = "all" | "premarket" | "regular" | "after_hou
 export type CalendarTradeCountFilter = "all" | "1-3" | "4-6" | "7+";
 export type CalendarPnlFilter = "all" | "loss200" | "flat" | "profit200";
 
+export type CalendarWeekOption = Readonly<{
+  months: readonly string[];
+  week: string;
+}>;
+
 export type CalendarFilterInput = {
   currency: string;
   direction: CalendarDirectionFilter;
@@ -24,5 +29,9 @@ export type CalendarFilterInput = {
 };
 
 export type CalendarTickerResult = JournalCalendarTickerReadModel;
-export type CalendarDay = JournalCalendarDayReadModel;
-export type CalendarData = JournalCalendarReadModel;
+export type CalendarDay = JournalCalendarDayReadModel & Readonly<{
+  hasDailyTracker: boolean;
+}>;
+export type CalendarData = Omit<JournalCalendarReadModel, "days"> & Readonly<{
+  days: readonly CalendarDay[];
+}>;

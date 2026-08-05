@@ -495,8 +495,8 @@ export function DataDecisionsRepairPreview() {
             <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ alignItems: { md: "center" } }}>
               <TextField aria-label="Sort rows" label="Sort rows" onChange={(event) => setSortOrder(event.target.value as SortOrder)} select size="small" sx={{ minWidth: 210 }} value={sortOrder}>
                 <MenuItem value="statement">Statement row</MenuItem>
-                <MenuItem value="symbol-asc">Symbol A–Z</MenuItem>
-                <MenuItem value="symbol-desc">Symbol Z–A</MenuItem>
+                <MenuItem value="symbol-asc">Ticker A–Z</MenuItem>
+                <MenuItem value="symbol-desc">Ticker Z–A</MenuItem>
                 <MenuItem value="time-asc">Date and time: oldest first</MenuItem>
                 <MenuItem value="time-desc">Date and time: newest first</MenuItem>
               </TextField>
@@ -511,7 +511,7 @@ export function DataDecisionsRepairPreview() {
               <Table size="small" stickyHeader sx={{ minWidth: 1320 }}>
                 <TableHead><TableRow>
                   <TableCell padding="checkbox"><Checkbox aria-label="Select all visible review rows" checked={allVisibleSelected} indeterminate={selectedRowIds.length > 0 && !allVisibleSelected} onChange={(event) => setSelectedRowIds(event.target.checked ? visibleRows.map((row) => row.id) : [])} /></TableCell>
-                  <TableCell>Statement row</TableCell><TableCell>What needs attention</TableCell><TableCell>Date</TableCell><TableCell>Time</TableCell><TableCell>Symbol</TableCell><TableCell>Side</TableCell><TableCell align="right">Quantity</TableCell><TableCell align="right">Price</TableCell><TableCell align="right">Fees</TableCell><TableCell>Use this row</TableCell>
+                  <TableCell>Statement row</TableCell><TableCell>What needs attention</TableCell><TableCell>Date</TableCell><TableCell>Time</TableCell><TableCell>Ticker</TableCell><TableCell>Side</TableCell><TableCell align="right">Quantity</TableCell><TableCell align="right">Price</TableCell><TableCell align="right">Fees</TableCell><TableCell>Use this row</TableCell>
                 </TableRow></TableHead>
                 <TableBody>{visibleRows.map((row) => <TableRow key={row.id} selected={selectedRows.has(row.id)}>
                   <TableCell padding="checkbox"><Checkbox aria-label={`Select statement row ${row.row}`} checked={selectedRows.has(row.id)} onChange={(event) => setSelectedRowIds((current) => event.target.checked ? [...current, row.id] : current.filter((id) => id !== row.id))} /></TableCell>
@@ -519,7 +519,7 @@ export function DataDecisionsRepairPreview() {
                   <TableCell sx={{ minWidth: 260 }}><Typography variant="body2">{row.message}</Typography></TableCell>
                   <EditableCell label={`Date for statement row ${row.row}`} onChange={(value) => setRows((current) => updateRowField(current, row.id, "date", value))} value={row.date} width={130} />
                   <EditableCell label={`Time for statement row ${row.row}`} onChange={(value) => setRows((current) => updateRowField(current, row.id, "time", value))} value={row.time} width={110} />
-                  <EditableCell label={`Symbol for statement row ${row.row}`} onChange={(value) => setRows((current) => updateRowField(current, row.id, "symbol", value.toUpperCase()))} value={row.symbol} width={100} />
+                  <EditableCell label={`Ticker for statement row ${row.row}`} onChange={(value) => setRows((current) => updateRowField(current, row.id, "symbol", value.toUpperCase()))} value={row.symbol} width={100} />
                   <TableCell sx={{ minWidth: 110 }}><TextField aria-label={`Side for statement row ${row.row}`} fullWidth onChange={(event) => setRows((current) => updateRowField(current, row.id, "side", event.target.value as PreviewRow["side"]))} select size="small" value={row.side}><MenuItem value="Buy">Buy</MenuItem><MenuItem value="Sell">Sell</MenuItem></TextField></TableCell>
                   <EditableCell align="right" label={`Quantity for statement row ${row.row}`} onChange={(value) => setRows((current) => updateRowField(current, row.id, "quantity", value))} value={row.quantity} width={100} />
                   <EditableCell align="right" label={`Price for statement row ${row.row}`} onChange={(value) => setRows((current) => updateRowField(current, row.id, "price", value))} value={row.price} width={100} />
@@ -531,7 +531,7 @@ export function DataDecisionsRepairPreview() {
             {automaticRows(statement).length > 0 ? <DashboardPanel title="Automatically set aside">
               <Stack spacing={1}>
                 <Typography color="text.secondary" variant="body2">{automaticRows(statement).length} statement rows were identified as headings, cash/FX, unfilled orders, or another non-stock record. They remain visible and do not need an exclusion decision.</Typography>
-                <TableContainer sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, maxHeight: 340 }}><Table size="small" stickyHeader sx={{ minWidth: 680 }}><TableHead><TableRow><TableCell>Statement row</TableCell><TableCell>Why it was set aside</TableCell><TableCell>Date</TableCell><TableCell>Time</TableCell><TableCell>Symbol</TableCell></TableRow></TableHead><TableBody>{automaticRows(statement).map((row) => { const parts = splitTimestamp(row.timestamp ?? ""); return <TableRow key={row.sourceRowNumber}><TableCell sx={{ fontWeight: 700 }}>{row.sourceRowNumber}</TableCell><TableCell><Typography variant="body2">{row.issues.map((issue) => issue.message).join(" ")}</Typography></TableCell><TableCell>{parts.date || "—"}</TableCell><TableCell>{parts.time || "—"}</TableCell><TableCell>{row.symbol ?? "—"}</TableCell></TableRow>; })}</TableBody></Table></TableContainer>
+                <TableContainer sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, maxHeight: 340 }}><Table size="small" stickyHeader sx={{ minWidth: 680 }}><TableHead><TableRow><TableCell>Statement row</TableCell><TableCell>Why it was set aside</TableCell><TableCell>Date</TableCell><TableCell>Time</TableCell><TableCell>Ticker</TableCell></TableRow></TableHead><TableBody>{automaticRows(statement).map((row) => { const parts = splitTimestamp(row.timestamp ?? ""); return <TableRow key={row.sourceRowNumber}><TableCell sx={{ fontWeight: 700 }}>{row.sourceRowNumber}</TableCell><TableCell><Typography variant="body2">{row.issues.map((issue) => issue.message).join(" ")}</Typography></TableCell><TableCell>{parts.date || "—"}</TableCell><TableCell>{parts.time || "—"}</TableCell><TableCell>{row.symbol ?? "—"}</TableCell></TableRow>; })}</TableBody></Table></TableContainer>
               </Stack>
             </DashboardPanel> : null}
             <Divider />

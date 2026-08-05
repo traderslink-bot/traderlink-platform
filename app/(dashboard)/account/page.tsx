@@ -1,5 +1,4 @@
 import AccountCircleRoundedIcon from "@mui/icons-material/AccountCircleRounded";
-import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import LockRoundedIcon from "@mui/icons-material/LockRounded";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
@@ -47,7 +46,7 @@ export default async function AccountPage() {
             <Typography sx={{ fontWeight: 850 }} variant="h2">{profile.displayName}</Typography>
             <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">{profile.authenticationLabel}</Typography>
           </Box>
-          <Chip color="success" icon={<CheckCircleRoundedIcon />} label={profile.accessMode === "local_development" ? "Local review access" : "Signed in"} />
+          <Chip color="success" label={profile.accessMode === "local_development" ? "Local review access" : "Signed in"} />
         </Stack>
       </DashboardPanel>
 

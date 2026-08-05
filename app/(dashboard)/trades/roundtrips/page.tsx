@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -20,6 +19,7 @@ import {
   DashboardUnavailableState,
 } from "../../../dashboard-template";
 import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
+import { subtractExactDecimals } from "@/src/modules/journal-analytics/server/exact-analytics-math";
 import {
   buildJournalAnalyticsDashboardQuery,
   withJournalAnalyticsDashboardRuntime,
@@ -46,6 +46,18 @@ function timestamp(value: string): string {
   return value.replace("T", " ").replace(".000Z", " UTC");
 }
 
+function money(value: string | null): string {
+  if (value === null) return "N/A";
+  const formatted = formatJournalAnalyticsDecimal(value, 2, true);
+  return formatted.startsWith("-") ? `-$${formatted.slice(1)}` : `$${formatted}`;
+}
+
+function fees(cost: string | null, credit: string | null): string {
+  return cost === null || credit === null
+    ? "N/A"
+    : money(subtractExactDecimals(cost, credit));
+}
+
 export default async function RoundTripsPage({
   searchParams,
 }: {
@@ -60,7 +72,7 @@ export default async function RoundTripsPage({
     ? requestedDate
     : null;
   const afterCursor = one(params, "after") ?? null;
-  const result = withJournalAnalyticsDashboardRuntime(scope, ({ facts, service }) => {
+  const result = withJournalAnalyticsDashboardRuntime(scope, ({ service }) => {
     const overviewQuery = buildJournalAnalyticsDashboardQuery(scope, {
       metricIds: ["included_count"],
     });
@@ -71,7 +83,7 @@ export default async function RoundTripsPage({
       ? requestedCurrency
       : currencies[0] ?? null;
     if (currency === null) {
-      return Object.freeze({ overview, currency, table: null, decisions: [] });
+      return Object.freeze({ overview, currency, table: null });
     }
     const tableQuery = buildJournalAnalyticsDashboardQuery(scope, {
       metricIds: ["included_count"],
@@ -88,23 +100,8 @@ export default async function RoundTripsPage({
       afterCursor,
     });
     const table = service.getRoundTripAnalyticsTable(scope, tableQuery);
-    const factSet = facts.getJournalAnalyticsFactSet(scope, {
-      accountIds: overviewQuery.accountIds,
-      closingDateRange: overviewQuery.closingDateRange,
-      currencySelection: Object.freeze({ kind: "all_partitions" as const }),
-    });
-    const decisions = factSet.roundTrips
-      .filter((roundTrip) => roundTrip.projectionState === "needs_decision")
-      .map((roundTrip) => Object.freeze({
-        roundTripId: roundTrip.roundTripId,
-        symbol: roundTrip.displayedSymbol,
-        direction: roundTrip.direction,
-        openedAtUtc: roundTrip.openedAtUtc,
-        reasonCodes: roundTrip.pendingDecisionReasonCodes,
-      }));
-    return Object.freeze({ overview, currency, table, decisions });
+    return Object.freeze({ overview, currency, table });
   });
-
   if (result.table === null || result.currency === null) {
     return (
       <DashboardPage>
@@ -132,13 +129,13 @@ export default async function RoundTripsPage({
         <Typography color="text.secondary" sx={{ maxWidth: 860, mt: 1 }} variant="body2">
           {instrumentId
             ? `Completed history for the selected stable instrument${selectedDate ? ` on ${selectedDate}` : ""}, reconstructed from the canonical Journal execution ledger.`
-            : "Completed trades are reconstructed from the canonical Journal execution ledger. Items needing a factual trader decision are contained below and do not hide unrelated valid trades."}
+            : "Completed trades are reconstructed from the canonical Journal execution ledger."}
         </Typography>
       </Box>
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
         <DashboardDataScopeChip />
-        {result.overview.partitions.map((partition) => (
+        {result.overview.partitions.length > 1 ? result.overview.partitions.map((partition) => (
           <Chip
             color={partition.currency === result.currency ? "primary" : "default"}
             component="a"
@@ -148,42 +145,24 @@ export default async function RoundTripsPage({
             size="small"
             variant={partition.currency === result.currency ? "filled" : "outlined"}
           />
-        ))}
-        <Chip label={`${table.totalRowCount} ready closed`} size="small" variant="outlined" />
-        <Chip label={`${result.decisions.length} need a decision`} size="small" variant="outlined" />
+        )) : null}
       </Stack>
 
-      {result.decisions.length > 0 ? (
-        <Alert
-          action={(
-            <Button color="inherit" href="/data-decisions" size="small">
-              Review Data Decisions
-            </Button>
-          )}
-          severity="warning"
-        >
-          {result.decisions.length} trade chains need factual review. They are excluded only from calculations that depend on those unresolved facts.
-        </Alert>
-      ) : null}
-
-      <DashboardPanel
-        action={<Chip label={`${table.rows.length} on this page`} size="small" variant="outlined" />}
+      <DashboardPanel hideHeader
         eyebrow={`${table.currency ?? "Currency unavailable"} · ${table.timezone}`}
-        title="Analytics-ready closed trades"
       >
         <TableContainer>
           <Table size="small">
             <TableHead>
               <TableRow>
                 <TableCell>Closed</TableCell>
-                <TableCell>Symbol</TableCell>
+                <TableCell>Ticker</TableCell>
                 <TableCell>Direction</TableCell>
-                <TableCell align="right">Quantity</TableCell>
-                <TableCell align="right">Gross P/L</TableCell>
-                <TableCell align="right">Net P/L</TableCell>
+                <TableCell>Executions</TableCell>
+                <TableCell>Gross P/L</TableCell>
+                <TableCell>Net P/L</TableCell>
                 <TableCell>Fees</TableCell>
-                <TableCell>Source</TableCell>
-                <TableCell align="right">Review</TableCell>
+                <TableCell>Review</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -192,16 +171,11 @@ export default async function RoundTripsPage({
                   <TableCell>{timestamp(row.closedAtUtc)}</TableCell>
                   <TableCell>{row.displayedSymbol}</TableCell>
                   <TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell>
-                  <TableCell align="right">{formatJournalAnalyticsDecimal(row.enteredQuantityDecimal)}</TableCell>
-                  <TableCell align="right">{table.currency} {formatJournalAnalyticsDecimal(row.grossPnlDecimal)}</TableCell>
-                  <TableCell align="right">
-                    {row.selectedPnlDecimal === null
-                      ? "Unavailable"
-                      : `${table.currency} ${formatJournalAnalyticsDecimal(row.selectedPnlDecimal)}`}
-                  </TableCell>
-                  <TableCell>{row.chargeCoverage === "complete" ? "Complete" : "Needs review"}</TableCell>
-                  <TableCell>{row.provenance.replaceAll("_", " ")}</TableCell>
-                  <TableCell align="right">
+                  <TableCell>{row.uniqueExecutionCount}</TableCell>
+                  <TableCell>{money(row.grossPnlDecimal)}</TableCell>
+                  <TableCell>{money(row.selectedPnlDecimal)}</TableCell>
+                  <TableCell>{fees(row.chargeCostDecimal, row.chargeCreditDecimal)}</TableCell>
+                  <TableCell>
                     <Button href={`/trades/candle-review?trade=${encodeURIComponent(row.roundTripId)}`} size="small" variant="outlined">
                       Candle Review
                     </Button>
@@ -228,41 +202,6 @@ export default async function RoundTripsPage({
         </Stack>
       </DashboardPanel>
 
-      <DashboardPanel
-        action={<Chip label={`${result.decisions.length} contained`} size="small" variant="outlined" />}
-        title="Needs a trader decision"
-      >
-        {result.decisions.length === 0 ? (
-          <Typography color="text.secondary" variant="body2">
-            No round-trip chain currently needs a trader decision.
-          </Typography>
-        ) : (
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Opened</TableCell>
-                  <TableCell>Symbol</TableCell>
-                  <TableCell>Direction</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Reason</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {result.decisions.map((row) => (
-                  <TableRow key={row.roundTripId}>
-                    <TableCell>{timestamp(row.openedAtUtc)}</TableCell>
-                    <TableCell>{row.symbol}</TableCell>
-                    <TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell>
-                    <TableCell>Trader decision required</TableCell>
-                    <TableCell>{row.reasonCodes.join(", ").replaceAll("_", " ")}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-      </DashboardPanel>
     </DashboardPage>
   );
 }

@@ -38,6 +38,7 @@ function listLegacyIntelligencePageRoutes(
 function main(): void {
   const repository = process.cwd();
   const activeReadFiles = [
+    "app/dismissible-data-decision-notice.tsx",
     "app/(dashboard)/calendar/calendar-data.ts",
     "app/(dashboard)/calendar/page.tsx",
     "app/(dashboard)/trades/ticker/page.tsx",
@@ -51,7 +52,15 @@ function main(): void {
     "app/(dashboard)/trade-tracker/[sessionDate]/day-session-view.tsx",
     "app/(dashboard)/trade-tracker/execution-entry-card.tsx",
     "app/(dashboard)/trade-tracker/manual-execution-entry.tsx",
+    "app/(dashboard)/trade-tracker/manual-execution-edit-dialog.tsx",
+    "app/(dashboard)/trade-tracker/position-style-control.tsx",
+    "app/(dashboard)/trade-tracker/position-style-labels.ts",
     "app/(dashboard)/trade-tracker/trade-tracker-platform-data.ts",
+    "app/(dashboard)/trade-tracker/swings/page.tsx",
+    "app/(dashboard)/trade-tracker/swings/swing-note-editor.tsx",
+    "app/(dashboard)/trade-tracker/swings/swing-annotation-editor.tsx",
+    "app/(dashboard)/trade-tracker/swings/swing-tracker-view.tsx",
+    "app/(dashboard)/trade-tracker/swings/[positionRef]/page.tsx",
     "app/(dashboard)/imports/page.tsx",
     "app/(dashboard)/imports/journal-import-client.tsx",
     "app/(dashboard)/data-decisions/page.tsx",
@@ -80,6 +89,13 @@ function main(): void {
     "app/api/platform/account-selection/route.ts",
     "app/api/platform/journal/accounts/route.ts",
     "app/api/platform/journal/manual-executions/route.ts",
+    "app/api/platform/journal/manual-executions/[executionRef]/route.ts",
+    "app/api/platform/journal/manual-trades/preview/route.ts",
+    "app/api/platform/journal/manual-trades/commit/route.ts",
+    "app/api/platform/journal/swings/[positionRef]/notes/route.ts",
+    "app/api/platform/journal/swings/[positionRef]/tags/route.ts",
+    "app/api/platform/journal/swings/[positionRef]/rule-reviews/route.ts",
+    "app/api/platform/journal/trade-style/[positionRef]/route.ts",
     "app/api/platform/journal/imports/preview/route.ts",
     "app/api/platform/journal/imports/commit/route.ts",
     "app/api/platform/journal/imports/history/route.ts",
@@ -153,9 +169,12 @@ function main(): void {
     "src/modules/journal/server/product/journal-import-product-service.ts",
     "src/modules/journal/server/product/journal-data-decision-resolution.ts",
     "src/modules/journal/server/product/journal-mapping-support-package.ts",
+    "src/modules/journal/contracts/journal-tag-preset-catalog.ts",
     "src/modules/journal/server/annotations/journal-annotation-runtime.ts",
     "src/modules/journal/server/annotations/journal-annotation-service.ts",
     "src/modules/journal/server/annotations/journal-trading-rules-dashboard.ts",
+    "src/modules/journal/server/decisions/journal-data-decision-notice.ts",
+    "src/modules/journal/server/manual-trades/journal-manual-execution-edit-service.ts",
     "src/modules/journal-analytics/server/journal-dashboard-read-model-service.ts",
     "src/modules/journal-analytics/server/analytics-lab-saved-view-repository.ts",
     "src/modules/journal-analytics/server/analytics-lab-saved-view-service.ts",
@@ -251,6 +270,22 @@ function main(): void {
     repository,
     "app/(dashboard)/trade-tracker/execution-entry-card.tsx",
   );
+  const swingTracker = read(
+    repository,
+    "app/(dashboard)/trade-tracker/swings/page.tsx",
+  );
+  const swingDetail = read(
+    repository,
+    "app/(dashboard)/trade-tracker/swings/[positionRef]/page.tsx",
+  );
+  const positionStyleControl = read(
+    repository,
+    "app/(dashboard)/trade-tracker/position-style-control.tsx",
+  );
+  const swingNoteEditor = read(
+    repository,
+    "app/(dashboard)/trade-tracker/swings/swing-note-editor.tsx",
+  );
   if (
     !tracker.includes("getReplacementDaySession") ||
     !tracker.includes("currentDateInTimezone") ||
@@ -258,12 +293,43 @@ function main(): void {
     !tracker.includes("topContent={topContent}") ||
     !datedTracker.includes("getReplacementDaySession") ||
     !datedTracker.includes("readOnly") ||
-    !manualEntry.includes("/api/platform/journal/manual-executions") ||
+    !manualEntry.includes("/api/platform/journal/manual-trades/preview") ||
+    !manualEntry.includes("/api/platform/journal/manual-trades/commit") ||
+    !entryCard.includes("Save executions") ||
     !entryCard.includes("onSave") ||
-    !entryCard.includes('value="swing"') ||
-    entryCard.includes("day-session-executions/v1")
+    entryCard.includes('value="swing"') ||
+    manualEntry.includes("/api/platform/journal/manual-executions") ||
+    entryCard.includes("day-session-executions/v1") ||
+    !swingTracker.includes("getReplacementSwingTrackerPositions") ||
+    !swingTracker.includes('tracker="swing"') ||
+    !swingDetail.includes("getReplacementSwingPositionDetail") ||
+    !swingDetail.includes("SwingNoteEditor") ||
+    !swingDetail.includes("SwingAnnotationEditor") ||
+    !swingDetail.includes("ManualExecutionEditDialog") ||
+    !swingDetail.includes("PositionStyleControl") ||
+    !positionStyleControl.includes("/api/platform/journal/trade-style/") ||
+    !swingNoteEditor.includes("/api/platform/journal/swings/") ||
+    !open.includes("getReplacementOpenPositionStyles") ||
+    !open.includes("PositionStyleControl")
   ) {
     fail("trade_tracker_replacement_read_boundary");
+  }
+
+  const trackerMutationRoutes = [
+    read(repository, "app/api/platform/journal/manual-trades/preview/route.ts"),
+    read(repository, "app/api/platform/journal/manual-trades/commit/route.ts"),
+    read(repository, "app/api/platform/journal/swings/[positionRef]/notes/route.ts"),
+    read(repository, "app/api/platform/journal/swings/[positionRef]/tags/route.ts"),
+    read(repository, "app/api/platform/journal/swings/[positionRef]/rule-reviews/route.ts"),
+    read(repository, "app/api/platform/journal/trade-style/[positionRef]/route.ts"),
+  ];
+  if (trackerMutationRoutes.some((source) =>
+    !source.includes("requireJournalMutationRequest") ||
+    !source.includes("requireExpectedJournalAccountSelection") ||
+    !source.includes('export const runtime = "nodejs"') ||
+    !source.includes('export const dynamic = "force-dynamic"')
+  )) {
+    fail("trade_tracker_mutation_boundary");
   }
 
   const imports = read(
@@ -892,6 +958,9 @@ function main(): void {
     "app/(dashboard)/imports/journal-import-client.tsx",
     "app/(dashboard)/data-decisions/journal-data-decisions-client.tsx",
     "app/api/platform/journal/manual-executions/route.ts",
+    "app/api/platform/journal/manual-executions/[executionRef]/route.ts",
+    "app/api/platform/journal/swings/[positionRef]/tags/route.ts",
+    "app/api/platform/journal/swings/[positionRef]/rule-reviews/route.ts",
     "app/api/platform/journal/imports/commit/route.ts",
     "app/api/platform/journal/data-decisions/route.ts",
     "app/(dashboard)/rules/rules-client.tsx",
@@ -919,6 +988,8 @@ function main(): void {
       "/trades/open",
       "/trade-tracker",
       "/trade-tracker/[sessionDate]",
+      "/trade-tracker/swings",
+      "/trade-tracker/swings/[positionRef]",
     ]),
     manualMutationState: "journal_command_with_data_decisions",
     accountSelectionState: "explicit_opaque_and_stale_safe",

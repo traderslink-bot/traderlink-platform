@@ -12,6 +12,7 @@ export type JournalExecutionChainRow = JournalExecutionFacts & Readonly<{
   executionId: string;
   executionVersionId: string;
   currentState: JournalExecutionState;
+  manualBoundaryConfirmed: boolean;
 }>;
 
 export type JournalPositionCheckpointRow = Readonly<{
@@ -66,6 +67,7 @@ type ExecutionRow = Readonly<{
   price_decimal: string | null; fees_decimal: string | null; fee_currency: string | null;
   fee_sign_convention: JournalExecutionFacts["feeSignConvention"];
   fact_completeness: JournalExecutionFacts["factCompleteness"];
+  manual_boundary_confirmed: 0 | 1;
 }>;
 
 export class JournalRoundTripRepository {
@@ -243,17 +245,46 @@ ORDER BY decision_state, issue.issue_code, issue.source_issue_id`).all(
 
   listExecutions(workspaceId: string, accountId: string, instrumentId: string, tradeCurrency: string): readonly JournalExecutionChainRow[] {
     return Object.freeze(this.database.prepare<[string, string, string, string], ExecutionRow>(`
-SELECT e.execution_id, e.current_state, v.*
+SELECT e.execution_id, e.current_state, v.*,
+  EXISTS (
+    SELECT 1
+    FROM journal_execution_provenance provenance
+    JOIN journal_source_rows source_row
+      ON source_row.workspace_id = provenance.workspace_id
+      AND source_row.account_id = provenance.account_id
+      AND source_row.source_row_id = provenance.source_row_id
+    JOIN journal_manual_trade_boundary_assertions boundary_assertion
+      ON boundary_assertion.workspace_id = source_row.workspace_id
+      AND boundary_assertion.account_id = source_row.account_id
+      AND boundary_assertion.import_batch_id = source_row.import_batch_id
+    WHERE provenance.workspace_id = e.workspace_id
+      AND provenance.account_id = e.account_id
+      AND provenance.execution_id = e.execution_id
+  ) AS manual_boundary_confirmed
 FROM journal_executions e
 JOIN journal_execution_versions v ON v.execution_version_id = e.current_version_id
 WHERE e.workspace_id = ? AND e.account_id = ?
   AND v.instrument_id = ? AND v.trade_currency = ? AND e.current_state <> 'superseded'
+  AND NOT EXISTS (
+    SELECT 1
+    FROM journal_execution_reconciliation_members reconciliation_member
+    JOIN journal_execution_reconciliation_sets reconciliation_set
+      ON reconciliation_set.workspace_id = reconciliation_member.workspace_id
+      AND reconciliation_set.account_id = reconciliation_member.account_id
+      AND reconciliation_set.reconciliation_set_id = reconciliation_member.reconciliation_set_id
+    WHERE reconciliation_member.workspace_id = e.workspace_id
+      AND reconciliation_member.account_id = e.account_id
+      AND reconciliation_member.execution_id = e.execution_id
+      AND reconciliation_member.member_role = 'provisional_imported_execution'
+      AND reconciliation_set.state = 'pending'
+  )
 ORDER BY v.executed_at_utc, v.source_order_key, v.execution_version_id`).all(
       workspaceId, accountId, instrumentId, tradeCurrency,
     ).map((row) => Object.freeze({
       executionId: row.execution_id,
       executionVersionId: row.execution_version_id,
       currentState: row.current_state,
+      manualBoundaryConfirmed: row.manual_boundary_confirmed === 1,
       instrumentId: row.instrument_id,
       tradeCurrency: row.trade_currency,
       sourceTimestampText: row.source_timestamp_text,
@@ -488,9 +519,13 @@ WHERE r.round_trip_id = ? AND r.workspace_id = ? AND r.account_id = ?`)
         input.projectionFingerprintSha256, input.timestamp);
     if (input.versionNumber > 1) {
       this.database.prepare(`UPDATE journal_round_trips
-SET current_version_id = ?, lifecycle_state = 'active', updated_at_utc = ?
+SET current_version_id = ?, lifecycle_state = 'active',
+ updated_at_utc = CASE
+   WHEN updated_at_utc > ? THEN updated_at_utc
+   ELSE ?
+ END
 WHERE round_trip_id = ? AND workspace_id = ? AND account_id = ?`)
-        .run(input.roundTripVersionId, input.timestamp, input.roundTripId,
+        .run(input.roundTripVersionId, input.timestamp, input.timestamp, input.roundTripId,
           input.workspaceId, input.accountId);
     }
   }
@@ -545,7 +580,8 @@ WHERE workspace_id = ? AND account_id = ?
     timestamp: string,
   ): void {
     this.database.prepare(`UPDATE journal_round_trips
-SET lifecycle_state = 'superseded', updated_at_utc = ?
+SET lifecycle_state = 'superseded',
+ updated_at_utc = CASE WHEN updated_at_utc > ? THEN updated_at_utc ELSE ? END
 WHERE workspace_id = ? AND account_id = ? AND lifecycle_state = 'active'
   AND EXISTS (
     SELECT 1
@@ -565,18 +601,20 @@ WHERE workspace_id = ? AND account_id = ? AND lifecycle_state = 'active'
         current_execution_version.instrument_id <> round_trip_version.instrument_id
         OR current_execution_version.trade_currency <> round_trip_version.trade_currency
       )
-  )`).run(timestamp, workspaceId, accountId);
+  )`).run(timestamp, timestamp, workspaceId, accountId);
   }
 
   supersedeMissingRoundTrips(workspaceId: string, accountId: string, instrumentId: string, currency: string, retainedIds: readonly string[], timestamp: string): void {
     const placeholders = retainedIds.length > 0 ? retainedIds.map(() => "?").join(", ") : "NULL";
-    this.database.prepare(`UPDATE journal_round_trips SET lifecycle_state = 'superseded', updated_at_utc = ?
+    this.database.prepare(`UPDATE journal_round_trips
+SET lifecycle_state = 'superseded',
+ updated_at_utc = CASE WHEN updated_at_utc > ? THEN updated_at_utc ELSE ? END
 WHERE workspace_id = ? AND account_id = ? AND lifecycle_state = 'active'
   AND current_version_id IN (
     SELECT round_trip_version_id FROM journal_round_trip_versions
     WHERE instrument_id = ? AND trade_currency = ?
   ) AND round_trip_id NOT IN (${placeholders})`)
-      .run(timestamp, workspaceId, accountId, instrumentId, currency, ...retainedIds);
+      .run(timestamp, timestamp, workspaceId, accountId, instrumentId, currency, ...retainedIds);
   }
 
   upsertTradingDay(input: Readonly<{
@@ -588,7 +626,12 @@ WHERE workspace_id = ? AND account_id = ? AND lifecycle_state = 'active'
  status, created_at_utc, updated_at_utc
 ) VALUES (?, ?, ?, ?, ?, 'active', ?, ?)
 ON CONFLICT(workspace_id, account_id, trading_date, trading_timezone)
-DO UPDATE SET status = 'active', updated_at_utc = excluded.updated_at_utc`)
+DO UPDATE SET status = 'active',
+ updated_at_utc = CASE
+   WHEN journal_trading_days.updated_at_utc > excluded.updated_at_utc
+     THEN journal_trading_days.updated_at_utc
+   ELSE excluded.updated_at_utc
+ END`)
       .run(input.tradingDayId, input.workspaceId, input.accountId,
         input.tradingDate, input.tradingTimezone, input.timestamp, input.timestamp);
   }

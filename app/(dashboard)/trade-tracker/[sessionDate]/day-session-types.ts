@@ -1,13 +1,15 @@
 export type DaySessionTradeTag = {
   assignmentCount: number;
+  category?: import("@/src/modules/journal/contracts/journal-tag-preset-catalog").JournalTagPresetCategory | "custom";
   name: string;
+  presetKey?: string;
   revision: string;
   tagId: string;
 };
 
 export type DaySessionTradeJournal = {
   noteRevision: string | null;
-  ruleStatus: "followed" | "broken" | "not-reviewed";
+  ruleStatus: "followed" | "broken" | "not-reviewed" | "n/a";
   ruleSummary: string;
   tags: DaySessionTradeTag[];
   technicalNote: string;
@@ -15,6 +17,7 @@ export type DaySessionTradeJournal = {
 };
 
 export type DaySessionRoundTrip = {
+  analyzer: DaySessionTradeAnalyzer | null;
   direction: "long" | "short";
   entryAt: string;
   entryPrice: string | null;
@@ -25,6 +28,62 @@ export type DaySessionRoundTrip = {
   netPnl: string | null;
   roundTripKey: string;
   timezone: string;
+};
+
+export type DaySessionTradeAnalyzer = {
+  candles: Array<{
+    close: string;
+    high: string;
+    low: string;
+    open: string;
+    time: number;
+    volume: string;
+  }>;
+  events: Array<{
+    candleTime: number | null;
+    executedAt: string;
+    indicators: {
+      adr20: number | null;
+      atr14: number | null;
+      ema9: number | null;
+      ema20: number | null;
+      macd: number | null;
+      macdHistogram: number | null;
+      macdSignal: number | null;
+      relativeVolume: number | null;
+      rsi14: number | null;
+      vwap: number | null;
+    } | null;
+    kind: "entry" | "add" | "partial_exit" | "final_exit";
+    patterns: Array<{ kind: string; score: number; time: number }>;
+    price: string;
+    quantity: string;
+  }>;
+  finalExitPaths: Array<{
+    favorableMove: string | null;
+    minutesAfterExit: 5 | 15 | 30 | 60;
+    observedAt: number | null;
+  }>;
+  status: "ready" | "no_coverage" | "provider_unavailable" | "expired" | "pending";
+};
+
+export type DaySessionExecutionActivity = {
+  executedAt: string;
+  executionKey: string;
+  manualEdit: {
+    editRef: string;
+    fees: string | null;
+    localDate: string;
+    localTime: string;
+    sourceTimezone: string;
+    tradeCurrency: string;
+  } | null;
+  needsDecision: boolean;
+  price: string | null;
+  quantity: string;
+  roundTripKeys: readonly string[];
+  side: "buy" | "sell";
+  symbol: string;
 };
 
 export type DaySessionTicker = {
@@ -38,10 +97,14 @@ export type DaySessionTicker = {
 export type DaySessionOpenPosition = {
   averageEntryPrice: string | null;
   direction: "long" | "short";
+  executions: DaySessionExecutionActivity[];
+  journal: DaySessionTradeJournal;
   openedAt: string;
   positionKey: string;
+  positionRef: string | null;
   remainingQuantity: string;
   stableInstrumentKey: string;
+  style: JournalTradeStyleRecord | null;
   symbol: string;
   timezone: string;
 };
@@ -53,7 +116,7 @@ export type DaySessionRule = {
   revision: string | null;
   ruleId: string;
   ruleVersion: string;
-  status: "followed" | "broken" | "not-reviewed";
+  status: "followed" | "broken" | "not-reviewed" | "n/a";
   targetLabel: string | null;
   targetRoundTripKey: string | null;
 };
@@ -85,6 +148,7 @@ export type DaySessionWeek = {
 
 export type DaySessionData = {
   availableTags: DaySessionTradeTag[];
+  availableSessionDates: string[];
   currency: string;
   dailyNote: DaySessionDailyNote;
   date: string;
@@ -96,15 +160,7 @@ export type DaySessionData = {
     roundTripKey: string;
     symbol: string;
   }>;
-  executionActivity: Array<{
-    executedAt: string;
-    executionKey: string;
-    needsDecision: boolean;
-    price: string | null;
-    quantity: string;
-    side: "buy" | "sell";
-    symbol: string;
-  }>;
+  executionActivity: DaySessionExecutionActivity[];
   expectedAccountSelectionRef: string;
   netPnl: string | null;
   needsDecisionCount: number;
@@ -120,8 +176,15 @@ export type DaySessionData = {
     symbol: string;
   }>;
   previousSessionDate: string | null;
+  review: {
+    revision: number | null;
+    status: "reviewed" | "incomplete" | null;
+    unclassifiedOpenPositionCount: number;
+    updatedAtUtc: string | null;
+  };
   rules: DaySessionRule[];
   tickers: DaySessionTicker[];
   timezone: string;
   week: DaySessionWeek;
 };
+import type { JournalTradeStyleRecord } from "@/src/modules/journal/contracts/journal-trade-style-contracts";

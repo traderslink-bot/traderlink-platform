@@ -75,6 +75,7 @@ const queryKeys = Object.freeze([
   "provenance",
   "queryVersion",
   "symbols",
+  "tradeClassifications",
   "table",
 ]);
 
@@ -93,7 +94,8 @@ export function requireJournalAnalyticsQuery(
   normalized: NormalizedJournalAnalyticsSet,
   query: JournalAnalyticsQuery,
 ): JournalAnalyticsQuery {
-  if (JSON.stringify(Object.keys(query).sort()) !== JSON.stringify(queryKeys)) {
+  if (JSON.stringify(Object.keys(query).sort()) !==
+      JSON.stringify([...queryKeys].sort())) {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
       field: "queryFields",
     });
@@ -164,6 +166,10 @@ export function requireJournalAnalyticsQuery(
     });
   }
   const directions = unique(query.directions, "directions");
+  const tradeClassifications = unique(
+    query.tradeClassifications,
+    "tradeClassifications",
+  );
   const provenance = unique(query.provenance, "provenance");
   const outcomes = unique(query.outcomes, "outcomes");
   const entryWeekdays = unique(query.entryWeekdays, "entryWeekdays");
@@ -172,6 +178,8 @@ export function requireJournalAnalyticsQuery(
   if (
     !["gross", "net"].includes(query.moneyBasis) ||
     directions.some((value) => !["long", "short"].includes(value)) ||
+    tradeClassifications.some((value) =>
+      !["day_trade", "multi_day_trade"].includes(value)) ||
     provenance.some((value) => ![
       "broker_only",
       "manual_only",
@@ -286,6 +294,7 @@ export function requireJournalAnalyticsQuery(
     instrumentIds,
     symbols,
     directions,
+    tradeClassifications,
     provenance,
     outcomes,
     entryWeekdays,
@@ -365,6 +374,8 @@ function baseRowMatches(
       query.instrumentIds.includes(row.instrumentId)) &&
     (query.symbols.length === 0 || query.symbols.includes(row.displayedSymbol)) &&
     (query.directions.length === 0 || query.directions.includes(row.direction)) &&
+    (query.tradeClassifications.length === 0 ||
+      query.tradeClassifications.includes(row.tradeClassification)) &&
     (query.provenance.length === 0 ||
       query.provenance.includes(row.provenanceGroup)) &&
     (query.entryWeekdays.length === 0 ||

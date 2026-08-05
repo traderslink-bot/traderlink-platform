@@ -446,6 +446,7 @@ describe("Journal Analytics normalization", () => {
       chargeCostDecimal: "0.1",
       chargeCreditDecimal: "0.1",
       netPnlDecimal: "10",
+      tradeClassification: "multi_day_trade",
       isOvernight: true,
     });
   });

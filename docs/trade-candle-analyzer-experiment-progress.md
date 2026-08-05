@@ -1,6 +1,6 @@
 # Trade Candle Analyzer Experiment Progress
 
-**Plan:** [trade-candle-analyzer-experiment-plan.md](./trade-candle-analyzer-experiment-plan.md)  
+**Plan:** Historical [trade-candle-analyzer-experiment-plan.md](./trade-candle-analyzer-experiment-plan.md); active future direction is [Daily Trade Tracker Yahoo Analyzer Plan](migration/daily-trade-tracker-yahoo-analyzer-plan.md).
 **Branch:** `main`
 
 | Checkpoint | Status | Notes |
@@ -12,6 +12,6 @@
 | Candle adapter and deterministic analyzer module | Complete | Protected Yahoo adapter normalizes bounded one-minute OHLCV data; the three price-path analyzers remain evidence-gated and return no-feedback per incomplete window. |
 | Execution-context candle patterns | Complete | The five approved families now include definitions, compression-break observations, an extended-move requirement for high-volume exhaustion, and execution-zone relevance scoring. |
 | Indicator context | Complete | EMA 9/20, RSI 14, session VWAP, MACD, ATR 14, and exact 20-day ADR are derived only after a manual review request; unavailable lookback remains blank. |
-| Governed trade connection | In progress | Completed V3 round trips have an `Analyze this trade` / `View review` / `No coverage` entry point. The detail surface resolves broker facts server-side, saves only derived feedback, and allows another Yahoo fetch after one minute. An explicit Yahoo intraday-coverage response saves `No coverage` instead of displaying a generic failure; a true Yahoo connection failure remains retryable. Manual Trade Tracker `Submit executions` automatically requests reviews only for completed round trips created by that submission and exposes direct links to those review results. |
+| Governed trade connection | Superseded | The former Round Trips/manual-trigger path is retained as experiment evidence only. The pending Daily Trade Tracker plan replaces it with automatic eligible day-trade analysis, per-event snapshots, a shared extended-hours session cache, and no Round Trips analyzer entry point. |
 | Focused verification and isolated review | In progress | Targeted static checks are pending for the manual-entry trigger. The shared protected runtime on port 3010 must remain running and needs a final visual review. |
 | Merge or deployment | Complete (main integration) | The experiment is integrated into `main`. No production deployment was requested. |

@@ -1,3 +1,30 @@
+# 2026-08-02 - Day Trade Tracker and Swing Trade Tracker split approved
+
+- Replaced the planned single mixed Trade Tracker workflow with two clearly
+  named Journal surfaces: `/trade-tracker` for current/recent Day Trade tracking
+  and `/trade-tracker/swings` for active/recent intentional Swing Trades.
+- Both trackers remain projections over one account-scoped canonical execution
+  ledger. Manual executions are not stored in a separate subsystem.
+- Fixed the manual-entry contract around per-row actual execution dates/times,
+  previewed start/continue/close relationships and a bounded seven-calendar-day
+  late-entry window, with exceptions for active swings and recently closed
+  swings whose true opening execution is older.
+- Fixed Day/Swing intent at stable trade/position scope. Holding duration never
+  infers intent, a Day trade does not silently become a Swing, and Open Positions
+  remains the factual surface for every confirmed open lifecycle.
+- Reserved migration 0021 for versioned style plans, dated swing-note revisions
+  and manual trade-boundary assertions. No tracker code, migration, process,
+  database, test, Git stage, commit or push was performed at this checkpoint.
+- QA-expanded manual/broker reconciliation: exact time is no longer a weak-match
+  requirement; pending imports preserve the manual execution as the sole active
+  position effect, withhold only the provisional broker candidate, and keep
+  unrelated statement rows flowing. Same/separate/correct/later and grouped
+  fill outcomes preserve both sources and require trader confirmation.
+- Corrected implementation order so approved Administration migrations
+  0019/0020 precede tracker/reconciliation migration 0021.
+- Controlling contract:
+  `docs/migration/day-and-swing-trade-tracker-plan.md`.
+
 # 2026-08-02 - TraderLink Platform Phase 6 locally accepted
 
 - Completed sequential one-worker regression, full TypeScript/lint, the
@@ -21030,3 +21057,343 @@ Current best next step:
   Treat hosted-source transfer, Discord owner linking, Git publication,
   Railway/DNS deployment and any physical cleanup as separate external or
   owner-controlled gates. Do not revive V3 or import legacy test annotations.
+
+# 2026-08-02 Journal Administration planning checkpoint
+
+- Created `docs/migration/journal-admin-dashboard-plan.md` as the detailed,
+  planning-only contract for the owner's Journal operations dashboard.
+- Reserved `/admin/journal` and `/api/admin/journal/**`; the separate
+  computer-run Watchlist admin, preserved `/intelligence/admin`, historical
+  `/workspace/admin` references and Level Analysis admin routes remain separate
+  and untouched.
+- Production authorization uses the existing Discord-authenticated Platform
+  session, configured-server owner evidence refreshed within five minutes and
+  the singleton active `journal_owner_admin` grant for the same exact user. No
+  condition alone, Premium entitlement or workspace role grants access.
+  Email/password admin login remains deferred.
+- The plan defines exact Overview, Users, Imports, Statement Formats, Data
+  Decisions, System and Audit surfaces; durable failed-import/format evidence;
+  privacy-safe developer packages; purpose-bound raw-statement consent; and no
+  administrator mutation of trader facts.
+- Completed an implementation-contract QA pass. Corrections define a five-minute
+  Discord-owner freshness window, same-origin/CSRF/revision/idempotency controls,
+  transactional import recovery, a seven-day mapping expiry, separate table and
+  statement-layout signatures, hardened package privacy scanning, an explicit
+  support-source vault with 90-day consent and purge rules, and exact metric
+  denominators with an honest pre-instrumentation historical-import coverage
+  boundary. No product decision or route boundary changed.
+- No code, migration, process, database, private data, server, test, deployment
+  or Git staging action was performed by this planning checkpoint.
+
+Current best next step:
+
+- Obtain owner approval of the QA-corrected Journal Administration plan. Once
+  accepted, begin Admin 1 with operator authority and audit foundation, then
+  Admin 2 import-attempt/format evidence. Keep Watchlist administration outside
+  this scope.
+
+# 2026-08-02 Day/Swing tracker implementation pause
+
+- The owner approved the Day/Swing Tracker and Journal Administration plans.
+- Migrations 0019-0021 are implemented; the protected replacement database was
+  backed up, restore-verified, migrated and independently verified.
+- Manual execution preview/confirmation/save is implemented over the canonical
+  Journal ledger, including position-level Day/Swing intent and explicit manual
+  trade boundaries.
+- Initial shared trade-style, Swing daily-note and tracker-read services plus
+  their mutation routes are written but have not yet received their first
+  TypeScript/focused test pass.
+- Work stopped at the owner's requested safe shutdown point. No command,
+  process, migration, test, server or Git operation is running. Port 3010 stays
+  off.
+
+Current best next step:
+
+- Resume in `traderlink-platform` on
+  `codex/traderlink-platform-replacement`; run the resource-aware TypeScript
+  check first, correct only the new tracker service/API slice, then implement
+  the Swing Tracker pages and shared Open Positions classification UI. Keep the
+  local Node memory fallback untracked.
+
+# 2026-08-03 Platform source publication and landing deployment
+
+- The accepted TraderLink Platform lineage is now published at
+  `https://github.com/traderslink-bot/traderlink-platform`. Published `main`
+  and the local replacement HEAD are
+  `c0c998d8e456b9e70433e73123e8024b13ece203`. Local `origin` names the new
+  repository and `legacy-origin` preserves the former repository.
+- The public Vercel project now serves the approved landing page and preserved
+  Academy from the clean narrow release
+  `2d7bdd2370b0781c8157ed11f54337c20a4e68cd`, production deployment
+  `dpl_4MGMs3jqaYbQ7Wx3FQKdaHRxt6vW`. Live `/` and `/academy` both returned
+  HTTP 200 and the deployment had no error/fatal runtime logs at verification.
+- A complete replacement build was not adopted as the Vercel runtime. Its
+  accepted single-node readiness contract requires persistent `/data` storage;
+  a dynamic Academy request exposed that Vercel incompatibility, so the
+  promotion was rolled back before the verified landing-only release. Railway,
+  production-source transfer, Discord owner activation and the full hosted
+  application cutover remain pending.
+- The deployment interruption changed no active Tracker/Admin implementation
+  file or protected database fact. The local branch fast-forwarded only the
+  published cross-platform `package-lock.json` correction. All unfinished
+  Tracker/Admin work remains unstaged.
+
+Current best next step:
+
+- Resume the Day/Swing Tracker checkpoint exactly where it paused: run the
+  narrow resource-aware TypeScript check over the new style, Swing-note,
+  tracker-read and mutation-route slice; correct only those findings; then
+  implement the complete Day/Swing/Open Positions UI. Keep port 3010 off until
+  the integrated owner-review checkpoint and keep
+  `.codex-node-userinfo-fallback.cjs` untracked.
+
+# 2026-08-03 Day/Swing and manual/broker reconciliation checkpoint
+
+- Day Tracker, Swing Tracker, Swing detail/dated notes and Open Positions now
+  share the saved Journal position-style authority. Displayed trading values use
+  at most two decimals while stored and editable facts remain lossless.
+- Broker imports detect manual candidates by account trading date, instrument,
+  currency, side and exact quantity without treating exact time or price as a
+  hard identity requirement. The manual execution stays accepted and only the
+  provisional broker member is withheld.
+- Data Decisions materialize exact candidate members. Trader-confirmed same
+  execution retains the manual ID with broker facts/provenance; separate keeps
+  both; grouped confirmation uses exact quantity-conserving broker fills and
+  preserves superseded manual history. Repeat evidence reuses the same decision
+  and all affected imports remain pending until it is resolved.
+- Read-only TypeScript passed. Three focused import/Data Decision files passed
+  63 tests with one worker; additional same/separate/grouped and repeat-evidence
+  focused proofs also passed. No server, protected database, staging, commit,
+  push or deployment occurred.
+- The explicit correct-manual-entry path now revises the accepted manual facts
+  without prematurely resolving a still-matching broker candidate. It resolves
+  only after corrected facts no longer overlap. Manual-save responses now
+  return affected dates and stable affected position references.
+- The combined focused gate passes four files and 68 tests with one worker and
+  no file parallelism. Read-only TypeScript also passes. The remaining tracker
+  work is the final route and integrated dashboard gate. Port 3010 remains off.
+- Operational constraint: the owner's Playwright/Chrome Discord press-release
+  app starts at 03:55 local time and must not be stopped. If it creates resource
+  pressure, pause only after updating this resume point and continue after the
+  owner closes it.
+
+Current best next step:
+
+- Finish the bounded tracker route/integrated checks, then proceed to the
+  approved Journal Administration implementation. Keep the press-release
+  process untouched and keep port 3010 off.
+
+# 2026-08-03 Journal Administration Admin 2 runtime checkpoint
+
+- Added one strict same-origin/custom-marker request boundary across all nine
+  ordinary Journal POST routes. Import preview now durably admits one
+  account-scoped attempt, records hardened V2 format observations and returns
+  encrypted opaque references without browser-visible source hashes, sizes or
+  internal UUIDs.
+- Generic and IBKR import finalization now commit Journal facts and the terminal
+  attempt event in one SQLite transaction. A disposable end-to-end proof found
+  and fixed a stale generic-preview counter; the corrected flow commits one
+  import/two executions/one round trip and exact retry creates no duplicate.
+- Added deterministic stale-commit recovery, expiring/revocable optional
+  importer-development consent, a separate hash-verified support-source vault,
+  trader-triggered purge receipts and Import UI consent controls. Consent stays
+  off by default and real support-vault configuration remains absent.
+- The complete Admin 2 focused gate passes 13 files/27 tests with one worker;
+  targeted lint and diff checks pass. The latest full TypeScript checkpoint is
+  deferred after a bounded 1 GiB heap exhaustion while the protected 03:55
+  Playwright/Chrome press-release application is running.
+- Automatic deletion of unreferenced support objects remains report-only. Its
+  safety gate requires separate explicit destructive-cleanup authorization;
+  no real database, private source, process, port, Git or deployment changed.
+
+Current best next step:
+
+- Complete the deferred full TypeScript checkpoint when resources permit,
+  then implement Admin 3 bounded/reconciled Overview, Users, Imports, Formats,
+  Data Decisions, System and Audit read models/APIs. Keep port 3010 off and do
+  not stop the protected press-release process group.
+
+# 2026-08-03 Journal Administration Admin 3-6 technical checkpoint
+
+- Added encrypted operator/mode-bound admin references and bounded Overview,
+  Users, Imports, Statement Formats, Data Decisions, System and immutable Audit
+  read services. The corresponding private/no-store APIs and the complete light
+  Material `/admin/journal` shell/pages are present.
+- Sensitive user/import detail remains POST-only, reason-gated, rate-limited and
+  audited before safe details are returned. Ordinary pages show operational
+  counts and states, not statement values, trade performance, user notes,
+  authentication subjects, internal UUIDs, filenames or paths.
+- Added expected-revision and durable-idempotency format transitions plus
+  immutable duplicate aliases. `supported` fails closed unless the code-owned
+  registry exactly matches the layout/table signatures, adapter version and
+  fixture digest; that registry intentionally remains empty until a real
+  verified importer slice is deployed.
+- Added the fixed five-entry privacy-safe developer ZIP and the separate
+  consented-source download. The latter requires current purpose-bound consent,
+  fresh owner authority, server-side hash verification, a pre-disclosure audit
+  and immutable consent download events; it never returns a public URL.
+- All 15 focused administration test files pass 31 tests with one worker.
+  Targeted ESLint and `git diff --check` pass. The new static verifier passes 83
+  required files, 14 admin pages/components, 14 private route handlers plus the
+  shared response helper, 38 foundation files and 15 focused test files.
+- The verifier's first launch hit Windows/Node `uv_os_get_passwd` ENOMEM before
+  project code loaded. The validated process-local fallback allowed the exact
+  run to pass and remains untracked/excluded from Git. The protected 03:55
+  Playwright/Chrome press-release process group was not stopped.
+- The scoped Journal Admin TypeScript dependency graph passes with a bounded
+  1 GiB heap; its temporary config was removed. Whole-project TypeScript,
+  production build and browser acceptance remain pending under current resource
+  pressure. No real database, support source, vault, operator
+  grant, process, port, Git stage/commit/push, deployment or external service
+  changed. Port 3010 remains off.
+
+Current best next step:
+
+- Run the integrated TypeScript/build/browser/privacy and recovery checkpoint
+  when memory permits, correct only verified findings, then start port 3010 for
+  the one deferred owner review of the technically complete Tracker and Journal
+  Administration UI. Keep the press-release process group untouched.
+
+# 2026-08-03 Tracker/Admin non-browser integrated checkpoint
+
+- Added route-level proof for manual preview/commit, Swing notes and
+  position-style changes. Five tracker/service/route files now pass 75 tests
+  with one worker; the dashboard shell/navigation test adds seven more checks.
+- Expanded private/no-store coverage to Trade Tracker, Calendar, Data
+  Decisions, Account, Journal Administration and their Journal APIs.
+- Updated the active replacement guard to the approved preview/confirm/commit
+  and position-level style architecture. It passes across 156 V3-free files;
+  the 83-file Journal Admin privacy guard and all 21 immutable migration-file
+  checks also pass.
+- Full whole-project TypeScript passed in 82 seconds with a bounded 1.5 GiB
+  heap. Full ESLint passed with zero errors and 18 unrelated pre-existing
+  warnings. The Next.js 16.2.6 production build passed Academy validation,
+  compilation, TypeScript and all 126 routes/pages.
+- The initial build hit a generated `.next/trace` sandbox permission error;
+  the identical direct-access build passed. No source defect was involved.
+- A temporary port-3011 dev server reached ready but consumed about 2.3 GiB
+  before browser navigation. Only its verified TraderLink process tree was
+  stopped. The protected press-release controller and its current bot child
+  remain alive; ports 3010 and 3011 are off.
+
+Current best next step:
+
+- After the owner closes the protected press-release app, start the replacement
+  on a temporary technical port, complete live Day/Swing/Open/Admin browser and
+  console verification, close that server, update acceptance documents, then
+  continue the remaining approved replacement-plan work. Keep
+  `.codex-node-userinfo-fallback.cjs` untracked and do not stage or commit the
+  active package without explicit owner authorization.
+
+# 2026-08-03 Tracker/Admin live browser acceptance checkpoint
+
+- The owner granted a one-time exception to pause the press-release runtime.
+  Both exact scheduled tasks were disabled, the manual-stop marker was created
+  and only the verified controller/runner tree was stopped. No scheduled-task
+  definition or press-release source was edited.
+- A temporary TraderLink server on port 3011 and clean automated Chromium
+  sessions verified `/trade-tracker`, `/trade-tracker/swings`, `/trades/open`,
+  `/admin/journal` and all six Admin subsections. Every route rendered
+  meaningful expected content, no framework overlay and no browser page error.
+  The Admin sidebar and the Overview `View formats` link navigated correctly.
+- Live verification found and fixed invalid Server-to-Client component props:
+  MUI link-component functions, `Stack.divider` React elements and
+  `TableContainer component={Paper}` composition. The Admin header now formats
+  its UTC timestamp deterministically, removing a Windows/Chromium hydration
+  mismatch.
+- Targeted Admin lint passes. The Admin static inventory/privacy verifier again
+  passes 83 required files, 14 pages, 15 APIs, 38 foundation files and 15
+  focused test files. Earlier full TypeScript, full lint, production build,
+  migration and active-replacement gates remain the integrated baseline.
+- The browser and exact temporary server tree were closed; ports 3010 and 3011
+  are off. Both scheduled tasks were re-enabled, the manual-stop marker was
+  removed and the existing daily task restarted the press-release controller.
+  Its runner health returned to `live`, Discord login is current and all three
+  watchers report healthy.
+- No database, private statement/source, support vault, operator grant, Git
+  stage/commit/push, deployment or production state changed. The entire active
+  Tracker/Admin package remains unstaged; the local Node user-info fallback
+  remains untracked and must not be committed.
+
+Current best next step:
+
+- Continue the remaining approved replacement-plan work without reopening an
+  owner review solely for these technically accepted routes. Keep port 3010
+  off until an integrated product review is useful; separately controlled
+  production owner grant, Discord activation and hosted cutover remain open.
+
+# 2026-08-03 independent replacement readiness QA
+
+- At the owner's request, reran a full pre-review QA instead of relying only on
+  the prior acceptance checkpoint.
+- The fresh browser inventory covered Workspace, Calendar, Day and Swing Trade
+  Trackers, all Trades and Analytics review pages, Rules, Imports, Data
+  Decisions, Account, Journal Admin Overview and all six Admin subsections.
+- The pass found a real Account hydration mismatch from a decorative React icon
+  passed through a server-rendered MUI Chip prop. Removed that prop and reran
+  Account plus every Admin page in a new browser session; the final error list
+  was empty and every framework-overlay count was zero.
+- Made saved Swing-note and Admin timestamps deterministic UTC so locale
+  differences cannot produce the same hydration failure class.
+- The read-only real database passed all 21 migration checks, schema digest,
+  foreign keys, quick check and integrity check. The 83-file Admin verifier,
+  156-file active replacement guard and migration verifier passed.
+- Whole-project TypeScript, full ESLint with zero errors and 18 pre-existing
+  warnings, Academy registry validation and the Next.js 16.2.6 production build
+  of all 126 pages passed.
+- Admin browser reads intentionally appended private-access audit evidence,
+  increasing `platform_admin_audit_events` from 86 to 153 across both QA passes. All Journal domain
+  counts remained unchanged, and the post-browser database passed schema,
+  foreign-key, quick and full integrity verification.
+- A non-committing manual-entry interaction populated the execution facts and
+  opened the normal time picker. Automation references changed during picker
+  interaction, so the browser check stopped without pressing Review or Commit;
+  no Journal fact was written. The preview endpoint is read-only.
+- A new Vitest run was not attempted after the execution-policy layer rejected
+  it; the previously accepted 75-test Tracker and 31-test Admin baselines remain
+  the focused-test evidence, supplemented by the rerun static, database,
+  TypeScript, build and browser gates.
+- The QA browser and port-3011 server are closed. The press-release controller
+  and watchdog were restored enabled, the controller is running, Discord is
+  logged in, and all three watchers returned live and healthy. Ports 3010 and
+  3011 remain off. No Git stage/commit/push, deployment, production setting,
+  operator grant, support source or Journal data changed.
+
+Current best next step:
+
+- The replacement dashboard is technically ready for the owner's integrated
+  visual/product review. Keep the local server off until that review is useful;
+  production Discord activation, owner grant, hosted-source transfer and full
+  application cutover remain separate pre-go-live work.
+
+# 2026-08-03 second risk-focused browser QA
+
+- Started the protected replacement launcher on loopback port 3010 for the
+  owner's after-20:00 review and a new isolated browser QA session.
+- Rechecked Account plus Day Tracker, Swing Tracker, Open Positions, Round
+  Trips, Ticker, Calendar, Imports, Data Decisions, Analytics Lab, Admin
+  Overview, Admin Imports, Admin Data Decisions and Admin Audit.
+- Every route returned meaningful content, the expected title, zero framework
+  overlays and an empty accumulated page-error record. Rendered-text scanning
+  found no numeric value with more than two decimal places.
+- Verified without mutation that generic broker statement selection exposes
+  broker name/timezone and optional private support controls, the two current
+  Data Decisions expose exact evidence and trader-controlled actions, Admin
+  `View imports` navigates correctly and `Return to Journal` returns to
+  Workspace.
+- No file was uploaded and no save, decision, import, preview or commit action
+  was triggered. The post-browser database again passed all 21 migrations,
+  schema digest, foreign keys, quick check and full integrity check. Every
+  Journal domain count remains unchanged; expected Admin audit events total
+  153.
+- The headless QA browser is closed and its new server log has no runtime or
+  HTTP failures. Port 3010 remains active only for owner review; port 3011 is
+  off. The press-release runtime remains paused for review memory. Tomorrow's
+  03:55 daily controller task is re-enabled, and a hidden one-time helper will
+  re-enable the existing watchdog at 20:00 after its active window closes.
+
+Current best next step:
+
+- Owner reviews `http://127.0.0.1:3010/workspace`. After review, stop the exact
+  port-3010 process tree and restore the daily controller/watchdog scheduling
+  state before the next 03:55 start. Production activation remains separate.

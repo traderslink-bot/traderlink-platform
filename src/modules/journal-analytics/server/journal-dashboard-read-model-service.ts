@@ -11,6 +11,7 @@ import type {
   JournalCalendarDayReadModel,
   JournalCalendarFilterInput,
   JournalCalendarReadModel,
+  JournalCalendarTradeReadModel,
   JournalDashboardCoverage,
   JournalOpenPositionRow,
   JournalOpenPositionsReadModel,
@@ -70,18 +71,19 @@ function sign(value: string | null): -1 | 0 | 1 | null {
 function netTotal(
   rows: readonly NormalizedJournalAnalyticsRow[],
 ): string | null {
-  return rows.every((row) => row.netPnlDecimal !== null)
-    ? sumExactDecimals(rows.map((row) => row.netPnlDecimal!))
+  return rows.every((row) => selectedPnl(row) !== null)
+    ? sumExactDecimals(rows.map((row) => selectedPnl(row)!))
     : null;
 }
 
 function winRatePercent(
   rows: readonly NormalizedJournalAnalyticsRow[],
 ): string | null {
-  const eligible = rows.filter((row) => row.netOutcome !== null);
+  const eligible = rows.map((row) => selectedPnl(row)).filter((value): value is string =>
+    value !== null);
   if (eligible.length === 0) return null;
   return percentageExactDecimals(
-    String(eligible.filter((row) => row.netOutcome === "win").length),
+    String(eligible.filter((value) => compareExactDecimals(value, "0") > 0).length),
     String(eligible.length),
   ).roundedDecimal;
 }
@@ -108,7 +110,7 @@ function coverage(normalized: NormalizedJournalAnalyticsSet): JournalDashboardCo
 }
 
 function selectedPnl(row: NormalizedJournalAnalyticsRow): string | null {
-  return row.netPnlDecimal;
+  return row.netPnlDecimal ?? row.grossPnlDecimal;
 }
 
 function peakGiveback(rows: readonly NormalizedJournalAnalyticsRow[]): string | null {
@@ -280,6 +282,20 @@ function calendarDay(
       symbol: instrumentRows[0].displayedSymbol,
       pnlDecimal,
       pnlSign: sign(pnlDecimal),
+      noteCount: 0,
+      ruleReviewCount: 0,
+      tagCount: 0,
+      trades: Object.freeze(instrumentRows
+        .slice()
+        .sort((left, right) => left.openedAtUtc.localeCompare(right.openedAtUtc))
+        .map((row): JournalCalendarTradeReadModel => Object.freeze({
+          roundTripId: row.roundTripId,
+          executions: Object.freeze([]),
+          notes: Object.freeze([]),
+          pnlDecimal: selectedPnl(row),
+          pnlSign: sign(selectedPnl(row)),
+          tags: Object.freeze([]),
+        }))),
     });
   }).sort((left, right) => {
     if (left.pnlDecimal === null) return right.pnlDecimal === null ?
@@ -299,6 +315,7 @@ function calendarDay(
     pnlSign: sign(pnlDecimal),
     tickers: Object.freeze(tickers),
     tradeCount: rows.length,
+    reviewStatus: null,
     winRatePercentDecimal: winRatePercent(rows),
   });
 }
@@ -348,11 +365,12 @@ function roundTripPrices(row: NormalizedJournalAnalyticsRow): Readonly<{
         decimalPlaces: 4,
         roundingPolicy: "half_up_4dp",
       }).roundedDecimal;
-  const gainLossPercentDecimal = row.netPnlDecimal === null ||
+  const pnlDecimal = selectedPnl(row);
+  const gainLossPercentDecimal = pnlDecimal === null ||
       compareExactDecimals(row.entryNotionalDecimal, "0") === 0
     ? null
     : percentageExactDecimals(
-        row.netPnlDecimal,
+        pnlDecimal,
         row.entryNotionalDecimal,
       ).roundedDecimal;
   return Object.freeze({
@@ -375,7 +393,7 @@ function tradingDayRoundTrip(
     entryAtUtc: row.openedAtUtc,
     exitAtUtc: row.closedAtUtc,
     ...roundTripPrices(row),
-    netPnlDecimal: row.netPnlDecimal,
+    netPnlDecimal: selectedPnl(row),
   });
 }
 
@@ -807,6 +825,7 @@ export class JournalDashboardReadModelService {
       timezone: account?.tradingTimezone ?? null,
       netPnlDecimal: netTotal(selectedRows),
       decisionActivity: Object.freeze(decisionActivity),
+      availableTradingDates: Object.freeze(dates),
       executionActivity,
       previousTradingDate: selectedIndex > 0 ? dates[selectedIndex - 1] : null,
       nextTradingDate: selectedIndex >= 0 && selectedIndex < dates.length - 1

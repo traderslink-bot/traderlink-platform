@@ -41,7 +41,9 @@ export default async function TradeTrackerDayPage({
     date: sessionDate,
     currency: query.currency?.toUpperCase() ?? null,
   });
-  if (data) return <DaySessionView data={data} readOnly />;
+  if (data) {
+    return <DaySessionView data={data} />;
+  }
 
   return (
     <DashboardPage>

@@ -54,6 +54,16 @@
 
 Broker executions, round trips, analytics calculations, lesson completions, Watchlist symbols, News articles, or provider market facts.
 
+## Journal Administration
+
+The exact QA-corrected contract is defined in the [Journal Administration Dashboard Plan](journal-admin-dashboard-plan.md). It is owner approved. Admin 1-6 authorization, import/format evidence, bounded read models, private APIs, audited maintenance actions and the complete light Material UI are assembled in the active unstaged implementation; integrated compile/build/browser acceptance and production activation remain pending.
+
+Platform owns global operator grants, Discord/session authorization, sensitive-access audit events and operational receipts. Journal owns import-attempt evidence, statement-format observations/candidates and the admin read services over Journal facts. The `/admin/journal` composition layer may combine those published services after a fail-closed Platform operator check; it may not query V3 or a separate legacy/admin database.
+
+Discord authenticates the owner in production. Journal Administration then requires the exact Discord-linked Platform user, configured-server owner evidence refreshed within five minutes and the singleton active `journal_owner_admin` grant. None of those conditions alone, and no Premium entitlement or workspace `owner`/`admin` role, authorizes Platform-global administration. Email/password admin login remains deferred.
+
+Journal Administration publishes bounded, privacy-safe operational counts, opaque support references, developer format packages and audited maintenance actions. It never owns or changes user executions, round trips, annotations or Data Decision outcomes, never turns an account-scoped user mapping into global runtime authority, and does not administer the separate computer-run Watchlist system.
+
 ## Journal
 
 The exact Phase 3 persistence, reconciliation, reconstruction, and verification
@@ -66,14 +76,16 @@ moving Journal authority into V3, routes, pages, or browser code.
 - Broker statements/import files and retention metadata.
 - Immutable source rows and mappings.
 - Immutable source coverage intervals; a missing statement period never means
-  zero activity, and a manual entry begins as point-only evidence rather than
-  claiming full-account coverage. A trader may confirm complete or partial
-  coverage only for the exact manual trading date through Data Decisions.
+  zero activity. Intentional manual trade capture proves only the submitted
+  executions and previewed trade boundary; it does not claim full-account or
+  full-day broker coverage. Broker-import coverage decisions remain separate.
 - Import batches/previews/acceptance/supersession.
 - Canonical executions from broker and manual sources.
 - Data Decisions, corrections, exclusions, duplicate resolution, opening inventory, and decision audit.
 - Derived round trips and stable round-trip identity/alias history.
 - Trading-day records, notes, trade notes, tags, setups, rules, reviews, and candle/Level Analysis associations.
+- Versioned trader-authored trade-style plans and dated Swing Trade Tracker note
+  revisions keyed to stable position/round-trip identity.
 
 ### Source-account assignment contract
 
@@ -126,6 +138,21 @@ Required: affected source rows/executions/round-trip chain; detected issue and c
 
 The trader controls facts. The service rejects arithmetically impossible outcomes such as declaring a non-zero position closed without an execution/inventory fact that reaches zero.
 
+Broker/manual reconciliation is a contained Data Decision. Candidate generation
+uses account-local date, instrument, currency, side, exact/aggregate quantity
+and price/notional evidence; exact time is never a hard weak-match requirement.
+While pending, the accepted manual execution remains eligible and only the
+provisional imported candidate is withheld. Same, separate, correct and later
+outcomes preserve both sources and prevent double counting; grouped-fill
+resolution must conserve exact quantity.
+
+The withholding occurs in the canonical round-trip input query through durable
+pending reconciliation membership, not as a UI or analytics-only filter. The
+ordinary exact duplicate merge remains strict; time-tolerant one-to-one merge is
+allowed only by an active account-scoped reconciliation set and explicit trader
+confirmation. Candidate creation, resolution and rebuild are atomic and
+idempotent across reimports.
+
 ### Round-trip contract
 
 Required: stable ID; current deterministic identity plus aliases; owner/account/instrument/currency; direction; ordered execution allocations; exact open/close times; lifecycle state; exact gross P/L; charge facts/coverage; net P/L when supportable; maximum position quantity; entry/exit notionals when supportable; affected trading dates; decision/limitation reasons.
@@ -135,6 +162,23 @@ The builder uses the approved zero-to-nonzero-to-zero rule, splits flips, rebuil
 ### Trading-day contract
 
 Required: owner/account/date/timezone; executions occurring that day; positions carried in/out; round trips closed that day; daily note; rule reviews; coverage. Realized P/L is attributed to closing trading date unless a metric explicitly declares a different basis.
+
+### Day/Swing tracker contract
+
+The [Day Trade Tracker And Swing Trade Tracker
+Plan](day-and-swing-trade-tracker-plan.md) controls the two Journal workflows.
+They share the canonical execution ledger and deterministic round-trip builder.
+Day/Swing/Other is an append-only trader-authored plan on a stable
+trade/position identity, never an inference from holding duration. Swing daily
+notes use the stable position and note date; late authorship keeps its actual
+creation timestamp. `/trades/open` continues to publish every factually
+confirmed open position, regardless of tracker classification.
+
+Intentional manual capture previews per-row dates/times plus explicit
+start/continue/close relationships. A supported zero boundary can establish a
+new manual trade without importing the unrelated whole-day coverage workflow.
+Duplicates, contradictory chronology, missing required facts and impossible
+position arithmetic still fail closed into Data Decisions.
 
 ### Publishes
 

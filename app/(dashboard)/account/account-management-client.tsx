@@ -8,6 +8,8 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useState } from "react";
 
+import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
+
 export function AccountManagementClient({
   activeAccountSelectionRef,
   defaultTradingTimezone,
@@ -28,7 +30,10 @@ export function AccountManagementClient({
     try {
       const response = await fetch("/api/platform/journal/accounts", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          [JOURNAL_MUTATION_REQUEST_HEADER]: "1",
+        },
         body: JSON.stringify({
           displayName: displayName.trim(),
           baseCurrency: baseCurrency.trim().toUpperCase(),

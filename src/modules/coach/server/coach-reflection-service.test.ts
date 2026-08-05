@@ -105,6 +105,7 @@ function dashboard(): JournalDashboardReadModelService {
         timezone: "America/New_York",
         netPnlDecimal: trades[0]?.netPnlDecimal ?? null,
         decisionActivity: Object.freeze([]),
+        availableTradingDates: Object.freeze(["2026-02-01"]),
         executionActivity: Object.freeze([]),
         previousTradingDate: null,
         nextTradingDate: null,

@@ -43,9 +43,9 @@ function periodHref(
 }
 
 function money(value: string | null, currency: string | null): string {
-  return value === null || currency === null
-    ? "Unavailable"
-    : `${currency} ${value.startsWith("-") ? "" : "+"}${formatJournalAnalyticsDecimal(value)}`;
+  if (value === null || currency === null) return "N/A";
+  const formatted = formatJournalAnalyticsDecimal(value, 2, true);
+  return formatted.startsWith("-") ? `-$${formatted.slice(1)}` : `+$${formatted}`;
 }
 
 function reviews(value: Readonly<{
@@ -108,7 +108,7 @@ export default async function ReflectionLoopPage({
       <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", xl: "repeat(5, minmax(0, 1fr))" } }}>
         <DashboardMetricCard caption="Ready-closed facts only" label="Net result" value={money(model.summary.netPnlDecimal, model.currency)} />
         <DashboardMetricCard caption={`${model.summary.tradingDayCount} trading days`} label="Completed trades" value={String(model.summary.readyClosedTradeCount)} />
-        <DashboardMetricCard caption="Ready trades with known outcomes" label="Win rate" value={model.summary.winRatePercentDecimal === null ? "Unavailable" : `${formatJournalAnalyticsDecimal(model.summary.winRatePercentDecimal)}%`} />
+        <DashboardMetricCard caption="Ready trades with known outcomes" label="Win rate" value={model.summary.winRatePercentDecimal === null ? "N/A" : `${formatJournalAnalyticsDecimal(model.summary.winRatePercentDecimal)}%`} />
         <DashboardMetricCard caption="Trader-authored day reflections" label="Day notes" value={`${model.summary.dailyNotesSavedCount}/${model.summary.tradingDayCount}`} />
         <DashboardMetricCard caption="Kept outside unsupported calculations" label="Data Decisions" value={String(model.summary.accountPendingDataDecisionCount)} />
       </Box>
@@ -239,7 +239,7 @@ export default async function ReflectionLoopPage({
 
       <DashboardPanel title="Coverage">
         <Typography color="text.secondary" variant="body2">
-          {model.coverage.readyClosedCount} ready closed · {model.coverage.legitimateOpenCount} confirmed open · {model.coverage.needsDecisionCount} need a trader decision. Missing facts restrict only the calculations that depend on them.
+          {model.coverage.readyClosedCount} ready closed · {model.coverage.legitimateOpenCount} confirmed open. Missing facts restrict only the calculations that depend on them.
         </Typography>
       </DashboardPanel>
     </DashboardPage>

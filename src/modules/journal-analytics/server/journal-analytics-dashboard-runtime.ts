@@ -51,6 +51,7 @@ export function buildJournalAnalyticsDashboardQuery(
     instrumentIds: Object.freeze(input.instrumentIds ? [...input.instrumentIds] : []),
     symbols: Object.freeze([]),
     directions: Object.freeze([]),
+    tradeClassifications: Object.freeze([]),
     provenance: Object.freeze([]),
     outcomes: Object.freeze([]),
     entryWeekdays: Object.freeze([]),

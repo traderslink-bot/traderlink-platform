@@ -6,7 +6,11 @@ import {
   buildJournalAnalyticsDashboardQuery,
   withJournalAnalyticsDashboardRuntime,
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { readJournalDataDecisionNoticeRef } from "@/src/modules/journal/server/decisions/journal-data-decision-notice";
+import {
+  currentJournalAccountSelectionRef,
+  requireTraderLinkPlatformPageScope,
+} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
 export const metadata: Metadata = {
   title: "Workspace | Trader Intelligence",
@@ -16,8 +20,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 const WORKSPACE_METRICS = [
-  ["Net realized P/L", "net_pnl", "Fee-covered completed trades"],
-  ["Gross P/L", "gross_pnl", "Before trading costs"],
+  ["P/L", "gross_pnl", "Completed trades"],
   ["Expectancy", "expectancy", "Per completed trade"],
   ["Win rate", "win_rate", "Completed round trips"],
   ["Profit factor", "profit_factor", "Gross wins divided by losses"],
@@ -48,6 +51,7 @@ export default async function WorkspacePage() {
   );
   return (
     <WorkspaceDashboard
+      accountSelectionRef={currentJournalAccountSelectionRef(scope)}
       analyticsCoverage={response.crossPartitionCounts}
       analyticsMetrics={WORKSPACE_METRICS.map(([label, metricId, caption]) => ({
         label,
@@ -55,6 +59,9 @@ export default async function WorkspacePage() {
         value: formatJournalAnalyticsPartitionedMetric(response, metricId),
       }))}
       calendarData={calendar}
+      decisionNoticeRef={response.crossPartitionCounts.needsDecisionCount > 0
+        ? readJournalDataDecisionNoticeRef(scope)
+        : null}
     />
   );
 }

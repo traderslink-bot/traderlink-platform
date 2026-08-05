@@ -1,6 +1,6 @@
 # TraderLink Platform Migration Progress
 
-**Current phase:** Phase 6 local acceptance is complete. Phases 0-6 now pass their local technical/product gates; the owner-approved light Material dashboard is preserved, port 3010 is off, and the real database remains at its accepted hash with a zero-byte WAL. Public owner linking, real hosted-source preview/transfer, Docker execution, Git publication, Railway deployment and DNS remain external. Phase 7 retirement cannot delete preserved assets without explicit owner approval.
+**Current phase:** Phase 6 local acceptance is complete. Phases 0-6 now pass their local technical/product gates; the owner-approved light Material dashboard is preserved, port 3010 is temporarily active for the owner's integrated review, and the accepted Journal fact counts remain intact with a zero-byte WAL. Local Journal Administration review now appends expected Platform audit events, so the live database file hash is no longer treated as immutable after Admin access begins. The replacement source was published to the new `traderslink-bot/traderlink-platform` repository on 2026-08-03, and the narrow landing/Academy release is live on Vercel. Public owner linking, real hosted-source preview/transfer, Docker execution, Railway persistent-volume deployment and full replacement application/DNS cutover remain external. Phase 7 retirement cannot delete preserved assets without explicit owner approval.
 **Historical pre-runtime implementation state:** The [Phase 3 plan](phase-3-journal-integrity-plan.md) and [tracker](phase-3-journal-integrity-progress.md) preserve the complete pre-runtime design and execution history. The accepted state immediately below supersedes former queued/unexecuted and 331/1/1 planning claims.
 **Phase 2 foundation commit:** `fea56307fbd0142ef99b9f13c020451a6a503cc7` (`feat(platform): establish verified database foundation`), preserved locally without push or deployment.
 **Phase 3 implementation commit:** `8f6a4d4e4dec20ef6edcd50f476b14d368bde505` (`feat(journal): complete phase 3 integrity foundation`), preserved locally without push or deployment.
@@ -11,7 +11,85 @@
 
 **Phase 6 acceptance:** [Replacement Acceptance Plan](phase-6-replacement-acceptance-plan.md), [progress tracker](phase-6-replacement-acceptance-progress.md), and [acceptance report](phase-6-replacement-acceptance-report.md) record the completed resource-aware local gate. Sequential one-worker regression, compile/lint/build, packaged runtime, browser/API/privacy, multi-account and final recovery rehearsal passed without authorizing production transfer or deployment.
 
-**Phase 7 boundary:** [Legacy Retirement Progress](phase-7-legacy-retirement-progress.md) makes `traderlink-platform` the canonical local development application and freezes `traderslink.pro` as recovery/current-production reference. No physical cleanup, Git publication or hosted cutover is authorized by that classification.
+**Phase 7 boundary:** [Legacy Retirement Progress](phase-7-legacy-retirement-progress.md) makes `traderlink-platform` the canonical local development application and freezes `traderslink.pro` as recovery/reference source. Source publication and the landing/Academy cutover are now recorded operations; no physical cleanup or full replacement hosted cutover is authorized by that classification.
+
+**Journal Administration implementation:** The owner-approved [Journal Administration Dashboard Plan](journal-admin-dashboard-plan.md) and [progress tracker](journal-admin-dashboard-progress.md) define `/admin/journal` as a separate Platform/Journal operations surface and keep Watchlist, V3 and Level Analysis administration out of scope. Technical Admin 1-6 is assembled in the active unstaged package: migrations 0019/0020, fail-closed owner authorization, bounded request security, import attempt/recovery and format evidence, privacy-safe read models, 14 private route handlers, audited format lifecycle/merge/developer-package/consented-source actions and the complete light Material UI. Fifteen focused files/31 tests, full whole-project TypeScript, full lint with zero errors, the 126-page production build, the 83-file Admin verifier, all 21 migration-file checks and the 156-file active replacement guard pass. Live browser acceptance now passes for Overview and all six Admin subsections with clean console/overlay and sidebar-navigation checks; real support-vault configuration, production operator grant, owner visual/product review and production Discord activation remain open. The code-owned supported-format registry is intentionally empty until exact adapter/fixture evidence exists; separately authorized automatic orphan cleanup remains report-only.
+
+**Day/Swing Tracker implementation:** The owner approved the [Day Trade Tracker And Swing Trade Tracker Plan](day-and-swing-trade-tracker-plan.md) on 2026-08-02 and authorized implementation through one integrated technical/UI review. The [progress tracker](day-and-swing-trade-tracker-progress.md) is active. `/trade-tracker` is the Day Trade Tracker, `/trade-tracker/swings` is the separate Swing Trade Tracker, and both use the same Journal execution ledger. Migrations 0019-0021, manual multi-date preview/confirmation/save, shared style and dated Swing notes, Day/Swing/Open Positions UI integration and manual/broker reconciliation are implemented. The complete five-file tracker/service/route gate passes 75 tests with one worker; shell/navigation, privacy headers, full TypeScript/lint/build and the 156-file active replacement guard also pass. Manual-save responses return affected Day Tracker dates and stable Swing position references. Live browser acceptance passes for Day Tracker, Swing Tracker and Open Positions with meaningful content, expected controls, clean overlays and no browser page errors; only integrated owner visual/product review remains.
+
+**Daily Trade Tracker Yahoo Analyzer implementation:** The owner approved the [Daily Trade Tracker Yahoo Analyzer Plan](daily-trade-tracker-yahoo-analyzer-plan.md) and [progress tracker](daily-trade-tracker-yahoo-analyzer-progress.md) on 2026-08-04. The shared extended-hours ticker/session cache, durable automatic work, per-event analyzer, and real Daily Tracker manual-save queue are now implemented locally. After a recovery backup/restore verification, migration 0023 applied cleanly to the local development database and the protected local worker loop restarted. Yahoo remains the provider; the product is Daily Trade Tracker-only, excludes Round Trips and Market Charts, captures every entry/add/partial-exit/final-exit snapshot, and retains 5/15/30/60-minute post-exit paths. The temporary readable analysis-details presentation is next.
+
+**Journal review workflow corrections:** The owner's integrated review found
+redundant deterministic-trade confirmation, unavailable saved-manual editing,
+overlapping Day/Swing lifecycle presentation, broken parameterized rule presets,
+missing preset tags, over-expanded Data Decisions, repeated non-dismissible
+coverage notices and missing Calendar annotation indicators. The owner-approved
+[correction plan](journal-review-workflow-corrections-plan.md) and
+[progress tracker](journal-review-workflow-corrections-progress.md) are active.
+The correction preserves server preview/validation, immutable evidence,
+account isolation and Data Decisions while replacing internal/system language
+with focused trader questions. Earlier Tracker browser acceptance remains
+historical evidence, not acceptance of these newly identified product issues.
+Corrections 0-7 are now implemented: deterministic capture no longer requires
+the redundant confirmation screen; saved manual rows are append-only editable
+from Day and Swing; rule presets validate by template; categorized preset/custom
+tags and trade-rule review are available on Swing; Data Decisions use collapsed
+direct questions and digest-bound dismissible notices; and Calendar shows
+server-composed notes/rules/tags counts, including dated Swing-note activity
+without invented closed-trade values. Focused lint, four one-worker files/17
+tests, whole-project TypeScript, zero-error full lint, the 165-file active
+replacement guard, whitespace verification and the final 126-route production
+build pass. A fresh protected-port browser pass is clean across Workspace,
+Day/Swing Trackers, Swing detail, Data Decisions, Rules and Calendar; the exact
+corrected UI is ready for owner visual/product review.
+
+**Temporary Data Decisions review examples:** Four `TLDEMO` synthetic broker
+imports were added to the one active local development Journal account on
+2026-08-04 so the owner can inspect open-position conflict, missing-price,
+same-time-order and invalid-import-row workflows. They are contained pending
+decisions, not real trader data and not completed-trade Analytics results. The
+accepted real-data baseline remains historical evidence; current local pending
+decision counts include these review-only examples until they are deliberately
+retired or archived under a later approved cleanup action.
+
+**Planned Data Decisions repair/review:** The dedicated [Data Decisions Repair
+and Review Plan](data-decisions-repair-and-review-plan.md) and [progress
+tracker](data-decisions-repair-and-review-progress.md) consolidate the
+owner-reviewed repair-first follow-up. The existing technical integrity
+contract remains controlling; implementation is active under the accepted
+repair-and-review plan.
+
+**Planned corporate-action integrity:** [Journal Corporate Actions and Share
+Adjustments Plan](journal-corporate-actions-plan.md) and its [progress
+tracker](journal-corporate-actions-progress.md) record a required future
+Journal slice. The current Journal does not yet model share adjustments. A
+split/reverse-split must become separately preserved, trader-confirmed evidence
+before it alters an affected chain's quantity, basis, P/L or Analytics; it must
+never be inferred from a quantity/price pattern alone. No implementation is
+included in this planning checkpoint.
+
+**Planned Trade Explorer:** The [Trade Explorer Plan](trade-explorer-platform-plan.md)
+and [progress tracker](trade-explorer-platform-progress.md) record the
+owner-requested full-capability comparison workspace. It will reuse accepted
+Journal Analytics exact calculations and coverage rather than revive the V3
+Explorer or create a duplicate engine. The plan includes side-by-side factual
+comparison groups, complete-trade scorecards, breakdowns, evidence drill-down,
+saved studies and later stored analyzer-snapshot comparisons. It remains a
+draft pending owner review; no route, migration or implementation is authorized
+by this planning record.
+
+**Independent readiness QA:** A pre-review QA pass revalidated all 21 database
+migrations and SQLite integrity, the Admin and active-replacement static guards,
+whole-project TypeScript, zero-error full lint and the 126-page production
+build. A full dashboard/Admin browser sweep found one Account MUI status-chip
+hydration mismatch, corrected it, and then completed with zero page errors or
+framework overlays in a fresh session. Admin and saved Swing-note timestamps
+use deterministic UTC formatting. No browser QA trade was committed.
+The private Admin route checks appended their expected access-audit events;
+`platform_admin_audit_events` moved from 86 to 153 across both QA passes while all Journal domain
+counts remained unchanged.
+
+**2026-08-03 Git and public landing checkpoint:** The accepted replacement lineage is published at `https://github.com/traderslink-bot/traderlink-platform`; published `main` and the local replacement HEAD are `c0c998d8e456b9e70433e73123e8024b13ece203`. Local `origin` names the new repository and `legacy-origin` preserves the former repository. The Vercel production release `dpl_4MGMs3jqaYbQ7Wx3FQKdaHRxt6vW` serves the approved landing page and preserved Academy from clean commit `2d7bdd2370b0781c8157ed11f54337c20a4e68cd`; live `/` and `/academy` both returned HTTP 200 with no error/fatal logs for that deployment. A full-replacement Vercel promotion was immediately rolled back after its persistent `/data` readiness contract correctly failed on a dynamic Academy request. The complete replacement remains a single-node persistent-volume application intended for the later hosted cutover, not the current Vercel landing runtime.
 
 Slice F1 now connects Reflection Loop and the latest Coach/Review APIs to one
 read-only replacement service using published Journal Analytics, Data
@@ -125,7 +203,7 @@ runtime gate, not a static proof.
 - Statement upload order is irrelevant; reconstruction uses the full chronological execution history for the affected account/instrument/currency chain.
 - A round trip starts when position leaves zero and closes when it returns to zero; the next execution after zero begins a new trade.
 - Broker-imported and manual Trade Tracker executions share one canonical ledger while preserving source provenance.
-- Manual executions use their actual execution date/time and never combine daily notes across trading dates. Their instants are assigned to the Journal account timezone and begin with point-only coverage; each account trading date requires an evidence-bound trader decision before complete/partial daily coverage is asserted, and opening inventory remains separate. The visible Trade Tracker focuses on the current account trading day/week; older routes are factual read-only history. Optional Day trade/Swing trade intent is authored by the trader and is never inferred from duration.
+- Manual executions use their actual per-row execution date/time and never combine daily notes across trading dates. Intentional manual entry uses previewed start/continue/close trade-boundary assertions and does not routinely require the broker-import opening-inventory or whole-day coverage workflow. Genuine duplicates, contradictions and impossible arithmetic still enter Data Decisions. The Day Trade Tracker focuses on the current/recent day workflow; the separate Swing Trade Tracker follows stable intentional swing positions across dates. Day/Swing intent is authored at the trade/position level and is never inferred from duration.
 - Displayed trading-data decimals use at most two places while editable source/manual values and canonical calculations remain lossless.
 - January IBKR data is test data, not a complete live customer migration source.
 - The architecture is TraderLink Platform; V4 is optional only as a later release label.

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -14,14 +13,15 @@ import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 
 import {
-  DashboardDataScopeChip,
   DashboardPage,
   DashboardPanel,
   DashboardUnavailableState,
 } from "../../../dashboard-template";
 import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import { withJournalAnalyticsDashboardRuntime } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import {
+  requireTraderLinkPlatformPageScope,
+} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
 export const metadata: Metadata = {
   title: "Trades by Ticker | TraderLink Platform",
@@ -30,15 +30,15 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 function money(currency: string, value: string | null): string {
-  if (value === null) return "Unavailable";
-  return `${currency} ${value.startsWith("-") ? "" : "+"}${formatJournalAnalyticsDecimal(value)}`;
+  if (value === null) return "N/A";
+  const formatted = formatJournalAnalyticsDecimal(value, 2, true);
+  return formatted.startsWith("-") ? `-$${formatted.slice(1)}` : `+$${formatted}`;
 }
 
 export default async function TradesByTickerPage() {
   const scope = await requireTraderLinkPlatformPageScope();
   const result = withJournalAnalyticsDashboardRuntime(scope, ({ dashboard }) =>
     dashboard.getTickerHistory(scope));
-
   return (
     <DashboardPage>
       <Box>
@@ -48,22 +48,11 @@ export default async function TradesByTickerPage() {
         <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">
           Ticker History
         </Typography>
-        <Typography color="text.secondary" sx={{ maxWidth: 860, mt: 1 }} variant="body2">
-          Completed round trips grouped by stable instrument and currency from the accepted Journal execution ledger.
-        </Typography>
       </Box>
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-        <DashboardDataScopeChip />
         <Chip label={`${result.coverage.readyClosedCount} analytics-ready closed trades`} size="small" variant="outlined" />
-        <Chip label={`${result.coverage.needsDecisionCount} need a decision`} size="small" variant="outlined" />
       </Stack>
-
-      {result.coverage.needsDecisionCount > 0 ? (
-        <Alert action={<Button color="inherit" href="/data-decisions" size="small">Review Data Decisions</Button>} severity="warning">
-          {result.coverage.needsDecisionCount} unresolved trade chain{result.coverage.needsDecisionCount === 1 ? " is" : "s are"} contained. Valid ticker history remains visible.
-        </Alert>
-      ) : null}
 
       <DashboardPanel
         action={<Chip label={`${result.rows.length} ticker groups`} size="small" variant="outlined" />}
@@ -104,7 +93,7 @@ export default async function TradesByTickerPage() {
                     <TableCell align="right" sx={{ color: row.netPnlSign === -1 ? "error.main" : row.netPnlSign === 1 ? "success.main" : "text.primary", fontFamily: "var(--font-geist-mono)", fontWeight: 800 }}>
                       {money(row.currency, row.netPnlDecimal)}
                     </TableCell>
-                    <TableCell align="right">{row.winRatePercentDecimal === null ? "Unavailable" : `${formatJournalAnalyticsDecimal(row.winRatePercentDecimal)}%`}</TableCell>
+                    <TableCell align="right">{row.winRatePercentDecimal === null ? "N/A" : `${formatJournalAnalyticsDecimal(row.winRatePercentDecimal)}%`}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

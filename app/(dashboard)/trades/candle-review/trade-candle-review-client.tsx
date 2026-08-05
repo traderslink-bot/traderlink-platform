@@ -41,7 +41,7 @@ function decimal(value: string | number): string {
   const number = typeof value === "number" ? value : Number(value);
   return Number.isFinite(number)
     ? number.toLocaleString("en-US", { maximumFractionDigits: 2 })
-    : "Unavailable";
+    : "N/A";
 }
 
 function easternTime(value: string | number): string {

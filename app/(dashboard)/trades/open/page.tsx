@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
@@ -18,9 +16,15 @@ import {
   DashboardPage,
   DashboardPanel,
 } from "../../../dashboard-template";
+import { PositionStyleControl } from "../../trade-tracker/position-style-control";
+import { positionStatusLabel } from "../../trade-tracker/position-style-labels";
+import { getReplacementOpenPositionStyles } from "../../trade-tracker/trade-tracker-platform-data";
 import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import { withJournalAnalyticsDashboardRuntime } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import {
+  currentJournalAccountSelectionRef,
+  requireTraderLinkPlatformPageScope,
+} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
 export const metadata: Metadata = {
   title: "Open Positions | TraderLink Platform",
@@ -49,6 +53,8 @@ export default async function OpenPositionsPage() {
   const scope = await requireTraderLinkPlatformPageScope();
   const result = withJournalAnalyticsDashboardRuntime(scope, ({ dashboard }) =>
     dashboard.getOpenPositions(scope));
+  const positionStyles = getReplacementOpenPositionStyles(scope);
+  const expectedAccountSelectionRef = currentJournalAccountSelectionRef(scope);
 
   return (
     <DashboardPage>
@@ -60,21 +66,14 @@ export default async function OpenPositionsPage() {
           Open Positions
         </Typography>
         <Typography color="text.secondary" sx={{ maxWidth: 860, mt: 1 }} variant="body2">
-          Confirmed open positions stay visible whether they are intentional swing trades, unplanned holds, or another trader-defined situation. Time held never decides that status automatically.
+          Confirmed open positions stay visible whether they are active swing trades, long-term holds, unplanned holds (bag holds), or another trader-defined situation. Time held never decides that status automatically.
         </Typography>
       </Box>
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
         <DashboardDataScopeChip />
         <Chip label={`${result.positions.length} confirmed open`} size="small" variant="outlined" />
-        <Chip label={`${result.decisions.length} need a decision`} size="small" variant="outlined" />
       </Stack>
-
-      {result.decisions.length > 0 ? (
-        <Alert action={<Button color="inherit" href="/data-decisions" size="small">Review Data Decisions</Button>} severity="warning">
-          {result.decisions.length} incomplete trade chain{result.decisions.length === 1 ? " is" : "s are"} excluded from open-position facts until you decide what the statement evidence means.
-        </Alert>
-      ) : null}
 
       <DashboardPanel
         action={<Chip label={`${result.positions.length} open`} size="small" variant="outlined" />}
@@ -99,52 +98,73 @@ export default async function OpenPositionsPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {result.positions.map((position) => (
+                {result.positions.map((position) => {
+                  const tracking = positionStyles[position.roundTripId] ?? null;
+                  return (
                   <TableRow key={position.roundTripId}>
                     <TableCell>{timestamp(position.openedAtUtc, position.timezone)}</TableCell>
                     <TableCell sx={{ fontWeight: 800 }}>{position.symbol}</TableCell>
                     <TableCell sx={{ textTransform: "capitalize" }}>{position.direction}</TableCell>
                     <TableCell align="right">{formatJournalAnalyticsDecimal(position.remainingQuantityDecimal)}</TableCell>
-                    <TableCell align="right">{position.averageEntryPriceDecimal === null ? "Unavailable" : `${position.currency} ${formatJournalAnalyticsDecimal(position.averageEntryPriceDecimal)}`}</TableCell>
+                    <TableCell align="right">{position.averageEntryPriceDecimal === null ? "N/A" : `$${formatJournalAnalyticsDecimal(position.averageEntryPriceDecimal, 2, true)}`}</TableCell>
                     <TableCell align="right">{age(position.ageMilliseconds)}</TableCell>
-                    <TableCell><Chip color="warning" label="Not classified" size="small" /></TableCell>
+                    <TableCell>
+                      <Chip
+                        color={tracking?.style?.openStatus === "swing" ? "primary" : "warning"}
+                        label={positionStatusLabel(tracking?.style ?? null)}
+                        size="small"
+                      />
+                    </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           </TableContainer>
         )}
       </DashboardPanel>
 
-      {result.decisions.length > 0 ? (
-        <DashboardPanel title="Needs a trader decision">
+      {result.positions.length > 0 ? (
+        <DashboardPanel title="Manage open position types">
           <Typography color="text.secondary" sx={{ mb: 2 }} variant="body2">
-            These chains are not confirmed open positions. Review the execution evidence in Data Decisions before they can affect open-position facts.
+            Your choice is shared by Daily Trade Tracker, Swing Trade Tracker, and Open Positions. Time held never changes it automatically.
           </Typography>
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Opened</TableCell>
-                  <TableCell>Ticker</TableCell>
-                  <TableCell>Side</TableCell>
-                  <TableCell>Reason</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {result.decisions.map((decision) => (
-                  <TableRow key={decision.roundTripId}>
-                    <TableCell>{decision.openedAtUtc.replace("T", " ").replace(".000Z", " UTC")}</TableCell>
-                    <TableCell sx={{ fontWeight: 800 }}>{decision.symbol}</TableCell>
-                    <TableCell sx={{ textTransform: "capitalize" }}>{decision.direction}</TableCell>
-                    <TableCell>{decision.reasonCodes.join(", ").replaceAll("_", " ")}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <Stack spacing={2}>
+            {result.positions.map((position) => {
+              const tracking = positionStyles[position.roundTripId] ?? null;
+              if (!tracking) return null;
+              return (
+                <Box
+                  key={position.roundTripId}
+                  sx={{ border: 1, borderColor: "divider", borderRadius: 1, p: 2 }}
+                >
+                  <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={1}
+                    sx={{ alignItems: { sm: "center" }, justifyContent: "space-between", mb: 1.5 }}
+                  >
+                    <Box>
+                      <Typography sx={{ fontWeight: 900 }}>{position.symbol}</Typography>
+                      <Typography color="text.secondary" variant="body2">
+                        {position.direction === "long" ? "Long" : "Short"} · {formatJournalAnalyticsDecimal(position.remainingQuantityDecimal)} remaining
+                      </Typography>
+                    </Box>
+                    <Chip label={positionStatusLabel(tracking.style)} size="small" variant="outlined" />
+                  </Stack>
+                  <PositionStyleControl
+                    closed={false}
+                    expectedAccountSelectionRef={expectedAccountSelectionRef}
+                    positionRef={tracking.positionRef}
+                    sourceUi="open_positions"
+                    style={tracking.style}
+                  />
+                </Box>
+              );
+            })}
+          </Stack>
         </DashboardPanel>
       ) : null}
+
     </DashboardPage>
   );
 }

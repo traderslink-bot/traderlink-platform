@@ -182,6 +182,42 @@ WHERE decision_id = ? AND workspace_id = ? AND account_id = ?
     return this.get(input.workspaceId, input.accountId, input.decisionId)!;
   }
 
+  continuePending(input: Readonly<{
+    decisionEventId: string; workspaceId: string; accountId: string;
+    decisionId: string; expectedRevision: number; action: JournalDecisionAction;
+    actorUserId: string; reasonCode: string; reasonText: string | null;
+    priorExecutionVersionId: string | null; resultingExecutionVersionId: string | null;
+    counterpartExecutionId: string | null; timestamp: string;
+  }>): JournalDataDecisionRecord {
+    this.database.prepare(`INSERT INTO journal_data_decision_events (
+ decision_event_id, workspace_id, account_id, decision_id, event_sequence,
+ action, actor_kind, actor_user_id, reason_code, reason_text,
+ prior_execution_version_id, resulting_execution_version_id,
+ prior_position_fact_id, resulting_position_fact_id, counterpart_execution_id,
+ resulting_coverage_interval_id, resulting_state, occurred_at_utc
+) VALUES (?, ?, ?, ?, ?, ?, 'user', ?, ?, ?, ?, ?, NULL, NULL, ?, NULL,
+ 'pending', ?)`).run(
+      input.decisionEventId, input.workspaceId, input.accountId,
+      input.decisionId, input.expectedRevision + 1, input.action,
+      input.actorUserId, input.reasonCode, input.reasonText,
+      input.priorExecutionVersionId, input.resultingExecutionVersionId,
+      input.counterpartExecutionId, input.timestamp,
+    );
+    const result = this.database.prepare(`UPDATE journal_data_decisions
+SET revision = revision + 1, current_event_id = ?, updated_at_utc = ?
+WHERE decision_id = ? AND workspace_id = ? AND account_id = ?
+  AND state = 'pending' AND revision = ?`).run(
+      input.decisionEventId, input.timestamp, input.decisionId,
+      input.workspaceId, input.accountId, input.expectedRevision,
+    );
+    if (result.changes !== 1) {
+      platformFailure("TRADERLINK_DATA_DECISION_CONFLICT", {
+        reason: "decision_revision",
+      });
+    }
+    return this.get(input.workspaceId, input.accountId, input.decisionId)!;
+  }
+
   updateExecutionState(input: Readonly<{
     workspaceId: string; accountId: string; executionId: string;
     expectedVersionId: string; state: JournalExecutionState; timestamp: string;

@@ -6,6 +6,11 @@ import type {
   JournalAnalyticsRoundTripTableRow,
 } from "../contracts/analytics-result";
 import { JOURNAL_ANALYTICS_RESULT_VERSION } from "../contracts/analytics-result";
+import {
+  compareExactDecimals,
+  divideExactDecimals,
+  percentageExactDecimals,
+} from "./exact-analytics-math";
 import type { JournalAnalyticsPopulation } from "./analytics-population";
 import type { NormalizedJournalAnalyticsRow } from "./normalize-journal-analytics-facts";
 
@@ -55,6 +60,21 @@ function publicRow(
   row: NormalizedJournalAnalyticsRow,
   moneyBasis: JournalAnalyticsMoneyBasis,
 ): JournalAnalyticsRoundTripTableRow {
+  const selectedPnlDecimal = moneyBasis === "gross"
+    ? row.grossPnlDecimal
+    : row.netPnlDecimal;
+  const averageEntryPriceDecimal = compareExactDecimals(row.enteredQuantityDecimal, "0") === 0
+    ? null
+    : divideExactDecimals(row.entryNotionalDecimal, row.enteredQuantityDecimal, {
+        decimalPlaces: 4,
+        roundingPolicy: "half_up_4dp",
+      }).roundedDecimal;
+  const averageExitPriceDecimal = compareExactDecimals(row.exitQuantityDecimal, "0") === 0
+    ? null
+    : divideExactDecimals(row.exitNotionalDecimal, row.exitQuantityDecimal, {
+        decimalPlaces: 4,
+        roundingPolicy: "half_up_4dp",
+      }).roundedDecimal;
   return Object.freeze({
     roundTripId: row.roundTripId,
     displayedSymbol: row.displayedSymbol,
@@ -63,17 +83,22 @@ function publicRow(
     closedAtUtc: row.closedAtUtc,
     entryLocalDate: row.entryLocal.localDate,
     closeLocalDate: row.closeLocal.localDate,
+    tradeClassification: row.tradeClassification,
     provenance: row.provenanceGroup,
-    selectedPnlDecimal: moneyBasis === "gross"
-      ? row.grossPnlDecimal
-      : row.netPnlDecimal,
+    selectedPnlDecimal,
     grossPnlDecimal: row.grossPnlDecimal,
     chargeCoverage: row.chargeCoverage,
     chargeCostDecimal: row.chargeCostDecimal,
     chargeCreditDecimal: row.chargeCreditDecimal,
+    uniqueExecutionCount: row.uniqueExecutionCount,
     enteredQuantityDecimal: row.enteredQuantityDecimal,
     maximumPositionQuantityDecimal: row.maximumPositionQuantityDecimal,
     entryNotionalDecimal: row.entryNotionalDecimal,
+    averageEntryPriceDecimal,
+    averageExitPriceDecimal,
+    returnPercentDecimal: selectedPnlDecimal === null || compareExactDecimals(row.entryNotionalDecimal, "0") === 0
+      ? null
+      : percentageExactDecimals(selectedPnlDecimal, row.entryNotionalDecimal).roundedDecimal,
     holdingDurationMilliseconds: row.holdingDurationMilliseconds,
   });
 }

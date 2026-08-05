@@ -56,7 +56,7 @@ function previewFromExecutions(
   const openPositions: DaySessionOpenPosition[] = [];
   for (const [symbol, unorderedRows] of bySymbol.entries()) {
     const rows = [...unorderedRows].sort((left, right) =>
-      left.time.localeCompare(right.time),
+      `${left.date}T${left.time}`.localeCompare(`${right.date}T${right.time}`),
     );
     const lots: Array<{
       direction: "long" | "short";
@@ -81,7 +81,7 @@ function previewFromExecutions(
       const direction = row.side === "BUY" ? "long" : "short";
       const quantity = Number(row.quantity);
       const price = Number(row.price);
-      const occurredAt = executionTime(date, row.time);
+      const occurredAt = executionTime(row.date, row.time);
       let remaining = quantity;
 
       if (lots.length === 0) {
@@ -196,8 +196,10 @@ function previewFromExecutions(
         direction: lots[0].direction,
         openedAt: cycle.entryAt,
         positionKey: `design-open-${symbol.toLowerCase()}`,
+        positionRef: null,
         remainingQuantity: rounded(remainingQuantity),
         stableInstrumentKey: `design-${symbol.toLowerCase()}`,
+        style: null,
         symbol,
         timezone: "America/New_York",
       });
@@ -236,6 +238,7 @@ function previewFromExecutions(
     availableTags:
       reviewConfiguration?.availableTags ??
       DESIGN_TAGS.map((tag) => ({ ...tag })),
+    availableSessionDates: [date],
     currency: "USD",
     date,
     decisionActivity: [],
@@ -255,6 +258,12 @@ function previewFromExecutions(
     openPositions,
     positionSnapshots: [],
     previousSessionDate: null,
+    review: {
+      revision: null,
+      status: null,
+      unclassifiedOpenPositionCount: 0,
+      updatedAtUtc: null,
+    },
     rules,
     tickers,
     timezone: "America/New_York",
@@ -302,6 +311,7 @@ export function getDaySessionDesignPreview(
 
   return {
     availableTags: DESIGN_TAGS.map((tag) => ({ ...tag })),
+    availableSessionDates: [previousTradeDate, date, currentSessionDate],
     currency: "USD",
     date,
     decisionActivity: [],
@@ -324,14 +334,22 @@ export function getDaySessionDesignPreview(
         direction: "long",
         openedAt: `${date}T18:12:00-04:00`,
         positionKey: "preview-open-amd",
+        positionRef: null,
         remainingQuantity: "75",
         stableInstrumentKey: "preview_amd",
+        style: null,
         symbol: "AMD",
         timezone: "America/New_York",
       },
     ],
     positionSnapshots: [],
     previousSessionDate: previousTradeDate,
+    review: {
+      revision: null,
+      status: null,
+      unclassifiedOpenPositionCount: 0,
+      updatedAtUtc: null,
+    },
     rules: [
       {
         applicability: "day",

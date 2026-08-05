@@ -4,6 +4,7 @@ import {
   requireTraderLinkPlatformRequestScope,
   requireExpectedJournalAccountSelection,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireJournalMutationRequest } from "@/src/modules/platform/server/authentication/journal-mutation-request-security";
 import { isTraderLinkPlatformError, platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
 
 export const runtime = "nodejs";
@@ -92,6 +93,7 @@ function manualEntry(value: unknown): Readonly<{
 
 export async function POST(request: Request): Promise<Response> {
   try {
+    requireJournalMutationRequest(request);
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
     const body: unknown = await request.json();
     if (!isRecord(body) || !Array.isArray(body.entries)) {

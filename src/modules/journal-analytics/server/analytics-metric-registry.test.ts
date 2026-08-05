@@ -41,6 +41,7 @@ function row(
       bucket30Minute: "10:00",
     }),
     holdingDurationMilliseconds: sequence * 1_800_000,
+    tradeClassification: "day_trade",
     isOvernight: false,
     uniqueExecutionCount: 2,
     uniqueExecutionIds: Object.freeze([

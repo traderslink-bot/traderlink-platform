@@ -12,7 +12,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import {
   DashboardPanel,
@@ -21,6 +21,7 @@ import {
 } from "../../dashboard-template";
 
 export type ExecutionDraft = {
+  date: string;
   fees: string;
   id: number;
   price: string;
@@ -28,16 +29,22 @@ export type ExecutionDraft = {
   side: "BUY" | "SELL";
   symbol: string;
   time: string;
-  tradeIntent: "not-set" | "day-trade" | "swing";
 };
 
-export type ExecutionSaveResult = Readonly<{
-  acceptedExecutionCount: number;
-  pendingDecisionCount: number;
-}>;
+export type ExecutionSaveResult =
+  Readonly<{
+    status: "saved";
+    acceptedExecutionCount: number;
+    pendingDecisionCount: number;
+  }>;
 
-function newExecution(id: number, side: "BUY" | "SELL"): ExecutionDraft {
+function newExecution(
+  id: number,
+  side: "BUY" | "SELL",
+  date: string,
+): ExecutionDraft {
   return {
+    date,
     fees: "",
     id,
     price: "",
@@ -45,7 +52,6 @@ function newExecution(id: number, side: "BUY" | "SELL"): ExecutionDraft {
     side,
     symbol: "",
     time: "",
-    tradeIntent: "not-set",
   };
 }
 
@@ -58,33 +64,41 @@ function normalizedDecimal(value: string): string {
 
 export function ExecutionEntryCard({
   collapsed,
-  dateEditable = false,
   initialExecutions = [],
   onCollapsedChange,
   onSave,
+  onStartAnother,
   onSubmitted,
+  allowMultipleTradingDates = false,
   savingEnabled = true,
   sessionDate,
   submittedCount,
 }: {
   collapsed: boolean;
-  dateEditable?: boolean;
   initialExecutions?: ExecutionDraft[];
   onCollapsedChange: (collapsed: boolean) => void;
   onSave?: (
-    sessionDate: string,
     executions: readonly ExecutionDraft[],
   ) => Promise<ExecutionSaveResult>;
+  onStartAnother?: () => void;
   onSubmitted: (count: number, executions: ExecutionDraft[]) => void;
+  allowMultipleTradingDates?: boolean;
   savingEnabled?: boolean;
   sessionDate: string;
   submittedCount: number | null;
 }) {
-  const [nextId, setNextId] = useState(3);
+  const [nextId, setNextId] = useState(() =>
+    initialExecutions.length > 0
+      ? Math.max(...initialExecutions.map((execution) => execution.id)) + 1
+      : 3,
+  );
   const [rows, setRows] = useState<ExecutionDraft[]>(() =>
     initialExecutions.length > 0
       ? initialExecutions
-      : [newExecution(1, "BUY"), newExecution(2, "SELL")],
+      : [
+          newExecution(1, "BUY", sessionDate),
+          newExecution(2, "SELL", sessionDate),
+        ],
   );
   const [state, setState] = useState<
     | { kind: "idle" }
@@ -97,20 +111,6 @@ export function ExecutionEntryCard({
       }
     | { kind: "error"; message: string }
   >({ kind: "idle" });
-  const [selectedSessionDate, setSelectedSessionDate] = useState(sessionDate);
-
-  useEffect(() => {
-    if (initialExecutions.length === 0) return;
-    setRows(initialExecutions);
-    setNextId(
-      Math.max(...initialExecutions.map((execution) => execution.id)) + 1,
-    );
-  }, [initialExecutions]);
-
-  useEffect(() => {
-    setSelectedSessionDate(sessionDate);
-  }, [sessionDate]);
-
   function update(
     id: number,
     field: keyof Omit<ExecutionDraft, "id">,
@@ -125,7 +125,10 @@ export function ExecutionEntryCard({
   }
 
   function addExecution() {
-    setRows((current) => [...current, newExecution(nextId, "BUY")]);
+    setRows((current) => [
+      ...current,
+      newExecution(nextId, "BUY", current.at(-1)?.date ?? sessionDate),
+    ]);
     setNextId((current) => current + 1);
     setState({ kind: "idle" });
   }
@@ -142,6 +145,7 @@ export function ExecutionEntryCard({
   const complete = rows.every(
     (row) =>
       row.symbol.trim() &&
+      /^\d{4}-\d{2}-\d{2}$/u.test(row.date) &&
       row.time &&
       Number(row.quantity) > 0 &&
       Number(row.price) > 0 &&
@@ -150,6 +154,13 @@ export function ExecutionEntryCard({
 
   async function saveExecutions() {
     if (!savingEnabled || !complete || state.kind === "saving") return;
+    if (!allowMultipleTradingDates && new Set(rows.map((row) => row.date)).size !== 1) {
+      setState({
+        kind: "error",
+        message: "Enter executions for one trading day at a time.",
+      });
+      return;
+    }
     setState({ kind: "saving" });
     try {
       const normalizedRows = rows.map((row) => ({
@@ -160,7 +171,7 @@ export function ExecutionEntryCard({
         symbol: row.symbol.trim().toUpperCase(),
       }));
       const saveResult = onSave
-        ? await onSave(selectedSessionDate, normalizedRows)
+        ? await onSave(normalizedRows)
         : null;
       const recordedCount = saveResult?.acceptedExecutionCount ?? rows.length;
       setState({
@@ -182,6 +193,17 @@ export function ExecutionEntryCard({
             : "The executions could not be saved.",
       });
     }
+  }
+
+  function startAnotherTrade() {
+    setRows([
+      newExecution(nextId, "BUY", sessionDate),
+      newExecution(nextId + 1, "SELL", sessionDate),
+    ]);
+    setNextId((current) => current + 2);
+    setState({ kind: "idle" });
+    onStartAnother?.();
+    onCollapsedChange(false);
   }
 
   if (collapsed && submittedCount !== null) {
@@ -222,10 +244,10 @@ export function ExecutionEntryCard({
                 ))
               : null}
             <DashboardSecondaryAction
-              onClick={() => onCollapsedChange(false)}
+              onClick={startAnotherTrade}
               startIcon={<EditRoundedIcon />}
             >
-              Add or correct executions
+              Enter another trade
             </DashboardSecondaryAction>
           </Stack>
         </Stack>
@@ -238,25 +260,14 @@ export function ExecutionEntryCard({
       eyebrow="Manual execution entry"
       title="Enter trades"
     >
-      <Typography color="text.secondary" variant="body2">
-        Use this during the current trading week. Choose each execution&apos;s actual trading date and mark Swing trade only when that is your intention. Completed trades and P/L are reconstructed from the shared Journal ledger after saving.
+      <Typography sx={{ fontWeight: 800 }} variant="body2">
+        Times use Eastern Time.
       </Typography>
-
-      {dateEditable ? (
-        <TextField
-          label="Trading date"
-          onChange={(event) => setSelectedSessionDate(event.target.value)}
-          size="small"
-          slotProps={{ inputLabel: { shrink: true } }}
-          sx={{ mt: 2.5, width: { xs: "100%", sm: 220 } }}
-          type="date"
-          value={selectedSessionDate}
-        />
-      ) : (
-        <Typography color="text.secondary" sx={{ mt: 1 }} variant="caption">
-          Trading date: {selectedSessionDate}
-        </Typography>
-      )}
+      <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">
+        {allowMultipleTradingDates
+          ? "Enter the executions that make up this swing trade. Opening and closing executions can have different trading dates."
+          : "Enter all day trade executions for one trading day and save your executions. All of your trades for the day will display below, organized by ticker."}
+      </Typography>
 
       <Stack spacing={1.5} sx={{ mt: 2.5 }}>
         {rows.map((row, index) => (
@@ -272,7 +283,7 @@ export function ExecutionEntryCard({
               gap: 1.25,
               gridTemplateColumns: {
                 xs: "1fr 1fr",
-                md: "80px minmax(105px, .75fr) 100px minmax(105px, .7fr) minmax(95px, .6fr) minmax(95px, .6fr) minmax(85px, .5fr) minmax(115px, .7fr) 40px",
+                md: "80px minmax(132px, .9fr) minmax(95px, .7fr) 88px minmax(105px, .7fr) minmax(90px, .6fr) minmax(90px, .6fr) minmax(80px, .5fr) 40px",
               },
               p: 1.5,
             }}
@@ -288,7 +299,15 @@ export function ExecutionEntryCard({
               Execution {index + 1}
             </Typography>
             <TextField
-              label="Symbol"
+              label="Trading date"
+              onChange={(event) => update(row.id, "date", event.target.value)}
+              size="small"
+              slotProps={{ inputLabel: { shrink: true } }}
+              type="date"
+              value={row.date}
+            />
+            <TextField
+              label="Ticker"
               onChange={(event) =>
                 update(row.id, "symbol", event.target.value.toUpperCase())
               }
@@ -309,7 +328,7 @@ export function ExecutionEntryCard({
               <MenuItem value="SELL">Sell</MenuItem>
             </TextField>
             <TextField
-              label="Time"
+              label="Time (Eastern Time)"
               onChange={(event) => update(row.id, "time", event.target.value)}
               size="small"
               slotProps={{
@@ -343,19 +362,6 @@ export function ExecutionEntryCard({
               slotProps={{ htmlInput: { inputMode: "decimal", min: 0 } }}
               value={row.fees}
             />
-            <TextField
-              label="Trade plan"
-              onChange={(event) =>
-                update(row.id, "tradeIntent", event.target.value)
-              }
-              select
-              size="small"
-              value={row.tradeIntent}
-            >
-              <MenuItem value="not-set">Not set</MenuItem>
-              <MenuItem value="day-trade">Day trade</MenuItem>
-              <MenuItem value="swing">Swing trade</MenuItem>
-            </TextField>
             <IconButton
               aria-label={`Remove execution ${index + 1}`}
               disabled={rows.length === 1}
@@ -387,9 +393,6 @@ export function ExecutionEntryCard({
           mt: 2.5,
         }}
       >
-        <Typography color="text.secondary" variant="body2">
-          Times use Eastern Time. Editable quantities, prices, and fees retain every digit you enter; saved displays use at most two decimal places.
-        </Typography>
         <Stack direction="row" spacing={1}>
           {submittedCount !== null ? (
             <DashboardSecondaryAction onClick={() => onCollapsedChange(true)}>
@@ -404,15 +407,13 @@ export function ExecutionEntryCard({
               ? "Saving executions..."
               : !savingEnabled
               ? "Saving not connected yet"
-              : submittedCount === null
-                ? "Submit executions"
-                : "Update executions"}
+              : "Save executions"}
           </DashboardPrimaryAction>
         </Stack>
       </Box>
       {!savingEnabled ? (
         <Typography color="text.secondary" sx={{ mt: 1.5 }} variant="caption">
-          This is the reviewable replacement form. Saving will be enabled only after the canonical manual-entry command and Data Decisions safeguards are verified.
+          This preview does not save executions.
         </Typography>
       ) : null}
       {state.kind === "error" ? (

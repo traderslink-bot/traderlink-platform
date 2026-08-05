@@ -7,7 +7,11 @@ import type {
   JournalAnalyticsRoundTripFact,
 } from "@/src/modules/journal/contracts/journal-analytics-fact-set";
 
-import type { JournalAnalyticsOutcome, JournalAnalyticsProvenanceGroup } from "../contracts/analytics-query";
+import type {
+  JournalAnalyticsOutcome,
+  JournalAnalyticsProvenanceGroup,
+  JournalAnalyticsTradeClassification,
+} from "../contracts/analytics-query";
 import {
   allocateExecutionCharges,
   type AllocatedExecutionCharge,
@@ -46,6 +50,7 @@ export type NormalizedJournalAnalyticsRow = Readonly<{
   entryLocal: JournalAnalyticsLocalTimeFact;
   closeLocal: JournalAnalyticsLocalTimeFact;
   holdingDurationMilliseconds: number;
+  tradeClassification: JournalAnalyticsTradeClassification;
   isOvernight: boolean;
   uniqueExecutionCount: number;
   uniqueExecutionIds: readonly string[];
@@ -434,6 +439,9 @@ function normalizeReadyClosed(
     entryLocal,
     closeLocal,
     holdingDurationMilliseconds,
+    tradeClassification: entryLocal.localDate === closeLocal.localDate
+      ? "day_trade"
+      : "multi_day_trade",
     isOvernight: entryLocal.localDate !== closeLocal.localDate,
     uniqueExecutionCount: uniqueExecutionIds.length,
     uniqueExecutionIds,

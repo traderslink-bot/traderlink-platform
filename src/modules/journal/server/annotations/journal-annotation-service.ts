@@ -10,6 +10,7 @@ import type {
   JournalRuleReviewStatus,
   JournalTagRecord,
 } from "@/src/modules/journal/contracts/journal-annotation-contracts";
+import { journalTagPresetByKey } from "@/src/modules/journal/contracts/journal-tag-preset-catalog";
 import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import {
   assertCanonicalUuidV4,
@@ -82,7 +83,7 @@ function canonicalConfiguration(value: unknown): Readonly<{
   if (entries.length > 64) invalid("configuration");
   const normalized = Object.fromEntries(entries
     .map(([key, item]) => {
-      if (!/^[a-z][a-z0-9_]{0,63}$/u.test(key) || typeof item !== "string") {
+      if (!/^[a-z][A-Za-z0-9_]{0,63}$/u.test(key) || typeof item !== "string") {
         invalid("configuration");
       }
       return [key, normalizedText(item, "configuration", 256, false)] as const;
@@ -273,6 +274,73 @@ export class JournalAnnotationService {
       return this.annotations.listTagsForRoundTrips(scope, [input.roundTripId])[
         input.roundTripId
       ] ?? Object.freeze([]);
+    });
+  }
+
+  replaceRoundTripTagsWithPresets(
+    scope: AccountScope,
+    input: Readonly<{
+      roundTripId: string;
+      tagIds: readonly string[];
+      presetKeys: readonly string[];
+      now?: Date;
+    }>,
+  ): readonly JournalTagRecord[] {
+    assertCanonicalUuidV4(input.roundTripId, "roundTripId");
+    const tagIds = [...new Set(input.tagIds)];
+    tagIds.forEach((tagId) => assertCanonicalUuidV4(tagId, "tagId"));
+    const presets = [...new Set(input.presetKeys)].map((presetKey) => {
+      const preset = journalTagPresetByKey(presetKey);
+      if (!preset) invalid("presetKeys");
+      return preset;
+    });
+    if (tagIds.length + presets.length > JOURNAL_TAGS_PER_ROUND_TRIP_MAXIMUM) {
+      invalid("tagIds");
+    }
+    const at = timestamp(input.now);
+    return this.annotations.immediate(() => {
+      const allTags = this.annotations.listTags(scope, true);
+      const activeByName = new Map(allTags
+        .filter((tag) => tag.lifecycleState === "active")
+        .map((tag) => [tag.name.trim().replace(/\s+/gu, " ").normalize("NFKC")
+          .toLocaleLowerCase("en-US"), tag]));
+      const retiredNames = new Set(allTags
+        .filter((tag) => tag.lifecycleState === "retired")
+        .map((tag) => tag.name.trim().replace(/\s+/gu, " ").normalize("NFKC")
+          .toLocaleLowerCase("en-US")));
+      const missingCount = presets.filter((preset) =>
+        !activeByName.has(preset.name.toLocaleLowerCase("en-US"))).length;
+      if (allTags.length + missingCount > JOURNAL_TAGS_PER_ACCOUNT_MAXIMUM) {
+        invalid("tagLimit");
+      }
+      for (const preset of presets) {
+        const normalized = preset.name.toLocaleLowerCase("en-US");
+        if (retiredNames.has(normalized)) conflict();
+        if (!activeByName.has(normalized)) {
+          const tagId = createCanonicalUuidV4();
+          this.annotations.insertTag({
+            scope,
+            tagId,
+            versionId: createCanonicalUuidV4(),
+            name: preset.name,
+            normalizedName: normalized,
+            timestamp: at,
+          });
+          const created = this.annotations.findTag(scope, tagId);
+          if (!created) conflict();
+          activeByName.set(normalized, created);
+        }
+      }
+      return this.replaceRoundTripTags(scope, {
+        roundTripId: input.roundTripId,
+        tagIds: [
+          ...tagIds,
+          ...presets.map((preset) => activeByName.get(
+            preset.name.toLocaleLowerCase("en-US"),
+          )!.tagId),
+        ],
+        now: input.now,
+      });
     });
   }
 

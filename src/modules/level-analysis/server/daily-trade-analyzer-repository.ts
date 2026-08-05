@@ -1,0 +1,393 @@
+import type Database from "better-sqlite3";
+
+import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
+import { createCanonicalUtcTimestamp, createCanonicalUuidV4 } from "@/src/modules/platform/server/database/platform-migration-contract";
+
+import type {
+  DailyTradeAnalyzerDirection,
+  DailyTradeAnalyzerEvent,
+  DailyTradeAnalyzerEventKind,
+  DailyTradeAnalyzerResult,
+} from "../contracts/daily-trade-analyzer-contracts";
+import type { NormalizedMarketCandle } from "../contracts/candle-review-contracts";
+
+export type DailyTradeAnalyzerTarget = Readonly<{
+  assetClass: "stock";
+  direction: DailyTradeAnalyzerDirection;
+  events: readonly DailyTradeAnalyzerEvent[];
+  finalExitAtUtc: string;
+  openedAtUtc: string;
+  providerSymbol: string;
+  roundTripId: string;
+  roundTripVersionId: string;
+  tradingDateNewYork: string;
+}>;
+
+export type ClaimedDailyTradeAnalyzerJob = Readonly<{
+  desiredCoverageEndUtc: string;
+  jobId: string;
+  marketSessionSetId: string;
+  scope: AccountScope;
+  target: DailyTradeAnalyzerTarget;
+}>;
+
+type JobRow = Readonly<{
+  account_id: string;
+  daily_trade_job_id: string;
+  desired_coverage_end_utc: string;
+  market_session_set_id: string;
+  round_trip_id: string;
+  user_id: string;
+  workspace_id: string;
+}>;
+
+type TargetRow = Readonly<{
+  allocation_role: "opening" | "adding" | "reducing" | "closing" | "flip_closing" | "flip_opening";
+  allocation_sequence: number;
+  asset_class: string;
+  closed_at_utc: string | null;
+  direction: DailyTradeAnalyzerDirection;
+  executed_at_utc: string;
+  execution_id: string;
+  normalized_symbol: string;
+  opened_at_utc: string;
+  price_decimal: string | null;
+  quantity_decimal: string;
+  round_trip_id: string;
+  round_trip_version_id: string;
+}>;
+
+function newYorkDate(utc: string): string | null {
+  const milliseconds = Date.parse(utc);
+  if (!Number.isFinite(milliseconds)) return null;
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "America/New_York",
+    year: "numeric",
+  }).formatToParts(new Date(milliseconds));
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return values.year && values.month && values.day
+    ? `${values.year}-${values.month}-${values.day}`
+    : null;
+}
+
+function eventKind(role: TargetRow["allocation_role"]): DailyTradeAnalyzerEventKind {
+  if (role === "opening" || role === "flip_opening") return "entry";
+  if (role === "adding") return "add";
+  if (role === "reducing") return "partial_exit";
+  return "final_exit";
+}
+
+function fromRows(rows: readonly TargetRow[]): DailyTradeAnalyzerTarget | null {
+  const first = rows[0];
+  if (!first || first.asset_class !== "stock" || !first.closed_at_utc || !first.price_decimal) {
+    return null;
+  }
+  const tradingDateNewYork = newYorkDate(first.opened_at_utc);
+  if (!tradingDateNewYork || newYorkDate(first.closed_at_utc) !== tradingDateNewYork) return null;
+  const events = rows.map((row) => row.price_decimal ? Object.freeze({
+    eventId: row.execution_id,
+    kind: eventKind(row.allocation_role),
+    executedAtUtc: row.executed_at_utc,
+    priceDecimal: row.price_decimal,
+    quantityDecimal: row.quantity_decimal,
+  }) : null);
+  if (events.some((event) => event === null) || events.at(-1)?.kind !== "final_exit") return null;
+  return Object.freeze({
+    assetClass: "stock",
+    direction: first.direction,
+    events: Object.freeze(events as DailyTradeAnalyzerEvent[]),
+    finalExitAtUtc: first.closed_at_utc,
+    openedAtUtc: first.opened_at_utc,
+    providerSymbol: first.normalized_symbol,
+    roundTripId: first.round_trip_id,
+    roundTripVersionId: first.round_trip_version_id,
+    tradingDateNewYork,
+  });
+}
+
+export class DailyTradeAnalyzerRepository {
+  constructor(private readonly database: Database.Database) {}
+
+  findEligibleTarget(scope: AccountScope, roundTripId: string): DailyTradeAnalyzerTarget | null {
+    const rows = this.database.prepare<[string, string, string], TargetRow>(`SELECT
+  round_trip.round_trip_id,
+  version.round_trip_version_id,
+  version.direction,
+  version.opened_at_utc,
+  version.closed_at_utc,
+  instrument.asset_class,
+  instrument.normalized_symbol,
+  allocation.allocation_sequence,
+  allocation.allocation_role,
+  execution_version.execution_id,
+  execution_version.executed_at_utc,
+  execution_version.quantity_decimal,
+  execution_version.price_decimal
+FROM journal_round_trips round_trip
+JOIN journal_round_trip_versions version
+  ON version.workspace_id = round_trip.workspace_id
+  AND version.account_id = round_trip.account_id
+  AND version.round_trip_version_id = round_trip.current_version_id
+JOIN journal_instruments instrument
+  ON instrument.workspace_id = version.workspace_id
+  AND instrument.instrument_id = version.instrument_id
+JOIN journal_round_trip_execution_allocations allocation
+  ON allocation.workspace_id = version.workspace_id
+  AND allocation.account_id = version.account_id
+  AND allocation.round_trip_version_id = version.round_trip_version_id
+JOIN journal_execution_versions execution_version
+  ON execution_version.workspace_id = allocation.workspace_id
+  AND execution_version.account_id = allocation.account_id
+  AND execution_version.execution_version_id = allocation.execution_version_id
+WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
+  AND round_trip.round_trip_id = ?
+  AND round_trip.lifecycle_state = 'active'
+  AND version.projection_state = 'ready_closed'
+ORDER BY allocation.allocation_sequence ASC`).all(
+      scope.workspaceId,
+      scope.accountId,
+      roundTripId,
+    );
+    return fromRows(rows);
+  }
+
+  queueTarget(input: Readonly<{
+    scope: AccountScope;
+    target: DailyTradeAnalyzerTarget;
+    desiredCoverageEndUtc: string;
+    now?: Date;
+  }>): void {
+    const timestamp = createCanonicalUtcTimestamp(input.now ?? new Date());
+    const exchangeIdentity = "unknown";
+    this.database.prepare(`INSERT INTO level_analysis_market_session_sets (
+  market_session_set_id, provider_key, provider_adapter_version, provider_symbol,
+  exchange_identity, trading_date_new_york, interval, session_policy,
+  current_version_id, current_coverage_end_utc, current_status, lease_expires_at_utc,
+  created_at_utc, updated_at_utc
+) VALUES (?, 'yahoo_chart', 'yahoo_chart_v1', ?, ?, ?, '1m',
+  'america_new_york_extended_0400_2000_v1', NULL, NULL, 'queued', NULL, ?, ?)
+ON CONFLICT(provider_key, provider_adapter_version, provider_symbol, exchange_identity, trading_date_new_york, interval, session_policy)
+DO NOTHING`).run(
+      createCanonicalUuidV4(),
+      input.target.providerSymbol,
+      exchangeIdentity,
+      input.target.tradingDateNewYork,
+      timestamp,
+      timestamp,
+    );
+    const session = this.database.prepare<[string, string], { market_session_set_id: string }>(`SELECT market_session_set_id
+FROM level_analysis_market_session_sets
+WHERE provider_key = 'yahoo_chart' AND provider_adapter_version = 'yahoo_chart_v1'
+  AND provider_symbol = ? AND exchange_identity = 'unknown'
+  AND trading_date_new_york = ? AND interval = '1m'
+  AND session_policy = 'america_new_york_extended_0400_2000_v1'`)
+      .get(input.target.providerSymbol, input.target.tradingDateNewYork);
+    if (!session) throw new Error("daily_trade_session_cache_missing");
+    this.database.prepare(`INSERT INTO level_analysis_daily_trade_jobs (
+  daily_trade_job_id, user_id, workspace_id, account_id, round_trip_id,
+  round_trip_version_id, market_session_set_id, desired_coverage_end_utc,
+  next_attempt_at_utc, status, attempt_count, lease_expires_at_utc, completed_at_utc,
+  created_at_utc, updated_at_utc
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'queued', 0, NULL, NULL, ?, ?)
+ON CONFLICT(workspace_id, account_id, round_trip_version_id, desired_coverage_end_utc)
+DO NOTHING`).run(
+      createCanonicalUuidV4(),
+      input.scope.userId,
+      input.scope.workspaceId,
+      input.scope.accountId,
+      input.target.roundTripId,
+      input.target.roundTripVersionId,
+      session.market_session_set_id,
+      input.desiredCoverageEndUtc,
+      timestamp,
+      timestamp,
+      timestamp,
+    );
+  }
+
+  claimNextJob(now: Date): ClaimedDailyTradeAnalyzerJob | null {
+    const timestamp = createCanonicalUtcTimestamp(now);
+    const row = this.database.transaction(() => {
+      const candidate = this.database.prepare<[string], JobRow>(`SELECT daily_trade_job_id, user_id,
+  workspace_id, account_id, round_trip_id, market_session_set_id, desired_coverage_end_utc
+FROM level_analysis_daily_trade_jobs
+WHERE (status = 'queued' OR (status = 'leased' AND lease_expires_at_utc < ?))
+  AND next_attempt_at_utc <= ?
+ORDER BY next_attempt_at_utc ASC, created_at_utc ASC
+LIMIT 1`).get(timestamp, timestamp);
+      if (!candidate) return null;
+      const changed = this.database.prepare(`UPDATE level_analysis_daily_trade_jobs
+SET status = 'leased', attempt_count = attempt_count + 1,
+  lease_expires_at_utc = ?, updated_at_utc = ?
+WHERE daily_trade_job_id = ? AND (status = 'queued' OR (status = 'leased' AND lease_expires_at_utc < ?))`)
+        .run(new Date(now.getTime() + 120_000).toISOString(), timestamp, candidate.daily_trade_job_id, timestamp);
+      return changed.changes === 1 ? candidate : null;
+    }).immediate();
+    if (!row) return null;
+    const scope: AccountScope = Object.freeze({
+      userId: row.user_id,
+      workspaceId: row.workspace_id,
+      workspaceRole: "owner",
+      accountId: row.account_id,
+    });
+    const target = this.findEligibleTarget(scope, row.round_trip_id);
+    if (!target) {
+      this.finishJob(row.daily_trade_job_id, "expired", now);
+      return null;
+    }
+    return Object.freeze({
+      desiredCoverageEndUtc: row.desired_coverage_end_utc,
+      jobId: row.daily_trade_job_id,
+      marketSessionSetId: row.market_session_set_id,
+      scope,
+      target,
+    });
+  }
+
+  readCurrentCandles(marketSessionSetId: string): readonly NormalizedMarketCandle[] {
+    const rows = this.database.prepare<[string], NormalizedMarketCandle & { candle_time_utc_seconds: number }>(`SELECT
+  candle_time_utc_seconds, open_decimal, high_decimal, low_decimal, close_decimal, volume_decimal
+FROM level_analysis_market_session_candles candle
+JOIN level_analysis_market_session_sets session
+  ON session.current_version_id = candle.market_session_set_version_id
+WHERE session.market_session_set_id = ?
+ORDER BY candle_time_utc_seconds ASC`).all(marketSessionSetId);
+    return Object.freeze(rows.map((row) => Object.freeze({
+      time: row.candle_time_utc_seconds,
+      openDecimal: row.openDecimal ?? row.open_decimal,
+      highDecimal: row.highDecimal ?? row.high_decimal,
+      lowDecimal: row.lowDecimal ?? row.low_decimal,
+      closeDecimal: row.closeDecimal ?? row.close_decimal,
+      volumeDecimal: row.volumeDecimal ?? row.volume_decimal,
+    })));
+  }
+
+  currentSessionCoverageEnd(marketSessionSetId: string): string | null {
+    return this.database.prepare<[string], { current_coverage_end_utc: string | null }>(`SELECT current_coverage_end_utc
+FROM level_analysis_market_session_sets WHERE market_session_set_id = ?`)
+      .get(marketSessionSetId)?.current_coverage_end_utc ?? null;
+  }
+
+  currentSessionVersionId(marketSessionSetId: string): string | null {
+    return this.database.prepare<[string], { current_version_id: string | null }>(`SELECT current_version_id
+FROM level_analysis_market_session_sets WHERE market_session_set_id = ?`)
+      .get(marketSessionSetId)?.current_version_id ?? null;
+  }
+
+  persistMarketSession(input: Readonly<{
+    candles: readonly NormalizedMarketCandle[];
+    completedAtUtc: string;
+    coverageEndUtc: string;
+    failureReasonCode: string | null;
+    marketSessionSetId: string;
+    outcome: "ready" | "no_coverage" | "provider_unavailable";
+    providerExchangeTimezone: string | null;
+    providerUtcOffsetSeconds: number | null;
+    requestedStartUtc: string;
+    requestedEndUtc: string;
+    sha256: string | null;
+  }>): string {
+    return this.database.transaction(() => {
+      const revision = this.database.prepare<[string], { revision: number }>(`SELECT
+  COALESCE(MAX(revision_number), 0) + 1 AS revision
+FROM level_analysis_market_session_set_versions
+WHERE market_session_set_id = ?`).get(input.marketSessionSetId)?.revision ?? 1;
+      const versionId = createCanonicalUuidV4();
+      this.database.prepare(`INSERT INTO level_analysis_market_session_set_versions (
+  market_session_set_version_id, market_session_set_id, revision_number,
+  requested_start_utc, requested_end_utc, provider_exchange_timezone,
+  provider_utc_offset_seconds, outcome, failure_reason_code, candle_sha256, retrieved_at_utc
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+        .run(versionId, input.marketSessionSetId, revision, input.requestedStartUtc,
+          input.requestedEndUtc, input.providerExchangeTimezone, input.providerUtcOffsetSeconds,
+          input.outcome, input.failureReasonCode, input.sha256, input.completedAtUtc);
+      const insert = this.database.prepare(`INSERT INTO level_analysis_market_session_candles (
+  market_session_set_version_id, candle_time_utc_seconds, open_decimal, high_decimal,
+  low_decimal, close_decimal, volume_decimal
+) VALUES (?, ?, ?, ?, ?, ?, ?)`);
+      for (const candle of input.candles) {
+        insert.run(versionId, candle.time, candle.openDecimal, candle.highDecimal,
+          candle.lowDecimal, candle.closeDecimal, candle.volumeDecimal);
+      }
+      this.database.prepare(`UPDATE level_analysis_market_session_sets
+SET current_version_id = ?, current_coverage_end_utc = ?, current_status = ?,
+  lease_expires_at_utc = NULL, updated_at_utc = ?
+WHERE market_session_set_id = ?`)
+        .run(versionId, input.coverageEndUtc, input.outcome, input.completedAtUtc, input.marketSessionSetId);
+      return versionId;
+    }).immediate();
+  }
+
+  persistAnalysis(input: Readonly<{
+    analyzed: DailyTradeAnalyzerResult;
+    marketSessionSetVersionId: string | null;
+    scope: AccountScope;
+    status: "ready" | "no_coverage" | "provider_unavailable" | "expired";
+    target: DailyTradeAnalyzerTarget;
+    now: Date;
+  }>): void {
+    const timestamp = createCanonicalUtcTimestamp(input.now);
+    this.database.transaction(() => {
+      const prior = this.database.prepare<[string, string, string], {
+        current_revision: number;
+        daily_trade_analysis_id: string;
+      }>(`SELECT daily_trade_analysis_id, current_revision
+FROM journal_round_trip_daily_trade_analyses
+WHERE workspace_id = ? AND account_id = ? AND round_trip_id = ?`)
+        .get(input.scope.workspaceId, input.scope.accountId, input.target.roundTripId);
+      const analysisId = prior?.daily_trade_analysis_id ?? createCanonicalUuidV4();
+      const revision = (prior?.current_revision ?? 0) + 1;
+      const versionId = createCanonicalUuidV4();
+      if (!prior) {
+        this.database.prepare(`INSERT INTO journal_round_trip_daily_trade_analyses (
+  daily_trade_analysis_id, user_id, workspace_id, account_id, round_trip_id,
+  round_trip_version_id, market_session_set_version_id, status, current_revision,
+  created_at_utc, updated_at_utc
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+          .run(analysisId, input.scope.userId, input.scope.workspaceId, input.scope.accountId,
+            input.target.roundTripId, input.target.roundTripVersionId, input.marketSessionSetVersionId,
+            input.status, revision, timestamp, timestamp);
+      } else {
+        this.database.prepare(`UPDATE journal_round_trip_daily_trade_analyses
+SET round_trip_version_id = ?, market_session_set_version_id = ?, status = ?,
+  current_revision = ?, updated_at_utc = ?
+WHERE daily_trade_analysis_id = ?`).run(input.target.roundTripVersionId,
+          input.marketSessionSetVersionId, input.status, revision, timestamp, analysisId);
+      }
+      this.database.prepare(`INSERT INTO journal_round_trip_daily_trade_analysis_versions (
+  daily_trade_analysis_version_id, daily_trade_analysis_id, revision_number,
+  market_session_set_version_id, status, analyzer_contract_version, created_at_utc
+) VALUES (?, ?, ?, ?, ?, 'daily_trade_analyzer_v1', ?)`)
+        .run(versionId, analysisId, revision, input.marketSessionSetVersionId, input.status, timestamp);
+      const insertSnapshot = this.database.prepare(`INSERT INTO journal_round_trip_daily_trade_analysis_event_snapshots (
+  daily_trade_analysis_version_id, execution_id, event_kind, candle_time_utc_seconds, snapshot_json
+) VALUES (?, ?, ?, ?, ?)`);
+      for (const snapshot of input.analyzed.eventSnapshots) {
+        insertSnapshot.run(versionId, snapshot.event.eventId, snapshot.event.kind,
+          snapshot.candleTime, JSON.stringify(snapshot));
+      }
+      const insertPath = this.database.prepare(`INSERT INTO journal_round_trip_daily_trade_analysis_post_exit_paths (
+  daily_trade_analysis_version_id, minutes_after_exit, favorable_move_decimal, observed_at_candle_time_utc_seconds
+) VALUES (?, ?, ?, ?)`);
+      for (const path of input.analyzed.finalExitPaths) {
+        insertPath.run(versionId, path.minutesAfterExit, path.favorableMoveDecimal, path.observedAtCandleTime);
+      }
+    }).immediate();
+  }
+
+  finishJob(jobId: string, status: "completed" | "no_coverage" | "provider_unavailable" | "expired", now: Date): void {
+    const timestamp = createCanonicalUtcTimestamp(now);
+    this.database.prepare(`UPDATE level_analysis_daily_trade_jobs
+SET status = ?, completed_at_utc = ?, lease_expires_at_utc = NULL, updated_at_utc = ?
+      WHERE daily_trade_job_id = ?`).run(status, timestamp, timestamp, jobId);
+  }
+
+  rescheduleJob(jobId: string, nextAttemptAt: Date, now: Date): void {
+    const timestamp = createCanonicalUtcTimestamp(now);
+    this.database.prepare(`UPDATE level_analysis_daily_trade_jobs
+SET status = 'queued', next_attempt_at_utc = ?, lease_expires_at_utc = NULL, updated_at_utc = ?
+WHERE daily_trade_job_id = ?`).run(createCanonicalUtcTimestamp(nextAttemptAt), timestamp, jobId);
+  }
+}

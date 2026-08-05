@@ -1,10 +1,18 @@
 # Trade Candle Analyzer Experiment Plan
 
-**Status:** Manual-entry automatic review connection in progress; acceptance review pending  
-**Branch:** `main`  
+**Status:** Historical experiment reference. The active runtime product direction is the owner-review draft [Daily Trade Tracker Yahoo Analyzer Plan](migration/daily-trade-tracker-yahoo-analyzer-plan.md).
+**Branch:** `main`
 **Progress:** [trade-candle-analyzer-experiment-progress.md](./trade-candle-analyzer-experiment-progress.md)
 
 ## Goal
+
+> **Superseded runtime direction:** Preserve this document's five approved
+> small-cap candle families and experiment evidence. Do not implement its Round
+> Trips entry point, manual trigger, per-round-trip cache, or
+> first-entry/final-exit-only scope. The active plan moves automatic analysis
+> to completed Daily Trade Tracker day trades, analyzes every execution event,
+> uses a shared extended-hours session cache, and removes analyzer links from
+> Round Trips.
 
 Add an isolated Trader Intelligence experiment that overlays a completed trade
 on Yahoo candle data and gives concise, evidence-gated feedback for:
@@ -21,21 +29,20 @@ authority.
 
 - Route: `/analytics/lab/trade-candle-analysis` under the existing V3 dashboard
   shell.
-- Entry point: the existing Analytics Lab experiment, completed Round Trips,
-  and the normal Trade Tracker manual-entry flow.
+- Historical entry points only: the existing Analytics Lab experiment,
+  completed Round Trips, and the former Trade Tracker manual-entry flow. The
+  active plan permits automatic analyzer work only from eligible completed Day
+  Tracker trades.
 - Review layout: one full-width candlestick replay with entry, exit, peak, the
   primary 30-minute window, and the available 60-minute context; three compact
   evidence panels underneath.
 - Data source labels: `Broker executions` for the governed trade timestamps and
   prices, `Yahoo candles (experimental)` for the market replay, and the candle
   interval/window used for every finding.
-- Completed Round Trips receive a compact `Candle review` status/link. The
-  detailed review retains `Analyze this trade` for an existing round trip. When
-  the trader explicitly presses `Submit executions` in Trade Tracker manual
-  entry, the app automatically reviews only completed round trips created by
-  that submission and exposes direct `View candle review` link(s) in the
-  submitted-executions result. It does not auto-review bulk imports, open
-  positions, or unrelated saved trades.
+- Historical experiment behavior only: completed Round Trips received a
+  `Candle review` link and manual submission could trigger a review. The active
+  plan removes those entry points and does not auto-review statement imports,
+  open positions, or unrelated saved trades.
 
 ## Evidence contract
 

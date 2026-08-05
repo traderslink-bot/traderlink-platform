@@ -38,7 +38,7 @@ const queryKeys = Object.freeze([
   "maximumEntryNotional", "maximumHoldingSeconds", "maximumPositionQuantity",
   "metricId", "minimumEnteredQuantity", "minimumEntryNotional",
   "minimumHoldingSeconds", "minimumPositionQuantity", "moneyBasis", "outcome",
-  "provenance", "startDate", "symbol",
+  "provenance", "startDate", "symbol", "tradeClassification",
 ] as const);
 
 function record(value: unknown): Record<string, unknown> {
@@ -53,8 +53,10 @@ function record(value: unknown): Record<string, unknown> {
 function exactKeys(value: Record<string, unknown>): void {
   const actual = Object.keys(value).sort();
   const expected = [...queryKeys].sort();
-  if (actual.length !== expected.length ||
-      actual.some((key, index) => key !== expected[index])) {
+  const legacy = expected.filter((key) => key !== "tradeClassification");
+  const matches = (keys: readonly string[]) => actual.length === keys.length &&
+    actual.every((key, index) => key === keys[index]);
+  if (!matches(expected) && !matches(legacy)) {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
       field: "analyticsLabQueryFields",
     });
@@ -213,6 +215,9 @@ export function normalizeAnalyticsLabPlatformQuery(
     currency,
     symbol,
     direction: nullableEnum(value.direction, ["long", "short"] as const, "direction"),
+    tradeClassification: Object.hasOwn(value, "tradeClassification")
+      ? nullableEnum(value.tradeClassification, ["day_trade", "multi_day_trade"] as const, "tradeClassification")
+      : null,
     provenance: nullableEnum(value.provenance, ["broker_only", "manual_only", "correction_only", "mixed", "unknown"] as const, "provenance"),
     outcome: nullableEnum(value.outcome, ["win", "loss", "flat"] as const, "outcome"),
     entryWeekday: nullableEnum(value.entryWeekday, ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const, "entryWeekday"),
@@ -242,6 +247,7 @@ function savedQuery(
     currency: query.currency,
     symbol: query.symbol,
     direction: query.direction,
+    tradeClassification: query.tradeClassification,
     provenance: query.provenance,
     outcome: query.outcome,
     entryWeekday: query.entryWeekday,
@@ -301,9 +307,17 @@ export function restoreAnalyticsLabSavedViewQuery(
     ...(saved as Record<string, unknown>),
     expectedAccountSelectionRef,
   });
-  if (prepared.payload.queryVersion !== payload.queryVersion ||
+  const legacySavedQuery = { ...prepared.savedQuery } as Record<string, unknown>;
+  delete legacySavedQuery.tradeClassification;
+  const legacyNormalizedQueryJson = JSON.stringify(legacySavedQuery);
+  const legacyMatches = !Object.hasOwn(saved as object, "tradeClassification") &&
+    prepared.payload.queryVersion === payload.queryVersion &&
+    legacyNormalizedQueryJson === payload.normalizedQueryJson &&
+    createHash("sha256").update(legacyNormalizedQueryJson, "utf8").digest("hex") ===
+      payload.querySha256;
+  if (!legacyMatches && (prepared.payload.queryVersion !== payload.queryVersion ||
       prepared.payload.normalizedQueryJson !== payload.normalizedQueryJson ||
-      prepared.payload.querySha256 !== payload.querySha256) {
+      prepared.payload.querySha256 !== payload.querySha256)) {
     platformFailure("TRADERLINK_ANALYTICS_SAVED_VIEW_INVALID", {
       field: "queryCanonicalization",
     });

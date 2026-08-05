@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import Decimal from "decimal.js";
 
 import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import {
@@ -10,7 +11,6 @@ import {
 } from "@/src/modules/platform/server/database/platform-migration-contract";
 import type {
   JournalDataDecisionRecord,
-  JournalDecisionAction,
   JournalDecisionTarget,
 } from "../../contracts/journal-decision-contracts";
 import type { JournalAssetClass } from "../../contracts/journal-import-contracts";
@@ -37,6 +37,7 @@ import {
   normalizeIbkrExecutionTime,
 } from "../imports/journal-value-normalization";
 import { JournalRoundTripService } from "../round-trips/journal-round-trip-service";
+import { JournalExecutionReconciliationRepository } from "../reconciliation/journal-execution-reconciliation-repository";
 import {
   JournalDataDecisionRepository,
   type SourceIssueResolutionContext,
@@ -147,6 +148,9 @@ export type JournalDecisionResolution = CommonResolution & (
   | Readonly<{
       action: "accept_source_limitation";
     }>
+  | Readonly<{
+      action: "reconcile_grouped_fills";
+    }>
 );
 
 export type JournalDecisionResolutionResult = Readonly<{
@@ -222,7 +226,7 @@ function positionFactKindForIssueCode(
 
 function sourceIssueAllowsAction(
   sourceIssue: SourceIssueResolutionContext,
-  action: JournalDecisionAction,
+  action: JournalDecisionResolution["action"],
 ): boolean {
   if (action === "accept_source_limitation") return true;
   if (sourceIssue.issueCode.startsWith("position_fact_")) {
@@ -466,7 +470,12 @@ function assertResolutionMatchesTarget(
   }
   if (
     decision.target.kind === "overlap_set" &&
-    !["merge_supported_duplicate", "keep_distinct"].includes(input.action)
+    ![
+      "merge_supported_duplicate",
+      "keep_distinct",
+      "correct_execution_fact",
+      "reconcile_grouped_fills",
+    ].includes(input.action)
   ) {
     platformFailure("TRADERLINK_DATA_DECISION_INVALID_ACTION", {
       reason: "overlap_action_mismatch",
@@ -523,6 +532,7 @@ export class JournalDataDecisionService {
     private readonly executionRepository: JournalExecutionRepository,
     private readonly executionService: JournalExecutionService,
     private readonly roundTrips: JournalRoundTripService,
+    private readonly reconciliations: JournalExecutionReconciliationRepository,
   ) {}
 
   openDecision(
@@ -570,9 +580,16 @@ export class JournalDataDecisionService {
         });
       }
     } else if (input.target.kind === "overlap_set") {
-      platformFailure("TRADERLINK_DATA_DECISION_INVALID_ACTION", {
-        reason: "overlap_target_not_materialized",
-      });
+      const reconciliation = this.reconciliations.findByOverlapKey(
+        scope.workspaceId,
+        scope.accountId,
+        input.target.overlapKeySha256,
+      );
+      if (!reconciliation || reconciliation.state !== "pending") {
+        platformFailure("TRADERLINK_DATA_DECISION_INVALID_ACTION", {
+          reason: "overlap_target_missing",
+        });
+      }
     } else if (!this.roundTrips.hasChainTarget(scope, input.target.chainKeySha256)) {
       platformFailure("TRADERLINK_DATA_DECISION_INVALID_ACTION", {
         reason: "chain_target_missing",
@@ -616,7 +633,10 @@ export class JournalDataDecisionService {
       scope.workspaceId,
       scope.accountId,
       importBatchId,
-    ).map((finding) => this.decisions.findForSourceIssue(
+    ).filter((finding) => ![
+      "manual_broker_possible_duplicate",
+      "manual_broker_grouped_fill_candidate",
+    ].includes(finding.issueCode)).map((finding) => this.decisions.findForSourceIssue(
       scope.workspaceId,
       scope.accountId,
       finding.sourceIssueId,
@@ -626,6 +646,53 @@ export class JournalDataDecisionService {
       target: { kind: "source_issue", sourceIssueId: finding.sourceIssueId },
       now,
     })));
+  }
+
+  openImportReconciliationDecisions(
+    scope: AccountScope,
+    importBatchId: string,
+    now?: Date,
+  ): readonly JournalDataDecisionRecord[] {
+    const timestamp = createCanonicalUtcTimestamp(now);
+    return Object.freeze(this.reconciliations.listPendingForImport(
+      scope,
+      importBatchId,
+    ).map((reconciliation) => {
+      const members = this.reconciliations.listMembers(
+        scope,
+        reconciliation.reconciliationSetId,
+      );
+      const manualCount = members.filter((member) =>
+        member.memberRole === "manual_execution").length;
+      const provisionalCount = members.filter((member) =>
+        member.memberRole === "provisional_imported_execution").length;
+      const grouped = manualCount !== 1 || provisionalCount !== 1;
+      const decision = this.openDecision(scope, {
+        issueCode: grouped
+          ? "manual_broker_grouped_fill_candidate"
+          : "manual_broker_possible_duplicate",
+        effectCode: "provisional_import_withheld_manual_active",
+        target: {
+          kind: "overlap_set",
+          overlapKeySha256: reconciliation.overlapKeySha256,
+        },
+        now,
+      });
+      if (reconciliation.decisionId === null) {
+        this.reconciliations.linkDecision(
+          scope,
+          reconciliation.reconciliationSetId,
+          decision.decisionId,
+          reconciliation.revision,
+          timestamp,
+        );
+      } else if (reconciliation.decisionId !== decision.decisionId) {
+        platformFailure("TRADERLINK_DATA_DECISION_CONFLICT", {
+          reason: "reconciliation_decision_mismatch",
+        });
+      }
+      return decision;
+    }));
   }
 
   openRoundTripDecisionFindings(
@@ -656,6 +723,83 @@ export class JournalDataDecisionService {
     });
   }
 
+  correctManualExecution(
+    scope: AccountScope,
+    input: Readonly<{
+      executionId: string;
+      expectedCurrentVersionId: string;
+      facts: JournalExecutionFacts;
+      idempotencyKey: string;
+      now?: Date;
+    }>,
+  ): Readonly<{
+    executionVersionId: string;
+    openedFollowupDecisionIds: readonly string[];
+    rebuildCount: number;
+  }> {
+    const eligible = this.reconciliations.listEligibleManualExecutions(
+      scope.workspaceId,
+      scope.accountId,
+    ).find((candidate) => candidate.executionId === input.executionId);
+    if (!eligible) {
+      platformFailure("TRADERLINK_MANUAL_EXECUTION_EDIT_REQUIRES_DECISION");
+    }
+    if (eligible.currentVersionId !== input.expectedCurrentVersionId) {
+      platformFailure("TRADERLINK_MANUAL_EXECUTION_EDIT_CONFLICT");
+    }
+    const current = this.executionRepository.currentVersion(
+      input.executionId,
+      scope.workspaceId,
+      scope.accountId,
+    );
+    if (!current || current.executionVersionId !== input.expectedCurrentVersionId) {
+      platformFailure("TRADERLINK_MANUAL_EXECUTION_EDIT_CONFLICT");
+    }
+    const facts = Object.freeze({
+      ...input.facts,
+      sourceOrderKey: input.facts.executedAtUtc === current.executedAtUtc
+        ? current.sourceOrderKey
+        : `${input.facts.executedAtUtc}|manual-correction|${input.executionId}`,
+    });
+    return this.decisions.immediate(() => {
+      const evidence = this.createExecutionCorrectionEvidence(scope, {
+        idempotencyKey: input.idempotencyKey,
+        sourceDisplayLabel: "Manual execution correction",
+        executionId: input.executionId,
+        facts,
+        correctionKind: "execution_fact_correction",
+        now: input.now,
+      });
+      const corrected = this.executionService.appendCorrection(scope, {
+        executionId: input.executionId,
+        expectedCurrentVersionId: input.expectedCurrentVersionId,
+        state: "accepted",
+        facts,
+        changeReasonCode: "manual_execution_user_correction",
+        importBatchId: evidence.importBatchId,
+        sourceRowId: evidence.sourceRowId,
+        now: input.now,
+      });
+      const rebuilds = this.roundTrips.rebuildAccount(scope, {
+        kind: "import_event",
+        triggerId: evidence.importEventId,
+        now: input.now,
+      });
+      const followups = this.openRoundTripDecisionFindings(
+        scope,
+        rebuilds,
+        input.now,
+      );
+      return Object.freeze({
+        executionVersionId: corrected.executionVersionId,
+        openedFollowupDecisionIds: Object.freeze(
+          followups.map((decision) => decision.decisionId),
+        ),
+        rebuildCount: rebuilds.length,
+      });
+    });
+  }
+
   resolve(
     scope: AccountScope,
     input: JournalDecisionResolution,
@@ -674,6 +818,38 @@ export class JournalDataDecisionService {
           scope.accountId,
           decision.target.sourceIssueId,
         )
+      : null;
+    const reconciliation = decision.target.kind === "overlap_set"
+      ? this.reconciliations.findByOverlapKey(
+          scope.workspaceId,
+          scope.accountId,
+          decision.target.overlapKeySha256,
+        )
+      : null;
+    if (
+      decision.target.kind === "overlap_set" &&
+      (!reconciliation || reconciliation.state !== "pending" ||
+        reconciliation.decisionId !== decision.decisionId)
+    ) {
+      platformFailure("TRADERLINK_DATA_DECISION_CONFLICT", {
+        reason: "reconciliation_target_state",
+      });
+    }
+    const reconciliationMembers = reconciliation
+      ? this.reconciliations.listMembers(scope, reconciliation.reconciliationSetId)
+      : Object.freeze([]);
+    const reconciliationEvidenceSha256 = reconciliation
+      ? sha256(JSON.stringify([
+          "manual-broker-resolution-evidence-v1",
+          reconciliation.reconciliationSetId,
+          reconciliation.revision,
+          reconciliationMembers.map((member) => [
+            member.memberRole,
+            member.executionId,
+            member.currentVersionId,
+            member.currentState,
+          ]),
+        ]))
       : null;
     assertResolutionMatchesTarget(decision, input, sourceIssue);
     const timestamp = createCanonicalUtcTimestamp(input.now);
@@ -699,6 +875,9 @@ export class JournalDataDecisionService {
       let resultingPositionFactId: string | null = null;
       let resultingCoverageIntervalId: string | null = null;
       let counterpartExecutionId: string | null = null;
+      const reconciliationImportBatchIds = new Set<string>();
+      let groupedReconciliationResolved = false;
+      let keepReconciliationDecisionPending = false;
 
       switch (input.action) {
         case "correct_execution_fact": {
@@ -720,6 +899,16 @@ export class JournalDataDecisionService {
             currentRecord.currentState === "superseded"
           ) {
             platformFailure("TRADERLINK_JOURNAL_EXECUTION_CONFLICT");
+          }
+          if (
+            reconciliation &&
+            !reconciliationMembers.some((member) =>
+              member.memberRole === "manual_execution" &&
+              member.executionId === input.executionId)
+          ) {
+            platformFailure("TRADERLINK_DATA_DECISION_INVALID_ACTION", {
+              reason: "reconciliation_manual_correction_target",
+            });
           }
           const correctedFacts = Object.freeze({
             ...input.facts,
@@ -794,6 +983,86 @@ export class JournalDataDecisionService {
           });
           priorExecutionVersionId = input.expectedCurrentVersionId;
           resultingExecutionVersionId = corrected.executionVersionId;
+          if (reconciliation) {
+            const accountTimezone = this.roundTrips.accountTradingTimezone(scope);
+            const manualMembers = reconciliationMembers.filter((member) =>
+              member.memberRole === "manual_execution");
+            const provisionalMembers = reconciliationMembers.filter((member) =>
+              member.memberRole === "provisional_imported_execution");
+            const manualVersions = manualMembers.map((member) =>
+              member.executionId === input.executionId
+                ? corrected
+                : this.executionRepository.currentVersion(
+                    member.executionId,
+                    scope.workspaceId,
+                    scope.accountId,
+                  ));
+            const provisionalVersions = provisionalMembers.map((member) =>
+              this.executionRepository.currentVersion(
+                member.executionId,
+                scope.workspaceId,
+                scope.accountId,
+              ));
+            if (
+              manualVersions.some((version) => version === null) ||
+              provisionalVersions.some((version) => version === null)
+            ) platformFailure("TRADERLINK_JOURNAL_EXECUTION_CONFLICT");
+            const typedManualVersions = manualVersions as JournalExecutionFacts[];
+            const typedProvisionalVersions = provisionalVersions as JournalExecutionFacts[];
+            const candidateKeys = new Set([
+              ...typedManualVersions,
+              ...typedProvisionalVersions,
+            ].map((version) => [
+              version.instrumentId,
+              version.tradeCurrency,
+              version.side,
+              positionLocalDateAtUtc(version.executedAtUtc, accountTimezone),
+            ].join("\u001f")));
+            const manualQuantity = typedManualVersions.reduce(
+              (sum, version) => sum.plus(version.quantityDecimal),
+              new Decimal(0),
+            );
+            const provisionalQuantity = typedProvisionalVersions.reduce(
+              (sum, version) => sum.plus(version.quantityDecimal),
+              new Decimal(0),
+            );
+            for (const member of provisionalMembers) {
+              for (const provenance of this.executionRepository.listProvenanceForExecution(
+                scope.workspaceId,
+                scope.accountId,
+                member.executionId,
+              )) reconciliationImportBatchIds.add(provenance.importBatchId);
+            }
+            const remainsCandidate = candidateKeys.size === 1 &&
+              manualQuantity.eq(provisionalQuantity);
+            if (remainsCandidate) {
+              keepReconciliationDecisionPending = true;
+            } else {
+              for (const [index, member] of provisionalMembers.entries()) {
+                const version = typedProvisionalVersions[index]!;
+                this.executionRepository.updateState({
+                  executionId: member.executionId,
+                  workspaceId: scope.workspaceId,
+                  accountId: scope.accountId,
+                  expectedCurrentVersionId: member.currentVersionId,
+                  state: version.factCompleteness === "complete"
+                    ? "accepted"
+                    : "needs_decision",
+                  timestamp,
+                });
+              }
+              this.reconciliations.resolve({
+                scope,
+                reconciliationSetId: reconciliation.reconciliationSetId,
+                decisionId: decision.decisionId,
+                expectedRevision: reconciliation.revision,
+                state: "corrected",
+                action: "correct_manual_entry",
+                evidenceSha256: reconciliationEvidenceSha256!,
+                timestamp,
+              });
+            }
+          }
           break;
         }
         case "set_execution_order": {
@@ -897,6 +1166,60 @@ export class JournalDataDecisionService {
         case "exclude_execution":
         case "restore_execution":
         case "keep_distinct": {
+          if (input.action === "keep_distinct" && reconciliation) {
+            const provisionals = reconciliationMembers.filter((member) =>
+              member.memberRole === "provisional_imported_execution");
+            const provisional = provisionals.find((member) =>
+              member.memberRole === "provisional_imported_execution" &&
+              member.executionId === input.executionId);
+            if (
+              !provisional ||
+              provisional.currentVersionId !== input.expectedCurrentVersionId ||
+              provisional.currentState !== "needs_decision" ||
+              provisionals.some((member) => member.currentState !== "needs_decision")
+            ) {
+              platformFailure("TRADERLINK_DATA_DECISION_INVALID_ACTION", {
+                reason: "reconciliation_separate_execution_mismatch",
+              });
+            }
+            for (const candidate of provisionals) {
+              const current = this.executionRepository.currentVersion(
+                candidate.executionId,
+                scope.workspaceId,
+                scope.accountId,
+              );
+              if (!current || current.executionVersionId !== candidate.currentVersionId) {
+                platformFailure("TRADERLINK_JOURNAL_EXECUTION_CONFLICT");
+              }
+              if (candidate.executionId !== input.executionId) {
+                this.executionRepository.updateState({
+                  executionId: candidate.executionId,
+                  workspaceId: scope.workspaceId,
+                  accountId: scope.accountId,
+                  expectedCurrentVersionId: candidate.currentVersionId,
+                  state: current.factCompleteness === "complete"
+                    ? "accepted"
+                    : "needs_decision",
+                  timestamp,
+                });
+              }
+              for (const provenance of this.executionRepository.listProvenanceForExecution(
+                scope.workspaceId,
+                scope.accountId,
+                candidate.executionId,
+              )) reconciliationImportBatchIds.add(provenance.importBatchId);
+            }
+            this.reconciliations.resolve({
+              scope,
+              reconciliationSetId: reconciliation.reconciliationSetId,
+              decisionId: decision.decisionId,
+              expectedRevision: reconciliation.revision,
+              state: "separate_executions",
+              action: "separate_executions",
+              evidenceSha256: reconciliationEvidenceSha256!,
+              timestamp,
+            });
+          }
           const currentRecord = this.executionRepository.current(
             input.executionId,
             scope.workspaceId,
@@ -953,6 +1276,115 @@ export class JournalDataDecisionService {
           break;
         }
         case "merge_supported_duplicate": {
+          if (reconciliation) {
+            const manuals = reconciliationMembers.filter((member) =>
+              member.memberRole === "manual_execution");
+            const provisionals = reconciliationMembers.filter((member) =>
+              member.memberRole === "provisional_imported_execution");
+            const manual = manuals[0];
+            const provisional = provisionals[0];
+            if (
+              manuals.length !== 1 ||
+              provisionals.length !== 1 ||
+              !manual ||
+              !provisional ||
+              input.duplicateExecutionId !== provisional.executionId ||
+              input.retainedExecutionId !== manual.executionId ||
+              input.expectedDuplicateVersionId !== provisional.currentVersionId ||
+              manual.currentState !== "accepted" ||
+              provisional.currentState !== "needs_decision" ||
+              manual.instrumentId !== provisional.instrumentId ||
+              manual.currency !== provisional.currency ||
+              manual.side !== provisional.side ||
+              !new Decimal(manual.quantityDecimal).eq(provisional.quantityDecimal)
+            ) {
+              platformFailure("TRADERLINK_DATA_DECISION_INVALID_ACTION", {
+                reason: "reconciliation_same_execution_mismatch",
+              });
+            }
+            const manualVersion = this.executionRepository.currentVersion(
+              manual.executionId,
+              scope.workspaceId,
+              scope.accountId,
+            );
+            const provisionalVersion = this.executionRepository.currentVersion(
+              provisional.executionId,
+              scope.workspaceId,
+              scope.accountId,
+            );
+            if (
+              !manualVersion ||
+              !provisionalVersion ||
+              manualVersion.executionVersionId !== manual.currentVersionId ||
+              provisionalVersion.executionVersionId !== provisional.currentVersionId
+            ) platformFailure("TRADERLINK_JOURNAL_EXECUTION_CONFLICT");
+            const reconciledVersion = this.executionRepository.appendVersion({
+              executionId: manual.executionId,
+              executionVersionId: createCanonicalUuidV4(),
+              workspaceId: scope.workspaceId,
+              accountId: scope.accountId,
+              expectedCurrentVersionId: manualVersion.executionVersionId,
+              versionNumber: manualVersion.versionNumber + 1,
+              state: provisionalVersion.factCompleteness === "complete"
+                ? "accepted"
+                : "needs_decision",
+              facts: provisionalVersion,
+              actorKind: "user",
+              actorUserId: scope.userId,
+              changeReasonCode: "broker_reconciled_manual_execution",
+              timestamp,
+            });
+            for (const provenance of this.executionRepository.listProvenanceForExecution(
+              scope.workspaceId,
+              scope.accountId,
+              provisional.executionId,
+            )) {
+              reconciliationImportBatchIds.add(provenance.importBatchId);
+              this.executionRepository.insertProvenance({
+                executionProvenanceId: createCanonicalUuidV4(),
+                workspaceId: scope.workspaceId,
+                accountId: scope.accountId,
+                executionId: manual.executionId,
+                executionVersionId: reconciledVersion.executionVersionId,
+                importBatchId: provenance.importBatchId,
+                sourceRowId: provenance.sourceRowId,
+                provenanceKind: "overlap_match",
+                providerIdentitySchemeVersion:
+                  provenance.providerIdentitySchemeVersion,
+                providerIdentitySha256: provenance.providerIdentitySha256,
+                timestamp,
+              });
+            }
+            this.executionRepository.reassignActiveAliases(
+              scope.workspaceId,
+              scope.accountId,
+              provisional.executionId,
+              manual.executionId,
+              timestamp,
+            );
+            this.executionRepository.updateState({
+              executionId: provisional.executionId,
+              workspaceId: scope.workspaceId,
+              accountId: scope.accountId,
+              expectedCurrentVersionId: provisional.currentVersionId,
+              state: "superseded",
+              timestamp,
+            });
+            this.reconciliations.resolve({
+              scope,
+              reconciliationSetId: reconciliation.reconciliationSetId,
+              decisionId: decision.decisionId,
+              expectedRevision: reconciliation.revision,
+              state: "same_execution",
+              action: "same_execution",
+              evidenceSha256: reconciliationEvidenceSha256!,
+              timestamp,
+            });
+            priorExecutionVersionId = provisional.currentVersionId;
+            resultingExecutionVersionId = reconciledVersion.executionVersionId;
+            counterpartExecutionId = manual.executionId;
+            break;
+          }
           if (input.duplicateExecutionId === input.retainedExecutionId) {
             platformFailure("TRADERLINK_DATA_DECISION_INVALID_ACTION");
           }
@@ -1172,17 +1604,123 @@ export class JournalDataDecisionService {
           });
           break;
         }
+        case "reconcile_grouped_fills": {
+          if (!reconciliation) {
+            platformFailure("TRADERLINK_DATA_DECISION_INVALID_ACTION", {
+              reason: "grouped_reconciliation_target_missing",
+            });
+          }
+          const manuals = reconciliationMembers.filter((member) =>
+            member.memberRole === "manual_execution");
+          const provisionals = reconciliationMembers.filter((member) =>
+            member.memberRole === "provisional_imported_execution");
+          const allMembers = [...manuals, ...provisionals];
+          const chainKeys = new Set(allMembers.map((member) => [
+            member.instrumentId,
+            member.currency,
+            member.side,
+          ].join("\u001f")));
+          const manualQuantity = manuals.reduce(
+            (sum, member) => sum.plus(member.quantityDecimal),
+            new Decimal(0),
+          );
+          const provisionalQuantity = provisionals.reduce(
+            (sum, member) => sum.plus(member.quantityDecimal),
+            new Decimal(0),
+          );
+          if (
+            manuals.length < 1 ||
+            provisionals.length < 1 ||
+            (manuals.length === 1 && provisionals.length === 1) ||
+            chainKeys.size !== 1 ||
+            !manualQuantity.eq(provisionalQuantity) ||
+            manuals.some((member) => member.currentState !== "accepted") ||
+            provisionals.some((member) => member.currentState !== "needs_decision")
+          ) {
+            platformFailure("TRADERLINK_DATA_DECISION_INVALID_ACTION", {
+              reason: "grouped_reconciliation_evidence_mismatch",
+            });
+          }
+          for (const provisional of provisionals) {
+            const current = this.executionRepository.currentVersion(
+              provisional.executionId,
+              scope.workspaceId,
+              scope.accountId,
+            );
+            if (!current || current.executionVersionId !== provisional.currentVersionId) {
+              platformFailure("TRADERLINK_JOURNAL_EXECUTION_CONFLICT");
+            }
+            this.executionRepository.updateState({
+              executionId: provisional.executionId,
+              workspaceId: scope.workspaceId,
+              accountId: scope.accountId,
+              expectedCurrentVersionId: provisional.currentVersionId,
+              state: current.factCompleteness === "complete"
+                ? "accepted"
+                : "needs_decision",
+              timestamp,
+            });
+            for (const provenance of this.executionRepository.listProvenanceForExecution(
+              scope.workspaceId,
+              scope.accountId,
+              provisional.executionId,
+            )) reconciliationImportBatchIds.add(provenance.importBatchId);
+          }
+          for (const manual of manuals) {
+            this.executionRepository.updateState({
+              executionId: manual.executionId,
+              workspaceId: scope.workspaceId,
+              accountId: scope.accountId,
+              expectedCurrentVersionId: manual.currentVersionId,
+              state: "superseded",
+              timestamp,
+            });
+          }
+          this.reconciliations.resolve({
+            scope,
+            reconciliationSetId: reconciliation.reconciliationSetId,
+            decisionId: decision.decisionId,
+            expectedRevision: reconciliation.revision,
+            state: "same_execution",
+            action: "grouped_fills_reconciled",
+            evidenceSha256: reconciliationEvidenceSha256!,
+            timestamp,
+          });
+          priorExecutionVersionId = manuals[0]!.currentVersionId;
+          resultingExecutionVersionId = provisionals[0]!.currentVersionId;
+          counterpartExecutionId = provisionals[0]!.executionId;
+          groupedReconciliationResolved = true;
+          break;
+        }
         case "accept_source_limitation":
           break;
       }
 
-      const resolved = this.decisions.resolve({
+      const decisionResult = keepReconciliationDecisionPending
+        ? this.decisions.continuePending({
+            decisionEventId,
+            workspaceId: scope.workspaceId,
+            accountId: scope.accountId,
+            decisionId: input.decisionId,
+            expectedRevision: input.expectedRevision,
+            action: "correct_execution_fact",
+            actorUserId: scope.userId,
+            reasonCode: input.reasonCode,
+            reasonText: input.reasonText ?? null,
+            priorExecutionVersionId,
+            resultingExecutionVersionId,
+            counterpartExecutionId: null,
+            timestamp,
+          })
+        : this.decisions.resolve({
         decisionEventId,
         workspaceId: scope.workspaceId,
         accountId: scope.accountId,
         decisionId: input.decisionId,
         expectedRevision: input.expectedRevision,
-        action: input.action,
+        action: input.action === "reconcile_grouped_fills"
+          ? "merge_supported_duplicate"
+          : input.action,
         actorUserId: scope.userId,
         reasonCode: input.reasonCode,
         reasonText: input.reasonText ?? null,
@@ -1194,8 +1732,21 @@ export class JournalDataDecisionService {
         counterpartExecutionId,
         timestamp,
       });
+      if (groupedReconciliationResolved) {
+        this.reconciliations.insertGroupedDecisionExtension({
+          scope,
+          decisionId: decision.decisionId,
+          decisionEventId,
+          reconciliationSetId: reconciliation!.reconciliationSetId,
+          evidenceSha256: reconciliationEvidenceSha256!,
+          timestamp,
+        });
+      }
       const affectedImportBatchIds = new Set<string>();
       if (sourceIssue) affectedImportBatchIds.add(sourceIssue.importBatchId);
+      for (const importBatchId of reconciliationImportBatchIds) {
+        affectedImportBatchIds.add(importBatchId);
+      }
       if (
         input.action === "supply_coverage_fact" &&
         sourceIssue?.issueCode === "manual_trading_day_coverage_unconfirmed"
@@ -1263,7 +1814,7 @@ export class JournalDataDecisionService {
         input.now,
       );
       return Object.freeze({
-        decision: resolved,
+        decision: decisionResult,
         decisionEventId,
         rebuildCount: rebuilds.length,
         openedFollowupDecisionIds: Object.freeze(
@@ -1330,7 +1881,11 @@ export class JournalDataDecisionService {
       correctionKind: "execution_fact_correction" | "execution_order_correction";
       now?: Date;
     }>,
-  ): Readonly<{ importBatchId: string; sourceRowId: string }> {
+  ): Readonly<{
+    importBatchId: string;
+    importEventId: string;
+    sourceRowId: string;
+  }> {
     assertCanonicalUuidV4(input.executionId, "executionId");
     assertSafeSourceDisplayLabel(input.sourceDisplayLabel);
     if (input.idempotencyKey.length < 16 || input.idempotencyKey.length > 128) {
@@ -1376,6 +1931,7 @@ export class JournalDataDecisionService {
       }
       return Object.freeze({
         importBatchId: priorBatch.importBatchId,
+        importEventId: priorBatch.currentEventId,
         sourceRowId: priorRow.sourceRowId,
       });
     }
@@ -1451,7 +2007,7 @@ export class JournalDataDecisionService {
       mappingVersion: "execution_correction_mapping_v1",
       timestamp,
     });
-    return Object.freeze({ importBatchId, sourceRowId });
+    return Object.freeze({ importBatchId, importEventId, sourceRowId });
   }
 
   private createCoverageCorrection(

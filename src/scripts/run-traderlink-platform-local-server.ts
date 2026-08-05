@@ -3,6 +3,10 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 
 import next from "next";
 
+import { DailyTradeAnalyzerRepository } from "../modules/level-analysis/server/daily-trade-analyzer-repository";
+import { DailyTradeYahooAnalyzerWorker } from "../modules/level-analysis/server/daily-trade-yahoo-analyzer-worker";
+import { YahooChartMarketDataProvider } from "../modules/level-analysis/server/providers/yahoo-chart-market-data-provider";
+
 import {
   isTraderLinkPlatformLoopbackPeer,
   TRADERLINK_PLATFORM_ALLOW_DEVELOPMENT_DASHBOARD_ENV,
@@ -13,6 +17,7 @@ import {
   validateDevelopmentDashboardInboundRequest,
 } from "../modules/platform/server/authentication/development-dashboard-network-boundary";
 import { loadTraderLinkPlatformLocalDevelopmentConfiguration } from "../modules/platform/server/authentication/local-development-configuration";
+import { openPlatformDatabase } from "../modules/platform/server/database/open-platform-database";
 import { TRADERLINK_LEVEL_ANALYSIS_ALLOWED_PROVIDERS_ENV } from "../modules/level-analysis/server/level-analysis-delivery-request";
 
 function argument(name: string): string | undefined {
@@ -55,6 +60,31 @@ function reject(response: ServerResponse, status: number, code: string): void {
   response.end(JSON.stringify({ ok: false, code }));
 }
 
+function startDailyTradeAnalyzerWorker(): void {
+  let processing = false;
+  const processOne = async (): Promise<void> => {
+    if (processing) return;
+    processing = true;
+    let database: ReturnType<typeof openPlatformDatabase> | null = null;
+    try {
+      database = openPlatformDatabase({ mode: "runtime" });
+      await new DailyTradeYahooAnalyzerWorker(
+        new DailyTradeAnalyzerRepository(database),
+        new YahooChartMarketDataProvider(),
+      ).runOne();
+    } catch (error) {
+      console.error("TraderLink daily trade analyzer worker failed.", {
+        errorName: error instanceof Error ? error.name : "UnknownError",
+      });
+    } finally {
+      database?.close();
+      processing = false;
+    }
+  };
+  void processOne();
+  setInterval(() => void processOne(), 60_000);
+}
+
 async function main(): Promise<void> {
   if (!process.argv.includes("--dev")) {
     throw new Error("platform_local_development_mode_required");
@@ -70,6 +100,7 @@ async function main(): Promise<void> {
   process.env[TRADERLINK_PLATFORM_LOCAL_DASHBOARD_RUNTIME_ENV] = "1";
   process.env[TRADERLINK_PLATFORM_LOCAL_DASHBOARD_TOKEN_ENV] = token;
   process.env[TRADERLINK_LEVEL_ANALYSIS_ALLOWED_PROVIDERS_ENV] ??= "ibkr";
+  startDailyTradeAnalyzerWorker();
   const application = next({
     dev: true,
     hostname: listenerHost,

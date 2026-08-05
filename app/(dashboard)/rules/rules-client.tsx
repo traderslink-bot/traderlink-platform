@@ -71,11 +71,9 @@ type MutationResponse =
     }>;
 
 const categoryLabels = {
-  frequency: "Frequency",
-  timing: "Timing",
-  risk: "Risk",
-  size: "Size",
-  scope: "Trade scope",
+  trade: "Trade rules",
+  trade_day: "Trade + day rules",
+  day: "Day rules",
 } as const;
 
 const scopeLabels = {
@@ -146,7 +144,7 @@ function exampleLabel(template: TradingRulesTemplateView): string {
     template,
     template.exampleConfiguration,
   );
-  return configuration || "After a loss, the next trade uses 50% of its normal size.";
+  return configuration || "This rule has no additional settings.";
 }
 
 function parameterHelperText(parameter: TradingRulesTemplateView["parameters"][number]): string {
@@ -167,7 +165,7 @@ function parameterHelperText(parameter: TradingRulesTemplateView["parameters"][n
 
 function latestResultLabel(rule: ExecutionRuleDashboardCard): string {
   void rule;
-  return "Review status is recorded by the trader in Trade Tracker";
+  return "Calculated automatically in Daily Trade Tracker";
 }
 
 export function RulesClient({
@@ -200,9 +198,6 @@ export function RulesClient({
   const retiredRules = view.packet.rules.filter(
     (rule) => rule.status === "retired",
   );
-  const evaluatedCount = view.packet.rules.filter(
-    (rule) => rule.latestEvaluation !== null,
-  ).length;
   const activeManualRules = view.manualRules.filter(
     (rule) => rule.status === "active",
   );
@@ -437,13 +432,9 @@ export function RulesClient({
           value={String(view.templates.length)}
         />
         <DashboardMetricCard
-          caption={
-            view.packet.rules.length
-              ? "Updated when trade analytics are available"
-              : "Add a rule to begin"
-          }
-          label="Latest evaluations"
-          value={`${evaluatedCount}/${view.packet.rules.length}`}
+          caption="Shown with each eligible Day trade"
+          label="Preset checks"
+          value="Automatic"
         />
       </Box>
 
@@ -513,6 +504,11 @@ export function RulesClient({
                             color={statusColor(rule.status)}
                             label={rule.status}
                             size="small"
+                          />
+                          <Chip
+                            label={categoryLabels[rule.template.category]}
+                            size="small"
+                            variant="outlined"
                           />
                           <Chip
                             label={
@@ -831,7 +827,7 @@ export function RulesClient({
               onChange={(event) => setCategory(event.target.value)}
               value={category}
             >
-              <MenuItem value="all">All categories</MenuItem>
+              <MenuItem value="all">All rule groups</MenuItem>
               {Object.entries(categoryLabels).map(([value, label]) => (
                 <MenuItem key={value} value={value}>
                   {label}

@@ -14,6 +14,12 @@ export const JOURNAL_ANALYTICS_TIME_BUCKET_MINUTES = Object.freeze([
 export type JournalAnalyticsMoneyBasis = "gross" | "net";
 export type JournalAnalyticsDirection = "long" | "short";
 export type JournalAnalyticsOutcome = "win" | "loss" | "flat";
+/**
+ * A factual completed-trade classification derived from the account's trading
+ * timezone. This is deliberately separate from the trader-authored style
+ * (such as an intentional Swing).
+ */
+export type JournalAnalyticsTradeClassification = "day_trade" | "multi_day_trade";
 export type JournalAnalyticsWeekday =
   | "monday"
   | "tuesday"
@@ -73,6 +79,7 @@ export type JournalAnalyticsQuery = Readonly<{
   instrumentIds: readonly string[];
   symbols: readonly string[];
   directions: readonly JournalAnalyticsDirection[];
+  tradeClassifications: readonly JournalAnalyticsTradeClassification[];
   provenance: readonly JournalAnalyticsProvenanceGroup[];
   outcomes: readonly JournalAnalyticsOutcome[];
   entryWeekdays: readonly JournalAnalyticsWeekday[];

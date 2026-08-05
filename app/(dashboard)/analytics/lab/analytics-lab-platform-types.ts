@@ -34,6 +34,7 @@ export type AnalyticsLabPlatformQuery = Readonly<{
   currency: string | null;
   symbol: string | null;
   direction: "long" | "short" | null;
+  tradeClassification: "day_trade" | "multi_day_trade" | null;
   provenance:
     | "broker_only"
     | "manual_only"

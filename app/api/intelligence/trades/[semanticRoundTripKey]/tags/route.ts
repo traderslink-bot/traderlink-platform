@@ -39,11 +39,16 @@ export async function PUT(request: Request, context: Context): Promise<Response>
         body.tagIds.some((tagId) => typeof tagId !== "string")) {
       platformFailure("TRADERLINK_JOURNAL_ANNOTATION_INVALID", { field: "tagIds" });
     }
+    if (!Array.isArray(body.presetKeys) ||
+        body.presetKeys.some((presetKey) => typeof presetKey !== "string")) {
+      platformFailure("TRADERLINK_JOURNAL_ANNOTATION_INVALID", { field: "presetKeys" });
+    }
     const { semanticRoundTripKey } = await context.params;
     const data = withWritableJournalAnnotations(scope, (service, account) =>
-      service.replaceRoundTripTags(account, {
+      service.replaceRoundTripTagsWithPresets(account, {
         roundTripId: semanticRoundTripKey,
         tagIds: body.tagIds as string[],
+        presetKeys: body.presetKeys as string[],
       }).map(tagView));
     return Response.json({ ok: true, data });
   } catch (error) {

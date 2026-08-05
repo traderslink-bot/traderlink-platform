@@ -1,6 +1,4 @@
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
@@ -11,6 +9,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 
+import { DismissibleDataDecisionNotice } from "./dismissible-data-decision-notice";
 import {
   DashboardDataScopeChip,
   DashboardMetricCard,
@@ -30,7 +29,11 @@ import {
   buildJournalAnalyticsDashboardQuery,
   withJournalAnalyticsDashboardService,
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { readJournalDataDecisionNoticeRef } from "@/src/modules/journal/server/decisions/journal-data-decision-notice";
+import {
+  currentJournalAccountSelectionRef,
+  requireTraderLinkPlatformPageScope,
+} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
 export type AnalyticsServerPageKind =
   | "overview"
@@ -134,6 +137,10 @@ export async function AnalyticsServerPage({
     ...response.limitations,
     ...response.partitions.flatMap((partition) => partition.limitations),
   ])];
+  const decisionNoticeRef = response.crossPartitionCounts.needsDecisionCount > 0
+    ? readJournalDataDecisionNoticeRef(scope)
+    : null;
+  const accountSelectionRef = currentJournalAccountSelectionRef(scope);
 
   return (
     <DashboardPage>
@@ -166,19 +173,18 @@ export async function AnalyticsServerPage({
         />
       </Stack>
 
-      {response.crossPartitionCounts.needsDecisionCount > 0 || limitations.length > 0 ? (
-        <Alert
-          action={response.crossPartitionCounts.needsDecisionCount > 0 ? (
-            <Button color="inherit" href="/data-decisions" size="small">
-              Review Data Decisions
-            </Button>
-          ) : undefined}
-          severity="warning"
+      {response.crossPartitionCounts.needsDecisionCount > 0 && decisionNoticeRef ? (
+        <DismissibleDataDecisionNotice
+          accountSelectionRef={accountSelectionRef}
+          evidenceRef={decisionNoticeRef}
+          surface={`analytics-${page}`}
         >
-          {response.crossPartitionCounts.needsDecisionCount > 0
-            ? `${response.crossPartitionCounts.needsDecisionCount} unresolved items are contained and excluded from dependent calculations. Unrelated valid trades remain visible.`
-            : "Some results are unavailable because the required facts do not exist in the selected Journal scope."}
-        </Alert>
+          {response.crossPartitionCounts.needsDecisionCount} unresolved items are contained and excluded from dependent calculations. Unrelated valid trades remain visible.
+        </DismissibleDataDecisionNotice>
+      ) : limitations.length > 0 ? (
+        <Typography color="text.secondary" variant="body2">
+          Some results are unavailable because the required facts do not exist in this Journal account.
+        </Typography>
       ) : null}
 
       {response.partitions.map((partition) => (
@@ -201,10 +207,10 @@ export async function AnalyticsServerPage({
               const metric = metricById(partition.metrics, metricId);
               return (
                 <DashboardMetricCard
-                  caption={metric ? journalAnalyticsMetricCaption(metric) : "Unavailable for this scope"}
+                  caption={metric ? journalAnalyticsMetricCaption(metric) : "N/A for this scope"}
                   key={metricId}
                   label={metric?.title ?? metricId}
-                  value={metric ? formatJournalAnalyticsMetric(metric) : "Unavailable"}
+                  value={metric ? formatJournalAnalyticsMetric(metric) : "N/A"}
                 />
               );
             })}
@@ -241,14 +247,14 @@ export async function AnalyticsServerPage({
                 partition.groups.map((group) => (
                   <TableRow key={`${partition.currency ?? "currency-unavailable"}-${group.grouping}-${group.groupKey}`}>
                     {response.partitions.length > 1 ? (
-                      <TableCell>{partition.currency ?? "Unavailable"}</TableCell>
+                      <TableCell>{partition.currency ?? "N/A"}</TableCell>
                     ) : null}
                     <TableCell>{group.label}</TableCell>
                     {definition.metricIds.map((metricId) => {
                       const metric = metricById(group.metrics, metricId);
                       return (
                         <TableCell align="right" key={metricId}>
-                          {metric ? formatJournalAnalyticsMetric(metric) : "Unavailable"}
+                          {metric ? formatJournalAnalyticsMetric(metric) : "N/A"}
                         </TableCell>
                       );
                     })}

@@ -14,15 +14,23 @@ const privateNoStoreHeaders: { key: string; value: string }[] = [
   { key: "Vary", value: "Cookie" },
 ];
 
-const privateTraderIntelligenceRoutes = [
+const privateTraderLinkRoutes = [
   "/intelligence/:path*",
   "/workspace/:path*",
+  "/calendar/:path*",
+  "/trade-tracker/:path*",
   "/trades/:path*",
   "/analytics/:path*",
   "/reflection-loop",
-  "/rules",
+  "/rules/:path*",
+  "/charts/:path*",
   "/imports/:path*",
-  "/manual-entry",
+  "/manual-entry/:path*",
+  "/data-decisions/:path*",
+  "/account/:path*",
+  "/admin/journal/:path*",
+  "/api/admin/journal/:path*",
+  "/api/platform/journal/:path*",
 ] as const;
 
 const legacyTopLevelReplacementRedirects = [
@@ -132,7 +140,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   serverExternalPackages: ["levels-system-v2", "better-sqlite3"],
   async headers() {
-    return privateTraderIntelligenceRoutes.map((source) => ({
+    return privateTraderLinkRoutes.map((source) => ({
       source,
       headers: privateNoStoreHeaders,
     }));
