@@ -120,10 +120,23 @@ export async function POST(request: Request): Promise<Response> {
         narrowWorkspaceAccessToAccount(scope, accountId),
         resolution,
       );
+      const accountScope = runtime.tradeStyles.accountScope(scope);
+      const openPosition = resolution.action === "confirm_legitimate_open_position" &&
+        item.instrumentRef && item.currency
+        ? runtime.tradeStyles.listOpenPositionRows(accountScope).filter((position) =>
+            position.instrumentId === item.instrumentRef &&
+            position.currency === item.currency &&
+            position.projectionState === "legitimate_open")
+        : [];
+      const position = openPosition.length === 1 ? openPosition[0]! : null;
       return Object.freeze({
         state: resolved.decision.state,
         rebuildCount: resolved.rebuildCount,
         followupDecisionCount: resolved.openedFollowupDecisionIds.length,
+        openPosition: position ? Object.freeze({
+          expectedRevision: position.styleRevision,
+          positionRef: runtime.tradeStyles.positionRef(accountScope, position.roundTripId),
+        }) : null,
       });
     });
     return Response.json({ status: "ready", result });

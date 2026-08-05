@@ -1,6 +1,6 @@
 # Data Decisions Repair and Review Progress
 
-**Status:** Active. Slices 0 and 1 are complete; Slice 2 is in progress.
+**Status:** Active. Slices 0 through 3 are complete; Slice 4 is in progress.
 
 **Controlling plan:** [Data Decisions Repair and Review Plan](data-decisions-repair-and-review-plan.md)
 
@@ -21,9 +21,9 @@ workflows; it must not create a second ledger or weaken the integrity contract.
 
 - [x] Slice 0: contract and page inventory
 - [x] Slice 1: repair-first information architecture
-- [ ] Slice 2: row correction workflow (in progress)
-- [ ] Slice 3: scoped open-position workflow
-- [ ] Slice 4: duplicate, notice and history completion
+- [x] Slice 2: row correction workflow
+- [x] Slice 3: scoped open-position workflow
+- [ ] Slice 4: duplicate, notice and history completion (in progress)
 - [ ] Slice 5: acceptance
 
 ## Start boundary
@@ -79,3 +79,26 @@ database, process or deployment is changed by this page work.
 - Focused whitespace and lint checks passed for the page, API route, read model,
   client and Product Read Service. Broad tests remain deferred during active
   owner-facing development.
+
+## Slices 2 and 3 implementation record
+
+- Row-level repair stays tied to the preserved statement row and uses the
+  existing versioned Journal correction authority. The page does not create a
+  second execution ledger or silently replace source evidence.
+- Confirming a factually supported open position now returns only an opaque
+  position reference and current revision for that one account-scoped position.
+  The trader can then classify it as an active swing, long-term hold or bag
+  hold. Classification is intentionally separate from factual confirmation.
+- The classification writer retains its established revision, idempotency and
+  account-selection protections. It cannot classify an arbitrary position from
+  a Data Decisions card.
+
+## Slice 4 in-progress record
+
+- A dismissal now follows the selected account and current pending-decision
+  evidence across dashboard pages instead of returning once per page. The
+  dashboard navigation displays the account-scoped pending count beside Data
+  Decisions. Resolving or changing pending evidence naturally creates a new
+  notice state.
+- Duplicate reconciliation and resolved-history presentation remain in scope
+  for Slice 4 and are not marked complete by this checkpoint.

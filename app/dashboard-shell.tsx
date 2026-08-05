@@ -2,25 +2,30 @@
 
 import AnalyticsRoundedIcon from "@mui/icons-material/AnalyticsRounded";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
+import CandlestickChartIcon from "@mui/icons-material/CandlestickChart";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
 import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
 import ExpandLessRoundedIcon from "@mui/icons-material/ExpandLessRounded";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
+import EventRepeatIcon from "@mui/icons-material/EventRepeat";
+import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
 import GavelRoundedIcon from "@mui/icons-material/GavelRounded";
 import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import NoteAltRoundedIcon from "@mui/icons-material/NoteAltRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import QueryStatsRoundedIcon from "@mui/icons-material/QueryStatsRounded";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import ScienceRoundedIcon from "@mui/icons-material/ScienceRounded";
 import ShowChartRoundedIcon from "@mui/icons-material/ShowChartRounded";
 import SpaceDashboardRoundedIcon from "@mui/icons-material/SpaceDashboardRounded";
 import SwapVertRoundedIcon from "@mui/icons-material/SwapVertRounded";
 import TableRowsRoundedIcon from "@mui/icons-material/TableRowsRounded";
 import TimelineRoundedIcon from "@mui/icons-material/TimelineRounded";
-import TrendingUpRoundedIcon from "@mui/icons-material/TrendingUpRounded";
+import TodayIcon from "@mui/icons-material/Today";
+import TravelExploreRoundedIcon from "@mui/icons-material/TravelExploreRounded";
 import ViewDayRoundedIcon from "@mui/icons-material/ViewDayRounded";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -45,6 +50,7 @@ import {
   DASHBOARD_DATA_NAVIGATION_GROUP,
   DASHBOARD_HOME_ITEM,
   DASHBOARD_MAIN_NAVIGATION_GROUPS,
+  DASHBOARD_NAVIGATION_HREFS,
   DASHBOARD_ROUTE_TITLES,
   DASHBOARD_STANDALONE_ITEMS,
   type DashboardNavigationGroup,
@@ -64,6 +70,10 @@ function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
     account: <PersonRoundedIcon />,
     analytics: <AnalyticsRoundedIcon />,
     calendar: <CalendarMonthRoundedIcon />,
+    tradingDay: <TodayIcon />,
+    swing: <EventRepeatIcon />,
+    roundTrips: <RestartAltIcon />,
+    marketCharts: <CandlestickChartIcon />,
     data: <ViewDayRoundedIcon />,
     execution: <InsightsRoundedIcon />,
     import: <CloudUploadRoundedIcon />,
@@ -74,8 +84,9 @@ function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
     reflection: <NoteAltRoundedIcon />,
     results: <QueryStatsRoundedIcon />,
     rules: <GavelRoundedIcon />,
-    ticker: <TrendingUpRoundedIcon />,
+    ticker: <FormatListBulletedIcon />,
     timing: <TimelineRoundedIcon />,
+    tradeExplorer: <TravelExploreRoundedIcon />,
     tradeGroup: <SwapVertRoundedIcon />,
     trades: <TableRowsRoundedIcon />,
     workspace: <DashboardRoundedIcon />,
@@ -84,10 +95,11 @@ function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
 }
 
 function isActive(pathname: string, href: string): boolean {
-  if (href === "/analytics") {
-    return pathname === href;
-  }
-  return pathname === href || pathname.startsWith(`${href}/`);
+  const activeHref = DASHBOARD_NAVIGATION_HREFS
+    .filter((candidate) =>
+      pathname === candidate || pathname.startsWith(`${candidate}/`))
+    .sort((left, right) => right.length - left.length)[0];
+  return activeHref === href;
 }
 
 function pageTitle(pathname: string): string {
@@ -102,11 +114,13 @@ function pageTitle(pathname: string): string {
 }
 
 function NavigationLink({
+  badgeCount = 0,
   collapsed,
   item,
   onNavigate,
   pathname,
 }: {
+  badgeCount?: number;
   collapsed: boolean;
   item: DashboardNavigationItem;
   onNavigate: () => void;
@@ -151,6 +165,26 @@ function NavigationLink({
           }}
         />
       )}
+      {badgeCount > 0 ? (
+        <Box
+          aria-label={`${badgeCount} unresolved data decision${badgeCount === 1 ? "" : "s"}`}
+          sx={{
+            alignItems: "center",
+            bgcolor: "warning.main",
+            borderRadius: "999px",
+            color: "warning.contrastText",
+            display: "flex",
+            fontSize: 12,
+            fontWeight: 800,
+            height: 20,
+            justifyContent: "center",
+            minWidth: 20,
+            px: 0.75,
+          }}
+        >
+          {badgeCount}
+        </Box>
+      ) : null}
     </ListItemButton>
   );
 
@@ -166,9 +200,11 @@ function NavigationLink({
 export function DashboardShell({
   children,
   journalAccounts,
+  pendingDataDecisionCount,
 }: {
   children: ReactNode;
   journalAccounts: readonly DashboardJournalAccountOption[];
+  pendingDataDecisionCount: number;
 }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
@@ -237,7 +273,8 @@ export function DashboardShell({
               pathname={pathname}
             />
             {DASHBOARD_MAIN_NAVIGATION_GROUPS.map((group) => {
-              const open = expandedGroups[group.id];
+              const open = expandedGroups[group.id] || group.items.some((item) =>
+                isActive(pathname, item.href));
               return (
                 <Box key={group.id}>
                   {compact ? null : (
@@ -296,7 +333,8 @@ export function DashboardShell({
               />
             ))}
             {[DASHBOARD_DATA_NAVIGATION_GROUP].map((group) => {
-              const open = expandedGroups[group.id];
+              const open = expandedGroups[group.id] || group.items.some((item) =>
+                isActive(pathname, item.href));
               return (
                 <Box key={group.id}>
                   {compact ? null : (
@@ -332,6 +370,7 @@ export function DashboardShell({
                     <List disablePadding>
                       {group.items.map((item) => (
                         <NavigationLink
+                          badgeCount={item.href === "/data-decisions" ? pendingDataDecisionCount : 0}
                           collapsed={compact}
                           item={item}
                           key={item.href}

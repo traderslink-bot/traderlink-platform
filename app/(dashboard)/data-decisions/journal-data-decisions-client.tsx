@@ -185,6 +185,88 @@ function executionOptionLabel(
 }
 
 type DataDecisionsView = "trades" | "statement-issues" | "statement-details";
+type ConfirmedOpenPosition = Readonly<{
+  expectedRevision: number | null;
+  positionRef: string;
+}>;
+type OpenPositionClassification = "swing" | "long_term_hold" | "bag_hold";
+
+function OpenPositionClassificationCard({
+  expectedAccountSelectionRef,
+  onSaved,
+  position,
+}: {
+  expectedAccountSelectionRef: string;
+  onSaved: () => void;
+  position: ConfirmedOpenPosition;
+}) {
+  const [classification, setClassification] = useState<OpenPositionClassification>("swing");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function save() {
+    if (saving) return;
+    setSaving(true);
+    setError(null);
+    const change = classification === "swing"
+      ? { tradeStyle: "swing", openStatus: "swing", reason: "reclassified" }
+      : classification === "bag_hold"
+        ? { tradeStyle: "other", openStatus: "unplanned_hold", reason: "unplanned_hold" }
+        : { tradeStyle: "other", openStatus: "other", reason: "other" };
+    try {
+      const response = await fetch(
+        `/api/platform/journal/trade-style/${encodeURIComponent(position.positionRef)}`,
+        {
+          body: JSON.stringify({
+            ...change,
+            claimedEffectiveAtUtc: new Date().toISOString(),
+            expectedAccountSelectionRef,
+            expectedRevision: position.expectedRevision,
+            idempotencyKey: crypto.randomUUID(),
+            plannedFromEntry: false,
+            sourceUi: "data_decisions",
+          }),
+          headers: {
+            "content-type": "application/json",
+            [JOURNAL_MUTATION_REQUEST_HEADER]: "1",
+          },
+          method: "POST",
+        },
+      );
+      const body = await response.json() as { status?: string };
+      if (!response.ok || body.status !== "ready") {
+        throw new Error("classification_save_failed");
+      }
+      onSaved();
+    } catch {
+      setError("This trade type could not be saved. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <DashboardPanel title="Open position">
+      <Stack spacing={1.5}>
+        <Typography>How would you like to classify this open position?</Typography>
+        <TextField
+          label="Trade type"
+          onChange={(event) => setClassification(event.target.value as OpenPositionClassification)}
+          select
+          value={classification}
+        >
+          <MenuItem value="swing">Active swing</MenuItem>
+          <MenuItem value="long_term_hold">Long-term hold</MenuItem>
+          <MenuItem value="bag_hold">Bag hold</MenuItem>
+        </TextField>
+        {error ? <Alert severity="error">{error}</Alert> : null}
+        <Button disabled={saving} onClick={() => void save()} sx={{ alignSelf: "flex-start" }} variant="contained">
+          {saving ? "Saving..." : "Save trade type"}
+        </Button>
+      </Stack>
+    </DashboardPanel>
+  );
+}
 
 function statementClassificationLabel(
   value: JournalDataDecisionStatementReadModel["rows"][number]["initialClassification"],
@@ -279,12 +361,14 @@ function DecisionCard({
   cardNumber,
   expectedAccountSelectionRef,
   item,
+  onOpenPositionConfirmed,
   onResolved,
   shouldFocus,
 }: {
   cardNumber: number;
   expectedAccountSelectionRef: string;
   item: JournalDataDecisionItem;
+  onOpenPositionConfirmed: (position: ConfirmedOpenPosition) => void;
   onResolved: () => Promise<void>;
   shouldFocus: boolean;
 }) {
@@ -346,8 +430,8 @@ function DecisionCard({
     }));
   }
 
-  async function save(submittedDraft: Draft = draft) {
-    if (!submittedDraft.action || saving) return;
+  async function save(submittedDraft: Draft = draft): Promise<ConfirmedOpenPosition | null> {
+    if (!submittedDraft.action || saving) return null;
     setSaving(true);
     setError(null);
     try {
@@ -424,11 +508,16 @@ function DecisionCard({
         },
         body: JSON.stringify(body),
       });
-      const packet = await response.json() as { code?: string };
+      const packet = await response.json() as {
+        code?: string;
+        result?: Readonly<{ openPosition?: ConfirmedOpenPosition | null }>;
+      };
       if (!response.ok) throw new Error(packet.code ?? "The decision could not be saved.");
       await onResolved();
+      return packet.result?.openPosition ?? null;
     } catch {
       setError("This change could not be saved. Please try again.");
+      return null;
     } finally {
       setSaving(false);
     }
@@ -458,7 +547,9 @@ function DecisionCard({
       action: "confirm_legitimate_open_position" as const,
       positionFactId: openPositionConfirmation.supportedPositionFactId,
     });
-    void save(confirmationDraft);
+    void save(confirmationDraft).then((position) => {
+      if (position) onOpenPositionConfirmed(position);
+    });
   };
   return (
     <Box id={`data-decision-card-${cardNumber}`} sx={{ scrollMarginTop: 96 }}>
@@ -682,6 +773,7 @@ export function JournalDataDecisionsClient({
   const [notice, setNotice] = useState<string | null>(null);
   const [view, setView] = useState<DataDecisionsView>("trades");
   const [focusedDecisionIndex, setFocusedDecisionIndex] = useState<number | null>(null);
+  const [openPositionToClassify, setOpenPositionToClassify] = useState<ConfirmedOpenPosition | null>(null);
   const [statement, setStatement] = useState<JournalDataDecisionStatementReadModel | null>(null);
   const [statementImportBatchId, setStatementImportBatchId] = useState(() =>
     selectedImportBatchId ?? imports.find((item) => item.issueCount > 0)?.importBatchId ?? imports[0]?.importBatchId ?? "");
@@ -747,6 +839,16 @@ export function JournalDataDecisionsClient({
         <Button onClick={() => setView("statement-details")} variant={view === "statement-details" ? "contained" : "outlined"}>Statement details</Button>
       </Stack>
       {notice ? <Alert severity="success">{notice}</Alert> : null}
+      {openPositionToClassify ? (
+        <OpenPositionClassificationCard
+          expectedAccountSelectionRef={expectedAccountSelectionRef}
+          onSaved={() => {
+            setOpenPositionToClassify(null);
+            void refresh();
+          }}
+          position={openPositionToClassify}
+        />
+      ) : null}
       {view === "trades" && pending.length === 0 ? (
         <Alert severity="success">There are no trades waiting for a decision.</Alert>
       ) : null}
@@ -756,6 +858,7 @@ export function JournalDataDecisionsClient({
           expectedAccountSelectionRef={expectedAccountSelectionRef}
           item={item}
           key={item.decisionId}
+          onOpenPositionConfirmed={setOpenPositionToClassify}
           onResolved={refresh}
           shouldFocus={focusedDecisionIndex === index}
         />

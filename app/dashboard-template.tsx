@@ -24,9 +24,18 @@ export {
 export function TraderLinkPlatformDashboardTemplate({
   children,
   journalAccounts,
+  pendingDataDecisionCount,
 }: {
   children: ReactNode;
   journalAccounts: readonly DashboardJournalAccountOption[];
+  pendingDataDecisionCount: number;
 }) {
-  return <DashboardShell journalAccounts={journalAccounts}>{children}</DashboardShell>;
+  return (
+    <DashboardShell
+      journalAccounts={journalAccounts}
+      pendingDataDecisionCount={pendingDataDecisionCount}
+    >
+      {children}
+    </DashboardShell>
+  );
 }

@@ -5,6 +5,7 @@ import { TraderLinkPlatformDashboardTemplate } from "../dashboard-template";
 import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformAccountProfileReadService } from "@/src/modules/platform/server/identity/platform-account-profile-read-service";
+import { readJournalDataDecisionNoticeSummary } from "@/src/modules/journal/server/decisions/journal-data-decision-notice";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -40,12 +41,16 @@ export default async function DashboardLayout({
   }
   const journalAccounts = withReadonlyPlatformDatabase({}, (database) =>
     new PlatformAccountProfileReadService(database).get(scope).journalAccounts);
+  const dataDecisionNotice = readJournalDataDecisionNoticeSummary(scope);
 
   return (
     <Suspense
       fallback={<DashboardFrameFallback>{children}</DashboardFrameFallback>}
     >
-      <TraderLinkPlatformDashboardTemplate journalAccounts={journalAccounts}>
+      <TraderLinkPlatformDashboardTemplate
+        journalAccounts={journalAccounts}
+        pendingDataDecisionCount={dataDecisionNotice.pendingCount}
+      >
         {children}
       </TraderLinkPlatformDashboardTemplate>
     </Suspense>
