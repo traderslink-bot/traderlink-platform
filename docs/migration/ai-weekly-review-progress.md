@@ -38,9 +38,20 @@ Active. The product contract is in [AI Weekly Review Plan](ai-weekly-review-plan
   delivery day and Eastern time. It contains no invented review while no issued
   review exists.
 
+## In progress: private provider and cost controls
+
+- Migration `0027_coach_ai_generation_cost_tracking` adds one protected
+  provider/model configuration and immutable per-review cost receipts.
+- Journal Administration now has an AI Reviews settings area. It reports only
+  whether a server credential is available, never the credential itself, and
+  lets the owner record the selected model's verified input/output token prices.
+- Prices are captured with each issued review so later price changes never
+  rewrite history. When no verified price is saved, the receipt retains token
+  counts and leaves cost unavailable.
+
 ## Next slice
 
-Add the account-scoped issued-review service, the automatic Friday runner, and
+Add the account-scoped issued-review service, the automatic weekend runner, and
 the saved weekly/monthly review list/detail view. Calendar-month reviews use
 the same delivery time, retain their first-use date, and issue a first partial
 month only after seven calendar days and three reviewed trading days. The

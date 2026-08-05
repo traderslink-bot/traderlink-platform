@@ -18,6 +18,7 @@ import { newsContentMigration } from "@/src/modules/news/server/database/migrati
 import { affiliateAttributionMigration } from "@/src/modules/affiliate/server/database/migrations/0016_affiliate_attribution";
 import { coachWeeklyReviewsMigration } from "@/src/modules/coach/server/database/migrations/0025_coach_weekly_reviews";
 import { coachMonthlyReviewsMigration } from "@/src/modules/coach/server/database/migrations/0026_coach_monthly_reviews";
+import { coachAiGenerationCostTrackingMigration } from "@/src/modules/coach/server/database/migrations/0027_coach_ai_generation_cost_tracking";
 
 import { platformIdentityMigration } from "./migrations/0001_platform_identity";
 import { platformAuthenticationIdentitiesMigration } from "./migrations/0012_platform_authentication_identities";
@@ -140,6 +141,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/coach/server/database/migrations/0026_coach_monthly_reviews.ts",
       migration: coachMonthlyReviewsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/coach/server/database/migrations/0027_coach_ai_generation_cost_tracking.ts",
+      migration: coachAiGenerationCostTrackingMigration,
     }),
   ]);
 
@@ -302,6 +307,10 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "coach_monthly_review_settings",
       "coach_monthly_review_requests",
       "coach_monthly_issued_reviews",
+    ]),
+    "0027_coach_ai_generation_cost_tracking": Object.freeze([
+      "coach_ai_provider_settings",
+      "coach_ai_generation_cost_receipts",
     ]),
   });
 

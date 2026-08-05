@@ -1,6 +1,7 @@
 "use client";
 
 import AssessmentRoundedIcon from "@mui/icons-material/AssessmentRounded";
+import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
 import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
@@ -36,6 +37,7 @@ const navigation = [
   { href: "/admin/journal/imports", label: "Imports", icon: <CloudUploadRoundedIcon /> },
   { href: "/admin/journal/statement-formats", label: "Statement Formats", icon: <SchemaRoundedIcon /> },
   { href: "/admin/journal/data-decisions", label: "Data Decisions", icon: <FactCheckRoundedIcon /> },
+  { href: "/admin/journal/ai-reviews", label: "AI Reviews", icon: <AutoAwesomeRoundedIcon /> },
   { href: "/admin/journal/system", label: "System", icon: <HealthAndSafetyRoundedIcon /> },
   { href: "/admin/journal/audit", label: "Audit", icon: <AssessmentRoundedIcon /> },
 ] as const;

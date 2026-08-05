@@ -132,6 +132,16 @@ counts or database terms.
 - Monthly delivery uses the same account setting and adds separate immutable
   monthly request/output records. The saved first-use date controls the partial
   month rule and is not reset when the trader changes delivery time.
+- AI Review provider controls belong only in Journal Administration. The
+  administrator can select the exact provider model and record the verified
+  input/output price per million tokens. The API credential stays in the
+  server environment; it is never stored in the Journal database or returned
+  to a browser.
+- Every issued review records its provider, model, input/output token counts
+  and the price snapshot used for that request. The resulting immutable receipt
+  gives the administrator a per-review and account-wide estimated API-cost
+  history. If pricing is not configured, token use is still retained and the
+  cost remains unavailable rather than guessed.
 
 ## UI direction
 
@@ -158,6 +168,8 @@ source, generation process, provider, prompt, token count, or database state.
 6. Use the local two-week fixture: issue week one, then issue week two with
    week one's saved review as prior context. Verify no fixture Journal fact,
    note, rule, focus revision, Decision or open-position state changes.
+7. Add the owner-only provider/cost settings and append an immutable cost
+   receipt whenever a saved review is issued.
 
 ## Acceptance criteria
 
