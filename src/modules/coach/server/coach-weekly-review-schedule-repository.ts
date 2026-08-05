@@ -3,8 +3,9 @@ import type Database from "better-sqlite3";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { createCanonicalUtcTimestamp, platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
 
-export type CoachWeeklyReviewSchedule = Readonly<{
-  fridayDeliveryTimeEastern: string;
+export type CoachReviewDeliverySchedule = Readonly<{
+  weeklyDeliveryDay: "friday" | "saturday" | "sunday";
+  deliveryTimeEastern: string;
   updatedAtUtc: string;
 }>;
 
@@ -17,43 +18,66 @@ function activeAccountId(scope: WorkspaceAccessScope): string {
   return scope.activeAccountId;
 }
 
-export class CoachWeeklyReviewScheduleRepository {
+const WEEKLY_DELIVERY_DAYS = new Set(["friday", "saturday", "sunday"]);
+
+function weeklyDeliveryDay(value: unknown): "friday" | "saturday" | "sunday" {
+  if (typeof value !== "string" || !WEEKLY_DELIVERY_DAYS.has(value)) {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "weeklyDeliveryDay" });
+  }
+  return value as "friday" | "saturday" | "sunday";
+}
+
+export class CoachReviewDeliveryScheduleRepository {
   constructor(private readonly database: Database.Database) {}
 
-  read(scope: WorkspaceAccessScope): CoachWeeklyReviewSchedule | null {
+  read(scope: WorkspaceAccessScope): CoachReviewDeliverySchedule | null {
     const row = this.database.prepare<[string], Readonly<{
-      friday_delivery_time_eastern: string;
+      weekly_delivery_day: "friday" | "saturday" | "sunday";
+      delivery_time_eastern: string;
       updated_at_utc: string;
-    }>>(`SELECT friday_delivery_time_eastern, updated_at_utc
-FROM coach_weekly_review_schedules
+    }>>(`SELECT weekly_delivery_day, delivery_time_eastern, updated_at_utc
+FROM coach_review_delivery_settings
 WHERE account_id = ?`).get(activeAccountId(scope));
     return row ? Object.freeze({
-      fridayDeliveryTimeEastern: row.friday_delivery_time_eastern,
+      weeklyDeliveryDay: row.weekly_delivery_day,
+      deliveryTimeEastern: row.delivery_time_eastern,
       updatedAtUtc: row.updated_at_utc,
     }) : null;
   }
 
   save(
     scope: WorkspaceAccessScope,
-    fridayDeliveryTimeEastern: unknown,
+    input: Readonly<{ weeklyDeliveryDay: unknown; deliveryTimeEastern: unknown }>,
     now = new Date(),
-  ): CoachWeeklyReviewSchedule {
-    if (typeof fridayDeliveryTimeEastern !== "string" || !DELIVERY_TIME_PATTERN.test(fridayDeliveryTimeEastern)) {
+  ): CoachReviewDeliverySchedule {
+    const deliveryDay = weeklyDeliveryDay(input.weeklyDeliveryDay);
+    if (typeof input.deliveryTimeEastern !== "string" || !DELIVERY_TIME_PATTERN.test(input.deliveryTimeEastern)) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
-        field: "fridayDeliveryTimeEastern",
+        field: "deliveryTimeEastern",
       });
     }
     const updatedAtUtc = createCanonicalUtcTimestamp(now);
-    this.database.prepare(`INSERT INTO coach_weekly_review_schedules (
-  account_id, friday_delivery_time_eastern, updated_at_utc
-) VALUES (?, ?, ?)
+    const accountId = activeAccountId(scope);
+    this.database.prepare(`INSERT INTO coach_review_delivery_settings (
+  account_id, weekly_delivery_day, delivery_time_eastern, updated_at_utc
+) VALUES (?, ?, ?, ?)
 ON CONFLICT(account_id) DO UPDATE SET
-  friday_delivery_time_eastern = excluded.friday_delivery_time_eastern,
+  weekly_delivery_day = excluded.weekly_delivery_day,
+  delivery_time_eastern = excluded.delivery_time_eastern,
   updated_at_utc = excluded.updated_at_utc`).run(
-      activeAccountId(scope),
-      fridayDeliveryTimeEastern,
+      accountId,
+      deliveryDay,
+      input.deliveryTimeEastern,
       updatedAtUtc,
     );
-    return Object.freeze({ fridayDeliveryTimeEastern, updatedAtUtc });
+    this.database.prepare(`INSERT INTO coach_monthly_review_settings (
+  account_id, enabled_at_utc
+) VALUES (?, ?)
+ON CONFLICT(account_id) DO NOTHING`).run(accountId, updatedAtUtc);
+    return Object.freeze({
+      weeklyDeliveryDay: deliveryDay,
+      deliveryTimeEastern: input.deliveryTimeEastern,
+      updatedAtUtc,
+    });
   }
 }

@@ -34,14 +34,18 @@ Active. The product contract is in [AI Weekly Review Plan](ai-weekly-review-plan
   successful online backup and `quick_check` verification.
 - AI Reviews replaces the retired Reflection Loop navigation entry. The old
   route now redirects to AI Reviews so saved links remain useful.
-- The AI Reviews page saves the trader's selected Friday delivery time in
-  Eastern time. It contains no invented review while no issued review exists.
+- The AI Reviews page points traders to Account for their selected weekend
+  delivery day and Eastern time. It contains no invented review while no issued
+  review exists.
 
 ## Next slice
 
 Add the account-scoped issued-review service, the automatic Friday runner, and
-the saved review list/detail view. The runner must issue only one review for an
-unchanged completed week and must skip a no-trade week.
+the saved weekly/monthly review list/detail view. Calendar-month reviews use
+the same delivery time, retain their first-use date, and issue a first partial
+month only after seven calendar days and three reviewed trading days. The
+runner must issue only one review for an unchanged period and must skip a
+no-trade period.
 
 ## Planned input addition: selected trade tags
 

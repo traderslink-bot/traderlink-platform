@@ -7,10 +7,12 @@ import Typography from "@mui/material/Typography";
 import type { Metadata } from "next";
 
 import { DashboardPage, DashboardPanel } from "../../dashboard-template";
+import { CoachReviewDeliveryScheduleRepository } from "@/src/modules/coach/server/coach-weekly-review-schedule-repository";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformAccountProfileReadService } from "@/src/modules/platform/server/identity/platform-account-profile-read-service";
 import { AccountManagementClient } from "./account-management-client";
+import { AiReviewDeliverySettings } from "./ai-review-delivery-settings";
 import { ReportingCurrencySettings } from "./reporting-currency-settings";
 
 export const metadata: Metadata = {
@@ -23,8 +25,10 @@ export const revalidate = 0;
 
 export default async function AccountPage() {
   const scope = await requireTraderLinkPlatformPageScope();
-  const profile = withReadonlyPlatformDatabase({}, (database) =>
-    new PlatformAccountProfileReadService(database).get(scope));
+  const { profile, aiReviewDelivery } = withReadonlyPlatformDatabase({}, (database) => Object.freeze({
+    profile: new PlatformAccountProfileReadService(database).get(scope),
+    aiReviewDelivery: new CoachReviewDeliveryScheduleRepository(database).read(scope),
+  }));
   const activeAccount = profile.journalAccounts.find((account) => account.active);
   if (!activeAccount) throw new Error("TRADERLINK_ACCOUNT_ACCESS_DENIED");
 
@@ -61,6 +65,13 @@ export default async function AccountPage() {
 
       <DashboardPanel title="Reporting currency">
         <ReportingCurrencySettings reportingCurrency={profile.reportingCurrency} />
+      </DashboardPanel>
+
+      <DashboardPanel title="AI Review delivery">
+        <AiReviewDeliverySettings
+          initialDeliveryDay={aiReviewDelivery?.weeklyDeliveryDay ?? null}
+          initialDeliveryTimeEastern={aiReviewDelivery?.deliveryTimeEastern ?? null}
+        />
       </DashboardPanel>
 
       <DashboardPanel title="Journal accounts">

@@ -1,4 +1,4 @@
-# AI Weekly Review Plan
+# AI Reviews Plan
 
 ## Status
 
@@ -22,9 +22,9 @@ classification, or analytics.
 ## Weekly boundary and request model
 
 - A week is Monday through Sunday in the selected Journal account timezone.
-- Each account receives one automatic review after the trading week closes at
-  the weekly delivery time selected by the trader in Eastern time. A no-trade
-  week is skipped.
+- Each account receives one automatic review after the trading week closes on
+  the selected Friday, Saturday or Sunday at the trader's chosen Eastern time.
+  A no-trade week is skipped.
 - A request is keyed to the account, week and exact factual-input digest. A
   completed request for the same input returns the saved review rather than
   charging for another generation.
@@ -34,6 +34,25 @@ classification, or analytics.
 - An issued review is immutable. A later, explicitly requested review against
   changed facts is a new, dated review, linked to the prior one rather than
   replacing it.
+
+## Monthly review boundary and first-month rule
+
+- A monthly review follows the calendar month, not a rolling four-week cycle.
+  It is delivered after the final trading day of the month at the same selected
+  Eastern-time delivery time used for weekly reviews.
+- A monthly review combines the month's trading facts, written reviews, notes,
+  selected tags, rules, Current Focuses and the month's issued weekly reviews.
+  It does not merely repeat four weekly reviews.
+- The first monthly review begins on the date the trader enabled AI Reviews.
+  If that begins mid-month, the first eligible period is visibly labelled with
+  its actual start and end dates as a partial month and is never compared with
+  a prior month.
+- A first partial month is issued only when it contains at least seven calendar
+  days and three reviewed trading days. A shorter start is skipped; the first
+  review is then the following complete calendar month. Later complete months
+  are not withheld for a quiet trading month, but a no-trade month is skipped.
+- Like weekly delivery, there is one issued review per unchanged account/month
+  package. A later Journal edit never silently creates another paid review.
 
 ## Exact AI input package
 
@@ -55,7 +74,7 @@ read services. It contains only the selected account and week:
 5. Every dated Current Focuses value that was in effect during the week,
    including immutable revisions. A focus that simply carried forward is
    represented at each relevant date without pretending the trader edited it.
-6. The immediately preceding issued weekly review, if one exists, as context
+6. The immediately preceding issued review, if one exists, as context
    for follow-through—not as evidence that its advice was correct.
 7. A concise Data Decisions/coverage notice so the review distinguishes
    confirmed results from facts still awaiting a trader decision.
@@ -81,6 +100,12 @@ The model must return structured, trader-facing content with these sections:
 - **Incomplete record:** shown only when an unreviewed day, missing note or
   contained Data Decision limits a conclusion.
 
+Monthly reviews use the same evidence rules with month-appropriate headings:
+monthly review, progress across the month, recurring friction, focus
+follow-through and next-month focuses. They can refer to a repeated weekly
+theme only when that theme appears in the saved weekly review record and is
+supported by the current month's Journal package.
+
 The prompt prohibits trade recommendations, price targets, diagnosing emotion,
 claiming certainty, treating profit as proof of good process, treating a loss
 as proof of bad process, and any mention of internal codes, providers, token
@@ -101,17 +126,20 @@ counts or database terms.
   the account-available `gpt-5.6-sol` model. Hosted-provider configuration is
   deferred until the live deployment boundary is designed.
 - Automatic delivery is the approved product behavior: one weekly review per
-  account after the trader's selected Friday Eastern-time delivery time. It is
-  bounded to one issued review for an unchanged completed week. A later edit
-  never silently triggers another paid review.
+  account after the trader's selected Friday, Saturday or Sunday Eastern-time
+  delivery time. It is bounded to one issued review for an unchanged completed
+  week. A later edit never silently triggers another paid review.
+- Monthly delivery uses the same account setting and adds separate immutable
+  monthly request/output records. The saved first-use date controls the partial
+  month rule and is not reset when the trader changes delivery time.
 
 ## UI direction
 
 AI Reviews is its own dashboard page at `/ai-reviews` with a left-navigation
-item. It replaces the retired Reflection Loop page. The page lists saved reviews by week,
-opens an addressable review detail view, and contains the per-account Eastern
-time delivery setting. It never invents a review or claims a schedule is active
-before the setting and scheduler exist.
+item. It replaces the retired Reflection Loop page. The page lists saved weekly
+and monthly reviews, opens an addressable detail view, and contains the
+per-account Eastern-time delivery setting. It never invents a review or claims
+a schedule is active before the setting and scheduler exist.
 
 Visible copy uses ordinary trading language. It does not explain its internal
 source, generation process, provider, prompt, token count, or database state.
@@ -123,9 +151,11 @@ source, generation process, provider, prompt, token count, or database state.
    account-isolated read/write service.
 3. Implement the strict prompt and direct local-provider adapter, then issue
    one controlled fixture review before adding persistent generation storage.
-4. Add saved-review storage, the Friday per-account Eastern-time schedule and the AI
-   Reviews list/detail experience.
-5. Use the local two-week fixture: issue week one, then issue week two with
+4. Add saved weekly/monthly review storage, the per-account weekend
+   (Friday/Saturday/Sunday) Eastern-time schedule and the AI Reviews list/detail experience.
+5. Add calendar-month eligibility, retained first-use date and first-partial
+   month handling before the automatic runner is enabled.
+6. Use the local two-week fixture: issue week one, then issue week two with
    week one's saved review as prior context. Verify no fixture Journal fact,
    note, rule, focus revision, Decision or open-position state changes.
 
