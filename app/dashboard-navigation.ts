@@ -49,11 +49,6 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
       icon: "tradeGroup" as const,
       items: Object.freeze([
         Object.freeze({
-          href: "/calendar",
-          label: "Calendar",
-          icon: "calendar" as const,
-        }),
-        Object.freeze({
           href: "/trade-tracker",
           label: "Daily Trade Tracker",
           icon: "tradingDay" as const,
@@ -67,6 +62,11 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
           href: "/quick-trade-entry",
           label: "Quick Trade Entry",
           icon: "manualEntry" as const,
+        }),
+        Object.freeze({
+          href: "/calendar",
+          label: "Calendar",
+          icon: "calendar" as const,
         }),
         Object.freeze({
           href: "/rules",
