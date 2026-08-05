@@ -31,17 +31,24 @@ export default async function DataDecisionsPage({
   const selectedImportBatchId = importBatchFilter((await searchParams).importBatchId);
   const accountId = scope.activeAccountId;
   if (!accountId) throw new Error("TRADERLINK_ACCOUNT_ACCESS_DENIED");
-  const initial = withReadonlyPlatformDatabase({}, (database) =>
-    new JournalProductReadService(database).listDataDecisions({
+  const initial = withReadonlyPlatformDatabase({}, (database) => {
+    const service = new JournalProductReadService(database);
+    const accountScope = {
       userId: scope.userId,
       workspaceId: scope.workspaceId,
       workspaceRole: scope.workspaceRole,
       accountId,
-    }));
+    } as const;
+    return Object.freeze({
+      decisions: service.listDataDecisions(accountScope),
+      imports: service.listImports(accountScope),
+    });
+  });
   return (
     <JournalDataDecisionsClient
       expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
-      initial={initial}
+      imports={initial.imports}
+      initial={initial.decisions}
       selectedImportBatchId={selectedImportBatchId}
     />
   );

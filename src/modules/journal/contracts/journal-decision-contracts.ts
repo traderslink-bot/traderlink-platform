@@ -5,6 +5,7 @@ export type JournalDecisionAction =
   | "exclude_execution"
   | "restore_execution"
   | "merge_supported_duplicate"
+  | "reconcile_grouped_fills"
   | "keep_distinct"
   | "supply_opening_inventory"
   | "supply_position_fact"

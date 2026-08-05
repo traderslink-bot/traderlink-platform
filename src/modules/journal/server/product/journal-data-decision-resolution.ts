@@ -186,6 +186,12 @@ export function createJournalDataDecisionResolution(
       expectedDuplicateVersionId: duplicate.currentVersionId,
     });
   }
+  if (action === "reconcile_grouped_fills") {
+    return Object.freeze({
+      ...common,
+      action,
+    });
+  }
   if (action === "correct_position_fact") {
     return Object.freeze({
       ...common,

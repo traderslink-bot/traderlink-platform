@@ -11,11 +11,14 @@ import {
   requireTraderLinkPlatformRequestScope,
   requireExpectedJournalAccountSelection,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireJournalMutationRequest } from "@/src/modules/platform/server/authentication/journal-mutation-request-security";
 import { isTraderLinkPlatformError, platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -56,14 +59,28 @@ export function GET(request: Request): Response {
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
     const accountId = scope.activeAccountId;
     if (!accountId) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
-    const decisions = withReadonlyPlatformDatabase({}, (database) =>
-      new JournalProductReadService(database).listDataDecisions({
+    const requestedImportBatchId = new URL(request.url).searchParams.get("importBatchId");
+    if (requestedImportBatchId !== null && !UUID_PATTERN.test(requestedImportBatchId)) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+        field: "importBatchId",
+      });
+    }
+    const result = withReadonlyPlatformDatabase({}, (database) => {
+      const service = new JournalProductReadService(database);
+      const accountScope = {
         userId: scope.userId,
         workspaceId: scope.workspaceId,
         workspaceRole: scope.workspaceRole,
         accountId,
-      }));
-    return Response.json({ status: "ready", decisions });
+      } as const;
+      return Object.freeze({
+        decisions: service.listDataDecisions(accountScope),
+        statement: requestedImportBatchId
+          ? service.listDataDecisionStatement(accountScope, requestedImportBatchId)
+          : null,
+      });
+    });
+    return Response.json({ status: "ready", ...result });
   } catch {
     return Response.json({ status: "unavailable" }, { status: 503 });
   }
@@ -71,6 +88,7 @@ export function GET(request: Request): Response {
 
 export async function POST(request: Request): Promise<Response> {
   try {
+    requireJournalMutationRequest(request);
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
     const body: unknown = await request.json();
     if (!isRecord(body) || !Number.isSafeInteger(body.expectedRevision)) {

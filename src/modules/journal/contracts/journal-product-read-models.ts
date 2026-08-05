@@ -31,6 +31,7 @@ export type JournalDecisionExecutionEvidence = Readonly<{
   feeCurrency: string | null;
   feeSignConvention: "not_reported" | "broker_reported_signed" | "cash_effect";
   currentState: "accepted" | "needs_decision" | "excluded_by_trader" | "superseded";
+  sourceLabel: "Manual entry" | "Broker statement" | null;
 }>;
 
 export type JournalDecisionPositionEvidence = Readonly<{
@@ -44,6 +45,18 @@ export type JournalDecisionPositionEvidence = Readonly<{
   source: "Broker statement" | "Trader correction";
 }>;
 
+export type JournalDecisionOpenPositionConfirmation = Readonly<{
+  supportedQuantityDecimal: string;
+  supportedPositionFactId: string;
+  contradictoryPositionFactId: string;
+}>;
+
+export type JournalDecisionStatementRowEvidence = Readonly<{
+  recordOrdinal: number;
+  sectionName: string | null;
+  fields: readonly string[];
+}>;
+
 export type JournalDataDecisionItem = Readonly<{
   decisionId: string;
   importBatchIds: readonly string[];
@@ -51,6 +64,8 @@ export type JournalDataDecisionItem = Readonly<{
   state: "pending" | "resolved" | "superseded";
   issueCode: string;
   effectCode: string;
+  question: string;
+  impactSummary: string;
   targetKind: "source_issue" | "execution" | "position_fact" | "overlap_set" | "chain";
   instrumentRef: string | null;
   symbol: string | null;
@@ -61,7 +76,9 @@ export type JournalDataDecisionItem = Readonly<{
   updatedAtUtc: string;
   allowedActions: readonly JournalDecisionAction[];
   executions: readonly JournalDecisionExecutionEvidence[];
+  flaggedStatementRow: JournalDecisionStatementRowEvidence | null;
   positionFacts: readonly JournalDecisionPositionEvidence[];
+  openPositionConfirmation?: JournalDecisionOpenPositionConfirmation | null;
   suggestedCoverage: Readonly<{
     assetClass: "stock";
     localStartDate: string;
@@ -73,4 +90,29 @@ export type JournalDataDecisionItem = Readonly<{
 export type JournalDataDecisionsReadModel = Readonly<{
   pending: readonly JournalDataDecisionItem[];
   resolved: readonly JournalDataDecisionItem[];
+}>;
+
+export type JournalDataDecisionStatementRow = Readonly<{
+  recordOrdinal: number;
+  sectionName: string | null;
+  recordType: string | null;
+  initialClassification:
+    | "mapped_execution"
+    | "mapped_position_fact"
+    | "mapped_coverage_fact"
+    | "automatic_non_execution"
+    | "unsupported"
+    | "needs_correction";
+  fields: readonly string[];
+  issues: readonly Readonly<{
+    message: string;
+    severity: "info" | "warning" | "error";
+  }>[];
+}>;
+
+export type JournalDataDecisionStatementReadModel = Readonly<{
+  importBatchId: string;
+  sourceDisplayLabel: string;
+  totalRowCount: number;
+  rows: readonly JournalDataDecisionStatementRow[];
 }>;
