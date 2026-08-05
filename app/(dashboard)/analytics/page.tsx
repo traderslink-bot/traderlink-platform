@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 
-import { AnalyticsServerPage } from "../../journal-analytics-server-page";
+import { AnalyticsOverviewPage as AnalyticsOverviewContent } from "./analytics-overview-page";
 
 export const metadata: Metadata = {
   title: "Analytics Overview | Trader Intelligence",
 };
 
-export default function AnalyticsOverviewPage() {
-  return <AnalyticsServerPage page="overview" />;
+export default async function AnalyticsOverviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<Readonly<Record<string, string | string[] | undefined>>>;
+}) {
+  return <AnalyticsOverviewContent searchParams={await searchParams} />;
 }
