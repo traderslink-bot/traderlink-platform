@@ -498,6 +498,7 @@ export function DashboardShell({
               startIcon={<CloudUploadRoundedIcon />}
               sx={{
                 color: "common.white",
+                display: { xs: "none", sm: "inline-flex" },
                 flexShrink: 0,
                 whiteSpace: "nowrap",
               }}
