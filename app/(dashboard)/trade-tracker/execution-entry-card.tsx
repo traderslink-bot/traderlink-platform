@@ -13,6 +13,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useState } from "react";
+import NextLink from "next/link";
 
 import {
   DashboardPanel,
@@ -70,6 +71,7 @@ export function ExecutionEntryCard({
   onStartAnother,
   onSubmitted,
   allowMultipleTradingDates = false,
+  entryMode = "day",
   savingEnabled = true,
   sessionDate,
   submittedCount,
@@ -83,6 +85,7 @@ export function ExecutionEntryCard({
   onStartAnother?: () => void;
   onSubmitted: (count: number, executions: ExecutionDraft[]) => void;
   allowMultipleTradingDates?: boolean;
+  entryMode?: "day" | "quick" | "swing";
   savingEnabled?: boolean;
   sessionDate: string;
   submittedCount: number | null;
@@ -264,7 +267,12 @@ export function ExecutionEntryCard({
         Times use Eastern Time.
       </Typography>
       <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">
-        {allowMultipleTradingDates
+        {entryMode === "quick" ? (
+          <>
+            Enter trade executions for any date. Skip the notes, tags and rules flow of the {" "}
+            <NextLink href="/trade-tracker">Daily Trade Tracker</NextLink>.
+          </>
+        ) : entryMode === "swing"
           ? "Enter the executions that make up this swing trade. Opening and closing executions can have different trading dates."
           : "Enter all day trade executions for one trading day and save your executions. All of your trades for the day will display below, organized by ticker."}
       </Typography>

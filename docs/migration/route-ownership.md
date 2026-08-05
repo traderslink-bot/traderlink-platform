@@ -50,6 +50,7 @@
 | `/trade-tracker/[sessionDate]` | Journal | Day Trade Tracker for exactly one trading day |
 | `/trade-tracker/swings` | Journal | Planned Swing Trade Tracker for active and recently completed intentional swings |
 | `/trade-tracker/swings/[positionRef]` | Journal | Planned stable swing lifecycle and dated-note detail |
+| `/quick-trade-entry` | Journal | Direct canonical manual execution entry without tracker journaling |
 | `/trades` | Journal | Compatibility redirect to `/calendar` |
 | `/trades/roundtrips` | Journal | Retired redirect to `/analytics/execution` |
 | `/trades/ticker` | Journal | Retired redirect to `/analytics/results` |

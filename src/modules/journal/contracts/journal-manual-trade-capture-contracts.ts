@@ -1,6 +1,6 @@
 export const JOURNAL_MANUAL_ENTRY_RECENT_CALENDAR_DAYS = 7;
 
-export type JournalManualTrackerKind = "day" | "swing";
+export type JournalManualTrackerKind = "day" | "quick" | "swing";
 
 export type JournalManualTradeRelationship =
   | "start_new_trade"

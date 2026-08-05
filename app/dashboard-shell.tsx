@@ -496,18 +496,10 @@ export function DashboardShell({
               component={Link}
               href="/imports"
               startIcon={<CloudUploadRoundedIcon />}
-              sx={{ display: { xs: "none", sm: "inline-flex" } }}
-              variant="text"
-            >
-              Import
-            </Button>
-            <Button
-              component={Link}
-              href="/trade-tracker"
-              startIcon={<NoteAltRoundedIcon />}
+              sx={{ color: "common.white" }}
               variant="contained"
             >
-              Add trade
+              Import trades
             </Button>
           </Toolbar>
         </Box>

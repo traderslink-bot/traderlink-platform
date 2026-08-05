@@ -64,6 +64,16 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
           icon: "swing" as const,
         }),
         Object.freeze({
+          href: "/quick-trade-entry",
+          label: "Quick Trade Entry",
+          icon: "manualEntry" as const,
+        }),
+        Object.freeze({
+          href: "/rules",
+          label: "Trading Rules",
+          icon: "rules" as const,
+        }),
+        Object.freeze({
           href: "/analytics/trade-explorer",
           label: "Trade Explorer",
           icon: "tradeExplorer" as const,
@@ -112,11 +122,6 @@ export const DASHBOARD_STANDALONE_ITEMS: readonly DashboardNavigationItem[] =
       icon: "reflection" as const,
     }),
     Object.freeze({
-      href: "/rules",
-      label: "Trading Rules",
-      icon: "rules" as const,
-    }),
-    Object.freeze({
       href: "/charts",
       label: "Market Charts",
       icon: "marketCharts" as const,
@@ -154,9 +159,10 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/calendar": "Calendar",
     "/trade-tracker": "Daily Trade Tracker",
     "/trade-tracker/swings": "Swing Trade Tracker",
+    "/quick-trade-entry": "Quick Trade Entry",
     "/trades/open": "Open Positions",
     "/analytics": "Analytics Overview",
-    "/analytics/results": "Results",
+    "/analytics/results": "Results by Ticker",
     "/analytics/timing": "Timing",
     "/analytics/execution": "Execution",
     "/analytics/trade-explorer": "Trade Explorer",

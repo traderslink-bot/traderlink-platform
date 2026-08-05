@@ -18,6 +18,9 @@ visual/product review pending
 **Implementation progress:**
 [Day And Swing Trade Tracker Progress](day-and-swing-trade-tracker-progress.md)
 
+**Quick-entry progress:**
+[Quick Trade Entry Progress](quick-trade-entry-progress.md)
+
 ## 1. Outcome
 
 Replace the overloaded single Trade Tracker workflow with two clearly named
@@ -32,6 +35,22 @@ Journal experiences over the same factual execution ledger:
 
 This is a product and writing-workflow split. It is not a split database,
 execution ledger, import system, reconstruction engine or analytics authority.
+
+### Quick Trade Entry addendum
+
+`/quick-trade-entry` is the execution-only path for traders who do not want to
+use either tracker workflow. It writes to the same selected-account Journal
+execution ledger as imports and both trackers, but does not create notes, tags,
+rule reviews, a daily-review state or a Swing note.
+
+- It accepts executions for any past trading date, including one batch with
+  multiple dates; future execution times remain rejected.
+- It does not infer a Day or Swing intention. Its neutral initial style is
+  `other`; completed-trade analytics still classify factual same-day closures
+  as Day trades independently.
+- It identifies its import batch as `Quick Trade Entry manual executions`.
+- Its form links to the Daily Trade Tracker for traders who want the full
+  daily notes, tags and rules workflow.
 
 ## 2. Fixed owner decisions
 
@@ -80,6 +99,7 @@ execution ledger, import system, reconstruction engine or analytics authority.
 | `/trade-tracker/[sessionDate]` | One factual Day Trade Tracker date |
 | `/trade-tracker/swings` | Active and recently completed Swing Trade Tracker |
 | `/trade-tracker/swings/[positionRef]` | One swing's complete factual lifecycle and dated journal |
+| `/quick-trade-entry` | Execution-only manual entry for any past trading date |
 | `/trades/open` | All confirmed open positions plus a separate Data Decisions queue |
 | `/manual-entry` | Compatibility redirect to `/trade-tracker` |
 
@@ -90,10 +110,10 @@ The `Trades` navigation group becomes:
 
 1. Day Trade Tracker
 2. Swing Trade Tracker
-3. Round Trips
-4. Ticker History
-5. Open Positions
-6. Candle Review
+3. Quick Trade Entry
+4. Trading Rules
+5. Trade Explorer
+6. Open Positions
 
 Both trackers inherit the approved light Material dashboard shell. Neither page
 rebuilds the navigation, header or account selector.

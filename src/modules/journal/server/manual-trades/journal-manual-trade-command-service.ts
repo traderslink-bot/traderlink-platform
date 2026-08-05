@@ -119,7 +119,9 @@ export class JournalManualTradeCommandService {
         idempotencyKey: request.idempotencyKey,
         sourceDisplayLabel: request.tracker === "swing"
           ? "Swing Trade Tracker manual executions"
-          : "Daily Trade Tracker manual executions",
+          : request.tracker === "quick"
+            ? "Quick Trade Entry manual executions"
+            : "Daily Trade Tracker manual executions",
         entries: request.entries.map(toManualExecutionInput),
         confirmedTraderBoundaries: true,
         now,

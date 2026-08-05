@@ -207,7 +207,11 @@ function toPreviewGroup(input: Readonly<{
       : null,
     allowedRelationships: relationships(input.group),
     allowedStyles: Object.freeze<JournalTradeStyle[]>(["day_trade", "swing", "other"]),
-    suggestedStyle: input.tracker === "swing" ? "swing" : "day_trade",
+    suggestedStyle: input.tracker === "swing"
+      ? "swing"
+      : input.tracker === "quick"
+        ? "other"
+        : "day_trade",
   });
 }
 

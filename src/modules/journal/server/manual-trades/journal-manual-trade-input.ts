@@ -58,7 +58,7 @@ function canonicalDecimal(
 export function parseJournalManualTrackerKind(
   value: unknown,
 ): JournalManualTrackerKind {
-  if (value !== "day" && value !== "swing") {
+  if (value !== "day" && value !== "quick" && value !== "swing") {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
       field: "tracker",
     });

@@ -37,7 +37,7 @@ function friendlyFailure(code?: string): string {
     return "Enter executions for one trading day at a time.";
   }
   if (code === "TRADERLINK_MANUAL_TRADE_RECENT_ENTRY_REQUIRED") {
-    return "These dates are outside the recent-entry window for this tracker.";
+    return "Check the execution date and time. Future executions cannot be saved.";
   }
   if (
     code === "TRADERLINK_ACCOUNT_SELECTION_CONFLICT" ||
@@ -125,7 +125,7 @@ export function ManualExecutionEntry({
   ): Promise<ExecutionSaveResult> {
     const currentIdempotencyKey = idempotencyKey.current ?? crypto.randomUUID();
     idempotencyKey.current = currentIdempotencyKey;
-    const entryTimezone = tracker === "day" ? "America/New_York" : accountTimezone;
+    const entryTimezone = tracker === "swing" ? accountTimezone : "America/New_York";
     const entries = executions.map((execution) =>
       tradeEntry(execution, accountCurrency, entryTimezone));
     const previewResponse = await fetch("/api/platform/journal/manual-trades/preview", {
@@ -153,7 +153,11 @@ export function ManualExecutionEntry({
       groupRef: group.groupRef,
       relationship: group.allowedRelationships.find((value) => value !== "not_finished") ??
         "not_finished",
-      style: tracker === "swing" ? "swing" as const : "day_trade" as const,
+      style: tracker === "swing"
+        ? "swing" as const
+        : tracker === "quick"
+          ? "other" as const
+          : "day_trade" as const,
       existingPositionRef: group.existingPosition?.positionRef ?? null,
       completeExecutionSetConfirmed: true,
     }));
@@ -194,7 +198,8 @@ export function ManualExecutionEntry({
   return (
     <ExecutionEntryCard
       collapsed={collapsed}
-      allowMultipleTradingDates={tracker === "swing"}
+      allowMultipleTradingDates={tracker !== "day"}
+      entryMode={tracker}
       initialExecutions={submittedExecutions}
       onCollapsedChange={setCollapsed}
       onSave={save}
