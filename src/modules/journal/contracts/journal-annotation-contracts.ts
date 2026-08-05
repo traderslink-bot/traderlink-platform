@@ -56,6 +56,13 @@ export type JournalDailyNoteRecord = Readonly<{
   updatedAtUtc: string;
 }>;
 
+export type JournalDailyFocusRevisionRecord = Readonly<{
+  tradingDate: string;
+  revisionNumber: number;
+  currentFocuses: string;
+  createdAtUtc: string;
+}>;
+
 export type JournalRoundTripNoteRecord = Readonly<{
   roundTripNoteId: string;
   roundTripId: string;

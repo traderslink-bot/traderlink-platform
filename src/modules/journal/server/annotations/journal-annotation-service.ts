@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 import type {
+  JournalDailyFocusRevisionRecord,
   JournalDailyNoteRecord,
   JournalRoundTripNoteRecord,
   JournalRuleLifecycleState,
@@ -353,6 +354,18 @@ export class JournalAnnotationService {
   readCurrentFocus(scope: AccountScope, tradingDate: string): string {
     if (!/^\d{4}-\d{2}-\d{2}$/u.test(tradingDate)) invalid("tradingDate");
     return this.annotations.readLatestDailyFocus(scope, tradingDate)?.tomorrowsFocus ?? "";
+  }
+
+  listDailyFocusRevisions(
+    scope: AccountScope,
+    startDate: string,
+    endDate: string,
+  ): readonly JournalDailyFocusRevisionRecord[] {
+    if (!/^\d{4}-\d{2}-\d{2}$/u.test(startDate)) invalid("startDate");
+    if (!/^\d{4}-\d{2}-\d{2}$/u.test(endDate) || endDate < startDate) {
+      invalid("endDate");
+    }
+    return this.annotations.listDailyFocusRevisions(scope, startDate, endDate);
   }
 
   resolveTradingDayId(scope: AccountScope, tradingDate: string): string | null {

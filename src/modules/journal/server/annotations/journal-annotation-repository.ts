@@ -1,6 +1,7 @@
 import type Database from "better-sqlite3";
 
 import type {
+  JournalDailyFocusRevisionRecord,
   JournalDailyNoteRecord,
   JournalRoundTripNoteRecord,
   JournalTagRecord,
@@ -346,6 +347,46 @@ LIMIT 1`).get(scope.workspaceId, scope.accountId, throughTradingDate) as
       | DailyNoteRow
       | undefined;
     return row ? mapDailyNote(row) : null;
+  }
+
+  listDailyFocusRevisions(
+    scope: AccountScope,
+    startDate: string,
+    endDate: string,
+  ): readonly JournalDailyFocusRevisionRecord[] {
+    return Object.freeze(this.database.prepare(`SELECT
+  trading_day.trading_date,
+  revision.revision_number,
+  revision.tomorrows_focus,
+  revision.created_at_utc
+FROM journal_daily_note_revisions revision
+JOIN journal_daily_notes note
+  ON note.workspace_id = revision.workspace_id
+ AND note.account_id = revision.account_id
+ AND note.daily_note_id = revision.daily_note_id
+JOIN journal_trading_days trading_day
+  ON trading_day.workspace_id = note.workspace_id
+ AND trading_day.account_id = note.account_id
+ AND trading_day.trading_day_id = note.trading_day_id
+WHERE revision.workspace_id = ?
+  AND revision.account_id = ?
+  AND trading_day.trading_date >= ?
+  AND trading_day.trading_date <= ?
+  AND trim(revision.tomorrows_focus) <> ''
+ORDER BY trading_day.trading_date, revision.revision_number, revision.created_at_utc`)
+      .all(scope.workspaceId, scope.accountId, startDate, endDate)
+      .map((row) => row as {
+        trading_date: string;
+        revision_number: number;
+        tomorrows_focus: string;
+        created_at_utc: string;
+      })
+      .map((row) => Object.freeze({
+        tradingDate: row.trading_date,
+        revisionNumber: row.revision_number,
+        currentFocuses: row.tomorrows_focus,
+        createdAtUtc: row.created_at_utc,
+      })));
   }
 
   insertDailyNote(input: Readonly<{
