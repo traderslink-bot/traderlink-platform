@@ -116,6 +116,22 @@ Active. The product contract is in [AI Weekly Review Plan](ai-weekly-review-plan
   and at least three reviewed trading days. It does not schedule, issue or
   skip a no-trade month.
 
+## Completed: monthly persistence and issuance
+
+- Added account-scoped immutable monthly request snapshots keyed by complete
+  or partial period dates and the exact canonical input digest. Repeated
+  unchanged packages reuse the issued review rather than make another provider
+  call.
+- Added account-scoped monthly issued-review reads, including the latest issued
+  monthly review before a supplied period start for later prior-context wiring.
+- Added retry-safe monthly generation attempts using the existing immutable
+  attempt and receipt records with `review_kind='monthly'`. Complete provider
+  usage records the saved model-price receipt; partial or missing usage remains
+  unavailable and is never estimated.
+- Added the structured direct OpenAI monthly adapter. Its output is restricted
+  to the monthly contract's six trader-facing sections and at most three
+  next-month focuses. The adapter receives only the supplied factual package.
+
 ## Completed: weekly issuance runner and protected trigger
 
 - The runner enumerates only active scheduled Journal accounts, calculates the
@@ -134,11 +150,12 @@ Active. The product contract is in [AI Weekly Review Plan](ai-weekly-review-plan
 
 ## Next slice
 
-Add monthly issuance and saved-read contracts. Calendar-month reviews use the
-same delivery time, retain their first-use date, apply the completed partial
-month eligibility helper, and skip no-trade months in the later runner.
-Register the protected trigger with the accepted hosted scheduler only at the
-deployment boundary.
+Wire the account-scoped prior-month read into the factual package, then add the
+monthly runner and saved-review UI. Calendar-month reviews use the same
+delivery time, retain their first-use date, apply the completed partial-month
+eligibility helper, and skip no-trade months in the later runner. Register the
+protected trigger with the accepted hosted scheduler only at the deployment
+boundary.
 
 ## Planned input addition: selected trade tags
 
