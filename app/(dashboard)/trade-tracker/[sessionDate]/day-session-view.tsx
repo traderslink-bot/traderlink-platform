@@ -2,9 +2,11 @@
 
 import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
+import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded";
 import {
   Alert,
   Box,
@@ -735,7 +737,8 @@ function TradeReview({
 }) {
   const presetRules = tradeRules.filter((rule) => !rule.custom);
   const tradeLabelColor = pnlColor(roundTrip.netPnl) === "success.main" ? "success" : "error";
-  const [mobileRulesOpen, setMobileRulesOpen] = useState(false);
+  const [mobileRulesOpen, setMobileRulesOpen] = useState(true);
+  const [mobileExecutionsOpen, setMobileExecutionsOpen] = useState(false);
   const customRules = tradeRules.filter((rule) => rule.custom);
   const [selectedCustomRuleId, setSelectedCustomRuleId] = useState(
     customRules[0]?.ruleId ?? "",
@@ -872,6 +875,38 @@ function TradeReview({
         ) : ruleControls}
       </Box>
     </>
+  );
+  const renderExecutionDetails = () => (
+    <Stack divider={<Divider flexItem />}>
+      {executions.map((execution) => (
+        <Box
+          key={execution.executionKey}
+          sx={{
+            alignItems: { sm: "center" },
+            display: "grid",
+            gap: 0.75,
+            gridTemplateColumns: {
+              xs: "1fr 1fr",
+              sm: "110px 80px minmax(88px, 1fr) 100px auto",
+            },
+            py: 0.45,
+          }}
+        >
+          <Typography variant="body2">{timeLabel(execution.executedAt, roundTrip.timezone)}</Typography>
+          <Typography sx={{ textTransform: "capitalize" }} variant="body2">{execution.side}</Typography>
+          <Typography sx={{ fontFamily: "var(--font-geist-mono)" }} variant="body2">
+            {formatJournalAnalyticsDecimal(execution.quantity)} shares
+          </Typography>
+          <Typography sx={{ fontFamily: "var(--font-geist-mono)" }} variant="body2">
+            {price(execution.price, currency)}
+          </Typography>
+          <ManualExecutionEditDialog
+            execution={execution}
+            expectedAccountSelectionRef={expectedAccountSelectionRef}
+          />
+        </Box>
+      ))}
+    </Stack>
   );
 
   return (
@@ -1049,49 +1084,40 @@ function TradeReview({
           </Box>
 
       {executions.length > 0 ? (
-        <Box
-          sx={{
-            bgcolor: "rgba(1, 30, 86, 0.035)",
-            borderRadius: 1.5,
-            mt: 0.5,
-            order: 3,
-            p: 1.5,
-          }}
-        >
-          <Typography color="text.secondary" sx={{ display: "block", mb: 0.5 }} variant="caption">
-            Executions
-          </Typography>
-          <Stack divider={<Divider flexItem />}>
-            {executions.map((execution) => (
-              <Box
-                key={execution.executionKey}
-                sx={{
-                  alignItems: { sm: "center" },
-                  display: "grid",
-                  gap: 0.75,
-                  gridTemplateColumns: {
-                    xs: "1fr 1fr",
-                    sm: "110px 80px minmax(88px, 1fr) 100px auto",
-                  },
-                  py: 0.45,
-                }}
-              >
-                <Typography variant="body2">{timeLabel(execution.executedAt, roundTrip.timezone)}</Typography>
-                <Typography sx={{ textTransform: "capitalize" }} variant="body2">{execution.side}</Typography>
-                <Typography sx={{ fontFamily: "var(--font-geist-mono)" }} variant="body2">
-                  {formatJournalAnalyticsDecimal(execution.quantity)} shares
-                </Typography>
-                <Typography sx={{ fontFamily: "var(--font-geist-mono)" }} variant="body2">
-                  {price(execution.price, currency)}
-                </Typography>
-                <ManualExecutionEditDialog
-                  execution={execution}
-                  expectedAccountSelectionRef={expectedAccountSelectionRef}
-                />
+        <>
+          <Box
+            sx={{
+              bgcolor: "rgba(1, 30, 86, 0.035)",
+              borderRadius: 1.5,
+              display: { xs: "none", md: "block" },
+              mt: 0.5,
+              order: 3,
+              p: 1.5,
+            }}
+          >
+            <Typography color="text.secondary" sx={{ display: "block", mb: 0.5 }} variant="caption">
+              Executions
+            </Typography>
+            {renderExecutionDetails()}
+          </Box>
+          <Box sx={{ display: { xs: "block", md: "none" }, mt: 0.5, order: 3 }}>
+            <Button
+              aria-expanded={mobileExecutionsOpen}
+              endIcon={mobileExecutionsOpen ? <RemoveRoundedIcon /> : <AddRoundedIcon />}
+              fullWidth
+              onClick={() => setMobileExecutionsOpen((current) => !current)}
+              sx={{ justifyContent: "space-between", textTransform: "none" }}
+              variant="outlined"
+            >
+              Executions ({executions.length})
+            </Button>
+            {mobileExecutionsOpen ? (
+              <Box sx={{ bgcolor: "rgba(1, 30, 86, 0.035)", borderRadius: 1.5, mt: 0.75, p: 1.5 }}>
+                {renderExecutionDetails()}
               </Box>
-            ))}
-          </Stack>
-        </Box>
+            ) : null}
+          </Box>
+        </>
       ) : null}
 
         </Box>
