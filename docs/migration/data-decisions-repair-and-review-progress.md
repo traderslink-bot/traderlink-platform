@@ -126,3 +126,16 @@ database, process or deployment is changed by this page work.
   manual/broker duplicate choice and later-open-position scoping. The scoped
   position test now explicitly asserts the approved confirmation-first action,
   rather than the superseded raw position-fact correction flow.
+
+## Slice 5 acceptance record
+
+- The focused resolver test covers each permitted typed correction and now
+  verifies that an execution exclusion carries one of the approved reason
+  categories. It passed with one Vitest worker.
+- Focused Journal integrity checks passed for exact statement re-import,
+  manual/broker duplicate choice, scoped later-open-position evidence, missing
+  execution entry, fact correction and factual open confirmation. No broad test
+  suite was run.
+- Browser acceptance remains the final pending item. Port 3010 is intentionally
+  off, so starting the protected dashboard (and its background analyzer) is
+  deferred to the next local visual-review checkpoint.
