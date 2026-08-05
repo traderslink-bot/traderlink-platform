@@ -157,6 +157,34 @@ describe("Coach weekly AI review input service", () => {
     ]);
   });
 
+  it("keeps every actual revision recorded on the first day in chronological order", () => {
+    const firstDayAnnotations = annotations();
+    firstDayAnnotations.listDailyFocusRevisions = (account, startDate, endDate) => {
+      if (account.accountId !== accountId) throw new Error("wrong account");
+      return [
+        {
+          tradingDate: "2026-08-03",
+          revisionNumber: 1,
+          currentFocuses: "First Monday focus.",
+          createdAtUtc: "2026-08-03T13:00:00.000Z",
+        },
+        {
+          tradingDate: "2026-08-03",
+          revisionNumber: 2,
+          currentFocuses: "Revised Monday focus.",
+          createdAtUtc: "2026-08-03T14:00:00.000Z",
+        },
+      ].filter((focus) => focus.tradingDate >= startDate && focus.tradingDate <= endDate);
+    };
+    const result = new CoachWeeklyAiReviewInputService(
+      { read: () => reflection } as unknown as CoachReflectionService,
+      firstDayAnnotations,
+      { read: () => null } as unknown as JournalTradingDayReviewService,
+    ).read(scope, "2026-08-09");
+
+    expect(result.currentFocuses.map((focus) => focus.revisionNumber)).toEqual([1, 2]);
+  });
+
   it("keeps malformed or reversed timestamps unavailable", () => {
     const malformedReflection = Object.freeze({
       ...reflection,

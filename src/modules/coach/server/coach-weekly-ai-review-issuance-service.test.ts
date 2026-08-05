@@ -87,7 +87,7 @@ function input(): CoachWeeklyAiReviewInput {
       weekReadyClosedCount: 1,
       accountLegitimateOpenCount: 0,
       accountNeedsDecisionCount: 0,
-      pendingDataDecisionCount: 0,
+      accountPendingDataDecisionCount: 0,
     }),
     summary: Object.freeze({
       tradingDayCount: 1,

@@ -52,7 +52,7 @@ export class CoachWeeklyAiReviewInputService {
       reflection.endDate,
     );
     const startingFocus = focusRevisions
-      .filter((focus) => focus.tradingDate <= reflection.startDate)
+      .filter((focus) => focus.tradingDate < reflection.startDate)
       .at(-1) ?? null;
     const datedFocusRevisions = focusRevisions.filter((focus) =>
       focus.tradingDate >= reflection.startDate);
