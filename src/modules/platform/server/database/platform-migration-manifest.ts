@@ -16,6 +16,7 @@ import { academyProgressMigration } from "@/src/modules/academy/server/database/
 import { watchlistStorageMigration } from "@/src/modules/watchlist/server/database/migrations/0014_watchlist_storage";
 import { newsContentMigration } from "@/src/modules/news/server/database/migrations/0015_news_content";
 import { affiliateAttributionMigration } from "@/src/modules/affiliate/server/database/migrations/0016_affiliate_attribution";
+import { coachWeeklyReviewsMigration } from "@/src/modules/coach/server/database/migrations/0025_coach_weekly_reviews";
 
 import { platformIdentityMigration } from "./migrations/0001_platform_identity";
 import { platformAuthenticationIdentitiesMigration } from "./migrations/0012_platform_authentication_identities";
@@ -130,6 +131,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/platform/server/database/migrations/0024_platform_currency_preferences.ts",
       migration: platformCurrencyPreferencesMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/coach/server/database/migrations/0025_coach_weekly_reviews.ts",
+      migration: coachWeeklyReviewsMigration,
     }),
   ]);
 
@@ -281,6 +286,11 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     "0024_platform_currency_preferences": Object.freeze([
       "platform_user_preferences",
       "platform_fx_rate_observations",
+    ]),
+    "0025_coach_weekly_reviews": Object.freeze([
+      "coach_weekly_review_schedules",
+      "coach_weekly_review_requests",
+      "coach_weekly_issued_reviews",
     ]),
   });
 

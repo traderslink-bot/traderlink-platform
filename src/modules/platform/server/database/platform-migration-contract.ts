@@ -7,7 +7,8 @@ export type PlatformMigrationModuleNamespace =
   | "academy"
   | "watchlist"
   | "news"
-  | "affiliate";
+  | "affiliate"
+  | "coach";
 
 export type PlatformMigration = Readonly<{
   moduleNamespace: PlatformMigrationModuleNamespace;

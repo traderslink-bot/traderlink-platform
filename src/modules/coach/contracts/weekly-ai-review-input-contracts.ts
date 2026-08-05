@@ -47,6 +47,7 @@ export type CoachWeeklyAiReviewInput = Readonly<{
       netPnlDecimal: string | null;
       ruleReviews: CoachReflectionRuleReviewCounts;
       note: string | null;
+      tags: readonly string[];
     }>[];
   }>[];
 }>;

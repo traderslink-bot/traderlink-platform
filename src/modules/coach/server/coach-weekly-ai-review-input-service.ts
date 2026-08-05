@@ -39,6 +39,10 @@ export class CoachWeeklyAiReviewInputService {
         account,
         day.trades.map((trade) => trade.roundTripId),
       );
+      const tagsByRoundTrip = this.annotations.listTagsForRoundTrips(
+        account,
+        day.trades.map((trade) => trade.roundTripId),
+      );
       return Object.freeze({
         date: day.date,
         reviewed: this.tradingDayReviews.read(account, day.date)?.status === "reviewed",
@@ -58,6 +62,11 @@ export class CoachWeeklyAiReviewInputService {
           netPnlDecimal: trade.netPnlDecimal,
           ruleReviews: trade.ruleReviews,
           note: notesByRoundTrip[trade.roundTripId]?.tradeNote || null,
+          tags: Object.freeze(
+            (tagsByRoundTrip[trade.roundTripId] ?? [])
+              .map((tag) => tag.name)
+              .sort((left, right) => left.localeCompare(right)),
+          ),
         }))),
       });
     });

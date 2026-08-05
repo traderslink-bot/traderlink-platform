@@ -1,6 +1,7 @@
 export type DashboardNavigationIconKey =
   | "account"
   | "analytics"
+  | "aiReviews"
   | "calendar"
   | "tradingDay"
   | "swing"
@@ -117,9 +118,9 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
 export const DASHBOARD_STANDALONE_ITEMS: readonly DashboardNavigationItem[] =
   Object.freeze([
     Object.freeze({
-      href: "/reflection-loop",
-      label: "Reflection Loop",
-      icon: "reflection" as const,
+      href: "/ai-reviews",
+      label: "AI Reviews",
+      icon: "aiReviews" as const,
     }),
     Object.freeze({
       href: "/charts",
@@ -167,7 +168,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/analytics/execution": "Execution",
     "/analytics/trade-explorer": "Trade Explorer",
     "/charts": "Market Charts",
-    "/reflection-loop": "Reflection Loop",
+    "/ai-reviews": "AI Reviews",
     "/rules": "Trading Rules",
     "/imports": "Import Trades",
     "/manual-entry": "Manual Entry",

@@ -1,6 +1,7 @@
 "use client";
 
 import AnalyticsRoundedIcon from "@mui/icons-material/AnalyticsRounded";
+import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import CandlestickChartIcon from "@mui/icons-material/CandlestickChart";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
@@ -68,6 +69,7 @@ const collapsedWidth = 76;
 function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
   const icons: Record<DashboardNavigationIconKey, ReactNode> = {
     account: <PersonRoundedIcon />,
+    aiReviews: <AutoAwesomeRoundedIcon />,
     analytics: <AnalyticsRoundedIcon />,
     calendar: <CalendarMonthRoundedIcon />,
     tradingDay: <TodayIcon />,

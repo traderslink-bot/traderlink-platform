@@ -5,8 +5,7 @@
 Approved product direction recorded on 2026-08-05. Implementation is active;
 the [progress record](ai-weekly-review-progress.md) tracks completed slices.
 The local two-week Journal fixture is the first controlled review input. This
-plan supersedes any implication that the existing factual Reflection Loop is
-already an AI review.
+supersedes the retired Reflection Loop page.
 
 ## Purpose
 
@@ -23,8 +22,9 @@ classification, or analytics.
 ## Weekly boundary and request model
 
 - A week is Monday through Sunday in the selected Journal account timezone.
-- The trader requests a review after the week has ended; TraderLink does not
-  silently create paid AI work on a schedule.
+- Each account receives one automatic review after the trading week closes at
+  the weekly delivery time selected by the trader in Eastern time. A no-trade
+  week is skipped.
 - A request is keyed to the account, week and exact factual-input digest. A
   completed request for the same input returns the saved review rather than
   charging for another generation.
@@ -47,8 +47,11 @@ read services. It contains only the selected account and week:
    result conclusions.
 3. Per-trading-day facts: trade count, realized P/L, reviewed/not-reviewed
    status, automatically evaluated rule outcomes, and daily note fields.
-4. Each completed trade's trader-authored trade note and applicable automatic
-   rule outcomes.
+4. Each completed trade's trader-authored trade note, selected trading tags and
+   applicable automatic rule outcomes. The initial tags include setup and
+   execution context such as First pullback, Pullback, Breakout, Reversal,
+   Chased entry, Early entry, Late entry, Patient entry, Good fill, Poor fill
+   and Anxious.
 5. Every dated Current Focuses value that was in effect during the week,
    including immutable revisions. A focus that simply carried forward is
    represented at each relevant date without pretending the trader edited it.
@@ -57,9 +60,10 @@ read services. It contains only the selected account and week:
 7. A concise Data Decisions/coverage notice so the review distinguishes
    confirmed results from facts still awaiting a trader decision.
 
-Tags are deliberately excluded from the first prompt. They may become a
-separately reviewed input later after their categories and interpretation are
-defined; the model must not infer behavior from arbitrary tag text.
+Tags are trader-selected context, not proof. The review may identify a repeated
+tag pattern across trades, but it must never treat a tag as a diagnosis or add
+meaning that the trader did not record. If a single trade has conflicting tags,
+the review names that conflict rather than deciding which tag is correct.
 
 ## Review output contract
 
@@ -84,7 +88,7 @@ counts or database terms.
 
 ## Storage and provider boundary
 
-- Add migration `0024_coach_weekly_reviews.ts` with immutable request/input
+- Add migration `0025_coach_weekly_reviews.ts` with immutable request/input
   snapshot and issued-review records. Store the generation ID before a provider
   request, exact input digest, period identity, prior-review reference, status,
   model identifier, usage/cost metadata, structured response and timestamps.
@@ -96,18 +100,18 @@ counts or database terms.
   never committed, logged or sent to the browser. The first direct test uses
   the account-available `gpt-5.6-sol` model. Hosted-provider configuration is
   deferred until the live deployment boundary is designed.
-- The first product slice has no automatic provider call, queue or scheduled
-  job. A later operational plan may add bounded, paid entitlement-controlled
-  scheduling after live usage and budget rules exist.
+- Automatic delivery is the approved product behavior: one weekly review per
+  account after the trader's selected Friday Eastern-time delivery time. It is
+  bounded to one issued review for an unchanged completed week. A later edit
+  never silently triggers another paid review.
 
 ## UI direction
 
-Extend the existing `/reflection-loop` weekly view rather than creating a
-second analytics engine. It will show the most recent saved weekly review for
-the selected week and a clear action to create one when eligible. Each saved
-review gets an addressable detail route under Reflection Loop. The existing
-factual Reflection Loop remains useful even when no AI credential or issued
-review exists.
+AI Reviews is its own dashboard page at `/ai-reviews` with a left-navigation
+item. It replaces the retired Reflection Loop page. The page lists saved reviews by week,
+opens an addressable review detail view, and contains the per-account Eastern
+time delivery setting. It never invents a review or claims a schedule is active
+before the setting and scheduler exist.
 
 Visible copy uses ordinary trading language. It does not explain its internal
 source, generation process, provider, prompt, token count, or database state.
@@ -119,7 +123,8 @@ source, generation process, provider, prompt, token count, or database state.
    account-isolated read/write service.
 3. Implement the strict prompt and direct local-provider adapter, then issue
    one controlled fixture review before adding persistent generation storage.
-4. Add the Reflection Loop weekly-review action and saved-review detail view.
+4. Add saved-review storage, the Friday per-account Eastern-time schedule and the AI
+   Reviews list/detail experience.
 5. Use the local two-week fixture: issue week one, then issue week two with
    week one's saved review as prior context. Verify no fixture Journal fact,
    note, rule, focus revision, Decision or open-position state changes.

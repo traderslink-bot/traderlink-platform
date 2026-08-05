@@ -37,12 +37,13 @@ Decisions. The next slice is the actual weekly-review package and issued-review
 workflow; no mock AI response is stored.
 
 **AI weekly review:** The owner-approved [AI Weekly Review Plan](ai-weekly-review-plan.md)
-and [progress record](ai-weekly-review-progress.md) define the next Coach slice.
-The initial immutable factual weekly input package is complete: it includes
-account-scoped day/trade notes, review state, rule outcomes and dated Current
-Focuses revisions. Persisted issued reviews, the gateway adapter and Reflection
-Loop action remain next. Tags stay out of the first prompt. The current
-Reflection Loop is the factual base; it is not itself an issued AI review.
+and [progress record](ai-weekly-review-progress.md) define the active Coach
+slice. The factual weekly package now includes account-scoped day/trade notes,
+review state, rule outcomes, selected trade tags and dated Current Focuses
+revisions. Migration `0025_coach_weekly_reviews` is applied locally with
+immutable request/output storage and per-account Friday Eastern delivery-time
+settings. AI Reviews replaces the retired Reflection Loop page; the next work
+is the issued-review service, automatic runner and saved review list/detail.
 
 **Daily Trade Tracker Yahoo Analyzer implementation:** The owner approved the [Daily Trade Tracker Yahoo Analyzer Plan](daily-trade-tracker-yahoo-analyzer-plan.md) and [progress tracker](daily-trade-tracker-yahoo-analyzer-progress.md) on 2026-08-04. The shared extended-hours ticker/session cache, durable automatic work, per-event analyzer, and real Daily Tracker manual-save queue are now implemented locally. After a recovery backup/restore verification, migration 0023 applied cleanly to the local development database and the protected local worker loop restarted. Yahoo remains the provider; the product is Daily Trade Tracker-only, excludes Round Trips and Market Charts, captures every entry/add/partial-exit/final-exit snapshot, and retains 5/15/30/60-minute post-exit paths. The temporary readable analysis-details presentation is next.
 
