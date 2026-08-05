@@ -369,20 +369,24 @@ function StatementRows({
   return (
     <DashboardPanel title={title}>
       <Stack spacing={2}>
-        <TextField
-          fullWidth
-          label="Statement"
-          onChange={(event) => onImportChange(event.target.value)}
-          select
-          size="small"
-          value={selectedImportBatchId}
-        >
-          {imports.map((item) => (
-            <MenuItem key={item.importBatchId} value={item.importBatchId}>
-              {item.sourceDisplayLabel}
-            </MenuItem>
-          ))}
-        </TextField>
+        {imports.length === 0 ? (
+          <Typography color="text.secondary">Upload a broker statement to review its imported rows.</Typography>
+        ) : (
+          <TextField
+            fullWidth
+            label="Broker statement"
+            onChange={(event) => onImportChange(event.target.value)}
+            select
+            size="small"
+            value={selectedImportBatchId}
+          >
+            {imports.map((item) => (
+              <MenuItem key={item.importBatchId} value={item.importBatchId}>
+                {item.sourceDisplayLabel}
+              </MenuItem>
+            ))}
+          </TextField>
+        )}
         {!statement ? <Typography color="text.secondary">Loading statement rows...</Typography> : null}
         {statement && rows.length === 0 ? (
           <Alert severity="success">This statement has no rows waiting for a decision.</Alert>
@@ -857,8 +861,11 @@ export function JournalDataDecisionsClient({
   const [focusedDecisionIndex, setFocusedDecisionIndex] = useState<number | null>(null);
   const [openPositionToClassify, setOpenPositionToClassify] = useState<ConfirmedOpenPosition | null>(null);
   const [statement, setStatement] = useState<JournalDataDecisionStatementReadModel | null>(null);
+  const brokerStatements = imports.filter((item) => item.sourceKind === "broker_statement");
   const [statementImportBatchId, setStatementImportBatchId] = useState(() =>
-    selectedImportBatchId ?? imports.find((item) => item.issueCount > 0)?.importBatchId ?? imports[0]?.importBatchId ?? "");
+    (selectedImportBatchId && brokerStatements.some((item) => item.importBatchId === selectedImportBatchId)
+      ? selectedImportBatchId
+      : brokerStatements.find((item) => item.issueCount > 0)?.importBatchId ?? brokerStatements[0]?.importBatchId ?? ""));
   const pending = selectedImportBatchId
     ? model.pending.filter((item) => item.importBatchIds.includes(selectedImportBatchId))
     : model.pending;
@@ -948,7 +955,7 @@ export function JournalDataDecisionsClient({
       )) : null}
       {view === "statement-issues" || view === "statement-details" ? (
         <StatementRows
-          imports={imports}
+          imports={brokerStatements}
           onImportChange={(importBatchId) => {
             setStatementImportBatchId(importBatchId);
             setFocusedDecisionIndex(null);
