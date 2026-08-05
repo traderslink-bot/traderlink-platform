@@ -9,6 +9,21 @@ visual review.
 
 **Current focused work:** [Cooldown After Loss Rule Progress](cooldown-after-loss-rule-progress.md)
 
+## 2026-08-05 Workspace review summary
+
+**Status:** Implemented locally; focused verification in progress.
+
+- Workspace reads the selected account's latest saved **Current Focuses** value
+  as of the current Eastern trading date. The card is intentionally absent when
+  the trader has not saved a focus note.
+- Active focus rules appear with their normal titles and rule scope.
+- Workspace shows the most recent completed review before the current Eastern
+  trading date. It keeps the display compact while naming each followed or
+  broken day/trade rule beside the factual trade result. Full notes, tags and
+  execution detail remain in Daily Trade Tracker.
+- The future AI Reviews card is deferred until issued reviews have persistent
+  storage. Workspace will not fabricate a review or show an empty placeholder.
+
 ## 2026-08-05 Current Focuses
 
 **Status:** Implemented locally; owner visual review complete; focused verification deferred.

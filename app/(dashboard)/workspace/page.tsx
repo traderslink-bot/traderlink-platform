@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { WorkspaceDashboard } from "./workspace-dashboard";
+import { readWorkspaceReviewSummary } from "./workspace-review-summary";
 import { formatJournalAnalyticsPartitionedMetric } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import {
   buildJournalAnalyticsDashboardQuery,
@@ -52,8 +53,10 @@ export default async function WorkspacePage() {
       }),
     }),
   );
-  const profile = withReadonlyPlatformDatabase({}, (database) =>
-    new PlatformAccountProfileReadService(database).get(scope));
+  const { profile, reviewSummary } = withReadonlyPlatformDatabase({}, (database) => Object.freeze({
+    profile: new PlatformAccountProfileReadService(database).get(scope),
+    reviewSummary: readWorkspaceReviewSummary(database, scope),
+  }));
   const reportingSummary = await getWorkspaceReportingSummary(
     calendar,
     profile.reportingCurrency,
@@ -69,6 +72,7 @@ export default async function WorkspacePage() {
       }))}
       calendarData={calendar}
       reportingSummary={reportingSummary}
+      reviewSummary={reviewSummary}
       decisionNoticeRef={response.crossPartitionCounts.needsDecisionCount > 0
         ? readJournalDataDecisionNoticeRef(scope)
         : null}

@@ -59,6 +59,30 @@ WHERE day.workspace_id = ? AND day.account_id = ? AND day.trading_date = ?`)
     return row?.trading_day_review_id ? record(row) : null;
   }
 
+  latestReviewedBefore(
+    scope: AccountScope,
+    beforeTradingDate: string,
+  ): JournalTradingDayReviewRecord | null {
+    if (!DATE_PATTERN.test(beforeTradingDate)) {
+      platformFailure("TRADERLINK_TRADING_DAY_REVIEW_INVALID");
+    }
+    const row = this.database.prepare<[string, string, string], ReviewRow>(`SELECT
+  review.current_revision, review.review_status, day.trading_date,
+  review.updated_at_utc, day.trading_day_id, review.trading_day_review_id
+FROM journal_trading_day_reviews review
+JOIN journal_trading_days day
+  ON day.workspace_id = review.workspace_id
+ AND day.account_id = review.account_id
+ AND day.trading_day_id = review.trading_day_id
+WHERE review.workspace_id = ? AND review.account_id = ?
+  AND review.review_status = 'reviewed'
+  AND day.status = 'active'
+  AND day.trading_date < ?
+ORDER BY day.trading_date DESC, review.updated_at_utc DESC, review.trading_day_review_id DESC
+LIMIT 1`).get(scope.workspaceId, scope.accountId, beforeTradingDate);
+    return row ? record(row) : null;
+  }
+
   unclassifiedOpenPositionCount(scope: AccountScope, tradingDate: string): number {
     if (!DATE_PATTERN.test(tradingDate)) {
       platformFailure("TRADERLINK_TRADING_DAY_REVIEW_INVALID");

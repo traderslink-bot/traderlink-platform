@@ -11,6 +11,7 @@ import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
+import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -26,6 +27,7 @@ import type { JournalCalendarReadModel } from "@/src/modules/journal-analytics/c
 import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import type { WorkspaceReportingSummary } from "@/src/modules/platform/server/reporting/workspace-reporting-summary";
 import { DismissibleDataDecisionNotice } from "../../dismissible-data-decision-notice";
+import type { WorkspaceReviewSummary } from "./workspace-review-summary";
 
 export type WorkspaceMetric = Readonly<{
   label: string;
@@ -88,6 +90,17 @@ function reportingMoney(value: string, currency: string): string {
     : `${currency} ${formatted}`;
 }
 
+function ruleOutcomeColor(status: "followed" | "broken"): "success" | "error" {
+  return status === "followed" ? "success" : "error";
+}
+
+function ruleOutcomeLabel(input: Readonly<{
+  ruleTitle: string;
+  status: "followed" | "broken";
+}>): string {
+  return `${input.ruleTitle} · ${input.status === "followed" ? "Followed" : "Broken"}`;
+}
+
 export function WorkspaceDashboard({
   accountSelectionRef,
   analyticsCoverage,
@@ -95,6 +108,7 @@ export function WorkspaceDashboard({
   calendarData,
   decisionNoticeRef,
   reportingSummary,
+  reviewSummary,
 }: {
   accountSelectionRef?: string;
   analyticsCoverage?: Readonly<{
@@ -108,6 +122,7 @@ export function WorkspaceDashboard({
   calendarData?: JournalCalendarReadModel;
   decisionNoticeRef?: string | null;
   reportingSummary?: WorkspaceReportingSummary;
+  reviewSummary?: WorkspaceReviewSummary;
 }) {
   const metrics = analyticsMetrics ?? unavailableMetrics;
   const recentTradingDays = calendarData?.days
@@ -192,6 +207,130 @@ export function WorkspaceDashboard({
               A {reportingSummary.reportingCurrency} reporting equivalent is not available for all {reportingSummary.tradingDayCount} USD trading day{reportingSummary.tradingDayCount === 1 ? "" : "s"}. Your original USD Journal amounts remain visible and unchanged.
             </Typography>
           )}
+        </DashboardPanel>
+      ) : null}
+
+      {reviewSummary?.currentFocuses || reviewSummary?.focusRules.length ? (
+        <Box
+          sx={{
+            display: "grid",
+            gap: 2,
+            gridTemplateColumns: {
+              xs: "minmax(0, 1fr)",
+              lg: "repeat(2, minmax(0, 1fr))",
+            },
+          }}
+        >
+          {reviewSummary.currentFocuses ? (
+            <DashboardPanel title="Current Focuses">
+              <Typography color="text.secondary" sx={{ whiteSpace: "pre-wrap" }} variant="body2">
+                {reviewSummary.currentFocuses}
+              </Typography>
+            </DashboardPanel>
+          ) : null}
+
+          {reviewSummary.focusRules.length > 0 ? (
+            <DashboardPanel title="Focus rules">
+              <Stack
+                spacing={1.25}
+                sx={{ "& > :not(:first-of-type)": { borderColor: "divider", borderTop: 1, pt: 1.25 } }}
+              >
+                {reviewSummary.focusRules.map((rule) => (
+                  <Box key={rule.ruleId}>
+                    <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+                      <Typography sx={{ fontWeight: 800 }}>{rule.title}</Typography>
+                      <Chip label={rule.reviewScope} size="small" variant="outlined" />
+                    </Stack>
+                    <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
+                      {rule.statement}
+                    </Typography>
+                  </Box>
+                ))}
+              </Stack>
+            </DashboardPanel>
+          ) : null}
+        </Box>
+      ) : null}
+
+      {reviewSummary?.previousReview ? (
+        <DashboardPanel
+          action={(
+            <Button href={`/trade-tracker/${encodeURIComponent(reviewSummary.previousReview.date)}`} size="small">
+              Open Daily Trade Tracker
+            </Button>
+          )}
+          title="Previous trading-day review"
+        >
+          <Stack spacing={1.25}>
+            <Box>
+              <Typography sx={{ fontWeight: 850 }}>{reviewSummary.previousReview.date}</Typography>
+              <Typography color="text.secondary" variant="body2">
+                {reviewSummary.previousReview.tradeCount} completed trade{reviewSummary.previousReview.tradeCount === 1 ? "" : "s"}
+                {" · "}{calendarMoney(
+                  reviewSummary.previousReview.netPnlDecimal,
+                  reviewSummary.previousReview.currency,
+                )}
+              </Typography>
+            </Box>
+
+            {reviewSummary.previousReview.dayRuleOutcomes.length > 0 ? (
+              <Box>
+                <Typography color="text.secondary" variant="caption">Day rules</Typography>
+                <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", mt: 0.5 }}>
+                  {reviewSummary.previousReview.dayRuleOutcomes.map((outcome) => (
+                    <Chip
+                      color={ruleOutcomeColor(outcome.status)}
+                      key={`${outcome.ruleId}-${outcome.status}`}
+                      label={ruleOutcomeLabel(outcome)}
+                      size="small"
+                    />
+                  ))}
+                </Stack>
+              </Box>
+            ) : null}
+
+            {reviewSummary.previousReview.trades.map((trade) => (
+              <Box
+                key={trade.roundTripId}
+                sx={{ borderColor: "divider", borderTop: 1, pt: 1.25 }}
+              >
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={0.5}
+                  sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}
+                >
+                  <Typography sx={{ fontWeight: 800 }}>
+                    {trade.symbol} <Box component="span" sx={{ color: "text.secondary", fontWeight: 500, textTransform: "capitalize" }}>{trade.direction}</Box>
+                  </Typography>
+                  <Typography
+                    color={trade.netPnlDecimal === null
+                      ? "text.secondary"
+                      : trade.netPnlDecimal.startsWith("-") ? "error.main" : "success.main"}
+                    sx={{ fontWeight: 800 }}
+                    variant="body2"
+                  >
+                    {calendarMoney(trade.netPnlDecimal, reviewSummary.previousReview.currency)}
+                  </Typography>
+                </Stack>
+                {trade.ruleOutcomes.length > 0 ? (
+                  <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", mt: 0.75 }}>
+                    {trade.ruleOutcomes.map((outcome) => (
+                      <Chip
+                        color={ruleOutcomeColor(outcome.status)}
+                        key={`${outcome.ruleId}-${outcome.status}`}
+                        label={ruleOutcomeLabel(outcome)}
+                        size="small"
+                      />
+                    ))}
+                  </Stack>
+                ) : (
+                  <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="caption">
+                    No followed or broken rules recorded for this trade.
+                  </Typography>
+                )}
+              </Box>
+            ))}
+          </Stack>
         </DashboardPanel>
       ) : null}
 
