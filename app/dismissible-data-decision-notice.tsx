@@ -8,12 +8,11 @@ import Stack from "@mui/material/Stack";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 
-const STORAGE_VERSION = "v2";
+const STORAGE_VERSION = "v3";
 
 export function DismissibleDataDecisionNotice({
   accountSelectionRef,
   children,
-  evidenceRef,
 }: {
   accountSelectionRef: string;
   children: ReactNode;
@@ -22,24 +21,27 @@ export function DismissibleDataDecisionNotice({
 }) {
 
   const storageKey = useMemo(
-    () => [
-      "traderlink",
-      "data-decision-notice",
-      STORAGE_VERSION,
-      accountSelectionRef,
-      evidenceRef,
-    ].join(":"),
-    [accountSelectionRef, evidenceRef],
+    () => ["traderlink", "data-decision-notice", STORAGE_VERSION, accountSelectionRef].join(":"),
+    [accountSelectionRef],
+  );
+  const legacyStoragePrefix = useMemo(
+    () => ["traderlink", "data-decision-notice", "v2", accountSelectionRef, ""].join(":"),
+    [accountSelectionRef],
   );
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     try {
-      setVisible(window.localStorage.getItem(storageKey) !== "dismissed");
+      const dismissed = window.localStorage.getItem(storageKey) === "dismissed" ||
+        Object.keys(window.localStorage).some((key) =>
+          key.startsWith(legacyStoragePrefix) && window.localStorage.getItem(key) === "dismissed",
+        );
+      if (dismissed) window.localStorage.setItem(storageKey, "dismissed");
+      setVisible(!dismissed);
     } catch {
       setVisible(true);
     }
-  }, [storageKey]);
+  }, [legacyStoragePrefix, storageKey]);
 
   if (!visible) return null;
 
