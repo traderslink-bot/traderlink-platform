@@ -496,7 +496,11 @@ export function DashboardShell({
               component={Link}
               href="/imports"
               startIcon={<CloudUploadRoundedIcon />}
-              sx={{ color: "common.white" }}
+              sx={{
+                color: "common.white",
+                flexShrink: 0,
+                whiteSpace: "nowrap",
+              }}
               variant="contained"
             >
               Import trades
