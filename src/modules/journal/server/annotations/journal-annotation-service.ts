@@ -350,6 +350,11 @@ export class JournalAnnotationService {
     return tradingDayId ? this.annotations.readDailyNote(scope, tradingDayId) : null;
   }
 
+  readCurrentFocus(scope: AccountScope, tradingDate: string): string {
+    if (!/^\d{4}-\d{2}-\d{2}$/u.test(tradingDate)) invalid("tradingDate");
+    return this.annotations.readLatestDailyFocus(scope, tradingDate)?.tomorrowsFocus ?? "";
+  }
+
   resolveTradingDayId(scope: AccountScope, tradingDate: string): string | null {
     if (!/^\d{4}-\d{2}-\d{2}$/u.test(tradingDate)) invalid("tradingDate");
     return this.annotations.findTradingDayId(scope, tradingDate);

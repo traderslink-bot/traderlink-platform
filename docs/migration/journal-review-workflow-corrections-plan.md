@@ -77,6 +77,23 @@ financial values, a second execution store or a second Swing ledger.
 - “Planned from entry” is removed from visible UI. Existing stored plan evidence
   remains preserved for audit compatibility.
 
+### 2.3.1 Current Focuses
+
+- Replace the visible per-day **Tomorrow's focus** field with **Current
+  Focuses** on Daily Trade Tracker.
+- The latest non-empty Current Focuses value carries to the next trading-day
+  page for the selected account. It is not copied into another execution
+  ledger, account or Swing note.
+- A trader can edit and save it from any editable Daily Trade Tracker page.
+  The saved text is retained by the existing immutable daily-note revision
+  history; older versions are never overwritten.
+- A future weekly AI review reads every focus version that was active during
+  its Monday-through-Friday review window, including a midweek edit, rather
+  than treating the final Friday value as the sole stated intention.
+- Empty historical daily notes must not erase a carried Current Focuses value.
+  The ordinary Daily Notes save continues to preserve the stored focus value
+  until the trader deliberately changes it.
+
 ### 2.4 Trading Rules
 
 #### Superseding catalog direction — 2026-08-04

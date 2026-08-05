@@ -62,13 +62,16 @@ function emptyNote(): DaySessionDailyNote {
   };
 }
 
-function noteView(note: JournalDailyNoteRecord | null): DaySessionDailyNote {
+function noteView(
+  note: JournalDailyNoteRecord | null,
+  currentFocus = "",
+): DaySessionDailyNote {
   return note
     ? {
         anythingElse: note.anythingElse,
         revision: String(note.revision),
         technicalRecap: note.technicalRecap,
-        tomorrowsFocus: note.tomorrowsFocus,
+        tomorrowsFocus: note.tomorrowsFocus || currentFocus,
         whatNeedsWork: note.whatNeedsWork,
         whatWorked: note.whatWorked,
       }
@@ -93,6 +96,7 @@ function reviewStatus(
 }
 
 type AnnotationSnapshot = Readonly<{
+  currentFocus: string;
   dailyNote: JournalDailyNoteRecord | null;
   roundTripNotes: Readonly<Record<string, JournalRoundTripNoteRecord>>;
   rules: readonly DaySessionRule[];
@@ -318,6 +322,7 @@ function annotationSnapshot(
     }
   }
   return Object.freeze({
+    currentFocus: service.readCurrentFocus(account, model.date),
     dailyNote: service.readDailyNote(account, model.date),
     roundTripNotes: service.readRoundTripNotes(account, roundTripIds),
     rules: Object.freeze([...dayRules, ...tradeRules]),
@@ -361,7 +366,7 @@ function toDaySessionData(
     availableTags: annotations.tags.map(tagView),
     availableSessionDates: [...model.availableTradingDates],
     currency: model.currency,
-    dailyNote: noteView(annotations.dailyNote),
+    dailyNote: noteView(annotations.dailyNote, annotations.currentFocus),
     date: model.date,
     decisionActivity: model.decisionActivity.map((item) => ({
       direction: item.direction,

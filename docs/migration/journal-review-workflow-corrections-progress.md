@@ -9,6 +9,19 @@ visual review.
 
 **Current focused work:** [Cooldown After Loss Rule Progress](cooldown-after-loss-rule-progress.md)
 
+## 2026-08-05 Current Focuses
+
+**Status:** Implemented locally; owner visual review complete; focused verification deferred.
+
+- The Daily Trade Tracker now calls the former visible Tomorrow's focus field
+  **Current Focuses**.
+- The selected account's latest saved non-empty focus carries to later Daily
+  Tracker dates. Editing and saving it remains an immutable daily-note
+  revision, so future weekly AI reviews can receive every focus version active
+  through Friday rather than only the final wording.
+- This change reuses existing account-scoped, versioned Journal note history;
+  it does not add another execution, note or AI store.
+
 ## 2026-08-05 Cooldown after a loss
 
 **Status:** Implemented locally; owner visual review and focused verification

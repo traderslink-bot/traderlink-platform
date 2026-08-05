@@ -2450,14 +2450,14 @@ export function DaySessionView({
               ["What worked", dailyNote.whatWorked],
               ["What needs work", dailyNote.whatNeedsWork],
               ["Technical recap", dailyNote.technicalRecap],
-              ["Tomorrow's focus", dailyNote.tomorrowsFocus],
+              ["Current Focuses", dailyNote.tomorrowsFocus],
               ["Anything else", dailyNote.anythingElse],
             ].some(([, value]) => value.trim().length > 0) ? (
               [
                 ["What worked", dailyNote.whatWorked],
                 ["What needs work", dailyNote.whatNeedsWork],
                 ["Technical recap", dailyNote.technicalRecap],
-                ["Tomorrow's focus", dailyNote.tomorrowsFocus],
+                ["Current Focuses", dailyNote.tomorrowsFocus],
                 ["Anything else", dailyNote.anythingElse],
               ].filter(([, value]) => value.trim().length > 0).map(([label, value]) => (
                 <Box key={label}>
@@ -2529,7 +2529,7 @@ export function DaySessionView({
           />
           <TextField
             disabled={readOnly}
-            label="Tomorrow's focus"
+            label="Current Focuses"
             minRows={4}
             multiline
             onChange={(event) => {
@@ -2540,7 +2540,7 @@ export function DaySessionView({
               setNotesState("idle");
               setDailyNotesDirty(true);
             }}
-            placeholder="What will you carry into the next trading day?"
+            placeholder="Keep the trading focuses you want to carry forward."
             value={dailyNote.tomorrowsFocus}
           />
           <TextField

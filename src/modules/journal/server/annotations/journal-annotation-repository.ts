@@ -324,6 +324,30 @@ WHERE n.workspace_id = ? AND n.account_id = ? AND n.trading_day_id = ?`)
     return row ? mapDailyNote(row) : null;
   }
 
+  readLatestDailyFocus(
+    scope: AccountScope,
+    throughTradingDate: string,
+  ): JournalDailyNoteRecord | null {
+    const row = this.database.prepare(`SELECT n.daily_note_id, n.trading_day_id,
+  n.revision, v.what_worked, v.what_needs_work, v.technical_recap,
+  v.tomorrows_focus, v.anything_else, n.created_at_utc, n.updated_at_utc
+FROM journal_daily_notes n
+JOIN journal_daily_note_revisions v
+  ON v.workspace_id = n.workspace_id AND v.account_id = n.account_id
+ AND v.daily_note_id = n.daily_note_id
+ AND v.daily_note_revision_id = n.current_revision_id
+JOIN journal_trading_days d
+  ON d.workspace_id = n.workspace_id AND d.account_id = n.account_id
+ AND d.trading_day_id = n.trading_day_id
+WHERE n.workspace_id = ? AND n.account_id = ?
+  AND d.trading_date <= ? AND trim(v.tomorrows_focus) <> ''
+ORDER BY d.trading_date DESC, n.updated_at_utc DESC, n.daily_note_id DESC
+LIMIT 1`).get(scope.workspaceId, scope.accountId, throughTradingDate) as
+      | DailyNoteRow
+      | undefined;
+    return row ? mapDailyNote(row) : null;
+  }
+
   insertDailyNote(input: Readonly<{
     scope: AccountScope;
     noteId: string;
