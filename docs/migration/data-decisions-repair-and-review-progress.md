@@ -102,3 +102,19 @@ database, process or deployment is changed by this page work.
   notice state.
 - Duplicate reconciliation and resolved-history presentation remain in scope
   for Slice 4 and are not marked complete by this checkpoint.
+
+## Slice 4 implementation record
+
+- Exact statement re-import is already idempotent at import commit: the Import
+  page reports that the statement was already saved and creates no duplicate
+  execution or new decision. Certain broker duplicates use the same safe
+  import path instead of becoming a new trade.
+- Possible manual/broker matches remain trader-controlled. The existing
+  overlap decision exposes both entries; a trader can match the broker entry,
+  keep them separate, or correct the manual entry. Until then, the accepted
+  manual execution remains active once and the provisional broker candidate is
+  withheld.
+- Review history is now a separate page view, not part of the pending queue.
+  Each item records the trader's plain-language action and can reveal the
+  original statement row and execution evidence without restoring an editable
+  decision card.

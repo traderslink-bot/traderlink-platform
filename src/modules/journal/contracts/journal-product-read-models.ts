@@ -74,6 +74,10 @@ export type JournalDataDecisionItem = Readonly<{
   sourceSection: string | null;
   effectiveAtUtc: string | null;
   updatedAtUtc: string;
+  resolution: Readonly<{
+    action: JournalDecisionAction;
+    occurredAtUtc: string;
+  }> | null;
   allowedActions: readonly JournalDecisionAction[];
   executions: readonly JournalDecisionExecutionEvidence[];
   flaggedStatementRow: JournalDecisionStatementRowEvidence | null;

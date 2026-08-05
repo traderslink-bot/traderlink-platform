@@ -46,6 +46,8 @@ type DecisionRow = Readonly<{
   effective_at_utc: string | null;
   symbol: string | null;
   updated_at_utc: string;
+  resolution_action: JournalDecisionAction | null;
+  resolution_at_utc: string | null;
 }>;
 
 function allowedActions(
@@ -397,8 +399,15 @@ ORDER BY source_issue_id`).all(scope.workspaceId, scope.accountId, importBatchId
        COALESCE(issue.effective_at_utc, execution_version.executed_at_utc,
                 position_fact.effective_at_utc) AS effective_at_utc,
        instrument.normalized_symbol AS symbol,
-       decision.updated_at_utc
+       decision.updated_at_utc,
+       resolution_event.action AS resolution_action,
+       resolution_event.occurred_at_utc AS resolution_at_utc
 FROM journal_data_decisions decision
+LEFT JOIN journal_data_decision_events resolution_event
+  ON resolution_event.workspace_id = decision.workspace_id
+ AND resolution_event.account_id = decision.account_id
+ AND resolution_event.decision_id = decision.decision_id
+ AND resolution_event.decision_event_id = decision.current_event_id
 LEFT JOIN journal_source_row_issues issue
   ON issue.workspace_id = decision.workspace_id
  AND issue.account_id = decision.account_id
@@ -498,6 +507,12 @@ LIMIT 400`).all(
       sourceSection: row.source_section,
       effectiveAtUtc: row.effective_at_utc,
       updatedAtUtc: row.updated_at_utc,
+      resolution: row.state === "resolved" && row.resolution_action && row.resolution_at_utc
+        ? Object.freeze({
+            action: row.resolution_action,
+            occurredAtUtc: row.resolution_at_utc,
+          })
+        : null,
       allowedActions: allowedActions(row, openPositionConfirmation !== null),
       executions,
       flaggedStatementRow: flaggedStatementRow(row),

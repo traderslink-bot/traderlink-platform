@@ -184,7 +184,7 @@ function executionOptionLabel(
   return `${source} · ${execution.symbol} · ${executed} · ${execution.side} ${displayDecimal(execution.quantityDecimal)} @ ${displayDecimal(execution.priceDecimal)}`;
 }
 
-type DataDecisionsView = "trades" | "statement-issues" | "statement-details";
+type DataDecisionsView = "trades" | "statement-issues" | "statement-details" | "history";
 type ConfirmedOpenPosition = Readonly<{
   expectedRevision: number | null;
   positionRef: string;
@@ -280,6 +280,70 @@ function statementClassificationLabel(
     needs_correction: "Needs a look",
   };
   return labels[value];
+}
+
+function resolutionLabel(action: JournalDecisionAction): string {
+  return ACTION_LABELS[action] ?? "Updated this decision";
+}
+
+function displayTimestamp(value: string): string {
+  return value.replace("T", " ").replace(".000Z", " UTC");
+}
+
+function ResolvedDecisionCard({
+  item,
+}: {
+  item: JournalDataDecisionItem;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const resolution = item.resolution;
+  return (
+    <DashboardPanel title={issueTitle(item.issueCode)}>
+      <Stack spacing={1.5}>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" } }}>
+          {item.symbol ? <Chip label={`${item.symbol}${item.currency ? ` · ${item.currency}` : ""}`} size="small" variant="outlined" /> : null}
+          <Chip color="success" label="Reviewed" size="small" />
+        </Stack>
+        <Typography variant="body2">
+          {resolution ? `${resolutionLabel(resolution.action)} · ${displayTimestamp(resolution.occurredAtUtc)}` : "This decision was reviewed."}
+        </Typography>
+        <Button
+          aria-expanded={expanded}
+          onClick={() => setExpanded((current) => !current)}
+          sx={{ alignSelf: "flex-start" }}
+          variant="outlined"
+        >
+          {expanded ? "Hide original details" : "View original details"}
+        </Button>
+        {expanded ? (
+          <Stack spacing={1.5}>
+            {item.flaggedStatementRow ? (
+              <Box>
+                <Typography sx={{ fontWeight: 800, mb: 0.5 }} variant="subtitle2">Original statement row</Typography>
+                <Box sx={{ bgcolor: "action.hover", borderRadius: 1, px: 1.5, py: 1 }}>
+                  <Typography variant="body2">
+                    Row {item.flaggedStatementRow.recordOrdinal}
+                    {item.flaggedStatementRow.sectionName ? ` · ${item.flaggedStatementRow.sectionName}` : ""}
+                  </Typography>
+                  <Typography color="text.secondary" variant="body2">
+                    {item.flaggedStatementRow.fields.join(" · ") || "The imported values could not be read."}
+                  </Typography>
+                </Box>
+              </Box>
+            ) : null}
+            {item.executions.length > 0 ? (
+              <Box>
+                <Typography sx={{ fontWeight: 800, mb: 0.5 }} variant="subtitle2">Executions used by this trade</Typography>
+                <TableContainer sx={{ maxHeight: 280 }}><Table size="small" stickyHeader><TableHead><TableRow><TableCell>Source</TableCell><TableCell>Executed</TableCell><TableCell>Side</TableCell><TableCell align="right">Shares</TableCell><TableCell align="right">Price</TableCell></TableRow></TableHead><TableBody>{item.executions.map((execution) => (
+                  <TableRow key={execution.executionId}><TableCell>{execution.sourceLabel ?? "Execution"}</TableCell><TableCell>{displayTimestamp(execution.executedAtUtc)}</TableCell><TableCell>{execution.side}</TableCell><TableCell align="right">{displayDecimal(execution.quantityDecimal)}</TableCell><TableCell align="right">{displayDecimal(execution.priceDecimal)}</TableCell></TableRow>
+                ))}</TableBody></Table></TableContainer>
+              </Box>
+            ) : null}
+          </Stack>
+        ) : null}
+      </Stack>
+    </DashboardPanel>
+  );
 }
 
 function StatementRows({
@@ -837,6 +901,7 @@ export function JournalDataDecisionsClient({
         <Button onClick={() => setView("trades")} variant={view === "trades" ? "contained" : "outlined"}>Trades needing a decision</Button>
         <Button onClick={() => setView("statement-issues")} variant={view === "statement-issues" ? "contained" : "outlined"}>Statement issues</Button>
         <Button onClick={() => setView("statement-details")} variant={view === "statement-details" ? "contained" : "outlined"}>Statement details</Button>
+        <Button onClick={() => setView("history")} variant={view === "history" ? "contained" : "outlined"}>Review history</Button>
       </Stack>
       {notice ? <Alert severity="success">{notice}</Alert> : null}
       {openPositionToClassify ? (
@@ -876,13 +941,12 @@ export function JournalDataDecisionsClient({
           statement={selectedStatement}
         />
       ) : null}
-      {view === "trades" && resolved.length > 0 ? (
-        <DashboardPanel title="Resolved decisions">
-          <TableContainer><Table size="small"><TableHead><TableRow><TableCell>Issue</TableCell><TableCell>Ticker</TableCell><TableCell>Updated</TableCell></TableRow></TableHead><TableBody>{resolved.slice(0, 100).map((item) => (
-            <TableRow key={item.decisionId}><TableCell>{issueTitle(item.issueCode)}</TableCell><TableCell>{item.symbol ?? "Account-wide"}</TableCell><TableCell>{item.updatedAtUtc.replace("T", " ").replace(".000Z", " UTC")}</TableCell></TableRow>
-          ))}</TableBody></Table></TableContainer>
-        </DashboardPanel>
+      {view === "history" && resolved.length === 0 ? (
+        <Alert severity="info">There are no reviewed decisions for this account yet.</Alert>
       ) : null}
+      {view === "history" ? resolved.map((item) => (
+        <ResolvedDecisionCard item={item} key={item.decisionId} />
+      )) : null}
     </DashboardPage>
   );
 }
