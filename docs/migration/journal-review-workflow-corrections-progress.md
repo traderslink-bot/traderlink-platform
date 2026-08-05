@@ -7,6 +7,22 @@ visual review.
 
 **Plan:** [Journal Review Workflow Corrections Plan](journal-review-workflow-corrections-plan.md)
 
+**Current focused work:** [Cooldown After Loss Rule Progress](cooldown-after-loss-rule-progress.md)
+
+## 2026-08-05 Cooldown after a loss
+
+**Status:** Implemented locally; owner visual review and focused verification
+pending.
+
+- The owner approved the visible statement: “Wait after a completed losing
+  trade before entering another Day trade.”
+- The trader chooses the wait time; the Rules library and add-rule form do not
+  suggest a duration.
+- Automatic results will be calculated only from eligible completed Day trades:
+  Followed, Broken or N/A for the affected trade when required facts are
+  unavailable.
+- No test suite ran during this design-first pass, at the owner’s direction.
+
 ## 2026-08-04 Factual Day-trade analytics classification
 
 **Status:** Implemented locally; focused verification pending under the

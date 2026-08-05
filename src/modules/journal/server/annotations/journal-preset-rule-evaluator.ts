@@ -93,6 +93,11 @@ function configuredCount(rule: JournalRuleRecord, key: string): number | null {
   return value.toNumber();
 }
 
+function timestampMilliseconds(value: string): number | null {
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function resultForTrades(
   ruleId: string,
   trades: readonly EligibleTrade[],
@@ -168,6 +173,38 @@ function evaluateTemplate(
       return entrySeconds === null ? "n/a" : entrySeconds >= cutoffSeconds
         ? "broken"
         : "followed";
+    });
+  }
+
+  if (rule.templateKey === "cooldown_after_loss") {
+    const cooldownMinutes = configuredCount(rule, "cooldownMinutes");
+    if (cooldownMinutes === null) {
+      return resultForTrades(rule.ruleId, applicable, () => "n/a");
+    }
+    const cooldownMilliseconds = cooldownMinutes * 60 * 1000;
+    return resultForTrades(rule.ruleId, applicable, (trade) => {
+      const entryAt = timestampMilliseconds(trade.entryAtUtc);
+      if (entryAt === null) return "n/a";
+      const earlierTrades = applicable.filter((candidate) => {
+        if (candidate.roundTripId === trade.roundTripId) return false;
+        const exitAt = timestampMilliseconds(candidate.exitAtUtc);
+        return exitAt !== null && exitAt <= entryAt;
+      });
+      for (const earlierTrade of earlierTrades) {
+        const exitAt = timestampMilliseconds(earlierTrade.exitAtUtc);
+        if (exitAt === null) continue;
+        if (earlierTrade.netPnlDecimal === null) {
+          if (entryAt < exitAt + cooldownMilliseconds) return "n/a";
+          continue;
+        }
+        if (
+          decimal(earlierTrade.netPnlDecimal).lessThan(0) &&
+          entryAt < exitAt + cooldownMilliseconds
+        ) {
+          return "broken";
+        }
+      }
+      return "followed";
     });
   }
 

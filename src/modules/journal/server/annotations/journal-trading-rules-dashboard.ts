@@ -102,6 +102,16 @@ const JOURNAL_RULE_TEMPLATE_DEFINITIONS = [
       limitationSummary: "Requires complete entry-price and currency facts.",
     },
     {
+      templateId: "cooldown_after_loss",
+      label: "Cooldown after a loss",
+      description: "Wait after a completed losing trade before entering another Day trade.",
+      category: "trade",
+      scope: "trade",
+      parameters: [parameter("cooldownMinutes", "Wait time", "positive_integer", "minutes", "1440")],
+      exampleConfiguration: { cooldownMinutes: "" },
+      limitationSummary: "Requires completed trade P/L and exact entry and exit times.",
+    },
+    {
       templateId: "maximum_attempts_per_ticker",
       label: "Maximum ticker attempts per day",
       description: "Review flat-to-flat attempts after the selected per-ticker limit.",

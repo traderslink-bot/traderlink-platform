@@ -140,6 +140,9 @@ function configurationLabel(
 }
 
 function exampleLabel(template: TradingRulesTemplateView): string {
+  if (Object.values(template.exampleConfiguration).some((value) => value.trim().length === 0)) {
+    return "Choose your wait time when you add this rule.";
+  }
   const configuration = configurationLabel(
     template,
     template.exampleConfiguration,

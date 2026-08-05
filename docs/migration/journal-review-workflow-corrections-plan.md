@@ -373,6 +373,8 @@ or generic opening-inventory actions.
 
 ### Correction 10: Trading Rules catalog revision
 
+**Progress record:** [Cooldown After Loss Rule Progress](cooldown-after-loss-rule-progress.md)
+
 - Remove the four permanently retired presets from the catalog, rule chooser,
   validation/evaluation registry and all preset-specific UI copy.
 - Add **Stop after a daily realized gain limit** with a required positive exact
@@ -385,6 +387,22 @@ or generic opening-inventory actions.
 - Update catalog-wide validation and focused lifecycle coverage for the revised
   catalog before final implementation review.
 
+#### Owner decision — 2026-08-05
+
+The owner explicitly supersedes the previous retirement only for this new,
+trader-configured preset:
+
+- Add **Cooldown after a loss** with the visible statement: “Wait after a
+  completed losing trade before entering another Day trade.”
+- The trader chooses a required whole-number wait time in minutes. The product
+  must not suggest, prefill or fall back to a duration.
+- The preset automatically marks a later eligible Day-trade entry **Broken**
+  when it begins before the selected wait time has elapsed after a completed
+  losing trade. It marks the entry **Followed** otherwise.
+- If the relevant completed-trade P/L or entry/exit time cannot be confirmed,
+  only that affected result is **N/A**. The product never guesses or asks the
+  trader to manually choose the result.
+
 #### Automatic preset-evaluation contract — owner-approved 2026-08-04
 
 - Presets evaluate only confirmed, eligible Day trades from the canonical Journal
@@ -394,7 +412,7 @@ or generic opening-inventory actions.
 
   | Group | Presets |
   | --- | --- |
-  | Trade rules | Avoid an entry-price range; No new trades after a selected time |
+  | Trade rules | Avoid an entry-price range; Cooldown after a loss; No new trades after a selected time |
   | Trade + day rules | Maximum ticker attempts per day; Stop a ticker after losing attempts |
   | Day rules | Maximum completed trades per day; Stop after consecutive losses; Stop after a daily realized loss limit; Stop after a daily realized gain limit; Stop after a realized profit giveback |
 

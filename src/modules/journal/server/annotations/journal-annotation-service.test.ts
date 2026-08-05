@@ -467,11 +467,16 @@ FROM journal_rule_lifecycle_events WHERE rule_id = ?`).get(created.ruleId))
       context.first.scope.accountId,
     );
 
+    const configurationForLifecycleTest = (template: typeof JOURNAL_RULE_TEMPLATE_CATALOG[number]) =>
+      template.templateId === "cooldown_after_loss"
+        ? { cooldownMinutes: "20" }
+        : { ...template.exampleConfiguration };
+
     for (const template of JOURNAL_RULE_TEMPLATE_CATALOG) {
       mutateJournalTradingRules(context.service, context.first.scope, {
         action: "create",
         templateId: template.templateId,
-        configuration: { ...template.exampleConfiguration },
+        configuration: configurationForLifecycleTest(template),
       });
     }
 
@@ -487,7 +492,7 @@ FROM journal_rule_lifecycle_events WHERE rule_id = ?`).get(created.ruleId))
         action: "revise",
         expectedRevision: original.revision,
         ruleInstanceId: original.ruleInstanceId,
-        configuration: { ...original.template.exampleConfiguration },
+        configuration: configurationForLifecycleTest(original.template),
       });
       let current = readJournalTradingRulesDashboard(
         context.service,
