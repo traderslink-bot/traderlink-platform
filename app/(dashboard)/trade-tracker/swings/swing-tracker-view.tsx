@@ -100,51 +100,64 @@ function SwingCard({
       sx={{ borderColor: active ? "primary.light" : "divider", scrollMarginTop: 96 }}
       variant="outlined"
     >
-      <Box sx={{ p: { xs: 2, md: 2.25 } }}>
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          spacing={{ xs: 1.25, md: 2 }}
-          sx={{ alignItems: { md: "center" }, justifyContent: "space-between" }}
-        >
-          <Stack direction="row" spacing={1.25} sx={{ alignItems: "center", minWidth: 0 }}>
-            <Chip color={active ? "primary" : "default"} label={active ? "Active swing" : "Completed swing"} size="small" />
-            <Typography component="h3" sx={{ fontWeight: 900, lineHeight: 1 }} variant="h4">
-              {position.symbol}
-            </Typography>
-            <Chip label={position.direction === "long" ? "Long" : "Short"} size="small" variant="outlined" />
-          </Stack>
-          <Typography color="text.secondary" variant="body2">
-            Opened {timestamp(position.openedAtUtc, position.timezone)}
-          </Typography>
-        </Stack>
-
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "240px minmax(0, 1fr)" },
+        }}
+      >
         <Box
           sx={{
-            alignItems: { md: "center" },
-            display: "grid",
-            gap: { xs: 1.5, md: 2 },
-            gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(120px, 1fr)) auto" },
-            mt: 1.75,
+            bgcolor: active ? "rgba(1, 30, 86, 0.06)" : "action.hover",
+            borderBottom: { xs: 1, md: 0 },
+            borderColor: "divider",
+            borderRight: { md: 1 },
+            p: { xs: 2, md: 2.5 },
           }}
         >
+          <Typography color="primary.main" sx={{ display: "block", fontWeight: 850 }} variant="overline">
+            {active ? "Active swing" : "Completed swing"}
+          </Typography>
+          <Typography component="h3" sx={{ fontWeight: 900 }} variant="h4">
+            {position.symbol}
+          </Typography>
+          <Chip
+            label={position.direction === "long" ? "Long" : "Short"}
+            size="small"
+            sx={{ mt: 1 }}
+            variant="outlined"
+          />
+          <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">
+            Opened {timestamp(position.openedAtUtc, position.timezone)}
+          </Typography>
+        </Box>
+
+        <Box sx={{ p: { xs: 2, md: 2.5 } }}>
           <Box
-            sx={{ gridColumn: { xs: "auto", md: "auto" } }}
+            sx={{
+              display: "grid",
+              gap: 2,
+              gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(150px, 1fr))" },
+            }}
           >
-            <Typography color="text.secondary" variant="caption">Remaining shares</Typography>
-            <Typography sx={{ fontWeight: 850, lineHeight: 1.2 }} variant="h6">{decimal(position.remainingQuantityDecimal)}</Typography>
+            <Box>
+              <Typography color="text.secondary" variant="caption">Remaining shares</Typography>
+              <Typography sx={{ fontWeight: 850 }} variant="h6">{decimal(position.remainingQuantityDecimal)}</Typography>
+            </Box>
+            <Box>
+              <Typography color="text.secondary" variant="caption">Average entry</Typography>
+              <Typography sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 850 }} variant="h6">
+                {price(position.averageEntryPriceDecimal)}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography color="text.secondary" variant="caption">Days held</Typography>
+              <Typography sx={{ fontWeight: 850 }} variant="h6">{held}</Typography>
+            </Box>
           </Box>
-          <Box>
-            <Typography color="text.secondary" variant="caption">Average entry</Typography>
-            <Typography sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 850, lineHeight: 1.2 }} variant="h6">
-              {price(position.averageEntryPriceDecimal)}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography color="text.secondary" variant="caption">Days held</Typography>
-            <Typography sx={{ fontWeight: 850, lineHeight: 1.2 }} variant="h6">{held}</Typography>
-          </Box>
+
           {active ? (
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={0.75} sx={{ gridColumn: { xs: "1 / -1", md: "auto" } }}>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mt: 2 }}>
               <DashboardSecondaryAction href={actionHref(position, "record")}>Add execution</DashboardSecondaryAction>
               <PositionStyleControl
                 closed={false}
@@ -156,9 +169,8 @@ function SwingCard({
               />
             </Stack>
           ) : null}
-        </Box>
 
-          <Divider sx={{ my: 1.75 }} />
+          <Divider sx={{ my: 2.5 }} />
           <Typography sx={{ fontWeight: 850 }} variant="subtitle2">Tags</Typography>
           <SwingAnnotationEditor
             availableTags={position.availableTags}
@@ -169,7 +181,7 @@ function SwingCard({
             tags={position.tags}
           />
 
-          <Divider sx={{ my: 1.75 }} />
+          <Divider sx={{ my: 2.5 }} />
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}>
             <Typography sx={{ fontWeight: 850 }} variant="subtitle2">Saved notes</Typography>
             {active ? (
@@ -190,7 +202,7 @@ function SwingCard({
             </Stack>
           )}
           {editingNoteDate ? (
-            <Box sx={{ mt: 1 }}>
+            <Box sx={{ mt: 1.5 }}>
               <SwingNoteEditor
                 expectedAccountSelectionRef={expectedAccountSelectionRef}
                 note={selectedNote}
@@ -200,13 +212,13 @@ function SwingCard({
             </Box>
           ) : null}
 
-          <Divider sx={{ my: 1.75 }} />
+          <Divider sx={{ my: 2.5 }} />
           <Typography sx={{ fontWeight: 850 }} variant="subtitle2">Executions</Typography>
           <Stack divider={<Divider flexItem />} sx={{ mt: 1 }}>
             {position.executions.map((execution, index) => (
               <Box
                 key={`${execution.executedAtUtc}:${index}`}
-                sx={{ alignItems: { sm: "center" }, display: "grid", gap: 0.75, gridTemplateColumns: { xs: "1fr 1fr", sm: "minmax(150px, 1.4fr) 72px 100px 90px 90px auto" }, py: 0.75 }}
+                sx={{ alignItems: { sm: "center" }, display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr 1fr", sm: "minmax(150px, 1.4fr) 72px 100px 90px 90px auto" }, py: 1.25 }}
               >
                 <Typography color="text.secondary" variant="body2">{timestamp(execution.executedAtUtc, position.timezone)}</Typography>
                 <Typography sx={{ textTransform: "capitalize" }} variant="body2">{execution.side}</Typography>
@@ -227,7 +239,8 @@ function SwingCard({
             ))}
           </Stack>
 
-          <Divider sx={{ mb: 0, mt: 1.75 }} />
+          <Divider sx={{ my: 2.5 }} />
+        </Box>
       </Box>
     </Card>
   );
