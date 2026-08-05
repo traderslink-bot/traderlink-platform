@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 
-import { AnalyticsServerPage } from "../../../journal-analytics-server-page";
+import { TimingAnalyticsPage } from "./timing-analytics-page";
 
 export const metadata: Metadata = {
-  title: "Timing | Trader Intelligence",
+  title: "Timing | TraderLink",
 };
 
 export default function TimingPage() {
-  return <AnalyticsServerPage page="timing" />;
+  return <TimingAnalyticsPage />;
 }

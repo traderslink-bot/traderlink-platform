@@ -44,6 +44,8 @@ const supportedGroupings = new Set<JournalAnalyticsGrouping>([
   "entry_weekday",
   "instrument",
   "entry_time_bucket",
+  "exit_time_bucket",
+  "entry_session",
   "direction",
   "account",
   "provenance",

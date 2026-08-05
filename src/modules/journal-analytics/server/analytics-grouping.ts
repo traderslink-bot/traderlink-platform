@@ -75,6 +75,28 @@ function groupDescriptor(
         key: `${String(row.entryLocal.hour).padStart(2, "0")}:${String(bucketMinute).padStart(2, "0")}`,
         label: `${String(row.entryLocal.hour).padStart(2, "0")}:${String(bucketMinute).padStart(2, "0")}`,
       });
+    case "exit_time_bucket": {
+      const bucketMinute = Math.floor(
+        row.closeLocal.minute / entryTimeBucketMinutes,
+      ) * entryTimeBucketMinutes;
+      return Object.freeze({
+        key: `${String(row.closeLocal.hour).padStart(2, "0")}:${String(bucketMinute).padStart(2, "0")}`,
+        label: `${String(row.closeLocal.hour).padStart(2, "0")}:${String(bucketMinute).padStart(2, "0")}`,
+      });
+    }
+    case "entry_session": {
+      const minuteOfDay = row.entryLocal.hour * 60 + row.entryLocal.minute;
+      if (minuteOfDay >= 4 * 60 && minuteOfDay < 9 * 60 + 30) {
+        return Object.freeze({ key: "premarket", label: "Premarket" });
+      }
+      if (minuteOfDay >= 9 * 60 + 30 && minuteOfDay < 16 * 60) {
+        return Object.freeze({ key: "regular_hours", label: "Regular Hours" });
+      }
+      if (minuteOfDay >= 16 * 60 && minuteOfDay < 20 * 60) {
+        return Object.freeze({ key: "after_hours", label: "After Hours" });
+      }
+      return Object.freeze({ key: "overnight", label: "Overnight" });
+    }
     case "closing_iso_week": {
       const value = isoWeek(row.closeLocal.localDate);
       return Object.freeze({ key: value, label: value });

@@ -53,6 +53,8 @@ export type JournalAnalyticsGrouping =
   | "closing_year"
   | "entry_weekday"
   | "entry_time_bucket"
+  | "exit_time_bucket"
+  | "entry_session"
   | "instrument"
   | "direction"
   | "account"
