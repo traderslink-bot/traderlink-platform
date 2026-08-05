@@ -1346,10 +1346,7 @@ export function DaySessionView({
     (count, ticker) => count + ticker.roundTrips.length,
     0,
   );
-  const tickerCount = new Set([
-    ...data.tickers.map((ticker) => ticker.stableInstrumentKey),
-    ...data.openPositions.map((position) => position.stableInstrumentKey),
-  ]).size;
+  const tickerCount = data.tickers.length;
   const reviewingPastDay = data.date !== data.week.currentSessionDate;
   const dayPresetRules = rules.filter(
     (rule) => rule.applicability === "day" && !rule.custom,
