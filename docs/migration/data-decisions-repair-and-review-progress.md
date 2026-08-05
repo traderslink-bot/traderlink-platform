@@ -1,6 +1,6 @@
 # Data Decisions Repair and Review Progress
 
-**Status:** Active. Slices 0 through 3 are complete; Slice 4 is in progress.
+**Status:** Active. Slices 0 through 4 are complete; Slice 5 is in progress.
 
 **Controlling plan:** [Data Decisions Repair and Review Plan](data-decisions-repair-and-review-plan.md)
 
@@ -23,8 +23,8 @@ workflows; it must not create a second ledger or weaken the integrity contract.
 - [x] Slice 1: repair-first information architecture
 - [x] Slice 2: row correction workflow
 - [x] Slice 3: scoped open-position workflow
-- [ ] Slice 4: duplicate, notice and history completion (in progress)
-- [ ] Slice 5: acceptance
+- [x] Slice 4: duplicate, notice and history completion
+- [ ] Slice 5: acceptance (in progress)
 
 ## Start boundary
 
@@ -118,3 +118,7 @@ database, process or deployment is changed by this page work.
   Each item records the trader's plain-language action and can reveal the
   original statement row and execution evidence without restoring an editable
   decision card.
+- Focused one-worker verification passed for exact re-import, trader-controlled
+  manual/broker duplicate choice and later-open-position scoping. The scoped
+  position test now explicitly asserts the approved confirmation-first action,
+  rather than the superseded raw position-fact correction flow.
