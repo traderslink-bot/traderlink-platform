@@ -15,7 +15,7 @@ export type CoachWeeklyAiReviewInput = Readonly<{
     weekReadyClosedCount: number;
     accountLegitimateOpenCount: number;
     accountNeedsDecisionCount: number;
-    pendingDataDecisionCount: number;
+    accountPendingDataDecisionCount: number;
   }>;
   summary: Readonly<{
     tradingDayCount: number;
@@ -24,6 +24,7 @@ export type CoachWeeklyAiReviewInput = Readonly<{
     winRatePercentDecimal: string | null;
   }>;
   currentFocuses: readonly Readonly<{
+    effectiveFromDate: string;
     tradingDate: string;
     revisionNumber: number;
     text: string;
@@ -44,6 +45,10 @@ export type CoachWeeklyAiReviewInput = Readonly<{
       direction: "long" | "short";
       openedAtUtc: string;
       closedAtUtc: string;
+      executionCount: number | null;
+      realizedGrossPnlDecimal: string | null;
+      holdingDurationMilliseconds: number | null;
+      tradingSession: "premarket" | "regular" | "after_hours" | null;
       netPnlDecimal: string | null;
       ruleReviews: CoachReflectionRuleReviewCounts;
       note: string | null;

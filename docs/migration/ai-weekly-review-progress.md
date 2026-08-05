@@ -12,6 +12,14 @@ Active. The product contract is in [AI Weekly Review Plan](ai-weekly-review-plan
   Journal Analytics, annotations and daily-review services.
 - Added an account-scoped daily-focus revision reader so every saved Current
   Focuses revision within the review week is available to the future prompt.
+- Corrected the weekly package to include holding duration when it can be
+  derived from the Journal's exact open/close timestamps. Execution count,
+  realized gross P/L and trading session remain explicitly unavailable because
+  the current Coach read contract does not expose those Journal facts.
+- Current Focuses now includes the value in effect at the start of the week and
+  only dated revisions actually recorded during the week. Carried-forward text
+  is marked with its effective week-start date and is not repeated as invented
+  daily edits.
 - Added trader-selected trade tags as contextual input. Tags are never treated
   as proof or a diagnosis.
 - Added the Vercel AI SDK and direct OpenAI provider dependencies. An ignored
@@ -72,3 +80,13 @@ conflict, never silently resolved by the review.
 - It exposed a scope-label ambiguity: account-wide coverage counts appeared
   beside weekly trade counts. The input contract now names week and account
   coverage separately before the final local review run.
+
+## Deferred dependency: prior issued-review context
+
+The weekly input package does not yet include the immediately preceding issued
+review. The current replacement has no account-scoped issued-review read
+contract or read service; the existing migration and schedule/storage pieces do
+not provide a safe immutable account-scoped read. Adding that dependency would
+require work in the issuance/storage boundary outside this correction's
+allowlist, so prior-review context remains deferred rather than guessed or
+loaded from another account.

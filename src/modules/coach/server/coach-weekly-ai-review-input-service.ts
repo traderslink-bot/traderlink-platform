@@ -9,6 +9,24 @@ import {
 } from "../contracts/weekly-ai-review-input-contracts";
 import { CoachReflectionService } from "./coach-reflection-service";
 
+function holdingDurationMilliseconds(
+  openedAtUtc: string,
+  closedAtUtc: string,
+): number | null {
+  const openedAt = Date.parse(openedAtUtc);
+  const closedAt = Date.parse(closedAtUtc);
+  if (!Number.isFinite(openedAt) || !Number.isFinite(closedAt)) return null;
+  const duration = closedAt - openedAt;
+  return Number.isSafeInteger(duration) && duration >= 0 ? duration : null;
+}
+
+function focusRevisionKey(focus: Readonly<{
+  tradingDate: string;
+  revisionNumber: number;
+}>): string {
+  return `${focus.tradingDate}:${focus.revisionNumber}`;
+}
+
 export class CoachWeeklyAiReviewInputService {
   constructor(
     private readonly reflections: CoachReflectionService,
@@ -30,9 +48,31 @@ export class CoachWeeklyAiReviewInputService {
     const account = narrowWorkspaceAccessToAccount(scope, accountId);
     const focusRevisions = this.annotations.listDailyFocusRevisions(
       account,
-      reflection.startDate,
+      "0000-01-01",
       reflection.endDate,
     );
+    const startingFocus = focusRevisions
+      .filter((focus) => focus.tradingDate <= reflection.startDate)
+      .at(-1) ?? null;
+    const datedFocusRevisions = focusRevisions.filter((focus) =>
+      focus.tradingDate >= reflection.startDate);
+    const currentFocuses = [
+      ...(startingFocus ? [Object.freeze({
+        effectiveFromDate: reflection.startDate,
+        tradingDate: startingFocus.tradingDate,
+        revisionNumber: startingFocus.revisionNumber,
+        text: startingFocus.currentFocuses,
+      })] : []),
+      ...datedFocusRevisions
+        .filter((focus) => !startingFocus ||
+          focusRevisionKey(focus) !== focusRevisionKey(startingFocus))
+        .map((focus) => Object.freeze({
+          effectiveFromDate: focus.tradingDate,
+          tradingDate: focus.tradingDate,
+          revisionNumber: focus.revisionNumber,
+          text: focus.currentFocuses,
+        })),
+    ];
     const days = reflection.days.map((day) => {
       const dailyNote = this.annotations.readDailyNote(account, day.date);
       const notesByRoundTrip = this.annotations.readRoundTripNotes(
@@ -59,6 +99,16 @@ export class CoachWeeklyAiReviewInputService {
           direction: trade.direction,
           openedAtUtc: trade.openedAtUtc,
           closedAtUtc: trade.closedAtUtc,
+          // The current Journal reflection read exposes timestamps but not the
+          // underlying execution allocations, gross P/L, or market session.
+          // Keep those facts unavailable instead of reconstructing them here.
+          executionCount: null,
+          realizedGrossPnlDecimal: null,
+          holdingDurationMilliseconds: holdingDurationMilliseconds(
+            trade.openedAtUtc,
+            trade.closedAtUtc,
+          ),
+          tradingSession: null,
           netPnlDecimal: trade.netPnlDecimal,
           ruleReviews: trade.ruleReviews,
           note: notesByRoundTrip[trade.roundTripId]?.tradeNote || null,
@@ -79,10 +129,10 @@ export class CoachWeeklyAiReviewInputService {
         currency: reflection.currency,
       }),
       coverage: Object.freeze({
-        weekReadyClosedCount: reflection.summary.readyClosedTradeCount,
+        weekReadyClosedCount: days.reduce((count, day) => count + day.trades.length, 0),
         accountLegitimateOpenCount: reflection.coverage.legitimateOpenCount,
         accountNeedsDecisionCount: reflection.coverage.needsDecisionCount,
-        pendingDataDecisionCount: reflection.summary.accountPendingDataDecisionCount,
+        accountPendingDataDecisionCount: reflection.summary.accountPendingDataDecisionCount,
       }),
       summary: Object.freeze({
         tradingDayCount: reflection.summary.tradingDayCount,
@@ -90,11 +140,7 @@ export class CoachWeeklyAiReviewInputService {
         netPnlDecimal: reflection.summary.netPnlDecimal,
         winRatePercentDecimal: reflection.summary.winRatePercentDecimal,
       }),
-      currentFocuses: Object.freeze(focusRevisions.map((focus) => Object.freeze({
-        tradingDate: focus.tradingDate,
-        revisionNumber: focus.revisionNumber,
-        text: focus.currentFocuses,
-      }))),
+      currentFocuses: Object.freeze(currentFocuses),
       days: Object.freeze(days),
     });
   }
