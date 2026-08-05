@@ -309,6 +309,11 @@ through bounded snapshots.
   and credit-pack design are product decisions before public launch; AI Chat
   and automatic reviews should be gated by entitlement rather than made
   unbounded by default.
+- AI Chat may prepare an allowlisted Account Settings change, such as a weekly
+  review delivery day/time, as a visible proposed change. The trader confirms
+  it and the normal Account Settings command saves it; Chat never changes any
+  setting invisibly or changes login, billing, ownership, privacy, or admin
+  controls.
 
 ### Journal Administration
 
@@ -375,6 +380,10 @@ once. The following sequence controls safe delivery:
 7. **Future analysis expansion:** only data-backed chart/candle or enhanced
    coaching capabilities after their market-data, product, cost, and privacy
    contracts are separately approved.
+8. **Rules evidence integration:** connect only the owner-approved saved
+   recommendation evidence from the [Preset Rule Recommendations
+   Plan](preset-rule-recommendations-plan.md). AI may explain a recommendation
+   but cannot create one or activate a rule itself.
 
 ## Verification and acceptance
 

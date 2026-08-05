@@ -104,10 +104,11 @@ financial values, a second execution store or a second Swing ledger.
   - Trade only the selected direction
   - Skip the next trade after an outcome
   - Wait after a losing trade
-- These four presets are permanently retired product decisions. Future rule
-  ideation, catalog expansion, migrations and compatibility work must not add
-  them back under the same wording or a substantially equivalent behavior
-  without a new explicit owner decision.
+- The owner later reconsidered this retirement direction. **Cooldown after a
+  loss** has been explicitly restored under its separate 2026-08-05 decision.
+  The remaining removed presets stay unavailable unless the owner explicitly
+  restores each one after a fresh product review; this plan no longer treats
+  their retirement as permanent.
 - Add the preset **Stop after a daily realized gain limit**. Its eventual
   implementation must use the selected account's configured trading-day
   boundary and exact realized gain from eligible closed trades; it must not
@@ -390,10 +391,12 @@ or generic opening-inventory actions.
 
 ### Correction 10: Trading Rules catalog revision
 
-**Progress record:** [Cooldown After Loss Rule Progress](cooldown-after-loss-rule-progress.md)
+**Progress records:** [Cooldown After Loss Rule Progress](cooldown-after-loss-rule-progress.md)
+and [Preset Rule Recommendations Progress](preset-rule-recommendations-progress.md)
 
-- Remove the four permanently retired presets from the catalog, rule chooser,
-  validation/evaluation registry and all preset-specific UI copy.
+- Keep the three remaining removed presets unavailable in the catalog, rule
+  chooser, validation/evaluation registry and UI until a separate owner
+  restoration decision. Cooldown after a loss is explicitly active.
 - Add **Stop after a daily realized gain limit** with a required positive exact
   monetary limit and account trading-day/timezone scope.
 - Evaluate it only against eligible closed-trade realized gain. Open positions,
@@ -403,6 +406,9 @@ or generic opening-inventory actions.
   preset as available for new activation.
 - Update catalog-wide validation and focused lifecycle coverage for the revised
   catalog before final implementation review.
+- The separate [Preset Rule Recommendations Plan](preset-rule-recommendations-plan.md)
+  governs deterministic activity-based rule suggestions; it does not restore a
+  removed preset or activate any rule automatically.
 
 #### Owner decision — 2026-08-05
 
