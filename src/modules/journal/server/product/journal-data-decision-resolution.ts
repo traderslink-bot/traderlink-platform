@@ -65,6 +65,23 @@ function idempotencyKey(
   ]), "utf8").digest("hex");
 }
 
+function decisionReasonCode(
+  action: string,
+  body: JournalDecisionProductRequest,
+): string {
+  if (action !== "exclude_execution") return "trader_data_decision";
+  return oneOf(
+    requiredString(body, "exclusionReason"),
+    [
+      "not_a_trade_execution",
+      "duplicate_execution",
+      "broker_correction_or_reversal",
+      "corporate_action",
+    ] as const,
+    "exclusionReason",
+  );
+}
+
 function executionEvidence(
   item: JournalDataDecisionItem,
   body: JournalDecisionProductRequest,
@@ -170,6 +187,9 @@ export function createJournalDataDecisionResolution(
       action: action as "exclude_execution" | "restore_execution" | "keep_distinct",
       executionId: evidence.executionId,
       expectedCurrentVersionId: evidence.currentVersionId,
+      ...(action === "exclude_execution"
+        ? { reasonCode: decisionReasonCode(action, body) }
+        : {}),
     });
   }
   if (action === "merge_supported_duplicate") {

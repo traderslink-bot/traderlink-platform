@@ -75,6 +75,7 @@ type Draft = Readonly<{
   priceDecimal: string;
   feesDecimal: string;
   feeSignConvention: "broker_reported_signed" | "cash_effect";
+  exclusionReason: "not_a_trade_execution" | "duplicate_execution" | "broker_correction_or_reversal" | "corporate_action";
 }>;
 
 function sourceDateTime(
@@ -145,6 +146,7 @@ function initialDraft(item: JournalDataDecisionItem): Draft {
     feeSignConvention: firstExecution?.feeSignConvention === "cash_effect"
       ? "cash_effect"
       : "broker_reported_signed",
+    exclusionReason: "not_a_trade_execution",
   });
 }
 
@@ -529,6 +531,9 @@ function DecisionCard({
       if (submittedDraft.action === "set_execution_order") {
         body.sameTimestampSequence = Number(submittedDraft.sameTimestampSequence);
       }
+      if (submittedDraft.action === "exclude_execution") {
+        body.exclusionReason = submittedDraft.exclusionReason;
+      }
       if (submittedDraft.action === "merge_supported_duplicate") {
         body.duplicateExecutionId = submittedDraft.executionId;
         body.retainedExecutionId = submittedDraft.retainedExecutionId;
@@ -742,7 +747,20 @@ function DecisionCard({
         ) : null}
 
         {draft.action === "exclude_execution" ? (
-          <Alert severity="warning">The original execution remains in history but is excluded from active trade reconstruction after you save.</Alert>
+          <Stack spacing={1.5}>
+            <Alert severity="warning">The original execution remains in history but is excluded from active trade reconstruction after you save.</Alert>
+            <TextField
+              label="Why should this row not be used as a trade execution?"
+              onChange={(event) => update("exclusionReason", event.target.value as Draft["exclusionReason"])}
+              select
+              value={draft.exclusionReason}
+            >
+              <MenuItem value="not_a_trade_execution">It is not a trade execution</MenuItem>
+              <MenuItem value="duplicate_execution">It is a duplicate execution</MenuItem>
+              <MenuItem value="broker_correction_or_reversal">It is a broker correction or reversal</MenuItem>
+              <MenuItem value="corporate_action">It is a corporate action</MenuItem>
+            </TextField>
+          </Stack>
         ) : null}
 
         {draft.action === "keep_distinct" ? (

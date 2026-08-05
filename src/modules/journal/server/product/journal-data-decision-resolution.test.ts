@@ -46,6 +46,8 @@ function item(
     state: "pending",
     issueCode: "test_issue",
     effectCode: "position_chain_unavailable",
+    question: "What does your broker statement show?",
+    impactSummary: "This ticker stays out of confirmed round trips until you decide.",
     targetKind: "chain",
     instrumentRef: INSTRUMENT_ID,
     symbol: "TEST",
@@ -71,6 +73,7 @@ function item(
         feeCurrency: "USD",
         feeSignConvention: "broker_reported_signed",
         currentState: "needs_decision",
+        sourceLabel: null,
       }),
       Object.freeze({
         executionId: EXECUTION_B,
@@ -87,6 +90,7 @@ function item(
         feeCurrency: "USD",
         feeSignConvention: "broker_reported_signed",
         currentState: "needs_decision",
+        sourceLabel: null,
       }),
     ]),
     positionFacts: Object.freeze([Object.freeze({
@@ -133,6 +137,7 @@ describe("Journal Data Decisions product resolution", () => {
       }, loadExecution),
       createJournalDataDecisionResolution(item(["exclude_execution"]), {
         action: "exclude_execution",
+        exclusionReason: "not_a_trade_execution",
         executionId: EXECUTION_A,
       }, loadExecution),
       createJournalDataDecisionResolution(item(["restore_execution"]), {

@@ -114,6 +114,10 @@ database, process or deployment is changed by this page work.
   keep them separate, or correct the manual entry. Until then, the accepted
   manual execution remains active once and the provisional broker candidate is
   withheld.
+- Exceptional exclusion now requires a concise trader-selected category:
+  non-trade row, duplicate execution, broker correction/reversal or corporate
+  action. It remains a reversible, evidence-preserving decision rather than a
+  source-row deletion.
 - Review history is now a separate page view, not part of the pending queue.
   Each item records the trader's plain-language action and can reveal the
   original statement row and execution evidence without restoring an editable
