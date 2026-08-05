@@ -3,7 +3,10 @@ import { createHash } from "node:crypto";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { deriveJournalAccountSelectionRef } from "@/src/modules/platform/contracts/journal-account-selection";
 import { resolvePlatformDatabaseConfig } from "@/src/modules/platform/server/database/platform-database-config";
-import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
+import {
+  createCanonicalUtcTimestamp,
+  platformFailure,
+} from "@/src/modules/platform/server/database/platform-migration-contract";
 import type { JournalScopedImportPreview } from "../../contracts/journal-import-contracts";
 import {
   type JournalGenericStatementMappingContract,
@@ -13,11 +16,17 @@ import {
   resolveJournalEvidenceVaultBoundary,
   promoteJournalEvidenceObject,
 } from "../imports/journal-evidence-vault";
+import { loadJournalPrivacyHmacConfiguration } from "../imports/journal-import-service";
+import { JournalImportAttemptRepository } from "../administration/journal-import-attempt-repository";
 import { withStagedJournalUpload } from "../imports/journal-upload-staging";
 import {
   withWritableJournalIntegrityRuntime,
   type JournalIntegrityRuntime,
 } from "../journal-integrity-runtime";
+import {
+  canonicalJournalImportPreviewPayload,
+  createJournalImportPreviewAuthority,
+} from "./journal-import-preview-authority";
 
 export type JournalImportMappingPreview = Readonly<{
   adapter: string;
@@ -27,11 +36,10 @@ export type JournalImportMappingPreview = Readonly<{
   mappingVersion: string;
   parserVersion: string;
   accountLabel: string;
-  accountRef: string;
   accountSelectionRef: string;
   sourceIdentityConfirmationRequired: boolean;
-  sourceFileSha256: string;
-  sourceFileSizeBytes: number;
+  previewRef: string;
+  previewExpiresAtUtc: string;
   sourceTimezone: string;
   statementPeriodStartDate: string | null;
   statementPeriodEndDate: string | null;
@@ -54,6 +62,15 @@ export type JournalImportMappingPreview = Readonly<{
   }>[];
 }>;
 
+type JournalImportPrivateMappingPreview = Omit<
+  JournalImportMappingPreview,
+  "previewRef" | "previewExpiresAtUtc"
+> & Readonly<{
+  accountRef: string;
+  sourceFileSha256: string;
+  sourceFileSizeBytes: number;
+}>;
+
 const IBKR_MAPPED_FIELDS = Object.freeze([
   Object.freeze({ source: "Account Information · Account", destination: "Journal trading account" }),
   Object.freeze({ source: "Statement · Period", destination: "Statement coverage period" }),
@@ -72,7 +89,7 @@ function safePreview(
   runtime: JournalIntegrityRuntime,
   scope: WorkspaceAccessScope,
   preview: JournalScopedImportPreview,
-): JournalImportMappingPreview {
+): JournalImportPrivateMappingPreview {
   if (!scope.activeAccountId || preview.accountId !== scope.activeAccountId) {
     platformFailure("TRADERLINK_JOURNAL_IMPORT_CONFLICT", {
       reason: "selected_account_mismatch",
@@ -127,7 +144,7 @@ function safeGenericPreview(
   preview: JournalScopedImportPreview,
   mapping: JournalGenericStatementMappingContract,
   mappingOrigin: "saved_exact_template" | "manual_mapping",
-): JournalImportMappingPreview {
+): JournalImportPrivateMappingPreview {
   if (!scope.activeAccountId || preview.accountId !== scope.activeAccountId) {
     platformFailure("TRADERLINK_JOURNAL_IMPORT_CONFLICT", {
       reason: "selected_account_mismatch",
@@ -181,17 +198,99 @@ function safeGenericPreview(
   });
 }
 
+function browserPreview(
+  scope: WorkspaceAccessScope,
+  preview: JournalImportPrivateMappingPreview,
+  attemptBindingSha256: string,
+): JournalImportMappingPreview {
+  const mappingContractSha256 = preview.mappingContract
+    ? createHash("sha256")
+      .update(`${JSON.stringify(preview.mappingContract)}\n`, "utf8")
+      .digest("hex")
+    : null;
+  const authority = createJournalImportPreviewAuthority(
+    loadJournalPrivacyHmacConfiguration(),
+  );
+  const confirmation = authority.issue(canonicalJournalImportPreviewPayload({
+    scope,
+    sourceFileSha256: preview.sourceFileSha256,
+    sourceFileSizeBytes: preview.sourceFileSizeBytes,
+    accountRef: preview.accountRef,
+    accountSelectionRef: preview.accountSelectionRef,
+    commitKind: preview.commitKind,
+    mappingVersion: preview.mappingVersion,
+    parserVersion: preview.parserVersion,
+    mappingContractSha256,
+    sourceTimezone: preview.sourceTimezone,
+    sourceIdentityConfirmationRequired: preview.sourceIdentityConfirmationRequired,
+    attemptBindingSha256,
+  }));
+  const {
+    accountRef: _accountRef,
+    sourceFileSha256: _sourceFileSha256,
+    sourceFileSizeBytes: _sourceFileSizeBytes,
+    ...safe
+  } = preview;
+  void _accountRef;
+  void _sourceFileSha256;
+  void _sourceFileSizeBytes;
+  return Object.freeze({ ...safe, ...confirmation });
+}
+
+function verifyPreviewRef(
+  scope: WorkspaceAccessScope,
+  preview: JournalImportPrivateMappingPreview,
+  previewRef: string,
+  attemptBindingSha256: string,
+): void {
+  const mappingContractSha256 = preview.mappingContract
+    ? createHash("sha256")
+      .update(`${JSON.stringify(preview.mappingContract)}\n`, "utf8")
+      .digest("hex")
+    : null;
+  const verified = createJournalImportPreviewAuthority(
+    loadJournalPrivacyHmacConfiguration(),
+  ).verify(previewRef, canonicalJournalImportPreviewPayload({
+    scope,
+    sourceFileSha256: preview.sourceFileSha256,
+    sourceFileSizeBytes: preview.sourceFileSizeBytes,
+    accountRef: preview.accountRef,
+    accountSelectionRef: preview.accountSelectionRef,
+    commitKind: preview.commitKind,
+    mappingVersion: preview.mappingVersion,
+    parserVersion: preview.parserVersion,
+    mappingContractSha256,
+    sourceTimezone: preview.sourceTimezone,
+    sourceIdentityConfirmationRequired: preview.sourceIdentityConfirmationRequired,
+    attemptBindingSha256,
+  }));
+  if (!verified) {
+    platformFailure("TRADERLINK_JOURNAL_IMPORT_SOURCE_EVIDENCE_MISMATCH", {
+      check: "opaque_preview_confirmation",
+    });
+  }
+}
+
 export function previewJournalIbkrUpload(
   scope: WorkspaceAccessScope,
-  input: Readonly<{ sourceBytes: Uint8Array; sourceTimezone: string }>,
+  input: Readonly<{
+    sourceBytes: Uint8Array;
+    sourceTimezone: string;
+    attemptBindingSha256: string;
+  }>,
 ): JournalImportMappingPreview {
-  return withWritableJournalIntegrityRuntime(scope, (runtime) => safePreview(
-    runtime,
+  return withWritableJournalIntegrityRuntime(scope, (runtime) => browserPreview(
     scope,
-    runtime.imports.previewIbkrForWorkspace(scope, {
-      ...input,
-      allowSelectedAccountIdentityConfirmation: true,
-    }),
+    safePreview(
+      runtime,
+      scope,
+      runtime.imports.previewIbkrForWorkspace(scope, {
+        sourceBytes: input.sourceBytes,
+        sourceTimezone: input.sourceTimezone,
+        allowSelectedAccountIdentityConfirmation: true,
+      }),
+    ),
+    input.attemptBindingSha256,
   ));
 }
 
@@ -201,21 +300,26 @@ export function previewJournalGenericMappedUpload(
     sourceBytes: Uint8Array;
     mapping: JournalGenericStatementMappingContract | unknown;
     mappingOrigin?: "saved_exact_template" | "manual_mapping";
+    attemptBindingSha256: string;
   }>,
 ): JournalImportMappingPreview {
   const mapping = parseJournalGenericStatementMappingContract(input.mapping);
   const accountId = scope.activeAccountId;
   if (!accountId) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
-  return withWritableJournalIntegrityRuntime(scope, (runtime) => safeGenericPreview(
-    runtime,
+  return withWritableJournalIntegrityRuntime(scope, (runtime) => browserPreview(
     scope,
-    runtime.imports.previewGenericMappedForWorkspace(scope, {
-      sourceBytes: input.sourceBytes,
-      accountId,
+    safeGenericPreview(
+      runtime,
+      scope,
+      runtime.imports.previewGenericMappedForWorkspace(scope, {
+        sourceBytes: input.sourceBytes,
+        accountId,
+        mapping,
+      }),
       mapping,
-    }),
-    mapping,
-    input.mappingOrigin ?? "manual_mapping",
+      input.mappingOrigin ?? "manual_mapping",
+    ),
+    input.attemptBindingSha256,
   ));
 }
 
@@ -224,6 +328,7 @@ export function previewJournalSavedGenericMappingUpload(
   input: Readonly<{
     sourceBytes: Uint8Array;
     structuralSignatures: readonly string[];
+    attemptBindingSha256: string;
   }>,
 ): JournalImportMappingPreview | null {
   const accountId = scope.activeAccountId;
@@ -235,16 +340,20 @@ export function previewJournalSavedGenericMappingUpload(
         structuralSignatureSha256,
       });
       if (!mapping) continue;
-      return safeGenericPreview(
-        runtime,
+      return browserPreview(
         scope,
-        runtime.imports.previewGenericMappedForWorkspace(scope, {
-          sourceBytes: input.sourceBytes,
-          accountId,
+        safeGenericPreview(
+          runtime,
+          scope,
+          runtime.imports.previewGenericMappedForWorkspace(scope, {
+            sourceBytes: input.sourceBytes,
+            accountId,
+            mapping,
+          }),
           mapping,
-        }),
-        mapping,
-        "saved_exact_template",
+          "saved_exact_template",
+        ),
+        input.attemptBindingSha256,
       );
     }
     return null;
@@ -256,8 +365,9 @@ export function commitJournalIbkrUpload(
   input: Readonly<{
     sourceBytes: Uint8Array;
     sourceTimezone: string;
-    confirmedSourceFileSha256: string;
-    confirmedAccountRef: string;
+    previewRef: string;
+    attemptBindingSha256: string;
+    attemptCorrelationSha256: string;
     confirmSourceIdentityLink: boolean;
   }>,
 ): Readonly<{
@@ -268,12 +378,6 @@ export function commitJournalIbkrUpload(
   pendingDecisionCount: number;
   rebuildCount: number;
 }> {
-  const digest = createHash("sha256").update(input.sourceBytes).digest("hex");
-  if (digest !== input.confirmedSourceFileSha256) {
-    platformFailure("TRADERLINK_JOURNAL_IMPORT_SOURCE_EVIDENCE_MISMATCH", {
-      check: "confirmed_browser_preview",
-    });
-  }
   const databasePath = resolvePlatformDatabaseConfig({}).databasePath;
   return withStagedJournalUpload(input.sourceBytes, (sourcePath) => {
     const vault = resolveJournalEvidenceVaultBoundary({
@@ -282,52 +386,119 @@ export function commitJournalIbkrUpload(
     });
     let promoted = false;
     try {
-      return withWritableJournalIntegrityRuntime(scope, (runtime) => {
+      return withWritableJournalIntegrityRuntime(scope, (runtime, database) => {
         const preview = runtime.imports.previewIbkrForWorkspace(scope, {
           sourceBytes: input.sourceBytes,
           sourceTimezone: input.sourceTimezone,
           allowSelectedAccountIdentityConfirmation: true,
         });
         const safe = safePreview(runtime, scope, preview);
+        verifyPreviewRef(
+          scope,
+          safe,
+          input.previewRef,
+          input.attemptBindingSha256,
+        );
         if (
-          preview.sourceFileSha256 !== input.confirmedSourceFileSha256 ||
-          safe.accountRef !== input.confirmedAccountRef ||
-          safe.sourceIdentityConfirmationRequired !==
-            input.confirmSourceIdentityLink ||
+          safe.sourceIdentityConfirmationRequired !== input.confirmSourceIdentityLink ||
           !preview.canCommit
         ) {
           platformFailure("TRADERLINK_JOURNAL_IMPORT_SOURCE_EVIDENCE_MISMATCH", {
             check: "confirmed_mapping_preview",
           });
         }
-        const account = runtime.accounts.requireAccountRecord(scope, preview.accountId);
-        const promotion = promoteJournalEvidenceObject(vault, {
-          sourceBytes: input.sourceBytes,
-          sourceFileSha256: preview.sourceFileSha256,
-          sourceFileSizeBytes: preview.sourceFileSizeBytes,
-        });
-        promoted = true;
-        const period = preview.statementPeriodStartDate && preview.statementPeriodEndDate
-          ? `${preview.statementPeriodStartDate} to ${preview.statementPeriodEndDate}`
-          : "period pending review";
-        const committed = runtime.command.commitIbkrStatement(scope, {
-          sourceBytes: input.sourceBytes,
-          sourceTimezone: input.sourceTimezone,
-          privacySafeAccountDisplay: account.displayName,
-          sourceDisplayLabel: `IBKR statement ${period}`,
-          evidenceObjectKey: promotion.evidenceObjectKey,
-          confirmedSourceIdentityAccountId:
-            safe.sourceIdentityConfirmationRequired
-              ? preview.accountId
-              : undefined,
-        });
-        return Object.freeze({
-          status: committed.status,
-          preservedRowCount: committed.preservedRowCount,
-          createdExecutionCount: committed.createdExecutionCount,
-          matchedExecutionCount: committed.matchedExecutionCount,
-          pendingDecisionCount: committed.relatedDecisionIds.length,
-          rebuildCount: committed.rebuilds.length,
+        const attempts = new JournalImportAttemptRepository(database);
+        return attempts.immediate(() => {
+          const current = attempts.findByIdempotency(
+            scope,
+            input.attemptBindingSha256,
+          );
+          if (!current) platformFailure("TRADERLINK_JOURNAL_IMPORT_CONFLICT", {
+            reason: "attempt_missing_at_commit",
+          });
+          if (["committed", "committed_with_decisions", "duplicate"].includes(
+            current.currentState,
+          )) {
+            return Object.freeze({
+              status: "already_imported" as const,
+              preservedRowCount: current.preservedRowCount,
+              createdExecutionCount: 0,
+              matchedExecutionCount: current.mappedExecutionCount,
+              pendingDecisionCount: current.pendingDecisionCount,
+              rebuildCount: 0,
+            });
+          }
+          if (current.currentState !== "preview_ready") {
+            platformFailure("TRADERLINK_JOURNAL_IMPORT_CONFLICT", {
+              reason: "attempt_not_preview_ready",
+            });
+          }
+          const timestamp = createCanonicalUtcTimestamp(new Date());
+          const committing = attempts.transition({
+            scope,
+            importAttemptId: current.importAttemptId,
+            expectedRevision: current.revision,
+            nextState: "committing",
+            reasonCode: "commit_started",
+            correlationRefSha256: input.attemptCorrelationSha256,
+            timestamp,
+          });
+          const account = runtime.accounts.requireAccountRecord(scope, preview.accountId);
+          const promotion = promoteJournalEvidenceObject(vault, {
+            sourceBytes: input.sourceBytes,
+            sourceFileSha256: preview.sourceFileSha256,
+            sourceFileSizeBytes: preview.sourceFileSizeBytes,
+          });
+          promoted = true;
+          const period = preview.statementPeriodStartDate && preview.statementPeriodEndDate
+            ? `${preview.statementPeriodStartDate} to ${preview.statementPeriodEndDate}`
+            : "period pending review";
+          const committed = runtime.command.commitIbkrStatement(scope, {
+            sourceBytes: input.sourceBytes,
+            sourceTimezone: input.sourceTimezone,
+            privacySafeAccountDisplay: account.displayName,
+            sourceDisplayLabel: `IBKR statement ${period}`,
+            evidenceObjectKey: promotion.evidenceObjectKey,
+            confirmedSourceIdentityAccountId:
+              safe.sourceIdentityConfirmationRequired
+                ? preview.accountId
+                : undefined,
+          });
+          const terminalState = committed.status === "already_imported"
+            ? "duplicate" as const
+            : committed.relatedDecisionIds.length > 0
+              ? "committed_with_decisions" as const
+              : "committed" as const;
+          attempts.transition({
+            scope,
+            importAttemptId: committing.importAttemptId,
+            expectedRevision: committing.revision,
+            nextState: terminalState,
+            reasonCode: terminalState === "duplicate"
+              ? "exact_duplicate"
+              : "import_committed",
+            correlationRefSha256: input.attemptCorrelationSha256,
+            timestamp,
+            committedImportBatchId: terminalState === "duplicate"
+              ? null
+              : committed.importBatchId,
+            failureCode: terminalState === "duplicate" ? "exact_duplicate" : null,
+            counts: {
+              preserved_rows: committed.preservedRowCount,
+              mapped_executions: preview.mappedExecutionCount,
+              unsupported_rows: preview.unsupportedRowCount,
+              issues: preview.issues.length,
+              pending_decisions: committed.relatedDecisionIds.length,
+            },
+          });
+          return Object.freeze({
+            status: committed.status,
+            preservedRowCount: committed.preservedRowCount,
+            createdExecutionCount: committed.createdExecutionCount,
+            matchedExecutionCount: committed.matchedExecutionCount,
+            pendingDecisionCount: committed.relatedDecisionIds.length,
+            rebuildCount: committed.rebuilds.length,
+          });
         });
       });
     } catch (error) {
@@ -346,8 +517,9 @@ export function commitJournalGenericMappedUpload(
   input: Readonly<{
     sourceBytes: Uint8Array;
     mapping: JournalGenericStatementMappingContract | unknown;
-    confirmedSourceFileSha256: string;
-    confirmedAccountRef: string;
+    previewRef: string;
+    attemptBindingSha256: string;
+    attemptCorrelationSha256: string;
   }>,
 ): Readonly<{
   status: "committed" | "already_imported";
@@ -358,18 +530,12 @@ export function commitJournalGenericMappedUpload(
   rebuildCount: number;
 }> {
   const mapping = parseJournalGenericStatementMappingContract(input.mapping);
-  const digest = createHash("sha256").update(input.sourceBytes).digest("hex");
-  if (digest !== input.confirmedSourceFileSha256) {
-    platformFailure("TRADERLINK_JOURNAL_IMPORT_SOURCE_EVIDENCE_MISMATCH", {
-      check: "confirmed_browser_preview",
-    });
-  }
   const databasePath = resolvePlatformDatabaseConfig({}).databasePath;
   return withStagedJournalUpload(input.sourceBytes, (sourcePath) => {
     const vault = resolveJournalEvidenceVaultBoundary({ sourcePath, databasePath });
     let promoted = false;
     try {
-      return withWritableJournalIntegrityRuntime(scope, (runtime) => {
+      return withWritableJournalIntegrityRuntime(scope, (runtime, database) => {
         const accountId = scope.activeAccountId;
         if (!accountId) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
         const preview = runtime.imports.previewGenericMappedForWorkspace(scope, {
@@ -378,36 +544,102 @@ export function commitJournalGenericMappedUpload(
           mapping,
         });
         const safe = safeGenericPreview(runtime, scope, preview, mapping, "manual_mapping");
-        if (
-          preview.sourceFileSha256 !== input.confirmedSourceFileSha256 ||
-          safe.accountRef !== input.confirmedAccountRef ||
-          !preview.canCommit
-        ) {
+        verifyPreviewRef(
+          scope,
+          safe,
+          input.previewRef,
+          input.attemptBindingSha256,
+        );
+        if (!preview.canCommit) {
           platformFailure("TRADERLINK_JOURNAL_IMPORT_SOURCE_EVIDENCE_MISMATCH", {
             check: "confirmed_mapping_preview",
           });
         }
-        const promotion = promoteJournalEvidenceObject(vault, {
-          sourceBytes: input.sourceBytes,
-          sourceFileSha256: preview.sourceFileSha256,
-          sourceFileSizeBytes: preview.sourceFileSizeBytes,
-          evidenceNamespace: "mapped_csv",
-        });
-        promoted = true;
-        const committed = runtime.command.commitGenericMappedStatement(scope, {
-          sourceBytes: input.sourceBytes,
-          accountId,
-          mapping,
-          sourceDisplayLabel: `${mapping.brokerName} mapped statement`,
-          evidenceObjectKey: promotion.evidenceObjectKey,
-        });
-        return Object.freeze({
-          status: committed.status,
-          preservedRowCount: committed.preservedRowCount,
-          createdExecutionCount: committed.createdExecutionCount,
-          matchedExecutionCount: committed.matchedExecutionCount,
-          pendingDecisionCount: committed.relatedDecisionIds.length,
-          rebuildCount: committed.rebuilds.length,
+        const attempts = new JournalImportAttemptRepository(database);
+        return attempts.immediate(() => {
+          const current = attempts.findByIdempotency(
+            scope,
+            input.attemptBindingSha256,
+          );
+          if (!current) platformFailure("TRADERLINK_JOURNAL_IMPORT_CONFLICT", {
+            reason: "attempt_missing_at_commit",
+          });
+          if (["committed", "committed_with_decisions", "duplicate"].includes(
+            current.currentState,
+          )) {
+            return Object.freeze({
+              status: "already_imported" as const,
+              preservedRowCount: current.preservedRowCount,
+              createdExecutionCount: 0,
+              matchedExecutionCount: current.mappedExecutionCount,
+              pendingDecisionCount: current.pendingDecisionCount,
+              rebuildCount: 0,
+            });
+          }
+          if (current.currentState !== "preview_ready") {
+            platformFailure("TRADERLINK_JOURNAL_IMPORT_CONFLICT", {
+              reason: "attempt_not_preview_ready",
+            });
+          }
+          const timestamp = createCanonicalUtcTimestamp(new Date());
+          const committing = attempts.transition({
+            scope,
+            importAttemptId: current.importAttemptId,
+            expectedRevision: current.revision,
+            nextState: "committing",
+            reasonCode: "commit_started",
+            correlationRefSha256: input.attemptCorrelationSha256,
+            timestamp,
+          });
+          const promotion = promoteJournalEvidenceObject(vault, {
+            sourceBytes: input.sourceBytes,
+            sourceFileSha256: preview.sourceFileSha256,
+            sourceFileSizeBytes: preview.sourceFileSizeBytes,
+            evidenceNamespace: "mapped_csv",
+          });
+          promoted = true;
+          const committed = runtime.command.commitGenericMappedStatement(scope, {
+            sourceBytes: input.sourceBytes,
+            accountId,
+            mapping,
+            sourceDisplayLabel: `${mapping.brokerName} mapped statement`,
+            evidenceObjectKey: promotion.evidenceObjectKey,
+          });
+          const terminalState = committed.status === "already_imported"
+            ? "duplicate" as const
+            : committed.relatedDecisionIds.length > 0
+              ? "committed_with_decisions" as const
+              : "committed" as const;
+          attempts.transition({
+            scope,
+            importAttemptId: committing.importAttemptId,
+            expectedRevision: committing.revision,
+            nextState: terminalState,
+            reasonCode: terminalState === "duplicate"
+              ? "exact_duplicate"
+              : "import_committed",
+            correlationRefSha256: input.attemptCorrelationSha256,
+            timestamp,
+            committedImportBatchId: terminalState === "duplicate"
+              ? null
+              : committed.importBatchId,
+            failureCode: terminalState === "duplicate" ? "exact_duplicate" : null,
+            counts: {
+              preserved_rows: committed.preservedRowCount,
+              mapped_executions: preview.mappedExecutionCount,
+              unsupported_rows: preview.unsupportedRowCount,
+              issues: preview.issues.length,
+              pending_decisions: committed.relatedDecisionIds.length,
+            },
+          });
+          return Object.freeze({
+            status: committed.status,
+            preservedRowCount: committed.preservedRowCount,
+            createdExecutionCount: committed.createdExecutionCount,
+            matchedExecutionCount: committed.matchedExecutionCount,
+            pendingDecisionCount: committed.relatedDecisionIds.length,
+            rebuildCount: committed.rebuilds.length,
+          });
         });
       });
     } catch (error) {

@@ -20,6 +20,7 @@ import { JournalExecutionService } from "../executions/journal-execution-service
 import { JournalIntegrityCommandService } from "../journal-integrity-command-service";
 import { JournalRoundTripRepository } from "../round-trips/journal-round-trip-repository";
 import { JournalRoundTripService } from "../round-trips/journal-round-trip-service";
+import { JournalExecutionReconciliationRepository } from "../reconciliation/journal-execution-reconciliation-repository";
 import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { resolvePlatformDatabaseConfig } from "@/src/modules/platform/server/database/platform-database-config";
 import { platformMigrationManifest } from "@/src/modules/platform/server/database/platform-migration-manifest";
@@ -264,6 +265,7 @@ function createCommandBoundary(
     createJournalPrivacyDigester(
       loadJournalPrivacyHmacConfiguration(environment),
     ),
+    new JournalExecutionReconciliationRepository(database),
   );
   const roundTrips = new JournalRoundTripService(
     new JournalRoundTripRepository(database),
@@ -275,6 +277,7 @@ function createCommandBoundary(
     executions,
     new JournalExecutionService(executions),
     roundTrips,
+    new JournalExecutionReconciliationRepository(database),
   );
   return Object.freeze({
     accounts,

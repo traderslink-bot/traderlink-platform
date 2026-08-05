@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
 
+import {
+  currentJournalAccountSelectionRef,
+  requireTraderLinkPlatformPageScope,
+} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+
 import { DashboardPage } from "../../dashboard-template";
 
 import { JournalImportClient } from "./journal-import-client";
@@ -10,10 +15,13 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default function ImportsPage() {
+export default async function ImportsPage() {
+  const scope = await requireTraderLinkPlatformPageScope();
   return (
     <DashboardPage>
-      <JournalImportClient />
+      <JournalImportClient
+        expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
+      />
     </DashboardPage>
   );
 }

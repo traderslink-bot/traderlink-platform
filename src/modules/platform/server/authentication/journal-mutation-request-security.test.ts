@@ -37,4 +37,3 @@ describe("Journal mutation request security", () => {
       .toThrowError(/TRADERLINK_WORKSPACE_ACCESS_DENIED/u);
   });
 });
-

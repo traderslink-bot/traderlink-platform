@@ -86,7 +86,7 @@ export function assertUtcMatchesJournalLocalTime(
   }
 }
 
-export function normalizeIbkrExecutionTime(sourceTimestampText: string, sourceTimezone: string): string {
+export function normalizeJournalExecutionLocalTime(sourceTimestampText: string, sourceTimezone: string): string {
   assertJournalTimezone(sourceTimezone, "sourceTimezone");
   if (sourceTimestampText.length > 120) {
     platformFailure("TRADERLINK_JOURNAL_IMPORT_MAPPING_FAILED", {
@@ -123,6 +123,8 @@ export function normalizeIbkrExecutionTime(sourceTimestampText: string, sourceTi
   assertJournalUtcTimestamp(canonical, "executedAtUtc");
   return canonical;
 }
+
+export const normalizeIbkrExecutionTime = normalizeJournalExecutionLocalTime;
 
 export function normalizeJournalCurrency(rawValue: string): string {
   if (rawValue.length > 16) {

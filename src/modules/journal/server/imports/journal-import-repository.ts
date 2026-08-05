@@ -158,17 +158,43 @@ WHERE workspace_id = ? AND account_id = ? AND import_batch_id = ?`)
         check: "import_decision_batch_state",
       });
     }
-    const pendingDecisionCount = this.database.prepare<[string, string, string], {
+    const pendingDecisionCount = this.database.prepare<[
+      string, string, string, string, string, string,
+    ], {
       count: number;
-    }>(`SELECT COUNT(*) AS count
-FROM journal_data_decisions decision
-JOIN journal_source_row_issues issue
-  ON issue.workspace_id = decision.workspace_id
- AND issue.account_id = decision.account_id
- AND issue.source_issue_id = decision.source_issue_id
-WHERE decision.workspace_id = ? AND decision.account_id = ?
-  AND issue.import_batch_id = ? AND decision.state = 'pending'
-  AND decision.target_kind = 'source_issue'`).get(
+    }>(`SELECT COUNT(*) AS count FROM (
+  SELECT decision.decision_id
+  FROM journal_data_decisions decision
+  JOIN journal_source_row_issues issue
+    ON issue.workspace_id = decision.workspace_id
+   AND issue.account_id = decision.account_id
+   AND issue.source_issue_id = decision.source_issue_id
+  WHERE decision.workspace_id = ? AND decision.account_id = ?
+    AND issue.import_batch_id = ? AND decision.state = 'pending'
+    AND decision.target_kind = 'source_issue'
+  UNION
+  SELECT decision.decision_id
+  FROM journal_data_decisions decision
+  JOIN journal_execution_reconciliation_sets reconciliation
+    ON reconciliation.workspace_id = decision.workspace_id
+   AND reconciliation.account_id = decision.account_id
+   AND reconciliation.decision_id = decision.decision_id
+  JOIN journal_execution_reconciliation_members member
+    ON member.workspace_id = reconciliation.workspace_id
+   AND member.account_id = reconciliation.account_id
+   AND member.reconciliation_set_id = reconciliation.reconciliation_set_id
+  JOIN journal_execution_provenance provenance
+    ON provenance.workspace_id = member.workspace_id
+   AND provenance.account_id = member.account_id
+   AND provenance.execution_id = member.execution_id
+  WHERE decision.workspace_id = ? AND decision.account_id = ?
+    AND provenance.import_batch_id = ? AND decision.state = 'pending'
+    AND decision.target_kind = 'overlap_set'
+    AND member.member_role = 'provisional_imported_execution'
+)`).get(
+      input.workspaceId,
+      input.accountId,
+      input.importBatchId,
       input.workspaceId,
       input.accountId,
       input.importBatchId,

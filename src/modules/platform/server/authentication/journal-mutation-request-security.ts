@@ -35,4 +35,3 @@ export function requireJournalMutationRequest(request: Request): void {
     platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
   }
 }
-

@@ -1,4 +1,5 @@
 import { createHash, createHmac } from "node:crypto";
+import Decimal from "decimal.js";
 
 import type {
   IbkrActivityStatementPreview,
@@ -9,6 +10,7 @@ import type {
   JournalImportIssue,
 } from "../../contracts/journal-import-contracts";
 import type { JournalExecutionFacts } from "../../contracts/journal-execution-contracts";
+import type { JournalManualExecutionCandidate } from "../../contracts/journal-execution-reconciliation-contracts";
 import {
   assertCanonicalJournalDecimal,
   assertJournalCurrency,
@@ -41,6 +43,7 @@ import {
   normalizeJournalStockSymbol,
 } from "./journal-value-normalization";
 import { calculateSourceFileEvidence } from "./record-preserving-csv";
+import { JournalExecutionReconciliationRepository } from "../reconciliation/journal-execution-reconciliation-repository";
 
 type JournalPrivacyPurpose = "broker_execution" | "execution_content";
 
@@ -229,6 +232,7 @@ export type ManualExecutionBatchInput = Readonly<{
   idempotencyKey: string;
   sourceDisplayLabel: string;
   entries: readonly ManualExecutionInput[];
+  confirmedTraderBoundaries?: boolean;
   now?: Date;
 }>;
 
@@ -241,7 +245,22 @@ type PlannedExecution = Readonly<{
   factConflict: boolean;
   enrichFromIncoming: boolean;
   attachContentAlias: boolean;
+  reconciliation: Readonly<{
+    kind: "one_to_one" | "grouped_fills";
+    overlapKeySha256: string;
+    evidenceSha256: string;
+    manualExecutionIds: readonly string[];
+  }> | null;
 }>;
+
+type PlannedReconciliation = NonNullable<PlannedExecution["reconciliation"]>;
+
+const ReconciliationDecimal = Decimal.clone({
+  precision: 160,
+  rounding: Decimal.ROUND_HALF_UP,
+  toExpNeg: -1000,
+  toExpPos: 1000,
+});
 
 function sha256(value: string): string {
   return createHash("sha256").update(value, "utf8").digest("hex");
@@ -364,7 +383,53 @@ export class JournalImportService {
     private readonly executions: JournalExecutionRepository,
     private readonly accounts: JournalAccountService,
     private readonly digester: JournalPrivacyDigester,
+    private readonly reconciliations: JournalExecutionReconciliationRepository,
   ) {}
+
+  private plannedDecisionCount(plans: readonly PlannedExecution[]): number {
+    const reconciliationKeys = new Set<string>();
+    let legacyAmbiguityCount = 0;
+    for (const plan of plans) {
+      if (plan.reconciliation) {
+        reconciliationKeys.add(plan.reconciliation.overlapKeySha256);
+      } else if (plan.ambiguous) {
+        legacyAmbiguityCount += 1;
+      }
+    }
+    return reconciliationKeys.size + legacyAmbiguityCount;
+  }
+
+  private overlapIssues(plans: readonly PlannedExecution[]): readonly JournalImportIssue[] {
+    const issues: JournalImportIssue[] = [];
+    const seenReconciliations = new Set<string>();
+    for (const plan of plans) {
+      if (!plan.ambiguous) continue;
+      if (plan.reconciliation) {
+        if (seenReconciliations.has(plan.reconciliation.overlapKeySha256)) continue;
+        seenReconciliations.add(plan.reconciliation.overlapKeySha256);
+      }
+      issues.push(Object.freeze({
+        recordOrdinal: plan.execution.recordOrdinal,
+        issueScope: "execution" as const,
+        issueCode: plan.reconciliation
+          ? plan.reconciliation.kind === "grouped_fills"
+            ? "manual_broker_grouped_fill_candidate"
+            : "manual_broker_possible_duplicate"
+          : plan.factConflict
+            ? "overlap_fact_conflict"
+            : "overlap_count_ambiguous",
+        severity: "warning" as const,
+        isBlocking: false,
+        chainHint: Object.freeze({
+          normalizedSymbol: plan.execution.normalizedSymbol,
+          assetClass: plan.execution.assetClass,
+          tradeCurrency: plan.execution.tradeCurrency,
+          effectiveAtUtc: plan.execution.executedAtUtc,
+        }),
+      }));
+    }
+    return Object.freeze(issues);
+  }
 
   private alreadyImportedResult(
     scope: WorkspaceAccessScope,
@@ -514,7 +579,7 @@ export class JournalImportService {
     const timezoneMismatch = account.tradingTimezone !== preview.sourceTimezone;
     const expectedPendingSourceDecisionCount = preview.issues.filter((issue) =>
       !issue.isBlocking && issue.severity !== "info").length +
-      planned.filter((entry) => entry.ambiguous).length +
+      this.plannedDecisionCount(planned) +
       (timezoneMismatch ? 1 : 0);
     const scopedIssues = timezoneMismatch
       ? Object.freeze([...safePreview.issues, Object.freeze({
@@ -622,22 +687,7 @@ export class JournalImportService {
       preview.executions,
       "broker_statement",
     );
-    const overlapIssues: JournalImportIssue[] = planned.filter((candidate) => candidate.ambiguous)
-      .map((candidate) => Object.freeze({
-        recordOrdinal: candidate.execution.recordOrdinal,
-        issueScope: "execution" as const,
-        issueCode: candidate.factConflict
-          ? "overlap_fact_conflict"
-          : "overlap_count_ambiguous",
-        severity: "warning" as const,
-        isBlocking: false,
-        chainHint: Object.freeze({
-          normalizedSymbol: candidate.execution.normalizedSymbol,
-          assetClass: candidate.execution.assetClass,
-          tradeCurrency: candidate.execution.tradeCurrency,
-          effectiveAtUtc: candidate.execution.executedAtUtc,
-        }),
-      }));
+    const overlapIssues = this.overlapIssues(planned);
     return this.commitPreparedImport(scope, {
       accountId, sourceIdentityId: identity.sourceIdentityId,
       sourceKind: "broker_statement", sourceSystem: "ibkr",
@@ -731,7 +781,7 @@ export class JournalImportService {
         candidate.ambiguous).length,
       expectedPendingSourceDecisionCount: preview.issues.filter((candidate) =>
         !candidate.isBlocking && candidate.severity !== "info").length +
-        planned.filter((candidate) => candidate.ambiguous).length,
+        this.plannedDecisionCount(planned),
     });
   }
 
@@ -798,23 +848,7 @@ export class JournalImportService {
       preview.executions,
       "broker_statement",
     );
-    const overlapIssues: JournalImportIssue[] = planned
-      .filter((candidate) => candidate.ambiguous)
-      .map((candidate) => Object.freeze({
-        recordOrdinal: candidate.execution.recordOrdinal,
-        issueScope: "execution" as const,
-        issueCode: candidate.factConflict
-          ? "overlap_fact_conflict"
-          : "overlap_count_ambiguous",
-        severity: "warning" as const,
-        isBlocking: false,
-        chainHint: Object.freeze({
-          normalizedSymbol: candidate.execution.normalizedSymbol,
-          assetClass: candidate.execution.assetClass,
-          tradeCurrency: candidate.execution.tradeCurrency,
-          effectiveAtUtc: candidate.execution.executedAtUtc,
-        }),
-      }));
+    const overlapIssues = this.overlapIssues(planned);
     return this.commitPreparedImport(scope, {
       accountId: input.accountId,
       sourceIdentityId: identity.sourceIdentityId,
@@ -988,28 +1022,16 @@ export class JournalImportService {
         chainHint: Object.freeze({ normalizedSymbol: entry.normalizedSymbol,
           assetClass: entry.assetClass, tradeCurrency: entry.tradeCurrency,
           effectiveAtUtc: entry.executedAtUtc }) }));
-    issues.push(...[...pointCoverage.values()].map((coverage) => Object.freeze({
-      recordOrdinal: coverage.recordOrdinal,
-      issueScope: "row" as const,
-      issueCode: "manual_trading_day_coverage_unconfirmed",
-      severity: "warning" as const,
-      isBlocking: false,
-    })));
-    issues.push(...planned.filter((candidate) => candidate.ambiguous).map((candidate) => Object.freeze({
-      recordOrdinal: candidate.execution.recordOrdinal,
-      issueScope: "execution" as const,
-      issueCode: candidate.factConflict
-        ? "overlap_fact_conflict"
-        : "overlap_count_ambiguous",
-      severity: "warning" as const,
-      isBlocking: false,
-      chainHint: Object.freeze({
-        normalizedSymbol: candidate.execution.normalizedSymbol,
-        assetClass: candidate.execution.assetClass,
-        tradeCurrency: candidate.execution.tradeCurrency,
-        effectiveAtUtc: candidate.execution.executedAtUtc,
-      }),
-    })));
+    if (!input.confirmedTraderBoundaries) {
+      issues.push(...[...pointCoverage.values()].map((coverage) => Object.freeze({
+        recordOrdinal: coverage.recordOrdinal,
+        issueScope: "row" as const,
+        issueCode: "manual_trading_day_coverage_unconfirmed",
+        severity: "warning" as const,
+        isBlocking: false,
+      })));
+    }
+    issues.push(...this.overlapIssues(planned));
     return this.commitPreparedImport(scope, {
       accountId: input.accountId, sourceIdentityId: null, sourceKind: "manual_batch",
       sourceSystem: "manual", sourceFileSha256: null, sourceFileSizeBytes: null,
@@ -1023,6 +1045,152 @@ export class JournalImportService {
       sourceIdentityForRows: `${scope.workspaceId}\u001f${input.accountId}\u001f${input.idempotencyKey}`,
       now: input.now,
     });
+  }
+
+  private addManualReconciliationCandidates(
+    workspaceId: string,
+    accountId: string,
+    plans: readonly PlannedExecution[],
+  ): readonly PlannedExecution[] {
+    const manualExecutions = this.reconciliations.listEligibleManualExecutions(
+      workspaceId,
+      accountId,
+    );
+    if (manualExecutions.length === 0) return plans;
+
+    const manualById = new Map(manualExecutions.map((manual) => [manual.executionId, manual]));
+    const groupKey = (input: Readonly<{
+      assetClass: string;
+      normalizedSymbol: string;
+      tradeCurrency: string;
+      executedAtUtc: string;
+      side: "buy" | "sell";
+      accountTimezone: string;
+    }>): string => [
+      localDateAtUtc(input.executedAtUtc, input.accountTimezone),
+      input.assetClass,
+      input.normalizedSymbol,
+      input.tradeCurrency,
+      input.side,
+    ].join("\u001f");
+    const manualsByGroup = new Map<string, JournalManualExecutionCandidate[]>();
+    for (const manual of manualExecutions) {
+      const key = groupKey(manual);
+      const grouped = manualsByGroup.get(key) ?? [];
+      grouped.push(manual);
+      manualsByGroup.set(key, grouped);
+    }
+    const plansByGroup = new Map<string, number[]>();
+    for (const [index, plan] of plans.entries()) {
+      if (
+        plan.reconciliation !== null ||
+        (plan.matchedExecutionId !== null && !manualById.has(plan.matchedExecutionId))
+      ) continue;
+      const accountTimezone = manualExecutions[0]!.accountTimezone;
+      const key = groupKey({ ...plan.execution, accountTimezone });
+      if (!manualsByGroup.has(key)) continue;
+      const grouped = plansByGroup.get(key) ?? [];
+      grouped.push(index);
+      plansByGroup.set(key, grouped);
+    }
+
+    const reconciliationsByPlan = new Map<number, PlannedReconciliation>();
+    const assignCandidate = (
+      kind: PlannedReconciliation["kind"],
+      manuals: readonly JournalManualExecutionCandidate[],
+      planIndexes: readonly number[],
+    ): void => {
+      const manualEvidence = manuals
+        .map((manual) => `${manual.executionId}:${manual.currentVersionId}`)
+        .sort();
+      const brokerEvidence = planIndexes
+        .map((index) => {
+          const plan = plans[index]!;
+          return [
+            plan.activeStrongAliasSha256 ?? "no_provider_identity",
+            plan.activeContentAliasSha256,
+            String(plan.execution.contentOccurrenceOrdinal),
+          ].join(":");
+        })
+        .sort();
+      const overlapKeySha256 = sha256(JSON.stringify([
+        "manual-broker-reconciliation-v1",
+        kind,
+        manualEvidence,
+        brokerEvidence,
+      ]));
+      const reconciliation = Object.freeze({
+        kind,
+        overlapKeySha256,
+        evidenceSha256: sha256(JSON.stringify([
+          "manual-broker-reconciliation-evidence-v1",
+          overlapKeySha256,
+          manualEvidence,
+          brokerEvidence,
+        ])),
+        manualExecutionIds: Object.freeze(manuals.map((manual) => manual.executionId).sort()),
+      });
+      for (const index of planIndexes) reconciliationsByPlan.set(index, reconciliation);
+    };
+
+    for (const [key, planIndexes] of plansByGroup) {
+      const manuals = manualsByGroup.get(key)!;
+      const manualTotal = manuals.reduce(
+        (sum, manual) => sum.plus(manual.quantityDecimal),
+        new ReconciliationDecimal(0),
+      );
+      const brokerTotal = planIndexes.reduce(
+        (sum, index) => sum.plus(plans[index]!.execution.quantityDecimal),
+        new ReconciliationDecimal(0),
+      );
+      if (manualTotal.eq(brokerTotal)) {
+        assignCandidate(
+          manuals.length === 1 && planIndexes.length === 1 ? "one_to_one" : "grouped_fills",
+          manuals,
+          planIndexes,
+        );
+        continue;
+      }
+
+      const manualsByQuantity = new Map<string, JournalManualExecutionCandidate[]>();
+      for (const manual of manuals) {
+        const quantity = new ReconciliationDecimal(manual.quantityDecimal).toString();
+        const matches = manualsByQuantity.get(quantity) ?? [];
+        matches.push(manual);
+        manualsByQuantity.set(quantity, matches);
+      }
+      const plansByQuantity = new Map<string, number[]>();
+      for (const index of planIndexes) {
+        const quantity = new ReconciliationDecimal(
+          plans[index]!.execution.quantityDecimal,
+        ).toString();
+        const matches = plansByQuantity.get(quantity) ?? [];
+        matches.push(index);
+        plansByQuantity.set(quantity, matches);
+      }
+      for (const [quantity, quantityManuals] of manualsByQuantity) {
+        const quantityPlans = plansByQuantity.get(quantity) ?? [];
+        if (quantityManuals.length === 1 && quantityPlans.length === 1) {
+          assignCandidate("one_to_one", quantityManuals, quantityPlans);
+        }
+      }
+    }
+
+    if (reconciliationsByPlan.size === 0) return plans;
+    return Object.freeze(plans.map((plan, index) => {
+      const reconciliation = reconciliationsByPlan.get(index);
+      if (!reconciliation) return plan;
+      const matchedManual = plan.matchedExecutionId !== null &&
+        manualById.has(plan.matchedExecutionId);
+      return Object.freeze({
+        ...plan,
+        matchedExecutionId: null,
+        ambiguous: true,
+        enrichFromIncoming: false,
+        attachContentAlias: matchedManual ? false : plan.attachContentAlias,
+        reconciliation,
+      });
+    }));
   }
 
   private planExecutions(
@@ -1041,7 +1209,7 @@ export class JournalImportService {
     const incomingCounts = new Map<string, number>();
     for (const execution of executions) incomingCounts.set(execution.normalizedContentIdentity,
       (incomingCounts.get(execution.normalizedContentIdentity) ?? 0) + 1);
-    return Object.freeze(executions.map((execution) => {
+    const planned = Object.freeze(executions.map((execution) => {
       const activeContentDigest = this.digester.activeDigest(
         "execution_content",
         execution.normalizedContentIdentity,
@@ -1193,8 +1361,12 @@ export class JournalImportService {
         factConflict,
         enrichFromIncoming,
         attachContentAlias: !providerDistinct && !contentOwnedByDifferentStrongExecution,
+        reconciliation: null,
       });
     }));
+    return sourceKind === "broker_statement"
+      ? this.addManualReconciliationCandidates(workspaceId, accountId, planned)
+      : planned;
   }
 
   private touchOrInsertActiveAlias(input: Readonly<{
@@ -1264,7 +1436,7 @@ export class JournalImportService {
       sourceIdentityForRows: string; now?: Date;
     }>,
   ): JournalImportCommitResult {
-    this.accounts.requireAccountScope(scope, input.accountId);
+    const accountScope = this.accounts.requireAccountScope(scope, input.accountId);
     if (input.sourceIdentityId) this.imports.requireSourceIdentity(scope.workspaceId, input.accountId, input.sourceIdentityId);
     const timestamp = createCanonicalUtcTimestamp(input.now);
     const importBatchId = createCanonicalUuidV4();
@@ -1402,6 +1574,14 @@ export class JournalImportService {
           quantityDecimal: fact.quantityDecimal, timestamp,
         });
       }
+      const reconciliationCandidates = new Map<string, {
+        reconciliation: PlannedReconciliation;
+        provisionalExecutions: Array<{
+          executionId: string;
+          sourceRowId: string;
+          evidenceSha256: string;
+        }>;
+      }>();
       for (const plan of input.plannedExecutions) {
         const sourceRowId = rowIds.get(plan.execution.recordOrdinal);
         if (!sourceRowId) platformFailure("TRADERLINK_JOURNAL_IMPORT_CONFLICT", { reason: "execution_source_missing" });
@@ -1477,7 +1657,7 @@ export class JournalImportService {
             occurrenceOrdinal: null, timestamp,
           });
         }
-        if (!plan.ambiguous && plan.attachContentAlias) {
+        if ((!plan.ambiguous || plan.reconciliation !== null) && plan.attachContentAlias) {
           this.touchOrInsertActiveAlias({
             workspaceId: scope.workspaceId,
             accountId: input.accountId,
@@ -1488,7 +1668,7 @@ export class JournalImportService {
             timestamp,
           });
         }
-        if (plan.activeStrongAliasSha256 && !plan.ambiguous) {
+        if (plan.activeStrongAliasSha256 && (!plan.ambiguous || plan.reconciliation !== null)) {
           this.touchOrInsertActiveAlias({
             workspaceId: scope.workspaceId,
             accountId: input.accountId,
@@ -1508,7 +1688,39 @@ export class JournalImportService {
             : null,
           providerIdentitySha256: plan.activeStrongAliasSha256, timestamp,
         });
+        if (plan.reconciliation) {
+          const candidate = reconciliationCandidates.get(
+            plan.reconciliation.overlapKeySha256,
+          ) ?? {
+            reconciliation: plan.reconciliation,
+            provisionalExecutions: [],
+          };
+          candidate.provisionalExecutions.push(Object.freeze({
+            executionId,
+            sourceRowId,
+            evidenceSha256: sha256(JSON.stringify([
+              "provisional-broker-execution-v1",
+              plan.activeStrongAliasSha256 ?? "no_provider_identity",
+              plan.activeContentAliasSha256,
+              plan.execution.contentOccurrenceOrdinal,
+            ])),
+          }));
+          reconciliationCandidates.set(
+            plan.reconciliation.overlapKeySha256,
+            candidate,
+          );
+        }
         executionIds.push(executionId);
+      }
+      for (const candidate of reconciliationCandidates.values()) {
+        this.reconciliations.createCandidate({
+          scope: accountScope,
+          overlapKeySha256: candidate.reconciliation.overlapKeySha256,
+          manualExecutionIds: candidate.reconciliation.manualExecutionIds,
+          provisionalExecutions: candidate.provisionalExecutions,
+          evidenceSha256: candidate.reconciliation.evidenceSha256,
+          timestamp,
+        });
       }
       return null;
     });

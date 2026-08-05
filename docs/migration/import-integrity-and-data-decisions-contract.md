@@ -28,11 +28,10 @@ Broker statement or manual Trade Tracker entry
 3. The engine may flag a candidate execution or round trip as needing a decision. It may not guess a date, price, quantity, fee, symbol, side, intended grouping, or trader intent.
 4. The trader decides factual corrections, exclusions, and intentional classifications from the evidence shown in Data Decisions.
    This includes supplying a reviewed statement coverage interval when the
-   preserved source period is missing/conflicting, confirming whether each
-   manually entered trading day is complete, or accepting the limitation
-   without inventing complete coverage. A coverage action is bound to that
-   source issue, exact manual trading date when applicable, and the Journal
-   account's trading timezone.
+   preserved source period is missing/conflicting or accepting the limitation
+   without inventing complete coverage. Intentional manual trade capture proves
+   only its submitted trade chain and does not routinely require a whole-day
+   coverage decision.
    The available actions are issue-specific: an action that does not address the
    recorded problem cannot resolve it. An explicit accepted source limitation
    remains available when the source fact cannot be recovered.
@@ -86,7 +85,41 @@ CSV header/data field-count disagreement is a blocking structural error because
 the adapter cannot faithfully assign values to columns. The exact row remains
 available in the preview evidence, but no authoritative import is committed.
 
-When broker data later matches a manual execution, Data Decisions shows both sources. The trader decides whether the broker record supersedes the manual record, the manual record corrects the broker fact, or both are genuinely distinct.
+When broker data may match a manual execution, exact timestamp equality is not
+required because manual time may be approximate. Candidate generation uses the
+same Journal account, account-local date, instrument, currency and side, then
+compares quantity/aggregate quantity, price/weighted price, notional, fees,
+provider identity and time as visible evidence. Time may rank candidates but
+never resolves them by itself.
+
+Until the trader decides, the manual execution remains accepted and the
+provisional imported candidate remains `needs_decision`; only the manual
+position effect enters reconstruction and analytics. Unrelated valid rows from
+the statement are accepted normally. The trader may confirm the same execution,
+confirm distinct executions, correct the manual record or decide later.
+
+This requires a durable pending-reconciliation membership filter in the
+canonical round-trip execution query. A generic `needs_decision` state is not
+enough because the existing builder applies such quantities while containing
+the chain. Only provisional imported members of a pending reconciliation set
+are omitted; the accepted manual member stays in the ordered input and all other
+decision containment remains unchanged. Candidate execution, set/members,
+decision and `accepted_with_decisions` import state are committed atomically
+before reconstruction.
+
+A confirmed one-to-one match retains the manual execution identity, attaches
+broker provenance and appends confirmed broker facts as a new version. A
+confirmed grouped-fill match may supersede the manual projection with exact
+broker fills while preserving the manual source/history and reconciliation
+lineage. A distinct decision activates both and persists the negative match so
+the same evidence is not repeatedly questioned. No manual fact is superseded
+before explicit confirmation.
+
+Repeated imports carrying the same pending provider/content evidence attach to
+the existing candidate set and decision. They do not create another position
+effect or prompt. Resolution of every one-to-one or grouped set is one
+optimistic transaction; stale evidence, quantity mismatch or rebuild failure
+rolls it all back.
 
 ## Deterministic round trips
 
@@ -111,7 +144,7 @@ later same-symbol round trips remain eligible.
 | Condition | Import result | Data Decisions result | Analytics result |
 | --- | --- | --- | --- |
 | Source cannot be parsed or safely mapped | Blocked preview; no authoritative commit | Show mapping/row errors | No records from that pending import |
-| Duplicate or overlap ambiguity | Accept independent records and contain affected candidates | Show all sources, provenance, and conflict reason | Exclude only the affected candidate until resolved |
+| Broker/manual duplicate or overlap ambiguity | Accept unrelated rows; preserve the broker candidate as `needs_decision` while the existing manual execution stays accepted | Show both sources, fact differences, grouped-fill arithmetic and same/separate/correct/later actions | Count the manual position effect once; exclude only the provisional imported candidate until resolved |
 | Source account is missing, conflicting, or cannot be safely assigned | Block before authoritative commit | Require account identity confirmation/correction | No records enter the wrong account |
 | Missing execution fact | Preserve row and flag affected execution | Trader corrects, excludes, or classifies after evidence review | Exclude dependent round trip from affected metrics |
 | Unmapped execution or position row with known instrument/currency | Preserve its chain scope and recoverable event/checkpoint time | Trader supplies a matching execution/position fact or accepts the limitation | Hold only projections in the affected chain/time segment; accepting the limitation does not make them complete |
@@ -151,11 +184,15 @@ unverified key when the corrected instant changes. Only the dedicated bounded
 ordering action can record trader-confirmed same-time sequence.
 
 A manual entry proves that the entered execution occurred; it does not prove
-that every execution for the account and trading date was entered. Each manual
-trading date therefore starts with point-only coverage and its own Data Decision.
-Only the trader's date-bound confirmation may add complete or partial daily
-coverage. Opening inventory remains a separate factual requirement, so complete
-daily coverage never silently means that the account began the day flat.
+that every execution for the account and trading date was entered. Intentional
+manual capture therefore remains point evidence, but it does not create a
+routine warning or Data Decision merely because the source is manual. Genuine
+duplicate candidates, contradictory facts, impossible position arithmetic and
+same-time ordering ambiguity that changes allocation remain contained in Data
+Decisions. A separately evidenced date-bound coverage decision may add complete
+or partial daily coverage. Opening inventory remains a separate factual
+requirement, so complete daily coverage never silently means that the account
+began the day flat.
 
 Daily notes and daily rule reviews use owner/account/trading-date identity. Trade notes, tags, and trade-level reviews use stable round-trip identity plus aliases across deterministic rebuilds. A round trip may span days: executions remain visible on their actual days, carried position is visible, and realized P/L defaults to the closing trading day unless a metric contract states otherwise.
 

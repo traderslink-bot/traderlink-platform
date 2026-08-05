@@ -37,6 +37,45 @@ export type JournalMappingSupportPackage = Readonly<{
   }>;
 }>;
 
+export type JournalMappingSupportPackageV2 = Readonly<{
+  contractVersion: "journal_statement_mapping_support_v2";
+  fileKind: "delimited_text";
+  brokerLabel: string;
+  detectedEncoding: "utf-8" | "unknown";
+  detectedDelimiter: "comma" | "semicolon" | "tab" | "unknown";
+  recordFieldCounts: readonly number[];
+  tables: readonly Readonly<{
+    ordinal: number;
+    tableLabel: string;
+    tableKind: "sectioned" | "tabular";
+    headerRowIndex: number;
+    structuralSignatureSha256: string;
+    fieldCount: number;
+    headerLabels: readonly string[];
+    suggestedMapping: Readonly<Record<string, string>>;
+  }>[];
+  statementLayoutSignatureSha256: string | null;
+  failureCategory:
+    | "none"
+    | "format_not_supported"
+    | "parse_failed"
+    | "mapping_failed"
+    | "inspection_failed"
+    | "privacy_review_required";
+  privacy: Readonly<{
+    privacyReviewRequired: boolean;
+    brokerLabelReplaced: boolean;
+    replacedLabelCount: number;
+    rawValuesIncluded: false;
+    rawRowsIncluded: false;
+    originalFilenameIncluded: false;
+    sourcePathIncluded: false;
+    sourceFileHashIncluded: false;
+    sourceFileSizeIncluded: false;
+    dataDependentCountsIncluded: false;
+  }>;
+}>;
+
 type ParsedRecord = readonly string[];
 
 function safeBrokerName(value: string): string {
@@ -67,6 +106,284 @@ function safeHeader(value: string, index: number): string {
 function normalizedHeader(value: string): string {
   return value.trim().normalize("NFKC").toLowerCase()
     .replace(/[^a-z0-9]+/gu, "");
+}
+
+const SAFE_HEADER_WORDS = new Set([
+  "account", "action", "amount", "asset", "average", "avg", "balance",
+  "broker", "buy", "cash", "charge", "charges", "commission", "comm",
+  "contract", "cost", "currency", "cusip", "date", "datetime", "description",
+  "direction", "exchange", "exec", "executed", "execution", "fee", "fees",
+  "field", "fill", "filled", "gross", "header", "id", "identifier", "info",
+  "information", "instrument", "isin", "market", "name", "net", "open",
+  "order", "position", "price", "primary", "proceeds", "qty", "quantity", "reference",
+  "row", "security", "section", "sell", "shares", "side", "statement",
+  "stock", "symbol", "table", "ticker", "time", "total", "trade", "trades",
+  "transaction", "type", "value",
+]);
+
+function hardenedLabel(value: string, fallback: string): Readonly<{
+  label: string;
+  replaced: boolean;
+}> {
+  const original = value.normalize("NFKC");
+  const text = original.trim().replace(/\s+/gu, " ");
+  const words = text.toLowerCase().match(/[a-z]+/gu) ?? [];
+  const compactTokens = text.match(/[A-Za-z0-9]+/gu) ?? [];
+  const unsafe =
+    original !== original.replace(/[\u0000-\u001f\u007f]/gu, "") ||
+    text.length < 1 ||
+    text.length > 80 ||
+    /^[=+\-@]/u.test(text) ||
+    !/^[A-Za-z0-9][A-Za-z0-9 .,_()/&#%+\-]*$/u.test(text) ||
+    /(?:https?:\/\/|www\.|mailto:|@[^ ]+\.|[A-Za-z]:\\|\\\\|\.\.\/)/iu.test(text) ||
+    /^[-+]?\d+(?:\.\d+)?$/u.test(text) ||
+    /\b\d{1,4}[-/]\d{1,2}[-/]\d{1,4}\b/u.test(text) ||
+    /\d{4,}/u.test(text) ||
+    compactTokens.some((token) =>
+      /^[0-9a-f]{16,}$/iu.test(token) ||
+      (/^[A-Z0-9]{4,}$/u.test(token) &&
+        !SAFE_HEADER_WORDS.has(token.toLowerCase()))) ||
+    words.length === 0 ||
+    !words.some((word) => SAFE_HEADER_WORDS.has(word));
+  return unsafe
+    ? Object.freeze({ label: fallback, replaced: true })
+    : Object.freeze({ label: text, replaced: false });
+}
+
+function hardenedBrokerLabel(value: string): Readonly<{
+  label: string;
+  replaced: boolean;
+}> {
+  const original = value.normalize("NFKC");
+  const text = original.trim().replace(/\s+/gu, " ");
+  const unsafe =
+    original !== original.replace(/[\u0000-\u001f\u007f]/gu, "") ||
+    text.length < 1 ||
+    text.length > 80 ||
+    /^[=+\-@]/u.test(text) ||
+    !/^[A-Za-z0-9][A-Za-z0-9 .,&()'\-]*$/u.test(text) ||
+    /(?:https?:\/\/|www\.|mailto:|@[^ ]+\.|[A-Za-z]:\\|\\\\|\.\.\/)/iu.test(text) ||
+    /\d{4,}/u.test(text) ||
+    text.match(/[A-Za-z]/gu)?.length === undefined;
+  return unsafe
+    ? Object.freeze({ label: "Broker not specified", replaced: true })
+    : Object.freeze({ label: text, replaced: false });
+}
+
+function safeFailureCategory(
+  failureCode: string,
+): JournalMappingSupportPackageV2["failureCategory"] {
+  if (failureCode === "none") return "none";
+  if (failureCode.includes("PARSE")) return "parse_failed";
+  if (failureCode.includes("MAPPING")) return "mapping_failed";
+  if (failureCode === "format_not_supported") return "format_not_supported";
+  return "inspection_failed";
+}
+
+export function journalStatementLayoutSignature(input: Readonly<{
+  fileKind: JournalMappingSupportPackageV2["fileKind"];
+  encoding: JournalMappingSupportPackageV2["detectedEncoding"];
+  delimiter: JournalMappingSupportPackageV2["detectedDelimiter"];
+  tables: JournalMappingSupportPackageV2["tables"];
+  recordFieldCounts: readonly number[];
+}>): string {
+  const payload = [
+    "journal_statement_mapping_support_v2",
+    input.fileKind,
+    input.encoding,
+    input.delimiter === "unknown" ? null : input.delimiter,
+    input.tables.map((table) => [
+      table.ordinal,
+      table.tableKind,
+      table.structuralSignatureSha256,
+    ]),
+    [...new Set(input.recordFieldCounts)].sort((left, right) => left - right),
+  ];
+  return createHash("sha256")
+    .update(`${JSON.stringify(payload)}\n`, "utf8")
+    .digest("hex");
+}
+
+export function createJournalMappingSupportPackageV2(
+  inspection: JournalMappingSupportPackage,
+): JournalMappingSupportPackageV2 {
+  const broker = hardenedBrokerLabel(inspection.brokerName);
+  let replacedLabelCount = 0;
+  const transformedTables = inspection.tables.map((table, tableIndex) => {
+    const tableLabel = hardenedLabel(table.tableLabel, `Section ${tableIndex + 1}`);
+    if (tableLabel.replaced) replacedLabelCount += 1;
+    const headers = table.headerLabels.map((label, columnIndex) => {
+      const hardened = hardenedLabel(label, `Column ${columnIndex + 1}`);
+      if (hardened.replaced) replacedLabelCount += 1;
+      return hardened.label;
+    });
+    const structuralSignatureSha256 = journalStatementStructuralSignature({
+      delimiter: inspection.detectedDelimiter,
+      tableKind: table.tableKind,
+      tableLabel: tableLabel.label,
+      headerLabels: headers,
+    });
+    return Object.freeze({
+      ordinal: tableIndex + 1,
+      tableLabel: tableLabel.label,
+      tableKind: table.tableKind,
+      headerRowIndex: table.headerRowIndex,
+      structuralSignatureSha256,
+      fieldCount: headers.length,
+      headerLabels: Object.freeze(headers),
+      suggestedMapping: suggestedMapping(headers),
+    });
+  });
+  const tables = Object.freeze(transformedTables);
+  const recordFieldCounts = Object.freeze(inspection.recordShapeCounts
+    .map((shapeEntry) => shapeEntry.fieldCount)
+    .filter((fieldCount, index, values) => values.indexOf(fieldCount) === index)
+    .sort((left, right) => left - right));
+  const privacyReviewRequired =
+    replacedLabelCount > 0 ||
+    inspection.detectedEncoding !== "utf-8" ||
+    inspection.detectedDelimiter === "unknown" ||
+    tables.length === 0;
+  const failureCategory = privacyReviewRequired
+    ? "privacy_review_required" as const
+    : safeFailureCategory(inspection.failureCode);
+  const result: JournalMappingSupportPackageV2 = Object.freeze({
+    contractVersion: "journal_statement_mapping_support_v2" as const,
+    fileKind: "delimited_text" as const,
+    brokerLabel: broker.label,
+    detectedEncoding: inspection.detectedEncoding,
+    detectedDelimiter: inspection.detectedDelimiter,
+    recordFieldCounts,
+    tables,
+    statementLayoutSignatureSha256: privacyReviewRequired
+      ? null
+      : journalStatementLayoutSignature({
+          fileKind: "delimited_text",
+          encoding: inspection.detectedEncoding,
+          delimiter: inspection.detectedDelimiter,
+          tables,
+          recordFieldCounts,
+        }),
+    failureCategory,
+    privacy: Object.freeze({
+      privacyReviewRequired,
+      brokerLabelReplaced: broker.replaced,
+      replacedLabelCount,
+      rawValuesIncluded: false as const,
+      rawRowsIncluded: false as const,
+      originalFilenameIncluded: false as const,
+      sourcePathIncluded: false as const,
+      sourceFileHashIncluded: false as const,
+      sourceFileSizeIncluded: false as const,
+      dataDependentCountsIncluded: false as const,
+    }),
+  });
+  assertJournalMappingSupportPackageV2Privacy(result);
+  return result;
+}
+
+export function assertJournalMappingSupportPackageV2Privacy(
+  value: JournalMappingSupportPackageV2,
+): void {
+  const serialized = JSON.stringify(value);
+  if (
+    serialized.length > 256_000 ||
+    /"(?:sourceFileSha256|sourceFileSizeBytes|recordCount|dataRowCount|emptyCount|nonEmptyCount)"/u
+      .test(serialized) ||
+    value.tables.length > 200 ||
+    value.recordFieldCounts.some((fieldCount) =>
+      !Number.isSafeInteger(fieldCount) || fieldCount < 1 || fieldCount > 4096) ||
+    value.tables.some((table, tableIndex) =>
+      table.ordinal !== tableIndex + 1 ||
+      table.fieldCount !== table.headerLabels.length ||
+      !/^[0-9a-f]{64}$/u.test(table.structuralSignatureSha256) ||
+      table.headerLabels.some((label, columnIndex) => {
+        const hardened = hardenedLabel(label, `Column ${columnIndex + 1}`);
+        return hardened.replaced && label !== `Column ${columnIndex + 1}`;
+      })) ||
+    (value.statementLayoutSignatureSha256 !== null &&
+      !/^[0-9a-f]{64}$/u.test(value.statementLayoutSignatureSha256))
+  ) {
+    throw new Error("TRADERLINK_JOURNAL_MAPPING_SUPPORT_PRIVACY_FAILED");
+  }
+}
+
+export function restoreJournalInternalMappingContractFromV2(
+  value: unknown,
+  inspection: JournalMappingSupportPackage,
+  browserPackage: JournalMappingSupportPackageV2,
+): unknown {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  const record = value as Record<string, unknown>;
+  const browserTable = browserPackage.tables.find((table) =>
+    table.structuralSignatureSha256 === record.structuralSignatureSha256 &&
+    table.tableKind === record.tableKind &&
+    table.headerRowIndex === record.headerRowIndex);
+  if (!browserTable) return value;
+  const internalTable = inspection.tables[browserTable.ordinal - 1];
+  if (!internalTable || !record.columns || typeof record.columns !== "object" ||
+    Array.isArray(record.columns)) return value;
+  const internalByBrowserLabel = new Map(
+    browserTable.headerLabels.map((label, index) => [
+      normalizedHeader(label),
+      internalTable.headerLabels[index],
+    ]),
+  );
+  const restoredColumns = Object.fromEntries(
+    Object.entries(record.columns as Record<string, unknown>).map(([field, label]) => [
+      field,
+      typeof label === "string"
+        ? internalByBrowserLabel.get(normalizedHeader(label)) ?? label
+        : label,
+    ]),
+  );
+  return Object.freeze({
+    ...record,
+    structuralSignatureSha256: internalTable.structuralSignatureSha256,
+    tableLabel: internalTable.tableLabel,
+    orderedHeaders: Object.freeze([...internalTable.headerLabels]),
+    columns: Object.freeze(restoredColumns),
+  });
+}
+
+export function sanitizeJournalInternalMappingContractForV2(
+  value: unknown,
+  inspection: JournalMappingSupportPackage,
+  browserPackage: JournalMappingSupportPackageV2,
+): unknown {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  const record = value as Record<string, unknown>;
+  const internalTableIndex = inspection.tables.findIndex((table) =>
+    table.structuralSignatureSha256 === record.structuralSignatureSha256 &&
+    table.tableKind === record.tableKind &&
+    table.headerRowIndex === record.headerRowIndex);
+  if (internalTableIndex < 0) return value;
+  const internalTable = inspection.tables[internalTableIndex];
+  const browserTable = browserPackage.tables[internalTableIndex];
+  if (!internalTable || !browserTable || !record.columns ||
+    typeof record.columns !== "object" || Array.isArray(record.columns)) return value;
+  const browserByInternalLabel = new Map(
+    internalTable.headerLabels.map((label, index) => [
+      normalizedHeader(label),
+      browserTable.headerLabels[index],
+    ]),
+  );
+  const sanitizedColumns = Object.fromEntries(
+    Object.entries(record.columns as Record<string, unknown>).map(([field, label]) => [
+      field,
+      typeof label === "string"
+        ? browserByInternalLabel.get(normalizedHeader(label)) ?? `Column`
+        : label,
+    ]),
+  );
+  return Object.freeze({
+    ...record,
+    brokerName: browserPackage.brokerLabel,
+    structuralSignatureSha256: browserTable.structuralSignatureSha256,
+    tableLabel: browserTable.tableLabel,
+    orderedHeaders: Object.freeze([...browserTable.headerLabels]),
+    columns: Object.freeze(sanitizedColumns),
+  });
 }
 
 function suggestedMapping(labels: readonly string[]): Readonly<Record<string, string>> {

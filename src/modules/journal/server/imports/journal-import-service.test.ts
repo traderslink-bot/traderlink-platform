@@ -28,6 +28,7 @@ import {
 } from "./journal-import-repository";
 import { mappingContractFromSupportTable } from "./journal-generic-mapped-statement-adapter";
 import { createJournalMappingSupportPackage } from "../product/journal-mapping-support-package";
+import { JournalExecutionReconciliationRepository } from "../reconciliation/journal-execution-reconciliation-repository";
 import { syntheticIbkrStatement } from "./synthetic-ibkr-fixtures";
 
 const roots: string[] = [];
@@ -58,6 +59,7 @@ function createImportService(
     new JournalExecutionRepository(database),
     accounts,
     createJournalPrivacyDigester(privacyConfiguration),
+    new JournalExecutionReconciliationRepository(database),
   );
 }
 
@@ -850,7 +852,7 @@ FROM journal_execution_versions ORDER BY executed_at_utc, source_order_key`).all
     } finally { context.database.close(); }
   });
 
-  it("stores manual activity as point-only coverage and matches a later broker execution", () => {
+  it("keeps a manual execution active while a later broker candidate waits for confirmation", () => {
     const context = setup();
     try {
       const manual = context.service.commitManualExecutions(context.scope, {
@@ -859,13 +861,25 @@ FROM journal_execution_versions ORDER BY executed_at_utc, source_order_key`).all
         now: new Date("2026-08-01T13:00:00.000Z"),
       });
       const broker = brokerCommit(context, ibkrCsv([
-        'Trades,Data,Order,Stocks,USD,MANU,"2026-01-08, 09:35:00",50,7.5,,MANU-FILL-1',
+        'Trades,Data,Order,Stocks,USD,MANU,"2026-01-08, 09:36:00",50,7.5,,MANU-FILL-1',
       ]));
       expect(manual.createdExecutionCount).toBe(1);
-      expect(broker.matchedExecutionCount).toBe(1);
-      expect(count(context.database, "journal_executions")).toBe(1);
+      expect(broker).toMatchObject({
+        createdExecutionCount: 1,
+        matchedExecutionCount: 0,
+        pendingSourceDecisionCount: 1,
+      });
+      expect(count(context.database, "journal_executions")).toBe(2);
       expect(count(context.database, "journal_execution_provenance")).toBe(2);
       expect(count(context.database, "journal_source_coverage_intervals", "WHERE coverage_kind = 'point_only'")).toBe(1);
+      expect(count(context.database, "journal_execution_reconciliation_sets", "WHERE state = 'pending'")).toBe(1);
+      expect(count(context.database, "journal_execution_reconciliation_members")).toBe(3);
+      expect(count(context.database, "journal_source_row_issues", "WHERE issue_code = 'manual_broker_possible_duplicate'")).toBe(1);
+      expect(context.database.prepare(`SELECT current_state, COUNT(*) AS count
+FROM journal_executions GROUP BY current_state ORDER BY current_state`).all()).toEqual([
+        { current_state: "accepted", count: 1 },
+        { current_state: "needs_decision", count: 1 },
+      ]);
     } finally { context.database.close(); }
   });
 
@@ -928,7 +942,7 @@ ORDER BY local_start_date`).all()).toEqual([
     } finally { context.database.close(); }
   });
 
-  it("uses a broker overlap to enrich an otherwise matching manual execution with fees", () => {
+  it("does not enrich an exact manual match until the trader confirms the broker overlap", () => {
     const context = setup();
     try {
       context.service.commitManualExecutions(context.scope, {
@@ -939,11 +953,23 @@ ORDER BY local_start_date`).all()).toEqual([
       const broker = brokerCommit(context, ibkrCsv([
         'Trades,Data,Order,Stocks,USD,MANU,"2026-01-08, 09:35:00",50,7.5,-0.5,MANU-FILL-FEE',
       ]));
-      expect(broker.matchedExecutionCount).toBe(1);
-      expect(count(context.database, "journal_executions")).toBe(1);
+      expect(broker).toMatchObject({
+        createdExecutionCount: 1,
+        matchedExecutionCount: 0,
+        pendingSourceDecisionCount: 1,
+      });
+      expect(count(context.database, "journal_executions")).toBe(2);
       expect(count(context.database, "journal_execution_versions")).toBe(2);
-      expect((context.database.prepare(`SELECT fees_decimal FROM journal_execution_versions
-ORDER BY version_number DESC LIMIT 1`).get() as { fees_decimal: string }).fees_decimal).toBe("-0.5");
+      expect(context.database.prepare(`SELECT member.member_role, version.fees_decimal
+FROM journal_execution_reconciliation_members member
+JOIN journal_executions execution ON execution.execution_id = member.execution_id
+JOIN journal_execution_versions version
+  ON version.execution_version_id = execution.current_version_id
+WHERE member.member_role IN ('manual_execution', 'provisional_imported_execution')
+ORDER BY member.member_role`).all()).toEqual([
+        { member_role: "manual_execution", fees_decimal: null },
+        { member_role: "provisional_imported_execution", fees_decimal: "-0.5" },
+      ]);
     } finally { context.database.close(); }
   });
 

@@ -6,6 +6,13 @@ import {
   requireTraderLinkPlatformRequestScope,
   requireExpectedJournalAccountSelection,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireJournalMutationRequest } from "@/src/modules/platform/server/authentication/journal-mutation-request-security";
+import { resolveJournalImportAttemptDigests } from "@/src/modules/journal/server/administration/journal-import-attempt-service";
+import {
+  createJournalMappingSupportPackage,
+  createJournalMappingSupportPackageV2,
+  restoreJournalInternalMappingContractFromV2,
+} from "@/src/modules/journal/server/product/journal-mapping-support-package";
 import { isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
 
 export const runtime = "nodejs";
@@ -13,12 +20,13 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request): Promise<Response> {
   try {
+    requireJournalMutationRequest(request);
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
     const data = await request.formData();
     const file = data.get("statement");
     const sourceTimezone = data.get("sourceTimezone");
-    const confirmedSourceFileSha256 = data.get("confirmedSourceFileSha256");
-    const confirmedAccountRef = data.get("confirmedAccountRef");
+    const previewRef = data.get("previewRef");
+    const attemptIdempotencyRef = data.get("attemptIdempotencyRef");
     const confirmationAction = data.get("confirmationAction");
     const commitKind = data.get("commitKind");
     const mappingContractJson = data.get("mappingContract");
@@ -27,8 +35,8 @@ export async function POST(request: Request): Promise<Response> {
     if (
       !(file instanceof File) ||
       typeof sourceTimezone !== "string" ||
-      typeof confirmedSourceFileSha256 !== "string" ||
-      typeof confirmedAccountRef !== "string" ||
+      typeof previewRef !== "string" ||
+      typeof attemptIdempotencyRef !== "string" ||
       typeof expectedAccountSelectionRef !== "string" ||
       (confirmSourceIdentityLink !== "yes" && confirmSourceIdentityLink !== "no") ||
       (commitKind !== "ibkr" && commitKind !== "mapped_csv") ||
@@ -39,9 +47,33 @@ export async function POST(request: Request): Promise<Response> {
         { status: 400 },
       );
     }
+    const allowedMimeTypes = new Set([
+      "",
+      "text/csv",
+      "text/plain",
+      "application/csv",
+      "text/tab-separated-values",
+    ]);
+    if (
+      !allowedMimeTypes.has(file.type.toLowerCase()) ||
+      !/\.(?:csv|tsv|txt)$/iu.test(file.name)
+    ) {
+      return Response.json(
+        { status: "unavailable", code: "TRADERLINK_JOURNAL_IMPORT_REQUEST_INVALID" },
+        { status: 415 },
+      );
+    }
     requireExpectedJournalAccountSelection(scope, expectedAccountSelectionRef);
+    const attemptDigests = resolveJournalImportAttemptDigests(
+      scope,
+      attemptIdempotencyRef,
+    );
     const sourceBytes = new Uint8Array(await file.arrayBuffer());
-    if (sourceBytes.byteLength < 1 || sourceBytes.byteLength > 25 * 1024 * 1024) {
+    if (
+      sourceBytes.byteLength < 1 ||
+      sourceBytes.byteLength > 25 * 1024 * 1024 ||
+      sourceBytes.includes(0)
+    ) {
       return Response.json(
         { status: "unavailable", code: "TRADERLINK_JOURNAL_IMPORT_REQUEST_INVALID" },
         { status: 413 },
@@ -64,18 +96,36 @@ export async function POST(request: Request): Promise<Response> {
           { status: 400 },
         );
       }
+      const mappingRecord = mappingContract && typeof mappingContract === "object" &&
+        !Array.isArray(mappingContract)
+        ? mappingContract as Record<string, unknown>
+        : {};
+      const inspection = createJournalMappingSupportPackage({
+        sourceBytes,
+        brokerName: typeof mappingRecord.brokerName === "string"
+          ? mappingRecord.brokerName
+          : "",
+        failureCode: "none",
+      });
+      const mappingSupport = createJournalMappingSupportPackageV2(inspection);
       result = commitJournalGenericMappedUpload(scope, {
         sourceBytes,
-        mapping: mappingContract,
-        confirmedSourceFileSha256,
-        confirmedAccountRef,
+        mapping: restoreJournalInternalMappingContractFromV2(
+          mappingContract,
+          inspection,
+          mappingSupport,
+        ),
+        previewRef,
+        attemptBindingSha256: attemptDigests.requestIdempotencySha256,
+        attemptCorrelationSha256: attemptDigests.correlationRefSha256,
       });
     } else {
       result = commitJournalIbkrUpload(scope, {
         sourceBytes,
         sourceTimezone,
-        confirmedSourceFileSha256,
-        confirmedAccountRef,
+        previewRef,
+        attemptBindingSha256: attemptDigests.requestIdempotencySha256,
+        attemptCorrelationSha256: attemptDigests.correlationRefSha256,
         confirmSourceIdentityLink: confirmSourceIdentityLink === "yes",
       });
     }
