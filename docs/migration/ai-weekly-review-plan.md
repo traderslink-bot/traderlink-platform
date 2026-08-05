@@ -7,10 +7,12 @@ the [progress record](ai-weekly-review-progress.md) tracks completed slices.
 The local two-week Journal fixture is the first controlled review input. This
 supersedes the retired Reflection Loop page.
 
-The future conversational companion is planned separately in
-[AI Chat Plan](ai-chat-plan.md). It may share the private provider/cost
-controls, but it has its own account-scoped history, factual snapshots and
-generation receipts. AI Chat cannot begin until its separate plan is approved.
+The broader AI product is governed by the [TraderLink AI Companion
+Plan](ai-chat-plan.md). It connects scheduled reviews with private AI Chat,
+Daily Trade Tracker assistance, conversational manual-entry drafts and shared
+privacy/cost controls. Weekly and monthly review boundaries in this document
+remain authoritative; AI Companion implementation cannot begin until the
+complete plan is approved.
 
 ## Purpose
 

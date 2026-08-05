@@ -1,322 +1,411 @@
-# AI Chat Plan
+# TraderLink AI Companion Plan
 
 ## Status
 
-Planning only. No AI Chat route, database table, provider request, user
-interface or API cost will be created until this plan is reviewed and approved.
-AI Chat is a separate Coach feature that follows the AI Reviews foundation; it
-does not revive or depend on the retired V3 Coach runtime.
+**Planning only.** This is the main, end-state plan for the TraderLink AI
+Companion: AI Chat, the Daily Trade Tracker companion, saved weekly and monthly
+reviews, conversational manual execution entry, account settings, and Journal
+Administration controls. No new route, database record, provider request,
+manual execution write, or automatic review behavior is authorized by this
+document until the owner accepts the complete plan.
 
-## Purpose
+The [AI Reviews Plan](ai-weekly-review-plan.md) remains the governing contract
+for the already-approved weekly and calendar-month review boundaries. This plan
+coordinates that work with the broader AI product; it does not revive the V3
+Coach or depend on a V3 route, database, analytics engine, or prompt.
 
-Give a trader a private place to ask clear questions about their own trading
-record. The chat helps them examine results, notes, rules, tags, Current
-Focuses and saved AI Reviews. It should be direct and useful without pretending
-to know why a trade happened or what will happen next.
+Implementation status is tracked in [AI Companion Progress](ai-chat-progress.md).
 
-Examples of useful questions:
+## Product direction
 
-- “What did I do differently on my best trading days this month?”
-- “Which rule did I break most often this week?”
-- “Show me the trades where I added to a losing position.”
-- “Did my notes support the focus I set at the start of the week?”
-- “What changed between this month and last month?”
+TraderLink AI is a private companion for a trader's own Journal. It helps the
+trader record accurate executions, complete a useful daily review, understand
+their own results, and receive a grounded weekly or monthly perspective. It is
+not a generic stock chatbot, a trade signal service, a prediction engine, or a
+replacement for the trader's broker statement.
 
-AI Chat is not a signal service, an execution tool, a prediction engine, a
-Data Decisions editor or an automatic trade classifier. It cannot add, change,
-delete or conceal Journal facts, notes, rules, tags, decisions or reviews.
+The complete product has four connected experiences:
 
-## Product decisions
-
-### One private chat per selected Journal account
-
-- The chat always belongs to the currently selected Journal account. A user
-  can switch accounts in the normal dashboard switcher, but conversations and
-  messages never cross that boundary.
-- A conversation is private to the user who created it. Account sharing and
-  team coaching are later product decisions, not part of this first release.
-- The chat does not read another user’s account, the admin dashboard, broker
-  statement files, raw statement rows, credentials or Discord information.
-- Each account starts with an empty state. The product never creates example
-  conversations or fake answers.
-
-### What the chat may use
-
-The answer service can use only bounded, replacement-owned Journal views:
-
-1. Confirmed completed trades and their factual P/L, dates/times, ticker,
-   direction, trade session, execution count, holding time and selected
-   account currency.
-2. Trader-authored trade notes, daily notes, Current Focuses, selected tags
-   and automatically evaluated rule outcomes.
-3. Saved weekly and monthly AI Reviews as prior coaching context, never as
-   proof that a conclusion is true.
-4. Open-position classification only when the trader asks about open positions.
-   Open positions stay out of realized P/L conclusions.
-5. A short plain-language availability note when unresolved Data Decisions,
-   missing coverage, unavailable values or unreviewed days limit the answer.
-
-The chat does not receive raw broker statements, account numbers, source-row
-values, internal issue codes, implementation logs, provider credentials or
-hidden admin information.
-
-### Facts before interpretation
-
-- The server first builds a compact factual answer package for the active
-  account and the question’s stated time period. The model never queries SQLite
-  directly and never receives unrestricted application access.
-- Factual values shown in an answer must come from that saved package. If the
-  record is incomplete, the answer says what is unavailable rather than filling
-  the gap with a guess.
-- The assistant may connect a pattern to a note, tag, Current Focus or rule
-  outcome only when the supplied record supports it. Tags remain trader context,
-  not a diagnosis or verified setup.
-- It must not call a profitable trade “good process” or a losing trade “bad
-  process” without evidence from the trader’s own notes or rules.
-
-### Direct answers, not a generic financial chatbot
-
-The chat can explain the trader’s own results, point out a supported pattern,
-compare selected periods and ask a focused follow-up question. It must not:
-
-- give a trade recommendation, price target, entry/exit instruction or
-  position-size instruction;
-- predict a ticker, market direction, news result or future P/L;
-- diagnose a trader’s mental state or invent motivation;
-- tell the trader to override their broker, statement or Data Decisions;
-- represent its answer as tax, legal, financial or medical advice.
-
-Trader-facing wording should be conversational and specific. It should not
-mention databases, prompts, model tokens, internal codes or source systems.
-
-## Chat experience
-
-### Route and navigation
-
-- Add a dedicated dashboard route: `/ai-chat`.
-- Add one left-navigation item named **AI Chat** in the AI/Analytics area,
-  beside AI Reviews. It is not nested under the retired Reflection Loop.
-- The page title and introduction should sell the feature in ordinary language,
-  for example: “Ask questions about your trades, habits, notes and progress.
-  AI Chat uses the record you have built in TraderLink to help you see patterns
-  and stay focused.” Final copy requires owner visual review.
-
-### Layout
-
-Desktop layout:
-
-- A compact conversation list on the left with **New chat** and searchable
-  saved conversation titles.
-- The active conversation in the main panel.
-- A small account/date context control above the composer. The active account
-  is always visible; date scope defaults to the most recent 30 calendar days.
-- Suggested starting questions only when there are no messages. Suggestions are
-  examples, not invented results and not automatic analyses.
-
-Mobile layout:
-
-- The conversation list opens as a drawer.
-- The active conversation and composer remain the primary screen.
-- Data cards and answer sections stack; no horizontal table is required for a
-  first release.
-
-### Conversation behavior
-
-- **New chat** creates a private, empty conversation. A title is created from
-  the trader’s first saved question, then remains editable by the trader.
-- The trader can type a free-form question and select an optional date range.
-  The account selection always follows the dashboard account switcher.
-- One question is processed at a time per conversation. The send control is
-  unavailable while an answer is being generated.
-- A saved response appears in the conversation with any compact factual cards
-  needed to make it understandable, such as a selected-period P/L summary or
-  a short list of the trades explicitly discussed.
-- Clicking a factual trade card opens that trade’s existing Journal detail
-  surface; it does not expose raw statement rows.
-- The trader can rename, archive and later reopen a conversation. Archive is a
-  normal visibility action, not destruction of paid-generation history.
-- The trader can start a new conversation from a saved Weekly or Monthly Review
-  using “Ask a follow-up.” The review is included as context only for that new
-  conversation.
-
-### Initial answer modes
-
-The first release supports these bounded question types, even when the trader
-uses ordinary free-form language:
-
-| Answer mode | What it can answer | Primary output |
+| Experience | Where it appears | Purpose |
 | --- | --- | --- |
-| Period review | “How did I trade last week?” | direct narrative plus summary figures |
-| Rule and focus follow-through | “How did I do with my focus?” | supported observations and named rules |
-| Trade pattern | “How were my re-entries?” | matching completed trades and pattern summary |
-| Ticker or tag review | “How did I trade ABC?” | filtered completed-trade summary |
-| Comparison | “This month versus last month” | side-by-side factual comparison |
-| Trade explanation | “Why is this marked a day trade?” | factual construction explanation only |
+| Daily Review Companion | Daily Trade Tracker | Helps the trader turn the day's facts and their own observations into a completed review. |
+| AI Chat | `/ai-chat` | Lets the trader ask questions, examine their record, and enter a draft of manual executions conversationally. |
+| AI Reviews | `/ai-reviews` | Delivers and saves scheduled weekly and calendar-month reviews. |
+| AI controls | Account Settings and Journal Administration | Lets the trader choose a review schedule and lets the owner manage availability, models, spending, and delivery health. |
 
-Unsupported questions receive an honest, short response explaining what the
-chat can presently help with. The feature does not silently change a question
-into a different analysis.
+All four experiences read the same selected Journal account. Broker imports and
+manual executions remain in the one canonical account ledger. AI never becomes
+an alternate ledger, a source of market facts, or a hidden decision-maker.
 
-## Data and persistence design
+## Non-negotiable rules
 
-### New records
+1. **Facts first.** The server builds a compact, account-scoped factual package
+   before any model request. The model does not query the database directly or
+   gain arbitrary application, browser, statement-file, or network access.
+2. **The trader controls facts.** AI can explain, organize, suggest a draft, or
+   ask a helpful question. It cannot silently save, edit, delete, exclude,
+   classify, tag, complete a review, or alter an execution.
+3. **Canonical Journal protection.** Conversational manual entry must use the
+   same preview, duplicate, reconciliation, Data Decisions, and commit path as
+   Quick Trade Entry and the trackers. There is no AI-only write path.
+4. **No invention.** Missing coverage, unresolved Data Decisions, absent notes,
+   missing prices/times, or unavailable calculated values must stay unavailable.
+   The AI may ask the trader for a fact but never fill it in.
+5. **No trading advice.** The AI must not recommend a ticker, price target,
+   entry, exit, position size, strategy, or market prediction; it must not give
+   tax, legal, medical, or financial advice.
+6. **Privacy by account.** Conversations, factual snapshots, review packages,
+   manual-entry drafts, and costs are scoped to the current user, workspace,
+   and Journal account. Raw statements, account numbers, credentials, Discord
+   identities, and hidden admin data never enter model context.
+7. **No fake coaching.** Empty accounts receive an honest empty state. The
+   product never creates sample conversations, fabricated insights, fictional
+   trade notes, or placeholder reviews for a trader.
 
-Add one new Coach migration after the currently applied cost-tracking
-migration. The exact migration number is assigned only when implementation
-begins.
+## Daily Trade Tracker companion
 
-| Record | Purpose | Key rules |
+The Daily Trade Tracker remains the place where a trader journals one Eastern
+market trading day. The AI companion makes that workflow easier and more useful
+without taking ownership of it.
+
+### Intended daily flow
+
+1. The trader enters executions for one trading date, through the tracker or
+   through a confirmed AI-chat draft. The existing Journal preview determines
+   duplicate/reconciliation outcomes before any save.
+2. The tracker organizes the saved day by ticker and trade. The trader can edit
+   their own manual executions, choose tags, write a single trade note, and see
+   applicable automatically evaluated rules.
+3. The trader may open **Ask about this day**. AI receives only that day’s
+   factual trade summary, saved notes, selected tags, evaluated rules, the
+   Current Focuses history relevant to the day, and any stated availability
+   limitations.
+4. The companion can ask concise reflection questions, surface a supported
+   observation, or help turn the trader’s own rough words into a proposed note.
+   Example: if a rule was broken and no trade note exists, it may invite the
+   trader to record what happened. It must not claim why the rule was broken.
+5. When AI proposes wording for a trade note, daily note, or Current Focus, the
+   proposed text is shown as an editable draft. The trader explicitly chooses
+   whether to save it through the normal annotation command.
+6. The trader marks **Review completed** themselves. That action saves any
+   unsaved tracker fields first, but AI cannot press it, mark it automatically,
+   or create a review for a day the trader never reviewed.
+
+### Daily companion capabilities
+
+- Explain a factual result or rule outcome in ordinary language.
+- Help the trader write a clearer trade note, daily reflection, or focus while
+  preserving that it is trader-authored and editable.
+- Ask a short, relevant reflection question based on saved facts; it should not
+  show generic boilerplate or force the trader to answer.
+- Compare the day with the trader’s active Current Focuses and earlier saved
+  focuses, using the dated revision history rather than pretending there was
+  one immutable weekly focus.
+- Point the trader to an existing Data Decisions item only when it truly limits
+  a fact they asked about. It does not make Data Decisions the center of a
+  daily-review experience.
+
+### Daily companion boundaries
+
+- It never creates tags, rules, notes, rule outcomes, classifications, or a
+  completed review on its own.
+- It does not ask the trader to reconstruct old historical days. Historical
+  imported days can be read and discussed if supported, but the current daily
+  journaling workflow remains for current/recent trading days.
+- It does not treat a tag as proof of a setup, emotion, or cause. Tags are
+  trader context.
+- It does not use open positions in realized P/L conclusions. An intentional
+  swing or bag hold may be discussed only when the trader asks about it and its
+  saved classification supports that discussion.
+
+## Conversational manual execution entry
+
+AI Chat must let a trader enter manual executions naturally while retaining the
+same financial safeguards as every other entry surface.
+
+### Deliberate entry mode
+
+- The chat has a clear **Enter trades in chat** action. Ordinary questions are
+  never silently interpreted as a request to write trades.
+- The trader may describe one or several executions in normal language, such as
+  a buy, add, partial exit, or full exit.
+- AI extracts only a **draft**. It presents one editable execution row per
+  proposed execution with: trading date, Eastern execution time, ticker, side,
+  quantity, price, and optional fees.
+- It asks a short direct follow-up for a missing required fact. If the trader
+  cannot supply the fact, the draft stays unsaved. The AI must not substitute a
+  guessed time, price, quantity, date, or ticker.
+- The confirmation screen explains that exact broker values—especially time—
+  make later statement matching more reliable, without technical language.
+
+### Confirm and save
+
+1. The trader edits the extracted rows and explicitly confirms the draft.
+2. The server calls the existing Journal manual-entry preview for the selected
+   account. It applies duplicate detection, exact arithmetic, chronological
+   rebuilding, provenance, and Data Decisions protections.
+3. The preview shows a plain result: ready to save, possible duplicate,
+   conflicting record, or a factual decision that needs attention. It never
+   hides valid unrelated activity.
+4. Only an explicit final **Save executions** action invokes the existing
+   canonical Journal commit command. The resulting facts are indistinguishable
+   from manual facts entered in Quick Trade Entry or a tracker, except for
+   truthful entry provenance showing that the trader used AI Chat to prepare
+   the draft.
+5. The chat displays the saved result and offers the appropriate next step:
+   Daily Trade Tracker for a one-day review, Swing Trade Tracker for an
+   intentional multi-day swing, or Quick Trade Entry for a simple execution
+   record with no review flow.
+
+### Day, swing, and open-position handling
+
+- A Daily Trade Tracker submission accepts one trading date only. If a chat
+  draft contains more than one date, it must not force the rows into one daily
+  review; it routes the trader to Quick Trade Entry or the Swing Trade Tracker.
+- A trader explicitly identifies an intentional swing when appropriate. AI may
+  ask for that classification when a position remains open, but it never infers
+  a swing merely from duration.
+- A position intentionally left open can be marked as swing, long-term hold, or
+  bag hold by the trader. These are trader choices, separate from source-import
+  Data Decisions.
+- Later broker imports may overlap chat-entered manual executions. The normal
+  reconciliation workflow asks the trader to decide rather than silently
+  deleting the manual record or admitting a duplicate.
+
+## AI Chat experience
+
+### Route and layout
+
+- Add `/ai-chat` to the dashboard navigation beside **AI Reviews**.
+- The page has a concise, trader-facing introduction; no database, prompt,
+  token, or system-language copy appears in the visible product.
+- Desktop: saved private conversations on the left, active conversation in the
+  center, and a compact account/date context control above the composer.
+- Mobile: conversations open in a drawer; the conversation and composer remain
+  the main screen. Factual cards stack without wide tables.
+- The account follows the normal account selector. A conversation never moves
+  between accounts. Default analysis scope is recent history, but the trader
+  can choose a supported date range before asking.
+
+### Conversation features
+
+- New, rename, archive, restore, and search personal conversations.
+- Saved answer history and follow-ups from a weekly or monthly review.
+- Compact, linked factual cards for the exact trades or periods an answer
+  discusses. These open existing TraderLink details, not raw broker rows.
+- An explicit context selector: current day, selected week, selected month,
+  custom date range, selected ticker, or selected trade where supported.
+- A visible entry-mode switch for conversational manual execution drafts.
+- Suggested opening questions only in an empty conversation and only as generic
+  examples; never as fake results.
+
+### Supported question families
+
+| Family | Examples | What the AI may return |
 | --- | --- | --- |
-| `coach_ai_chat_conversations` | Account-scoped private conversation identity, title and archive state | UUID, user/workspace/account ownership, created/updated timestamps, no cross-account reads |
-| `coach_ai_chat_messages` | Ordered trader and assistant messages | UUID, immutable message content, role, status, created timestamp; assistant text is saved before it is displayed as complete |
-| `coach_ai_chat_answer_snapshots` | Exact bounded factual package used for each assistant answer | immutable JSON and SHA-256 digest; no raw broker statement data |
-| `coach_ai_chat_generation_receipts` | Provider/model, token use and price snapshot for each completed assistant answer | immutable, one receipt per completed assistant message |
-| `coach_ai_chat_archive_events` | Trader archive/restore actions | append-only history; no hidden deletion of paid generation evidence |
+| Results and patterns | best/worst days, ticker results, hold-time patterns, re-entries, scaling | filtered Journal facts plus supported observations |
+| Rules and focuses | rule follow-through, current-focus progress, repeated behavior in notes | factual outcomes plus carefully bounded coaching |
+| Daily review | help me review today, turn these bullets into a note, what did I miss? | reflection prompts and user-approved drafts |
+| Saved review follow-up | what should I take from last week’s review? | prior review context paired with current factual context |
+| Journal guidance | how does this tracker work? what does this status mean? | product help without exposing internals |
+| Manual execution capture | I bought/sold/added/covered... | editable execution draft and canonical preview/commit |
+| Future data-backed analysis | entry/exit analysis, chart/candle facts, tagged setup comparison | only after the required market-data coverage and product contract exist |
 
-The existing review-cost receipt table accepts only weekly/monthly review
-records, so chat receipts remain in their own immutable table. Journal
-Administration aggregates both receipt families into one AI-cost view.
+Unsupported questions receive a brief honest answer describing what the chat can
+help with now. It must not quietly turn an unsupported request into unrelated
+analysis.
 
-### Saved conversation history
+## Weekly and monthly reviews
 
-- Every trader question is saved before a provider request begins.
-- Every assistant answer has an addressable message ID and its own factual
-  snapshot. Later Journal edits do not rewrite an earlier answer.
-- A browser refresh during generation leaves a visible “Preparing answer”
-  state. A background completion can resume only when the pending request’s
-  immutable question, selected account, time range and factual digest still
-  match; otherwise it is marked unavailable and is never charged twice.
-- Conversation context sent to the model is bounded: the most recent relevant
-  messages plus a server-built compact summary of earlier messages. It must not
-  send an account’s unlimited chat history on each question.
-- Archiving hides the conversation from the normal list but preserves the
-  auditable receipt and message history. A future privacy/deletion policy will
-  define whether and how a trader can request permanent content removal.
+Weekly and calendar-month reviews are not chat transcripts. They are saved,
+dated coaching records generated from an immutable input package after the
+selected review schedule. AI Chat can start a follow-up conversation from a
+saved review, but it must identify the review as prior context rather than new
+proof.
 
-## Provider, costs and limits
+### Review input package
 
-### Provider settings
+The existing review plan governs the exact shape. At a high level, a package
+contains only the active account’s eligible completed facts, evaluated rules,
+trader notes, selected tags, daily-review completion state, Current Focuses
+and every dated revision during the period, prior relevant AI reviews, and
+truthful availability limitations. It does not contain raw statements, private
+identity, credentials, other accounts, or invented narrative.
 
-- Continue using the existing server-only provider credential and owner-only
-  AI Review settings area. The credential is never stored in SQLite or shown in
-  the dashboard.
-- AI Chat uses the currently selected approved model. Changing the model affects
-  only future answers; each saved answer records its actual model.
-- The administrator records verified input/output pricing before enabling
-  paid chat. If pricing is blank, Chat remains unavailable for new generation
-  rather than showing a made-up cost.
+### Scheduling
 
-### Cost controls
+- The trader chooses Friday, Saturday, or Sunday and an Eastern delivery time
+  in Account Settings.
+- The weekly schedule creates one review per completed eligible week.
+- A calendar-month review follows the approved partial-first-month and
+  eligibility rules in the AI Reviews Plan; it is not a rolling four-week
+  summary.
+- The scheduler is idempotent and records a saved review package before calling
+  the provider. A retry never double-bills or silently replaces an issued
+  review.
+- No review is sent merely because a calendar time passed. It must meet the
+  stated data/review eligibility conditions.
 
-- Record input tokens, output tokens, selected model, input/output price
-  snapshot and estimated cost for every completed answer.
-- Add owner settings for: chat enabled/disabled, maximum answers per account per
-  day, maximum question length, maximum answer length and optional per-account
-  daily cost cap.
-- Apply the smaller of the answer-count and cost cap before a provider request.
-  A reached cap produces a plain trader-facing availability message; it never
-  sends a partial request or charges for a response that is discarded.
-- Journal Administration shows total and period cost, answer count, tokens,
-  model breakdown, limit blocks and failed requests. It never shows message
-  contents or a credential in the cost overview.
+## Data, history, and retention
 
-### Rate and abuse protection
+### New AI Companion records
 
-- Require the current Platform account scope for every read and write.
-- Limit active generations to one per conversation and use server-side
-  idempotency keys for retry-safe submissions.
-- Enforce a short per-account request limit and reject oversized questions
-  before creating a provider request.
-- Log only safe operational outcomes and counts. Do not write prompts, answers,
-  credentials or raw trader content to application logs.
+One future Coach migration, numbered only at implementation, should add the
+following account-scoped records:
 
-## Server design
+| Record | Purpose |
+| --- | --- |
+| `coach_ai_chat_conversations` | conversation identity, title, ownership, archive state |
+| `coach_ai_chat_messages` | ordered trader/assistant messages and generation state |
+| `coach_ai_chat_answer_snapshots` | immutable, compact factual package and SHA-256 digest for an answer |
+| `coach_ai_chat_generation_receipts` | provider/model, token counts, verified price snapshot, estimated cost |
+| `coach_ai_manual_entry_drafts` | explicit user-owned chat drafts, confirmation state, and expiry/archive policy |
+| `coach_ai_daily_companion_interactions` | optional saved daily reflection drafts and their approved/rejected disposition |
+| `coach_ai_archive_events` | append-only archive/restore actions |
 
-### Read services
+This does not duplicate executions, notes, tags, rules, Current Focuses, or
+reviews. Those stay in their owning Journal/Coach tables and are referenced
+through bounded snapshots.
 
-Create an account-scoped `CoachAiChatFactService` that accepts a validated
-question mode and date range. It composes existing Journal Analytics,
-annotation, trading-day review, open-position and saved-review services into a
-small typed answer package. It has no write access to Journal facts.
+### Immutable evidence and user control
 
-The service has a fixed set of read operations, not arbitrary SQL or free-form
-database tool calls. It always applies account ownership, factual eligibility,
-timezone and Data Decisions coverage rules before building the package.
+- Every submitted question is persisted before provider work begins; every
+  completed assistant answer retains its immutable input snapshot and receipt.
+- Every manual-entry draft records that it was a draft. Only the canonical
+  manual-entry command creates ledger facts.
+- Revising Journal facts later does not rewrite an earlier answer or review.
+  A new question or deliberately regenerated eligible review gets a new dated
+  package.
+- Archiving hides a conversation from normal navigation but does not erase the
+  record required to explain a completed paid generation. A separate
+  owner-approved privacy/deletion policy must define permanent deletion.
 
-### Conversation service
+## Prompt, model, and output design
 
-Create a `CoachAiChatConversationService` responsible for:
+- A short system instruction defines the allowed question family, factual
+  grounding, privacy boundary, non-advice boundary, and user-control rules.
+- The model receives the minimum typed factual package for the request, plus
+  only the relevant recent conversation context and a server-built summary of
+  older context. It never receives unlimited history.
+- Responses use a structured server contract: direct answer, supporting
+  observations, availability limitation when needed, and an optional next
+  question. The UI renders these naturally and does not expose internal labels.
+- A server-side validator rejects malformed, unsupported, unsafe, or
+  ungrounded output before it becomes a completed assistant message.
+- Manual-entry extraction has a distinct structured draft schema. It is not a
+  natural-language answer treated as a command.
+- Any future chart/candle analysis must be separately approved and must state
+  actual coverage. AI cannot claim a technical indicator or candle pattern
+  without retained, verified market-data evidence.
 
-1. creating/renaming/archiving a conversation;
-2. validating a trader question and selected date range;
-3. writing the trader message and pending assistant message transactionally;
-4. building and saving the immutable answer snapshot;
-5. applying budget/rate/idempotency checks;
-6. calling the provider from a server-only adapter;
-7. saving the completed answer and immutable cost receipt;
-8. returning a compact result for the UI without re-calling the provider.
+## Settings, entitlements, administration, and cost controls
 
-Provider failure produces a neutral failed-answer state with a retry action. It
-does not reveal provider error text, erase the trader’s question or create a
-second billable answer without explicit retry.
+### Trader account settings
 
-### Prompt and response contract
+- AI Reviews enabled/disabled.
+- Weekly delivery day (Friday, Saturday, or Sunday) and Eastern delivery time.
+- Clear history/status for saved reviews and any current availability state.
+- Future entitlement/allowance display in plain language. Pricing, subscription,
+  and credit-pack design are product decisions before public launch; AI Chat
+  and automatic reviews should be gated by entitlement rather than made
+  unbounded by default.
 
-- Use a short system instruction focused on the trader’s own record and the
-  permitted answer modes.
-- Include the selected account/date facts and the minimal relevant prior
-  conversation context. Do not include credentials, raw statement rows or
-  unrelated accounts.
-- Require structured response sections: direct answer, supporting observations,
-  record limitations and optional next question. The rendered UI can present
-  them naturally without exposing its internal structure.
-- Do not enable autonomous tools, browser access, market-data retrieval,
-  trading integration or arbitrary URL access in the first release.
-- Run a server-side output validator before marking the assistant message
-  complete. Invalid or unsafe output is not displayed and does not overwrite
-  the pending record.
+### Journal Administration
 
-## Delivery sequence
+The owner-only AI area should include:
 
-### Phase A — foundation
+- server credential availability only—never the key itself;
+- current model selection and verified input/output price values;
+- separate enablement for Chat, Daily Companion, Weekly Reviews, and Monthly
+  Reviews so unfinished surfaces cannot become public accidentally;
+- per-account/day and platform-wide request, token, and estimated-spend caps;
+- model/feature/account aggregate costs, requests, token totals, failures,
+  blocked requests, scheduled-review status, and delivery health;
+- account-level enablement/entitlement support when the commercial plan is
+  defined;
+- no bulk display of private conversation text, notes, broker data, or prompts.
+  Support access to private content requires a future explicit privacy policy,
+  not a convenience admin screen.
 
-1. Review and approve this plan.
-2. Finalize model/pricing/cap values in Journal Administration.
-3. Add migration, exact contracts and account-isolated repositories.
-4. Add conversation/message/snapshot/receipt services with no dashboard route.
-5. Verify account isolation, immutable histories, retry/idempotency, cost math
-   and absence of Journal writes.
+### Cost and abuse protections
 
-### Phase B — first chat experience
+- One active generation per conversation; server idempotency keys for retries.
+- Question and answer length limits before provider work begins.
+- Per-account request rate limits and feature-specific daily/period caps.
+- Before every provider request, enforce the tighter of allowance, request cap,
+  and spend cap. Do not make a partial call that will be discarded.
+- Price is snapshotted with the actual completed generation. Admin totals show
+  estimates truthfully and never invent a cost when provider usage is absent.
+- Operational logs contain only privacy-safe status/count information, never
+  prompts, answers, credentials, raw statement contents, or raw identities.
 
-1. Add `/ai-chat`, navigation, conversation list and responsive chat view.
-2. Add New Chat, archive/restore, date scope and free-form question composer.
-3. Connect only the six initial answer modes and render saved answers.
-4. Add AI Review follow-up entry points.
-5. Obtain owner visual approval before expanding modes or changing the layout.
+## Security and failure behavior
 
-### Phase C — production controls
+- Every route/service verifies the selected Platform user/workspace/account
+  scope. Conversation IDs and draft IDs are opaque and never sufficient to
+  bypass scope.
+- Provider calls run server-side only. API keys are environment-only and never
+  enter a client bundle, SQLite, screenshots, browser storage, or logs.
+- Provider failure leaves a clear saved failed/pending state and an explicit
+  retry choice; it does not show raw provider errors or double-charge.
+- A browser refresh never starts a second generation. A resumed request must
+  match its saved question, account, date scope, and factual digest.
+- AI availability errors use plain trader language. Internal codes and database
+  terminology remain server-side.
 
-1. Add admin enabled state, budgets, model/pricing controls and combined cost
-   reporting.
-2. Add scheduled cleanup/archive retention only after a separate privacy
-   decision; no automatic deletion in the first release.
-3. Add Discord-hosted authentication and entitlement checks at the existing
-   hosted-launch boundary.
-4. Run final one-worker tests, targeted browser checks, then broader launch
-   verification at the established replacement checkpoint.
+## Future scope, deliberately sequenced
 
-## Acceptance criteria
+This is the complete target plan, not a promise to enable every capability at
+once. The following sequence controls safe delivery:
 
-- No V3 engine, V3 database, V3 route or V3 analytics dependency is introduced.
-- A chat answer never crosses selected-user/workspace/account boundaries.
-- Reopening an answer never triggers another model call.
-- Each completed answer remains readable with its exact saved factual snapshot.
-- Each provider call has one immutable token/model/cost receipt, or is clearly
-  unavailable before a request is sent.
-- The chat never changes Journal facts and cannot bypass Data Decisions.
-- Missing/contained records limit the answer honestly without hiding unrelated
-  valid activity.
-- Empty accounts receive an honest empty state, not a fabricated conversation.
-- The first UI is responsive, light Material UI, and visually approved before
-  later chat features expand.
+1. **Foundation:** schema/contracts, scopes, provider adapter, receipts, cost
+   controls, and immutable snapshots.
+2. **AI Reviews completion:** saved review list/detail, scheduler, weekly and
+   monthly issuance, account settings, and owner controls.
+3. **AI Chat core:** private conversations, factual question families, saved
+   answers, review follow-up, and responsive UI.
+4. **Daily companion:** tracker entry point, factual reflection support,
+   editable AI drafts for notes/focuses, and review-completion guardrails.
+5. **Conversational manual entry:** structured drafts, explicit confirmation,
+   existing Journal preview/commit integration, duplicate/reconciliation and
+   tracker routing.
+6. **Entitlements and production operations:** public login boundary, feature
+   eligibility, scheduled delivery execution, monitoring, costs, and support
+   workflow.
+7. **Future analysis expansion:** only data-backed chart/candle or enhanced
+   coaching capabilities after their market-data, product, cost, and privacy
+   contracts are separately approved.
+
+## Verification and acceptance
+
+Before each implementation slice, add focused deterministic checks for its own
+contract. The final product must prove at least:
+
+- strict user/workspace/account isolation for conversations, reviews, drafts,
+  facts, receipts, and settings;
+- one saved factual snapshot and one receipt per completed provider generation;
+- no V3 dependency and no raw statement or credential inclusion;
+- safe provider retry/idempotency and accurate cost-cap behavior;
+- an AI manual-entry draft cannot create or change executions until the trader
+  explicitly confirms and the canonical Journal command succeeds;
+- duplicate and overlap handling remains exactly the same regardless of whether
+  the trader typed rows or used chat to prepare them;
+- AI cannot save notes, tags, focuses, classifications, rule outcomes, or a
+  completed day review without the trader’s normal confirmation action;
+- weekly/monthly schedules are idempotent and honor eligibility, account
+  timezone, selected Eastern delivery time, and partial-first-month rules;
+- generated results are honest when coverage is missing and never hide valid
+  unrelated Journal activity;
+- the light Material UI is responsive and visually accepted before broadening a
+  visible AI surface;
+- focused service and browser checks run during each completed slice; broader
+  test/build/CI verification happens at the approved launch checkpoint.
+
+## Completion definition
+
+The AI Companion is complete only when the approved components above work from
+the canonical replacement Journal, are safely account-scoped and cost-managed,
+and are understandable to a trader without system language. A chat response,
+manual-entry draft, daily companion prompt, or scheduled review is never
+considered complete merely because it renders: it must preserve factual
+boundaries, trader control, privacy, and truthful availability.
