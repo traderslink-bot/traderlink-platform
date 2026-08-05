@@ -1,6 +1,6 @@
 # Data Decisions Repair and Review Progress
 
-**Status:** Active. Slices 0 through 4 are complete; Slice 5 is in progress.
+**Status:** Technically complete. Owner visual/product review remains pending.
 
 **Controlling plan:** [Data Decisions Repair and Review Plan](data-decisions-repair-and-review-plan.md)
 
@@ -24,7 +24,8 @@ workflows; it must not create a second ledger or weaken the integrity contract.
 - [x] Slice 2: row correction workflow
 - [x] Slice 3: scoped open-position workflow
 - [x] Slice 4: duplicate, notice and history completion
-- [ ] Slice 5: acceptance (in progress)
+- [x] Slice 5: technical acceptance
+- [ ] Owner visual/product review
 
 ## Start boundary
 
@@ -136,6 +137,20 @@ database, process or deployment is changed by this page work.
   manual/broker duplicate choice, scoped later-open-position evidence, missing
   execution entry, fact correction and factual open confirmation. No broad test
   suite was run.
-- Browser acceptance remains the final pending item. Port 3010 is intentionally
-  off, so starting the protected dashboard (and its background analyzer) is
-  deferred to the next local visual-review checkpoint.
+- The protected browser check was the last technical item. Port 3010 remains
+  off outside a local visual-review checkpoint.
+
+## Browser verification record
+
+- The protected loopback dashboard was started only for this check and stopped
+  afterward; port 3010 is clear again.
+- Desktop and mobile `/data-decisions` checks rendered the three statement and
+  trade views plus review history, the unresolved-count badge, compact pending
+  cards, the actual flagged statement row, and its trade-scoped repair form.
+  There was no framework error overlay, browser console error or mobile
+  horizontal overflow.
+- The available local review examples contain no previously resolved decision,
+  so review history's empty state was rendered. The server read-model and
+  focused decision tests cover populated resolved-history records.
+- This browser verification is technical evidence only. The owner remains the
+  final product/visual reviewer for the page.

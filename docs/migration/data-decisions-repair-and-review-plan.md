@@ -1,7 +1,8 @@
 # Data Decisions Repair and Review Plan
 
-**Status:** Owner-approved and active. Work proceeds in the implementation
-slices below; the integrity contract remains controlling.
+**Status:** Implementation and technical verification are complete. Owner
+visual/product review remains the final acceptance boundary; the integrity
+contract remains controlling.
 
 **Progress:** [Data Decisions Repair and Review Progress](data-decisions-repair-and-review-progress.md)
 
