@@ -18,7 +18,6 @@ import {
   finishJournalImportPreview,
   type JournalImportAttemptContext,
 } from "@/src/modules/journal/server/administration/journal-import-attempt-service";
-import { grantJournalAttemptSupportConsent } from "@/src/modules/journal/server/administration/journal-support-consent-service";
 import { issueJournalOpaqueReference } from "@/src/modules/journal/server/administration/journal-opaque-reference-authority";
 import { loadJournalPrivacyHmacConfiguration } from "@/src/modules/journal/server/imports/journal-import-service";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
@@ -39,38 +38,6 @@ function importReference(
     kind: "import_attempt",
     internalId: context.attempt.importAttemptId,
   });
-}
-
-function optionalSupportConsent(input: Readonly<{
-  requested: boolean;
-  scope: WorkspaceAccessScope;
-  context: JournalImportAttemptContext;
-  sourceBytes: Uint8Array;
-  sourceMimeType: string;
-}>): Readonly<{
-  status: "active" | "unavailable";
-  state?: "active";
-  revision?: number;
-  expiresAtUtc?: string;
-  purgeState?: "active";
-}> | null {
-  if (!input.requested) return null;
-  try {
-    const consent = grantJournalAttemptSupportConsent(input.scope, {
-      importAttemptId: input.context.attempt.importAttemptId,
-      sourceBytes: input.sourceBytes,
-      sourceMimeType: input.sourceMimeType || "text/plain",
-    });
-    return Object.freeze({
-      status: "active" as const,
-      state: "active" as const,
-      revision: consent.revision,
-      expiresAtUtc: consent.expiresAtUtc,
-      purgeState: "active" as const,
-    });
-  } catch {
-    return Object.freeze({ status: "unavailable" as const });
-  }
 }
 
 function unavailable(error: unknown): Response {
@@ -116,13 +83,11 @@ export async function POST(request: Request): Promise<Response> {
     const sourceTimezone = data.get("sourceTimezone");
     const brokerName = data.get("brokerName");
     const attemptIdempotencyRef = data.get("attemptIdempotencyRef");
-    const supportConsentRequest = data.get("supportConsent");
     const mappingContractJson = data.get("mappingContract");
     if (
       !(file instanceof File) ||
       typeof sourceTimezone !== "string" ||
-      typeof attemptIdempotencyRef !== "string" ||
-      (supportConsentRequest !== "yes" && supportConsentRequest !== "no")
+      typeof attemptIdempotencyRef !== "string"
     ) {
       return Response.json(
         { status: "unavailable", code: "TRADERLINK_JOURNAL_IMPORT_REQUEST_INVALID" },
@@ -194,19 +159,11 @@ export async function POST(request: Request): Promise<Response> {
         preview,
         safeMappingContract: preview.mappingContract,
       });
-      const supportConsent = optionalSupportConsent({
-        requested: supportConsentRequest === "yes",
-        scope,
-        context: attemptContext,
-        sourceBytes,
-        sourceMimeType: file.type,
-      });
       return Response.json({
         status: "ready",
         importRef: importReference(scope, attemptContext),
         preview,
         mappingSupport,
-        supportConsent,
       });
     }
     try {
@@ -228,19 +185,11 @@ export async function POST(request: Request): Promise<Response> {
         preview,
         safeMappingContract: null,
       });
-      const supportConsent = optionalSupportConsent({
-        requested: supportConsentRequest === "yes",
-        scope,
-        context: attemptContext,
-        sourceBytes,
-        sourceMimeType: file.type,
-      });
       return Response.json({
         status: "ready",
         importRef: importReference(scope, attemptContext),
         preview,
         mappingSupport,
-        supportConsent,
       });
     } catch (error) {
       if (
@@ -284,19 +233,11 @@ export async function POST(request: Request): Promise<Response> {
           preview: browserPreview,
           safeMappingContract: browserPreview.mappingContract,
         });
-        const supportConsent = optionalSupportConsent({
-          requested: supportConsentRequest === "yes",
-          scope,
-          context: attemptContext,
-          sourceBytes,
-          sourceMimeType: file.type,
-        });
         return Response.json({
           status: "ready",
           importRef: importReference(scope, attemptContext),
           preview: browserPreview,
           mappingSupport,
-          supportConsent,
         });
       }
       finishJournalImportPreview(scope, {
@@ -305,18 +246,10 @@ export async function POST(request: Request): Promise<Response> {
         preview: null,
         safeMappingContract: null,
       });
-      const supportConsent = optionalSupportConsent({
-        requested: supportConsentRequest === "yes",
-        scope,
-        context: attemptContext,
-        sourceBytes,
-        sourceMimeType: file.type,
-      });
       return Response.json({
         status: "mapping_required",
         importRef: importReference(scope, attemptContext),
         mappingSupport,
-        supportConsent,
       }, { status: 422 });
     }
   } catch (error) {

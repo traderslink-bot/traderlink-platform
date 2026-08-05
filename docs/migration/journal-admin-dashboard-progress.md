@@ -64,6 +64,11 @@ backend and empty-shell checkpoints do not require intermediate owner review.
       report-only until its separate destructive-cleanup authorization.
 - [x] Permit first instrumentation-epoch activation only through the now fully
       covered preview path. No historical attempt rows are fabricated.
+- [x] 2026-08-05: Removed the regular-import source-sharing consent control and
+      disabled that request path. Failed, structurally readable imports continue
+      to create the existing Journal Administration format observation with only
+      the broker label, sanitized headers/labels, outcome and time; no statement
+      values are retained for importer development.
 
 ## Admin 3: Read models and APIs
 

@@ -5,9 +5,7 @@ import DownloadRoundedIcon from "@mui/icons-material/DownloadRounded";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Checkbox from "@mui/material/Checkbox";
 import Chip from "@mui/material/Chip";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
@@ -36,15 +34,6 @@ import { DashboardPanel } from "../../dashboard-template";
 const PREVIEW_ENDPOINT = "/api/platform/journal/imports/preview";
 const COMMIT_ENDPOINT = "/api/platform/journal/imports/commit";
 const HISTORY_ENDPOINT = "/api/platform/journal/imports/history";
-
-type SupportConsentStatus = Readonly<{
-  status?: "active" | "unavailable";
-  state?: "active" | "revoked" | "expired";
-  revision?: number;
-  expiresAtUtc?: string;
-  purgeState?: "not_applicable" | "active" | "purge_pending" | "purged" |
-    "purge_failed";
-}>;
 
 const MAPPING_FIELDS = Object.freeze([
   ["symbol", "Ticker", true],
@@ -94,9 +83,6 @@ export function JournalImportClient({
   const [defaultCurrency, setDefaultCurrency] = useState("USD");
   const [feeSignConvention, setFeeSignConvention] = useState<"cost_positive" | "cash_effect">("cost_positive");
   const [confirmedAccount, setConfirmedAccount] = useState(false);
-  const [shareForImporterDevelopment, setShareForImporterDevelopment] = useState(false);
-  const [importRef, setImportRef] = useState("");
-  const [supportConsent, setSupportConsent] = useState<SupportConsentStatus | null>(null);
   const [history, setHistory] = useState<readonly JournalImportHistoryItem[]>([]);
   const [working, setWorking] = useState<"preview" | "commit" | null>(null);
   const [notice, setNotice] = useState<Readonly<{
@@ -138,7 +124,6 @@ export function JournalImportClient({
       data.set("sourceTimezone", sourceTimezone);
       data.set("brokerName", brokerName);
       data.set("attemptIdempotencyRef", attemptIdempotencyRef);
-      data.set("supportConsent", shareForImporterDevelopment ? "yes" : "no");
       const response = await fetch(PREVIEW_ENDPOINT, {
         method: "POST",
         headers: { [JOURNAL_MUTATION_REQUEST_HEADER]: "1" },
@@ -147,20 +132,14 @@ export function JournalImportClient({
       const packet = await response.json() as {
         preview?: JournalImportMappingPreview;
         mappingSupport?: JournalMappingSupportPackageV2;
-        importRef?: string;
-        supportConsent?: SupportConsentStatus | null;
         status?: string;
         code?: string;
       };
-      setImportRef(packet.importRef ?? "");
-      setSupportConsent(packet.supportConsent ?? null);
       if (packet.status === "mapping_required" && packet.mappingSupport) {
         acceptMappingSupport(packet.mappingSupport);
         setNotice({
           severity: "warning",
-          text: packet.supportConsent?.status === "unavailable"
-            ? "TraderLink could not map this statement safely. The privacy-safe format package is ready, but private statement sharing could not be enabled right now."
-            : "TraderLink could not map this statement safely. Download the privacy-safe mapping support package so this broker format can be added without exposing statement values.",
+          text: "TraderLink could not map this statement safely. Your broker name and statement headers have been recorded so this format can be added without retaining statement values.",
         });
         return;
       }
@@ -170,12 +149,8 @@ export function JournalImportClient({
       setPreview(packet.preview);
       acceptMappingSupport(packet.mappingSupport ?? null);
       setNotice({
-        severity: packet.supportConsent?.status === "unavailable"
-          ? "warning"
-          : packet.preview.canCommit ? "success" : "warning",
-        text: packet.supportConsent?.status === "unavailable"
-          ? "The statement mapping is ready, but private statement sharing could not be enabled right now. Nothing has been saved to your Journal yet."
-          : packet.preview.canCommit
+        severity: packet.preview.canCommit ? "success" : "warning",
+        text: packet.preview.canCommit
           ? packet.preview.mappingOrigin === "saved_exact_template"
             ? "This account's saved statement template matched exactly. Review it before saving; nothing has been saved yet."
             : "The statement mapping is ready for your review. Nothing has been saved yet."
@@ -238,7 +213,6 @@ export function JournalImportClient({
       data.set("sourceTimezone", sourceTimezone);
       data.set("brokerName", brokerName.trim());
       data.set("attemptIdempotencyRef", attemptIdempotencyRef);
-      data.set("supportConsent", shareForImporterDevelopment ? "yes" : "no");
       data.set("mappingContract", JSON.stringify(mapping));
       const response = await fetch(PREVIEW_ENDPOINT, {
         method: "POST",
@@ -248,24 +222,16 @@ export function JournalImportClient({
       const packet = await response.json() as {
         preview?: JournalImportMappingPreview;
         mappingSupport?: JournalMappingSupportPackageV2;
-        importRef?: string;
-        supportConsent?: SupportConsentStatus | null;
         code?: string;
       };
-      setImportRef(packet.importRef ?? "");
-      setSupportConsent(packet.supportConsent ?? null);
       if (!response.ok || !packet.preview) {
         throw new Error(packet.code ?? "The selected columns could not be mapped.");
       }
       setPreview(packet.preview);
       acceptMappingSupport(packet.mappingSupport ?? mappingSupport);
       setNotice({
-        severity: packet.supportConsent?.status === "unavailable"
-          ? "warning"
-          : packet.preview.canCommit ? "success" : "warning",
-        text: packet.supportConsent?.status === "unavailable"
-          ? "Your mapping is ready, but private statement sharing could not be enabled right now."
-          : packet.preview.canCommit
+        severity: packet.preview.canCommit ? "success" : "warning",
+        text: packet.preview.canCommit
           ? "Your mapping is ready. Saving the statement will also save this exact format as a reusable template for this trading account."
           : "The selected mapping has blocking issues. Review the fields and try again.",
       });
@@ -333,54 +299,6 @@ export function JournalImportClient({
     }
   }
 
-  async function revokeSupportConsent() {
-    if (!importRef || supportConsent?.state !== "active" ||
-      !supportConsent.revision || working) return;
-    setWorking("preview");
-    try {
-      const response = await fetch(
-        `/api/platform/journal/imports/${encodeURIComponent(importRef)}/support-consent`,
-        {
-          method: "DELETE",
-          headers: {
-            "content-type": "application/json",
-            [JOURNAL_MUTATION_REQUEST_HEADER]: "1",
-          },
-          body: JSON.stringify({
-            expectedAccountSelectionRef,
-            expectedRevision: supportConsent.revision,
-          }),
-        },
-      );
-      const packet = await response.json() as {
-        supportConsent?: SupportConsentStatus;
-        code?: string;
-      };
-      if (!response.ok || !packet.supportConsent) {
-        throw new Error(packet.code ?? "Private statement sharing could not be turned off.");
-      }
-      setSupportConsent(packet.supportConsent);
-      setShareForImporterDevelopment(false);
-      setNotice({
-        severity: packet.supportConsent.purgeState === "purge_failed"
-          ? "warning"
-          : "success",
-        text: packet.supportConsent.purgeState === "purge_failed"
-          ? "Private sharing is off. TraderLink will keep retrying the private-copy removal."
-          : "Private sharing is off, and the temporary support copy has been removed.",
-      });
-    } catch (error) {
-      setNotice({
-        severity: "error",
-        text: error instanceof Error
-          ? error.message
-          : "Private statement sharing could not be turned off.",
-      });
-    } finally {
-      setWorking(null);
-    }
-  }
-
   const selectedTable = mappingSupport?.tables.find(
     (table) => table.structuralSignatureSha256 === selectedTableSignature,
   ) ?? null;
@@ -420,15 +338,6 @@ export function JournalImportClient({
             <Alert severity="info">
               TraderLink recognizes verified statement formats automatically. If a broker format is new, you can map its columns here. A successful mapping becomes an exact reusable template for this trading account; changed layouts return for review instead of being guessed.
             </Alert>
-            <FormControlLabel
-              control={(
-                <Checkbox
-                  checked={shareForImporterDevelopment}
-                  onChange={(event) => setShareForImporterDevelopment(event.target.checked)}
-                />
-              )}
-              label="Privately share this statement for up to 90 days to help TraderLink add or improve support for this broker format. This is optional, and you can turn it off later."
-            />
             <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
               <Button
                 component="label"
@@ -449,8 +358,6 @@ export function JournalImportClient({
                     setPreview(null);
                     acceptMappingSupport(null);
                     setConfirmedAccount(false);
-                    setImportRef("");
-                    setSupportConsent(null);
                   }}
                   type="file"
                 />
@@ -592,23 +499,6 @@ export function JournalImportClient({
         </DashboardPanel>
       ) : null}
 
-      {supportConsent?.state === "active" ? (
-        <Alert
-          action={(
-            <Button
-              color="inherit"
-              disabled={working !== null}
-              onClick={() => void revokeSupportConsent()}
-              size="small"
-            >
-              Turn off sharing
-            </Button>
-          )}
-          severity="info"
-        >
-          This statement is privately available to help improve broker-format support until {supportConsent.expiresAtUtc?.slice(0, 10) ?? "its expiry date"}. It is not included in the privacy-safe format package.
-        </Alert>
-      ) : null}
 
       {preview ? (
         <DashboardPanel title="Mapping review">
