@@ -7,6 +7,11 @@ the [progress record](ai-weekly-review-progress.md) tracks completed slices.
 The local two-week Journal fixture is the first controlled review input. This
 supersedes the retired Reflection Loop page.
 
+The future conversational companion is planned separately in
+[AI Chat Plan](ai-chat-plan.md). It may share the private provider/cost
+controls, but it has its own account-scoped history, factual snapshots and
+generation receipts. AI Chat cannot begin until its separate plan is approved.
+
 ## Purpose
 
 Give a trader a direct, honest weekly review of their own Journal work. The
