@@ -3,9 +3,14 @@ import type Database from "better-sqlite3";
 import type { WorkspaceAccessScope } from "../../contracts/workspace-access-scope";
 import { deriveJournalAccountSelectionRef } from "../../contracts/journal-account-selection";
 import { platformFailure } from "../database/platform-migration-contract";
+import {
+  parsePlatformReportingCurrency,
+  type PlatformReportingCurrency,
+} from "./platform-user-preference-repository";
 
 export type PlatformAccountProfile = Readonly<{
   displayName: string;
+  reportingCurrency: PlatformReportingCurrency;
   accessMode: "local_development" | "authenticated";
   authenticationLabel: string;
   workspace: Readonly<{
@@ -25,6 +30,7 @@ export type PlatformAccountProfile = Readonly<{
 type ProfileRow = Readonly<{
   display_name: string;
   auth_provider: string;
+  reporting_currency: string;
   workspace_display_name: string;
   default_trading_timezone: string;
   role: "owner" | "admin" | "member";
@@ -50,10 +56,12 @@ export class PlatformAccountProfileReadService {
     const profile = this.database.prepare<[string, string], ProfileRow>(`SELECT
   user.display_name,
   user.auth_provider,
+  preference.reporting_currency,
   workspace.display_name AS workspace_display_name,
   workspace.default_trading_timezone,
   membership.role
 FROM platform_users user
+JOIN platform_user_preferences preference ON preference.user_id = user.user_id
 JOIN platform_workspace_memberships membership
   ON membership.user_id = user.user_id
 JOIN platform_workspaces workspace
@@ -84,6 +92,7 @@ ORDER BY display_name, account_id`).all(scope.workspaceId)
       }));
     return Object.freeze({
       displayName: profile.display_name,
+      reportingCurrency: parsePlatformReportingCurrency(profile.reporting_currency),
       accessMode: profile.auth_provider === "development_local"
         ? "local_development" as const
         : "authenticated" as const,

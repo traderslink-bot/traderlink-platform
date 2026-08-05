@@ -24,6 +24,7 @@ import {
 } from "../../dashboard-template";
 import type { JournalCalendarReadModel } from "@/src/modules/journal-analytics/contracts/journal-dashboard-read-models";
 import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
+import type { WorkspaceReportingSummary } from "@/src/modules/platform/server/reporting/workspace-reporting-summary";
 import { DismissibleDataDecisionNotice } from "../../dismissible-data-decision-notice";
 
 export type WorkspaceMetric = Readonly<{
@@ -80,12 +81,20 @@ function calendarDate(value: string): string {
   });
 }
 
+function reportingMoney(value: string, currency: string): string {
+  const formatted = formatJournalAnalyticsDecimal(value, 2, true);
+  return formatted.startsWith("-")
+    ? `-${currency} ${formatted.slice(1)}`
+    : `${currency} ${formatted}`;
+}
+
 export function WorkspaceDashboard({
   accountSelectionRef,
   analyticsCoverage,
   analyticsMetrics,
   calendarData,
   decisionNoticeRef,
+  reportingSummary,
 }: {
   accountSelectionRef?: string;
   analyticsCoverage?: Readonly<{
@@ -98,6 +107,7 @@ export function WorkspaceDashboard({
   analyticsMetrics?: readonly WorkspaceMetric[];
   calendarData?: JournalCalendarReadModel;
   decisionNoticeRef?: string | null;
+  reportingSummary?: WorkspaceReportingSummary;
 }) {
   const metrics = analyticsMetrics ?? unavailableMetrics;
   const recentTradingDays = calendarData?.days
@@ -154,6 +164,35 @@ export function WorkspaceDashboard({
           {analyticsCoverage.readyClosedCount} closed round trips are available.
           {` ${analyticsCoverage.legitimateOpenCount} positions are classified as open.`}
         </Alert>
+      ) : null}
+
+      {reportingSummary ? (
+        <DashboardPanel title="Reporting equivalent">
+          {reportingSummary.status === "native_usd" ? (
+            <Typography color="text.secondary" variant="body2">
+              You are viewing your original USD Journal amounts. Choose another currency in Account Settings to see a daily reporting equivalent here.
+            </Typography>
+          ) : reportingSummary.status === "ready" && reportingSummary.convertedNetPnlDecimal !== null ? (
+            <Stack spacing={0.5}>
+              <Typography sx={{ fontWeight: 850 }} variant="h2">
+                {reportingMoney(
+                  reportingSummary.convertedNetPnlDecimal,
+                  reportingSummary.reportingCurrency,
+                )}
+              </Typography>
+              <Typography color="text.secondary" variant="body2">
+                Net realized P/L reporting equivalent from {reportingSummary.convertedTradingDayCount} USD trading day{reportingSummary.convertedTradingDayCount === 1 ? "" : "s"}, using Bank of Canada daily indicative rates.
+              </Typography>
+              <Typography color="text.secondary" variant="caption">
+                Your original USD Journal amounts remain authoritative.
+              </Typography>
+            </Stack>
+          ) : (
+            <Typography color="text.secondary" variant="body2">
+              A {reportingSummary.reportingCurrency} reporting equivalent is not available for all {reportingSummary.tradingDayCount} USD trading day{reportingSummary.tradingDayCount === 1 ? "" : "s"}. Your original USD Journal amounts remain visible and unchanged.
+            </Typography>
+          )}
+        </DashboardPanel>
       ) : null}
 
       <Box

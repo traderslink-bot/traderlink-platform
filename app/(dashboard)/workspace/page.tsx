@@ -11,6 +11,9 @@ import {
   currentJournalAccountSelectionRef,
   requireTraderLinkPlatformPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
+import { PlatformAccountProfileReadService } from "@/src/modules/platform/server/identity/platform-account-profile-read-service";
+import { getWorkspaceReportingSummary } from "@/src/modules/platform/server/reporting/workspace-reporting-summary";
 
 export const metadata: Metadata = {
   title: "Workspace | Trader Intelligence",
@@ -49,6 +52,12 @@ export default async function WorkspacePage() {
       }),
     }),
   );
+  const profile = withReadonlyPlatformDatabase({}, (database) =>
+    new PlatformAccountProfileReadService(database).get(scope));
+  const reportingSummary = await getWorkspaceReportingSummary(
+    calendar,
+    profile.reportingCurrency,
+  );
   return (
     <WorkspaceDashboard
       accountSelectionRef={currentJournalAccountSelectionRef(scope)}
@@ -59,6 +68,7 @@ export default async function WorkspacePage() {
         value: formatJournalAnalyticsPartitionedMetric(response, metricId),
       }))}
       calendarData={calendar}
+      reportingSummary={reportingSummary}
       decisionNoticeRef={response.crossPartitionCounts.needsDecisionCount > 0
         ? readJournalDataDecisionNoticeRef(scope)
         : null}

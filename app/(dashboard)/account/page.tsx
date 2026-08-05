@@ -11,6 +11,7 @@ import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/serve
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformAccountProfileReadService } from "@/src/modules/platform/server/identity/platform-account-profile-read-service";
 import { AccountManagementClient } from "./account-management-client";
+import { ReportingCurrencySettings } from "./reporting-currency-settings";
 
 export const metadata: Metadata = {
   description: "Review the active TraderLink profile, workspace and Journal account.",
@@ -56,6 +57,10 @@ export default async function AccountPage() {
           <Box><Typography color="text.secondary" variant="caption">Access</Typography><Typography sx={{ fontWeight: 750, textTransform: "capitalize" }}>{profile.workspace.role}</Typography></Box>
           <Box><Typography color="text.secondary" variant="caption">Default timezone</Typography><Typography sx={{ fontWeight: 750 }}>{profile.workspace.defaultTradingTimezone}</Typography></Box>
         </Box>
+      </DashboardPanel>
+
+      <DashboardPanel title="Reporting currency">
+        <ReportingCurrencySettings reportingCurrency={profile.reportingCurrency} />
       </DashboardPanel>
 
       <DashboardPanel title="Journal accounts">

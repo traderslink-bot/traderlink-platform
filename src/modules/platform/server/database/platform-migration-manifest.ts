@@ -22,6 +22,7 @@ import { platformAuthenticationIdentitiesMigration } from "./migrations/0012_pla
 import { platformDiscordMembershipsMigration } from "./migrations/0017_platform_discord_memberships";
 import { platformHostedTransferEventsMigration } from "./migrations/0018_platform_hosted_transfer_events";
 import { platformAdministrationMigration } from "./migrations/0019_platform_administration";
+import { platformCurrencyPreferencesMigration } from "./migrations/0024_platform_currency_preferences";
 import {
   type PlatformMigration,
   validatePlatformMigrationManifest,
@@ -125,6 +126,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/level-analysis/server/database/migrations/0023_daily_trade_yahoo_analyzer.ts",
       migration: dailyTradeYahooAnalyzerMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0024_platform_currency_preferences.ts",
+      migration: platformCurrencyPreferencesMigration,
     }),
   ]);
 
@@ -272,6 +277,10 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "journal_round_trip_daily_trade_analysis_versions",
       "journal_round_trip_daily_trade_analysis_event_snapshots",
       "journal_round_trip_daily_trade_analysis_post_exit_paths",
+    ]),
+    "0024_platform_currency_preferences": Object.freeze([
+      "platform_user_preferences",
+      "platform_fx_rate_observations",
     ]),
   });
 

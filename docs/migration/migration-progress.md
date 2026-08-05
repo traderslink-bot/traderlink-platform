@@ -21,6 +21,8 @@
 
 **Quick Trade Entry:** The owner authorized `/quick-trade-entry` on 2026-08-05 as the direct selected-account Journal execution form for any past trading date, without Daily Tracker notes/tags/rules/review or Swing Tracker notes. It reuses the canonical manual preview/commit path and records visible `Quick Trade Entry manual executions` provenance; it does not create a second manual store or classify trades as swings. The [Quick Trade Entry progress record](quick-trade-entry-progress.md) tracks the focused implementation and visual checkpoint.
 
+**Currency preference and reporting:** The owner authorized a user-selected Account Settings reporting currency on 2026-08-05. U.S. equity Journal executions remain USD facts; the initial Workspace dashboard checkpoint will show a labelled reporting equivalent using cached daily Bank of Canada indicative rates, with USD originals and unavailable coverage preserved. The [Currency Preference And Reporting Plan](currency-preference-and-reporting-plan.md) and [progress record](currency-preference-and-reporting-progress.md) control this Platform-owned preference slice.
+
 **Current Focuses:** Daily Trade Tracker now carries the selected account's latest saved Current Focuses text to later editable trading-day pages. The existing immutable daily-note revision history retains every edit, which is the future weekly AI-review input rather than a single overwritten Friday value. The owner visually approved the current UI on 2026-08-05; focused verification remains deferred under the [Journal Review Workflow Corrections progress tracker](journal-review-workflow-corrections-progress.md).
 
 **AI weekly-review fixture:** The owner approved a realistic two-week local
