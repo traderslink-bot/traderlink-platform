@@ -2,8 +2,7 @@
 
 ## Status
 
-Planning complete enough for owner review; implementation has not started from
-this plan. The parent plan is [TraderLink AI Companion Plan](ai-chat-plan.md).
+Implementation is active. The parent plan is [TraderLink AI Companion Plan](ai-chat-plan.md).
 
 ## Accepted existing foundation
 
@@ -21,7 +20,7 @@ this plan. The parent plan is [TraderLink AI Companion Plan](ai-chat-plan.md).
 ## Planned work
 
 - [x] Complete and link the AI Companion product plan and language/query plan.
-- [ ] Approve the complete integrated AI Companion direction for implementation.
+- [x] Approve the complete integrated AI Companion direction for implementation.
 - [ ] Implement and verify the AI Reviews schedule/list/detail foundation.
 - [ ] Implement account-scoped Chat persistence, factual snapshots, receipts,
   provider boundaries, and cost controls.

@@ -2,12 +2,19 @@
 
 ## Status
 
-**Planning only.** This is the main, end-state plan for the TraderLink AI
+**Implementation active.** This is the main, end-state plan for the TraderLink AI
 Companion: AI Chat, the Daily Trade Tracker companion, saved weekly and monthly
 reviews, conversational manual execution entry, account settings, and Journal
 Administration controls. No new route, database record, provider request,
 manual execution write, or automatic review behavior is authorized by this
 document until the owner accepts the complete plan.
+
+The owner accepted the integrated direction and delegated technical sequencing
+on 2026-08-05. Work begins with account-scoped persistence, factual snapshots,
+provider/cost boundaries and the already-started AI Reviews foundation. Each
+visible surface remains subject to the normal owner product review; this does
+not authorize a provider call, a ledger mutation, or a production release by
+itself.
 
 The [AI Reviews Plan](ai-weekly-review-plan.md) remains the governing contract
 for the already-approved weekly and calendar-month review boundaries. This plan
