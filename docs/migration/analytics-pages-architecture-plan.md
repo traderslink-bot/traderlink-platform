@@ -1,6 +1,6 @@
 # Analytics Page Architecture Plan
 
-**Status:** Active — Overview implementation approved; Performance scope approved; Results and Execution remain separate review slices.
+**Status:** Active — Overview is complete; Results and Execution remain separate review slices.
 
 ## Purpose
 
@@ -12,7 +12,6 @@ application-maintenance statistics.
 | Page | Status | Single job |
 | --- | --- | --- |
 | Overview | Approved for implementation | Give the trader an immediate account snapshot. |
-| Performance | Scope approved | Show how account results change over days, weeks, months and years. |
 | Results | Planned | Show results grouped by trader-relevant dimensions, starting with ticker. |
 | Execution | Scope approved, retained only if useful | Show trade construction and execution behavior. |
 | Timing | Implemented / iterative visual review | Show performance by entry/exit time, weekday and trading session. |
@@ -59,14 +58,6 @@ Year selector for narrowing that chart's monthly bars to one available year.
 - account equity, deposits, withdrawals, buying power, account-return or true
   account drawdown without the required broker account facts;
 - Analytics Lab or Yahoo market-data results.
-
-## Performance
-
-Performance answers: **How are my account results changing over time?**
-
-It will use time-series views such as daily, weekly, monthly and yearly P/L,
-cumulative P/L, realized drawdown and consistency. It does not repeat the
-Overview metric-card set or become a trade-result list.
 
 ## Results
 

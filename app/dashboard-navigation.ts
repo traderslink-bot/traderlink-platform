@@ -12,7 +12,6 @@ export type DashboardNavigationIconKey =
   | "lab"
   | "manualEntry"
   | "overview"
-  | "performance"
   | "reflection"
   | "results"
   | "rules"
@@ -97,11 +96,6 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
           icon: "overview" as const,
         }),
         Object.freeze({
-          href: "/analytics/performance",
-          label: "Performance",
-          icon: "performance" as const,
-        }),
-        Object.freeze({
           href: "/analytics/results",
           label: "Results",
           icon: "results" as const,
@@ -179,7 +173,6 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/trades/ticker": "Trades by Ticker",
     "/trades/open": "Open Positions",
     "/analytics": "Analytics Overview",
-    "/analytics/performance": "Performance",
     "/analytics/results": "Results",
     "/analytics/timing": "Timing",
     "/analytics/execution": "Execution",
