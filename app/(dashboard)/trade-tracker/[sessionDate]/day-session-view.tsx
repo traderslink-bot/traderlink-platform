@@ -1848,9 +1848,7 @@ export function DaySessionView({
                   {ticker.roundTrips.length === 1 ? "" : "s"}
                 </Typography>
                 <Typography
-                  component={Link}
-                  href={`/trades/roundtrips?currency=${encodeURIComponent(data.currency)}&instrumentId=${encodeURIComponent(ticker.stableInstrumentKey)}&date=${encodeURIComponent(data.date)}`}
-                  sx={{ color: "inherit", fontWeight: 900, textDecoration: "none" }}
+                  sx={{ color: "inherit", fontWeight: 900 }}
                   variant="h4"
                 >
                   {ticker.symbol}

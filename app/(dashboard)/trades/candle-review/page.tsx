@@ -24,7 +24,7 @@ export default async function TradeCandleReviewPage({
       <DashboardPage>
         <DashboardPanel title="Candle review">
           <DashboardUnavailableState
-            actionHref="/trades/roundtrips"
+            actionHref="/analytics/execution"
             actionLabel="View completed trades"
             description="Choose a verified completed round trip before requesting an experimental candle review."
           />

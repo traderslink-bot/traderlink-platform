@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -36,6 +37,7 @@ function money(currency: string, value: string | null): string {
 }
 
 export default async function TradesByTickerPage() {
+  redirect("/analytics/results");
   const scope = await requireTraderLinkPlatformPageScope();
   const result = withJournalAnalyticsDashboardRuntime(scope, ({ dashboard }) =>
     dashboard.getTickerHistory(scope));

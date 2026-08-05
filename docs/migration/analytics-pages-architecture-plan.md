@@ -70,6 +70,8 @@ table supports a case-insensitive ticker search and ascending or descending
 sort on every displayed column. Future groupings such as trade type, tags and
 setups are added only once their facts are complete and useful.
 
+Results replaces the retired standalone Trades by Ticker page.
+
 ## Execution
 
 Execution answers: **How did I construct and manage my trades?**
@@ -86,6 +88,8 @@ Scale-ins, scale-outs and re-entries are not shown as labels until their exact
 per-trade definitions and read contract are implemented. If that cannot be
 done without guessing, the page keeps the useful confirmed facts rather than
 inventing behavior classifications.
+
+Execution replaces the retired standalone Round Trips page.
 
 ## Implementation rules
 

@@ -200,11 +200,11 @@ export const LEGACY_INTELLIGENCE_ROUTE_DISPOSITIONS = Object.freeze([
     "/workspace",
     "owner_rejected_test_surface",
   ),
-  disposition("/intelligence/trades", "saved-trade-list", "/trades/roundtrips"),
+  disposition("/intelligence/trades", "saved-trade-list", "/analytics/execution"),
   disposition(
     "/intelligence/trades/:tradeId",
     "trade-detail-review",
-    "/trades/roundtrips",
+    "/analytics/execution",
   ),
   disposition("/intelligence/trades/calendar", "trading-calendar", "/calendar"),
   disposition(
@@ -232,17 +232,17 @@ export const LEGACY_INTELLIGENCE_ROUTE_DISPOSITIONS = Object.freeze([
   disposition(
     "/intelligence/trades/round-trips",
     "reconstructed-round-trips",
-    "/trades/roundtrips",
+    "/analytics/execution",
   ),
   disposition(
     "/intelligence/trades/ticker-stories",
     "ticker-history",
-    "/trades/ticker",
+    "/analytics/results",
   ),
   disposition(
     "/intelligence/trades/ticker-story/:threadId",
     "legacy-ticker-thread",
-    "/trades/ticker",
+    "/analytics/results",
   ),
   disposition("/intelligence/upload-csv", "statement-upload", "/imports"),
 ] satisfies readonly LegacyIntelligenceRouteDisposition[]);

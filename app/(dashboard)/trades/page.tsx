@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function TradesPage() {
-  redirect("/trades/roundtrips");
+  redirect("/calendar");
 }

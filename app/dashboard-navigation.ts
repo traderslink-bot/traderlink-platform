@@ -64,16 +64,6 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
           icon: "swing" as const,
         }),
         Object.freeze({
-          href: "/trades/roundtrips",
-          label: "Round Trips",
-          icon: "roundTrips" as const,
-        }),
-        Object.freeze({
-          href: "/trades/ticker",
-          label: "Trades by Ticker",
-          icon: "ticker" as const,
-        }),
-        Object.freeze({
           href: "/analytics/trade-explorer",
           label: "Trade Explorer",
           icon: "tradeExplorer" as const,
@@ -162,10 +152,8 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/workspace": "Workspace",
     "/workspace/readiness": "Platform Readiness",
     "/calendar": "Calendar",
-    "/trades/roundtrips": "Round Trips",
     "/trade-tracker": "Daily Trade Tracker",
     "/trade-tracker/swings": "Swing Trade Tracker",
-    "/trades/ticker": "Trades by Ticker",
     "/trades/open": "Open Positions",
     "/analytics": "Analytics Overview",
     "/analytics/results": "Results",

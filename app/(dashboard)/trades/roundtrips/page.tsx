@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -63,6 +64,7 @@ export default async function RoundTripsPage({
 }: {
   searchParams: RoundTripSearchParams;
 }) {
+  redirect("/analytics/execution");
   const params = await searchParams;
   const scope = await requireTraderLinkPlatformPageScope();
   const requestedCurrency = one(params, "currency")?.toUpperCase() ?? null;

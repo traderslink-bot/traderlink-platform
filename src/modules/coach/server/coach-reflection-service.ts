@@ -144,7 +144,7 @@ function prompts(input: Readonly<{
       code: "review_round_trips",
       title: "Review completed trades",
       description: "Add trader-authored notes or tags to the stable round trips you choose to review.",
-      href: "/trades/roundtrips",
+      href: "/analytics/execution",
       count: input.tradesWithoutNotes,
     }));
   }

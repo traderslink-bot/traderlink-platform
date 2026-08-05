@@ -39,7 +39,7 @@ This route family uses the owner-approved **light Material UI dashboard** with a
 The navigation-visible dashboard is the clearest future route family and contains:
 
 - Workspace: `/workspace`.
-- Trades: `/calendar`, `/trade-tracker` (Day Trade Tracker), `/trade-tracker/swings` (Swing Trade Tracker), `/trades/roundtrips`, `/trades/ticker`, `/trades/open`.
+- Trades: `/calendar`, `/trade-tracker` (Day Trade Tracker), `/trade-tracker/swings` (Swing Trade Tracker), `/trades/open`. Retired `/trades/roundtrips` and `/trades/ticker` routes redirect to Execution and Results respectively.
 - Analytics: `/analytics`, `/analytics/performance`, `/analytics/results`, `/analytics/timing`, `/analytics/execution`, `/analytics/lab`.
 - Review tools: `/reflection-loop`, `/rules`, `/charts`.
 - Data: `/imports`, `/manual-entry`, `/data-decisions`.

@@ -50,9 +50,9 @@
 | `/trade-tracker/[sessionDate]` | Journal | Day Trade Tracker for exactly one trading day |
 | `/trade-tracker/swings` | Journal | Planned Swing Trade Tracker for active and recently completed intentional swings |
 | `/trade-tracker/swings/[positionRef]` | Journal | Planned stable swing lifecycle and dated-note detail |
-| `/trades` | Journal | Compatibility redirect to `/trades/roundtrips` |
-| `/trades/roundtrips` | Journal | Platform target |
-| `/trades/ticker` | Journal | Platform target |
+| `/trades` | Journal | Compatibility redirect to `/calendar` |
+| `/trades/roundtrips` | Journal | Retired redirect to `/analytics/execution` |
+| `/trades/ticker` | Journal | Retired redirect to `/analytics/results` |
 | `/trades/open` | Journal | Platform target |
 | `/trades/candle-review` | Journal/Level Analysis | Review and preserve useful behavior |
 | `/trades/day-sessions` | Journal | Compatibility redirect to Trade Tracker |
@@ -213,7 +213,7 @@ permission to change an endpoint now.
 
 ### Route-local compatibility redirects
 
-- `/trades` -> `/trades/roundtrips`.
+- `/trades` -> `/calendar`.
 - `/trades/day-sessions` -> `/trade-tracker` while preserving the current design-preview query behavior.
 - `/trades/day-session/[sessionDate]` -> `/trade-tracker/[sessionDate]`.
 - `/intelligence/trades/day-sessions` -> `/trade-tracker`.
