@@ -12,10 +12,13 @@ this plan. The parent plan is [TraderLink AI Companion Plan](ai-chat-plan.md).
 - The replacement has owner-only provider/cost controls and immutable
   generation-cost tracking for review work.
 - Current Focuses carry dated revisions for later review context.
+- The complete language/query contract is finalized in the
+  [AI Chatbot Complete Language Plan](traderslink_ai_chatbot_complete_language_plan.md).
 
 ## Planned work
 
-- [ ] Approve the complete AI Companion plan.
+- [x] Complete and link the AI Companion product plan and language/query plan.
+- [ ] Approve the complete integrated AI Companion direction for implementation.
 - [ ] Implement and verify the AI Reviews schedule/list/detail foundation.
 - [ ] Implement account-scoped Chat persistence, factual snapshots, receipts,
   provider boundaries, and cost controls.

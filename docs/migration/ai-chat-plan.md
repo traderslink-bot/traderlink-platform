@@ -14,6 +14,13 @@ for the already-approved weekly and calendar-month review boundaries. This plan
 coordinates that work with the broader AI product; it does not revive the V3
 Coach or depend on a V3 route, database, analytics engine, or prompt.
 
+The complete natural-language interpretation, deterministic-query and response
+contract is maintained separately in the [AI Chatbot Complete Language
+Plan](traderslink_ai_chatbot_complete_language_plan.md). The two plans are
+jointly controlling: this document governs product behavior and protected
+actions; the language plan governs what Chat understands, validates and can
+truthfully answer.
+
 Implementation status is tracked in [AI Companion Progress](ai-chat-progress.md).
 
 ## Product direction
