@@ -15,7 +15,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 import type { JournalDecisionAction } from "@/src/modules/journal/contracts/journal-decision-contracts";
 import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
@@ -349,20 +349,27 @@ function ResolvedDecisionCard({
 }
 
 function StatementRows({
+  decisions,
+  expectedAccountSelectionRef,
   imports,
   onImportChange,
-  onReviewRow,
+  onOpenPositionConfirmed,
+  onResolved,
   onlyIssues,
   selectedImportBatchId,
   statement,
 }: {
+  decisions: readonly JournalDataDecisionItem[];
+  expectedAccountSelectionRef: string;
   imports: readonly JournalImportHistoryItem[];
   onImportChange: (importBatchId: string) => void;
-  onReviewRow: (recordOrdinal: number) => void;
+  onOpenPositionConfirmed: (position: ConfirmedOpenPosition) => void;
+  onResolved: () => Promise<void>;
   onlyIssues: boolean;
   selectedImportBatchId: string;
   statement: JournalDataDecisionStatementReadModel | null;
 }) {
+  const [expandedRecordOrdinal, setExpandedRecordOrdinal] = useState<number | null>(null);
   const rows = statement?.rows.filter((row) =>
     !onlyIssues || row.issues.length > 0 || row.initialClassification === "needs_correction") ?? [];
   const title = onlyIssues ? "Statement issues" : "Statement details";
@@ -400,8 +407,16 @@ function StatementRows({
                 <TableCell>Imported details</TableCell>
                 <TableCell>Review</TableCell>
               </TableRow></TableHead>
-              <TableBody>{rows.map((row) => (
-                <TableRow key={row.recordOrdinal}>
+              <TableBody>{rows.map((row) => {
+                const decision = statement
+                  ? decisions.find((item) =>
+                      item.sourceRowNumber === row.recordOrdinal &&
+                      item.importBatchIds.includes(statement.importBatchId)) ?? null
+                  : null;
+                const expanded = expandedRecordOrdinal === row.recordOrdinal;
+                return (
+                <Fragment key={row.recordOrdinal}>
+                  <TableRow>
                   <TableCell>{row.recordOrdinal}</TableCell>
                   <TableCell>{row.sectionName ?? statementClassificationLabel(row.initialClassification)}</TableCell>
                   <TableCell sx={{ maxWidth: 620, whiteSpace: "normal" }}>
@@ -413,12 +428,35 @@ function StatementRows({
                     </Stack>
                   </TableCell>
                   <TableCell>
-                    {row.issues.length > 0 || row.initialClassification === "needs_correction" ? (
-                      <Button onClick={() => onReviewRow(row.recordOrdinal)} size="small">Review this row</Button>
+                    {decision ? (
+                      <Button
+                        onClick={() => setExpandedRecordOrdinal((current) =>
+                          current === row.recordOrdinal ? null : row.recordOrdinal)}
+                        size="small"
+                      >
+                        {expanded ? "Hide editor" : "Fix this row"}
+                      </Button>
                     ) : "—"}
                   </TableCell>
-                </TableRow>
-              ))}</TableBody>
+                  </TableRow>
+                  {expanded && decision ? (
+                    <TableRow>
+                      <TableCell colSpan={4} sx={{ p: 1.5 }}>
+                        <DecisionCard
+                          cardNumber={row.recordOrdinal}
+                          expectedAccountSelectionRef={expectedAccountSelectionRef}
+                            item={decision}
+                            initiallyExpanded
+                            onOpenPositionConfirmed={onOpenPositionConfirmed}
+                          onResolved={onResolved}
+                          shouldFocus={false}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ) : null}
+                </Fragment>
+                );
+              })}</TableBody>
             </Table>
           </TableContainer>
         ) : null}
@@ -431,6 +469,7 @@ function DecisionCard({
   cardNumber,
   expectedAccountSelectionRef,
   item,
+  initiallyExpanded = false,
   onOpenPositionConfirmed,
   onResolved,
   shouldFocus,
@@ -438,12 +477,13 @@ function DecisionCard({
   cardNumber: number;
   expectedAccountSelectionRef: string;
   item: JournalDataDecisionItem;
+  initiallyExpanded?: boolean;
   onOpenPositionConfirmed: (position: ConfirmedOpenPosition) => void;
   onResolved: () => Promise<void>;
   shouldFocus: boolean;
 }) {
   const [draft, setDraft] = useState<Draft>(() => initialDraft(item));
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(initiallyExpanded);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -858,7 +898,6 @@ export function JournalDataDecisionsClient({
   const [model, setModel] = useState(initial);
   const [notice, setNotice] = useState<string | null>(null);
   const [view, setView] = useState<DataDecisionsView>("trades");
-  const [focusedDecisionIndex, setFocusedDecisionIndex] = useState<number | null>(null);
   const [openPositionToClassify, setOpenPositionToClassify] = useState<ConfirmedOpenPosition | null>(null);
   const [statement, setStatement] = useState<JournalDataDecisionStatementReadModel | null>(null);
   const brokerStatements = imports.filter((item) => item.sourceKind === "broker_statement");
@@ -897,21 +936,19 @@ export function JournalDataDecisionsClient({
     : null;
 
   async function refresh() {
-    const response = await fetch(ENDPOINT, { cache: "no-store" });
-    const packet = await response.json() as { decisions?: JournalDataDecisionsReadModel };
+    const statementQuery = statementImportBatchId
+      ? `?importBatchId=${encodeURIComponent(statementImportBatchId)}`
+      : "";
+    const response = await fetch(`${ENDPOINT}${statementQuery}`, { cache: "no-store" });
+    const packet = await response.json() as {
+      decisions?: JournalDataDecisionsReadModel;
+      statement?: JournalDataDecisionStatementReadModel | null;
+    };
     if (response.ok && packet.decisions) {
       setModel(packet.decisions);
+      setStatement(packet.statement ?? null);
       setNotice("Decision saved. TraderLink rebuilt the affected account facts.");
     }
-  }
-
-  function reviewStatementRow(recordOrdinal: number) {
-    const index = pending.findIndex((item) =>
-      item.sourceRowNumber === recordOrdinal &&
-      item.importBatchIds.includes(statementImportBatchId));
-    if (index < 0) return;
-    setFocusedDecisionIndex(index);
-    setView("trades");
   }
 
   return (
@@ -950,17 +987,19 @@ export function JournalDataDecisionsClient({
           key={item.decisionId}
           onOpenPositionConfirmed={setOpenPositionToClassify}
           onResolved={refresh}
-          shouldFocus={focusedDecisionIndex === index}
+          shouldFocus={false}
         />
       )) : null}
       {view === "statement-issues" || view === "statement-details" ? (
         <StatementRows
+          decisions={pending}
+          expectedAccountSelectionRef={expectedAccountSelectionRef}
           imports={brokerStatements}
           onImportChange={(importBatchId) => {
             setStatementImportBatchId(importBatchId);
-            setFocusedDecisionIndex(null);
           }}
-          onReviewRow={reviewStatementRow}
+          onOpenPositionConfirmed={setOpenPositionToClassify}
+          onResolved={refresh}
           onlyIssues={view === "statement-issues"}
           selectedImportBatchId={statementImportBatchId}
           statement={selectedStatement}
