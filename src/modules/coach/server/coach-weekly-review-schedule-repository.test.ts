@@ -65,6 +65,7 @@ describe("Coach review delivery schedule repository", () => {
       expect(repository.listEnabledAccounts()).toEqual([{
         scope,
         accountTimezone: "America/New_York",
+        monthlyEnabledAtUtc: nowUtc,
         schedule: {
           weeklyDeliveryDay: "saturday",
           deliveryTimeEastern: "20:30",

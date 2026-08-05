@@ -12,6 +12,7 @@ export type CoachReviewDeliverySchedule = Readonly<{
 export type CoachScheduledReviewAccount = Readonly<{
   scope: WorkspaceAccessScope;
   accountTimezone: string;
+  monthlyEnabledAtUtc: string;
   schedule: CoachReviewDeliverySchedule;
 }>;
 
@@ -40,6 +41,7 @@ export class CoachReviewDeliveryScheduleRepository {
     const row = this.database.prepare<[string], Readonly<{
       weekly_delivery_day: "friday" | "saturday" | "sunday";
       delivery_time_eastern: string;
+      monthly_enabled_at_utc: string;
       updated_at_utc: string;
     }>>(`SELECT weekly_delivery_day, delivery_time_eastern, updated_at_utc
 FROM coach_review_delivery_settings
@@ -64,8 +66,10 @@ WHERE account_id = ?`).get(activeAccountId(scope));
     }>>(`SELECT account.created_by_user_id AS user_id,
   account.workspace_id, account.account_id, membership.role AS workspace_role,
   account.trading_timezone, settings.weekly_delivery_day,
-  settings.delivery_time_eastern, settings.updated_at_utc
+  settings.delivery_time_eastern, settings.updated_at_utc,
+  monthly.enabled_at_utc AS monthly_enabled_at_utc
 FROM coach_review_delivery_settings settings
+JOIN coach_monthly_review_settings monthly ON monthly.account_id = settings.account_id
 JOIN journal_accounts account ON account.account_id = settings.account_id
 JOIN platform_users user ON user.user_id = account.created_by_user_id
 JOIN platform_workspaces workspace ON workspace.workspace_id = account.workspace_id
@@ -84,6 +88,7 @@ ORDER BY account.workspace_id, account.account_id`).all();
         activeAccountId: row.account_id,
       }),
       accountTimezone: row.trading_timezone,
+      monthlyEnabledAtUtc: row.monthly_enabled_at_utc,
       schedule: Object.freeze({
         weeklyDeliveryDay: row.weekly_delivery_day,
         deliveryTimeEastern: row.delivery_time_eastern,
