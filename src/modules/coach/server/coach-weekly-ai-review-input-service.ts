@@ -140,6 +140,7 @@ export class CoachWeeklyAiReviewInputService {
         netPnlDecimal: reflection.summary.netPnlDecimal,
         winRatePercentDecimal: reflection.summary.winRatePercentDecimal,
       }),
+      priorReview: null,
       currentFocuses: Object.freeze(currentFocuses),
       days: Object.freeze(days),
     });

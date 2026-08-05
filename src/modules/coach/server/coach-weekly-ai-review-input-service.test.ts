@@ -125,6 +125,7 @@ describe("Coach weekly AI review input service", () => {
       accountNeedsDecisionCount: 3,
       accountPendingDataDecisionCount: 4,
     });
+    expect(result.priorReview).toBeNull();
     expect(result.days[0]?.trades[0]).toMatchObject({
       executionCount: null,
       realizedGrossPnlDecimal: null,

@@ -95,6 +95,7 @@ function input(): CoachWeeklyAiReviewInput {
       netPnlDecimal: "25",
       winRatePercentDecimal: "100",
     }),
+    priorReview: null,
     currentFocuses: Object.freeze([]),
     days: Object.freeze([]),
   });

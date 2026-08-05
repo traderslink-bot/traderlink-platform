@@ -23,6 +23,16 @@ export type CoachWeeklyAiReviewInput = Readonly<{
     netPnlDecimal: string | null;
     winRatePercentDecimal: string | null;
   }>;
+  priorReview: Readonly<{
+    weekStartDate: string;
+    weekEndDate: string;
+    weeklyReview: string;
+    whatImproved: string;
+    whatHeldYouBack: string;
+    focusFollowThrough: string;
+    nextWeekFocuses: readonly string[];
+    incompleteRecord: string | null;
+  }> | null;
   currentFocuses: readonly Readonly<{
     effectiveFromDate: string;
     tradingDate: string;
