@@ -183,6 +183,17 @@ describe("Coach weekly AI review issuance", () => {
         totalTokens: 450,
         estimatedCostUsd: "0.002250",
       });
+      expect(reviews.listIssuedWeeklyReviews(scope)).toEqual([
+        expect.objectContaining({
+          issuedReviewId: second.review.issuedReviewId,
+          weekStartDate: "2026-08-03",
+          weekEndDate: "2026-08-09",
+        }),
+      ]);
+      expect(reviews.readLatestIssuedWeeklyReviewBefore(scope, "2026-08-10"))
+        .toEqual(expect.objectContaining({ issuedReviewId: second.review.issuedReviewId }));
+      expect(reviews.readLatestIssuedWeeklyReviewBefore(scope, "2026-08-03")).toBeNull();
+      expect(reviews.listIssuedWeeklyReviews(secondAccountScope)).toEqual([]);
       expect(() => reviews.readIssuedWeeklyReview(
         secondAccountScope,
         second.review.issuedReviewId,

@@ -42,6 +42,8 @@ export type CoachWeeklyReviewRequestRecord = Readonly<{
 export type CoachWeeklyIssuedReviewRecord = Readonly<{
   issuedReviewId: string;
   requestId: string;
+  weekStartDate: string;
+  weekEndDate: string;
   output: CoachWeeklyAiReviewOutput;
   modelId: string;
   issuedAtUtc: string;
@@ -228,11 +230,14 @@ WHERE workspace_id = ? AND account_id = ? AND week_start_date = ?
     const row = this.database.prepare<[string, string, string, string], Readonly<{
       coach_weekly_issued_review_id: string;
       coach_weekly_review_request_id: string;
+      week_start_date: string;
+      week_end_date: string;
       output_json: string;
       model_id: string;
       issued_at_utc: string;
     }>>(`SELECT issued.coach_weekly_issued_review_id,
-  issued.coach_weekly_review_request_id, issued.output_json,
+  issued.coach_weekly_review_request_id, request.week_start_date,
+  request.week_end_date, issued.output_json,
   issued.model_id, issued.issued_at_utc
 FROM coach_weekly_issued_reviews issued
 JOIN coach_weekly_review_requests request
@@ -248,10 +253,67 @@ WHERE issued.coach_weekly_issued_review_id = ? AND request.user_id = ?
     return Object.freeze({
       issuedReviewId: row.coach_weekly_issued_review_id,
       requestId: row.coach_weekly_review_request_id,
+      weekStartDate: row.week_start_date,
+      weekEndDate: row.week_end_date,
       output: parseWeeklyOutput(row.output_json),
       modelId: row.model_id,
       issuedAtUtc: row.issued_at_utc,
     });
+  }
+
+  listIssuedWeeklyReviews(
+    scope: WorkspaceAccessScope,
+    limit = 100,
+  ): readonly CoachWeeklyIssuedReviewRecord[] {
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 500) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "limit" });
+    }
+    const rows = this.database.prepare<[string, string, string, number], Readonly<{
+      coach_weekly_issued_review_id: string;
+      coach_weekly_review_request_id: string;
+      week_start_date: string;
+      week_end_date: string;
+      output_json: string;
+      model_id: string;
+      issued_at_utc: string;
+    }>>(`SELECT issued.coach_weekly_issued_review_id,
+  issued.coach_weekly_review_request_id, request.week_start_date,
+  request.week_end_date, issued.output_json, issued.model_id, issued.issued_at_utc
+FROM coach_weekly_issued_reviews issued
+JOIN coach_weekly_review_requests request
+  ON request.coach_weekly_review_request_id = issued.coach_weekly_review_request_id
+WHERE request.user_id = ? AND request.workspace_id = ? AND request.account_id = ?
+ORDER BY request.week_end_date DESC, issued.issued_at_utc DESC
+LIMIT ?`).all(scope.userId, scope.workspaceId, accountId(scope), limit);
+    return Object.freeze(rows.map((row) => Object.freeze({
+      issuedReviewId: row.coach_weekly_issued_review_id,
+      requestId: row.coach_weekly_review_request_id,
+      weekStartDate: row.week_start_date,
+      weekEndDate: row.week_end_date,
+      output: parseWeeklyOutput(row.output_json),
+      modelId: row.model_id,
+      issuedAtUtc: row.issued_at_utc,
+    })));
+  }
+
+  readLatestIssuedWeeklyReviewBefore(
+    scope: WorkspaceAccessScope,
+    weekStartDate: string,
+  ): CoachWeeklyIssuedReviewRecord | null {
+    if (!/^\d{4}-\d{2}-\d{2}$/u.test(weekStartDate)) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "weekStartDate" });
+    }
+    const row = this.database.prepare<[string, string, string, string], Readonly<{
+      coach_weekly_issued_review_id: string;
+    }>>(`SELECT issued.coach_weekly_issued_review_id
+FROM coach_weekly_issued_reviews issued
+JOIN coach_weekly_review_requests request
+  ON request.coach_weekly_review_request_id = issued.coach_weekly_review_request_id
+WHERE request.user_id = ? AND request.workspace_id = ? AND request.account_id = ?
+  AND request.week_end_date < ?
+ORDER BY request.week_end_date DESC, issued.issued_at_utc DESC
+LIMIT 1`).get(scope.userId, scope.workspaceId, accountId(scope), weekStartDate);
+    return row ? this.readIssuedWeeklyReview(scope, row.coach_weekly_issued_review_id) : null;
   }
 
   beginWeeklyAttempt(
