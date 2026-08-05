@@ -15,8 +15,6 @@ import { generateCoachWeeklyAiReview } from "./coach-weekly-ai-review-openai-ada
 import { calculateCoachWeeklyReviewDueTime } from "./coach-weekly-review-due-time";
 import { CoachReviewDeliveryScheduleRepository } from "./coach-weekly-review-schedule-repository";
 
-const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1_000;
-
 export type CoachWeeklyReviewRunSummary = Readonly<{
   scheduledAccountCount: number;
   issuedCount: number;
@@ -68,7 +66,8 @@ export class CoachWeeklyAiReviewRunner {
           accountTradingTimezone: account.accountTimezone,
           weeklyDeliveryDay: account.schedule.weeklyDeliveryDay,
           deliveryTimeEastern: account.schedule.deliveryTimeEastern,
-          now: new Date(now.getTime() - ONE_WEEK_MS),
+          now,
+          periodOffsetWeeks: -1,
         });
       }
       if (due.state !== "due") {

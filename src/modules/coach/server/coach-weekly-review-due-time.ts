@@ -7,6 +7,7 @@ export type CoachWeeklyReviewDueTimeInput = Readonly<{
   weeklyDeliveryDay: CoachWeeklyReviewDeliveryDay;
   deliveryTimeEastern: string;
   now: Date;
+  periodOffsetWeeks?: 0 | -1;
 }>;
 
 export type CoachWeeklyReviewPeriod = Readonly<{
@@ -225,9 +226,13 @@ export function calculateCoachWeeklyReviewDueTime(
     throw new RangeError(`Invalid weekly delivery day: ${input.weeklyDeliveryDay}`);
   }
   const deliveryTime = parseDeliveryTime(input.deliveryTimeEastern);
+  const periodOffsetWeeks = input.periodOffsetWeeks ?? 0;
+  if (periodOffsetWeeks !== 0 && periodOffsetWeeks !== -1) {
+    throw new RangeError(`Invalid weekly period offset: ${periodOffsetWeeks}`);
+  }
   const currentLocalDate = calendarPartsAt(input.now, input.accountTradingTimezone);
   const currentWeekStart = mondayOfWeek(currentLocalDate);
-  const periodStart = currentWeekStart;
+  const periodStart = addDays(currentWeekStart, periodOffsetWeeks * 7);
   const periodEnd = addDays(periodStart, 6);
   const period = Object.freeze({
     startDate: dateString(periodStart),

@@ -55,6 +55,20 @@ describe("calculateCoachWeeklyReviewDueTime", () => {
     });
   });
 
+  it("returns the immediately prior period as due for missed-run recovery", () => {
+    const result = calculateCoachWeeklyReviewDueTime({
+      ...BASE_INPUT,
+      now: new Date("2026-08-05T16:00:00.000Z"),
+      weeklyDeliveryDay: "friday",
+      periodOffsetWeeks: -1,
+    });
+    expect(result).toMatchObject({
+      state: "due",
+      period: { startDate: "2026-07-27", endDate: "2026-08-02" },
+      scheduledAtUtc: "2026-08-01T00:00:00.000Z",
+    });
+  });
+
   it.each([
     ["2026-03-02T16:00:00.000Z", "2026-03-07T01:00:00.000Z"],
     ["2026-11-02T16:00:00.000Z", "2026-11-07T01:00:00.000Z"],

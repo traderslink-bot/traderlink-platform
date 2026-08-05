@@ -175,4 +175,35 @@ describe("Coach weekly AI review runner", () => {
       database.close();
     }
   });
+
+  it("recovers the immediately prior week before the current delivery time", async () => {
+    const { database } = setup();
+    let anchorDateSeen = "";
+    try {
+      const runner = new CoachWeeklyAiReviewRunner(
+        database,
+        (_database, _scope, anchorDate) => {
+          anchorDateSeen = anchorDate;
+          return weeklyInput(anchorDate);
+        },
+        async () => Object.freeze({
+          output: Object.freeze({
+            contractVersion: COACH_WEEKLY_AI_OUTPUT_CONTRACT_VERSION,
+            weeklyReview: "Recovered review.",
+            whatImproved: "Supported.",
+            whatHeldYouBack: "Supported.",
+            focusFollowThrough: "Supported.",
+            nextWeekFocuses: Object.freeze(["One focus."]),
+            incompleteRecord: null,
+          }),
+          usage: Object.freeze({ inputTokens: 10, outputTokens: 5, totalTokens: 15 }),
+        }),
+      );
+      await expect(runner.run(new Date("2026-08-05T16:00:00.000Z")))
+        .resolves.toEqual(expect.objectContaining({ issuedCount: 1 }));
+      expect(anchorDateSeen).toBe("2026-08-02");
+    } finally {
+      database.close();
+    }
+  });
 });
