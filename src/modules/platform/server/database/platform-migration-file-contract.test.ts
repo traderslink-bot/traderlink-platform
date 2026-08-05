@@ -15,7 +15,7 @@ describe("static platform migration file contract", () => {
       })),
     );
     expect(platformMigrationFileEntries.at(-1)?.migration.migrationId).toBe(
-      "0018_platform_hosted_transfer_events",
+      "0022_journal_trading_day_reviews",
     );
   });
 

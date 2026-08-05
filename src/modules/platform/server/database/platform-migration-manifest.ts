@@ -5,9 +5,13 @@ import { journalDataDecisionsMigration } from "@/src/modules/journal/server/data
 import { journalRoundTripProjectionMigration } from "@/src/modules/journal/server/database/migrations/0006_journal_round_trip_projection";
 import { journalAnnotationsMigration } from "@/src/modules/journal/server/database/migrations/0007_journal_annotations";
 import { journalLevelAnalysisLinksMigration } from "@/src/modules/journal/server/database/migrations/0011_journal_level_analysis_links";
+import { journalImportOperationsMigration } from "@/src/modules/journal/server/database/migrations/0020_journal_import_operations";
+import { journalTradeTrackingAndReconciliationMigration } from "@/src/modules/journal/server/database/migrations/0021_journal_trade_tracking_and_reconciliation";
+import { journalTradingDayReviewsMigration } from "@/src/modules/journal/server/database/migrations/0022_journal_trading_day_reviews";
 import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
 import { levelAnalysisCandleReviewMigration } from "@/src/modules/level-analysis/server/database/migrations/0009_level_analysis_candle_review";
 import { levelAnalysisDeliveriesMigration } from "@/src/modules/level-analysis/server/database/migrations/0010_level_analysis_deliveries";
+import { dailyTradeYahooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0023_daily_trade_yahoo_analyzer";
 import { academyProgressMigration } from "@/src/modules/academy/server/database/migrations/0013_academy_progress";
 import { watchlistStorageMigration } from "@/src/modules/watchlist/server/database/migrations/0014_watchlist_storage";
 import { newsContentMigration } from "@/src/modules/news/server/database/migrations/0015_news_content";
@@ -17,6 +21,7 @@ import { platformIdentityMigration } from "./migrations/0001_platform_identity";
 import { platformAuthenticationIdentitiesMigration } from "./migrations/0012_platform_authentication_identities";
 import { platformDiscordMembershipsMigration } from "./migrations/0017_platform_discord_memberships";
 import { platformHostedTransferEventsMigration } from "./migrations/0018_platform_hosted_transfer_events";
+import { platformAdministrationMigration } from "./migrations/0019_platform_administration";
 import {
   type PlatformMigration,
   validatePlatformMigrationManifest,
@@ -100,6 +105,26 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/platform/server/database/migrations/0018_platform_hosted_transfer_events.ts",
       migration: platformHostedTransferEventsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0019_platform_administration.ts",
+      migration: platformAdministrationMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/journal/server/database/migrations/0020_journal_import_operations.ts",
+      migration: journalImportOperationsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/journal/server/database/migrations/0021_journal_trade_tracking_and_reconciliation.ts",
+      migration: journalTradeTrackingAndReconciliationMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/journal/server/database/migrations/0022_journal_trading_day_reviews.ts",
+      migration: journalTradingDayReviewsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/level-analysis/server/database/migrations/0023_daily_trade_yahoo_analyzer.ts",
+      migration: dailyTradeYahooAnalyzerMigration,
     }),
   ]);
 
@@ -205,6 +230,48 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     ]),
     "0018_platform_hosted_transfer_events": Object.freeze([
       "platform_hosted_transfer_events",
+    ]),
+    "0019_platform_administration": Object.freeze([
+      "platform_operator_grants",
+      "platform_admin_audit_events",
+      "platform_operational_events",
+    ]),
+    "0020_journal_import_operations": Object.freeze([
+      "journal_import_instrumentation_epochs",
+      "journal_import_attempts",
+      "journal_import_attempt_events",
+      "journal_statement_format_candidates",
+      "journal_statement_format_candidate_events",
+      "journal_statement_format_candidate_aliases",
+      "journal_statement_format_observations",
+      "journal_statement_support_objects",
+      "journal_statement_support_consents",
+      "journal_statement_support_consent_events",
+    ]),
+    "0021_journal_trade_tracking_and_reconciliation": Object.freeze([
+      "journal_trade_style_plans",
+      "journal_trade_style_plan_events",
+      "journal_swing_daily_notes",
+      "journal_swing_daily_note_revisions",
+      "journal_manual_trade_boundary_assertions",
+      "journal_execution_reconciliation_sets",
+      "journal_execution_reconciliation_members",
+      "journal_execution_reconciliation_events",
+      "journal_data_decision_event_action_extensions",
+    ]),
+    "0022_journal_trading_day_reviews": Object.freeze([
+      "journal_trading_day_reviews",
+      "journal_trading_day_review_events",
+    ]),
+    "0023_daily_trade_yahoo_analyzer": Object.freeze([
+      "level_analysis_market_session_sets",
+      "level_analysis_market_session_set_versions",
+      "level_analysis_market_session_candles",
+      "level_analysis_daily_trade_jobs",
+      "journal_round_trip_daily_trade_analyses",
+      "journal_round_trip_daily_trade_analysis_versions",
+      "journal_round_trip_daily_trade_analysis_event_snapshots",
+      "journal_round_trip_daily_trade_analysis_post_exit_paths",
     ]),
   });
 
