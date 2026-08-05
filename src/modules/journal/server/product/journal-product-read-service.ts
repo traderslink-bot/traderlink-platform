@@ -290,6 +290,7 @@ export class JournalProductReadService {
  issue_count, pending_decision_count, accepted_at_utc
 FROM journal_import_batches
 WHERE workspace_id = ? AND account_id = ?
+  AND source_display_label NOT LIKE 'Data Decisions review example:%'
 ORDER BY accepted_at_utc DESC, import_batch_id DESC
 LIMIT 200`).all(scope.workspaceId, scope.accountId).map((row) => Object.freeze({
       importBatchId: row.import_batch_id,
@@ -437,6 +438,14 @@ LEFT JOIN journal_instruments instrument
  )
 WHERE decision.workspace_id = ? AND decision.account_id = ?
   AND decision.state IN ('pending', 'resolved')
+  AND NOT EXISTS (
+    SELECT 1
+    FROM journal_import_batches seeded_batch
+    WHERE seeded_batch.workspace_id = decision.workspace_id
+      AND seeded_batch.account_id = decision.account_id
+      AND seeded_batch.source_display_label LIKE 'Data Decisions review example:%'
+      AND seeded_batch.import_batch_id = COALESCE(issue.import_batch_id, position_fact.import_batch_id)
+  )
 ORDER BY CASE decision.state WHEN 'pending' THEN 0 ELSE 1 END,
          decision.updated_at_utc DESC, decision.decision_id DESC
 LIMIT 400`).all(
