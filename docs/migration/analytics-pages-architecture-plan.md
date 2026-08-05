@@ -12,7 +12,7 @@ application-maintenance statistics.
 | Page | Status | Single job |
 | --- | --- | --- |
 | Overview | Approved for implementation | Give the trader an immediate account snapshot. |
-| Results | Planned | Show results grouped by trader-relevant dimensions, starting with ticker. |
+| Results | In implementation | Show results grouped by trader-relevant dimensions, starting with ticker. |
 | Execution | Scope approved, retained only if useful | Show trade construction and execution behavior. |
 | Timing | Implemented / iterative visual review | Show performance by entry/exit time, weekday and trading session. |
 
@@ -64,10 +64,11 @@ Year selector for narrowing that chart's monthly bars to one available year.
 Results answers: **Which tickers, trade types or later trader-defined groups
 produce my best and worst results?**
 
-The initial default grouping is ticker. Each row will show total P/L, win rate,
-completed trades, trading days, average P/L per trade and average hold time.
-Opening a ticker leads to its completed trades. Future groupings such as trade
-type, tags and setups are added only once their facts are complete and useful.
+The initial default grouping is ticker. Each row shows total P/L, win rate,
+profit factor, completed trades, trading days and average P/L per trade. The
+table supports a case-insensitive ticker search and ascending or descending
+sort on every displayed column. Future groupings such as trade type, tags and
+setups are added only once their facts are complete and useful.
 
 ## Execution
 
@@ -93,3 +94,4 @@ showing generic quantity or fee statistics.
 ## Progress records
 
 - [Overview progress](analytics-overview-progress.md)
+- [Results progress](analytics-results-progress.md)

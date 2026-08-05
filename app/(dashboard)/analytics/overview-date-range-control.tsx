@@ -25,7 +25,7 @@ const OPTIONS: readonly Readonly<{ value: OverviewDateRange["kind"]; label: stri
   { value: "custom", label: "Custom range" },
 ];
 
-export function OverviewDateRangeControl({ value }: { value: OverviewDateRange }) {
+export function OverviewDateRangeControl({ href = "/analytics", value }: { href?: string; value: OverviewDateRange }) {
   const router = useRouter();
   const [kind, setKind] = useState<OverviewDateRange["kind"]>(value.kind);
   const [startDate, setStartDate] = useState(value.startDate ?? "");
@@ -36,7 +36,7 @@ export function OverviewDateRangeControl({ value }: { value: OverviewDateRange }
       params.set("start", startDate);
       params.set("end", endDate);
     }
-    router.push(`/analytics?${params.toString()}`);
+    router.push(`${href}?${params.toString()}`);
   };
   return <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" } }}><TextField label="Date range" onChange={(event) => setKind(event.target.value as OverviewDateRange["kind"])} select size="small" sx={{ minWidth: 180 }} value={kind}>{OPTIONS.map((option) => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}</TextField>{kind === "custom" ? <><FormControl size="small" sx={{ minWidth: 156 }}><InputLabel htmlFor="overview-start-date" shrink>Start date</InputLabel><OutlinedInput id="overview-start-date" inputProps={{ "aria-label": "Start date" }} label="Start date" notched onChange={(event) => setStartDate(event.target.value)} type="date" value={startDate} /></FormControl><FormControl size="small" sx={{ minWidth: 156 }}><InputLabel htmlFor="overview-end-date" shrink>End date</InputLabel><OutlinedInput id="overview-end-date" inputProps={{ "aria-label": "End date" }} label="End date" notched onChange={(event) => setEndDate(event.target.value)} type="date" value={endDate} /></FormControl></> : null}<Button onClick={apply} variant="outlined">Update</Button></Stack>;
 }
