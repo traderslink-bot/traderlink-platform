@@ -110,11 +110,6 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
           label: "Execution",
           icon: "execution" as const,
         }),
-        Object.freeze({
-          href: "/analytics/lab",
-          label: "Analytics Lab",
-          icon: "lab" as const,
-        }),
       ]),
     }),
   ]);
@@ -176,7 +171,6 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/analytics/results": "Results",
     "/analytics/timing": "Timing",
     "/analytics/execution": "Execution",
-    "/analytics/lab": "Analytics Lab",
     "/analytics/trade-explorer": "Trade Explorer",
     "/charts": "Market Charts",
     "/reflection-loop": "Reflection Loop",

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import { TradeCandleAnalysisPreview } from "./trade-candle-analysis-preview";
 
@@ -9,5 +10,6 @@ export const metadata: Metadata = {
 };
 
 export default function TradeCandleAnalysisPage() {
+  redirect("/analytics");
   return <TradeCandleAnalysisPreview />;
 }

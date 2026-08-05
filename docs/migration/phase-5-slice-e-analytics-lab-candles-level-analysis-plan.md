@@ -1,6 +1,6 @@
 # Phase 5 Slice E Analytics Lab, Candle Review and Level Analysis Plan
 
-**Status:** Technically complete under delegated technical authority; E1-E4 passed their focused gates and the integrated visual checkpoint remains deferred
+**Status:** Retained but disabled from the online dashboard. The former Analytics Lab routes redirect to Analytics until a future owner-approved scope makes the feature useful enough to restore.
 **Repository:** `C:\Users\jerac\Documents\TraderLink\traderlink-platform`
 **Branch:** `codex/traderlink-platform-replacement`
 **Runtime:** Port 3010 remains off until the combined visual checkpoint
@@ -12,9 +12,10 @@ restoring V3 analytics, V3 authentication, repository-local sample authority,
 or the shared legacy SQLite database. All trade selection starts from the
 server-derived active Journal account and stable Journal round-trip identity.
 
-The approved light Material dashboard shell and navigation remain unchanged.
-This slice repairs data and persistence authority first; broad visual review is
-deferred to the coherent integrated checkpoint already approved by the owner.
+The approved light Material dashboard shell remains unchanged. Analytics Lab is
+not included in the public navigation or reachable as a separate experience at
+this stage. Its implementation and saved-view data are retained for later work;
+they are not deleted or presented as ready.
 
 ## Audit findings
 

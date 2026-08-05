@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
@@ -14,6 +15,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AnalyticsLabPage() {
+  redirect("/analytics");
   const scope = await requireTraderLinkPlatformPageScope();
   return <AnalyticsLabPlatformClient model={readAnalyticsLabPlatformPageModel(scope)} />;
 }
