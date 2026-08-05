@@ -7,8 +7,14 @@ import {
   type CoachWeeklyAiReviewOutput,
 } from "../contracts/weekly-ai-review-output-contracts";
 import type { CoachWeeklyAiReviewInput } from "../contracts/weekly-ai-review-input-contracts";
+import type { CoachAiGenerationUsage } from "./coach-ai-review-repository";
 
 export const LOCAL_COACH_WEEKLY_AI_MODEL = "gpt-5.6-sol" as const;
+
+export type CoachWeeklyAiReviewGeneration = Readonly<{
+  output: CoachWeeklyAiReviewOutput;
+  usage: CoachAiGenerationUsage;
+}>;
 
 const weeklyReviewSchema = z.object({
   weeklyReview: z.string().min(1).max(1_800),
@@ -27,27 +33,61 @@ Do not provide trade recommendations, price targets, position-size advice, entry
 
 Use plain trading-journal language. Keep the next focuses process-oriented and limited to three. If the supplied record is incomplete, say exactly what limits the conclusion in incompleteRecord; otherwise set incompleteRecord to null.`;
 
+function completeUsage(usage: Readonly<{
+  inputTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+}>): CoachAiGenerationUsage {
+  const values = [usage.inputTokens, usage.outputTokens, usage.totalTokens];
+  if (!values.every((value) =>
+    typeof value === "number" && Number.isSafeInteger(value) && value >= 0,
+  )) {
+    return Object.freeze({ inputTokens: null, outputTokens: null, totalTokens: null });
+  }
+  return Object.freeze({
+    inputTokens: usage.inputTokens as number,
+    outputTokens: usage.outputTokens as number,
+    totalTokens: usage.totalTokens as number,
+  });
+}
+
 function localOpenAiApiKey(environment: NodeJS.ProcessEnv): string {
   const value = environment.OPENAI_API_KEY?.trim();
   if (!value) throw new Error("TRADERLINK_COACH_OPENAI_UNAVAILABLE");
   return value;
 }
 
-export async function generateLocalCoachWeeklyAiReview(
+export async function generateCoachWeeklyAiReview(
   input: CoachWeeklyAiReviewInput,
-  environment: NodeJS.ProcessEnv = process.env,
-): Promise<CoachWeeklyAiReviewOutput> {
-  const openai = createOpenAI({ apiKey: localOpenAiApiKey(environment) });
+  options: Readonly<{
+    modelId: string;
+    environment?: NodeJS.ProcessEnv;
+  }>,
+): Promise<CoachWeeklyAiReviewGeneration> {
+  const openai = createOpenAI({ apiKey: localOpenAiApiKey(options.environment ?? process.env) });
   const result = await generateText({
-    model: openai(LOCAL_COACH_WEEKLY_AI_MODEL),
+    model: openai(options.modelId),
     output: Output.object({ schema: weeklyReviewSchema }),
     system: SYSTEM_PROMPT,
     prompt: JSON.stringify(input),
   });
   if (!result.output) throw new Error("TRADERLINK_COACH_OPENAI_NO_OUTPUT");
   return Object.freeze({
-    contractVersion: COACH_WEEKLY_AI_OUTPUT_CONTRACT_VERSION,
-    ...result.output,
-    nextWeekFocuses: Object.freeze([...result.output.nextWeekFocuses]),
+    output: Object.freeze({
+      contractVersion: COACH_WEEKLY_AI_OUTPUT_CONTRACT_VERSION,
+      ...result.output,
+      nextWeekFocuses: Object.freeze([...result.output.nextWeekFocuses]),
+    }),
+    usage: completeUsage(result.usage),
   });
+}
+
+export async function generateLocalCoachWeeklyAiReview(
+  input: CoachWeeklyAiReviewInput,
+  environment: NodeJS.ProcessEnv = process.env,
+): Promise<CoachWeeklyAiReviewOutput> {
+  return (await generateCoachWeeklyAiReview(input, {
+    modelId: LOCAL_COACH_WEEKLY_AI_MODEL,
+    environment,
+  })).output;
 }

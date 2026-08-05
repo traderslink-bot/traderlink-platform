@@ -63,10 +63,21 @@ FROM coach_ai_provider_settings WHERE settings_key = 'coach_reviews'`).get();
     }>>(`SELECT COUNT(*) AS generation_count, COALESCE(SUM(total_tokens), 0) AS total_tokens,
   SUM(CAST(estimated_cost_usd AS REAL)) AS estimated_cost_usd
 FROM coach_ai_generation_cost_receipts`).get();
+    const attemptRow = this.database.prepare<[], Readonly<{
+      generation_count: number;
+      total_tokens: number;
+      estimated_cost_usd: number | null;
+    }>>(`SELECT COUNT(*) AS generation_count, COALESCE(SUM(total_tokens), 0) AS total_tokens,
+  SUM(CAST(estimated_cost_usd AS REAL)) AS estimated_cost_usd
+FROM coach_ai_review_generation_attempt_receipts`).get();
+    const legacyCost = row?.estimated_cost_usd ?? null;
+    const attemptCost = attemptRow?.estimated_cost_usd ?? null;
     return Object.freeze({
-      generationCount: row?.generation_count ?? 0,
-      totalTokens: row?.total_tokens ?? 0,
-      estimatedCostUsd: formatCost(row?.estimated_cost_usd ?? null),
+      generationCount: (row?.generation_count ?? 0) + (attemptRow?.generation_count ?? 0),
+      totalTokens: (row?.total_tokens ?? 0) + (attemptRow?.total_tokens ?? 0),
+      estimatedCostUsd: formatCost(legacyCost === null && attemptCost === null
+        ? null
+        : (legacyCost ?? 0) + (attemptCost ?? 0)),
     });
   }
 
