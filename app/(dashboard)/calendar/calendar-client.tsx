@@ -287,12 +287,14 @@ function DayCell({
                       <Typography color={ticker.pnlSign === -1 ? "error.main" : "success.main"} noWrap sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 750 }} variant="caption">{money(ticker.pnlDecimal, currency)}</Typography>
                     </Stack>
                   </ButtonBase>
-                  <TickerAnnotationChips
-                    compact={mode === "month"}
-                    noteCount={ticker.noteCount}
-                    ruleReviewCount={ticker.ruleReviewCount}
-                    tagCount={ticker.tagCount}
-                  />
+                  {mode === "week" ? (
+                    <TickerAnnotationChips
+                      compact={false}
+                      noteCount={ticker.noteCount}
+                      ruleReviewCount={ticker.ruleReviewCount}
+                      tagCount={ticker.tagCount}
+                    />
+                  ) : null}
                   {mode === "week" ? (
                     <Stack spacing={0.25} sx={{ mt: 0.65 }}>
                       {ticker.trades.slice(0, 2).map((trade, index) => (
