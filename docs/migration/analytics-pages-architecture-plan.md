@@ -74,10 +74,18 @@ setups are added only once their facts are complete and useful.
 
 Execution answers: **How did I construct and manage my trades?**
 
-It is justified only by useful facts such as execution count, partial entries
-and exits, scale-ins, scale-outs, re-entries, position size, hold time and
-direction. If it cannot provide these useful views, remove the page rather than
-showing generic quantity or fee statistics.
+The first slice is a date-filtered trade-construction workspace. It has three
+real Journal charts: entry-size, maximum-position and hold-duration results.
+Each uses Net P/L, win rate or trade count and offers the chart types that fit
+the categorical data: horizontal bars and columns. A searchable, filterable,
+sortable trade table shows ticker, direction, factual day/multi-day
+classification, opened and closed time, execution count, average entry/exit,
+maximum position, hold time and Net P/L.
+
+Scale-ins, scale-outs and re-entries are not shown as labels until their exact
+per-trade definitions and read contract are implemented. If that cannot be
+done without guessing, the page keeps the useful confirmed facts rather than
+inventing behavior classifications.
 
 ## Implementation rules
 
@@ -95,3 +103,4 @@ showing generic quantity or fee statistics.
 
 - [Overview progress](analytics-overview-progress.md)
 - [Results progress](analytics-results-progress.md)
+- [Execution progress](analytics-execution-progress.md)

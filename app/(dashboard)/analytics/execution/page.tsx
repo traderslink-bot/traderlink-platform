@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 
-import { AnalyticsServerPage } from "../../../journal-analytics-server-page";
+import { ExecutionAnalyticsPage } from "../execution-analytics-page";
 
 export const metadata: Metadata = {
   title: "Execution | Trader Intelligence",
 };
 
-export default function ExecutionPage() {
-  return <AnalyticsServerPage page="execution" />;
+export default async function ExecutionPage({
+  searchParams,
+}: {
+  searchParams: Promise<Readonly<Record<string, string | string[] | undefined>>>;
+}) {
+  return <ExecutionAnalyticsPage searchParams={await searchParams} />;
 }
