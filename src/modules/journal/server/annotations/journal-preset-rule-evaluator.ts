@@ -139,6 +139,7 @@ function evaluateTemplate(
     if (
       rule.templateKey === "maximum_trades_per_day" ||
       rule.templateKey === "stop_after_consecutive_losses" ||
+      rule.templateKey === "stop_after_total_daily_losses" ||
       rule.templateKey === "stop_after_daily_realized_loss" ||
       rule.templateKey === "stop_after_daily_realized_gain_limit" ||
       rule.templateKey === "stop_after_profit_giveback"
@@ -208,6 +209,28 @@ function evaluateTemplate(
     });
   }
 
+  if (rule.templateKey === "cooldown_before_same_ticker_reentry") {
+    const cooldownMinutes = configuredCount(rule, "cooldownMinutes");
+    if (cooldownMinutes === null) {
+      return resultForTrades(rule.ruleId, applicable, () => "n/a");
+    }
+    const cooldownMilliseconds = cooldownMinutes * 60 * 1000;
+    return resultForTrades(rule.ruleId, applicable, (trade) => {
+      const entryAt = timestampMilliseconds(trade.entryAtUtc);
+      if (entryAt === null) return "n/a";
+      const sameTickerCompletedTrades = applicable.filter((candidate) =>
+        candidate.roundTripId !== trade.roundTripId &&
+        candidate.instrumentId === trade.instrumentId &&
+        candidate.exitAtUtc <= trade.entryAtUtc,
+      );
+      if (sameTickerCompletedTrades.length === 0) return "followed";
+      const prior = sameTickerCompletedTrades.at(-1)!;
+      const exitAt = timestampMilliseconds(prior.exitAtUtc);
+      if (exitAt === null || exitAt >= entryAt) return "n/a";
+      return entryAt < exitAt + cooldownMilliseconds ? "broken" : "followed";
+    });
+  }
+
   if (rule.templateKey === "maximum_attempts_per_ticker") {
     const maximum = configuredCount(rule, "maximumAttempts");
     if (maximum === null) return resultForTrades(rule.ruleId, applicable, () => "n/a");
@@ -253,6 +276,20 @@ function evaluateTemplate(
     for (const trade of applicable) {
       if (streak >= threshold) return Object.freeze([dayResult(rule.ruleId, "broken")]);
       streak = decimal(trade.netPnlDecimal!).lessThan(0) ? streak + 1 : 0;
+    }
+    return Object.freeze([dayResult(rule.ruleId, "followed")]);
+  }
+
+  if (rule.templateKey === "stop_after_total_daily_losses") {
+    const threshold = configuredCount(rule, "dailyLossCountLimit");
+    if (threshold === null || !sequenceIsUnambiguous(applicable) ||
+        applicable.some((trade) => trade.netPnlDecimal === null)) {
+      return Object.freeze([dayResult(rule.ruleId, "n/a")]);
+    }
+    let lossCount = 0;
+    for (const trade of applicable) {
+      if (lossCount >= threshold) return Object.freeze([dayResult(rule.ruleId, "broken")]);
+      if (decimal(trade.netPnlDecimal!).lessThan(0)) lossCount += 1;
     }
     return Object.freeze([dayResult(rule.ruleId, "followed")]);
   }

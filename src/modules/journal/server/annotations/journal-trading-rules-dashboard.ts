@@ -112,6 +112,16 @@ const JOURNAL_RULE_TEMPLATE_DEFINITIONS = [
       limitationSummary: "Requires completed trade P/L and exact entry and exit times.",
     },
     {
+      templateId: "cooldown_before_same_ticker_reentry",
+      label: "Cooldown before re-entering the same ticker",
+      description: "Wait after fully closing a Day trade before entering the same ticker again.",
+      category: "trade_day",
+      scope: "ticker_day",
+      parameters: [parameter("cooldownMinutes", "Wait time", "positive_integer", "minutes", "1440")],
+      exampleConfiguration: { cooldownMinutes: "" },
+      limitationSummary: "Requires exact entry and exit times for completed Day trades in the same ticker.",
+    },
+    {
       templateId: "maximum_attempts_per_ticker",
       label: "Maximum ticker attempts per day",
       description: "Review flat-to-flat attempts after the selected per-ticker limit.",
@@ -150,6 +160,16 @@ const JOURNAL_RULE_TEMPLATE_DEFINITIONS = [
       parameters: [parameter("consecutiveLossThreshold", "Consecutive loss limit", "positive_integer", "completed losses", "16")],
       exampleConfiguration: { consecutiveLossThreshold: "2" },
       limitationSummary: "Ambiguous simultaneous outcomes remain unavailable rather than creating a streak.",
+    },
+    {
+      templateId: "stop_after_total_daily_losses",
+      label: "Stop after a selected total number of losing trades in a day",
+      description: "Review later Day trades after the selected total number of completed losses, even when wins occurred between them.",
+      category: "day",
+      scope: "day_session",
+      parameters: [parameter("dailyLossCountLimit", "Total daily loss limit", "positive_integer", "completed losing trades", "1000")],
+      exampleConfiguration: { dailyLossCountLimit: "3" },
+      limitationSummary: "Requires unambiguous completed-trade order and exact realized P/L.",
     },
     {
       templateId: "stop_after_daily_realized_loss",

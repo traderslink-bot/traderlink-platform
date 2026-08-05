@@ -468,7 +468,8 @@ FROM journal_rule_lifecycle_events WHERE rule_id = ?`).get(created.ruleId))
     );
 
     const configurationForLifecycleTest = (template: typeof JOURNAL_RULE_TEMPLATE_CATALOG[number]) =>
-      template.templateId === "cooldown_after_loss"
+      template.templateId === "cooldown_after_loss" ||
+      template.templateId === "cooldown_before_same_ticker_reentry"
         ? { cooldownMinutes: "20" }
         : { ...template.exampleConfiguration };
 

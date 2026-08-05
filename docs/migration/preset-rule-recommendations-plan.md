@@ -2,10 +2,12 @@
 
 ## Status
 
-Planning only. This plan adds an evidence-led recommendation layer to the
-existing automatically evaluated preset Rules. It does not create, activate,
+The two owner-approved catalog additions are implemented and verified:
+**Cooldown before re-entering the same ticker** and **Stop after a selected
+total number of losing trades in a day**. The evidence-led
+recommendation layer remains planning only. It does not create, activate,
 alter, or retire a rule, make an AI request, or change any Journal fact until
-the owner approves this plan and its calibration rules.
+the owner approves the detector and its calibration rules.
 
 **Progress record:** [Preset Rule Recommendations Progress](preset-rule-recommendations-progress.md)
 
@@ -177,8 +179,8 @@ tests before it can appear in Rules or AI.
 
 | Preset | Deterministic rule definition | Required existing facts | Decision and false-positive guard |
 | --- | --- | --- | --- |
-| **Cooldown before re-entering the same ticker** | After a completed flat-to-flat Day trade in a ticker, do not begin another attempt in that ticker for the trader-selected number of minutes, regardless of the prior result. | Instrument identity, exact exit and next entry timestamps, local date | **Approved for catalog addition.** It addresses rapid repeat attempts of any outcome. A short re-entry after losses is a factual revenge-trading proxy only; it is never an emotion diagnosis. Suggest only when short same-ticker gaps repeatedly underperform longer gaps. |
-| **Stop after a selected total number of losing trades in a day** | Once the trader-selected count of completed daily losses is reached, later Day-trade entries are broken even if wins interrupted the losses. | Chronological completed outcomes, local date, realized P/L | **Approved for catalog addition.** This is distinct from the existing consecutive-loss rule and daily dollar-loss limit. It needs several threshold-reaching days and later trades, or it becomes a one-day reaction. |
+| **Cooldown before re-entering the same ticker** | After a completed flat-to-flat Day trade in a ticker, do not begin another attempt in that ticker for the trader-selected number of minutes, regardless of the prior result. | Instrument identity, exact exit and next entry timestamps, Eastern trading date | **Implemented and focus-verified.** It addresses rapid repeat attempts of any outcome. A short re-entry after losses is a factual revenge-trading proxy only; it is never an emotion diagnosis. Suggest only when short same-ticker gaps repeatedly underperform longer gaps. |
+| **Stop after a selected total number of losing trades in a day** | Once the trader-selected count of completed daily losses is reached, later Day-trade entries are broken even if wins interrupted the losses. | Chronological completed outcomes, Eastern trading date, realized P/L | **Implemented and focus-verified.** This is distinct from the existing consecutive-loss rule and daily dollar-loss limit. It needs several threshold-reaching days and later trades, or it becomes a one-day reaction. |
 | No new Day trades before a selected time | A Day-trade entry at or before the configured local time is broken. | Exact entry timestamp and account timezone | Not approved for catalog addition. Early trading may be a deliberate strategy; only reconsider after a separate product decision. |
 | Maximum Day-trade hold time | A completed Day trade held longer than the configured duration is broken. | Exact opening/closing timestamps, Day-trade classification | Not approved for catalog addition. A longer hold is not inherently poor and should not be an automatic first recommendation. |
 
