@@ -17,7 +17,7 @@ export type CoachWeeklyReviewIssuanceResult =
   | Readonly<{ state: "in_progress"; requestId: string }>
   | Readonly<{ state: "failed"; requestId: string; retryAvailable: true }>;
 
-type WeeklyGenerator = (
+export type CoachWeeklyReviewGenerator = (
   input: CoachWeeklyAiReviewInput,
   options: Readonly<{ modelId: string }>,
 ) => Promise<CoachWeeklyAiReviewGeneration>;
@@ -54,7 +54,7 @@ export class CoachWeeklyAiReviewIssuanceService {
   constructor(
     private readonly reviews: CoachAiReviewRepository,
     private readonly providerSettings: CoachAiProviderSettingsRepository,
-    private readonly generate: WeeklyGenerator = generateCoachWeeklyAiReview,
+    private readonly generate: CoachWeeklyReviewGenerator = generateCoachWeeklyAiReview,
   ) {}
 
   async issue(

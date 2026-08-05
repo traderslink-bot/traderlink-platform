@@ -95,13 +95,29 @@ Active. The product contract is in [AI Weekly Review Plan](ai-weekly-review-plan
   period dates. Provider, model, token, cost and internal identifiers do not
   enter the prompt.
 
+## Completed: weekly issuance runner and protected trigger
+
+- The runner enumerates only active scheduled Journal accounts, calculates the
+  selected account's due week, builds the exact immutable input package and
+  issues sequentially so one scheduler invocation cannot fan out uncontrolled
+  provider calls.
+- A due week with no completed trade is skipped before a request or provider
+  call is created. Repeated runs reuse the existing issued review, and failed
+  provider attempts remain retryable with separate cost receipts.
+- `GET /api/cron/ai-reviews` is a server-only trigger protected by
+  `CRON_SECRET`. It returns aggregate counts only and never returns account,
+  review, provider or credential details.
+- Hosted scheduler registration remains a deployment-boundary task because the
+  replacement dashboard's final Vercel-versus-single-node runtime has not been
+  activated. The protected trigger and runner are ready for that scheduler.
+
 ## Next slice
 
-Add the automatic weekend runner and scoped monthly review delivery/read
-contract. Calendar-month reviews use the same delivery time, retain their
-first-use date, and issue a first partial month only after seven calendar days
-and three reviewed trading days. The runner must issue only one review for an
-unchanged period and must skip a no-trade period.
+Add the scoped monthly review input, issuance and saved read contract.
+Calendar-month reviews use the same delivery time, retain their first-use date,
+and issue a first partial month only after seven calendar days and three
+reviewed trading days. Register the protected trigger with the accepted hosted
+scheduler only at the deployment boundary.
 
 ## Planned input addition: selected trade tags
 

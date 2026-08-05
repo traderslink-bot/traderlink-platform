@@ -28,9 +28,11 @@ classification, or analytics.
 
 ## Weekly boundary and request model
 
-- A week is Monday through Sunday in the selected Journal account timezone.
-- Each account receives one automatic review after the trading week closes on
-  the selected Friday, Saturday or Sunday at the trader's chosen Eastern time.
+- A review period is labelled Monday through Sunday in the selected Journal
+  account timezone. Friday is the effective market-week close; Saturday and
+  Sunday are delayed delivery choices for that same labelled period.
+- Each account receives one automatic review at or after its selected Friday,
+  Saturday or Sunday Eastern-time delivery setting for that trading week.
   A no-trade week is skipped.
 - A request is keyed to the account, week and exact factual-input digest. A
   completed request for the same input returns the saved review rather than
