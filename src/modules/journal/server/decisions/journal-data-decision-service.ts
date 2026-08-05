@@ -699,6 +699,7 @@ export class JournalDataDecisionService {
     scope: AccountScope,
     rebuilds: readonly JournalChainRebuildResult[],
     now?: Date,
+    affectedChainKeys?: ReadonlySet<string>,
   ): readonly JournalDataDecisionRecord[] {
     const findings = this.roundTrips.listDecisionFindings(rebuilds);
     const currentFindings = new Map(findings.map((finding) => [
@@ -711,6 +712,7 @@ export class JournalDataDecisionService {
         workspaceId: scope.workspaceId,
         accountId: scope.accountId,
         currentFindings,
+        affectedChainKeys,
         createEventId: createCanonicalUuidV4,
         timestamp,
       });

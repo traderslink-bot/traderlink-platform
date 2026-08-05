@@ -23,6 +23,17 @@
 
 **Current Focuses:** Daily Trade Tracker now carries the selected account's latest saved Current Focuses text to later editable trading-day pages. The existing immutable daily-note revision history retains every edit, which is the future weekly AI-review input rather than a single overwritten Friday value. The owner visually approved the current UI on 2026-08-05; focused verification remains deferred under the [Journal Review Workflow Corrections progress tracker](journal-review-workflow-corrections-progress.md).
 
+**AI weekly-review fixture:** The owner approved a realistic two-week local
+test-account fixture before AI review implementation. The controlled scenario,
+safety boundary, expected trader notes, Current Focuses revisions, rule
+coverage, and reviewed-day coverage are recorded in the [AI Weekly Review Test
+Fixture Plan](ai-weekly-review-test-fixture-plan.md).
+The guarded local seed is now complete: it added the planned 34 test
+executions, 17 closed test trades, trader-authored notes, dated Current Focuses
+history, and nine reviewed days without changing the pre-existing six Data
+Decisions. The next slice is the actual weekly-review package and issued-review
+workflow; no mock AI response is stored.
+
 **Daily Trade Tracker Yahoo Analyzer implementation:** The owner approved the [Daily Trade Tracker Yahoo Analyzer Plan](daily-trade-tracker-yahoo-analyzer-plan.md) and [progress tracker](daily-trade-tracker-yahoo-analyzer-progress.md) on 2026-08-04. The shared extended-hours ticker/session cache, durable automatic work, per-event analyzer, and real Daily Tracker manual-save queue are now implemented locally. After a recovery backup/restore verification, migration 0023 applied cleanly to the local development database and the protected local worker loop restarted. Yahoo remains the provider; the product is Daily Trade Tracker-only, excludes Round Trips and Market Charts, captures every entry/add/partial-exit/final-exit snapshot, and retains 5/15/30/60-minute post-exit paths. The temporary readable analysis-details presentation is next.
 
 **Journal review workflow corrections:** The owner's integrated review found

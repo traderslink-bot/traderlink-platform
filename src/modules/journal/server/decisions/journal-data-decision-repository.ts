@@ -352,6 +352,7 @@ ORDER BY source_issue_id`).all(workspaceId, accountId, importBatchId)
     workspaceId: string;
     accountId: string;
     currentFindings: ReadonlyMap<string, string>;
+    affectedChainKeys?: ReadonlySet<string>;
     createEventId: () => string;
     timestamp: string;
   }>): readonly string[] {
@@ -368,6 +369,10 @@ WHERE workspace_id = ? AND account_id = ? AND state = 'pending'
 ORDER BY decision_id`).all(input.workspaceId, input.accountId);
     const superseded: string[] = [];
     for (const decision of pending) {
+      if (
+        input.affectedChainKeys &&
+        !input.affectedChainKeys.has(decision.chain_key_sha256)
+      ) continue;
       if (input.currentFindings.get(decision.chain_key_sha256) === decision.issue_code) continue;
       const decisionEventId = input.createEventId();
       this.database.prepare(`INSERT INTO journal_data_decision_events (

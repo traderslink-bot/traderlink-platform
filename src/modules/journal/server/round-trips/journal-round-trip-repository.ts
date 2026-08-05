@@ -185,6 +185,41 @@ ORDER BY instrument_id, trade_currency`).all(
     })));
   }
 
+  listChainsForExecutionIds(
+    workspaceId: string,
+    accountId: string,
+    executionIds: readonly string[],
+  ): readonly JournalChainDescriptor[] {
+    if (executionIds.length === 0) return Object.freeze([]);
+    const placeholders = executionIds.map(() => "?").join(", ");
+    return Object.freeze(this.database.prepare(`SELECT DISTINCT
+  execution_version.instrument_id,
+  instrument.asset_class,
+  execution_version.trade_currency
+FROM journal_executions execution
+JOIN journal_execution_versions execution_version
+  ON execution_version.execution_version_id = execution.current_version_id
+JOIN journal_instruments instrument
+  ON instrument.workspace_id = execution.workspace_id
+ AND instrument.instrument_id = execution_version.instrument_id
+WHERE execution.workspace_id = ?
+  AND execution.account_id = ?
+  AND execution.execution_id IN (${placeholders})
+  AND execution.current_state <> 'superseded'
+ORDER BY execution_version.instrument_id, execution_version.trade_currency`)
+      .all(workspaceId, accountId, ...executionIds)
+      .map((row) => row as {
+        instrument_id: string;
+        asset_class: string;
+        trade_currency: string;
+      })
+      .map((row) => Object.freeze({
+        instrumentId: row.instrument_id,
+        assetClass: row.asset_class,
+        tradeCurrency: row.trade_currency,
+      })));
+  }
+
   listSourceChainLimitations(
     workspaceId: string,
     accountId: string,

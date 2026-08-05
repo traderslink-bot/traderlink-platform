@@ -708,6 +708,21 @@ export class JournalRoundTripService {
     });
   }
 
+  rebuildAffectedExecutionChains(
+    scope: AccountScope,
+    executionIds: readonly string[],
+    trigger: JournalRebuildTrigger,
+  ): readonly JournalChainRebuildResult[] {
+    if (executionIds.length === 0) return Object.freeze([]);
+    return this.repository.immediate(() => Object.freeze(
+      this.repository.listChainsForExecutionIds(
+        scope.workspaceId,
+        scope.accountId,
+        executionIds,
+      ).map((chain) => this.rebuildChainUnderLock(scope, chain, trigger)),
+    ));
+  }
+
   verifyAccountRebuildsCurrent(scope: AccountScope): Readonly<{
     verifiedChainCount: number;
   }> {

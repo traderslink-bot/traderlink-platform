@@ -208,15 +208,20 @@ export class JournalManualTradeCommandService {
         committed.importBatchId,
         now,
       );
-      const rebuilds = this.roundTrips.rebuildAccount(accountScope, {
-        kind: "import_event",
-        triggerId: committed.importEventId,
-        now,
-      });
+      const rebuilds = this.roundTrips.rebuildAffectedExecutionChains(
+        accountScope,
+        committed.executionIds,
+        {
+          kind: "import_event",
+          triggerId: committed.importEventId,
+          now,
+        },
+      );
       const chainDecisions = this.decisions.openRoundTripDecisionFindings(
         accountScope,
         rebuilds,
         now,
+        new Set(rebuilds.map((rebuild) => rebuild.chainKeySha256)),
       );
       for (const group of preview.groups) {
         const confirmation = confirmations.get(group.groupRef)!;
