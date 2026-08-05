@@ -57,6 +57,7 @@
     "check": "tsc --noEmit && npm run build"
   },
   "dependencies": {
+    "@ai-sdk/openai": "4.0.30",
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
@@ -74,7 +75,8 @@
     "lightweight-charts": "5.2.0",
     "next": "16.2.6",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "zod": "4.4.3"
   },
   "overrides": {
     "postcss": "8.5.13"

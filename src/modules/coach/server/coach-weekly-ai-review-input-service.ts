@@ -70,9 +70,9 @@ export class CoachWeeklyAiReviewInputService {
         currency: reflection.currency,
       }),
       coverage: Object.freeze({
-        readyClosedCount: reflection.coverage.readyClosedCount,
-        legitimateOpenCount: reflection.coverage.legitimateOpenCount,
-        needsDecisionCount: reflection.coverage.needsDecisionCount,
+        weekReadyClosedCount: reflection.summary.readyClosedTradeCount,
+        accountLegitimateOpenCount: reflection.coverage.legitimateOpenCount,
+        accountNeedsDecisionCount: reflection.coverage.needsDecisionCount,
         pendingDataDecisionCount: reflection.summary.accountPendingDataDecisionCount,
       }),
       summary: Object.freeze({

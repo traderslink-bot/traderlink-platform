@@ -1,0 +1,53 @@
+import { createOpenAI } from "@ai-sdk/openai";
+import { generateText, Output } from "ai";
+import { z } from "zod";
+
+import {
+  COACH_WEEKLY_AI_OUTPUT_CONTRACT_VERSION,
+  type CoachWeeklyAiReviewOutput,
+} from "../contracts/weekly-ai-review-output-contracts";
+import type { CoachWeeklyAiReviewInput } from "../contracts/weekly-ai-review-input-contracts";
+
+export const LOCAL_COACH_WEEKLY_AI_MODEL = "gpt-5.6-sol" as const;
+
+const weeklyReviewSchema = z.object({
+  weeklyReview: z.string().min(1).max(1_800),
+  whatImproved: z.string().min(1).max(1_500),
+  whatHeldYouBack: z.string().min(1).max(1_500),
+  focusFollowThrough: z.string().min(1).max(1_500),
+  nextWeekFocuses: z.array(z.string().min(1).max(280)).min(1).max(3),
+  incompleteRecord: z.string().min(1).max(1_000).nullable(),
+});
+
+const SYSTEM_PROMPT = `You are TraderLink's weekly trading-journal reviewer. Write a direct, useful review only from the supplied weekly Journal package.
+
+Be specific where the supplied notes, rule outcomes, focuses, or trade facts support a point. Be respectful but do not soften a supported criticism. Do not invent a setup, motive, market condition, rule outcome, missing fact, or trade result.
+
+Do not provide trade recommendations, price targets, position-size advice, entry or exit instructions, diagnoses, certainty claims, or language that treats profit as proof of good process or a loss as proof of bad process. Do not mention the provider, AI, prompts, tokens, databases, internal systems, or data-decision codes.
+
+Use plain trading-journal language. Keep the next focuses process-oriented and limited to three. If the supplied record is incomplete, say exactly what limits the conclusion in incompleteRecord; otherwise set incompleteRecord to null.`;
+
+function localOpenAiApiKey(environment: NodeJS.ProcessEnv): string {
+  const value = environment.OPENAI_API_KEY?.trim();
+  if (!value) throw new Error("TRADERLINK_COACH_OPENAI_UNAVAILABLE");
+  return value;
+}
+
+export async function generateLocalCoachWeeklyAiReview(
+  input: CoachWeeklyAiReviewInput,
+  environment: NodeJS.ProcessEnv = process.env,
+): Promise<CoachWeeklyAiReviewOutput> {
+  const openai = createOpenAI({ apiKey: localOpenAiApiKey(environment) });
+  const result = await generateText({
+    model: openai(LOCAL_COACH_WEEKLY_AI_MODEL),
+    output: Output.object({ schema: weeklyReviewSchema }),
+    system: SYSTEM_PROMPT,
+    prompt: JSON.stringify(input),
+  });
+  if (!result.output) throw new Error("TRADERLINK_COACH_OPENAI_NO_OUTPUT");
+  return Object.freeze({
+    contractVersion: COACH_WEEKLY_AI_OUTPUT_CONTRACT_VERSION,
+    ...result.output,
+    nextWeekFocuses: Object.freeze([...result.output.nextWeekFocuses]),
+  });
+}

@@ -13,9 +13,9 @@ Active. The product contract is in [AI Weekly Review Plan](ai-weekly-review-plan
 - Added an account-scoped daily-focus revision reader so every saved Current
   Focuses revision within the review week is available to the future prompt.
 - Kept tags out of the package; they are not first-pass AI evidence.
-- Added the Vercel AI SDK dependency. No gateway credential is configured and
-  no provider call, generated review, review table or database migration exists
-  yet.
+- Added the Vercel AI SDK and direct OpenAI provider dependencies. An ignored
+  local `OPENAI_API_KEY` is authorized only for controlled development testing;
+  no key is committed or exposed to the browser.
 
 ## Verification
 
@@ -27,6 +27,15 @@ Active. The product contract is in [AI Weekly Review Plan](ai-weekly-review-plan
 
 ## Next slice
 
-Create immutable persisted review-request/input/output storage, then add the
-strict prompt/provider adapter and one trader-requested Reflection Loop action.
-The adapter must remain unavailable until `AI_GATEWAY_API_KEY` is configured.
+Run one controlled local OpenAI fixture review through the strict structured
+adapter. Then create immutable persisted review-request/input/output storage
+and one trader-requested Reflection Loop action. Hosted provider selection is
+deferred until deployment planning.
+
+## In progress: local OpenAI review test
+
+- The first controlled direct OpenAI response completed against the first
+  fixture week without changing Journal data.
+- It exposed a scope-label ambiguity: account-wide coverage counts appeared
+  beside weekly trade counts. The input contract now names week and account
+  coverage separately before the final local review run.

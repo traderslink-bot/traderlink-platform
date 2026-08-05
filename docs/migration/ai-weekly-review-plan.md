@@ -91,9 +91,11 @@ counts or database terms.
 - The input snapshot and issued response are private owner/account records. No
   Journal source rows, raw broker file contents, private identifiers, secrets
   or Data Decision implementation details enter the prompt.
-- Use Vercel AI Gateway with the current approved OpenAI model when the hosted
-  gateway credential is configured. The implementation must fail clearly and
-  save no invented response when that credential is absent.
+- Local development testing uses the direct OpenAI provider and an ignored
+  `OPENAI_API_KEY` in the replacement checkout's `.env.local`. The key is
+  never committed, logged or sent to the browser. The first direct test uses
+  the account-available `gpt-5.6-sol` model. Hosted-provider configuration is
+  deferred until the live deployment boundary is designed.
 - The first product slice has no automatic provider call, queue or scheduled
   job. A later operational plan may add bounded, paid entitlement-controlled
   scheduling after live usage and budget rules exist.
@@ -115,8 +117,8 @@ source, generation process, provider, prompt, token count, or database state.
 1. Create the immutable factual weekly package and its focused server contract.
 2. Add persisted review request/snapshot/issued-response storage and the
    account-isolated read/write service.
-3. Implement the strict prompt and provider adapter behind the configured
-   gateway boundary.
+3. Implement the strict prompt and direct local-provider adapter, then issue
+   one controlled fixture review before adding persistent generation storage.
 4. Add the Reflection Loop weekly-review action and saved-review detail view.
 5. Use the local two-week fixture: issue week one, then issue week two with
    week one's saved review as prior context. Verify no fixture Journal fact,
@@ -128,7 +130,7 @@ source, generation process, provider, prompt, token count, or database state.
 - The saved input snapshot precisely reproduces what the model received.
 - Reopening a saved review never calls a provider again.
 - Existing reviews remain readable after later Journal edits.
-- A missing gateway credential produces an honest unavailable state, never a
+- A missing provider credential produces an honest unavailable state, never a
   mock review.
 - Week-two generation receives the prior issued week-one review and dated
   Current Focuses history.

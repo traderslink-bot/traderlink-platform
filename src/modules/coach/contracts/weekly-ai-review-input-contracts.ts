@@ -12,9 +12,9 @@ export type CoachWeeklyAiReviewInput = Readonly<{
     currency: string | null;
   }>;
   coverage: Readonly<{
-    readyClosedCount: number;
-    legitimateOpenCount: number;
-    needsDecisionCount: number;
+    weekReadyClosedCount: number;
+    accountLegitimateOpenCount: number;
+    accountNeedsDecisionCount: number;
     pendingDataDecisionCount: number;
   }>;
   summary: Readonly<{
