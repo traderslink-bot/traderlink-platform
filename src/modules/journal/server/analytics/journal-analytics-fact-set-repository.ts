@@ -291,6 +291,21 @@ SELECT current.account_id, current.instrument_id, current.trade_currency,
        current.excluded_count, current.completed_at_utc
 FROM journal_chain_rebuilds current
 WHERE current.workspace_id = ? AND current.account_id IN (${placeholders})
+  AND current.rebuild_id NOT IN (
+    SELECT seeded_round_trip_version.rebuild_id
+    FROM journal_round_trip_versions seeded_round_trip_version
+    JOIN journal_round_trip_execution_allocations seeded_allocation
+      ON seeded_allocation.round_trip_version_id = seeded_round_trip_version.round_trip_version_id
+    JOIN journal_execution_provenance seeded_provenance
+      ON seeded_provenance.workspace_id = seeded_allocation.workspace_id
+     AND seeded_provenance.account_id = seeded_allocation.account_id
+     AND seeded_provenance.execution_version_id = seeded_allocation.execution_version_id
+    JOIN journal_import_batches seeded_batch
+      ON seeded_batch.workspace_id = seeded_provenance.workspace_id
+     AND seeded_batch.account_id = seeded_provenance.account_id
+     AND seeded_batch.import_batch_id = seeded_provenance.import_batch_id
+    WHERE seeded_batch.source_display_label LIKE 'Data Decisions review example:%'
+  )
   AND NOT EXISTS (
     SELECT 1 FROM journal_chain_rebuilds next
     WHERE next.workspace_id = current.workspace_id
@@ -352,6 +367,19 @@ JOIN journal_instruments instrument
 WHERE round_trip.workspace_id = ?
   AND round_trip.account_id IN (${placeholders})
   AND round_trip.lifecycle_state = 'active'
+  AND version.round_trip_version_id NOT IN (
+    SELECT seeded_allocation.round_trip_version_id
+    FROM journal_round_trip_execution_allocations seeded_allocation
+    JOIN journal_execution_provenance seeded_provenance
+      ON seeded_provenance.workspace_id = seeded_allocation.workspace_id
+     AND seeded_provenance.account_id = seeded_allocation.account_id
+     AND seeded_provenance.execution_version_id = seeded_allocation.execution_version_id
+    JOIN journal_import_batches seeded_batch
+      ON seeded_batch.workspace_id = seeded_provenance.workspace_id
+     AND seeded_batch.account_id = seeded_provenance.account_id
+     AND seeded_batch.import_batch_id = seeded_provenance.import_batch_id
+    WHERE seeded_batch.source_display_label LIKE 'Data Decisions review example:%'
+  )
 ORDER BY round_trip.account_id, version.opened_at_utc,
          version.round_trip_version_id`).all(...parameters) as RoundTripRow[];
 
@@ -386,6 +414,19 @@ JOIN journal_executions execution
 WHERE round_trip.workspace_id = ?
   AND round_trip.account_id IN (${placeholders})
   AND round_trip.lifecycle_state = 'active'
+  AND round_trip_version.round_trip_version_id NOT IN (
+    SELECT seeded_allocation.round_trip_version_id
+    FROM journal_round_trip_execution_allocations seeded_allocation
+    JOIN journal_execution_provenance seeded_provenance
+      ON seeded_provenance.workspace_id = seeded_allocation.workspace_id
+     AND seeded_provenance.account_id = seeded_allocation.account_id
+     AND seeded_provenance.execution_version_id = seeded_allocation.execution_version_id
+    JOIN journal_import_batches seeded_batch
+      ON seeded_batch.workspace_id = seeded_provenance.workspace_id
+     AND seeded_batch.account_id = seeded_provenance.account_id
+     AND seeded_batch.import_batch_id = seeded_provenance.import_batch_id
+    WHERE seeded_batch.source_display_label LIKE 'Data Decisions review example:%'
+  )
 ORDER BY allocation.account_id, allocation.round_trip_version_id,
          allocation.allocation_sequence, allocation.allocation_id`).all(
       ...parameters,
@@ -404,6 +445,15 @@ JOIN journal_execution_versions version
 WHERE execution.workspace_id = ?
   AND execution.account_id IN (${placeholders})
   AND execution.current_state IN ('accepted', 'needs_decision')
+  AND execution.current_version_id NOT IN (
+    SELECT seeded_provenance.execution_version_id
+    FROM journal_execution_provenance seeded_provenance
+    JOIN journal_import_batches seeded_batch
+      ON seeded_batch.workspace_id = seeded_provenance.workspace_id
+     AND seeded_batch.account_id = seeded_provenance.account_id
+     AND seeded_batch.import_batch_id = seeded_provenance.import_batch_id
+    WHERE seeded_batch.source_display_label LIKE 'Data Decisions review example:%'
+  )
 ORDER BY execution.account_id, execution.current_version_id`).all(
       ...parameters,
     ) as CurrentExecutionRow[];
