@@ -46,7 +46,7 @@ Active. The product contract is in [AI Weekly Review Plan](ai-weekly-review-plan
   delivery day and Eastern time. It contains no invented review while no issued
   review exists.
 
-## In progress: private provider and cost controls
+## Completed: private provider and cost controls
 
 - Migration `0027_coach_ai_generation_cost_tracking` adds one protected
   provider/model configuration and immutable per-review cost receipts.
@@ -56,6 +56,9 @@ Active. The product contract is in [AI Weekly Review Plan](ai-weekly-review-plan
 - Prices are captured with each issued review so later price changes never
   rewrite history. When no verified price is saved, the receipt retains token
   counts and leaves cost unavailable.
+- Migration `0028_coach_ai_review_generation_attempts` adds retry-safe,
+  immutable generation attempts and one receipt per completed provider call.
+  An unchanged issued request is reused rather than calling the provider again.
 
 ## Completed: saved weekly review reading
 
@@ -69,6 +72,28 @@ Active. The product contract is in [AI Weekly Review Plan](ai-weekly-review-plan
   displays provider, model, token, cost, request or other operational data.
 - Monthly reviews remain an honest not-yet-issued section until a scoped
   monthly read contract and delivery work are implemented.
+
+## Completed: deterministic weekly due-time calculator
+
+- Added a pure server calculator that returns an explicit due/not-due result,
+  the account-local Monday-Sunday period label, and the scheduled UTC instant.
+- Friday is the effective market-week close; Saturday and Sunday are delayed
+  delivery choices for that same Monday-Sunday period. Before the selected
+  instant, the current period remains not due rather than being treated as
+  complete.
+- Account week boundaries and Eastern delivery conversion use the runtime's
+  IANA timezone API, including daylight-saving transitions. The calculator
+  does not call a provider or mutate a database.
+- Focused test coverage includes all three delivery days, before/at/after
+  delivery, current-week eligibility, and Eastern daylight-saving conversion.
+
+## Completed: preceding weekly review context
+
+- The next weekly package reads the immediately preceding issued review only
+  through the same selected-account boundary used by the saved-review pages.
+- The package includes only the prior review's trader-facing sections and
+  period dates. Provider, model, token, cost and internal identifiers do not
+  enter the prompt.
 
 ## Next slice
 
@@ -92,13 +117,3 @@ conflict, never silently resolved by the review.
 - It exposed a scope-label ambiguity: account-wide coverage counts appeared
   beside weekly trade counts. The input contract now names week and account
   coverage separately before the final local review run.
-
-## Deferred dependency: prior issued-review context
-
-The weekly input package does not yet include the immediately preceding issued
-review. The current replacement has no account-scoped issued-review read
-contract or read service; the existing migration and schedule/storage pieces do
-not provide a safe immutable account-scoped read. Adding that dependency would
-require work in the issuance/storage boundary outside this correction's
-allowlist, so prior-review context remains deferred rather than guessed or
-loaded from another account.
