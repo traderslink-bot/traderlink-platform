@@ -13,6 +13,15 @@ This document does not authorize implementation by itself. The implementation
 sequence and current state remain in [AI Companion Progress](ai-chat-progress.md).
 No V3 Coach, V3 analytics engine, V3 database, or V3 route is a runtime source.
 
+The complete natural-language vocabulary is delivered category by category
+under the [AI Language Inventory Master](traderslink_ai_language_inventory_master.md).
+That master controls category order, status, review gates, canonical-name locks
+and generated language artifacts. Every category must use the
+[Category Completion Template](category_completion_template_example.md). This
+plan remains the architecture/behavior authority when an inventory item would
+otherwise imply an unavailable metric, unsafe action, missing data, or a change
+to account scope.
+
 ## 1. Purpose
 
 The TradersLink chatbot will let users ask questions naturally about their trading history, performance, behaviour, journal entries, executions, market context, rules, tags, setups, and account activity.
@@ -2936,3 +2945,26 @@ Natural language
 This architecture gives TradersLink the best chance of understanding the enormous variety of questions users will ask without creating one hard-coded feature for every possible sentence.
 
 The next implementation artifact should be the machine-readable intent, metric, dimension, synonym, and capability registry. That registry becomes the controlling vocabulary shared by the chatbot, validator, analytics tools, and language test suite.
+
+---
+
+# 49. Language Inventory Delivery Program
+
+The full language inventory is a documentation-and-registry program that may be
+completed by dedicated AI work one category at a time. Its governing work order,
+review gates, required deliverables and twenty-category tracker live in the
+[AI Language Inventory Master](traderslink_ai_language_inventory_master.md).
+
+Each category must begin with the
+[Category Completion Template](category_completion_template_example.md) and
+produce all four required deliverables: Canonical Inventory, Language Registry
+Entries, Evaluation Cases, and Coverage Report. The program must not silently
+invent a metric, supported tool, data source, user setting, or action merely to
+complete language coverage. Such a concept is recognized and recorded with its
+truthful planned/unavailable status until the governing product plan authorizes
+its deterministic implementation.
+
+The category workflow may create vocabulary and evaluation artifacts, but it
+does not itself create a provider request, a runtime AI route, a database
+migration, or a Journal mutation. Those changes remain separate implementation
+work under the AI Companion Plan.
