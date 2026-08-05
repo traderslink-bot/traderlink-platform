@@ -95,6 +95,27 @@ Active. The product contract is in [AI Weekly Review Plan](ai-weekly-review-plan
   period dates. Provider, model, token, cost and internal identifiers do not
   enter the prompt.
 
+## Completed: monthly factual input/output contracts
+
+- Added replacement-owned monthly input and output contracts with the six
+  trader-facing monthly output sections: Monthly review, Progress across the
+  month, Recurring friction, Focus follow-through, Next month focuses and
+  Incomplete record.
+- Added the account-scoped monthly factual input builder. It retains only the
+  supplied complete calendar month or partial first-month period, selected
+  account Journal facts, notes, tags, rule outcomes, reviewed-day state and
+  dated Current Focuses revisions, including the value effective at the period
+  start. Execution count, realized gross P/L and trading session stay
+  unavailable when the replacement read contract does not expose them.
+- The package includes only immutable issued weekly reviews whose complete
+  Monday-Sunday periods fall within the selected monthly period. Prior monthly
+  context remains explicitly unavailable until an account-scoped monthly read
+  exists.
+- Added a pure first-partial-month eligibility helper: it requires the exact
+  AI Reviews enabled date as the period start, at least seven calendar days,
+  and at least three reviewed trading days. It does not schedule, issue or
+  skip a no-trade month.
+
 ## Completed: weekly issuance runner and protected trigger
 
 - The runner enumerates only active scheduled Journal accounts, calculates the
@@ -113,11 +134,11 @@ Active. The product contract is in [AI Weekly Review Plan](ai-weekly-review-plan
 
 ## Next slice
 
-Add the scoped monthly review input, issuance and saved read contract.
-Calendar-month reviews use the same delivery time, retain their first-use date,
-and issue a first partial month only after seven calendar days and three
-reviewed trading days. Register the protected trigger with the accepted hosted
-scheduler only at the deployment boundary.
+Add monthly issuance and saved-read contracts. Calendar-month reviews use the
+same delivery time, retain their first-use date, apply the completed partial
+month eligibility helper, and skip no-trade months in the later runner.
+Register the protected trigger with the accepted hosted scheduler only at the
+deployment boundary.
 
 ## Planned input addition: selected trade tags
 
