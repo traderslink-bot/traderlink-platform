@@ -36,7 +36,7 @@ The private persistence API checkpoint is tracked in
 - [ ] Implement Daily Trade Tracker companion drafting/confirmation flow.
   The trusted one-day discussion/context boundary is complete; editable note,
   focus, tag, classification and review proposals remain confirmation work.
-- [ ] Integrate conversational manual execution drafts with the canonical
+- [x] Integrate conversational manual execution drafts with the canonical
   Journal preview and commit commands.
 - [ ] Implement production entitlement, scheduled-delivery, operational, and
   privacy-deletion decisions at their separate launch boundaries.
@@ -192,6 +192,45 @@ existing migration, Journal, and account boundaries.
   the existing cross-project Analytics, Calendar, Import, Tracker fixture and
   older test typing backlog; no new runtime failure was found by the focused
   Daily Companion checks.
+
+## Completed: confirmed conversational manual execution drafts
+
+- AI Chat now has a deliberate **Enter trades in chat** mode. Ordinary trading
+  questions and Daily Companion discussions cannot silently become execution
+  drafts, and manual-entry extraction receives no analytics tools.
+- The provider may propose at most eight editable rows per response. Required
+  date, Eastern time, ticker, side, quantity or price facts stay blank when the
+  trader did not provide them; relative dates are never converted into guessed
+  calendar dates. Follow-up messages can refine the latest active draft.
+- Drafts are private to the current user, workspace and selected Journal
+  account. They expire after 24 hours, retain exact decimal text, and remain
+  separate from the Journal until the trader reviews every row.
+- The responsive Chat card supports row edits and additions, Quick Trade
+  Entry, Swing Trade and same-day Daily Trade Tracker destinations. It sends
+  the edited rows through the existing Journal preview, displays the permitted
+  trade relationship and type choices, and requires an explicit confirmation
+  that every execution was included before enabling **Save executions**.
+- Saving uses the canonical Journal manual-execution command with its existing
+  account-selection, preview-integrity, duplicate reconciliation and Data
+  Decisions behavior. The AI never calls the Journal command. The committed
+  draft retains the canonical import-batch reference, while the Journal source
+  label records `AI Chat manual executions` without changing execution facts.
+- Stable request identifiers make generation and Journal commit retries
+  idempotent. A concurrent follow-up archives every older active draft inside
+  the final persistence transaction so one conversation retains one current
+  editable draft.
+
+### Verification
+
+- Six focused files passed 37 tests with one worker and no file parallelism.
+  Coverage includes scoped/immutable draft persistence, manual-intent routing,
+  server-derived Eastern account defaults, bounded provider reservation,
+  idempotent extraction retries, strict draft routes, editable-row preview,
+  explicit confirmation, one canonical commit under retry, and the durable AI
+  Chat source label/reference.
+- Focused ESLint and `git diff --check` passed. No provider call, real database
+  write or migration, dependency change, process start, deployment or push was
+  made for this slice. Chat remains disabled by default.
 
 ## Completed: protected local migration checkpoint
 

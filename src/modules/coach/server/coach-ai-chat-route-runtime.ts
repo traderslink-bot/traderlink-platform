@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 
 import type {
   CoachAiChatConversationCursor,
+  CoachAiChatMessageIntent,
   CoachAiChatMessageCursor,
 } from "@/src/modules/coach/contracts/ai-chat-contracts";
 import type { CoachAiDailyCompanionContextSelector } from "@/src/modules/coach/contracts/ai-daily-companion-contracts";
@@ -38,6 +39,7 @@ export type GenerateChatMessageInput = Readonly<{
   question: string;
   clientRequestId: string;
   context: CoachAiDailyCompanionContextSelector | null;
+  intent: CoachAiChatMessageIntent;
 }>;
 
 function invalidRequest(field: string): never {
@@ -210,15 +212,22 @@ export function parseConversationPatchBody(body: Record<string, unknown>): Conve
 }
 
 export function parseGenerateChatMessageBody(body: Record<string, unknown>): GenerateChatMessageInput {
-  const expectedKeys = body.context === undefined
-    ? ["question", "clientRequestId"]
-    : ["question", "clientRequestId", "context"];
+  const expectedKeys = [
+    "question",
+    "clientRequestId",
+    ...(body.context === undefined ? [] : ["context"]),
+    ...(body.intent === undefined ? [] : ["intent"]),
+  ];
   if (!hasExactKeys(body, expectedKeys) ||
       typeof body.question !== "string" || body.question.trim().length === 0 ||
       typeof body.clientRequestId !== "string") {
     invalidRequest("message");
   }
   assertCanonicalUuidV4(body.clientRequestId, "clientRequestId");
+  const intent = body.intent === undefined ? "answer_question" : body.intent;
+  if (intent !== "answer_question" && intent !== "prepare_manual_execution_draft") {
+    invalidRequest("intent");
+  }
   let context: CoachAiDailyCompanionContextSelector | null = null;
   if (body.context !== undefined) {
     if (!isRecord(body.context) || !hasExactKeys(body.context, ["kind", "tradingDate", "currency"]) ||
@@ -233,18 +242,27 @@ export function parseGenerateChatMessageBody(body: Record<string, unknown>): Gen
       currency: body.context.currency,
     });
   }
-  return Object.freeze({ question: body.question, clientRequestId: body.clientRequestId, context });
+  if (context && intent !== "answer_question") invalidRequest("intent");
+  return Object.freeze({
+    question: body.question,
+    clientRequestId: body.clientRequestId,
+    context,
+    intent,
+  });
 }
 
 export function createChatGenerationIdempotencySha256(
   conversationId: string,
   clientRequestId: string,
+  intent: CoachAiChatMessageIntent = "answer_question",
 ): string {
   return createHash("sha256")
-    .update("traderlink-coach-chat-generation-v1\0", "utf8")
+    .update("traderlink-coach-chat-generation-v2\0", "utf8")
     .update(conversationId, "utf8")
     .update("\0", "utf8")
     .update(clientRequestId, "utf8")
+    .update("\0", "utf8")
+    .update(intent, "utf8")
     .digest("hex");
 }
 
@@ -272,6 +290,10 @@ function mapChatRouteError(error: unknown): ChatRouteError {
     return Object.freeze({ status: 400, code: "invalid_request" });
   }
   if (error.code === "TRADERLINK_PLATFORM_INTEGRITY_FAILED") {
+    return Object.freeze({ status: 409, code: "conflict" });
+  }
+  if (error.code.includes("CONFLICT") ||
+      error.code === "TRADERLINK_MANUAL_TRADE_PREVIEW_INVALID") {
     return Object.freeze({ status: 409, code: "conflict" });
   }
   if (error.code === "TRADERLINK_WORKSPACE_ACCESS_DENIED" ||

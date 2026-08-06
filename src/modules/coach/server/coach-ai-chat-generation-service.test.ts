@@ -15,6 +15,7 @@ import { CoachAiChatProviderGenerationError } from "./coach-ai-chat-openai-adapt
 import { CoachAiChatProviderControlsRepository } from "./coach-ai-chat-provider-controls-repository";
 import { CoachAiChatRepository } from "./coach-ai-chat-repository";
 import { CoachAiDailyCompanionRepository } from "./coach-ai-daily-companion-repository";
+import { CoachAiManualEntryDraftRepository } from "./coach-ai-manual-entry-draft-repository";
 import { COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES } from "./coach-ai-chat-factual-tool-dispatcher";
 import { CoachAiChatGenerationService, COACH_AI_CHAT_MAX_TRUSTED_CONTEXT_BYTES, COACH_AI_CHAT_SYSTEM_AND_TOOL_ENVELOPE_RESERVED_BYTES, createCoachAiChatReservationEnvelope, type CoachAiChatGenerator } from "./coach-ai-chat-generation-service";
 
@@ -33,11 +34,18 @@ function fixture() {
   controls.saveChatSettings({ modelId: "gpt-chat-test", inputCostUsdPerMillionTokens: "1", outputCostUsdPerMillionTokens: "2" });
   controls.savePlatformFeatureControl({ featureKey: "ai_chat", enabled: true, dailyRequestCap: 20, dailyTokenCap: 2_000_000, dailyEstimatedSpendCapUsd: "10" });
   controls.saveAccountFeatureControl(scope, { featureKey: "ai_chat", enabled: true, dailyRequestCap: 20, dailyTokenCap: 2_000_000, dailyEstimatedSpendCapUsd: "10" });
-  return { database, scope, chat, controls, conversationId: chat.createConversation(scope, "Private", now).conversationId };
+  return {
+    database,
+    scope,
+    chat,
+    controls,
+    manualDrafts: new CoachAiManualEntryDraftRepository(database),
+    conversationId: chat.createConversation(scope, "Private", now).conversationId,
+  };
 }
 
 function answer(): CoachAiChatGenerationResult {
-  return Object.freeze({ answer: Object.freeze({ contractVersion: COACH_AI_CHAT_ANSWER_CONTRACT_VERSION, directAnswer: "Your saved Journal does not have enough facts for that yet.", supportingObservations: Object.freeze(["No closed-trade result was requested."]), limitation: "Ask about a saved trade or date range when you are ready.", nextQuestion: null, evidenceReferences: Object.freeze([]) }), usage: Object.freeze({ inputTokens: 20, outputTokens: 10, totalTokens: 30 }), factualToolCalls: Object.freeze([]) });
+  return Object.freeze({ answer: Object.freeze({ contractVersion: COACH_AI_CHAT_ANSWER_CONTRACT_VERSION, directAnswer: "Your saved Journal does not have enough facts for that yet.", supportingObservations: Object.freeze(["No closed-trade result was requested."]), limitation: "Ask about a saved trade or date range when you are ready.", nextQuestion: null, evidenceReferences: Object.freeze([]) }), usage: Object.freeze({ inputTokens: 20, outputTokens: 10, totalTokens: 30 }), factualToolCalls: Object.freeze([]), manualEntryExtraction: null });
 }
 
 function service(f: ReturnType<typeof fixture>, generator: CoachAiChatGenerator) {
@@ -50,6 +58,7 @@ function service(f: ReturnType<typeof fixture>, generator: CoachAiChatGenerator)
     details as never,
     generator,
     new CoachAiDailyCompanionRepository(f.database),
+    f.manualDrafts,
   );
 }
 
@@ -184,6 +193,76 @@ FROM coach_ai_daily_companion_interactions`).get()).toEqual({
       createCoachAiChatReservationEnvelope("A bounded question", [], nearMaximumContext),
       "utf8",
     )).toBeLessThan(256_000);
+    expect(Buffer.byteLength(
+      createCoachAiChatReservationEnvelope("Buy 10 TEST at 1.25", [], null, null,
+        "prepare_manual_execution_draft"),
+      "utf8",
+    )).toBeLessThan(256_000);
+  });
+
+  it("persists one editable manual-execution draft and reuses it for an idempotent retry", async () => {
+    const f = fixture();
+    try {
+      const generator = vi.fn(async (input: Parameters<CoachAiChatGenerator>[0]) => {
+        expect(input.intent).toBe("prepare_manual_execution_draft");
+        expect(input.trustedContext).toBeNull();
+        expect(input.existingManualEntryDraft).toBeNull();
+        return Object.freeze({
+          ...answer(),
+          answer: Object.freeze({
+            ...answer().answer,
+            directAnswer: "I captured two TEST executions for your review.",
+          }),
+          manualEntryExtraction: Object.freeze({
+            state: "ready_for_confirmation" as const,
+            rows: Object.freeze([
+              Object.freeze({ clientRowRef: "row-1", localDate: "2026-08-05", localTime: "09:30:00", normalizedSymbol: "TEST", side: "buy" as const, quantityDecimal: "10", priceDecimal: "1.25", feesDecimal: null }),
+              Object.freeze({ clientRowRef: "row-2", localDate: "2026-08-05", localTime: "10:00:00", normalizedSymbol: "TEST", side: "sell" as const, quantityDecimal: "10", priceDecimal: "1.5", feesDecimal: null }),
+            ]),
+            missingFields: Object.freeze([]),
+            followUpQuestion: null,
+          }),
+        });
+      });
+      const subject = service(f, generator);
+      const input = {
+        conversationId: f.conversationId,
+        question: "Buy 10 TEST at 1.25 and sell 10 at 1.50.",
+        intent: "prepare_manual_execution_draft" as const,
+        idempotencySha256: "1".repeat(64),
+        resolveManualEntryDefaults: () => Object.freeze({
+          sourceTimezone: "America/New_York",
+          tradeCurrency: "USD",
+        }),
+      };
+      const first = await subject.generateSavedAnswer(f.scope, input, now);
+      expect(first).toMatchObject({
+        state: "completed",
+        manualEntryDraft: {
+          state: "ready_for_confirmation",
+          rows: [
+            { sourceTimezone: "America/New_York", tradeCurrency: "USD" },
+            { sourceTimezone: "America/New_York", tradeCurrency: "USD" },
+          ],
+        },
+      });
+      const second = await subject.generateSavedAnswer(f.scope, {
+        ...input,
+        resolveManualEntryDefaults: () => {
+          throw new Error("defaults must not be read for an idempotent retry");
+        },
+      }, now);
+      expect(second.manualEntryDraft?.draftId).toBe(first.manualEntryDraft?.draftId);
+      expect(generator).toHaveBeenCalledTimes(1);
+      expect(f.database.prepare(`SELECT COUNT(*) AS count FROM coach_ai_manual_entry_drafts`).get())
+        .toEqual({ count: 1 });
+      const snapshot = f.database.prepare(`SELECT factual_snapshot_json
+FROM coach_ai_chat_answer_snapshots`).get() as { factual_snapshot_json: string };
+      expect(JSON.parse(snapshot.factual_snapshot_json)).toMatchObject({
+        factualToolCalls: [],
+        manualEntryExtraction: { state: "ready_for_confirmation" },
+      });
+    } finally { f.database.close(); }
   });
 
   it("captures a dispatcher factual snapshot, blocks before generation, and never sends unbounded history", async () => {

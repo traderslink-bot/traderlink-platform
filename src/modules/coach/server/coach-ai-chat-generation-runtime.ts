@@ -18,15 +18,22 @@ import { CoachAiChatProviderControlsRepository } from "./coach-ai-chat-provider-
 import { CoachAiChatRepository } from "./coach-ai-chat-repository";
 import { CoachAiChatTradeDetailService } from "./coach-ai-chat-trade-detail-service";
 import { CoachAiDailyCompanionRepository } from "./coach-ai-daily-companion-repository";
+import { CoachAiManualEntryDraftRepository } from "./coach-ai-manual-entry-draft-repository";
 import type { CoachAiChatTrustedContext } from "../contracts/ai-daily-companion-contracts";
+import type { CoachAiChatMessageIntent } from "../contracts/ai-chat-contracts";
 
 export async function generateCoachAiChatSavedAnswer(
   scope: WorkspaceAccessScope,
   input: Readonly<{
     conversationId: string;
     question: string;
+    intent?: CoachAiChatMessageIntent;
     idempotencySha256: string;
     resolveTrustedContext?: (() => CoachAiChatTrustedContext) | null;
+    resolveManualEntryDefaults?: (() => Readonly<{
+      sourceTimezone: string;
+      tradeCurrency: string;
+    }>) | null;
   }>,
 ): Promise<CoachAiChatGenerationServiceResult> {
   const database = openPlatformDatabase({ mode: "runtime" });
@@ -45,6 +52,7 @@ export async function generateCoachAiChatSavedAnswer(
       new CoachAiChatTradeDetailService(facts, annotations),
       undefined,
       new CoachAiDailyCompanionRepository(database),
+      new CoachAiManualEntryDraftRepository(database),
     ).generateSavedAnswer(scope, input);
   } finally {
     database.close();

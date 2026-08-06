@@ -231,7 +231,8 @@ export function parseJournalManualTradeCommitRequest(
     !OPAQUE_REF_PATTERN.test(expectedAccountSelectionRef) ||
     idempotencyKey.length < 16 || idempotencyKey.length > 128 ||
     !Array.isArray(input.confirmations) ||
-    input.confirmations.length < 1 || input.confirmations.length > 200
+    input.confirmations.length < 1 || input.confirmations.length > 200 ||
+    (input.preparedBy !== undefined && input.preparedBy !== "ai_chat")
   ) {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
       field: "manualTradeCommit",
@@ -244,6 +245,7 @@ export function parseJournalManualTradeCommitRequest(
     expectedAccountSelectionRef,
     idempotencyKey,
     confirmations: Object.freeze(input.confirmations.map(parseConfirmation)),
+    ...(input.preparedBy === "ai_chat" ? { preparedBy: "ai_chat" as const } : {}),
   });
 }
 

@@ -7,6 +7,7 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import RestoreRoundedIcon from "@mui/icons-material/RestoreRounded";
+import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -32,6 +33,9 @@ import type {
   CoachAiChatMessage,
 } from "@/src/modules/coach/contracts/ai-chat-contracts";
 import type { CoachAiDailyCompanionContextSelector } from "@/src/modules/coach/contracts/ai-daily-companion-contracts";
+import type { CoachAiManualEntryDraft } from "@/src/modules/coach/contracts/ai-manual-entry-draft-contracts";
+
+import { AiChatManualEntryCard } from "./ai-chat-manual-entry-card";
 
 type ConversationResponse = Readonly<{
   status: "ready";
@@ -49,6 +53,13 @@ type MessageResponse = Readonly<{
 type GenerationResponse = Readonly<{
   status: "completed" | "pending" | "blocked" | "failed";
   assistantMessageId: string;
+  manualEntryDraft: CoachAiManualEntryDraft | null;
+}>;
+
+type ManualEntryDraftResponse = Readonly<{
+  status: "ready";
+  conversationId: string;
+  drafts: readonly CoachAiManualEntryDraft[];
 }>;
 
 type RetryRequest = Readonly<{
@@ -148,6 +159,7 @@ export function AiChatClient({
   const [conversationCursor, setConversationCursor] = useState<string | null>(null);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<readonly CoachAiChatMessage[]>([]);
+  const [manualEntryDrafts, setManualEntryDrafts] = useState<readonly CoachAiManualEntryDraft[]>([]);
   const [messageCursor, setMessageCursor] = useState<string | null>(null);
   const [question, setQuestion] = useState("");
   const [loadingConversations, setLoadingConversations] = useState(true);
@@ -159,6 +171,7 @@ export function AiChatClient({
   const [notice, setNotice] = useState<string | null>(null);
   const [retryRequest, setRetryRequest] = useState<RetryRequest | null>(null);
   const [dailyContext, setDailyContext] = useState(initialContext);
+  const [manualEntryMode, setManualEntryMode] = useState(false);
 
   const activeConversation = useMemo(
     () => conversations.find((item) => item.conversationId === activeConversationId) ?? null,
@@ -206,24 +219,45 @@ export function AiChatClient({
     }
   }, []);
 
+  const loadManualEntryDrafts = useCallback(async (conversationId: string) => {
+    try {
+      const response = await readJson<ManualEntryDraftResponse>(await fetch(
+        `${conversationsEndpoint}/${conversationId}/manual-entry-drafts`,
+        { cache: "no-store" },
+      ));
+      setManualEntryDrafts(response.drafts);
+    } catch {
+      setManualEntryDrafts([]);
+      setNotice("Execution drafts could not be loaded right now.");
+    }
+  }, []);
+
   useEffect(() => { void loadConversations(); }, [loadConversations]);
   useEffect(() => {
-    if (activeConversationId) void loadMessages(activeConversationId);
+    if (activeConversationId) {
+      void loadMessages(activeConversationId);
+      void loadManualEntryDrafts(activeConversationId);
+    }
     else {
       setMessages([]);
+      setManualEntryDrafts([]);
       setMessageCursor(null);
     }
-  }, [activeConversationId, loadMessages]);
+  }, [activeConversationId, loadManualEntryDrafts, loadMessages]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, sending]);
 
-  async function createConversation(): Promise<CoachAiChatConversation | null> {
+  async function createConversation(
+    kind: "standard" | "manual" = "standard",
+  ): Promise<CoachAiChatConversation | null> {
     setNotice(null);
     try {
       const response = await readJson<Readonly<{ status: "ready"; conversation: CoachAiChatConversation }>>(await fetch(conversationsEndpoint, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          title: dailyContext
+          title: kind === "manual"
+            ? "Trade entry"
+            : dailyContext
             ? `${dailyContext.tradingDate} daily review`
             : "New conversation",
         }),
@@ -232,6 +266,11 @@ export function AiChatClient({
       setConversations((current) => [response.conversation, ...current]);
       if (dailyContext) {
         dailyContextConversationIdRef.current = response.conversation.conversationId;
+      }
+      if (kind === "manual") {
+        dailyContextConversationIdRef.current = null;
+        setDailyContext(null);
+        setManualEntryMode(true);
       }
       setActiveConversationId(response.conversation.conversationId);
       setMobileOpen(false);
@@ -251,9 +290,10 @@ export function AiChatClient({
     setQuestion("");
     setSending(true);
     setNotice(null);
+    const intent = manualEntryMode ? "prepare_manual_execution_draft" : "answer_question";
     const contextKey = dailyContext
       ? `${dailyContext.kind}:${dailyContext.tradingDate}:${dailyContext.currency}`
-      : "none";
+      : intent;
     const clientRequestId = retryRequest?.conversationId === conversation.conversationId &&
         retryRequest.question === text && retryRequest.contextKey === contextKey
       ? retryRequest.clientRequestId
@@ -284,6 +324,7 @@ export function AiChatClient({
         body: JSON.stringify({
           question: text,
           clientRequestId,
+          intent,
           ...(dailyContext ? { context: dailyContext } : {}),
         }),
       });
@@ -291,6 +332,12 @@ export function AiChatClient({
       if (!(["completed", "pending", "blocked", "failed"] as const).includes(body.status as GenerationResponse["status"]) ||
           typeof body.assistantMessageId !== "string") throw new Error("request_failed");
       setRetryRequest(null);
+      if (body.manualEntryDraft) {
+        setManualEntryDrafts((current) => [
+          body.manualEntryDraft!,
+          ...current.filter((draft) => draft.draftId !== body.manualEntryDraft!.draftId),
+        ]);
+      }
       await loadMessages(conversation.conversationId);
       await loadConversations();
       if (body.status === "blocked") setNotice("Today’s AI Chat limit has been reached. Your question is saved, and you can return later.");
@@ -352,12 +399,14 @@ export function AiChatClient({
           dailyContextConversationIdRef.current = null;
           setDailyContext(null);
         }
+        setManualEntryMode(false);
         setActiveConversationId(conversationId);
         setMobileOpen(false);
       }}
       onToggleArchived={() => {
         dailyContextConversationIdRef.current = null;
         setDailyContext(null);
+        setManualEntryMode(false);
         setArchived((value) => !value);
         setActiveConversationId(null);
       }}
@@ -428,6 +477,33 @@ export function AiChatClient({
           </Stack>
         ) : null}
 
+        {manualEntryMode ? (
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{
+              alignItems: "center",
+              bgcolor: "#EAF2FF",
+              borderBottom: 1,
+              borderColor: "#C8DAF7",
+              px: { xs: 1.5, sm: 2 },
+              py: 1,
+            }}
+          >
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography color="primary.main" sx={{ fontWeight: 850 }} variant="body2">
+                Enter trades in chat
+              </Typography>
+              <Typography color="text.secondary" variant="caption">
+                Describe the executions shown by your broker. You will review and confirm every row before anything is saved.
+              </Typography>
+            </Box>
+            <IconButton aria-label="Stop entering trades" onClick={() => setManualEntryMode(false)} size="small">
+              <CloseRoundedIcon fontSize="small" />
+            </IconButton>
+          </Stack>
+        ) : null}
+
         {notice ? <Alert onClose={() => setNotice(null)} severity="info" sx={{ borderRadius: 0 }}>{notice}</Alert> : null}
         <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", px: { xs: 1.5, sm: 3 }, py: 2 }}>
           {messageCursor ? <Button onClick={() => activeConversationId && void loadMessages(activeConversationId, true, messageCursor)} size="small" sx={{ display: "block", mx: "auto", mb: 2 }}>Load earlier messages</Button> : null}
@@ -443,7 +519,10 @@ export function AiChatClient({
             <Stack spacing={2} sx={{ alignItems: "center", justifyContent: "center", minHeight: "100%", textAlign: "center" }}>
               <ChatBubbleOutlineRoundedIcon color="primary" sx={{ fontSize: 46 }} />
               <Typography sx={{ fontWeight: 800 }} variant="h3">Start a conversation about your trading</Typography>
-              <Button onClick={() => void createConversation()} startIcon={<AddRoundedIcon />} variant="contained">New conversation</Button>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                <Button onClick={() => void createConversation()} startIcon={<AddRoundedIcon />} variant="contained">New conversation</Button>
+                <Button onClick={() => void createConversation("manual")} startIcon={<ReceiptLongRoundedIcon />} variant="outlined">Enter trades in chat</Button>
+              </Stack>
             </Stack>
           ) : null}
           <Stack spacing={1.5}>
@@ -459,13 +538,44 @@ export function AiChatClient({
                 </Box>
               );
             })}
+            {manualEntryDrafts
+              .filter((draft) => draft.state !== "archived" && draft.state !== "expired")
+              .slice(0, 1)
+              .map((draft) => (
+                <AiChatManualEntryCard
+                  conversationId={draft.conversationId}
+                  draft={draft}
+                  key={draft.draftId}
+                  onDraftChange={(updatedDraft) => setManualEntryDrafts((current) => [
+                    updatedDraft,
+                    ...current.filter((item) => item.draftId !== updatedDraft.draftId),
+                  ])}
+                />
+              ))}
             {sending ? <Box sx={{ alignSelf: "flex-start", bgcolor: "#EEF4FF", borderRadius: 2, px: 2, py: 1.5 }}><Stack direction="row" spacing={1} sx={{ alignItems: "center" }}><CircularProgress size={16} /><Typography variant="body2">Thinking...</Typography></Stack></Box> : null}
             <div ref={endRef} />
           </Stack>
         </Box>
 
         <Box sx={{ borderTop: 1, borderColor: "divider", p: { xs: 1.25, sm: 2 } }}>
-          <Stack direction="row" spacing={1} sx={{ alignItems: "flex-end" }}>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "flex-end" } }}>
+            <Button
+              disabled={activeConversation?.state === "archived" || sending}
+              onClick={async () => {
+                if (!activeConversation) {
+                  await createConversation("manual");
+                  return;
+                }
+                dailyContextConversationIdRef.current = null;
+                setDailyContext(null);
+                setManualEntryMode((current) => !current);
+              }}
+              startIcon={<ReceiptLongRoundedIcon />}
+              sx={{ flexShrink: 0 }}
+              variant={manualEntryMode ? "contained" : "outlined"}
+            >
+              {manualEntryMode ? "Entering trades" : "Enter trades in chat"}
+            </Button>
             <TextField
               disabled={!activeConversation || activeConversation.state !== "active" || sending}
               fullWidth
@@ -480,7 +590,9 @@ export function AiChatClient({
                 }
               }}
               placeholder={activeConversation
-                ? dailyContext ? "Ask about this trading day..." : "Ask about your trading..."
+                ? manualEntryMode
+                  ? "Describe the executions shown by your broker..."
+                  : dailyContext ? "Ask about this trading day..." : "Ask about your trading..."
                 : "Start a conversation to ask a question"}
               value={question}
             />

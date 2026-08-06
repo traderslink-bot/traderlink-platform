@@ -221,6 +221,7 @@ describe("Journal manual trade confirmation", () => {
         previewRef: preview.previewRef,
         expectedAccountSelectionRef: selectionRef,
         idempotencyKey: "manual-day-trade-confirmation-001",
+        preparedBy: "ai_chat",
         confirmations: preview.groups.map((group) => Object.freeze({
           groupRef: group.groupRef,
           relationship: "start_new_trade" as const,
@@ -244,6 +245,10 @@ FROM journal_trade_style_plans`).get()).toEqual({
       });
       expect(context.database.prepare(`SELECT count(*) AS count
 FROM journal_data_decisions WHERE state = 'pending'`).get()).toEqual({ count: 0 });
+      expect(context.database.prepare(`SELECT source_display_label
+FROM journal_import_batches WHERE import_batch_id = ?`).get(result.importBatchId)).toEqual({
+        source_display_label: "AI Chat manual executions",
+      });
     } finally {
       context.database.close();
     }

@@ -87,4 +87,5 @@ export type JournalManualTradeCommitRequest = Readonly<{
   expectedAccountSelectionRef: string;
   idempotencyKey: string;
   confirmations: readonly JournalManualTradeGroupConfirmation[];
+  preparedBy?: "ai_chat";
 }>;

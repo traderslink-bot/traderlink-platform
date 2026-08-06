@@ -12,7 +12,10 @@ import {
   withReadonlyChatRepository,
 } from "@/src/modules/coach/server/coach-ai-chat-route-runtime";
 import { generateCoachAiChatSavedAnswer } from "@/src/modules/coach/server/coach-ai-chat-generation-runtime";
-import { getReplacementDailyCompanionContext } from "@/app/(dashboard)/trade-tracker/trade-tracker-platform-data";
+import {
+  getReplacementDailyCompanionContext,
+  getReplacementTradeTrackerAccount,
+} from "@/app/(dashboard)/trade-tracker/trade-tracker-platform-data";
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
 
 export const runtime = "nodejs";
@@ -57,7 +60,12 @@ export async function POST(
     const result = await generateCoachAiChatSavedAnswer(scope, {
       conversationId: id,
       question: input.question,
-      idempotencySha256: createChatGenerationIdempotencySha256(id, input.clientRequestId),
+      intent: input.intent,
+      idempotencySha256: createChatGenerationIdempotencySha256(
+        id,
+        input.clientRequestId,
+        input.intent,
+      ),
       resolveTrustedContext: input.context
         ? () => {
             const context = getReplacementDailyCompanionContext(scope, {
@@ -68,6 +76,20 @@ export async function POST(
               platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "context" });
             }
             return context;
+        }
+        : null,
+      resolveManualEntryDefaults: input.intent === "prepare_manual_execution_draft"
+        ? () => {
+            const account = getReplacementTradeTrackerAccount(scope);
+            if (!account || account.tradingTimezone !== "America/New_York") {
+              platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+                field: "manualEntryTimezone",
+              });
+            }
+            return Object.freeze({
+              sourceTimezone: "America/New_York",
+              tradeCurrency: account.baseCurrency,
+            });
           }
         : null,
     });
@@ -78,6 +100,7 @@ export async function POST(
     return readyResponse({
       status: result.state,
       assistantMessageId: result.assistantMessageId,
+      manualEntryDraft: result.manualEntryDraft,
     }, status);
   } catch (error) {
     return respondToChatRouteError(error);

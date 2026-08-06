@@ -117,7 +117,9 @@ export class JournalManualTradeCommandService {
       const committed = this.imports.commitManualExecutions(scope, {
         accountId,
         idempotencyKey: request.idempotencyKey,
-        sourceDisplayLabel: request.tracker === "swing"
+        sourceDisplayLabel: request.preparedBy === "ai_chat"
+          ? "AI Chat manual executions"
+          : request.tracker === "swing"
           ? "Swing Trade Tracker manual executions"
           : request.tracker === "quick"
             ? "Quick Trade Entry manual executions"

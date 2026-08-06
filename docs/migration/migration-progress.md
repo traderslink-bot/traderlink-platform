@@ -61,7 +61,13 @@ new date-bound Chat conversation whose trusted Journal context is resolved on
 the server, cost-gated by both Chat and Daily Companion controls, bounded,
 retained with the immutable answer evidence and never written back to Journal
 without a later explicit confirmation flow. Conversational execution drafts
-and editable Daily Companion proposals remain the next active slices.
+are now integrated through a deliberate Chat mode, private account-scoped
+editable draft, canonical Journal preview, explicit execution-set and trade
+relationship/type confirmation, and the existing retry-safe manual execution
+commit. The AI never writes Journal facts directly; the committed draft keeps
+the canonical Journal reference and existing duplicate/Data Decisions behavior
+remains authoritative. Editable Daily Companion proposals remain an active
+future slice.
 The finalized natural-language/query contract is maintained in the
 [AI Chatbot Complete Language Plan](traderslink_ai_chatbot_complete_language_plan.md);
 it requires deterministic capability routing, account scope, explicit action

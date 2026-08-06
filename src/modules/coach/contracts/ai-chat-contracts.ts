@@ -1,3 +1,5 @@
+import type { CoachAiManualExecutionExtraction } from "./ai-manual-entry-draft-contracts";
+
 export const COACH_AI_CHAT_SNAPSHOT_CONTRACT_VERSION =
   "traderlink_coach_ai_chat_snapshot_v1" as const;
 
@@ -29,7 +31,12 @@ export type CoachAiChatGenerationResult = Readonly<{
   answer: CoachAiChatAnswer;
   usage: CoachAiChatGenerationUsage;
   factualToolCalls: readonly CoachAiChatFactualToolCallSnapshot[];
+  manualEntryExtraction: CoachAiManualExecutionExtraction | null;
 }>;
+
+export type CoachAiChatMessageIntent =
+  | "answer_question"
+  | "prepare_manual_execution_draft";
 
 export type CoachAiChatGenerationUsage = Readonly<{
   inputTokens: number | null;

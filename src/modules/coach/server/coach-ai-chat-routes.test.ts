@@ -6,6 +6,7 @@ import type {
   CoachAiChatConversation,
   CoachAiChatMessage,
 } from "../contracts/ai-chat-contracts";
+import type { CoachAiManualEntryDraft } from "../contracts/ai-manual-entry-draft-contracts";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { TraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
 
@@ -40,6 +41,23 @@ const message: CoachAiChatMessage = Object.freeze({
   finalizedAtUtc: null,
 });
 
+const manualEntryDraft: CoachAiManualEntryDraft = Object.freeze({
+  contractVersion: "traderlink_coach_ai_manual_entry_draft_v1",
+  draftId: "00000000-0000-4000-8000-000000000020",
+  conversationId: conversation.conversationId,
+  sourceMessageId: message.messageId,
+  state: "draft",
+  journalWriteState: "not_written",
+  canonicalJournalCommand: null,
+  canonicalJournalReference: null,
+  writeFailureCode: null,
+  rows: Object.freeze([]),
+  createdAtUtc: message.createdAtUtc,
+  updatedAtUtc: message.createdAtUtc,
+  expiresAtUtc: "2026-08-06T12:01:00.000Z",
+  finalizedAtUtc: null,
+});
+
 const { mocks, FakeRepository } = vi.hoisted(() => {
   const routeMocks = {
     requireScope: vi.fn(),
@@ -52,6 +70,7 @@ const { mocks, FakeRepository } = vi.hoisted(() => {
     listMessages: vi.fn(),
     generateSavedAnswer: vi.fn(),
     getDailyCompanionContext: vi.fn(),
+    getTradeTrackerAccount: vi.fn(),
     withReadonlyPlatformDatabase: vi.fn(),
     withPlatformDatabase: vi.fn(),
   };
@@ -84,6 +103,7 @@ vi.mock("@/src/modules/coach/server/coach-ai-chat-generation-runtime", () => ({
 }));
 vi.mock("@/app/(dashboard)/trade-tracker/trade-tracker-platform-data", () => ({
   getReplacementDailyCompanionContext: mocks.getDailyCompanionContext,
+  getReplacementTradeTrackerAccount: mocks.getTradeTrackerAccount,
 }));
 
 import { GET as listConversations, POST as createConversation } from "@/app/api/coach/chat/conversations/route";
@@ -127,8 +147,13 @@ describe("private AI Chat persistence routes", () => {
       state: "completed",
       assistantMessageId: "00000000-0000-4000-8000-000000000012",
       attemptId: "00000000-0000-4000-8000-000000000013",
+      manualEntryDraft: null,
     });
     mocks.getDailyCompanionContext.mockReturnValue(null);
+    mocks.getTradeTrackerAccount.mockReturnValue(Object.freeze({
+      baseCurrency: "USD",
+      tradingTimezone: "America/New_York",
+    }));
   });
 
   it("lists bounded active conversations and preserves the repository cursor", async () => {
@@ -221,12 +246,15 @@ describe("private AI Chat persistence routes", () => {
     expect(body).toEqual({
       status: "completed",
       assistantMessageId: "00000000-0000-4000-8000-000000000012",
+      manualEntryDraft: null,
     });
     expect(mocks.generateSavedAnswer).toHaveBeenCalledWith(scope, {
       conversationId,
       question: "How did I trade this week?",
+      intent: "answer_question",
       idempotencySha256: expect.stringMatching(/^[0-9a-f]{64}$/u),
       resolveTrustedContext: null,
+      resolveManualEntryDefaults: null,
     });
     expect(JSON.stringify(body)).not.toContain("attemptId");
   });
@@ -258,6 +286,7 @@ describe("private AI Chat persistence routes", () => {
         state: "completed",
         assistantMessageId: "00000000-0000-4000-8000-000000000012",
         attemptId: "00000000-0000-4000-8000-000000000013",
+        manualEntryDraft: null,
       };
     });
     const response = await generateMessage(request(`${conversationPath}/messages`, {
@@ -281,6 +310,45 @@ describe("private AI Chat persistence routes", () => {
     }));
   });
 
+  it("uses an explicit manual-entry intent and server-derived Eastern account defaults", async () => {
+    mocks.generateSavedAnswer.mockImplementationOnce(async (
+      _scope: WorkspaceAccessScope,
+      input: Readonly<{ resolveManualEntryDefaults: () => unknown }>,
+    ) => {
+      expect(input.resolveManualEntryDefaults()).toEqual({
+        sourceTimezone: "America/New_York",
+        tradeCurrency: "USD",
+      });
+      return {
+        state: "completed",
+        assistantMessageId: "00000000-0000-4000-8000-000000000012",
+        attemptId: "00000000-0000-4000-8000-000000000013",
+        manualEntryDraft,
+      };
+    });
+    const response = await generateMessage(request(`${conversationPath}/messages`, {
+      method: "POST",
+      body: JSON.stringify({
+        question: "Bought 10 TEST at 1.25.",
+        clientRequestId: "00000000-0000-4000-8000-000000000019",
+        intent: "prepare_manual_execution_draft",
+      }),
+    }), params());
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      status: "completed",
+      assistantMessageId: "00000000-0000-4000-8000-000000000012",
+      manualEntryDraft,
+    });
+    expect(mocks.generateSavedAnswer).toHaveBeenCalledWith(scope, expect.objectContaining({
+      intent: "prepare_manual_execution_draft",
+      resolveTrustedContext: null,
+      resolveManualEntryDefaults: expect.any(Function),
+    }));
+    expect(mocks.getDailyCompanionContext).not.toHaveBeenCalled();
+  });
+
   it.each([
     ["pending", 202],
     ["blocked", 429],
@@ -290,6 +358,7 @@ describe("private AI Chat persistence routes", () => {
       state,
       assistantMessageId: "00000000-0000-4000-8000-000000000012",
       attemptId: "00000000-0000-4000-8000-000000000013",
+      manualEntryDraft: null,
     });
     const response = await generateMessage(request(`${conversationPath}/messages`, {
       method: "POST",
@@ -303,6 +372,7 @@ describe("private AI Chat persistence routes", () => {
     expect(await response.json()).toEqual({
       status: state,
       assistantMessageId: "00000000-0000-4000-8000-000000000012",
+      manualEntryDraft: null,
     });
   });
 
