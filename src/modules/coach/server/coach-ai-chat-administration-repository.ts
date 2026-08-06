@@ -4,9 +4,9 @@ import Decimal from "decimal.js";
 import type {
   CoachAiChatProviderSettings,
   CoachAiCostAggregation,
-  CoachAiFeatureControl,
 } from "@/src/modules/coach/contracts/ai-provider-controls-contracts";
 import type { JournalAdminScope } from "@/src/modules/platform/contracts/journal-admin-scope";
+import type { PlatformAdminReferenceKeyConfiguration } from "@/src/modules/platform/server/administration/platform-admin-reference-authority";
 import { createCanonicalUtcTimestamp, createCanonicalUuidV4, platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
 import {
   createJournalAdminReadContext,
@@ -149,7 +149,11 @@ export class CoachAiChatAdministrationRepository {
   private readonly context;
   private readonly controls: CoachAiChatProviderControlsRepository;
 
-  constructor(input: Readonly<{ database: Database.Database; scope: JournalAdminScope }>) {
+  constructor(input: Readonly<{
+    database: Database.Database;
+    scope: JournalAdminScope;
+    configuration?: PlatformAdminReferenceKeyConfiguration;
+  }>) {
     this.context = createJournalAdminReadContext(input);
     this.controls = new CoachAiChatProviderControlsRepository(input.database);
   }
@@ -207,6 +211,13 @@ ORDER BY account.display_name, account.account_id`).all()
 FROM journal_accounts WHERE account_id = ? AND status = 'active'`).get(accountId);
     if (!account) platformFailure("TRADERLINK_JOURNAL_ADMIN_MUTATION_INVALID");
     const normalized = validateControl(input);
+    const membership = this.context.database.prepare<[string], Readonly<{ user_id: string }>>(`SELECT membership.user_id
+FROM platform_workspace_memberships membership
+JOIN platform_users user ON user.user_id = membership.user_id
+WHERE membership.workspace_id = ? AND membership.status = 'active' AND user.status = 'active'
+ORDER BY CASE membership.role WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END,
+  membership.user_id ASC LIMIT 1`).get(account.workspace_id);
+    if (!membership) platformFailure("TRADERLINK_JOURNAL_ADMIN_MUTATION_INVALID");
     this.context.database.prepare(`INSERT INTO coach_ai_feature_controls (
   coach_ai_feature_control_id, feature_key, scope_kind, user_id, workspace_id, account_id, enabled,
   daily_request_cap, daily_token_cap, daily_estimated_spend_cap_usd, updated_at_utc
@@ -215,7 +226,7 @@ ON CONFLICT(feature_key, scope_kind, account_id) DO UPDATE SET enabled = exclude
   daily_request_cap = excluded.daily_request_cap, daily_token_cap = excluded.daily_token_cap,
   daily_estimated_spend_cap_usd = excluded.daily_estimated_spend_cap_usd, updated_at_utc = excluded.updated_at_utc`).run(
       createCanonicalUuidV4(),
-      account.created_by_user_id,
+      membership.user_id,
       account.workspace_id,
       account.account_id,
       normalized.enabled ? 1 : 0,
