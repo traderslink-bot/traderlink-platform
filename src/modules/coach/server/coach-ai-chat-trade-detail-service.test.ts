@@ -78,6 +78,8 @@ describe("CoachAiChatTradeDetailService", () => {
     expect(response.result.tags).toEqual(["A setup", "Trend"]);
     expect(JSON.stringify(response)).not.toContain("accountId");
     expect(JSON.stringify(response)).not.toContain("executionId");
+    expect(JSON.stringify(response)).not.toContain("technicalNote");
+    expect(JSON.stringify(response)).not.toContain("Waited for confirmation");
   });
 
   it("returns null and empty metadata when a current note or tags do not exist", () => {

@@ -99,7 +99,6 @@ export class CoachAiChatTradeDetailService {
           }))),
         note: note === null ? null : Object.freeze({
           tradeNote: note.tradeNote,
-          technicalNote: note.technicalNote,
           updatedAtUtc: note.updatedAtUtc,
         }),
         tags: Object.freeze(tags.map((tag) => tag.name).sort((left, right) =>

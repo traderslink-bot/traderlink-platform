@@ -11,7 +11,7 @@ Implemented locally on 2026-08-05 as a narrow, non-routed server contract slice.
 - Server-authoritative WorkspaceAccessScope and selected-account inputs. Tool requests cannot choose an account.
 - Typed allowlists for metrics, grouping, date range, currency, factual filters, money basis, and table pagination.
 - Direct forwarding of Journal Analytics result states, coverage, currency partitions, limitations, and fact-set revision without replacing unavailable values with zero.
-- Trade detail from the canonical Journal fact set, ordered allocation facts, and optional current trader note/tags. It excludes source rows and private identifiers.
+- Trade detail from the canonical Journal fact set, ordered allocation facts, and the optional current trader trade note/tags. The retired technical-note field, source rows, and private identifiers are excluded.
 - Indistinguishable `not_found` errors for cross-account and nonexistent closed-trade identifiers.
 
 ## Explicitly not included
@@ -21,4 +21,4 @@ Implemented locally on 2026-08-05 as a narrow, non-routed server contract slice.
 
 ## Verification
 
-Focused Vitest coverage is included for request validation, selected-account scoping, exact analytics response forwarding, unavailable states, page bounds/cursors, generic missing-trade behavior, allocation ordering, optional notes/tags, and privacy-safe errors. This isolated worktree has neither the local Vitest nor ESLint executable, so the required focused ESLint and one-worker/no-file-parallelism Vitest checks were deliberately not run and are deferred to the canonical checkout. No dependency installation or download was attempted. `git diff --check` passed for the new-file set.
+The canonical checkout passed seven focused one-worker tests for request validation, selected-account scoping, exact analytics response forwarding, unavailable states, page bounds/cursors, generic missing-trade behavior, allocation ordering, optional notes/tags, and privacy-safe errors. Focused ESLint and `git diff --check` also passed. No dependency installation or download was needed.

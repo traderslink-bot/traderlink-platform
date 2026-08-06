@@ -161,7 +161,6 @@ export type CoachAiChatClosedTradeDetail = Readonly<{
   }>[];
   note: Readonly<{
     tradeNote: string;
-    technicalNote: string;
     updatedAtUtc: string;
   }> | null;
   tags: readonly string[];
