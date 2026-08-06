@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 
+import { CoachMonthlyAiReviewRunner } from "@/src/modules/coach/server/coach-monthly-ai-review-runner";
 import { CoachWeeklyAiReviewRunner } from "@/src/modules/coach/server/coach-weekly-ai-review-runner";
 import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 
@@ -22,8 +23,10 @@ export async function GET(request: Request): Promise<Response> {
   }
   const database = openPlatformDatabase({ mode: "runtime" });
   try {
-    const summary = await new CoachWeeklyAiReviewRunner(database).run(new Date());
-    return Response.json({ ok: true, summary });
+    const now = new Date();
+    const weekly = await new CoachWeeklyAiReviewRunner(database).run(now);
+    const monthly = await new CoachMonthlyAiReviewRunner(database).run(now);
+    return Response.json({ ok: true, summary: { weekly, monthly } });
   } finally {
     database.close();
   }

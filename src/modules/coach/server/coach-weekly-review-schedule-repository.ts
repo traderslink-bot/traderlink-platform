@@ -62,6 +62,7 @@ WHERE account_id = ?`).get(activeAccountId(scope));
       trading_timezone: string;
       weekly_delivery_day: "friday" | "saturday" | "sunday";
       delivery_time_eastern: string;
+      monthly_enabled_at_utc: string;
       updated_at_utc: string;
     }>>(`SELECT account.created_by_user_id AS user_id,
   account.workspace_id, account.account_id, membership.role AS workspace_role,

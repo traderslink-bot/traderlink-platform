@@ -75,6 +75,13 @@ export class CoachWeeklyAiReviewRunner {
           check: "prior_week_must_be_due",
         });
       }
+      const alreadyIssued = reviews.listIssuedWeeklyReviews(account.scope, 2)
+        .some((review) => review.weekStartDate === due.period.startDate &&
+          review.weekEndDate === due.period.endDate);
+      if (alreadyIssued) {
+        counts.reusedCount += 1;
+        continue;
+      }
       const input = this.buildInput(this.database, account.scope, due.period.endDate);
       if (input.week.startDate !== due.period.startDate ||
           input.week.endDate !== due.period.endDate ||
