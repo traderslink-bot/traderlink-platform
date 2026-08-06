@@ -487,7 +487,7 @@ WHERE coach_ai_chat_conversation_id = ?`).run(createdAtUtc, conversationId);
     const finalizedAtUtc = createCanonicalUtcTimestamp(now);
     return this.transaction(() => {
       const pending = this.message(scope, assistantMessageId, verifiedAccountId);
-      if (pending.role !== "assistant" || pending.generationState !== "pending") {
+      if (pending.role !== "assistant" || pending.generation_state !== "pending") {
         platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { state: "assistant_not_pending" });
       }
       const result = this.database.prepare(`UPDATE coach_ai_chat_messages
@@ -528,7 +528,7 @@ WHERE coach_ai_chat_message_id = ? AND user_id = ? AND workspace_id = ?
     const finalizedAtUtc = createCanonicalUtcTimestamp(now);
     return this.transaction(() => {
       const pending = this.message(scope, assistantMessageId, verifiedAccountId);
-      if (pending.role !== "assistant" || pending.generationState !== "pending") {
+      if (pending.role !== "assistant" || pending.generation_state !== "pending") {
         platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { state: "assistant_not_pending" });
       }
       const result = this.database.prepare(`UPDATE coach_ai_chat_messages
