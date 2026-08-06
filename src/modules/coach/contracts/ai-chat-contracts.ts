@@ -1,6 +1,36 @@
 export const COACH_AI_CHAT_SNAPSHOT_CONTRACT_VERSION =
   "traderlink_coach_ai_chat_snapshot_v1" as const;
 
+export const COACH_AI_CHAT_ANSWER_CONTRACT_VERSION =
+  "traderlink_coach_ai_chat_answer_v1" as const;
+
+/** The stored answer shape. UI code renders these fields without exposing runtime labels. */
+export type CoachAiChatAnswer = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_ANSWER_CONTRACT_VERSION;
+  directAnswer: string;
+  supportingObservations: readonly string[];
+  limitation: string | null;
+  nextQuestion: string | null;
+  evidenceReferences: readonly Readonly<{
+    toolCallId: string;
+    statement: string;
+  }>[];
+}>;
+
+export type CoachAiChatFactualToolCallSnapshot = Readonly<{
+  toolCallId: string;
+  toolName: string;
+  request: unknown;
+  result: unknown;
+  serializedResultBytes: number;
+}>;
+
+export type CoachAiChatGenerationResult = Readonly<{
+  answer: CoachAiChatAnswer;
+  usage: CoachAiChatGenerationUsage;
+  factualToolCalls: readonly CoachAiChatFactualToolCallSnapshot[];
+}>;
+
 export type CoachAiChatGenerationUsage = Readonly<{
   inputTokens: number | null;
   outputTokens: number | null;
@@ -69,6 +99,11 @@ export type CoachAiChatMessagePage = Readonly<{
 }>;
 
 export type CoachAiChatReservedGeneration = Readonly<{
+  userMessage: CoachAiChatMessage;
+  assistantMessage: CoachAiChatMessage;
+}>;
+
+export type CoachAiChatGenerationPair = Readonly<{
   userMessage: CoachAiChatMessage;
   assistantMessage: CoachAiChatMessage;
 }>;

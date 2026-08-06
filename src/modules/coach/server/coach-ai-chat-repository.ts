@@ -10,6 +10,7 @@ import type {
   CoachAiChatGenerationReceipt,
   CoachAiChatGenerationReceiptInput,
   CoachAiChatGenerationUsage,
+  CoachAiChatGenerationPair,
   CoachAiChatMessage,
   CoachAiChatMessageCursor,
   CoachAiChatMessagePage,
@@ -204,6 +205,11 @@ export class CoachAiChatRepository {
     return this.database.inTransaction ? operation() : this.database.transaction(operation).immediate();
   }
 
+  /** Coordinates a Chat state transition with another repository on this database. */
+  runAtomically<T>(operation: () => T): T {
+    return this.transaction(operation);
+  }
+
   private verifiedAccountId(scope: WorkspaceAccessScope): string {
     if (!scope.activeAccountId || !scope.allowedAccountIds.includes(scope.activeAccountId)) {
       platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
@@ -310,6 +316,36 @@ LIMIT ?`).all(
       messages: Object.freeze(page),
       nextCursor: rows.length > limit && oldest ? Object.freeze({ beforeSequence: oldest.sequence }) : null,
     });
+  }
+
+  readGenerationPair(
+    scope: WorkspaceAccessScope,
+    conversationId: string,
+    assistantMessageId: string,
+  ): CoachAiChatGenerationPair {
+    const verifiedAccountId = this.verifiedAccountId(scope);
+    this.conversation(scope, conversationId, verifiedAccountId);
+    const assistant = this.database.prepare<[string, string, string, string, string], MessageRow>(`SELECT
+  coach_ai_chat_message_id, message_sequence, role, original_user_text_private,
+  normalized_user_text_private, structured_interpretation_json, assistant_text_private,
+  generation_state, failure_code, created_at_utc, finalized_at_utc
+FROM coach_ai_chat_messages
+WHERE coach_ai_chat_message_id = ? AND coach_ai_chat_conversation_id = ? AND user_id = ?
+  AND workspace_id = ? AND account_id = ? AND role = 'assistant'`).get(
+      assistantMessageId, conversationId, scope.userId, scope.workspaceId, verifiedAccountId,
+    );
+    if (!assistant) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
+    const row = this.database.prepare<[string, string, string, string, number], MessageRow>(`SELECT
+  coach_ai_chat_message_id, message_sequence, role, original_user_text_private,
+  normalized_user_text_private, structured_interpretation_json, assistant_text_private,
+  generation_state, failure_code, created_at_utc, finalized_at_utc
+FROM coach_ai_chat_messages
+WHERE coach_ai_chat_conversation_id = ? AND user_id = ? AND workspace_id = ? AND account_id = ?
+  AND message_sequence = ? AND role = 'user'`).get(
+      conversationId, scope.userId, scope.workspaceId, verifiedAccountId, assistant.message_sequence - 1,
+    );
+    if (!row) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
+    return Object.freeze({ userMessage: messageRecord(row), assistantMessage: messageRecord(assistant) });
   }
 
   listConversations(

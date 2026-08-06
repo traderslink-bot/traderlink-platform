@@ -35,6 +35,8 @@ export type CoachAiChatProviderSettings = Readonly<{
 
 export type CoachAiChatGenerationAttempt = Readonly<{
   attemptId: string;
+  conversationId: string;
+  assistantMessageId: string;
   state: "reserved" | "started" | "completed" | "failed" | "blocked";
   providerKey: "openai_direct";
   modelId: string;

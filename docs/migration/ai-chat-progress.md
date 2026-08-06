@@ -28,7 +28,7 @@ The private persistence API checkpoint is tracked in
 - [x] Implement account-scoped Chat persistence, ordered-message history,
   immutable factual snapshots, and generation-receipt contracts over migration
   `0029`.
-- [ ] Implement the separate Chat provider boundary and cost-control service.
+- [x] Implement the separate Chat provider boundary and cost-control service.
 - [ ] Complete the twenty-category language inventory program and review/lock
   its canonical vocabulary before generating runtime registries.
 - [ ] Implement the private AI Chat experience and factual question families.
@@ -120,3 +120,10 @@ The private persistence API checkpoint is tracked in
   scope denial, and privacy-safe errors.
 - [x] Recorded the API boundary in
   [AI Chat Persistence API Progress](ai-chat-api-progress.md).
+
+## Completed: saved-question generation orchestration
+
+The server-only saved-question runtime is recorded in
+[AI Chat Runtime Progress](ai-chat-runtime-progress.md). It adds no route or
+visible surface, does not call a provider during tests, and retains the
+existing migration, Journal, and account boundaries.

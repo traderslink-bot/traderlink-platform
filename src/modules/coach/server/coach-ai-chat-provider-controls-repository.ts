@@ -178,6 +178,22 @@ FROM coach_ai_feature_controls WHERE scope_kind = 'platform' OR (scope_kind = 'a
 ORDER BY feature_key, scope_kind`).all(scope.workspaceId, accountId).map(controlRecord));
   }
 
+  findChatGenerationByIdempotency(
+    scope: WorkspaceAccessScope,
+    idempotencySha256: unknown,
+  ): CoachAiChatGenerationAttempt | null {
+    const accountId = this.accountId(scope);
+    if (typeof idempotencySha256 !== "string" || !DIGEST_PATTERN.test(idempotencySha256)) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "idempotencySha256" });
+    }
+    const row = this.database.prepare<[string, string], AttemptRow>(`SELECT coach_ai_chat_generation_attempt_id,
+  coach_ai_chat_conversation_id, coach_ai_chat_message_id, state, provider_key, model_id,
+  input_cost_usd_per_million_tokens, output_cost_usd_per_million_tokens,
+  reserved_max_input_tokens, reserved_max_output_tokens, reserved_max_total_tokens, reserved_maximum_cost_usd
+FROM coach_ai_chat_generation_attempts WHERE account_id = ? AND idempotency_sha256 = ?`).get(accountId, idempotencySha256);
+    return row ? this.attemptRecord(row) : null;
+  }
+
   savePlatformFeatureControl(input: Readonly<{ featureKey: unknown; enabled: unknown; dailyRequestCap: unknown; dailyTokenCap: unknown; dailyEstimatedSpendCapUsd: unknown }>, now = new Date()): CoachAiFeatureControl {
     const featureKey = feature(input.featureKey);
     if (typeof input.enabled !== "boolean") platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "enabled" });
@@ -327,6 +343,8 @@ FROM coach_ai_chat_generation_attempts WHERE coach_ai_chat_generation_attempt_id
   private attemptRecord(row: AttemptRow): CoachAiChatGenerationAttempt {
     return Object.freeze({
       attemptId: row.coach_ai_chat_generation_attempt_id,
+      conversationId: row.coach_ai_chat_conversation_id,
+      assistantMessageId: row.coach_ai_chat_message_id,
       state: row.state,
       providerKey: row.provider_key,
       modelId: row.model_id,
