@@ -3,6 +3,8 @@
 ## Status
 
 Implementation is active. The parent plan is [TraderLink AI Companion Plan](ai-chat-plan.md).
+The private persistence API checkpoint is tracked in
+[AI Chat Persistence API Progress](ai-chat-api-progress.md).
 
 ## Accepted existing foundation
 
@@ -108,3 +110,13 @@ Implementation is active. The parent plan is [TraderLink AI Companion Plan](ai-c
   The migration was verified only against disposable test databases; no real
   database was opened or changed.
 - No V3 Coach runtime is a source for the new implementation.
+
+## Completed: private Chat persistence API
+
+- [x] Added private account-scoped conversation list/create/read, strict
+  rename/archive/restore, and bounded message-history route handlers over the
+  existing migration `0029` repository.
+- [x] Added focused route coverage for validation, pagination, archive/restore,
+  scope denial, and privacy-safe errors.
+- [x] Recorded the API boundary in
+  [AI Chat Persistence API Progress](ai-chat-api-progress.md).
