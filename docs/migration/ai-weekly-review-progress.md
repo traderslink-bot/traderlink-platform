@@ -70,8 +70,6 @@ Active. The product contract is in [AI Weekly Review Plan](ai-weekly-review-plan
   trader-facing weekly summary, improvement, friction, focus follow-through,
   next-focus and applicable incomplete-record sections. It never reads or
   displays provider, model, token, cost, request or other operational data.
-- Monthly reviews remain an honest not-yet-issued section until a scoped
-  monthly read contract and delivery work are implemented.
 
 ## Completed: deterministic weekly due-time calculator
 
@@ -108,9 +106,9 @@ Active. The product contract is in [AI Weekly Review Plan](ai-weekly-review-plan
   start. Execution count, realized gross P/L and trading session stay
   unavailable when the replacement read contract does not expose them.
 - The package includes only immutable issued weekly reviews whose complete
-  Monday-Sunday periods fall within the selected monthly period. Prior monthly
-  context remains explicitly unavailable until an account-scoped monthly read
-  exists.
+  Monday-Sunday periods fall within the selected monthly period. It also reads
+  the immediately preceding issued monthly review through the same
+  selected-account boundary and includes only its trader-facing sections.
 - Added a pure first-partial-month eligibility helper: it requires the exact
   AI Reviews enabled date as the period start, at least seven calendar days,
   and at least three reviewed trading days. It does not schedule, issue or
@@ -161,13 +159,39 @@ Active. The product contract is in [AI Weekly Review Plan](ai-weekly-review-plan
   replacement dashboard's final Vercel-versus-single-node runtime has not been
   activated. The protected trigger and runner are ready for that scheduler.
 
+## Completed: monthly due time and issuance runner
+
+- Monthly reviews use closed calendar months. They become due on the first day
+  after the month at the account's selected Eastern delivery time. The first
+  period begins on the account-local AI Reviews enablement date; later periods
+  are complete calendar months.
+- The monthly runner processes scheduled accounts sequentially, carries the
+  preceding monthly review into the input, skips no-trade months, and skips a
+  first partial month unless it contains at least seven calendar days and
+  three reviewed trading days.
+- Weekly and monthly runners now check the period's already-issued review
+  before rebuilding input. Later Journal edits therefore do not silently issue
+  a second paid review for an already completed period.
+- The protected scheduler route invokes both runners and returns aggregate
+  counts only. Hosted scheduler registration remains deferred until the
+  accepted deployment runtime is activated.
+
+## Completed: local migration 0028 checkpoint
+
+- Before applying migration `0028`, an SQLite online backup was created at
+  `C:\Users\jerac\Documents\TraderLink\private-data\traderlink-platform\backups\ai-reviews-20260806T000658Z\development-before-ai-review-migration.sqlite`.
+  It is 29,507,584 bytes, has SHA-256
+  `2A3A5D119B426FFFE36153C22E138C2A7CDB2C9291850630F6787F18696466E2`,
+  contains 27 migration rows and passed `quick_check`.
+- Migration `0028_coach_ai_review_generation_attempts` was then applied to the
+  local development database. The current verifier passed schema digest,
+  foreign-key, quick, and full integrity checks with 28 exact migration rows.
+
 ## Next slice
 
-Wire the account-scoped prior-month read into the factual package, then add the
-monthly runner. Calendar-month reviews use the same delivery time, retain their
-first-use date, apply the completed partial-month eligibility helper, and skip
-no-trade months in the later runner. Register the protected trigger with the
-accepted hosted scheduler only at the deployment boundary.
+Start the approved AI Chat foundation as a separate migration and server
+contract. Register the protected review trigger with the accepted hosted
+scheduler only at the deployment boundary.
 
 ## Planned input addition: selected trade tags
 

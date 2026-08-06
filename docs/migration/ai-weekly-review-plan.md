@@ -156,9 +156,10 @@ counts or database terms.
 
 AI Reviews is its own dashboard page at `/ai-reviews` with a left-navigation
 item. It replaces the retired Reflection Loop page. The page lists saved weekly
-and monthly reviews, opens an addressable detail view, and contains the
-per-account Eastern-time delivery setting. It never invents a review or claims
-a schedule is active before the setting and scheduler exist.
+and monthly reviews and opens an addressable detail view. The per-account
+Eastern-time delivery setting belongs on Account with the user's other
+settings. AI Reviews never invents a review or claims a schedule is active
+before the setting and scheduler exist.
 
 Visible copy uses ordinary trading language. It does not explain its internal
 source, generation process, provider, prompt, token count, or database state.
