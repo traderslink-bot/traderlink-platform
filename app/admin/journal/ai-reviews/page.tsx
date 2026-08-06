@@ -3,6 +3,10 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import type { Metadata } from "next";
 
+import {
+  CoachAiChatAdministrationRepository,
+  isCoachAiChatAdministrationSchemaAvailable,
+} from "@/src/modules/coach/server/coach-ai-chat-administration-repository";
 import { CoachAiProviderSettingsRepository } from "@/src/modules/coach/server/coach-ai-provider-settings-repository";
 import { withJournalAdminPageDatabase } from "@/src/modules/platform/server/administration/require-journal-admin-page";
 import {
@@ -15,6 +19,11 @@ import {
   formatAdminInteger,
 } from "../journal-admin-ui";
 import { AiReviewProviderSettings } from "./ai-review-provider-settings";
+import {
+  AiChatAccountControl,
+  AiChatPlatformControl,
+  AiChatProviderSettings,
+} from "./ai-chat-admin-controls";
 
 export const metadata: Metadata = { title: "AI Reviews | Journal Administration" };
 export const dynamic = "force-dynamic";
@@ -24,9 +33,14 @@ function money(value: string | null): string {
 }
 
 export default async function JournalAdminAiReviewsPage() {
-  const state = await withJournalAdminPageDatabase((database) => {
+  const state = await withJournalAdminPageDatabase((database, scope) => {
     const repository = new CoachAiProviderSettingsRepository(database);
-    return Object.freeze({ settings: repository.read(), costs: repository.readCostSummary() });
+    const chatAvailable = isCoachAiChatAdministrationSchemaAvailable(database);
+    return Object.freeze({
+      settings: repository.read(),
+      costs: repository.readCostSummary(),
+      chat: chatAvailable ? new CoachAiChatAdministrationRepository({ database, scope }).read() : null,
+    });
   });
   const credentialConfigured = Boolean(process.env.OPENAI_API_KEY?.trim());
   const pricingConfigured = state.settings.inputCostUsdPerMillionTokens !== null;
@@ -63,6 +77,41 @@ export default async function JournalAdminAiReviewsPage() {
           initialOutputRate={state.settings.outputCostUsdPerMillionTokens}
         />
       </JournalAdminPanel>
+
+      <JournalAdminPanel title="AI Chat">
+        <Stack spacing={1.25}>
+          <Stack direction="row" sx={{ justifyContent: "space-between" }}><Typography>Server credential</Typography><JournalAdminStatus state={credentialConfigured ? "active" : "unavailable"} /></Stack>
+          <Typography color="text.secondary" variant="body2">Chat uses a separate model, verified pricing, enablement and caps. The server credential itself is never stored or shown.</Typography>
+          {state.chat ? (
+            <>
+              <Stack direction="row" sx={{ justifyContent: "space-between" }}><Typography>Platform Chat</Typography><JournalAdminStatus state={state.chat.platformControl.enabled ? "active" : "disabled"} /></Stack>
+              <AiChatProviderSettings
+                initialInputRate={state.chat.settings.inputCostUsdPerMillionTokens}
+                initialModelId={state.chat.settings.modelId}
+                initialOutputRate={state.chat.settings.outputCostUsdPerMillionTokens}
+              />
+            </>
+          ) : <Alert severity="info">AI Chat administration is unavailable until the accepted Chat schema migrations are applied. AI Review settings remain available above.</Alert>}
+        </Stack>
+      </JournalAdminPanel>
+
+      {state.chat ? (
+        <>
+          <JournalAdminMetricGrid>
+            <JournalAdminMetricCard caption="All Chat attempts" label="Chat requests" value={formatAdminInteger(state.chat.costs.requestCount)} />
+            <JournalAdminMetricCard caption="Completed receipts only" label="Chat tokens" value={formatAdminInteger(state.chat.costs.totalTokens)} />
+            <JournalAdminMetricCard caption="Recorded provider usage" label="Estimated Chat cost" value={money(state.chat.costs.estimatedCostUsd)} />
+            <JournalAdminMetricCard caption="Provider failures" label="Failed Chat requests" value={formatAdminInteger(state.chat.costs.failedRequestCount)} />
+            <JournalAdminMetricCard caption="Daily-cap denials" label="Blocked Chat requests" value={formatAdminInteger(state.chat.costs.blockedRequestCount)} />
+          </JournalAdminMetricGrid>
+          <JournalAdminPanel title="Platform Chat control">
+            <AiChatPlatformControl initialControl={state.chat.platformControl} />
+          </JournalAdminPanel>
+          <JournalAdminPanel title="Account Chat controls">
+            <AiChatAccountControl accounts={state.chat.accounts} />
+          </JournalAdminPanel>
+        </>
+      ) : null}
     </JournalAdminPage>
   );
 }
