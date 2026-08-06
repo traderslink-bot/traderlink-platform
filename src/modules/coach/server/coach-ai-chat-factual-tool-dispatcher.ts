@@ -17,6 +17,11 @@ import type { CoachAiChatTradeDetailService } from "./coach-ai-chat-trade-detail
 /** Across at most two tool steps; later model calls can receive this package twice. */
 export const COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES = 72 * 1024;
 
+function unsupportedTool(request: never): never {
+  void request;
+  throw new CoachAiChatFactualToolError("invalid_request");
+}
+
 export class CoachAiChatFactualToolDispatcher {
   private readonly snapshots: CoachAiChatFactualToolCallSnapshot[] = [];
   private totalBytes = 0;
@@ -46,10 +51,8 @@ export class CoachAiChatFactualToolDispatcher {
       case "get_closed_trade_details":
         result = this.details.getClosedTradeDetails(this.scope, this.selectedAccountId, request);
         break;
-      default: {
-        const impossible: never = request;
-        throw new CoachAiChatFactualToolError("invalid_request");
-      }
+      default:
+        return unsupportedTool(request);
     }
     const serializedResultBytes = Buffer.byteLength(JSON.stringify(result), "utf8");
     if (this.totalBytes + serializedResultBytes > COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES) {
