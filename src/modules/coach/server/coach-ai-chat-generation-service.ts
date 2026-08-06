@@ -13,6 +13,10 @@ import type {
   CoachAiDailyCompanionResolvedContext,
 } from "../contracts/ai-daily-companion-contracts";
 import type { CoachAiChatGenerationAttempt } from "../contracts/ai-provider-controls-contracts";
+import type {
+  CoachAiReviewDeliveryChangeDraft,
+  CoachAiReviewDeliveryScheduleSnapshot,
+} from "../contracts/ai-review-delivery-change-contracts";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
 
@@ -22,6 +26,7 @@ import { CoachAiChatProviderControlsRepository } from "./coach-ai-chat-provider-
 import { CoachAiChatRepository } from "./coach-ai-chat-repository";
 import type { CoachAiDailyCompanionRepository } from "./coach-ai-daily-companion-repository";
 import type { CoachAiManualEntryDraftRepository } from "./coach-ai-manual-entry-draft-repository";
+import type { CoachAiReviewDeliveryChangeRepository } from "./coach-ai-review-delivery-change-repository";
 import type { CoachAiChatFactualToolService } from "./coach-ai-chat-factual-tool-service";
 import type { CoachAiChatTradeDetailService } from "./coach-ai-chat-trade-detail-service";
 
@@ -44,6 +49,7 @@ export type CoachAiChatGenerator = (input: Readonly<{
   intent: CoachAiChatMessageIntent;
   trustedContext: CoachAiChatTrustedContext | null;
   existingManualEntryDraft: CoachAiManualEntryDraft | null;
+  currentReviewDelivery: CoachAiReviewDeliveryScheduleSnapshot | null;
   dispatcher: CoachAiChatFactualToolDispatcher;
 }>) => Promise<CoachAiChatGenerationResult>;
 
@@ -53,6 +59,7 @@ export type CoachAiChatGenerationServiceResult = Readonly<{
   attemptId: string;
   manualEntryDraft: CoachAiManualEntryDraft | null;
   dailyCompanionDraft: CoachAiDailyCompanionDraft | null;
+  reviewDeliveryChangeDraft: CoachAiReviewDeliveryChangeDraft | null;
 }>;
 
 function completeUsage(usage: CoachAiChatGenerationUsage): boolean {
@@ -88,6 +95,7 @@ export function createCoachAiChatReservationEnvelope(
   trustedContext: CoachAiChatTrustedContext | null = null,
   existingManualEntryDraft: CoachAiManualEntryDraft | null = null,
   intent: CoachAiChatMessageIntent = "answer_question",
+  currentReviewDelivery: CoachAiReviewDeliveryScheduleSnapshot | null = null,
 ): string {
   const manualEntry = intent === "prepare_manual_execution_draft";
   const trustedContextBytes = Buffer.byteLength(JSON.stringify(trustedContext), "utf8");
@@ -103,6 +111,7 @@ export function createCoachAiChatReservationEnvelope(
     currentQuestion: question,
     trustedContext,
     existingManualEntryDraft,
+    currentReviewDelivery,
     toolDefinitions: manualEntry
       ? []
       : ["summarize_closed_trades", "group_closed_trades", "list_closed_trades", "get_closed_trade_details"],
@@ -140,6 +149,8 @@ export class CoachAiChatGenerationService {
       "recordProposedReflection" | "recordProposedDraft" | "listDrafts"> | null = null,
     private readonly manualDrafts: Pick<CoachAiManualEntryDraftRepository,
       "createDraft" | "listDrafts" | "readDraftForSourceMessage" | "transitionDraft"> | null = null,
+    private readonly reviewDeliveryChanges: Pick<CoachAiReviewDeliveryChangeRepository,
+      "create" | "readForSourceMessage"> | null = null,
   ) {}
 
   async generateSavedAnswer(
@@ -154,6 +165,7 @@ export class CoachAiChatGenerationService {
         sourceTimezone: string;
         tradeCurrency: string;
       }>) | null;
+      resolveReviewDelivery?: (() => CoachAiReviewDeliveryScheduleSnapshot) | null;
     }>,
     now = new Date(),
   ): Promise<CoachAiChatGenerationServiceResult> {
@@ -179,9 +191,14 @@ export class CoachAiChatGenerationService {
         conversationId: input.conversationId,
         limit: 50,
       }).find((draft) => draft.sourceMessageId === pair.userMessage.messageId) ?? null;
+      const reviewDeliveryChangeDraft = this.reviewDeliveryChanges?.readForSourceMessage(
+        scope,
+        input.conversationId,
+        pair.userMessage.messageId,
+      ) ?? null;
       return Object.freeze({ state: existing.state === "reserved" || existing.state === "started" ? "pending" : existing.state,
         assistantMessageId: existing.assistantMessageId, attemptId: existing.attemptId,
-        manualEntryDraft, dailyCompanionDraft });
+        manualEntryDraft, dailyCompanionDraft, reviewDeliveryChangeDraft });
     }
 
     const resolvedTrustedContext = input.resolveTrustedContext?.() ?? null;
@@ -193,6 +210,7 @@ export class CoachAiChatGenerationService {
     const manualEntryDefaults = intent === "prepare_manual_execution_draft"
       ? input.resolveManualEntryDefaults?.() ?? null
       : null;
+    const currentReviewDelivery = input.resolveReviewDelivery?.() ?? null;
     if (intent === "prepare_manual_execution_draft" && (!manualEntryDefaults || !this.manualDrafts)) {
       platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { component: "manualEntryDraft" });
     }
@@ -229,6 +247,7 @@ export class CoachAiChatGenerationService {
           trustedContext,
           boundedExistingManualEntryDraft,
           intent,
+          currentReviewDelivery,
         ),
         maxOutputTokens: COACH_AI_CHAT_MAX_OUTPUT_TOKENS,
         additionalFeatureKey: trustedContext ? "daily_companion" : undefined,
@@ -239,7 +258,7 @@ export class CoachAiChatGenerationService {
       return Object.freeze({ pair, history, reservation });
     });
     if (created.reservation.state === "blocked") {
-      return Object.freeze({ state: "blocked", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: created.reservation.attempt.attemptId, manualEntryDraft: null, dailyCompanionDraft: null });
+      return Object.freeze({ state: "blocked", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: created.reservation.attempt.attemptId, manualEntryDraft: null, dailyCompanionDraft: null, reviewDeliveryChangeDraft: null });
     }
     if (created.reservation.state !== "reserved") {
       platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { state: "unexpected_reservation" });
@@ -251,7 +270,7 @@ export class CoachAiChatGenerationService {
     try {
       result = await this.generator({ scope, selectedAccountId: scope.activeAccountId!, asOfUtc: now.toISOString(), attempt,
         recentMessages: created.history, question: input.question, intent, trustedContext,
-        existingManualEntryDraft: boundedExistingManualEntryDraft, dispatcher });
+        existingManualEntryDraft: boundedExistingManualEntryDraft, currentReviewDelivery, dispatcher });
       if ((intent === "prepare_manual_execution_draft") !== (result.manualEntryExtraction !== null)) {
         throw new CoachAiChatProviderGenerationError(
           result.usage,
@@ -278,11 +297,12 @@ export class CoachAiChatGenerationService {
           this.controls.failStartedWithoutUsage(scope, attempt.attemptId, providerError.message, now);
         }
       });
-      return Object.freeze({ state: "failed", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: attempt.attemptId, manualEntryDraft: null, dailyCompanionDraft: null });
+      return Object.freeze({ state: "failed", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: attempt.attemptId, manualEntryDraft: null, dailyCompanionDraft: null, reviewDeliveryChangeDraft: null });
     }
     // A receipt/attempt mismatch must roll this whole persistence transition back; it is not a provider failure.
     let manualEntryDraft: CoachAiManualEntryDraft | null = null;
     let dailyCompanionDraft: CoachAiDailyCompanionDraft | null = null;
+    let reviewDeliveryChangeDraft: CoachAiReviewDeliveryChangeDraft | null = null;
     this.chat.runAtomically(() => {
       this.chat.finalizeAssistantSuccess(scope, created.pair.assistantMessage.messageId, {
         assistantTextPrivate: safeAssistantText(result),
@@ -290,7 +310,8 @@ export class CoachAiChatGenerationService {
         factualSnapshot: Object.freeze({ answer: result.answer, factualToolCalls: result.factualToolCalls,
           totalFactualResultBytes: dispatcher.totalSerializedResultBytes(), trustedContext,
           manualEntryExtraction: result.manualEntryExtraction,
-          dailyCompanionDraftExtraction: result.dailyCompanionDraftExtraction }),
+          dailyCompanionDraftExtraction: result.dailyCompanionDraftExtraction,
+          reviewDeliveryChangeExtraction: result.reviewDeliveryChangeExtraction }),
         receipt: { providerKey: attempt.providerKey, modelId: attempt.modelId, usage: result.usage,
           inputCostUsdPerMillionTokens: attempt.inputCostUsdPerMillionTokens,
           outputCostUsdPerMillionTokens: attempt.outputCostUsdPerMillionTokens },
@@ -343,7 +364,20 @@ export class CoachAiChatGenerationService {
           expiresAtUtc: expiresAt.toISOString(),
         }, now);
       }
+      if (result.reviewDeliveryChangeExtraction) {
+        if (!this.reviewDeliveryChanges || !currentReviewDelivery) {
+          platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+            component: "reviewDeliveryChange",
+          });
+        }
+        reviewDeliveryChangeDraft = this.reviewDeliveryChanges.create(scope, {
+          conversationId: input.conversationId,
+          sourceMessageId: created.pair.userMessage.messageId,
+          current: currentReviewDelivery,
+          proposed: result.reviewDeliveryChangeExtraction,
+        }, now);
+      }
     });
-    return Object.freeze({ state: "completed", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: attempt.attemptId, manualEntryDraft, dailyCompanionDraft });
+    return Object.freeze({ state: "completed", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: attempt.attemptId, manualEntryDraft, dailyCompanionDraft, reviewDeliveryChangeDraft });
   }
 }

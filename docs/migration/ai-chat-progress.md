@@ -39,6 +39,8 @@ The private persistence API checkpoint is tracked in
   trader-controlled outside this AI write path.
 - [x] Integrate conversational manual execution drafts with the canonical
   Journal preview and commit commands.
+- [x] Let Chat prepare an allowlisted AI Review delivery day/time change and
+  require explicit trader confirmation through the normal settings command.
 - [ ] Implement production entitlement, scheduled-delivery, operational, and
   privacy-deletion decisions at their separate launch boundaries.
 
@@ -223,6 +225,34 @@ existing migration, Journal, and account boundaries.
 - Focused ESLint passed for all 15 implementation files and
   `git diff --check` passed. No provider call, protected-database write,
   migration, dependency change, process start, deployment or push was made.
+
+## Implemented: confirmed AI Review delivery changes
+
+- A trader may ask Chat to prepare a weekly AI Review delivery change. The
+  allowlist contains only Friday, Saturday or Sunday and a half-hour Eastern
+  time from 4:00 PM through 11:30 PM.
+- Chat displays the saved current schedule and proposed schedule in an editable
+  confirmation card. Generation alone never changes Account Settings. Login,
+  billing, ownership, privacy, provider/model and administration settings are
+  outside this path.
+- Explicit confirmation uses the existing
+  `CoachReviewDeliveryScheduleRepository.save` command. A saved-setting
+  timestamp and value comparison prevents a stale Chat card from overwriting a
+  newer Account Settings change; the draft transition and setting save share
+  one immediate transaction.
+- Migration `0031_coach_ai_chat_setting_change_drafts` adds the durable,
+  account-scoped, refresh-safe proposal and confirmation record without
+  changing migration `0029`. The migration is verified against disposable
+  databases but is not yet applied to the protected local database.
+
+### Verification
+
+- Five focused one-worker files passed 36 tests covering migration/file
+  contracts, scoped draft creation, idempotent generation, explicit edited
+  confirmation, stale rollback and rejection without a settings write.
+- Focused ESLint and `git diff --check` passed. No provider call, protected
+  database write, process start, dependency change, deployment or push was
+  made.
 
 ## Completed: confirmed conversational manual execution drafts
 

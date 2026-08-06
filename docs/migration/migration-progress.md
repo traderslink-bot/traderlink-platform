@@ -71,6 +71,12 @@ daily note, one server-resolved trade note, or Current Focuses update. Nothing
 changes until the trader explicitly saves it; confirmation preserves untouched
 Journal fields, rejects stale note revisions, and never changes tags, rule
 outcomes, position classifications, executions or trading-day review status.
+Chat can also prepare an allowlisted weekly AI Review delivery day/time change
+and show a durable confirmation card. Only explicit confirmation calls the
+existing Account Settings save, with stale-setting protection. Additive
+migration 0031 is implemented and disposable-test verified; the protected
+local database remains at migration 0030 pending its separate backup/apply
+checkpoint.
 The finalized natural-language/query contract is maintained in the
 [AI Chatbot Complete Language Plan](traderslink_ai_chatbot_complete_language_plan.md);
 it requires deterministic capability routing, account scope, explicit action

@@ -37,9 +37,11 @@ import type {
   CoachAiDailyCompanionDraft,
 } from "@/src/modules/coach/contracts/ai-daily-companion-contracts";
 import type { CoachAiManualEntryDraft } from "@/src/modules/coach/contracts/ai-manual-entry-draft-contracts";
+import type { CoachAiReviewDeliveryChangeDraft } from "@/src/modules/coach/contracts/ai-review-delivery-change-contracts";
 
 import { AiChatManualEntryCard } from "./ai-chat-manual-entry-card";
 import { AiChatDailyCompanionCard } from "./ai-chat-daily-companion-card";
+import { AiChatReviewDeliveryChangeCard } from "./ai-chat-review-delivery-change-card";
 
 type ConversationResponse = Readonly<{
   status: "ready";
@@ -59,6 +61,7 @@ type GenerationResponse = Readonly<{
   assistantMessageId: string;
   manualEntryDraft: CoachAiManualEntryDraft | null;
   dailyCompanionDraft: CoachAiDailyCompanionDraft | null;
+  reviewDeliveryChangeDraft: CoachAiReviewDeliveryChangeDraft | null;
 }>;
 
 type ManualEntryDraftResponse = Readonly<{
@@ -71,6 +74,12 @@ type DailyCompanionDraftResponse = Readonly<{
   status: "ready";
   conversationId: string;
   drafts: readonly CoachAiDailyCompanionDraft[];
+}>;
+
+type ReviewDeliveryChangeDraftResponse = Readonly<{
+  status: "ready";
+  conversationId: string;
+  drafts: readonly CoachAiReviewDeliveryChangeDraft[];
 }>;
 
 type RetryRequest = Readonly<{
@@ -172,6 +181,7 @@ export function AiChatClient({
   const [messages, setMessages] = useState<readonly CoachAiChatMessage[]>([]);
   const [manualEntryDrafts, setManualEntryDrafts] = useState<readonly CoachAiManualEntryDraft[]>([]);
   const [dailyCompanionDrafts, setDailyCompanionDrafts] = useState<readonly CoachAiDailyCompanionDraft[]>([]);
+  const [reviewDeliveryChangeDrafts, setReviewDeliveryChangeDrafts] = useState<readonly CoachAiReviewDeliveryChangeDraft[]>([]);
   const [messageCursor, setMessageCursor] = useState<string | null>(null);
   const [question, setQuestion] = useState("");
   const [loadingConversations, setLoadingConversations] = useState(true);
@@ -257,20 +267,35 @@ export function AiChatClient({
     }
   }, []);
 
+  const loadReviewDeliveryChangeDrafts = useCallback(async (conversationId: string) => {
+    try {
+      const response = await readJson<ReviewDeliveryChangeDraftResponse>(await fetch(
+        `${conversationsEndpoint}/${conversationId}/review-delivery-change-drafts`,
+        { cache: "no-store" },
+      ));
+      setReviewDeliveryChangeDrafts(response.drafts);
+    } catch {
+      setReviewDeliveryChangeDrafts([]);
+      setNotice("AI Review delivery changes could not be loaded right now.");
+    }
+  }, []);
+
   useEffect(() => { void loadConversations(); }, [loadConversations]);
   useEffect(() => {
     if (activeConversationId) {
       void loadMessages(activeConversationId);
       void loadManualEntryDrafts(activeConversationId);
       void loadDailyCompanionDrafts(activeConversationId);
+      void loadReviewDeliveryChangeDrafts(activeConversationId);
     }
     else {
       setMessages([]);
       setManualEntryDrafts([]);
       setDailyCompanionDrafts([]);
+      setReviewDeliveryChangeDrafts([]);
       setMessageCursor(null);
     }
-  }, [activeConversationId, loadDailyCompanionDrafts, loadManualEntryDrafts, loadMessages]);
+  }, [activeConversationId, loadDailyCompanionDrafts, loadManualEntryDrafts, loadMessages, loadReviewDeliveryChangeDrafts]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, sending]);
 
   async function createConversation(
@@ -370,6 +395,13 @@ export function AiChatClient({
           body.dailyCompanionDraft!,
           ...current.filter((draft) =>
             draft.interactionId !== body.dailyCompanionDraft!.interactionId),
+        ]);
+      }
+      if (body.reviewDeliveryChangeDraft) {
+        setReviewDeliveryChangeDrafts((current) => [
+          body.reviewDeliveryChangeDraft!,
+          ...current.filter((draft) =>
+            draft.draftId !== body.reviewDeliveryChangeDraft!.draftId),
         ]);
       }
       await loadMessages(conversation.conversationId);
@@ -598,6 +630,20 @@ export function AiChatClient({
                     updatedDraft,
                     ...current.filter((item) =>
                       item.interactionId !== updatedDraft.interactionId),
+                  ])}
+                />
+              ))}
+            {reviewDeliveryChangeDrafts
+              .filter((draft) => draft.disposition !== "rejected" && draft.disposition !== "expired")
+              .slice(0, 1)
+              .map((draft) => (
+                <AiChatReviewDeliveryChangeCard
+                  conversationId={draft.conversationId}
+                  draft={draft}
+                  key={draft.draftId}
+                  onDraftChange={(updatedDraft) => setReviewDeliveryChangeDrafts((current) => [
+                    updatedDraft,
+                    ...current.filter((item) => item.draftId !== updatedDraft.draftId),
                   ])}
                 />
               ))}

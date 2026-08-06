@@ -16,6 +16,10 @@ import type {
 } from "../contracts/ai-manual-entry-draft-contracts";
 import type { CoachAiChatTrustedContext } from "../contracts/ai-daily-companion-contracts";
 import type { CoachAiDailyCompanionDraftExtraction } from "../contracts/ai-daily-companion-contracts";
+import type {
+  CoachAiReviewDeliveryChangeExtraction,
+  CoachAiReviewDeliveryScheduleSnapshot,
+} from "../contracts/ai-review-delivery-change-contracts";
 import { COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION } from "../contracts/coach-ai-chat-factual-tool-contracts";
 import type { CoachAiChatGenerationAttempt } from "../contracts/ai-provider-controls-contracts";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
@@ -72,6 +76,10 @@ const dailyCompanionDraftSchema = z.discriminatedUnion("kind", [
 
 const dailyCompanionAnswerSchema = answerSchema.extend({
   dailyCompanionDraft: dailyCompanionDraftSchema.nullable(),
+  reviewDeliveryChangeDraft: z.object({
+    weeklyDeliveryDay: z.enum(["friday", "saturday", "sunday"]),
+    deliveryTimeEastern: z.string().regex(/^(?:1[6-9]|2[0-3]):(?:00|30)$/u),
+  }).strict().nullable(),
 }).strict();
 
 const manualExecutionRowSchema = z.object({
@@ -99,6 +107,8 @@ When trusted daily context is present, stay within that one trading day unless t
 
 Create a dailyCompanionDraft only when the trader explicitly asks you to draft, rewrite, or update a Daily Tracker note or Current Focus. Return null for ordinary questions. A daily-note draft may update only What worked, What needs work, Technical recap, or Anything else. A trade-note draft must identify exactly one trade by the globally unique tradeNumber in the trusted context. Never draft or change review completion, tags, rules, rule results, position classifications, or executions. The trader will edit and explicitly save any draft in a separate confirmation step.
 
+Create a reviewDeliveryChangeDraft only when the trader explicitly asks to change the weekly AI Review delivery day or Eastern delivery time and both final values are clear. The only permitted days are Friday, Saturday, and Sunday. The only permitted times are 4:00 PM through 11:30 PM Eastern in 30-minute steps. Use the supplied currentReviewDelivery value for an unchanged field. Return null when the request is unclear or concerns any other user, login, billing, privacy, ownership, provider, model, admin, or account setting. Never claim the setting was changed; the trader will review and confirm it separately.
+
 Return the requested answer structure. Start with a direct answer, include one to four supporting observations, and use evidenceReferences only for factual tools actually called in this generation. A no-tool answer must have no evidence references and must be honest about why a factual answer is unavailable.`;
 
 const MANUAL_ENTRY_SYSTEM_INSTRUCTION = `You help a trader prepare an editable manual execution draft. This is draft extraction only. You never save an execution, confirm a trade, infer a swing, or claim a trade was recorded.
@@ -117,6 +127,7 @@ export type CoachAiChatOpenAiAdapterInput = Readonly<{
   intent: CoachAiChatMessageIntent;
   trustedContext: CoachAiChatTrustedContext | null;
   existingManualEntryDraft: CoachAiManualEntryDraft | null;
+  currentReviewDelivery: CoachAiReviewDeliveryScheduleSnapshot | null;
   dispatcher: CoachAiChatFactualToolDispatcher;
   environment?: NodeJS.ProcessEnv;
 }>;
@@ -248,6 +259,7 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
         factualToolCalls: Object.freeze([]),
         manualEntryExtraction: manualExtraction(result.output.manualExecutionDraft),
         dailyCompanionDraftExtraction: null,
+        reviewDeliveryChangeExtraction: null,
       });
     }
     const result = await generateText({
@@ -257,6 +269,7 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
         recentConversation: context,
         currentQuestion: input.question,
         trustedDailyContext: input.trustedContext,
+        currentReviewDelivery: input.currentReviewDelivery,
       }),
       maxOutputTokens: input.attempt.maximumOutputTokens,
       maxRetries: 0,
@@ -279,6 +292,10 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
         result.output.dailyCompanionDraft,
         input.trustedContext,
       ),
+      reviewDeliveryChangeExtraction: result.output.reviewDeliveryChangeDraft
+        ? Object.freeze({ ...result.output.reviewDeliveryChangeDraft }) as
+          CoachAiReviewDeliveryChangeExtraction
+        : null,
     });
   } catch (error) {
     if (error instanceof CoachAiChatProviderGenerationError) throw error;

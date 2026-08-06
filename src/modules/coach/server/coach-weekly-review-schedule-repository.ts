@@ -100,7 +100,13 @@ ORDER BY account.workspace_id, account.account_id`).all();
 
   save(
     scope: WorkspaceAccessScope,
-    input: Readonly<{ weeklyDeliveryDay: unknown; deliveryTimeEastern: unknown }>,
+    input: Readonly<{
+      weeklyDeliveryDay: unknown;
+      deliveryTimeEastern: unknown;
+      expectedUpdatedAtUtc?: string | null;
+      expectedWeeklyDeliveryDay?: "friday" | "saturday" | "sunday";
+      expectedDeliveryTimeEastern?: string;
+    }>,
     now = new Date(),
   ): CoachReviewDeliverySchedule {
     const deliveryDay = weeklyDeliveryDay(input.weeklyDeliveryDay);
@@ -111,6 +117,16 @@ ORDER BY account.workspace_id, account.account_id`).all();
     }
     const updatedAtUtc = createCanonicalUtcTimestamp(now);
     const accountId = activeAccountId(scope);
+    if (Object.hasOwn(input, "expectedUpdatedAtUtc")) {
+      const current = this.read(scope);
+      if ((current?.updatedAtUtc ?? null) !== input.expectedUpdatedAtUtc ||
+          (input.expectedWeeklyDeliveryDay !== undefined &&
+            (current?.weeklyDeliveryDay ?? null) !== input.expectedWeeklyDeliveryDay) ||
+          (input.expectedDeliveryTimeEastern !== undefined &&
+            (current?.deliveryTimeEastern ?? null) !== input.expectedDeliveryTimeEastern)) {
+        platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+      }
+    }
     this.database.prepare(`INSERT INTO coach_review_delivery_settings (
   account_id, weekly_delivery_day, delivery_time_eastern, updated_at_utc
 ) VALUES (?, ?, ?, ?)

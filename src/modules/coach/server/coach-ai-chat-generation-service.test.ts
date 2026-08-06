@@ -16,6 +16,7 @@ import { CoachAiChatProviderControlsRepository } from "./coach-ai-chat-provider-
 import { CoachAiChatRepository } from "./coach-ai-chat-repository";
 import { CoachAiDailyCompanionRepository } from "./coach-ai-daily-companion-repository";
 import { CoachAiManualEntryDraftRepository } from "./coach-ai-manual-entry-draft-repository";
+import { CoachAiReviewDeliveryChangeRepository } from "./coach-ai-review-delivery-change-repository";
 import { COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES } from "./coach-ai-chat-factual-tool-dispatcher";
 import { CoachAiChatGenerationService, COACH_AI_CHAT_MAX_TRUSTED_CONTEXT_BYTES, COACH_AI_CHAT_SYSTEM_AND_TOOL_ENVELOPE_RESERVED_BYTES, createCoachAiChatReservationEnvelope, type CoachAiChatGenerator } from "./coach-ai-chat-generation-service";
 
@@ -40,12 +41,13 @@ function fixture() {
     chat,
     controls,
     manualDrafts: new CoachAiManualEntryDraftRepository(database),
+    reviewDeliveryChanges: new CoachAiReviewDeliveryChangeRepository(database),
     conversationId: chat.createConversation(scope, "Private", now).conversationId,
   };
 }
 
 function answer(): CoachAiChatGenerationResult {
-  return Object.freeze({ answer: Object.freeze({ contractVersion: COACH_AI_CHAT_ANSWER_CONTRACT_VERSION, directAnswer: "Your saved Journal does not have enough facts for that yet.", supportingObservations: Object.freeze(["No closed-trade result was requested."]), limitation: "Ask about a saved trade or date range when you are ready.", nextQuestion: null, evidenceReferences: Object.freeze([]) }), usage: Object.freeze({ inputTokens: 20, outputTokens: 10, totalTokens: 30 }), factualToolCalls: Object.freeze([]), manualEntryExtraction: null, dailyCompanionDraftExtraction: null });
+  return Object.freeze({ answer: Object.freeze({ contractVersion: COACH_AI_CHAT_ANSWER_CONTRACT_VERSION, directAnswer: "Your saved Journal does not have enough facts for that yet.", supportingObservations: Object.freeze(["No closed-trade result was requested."]), limitation: "Ask about a saved trade or date range when you are ready.", nextQuestion: null, evidenceReferences: Object.freeze([]) }), usage: Object.freeze({ inputTokens: 20, outputTokens: 10, totalTokens: 30 }), factualToolCalls: Object.freeze([]), manualEntryExtraction: null, dailyCompanionDraftExtraction: null, reviewDeliveryChangeExtraction: null });
 }
 
 function service(f: ReturnType<typeof fixture>, generator: CoachAiChatGenerator) {
@@ -59,6 +61,7 @@ function service(f: ReturnType<typeof fixture>, generator: CoachAiChatGenerator)
     generator,
     new CoachAiDailyCompanionRepository(f.database),
     f.manualDrafts,
+    f.reviewDeliveryChanges,
   );
 }
 
@@ -206,6 +209,7 @@ FROM coach_ai_daily_companion_interactions`).get()).toEqual({
           kind: "current_focus_draft" as const,
           currentFocuses: "Wait for confirmation before adding size.",
         }),
+        reviewDeliveryChangeExtraction: null,
       }));
       const subject = service(f, generator);
       const input = {
@@ -240,6 +244,48 @@ ORDER BY interaction_kind`).all()).toEqual([
         { interaction_kind: "current_focus_draft", count: 1 },
         { interaction_kind: "daily_reflection", count: 1 },
       ]);
+    } finally { f.database.close(); }
+  });
+
+  it("persists one review delivery change proposal and reuses it on an idempotent retry", async () => {
+    const f = fixture();
+    try {
+      const generator = vi.fn(async () => Object.freeze({
+        ...answer(),
+        reviewDeliveryChangeExtraction: Object.freeze({
+          weeklyDeliveryDay: "sunday" as const,
+          deliveryTimeEastern: "19:00",
+        }),
+      }));
+      const subject = service(f, generator);
+      const input = {
+        conversationId: f.conversationId,
+        question: "Move my AI Review to Sunday at 7 PM Eastern.",
+        idempotencySha256: "7".repeat(64),
+        resolveReviewDelivery: () => Object.freeze({
+          weeklyDeliveryDay: "friday" as const,
+          deliveryTimeEastern: "18:00",
+          updatedAtUtc: null,
+        }),
+      };
+      const first = await subject.generateSavedAnswer(f.scope, input, now);
+      expect(first.reviewDeliveryChangeDraft).toMatchObject({
+        current: { weeklyDeliveryDay: "friday", deliveryTimeEastern: "18:00" },
+        proposed: { weeklyDeliveryDay: "sunday", deliveryTimeEastern: "19:00" },
+        disposition: "proposed",
+        settingsWriteState: "not_written",
+      });
+      const second = await subject.generateSavedAnswer(f.scope, {
+        ...input,
+        resolveReviewDelivery: () => {
+          throw new Error("settings must not be reread for an idempotent retry");
+        },
+      }, now);
+      expect(second.reviewDeliveryChangeDraft?.draftId)
+        .toBe(first.reviewDeliveryChangeDraft?.draftId);
+      expect(generator).toHaveBeenCalledTimes(1);
+      expect(f.database.prepare(`SELECT COUNT(*) AS count
+FROM coach_ai_review_delivery_change_drafts`).get()).toEqual({ count: 1 });
     } finally { f.database.close(); }
   });
 

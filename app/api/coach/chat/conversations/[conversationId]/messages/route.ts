@@ -17,6 +17,8 @@ import {
   getReplacementTradeTrackerAccount,
 } from "@/app/(dashboard)/trade-tracker/trade-tracker-platform-data";
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
+import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
+import { CoachReviewDeliveryScheduleRepository } from "@/src/modules/coach/server/coach-weekly-review-schedule-repository";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -92,6 +94,14 @@ export async function POST(
             });
           }
         : null,
+      resolveReviewDelivery: () => withReadonlyPlatformDatabase({}, (database) => {
+        const saved = new CoachReviewDeliveryScheduleRepository(database).read(scope);
+        return saved ?? Object.freeze({
+          weeklyDeliveryDay: "friday" as const,
+          deliveryTimeEastern: "18:00",
+          updatedAtUtc: null,
+        });
+      }),
     });
     const status = result.state === "completed" ? 200
       : result.state === "pending" ? 202
@@ -102,6 +112,7 @@ export async function POST(
       assistantMessageId: result.assistantMessageId,
       manualEntryDraft: result.manualEntryDraft,
       dailyCompanionDraft: result.dailyCompanionDraft,
+      reviewDeliveryChangeDraft: result.reviewDeliveryChangeDraft,
     }, status);
   } catch (error) {
     return respondToChatRouteError(error);

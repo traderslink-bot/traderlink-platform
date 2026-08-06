@@ -257,6 +257,7 @@ describe("private AI Chat persistence routes", () => {
       idempotencySha256: expect.stringMatching(/^[0-9a-f]{64}$/u),
       resolveTrustedContext: null,
       resolveManualEntryDefaults: null,
+      resolveReviewDelivery: expect.any(Function),
     });
     expect(JSON.stringify(body)).not.toContain("attemptId");
   });

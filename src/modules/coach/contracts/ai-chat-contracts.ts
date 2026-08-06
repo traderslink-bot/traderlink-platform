@@ -1,5 +1,6 @@
 import type { CoachAiManualExecutionExtraction } from "./ai-manual-entry-draft-contracts";
 import type { CoachAiDailyCompanionDraftExtraction } from "./ai-daily-companion-contracts";
+import type { CoachAiReviewDeliveryChangeExtraction } from "./ai-review-delivery-change-contracts";
 
 export const COACH_AI_CHAT_SNAPSHOT_CONTRACT_VERSION =
   "traderlink_coach_ai_chat_snapshot_v1" as const;
@@ -34,6 +35,7 @@ export type CoachAiChatGenerationResult = Readonly<{
   factualToolCalls: readonly CoachAiChatFactualToolCallSnapshot[];
   manualEntryExtraction: CoachAiManualExecutionExtraction | null;
   dailyCompanionDraftExtraction: CoachAiDailyCompanionDraftExtraction | null;
+  reviewDeliveryChangeExtraction: CoachAiReviewDeliveryChangeExtraction | null;
 }>;
 
 export type CoachAiChatMessageIntent =
