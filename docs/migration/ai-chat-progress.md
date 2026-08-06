@@ -23,8 +23,10 @@ Implementation is active. The parent plan is [TraderLink AI Companion Plan](ai-c
 - [x] Approve the complete integrated AI Companion direction for implementation.
 - [x] Add the schema-only, account-scoped AI Chat foundation migration.
 - [ ] Implement and verify the AI Reviews schedule/list/detail foundation.
-- [ ] Implement account-scoped Chat persistence, factual snapshots, receipts,
-  provider boundaries, and cost controls.
+- [x] Implement account-scoped Chat persistence, ordered-message history,
+  immutable factual snapshots, and generation-receipt contracts over migration
+  `0029`.
+- [ ] Implement the separate Chat provider boundary and cost-control service.
 - [ ] Complete the twenty-category language inventory program and review/lock
   its canonical vocabulary before generating runtime registries.
 - [ ] Implement the private AI Chat experience and factual question families.
@@ -65,10 +67,41 @@ Implementation is active. The parent plan is [TraderLink AI Companion Plan](ai-c
   fails before file inspection with `uv_os_get_passwd` ENOMEM. No project
   configuration was changed to work around that local environment failure.
 
+## Completed: private Chat persistence repository
+
+- `CoachAiChatRepository` is server-only and verifies the current active user,
+  workspace membership, and selected Journal account from the database for
+  every operation. Conversation identifiers never bypass that scope.
+- It creates, reads, renames, archives, and restores private conversations
+  without deletion. Archive and restore append the immutable archive evidence.
+- Conversation metadata and private message history are intentionally separate:
+  message reads use a newest-page query with a default limit of 50, a maximum
+  of 100, and a typed sequence cursor while returning each page in chronological
+  order. This prevents an unbounded long-lived-history read.
+- User-message append and pending-assistant reservation run in one immediate
+  transaction. The repository preserves message sequence order and refuses a
+  second pending assistant reservation for a conversation.
+- Completed assistant messages are finalized in one transaction with a
+  canonicalized immutable factual snapshot, SHA-256 digest, and generation
+  receipt. Failed messages retain only a safe code and may record an honest
+  usage receipt; neither path writes Journal facts, calls a provider, or creates
+  a route/UI/manual-entry/daily-companion save path.
+- Added focused one-worker repository tests covering cross-account denial, inactive
+  membership, ordered reservations, duplicate-pending prevention, success and
+  failure persistence, archive/restore, deterministic conversation and message
+  pagination, and privacy-safe errors.
+
+## Verification handoff
+
+- Focused Vitest and ESLint for the repository slice are deliberately deferred
+  to the coordinator's canonical checkout. This isolated worktree has no usable
+  local `node_modules`; no dependency install, download, database migration, or
+  configuration workaround was performed here.
+
 ## Explicit non-actions
 
-- No Chat route, provider request, repository, manual-execution write, or AI
-  change to Journal facts was made in this schema-only slice. The migration was
-  verified only against disposable test databases; no real database was opened
-  or changed.
+- No Chat route, provider request, manual-execution write, daily-companion save,
+  or AI change to Journal facts was made in the schema or persistence slices.
+  The migration was verified only against disposable test databases; no real
+  database was opened or changed.
 - No V3 Coach runtime is a source for the new implementation.
