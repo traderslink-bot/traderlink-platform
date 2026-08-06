@@ -29,6 +29,7 @@ The private persistence API checkpoint is tracked in
   immutable factual snapshots, and generation-receipt contracts over migration
   `0029`.
 - [x] Implement the separate Chat provider boundary and cost-control service.
+- [x] Add the responsive saved-conversation Chat page and dashboard navigation.
 - [ ] Complete the twenty-category language inventory program and review/lock
   its canonical vocabulary before generating runtime registries.
 - [ ] Implement the private AI Chat experience and factual question families.
@@ -127,3 +128,28 @@ The server-only saved-question runtime is recorded in
 [AI Chat Runtime Progress](ai-chat-runtime-progress.md). It adds no route or
 visible surface, does not call a provider during tests, and retains the
 existing migration, Journal, and account boundaries.
+
+## Completed: saved-conversation Chat page
+
+- `/ai-chat` now provides a responsive private conversation workspace using
+  the dashboard's existing Material UI design. Desktop users see the
+  conversation list beside the active thread; smaller screens use a closable
+  conversation drawer.
+- Users can create, rename, archive, restore and page through conversations,
+  load earlier messages, and submit a question without exposing internal
+  generation identifiers or failure codes.
+- Submission keeps one stable request identifier across an uncertain network
+  retry so the same saved question cannot accidentally create a second paid
+  answer. Definite completed, pending, blocked and failed outcomes refresh from
+  the saved conversation record.
+- Provider answers are requested as plain text for direct display inside the
+  current Material UI rather than introducing a second component system or
+  rendering untrusted HTML.
+
+### Verification
+
+- Focused ESLint passed for the new page, client, dashboard navigation and
+  provider presentation instruction.
+- `git diff --check` passed for the tracked files. No provider call, database
+  migration, dependency change or dashboard process was made during this UI
+  checkpoint.
