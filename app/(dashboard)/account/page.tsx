@@ -11,6 +11,7 @@ import { CoachReviewDeliveryScheduleRepository } from "@/src/modules/coach/serve
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformAccountProfileReadService } from "@/src/modules/platform/server/identity/platform-account-profile-read-service";
+import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
 import { AccountManagementClient } from "./account-management-client";
 import { AiReviewDeliverySettings } from "./ai-review-delivery-settings";
 import { ReportingCurrencySettings } from "./reporting-currency-settings";
@@ -25,9 +26,10 @@ export const revalidate = 0;
 
 export default async function AccountPage() {
   const scope = await requireTraderLinkPlatformPageScope();
-  const { profile, aiReviewDelivery } = withReadonlyPlatformDatabase({}, (database) => Object.freeze({
+  const { profile, aiReviewDelivery, moomooConnection } = withReadonlyPlatformDatabase({}, (database) => Object.freeze({
     profile: new PlatformAccountProfileReadService(database).get(scope),
     aiReviewDelivery: new CoachReviewDeliveryScheduleRepository(database).read(scope),
+    moomooConnection: new MoomooConnectionRepository(database).find(scope),
   }));
   const activeAccount = profile.journalAccounts.find((account) => account.active);
   if (!activeAccount) throw new Error("TRADERLINK_ACCOUNT_ACCESS_DENIED");
@@ -72,6 +74,21 @@ export default async function AccountPage() {
           initialDeliveryDay={aiReviewDelivery?.weeklyDeliveryDay ?? null}
           initialDeliveryTimeEastern={aiReviewDelivery?.deliveryTimeEastern ?? null}
         />
+      </DashboardPanel>
+
+      <DashboardPanel title="Moomoo connection">
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ alignItems: { sm: "center" } }}>
+          <Chip
+            color={moomooConnection?.state === "active" ? "success" : "default"}
+            label={moomooConnection?.state === "active" ? "Connected" : "Not connected"}
+            size="small"
+          />
+          <Typography color="text.secondary" variant="body2">
+            {moomooConnection?.state === "active"
+              ? "Moomoo read access is connected. Exact broker execution data is accepted automatically when the import connection is enabled."
+              : "No Moomoo trading connection is saved. Market-data-only access cannot import trades."}
+          </Typography>
+        </Stack>
       </DashboardPanel>
 
       <DashboardPanel title="Journal accounts">

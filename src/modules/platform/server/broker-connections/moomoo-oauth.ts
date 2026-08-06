@@ -1,0 +1,65 @@
+import "server-only";
+
+import { createHash, randomBytes } from "node:crypto";
+
+import { platformFailure } from "../database/platform-migration-contract";
+
+const MOOMOO_API_ORIGIN = "https://webapi.moomoo.com";
+const QUOTE_READ_SCOPE = "quote:read";
+
+export type MoomooOAuthConfig = Readonly<{
+  clientId: string;
+  redirectUri: string;
+}>;
+
+export function getMoomooOAuthConfig(origin: string): MoomooOAuthConfig {
+  const clientId = process.env.TRADERLINK_MOOMOO_OAUTH_CLIENT_ID?.trim();
+  if (!clientId || clientId.length > 255) {
+    platformFailure("TRADERLINK_BROKER_CONNECTION_CONFIGURATION_INVALID");
+  }
+  const localOrigin = "http://127.0.0.1:3010";
+  const redirectUri = process.env.NODE_ENV === "production"
+    ? new URL("/api/connections/moomoo/callback", origin).toString()
+    : new URL("/api/connections/moomoo/callback", localOrigin).toString();
+  return Object.freeze({ clientId, redirectUri });
+}
+
+export function createMoomooPkce(): Readonly<{ state: string; verifier: string; challenge: string }> {
+  const verifier = randomBytes(48).toString("base64url");
+  return Object.freeze({
+    state: randomBytes(24).toString("base64url"),
+    verifier,
+    challenge: createHash("sha256").update(verifier, "utf8").digest("base64url"),
+  });
+}
+
+export function buildMoomooAuthorizeUrl(input: Readonly<{
+  config: MoomooOAuthConfig; state: string; challenge: string;
+}>): URL {
+  const url = new URL("/oauth2/authorize/confirm", MOOMOO_API_ORIGIN);
+  url.search = new URLSearchParams({
+    client_id: input.config.clientId,
+    code_challenge: input.challenge,
+    code_challenge_method: "S256",
+    redirect_uri: input.config.redirectUri,
+    response_type: "code",
+    state: input.state,
+  }).toString();
+  return url;
+}
+
+export async function exchangeMoomooCode(input: Readonly<{
+  config: MoomooOAuthConfig; code: string; verifier: string;
+}>): Promise<Readonly<{ accessToken: string; refreshToken: string; expiresInSeconds: number; scopes: readonly string[] }>> {
+  const body = new URLSearchParams({ grant_type: "authorization_code", code: input.code, client_id: input.config.clientId, redirect_uri: input.config.redirectUri, code_verifier: input.verifier });
+  let response: Response;
+  try { response = await fetch(`${MOOMOO_API_ORIGIN}/oauth2/token`, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body, cache: "no-store" }); } catch { platformFailure("TRADERLINK_BROKER_CONNECTION_OAUTH_INVALID"); }
+  let payload: unknown;
+  try { payload = await response!.json(); } catch { platformFailure("TRADERLINK_BROKER_CONNECTION_OAUTH_INVALID"); }
+  if (!response!.ok || !payload || typeof payload !== "object") platformFailure("TRADERLINK_BROKER_CONNECTION_OAUTH_INVALID");
+  const token = payload as Record<string, unknown>;
+  if (typeof token.access_token !== "string" || typeof token.refresh_token !== "string" || !Number.isSafeInteger(token.expires_in) || token.expires_in <= 0 || typeof token.scope !== "string") platformFailure("TRADERLINK_BROKER_CONNECTION_OAUTH_INVALID");
+  const scopes = token.scope.split(" ").filter(Boolean);
+  if (!scopes.includes(QUOTE_READ_SCOPE)) platformFailure("TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED");
+  return Object.freeze({ accessToken: token.access_token, refreshToken: token.refresh_token, expiresInSeconds: token.expires_in, scopes: Object.freeze(scopes) });
+}

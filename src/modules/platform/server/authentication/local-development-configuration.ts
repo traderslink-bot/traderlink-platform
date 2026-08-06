@@ -12,6 +12,12 @@ type AuthoritySection = Readonly<{
   keysBase64: Readonly<Record<string, string>>;
 }>;
 
+type MoomooConnectionSection = Readonly<{
+  oauthClientId: string;
+  credentialActiveKeyVersion: string;
+  credentialKeysBase64: Readonly<Record<string, string>>;
+}>;
+
 export type LocalDevelopmentConfiguration = Readonly<{
   databasePath: string;
   evidenceVaultRoot: string;
@@ -75,6 +81,31 @@ function authoritySection(value: unknown): AuthoritySection {
   });
 }
 
+function moomooConnectionSection(value: unknown): MoomooConnectionSection {
+  if (!value || typeof value !== "object" || Array.isArray(value)) fail();
+  const record = value as Record<string, unknown>;
+  if (
+    typeof record.oauthClientId !== "string" || record.oauthClientId.length < 1 ||
+    typeof record.credentialActiveKeyVersion !== "string" ||
+    !record.credentialKeysBase64 || typeof record.credentialKeysBase64 !== "object" ||
+    Array.isArray(record.credentialKeysBase64)
+  ) fail();
+  const credentialKeysBase64 = Object.fromEntries(
+    Object.entries(record.credentialKeysBase64).map(([version, value]) => {
+      if (typeof value !== "string" || !/^[A-Za-z0-9_-]{1,64}$/u.test(version)) fail();
+      const decoded = Buffer.from(value, "base64");
+      if (decoded.length !== 32 || decoded.toString("base64") !== value) fail();
+      return [version, value];
+    }),
+  );
+  if (!(record.credentialActiveKeyVersion in credentialKeysBase64)) fail();
+  return Object.freeze({
+    oauthClientId: record.oauthClientId,
+    credentialActiveKeyVersion: record.credentialActiveKeyVersion,
+    credentialKeysBase64: Object.freeze(credentialKeysBase64),
+  });
+}
+
 export function loadTraderLinkPlatformLocalDevelopmentConfiguration(
   options: Readonly<{
     repositoryRoot: string;
@@ -123,6 +154,10 @@ export function loadTraderLinkPlatformLocalDevelopmentConfiguration(
   const authority = authorityDocument as Record<string, unknown>;
   const accountIdentity = authoritySection(authority.accountIdentity);
   const journalPrivacy = authoritySection(authority.journalPrivacy);
+  const moomooPath = resolve(dirname(authorityPath), "moomoo-connection-v1.json");
+  const moomoo = existsSync(moomooPath)
+    ? moomooConnectionSection(JSON.parse(readFileSync(requireFile(moomooPath), "utf8")))
+    : null;
   const defaultProtectedRoots = [
     resolve(privateDataRoot, "v3-dashboard"),
     resolve(privateDataRoot, "legacy-app"),
@@ -156,6 +191,13 @@ export function loadTraderLinkPlatformLocalDevelopmentConfiguration(
       journalPrivacy.activeKeyVersion,
     TRADERLINK_PLATFORM_JOURNAL_HMAC_KEYS_JSON:
       JSON.stringify(journalPrivacy.keysBase64),
+    ...(moomoo ? {
+      TRADERLINK_MOOMOO_OAUTH_CLIENT_ID: moomoo.oauthClientId,
+      TRADERLINK_MOOMOO_CREDENTIAL_ACTIVE_KEY_VERSION:
+        moomoo.credentialActiveKeyVersion,
+      TRADERLINK_MOOMOO_CREDENTIAL_KEYS_BASE64:
+        JSON.stringify(moomoo.credentialKeysBase64),
+    } : {}),
   });
   return Object.freeze({
     databasePath,

@@ -31,6 +31,7 @@ import { platformDiscordMembershipsMigration } from "./migrations/0017_platform_
 import { platformHostedTransferEventsMigration } from "./migrations/0018_platform_hosted_transfer_events";
 import { platformAdministrationMigration } from "./migrations/0019_platform_administration";
 import { platformCurrencyPreferencesMigration } from "./migrations/0024_platform_currency_preferences";
+import { platformMoomooConnectionsMigration } from "./migrations/0033_platform_moomoo_connections";
 import {
   type PlatformMigration,
   validatePlatformMigrationManifest,
@@ -170,6 +171,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/coach/server/database/migrations/0032_coach_ai_review_provider_controls.ts",
       migration: coachAiReviewProviderControlsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0033_platform_moomoo_connections.ts",
+      migration: platformMoomooConnectionsMigration,
     }),
   ]);
 
@@ -360,6 +365,9 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     ]),
     "0032_coach_ai_review_provider_controls": Object.freeze([
       "coach_ai_review_generation_control_reservations",
+    ]),
+    "0033_platform_moomoo_connections": Object.freeze([
+      "platform_broker_connections",
     ]),
   });
 
