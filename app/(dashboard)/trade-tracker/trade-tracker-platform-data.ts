@@ -25,7 +25,6 @@ import { withReadonlyJournalAnnotations } from "@/src/modules/journal/server/ann
 import { evaluateJournalPresetRules } from "@/src/modules/journal/server/annotations/journal-preset-rule-evaluator";
 import { currentJournalAccountSelectionRef } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
-import { dailyTradeYahooAnalyzerEnabled } from "@/src/modules/level-analysis/server/daily-trade-analyzer-feature";
 import {
   COACH_AI_DAILY_COMPANION_CONTEXT_VERSION,
   type CoachAiDailyCompanionContext,
@@ -603,12 +602,10 @@ export function getReplacementDaySession(
   );
   const annotations = withReadonlyJournalAnnotations(scope, (service, account) =>
     annotationSnapshot(service, account, model, swingRoundTripIds));
-  const analyzers = dailyTradeYahooAnalyzerEnabled()
-    ? readDailyTradeAnalyzers(
-        scope,
-        model.tickers.flatMap((ticker) => ticker.roundTrips.map((roundTrip) => roundTrip.roundTripId)),
-      )
-    : new Map<string, DaySessionTradeAnalyzer>();
+  const analyzers = readDailyTradeAnalyzers(
+    scope,
+    model.tickers.flatMap((ticker) => ticker.roundTrips.map((roundTrip) => roundTrip.roundTripId)),
+  );
   return toDaySessionData(
     model,
     annotations,
