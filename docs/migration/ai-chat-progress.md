@@ -21,6 +21,7 @@ Implementation is active. The parent plan is [TraderLink AI Companion Plan](ai-c
 
 - [x] Complete and link the AI Companion product plan and language/query plan.
 - [x] Approve the complete integrated AI Companion direction for implementation.
+- [x] Add the schema-only, account-scoped AI Chat foundation migration.
 - [ ] Implement and verify the AI Reviews schedule/list/detail foundation.
 - [ ] Implement account-scoped Chat persistence, factual snapshots, receipts,
   provider boundaries, and cost controls.
@@ -33,8 +34,41 @@ Implementation is active. The parent plan is [TraderLink AI Companion Plan](ai-c
 - [ ] Implement production entitlement, scheduled-delivery, operational, and
   privacy-deletion decisions at their separate launch boundaries.
 
+## Completed: schema-only AI Chat foundation
+
+- Migration `0029_coach_ai_chat_foundation` adds the seven planned private,
+  account-scoped records for conversations, ordered messages, factual answer
+  snapshots, generation receipts, manual-entry drafts, daily companion
+  interactions and archive events.
+- The schema retains private original user text separately from normalized and
+  structured interpretation fields, bounds private text/JSON payload sizes,
+  and keeps operational receipt rows free of conversation content.
+- Assistant messages begin pending with one active generation per conversation.
+  Completed answers require an immutable factual snapshot before their receipt;
+  failed assistant attempts may retain an honest receipt when provider usage is
+  available without inventing a snapshot, token count or cost.
+- Manual-entry and daily companion records are drafts/proposals only. They can
+  retain a later canonical Journal command/reference outcome, but have no
+  execution or annotation write path. Confirmed manual rows freeze before the
+  canonical save transition.
+- Append-only triggers protect message/snapshot/receipt/archive history, and
+  narrowly constrain conversation, assistant-generation, draft, daily-proposal
+  and canonical-save state transitions. Conversation insertion requires an
+  active workspace membership and matching Journal account workspace.
+
+## Verification
+
+- Focused one-worker migration tests passed: 13 tests across the `0029`
+  migration, migration registry, and migration-file contract.
+- Focused ESLint and `git diff --check` passed.
+- The standalone migration-file verifier is deferred: its local Node process
+  fails before file inspection with `uv_os_get_passwd` ENOMEM. No project
+  configuration was changed to work around that local environment failure.
+
 ## Explicit non-actions
 
-- No Chat route, Chat tables, provider request, manual-execution write, or AI
-  change to Journal facts was made while preparing this plan.
+- No Chat route, provider request, repository, manual-execution write, or AI
+  change to Journal facts was made in this schema-only slice. The migration was
+  verified only against disposable test databases; no real database was opened
+  or changed.
 - No V3 Coach runtime is a source for the new implementation.

@@ -20,6 +20,7 @@ import { coachWeeklyReviewsMigration } from "@/src/modules/coach/server/database
 import { coachMonthlyReviewsMigration } from "@/src/modules/coach/server/database/migrations/0026_coach_monthly_reviews";
 import { coachAiGenerationCostTrackingMigration } from "@/src/modules/coach/server/database/migrations/0027_coach_ai_generation_cost_tracking";
 import { coachAiReviewGenerationAttemptsMigration } from "@/src/modules/coach/server/database/migrations/0028_coach_ai_review_generation_attempts";
+import { coachAiChatFoundationMigration } from "@/src/modules/coach/server/database/migrations/0029_coach_ai_chat_foundation";
 
 import { platformIdentityMigration } from "./migrations/0001_platform_identity";
 import { platformAuthenticationIdentitiesMigration } from "./migrations/0012_platform_authentication_identities";
@@ -150,6 +151,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/coach/server/database/migrations/0028_coach_ai_review_generation_attempts.ts",
       migration: coachAiReviewGenerationAttemptsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/coach/server/database/migrations/0029_coach_ai_chat_foundation.ts",
+      migration: coachAiChatFoundationMigration,
     }),
   ]);
 
@@ -320,6 +325,15 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     "0028_coach_ai_review_generation_attempts": Object.freeze([
       "coach_ai_review_generation_attempts",
       "coach_ai_review_generation_attempt_receipts",
+    ]),
+    "0029_coach_ai_chat_foundation": Object.freeze([
+      "coach_ai_chat_conversations",
+      "coach_ai_chat_messages",
+      "coach_ai_chat_answer_snapshots",
+      "coach_ai_chat_generation_receipts",
+      "coach_ai_manual_entry_drafts",
+      "coach_ai_daily_companion_interactions",
+      "coach_ai_archive_events",
     ]),
   });
 

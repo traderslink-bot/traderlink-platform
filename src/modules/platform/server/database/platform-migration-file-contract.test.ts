@@ -15,7 +15,7 @@ describe("static platform migration file contract", () => {
       })),
     );
     expect(platformMigrationFileEntries.at(-1)?.migration.migrationId).toBe(
-      "0022_journal_trading_day_reviews",
+      "0029_coach_ai_chat_foundation",
     );
   });
 
