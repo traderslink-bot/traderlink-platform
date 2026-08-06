@@ -1,4 +1,5 @@
 import { Buffer } from "node:buffer";
+import { createHash } from "node:crypto";
 
 import type {
   CoachAiChatConversationCursor,
@@ -31,6 +32,11 @@ export type ConversationPatch =
   | Readonly<{ action: "rename"; title: string }>
   | Readonly<{ action: "archive" }>
   | Readonly<{ action: "restore" }>;
+
+export type GenerateChatMessageInput = Readonly<{
+  question: string;
+  clientRequestId: string;
+}>;
 
 function invalidRequest(field: string): never {
   platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field });
@@ -199,6 +205,28 @@ export function parseConversationPatchBody(body: Record<string, unknown>): Conve
     return Object.freeze({ action: body.action });
   }
   invalidRequest("action");
+}
+
+export function parseGenerateChatMessageBody(body: Record<string, unknown>): GenerateChatMessageInput {
+  if (!hasExactKeys(body, ["question", "clientRequestId"]) ||
+      typeof body.question !== "string" || body.question.trim().length === 0 ||
+      typeof body.clientRequestId !== "string") {
+    invalidRequest("message");
+  }
+  assertCanonicalUuidV4(body.clientRequestId, "clientRequestId");
+  return Object.freeze({ question: body.question, clientRequestId: body.clientRequestId });
+}
+
+export function createChatGenerationIdempotencySha256(
+  conversationId: string,
+  clientRequestId: string,
+): string {
+  return createHash("sha256")
+    .update("traderlink-coach-chat-generation-v1\0", "utf8")
+    .update(conversationId, "utf8")
+    .update("\0", "utf8")
+    .update(clientRequestId, "utf8")
+    .digest("hex");
 }
 
 export function withReadonlyChatRepository<T>(

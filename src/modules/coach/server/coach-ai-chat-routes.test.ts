@@ -50,6 +50,7 @@ const { mocks, FakeRepository } = vi.hoisted(() => {
     archiveConversation: vi.fn(),
     restoreConversation: vi.fn(),
     listMessages: vi.fn(),
+    generateSavedAnswer: vi.fn(),
     withReadonlyPlatformDatabase: vi.fn(),
     withPlatformDatabase: vi.fn(),
   };
@@ -77,10 +78,13 @@ vi.mock("@/src/modules/platform/server/database/open-platform-database", () => (
 vi.mock("@/src/modules/coach/server/coach-ai-chat-repository", () => ({
   CoachAiChatRepository: FakeRepository,
 }));
+vi.mock("@/src/modules/coach/server/coach-ai-chat-generation-runtime", () => ({
+  generateCoachAiChatSavedAnswer: mocks.generateSavedAnswer,
+}));
 
 import { GET as listConversations, POST as createConversation } from "@/app/api/coach/chat/conversations/route";
 import { GET as readConversation, PATCH as patchConversation } from "@/app/api/coach/chat/conversations/[conversationId]/route";
-import { GET as listMessages } from "@/app/api/coach/chat/conversations/[conversationId]/messages/route";
+import { GET as listMessages, POST as generateMessage } from "@/app/api/coach/chat/conversations/[conversationId]/messages/route";
 
 const conversationId = conversation.conversationId;
 const conversationPath = `/api/coach/chat/conversations/${conversationId}`;
@@ -114,6 +118,11 @@ describe("private AI Chat persistence routes", () => {
     mocks.listMessages.mockReturnValue({
       messages: [message],
       nextCursor: Object.freeze({ beforeSequence: 2 }),
+    });
+    mocks.generateSavedAnswer.mockResolvedValue({
+      state: "completed",
+      assistantMessageId: "00000000-0000-4000-8000-000000000012",
+      attemptId: "00000000-0000-4000-8000-000000000013",
     });
   });
 
@@ -192,6 +201,75 @@ describe("private AI Chat persistence routes", () => {
       limit: 5,
       cursor: null,
     });
+  });
+
+  it("generates one saved answer with a server-derived idempotency digest", async () => {
+    const clientRequestId = "00000000-0000-4000-8000-000000000014";
+    const response = await generateMessage(request(`${conversationPath}/messages`, {
+      method: "POST",
+      body: JSON.stringify({ question: "How did I trade this week?", clientRequestId }),
+      headers: { "content-type": "application/json" },
+    }), params());
+    const body = await response.json() as Record<string, unknown>;
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual({
+      status: "completed",
+      assistantMessageId: "00000000-0000-4000-8000-000000000012",
+    });
+    expect(mocks.generateSavedAnswer).toHaveBeenCalledWith(scope, {
+      conversationId,
+      question: "How did I trade this week?",
+      idempotencySha256: expect.stringMatching(/^[0-9a-f]{64}$/u),
+    });
+    expect(JSON.stringify(body)).not.toContain("attemptId");
+  });
+
+  it.each([
+    ["pending", 202],
+    ["blocked", 429],
+    ["failed", 503],
+  ] as const)("returns a safe %s generation state", async (state, expectedStatus) => {
+    mocks.generateSavedAnswer.mockResolvedValueOnce({
+      state,
+      assistantMessageId: "00000000-0000-4000-8000-000000000012",
+      attemptId: "00000000-0000-4000-8000-000000000013",
+    });
+    const response = await generateMessage(request(`${conversationPath}/messages`, {
+      method: "POST",
+      body: JSON.stringify({
+        question: "Review this safely.",
+        clientRequestId: "00000000-0000-4000-8000-000000000015",
+      }),
+    }), params());
+
+    expect(response.status).toBe(expectedStatus);
+    expect(await response.json()).toEqual({
+      status: state,
+      assistantMessageId: "00000000-0000-4000-8000-000000000012",
+    });
+  });
+
+  it("rejects unknown generation fields and query parameters before provider work", async () => {
+    const invalidBody = await generateMessage(request(`${conversationPath}/messages`, {
+      method: "POST",
+      body: JSON.stringify({
+        question: "Private question",
+        clientRequestId: "00000000-0000-4000-8000-000000000016",
+        accountId: "do-not-accept",
+      }),
+    }), params());
+    const invalidQuery = await generateMessage(request(`${conversationPath}/messages?retry=true`, {
+      method: "POST",
+      body: JSON.stringify({
+        question: "Private question",
+        clientRequestId: "00000000-0000-4000-8000-000000000016",
+      }),
+    }), params());
+
+    expect(invalidBody.status).toBe(400);
+    expect(invalidQuery.status).toBe(400);
+    expect(mocks.generateSavedAnswer).not.toHaveBeenCalled();
   });
 
   it.each([
