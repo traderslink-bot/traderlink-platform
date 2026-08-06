@@ -132,6 +132,19 @@ Active. The product contract is in [AI Weekly Review Plan](ai-weekly-review-plan
   to the monthly contract's six trader-facing sections and at most three
   next-month focuses. The adapter receives only the supplied factual package.
 
+## Completed: saved monthly review UI
+
+- AI Reviews now reads the selected account's saved monthly reviews through the
+  account-scoped repository. The monthly panel shows a truthful empty state
+  only when that account has no saved monthly review.
+- Saved monthly reviews have addressable detail pages with Monthly review,
+  Progress across the month, Recurring friction, Focus follow-through, Next
+  month's focuses and an Incomplete record section only when present.
+- A first partial month is labelled with plain dates as the trader's first
+  month. Provider, model, token, cost and internal identifiers remain absent
+  from both list and detail views. The existing weekly list and detail UI is
+  preserved.
+
 ## Completed: weekly issuance runner and protected trigger
 
 - The runner enumerates only active scheduled Journal accounts, calculates the
@@ -151,11 +164,10 @@ Active. The product contract is in [AI Weekly Review Plan](ai-weekly-review-plan
 ## Next slice
 
 Wire the account-scoped prior-month read into the factual package, then add the
-monthly runner and saved-review UI. Calendar-month reviews use the same
-delivery time, retain their first-use date, apply the completed partial-month
-eligibility helper, and skip no-trade months in the later runner. Register the
-protected trigger with the accepted hosted scheduler only at the deployment
-boundary.
+monthly runner. Calendar-month reviews use the same delivery time, retain their
+first-use date, apply the completed partial-month eligibility helper, and skip
+no-trade months in the later runner. Register the protected trigger with the
+accepted hosted scheduler only at the deployment boundary.
 
 ## Planned input addition: selected trade tags
 

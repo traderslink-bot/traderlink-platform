@@ -13,7 +13,7 @@ import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/data
 
 export const metadata: Metadata = {
   title: "AI Reviews | TraderLink Platform",
-  description: "Read your saved weekly trading reviews.",
+  description: "Read your saved weekly and monthly trading reviews.",
 };
 
 export const dynamic = "force-dynamic";
@@ -28,14 +28,36 @@ function formatWeekDate(value: string): string {
   }).format(new Date(`${value}T12:00:00.000Z`));
 }
 
+function formatMonthDate(value: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+    year: "numeric",
+  }).format(new Date(`${value}T12:00:00.000Z`));
+}
+
+function formatMonth(value: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    timeZone: "UTC",
+    year: "numeric",
+  }).format(new Date(`${value}T12:00:00.000Z`));
+}
+
 function reviewWeekLabel(startDate: string, endDate: string): string {
   return `Week of ${formatWeekDate(startDate)} to ${formatWeekDate(endDate)}`;
 }
 
 export default async function AiReviewsPage() {
   const scope = await requireTraderLinkPlatformPageScope();
-  const reviews = withReadonlyPlatformDatabase({}, (database) =>
-    new CoachAiReviewRepository(database).listIssuedWeeklyReviews(scope));
+  const { monthlyReviews, reviews } = withReadonlyPlatformDatabase({}, (database) => {
+    const repository = new CoachAiReviewRepository(database);
+    return {
+      reviews: repository.listIssuedWeeklyReviews(scope),
+      monthlyReviews: repository.listIssuedMonthlyReviews(scope),
+    };
+  });
 
   return (
     <DashboardPage>
@@ -82,12 +104,40 @@ export default async function AiReviewsPage() {
       </DashboardPanel>
 
       <DashboardPanel title="Monthly reviews">
-        <Stack spacing={0.75}>
-          <Typography sx={{ fontWeight: 800 }}>No monthly reviews yet</Typography>
-          <Typography color="text.secondary" variant="body2">
-            Monthly reviews have not been issued yet. Delivery settings are in Account.
-          </Typography>
-        </Stack>
+        {monthlyReviews.length === 0 ? (
+          <Stack spacing={0.75}>
+            <Typography sx={{ fontWeight: 800 }}>No monthly reviews yet</Typography>
+            <Typography color="text.secondary" variant="body2">
+              Your monthly reviews will appear here after one has been issued for this Journal account.
+            </Typography>
+          </Stack>
+        ) : (
+          <Stack spacing={1.25}>
+            {monthlyReviews.map((review) => (
+              <Box
+                component="article"
+                key={review.issuedReviewId}
+                sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 2 }}
+              >
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ alignItems: { sm: "flex-start" }, justifyContent: "space-between" }}>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography sx={{ fontWeight: 800 }} variant="h3">
+                      {review.periodCoverage === "partial_month"
+                        ? `First month: ${formatMonthDate(review.monthStartDate)} to ${formatMonthDate(review.monthEndDate)}`
+                        : formatMonth(review.monthStartDate)}
+                    </Typography>
+                    <Typography color="text.secondary" sx={{ mt: 0.75, whiteSpace: "pre-wrap" }} variant="body2">
+                      {review.output.monthlyReview}
+                    </Typography>
+                  </Box>
+                  <Button component={Link} href={`/ai-reviews/monthly/${review.issuedReviewId}`} size="small" variant="outlined">
+                    Open review
+                  </Button>
+                </Stack>
+              </Box>
+            ))}
+          </Stack>
+        )}
       </DashboardPanel>
     </DashboardPage>
   );
