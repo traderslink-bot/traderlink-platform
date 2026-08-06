@@ -91,12 +91,15 @@ Implementation is active. The parent plan is [TraderLink AI Companion Plan](ai-c
   failure persistence, archive/restore, deterministic conversation and message
   pagination, and privacy-safe errors.
 
-## Verification handoff
+## Verification
 
-- Focused Vitest and ESLint for the repository slice are deliberately deferred
-  to the coordinator's canonical checkout. This isolated worktree has no usable
-  local `node_modules`; no dependency install, download, database migration, or
-  configuration workaround was performed here.
+- The canonical checkout passed eight focused one-worker tests across the Chat
+  repository and migration foundation, plus focused ESLint for the new
+  contracts, repository, and repository tests.
+- That verification caught and corrected a row-field mismatch in assistant
+  finalization before this persistence checkpoint was accepted. No dependency
+  install, download, real database migration, or configuration workaround was
+  needed.
 
 ## Explicit non-actions
 
