@@ -52,6 +52,30 @@ function setup(): Readonly<{
 }
 
 describe("Coach review delivery schedule repository", () => {
+  it("accepts only the Friday-to-Sunday half-hour delivery choices shown in Account Settings", () => {
+    const { database, scope } = setup();
+    try {
+      const repository = new CoachReviewDeliveryScheduleRepository(database);
+      expect(repository.save(scope, {
+        weeklyDeliveryDay: "sunday",
+        deliveryTimeEastern: "23:30",
+      }, new Date(nowUtc))).toMatchObject({
+        weeklyDeliveryDay: "sunday",
+        deliveryTimeEastern: "23:30",
+      });
+      expect(() => repository.save(scope, {
+        weeklyDeliveryDay: "friday",
+        deliveryTimeEastern: "20:15",
+      }, new Date(nowUtc))).toThrow("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED");
+      expect(() => repository.save(scope, {
+        weeklyDeliveryDay: "saturday",
+        deliveryTimeEastern: "23:59",
+      }, new Date(nowUtc))).toThrow("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED");
+    } finally {
+      database.close();
+    }
+  });
+
   it("lists only active accounts with an enabled review schedule", () => {
     const { database, scope } = setup();
     try {

@@ -16,7 +16,7 @@ export type CoachScheduledReviewAccount = Readonly<{
   schedule: CoachReviewDeliverySchedule;
 }>;
 
-const DELIVERY_TIME_PATTERN = /^(?:1[6-9]|2[0-3]):[0-5][0-9]$/u;
+const DELIVERY_TIME_PATTERN = /^(?:1[6-9]|2[0-3]):(?:00|30)$/u;
 
 function activeAccountId(scope: WorkspaceAccessScope): string {
   if (!scope.activeAccountId || !scope.allowedAccountIds.includes(scope.activeAccountId)) {

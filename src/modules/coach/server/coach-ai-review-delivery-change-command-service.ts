@@ -36,6 +36,9 @@ export class CoachAiReviewDeliveryChangeCommandService {
       if (draft.disposition === "confirmed" && draft.settingsWriteState === "committed") {
         return draft;
       }
+      if (draft.disposition === "expired" || now.toISOString() >= draft.expiresAtUtc) {
+        return this.drafts.expire(scope, input.draftId, now);
+      }
       draft = this.drafts.beginConfirm(scope, input.draftId, now);
       const saved = this.schedules.save(scope, {
         weeklyDeliveryDay: input.editedProposal.weeklyDeliveryDay,

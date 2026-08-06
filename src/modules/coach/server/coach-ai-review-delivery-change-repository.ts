@@ -182,6 +182,23 @@ WHERE coach_ai_review_delivery_change_draft_id = ? AND disposition = 'proposed'
     return this.read(scope, draftId);
   }
 
+  expire(scope: WorkspaceAccessScope, draftId: string, now = new Date()): CoachAiReviewDeliveryChangeDraft {
+    const current = this.read(scope, draftId);
+    if (current.disposition === "expired") return current;
+    if (current.disposition !== "proposed" || current.settingsWriteState !== "not_written" ||
+        createCanonicalUtcTimestamp(now) < current.expiresAtUtc) {
+      platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+    }
+    const result = this.database.prepare(`UPDATE coach_ai_review_delivery_change_drafts
+SET disposition = 'expired', finalized_at_utc = ?
+WHERE coach_ai_review_delivery_change_draft_id = ? AND disposition = 'proposed'
+  AND settings_write_state = 'not_written' AND expires_at_utc <= ?`).run(
+      createCanonicalUtcTimestamp(now), draftId, createCanonicalUtcTimestamp(now),
+    );
+    if (result.changes !== 1) platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+    return this.read(scope, draftId);
+  }
+
   markCommitted(scope: WorkspaceAccessScope, draftId: string, reference: string): CoachAiReviewDeliveryChangeDraft {
     if (reference.length < 1 || reference.length > 128) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "reference" });

@@ -84,4 +84,35 @@ describe("CoachAiReviewDeliveryChangeCommandService", () => {
       expect(schedules.read(f.scope)).toMatchObject({ deliveryTimeEastern: "21:00" });
     } finally { f.database.close(); }
   });
+
+  it("expires an old proposal without writing review delivery settings", () => {
+    const f = fixture();
+    try {
+      const service = new CoachAiReviewDeliveryChangeCommandService(f.database);
+      const afterExpiry = new Date("2026-08-07T12:00:00.001Z");
+      const expired = service.confirm(f.scope, {
+        conversationId: f.conversationId,
+        draftId: f.draft.draftId,
+        editedProposal: Object.freeze({
+          weeklyDeliveryDay: "saturday",
+          deliveryTimeEastern: "20:30",
+        }),
+      }, afterExpiry);
+
+      expect(expired).toMatchObject({
+        disposition: "expired",
+        settingsWriteState: "not_written",
+        finalizedAtUtc: afterExpiry.toISOString(),
+      });
+      expect(new CoachReviewDeliveryScheduleRepository(f.database).read(f.scope)).toBeNull();
+      expect(service.confirm(f.scope, {
+        conversationId: f.conversationId,
+        draftId: f.draft.draftId,
+        editedProposal: Object.freeze({
+          weeklyDeliveryDay: "friday",
+          deliveryTimeEastern: "16:00",
+        }),
+      }, new Date("2026-08-07T13:00:00.000Z"))).toEqual(expired);
+    } finally { f.database.close(); }
+  });
 });

@@ -238,6 +238,9 @@ existing migration, Journal, and account boundaries.
   confirmation card. Generation alone never changes Account Settings. Login,
   billing, ownership, privacy, provider/model and administration settings are
   outside this path.
+- The server accepts only the same Friday-to-Sunday half-hour choices shown in
+  Account Settings, from 4:00 PM through 11:30 PM Eastern. A proposal expires
+  after 24 hours and cannot write settings after expiry.
 - Explicit confirmation uses the existing
   `CoachReviewDeliveryScheduleRepository.save` command. A saved-setting
   timestamp and value comparison prevents a stale Chat card from overwriting a
@@ -253,6 +256,8 @@ existing migration, Journal, and account boundaries.
 - Five focused one-worker files passed 36 tests covering migration/file
   contracts, scoped draft creation, idempotent generation, explicit edited
   confirmation, stale rollback and rejection without a settings write.
+- A later correctness pass added five focused schedule/confirmation checks for
+  half-hour enforcement and expiry without a settings write.
 - Focused ESLint and `git diff --check` passed. No provider call, protected
   database write, process start, dependency change, deployment or push was
   made.
