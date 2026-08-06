@@ -10,6 +10,7 @@ import type { JournalAnalyticsService } from "@/src/modules/journal-analytics/se
 import {
   COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
   COACH_AI_CHAT_FACTUAL_TOOL_GROUPINGS,
+  COACH_AI_CHAT_FACTUAL_TOOL_MAX_GROUPS,
   COACH_AI_CHAT_FACTUAL_TOOL_MAX_METRICS,
   COACH_AI_CHAT_FACTUAL_TOOL_MAX_PAGE_SIZE,
   COACH_AI_CHAT_FACTUAL_TOOL_MAX_SYMBOLS,
@@ -195,6 +196,13 @@ export class CoachAiChatFactualToolService {
       validateMetrics(request.metricIds), Object.freeze([request.grouping]),
       Object.freeze({ pageSize: 1, afterCursor: null }), asOfUtc,
     ));
+    const groupCount = result.partitions.reduce(
+      (total, partition) => total + partition.groups.length,
+      0,
+    );
+    if (groupCount > COACH_AI_CHAT_FACTUAL_TOOL_MAX_GROUPS) {
+      throw new CoachAiChatFactualToolError("result_too_large");
+    }
     return Object.freeze({
       contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
       toolName: "group_closed_trades",

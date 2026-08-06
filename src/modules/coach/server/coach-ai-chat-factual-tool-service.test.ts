@@ -8,6 +8,7 @@ import type {
 
 import {
   COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
+  COACH_AI_CHAT_FACTUAL_TOOL_MAX_GROUPS,
   CoachAiChatFactualToolError,
 } from "../contracts/coach-ai-chat-factual-tool-contracts";
 import { CoachAiChatFactualToolService } from "./coach-ai-chat-factual-tool-service";
@@ -168,6 +169,38 @@ describe("CoachAiChatFactualToolService", () => {
       grouping: "account",
       moneyBasis: "gross",
     } as never, asOfUtc)).toThrow("not valid");
+  });
+
+  it("rejects grouped results that are too large instead of truncating facts", () => {
+    const oversizedGroups = Object.freeze(Array.from(
+      { length: COACH_AI_CHAT_FACTUAL_TOOL_MAX_GROUPS + 1 },
+      (_, index) => Object.freeze({
+        grouping: "closing_day" as const,
+        groupKey: `2026-01-${String(index + 1).padStart(2, "0")}`,
+        label: `Day ${index + 1}`,
+        metrics: Object.freeze([]),
+      }),
+    ));
+    const oversizedOverview = Object.freeze({
+      ...overview,
+      partitions: Object.freeze([Object.freeze({
+        ...overview.partitions[0]!,
+        groups: oversizedGroups,
+      })]),
+    }) as JournalAnalyticsPartitionedResponse;
+    const analytics = {
+      getAnalyticsOverview: vi.fn(() => oversizedOverview),
+      getRoundTripAnalyticsTable: vi.fn(() => table),
+    };
+    const service = new CoachAiChatFactualToolService(analytics);
+
+    expect(() => service.groupClosedTrades(scope, accountId, {
+      contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
+      toolName: "group_closed_trades",
+      metricIds: ["gross_pnl"],
+      grouping: "closing_day",
+      moneyBasis: "gross",
+    }, asOfUtc)).toThrow("shorter period or narrower filters");
   });
 
   it("bounds pagination and forwards an opaque cursor unchanged", () => {

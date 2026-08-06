@@ -10,6 +10,7 @@ Implemented locally on 2026-08-05 as a narrow, non-routed server contract slice.
 - A machine-readable registry limited to the implemented factual tools and first-slice Journal Analytics metrics.
 - Server-authoritative WorkspaceAccessScope and selected-account inputs. Tool requests cannot choose an account.
 - Typed allowlists for metrics, grouping, date range, currency, factual filters, money basis, and table pagination.
+- Grouped results are bounded to 100 groups. Broader results fail clearly and must be rerun with a shorter period or narrower filters; facts are never silently truncated.
 - Direct forwarding of Journal Analytics result states, coverage, currency partitions, limitations, and fact-set revision without replacing unavailable values with zero.
 - Trade detail from the canonical Journal fact set, ordered allocation facts, and the optional current trader trade note/tags. The retired technical-note field, source rows, and private identifiers are excluded.
 - Indistinguishable `not_found` errors for cross-account and nonexistent closed-trade identifiers.
@@ -21,4 +22,4 @@ Implemented locally on 2026-08-05 as a narrow, non-routed server contract slice.
 
 ## Verification
 
-The canonical checkout passed seven focused one-worker tests for request validation, selected-account scoping, exact analytics response forwarding, unavailable states, page bounds/cursors, generic missing-trade behavior, allocation ordering, optional notes/tags, and privacy-safe errors. Focused ESLint and `git diff --check` also passed. No dependency installation or download was needed.
+The canonical checkout passed eight focused one-worker tests for request validation, selected-account scoping, exact analytics response forwarding, unavailable states, grouping-result bounds, page bounds/cursors, generic missing-trade behavior, allocation ordering, optional notes/tags, and privacy-safe errors. Focused ESLint and `git diff --check` also passed. No dependency installation or download was needed.

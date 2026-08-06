@@ -18,6 +18,7 @@ export const COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION =
 export const COACH_AI_CHAT_FACTUAL_TOOL_MAX_PAGE_SIZE = 50 as const;
 export const COACH_AI_CHAT_FACTUAL_TOOL_MAX_SYMBOLS = 25 as const;
 export const COACH_AI_CHAT_FACTUAL_TOOL_MAX_METRICS = 22 as const;
+export const COACH_AI_CHAT_FACTUAL_TOOL_MAX_GROUPS = 100 as const;
 
 export const COACH_AI_CHAT_FACTUAL_TOOL_METRIC_IDS = Object.freeze([
   "candidate_count",
@@ -177,14 +178,20 @@ export type CoachAiChatFactualToolResponse =
   | CoachAiChatFactualTradeListResponse
   | CoachAiChatClosedTradeDetailResponse;
 
-export type CoachAiChatFactualToolErrorCode = "invalid_request" | "not_found";
+export type CoachAiChatFactualToolErrorCode =
+  | "invalid_request"
+  | "not_found"
+  | "result_too_large";
 
 /** Only use this error at the chat/provider boundary; it intentionally omits private inputs. */
 export class CoachAiChatFactualToolError extends Error {
   readonly name = "CoachAiChatFactualToolError";
 
   constructor(readonly code: CoachAiChatFactualToolErrorCode) {
-    super(code === "not_found" ? "The requested closed trade was not found." :
-      "The factual tool request is not valid.");
+    super(code === "not_found"
+      ? "The requested closed trade was not found."
+      : code === "result_too_large"
+        ? "That result is too large. Use a shorter period or narrower filters."
+        : "The factual tool request is not valid.");
   }
 }
