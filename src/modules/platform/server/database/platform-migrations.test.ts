@@ -56,7 +56,9 @@ describe("TraderLink Platform migrations", () => {
       ).toEqual({ count: platformMigrationManifest.length });
       for (const table of currentPlatformDomainTableNames) {
         expect(database.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get()).toEqual({
-          count: table === "coach_ai_provider_settings" ? 1 : 0,
+          count: table === "coach_ai_provider_settings" ? 1
+            : table === "coach_ai_chat_provider_settings" ? 1
+              : table === "coach_ai_feature_controls" ? 4 : 0,
         });
       }
     } finally {

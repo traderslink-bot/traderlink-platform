@@ -1,5 +1,7 @@
 import type Database from "better-sqlite3";
+import Decimal from "decimal.js";
 
+import type { CoachAiCostAggregation, CoachAiFeatureKey } from "@/src/modules/coach/contracts/ai-provider-controls-contracts";
 import { createCanonicalUtcTimestamp, platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
 
 export type CoachAiProviderSettings = Readonly<{
@@ -18,6 +20,7 @@ export type CoachAiCostSummary = Readonly<{
 
 const MODEL_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u;
 const MONEY_RATE_PATTERN = /^(?:0|[1-9]\d*)(?:\.\d{1,6})?$/u;
+const ExactDecimal = Decimal.clone({ precision: 80, toExpNeg: -1000, toExpPos: 1000 });
 
 function nullableRate(value: unknown, field: string): string | null {
   if (value === null || value === undefined || value === "") return null;
@@ -79,6 +82,61 @@ FROM coach_ai_review_generation_attempt_receipts`).get();
         ? null
         : (legacyCost ?? 0) + (attemptCost ?? 0)),
     });
+  }
+
+  readCostAggregation(): readonly CoachAiCostAggregation[] {
+    type AggregationRow = Readonly<{
+      feature_key: CoachAiFeatureKey;
+      model_id: string;
+      account_id: string;
+      request_count: number;
+      blocked_request_count: number;
+      failed_request_count: number;
+      total_tokens: number;
+      estimated_cost_usd: string | null;
+    }>;
+    const rows = this.database.prepare<[], AggregationRow>(`SELECT 'ai_chat' AS feature_key,
+  attempt.model_id, attempt.account_id, COUNT(*) AS request_count,
+  SUM(CASE WHEN attempt.state = 'blocked' THEN 1 ELSE 0 END) AS blocked_request_count,
+  SUM(CASE WHEN attempt.state = 'failed' THEN 1 ELSE 0 END) AS failed_request_count,
+  COALESCE(SUM(receipt.total_tokens), 0) AS total_tokens, receipt.estimated_cost_usd
+FROM coach_ai_chat_generation_attempts attempt
+LEFT JOIN coach_ai_chat_generation_receipts receipt
+  ON receipt.coach_ai_chat_message_id = attempt.coach_ai_chat_message_id
+GROUP BY attempt.model_id, attempt.account_id, receipt.estimated_cost_usd
+UNION ALL
+SELECT CASE attempt.review_kind WHEN 'weekly' THEN 'weekly_reviews' ELSE 'monthly_reviews' END AS feature_key,
+  attempt.model_id, attempt.account_id, COUNT(*) AS request_count, 0 AS blocked_request_count,
+  SUM(CASE WHEN attempt.state = 'failed' THEN 1 ELSE 0 END) AS failed_request_count,
+  COALESCE(SUM(receipt.total_tokens), 0) AS total_tokens, receipt.estimated_cost_usd
+FROM coach_ai_review_generation_attempts attempt
+LEFT JOIN coach_ai_review_generation_attempt_receipts receipt
+  ON receipt.coach_ai_review_generation_attempt_id = attempt.coach_ai_review_generation_attempt_id
+GROUP BY attempt.review_kind, attempt.model_id, attempt.account_id, receipt.estimated_cost_usd`).all();
+    const grouped = new Map<string, {
+      featureKey: CoachAiFeatureKey; modelId: string; accountId: string; requestCount: number;
+      blockedRequestCount: number; failedRequestCount: number; totalTokens: number; costs: Decimal[];
+    }>();
+    for (const row of rows) {
+      const key = `${row.feature_key}\u0000${row.model_id}\u0000${row.account_id}`;
+      const current = grouped.get(key) ?? {
+        featureKey: row.feature_key, modelId: row.model_id, accountId: row.account_id,
+        requestCount: 0, blockedRequestCount: 0, failedRequestCount: 0, totalTokens: 0, costs: [],
+      };
+      current.requestCount += row.request_count;
+      current.blockedRequestCount += row.blocked_request_count;
+      current.failedRequestCount += row.failed_request_count;
+      current.totalTokens += row.total_tokens;
+      if (row.estimated_cost_usd !== null) current.costs.push(new ExactDecimal(row.estimated_cost_usd));
+      grouped.set(key, current);
+    }
+    return Object.freeze([...grouped.values()].map((row) => Object.freeze({
+      featureKey: row.featureKey, modelId: row.modelId, accountId: row.accountId,
+      requestCount: row.requestCount, blockedRequestCount: row.blockedRequestCount,
+      failedRequestCount: row.failedRequestCount, totalTokens: row.totalTokens,
+      estimatedCostUsd: row.costs.length === 0 ? null : row.costs.reduce((sum, value) => sum.plus(value), new ExactDecimal(0))
+        .toFixed(12).replace(/\.?0+$/u, "") || "0",
+    })).sort((left, right) => left.featureKey.localeCompare(right.featureKey) || left.modelId.localeCompare(right.modelId) || left.accountId.localeCompare(right.accountId)));
   }
 
   save(input: Readonly<{
