@@ -24,6 +24,7 @@ const PRICE_PATTERN = /^(?:0|[1-9]\d*)(?:\.\d{1,6})?$/u;
 const DIGEST_PATTERN = /^[0-9a-f]{64}$/u;
 const FEATURE_KEYS = new Set<CoachAiFeatureKey>(["ai_chat", "daily_companion", "weekly_reviews", "monthly_reviews"]);
 const MAX_OUTPUT_TOKENS = 16_384;
+const MAX_PROVIDER_INPUT_BYTES = 256_000;
 
 type ControlRow = Readonly<{
   feature_key: CoachAiFeatureKey;
@@ -45,6 +46,8 @@ type SettingsRow = Readonly<{
 
 type AttemptRow = Readonly<{
   coach_ai_chat_generation_attempt_id: string;
+  coach_ai_chat_conversation_id: string;
+  coach_ai_chat_message_id: string;
   state: "reserved" | "started" | "completed" | "failed" | "blocked";
   reserved_max_input_tokens: number;
   reserved_max_output_tokens: number;
@@ -165,10 +168,10 @@ WHERE user.user_id = ? AND user.status = 'active' AND workspace.status = 'active
 
   readFeatureControls(scope: WorkspaceAccessScope): readonly CoachAiFeatureControl[] {
     const accountId = this.accountId(scope);
-    return Object.freeze(this.database.prepare<[string, string, string], ControlRow>(`SELECT feature_key, scope_kind, enabled,
+    return Object.freeze(this.database.prepare<[string, string], ControlRow>(`SELECT feature_key, scope_kind, enabled,
   daily_request_cap, daily_token_cap, daily_estimated_spend_cap_usd, updated_at_utc
-FROM coach_ai_feature_controls WHERE scope_kind = 'platform' OR (scope_kind = 'account' AND user_id = ? AND workspace_id = ? AND account_id = ?)
-ORDER BY feature_key, scope_kind`).all(scope.userId, scope.workspaceId, accountId).map(controlRecord));
+FROM coach_ai_feature_controls WHERE scope_kind = 'platform' OR (scope_kind = 'account' AND workspace_id = ? AND account_id = ?)
+ORDER BY feature_key, scope_kind`).all(scope.workspaceId, accountId).map(controlRecord));
   }
 
   savePlatformFeatureControl(input: Readonly<{ featureKey: unknown; enabled: unknown; dailyRequestCap: unknown; dailyTokenCap: unknown; dailyEstimatedSpendCapUsd: unknown }>, now = new Date()): CoachAiFeatureControl {
@@ -205,34 +208,41 @@ FROM coach_ai_feature_controls WHERE feature_key = ? AND scope_kind = 'platform'
   }
 
   private accountControl(scope: WorkspaceAccessScope, featureKey: CoachAiFeatureKey, accountId: string): CoachAiFeatureControl {
-    const row = this.database.prepare<[CoachAiFeatureKey, string, string, string], ControlRow>(`SELECT feature_key, scope_kind, enabled,
+    const row = this.database.prepare<[CoachAiFeatureKey, string, string], ControlRow>(`SELECT feature_key, scope_kind, enabled,
   daily_request_cap, daily_token_cap, daily_estimated_spend_cap_usd, updated_at_utc FROM coach_ai_feature_controls
-WHERE feature_key = ? AND scope_kind = 'account' AND user_id = ? AND workspace_id = ? AND account_id = ?`).get(featureKey, scope.userId, scope.workspaceId, accountId);
+WHERE feature_key = ? AND scope_kind = 'account' AND workspace_id = ? AND account_id = ?`).get(featureKey, scope.workspaceId, accountId);
     if (!row) platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { table: "coach_ai_feature_controls" });
     return controlRecord(row);
   }
 
-  reserveChatGeneration(scope: WorkspaceAccessScope, input: Readonly<{ conversationId: unknown; assistantMessageId: unknown; idempotencySha256: unknown; inputText: unknown; maxOutputTokens: unknown }>, now = new Date()): Readonly<{ state: "reserved" | "blocked" | "idempotent"; attempt: CoachAiChatGenerationAttempt }> {
+  reserveChatGeneration(scope: WorkspaceAccessScope, input: Readonly<{ conversationId: unknown; assistantMessageId: unknown; idempotencySha256: unknown; providerInputText: unknown; maxOutputTokens: unknown }>, now = new Date()): Readonly<{ state: "reserved" | "blocked" | "idempotent"; attempt: CoachAiChatGenerationAttempt }> {
     const accountId = this.accountId(scope);
     if (typeof input.conversationId !== "string") platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "conversationId" });
     if (typeof input.assistantMessageId !== "string") platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "assistantMessageId" });
     assertCanonicalUuidV4(input.conversationId, "conversationId");
     assertCanonicalUuidV4(input.assistantMessageId, "assistantMessageId");
     if (typeof input.idempotencySha256 !== "string" || !DIGEST_PATTERN.test(input.idempotencySha256)) platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "idempotencySha256" });
-    if (typeof input.inputText !== "string" || input.inputText.length < 1 || input.inputText.length > 4_000) platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "inputText" });
+    if (typeof input.providerInputText !== "string") platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "providerInputText" });
+    const maxInputTokens = Buffer.byteLength(input.providerInputText, "utf8");
+    if (maxInputTokens < 1 || maxInputTokens > MAX_PROVIDER_INPUT_BYTES) platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "providerInputText" });
     if (!Number.isSafeInteger(input.maxOutputTokens) || input.maxOutputTokens < 1 || input.maxOutputTokens > MAX_OUTPUT_TOKENS) platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "maxOutputTokens" });
     return this.transaction(() => {
-      const existing = this.database.prepare<[string, string], AttemptRow>(`SELECT coach_ai_chat_generation_attempt_id, state,
+      const existing = this.database.prepare<[string, string], AttemptRow>(`SELECT coach_ai_chat_generation_attempt_id,
+  coach_ai_chat_conversation_id, coach_ai_chat_message_id, state,
   reserved_max_input_tokens, reserved_max_output_tokens, reserved_max_total_tokens, reserved_maximum_cost_usd
 FROM coach_ai_chat_generation_attempts WHERE account_id = ? AND idempotency_sha256 = ?`).get(accountId, input.idempotencySha256);
-      if (existing) return Object.freeze({ state: "idempotent" as const, attempt: this.attemptRecord(existing) });
+      if (existing) {
+        if (existing.coach_ai_chat_conversation_id !== input.conversationId || existing.coach_ai_chat_message_id !== input.assistantMessageId) {
+          platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { field: "idempotencySha256" });
+        }
+        return Object.freeze({ state: "idempotent" as const, attempt: this.attemptRecord(existing) });
+      }
       const settings = this.readChatSettings();
       const platform = this.platformControl("ai_chat");
       const account = this.accountControl(scope, "ai_chat", accountId);
       if (!platform.enabled || !account.enabled || settings.inputCostUsdPerMillionTokens === null || settings.outputCostUsdPerMillionTokens === null || platform.caps.dailyRequestCap === null || account.caps.dailyRequestCap === null || platform.caps.dailyTokenCap === null || account.caps.dailyTokenCap === null || platform.caps.dailyEstimatedSpendCapUsd === null || account.caps.dailyEstimatedSpendCapUsd === null) {
         platformFailure("TRADERLINK_COACH_CHAT_UNAVAILABLE");
       }
-      const maxInputTokens = Buffer.byteLength(input.inputText, "utf8");
       const maxTotalTokens = maxInputTokens + input.maxOutputTokens;
       const maxCost = money(maxInputTokens, input.maxOutputTokens, settings.inputCostUsdPerMillionTokens, settings.outputCostUsdPerMillionTokens);
       const day = easternCalendarDate(now);
@@ -272,16 +282,17 @@ WHERE coach_ai_chat_generation_attempt_id = ? AND user_id = ? AND workspace_id =
   finalizeFromChatReceipt(scope: WorkspaceAccessScope, attemptId: string, state: "completed" | "failed", failureCode: string | null, now = new Date()): CoachAiChatGenerationAttempt {
     const accountId = this.accountId(scope); assertCanonicalUuidV4(attemptId, "attemptId");
     if ((state === "completed" && failureCode !== null) || (state === "failed" && (typeof failureCode !== "string" || !/^[A-Z][A-Z0-9_]{0,95}$/u.test(failureCode)))) platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "failureCode" });
-    const receipt = this.database.prepare<[string, string, string, string], Readonly<{ input_tokens: number; output_tokens: number; total_tokens: number; estimated_cost_usd: string; message_state: "completed" | "failed"; receipt_provider_key: "openai_direct"; receipt_model_id: string; receipt_input_rate: string; receipt_output_rate: string; attempt_provider_key: "openai_direct"; attempt_model_id: string; attempt_input_rate: string; attempt_output_rate: string }>>(`SELECT receipt.input_tokens, receipt.output_tokens, receipt.total_tokens, receipt.estimated_cost_usd,
+    const receipt = this.database.prepare<[string, string, string, string], Readonly<{ input_tokens: number; output_tokens: number; total_tokens: number; estimated_cost_usd: string; message_state: "completed" | "failed"; receipt_provider_key: "openai_direct"; receipt_model_id: string; receipt_input_rate: string; receipt_output_rate: string; attempt_provider_key: "openai_direct"; attempt_model_id: string; attempt_input_rate: string; attempt_output_rate: string; reserved_max_input_tokens: number; reserved_max_output_tokens: number; reserved_max_total_tokens: number; reserved_maximum_cost_usd: string }>>(`SELECT receipt.input_tokens, receipt.output_tokens, receipt.total_tokens, receipt.estimated_cost_usd,
   message.generation_state AS message_state, receipt.provider_key AS receipt_provider_key, receipt.model_id AS receipt_model_id,
   receipt.input_cost_usd_per_million_tokens AS receipt_input_rate, receipt.output_cost_usd_per_million_tokens AS receipt_output_rate,
   attempt.provider_key AS attempt_provider_key, attempt.model_id AS attempt_model_id,
-  attempt.input_cost_usd_per_million_tokens AS attempt_input_rate, attempt.output_cost_usd_per_million_tokens AS attempt_output_rate
+  attempt.input_cost_usd_per_million_tokens AS attempt_input_rate, attempt.output_cost_usd_per_million_tokens AS attempt_output_rate,
+  attempt.reserved_max_input_tokens, attempt.reserved_max_output_tokens, attempt.reserved_max_total_tokens, attempt.reserved_maximum_cost_usd
 FROM coach_ai_chat_generation_attempts attempt JOIN coach_ai_chat_messages message ON message.coach_ai_chat_message_id = attempt.coach_ai_chat_message_id
 JOIN coach_ai_chat_generation_receipts receipt ON receipt.coach_ai_chat_message_id = attempt.coach_ai_chat_message_id
 WHERE attempt.coach_ai_chat_generation_attempt_id = ? AND attempt.user_id = ? AND attempt.workspace_id = ? AND attempt.account_id = ?
   AND receipt.input_tokens IS NOT NULL AND receipt.output_tokens IS NOT NULL AND receipt.total_tokens IS NOT NULL AND receipt.estimated_cost_usd IS NOT NULL`).get(attemptId, scope.userId, scope.workspaceId, accountId);
-    if (!receipt || receipt.message_state !== state || receipt.receipt_provider_key !== receipt.attempt_provider_key || receipt.receipt_model_id !== receipt.attempt_model_id || receipt.receipt_input_rate !== receipt.attempt_input_rate || receipt.receipt_output_rate !== receipt.attempt_output_rate) {
+    if (!receipt || receipt.message_state !== state || receipt.receipt_provider_key !== receipt.attempt_provider_key || receipt.receipt_model_id !== receipt.attempt_model_id || receipt.receipt_input_rate !== receipt.attempt_input_rate || receipt.receipt_output_rate !== receipt.attempt_output_rate || receipt.input_tokens > receipt.reserved_max_input_tokens || receipt.output_tokens > receipt.reserved_max_output_tokens || receipt.total_tokens > receipt.reserved_max_total_tokens || new ExactDecimal(receipt.estimated_cost_usd).gt(receipt.reserved_maximum_cost_usd)) {
       platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { table: "coach_ai_chat_generation_receipts" });
     }
     const result = this.database.prepare(`UPDATE coach_ai_chat_generation_attempts SET state = ?, failure_code = ?, actual_input_tokens = ?, actual_output_tokens = ?, actual_total_tokens = ?, actual_cost_usd = ?, finalized_at_utc = ?
@@ -300,7 +311,8 @@ WHERE coach_ai_chat_generation_attempt_id = ? AND user_id = ? AND workspace_id =
   }
 
   private attempt(scope: WorkspaceAccessScope, attemptId: string, accountId: string): CoachAiChatGenerationAttempt {
-    const row = this.database.prepare<[string, string, string, string], AttemptRow>(`SELECT coach_ai_chat_generation_attempt_id, state,
+    const row = this.database.prepare<[string, string, string, string], AttemptRow>(`SELECT coach_ai_chat_generation_attempt_id,
+  coach_ai_chat_conversation_id, coach_ai_chat_message_id, state,
   reserved_max_input_tokens, reserved_max_output_tokens, reserved_max_total_tokens, reserved_maximum_cost_usd
 FROM coach_ai_chat_generation_attempts WHERE coach_ai_chat_generation_attempt_id = ? AND user_id = ? AND workspace_id = ? AND account_id = ?`).get(attemptId, scope.userId, scope.workspaceId, accountId);
     if (!row) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED"); return this.attemptRecord(row);

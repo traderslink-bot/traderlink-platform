@@ -1,3 +1,5 @@
+import { Buffer } from "node:buffer";
+
 import Database from "better-sqlite3";
 
 import { CoachAiProviderSettingsRepository } from "@/src/modules/coach/server/coach-ai-provider-settings-repository";
@@ -17,6 +19,7 @@ type Fixture = Readonly<{
   controls: CoachAiChatProviderControlsRepository;
   scope: WorkspaceAccessScope;
   otherScope: WorkspaceAccessScope;
+  sharedScope: WorkspaceAccessScope;
 }>;
 
 function insertScope(database: Database.Database): WorkspaceAccessScope {
@@ -37,7 +40,14 @@ VALUES (?, ?, 'Test', 'USD', 'America/New_York', 'active', ?, ?, ?)`).run(accoun
 function setup(): Fixture {
   const database = new Database(":memory:"); database.pragma("foreign_keys = ON");
   runPlatformMigrations(database, { manifest: platformMigrationManifest, now: () => new Date(initialTime) });
-  return Object.freeze({ database, chat: new CoachAiChatRepository(database), controls: new CoachAiChatProviderControlsRepository(database), scope: insertScope(database), otherScope: insertScope(database) });
+  const scope = insertScope(database);
+  const sharedUserId = createCanonicalUuidV4();
+  database.prepare(`INSERT INTO platform_users (user_id, auth_provider, auth_subject, display_name, status, created_at_utc, updated_at_utc)
+VALUES (?, 'development_local', ?, 'Shared user', 'active', ?, ?)`).run(sharedUserId, `shared-${sharedUserId}`, initialTime, initialTime);
+  database.prepare(`INSERT INTO platform_workspace_memberships (workspace_id, user_id, role, status, created_by_user_id, created_at_utc, updated_at_utc)
+VALUES (?, ?, 'member', 'active', ?, ?, ?)`).run(scope.workspaceId, sharedUserId, scope.userId, initialTime, initialTime);
+  const sharedScope = Object.freeze({ userId: sharedUserId, workspaceId: scope.workspaceId, workspaceRole: "member" as const, allowedAccountIds: scope.allowedAccountIds, activeAccountId: scope.activeAccountId });
+  return Object.freeze({ database, chat: new CoachAiChatRepository(database), controls: new CoachAiChatProviderControlsRepository(database), scope, otherScope: insertScope(database), sharedScope });
 }
 
 function configure(fixture: Fixture, input: Readonly<{ platformRequests?: number; accountRequests?: number; platformTokens?: number; accountTokens?: number }> = {}): void {
@@ -52,8 +62,8 @@ function assistantReservation(fixture: Fixture, scope = fixture.scope): Readonly
   return Object.freeze({ conversationId: conversation.conversationId, assistantMessageId: reserved.assistantMessage.messageId });
 }
 
-function reservationInput(reservation: Readonly<{ conversationId: string; assistantMessageId: string }>, digest = "a".repeat(64)): Readonly<{ conversationId: string; assistantMessageId: string; idempotencySha256: string; inputText: string; maxOutputTokens: number }> {
-  return Object.freeze({ ...reservation, idempotencySha256: digest, inputText: "A private question", maxOutputTokens: 100 });
+function reservationInput(reservation: Readonly<{ conversationId: string; assistantMessageId: string }>, digest = "a".repeat(64), providerInputText = "System instructions\nBounded conversation context\nTool definitions and results\nA private question"): Readonly<{ conversationId: string; assistantMessageId: string; idempotencySha256: string; providerInputText: string; maxOutputTokens: number }> {
+  return Object.freeze({ ...reservation, idempotencySha256: digest, providerInputText, maxOutputTokens: 100 });
 }
 
 describe("Coach AI Chat provider controls repository", () => {
@@ -83,7 +93,7 @@ describe("Coach AI Chat provider controls repository", () => {
     } finally { fixture.database.close(); }
   });
 
-  it("uses Eastern calendar dates across the DST boundary and reuses a matching idempotency digest", () => {
+  it("uses the complete provider envelope, handles Eastern DST rollover, and fails closed on idempotency reuse for another message", () => {
     const fixture = setup();
     try {
       configure(fixture, { platformRequests: 1, accountRequests: 1 });
@@ -94,6 +104,19 @@ describe("Coach AI Chat provider controls repository", () => {
       expect(second.state).toBe("reserved");
       const repeated = fixture.controls.reserveChatGeneration(fixture.scope, firstInput);
       expect(repeated).toMatchObject({ state: "idempotent", attempt: { attemptId: first.attempt.attemptId } });
+      const differentMessage = reservationInput(assistantReservation(fixture), "d".repeat(64), "x".repeat(5_000));
+      expect(() => fixture.controls.reserveChatGeneration(fixture.scope, differentMessage)).toThrow("TRADERLINK_PLATFORM_INTEGRITY_FAILED");
+      expect(first.attempt.maximumInputTokens).toBe(Buffer.byteLength(firstInput.providerInputText, "utf8"));
+    } finally { fixture.database.close(); }
+  });
+
+  it("shares one account control across active workspace members", () => {
+    const fixture = setup();
+    try {
+      configure(fixture);
+      const fromSharedMember = fixture.controls.readFeatureControls(fixture.sharedScope)
+        .find((item) => item.featureKey === "ai_chat" && item.scopeKind === "account");
+      expect(fromSharedMember).toMatchObject({ enabled: true, caps: { dailyRequestCap: 20, dailyTokenCap: 10_000, dailyEstimatedSpendCapUsd: "10" } });
     } finally { fixture.database.close(); }
   });
 
@@ -128,6 +151,19 @@ describe("Coach AI Chat provider controls repository", () => {
         expect(isTraderLinkPlatformError(error)).toBe(true);
         if (isTraderLinkPlatformError(error)) expect(JSON.stringify(error.safeContext)).not.toContain("A private question");
       }
+    } finally { fixture.database.close(); }
+  });
+
+  it("fails closed when a Chat receipt exceeds the immutable reservation", () => {
+    const fixture = setup();
+    try {
+      configure(fixture);
+      const chat = assistantReservation(fixture);
+      const reserved = fixture.controls.reserveChatGeneration(fixture.scope, reservationInput(chat, "4".repeat(64), "full provider envelope"));
+      fixture.controls.markProviderStarted(fixture.scope, reserved.attempt.attemptId);
+      fixture.chat.finalizeAssistantSuccess(fixture.scope, chat.assistantMessageId, { assistantTextPrivate: "Safe answer", snapshotContractVersion: "v1", factualSnapshot: { coverage: "available" }, receipt: { providerKey: "openai_direct", modelId: "gpt-chat-a", usage: { inputTokens: reserved.attempt.maximumInputTokens + 1, outputTokens: 2, totalTokens: reserved.attempt.maximumInputTokens + 3 }, inputCostUsdPerMillionTokens: "1", outputCostUsdPerMillionTokens: "2" } });
+      expect(() => fixture.controls.finalizeFromChatReceipt(fixture.scope, reserved.attempt.attemptId, "completed", null)).toThrow("TRADERLINK_PLATFORM_INTEGRITY_FAILED");
+      expect(fixture.database.prepare(`SELECT state, actual_total_tokens FROM coach_ai_chat_generation_attempts WHERE coach_ai_chat_generation_attempt_id = ?`).get(reserved.attempt.attemptId)).toEqual({ state: "started", actual_total_tokens: null });
     } finally { fixture.database.close(); }
   });
 });
