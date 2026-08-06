@@ -5,6 +5,7 @@ import { platformFailure } from "@/src/modules/platform/server/database/platform
 
 import type { CoachWeeklyAiReviewInput } from "../contracts/weekly-ai-review-input-contracts";
 import { CoachAiProviderSettingsRepository } from "./coach-ai-provider-settings-repository";
+import { CoachAiReviewProviderControlsRepository } from "./coach-ai-review-provider-controls-repository";
 import { CoachAiReviewRepository } from "./coach-ai-review-repository";
 import { buildCoachWeeklyAiReviewInput } from "./coach-weekly-ai-review-input-runtime";
 import {
@@ -45,6 +46,7 @@ export class CoachWeeklyAiReviewRunner {
       reviews,
       new CoachAiProviderSettingsRepository(this.database),
       this.generate,
+      new CoachAiReviewProviderControlsRepository(this.database),
     );
     const counts = {
       issuedCount: 0,

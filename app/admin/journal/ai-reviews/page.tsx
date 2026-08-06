@@ -7,6 +7,10 @@ import {
   CoachAiChatAdministrationRepository,
   isCoachAiChatAdministrationSchemaAvailable,
 } from "@/src/modules/coach/server/coach-ai-chat-administration-repository";
+import {
+  CoachAiReviewAdministrationRepository,
+  isCoachAiReviewAdministrationSchemaAvailable,
+} from "@/src/modules/coach/server/coach-ai-review-administration-repository";
 import { CoachAiProviderSettingsRepository } from "@/src/modules/coach/server/coach-ai-provider-settings-repository";
 import { withJournalAdminPageDatabase } from "@/src/modules/platform/server/administration/require-journal-admin-page";
 import {
@@ -24,6 +28,7 @@ import {
   AiChatPlatformControl,
   AiChatProviderSettings,
 } from "./ai-chat-admin-controls";
+import { AiReviewFeatureControl } from "./ai-review-feature-controls";
 
 export const metadata: Metadata = { title: "AI Reviews | Journal Administration" };
 export const dynamic = "force-dynamic";
@@ -36,10 +41,12 @@ export default async function JournalAdminAiReviewsPage() {
   const state = await withJournalAdminPageDatabase((database, scope) => {
     const repository = new CoachAiProviderSettingsRepository(database);
     const chatAvailable = isCoachAiChatAdministrationSchemaAvailable(database);
+    const reviewsAvailable = isCoachAiReviewAdministrationSchemaAvailable(database);
     return Object.freeze({
       settings: repository.read(),
       costs: repository.readCostSummary(),
       chat: chatAvailable ? new CoachAiChatAdministrationRepository({ database, scope }).read() : null,
+      reviews: reviewsAvailable ? new CoachAiReviewAdministrationRepository({ database, scope }).read() : null,
     });
   });
   const credentialConfigured = Boolean(process.env.OPENAI_API_KEY?.trim());
@@ -77,6 +84,52 @@ export default async function JournalAdminAiReviewsPage() {
           initialOutputRate={state.settings.outputCostUsdPerMillionTokens}
         />
       </JournalAdminPanel>
+
+      <JournalAdminPanel title="Automatic AI Reviews">
+        {state.reviews ? (
+          <Stack spacing={2.25}>
+            <Typography color="text.secondary" variant="body2">
+              Weekly and monthly reviews are controlled separately. Turning either one off pauses new reviews without changing anyone&apos;s saved delivery time.
+            </Typography>
+            <Stack direction={{ xs: "column", lg: "row" }} spacing={2.25}>
+              <Stack flex={1} spacing={1.5}>
+                <Typography sx={{ fontWeight: 800 }}>Weekly Reviews</Typography>
+                <AiReviewFeatureControl initialControl={state.reviews.weekly.control} label="Weekly Reviews" />
+              </Stack>
+              <Stack flex={1} spacing={1.5}>
+                <Typography sx={{ fontWeight: 800 }}>Monthly Reviews</Typography>
+                <AiReviewFeatureControl initialControl={state.reviews.monthly.control} label="Monthly Reviews" />
+              </Stack>
+            </Stack>
+          </Stack>
+        ) : <Alert severity="info">Automatic review controls will be available after the accepted review-control migration is applied. Existing delivery preferences are unchanged.</Alert>}
+      </JournalAdminPanel>
+
+      {state.reviews ? (
+        <>
+          <JournalAdminMetricGrid>
+            <JournalAdminMetricCard caption="All recorded weekly attempts" label="Weekly review requests" value={formatAdminInteger(state.reviews.weekly.metrics.requestCount)} />
+            <JournalAdminMetricCard caption="Completed or issued weekly reviews" label="Weekly reviews delivered" value={formatAdminInteger(state.reviews.weekly.metrics.completedOrIssuedCount)} />
+            <JournalAdminMetricCard caption="Weekly attempts stopped before provider work" label="Weekly reviews blocked" value={formatAdminInteger(state.reviews.weekly.metrics.blockedCount)} />
+            <JournalAdminMetricCard caption="Weekly review receipts" label="Weekly tokens" value={formatAdminInteger(state.reviews.weekly.metrics.totalTokens)} />
+            <JournalAdminMetricCard caption="Uses the price saved with each review" label="Weekly estimated cost" value={money(state.reviews.weekly.metrics.estimatedCostUsd)} />
+          </JournalAdminMetricGrid>
+          <JournalAdminMetricGrid>
+            <JournalAdminMetricCard caption="All recorded monthly attempts" label="Monthly review requests" value={formatAdminInteger(state.reviews.monthly.metrics.requestCount)} />
+            <JournalAdminMetricCard caption="Completed or issued monthly reviews" label="Monthly reviews delivered" value={formatAdminInteger(state.reviews.monthly.metrics.completedOrIssuedCount)} />
+            <JournalAdminMetricCard caption="Monthly attempts stopped before provider work" label="Monthly reviews blocked" value={formatAdminInteger(state.reviews.monthly.metrics.blockedCount)} />
+            <JournalAdminMetricCard caption="Monthly review receipts" label="Monthly tokens" value={formatAdminInteger(state.reviews.monthly.metrics.totalTokens)} />
+            <JournalAdminMetricCard caption="Uses the price saved with each review" label="Monthly estimated cost" value={money(state.reviews.monthly.metrics.estimatedCostUsd)} />
+          </JournalAdminMetricGrid>
+          <JournalAdminPanel title="Review delivery health">
+            <Stack spacing={0.75}>
+              <Typography color="text.secondary" variant="body2">Saved delivery preferences: {formatAdminInteger(state.reviews.weekly.metrics.deliveryScheduleCount)} active account{state.reviews.weekly.metrics.deliveryScheduleCount === 1 ? "" : "s"}.</Typography>
+              <Typography color="text.secondary" variant="body2">Failed review attempts: {formatAdminInteger(state.reviews.weekly.metrics.failedCount + state.reviews.monthly.metrics.failedCount)}. This count does not include private review text or account identities.</Typography>
+              <Typography color="text.secondary" variant="body2">Control reservations: {formatAdminInteger(state.reviews.weekly.metrics.reservationCount + state.reviews.monthly.metrics.reservationCount)}.</Typography>
+            </Stack>
+          </JournalAdminPanel>
+        </>
+      ) : null}
 
       <JournalAdminPanel title="AI Chat">
         <Stack spacing={1.25}>

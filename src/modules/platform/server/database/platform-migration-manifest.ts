@@ -23,6 +23,7 @@ import { coachAiReviewGenerationAttemptsMigration } from "@/src/modules/coach/se
 import { coachAiChatFoundationMigration } from "@/src/modules/coach/server/database/migrations/0029_coach_ai_chat_foundation";
 import { coachAiChatProviderControlsMigration } from "@/src/modules/coach/server/database/migrations/0030_coach_ai_chat_provider_controls";
 import { coachAiChatSettingChangeDraftsMigration } from "@/src/modules/coach/server/database/migrations/0031_coach_ai_chat_setting_change_drafts";
+import { coachAiReviewProviderControlsMigration } from "@/src/modules/coach/server/database/migrations/0032_coach_ai_review_provider_controls";
 
 import { platformIdentityMigration } from "./migrations/0001_platform_identity";
 import { platformAuthenticationIdentitiesMigration } from "./migrations/0012_platform_authentication_identities";
@@ -165,6 +166,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/coach/server/database/migrations/0031_coach_ai_chat_setting_change_drafts.ts",
       migration: coachAiChatSettingChangeDraftsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/coach/server/database/migrations/0032_coach_ai_review_provider_controls.ts",
+      migration: coachAiReviewProviderControlsMigration,
     }),
   ]);
 
@@ -352,6 +357,9 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     ]),
     "0031_coach_ai_chat_setting_change_drafts": Object.freeze([
       "coach_ai_review_delivery_change_drafts",
+    ]),
+    "0032_coach_ai_review_provider_controls": Object.freeze([
+      "coach_ai_review_generation_control_reservations",
     ]),
   });
 

@@ -5,9 +5,9 @@
 **Implementation active.** This is the main, end-state plan for the TraderLink AI
 Companion: AI Chat, the Daily Trade Tracker companion, saved weekly and monthly
 reviews, conversational manual execution entry, account settings, and Journal
-Administration controls. No new route, database record, provider request,
-manual execution write, or automatic review behavior is authorized by this
-document until the owner accepts the complete plan.
+Administration controls. The owner accepted the integrated direction and
+delegated technical sequencing on 2026-08-05. Each remaining release, provider
+and irreversible Journal action still follows its own protected boundary.
 
 The owner accepted the integrated direction and delegated technical sequencing
 on 2026-08-05. Work begins with account-scoped persistence, factual snapshots,
@@ -137,10 +137,15 @@ without taking ownership of it.
 AI Chat must let a trader enter manual executions naturally while retaining the
 same financial safeguards as every other entry surface.
 
-### Deliberate entry mode
+### Natural trade-entry recognition and confirmation
 
-- The chat has a clear **Enter trades in chat** action. Ordinary questions are
-  never silently interpreted as a request to write trades.
+- The chat recognizes a clear natural-language request to record trades, such
+  as “I bought 100 shares of ABC at…”, without making the trader first enable a
+  special mode. **Enter trades in chat** remains an optional shortcut, not a
+  requirement.
+- Trade-like wording can create only an editable draft. Ordinary questions,
+  examples and discussion never write or alter Journal facts; the explicit
+  final confirmation remains the only save action.
 - The trader may describe one or several executions in normal language, such as
   a buy, add, partial exit, or full exit.
 - AI extracts only a **draft**. It presents one editable execution row per

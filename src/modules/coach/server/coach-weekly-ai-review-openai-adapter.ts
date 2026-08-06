@@ -10,6 +10,7 @@ import type { CoachWeeklyAiReviewInput } from "../contracts/weekly-ai-review-inp
 import type { CoachAiGenerationUsage } from "./coach-ai-review-repository";
 
 export const LOCAL_COACH_WEEKLY_AI_MODEL = "gpt-5.6-sol" as const;
+export const COACH_WEEKLY_AI_REVIEW_MAX_OUTPUT_TOKENS = 4_096;
 
 export type CoachWeeklyAiReviewGeneration = Readonly<{
   output: CoachWeeklyAiReviewOutput;
@@ -32,6 +33,25 @@ Be specific where the supplied notes, rule outcomes, focuses, or trade facts sup
 Do not provide trade recommendations, price targets, position-size advice, entry or exit instructions, diagnoses, certainty claims, or language that treats profit as proof of good process or a loss as proof of bad process. Do not mention the provider, AI, prompts, tokens, databases, internal systems, or data-decision codes.
 
 Use plain trading-journal language. Keep the next focuses process-oriented and limited to three. If the supplied record is incomplete, say exactly what limits the conclusion in incompleteRecord; otherwise set incompleteRecord to null.`;
+
+export type CoachWeeklyAiReviewProviderEnvelope = Readonly<{
+  system: string;
+  prompt: string;
+  maximumOutputTokens: number;
+  reservationText: string;
+}>;
+
+export function buildCoachWeeklyAiReviewProviderEnvelope(
+  input: CoachWeeklyAiReviewInput,
+): CoachWeeklyAiReviewProviderEnvelope {
+  const prompt = JSON.stringify(input);
+  return Object.freeze({
+    system: SYSTEM_PROMPT,
+    prompt,
+    maximumOutputTokens: COACH_WEEKLY_AI_REVIEW_MAX_OUTPUT_TOKENS,
+    reservationText: JSON.stringify({ system: SYSTEM_PROMPT, prompt }),
+  });
+}
 
 function completeUsage(usage: Readonly<{
   inputTokens?: number;
@@ -65,11 +85,13 @@ export async function generateCoachWeeklyAiReview(
   }>,
 ): Promise<CoachWeeklyAiReviewGeneration> {
   const openai = createOpenAI({ apiKey: localOpenAiApiKey(options.environment ?? process.env) });
+  const envelope = buildCoachWeeklyAiReviewProviderEnvelope(input);
   const result = await generateText({
     model: openai(options.modelId),
+    maxOutputTokens: envelope.maximumOutputTokens,
     output: Output.object({ schema: weeklyReviewSchema }),
-    system: SYSTEM_PROMPT,
-    prompt: JSON.stringify(input),
+    system: envelope.system,
+    prompt: envelope.prompt,
   });
   if (!result.output) throw new Error("TRADERLINK_COACH_OPENAI_NO_OUTPUT");
   return Object.freeze({

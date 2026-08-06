@@ -187,23 +187,27 @@ Active. The product contract is in [AI Weekly Review Plan](ai-weekly-review-plan
   local development database. The current verifier passed schema digest,
   foreign-key, quick, and full integrity checks with 28 exact migration rows.
 
-## Next slice
+## Current next slice
 
-Start the approved AI Chat foundation as a separate migration and server
-contract. Register the protected review trigger with the accepted hosted
-scheduler only at the deployment boundary.
+The AI Chat foundation, private conversation UI, Daily Companion drafting and
+manual-execution drafts are now implemented under
+[AI Companion Progress](ai-chat-progress.md). The next review-specific work is
+the active independent Weekly/Monthly provider-control enforcement slice, then
+the deployment-boundary scheduler registration. No hosted scheduler is being
+registered during local development.
 
-## Planned input addition: selected trade tags
+## Completed: selected trade tags in review input
 
-The weekly package will include the trader-selected tags already shown beside
-each completed trade. They give useful setup and execution context, but remain
-context rather than proof. Conflicting tags on one trade must be presented as a
+The weekly package includes the trader-selected tags already shown beside each
+completed trade. They give useful setup and execution context, but remain
+context rather than proof. Conflicting tags on one trade are presented as a
 conflict, never silently resolved by the review.
 
-## In progress: local OpenAI review test
+## Completed: controlled local OpenAI review test
 
 - The first controlled direct OpenAI response completed against the first
   fixture week without changing Journal data.
 - It exposed a scope-label ambiguity: account-wide coverage counts appeared
   beside weekly trade counts. The input contract now names week and account
-  coverage separately before the final local review run.
+  coverage separately. This was a controlled development check, not scheduled
+  delivery and not a production-provider acceptance.

@@ -1,5 +1,12 @@
 # AI Chat provider controls progress
 
+## Status
+
+Chat provider controls are implemented locally and migration `0030` is applied
+to the protected development database. Scheduled AI Review controls are a
+separate active slice under migration `0032`; they are not accepted merely
+because Chat controls exist.
+
 ## Implemented locally: provider-control foundation
 
 - Migration `0030_coach_ai_chat_provider_controls` adds a separate singleton Chat provider setting seeded from the existing review setting, four disabled feature controls, and immutable Chat generation-attempt reservations.
@@ -17,7 +24,24 @@
 - The page uses the existing Chat-inclusive cost aggregation repository for request, token, estimated-cost, failed and blocked totals. When the database is still at the pre-0029/0030 checkpoint, the Chat section stays honestly unavailable and the existing AI Review settings remain readable.
 - No credential value, prompt, answer, private Journal fact, raw account identifier or environment-file value is accepted, displayed, persisted or logged by this slice.
 
+## Scheduled AI Review controls: active
+
+- Migration `0032_coach_ai_review_provider_controls` creates independent
+  Weekly Review and Monthly Review enablement, caps, immutable reservations and
+  usage/cost receipts. It preserves each trader's saved delivery preference
+  when a feature is disabled.
+- The local protected database has applied `0032` and passed its current
+  integrity/schema verification. Focused one-worker migration and migration
+  contract tests passed before the apply.
+- The related runner, issuance and Journal Administration changes are still
+  uncommitted. Before this slice is marked complete, its timeout/retry behavior
+  must be checked so an interrupted provider request cannot leave an allowance
+  unusably reserved; the owner controls must also be verified against the same
+  independent feature boundaries.
+
 ## Verification boundary
 
 - Focused migration and repository tests cover defaults, enablement guards, complete provider-envelope byte bounds, cap blocking, Eastern DST rollover, exact-message idempotency, shared-workspace account controls, configuration snapshots, over-reservation receipt rejection, started failures, scope denial, safe errors, and Chat aggregation.
-- Applying migration `0030` to the private development database remains intentionally deferred to the coordinating migration checkpoint.
+- Migration `0030` and its follow-on migration `0032` are applied to the
+  private development database through protected checkpoints. This record does
+  not treat the currently active 0032 runtime/admin code as complete.

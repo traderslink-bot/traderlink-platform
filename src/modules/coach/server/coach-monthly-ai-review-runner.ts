@@ -8,6 +8,7 @@ import type {
   CoachMonthlyAiReviewPeriod,
 } from "../contracts/monthly-ai-review-input-contracts";
 import { CoachAiProviderSettingsRepository } from "./coach-ai-provider-settings-repository";
+import { CoachAiReviewProviderControlsRepository } from "./coach-ai-review-provider-controls-repository";
 import { CoachAiReviewRepository } from "./coach-ai-review-repository";
 import { buildCoachMonthlyAiReviewInput } from "./coach-monthly-ai-review-input-runtime";
 import {
@@ -51,6 +52,7 @@ export class CoachMonthlyAiReviewRunner {
       reviews,
       new CoachAiProviderSettingsRepository(this.database),
       this.generate,
+      new CoachAiReviewProviderControlsRepository(this.database),
     );
     const counts = {
       issuedCount: 0,

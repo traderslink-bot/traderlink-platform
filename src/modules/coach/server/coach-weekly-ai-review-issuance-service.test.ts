@@ -14,6 +14,7 @@ import {
   type CoachWeeklyAiReviewOutput,
 } from "../contracts/weekly-ai-review-output-contracts";
 import { CoachAiProviderSettingsRepository } from "./coach-ai-provider-settings-repository";
+import { CoachAiReviewProviderControlsRepository } from "./coach-ai-review-provider-controls-repository";
 import { CoachAiReviewRepository } from "./coach-ai-review-repository";
 import { CoachWeeklyAiReviewIssuanceService } from "./coach-weekly-ai-review-issuance-service";
 
@@ -113,6 +114,14 @@ function output(): CoachWeeklyAiReviewOutput {
   });
 }
 
+function enableWeeklyReviewControl(database: Database.Database): CoachAiReviewProviderControlsRepository {
+  database.prepare(`UPDATE coach_ai_feature_controls
+SET enabled = 1, daily_request_cap = 10, daily_token_cap = 100000,
+  daily_estimated_spend_cap_usd = '10', updated_at_utc = ?
+WHERE feature_key = 'weekly_reviews' AND scope_kind = 'platform'`).run(createdAtUtc);
+  return new CoachAiReviewProviderControlsRepository(database);
+}
+
 describe("Coach weekly AI review issuance", () => {
   it("records failed attempts, retries the same immutable request, and reuses the issued review", async () => {
     const { database, scope, secondAccountScope } = setup();
@@ -123,6 +132,7 @@ describe("Coach weekly AI review issuance", () => {
         inputCostUsdPerMillionTokens: "2.5",
         outputCostUsdPerMillionTokens: "10",
       }, new Date(createdAtUtc));
+      const controls = enableWeeklyReviewControl(database);
       const reviews = new CoachAiReviewRepository(database);
       let calls = 0;
       const service = new CoachWeeklyAiReviewIssuanceService(
@@ -142,6 +152,7 @@ describe("Coach weekly AI review issuance", () => {
             usage: Object.freeze({ inputTokens: 200, outputTokens: 100, totalTokens: 300 }),
           });
         },
+        controls,
       );
 
       const first = await service.issue(scope, input(), null, new Date(createdAtUtc));
@@ -228,6 +239,7 @@ describe("Coach weekly AI review issuance", () => {
     const { database, scope } = setup();
     try {
       const settings = new CoachAiProviderSettingsRepository(database);
+      settings.save({ modelId: "gpt-test", inputCostUsdPerMillionTokens: "2.5", outputCostUsdPerMillionTokens: "10" }, new Date(createdAtUtc));
       const service = new CoachWeeklyAiReviewIssuanceService(
         new CoachAiReviewRepository(database),
         settings,
@@ -236,6 +248,7 @@ describe("Coach weekly AI review issuance", () => {
             usage: { totalTokens: 150 },
           });
         },
+        enableWeeklyReviewControl(database),
       );
 
       await expect(service.issue(scope, input(), null, new Date(createdAtUtc)))

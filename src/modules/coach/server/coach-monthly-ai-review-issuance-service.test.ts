@@ -14,6 +14,7 @@ import {
   type CoachMonthlyAiReviewOutput,
 } from "../contracts/monthly-ai-review-output-contracts";
 import { CoachAiProviderSettingsRepository } from "./coach-ai-provider-settings-repository";
+import { CoachAiReviewProviderControlsRepository } from "./coach-ai-review-provider-controls-repository";
 import { CoachAiReviewRepository } from "./coach-ai-review-repository";
 import { CoachMonthlyAiReviewIssuanceService } from "./coach-monthly-ai-review-issuance-service";
 
@@ -115,6 +116,14 @@ function output(): CoachMonthlyAiReviewOutput {
   });
 }
 
+function enableMonthlyReviewControl(database: Database.Database): CoachAiReviewProviderControlsRepository {
+  database.prepare(`UPDATE coach_ai_feature_controls
+SET enabled = 1, daily_request_cap = 10, daily_token_cap = 100000,
+  daily_estimated_spend_cap_usd = '10', updated_at_utc = ?
+WHERE feature_key = 'monthly_reviews' AND scope_kind = 'platform'`).run(createdAtUtc);
+  return new CoachAiReviewProviderControlsRepository(database);
+}
+
 describe("Coach monthly AI review issuance", () => {
   it("persists a partial-month snapshot, retries safely, and reuses an immutable issued review", async () => {
     const { database, scope, secondAccountScope } = setup();
@@ -125,6 +134,7 @@ describe("Coach monthly AI review issuance", () => {
         inputCostUsdPerMillionTokens: "2.5",
         outputCostUsdPerMillionTokens: "10",
       }, new Date(createdAtUtc));
+      const controls = enableMonthlyReviewControl(database);
       const reviews = new CoachAiReviewRepository(database);
       let calls = 0;
       const service = new CoachMonthlyAiReviewIssuanceService(
@@ -143,6 +153,7 @@ describe("Coach monthly AI review issuance", () => {
             usage: Object.freeze({ inputTokens: 200, outputTokens: 100, totalTokens: 300 }),
           });
         },
+        controls,
       );
 
       const first = await service.issue(scope, input(), null, new Date(createdAtUtc));
@@ -228,14 +239,17 @@ describe("Coach monthly AI review issuance", () => {
   it("keeps missing partial provider usage unavailable rather than estimating it", async () => {
     const { database, scope } = setup();
     try {
+      const settings = new CoachAiProviderSettingsRepository(database);
+      settings.save({ modelId: "gpt-test", inputCostUsdPerMillionTokens: "2.5", outputCostUsdPerMillionTokens: "10" }, new Date(createdAtUtc));
       const service = new CoachMonthlyAiReviewIssuanceService(
         new CoachAiReviewRepository(database),
-        new CoachAiProviderSettingsRepository(database),
+        settings,
         async () => {
           throw Object.assign(new Error("provider failed"), {
             usage: { totalTokens: 150 },
           });
         },
+        enableMonthlyReviewControl(database),
       );
 
       await expect(service.issue(scope, input(), null, new Date(createdAtUtc)))

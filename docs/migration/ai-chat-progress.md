@@ -41,8 +41,52 @@ The private persistence API checkpoint is tracked in
   Journal preview and commit commands.
 - [x] Let Chat prepare an allowlisted AI Review delivery day/time change and
   require explicit trader confirmation through the normal settings command.
+- [ ] Finish the scheduled AI Review control-enforcement slice: audit the
+  Weekly/Monthly reservation retry and timeout paths, finish its owner-only
+  controls, and record its narrow verification/commit checkpoint.
 - [ ] Implement production entitlement, scheduled-delivery, operational, and
   privacy-deletion decisions at their separate launch boundaries.
+
+## Active: scheduled AI Review control enforcement
+
+### Current checkpoint
+
+- Migration `0032_coach_ai_review_provider_controls` is now applied to the
+  protected local development database. It creates distinct Weekly Review and
+  Monthly Review control/reservation boundaries so neither can consume Chat's
+  allowance or the other review type's allowance.
+- The protected backup, restore and current-database verification checkpoint
+  completed on 2026-08-06. The completed database has 32 ordered migrations;
+  `quick_check`, `integrity_check`, foreign-key verification and the current
+  schema-digest check passed after the apply.
+- The implementation and focused migration/file-contract tests are present,
+  but the full runtime/administration slice is still active and uncommitted.
+  In particular, the retry/timeout behavior for an interrupted provider attempt
+  must be reviewed so a stale reservation cannot silently consume a future
+  scheduled review allowance.
+
+- Preserve each trader's saved Friday/Saturday/Sunday and Eastern-time delivery
+  preference when an owner disables a review feature; disabling generation must
+  never erase the schedule.
+- Enforce independent platform controls and request/token/spend caps for Weekly
+  Reviews and Monthly Reviews before provider work. Chat, Weekly Reviews and
+  Monthly Reviews must not consume or unlock one another's allowance.
+- Add an immutable, privacy-safe reservation record for each attempted scheduled
+  review. It may retain scope references, feature, model/pricing snapshots,
+  bounded usage reservations, state, safe failure code and timestamps, but no
+  prompt, notes, review text, statement content or display identity.
+- Keep review provider pricing separate from Chat provider pricing. Enabling or
+  retaining a review feature requires configured Review pricing; Chat and Daily
+  Companion continue to require configured Chat pricing.
+- The runner checks the platform switch before account enumeration or input
+  construction, and the issuance service checks/reserves again immediately
+  before a provider call so a mid-run disable or exhausted cap fails closed.
+- Journal Administration will show separate Weekly and Monthly controls and
+  aggregate requests, blocks, failures, tokens, estimated cost and delivery
+  health without exposing private review content or raw account identifiers.
+- Account Settings will retain the user's delivery choices. The user-facing
+  automatic-review opt-out remains distinct from owner enablement/entitlement
+  and will be added only through an explicit durable preference contract.
 
 ## Completed: schema-only AI Chat foundation
 
@@ -349,6 +393,23 @@ existing migration, Journal, and account boundaries.
   remain disabled by default.
 - The post-migration online backup and independently restored copy are
   byte-identical at SHA-256
-  `a2d41c697abf3430e18c7f3d41e60449a0bb607b803e941f0871b8e0416722e3`,
-  with all 31 migration records, 118 table counts, page geometry and recovery
-  authority matching.
+   `a2d41c697abf3430e18c7f3d41e60449a0bb607b803e941f0871b8e0416722e3`,
+   with all 31 migration records, 118 table counts, page geometry and recovery
+   authority matching.
+
+## Completed: protected migration 0032 checkpoint
+
+- Before applying `0032_coach_ai_review_provider_controls`, a fresh protected
+  online backup and independent restore were created under the private Platform
+  data boundary. The backup and restore matched exactly.
+- Migration `0032` applied once and only once. The current development
+  database now has 32 ordered migrations and schema digest
+  `2b282574a975a701f00d7bb961422e09ed33badb61050a4a7ca46fa7486f577b`.
+- The post-apply verifier passed `quick_check`, `integrity_check`,
+  foreign-key validation and the current schema contract. This checkpoint
+  changes no Journal execution, trade, annotation, account, provider key or
+  user-facing review content.
+- Focused one-worker tests for the migration and migration-file contract passed
+  before the protected apply. The runtime/admin controls remain an active
+  source slice until their own focused verification and local commit are
+  recorded.
