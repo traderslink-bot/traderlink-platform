@@ -63,3 +63,41 @@ export async function exchangeMoomooCode(input: Readonly<{
   if (!scopes.includes(QUOTE_READ_SCOPE)) platformFailure("TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED");
   return Object.freeze({ accessToken: token.access_token, refreshToken: token.refresh_token, expiresInSeconds: token.expires_in, scopes: Object.freeze(scopes) });
 }
+
+export async function refreshMoomooAccessToken(input: Readonly<{
+  clientId: string;
+  refreshToken: string;
+}>): Promise<Readonly<{ accessToken: string; expiresInSeconds: number; scopes: readonly string[] }> | null> {
+  const body = new URLSearchParams({
+    grant_type: "refresh_token",
+    refresh_token: input.refreshToken,
+    client_id: input.clientId,
+  });
+  let response: Response;
+  try {
+    response = await fetch(`${MOOMOO_API_ORIGIN}/oauth2/token`, {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body,
+      cache: "no-store",
+    });
+  } catch {
+    return null;
+  }
+  let payload: unknown;
+  try { payload = await response.json(); } catch { return null; }
+  if (!response.ok || !payload || typeof payload !== "object") return null;
+  const token = payload as Record<string, unknown>;
+  if (
+    typeof token.access_token !== "string" ||
+    !Number.isSafeInteger(token.expires_in) || token.expires_in <= 0 ||
+    typeof token.scope !== "string"
+  ) return null;
+  const scopes = token.scope.split(" ").filter(Boolean);
+  if (!scopes.includes(QUOTE_READ_SCOPE)) return null;
+  return Object.freeze({
+    accessToken: token.access_token,
+    expiresInSeconds: token.expires_in,
+    scopes: Object.freeze(scopes),
+  });
+}

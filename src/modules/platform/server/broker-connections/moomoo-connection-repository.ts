@@ -62,4 +62,13 @@ export class MoomooConnectionRepository {
     this.database.prepare(`INSERT INTO platform_broker_connections (connection_id, user_id, workspace_id, provider, connection_state, credential_key_version, credential_initialization_vector, credential_ciphertext, credential_authentication_tag, access_token_expires_at_utc, authorized_scopes, connected_at_utc, updated_at_utc, revoked_at_utc) VALUES (?, ?, ?, 'moomoo', 'active', ?, ?, ?, ?, ?, ?, ?, ?, NULL) ON CONFLICT(user_id, workspace_id, provider) DO UPDATE SET connection_state = 'active', credential_key_version = excluded.credential_key_version, credential_initialization_vector = excluded.credential_initialization_vector, credential_ciphertext = excluded.credential_ciphertext, credential_authentication_tag = excluded.credential_authentication_tag, access_token_expires_at_utc = excluded.access_token_expires_at_utc, authorized_scopes = excluded.authorized_scopes, updated_at_utc = excluded.updated_at_utc, revoked_at_utc = NULL`).run(connectionId, scope.userId, scope.workspaceId, input.encrypted.keyVersion, input.encrypted.initializationVector, input.encrypted.ciphertext, input.encrypted.authenticationTag, input.accessTokenExpiresAtUtc, JSON.stringify([...new Set(input.authorizedScopes)].sort()), connectedAtUtc, input.timestamp);
     const saved = this.find(scope); if (!saved) platformFailure("TRADERLINK_BROKER_CONNECTION_STORAGE_INVALID"); return saved;
   }
+
+  markReauthorizationRequired(scope: WorkspaceAccessScope, timestamp: string): void {
+    assertCanonicalUtcTimestamp(timestamp, "timestamp");
+    const result = this.database.prepare(`UPDATE platform_broker_connections
+SET connection_state = 'reauthorization_required', updated_at_utc = ?
+WHERE user_id = ? AND workspace_id = ? AND provider = 'moomoo'
+  AND connection_state = 'active'`).run(timestamp, scope.userId, scope.workspaceId);
+    if (result.changes !== 1) platformFailure("TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED");
+  }
 }
