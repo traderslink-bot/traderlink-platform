@@ -17,6 +17,8 @@ import {
 import { CoachAiChatProviderControlsRepository } from "./coach-ai-chat-provider-controls-repository";
 import { CoachAiChatRepository } from "./coach-ai-chat-repository";
 import { CoachAiChatTradeDetailService } from "./coach-ai-chat-trade-detail-service";
+import { CoachAiDailyCompanionRepository } from "./coach-ai-daily-companion-repository";
+import type { CoachAiChatTrustedContext } from "../contracts/ai-daily-companion-contracts";
 
 export async function generateCoachAiChatSavedAnswer(
   scope: WorkspaceAccessScope,
@@ -24,6 +26,7 @@ export async function generateCoachAiChatSavedAnswer(
     conversationId: string;
     question: string;
     idempotencySha256: string;
+    resolveTrustedContext?: (() => CoachAiChatTrustedContext) | null;
   }>,
 ): Promise<CoachAiChatGenerationServiceResult> {
   const database = openPlatformDatabase({ mode: "runtime" });
@@ -40,6 +43,8 @@ export async function generateCoachAiChatSavedAnswer(
       new CoachAiChatProviderControlsRepository(database),
       new CoachAiChatFactualToolService(new JournalAnalyticsService(facts)),
       new CoachAiChatTradeDetailService(facts, annotations),
+      undefined,
+      new CoachAiDailyCompanionRepository(database),
     ).generateSavedAnswer(scope, input);
   } finally {
     database.close();

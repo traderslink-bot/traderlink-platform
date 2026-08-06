@@ -424,6 +424,7 @@ export async function getGovernedDaySession(
     decisionActivity: [],
     executionActivity: [],
     expectedAccountSelectionRef: "legacy-read-only",
+    factSetRevisionSha256: "0".repeat(64),
     dailyNote: savedNote
       ? {
           anythingElse: savedNote.anythingElse,

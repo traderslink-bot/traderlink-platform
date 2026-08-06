@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 
 import { DashboardPage } from "../../dashboard-template";
 import { AiChatClient } from "./ai-chat-client";
+import type { CoachAiDailyCompanionContextSelector } from "@/src/modules/coach/contracts/ai-daily-companion-contracts";
 
 export const metadata: Metadata = {
   title: "AI Chat | TraderLink Platform",
@@ -13,7 +14,24 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default function AiChatPage() {
+type AiChatPageProps = Readonly<{
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}>;
+
+function dailyContextFromSearchParams(
+  values: Record<string, string | string[] | undefined>,
+): CoachAiDailyCompanionContextSelector | null {
+  const date = values.date;
+  const currency = values.currency;
+  if (typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/u.test(date) ||
+      typeof currency !== "string" || !/^[A-Z]{3}$/u.test(currency)) {
+    return null;
+  }
+  return Object.freeze({ kind: "daily_review", tradingDate: date, currency });
+}
+
+export default async function AiChatPage({ searchParams }: AiChatPageProps) {
+  const initialContext = dailyContextFromSearchParams(await searchParams);
   return (
     <DashboardPage>
       <Box>
@@ -22,7 +40,7 @@ export default function AiChatPage() {
           Ask questions about your completed trades, explore what has been working, and keep each conversation saved with the Journal account you are viewing.
         </Typography>
       </Box>
-      <AiChatClient />
+      <AiChatClient initialContext={initialContext} />
     </DashboardPage>
   );
 }

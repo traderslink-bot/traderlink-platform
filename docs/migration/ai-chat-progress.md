@@ -24,7 +24,7 @@ The private persistence API checkpoint is tracked in
 - [x] Complete and link the AI Companion product plan and language/query plan.
 - [x] Approve the complete integrated AI Companion direction for implementation.
 - [x] Add the schema-only, account-scoped AI Chat foundation migration.
-- [ ] Implement and verify the AI Reviews schedule/list/detail foundation.
+- [x] Implement and verify the AI Reviews schedule/list/detail foundation.
 - [x] Implement account-scoped Chat persistence, ordered-message history,
   immutable factual snapshots, and generation-receipt contracts over migration
   `0029`.
@@ -34,6 +34,8 @@ The private persistence API checkpoint is tracked in
   its canonical vocabulary before generating runtime registries.
 - [ ] Implement the private AI Chat experience and factual question families.
 - [ ] Implement Daily Trade Tracker companion drafting/confirmation flow.
+  The trusted one-day discussion/context boundary is complete; editable note,
+  focus, tag, classification and review proposals remain confirmation work.
 - [ ] Integrate conversational manual execution drafts with the canonical
   Journal preview and commit commands.
 - [ ] Implement production entitlement, scheduled-delivery, operational, and
@@ -154,6 +156,42 @@ existing migration, Journal, and account boundaries.
 - `git diff --check` passed for the tracked files. No provider call, database
   migration, dependency change or dashboard process was made during this UI
   checkpoint.
+
+## Completed: trusted Daily Trade Tracker companion context
+
+- The Daily Trade Tracker now opens AI Chat with an explicit trading-date and
+  currency selector. The browser never supplies Journal facts: the message
+  route resolves the selected day from the current user, workspace and Journal
+  account before generation.
+- One bounded context package includes the selected day's exact fact-set
+  revision, result, review state, daily notes, dated Current Focuses revisions,
+  saved rule outcomes, trade notes and tags, open-position classifications and
+  visible coverage limitations. Tags remain context, never proof of a setup,
+  emotion, cause or rule break.
+- Daily context is attached only to a newly created daily-review conversation.
+  Selecting an existing conversation clears that binding so an unrelated
+  private thread cannot silently inherit the day.
+- A Daily Companion request must pass both Chat and Daily Companion platform
+  and account controls. The tighter enabled request, token and spend caps apply;
+  both features remain disabled by default.
+- Idempotent retries return the original saved attempt before rebuilding live
+  day context. The exact trusted context used for a completed answer is kept in
+  the immutable answer evidence and in a scoped Daily Companion proposal record.
+  No Journal note, tag, focus, classification, execution or review state is
+  changed by this slice.
+
+### Verification
+
+- Three focused one-worker files passed 33 tests covering route trust,
+  feature/cost gates, bounded context, immutable evidence, Daily Companion
+  proposals and idempotent retry behavior.
+- Focused ESLint passed with zero errors. The Tracker retains two pre-existing
+  unused-variable warnings, and `git diff --check` passed.
+- One project-wide TypeScript pass was attempted with incremental output
+  disabled after the checkout rejected its cache write. It remains blocked by
+  the existing cross-project Analytics, Calendar, Import, Tracker fixture and
+  older test typing backlog; no new runtime failure was found by the focused
+  Daily Companion checks.
 
 ## Completed: protected local migration checkpoint
 

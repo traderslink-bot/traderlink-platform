@@ -5,6 +5,7 @@ import type {
   CoachAiChatGenerationUsage,
   CoachAiChatMessage,
 } from "../contracts/ai-chat-contracts";
+import type { CoachAiChatTrustedContext } from "../contracts/ai-daily-companion-contracts";
 import type { CoachAiChatGenerationAttempt } from "../contracts/ai-provider-controls-contracts";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
@@ -13,6 +14,7 @@ import { CoachAiChatFactualToolDispatcher, COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYT
 import { CoachAiChatProviderGenerationError, generateCoachAiChatOpenAiAnswer } from "./coach-ai-chat-openai-adapter";
 import { CoachAiChatProviderControlsRepository } from "./coach-ai-chat-provider-controls-repository";
 import { CoachAiChatRepository } from "./coach-ai-chat-repository";
+import type { CoachAiDailyCompanionRepository } from "./coach-ai-daily-companion-repository";
 import type { CoachAiChatFactualToolService } from "./coach-ai-chat-factual-tool-service";
 import type { CoachAiChatTradeDetailService } from "./coach-ai-chat-trade-detail-service";
 
@@ -20,6 +22,7 @@ export const COACH_AI_CHAT_MAX_RECENT_MESSAGES = 12;
 export const COACH_AI_CHAT_MAX_HISTORY_BYTES = 16 * 1024;
 export const COACH_AI_CHAT_MAX_OUTPUT_TOKENS = 1_200;
 export const COACH_AI_CHAT_MAX_QUESTION_BYTES = 4 * 1024;
+export const COACH_AI_CHAT_MAX_TRUSTED_CONTEXT_BYTES = 20 * 1024;
 // Covers the real system contract, four Zod tool schemas, structured output, and all three model steps.
 export const COACH_AI_CHAT_SYSTEM_AND_TOOL_ENVELOPE_RESERVED_BYTES = 32 * 1024;
 
@@ -30,6 +33,7 @@ export type CoachAiChatGenerator = (input: Readonly<{
   attempt: CoachAiChatGenerationAttempt;
   recentMessages: readonly CoachAiChatMessage[];
   question: string;
+  trustedContext: CoachAiChatTrustedContext | null;
   dispatcher: CoachAiChatFactualToolDispatcher;
 }>) => Promise<CoachAiChatGenerationResult>;
 
@@ -66,7 +70,12 @@ function boundedHistory(messages: readonly CoachAiChatMessage[]): readonly Coach
   return Object.freeze(accepted.reverse());
 }
 
-export function createCoachAiChatReservationEnvelope(question: string, history: readonly CoachAiChatMessage[]): string {
+export function createCoachAiChatReservationEnvelope(
+  question: string,
+  history: readonly CoachAiChatMessage[],
+  trustedContext: CoachAiChatTrustedContext | null = null,
+): string {
+  const trustedContextBytes = Buffer.byteLength(JSON.stringify(trustedContext), "utf8");
   const context = history.map((message) => ({
     role: message.role,
     text: message.role === "user" ? message.originalUserTextPrivate : message.assistantTextPrivate,
@@ -76,6 +85,7 @@ export function createCoachAiChatReservationEnvelope(question: string, history: 
     systemInstruction: "grounded Journal answers only; no advice; evidence references must resolve to deterministic factual tools",
     recentConversation: context,
     currentQuestion: question,
+    trustedContext,
     toolDefinitions: ["summarize_closed_trades", "group_closed_trades", "list_closed_trades", "get_closed_trade_details"],
     maximumFactualResultsBytes: COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES,
     maximumOutputTokens: COACH_AI_CHAT_MAX_OUTPUT_TOKENS,
@@ -84,6 +94,10 @@ export function createCoachAiChatReservationEnvelope(question: string, history: 
     repeatedFactualResultsReservation: "x".repeat(COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES * 2),
     repeatedHistoryReservation: "x".repeat(COACH_AI_CHAT_MAX_HISTORY_BYTES * 2),
     repeatedQuestionReservation: "x".repeat(COACH_AI_CHAT_MAX_QUESTION_BYTES * 2),
+    trustedContextReservation: "x".repeat(Math.max(
+      0,
+      COACH_AI_CHAT_MAX_TRUSTED_CONTEXT_BYTES - trustedContextBytes,
+    )),
     systemAndToolEnvelopeReservation: "x".repeat(COACH_AI_CHAT_SYSTEM_AND_TOOL_ENVELOPE_RESERVED_BYTES),
   });
 }
@@ -95,11 +109,17 @@ export class CoachAiChatGenerationService {
     private readonly factualTools: Pick<CoachAiChatFactualToolService, "summarizeClosedTrades" | "groupClosedTrades" | "listClosedTrades">,
     private readonly tradeDetails: Pick<CoachAiChatTradeDetailService, "getClosedTradeDetails">,
     private readonly generator: CoachAiChatGenerator = generateCoachAiChatOpenAiAnswer,
+    private readonly dailyCompanion: Pick<CoachAiDailyCompanionRepository, "recordProposedReflection"> | null = null,
   ) {}
 
   async generateSavedAnswer(
     scope: WorkspaceAccessScope,
-    input: Readonly<{ conversationId: string; question: string; idempotencySha256: string }>,
+    input: Readonly<{
+      conversationId: string;
+      question: string;
+      idempotencySha256: string;
+      resolveTrustedContext?: (() => CoachAiChatTrustedContext) | null;
+    }>,
     now = new Date(),
   ): Promise<CoachAiChatGenerationServiceResult> {
     if (Buffer.byteLength(input.question, "utf8") > COACH_AI_CHAT_MAX_QUESTION_BYTES) {
@@ -118,9 +138,18 @@ export class CoachAiChatGenerationService {
         assistantMessageId: existing.assistantMessageId, attemptId: existing.attemptId });
     }
 
+    const trustedContext = input.resolveTrustedContext?.() ?? null;
+    if (trustedContext && Buffer.byteLength(JSON.stringify(trustedContext), "utf8") >
+        COACH_AI_CHAT_MAX_TRUSTED_CONTEXT_BYTES) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "trustedContext" });
+    }
+
     const created = this.chat.runAtomically(() => {
       const pair = this.chat.appendUserMessageAndReserveAssistant(scope, input.conversationId, {
         originalUserTextPrivate: input.question,
+        structuredInterpretation: trustedContext
+          ? Object.freeze({ intent: "assist_daily_review", trustedContext })
+          : undefined,
       }, now);
       const history = boundedHistory(this.chat.listMessages(scope, input.conversationId, { limit: COACH_AI_CHAT_MAX_RECENT_MESSAGES }).messages
         .filter((message) => message.messageId !== pair.userMessage.messageId && message.messageId !== pair.assistantMessage.messageId));
@@ -128,8 +157,9 @@ export class CoachAiChatGenerationService {
         conversationId: input.conversationId,
         assistantMessageId: pair.assistantMessage.messageId,
         idempotencySha256: input.idempotencySha256,
-        providerInputText: createCoachAiChatReservationEnvelope(input.question, history),
+        providerInputText: createCoachAiChatReservationEnvelope(input.question, history, trustedContext),
         maxOutputTokens: COACH_AI_CHAT_MAX_OUTPUT_TOKENS,
+        additionalFeatureKey: trustedContext ? "daily_companion" : undefined,
       }, now);
       if (reservation.state === "blocked") {
         this.chat.finalizeAssistantFailure(scope, pair.assistantMessage.messageId, "TRADERLINK_COACH_CHAT_DAILY_CAP_REACHED", null, now);
@@ -148,7 +178,7 @@ export class CoachAiChatGenerationService {
     let result: CoachAiChatGenerationResult;
     try {
       result = await this.generator({ scope, selectedAccountId: scope.activeAccountId!, asOfUtc: now.toISOString(), attempt,
-        recentMessages: created.history, question: input.question, dispatcher });
+        recentMessages: created.history, question: input.question, trustedContext, dispatcher });
       if (!completeUsage(result.usage)) {
         throw new CoachAiChatProviderGenerationError(result.usage, "TRADERLINK_COACH_PROVIDER_USAGE_UNAVAILABLE");
       }
@@ -177,12 +207,26 @@ export class CoachAiChatGenerationService {
         assistantTextPrivate: safeAssistantText(result),
         snapshotContractVersion: "traderlink_coach_ai_chat_generation_v1",
         factualSnapshot: Object.freeze({ answer: result.answer, factualToolCalls: result.factualToolCalls,
-          totalFactualResultBytes: dispatcher.totalSerializedResultBytes() }),
+          totalFactualResultBytes: dispatcher.totalSerializedResultBytes(), trustedContext }),
         receipt: { providerKey: attempt.providerKey, modelId: attempt.modelId, usage: result.usage,
           inputCostUsdPerMillionTokens: attempt.inputCostUsdPerMillionTokens,
           outputCostUsdPerMillionTokens: attempt.outputCostUsdPerMillionTokens },
       }, now);
       this.controls.finalizeFromChatReceipt(scope, attempt.attemptId, "completed", null, now);
+      if (trustedContext) {
+        if (!this.dailyCompanion) {
+          platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { component: "dailyCompanion" });
+        }
+        this.dailyCompanion.recordProposedReflection(scope, {
+          conversationId: input.conversationId,
+          sourceMessageId: created.pair.userMessage.messageId,
+          tradingDate: trustedContext.tradingDate,
+          proposedContent: Object.freeze({
+            assistantMessageId: created.pair.assistantMessage.messageId,
+            answer: result.answer,
+          }),
+        }, now);
+      }
     });
     return Object.freeze({ state: "completed", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: attempt.attemptId });
   }

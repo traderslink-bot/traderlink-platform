@@ -31,6 +31,7 @@ import type {
   CoachAiChatConversation,
   CoachAiChatMessage,
 } from "@/src/modules/coach/contracts/ai-chat-contracts";
+import type { CoachAiDailyCompanionContextSelector } from "@/src/modules/coach/contracts/ai-daily-companion-contracts";
 
 type ConversationResponse = Readonly<{
   status: "ready";
@@ -54,6 +55,7 @@ type RetryRequest = Readonly<{
   conversationId: string;
   question: string;
   clientRequestId: string;
+  contextKey: string;
 }>;
 
 const conversationsEndpoint = "/api/coach/chat/conversations";
@@ -132,10 +134,15 @@ function ConversationList({
   );
 }
 
-export function AiChatClient() {
+export function AiChatClient({
+  initialContext = null,
+}: Readonly<{
+  initialContext?: CoachAiDailyCompanionContextSelector | null;
+}>) {
   const theme = useTheme();
   const mobile = useMediaQuery(theme.breakpoints.down("md"));
   const endRef = useRef<HTMLDivElement | null>(null);
+  const dailyContextConversationIdRef = useRef<string | null>(null);
   const [archived, setArchived] = useState(false);
   const [conversations, setConversations] = useState<readonly CoachAiChatConversation[]>([]);
   const [conversationCursor, setConversationCursor] = useState<string | null>(null);
@@ -151,6 +158,7 @@ export function AiChatClient() {
   const [renameTitle, setRenameTitle] = useState("");
   const [notice, setNotice] = useState<string | null>(null);
   const [retryRequest, setRetryRequest] = useState<RetryRequest | null>(null);
+  const [dailyContext, setDailyContext] = useState(initialContext);
 
   const activeConversation = useMemo(
     () => conversations.find((item) => item.conversationId === activeConversationId) ?? null,
@@ -167,16 +175,19 @@ export function AiChatClient() {
       setConversations((current) => append ? [...current, ...response.conversations] : response.conversations);
       setConversationCursor(response.nextCursor);
       if (!append) {
-        setActiveConversationId((current) => response.conversations.some((item) => item.conversationId === current)
-          ? current
-          : response.conversations[0]?.conversationId ?? null);
+        setActiveConversationId((current) => {
+          if (dailyContext && dailyContextConversationIdRef.current === null) return null;
+          return response.conversations.some((item) => item.conversationId === current)
+            ? current
+            : response.conversations[0]?.conversationId ?? null;
+        });
       }
     } catch {
       setNotice("Conversations could not be loaded right now.");
     } finally {
       setLoadingConversations(false);
     }
-  }, [archived]);
+  }, [archived, dailyContext]);
 
   const loadMessages = useCallback(async (conversationId: string, appendOlder = false, cursor: string | null = null) => {
     setLoadingMessages(true);
@@ -211,10 +222,17 @@ export function AiChatClient() {
       const response = await readJson<Readonly<{ status: "ready"; conversation: CoachAiChatConversation }>>(await fetch(conversationsEndpoint, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ title: "New conversation" }),
+        body: JSON.stringify({
+          title: dailyContext
+            ? `${dailyContext.tradingDate} daily review`
+            : "New conversation",
+        }),
       }));
       setArchived(false);
       setConversations((current) => [response.conversation, ...current]);
+      if (dailyContext) {
+        dailyContextConversationIdRef.current = response.conversation.conversationId;
+      }
       setActiveConversationId(response.conversation.conversationId);
       setMobileOpen(false);
       return response.conversation;
@@ -233,10 +251,19 @@ export function AiChatClient() {
     setQuestion("");
     setSending(true);
     setNotice(null);
-    const clientRequestId = retryRequest?.conversationId === conversation.conversationId && retryRequest.question === text
+    const contextKey = dailyContext
+      ? `${dailyContext.kind}:${dailyContext.tradingDate}:${dailyContext.currency}`
+      : "none";
+    const clientRequestId = retryRequest?.conversationId === conversation.conversationId &&
+        retryRequest.question === text && retryRequest.contextKey === contextKey
       ? retryRequest.clientRequestId
       : crypto.randomUUID();
-    setRetryRequest(Object.freeze({ conversationId: conversation.conversationId, question: text, clientRequestId }));
+    setRetryRequest(Object.freeze({
+      conversationId: conversation.conversationId,
+      question: text,
+      clientRequestId,
+      contextKey,
+    }));
     setMessages((current) => [...current, {
       messageId: `local-${crypto.randomUUID()}`,
       sequence: Number.MAX_SAFE_INTEGER,
@@ -254,7 +281,11 @@ export function AiChatClient() {
       const response = await fetch(`${conversationsEndpoint}/${conversation.conversationId}/messages`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ question: text, clientRequestId }),
+        body: JSON.stringify({
+          question: text,
+          clientRequestId,
+          ...(dailyContext ? { context: dailyContext } : {}),
+        }),
       });
       const body = await response.json() as Partial<GenerationResponse>;
       if (!(["completed", "pending", "blocked", "failed"] as const).includes(body.status as GenerationResponse["status"]) ||
@@ -296,6 +327,10 @@ export function AiChatClient() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: activeConversation.state === "active" ? "archive" : "restore" }),
       }));
+      if (dailyContextConversationIdRef.current === activeConversation.conversationId) {
+        dailyContextConversationIdRef.current = null;
+        setDailyContext(null);
+      }
       setActiveConversationId(null);
       await loadConversations();
     } catch {
@@ -312,8 +347,20 @@ export function AiChatClient() {
       nextCursor={conversationCursor}
       onLoadMore={() => void loadConversations(true, conversationCursor)}
       onNew={() => void createConversation()}
-      onSelect={(conversationId) => { setActiveConversationId(conversationId); setMobileOpen(false); }}
-      onToggleArchived={() => { setArchived((value) => !value); setActiveConversationId(null); }}
+      onSelect={(conversationId) => {
+        if (dailyContextConversationIdRef.current !== conversationId) {
+          dailyContextConversationIdRef.current = null;
+          setDailyContext(null);
+        }
+        setActiveConversationId(conversationId);
+        setMobileOpen(false);
+      }}
+      onToggleArchived={() => {
+        dailyContextConversationIdRef.current = null;
+        setDailyContext(null);
+        setArchived((value) => !value);
+        setActiveConversationId(null);
+      }}
     />
   );
 
@@ -346,6 +393,40 @@ export function AiChatClient() {
             </>
           ) : null}
         </Stack>
+
+        {dailyContext ? (
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{
+              alignItems: "center",
+              bgcolor: "#EAF2FF",
+              borderBottom: 1,
+              borderColor: "#C8DAF7",
+              px: { xs: 1.5, sm: 2 },
+              py: 1,
+            }}
+          >
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography color="primary.main" sx={{ fontWeight: 850 }} variant="body2">
+                Daily Trade Tracker · {dailyContext.tradingDate}
+              </Typography>
+              <Typography color="text.secondary" variant="caption">
+                Your questions will use the saved trades, notes, tags, rules and focuses from this day.
+              </Typography>
+            </Box>
+            <IconButton
+              aria-label="Stop using this trading day"
+              onClick={() => {
+                dailyContextConversationIdRef.current = null;
+                setDailyContext(null);
+              }}
+              size="small"
+            >
+              <CloseRoundedIcon fontSize="small" />
+            </IconButton>
+          </Stack>
+        ) : null}
 
         {notice ? <Alert onClose={() => setNotice(null)} severity="info" sx={{ borderRadius: 0 }}>{notice}</Alert> : null}
         <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", px: { xs: 1.5, sm: 3 }, py: 2 }}>
@@ -398,7 +479,9 @@ export function AiChatClient() {
                   void sendQuestion();
                 }
               }}
-              placeholder={activeConversation ? "Ask about your trading..." : "Start a conversation to ask a question"}
+              placeholder={activeConversation
+                ? dailyContext ? "Ask about this trading day..." : "Ask about your trading..."
+                : "Start a conversation to ask a question"}
               value={question}
             />
             <IconButton aria-label="Send question" color="primary" disabled={!question.trim() || !activeConversation || sending} onClick={() => void sendQuestion()} sx={{ height: 48, width: 48 }}><SendRoundedIcon /></IconButton>

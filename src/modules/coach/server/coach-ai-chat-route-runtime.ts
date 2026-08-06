@@ -5,6 +5,7 @@ import type {
   CoachAiChatConversationCursor,
   CoachAiChatMessageCursor,
 } from "@/src/modules/coach/contracts/ai-chat-contracts";
+import type { CoachAiDailyCompanionContextSelector } from "@/src/modules/coach/contracts/ai-daily-companion-contracts";
 import { CoachAiChatRepository } from "@/src/modules/coach/server/coach-ai-chat-repository";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { assertCanonicalUuidV4, isCanonicalUtcTimestamp, isTraderLinkPlatformError, platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
@@ -36,6 +37,7 @@ export type ConversationPatch =
 export type GenerateChatMessageInput = Readonly<{
   question: string;
   clientRequestId: string;
+  context: CoachAiDailyCompanionContextSelector | null;
 }>;
 
 function invalidRequest(field: string): never {
@@ -208,13 +210,30 @@ export function parseConversationPatchBody(body: Record<string, unknown>): Conve
 }
 
 export function parseGenerateChatMessageBody(body: Record<string, unknown>): GenerateChatMessageInput {
-  if (!hasExactKeys(body, ["question", "clientRequestId"]) ||
+  const expectedKeys = body.context === undefined
+    ? ["question", "clientRequestId"]
+    : ["question", "clientRequestId", "context"];
+  if (!hasExactKeys(body, expectedKeys) ||
       typeof body.question !== "string" || body.question.trim().length === 0 ||
       typeof body.clientRequestId !== "string") {
     invalidRequest("message");
   }
   assertCanonicalUuidV4(body.clientRequestId, "clientRequestId");
-  return Object.freeze({ question: body.question, clientRequestId: body.clientRequestId });
+  let context: CoachAiDailyCompanionContextSelector | null = null;
+  if (body.context !== undefined) {
+    if (!isRecord(body.context) || !hasExactKeys(body.context, ["kind", "tradingDate", "currency"]) ||
+        body.context.kind !== "daily_review" || typeof body.context.tradingDate !== "string" ||
+        !/^\d{4}-\d{2}-\d{2}$/u.test(body.context.tradingDate) ||
+        typeof body.context.currency !== "string" || !/^[A-Z]{3}$/u.test(body.context.currency)) {
+      invalidRequest("context");
+    }
+    context = Object.freeze({
+      kind: "daily_review",
+      tradingDate: body.context.tradingDate,
+      currency: body.context.currency,
+    });
+  }
+  return Object.freeze({ question: body.question, clientRequestId: body.clientRequestId, context });
 }
 
 export function createChatGenerationIdempotencySha256(

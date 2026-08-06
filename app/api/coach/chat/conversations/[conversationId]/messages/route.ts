@@ -12,6 +12,8 @@ import {
   withReadonlyChatRepository,
 } from "@/src/modules/coach/server/coach-ai-chat-route-runtime";
 import { generateCoachAiChatSavedAnswer } from "@/src/modules/coach/server/coach-ai-chat-generation-runtime";
+import { getReplacementDailyCompanionContext } from "@/app/(dashboard)/trade-tracker/trade-tracker-platform-data";
+import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -56,6 +58,18 @@ export async function POST(
       conversationId: id,
       question: input.question,
       idempotencySha256: createChatGenerationIdempotencySha256(id, input.clientRequestId),
+      resolveTrustedContext: input.context
+        ? () => {
+            const context = getReplacementDailyCompanionContext(scope, {
+              tradingDate: input.context!.tradingDate,
+              currency: input.context!.currency,
+            });
+            if (!context) {
+              platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "context" });
+            }
+            return context;
+          }
+        : null,
     });
     const status = result.state === "completed" ? 200
       : result.state === "pending" ? 202

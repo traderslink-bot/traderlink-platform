@@ -51,6 +51,7 @@ const { mocks, FakeRepository } = vi.hoisted(() => {
     restoreConversation: vi.fn(),
     listMessages: vi.fn(),
     generateSavedAnswer: vi.fn(),
+    getDailyCompanionContext: vi.fn(),
     withReadonlyPlatformDatabase: vi.fn(),
     withPlatformDatabase: vi.fn(),
   };
@@ -80,6 +81,9 @@ vi.mock("@/src/modules/coach/server/coach-ai-chat-repository", () => ({
 }));
 vi.mock("@/src/modules/coach/server/coach-ai-chat-generation-runtime", () => ({
   generateCoachAiChatSavedAnswer: mocks.generateSavedAnswer,
+}));
+vi.mock("@/app/(dashboard)/trade-tracker/trade-tracker-platform-data", () => ({
+  getReplacementDailyCompanionContext: mocks.getDailyCompanionContext,
 }));
 
 import { GET as listConversations, POST as createConversation } from "@/app/api/coach/chat/conversations/route";
@@ -124,6 +128,7 @@ describe("private AI Chat persistence routes", () => {
       assistantMessageId: "00000000-0000-4000-8000-000000000012",
       attemptId: "00000000-0000-4000-8000-000000000013",
     });
+    mocks.getDailyCompanionContext.mockReturnValue(null);
   });
 
   it("lists bounded active conversations and preserves the repository cursor", async () => {
@@ -221,8 +226,59 @@ describe("private AI Chat persistence routes", () => {
       conversationId,
       question: "How did I trade this week?",
       idempotencySha256: expect.stringMatching(/^[0-9a-f]{64}$/u),
+      resolveTrustedContext: null,
     });
     expect(JSON.stringify(body)).not.toContain("attemptId");
+  });
+
+  it("accepts only a date selector and replaces it with server-derived Daily Tracker context", async () => {
+    const trustedContext = Object.freeze({
+      contractVersion: "traderlink_coach_ai_daily_companion_context_v1",
+      kind: "daily_review",
+      tradingDate: "2026-08-05",
+      timezone: "America/New_York",
+      currency: "USD",
+      factSetRevisionSha256: "a".repeat(64),
+      dayResult: Object.freeze({ netPnlDecimal: "25", tradeCount: 1, tickerCount: 1 }),
+      review: Object.freeze({ status: "not_started" }),
+      dailyNotes: Object.freeze({ whatWorked: "", whatNeedsWork: "", technicalRecap: "", currentFocuses: "", anythingElse: "" }),
+      focusRevisions: Object.freeze([]),
+      dayRules: Object.freeze([]),
+      trades: Object.freeze([]),
+      openPositions: Object.freeze([]),
+      coverage: Object.freeze({ needsDecisionCount: 0, contextTruncated: false, limitations: Object.freeze([]) }),
+    });
+    mocks.getDailyCompanionContext.mockReturnValueOnce(trustedContext);
+    mocks.generateSavedAnswer.mockImplementationOnce(async (
+      _scope: WorkspaceAccessScope,
+      input: Readonly<{ resolveTrustedContext: () => unknown }>,
+    ) => {
+      expect(input.resolveTrustedContext()).toEqual(trustedContext);
+      return {
+        state: "completed",
+        assistantMessageId: "00000000-0000-4000-8000-000000000012",
+        attemptId: "00000000-0000-4000-8000-000000000013",
+      };
+    });
+    const response = await generateMessage(request(`${conversationPath}/messages`, {
+      method: "POST",
+      body: JSON.stringify({
+        question: "Help me review this day.",
+        clientRequestId: "00000000-0000-4000-8000-000000000017",
+        context: { kind: "daily_review", tradingDate: "2026-08-05", currency: "USD" },
+      }),
+    }), params());
+
+    expect(response.status).toBe(200);
+    expect(mocks.getDailyCompanionContext).toHaveBeenCalledWith(scope, {
+      tradingDate: "2026-08-05",
+      currency: "USD",
+    });
+    expect(mocks.generateSavedAnswer).toHaveBeenCalledWith(scope, expect.objectContaining({
+      conversationId,
+      question: "Help me review this day.",
+      resolveTrustedContext: expect.any(Function),
+    }));
   });
 
   it.each([

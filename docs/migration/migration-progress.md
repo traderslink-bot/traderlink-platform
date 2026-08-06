@@ -56,7 +56,12 @@ separate disabled-by-default Chat controls, owner administration and responsive
 `/ai-chat` surface are implemented. Protected migrations 0029 and 0030 were
 applied after a fresh online backup/restore gate and passed post-migration
 integrity, count-preservation and second backup/restore verification. No V3
-Coach/chat runtime is a migration source.
+Coach/chat runtime is a migration source. The Daily Trade Tracker now opens a
+new date-bound Chat conversation whose trusted Journal context is resolved on
+the server, cost-gated by both Chat and Daily Companion controls, bounded,
+retained with the immutable answer evidence and never written back to Journal
+without a later explicit confirmation flow. Conversational execution drafts
+and editable Daily Companion proposals remain the next active slices.
 The finalized natural-language/query contract is maintained in the
 [AI Chatbot Complete Language Plan](traderslink_ai_chatbot_complete_language_plan.md);
 it requires deterministic capability routing, account scope, explicit action

@@ -26,6 +26,11 @@ import { evaluateJournalPresetRules } from "@/src/modules/journal/server/annotat
 import { currentJournalAccountSelectionRef } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { dailyTradeYahooAnalyzerEnabled } from "@/src/modules/level-analysis/server/daily-trade-analyzer-feature";
+import {
+  COACH_AI_DAILY_COMPANION_CONTEXT_VERSION,
+  type CoachAiDailyCompanionContext,
+  type CoachAiDailyCompanionRule,
+} from "@/src/modules/coach/contracts/ai-daily-companion-contracts";
 
 import type {
   DaySessionDailyNote,
@@ -400,6 +405,7 @@ function toDaySessionData(
       symbol: execution.symbol,
     })),
     expectedAccountSelectionRef,
+    factSetRevisionSha256: model.factSetRevisionSha256,
     netPnl: model.netPnlDecimal,
     needsDecisionCount: model.coverage.needsDecisionCount,
     nextSessionDate: model.nextTradingDate,
@@ -629,6 +635,134 @@ export function getReplacementTradeTrackerAccount(
       baseCurrency: account.baseCurrency,
       tradingTimezone: account.tradingTimezone,
     });
+  });
+}
+
+function startOfTradingWeek(tradingDate: string): string {
+  const date = new Date(`${tradingDate}T12:00:00.000Z`);
+  const mondayOffset = (date.getUTCDay() + 6) % 7;
+  date.setUTCDate(date.getUTCDate() - mondayOffset);
+  return date.toISOString().slice(0, 10);
+}
+
+function companionRule(rule: DaySessionRule): CoachAiDailyCompanionRule {
+  return Object.freeze({
+    title: rule.label.slice(0, 120),
+    status: rule.status === "not-reviewed"
+      ? "not_reviewed"
+      : rule.status === "n/a"
+        ? "n_a"
+        : rule.status,
+  });
+}
+
+function positionClassification(
+  position: DaySessionData["openPositions"][number],
+): CoachAiDailyCompanionContext["openPositions"][number]["savedClassification"] {
+  if (position.style?.openStatus === "swing") return "swing";
+  if (position.style?.openStatus === "unplanned_hold") return "bag_hold";
+  if (position.style?.openStatus === "other") return "long_term";
+  return "unclassified";
+}
+
+/** Builds bounded, server-derived context for one explicit Daily Tracker request. */
+export function getReplacementDailyCompanionContext(
+  scope: WorkspaceAccessScope,
+  input: Readonly<{ tradingDate: string; currency: string | null }>,
+): CoachAiDailyCompanionContext | null {
+  const data = getReplacementDaySession(scope, {
+    date: input.tradingDate,
+    currency: input.currency,
+  });
+  if (!data || data.date !== input.tradingDate) return null;
+
+  let contextTruncated = false;
+  const clip = (value: string, maximum: number): string => {
+    if (value.length <= maximum) return value;
+    contextTruncated = true;
+    return value.slice(0, maximum);
+  };
+  const take = <Value,>(values: readonly Value[], maximum: number): readonly Value[] => {
+    if (values.length > maximum) contextTruncated = true;
+    return values.slice(0, maximum);
+  };
+  const focusRevisions = withReadonlyJournalAnnotations(scope, (service, account) =>
+    service.listDailyFocusRevisions(
+      account,
+      startOfTradingWeek(input.tradingDate),
+      input.tradingDate,
+    ));
+  const trades = data.tickers.flatMap((ticker) =>
+    ticker.roundTrips.map((trade, index) => ({ ticker, trade, index })));
+  const includedTrades = take(trades, 8).map(({ ticker, trade, index }) => {
+    const rules = data.rules.filter((rule) =>
+      rule.applicability === "trade" && rule.targetRoundTripKey === trade.roundTripKey);
+    return Object.freeze({
+      tradeNumber: index + 1,
+      ticker: ticker.symbol,
+      direction: trade.direction,
+      entryAtUtc: trade.entryAt,
+      exitAtUtc: trade.exitAt,
+      netPnlDecimal: trade.netPnl,
+      gainLossPercentDecimal: trade.gainLossPercent,
+      tradeNote: clip(trade.journal.tradeNote, 500),
+      tags: Object.freeze(take(trade.journal.tags, 6).map((tag) => clip(tag.name, 60))),
+      rules: Object.freeze(take(rules, 6).map(companionRule)),
+    });
+  });
+  const includedFocusRevisions = take(focusRevisions, 6).map((revision) => Object.freeze({
+    tradingDate: revision.tradingDate,
+    currentFocuses: clip(revision.currentFocuses, 500),
+  }));
+  const includedDayRules = take(
+    data.rules.filter((rule) => rule.applicability === "day"),
+    16,
+  ).map(companionRule);
+  const includedOpenPositions = take(data.openPositions, 8).map((position) => Object.freeze({
+    ticker: position.symbol,
+    direction: position.direction,
+    openedAtUtc: position.openedAt,
+    remainingQuantityDecimal: position.remainingQuantity,
+    savedClassification: positionClassification(position),
+  }));
+  const limitations = [
+    ...(data.needsDecisionCount > 0
+      ? [`${data.needsDecisionCount} item${data.needsDecisionCount === 1 ? "" : "s"} still need a trader decision.`]
+      : []),
+    ...(contextTruncated
+      ? ["This day contains more saved detail than fits in one companion request."]
+      : []),
+  ];
+
+  return Object.freeze({
+    contractVersion: COACH_AI_DAILY_COMPANION_CONTEXT_VERSION,
+    kind: "daily_review",
+    tradingDate: data.date,
+    timezone: data.timezone,
+    currency: data.currency,
+    factSetRevisionSha256: data.factSetRevisionSha256,
+    dayResult: Object.freeze({
+      netPnlDecimal: data.netPnl,
+      tradeCount: trades.length,
+      tickerCount: data.tickers.length,
+    }),
+    review: Object.freeze({ status: data.review.status ?? "not_started" }),
+    dailyNotes: Object.freeze({
+      whatWorked: clip(data.dailyNote.whatWorked, 700),
+      whatNeedsWork: clip(data.dailyNote.whatNeedsWork, 700),
+      technicalRecap: clip(data.dailyNote.technicalRecap, 700),
+      currentFocuses: clip(data.dailyNote.tomorrowsFocus, 900),
+      anythingElse: clip(data.dailyNote.anythingElse, 700),
+    }),
+    focusRevisions: Object.freeze(includedFocusRevisions),
+    dayRules: Object.freeze(includedDayRules),
+    trades: Object.freeze(includedTrades),
+    openPositions: Object.freeze(includedOpenPositions),
+    coverage: Object.freeze({
+      needsDecisionCount: data.needsDecisionCount,
+      contextTruncated,
+      limitations: Object.freeze(limitations),
+    }),
   });
 }
 

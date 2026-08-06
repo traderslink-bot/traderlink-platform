@@ -228,14 +228,23 @@ FROM coach_ai_feature_controls WHERE feature_key = ? AND scope_kind = 'platform'
   }
 
   private accountControl(scope: WorkspaceAccessScope, featureKey: CoachAiFeatureKey, accountId: string): CoachAiFeatureControl {
+    const control = this.accountControlOrNull(scope, featureKey, accountId);
+    if (!control) platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { table: "coach_ai_feature_controls" });
+    return control;
+  }
+
+  private accountControlOrNull(
+    scope: WorkspaceAccessScope,
+    featureKey: CoachAiFeatureKey,
+    accountId: string,
+  ): CoachAiFeatureControl | null {
     const row = this.database.prepare<[CoachAiFeatureKey, string, string], ControlRow>(`SELECT feature_key, scope_kind, enabled,
   daily_request_cap, daily_token_cap, daily_estimated_spend_cap_usd, updated_at_utc FROM coach_ai_feature_controls
 WHERE feature_key = ? AND scope_kind = 'account' AND workspace_id = ? AND account_id = ?`).get(featureKey, scope.workspaceId, accountId);
-    if (!row) platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { table: "coach_ai_feature_controls" });
-    return controlRecord(row);
+    return row ? controlRecord(row) : null;
   }
 
-  reserveChatGeneration(scope: WorkspaceAccessScope, input: Readonly<{ conversationId: unknown; assistantMessageId: unknown; idempotencySha256: unknown; providerInputText: unknown; maxOutputTokens: unknown }>, now = new Date()): Readonly<{ state: "reserved" | "blocked" | "idempotent"; attempt: CoachAiChatGenerationAttempt }> {
+  reserveChatGeneration(scope: WorkspaceAccessScope, input: Readonly<{ conversationId: unknown; assistantMessageId: unknown; idempotencySha256: unknown; providerInputText: unknown; maxOutputTokens: unknown; additionalFeatureKey?: unknown }>, now = new Date()): Readonly<{ state: "reserved" | "blocked" | "idempotent"; attempt: CoachAiChatGenerationAttempt }> {
     const accountId = this.accountId(scope);
     if (typeof input.conversationId !== "string") platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "conversationId" });
     if (typeof input.assistantMessageId !== "string") platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "assistantMessageId" });
@@ -259,11 +268,43 @@ FROM coach_ai_chat_generation_attempts WHERE account_id = ? AND idempotency_sha2
         return Object.freeze({ state: "idempotent" as const, attempt: this.attemptRecord(existing) });
       }
       const settings = this.readChatSettings();
-      const platform = this.platformControl("ai_chat");
-      const account = this.accountControl(scope, "ai_chat", accountId);
-      if (!platform.enabled || !account.enabled || settings.inputCostUsdPerMillionTokens === null || settings.outputCostUsdPerMillionTokens === null || platform.caps.dailyRequestCap === null || account.caps.dailyRequestCap === null || platform.caps.dailyTokenCap === null || account.caps.dailyTokenCap === null || platform.caps.dailyEstimatedSpendCapUsd === null || account.caps.dailyEstimatedSpendCapUsd === null) {
+      const additionalFeatureKey = input.additionalFeatureKey === undefined
+        ? null
+        : feature(input.additionalFeatureKey);
+      const platformControls = [
+        this.platformControl("ai_chat"),
+        ...(additionalFeatureKey && additionalFeatureKey !== "ai_chat"
+          ? [this.platformControl(additionalFeatureKey)]
+          : []),
+      ];
+      if (platformControls.some((control) => !control.enabled || control.caps.dailyRequestCap === null ||
+          control.caps.dailyTokenCap === null || control.caps.dailyEstimatedSpendCapUsd === null)) {
         platformFailure("TRADERLINK_COACH_CHAT_UNAVAILABLE");
       }
+      const possibleAccountControls = [
+        this.accountControlOrNull(scope, "ai_chat", accountId),
+        ...(additionalFeatureKey && additionalFeatureKey !== "ai_chat"
+          ? [this.accountControlOrNull(scope, additionalFeatureKey, accountId)]
+          : []),
+      ];
+      if (possibleAccountControls.some((control) => control === null)) {
+        platformFailure("TRADERLINK_COACH_CHAT_UNAVAILABLE");
+      }
+      const accountControls = possibleAccountControls as readonly CoachAiFeatureControl[];
+      if (accountControls.some((control) => !control.enabled || control.caps.dailyRequestCap === null ||
+          control.caps.dailyTokenCap === null || control.caps.dailyEstimatedSpendCapUsd === null) ||
+          settings.inputCostUsdPerMillionTokens === null || settings.outputCostUsdPerMillionTokens === null) {
+        platformFailure("TRADERLINK_COACH_CHAT_UNAVAILABLE");
+      }
+      const platformRequestCap = Math.min(...platformControls.map((control) => control.caps.dailyRequestCap!));
+      const accountRequestCap = Math.min(...accountControls.map((control) => control.caps.dailyRequestCap!));
+      const platformTokenCap = Math.min(...platformControls.map((control) => control.caps.dailyTokenCap!));
+      const accountTokenCap = Math.min(...accountControls.map((control) => control.caps.dailyTokenCap!));
+      const minimumSpendCap = (values: readonly CoachAiFeatureControl[]): string =>
+        values.map((control) => control.caps.dailyEstimatedSpendCapUsd!)
+          .reduce((minimum, value) => new ExactDecimal(value).lt(minimum) ? value : minimum);
+      const platformSpendCap = minimumSpendCap(platformControls);
+      const accountSpendCap = minimumSpendCap(accountControls);
       const maxTotalTokens = maxInputTokens + input.maxOutputTokens;
       const maxCost = money(maxInputTokens, input.maxOutputTokens, settings.inputCostUsdPerMillionTokens, settings.outputCostUsdPerMillionTokens);
       const day = easternCalendarDate(now);
@@ -277,7 +318,9 @@ FROM coach_ai_chat_generation_attempts WHERE account_id = ? AND eastern_calendar
       const accountSpendRows = this.database.prepare<[string, string], Readonly<{ value: string | null }>>(`SELECT CASE WHEN state = 'blocked' THEN '0' WHEN actual_cost_usd IS NULL THEN reserved_maximum_cost_usd ELSE actual_cost_usd END AS value FROM coach_ai_chat_generation_attempts WHERE account_id = ? AND eastern_calendar_date = ?`).all(accountId, day);
       const spend = spendRows.reduce((sum, row) => sum.plus(row.value ?? "0"), new ExactDecimal(0));
       const accountSpend = accountSpendRows.reduce((sum, row) => sum.plus(row.value ?? "0"), new ExactDecimal(0));
-      const blocked = totals.requests + 1 > platform.caps.dailyRequestCap || accountTotals.requests + 1 > account.caps.dailyRequestCap || totals.tokens + maxTotalTokens > platform.caps.dailyTokenCap || accountTotals.tokens + maxTotalTokens > account.caps.dailyTokenCap || spend.plus(maxCost).gt(platform.caps.dailyEstimatedSpendCapUsd) || accountSpend.plus(maxCost).gt(account.caps.dailyEstimatedSpendCapUsd);
+      const blocked = totals.requests + 1 > platformRequestCap || accountTotals.requests + 1 > accountRequestCap ||
+        totals.tokens + maxTotalTokens > platformTokenCap || accountTotals.tokens + maxTotalTokens > accountTokenCap ||
+        spend.plus(maxCost).gt(platformSpendCap) || accountSpend.plus(maxCost).gt(accountSpendCap);
       const attemptId = createCanonicalUuidV4();
       const timestamp = createCanonicalUtcTimestamp(now);
       this.database.prepare(`INSERT INTO coach_ai_chat_generation_attempts (

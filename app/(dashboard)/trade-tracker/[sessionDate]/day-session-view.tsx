@@ -4,6 +4,7 @@ import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
+import ChatBubbleOutlineRoundedIcon from "@mui/icons-material/ChatBubbleOutlineRounded";
 import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded";
@@ -1697,19 +1698,37 @@ export function DaySessionView({
 
   return (
     <DashboardPage>
-      <Box>
-        <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">
-          Trade Tracker
-        </Typography>
-        <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">
-          Daily Trade Tracker
-        </Typography>
-        <Typography color="text.secondary" sx={{ maxWidth: 900, mt: 1 }} variant="body2">
-          The Daily Trade Tracker allows you to journal one trading day and the
-          trades you took on that particular day. Add tags, notes and track rules
-          for each trade. Add notes and track rules that apply to the trading day
-          as a whole.
-        </Typography>
+      <Box
+        sx={{
+          alignItems: { md: "flex-start" },
+          display: "grid",
+          gap: 2,
+          gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1fr) auto" },
+        }}
+      >
+        <Box>
+          <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">
+            Trade Tracker
+          </Typography>
+          <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">
+            Daily Trade Tracker
+          </Typography>
+          <Typography color="text.secondary" sx={{ maxWidth: 900, mt: 1 }} variant="body2">
+            The Daily Trade Tracker allows you to journal one trading day and the
+            trades you took on that particular day. Add tags, notes and track rules
+            for each trade. Add notes and track rules that apply to the trading day
+            as a whole.
+          </Typography>
+        </Box>
+        <Button
+          component={Link}
+          href={`/ai-chat?date=${encodeURIComponent(data.date)}&currency=${encodeURIComponent(data.currency)}`}
+          startIcon={<ChatBubbleOutlineRoundedIcon />}
+          sx={{ justifySelf: { md: "end" } }}
+          variant="outlined"
+        >
+          Ask about this day
+        </Button>
       </Box>
       {topContent}
       {readOnly ? (

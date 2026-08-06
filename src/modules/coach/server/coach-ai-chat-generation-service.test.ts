@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { CoachAiChatGenerationResult } from "../contracts/ai-chat-contracts";
 import { COACH_AI_CHAT_ANSWER_CONTRACT_VERSION } from "../contracts/ai-chat-contracts";
+import type { CoachAiDailyCompanionContext } from "../contracts/ai-daily-companion-contracts";
 import { COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION } from "../contracts/coach-ai-chat-factual-tool-contracts";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { createCanonicalUuidV4, isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
@@ -13,8 +14,9 @@ import { runPlatformMigrations } from "@/src/modules/platform/server/database/ru
 import { CoachAiChatProviderGenerationError } from "./coach-ai-chat-openai-adapter";
 import { CoachAiChatProviderControlsRepository } from "./coach-ai-chat-provider-controls-repository";
 import { CoachAiChatRepository } from "./coach-ai-chat-repository";
+import { CoachAiDailyCompanionRepository } from "./coach-ai-daily-companion-repository";
 import { COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES } from "./coach-ai-chat-factual-tool-dispatcher";
-import { CoachAiChatGenerationService, COACH_AI_CHAT_SYSTEM_AND_TOOL_ENVELOPE_RESERVED_BYTES, createCoachAiChatReservationEnvelope, type CoachAiChatGenerator } from "./coach-ai-chat-generation-service";
+import { CoachAiChatGenerationService, COACH_AI_CHAT_MAX_TRUSTED_CONTEXT_BYTES, COACH_AI_CHAT_SYSTEM_AND_TOOL_ENVELOPE_RESERVED_BYTES, createCoachAiChatReservationEnvelope, type CoachAiChatGenerator } from "./coach-ai-chat-generation-service";
 
 const now = new Date("2026-08-05T12:00:00.000Z");
 
@@ -41,7 +43,43 @@ function answer(): CoachAiChatGenerationResult {
 function service(f: ReturnType<typeof fixture>, generator: CoachAiChatGenerator) {
   const factualTools = { summarizeClosedTrades: vi.fn(() => ({ contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION, toolName: "summarize_closed_trades", result: { state: "unavailable" } })), groupClosedTrades: vi.fn(() => ({ contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION, toolName: "group_closed_trades", result: { state: "unavailable" } })), listClosedTrades: vi.fn() };
   const details = { getClosedTradeDetails: vi.fn() };
-  return new CoachAiChatGenerationService(f.chat, f.controls, factualTools as never, details as never, generator);
+  return new CoachAiChatGenerationService(
+    f.chat,
+    f.controls,
+    factualTools as never,
+    details as never,
+    generator,
+    new CoachAiDailyCompanionRepository(f.database),
+  );
+}
+
+function dailyContext(): CoachAiDailyCompanionContext {
+  return Object.freeze({
+    contractVersion: "traderlink_coach_ai_daily_companion_context_v1",
+    kind: "daily_review",
+    tradingDate: "2026-08-05",
+    timezone: "America/New_York",
+    currency: "USD",
+    factSetRevisionSha256: "a".repeat(64),
+    dayResult: Object.freeze({ netPnlDecimal: "25", tradeCount: 1, tickerCount: 1 }),
+    review: Object.freeze({ status: "not_started" }),
+    dailyNotes: Object.freeze({
+      whatWorked: "I waited for the setup.",
+      whatNeedsWork: "I added too quickly.",
+      technicalRecap: "",
+      currentFocuses: "Wait for confirmation.",
+      anythingElse: "",
+    }),
+    focusRevisions: Object.freeze([]),
+    dayRules: Object.freeze([]),
+    trades: Object.freeze([]),
+    openPositions: Object.freeze([]),
+    coverage: Object.freeze({
+      needsDecisionCount: 0,
+      contextTruncated: false,
+      limitations: Object.freeze([]),
+    }),
+  });
 }
 
 describe("CoachAiChatGenerationService", () => {
@@ -59,11 +97,93 @@ describe("CoachAiChatGenerationService", () => {
     } finally { f.database.close(); }
   });
 
+  it("gates and persists one server-trusted Daily Tracker interaction with the completed answer", async () => {
+    const f = fixture();
+    try {
+      const context = dailyContext();
+      const generator = vi.fn(async (input: Parameters<CoachAiChatGenerator>[0]) => {
+        expect(input.trustedContext).toEqual(context);
+        return answer();
+      });
+      const subject = service(f, generator);
+      await expect(subject.generateSavedAnswer(f.scope, {
+        conversationId: f.conversationId,
+        question: "Help me review this day.",
+        idempotencySha256: "6".repeat(64),
+        resolveTrustedContext: () => context,
+      }, now)).rejects.toThrow("TRADERLINK_COACH_CHAT_UNAVAILABLE");
+      expect(f.database.prepare(`SELECT COUNT(*) AS count FROM coach_ai_chat_messages`).get())
+        .toEqual({ count: 0 });
+
+      f.controls.savePlatformFeatureControl({
+        featureKey: "daily_companion",
+        enabled: true,
+        dailyRequestCap: 20,
+        dailyTokenCap: 2_000_000,
+        dailyEstimatedSpendCapUsd: "10",
+      });
+      f.controls.saveAccountFeatureControl(f.scope, {
+        featureKey: "daily_companion",
+        enabled: true,
+        dailyRequestCap: 20,
+        dailyTokenCap: 2_000_000,
+        dailyEstimatedSpendCapUsd: "10",
+      });
+      await expect(subject.generateSavedAnswer(f.scope, {
+        conversationId: f.conversationId,
+        question: "Help me review this day.",
+        idempotencySha256: "7".repeat(64),
+        resolveTrustedContext: () => context,
+      }, now)).resolves.toMatchObject({ state: "completed" });
+      await expect(subject.generateSavedAnswer(f.scope, {
+        conversationId: f.conversationId,
+        question: "Help me review this day.",
+        idempotencySha256: "7".repeat(64),
+        resolveTrustedContext: () => {
+          throw new Error("the live day changed after the saved attempt");
+        },
+      }, now)).resolves.toMatchObject({ state: "completed" });
+      expect(generator).toHaveBeenCalledTimes(1);
+
+      const userMessage = f.database.prepare(`SELECT structured_interpretation_json
+FROM coach_ai_chat_messages WHERE role = 'user'`).get() as { structured_interpretation_json: string };
+      expect(JSON.parse(userMessage.structured_interpretation_json)).toMatchObject({
+        intent: "assist_daily_review",
+        trustedContext: { tradingDate: "2026-08-05", factSetRevisionSha256: "a".repeat(64) },
+      });
+      const snapshot = f.database.prepare(`SELECT factual_snapshot_json
+FROM coach_ai_chat_answer_snapshots`).get() as { factual_snapshot_json: string };
+      expect(JSON.parse(snapshot.factual_snapshot_json)).toMatchObject({
+        trustedContext: { tradingDate: "2026-08-05", factSetRevisionSha256: "a".repeat(64) },
+      });
+      expect(f.database.prepare(`SELECT trading_date, disposition, journal_write_state
+FROM coach_ai_daily_companion_interactions`).get()).toEqual({
+        trading_date: "2026-08-05",
+        disposition: "proposed",
+        journal_write_state: "not_written",
+      });
+    } finally { f.database.close(); }
+  });
+
   it("reserves factual results plus the full two-step system and tool envelope below the provider hard limit", () => {
     const envelope = createCoachAiChatReservationEnvelope("A bounded question", []);
     const bytes = Buffer.byteLength(envelope, "utf8");
     expect(bytes).toBeGreaterThanOrEqual(COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES * 2 + COACH_AI_CHAT_SYSTEM_AND_TOOL_ENVELOPE_RESERVED_BYTES);
     expect(bytes).toBeLessThan(256_000);
+
+    const context = dailyContext();
+    const fixedContextBytes = Buffer.byteLength(JSON.stringify(context), "utf8");
+    const nearMaximumContext = Object.freeze({
+      ...context,
+      dailyNotes: Object.freeze({
+        ...context.dailyNotes,
+        anythingElse: "x".repeat(COACH_AI_CHAT_MAX_TRUSTED_CONTEXT_BYTES - fixedContextBytes - 256),
+      }),
+    });
+    expect(Buffer.byteLength(
+      createCoachAiChatReservationEnvelope("A bounded question", [], nearMaximumContext),
+      "utf8",
+    )).toBeLessThan(256_000);
   });
 
   it("captures a dispatcher factual snapshot, blocks before generation, and never sends unbounded history", async () => {

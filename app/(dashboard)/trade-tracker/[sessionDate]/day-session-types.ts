@@ -162,6 +162,7 @@ export type DaySessionData = {
   }>;
   executionActivity: DaySessionExecutionActivity[];
   expectedAccountSelectionRef: string;
+  factSetRevisionSha256: string;
   netPnl: string | null;
   needsDecisionCount: number;
   nextSessionDate: string | null;
