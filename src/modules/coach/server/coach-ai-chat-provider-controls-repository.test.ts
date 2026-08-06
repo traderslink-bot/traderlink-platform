@@ -123,7 +123,7 @@ describe("Coach AI Chat provider controls repository", () => {
   it("keeps a reservation's provider snapshot after later settings edits and replaces it with actual receipt usage", () => {
     const fixture = setup();
     try {
-      configure(fixture, { platformTokens: 150, accountTokens: 150 });
+      configure(fixture, { platformTokens: 250, accountTokens: 250 });
       const chat = assistantReservation(fixture);
       const reserved = fixture.controls.reserveChatGeneration(fixture.scope, reservationInput(chat, "f".repeat(64)));
       fixture.controls.saveChatSettings({ modelId: "gpt-chat-b", inputCostUsdPerMillionTokens: "3", outputCostUsdPerMillionTokens: "4" });
@@ -131,7 +131,10 @@ describe("Coach AI Chat provider controls repository", () => {
       fixture.controls.markProviderStarted(fixture.scope, reserved.attempt.attemptId);
       fixture.chat.finalizeAssistantSuccess(fixture.scope, chat.assistantMessageId, { assistantTextPrivate: "Safe answer", snapshotContractVersion: "v1", factualSnapshot: { coverage: "available" }, receipt: { providerKey: "openai_direct", modelId: "gpt-chat-a", usage: { inputTokens: 1, outputTokens: 2, totalTokens: 3 }, inputCostUsdPerMillionTokens: "1", outputCostUsdPerMillionTokens: "2" } });
       fixture.controls.finalizeFromChatReceipt(fixture.scope, reserved.attempt.attemptId, "completed", null);
-      expect(fixture.controls.reserveChatGeneration(fixture.scope, reservationInput(assistantReservation(fixture), "1".repeat(64))).toMatchObject({ state: "reserved" });
+      expect(fixture.controls.reserveChatGeneration(
+        fixture.scope,
+        reservationInput(assistantReservation(fixture), "1".repeat(64)),
+      )).toMatchObject({ state: "reserved" });
       expect(new CoachAiProviderSettingsRepository(fixture.database).readCostAggregation()).toEqual(expect.arrayContaining([expect.objectContaining({ featureKey: "ai_chat", modelId: "gpt-chat-a", totalTokens: 3, estimatedCostUsd: "0.000005" })]));
     } finally { fixture.database.close(); }
   });
@@ -139,11 +142,14 @@ describe("Coach AI Chat provider controls repository", () => {
   it("retains a provider-started failure's conservative reservation and never leaks private inputs or cross-account records", () => {
     const fixture = setup();
     try {
-      configure(fixture, { platformTokens: 150, accountTokens: 150 });
+      configure(fixture, { platformTokens: 250, accountTokens: 250 });
       const reserved = fixture.controls.reserveChatGeneration(fixture.scope, reservationInput(assistantReservation(fixture), "2".repeat(64)));
       fixture.controls.markProviderStarted(fixture.scope, reserved.attempt.attemptId);
       fixture.controls.failStartedWithoutUsage(fixture.scope, reserved.attempt.attemptId, "TRADERLINK_COACH_PROVIDER_FAILED");
-      expect(fixture.controls.reserveChatGeneration(fixture.scope, reservationInput(assistantReservation(fixture), "3".repeat(64))).toMatchObject({ state: "blocked" });
+      expect(fixture.controls.reserveChatGeneration(
+        fixture.scope,
+        reservationInput(assistantReservation(fixture), "3".repeat(64)),
+      )).toMatchObject({ state: "blocked" });
       try {
         fixture.controls.markProviderStarted(fixture.otherScope, reserved.attempt.attemptId);
         throw new Error("expected access failure");
