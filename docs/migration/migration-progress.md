@@ -47,15 +47,20 @@ Eastern delivery settings, calendar-month eligibility records and private
 provider/cost-receipt storage. AI Reviews replaces the retired Reflection Loop
 page; the next work
 is the issued-review service, automatic runner and saved review list/detail.
-The complete future AI product remains planning-only under the
+The complete AI product is now under active implementation through the
 [TraderLink AI Companion Plan](ai-chat-plan.md) and its
 [progress record](ai-chat-progress.md). It covers AI Chat, Daily Trade Tracker
-assistance and conversational manual-entry drafts alongside saved reviews; no
-V3 Coach/chat runtime is a migration source.
+assistance and conversational manual-entry drafts alongside saved reviews.
+The private saved-conversation API, bounded factual generation runtime,
+separate disabled-by-default Chat controls, owner administration and responsive
+`/ai-chat` surface are implemented. Protected migrations 0029 and 0030 were
+applied after a fresh online backup/restore gate and passed post-migration
+integrity, count-preservation and second backup/restore verification. No V3
+Coach/chat runtime is a migration source.
 The finalized natural-language/query contract is maintained in the
 [AI Chatbot Complete Language Plan](traderslink_ai_chatbot_complete_language_plan.md);
 it requires deterministic capability routing, account scope, explicit action
-confirmation and truthful unavailable states before any Chat implementation.
+confirmation and truthful unavailable states throughout Chat implementation.
 
 **Daily Trade Tracker Yahoo Analyzer implementation:** The owner approved the [Daily Trade Tracker Yahoo Analyzer Plan](daily-trade-tracker-yahoo-analyzer-plan.md) and [progress tracker](daily-trade-tracker-yahoo-analyzer-progress.md) on 2026-08-04. The shared extended-hours ticker/session cache, durable automatic work, per-event analyzer, and real Daily Tracker manual-save queue are now implemented locally. After a recovery backup/restore verification, migration 0023 applied cleanly to the local development database and the protected local worker loop restarted. Yahoo remains the provider; the product is Daily Trade Tracker-only, excludes Round Trips and Market Charts, captures every entry/add/partial-exit/final-exit snapshot, and retains 5/15/30/60-minute post-exit paths. The temporary readable analysis-details presentation is next.
 

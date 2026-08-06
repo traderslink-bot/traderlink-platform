@@ -104,12 +104,13 @@ The private persistence API checkpoint is tracked in
   install, download, real database migration, or configuration workaround was
   needed.
 
-## Explicit non-actions
+## Historical schema/persistence boundary
 
 - No Chat route, provider request, manual-execution write, daily-companion save,
-  or AI change to Journal facts was made in the schema or persistence slices.
-  The migration was verified only against disposable test databases; no real
-  database was opened or changed.
+  or AI change to Journal facts was made in the earlier schema or persistence
+  slices. At that checkpoint the migration was verified only against disposable
+  test databases. The protected local migration checkpoint recorded below now
+  supersedes only that former unapplied-database state.
 - No V3 Coach runtime is a source for the new implementation.
 
 ## Completed: private Chat persistence API
@@ -153,3 +154,28 @@ existing migration, Journal, and account boundaries.
 - `git diff --check` passed for the tracked files. No provider call, database
   migration, dependency change or dashboard process was made during this UI
   checkpoint.
+
+## Completed: protected local migration checkpoint
+
+- Before migration, the protected database contained 28 ordered migrations,
+  `quick_check=ok`, zero foreign-key issues, one Journal account, 1,128
+  executions and 361 round trips.
+- The pre-migration online backup and independent restore completed under
+  `private-data/traderlink-platform` at checkpoint
+  `ai-chat-20260806T023503Z`. The backup and restored main files are
+  byte-identical at SHA-256
+  `4ee839d5495468b918287d2ec6b42a1d5e52d0bac8e83b9dedc9b817c3bd7607`;
+  registry, table counts, page geometry and recovery authority also match.
+- Migrations `0029_coach_ai_chat_foundation` and
+  `0030_coach_ai_chat_provider_controls` applied together. The protected
+  database now has 30 migrations and final schema digest
+  `56cf851cc70348adb97ee810f364a856f03e5a0ab7953a1871475b022c2a0776`.
+- Post-migration `quick_check` remains `ok`, the foreign-key issue count remains
+  zero, and the Journal account, execution and round-trip counts remain exactly
+  1, 1,128 and 361. All private Chat conversation, message, snapshot, receipt
+  and attempt tables remain empty. Chat and Daily Companion platform controls
+  remain disabled by default.
+- A post-migration online backup and independently restored copy are
+  byte-identical at SHA-256
+  `d8282ad00d39ff06b7581c4a5829b9522012c771cd94c3ac2d87ce524f8977a9`,
+  with all 30 migration records and all 117 table counts matching.
