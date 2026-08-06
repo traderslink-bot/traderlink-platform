@@ -242,8 +242,8 @@ existing migration, Journal, and account boundaries.
   one immediate transaction.
 - Migration `0031_coach_ai_chat_setting_change_drafts` adds the durable,
   account-scoped, refresh-safe proposal and confirmation record without
-  changing migration `0029`. The migration is verified against disposable
-  databases but is not yet applied to the protected local database.
+  changing migration `0029`. The migration passed disposable verification and
+  the protected local backup/apply/restore checkpoint described below.
 
 ### Verification
 
@@ -317,3 +317,30 @@ existing migration, Journal, and account boundaries.
   byte-identical at SHA-256
   `d8282ad00d39ff06b7581c4a5829b9522012c771cd94c3ac2d87ce524f8977a9`,
   with all 30 migration records and all 117 table counts matching.
+
+## Completed: protected migration 0031 checkpoint
+
+- Before applying migration `0031_coach_ai_chat_setting_change_drafts`, the
+  protected database still had 30 ordered migrations, 117 application tables,
+  `quick_check=ok`, zero foreign-key issues, one Journal account, 1,128
+  executions and 361 round trips.
+- The pre-migration online backup and independent restore were created at
+  checkpoint `ai-chat-settings-20260806T123545Z`. The backup and restored main
+  files are byte-identical at SHA-256
+  `d8282ad00d39ff06b7581c4a5829b9522012c771cd94c3ac2d87ce524f8977a9`;
+  all 30 migration rows, 117 table counts, page geometry and recovery authority
+  match.
+- Migration 0031 applied once. The protected database now has 31 ordered
+  migrations, 118 application tables and final schema digest
+  `1bc31b4d8c488177a51f22bb6adc765ff5dafb08599dda9c76821b3e79aa8535`.
+  The new `coach_ai_review_delivery_change_drafts` table is empty.
+- Post-migration `quick_check`, `integrity_check` and foreign-key verification
+  pass. Journal facts remain exactly one account, 1,128 executions and 361
+  round trips; all private Chat conversation, message, draft, snapshot,
+  receipt and attempt tables remain empty. Chat and Daily Companion controls
+  remain disabled by default.
+- The post-migration online backup and independently restored copy are
+  byte-identical at SHA-256
+  `a2d41c697abf3430e18c7f3d41e60449a0bb607b803e941f0871b8e0416722e3`,
+  with all 31 migration records, 118 table counts, page geometry and recovery
+  authority matching.

@@ -74,9 +74,10 @@ outcomes, position classifications, executions or trading-day review status.
 Chat can also prepare an allowlisted weekly AI Review delivery day/time change
 and show a durable confirmation card. Only explicit confirmation calls the
 existing Account Settings save, with stale-setting protection. Additive
-migration 0031 is implemented and disposable-test verified; the protected
-local database remains at migration 0030 pending its separate backup/apply
-checkpoint.
+migration 0031 is implemented, disposable-test verified and applied to the
+protected local database after a fresh online backup and independent restore
+verification. Post-migration integrity, schema digest and count-preservation
+checks pass; its account-scoped delivery-change draft table remains empty.
 The finalized natural-language/query contract is maintained in the
 [AI Chatbot Complete Language Plan](traderslink_ai_chatbot_complete_language_plan.md);
 it requires deterministic capability routing, account scope, explicit action
