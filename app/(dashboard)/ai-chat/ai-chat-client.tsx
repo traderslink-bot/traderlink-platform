@@ -8,6 +8,7 @@ import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import RestoreRoundedIcon from "@mui/icons-material/RestoreRounded";
 import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
+import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -19,6 +20,7 @@ import IconButton from "@mui/material/IconButton";
 import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
+import InputAdornment from "@mui/material/InputAdornment";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
@@ -114,8 +116,10 @@ function ConversationList({
   nextCursor,
   onLoadMore,
   onNew,
+  onSearchChange,
   onSelect,
   onToggleArchived,
+  search,
 }: Readonly<{
   activeConversationId: string | null;
   archived: boolean;
@@ -124,8 +128,10 @@ function ConversationList({
   nextCursor: string | null;
   onLoadMore: () => void;
   onNew: () => void;
+  onSearchChange: (value: string) => void;
   onSelect: (conversationId: string) => void;
   onToggleArchived: () => void;
+  search: string;
 }>) {
   return (
     <Stack sx={{ height: "100%" }}>
@@ -134,6 +140,18 @@ function ConversationList({
         <Button onClick={onToggleArchived} size="small" startIcon={archived ? <ChatBubbleOutlineRoundedIcon /> : <ArchiveRoundedIcon />} variant="text">
           {archived ? "Active conversations" : "Archived conversations"}
         </Button>
+        <TextField
+          fullWidth
+          label="Search conversations"
+          onChange={(event) => onSearchChange(event.target.value)}
+          size="small"
+          slotProps={{
+            input: {
+              startAdornment: <InputAdornment position="start"><SearchRoundedIcon fontSize="small" /></InputAdornment>,
+            },
+          }}
+          value={search}
+        />
       </Stack>
       <Divider />
       <List disablePadding sx={{ flex: 1, minHeight: 0, overflowY: "auto", py: 1 }}>
@@ -154,7 +172,9 @@ function ConversationList({
         {!loading && conversations.length === 0 ? (
           <Box sx={{ px: 2, py: 3 }}>
             <Typography color="text.secondary" variant="body2">
-              {archived ? "No archived conversations." : "No conversations yet."}
+              {search.trim().length > 0
+                ? "No conversations match your search."
+                : archived ? "No archived conversations." : "No conversations yet."}
             </Typography>
           </Box>
         ) : null}
@@ -175,6 +195,8 @@ export function AiChatClient({
   const endRef = useRef<HTMLDivElement | null>(null);
   const dailyContextConversationIdRef = useRef<string | null>(null);
   const [archived, setArchived] = useState(false);
+  const [conversationSearch, setConversationSearch] = useState("");
+  const [activeConversationSearch, setActiveConversationSearch] = useState("");
   const [conversations, setConversations] = useState<readonly CoachAiChatConversation[]>([]);
   const [conversationCursor, setConversationCursor] = useState<string | null>(null);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -205,6 +227,7 @@ export function AiChatClient({
     setNotice(null);
     try {
       const query = new URLSearchParams({ state: archived ? "archived" : "active", limit: "30" });
+      if (activeConversationSearch) query.set("search", activeConversationSearch);
       if (cursor) query.set("cursor", cursor);
       const response = await readJson<ConversationResponse>(await fetch(`${conversationsEndpoint}?${query}`, { cache: "no-store" }));
       setConversations((current) => append ? [...current, ...response.conversations] : response.conversations);
@@ -222,7 +245,7 @@ export function AiChatClient({
     } finally {
       setLoadingConversations(false);
     }
-  }, [archived, dailyContext]);
+  }, [activeConversationSearch, archived, dailyContext]);
 
   const loadMessages = useCallback(async (conversationId: string, appendOlder = false, cursor: string | null = null) => {
     setLoadingMessages(true);
@@ -280,6 +303,12 @@ export function AiChatClient({
     }
   }, []);
 
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setActiveConversationSearch(conversationSearch.trim());
+    }, 250);
+    return () => window.clearTimeout(timeout);
+  }, [conversationSearch]);
   useEffect(() => { void loadConversations(); }, [loadConversations]);
   useEffect(() => {
     if (activeConversationId) {
@@ -314,6 +343,8 @@ export function AiChatClient({
             : "New conversation",
         }),
       }));
+      setConversationSearch("");
+      setActiveConversationSearch("");
       setArchived(false);
       setConversations((current) => [response.conversation, ...current]);
       if (dailyContext) {
@@ -460,6 +491,7 @@ export function AiChatClient({
       nextCursor={conversationCursor}
       onLoadMore={() => void loadConversations(true, conversationCursor)}
       onNew={() => void createConversation()}
+      onSearchChange={setConversationSearch}
       onSelect={(conversationId) => {
         if (dailyContextConversationIdRef.current !== conversationId) {
           dailyContextConversationIdRef.current = null;
@@ -476,6 +508,7 @@ export function AiChatClient({
         setArchived((value) => !value);
         setActiveConversationId(null);
       }}
+      search={conversationSearch}
     />
   );
 

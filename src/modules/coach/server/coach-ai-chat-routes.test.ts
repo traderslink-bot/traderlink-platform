@@ -170,6 +170,21 @@ describe("private AI Chat persistence routes", () => {
     });
     expect(mocks.listConversations).toHaveBeenCalledWith(scope, {
       state: "active",
+      search: null,
+      limit: 10,
+      cursor: null,
+    });
+  });
+
+  it("passes a bounded private conversation search only to the scoped repository", async () => {
+    const response = listConversations(request(
+      "/api/coach/chat/conversations?state=active&search=morning%20review&limit=10",
+    ));
+
+    expect(response.status).toBe(200);
+    expect(mocks.listConversations).toHaveBeenCalledWith(scope, {
+      state: "active",
+      search: "morning review",
       limit: 10,
       cursor: null,
     });
@@ -414,6 +429,7 @@ describe("private AI Chat persistence routes", () => {
   it.each([
     ["unknown query", "/api/coach/chat/conversations?privateText=do-not-return"],
     ["overlarge limit", "/api/coach/chat/conversations?limit=101"],
+    ["overlarge search", `/api/coach/chat/conversations?search=${"x".repeat(121)}`],
     ["invalid cursor", "/api/coach/chat/conversations?cursor=not-a-valid-cursor"],
   ])("rejects %s with a bounded error", async (_label, path) => {
     const response = listConversations(request(path));

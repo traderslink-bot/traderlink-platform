@@ -141,9 +141,10 @@ existing migration, Journal, and account boundaries.
   the dashboard's existing Material UI design. Desktop users see the
   conversation list beside the active thread; smaller screens use a closable
   conversation drawer.
-- Users can create, rename, archive, restore and page through conversations,
-  load earlier messages, and submit a question without exposing internal
-  generation identifiers or failure codes.
+- Users can create, rename, archive, restore, search and page through
+  conversations, load earlier messages, and submit a question without exposing
+  internal generation identifiers or failure codes. Search covers saved titles
+  and message text only within the current user, workspace and Journal account.
 - Submission keeps one stable request identifier across an uncertain network
   retry so the same saved question cannot accidentally create a second paid
   answer. Definite completed, pending, blocked and failed outcomes refresh from
@@ -156,6 +157,8 @@ existing migration, Journal, and account boundaries.
 
 - Focused ESLint passed for the new page, client, dashboard navigation and
   provider presentation instruction.
+- The account-scoped search addition passed 31 focused repository/route tests
+  with one worker, plus focused ESLint.
 - `git diff --check` passed for the tracked files. No provider call, database
   migration, dependency change or dashboard process was made during this UI
   checkpoint.

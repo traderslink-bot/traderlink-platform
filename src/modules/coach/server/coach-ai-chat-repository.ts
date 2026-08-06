@@ -33,6 +33,7 @@ const ASSISTANT_MESSAGE_MAX_LENGTH = 8_000;
 const SNAPSHOT_CONTRACT_VERSION_MAX_LENGTH = 128;
 const SNAPSHOT_MAX_LENGTH = 256_000;
 const PAGE_MAX_LIMIT = 100;
+const CONVERSATION_SEARCH_MAX_LENGTH = 120;
 const MODEL_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u;
 const FAILURE_CODE_PATTERN = /^[A-Z][A-Z0-9_]{0,95}$/u;
 const MONEY_RATE_PATTERN = /^(?:0|[1-9]\d*)(?:\.\d{1,6})?$/u;
@@ -352,6 +353,7 @@ WHERE coach_ai_chat_conversation_id = ? AND user_id = ? AND workspace_id = ? AND
     scope: WorkspaceAccessScope,
     input: Readonly<{
       state: "active" | "archived";
+      search?: string | null;
       limit?: number;
       cursor?: CoachAiChatConversationCursor | null;
     }>,
@@ -364,20 +366,41 @@ WHERE coach_ai_chat_conversation_id = ? AND user_id = ? AND workspace_id = ? AND
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > PAGE_MAX_LIMIT) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "limit" });
     }
+    const search = input.search?.trim() ?? "";
+    if (search.length > CONVERSATION_SEARCH_MAX_LENGTH || /[\u0000-\u001f\u007f]/u.test(search)) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "search" });
+    }
     if (input.cursor) {
       assertCanonicalUuidV4(input.cursor.conversationId, "cursorConversationId");
       if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(input.cursor.updatedAtUtc)) {
         platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "cursorUpdatedAtUtc" });
       }
     }
-    const rows = this.database.prepare<[string, string, string, string, string, number], ConversationRow>(`SELECT
-  coach_ai_chat_conversation_id, title, state, created_at_utc, updated_at_utc, archived_at_utc
-FROM coach_ai_chat_conversations
-WHERE user_id = ? AND workspace_id = ? AND account_id = ? AND state = ?
+    const rows = this.database.prepare<[
+      string, string, string, "active" | "archived",
+      string, string, string, string, string, string,
+      string, string, string, string, number,
+    ], ConversationRow>(`SELECT
+  conversation.coach_ai_chat_conversation_id, conversation.title, conversation.state,
+  conversation.created_at_utc, conversation.updated_at_utc, conversation.archived_at_utc
+FROM coach_ai_chat_conversations conversation
+WHERE conversation.user_id = ? AND conversation.workspace_id = ?
+  AND conversation.account_id = ? AND conversation.state = ?
+  AND (? = '' OR instr(lower(conversation.title), lower(?)) > 0 OR EXISTS (
+    SELECT 1
+    FROM coach_ai_chat_messages message
+    WHERE message.coach_ai_chat_conversation_id = conversation.coach_ai_chat_conversation_id
+      AND message.user_id = ? AND message.workspace_id = ? AND message.account_id = ?
+      AND (
+        instr(lower(COALESCE(message.original_user_text_private, '')), lower(?)) > 0
+        OR instr(lower(COALESCE(message.assistant_text_private, '')), lower(?)) > 0
+      )
+  ))
   AND (? = '' OR updated_at_utc < ? OR (updated_at_utc = ? AND coach_ai_chat_conversation_id < ?))
 ORDER BY updated_at_utc DESC, coach_ai_chat_conversation_id DESC
 LIMIT ?`).all(
       scope.userId, scope.workspaceId, verifiedAccountId, input.state,
+      search, search, scope.userId, scope.workspaceId, verifiedAccountId, search, search,
       input.cursor?.updatedAtUtc ?? "", input.cursor?.updatedAtUtc ?? "",
       input.cursor?.updatedAtUtc ?? "", input.cursor?.conversationId ?? "", limit + 1,
     );

@@ -300,6 +300,59 @@ WHERE coach_ai_chat_conversation_id = ? ORDER BY occurred_at_utc`).all(conversat
     }
   });
 
+  it("searches scoped conversation titles and saved messages without crossing accounts", () => {
+    const fixture = setup();
+    try {
+      const titleMatch = fixture.repository.createConversation(
+        fixture.primaryScope,
+        "August morning review",
+        new Date("2026-08-05T12:01:00.000Z"),
+      );
+      const messageMatch = fixture.repository.createConversation(
+        fixture.primaryScope,
+        "Trading questions",
+        new Date("2026-08-05T12:02:00.000Z"),
+      );
+      const reserved = fixture.repository.appendUserMessageAndReserveAssistant(
+        fixture.primaryScope,
+        messageMatch.conversationId,
+        { originalUserTextPrivate: "Why did I keep adding while underwater?" },
+        new Date("2026-08-05T12:03:00.000Z"),
+      );
+      fixture.repository.finalizeAssistantFailure(
+        fixture.primaryScope,
+        reserved.assistantMessage.messageId,
+        "TRADERLINK_COACH_PROVIDER_UNAVAILABLE",
+        null,
+        new Date("2026-08-05T12:04:00.000Z"),
+      );
+      const otherAccount = fixture.repository.createConversation(
+        fixture.secondAccountScope,
+        "Private account phrase",
+        new Date("2026-08-05T12:05:00.000Z"),
+      );
+
+      expect(fixture.repository.listConversations(fixture.primaryScope, {
+        state: "active",
+        search: "AUGUST",
+      }).conversations.map((item) => item.conversationId)).toEqual([titleMatch.conversationId]);
+      expect(fixture.repository.listConversations(fixture.primaryScope, {
+        state: "active",
+        search: "underwater",
+      }).conversations.map((item) => item.conversationId)).toEqual([messageMatch.conversationId]);
+      expect(fixture.repository.listConversations(fixture.primaryScope, {
+        state: "active",
+        search: "Private account phrase",
+      }).conversations).toEqual([]);
+      expect(fixture.repository.listConversations(fixture.secondAccountScope, {
+        state: "active",
+        search: "Private account phrase",
+      }).conversations.map((item) => item.conversationId)).toEqual([otherAccount.conversationId]);
+    } finally {
+      fixture.database.close();
+    }
+  });
+
   it("keeps conversation metadata separate from bounded newest-first message pages", () => {
     const fixture = setup();
     try {

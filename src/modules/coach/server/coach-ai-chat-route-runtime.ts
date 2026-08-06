@@ -15,12 +15,14 @@ import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/data
 
 const MAX_CURSOR_LENGTH = 1024;
 const MAX_PAGE_LIMIT = 100;
+const MAX_CONVERSATION_SEARCH_LENGTH = 120;
 const MAX_JSON_BODY_BYTES = 8 * 1024;
 const INTEGER_PATTERN = /^(?:0|[1-9][0-9]*)$/u;
 const CURSOR_PATTERN = /^[A-Za-z0-9_-]{1,1024}$/u;
 
 type ConversationListQuery = Readonly<{
   state: "active" | "archived";
+  search: string | null;
   limit: number;
   cursor: CoachAiChatConversationCursor | null;
 }>;
@@ -137,11 +139,17 @@ export function encodeMessagePageCursor(cursor: CoachAiChatMessageCursor | null)
 }
 
 export function parseConversationListQuery(url: URL): ConversationListQuery {
-  assertKnownQueryKeys(url, ["state", "limit", "cursor"]);
+  assertKnownQueryKeys(url, ["state", "search", "limit", "cursor"]);
   const state = readSingleQueryValue(url, "state") ?? "active";
   if (state !== "active" && state !== "archived") invalidRequest("state");
+  const rawSearch = readSingleQueryValue(url, "search");
+  const search = rawSearch?.trim() ?? "";
+  if (search.length > MAX_CONVERSATION_SEARCH_LENGTH || /[\u0000-\u001f\u007f]/u.test(search)) {
+    invalidRequest("search");
+  }
   return Object.freeze({
     state,
+    search: search.length > 0 ? search : null,
     limit: parseLimit(readSingleQueryValue(url, "limit"), 30, "limit"),
     cursor: parseConversationCursor(readSingleQueryValue(url, "cursor")),
   });
