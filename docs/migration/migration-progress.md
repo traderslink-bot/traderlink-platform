@@ -66,8 +66,11 @@ editable draft, canonical Journal preview, explicit execution-set and trade
 relationship/type confirmation, and the existing retry-safe manual execution
 commit. The AI never writes Journal facts directly; the committed draft keeps
 the canonical Journal reference and existing duplicate/Data Decisions behavior
-remains authoritative. Editable Daily Companion proposals remain an active
-future slice.
+remains authoritative. Daily Companion answers can now propose an editable
+daily note, one server-resolved trade note, or Current Focuses update. Nothing
+changes until the trader explicitly saves it; confirmation preserves untouched
+Journal fields, rejects stale note revisions, and never changes tags, rule
+outcomes, position classifications, executions or trading-day review status.
 The finalized natural-language/query contract is maintained in the
 [AI Chatbot Complete Language Plan](traderslink_ai_chatbot_complete_language_plan.md);
 it requires deterministic capability routing, account scope, explicit action

@@ -33,9 +33,10 @@ The private persistence API checkpoint is tracked in
 - [ ] Complete the twenty-category language inventory program and review/lock
   its canonical vocabulary before generating runtime registries.
 - [ ] Implement the private AI Chat experience and factual question families.
-- [ ] Implement Daily Trade Tracker companion drafting/confirmation flow.
-  The trusted one-day discussion/context boundary is complete; editable note,
-  focus, tag, classification and review proposals remain confirmation work.
+- [x] Implement the Daily Trade Tracker companion drafting/confirmation flow
+  for daily notes, one selected trade note, and Current Focuses. Tags, rule
+  outcomes, executions, position classifications and review completion remain
+  trader-controlled outside this AI write path.
 - [x] Integrate conversational manual execution drafts with the canonical
   Journal preview and commit commands.
 - [ ] Implement production entitlement, scheduled-delivery, operational, and
@@ -54,10 +55,10 @@ The private persistence API checkpoint is tracked in
   Completed answers require an immutable factual snapshot before their receipt;
   failed assistant attempts may retain an honest receipt when provider usage is
   available without inventing a snapshot, token count or cost.
-- Manual-entry and daily companion records are drafts/proposals only. They can
-  retain a later canonical Journal command/reference outcome, but have no
-  execution or annotation write path. Confirmed manual rows freeze before the
-  canonical save transition.
+- At the schema-foundation checkpoint, manual-entry and daily companion records
+  were drafts/proposals only. Later completed slices now use their guarded
+  canonical Journal command/reference states; confirmed manual rows still
+  freeze before the canonical save transition.
 - Append-only triggers protect message/snapshot/receipt/archive history, and
   narrowly constrain conversation, assistant-generation, draft, daily-proposal
   and canonical-save state transitions. Conversation insertion requires an
@@ -192,6 +193,36 @@ existing migration, Journal, and account boundaries.
   the existing cross-project Analytics, Calendar, Import, Tracker fixture and
   older test typing backlog; no new runtime failure was found by the focused
   Daily Companion checks.
+
+## Completed: editable Daily Companion note drafts
+
+- A trusted date-bound Daily Companion answer may propose one editable daily
+  note update, one selected trade note, or one Current Focuses update. The
+  provider sees stable global trade numbers; the canonical round-trip ID stays
+  server-only and is never selected or invented by the browser or model.
+- The trader reviews and may edit every proposed word in a plain Material UI
+  card. **Save** and **Discard draft** are explicit. Generating an answer alone
+  never changes the Daily Trade Tracker.
+- Confirming a daily note or Current Focuses draft preserves every untouched
+  daily-note field. Confirming a trade-note draft preserves its technical note.
+  A newer Journal note revision causes a safe conflict instead of overwriting
+  the trader's later work.
+- The proposal transition and canonical Journal annotation save share one
+  immediate SQLite transaction. Repeated confirmation of an already committed
+  draft is idempotent and cannot create a second note revision.
+- Tags, rule outcomes, trading-day review completion, position
+  classifications and executions are outside this write path. The AI does not
+  mark a day reviewed or call the trading-day review service.
+
+### Verification
+
+- Four focused one-worker files passed 36 tests covering trusted generation,
+  idempotent draft persistence, server-only trade targeting, strict route
+  behavior, field preservation, stale-revision rollback, explicit rejection
+  and the absence of any review-completion write.
+- Focused ESLint passed for all 15 implementation files and
+  `git diff --check` passed. No provider call, protected-database write,
+  migration, dependency change, process start, deployment or push was made.
 
 ## Completed: confirmed conversational manual execution drafts
 

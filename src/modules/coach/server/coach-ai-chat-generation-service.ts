@@ -8,6 +8,10 @@ import type {
 } from "../contracts/ai-chat-contracts";
 import type { CoachAiManualEntryDraft } from "../contracts/ai-manual-entry-draft-contracts";
 import type { CoachAiChatTrustedContext } from "../contracts/ai-daily-companion-contracts";
+import type {
+  CoachAiDailyCompanionDraft,
+  CoachAiDailyCompanionResolvedContext,
+} from "../contracts/ai-daily-companion-contracts";
 import type { CoachAiChatGenerationAttempt } from "../contracts/ai-provider-controls-contracts";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
@@ -48,6 +52,7 @@ export type CoachAiChatGenerationServiceResult = Readonly<{
   assistantMessageId: string;
   attemptId: string;
   manualEntryDraft: CoachAiManualEntryDraft | null;
+  dailyCompanionDraft: CoachAiDailyCompanionDraft | null;
 }>;
 
 function completeUsage(usage: CoachAiChatGenerationUsage): boolean {
@@ -131,7 +136,8 @@ export class CoachAiChatGenerationService {
     private readonly factualTools: Pick<CoachAiChatFactualToolService, "summarizeClosedTrades" | "groupClosedTrades" | "listClosedTrades">,
     private readonly tradeDetails: Pick<CoachAiChatTradeDetailService, "getClosedTradeDetails">,
     private readonly generator: CoachAiChatGenerator = generateCoachAiChatOpenAiAnswer,
-    private readonly dailyCompanion: Pick<CoachAiDailyCompanionRepository, "recordProposedReflection"> | null = null,
+    private readonly dailyCompanion: Pick<CoachAiDailyCompanionRepository,
+      "recordProposedReflection" | "recordProposedDraft" | "listDrafts"> | null = null,
     private readonly manualDrafts: Pick<CoachAiManualEntryDraftRepository,
       "createDraft" | "listDrafts" | "readDraftForSourceMessage" | "transitionDraft"> | null = null,
   ) {}
@@ -143,7 +149,7 @@ export class CoachAiChatGenerationService {
       question: string;
       intent?: CoachAiChatMessageIntent;
       idempotencySha256: string;
-      resolveTrustedContext?: (() => CoachAiChatTrustedContext) | null;
+      resolveTrustedContext?: (() => CoachAiDailyCompanionResolvedContext) | null;
       resolveManualEntryDefaults?: (() => Readonly<{
         sourceTimezone: string;
         tradeCurrency: string;
@@ -169,12 +175,17 @@ export class CoachAiChatGenerationService {
         input.conversationId,
         pair.userMessage.messageId,
       ) ?? null;
+      const dailyCompanionDraft = this.dailyCompanion?.listDrafts(scope, {
+        conversationId: input.conversationId,
+        limit: 50,
+      }).find((draft) => draft.sourceMessageId === pair.userMessage.messageId) ?? null;
       return Object.freeze({ state: existing.state === "reserved" || existing.state === "started" ? "pending" : existing.state,
         assistantMessageId: existing.assistantMessageId, attemptId: existing.attemptId,
-        manualEntryDraft });
+        manualEntryDraft, dailyCompanionDraft });
     }
 
-    const trustedContext = input.resolveTrustedContext?.() ?? null;
+    const resolvedTrustedContext = input.resolveTrustedContext?.() ?? null;
+    const trustedContext = resolvedTrustedContext?.context ?? null;
     if (trustedContext && Buffer.byteLength(JSON.stringify(trustedContext), "utf8") >
         COACH_AI_CHAT_MAX_TRUSTED_CONTEXT_BYTES) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "trustedContext" });
@@ -228,7 +239,7 @@ export class CoachAiChatGenerationService {
       return Object.freeze({ pair, history, reservation });
     });
     if (created.reservation.state === "blocked") {
-      return Object.freeze({ state: "blocked", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: created.reservation.attempt.attemptId, manualEntryDraft: null });
+      return Object.freeze({ state: "blocked", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: created.reservation.attempt.attemptId, manualEntryDraft: null, dailyCompanionDraft: null });
     }
     if (created.reservation.state !== "reserved") {
       platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { state: "unexpected_reservation" });
@@ -267,17 +278,19 @@ export class CoachAiChatGenerationService {
           this.controls.failStartedWithoutUsage(scope, attempt.attemptId, providerError.message, now);
         }
       });
-      return Object.freeze({ state: "failed", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: attempt.attemptId, manualEntryDraft: null });
+      return Object.freeze({ state: "failed", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: attempt.attemptId, manualEntryDraft: null, dailyCompanionDraft: null });
     }
     // A receipt/attempt mismatch must roll this whole persistence transition back; it is not a provider failure.
     let manualEntryDraft: CoachAiManualEntryDraft | null = null;
+    let dailyCompanionDraft: CoachAiDailyCompanionDraft | null = null;
     this.chat.runAtomically(() => {
       this.chat.finalizeAssistantSuccess(scope, created.pair.assistantMessage.messageId, {
         assistantTextPrivate: safeAssistantText(result),
         snapshotContractVersion: "traderlink_coach_ai_chat_generation_v1",
         factualSnapshot: Object.freeze({ answer: result.answer, factualToolCalls: result.factualToolCalls,
           totalFactualResultBytes: dispatcher.totalSerializedResultBytes(), trustedContext,
-          manualEntryExtraction: result.manualEntryExtraction }),
+          manualEntryExtraction: result.manualEntryExtraction,
+          dailyCompanionDraftExtraction: result.dailyCompanionDraftExtraction }),
         receipt: { providerKey: attempt.providerKey, modelId: attempt.modelId, usage: result.usage,
           inputCostUsdPerMillionTokens: attempt.inputCostUsdPerMillionTokens,
           outputCostUsdPerMillionTokens: attempt.outputCostUsdPerMillionTokens },
@@ -296,6 +309,18 @@ export class CoachAiChatGenerationService {
             answer: result.answer,
           }),
         }, now);
+        if (result.dailyCompanionDraftExtraction) {
+          dailyCompanionDraft = this.dailyCompanion.recordProposedDraft(scope, {
+            conversationId: input.conversationId,
+            sourceMessageId: created.pair.userMessage.messageId,
+            resolvedContext: resolvedTrustedContext!,
+            extraction: result.dailyCompanionDraftExtraction,
+          }, now);
+        }
+      } else if (result.dailyCompanionDraftExtraction) {
+        platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+          component: "dailyCompanionDraft",
+        });
       }
       if (result.manualEntryExtraction) {
         const activeDrafts = this.manualDrafts!.listDrafts(scope, {
@@ -319,6 +344,6 @@ export class CoachAiChatGenerationService {
         }, now);
       }
     });
-    return Object.freeze({ state: "completed", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: attempt.attemptId, manualEntryDraft });
+    return Object.freeze({ state: "completed", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: attempt.attemptId, manualEntryDraft, dailyCompanionDraft });
   }
 }

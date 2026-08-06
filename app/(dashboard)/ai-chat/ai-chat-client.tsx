@@ -32,10 +32,14 @@ import type {
   CoachAiChatConversation,
   CoachAiChatMessage,
 } from "@/src/modules/coach/contracts/ai-chat-contracts";
-import type { CoachAiDailyCompanionContextSelector } from "@/src/modules/coach/contracts/ai-daily-companion-contracts";
+import type {
+  CoachAiDailyCompanionContextSelector,
+  CoachAiDailyCompanionDraft,
+} from "@/src/modules/coach/contracts/ai-daily-companion-contracts";
 import type { CoachAiManualEntryDraft } from "@/src/modules/coach/contracts/ai-manual-entry-draft-contracts";
 
 import { AiChatManualEntryCard } from "./ai-chat-manual-entry-card";
+import { AiChatDailyCompanionCard } from "./ai-chat-daily-companion-card";
 
 type ConversationResponse = Readonly<{
   status: "ready";
@@ -54,12 +58,19 @@ type GenerationResponse = Readonly<{
   status: "completed" | "pending" | "blocked" | "failed";
   assistantMessageId: string;
   manualEntryDraft: CoachAiManualEntryDraft | null;
+  dailyCompanionDraft: CoachAiDailyCompanionDraft | null;
 }>;
 
 type ManualEntryDraftResponse = Readonly<{
   status: "ready";
   conversationId: string;
   drafts: readonly CoachAiManualEntryDraft[];
+}>;
+
+type DailyCompanionDraftResponse = Readonly<{
+  status: "ready";
+  conversationId: string;
+  drafts: readonly CoachAiDailyCompanionDraft[];
 }>;
 
 type RetryRequest = Readonly<{
@@ -160,6 +171,7 @@ export function AiChatClient({
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<readonly CoachAiChatMessage[]>([]);
   const [manualEntryDrafts, setManualEntryDrafts] = useState<readonly CoachAiManualEntryDraft[]>([]);
+  const [dailyCompanionDrafts, setDailyCompanionDrafts] = useState<readonly CoachAiDailyCompanionDraft[]>([]);
   const [messageCursor, setMessageCursor] = useState<string | null>(null);
   const [question, setQuestion] = useState("");
   const [loadingConversations, setLoadingConversations] = useState(true);
@@ -232,18 +244,33 @@ export function AiChatClient({
     }
   }, []);
 
+  const loadDailyCompanionDrafts = useCallback(async (conversationId: string) => {
+    try {
+      const response = await readJson<DailyCompanionDraftResponse>(await fetch(
+        `${conversationsEndpoint}/${conversationId}/daily-companion-drafts`,
+        { cache: "no-store" },
+      ));
+      setDailyCompanionDrafts(response.drafts);
+    } catch {
+      setDailyCompanionDrafts([]);
+      setNotice("Daily note drafts could not be loaded right now.");
+    }
+  }, []);
+
   useEffect(() => { void loadConversations(); }, [loadConversations]);
   useEffect(() => {
     if (activeConversationId) {
       void loadMessages(activeConversationId);
       void loadManualEntryDrafts(activeConversationId);
+      void loadDailyCompanionDrafts(activeConversationId);
     }
     else {
       setMessages([]);
       setManualEntryDrafts([]);
+      setDailyCompanionDrafts([]);
       setMessageCursor(null);
     }
-  }, [activeConversationId, loadManualEntryDrafts, loadMessages]);
+  }, [activeConversationId, loadDailyCompanionDrafts, loadManualEntryDrafts, loadMessages]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, sending]);
 
   async function createConversation(
@@ -336,6 +363,13 @@ export function AiChatClient({
         setManualEntryDrafts((current) => [
           body.manualEntryDraft!,
           ...current.filter((draft) => draft.draftId !== body.manualEntryDraft!.draftId),
+        ]);
+      }
+      if (body.dailyCompanionDraft) {
+        setDailyCompanionDrafts((current) => [
+          body.dailyCompanionDraft!,
+          ...current.filter((draft) =>
+            draft.interactionId !== body.dailyCompanionDraft!.interactionId),
         ]);
       }
       await loadMessages(conversation.conversationId);
@@ -549,6 +583,21 @@ export function AiChatClient({
                   onDraftChange={(updatedDraft) => setManualEntryDrafts((current) => [
                     updatedDraft,
                     ...current.filter((item) => item.draftId !== updatedDraft.draftId),
+                  ])}
+                />
+              ))}
+            {dailyCompanionDrafts
+              .filter((draft) => draft.disposition !== "rejected" && draft.disposition !== "expired")
+              .slice(0, 3)
+              .map((draft) => (
+                <AiChatDailyCompanionCard
+                  conversationId={draft.conversationId}
+                  draft={draft}
+                  key={draft.interactionId}
+                  onDraftChange={(updatedDraft) => setDailyCompanionDrafts((current) => [
+                    updatedDraft,
+                    ...current.filter((item) =>
+                      item.interactionId !== updatedDraft.interactionId),
                   ])}
                 />
               ))}

@@ -66,3 +66,72 @@ export type CoachAiDailyCompanionContext = Readonly<{
 }>;
 
 export type CoachAiChatTrustedContext = CoachAiDailyCompanionContext;
+
+export type CoachAiDailyNoteDraftField =
+  | "whatWorked"
+  | "whatNeedsWork"
+  | "technicalRecap"
+  | "anythingElse";
+
+export type CoachAiDailyCompanionDraftExtraction =
+  | Readonly<{
+      kind: "daily_note_draft";
+      updates: readonly Readonly<{
+        field: CoachAiDailyNoteDraftField;
+        content: string;
+      }>[];
+    }>
+  | Readonly<{
+      kind: "trade_note_draft";
+      tradeNumber: number;
+      content: string;
+    }>
+  | Readonly<{
+      kind: "current_focus_draft";
+      currentFocuses: string;
+    }>;
+
+export type CoachAiDailyCompanionDraftProposal =
+  | Readonly<{
+      kind: "daily_note_draft";
+      updates: readonly Readonly<{
+        field: CoachAiDailyNoteDraftField;
+        content: string;
+      }>[];
+    }>
+  | Readonly<{
+      kind: "trade_note_draft";
+      tradeNumber: number;
+      ticker: string;
+      direction: "long" | "short";
+      content: string;
+    }>
+  | Readonly<{
+      kind: "current_focus_draft";
+      currentFocuses: string;
+    }>;
+
+export type CoachAiDailyCompanionDraft = Readonly<{
+  interactionId: string;
+  conversationId: string;
+  sourceMessageId: string;
+  tradingDate: string;
+  proposal: CoachAiDailyCompanionDraftProposal;
+  disposition: "proposed" | "accepted" | "rejected" | "expired";
+  journalWriteState: "not_written" | "commit_pending" | "committed" | "write_failed";
+  createdAtUtc: string;
+  resolvedAtUtc: string | null;
+}>;
+
+/** Server-only target information. It is never included in the provider prompt or API view. */
+export type CoachAiDailyCompanionResolvedContext = Readonly<{
+  context: CoachAiDailyCompanionContext;
+  dailyNoteRevision: number | null;
+  trades: readonly Readonly<{
+    tradeNumber: number;
+    roundTripId: string;
+    noteRevision: number | null;
+    ticker: string;
+    direction: "long" | "short";
+  }>[];
+}>;

@@ -13,7 +13,7 @@ import {
 } from "@/src/modules/coach/server/coach-ai-chat-route-runtime";
 import { generateCoachAiChatSavedAnswer } from "@/src/modules/coach/server/coach-ai-chat-generation-runtime";
 import {
-  getReplacementDailyCompanionContext,
+  getReplacementDailyCompanionResolvedContext,
   getReplacementTradeTrackerAccount,
 } from "@/app/(dashboard)/trade-tracker/trade-tracker-platform-data";
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
@@ -68,7 +68,7 @@ export async function POST(
       ),
       resolveTrustedContext: input.context
         ? () => {
-            const context = getReplacementDailyCompanionContext(scope, {
+            const context = getReplacementDailyCompanionResolvedContext(scope, {
               tradingDate: input.context!.tradingDate,
               currency: input.context!.currency,
             });
@@ -101,6 +101,7 @@ export async function POST(
       status: result.state,
       assistantMessageId: result.assistantMessageId,
       manualEntryDraft: result.manualEntryDraft,
+      dailyCompanionDraft: result.dailyCompanionDraft,
     }, status);
   } catch (error) {
     return respondToChatRouteError(error);

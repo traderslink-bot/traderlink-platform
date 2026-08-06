@@ -15,6 +15,7 @@ import type {
   CoachAiManualExecutionExtraction,
 } from "../contracts/ai-manual-entry-draft-contracts";
 import type { CoachAiChatTrustedContext } from "../contracts/ai-daily-companion-contracts";
+import type { CoachAiDailyCompanionDraftExtraction } from "../contracts/ai-daily-companion-contracts";
 import { COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION } from "../contracts/coach-ai-chat-factual-tool-contracts";
 import type { CoachAiChatGenerationAttempt } from "../contracts/ai-provider-controls-contracts";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
@@ -48,6 +49,31 @@ const answerSchema = z.object({
   evidenceReferences: z.array(z.object({ toolCallId: z.string().min(1).max(128), statement: z.string().min(1).max(800) }).strict()).max(COACH_AI_CHAT_MAX_TOOL_CALLS),
 }).strict();
 
+const dailyNoteUpdateSchema = z.object({
+  field: z.enum(["whatWorked", "whatNeedsWork", "technicalRecap", "anythingElse"]),
+  content: z.string().trim().min(1).max(4_000),
+}).strict();
+
+const dailyCompanionDraftSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("daily_note_draft"),
+    updates: z.array(dailyNoteUpdateSchema).min(1).max(4),
+  }).strict(),
+  z.object({
+    kind: z.literal("trade_note_draft"),
+    tradeNumber: z.number().int().positive(),
+    content: z.string().trim().min(1).max(4_000),
+  }).strict(),
+  z.object({
+    kind: z.literal("current_focus_draft"),
+    currentFocuses: z.string().trim().min(1).max(4_000),
+  }).strict(),
+]);
+
+const dailyCompanionAnswerSchema = answerSchema.extend({
+  dailyCompanionDraft: dailyCompanionDraftSchema.nullable(),
+}).strict();
+
 const manualExecutionRowSchema = z.object({
   localDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/u).nullable(),
   localTime: z.string().regex(/^\d{2}:\d{2}(?::\d{2})?$/u).nullable(),
@@ -70,6 +96,8 @@ const SYSTEM_INSTRUCTION = `You are TraderLink's private trading-journal compani
 Use plain trader language and plain text only; do not use Markdown formatting. Do not give trading, financial, tax, medical, or legal advice. Do not invent facts, causes, market conditions, or missing values. State an honest limitation when coverage, sample size, or data availability limits an answer. Do not mention providers, AI, prompts, tokens, databases, internal systems, codes, or account identifiers.
 
 When trusted daily context is present, stay within that one trading day unless the trader explicitly asks a broader question that the factual tools can answer. Tags are trader context, not proof of a setup, emotion, cause, or rule break. You may help draft wording, but never claim that you saved a note, changed a focus, applied a tag, classified a position, or completed a review.
+
+Create a dailyCompanionDraft only when the trader explicitly asks you to draft, rewrite, or update a Daily Tracker note or Current Focus. Return null for ordinary questions. A daily-note draft may update only What worked, What needs work, Technical recap, or Anything else. A trade-note draft must identify exactly one trade by the globally unique tradeNumber in the trusted context. Never draft or change review completion, tags, rules, rule results, position classifications, or executions. The trader will edit and explicitly save any draft in a separate confirmation step.
 
 Return the requested answer structure. Start with a direct answer, include one to four supporting observations, and use evidenceReferences only for factual tools actually called in this generation. A no-tool answer must have no evidence references and must be honest about why a factual answer is unavailable.`;
 
@@ -155,6 +183,40 @@ function manualExtraction(
   });
 }
 
+function dailyCompanionExtraction(
+  value: z.infer<typeof dailyCompanionDraftSchema> | null,
+  context: CoachAiChatTrustedContext | null,
+): CoachAiDailyCompanionDraftExtraction | null {
+  if (value === null) return null;
+  if (!context) {
+    throw new CoachAiChatProviderGenerationError(
+      Object.freeze({ inputTokens: null, outputTokens: null, totalTokens: null }),
+      "TRADERLINK_COACH_DAILY_COMPANION_DRAFT_INVALID",
+    );
+  }
+  if (value.kind === "trade_note_draft" &&
+      !context.trades.some((trade) => trade.tradeNumber === value.tradeNumber)) {
+    throw new CoachAiChatProviderGenerationError(
+      Object.freeze({ inputTokens: null, outputTokens: null, totalTokens: null }),
+      "TRADERLINK_COACH_DAILY_COMPANION_DRAFT_INVALID",
+    );
+  }
+  if (value.kind === "daily_note_draft") {
+    const fields = new Set(value.updates.map((update) => update.field));
+    if (fields.size !== value.updates.length) {
+      throw new CoachAiChatProviderGenerationError(
+        Object.freeze({ inputTokens: null, outputTokens: null, totalTokens: null }),
+        "TRADERLINK_COACH_DAILY_COMPANION_DRAFT_INVALID",
+      );
+    }
+    return Object.freeze({
+      kind: value.kind,
+      updates: Object.freeze(value.updates.map((update) => Object.freeze({ ...update }))),
+    });
+  }
+  return Object.freeze({ ...value });
+}
+
 export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAdapterInput): Promise<CoachAiChatGenerationResult> {
   const openai = createOpenAI({ apiKey: requireOpenAiKey(input.environment ?? process.env) });
   const context = input.recentMessages.slice(-12).map((message) => Object.freeze({
@@ -185,6 +247,7 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
         usage: completeUsage(result.usage),
         factualToolCalls: Object.freeze([]),
         manualEntryExtraction: manualExtraction(result.output.manualExecutionDraft),
+        dailyCompanionDraftExtraction: null,
       });
     }
     const result = await generateText({
@@ -198,7 +261,7 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
       maxOutputTokens: input.attempt.maximumOutputTokens,
       maxRetries: 0,
       stopWhen: isStepCount(COACH_AI_CHAT_MAX_STEPS),
-      output: Output.object({ schema: answerSchema }),
+      output: Output.object({ schema: dailyCompanionAnswerSchema }),
       tools: {
         summarize_closed_trades: tool({ description: "Get verified closed-trade metrics for this trader.", inputSchema: summaryInput, execute: (value) => input.dispatcher.dispatch(`factual-${input.dispatcher.snapshotsForPersistence().length + 1}`, { contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION, toolName: "summarize_closed_trades", ...value }) }),
         group_closed_trades: tool({ description: "Get verified closed-trade metrics by one supported group.", inputSchema: groupingInput, execute: (value) => input.dispatcher.dispatch(`factual-${input.dispatcher.snapshotsForPersistence().length + 1}`, { contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION, toolName: "group_closed_trades", ...value }) }),
@@ -212,6 +275,10 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
       usage: completeUsage(result.usage),
       factualToolCalls: input.dispatcher.snapshotsForPersistence(),
       manualEntryExtraction: null,
+      dailyCompanionDraftExtraction: dailyCompanionExtraction(
+        result.output.dailyCompanionDraft,
+        input.trustedContext,
+      ),
     });
   } catch (error) {
     if (error instanceof CoachAiChatProviderGenerationError) throw error;

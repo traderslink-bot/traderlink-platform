@@ -45,7 +45,7 @@ function fixture() {
 }
 
 function answer(): CoachAiChatGenerationResult {
-  return Object.freeze({ answer: Object.freeze({ contractVersion: COACH_AI_CHAT_ANSWER_CONTRACT_VERSION, directAnswer: "Your saved Journal does not have enough facts for that yet.", supportingObservations: Object.freeze(["No closed-trade result was requested."]), limitation: "Ask about a saved trade or date range when you are ready.", nextQuestion: null, evidenceReferences: Object.freeze([]) }), usage: Object.freeze({ inputTokens: 20, outputTokens: 10, totalTokens: 30 }), factualToolCalls: Object.freeze([]), manualEntryExtraction: null });
+  return Object.freeze({ answer: Object.freeze({ contractVersion: COACH_AI_CHAT_ANSWER_CONTRACT_VERSION, directAnswer: "Your saved Journal does not have enough facts for that yet.", supportingObservations: Object.freeze(["No closed-trade result was requested."]), limitation: "Ask about a saved trade or date range when you are ready.", nextQuestion: null, evidenceReferences: Object.freeze([]) }), usage: Object.freeze({ inputTokens: 20, outputTokens: 10, totalTokens: 30 }), factualToolCalls: Object.freeze([]), manualEntryExtraction: null, dailyCompanionDraftExtraction: null });
 }
 
 function service(f: ReturnType<typeof fixture>, generator: CoachAiChatGenerator) {
@@ -91,6 +91,14 @@ function dailyContext(): CoachAiDailyCompanionContext {
   });
 }
 
+function resolvedDailyContext() {
+  return Object.freeze({
+    context: dailyContext(),
+    dailyNoteRevision: null,
+    trades: Object.freeze([]),
+  });
+}
+
 describe("CoachAiChatGenerationService", () => {
   it("persists one bounded, no-tool answer and reuses the exact attempt before and after completion", async () => {
     const f = fixture();
@@ -109,7 +117,8 @@ describe("CoachAiChatGenerationService", () => {
   it("gates and persists one server-trusted Daily Tracker interaction with the completed answer", async () => {
     const f = fixture();
     try {
-      const context = dailyContext();
+      const resolvedContext = resolvedDailyContext();
+      const context = resolvedContext.context;
       const generator = vi.fn(async (input: Parameters<CoachAiChatGenerator>[0]) => {
         expect(input.trustedContext).toEqual(context);
         return answer();
@@ -119,7 +128,7 @@ describe("CoachAiChatGenerationService", () => {
         conversationId: f.conversationId,
         question: "Help me review this day.",
         idempotencySha256: "6".repeat(64),
-        resolveTrustedContext: () => context,
+        resolveTrustedContext: () => resolvedContext,
       }, now)).rejects.toThrow("TRADERLINK_COACH_CHAT_UNAVAILABLE");
       expect(f.database.prepare(`SELECT COUNT(*) AS count FROM coach_ai_chat_messages`).get())
         .toEqual({ count: 0 });
@@ -142,7 +151,7 @@ describe("CoachAiChatGenerationService", () => {
         conversationId: f.conversationId,
         question: "Help me review this day.",
         idempotencySha256: "7".repeat(64),
-        resolveTrustedContext: () => context,
+        resolveTrustedContext: () => resolvedContext,
       }, now)).resolves.toMatchObject({ state: "completed" });
       await expect(subject.generateSavedAnswer(f.scope, {
         conversationId: f.conversationId,
@@ -171,6 +180,66 @@ FROM coach_ai_daily_companion_interactions`).get()).toEqual({
         disposition: "proposed",
         journal_write_state: "not_written",
       });
+    } finally { f.database.close(); }
+  });
+
+  it("persists one editable Daily Companion draft and reuses it on an idempotent retry", async () => {
+    const f = fixture();
+    try {
+      f.controls.savePlatformFeatureControl({
+        featureKey: "daily_companion",
+        enabled: true,
+        dailyRequestCap: 20,
+        dailyTokenCap: 2_000_000,
+        dailyEstimatedSpendCapUsd: "10",
+      });
+      f.controls.saveAccountFeatureControl(f.scope, {
+        featureKey: "daily_companion",
+        enabled: true,
+        dailyRequestCap: 20,
+        dailyTokenCap: 2_000_000,
+        dailyEstimatedSpendCapUsd: "10",
+      });
+      const generator = vi.fn(async () => Object.freeze({
+        ...answer(),
+        dailyCompanionDraftExtraction: Object.freeze({
+          kind: "current_focus_draft" as const,
+          currentFocuses: "Wait for confirmation before adding size.",
+        }),
+      }));
+      const subject = service(f, generator);
+      const input = {
+        conversationId: f.conversationId,
+        question: "Help me rewrite my Current Focus.",
+        idempotencySha256: "8".repeat(64),
+        resolveTrustedContext: () => resolvedDailyContext(),
+      };
+      const first = await subject.generateSavedAnswer(f.scope, input, now);
+      expect(first.dailyCompanionDraft).toMatchObject({
+        tradingDate: "2026-08-05",
+        proposal: {
+          kind: "current_focus_draft",
+          currentFocuses: "Wait for confirmation before adding size.",
+        },
+        disposition: "proposed",
+        journalWriteState: "not_written",
+      });
+      const second = await subject.generateSavedAnswer(f.scope, {
+        ...input,
+        resolveTrustedContext: () => {
+          throw new Error("trusted context must not be rebuilt for an idempotent retry");
+        },
+      }, now);
+      expect(second.dailyCompanionDraft?.interactionId)
+        .toBe(first.dailyCompanionDraft?.interactionId);
+      expect(generator).toHaveBeenCalledTimes(1);
+      expect(f.database.prepare(`SELECT interaction_kind, COUNT(*) AS count
+FROM coach_ai_daily_companion_interactions
+GROUP BY interaction_kind
+ORDER BY interaction_kind`).all()).toEqual([
+        { interaction_kind: "current_focus_draft", count: 1 },
+        { interaction_kind: "daily_reflection", count: 1 },
+      ]);
     } finally { f.database.close(); }
   });
 

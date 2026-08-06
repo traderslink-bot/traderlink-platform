@@ -29,6 +29,7 @@ import { dailyTradeYahooAnalyzerEnabled } from "@/src/modules/level-analysis/ser
 import {
   COACH_AI_DAILY_COMPANION_CONTEXT_VERSION,
   type CoachAiDailyCompanionContext,
+  type CoachAiDailyCompanionResolvedContext,
   type CoachAiDailyCompanionRule,
 } from "@/src/modules/coach/contracts/ai-daily-companion-contracts";
 
@@ -666,10 +667,10 @@ function positionClassification(
 }
 
 /** Builds bounded, server-derived context for one explicit Daily Tracker request. */
-export function getReplacementDailyCompanionContext(
+export function getReplacementDailyCompanionResolvedContext(
   scope: WorkspaceAccessScope,
   input: Readonly<{ tradingDate: string; currency: string | null }>,
-): CoachAiDailyCompanionContext | null {
+): CoachAiDailyCompanionResolvedContext | null {
   const data = getReplacementDaySession(scope, {
     date: input.tradingDate,
     currency: input.currency,
@@ -693,8 +694,9 @@ export function getReplacementDailyCompanionContext(
       input.tradingDate,
     ));
   const trades = data.tickers.flatMap((ticker) =>
-    ticker.roundTrips.map((trade, index) => ({ ticker, trade, index })));
-  const includedTrades = take(trades, 8).map(({ ticker, trade, index }) => {
+    ticker.roundTrips.map((trade) => ({ ticker, trade })));
+  const includedTradeRows = take(trades, 8);
+  const includedTrades = includedTradeRows.map(({ ticker, trade }, index) => {
     const rules = data.rules.filter((rule) =>
       rule.applicability === "trade" && rule.targetRoundTripKey === trade.roundTripKey);
     return Object.freeze({
@@ -734,7 +736,7 @@ export function getReplacementDailyCompanionContext(
       : []),
   ];
 
-  return Object.freeze({
+  const context: CoachAiDailyCompanionContext = Object.freeze({
     contractVersion: COACH_AI_DAILY_COMPANION_CONTEXT_VERSION,
     kind: "daily_review",
     tradingDate: data.date,
@@ -764,6 +766,28 @@ export function getReplacementDailyCompanionContext(
       limitations: Object.freeze(limitations),
     }),
   });
+  return Object.freeze({
+    context,
+    dailyNoteRevision: data.dailyNote.revision === null
+      ? null
+      : Number(data.dailyNote.revision),
+    trades: Object.freeze(includedTradeRows.map(({ ticker, trade }, index) => Object.freeze({
+      tradeNumber: index + 1,
+      roundTripId: trade.roundTripKey,
+      noteRevision: trade.journal.noteRevision === null
+        ? null
+        : Number(trade.journal.noteRevision),
+      ticker: ticker.symbol,
+      direction: trade.direction,
+    }))),
+  });
+}
+
+export function getReplacementDailyCompanionContext(
+  scope: WorkspaceAccessScope,
+  input: Readonly<{ tradingDate: string; currency: string | null }>,
+): CoachAiDailyCompanionContext | null {
+  return getReplacementDailyCompanionResolvedContext(scope, input)?.context ?? null;
 }
 
 export function getReplacementSwingTrackerPositions(
