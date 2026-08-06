@@ -49,6 +49,10 @@ type AttemptRow = Readonly<{
   coach_ai_chat_conversation_id: string;
   coach_ai_chat_message_id: string;
   state: "reserved" | "started" | "completed" | "failed" | "blocked";
+  provider_key: "openai_direct";
+  model_id: string;
+  input_cost_usd_per_million_tokens: string;
+  output_cost_usd_per_million_tokens: string;
   reserved_max_input_tokens: number;
   reserved_max_output_tokens: number;
   reserved_max_total_tokens: number;
@@ -228,7 +232,8 @@ WHERE feature_key = ? AND scope_kind = 'account' AND workspace_id = ? AND accoun
     if (!Number.isSafeInteger(input.maxOutputTokens) || input.maxOutputTokens < 1 || input.maxOutputTokens > MAX_OUTPUT_TOKENS) platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "maxOutputTokens" });
     return this.transaction(() => {
       const existing = this.database.prepare<[string, string], AttemptRow>(`SELECT coach_ai_chat_generation_attempt_id,
-  coach_ai_chat_conversation_id, coach_ai_chat_message_id, state,
+  coach_ai_chat_conversation_id, coach_ai_chat_message_id, state, provider_key, model_id,
+  input_cost_usd_per_million_tokens, output_cost_usd_per_million_tokens,
   reserved_max_input_tokens, reserved_max_output_tokens, reserved_max_total_tokens, reserved_maximum_cost_usd
 FROM coach_ai_chat_generation_attempts WHERE account_id = ? AND idempotency_sha256 = ?`).get(accountId, input.idempotencySha256);
       if (existing) {
@@ -312,13 +317,25 @@ WHERE coach_ai_chat_generation_attempt_id = ? AND user_id = ? AND workspace_id =
 
   private attempt(scope: WorkspaceAccessScope, attemptId: string, accountId: string): CoachAiChatGenerationAttempt {
     const row = this.database.prepare<[string, string, string, string], AttemptRow>(`SELECT coach_ai_chat_generation_attempt_id,
-  coach_ai_chat_conversation_id, coach_ai_chat_message_id, state,
+  coach_ai_chat_conversation_id, coach_ai_chat_message_id, state, provider_key, model_id,
+  input_cost_usd_per_million_tokens, output_cost_usd_per_million_tokens,
   reserved_max_input_tokens, reserved_max_output_tokens, reserved_max_total_tokens, reserved_maximum_cost_usd
 FROM coach_ai_chat_generation_attempts WHERE coach_ai_chat_generation_attempt_id = ? AND user_id = ? AND workspace_id = ? AND account_id = ?`).get(attemptId, scope.userId, scope.workspaceId, accountId);
     if (!row) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED"); return this.attemptRecord(row);
   }
 
   private attemptRecord(row: AttemptRow): CoachAiChatGenerationAttempt {
-    return Object.freeze({ attemptId: row.coach_ai_chat_generation_attempt_id, state: row.state, maximumInputTokens: row.reserved_max_input_tokens, maximumOutputTokens: row.reserved_max_output_tokens, maximumTotalTokens: row.reserved_max_total_tokens, maximumCostUsd: row.reserved_maximum_cost_usd });
+    return Object.freeze({
+      attemptId: row.coach_ai_chat_generation_attempt_id,
+      state: row.state,
+      providerKey: row.provider_key,
+      modelId: row.model_id,
+      inputCostUsdPerMillionTokens: row.input_cost_usd_per_million_tokens,
+      outputCostUsdPerMillionTokens: row.output_cost_usd_per_million_tokens,
+      maximumInputTokens: row.reserved_max_input_tokens,
+      maximumOutputTokens: row.reserved_max_output_tokens,
+      maximumTotalTokens: row.reserved_max_total_tokens,
+      maximumCostUsd: row.reserved_maximum_cost_usd,
+    });
   }
 }

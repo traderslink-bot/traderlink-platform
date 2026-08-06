@@ -127,6 +127,12 @@ describe("Coach AI Chat provider controls repository", () => {
       const chat = assistantReservation(fixture);
       const reserved = fixture.controls.reserveChatGeneration(fixture.scope, reservationInput(chat, "f".repeat(64)));
       fixture.controls.saveChatSettings({ modelId: "gpt-chat-b", inputCostUsdPerMillionTokens: "3", outputCostUsdPerMillionTokens: "4" });
+      expect(reserved.attempt).toMatchObject({
+        providerKey: "openai_direct",
+        modelId: "gpt-chat-a",
+        inputCostUsdPerMillionTokens: "1",
+        outputCostUsdPerMillionTokens: "2",
+      });
       expect(fixture.database.prepare(`SELECT model_id, input_cost_usd_per_million_tokens FROM coach_ai_chat_generation_attempts WHERE coach_ai_chat_generation_attempt_id = ?`).get(reserved.attempt.attemptId)).toEqual({ model_id: "gpt-chat-a", input_cost_usd_per_million_tokens: "1" });
       fixture.controls.markProviderStarted(fixture.scope, reserved.attempt.attemptId);
       fixture.chat.finalizeAssistantSuccess(fixture.scope, chat.assistantMessageId, { assistantTextPrivate: "Safe answer", snapshotContractVersion: "v1", factualSnapshot: { coverage: "available" }, receipt: { providerKey: "openai_direct", modelId: "gpt-chat-a", usage: { inputTokens: 1, outputTokens: 2, totalTokens: 3 }, inputCostUsdPerMillionTokens: "1", outputCostUsdPerMillionTokens: "2" } });
