@@ -123,7 +123,7 @@ describe("Coach AI Chat administration repository", () => {
       const accountRef = fixture.repository.read().accounts[0]!.accountRef;
       fixture.repository.saveSettings({ modelId: "gpt-chat-test", inputCostUsdPerMillionTokens: "1", outputCostUsdPerMillionTokens: "2" });
       fixture.repository.savePlatformControl({ enabled: true, dailyRequestCap: 20, dailyTokenCap: 10_000, dailyEstimatedSpendCapUsd: "10" });
-      fixture.database.prepare(`UPDATE platform_workspace_memberships SET status = 'revoked'`).run();
+      fixture.database.prepare(`UPDATE platform_workspace_memberships SET status = 'suspended'`).run();
       expect(() => fixture.repository.saveAccountControl(accountRef, {
         enabled: true,
         dailyRequestCap: 10,
