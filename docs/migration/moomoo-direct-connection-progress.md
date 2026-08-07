@@ -36,8 +36,13 @@
   account/deal response without retaining private values in logs or fixtures.
 - [ ] Add the broker selector/details experience and the durable disconnect /
   fresh-connect lifecycle for the Account page.
-- [ ] Add a trader-selected first-history start date, durable 90-day range
-  progress, paged fill retrieval, retries and server-side status reads.
+- [ ] Require a trader-entered earliest import date; retrieve exact Moomoo
+  start/end batches newest to oldest in durable overlapping 90-day work units,
+  page at 50 fills until `completed: true`, and publish retry-safe server-side
+  progress while the trader navigates elsewhere.
+- [ ] Let a trader later import older trades by requesting only the uncovered
+  interval before the earliest completed account/market boundary, deduplicating
+  the overlap by Moomoo deal ID and rebuilding the affected Journal chronology.
 - [ ] Add broker account + deal-ID deduplication and update-time watermark
   sync so reconnects and future syncs do not re-import past executions.
 - [ ] Reconcile accepted broker fills through the canonical Journal ledger and

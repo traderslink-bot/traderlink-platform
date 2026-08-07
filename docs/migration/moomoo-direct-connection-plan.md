@@ -129,23 +129,57 @@ It remains read-only: it never places, changes or cancels an order.
 
 ### Initial history selection and durable progress
 
-1. On the first execution import, the trader chooses an earliest import date.
-   Offer date shortcuts and a custom date. Do not claim an "all available"
-   progress total because Moomoo does not document an earliest-history date
+1. The trader must enter the earliest trading date they want imported before
+   the first execution job can start. Explain that they should choose the date
+   of their first Moomoo execution or a slightly earlier date if they are
+   unsure. Do not offer or imply an automatic "all available history" search:
+   Moomoo does not expose the account-opening date or an earliest-history
    discovery field.
-2. Divide the selected start date through the current date into consecutive
-   90-day date ranges. This is a TradersLink reliability/progress unit, not a
-   claim that Moomoo limits explicit start/end queries to 90 days.
-3. Process ranges oldest to newest. Store the selected start/end, current
-   range, page cursor, counts, attempt state and timestamps in durable
+2. Lock an immutable import cutoff when the job starts. Moomoo accepts exact
+   positive `start` and `end` microsecond update timestamps; when both are
+   supplied, they define the requested batch. Divide the trader-selected date
+   through that cutoff into consecutive, overlapping 90-day reliability and
+   progress ranges. The range size is a TradersLink recovery unit, not a claim
+   that Moomoo limits an explicit start/end query to 90 days.
+3. Retrieve ranges newest to oldest so the most recent executions become
+   available first, then continue backward until the trader-selected start
+   boundary has been processed. Store the selected start, immutable cutoff,
+   current range, page cursor, counts, attempt state and timestamps in durable
    server-side import records. The Account page can show ranges complete out
    of total, current date window, imported execution count and any retry
    status while the trader navigates elsewhere or closes the browser.
-4. Within a range, follow Moomoo's historical-deals page cursor until it is
-   complete. Never perform the whole backfill inside an OAuth callback,
-   browser request or a single long-running serverless invocation.
-5. A retry resumes from the last durable page/range checkpoint. Rate-limit or
-   provider failures back off without discarding completed work.
+4. Within each account, market and date range, request the maximum documented
+   page size of 50 fills and follow Moomoo's returned `page_flag`. A range is
+   complete only when Moomoo returns `completed: true`, which means every deal
+   for that requested account, market and start/end batch has been returned;
+   it does not prove lifetime account-history coverage outside that batch.
+   Never perform the whole backfill inside an OAuth callback, browser request
+   or a single long-running serverless invocation.
+5. Retrieval order does not change Journal truth. Preserve each fill's exact
+   `create_time` as its execution time and `updated_time` as its provider
+   synchronization/correction time, then rebuild the affected Journal chain in
+   chronological execution order. Until the selected coverage is complete,
+   do not describe partial position, round-trip or long-term analytics as
+   complete.
+6. A retry resumes from the last durably committed page/range checkpoint.
+   Rate-limit or provider failures back off without discarding completed work.
+   A page cursor advances only after that page's private evidence and bounded
+   Journal commit have both succeeded, so a crash cannot skip received fills.
+
+### Extending imported history backward
+
+1. Persist successfully processed coverage intervals by provider account and
+   market. Coverage is proven by completed requests, not inferred from dates
+   on existing executions; an execution-free period may still have been
+   requested successfully.
+2. After an initial import, let the trader choose **Import older trades** and
+   enter an earlier date. Compute only the missing interval between that new
+   date and the earliest completed boundary, with a small deliberate boundary
+   overlap. Do not request all already-covered newer history again.
+3. Deduplicate every overlap by provider + broker account + deal ID. Once the
+   older interval is complete, merge the durable coverage intervals and
+   rebuild the affected chronological Journal chain so earlier executions can
+   correctly change later positions and round trips.
 
 ### Reconnect and incremental sync
 
@@ -197,10 +231,13 @@ The following are required before this slice may be called complete.
    execution time, persist each page/range checkpoint before another call,
    back off on provider limits and be independently retryable. Browser
    navigation, request timeouts and OAuth callbacks cannot own the import.
-5. **Progress totals are honest.** Display a total only after the trader has
-   supplied the initial earliest date. The total is the deterministic count of
-   TradersLink 90-day ranges from that date through the import cutoff, not an
-   assertion about Moomoo's earliest available history.
+5. **Progress totals are honest.** Do not start an execution import until the
+   trader supplies the earliest date they want imported. The total is the
+   deterministic account + market + TradersLink-range work from that date
+   through the immutable import cutoff, not an assertion about Moomoo's
+   earliest available history or the unknown number of fills. Show the current
+   backward-moving date window, completed work units and accepted fill count;
+   do not invent a fill percentage.
 6. **Execution identity is exact.** Deduplicate by the provider deal/fill ID
    within the provider account identity, never by parent order ID, symbol,
    time, price or quantity. Use Moomoo update timestamps only as a sync
@@ -219,19 +256,24 @@ The following are required before this slice may be called complete.
    account; never silently route every returned broker account into the active
    Journal account. Persist the private source-account identity under the
    existing versioned identity/HMAC boundary before the first fill is accepted.
-10. **Date selection has exact broker-time boundaries.** The initial date is a
-    trader-facing trading date, while Moomoo historical-deals filters use
-    microsecond update timestamps. At job creation, resolve the selected first
-    date and immutable import cutoff to documented market/account-timezone
-    boundaries, persist both exact instants, and use half-open ranges. No later
-    browser timezone, daylight-saving change or retry may shift a boundary and
-    miss or duplicate a fill.
+10. **Date selection has exact broker-time boundaries.** The required initial
+    date is a trader-facing trading date, while Moomoo historical-deals filters
+    use microsecond update timestamps. At job creation, resolve the selected
+    first date and immutable import cutoff to documented market/account-timezone
+    boundaries and persist both exact instants. Until a live boundary test
+    proves Moomoo's inclusivity semantics, overlap adjacent ranges and
+    deduplicate by deal ID rather than assuming half-open provider behavior. No
+    later browser timezone, daylight-saving change or retry may shift a
+    boundary and miss a fill.
 11. **Every page enters Journal through the existing evidence boundary.** A
-    worker page writes a private, hashed source-evidence batch and its durable
-    checkpoint atomically before it advances. It must not keep raw API payloads
-    in browser models, ordinary logs or job-status tables. Accepted executions
-    then use the canonical broker-import command/rebuild path in bounded
-    transactions; a multi-year import never becomes one giant ledger write.
+    worker page first persists its private, hashed source evidence, then uses
+    the canonical broker-import command/rebuild path to commit that page's
+    accepted executions in a bounded transaction, and only after both succeed
+    advances the durable page cursor. If those stores cannot share one database
+    transaction, persist an explicit replayable intermediate state so a crash
+    repeats rather than skips the page. Never keep raw API payloads in browser
+    models, ordinary logs or job-status tables, and never turn a multi-year
+    import into one giant ledger write.
 12. **Scope proof is account-specific.** Do not treat a token string that
     merely contains `trade:read` as enough. Prove that the returned authorized
     account list and each selected market can actually be read with that token.
