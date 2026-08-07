@@ -10,7 +10,8 @@ facts.
 ## Outcome
 
 Add one Platform-owned `reportingCurrency` preference with these choices:
-USD, CAD, AUD, EUR, HKD, SGD and MYR.
+USD, CAD, AUD, BRL, CNY, EUR, HKD, INR, IDR, JPY, MYR, MXN, NZD, NOK,
+PEN, PLN, SGD, ZAR, KRW, SEK, CHF, TWD, THB, TRY and GBP.
 
 The Workspace dashboard shows USD Journal amounts as the factual value and, if
 the preference is not USD, a reporting equivalent in the selected currency.
@@ -40,6 +41,8 @@ or correction.
 
 1. Add a versioned Platform migration for the user preference and cached
    currency observations. Update the migration manifest and schema inventory.
+   Migration 0035 expands the strict currency constraints without changing a
+   user's selected preference or any cached observation.
 2. Publish a private, owner-scoped preference read/write service with strict
    ISO-currency allowlisting. Account Settings uses this service through the
    existing request-security and Platform-scope boundary.

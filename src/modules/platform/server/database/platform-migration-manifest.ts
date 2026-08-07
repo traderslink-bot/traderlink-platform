@@ -33,6 +33,7 @@ import { platformAdministrationMigration } from "./migrations/0019_platform_admi
 import { platformCurrencyPreferencesMigration } from "./migrations/0024_platform_currency_preferences";
 import { platformMoomooConnectionsMigration } from "./migrations/0033_platform_moomoo_connections";
 import { platformMoomooReconnectionMigration } from "./migrations/0034_platform_moomoo_reconnection";
+import { platformReportingCurrencyCoverageMigration } from "./migrations/0035_platform_reporting_currency_coverage";
 import {
   type PlatformMigration,
   validatePlatformMigrationManifest,
@@ -180,6 +181,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/platform/server/database/migrations/0034_platform_moomoo_reconnection.ts",
       migration: platformMoomooReconnectionMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0035_platform_reporting_currency_coverage.ts",
+      migration: platformReportingCurrencyCoverageMigration,
     }),
   ]);
 
@@ -375,6 +380,7 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "platform_broker_connections",
     ]),
     "0034_platform_moomoo_reconnection": Object.freeze([]),
+    "0035_platform_reporting_currency_coverage": Object.freeze([]),
   });
 
 export function expectedPlatformTableNamesForPrefix(

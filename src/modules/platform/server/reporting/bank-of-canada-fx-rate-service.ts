@@ -13,10 +13,28 @@ const RATE_PROVIDER_KEY = "bank_of_canada_valet";
 const USD_TO_CAD_SERIES = "FXUSDCAD";
 const TARGET_SERIES: Readonly<Record<Exclude<PlatformReportingCurrency, "USD" | "CAD">, string>> = Object.freeze({
   AUD: "FXAUDCAD",
+  BRL: "FXBRLCAD",
+  CNY: "FXCNYCAD",
   EUR: "FXEURCAD",
   HKD: "FXHKDCAD",
-  SGD: "FXSGDCAD",
+  INR: "FXINRCAD",
+  IDR: "FXIDRCAD",
+  JPY: "FXJPYCAD",
   MYR: "FXMYRCAD",
+  MXN: "FXMXNCAD",
+  NZD: "FXNZDCAD",
+  NOK: "FXNOKCAD",
+  PEN: "FXPENCAD",
+  PLN: "FXPLNCAD",
+  SGD: "FXSGDCAD",
+  ZAR: "FXZARCAD",
+  KRW: "FXKRWCAD",
+  SEK: "FXSEKCAD",
+  CHF: "FXCHFCAD",
+  TWD: "FXTWDCAD",
+  THB: "FXTHBCAD",
+  TRY: "FXTRYCAD",
+  GBP: "FXGBPCAD",
 });
 const TradingDecimal = Decimal.clone({ precision: 40, rounding: Decimal.ROUND_HALF_UP });
 
