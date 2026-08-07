@@ -24,8 +24,8 @@ export function BrokerConnectionPicker({
 }: {
   moomooConnectionState: BrokerConnectionState;
 }) {
-  const [selectedBroker, setSelectedBroker] = useState("moomoo");
-  const broker = BROKERS.find((entry) => entry.key === selectedBroker) ?? BROKERS[0]!;
+  const [selectedBroker, setSelectedBroker] = useState("");
+  const broker = BROKERS.find((entry) => entry.key === selectedBroker) ?? null;
   const connected = moomooConnectionState === "active";
 
   return (
@@ -38,6 +38,7 @@ export function BrokerConnectionPicker({
           sx={{ minWidth: { sm: 260 } }}
           value={selectedBroker}
         >
+          <MenuItem disabled value="">Choose a broker</MenuItem>
           {BROKERS.map((entry) => <MenuItem key={entry.key} value={entry.key}>{entry.label}</MenuItem>)}
         </TextField>
         <Typography color="text.secondary" sx={{ mt: 0.75 }} variant="body2">
@@ -45,7 +46,7 @@ export function BrokerConnectionPicker({
         </Typography>
       </Box>
 
-      <Box sx={{ bgcolor: "rgba(1, 30, 86, 0.035)", border: 1, borderColor: "divider", borderRadius: 1.5, p: 2 }}>
+      {broker ? <Box sx={{ bgcolor: "rgba(1, 30, 86, 0.035)", border: 1, borderColor: "divider", borderRadius: 1.5, p: 2 }}>
         <Typography sx={{ fontWeight: 800 }} variant="body1">{broker.label}</Typography>
         <Stack spacing={0.75} sx={{ mt: 1 }}>
           <Typography color="text.secondary" variant="body2">
@@ -63,7 +64,7 @@ export function BrokerConnectionPicker({
             Connect Moomoo
           </DashboardPrimaryAction>
         ) : null}
-      </Box>
+      </Box> : null}
     </Stack>
   );
 }
