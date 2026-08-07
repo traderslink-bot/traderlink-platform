@@ -65,6 +65,16 @@
     can cover at most about 310 elapsed minutes from entry to final exit when
     requested promptly. Longer same-day trades require previously cached bars,
     a later History K-Line backfill, or an explicit unavailable-coverage state.
+  - History K-Line continuation is now live-proven on NAMI for 2026-08-06.
+    Page one returned 370 bars; returning `data.next_time` as a `next_time`
+    query parameter produced a distinct second page and 740 unique consecutive
+    bars from 07:41 through 20:00 Eastern with no duplicates, conflicts or
+    invalid rows. A third page expanded the target-day set to 960 bars from
+    04:01 through 20:00. Passing the millisecond cursor as `end`, as the current
+    endpoint page says, failed because `end` enforces a ten-character date.
+    A fourth page moved into the prior date and did not produce a 04:00 target-
+    day row; the 04:00-versus-04:01 candle timestamp convention remains to be
+    reconciled with execution-minute matching.
 - [ ] Publish a privacy-safe confirmed-working / confirmed-unavailable /
   unresolved result and decide pass, limited pass or fail for the existing
   broker-neutral Daily Trade Tracker `MarketDataProvider` boundary.

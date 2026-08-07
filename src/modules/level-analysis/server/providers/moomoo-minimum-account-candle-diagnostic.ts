@@ -109,6 +109,12 @@ function validDate(value: string): boolean {
   return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
+function followingDate(value: string): string {
+  const date = new Date(`${value}T12:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + 1);
+  return date.toISOString().slice(0, 10);
+}
+
 function decimal(value: unknown): Decimal | null {
   if ((typeof value !== "number" && typeof value !== "string") || value === "") return null;
   try {
@@ -225,7 +231,10 @@ async function diagnoseSymbol(input: Readonly<{
       ktype: "1",
       num: "370",
     });
-    if (input.source === "history") query.set("end", pageCursor ?? input.date);
+    if (input.source === "history") {
+      query.set("end", followingDate(input.date));
+      if (pageCursor) query.set("next_time", pageCursor);
+    }
     let response: Response;
     try {
       response = await input.request(
