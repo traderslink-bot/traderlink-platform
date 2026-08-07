@@ -14,6 +14,7 @@ import { PlatformAccountProfileReadService } from "@/src/modules/platform/server
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
 import { AccountManagementClient } from "./account-management-client";
 import { AiReviewDeliverySettings } from "./ai-review-delivery-settings";
+import { BrokerConnectionPicker } from "./broker-connection-picker";
 import { MoomooConnectionSettings } from "./moomoo-connection-settings";
 import { ReportingCurrencySettings } from "./reporting-currency-settings";
 
@@ -81,15 +82,14 @@ export default async function AccountPage() {
         <Typography color="text.secondary" sx={{ mb: 2.5 }} variant="body2">
           Connect a broker to automatically import your trades.
         </Typography>
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ alignItems: { sm: "center" } }}>
-          <Typography sx={{ fontWeight: 800 }} variant="body2">Moomoo</Typography>
-          <Chip
-            color={moomooConnection?.state === "active" ? "success" : "default"}
-            label={moomooConnection?.state === "active" ? "Connected" : "Not connected"}
-            size="small"
-          />
-          <MoomooConnectionSettings state={moomooConnection?.state ?? null} />
-        </Stack>
+        <BrokerConnectionPicker moomooConnectionState={moomooConnection?.state ?? null} />
+        {moomooConnection?.state === "active" ? (
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ alignItems: { sm: "center" }, mt: 2 }}>
+            <Typography sx={{ fontWeight: 800 }} variant="body2">Moomoo</Typography>
+            <Chip color="success" label="Connected" size="small" />
+            <MoomooConnectionSettings state="active" />
+          </Stack>
+        ) : null}
       </DashboardPanel>
 
       <DashboardPanel title="Journal accounts">
