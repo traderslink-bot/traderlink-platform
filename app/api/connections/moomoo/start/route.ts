@@ -8,10 +8,16 @@ import { buildMoomooAuthorizeUrl, createMoomooPkce, getMoomooOAuthConfig } from 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+function requestHostname(request: NextRequest): string {
+  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",", 1)[0]?.trim();
+  const host = forwardedHost || request.headers.get("host")?.trim() || request.nextUrl.host;
+  return host.replace(/:\d+$/u, "").toLowerCase();
+}
+
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     requireTraderLinkPlatformRequestIdentity(request.headers);
-    if (process.env.NODE_ENV !== "production" && request.nextUrl.hostname.toLowerCase() !== "127.0.0.1") {
+    if (process.env.NODE_ENV !== "production" && requestHostname(request) !== "127.0.0.1") {
       return NextResponse.redirect("http://127.0.0.1:3010/api/connections/moomoo/start");
     }
     const pkce = createMoomooPkce();
