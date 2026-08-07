@@ -41,7 +41,7 @@ export function AiReviewDeliverySettings({ initialDeliveryDay, initialDeliveryTi
 
   return (
     <Stack spacing={1.5}>
-      <Typography color="text.secondary" variant="body2">Choose when your weekly review arrives. Your monthly review uses the same Eastern-time delivery time after the month closes.</Typography>
+      <Typography color="text.secondary" variant="body2">Choose when your weekly review arrives. Your monthly review arrives the next day after month end.</Typography>
       {message ? <Alert severity={message === "AI Review delivery settings saved." ? "success" : "error"}>{message}</Alert> : null}
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ alignItems: { sm: "center" } }}>
         <TextField label="Weekly review day" onChange={(event) => setDay(event.target.value as typeof day)} select sx={{ minWidth: { sm: 180 } }} value={day}>{WEEKEND_DAYS.map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}</TextField>

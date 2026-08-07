@@ -70,7 +70,8 @@ export default async function AccountPage() {
         <ReportingCurrencySettings reportingCurrency={profile.reportingCurrency} />
       </DashboardPanel>
 
-      <DashboardPanel title="AI Review delivery">
+      <DashboardPanel hideHeader>
+        <Typography component="h2" variant="h2">AI Review delivery</Typography>
         <AiReviewDeliverySettings
           initialDeliveryDay={aiReviewDelivery?.weeklyDeliveryDay ?? null}
           initialDeliveryTimeEastern={aiReviewDelivery?.deliveryTimeEastern ?? null}
@@ -88,8 +89,8 @@ export default async function AccountPage() {
             label={moomooConnection?.state === "active" ? "Connected" : "Not connected"}
             size="small"
           />
+          <MoomooConnectionSettings state={moomooConnection?.state ?? null} />
         </Stack>
-        <MoomooConnectionSettings state={moomooConnection?.state ?? null} />
       </DashboardPanel>
 
       <DashboardPanel title="Journal accounts">

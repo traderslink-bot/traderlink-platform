@@ -43,9 +43,7 @@ export function ReportingCurrencySettings({
 
   return (
     <Stack spacing={1.5}>
-      <Typography color="text.secondary" variant="body2">
-        Your USD Journal records stay unchanged. The Workspace dashboard can show a daily reporting equivalent in this currency.
-      </Typography>
+      <Typography color="text.secondary" variant="body2">Select the currency you want displayed in your dashboard. Your USD trade execution records stay unchanged.</Typography>
       {message ? <Alert severity={message === "Reporting currency saved." ? "success" : "error"}>{message}</Alert> : null}
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ alignItems: { sm: "center" } }}>
         <TextField
