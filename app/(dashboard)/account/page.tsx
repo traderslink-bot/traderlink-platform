@@ -14,6 +14,7 @@ import { PlatformAccountProfileReadService } from "@/src/modules/platform/server
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
 import { AccountManagementClient } from "./account-management-client";
 import { AiReviewDeliverySettings } from "./ai-review-delivery-settings";
+import { MoomooConnectionSettings } from "./moomoo-connection-settings";
 import { ReportingCurrencySettings } from "./reporting-currency-settings";
 
 export const metadata: Metadata = {
@@ -89,6 +90,7 @@ export default async function AccountPage() {
               : "No Moomoo trading connection is saved. Market-data-only access cannot import trades."}
           </Typography>
         </Stack>
+        <MoomooConnectionSettings connected={moomooConnection?.state === "active"} />
       </DashboardPanel>
 
       <DashboardPanel title="Journal accounts">

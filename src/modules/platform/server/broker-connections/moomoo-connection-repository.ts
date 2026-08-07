@@ -71,4 +71,29 @@ WHERE user_id = ? AND workspace_id = ? AND provider = 'moomoo'
   AND connection_state = 'active'`).run(timestamp, scope.userId, scope.workspaceId);
     if (result.changes !== 1) platformFailure("TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED");
   }
+
+  revoke(scope: WorkspaceAccessScope, input: Readonly<{
+    encrypted: EncryptedMoomooCredentials;
+    timestamp: string;
+  }>): void {
+    assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
+    const result = this.database.prepare(`UPDATE platform_broker_connections
+SET connection_state = 'revoked', credential_key_version = ?,
+  credential_initialization_vector = ?, credential_ciphertext = ?,
+  credential_authentication_tag = ?, access_token_expires_at_utc = ?,
+  authorized_scopes = '[]', updated_at_utc = ?, revoked_at_utc = ?
+WHERE user_id = ? AND workspace_id = ? AND provider = 'moomoo'
+  AND connection_state <> 'revoked'`).run(
+      input.encrypted.keyVersion,
+      input.encrypted.initializationVector,
+      input.encrypted.ciphertext,
+      input.encrypted.authenticationTag,
+      input.timestamp,
+      input.timestamp,
+      input.timestamp,
+      scope.userId,
+      scope.workspaceId,
+    );
+    if (result.changes !== 1) platformFailure("TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED");
+  }
 }
