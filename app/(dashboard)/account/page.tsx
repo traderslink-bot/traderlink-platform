@@ -70,8 +70,7 @@ export default async function AccountPage() {
         <ReportingCurrencySettings reportingCurrency={profile.reportingCurrency} />
       </DashboardPanel>
 
-      <DashboardPanel hideHeader>
-        <Typography component="h2" variant="h2">AI Review delivery</Typography>
+      <DashboardPanel title="AI Review delivery">
         <AiReviewDeliverySettings
           initialDeliveryDay={aiReviewDelivery?.weeklyDeliveryDay ?? null}
           initialDeliveryTimeEastern={aiReviewDelivery?.deliveryTimeEastern ?? null}
