@@ -213,3 +213,27 @@ The following are required before this slice may be called complete.
    client must display TradersLink as its client name on Moomoo's consent
    screen. The local generic Moomoo Web API wording is a test-only result and
    must not be described as branded TradersLink authorization.
+9. **Multiple broker accounts require an explicit mapping.** OAuth may return
+   more than one authorized Moomoo trading account. Show only safe account
+   labels and let the trader select which broker accounts feed which Journal
+   account; never silently route every returned broker account into the active
+   Journal account. Persist the private source-account identity under the
+   existing versioned identity/HMAC boundary before the first fill is accepted.
+10. **Date selection has exact broker-time boundaries.** The initial date is a
+    trader-facing trading date, while Moomoo historical-deals filters use
+    microsecond update timestamps. At job creation, resolve the selected first
+    date and immutable import cutoff to documented market/account-timezone
+    boundaries, persist both exact instants, and use half-open ranges. No later
+    browser timezone, daylight-saving change or retry may shift a boundary and
+    miss or duplicate a fill.
+11. **Every page enters Journal through the existing evidence boundary.** A
+    worker page writes a private, hashed source-evidence batch and its durable
+    checkpoint atomically before it advances. It must not keep raw API payloads
+    in browser models, ordinary logs or job-status tables. Accepted executions
+    then use the canonical broker-import command/rebuild path in bounded
+    transactions; a multi-year import never becomes one giant ledger write.
+12. **Scope proof is account-specific.** Do not treat a token string that
+    merely contains `trade:read` as enough. Prove that the returned authorized
+    account list and each selected market can actually be read with that token.
+    If Moomoo's returned account-scoping permission excludes an account, show
+    that account as unavailable and do not start a partially authorized import.

@@ -46,6 +46,9 @@
   disconnect/reconnect lifecycle, future-broker schema, hosted job ownership,
   honest range progress, deal-ID deduplication, market coverage and production
   OAuth client identity.
+- [ ] Pass the second QA gates: explicit broker-account to Journal-account
+  mapping, exact selected-date timestamp boundaries, private page evidence /
+  bounded Journal writes, and account-specific trade-read proof.
 
 ## Implementation checkpoint
 
