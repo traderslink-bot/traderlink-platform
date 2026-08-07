@@ -4,11 +4,11 @@ const TRADERSLINK_COOKIE_DOMAIN = ".traderslink.pro";
 
 type CookieOptions = Readonly<{
   domain?: string;
-  maxAge: number;
+  maxAge?: number;
   secure: boolean;
 }>;
 
-function cookieOptions(request: NextRequest, maxAge: number): CookieOptions {
+function cookieOptions(request: NextRequest, maxAge?: number): CookieOptions {
   const hostname = request.nextUrl.hostname.toLowerCase();
   const domain = hostname === "traderslink.pro" ||
       hostname.endsWith(".traderslink.pro")
@@ -16,7 +16,7 @@ function cookieOptions(request: NextRequest, maxAge: number): CookieOptions {
     : undefined;
   return Object.freeze({
     ...(domain ? { domain } : {}),
-    maxAge,
+    ...(maxAge === undefined ? {} : { maxAge }),
     secure: process.env.NODE_ENV === "production",
   });
 }
@@ -30,13 +30,29 @@ function appendCookie(
   const parts = [
     `${name}=${encodeURIComponent(value)}`,
     "Path=/",
-    `Max-Age=${options.maxAge}`,
     "HttpOnly",
     "SameSite=Lax",
   ];
+  if (options.maxAge !== undefined) parts.splice(2, 0, `Max-Age=${options.maxAge}`);
   if (options.domain) parts.push(`Domain=${options.domain}`);
   if (options.secure) parts.push("Secure");
   response.headers.append("Set-Cookie", parts.join("; "));
+}
+
+export function setPlatformSessionAuthCookie(
+  response: NextResponse,
+  request: NextRequest,
+  name: string,
+  value: string,
+): void {
+  const options = cookieOptions(request);
+  appendCookie(response, name, value, options);
+  if (options.domain) {
+    appendCookie(response, name, "", {
+      maxAge: 0,
+      secure: options.secure,
+    });
+  }
 }
 
 export function setPlatformAuthCookie(

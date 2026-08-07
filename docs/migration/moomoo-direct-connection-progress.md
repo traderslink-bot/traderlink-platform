@@ -26,6 +26,11 @@
   conflicting general pagination wording.
 - [ ] Connect the new unfunded/no-brokerage Moomoo OAuth identity and run the
   minimum-account Daily Trade Tracker candle proof.
+  - The first minimum-account attempt exposed a local OAuth defect: starting
+    from `localhost` stored host-only PKCE cookies there while the registered
+    callback used `127.0.0.1`. The local start route now canonicalizes before
+    creating OAuth state, and its state/verifier are browser-session cookies
+    deleted by the callback rather than an arbitrary ten-minute timer.
 - [ ] Prove only one-minute U.S. historical candles with premarket and
   after-hours (`ktype=1`, `extended_time=1`), same-symbol pagination, exact
   4:00 AM-8:00 PM coverage and bounded distinct-symbol behavior. Overnight,
