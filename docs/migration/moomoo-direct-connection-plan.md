@@ -205,6 +205,19 @@ It remains read-only: it never places, changes or cancels an order.
   Journal-ledger invariant. This integration adds another trusted broker
   source; it does not replace the existing import path.
 
+### Reliability fallback
+
+The multi-year direct backfill remains conditional on live proof that Moomoo's
+pagination, rate limits, cursor recovery and hosted processing are reliable at
+realistic account sizes. If that proof does not pass, do not ship a fragile
+long-history promise. Limit the direct connection to current executions plus a
+clearly stated, owner-approved number of recent historical days. Show that
+exact recent-history window before the trader starts the import, and use broker
+statements for history before the window. Record broker-API and statement
+coverage separately, deduplicate any deliberate overlap through the canonical
+source-identity and Journal reconciliation boundary, and never imply that the
+bounded direct import represents the trader's complete account history.
+
 ## Plan QA gates
 
 The following are required before this slice may be called complete.
@@ -279,3 +292,9 @@ The following are required before this slice may be called complete.
     account list and each selected market can actually be read with that token.
     If Moomoo's returned account-scoping permission excludes an account, show
     that account as unavailable and do not start a partially authorized import.
+13. **Long-history reliability has a release decision.** Test representative
+    high-fill multi-year pagination, interruption, retry and provider-limit
+    behavior before enabling unrestricted user-selected history. If it does
+    not pass, activate the documented recent-history-plus-statements fallback,
+    select and disclose the exact supported day count, and retain the same
+    duplicate, coverage and Journal-truth safeguards across both sources.

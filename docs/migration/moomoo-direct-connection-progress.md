@@ -54,6 +54,10 @@
 - [ ] Pass the second QA gates: explicit broker-account to Journal-account
   mapping, exact selected-date timestamp boundaries, private page evidence /
   bounded Journal writes, and account-specific trade-read proof.
+- [ ] Prove reliable multi-year pagination and recovery at representative
+  high-fill volume. If that proof fails, approve and disclose a fixed recent
+  historical-day window for direct Moomoo imports and use statements for older
+  history with explicit coverage and duplicate reconciliation.
 
 ## Implementation checkpoint
 
