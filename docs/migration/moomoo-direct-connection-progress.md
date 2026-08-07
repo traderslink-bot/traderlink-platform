@@ -75,6 +75,15 @@
     A fourth page moved into the prior date and did not produce a 04:00 target-
     day row; the 04:00-versus-04:01 candle timestamp convention remains to be
     reconciled with execution-minute matching.
+  - The actual same-day Daily Trade Tracker proof is also confirmed on NAMI for
+    2026-08-07. Supplying explicit `start=2026-08-07` with the next calendar
+    day cutoff returned the entire 960-minute 04:01-20:00 session structure in
+    one response, despite `num=370`. At the 13:14 Eastern observation time,
+    554 consecutive valid OHLCV candles covered 04:01 through 13:14; the 406
+    later session rows were correctly distinguishable placeholders without
+    prices. The tracker can therefore retrieve a same-day trade's complete
+    candle history through the current minute, including periods exceeding 370
+    bars, rather than relying only on a rolling Current K-Line window.
 - [ ] Publish a privacy-safe confirmed-working / confirmed-unavailable /
   unresolved result and decide pass, limited pass or fail for the existing
   broker-neutral Daily Trade Tracker `MarketDataProvider` boundary.

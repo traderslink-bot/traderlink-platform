@@ -233,6 +233,7 @@ async function diagnoseSymbol(input: Readonly<{
     });
     if (input.source === "history") {
       query.set("end", followingDate(input.date));
+      if (!pageCursor) query.set("start", input.date);
       if (pageCursor) query.set("next_time", pageCursor);
     }
     let response: Response;
