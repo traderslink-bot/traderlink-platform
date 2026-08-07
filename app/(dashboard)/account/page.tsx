@@ -77,8 +77,9 @@ export default async function AccountPage() {
         />
       </DashboardPanel>
 
-      <DashboardPanel title="Moomoo connection">
+      <DashboardPanel title="Broker connections">
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ alignItems: { sm: "center" } }}>
+          <Typography sx={{ fontWeight: 800 }} variant="body2">Moomoo</Typography>
           <Chip
             color={moomooConnection?.state === "active" ? "success" : "default"}
             label={moomooConnection?.state === "active" ? "Connected" : "Not connected"}
@@ -90,7 +91,7 @@ export default async function AccountPage() {
               : "No Moomoo trading connection is saved. Market-data-only access cannot import trades."}
           </Typography>
         </Stack>
-        <MoomooConnectionSettings connected={moomooConnection?.state === "active"} />
+        <MoomooConnectionSettings state={moomooConnection?.state ?? null} />
       </DashboardPanel>
 
       <DashboardPanel title="Journal accounts">
