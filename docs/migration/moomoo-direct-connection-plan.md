@@ -87,6 +87,74 @@ to project files or logs.
 - The owner's test result yields a privacy-safe candle-field inventory and an
   explicit follow-up decision for the Daily Trade Tracker and Journal ingestion.
 
+## Minimum-account Daily Trade Tracker candle proof
+
+Before expanding the execution-import slice, prove the Daily Trade Tracker's
+minimum market-data requirement with a newly created Moomoo OAuth identity that
+has no funded balance, no cash or margin brokerage account, no trading history
+and no executions. This is a quote-access proof, not an execution-import test.
+
+### Exact scope
+
+1. Use only the current OAuth OPEN API at `webapi.moomoo.com` with the existing
+   server-held `quote:read` connection. Do not install, start or use OpenD and
+   do not treat legacy OpenD behavior as proof.
+2. Test only historical U.S. **one-minute** candles. Moomoo documents
+   `extended_time` only for U.S. one-minute K-lines: use `extended_time=1` to
+   include premarket and after-hours. Do not request `extended_time=2`; the
+   Daily Trade Tracker does not support overnight trading in this slice.
+3. Do not test daily or five-minute candles, realtime REST/WebSocket data,
+   quotes, scanner features, short interest, daily short volume, Level 1/2/3,
+   order books, watchlists, fundamentals or any trading endpoint.
+4. The application requirement is the analyzer's existing 4:00 AM through
+   8:00 PM America/New_York session: exact one-minute OHLCV, every execution
+   minute, and available candles through 60 minutes after the final exit. The
+   diagnostic must assess this contract rather than unrelated provider fields.
+
+### Diagnostic sequence
+
+1. After the owner connects the new minimum account, record only the safe OAuth
+   scopes and the owner's supplied account classification. Never record tokens,
+   cookies, raw identities, broker identifiers or account values.
+2. Request a liquid U.S. symbol for a completed trading date with
+   `ktype=1`, `extended_time=1` and the documented maximum `num=370`. Validate
+   actual OHLCV rows and timestamps rather than treating HTTP success as proof.
+3. Follow the live OPEN API pagination behavior for the same symbol until the
+   requested 4:00 AM-8:00 PM session is covered or Moomoo reports no earlier
+   page. Record page count, candle count, first/last timestamps, safe response
+   status/error codes and whether premarket, regular-session and after-hours
+   candles were actually observed.
+4. Repeat with representative U.S. symbols that have known extended-hours
+   activity, including the previously useful CLRO, WYHG and PAVS cases where
+   their requested dates remain suitable. A valid empty minute is not a
+   failure, but every requested execution minute must have a candle before the
+   analyzer can call that trade ready.
+5. Probe distinct symbols gradually and with bounded pacing. First search the
+   current OPEN API response/documentation for observable quota metadata. If a
+   legacy-like 100-unique-symbol rolling seven-day limit becomes proven, accept
+   it as a workable analyzer coverage limit and expose missing coverage rather
+   than bypassing or hiding it. Do not rapidly blast 101 requests merely to
+   force an error; expand the probe only while responses and provider limits
+   remain safe.
+6. Store a privacy-safe diagnostic report with only confirmed working,
+   confirmed unavailable and unresolved results. Do not persist raw candle
+   values merely to prove capability; counts, bounded timestamps, session
+   coverage, hashes and provider errors are sufficient.
+
+### Decision boundary
+
+- **Pass:** the minimum account can retrieve and page valid one-minute U.S.
+  premarket, regular and after-hours candles covering the analyzer's required
+  trade window. The Moomoo adapter may then be considered for the Daily Trade
+  Tracker behind the existing broker-neutral `MarketDataProvider` boundary.
+- **Limited pass:** candles work but a provider history, pagination or
+  distinct-symbol restriction is proven. Keep the analyzer available only
+  within that exact disclosed coverage and return factual no-coverage states
+  outside it.
+- **Fail:** the minimum account cannot obtain the required one-minute extended
+  session. Do not make Moomoo a general Daily Trade Tracker candle dependency;
+  retain the provider abstraction for another market-data source.
+
 ## Next slice — execution import and history backfill
 
 This owner-approved slice turns the connection into a broker execution source.

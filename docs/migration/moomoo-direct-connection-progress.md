@@ -24,6 +24,16 @@
   `data.next_time`, and the next backward page is requested with that value as
   the `next_time` query parameter. It is not passed as `end` despite the
   conflicting general pagination wording.
+- [ ] Connect the new unfunded/no-brokerage Moomoo OAuth identity and run the
+  minimum-account Daily Trade Tracker candle proof.
+- [ ] Prove only one-minute U.S. historical candles with premarket and
+  after-hours (`ktype=1`, `extended_time=1`), same-symbol pagination, exact
+  4:00 AM-8:00 PM coverage and bounded distinct-symbol behavior. Overnight,
+  daily/five-minute, realtime, scanner, short-interest and market-depth tests
+  are explicitly outside this checkpoint.
+- [ ] Publish a privacy-safe confirmed-working / confirmed-unavailable /
+  unresolved result and decide pass, limited pass or fail for the existing
+  broker-neutral Daily Trade Tracker `MarketDataProvider` boundary.
 - [ ] Replace the inactive Yahoo analyzer provider with the authenticated
   Moomoo candle provider, then restore Daily Trade Tracker analyzer display.
 - [ ] Add the bounded authorized-account/today-fill/historical-fill read client
