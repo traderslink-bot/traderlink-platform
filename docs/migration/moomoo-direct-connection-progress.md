@@ -53,6 +53,18 @@
     rolling window still contains every execution minute through one hour after
     exit; it must show unavailable coverage when the required entry has already
     rolled out of the window.
+  - A second bounded same-day proof at 12:31 Eastern returned 370 valid,
+    conflict-free one-minute bars from 06:22 through 12:31 for each of NAMI,
+    MB and HCWC. That fully covered the selected NAMI 06:30-11:00, MB
+    07:00-10:15 and shortened HCWC 08:05-11:20 trade windows plus 60 minutes
+    after final exit. MB also retained every minute timestamp across the
+    requested 09:30-10:15 halt interval; halt-bar price/volume semantics remain
+    a separate analyzer check.
+  - Repeating Current K-Line cannot page backward; it returns the same rolling
+    latest-370 window. With a 60-minute post-exit requirement, a single request
+    can cover at most about 310 elapsed minutes from entry to final exit when
+    requested promptly. Longer same-day trades require previously cached bars,
+    a later History K-Line backfill, or an explicit unavailable-coverage state.
 - [ ] Publish a privacy-safe confirmed-working / confirmed-unavailable /
   unresolved result and decide pass, limited pass or fail for the existing
   broker-neutral Daily Trade Tracker `MarketDataProvider` boundary.
