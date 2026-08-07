@@ -78,7 +78,7 @@ export default async function AccountPage() {
       </DashboardPanel>
 
       <DashboardPanel title="Broker connections">
-        <Typography color="text.secondary" sx={{ mb: 1.5 }} variant="body2">
+        <Typography color="text.secondary" sx={{ mb: 2.5 }} variant="body2">
           Connect a broker to automatically import your trades.
         </Typography>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ alignItems: { sm: "center" } }}>
