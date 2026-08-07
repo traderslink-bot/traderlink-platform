@@ -31,6 +31,11 @@
     callback used `127.0.0.1`. The local start route now canonicalizes before
     creating OAuth state, and its state/verifier are browser-session cookies
     deleted by the callback rather than an arbitrary ten-minute timer.
+  - The next attempt proved token issuance but exposed that migration 0033's
+    history-preservation trigger also blocked a deliberately disconnected
+    connection from becoming active again. Migration 0034 retains the record,
+    immutable identity and no-delete rule while permitting only the intended
+    revoked-to-active transition after fresh OAuth authorization.
 - [ ] Prove only one-minute U.S. historical candles with premarket and
   after-hours (`ktype=1`, `extended_time=1`), same-symbol pagination, exact
   4:00 AM-8:00 PM coverage and bounded distinct-symbol behavior. Overnight,
