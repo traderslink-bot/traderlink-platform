@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import { useRouter } from "next/navigation";
 
-import { DashboardPrimaryAction, DashboardSecondaryAction } from "../../dashboard-template";
+import { DashboardPrimaryAction } from "../../dashboard-template";
 
 export function MoomooConnectionSettings({
   state,
@@ -18,7 +19,8 @@ export function MoomooConnectionSettings({
   if (state === "active") {
     return (
       <>
-        <DashboardSecondaryAction
+        <Button
+          color="error"
           disabled={pending}
           onClick={() => startTransition(async () => {
             setMessage(null);
@@ -34,9 +36,10 @@ export function MoomooConnectionSettings({
             }
           })}
           size="small"
+          variant="outlined"
         >
           {pending ? "Disconnecting" : "Disconnect"}
-        </DashboardSecondaryAction>
+        </Button>
         {message ? <Typography color="error" variant="body2">{message}</Typography> : null}
       </>
     );
