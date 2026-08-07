@@ -86,3 +86,87 @@ to project files or logs.
   including its actual pagination behavior, with no write-capable scope.
 - The owner's test result yields a privacy-safe candle-field inventory and an
   explicit follow-up decision for the Daily Trade Tracker and Journal ingestion.
+
+## Next slice — execution import and history backfill
+
+This owner-approved slice turns the connection into a broker execution source.
+It remains read-only: it never places, changes or cancels an order.
+
+### Broker connection experience
+
+1. The Account page owns one **Broker connections** card. It starts with a
+   broker selector; Moomoo is the first selectable broker and the card states
+   that more brokers are coming soon.
+2. Selecting a broker reveals only that broker's connection method,
+   limitations, reauthorization behavior and next steps. Those instructions
+   disappear once that broker is connected.
+3. The selected broker's Connect action takes the trader to the broker's own
+   sign-in/authorization page and returns them to TradersLink. The provider's
+   OAuth client display name must identify TradersLink in production; generic
+   provider wording is not adequate release copy.
+4. Connected brokers appear as their own rows with status and a red
+   **Disconnect** control. Disconnect asks for confirmation, destroys usable
+   local credentials and removes that broker from the visible connected list.
+   Selecting it later starts a fresh connection; it does not silently reuse an
+   old credential.
+
+### Authorization and source contract
+
+1. Upgrade the Moomoo OAuth connection from the candle-proof `quote:read`
+   scope to the minimum execution-read `trade:read` scope. Never request
+   `trade:write`.
+2. Read authorized trading accounts first. Keep raw provider account IDs,
+   order IDs and deal IDs server-side/private; browser models use safe labels
+   and opaque references only.
+3. Read **historical deals/fills**, not historical orders, for Journal facts.
+   A deal is one actual execution; an order may have several deals. Preserve
+   the provider's deal ID, parent order ID, side, symbol, quantity, price,
+   market, status and broker timestamps exactly at the private evidence
+   boundary.
+4. Broker-imported exact fills are accepted automatically after deterministic
+   validation. Data Decisions are only for genuine duplicate/source conflicts,
+   missing facts or impossible arithmetic; they are not a blanket review step.
+
+### Initial history selection and durable progress
+
+1. On the first execution import, the trader chooses an earliest import date.
+   Offer date shortcuts and a custom date. Do not claim an "all available"
+   progress total because Moomoo does not document an earliest-history date
+   discovery field.
+2. Divide the selected start date through the current date into consecutive
+   90-day date ranges. This is a TradersLink reliability/progress unit, not a
+   claim that Moomoo limits explicit start/end queries to 90 days.
+3. Process ranges oldest to newest. Store the selected start/end, current
+   range, page cursor, counts, attempt state and timestamps in durable
+   server-side import records. The Account page can show ranges complete out
+   of total, current date window, imported execution count and any retry
+   status while the trader navigates elsewhere or closes the browser.
+4. Within a range, follow Moomoo's historical-deals page cursor until it is
+   complete. Never perform the whole backfill inside an OAuth callback,
+   browser request or a single long-running serverless invocation.
+5. A retry resumes from the last durable page/range checkpoint. Rate-limit or
+   provider failures back off without discarding completed work.
+
+### Reconnect and incremental sync
+
+1. Store a broker-account-scoped high-water mark based on Moomoo's execution
+   update timestamp, plus a small overlap on every later sync.
+2. Deduplicate the overlap by provider + broker account + deal ID. A reconnect
+   or a second import request never re-creates already accepted executions.
+3. If Moomoo changes an existing execution, preserve the source-version chain
+   and let the Journal rebuild affected round trips under its existing
+   correction/decision contract.
+
+### Required implementation boundary
+
+- Add the broker connection/import job schema only after the shared next
+  migration number is available; do not reuse migration 0033 or conflict with
+  the separately reserved currency migration 0034.
+- Use a durable worker/queue suitable for hosted execution. The browser is a
+  status surface only; local development can run the same job processor
+  explicitly.
+- Prove the returned execution schema and account/market pagination with a
+  bounded live `trade:read` test before creating Journal facts from it.
+- Preserve every existing import, Data Decisions, manual execution and
+  Journal-ledger invariant. This integration adds another trusted broker
+  source; it does not replace the existing import path.

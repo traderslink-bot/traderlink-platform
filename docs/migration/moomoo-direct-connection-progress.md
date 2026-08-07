@@ -30,6 +30,19 @@
   when the owner chooses the execution-read scope.
 - [ ] Decide the later source-evidence/Journal-preview contract.
 
+## Execution-import checkpoint — planned
+
+- [ ] Upgrade Moomoo authorization to `trade:read` and prove an authorized
+  account/deal response without retaining private values in logs or fixtures.
+- [ ] Add the broker selector/details experience and the durable disconnect /
+  fresh-connect lifecycle for the Account page.
+- [ ] Add a trader-selected first-history start date, durable 90-day range
+  progress, paged fill retrieval, retries and server-side status reads.
+- [ ] Add broker account + deal-ID deduplication and update-time watermark
+  sync so reconnects and future syncs do not re-import past executions.
+- [ ] Reconcile accepted broker fills through the canonical Journal ledger and
+  publish privacy-safe progress/status models.
+
 ## Implementation checkpoint
 
 Migration 0033 has been applied to the local development database. The
