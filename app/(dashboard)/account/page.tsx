@@ -77,12 +77,11 @@ export default async function AccountPage() {
         />
       </DashboardPanel>
 
-      <DashboardPanel hideHeader>
-        <Typography component="h2" variant="h2">Broker connections</Typography>
-        <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
+      <DashboardPanel title="Broker connections">
+        <Typography color="text.secondary" sx={{ mb: 1.5 }} variant="body2">
           Connect a broker to automatically import your trades.
         </Typography>
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ alignItems: { sm: "center" }, mt: 1.5 }}>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ alignItems: { sm: "center" } }}>
           <Typography sx={{ fontWeight: 800 }} variant="body2">Moomoo</Typography>
           <Chip
             color={moomooConnection?.state === "active" ? "success" : "default"}
