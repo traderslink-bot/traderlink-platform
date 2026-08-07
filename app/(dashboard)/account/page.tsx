@@ -77,22 +77,18 @@ export default async function AccountPage() {
         />
       </DashboardPanel>
 
-      <DashboardPanel title="Broker connections">
-        <Typography color="text.secondary" sx={{ mb: 1.5 }} variant="body2">
+      <DashboardPanel hideHeader>
+        <Typography component="h2" variant="h2">Broker connections</Typography>
+        <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
           Connect a broker to automatically import your trades.
         </Typography>
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ alignItems: { sm: "center" } }}>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ alignItems: { sm: "center" }, mt: 1.5 }}>
           <Typography sx={{ fontWeight: 800 }} variant="body2">Moomoo</Typography>
           <Chip
             color={moomooConnection?.state === "active" ? "success" : "default"}
             label={moomooConnection?.state === "active" ? "Connected" : "Not connected"}
             size="small"
           />
-          <Typography color="text.secondary" variant="body2">
-            {moomooConnection?.state === "active"
-              ? "Moomoo read access is connected. Exact broker execution data is accepted automatically when the import connection is enabled."
-              : "No Moomoo trading connection is saved. Market-data-only access cannot import trades."}
-          </Typography>
         </Stack>
         <MoomooConnectionSettings state={moomooConnection?.state ?? null} />
       </DashboardPanel>
