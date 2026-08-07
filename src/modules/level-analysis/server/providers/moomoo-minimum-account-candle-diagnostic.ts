@@ -17,6 +17,7 @@ type MoomooKlinePayload = Readonly<{
 export type MoomooMinimumAccountCandleDiagnosticInput = Readonly<{
   accessToken: string;
   date: string;
+  source?: "history" | "current";
   symbols: readonly string[];
   maxPages?: number;
   delayMilliseconds?: number;
@@ -39,8 +40,11 @@ export type MoomooMinimumAccountSymbolResult = Readonly<{
   validUniqueCandles: number;
   duplicateCandles: number;
   conflictingDuplicateCandles: number;
+  invalidRowReasons: Readonly<Record<string, number>>;
   firstCandleUtc: string | null;
   lastCandleUtc: string | null;
+  firstReturnedCandleUtc: string | null;
+  lastReturnedCandleUtc: string | null;
   sessionCounts: SessionCounts;
   premarketObserved: boolean;
   regularSessionObserved: boolean;
@@ -66,6 +70,7 @@ export type MoomooMinimumAccountCandleDiagnosticResult = Readonly<{
   requestedKtype: 1;
   requestedExtendedTime: 1;
   requestedMaximumPageSize: 370;
+  requestedSource: "history" | "current";
   overnightRequested: false;
   results: readonly MoomooMinimumAccountSymbolResult[];
 }>;
@@ -119,24 +124,38 @@ type ValidCandle = Readonly<{
   signature: string;
 }>;
 
-function validCandle(value: unknown): ValidCandle | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+function validateCandle(value: unknown): Readonly<{ candle: ValidCandle | null; reason: string | null }> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return Object.freeze({ candle: null, reason: "row_not_object" });
+  }
   const row = value as Record<string, unknown>;
   const timeMilliseconds = Number(row.time_key);
-  const open = decimal(row.open);
-  const high = decimal(row.high);
-  const low = decimal(row.low);
-  const close = decimal(row.close);
+  const open = decimal(row.open ?? row.open_price);
+  const high = decimal(row.high ?? row.high_price);
+  const low = decimal(row.low ?? row.low_price);
+  const close = decimal(row.close ?? row.close_price);
   const volume = decimal(row.volume);
-  if (
-    !Number.isSafeInteger(timeMilliseconds) || timeMilliseconds <= 0 ||
-    !open || !high || !low || !close || !volume ||
-    open.lte(0) || high.lte(0) || low.lte(0) || close.lte(0) || volume.lt(0) ||
-    high.lt(low) || high.lt(open) || high.lt(close) || low.gt(open) || low.gt(close)
-  ) return null;
+  if (!Number.isSafeInteger(timeMilliseconds) || timeMilliseconds <= 0) {
+    return Object.freeze({ candle: null, reason: "timestamp_invalid" });
+  }
+  if (!open) return Object.freeze({ candle: null, reason: "open_missing_or_invalid" });
+  if (!high) return Object.freeze({ candle: null, reason: "high_missing_or_invalid" });
+  if (!low) return Object.freeze({ candle: null, reason: "low_missing_or_invalid" });
+  if (!close) return Object.freeze({ candle: null, reason: "close_missing_or_invalid" });
+  if (!volume) return Object.freeze({ candle: null, reason: "volume_missing_or_invalid" });
+  if (open.lte(0) || high.lte(0) || low.lte(0) || close.lte(0)) {
+    return Object.freeze({ candle: null, reason: "price_not_positive" });
+  }
+  if (volume.lt(0)) return Object.freeze({ candle: null, reason: "volume_negative" });
+  if (high.lt(low) || high.lt(open) || high.lt(close) || low.gt(open) || low.gt(close)) {
+    return Object.freeze({ candle: null, reason: "ohlc_arithmetic_invalid" });
+  }
   return Object.freeze({
-    timeMilliseconds,
-    signature: [open, high, low, close, volume].map((item) => item.toFixed()).join("|"),
+    candle: Object.freeze({
+      timeMilliseconds,
+      signature: [open, high, low, close, volume].map((item) => item.toFixed()).join("|"),
+    }),
+    reason: null,
   });
 }
 
@@ -182,13 +201,16 @@ async function diagnoseSymbol(input: Readonly<{
   symbol: string;
   maxPages: number;
   request: typeof fetch;
+  source: "history" | "current";
 }>): Promise<MoomooMinimumAccountSymbolResult> {
   const session = newYorkExtendedSession(input.date);
   if (!session) throw new Error("moomoo_diagnostic_date_invalid");
   const candles = new Map<number, ValidCandle>();
+  const returnedCandleTimes: number[] = [];
   const responseEvidence: Array<MoomooMinimumAccountSymbolResult["responseEvidence"][number]> = [];
   let duplicateCandles = 0;
   let conflictingDuplicateCandles = 0;
+  const invalidRowReasons: Record<string, number> = {};
   let recordsReturned = 0;
   let pageCursor: string | null = null;
   let paginationObserved = false;
@@ -199,16 +221,15 @@ async function diagnoseSymbol(input: Readonly<{
   for (let page = 1; page <= input.maxPages; page += 1) {
     const query = new URLSearchParams({
       autype: "0",
-      end: input.date,
       extended_time: "1",
       ktype: "1",
       num: "370",
     });
-    if (pageCursor) query.set("next_time", pageCursor);
+    if (input.source === "history") query.set("end", pageCursor ?? input.date);
     let response: Response;
     try {
       response = await input.request(
-        `${MOOMOO_API_ORIGIN}/api/v1.0/quote/US.${encodeURIComponent(input.symbol)}/history-kline?${query}`,
+        `${MOOMOO_API_ORIGIN}/api/v1.0/quote/US.${encodeURIComponent(input.symbol)}/${input.source === "current" ? "cur-kline" : "history-kline"}?${query}`,
         {
           cache: "no-store",
           headers: { Accept: "application/json", Authorization: `Bearer ${input.accessToken}` },
@@ -248,7 +269,7 @@ async function diagnoseSymbol(input: Readonly<{
     }
 
     const items = Array.isArray(payload.data?.kline_list) ? payload.data.kline_list : [];
-    const hasMore = payload.pagination?.has_more === true;
+    const hasMore = input.source === "history" && payload.pagination?.has_more === true;
     const nextTime = payload.data?.next_time;
     const nextTimePresent = (typeof nextTime === "number" || typeof nextTime === "string") && String(nextTime).length > 0;
     const providerCode = typeof payload.ret_code === "number" || typeof payload.ret_code === "string"
@@ -279,11 +300,15 @@ async function diagnoseSymbol(input: Readonly<{
     recordsReturned += items.length;
     let invalidRows = 0;
     for (const item of items) {
-      const candle = validCandle(item);
+      const validation = validateCandle(item);
+      const candle = validation.candle;
       if (!candle) {
         invalidRows += 1;
+        const reason = validation.reason ?? "unknown";
+        invalidRowReasons[reason] = (invalidRowReasons[reason] ?? 0) + 1;
         continue;
       }
+      returnedCandleTimes.push(candle.timeMilliseconds);
       if (candle.timeMilliseconds < session.startTime * 1000 || candle.timeMilliseconds > session.endTime * 1000) {
         continue;
       }
@@ -302,7 +327,7 @@ async function diagnoseSymbol(input: Readonly<{
 
     if (page > 1) paginationObserved = true;
     const earliest = candles.size > 0 ? Math.min(...candles.keys()) : Number.POSITIVE_INFINITY;
-    if (earliest <= session.startTime * 1000 || !hasMore || !nextTimePresent) {
+    if (input.source === "current" || earliest <= session.startTime * 1000 || !hasMore || !nextTimePresent) {
       paginationCompletedForRequestedSession = earliest <= session.startTime * 1000 || !hasMore;
       terminalStatus = candles.size > 0 ? "confirmed_working" : "confirmed_unavailable";
       terminalReason = candles.size > 0 ? "valid_one_minute_candles_returned" : "no_candles_returned";
@@ -312,6 +337,7 @@ async function diagnoseSymbol(input: Readonly<{
   }
 
   const ordered = [...candles.values()].sort((left, right) => left.timeMilliseconds - right.timeMilliseconds);
+  returnedCandleTimes.sort((left, right) => left - right);
   const counts = sessionCounts(ordered);
   return Object.freeze({
     symbol: input.symbol,
@@ -322,8 +348,15 @@ async function diagnoseSymbol(input: Readonly<{
     validUniqueCandles: ordered.length,
     duplicateCandles,
     conflictingDuplicateCandles,
+    invalidRowReasons: Object.freeze({ ...invalidRowReasons }),
     firstCandleUtc: ordered[0] ? new Date(ordered[0].timeMilliseconds).toISOString() : null,
     lastCandleUtc: ordered.at(-1) ? new Date(ordered.at(-1)!.timeMilliseconds).toISOString() : null,
+    firstReturnedCandleUtc: returnedCandleTimes[0]
+      ? new Date(returnedCandleTimes[0]).toISOString()
+      : null,
+    lastReturnedCandleUtc: returnedCandleTimes.at(-1)
+      ? new Date(returnedCandleTimes.at(-1)!).toISOString()
+      : null,
     sessionCounts: counts,
     premarketObserved: counts.premarket > 0,
     regularSessionObserved: counts.regular > 0,
@@ -340,8 +373,10 @@ export async function runMoomooMinimumAccountCandleDiagnostic(
   if (!validDate(input.date) || !input.accessToken) throw new Error("moomoo_diagnostic_input_invalid");
   const symbols = canonicalSymbols(input.symbols);
   const maxPages = input.maxPages ?? 4;
+  const source = input.source ?? "history";
   const delayMilliseconds = input.delayMilliseconds ?? 500;
   if (
+    !["history", "current"].includes(source) ||
     !Number.isSafeInteger(maxPages) || maxPages < 1 || maxPages > MAX_PAGES_PER_SYMBOL ||
     !Number.isSafeInteger(delayMilliseconds) || delayMilliseconds < 250 || delayMilliseconds > 5_000
   ) throw new Error("moomoo_diagnostic_input_invalid");
@@ -349,7 +384,7 @@ export async function runMoomooMinimumAccountCandleDiagnostic(
   const results: MoomooMinimumAccountSymbolResult[] = [];
   for (const [index, symbol] of symbols.entries()) {
     if (index > 0) await pause(delayMilliseconds);
-    results.push(await diagnoseSymbol({ accessToken: input.accessToken, date: input.date, symbol, maxPages, request }));
+    results.push(await diagnoseSymbol({ accessToken: input.accessToken, date: input.date, symbol, maxPages: source === "current" ? 1 : maxPages, request, source }));
   }
   return Object.freeze({
     contract: "moomoo_minimum_account_daily_trade_tracker_candles_v1",
@@ -358,6 +393,7 @@ export async function runMoomooMinimumAccountCandleDiagnostic(
     requestedKtype: 1,
     requestedExtendedTime: 1,
     requestedMaximumPageSize: 370,
+    requestedSource: source,
     overnightRequested: false,
     results: Object.freeze(results),
   });

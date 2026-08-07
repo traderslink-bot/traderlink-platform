@@ -32,6 +32,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       .filter(Boolean);
     const maxPagesValue = request.nextUrl.searchParams.get("maxPages");
     const maxPages = maxPagesValue && /^\d+$/u.test(maxPagesValue) ? Number(maxPagesValue) : undefined;
+    const source = request.nextUrl.searchParams.get("source") ?? "history";
+    if (source !== "history" && source !== "current") throw new Error("moomoo_diagnostic_source_invalid");
     const repository = new MoomooConnectionRepository(database);
     const connection = repository.find(identity.scope);
     const accessToken = await new MoomooConnectionAccessService(repository).accessToken(identity.scope);
@@ -40,6 +42,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       date,
       symbols,
       maxPages,
+      source,
     });
     return privateJson({
       ok: true,

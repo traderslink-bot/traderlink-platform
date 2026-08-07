@@ -41,6 +41,18 @@
   4:00 AM-8:00 PM coverage and bounded distinct-symbol behavior. Overnight,
   daily/five-minute, realtime, scanner, short-interest and market-depth tests
   are explicitly outside this checkpoint.
+  - The new unfunded/no-brokerage identity is authorized for `quote:read` and
+    `quote:write`. A bounded Current K-Line request for CLRO on 2026-08-07
+    returned 370 valid one-minute OHLCV bars from 06:13 through 12:22 Eastern:
+    197 premarket and 173 regular-session bars, with no invalid or conflicting
+    rows. This proves same-day premarket access without a funded or configured
+    trading account. After-hours remains untested because the observation was
+    made during the regular session.
+  - Current K-Line is explicitly separate from History K-Line and returns only
+    the latest 370 bars. The Daily Trade Tracker must measure whether that
+    rolling window still contains every execution minute through one hour after
+    exit; it must show unavailable coverage when the required entry has already
+    rolled out of the window.
 - [ ] Publish a privacy-safe confirmed-working / confirmed-unavailable /
   unresolved result and decide pass, limited pass or fail for the existing
   broker-neutral Daily Trade Tracker `MarketDataProvider` boundary.
