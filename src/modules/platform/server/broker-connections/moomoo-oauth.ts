@@ -53,14 +53,36 @@ export async function exchangeMoomooCode(input: Readonly<{
 }>): Promise<Readonly<{ accessToken: string; refreshToken: string; expiresInSeconds: number; scopes: readonly string[] }>> {
   const body = new URLSearchParams({ grant_type: "authorization_code", code: input.code, client_id: input.config.clientId, redirect_uri: input.config.redirectUri, code_verifier: input.verifier });
   let response: Response;
-  try { response = await fetch(`${MOOMOO_API_ORIGIN}/oauth2/token`, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body, cache: "no-store" }); } catch { platformFailure("TRADERLINK_BROKER_CONNECTION_OAUTH_INVALID"); }
+  try { response = await fetch(`${MOOMOO_API_ORIGIN}/oauth2/token`, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body, cache: "no-store" }); } catch { platformFailure("TRADERLINK_BROKER_CONNECTION_OAUTH_INVALID", { stage: "network" }); }
   let payload: unknown;
-  try { payload = await response!.json(); } catch { platformFailure("TRADERLINK_BROKER_CONNECTION_OAUTH_INVALID"); }
-  if (!response!.ok || !payload || typeof payload !== "object") platformFailure("TRADERLINK_BROKER_CONNECTION_OAUTH_INVALID");
+  try { payload = await response!.json(); } catch { platformFailure("TRADERLINK_BROKER_CONNECTION_OAUTH_INVALID", { httpStatus: response!.status, stage: "response_json" }); }
+  if (!response!.ok) {
+    const providerError = payload && typeof payload === "object" && !Array.isArray(payload) &&
+      typeof (payload as Record<string, unknown>).error === "string" &&
+      /^[a-z][a-z0-9_-]{0,63}$/u.test((payload as Record<string, unknown>).error as string)
+      ? (payload as Record<string, string>).error
+      : "provider_error";
+    platformFailure("TRADERLINK_BROKER_CONNECTION_OAUTH_INVALID", {
+      httpStatus: response!.status,
+      providerError,
+      stage: "provider_rejected",
+    });
+  }
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    platformFailure("TRADERLINK_BROKER_CONNECTION_OAUTH_INVALID", { stage: "response_shape" });
+  }
   const token = payload as Record<string, unknown>;
-  if (typeof token.access_token !== "string" || typeof token.refresh_token !== "string" || !Number.isSafeInteger(token.expires_in) || token.expires_in <= 0 || typeof token.scope !== "string") platformFailure("TRADERLINK_BROKER_CONNECTION_OAUTH_INVALID");
+  if (typeof token.access_token !== "string" || typeof token.refresh_token !== "string" || !Number.isSafeInteger(token.expires_in) || token.expires_in <= 0 || typeof token.scope !== "string") {
+    platformFailure("TRADERLINK_BROKER_CONNECTION_OAUTH_INVALID", {
+      accessTokenPresent: typeof token.access_token === "string",
+      expiryValid: Number.isSafeInteger(token.expires_in) && Number(token.expires_in) > 0,
+      refreshTokenPresent: typeof token.refresh_token === "string",
+      scopePresent: typeof token.scope === "string",
+      stage: "token_fields",
+    });
+  }
   const scopes = token.scope.split(" ").filter(Boolean);
-  if (!scopes.includes(QUOTE_READ_SCOPE)) platformFailure("TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED");
+  if (!scopes.includes(QUOTE_READ_SCOPE)) platformFailure("TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED", { stage: "quote_scope" });
   return Object.freeze({ accessToken: token.access_token, refreshToken: token.refresh_token, expiresInSeconds: token.expires_in, scopes: Object.freeze(scopes) });
 }
 
