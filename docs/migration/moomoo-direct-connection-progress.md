@@ -42,6 +42,10 @@
   sync so reconnects and future syncs do not re-import past executions.
 - [ ] Reconcile accepted broker fills through the canonical Journal ledger and
   publish privacy-safe progress/status models.
+- [ ] Pass the execution-import plan QA gates: execution-scope state,
+  disconnect/reconnect lifecycle, future-broker schema, hosted job ownership,
+  honest range progress, deal-ID deduplication, market coverage and production
+  OAuth client identity.
 
 ## Implementation checkpoint
 

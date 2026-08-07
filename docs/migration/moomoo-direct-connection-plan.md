@@ -170,3 +170,46 @@ It remains read-only: it never places, changes or cancels an order.
 - Preserve every existing import, Data Decisions, manual execution and
   Journal-ledger invariant. This integration adds another trusted broker
   source; it does not replace the existing import path.
+
+## Plan QA gates
+
+The following are required before this slice may be called complete.
+
+1. **Scope readiness is visible and enforced.** The existing proof connection
+   has `quote:read`; that is candle-ready, not execution-ready. The connection
+   model and Account status must distinguish quote-only, execution-ready and
+   reauthorization-required states. An active quote-only connection must not
+   be presented as able to import trades or trigger a fill job.
+2. **Fresh removal can reconnect.** Migration 0033 intentionally prevents a
+   revoked record from being modified. The next connection migration must make
+   a confirmed Disconnect remove usable credentials, hide the broker row and
+   still let a later new OAuth flow create a fresh connection safely. Verify
+   this lifecycle end to end; do not leave a hidden revoked record that blocks
+   a new connection.
+3. **More-broker architecture is real, not just a picker label.** Migration
+   0033 currently constrains the database provider to Moomoo. Before any
+   second broker becomes selectable, introduce a versioned broker registry and
+   schema constraints that allow only explicitly supported providers. Each
+   provider supplies its own OAuth method, scope requirements, availability,
+   delay/reauthorization limitations, history capabilities and importer.
+4. **The job has a hosted owner.** Select and document the durable hosted job
+   runner before release. It must claim database-backed work, use bounded
+   execution time, persist each page/range checkpoint before another call,
+   back off on provider limits and be independently retryable. Browser
+   navigation, request timeouts and OAuth callbacks cannot own the import.
+5. **Progress totals are honest.** Display a total only after the trader has
+   supplied the initial earliest date. The total is the deterministic count of
+   TradersLink 90-day ranges from that date through the import cutoff, not an
+   assertion about Moomoo's earliest available history.
+6. **Execution identity is exact.** Deduplicate by the provider deal/fill ID
+   within the provider account identity, never by parent order ID, symbol,
+   time, price or quantity. Use Moomoo update timestamps only as a sync
+   cursor, with an overlap that always rechecks already-seen deal IDs.
+7. **Market coverage is explicit.** Moomoo historical-deals requests require
+   a trading market. The importer must enumerate supported authorized markets
+   and show unavailable/unsupported markets rather than silently omitting
+   executions.
+8. **OAuth client identity is release-ready.** The production Moomoo OAuth
+   client must display TradersLink as its client name on Moomoo's consent
+   screen. The local generic Moomoo Web API wording is a test-only result and
+   must not be described as branded TradersLink authorization.
