@@ -84,6 +84,14 @@
     prices. The tracker can therefore retrieve a same-day trade's complete
     candle history through the current minute, including periods exceeding 370
     bars, rather than relying only on a rolling Current K-Line window.
+  - The bounded distinct-symbol test then requested the same current-day
+    History K-Line session for 150 fresh Nasdaq symbols, paced one request per
+    ticker. All 150 received HTTP 200 and provider code `0` with no quota,
+    remaining-count, reset or rate-limit response metadata. This disproves a
+    hard 100-symbol limit for this OAuth REST account/endpoint combination.
+    Moomoo did not expose an upper numerical bound, so the maximum remains
+    unconfirmed rather than unlimited; the future analyzer must fetch and
+    cache only trader-needed ticker windows.
 - [ ] Publish a privacy-safe confirmed-working / confirmed-unavailable /
   unresolved result and decide pass, limited pass or fail for the existing
   broker-neutral Daily Trade Tracker `MarketDataProvider` boundary.

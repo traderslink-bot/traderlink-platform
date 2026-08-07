@@ -136,6 +136,15 @@ and no executions. This is a quote-access proof, not an execution-import test.
    than bypassing or hiding it. Do not rapidly blast 101 requests merely to
    force an error; expand the probe only while responses and provider limits
    remain safe.
+   - The initial same-day probe completed 150 fresh Nasdaq symbols, each with
+     one paced History K-Line first-page request for the current date. All
+     returned HTTP 200 and provider code `0`; no response included quota,
+     remaining-count, reset or rate-limit metadata. The old 100-symbol claim
+     is therefore not a hard limit for this OAuth REST account and endpoint.
+     This does not prove an unlimited entitlement: Moomoo did not disclose an
+     upper bound, so the production client must still request only the ticker
+     coverage a trader actually needs and cache fetched candles by symbol and
+     minute.
 6. Store a privacy-safe diagnostic report with only confirmed working,
    confirmed unavailable and unresolved results. Do not persist raw candle
    values merely to prove capability; counts, bounded timestamps, session
