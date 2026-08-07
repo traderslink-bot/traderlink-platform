@@ -32,13 +32,13 @@ export function BrokerConnectionPicker({
     <Stack spacing={1.5}>
       <Box>
         <TextField
-          label="Broker"
+          label="Select broker"
           onChange={(event) => setSelectedBroker(event.target.value)}
           select
           sx={{ minWidth: { sm: 260 } }}
           value={selectedBroker}
         >
-          <MenuItem disabled value="">Choose a broker</MenuItem>
+          <MenuItem disabled sx={{ display: "none" }} value="" />
           {BROKERS.map((entry) => <MenuItem key={entry.key} value={entry.key}>{entry.label}</MenuItem>)}
         </TextField>
         <Typography color="text.secondary" sx={{ mt: 0.75 }} variant="body2">
@@ -46,7 +46,7 @@ export function BrokerConnectionPicker({
         </Typography>
       </Box>
 
-      {broker ? <Box sx={{ bgcolor: "rgba(1, 30, 86, 0.035)", border: 1, borderColor: "divider", borderRadius: 1.5, p: 2 }}>
+      {broker && !connected ? <Box sx={{ bgcolor: "rgba(1, 30, 86, 0.035)", border: 1, borderColor: "divider", borderRadius: 1.5, p: 2 }}>
         <Typography sx={{ fontWeight: 800 }} variant="body1">{broker.label}</Typography>
         <Stack spacing={0.75} sx={{ mt: 1 }}>
           <Typography color="text.secondary" variant="body2">
