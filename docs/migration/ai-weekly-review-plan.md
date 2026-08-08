@@ -47,6 +47,18 @@ with a full-width mobile drawer and explicit close control. Account remains the
 settings surface and does not duplicate the review-availability card. The
 saved weekly/two-week panel remains issued AI-review history, not input
 coverage.
+The owner approved preparing automatic future-year market-calendar verification
+before launch. The full replacement remains a single-node persistent-volume
+application because its current Platform/Journal database is SQLite. Railway
+is one suitable candidate, not a required brand or a service the owner already
+uses. The existing Vercel/Neon deployment continues to serve the current
+public surfaces and is not the full replacement database runtime. This work
+therefore must not add Vercel Cron to the landing/Academy deployment. A
+protected, host-neutral calendar job and migration `0039` will
+store operational check state and immutable verified annual snapshots. The job
+remains dormant during local development; the production launch checklist must
+prove that the accepted single-node scheduler invokes it with its server-only
+secret. The embedded verified 2026 snapshot remains the bootstrap fallback.
 The local two-week Journal fixture is the first controlled review input. This
 supersedes the retired Reflection Loop page.
 
@@ -103,6 +115,39 @@ classification, or analytics.
   expiring merely because the year changed. Missing, stale, conflicting or
   incomplete coverage for the requested period prevents generation. No browser
   or provider call fetches live calendar data at review time.
+- Future-year verification is an operational job, never part of an AI Review
+  page render or provider request. It fetches only the allowlisted official
+  Nasdaq Trader and NYSE pages with bounded time and response size, records
+  retrieval/content-digest evidence, and normalizes only explicit closed and
+  scheduled early-close dates for one target year. A year becomes verified
+  only when Nasdaq Trader publishes it and the independently parsed NYSE dates
+  agree exactly. Both parses require explicit target-year evidence and credible
+  non-empty closure/early-close counts; empty agreement is never verification.
+  NYSE publication by itself is `awaiting_primary`; an HTTP,
+  parsing or content-shape failure is `source_unavailable`; any difference is
+  `conflict`. All three states fail closed and preserve the last verified
+  snapshot without guessing.
+- Verified annual snapshots are immutable database records. Runtime calendar
+  selection may combine the embedded 2026 bootstrap with database snapshots.
+  The latest successfully verified version for a year becomes active, while
+  prior versions remain addressable and a calendar ID/digest already frozen
+  into a review request is never replaced. An ambiguous ordering or duplicate
+  version fails closed. Operational check state may advance idempotently;
+  verified snapshot history cannot be updated or deleted.
+- The production scheduler may call the protected calendar job daily. The job
+  itself suppresses unnecessary source traffic: normally it rechecks an
+  unverified next year weekly, moves to daily checks during the final 45 days
+  of current coverage, and rechecks an already verified next year monthly for
+  official revisions. A successful revision creates a new immutable snapshot
+  version rather than mutating the prior one. Review generation always reads
+  stored verified evidence and never waits on a live exchange request.
+- Launch readiness requires: migration `0039` applied to the production
+  persistent database, a server-only scheduler secret, the accepted
+  single-node scheduler invoking the protected job, and a health/readiness
+  check that shows verified current-year coverage plus either verified next-
+  year coverage or an explicit fail-closed warning. This is an operational
+  launch gate owned by the application, not something the owner must remember
+  informally.
 - The Monday-through-Friday cohort is identified by its calendar Friday in
   `America/New_York`, even when Friday is market-closed. Calendar Friday
   determines the cohort's narrative-month ownership; the final actual open
@@ -534,6 +579,11 @@ The later AI Chat adaptation is not a dependency.
    forward, completion-driven automatic/manual generation, immutable
    generation-time coverage snapshots and the monthly routing recorded in the
    linked boundary progress record before enabling hosted generation.
+9. Add the host-neutral future-year calendar verifier, immutable database
+   snapshots and protected trigger. Keep it dormant locally, do not add Vercel
+  Cron to the landing deployment, and make scheduler activation plus calendar
+  readiness explicit gates for the accepted persistent single-node production
+  cutover, whether hosted on Railway or an equivalent provider.
 
 ## Exact implementation allowlist
 
@@ -568,8 +618,21 @@ The boundary slice may change only the following production files. Migration
   `src/modules/coach/server/market-calendar/us-equities-review-calendar.v1.json`
   containing the reviewed official-source snapshot and new
   `src/modules/coach/server/market-calendar/coach-us-equities-review-calendar-service.ts`
-  that validates source metadata, digest, coverage and seals. No new market-
-  calendar dependency or live review-time web request is required.
+  that validates source metadata, digest, coverage and seals; additive
+  `coach-us-equities-calendar-source-adapter.ts`,
+  `coach-us-equities-calendar-repository.ts` and
+  `coach-us-equities-calendar-verification-service.ts` in that folder may
+  implement the bounded official-source job and database-backed snapshot
+  registry. No live review-time web request is permitted.
+- Calendar persistence/trigger: new
+  `src/modules/coach/server/database/migrations/0039_coach_us_equities_review_calendars.ts`,
+  `src/modules/platform/server/database/platform-migration-manifest.ts` and new
+  `app/api/cron/ai-review-calendar/route.ts`. Migration `0039` is reserved for
+  this slice after coordination confirmed no Tracker/analyzer reservation.
+  `vercel.json` is explicitly excluded because the complete replacement's
+  scheduler belongs to its accepted persistent single-node deployment, not the
+  current landing/Academy Vercel runtime. The calendar contract does not depend
+  on Railway specifically.
 - Account/AI Reviews: `app/(dashboard)/account/page.tsx`,
   `app/(dashboard)/account/ai-review-delivery-settings.tsx`,
   `app/(dashboard)/account/ai-review-delivery-actions.ts`,

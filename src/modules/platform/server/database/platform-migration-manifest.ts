@@ -25,6 +25,7 @@ import { coachAiChatProviderControlsMigration } from "@/src/modules/coach/server
 import { coachAiChatSettingChangeDraftsMigration } from "@/src/modules/coach/server/database/migrations/0031_coach_ai_chat_setting_change_drafts";
 import { coachAiReviewProviderControlsMigration } from "@/src/modules/coach/server/database/migrations/0032_coach_ai_review_provider_controls";
 import { coachAiReviewPeriodsV2Migration } from "@/src/modules/coach/server/database/migrations/0037_coach_ai_review_periods_v2";
+import { coachUsEquitiesReviewCalendarsMigration } from "@/src/modules/coach/server/database/migrations/0039_coach_us_equities_review_calendars";
 
 import { platformIdentityMigration } from "./migrations/0001_platform_identity";
 import { platformAuthenticationIdentitiesMigration } from "./migrations/0012_platform_authentication_identities";
@@ -200,6 +201,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover.ts",
       migration: dailyTradeExactTurnoverMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/coach/server/database/migrations/0039_coach_us_equities_review_calendars.ts",
+      migration: coachUsEquitiesReviewCalendarsMigration,
     }),
   ]);
 
@@ -408,6 +413,11 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "coach_ai_review_carry_consumptions_v2",
     ]),
     "0038_daily_trade_exact_turnover": Object.freeze([]),
+    "0039_coach_us_equities_review_calendars": Object.freeze([
+      "coach_us_equities_calendar_snapshots",
+      "coach_us_equities_calendar_verification_attempts",
+      "coach_us_equities_calendar_verification_state",
+    ]),
   });
 
 export function expectedPlatformTableNamesForPrefix(

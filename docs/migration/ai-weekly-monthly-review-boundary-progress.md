@@ -75,6 +75,21 @@ Account does not duplicate this review card. The separate `Weekly and two-week
 reviews` panel remains issued AI-review history. This presentation is
 implemented and owner approved.
 
+The owner also approved preparing automatic future-year calendar verification
+before the application goes live. Deployment evidence confirms that the full
+replacement is intended for a single-node persistent-volume runtime because
+its Platform/Journal database is SQLite, while the owner's existing
+Vercel/Neon stack is not yet the full replacement runtime. Railway is one
+suitable persistent-host candidate, not a required brand or a service the
+owner currently uses. The accepted design
+therefore does not add Vercel Cron. It reserves migration `0039` for immutable
+verified annual snapshots plus mutable operational check state, adds a
+protected host-neutral trigger, and makes activation of that trigger an
+explicit production-cutover gate. Local development does not activate a
+scheduler. A target year is accepted only when explicit Nasdaq Trader and NYSE
+closed/early-close dates parse successfully and match exactly; NYSE-only
+publication, source failure or disagreement remains fail-closed.
+
 Migration number `0037` is now reserved by a registered forward migration
 file. It defines the v2 account-frequency state, unified weekly/two-week/monthly
 request identity, immutable input/evidence snapshots, retryable attempts,
@@ -210,6 +225,40 @@ state transition at its accepted checkpoint, design paid entitlement/packaging,
 connect the dormant automatic request coordinator to an explicitly enabled
 schedule plus a pending-request issuance path, and extend the official-source
 calendar beyond verified 2026 coverage.
+
+## 2026-08-08 future-year calendar verification design checkpoint
+
+- The existing embedded 2026 calendar remains the trusted bootstrap and keeps
+  its immutable ID/digest.
+- A protected operational job checks official sources outside page rendering
+  and review generation. It uses fixed HTTPS allowlists, bounded timeout and
+  response size, and stores content digests/retrieval evidence without placing
+  copied source pages in the database.
+- Nasdaq Trader is the required primary source. NYSE is an independent exact
+  cross-check. A year is not verified until both explicitly publish the same
+  closed and scheduled early-close dates. Both parses require explicit target-
+  year evidence plus credible non-empty result counts; empty agreement is not
+  verification.
+- Immutable annual snapshots are stored in the persistent Platform database.
+  Operational status is idempotent and may move among `awaiting_primary`,
+  `source_unavailable`, `conflict` and `verified`; a failed recheck never
+  deletes or rewrites prior verified evidence.
+- The production scheduler may invoke the job daily, while the service itself
+  limits checks to weekly for a normally unverified next year, daily in the
+  final 45 days of current coverage, and monthly after next-year verification.
+- No Vercel Cron entry is added because it would run against the wrong deployed
+  application. Production acceptance must prove migration `0039`, the
+  server-only scheduler secret, persistent single-node job invocation and
+  current/next-year calendar readiness. The calendar job is host-neutral and
+  works on Railway or an equivalent provider. This prevents launch from
+  depending on an informal reminder.
+- The design QA rejected three tempting shortcuts: trusting NYSE alone,
+  writing a runtime JSON source file, and fetching exchanges during review
+  generation. Each would compromise the existing fail-closed or immutable
+  evidence contract.
+- A later official revision creates a new immutable version and becomes active
+  only after the same two-source verification. Older versions and every review
+  request's original calendar ID/digest remain unchanged.
 
 ## 2026-08-08 request workflow checkpoint
 
