@@ -326,7 +326,36 @@ aggregation input, not a new dashboard. Later metrics may group exact retained
 values into holding-duration, profit-retention and giveback buckets without
 refetching candles or changing the stored continuous facts.
 
-### 5. Deferred import handoff
+### 5. Alternate chart timeframes
+
+The saved one-minute tape is the analyzer's canonical evidence. The chart may
+offer `1m`, `5m`, `15m` and `1h` views, but changing the view must not silently
+replace the stored analysis or create a second interpretation of the trade.
+EMA 9, candle structures, relative volume, compression/expansion and
+completed-close path timing are timeframe-sensitive. The selected chart view
+may therefore recalculate its visual EMA 9 and aggregate its candle/volume
+display, while the written execution analysis and saved price-action evidence
+remain explicitly one-minute facts.
+
+Higher intervals are derived entirely from the saved one-minute candle revision:
+
+- buckets align to the exchange-hour clock and retain the first open, maximum
+  high, minimum low, final close, summed volume and summed exact turnover;
+- VWAP remains cumulative turnover divided by cumulative volume at the selected
+  bucket closes, while EMA 9 is recalculated for the displayed interval;
+- execution annotations retain the exact execution price and timestamp in their
+  details and attach to the containing aggregate candle;
+- one-minute candle-pattern labels are shown only in the `1m` view, because a
+  one-minute Hammer, rejection or expansion is not the same pattern on a
+  five-minute, fifteen-minute or hourly candle;
+- switching views makes no Moomoo request, writes no new analysis revision and
+  does not alter the shared candle cache.
+
+The control must remain compact on desktop and phone, identify `1m analysis` as
+the authoritative basis, and reset the initial viewport around the first
+execution using a useful interval-specific bar count.
+
+### 6. Deferred import handoff
 
 The later `trade:read` execution-import job will call this same queueing
 boundary after accepted Moomoo executions rebuild their round trips. It will
@@ -384,6 +413,17 @@ not create a separate Daily Tracker product or impose a 60-minute page delay.
 18. Account-scoped long-term reads cannot expose another account's facts and
     retain exact continuous values plus the source analysis/round-trip version
     keys. Actual net P/L remains Journal-owned rather than duplicated.
+19. The chart offers `1m`, `5m`, `15m` and `1h` without a provider request or
+    another persisted analysis revision.
+20. Aggregate candles preserve exact OHLC order, summed volume and summed exact
+    turnover. Displayed VWAP uses the aggregated exact totals and displayed EMA
+    9 uses the selected chart interval.
+21. Exact execution price/time remains available in every timeframe. Execution
+    markers attach to the containing aggregate candle, while one-minute pattern
+    labels are hidden outside `1m` rather than being misrepresented as
+    higher-timeframe patterns.
+22. Written entry/exit, green-to-red and opportunity analysis remains the saved
+    one-minute contract regardless of the selected visual timeframe.
 
 ## Non-goals
 

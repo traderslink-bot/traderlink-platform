@@ -1,6 +1,7 @@
 "use client";
 
-import { Box, Stack, Typography } from "@mui/material";
+import { Box, Stack, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import Decimal from "decimal.js";
 import {
   CandlestickSeries,
   HistogramSeries,
@@ -17,6 +18,94 @@ import { calculateIndicatorPoints } from "@/src/lib/trade-candle-analysis/indica
 import { TradeAnalyzerAnnotationPrimitive } from "./trade-analyzer-annotation-primitive";
 
 import type { DaySessionTradeAnalyzer } from "./day-session-types";
+
+type ChartInterval = "1m" | "5m" | "15m" | "1h";
+
+type ChartCandle = DaySessionTradeAnalyzer["candles"][number];
+
+const CHART_INTERVAL_SECONDS: Readonly<Record<ChartInterval, number>> = Object.freeze({
+  "1m": 60,
+  "5m": 5 * 60,
+  "15m": 15 * 60,
+  "1h": 60 * 60,
+});
+
+const CHART_INTERVALS = Object.freeze(["1m", "5m", "15m", "1h"] as const);
+
+function chartBucketTime(time: number, interval: ChartInterval): number {
+  const seconds = CHART_INTERVAL_SECONDS[interval];
+  return Math.floor(time / seconds) * seconds;
+}
+
+function aggregateChartCandles(
+  candles: readonly ChartCandle[],
+  interval: ChartInterval,
+): readonly ChartCandle[] {
+  if (interval === "1m") return candles;
+  const buckets = new Map<number, {
+    close: string;
+    high: string;
+    low: string;
+    open: string;
+    time: number;
+    turnover: Decimal | null;
+    volume: Decimal;
+  }>();
+  for (const candle of candles) {
+    const time = chartBucketTime(candle.time, interval);
+    const current = buckets.get(time);
+    if (!current) {
+      buckets.set(time, {
+        close: candle.close,
+        high: candle.high,
+        low: candle.low,
+        open: candle.open,
+        time,
+        turnover: candle.turnover === null ? null : new Decimal(candle.turnover),
+        volume: new Decimal(candle.volume),
+      });
+      continue;
+    }
+    current.close = candle.close;
+    if (new Decimal(candle.high).greaterThan(current.high)) current.high = candle.high;
+    if (new Decimal(candle.low).lessThan(current.low)) current.low = candle.low;
+    current.volume = current.volume.plus(candle.volume);
+    current.turnover = current.turnover === null || candle.turnover === null
+      ? null
+      : current.turnover.plus(candle.turnover);
+  }
+  return Object.freeze([...buckets.values()].map((candle) => Object.freeze({
+    close: candle.close,
+    high: candle.high,
+    low: candle.low,
+    open: candle.open,
+    time: candle.time,
+    turnover: candle.turnover?.toFixed() ?? null,
+    volume: candle.volume.toFixed(),
+  })));
+}
+
+function initialVisibleSpan(
+  interval: ChartInterval,
+  candleCount: number,
+  width: number,
+): number {
+  const bounds: Readonly<Record<ChartInterval, Readonly<{
+    maximum: number;
+    minimum: number;
+    pixelsPerBar: number;
+  }>>> = {
+    "1m": { maximum: 240, minimum: 90, pixelsPerBar: 5 },
+    "5m": { maximum: 96, minimum: 48, pixelsPerBar: 8 },
+    "15m": { maximum: 48, minimum: 24, pixelsPerBar: 12 },
+    "1h": { maximum: 24, minimum: 12, pixelsPerBar: 16 },
+  };
+  const selected = bounds[interval];
+  return Math.min(
+    candleCount,
+    Math.max(selected.minimum, Math.min(selected.maximum, Math.round(width / selected.pixelsPerBar))),
+  );
+}
 
 function easternTime(timestamp: number): string {
   return new Intl.DateTimeFormat("en-US", {
@@ -129,7 +218,7 @@ function formatTurnover(value: number): string {
 }
 
 type ChartDetail = Readonly<{
-  candle: DaySessionTradeAnalyzer["candles"][number];
+  candle: ChartCandle;
   event: DaySessionTradeAnalyzer["events"][number] | null;
   priceAction: Readonly<{ explanation: string; title: string }> | null;
 }>;
@@ -156,15 +245,19 @@ export function DailyTradeAnalyzerChart({
   const selectedEventIdRef = useRef(selectedEventId);
   const pinnedDetailRef = useRef(false);
   const [detail, setDetail] = useState<ChartDetail | null>(null);
+  const [chartInterval, setChartInterval] = useState<ChartInterval>("1m");
 
   const [mobilePatternKeyOpen, setMobilePatternKeyOpen] = useState(false);
-  const visiblePatternKinds = [...new Set(analysis.events.flatMap((event) => event.patterns.map((pattern) => pattern.kind)))];
+  const visiblePatternKinds = chartInterval === "1m"
+    ? [...new Set(analysis.events.flatMap((event) => event.patterns.map((pattern) => pattern.kind)))]
+    : [];
   useEffect(() => {
     const container = containerRef.current;
     if (!container || !["pending", "ready", "provider_unavailable"].includes(analysis.status) || analysis.candles.length === 0) return;
     pinnedDetailRef.current = false;
     const clearDetailTimer = window.setTimeout(() => setDetail(null), 0);
-    const numericCandles = analysis.candles.map((candle) => ({
+    const displayedCandles = aggregateChartCandles(analysis.candles, chartInterval);
+    const numericCandles = displayedCandles.map((candle) => ({
       close: Number(candle.close),
       high: Number(candle.high),
       low: Number(candle.low),
@@ -173,7 +266,7 @@ export function DailyTradeAnalyzerChart({
       turnover: candle.turnover === null ? null : Number(candle.turnover),
       volume: Number(candle.volume),
     }));
-    const candleByTime = new Map(analysis.candles.map((candle) => [candle.time, candle]));
+    const candleByTime = new Map(displayedCandles.map((candle) => [candle.time, candle]));
     const chart = createChart(container, {
       autoSize: true,
       height: 420,
@@ -226,7 +319,7 @@ export function DailyTradeAnalyzerChart({
       lastValueVisible: false,
       lineWidth: 2,
       priceLineVisible: false,
-      title: "EMA 9",
+      title: `EMA 9 (${chartInterval})`,
     });
     ema9.setData(indicators.flatMap((point) =>
       point.ema9 === null ? [] : [{ time: point.time as Time, value: point.ema9 }],
@@ -237,7 +330,7 @@ export function DailyTradeAnalyzerChart({
       priceFormat: { type: "volume" },
       priceScaleId: "volume",
     }, 1);
-    volume.setData(analysis.candles.map((candle) => ({
+    volume.setData(displayedCandles.map((candle) => ({
       time: candle.time as Time,
       value: Number(candle.volume),
     })));
@@ -255,11 +348,12 @@ export function DailyTradeAnalyzerChart({
         event,
         label: `${side} ${sequence}`,
         side,
+        time: chartBucketTime(event.candleTime, chartInterval),
       }];
     });
 
     const seenPatterns = new Set<string>();
-    const patternModels = analysis.events.flatMap((event) =>
+    const patternModels = chartInterval === "1m" ? analysis.events.flatMap((event) =>
       event.patterns.flatMap((pattern) => {
         const key = `${pattern.time}:${pattern.kind}`;
         const candle = candleByTime.get(pattern.time);
@@ -274,10 +368,10 @@ export function DailyTradeAnalyzerChart({
           time: pattern.time,
         }];
       }),
-    );
+    ) : [];
     const annotationDetails = new Map<string, ChartDetail>();
     const executionAnnotations = executionModels.flatMap((model) => {
-      const candle = model.event.candleTime === null ? null : candleByTime.get(model.event.candleTime) ?? null;
+      const candle = candleByTime.get(model.time) ?? null;
       if (!candle) return [];
       const id = `execution-${model.event.eventId}`;
       annotationDetails.set(id, { candle, event: model.event, priceAction: null });
@@ -288,7 +382,7 @@ export function DailyTradeAnalyzerChart({
         label: model.label,
         preferredPosition: model.side === "BUY" ? "above" as const : "below" as const,
         price: Number(model.event.price),
-        time: model.event.candleTime!,
+        time: model.time,
       }];
     });
     const patternAnnotations = patternModels.map((model, index) => {
@@ -329,7 +423,8 @@ export function DailyTradeAnalyzerChart({
       if (typeof param.time !== "number") return null;
       const candle = candleByTime.get(param.time);
       if (!candle) return null;
-      const candleEvent = analysis.events.find((event) => event.candleTime === param.time) ?? null;
+      const candleEvent = analysis.events.find((event) =>
+        event.candleTime !== null && chartBucketTime(event.candleTime, chartInterval) === param.time) ?? null;
       return { candle, event: candleEvent, priceAction: null };
     }
     const handleCrosshairMove = (param: MouseEventParams<Time>) => {
@@ -344,18 +439,23 @@ export function DailyTradeAnalyzerChart({
     chart.timeScale().fitContent();
     const candleIndexByTime = new Map(numericCandles.map((candle, index) => [candle.time, index] as const));
     eventCandleIndexesRef.current = new Map(analysis.events.flatMap((event) => {
-      const index = event.candleTime === null ? undefined : candleIndexByTime.get(event.candleTime);
+      const index = event.candleTime === null
+        ? undefined
+        : candleIndexByTime.get(chartBucketTime(event.candleTime, chartInterval));
       return index === undefined ? [] : [[event.eventId, index] as const];
     }));
     const executionIndexes = analysis.events.flatMap((event) => {
-      const index = event.candleTime === null ? undefined : candleIndexByTime.get(event.candleTime);
+      const index = event.candleTime === null
+        ? undefined
+        : candleIndexByTime.get(chartBucketTime(event.candleTime, chartInterval));
       return index === undefined ? [] : [index];
     });
     if (numericCandles.length > 1 && executionIndexes.length > 0) {
       const firstExecutionIndex = Math.min(...executionIndexes);
-      const visibleSpan = Math.min(
+      const visibleSpan = initialVisibleSpan(
+        chartInterval,
         numericCandles.length,
-        Math.max(90, Math.min(240, Math.round(container.clientWidth / 5))),
+        container.clientWidth,
       );
       if (visibleSpan < numericCandles.length) {
         const maximumFrom = numericCandles.length - visibleSpan;
@@ -376,7 +476,7 @@ export function DailyTradeAnalyzerChart({
       eventCandleIndexesRef.current = new Map();
       chart.remove();
     };
-  }, [analysis, currency, direction]);
+  }, [analysis, chartInterval, currency, direction]);
 
   useEffect(() => {
     selectedEventIdRef.current = selectedEventId;
@@ -399,8 +499,8 @@ export function DailyTradeAnalyzerChart({
     <Box sx={{ bgcolor: "#f8fbff", borderBottom: 1, borderColor: "divider", position: "relative" }}>
       <Stack
         direction="row"
-        spacing={1.5}
-        sx={{ alignItems: "center", left: 14, pointerEvents: "none", position: "absolute", top: 10, zIndex: 2 }}
+        spacing={{ xs: 0.75, md: 1.5 }}
+        sx={{ alignItems: "center", left: 14, pointerEvents: "none", position: "absolute", top: 10, zIndex: 8 }}
       >
         <Typography
           sx={{ bgcolor: "#011e56", borderRadius: 1, color: "#fff", fontWeight: 900, px: 1.25, py: 0.5 }}
@@ -408,9 +508,49 @@ export function DailyTradeAnalyzerChart({
         >
           {symbol}
         </Typography>
-        <Typography sx={{ fontWeight: 800 }} variant="body2">Trade {tradeNumber}</Typography>
-        <Typography sx={{ color: "#7b1fa2", fontWeight: 800 }} variant="caption">- VWAP</Typography>
-        <Typography sx={{ color: "#ef6c00", fontWeight: 800 }} variant="caption">- EMA 9</Typography>
+        <Typography sx={{ display: { xs: "none", sm: "block" }, fontWeight: 800 }} variant="body2">
+          Trade {tradeNumber}
+        </Typography>
+        <ToggleButtonGroup
+          aria-label="Chart timeframe"
+          exclusive
+          onChange={(_event, value: ChartInterval | null) => {
+            if (value) setChartInterval(value);
+          }}
+          size="small"
+          sx={{
+            bgcolor: "rgba(255,255,255,0.96)",
+            height: 28,
+            pointerEvents: "auto",
+            "& .MuiToggleButton-root": {
+              borderColor: "#b8c6d9",
+              color: "#41516a",
+              fontSize: "0.66rem",
+              fontWeight: 850,
+              minWidth: 34,
+              px: 0.65,
+              py: 0.25,
+            },
+            "& .Mui-selected": {
+              bgcolor: "#011e56 !important",
+              color: "#fff !important",
+            },
+          }}
+          value={chartInterval}
+        >
+          {CHART_INTERVALS.map((interval) => (
+            <ToggleButton key={interval} value={interval}>{interval}</ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+        <Typography sx={{ color: "#41516a", fontSize: "0.66rem", fontWeight: 800 }}>
+          Analysis: 1m
+        </Typography>
+        <Typography sx={{ color: "#7b1fa2", display: { xs: "none", md: "block" }, fontWeight: 800 }} variant="caption">
+          - VWAP
+        </Typography>
+        <Typography sx={{ color: "#ef6c00", display: { xs: "none", md: "block" }, fontWeight: 800 }} variant="caption">
+          - EMA 9 ({chartInterval})
+        </Typography>
       </Stack>
       {visiblePatternKinds.length > 0 ? (
         <>
@@ -510,7 +650,10 @@ export function DailyTradeAnalyzerChart({
           }}
         >
           <Typography sx={{ fontWeight: 850 }} variant="caption">
-            {easternTime(detail.candle.time)} ET
+            {detail.event
+              ? easternTime(Math.floor(Date.parse(detail.event.executedAt) / 1000))
+              : easternTime(detail.candle.time)} ET
+            {detail.event ? " execution" : ` · ${chartInterval} candle`}
           </Typography>
           <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">
             O {formatPrice(Number(detail.candle.open), currency)} | H {formatPrice(Number(detail.candle.high), currency)} | L {formatPrice(Number(detail.candle.low), currency)} | C {formatPrice(Number(detail.candle.close), currency)}

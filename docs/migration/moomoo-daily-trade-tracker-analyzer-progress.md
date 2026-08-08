@@ -165,6 +165,18 @@
   trades then matched their independently recalculated saved-evidence results
   5-for-5. Tracker, Account and AI Reviews each returned HTTP 200 after one
   coordinated clean restart.
+- [x] Owner authorized alternate `1m`, `5m`, `15m` and `1h` chart views. The
+  plan keeps `1m` as the canonical stored analyzer contract because candle
+  structures, EMA 9, relative volume and path timing are timeframe-sensitive.
+- [x] Add the compact timeframe control and aggregate higher views only from
+  the saved one-minute candle revision. Keep exact execution details, hide
+  one-minute pattern labels outside `1m`, and make no provider request/write.
+- [x] Complete focused desktop/mobile technical review of the timeframe control,
+  interval-specific viewport, execution annotation placement and chart detail.
+  All four controls switch normally on desktop and 390px mobile, higher views
+  retain exact-price execution annotations, no one-minute price-action labels
+  appear outside `1m`, the mobile page has no horizontal overflow, and no page
+  or console error was observed. Owner visual approval remains open.
 - [x] Rebuilt the five saved 2026-08-07 sample analyses from their finalized
   shared candle revisions. All 20 executions now expose selectable analysis;
   the worker reused cached candles and made no additional Moomoo request.
