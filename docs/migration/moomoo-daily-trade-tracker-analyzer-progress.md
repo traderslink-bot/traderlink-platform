@@ -150,12 +150,21 @@
   `0040` stores that key on every path summary and limits automatic legacy
   backfill to the current analysis revision rather than guessing historical
   attribution.
-- [ ] Implement and register migration `0040`, persisted calculation, stored
+- [x] Implement and register migration `0040`, persisted calculation, stored
   Tracker read, account-scoped long-term fact query and compatibility fallback.
-- [ ] Apply `0040` locally and backfill the current five saved sample analyses
+- [x] Apply `0040` locally and backfill the current five saved sample analyses
   from cached evidence with zero Moomoo requests.
-- [ ] Confirm each stored result exactly matches the prior derived result and
+- [x] Confirm each stored result exactly matches the prior derived result and
   complete focused static/runtime checks before the checkpoint commit.
+- [x] Preserved the implementation in narrow local commit `745f84c9`. A fresh
+  pre-`0040` SQLite online backup and independent restored copy matched exactly
+  before the migration write. The database already contained migration `0039`,
+  so the normal runner applied exactly `0040_daily_trade_path_materialization`.
+- [x] The cache-only backfill materialized all 10 current analyzer revisions
+  with zero skips and no provider call. The five approved 2026-08-07 sample
+  trades then matched their independently recalculated saved-evidence results
+  5-for-5. Tracker, Account and AI Reviews each returned HTTP 200 after one
+  coordinated clean restart.
 - [x] Rebuilt the five saved 2026-08-07 sample analyses from their finalized
   shared candle revisions. All 20 executions now expose selectable analysis;
   the worker reused cached candles and made no additional Moomoo request.

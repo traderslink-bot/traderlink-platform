@@ -307,10 +307,10 @@ backfilled; it must never make a broker request or silently write from a
 read-only page.
 
 The cache-only backfill processes current analysis versions missing a path
-summary in bounded batches. It reconstructs events only from their saved
-snapshot JSON, reads candles only from the version's saved market-session set,
-uses the direction of the parent analysis's current exact round-trip version,
-and freezes that key on the summary. Existing pre-`0040` versions have no
+summary in bounded batches. It reconstructs events from the canonical saved
+Journal executions and round-trip allocations, reads candles only from the
+version's saved market-session set, uses the direction of the current exact
+round-trip version, and freezes that key on the summary. Existing pre-`0040` versions have no
 version-local round-trip key, so only each analysis's current version is
 eligible for automatic backfill; older historical analysis revisions remain
 untouched rather than receiving guessed attribution. The backfill inserts the
@@ -378,7 +378,7 @@ not create a separate Daily Tracker product or impose a 60-minute page delay.
     analysis version. New analyzer revisions write them atomically and current
     stored results round-trip back to the same UI contract.
 17. The cache-only backfill materializes current missing versions from saved
-    snapshot JSON, saved candles and the exact saved round-trip direction. It is
+    Journal executions/allocations, saved candles and the exact saved round-trip direction. It is
     bounded, idempotent, makes zero provider requests and does not create a new
     analysis revision.
 18. Account-scoped long-term reads cannot expose another account's facts and
