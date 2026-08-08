@@ -8,26 +8,42 @@ export type CandlePatternKind =
   | "engulfing_bullish"
   | "expansion_bearish"
   | "expansion_bullish"
+  | "hammer_bullish"
   | "high_volume_exhaustion"
   | "rejection_lower"
-  | "rejection_upper";
+  | "rejection_upper"
+  | "shooting_star_bearish";
 
-export type CandlePatternEvent = {
-  kind: CandlePatternKind;
-  time: number;
-};
+export type CandlePatternEvent = { kind: CandlePatternKind; time: number };
 
 export const MICRO_CAP_PATTERN_DEFINITIONS: Readonly<Record<CandlePatternKind, string>> = {
-  compression: "An inside bar or tight range contained by the prior range. It is a pause, not a directional signal.",
-  compression_break_bearish: "Price broke below the prior compressed range on an active candle.",
-  compression_break_bullish: "Price broke above the prior compressed range on an active candle.",
-  engulfing_bearish: "A bearish real body contained the preceding bullish body, an observed short-term control shift.",
-  engulfing_bullish: "A bullish real body contained the preceding bearish body, an observed short-term control shift.",
-  expansion_bearish: "A wide bearish body closed near its low relative to recent active candles.",
-  expansion_bullish: "A wide bullish body closed near its high relative to recent active candles.",
-  high_volume_exhaustion: "An extended move met unusually high volume and stalled; high volume alone is never classified as exhaustion.",
-  rejection_lower: "A dominant lower wick showed price rejection near the candle low.",
-  rejection_upper: "A dominant upper wick showed price rejection near the candle high.",
+  compression: "A materially smaller inside bar with contracting volume relative to recent active candles.",
+  compression_break_bearish: "A decisive, active close below a confirmed compressed range.",
+  compression_break_bullish: "A decisive, active close above a confirmed compressed range.",
+  engulfing_bearish: "A meaningful bearish real body fully engulfed the preceding bullish body.",
+  engulfing_bullish: "A meaningful bullish real body fully engulfed the preceding bearish body.",
+  expansion_bearish: "A wide, active bearish body closed near its low relative to recent candles.",
+  expansion_bullish: "A wide, active bullish body closed near its high relative to recent candles.",
+  hammer_bullish: "After a meaningful decline, a small body rejected a local low with a dominant lower wick and the following candle confirmed recovery.",
+  high_volume_exhaustion: "A locally extended move printed exceptional volume, stalled at an extreme, and was confirmed by the following candle.",
+  rejection_lower: "A significant candle tested a local low, left a dominant lower wick, and closed back in its upper portion.",
+  rejection_upper: "A significant candle tested a local high, left a dominant upper wick, and closed back in its lower portion.",
+  shooting_star_bearish: "After a meaningful advance, a small body rejected a local high with a dominant upper wick and the following candle confirmed weakness.",
+};
+
+const PATTERN_PRIORITY: Readonly<Record<CandlePatternKind, number>> = {
+  compression: 1,
+  expansion_bearish: 2,
+  expansion_bullish: 2,
+  engulfing_bearish: 3,
+  engulfing_bullish: 3,
+  rejection_lower: 4,
+  rejection_upper: 4,
+  hammer_bullish: 5,
+  shooting_star_bearish: 5,
+  compression_break_bearish: 5,
+  compression_break_bullish: 5,
+  high_volume_exhaustion: 6,
 };
 
 function body(candle: TradeCandle): number {
@@ -39,58 +55,161 @@ function range(candle: TradeCandle): number {
 }
 
 function active(candle: TradeCandle): boolean {
-  return [candle.open, candle.high, candle.low, candle.close, candle.volume].every(Number.isFinite) && candle.volume > 0 && range(candle) > 0;
+  return [candle.open, candle.high, candle.low, candle.close, candle.volume].every(Number.isFinite) &&
+    candle.volume > 0 && range(candle) > 0;
 }
 
-export function detectMicroCapCandlePatterns(
-  candles: readonly TradeCandle[],
-): readonly CandlePatternEvent[] {
-  const events: CandlePatternEvent[] = [];
-  for (let index = 1; index < candles.length; index += 1) {
-    const candle = candles[index];
-    const previous = candles[index - 1];
-    if (!active(candle) || !active(previous)) continue;
-    const candleBody = body(candle);
-    const candleRange = range(candle);
-    const bullish = candle.close > candle.open;
-    const closeNearHigh = (candle.high - candle.close) / candleRange <= 0.2;
-    const closeNearLow = (candle.close - candle.low) / candleRange <= 0.2;
-    const priorBodies = candles.slice(Math.max(0, index - 10), index).filter(active).map(body);
-    const averageBody = priorBodies.reduce((sum, value) => sum + value, 0) / priorBodies.length;
-    if (averageBody > 0 && candleBody >= averageBody * 1.8) {
-      if (bullish && closeNearHigh) events.push({ kind: "expansion_bullish", time: candle.time });
-      if (!bullish && closeNearLow) events.push({ kind: "expansion_bearish", time: candle.time });
-    }
-    const previousBullish = previous.close > previous.open;
-    if (!previousBullish && bullish && candle.open <= previous.close && candle.close >= previous.open) events.push({ kind: "engulfing_bullish", time: candle.time });
-    if (previousBullish && !bullish && candle.open >= previous.close && candle.close <= previous.open) events.push({ kind: "engulfing_bearish", time: candle.time });
-    const upperWick = candle.high - Math.max(candle.open, candle.close);
-    const lowerWick = Math.min(candle.open, candle.close) - candle.low;
-    if (lowerWick >= candleBody * 2 && lowerWick > upperWick * 1.5) events.push({ kind: "rejection_lower", time: candle.time });
-    if (upperWick >= candleBody * 2 && upperWick > lowerWick * 1.5) events.push({ kind: "rejection_upper", time: candle.time });
-    if (candle.high <= previous.high && candle.low >= previous.low) events.push({ kind: "compression", time: candle.time });
-    if (index >= 2) {
-      const compressed = candles[index - 1];
-      const container = candles[index - 2];
-      if (active(compressed) && active(container) && compressed.high <= container.high && compressed.low >= container.low) {
-        if (candle.close > container.high) events.push({ kind: "compression_break_bullish", time: candle.time });
-        if (candle.close < container.low) events.push({ kind: "compression_break_bearish", time: candle.time });
-      }
-    }
-    const priorVolumes = candles.slice(Math.max(0, index - 20), index).filter(active).map((item) => item.volume);
-    const averageVolume = priorVolumes.reduce((sum, value) => sum + value, 0) / priorVolumes.length;
-    const stalled = (bullish && !closeNearHigh) || (!bullish && !closeNearLow) || upperWick >= candleBody || lowerWick >= candleBody;
-    const priorMove = candles.slice(Math.max(0, index - 5), index).filter(active);
-    const priorRange = priorMove.reduce((sum, item) => sum + range(item), 0) / priorMove.length;
-    const directionalMove = priorMove.length >= 3
-      ? previous.close - priorMove[0]!.open
-      : 0;
-    const extendedMove = priorRange > 0 && Math.abs(directionalMove) >= priorRange * 1.5;
-    const isAgainstPriorMove = (directionalMove > 0 && (!bullish || !closeNearHigh)) ||
-      (directionalMove < 0 && (bullish || !closeNearLow));
-    if (averageVolume > 0 && candle.volume >= averageVolume * 3 && extendedMove && isAgainstPriorMove && stalled) {
-      events.push({ kind: "high_volume_exhaustion", time: candle.time });
+function median(values: readonly number[]): number {
+  if (values.length === 0) return 0;
+  const ordered = [...values].sort((left, right) => left - right);
+  const middle = Math.floor(ordered.length / 2);
+  return ordered.length % 2 === 0
+    ? (ordered[middle - 1]! + ordered[middle]!) / 2
+    : ordered[middle]!;
+}
+
+function recentActive(candles: readonly TradeCandle[], endIndexExclusive: number, maximum: number): readonly TradeCandle[] {
+  return candles.slice(Math.max(0, endIndexExclusive - maximum), endIndexExclusive).filter(active);
+}
+
+function isConfirmedCompression(
+  compressed: TradeCandle,
+  container: TradeCandle,
+  baseline: readonly TradeCandle[],
+): boolean {
+  if (!active(compressed) || !active(container) || baseline.length < 5) return false;
+  const compressedRange = range(compressed);
+  const medianRange = median(baseline.map(range));
+  const medianVolume = median(baseline.map((candle) => candle.volume));
+  return compressed.high <= container.high && compressed.low >= container.low &&
+    compressedRange <= range(container) * 0.65 && medianRange > 0 &&
+    compressedRange <= medianRange * 0.7 && medianVolume > 0 &&
+    compressed.volume <= medianVolume * 0.85;
+}
+
+function selectOnePatternPerCandle(candidates: readonly CandlePatternEvent[]): readonly CandlePatternEvent[] {
+  const strongestByTime = new Map<number, CandlePatternEvent>();
+  for (const candidate of candidates) {
+    const current = strongestByTime.get(candidate.time);
+    if (!current || PATTERN_PRIORITY[candidate.kind] > PATTERN_PRIORITY[current.kind]) {
+      strongestByTime.set(candidate.time, candidate);
     }
   }
-  return events;
+  return [...strongestByTime.values()].sort((left, right) => left.time - right.time);
+}
+
+export function detectMicroCapCandlePatterns(candles: readonly TradeCandle[]): readonly CandlePatternEvent[] {
+  const candidates: CandlePatternEvent[] = [];
+  for (let index = 1; index < candles.length; index += 1) {
+    const candle = candles[index]!;
+    const previous = candles[index - 1]!;
+    if (!active(candle) || !active(previous)) continue;
+    const lookback10 = recentActive(candles, index, 10);
+    if (lookback10.length < 5) continue;
+
+    const candleBody = body(candle);
+    const candleRange = range(candle);
+    const bodyShare = candleBody / candleRange;
+    const bullish = candle.close > candle.open;
+    const closeLocation = (candle.close - candle.low) / candleRange;
+    const medianRange = median(lookback10.map(range));
+    const medianVolume = median(lookback10.map((item) => item.volume));
+    const positiveBodies = lookback10.map(body).filter((value) => value > 0);
+    const bodyBaseline = Math.max(median(positiveBodies), medianRange * 0.15);
+
+    const isExpansion = medianRange > 0 && medianVolume > 0 &&
+      candleBody >= bodyBaseline * 1.8 && candleRange >= medianRange * 1.4 &&
+      bodyShare >= 0.65 && candle.volume >= medianVolume * 0.9;
+    if (isExpansion && bullish && closeLocation >= 0.85) {
+      candidates.push({ kind: "expansion_bullish", time: candle.time });
+    } else if (isExpansion && !bullish && closeLocation <= 0.15) {
+      candidates.push({ kind: "expansion_bearish", time: candle.time });
+    }
+
+    const previousBody = body(previous);
+    const previousBullish = previous.close > previous.open;
+    const isMeaningfulEngulfing = previousBody > 0 && candleBody >= previousBody * 1.2 &&
+      candleBody >= bodyBaseline * 0.8 && candleRange >= medianRange * 0.8 &&
+      bodyShare >= 0.55 && candle.volume >= medianVolume * 0.75;
+    if (isMeaningfulEngulfing && !previousBullish && bullish &&
+        candle.open <= previous.close && candle.close >= previous.open) {
+      candidates.push({ kind: "engulfing_bullish", time: candle.time });
+    } else if (isMeaningfulEngulfing && previousBullish && !bullish &&
+        candle.open >= previous.close && candle.close <= previous.open) {
+      candidates.push({ kind: "engulfing_bearish", time: candle.time });
+    }
+
+    const upperWick = candle.high - Math.max(candle.open, candle.close);
+    const lowerWick = Math.min(candle.open, candle.close) - candle.low;
+    const recentThree = recentActive(candles, index, 3);
+    const testedLocalLow = recentThree.length >= 2 && candle.low <= Math.min(...recentThree.map((item) => item.low));
+    const testedLocalHigh = recentThree.length >= 2 && candle.high >= Math.max(...recentThree.map((item) => item.high));
+    const significantRejection = candleRange >= medianRange * 0.9 && candle.volume >= medianVolume * 0.75;
+    const confirmation = candles[index + 1];
+    const hasActiveConfirmation = confirmation !== undefined && active(confirmation);
+    const midpoint = (candle.high + candle.low) / 2;
+    const recentDirectionalMove = recentThree.length >= 2
+      ? previous.close - recentThree[0]!.open
+      : 0;
+    const confirmedHammer = significantRejection && hasActiveConfirmation && testedLocalLow &&
+      recentDirectionalMove <= -medianRange * 1.25 && bodyShare <= 0.35 &&
+      lowerWick / candleRange >= 0.55 && upperWick / candleRange <= 0.2 &&
+      confirmation!.close > confirmation!.open && confirmation!.close > midpoint;
+    const confirmedShootingStar = significantRejection && hasActiveConfirmation && testedLocalHigh &&
+      recentDirectionalMove >= medianRange * 1.25 && bodyShare <= 0.35 &&
+      upperWick / candleRange >= 0.55 && lowerWick / candleRange <= 0.2 &&
+      confirmation!.close < confirmation!.open && confirmation!.close < midpoint;
+    if (confirmedHammer) candidates.push({ kind: "hammer_bullish", time: candle.time });
+    if (confirmedShootingStar) candidates.push({ kind: "shooting_star_bearish", time: candle.time });
+    if (significantRejection && testedLocalLow && lowerWick / candleRange >= 0.5 &&
+        lowerWick >= Math.max(candleBody * 1.5, upperWick * 1.5) && closeLocation >= 0.6) {
+      candidates.push({ kind: "rejection_lower", time: candle.time });
+    } else if (significantRejection && testedLocalHigh && upperWick / candleRange >= 0.5 &&
+        upperWick >= Math.max(candleBody * 1.5, lowerWick * 1.5) && closeLocation <= 0.4) {
+      candidates.push({ kind: "rejection_upper", time: candle.time });
+    }
+
+    const compressionBaseline = recentActive(candles, index, 6);
+    if (isConfirmedCompression(candle, previous, compressionBaseline)) {
+      candidates.push({ kind: "compression", time: candle.time });
+    }
+
+    if (index >= 2) {
+      const compressed = candles[index - 1]!;
+      const container = candles[index - 2]!;
+      const baseline = recentActive(candles, index - 1, 6);
+      if (isConfirmedCompression(compressed, container, baseline)) {
+        const activeBreak = candleRange >= medianRange * 1.1 && candle.volume >= medianVolume * 1.2;
+        const minimumBreakDistance = medianRange * 0.1;
+        if (bodyShare >= 0.55 && activeBreak && closeLocation >= 0.75 &&
+            candle.close - container.high >= minimumBreakDistance) {
+          candidates.push({ kind: "compression_break_bullish", time: candle.time });
+        } else if (bodyShare >= 0.55 && activeBreak && closeLocation <= 0.25 &&
+            container.low - candle.close >= minimumBreakDistance) {
+          candidates.push({ kind: "compression_break_bearish", time: candle.time });
+        }
+      }
+    }
+
+    const lookback20 = recentActive(candles, index, 20);
+    if (!confirmation || !active(confirmation) || lookback20.length < 8) continue;
+    const medianVolume20 = median(lookback20.map((item) => item.volume));
+    const medianRange20 = median(lookback20.map(range));
+    const priorMoveCandles = recentActive(candles, index, 5);
+    if (medianVolume20 <= 0 || medianRange20 <= 0 || priorMoveCandles.length < 4) continue;
+
+    const directionalMove = previous.close - priorMoveCandles[0]!.open;
+    const extendedMove = Math.abs(directionalMove) >= medianRange20 * 2.5;
+    const exceptionalActivity = candle.volume >= medianVolume20 * 3 && candleRange >= medianRange20 * 1.4;
+    const localHigh = candle.high >= Math.max(...priorMoveCandles.map((item) => item.high));
+    const localLow = candle.low <= Math.min(...priorMoveCandles.map((item) => item.low));
+    const upwardFailure = directionalMove > 0 && localHigh && upperWick / candleRange >= 0.25 &&
+      closeLocation <= 0.7 && confirmation.close < midpoint;
+    const downwardFailure = directionalMove < 0 && localLow && lowerWick / candleRange >= 0.25 &&
+      closeLocation >= 0.3 && confirmation.close > midpoint;
+    if (extendedMove && exceptionalActivity && (upwardFailure || downwardFailure)) {
+      candidates.push({ kind: "high_volume_exhaustion", time: candle.time });
+    }
+  }
+  return selectOnePatternPerCandle(candidates);
 }

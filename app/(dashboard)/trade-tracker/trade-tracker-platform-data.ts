@@ -31,6 +31,9 @@ import {
   type CoachAiDailyCompanionResolvedContext,
   type CoachAiDailyCompanionRule,
 } from "@/src/modules/coach/contracts/ai-daily-companion-contracts";
+import type { TradeCandle } from "@/src/lib/trade-candle-analysis/candle-analysis";
+import { detectMicroCapCandlePatterns } from "@/src/lib/trade-candle-analysis/pattern-detection";
+import { analyzeDailyTradeGreenToRed } from "@/src/modules/level-analysis/server/daily-trade-green-to-red-analyzer";
 
 import type {
   DaySessionDailyNote,
@@ -127,11 +130,101 @@ function numberOrNull(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
+function stringOrNull(value: unknown): string | null {
+  return typeof value === "string" ? value : null;
+}
+
+function analyzerReferenceDistance(value: unknown): DaySessionTradeAnalyzer["events"][number]["metrics"]["vwapDistance"] {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  const anchor = stringOrNull(record.anchorDecimal);
+  const signedDistance = stringOrNull(record.signedDistanceDecimal);
+  const signedDistancePercent = numberOrNull(record.signedDistancePercent);
+  return anchor !== null && signedDistance !== null && signedDistancePercent !== null
+    ? { anchor, signedDistance, signedDistancePercent }
+    : null;
+}
+
+function analyzerMetrics(value: unknown): DaySessionTradeAnalyzer["events"][number]["metrics"] {
+  if (!value || typeof value !== "object") {
+    return {
+      available: false,
+      averageEntryPriceAfter: null,
+      candleLocationRatio: null,
+      candleTurnover: null,
+      candleVolume: null,
+      cumulativeSessionTurnover: null,
+      cumulativeSessionVolume: null,
+      ema9Distance: null,
+      executionEdgeDistance: null,
+      excursionUntilFlat: null,
+      givebackFromPriorFavorableExtreme: null,
+      positionQuantityAfter: "0",
+      positionQuantityBefore: "0",
+      postEventPaths: [],
+      priorFavorableExtremePrice: null,
+      vwapDistance: null,
+    };
+  }
+  const record = value as Record<string, unknown>;
+  const excursionRecord = record.excursionUntilFlat && typeof record.excursionUntilFlat === "object"
+    ? record.excursionUntilFlat as Record<string, unknown>
+    : null;
+  const favorableMove = excursionRecord ? stringOrNull(excursionRecord.favorableMoveDecimal) : null;
+  const adverseMove = excursionRecord ? stringOrNull(excursionRecord.adverseMoveDecimal) : null;
+  const minutesUntilFlat = excursionRecord ? numberOrNull(excursionRecord.minutesUntilFlat) : null;
+  const paths = Array.isArray(record.postEventPaths) ? record.postEventPaths : [];
+  return {
+    available: true,
+    averageEntryPriceAfter: stringOrNull(record.averageEntryPriceAfterDecimal),
+    candleLocationRatio: numberOrNull(record.candleLocationRatio),
+    candleTurnover: stringOrNull(record.candleTurnoverDecimal),
+    candleVolume: stringOrNull(record.candleVolumeDecimal),
+    cumulativeSessionTurnover: stringOrNull(record.cumulativeSessionTurnoverDecimal),
+    cumulativeSessionVolume: stringOrNull(record.cumulativeSessionVolumeDecimal),
+    ema9Distance: analyzerReferenceDistance(record.ema9Distance),
+    executionEdgeDistance: stringOrNull(record.executionEdgeDistanceDecimal),
+    excursionUntilFlat: favorableMove !== null && adverseMove !== null && minutesUntilFlat !== null
+      ? {
+          adverseMove,
+          favorableMove,
+          minutesUntilFlat,
+          observedThrough: excursionRecord ? numberOrNull(excursionRecord.observedThroughCandleTime) : null,
+        }
+      : null,
+    givebackFromPriorFavorableExtreme: stringOrNull(record.givebackFromPriorFavorableExtremeDecimal),
+    positionQuantityAfter: stringOrNull(record.positionQuantityAfterDecimal) ?? "0",
+    positionQuantityBefore: stringOrNull(record.positionQuantityBeforeDecimal) ?? "0",
+    postEventPaths: paths.flatMap((path) => {
+      if (!path || typeof path !== "object") return [];
+      const candidate = path as Record<string, unknown>;
+      const minutesAfterEvent = numberOrNull(candidate.minutesAfterEvent);
+      if (minutesAfterEvent !== 5 && minutesAfterEvent !== 15 && minutesAfterEvent !== 30 && minutesAfterEvent !== 60) return [];
+      return [{
+        minutesAfterEvent,
+        observedAt: numberOrNull(candidate.observedAtCandleTime),
+        oppositeDirectionMove: stringOrNull(candidate.oppositeDirectionMoveDecimal),
+        tradeDirectionMove: stringOrNull(candidate.tradeDirectionMoveDecimal),
+      }];
+    }),
+    priorFavorableExtremePrice: stringOrNull(record.priorFavorableExtremePriceDecimal),
+    vwapDistance: analyzerReferenceDistance(record.vwapDistance),
+  };
+}
+
 function analyzerSnapshotView(row: AnalyzerSnapshotRow): DaySessionTradeAnalyzer["events"][number] | null {
   try {
     const snapshot = JSON.parse(row.snapshot_json) as {
-      event?: { executedAtUtc?: unknown; priceDecimal?: unknown; quantityDecimal?: unknown };
+      event?: {
+        eventId?: unknown;
+        executedAtUtc?: unknown;
+        feesDecimal?: unknown;
+        priceDecimal?: unknown;
+        quantityDecimal?: unknown;
+        sequence?: unknown;
+      };
       indicators?: Record<string, unknown> | null;
+      metrics?: unknown;
       patterns?: Array<{ kind?: unknown; score?: unknown; time?: unknown }>;
     };
     if (!snapshot.event || typeof snapshot.event.executedAtUtc !== "string" ||
@@ -154,27 +247,67 @@ function analyzerSnapshotView(row: AnalyzerSnapshotRow): DaySessionTradeAnalyzer
       : null;
     return {
       candleTime: row.candle_time_utc_seconds,
+      eventId: typeof snapshot.event.eventId === "string" ? snapshot.event.eventId : "",
       executedAt: snapshot.event.executedAtUtc,
+      fees: stringOrNull(snapshot.event.feesDecimal),
       indicators,
       kind: row.event_kind,
+      metrics: analyzerMetrics(snapshot.metrics),
       patterns: (snapshot.patterns ?? []).flatMap((pattern) =>
         typeof pattern.kind === "string" && numberOrNull(pattern.score) !== null && numberOrNull(pattern.time) !== null
           ? [{ kind: pattern.kind, score: pattern.score as number, time: pattern.time as number }]
           : []),
       price: snapshot.event.priceDecimal,
       quantity: snapshot.event.quantityDecimal,
+      sequence: numberOrNull(snapshot.event.sequence) ?? 0,
     };
   } catch {
     return null;
   }
 }
 
+function withNearbyPatterns(
+  candles: readonly TradeCandle[],
+  events: readonly DaySessionTradeAnalyzer["events"][number][],
+): DaySessionTradeAnalyzer["events"] {
+  const detected = detectMicroCapCandlePatterns(candles);
+  const candleIndexByTime = new Map(candles.map((candle, index) => [candle.time, index] as const));
+  return events.map((event) => {
+    if (event.candleTime === null) return event;
+    const executionCandleIndex = candleIndexByTime.get(event.candleTime);
+    if (executionCandleIndex === undefined) return { ...event, patterns: [] };
+    const relevantTimes = new Map<number, number>();
+    for (let offset = 0; offset <= 2; offset += 1) {
+      const candle = candles[executionCandleIndex - offset];
+      if (candle) relevantTimes.set(candle.time, 1 - offset * 0.15);
+    }
+    const nearby = detected
+      .flatMap((pattern) => {
+        const relevance = relevantTimes.get(pattern.time);
+        return relevance === undefined ? [] : [{ ...pattern, score: relevance }];
+      })
+      .sort((left, right) => right.score - left.score)
+      .slice(0, 2);
+    return { ...event, patterns: nearby };
+  });
+}
+
 function readDailyTradeAnalyzers(
   scope: WorkspaceAccessScope,
-  roundTripIds: readonly string[],
+  roundTrips: readonly Readonly<{ direction: "long" | "short"; roundTripId: string }>[],
 ): ReadonlyMap<string, DaySessionTradeAnalyzer> {
+  const roundTripIds = roundTrips.map((roundTrip) => roundTrip.roundTripId);
+  const directionByRoundTripId = new Map(roundTrips.map((roundTrip) =>
+    [roundTrip.roundTripId, roundTrip.direction] as const));
   if (roundTripIds.length === 0 || !scope.activeAccountId) return new Map();
+  const activeAccountId = scope.activeAccountId;
   return withReadonlyPlatformDatabase({}, (database) => {
+    const supportsExactTurnover = database.prepare<[], { name: string }>(
+      "PRAGMA table_info(level_analysis_market_session_candles)",
+    ).all().some((column) => column.name === "turnover_decimal");
+    const turnoverSelection = supportsExactTurnover
+      ? "turnover_decimal"
+      : "NULL AS turnover_decimal";
     const analysisForRoundTrip = database.prepare<[string, string, string], AnalyzerRow>(`SELECT
   analysis.round_trip_id,
   analysis.status,
@@ -189,7 +322,7 @@ WHERE analysis.workspace_id = ? AND analysis.account_id = ? AND analysis.round_t
   event_kind, candle_time_utc_seconds, snapshot_json
 FROM journal_round_trip_daily_trade_analysis_event_snapshots
 WHERE daily_trade_analysis_version_id = ?
-ORDER BY CASE event_kind WHEN 'entry' THEN 1 WHEN 'add' THEN 2 WHEN 'partial_exit' THEN 3 ELSE 4 END, candle_time_utc_seconds`);
+ORDER BY COALESCE(json_extract(snapshot_json, '$.event.sequence'), candle_time_utc_seconds), candle_time_utc_seconds`);
     const paths = database.prepare<[string], {
       favorable_move_decimal: string | null;
       minutes_after_exit: 5 | 15 | 30 | 60;
@@ -204,37 +337,71 @@ ORDER BY minutes_after_exit`);
       high_decimal: string;
       low_decimal: string;
       open_decimal: string;
+      turnover_decimal: string | null;
       volume_decimal: string;
-    }>(`SELECT candle_time_utc_seconds, open_decimal, high_decimal, low_decimal, close_decimal, volume_decimal
+    }>(`SELECT candle_time_utc_seconds, open_decimal, high_decimal, low_decimal, close_decimal, volume_decimal,
+  ${turnoverSelection}
 FROM level_analysis_market_session_candles
 WHERE market_session_set_version_id = ?
 ORDER BY candle_time_utc_seconds`);
     const result = new Map<string, DaySessionTradeAnalyzer>();
     for (const roundTripId of roundTripIds) {
-      const analysis = analysisForRoundTrip.get(scope.workspaceId, scope.activeAccountId, roundTripId);
+      const analysis = analysisForRoundTrip.get(scope.workspaceId, activeAccountId, roundTripId);
       if (!analysis) continue;
-      const eventViews = snapshots.all(analysis.daily_trade_analysis_version_id)
+      const persistedEventViews = snapshots.all(analysis.daily_trade_analysis_version_id)
         .map(analyzerSnapshotView)
         .filter((snapshot): snapshot is DaySessionTradeAnalyzer["events"][number] => snapshot !== null);
+      const candleViews = analysis.market_session_set_version_id
+        ? candles.all(analysis.market_session_set_version_id).map((candle) => ({
+            close: candle.close_decimal,
+            high: candle.high_decimal,
+            low: candle.low_decimal,
+            open: candle.open_decimal,
+            time: candle.candle_time_utc_seconds,
+            turnover: candle.turnover_decimal,
+            volume: candle.volume_decimal,
+          }))
+        : [];
+      const eventViews = withNearbyPatterns(
+        candleViews.map((candle) => ({
+          close: Number(candle.close),
+          high: Number(candle.high),
+          low: Number(candle.low),
+          open: Number(candle.open),
+          time: candle.time,
+          turnover: candle.turnover === null ? null : Number(candle.turnover),
+          volume: Number(candle.volume),
+        })),
+        persistedEventViews,
+      );
       const hasCompleteExecutionCoverage = eventViews.length > 0 &&
         eventViews.every((event) => event.candleTime !== null && event.indicators !== null);
+      const direction = directionByRoundTripId.get(roundTripId);
+      if (!direction) continue;
       result.set(roundTripId, {
-        candles: analysis.market_session_set_version_id
-          ? candles.all(analysis.market_session_set_version_id).map((candle) => ({
-              close: candle.close_decimal,
-              high: candle.high_decimal,
-              low: candle.low_decimal,
-              open: candle.open_decimal,
-              time: candle.candle_time_utc_seconds,
-              volume: candle.volume_decimal,
-            }))
-          : [],
+        candles: candleViews,
         events: eventViews,
         finalExitPaths: paths.all(analysis.daily_trade_analysis_version_id).map((path) => ({
           favorableMove: path.favorable_move_decimal,
           minutesAfterExit: path.minutes_after_exit,
           observedAt: path.observed_at_candle_time_utc_seconds,
         })),
+        greenToRed: analyzeDailyTradeGreenToRed({
+          candles: candleViews.map((candle) => ({
+            closeDecimal: candle.close,
+            time: candle.time,
+          })),
+          direction,
+          events: eventViews.map((event) => ({
+            eventId: event.eventId,
+            executedAtUtc: event.executedAt,
+            feesDecimal: event.fees,
+            kind: event.kind,
+            priceDecimal: event.price,
+            quantityDecimal: event.quantity,
+            sequence: event.sequence,
+          })),
+        }),
         status: analysis.status === "ready" && !hasCompleteExecutionCoverage
           ? "no_coverage"
           : analysis.status,
@@ -382,6 +549,7 @@ function toDaySessionData(
       symbol: item.symbol,
     })),
     executionActivity: model.executionActivity.map((execution) => ({
+      analysisEventKey: execution.executionId,
       executedAt: execution.executedAtUtc,
       executionKey: execution.executionVersionId,
       manualEdit: (() => {
@@ -420,6 +588,7 @@ function toDaySessionData(
         executions: (detail?.executions ?? []).map((execution) => {
           const editable = editableManualExecutions.get(execution.executionId);
           return {
+            analysisEventKey: execution.executionId,
             executedAt: execution.executedAtUtc,
             executionKey: execution.executionId,
             manualEdit: editable
@@ -604,7 +773,10 @@ export function getReplacementDaySession(
     annotationSnapshot(service, account, model, swingRoundTripIds));
   const analyzers = readDailyTradeAnalyzers(
     scope,
-    model.tickers.flatMap((ticker) => ticker.roundTrips.map((roundTrip) => roundTrip.roundTripId)),
+    model.tickers.flatMap((ticker) => ticker.roundTrips.map((roundTrip) => ({
+      direction: roundTrip.direction,
+      roundTripId: roundTrip.roundTripId,
+    }))),
   );
   return toDaySessionData(
     model,

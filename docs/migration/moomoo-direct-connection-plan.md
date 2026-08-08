@@ -169,6 +169,14 @@ and no executions. This is a quote-access proof, not an execution-import test.
 This owner-approved slice turns the connection into a broker execution source.
 It remains read-only: it never places, changes or cancels an order.
 
+## Linked implementation slice
+
+The approved follow-on implementation is [Moomoo Daily Trade Tracker Analyzer
+Plan](moomoo-daily-trade-tracker-analyzer-plan.md), with its active work record
+in [Moomoo Daily Trade Tracker Analyzer Progress](moomoo-daily-trade-tracker-analyzer-progress.md).
+It replaces the inactive Yahoo Daily Trade Tracker analyzer only. Automatic
+Moomoo execution importing remains the execution-import scope below.
+
 ### Broker connection experience
 
 1. The Account page owns one **Broker connections** card. It starts with a

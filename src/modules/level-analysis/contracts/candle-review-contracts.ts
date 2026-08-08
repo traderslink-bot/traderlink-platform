@@ -17,6 +17,8 @@ export type NormalizedMarketCandle = Readonly<{
   lowDecimal: string;
   closeDecimal: string;
   volumeDecimal: string;
+  /** Exact traded amount when supplied by the provider; null means unavailable. */
+  turnoverDecimal?: string | null;
 }>;
 
 export type MarketDataRequest = Readonly<{

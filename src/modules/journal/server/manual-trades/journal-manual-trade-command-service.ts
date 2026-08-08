@@ -1,6 +1,6 @@
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { narrowWorkspaceAccessToAccount } from "@/src/modules/platform/contracts/workspace-access-scope";
-import { DailyTradeYahooAnalyzerService } from "@/src/modules/level-analysis/server/daily-trade-yahoo-analyzer-service";
+import { DailyTradeMoomooAnalyzerService } from "@/src/modules/level-analysis/server/daily-trade-moomoo-analyzer-service";
 import {
   createCanonicalUtcTimestamp,
   platformFailure,
@@ -63,7 +63,7 @@ export class JournalManualTradeCommandService {
     private readonly decisions: JournalDataDecisionService,
     private readonly roundTrips: JournalRoundTripService,
     private readonly previews: JournalManualTradePreviewService,
-    private readonly dailyTradeAnalyzer?: DailyTradeYahooAnalyzerService,
+    private readonly dailyTradeAnalyzer?: DailyTradeMoomooAnalyzerService,
   ) {}
 
   commit(

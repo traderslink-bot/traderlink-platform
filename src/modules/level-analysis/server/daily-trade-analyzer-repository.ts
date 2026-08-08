@@ -31,6 +31,11 @@ export type ClaimedDailyTradeAnalyzerJob = Readonly<{
   target: DailyTradeAnalyzerTarget;
 }>;
 
+export type DailyTradeMarketDataProviderIdentity = Readonly<{
+  adapterVersion: string;
+  key: string;
+}>;
+
 type JobRow = Readonly<{
   account_id: string;
   daily_trade_job_id: string;
@@ -49,6 +54,7 @@ type TargetRow = Readonly<{
   direction: DailyTradeAnalyzerDirection;
   executed_at_utc: string;
   execution_id: string;
+  fees_decimal: string | null;
   normalized_symbol: string;
   opened_at_utc: string;
   price_decimal: string | null;
@@ -88,8 +94,10 @@ function fromRows(rows: readonly TargetRow[]): DailyTradeAnalyzerTarget | null {
   if (!tradingDateNewYork || newYorkDate(first.closed_at_utc) !== tradingDateNewYork) return null;
   const events = rows.map((row) => row.price_decimal ? Object.freeze({
     eventId: row.execution_id,
+    sequence: row.allocation_sequence,
     kind: eventKind(row.allocation_role),
     executedAtUtc: row.executed_at_utc,
+    feesDecimal: row.fees_decimal,
     priceDecimal: row.price_decimal,
     quantityDecimal: row.quantity_decimal,
   }) : null);
@@ -110,6 +118,12 @@ function fromRows(rows: readonly TargetRow[]): DailyTradeAnalyzerTarget | null {
 export class DailyTradeAnalyzerRepository {
   constructor(private readonly database: Database.Database) {}
 
+  private supportsExactTurnover(): boolean {
+    return this.database.prepare<[], { name: string }>(
+      "PRAGMA table_info(level_analysis_market_session_candles)",
+    ).all().some((column) => column.name === "turnover_decimal");
+  }
+
   findEligibleTarget(scope: AccountScope, roundTripId: string): DailyTradeAnalyzerTarget | null {
     const rows = this.database.prepare<[string, string, string], TargetRow>(`SELECT
   round_trip.round_trip_id,
@@ -124,7 +138,8 @@ export class DailyTradeAnalyzerRepository {
   execution_version.execution_id,
   execution_version.executed_at_utc,
   execution_version.quantity_decimal,
-  execution_version.price_decimal
+  execution_version.price_decimal,
+  execution_version.fees_decimal
 FROM journal_round_trips round_trip
 JOIN journal_round_trip_versions version
   ON version.workspace_id = round_trip.workspace_id
@@ -157,6 +172,7 @@ ORDER BY allocation.allocation_sequence ASC`).all(
     scope: AccountScope;
     target: DailyTradeAnalyzerTarget;
     desiredCoverageEndUtc: string;
+    provider: DailyTradeMarketDataProviderIdentity;
     now?: Date;
   }>): void {
     const timestamp = createCanonicalUtcTimestamp(input.now ?? new Date());
@@ -166,24 +182,26 @@ ORDER BY allocation.allocation_sequence ASC`).all(
   exchange_identity, trading_date_new_york, interval, session_policy,
   current_version_id, current_coverage_end_utc, current_status, lease_expires_at_utc,
   created_at_utc, updated_at_utc
-) VALUES (?, 'yahoo_chart', 'yahoo_chart_v1', ?, ?, ?, '1m',
+) VALUES (?, ?, ?, ?, ?, ?, '1m',
   'america_new_york_extended_0400_2000_v1', NULL, NULL, 'queued', NULL, ?, ?)
 ON CONFLICT(provider_key, provider_adapter_version, provider_symbol, exchange_identity, trading_date_new_york, interval, session_policy)
 DO NOTHING`).run(
       createCanonicalUuidV4(),
+      input.provider.key,
+      input.provider.adapterVersion,
       input.target.providerSymbol,
       exchangeIdentity,
       input.target.tradingDateNewYork,
       timestamp,
       timestamp,
     );
-    const session = this.database.prepare<[string, string], { market_session_set_id: string }>(`SELECT market_session_set_id
+    const session = this.database.prepare<[string, string, string, string], { market_session_set_id: string }>(`SELECT market_session_set_id
 FROM level_analysis_market_session_sets
-WHERE provider_key = 'yahoo_chart' AND provider_adapter_version = 'yahoo_chart_v1'
+WHERE provider_key = ? AND provider_adapter_version = ?
   AND provider_symbol = ? AND exchange_identity = 'unknown'
   AND trading_date_new_york = ? AND interval = '1m'
   AND session_policy = 'america_new_york_extended_0400_2000_v1'`)
-      .get(input.target.providerSymbol, input.target.tradingDateNewYork);
+      .get(input.provider.key, input.provider.adapterVersion, input.target.providerSymbol, input.target.tradingDateNewYork);
     if (!session) throw new Error("daily_trade_session_cache_missing");
     this.database.prepare(`INSERT INTO level_analysis_daily_trade_jobs (
   daily_trade_job_id, user_id, workspace_id, account_id, round_trip_id,
@@ -210,7 +228,7 @@ DO NOTHING`).run(
   claimNextJob(now: Date): ClaimedDailyTradeAnalyzerJob | null {
     const timestamp = createCanonicalUtcTimestamp(now);
     const row = this.database.transaction(() => {
-      const candidate = this.database.prepare<[string], JobRow>(`SELECT daily_trade_job_id, user_id,
+      const candidate = this.database.prepare<[string, string], JobRow>(`SELECT daily_trade_job_id, user_id,
   workspace_id, account_id, round_trip_id, market_session_set_id, desired_coverage_end_utc
 FROM level_analysis_daily_trade_jobs
 WHERE (status = 'queued' OR (status = 'leased' AND lease_expires_at_utc < ?))
@@ -247,8 +265,20 @@ WHERE daily_trade_job_id = ? AND (status = 'queued' OR (status = 'leased' AND le
   }
 
   readCurrentCandles(marketSessionSetId: string): readonly NormalizedMarketCandle[] {
-    const rows = this.database.prepare<[string], NormalizedMarketCandle & { candle_time_utc_seconds: number }>(`SELECT
-  candle_time_utc_seconds, open_decimal, high_decimal, low_decimal, close_decimal, volume_decimal
+    const turnoverSelection = this.supportsExactTurnover()
+      ? "turnover_decimal"
+      : "NULL AS turnover_decimal";
+    const rows = this.database.prepare<[string], {
+      candle_time_utc_seconds: number;
+      close_decimal: string;
+      high_decimal: string;
+      low_decimal: string;
+      open_decimal: string;
+      turnover_decimal: string | null;
+      volume_decimal: string;
+    }>(`SELECT
+  candle_time_utc_seconds, open_decimal, high_decimal, low_decimal, close_decimal, volume_decimal,
+  ${turnoverSelection}
 FROM level_analysis_market_session_candles candle
 JOIN level_analysis_market_session_sets session
   ON session.current_version_id = candle.market_session_set_version_id
@@ -256,11 +286,12 @@ WHERE session.market_session_set_id = ?
 ORDER BY candle_time_utc_seconds ASC`).all(marketSessionSetId);
     return Object.freeze(rows.map((row) => Object.freeze({
       time: row.candle_time_utc_seconds,
-      openDecimal: row.openDecimal ?? row.open_decimal,
-      highDecimal: row.highDecimal ?? row.high_decimal,
-      lowDecimal: row.lowDecimal ?? row.low_decimal,
-      closeDecimal: row.closeDecimal ?? row.close_decimal,
-      volumeDecimal: row.volumeDecimal ?? row.volume_decimal,
+      openDecimal: row.open_decimal,
+      highDecimal: row.high_decimal,
+      lowDecimal: row.low_decimal,
+      closeDecimal: row.close_decimal,
+      volumeDecimal: row.volume_decimal,
+      turnoverDecimal: row.turnover_decimal,
     })));
   }
 
@@ -274,6 +305,15 @@ FROM level_analysis_market_session_sets WHERE market_session_set_id = ?`)
     return this.database.prepare<[string], { current_version_id: string | null }>(`SELECT current_version_id
 FROM level_analysis_market_session_sets WHERE market_session_set_id = ?`)
       .get(marketSessionSetId)?.current_version_id ?? null;
+  }
+
+  currentSessionRetrievedAt(marketSessionSetId: string): string | null {
+    return this.database.prepare<[string], { retrieved_at_utc: string | null }>(`SELECT version.retrieved_at_utc
+FROM level_analysis_market_session_sets session
+LEFT JOIN level_analysis_market_session_set_versions version
+  ON version.market_session_set_version_id = session.current_version_id
+WHERE session.market_session_set_id = ?`)
+      .get(marketSessionSetId)?.retrieved_at_utc ?? null;
   }
 
   persistMarketSession(input: Readonly<{
@@ -303,13 +343,22 @@ WHERE market_session_set_id = ?`).get(input.marketSessionSetId)?.revision ?? 1;
         .run(versionId, input.marketSessionSetId, revision, input.requestedStartUtc,
           input.requestedEndUtc, input.providerExchangeTimezone, input.providerUtcOffsetSeconds,
           input.outcome, input.failureReasonCode, input.sha256, input.completedAtUtc);
-      const insert = this.database.prepare(`INSERT INTO level_analysis_market_session_candles (
+      const supportsExactTurnover = this.supportsExactTurnover();
+      const insert = this.database.prepare(supportsExactTurnover
+        ? `INSERT INTO level_analysis_market_session_candles (
+  market_session_set_version_id, candle_time_utc_seconds, open_decimal, high_decimal,
+  low_decimal, close_decimal, volume_decimal, turnover_decimal
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+        : `INSERT INTO level_analysis_market_session_candles (
   market_session_set_version_id, candle_time_utc_seconds, open_decimal, high_decimal,
   low_decimal, close_decimal, volume_decimal
 ) VALUES (?, ?, ?, ?, ?, ?, ?)`);
       for (const candle of input.candles) {
-        insert.run(versionId, candle.time, candle.openDecimal, candle.highDecimal,
-          candle.lowDecimal, candle.closeDecimal, candle.volumeDecimal);
+        const values = [versionId, candle.time, candle.openDecimal, candle.highDecimal,
+          candle.lowDecimal, candle.closeDecimal, candle.volumeDecimal];
+        insert.run(...(supportsExactTurnover
+          ? [...values, candle.turnoverDecimal ?? null]
+          : values));
       }
       this.database.prepare(`UPDATE level_analysis_market_session_sets
 SET current_version_id = ?, current_coverage_end_utc = ?, current_status = ?,
@@ -324,7 +373,7 @@ WHERE market_session_set_id = ?`)
     analyzed: DailyTradeAnalyzerResult;
     marketSessionSetVersionId: string | null;
     scope: AccountScope;
-    status: "ready" | "no_coverage" | "provider_unavailable" | "expired";
+    status: "pending" | "ready" | "no_coverage" | "provider_unavailable" | "expired";
     target: DailyTradeAnalyzerTarget;
     now: Date;
   }>): void {

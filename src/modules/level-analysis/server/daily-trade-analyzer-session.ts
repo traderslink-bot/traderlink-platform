@@ -59,3 +59,14 @@ export function availableSessionEnd(
   if (currentMinute < session.startTime) return null;
   return Math.min(currentMinute, session.endTime);
 }
+
+/**
+ * Moomoo can revise same-day one-minute bars after extended trading closes.
+ * Reconcile once at 04:15 New York time the following morning, well after the
+ * 20:00 session end, without polling during the night.
+ */
+export function postSessionReconciliationAt(
+  session: NewYorkExtendedSession,
+): Date {
+  return new Date((session.endTime + (8 * 60 + 15) * 60) * 1000);
+}

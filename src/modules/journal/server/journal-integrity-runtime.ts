@@ -40,7 +40,8 @@ import { JournalTradeStyleRepository } from "./trade-style/journal-trade-style-r
 import { JournalTradeStyleService } from "./trade-style/journal-trade-style-service";
 import { JournalTradingDayReviewService } from "./reviews/journal-trading-day-review-service";
 import { DailyTradeAnalyzerRepository } from "@/src/modules/level-analysis/server/daily-trade-analyzer-repository";
-import { DailyTradeYahooAnalyzerService } from "@/src/modules/level-analysis/server/daily-trade-yahoo-analyzer-service";
+import { DailyTradeMoomooAnalyzerService } from "@/src/modules/level-analysis/server/daily-trade-moomoo-analyzer-service";
+import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
 
 export type JournalIntegrityRuntime = Readonly<{
   accounts: JournalAccountService;
@@ -109,8 +110,9 @@ export function createJournalIntegrityRuntime(
     tradeStyles,
   );
   const tradingDayReviews = new JournalTradingDayReviewService(database);
-  const dailyTradeAnalyzer = new DailyTradeYahooAnalyzerService(
+  const dailyTradeAnalyzer = new DailyTradeMoomooAnalyzerService(
     new DailyTradeAnalyzerRepository(database),
+    new MoomooConnectionRepository(database),
   );
   return Object.freeze({
     accounts,

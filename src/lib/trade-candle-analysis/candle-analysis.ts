@@ -7,6 +7,7 @@ export type TradeCandle = {
   open: number;
   time: number;
   volume: number;
+  turnover?: number | null;
 };
 
 export type CandleAnalysisTrade = {

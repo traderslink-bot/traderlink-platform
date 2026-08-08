@@ -37,11 +37,14 @@ export type DaySessionTradeAnalyzer = {
     low: string;
     open: string;
     time: number;
+    turnover: string | null;
     volume: string;
   }>;
   events: Array<{
     candleTime: number | null;
+    eventId: string;
     executedAt: string;
+    fees: string | null;
     indicators: {
       adr20: number | null;
       atr14: number | null;
@@ -55,19 +58,58 @@ export type DaySessionTradeAnalyzer = {
       vwap: number | null;
     } | null;
     kind: "entry" | "add" | "partial_exit" | "final_exit";
+    metrics: {
+      available: boolean;
+      averageEntryPriceAfter: string | null;
+      candleLocationRatio: number | null;
+      candleTurnover: string | null;
+      candleVolume: string | null;
+      cumulativeSessionTurnover: string | null;
+      cumulativeSessionVolume: string | null;
+      ema9Distance: {
+        anchor: string;
+        signedDistance: string;
+        signedDistancePercent: number;
+      } | null;
+      executionEdgeDistance: string | null;
+      excursionUntilFlat: {
+        adverseMove: string;
+        favorableMove: string;
+        minutesUntilFlat: number;
+        observedThrough: number | null;
+      } | null;
+      givebackFromPriorFavorableExtreme: string | null;
+      positionQuantityAfter: string;
+      positionQuantityBefore: string;
+      postEventPaths: Array<{
+        minutesAfterEvent: 5 | 15 | 30 | 60;
+        observedAt: number | null;
+        oppositeDirectionMove: string | null;
+        tradeDirectionMove: string | null;
+      }>;
+      priorFavorableExtremePrice: string | null;
+      vwapDistance: {
+        anchor: string;
+        signedDistance: string;
+        signedDistancePercent: number;
+      } | null;
+    };
     patterns: Array<{ kind: string; score: number; time: number }>;
     price: string;
     quantity: string;
+    sequence: number;
   }>;
   finalExitPaths: Array<{
     favorableMove: string | null;
     minutesAfterExit: 5 | 15 | 30 | 60;
     observedAt: number | null;
   }>;
+  greenToRed: import("@/src/modules/level-analysis/contracts/daily-trade-analyzer-contracts").DailyTradeGreenToRedAnalysis;
   status: "ready" | "no_coverage" | "provider_unavailable" | "expired" | "pending";
 };
 
 export type DaySessionExecutionActivity = {
+  analysisEventKey?: string;
   executedAt: string;
   executionKey: string;
   manualEdit: {
