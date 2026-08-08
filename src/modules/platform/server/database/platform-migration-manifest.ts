@@ -36,6 +36,7 @@ import { platformMoomooConnectionsMigration } from "./migrations/0033_platform_m
 import { platformMoomooReconnectionMigration } from "./migrations/0034_platform_moomoo_reconnection";
 import { platformReportingCurrencyCoverageMigration } from "./migrations/0035_platform_reporting_currency_coverage";
 import { dailyTradeMoomooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer";
+import { dailyTradeExactTurnoverMigration } from "@/src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover";
 import {
   type PlatformMigration,
   validatePlatformMigrationManifest,
@@ -195,6 +196,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/coach/server/database/migrations/0037_coach_ai_review_periods_v2.ts",
       migration: coachAiReviewPeriodsV2Migration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover.ts",
+      migration: dailyTradeExactTurnoverMigration,
     }),
   ]);
 
@@ -402,6 +407,7 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "coach_ai_review_generation_attempt_receipts_v2",
       "coach_ai_review_carry_consumptions_v2",
     ]),
+    "0038_daily_trade_exact_turnover": Object.freeze([]),
   });
 
 export function expectedPlatformTableNamesForPrefix(
