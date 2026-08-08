@@ -26,16 +26,17 @@ that calendar and preserve the existing v1 functions for current callers.
 The additive weekly/two-week v2 input builder and private-lineage snapshot are
 implemented, along with strict monthly v2 extraction/assembly. The v2
 repository and read-only runner planners are integrated. Migration `0037` is
-registered in the shared source manifest. Migration execution, provider prompts/calls, paid
-entitlement activation and UI behavior remain pending, so the new policy is
-not live.
+registered in the shared source manifest and applied in the local development
+database. Provider prompts/calls, runner activation, paid entitlement
+activation and UI behavior remain pending, so the new policy is not live.
 
 Migration number `0037` is now reserved by a registered forward migration
 file. It defines the v2 account-frequency state, unified weekly/two-week/monthly
 request identity, immutable input/evidence snapshots, retryable attempts,
 issued outputs, cost receipts and one-time carry consumption. It deliberately
-follows the committed `0036` Daily Tracker migration in the shared manifest,
-and it has not been executed.
+follows the committed `0036` Daily Tracker migration in the shared manifest.
+The owner-authorized normal local migration run applied it on 2026-08-08; no
+AI provider or review runner was activated.
 
 The controlling product contract remains the
 [AI Weekly Review Plan](ai-weekly-review-plan.md). This record refines its
@@ -81,7 +82,8 @@ Reviews UI, migration manifest or database state:
   non-statistical narrative context, and rejects duplicate reflection evidence
   supplied through both issued-review and raw-reflection paths.
 - `src/modules/coach/server/database/migrations/0037_coach_ai_review_periods_v2.ts`
-  reserves the next migration number and is registered in the shared manifest. Its
+  reserves the next migration number, is registered in the shared manifest and
+  is applied in the local development database. Its
   unified request table makes the period identity independent of input digest,
   preserves v1 tables, backfills only explicitly scheduled accounts as enabled
   weekly accounts, and creates no request, entitlement or provider call.
@@ -150,13 +152,15 @@ replay/analyzer UI:
 
 The narrow TypeScript checkpoint is clean for every changed AI Review file,
 including provider controls, v2 adapters and v2 issuance. `git diff --check`
-also passes. No Vitest/test suite, migration, database write, local server
-action, provider call, commit or deployment ran. Temporary checkpoint
-configuration was removed.
+also passes. At that implementation checkpoint, no Vitest/test suite,
+migration, database write, local server action, provider call or deployment
+ran. Temporary checkpoint configuration was removed. A later owner-authorized
+normal local migration run recorded exactly migrations `0037` and `0038`;
+`0037` is therefore locally applied while AI Reviews remain inactive.
 
-Remaining activation work is intentionally separate: apply migration `0037`
-only at an authorized database checkpoint, design paid entitlement/packaging, connect an
-explicitly enabled runner/API path, add Account and AI Reviews UI with owner
+Remaining activation work is intentionally separate: design paid
+entitlement/packaging, connect an explicitly enabled runner/API path, add
+Account and AI Reviews UI with owner
 visual review, and extend the official-source calendar beyond verified 2026
 coverage.
 
@@ -431,7 +435,8 @@ migration, `0037_coach_ai_review_periods_v2.ts`, that preserves the existing
 tables and v1 rows while adding activation, cadence, effective-period identity,
 permitted v2 contract versions, evidence lineage, corrected uniqueness and
 retryable request-state behavior. Migration `0037` follows the committed Daily
-Tracker migration `0036` and is registered in the shared source manifest. Do
+Tracker migration `0036`, is registered in the shared source manifest and is
+applied in the local development database. Do
 not create a parallel biweekly subsystem, persist a derived queue state, or
 reinterpret issued reviews.
 

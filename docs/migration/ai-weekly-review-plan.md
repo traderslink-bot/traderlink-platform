@@ -11,9 +11,9 @@ The non-visual 2026-08-08 engine slice now implements the additive v2 account
 settings/storage repositories, private evidence manifests, exact-month
 extraction and lineage-aware narrative selection, completion/market-seal
 eligibility, and read-only weekly/monthly runner planning. These paths remain
-dormant: migration `0037` is registered in the source manifest but remains
-unexecuted, provider calls and paid customer activation remain off, and
-Account/AI Reviews UI work has not begun.
+dormant: migration `0037` is registered and applied in the local development
+database, but provider calls, runner activation and paid customer activation
+remain off, and Account/AI Reviews UI work has not begun.
 The local two-week Journal fixture is the first controlled review input. This
 supersedes the retired Reflection Loop page.
 
@@ -363,8 +363,9 @@ counts or database terms.
   adding activation/cadence/effective-period identity, v2 input/output versions,
   evidence lineage, period-level uniqueness and retryable request-state
   behavior. Migration `0037` follows the committed Daily Tracker migration
-  `0036` and is registered in the source manifest. It remains unapplied until
-  a separately authorized database checkpoint.
+  `0036`, is registered in the source manifest and was applied to the local
+  development database on 2026-08-08. This does not activate a runner,
+  provider call or paid entitlement.
   Do not create a separate biweekly subsystem or reinterpret historical rows.
 - Persist a private immutable evidence manifest for each request. It maps a
   prompt-safe ordinal such as `reflection_001` to the private source Daily
