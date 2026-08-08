@@ -176,14 +176,15 @@
   All four controls switch normally on desktop and 390px mobile, higher views
   retain exact-price execution annotations, no one-minute price-action labels
   appear outside `1m`, the mobile page has no horizontal overflow, and no page
-  or console error was observed. Owner visual approval remains open.
+  or console error was observed.
 - [x] Clarify the analysis boundary in the review UI: every analysis-card
   title states `1 min timeframe only`, chart labels distinguish session VWAP
   from the selected interval's EMA 9, and `5m`/`15m`/`1h` independently detect
   execution-adjacent candle structures from their own aggregated OHLCV bars.
   Partial aggregate candles and discontinuous candle runs are excluded.
   Higher-timeframe structures remain chart context and do not rewrite the
-  canonical one-minute analysis. Owner visual approval remains open.
+  canonical one-minute analysis. Owner visually approved this timeframe
+  presentation on 2026-08-08.
 - [x] Rebuilt the five saved 2026-08-07 sample analyses from their finalized
   shared candle revisions. All 20 executions now expose selectable analysis;
   the worker reused cached candles and made no additional Moomoo request.
