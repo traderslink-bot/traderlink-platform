@@ -23,6 +23,32 @@ type MutableProfitOpportunity = {
   points: PathPoint[];
 };
 
+export const UNAVAILABLE_DAILY_TRADE_GREEN_TO_RED_ANALYSIS: DailyTradeGreenToRedAnalysis =
+  Object.freeze({
+    addedAfterPeakCount: 0,
+    bestProfitOpportunityIndex: null,
+    completedClosePeakAtUtcSeconds: null,
+    completedClosePeakPnlDecimal: null,
+    feesComplete: false,
+    finalPnlDecimal: null,
+    firstGreenAtUtcSeconds: null,
+    firstRedAtUtcSeconds: null,
+    firstRedPnlDecimal: null,
+    firstRecoveryAtUtcSeconds: null,
+    minutesFromPeakToRed: null,
+    partialExitBeforeRedCount: 0,
+    peakAtUtcSeconds: null,
+    peakPnlDecimal: null,
+    peakToFinalReversalDecimal: null,
+    peakToRedReversalDecimal: null,
+    positionQuantityAtPeakDecimal: null,
+    positionQuantityAtRedDecimal: null,
+    profitOpportunities: Object.freeze([]),
+    profitOpportunityThresholdDecimal: null,
+    status: "unavailable",
+    strongOpportunityThresholdDecimal: null,
+  });
+
 function eventTimeSeconds(event: DailyTradeAnalyzerEvent): number | null {
   const milliseconds = Date.parse(event.executedAtUtc);
   return Number.isFinite(milliseconds) ? milliseconds / 1000 : null;
@@ -105,7 +131,7 @@ function profitOpportunityResult(
       currentWindow = { points: [] };
       windows.push(currentWindow);
     }
-    currentWindow.points.push(point);
+    currentWindow!.points.push(point);
   }
 
   const profitOpportunities = Object.freeze(windows.map((window) => {
@@ -170,30 +196,7 @@ export function analyzeDailyTradeGreenToRed(input: Readonly<{
     .filter((candle) => Number.isFinite(candle.time))
     .sort((left, right) => left.time - right.time);
   if (events.length === 0 || candles.length === 0 || events.at(-1)?.kind !== "final_exit") {
-    return Object.freeze({
-      addedAfterPeakCount: 0,
-      bestProfitOpportunityIndex: null,
-      completedClosePeakAtUtcSeconds: null,
-      completedClosePeakPnlDecimal: null,
-      feesComplete: false,
-      finalPnlDecimal: null,
-      firstGreenAtUtcSeconds: null,
-      firstRedAtUtcSeconds: null,
-      firstRedPnlDecimal: null,
-      firstRecoveryAtUtcSeconds: null,
-      minutesFromPeakToRed: null,
-      partialExitBeforeRedCount: 0,
-      peakAtUtcSeconds: null,
-      peakPnlDecimal: null,
-      peakToFinalReversalDecimal: null,
-      peakToRedReversalDecimal: null,
-      positionQuantityAtPeakDecimal: null,
-      positionQuantityAtRedDecimal: null,
-      profitOpportunities: Object.freeze([]),
-      profitOpportunityThresholdDecimal: null,
-      status: "unavailable",
-      strongOpportunityThresholdDecimal: null,
-    });
+    return UNAVAILABLE_DAILY_TRADE_GREEN_TO_RED_ANALYSIS;
   }
 
   const points: PathPoint[] = [];

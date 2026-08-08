@@ -20,6 +20,7 @@ import {
   type DailyTradeAnalyzerResult,
 } from "../contracts/daily-trade-analyzer-contracts";
 import type { NormalizedMarketCandle } from "../contracts/candle-review-contracts";
+import { analyzeDailyTradeGreenToRed } from "./daily-trade-green-to-red-analyzer";
 
 function numericCandles(candles: readonly NormalizedMarketCandle[]): readonly TradeCandle[] {
   return Object.freeze(candles.map((candle) => Object.freeze({
@@ -387,5 +388,13 @@ export function analyzeDailyTrade(input: DailyTradeAnalyzerInput): DailyTradeAna
       ? postExitPath(finalExit, input.direction, candles, minutesAfterExit)
       : Object.freeze({ minutesAfterExit, favorableMoveDecimal: null, observedAtCandleTime: null }),
   ));
-  return Object.freeze({ eventSnapshots, finalExitPaths });
+  const greenToRed = analyzeDailyTradeGreenToRed({
+    candles: input.candles.map((candle) => ({
+      closeDecimal: candle.closeDecimal,
+      time: candle.time,
+    })),
+    direction: input.direction,
+    events,
+  });
+  return Object.freeze({ eventSnapshots, finalExitPaths, greenToRed });
 }

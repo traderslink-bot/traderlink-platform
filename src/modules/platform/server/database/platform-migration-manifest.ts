@@ -38,6 +38,7 @@ import { platformMoomooReconnectionMigration } from "./migrations/0034_platform_
 import { platformReportingCurrencyCoverageMigration } from "./migrations/0035_platform_reporting_currency_coverage";
 import { dailyTradeMoomooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer";
 import { dailyTradeExactTurnoverMigration } from "@/src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover";
+import { dailyTradePathMaterializationMigration } from "@/src/modules/level-analysis/server/database/migrations/0040_daily_trade_path_materialization";
 import {
   type PlatformMigration,
   validatePlatformMigrationManifest,
@@ -205,6 +206,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/coach/server/database/migrations/0039_coach_us_equities_review_calendars.ts",
       migration: coachUsEquitiesReviewCalendarsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/level-analysis/server/database/migrations/0040_daily_trade_path_materialization.ts",
+      migration: dailyTradePathMaterializationMigration,
     }),
   ]);
 
@@ -417,6 +422,10 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "coach_us_equities_calendar_snapshots",
       "coach_us_equities_calendar_verification_attempts",
       "coach_us_equities_calendar_verification_state",
+    ]),
+    "0040_daily_trade_path_materialization": Object.freeze([
+      "journal_round_trip_daily_trade_analysis_path_summaries",
+      "journal_round_trip_daily_trade_analysis_profit_opportunities",
     ]),
   });
 

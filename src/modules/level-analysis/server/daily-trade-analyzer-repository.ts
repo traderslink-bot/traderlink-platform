@@ -10,6 +10,7 @@ import type {
   DailyTradeAnalyzerResult,
 } from "../contracts/daily-trade-analyzer-contracts";
 import type { NormalizedMarketCandle } from "../contracts/candle-review-contracts";
+import { persistDailyTradePathMaterialization } from "./daily-trade-path-materialization-repository";
 
 export type DailyTradeAnalyzerTarget = Readonly<{
   assetClass: "stock";
@@ -423,6 +424,11 @@ WHERE daily_trade_analysis_id = ?`).run(input.target.roundTripVersionId,
       for (const path of input.analyzed.finalExitPaths) {
         insertPath.run(versionId, path.minutesAfterExit, path.favorableMoveDecimal, path.observedAtCandleTime);
       }
+      persistDailyTradePathMaterialization(this.database, {
+        analysis: input.analyzed.greenToRed,
+        analysisVersionId: versionId,
+        roundTripVersionId: input.target.roundTripVersionId,
+      });
     }).immediate();
   }
 

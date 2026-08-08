@@ -1,4 +1,5 @@
 import { analyzeDailyTrade } from "./daily-trade-analyzer";
+import { UNAVAILABLE_DAILY_TRADE_GREEN_TO_RED_ANALYSIS } from "./daily-trade-green-to-red-analyzer";
 import { DailyTradeAnalyzerRepository } from "./daily-trade-analyzer-repository";
 import {
   availableSessionEnd,
@@ -108,7 +109,7 @@ export class DailyTradeMoomooAnalyzerWorker {
           requestedEndUtc: new Date(requestEnd * 1000).toISOString(),
           sha256: null,
         });
-        this.repository.persistAnalysis({ analyzed: { eventSnapshots: [], finalExitPaths: [] }, marketSessionSetVersionId: sessionVersionId,
+        this.repository.persistAnalysis({ analyzed: { eventSnapshots: [], finalExitPaths: [], greenToRed: UNAVAILABLE_DAILY_TRADE_GREEN_TO_RED_ANALYSIS }, marketSessionSetVersionId: sessionVersionId,
           scope: job.scope, status: result.code === "provider_unavailable" ? "provider_unavailable" : "no_coverage", target: job.target, now: completedAt });
         this.repository.finishJob(job.jobId, result.code === "provider_unavailable" ? "provider_unavailable" : "no_coverage", completedAt);
         return true;
@@ -134,7 +135,7 @@ export class DailyTradeMoomooAnalyzerWorker {
           sha256: result.normalizedCandleSha256,
         });
         this.repository.persistAnalysis({
-          analyzed: { eventSnapshots: [], finalExitPaths: [] },
+          analyzed: { eventSnapshots: [], finalExitPaths: [], greenToRed: UNAVAILABLE_DAILY_TRADE_GREEN_TO_RED_ANALYSIS },
           marketSessionSetVersionId: sessionVersionId,
           scope: job.scope,
           status: "no_coverage",
@@ -164,7 +165,7 @@ export class DailyTradeMoomooAnalyzerWorker {
     if (!containsEveryExecutionMinute(candles, job.target.events)) {
       const completedAt = this.now();
       this.repository.persistAnalysis({
-        analyzed: { eventSnapshots: [], finalExitPaths: [] },
+        analyzed: { eventSnapshots: [], finalExitPaths: [], greenToRed: UNAVAILABLE_DAILY_TRADE_GREEN_TO_RED_ANALYSIS },
         marketSessionSetVersionId: sessionVersionId,
         scope: job.scope,
         status: "no_coverage",

@@ -34,6 +34,7 @@ import {
 import type { TradeCandle } from "@/src/lib/trade-candle-analysis/candle-analysis";
 import { detectMicroCapCandlePatterns } from "@/src/lib/trade-candle-analysis/pattern-detection";
 import { analyzeDailyTradeGreenToRed } from "@/src/modules/level-analysis/server/daily-trade-green-to-red-analyzer";
+import { readDailyTradePathMaterialization } from "@/src/modules/level-analysis/server/daily-trade-path-materialization-repository";
 
 import type {
   DaySessionDailyNote,
@@ -378,6 +379,10 @@ ORDER BY candle_time_utc_seconds`);
         eventViews.every((event) => event.candleTime !== null && event.indicators !== null);
       const direction = directionByRoundTripId.get(roundTripId);
       if (!direction) continue;
+      const storedPath = readDailyTradePathMaterialization(
+        database,
+        analysis.daily_trade_analysis_version_id,
+      );
       result.set(roundTripId, {
         candles: candleViews,
         events: eventViews,
@@ -386,7 +391,7 @@ ORDER BY candle_time_utc_seconds`);
           minutesAfterExit: path.minutes_after_exit,
           observedAt: path.observed_at_candle_time_utc_seconds,
         })),
-        greenToRed: analyzeDailyTradeGreenToRed({
+        greenToRed: storedPath?.path ?? analyzeDailyTradeGreenToRed({
           candles: candleViews.map((candle) => ({
             closeDecimal: candle.close,
             time: candle.time,

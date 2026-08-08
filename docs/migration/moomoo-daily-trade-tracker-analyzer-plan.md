@@ -270,7 +270,63 @@ column. Narrow screens stack the same content. Selecting an individual
 execution hides green-to-red analysis and returns to a single column because a
 whole-position transition cannot be truthfully assigned to one fill.
 
-### 4. Deferred import handoff
+### 4. Versioned trade-path materialization
+
+The approved green-to-red and profit-opportunity result must no longer exist
+only as a page-time calculation. Migration `0040` adds two Level Analysis-owned
+append-only tables attached to
+`journal_round_trip_daily_trade_analysis_versions`:
+
+- `journal_round_trip_daily_trade_analysis_path_summaries` stores exactly one
+  `daily_trade_path_v1` summary per immutable analysis version. It also freezes
+  the exact `round_trip_version_id`, because the existing mutable parent
+  analysis row cannot provide historical revision attribution. The remaining
+  fields retain status, fee coverage, first green/red/recovery facts,
+  completed-close and exact-fill peak facts, position/add/partial-exit context,
+  the 50% and 75% opportunity thresholds, and calculated final/reversal values.
+- `journal_round_trip_daily_trade_analysis_profit_opportunities` stores the
+  ordered non-overlapping completed-close windows for that version. Each row
+  retains its zero-based sequence, whether it is the best sustained window,
+  exact start/end/peak timestamps, observed duration, completed-close counts,
+  75% retention count, lowest/peak P/L and local-peak-to-final reversal.
+
+Both tables reject update and delete. Ownership remains inherited through the
+analysis-version foreign key; account-scoped reads must join through the parent
+analysis row and may never select a path row by its identifier alone. Actual
+Journal net P/L is not duplicated into Level Analysis storage. Long-term reads
+join the analysis version to its exact `round_trip_version_id` and use the
+Journal-owned realized-P/L calculation, preserving fee eligibility and avoiding
+two competing profit facts.
+
+`analyzeDailyTrade` produces the path summary once from the same saved candles
+and executions used for its event snapshots. `persistAnalysis` writes the
+summary and child windows in the same immediate transaction as the analysis
+version. The Tracker reads the stored result. A compatibility fallback may
+derive the result only for an older analysis version that has not yet been
+backfilled; it must never make a broker request or silently write from a
+read-only page.
+
+The cache-only backfill processes current analysis versions missing a path
+summary in bounded batches. It reconstructs events only from their saved
+snapshot JSON, reads candles only from the version's saved market-session set,
+uses the direction of the parent analysis's current exact round-trip version,
+and freezes that key on the summary. Existing pre-`0040` versions have no
+version-local round-trip key, so only each analysis's current version is
+eligible for automatic backfill; older historical analysis revisions remain
+untouched rather than receiving guessed attribution. The backfill inserts the
+derived summary/windows without creating a new analysis revision. Invalid or
+incomplete stored evidence remains unmaterialized with a counted failure; it
+must not invent events, direction, fees or candles. Re-running the backfill is
+idempotent. It does not call Moomoo, change the Journal, replace source evidence
+or rewrite an existing materialization.
+
+The first long-term read contract exposes account-scoped, current-version
+trade-path and opportunity rows with their round-trip version key. It is an
+aggregation input, not a new dashboard. Later metrics may group exact retained
+values into holding-duration, profit-retention and giveback buckets without
+refetching candles or changing the stored continuous facts.
+
+### 5. Deferred import handoff
 
 The later `trade:read` execution-import job will call this same queueing
 boundary after accepted Moomoo executions rebuild their round trips. It will
@@ -318,6 +374,16 @@ not create a separate Daily Tracker product or impose a 60-minute page delay.
     and the opportunity-window result retains structured fields suitable for a
     later versioned long-term analytics materialization without another broker
     fetch.
+16. Migration `0040` creates immutable summary/window rows owned by each exact
+    analysis version. New analyzer revisions write them atomically and current
+    stored results round-trip back to the same UI contract.
+17. The cache-only backfill materializes current missing versions from saved
+    snapshot JSON, saved candles and the exact saved round-trip direction. It is
+    bounded, idempotent, makes zero provider requests and does not create a new
+    analysis revision.
+18. Account-scoped long-term reads cannot expose another account's facts and
+    retain exact continuous values plus the source analysis/round-trip version
+    keys. Actual net P/L remains Journal-owned rather than duplicated.
 
 ## Non-goals
 

@@ -138,6 +138,24 @@
   2026-08-08: best sustained window in the default analysis, additional windows
   in a separate expandable section, and actual net result kept distinct from
   the calculated price path.
+- [x] Owner authorized long-term materialization on 2026-08-08. Migration
+  ownership is coordinated: AI Reviews owns `0039`; this analyzer slice owns
+  `0040`.
+- [x] Define the `daily_trade_path_v1` append-only summary/window contract,
+  atomic revision writes, account-scoped long-term read boundary and bounded
+  cache-only backfill. Actual net P/L remains Journal-owned.
+- [x] QA the materialization plan against the current schema, analyzer write
+  transaction and current-version read path. The QA found that existing
+  analysis-version rows do not freeze their own round-trip-version key, so
+  `0040` stores that key on every path summary and limits automatic legacy
+  backfill to the current analysis revision rather than guessing historical
+  attribution.
+- [ ] Implement and register migration `0040`, persisted calculation, stored
+  Tracker read, account-scoped long-term fact query and compatibility fallback.
+- [ ] Apply `0040` locally and backfill the current five saved sample analyses
+  from cached evidence with zero Moomoo requests.
+- [ ] Confirm each stored result exactly matches the prior derived result and
+  complete focused static/runtime checks before the checkpoint commit.
 - [x] Rebuilt the five saved 2026-08-07 sample analyses from their finalized
   shared candle revisions. All 20 executions now expose selectable analysis;
   the worker reused cached candles and made no additional Moomoo request.

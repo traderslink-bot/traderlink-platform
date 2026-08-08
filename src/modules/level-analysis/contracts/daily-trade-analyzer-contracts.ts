@@ -134,6 +134,7 @@ export type DailyTradeGreenToRedAnalysis = Readonly<{
 export type DailyTradeAnalyzerResult = Readonly<{
   eventSnapshots: readonly DailyTradeAnalyzerEventSnapshot[];
   finalExitPaths: readonly DailyTradeAnalyzerPostExitPath[];
+  greenToRed: DailyTradeGreenToRedAnalysis;
 }>;
 
 export type DailyTradeAnalyzerInput = Readonly<{
