@@ -24,6 +24,7 @@ import { coachAiChatFoundationMigration } from "@/src/modules/coach/server/datab
 import { coachAiChatProviderControlsMigration } from "@/src/modules/coach/server/database/migrations/0030_coach_ai_chat_provider_controls";
 import { coachAiChatSettingChangeDraftsMigration } from "@/src/modules/coach/server/database/migrations/0031_coach_ai_chat_setting_change_drafts";
 import { coachAiReviewProviderControlsMigration } from "@/src/modules/coach/server/database/migrations/0032_coach_ai_review_provider_controls";
+import { coachAiReviewPeriodsV2Migration } from "@/src/modules/coach/server/database/migrations/0037_coach_ai_review_periods_v2";
 
 import { platformIdentityMigration } from "./migrations/0001_platform_identity";
 import { platformAuthenticationIdentitiesMigration } from "./migrations/0012_platform_authentication_identities";
@@ -190,6 +191,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer.ts",
       migration: dailyTradeMoomooAnalyzerMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/coach/server/database/migrations/0037_coach_ai_review_periods_v2.ts",
+      migration: coachAiReviewPeriodsV2Migration,
     }),
   ]);
 
@@ -387,6 +392,16 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     "0034_platform_moomoo_reconnection": Object.freeze([]),
     "0035_platform_reporting_currency_coverage": Object.freeze([]),
     "0036_daily_trade_moomoo_analyzer": Object.freeze([]),
+    "0037_coach_ai_review_periods_v2": Object.freeze([
+      "coach_ai_review_account_settings_v2",
+      "coach_ai_review_account_setting_revisions_v2",
+      "coach_ai_review_period_requests_v2",
+      "coach_ai_review_generation_attempts_v2",
+      "coach_ai_review_generation_control_reservations_v2",
+      "coach_ai_issued_reviews_v2",
+      "coach_ai_review_generation_attempt_receipts_v2",
+      "coach_ai_review_carry_consumptions_v2",
+    ]),
   });
 
 export function expectedPlatformTableNamesForPrefix(

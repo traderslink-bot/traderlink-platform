@@ -3,10 +3,15 @@ import { generateText, Output } from "ai";
 import { z } from "zod";
 
 import {
+  COACH_PERIODIC_AI_REVIEW_OUTPUT_CONTRACT_VERSION,
   COACH_WEEKLY_AI_OUTPUT_CONTRACT_VERSION,
+  type CoachPeriodicAiReviewOutputV2,
   type CoachWeeklyAiReviewOutput,
 } from "../contracts/weekly-ai-review-output-contracts";
-import type { CoachWeeklyAiReviewInput } from "../contracts/weekly-ai-review-input-contracts";
+import type {
+  CoachPeriodicAiReviewInputV2,
+  CoachWeeklyAiReviewInput,
+} from "../contracts/weekly-ai-review-input-contracts";
 import type { CoachAiGenerationUsage } from "./coach-ai-review-repository";
 
 export const LOCAL_COACH_WEEKLY_AI_MODEL = "gpt-5.6-sol" as const;
@@ -26,6 +31,15 @@ const weeklyReviewSchema = z.object({
   incompleteRecord: z.string().min(1).max(1_000).nullable(),
 });
 
+const periodicReviewSchemaV2 = z.object({
+  reviewSummary: z.string().min(1).max(1_800),
+  whatImproved: z.string().min(1).max(1_500),
+  whatHeldYouBack: z.string().min(1).max(1_500),
+  focusFollowThrough: z.string().min(1).max(1_500),
+  nextPeriodFocuses: z.array(z.string().min(1).max(280)).min(1).max(3),
+  incompleteRecord: z.string().min(1).max(1_000).nullable(),
+});
+
 const SYSTEM_PROMPT = `You are TraderLink's weekly trading-journal reviewer. Write a direct, useful review only from the supplied weekly Journal package.
 
 Be specific where the supplied notes, rule outcomes, focuses, or trade facts support a point. Be respectful but do not soften a supported criticism. Do not invent a setup, motive, market condition, rule outcome, missing fact, or trade result.
@@ -33,6 +47,16 @@ Be specific where the supplied notes, rule outcomes, focuses, or trade facts sup
 Do not provide trade recommendations, price targets, position-size advice, entry or exit instructions, diagnoses, certainty claims, or language that treats profit as proof of good process or a loss as proof of bad process. Do not mention the provider, AI, prompts, tokens, databases, internal systems, or data-decision codes.
 
 Use plain trading-journal language. Keep the next focuses process-oriented and limited to three. If the supplied record is incomplete, say exactly what limits the conclusion in incompleteRecord; otherwise set incompleteRecord to null.`;
+
+const PERIODIC_SYSTEM_PROMPT_V2 = `You are TraderLink's end-of-trading-period journal reviewer. The supplied package is either one complete Monday-through-Friday market-calendar cohort or two consecutive cohorts.
+
+Use reviewPeriodMarketFacts as the only source for current-period trade counts, P/L, win rate, rule counts, tag observations, and other statistics. completedDailyReflections are trader-authored process evidence only for the current period. carryForwardEvidenceBundles are dated historical process context: never move their executions, P/L, rule counts, or tags into the current period and never treat a carried reflection plus its prior-review reference as two observations. priorIssuedReview is continuity context, not current-period statistical evidence.
+
+Be direct and proportionate to coverage. One completed reflection may support a narrow observation but not a recurring-pattern claim. Respect reflectionCoverage and coverageNotice. Never invent a setup, motive, market condition, rule outcome, missing fact, or trade result.
+
+Do not provide trade recommendations, price targets, position-size advice, entry or exit instructions, diagnoses, certainty claims, or treat profit as proof of good process or loss as proof of bad process. Do not mention the provider, AI, prompts, tokens, databases, internal systems, or data-decision codes.
+
+Use plain trading-journal language. Keep nextPeriodFocuses process-oriented and limited to three. If coverage limits any conclusion, state the exact limitation in incompleteRecord; otherwise set incompleteRecord to null.`;
 
 export type CoachWeeklyAiReviewProviderEnvelope = Readonly<{
   system: string;
@@ -50,6 +74,18 @@ export function buildCoachWeeklyAiReviewProviderEnvelope(
     prompt,
     maximumOutputTokens: COACH_WEEKLY_AI_REVIEW_MAX_OUTPUT_TOKENS,
     reservationText: JSON.stringify({ system: SYSTEM_PROMPT, prompt }),
+  });
+}
+
+export function buildCoachPeriodicAiReviewProviderEnvelopeV2(
+  input: CoachPeriodicAiReviewInputV2,
+): CoachWeeklyAiReviewProviderEnvelope {
+  const prompt = JSON.stringify(input);
+  return Object.freeze({
+    system: PERIODIC_SYSTEM_PROMPT_V2,
+    prompt,
+    maximumOutputTokens: COACH_WEEKLY_AI_REVIEW_MAX_OUTPUT_TOKENS,
+    reservationText: JSON.stringify({ system: PERIODIC_SYSTEM_PROMPT_V2, prompt }),
   });
 }
 
@@ -99,6 +135,36 @@ export async function generateCoachWeeklyAiReview(
       contractVersion: COACH_WEEKLY_AI_OUTPUT_CONTRACT_VERSION,
       ...result.output,
       nextWeekFocuses: Object.freeze([...result.output.nextWeekFocuses]),
+    }),
+    usage: completeUsage(result.usage),
+  });
+}
+
+export async function generateCoachPeriodicAiReviewV2(
+  input: CoachPeriodicAiReviewInputV2,
+  options: Readonly<{
+    modelId: string;
+    environment?: NodeJS.ProcessEnv;
+  }>,
+): Promise<Readonly<{
+  output: CoachPeriodicAiReviewOutputV2;
+  usage: CoachAiGenerationUsage;
+}>> {
+  const openai = createOpenAI({ apiKey: localOpenAiApiKey(options.environment ?? process.env) });
+  const envelope = buildCoachPeriodicAiReviewProviderEnvelopeV2(input);
+  const result = await generateText({
+    model: openai(options.modelId),
+    maxOutputTokens: envelope.maximumOutputTokens,
+    output: Output.object({ schema: periodicReviewSchemaV2 }),
+    system: envelope.system,
+    prompt: envelope.prompt,
+  });
+  if (!result.output) throw new Error("TRADERLINK_COACH_OPENAI_NO_OUTPUT");
+  return Object.freeze({
+    output: Object.freeze({
+      contractVersion: COACH_PERIODIC_AI_REVIEW_OUTPUT_CONTRACT_VERSION,
+      ...result.output,
+      nextPeriodFocuses: Object.freeze([...result.output.nextPeriodFocuses]),
     }),
     usage: completeUsage(result.usage),
   });

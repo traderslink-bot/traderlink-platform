@@ -38,6 +38,11 @@ function formatCost(value: number | null): string | null {
 export class CoachAiProviderSettingsRepository {
   constructor(private readonly database: Database.Database) {}
 
+  private tableExists(name: string): boolean {
+    return Boolean(this.database.prepare<[string], Readonly<{ present: number }>>(`SELECT 1 AS present
+FROM sqlite_master WHERE type = 'table' AND name = ?`).get(name));
+  }
+
   read(): CoachAiProviderSettings {
     const row = this.database.prepare<[], Readonly<{
       provider_key: "openai_direct";
@@ -73,14 +78,28 @@ FROM coach_ai_generation_cost_receipts`).get();
     }>>(`SELECT COUNT(*) AS generation_count, COALESCE(SUM(total_tokens), 0) AS total_tokens,
   SUM(CAST(estimated_cost_usd AS REAL)) AS estimated_cost_usd
 FROM coach_ai_review_generation_attempt_receipts`).get();
+    const attemptRowV2 = this.tableExists("coach_ai_review_generation_attempt_receipts_v2")
+      ? this.database.prepare<[], Readonly<{
+          generation_count: number;
+          total_tokens: number;
+          estimated_cost_usd: number | null;
+        }>>(`SELECT COUNT(*) AS generation_count,
+  COALESCE(SUM(total_tokens), 0) AS total_tokens,
+  SUM(CAST(estimated_cost_usd AS REAL)) AS estimated_cost_usd
+FROM coach_ai_review_generation_attempt_receipts_v2`).get()
+      : null;
     const legacyCost = row?.estimated_cost_usd ?? null;
     const attemptCost = attemptRow?.estimated_cost_usd ?? null;
+    const attemptCostV2 = attemptRowV2?.estimated_cost_usd ?? null;
     return Object.freeze({
-      generationCount: (row?.generation_count ?? 0) + (attemptRow?.generation_count ?? 0),
-      totalTokens: (row?.total_tokens ?? 0) + (attemptRow?.total_tokens ?? 0),
-      estimatedCostUsd: formatCost(legacyCost === null && attemptCost === null
+      generationCount: (row?.generation_count ?? 0) +
+        (attemptRow?.generation_count ?? 0) + (attemptRowV2?.generation_count ?? 0),
+      totalTokens: (row?.total_tokens ?? 0) +
+        (attemptRow?.total_tokens ?? 0) + (attemptRowV2?.total_tokens ?? 0),
+      estimatedCostUsd: formatCost(
+        legacyCost === null && attemptCost === null && attemptCostV2 === null
         ? null
-        : (legacyCost ?? 0) + (attemptCost ?? 0)),
+        : (legacyCost ?? 0) + (attemptCost ?? 0) + (attemptCostV2 ?? 0)),
     });
   }
 
@@ -95,6 +114,20 @@ FROM coach_ai_review_generation_attempt_receipts`).get();
       total_tokens: number;
       estimated_cost_usd: string | null;
     }>;
+    const reviewV2Aggregation = this.tableExists("coach_ai_review_generation_attempts_v2")
+      ? `
+UNION ALL
+SELECT CASE attempt.review_kind WHEN 'monthly' THEN 'monthly_reviews' ELSE 'weekly_reviews' END AS feature_key,
+  attempt.model_id, attempt.account_id, COUNT(*) AS request_count,
+  0 AS blocked_request_count,
+  SUM(CASE WHEN attempt.state = 'failed' THEN 1 ELSE 0 END) AS failed_request_count,
+  COALESCE(SUM(receipt.total_tokens), 0) AS total_tokens,
+  receipt.estimated_cost_usd
+FROM coach_ai_review_generation_attempts_v2 attempt
+LEFT JOIN coach_ai_review_generation_attempt_receipts_v2 receipt
+  ON receipt.coach_ai_review_generation_attempt_id = attempt.coach_ai_review_generation_attempt_id
+GROUP BY attempt.review_kind, attempt.model_id, attempt.account_id, receipt.estimated_cost_usd`
+      : "";
     const rows = this.database.prepare<[], AggregationRow>(`SELECT 'ai_chat' AS feature_key,
   attempt.model_id, attempt.account_id, COUNT(*) AS request_count,
   SUM(CASE WHEN attempt.state = 'blocked' THEN 1 ELSE 0 END) AS blocked_request_count,
@@ -112,7 +145,7 @@ SELECT CASE attempt.review_kind WHEN 'weekly' THEN 'weekly_reviews' ELSE 'monthl
 FROM coach_ai_review_generation_attempts attempt
 LEFT JOIN coach_ai_review_generation_attempt_receipts receipt
   ON receipt.coach_ai_review_generation_attempt_id = attempt.coach_ai_review_generation_attempt_id
-GROUP BY attempt.review_kind, attempt.model_id, attempt.account_id, receipt.estimated_cost_usd`).all();
+GROUP BY attempt.review_kind, attempt.model_id, attempt.account_id, receipt.estimated_cost_usd${reviewV2Aggregation}`).all();
     const grouped = new Map<string, {
       featureKey: CoachAiFeatureKey; modelId: string; accountId: string; requestCount: number;
       blockedRequestCount: number; failedRequestCount: number; totalTokens: number; costs: Decimal[];

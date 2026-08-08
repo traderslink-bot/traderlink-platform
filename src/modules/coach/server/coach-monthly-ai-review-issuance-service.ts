@@ -1,15 +1,22 @@
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 
-import type { CoachMonthlyAiReviewInput } from "../contracts/monthly-ai-review-input-contracts";
+import type {
+  CoachMonthlyAiReviewInputV2,
+  CoachMonthlyAiReviewInput,
+} from "../contracts/monthly-ai-review-input-contracts";
 import { CoachAiReviewProviderControlsRepository } from "./coach-ai-review-provider-controls-repository";
 import type { CoachAiProviderSettingsRepository } from "./coach-ai-provider-settings-repository";
 import {
   type CoachAiGenerationUsage,
+  type CoachAiIssuedReviewRecordV2,
+  type CoachAiReviewEvidenceManifestV2,
   type CoachAiReviewRepository,
   type CoachMonthlyIssuedReviewRecord,
 } from "./coach-ai-review-repository";
 import {
   buildCoachMonthlyAiReviewProviderEnvelope,
+  buildCoachMonthlyAiReviewProviderEnvelopeV2,
+  generateCoachMonthlyAiReviewV2,
   generateCoachMonthlyAiReview,
   type CoachMonthlyAiReviewGeneration,
 } from "./coach-monthly-ai-review-openai-adapter";
@@ -23,6 +30,13 @@ export type CoachMonthlyReviewGenerator = (
   input: CoachMonthlyAiReviewInput,
   options: Readonly<{ modelId: string }>,
 ) => Promise<CoachMonthlyAiReviewGeneration>;
+
+export type CoachMonthlyReviewGeneratorV2 = typeof generateCoachMonthlyAiReviewV2;
+
+export type CoachMonthlyReviewIssuanceResultV2 =
+  | Readonly<{ state: "issued"; review: CoachAiIssuedReviewRecordV2; reused: boolean }>
+  | Readonly<{ state: "in_progress"; requestId: string }>
+  | Readonly<{ state: "failed"; requestId: string; retryAvailable: true }>;
 
 function failureCode(error: unknown): string {
   if (error instanceof Error) {
@@ -58,7 +72,123 @@ export class CoachMonthlyAiReviewIssuanceService {
     private readonly providerSettings: CoachAiProviderSettingsRepository,
     private readonly generate: CoachMonthlyReviewGenerator = generateCoachMonthlyAiReview,
     private readonly controls: CoachAiReviewProviderControlsRepository,
+    private readonly generateV2: CoachMonthlyReviewGeneratorV2 = generateCoachMonthlyAiReviewV2,
   ) {}
+
+  async issueV2(
+    scope: WorkspaceAccessScope,
+    input: CoachMonthlyAiReviewInputV2,
+    evidenceManifest: CoachAiReviewEvidenceManifestV2,
+    requestOrigin: "automatic" | "manual",
+    priorIssuedReviewId: string | null,
+    now = new Date(),
+  ): Promise<CoachMonthlyReviewIssuanceResultV2> {
+    const request = this.reviews.createOrReadPeriodRequestV2(
+      scope,
+      input,
+      evidenceManifest,
+      requestOrigin,
+      priorIssuedReviewId,
+      now,
+    );
+    const providerInput = this.reviews.readInputV2(scope, request.requestId);
+    if (providerInput.contractVersion !== input.contractVersion ||
+        !("calendarMonth" in providerInput)) {
+      throw new Error("TRADERLINK_COACH_REVIEW_REQUEST_INPUT_MISMATCH");
+    }
+    const settings = this.providerSettings.read();
+    const attempt = this.reviews.beginAttemptV2(scope, request.requestId, settings, now);
+    if (attempt.state === "already_issued") {
+      return Object.freeze({ state: "issued", review: attempt.review, reused: true });
+    }
+    if (attempt.state === "in_progress") {
+      return Object.freeze({ state: "in_progress", requestId: request.requestId });
+    }
+    const envelope = buildCoachMonthlyAiReviewProviderEnvelopeV2(providerInput);
+    const reservation = this.controls.reserveReviewGenerationV2(scope, {
+      attemptId: attempt.attemptId,
+      reviewKind: "monthly",
+      providerInputText: envelope.reservationText,
+      maxOutputTokens: envelope.maximumOutputTokens,
+    }, now);
+    if (reservation.reservation.state === "blocked") {
+      this.reviews.failAttemptV2(
+        scope,
+        attempt.attemptId,
+        "TRADERLINK_COACH_REVIEW_UNAVAILABLE",
+        null,
+        null,
+        now,
+      );
+      return Object.freeze({
+        state: "failed",
+        requestId: request.requestId,
+        retryAvailable: true,
+      });
+    }
+    this.controls.markProviderStartedV2(scope, attempt.attemptId, now);
+    let generated: Awaited<ReturnType<CoachMonthlyReviewGeneratorV2>>;
+    try {
+      generated = await this.generateV2(providerInput, {
+        modelId: reservation.reservation.modelId,
+      });
+    } catch (error) {
+      const usage = failureUsage(error);
+      const code = failureCode(error);
+      this.reviews.failAttemptV2(
+        scope,
+        attempt.attemptId,
+        code,
+        usage,
+        usage ? settings : null,
+        now,
+      );
+      if (usage) {
+        this.controls.finalizeFromReviewReceiptV2(
+          scope,
+          attempt.attemptId,
+          "failed",
+          code,
+          now,
+        );
+      } else {
+        this.controls.failStartedWithoutUsageV2(scope, attempt.attemptId, code, now);
+      }
+      return Object.freeze({
+        state: "failed",
+        requestId: request.requestId,
+        retryAvailable: true,
+      });
+    }
+    if (generated.usage.inputTokens === null || generated.usage.outputTokens === null ||
+        generated.usage.totalTokens === null) {
+      const code = "TRADERLINK_COACH_PROVIDER_USAGE_UNAVAILABLE";
+      this.reviews.failAttemptV2(scope, attempt.attemptId, code, null, null, now);
+      this.controls.failStartedWithoutUsageV2(scope, attempt.attemptId, code, now);
+      return Object.freeze({
+        state: "failed",
+        requestId: request.requestId,
+        retryAvailable: true,
+      });
+    }
+    const review = this.reviews.issueAttemptV2(
+      scope,
+      request.requestId,
+      attempt.attemptId,
+      generated.output,
+      generated.usage,
+      settings,
+      now,
+    );
+    this.controls.finalizeFromReviewReceiptV2(
+      scope,
+      attempt.attemptId,
+      "completed",
+      null,
+      now,
+    );
+    return Object.freeze({ state: "issued", review, reused: false });
+  }
 
   async issue(
     scope: WorkspaceAccessScope,

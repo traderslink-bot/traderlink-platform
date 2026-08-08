@@ -1,3 +1,8 @@
+import {
+  CoachUsEquitiesReviewCalendarService,
+  type CoachUsEquitiesReviewCohort,
+} from "./market-calendar/coach-us-equities-review-calendar-service";
+
 const EASTERN_TIMEZONE = "America/New_York";
 
 export type CoachWeeklyReviewDeliveryDay = "friday" | "saturday" | "sunday";
@@ -250,5 +255,148 @@ export function calculateCoachWeeklyReviewDueTime(
     reason: "delivery_not_reached",
     period,
     scheduledAtUtc: scheduledAtUtcString,
+  });
+}
+
+export type CoachPeriodicReviewCadenceV2 = "weekly" | "two_week";
+
+export type CoachPeriodicReviewDueTimeInputV2 = Readonly<{
+  cadence: CoachPeriodicReviewCadenceV2;
+  cadenceAnchorMondayDate?: string | null;
+  now: Date;
+  periodOffset?: 0 | -1;
+  calendar?: CoachUsEquitiesReviewCalendarService;
+}>;
+
+export type CoachPeriodicReviewPeriodV2 = Readonly<{
+  cadence: CoachPeriodicReviewCadenceV2;
+  startDate: string;
+  endDate: string;
+  timezone: typeof EASTERN_TIMEZONE;
+  cohorts: readonly CoachUsEquitiesReviewCohort[];
+  calendarId: string;
+  calendarEvidenceDigestSha256: string;
+}>;
+
+export type CoachPeriodicReviewDueTimeResultV2 =
+  | Readonly<{
+      state: "due";
+      period: CoachPeriodicReviewPeriodV2;
+      sealedAtUtc: string;
+      scheduledAtUtc: string;
+      nextOpenSessionDate: string;
+    }>
+  | Readonly<{
+      state: "not_due";
+      reason: "period_not_sealed";
+      period: CoachPeriodicReviewPeriodV2;
+      sealedAtUtc: string;
+      scheduledAtUtc: string;
+      nextOpenSessionDate: string;
+    }>;
+
+function parseIsoDate(value: string, name: string): CalendarParts {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/u.exec(value);
+  if (!match || value.trim() !== value) {
+    throw new RangeError(`${name} must be an ISO date`);
+  }
+  const result = Object.freeze({
+    year: Number(match[1]),
+    month: Number(match[2]),
+    day: Number(match[3]),
+  });
+  if (dateString(Object.freeze({
+    year: dateFromParts(result).getUTCFullYear(),
+    month: dateFromParts(result).getUTCMonth() + 1,
+    day: dateFromParts(result).getUTCDate(),
+  })) !== value) {
+    throw new RangeError(`${name} must be a real calendar date`);
+  }
+  return result;
+}
+
+function wholeWeeksBetween(leftMonday: CalendarParts, rightMonday: CalendarParts): number {
+  const elapsedDays = (dateFromParts(rightMonday).getTime() - dateFromParts(leftMonday).getTime()) /
+    86_400_000;
+  if (!Number.isInteger(elapsedDays) || elapsedDays % 7 !== 0) {
+    throw new RangeError("AI Review cadence dates must align to Mondays");
+  }
+  return elapsedDays / 7;
+}
+
+/**
+ * Resolves the market-calendar period that contains the current Eastern market
+ * date. V2 generation is due at the factual period seal, not at a selected
+ * Friday/Saturday/Sunday delivery time. The next open session is returned only
+ * for freshness messaging; it never expires the review.
+ */
+export function calculateCoachPeriodicReviewDueTimeV2(
+  input: CoachPeriodicReviewDueTimeInputV2,
+): CoachPeriodicReviewDueTimeResultV2 {
+  if (!(input.now instanceof Date) || !Number.isFinite(input.now.getTime())) {
+    throw new RangeError("A valid current instant is required");
+  }
+  if (input.cadence !== "weekly" && input.cadence !== "two_week") {
+    throw new RangeError(`Invalid AI Review cadence: ${input.cadence}`);
+  }
+  const offset = input.periodOffset ?? 0;
+  if (offset !== 0 && offset !== -1) {
+    throw new RangeError(`Invalid AI Review period offset: ${offset}`);
+  }
+
+  const calendar = input.calendar ?? new CoachUsEquitiesReviewCalendarService();
+  const currentMarketDate = parseIsoDate(calendar.marketDateAt(input.now), "current market date");
+  const currentMonday = mondayOfWeek(currentMarketDate);
+  if (input.cadence === "two_week" && !input.cadenceAnchorMondayDate) {
+    throw new RangeError("Two-week AI Reviews require a cadence anchor Monday");
+  }
+  const anchor = input.cadence === "weekly"
+    ? currentMonday
+    : parseIsoDate(input.cadenceAnchorMondayDate!, "cadenceAnchorMondayDate");
+  if (dateFromParts(anchor).getUTCDay() !== 1) {
+    throw new RangeError("cadenceAnchorMondayDate must be a Monday");
+  }
+  const weeksFromAnchor = wholeWeeksBetween(anchor, currentMonday);
+  const cohortsPerPeriod = input.cadence === "weekly" ? 1 : 2;
+  const currentPeriodIndex = Math.floor(weeksFromAnchor / cohortsPerPeriod);
+  const requestedPeriodIndex = currentPeriodIndex + offset;
+  if (weeksFromAnchor < 0 || requestedPeriodIndex < 0) {
+    throw new RangeError("Requested AI Review period predates its cadence anchor");
+  }
+
+  const periodStart = addDays(anchor, requestedPeriodIndex * cohortsPerPeriod * 7);
+  const cohorts = Object.freeze(Array.from({ length: cohortsPerPeriod }, (_, index) =>
+    calendar.cohortStarting(dateString(addDays(periodStart, index * 7)))));
+  const finalCohort = cohorts.at(-1);
+  if (!finalCohort) throw new RangeError("AI Review period has no market cohort");
+  const metadata = calendar.metadata();
+  const period = Object.freeze({
+    cadence: input.cadence,
+    startDate: dateString(periodStart),
+    endDate: finalCohort.fridayDate,
+    timezone: EASTERN_TIMEZONE,
+    cohorts,
+    calendarId: metadata.calendarId,
+    calendarEvidenceDigestSha256: metadata.evidenceDigestSha256,
+  });
+  const sealedAtUtc = finalCohort.sealedAtUtc;
+  const scheduledAtUtc = sealedAtUtc;
+  const nextOpenSessionDate = calendar.nextOpenSessionDate(finalCohort.fridayDate);
+  if (input.now.getTime() >= new Date(sealedAtUtc).getTime()) {
+    return Object.freeze({
+      state: "due",
+      period,
+      sealedAtUtc,
+      scheduledAtUtc,
+      nextOpenSessionDate,
+    });
+  }
+  return Object.freeze({
+    state: "not_due",
+    reason: "period_not_sealed",
+    period,
+    sealedAtUtc,
+    scheduledAtUtc,
+    nextOpenSessionDate,
   });
 }

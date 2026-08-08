@@ -5,25 +5,34 @@ import Decimal from "decimal.js";
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import {
+  assertCanonicalUuidV4,
   createCanonicalUtcTimestamp,
   createCanonicalUuidV4,
   platformFailure,
 } from "@/src/modules/platform/server/database/platform-migration-contract";
 
 import {
+  COACH_PERIODIC_AI_REVIEW_INPUT_CONTRACT_VERSION,
   COACH_WEEKLY_AI_INPUT_CONTRACT_VERSION,
+  type CoachPeriodicAiReviewInputV2,
   type CoachWeeklyAiReviewInput,
 } from "../contracts/weekly-ai-review-input-contracts";
 import {
   COACH_MONTHLY_AI_INPUT_CONTRACT_VERSION,
+  COACH_MONTHLY_AI_REVIEW_INPUT_CONTRACT_VERSION_V2,
+  type CoachMonthlyAiReviewInputV2,
   type CoachMonthlyAiReviewInput,
 } from "../contracts/monthly-ai-review-input-contracts";
 import {
+  COACH_PERIODIC_AI_REVIEW_OUTPUT_CONTRACT_VERSION,
   COACH_WEEKLY_AI_OUTPUT_CONTRACT_VERSION,
+  type CoachPeriodicAiReviewOutputV2,
   type CoachWeeklyAiReviewOutput,
 } from "../contracts/weekly-ai-review-output-contracts";
 import {
   COACH_MONTHLY_AI_OUTPUT_CONTRACT_VERSION,
+  COACH_MONTHLY_AI_REVIEW_OUTPUT_CONTRACT_VERSION_V2,
+  type CoachMonthlyAiReviewOutputV2,
   type CoachMonthlyAiReviewOutput,
 } from "../contracts/monthly-ai-review-output-contracts";
 import type { CoachAiProviderSettings } from "./coach-ai-provider-settings-repository";
@@ -100,6 +109,102 @@ export type CoachMonthlyAttemptStart =
   | Readonly<{ state: "in_progress"; attemptId: string; attemptNumber: number }>
   | Readonly<{ state: "already_issued"; review: CoachMonthlyIssuedReviewRecord }>;
 
+export type CoachAiReviewKindV2 = "weekly" | "two_week" | "monthly";
+export type CoachAiReviewInputV2 = CoachPeriodicAiReviewInputV2 | CoachMonthlyAiReviewInputV2;
+export type CoachAiReviewOutputV2 = CoachPeriodicAiReviewOutputV2 | CoachMonthlyAiReviewOutputV2;
+
+export type CoachAiReviewEvidenceManifestV2 = Readonly<{
+  contractVersion: "traderlink_coach_ai_review_evidence_manifest_v2";
+  evidence: readonly Readonly<{
+    evidenceRef: string;
+    tradingDayReviewId: string;
+    reviewedStatusRevision: number;
+    dailyNoteRevisionId: string | null;
+    tradeNoteRevisionIds: readonly string[];
+    reviewMarketDate: string;
+    sourcePeriodStartDate: string;
+    sourcePeriodEndDate: string;
+    narrativeOwnerMonth: string;
+    carryDestinationPeriodStartDate: string | null;
+    carryDestinationPeriodEndDate: string | null;
+    representedByRequestId: string | null;
+  }>[];
+}>;
+
+export type CoachAiReviewPeriodRequestRecordV2 = Readonly<{
+  requestId: string;
+  reviewKind: CoachAiReviewKindV2;
+  periodStartDate: string;
+  periodEndDate: string;
+  coverageStartDate: string;
+  coverageEndDate: string;
+  narrativeOwnerMonth: string;
+  calendarId: string;
+  calendarEvidenceDigestSha256: string;
+  eligibleAtUtc: string;
+  requestOrigin: "automatic" | "manual";
+  inputSha256: string;
+  inputJson: string;
+  evidenceManifestSha256: string;
+  evidenceManifestJson: string;
+  priorIssuedReviewId: string | null;
+  state: "pending" | "issued" | "failed" | "stopped";
+  terminalFailureCode: string | null;
+  issuedReviewId: string | null;
+  createdAtUtc: string;
+  finalizedAtUtc: string | null;
+}>;
+
+export type CoachAiIssuedReviewRecordV2 = Readonly<{
+  issuedReviewId: string;
+  requestId: string;
+  reviewKind: CoachAiReviewKindV2;
+  periodStartDate: string;
+  periodEndDate: string;
+  output: CoachAiReviewOutputV2;
+  representedEvidenceRefs: readonly string[];
+  modelId: string;
+  issuedAtUtc: string;
+}>;
+
+export type CoachAiReviewAttemptStartV2 =
+  | Readonly<{ state: "started"; attemptId: string; attemptNumber: number }>
+  | Readonly<{ state: "in_progress"; attemptId: string; attemptNumber: number }>
+  | Readonly<{ state: "already_issued"; review: CoachAiIssuedReviewRecordV2 }>;
+
+type PeriodRequestRowV2 = Readonly<{
+  coach_ai_review_period_request_id: string;
+  review_kind: CoachAiReviewKindV2;
+  period_start_date: string;
+  period_end_date: string;
+  coverage_start_date: string;
+  coverage_end_date: string;
+  narrative_owner_month: string;
+  calendar_id: string;
+  calendar_evidence_digest_sha256: string;
+  eligible_at_utc: string;
+  request_origin: "automatic" | "manual";
+  input_sha256: string;
+  input_json: string;
+  evidence_manifest_sha256: string;
+  evidence_manifest_json: string;
+  prior_issued_review_id: string | null;
+  state: "pending" | "issued" | "failed" | "stopped";
+  terminal_failure_code: string | null;
+  issued_review_id: string | null;
+  created_at_utc: string;
+  finalized_at_utc: string | null;
+}>;
+
+const PERIOD_REQUEST_SELECT_V2 = `SELECT
+  coach_ai_review_period_request_id, review_kind, period_start_date,
+  period_end_date, coverage_start_date, coverage_end_date,
+  narrative_owner_month, calendar_id, calendar_evidence_digest_sha256,
+  eligible_at_utc, request_origin, input_sha256, input_json,
+  evidence_manifest_sha256, evidence_manifest_json, prior_issued_review_id,
+  state, terminal_failure_code, issued_review_id, created_at_utc, finalized_at_utc
+FROM coach_ai_review_period_requests_v2`;
+
 function accountId(scope: WorkspaceAccessScope): string {
   if (!scope.activeAccountId || !scope.allowedAccountIds.includes(scope.activeAccountId)) {
     platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
@@ -130,6 +235,132 @@ function monthlySnapshot(input: CoachMonthlyAiReviewInput): Readonly<{ json: str
   return Object.freeze({
     json,
     sha256: createHash("sha256").update(`${json}\n`, "utf8").digest("hex"),
+  });
+}
+
+function immutableSnapshot(value: unknown): Readonly<{ json: string; sha256: string }> {
+  const json = JSON.stringify(canonicalize(value));
+  return Object.freeze({
+    json,
+    sha256: createHash("sha256").update(`${json}\n`, "utf8").digest("hex"),
+  });
+}
+
+function validateV2Input(
+  reviewKind: CoachAiReviewKindV2,
+  input: CoachAiReviewInputV2,
+): void {
+  const valid = reviewKind === "monthly"
+    ? input.contractVersion === COACH_MONTHLY_AI_REVIEW_INPUT_CONTRACT_VERSION_V2
+    : input.contractVersion === COACH_PERIODIC_AI_REVIEW_INPUT_CONTRACT_VERSION;
+  if (!valid || (reviewKind !== "monthly" &&
+      (input as CoachPeriodicAiReviewInputV2).period.cadence !== reviewKind)) {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+      field: "inputContractVersion",
+    });
+  }
+}
+
+function validateEvidenceManifestV2(
+  manifest: CoachAiReviewEvidenceManifestV2,
+  inputJson: string,
+): void {
+  if (manifest.contractVersion !== "traderlink_coach_ai_review_evidence_manifest_v2") {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+      field: "evidenceManifestVersion",
+    });
+  }
+  const evidenceRefs = new Set<string>();
+  for (const [index, evidence] of manifest.evidence.entries()) {
+    if (!/^(?:reflection_[0-9]{3}|daily_reflection_sha256:[0-9a-f]{64})$/u
+      .test(evidence.evidenceRef) || evidenceRefs.has(evidence.evidenceRef) ||
+      !Number.isSafeInteger(evidence.reviewedStatusRevision) ||
+      evidence.reviewedStatusRevision < 1) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+        field: `evidence[${index}]`,
+      });
+    }
+    evidenceRefs.add(evidence.evidenceRef);
+    assertCanonicalUuidV4(evidence.tradingDayReviewId, `evidence[${index}].tradingDayReviewId`);
+    if (evidence.dailyNoteRevisionId) {
+      assertCanonicalUuidV4(evidence.dailyNoteRevisionId, `evidence[${index}].dailyNoteRevisionId`);
+    }
+    for (const revisionId of evidence.tradeNoteRevisionIds) {
+      assertCanonicalUuidV4(revisionId, `evidence[${index}].tradeNoteRevisionIds`);
+    }
+    if (evidence.representedByRequestId) {
+      assertCanonicalUuidV4(
+        evidence.representedByRequestId,
+        `evidence[${index}].representedByRequestId`,
+      );
+    }
+    const privateIds = [
+      evidence.tradingDayReviewId,
+      evidence.dailyNoteRevisionId,
+      ...evidence.tradeNoteRevisionIds,
+      evidence.representedByRequestId,
+    ].filter((value): value is string => value !== null);
+    if (privateIds.some((privateId) => inputJson.includes(privateId))) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+        field: "providerInputPrivateIdentifier",
+      });
+    }
+  }
+}
+
+function periodRequestRecordV2(row: PeriodRequestRowV2): CoachAiReviewPeriodRequestRecordV2 {
+  return Object.freeze({
+    requestId: row.coach_ai_review_period_request_id,
+    reviewKind: row.review_kind,
+    periodStartDate: row.period_start_date,
+    periodEndDate: row.period_end_date,
+    coverageStartDate: row.coverage_start_date,
+    coverageEndDate: row.coverage_end_date,
+    narrativeOwnerMonth: row.narrative_owner_month,
+    calendarId: row.calendar_id,
+    calendarEvidenceDigestSha256: row.calendar_evidence_digest_sha256,
+    eligibleAtUtc: row.eligible_at_utc,
+    requestOrigin: row.request_origin,
+    inputSha256: row.input_sha256,
+    inputJson: row.input_json,
+    evidenceManifestSha256: row.evidence_manifest_sha256,
+    evidenceManifestJson: row.evidence_manifest_json,
+    priorIssuedReviewId: row.prior_issued_review_id,
+    state: row.state,
+    terminalFailureCode: row.terminal_failure_code,
+    issuedReviewId: row.issued_review_id,
+    createdAtUtc: row.created_at_utc,
+    finalizedAtUtc: row.finalized_at_utc,
+  });
+}
+
+function representedEvidenceRefs(inputJson: string): readonly string[] {
+  const input = JSON.parse(inputJson) as CoachAiReviewInputV2;
+  const refs = input.contractVersion === COACH_PERIODIC_AI_REVIEW_INPUT_CONTRACT_VERSION
+    ? [
+        ...input.completedDailyReflections.map((reflection) => reflection.evidenceRef),
+        ...input.carryForwardEvidenceBundles.map((bundle) => bundle.evidenceRef),
+      ]
+    : [
+        ...input.reviewNarrativeContext.flatMap((review) => review.representedEvidenceRefs),
+        ...input.rawReflectionContext.map((context) => context.reflection.evidenceRef),
+      ];
+  return Object.freeze([...new Set(refs)].sort((left, right) => left.localeCompare(right)));
+}
+
+function parseOutputV2(reviewKind: CoachAiReviewKindV2, value: string): CoachAiReviewOutputV2 {
+  const output = JSON.parse(value) as CoachAiReviewOutputV2;
+  const valid = reviewKind === "monthly"
+    ? output.contractVersion === COACH_MONTHLY_AI_REVIEW_OUTPUT_CONTRACT_VERSION_V2
+    : output.contractVersion === COACH_PERIODIC_AI_REVIEW_OUTPUT_CONTRACT_VERSION;
+  if (!valid || !Array.isArray(output.nextPeriodFocuses) || output.nextPeriodFocuses.length > 3) {
+    platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+      field: "v2OutputContractVersion",
+    });
+  }
+  return Object.freeze({
+    ...output,
+    nextPeriodFocuses: Object.freeze([...output.nextPeriodFocuses]),
   });
 }
 
@@ -981,5 +1212,563 @@ WHERE coach_monthly_review_request_id = ? AND state = 'pending'`).run(
       );
       return this.readIssuedMonthlyReview(scope, issuedReviewId);
     });
+  }
+
+  readPeriodRequestV2(
+    scope: WorkspaceAccessScope,
+    requestId: string,
+  ): CoachAiReviewPeriodRequestRecordV2 {
+    assertCanonicalUuidV4(requestId, "requestId");
+    const row = this.database.prepare<[string, string, string, string], PeriodRequestRowV2>(
+      `${PERIOD_REQUEST_SELECT_V2}
+WHERE coach_ai_review_period_request_id = ? AND user_id = ?
+  AND workspace_id = ? AND account_id = ?`,
+    ).get(requestId, scope.userId, scope.workspaceId, accountId(scope));
+    if (!row) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
+    return periodRequestRecordV2(row);
+  }
+
+  readEvidenceManifestV2(
+    scope: WorkspaceAccessScope,
+    requestId: string,
+  ): CoachAiReviewEvidenceManifestV2 {
+    const request = this.readPeriodRequestV2(scope, requestId);
+    const parsed = JSON.parse(request.evidenceManifestJson) as CoachAiReviewEvidenceManifestV2;
+    validateEvidenceManifestV2(parsed, request.inputJson);
+    return Object.freeze({
+      contractVersion: parsed.contractVersion,
+      evidence: Object.freeze(parsed.evidence.map((evidence) => Object.freeze({
+        ...evidence,
+        tradeNoteRevisionIds: Object.freeze([...evidence.tradeNoteRevisionIds]),
+      }))),
+    });
+  }
+
+  readInputV2(
+    scope: WorkspaceAccessScope,
+    requestId: string,
+  ): CoachAiReviewInputV2 {
+    const request = this.readPeriodRequestV2(scope, requestId);
+    const parsed = JSON.parse(request.inputJson) as CoachAiReviewInputV2;
+    validateV2Input(request.reviewKind, parsed);
+    const checked = immutableSnapshot(parsed);
+    if (checked.json !== request.inputJson || checked.sha256 !== request.inputSha256) {
+      platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+        table: "coach_ai_review_period_requests_v2",
+      });
+    }
+    return parsed;
+  }
+
+  readPeriodRequestByIdentityV2(
+    scope: WorkspaceAccessScope,
+    reviewKind: CoachAiReviewKindV2,
+    periodStartDate: string,
+    periodEndDate: string,
+  ): CoachAiReviewPeriodRequestRecordV2 | null {
+    const row = this.database.prepare<[
+      string, string, string, CoachAiReviewKindV2, string, string
+    ], PeriodRequestRowV2>(`${PERIOD_REQUEST_SELECT_V2}
+WHERE user_id = ? AND workspace_id = ? AND account_id = ?
+  AND review_kind = ? AND period_start_date = ? AND period_end_date = ?`).get(
+      scope.userId,
+      scope.workspaceId,
+      accountId(scope),
+      reviewKind,
+      periodStartDate,
+      periodEndDate,
+    );
+    return row ? periodRequestRecordV2(row) : null;
+  }
+
+  createOrReadPeriodRequestV2(
+    scope: WorkspaceAccessScope,
+    input: CoachAiReviewInputV2,
+    evidenceManifest: CoachAiReviewEvidenceManifestV2,
+    requestOrigin: "automatic" | "manual",
+    priorIssuedReviewId: string | null,
+    now = new Date(),
+  ): CoachAiReviewPeriodRequestRecordV2 {
+    const reviewKind: CoachAiReviewKindV2 =
+      input.contractVersion === COACH_MONTHLY_AI_REVIEW_INPUT_CONTRACT_VERSION_V2
+        ? "monthly"
+        : input.period.cadence;
+    validateV2Input(reviewKind, input);
+    if (requestOrigin !== "automatic" && requestOrigin !== "manual") {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+        field: "requestOrigin",
+      });
+    }
+    if (priorIssuedReviewId) assertCanonicalUuidV4(priorIssuedReviewId, "priorIssuedReviewId");
+    const inputSnapshot = immutableSnapshot(input);
+    validateEvidenceManifestV2(evidenceManifest, inputSnapshot.json);
+    const manifestSnapshot = immutableSnapshot(evidenceManifest);
+    const identity = reviewKind === "monthly"
+      ? (() => {
+          const monthly = input as CoachMonthlyAiReviewInputV2;
+          return Object.freeze({
+            periodStartDate: monthly.calendarMonth.calendarMonthStartDate,
+            periodEndDate: monthly.calendarMonth.calendarMonthEndDate,
+            coverageStartDate: monthly.calendarMonth.coverageStartDate,
+            coverageEndDate: monthly.calendarMonth.coverageEndDate,
+            calendarId: monthly.calendarMonth.calendarId,
+            calendarEvidenceDigestSha256:
+              monthly.calendarMonth.calendarEvidenceDigestSha256,
+            eligibleAtUtc: monthly.calendarMonth.scheduledAtUtc,
+          });
+        })()
+      : (() => {
+          const periodic = input as CoachPeriodicAiReviewInputV2;
+          return Object.freeze({
+            periodStartDate: periodic.period.startDate,
+            periodEndDate: periodic.period.endDate,
+            coverageStartDate: periodic.period.startDate,
+            coverageEndDate: periodic.period.endDate,
+            calendarId: periodic.period.calendarId,
+            calendarEvidenceDigestSha256:
+              periodic.period.calendarEvidenceDigestSha256,
+            eligibleAtUtc: periodic.period.cohorts.at(-1)?.sealedAtUtc ?? "",
+          });
+        })();
+    const eligibleAtUtc = createCanonicalUtcTimestamp(new Date(identity.eligibleAtUtc));
+    if (eligibleAtUtc !== identity.eligibleAtUtc) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+        field: "eligibleAtUtc",
+      });
+    }
+    const narrativeOwnerMonth = identity.periodEndDate.slice(0, 7);
+    return this.transaction(() => {
+      const existing = this.readPeriodRequestByIdentityV2(
+        scope,
+        reviewKind,
+        identity.periodStartDate,
+        identity.periodEndDate,
+      );
+      if (existing) return existing;
+      const requestId = createCanonicalUuidV4();
+      const createdAtUtc = createCanonicalUtcTimestamp(now);
+      const result = this.database.prepare(`INSERT OR IGNORE INTO coach_ai_review_period_requests_v2 (
+  coach_ai_review_period_request_id, user_id, workspace_id, account_id,
+  review_kind, period_start_date, period_end_date, coverage_start_date,
+  coverage_end_date, narrative_owner_month, calendar_id,
+  calendar_evidence_digest_sha256, eligible_at_utc, request_origin,
+  input_contract_version, input_sha256, input_json,
+  evidence_manifest_sha256, evidence_manifest_json, prior_issued_review_id,
+  state, terminal_failure_code, issued_review_id, created_at_utc, finalized_at_utc
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+  'pending', NULL, NULL, ?, NULL)`).run(
+        requestId,
+        scope.userId,
+        scope.workspaceId,
+        accountId(scope),
+        reviewKind,
+        identity.periodStartDate,
+        identity.periodEndDate,
+        identity.coverageStartDate,
+        identity.coverageEndDate,
+        narrativeOwnerMonth,
+        identity.calendarId,
+        identity.calendarEvidenceDigestSha256,
+        eligibleAtUtc,
+        requestOrigin,
+        input.contractVersion,
+        inputSnapshot.sha256,
+        inputSnapshot.json,
+        manifestSnapshot.sha256,
+        manifestSnapshot.json,
+        priorIssuedReviewId,
+        createdAtUtc,
+      );
+      const saved = result.changes === 1
+        ? this.readPeriodRequestV2(scope, requestId)
+        : this.readPeriodRequestByIdentityV2(
+            scope,
+            reviewKind,
+            identity.periodStartDate,
+            identity.periodEndDate,
+          );
+      if (!saved) platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+        table: "coach_ai_review_period_requests_v2",
+      });
+      if (result.changes === 1 &&
+          input.contractVersion === COACH_PERIODIC_AI_REVIEW_INPUT_CONTRACT_VERSION) {
+        for (const carry of input.carryForwardEvidenceBundles) {
+          const sourceEvidenceSha256 = carry.evidenceRef.startsWith("daily_reflection_sha256:")
+            ? carry.evidenceRef.slice("daily_reflection_sha256:".length)
+            : createHash("sha256").update(`${carry.evidenceRef}\n`, "utf8").digest("hex");
+          const consumptionId = createCanonicalUuidV4();
+          this.database.prepare(`INSERT OR IGNORE INTO coach_ai_review_carry_consumptions_v2 (
+  coach_ai_review_carry_consumption_id, workspace_id, account_id,
+  source_evidence_sha256, source_period_start_date, source_period_end_date,
+  destination_request_id, consumed_at_utc
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).run(
+            consumptionId,
+            scope.workspaceId,
+            accountId(scope),
+            sourceEvidenceSha256,
+            carry.sourcePeriodStartDate,
+            carry.sourcePeriodEndDate,
+            saved.requestId,
+            createdAtUtc,
+          );
+          const consumption = this.database.prepare<[
+            string, string, string
+          ], Readonly<{ destination_request_id: string }>>(`SELECT destination_request_id
+FROM coach_ai_review_carry_consumptions_v2
+WHERE workspace_id = ? AND account_id = ? AND source_evidence_sha256 = ?`).get(
+            scope.workspaceId,
+            accountId(scope),
+            sourceEvidenceSha256,
+          );
+          if (consumption?.destination_request_id !== saved.requestId) {
+            platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+              check: "coach_ai_review_carry_already_consumed",
+            });
+          }
+        }
+      }
+      return saved;
+    });
+  }
+
+  readIssuedReviewV2(
+    scope: WorkspaceAccessScope,
+    issuedReviewId: string,
+  ): CoachAiIssuedReviewRecordV2 {
+    assertCanonicalUuidV4(issuedReviewId, "issuedReviewId");
+    const row = this.database.prepare<[
+      string, string, string, string
+    ], Readonly<{
+      coach_ai_issued_review_id: string;
+      coach_ai_review_period_request_id: string;
+      review_kind: CoachAiReviewKindV2;
+      period_start_date: string;
+      period_end_date: string;
+      input_json: string;
+      output_json: string;
+      model_id: string;
+      issued_at_utc: string;
+    }>>(`SELECT review.coach_ai_issued_review_id,
+  review.coach_ai_review_period_request_id, request.review_kind,
+  request.period_start_date, request.period_end_date, request.input_json,
+  review.output_json, review.model_id, review.issued_at_utc
+FROM coach_ai_issued_reviews_v2 review
+JOIN coach_ai_review_period_requests_v2 request
+  ON request.coach_ai_review_period_request_id = review.coach_ai_review_period_request_id
+WHERE review.coach_ai_issued_review_id = ? AND request.user_id = ?
+  AND request.workspace_id = ? AND request.account_id = ?`).get(
+      issuedReviewId,
+      scope.userId,
+      scope.workspaceId,
+      accountId(scope),
+    );
+    if (!row) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
+    return Object.freeze({
+      issuedReviewId: row.coach_ai_issued_review_id,
+      requestId: row.coach_ai_review_period_request_id,
+      reviewKind: row.review_kind,
+      periodStartDate: row.period_start_date,
+      periodEndDate: row.period_end_date,
+      output: parseOutputV2(row.review_kind, row.output_json),
+      representedEvidenceRefs: representedEvidenceRefs(row.input_json),
+      modelId: row.model_id,
+      issuedAtUtc: row.issued_at_utc,
+    });
+  }
+
+  listIssuedReviewsV2(
+    scope: WorkspaceAccessScope,
+    input: Readonly<{
+      beforePeriodEndDate?: string;
+      reviewKinds?: readonly CoachAiReviewKindV2[];
+      limit?: number;
+    }> = {},
+  ): readonly CoachAiIssuedReviewRecordV2[] {
+    const limit = input.limit ?? 100;
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 500) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "limit" });
+    }
+    const allowedKinds = new Set(input.reviewKinds ?? ["weekly", "two_week", "monthly"]);
+    const rows = this.database.prepare<[
+      string, string, string, string, number
+    ], Readonly<{
+      coach_ai_issued_review_id: string;
+      coach_ai_review_period_request_id: string;
+      review_kind: CoachAiReviewKindV2;
+      period_start_date: string;
+      period_end_date: string;
+      input_json: string;
+      output_json: string;
+      model_id: string;
+      issued_at_utc: string;
+    }>>(`SELECT review.coach_ai_issued_review_id,
+  review.coach_ai_review_period_request_id, request.review_kind,
+  request.period_start_date, request.period_end_date, request.input_json,
+  review.output_json, review.model_id, review.issued_at_utc
+FROM coach_ai_issued_reviews_v2 review
+JOIN coach_ai_review_period_requests_v2 request
+  ON request.coach_ai_review_period_request_id = review.coach_ai_review_period_request_id
+WHERE request.user_id = ? AND request.workspace_id = ? AND request.account_id = ?
+  AND request.period_end_date < ?
+ORDER BY request.period_end_date DESC, review.issued_at_utc DESC
+LIMIT ?`).all(
+      scope.userId,
+      scope.workspaceId,
+      accountId(scope),
+      input.beforePeriodEndDate ?? "9999-12-31",
+      limit,
+    );
+    return Object.freeze(rows
+      .filter((row) => allowedKinds.has(row.review_kind))
+      .map((row) => Object.freeze({
+        issuedReviewId: row.coach_ai_issued_review_id,
+        requestId: row.coach_ai_review_period_request_id,
+        reviewKind: row.review_kind,
+        periodStartDate: row.period_start_date,
+        periodEndDate: row.period_end_date,
+        output: parseOutputV2(row.review_kind, row.output_json),
+        representedEvidenceRefs: representedEvidenceRefs(row.input_json),
+        modelId: row.model_id,
+        issuedAtUtc: row.issued_at_utc,
+      })));
+  }
+
+  beginAttemptV2(
+    scope: WorkspaceAccessScope,
+    requestId: string,
+    settings: CoachAiProviderSettings,
+    now = new Date(),
+  ): CoachAiReviewAttemptStartV2 {
+    return this.transaction(() => {
+      const request = this.readPeriodRequestV2(scope, requestId);
+      if (request.state === "issued" && request.issuedReviewId) {
+        return Object.freeze({
+          state: "already_issued" as const,
+          review: this.readIssuedReviewV2(scope, request.issuedReviewId),
+        });
+      }
+      if (request.state !== "pending") {
+        platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { state: request.state });
+      }
+      const nowUtc = createCanonicalUtcTimestamp(now);
+      const staleBeforeUtc = createCanonicalUtcTimestamp(
+        new Date(now.getTime() - ATTEMPT_TIMEOUT_MS),
+      );
+      this.database.prepare(`UPDATE coach_ai_review_generation_attempts_v2
+SET state = 'failed', failure_code = 'TRADERLINK_COACH_ATTEMPT_TIMED_OUT',
+  finalized_at_utc = ?
+WHERE coach_ai_review_period_request_id = ? AND user_id = ?
+  AND workspace_id = ? AND account_id = ? AND state = 'pending'
+  AND created_at_utc < ?`).run(
+        nowUtc,
+        requestId,
+        scope.userId,
+        scope.workspaceId,
+        accountId(scope),
+        staleBeforeUtc,
+      );
+      const pending = this.database.prepare<[
+        string, string, string, string
+      ], Readonly<{
+        coach_ai_review_generation_attempt_id: string;
+        attempt_number: number;
+      }>>(`SELECT coach_ai_review_generation_attempt_id, attempt_number
+FROM coach_ai_review_generation_attempts_v2
+WHERE coach_ai_review_period_request_id = ? AND user_id = ?
+  AND workspace_id = ? AND account_id = ? AND state = 'pending'`).get(
+        requestId,
+        scope.userId,
+        scope.workspaceId,
+        accountId(scope),
+      );
+      if (pending) return Object.freeze({
+        state: "in_progress" as const,
+        attemptId: pending.coach_ai_review_generation_attempt_id,
+        attemptNumber: pending.attempt_number,
+      });
+      const previous = this.database.prepare<[string], Readonly<{ maximum: number }>>(`SELECT
+  COALESCE(MAX(attempt_number), 0) AS maximum
+FROM coach_ai_review_generation_attempts_v2
+WHERE coach_ai_review_period_request_id = ?`).get(requestId);
+      const attemptNumber = (previous?.maximum ?? 0) + 1;
+      const attemptId = createCanonicalUuidV4();
+      this.database.prepare(`INSERT INTO coach_ai_review_generation_attempts_v2 (
+  coach_ai_review_generation_attempt_id, coach_ai_review_period_request_id,
+  user_id, workspace_id, account_id, attempt_number, provider_key, model_id,
+  state, failure_code, created_at_utc, finalized_at_utc
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NULL, ?, NULL)`).run(
+        attemptId,
+        requestId,
+        scope.userId,
+        scope.workspaceId,
+        accountId(scope),
+        attemptNumber,
+        settings.providerKey,
+        settings.modelId,
+        nowUtc,
+      );
+      return Object.freeze({ state: "started" as const, attemptId, attemptNumber });
+    });
+  }
+
+  failAttemptV2(
+    scope: WorkspaceAccessScope,
+    attemptId: string,
+    failureCode: string,
+    usageInput: CoachAiGenerationUsage | null = null,
+    settings: CoachAiProviderSettings | null = null,
+    now = new Date(),
+  ): void {
+    if (!/^[A-Z][A-Z0-9_]{0,95}$/u.test(failureCode)) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+        field: "failureCode",
+      });
+    }
+    this.transaction(() => {
+      const finalizedAtUtc = createCanonicalUtcTimestamp(now);
+      const result = this.database.prepare(`UPDATE coach_ai_review_generation_attempts_v2
+SET state = 'failed', failure_code = ?, finalized_at_utc = ?
+WHERE coach_ai_review_generation_attempt_id = ? AND user_id = ?
+  AND workspace_id = ? AND account_id = ? AND state = 'pending'`).run(
+        failureCode,
+        finalizedAtUtc,
+        attemptId,
+        scope.userId,
+        scope.workspaceId,
+        accountId(scope),
+      );
+      if (result.changes !== 1) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
+      if (usageInput && settings) {
+        const usage = normalizedUsage(usageInput);
+        const cost = estimatedCost(usage, settings);
+        this.database.prepare(`INSERT INTO coach_ai_review_generation_attempt_receipts_v2 (
+  coach_ai_review_generation_attempt_receipt_id,
+  coach_ai_review_generation_attempt_id, input_tokens, output_tokens,
+  total_tokens, input_cost_usd_per_million_tokens,
+  output_cost_usd_per_million_tokens, estimated_cost_usd, recorded_at_utc
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+          createCanonicalUuidV4(), attemptId, usage.inputTokens, usage.outputTokens,
+          usage.totalTokens, cost === null ? null : settings.inputCostUsdPerMillionTokens,
+          cost === null ? null : settings.outputCostUsdPerMillionTokens,
+          cost, finalizedAtUtc,
+        );
+      }
+    });
+  }
+
+  issueAttemptV2(
+    scope: WorkspaceAccessScope,
+    requestId: string,
+    attemptId: string,
+    output: CoachAiReviewOutputV2,
+    usageInput: CoachAiGenerationUsage,
+    settings: CoachAiProviderSettings,
+    now = new Date(),
+  ): CoachAiIssuedReviewRecordV2 {
+    const usage = normalizedUsage(usageInput);
+    return this.transaction(() => {
+      const request = this.readPeriodRequestV2(scope, requestId);
+      if (request.state === "issued" && request.issuedReviewId) {
+        return this.readIssuedReviewV2(scope, request.issuedReviewId);
+      }
+      if (request.state !== "pending") {
+        platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { state: request.state });
+      }
+      const parsedOutput = parseOutputV2(request.reviewKind, JSON.stringify(output));
+      const attempt = this.database.prepare<[
+        string, string, string, string, string
+      ], Readonly<{ model_id: string; provider_key: "openai_direct" }>>(
+        `SELECT model_id, provider_key
+FROM coach_ai_review_generation_attempts_v2
+WHERE coach_ai_review_generation_attempt_id = ?
+  AND coach_ai_review_period_request_id = ? AND user_id = ?
+  AND workspace_id = ? AND account_id = ? AND state = 'pending'`,
+      ).get(
+        attemptId,
+        requestId,
+        scope.userId,
+        scope.workspaceId,
+        accountId(scope),
+      );
+      if (!attempt || attempt.model_id !== settings.modelId ||
+          attempt.provider_key !== settings.providerKey) {
+        platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+          table: "coach_ai_review_generation_attempts_v2",
+        });
+      }
+      const issuedAtUtc = createCanonicalUtcTimestamp(now);
+      const issuedReviewId = createCanonicalUuidV4();
+      this.database.prepare(`INSERT INTO coach_ai_issued_reviews_v2 (
+  coach_ai_issued_review_id, coach_ai_review_period_request_id,
+  provider_key, model_id, output_contract_version, output_json, issued_at_utc
+) VALUES (?, ?, 'openai_direct', ?, ?, ?, ?)`).run(
+        issuedReviewId,
+        requestId,
+        settings.modelId,
+        parsedOutput.contractVersion,
+        JSON.stringify(parsedOutput),
+        issuedAtUtc,
+      );
+      const cost = estimatedCost(usage, settings);
+      this.database.prepare(`INSERT INTO coach_ai_review_generation_attempt_receipts_v2 (
+  coach_ai_review_generation_attempt_receipt_id,
+  coach_ai_review_generation_attempt_id, input_tokens, output_tokens,
+  total_tokens, input_cost_usd_per_million_tokens,
+  output_cost_usd_per_million_tokens, estimated_cost_usd, recorded_at_utc
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+        createCanonicalUuidV4(), attemptId, usage.inputTokens, usage.outputTokens,
+        usage.totalTokens, cost === null ? null : settings.inputCostUsdPerMillionTokens,
+        cost === null ? null : settings.outputCostUsdPerMillionTokens,
+        cost, issuedAtUtc,
+      );
+      const attemptUpdate = this.database.prepare(`UPDATE coach_ai_review_generation_attempts_v2
+SET state = 'issued', failure_code = NULL, finalized_at_utc = ?
+WHERE coach_ai_review_generation_attempt_id = ? AND state = 'pending'`).run(
+        issuedAtUtc,
+        attemptId,
+      );
+      const requestUpdate = this.database.prepare(`UPDATE coach_ai_review_period_requests_v2
+SET state = 'issued', terminal_failure_code = NULL, issued_review_id = ?,
+  finalized_at_utc = ?
+WHERE coach_ai_review_period_request_id = ? AND state = 'pending'`).run(
+        issuedReviewId,
+        issuedAtUtc,
+        requestId,
+      );
+      if (attemptUpdate.changes !== 1 || requestUpdate.changes !== 1) {
+        platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+          table: "coach_ai_review_period_requests_v2",
+        });
+      }
+      return this.readIssuedReviewV2(scope, issuedReviewId);
+    });
+  }
+
+  finalizePeriodRequestV2(
+    scope: WorkspaceAccessScope,
+    requestId: string,
+    state: "failed" | "stopped",
+    terminalFailureCode: string,
+    now = new Date(),
+  ): CoachAiReviewPeriodRequestRecordV2 {
+    if (!/^[A-Z][A-Z0-9_]{0,95}$/u.test(terminalFailureCode)) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+        field: "terminalFailureCode",
+      });
+    }
+    const result = this.database.prepare(`UPDATE coach_ai_review_period_requests_v2
+SET state = ?, terminal_failure_code = ?, finalized_at_utc = ?
+WHERE coach_ai_review_period_request_id = ? AND user_id = ?
+  AND workspace_id = ? AND account_id = ? AND state = 'pending'`).run(
+      state,
+      terminalFailureCode,
+      createCanonicalUtcTimestamp(now),
+      requestId,
+      scope.userId,
+      scope.workspaceId,
+      accountId(scope),
+    );
+    if (result.changes !== 1) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
+    return this.readPeriodRequestV2(scope, requestId);
   }
 }

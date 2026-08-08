@@ -1,3 +1,6 @@
+import { CoachUsEquitiesReviewCalendarService } from
+  "./market-calendar/coach-us-equities-review-calendar-service";
+
 const EASTERN_TIMEZONE = "America/New_York";
 
 export type CoachMonthlyReviewPeriod = Readonly<{
@@ -240,4 +243,130 @@ export function calculateCoachMonthlyReviewDueTime(
     });
   }
   return Object.freeze({ state: "due", period, scheduledAtUtc });
+}
+
+const MONTHLY_REVIEW_TIME_EASTERN_V2 = "08:00" as const;
+
+export type CoachMonthlyReviewDueTimeInputV2 = Readonly<{
+  monthlyEnabledAtUtc: string;
+  now: Date;
+  periodOffsetMonths?: 0 | -1;
+  calendar?: CoachUsEquitiesReviewCalendarService;
+}>;
+
+export type CoachMonthlyReviewPeriodV2 = Readonly<{
+  calendarMonthStartDate: string;
+  calendarMonthEndDate: string;
+  coverageStartDate: string;
+  coverageEndDate: string;
+  periodCoverage: "complete_month" | "partial_month";
+  timezone: typeof EASTERN_TIMEZONE;
+  calendarId: string;
+  calendarEvidenceDigestSha256: string;
+}>;
+
+export type CoachMonthlyReviewDueTimeResultV2 =
+  | Readonly<{
+      state: "due";
+      period: CoachMonthlyReviewPeriodV2;
+      scheduledAtUtc: string;
+      scheduledTimeEastern: typeof MONTHLY_REVIEW_TIME_EASTERN_V2;
+    }>
+  | Readonly<{
+      state: "not_due";
+      reason: "delivery_not_reached" | "enabled_after_period";
+      period: CoachMonthlyReviewPeriodV2;
+      scheduledAtUtc: string;
+      scheduledTimeEastern: typeof MONTHLY_REVIEW_TIME_EASTERN_V2;
+    }>;
+
+function parseIsoDateV2(value: string, name: string): CalendarParts {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/u.exec(value);
+  if (!match || value.trim() !== value) {
+    throw new RangeError(`${name} must be an ISO date`);
+  }
+  const result = Object.freeze({
+    year: Number(match[1]),
+    month: Number(match[2]),
+    day: Number(match[3]),
+  });
+  const checked = new Date(Date.UTC(result.year, result.month - 1, result.day));
+  if (!Number.isFinite(checked.getTime()) || checked.toISOString().slice(0, 10) !== value) {
+    throw new RangeError(`${name} must be a real calendar date`);
+  }
+  return result;
+}
+
+/**
+ * Resolves the latest completed Eastern calendar month. V2 always schedules
+ * one snapshot at 8:00 AM Eastern on the next calendar day, including weekends
+ * and market holidays. The first enabled month keeps its calendar identity but
+ * exposes an honest partial coverage range.
+ */
+export function calculateCoachMonthlyReviewDueTimeV2(
+  input: CoachMonthlyReviewDueTimeInputV2,
+): CoachMonthlyReviewDueTimeResultV2 {
+  if (!(input.now instanceof Date) || !Number.isFinite(input.now.getTime())) {
+    throw new RangeError("A valid current instant is required");
+  }
+  const enabledAt = new Date(input.monthlyEnabledAtUtc);
+  if (!Number.isFinite(enabledAt.getTime())) {
+    throw new RangeError("A valid monthly enablement instant is required");
+  }
+  const offset = input.periodOffsetMonths ?? 0;
+  if (offset !== 0 && offset !== -1) {
+    throw new RangeError(`Invalid monthly period offset: ${offset}`);
+  }
+
+  const calendar = input.calendar ?? new CoachUsEquitiesReviewCalendarService();
+  const nowEastern = parseIsoDateV2(calendar.marketDateAt(input.now), "current Eastern date");
+  const currentMonthStart = Object.freeze({ ...nowEastern, day: 1 });
+  const calendarMonthStart = shiftMonth(currentMonthStart, -1 + offset);
+  const calendarMonthEnd = monthEnd(calendarMonthStart);
+  const calendarMonthStartDate = dateString(calendarMonthStart);
+  const calendarMonthEndDate = dateString(calendarMonthEnd);
+  calendar.session(calendarMonthEndDate);
+
+  const enabledDate = calendar.marketDateAt(enabledAt);
+  const coverageStartDate = enabledDate > calendarMonthStartDate
+    ? enabledDate
+    : calendarMonthStartDate;
+  const metadata = calendar.metadata();
+  const period = Object.freeze({
+    calendarMonthStartDate,
+    calendarMonthEndDate,
+    coverageStartDate,
+    coverageEndDate: calendarMonthEndDate,
+    periodCoverage: coverageStartDate > calendarMonthStartDate
+      ? "partial_month" as const
+      : "complete_month" as const,
+    timezone: EASTERN_TIMEZONE,
+    calendarId: metadata.calendarId,
+    calendarEvidenceDigestSha256: metadata.evidenceDigestSha256,
+  });
+  const deliveryDate = dateString(shiftMonth(calendarMonthStart, 1));
+  const scheduledAtUtc = calendar.easternWallClockAtUtc(
+    deliveryDate,
+    MONTHLY_REVIEW_TIME_EASTERN_V2,
+  );
+  const resultFields = Object.freeze({
+    period,
+    scheduledAtUtc,
+    scheduledTimeEastern: MONTHLY_REVIEW_TIME_EASTERN_V2,
+  });
+  if (enabledDate > calendarMonthEndDate) {
+    return Object.freeze({
+      state: "not_due",
+      reason: "enabled_after_period",
+      ...resultFields,
+    });
+  }
+  if (input.now.getTime() < new Date(scheduledAtUtc).getTime()) {
+    return Object.freeze({
+      state: "not_due",
+      reason: "delivery_not_reached",
+      ...resultFields,
+    });
+  }
+  return Object.freeze({ state: "due", ...resultFields });
 }

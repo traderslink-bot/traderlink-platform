@@ -1,0 +1,59 @@
+{
+  "contractVersion": "traderlink_us_equities_review_calendar_v1",
+  "calendarId": "us_equities_2026_v1",
+  "timezone": "America/New_York",
+  "coverage": {
+    "startDate": "2026-01-01",
+    "endDate": "2026-12-31",
+    "verificationStatus": "verified"
+  },
+  "retrievedAtUtc": "2026-08-08T03:29:02.523Z",
+  "evidenceDigestSha256": "233d1be39468132cefa03b0ceda09c5f573856a7a4e76874bdf70ff0c8dd2c9f",
+  "sources": [
+    {
+      "sourceId": "nasdaq_trader_2026_calendar",
+      "role": "primary_holiday_calendar",
+      "url": "https://www.nasdaqtrader.com/Trader.aspx?id=Calendar"
+    },
+    {
+      "sourceId": "nasdaq_market_hours",
+      "role": "normal_extended_session_hours",
+      "url": "https://www.nasdaq.com/market-activity/stock-market-holiday-schedule"
+    },
+    {
+      "sourceId": "nasdaq_rule_filing_sr_nasdaq_2022_069",
+      "role": "normal_and_early_close_extended_session_rule",
+      "url": "https://listingcenter.nasdaq.com/assets/rulebook/nasdaq/filings/SR-NASDAQ-2022-069.pdf"
+    },
+    {
+      "sourceId": "nyse_2026_2027_calendar",
+      "role": "holiday_and_early_close_cross_check",
+      "url": "https://www.nyse.com/markets/hours-calendars"
+    }
+  ],
+  "normalWeekdaySession": {
+    "postMarketEndEastern": "20:00"
+  },
+  "closedDates": [
+    "2026-01-01",
+    "2026-01-19",
+    "2026-02-16",
+    "2026-04-03",
+    "2026-05-25",
+    "2026-06-19",
+    "2026-07-03",
+    "2026-09-07",
+    "2026-11-26",
+    "2026-12-25"
+  ],
+  "earlyCloseSessions": [
+    {
+      "date": "2026-11-27",
+      "postMarketEndEastern": "17:00"
+    },
+    {
+      "date": "2026-12-24",
+      "postMarketEndEastern": "17:00"
+    }
+  ]
+}

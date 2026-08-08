@@ -10,3 +10,16 @@ export type CoachWeeklyAiReviewOutput = Readonly<{
   nextWeekFocuses: readonly string[];
   incompleteRecord: string | null;
 }>;
+
+export const COACH_PERIODIC_AI_REVIEW_OUTPUT_CONTRACT_VERSION =
+  "traderlink_coach_periodic_ai_review_output_v2" as const;
+
+export type CoachPeriodicAiReviewOutputV2 = Readonly<{
+  contractVersion: typeof COACH_PERIODIC_AI_REVIEW_OUTPUT_CONTRACT_VERSION;
+  reviewSummary: string;
+  whatImproved: string;
+  whatHeldYouBack: string;
+  focusFollowThrough: string;
+  nextPeriodFocuses: readonly string[];
+  incompleteRecord: string | null;
+}>;
