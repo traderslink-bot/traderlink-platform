@@ -1723,7 +1723,11 @@ function TradeReview({
           }}
         >
           <Typography sx={{ fontWeight: 850 }} variant="body2">
-            {analyzer.status === "pending" ? "Live trade analysis" : analyzer.status === "ready" ? "Trade analysis" : "Partial trade analysis"}
+            {analyzer.status === "pending"
+              ? "Live trade analysis (1 min timeframe only)"
+              : analyzer.status === "ready"
+                ? "Trade analysis (1 min timeframe only)"
+                : "Partial trade analysis (1 min timeframe only)"}
           </Typography>
           {hasVisibleAnalysis(analyzer) ? (
             <Stack spacing={1} sx={{ mt: 1 }}>

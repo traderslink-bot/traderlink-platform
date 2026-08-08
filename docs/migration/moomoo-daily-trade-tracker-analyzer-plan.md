@@ -345,9 +345,12 @@ Higher intervals are derived entirely from the saved one-minute candle revision:
   bucket closes, while EMA 9 is recalculated for the displayed interval;
 - execution annotations retain the exact execution price and timestamp in their
   details and attach to the containing aggregate candle;
-- one-minute candle-pattern labels are shown only in the `1m` view, because a
-  one-minute Hammer, rejection or expansion is not the same pattern on a
-  five-minute, fifteen-minute or hourly candle;
+- each selected view independently detects candle structures from that view's
+  own aggregated OHLCV candles around executions; a five-minute Hammer is
+  therefore never inherited from a one-minute label. Higher-timeframe labels
+  are visual context only and do not replace the saved one-minute analysis.
+  Detection excludes partial aggregate candles and does not cross a missing
+  aggregate-candle gap;
 - switching views makes no Moomoo request, writes no new analysis revision and
   does not alter the shared candle cache.
 
@@ -419,14 +422,14 @@ not create a separate Daily Tracker product or impose a 60-minute page delay.
     turnover. Displayed VWAP uses the aggregated exact totals and displayed EMA
     9 uses the selected chart interval.
 21. Exact execution price/time remains available in every timeframe. Execution
-    markers attach to the containing aggregate candle, while one-minute pattern
-    labels are hidden outside `1m` rather than being misrepresented as
-    higher-timeframe patterns.
+    markers attach to the containing aggregate candle, while candle structures
+    are independently detected from the selected interval's OHLCV candles near
+    executions and remain visual context outside the saved `1m` analysis.
 22. Written entry/exit, green-to-red and opportunity analysis remains the saved
     one-minute contract regardless of the selected visual timeframe.
 
 ## Non-goals
 
 Execution importing, broker account mapping, historical fill backfill,
-notifications/inbox UI, overnight support, non-one-minute candles, scanner
+notifications/inbox UI, overnight support, provider-supplied non-one-minute candles, scanner
 data, and Yahoo fallback are outside this slice.

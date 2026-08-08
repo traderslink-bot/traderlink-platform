@@ -11,9 +11,10 @@ import {
   type MouseEventParams,
   type Time,
 } from "lightweight-charts";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { calculateIndicatorPoints } from "@/src/lib/trade-candle-analysis/indicator-context";
+import { detectMicroCapCandlePatterns } from "@/src/lib/trade-candle-analysis/pattern-detection";
 
 import { TradeAnalyzerAnnotationPrimitive } from "./trade-analyzer-annotation-primitive";
 
@@ -22,6 +23,7 @@ import type { DaySessionTradeAnalyzer } from "./day-session-types";
 type ChartInterval = "1m" | "5m" | "15m" | "1h";
 
 type ChartCandle = DaySessionTradeAnalyzer["candles"][number];
+type ChartPattern = Readonly<{ kind: string; time: number }>;
 
 const CHART_INTERVAL_SECONDS: Readonly<Record<ChartInterval, number>> = Object.freeze({
   "1m": 60,
@@ -83,6 +85,49 @@ function aggregateChartCandles(
     turnover: candle.turnover?.toFixed() ?? null,
     volume: candle.volume.toFixed(),
   })));
+}
+
+function patternsForChartInterval(
+  analysis: DaySessionTradeAnalyzer,
+  interval: ChartInterval,
+): readonly ChartPattern[] {
+  if (interval === "1m") {
+    return analysis.events.flatMap((event) => event.patterns);
+  }
+  const executionBuckets = new Set(analysis.events.flatMap((event) =>
+    event.candleTime === null ? [] : [chartBucketTime(event.candleTime, interval)],
+  ));
+  const sourceCountByBucket = new Map<number, number>();
+  for (const candle of analysis.candles) {
+    const bucket = chartBucketTime(candle.time, interval);
+    sourceCountByBucket.set(bucket, (sourceCountByBucket.get(bucket) ?? 0) + 1);
+  }
+  const requiredSourceCount = CHART_INTERVAL_SECONDS[interval] / CHART_INTERVAL_SECONDS["1m"];
+  const intervalCandles = aggregateChartCandles(analysis.candles, interval).filter((candle) =>
+    sourceCountByBucket.get(candle.time) === requiredSourceCount,
+  ).map((candle) => ({
+    close: Number(candle.close),
+    high: Number(candle.high),
+    low: Number(candle.low),
+    open: Number(candle.open),
+    time: candle.time,
+    turnover: candle.turnover === null ? null : Number(candle.turnover),
+    volume: Number(candle.volume),
+  }));
+  const continuousRuns = intervalCandles.reduce<Array<typeof intervalCandles>>((runs, candle) => {
+    const current = runs.at(-1);
+    const previous = current?.at(-1);
+    if (!previous || candle.time === previous.time + CHART_INTERVAL_SECONDS[interval]) {
+      if (current) current.push(candle);
+      else runs.push([candle]);
+    } else {
+      runs.push([candle]);
+    }
+    return runs;
+  }, []);
+  return continuousRuns.flatMap((candles) => detectMicroCapCandlePatterns(candles)).filter((pattern) =>
+    executionBuckets.has(pattern.time),
+  );
 }
 
 function initialVisibleSpan(
@@ -248,9 +293,11 @@ export function DailyTradeAnalyzerChart({
   const [chartInterval, setChartInterval] = useState<ChartInterval>("1m");
 
   const [mobilePatternKeyOpen, setMobilePatternKeyOpen] = useState(false);
-  const visiblePatternKinds = chartInterval === "1m"
-    ? [...new Set(analysis.events.flatMap((event) => event.patterns.map((pattern) => pattern.kind)))]
-    : [];
+  const chartPatterns = useMemo(
+    () => patternsForChartInterval(analysis, chartInterval),
+    [analysis, chartInterval],
+  );
+  const visiblePatternKinds = [...new Set(chartPatterns.map((pattern) => pattern.kind))];
   useEffect(() => {
     const container = containerRef.current;
     if (!container || !["pending", "ready", "provider_unavailable"].includes(analysis.status) || analysis.candles.length === 0) return;
@@ -308,7 +355,7 @@ export function DailyTradeAnalyzerChart({
       lastValueVisible: false,
       lineWidth: 2,
       priceLineVisible: false,
-      title: "VWAP",
+      title: "Session VWAP",
     });
     vwap.setData(indicators.flatMap((point) =>
       point.vwap === null ? [] : [{ time: point.time as Time, value: point.vwap }],
@@ -319,7 +366,7 @@ export function DailyTradeAnalyzerChart({
       lastValueVisible: false,
       lineWidth: 2,
       priceLineVisible: false,
-      title: `EMA 9 (${chartInterval})`,
+      title: `${chartInterval} EMA 9`,
     });
     ema9.setData(indicators.flatMap((point) =>
       point.ema9 === null ? [] : [{ time: point.time as Time, value: point.ema9 }],
@@ -353,8 +400,7 @@ export function DailyTradeAnalyzerChart({
     });
 
     const seenPatterns = new Set<string>();
-    const patternModels = chartInterval === "1m" ? analysis.events.flatMap((event) =>
-      event.patterns.flatMap((pattern) => {
+    const patternModels = chartPatterns.flatMap((pattern) => {
         const key = `${pattern.time}:${pattern.kind}`;
         const candle = candleByTime.get(pattern.time);
         if (seenPatterns.has(key) || !candle) return [];
@@ -367,8 +413,7 @@ export function DailyTradeAnalyzerChart({
           position: patternPosition(pattern.kind),
           time: pattern.time,
         }];
-      }),
-    ) : [];
+      });
     const annotationDetails = new Map<string, ChartDetail>();
     const executionAnnotations = executionModels.flatMap((model) => {
       const candle = candleByTime.get(model.time) ?? null;
@@ -476,7 +521,7 @@ export function DailyTradeAnalyzerChart({
       eventCandleIndexesRef.current = new Map();
       chart.remove();
     };
-  }, [analysis, chartInterval, currency, direction]);
+  }, [analysis, chartInterval, chartPatterns, currency, direction]);
 
   useEffect(() => {
     selectedEventIdRef.current = selectedEventId;
@@ -546,10 +591,10 @@ export function DailyTradeAnalyzerChart({
           Analysis: 1m
         </Typography>
         <Typography sx={{ color: "#7b1fa2", display: { xs: "none", md: "block" }, fontWeight: 800 }} variant="caption">
-          - VWAP
+          - Session VWAP
         </Typography>
         <Typography sx={{ color: "#ef6c00", display: { xs: "none", md: "block" }, fontWeight: 800 }} variant="caption">
-          - EMA 9 ({chartInterval})
+          - {chartInterval} EMA 9
         </Typography>
       </Stack>
       {visiblePatternKinds.length > 0 ? (
