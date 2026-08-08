@@ -34,6 +34,7 @@ import { platformCurrencyPreferencesMigration } from "./migrations/0024_platform
 import { platformMoomooConnectionsMigration } from "./migrations/0033_platform_moomoo_connections";
 import { platformMoomooReconnectionMigration } from "./migrations/0034_platform_moomoo_reconnection";
 import { platformReportingCurrencyCoverageMigration } from "./migrations/0035_platform_reporting_currency_coverage";
+import { dailyTradeMoomooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer";
 import {
   type PlatformMigration,
   validatePlatformMigrationManifest,
@@ -185,6 +186,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/platform/server/database/migrations/0035_platform_reporting_currency_coverage.ts",
       migration: platformReportingCurrencyCoverageMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer.ts",
+      migration: dailyTradeMoomooAnalyzerMigration,
     }),
   ]);
 
@@ -381,6 +386,7 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     ]),
     "0034_platform_moomoo_reconnection": Object.freeze([]),
     "0035_platform_reporting_currency_coverage": Object.freeze([]),
+    "0036_daily_trade_moomoo_analyzer": Object.freeze([]),
   });
 
 export function expectedPlatformTableNamesForPrefix(
