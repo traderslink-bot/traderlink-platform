@@ -106,6 +106,7 @@ export function buildCoachPeriodicAiReviewInputV2(
     reflections,
     annotations,
     new JournalTradingDayReviewService(database),
+    request.calendar,
   ).readPeriodicV2(scope, request);
 }
 
@@ -147,6 +148,7 @@ export function buildCoachPeriodicAiReviewSnapshotV2(
     reflections,
     annotations,
     new JournalTradingDayReviewService(database),
+    request.calendar,
   ).readPeriodicV2(scope, request);
   const account = accountId(scope);
   const carryByEvidenceRef = new Map(input.carryForwardEvidenceBundles.map((bundle) =>

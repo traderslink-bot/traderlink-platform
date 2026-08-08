@@ -54,11 +54,14 @@ is one suitable candidate, not a required brand or a service the owner already
 uses. The existing Vercel/Neon deployment continues to serve the current
 public surfaces and is not the full replacement database runtime. This work
 therefore must not add Vercel Cron to the landing/Academy deployment. A
-protected, host-neutral calendar job and migration `0039` will
+protected, host-neutral calendar job and locally applied migration `0039` now
 store operational check state and immutable verified annual snapshots. The job
 remains dormant during local development; the production launch checklist must
 prove that the accepted single-node scheduler invokes it with its server-only
 secret. The embedded verified 2026 snapshot remains the bootstrap fallback.
+All hosting, database, secret, scheduler and cutover gates are consolidated in
+the [TraderLink Platform Live Launch Readiness](traderlink-platform-live-launch-readiness.md)
+checklist so calendar activation cannot be forgotten at launch.
 The local two-week Journal fixture is the first controlled review input. This
 supersedes the retired Reflection Loop page.
 
@@ -580,10 +583,10 @@ The later AI Chat adaptation is not a dependency.
    generation-time coverage snapshots and the monthly routing recorded in the
    linked boundary progress record before enabling hosted generation.
 9. Add the host-neutral future-year calendar verifier, immutable database
-   snapshots and protected trigger. Keep it dormant locally, do not add Vercel
-  Cron to the landing deployment, and make scheduler activation plus calendar
-  readiness explicit gates for the accepted persistent single-node production
-  cutover, whether hosted on Railway or an equivalent provider.
+   snapshots and protected trigger. **Implemented and dormant locally.** Do not
+   add Vercel Cron to the landing deployment; scheduler activation plus calendar
+   readiness remain explicit gates for the accepted persistent single-node
+   production cutover, whether hosted on Railway or an equivalent provider.
 
 ## Exact implementation allowlist
 

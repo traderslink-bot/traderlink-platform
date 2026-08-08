@@ -331,7 +331,10 @@ export function calculateCoachMonthlyReviewDueTimeV2(
   const coverageStartDate = enabledDate > calendarMonthStartDate
     ? enabledDate
     : calendarMonthStartDate;
-  const metadata = calendar.metadata();
+  const metadata = calendar.metadataForRange(
+    calendarMonthStartDate,
+    calendarMonthEndDate,
+  );
   const period = Object.freeze({
     calendarMonthStartDate,
     calendarMonthEndDate,

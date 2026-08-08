@@ -16,8 +16,8 @@ import {
   CoachReviewDeliveryScheduleRepository,
   resolveCoachEffectiveAiReviewFrequencyV2,
 } from "./coach-weekly-review-schedule-repository";
-import { CoachUsEquitiesReviewCalendarService } from
-  "./market-calendar/coach-us-equities-review-calendar-service";
+import { CoachUsEquitiesCalendarRepository } from
+  "./market-calendar/coach-us-equities-calendar-repository";
 import type { WorkspaceAccessScope } from
   "@/src/modules/platform/contracts/workspace-access-scope";
 
@@ -202,7 +202,7 @@ export class CoachAiReviewAvailabilityService {
     if (!settings?.isEnabled) {
       return Object.freeze({ periodic: null, monthly: null });
     }
-    const calendar = new CoachUsEquitiesReviewCalendarService();
+    const calendar = new CoachUsEquitiesCalendarRepository(this.database).calendar();
     const requests = new CoachAiReviewRepository(this.database);
     const firstEnabledMarketDate = calendar.marketDateAt(new Date(settings.firstEnabledAtUtc));
     const currentMarketDate = calendar.marketDateAt(now);

@@ -31,8 +31,8 @@ import {
   resolveCoachEffectiveAiReviewFrequencyV2,
   type CoachAiReviewAccountSettingsV2,
 } from "./coach-weekly-review-schedule-repository";
-import { CoachUsEquitiesReviewCalendarService } from
-  "./market-calendar/coach-us-equities-review-calendar-service";
+import { CoachUsEquitiesCalendarRepository } from
+  "./market-calendar/coach-us-equities-calendar-repository";
 
 export type CoachWeeklyReviewRunSummary = Readonly<{
   scheduledAccountCount: number;
@@ -138,7 +138,7 @@ export class CoachWeeklyAiReviewRunner {
     now = new Date(),
     requestedScope: WorkspaceAccessScope | null = null,
   ): readonly CoachPeriodicReviewPlanV2[] {
-    const calendar = new CoachUsEquitiesReviewCalendarService();
+    const calendar = new CoachUsEquitiesCalendarRepository(this.database).calendar();
     const scheduleRepository = new CoachReviewDeliveryScheduleRepository(this.database);
     const scheduled: readonly Readonly<{
       scope: WorkspaceAccessScope;
@@ -213,7 +213,7 @@ export class CoachWeeklyAiReviewRunner {
           calendarId: priorDue.period.calendarId,
           calendarEvidenceDigestSha256: priorDue.period.calendarEvidenceDigestSha256,
           cohorts: priorDue.period.cohorts,
-        }), reflectionEligibilityStartDate: calendar.marketDateAt(
+        }), calendar, reflectionEligibilityStartDate: calendar.marketDateAt(
           new Date(account.settings.firstEnabledAtUtc),
         ) },
       ) : null;
@@ -249,6 +249,7 @@ export class CoachWeeklyAiReviewRunner {
         this.database,
         account.scope,
         {
+          calendar,
           period: Object.freeze({
             cadence: due.period.cadence,
             startDate: due.period.startDate,

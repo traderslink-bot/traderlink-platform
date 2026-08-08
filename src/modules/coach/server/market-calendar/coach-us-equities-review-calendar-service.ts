@@ -26,7 +26,7 @@ type EarlyCloseSession = Readonly<{
   postMarketEndEastern: string;
 }>;
 
-type CalendarSnapshot = Readonly<{
+export type CoachUsEquitiesReviewCalendarSnapshot = Readonly<{
   contractVersion: typeof CALENDAR_CONTRACT_VERSION;
   calendarId: string;
   timezone: typeof EASTERN_TIMEZONE;
@@ -129,7 +129,8 @@ function wallClock(value: unknown, name: string): string {
 }
 
 function canonicalEvidenceDigest(value: Readonly<Record<string, unknown>>): string {
-  const { evidenceDigestSha256: _excluded, ...evidence } = value;
+  const evidence = Object.fromEntries(Object.entries(value).filter(([key]) =>
+    key !== "evidenceDigestSha256"));
   return createHash("sha256").update(`${JSON.stringify(evidence)}\n`, "utf8").digest("hex");
 }
 
@@ -157,7 +158,7 @@ function source(value: unknown, index: number): CalendarSource {
   });
 }
 
-function parseSnapshot(value: unknown): CalendarSnapshot {
+function parseSnapshot(value: unknown): CoachUsEquitiesReviewCalendarSnapshot {
   const row = record(value, "calendar snapshot");
   if (row.contractVersion !== CALENDAR_CONTRACT_VERSION) {
     failCalendar("contractVersion is unsupported");
@@ -331,16 +332,34 @@ function zonedWallClockToUtc(date: string, time: string): string {
 }
 
 export class CoachUsEquitiesReviewCalendarService {
-  readonly #snapshot: CalendarSnapshot;
-  readonly #closedDates: ReadonlySet<string>;
-  readonly #earlyCloseByDate: ReadonlyMap<string, EarlyCloseSession>;
+  readonly #snapshots: readonly CoachUsEquitiesReviewCalendarSnapshot[];
+  readonly #closedDatesByCalendar: ReadonlyMap<string, ReadonlySet<string>>;
+  readonly #earlyCloseByCalendar: ReadonlyMap<string, ReadonlyMap<string, EarlyCloseSession>>;
 
-  constructor(snapshot: unknown = calendarSnapshotJson) {
-    this.#snapshot = parseSnapshot(snapshot);
-    this.#closedDates = new Set(this.#snapshot.closedDates);
-    this.#earlyCloseByDate = new Map(
-      this.#snapshot.earlyCloseSessions.map((session) => [session.date, session]),
-    );
+  constructor(snapshotInput: unknown = calendarSnapshotJson) {
+    const supplied = Array.isArray(snapshotInput) ? snapshotInput : [snapshotInput];
+    if (supplied.length === 0) failCalendar("at least one verified snapshot is required");
+    const byCoverage = new Map<string, CoachUsEquitiesReviewCalendarSnapshot>();
+    for (const value of supplied) {
+      const snapshot = parseSnapshot(value);
+      byCoverage.set(`${snapshot.coverage.startDate}:${snapshot.coverage.endDate}`, snapshot);
+    }
+    this.#snapshots = Object.freeze([...byCoverage.values()].sort((left, right) =>
+      left.coverage.startDate.localeCompare(right.coverage.startDate)));
+    for (let index = 1; index < this.#snapshots.length; index += 1) {
+      if (this.#snapshots[index]!.coverage.startDate <=
+          this.#snapshots[index - 1]!.coverage.endDate) {
+        failCalendar("active snapshot coverage overlaps");
+      }
+    }
+    this.#closedDatesByCalendar = new Map(this.#snapshots.map((snapshot) => [
+      snapshot.calendarId,
+      new Set(snapshot.closedDates),
+    ]));
+    this.#earlyCloseByCalendar = new Map(this.#snapshots.map((snapshot) => [
+      snapshot.calendarId,
+      new Map(snapshot.earlyCloseSessions.map((session) => [session.date, session])),
+    ]));
   }
 
   metadata(): Readonly<{
@@ -349,11 +368,54 @@ export class CoachUsEquitiesReviewCalendarService {
     coverageStartDate: string;
     coverageEndDate: string;
   }> {
+    if (this.#snapshots.length !== 1) {
+      failCalendar("metadata requires an explicit covered date range");
+    }
+    const snapshot = this.#snapshots[0]!;
     return Object.freeze({
-      calendarId: this.#snapshot.calendarId,
-      evidenceDigestSha256: this.#snapshot.evidenceDigestSha256,
-      coverageStartDate: this.#snapshot.coverage.startDate,
-      coverageEndDate: this.#snapshot.coverage.endDate,
+      calendarId: snapshot.calendarId,
+      evidenceDigestSha256: snapshot.evidenceDigestSha256,
+      coverageStartDate: snapshot.coverage.startDate,
+      coverageEndDate: snapshot.coverage.endDate,
+    });
+  }
+
+  metadataForRange(startDateInput: string, endDateInput: string): Readonly<{
+    calendarId: string;
+    evidenceDigestSha256: string;
+    coverageStartDate: string;
+    coverageEndDate: string;
+  }> {
+    const startDate = isoDate(startDateInput, "startDate");
+    const endDate = isoDate(endDateInput, "endDate");
+    if (endDate < startDate) failCalendar("metadata range is invalid");
+    const snapshots = new Map<string, CoachUsEquitiesReviewCalendarSnapshot>();
+    for (let date = startDate; date <= endDate; date = shiftDate(date, 1)) {
+      const snapshot = this.#snapshotForDate(date);
+      snapshots.set(snapshot.calendarId, snapshot);
+    }
+    const ordered = [...snapshots.values()].sort((left, right) =>
+      left.coverage.startDate.localeCompare(right.coverage.startDate));
+    if (ordered.length === 1) {
+      const snapshot = ordered[0]!;
+      return Object.freeze({
+        calendarId: snapshot.calendarId,
+        evidenceDigestSha256: snapshot.evidenceDigestSha256,
+        coverageStartDate: snapshot.coverage.startDate,
+        coverageEndDate: snapshot.coverage.endDate,
+      });
+    }
+    const evidence = ordered.map((snapshot) => Object.freeze({
+      calendarId: snapshot.calendarId,
+      evidenceDigestSha256: snapshot.evidenceDigestSha256,
+    }));
+    const evidenceDigestSha256 = createHash("sha256")
+      .update(`${JSON.stringify(evidence)}\n`, "utf8").digest("hex");
+    return Object.freeze({
+      calendarId: `us_equities_set_${evidenceDigestSha256.slice(0, 16)}`,
+      evidenceDigestSha256,
+      coverageStartDate: ordered[0]!.coverage.startDate,
+      coverageEndDate: ordered.at(-1)!.coverage.endDate,
     });
   }
 
@@ -369,10 +431,7 @@ export class CoachUsEquitiesReviewCalendarService {
 
   session(marketDateInput: string): CoachUsEquitiesReviewSession {
     const marketDate = isoDate(marketDateInput, "marketDate");
-    if (marketDate < this.#snapshot.coverage.startDate ||
-        marketDate > this.#snapshot.coverage.endDate) {
-      failCalendar(`verified coverage does not include ${marketDate}`);
-    }
+    const snapshot = this.#snapshotForDate(marketDate);
     const day = weekday(marketDate);
     if (day === 0 || day === 6) {
       return Object.freeze({
@@ -381,32 +440,32 @@ export class CoachUsEquitiesReviewCalendarService {
         sessionKind: "weekend",
         postMarketEndEastern: null,
         postMarketEndUtc: null,
-        calendarId: this.#snapshot.calendarId,
-        evidenceDigestSha256: this.#snapshot.evidenceDigestSha256,
+        calendarId: snapshot.calendarId,
+        evidenceDigestSha256: snapshot.evidenceDigestSha256,
       });
     }
-    if (this.#closedDates.has(marketDate)) {
+    if (this.#closedDatesByCalendar.get(snapshot.calendarId)?.has(marketDate)) {
       return Object.freeze({
         marketDate,
         state: "closed",
         sessionKind: "holiday",
         postMarketEndEastern: null,
         postMarketEndUtc: null,
-        calendarId: this.#snapshot.calendarId,
-        evidenceDigestSha256: this.#snapshot.evidenceDigestSha256,
+        calendarId: snapshot.calendarId,
+        evidenceDigestSha256: snapshot.evidenceDigestSha256,
       });
     }
-    const earlyClose = this.#earlyCloseByDate.get(marketDate);
+    const earlyClose = this.#earlyCloseByCalendar.get(snapshot.calendarId)?.get(marketDate);
     const postMarketEndEastern = earlyClose?.postMarketEndEastern ??
-      this.#snapshot.normalWeekdaySession.postMarketEndEastern;
+      snapshot.normalWeekdaySession.postMarketEndEastern;
     return Object.freeze({
       marketDate,
       state: "open",
       sessionKind: earlyClose ? "scheduled_early_close" : "normal",
       postMarketEndEastern,
       postMarketEndUtc: zonedWallClockToUtc(marketDate, postMarketEndEastern),
-      calendarId: this.#snapshot.calendarId,
-      evidenceDigestSha256: this.#snapshot.evidenceDigestSha256,
+      calendarId: snapshot.calendarId,
+      evidenceDigestSha256: snapshot.evidenceDigestSha256,
     });
   }
 
@@ -423,14 +482,15 @@ export class CoachUsEquitiesReviewCalendarService {
     if (!finalSession?.postMarketEndUtc) {
       failCalendar(`cohort ${mondayDate} through ${fridayDate} has no verified open session`);
     }
+    const metadata = this.metadataForRange(mondayDate, fridayDate);
     return Object.freeze({
       mondayDate,
       fridayDate,
       openSessionDates: Object.freeze(openSessions.map((session) => session.marketDate)),
       finalOpenSessionDate: finalSession.marketDate,
       sealedAtUtc: finalSession.postMarketEndUtc,
-      calendarId: this.#snapshot.calendarId,
-      evidenceDigestSha256: this.#snapshot.evidenceDigestSha256,
+      calendarId: metadata.calendarId,
+      evidenceDigestSha256: metadata.evidenceDigestSha256,
     });
   }
 
@@ -448,4 +508,17 @@ export class CoachUsEquitiesReviewCalendarService {
     }
     return failCalendar(`no open session follows ${afterMarketDateInput} within 14 days`);
   }
+
+  #snapshotForDate(marketDate: string): CoachUsEquitiesReviewCalendarSnapshot {
+    const snapshot = this.#snapshots.find((candidate) =>
+      marketDate >= candidate.coverage.startDate && marketDate <= candidate.coverage.endDate);
+    if (!snapshot) failCalendar(`verified coverage does not include ${marketDate}`);
+    return snapshot;
+  }
+}
+
+export function createCoachUsEquitiesReviewCalendarWithAdditionalSnapshots(
+  snapshots: readonly unknown[],
+): CoachUsEquitiesReviewCalendarService {
+  return new CoachUsEquitiesReviewCalendarService([calendarSnapshotJson, ...snapshots]);
 }

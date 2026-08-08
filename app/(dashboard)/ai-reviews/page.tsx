@@ -31,7 +31,7 @@ import {
   type CoachMonthlyReviewAvailabilityV2,
   type CoachPeriodicReviewAvailabilityV2,
 } from "@/src/modules/coach/server/coach-ai-review-availability-service";
-import { CoachUsEquitiesReviewCalendarService } from "@/src/modules/coach/server/market-calendar/coach-us-equities-review-calendar-service";
+import { CoachUsEquitiesCalendarRepository } from "@/src/modules/coach/server/market-calendar/coach-us-equities-calendar-repository";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import {
@@ -440,23 +440,24 @@ function ReviewAvailability({
 export default async function AiReviewsPage() {
   const scope = await requireTraderLinkPlatformPageScope();
   const now = new Date();
-  const calendar = new CoachUsEquitiesReviewCalendarService();
-  const marketMonday = calendar.cohortForDate(calendar.marketDateAt(now)).mondayDate;
   const {
     monthlyReviews,
     availability,
+    marketMonday,
     reviews,
     settings,
     v2Reviews,
   } = withReadonlyPlatformDatabase({}, (database) => {
     const repository = new CoachAiReviewRepository(database);
     const scheduleRepository = new CoachReviewDeliveryScheduleRepository(database);
+    const calendar = new CoachUsEquitiesCalendarRepository(database).calendar();
     return Object.freeze({
       reviews: repository.listIssuedWeeklyReviews(scope),
       monthlyReviews: repository.listIssuedMonthlyReviews(scope),
       settings: scheduleRepository.readV2(scope),
       v2Reviews: repository.listIssuedReviewsV2(scope),
       availability: new CoachAiReviewAvailabilityService(database).read(scope, now),
+      marketMonday: calendar.cohortForDate(calendar.marketDateAt(now)).mondayDate,
     });
   });
   const effectiveFrequency = settings?.isEnabled

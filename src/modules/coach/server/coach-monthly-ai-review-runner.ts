@@ -39,6 +39,8 @@ import {
 } from "./coach-weekly-review-schedule-repository";
 import { CoachUsEquitiesReviewCalendarService } from
   "./market-calendar/coach-us-equities-review-calendar-service";
+import { CoachUsEquitiesCalendarRepository } from
+  "./market-calendar/coach-us-equities-calendar-repository";
 
 export type CoachMonthlyReviewRunSummary = Readonly<{
   scheduledAccountCount: number;
@@ -182,7 +184,7 @@ export class CoachMonthlyAiReviewRunner {
     now = new Date(),
     requestedScope: WorkspaceAccessScope | null = null,
   ): readonly CoachMonthlyReviewPlanV2[] {
-    const calendar = new CoachUsEquitiesReviewCalendarService();
+    const calendar = new CoachUsEquitiesCalendarRepository(this.database).calendar();
     const settingsRepository = new CoachReviewDeliveryScheduleRepository(this.database);
     const accounts: readonly Readonly<{
       scope: WorkspaceAccessScope;

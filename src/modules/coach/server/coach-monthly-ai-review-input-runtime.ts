@@ -148,8 +148,12 @@ export function buildCoachMonthlyAiReviewSnapshotV2(
     monday = shiftIsoDate(monday, 7)
   ) {
     const cohort = calendar.cohortStarting(monday);
-    const metadata = calendar.metadata();
+    const metadata = calendar.metadataForRange(
+      cohort.mondayDate,
+      cohort.fridayDate,
+    );
     weeklySnapshots.push(buildCoachPeriodicAiReviewSnapshotV2(database, scope, {
+      calendar,
       period: Object.freeze({
         cadence: "weekly",
         startDate: cohort.mondayDate,

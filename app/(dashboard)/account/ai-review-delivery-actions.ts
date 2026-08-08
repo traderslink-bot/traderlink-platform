@@ -9,6 +9,7 @@ import {
   type CoachAiReviewFrequencyV2,
 } from "@/src/modules/coach/server/coach-weekly-review-schedule-repository";
 import { CoachUsEquitiesReviewCalendarService } from "@/src/modules/coach/server/market-calendar/coach-us-equities-review-calendar-service";
+import { CoachUsEquitiesCalendarRepository } from "@/src/modules/coach/server/market-calendar/coach-us-equities-calendar-repository";
 import { calculateCoachPeriodicReviewDueTimeV2 } from "@/src/modules/coach/server/coach-weekly-review-due-time";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
@@ -81,7 +82,7 @@ export async function saveAiReviewFrequency(input: Readonly<{
       const repository = new CoachReviewDeliveryScheduleRepository(database);
       const current = repository.readV2(scope);
       const now = new Date();
-      const calendar = new CoachUsEquitiesReviewCalendarService();
+      const calendar = new CoachUsEquitiesCalendarRepository(database).calendar();
       if (!current || !current.isEnabled) {
         const cohortMonday = calendar.cohortForDate(calendar.marketDateAt(now)).mondayDate;
         return repository.saveV2(scope, {

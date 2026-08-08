@@ -89,6 +89,15 @@ explicit production-cutover gate. Local development does not activate a
 scheduler. A target year is accepted only when explicit Nasdaq Trader and NYSE
 closed/early-close dates parse successfully and match exactly; NYSE-only
 publication, source failure or disagreement remains fail-closed.
+Migration `0039` was registered and locally applied on 2026-08-08. Registering
+it initially caused the local runtime's expected
+`TRADERLINK_PLATFORM_MIGRATIONS_PENDING` guard until the normal local migration
+runner applied exactly `0039`; `/ai-reviews` then returned HTTP 200 without the
+guard. No production database, deployment, scheduler or provider was changed.
+The host-neutral verifier, two-source parser, database-backed active-snapshot
+loader and protected trigger are now implemented. They remain inactive unless
+an authorized scheduler calls the trigger; no review page or provider path
+fetches an exchange site.
 
 Migration number `0037` is now reserved by a registered forward migration
 file. It defines the v2 account-frequency state, unified weekly/two-week/monthly
@@ -220,13 +229,13 @@ ran. Temporary checkpoint configuration was removed. A later owner-authorized
 normal local migration run recorded exactly migrations `0037` and `0038`;
 `0037` is therefore locally applied while AI Reviews remain inactive.
 
-Remaining activation work is intentionally separate: verify the request-only
-state transition at its accepted checkpoint, design paid entitlement/packaging,
-connect the dormant automatic request coordinator to an explicitly enabled
-schedule plus a pending-request issuance path, and extend the official-source
-calendar beyond verified 2026 coverage.
+Remaining activation work is intentionally separate: design paid
+entitlement/packaging, connect the dormant automatic request coordinator to an
+explicitly enabled schedule plus a pending-request issuance path, activate the
+host scheduler at production cutover, and wait for two-source official
+agreement before calendar coverage can extend beyond verified 2026.
 
-## 2026-08-08 future-year calendar verification design checkpoint
+## 2026-08-08 future-year calendar verification implementation checkpoint
 
 - The existing embedded 2026 calendar remains the trusted bootstrap and keeps
   its immutable ID/digest.
@@ -259,6 +268,22 @@ calendar beyond verified 2026 coverage.
 - A later official revision creates a new immutable version and becomes active
   only after the same two-source verification. Older versions and every review
   request's original calendar ID/digest remain unchanged.
+- The implemented runtime loads active verified snapshots from the scoped
+  Platform database and combines them with the embedded 2026 bootstrap.
+  Cross-year review periods receive deterministic composite calendar evidence;
+  missing annual coverage fails closed rather than silently using another year.
+- The protected route rejects missing or incorrect scheduler authorization
+  before opening the database or fetching a source. An unauthenticated local
+  request returned HTTP 401.
+- A read-only live parser check on 2026-08-08 produced 10 closures and 2 early
+  closes from each official source, with identical normalized digests. The same
+  check confirmed that NYSE exposes a 2027 calendar (10 closures, 1 early
+  close) while Nasdaq Trader still has no explicit 2027 schedule. The verifier
+  therefore correctly remains `awaiting_primary`/fail-closed for 2027.
+- After correcting a parser regular-expression syntax error found by the live
+  runtime, `/ai-reviews`, `/account` and `/trade-tracker/2026-08-07` all returned
+  HTTP 200 on the clean post-`0040` local runtime. No restart was required for
+  the parser correction.
 
 ## 2026-08-08 request workflow checkpoint
 

@@ -94,6 +94,7 @@ function dailyReflectionEvidenceRef(input: Readonly<{
 
 export type CoachPeriodicAiReviewBuildRequestV2 = Readonly<{
   period: Omit<CoachPeriodicAiReviewInputV2["period"], "currency">;
+  calendar?: CoachUsEquitiesReviewCalendarService;
   reflectionEligibilityStartDate?: string;
   carryForwardEvidenceBundles?: readonly CoachAiReviewCarryForwardEvidenceBundleV2[];
   priorIssuedReview?: CoachAiReviewPriorIssuedReviewV2 | null;
@@ -228,7 +229,10 @@ export class CoachWeeklyAiReviewInputService {
     const accountId = scope.activeAccountId;
     if (!accountId) throw new Error("TRADERLINK_ACCOUNT_ACCESS_DENIED");
     const account = narrowWorkspaceAccessToAccount(scope, accountId);
-    const metadata = this.reviewCalendar.metadata();
+    const metadata = this.reviewCalendar.metadataForRange(
+      request.period.startDate,
+      request.period.endDate,
+    );
     const expectedCohortCount = request.period.cadence === "weekly" ? 1 : 2;
     if (
       request.period.calendarTimezone !== EASTERN_TIMEZONE ||

@@ -1,5 +1,10 @@
 # TraderLink Operational and Configuration Inventory
 
+The consolidated production go-live checklist is maintained in
+[TraderLink Platform Live Launch Readiness](traderlink-platform-live-launch-readiness.md).
+This inventory supplies configuration evidence; the launch-readiness document
+is the single cross-feature status and acceptance view.
+
 **Phase:** 1 - inventory and baseline  
 **Status:** Legacy source inventory complete; accepted replacement configuration names are updated through Phase 3. Installed Big Time machine-schedule state remains deferred and is not a Journal blocker.
 **Safety:** Values of secrets, tokens, user IDs, account IDs, and private origins are intentionally omitted.
@@ -109,6 +114,9 @@ This inventory includes runtime configuration names read directly or indirectly 
 
 - Database/repository boundary: `TRADERLINK_PLATFORM_DB_PATH`,
   `TRADERLINK_PLATFORM_REPOSITORY_ROOT`.
+- Protected operational scheduler authentication: `CRON_SECRET`. This is a
+  server-only bearer secret for the host-neutral AI Review calendar trigger;
+  its value must not enter browser code, logs or this inventory.
 - Versioned broker-account identity authority:
   `TRADERLINK_PLATFORM_ACCOUNT_IDENTITY_ACTIVE_KEY_VERSION`,
   `TRADERLINK_PLATFORM_ACCOUNT_IDENTITY_HMAC_KEYS_JSON`.

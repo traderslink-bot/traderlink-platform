@@ -276,8 +276,11 @@ export function assembleCoachMonthlyAiReviewInputV2(
   request: CoachMonthlyAiReviewAssemblyRequestV2,
 ): CoachMonthlyAiReviewInputV2 {
   const calendar = request.calendar ?? new CoachUsEquitiesReviewCalendarService();
-  const metadata = calendar.metadata();
   const month = request.calendarMonth;
+  const metadata = calendar.metadataForRange(
+    month.calendarMonthStartDate,
+    month.calendarMonthEndDate,
+  );
   const exactMonth = coachReflectionPeriodBounds("monthly", month.calendarMonthEndDate);
   const validCoverage = month.coverageStartDate >= month.calendarMonthStartDate &&
     month.coverageStartDate <= month.calendarMonthEndDate &&

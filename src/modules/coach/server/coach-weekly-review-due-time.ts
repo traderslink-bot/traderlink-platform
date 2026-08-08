@@ -372,7 +372,10 @@ export function calculateCoachPeriodicReviewDueTimeV2(
     calendar.cohortStarting(dateString(addDays(periodStart, index * 7)))));
   const finalCohort = cohorts.at(-1);
   if (!finalCohort) throw new RangeError("AI Review period has no market cohort");
-  const metadata = calendar.metadata();
+  const metadata = calendar.metadataForRange(
+    dateString(periodStart),
+    finalCohort.fridayDate,
+  );
   const period = Object.freeze({
     cadence: input.cadence,
     startDate: dateString(periodStart),
