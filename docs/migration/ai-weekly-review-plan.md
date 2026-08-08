@@ -13,7 +13,40 @@ extraction and lineage-aware narrative selection, completion/market-seal
 eligibility, and read-only weekly/monthly runner planning. These paths remain
 dormant: migration `0037` is registered and applied in the local development
 database, but provider calls, runner activation and paid customer activation
-remain off, and Account/AI Reviews UI work has not begun.
+remain off. The first Account/AI Reviews presentation slice is implemented for
+owner visual review and was approved on 2026-08-08. Visible account copy uses
+`Trade Tracker`, not `Journal`. Frequency saving is now connected. The second
+presentation slice now uses account-scoped read-only runner plans to
+show the actual market-calendar period, completed/incomplete Trade Tracker
+review coverage and current availability state. The owner approved this visual
+checkpoint on 2026-08-08. Eligible manual-generation buttons now call an
+authenticated request-only action that rebuilds the current account-scoped v2
+plan, freezes the immutable input and private evidence manifest, and saves one
+idempotent pending request. It does not reserve paid capacity, start an attempt
+or call an AI provider. Once requested, the card reads completion coverage from
+that immutable snapshot rather than later live Tracker edits. The
+availability read is deliberately lightweight: full analytics and immutable
+evidence snapshots are generation-time work, not Account or AI Reviews page-
+render work. Weekend first enablement after a sealed week presents the next
+weekly period as upcoming; it does not expose the already-ended pre-enable week
+as a recoverable review period.
+The same request service now has a dormant automatic coordinator that freezes
+only sealed `automatic_ready` weekly, two-week and monthly periods. It is not
+scheduled or connected to provider execution; partial-coverage periods remain
+manual. Weekly/two-week and monthly issuance services can later consume an
+existing pending request by its scoped request ID, always re-reading the stored
+input and evidence manifest instead of rebuilding from later Tracker data.
+These methods are dormant and no provider runner invokes them.
+The owner-approved coverage drill-down belongs only on AI Reviews. Weekly and
+two-week cards show only actual Tracker day pages in the period, identify them
+as marked complete or not marked complete, and link both states to their Trade
+Tracker pages. They do not list future sessions or manufacture missing-review
+rows for dates without a Tracker day. Monthly cards retain the concise
+completion count and open existing month coverage in an in-page side drawer,
+with a full-width mobile drawer and explicit close control. Account remains the
+settings surface and does not duplicate the review-availability card. The
+saved weekly/two-week panel remains issued AI-review history, not input
+coverage.
 The local two-week Journal fixture is the first controlled review input. This
 supersedes the retired Reflection Loop page.
 

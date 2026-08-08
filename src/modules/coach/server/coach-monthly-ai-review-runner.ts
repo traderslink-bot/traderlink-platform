@@ -34,6 +34,7 @@ import {
 import {
   CoachReviewDeliveryScheduleRepository,
   resolveCoachEffectiveAiReviewFrequencyV2,
+  type CoachAiReviewAccountSettingsV2,
   type CoachAiReviewAccountSettingsRevisionV2,
 } from "./coach-weekly-review-schedule-repository";
 import { CoachUsEquitiesReviewCalendarService } from
@@ -103,6 +104,7 @@ export type CoachMonthlyReviewPlanV2 = Readonly<{
     "manual_available" | "automatic_ready" | "already_requested";
   snapshot: CoachMonthlyAiReviewSnapshotV2 | null;
   existingRequestId: string | null;
+  priorIssuedReviewId: string | null;
 }>;
 
 function shiftDate(value: string, days: number): string {
@@ -169,11 +171,30 @@ export class CoachMonthlyAiReviewRunner {
   ) {}
 
   /** Read-only V2 planning; no request write, paid reservation, or provider call. */
-  planV2(now = new Date()): readonly CoachMonthlyReviewPlanV2[] {
+  planAccountV2(
+    scope: WorkspaceAccessScope,
+    now = new Date(),
+  ): readonly CoachMonthlyReviewPlanV2[] {
+    return this.planV2(now, scope);
+  }
+
+  planV2(
+    now = new Date(),
+    requestedScope: WorkspaceAccessScope | null = null,
+  ): readonly CoachMonthlyReviewPlanV2[] {
     const calendar = new CoachUsEquitiesReviewCalendarService();
-    const accounts = new CoachReviewDeliveryScheduleRepository(this.database)
-      .listEnabledAccountsV2();
     const settingsRepository = new CoachReviewDeliveryScheduleRepository(this.database);
+    const accounts: readonly Readonly<{
+      scope: WorkspaceAccessScope;
+      settings: CoachAiReviewAccountSettingsV2;
+    }>[] = requestedScope
+      ? (() => {
+          const settings = settingsRepository.readV2(requestedScope);
+          return settings?.isEnabled
+            ? [Object.freeze({ scope: requestedScope, settings })]
+            : [];
+        })()
+      : settingsRepository.listEnabledAccountsV2();
     const reviews = new CoachAiReviewRepository(this.database);
     return Object.freeze(accounts.flatMap<CoachMonthlyReviewPlanV2>((account) => {
       let due = calculateCoachMonthlyReviewDueTimeV2({
@@ -205,7 +226,15 @@ export class CoachMonthlyAiReviewRunner {
         state: "already_requested" as const,
         snapshot: null,
         existingRequestId: existing.requestId,
+        priorIssuedReviewId: existing.priorIssuedReviewId,
       })];
+      const priorIssued = due.period.periodCoverage === "partial_month"
+        ? null
+        : reviews.listIssuedReviewsV2(account.scope, {
+            beforePeriodEndDate: due.period.calendarMonthStartDate,
+            reviewKinds: ["monthly"],
+            limit: 1,
+          }).at(0) ?? null;
       const snapshot = buildCoachMonthlyAiReviewSnapshotV2(
         this.database,
         account.scope,
@@ -256,6 +285,7 @@ WHERE workspace_id = ? AND account_id = ? AND trading_day_review_id = ?
         state,
         snapshot,
         existingRequestId: null,
+        priorIssuedReviewId: priorIssued?.issuedReviewId ?? null,
       })];
     }));
   }

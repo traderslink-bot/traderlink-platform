@@ -13,13 +13,13 @@ import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/data
 import { PlatformAccountProfileReadService } from "@/src/modules/platform/server/identity/platform-account-profile-read-service";
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
 import { AccountManagementClient } from "./account-management-client";
-import { AiReviewDeliverySettings } from "./ai-review-delivery-settings";
+import { AiReviewFrequencySettings } from "./ai-review-delivery-settings";
 import { BrokerConnectionPicker } from "./broker-connection-picker";
 import { MoomooConnectionSettings } from "./moomoo-connection-settings";
 import { ReportingCurrencySettings } from "./reporting-currency-settings";
 
 export const metadata: Metadata = {
-  description: "Review the active TraderLink profile, workspace and Journal account.",
+  description: "Review the active TraderLink profile, workspace and Trade Tracker account.",
   title: "Account | TraderLink Platform",
 };
 
@@ -28,9 +28,9 @@ export const revalidate = 0;
 
 export default async function AccountPage() {
   const scope = await requireTraderLinkPlatformPageScope();
-  const { profile, aiReviewDelivery, moomooConnection } = withReadonlyPlatformDatabase({}, (database) => Object.freeze({
+  const { profile, aiReviewSettings, moomooConnection } = withReadonlyPlatformDatabase({}, (database) => Object.freeze({
     profile: new PlatformAccountProfileReadService(database).get(scope),
-    aiReviewDelivery: new CoachReviewDeliveryScheduleRepository(database).read(scope),
+    aiReviewSettings: new CoachReviewDeliveryScheduleRepository(database).readV2(scope),
     moomooConnection: new MoomooConnectionRepository(database).find(scope),
   }));
   const activeAccount = profile.journalAccounts.find((account) => account.active);
@@ -44,7 +44,7 @@ export default async function AccountPage() {
         </Typography>
         <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">Account</Typography>
         <Typography color="text.secondary" sx={{ maxWidth: 760, mt: 1 }} variant="body2">
-          Your profile, workspace access and trading-account settings use the same stable Platform ownership as Journal data.
+          Your profile, workspace access and trading-account settings use the same stable ownership as your Trade Tracker data.
         </Typography>
       </Box>
 
@@ -71,11 +71,8 @@ export default async function AccountPage() {
         <ReportingCurrencySettings reportingCurrency={profile.reportingCurrency} />
       </DashboardPanel>
 
-      <DashboardPanel title="AI Review delivery">
-        <AiReviewDeliverySettings
-          initialDeliveryDay={aiReviewDelivery?.weeklyDeliveryDay ?? null}
-          initialDeliveryTimeEastern={aiReviewDelivery?.deliveryTimeEastern ?? null}
-        />
+      <DashboardPanel title="AI Review frequency">
+        <AiReviewFrequencySettings initialSettings={aiReviewSettings} />
       </DashboardPanel>
 
       <DashboardPanel title="Broker connections">
@@ -92,7 +89,7 @@ export default async function AccountPage() {
         ) : null}
       </DashboardPanel>
 
-      <DashboardPanel title="Journal accounts">
+      <DashboardPanel title="Trade Tracker accounts">
         <Stack spacing={1.5}>
           {profile.journalAccounts.map((account) => (
             <Box key={account.selectionRef} sx={{ alignItems: { sm: "center" }, border: 1, borderColor: "divider", borderRadius: 1.5, display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 1.5, justifyContent: "space-between", p: 2 }}>
@@ -100,13 +97,13 @@ export default async function AccountPage() {
                 <Typography sx={{ fontWeight: 800 }}>{account.displayName}</Typography>
                 <Typography color="text.secondary" variant="body2">{account.baseCurrency} · {account.tradingTimezone}</Typography>
               </Box>
-              {account.active ? <Chip color="primary" label="Active Journal account" size="small" /> : null}
+              {account.active ? <Chip color="primary" label="Active Trade Tracker account" size="small" /> : null}
             </Box>
           ))}
         </Stack>
       </DashboardPanel>
 
-      <DashboardPanel title="Create a Journal account">
+      <DashboardPanel title="Create a Trade Tracker account">
         <AccountManagementClient
           activeAccountSelectionRef={activeAccount.selectionRef}
           defaultTradingTimezone={profile.workspace.defaultTradingTimezone}

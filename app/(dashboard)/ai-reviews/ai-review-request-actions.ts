@@ -1,0 +1,61 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+
+import type { CoachAiReviewKindV2 } from
+  "@/src/modules/coach/server/coach-ai-review-repository";
+import { CoachAiReviewRequestService } from
+  "@/src/modules/coach/server/coach-ai-review-request-service";
+import { requireTraderLinkPlatformPageScope } from
+  "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { withPlatformDatabase } from
+  "@/src/modules/platform/server/database/open-platform-database";
+
+const REVIEW_KINDS = new Set<CoachAiReviewKindV2>(["weekly", "two_week", "monthly"]);
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
+
+export type RequestAiReviewActionState = Readonly<{
+  ok: boolean;
+  message: string | null;
+}>;
+
+export async function requestAiReview(
+  _previous: RequestAiReviewActionState,
+  formData: FormData,
+): Promise<RequestAiReviewActionState> {
+  const reviewKind = formData.get("reviewKind");
+  const periodStartDate = formData.get("periodStartDate");
+  const periodEndDate = formData.get("periodEndDate");
+  if (typeof reviewKind !== "string" ||
+      !REVIEW_KINDS.has(reviewKind as CoachAiReviewKindV2) ||
+      typeof periodStartDate !== "string" || !DATE_PATTERN.test(periodStartDate) ||
+      typeof periodEndDate !== "string" || !DATE_PATTERN.test(periodEndDate)) {
+    return Object.freeze({
+      ok: false,
+      message: "This review period is no longer available. Refresh and try again.",
+    });
+  }
+
+  try {
+    const scope = await requireTraderLinkPlatformPageScope();
+    const result = withPlatformDatabase({ mode: "runtime" }, (database) =>
+      new CoachAiReviewRequestService(database).requestManualV2(scope, {
+        reviewKind: reviewKind as CoachAiReviewKindV2,
+        periodStartDate,
+        periodEndDate,
+      }));
+    if (result.state === "not_available") {
+      return Object.freeze({
+        ok: false,
+        message: "This review is not ready yet. Refresh to see its current status.",
+      });
+    }
+    revalidatePath("/ai-reviews");
+    return Object.freeze({ ok: true, message: null });
+  } catch {
+    return Object.freeze({
+      ok: false,
+      message: "Your AI Review request could not be saved. Try again.",
+    });
+  }
+}

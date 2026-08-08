@@ -2,9 +2,10 @@
 
 ## Status
 
-Owner-approved product boundary recorded on 2026-08-06. This is a design and
-implementation planning record; no Journal fact, database schema, schedule or
-AI review has changed yet.
+Owner-approved product boundary recorded on 2026-08-06. This document began as
+the design and implementation record and now tracks the accepted implementation
+slices below. No implementation slice rewrites Journal facts or activates an AI
+provider.
 
 Completion-driven generation and late-review behavior were refined with the
 owner on 2026-08-07. The owner then approved the QA simplifications, one-time
@@ -13,10 +14,10 @@ next-day monthly generation. The authoritative market-calendar source and the
 Daily Trade Tracker handoff are now also selected. AI Chat adaptation is a
 later follow-on and does not block AI Review implementation or acceptance.
 
-The active customer implementation still uses the earlier v1 Monday-Sunday
-path. Treat this record as the controlling target; do not represent the v2
-policy as live until its migration, UI, entitlement and provider activation
-checkpoints are separately accepted.
+The active AI-generation path still uses the earlier v1 Monday-Sunday runner.
+Treat this record as the controlling target; do not represent v2 generation as
+live until its UI, entitlement and provider-activation checkpoints are
+separately accepted.
 
 Implementation began on 2026-08-07 with an isolated non-visual server
 checkpoint. The versioned 2026 U.S.-equities calendar snapshot/validator and
@@ -28,7 +29,51 @@ implemented, along with strict monthly v2 extraction/assembly. The v2
 repository and read-only runner planners are integrated. Migration `0037` is
 registered in the shared source manifest and applied in the local development
 database. Provider prompts/calls, runner activation, paid entitlement
-activation and UI behavior remain pending, so the new policy is not live.
+activation and automatic generation remain pending, so the new policy is not
+live for paid customers.
+The first visual-review slice replaces the old weekend delivery picker with
+the three approved frequency choices, adds enabled/off and pending-effective
+states to AI Reviews, and renders saved v2 weekly, two-week and monthly reviews
+through cadence-neutral detail views. Settings saving and review generation
+were deliberately disabled for the first presentation. The owner approved that
+presentation on 2026-08-08 and clarified that visible account language uses
+`Trade Tracker`, not `Journal`. Frequency saving is now connected with
+optimistic revision checks and market-calendar effective dates; review
+generation remained disabled during its visual checkpoint. The next UI slice
+reads the signed-in account only and presents real market-calendar
+period identity, completed/incomplete Trade Tracker review coverage and the
+`in progress`, `ready`, `not ready`, or `requested` state. The owner approved
+this visual checkpoint on 2026-08-08. Its eligible manual-generation buttons
+now use an authenticated request-only server action: the server recalculates
+the current account-scoped plan, freezes the immutable v2 input and private
+evidence manifest, and creates or reuses the one pending period request. This
+path does not reserve provider capacity, begin a generation attempt or call an
+AI provider. Requested cards show completion counts and day states from the
+frozen request snapshot so later Tracker edits cannot be mistaken for captured
+AI evidence. The request service also implements a dormant automatic
+coordinator that creates pending requests only for sealed `automatic_ready`
+periods. Issuance services now expose a scoped pending-request entry point that
+re-reads the immutable stored input and evidence manifest before any future
+attempt. Neither path is scheduled, and no current route can start a provider
+attempt. A
+first-use runtime QA found and corrected the prior-week lookup: ordinary weekly
+periods may resolve the preceding calendar week, while two-week periods still
+cannot cross their persisted cadence anchor. Page availability now reads only
+account-scoped Trade Tracker review status/date rows and request identity; it
+does not build the full analytics/evidence snapshot during page rendering. If
+first enablement occurs after a weekly period has already ended, availability
+shows the next period as `Upcoming` rather than claiming the permanently
+pre-enable week could later become eligible.
+The owner approved the review-coverage drill-down on 2026-08-08. The AI Reviews
+page lists only actual Trade Tracker day pages already created for the review
+period, classifying each as `Marked complete` or `Not marked complete` and
+linking both states to their date. It does not invent rows for future sessions,
+market-closed dates or dates without a Tracker day. Monthly coverage stays
+compact on the card and opens existing days in an in-page right drawer; the
+drawer becomes full width on mobile and has an explicit sticky close control.
+Account does not duplicate this review card. The separate `Weekly and two-week
+reviews` panel remains issued AI-review history. This presentation is
+implemented and owner approved.
 
 Migration number `0037` is now reserved by a registered forward migration
 file. It defines the v2 account-frequency state, unified weekly/two-week/monthly
@@ -92,6 +137,8 @@ Nasdaq Trader currently publishes the 2026 holiday calendar but not a verified
 2027 calendar. The implementation therefore supports verified 2026 periods and
 honestly fails closed outside that range. Add a new reviewed snapshot version
 when Nasdaq publishes the next calendar; do not infer 2027 from NYSE alone.
+This was rechecked against both official sites on 2026-08-08: NYSE lists
+2027/2028, while Nasdaq Trader and Nasdaq's market schedule still stop at 2026.
 
 Focused verification completed: evidence digest recomputation and targeted,
 alias-aware TypeScript compilation of only the four contracts, calendar
@@ -158,11 +205,36 @@ ran. Temporary checkpoint configuration was removed. A later owner-authorized
 normal local migration run recorded exactly migrations `0037` and `0038`;
 `0037` is therefore locally applied while AI Reviews remain inactive.
 
-Remaining activation work is intentionally separate: design paid
-entitlement/packaging, connect an explicitly enabled runner/API path, add
-Account and AI Reviews UI with owner
-visual review, and extend the official-source calendar beyond verified 2026
-coverage.
+Remaining activation work is intentionally separate: verify the request-only
+state transition at its accepted checkpoint, design paid entitlement/packaging,
+connect the dormant automatic request coordinator to an explicitly enabled
+schedule plus a pending-request issuance path, and extend the official-source
+calendar beyond verified 2026 coverage.
+
+## 2026-08-08 request workflow checkpoint
+
+- The owner approved the availability and Trade Tracker coverage presentation.
+- Manual weekly, two-week and monthly actions reauthenticate the page scope,
+  accept only the displayed period identity, recalculate eligibility on the
+  server and create or reuse one immutable v2 request.
+- Prior-review lineage is accepted only from an earlier issued v2 review in the
+  same user/workspace/account scope and compatible cadence family.
+- Duplicate or stale submissions cannot create a second period request. A stale
+  ineligible period returns a refresh message without creating a request.
+- Requested cards read their completion counts and review-day states from the
+  stored input snapshot, not later live Trade Tracker status.
+- A dormant coordinator can create pending requests for `automatic_ready`
+  periods, but no schedule invokes it and it cannot reserve capacity or call a
+  provider.
+- Dormant issuance entry points can later consume a pending weekly/two-week or
+  monthly request by scoped ID; they always use the stored snapshot rather than
+  rebuilding mutable evidence.
+- Focused ESLint, changed-file TypeScript filtering and `git diff --check` pass,
+  and the existing local `/ai-reviews` route returns HTTP 200. The full shared
+  TypeScript project remains nonzero because of unrelated active-worktree
+  errors outside this slice. Per repository instruction, no Vitest or other
+  test suite ran. No migration, provider call, runner activation, Tracker edit,
+  server restart, commit, push or deployment occurred.
 
 ## Approved policy
 

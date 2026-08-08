@@ -75,6 +75,29 @@ export class CoachMonthlyAiReviewIssuanceService {
     private readonly generateV2: CoachMonthlyReviewGeneratorV2 = generateCoachMonthlyAiReviewV2,
   ) {}
 
+  async issueExistingV2(
+    scope: WorkspaceAccessScope,
+    requestId: string,
+    now = new Date(),
+  ): Promise<CoachMonthlyReviewIssuanceResultV2> {
+    const request = this.reviews.readPeriodRequestV2(scope, requestId);
+    if (request.reviewKind !== "monthly") {
+      throw new Error("TRADERLINK_COACH_REVIEW_REQUEST_KIND_MISMATCH");
+    }
+    const input = this.reviews.readInputV2(scope, requestId);
+    if (!("calendarMonth" in input)) {
+      throw new Error("TRADERLINK_COACH_REVIEW_REQUEST_INPUT_MISMATCH");
+    }
+    return this.issueV2(
+      scope,
+      input,
+      this.reviews.readEvidenceManifestV2(scope, requestId),
+      request.requestOrigin,
+      request.priorIssuedReviewId,
+      now,
+    );
+  }
+
   async issueV2(
     scope: WorkspaceAccessScope,
     input: CoachMonthlyAiReviewInputV2,

@@ -264,7 +264,7 @@ export type CoachPeriodicReviewDueTimeInputV2 = Readonly<{
   cadence: CoachPeriodicReviewCadenceV2;
   cadenceAnchorMondayDate?: string | null;
   now: Date;
-  periodOffset?: 0 | -1;
+  periodOffset?: 1 | 0 | -1;
   calendar?: CoachUsEquitiesReviewCalendarService;
 }>;
 
@@ -340,7 +340,7 @@ export function calculateCoachPeriodicReviewDueTimeV2(
     throw new RangeError(`Invalid AI Review cadence: ${input.cadence}`);
   }
   const offset = input.periodOffset ?? 0;
-  if (offset !== 0 && offset !== -1) {
+  if (offset !== 1 && offset !== 0 && offset !== -1) {
     throw new RangeError(`Invalid AI Review period offset: ${offset}`);
   }
 
@@ -360,7 +360,10 @@ export function calculateCoachPeriodicReviewDueTimeV2(
   const cohortsPerPeriod = input.cadence === "weekly" ? 1 : 2;
   const currentPeriodIndex = Math.floor(weeksFromAnchor / cohortsPerPeriod);
   const requestedPeriodIndex = currentPeriodIndex + offset;
-  if (weeksFromAnchor < 0 || requestedPeriodIndex < 0) {
+  if (
+    weeksFromAnchor < 0 ||
+    (input.cadence === "two_week" && requestedPeriodIndex < 0)
+  ) {
     throw new RangeError("Requested AI Review period predates its cadence anchor");
   }
 

@@ -250,7 +250,7 @@ const MONTHLY_REVIEW_TIME_EASTERN_V2 = "08:00" as const;
 export type CoachMonthlyReviewDueTimeInputV2 = Readonly<{
   monthlyEnabledAtUtc: string;
   now: Date;
-  periodOffsetMonths?: 0 | -1;
+  periodOffsetMonths?: 1 | 0 | -1;
   calendar?: CoachUsEquitiesReviewCalendarService;
 }>;
 
@@ -314,7 +314,7 @@ export function calculateCoachMonthlyReviewDueTimeV2(
     throw new RangeError("A valid monthly enablement instant is required");
   }
   const offset = input.periodOffsetMonths ?? 0;
-  if (offset !== 0 && offset !== -1) {
+  if (offset !== 1 && offset !== 0 && offset !== -1) {
     throw new RangeError(`Invalid monthly period offset: ${offset}`);
   }
 

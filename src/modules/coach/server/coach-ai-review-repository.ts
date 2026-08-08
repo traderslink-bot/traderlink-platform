@@ -1345,6 +1345,28 @@ WHERE user_id = ? AND workspace_id = ? AND account_id = ?
         identity.periodEndDate,
       );
       if (existing) return existing;
+      if (priorIssuedReviewId) {
+        const allowedPriorKinds: readonly CoachAiReviewKindV2[] = reviewKind === "monthly"
+          ? ["monthly"]
+          : ["weekly", "two_week"];
+        const prior = this.database.prepare(`SELECT request.period_end_date
+FROM coach_ai_issued_reviews_v2 review
+JOIN coach_ai_review_period_requests_v2 request
+  ON request.coach_ai_review_period_request_id = review.coach_ai_review_period_request_id
+WHERE review.coach_ai_issued_review_id = ? AND request.user_id = ?
+  AND request.workspace_id = ? AND request.account_id = ?
+  AND request.review_kind IN (${allowedPriorKinds.map(() => "?").join(", ")})`)
+          .get(
+            priorIssuedReviewId,
+            scope.userId,
+            scope.workspaceId,
+            accountId(scope),
+            ...allowedPriorKinds,
+          ) as Readonly<{ period_end_date: string }> | undefined;
+        if (!prior || prior.period_end_date >= identity.periodStartDate) {
+          platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
+        }
+      }
       const requestId = createCanonicalUuidV4();
       const createdAtUtc = createCanonicalUtcTimestamp(now);
       const result = this.database.prepare(`INSERT OR IGNORE INTO coach_ai_review_period_requests_v2 (

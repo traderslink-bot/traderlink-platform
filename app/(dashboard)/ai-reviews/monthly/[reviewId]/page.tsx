@@ -10,6 +10,7 @@ import type { Metadata } from "next";
 import { DashboardPage, DashboardPanel } from "../../../../dashboard-template";
 import {
   CoachAiReviewRepository,
+  type CoachAiIssuedReviewRecordV2,
   type CoachMonthlyIssuedReviewRecord,
 } from "@/src/modules/coach/server/coach-ai-review-repository";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -25,7 +26,17 @@ export const revalidate = 0;
 
 const UUID_V4_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
 
-function formatMonthDate(value: string): string {
+type MonthlyReviewView = Readonly<{
+  periodLabel: string;
+  reviewSummary: string;
+  whatImproved: string;
+  whatHeldYouBack: string;
+  focusFollowThrough: string;
+  nextPeriodFocuses: readonly string[];
+  incompleteRecord: string | null;
+}>;
+
+function formatDate(value: string): string {
   return new Intl.DateTimeFormat("en-US", {
     day: "numeric",
     month: "long",
@@ -42,10 +53,31 @@ function formatMonth(value: string): string {
   }).format(new Date(`${value}T12:00:00.000Z`));
 }
 
-function reviewMonthLabel(review: CoachMonthlyIssuedReviewRecord): string {
-  return review.periodCoverage === "partial_month"
-    ? `First month: ${formatMonthDate(review.monthStartDate)} to ${formatMonthDate(review.monthEndDate)}`
-    : formatMonth(review.monthStartDate);
+function v2View(review: CoachAiIssuedReviewRecordV2): MonthlyReviewView {
+  if (review.reviewKind !== "monthly") notFound();
+  return Object.freeze({
+    periodLabel: formatMonth(review.periodStartDate),
+    reviewSummary: review.output.reviewSummary,
+    whatImproved: review.output.whatImproved,
+    whatHeldYouBack: review.output.whatHeldYouBack,
+    focusFollowThrough: review.output.focusFollowThrough,
+    nextPeriodFocuses: review.output.nextPeriodFocuses,
+    incompleteRecord: review.output.incompleteRecord,
+  });
+}
+
+function legacyView(review: CoachMonthlyIssuedReviewRecord): MonthlyReviewView {
+  return Object.freeze({
+    periodLabel: review.periodCoverage === "partial_month"
+      ? `First month: ${formatDate(review.monthStartDate)} to ${formatDate(review.monthEndDate)}`
+      : formatMonth(review.monthStartDate),
+    reviewSummary: review.output.monthlyReview,
+    whatImproved: review.output.progressAcrossMonth,
+    whatHeldYouBack: review.output.recurringFriction,
+    focusFollowThrough: review.output.focusFollowThrough,
+    nextPeriodFocuses: review.output.nextMonthFocuses,
+    incompleteRecord: review.output.incompleteRecord,
+  });
 }
 
 export default async function MonthlyAiReviewPage({
@@ -57,14 +89,24 @@ export default async function MonthlyAiReviewPage({
   if (!UUID_V4_PATTERN.test(reviewId)) notFound();
 
   const scope = await requireTraderLinkPlatformPageScope();
-  let review: CoachMonthlyIssuedReviewRecord;
-  try {
-    review = withReadonlyPlatformDatabase({}, (database) =>
-      new CoachAiReviewRepository(database).readIssuedMonthlyReview(scope, reviewId));
-  } catch (error) {
-    if (isTraderLinkPlatformError(error) && error.code === "TRADERLINK_ACCOUNT_ACCESS_DENIED") notFound();
-    throw error;
-  }
+  const view = withReadonlyPlatformDatabase({}, (database): MonthlyReviewView => {
+    const repository = new CoachAiReviewRepository(database);
+    try {
+      return v2View(repository.readIssuedReviewV2(scope, reviewId));
+    } catch (error) {
+      if (!(isTraderLinkPlatformError(error) && error.code === "TRADERLINK_ACCOUNT_ACCESS_DENIED")) {
+        throw error;
+      }
+    }
+    try {
+      return legacyView(repository.readIssuedMonthlyReview(scope, reviewId));
+    } catch (error) {
+      if (isTraderLinkPlatformError(error) && error.code === "TRADERLINK_ACCOUNT_ACCESS_DENIED") {
+        notFound();
+      }
+      throw error;
+    }
+  });
 
   return (
     <DashboardPage>
@@ -74,30 +116,30 @@ export default async function MonthlyAiReviewPage({
         </Button>
         <Typography component="h1" sx={{ mt: 1 }} variant="h1">Monthly AI Review</Typography>
         <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">
-          {reviewMonthLabel(review)}
+          {view.periodLabel}
         </Typography>
       </Box>
 
-      <DashboardPanel title="Monthly review">
-        <Typography sx={{ whiteSpace: "pre-wrap" }} variant="body1">{review.output.monthlyReview}</Typography>
+      <DashboardPanel title="Review summary">
+        <Typography sx={{ whiteSpace: "pre-wrap" }} variant="body1">{view.reviewSummary}</Typography>
       </DashboardPanel>
 
-      <DashboardPanel title="Progress across the month">
-        <Typography sx={{ whiteSpace: "pre-wrap" }} variant="body1">{review.output.progressAcrossMonth}</Typography>
+      <DashboardPanel title="What improved">
+        <Typography sx={{ whiteSpace: "pre-wrap" }} variant="body1">{view.whatImproved}</Typography>
       </DashboardPanel>
 
-      <DashboardPanel title="Recurring friction">
-        <Typography sx={{ whiteSpace: "pre-wrap" }} variant="body1">{review.output.recurringFriction}</Typography>
+      <DashboardPanel title="What held you back">
+        <Typography sx={{ whiteSpace: "pre-wrap" }} variant="body1">{view.whatHeldYouBack}</Typography>
       </DashboardPanel>
 
       <DashboardPanel title="Focus follow-through">
-        <Typography sx={{ whiteSpace: "pre-wrap" }} variant="body1">{review.output.focusFollowThrough}</Typography>
+        <Typography sx={{ whiteSpace: "pre-wrap" }} variant="body1">{view.focusFollowThrough}</Typography>
       </DashboardPanel>
 
-      <DashboardPanel title="Next month's focuses">
-        {review.output.nextMonthFocuses.length > 0 ? (
+      <DashboardPanel title="Focus until your next review">
+        {view.nextPeriodFocuses.length > 0 ? (
           <Stack component="ol" spacing={0.75} sx={{ m: 0, pl: 3 }}>
-            {review.output.nextMonthFocuses.map((focus, index) => (
+            {view.nextPeriodFocuses.map((focus, index) => (
               <Typography component="li" key={`${focus}-${index}`} variant="body1">{focus}</Typography>
             ))}
           </Stack>
@@ -106,9 +148,9 @@ export default async function MonthlyAiReviewPage({
         )}
       </DashboardPanel>
 
-      {review.output.incompleteRecord !== null ? (
-        <DashboardPanel title="Incomplete record">
-          <Typography sx={{ whiteSpace: "pre-wrap" }} variant="body1">{review.output.incompleteRecord}</Typography>
+      {view.incompleteRecord !== null ? (
+        <DashboardPanel title="Coverage note">
+          <Typography sx={{ whiteSpace: "pre-wrap" }} variant="body1">{view.incompleteRecord}</Typography>
         </DashboardPanel>
       ) : null}
     </DashboardPage>

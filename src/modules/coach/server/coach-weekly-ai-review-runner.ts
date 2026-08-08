@@ -29,6 +29,7 @@ import {
 import {
   CoachReviewDeliveryScheduleRepository,
   resolveCoachEffectiveAiReviewFrequencyV2,
+  type CoachAiReviewAccountSettingsV2,
 } from "./coach-weekly-review-schedule-repository";
 import { CoachUsEquitiesReviewCalendarService } from
   "./market-calendar/coach-us-equities-review-calendar-service";
@@ -96,6 +97,7 @@ export type CoachPeriodicReviewPlanV2 = Readonly<{
     "manual_available" | "automatic_ready" | "already_requested";
   snapshot: CoachPeriodicAiReviewSnapshotV2 | null;
   existingRequestId: string | null;
+  priorIssuedReviewId: string | null;
 }>;
 
 function shiftDate(value: string, days: number): string {
@@ -125,10 +127,30 @@ export class CoachWeeklyAiReviewRunner {
    * Read-only V2 planning. It never creates a request, reserves paid capacity,
    * or calls a provider; a later activation checkpoint may consume the plan.
    */
-  planV2(now = new Date()): readonly CoachPeriodicReviewPlanV2[] {
+  planAccountV2(
+    scope: WorkspaceAccessScope,
+    now = new Date(),
+  ): readonly CoachPeriodicReviewPlanV2[] {
+    return this.planV2(now, scope);
+  }
+
+  planV2(
+    now = new Date(),
+    requestedScope: WorkspaceAccessScope | null = null,
+  ): readonly CoachPeriodicReviewPlanV2[] {
     const calendar = new CoachUsEquitiesReviewCalendarService();
-    const scheduled = new CoachReviewDeliveryScheduleRepository(this.database)
-      .listEnabledAccountsV2();
+    const scheduleRepository = new CoachReviewDeliveryScheduleRepository(this.database);
+    const scheduled: readonly Readonly<{
+      scope: WorkspaceAccessScope;
+      settings: CoachAiReviewAccountSettingsV2;
+    }>[] = requestedScope
+      ? (() => {
+          const settings = scheduleRepository.readV2(requestedScope);
+          return settings?.isEnabled
+            ? [Object.freeze({ scope: requestedScope, settings })]
+            : [];
+        })()
+      : scheduleRepository.listEnabledAccountsV2();
     const reviews = new CoachAiReviewRepository(this.database);
     return Object.freeze(scheduled.flatMap<CoachPeriodicReviewPlanV2>((account) => {
       const marketMonday = mondayDate(calendar.marketDateAt(now));
@@ -147,13 +169,17 @@ export class CoachWeeklyAiReviewRunner {
           calendar,
         });
       if (!current) return [];
-      const due = current.state === "due" ? current : calculateCoachPeriodicReviewDueTimeV2({
-        cadence: effective.frequency as "weekly" | "two_week",
-        cadenceAnchorMondayDate: anchor,
-        now,
-        periodOffset: -1,
-        calendar,
-      });
+      const hasPriorCadencePeriod = current.period.cadence === "weekly" ||
+        current.period.startDate !== anchor;
+      const due = current.state === "due" || !hasPriorCadencePeriod
+        ? current
+        : calculateCoachPeriodicReviewDueTimeV2({
+            cadence: current.period.cadence,
+            cadenceAnchorMondayDate: anchor,
+            now,
+            periodOffset: -1,
+            calendar,
+          });
       const existing = reviews.readPeriodRequestByIdentityV2(
         account.scope,
         due.period.cadence,
@@ -166,6 +192,7 @@ export class CoachWeeklyAiReviewRunner {
         state: "already_requested" as const,
         snapshot: null,
         existingRequestId: existing.requestId,
+        priorIssuedReviewId: existing.priorIssuedReviewId,
       })];
       const priorDue = due.period.cadence === "two_week" &&
         due.period.startDate === anchor ? null : calculateCoachPeriodicReviewDueTimeV2({
@@ -264,6 +291,7 @@ export class CoachWeeklyAiReviewRunner {
         state,
         snapshot,
         existingRequestId: null,
+        priorIssuedReviewId: priorIssued?.issuedReviewId ?? null,
       })];
     }));
   }
