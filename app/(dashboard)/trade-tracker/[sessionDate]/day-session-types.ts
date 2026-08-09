@@ -45,6 +45,37 @@ export type DaySessionTradeAnalyzer = {
     eventId: string;
     executedAt: string;
     fees: string | null;
+    fiveMinuteContext: {
+      completedBeforeExecution: {
+        candleTime: number;
+        ema9Distance: {
+          anchor: string;
+          signedDistance: string;
+          signedDistancePercent: number;
+        } | null;
+        relativeVolume: number | null;
+        turnover: string | null;
+        volume: string;
+      } | null;
+      containingCandle: {
+        candleLocationRatio: number | null;
+        candleTime: number;
+        ema9Distance: {
+          anchor: string;
+          signedDistance: string;
+          signedDistancePercent: number;
+        } | null;
+        executionEdgeDistance: string | null;
+        relativeVolume: number | null;
+        turnover: string | null;
+        volume: string;
+      } | null;
+      preExecutionPartial: {
+        completedMinuteCount: number;
+        turnover: string | null;
+        volume: string;
+      } | null;
+    };
     indicators: {
       adr20: number | null;
       atr14: number | null;
@@ -94,7 +125,15 @@ export type DaySessionTradeAnalyzer = {
         signedDistancePercent: number;
       } | null;
     };
-    patterns: Array<{ kind: string; score: number; time: number }>;
+    patterns: Array<{
+      availableAtExecution: boolean;
+      candlesBeforeExecution: 0 | 1 | 2;
+      kind: string;
+      knownAtTime: number;
+      score: number;
+      time: number;
+      timeframe: "1m" | "5m" | "15m";
+    }>;
     price: string;
     quantity: string;
     sequence: number;

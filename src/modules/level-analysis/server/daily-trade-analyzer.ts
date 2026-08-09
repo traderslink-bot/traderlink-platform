@@ -5,11 +5,16 @@ import {
   calculateAdr20,
   calculateIndicatorPoints,
 } from "@/src/lib/trade-candle-analysis/indicator-context";
-import { detectMicroCapCandlePatterns } from "@/src/lib/trade-candle-analysis/pattern-detection";
+import {
+  aggregateCompleteExecutionTimeframeCandles,
+  detectExecutionPatternContexts,
+  executionTimeframeBucketTime,
+} from "@/src/lib/trade-candle-analysis/execution-pattern-context";
 
 import {
   DAILY_TRADE_ANALYZER_POST_EXIT_MINUTES,
   type DailyTradeAnalyzerEvent,
+  type DailyTradeAnalyzerFiveMinuteContext,
   type DailyTradeAnalyzerEventMetrics,
   type DailyTradeAnalyzerEventPath,
   type DailyTradeAnalyzerEventSnapshot,
@@ -58,6 +63,96 @@ function relativeVolume(candles: readonly TradeCandle[], index: number): number 
   if (earlier.length < 5) return null;
   const average = earlier.reduce((total, volume) => total + volume, 0) / earlier.length;
   return average > 0 ? candidate.volume / average : null;
+}
+
+function summedActivity(candles: readonly TradeCandle[]): Readonly<{
+  turnoverDecimal: string | null;
+  volumeDecimal: string;
+}> {
+  const volumeDecimal = candles.reduce(
+    (total, candle) => total.plus(candle.volume),
+    new Decimal(0),
+  ).toFixed();
+  const turnoverDecimal = candles.every((candle) => candle.turnover !== null)
+    ? candles.reduce(
+        (total, candle) => total.plus(candle.turnover ?? 0),
+        new Decimal(0),
+      ).toFixed()
+    : null;
+  return Object.freeze({ turnoverDecimal, volumeDecimal });
+}
+
+function fiveMinuteExecutionContext(
+  event: DailyTradeAnalyzerEvent,
+  oneMinuteCandles: readonly TradeCandle[],
+  fiveMinuteCandles: readonly TradeCandle[],
+  fiveMinuteIndicatorPoints: ReturnType<typeof calculateIndicatorPoints>,
+  direction: DailyTradeAnalyzerInput["direction"],
+): DailyTradeAnalyzerFiveMinuteContext {
+  const executedAtSeconds = Date.parse(event.executedAtUtc) / 1000;
+  if (!Number.isFinite(executedAtSeconds)) {
+    return Object.freeze({ completedBeforeExecution: null, containingCandle: null, preExecutionPartial: null });
+  }
+  const eventMinute = Math.floor(executedAtSeconds / 60) * 60;
+  const containingTime = executionTimeframeBucketTime(eventMinute, "5m");
+  const containingIndex = fiveMinuteCandles.findIndex((candle) => candle.time === containingTime);
+  const containingCandle = containingIndex >= 0 ? fiveMinuteCandles[containingIndex]! : null;
+  const priorIndex = fiveMinuteCandles.findLastIndex((candle) => candle.time < containingTime);
+  const priorCandle = priorIndex >= 0 ? fiveMinuteCandles[priorIndex]! : null;
+  const executionPrice = new Decimal(event.priceDecimal);
+
+  let candleLocationRatio: number | null = null;
+  let executionEdgeDistanceDecimal: string | null = null;
+  if (containingCandle) {
+    const low = new Decimal(containingCandle.low);
+    const high = new Decimal(containingCandle.high);
+    const range = high.minus(low);
+    if (range.isPositive()) {
+      candleLocationRatio = executionPrice.minus(low).dividedBy(range).toNumber();
+      const favorableEdgeIsHigh = direction === "long" ? !isOpeningEvent(event) : isOpeningEvent(event);
+      const edgeDistance = favorableEdgeIsHigh
+        ? high.minus(executionPrice)
+        : executionPrice.minus(low);
+      executionEdgeDistanceDecimal = Decimal.max(0, edgeDistance).toFixed();
+    }
+  }
+
+  const partialCandles = oneMinuteCandles.filter((candle) =>
+    candle.time >= containingTime && candle.time < eventMinute);
+  const partialActivity = partialCandles.length > 0 ? summedActivity(partialCandles) : null;
+  const containingPoint = containingIndex >= 0 ? fiveMinuteIndicatorPoints[containingIndex] ?? null : null;
+  const priorPoint = priorIndex >= 0 ? fiveMinuteIndicatorPoints[priorIndex] ?? null : null;
+
+  return Object.freeze({
+    completedBeforeExecution: priorCandle
+      ? Object.freeze({
+          candleTime: priorCandle.time,
+          ema9Distance: referenceDistance(executionPrice, priorPoint?.ema9 ?? null),
+          relativeVolume: relativeVolume(fiveMinuteCandles, priorIndex),
+          turnoverDecimal: priorCandle.turnover == null ? null : new Decimal(priorCandle.turnover).toFixed(),
+          volumeDecimal: new Decimal(priorCandle.volume).toFixed(),
+        })
+      : null,
+    containingCandle: containingCandle
+      ? Object.freeze({
+          candleLocationRatio,
+          candleTime: containingCandle.time,
+          ema9Distance: referenceDistance(executionPrice, containingPoint?.ema9 ?? null),
+          executionEdgeDistanceDecimal,
+          relativeVolume: relativeVolume(fiveMinuteCandles, containingIndex),
+          turnoverDecimal: containingCandle.turnover == null
+            ? null
+            : new Decimal(containingCandle.turnover).toFixed(),
+          volumeDecimal: new Decimal(containingCandle.volume).toFixed(),
+        })
+      : null,
+    preExecutionPartial: partialActivity
+      ? Object.freeze({
+          completedMinuteCount: partialCandles.length,
+          ...partialActivity,
+        })
+      : null,
+  });
 }
 
 function isOpeningEvent(event: DailyTradeAnalyzerEvent): boolean {
@@ -281,33 +376,35 @@ function eventMetrics(
   });
 }
 
-function patternsAt(
-  patterns: readonly DailyTradeAnalyzerPattern[],
-  candleTime: number,
-): readonly DailyTradeAnalyzerPattern[] {
-  return Object.freeze(patterns.filter((pattern) => pattern.time === candleTime));
-}
-
 function eventSnapshot(
   event: DailyTradeAnalyzerEvent,
   candles: readonly TradeCandle[],
   indicatorPoints: ReturnType<typeof calculateIndicatorPoints>,
   adr20: number | null,
+  fiveMinuteContext: DailyTradeAnalyzerFiveMinuteContext,
   patterns: readonly DailyTradeAnalyzerPattern[],
   metrics: DailyTradeAnalyzerEventMetrics,
 ): DailyTradeAnalyzerEventSnapshot {
   const candleTime = containingMinute(event.executedAtUtc);
   if (candleTime === null) {
-    return Object.freeze({ candleTime: null, event, indicators: null, metrics, patterns: Object.freeze([]) });
+    return Object.freeze({
+      candleTime: null,
+      event,
+      fiveMinuteContext,
+      indicators: null,
+      metrics,
+      patterns: Object.freeze([]),
+    });
   }
   const index = candles.findIndex((candle) => candle.time === candleTime);
   const point = index >= 0 ? indicatorPoints[index] : null;
   if (!point) {
-    return Object.freeze({ candleTime, event, indicators: null, metrics, patterns: Object.freeze([]) });
+    return Object.freeze({ candleTime, event, fiveMinuteContext, indicators: null, metrics, patterns: Object.freeze([]) });
   }
   return Object.freeze({
     candleTime,
     event,
+    fiveMinuteContext,
     indicators: Object.freeze({
       adr20,
       atr14: point.atr14,
@@ -321,7 +418,7 @@ function eventSnapshot(
       vwap: point.vwap,
     }),
     metrics,
-    patterns: patternsAt(patterns, candleTime),
+    patterns,
   });
 }
 
@@ -364,11 +461,8 @@ export function analyzeDailyTrade(input: DailyTradeAnalyzerInput): DailyTradeAna
   const candles = numericCandles(input.candles);
   const adr20 = calculateAdr20(input.dailyRanges);
   const indicatorPoints = calculateIndicatorPoints(candles, { vwapSource: "turnover" });
-  const patterns = Object.freeze(detectMicroCapCandlePatterns(candles).map((pattern) => Object.freeze({
-    kind: pattern.kind,
-    score: 1,
-    time: pattern.time,
-  })));
+  const fiveMinuteCandles = aggregateCompleteExecutionTimeframeCandles(candles, "5m");
+  const fiveMinuteIndicatorPoints = calculateIndicatorPoints(fiveMinuteCandles, { vwapSource: "turnover" });
   const states = positionStates(events);
   const eventSnapshots = Object.freeze(events.map((event) => {
     const state = states.get(event.eventId);
@@ -378,7 +472,14 @@ export function analyzeDailyTrade(input: DailyTradeAnalyzerInput): DailyTradeAna
       candles,
       indicatorPoints,
       adr20,
-      patterns,
+      fiveMinuteExecutionContext(
+        event,
+        candles,
+        fiveMinuteCandles,
+        fiveMinuteIndicatorPoints,
+        input.direction,
+      ),
+      detectExecutionPatternContexts(candles, Date.parse(event.executedAtUtc) / 1000),
       eventMetrics(event, events, candles, indicatorPoints, input.direction, state),
     );
   }));

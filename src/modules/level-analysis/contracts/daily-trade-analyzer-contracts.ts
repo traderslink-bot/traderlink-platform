@@ -1,6 +1,6 @@
 import type { NormalizedMarketCandle } from "./candle-review-contracts";
 
-export const DAILY_TRADE_ANALYZER_CONTRACT_VERSION = "daily_trade_analyzer_v1" as const;
+export const DAILY_TRADE_ANALYZER_CONTRACT_VERSION = "daily_trade_analyzer_v2" as const;
 export const DAILY_TRADE_ANALYZER_POST_EXIT_MINUTES = Object.freeze([5, 15, 30, 60] as const);
 
 export type DailyTradeAnalyzerEventKind = "entry" | "add" | "partial_exit" | "final_exit";
@@ -31,15 +31,43 @@ export type DailyTradeAnalyzerIndicatorSnapshot = Readonly<{
 }>;
 
 export type DailyTradeAnalyzerPattern = Readonly<{
+  availableAtExecution: boolean;
+  candlesBeforeExecution: 0 | 1 | 2;
   kind: string;
+  knownAtTime: number;
   score: number;
   time: number;
+  timeframe: "1m" | "5m" | "15m";
 }>;
 
 export type DailyTradeAnalyzerReferenceDistance = Readonly<{
   anchorDecimal: string;
   signedDistanceDecimal: string;
   signedDistancePercent: number;
+}>;
+
+export type DailyTradeAnalyzerFiveMinuteContext = Readonly<{
+  completedBeforeExecution: Readonly<{
+    candleTime: number;
+    ema9Distance: DailyTradeAnalyzerReferenceDistance | null;
+    relativeVolume: number | null;
+    turnoverDecimal: string | null;
+    volumeDecimal: string;
+  }> | null;
+  containingCandle: Readonly<{
+    candleLocationRatio: number | null;
+    candleTime: number;
+    ema9Distance: DailyTradeAnalyzerReferenceDistance | null;
+    executionEdgeDistanceDecimal: string | null;
+    relativeVolume: number | null;
+    turnoverDecimal: string | null;
+    volumeDecimal: string;
+  }> | null;
+  preExecutionPartial: Readonly<{
+    completedMinuteCount: number;
+    turnoverDecimal: string | null;
+    volumeDecimal: string;
+  }> | null;
 }>;
 
 export type DailyTradeAnalyzerEventPath = Readonly<{
@@ -75,6 +103,7 @@ export type DailyTradeAnalyzerEventMetrics = Readonly<{
 export type DailyTradeAnalyzerEventSnapshot = Readonly<{
   candleTime: number | null;
   event: DailyTradeAnalyzerEvent;
+  fiveMinuteContext: DailyTradeAnalyzerFiveMinuteContext;
   indicators: DailyTradeAnalyzerIndicatorSnapshot | null;
   metrics: DailyTradeAnalyzerEventMetrics;
   patterns: readonly DailyTradeAnalyzerPattern[];

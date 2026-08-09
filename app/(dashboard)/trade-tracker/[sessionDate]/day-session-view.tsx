@@ -64,7 +64,10 @@ import type {
 import { PositionStyleControl } from "../position-style-control";
 import { ManualExecutionEditDialog } from "../manual-execution-edit-dialog";
 import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
-import { DailyTradeAnalyzerChart } from "./daily-trade-analyzer-chart";
+import {
+  DailyTradeAnalyzerChart,
+  type DailyTradeChartInterval,
+} from "./daily-trade-analyzer-chart";
 
 type ApiResult<T> = {
   data?: T;
@@ -680,7 +683,68 @@ function analyzerPatternName(kind: string): string {
   return labels[kind] ?? kind.replaceAll("_", " ");
 }
 
-type TradeAnalysisSection = Readonly<{ lines: readonly string[]; title: string }>;
+type TradeAnalysisSection = Readonly<{
+  lines: readonly string[];
+  title: string;
+}>;
+
+type TradeAnalysisTimeframe = "1m" | "5m";
+
+type AnalyzerPattern = DaySessionTradeAnalyzer["events"][number]["patterns"][number];
+
+function sentenceCase(value: string): string {
+  return value.length === 0 ? value : `${value[0]!.toUpperCase()}${value.slice(1)}`;
+}
+
+function executionPatternText(
+  pattern: AnalyzerPattern,
+  eventKind: DaySessionTradeAnalyzer["events"][number]["kind"],
+  timezone: string,
+): string {
+  const executionName = eventKind === "entry" || eventKind === "add" ? "entry" : "exit";
+  const patternName = sentenceCase(analyzerPatternName(pattern.kind));
+  const candleLabel = pattern.candlesBeforeExecution === 0
+    ? `the same ${pattern.timeframe} candle as this ${executionName}`
+    : `${pattern.candlesBeforeExecution === 1 ? "one" : "two"} candle${pattern.candlesBeforeExecution === 1 ? "" : "s"} before this ${executionName}`;
+  const timestamp = timeLabel(new Date(pattern.time * 1000).toISOString(), timezone);
+  if (pattern.availableAtExecution) {
+    return `${patternName} appeared on the ${timestamp} ${pattern.timeframe} candle, ${candleLabel}. It was complete before the fill.`;
+  }
+  if (pattern.candlesBeforeExecution === 0) {
+    return `${patternName} formed on the ${timestamp} ${pattern.timeframe} candle, ${candleLabel}. That candle was still forming at the fill, so this is retrospective context.`;
+  }
+  return `${patternName} appeared on the ${timestamp} ${pattern.timeframe} candle, ${candleLabel}, but its required following-candle confirmation was not complete at the fill.`;
+}
+
+function patternLines(
+  event: DaySessionTradeAnalyzer["events"][number],
+  timeframe: AnalyzerPattern["timeframe"],
+  timezone: string,
+): readonly string[] {
+  return event.patterns
+    .filter((pattern) => pattern.timeframe === timeframe)
+    .sort((left, right) => right.candlesBeforeExecution - left.candlesBeforeExecution)
+    .map((pattern) => executionPatternText(pattern, event.kind, timezone));
+}
+
+function closestPatternLine(
+  events: readonly DaySessionTradeAnalyzer["events"][number][],
+  timeframe: AnalyzerPattern["timeframe"],
+  timezone: string,
+  prefix: string,
+): string | null {
+  const candidates = events.flatMap((event) => event.patterns
+    .filter((pattern) => pattern.timeframe === timeframe)
+    .map((pattern) => ({ event, pattern })))
+    .sort((left, right) =>
+      Number(right.pattern.availableAtExecution) - Number(left.pattern.availableAtExecution) ||
+      right.pattern.score - left.pattern.score ||
+      left.event.sequence - right.event.sequence);
+  const selected = candidates[0];
+  return selected
+    ? `${prefix}: ${executionPatternText(selected.pattern, selected.event.kind, timezone)}`
+    : null;
+}
 
 function compactNumber(value: number): string {
   return new Intl.NumberFormat("en-US", { maximumFractionDigits: 1, notation: "compact" }).format(value);
@@ -728,6 +792,34 @@ function weightedReferenceText(
     : `${price(String(Math.abs(distance)), currency)} (${Math.abs(percent).toFixed(2)}%) ${relation} ${label}`;
 }
 
+function weightedFiveMinuteEmaText(
+  events: readonly DaySessionTradeAnalyzer["events"][number][],
+  currency: string,
+): string | null {
+  const distance = weightedAverage(events, (event) => {
+    const candidate = event.fiveMinuteContext.completedBeforeExecution?.ema9Distance;
+    return candidate ? Number(candidate.signedDistance) : null;
+  });
+  const percent = weightedAverage(events, (event) =>
+    event.fiveMinuteContext.completedBeforeExecution?.ema9Distance?.signedDistancePercent ?? null);
+  if (distance === null || percent === null) return null;
+  const relation = distance > 0 ? "above" : distance < 0 ? "below" : "at";
+  return relation === "at"
+    ? "at the 5-minute EMA 9 from the last completed candle"
+    : `${price(String(Math.abs(distance)), currency)} (${Math.abs(percent).toFixed(2)}%) ${relation} the 5-minute EMA 9 from the last completed candle`;
+}
+
+function weightedFiveMinuteRelativeVolumeText(
+  events: readonly DaySessionTradeAnalyzer["events"][number][],
+  label: string,
+): string | null {
+  const relativeVolume = weightedAverage(events, (event) =>
+    event.fiveMinuteContext.completedBeforeExecution?.relativeVolume ?? null);
+  return relativeVolume === null
+    ? null
+    : `Before the ${label.toLowerCase()} fills, the last completed 5-minute candle averaged ${relativeVolume.toFixed(2)}× recent 5-minute volume, weighted by fill size.`;
+}
+
 function combinedActivityText(
   events: readonly DaySessionTradeAnalyzer["events"][number][],
   label: string,
@@ -744,10 +836,31 @@ function combinedActivityText(
   return `${label} candle activity: ${compactNumber(volume)} shares${turnoverAvailable ? ` and ${price(String(turnover), "USD")} turnover` : ""}${unique.length < events.length ? "; fills in the same minute are counted once" : ""}.`;
 }
 
+function combinedFiveMinuteActivityText(
+  events: readonly DaySessionTradeAnalyzer["events"][number][],
+  label: string,
+): string | null {
+  const byCandle = new Map<number, DaySessionTradeAnalyzer["events"][number]>();
+  for (const event of events) {
+    const candle = event.fiveMinuteContext.containingCandle;
+    if (candle) byCandle.set(candle.candleTime, event);
+  }
+  const unique = [...byCandle.values()];
+  if (unique.length === 0) return null;
+  const volume = unique.reduce((total, event) =>
+    total + Number(event.fiveMinuteContext.containingCandle?.volume ?? 0), 0);
+  const turnoverAvailable = unique.every((event) =>
+    event.fiveMinuteContext.containingCandle?.turnover !== null);
+  const turnover = unique.reduce((total, event) =>
+    total + Number(event.fiveMinuteContext.containingCandle?.turnover ?? 0), 0);
+  return `After the containing 5-minute candle${unique.length === 1 ? "" : "s"} closed, ${label.toLowerCase()} activity totaled ${compactNumber(volume)} shares${turnoverAvailable ? ` and ${price(String(turnover), "USD")} turnover` : ""}${unique.length < events.length ? "; fills in the same 5-minute candle are counted once" : ""}. This is retrospective context.`;
+}
+
 function combinedTradeAnalysisSections(
   roundTrip: DaySessionRoundTrip,
   analyzer: DaySessionTradeAnalyzer,
   currency: string,
+  timeframe: TradeAnalysisTimeframe,
 ): TradeAnalysisSection[] {
   const entries = analyzer.events.filter((event) => event.kind === "entry" || event.kind === "add");
   const exits = analyzer.events.filter((event) => event.kind === "partial_exit" || event.kind === "final_exit");
@@ -757,19 +870,32 @@ function combinedTradeAnalysisSections(
   const averageEntry = weightedAverage(entries, (event) => Number(event.price));
   const averageExit = weightedAverage(exits, (event) => Number(event.price));
   const entryReferences = [
-    weightedReferenceText(entries, "vwapDistance", "session VWAP", currency),
-    weightedReferenceText(entries, "ema9Distance", "EMA 9", currency),
+    weightedReferenceText(entries, "vwapDistance", "session VWAP through each execution minute", currency),
+    timeframe === "5m"
+      ? weightedFiveMinuteEmaText(entries, currency)
+      : weightedReferenceText(entries, "ema9Distance", "1-minute EMA 9", currency),
   ].filter((line): line is string => line !== null);
   const exitReferences = [
-    weightedReferenceText(exits, "vwapDistance", "session VWAP", currency),
-    weightedReferenceText(exits, "ema9Distance", "EMA 9", currency),
+    weightedReferenceText(exits, "vwapDistance", "session VWAP through each execution minute", currency),
+    timeframe === "5m"
+      ? weightedFiveMinuteEmaText(exits, currency)
+      : weightedReferenceText(exits, "ema9Distance", "1-minute EMA 9", currency),
   ].filter((line): line is string => line !== null);
-  const entryEdge = weightedAverage(entries, (event) => event.metrics.executionEdgeDistance === null
-    ? null
-    : Number(event.metrics.executionEdgeDistance));
+  const entryEdge = weightedAverage(entries, (event) => {
+    const candidate = timeframe === "5m"
+      ? event.fiveMinuteContext.containingCandle?.executionEdgeDistance ?? null
+      : event.metrics.executionEdgeDistance;
+    return candidate === null ? null : Number(candidate);
+  });
   const exitGiveback = weightedAverage(exits, (event) => event.metrics.givebackFromPriorFavorableExtreme === null
     ? null
     : Number(event.metrics.givebackFromPriorFavorableExtreme));
+  const exitEdge = weightedAverage(exits, (event) => {
+    const candidate = timeframe === "5m"
+      ? event.fiveMinuteContext.containingCandle?.executionEdgeDistance ?? null
+      : event.metrics.executionEdgeDistance;
+    return candidate === null ? null : Number(candidate);
+  });
   const firstEntry = entries[0]!;
   const tradeExcursion = firstEntry.metrics.excursionUntilFlat;
   const entryLines = [
@@ -777,16 +903,31 @@ function combinedTradeAnalysisSections(
       ? `${entries.length} opening execution${entries.length === 1 ? "" : "s"} established ${compactNumber(entryQuantity)} shares.`
       : `${entries.length} opening execution${entries.length === 1 ? "" : "s"} established ${compactNumber(entryQuantity)} shares at a quantity-weighted average of ${price(String(averageEntry), currency)}${eventSpanMinutes(entries) > 0 ? ` over ${eventSpanMinutes(entries)} minutes` : ""}.`,
     entryReferences.length > 0 ? `Across the entry fills, the quantity-weighted execution was ${entryReferences.join(" and ")}.` : null,
-    entryEdge === null ? null : `Average entry precision was ${price(String(entryEdge), currency)} from each fill's favorable edge inside its own 1-minute candle.`,
-    combinedActivityText(entries, "Entry"),
+    timeframe === "5m" ? weightedFiveMinuteRelativeVolumeText(entries, "Entry") : null,
+    entryEdge === null
+      ? null
+      : timeframe === "5m"
+        ? `After each containing 5-minute candle closed, the quantity-weighted execution was ${price(String(entryEdge), currency)} from its favorable edge. This is retrospective candle location, not information available at the fill.`
+        : `Average entry precision was ${price(String(entryEdge), currency)} from each fill's favorable edge inside its own 1-minute candle.`,
+    timeframe === "5m"
+      ? combinedFiveMinuteActivityText(entries, "Entry")
+      : combinedActivityText(entries, "Entry"),
   ].filter((line): line is string => line !== null);
   const exitLines = [
     exits.length === 0
       ? "No reducing execution is available."
       : `${exits.length} exit execution${exits.length === 1 ? "" : "s"} closed ${compactNumber(exitQuantity)} shares${averageExit === null ? "" : ` at a quantity-weighted average of ${price(String(averageExit), currency)}`}${eventSpanMinutes(exits) > 0 ? ` over ${eventSpanMinutes(exits)} minutes` : ""}.`,
     exitReferences.length > 0 ? `Across the exit fills, the quantity-weighted execution was ${exitReferences.join(" and ")}.` : null,
-    exitGiveback === null ? null : `Across the exits, the average giveback was ${price(String(exitGiveback), currency)} per share from the most favorable earlier completed-candle price. Larger exit fills carry more weight in this average.`,
-    combinedActivityText(exits, "Exit"),
+    timeframe === "5m" ? weightedFiveMinuteRelativeVolumeText(exits, "Exit") : null,
+    exitGiveback === null ? null : `Across the exits, the average giveback was ${price(String(exitGiveback), currency)} per share from the most favorable earlier completed 1-minute candle price. Larger exit fills carry more weight in this average.`,
+    exitEdge === null
+      ? null
+      : timeframe === "5m"
+        ? `After each containing 5-minute candle closed, the quantity-weighted exit was ${price(String(exitEdge), currency)} from its favorable edge. This is retrospective candle location, not information available at the fill.`
+        : `Average exit precision was ${price(String(exitEdge), currency)} from each fill's favorable edge inside its own 1-minute candle.`,
+    timeframe === "5m"
+      ? combinedFiveMinuteActivityText(exits, "Exit")
+      : combinedActivityText(exits, "Exit"),
   ].filter((line): line is string => line !== null);
   const outcomeLines = [
     `Trade result: ${money(roundTrip.netPnl, currency)}${roundTrip.gainLossPercent === null ? "" : ` (${percentage(roundTrip.gainLossPercent)})`}.`,
@@ -794,42 +935,64 @@ function combinedTradeAnalysisSections(
       ? `From the first entry until the position was flat (${tradeExcursion.minutesUntilFlat} minutes), price moved as much as ${price(tradeExcursion.favorableMove, currency)} in the trade's favor and ${price(tradeExcursion.adverseMove, currency)} against it.`
       : null,
   ].filter((line): line is string => line !== null);
+  const oneMinuteLines = [
+    closestPatternLine(entries, "1m", roundTrip.timezone, "Entry"),
+    closestPatternLine(exits, "1m", roundTrip.timezone, "Exit"),
+  ].filter((line): line is string => line !== null);
+  const fiveMinuteLines = [
+    closestPatternLine(entries, "5m", roundTrip.timezone, "Entry"),
+    closestPatternLine(exits, "5m", roundTrip.timezone, "Exit"),
+  ].filter((line): line is string => line !== null);
   return [
     { lines: entryLines, title: "Combined entry" },
     { lines: exitLines, title: "Combined exit" },
+    { lines: timeframe === "5m" ? fiveMinuteLines : oneMinuteLines, title: `${timeframe === "5m" ? "5-minute" : "1-minute"} candle patterns` },
     { lines: outcomeLines, title: "Trade outcome" },
-  ];
+  ].filter((section) => section.lines.length > 0);
 }
 
 function executionAnalysisSections(
   roundTrip: DaySessionRoundTrip,
   event: DaySessionTradeAnalyzer["events"][number],
   currency: string,
+  timeframe: TradeAnalysisTimeframe,
 ): TradeAnalysisSection[] {
   const opening = event.kind === "entry" || event.kind === "add";
+  const completedFiveMinute = event.fiveMinuteContext.completedBeforeExecution;
+  const containingFiveMinute = event.fiveMinuteContext.containingCandle;
   const references = [
     event.metrics.vwapDistance
-      ? relativeAnchorText(Number(event.price), Number(event.metrics.vwapDistance.anchor), "session VWAP", currency)
+      ? relativeAnchorText(Number(event.price), Number(event.metrics.vwapDistance.anchor), "session VWAP through the execution minute", currency)
       : null,
-    event.metrics.ema9Distance
-      ? relativeAnchorText(Number(event.price), Number(event.metrics.ema9Distance.anchor), "EMA 9", currency)
-      : null,
+    timeframe === "5m"
+      ? completedFiveMinute?.ema9Distance
+        ? relativeAnchorText(Number(event.price), Number(completedFiveMinute.ema9Distance.anchor), "5-minute EMA 9 from the last completed candle", currency)
+        : null
+      : event.metrics.ema9Distance
+        ? relativeAnchorText(Number(event.price), Number(event.metrics.ema9Distance.anchor), "1-minute EMA 9", currency)
+        : null,
   ].filter((line): line is string => line !== null);
-  const location = event.metrics.candleLocationRatio;
+  const location = timeframe === "5m"
+    ? containingFiveMinute?.candleLocationRatio ?? null
+    : event.metrics.candleLocationRatio;
   const locationText = location === null
     ? null
     : location >= 0.8 ? "near the top" : location <= 0.2 ? "near the bottom" : "inside the middle";
+  const edgeDistance = timeframe === "5m"
+    ? containingFiveMinute?.executionEdgeDistance ?? null
+    : event.metrics.executionEdgeDistance;
   const latestPath = [...event.metrics.postEventPaths]
     .reverse()
     .find((path) => path.observedAt !== null && path.tradeDirectionMove !== null && path.oppositeDirectionMove !== null) ?? null;
-  const nearbyPattern = event.patterns[0] ?? null;
   const executionContext = [
     `${eventName(event.kind)} at ${timeLabel(event.executedAt, roundTrip.timezone)}: ${event.quantity} shares at ${price(event.price, currency)}${references.length > 0 ? `, ${references.join(" and ")}` : ""}.`,
-    event.metrics.executionEdgeDistance === null || !locationText
+    edgeDistance === null || !locationText
       ? null
-      : `${opening ? "Entry" : "Exit"} precision: ${price(event.metrics.executionEdgeDistance, currency)} from the favorable edge of its 1-minute candle; the execution was ${locationText} of that candle's range. The candle location does not establish whether its high or low formed before or after the fill.`,
+      : timeframe === "5m"
+        ? `After the containing 5-minute candle closed, the execution was ${price(edgeDistance, currency)} from its favorable edge and ${locationText} of its range. This is retrospective context; the candle was still forming at the fill.`
+        : `${opening ? "Entry" : "Exit"} precision: ${price(edgeDistance, currency)} from the favorable edge of its 1-minute candle; the execution was ${locationText} of that candle's range. The candle location does not establish whether its high or low formed before or after the fill.`,
   ].filter((line): line is string => line !== null);
-  const marketActivity = [
+  const oneMinuteMarketActivity = [
     event.indicators?.relativeVolume === null || event.indicators?.relativeVolume === undefined
       ? null
       : `Execution-candle volume was ${event.indicators.relativeVolume.toFixed(2)}× its recent 1-minute average (${compactNumber(Number(event.metrics.candleVolume ?? 0))} shares${event.metrics.candleTurnover === null ? "" : `, ${price(event.metrics.candleTurnover, "USD")} turnover`}).`,
@@ -837,6 +1000,21 @@ function executionAnalysisSections(
       ? null
       : `By the end of that candle, the session had traded ${compactNumber(Number(event.metrics.cumulativeSessionVolume))} shares${event.metrics.cumulativeSessionTurnover === null ? "" : ` and ${price(event.metrics.cumulativeSessionTurnover, "USD")} in turnover`}.`,
   ].filter((line): line is string => line !== null);
+  const fiveMinuteMarketActivity = [
+    completedFiveMinute
+      ? `Before the fill, the last completed 5-minute candle (${timeLabel(new Date(completedFiveMinute.candleTime * 1000).toISOString(), roundTrip.timezone)}) traded ${compactNumber(Number(completedFiveMinute.volume))} shares${completedFiveMinute.turnover === null ? "" : ` and ${price(completedFiveMinute.turnover, "USD")} in turnover`}${completedFiveMinute.relativeVolume === null ? "" : `, or ${completedFiveMinute.relativeVolume.toFixed(2)}× its recent 5-minute volume average`}.`
+      : null,
+    event.fiveMinuteContext.preExecutionPartial
+      ? `Before the execution minute, ${event.fiveMinuteContext.preExecutionPartial.completedMinuteCount} completed minute${event.fiveMinuteContext.preExecutionPartial.completedMinuteCount === 1 ? "" : "s"} inside the active 5-minute window had traded ${compactNumber(Number(event.fiveMinuteContext.preExecutionPartial.volume))} shares${event.fiveMinuteContext.preExecutionPartial.turnover === null ? "" : ` and ${price(event.fiveMinuteContext.preExecutionPartial.turnover, "USD")} in turnover`}.`
+      : "The execution occurred before another full 1-minute candle had completed inside its active 5-minute window.",
+    containingFiveMinute
+      ? `After the containing 5-minute candle closed, it had traded ${compactNumber(Number(containingFiveMinute.volume))} shares${containingFiveMinute.turnover === null ? "" : ` and ${price(containingFiveMinute.turnover, "USD")} in turnover`}${containingFiveMinute.relativeVolume === null ? "" : `, or ${containingFiveMinute.relativeVolume.toFixed(2)}× its recent 5-minute volume average`}. This final candle activity was not fully known at the fill.`
+      : null,
+    containingFiveMinute?.ema9Distance
+      ? `After that candle closed, the execution price was ${relativeAnchorText(Number(event.price), Number(containingFiveMinute.ema9Distance.anchor), "resulting 5-minute EMA 9", currency)}. This comparison is retrospective.`
+      : null,
+  ].filter((line): line is string => line !== null);
+  const marketActivity = timeframe === "5m" ? fiveMinuteMarketActivity : oneMinuteMarketActivity;
   const priceResponse = [
     event.metrics.excursionUntilFlat
       ? `After this execution and before the position became flat, price moved as much as ${price(event.metrics.excursionUntilFlat.favorableMove, currency)} in the trade's favor and ${price(event.metrics.excursionUntilFlat.adverseMove, currency)} against it over ${event.metrics.excursionUntilFlat.minutesUntilFlat} minutes. Same-minute extremes are excluded because their order around the fill is unknown.`
@@ -850,17 +1028,37 @@ function executionAnalysisSections(
         : `Within ${latestPath.minutesAfterEvent} minutes after this exit, price continued up to ${price(latestPath.tradeDirectionMove!, currency)} in the former trade direction and reversed up to ${price(latestPath.oppositeDirectionMove!, currency)} the other way.`
       : null,
   ].filter((line): line is string => line !== null);
-  const nearbyPriceAction = [
-    nearbyPattern
-      ? `${analyzerPatternName(nearbyPattern.kind)} at ${timeLabel(new Date(nearbyPattern.time * 1000).toISOString(), roundTrip.timezone)}.`
-      : null,
-  ].filter((line): line is string => line !== null);
+  const oneMinutePatterns = patternLines(event, "1m", roundTrip.timezone);
+  const fiveMinutePatterns = patternLines(event, "5m", roundTrip.timezone);
   return [
     { lines: executionContext, title: "Execution context" },
     { lines: marketActivity, title: "Market activity" },
-    { lines: priceResponse, title: "Price response" },
-    { lines: nearbyPriceAction, title: "Nearby price action" },
+    { lines: timeframe === "5m" ? fiveMinutePatterns : oneMinutePatterns, title: `${timeframe === "5m" ? "5-minute" : "1-minute"} candle patterns` },
+    { lines: priceResponse, title: timeframe === "5m" ? "Price response (1-minute path)" : "Price response" },
   ].filter((section) => section.lines.length > 0);
+}
+
+function TradeAnalysisSectionBlock({
+  keyPrefix,
+  section,
+}: {
+  keyPrefix: string;
+  section: TradeAnalysisSection;
+}) {
+  return (
+    <Box>
+      <Typography sx={{ fontWeight: 850, mb: 0.4 }} variant="body2">
+        {section.title}
+      </Typography>
+      <Stack spacing={0.6}>
+        {section.lines.map((line, index) => (
+          <Typography key={`${keyPrefix}-${section.title}-${index}`} variant="body2">
+            {line}
+          </Typography>
+        ))}
+      </Stack>
+    </Box>
+  );
 }
 
 function analysisTimestamp(seconds: number | null, timezone: string): string | null {
@@ -1217,12 +1415,17 @@ function statusPresentation(
 
 function TradeReview({
   analyzer,
+  analysisInterval,
   availableTags,
   currency,
   designPreview,
+  expandedDesktop,
+  expandedMobile,
   expectedAccountSelectionRef,
   onCatalogChange,
+  onCloseMobile,
   onManageTags,
+  onOpen,
   onRuleStatusChange,
   onSaveNotes,
   onSelectAnalysisEvent,
@@ -1240,12 +1443,17 @@ function TradeReview({
   tradeRules,
 }: {
   analyzer: DaySessionTradeAnalyzer | null;
+  analysisInterval: DailyTradeChartInterval;
   availableTags: DaySessionTradeTag[];
   currency: string;
   designPreview: boolean;
+  expandedDesktop: boolean;
+  expandedMobile: boolean;
   expectedAccountSelectionRef: string;
   onCatalogChange: (tags: DaySessionTradeTag[]) => void;
+  onCloseMobile: () => void;
   onManageTags?: () => void;
+  onOpen: () => void;
   onRuleStatusChange: (
     rule: DaySessionRule,
     status: DaySessionRule["status"],
@@ -1280,16 +1488,22 @@ function TradeReview({
   const selectedAnalysisEvent = selectedAnalysisEventId
     ? analyzer?.events.find((event) => event.eventId === selectedAnalysisEventId) ?? null
     : null;
+  const analysisTimeframe = analysisInterval === "5m" ? "5m" : "1m";
   const analysisSections = analyzer
     ? selectedAnalysisEvent
-      ? executionAnalysisSections(roundTrip, selectedAnalysisEvent, currency)
-      : combinedTradeAnalysisSections(roundTrip, analyzer, currency)
+      ? executionAnalysisSections(roundTrip, selectedAnalysisEvent, currency, analysisTimeframe)
+      : combinedTradeAnalysisSections(roundTrip, analyzer, currency, analysisTimeframe)
     : [];
   const selectedAnalysisTitle = selectedAnalysisEvent
     ? selectedAnalysisEvent.kind === "entry" || selectedAnalysisEvent.kind === "add"
       ? "Entry analysis"
       : "Exit analysis"
     : null;
+  const analysisBaseTitle = analyzer?.status === "pending"
+    ? "Live trade analysis"
+    : analyzer?.status === "ready"
+      ? "Trade analysis"
+      : "Partial trade analysis";
   const ruleControls = customRules.length === 0 ? (
     <Typography color="text.secondary" variant="body2">
       You have no custom rules set up.
@@ -1448,7 +1662,8 @@ function TradeReview({
               <Button
                 onClick={() => onSelectAnalysisEvent(analysisEvent.eventId)}
                 size="small"
-                variant={selectedAnalysisEventId === analysisEvent.eventId ? "contained" : "text"}
+                sx={{ lineHeight: 1.2, minHeight: 26, minWidth: 0, px: 0.75, py: 0.2 }}
+                variant={selectedAnalysisEventId === analysisEvent.eventId ? "contained" : "outlined"}
               >
                 View analysis
               </Button>
@@ -1464,7 +1679,97 @@ function TradeReview({
   );
 
   return (
-    <Box sx={{ px: { xs: 2, md: 2.5 }, py: 2 }}>
+    <>
+      <Box
+        sx={{
+          bgcolor: "rgba(1, 30, 86, 0.02)",
+          display: {
+            xs: expandedMobile ? "none" : "block",
+            md: expandedDesktop ? "none" : "block",
+          },
+          px: { xs: 1, md: 1.5 },
+          py: 0.75,
+        }}
+      >
+        <Button
+          aria-expanded={false}
+          color="inherit"
+          fullWidth
+          onClick={onOpen}
+          sx={{
+            display: "grid",
+            gap: 1,
+            gridTemplateColumns: "auto minmax(0, 1fr) auto auto",
+            justifyContent: "stretch",
+            minHeight: 54,
+            px: 1,
+            textAlign: "left",
+            textTransform: "none",
+          }}
+          variant="text"
+        >
+          <Typography
+            component="span"
+            sx={{
+              bgcolor: tradeLabelColor === "success" ? "success.main" : "error.main",
+              borderRadius: 1,
+              color: tradeLabelColor === "success" ? "success.contrastText" : "error.contrastText",
+              fontWeight: 850,
+              px: 0.75,
+              py: 0.35,
+            }}
+            variant="body2"
+          >
+            Trade {tradeNumber}
+          </Typography>
+          <Box component="span" sx={{ minWidth: 0 }}>
+            <Typography component="span" sx={{ display: "block", fontWeight: 800 }} variant="body2">
+              {timeLabel(roundTrip.entryAt, roundTrip.timezone)} – {timeLabel(roundTrip.exitAt, roundTrip.timezone)}
+            </Typography>
+            <Typography color="text.secondary" component="span" sx={{ display: "block" }} variant="caption">
+              {roundTrip.direction === "long" ? "Long" : "Short"} · {executions.length} execution{executions.length === 1 ? "" : "s"}
+            </Typography>
+          </Box>
+          <Box component="span" sx={{ textAlign: "right" }}>
+            <Typography
+              color={pnlColor(roundTrip.netPnl)}
+              component="span"
+              sx={{ display: "block", fontFamily: "var(--font-geist-mono)", fontWeight: 850 }}
+              variant="body2"
+            >
+              {money(roundTrip.netPnl, currency)}
+            </Typography>
+            <Typography
+              color={pnlColor(roundTrip.gainLossPercent ?? "0")}
+              component="span"
+              sx={{ display: "block", fontFamily: "var(--font-geist-mono)", fontWeight: 800 }}
+              variant="caption"
+            >
+              {percentage(roundTrip.gainLossPercent)}
+            </Typography>
+          </Box>
+          <AddRoundedIcon color="action" fontSize="small" />
+        </Button>
+      </Box>
+      <Box
+        sx={{
+          display: {
+            xs: expandedMobile ? "block" : "none",
+            md: expandedDesktop ? "block" : "none",
+          },
+          px: { xs: 2, md: 2.5 },
+          py: 2,
+        }}
+      >
+      <Button
+        endIcon={<RemoveRoundedIcon />}
+        onClick={onCloseMobile}
+        size="small"
+        sx={{ display: { xs: "inline-flex", md: "none" }, mb: 1, ml: "auto" }}
+        variant="outlined"
+      >
+        Collapse trade
+      </Button>
       <Box
         sx={{
           display: { md: "grid" },
@@ -1722,15 +2027,8 @@ function TradeReview({
             p: 1.5,
           }}
         >
-          <Typography sx={{ fontWeight: 850 }} variant="body2">
-            {analyzer.status === "pending"
-              ? "Live trade analysis (1 min timeframe only)"
-              : analyzer.status === "ready"
-                ? "Trade analysis (1 min timeframe only)"
-                : "Partial trade analysis (1 min timeframe only)"}
-          </Typography>
           {hasVisibleAnalysis(analyzer) ? (
-            <Stack spacing={1} sx={{ mt: 1 }}>
+            <Stack spacing={1}>
               {analyzer.status === "pending" ? (
                 <Typography color="text.secondary" variant="caption">
                   {postExitMinutesAvailable(analyzer) ?? 0} of 60 post-exit minutes are available. The final update is added once 60 minutes have formed.
@@ -1741,35 +2039,29 @@ function TradeReview({
                   The candles available so far are shown. The final post-exit update could not be retrieved.
                 </Typography>
               ) : null}
-              {selectedAnalysisEvent ? (
-                <Button
-                  onClick={() => onSelectAnalysisEvent(null)}
-                  size="small"
-                  sx={{ alignSelf: "flex-start" }}
-                  variant="outlined"
-                >
-                  Combined overview
-                </Button>
-              ) : null}
               {selectedAnalysisTitle ? (
                 <>
+                  <Typography sx={{ fontWeight: 900 }} variant="body1">
+                    {analysisBaseTitle} ({analysisTimeframe === "5m" ? "5-minute" : "1-minute"})
+                  </Typography>
+                  <Button
+                    onClick={() => onSelectAnalysisEvent(null)}
+                    size="small"
+                    sx={{ alignSelf: "flex-start" }}
+                    variant="outlined"
+                  >
+                    Combined overview
+                  </Button>
                   <Typography sx={{ fontWeight: 900 }} variant="body1">
                     {selectedAnalysisTitle}
                   </Typography>
                   <Stack spacing={1.25}>
                     {analysisSections.map((section) => (
-                      <Box key={section.title}>
-                        <Typography sx={{ fontWeight: 850, mb: 0.4 }} variant="body2">
-                          {section.title}
-                        </Typography>
-                        <Stack spacing={0.6}>
-                          {section.lines.map((line, index) => (
-                            <Typography key={`${roundTrip.roundTripKey}-${section.title}-${index}`} variant="body2">
-                              {line}
-                            </Typography>
-                          ))}
-                        </Stack>
-                      </Box>
+                      <TradeAnalysisSectionBlock
+                        key={section.title}
+                        keyPrefix={roundTrip.roundTripKey}
+                        section={section}
+                      />
                     ))}
                   </Stack>
                 </>
@@ -1782,19 +2074,15 @@ function TradeReview({
                   }}
                 >
                   <Stack spacing={1.25} sx={{ minWidth: 0, pr: { xs: 0, md: 2 } }}>
+                    <Typography sx={{ fontWeight: 900 }} variant="body1">
+                      {analysisBaseTitle} ({analysisTimeframe === "5m" ? "5-minute" : "1-minute"})
+                    </Typography>
                     {analysisSections.map((section) => (
-                      <Box key={section.title}>
-                        <Typography sx={{ fontWeight: 850, mb: 0.4 }} variant="body2">
-                          {section.title}
-                        </Typography>
-                        <Stack spacing={0.6}>
-                          {section.lines.map((line, index) => (
-                            <Typography key={`${roundTrip.roundTripKey}-${section.title}-${index}`} variant="body2">
-                              {line}
-                            </Typography>
-                          ))}
-                        </Stack>
-                      </Box>
+                      <TradeAnalysisSectionBlock
+                        key={section.title}
+                        keyPrefix={roundTrip.roundTripKey}
+                        section={section}
+                      />
                     ))}
                   </Stack>
                   <GreenToRedAnalysis
@@ -1819,14 +2107,20 @@ function TradeReview({
               </Box>
             </Stack>
           ) : (
-            <Typography color="text.secondary" sx={{ mt: 0.75 }} variant="body2">
-              Analysis data is not available for this trade yet.
-            </Typography>
+            <Stack spacing={0.75}>
+              <Typography sx={{ fontWeight: 900 }} variant="body1">
+                {analysisBaseTitle} ({analysisTimeframe === "5m" ? "5-minute" : "1-minute"})
+              </Typography>
+              <Typography color="text.secondary" variant="body2">
+                Analysis data is not available for this trade yet.
+              </Typography>
+            </Stack>
           )}
         </Box>
       ) : null}
 
-    </Box>
+      </Box>
+    </>
   );
 }
 
@@ -1997,12 +2291,17 @@ export function DaySessionView({
   const [dayReviewError, setDayReviewError] = useState<string | null>(null);
   const [selectedAnalyzerTradeKeys, setSelectedAnalyzerTradeKeys] = useState<Record<string, string>>({});
   const [selectedAnalysisEventIds, setSelectedAnalysisEventIds] = useState<Record<string, string | null>>({});
+  const [selectedAnalyzerIntervals, setSelectedAnalyzerIntervals] = useState<
+    Record<string, DailyTradeChartInterval>
+  >({});
+  const [expandedMobileTradeKeys, setExpandedMobileTradeKeys] = useState<
+    Record<string, string | null>
+  >({});
   const tradeCount = data.tickers.reduce(
     (count, ticker) => count + ticker.roundTrips.length,
     0,
   );
   const tickerCount = data.tickers.length;
-  const reviewingPastDay = data.date !== data.week.currentSessionDate;
   const dayPresetRules = rules.filter(
     (rule) => rule.applicability === "day" && !rule.custom,
   );
@@ -2225,7 +2524,7 @@ export function DaySessionView({
       const source = event.target;
       if (!(source instanceof Element)) return;
       const link = source.closest("a[href]");
-      if (!link || link.target || link.hasAttribute("download")) return;
+      if (!(link instanceof HTMLAnchorElement) || link.target || link.hasAttribute("download")) return;
       const destination = new URL(link.href, window.location.href);
       if (destination.origin !== window.location.origin ||
           destination.pathname === window.location.pathname) return;
@@ -2488,15 +2787,40 @@ export function DaySessionView({
           const selectedTrade = ticker.roundTrips.find((roundTrip) =>
             roundTrip.roundTripKey === selectedAnalyzerTradeKeys[ticker.stableInstrumentKey],
           ) ?? readyTrade;
+          const selectedInterval = selectedAnalyzerIntervals[ticker.stableInstrumentKey] ?? "1m";
+          const selectTrade = (roundTripKey: string, expandOnMobile: boolean) => {
+            setSelectedAnalyzerTradeKeys((current) => ({
+              ...current,
+              [ticker.stableInstrumentKey]: roundTripKey,
+            }));
+            if (expandOnMobile) {
+              setExpandedMobileTradeKeys((current) => ({
+                ...current,
+                [ticker.stableInstrumentKey]: roundTripKey,
+              }));
+            }
+          };
           return (
-          <Card key={ticker.stableInstrumentKey} variant="outlined">
+          <Card
+            key={ticker.stableInstrumentKey}
+            sx={{ borderBottom: "2px solid #000" }}
+            variant="outlined"
+          >
             {selectedTrade?.analyzer && hasVisibleAnalysis(selectedTrade.analyzer) ? (
               <DailyTradeAnalyzerChart
                 analysis={selectedTrade.analyzer}
                 currency={data.currency}
                 direction={selectedTrade.direction}
+                interval={selectedInterval}
+                onIntervalChange={(interval) => {
+                  setSelectedAnalyzerIntervals((current) => ({
+                    ...current,
+                    [ticker.stableInstrumentKey]: interval,
+                  }));
+                }}
                 selectedEventId={selectedAnalysisEventIds[selectedTrade.roundTripKey] ?? null}
                 symbol={ticker.symbol}
+                tradeLabelColor={pnlColor(selectedTrade.netPnl) === "success.main" ? "success" : "error"}
                 tradeNumber={ticker.roundTrips.findIndex((roundTrip) =>
                   roundTrip.roundTripKey === selectedTrade.roundTripKey,
                 ) + 1}
@@ -2569,40 +2893,50 @@ export function DaySessionView({
                 {ticker.roundTrips.map((roundTrip, index) => (
                   <TradeReview
                     analyzer={roundTrip.analyzer}
+                    analysisInterval={selectedTrade?.roundTripKey === roundTrip.roundTripKey
+                      ? selectedInterval
+                      : "1m"}
                     availableTags={availableTags}
                     currency={data.currency}
                     designPreview={designPreview || pendingExecutions}
+                    expandedDesktop={selectedTrade
+                      ? selectedTrade.roundTripKey === roundTrip.roundTripKey
+                      : index === 0}
+                    expandedMobile={
+                      expandedMobileTradeKeys[ticker.stableInstrumentKey] === roundTrip.roundTripKey
+                    }
                     executions={data.executionActivity.filter((execution) =>
                       execution.roundTripKeys.includes(roundTrip.roundTripKey),
                     )}
                     expectedAccountSelectionRef={data.expectedAccountSelectionRef}
                     key={roundTrip.roundTripKey}
                     onCatalogChange={setAvailableTags}
+                    onCloseMobile={() => {
+                      setExpandedMobileTradeKeys((current) => ({
+                        ...current,
+                        [ticker.stableInstrumentKey]: null,
+                      }));
+                    }}
                     onManageTags={
                       designPreview || readOnly
                         ? undefined
                         : () => setManageTagsOpen(true)
                     }
                     noteState={tradeNoteStates[roundTrip.roundTripKey] ?? "idle"}
+                    onOpen={() => selectTrade(roundTrip.roundTripKey, true)}
                     onRuleStatusChange={saveRuleStatus}
                     onSaveNotes={async () => {
                       await saveTradeNotes(roundTrip.roundTripKey);
                     }}
                     onSelectAnalysisEvent={(eventId) => {
-                      setSelectedAnalyzerTradeKeys((current) => ({
-                        ...current,
-                        [ticker.stableInstrumentKey]: roundTrip.roundTripKey,
-                      }));
+                      selectTrade(roundTrip.roundTripKey, true);
                       setSelectedAnalysisEventIds((current) => ({
                         ...current,
                         [roundTrip.roundTripKey]: eventId,
                       }));
                     }}
                     onSelectForChart={roundTrip.analyzer?.status === "ready"
-                      ? () => setSelectedAnalyzerTradeKeys((current) => ({
-                          ...current,
-                          [ticker.stableInstrumentKey]: roundTrip.roundTripKey,
-                        }))
+                      ? () => selectTrade(roundTrip.roundTripKey, false)
                       : undefined}
                     onTagsChange={(tags) =>
                       setTradeTags((current) => ({

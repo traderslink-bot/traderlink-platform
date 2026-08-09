@@ -14,18 +14,17 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { calculateIndicatorPoints } from "@/src/lib/trade-candle-analysis/indicator-context";
-import { detectMicroCapCandlePatterns } from "@/src/lib/trade-candle-analysis/pattern-detection";
 
 import { TradeAnalyzerAnnotationPrimitive } from "./trade-analyzer-annotation-primitive";
 
 import type { DaySessionTradeAnalyzer } from "./day-session-types";
 
-type ChartInterval = "1m" | "5m" | "15m" | "1h";
+export type DailyTradeChartInterval = "1m" | "5m" | "15m" | "1h";
 
 type ChartCandle = DaySessionTradeAnalyzer["candles"][number];
 type ChartPattern = Readonly<{ kind: string; time: number }>;
 
-const CHART_INTERVAL_SECONDS: Readonly<Record<ChartInterval, number>> = Object.freeze({
+const CHART_INTERVAL_SECONDS: Readonly<Record<DailyTradeChartInterval, number>> = Object.freeze({
   "1m": 60,
   "5m": 5 * 60,
   "15m": 15 * 60,
@@ -33,15 +32,97 @@ const CHART_INTERVAL_SECONDS: Readonly<Record<ChartInterval, number>> = Object.f
 });
 
 const CHART_INTERVALS = Object.freeze(["1m", "5m", "15m", "1h"] as const);
+const CHART_ZOOM_IN_FACTOR = 0.82;
+const CHART_ZOOM_OUT_FACTOR = 1.22;
 
-function chartBucketTime(time: number, interval: ChartInterval): number {
+function zoomChartTimeScale(
+  chart: IChartApi,
+  factor: number,
+  maximumSpan: number,
+  anchorLogical?: number,
+): void {
+  const timeScale = chart.timeScale();
+  const range = timeScale.getVisibleLogicalRange();
+  if (!range) return;
+  const currentSpan = Math.max(1, range.to - range.from);
+  const anchor = anchorLogical ?? range.from + currentSpan / 2;
+  const anchorRatio = Math.max(0, Math.min(1, (anchor - range.from) / currentSpan));
+  const nextSpan = Math.max(12, Math.min(maximumSpan, currentSpan * factor));
+  timeScale.setVisibleLogicalRange({
+    from: anchor - nextSpan * anchorRatio,
+    to: anchor + nextSpan * (1 - anchorRatio),
+  });
+}
+
+function ChartZoomControls({
+  mobile,
+  onZoomIn,
+  onZoomOut,
+}: {
+  mobile: boolean;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+}) {
+  const buttonStyle = {
+    bgcolor: "#011e56",
+    border: 1,
+    borderColor: "#011e56",
+    borderRadius: 1,
+    color: "#fff",
+    cursor: "pointer",
+    fontSize: "1rem",
+    fontWeight: 900,
+    height: 28,
+    lineHeight: 1,
+    p: 0,
+    width: 28,
+    "&:hover": {
+      bgcolor: "#0b3475",
+      borderColor: "#0b3475",
+    },
+  } as const;
+  return (
+    <Stack
+      aria-label="Chart zoom controls"
+      direction="row"
+      role="group"
+      spacing={0.4}
+      sx={mobile
+        ? { bottom: 32, display: { xs: "flex", md: "none" }, position: "absolute", right: 72, zIndex: 7 }
+        : { display: { xs: "none", md: "flex" }, pointerEvents: "auto" }}
+    >
+      <Box
+        aria-label="Zoom chart out"
+        component="button"
+        onClick={onZoomOut}
+        sx={buttonStyle}
+        title="Zoom out"
+        type="button"
+      >
+        {"\u2212"}
+      </Box>
+      <Box
+        aria-label="Zoom chart in"
+        component="button"
+        onClick={onZoomIn}
+        sx={buttonStyle}
+        title="Zoom in"
+        type="button"
+      >
+        +
+      </Box>
+    </Stack>
+  );
+}
+
+function chartBucketTime(time: number, interval: DailyTradeChartInterval): number {
   const seconds = CHART_INTERVAL_SECONDS[interval];
   return Math.floor(time / seconds) * seconds;
 }
 
 function aggregateChartCandles(
   candles: readonly ChartCandle[],
-  interval: ChartInterval,
+  interval: DailyTradeChartInterval,
 ): readonly ChartCandle[] {
   if (interval === "1m") return candles;
   const buckets = new Map<number, {
@@ -89,53 +170,19 @@ function aggregateChartCandles(
 
 function patternsForChartInterval(
   analysis: DaySessionTradeAnalyzer,
-  interval: ChartInterval,
+  interval: DailyTradeChartInterval,
 ): readonly ChartPattern[] {
-  if (interval === "1m") {
-    return analysis.events.flatMap((event) => event.patterns);
-  }
-  const executionBuckets = new Set(analysis.events.flatMap((event) =>
-    event.candleTime === null ? [] : [chartBucketTime(event.candleTime, interval)],
-  ));
-  const sourceCountByBucket = new Map<number, number>();
-  for (const candle of analysis.candles) {
-    const bucket = chartBucketTime(candle.time, interval);
-    sourceCountByBucket.set(bucket, (sourceCountByBucket.get(bucket) ?? 0) + 1);
-  }
-  const requiredSourceCount = CHART_INTERVAL_SECONDS[interval] / CHART_INTERVAL_SECONDS["1m"];
-  const intervalCandles = aggregateChartCandles(analysis.candles, interval).filter((candle) =>
-    sourceCountByBucket.get(candle.time) === requiredSourceCount,
-  ).map((candle) => ({
-    close: Number(candle.close),
-    high: Number(candle.high),
-    low: Number(candle.low),
-    open: Number(candle.open),
-    time: candle.time,
-    turnover: candle.turnover === null ? null : Number(candle.turnover),
-    volume: Number(candle.volume),
-  }));
-  const continuousRuns = intervalCandles.reduce<Array<typeof intervalCandles>>((runs, candle) => {
-    const current = runs.at(-1);
-    const previous = current?.at(-1);
-    if (!previous || candle.time === previous.time + CHART_INTERVAL_SECONDS[interval]) {
-      if (current) current.push(candle);
-      else runs.push([candle]);
-    } else {
-      runs.push([candle]);
-    }
-    return runs;
-  }, []);
-  return continuousRuns.flatMap((candles) => detectMicroCapCandlePatterns(candles)).filter((pattern) =>
-    executionBuckets.has(pattern.time),
-  );
+  if (interval === "1h") return Object.freeze([]);
+  return analysis.events.flatMap((event) => event.patterns)
+    .filter((pattern) => pattern.timeframe === interval);
 }
 
 function initialVisibleSpan(
-  interval: ChartInterval,
+  interval: DailyTradeChartInterval,
   candleCount: number,
   width: number,
 ): number {
-  const bounds: Readonly<Record<ChartInterval, Readonly<{
+  const bounds: Readonly<Record<DailyTradeChartInterval, Readonly<{
     maximum: number;
     minimum: number;
     pixelsPerBar: number;
@@ -272,25 +319,32 @@ export function DailyTradeAnalyzerChart({
   analysis,
   currency,
   direction,
+  interval,
+  onIntervalChange,
   selectedEventId,
   symbol,
+  tradeLabelColor,
   tradeNumber,
 }: {
   analysis: DaySessionTradeAnalyzer;
   currency: string;
   direction: "long" | "short";
+  interval: DailyTradeChartInterval;
+  onIntervalChange: (interval: DailyTradeChartInterval) => void;
   selectedEventId: string | null;
   symbol: string;
+  tradeLabelColor: "success" | "error";
   tradeNumber: number;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
+  const chartCandleCountRef = useRef(0);
   const annotationPrimitiveRef = useRef<TradeAnalyzerAnnotationPrimitive | null>(null);
   const eventCandleIndexesRef = useRef<Map<string, number>>(new Map());
   const selectedEventIdRef = useRef(selectedEventId);
   const pinnedDetailRef = useRef(false);
   const [detail, setDetail] = useState<ChartDetail | null>(null);
-  const [chartInterval, setChartInterval] = useState<ChartInterval>("1m");
+  const chartInterval = interval;
 
   const [mobilePatternKeyOpen, setMobilePatternKeyOpen] = useState(false);
   const chartPatterns = useMemo(
@@ -316,6 +370,17 @@ export function DailyTradeAnalyzerChart({
     const candleByTime = new Map(displayedCandles.map((candle) => [candle.time, candle]));
     const chart = createChart(container, {
       autoSize: true,
+      handleScale: {
+        axisPressedMouseMove: true,
+        mouseWheel: false,
+        pinch: true,
+      },
+      handleScroll: {
+        horzTouchDrag: true,
+        mouseWheel: false,
+        pressedMouseMove: true,
+        vertTouchDrag: false,
+      },
       height: 420,
       layout: { background: { color: "#f8fbff" }, textColor: "#172033" },
       rightPriceScale: { borderColor: "#dce5f0" },
@@ -328,6 +393,20 @@ export function DailyTradeAnalyzerChart({
         timeFormatter: (time: Time) => typeof time === "number" ? easternTime(time) : "",
       },
     });
+    chartCandleCountRef.current = numericCandles.length;
+    const handleWheelZoom = (event: WheelEvent) => {
+      if (!event.ctrlKey && !event.metaKey) return;
+      event.preventDefault();
+      const chartBounds = container.getBoundingClientRect();
+      const anchor = chart.timeScale().coordinateToLogical(event.clientX - chartBounds.left);
+      zoomChartTimeScale(
+        chart,
+        event.deltaY < 0 ? CHART_ZOOM_IN_FACTOR : CHART_ZOOM_OUT_FACTOR,
+        Math.max(30, numericCandles.length + 20),
+        anchor === null ? undefined : anchor,
+      );
+    };
+    container.addEventListener("wheel", handleWheelZoom, { passive: false });
     const candles = chart.addSeries(CandlestickSeries, {
       downColor: "#d14343",
       borderDownColor: "#d14343",
@@ -513,10 +592,12 @@ export function DailyTradeAnalyzerChart({
     }
     return () => {
       window.clearTimeout(clearDetailTimer);
+      container.removeEventListener("wheel", handleWheelZoom);
       chart.unsubscribeCrosshairMove(handleCrosshairMove);
       chart.unsubscribeClick(handleClick);
       candles.detachPrimitive(annotationPrimitive);
       chartRef.current = null;
+      chartCandleCountRef.current = 0;
       annotationPrimitiveRef.current = null;
       eventCandleIndexesRef.current = new Map();
       chart.remove();
@@ -540,6 +621,16 @@ export function DailyTradeAnalyzerChart({
     });
   }, [selectedEventId]);
 
+  const zoomFromControl = (factor: number) => {
+    const chart = chartRef.current;
+    if (!chart) return;
+    zoomChartTimeScale(
+      chart,
+      factor,
+      Math.max(30, chartCandleCountRef.current + 20),
+    );
+  };
+
   return (
     <Box sx={{ bgcolor: "#f8fbff", borderBottom: 1, borderColor: "divider", position: "relative" }}>
       <Stack
@@ -553,14 +644,25 @@ export function DailyTradeAnalyzerChart({
         >
           {symbol}
         </Typography>
-        <Typography sx={{ display: { xs: "none", sm: "block" }, fontWeight: 800 }} variant="body2">
+        <Typography
+          sx={{
+            bgcolor: tradeLabelColor === "success" ? "success.main" : "error.main",
+            borderRadius: 1,
+            color: tradeLabelColor === "success" ? "success.contrastText" : "error.contrastText",
+            display: { xs: "none", sm: "block" },
+            fontWeight: 850,
+            px: 0.75,
+            py: 0.35,
+          }}
+          variant="body2"
+        >
           Trade {tradeNumber}
         </Typography>
         <ToggleButtonGroup
           aria-label="Chart timeframe"
           exclusive
-          onChange={(_event, value: ChartInterval | null) => {
-            if (value) setChartInterval(value);
+          onChange={(_event, value: DailyTradeChartInterval | null) => {
+            if (value) onIntervalChange(value);
           }}
           size="small"
           sx={{
@@ -587,8 +689,13 @@ export function DailyTradeAnalyzerChart({
             <ToggleButton key={interval} value={interval}>{interval}</ToggleButton>
           ))}
         </ToggleButtonGroup>
+        <ChartZoomControls
+          mobile={false}
+          onZoomIn={() => zoomFromControl(CHART_ZOOM_IN_FACTOR)}
+          onZoomOut={() => zoomFromControl(CHART_ZOOM_OUT_FACTOR)}
+        />
         <Typography sx={{ color: "#41516a", fontSize: "0.66rem", fontWeight: 800 }}>
-          Analysis: 1m
+          {chartInterval === "1h" ? "1h chart only" : `Pattern context: ${chartInterval}`}
         </Typography>
         <Typography sx={{ color: "#7b1fa2", display: { xs: "none", md: "block" }, fontWeight: 800 }} variant="caption">
           - Session VWAP
@@ -612,7 +719,7 @@ export function DailyTradeAnalyzerChart({
               maxWidth: 520,
               p: 0.75,
               position: "absolute",
-              right: 12,
+              right: 72,
               top: 10,
               zIndex: 3,
             }}
@@ -627,16 +734,20 @@ export function DailyTradeAnalyzerChart({
             ))}
           </Box>
           <Box
+            aria-controls="mobile-candle-patterns"
+            aria-expanded={mobilePatternKeyOpen}
             component="button"
             onClick={() => setMobilePatternKeyOpen((open) => !open)}
             sx={{
+              alignItems: "center",
               bgcolor: "rgba(255,255,255,0.96)",
               border: 1,
               borderColor: "divider",
               borderRadius: 1,
-              display: { xs: "block", md: "none" },
+              display: { xs: "flex", md: "none" },
               fontSize: "0.68rem",
               fontWeight: 850,
+              gap: 0.55,
               p: 0.6,
               position: "absolute",
               right: 8,
@@ -645,10 +756,14 @@ export function DailyTradeAnalyzerChart({
             }}
             type="button"
           >
-            Price action key
+            Candle patterns
+            <Box aria-hidden component="span" sx={{ fontSize: "0.9rem", lineHeight: 0.8 }}>
+              {mobilePatternKeyOpen ? "−" : "+"}
+            </Box>
           </Box>
           {mobilePatternKeyOpen ? (
             <Box
+              id="mobile-candle-patterns"
               sx={{
                 bgcolor: "rgba(255,255,255,0.98)",
                 border: 1,
@@ -677,6 +792,11 @@ export function DailyTradeAnalyzerChart({
           ) : null}
         </>
       ) : null}
+      <ChartZoomControls
+        mobile
+        onZoomIn={() => zoomFromControl(CHART_ZOOM_IN_FACTOR)}
+        onZoomOut={() => zoomFromControl(CHART_ZOOM_OUT_FACTOR)}
+      />
       {detail ? (
         <Box
           sx={{

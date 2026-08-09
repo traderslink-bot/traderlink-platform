@@ -32,7 +32,7 @@ import {
   type CoachAiDailyCompanionRule,
 } from "@/src/modules/coach/contracts/ai-daily-companion-contracts";
 import type { TradeCandle } from "@/src/lib/trade-candle-analysis/candle-analysis";
-import { detectMicroCapCandlePatterns } from "@/src/lib/trade-candle-analysis/pattern-detection";
+import { detectExecutionPatternContexts } from "@/src/lib/trade-candle-analysis/execution-pattern-context";
 import { analyzeDailyTradeGreenToRed } from "@/src/modules/level-analysis/server/daily-trade-green-to-red-analyzer";
 import { readDailyTradePathMaterialization } from "@/src/modules/level-analysis/server/daily-trade-path-materialization-repository";
 
@@ -213,6 +213,62 @@ function analyzerMetrics(value: unknown): DaySessionTradeAnalyzer["events"][numb
   };
 }
 
+function analyzerFiveMinuteContext(
+  value: unknown,
+): DaySessionTradeAnalyzer["events"][number]["fiveMinuteContext"] {
+  const empty = {
+    completedBeforeExecution: null,
+    containingCandle: null,
+    preExecutionPartial: null,
+  } satisfies DaySessionTradeAnalyzer["events"][number]["fiveMinuteContext"];
+  if (!value || typeof value !== "object" || Array.isArray(value)) return empty;
+  const record = value as Record<string, unknown>;
+  const completed = record.completedBeforeExecution && typeof record.completedBeforeExecution === "object"
+    ? record.completedBeforeExecution as Record<string, unknown>
+    : null;
+  const containing = record.containingCandle && typeof record.containingCandle === "object"
+    ? record.containingCandle as Record<string, unknown>
+    : null;
+  const partial = record.preExecutionPartial && typeof record.preExecutionPartial === "object"
+    ? record.preExecutionPartial as Record<string, unknown>
+    : null;
+  const completedCandleTime = completed ? numberOrNull(completed.candleTime) : null;
+  const completedVolume = completed ? stringOrNull(completed.volumeDecimal) : null;
+  const containingCandleTime = containing ? numberOrNull(containing.candleTime) : null;
+  const containingVolume = containing ? stringOrNull(containing.volumeDecimal) : null;
+  const partialMinuteCount = partial ? numberOrNull(partial.completedMinuteCount) : null;
+  const partialVolume = partial ? stringOrNull(partial.volumeDecimal) : null;
+  return {
+    completedBeforeExecution: completed && completedCandleTime !== null && completedVolume !== null
+      ? {
+          candleTime: completedCandleTime,
+          ema9Distance: analyzerReferenceDistance(completed.ema9Distance),
+          relativeVolume: numberOrNull(completed.relativeVolume),
+          turnover: stringOrNull(completed.turnoverDecimal),
+          volume: completedVolume,
+        }
+      : null,
+    containingCandle: containing && containingCandleTime !== null && containingVolume !== null
+      ? {
+          candleLocationRatio: numberOrNull(containing.candleLocationRatio),
+          candleTime: containingCandleTime,
+          ema9Distance: analyzerReferenceDistance(containing.ema9Distance),
+          executionEdgeDistance: stringOrNull(containing.executionEdgeDistanceDecimal),
+          relativeVolume: numberOrNull(containing.relativeVolume),
+          turnover: stringOrNull(containing.turnoverDecimal),
+          volume: containingVolume,
+        }
+      : null,
+    preExecutionPartial: partial && partialMinuteCount !== null && partialVolume !== null
+      ? {
+          completedMinuteCount: partialMinuteCount,
+          turnover: stringOrNull(partial.turnoverDecimal),
+          volume: partialVolume,
+        }
+      : null,
+  };
+}
+
 function analyzerSnapshotView(row: AnalyzerSnapshotRow): DaySessionTradeAnalyzer["events"][number] | null {
   try {
     const snapshot = JSON.parse(row.snapshot_json) as {
@@ -224,9 +280,18 @@ function analyzerSnapshotView(row: AnalyzerSnapshotRow): DaySessionTradeAnalyzer
         quantityDecimal?: unknown;
         sequence?: unknown;
       };
+      fiveMinuteContext?: unknown;
       indicators?: Record<string, unknown> | null;
       metrics?: unknown;
-      patterns?: Array<{ kind?: unknown; score?: unknown; time?: unknown }>;
+      patterns?: Array<{
+        availableAtExecution?: unknown;
+        candlesBeforeExecution?: unknown;
+        kind?: unknown;
+        knownAtTime?: unknown;
+        score?: unknown;
+        time?: unknown;
+        timeframe?: unknown;
+      }>;
     };
     if (!snapshot.event || typeof snapshot.event.executedAtUtc !== "string" ||
         typeof snapshot.event.priceDecimal !== "string" || typeof snapshot.event.quantityDecimal !== "string") {
@@ -251,13 +316,31 @@ function analyzerSnapshotView(row: AnalyzerSnapshotRow): DaySessionTradeAnalyzer
       eventId: typeof snapshot.event.eventId === "string" ? snapshot.event.eventId : "",
       executedAt: snapshot.event.executedAtUtc,
       fees: stringOrNull(snapshot.event.feesDecimal),
+      fiveMinuteContext: analyzerFiveMinuteContext(snapshot.fiveMinuteContext),
       indicators,
       kind: row.event_kind,
       metrics: analyzerMetrics(snapshot.metrics),
-      patterns: (snapshot.patterns ?? []).flatMap((pattern) =>
-        typeof pattern.kind === "string" && numberOrNull(pattern.score) !== null && numberOrNull(pattern.time) !== null
-          ? [{ kind: pattern.kind, score: pattern.score as number, time: pattern.time as number }]
-          : []),
+      patterns: (snapshot.patterns ?? []).flatMap((pattern) => {
+        const candlesBeforeExecution = numberOrNull(pattern.candlesBeforeExecution);
+        const knownAtTime = numberOrNull(pattern.knownAtTime);
+        const score = numberOrNull(pattern.score);
+        const time = numberOrNull(pattern.time);
+        const timeframe = pattern.timeframe;
+        return typeof pattern.availableAtExecution === "boolean" &&
+          (candlesBeforeExecution === 0 || candlesBeforeExecution === 1 || candlesBeforeExecution === 2) &&
+          typeof pattern.kind === "string" && knownAtTime !== null && score !== null && time !== null &&
+          (timeframe === "1m" || timeframe === "5m" || timeframe === "15m")
+          ? [{
+              availableAtExecution: pattern.availableAtExecution,
+              candlesBeforeExecution,
+              kind: pattern.kind,
+              knownAtTime,
+              score,
+              time,
+              timeframe,
+            }]
+          : [];
+      }),
       price: snapshot.event.priceDecimal,
       quantity: snapshot.event.quantityDecimal,
       sequence: numberOrNull(snapshot.event.sequence) ?? 0,
@@ -267,29 +350,17 @@ function analyzerSnapshotView(row: AnalyzerSnapshotRow): DaySessionTradeAnalyzer
   }
 }
 
-function withNearbyPatterns(
+function withExecutionPatternContexts(
   candles: readonly TradeCandle[],
   events: readonly DaySessionTradeAnalyzer["events"][number][],
 ): DaySessionTradeAnalyzer["events"] {
-  const detected = detectMicroCapCandlePatterns(candles);
-  const candleIndexByTime = new Map(candles.map((candle, index) => [candle.time, index] as const));
   return events.map((event) => {
-    if (event.candleTime === null) return event;
-    const executionCandleIndex = candleIndexByTime.get(event.candleTime);
-    if (executionCandleIndex === undefined) return { ...event, patterns: [] };
-    const relevantTimes = new Map<number, number>();
-    for (let offset = 0; offset <= 2; offset += 1) {
-      const candle = candles[executionCandleIndex - offset];
-      if (candle) relevantTimes.set(candle.time, 1 - offset * 0.15);
-    }
-    const nearby = detected
-      .flatMap((pattern) => {
-        const relevance = relevantTimes.get(pattern.time);
-        return relevance === undefined ? [] : [{ ...pattern, score: relevance }];
-      })
-      .sort((left, right) => right.score - left.score)
-      .slice(0, 2);
-    return { ...event, patterns: nearby };
+    if (event.patterns.length > 0 && event.patterns.every((pattern) => pattern.timeframe)) return event;
+    const executedAtSeconds = Date.parse(event.executedAt) / 1000;
+    return {
+      ...event,
+      patterns: [...detectExecutionPatternContexts(candles, executedAtSeconds)],
+    };
   });
 }
 
@@ -363,7 +434,7 @@ ORDER BY candle_time_utc_seconds`);
             volume: candle.volume_decimal,
           }))
         : [];
-      const eventViews = withNearbyPatterns(
+      const eventViews = withExecutionPatternContexts(
         candleViews.map((candle) => ({
           close: Number(candle.close),
           high: Number(candle.high),
@@ -422,7 +493,7 @@ function annotationSnapshot(
   model: JournalTradingDayReadModel,
   swingRoundTripIds: ReadonlySet<string>,
 ): AnnotationSnapshot {
-  const roundTripsById = new Map(model.tickers.flatMap((ticker) =>
+  const roundTripsById = new Map<string, { id: string; label: string }>(model.tickers.flatMap((ticker) =>
     ticker.roundTrips.map((roundTrip, index) => [
       roundTrip.roundTripId,
       { id: roundTrip.roundTripId, label: `${ticker.symbol} trade ${index + 1}` },

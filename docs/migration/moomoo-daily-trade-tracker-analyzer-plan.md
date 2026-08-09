@@ -2,6 +2,7 @@
 
 **Parent:** [Moomoo Direct Connection Plan](moomoo-direct-connection-plan.md)
 **Progress:** [Moomoo Daily Trade Tracker Analyzer Progress](moomoo-daily-trade-tracker-analyzer-progress.md)
+**Status:** Complete and owner-approved locally on 2026-08-09. Automatic Moomoo execution importing remains a separate later slice.
 
 ## Purpose
 
@@ -132,15 +133,21 @@ slice.
   rejection requires a dominant wick at a tested local extreme; engulfing must
   be meaningful versus recent active candles; and possible exhaustion requires
   exceptional activity, an extended move, a stall at an extreme and confirmation
-  by the following candle. Show at most two structures from the execution candle
-  or its two immediately preceding candles. Each annotation identifies the event,
-  structure time, observed evidence and why it matters; internal keys are never
-  shown without context. Familiar candlestick names such as Hammer or Shooting
-  Star may be used only when their trend and location context is also satisfied.
-  During this pre-acceptance slice these rules define analyzer contract v1. Once
-  accepted, changing any detection threshold or execution-association rule
-  requires a new analyzer contract version and compatible database migration;
-  saved historical analysis must not silently change meaning.
+  by the following candle. For every execution, retain structures from its
+  containing candle and two immediately preceding candles independently for
+  `1m`, `5m` and `15m`. Every stored observation identifies its timeframe,
+  exact source-candle time, distance from the execution candle, and the time at
+  which the completed or confirmed evidence became knowable. This separates
+  exact-execution patterns from nearby patterns for long-term statistics and
+  prevents a following-candle confirmation from being presented as evidence
+  available at the fill. Patterns after the execution window are excluded.
+  Each annotation identifies the event, structure time, observed evidence and
+  why it matters; internal keys are never shown without context. Familiar
+  candlestick names such as Hammer or Shooting Star may be used only when their
+  trend and location context is also satisfied. The expanded saved association
+  rules define analyzer contract v2. Later threshold or association changes
+  require another stored contract version; saved historical analysis must not
+  silently change meaning.
 ### 3.2 Long-term comparison facts
 
 The immutable execution and indicator snapshots support personal comparisons
@@ -169,6 +176,13 @@ Each selected execution groups its trader-facing explanation into four compact
 categories: **Execution context**, **Market activity**, **Price response**, and
 **Nearby price action**. Empty categories are omitted rather than showing an
 unavailable or meaningless section.
+
+Each ticker owns exactly one chart and one expanded trade-detail view. On
+desktop, the selected trade is expanded and every other trade is a compact
+time/direction/execution-count/P&L summary; selecting a summary replaces the
+chart and detail view with that trade. On mobile, every trade begins collapsed,
+opening one trade selects its chart and closes the previously open trade. The
+product must never render one chart per trade.
 
 Combined entry and exit prices are quantity-weighted. Their VWAP/EMA distances
 are also quantity-weighted from each fill's own timestamp; an aggregate fill
@@ -328,14 +342,17 @@ refetching candles or changing the stored continuous facts.
 
 ### 5. Alternate chart timeframes
 
-The saved one-minute tape is the analyzer's canonical evidence. The chart may
-offer `1m`, `5m`, `15m` and `1h` views, but changing the view must not silently
-replace the stored analysis or create a second interpretation of the trade.
+The saved one-minute tape is the analyzer's canonical source evidence. The
+chart may offer `1m`, `5m`, `15m` and `1h` views, but changing the view must not
+silently replace the stored analysis or create a second interpretation of the
+trade.
 EMA 9, candle structures, relative volume, compression/expansion and
 completed-close path timing are timeframe-sensitive. The selected chart view
 may therefore recalculate its visual EMA 9 and aggregate its candle/volume
-display, while the written execution analysis and saved price-action evidence
-remain explicitly one-minute facts.
+display. The selected trade receives a complete combined or individual
+analysis at `1m` and `5m`. The `15m` and `1h` views remain chart-only; saved
+15-minute observations are retained for later long-term statistics without a
+separate higher-timeframe analysis section.
 
 Higher intervals are derived entirely from the saved one-minute candle revision:
 
@@ -345,17 +362,16 @@ Higher intervals are derived entirely from the saved one-minute candle revision:
   bucket closes, while EMA 9 is recalculated for the displayed interval;
 - execution annotations retain the exact execution price and timestamp in their
   details and attach to the containing aggregate candle;
-- each selected view independently detects candle structures from that view's
-  own aggregated OHLCV candles around executions; a five-minute Hammer is
-  therefore never inherited from a one-minute label. Higher-timeframe labels
-  are visual context only and do not replace the saved one-minute analysis.
-  Detection excludes partial aggregate candles and does not cross a missing
-  aggregate-candle gap;
+- `1m`, `5m` and `15m` independently detect and save candle structures from
+  their own OHLCV candles around every execution; a five-minute Hammer is
+  therefore never inherited from a one-minute label. Exact and one/two-candle
+  lookback observations remain separate. Detection excludes partial aggregate
+  candles and does not cross a missing aggregate-candle gap;
 - switching views makes no Moomoo request, writes no new analysis revision and
   does not alter the shared candle cache.
 
-The control must remain compact on desktop and phone, identify `1m analysis` as
-the authoritative basis, and reset the initial viewport around the first
+The control must remain compact on desktop and phone, identify each analysis
+timeframe honestly, and reset the initial viewport around the first
 execution using a useful interval-specific bar count.
 
 ### 6. Deferred import handoff
@@ -422,11 +438,24 @@ not create a separate Daily Tracker product or impose a 60-minute page delay.
     turnover. Displayed VWAP uses the aggregated exact totals and displayed EMA
     9 uses the selected chart interval.
 21. Exact execution price/time remains available in every timeframe. Execution
-    markers attach to the containing aggregate candle, while candle structures
-    are independently detected from the selected interval's OHLCV candles near
-    executions and remain visual context outside the saved `1m` analysis.
-22. Written entry/exit, green-to-red and opportunity analysis remains the saved
-    one-minute contract regardless of the selected visual timeframe.
+    markers attach to the containing aggregate candle, while `1m`, `5m` and
+    `15m` structures attach to their actual source candles.
+22. Every execution snapshot distinguishes exact-candle, one-candle-before and
+    two-candles-before patterns by timeframe and records whether the complete
+    evidence was knowable at the fill. No after-execution pattern is used to
+    judge the execution decision.
+23. Candle-pattern labels are derived independently for the selected `1m`,
+    `5m` or `15m` chart from that interval's own complete bars. The `1h` view
+    remains visual only and does not claim detected structures.
+24. The selected chart timeframe controls the selected trade's analysis for
+    `1m` and `5m`. Five-minute analysis is a complete combined or individual
+    execution view, not a pattern-only summary. It separates the last completed
+    five-minute evidence that was knowable before the fill from the containing
+    five-minute candle that became factual only after it closed. Trade outcome,
+    MFE, MAE and holding-time facts remain unchanged across timeframes. The
+    `15m` and `1h` remain chart-only. Stored 15-minute observations are retained
+    for future long-term statistics but are not shown as a separate
+    higher-timeframe section in the trade-analysis card.
 
 ## Non-goals
 

@@ -3,11 +3,12 @@ import type Database from "better-sqlite3";
 import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { createCanonicalUtcTimestamp, createCanonicalUuidV4 } from "@/src/modules/platform/server/database/platform-migration-contract";
 
-import type {
-  DailyTradeAnalyzerDirection,
-  DailyTradeAnalyzerEvent,
-  DailyTradeAnalyzerEventKind,
-  DailyTradeAnalyzerResult,
+import {
+  DAILY_TRADE_ANALYZER_CONTRACT_VERSION,
+  type DailyTradeAnalyzerDirection,
+  type DailyTradeAnalyzerEvent,
+  type DailyTradeAnalyzerEventKind,
+  type DailyTradeAnalyzerResult,
 } from "../contracts/daily-trade-analyzer-contracts";
 import type { NormalizedMarketCandle } from "../contracts/candle-review-contracts";
 import { persistDailyTradePathMaterialization } from "./daily-trade-path-materialization-repository";
@@ -409,8 +410,9 @@ WHERE daily_trade_analysis_id = ?`).run(input.target.roundTripVersionId,
       this.database.prepare(`INSERT INTO journal_round_trip_daily_trade_analysis_versions (
   daily_trade_analysis_version_id, daily_trade_analysis_id, revision_number,
   market_session_set_version_id, status, analyzer_contract_version, created_at_utc
-) VALUES (?, ?, ?, ?, ?, 'daily_trade_analyzer_v1', ?)`)
-        .run(versionId, analysisId, revision, input.marketSessionSetVersionId, input.status, timestamp);
+) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+        .run(versionId, analysisId, revision, input.marketSessionSetVersionId, input.status,
+          DAILY_TRADE_ANALYZER_CONTRACT_VERSION, timestamp);
       const insertSnapshot = this.database.prepare(`INSERT INTO journal_round_trip_daily_trade_analysis_event_snapshots (
   daily_trade_analysis_version_id, execution_id, event_kind, candle_time_utc_seconds, snapshot_json
 ) VALUES (?, ?, ?, ?, ?)`);

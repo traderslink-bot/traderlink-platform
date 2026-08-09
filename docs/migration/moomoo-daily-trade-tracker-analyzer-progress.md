@@ -1,9 +1,20 @@
 # Moomoo Daily Trade Tracker Analyzer Progress
 
 **Plan:** [Moomoo Daily Trade Tracker Analyzer Plan](moomoo-daily-trade-tracker-analyzer-plan.md)
+**Status:** Complete and owner-approved locally on 2026-08-09. Automatic Moomoo execution importing remains a separate later slice.
 
-## Current checkpoint — 2026-08-07
+## Current checkpoint — 2026-08-09
 
+- [x] Implemented the owner-approved multi-trade presentation. Every ticker
+  retains one chart; desktop expands only the selected trade while other trades
+  become compact summaries, and mobile starts with every trade collapsed.
+  Selecting another trade replaces the chart and expanded detail instead of
+  adding another chart or full analysis card.
+- [x] Backed up the local development database and added six boundary-confirmed
+  synthetic trades for owner review: MB, NAMI and DSY now each have three
+  completed trades with four executions apiece. All nine affected analyses were
+  rebuilt from the existing 960-bar saved Moomoo sessions with no provider call,
+  and all nine current round trips have current `ready` analyses.
 - [x] Confirmed same-day Moomoo one-minute candles and the owner-approved
   live-analysis behavior: show real candles now, then make one final fetch at
   exit plus 60 minutes.
@@ -194,18 +205,93 @@
   execution-analysis controls, successful selection, no error overlay and no
   `NaN`/undefined analysis text. An existing Material UI hydration style
   warning remains outside this analyzer slice.
-- [ ] Complete owner review of the actual detected structures on the saved
-  NAMI, MB, DSY, WWR and YJ examples. Visual placement approval does not by
-  itself accept detector usefulness.
-- [ ] Visually compare cumulative turnover/volume VWAP with Moomoo at the same
-  timestamp and extended-session anchor before final owner acceptance.
-- [ ] Exercise the approved post-session reconciliation with a connected account
-  after the due time, confirming one shared fetch, a new immutable session and
-  analysis revision, and no change to executions or notes.
-- [ ] Complete the remaining connected-account post-session reconciliation and
-  exact Moomoo VWAP comparisons before final analyzer acceptance. The approved
-  implementation receives a narrow local checkpoint commit now; these open
-  evidence checks remain explicit and are not implied complete by UI approval.
+- [x] Completed the delegated detector-evidence audit on NAMI, MB, DSY, WWR and
+  YJ. Only two canonical one-minute labels are present. DSY's 09:16 bullish
+  expansion has a 3.68x baseline body, 1.63x median range, 2.85x median volume
+  and a close in the top 8% of its range. NAMI's 10:34 confirmed Hammer follows
+  a 1.83-median-range decline, tests the local low, has a 66% lower wick and
+  16% upper wick, and receives bullish next-candle confirmation. MB, WWR and YJ
+  correctly force no label. All saved event patterns replay exactly.
+- [x] Completed a new direct Moomoo comparison for all five already-requested
+  symbols. The broker returned 960 finalized 04:01-20:00 candles per symbol;
+  all 4,800 OHLCV/turnover rows matched the saved finalized revisions exactly.
+  At every execution, cumulative turnover divided by cumulative volume matched
+  the saved VWAP with a maximum floating-point difference below `7e-15`.
+- [x] Verified the connected post-session lifecycle from durable evidence. Every
+  symbol has both a pre-due and post-due immutable session version, every job
+  completed after its scheduled reconciliation time, and each current analysis
+  points to the finalized full-session revision. Static write-set review shows
+  the worker mutates only Level Analysis session/job/analysis/materialization
+  tables; it has no execution or note mutation path.
+- [x] Owner approved the corrected pattern-context hierarchy: exact and nearby
+  patterns remain distinct; only the execution candle and two preceding candles
+  are eligible; patterns after the execution are excluded. One-minute evidence
+  describes execution timing, five-minute evidence describes setup and
+  confirmation, fifteen-minute evidence is expandable broader context, and the
+  one-hour view remains visual only.
+- [x] Persist analyzer contract v2 pattern context for every execution with
+  timeframe, source candle, execution-candle distance, and factual evidence
+  availability at the fill. Migration `0042` preserves the immutable analyzer
+  graph while admitting `daily_trade_analyzer_v2`; new revisions now store the
+  structured contexts instead of relying on the temporary one-minute shortcut.
+- [x] Rebuild the five cached sample analyses without provider requests and
+  audit the new `1m`, `5m` and `15m` observations against their source candles.
+  Ten current round-trip analyses rebuilt from the saved cache with 48 stored
+  contexts. All five symbols passed exact pattern replay, completed-job,
+  full-session, turnover and post-session reconciliation checks; the largest
+  event VWAP replay difference remained below `7e-15`.
+- [x] Completed focused desktop/mobile owner review and final detector
+  calibration, restoring final local analyzer acceptance on 2026-08-09.
+- [x] Owner corrected the presentation contract before acceptance: a nearby
+  five-minute candle-pattern line is not a complete five-minute trade analysis,
+  and `setup and confirmation` must not be claimed without that exact evidence.
+- [x] Persist per-execution five-minute activity, EMA 9 and containing-candle
+  context while keeping known-before-fill evidence separate from retrospective
+  completed-candle evidence. The snapshot separately stores the last completed
+  five-minute candle, completed one-minute activity already available inside
+  the active five-minute window, and the final containing candle.
+- [x] Synchronize the chart selector with a complete `Trade analysis
+  (5-minute)` combined/individual view. Keep the default complete analysis at
+  `1m`; keep `15m` and `1h` as chart-only. Stored 15-minute observations remain
+  available for future long-term statistics, but the owner removed the separate
+  higher-timeframe section from the analysis card on 2026-08-08. The mobile
+  chart control now uses the exact label `Candle patterns` instead of the
+  broader and inaccurate `Price action key`, with an explicit `+`/`−`
+  expansion-state indicator. Execution-row `View analysis` actions now use the
+  same compact button treatment as `Edit`. Analysis cards now rely on their
+  explicit `Trade analysis (1-minute)` or `Trade analysis (5-minute)` title
+  without an explanatory subtitle, and detected structures are labelled
+  `1-minute candle patterns` or `5-minute candle patterns` rather than the
+  broader `price action`. On desktop, the Trade analysis heading now begins
+  inside the left analysis column using the same heading size and top alignment
+  as `Green-to-red analysis`. Chart interaction now leaves ordinary mouse-wheel
+  and vertical touch gestures to page scrolling. Horizontal touch drag still
+  pans, pinch still zooms, desktop `Ctrl`/`Cmd` + wheel deliberately zooms around
+  the pointer, and visible `−`/`+` controls provide explicit zoom. The controls
+  sit beside the timeframe selector on desktop and remain floating at the lower
+  right on mobile. The
+  cache-only rebuild updated 10 current analyses with 20 execution-level
+  five-minute contexts. Independent replay passed for all five test symbols,
+  alongside exact pattern replay, turnover, full-session and reconciliation
+  checks.
+- [x] Owner approved the final multi-trade Tracker presentation and chart
+  refinements on 2026-08-09. The chart's selected Trade label now matches the
+  trade's green/red result treatment with white text; explicit zoom controls
+  use the approved navy/white styling; the desktop candle-pattern key remains
+  clear of the price scale; and each ticker card has a definite black bottom
+  boundary.
+- [x] Completed the final bounded browser regression at 1440px desktop and
+  390px mobile. Trade switching, five-minute combined analysis, individual
+  execution analysis, explicit zoom, ordinary page scrolling over charts and
+  the mobile Candle Patterns expansion all passed. Five ticker charts rendered,
+  no horizontal mobile overflow or framework error overlay was present, and no
+  browser console/page error was observed.
+- [x] Completed the final cache-only acceptance audit across all 11 current
+  analyses for DSY, MB, NAMI, WWR and YJ. One-minute pattern replay,
+  five-minute context replay, existing job completion, pre/post-reconciliation
+  coverage, finalized-session use, full extended-session requests and exact
+  turnover coverage all passed. Focused ESLint, Tracker/analyzer TypeScript
+  filtering and diff-whitespace verification also pass.
 
 ## Boundary
 
