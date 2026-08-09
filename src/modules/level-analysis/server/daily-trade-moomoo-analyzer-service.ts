@@ -43,6 +43,9 @@ export class DailyTradeMoomooAnalyzerService {
     const now = this.now();
     const queued: string[] = [];
     for (const roundTripId of [...new Set(roundTripIds)]) {
+      if (this.repository.currentAnalysisMatchesProjection(scope, roundTripId)) {
+        continue;
+      }
       const target = this.repository.findEligibleTarget(scope, roundTripId);
       if (!target) continue;
       const finalExitMilliseconds = Date.parse(target.finalExitAtUtc);

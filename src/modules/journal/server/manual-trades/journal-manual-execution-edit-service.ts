@@ -1,4 +1,5 @@
 import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
+import type { DailyTradeMoomooAnalyzerService } from "@/src/modules/level-analysis/server/daily-trade-moomoo-analyzer-service";
 import {
   createCanonicalUtcTimestamp,
   createCanonicalUuidV4,
@@ -53,6 +54,10 @@ export class JournalManualExecutionEditService {
     private readonly imports: JournalImportRepository,
     private readonly decisions: JournalDataDecisionService,
     private readonly authority: JournalManualTradePreviewAuthority,
+    private readonly dailyTradeAnalyzer?: Pick<
+      DailyTradeMoomooAnalyzerService,
+      "queueAfterJournalRebuild"
+    >,
   ) {}
 
   private editRef(
@@ -139,7 +144,7 @@ export class JournalManualExecutionEditService {
         input.feesDecimal.trim().length === 0
       ? null
       : normalizeBrokerDecimal(input.feesDecimal, "feesDecimal");
-    return this.imports.immediate(() => {
+    const correction = this.imports.immediate(() => {
       const timestamp = createCanonicalUtcTimestamp(input.now);
       const instrumentId = this.imports.findOrCreateInstrument({
         instrumentId: createCanonicalUuidV4(),
@@ -185,6 +190,32 @@ export class JournalManualExecutionEditService {
         idempotencyKey: input.idempotencyKey,
         now: input.now,
       });
+    });
+    const affectedRoundTripIds = Object.freeze([
+      ...new Set(
+        correction.rebuilds
+          .filter((rebuild) => rebuild.status === "rebuilt")
+          .flatMap((rebuild) => rebuild.roundTripIds),
+      ),
+    ]);
+    let queuedRoundTripIds: readonly string[] = Object.freeze([]);
+    try {
+      queuedRoundTripIds = this.dailyTradeAnalyzer?.queueAfterJournalRebuild(
+        scope,
+        affectedRoundTripIds,
+      ) ?? Object.freeze([]);
+    } catch {
+      // The Journal correction is already committed. Analyzer availability
+      // cannot turn that successful fact correction into a reported failure.
+    }
+    return Object.freeze({
+      executionVersionId: correction.executionVersionId,
+      openedFollowupDecisionIds: correction.openedFollowupDecisionIds,
+      rebuildCount: correction.rebuildCount,
+      analysisRefresh: Object.freeze({
+        affectedTradeCount: affectedRoundTripIds.length,
+        queuedTradeCount: queuedRoundTripIds.length,
+      }),
     });
   }
 }

@@ -147,11 +147,19 @@ function setup() {
     new JournalSwingNoteRepository(database),
     styles,
   );
+  const queuedAnalysisRoundTripIds: Array<readonly string[]> = [];
   const manualExecutionEdits = new JournalManualExecutionEditService(
     new JournalExecutionReconciliationRepository(database),
     importRepository,
     decisions,
     authority,
+    {
+      queueAfterJournalRebuild: (_scope, roundTripIds) => {
+        const queued = Object.freeze([...roundTripIds]);
+        queuedAnalysisRoundTripIds.push(queued);
+        return queued;
+      },
+    },
   );
   const annotations = new JournalAnnotationService(
     new JournalAnnotationRepository(database),
@@ -172,6 +180,7 @@ function setup() {
       previews,
     ),
     manualExecutionEdits,
+    queuedAnalysisRoundTripIds,
     styles,
     swingNotes,
     trackerReads: new JournalTradeTrackerReadService(database, styles, swingNotes),
@@ -336,7 +345,11 @@ FROM journal_round_trips WHERE lifecycle_state = 'active'`).get() as {
           now: new Date("2026-08-02T23:05:00.000Z"),
         },
       );
-      expect(result).toMatchObject({ rebuildCount: 1 });
+      expect(result).toMatchObject({
+        analysisRefresh: { affectedTradeCount: 1, queuedTradeCount: 1 },
+        rebuildCount: 1,
+      });
+      expect(context.queuedAnalysisRoundTripIds).toEqual([[roundTrip.round_trip_id]]);
       expect(context.database.prepare(`SELECT COUNT(*) AS count
 FROM journal_execution_versions`).get()).toEqual({ count: 3 });
       expect(context.database.prepare(`SELECT version.price_decimal, version.version_number

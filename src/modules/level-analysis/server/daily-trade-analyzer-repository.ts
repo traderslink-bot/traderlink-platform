@@ -126,6 +126,31 @@ export class DailyTradeAnalyzerRepository {
     ).all().some((column) => column.name === "turnover_decimal");
   }
 
+  currentAnalysisMatchesProjection(scope: AccountScope, roundTripId: string): boolean {
+    const row = this.database.prepare<[string, string, string], {
+      matches_projection: 0 | 1;
+    }>(`SELECT
+  CASE WHEN analyzed_version.projection_fingerprint_sha256 = current_version.projection_fingerprint_sha256
+    THEN 1 ELSE 0 END AS matches_projection
+FROM journal_round_trips round_trip
+JOIN journal_round_trip_versions current_version
+  ON current_version.workspace_id = round_trip.workspace_id
+  AND current_version.account_id = round_trip.account_id
+  AND current_version.round_trip_version_id = round_trip.current_version_id
+LEFT JOIN journal_round_trip_daily_trade_analyses analysis
+  ON analysis.workspace_id = round_trip.workspace_id
+  AND analysis.account_id = round_trip.account_id
+  AND analysis.round_trip_id = round_trip.round_trip_id
+LEFT JOIN journal_round_trip_versions analyzed_version
+  ON analyzed_version.workspace_id = analysis.workspace_id
+  AND analyzed_version.account_id = analysis.account_id
+  AND analyzed_version.round_trip_version_id = analysis.round_trip_version_id
+WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
+  AND round_trip.round_trip_id = ? AND round_trip.lifecycle_state = 'active'`)
+      .get(scope.workspaceId, scope.accountId, roundTripId);
+    return row?.matches_projection === 1;
+  }
+
   findEligibleTarget(scope: AccountScope, roundTripId: string): DailyTradeAnalyzerTarget | null {
     const rows = this.database.prepare<[string, string, string], TargetRow>(`SELECT
   round_trip.round_trip_id,

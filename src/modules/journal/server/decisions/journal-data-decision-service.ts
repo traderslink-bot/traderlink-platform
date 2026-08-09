@@ -737,6 +737,7 @@ export class JournalDataDecisionService {
   ): Readonly<{
     executionVersionId: string;
     openedFollowupDecisionIds: readonly string[];
+    rebuilds: readonly JournalChainRebuildResult[];
     rebuildCount: number;
   }> {
     const eligible = this.reconciliations.listEligibleManualExecutions(
@@ -797,6 +798,7 @@ export class JournalDataDecisionService {
         openedFollowupDecisionIds: Object.freeze(
           followups.map((decision) => decision.decisionId),
         ),
+        rebuilds,
         rebuildCount: rebuilds.length,
       });
     });

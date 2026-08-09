@@ -33,7 +33,10 @@ import {
 } from "@/src/modules/coach/contracts/ai-daily-companion-contracts";
 import type { TradeCandle } from "@/src/lib/trade-candle-analysis/candle-analysis";
 import { detectExecutionPatternContexts } from "@/src/lib/trade-candle-analysis/execution-pattern-context";
-import { analyzeDailyTradeGreenToRed } from "@/src/modules/level-analysis/server/daily-trade-green-to-red-analyzer";
+import {
+  analyzeDailyTradeGreenToRed,
+  UNAVAILABLE_DAILY_TRADE_GREEN_TO_RED_ANALYSIS,
+} from "@/src/modules/level-analysis/server/daily-trade-green-to-red-analyzer";
 import { readDailyTradePathMaterialization } from "@/src/modules/level-analysis/server/daily-trade-path-materialization-repository";
 
 import type {
@@ -115,10 +118,15 @@ type AnnotationSnapshot = Readonly<{
 }>;
 
 type AnalyzerRow = Readonly<{
-  daily_trade_analysis_version_id: string;
+  analysis_projection_fingerprint_sha256: string | null;
+  current_round_trip_version_id: string;
+  current_projection_fingerprint_sha256: string;
+  daily_trade_analysis_version_id: string | null;
+  has_pending_job: 0 | 1;
   market_session_set_version_id: string | null;
   round_trip_id: string;
-  status: DaySessionTradeAnalyzer["status"];
+  round_trip_version_id: string | null;
+  status: DaySessionTradeAnalyzer["status"] | null;
 }>;
 
 type AnalyzerSnapshotRow = Readonly<{
@@ -381,15 +389,41 @@ function readDailyTradeAnalyzers(
       ? "turnover_decimal"
       : "NULL AS turnover_decimal";
     const analysisForRoundTrip = database.prepare<[string, string, string], AnalyzerRow>(`SELECT
-  analysis.round_trip_id,
+  round_trip.round_trip_id,
+  round_trip.current_version_id AS current_round_trip_version_id,
+  current_version.projection_fingerprint_sha256 AS current_projection_fingerprint_sha256,
+  analysis.round_trip_version_id,
+  analyzed_version.projection_fingerprint_sha256 AS analysis_projection_fingerprint_sha256,
   analysis.status,
   version.daily_trade_analysis_version_id,
-  version.market_session_set_version_id
-FROM journal_round_trip_daily_trade_analyses analysis
-JOIN journal_round_trip_daily_trade_analysis_versions version
+  version.market_session_set_version_id,
+  EXISTS (
+    SELECT 1
+    FROM level_analysis_daily_trade_jobs job
+    WHERE job.workspace_id = round_trip.workspace_id
+      AND job.account_id = round_trip.account_id
+      AND job.round_trip_id = round_trip.round_trip_id
+      AND job.round_trip_version_id = round_trip.current_version_id
+      AND job.status IN ('queued', 'leased')
+  ) AS has_pending_job
+FROM journal_round_trips round_trip
+JOIN journal_round_trip_versions current_version
+  ON current_version.workspace_id = round_trip.workspace_id
+  AND current_version.account_id = round_trip.account_id
+  AND current_version.round_trip_version_id = round_trip.current_version_id
+LEFT JOIN journal_round_trip_daily_trade_analyses analysis
+  ON analysis.workspace_id = round_trip.workspace_id
+  AND analysis.account_id = round_trip.account_id
+  AND analysis.round_trip_id = round_trip.round_trip_id
+LEFT JOIN journal_round_trip_daily_trade_analysis_versions version
   ON version.daily_trade_analysis_id = analysis.daily_trade_analysis_id
   AND version.revision_number = analysis.current_revision
-WHERE analysis.workspace_id = ? AND analysis.account_id = ? AND analysis.round_trip_id = ?`);
+LEFT JOIN journal_round_trip_versions analyzed_version
+  ON analyzed_version.workspace_id = analysis.workspace_id
+  AND analyzed_version.account_id = analysis.account_id
+  AND analyzed_version.round_trip_version_id = analysis.round_trip_version_id
+WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
+  AND round_trip.round_trip_id = ? AND round_trip.lifecycle_state = 'active'`);
     const snapshots = database.prepare<[string], AnalyzerSnapshotRow>(`SELECT
   event_kind, candle_time_utc_seconds, snapshot_json
 FROM journal_round_trip_daily_trade_analysis_event_snapshots
@@ -420,6 +454,24 @@ ORDER BY candle_time_utc_seconds`);
     for (const roundTripId of roundTripIds) {
       const analysis = analysisForRoundTrip.get(scope.workspaceId, activeAccountId, roundTripId);
       if (!analysis) continue;
+      if (
+        !analysis.daily_trade_analysis_version_id ||
+        !analysis.status ||
+        !analysis.analysis_projection_fingerprint_sha256 ||
+        analysis.analysis_projection_fingerprint_sha256 !==
+          analysis.current_projection_fingerprint_sha256
+      ) {
+        if (analysis.has_pending_job === 1) {
+          result.set(roundTripId, {
+            candles: [],
+            events: [],
+            finalExitPaths: [],
+            greenToRed: UNAVAILABLE_DAILY_TRADE_GREEN_TO_RED_ANALYSIS,
+            status: "pending",
+          });
+        }
+        continue;
+      }
       const persistedEventViews = snapshots.all(analysis.daily_trade_analysis_version_id)
         .map(analyzerSnapshotView)
         .filter((snapshot): snapshot is DaySessionTradeAnalyzer["events"][number] => snapshot !== null);

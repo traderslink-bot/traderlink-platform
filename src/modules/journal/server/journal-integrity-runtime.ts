@@ -129,6 +129,7 @@ export function createJournalIntegrityRuntime(
       importRepository,
       decisions,
       manualTradeAuthority,
+      dailyTradeAnalyzer,
     ),
     manualTrades: new JournalManualTradeCommandService(
       new JournalManualTradeCommandRepository(database),

@@ -1,10 +1,31 @@
 # Moomoo Daily Trade Tracker Analyzer Progress
 
 **Plan:** [Moomoo Daily Trade Tracker Analyzer Plan](moomoo-daily-trade-tracker-analyzer-plan.md)
-**Status:** Complete and owner-approved locally on 2026-08-09. Automatic Moomoo execution importing remains a separate later slice.
+**Status:** Complete and owner-approved locally on 2026-08-09, including manual-execution correction refresh. Automatic Moomoo execution importing remains a separate later slice.
 
 ## Current checkpoint — 2026-08-09
 
+- [x] Completed the approved save-triggered manual-execution refresh. The
+  implementation now carries the affected rebuilt trade IDs through the
+  correction result, invokes the analyzer only after the Journal transaction
+  commits, queues only actually rebuilt current trades, and returns an honest
+  queued count to the edit UI.
+- [x] Completed the stale-analysis guard and focused verification. The Tracker
+  read now distinguishes the current round-trip version from the stored
+  analysis version, exposes a durable queued placeholder and states **Updating
+  analysis with the latest executions** instead of rendering the earlier
+  execution facts as current.
+- [x] Reuse an existing analysis when a wider ticker-chain rebuild creates a
+  newer technical round-trip version but its exact projection fingerprint did
+  not change. This avoids refetching or recalculating unaffected recent and
+  historical trades in the same ticker.
+- [x] Focused ESLint, changed-file TypeScript filtering, diff-whitespace checks
+  and the live `2026-08-07` Tracker route pass. The route returns HTTP 200 with
+  no migration or compile error. Per repository policy, no Vitest or broad test
+  suite was run during the active implementation slice.
+- [x] Owner visually approved the manual-execution correction presentation on
+  2026-08-09, including the success message and durable **Updating analysis
+  with the latest executions** state.
 - [x] Implemented the owner-approved multi-trade presentation. Every ticker
   retains one chart; desktop expands only the selected trade while other trades
   become compact summaries, and mobile starts with every trade collapsed.

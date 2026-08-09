@@ -9,6 +9,7 @@ import {
   DialogContent,
   DialogTitle,
   MenuItem,
+  Snackbar,
   Stack,
   TextField,
   Typography,
@@ -72,6 +73,7 @@ export function ManualExecutionEditDialog({
   const [draft, setDraft] = useState(initialDraft);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmation, setConfirmation] = useState<string | null>(null);
 
   if (!editable) return null;
   const editRef = editable.editRef;
@@ -114,7 +116,12 @@ export function ManualExecutionEditDialog({
           method: "POST",
         },
       );
-      const packet = await response.json() as { code?: string };
+      const packet = await response.json() as {
+        code?: string;
+        result?: {
+          analysisRefresh?: { queuedTradeCount?: number };
+        };
+      };
       if (!response.ok) {
         if (packet.code === "TRADERLINK_MANUAL_EXECUTION_EDIT_REQUIRES_DECISION") {
           throw new Error("This execution is being compared with broker data. Review that match in Data Decisions before editing it here.");
@@ -124,6 +131,11 @@ export function ManualExecutionEditDialog({
         }
         throw new Error("Check the execution details and try again.");
       }
+      setConfirmation(
+        (packet.result?.analysisRefresh?.queuedTradeCount ?? 0) > 0
+          ? "Execution updated. Analysis is updating with the latest executions."
+          : "Execution updated.",
+      );
       setOpen(false);
       router.refresh();
     } catch (cause) {
@@ -148,11 +160,20 @@ export function ManualExecutionEditDialog({
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
             <Typography color="text.secondary" variant="body2">
-              Use the exact details shown by your broker. Saving refreshes the affected trades while keeping the earlier entry in its history.
+              Use the exact details shown by your broker. Trade replay and analysis use the execution time to match the correct chart candle. Saving refreshes the affected trades while keeping the earlier entry in its history.
             </Typography>
             <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" } }}>
               <TextField label="Date" onChange={(event) => update("localDate", event.target.value)} slotProps={{ inputLabel: { shrink: true } }} type="date" value={draft.localDate} />
-              <TextField label="Time" onChange={(event) => update("localTime", event.target.value)} slotProps={{ inputLabel: { shrink: true } }} type="time" value={draft.localTime.slice(0, 5)} />
+              <TextField
+                label="Time"
+                onChange={(event) => update("localTime", event.target.value)}
+                slotProps={{
+                  htmlInput: { step: 1 },
+                  inputLabel: { shrink: true },
+                }}
+                type="time"
+                value={draft.localTime}
+              />
               <TextField label="Timezone" onChange={(event) => update("sourceTimezone", event.target.value)} value={draft.sourceTimezone} />
               <TextField label="Ticker" onChange={(event) => update("symbol", event.target.value.toUpperCase())} value={draft.symbol} />
               <TextField label="Currency" onChange={(event) => update("tradeCurrency", event.target.value.toUpperCase())} value={draft.tradeCurrency} />
@@ -178,6 +199,19 @@ export function ManualExecutionEditDialog({
           </Button>
         </DialogActions>
       </Dialog>
+      <Snackbar
+        autoHideDuration={5000}
+        onClose={() => setConfirmation(null)}
+        open={confirmation !== null}
+      >
+        <Alert
+          onClose={() => setConfirmation(null)}
+          severity="success"
+          variant="filled"
+        >
+          {confirmation}
+        </Alert>
+      </Snackbar>
     </>
   );
 }

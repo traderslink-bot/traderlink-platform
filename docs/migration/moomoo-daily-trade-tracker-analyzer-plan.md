@@ -2,7 +2,7 @@
 
 **Parent:** [Moomoo Direct Connection Plan](moomoo-direct-connection-plan.md)
 **Progress:** [Moomoo Daily Trade Tracker Analyzer Progress](moomoo-daily-trade-tracker-analyzer-progress.md)
-**Status:** Complete and owner-approved locally on 2026-08-09. Automatic Moomoo execution importing remains a separate later slice.
+**Status:** Complete and owner-approved locally on 2026-08-09, including manual-execution correction refresh. Automatic Moomoo execution importing remains a separate later slice.
 
 ## Purpose
 
@@ -68,6 +68,14 @@ slice.
     `turnover_rate` values were zero. A later market-context slice may add
     clearly labelled price-versus-prior-close and session turnover-rate facts
     from Market Snapshot, preserving the denominator, source and timestamp.
+13. Saving a correction to a manual execution invalidates analysis tied to the
+    earlier round-trip version. Complete the Journal correction and
+    chronological rebuild first, then queue every newly rebuilt eligible
+    closed trade. Never analyze partially committed Journal state or continue
+    presenting the earlier execution analysis as current. Reuse the shared
+    candle cache before requesting missing coverage. Notes, tags and rule
+    reviews do not trigger this refresh because they do not change the trade's
+    execution path.
 
 ## Implementation
 
@@ -284,6 +292,32 @@ column. Narrow screens stack the same content. Selecting an individual
 execution hides green-to-red analysis and returns to a single column because a
 whole-position transition cannot be truthfully assigned to one fill.
 
+### 3.5 Manual execution correction refresh
+
+- Trigger only after **Save changes** succeeds. Editing fields in the dialog
+  must never start work.
+- Append the corrected execution version, rebuild the affected chronological
+  Journal chains and commit that transaction before invoking the analyzer
+  queue.
+- Queue the current round trips returned only by chains that were actually
+  rebuilt. This covers a correction that changes which trades the fill belongs
+  to without refreshing unrelated recent trades in the account.
+- Compare each current trade projection with the projection already analyzed.
+  Reuse an analysis when those fingerprints match, even if a wider Journal
+  chain rebuild assigned that unchanged trade a newer technical version.
+- Recalculate the complete combined trade, every individual entry/exit,
+  green-to-red path, one-minute/five-minute contexts and post-exit facts for
+  the new round-trip version. A time edit always refreshes: crossing a minute
+  boundary changes the source candle, while a within-minute change can still
+  change ordering and holding-time facts.
+- While a queued job targets a changed trade projection, hide the stale result
+  and state that analysis is updating with the latest executions. A newer
+  technical round-trip version with the same projection may safely reuse the
+  existing analysis.
+- If the corrected trade is open, outside the analyzer's eligible history, or
+  cannot use Moomoo market data, keep the Journal correction but do not imply
+  that analysis refreshed.
+
 ### 4. Versioned trade-path materialization
 
 The approved green-to-red and profit-opportunity result must no longer exist
@@ -456,6 +490,14 @@ not create a separate Daily Tracker product or impose a 60-minute page delay.
     `15m` and `1h` remain chart-only. Stored 15-minute observations are retained
     for future long-term statistics but are not shown as a separate
     higher-timeframe section in the trade-analysis card.
+
+25. Saving a manual execution correction commits the Journal rebuild before
+    any analysis queue call, queues every current eligible trade from the
+    actually rebuilt chains, and returns an honest queued count to the UI.
+26. A current analysis tied to an older round-trip version is never displayed
+    as current. A queued replacement shows an updating state until the new
+    immutable analysis revision is available; an ineligible correction remains
+    saved without claiming an analyzer update.
 
 ## Non-goals
 

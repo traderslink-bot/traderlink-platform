@@ -2112,7 +2112,9 @@ function TradeReview({
                 {analysisBaseTitle} ({analysisTimeframe === "5m" ? "5-minute" : "1-minute"})
               </Typography>
               <Typography color="text.secondary" variant="body2">
-                Analysis data is not available for this trade yet.
+                {analyzer.status === "pending"
+                  ? "Updating analysis with the latest executions."
+                  : "Analysis data is not available for this trade yet."}
               </Typography>
             </Stack>
           )}

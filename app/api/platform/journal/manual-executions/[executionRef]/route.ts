@@ -76,6 +76,7 @@ export async function POST(
       result: {
         pendingDecisionCount: result.openedFollowupDecisionIds.length,
         rebuildCount: result.rebuildCount,
+        analysisRefresh: result.analysisRefresh,
       },
     });
   } catch (error) {
