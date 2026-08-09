@@ -49,8 +49,12 @@
   warning/error logs.
 - [x] Completed desktop/mobile owner visual review. The owner approved the
   Admin Errors presentation on 2026-08-09.
-- [x] Prepared the narrow local feature commit with an explicit Moomoo/Admin
-  Errors allowlist.
+- [x] Created the narrow local feature commit with the explicit Moomoo/Admin
+  Errors allowlist: `8a71a215 feat(moomoo): harden imports and add admin
+  errors`.
+- [x] Added the hosted go-live checklist and a self-contained continuation
+  handoff. The next task must begin with a read-only QA run before changing
+  code, migration state, scheduler configuration or the local server.
 
 ## Coordination
 

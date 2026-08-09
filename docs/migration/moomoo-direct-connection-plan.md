@@ -8,6 +8,8 @@ implementation claim.
 
 **Active reliability correction:** [Moomoo Import Reliability And Admin Errors Plan](moomoo-import-reliability-and-admin-errors-plan.md)
 and [progress tracker](moomoo-import-reliability-and-admin-errors-progress.md).
+The production release checklist and exact continuation state are in the
+[Moomoo Import Reliability And Admin Errors Handoff](moomoo-import-reliability-and-admin-errors-handoff.md).
 
 ## Goal
 

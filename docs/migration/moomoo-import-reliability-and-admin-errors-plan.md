@@ -6,6 +6,8 @@ import. Live `trade:read` proof remains deferred to invited beta users.
 
 **Progress:** [Moomoo Import Reliability And Admin Errors Progress](moomoo-import-reliability-and-admin-errors-progress.md)
 
+**Continuation handoff:** [Moomoo Import Reliability And Admin Errors Handoff](moomoo-import-reliability-and-admin-errors-handoff.md)
+
 ## Outcome
 
 Make the existing Moomoo OAuth and execution-import path dependable enough for
@@ -117,3 +119,51 @@ from the Moomoo connection, account-link and execution-import work.
 - Moomoo correction/update behavior and the final hosted incremental cadence.
 - Representative multi-year/high-fill pagination and provider limits.
 - Any fallback limit that would route older history through statements.
+
+## Hosted go-live checklist
+
+This is a release gate, not permission to activate production services from a
+local development task. Complete it deliberately after the hosted dashboard,
+identity boundary and persistent database are ready.
+
+1. Register the exact hosted HTTPS callback URL with Moomoo:
+   `https://<host>/api/connections/moomoo/callback`. Keep the local
+   `127.0.0.1` callback as a distinct development configuration. Do not reuse
+   a local client identifier for a public production callback unless Moomoo
+   explicitly permits that configuration.
+2. Set production-only Moomoo credential configuration in the host's secret
+   store: OAuth client identifier, active encryption-key version and the
+   versioned AES key set. Generate production keys independently; never copy
+   local values into source, logs or client bundles. Retain an operational key
+   rotation/recovery procedure before changing the active version.
+3. Bring the hosted database to the exact approved manifest version using the
+   normal backup, migration and restore-rehearsal process. Confirm the Moomoo
+   foundation migrations (0033, 0034 and 0047) and every intervening manifest
+   migration are applied. Do not point production at the local development
+   SQLite database.
+4. Confirm durable hosted storage and backups for encrypted connection records,
+   private fill receipts, jobs, ranges, coverage and operational events. A
+   transient server filesystem is not an acceptable production store.
+5. Configure the protected Moomoo worker invocation with a unique secret and
+   one authoritative scheduler. Start with the documented conservative
+   15-minute interval only after an invited-beta calibration decision; do not
+   run multiple scheduler instances or publicly expose the worker route.
+6. Verify production authentication/owner authorization before exposing the
+   Account connection card or `/admin/journal/errors`. The Admin Errors route
+   remains owner-only, and ordinary users never see diagnostic records.
+7. Run a production-safe smoke test with an invited account: OAuth start,
+   callback, encrypted save, disconnect, reconnect, quote candle access,
+   failed-operation reporting and Admin Errors visibility. Use an account with
+   trade access only when the tester has explicitly agreed to the beta.
+8. Before enabling historical execution import broadly, prove with invited
+   trading accounts: account selection, `trade:read` eligibility, exact fill
+   fields/timestamp units, 90-day range paging, high-fill recovery, provider
+   corrections, deduplication, retry behavior, first-execution-date exclusion
+   and the final incremental cadence.
+9. Keep statement import available. If direct multi-year Moomoo history is not
+   reliably proven at representative volume, disclose a fixed direct-import
+   history limit and route older history through statements with duplicate
+   reconciliation.
+10. During beta, review `/admin/journal/errors` and safe host logs daily. Add
+    a new error source to the Admin page only through a reviewed privacy-safe
+    event mapping; never copy raw broker data into generic site-wide errors.
