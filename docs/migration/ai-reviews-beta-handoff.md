@@ -86,6 +86,12 @@ accepted current state, remaining launch work and safe continuation boundary.
 
 ## Local verification completed
 
+- Fresh low-resource QA on 2026-08-09 found and corrected one local beta
+  blocker: the authenticated `Generate now` action now only freezes or reuses
+  the account-scoped immutable pending request. It cannot reserve capacity,
+  start an attempt or call a provider; the protected scheduler remains the
+  sole issuance path. No migration, provider, Whop, scheduler or port-3010
+  action was performed during this correction.
 - Disposable migration, backup/restore, SQLite integrity and foreign-key
   checks passed through 51/51.
 - Focused cache-write pricing, subscriber paid-cycle isolation, warning/

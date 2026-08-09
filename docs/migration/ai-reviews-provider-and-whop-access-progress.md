@@ -254,3 +254,13 @@ entitlement or provider activation has occurred.
 - Customer provider calls, real Whop entitlement, hosted scheduling and
   deployment remain inactive. The QA-first resume point and production launch
   checklist are in [AI Reviews Beta Handoff](ai-reviews-beta-handoff.md).
+
+## 2026-08-09 QA request-only correction
+
+- Fresh read-only beta QA found that the authenticated `Generate now` server
+  action could enter the provider coordinator after launch controls were
+  enabled. This contradicted the accepted request-only contract.
+- The action now only freezes or reuses its account-scoped immutable pending
+  request. It does not reserve capacity, start an attempt or call a provider;
+  protected scheduler issuance remains the only execution path. No hosted
+  configuration, migration, provider call or scheduler activation occurred.
