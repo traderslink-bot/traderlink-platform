@@ -113,6 +113,8 @@ export type MoomooClaimedImportRange = Readonly<{
   endMicroseconds: number;
   encryptedCursor: EncryptedMoomooPrivateData | null;
   retryCount: number;
+  requestedStartDate: string;
+  executionCutoffMicroseconds: number;
 }>;
 
 export type MoomooFillReceiptSeed = Readonly<{
@@ -152,6 +154,8 @@ type ClaimedRangeRow = Readonly<{
   cursor_ciphertext: string | null;
   cursor_authentication_tag: string | null;
   retry_count: number;
+  requested_start_date: string;
+  exact_end_microseconds: number;
 }>;
 
 function encryptedPrivateData(input: Readonly<{
@@ -203,8 +207,21 @@ function mapClaimedRange(row: ClaimedRangeRow): MoomooClaimedImportRange {
       authenticationTag: row.cursor_authentication_tag,
     }),
     retryCount: row.retry_count,
+    requestedStartDate: row.requested_start_date,
+    executionCutoffMicroseconds: row.exact_end_microseconds,
   });
 }
+
+export type MoomooIncrementalImportCandidate = Readonly<{
+  link: MoomooBrokerAccountLink;
+  requestedStartDate: string;
+  latestCompletedCutoffAtUtc: string;
+}>;
+
+type IncrementalCandidateRow = LinkRow & Readonly<{
+  requested_start_date: string;
+  latest_completed_cutoff_at_utc: string;
+}>;
 
 export type MoomooBrokerImportJobSummary = Readonly<{
   brokerImportJobId: string;
@@ -344,6 +361,64 @@ WHERE workspace_id = ? AND account_id = ? AND broker_account_link_id = ?
 FROM journal_broker_account_links
 WHERE workspace_id = ? AND account_id = ? AND provider = 'moomoo'
 ORDER BY first_seen_at_utc, broker_account_link_id`).all(workspaceId, accountId).map(mapLink));
+  }
+
+  disconnectLinksForConnection(connectionId: string, timestamp: string): number {
+    assertCanonicalUuidV4(connectionId, "connectionId");
+    assertCanonicalUtcTimestamp(timestamp, "timestamp");
+    return this.database.prepare(`UPDATE journal_broker_account_links
+SET link_state = 'disconnected', updated_at_utc = ?
+WHERE connection_id = ? AND provider = 'moomoo' AND link_state = 'active'`)
+      .run(timestamp, connectionId).changes;
+  }
+
+  listIncrementalCandidates(
+    dueBeforeTimestamp: string,
+    limit = 100,
+  ): readonly MoomooIncrementalImportCandidate[] {
+    assertCanonicalUtcTimestamp(dueBeforeTimestamp, "dueBeforeTimestamp");
+    const safeLimit = Number.isSafeInteger(limit) && limit >= 1 && limit <= 500
+      ? limit
+      : 100;
+    const rows = this.database.prepare<[string, number], IncrementalCandidateRow>(`SELECT
+  link.*,
+  (SELECT MIN(history.requested_start_date)
+   FROM journal_broker_import_jobs history
+   WHERE history.workspace_id = link.workspace_id
+     AND history.account_id = link.account_id
+     AND history.broker_account_link_id = link.broker_account_link_id
+     AND history.job_state = 'completed') AS requested_start_date,
+  latest.cutoff_at_utc AS latest_completed_cutoff_at_utc
+FROM journal_broker_account_links link
+JOIN platform_broker_connections connection
+  ON connection.connection_id = link.connection_id
+JOIN journal_broker_import_jobs latest
+  ON latest.broker_import_job_id = (
+    SELECT candidate.broker_import_job_id
+    FROM journal_broker_import_jobs candidate
+    WHERE candidate.workspace_id = link.workspace_id
+      AND candidate.account_id = link.account_id
+      AND candidate.broker_account_link_id = link.broker_account_link_id
+    ORDER BY candidate.created_at_utc DESC, candidate.broker_import_job_id DESC
+    LIMIT 1
+  )
+WHERE link.provider = 'moomoo' AND link.link_state = 'active'
+  AND connection.connection_state = 'active'
+  AND latest.job_state = 'completed' AND latest.cutoff_at_utc <= ?
+  AND NOT EXISTS (
+    SELECT 1 FROM journal_broker_import_jobs active
+    WHERE active.workspace_id = link.workspace_id
+      AND active.account_id = link.account_id
+      AND active.broker_account_link_id = link.broker_account_link_id
+      AND active.job_state IN ('queued', 'running', 'waiting_retry')
+  )
+ORDER BY latest.cutoff_at_utc, link.broker_account_link_id
+LIMIT ?`).all(dueBeforeTimestamp, safeLimit);
+    return Object.freeze(rows.map((row) => Object.freeze({
+      link: mapLink(row),
+      requestedStartDate: row.requested_start_date,
+      latestCompletedCutoffAtUtc: row.latest_completed_cutoff_at_utc,
+    })));
   }
 
   listCoverage(
@@ -515,7 +590,8 @@ ON CONFLICT(workspace_id, account_id, source_identity_id) DO UPDATE SET
   link.private_authentication_tag AS account_authentication_tag,
   range.market, range.range_start_microseconds, range.range_end_microseconds,
   range.cursor_key_version, range.cursor_initialization_vector,
-  range.cursor_ciphertext, range.cursor_authentication_tag, range.retry_count
+  range.cursor_ciphertext, range.cursor_authentication_tag, range.retry_count,
+  job.requested_start_date, job.exact_end_microseconds
 FROM journal_broker_import_ranges range
 JOIN journal_broker_import_jobs job
   ON job.workspace_id = range.workspace_id AND job.account_id = range.account_id

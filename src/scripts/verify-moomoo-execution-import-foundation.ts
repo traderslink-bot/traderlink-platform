@@ -30,6 +30,17 @@ try {
   try {
     database.pragma("foreign_keys = ON");
     database.transaction(() => {
+      for (const table of [
+        "journal_broker_import_coverage",
+        "journal_broker_fill_receipts",
+        "journal_broker_import_ranges",
+        "journal_broker_import_jobs",
+        "journal_broker_account_links",
+        "journal_trade_analyzer_entitlement_intervals",
+        "journal_daily_tracker_settings",
+      ]) {
+        database.exec(`DROP TABLE IF EXISTS ${table}`);
+      }
       for (const statement of moomooExecutionImportFoundationMigration.statements) {
         database.exec(statement);
       }

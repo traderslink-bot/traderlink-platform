@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { MoomooExecutionImportAccountService } from "@/src/modules/journal/server/broker-imports/moomoo-execution-import-account-service";
-import { recordMoomooImportFailure } from "@/src/modules/journal/server/broker-imports/moomoo-execution-import-observability";
+import { recordMoomooOperationFailure } from "@/src/modules/platform/server/broker-connections/moomoo-operation-observability";
 import {
   requireExpectedJournalAccountSelection,
   requireTraderLinkPlatformRequestScope,
@@ -33,14 +33,14 @@ function safeFailure(
     : code === "TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED"
       ? 400
       : 403;
-  recordMoomooImportFailure({ database, error, stage });
+  const reportedToAdmin = recordMoomooOperationFailure({ database, error, stage });
   return NextResponse.json(
     {
       status: "unavailable",
       message: stage === "account_discovery"
         ? "Moomoo trading accounts could not be checked. Try again."
         : "The Moomoo trading account could not be linked. Confirm the account and try again.",
-      reportedToAdmin: true,
+      reportedToAdmin,
     },
     { status, headers: { "cache-control": "no-store" } },
   );

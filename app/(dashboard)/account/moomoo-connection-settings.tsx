@@ -30,7 +30,17 @@ export function MoomooConnectionSettings({
           method: "DELETE",
           credentials: "same-origin",
         });
-        if (!response.ok) throw new Error("moomoo_disconnect_failed");
+        if (!response.ok) {
+          const packet = await response.json() as Readonly<{
+            message?: string;
+            reportedToAdmin?: boolean;
+          }>;
+          const base = packet.message ?? "The Moomoo connection could not be disconnected. Try again.";
+          setMessage(packet.reportedToAdmin
+            ? `${base} The details were automatically sent to TradersLink administration, and we are working on it.`
+            : base);
+          return;
+        }
         setConfirmingDisconnect(false);
         router.refresh();
       } catch {

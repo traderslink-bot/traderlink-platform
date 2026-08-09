@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { MoomooExecutionImportCommandService } from "@/src/modules/journal/server/broker-imports/moomoo-execution-import-command-service";
-import { recordMoomooImportFailure } from "@/src/modules/journal/server/broker-imports/moomoo-execution-import-observability";
+import { recordMoomooOperationFailure } from "@/src/modules/platform/server/broker-connections/moomoo-operation-observability";
 import {
   requireExpectedJournalAccountSelection,
   requireTraderLinkPlatformRequestScope,
@@ -26,7 +26,7 @@ function safeFailure(
   stage: "import_start" | "import_status",
 ): NextResponse {
   const code = isTraderLinkPlatformError(error) ? error.code : null;
-  recordMoomooImportFailure({ database, error, stage });
+  const reportedToAdmin = recordMoomooOperationFailure({ database, error, stage });
   const status = code === "TRADERLINK_ACCOUNT_SELECTION_CONFLICT"
     ? 409
     : code === "TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED"
@@ -39,7 +39,7 @@ function safeFailure(
       : stage === "import_status"
         ? "Import progress could not be loaded. Try again."
         : "The import could not be started. Try again.",
-    reportedToAdmin: true,
+    reportedToAdmin,
   }, { status, headers: { "cache-control": "no-store" } });
 }
 

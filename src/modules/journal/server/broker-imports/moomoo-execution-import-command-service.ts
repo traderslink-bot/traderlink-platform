@@ -30,6 +30,7 @@ export type SafeMoomooImportJob = Readonly<{
   existingExecutionCount: number;
   decisionRequiredCount: number;
   nextAttemptAtUtc: string | null;
+  reportedToAdmin: boolean;
 }>;
 
 export type SafeMoomooLinkedImportAccount = MoomooLinkedAccountOption & Readonly<{
@@ -48,6 +49,7 @@ function safeJob(job: MoomooBrokerImportJobSummary): SafeMoomooImportJob {
     existingExecutionCount: job.existingExecutionCount,
     decisionRequiredCount: job.decisionRequiredCount,
     nextAttemptAtUtc: job.nextAttemptAtUtc,
+    reportedToAdmin: job.safeErrorCode === "moomoo_import_failed_reported",
   });
 }
 

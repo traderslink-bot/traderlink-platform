@@ -3,25 +3,33 @@ import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import type Database from "better-sqlite3";
 
-import { PlatformOperationalEventRepository } from "@/src/modules/platform/server/administration/platform-operational-event-repository";
+import { PlatformOperationalEventRepository } from "../administration/platform-operational-event-repository";
 import {
   createCanonicalUtcTimestamp,
   isTraderLinkPlatformError,
-} from "@/src/modules/platform/server/database/platform-migration-contract";
+} from "../database/platform-migration-contract";
+
+export type MoomooOperationStage =
+  | "oauth_start"
+  | "oauth_state"
+  | "oauth_callback"
+  | "disconnect"
+  | "account_discovery"
+  | "account_link"
+  | "import_start"
+  | "import_status"
+  | "incremental_schedule"
+  | "worker";
 
 function sha256(value: string): string {
   return createHash("sha256").update(value, "utf8").digest("hex");
 }
-
 function safeCount(value: unknown): number | null {
   if (typeof value !== "number" || !Number.isSafeInteger(value)) return null;
   return Math.abs(value);
 }
 
-function safeOutcomeCode(
-  code: string,
-  stage: "account_discovery" | "account_link" | "import_start" | "import_status" | "worker",
-): string {
+function safeOutcomeCode(code: string, stage: MoomooOperationStage): string {
   const reason = code === "TRADERLINK_BROKER_CONNECTION_OAUTH_INVALID"
     ? "oauth_invalid"
     : code === "TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED"
@@ -36,17 +44,17 @@ function safeOutcomeCode(
   return `moomoo_${stage}_${reason}`;
 }
 
-export function recordMoomooImportFailure(input: Readonly<{
+export function recordMoomooOperationFailure(input: Readonly<{
   database: Database.Database;
   error: unknown;
-  stage: "account_discovery" | "account_link" | "import_start" | "import_status" | "worker";
+  stage: MoomooOperationStage;
   now?: Date;
-}>): string {
-  const supportReference = `MOO-${randomBytes(5).toString("hex").toUpperCase()}`;
+}>): boolean {
+  const eventReference = `MOO-${randomBytes(8).toString("hex").toUpperCase()}`;
   const timestamp = createCanonicalUtcTimestamp(input.now);
   const code = isTraderLinkPlatformError(input.error)
     ? input.error.code
-    : "TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED";
+    : "TRADERLINK_MOOMOO_UNEXPECTED_FAILURE";
   const context: Readonly<Record<string, unknown>> = isTraderLinkPlatformError(input.error)
     ? input.error.safeContext as Readonly<Record<string, unknown>>
     : Object.freeze({});
@@ -58,28 +66,33 @@ export function recordMoomooImportFailure(input: Readonly<{
     safeCounts.provider_code = providerCode;
     safeCounts.provider_code_negative = Number(context.providerCode) < 0 ? 1 : 0;
   }
-  const evidence = JSON.stringify({
-    code,
-    stage: input.stage,
-    safeCounts,
-  });
-  new PlatformOperationalEventRepository(input.database).append({
-    operationKind: "background_job",
-    operationRefSha256: sha256(supportReference),
-    state: "failed",
-    outcomeCode: safeOutcomeCode(code, input.stage),
-    applicationVersion: null,
-    safeCounts,
-    evidenceSha256: sha256(evidence),
-    startedAtUtc: timestamp,
-    completedAtUtc: timestamp,
-    createdAtUtc: timestamp,
-  });
-  console.error("TraderLink Moomoo import operation failed.", {
-    code,
-    stage: input.stage,
-    supportReference,
-    ...safeCounts,
-  });
-  return supportReference;
+  const outcomeCode = safeOutcomeCode(code, input.stage);
+  const evidence = JSON.stringify({ outcomeCode, safeCounts });
+  try {
+    new PlatformOperationalEventRepository(input.database).append({
+      operationKind: "background_job",
+      operationRefSha256: sha256(eventReference),
+      state: "failed",
+      outcomeCode,
+      applicationVersion: null,
+      safeCounts,
+      evidenceSha256: sha256(evidence),
+      startedAtUtc: timestamp,
+      completedAtUtc: timestamp,
+      createdAtUtc: timestamp,
+    });
+    console.error("TraderLink Moomoo operation failed.", JSON.stringify({
+      code,
+      eventReference,
+      stage: input.stage,
+      ...safeCounts,
+    }));
+    return true;
+  } catch {
+    console.error("TraderLink Moomoo failure reporting failed.", JSON.stringify({
+      code: "TRADERLINK_MOOMOO_FAILURE_REPORTING_FAILED",
+      stage: input.stage,
+    }));
+    return false;
+  }
 }

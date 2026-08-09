@@ -6,6 +6,9 @@ on 2026-08-09. Real `trade:read` provider proof is deliberately deferred to
 the invited public beta and remains a release checkpoint rather than an
 implementation claim.
 
+**Active reliability correction:** [Moomoo Import Reliability And Admin Errors Plan](moomoo-import-reliability-and-admin-errors-plan.md)
+and [progress tracker](moomoo-import-reliability-and-admin-errors-progress.md).
+
 ## Goal
 
 Connect a trader's Moomoo account directly to TradersLink using Moomoo OAuth

@@ -128,8 +128,9 @@
   the overlap by Moomoo deal ID and rebuilding the affected Journal chronology.
 - [x] Added broker-account + deal-ID deduplication, encrypted updated-time
   receipts and completed account/market coverage subtraction so reconnects do
-  not request all already-covered history again. Automatic ongoing sync timing
-  will be calibrated during the invited beta rather than guessed locally.
+  not request all already-covered history again. Due incremental jobs now use
+  a configurable 15-minute default and a bounded provider-update overlap; the
+  final production cadence will be calibrated during the invited beta.
 - [x] Reconcile accepted broker fills through the canonical Journal ledger and
   publish privacy-safe progress/status models. Private fill receipts are saved
   first; Journal acceptance and page-cursor advancement then share one atomic
@@ -140,9 +141,11 @@
   retain progress independently of the browser.
 - [x] Added beta failure capture. User accounts receive only process status and
   plain failure/retry copy, including confirmation that server-received failure
-  details were sent to TradersLink administration. The Admin System page shows
-  the privacy-safe failure category plus available HTTP/provider numeric codes;
-  raw broker identities, tokens and payload values are excluded.
+  details were sent to TradersLink administration. The dedicated owner-only
+  Admin Errors page shows the privacy-safe source, operation, failure category
+  and available HTTP/provider numeric codes; raw broker identities, tokens,
+  payload values and stack traces are excluded. The user confirmation is shown
+  only when the diagnostic event was actually saved.
 - [x] Owner approved the Account import progress UI direction on 2026-08-09.
   It shows completed/total date ranges, new and existing execution counts,
   Data Decisions and retry/failure status, and states that the page may be
@@ -152,6 +155,13 @@
   the same provider deal created zero duplicates, covered ranges were not
   replanned, failed Journal work did not advance the cursor, retry state was
   retained and `foreign_key_check` returned zero failures.
+- [x] Corrected the invited-beta reliability gaps found by the second QA pass:
+  OAuth start/state/callback and disconnect failures are recorded; a fresh
+  authorization disconnects old account links until the trader selects an
+  authorized account again; the chosen first-execution date is enforced on the
+  execution timestamp even though Moomoo pages by update time; and a completed
+  initial/history import becomes eligible for configurable incremental jobs.
+  The final production cadence still remains a live-beta calibration decision.
 - [ ] Pass the execution-import plan QA gates: execution-scope state,
   disconnect/reconnect lifecycle, future-broker schema, hosted job ownership,
   honest range progress, deal-ID deduplication, market coverage and production

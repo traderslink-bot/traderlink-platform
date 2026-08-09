@@ -24,12 +24,13 @@ import {
   type JournalImportCommitResult,
   type MoomooApiFillInput,
 } from "../imports/journal-import-service";
-import { recordMoomooImportFailure } from "./moomoo-execution-import-observability";
+import { recordMoomooOperationFailure } from "@/src/modules/platform/server/broker-connections/moomoo-operation-observability";
 import {
   MoomooExecutionImportRepository,
   type MoomooClaimedImportRange,
   type MoomooFillReceiptSeed,
 } from "./moomoo-execution-import-repository";
+import { isMoomooExecutionWithinRequestedWindow } from "./moomoo-execution-import-planning";
 
 const STALE_CLAIM_MILLISECONDS = 10 * 60 * 1_000;
 const RETRY_DELAYS_MINUTES = Object.freeze([1, 5, 15, 60] as const);
@@ -136,7 +137,7 @@ export class MoomooExecutionImportWorker {
       return true;
     } catch (error) {
       const failedAt = this.now();
-      recordMoomooImportFailure({
+      const reportedToAdmin = recordMoomooOperationFailure({
         database: this.database,
         error,
         stage: "worker",
@@ -145,7 +146,9 @@ export class MoomooExecutionImportWorker {
       const retryDelay = RETRY_DELAYS_MINUTES[claimed.retryCount] ?? null;
       this.repository.markRangeRetry({
         claimed,
-        safeErrorCode: "moomoo_import_failed",
+        safeErrorCode: reportedToAdmin
+          ? "moomoo_import_failed_reported"
+          : "moomoo_import_failed",
         nextAttemptAtUtc: retryDelay === null
           ? null
           : createCanonicalUtcTimestamp(
@@ -184,6 +187,13 @@ export class MoomooExecutionImportWorker {
       endMicroseconds: claimed.endMicroseconds,
       pageFlag: cursor,
     });
+    const inScopeFills = page.fills.filter((fill) =>
+      isMoomooExecutionWithinRequestedWindow({
+        createdMicroseconds: fill.createdMicroseconds,
+        requestedStartDate: claimed.requestedStartDate,
+        market: claimed.market,
+        cutoffMicroseconds: claimed.executionCutoffMicroseconds,
+      }));
     const processedAt = this.now();
     const timestamp = createCanonicalUtcTimestamp(processedAt);
     const digester = createJournalPrivacyDigester(loadJournalPrivacyHmacConfiguration());
@@ -191,7 +201,7 @@ export class MoomooExecutionImportWorker {
       schemeVersion: string;
       digestSha256: string;
     }>> = [];
-    const receipts: MoomooFillReceiptSeed[] = page.fills.map((fill) => {
+    const receipts: MoomooFillReceiptSeed[] = inScopeFills.map((fill) => {
       const identity = digester.activeDigest(
         "broker_execution",
         providerIdentity(claimed, fill),
@@ -224,7 +234,7 @@ export class MoomooExecutionImportWorker {
           plaintext: page.nextPageFlag,
         });
     this.database.transaction(() => {
-      const result: JournalImportCommitResult | null = page.fills.length === 0
+      const result: JournalImportCommitResult | null = inScopeFills.length === 0
         ? null
         : createJournalIntegrityRuntime(this.database).imports.commitMoomooApiFills(scope, {
             accountId: claimed.accountId,
@@ -232,7 +242,7 @@ export class MoomooExecutionImportWorker {
             pageIdentitySha256: digest,
             evidenceObjectKey: `moomoo_receipt_${claimed.brokerImportRangeId.replaceAll("-", "")}_${digest.slice(0, 16)}`,
             sourceDisplayLabel: claimed.privacySafeLabel,
-            fills: page.fills.map((fill) => toJournalFill(claimed, fill)),
+            fills: inScopeFills.map((fill) => toJournalFill(claimed, fill)),
             now: processedAt,
           });
       this.repository.commitProcessedPage({
@@ -240,7 +250,7 @@ export class MoomooExecutionImportWorker {
         receiptIdentities,
         encryptedNextCursor,
         providerCompleted: page.completed,
-        receivedFillCount: page.fills.length,
+        receivedFillCount: inScopeFills.length,
         createdExecutionCount: result?.createdExecutionCount ?? 0,
         matchedExecutionCount: result?.matchedExecutionCount ?? 0,
         decisionRequiredCount: result?.pendingSourceDecisionCount ?? 0,

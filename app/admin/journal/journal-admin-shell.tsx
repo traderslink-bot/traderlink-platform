@@ -9,6 +9,7 @@ import FactCheckRoundedIcon from "@mui/icons-material/FactCheckRounded";
 import GroupRoundedIcon from "@mui/icons-material/GroupRounded";
 import HealthAndSafetyRoundedIcon from "@mui/icons-material/HealthAndSafetyRounded";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
+import ReportProblemRoundedIcon from "@mui/icons-material/ReportProblemRounded";
 import SchemaRoundedIcon from "@mui/icons-material/SchemaRounded";
 import AppBar from "@mui/material/AppBar";
 import Badge from "@mui/material/Badge";
@@ -39,6 +40,7 @@ const navigation = [
   { href: "/admin/journal/data-decisions", label: "Data Decisions", icon: <FactCheckRoundedIcon /> },
   { href: "/admin/journal/ai-reviews", label: "AI Reviews", icon: <AutoAwesomeRoundedIcon /> },
   { href: "/admin/journal/system", label: "System", icon: <HealthAndSafetyRoundedIcon /> },
+  { href: "/admin/journal/errors", label: "Errors", icon: <ReportProblemRoundedIcon /> },
   { href: "/admin/journal/audit", label: "Audit", icon: <AssessmentRoundedIcon /> },
 ] as const;
 

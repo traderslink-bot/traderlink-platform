@@ -29,6 +29,7 @@ type SafeImportJob = Readonly<{
   existingExecutionCount: number;
   decisionRequiredCount: number;
   nextAttemptAtUtc: string | null;
+  reportedToAdmin: boolean;
 }>;
 
 type SafeLinkedAccount = Readonly<{
@@ -279,7 +280,9 @@ export function MoomooExecutionImportSetup({
               ) : null}
               {account.latestImport.state === "failed" ? (
                 <Typography color="error.main" variant="caption">
-                  The import could not finish. The details were automatically sent to TradersLink administration, and we are working on it. You can leave this page and try again later.
+                  {account.latestImport.reportedToAdmin
+                    ? "The import could not finish. The details were automatically sent to TradersLink administration, and we are working on it. You can leave this page and try again later."
+                    : "The import could not finish. You can leave this page and try again later."}
                 </Typography>
               ) : null}
             </Stack>

@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { JournalAdminOverviewService } from "@/src/modules/journal/server/administration/journal-admin-overview-service";
+import { createJournalAdminReadContext } from "@/src/modules/journal/server/administration/journal-admin-read-helpers";
+import { PlatformAdminErrorService } from "@/src/modules/platform/server/administration/platform-admin-error-service";
 import { withJournalAdminPageDatabase } from "@/src/modules/platform/server/administration/require-journal-admin-page";
 import { JournalAdminShell } from "./journal-admin-shell";
 
@@ -32,9 +34,12 @@ export default async function JournalAdminLayout({ children }: { children: React
   try {
     shell = await withJournalAdminPageDatabase((database, scope) => {
       const overview = new JournalAdminOverviewService({ database, scope }).read();
+      const recentMoomooErrors = new PlatformAdminErrorService(
+        createJournalAdminReadContext({ database, scope }),
+      ).recentFailureCount();
       return Object.freeze({
         alertCount: overview.imports.systemFailed +
-          overview.formats.privacyReviewRequired,
+          overview.formats.privacyReviewRequired + recentMoomooErrors,
         dataAsOfUtc: overview.coverage.dataAsOfUtc,
         operatorRole: scope.role === "journal_owner_admin"
           ? "Owner administrator"

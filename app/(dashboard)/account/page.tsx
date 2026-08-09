@@ -1,5 +1,6 @@
 import AccountCircleRoundedIcon from "@mui/icons-material/AccountCircleRounded";
 import LockRoundedIcon from "@mui/icons-material/LockRounded";
+import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
@@ -37,7 +38,12 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default async function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ moomoo?: string; reported?: string }>;
+}) {
+  const query = await searchParams;
   const scope = await requireTraderLinkPlatformPageScope();
   const { profile, aiReviewSettings, moomooConnection, aiReviewAccess, moomooAccountLinks } = withReadonlyPlatformDatabase({}, (database) => {
     const currentProfile = new PlatformAccountProfileReadService(database).get(scope);
@@ -61,6 +67,8 @@ export default async function AccountPage() {
   const whopUrls = readWhopAiReviewCustomerUrls();
   const activeAccount = profile.journalAccounts.find((account) => account.active);
   if (!activeAccount) throw new Error("TRADERLINK_ACCOUNT_ACCESS_DENIED");
+  const moomooConnectionFailed = ["failed", "invalid-state", "unavailable"]
+    .includes(query.moomoo ?? "");
 
   return (
     <DashboardPage>
@@ -114,6 +122,13 @@ export default async function AccountPage() {
         <Typography color="text.secondary" sx={{ mb: 2.5 }} variant="body2">
           Connect a broker to automatically import your trades.
         </Typography>
+        {moomooConnectionFailed ? (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            The Moomoo connection could not be completed. {query.reported === "1"
+              ? "The details were automatically sent to TradersLink administration, and we are working on it. "
+              : ""}You can try connecting again later.
+          </Alert>
+        ) : null}
         <BrokerConnectionPicker moomooConnectionState={moomooConnection?.state ?? null} />
         {moomooConnection?.state === "active" ? (
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ alignItems: { sm: "center" }, mt: 2 }}>

@@ -4,6 +4,8 @@ import { setPlatformSessionAuthCookie } from "@/src/modules/platform/server/auth
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { MOOMOO_OAUTH_STATE_COOKIE, MOOMOO_OAUTH_VERIFIER_COOKIE } from "@/src/modules/platform/server/broker-connections/moomoo-oauth-cookies";
 import { buildMoomooAuthorizeUrl, createMoomooPkce, getMoomooOAuthConfig } from "@/src/modules/platform/server/broker-connections/moomoo-oauth";
+import { recordMoomooOperationFailure } from "@/src/modules/platform/server/broker-connections/moomoo-operation-observability";
+import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,7 +27,16 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     setPlatformSessionAuthCookie(response, request, MOOMOO_OAUTH_STATE_COOKIE, pkce.state);
     setPlatformSessionAuthCookie(response, request, MOOMOO_OAUTH_VERIFIER_COOKIE, pkce.verifier);
     return response;
-  } catch {
-    return NextResponse.redirect(new URL("/account?moomoo=unavailable", request.nextUrl.origin));
+  } catch (error) {
+    let reportedToAdmin = false;
+    try {
+      reportedToAdmin = withPlatformDatabase({ mode: "runtime" }, (database) =>
+        recordMoomooOperationFailure({ database, error, stage: "oauth_start" }));
+    } catch {
+      // The user still receives the connection failure when diagnostics cannot open storage.
+    }
+    const destination = new URL("/account?moomoo=unavailable", request.nextUrl.origin);
+    if (reportedToAdmin) destination.searchParams.set("reported", "1");
+    return NextResponse.redirect(destination);
   }
 }

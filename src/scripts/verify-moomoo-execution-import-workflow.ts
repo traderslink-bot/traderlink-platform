@@ -10,7 +10,12 @@ import {
   MoomooExecutionImportRepository,
   type MoomooClaimedImportRange,
 } from "@/src/modules/journal/server/broker-imports/moomoo-execution-import-repository";
-import { planMoomooExecutionImport } from "@/src/modules/journal/server/broker-imports/moomoo-execution-import-planning";
+import { MoomooExecutionImportScheduler } from "@/src/modules/journal/server/broker-imports/moomoo-execution-import-scheduler";
+import {
+  isMoomooExecutionWithinRequestedWindow,
+  moomooExecutionDateFloorMicroseconds,
+  planMoomooExecutionImport,
+} from "@/src/modules/journal/server/broker-imports/moomoo-execution-import-planning";
 import {
   createJournalPrivacyDigester,
   loadJournalPrivacyHmacConfiguration,
@@ -82,6 +87,11 @@ LIMIT 1`).get() as Readonly<{
     }));
     const repository = new MoomooExecutionImportRepository(database);
     const brokerAccountLinkId = createCanonicalUuidV4();
+    const encryptedAccountId = encryptMoomooPrivateData({
+      configuration: loadMoomooCredentialKeyConfiguration(),
+      purpose: "broker_account_id",
+      plaintext: "disposable-account",
+    });
     repository.upsertLink({
       brokerAccountLinkId,
       workspaceId: fixture.workspace_id,
@@ -91,11 +101,7 @@ LIMIT 1`).get() as Readonly<{
       privacySafeLabel: "Moomoo account",
       accountType: "cash",
       enabledMarketCodes: Object.freeze([2]),
-      encryptedAccountId: encryptMoomooPrivateData({
-        configuration: loadMoomooCredentialKeyConfiguration(),
-        purpose: "broker_account_id",
-        plaintext: "disposable-account",
-      }),
+      encryptedAccountId,
       timestamp,
     });
     const scope: WorkspaceAccessScope = Object.freeze({
@@ -211,6 +217,38 @@ LIMIT 1`).get() as Readonly<{
     if (duplicate.createdExecutionCount !== 0 || duplicate.matchedExecutionCount !== 1) {
       throw new Error("moomoo_import_workflow_dedupe_invalid");
     }
+    const incrementalCandidate = repository.listIncrementalCandidates(
+      "2026-08-09T14:15:00.000Z",
+    ).find((candidate) =>
+      candidate.link.brokerAccountLinkId === brokerAccountLinkId);
+    if (!incrementalCandidate) {
+      throw new Error("moomoo_import_workflow_incremental_candidate_missing");
+    }
+    database.prepare(`UPDATE journal_broker_account_links
+SET link_state = 'disconnected', updated_at_utc = ?
+WHERE broker_account_link_id <> ? AND link_state = 'active'`)
+      .run(timestamp, brokerAccountLinkId);
+    const scheduledCount = new MoomooExecutionImportScheduler(
+      database,
+      () => new Date("2026-08-09T14:16:00.000Z"),
+      { TRADERLINK_MOOMOO_INCREMENTAL_SYNC_MINUTES: "15" },
+    ).scheduleDue();
+    const scheduledJob = repository.latestJobForLink(
+      fixture.workspace_id,
+      fixture.account_id,
+      brokerAccountLinkId,
+    );
+    if (
+      scheduledCount !== 1 || !scheduledJob ||
+      scheduledJob.importKind !== "incremental_sync" ||
+      scheduledJob.state !== "queued"
+    ) {
+      throw new Error("moomoo_import_workflow_incremental_schedule_invalid");
+    }
+    database.prepare(`DELETE FROM journal_broker_import_ranges
+WHERE broker_import_job_id = ?`).run(scheduledJob.brokerImportJobId);
+    database.prepare(`DELETE FROM journal_broker_import_jobs
+WHERE broker_import_job_id = ?`).run(scheduledJob.brokerImportJobId);
 
     const rollbackClaim = createClaim(3);
     const rollbackReceipt = receiptFor(rollbackClaim, "deal-rollback");
@@ -292,6 +330,58 @@ WHERE workspace_id = ? AND account_id = ? AND alias_type = 'broker_fill'
       throw new Error("moomoo_import_workflow_covered_ranges_replanned");
     }
 
+    const requestedDateFloor = moomooExecutionDateFloorMicroseconds(
+      "2026-08-09",
+      "US",
+    );
+    if (
+      isMoomooExecutionWithinRequestedWindow({
+        createdMicroseconds: requestedDateFloor - 1,
+        requestedStartDate: "2026-08-09",
+        market: "US",
+        cutoffMicroseconds: requestedDateFloor + 1,
+      }) ||
+      !isMoomooExecutionWithinRequestedWindow({
+        createdMicroseconds: requestedDateFloor,
+        requestedStartDate: "2026-08-09",
+        market: "US",
+        cutoffMicroseconds: requestedDateFloor + 1,
+      }) ||
+      isMoomooExecutionWithinRequestedWindow({
+        createdMicroseconds: requestedDateFloor + 2,
+        requestedStartDate: "2026-08-09",
+        market: "US",
+        cutoffMicroseconds: requestedDateFloor + 1,
+      })
+    ) {
+      throw new Error("moomoo_import_workflow_execution_date_floor_invalid");
+    }
+
+    repository.disconnectLinksForConnection(fixture.connection_id, timestamp);
+    if (repository.findLinkById(
+      fixture.workspace_id,
+      fixture.account_id,
+      brokerAccountLinkId,
+    )?.state !== "disconnected") {
+      throw new Error("moomoo_import_workflow_disconnect_missing");
+    }
+    const reactivated = repository.upsertLink({
+      brokerAccountLinkId,
+      workspaceId: fixture.workspace_id,
+      accountId: fixture.account_id,
+      sourceIdentityId,
+      connectionId: fixture.connection_id,
+      privacySafeLabel: "Moomoo account",
+      accountType: "cash",
+      enabledMarketCodes: Object.freeze([2]),
+      encryptedAccountId,
+      timestamp,
+    });
+    if (reactivated.state !== "active" ||
+        reactivated.brokerAccountLinkId !== brokerAccountLinkId) {
+      throw new Error("moomoo_import_workflow_reactivation_invalid");
+    }
+
     const foreignKeyFailures = database.pragma("foreign_key_check") as readonly unknown[];
     if (foreignKeyFailures.length !== 0) {
       throw new Error("moomoo_import_workflow_foreign_key_failure");
@@ -302,6 +392,10 @@ WHERE workspace_id = ? AND account_id = ? AND alias_type = 'broker_fill'
       fullyCoveredRangesReplanned: alreadyCoveredPlan.ranges.length,
       firstCreatedExecutionCount: first.createdExecutionCount,
       foreignKeyFailures: 0,
+      incrementalCandidateFound: true,
+      incrementalJobScheduled: true,
+      requestedExecutionDateFloorEnforced: true,
+      sourceIdentityReactivated: true,
       retryStatePreserved: true,
     }));
   } finally {
