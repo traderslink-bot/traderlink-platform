@@ -39,7 +39,19 @@ VALUES (?, ?, 'Test', 'USD', 'America/New_York', 'active', ?, ?, ?)`).run(accoun
 
 function configurePlatform(fixture: Fixture, featureKey: "weekly_reviews" | "monthly_reviews", requestCap = 10): void {
   fixture.database.prepare(`UPDATE coach_ai_provider_settings SET input_cost_usd_per_million_tokens = '1',
+  cached_input_cost_usd_per_million_tokens = '0.1',
+  cache_write_input_cost_usd_per_million_tokens = '1.25',
   output_cost_usd_per_million_tokens = '2', updated_at_utc = ? WHERE settings_key = 'coach_reviews'`).run(initialTime);
+  const budgetAvailable = Boolean(fixture.database.prepare<[], Readonly<{
+    found: number;
+  }>>(`SELECT 1 AS found FROM sqlite_schema
+WHERE type = 'table' AND name = 'coach_ai_review_budget_controls'`).get());
+  if (budgetAvailable) {
+    fixture.database.prepare(`UPDATE coach_ai_review_budget_controls SET
+  trailing_30_day_estimated_spend_cap_usd = '10',
+  updated_at_utc = '2026-08-10T00:00:00.000Z'
+WHERE control_key = 'ai_reviews'`).run();
+  }
   fixture.database.prepare(`UPDATE coach_ai_feature_controls SET enabled = 1, daily_request_cap = ?,
   daily_token_cap = 100000, daily_estimated_spend_cap_usd = '10', updated_at_utc = ?
 WHERE feature_key = ? AND scope_kind = 'platform'`).run(requestCap, initialTime, featureKey);
@@ -80,9 +92,12 @@ function insertPendingAttempt(fixture: Fixture, reviewKind: "weekly" | "monthly"
 function markIssuedWithReceipt(fixture: Fixture, attemptId: string): void {
   fixture.database.prepare(`INSERT INTO coach_ai_review_generation_attempt_receipts (
   coach_ai_review_generation_attempt_receipt_id, coach_ai_review_generation_attempt_id,
-  input_tokens, output_tokens, total_tokens, input_cost_usd_per_million_tokens,
+  input_tokens, cached_input_tokens, cache_write_input_tokens,
+  output_tokens, total_tokens, input_cost_usd_per_million_tokens,
+  cached_input_cost_usd_per_million_tokens,
+  cache_write_input_cost_usd_per_million_tokens,
   output_cost_usd_per_million_tokens, estimated_cost_usd, recorded_at_utc
-) VALUES (?, ?, 1, 2, 3, '1', '2', '0.000005', ?)`).run(createCanonicalUuidV4(), attemptId, initialTime);
+) VALUES (?, ?, 1, 0, 0, 2, 3, '1', '0.1', '1.25', '2', '0.000005', ?)`).run(createCanonicalUuidV4(), attemptId, initialTime);
   fixture.database.prepare(`UPDATE coach_ai_review_generation_attempts SET state = 'issued', finalized_at_utc = ?
 WHERE coach_ai_review_generation_attempt_id = ?`).run("2026-08-06T12:01:00.000Z", attemptId);
 }
@@ -165,9 +180,12 @@ describe("Coach AI Review provider controls repository", () => {
       fixture.controls.markProviderStarted(fixture.scope, attemptId);
       fixture.database.prepare(`INSERT INTO coach_ai_review_generation_attempt_receipts (
   coach_ai_review_generation_attempt_receipt_id, coach_ai_review_generation_attempt_id,
-  input_tokens, output_tokens, total_tokens, input_cost_usd_per_million_tokens,
+  input_tokens, cached_input_tokens, cache_write_input_tokens,
+  output_tokens, total_tokens, input_cost_usd_per_million_tokens,
+  cached_input_cost_usd_per_million_tokens,
+  cache_write_input_cost_usd_per_million_tokens,
   output_cost_usd_per_million_tokens, estimated_cost_usd, recorded_at_utc
-) VALUES (?, ?, 999999, 2, 1000001, '1', '2', '10', ?)`).run(createCanonicalUuidV4(), attemptId, initialTime);
+) VALUES (?, ?, 999999, 0, 0, 2, 1000001, '1', '0.1', '1.25', '2', '10', ?)`).run(createCanonicalUuidV4(), attemptId, initialTime);
       fixture.database.prepare(`UPDATE coach_ai_review_generation_attempts SET state = 'failed', failure_code = 'TRADERLINK_COACH_PROVIDER_FAILED', finalized_at_utc = ?
 WHERE coach_ai_review_generation_attempt_id = ?`).run("2026-08-06T12:01:00.000Z", attemptId);
       expect(() => fixture.controls.finalizeFromReviewReceipt(fixture.scope, attemptId, "failed", "TRADERLINK_COACH_PROVIDER_FAILED"))

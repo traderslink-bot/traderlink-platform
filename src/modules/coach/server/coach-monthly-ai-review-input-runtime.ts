@@ -130,6 +130,17 @@ function safeReviewRef(issuedReviewId: string): string {
     .update(`${issuedReviewId}\n`, "utf8").digest("hex")}`;
 }
 
+function omitNarratedTradeAnalysis(
+  day: CoachPeriodicAiReviewSnapshotV2["input"]["reviewPeriodMarketFacts"]["days"][number],
+) {
+  return Object.freeze({
+    ...day,
+    trades: Object.freeze(day.trades.map((trade) => Object.freeze(Object.fromEntries(
+      Object.entries(trade).filter(([key]) => key !== "analysis"),
+    )) as typeof trade)),
+  });
+}
+
 /**
  * Builds an exact-calendar-month fact snapshot while routing reflection prose
  * through whole weekly/two-week periods. Cross-boundary review prose is
@@ -173,8 +184,10 @@ export function buildCoachMonthlyAiReviewSnapshotV2(
   const reflectionCoverage = weeklySnapshots.flatMap((snapshot) =>
     snapshot.input.reflectionCoverage.filter((coverage) => inCoverage(coverage.reviewMarketDate)));
   const reflections = weeklySnapshots.flatMap((snapshot) =>
-    snapshot.input.completedDailyReflections.filter((reflection) =>
-      reflection.reviewMarketDate >= request.firstEnabledMarketDate));
+    [
+      ...snapshot.input.completedDailyReflections,
+      ...(snapshot.input.savedDailyReflections ?? []),
+    ].filter((reflection) => reflection.reviewMarketDate >= request.firstEnabledMarketDate));
   const ownerMonth = request.period.calendarMonthEndDate.slice(0, 7);
   const reviews = new CoachAiReviewRepository(database);
   const issued = reviews.listIssuedReviewsV2(scope, {
@@ -182,6 +195,11 @@ export function buildCoachMonthlyAiReviewSnapshotV2(
     reviewKinds: ["weekly", "two_week"],
     limit: 500,
   }).filter((review) => review.periodEndDate.slice(0, 7) === ownerMonth);
+  const calendarMonthFactDays = factDays.map((day) => issued.some((review) =>
+    day.reviewMarketDate >= review.periodStartDate &&
+    day.reviewMarketDate <= review.periodEndDate)
+    ? omitNarratedTradeAnalysis(day)
+    : day);
   const representedEvidenceRefs = new Set(issued.flatMap((review) =>
     review.representedEvidenceRefs));
   const reviewNarrativeContext = issued.map((review) => {
@@ -242,7 +260,7 @@ export function buildCoachMonthlyAiReviewSnapshotV2(
       currency: weeklySnapshots[0]?.input.period.currency ?? null,
       scheduledAtUtc: request.scheduledAtUtc,
     }),
-    calendarMonthFactDays: factDays,
+    calendarMonthFactDays,
     accountCoverage: Object.freeze({
       legitimateOpenCount: accountCoverage?.accountLegitimateOpenCount ?? 0,
       needsDecisionCount: accountCoverage?.accountNeedsDecisionCount ?? 0,

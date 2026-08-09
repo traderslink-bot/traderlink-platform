@@ -92,8 +92,9 @@ export class CoachAiReviewRequestService {
   }
 
   /**
-   * Creates pending requests only for fully complete, sealed periods. This is
-   * deliberately not scheduled here and never starts provider execution.
+   * Creates pending requests only for sealed periods whose facts/reflections
+   * satisfy the meaningful-evidence gate. This is deliberately not scheduled
+   * here and never starts provider execution.
    */
   requestAutomaticReadyV2(now = new Date()): CoachAiReviewAutomaticRequestSummaryV2 {
     const plans = [

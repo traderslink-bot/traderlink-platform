@@ -9,8 +9,9 @@ boundary are recorded in the [weekly/monthly review boundary progress
 record](ai-weekly-monthly-review-boundary-progress.md).
 The non-visual 2026-08-08 engine slice now implements the additive v2 account
 settings/storage repositories, private evidence manifests, exact-month
-extraction and lineage-aware narrative selection, completion/market-seal
-eligibility, and read-only weekly/monthly runner planning. These paths remain
+extraction and lineage-aware narrative selection, fact-first meaningful-
+evidence eligibility, saved-note evidence, and read-only weekly/monthly
+runner planning. These paths remain
 dormant: migration `0037` is registered and applied in the local development
 database, but provider calls, runner activation and paid customer activation
 remain off. The first Account/AI Reviews presentation slice is implemented for
@@ -19,15 +20,19 @@ owner visual review and was approved on 2026-08-08. Visible account copy uses
 presentation slice now uses account-scoped read-only runner plans to
 show the actual market-calendar period, completed/incomplete Trade Tracker
 review coverage and current availability state. The owner approved this visual
-checkpoint on 2026-08-08. Eligible manual-generation buttons now call an
+checkpoint on 2026-08-08; the later fact-first evidence wording and counts are
+also approved in the final Account, AI Reviews and Journal Administration
+visual checkpoint on 2026-08-08. Eligible manual-generation buttons now call an
 authenticated request-only action that rebuilds the current account-scoped v2
 plan, freezes the immutable input and private evidence manifest, and saves one
 idempotent pending request. It does not reserve paid capacity, start an attempt
 or call an AI provider. Once requested, the card reads completion coverage from
-that immutable snapshot rather than later live Tracker edits. The
-availability read is deliberately lightweight: full analytics and immutable
-evidence snapshots are generation-time work, not Account or AI Reviews page-
-render work. Weekend first enablement after a sealed week presents the next
+that immutable snapshot rather than later live Tracker edits. The fact-first
+availability revision now uses the same read-only exact candidate plan as the
+request service so evidence sufficiency cannot drift between the card and the
+server. It creates no request and calls no provider during page rendering;
+route performance remains a required browser checkpoint. Weekend first
+enablement after a sealed week presents the next
 weekly period as upcoming; it does not expose the already-ended pre-enable week
 as a recoverable review period.
 The same request service now has a dormant automatic coordinator that freezes
@@ -37,6 +42,13 @@ manual. Weekly/two-week and monthly issuance services can later consume an
 existing pending request by its scoped request ID, always re-reading the stored
 input and evidence manifest instead of rebuilding from later Tracker data.
 These methods are dormant and no provider runner invokes them.
+The owner approved completing that dormant boundary on 2026-08-08. The next
+slice must replace the scheduled v1 path with one v2 coordinator, consume
+pending requests oldest-first, preserve frozen evidence across retryable
+provider/cap failures, keep overdue monthly reviews automatic until requested,
+and expose truthful Account, AI Reviews and Journal Administration controls.
+Real provider calls, paid customer entitlement, hosted scheduler activation,
+push and deployment remain outside the local implementation checkpoint.
 The owner-approved coverage drill-down belongs only on AI Reviews. Weekly and
 two-week cards show only actual Tracker day pages in the period, identify them
 as marked complete or not marked complete, and link both states to their Trade
@@ -76,6 +88,10 @@ dependency for AI Reviews. Account is the sole frequency-setting writer for
 this feature; the existing AI Chat Friday/Saturday/Sunday delivery-change flow
 remains preserved and disabled until Chat is deliberately updated to consume
 the completed Tracker and AI Review contracts.
+
+Real-provider acceptance, the owner-selected initial Whop subscription contract
+and production provider configuration are governed by the
+[AI Reviews Provider Acceptance and Whop Access Plan](ai-reviews-provider-and-whop-access-plan.md).
 
 ## Purpose
 
@@ -182,7 +198,7 @@ classification, or analytics.
   joins exactly two consecutive Monday-through-Friday market-calendar cohorts;
   it is not an open-ended wait for the system to decide that a trader has
   accumulated enough trades. `Monthly only` disables weekly/two-week provider
-  calls while preserving completed Daily Tracker work for the calendar-month
+  calls while preserving saved Daily Tracker work for the calendar-month
   review.
 - The frequency named above is a default selection, not automatic activation.
   Existing accounts with an explicit AI Review schedule remain enabled and
@@ -202,70 +218,70 @@ classification, or analytics.
   therefore contain reflection context produced under two settings; the
   monthly builder resolves that safely by reflection identity rather than
   pretending market-week and month boundaries always align.
-- Completion, not a trader-selected delivery delay, controls generation. The
-  market calendar seals a review period after its final eligible session's
-  post-market close. For weekly frequency that is the one cohort's final
-  session; for two-week frequency it is the second cohort's final session. If
-  that final eligible trading day's Daily Tracker review is complete and every
-  other Daily Tracker review the trader created in the review period is
-  complete, the scheduler generates the AI review as soon as the period is
-  sealed. A review completed before the seal waits for the seal so a later
-  execution, correction or import is not omitted. Eligibility is derived at
-  the seal; a separate persisted queue state is not required.
+- The account has two explicit weekly/two-week timing modes. `Automatic - no
+  daily reviews required` always waits 12 hours after the final eligible
+  session's verified post-market close, then generates from sufficiently
+  meaningful evidence without checking Daily Tracker completion. `Give me
+  extra time for Trade Tracker reviews` may generate after the seal when the
+  trader has marked the relevant created reviews complete or selects
+  `Generate now`; otherwise it generates at the following trading week's
+  final verified post-market seal. The market calendar supplies both seals,
+  including holiday-shortened weeks. A review never starts before its own
+  factual period seals, so later executions, corrections or imports from the
+  open period are not omitted.
 - A trader who did not trade every day, chose not to review a day or still has
   an incomplete daily review is never forced to create five reviews. After the
   review-period seal, AI Reviews presents one action labelled `Generate weekly
   review` or `Generate two-week review` for the selected cadence. It clearly
-  identifies incomplete coverage and uses only daily reviews marked complete
-  when the trader requests generation.
-- The start of the next trading week is a freshness reminder, not a hard
-  cutoff. The market calendar supplies the next open session for accurate UI
-  wording, including holiday Mondays, but an ungenerated prior week remains
-  available afterward. A later review uses the most recent issued prior review
-  when one exists. Missing prior context is a quiet coverage disclosure and
-  link to the older period, never a blocking choice or modal.
+  identifies incomplete review coverage and includes verified execution facts
+  plus every non-empty daily/trade note, tag and recorded rule result saved at
+  generation time. Completion is never required for inclusion.
+- In the extra-time mode, the end of the following trading week is the hard
+  automatic cutoff for the older pending review. The system resolves the
+  oldest review first, then lets the new period enter its own timing window, so
+  the previous issued review is available as continuity context before the
+  next AI Review starts. Provider retries may delay that ordering but never
+  cause the newer review to invent or silently skip prior context.
 - At automatic or requested generation the system creates one immutable
   snapshot: all
   confirmed weekly executions, statistics, rule outcomes and tags remain in
-  factual coverage, while only daily reviews marked complete at that moment
-  enter trader-reflection evidence. A market-closed day is never expected to
-  have a daily review. A no-trade market-open day may be marked complete and
-  participates as a valid reviewed day.
-- A period with no completed daily reviews is not sent to a provider. One or
-  more completed daily reviews use the same output contract with exact coverage
-  and proportionate conclusions. A period may be reviewed even when it has no
-  closed trades; the output must state that closed-trade results are unavailable
-  rather than discarding the trader's completed reflections.
-- When weekly frequency has only one or two completed daily reviews, those
-  reflections are not discarded. The weekly review may still be issued, and
-  the dated completed reflections are included once as labelled
-  `carryForwardEvidenceBundles` in the immediately following review. They
-  remain historical process context: prior-week executions, P/L, rule counts
-  and tag counts never become current-week facts. Carry-forward stops after one
-  subsequent review and never accumulates indefinitely. This applies whether
-  or not the thin weekly period itself produced an issued AI review.
-- Carry-forward belongs to the immediately following chronological review
-  period, not merely the next review generated. If that period has not yet been
-  generated, the context remains available there; it does not leapfrog into
-  later periods or accumulate. Every carried item retains a stable reflection
-  reference, reviewed-status revision, exact note-content revision set,
-  original date and source period. One bundle
-  is one evidence unit: it contains the raw completed reflection plus an
-  optional reference to the prior issued review that represented it. The raw
-  reflection and prior review are never supplied as two independent evidence
-  items or counted twice.
+  factual coverage, while every non-empty note saved at that moment enters
+  trader-reflection evidence with its completed/incomplete review state. A
+  saved note from an incomplete review is user-authored evidence but does not
+  prove the trader finalized the whole daily review. A market-closed day is
+  never expected to have a daily review.
+- Automatic generation uses a deterministic meaningful-evidence gate so the
+  AI has enough factual or reflective context to provide useful feedback,
+  expressed in ready closed trades rather than raw execution count. A period
+  qualifies with at least two ready closed trades; one ready closed trade plus
+  a substantive saved reflection, a saved trade tag, or a followed/broken
+  rule result; or a substantive saved reflection on its own. A reflection is
+  substantive only when it contains non-empty saved daily/trade
+  note content. A context-free single ready closed trade, an open position with
+  only an entry execution, an empty completed review, or zero usable evidence
+  does not trigger an AI review.
+- Below-threshold weekly evidence is not discarded. AI Reviews shows its exact
+  deterministic facts without a provider call and binds it to the immediately
+  following trading-week cohort. If those two exact cohorts together meet the
+  same meaningful-evidence gate, the system creates one clearly labelled
+  two-week review. Aggregation stops after that one additional cohort; it never
+  becomes an open-ended rolling period. If the two-week package is still below
+  threshold, no weak review is generated, while the exact dated facts and
+  saved reflections remain available to their calendar-month review.
+- Thin-period aggregation belongs to the immediately following chronological
+  cohort, not merely the next review generated. The resulting two-week request
+  contains the two cohorts' exact facts under their original dates and one
+  deduplicated copy of each saved reflection. It does not relabel prior-
+  week facts as current-week facts or leapfrog into a later period.
 - A thin weekly source may carry into the immediately following weekly or
   two-week period. If `Monthly only` becomes effective before a shorter review
   can consume it, the first eligible monthly review is its terminal one-time
   destination. The source period makes the evidence eligible; the destination
   cadence does not erase it.
-- Carry-forward does not by itself satisfy destination eligibility. The
-  immediately following period must contain at least one newly completed
-  reflection before an AI review uses the carried context. The carry is
-  permanently bound to that one destination period: it remains available if
-  that destination is generated late, but it is never copied or forwarded into
-  a later period. No carry-expiration timer or mutable expiry state is stored.
-  The original Daily Tracker record remains unchanged in Journal history.
+- The combined two-week evidence must itself satisfy the same meaningful-
+  evidence rule. There is no hidden evidence score, indefinite accumulation,
+  mutable expiry timer or silent frequency change. The original Trade Tracker
+  records remain unchanged.
 - `Already represented` has one deterministic meaning: the exact private tuple
   of source reflection ID, reviewed-status revision and ordered note-content
   revision IDs appeared in the immutable input snapshot of the prior issued
@@ -298,7 +314,8 @@ classification, or analytics.
   never create a second paid review for the period.
 - If AI Reviews is enabled midweek, the first weekly factual package retains
   the complete market-calendar cohort and all confirmed facts available for
-  it, but includes only daily reflections actually completed by the trader.
+  it, plus every non-empty reflection saved inside the enabled coverage by
+  generation time. Each reflection retains its completed/incomplete state.
   Coverage must disclose the midweek enablement; the system never invents or
   requires pre-enable reflections.
 
@@ -309,12 +326,12 @@ classification, or analytics.
   month end; a weekend or market holiday does not defer it. The UI displays the
   resulting instant in the trader's local time. Weekly completion timing does
   not alter the monthly rule, and there is no monthly delivery-time setting.
-- The 8:00 AM snapshot includes only Daily Tracker reflections complete at that
-  instant. Account and AI Reviews display the localized deadline before month
-  end. If at least one reflection is complete, the one final monthly review is
-  issued and later completions cannot replace it. If zero are complete, no
-  immutable request is created; the month remains available with a `Generate
-  monthly review` action after at least one reflection is completed.
+- The 8:00 AM snapshot includes exact month facts and every non-empty Daily
+  Tracker note saved at that instant, with its completion state. Account and
+  AI Reviews display the localized deadline before month end. The one final
+  monthly review is issued only when the exact-month package satisfies the same
+  meaningful-evidence rule; later completions cannot replace it. A below-
+  threshold month creates no AI review request and remains factually visible.
 - A monthly review combines the calendar month's dated trading facts,
   including executions, statistics, rule outcomes and trade tags. Those facts
   never move to another month.
@@ -323,7 +340,7 @@ classification, or analytics.
   When that cohort crosses a month boundary, its notes are routed to the month
   of the cohort's final calendar Friday for review-narrative continuity; this
   routing does not rewrite the note's factual date. Under `Monthly only`, raw
-  completed reflections remain narrative-owned by their own Eastern
+  saved reflections remain narrative-owned by their own Eastern
   `reviewMarketDate` month because no shorter review exists.
 - A monthly review can use an issued cross-month weekly or two-week review only
   as clearly labelled process context. A weekly review belongs to the month of
@@ -335,18 +352,18 @@ classification, or analytics.
   Each eligible reflection receives a narrative-owner month from the cadence
   period that contains it. If an issued weekly/two-week review represents that
   reflection, the monthly input uses the issued review as labelled narrative
-  context; otherwise it uses the completed raw reflection. It never supplies
+  context; otherwise it uses the saved raw reflection with its completion
+  state. It never supplies
   both representations as independent evidence. Under `Monthly only`, no
-  shorter review exists, so the raw completed reflection is used with its
+  shorter review exists, so the raw saved reflection is used with its
   original date and derived narrative-owner month.
 - Narrative ownership is explicit: weekly context belongs to the month
   containing its cohort's calendar Friday; two-week context belongs to the
   month containing its second cohort's calendar Friday; Monthly-only raw
   reflection context belongs to the reflection's own Eastern calendar month.
-- Unconsumed thin-week carry-forward that reaches a `Monthly only` transition
-  may appear once in the first eligible monthly review as clearly dated prior-
-  period narrative context. It remains non-statistical and is deduplicated by
-  reflection reference.
+- A below-threshold weekly cohort does not create a narrative carry bundle when
+  `Monthly only` becomes effective. Its facts and saved reflections enter
+  the appropriate exact calendar month directly under their original dates.
 - The first monthly review begins on the date the trader enabled AI Reviews.
   If that begins mid-month, the first eligible period is visibly labelled with
   its actual start and end dates as a partial month and is never compared with
@@ -358,10 +375,9 @@ classification, or analytics.
   and UI receive that honest coverage range plus `periodCoverage` of
   `complete_month` or `partial_month`. Exact facts and reflections before a
   partial month's `coverageStartDate` are not included.
-- A first partial month uses the same simple eligibility rule as any later
-  month: at least one completed daily reflection. With zero completed
-  reflections, no provider call is made. A completed reflection can support a
-  coverage-aware monthly review even when there are no closed trades.
+- A first partial month uses the same meaningful-evidence rule as any later
+  month. A substantive saved reflection can support a coverage-aware
+  monthly review even with no closed trades; an empty completed review cannot.
 - There is exactly one issued review per account/month. Later Journal edits do
   not create another paid review.
 
@@ -388,14 +404,11 @@ read services. It contains only the selected account and review period:
    including immutable revisions. A focus that simply carried forward is
    represented at each relevant date without pretending the trader edited it.
 6. The immediately preceding issued review, if one exists, as context for
-   follow-through, not as evidence that its advice was correct. Reflection
-   references represented by that review are declared so an overlapping carry
-   bundle remains one evidence unit.
-7. The immediately prior weekly period's eligible one-time
-   `carryForwardEvidenceBundles` when that prior period had only one or two
-   completed daily reviews. Each bundle retains its date and revision, is
-   explicitly separate from current-period facts and may reference, but never
-   independently duplicate, its prior issued-review representation.
+   follow-through, not as evidence that its advice was correct.
+7. For an adaptive thin-week combination, one two-cohort
+   `reviewPeriodMarketFacts` package built directly from the exact two-week
+   period. New fact-first requests keep legacy `carryForwardEvidenceBundles`
+   empty rather than duplicating prior facts or reflections as narrative carry.
 8. A concise Data Decisions/coverage notice so the review distinguishes
    confirmed results from facts still awaiting a trader decision.
 
@@ -447,6 +460,12 @@ counts or database terms.
   `0036`, is registered in the source manifest and was applied to the local
   development database on 2026-08-08. This does not activate a runner,
   provider call or paid entitlement.
+  Corrective migration `0041_coach_ai_review_reservation_scope_trigger.ts`
+  later repaired one invalid reservation-scope trigger from `0037` by reading
+  review kind from the linked period request rather than the generation
+  attempt. That repair is schema integrity work only; the approved fact-first
+  threshold, note-completion boundary and two-cohort behavior require no new
+  storage.
   Do not create a separate biweekly subsystem or reinterpret historical rows.
 - Persist a private immutable evidence manifest for each request. It maps a
   prompt-safe ordinal such as `reflection_001` to the private source Daily
@@ -505,13 +524,15 @@ shows completed, incomplete and unavailable coverage and the one-click
 generation action when needed. It never asks the trader to configure Eastern
 time, a weekday or an hour delay, and never invents a review or claims automatic
 generation is active before the market-calendar scheduler exists. Before a
-manual request, the page explains that only currently completed daily reviews
-will be included and that later edits will not change the issued review.
+manual request, the page explains that verified execution facts and everything
+saved at generation time can be used, completion affects early timing only in
+the extra-time mode, and later edits will not change the issued review.
 While `Monthly only` is effective, AI Reviews hides weekly/two-week generation
 actions but continues to show historical issued reviews and monthly status.
-If the 8:00 AM monthly check found zero completed reflections, the page shows
-that no AI review was generated and enables `Generate monthly review` only
-after at least one Daily Tracker reflection becomes complete.
+If the 8:00 AM monthly check found insufficient meaningful evidence, the page
+shows the exact available facts without claiming an AI review was generated. A
+later manual request becomes available only when the package satisfies the
+same meaningful-evidence rule.
 
 Account includes an **AI Review frequency** setting with three clear choices:
 `Every trading week`, `Every two trading weeks`, and `Monthly only`. Supporting
@@ -519,6 +540,15 @@ copy explains that two-week frequency combines exactly two consecutive trading
 weeks for traders who want more activity and reflection context, while monthly
 only generates no weekly/two-week AI reviews. The issued review always shows
 its actual fact and reflection coverage.
+
+For weekly and two-week frequencies, Account also shows both timing choices at
+once. `Automatic - no daily reviews required` states that generation begins 12
+hours after the period's final post-market seal and requires no Tracker
+completion. `Give me extra time for Trade Tracker reviews` states that marking
+reviews complete or selecting `Generate now` can start the review sooner, but
+otherwise the review automatically starts at the end of the following trading
+week using everything then saved. Monthly-only hides the weekly timing cards;
+its exact-month 8:00 AM rule remains independent.
 
 Enabling and changing frequency are separate actions. `Every trading week` may
 be preselected, but no customer account becomes active until the trader saves/
@@ -579,7 +609,8 @@ The later AI Chat adaptation is not a dependency.
    receipt whenever a saved review is issued.
 8. Implement the market-calendar Monday-through-Friday boundary, fixed weekly,
    two-week and monthly-only behavior, one-time thin-week reflection carry-
-   forward, completion-driven automatic/manual generation, immutable
+   forward, the two persisted timing modes, saved-note inclusion, oldest-first
+   automatic/manual generation, immutable
    generation-time coverage snapshots and the monthly routing recorded in the
    linked boundary progress record before enabling hosted generation.
 9. Add the host-neutral future-year calendar verifier, immutable database
@@ -658,10 +689,121 @@ joins this slice. Focused verification files mirror the named contracts/services
 and the platform migration manifest, but no test command runs during the
 design/visual-approval stage.
 
+## Approved automatic-generation and administration completion slice
+
+This checklist is the controlling completion record for the owner-approved
+2026-08-08 follow-on. A checked item requires both implementation evidence and
+the applicable focused verification; UI items also require owner visual
+approval. The linked weekly/monthly boundary progress record carries dated
+evidence and the current resume point.
+
+### Product and plan
+
+- [x] Record the two-layer control model: Journal Administration owns global
+  platform availability; Account owns the selected Trade Tracker account's
+  personal AI Reviews On/Off preference.
+- [x] Keep three frequency choices and only two weekly timing choices. Do not
+  add note/tag/rule switches, custom delay hours, user-selected evidence
+  thresholds or a manual-only timing preference.
+- [x] Confirm that review generation reads saved verified annual market
+  calendars and never fetches Nasdaq/NYSE during a page render or review.
+- [x] Complete a QA pass on this implementation checklist before production
+  code changes begin.
+
+### V2 automatic request and issuance path
+
+- [x] Replace the scheduled v1 weekly/monthly execution path with one v2
+  coordinator without activating the hosted scheduler.
+- [x] Freeze every newly eligible automatic request exactly once, then consume
+  pending v2 requests oldest-first so the prior issued review is available as
+  continuity context before a newer review begins.
+- [x] Route `Generate now` through the same pending-request issuance workflow;
+  it must not leave an indefinitely unconsumed request.
+- [x] Retry temporary provider failures and request/token/spend-cap delays from
+  the exact immutable input/evidence snapshot. Never rebuild mutable Tracker
+  evidence for a retry.
+- [x] Keep a sufficiently evidenced monthly review automatically due from
+  8:00 AM Eastern after month end until its immutable request exists. Once a
+  request exists, retain it pending until issuance or deliberate stop.
+- [x] Preserve idempotent account/period identity, owner/account isolation,
+  exact facts, calendar dates, evidence lineage and no duplicate provider call.
+
+### Journal Administration
+
+- [x] Present one clear global `AI Reviews available` master control backed by
+  the existing weekly/two-week and monthly platform safety controls. Off pauses
+  new requests and not-started pending work; issued reviews remain readable and
+  an already-started attempt may finish safely.
+- [x] Keep provider credential status, model, verified pricing and separate
+  request/token/spend caps in Admin rather than Account.
+- [x] Show scheduler health, pending/retrying/failed/issued operational counts,
+  current-year and next-year market-calendar verification, and paid-access
+  integration status without exposing account identities or review contents.
+- [x] Add an owner-only `Verify calendar now` action only if it can reuse the
+  existing protected stored-snapshot verifier without introducing a review-time
+  web dependency.
+- [x] Do not add a manual paid-entitlement grant or imply that billing is
+  connected before the paid-plan contract is approved.
+
+### Trader Account and AI Reviews UI
+
+- [x] Add a personal AI Reviews On/Off control for the selected Trade Tracker
+  account. Off prevents new account review generation without deleting Tracker
+  data or issued reviews.
+- [x] Rename the Account panel `AI Review settings`, rename the hands-off timing
+  choice `Automatic after 12 hours`, and keep `No daily reviews required` as
+  explanatory copy that also states saved Tracker input is still used.
+- [x] Disclose that a context-free one-trade week may combine once with the
+  following trading week instead of producing weak feedback.
+- [x] Hide weekly timing for `Monthly only` and state clearly whether a timing
+  change affects an already open but unissued period.
+- [x] Show the localized automatic time and distinguish period open, waiting
+  for timing, insufficient evidence, combined with next week, pending,
+  generating, retrying, platform unavailable and paid-access unavailable.
+- [x] Never show `ready to start automatically` when the v2 coordinator,
+  calendar, provider controls or entitlement gate cannot actually proceed.
+
+### Verification and release boundary
+
+- [x] Update this plan and the linked progress record after every material
+  implementation or visual checkpoint.
+- [x] Run focused non-Vitest timing/coordinator/retry checks, targeted ESLint,
+  changed-file TypeScript filtering and `git diff --check` at the checkpoint.
+- [x] Obtain owner visual approval for Account, AI Reviews and Journal
+  Administration before accepting the UI slice.
+- [x] Use a new migration only if persistent coordinator/master-status state is
+  truly required, and coordinate its number before registration or execution.
+- [x] Preserve all concurrent Trade Tracker/analyzer work. Do not activate paid
+  access, real provider calls or a hosted scheduler; do not push or deploy.
+
+### Completion-slice allowlist
+
+The completion slice may edit only the existing AI Review plan/progress files;
+the Account and AI Reviews files already named above; `app/api/cron/ai-reviews/route.ts`;
+`app/api/cron/ai-review-calendar/route.ts`; the files under
+`app/admin/journal/ai-reviews/` excluding AI Chat controls/actions; and the
+following Coach server boundaries: request service, weekly/monthly v2 planners,
+evidence eligibility, availability service, weekly/monthly issuance services,
+AI Review repository, provider-controls repository, provider-settings
+repository, AI Review administration repository and market-calendar
+repository/verification services. One narrowly named v2 coordinator and
+focused non-Vitest verification scripts may be added. Any migration or
+production file outside this list requires a plan amendment and explicit owner
+scope approval. Daily Trade Tracker, analyzer and AI Chat production files are
+excluded.
+
+Migration `0044_coach_ai_review_scheduler_health_v2` is the approved narrow
+exception for privacy-safe persistent coordinator-run health. It stores only
+run origin/state, timestamps, aggregate summary JSON and a bounded failure
+code. It stores no user/account identity, review content or Tracker evidence.
+The migration and its focused disposable-copy verifier are within this slice,
+as are the migration manifest/register/progress entries required to track it.
+
 ## Acceptance criteria
 
-- Only selected-account confirmed facts and explicitly eligible completed
-  reflections are sent.
+- Only selected-account confirmed facts and explicitly eligible saved
+  reflections are sent; every reflection preserves whether its daily review
+  was complete or incomplete at snapshot time.
 - The saved input snapshot precisely reproduces what the model received.
 - Reopening a saved review never calls a provider again.
 - Existing reviews remain readable after later Journal edits.
@@ -673,17 +815,15 @@ design/visual-approval stage.
   mock review.
 - A later weekly or two-week generation receives the prior issued review and
   dated Current Focuses history.
-- One or two completed weekly reflections are carried forward once as dated
-  process context without moving or recounting prior-week market facts. Each
-  carry bundle is one evidence unit even when it references a prior issued
-  review, remains bound to its one destination for late generation and never
-  requires an expiry timer or advances to another period.
+- A below-threshold weekly cohort combines with only its immediately following
+  cohort as one exact two-week period. New requests do not duplicate that
+  evidence through legacy carry bundles.
 - Monthly-only accounts receive no weekly/two-week provider calls and their
-  monthly input uses only exact-month facts and completed exact-month
+  monthly input uses only exact-month facts and eligible saved exact-month
   reflections.
-- A monthly period with zero completed reflections at 8:00 AM creates no
-  request and becomes manually generatable after the first reflection is
-  completed; a period generated with one or more remains final.
+- A monthly period below the meaningful-evidence threshold at 8:00 AM creates
+  no AI review request; one that qualifies from exact facts and/or substantive
+  saved reflections remains final.
 - A first partial month has one calendar-month request identity and a separate
   immutable coverage range beginning at first use; pre-enable facts and
   reflections are excluded without permitting a second request.
@@ -693,8 +833,9 @@ design/visual-approval stage.
 - Traded and trader-created no-trade Daily Tracker reviews expose their existing
   verified Eastern trading date as request-only `reviewMarketDate`, preserving
   `trading_day_id`, trading timezone and source timestamps. Eligibility uses the
-  current status revision whose latest state remains `reviewed`, while the
-  immutable manifest separately identifies every note content revision used.
+  current status revision and preserves whether its state is `reviewed` or
+  `incomplete`, while the immutable manifest separately identifies every note
+  content revision used.
 - A frequency change made during an open two-week period waits until both
   cohorts finish and never splits or regroups that period.
 - Historical market-calendar snapshots required for late generation remain

@@ -4,11 +4,14 @@ import { revalidatePath } from "next/cache";
 
 import type { CoachAiReviewKindV2 } from
   "@/src/modules/coach/server/coach-ai-review-repository";
-import { CoachAiReviewRequestService } from
-  "@/src/modules/coach/server/coach-ai-review-request-service";
+import {
+  CoachAiReviewGenerationCoordinatorV2,
+  type CoachAiReviewManualGenerationResultV2,
+} from
+  "@/src/modules/coach/server/coach-ai-review-generation-coordinator-v2";
 import { requireTraderLinkPlatformPageScope } from
   "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { withPlatformDatabase } from
+import { openPlatformDatabase } from
   "@/src/modules/platform/server/database/open-platform-database";
 
 const REVIEW_KINDS = new Set<CoachAiReviewKindV2>(["weekly", "two_week", "monthly"]);
@@ -38,12 +41,29 @@ export async function requestAiReview(
 
   try {
     const scope = await requireTraderLinkPlatformPageScope();
-    const result = withPlatformDatabase({ mode: "runtime" }, (database) =>
-      new CoachAiReviewRequestService(database).requestManualV2(scope, {
+    const database = openPlatformDatabase({ mode: "runtime" });
+    let result: CoachAiReviewManualGenerationResultV2;
+    try {
+      result = await new CoachAiReviewGenerationCoordinatorV2(database).generateNow(scope, {
         reviewKind: reviewKind as CoachAiReviewKindV2,
         periodStartDate,
         periodEndDate,
-      }));
+      });
+    } finally {
+      database.close();
+    }
+    if (result.state === "platform_unavailable") {
+      return Object.freeze({
+        ok: false,
+        message: "AI Reviews are currently unavailable for the platform.",
+      });
+    }
+    if (result.state === "paid_access_unavailable") {
+      return Object.freeze({
+        ok: false,
+        message: "Connect or renew AI Review access from Account, then try again.",
+      });
+    }
     if (result.state === "not_available") {
       return Object.freeze({
         ok: false,
@@ -51,7 +71,12 @@ export async function requestAiReview(
       });
     }
     revalidatePath("/ai-reviews");
-    return Object.freeze({ ok: true, message: null });
+    return Object.freeze({
+      ok: true,
+      message: result.state === "retrying"
+        ? "Your review is saved and will retry from the same evidence."
+        : null,
+    });
   } catch {
     return Object.freeze({
       ok: false,

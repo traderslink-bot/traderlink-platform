@@ -13,8 +13,17 @@ import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/data
 import { PlatformAccountProfileReadService } from "@/src/modules/platform/server/identity/platform-account-profile-read-service";
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
 import { MoomooExecutionImportCommandService } from "@/src/modules/journal/server/broker-imports/moomoo-execution-import-command-service";
+import {
+  readWhopAiReviewConfigurationHealth,
+  readWhopAiReviewCustomerUrls,
+} from "@/src/modules/platform/server/billing/whop-ai-review-configuration";
+import {
+  isWhopAiReviewEntitlementSchemaAvailable,
+  WhopAiReviewEntitlementRepository,
+} from "@/src/modules/platform/server/billing/whop-ai-review-entitlement-repository";
 import { AccountManagementClient } from "./account-management-client";
 import { AiReviewFrequencySettings } from "./ai-review-delivery-settings";
+import { AiReviewSubscriptionStatus } from "./ai-review-subscription-status";
 import { BrokerConnectionPicker } from "./broker-connection-picker";
 import { MoomooConnectionSettings } from "./moomoo-connection-settings";
 import { MoomooExecutionImportSetup } from "./moomoo-execution-import-setup";
@@ -30,21 +39,26 @@ export const revalidate = 0;
 
 export default async function AccountPage() {
   const scope = await requireTraderLinkPlatformPageScope();
-  const { profile, aiReviewSettings, moomooConnection, moomooAccountLinks } = withReadonlyPlatformDatabase({}, (database) => {
+  const { profile, aiReviewSettings, moomooConnection, aiReviewAccess, moomooAccountLinks } = withReadonlyPlatformDatabase({}, (database) => {
     const currentProfile = new PlatformAccountProfileReadService(database).get(scope);
     const currentAccount = currentProfile.journalAccounts.find((account) => account.active);
     return Object.freeze({
-      profile: currentProfile,
-      aiReviewSettings: new CoachReviewDeliveryScheduleRepository(database).readV2(scope),
-      moomooConnection: new MoomooConnectionRepository(database).find(scope),
-      moomooAccountLinks: currentAccount
-        ? new MoomooExecutionImportCommandService(database).list(
-            scope,
-            scope.activeAccountId ?? "",
-          )
-        : [],
-    });
+    profile: currentProfile,
+    aiReviewSettings: new CoachReviewDeliveryScheduleRepository(database).readV2(scope),
+    moomooConnection: new MoomooConnectionRepository(database).find(scope),
+    aiReviewAccess: isWhopAiReviewEntitlementSchemaAvailable(database)
+      ? new WhopAiReviewEntitlementRepository(database).readAccess(scope.userId)
+      : null,
+    moomooAccountLinks: currentAccount
+      ? new MoomooExecutionImportCommandService(database).list(
+          scope,
+          scope.activeAccountId ?? "",
+        )
+      : [],
   });
+  });
+  const whopHealth = readWhopAiReviewConfigurationHealth();
+  const whopUrls = readWhopAiReviewCustomerUrls();
   const activeAccount = profile.journalAccounts.find((account) => account.active);
   if (!activeAccount) throw new Error("TRADERLINK_ACCOUNT_ACCESS_DENIED");
 
@@ -83,8 +97,17 @@ export default async function AccountPage() {
         <ReportingCurrencySettings reportingCurrency={profile.reportingCurrency} />
       </DashboardPanel>
 
-      <DashboardPanel title="AI Review frequency">
+      <DashboardPanel title="AI Review settings">
         <AiReviewFrequencySettings initialSettings={aiReviewSettings} />
+      </DashboardPanel>
+
+      <DashboardPanel title="AI Review subscription">
+        <AiReviewSubscriptionStatus
+          access={aiReviewAccess}
+          billingPortalUrl={whopUrls.billingPortalUrl}
+          checkoutUrl={whopUrls.checkoutUrl}
+          configured={whopHealth.readyForEntitlement}
+        />
       </DashboardPanel>
 
       <DashboardPanel title="Broker connections">

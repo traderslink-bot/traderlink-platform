@@ -60,6 +60,8 @@ function setup(): Readonly<{
   new CoachAiProviderSettingsRepository(database).save({
     modelId: "gpt-test",
     inputCostUsdPerMillionTokens: "1",
+    cachedInputCostUsdPerMillionTokens: "0.1",
+    cacheWriteInputCostUsdPerMillionTokens: "1.25",
     outputCostUsdPerMillionTokens: "2",
   }, new Date(createdAtUtc));
   return Object.freeze({ database, scope });
@@ -125,7 +127,7 @@ describe("Coach weekly AI review runner", () => {
               nextWeekFocuses: Object.freeze(["Keep one process focus."]),
               incompleteRecord: null,
             }),
-            usage: Object.freeze({ inputTokens: 100, outputTokens: 50, totalTokens: 150 }),
+            usage: Object.freeze({ inputTokens: 100, cachedInputTokens: 0, cacheWriteInputTokens: 0, outputTokens: 50, totalTokens: 150 }),
           });
         },
       );
@@ -196,7 +198,7 @@ describe("Coach weekly AI review runner", () => {
             nextWeekFocuses: Object.freeze(["One focus."]),
             incompleteRecord: null,
           }),
-          usage: Object.freeze({ inputTokens: 10, outputTokens: 5, totalTokens: 15 }),
+          usage: Object.freeze({ inputTokens: 10, cachedInputTokens: 0, cacheWriteInputTokens: 0, outputTokens: 5, totalTokens: 15 }),
         }),
       );
       await expect(runner.run(new Date("2026-08-05T16:00:00.000Z")))

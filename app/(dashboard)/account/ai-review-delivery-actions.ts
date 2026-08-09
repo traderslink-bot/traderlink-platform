@@ -7,6 +7,7 @@ import {
   resolveCoachEffectiveAiReviewFrequencyV2,
   type CoachAiReviewAccountSettingsV2,
   type CoachAiReviewFrequencyV2,
+  type CoachAiReviewTimingModeV2,
 } from "@/src/modules/coach/server/coach-weekly-review-schedule-repository";
 import { CoachUsEquitiesReviewCalendarService } from "@/src/modules/coach/server/market-calendar/coach-us-equities-review-calendar-service";
 import { CoachUsEquitiesCalendarRepository } from "@/src/modules/coach/server/market-calendar/coach-us-equities-calendar-repository";
@@ -20,6 +21,10 @@ const FREQUENCIES = new Set<CoachAiReviewFrequencyV2>([
   "two_week",
   "monthly_only",
 ]);
+const TIMING_MODES = new Set<CoachAiReviewTimingModeV2>([
+  "automatic_after_12_hours",
+  "wait_for_tracker_input",
+]);
 
 function shiftDate(value: string, days: number): string {
   const date = new Date(`${value}T12:00:00.000Z`);
@@ -30,6 +35,12 @@ function shiftDate(value: string, days: number): string {
 function parseFrequency(value: unknown): CoachAiReviewFrequencyV2 | null {
   return typeof value === "string" && FREQUENCIES.has(value as CoachAiReviewFrequencyV2)
     ? value as CoachAiReviewFrequencyV2
+    : null;
+}
+
+function parseTimingMode(value: unknown): CoachAiReviewTimingModeV2 | null {
+  return typeof value === "string" && TIMING_MODES.has(value as CoachAiReviewTimingModeV2)
+    ? value as CoachAiReviewTimingModeV2
     : null;
 }
 
@@ -66,15 +77,20 @@ export type SaveAiReviewFrequencyResult =
   | Readonly<{ ok: true; settings: CoachAiReviewAccountSettingsV2 }>
   | Readonly<{ ok: false; message: string }>;
 
-export async function saveAiReviewFrequency(input: Readonly<{
+export async function saveAiReviewSettings(input: Readonly<{
+  isEnabled: unknown;
   frequency: unknown;
+  timingMode: unknown;
   expectedRevision: unknown;
 }>): Promise<SaveAiReviewFrequencyResult> {
   const frequency = parseFrequency(input.frequency);
+  const timingMode = parseTimingMode(input.timingMode);
   const expectedRevision = parseExpectedRevision(input.expectedRevision);
-  if (!frequency || expectedRevision === undefined) {
-    return Object.freeze({ ok: false, message: "Choose a valid AI Review frequency." });
+  if (typeof input.isEnabled !== "boolean" || !frequency || !timingMode ||
+      expectedRevision === undefined) {
+    return Object.freeze({ ok: false, message: "Choose valid AI Review settings." });
   }
+  const isEnabled = input.isEnabled;
 
   try {
     const scope = await requireTraderLinkPlatformPageScope();
@@ -83,11 +99,24 @@ export async function saveAiReviewFrequency(input: Readonly<{
       const current = repository.readV2(scope);
       const now = new Date();
       const calendar = new CoachUsEquitiesCalendarRepository(database).calendar();
+      if (current && !input.isEnabled) {
+        return repository.saveV2(scope, {
+          isEnabled: false,
+          currentFrequency: current.currentFrequency,
+          timingMode,
+          twoWeekAnchorMondayDate: current.twoWeekAnchorMondayDate,
+          pendingFrequency: null,
+          pendingEffectiveMondayDate: null,
+          pendingTwoWeekAnchorMondayDate: null,
+          expectedRevision,
+        }, now);
+      }
       if (!current || !current.isEnabled) {
         const cohortMonday = calendar.cohortForDate(calendar.marketDateAt(now)).mondayDate;
         return repository.saveV2(scope, {
-          isEnabled: true,
+          isEnabled,
           currentFrequency: frequency,
+          timingMode,
           twoWeekAnchorMondayDate: frequency === "two_week" ? cohortMonday : null,
           pendingFrequency: null,
           pendingEffectiveMondayDate: null,
@@ -105,6 +134,7 @@ export async function saveAiReviewFrequency(input: Readonly<{
         return repository.saveV2(scope, {
           isEnabled: true,
           currentFrequency: currentEffective.frequency,
+          timingMode,
           twoWeekAnchorMondayDate: currentEffective.frequency === "two_week"
             ? currentEffective.twoWeekAnchorMondayDate
             : null,
@@ -117,6 +147,7 @@ export async function saveAiReviewFrequency(input: Readonly<{
       return repository.saveV2(scope, {
         isEnabled: true,
         currentFrequency: currentEffective.frequency,
+        timingMode,
         twoWeekAnchorMondayDate: currentEffective.frequency === "two_week"
           ? currentEffective.twoWeekAnchorMondayDate
           : null,
@@ -137,10 +168,10 @@ export async function saveAiReviewFrequency(input: Readonly<{
     return Object.freeze({
       ok: false,
       message: conflict
-        ? "These settings changed in another window. Refresh and try again."
-        : invalid
-          ? "Choose a valid AI Review frequency."
-          : "Your AI Review frequency could not be saved. Try again.",
+          ? "These settings changed in another window. Refresh and try again."
+          : invalid
+          ? "Choose valid AI Review settings."
+          : "Your AI Review settings could not be saved. Try again.",
     });
   }
 }

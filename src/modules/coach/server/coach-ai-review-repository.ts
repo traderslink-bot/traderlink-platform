@@ -95,6 +95,8 @@ export type CoachMonthlyIssuedReviewRecord = Readonly<{
 
 export type CoachAiGenerationUsage = Readonly<{
   inputTokens: number | null;
+  cachedInputTokens?: number | null;
+  cacheWriteInputTokens?: number | null;
   outputTokens: number | null;
   totalTokens: number | null;
 }>;
@@ -119,6 +121,7 @@ export type CoachAiReviewEvidenceManifestV2 = Readonly<{
     evidenceRef: string;
     tradingDayReviewId: string;
     reviewedStatusRevision: number;
+    reviewStatus?: "reviewed" | "incomplete";
     dailyNoteRevisionId: string | null;
     tradeNoteRevisionIds: readonly string[];
     reviewMarketDate: string;
@@ -171,6 +174,9 @@ export type CoachAiReviewAttemptStartV2 =
   | Readonly<{ state: "started"; attemptId: string; attemptNumber: number }>
   | Readonly<{ state: "in_progress"; attemptId: string; attemptNumber: number }>
   | Readonly<{ state: "already_issued"; review: CoachAiIssuedReviewRecordV2 }>;
+
+export type CoachAiReviewRequestOperationalStateV2 =
+  "pending" | "generating" | "retrying" | "issued" | "stopped";
 
 type PeriodRequestRowV2 = Readonly<{
   coach_ai_review_period_request_id: string;
@@ -275,7 +281,9 @@ function validateEvidenceManifestV2(
     if (!/^(?:reflection_[0-9]{3}|daily_reflection_sha256:[0-9a-f]{64})$/u
       .test(evidence.evidenceRef) || evidenceRefs.has(evidence.evidenceRef) ||
       !Number.isSafeInteger(evidence.reviewedStatusRevision) ||
-      evidence.reviewedStatusRevision < 1) {
+      evidence.reviewedStatusRevision < 1 ||
+      (evidence.reviewStatus !== undefined &&
+        evidence.reviewStatus !== "reviewed" && evidence.reviewStatus !== "incomplete")) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
         field: `evidence[${index}]`,
       });
@@ -339,6 +347,7 @@ function representedEvidenceRefs(inputJson: string): readonly string[] {
   const refs = input.contractVersion === COACH_PERIODIC_AI_REVIEW_INPUT_CONTRACT_VERSION
     ? [
         ...input.completedDailyReflections.map((reflection) => reflection.evidenceRef),
+        ...(input.savedDailyReflections ?? []).map((reflection) => reflection.evidenceRef),
         ...input.carryForwardEvidenceBundles.map((bundle) => bundle.evidenceRef),
       ]
     : [
@@ -394,25 +403,55 @@ function nonnegativeToken(value: number | null, field: string): number | null {
 
 function normalizedUsage(usage: CoachAiGenerationUsage): CoachAiGenerationUsage {
   const inputTokens = nonnegativeToken(usage.inputTokens, "inputTokens");
+  const cachedInputTokens = nonnegativeToken(
+    usage.cachedInputTokens ?? null,
+    "cachedInputTokens",
+  );
+  const cacheWriteInputTokens = nonnegativeToken(
+    usage.cacheWriteInputTokens ?? null,
+    "cacheWriteInputTokens",
+  );
   const outputTokens = nonnegativeToken(usage.outputTokens, "outputTokens");
   const totalTokens = nonnegativeToken(usage.totalTokens, "totalTokens");
   if ((inputTokens === null) !== (outputTokens === null) ||
       (inputTokens === null) !== (totalTokens === null) ||
+      (inputTokens === null) !== (cachedInputTokens === null) ||
+      (inputTokens === null) !== (cacheWriteInputTokens === null) ||
+      (inputTokens !== null && cachedInputTokens !== null &&
+        cacheWriteInputTokens !== null &&
+        cachedInputTokens + cacheWriteInputTokens > inputTokens) ||
       (inputTokens !== null && outputTokens !== null && totalTokens !== inputTokens + outputTokens)) {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "tokenUsage" });
   }
-  return Object.freeze({ inputTokens, outputTokens, totalTokens });
+  return Object.freeze({
+    inputTokens,
+    cachedInputTokens,
+    cacheWriteInputTokens,
+    outputTokens,
+    totalTokens,
+  });
 }
 
-function estimatedCost(
+export function calculateCoachAiReviewEstimatedCost(
   usage: CoachAiGenerationUsage,
   settings: CoachAiProviderSettings,
 ): string | null {
-  if (usage.inputTokens === null || usage.outputTokens === null ||
+  if (usage.inputTokens === null || usage.cachedInputTokens === null ||
+      usage.cachedInputTokens === undefined ||
+      usage.cacheWriteInputTokens === null ||
+      usage.cacheWriteInputTokens === undefined || usage.outputTokens === null ||
       settings.inputCostUsdPerMillionTokens === null ||
+      settings.cachedInputCostUsdPerMillionTokens === null ||
+      settings.cacheWriteInputCostUsdPerMillionTokens === null ||
       settings.outputCostUsdPerMillionTokens === null) return null;
-  return new ExactDecimal(usage.inputTokens)
+  return new ExactDecimal(
+    usage.inputTokens - usage.cachedInputTokens - usage.cacheWriteInputTokens,
+  )
     .times(settings.inputCostUsdPerMillionTokens)
+    .plus(new ExactDecimal(usage.cachedInputTokens)
+      .times(settings.cachedInputCostUsdPerMillionTokens))
+    .plus(new ExactDecimal(usage.cacheWriteInputTokens)
+      .times(settings.cacheWriteInputCostUsdPerMillionTokens))
     .plus(new ExactDecimal(usage.outputTokens).times(settings.outputCostUsdPerMillionTokens))
     .dividedBy(1_000_000)
     .toFixed(12)
@@ -893,19 +932,25 @@ WHERE coach_ai_review_generation_attempt_id = ? AND review_kind = 'weekly'
       if (result.changes !== 1) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
       if (usageInput && settings) {
         const usage = normalizedUsage(usageInput);
-        const cost = estimatedCost(usage, settings);
+        const cost = calculateCoachAiReviewEstimatedCost(usage, settings);
         this.database.prepare(`INSERT INTO coach_ai_review_generation_attempt_receipts (
   coach_ai_review_generation_attempt_receipt_id,
-  coach_ai_review_generation_attempt_id, input_tokens, output_tokens,
-  total_tokens, input_cost_usd_per_million_tokens,
+  coach_ai_review_generation_attempt_id, input_tokens, cached_input_tokens,
+  cache_write_input_tokens, output_tokens, total_tokens,
+  input_cost_usd_per_million_tokens, cached_input_cost_usd_per_million_tokens,
+  cache_write_input_cost_usd_per_million_tokens,
   output_cost_usd_per_million_tokens, estimated_cost_usd, recorded_at_utc
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
           createCanonicalUuidV4(),
           attemptId,
           usage.inputTokens,
+          usage.cachedInputTokens,
+          usage.cacheWriteInputTokens,
           usage.outputTokens,
           usage.totalTokens,
           cost === null ? null : settings.inputCostUsdPerMillionTokens,
+          cost === null ? null : settings.cachedInputCostUsdPerMillionTokens,
+          cost === null ? null : settings.cacheWriteInputCostUsdPerMillionTokens,
           cost === null ? null : settings.outputCostUsdPerMillionTokens,
           cost,
           createCanonicalUtcTimestamp(now),
@@ -968,19 +1013,25 @@ WHERE coach_ai_review_generation_attempt_id = ? AND review_kind = 'weekly'
         usage.totalTokens,
         issuedAtUtc,
       );
-      const cost = estimatedCost(usage, settings);
+      const cost = calculateCoachAiReviewEstimatedCost(usage, settings);
       this.database.prepare(`INSERT INTO coach_ai_review_generation_attempt_receipts (
   coach_ai_review_generation_attempt_receipt_id,
-  coach_ai_review_generation_attempt_id, input_tokens, output_tokens,
-  total_tokens, input_cost_usd_per_million_tokens,
+  coach_ai_review_generation_attempt_id, input_tokens, cached_input_tokens,
+  cache_write_input_tokens, output_tokens, total_tokens,
+  input_cost_usd_per_million_tokens, cached_input_cost_usd_per_million_tokens,
+  cache_write_input_cost_usd_per_million_tokens,
   output_cost_usd_per_million_tokens, estimated_cost_usd, recorded_at_utc
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
         createCanonicalUuidV4(),
         attemptId,
         usage.inputTokens,
+        usage.cachedInputTokens,
+        usage.cacheWriteInputTokens,
         usage.outputTokens,
         usage.totalTokens,
         cost === null ? null : settings.inputCostUsdPerMillionTokens,
+        cost === null ? null : settings.cachedInputCostUsdPerMillionTokens,
+        cost === null ? null : settings.cacheWriteInputCostUsdPerMillionTokens,
         cost === null ? null : settings.outputCostUsdPerMillionTokens,
         cost,
         issuedAtUtc,
@@ -1101,19 +1152,25 @@ WHERE coach_ai_review_generation_attempt_id = ? AND review_kind = 'monthly'
       if (result.changes !== 1) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
       if (usageInput && settings) {
         const usage = normalizedUsage(usageInput);
-        const cost = estimatedCost(usage, settings);
+        const cost = calculateCoachAiReviewEstimatedCost(usage, settings);
         this.database.prepare(`INSERT INTO coach_ai_review_generation_attempt_receipts (
   coach_ai_review_generation_attempt_receipt_id,
-  coach_ai_review_generation_attempt_id, input_tokens, output_tokens,
-  total_tokens, input_cost_usd_per_million_tokens,
+  coach_ai_review_generation_attempt_id, input_tokens, cached_input_tokens,
+  cache_write_input_tokens, output_tokens, total_tokens,
+  input_cost_usd_per_million_tokens, cached_input_cost_usd_per_million_tokens,
+  cache_write_input_cost_usd_per_million_tokens,
   output_cost_usd_per_million_tokens, estimated_cost_usd, recorded_at_utc
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
           createCanonicalUuidV4(),
           attemptId,
           usage.inputTokens,
+          usage.cachedInputTokens,
+          usage.cacheWriteInputTokens,
           usage.outputTokens,
           usage.totalTokens,
           cost === null ? null : settings.inputCostUsdPerMillionTokens,
+          cost === null ? null : settings.cachedInputCostUsdPerMillionTokens,
+          cost === null ? null : settings.cacheWriteInputCostUsdPerMillionTokens,
           cost === null ? null : settings.outputCostUsdPerMillionTokens,
           cost,
           createCanonicalUtcTimestamp(now),
@@ -1180,19 +1237,25 @@ WHERE coach_ai_review_generation_attempt_id = ? AND review_kind = 'monthly'
         usage.totalTokens,
         issuedAtUtc,
       );
-      const cost = estimatedCost(usage, settings);
+      const cost = calculateCoachAiReviewEstimatedCost(usage, settings);
       this.database.prepare(`INSERT INTO coach_ai_review_generation_attempt_receipts (
   coach_ai_review_generation_attempt_receipt_id,
-  coach_ai_review_generation_attempt_id, input_tokens, output_tokens,
-  total_tokens, input_cost_usd_per_million_tokens,
+  coach_ai_review_generation_attempt_id, input_tokens, cached_input_tokens,
+  cache_write_input_tokens, output_tokens, total_tokens,
+  input_cost_usd_per_million_tokens, cached_input_cost_usd_per_million_tokens,
+  cache_write_input_cost_usd_per_million_tokens,
   output_cost_usd_per_million_tokens, estimated_cost_usd, recorded_at_utc
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
         createCanonicalUuidV4(),
         attemptId,
         usage.inputTokens,
+        usage.cachedInputTokens,
+        usage.cacheWriteInputTokens,
         usage.outputTokens,
         usage.totalTokens,
         cost === null ? null : settings.inputCostUsdPerMillionTokens,
+        cost === null ? null : settings.cachedInputCostUsdPerMillionTokens,
+        cost === null ? null : settings.cacheWriteInputCostUsdPerMillionTokens,
         cost === null ? null : settings.outputCostUsdPerMillionTokens,
         cost,
         issuedAtUtc,
@@ -1279,6 +1342,46 @@ WHERE user_id = ? AND workspace_id = ? AND account_id = ?
       periodEndDate,
     );
     return row ? periodRequestRecordV2(row) : null;
+  }
+
+  listPendingPeriodRequestsV2(
+    scope: WorkspaceAccessScope,
+  ): readonly CoachAiReviewPeriodRequestRecordV2[] {
+    const rows = this.database.prepare<[
+      string, string, string
+    ], PeriodRequestRowV2>(`${PERIOD_REQUEST_SELECT_V2}
+WHERE user_id = ? AND workspace_id = ? AND account_id = ? AND state = 'pending'
+ORDER BY eligible_at_utc ASC, created_at_utc ASC,
+  coach_ai_review_period_request_id ASC`).all(
+      scope.userId,
+      scope.workspaceId,
+      accountId(scope),
+    );
+    return Object.freeze(rows.map(periodRequestRecordV2));
+  }
+
+  readPeriodRequestOperationalStateV2(
+    scope: WorkspaceAccessScope,
+    requestId: string,
+  ): CoachAiReviewRequestOperationalStateV2 {
+    const request = this.readPeriodRequestV2(scope, requestId);
+    if (request.state === "issued") return "issued";
+    if (request.state === "stopped" || request.state === "failed") return "stopped";
+    const attempts = this.database.prepare<[
+      string, string, string, string
+    ], Readonly<{ state: "pending" | "issued" | "failed" }>>(`SELECT state
+FROM coach_ai_review_generation_attempts_v2
+WHERE coach_ai_review_period_request_id = ? AND user_id = ?
+  AND workspace_id = ? AND account_id = ?
+ORDER BY attempt_number DESC`).all(
+      requestId,
+      scope.userId,
+      scope.workspaceId,
+      accountId(scope),
+    );
+    if (attempts.some((attempt) => attempt.state === "pending")) return "generating";
+    if (attempts.some((attempt) => attempt.state === "failed")) return "retrying";
+    return "pending";
   }
 
   createOrReadPeriodRequestV2(
@@ -1662,15 +1765,21 @@ WHERE coach_ai_review_generation_attempt_id = ? AND user_id = ?
       if (result.changes !== 1) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
       if (usageInput && settings) {
         const usage = normalizedUsage(usageInput);
-        const cost = estimatedCost(usage, settings);
+        const cost = calculateCoachAiReviewEstimatedCost(usage, settings);
         this.database.prepare(`INSERT INTO coach_ai_review_generation_attempt_receipts_v2 (
   coach_ai_review_generation_attempt_receipt_id,
-  coach_ai_review_generation_attempt_id, input_tokens, output_tokens,
-  total_tokens, input_cost_usd_per_million_tokens,
+  coach_ai_review_generation_attempt_id, input_tokens, cached_input_tokens,
+  cache_write_input_tokens, output_tokens, total_tokens,
+  input_cost_usd_per_million_tokens, cached_input_cost_usd_per_million_tokens,
+  cache_write_input_cost_usd_per_million_tokens,
   output_cost_usd_per_million_tokens, estimated_cost_usd, recorded_at_utc
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-          createCanonicalUuidV4(), attemptId, usage.inputTokens, usage.outputTokens,
-          usage.totalTokens, cost === null ? null : settings.inputCostUsdPerMillionTokens,
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+          createCanonicalUuidV4(), attemptId, usage.inputTokens,
+          usage.cachedInputTokens, usage.cacheWriteInputTokens,
+          usage.outputTokens, usage.totalTokens,
+          cost === null ? null : settings.inputCostUsdPerMillionTokens,
+          cost === null ? null : settings.cachedInputCostUsdPerMillionTokens,
+          cost === null ? null : settings.cacheWriteInputCostUsdPerMillionTokens,
           cost === null ? null : settings.outputCostUsdPerMillionTokens,
           cost, finalizedAtUtc,
         );
@@ -1731,15 +1840,21 @@ WHERE coach_ai_review_generation_attempt_id = ?
         JSON.stringify(parsedOutput),
         issuedAtUtc,
       );
-      const cost = estimatedCost(usage, settings);
+      const cost = calculateCoachAiReviewEstimatedCost(usage, settings);
       this.database.prepare(`INSERT INTO coach_ai_review_generation_attempt_receipts_v2 (
   coach_ai_review_generation_attempt_receipt_id,
-  coach_ai_review_generation_attempt_id, input_tokens, output_tokens,
-  total_tokens, input_cost_usd_per_million_tokens,
+  coach_ai_review_generation_attempt_id, input_tokens, cached_input_tokens,
+  cache_write_input_tokens, output_tokens, total_tokens,
+  input_cost_usd_per_million_tokens, cached_input_cost_usd_per_million_tokens,
+  cache_write_input_cost_usd_per_million_tokens,
   output_cost_usd_per_million_tokens, estimated_cost_usd, recorded_at_utc
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-        createCanonicalUuidV4(), attemptId, usage.inputTokens, usage.outputTokens,
-        usage.totalTokens, cost === null ? null : settings.inputCostUsdPerMillionTokens,
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+        createCanonicalUuidV4(), attemptId, usage.inputTokens,
+        usage.cachedInputTokens, usage.cacheWriteInputTokens,
+        usage.outputTokens, usage.totalTokens,
+        cost === null ? null : settings.inputCostUsdPerMillionTokens,
+        cost === null ? null : settings.cachedInputCostUsdPerMillionTokens,
+        cost === null ? null : settings.cacheWriteInputCostUsdPerMillionTokens,
         cost === null ? null : settings.outputCostUsdPerMillionTokens,
         cost, issuedAtUtc,
       );

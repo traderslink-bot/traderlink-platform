@@ -104,20 +104,26 @@ migration, backup and restore evidence.
 - [ ] Invoke the protected AI Review market-calendar verifier on its accepted
   schedule. The job is host-neutral; it is not Vercel Cron unless the complete
   app is later moved to an accepted Vercel/Neon architecture.
+- [ ] Invoke the protected AI Review generation coordinator after each relevant
+  market seal and on a bounded retry cadence. Confirm Admin records successful,
+  paused and failed runs without storing user identity or review content.
 - [ ] Prove current-year market-calendar coverage and either verified next-year
   coverage or an explicit fail-closed warning before review periods can cross
   the coverage boundary.
-- [ ] Keep AI Review provider issuance and customer automatic generation off
-  until the separate paid-feature/entitlement plan is accepted.
+- [x] Implement the fail-closed AI Review paid-feature entitlement contract.
+  Keep provider issuance and customer automatic generation off until Whop,
+  OpenAI and scheduler launch configuration is supplied and deliberately enabled.
 - [ ] For every worker, document retry/idempotency, concurrency ownership,
   health evidence, failure alert and safe restart behavior.
 
 ### 7. AI and paid-feature controls
 
-- [ ] Complete pricing, packaging, entitlement and customer-access policy for
-  AI Reviews before customer provider calls are enabled.
-- [ ] Configure provider/model, verified token prices, daily/account/platform
-  caps and server-only provider credentials.
+- [x] Complete the initial Whop packaging, entitlement and customer-access
+  contract for AI Reviews. Whop owns price/trial/renewal truth; TraderLink owns
+  only privacy-safe access projection and generation enforcement.
+- [ ] Configure provider/model, verified token prices, daily burst caps, one
+  trailing-30-day AI Reviews platform spend ceiling and server-only provider
+  credentials.
 - [ ] Prove requests use immutable account-scoped snapshots, retries reuse the
   same request, and saved reviews never call the provider again when reopened.
 - [ ] Keep missing credentials, calendar coverage, entitlement or price data as
@@ -153,15 +159,28 @@ migration, backup and restore evidence.
   replacement has not been ported to a Neon/Postgres Platform database.
 - A prior full-replacement Vercel attempt correctly failed the persistent `/data`
   readiness contract and was rolled back.
-- Local migrations through `0040_daily_trade_path_materializations` are
-  applied. This does not mean `0039` or `0040` is applied in production.
-- The verified AI Review calendar covers 2026. NYSE publishes later years, but
-  Nasdaq Trader has not yet published 2027, so 2027 remains fail-closed.
+- Local migrations are current through
+  `0051_coach_ai_review_cache_write_accounting`, including the
+  disposable-verified Whop entitlement, subscriber safeguards and exact
+  ordinary-input/cache-read/cache-write/output pricing foundations. None of
+  these local migration states implies production application.
+- The verified baseline AI Review calendar covers 2026. Next-year coverage is
+  accepted only after the stored two-source verifier confirms Nasdaq and NYSE
+  agree; otherwise it remains visibly fail-closed and retries on schedule.
 - The future-year verifier and protected host-neutral trigger are implemented
   but not scheduled. A read-only official-source check confirms both parsers
   agree exactly for 2026; unauthenticated trigger access fails closed with 401.
-- AI Review request creation and issuance entry points exist but provider calls,
-  paid customer entitlement and hosted automatic generation remain inactive.
+- The v2 AI Review coordinator, immutable pending/retry path, per-user Whop
+  entitlement enforcement, signed webhook/OAuth foundation, Admin health and
+  Account controls are implemented. Luna and four-rate pricing are configured
+  locally; the USD 2.00 per-subscriber paid-cycle safeguard is stored,
+  emergency limits remain unset and both controls remain disabled
+  pending the owner's Admin decision. A daily cap alone does not guarantee a
+  monthly business budget, so a trailing-30-day platform ceiling is also a
+  pre-activation gate. Real Whop configuration, customer activation and hosted
+  automatic generation remain inactive. The disposable end-to-end
+  issuance/reopen proof passed; source-verified Whop API reconciliation still
+  awaits coordinated migration registration and local application.
 - Hosting provisioning, production database creation/transfer, owner linking,
   production scheduler activation, full-app DNS cutover and rollback rehearsal
   remain open.
@@ -174,6 +193,7 @@ migration, backup and restore evidence.
 - [Operational and Configuration Inventory](operational-and-configuration-inventory.md)
 - [Phase 6 Replacement Acceptance Plan](phase-6-replacement-acceptance-plan.md)
 - [AI Reviews Plan](ai-weekly-review-plan.md)
+- [AI Reviews Provider Acceptance and Whop Access Plan](ai-reviews-provider-and-whop-access-plan.md)
 - [Weekly and Monthly AI Review Boundary Progress](ai-weekly-monthly-review-boundary-progress.md)
 
 ## Maintenance rule

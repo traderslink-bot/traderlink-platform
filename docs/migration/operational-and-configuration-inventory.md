@@ -115,8 +115,9 @@ This inventory includes runtime configuration names read directly or indirectly 
 - Database/repository boundary: `TRADERLINK_PLATFORM_DB_PATH`,
   `TRADERLINK_PLATFORM_REPOSITORY_ROOT`.
 - Protected operational scheduler authentication: `CRON_SECRET`. This is a
-  server-only bearer secret for the host-neutral AI Review calendar trigger;
-  its value must not enter browser code, logs or this inventory.
+  server-only bearer secret for the host-neutral AI Review calendar and
+  generation-coordinator triggers; its value must not enter browser code, logs
+  or this inventory. Production scheduling remains a launch gate.
 - Versioned broker-account identity authority:
   `TRADERLINK_PLATFORM_ACCOUNT_IDENTITY_ACTIVE_KEY_VERSION`,
   `TRADERLINK_PLATFORM_ACCOUNT_IDENTITY_HMAC_KEYS_JSON`.
@@ -160,6 +161,31 @@ These names are migration inputs. The replacement must use Platform/Journal name
 
 - `NEWS_PUBLIC_BASE_URL`, `NEWS_PUBLISH_TOKEN`.
 - `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_TIMEOUT_MS`, `PRESS_RELEASE_OPENAI_MODEL`.
+- AI Review Whop access: `WHOP_API_KEY`, `WHOP_WEBHOOK_SECRET`,
+  `WHOP_COMPANY_ID`, `WHOP_AI_REVIEWS_PRODUCT_IDS`,
+  `WHOP_AI_REVIEWS_CHECKOUT_URL`, `WHOP_BILLING_PORTAL_URL`,
+  `WHOP_OAUTH_CLIENT_ID`, `WHOP_OAUTH_REDIRECT_URI`,
+  `WHOP_API_VERSION_DATE`, and
+  `TRADERLINK_PLATFORM_WHOP_IDENTITY_HMAC_KEY`. All are server-only. Checkout,
+  pricing, trial and renewal truth remains in Whop; no secret or duplicate price
+  value belongs in the Platform database.
+- Whop reconciliation uses the server-only `WHOP_API_KEY` to page the official
+  memberships endpoint for the configured company and product allowlist. Raw
+  Whop IDs are converted immediately to keyed references, only aggregate run
+  health is stored, and absence from one response never revokes access.
+- Local AI Review provider acceptance/configuration is guarded by
+  `src/scripts/run-coach-ai-review-provider-acceptance.ts`,
+  `src/scripts/verify-coach-ai-review-end-to-end-fixture.ts` and
+  `src/scripts/configure-coach-ai-review-provider-local.ts`. These are local
+  owner operations, not hosted jobs; provider calls require their explicit
+  confirmation flags and configuration never enables review controls.
+- AI Review cost protection uses cadence-specific daily burst limits and a USD
+  2.00 estimated-spend cap per subscriber per stored Whop paid cycle across
+  weekly, two-week and monthly reviews. The Admin trailing-30-day value is a
+  non-blocking warning; only the separately configured emergency global value
+  can pause every subscriber. All four GPT-5.6 price classes (ordinary input,
+  cache read, cache write and output) are stored with each new receipt. AI Chat
+  usage and limits remain separate.
 - `NEXT_PUBLIC_DISABLE_GA`, `NEXT_PUBLIC_ENABLE_GA_IN_DEV`, `NEXT_PUBLIC_GA_MEASUREMENT_ID`, `NEXT_PUBLIC_GOOGLE_ANALYTICS_ID`.
 
 ### Big Time local automation
@@ -196,7 +222,7 @@ part of the migration documents.
 | TradingView embed | Watchlist chart UI | Watchlist external UI dependency |
 | Interactive Brokers/TWS or Gateway | Statement source plus optional Levels System market-data provider | Journal broker source and Level Analysis provider through separate contracts |
 | EODHD, Yahoo, Finnhub | Market data/source options in chart/analysis/watchlist code | Market-data provider contracts; never implicit Journal facts |
-| Whop | Product/access links | Platform/Account commerce link; no payment persistence identified in this repo |
+| Whop | AI Review product/access authority, signed membership events, OAuth identity proof and Admin reconciliation | Platform/Account stores privacy-safe access projections and aggregate run health only; Whop retains billing truth and payment data |
 | Google Analytics | Public-site telemetry | Platform telemetry; must exclude private Journal data |
 | Vendored `levels-system-v2` | Local package for support/resistance/market structure | Market/Level Analysis module; reconcile external source folders before cleanup |
 

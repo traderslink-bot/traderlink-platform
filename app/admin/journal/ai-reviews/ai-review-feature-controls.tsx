@@ -2,9 +2,7 @@
 
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import Stack from "@mui/material/Stack";
-import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useState, useTransition } from "react";
@@ -24,21 +22,20 @@ export function AiReviewFeatureControl({
   initialControl: CoachAiFeatureControl;
   label: "Weekly Reviews" | "Monthly Reviews";
 }>) {
-  const [enabled, setEnabled] = useState(initialControl.enabled);
   const [requestCap, setRequestCap] = useState(initialControl.caps.dailyRequestCap?.toString() ?? "");
   const [tokenCap, setTokenCap] = useState(initialControl.caps.dailyTokenCap?.toString() ?? "");
   const [spendCap, setSpendCap] = useState(initialControl.caps.dailyEstimatedSpendCapUsd ?? "");
   const [saved, setSaved] = useState(keyFor(initialControl));
   const [message, setMessage] = useState<string | null>(null);
   const [working, startTransition] = useTransition();
-  const current = `${enabled}|${requestCap}|${tokenCap}|${spendCap}`;
+  const current = `${initialControl.enabled}|${requestCap}|${tokenCap}|${spendCap}`;
   const featureKey = initialControl.featureKey as "weekly_reviews" | "monthly_reviews";
 
   function save(): void {
     startTransition(async () => {
       const result = await saveAiReviewFeatureControl({
         featureKey,
-        enabled,
+        enabled: initialControl.enabled,
         dailyRequestCap: requestCap,
         dailyTokenCap: tokenCap,
         dailyEstimatedSpendCapUsd: spendCap,
@@ -52,10 +49,9 @@ export function AiReviewFeatureControl({
 
   return (
     <Stack spacing={1.5}>
-      <FormControlLabel
-        control={<Switch checked={enabled} onChange={(event) => setEnabled(event.target.checked)} />}
-        label={enabled ? `${label} enabled` : `${label} disabled`}
-      />
+      <Typography color="text.secondary" variant="body2">
+        These limits apply to {label.toLowerCase()}. Platform availability is controlled by the master switch above.
+      </Typography>
       <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
         <TextField fullWidth inputMode="numeric" label="Daily request limit" onChange={(event) => setRequestCap(event.target.value.trim())} value={requestCap} />
         <TextField fullWidth inputMode="numeric" label="Daily token limit" onChange={(event) => setTokenCap(event.target.value.trim())} value={tokenCap} />
@@ -67,7 +63,7 @@ export function AiReviewFeatureControl({
           {working ? "Saving..." : `Save ${label}`}
         </Button>
         <Typography color="text.secondary" variant="caption">
-          Turning this off pauses new automatic reviews. Existing delivery choices stay exactly as the trader saved them.
+          Limits reserve room before any provider call and are rechecked on retry.
         </Typography>
       </Stack>
     </Stack>

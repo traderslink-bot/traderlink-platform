@@ -78,6 +78,104 @@ export type CoachAiReviewRuleCountsV2 = Readonly<{
   notReviewed: number;
 }>;
 
+export type CoachAiReviewNamedRuleOutcomeV2 = Readonly<{
+  category: string;
+  statement: string;
+  status: "followed" | "broken" | "not_reviewed";
+  title: string;
+}>;
+
+export type CoachAiReviewTradeAnalysisV2 = Readonly<{
+  availability: "ready" | "unavailable";
+  unavailableReason: "missing" | "pending" | "no_coverage" |
+    "provider_unavailable" | "expired" | "stale" | null;
+  analyzerContractVersion: "daily_trade_analyzer_v1" |
+    "daily_trade_analyzer_v2" | null;
+  events: readonly Readonly<{
+    kind: "entry" | "add" | "partial_exit" | "final_exit";
+    sequence: number;
+    executedAtUtc: string;
+    oneMinute: Readonly<{
+      candleLocationRatio: number | null;
+      candleTurnoverDecimal: string | null;
+      candleVolumeDecimal: string | null;
+      relativeVolume: number | null;
+      rsi14: number | null;
+      ema9DistancePercent: number | null;
+      vwapDistancePercent: number | null;
+      executionEdgeDistanceDecimal: string | null;
+      favorableMoveUntilFlatDecimal: string | null;
+      adverseMoveUntilFlatDecimal: string | null;
+      minutesUntilFlat: number | null;
+      givebackFromPriorFavorableExtremeDecimal: string | null;
+      patterns: readonly Readonly<{
+        availableAtExecution: boolean;
+        candlesBeforeExecution: 0 | 1 | 2;
+        kind: string;
+        score: number;
+      }>[];
+      postEventPaths: readonly Readonly<{
+        minutesAfterEvent: 5 | 15 | 30 | 60;
+        oppositeDirectionMoveDecimal: string | null;
+        tradeDirectionMoveDecimal: string | null;
+      }>[];
+    }>;
+    fiveMinute: Readonly<{
+      completedBeforeExecution: Readonly<{
+        ema9DistancePercent: number | null;
+        relativeVolume: number | null;
+        turnoverDecimal: string | null;
+        volumeDecimal: string;
+      }> | null;
+      containingCandle: Readonly<{
+        candleLocationRatio: number | null;
+        ema9DistancePercent: number | null;
+        executionEdgeDistanceDecimal: string | null;
+        relativeVolume: number | null;
+        turnoverDecimal: string | null;
+        volumeDecimal: string;
+      }> | null;
+      preExecutionPartial: Readonly<{
+        completedMinuteCount: number;
+        turnoverDecimal: string | null;
+        volumeDecimal: string;
+      }> | null;
+      patterns: readonly Readonly<{
+        availableAtExecution: boolean;
+        candlesBeforeExecution: 0 | 1 | 2;
+        kind: string;
+        score: number;
+      }>[];
+    }>;
+  }>[];
+  greenToRed: Readonly<{
+    status: "unavailable" | "never_green" | "green_no_red" |
+      "green_to_red_ended_red" | "green_to_red_recovered" |
+      "green_to_red_ended_flat";
+    feesComplete: boolean;
+    finalPnlDecimal: string | null;
+    peakPnlDecimal: string | null;
+    firstRedPnlDecimal: string | null;
+    peakToRedReversalDecimal: string | null;
+    peakToFinalReversalDecimal: string | null;
+    minutesFromPeakToRed: number | null;
+    addedAfterPeakCount: number;
+    partialExitBeforeRedCount: number;
+    bestProfitOpportunity: Readonly<{
+      durationMinutes: number;
+      completedCloseCount: number;
+      closesAtOrAboveStrongThresholdCount: number;
+      lowestPnlDecimal: string;
+      peakPnlDecimal: string;
+      peakToFinalReversalDecimal: string;
+    }> | null;
+  }> | null;
+  finalExitPaths: readonly Readonly<{
+    minutesAfterExit: 5 | 15 | 30 | 60;
+    favorableMoveDecimal: string | null;
+  }>[];
+}>;
+
 export type CoachAiReviewTradeMarketFactV2 = Readonly<{
   ticker: string;
   direction: "long" | "short";
@@ -89,7 +187,9 @@ export type CoachAiReviewTradeMarketFactV2 = Readonly<{
   holdingDurationMilliseconds: number | null;
   tradingSession: "premarket" | "regular" | "after_hours" | null;
   ruleReviews: CoachAiReviewRuleCountsV2;
+  ruleOutcomes?: readonly CoachAiReviewNamedRuleOutcomeV2[];
   tags: readonly string[];
+  analysis?: CoachAiReviewTradeAnalysisV2;
 }>;
 
 export type CoachAiReviewDayMarketFactsV2 = Readonly<{
@@ -99,6 +199,7 @@ export type CoachAiReviewDayMarketFactsV2 = Readonly<{
   readyClosedTradeCount: number;
   netPnlDecimal: string | null;
   ruleReviews: CoachAiReviewRuleCountsV2;
+  ruleOutcomes?: readonly CoachAiReviewNamedRuleOutcomeV2[];
   trades: readonly CoachAiReviewTradeMarketFactV2[];
 }>;
 
@@ -106,6 +207,7 @@ export type CoachAiReviewDailyReflectionV2 = Readonly<{
   evidenceRef: string;
   reviewMarketDate: string;
   reviewedStatusRevision: number;
+  reflectionState?: "completed" | "incomplete";
   dailyNotes: Readonly<{
     whatWorked: string;
     whatNeedsWork: string;
@@ -173,6 +275,7 @@ export type CoachPeriodicAiReviewInputV2 = Readonly<{
     days: readonly CoachAiReviewDayMarketFactsV2[];
   }>;
   completedDailyReflections: readonly CoachAiReviewDailyReflectionV2[];
+  savedDailyReflections?: readonly CoachAiReviewDailyReflectionV2[];
   reflectionCoverage: readonly Readonly<{
     reviewMarketDate: string;
     marketSessionState: "open" | "closed";

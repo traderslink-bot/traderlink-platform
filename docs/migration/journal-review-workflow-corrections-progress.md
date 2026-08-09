@@ -65,7 +65,8 @@ active owner-review testing cadence.
 
 ## 2026-08-04 Daily Trade Tracker presentation cleanup
 
-**Status:** Implemented locally; owner visual review pending.
+**Status:** Implemented locally; existing Daily Trade Tracker visual design
+owner-approved on 2026-08-07.
 
 - Each completed trade card now owns its factual executions and their manual
   Edit action. The standalone execution list is removed.
@@ -100,7 +101,8 @@ active owner-review testing cadence.
 
 ## 2026-08-04 Daily Trade Tracker one-day review workflow
 
-**Status:** Implemented locally; owner visual review pending.
+**Status:** Implemented locally; existing Daily Trade Tracker visual design
+owner-approved on 2026-08-07.
 
 - A manual Day Tracker submission is permitted for any entered date but must
   contain executions from exactly one Eastern Time trading date. A mixed-date

@@ -136,14 +136,19 @@ No work in Phases A-C authorizes deployment or customer activation.
     period because it cannot support useful feedback alone. It is never
     discarded. Two closed trades, one trade with saved context, or substantive
     saved reflection evidence can support a review.
-12. A daily spend cap limits a sudden loop or key-abuse burst but cannot enforce
-    a monthly business budget. Launch readiness therefore requires both the
-    existing daily protections and one Admin-owned trailing-30-day platform
-    spend ceiling shared by all AI Reviews; neither is shown as a customer
-    quota. A rolling window avoids a calendar-month reset loophole and is easier
-    to understand than separate weekly/monthly monthly-budget fields.
+12. A daily spend cap limits a sudden loop or key-abuse burst but cannot contain
+    one subscriber across a paid month. The accepted correction is a USD 1.00
+    per-subscriber paid-cycle limit, using stored Whop renewal boundaries, plus
+    a non-blocking global warning and a separately configured emergency global
+    stop. The detailed correction is governed by the
+    [AI Reviews Subscriber Safeguards and Review Presentation Plan](ai-reviews-safeguards-and-presentation-plan.md).
 
-## Budget-safeguard implementation contract
+## Superseded budget-safeguard contract
+
+The original shared hard-ceiling design below was implemented for initial
+provider containment but is superseded by the subscriber-safe contract linked
+above. It must not remain the normal launch behavior because one user's spend
+could block unrelated subscribers.
 
 - Store exactly one nullable trailing-30-day AI Reviews estimated-spend ceiling.
   Keep it Admin-only; traders never see it as a usage allowance.
@@ -167,3 +172,6 @@ The feature is provider-accepted when Phase A passes. It is paid-access complete
 when Phase B is implemented and verified against signed Whop test events. It is
 production-configured when Phase C passes. It is live only after Phase D is
 separately accepted and activated.
+
+The high-volume cost and payload follow-up is governed by the
+[AI Reviews Monthly Cost Benchmark Plan](ai-reviews-monthly-cost-benchmark-plan.md).

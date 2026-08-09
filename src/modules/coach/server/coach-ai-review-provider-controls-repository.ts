@@ -8,6 +8,8 @@ import type {
   CoachAiFeatureKey,
 } from "@/src/modules/coach/contracts/ai-provider-controls-contracts";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
+import { WhopAiReviewEntitlementRepository } from
+  "@/src/modules/platform/server/billing/whop-ai-review-entitlement-repository";
 import {
   assertCanonicalUuidV4,
   createCanonicalUtcTimestamp,
@@ -36,6 +38,8 @@ export type CoachAiReviewGenerationControlReservation = Readonly<{
   providerKey: "openai_direct";
   modelId: string;
   inputCostUsdPerMillionTokens: string | null;
+  cachedInputCostUsdPerMillionTokens: string | null;
+  cacheWriteInputCostUsdPerMillionTokens: string | null;
   outputCostUsdPerMillionTokens: string | null;
   maximumInputTokens: number;
   maximumOutputTokens: number;
@@ -57,6 +61,8 @@ type ReviewSettingsRow = Readonly<{
   provider_key: "openai_direct";
   model_id: string;
   input_cost_usd_per_million_tokens: string | null;
+  cached_input_cost_usd_per_million_tokens: string | null;
+  cache_write_input_cost_usd_per_million_tokens: string | null;
   output_cost_usd_per_million_tokens: string | null;
 }>;
 
@@ -68,6 +74,8 @@ type ReservationRow = Readonly<{
   provider_key: "openai_direct";
   model_id: string;
   input_cost_usd_per_million_tokens: string | null;
+  cached_input_cost_usd_per_million_tokens: string | null;
+  cache_write_input_cost_usd_per_million_tokens: string | null;
   output_cost_usd_per_million_tokens: string | null;
   reserved_max_input_tokens: number;
   reserved_max_output_tokens: number;
@@ -80,6 +88,23 @@ type AttemptRow = Readonly<{
   state: "pending" | "issued" | "failed" | "blocked";
   provider_key: "openai_direct";
   model_id: string;
+}>;
+
+type BudgetControlRow = Readonly<{
+  trailing_30_day_estimated_spend_cap_usd: string | null;
+  per_subscriber_paid_cycle_estimated_spend_cap_usd: string;
+  emergency_trailing_30_day_estimated_spend_cap_usd: string | null;
+}>;
+
+type SubscriberBudgetWindow = Readonly<{
+  startUtc: string;
+  endUtc: string;
+}>;
+
+type RollingSpendRow = Readonly<{
+  state: "reserved" | "started" | "completed" | "failed" | "blocked";
+  reserved_maximum_cost_usd: string | null;
+  estimated_cost_usd: string | null;
 }>;
 
 function easternCalendarDate(now: Date): string {
@@ -113,6 +138,10 @@ function reservationRecord(row: ReservationRow, reviewKind: CoachAiReviewKind): 
     providerKey: row.provider_key,
     modelId: row.model_id,
     inputCostUsdPerMillionTokens: row.input_cost_usd_per_million_tokens,
+    cachedInputCostUsdPerMillionTokens:
+      row.cached_input_cost_usd_per_million_tokens,
+    cacheWriteInputCostUsdPerMillionTokens:
+      row.cache_write_input_cost_usd_per_million_tokens,
     outputCostUsdPerMillionTokens: row.output_cost_usd_per_million_tokens,
     maximumInputTokens: row.reserved_max_input_tokens,
     maximumOutputTokens: row.reserved_max_output_tokens,
@@ -128,8 +157,17 @@ function hasCompleteCaps(control: CoachAiFeatureControl): control is CoachAiFeat
     control.caps.dailyEstimatedSpendCapUsd !== null;
 }
 
-function reservedCost(inputTokens: number, outputTokens: number, inputRate: string, outputRate: string): string {
-  return new ExactDecimal(inputTokens).times(inputRate).plus(new ExactDecimal(outputTokens).times(outputRate))
+function reservedCost(
+  inputTokens: number,
+  outputTokens: number,
+  inputRate: string,
+  cacheWriteInputRate: string,
+  outputRate: string,
+): string {
+  const conservativeInputRate = new ExactDecimal(inputRate).gte(cacheWriteInputRate)
+    ? inputRate : cacheWriteInputRate;
+  return new ExactDecimal(inputTokens).times(conservativeInputRate)
+    .plus(new ExactDecimal(outputTokens).times(outputRate))
     .dividedBy(1_000_000).toFixed(12).replace(/\.?0+$/u, "") || "0";
 }
 
@@ -183,7 +221,10 @@ WHERE feature_key = ? AND scope_kind = 'account' AND workspace_id = ? AND accoun
 
   private reviewSettings(): ReviewSettingsRow {
     const row = this.database.prepare<[], ReviewSettingsRow>(`SELECT provider_key, model_id,
-  input_cost_usd_per_million_tokens, output_cost_usd_per_million_tokens
+  input_cost_usd_per_million_tokens,
+  cached_input_cost_usd_per_million_tokens,
+  cache_write_input_cost_usd_per_million_tokens,
+  output_cost_usd_per_million_tokens
 FROM coach_ai_provider_settings WHERE settings_key = 'coach_reviews'`).get();
     if (!row) platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { table: "coach_ai_provider_settings" });
     return row;
@@ -198,7 +239,10 @@ FROM coach_ai_provider_settings WHERE settings_key = 'coach_reviews'`).get();
     const settings = this.reviewSettings();
     return Object.freeze({
       featureKey,
-      enabled: hasCompleteCaps(control) && settings.input_cost_usd_per_million_tokens !== null &&
+      enabled: hasCompleteCaps(control) && this.budgetPolicy() !== null &&
+        settings.input_cost_usd_per_million_tokens !== null &&
+        settings.cached_input_cost_usd_per_million_tokens !== null &&
+        settings.cache_write_input_cost_usd_per_million_tokens !== null &&
         settings.output_cost_usd_per_million_tokens !== null,
     });
   }
@@ -279,27 +323,65 @@ FROM coach_ai_provider_settings WHERE settings_key = 'coach_reviews'`).get();
       const accountControl = this.accountControlOrNull(scope, accountId, featureKey);
       const settings = this.reviewSettings();
       const inputCost = settings.input_cost_usd_per_million_tokens;
+      const cachedInputCost = settings.cached_input_cost_usd_per_million_tokens;
+      const cacheWriteInputCost =
+        settings.cache_write_input_cost_usd_per_million_tokens;
       const outputCost = settings.output_cost_usd_per_million_tokens;
-      const completePricing = inputCost !== null && outputCost !== null;
+      const budgetPolicy = this.budgetPolicy();
+      const subscriberWindow = budgetPolicy === null
+        ? null : this.subscriberBudgetWindow(scope.userId, now);
+      const subscriberSpend = subscriberWindow === null
+        ? null : this.subscriberSpend(scope.userId, subscriberWindow);
+      const emergencyRollingSpend = budgetPolicy?.emergency_trailing_30_day_estimated_spend_cap_usd
+        ? this.rollingSpend(now)
+        : new ExactDecimal(0);
+      const completePricing = inputCost !== null && cachedInputCost !== null &&
+        cacheWriteInputCost !== null && outputCost !== null;
       const controls = accountControl === null ? [platformControl] : [platformControl, accountControl];
-      const available = completePricing && controls.every(hasCompleteCaps);
+      const available = completePricing && controls.every(hasCompleteCaps) &&
+        budgetPolicy !== null && subscriberSpend !== null &&
+        emergencyRollingSpend !== null;
       const maximumTotalTokens = maximumInputTokens + maxOutputTokens;
-      const maximumCostUsd = inputCost !== null && outputCost !== null
-        ? reservedCost(maximumInputTokens, maxOutputTokens, inputCost, outputCost)
+      const maximumCostUsd = inputCost !== null && cacheWriteInputCost !== null &&
+          outputCost !== null
+        ? reservedCost(
+            maximumInputTokens,
+            maxOutputTokens,
+            inputCost,
+            cacheWriteInputCost,
+            outputCost,
+          )
         : null;
       const day = easternCalendarDate(now);
       let blocked = !available;
+      let blockFailureCode = available
+        ? null : "TRADERLINK_COACH_REVIEW_UNAVAILABLE";
       if (!blocked) {
         const platformTotals = this.totals(day, featureKey, null);
         const accountTotals = this.totals(day, featureKey, accountId);
         const platformCap = platformControl.caps;
         const accountCap = accountControl?.caps ?? platformCap;
-        blocked = platformTotals.requests + 1 > platformCap.dailyRequestCap! ||
+        const dailyCapReached = platformTotals.requests + 1 > platformCap.dailyRequestCap! ||
           platformTotals.tokens + maximumTotalTokens > platformCap.dailyTokenCap! ||
           platformTotals.spend.plus(maximumCostUsd!).gt(platformCap.dailyEstimatedSpendCapUsd!) ||
           accountTotals.requests + 1 > accountCap.dailyRequestCap! ||
           accountTotals.tokens + maximumTotalTokens > accountCap.dailyTokenCap! ||
           accountTotals.spend.plus(maximumCostUsd!).gt(accountCap.dailyEstimatedSpendCapUsd!);
+        const subscriberCapReached = subscriberSpend!
+          .plus(maximumCostUsd!)
+          .gt(budgetPolicy!.per_subscriber_paid_cycle_estimated_spend_cap_usd);
+        const emergencyCap = budgetPolicy!
+          .emergency_trailing_30_day_estimated_spend_cap_usd;
+        const emergencyCapReached = emergencyCap !== null &&
+          emergencyRollingSpend!.plus(maximumCostUsd!).gt(emergencyCap);
+        blocked = dailyCapReached || subscriberCapReached || emergencyCapReached;
+        blockFailureCode = dailyCapReached
+          ? "TRADERLINK_COACH_REVIEW_DAILY_CAP_REACHED"
+          : subscriberCapReached
+            ? "TRADERLINK_COACH_REVIEW_SUBSCRIBER_CYCLE_CAP_REACHED"
+            : emergencyCapReached
+              ? "TRADERLINK_COACH_REVIEW_EMERGENCY_GLOBAL_CAP_REACHED"
+              : null;
       }
       const timestamp = createCanonicalUtcTimestamp(now);
       const reservationId = createCanonicalUuidV4();
@@ -310,15 +392,19 @@ FROM coach_ai_provider_settings WHERE settings_key = 'coach_reviews'`).get();
   coach_ai_review_generation_control_reservation_id, coach_ai_review_generation_attempt_id,
   user_id, workspace_id, account_id, feature_key, eastern_calendar_date,
   provider_key, model_id, input_cost_usd_per_million_tokens,
+  cached_input_cost_usd_per_million_tokens,
+  cache_write_input_cost_usd_per_million_tokens,
   output_cost_usd_per_million_tokens, reserved_max_input_tokens,
   reserved_max_output_tokens, reserved_max_total_tokens, reserved_maximum_cost_usd,
   state, failure_code, reserved_at_utc, started_at_utc, finalized_at_utc
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)`).run(
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)`).run(
         reservationId, attemptId, scope.userId, scope.workspaceId, accountId, featureKey, day,
         settings.provider_key, attempt.model_id, settings.input_cost_usd_per_million_tokens,
+        settings.cached_input_cost_usd_per_million_tokens,
+        settings.cache_write_input_cost_usd_per_million_tokens,
         settings.output_cost_usd_per_million_tokens, maximumInputTokens, maxOutputTokens,
         maximumTotalTokens, maximumCostUsd, blocked ? "blocked" : "reserved",
-        blocked ? (available ? "TRADERLINK_COACH_REVIEW_DAILY_CAP_REACHED" : "TRADERLINK_COACH_REVIEW_UNAVAILABLE") : null,
+        blocked ? blockFailureCode : null,
         timestamp, blocked ? timestamp : null,
       );
       const reservation = version === "v1"
@@ -381,19 +467,33 @@ WHERE coach_ai_review_generation_attempt_id = ? AND user_id = ?
     }
     const receipt = this.database.prepare<[string], Readonly<{
       input_tokens: number | null;
+      cached_input_tokens: number | null;
+      cache_write_input_tokens: number | null;
       output_tokens: number | null;
       total_tokens: number | null;
       input_cost_usd_per_million_tokens: string | null;
+      cached_input_cost_usd_per_million_tokens: string | null;
+      cache_write_input_cost_usd_per_million_tokens: string | null;
       output_cost_usd_per_million_tokens: string | null;
       estimated_cost_usd: string | null;
-    }>>(`SELECT input_tokens, output_tokens, total_tokens, input_cost_usd_per_million_tokens,
+    }>>(`SELECT input_tokens, cached_input_tokens, cache_write_input_tokens,
+  output_tokens, total_tokens, input_cost_usd_per_million_tokens,
+  cached_input_cost_usd_per_million_tokens,
+  cache_write_input_cost_usd_per_million_tokens,
   output_cost_usd_per_million_tokens, estimated_cost_usd
 FROM coach_ai_review_generation_attempt_receipts
 WHERE coach_ai_review_generation_attempt_id = ?`).get(attemptId);
     if (!receipt || receipt.input_tokens === null || receipt.output_tokens === null || receipt.total_tokens === null ||
+      receipt.cached_input_tokens === null || receipt.cache_write_input_tokens === null ||
       receipt.input_cost_usd_per_million_tokens !== reservation.inputCostUsdPerMillionTokens ||
+      receipt.cached_input_cost_usd_per_million_tokens !==
+        reservation.cachedInputCostUsdPerMillionTokens ||
+      receipt.cache_write_input_cost_usd_per_million_tokens !==
+        reservation.cacheWriteInputCostUsdPerMillionTokens ||
       receipt.output_cost_usd_per_million_tokens !== reservation.outputCostUsdPerMillionTokens ||
       receipt.estimated_cost_usd === null || receipt.input_tokens > reservation.maximumInputTokens ||
+      receipt.cached_input_tokens + receipt.cache_write_input_tokens >
+        receipt.input_tokens ||
       receipt.output_tokens > reservation.maximumOutputTokens || receipt.total_tokens > reservation.maximumTotalTokens ||
       reservation.maximumCostUsd === null || new ExactDecimal(receipt.estimated_cost_usd).gt(reservation.maximumCostUsd)) {
       platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { table: "coach_ai_review_generation_attempt_receipts" });
@@ -429,22 +529,36 @@ WHERE coach_ai_review_generation_attempt_id = ? AND user_id = ? AND workspace_id
     }
     const receipt = this.database.prepare<[string], Readonly<{
       input_tokens: number | null;
+      cached_input_tokens: number | null;
+      cache_write_input_tokens: number | null;
       output_tokens: number | null;
       total_tokens: number | null;
       input_cost_usd_per_million_tokens: string | null;
+      cached_input_cost_usd_per_million_tokens: string | null;
+      cache_write_input_cost_usd_per_million_tokens: string | null;
       output_cost_usd_per_million_tokens: string | null;
       estimated_cost_usd: string | null;
-    }>>(`SELECT input_tokens, output_tokens, total_tokens,
-  input_cost_usd_per_million_tokens, output_cost_usd_per_million_tokens,
+    }>>(`SELECT input_tokens, cached_input_tokens, cache_write_input_tokens,
+  output_tokens, total_tokens, input_cost_usd_per_million_tokens,
+  cached_input_cost_usd_per_million_tokens,
+  cache_write_input_cost_usd_per_million_tokens,
+  output_cost_usd_per_million_tokens,
   estimated_cost_usd
 FROM coach_ai_review_generation_attempt_receipts_v2
 WHERE coach_ai_review_generation_attempt_id = ?`).get(attemptId);
     if (!receipt || receipt.input_tokens === null || receipt.output_tokens === null ||
-      receipt.total_tokens === null ||
+      receipt.total_tokens === null || receipt.cached_input_tokens === null ||
+      receipt.cache_write_input_tokens === null ||
       receipt.input_cost_usd_per_million_tokens !== reservation.inputCostUsdPerMillionTokens ||
+      receipt.cached_input_cost_usd_per_million_tokens !==
+        reservation.cachedInputCostUsdPerMillionTokens ||
+      receipt.cache_write_input_cost_usd_per_million_tokens !==
+        reservation.cacheWriteInputCostUsdPerMillionTokens ||
       receipt.output_cost_usd_per_million_tokens !== reservation.outputCostUsdPerMillionTokens ||
       receipt.estimated_cost_usd === null ||
       receipt.input_tokens > reservation.maximumInputTokens ||
+      receipt.cached_input_tokens + receipt.cache_write_input_tokens >
+        receipt.input_tokens ||
       receipt.output_tokens > reservation.maximumOutputTokens ||
       receipt.total_tokens > reservation.maximumTotalTokens ||
       reservation.maximumCostUsd === null ||
@@ -530,6 +644,142 @@ WHERE type = 'table' AND name = 'coach_ai_review_generation_control_reservations
     });
   }
 
+  private budgetPolicy(): BudgetControlRow | null {
+    const available = this.database.prepare<[], Readonly<{ present: number }>>(`SELECT 1 AS present
+FROM sqlite_master
+WHERE type = 'table' AND name = 'coach_ai_review_budget_controls'`).get();
+    if (!available) return null;
+    const row = this.database.prepare<[], BudgetControlRow>(`SELECT
+  trailing_30_day_estimated_spend_cap_usd,
+  per_subscriber_paid_cycle_estimated_spend_cap_usd,
+  emergency_trailing_30_day_estimated_spend_cap_usd
+FROM coach_ai_review_budget_controls WHERE control_key = 'ai_reviews'`).get();
+    if (!row) {
+      platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+        table: "coach_ai_review_budget_controls",
+      });
+    }
+    return row;
+  }
+
+  private subscriberBudgetWindow(userId: string, now: Date): SubscriberBudgetWindow {
+    const access = new WhopAiReviewEntitlementRepository(this.database).readAccess(userId);
+    const nowUtc = createCanonicalUtcTimestamp(now);
+    if (access.state === "active" && access.renewalPeriodStartUtc !== null &&
+        access.renewalPeriodEndUtc !== null &&
+        access.renewalPeriodStartUtc <= nowUtc && access.renewalPeriodEndUtc > nowUtc) {
+      return Object.freeze({
+        startUtc: access.renewalPeriodStartUtc,
+        endUtc: access.renewalPeriodEndUtc,
+      });
+    }
+    return Object.freeze({
+      startUtc: createCanonicalUtcTimestamp(new Date(
+        now.getTime() - 30 * 24 * 60 * 60 * 1_000,
+      )),
+      endUtc: nowUtc,
+    });
+  }
+
+  private subscriberSpend(userId: string, window: SubscriberBudgetWindow): Decimal | null {
+    const values = [this.spendForTable(
+      "coach_ai_review_generation_control_reservations",
+      "coach_ai_review_generation_attempt_receipts",
+      window.startUtc,
+      window.endUtc,
+      userId,
+    )];
+    const hasV2 = this.database.prepare<[], Readonly<{ present: number }>>(`SELECT 1 AS present
+FROM sqlite_master
+WHERE type = 'table' AND name = 'coach_ai_review_generation_control_reservations_v2'`).get();
+    if (hasV2) values.push(this.spendForTable(
+      "coach_ai_review_generation_control_reservations_v2",
+      "coach_ai_review_generation_attempt_receipts_v2",
+      window.startUtc,
+      window.endUtc,
+      userId,
+    ));
+    let total: Decimal = new ExactDecimal(0);
+    for (const value of values) {
+      if (value === null) return null;
+      total = total.plus(value);
+    }
+    return total;
+  }
+
+  private rollingSpend(now: Date): Decimal | null {
+    const since = createCanonicalUtcTimestamp(new Date(
+      now.getTime() - 30 * 24 * 60 * 60 * 1_000,
+    ));
+    const values = [this.spendForTable(
+      "coach_ai_review_generation_control_reservations",
+      "coach_ai_review_generation_attempt_receipts",
+      since,
+      createCanonicalUtcTimestamp(now),
+      null,
+    )];
+    const hasV2 = this.database.prepare<[], Readonly<{ present: number }>>(`SELECT 1 AS present
+FROM sqlite_master
+WHERE type = 'table' AND name = 'coach_ai_review_generation_control_reservations_v2'`).get();
+    if (hasV2) values.push(this.spendForTable(
+      "coach_ai_review_generation_control_reservations_v2",
+      "coach_ai_review_generation_attempt_receipts_v2",
+      since,
+      createCanonicalUtcTimestamp(now),
+      null,
+    ));
+    let total: Decimal = new ExactDecimal(0);
+    for (const value of values) {
+      if (value === null) return null;
+      total = total.plus(value);
+    }
+    return total;
+  }
+
+  private spendForTable(
+    reservationTable: "coach_ai_review_generation_control_reservations" |
+      "coach_ai_review_generation_control_reservations_v2",
+    receiptTable: "coach_ai_review_generation_attempt_receipts" |
+      "coach_ai_review_generation_attempt_receipts_v2",
+    sinceUtc: string,
+    untilUtc: string,
+    userId: string | null,
+  ): Decimal | null {
+    const userClause = userId === null ? "" : " AND reservation.user_id = ?";
+    const statement = this.database.prepare<[string, string, string?], RollingSpendRow>(`SELECT
+  reservation.state, reservation.reserved_maximum_cost_usd,
+  receipt.estimated_cost_usd
+FROM ${reservationTable} reservation
+LEFT JOIN ${receiptTable} receipt
+  ON receipt.coach_ai_review_generation_attempt_id =
+    reservation.coach_ai_review_generation_attempt_id
+WHERE reservation.feature_key IN ('weekly_reviews', 'monthly_reviews')
+  AND (
+    reservation.state IN ('reserved', 'started')
+    OR (
+      reservation.state IN ('completed', 'failed')
+      AND receipt.recorded_at_utc >= ?
+      AND receipt.recorded_at_utc < ?
+    )
+  )${userClause}`);
+    const rows = userId === null
+      ? statement.all(sinceUtc, untilUtc)
+      : statement.all(sinceUtc, untilUtc, userId);
+    let total = new ExactDecimal(0);
+    for (const row of rows) {
+      if (row.state === "reserved" || row.state === "started") {
+        if (row.reserved_maximum_cost_usd === null) return null;
+        total = total.plus(row.reserved_maximum_cost_usd);
+      } else if (row.state === "completed") {
+        if (row.estimated_cost_usd === null) return null;
+        total = total.plus(row.estimated_cost_usd);
+      } else if (row.state === "failed" && row.estimated_cost_usd !== null) {
+        total = total.plus(row.estimated_cost_usd);
+      }
+    }
+    return total;
+  }
+
   private totalsForTable(
     table: "coach_ai_review_generation_control_reservations" |
       "coach_ai_review_generation_control_reservations_v2",
@@ -578,10 +828,16 @@ WHERE coach_ai_review_generation_attempt_id = ? AND user_id = ? AND workspace_id
 
   private attemptV2(scope: WorkspaceAccessScope, accountId: string, attemptId: string): AttemptRow {
     const row = this.database.prepare<[string, string, string, string], AttemptRow>(`SELECT
-  review_kind, state, provider_key, model_id
-FROM coach_ai_review_generation_attempts_v2
-WHERE coach_ai_review_generation_attempt_id = ? AND user_id = ?
-  AND workspace_id = ? AND account_id = ?`).get(
+  request.review_kind, attempt.state, attempt.provider_key, attempt.model_id
+FROM coach_ai_review_generation_attempts_v2 attempt
+JOIN coach_ai_review_period_requests_v2 request
+  ON request.coach_ai_review_period_request_id =
+    attempt.coach_ai_review_period_request_id
+ AND request.user_id = attempt.user_id
+ AND request.workspace_id = attempt.workspace_id
+ AND request.account_id = attempt.account_id
+WHERE attempt.coach_ai_review_generation_attempt_id = ? AND attempt.user_id = ?
+  AND attempt.workspace_id = ? AND attempt.account_id = ?`).get(
       attemptId, scope.userId, scope.workspaceId, accountId,
     );
     if (!row) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
@@ -592,6 +848,8 @@ WHERE coach_ai_review_generation_attempt_id = ? AND user_id = ?
     return this.database.prepare<[string, string, string, string], ReservationRow>(`SELECT
   coach_ai_review_generation_control_reservation_id, coach_ai_review_generation_attempt_id,
   feature_key, state, provider_key, model_id, input_cost_usd_per_million_tokens,
+  cached_input_cost_usd_per_million_tokens,
+  cache_write_input_cost_usd_per_million_tokens,
   output_cost_usd_per_million_tokens, reserved_max_input_tokens,
   reserved_max_output_tokens, reserved_max_total_tokens, reserved_maximum_cost_usd
 FROM coach_ai_review_generation_control_reservations
@@ -609,6 +867,8 @@ WHERE coach_ai_review_generation_attempt_id = ? AND user_id = ? AND workspace_id
   coach_ai_review_generation_control_reservation_id,
   coach_ai_review_generation_attempt_id, feature_key, state, provider_key,
   model_id, input_cost_usd_per_million_tokens,
+  cached_input_cost_usd_per_million_tokens,
+  cache_write_input_cost_usd_per_million_tokens,
   output_cost_usd_per_million_tokens, reserved_max_input_tokens,
   reserved_max_output_tokens, reserved_max_total_tokens,
   reserved_maximum_cost_usd

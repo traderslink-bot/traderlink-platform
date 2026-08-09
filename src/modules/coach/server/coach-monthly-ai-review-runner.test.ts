@@ -61,6 +61,8 @@ function setup(enabledAtUtc = createdAtUtc): Readonly<{
   new CoachAiProviderSettingsRepository(database).save({
     modelId: "gpt-test",
     inputCostUsdPerMillionTokens: "1",
+    cachedInputCostUsdPerMillionTokens: "0.1",
+    cacheWriteInputCostUsdPerMillionTokens: "1.25",
     outputCostUsdPerMillionTokens: "2",
   }, new Date(createdAtUtc));
   return Object.freeze({ database, scope });
@@ -130,7 +132,7 @@ describe("Coach monthly AI review runner", () => {
               nextMonthFocuses: Object.freeze(["Keep one process focus."]),
               incompleteRecord: null,
             }),
-            usage: Object.freeze({ inputTokens: 100, outputTokens: 50, totalTokens: 150 }),
+            usage: Object.freeze({ inputTokens: 100, cachedInputTokens: 0, cacheWriteInputTokens: 0, outputTokens: 50, totalTokens: 150 }),
           });
         },
       );

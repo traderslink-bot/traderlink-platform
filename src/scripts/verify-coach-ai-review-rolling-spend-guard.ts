@@ -66,10 +66,13 @@ function setup(database: Database.Database): WorkspaceAccessScope {
   database.prepare(`UPDATE coach_ai_provider_settings SET
   input_cost_usd_per_million_tokens = '1',
   cached_input_cost_usd_per_million_tokens = '0.1',
+  cache_write_input_cost_usd_per_million_tokens = '1.25',
   output_cost_usd_per_million_tokens = '6',
   updated_at_utc = ? WHERE settings_key = 'coach_reviews'`).run(addSeconds(1).toISOString());
   database.prepare(`UPDATE coach_ai_review_budget_controls SET
-  trailing_30_day_estimated_spend_cap_usd = '0.01', updated_at_utc = ?
+  trailing_30_day_estimated_spend_cap_usd = '0.001',
+  per_subscriber_paid_cycle_estimated_spend_cap_usd = '10',
+  emergency_trailing_30_day_estimated_spend_cap_usd = '0.01', updated_at_utc = ?
 WHERE control_key = 'ai_reviews'`).run(addSeconds(1).toISOString());
   database.prepare(`UPDATE coach_ai_feature_controls SET
   enabled = 1, daily_request_cap = 100, daily_token_cap = 1000000,
@@ -144,10 +147,11 @@ function finalizeWithExactReceipt(
   database.prepare(`INSERT INTO coach_ai_review_generation_attempt_receipts (
   coach_ai_review_generation_attempt_receipt_id,
   coach_ai_review_generation_attempt_id, input_tokens, cached_input_tokens,
-  output_tokens, total_tokens, input_cost_usd_per_million_tokens,
+  cache_write_input_tokens, output_tokens, total_tokens, input_cost_usd_per_million_tokens,
   cached_input_cost_usd_per_million_tokens,
+  cache_write_input_cost_usd_per_million_tokens,
   output_cost_usd_per_million_tokens, estimated_cost_usd, recorded_at_utc
-) VALUES (?, ?, 5, 2, 5, 10, '1', '0.1', '6', '0.0000332', ?)`)
+) VALUES (?, ?, 5, 2, 1, 5, 10, '1', '0.1', '1.25', '6', '0.00003345', ?)`)
     .run(createCanonicalUuidV4(), attemptId, addSeconds(5).toISOString());
   database.prepare(`UPDATE coach_ai_review_generation_attempts SET
   state = 'issued', finalized_at_utc = ?
@@ -184,7 +188,7 @@ function outstandingReservationRemainsCounted(): boolean {
 WHERE coach_ai_review_generation_attempt_id = ?`).get(secondAttempt)?.failure_code;
     return first.state === "reserved" && second.state === "blocked" &&
       blockedCode ===
-        "TRADERLINK_COACH_REVIEW_ROLLING_SPEND_CAP_REACHED";
+        "TRADERLINK_COACH_REVIEW_EMERGENCY_GLOBAL_CAP_REACHED";
   } finally {
     database.close();
   }
@@ -252,7 +256,7 @@ WHERE scope_kind = 'platform' AND feature_key = 'weekly_reviews'`)
     const outstandingLiabilityProtected = outstandingReservationRemainsCounted();
     const foreignKeyFailures = database.pragma("foreign_key_check") as unknown[];
     const valid = first.state === "reserved" && second.state === "blocked" &&
-      blockedCode === "TRADERLINK_COACH_REVIEW_ROLLING_SPEND_CAP_REACHED" &&
+      blockedCode === "TRADERLINK_COACH_REVIEW_EMERGENCY_GLOBAL_CAP_REACHED" &&
       third.state === "reserved" && clearWhileEnabledRejected &&
       enableWithoutBudgetRejected && outstandingLiabilityProtected &&
       foreignKeyFailures.length === 0;

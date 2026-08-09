@@ -8,6 +8,8 @@ export type CoachAiProviderSettings = Readonly<{
   providerKey: "openai_direct";
   modelId: string;
   inputCostUsdPerMillionTokens: string | null;
+  cachedInputCostUsdPerMillionTokens: string | null;
+  cacheWriteInputCostUsdPerMillionTokens: string | null;
   outputCostUsdPerMillionTokens: string | null;
   updatedAtUtc: string;
 }>;
@@ -48,9 +50,13 @@ FROM sqlite_master WHERE type = 'table' AND name = ?`).get(name));
       provider_key: "openai_direct";
       model_id: string;
       input_cost_usd_per_million_tokens: string | null;
+      cached_input_cost_usd_per_million_tokens: string | null;
+      cache_write_input_cost_usd_per_million_tokens: string | null;
       output_cost_usd_per_million_tokens: string | null;
       updated_at_utc: string;
     }>>(`SELECT provider_key, model_id, input_cost_usd_per_million_tokens,
+  cached_input_cost_usd_per_million_tokens,
+  cache_write_input_cost_usd_per_million_tokens,
   output_cost_usd_per_million_tokens, updated_at_utc
 FROM coach_ai_provider_settings WHERE settings_key = 'coach_reviews'`).get();
     if (!row) platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { table: "coach_ai_provider_settings" });
@@ -58,6 +64,10 @@ FROM coach_ai_provider_settings WHERE settings_key = 'coach_reviews'`).get();
       providerKey: row.provider_key,
       modelId: row.model_id,
       inputCostUsdPerMillionTokens: row.input_cost_usd_per_million_tokens,
+      cachedInputCostUsdPerMillionTokens:
+        row.cached_input_cost_usd_per_million_tokens,
+      cacheWriteInputCostUsdPerMillionTokens:
+        row.cache_write_input_cost_usd_per_million_tokens,
       outputCostUsdPerMillionTokens: row.output_cost_usd_per_million_tokens,
       updatedAtUtc: row.updated_at_utc,
     });
@@ -117,16 +127,21 @@ FROM coach_ai_review_generation_attempt_receipts_v2`).get()
     const reviewV2Aggregation = this.tableExists("coach_ai_review_generation_attempts_v2")
       ? `
 UNION ALL
-SELECT CASE attempt.review_kind WHEN 'monthly' THEN 'monthly_reviews' ELSE 'weekly_reviews' END AS feature_key,
+SELECT CASE request.review_kind WHEN 'monthly' THEN 'monthly_reviews' ELSE 'weekly_reviews' END AS feature_key,
   attempt.model_id, attempt.account_id, COUNT(*) AS request_count,
   0 AS blocked_request_count,
   SUM(CASE WHEN attempt.state = 'failed' THEN 1 ELSE 0 END) AS failed_request_count,
   COALESCE(SUM(receipt.total_tokens), 0) AS total_tokens,
   receipt.estimated_cost_usd
 FROM coach_ai_review_generation_attempts_v2 attempt
+JOIN coach_ai_review_period_requests_v2 request
+  ON request.coach_ai_review_period_request_id = attempt.coach_ai_review_period_request_id
+ AND request.user_id = attempt.user_id
+ AND request.workspace_id = attempt.workspace_id
+ AND request.account_id = attempt.account_id
 LEFT JOIN coach_ai_review_generation_attempt_receipts_v2 receipt
   ON receipt.coach_ai_review_generation_attempt_id = attempt.coach_ai_review_generation_attempt_id
-GROUP BY attempt.review_kind, attempt.model_id, attempt.account_id, receipt.estimated_cost_usd`
+GROUP BY request.review_kind, attempt.model_id, attempt.account_id, receipt.estimated_cost_usd`
       : "";
     const rows = this.database.prepare<[], AggregationRow>(`SELECT 'ai_chat' AS feature_key,
   attempt.model_id, attempt.account_id, COUNT(*) AS request_count,
@@ -175,21 +190,42 @@ GROUP BY attempt.review_kind, attempt.model_id, attempt.account_id, receipt.esti
   save(input: Readonly<{
     modelId: unknown;
     inputCostUsdPerMillionTokens: unknown;
+    cachedInputCostUsdPerMillionTokens: unknown;
+    cacheWriteInputCostUsdPerMillionTokens: unknown;
     outputCostUsdPerMillionTokens: unknown;
   }>, now = new Date()): CoachAiProviderSettings {
     if (typeof input.modelId !== "string" || !MODEL_ID_PATTERN.test(input.modelId)) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "modelId" });
     }
     const inputRate = nullableRate(input.inputCostUsdPerMillionTokens, "inputCostUsdPerMillionTokens");
+    const cachedInputRate = nullableRate(
+      input.cachedInputCostUsdPerMillionTokens,
+      "cachedInputCostUsdPerMillionTokens",
+    );
+    const cacheWriteInputRate = nullableRate(
+      input.cacheWriteInputCostUsdPerMillionTokens,
+      "cacheWriteInputCostUsdPerMillionTokens",
+    );
     const outputRate = nullableRate(input.outputCostUsdPerMillionTokens, "outputCostUsdPerMillionTokens");
-    if ((inputRate === null) !== (outputRate === null)) {
+    if ((inputRate === null) !== (cachedInputRate === null) ||
+        (inputRate === null) !== (cacheWriteInputRate === null) ||
+        (inputRate === null) !== (outputRate === null)) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "tokenPricing" });
     }
     const updatedAtUtc = createCanonicalUtcTimestamp(now);
     this.database.prepare(`UPDATE coach_ai_provider_settings SET
   model_id = ?, input_cost_usd_per_million_tokens = ?,
+  cached_input_cost_usd_per_million_tokens = ?,
+  cache_write_input_cost_usd_per_million_tokens = ?,
   output_cost_usd_per_million_tokens = ?, updated_at_utc = ?
-WHERE settings_key = 'coach_reviews'`).run(input.modelId, inputRate, outputRate, updatedAtUtc);
+WHERE settings_key = 'coach_reviews'`).run(
+      input.modelId,
+      inputRate,
+      cachedInputRate,
+      cacheWriteInputRate,
+      outputRate,
+      updatedAtUtc,
+    );
     return this.read();
   }
 }

@@ -17,11 +17,14 @@ export type CoachScheduledReviewAccount = Readonly<{
 }>;
 
 export type CoachAiReviewFrequencyV2 = "weekly" | "two_week" | "monthly_only";
+export type CoachAiReviewTimingModeV2 =
+  "automatic_after_12_hours" | "wait_for_tracker_input";
 
 export type CoachAiReviewAccountSettingsV2 = Readonly<{
   isEnabled: boolean;
   firstEnabledAtUtc: string;
   currentFrequency: CoachAiReviewFrequencyV2;
+  timingMode: CoachAiReviewTimingModeV2;
   twoWeekAnchorMondayDate: string | null;
   pendingFrequency: CoachAiReviewFrequencyV2 | null;
   pendingEffectiveMondayDate: string | null;
@@ -70,6 +73,13 @@ function v2Frequency(value: unknown, field: string): CoachAiReviewFrequencyV2 {
   return value;
 }
 
+function v2TimingMode(value: unknown, field: string): CoachAiReviewTimingModeV2 {
+  if (value !== "automatic_after_12_hours" && value !== "wait_for_tracker_input") {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field });
+  }
+  return value;
+}
+
 function optionalMonday(value: unknown, field: string): string | null {
   if (value === null) return null;
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/u.test(value)) {
@@ -87,6 +97,7 @@ function v2Settings(row: Readonly<{
   is_enabled: 0 | 1;
   first_enabled_at_utc: string;
   current_frequency: CoachAiReviewFrequencyV2;
+  review_timing_mode: CoachAiReviewTimingModeV2;
   two_week_anchor_monday_date: string | null;
   pending_frequency: CoachAiReviewFrequencyV2 | null;
   pending_effective_monday_date: string | null;
@@ -98,6 +109,7 @@ function v2Settings(row: Readonly<{
     isEnabled: row.is_enabled === 1,
     firstEnabledAtUtc: row.first_enabled_at_utc,
     currentFrequency: row.current_frequency,
+    timingMode: v2TimingMode(row.review_timing_mode, "reviewTimingMode"),
     twoWeekAnchorMondayDate: row.two_week_anchor_monday_date,
     pendingFrequency: row.pending_frequency,
     pendingEffectiveMondayDate: row.pending_effective_monday_date,
@@ -153,13 +165,14 @@ WHERE account_id = ?`).get(activeAccountId(scope));
       is_enabled: 0 | 1;
       first_enabled_at_utc: string;
       current_frequency: CoachAiReviewFrequencyV2;
+      review_timing_mode: CoachAiReviewTimingModeV2;
       two_week_anchor_monday_date: string | null;
       pending_frequency: CoachAiReviewFrequencyV2 | null;
       pending_effective_monday_date: string | null;
       pending_two_week_anchor_monday_date: string | null;
       revision: number;
       updated_at_utc: string;
-    }>>(`SELECT is_enabled, first_enabled_at_utc, current_frequency,
+    }>>(`SELECT is_enabled, first_enabled_at_utc, current_frequency, review_timing_mode,
   two_week_anchor_monday_date, pending_frequency,
   pending_effective_monday_date, pending_two_week_anchor_monday_date,
   revision, updated_at_utc
@@ -175,13 +188,14 @@ WHERE account_id = ?`).get(activeAccountId(scope));
       is_enabled: 0 | 1;
       first_enabled_at_utc: string;
       current_frequency: CoachAiReviewFrequencyV2;
+      review_timing_mode: CoachAiReviewTimingModeV2;
       two_week_anchor_monday_date: string | null;
       pending_frequency: CoachAiReviewFrequencyV2 | null;
       pending_effective_monday_date: string | null;
       pending_two_week_anchor_monday_date: string | null;
       revision: number;
       updated_at_utc: string;
-    }>>(`SELECT is_enabled, first_enabled_at_utc, current_frequency,
+    }>>(`SELECT is_enabled, first_enabled_at_utc, current_frequency, review_timing_mode,
   two_week_anchor_monday_date, pending_frequency,
   pending_effective_monday_date, pending_two_week_anchor_monday_date,
   revision, recorded_at_utc AS updated_at_utc
@@ -245,6 +259,7 @@ ORDER BY account.workspace_id, account.account_id`).all();
       is_enabled: 1;
       first_enabled_at_utc: string;
       current_frequency: CoachAiReviewFrequencyV2;
+      review_timing_mode: CoachAiReviewTimingModeV2;
       two_week_anchor_monday_date: string | null;
       pending_frequency: CoachAiReviewFrequencyV2 | null;
       pending_effective_monday_date: string | null;
@@ -254,7 +269,8 @@ ORDER BY account.workspace_id, account.account_id`).all();
     }>>(`SELECT account.created_by_user_id AS user_id,
   account.workspace_id, account.account_id, membership.role AS workspace_role,
   account.trading_timezone, settings.is_enabled, settings.first_enabled_at_utc,
-  settings.current_frequency, settings.two_week_anchor_monday_date,
+  settings.current_frequency, settings.review_timing_mode,
+  settings.two_week_anchor_monday_date,
   settings.pending_frequency, settings.pending_effective_monday_date,
   settings.pending_two_week_anchor_monday_date, settings.revision,
   settings.updated_at_utc
@@ -287,6 +303,7 @@ ORDER BY account.workspace_id, account.account_id`).all();
     input: Readonly<{
       isEnabled: boolean;
       currentFrequency: CoachAiReviewFrequencyV2;
+      timingMode: CoachAiReviewTimingModeV2;
       twoWeekAnchorMondayDate: string | null;
       pendingFrequency: CoachAiReviewFrequencyV2 | null;
       pendingEffectiveMondayDate: string | null;
@@ -301,6 +318,7 @@ ORDER BY account.workspace_id, account.account_id`).all();
       platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
     }
     const currentFrequency = v2Frequency(input.currentFrequency, "currentFrequency");
+    const timingMode = v2TimingMode(input.timingMode, "reviewTimingMode");
     const anchor = optionalMonday(input.twoWeekAnchorMondayDate, "twoWeekAnchorMondayDate");
     const pendingFrequency = input.pendingFrequency === null
       ? null
@@ -332,12 +350,14 @@ ORDER BY account.workspace_id, account.account_id`).all();
     const persist = this.database.transaction(() => {
     if (current) {
       const result = this.database.prepare(`UPDATE coach_ai_review_account_settings_v2
-SET is_enabled = ?, current_frequency = ?, two_week_anchor_monday_date = ?,
+SET is_enabled = ?, current_frequency = ?, review_timing_mode = ?,
+  two_week_anchor_monday_date = ?,
   pending_frequency = ?, pending_effective_monday_date = ?,
   pending_two_week_anchor_monday_date = ?, revision = ?, updated_at_utc = ?
 WHERE account_id = ? AND revision = ?`).run(
         input.isEnabled ? 1 : 0,
         currentFrequency,
+        timingMode,
         anchor,
         pendingFrequency,
         pendingEffective,
@@ -351,13 +371,14 @@ WHERE account_id = ? AND revision = ?`).run(
     } else {
       this.database.prepare(`INSERT INTO coach_ai_review_account_settings_v2 (
   account_id, is_enabled, first_enabled_at_utc, current_frequency,
-  two_week_anchor_monday_date, pending_frequency,
+  review_timing_mode, two_week_anchor_monday_date, pending_frequency,
   pending_effective_monday_date, pending_two_week_anchor_monday_date,
   revision, updated_at_utc
-) VALUES (?, 1, ?, ?, ?, ?, ?, ?, 1, ?)`).run(
+) VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, 1, ?)`).run(
         accountId,
         firstEnabledAtUtc,
         currentFrequency,
+        timingMode,
         anchor,
         pendingFrequency,
         pendingEffective,
@@ -368,15 +389,16 @@ WHERE account_id = ? AND revision = ?`).run(
     const saved = this.readV2(scope)!;
     this.database.prepare(`INSERT INTO coach_ai_review_account_setting_revisions_v2 (
   account_id, revision, is_enabled, first_enabled_at_utc, current_frequency,
-  two_week_anchor_monday_date, pending_frequency,
+  review_timing_mode, two_week_anchor_monday_date, pending_frequency,
   pending_effective_monday_date, pending_two_week_anchor_monday_date,
   recorded_at_utc
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
       accountId,
       saved.revision,
       saved.isEnabled ? 1 : 0,
       saved.firstEnabledAtUtc,
       saved.currentFrequency,
+      saved.timingMode,
       saved.twoWeekAnchorMondayDate,
       saved.pendingFrequency,
       saved.pendingEffectiveMondayDate,

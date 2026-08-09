@@ -10,6 +10,8 @@ import { isTraderLinkPlatformError } from "@/src/modules/platform/server/databas
 export async function saveAiReviewProviderSettings(input: Readonly<{
   modelId: unknown;
   inputCostUsdPerMillionTokens: unknown;
+  cachedInputCostUsdPerMillionTokens: unknown;
+  cacheWriteInputCostUsdPerMillionTokens: unknown;
   outputCostUsdPerMillionTokens: unknown;
 }>): Promise<Readonly<{ ok: true }> | Readonly<{ ok: false; message: string }>> {
   try {
@@ -22,7 +24,7 @@ export async function saveAiReviewProviderSettings(input: Readonly<{
     return Object.freeze({
       ok: false as const,
       message: invalid
-        ? "Enter a model ID and either both token prices or leave both prices blank."
+        ? "Enter a model ID and all four token prices, or leave all four prices blank."
         : "AI Review settings could not be saved. Try again.",
     });
   }

@@ -15,9 +15,14 @@ import {
   COACH_WEEKLY_AI_INPUT_CONTRACT_VERSION,
   type CoachAiReviewCarryForwardEvidenceBundleV2,
   type CoachAiReviewPriorIssuedReviewV2,
+  type CoachAiReviewTradeAnalysisV2,
   type CoachPeriodicAiReviewInputV2,
   type CoachWeeklyAiReviewInput,
 } from "../contracts/weekly-ai-review-input-contracts";
+import type {
+  CoachAiReviewRuleDefinitionV2,
+  CoachAiReviewSupplementalEvidenceReader,
+} from "./coach-ai-review-supplemental-evidence-repository";
 import { CoachReflectionService } from "./coach-reflection-service";
 import { CoachUsEquitiesReviewCalendarService } from
   "./market-calendar/coach-us-equities-review-calendar-service";
@@ -73,6 +78,7 @@ function ruleCounts(
 
 function dailyReflectionEvidenceRef(input: Readonly<{
   reviewMarketDate: string;
+  reflectionState: "completed" | "incomplete";
   reviewedStatusRevision: number;
   dailyNote: Readonly<{ dailyNoteId: string; revision: number }> | null;
   tradeNotes: readonly Readonly<{
@@ -84,6 +90,7 @@ function dailyReflectionEvidenceRef(input: Readonly<{
   const digest = createHash("sha256").update(`${JSON.stringify({
     contract: "traderlink_daily_reflection_evidence_v1",
     reviewMarketDate: input.reviewMarketDate,
+    reflectionState: input.reflectionState,
     reviewedStatusRevision: input.reviewedStatusRevision,
     dailyNote: input.dailyNote,
     tradeNotes: [...input.tradeNotes].sort((left, right) =>
@@ -108,6 +115,7 @@ export class CoachWeeklyAiReviewInputService {
     private readonly tradingDayReviews: JournalTradingDayReviewService,
     private readonly reviewCalendar: CoachUsEquitiesReviewCalendarService =
       new CoachUsEquitiesReviewCalendarService(),
+    private readonly supplementalEvidence?: CoachAiReviewSupplementalEvidenceReader,
   ) {}
 
   read(
@@ -281,10 +289,20 @@ export class CoachWeeklyAiReviewInputService {
       if (dayByDate.has(day.date)) throw new Error("TRADERLINK_COACH_REVIEW_DUPLICATE_DAY");
       dayByDate.set(day.date, day);
     }
+    const allRoundTripIds = [...dayByDate.values()].flatMap((day) =>
+      day.trades.map((trade) => trade.roundTripId));
+    const analysisByRoundTripId: Readonly<Record<string, CoachAiReviewTradeAnalysisV2>> =
+      this.supplementalEvidence?.readTradeAnalyses(
+      account,
+      allRoundTripIds,
+    ) ?? Object.freeze({});
 
     const expectedDates = authoritativeCohorts.flatMap((cohort) =>
       Array.from({ length: 5 }, (_, index) => shiftIsoDate(cohort.mondayDate, index)));
     const completedDailyReflections: CoachPeriodicAiReviewInputV2["completedDailyReflections"][number][] = [];
+    const savedDailyReflections: NonNullable<
+      CoachPeriodicAiReviewInputV2["savedDailyReflections"]
+    >[number][] = [];
     const reflectionCoverage: CoachPeriodicAiReviewInputV2["reflectionCoverage"][number][] = [];
     const factDays: CoachPeriodicAiReviewInputV2["reviewPeriodMarketFacts"]["days"][number][] = [];
     const limitations = new Set(request.limitationReasonCodes ?? []);
@@ -311,6 +329,29 @@ export class CoachWeeklyAiReviewInputService {
       const recordedRuleReviews = tradingDayId
         ? this.annotations.listRuleReviews(account, { tradingDayId, roundTripIds })
         : Object.freeze([]);
+      const ruleDefinitions: Readonly<Record<string, CoachAiReviewRuleDefinitionV2>> =
+        this.supplementalEvidence?.readRuleDefinitions(
+        account,
+        recordedRuleReviews.map((review) => review.ruleVersionId),
+      ) ?? Object.freeze({});
+      const ruleOutcomes = (
+        targetKind: "trading_day" | "round_trip",
+        targetId: string,
+      ) => Object.freeze(recordedRuleReviews
+        .filter((review) => review.targetKind === targetKind &&
+          (targetKind === "trading_day"
+            ? review.tradingDayId === targetId
+            : review.roundTripId === targetId))
+        .flatMap((review) => {
+          const definition = ruleDefinitions[review.ruleVersionId];
+          if (!definition) return [];
+          return [Object.freeze({
+            ...definition,
+            status: review.status,
+          })];
+        })
+        .sort((left, right) => left.title.localeCompare(right.title) ||
+          left.status.localeCompare(right.status)));
       const dayRuleCounts = day?.ruleReviews ?? ruleCounts(recordedRuleReviews.filter((review) =>
         review.targetKind === "trading_day"));
       const trades = Object.freeze((day?.trades ?? []).map((trade) => {
@@ -333,8 +374,14 @@ export class CoachWeeklyAiReviewInputService {
           ),
           tradingSession: null,
           ruleReviews: trade.ruleReviews,
+          ...(this.supplementalEvidence ? {
+            ruleOutcomes: ruleOutcomes("round_trip", trade.roundTripId),
+          } : {}),
           tags: Object.freeze([...trade.tagNames].sort((left, right) =>
             left.localeCompare(right))),
+          ...(this.supplementalEvidence && analysisByRoundTripId[trade.roundTripId] ? {
+            analysis: analysisByRoundTripId[trade.roundTripId],
+          } : {}),
         });
       }));
       if (day || dayRuleCounts.followed + dayRuleCounts.broken + dayRuleCounts.notReviewed > 0) {
@@ -345,6 +392,9 @@ export class CoachWeeklyAiReviewInputService {
           readyClosedTradeCount: trades.length,
           netPnlDecimal: day?.netPnlDecimal ?? null,
           ruleReviews: dayRuleCounts,
+          ...(this.supplementalEvidence && tradingDayId ? {
+            ruleOutcomes: ruleOutcomes("trading_day", tradingDayId),
+          } : {}),
           trades,
         }));
       }
@@ -360,21 +410,31 @@ export class CoachWeeklyAiReviewInputService {
         reflectionState,
         noTradeReview: null,
       }));
-      if (reflectionState !== "completed") {
-        limitations.add("incomplete_daily_reflection_coverage");
-        continue;
-      }
+      if (reflectionState !== "completed") limitations.add("incomplete_daily_review_coverage");
       if (request.reflectionEligibilityStartDate &&
           reviewMarketDate < request.reflectionEligibilityStartDate) {
         limitations.add("pre_enable_reflection_excluded");
         continue;
       }
-      if (!day || day.trades.length === 0) {
-        limitations.add("no_trade_review_signal_unavailable");
-      }
+
+      if (!reviewRecord || reflectionState === "not_created") continue;
 
       const dailyNote = this.annotations.readDailyNote(account, reviewMarketDate);
       const notesByRoundTrip = this.annotations.readRoundTripNotes(account, roundTripIds);
+      const tradeNotes = Object.freeze((day?.trades ?? []).flatMap((trade) => {
+        const note = notesByRoundTrip[trade.roundTripId]?.tradeNote.trim();
+        return note ? [Object.freeze({ ticker: trade.symbol, note })] : [];
+      }));
+      const hasSavedNote = Boolean(dailyNote && [
+        dailyNote.whatWorked,
+        dailyNote.whatNeedsWork,
+        dailyNote.technicalRecap,
+        dailyNote.anythingElse,
+      ].some((value) => value.trim().length > 0)) || tradeNotes.length > 0;
+      if (reflectionState === "incomplete" && !hasSavedNote) continue;
+      if (!day || day.trades.length === 0) {
+        limitations.add("no_trade_review_signal_unavailable");
+      }
       const evidenceTradeNotes = Object.entries(notesByRoundTrip).map(([roundTripId, note]) =>
         Object.freeze({
           roundTripId,
@@ -383,28 +443,29 @@ export class CoachWeeklyAiReviewInputService {
         }));
       const evidenceRef = dailyReflectionEvidenceRef({
         reviewMarketDate,
-        reviewedStatusRevision: reviewRecord!.revision,
+        reflectionState,
+        reviewedStatusRevision: reviewRecord.revision,
         dailyNote: dailyNote ? Object.freeze({
           dailyNoteId: dailyNote.dailyNoteId,
           revision: dailyNote.revision,
         }) : null,
         tradeNotes: evidenceTradeNotes,
       });
-      completedDailyReflections.push(Object.freeze({
+      const reflection = Object.freeze({
         evidenceRef,
         reviewMarketDate,
-        reviewedStatusRevision: reviewRecord!.revision,
+        reviewedStatusRevision: reviewRecord.revision,
+        reflectionState,
         dailyNotes: dailyNote ? Object.freeze({
           whatWorked: dailyNote.whatWorked,
           whatNeedsWork: dailyNote.whatNeedsWork,
           technicalRecap: dailyNote.technicalRecap,
           anythingElse: dailyNote.anythingElse,
         }) : null,
-        tradeNotes: Object.freeze((day?.trades ?? []).flatMap((trade) => {
-          const note = notesByRoundTrip[trade.roundTripId]?.tradeNote.trim();
-          return note ? [Object.freeze({ ticker: trade.symbol, note })] : [];
-        })),
-      }));
+        tradeNotes,
+      });
+      if (reflectionState === "completed") completedDailyReflections.push(reflection);
+      else savedDailyReflections.push(reflection);
     }
 
     const allTrades = factDays.flatMap((day) => day.trades);
@@ -480,6 +541,7 @@ export class CoachWeeklyAiReviewInputService {
         days: Object.freeze(factDays),
       }),
       completedDailyReflections: Object.freeze(completedDailyReflections),
+      savedDailyReflections: Object.freeze(savedDailyReflections),
       reflectionCoverage: Object.freeze(reflectionCoverage),
       carryForwardEvidenceBundles: Object.freeze([
         ...(request.carryForwardEvidenceBundles ?? []),

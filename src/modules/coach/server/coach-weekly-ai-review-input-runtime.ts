@@ -21,6 +21,8 @@ import {
   CoachAiReviewRepository,
   type CoachAiReviewEvidenceManifestV2,
 } from "./coach-ai-review-repository";
+import { CoachAiReviewSupplementalEvidenceRepository } from
+  "./coach-ai-review-supplemental-evidence-repository";
 import { CoachReflectionService } from "./coach-reflection-service";
 import {
   type CoachPeriodicAiReviewBuildRequestV2,
@@ -57,6 +59,8 @@ export function buildCoachWeeklyAiReviewInput(
     reflections,
     annotations,
     new JournalTradingDayReviewService(database),
+    undefined,
+    new CoachAiReviewSupplementalEvidenceRepository(database),
   ).read(scope, anchorDate);
   const prior = new CoachAiReviewRepository(database)
     .readLatestIssuedWeeklyReviewBefore(scope, input.week.startDate);
@@ -107,6 +111,7 @@ export function buildCoachPeriodicAiReviewInputV2(
     annotations,
     new JournalTradingDayReviewService(database),
     request.calendar,
+    new CoachAiReviewSupplementalEvidenceRepository(database),
   ).readPeriodicV2(scope, request);
 }
 
@@ -149,12 +154,14 @@ export function buildCoachPeriodicAiReviewSnapshotV2(
     annotations,
     new JournalTradingDayReviewService(database),
     request.calendar,
+    new CoachAiReviewSupplementalEvidenceRepository(database),
   ).readPeriodicV2(scope, request);
   const account = accountId(scope);
   const carryByEvidenceRef = new Map(input.carryForwardEvidenceBundles.map((bundle) =>
     [bundle.evidenceRef, bundle] as const));
   const reflectionsByEvidenceRef = new Map([
     ...input.completedDailyReflections,
+    ...(input.savedDailyReflections ?? []),
     ...input.carryForwardEvidenceBundles.map((bundle) => bundle.reflection),
   ].map((reflection) => [reflection.evidenceRef, reflection] as const));
   const evidence = [...reflectionsByEvidenceRef.values()]
@@ -166,8 +173,9 @@ export function buildCoachPeriodicAiReviewSnapshotV2(
         trading_day_id: string;
         trading_day_review_id: string;
         current_revision: number;
+        review_status: "reviewed" | "incomplete";
       }>>(`SELECT day.trading_day_id, review.trading_day_review_id,
-  review.current_revision
+  review.current_revision, review.review_status
 FROM journal_trading_days day
 JOIN journal_trading_day_reviews review
   ON review.workspace_id = day.workspace_id
@@ -175,12 +183,16 @@ JOIN journal_trading_day_reviews review
  AND review.trading_day_id = day.trading_day_id
 WHERE day.workspace_id = ? AND day.account_id = ?
   AND day.trading_date = ? AND day.trading_timezone = 'America/New_York'
-  AND day.status = 'active' AND review.review_status = 'reviewed'`).get(
+  AND day.status = 'active' AND review.review_status IN ('reviewed', 'incomplete')`).get(
         scope.workspaceId,
         account,
         reflection.reviewMarketDate,
       );
-      if (!review || review.current_revision !== reflection.reviewedStatusRevision) {
+      const expectedReviewStatus = reflection.reflectionState === "incomplete"
+        ? "incomplete"
+        : "reviewed";
+      if (!review || review.current_revision !== reflection.reviewedStatusRevision ||
+          review.review_status !== expectedReviewStatus) {
         throw new Error("TRADERLINK_COACH_REVIEW_EVIDENCE_REVISION_MISMATCH");
       }
       const dailyNote = database.prepare<[
@@ -218,6 +230,7 @@ ORDER BY current_revision_id`).all(
         evidenceRef: reflection.evidenceRef,
         tradingDayReviewId: review.trading_day_review_id,
         reviewedStatusRevision: review.current_revision,
+        reviewStatus: review.review_status,
         dailyNoteRevisionId: dailyNote?.current_revision_id ?? null,
         tradeNoteRevisionIds: Object.freeze(tradeNoteRevisionIds),
         reviewMarketDate: reflection.reviewMarketDate,

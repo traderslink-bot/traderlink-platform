@@ -1,5 +1,52 @@
 # TraderLink Platform Migration Progress
 
+## 2026-08-09 AI Review subscriber and cache-write safeguards
+
+- Migrations `0050_coach_ai_review_subscriber_budget_safeguards` and
+  `0051_coach_ai_review_cache_write_accounting` are registered,
+  disposable-verified, backup/restore protected and locally applied. The local
+  database and manifest are current at 51/51.
+- AI Reviews use a USD 2.00 estimated-spend cap per subscriber per stored Whop
+  paid cycle. The platform trailing-30-day value is a warning; only the separate
+  optional emergency global value can stop all review generation. AI Chat is
+  excluded from this allowance.
+- New reservations and receipts preserve separate ordinary-input, cache-read,
+  cache-write and output pricing. Focused cached-pricing, subscriber-isolation
+  and emergency-spend verifiers pass with zero foreign-key failures. No
+  provider, hosted scheduler, push or deployment was activated.
+
+## 2026-08-09 AI Review Whop entitlement and cached-pricing migrations
+
+- `0045_platform_whop_ai_review_entitlements` and
+  `0046_coach_ai_review_cached_input_pricing` are registered, verified on
+  disposable copies and locally applied. The local database and manifest are
+  current through migration 0046.
+- Synthetic signed-event verification passed activation, replay, cancellation,
+  unordered stale delivery, deactivation and payment-failure behavior. It found
+  no raw Whop identifier leakage, preserved unrelated table counts and returned
+  zero foreign-key failures.
+- This is a historical 0045/0046 checkpoint. Luna and the then-known three
+  measured token rates were configured locally; migration 0051 now supersedes
+  that pricing contract with four-rate cache-write accounting. Weekly and
+  monthly controls remain disabled and their abuse-protection limits remain
+  unset for the owner's Admin decision; the rejected $500-per-day proposal was
+  cleared.
+  Customer access remains inactive until real Whop/scheduler launch
+  configuration is supplied and the Admin master switch is deliberately
+  enabled. No deployment or hosted activation occurred.
+
+## 2026-08-08 AI Review scheduler health migration
+
+- `0044_coach_ai_review_scheduler_health_v2` is registered and locally applied.
+- Disposable-copy verification preserved v2 request/attempt/issued-review and
+  Journal execution counts, proved terminal run rows immutable and returned
+  zero foreign-key failures.
+- The table contains operational run state, timestamps, aggregate summary JSON
+  and a bounded failure code only. It contains no user/account identity, review
+  text or Trade Tracker evidence.
+- No provider, paid entitlement, hosted scheduler, push or deployment was
+  activated. The shared port-3010 process was not restarted or queried.
+
 **Current phase:** Phase 6 local acceptance is complete. Phases 0-6 now pass their local technical/product gates; the owner-approved light Material dashboard is preserved, port 3010 is temporarily active for the owner's integrated review, and the accepted Journal fact counts remain intact with a zero-byte WAL. Local Journal Administration review now appends expected Platform audit events, so the live database file hash is no longer treated as immutable after Admin access begins. The replacement source was published to the new `traderslink-bot/traderlink-platform` repository on 2026-08-03, and the narrow landing/Academy release is live on Vercel. Public owner linking, real hosted-source preview/transfer, Docker execution, Railway persistent-volume deployment and full replacement application/DNS cutover remain external. Phase 7 retirement cannot delete preserved assets without explicit owner approval.
 
 **Focused analytics pages:** The owner-approved [Analytics Page Architecture Plan](analytics-pages-architecture-plan.md) separates Overview, Results, Execution and Timing so they do not become duplicate metric pages. Overview implementation is complete under its [progress record](analytics-overview-progress.md). Results is now in focused local review under its [progress record](analytics-results-progress.md): it begins with a date-filtered, searchable and sortable ticker table using only trader-relevant P/L, win-rate, profit-factor, completed-trade and trading-day calculations and replaces the retired Trades by Ticker page. Execution is now in implementation under its [progress record](analytics-execution-progress.md): its charts and table use factual completed-trade construction data and replaces the retired Round Trips page. Analytics Lab is retained but removed from public navigation and redirects to Analytics until a later owner-approved scope restores it. The owner removed the separate Performance page because its calendar-based P/L views overlapped with Overview and Calendar; it is not a future implementation requirement.
@@ -10,6 +57,15 @@
 **Phase 6 accepted source commit:** `b9575e2ed8ba93c23c3c4b8e35d80c26f71477c6` (`feat(platform): complete replacement application candidate`), preserved locally without upstream, push or deployment.
 
 **Phase 5 plan:** [Phase 5 Module Transfer Plan](phase-5-module-transfer-plan.md) and [progress tracker](phase-5-module-transfer-progress.md) are accepted for implementation under delegated technical authority. Slice A has exact replacement Calendar/Ticker/Open-Positions/Trade-Tracker reads, V3-free active adapters and at-most-two-decimal displays. Broker-neutral imports/Data Decisions, retry-safe manual executions, local account management and user-defined multi-account selection are connected. Slice D provides replacement Journal rules, tags, daily notes, trade notes and trader-authored reviews; its empty schema and focused persistence/isolation/rebuild gate passed, and legacy annotation test data is deliberately excluded. Slice E connects the complete 210-capability Analytics Lab registry/query surface, account-scoped immutable saved views, explicit account/version-scoped Candle Review, normalized immutable market facts, and immutable Level Analysis deliveries plus stable Journal round-trip link versions through migrations 0008-0011. Every new E2-E4 table intentionally began empty. `/account` remains login-free on loopback, while Discord-first public login is activated only before go-live. Port 3010 remains off until a broad integrated visual boundary.
+
+**Moomoo direct connection:** The owner authorized a narrow new direct-broker
+foundation on 2026-08-06. The controlling
+[plan](moomoo-direct-connection-plan.md) and
+[progress tracker](moomoo-direct-connection-progress.md) limit it to
+read-only OAuth/PKCE, encrypted credentials, authorized-account discovery and
+fill reads. No Journal import/ledger write, order action, market-data feature,
+WebSocket or scheduled polling is included until the owner test establishes
+the returned schema and a later Journal-evidence contract is accepted.
 
 **Phase 6 acceptance:** [Replacement Acceptance Plan](phase-6-replacement-acceptance-plan.md), [progress tracker](phase-6-replacement-acceptance-progress.md), and [acceptance report](phase-6-replacement-acceptance-report.md) record the completed resource-aware local gate. Sequential one-worker regression, compile/lint/build, packaged runtime, browser/API/privacy, multi-account and final recovery rehearsal passed without authorizing production transfer or deployment.
 

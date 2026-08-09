@@ -12,6 +12,10 @@ import { CoachAiProviderSettingsRepository } from "./coach-ai-provider-settings-
 import { CoachAiReviewProviderControlsRepository } from "./coach-ai-review-provider-controls-repository";
 import { CoachAiReviewRepository } from "./coach-ai-review-repository";
 import {
+  assessCoachMonthlyEvidenceSufficiencyV2,
+  type CoachAiReviewEvidenceSufficiencyV2,
+} from "./coach-ai-review-evidence-sufficiency";
+import {
   buildCoachMonthlyAiReviewInput,
   buildCoachMonthlyAiReviewSnapshotV2,
   type CoachMonthlyAiReviewSnapshotV2,
@@ -62,51 +66,56 @@ type InputBuilder = (
 export type CoachMonthlyReviewEligibilityV2 = Readonly<{
   eligible: boolean;
   generationMode: "automatic" | "manual" | null;
-  reason: "eligible" | "delivery_not_reached" | "no_completed_reflections" |
+  reason: "eligible" | "delivery_not_reached" | "insufficient_evidence" |
     "manual_generation_required";
+  automaticAtUtc: string | null;
+  evidence: CoachAiReviewEvidenceSufficiencyV2;
 }>;
 
 export function assessCoachMonthlyReviewEligibilityV2(
   input: CoachMonthlyAiReviewInputV2,
   now: Date,
-  completedAtScheduledSnapshotCount: number,
+  _completedAtScheduledSnapshotCount = 0,
 ): CoachMonthlyReviewEligibilityV2 {
+  void _completedAtScheduledSnapshotCount;
+  const evidence = assessCoachMonthlyEvidenceSufficiencyV2(input);
   if (now.getTime() < new Date(input.calendarMonth.scheduledAtUtc).getTime()) {
     return Object.freeze({
       eligible: false,
       generationMode: null,
       reason: "delivery_not_reached",
+      automaticAtUtc: input.calendarMonth.scheduledAtUtc,
+      evidence,
     });
   }
-  const completedRefs = new Set([
-    ...input.rawReflectionContext.map((context) => context.reflection.evidenceRef),
-    ...input.reviewNarrativeContext.flatMap((review) => review.representedEvidenceRefs),
-  ]);
-  if (completedRefs.size === 0) {
+  if (!evidence.sufficient) {
     return Object.freeze({
       eligible: false,
       generationMode: null,
-      reason: "no_completed_reflections",
+      reason: "insufficient_evidence",
+      automaticAtUtc: null,
+      evidence,
     });
-  }
-  if (completedAtScheduledSnapshotCount > 0) {
-    return Object.freeze({ eligible: true, generationMode: "automatic", reason: "eligible" });
   }
   return Object.freeze({
     eligible: true,
-    generationMode: "manual",
-    reason: "manual_generation_required",
+    generationMode: "automatic",
+    reason: "eligible",
+    automaticAtUtc: input.calendarMonth.scheduledAtUtc,
+    evidence,
   });
 }
 
 export type CoachMonthlyReviewPlanV2 = Readonly<{
   scope: WorkspaceAccessScope;
   period: CoachMonthlyReviewPeriodV2;
-  state: "waiting_for_delivery" | "no_completed_reflections" |
+  state: "waiting_for_delivery" | "insufficient_evidence" |
     "manual_available" | "automatic_ready" | "already_requested";
   snapshot: CoachMonthlyAiReviewSnapshotV2 | null;
   existingRequestId: string | null;
   priorIssuedReviewId: string | null;
+  automaticAtUtc: string | null;
+  evidence: CoachAiReviewEvidenceSufficiencyV2 | null;
 }>;
 
 function shiftDate(value: string, days: number): string {
@@ -215,7 +224,14 @@ export class CoachMonthlyAiReviewRunner {
           due = prior;
         }
       }
-      if (due.state === "not_due" && due.reason === "enabled_after_period") return [];
+      if (due.state === "not_due" && due.reason === "enabled_after_period") {
+        due = calculateCoachMonthlyReviewDueTimeV2({
+          monthlyEnabledAtUtc: account.settings.firstEnabledAtUtc,
+          now,
+          periodOffsetMonths: 1,
+          calendar,
+        });
+      }
       const existing = reviews.readPeriodRequestByIdentityV2(
         account.scope,
         "monthly",
@@ -229,6 +245,8 @@ export class CoachMonthlyAiReviewRunner {
         snapshot: null,
         existingRequestId: existing.requestId,
         priorIssuedReviewId: existing.priorIssuedReviewId,
+        automaticAtUtc: null,
+        evidence: null,
       })];
       const priorIssued = due.period.periodCoverage === "partial_month"
         ? null
@@ -254,30 +272,14 @@ export class CoachMonthlyAiReviewRunner {
           calendar,
         },
       );
-      const completedAtScheduledSnapshotCount = snapshot.evidenceManifest.evidence
-        .filter((evidence) => {
-          const event = this.database.prepare<[
-            string, string, string, number
-          ], Readonly<{ occurred_at_utc: string }>>(`SELECT occurred_at_utc
-FROM journal_trading_day_review_events
-WHERE workspace_id = ? AND account_id = ? AND trading_day_review_id = ?
-  AND revision_number = ? AND review_status = 'reviewed'`).get(
-            account.scope.workspaceId,
-            account.scope.activeAccountId!,
-            evidence.tradingDayReviewId,
-            evidence.reviewedStatusRevision,
-          );
-          return Boolean(event && event.occurred_at_utc <= due.scheduledAtUtc);
-        }).length;
       const eligibility = assessCoachMonthlyReviewEligibilityV2(
         snapshot.input,
         now,
-        completedAtScheduledSnapshotCount,
       );
       const state = eligibility.reason === "delivery_not_reached"
         ? "waiting_for_delivery" as const
-        : eligibility.reason === "no_completed_reflections"
-          ? "no_completed_reflections" as const
+        : eligibility.reason === "insufficient_evidence"
+          ? "insufficient_evidence" as const
           : eligibility.generationMode === "automatic"
             ? "automatic_ready" as const
             : "manual_available" as const;
@@ -288,6 +290,8 @@ WHERE workspace_id = ? AND account_id = ? AND trading_day_review_id = ?
         snapshot,
         existingRequestId: null,
         priorIssuedReviewId: priorIssued?.issuedReviewId ?? null,
+        automaticAtUtc: eligibility.automaticAtUtc,
+        evidence: eligibility.evidence,
       })];
     }));
   }

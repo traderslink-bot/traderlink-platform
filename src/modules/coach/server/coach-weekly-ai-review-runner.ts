@@ -12,6 +12,13 @@ import { CoachAiProviderSettingsRepository } from "./coach-ai-provider-settings-
 import { CoachAiReviewProviderControlsRepository } from "./coach-ai-review-provider-controls-repository";
 import { CoachAiReviewRepository } from "./coach-ai-review-repository";
 import {
+  type CoachAiReviewEvidenceSufficiencyV2,
+} from "./coach-ai-review-evidence-sufficiency";
+import {
+  assessCoachPeriodicReviewEligibilityV2,
+  type CoachPeriodicReviewEligibilityV2,
+} from "./coach-ai-review-eligibility";
+import {
   buildCoachPeriodicAiReviewSnapshotV2,
   buildCoachWeeklyAiReviewInput,
   type CoachPeriodicAiReviewSnapshotV2,
@@ -31,8 +38,18 @@ import {
   resolveCoachEffectiveAiReviewFrequencyV2,
   type CoachAiReviewAccountSettingsV2,
 } from "./coach-weekly-review-schedule-repository";
+
+export {
+  assessCoachPeriodicReviewEligibilityV2,
+  COACH_PERIODIC_REFLECTION_WINDOW_MILLISECONDS,
+} from "./coach-ai-review-eligibility";
+export type {
+  CoachPeriodicReviewEligibilityV2,
+} from "./coach-ai-review-eligibility";
 import { CoachUsEquitiesCalendarRepository } from
   "./market-calendar/coach-us-equities-calendar-repository";
+import type { CoachUsEquitiesReviewCalendarService } from
+  "./market-calendar/coach-us-equities-review-calendar-service";
 
 export type CoachWeeklyReviewRunSummary = Readonly<{
   scheduledAccountCount: number;
@@ -49,55 +66,16 @@ type InputBuilder = (
   anchorDate: string,
 ) => CoachWeeklyAiReviewInput;
 
-export type CoachPeriodicReviewEligibilityV2 = Readonly<{
-  eligible: boolean;
-  generationMode: "automatic" | "manual" | null;
-  reason: "eligible" | "period_not_sealed" | "no_completed_reflections" |
-    "manual_generation_required";
-}>;
-
-export function assessCoachPeriodicReviewEligibilityV2(
-  snapshot: CoachPeriodicAiReviewSnapshotV2,
-  now: Date,
-): CoachPeriodicReviewEligibilityV2 {
-  const sealedAt = snapshot.input.period.cohorts.at(-1)?.sealedAtUtc;
-  if (!sealedAt || now.getTime() < new Date(sealedAt).getTime()) {
-    return Object.freeze({
-      eligible: false,
-      generationMode: null,
-      reason: "period_not_sealed",
-    });
-  }
-  if (snapshot.input.completedDailyReflections.length === 0) {
-    return Object.freeze({
-      eligible: false,
-      generationMode: null,
-      reason: "no_completed_reflections",
-    });
-  }
-  const finalOpenDate = snapshot.input.period.cohorts.at(-1)?.finalOpenSessionDate;
-  const finalCoverage = snapshot.input.reflectionCoverage.find((coverage) =>
-    coverage.reviewMarketDate === finalOpenDate);
-  const hasIncompleteCreatedReview = snapshot.input.reflectionCoverage.some((coverage) =>
-    coverage.reflectionState === "incomplete");
-  if (finalCoverage?.reflectionState === "completed" && !hasIncompleteCreatedReview) {
-    return Object.freeze({ eligible: true, generationMode: "automatic", reason: "eligible" });
-  }
-  return Object.freeze({
-    eligible: true,
-    generationMode: "manual",
-    reason: "manual_generation_required",
-  });
-}
-
 export type CoachPeriodicReviewPlanV2 = Readonly<{
   scope: WorkspaceAccessScope;
   period: CoachPeriodicReviewPeriodV2;
-  state: "suppressed_monthly_only" | "waiting_for_seal" | "no_completed_reflections" |
+  state: "suppressed_monthly_only" | "waiting_for_seal" | "insufficient_evidence" |
     "manual_available" | "automatic_ready" | "already_requested";
   snapshot: CoachPeriodicAiReviewSnapshotV2 | null;
   existingRequestId: string | null;
   priorIssuedReviewId: string | null;
+  automaticAtUtc: string | null;
+  evidence: CoachAiReviewEvidenceSufficiencyV2 | null;
 }>;
 
 function shiftDate(value: string, days: number): string {
@@ -114,6 +92,42 @@ function mondayDate(value: string): string {
 function safeIssuedReviewRef(value: string): string {
   return `issued_review_sha256:${createHash("sha256")
     .update(`${value}\n`, "utf8").digest("hex")}`;
+}
+
+function twoWeekPeriodStarting(
+  calendar: CoachUsEquitiesReviewCalendarService,
+  startDate: string,
+): CoachPeriodicReviewPeriodV2 {
+  const firstCohort = calendar.cohortStarting(startDate);
+  return calculateCoachPeriodicReviewDueTimeV2({
+    cadence: "two_week",
+    cadenceAnchorMondayDate: startDate,
+    now: new Date(firstCohort.sealedAtUtc),
+    calendar,
+  }).period;
+}
+
+function weeklyPeriodStarting(
+  calendar: CoachUsEquitiesReviewCalendarService,
+  startDate: string,
+): CoachPeriodicReviewPeriodV2 {
+  const cohort = calendar.cohortStarting(startDate);
+  return calculateCoachPeriodicReviewDueTimeV2({
+    cadence: "weekly",
+    cadenceAnchorMondayDate: null,
+    now: new Date(cohort.sealedAtUtc),
+    calendar,
+  }).period;
+}
+
+function planState(
+  eligibility: CoachPeriodicReviewEligibilityV2,
+): CoachPeriodicReviewPlanV2["state"] {
+  if (eligibility.reason === "period_not_sealed") return "waiting_for_seal";
+  if (eligibility.reason === "insufficient_evidence") return "insufficient_evidence";
+  return eligibility.generationMode === "automatic"
+    ? "automatic_ready"
+    : "manual_available";
 }
 
 export class CoachWeeklyAiReviewRunner {
@@ -180,120 +194,121 @@ export class CoachWeeklyAiReviewRunner {
             periodOffset: -1,
             calendar,
           });
-      const existing = reviews.readPeriodRequestByIdentityV2(
-        account.scope,
-        due.period.cadence,
-        due.period.startDate,
-        due.period.endDate,
+      const firstEnabledMarketDate = calendar.marketDateAt(
+        new Date(account.settings.firstEnabledAtUtc),
       );
-      if (existing) return [Object.freeze({
-        scope: account.scope,
-        period: due.period,
-        state: "already_requested" as const,
-        snapshot: null,
-        existingRequestId: existing.requestId,
-        priorIssuedReviewId: existing.priorIssuedReviewId,
-      })];
-      const priorDue = due.period.cadence === "two_week" &&
-        due.period.startDate === anchor ? null : calculateCoachPeriodicReviewDueTimeV2({
-          cadence: due.period.cadence,
-          cadenceAnchorMondayDate: anchor,
-          now: new Date(due.period.cohorts[0]!.sealedAtUtc),
-          periodOffset: -1,
-          calendar,
+      const existingPlan = (
+        period: CoachPeriodicReviewPeriodV2,
+      ): CoachPeriodicReviewPlanV2 | null => {
+        const existing = reviews.readPeriodRequestByIdentityV2(
+          account.scope,
+          period.cadence,
+          period.startDate,
+          period.endDate,
+        );
+        return existing ? Object.freeze({
+          scope: account.scope,
+          period,
+          state: "already_requested" as const,
+          snapshot: null,
+          existingRequestId: existing.requestId,
+          priorIssuedReviewId: existing.priorIssuedReviewId,
+          automaticAtUtc: null,
+          evidence: null,
+        }) : null;
+      };
+      const buildPlan = (
+        period: CoachPeriodicReviewPeriodV2,
+      ): CoachPeriodicReviewPlanV2 => {
+        const priorIssued = reviews.listIssuedReviewsV2(account.scope, {
+          beforePeriodEndDate: period.startDate,
+          reviewKinds: ["weekly", "two_week"],
+          limit: 1,
+        }).at(0) ?? null;
+        const priorOutput = priorIssued?.output.contractVersion ===
+          COACH_PERIODIC_AI_REVIEW_OUTPUT_CONTRACT_VERSION ? priorIssued.output : null;
+        const snapshot = buildCoachPeriodicAiReviewSnapshotV2(
+          this.database,
+          account.scope,
+          {
+            calendar,
+            period: Object.freeze({
+              cadence: period.cadence,
+              startDate: period.startDate,
+              endDate: period.endDate,
+              calendarTimezone: period.timezone,
+              calendarId: period.calendarId,
+              calendarEvidenceDigestSha256: period.calendarEvidenceDigestSha256,
+              cohorts: period.cohorts,
+            }),
+            reflectionEligibilityStartDate: firstEnabledMarketDate,
+            carryForwardEvidenceBundles: Object.freeze([]),
+            priorIssuedReview: priorIssued && priorOutput ? Object.freeze({
+              reviewRef: safeIssuedReviewRef(priorIssued.issuedReviewId),
+              cadence: priorIssued.reviewKind as "weekly" | "two_week",
+              periodStartDate: priorIssued.periodStartDate,
+              periodEndDate: priorIssued.periodEndDate,
+              reviewSummary: priorOutput.reviewSummary,
+              whatImproved: priorOutput.whatImproved,
+              whatHeldYouBack: priorOutput.whatHeldYouBack,
+              focusFollowThrough: priorOutput.focusFollowThrough,
+              nextPeriodFocuses: Object.freeze([...priorOutput.nextPeriodFocuses]),
+              incompleteRecord: priorOutput.incompleteRecord,
+              representedEvidenceRefs: Object.freeze([...priorIssued.representedEvidenceRefs]),
+            }) : null,
+          },
+        );
+        const finalCohortMonday = period.cohorts.at(-1)?.mondayDate;
+        if (!finalCohortMonday) {
+          throw new Error("TRADERLINK_COACH_REVIEW_CALENDAR_COHORT_EMPTY");
+        }
+        const followingTradingWeek = calendar.cohortStarting(
+          shiftDate(finalCohortMonday, 7),
+        );
+        const eligibility = assessCoachPeriodicReviewEligibilityV2(snapshot, now, {
+          mode: account.settings.timingMode,
+          followingTradingWeekSealedAtUtc: followingTradingWeek.sealedAtUtc,
         });
-      const priorSnapshot = priorDue ? buildCoachPeriodicAiReviewSnapshotV2(
-        this.database,
-        account.scope,
-        { period: Object.freeze({
-          cadence: priorDue.period.cadence,
-          startDate: priorDue.period.startDate,
-          endDate: priorDue.period.endDate,
-          calendarTimezone: priorDue.period.timezone,
-          calendarId: priorDue.period.calendarId,
-          calendarEvidenceDigestSha256: priorDue.period.calendarEvidenceDigestSha256,
-          cohorts: priorDue.period.cohorts,
-        }), calendar, reflectionEligibilityStartDate: calendar.marketDateAt(
-          new Date(account.settings.firstEnabledAtUtc),
-        ) },
-      ) : null;
-      const priorRequest = priorDue ? reviews.readPeriodRequestByIdentityV2(
-        account.scope,
-        priorDue.period.cadence,
-        priorDue.period.startDate,
-        priorDue.period.endDate,
-      ) : null;
-      const priorIssued = priorRequest?.issuedReviewId
-        ? reviews.readIssuedReviewV2(account.scope, priorRequest.issuedReviewId)
-        : null;
-      const priorOutput = priorIssued?.output.contractVersion ===
-        COACH_PERIODIC_AI_REVIEW_OUTPUT_CONTRACT_VERSION ? priorIssued.output : null;
-      const carry = priorDue && priorSnapshot &&
-        priorSnapshot.input.completedDailyReflections.length >= 1 &&
-        priorSnapshot.input.completedDailyReflections.length <= 2
-        ? priorSnapshot.input.completedDailyReflections.map((reflection) => Object.freeze({
-            evidenceRef: reflection.evidenceRef,
-            sourcePeriodStartDate: priorDue.period.startDate,
-            sourcePeriodEndDate: priorDue.period.endDate,
-            destinationPeriodStartDate: due.period.startDate,
-            destinationPeriodEndDate: due.period.endDate,
-            reflection,
-            representedByPriorReviewRef: priorIssued
-              ? safeIssuedReviewRef(priorIssued.issuedReviewId)
-              : null,
-            evidenceWeight: "single_observation" as const,
-            statisticalUse: "prohibited" as const,
-          }))
-        : [];
-      const snapshot = buildCoachPeriodicAiReviewSnapshotV2(
-        this.database,
-        account.scope,
-        {
-          calendar,
-          period: Object.freeze({
-            cadence: due.period.cadence,
-            startDate: due.period.startDate,
-            endDate: due.period.endDate,
-            calendarTimezone: due.period.timezone,
-            calendarId: due.period.calendarId,
-            calendarEvidenceDigestSha256: due.period.calendarEvidenceDigestSha256,
-            cohorts: due.period.cohorts,
-          }),
-          reflectionEligibilityStartDate: calendar.marketDateAt(
-            new Date(account.settings.firstEnabledAtUtc),
-          ),
-          carryForwardEvidenceBundles: carry,
-          priorIssuedReview: priorIssued && priorOutput ? Object.freeze({
-            reviewRef: safeIssuedReviewRef(priorIssued.issuedReviewId),
-            cadence: priorIssued.reviewKind as "weekly" | "two_week",
-            periodStartDate: priorIssued.periodStartDate,
-            periodEndDate: priorIssued.periodEndDate,
-            reviewSummary: priorOutput.reviewSummary,
-            whatImproved: priorOutput.whatImproved,
-            whatHeldYouBack: priorOutput.whatHeldYouBack,
-            focusFollowThrough: priorOutput.focusFollowThrough,
-            nextPeriodFocuses: Object.freeze([...priorOutput.nextPeriodFocuses]),
-            incompleteRecord: priorOutput.incompleteRecord,
-            representedEvidenceRefs: Object.freeze([...priorIssued.representedEvidenceRefs]),
-          }) : null,
-        },
-      );
-      const eligibility = assessCoachPeriodicReviewEligibilityV2(snapshot, now);
-      const state = eligibility.reason === "period_not_sealed"
-        ? "waiting_for_seal" as const
-        : eligibility.reason === "no_completed_reflections"
-          ? "no_completed_reflections" as const
-          : eligibility.generationMode === "automatic"
-            ? "automatic_ready" as const
-            : "manual_available" as const;
-      return [Object.freeze({
-        scope: account.scope,
-        period: due.period,
-        state,
-        snapshot,
-        existingRequestId: null,
-        priorIssuedReviewId: priorIssued?.issuedReviewId ?? null,
-      })];
+        return Object.freeze({
+          scope: account.scope,
+          period,
+          state: planState(eligibility),
+          snapshot,
+          existingRequestId: null,
+          priorIssuedReviewId: priorIssued?.issuedReviewId ?? null,
+          automaticAtUtc: eligibility.automaticAtUtc,
+          evidence: eligibility.evidence,
+        });
+      };
+
+      if (due.period.cadence === "weekly") {
+        const priorPairStart = shiftDate(due.period.startDate, -7);
+        if (priorPairStart >= mondayDate(firstEnabledMarketDate)) {
+          const priorPair = twoWeekPeriodStarting(calendar, priorPairStart);
+          const priorPairExisting = existingPlan(priorPair);
+          if (priorPairExisting) return [priorPairExisting];
+          const priorWeekly = weeklyPeriodStarting(calendar, priorPairStart);
+          if (!existingPlan(priorWeekly)) {
+            const priorWeeklyPlan = buildPlan(priorWeekly);
+            if (priorWeeklyPlan.evidence?.deferableSingleTrade) {
+              return [buildPlan(priorPair)];
+            }
+            if (priorWeeklyPlan.evidence?.sufficient &&
+                priorWeeklyPlan.state !== "waiting_for_seal") {
+              return [priorWeeklyPlan];
+            }
+          }
+        }
+      }
+      const existing = existingPlan(due.period);
+      if (existing) return [existing];
+      const basePlan = buildPlan(due.period);
+      if (due.period.cadence !== "weekly" || !basePlan.evidence?.deferableSingleTrade) {
+        return [basePlan];
+      }
+      const combinedPeriod = twoWeekPeriodStarting(calendar, due.period.startDate);
+      const combinedExisting = existingPlan(combinedPeriod);
+      return [combinedExisting ?? buildPlan(combinedPeriod)];
     }));
   }
 

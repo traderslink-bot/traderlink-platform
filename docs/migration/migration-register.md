@@ -8,6 +8,46 @@
 **Phase 6 acceptance:** [Replacement Acceptance Report](phase-6-replacement-acceptance-report.md); no external launch operation is implied by local verification.
 **Rule:** A legacy item cannot be removed until its row is `Owner accepted` and its legacy dependency check is complete.
 
+**2026-08-09 AI Review cache-write accounting checkpoint:** migration
+`0051_coach_ai_review_cache_write_accounting` is registered, disposable-copy
+verified, recovery-authority backup/restore verified and locally applied. The
+local database and manifest are current at 51/51. New reservations and receipts
+preserve GPT-5.6 cache-write usage and pricing separately from ordinary input
+and cache reads. The normal per-subscriber AI Review paid-cycle cap is USD 2.00;
+AI Chat remains outside that allowance. No provider, scheduler, hosted runtime,
+push or deployment was activated by this checkpoint.
+
+**2026-08-09 AI Review subscriber-safeguard checkpoint:** migration
+`0050_coach_ai_review_subscriber_budget_safeguards` is registered,
+disposable-copy verified, backed up and locally applied. It changes the normal
+hard protection from one shared global ceiling to a USD 1.00 per-subscriber AI
+Review cap aligned to stored Whop renewal boundaries, with trailing 30 days as
+the missing-boundary fail-safe. The existing global amount is now a non-blocking
+warning; a separate optional emergency global threshold is the only automatic
+spend control that may pause every subscriber. AI Chat usage, model selection
+and future Chat limits remain separate.
+Migration 0051 supersedes that initial USD 1.00 default with USD 2.00 and adds
+exact cache-write accounting; migration 0050 remains immutable historical
+schema evidence.
+
+**2026-08-09 AI Review paid-access checkpoint:** migration
+`0045_platform_whop_ai_review_entitlements` is registered, disposable-copy
+verified and locally applied. It owns keyed Whop OAuth links, current
+membership projections and immutable replay-safe webhook receipts. It stores no
+raw Whop/customer identity, payment data, OAuth tokens or review content.
+Migration `0046_coach_ai_review_cached_input_pricing` is also registered,
+disposable-copy verified and locally applied; it makes cached-input price and
+usage exact parts of reservations, receipts and Admin cost accounting. Provider,
+hosted scheduler and customer activation remain disabled.
+
+**2026-08-08 AI Review coordinator checkpoint:** migrations 0037, 0039, 0041,
+0043 and 0044 own the v2 period/evidence/attempt contract, immutable verified
+annual U.S.-equities calendar snapshots, corrected reservation scope, the two
+accepted timing modes and privacy-safe scheduler-run health. Migration 0044
+passed disposable-copy count preservation, terminal immutability and foreign-
+key checks and was applied locally as the only pending migration. Provider,
+paid-access and hosted-scheduler activation remain disabled.
+
 **2026-08-03 Journal correction checkpoint:** Integrated owner review opened the
 [Journal Review Workflow Corrections Plan](journal-review-workflow-corrections-plan.md).
 It covers deterministic manual save, append-only saved-manual editing, distinct

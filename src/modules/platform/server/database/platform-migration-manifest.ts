@@ -32,6 +32,8 @@ import { coachAiReviewTimingModesMigration } from "@/src/modules/coach/server/da
 import { coachAiReviewSchedulerHealthV2Migration } from "@/src/modules/coach/server/database/migrations/0044_coach_ai_review_scheduler_health_v2";
 import { coachAiReviewCachedInputPricingMigration } from "@/src/modules/coach/server/database/migrations/0046_coach_ai_review_cached_input_pricing";
 import { coachAiReviewRollingSpendGuardMigration } from "@/src/modules/coach/server/database/migrations/0049_coach_ai_review_rolling_spend_guard";
+import { coachAiReviewSubscriberBudgetSafeguardsMigration } from "@/src/modules/coach/server/database/migrations/0050_coach_ai_review_subscriber_budget_safeguards";
+import { coachAiReviewCacheWriteAccountingMigration } from "@/src/modules/coach/server/database/migrations/0051_coach_ai_review_cache_write_accounting";
 
 import { platformIdentityMigration } from "./migrations/0001_platform_identity";
 import { platformAuthenticationIdentitiesMigration } from "./migrations/0012_platform_authentication_identities";
@@ -255,6 +257,14 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/coach/server/database/migrations/0049_coach_ai_review_rolling_spend_guard.ts",
       migration: coachAiReviewRollingSpendGuardMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/coach/server/database/migrations/0050_coach_ai_review_subscriber_budget_safeguards.ts",
+      migration: coachAiReviewSubscriberBudgetSafeguardsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/coach/server/database/migrations/0051_coach_ai_review_cache_write_accounting.ts",
+      migration: coachAiReviewCacheWriteAccountingMigration,
     }),
   ]);
 
@@ -499,6 +509,8 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     "0049_coach_ai_review_rolling_spend_guard": Object.freeze([
       "coach_ai_review_budget_controls",
     ]),
+    "0050_coach_ai_review_subscriber_budget_safeguards": Object.freeze([]),
+    "0051_coach_ai_review_cache_write_accounting": Object.freeze([]),
   });
 
 export function expectedPlatformTableNamesForPrefix(

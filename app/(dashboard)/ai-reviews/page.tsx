@@ -25,20 +25,26 @@ import {
   resolveCoachEffectiveAiReviewFrequencyV2,
   type CoachAiReviewAccountSettingsV2,
   type CoachAiReviewFrequencyV2,
+  type CoachAiReviewTimingModeV2,
 } from "@/src/modules/coach/server/coach-weekly-review-schedule-repository";
 import {
   CoachAiReviewAvailabilityService,
   type CoachMonthlyReviewAvailabilityV2,
   type CoachPeriodicReviewAvailabilityV2,
 } from "@/src/modules/coach/server/coach-ai-review-availability-service";
+import {
+  CoachAiReviewGenerationCoordinatorV2,
+  type CoachAiReviewGenerationGateV2,
+} from "@/src/modules/coach/server/coach-ai-review-generation-coordinator-v2";
 import { CoachUsEquitiesCalendarRepository } from "@/src/modules/coach/server/market-calendar/coach-us-equities-calendar-repository";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import {
   MonthlyTradeTrackerReviewDrawer,
   WeeklyTradeTrackerReviewCoverage,
 } from "./trade-tracker-review-coverage";
 import { AiReviewRequestButton } from "./ai-review-request-button";
+import { LocalReviewTime } from "./local-review-time";
 
 export const metadata: Metadata = {
   title: "AI Reviews | TraderLink Platform",
@@ -69,6 +75,31 @@ function frequencyLabel(value: CoachAiReviewFrequencyV2): string {
   if (value === "weekly") return "Every trading week";
   if (value === "two_week") return "Every two trading weeks";
   return "Monthly only";
+}
+
+function timingLabel(value: CoachAiReviewTimingModeV2): string {
+  return value === "automatic_after_12_hours"
+    ? "Automatic after 12 hours"
+    : "Extra time for Trade Tracker reviews";
+}
+
+function unavailableCopy(gate: CoachAiReviewGenerationGateV2): Readonly<{
+  status: string;
+  description: ReactNode;
+}> | null {
+  if (gate.state === "platform_unavailable") {
+    return Object.freeze({
+      status: "Platform unavailable",
+      description: "Your saved evidence and issued reviews remain available. New AI Reviews will resume when the service is available.",
+    });
+  }
+  if (gate.state === "paid_access_unavailable") {
+    return Object.freeze({
+      status: "Paid access unavailable",
+      description: "Your saved evidence and issued reviews remain available. Connect or renew AI Review access from Account before a new review can start.",
+    });
+  }
+  return null;
 }
 
 function v2ReviewTitle(review: CoachAiIssuedReviewRecordV2): string {
@@ -151,7 +182,7 @@ function ReviewSchedule({
         sx={{
           display: "grid",
           gap: 2,
-          gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" },
+          gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" },
         }}
       >
         <Box>
@@ -160,6 +191,14 @@ function ReviewSchedule({
             {frequencyLabel(effectiveFrequency ?? settings.currentFrequency)}
           </Typography>
         </Box>
+        {(effectiveFrequency ?? settings.currentFrequency) !== "monthly_only" ? (
+          <Box>
+            <Typography color="text.secondary" variant="caption">Weekly review timing</Typography>
+            <Typography sx={{ fontWeight: 800 }}>
+              {timingLabel(settings.timingMode)}
+            </Typography>
+          </Box>
+        ) : null}
         <Box>
           <Typography color="text.secondary" variant="caption">Monthly review</Typography>
           <Typography sx={{ fontWeight: 800 }}>8:00 AM after month end</Typography>
@@ -172,24 +211,40 @@ function ReviewSchedule({
         </Alert>
       ) : null}
       <Typography color="text.secondary" variant="body2">
-        Only daily Trade Tracker reviews marked complete when generation begins are included. Later edits do not change an issued review.
+        Verified execution facts, saved tags, recorded rule results and all non-empty notes available when generation begins can be used. Later edits do not change an issued review.
       </Typography>
+      {(effectiveFrequency ?? settings.currentFrequency) !== "monthly_only" ? (
+        <Typography color="text.secondary" variant="body2">
+          {settings.timingMode === "automatic_after_12_hours"
+            ? "Weekly reviews start automatically 12 hours after post-market ends on the final trading day. Trade Tracker reviews do not need to be completed."
+            : "Weekly reviews can start sooner when you have marked your reviews complete or select Generate now. Otherwise they start automatically at the end of the following trading week."}
+        </Typography>
+      ) : null}
     </Stack>
   );
 }
 
-function completedCoverageLabel(
+function evidenceCoverageLabel(
+  availability: CoachPeriodicReviewAvailabilityV2 | CoachMonthlyReviewAvailabilityV2,
   completed: number,
   created: number,
-  context: "monthly" | "periodic",
 ): string {
-  const completedLabel = context === "monthly"
-    ? `${completed} daily review${completed === 1 ? "" : "s"} available for this monthly review`
-    : `${completed} daily review${completed === 1 ? "" : "s"} marked complete`;
+  const evidence = availability.evidence;
   const incomplete = Math.max(0, created - completed);
-  return incomplete > 0
-    ? `${completedLabel} · ${incomplete} not complete`
-    : completedLabel;
+  const parts = [
+    `${evidence.readyClosedTradeCount} ready closed trade${evidence.readyClosedTradeCount === 1 ? "" : "s"}`,
+    `${completed} review${completed === 1 ? "" : "s"} marked complete`,
+  ];
+  if (incomplete > 0) {
+    parts.push(`${incomplete} review${incomplete === 1 ? "" : "s"} not complete`);
+  }
+  if (evidence.savedTagCount > 0) {
+    parts.push(`${evidence.savedTagCount} saved tag${evidence.savedTagCount === 1 ? "" : "s"}`);
+  }
+  if (evidence.reviewedRuleOutcomeCount > 0) {
+    parts.push(`${evidence.reviewedRuleOutcomeCount} followed or broken rule result${evidence.reviewedRuleOutcomeCount === 1 ? "" : "s"}`);
+  }
+  return parts.join(" · ");
 }
 
 function AvailabilityCard({
@@ -203,7 +258,7 @@ function AvailabilityCard({
 }: {
   action?: ReactNode;
   coverage?: string;
-  description: string;
+  description: ReactNode;
   details?: ReactNode;
   period: string;
   status: string;
@@ -238,8 +293,10 @@ function AvailabilityCard({
   );
 }
 
-function PeriodicAvailability({ availability }: {
+function PeriodicAvailability({ availability, gate, timingMode }: {
   availability: CoachPeriodicReviewAvailabilityV2;
+  gate: CoachAiReviewGenerationGateV2;
+  timingMode: CoachAiReviewTimingModeV2;
 }) {
   const completed = availability.completedReviewCount;
   const created = completed + availability.incompleteReviewCount;
@@ -248,6 +305,20 @@ function PeriodicAvailability({ availability }: {
     : "Trading-week review";
   const period = `${formatDate(availability.period.startDate)} to ${formatDate(availability.period.endDate)}`;
   const details = <WeeklyTradeTrackerReviewCoverage days={availability.reviewDays} />;
+  const unavailable = unavailableCopy(gate);
+  if (unavailable && ["manual_available", "automatic_ready", "already_requested"]
+      .includes(availability.state)) {
+    return (
+      <AvailabilityCard
+        coverage={evidenceCoverageLabel(availability, completed, created)}
+        description={unavailable.description}
+        details={details}
+        period={period}
+        status={unavailable.status}
+        title={title}
+      />
+    );
+  }
   if (availability.state === "manual_available") {
     return (
       <AvailabilityCard
@@ -261,8 +332,10 @@ function PeriodicAvailability({ availability }: {
             reviewKind={availability.period.cadence}
           />
         }
-        coverage={completedCoverageLabel(completed, created, "periodic")}
-        description="Generate now using the completed reviews available at this moment. Later edits will not change the issued review."
+        coverage={evidenceCoverageLabel(availability, completed, created)}
+        description={timingMode === "automatic_after_12_hours"
+          ? <>Generate now using verified execution facts and everything currently saved. Otherwise, it will start automatically{availability.automaticAtUtc ? <> at <LocalReviewTime value={availability.automaticAtUtc} /></> : " 12 hours after post-market ends on the final trading day"}.</>
+          : <>Generate now using verified execution facts and everything currently saved. It can also start when you have marked your reviews complete; otherwise, it starts automatically{availability.automaticAtUtc ? <> at <LocalReviewTime value={availability.automaticAtUtc} /></> : " at the end of the following trading week"}.</>}
         details={details}
         period={period}
         status="Ready"
@@ -273,8 +346,8 @@ function PeriodicAvailability({ availability }: {
   if (availability.state === "automatic_ready") {
     return (
       <AvailabilityCard
-        coverage={completedCoverageLabel(completed, created, "periodic")}
-        description="Every Trade Tracker review you created is complete. This review is ready to start automatically."
+        coverage={evidenceCoverageLabel(availability, completed, created)}
+        description={<>The verified evidence is meaningful enough for an AI review. It is ready to start automatically using the verified facts and everything saved in Trade Tracker when generation begins{availability.automaticAtUtc ? <> at <LocalReviewTime value={availability.automaticAtUtc} /></> : null}.</>}
         details={details}
         period={period}
         status="Ready"
@@ -282,26 +355,37 @@ function PeriodicAvailability({ availability }: {
       />
     );
   }
-  if (availability.state === "no_completed_reflections") {
+  if (availability.state === "insufficient_evidence") {
+    const singleTradeOnly = availability.evidence.readyClosedTradeCount === 1 &&
+      availability.evidence.substantiveReflectionCount === 0 &&
+      availability.evidence.savedTagCount === 0 &&
+      availability.evidence.reviewedRuleOutcomeCount === 0;
     return (
       <AvailabilityCard
-        coverage={completedCoverageLabel(0, created, "periodic")}
-        description="No AI review is generated without at least one completed Trade Tracker review. A completed review can make this period available later."
+        coverage={evidenceCoverageLabel(availability, completed, created)}
+        description={singleTradeOnly
+          ? "One closed trade without notes, tags or rule results is not enough to support useful AI feedback. It will be combined with the next trading week once; exact facts are not discarded."
+          : "There is not enough verified trade activity or substantive saved-note evidence to support a useful AI review yet."}
         details={details}
         period={period}
-        status="Not ready"
+        status={singleTradeOnly ? "Combines with next week" : "Not ready"}
         title={title}
       />
     );
   }
   if (availability.state === "already_requested") {
+    const requestCopy = availability.requestState === "generating"
+      ? Object.freeze({ status: "Generating", description: "Your AI Review is being written from the saved evidence for this period." })
+      : availability.requestState === "retrying"
+        ? Object.freeze({ status: "Retrying", description: "A temporary issue stopped the review. It will retry with the same saved evidence." })
+        : Object.freeze({ status: "Pending", description: "Your review is saved and waiting to begin." });
     return (
       <AvailabilityCard
-        coverage={completedCoverageLabel(completed, created, "periodic")}
-        description="This review has already been requested. It will appear in your saved reviews when it is issued."
+        coverage={evidenceCoverageLabel(availability, completed, created)}
+        description={requestCopy.description}
         details={details}
         period={period}
-        status="Requested"
+        status={requestCopy.status}
         title={title}
       />
     );
@@ -309,8 +393,7 @@ function PeriodicAvailability({ availability }: {
   if (availability.state === "waiting_for_period") {
     return (
       <AvailabilityCard
-        description={`This review period begins ${formatDate(availability.period.startDate)}. Complete Trade Tracker reviews from that period will count.`}
-        details={details}
+        description={`This review period begins ${formatDate(availability.period.startDate)}. Verified execution facts and everything saved in Trade Tracker can be used when generation begins.`}
         period={period}
         status="Upcoming"
         title={title}
@@ -319,8 +402,8 @@ function PeriodicAvailability({ availability }: {
   }
   return (
     <AvailabilityCard
-      coverage={completedCoverageLabel(completed, created, "periodic")}
-      description="Keep completing your Trade Tracker reviews. The factual period must end before an AI review can begin."
+      coverage={evidenceCoverageLabel(availability, completed, created)}
+      description="Verified facts and saved Trade Tracker input are accumulating. The trading period must end before an AI review can begin."
       details={details}
       period={period}
       status="In progress"
@@ -329,8 +412,9 @@ function PeriodicAvailability({ availability }: {
   );
 }
 
-function MonthlyAvailability({ availability }: {
+function MonthlyAvailability({ availability, gate }: {
   availability: CoachMonthlyReviewAvailabilityV2;
+  gate: CoachAiReviewGenerationGateV2;
 }) {
   const completed = availability.completedReviewCount;
   const created = completed + availability.incompleteReviewCount;
@@ -343,6 +427,20 @@ function MonthlyAvailability({ availability }: {
       periodLabel={period}
     />
   );
+  const unavailable = unavailableCopy(gate);
+  if (unavailable && ["manual_available", "automatic_ready", "already_requested"]
+      .includes(availability.state)) {
+    return (
+      <AvailabilityCard
+        coverage={evidenceCoverageLabel(availability, completed, created)}
+        description={unavailable.description}
+        details={details}
+        period={period}
+        status={unavailable.status}
+        title="Monthly review"
+      />
+    );
+  }
   if (availability.state === "manual_available") {
     return (
       <AvailabilityCard
@@ -354,8 +452,8 @@ function MonthlyAvailability({ availability }: {
             reviewKind="monthly"
           />
         }
-        coverage={completedCoverageLabel(completed, created, "monthly")}
-        description="Generate the calendar-month review using exact month facts and the completed monthly reflection coverage available now."
+        coverage={evidenceCoverageLabel(availability, completed, created)}
+        description="Generate the calendar-month review using exact month facts and everything saved in Trade Tracker by generation time."
         details={details}
         period={period}
         status="Ready"
@@ -366,8 +464,8 @@ function MonthlyAvailability({ availability }: {
   if (availability.state === "automatic_ready") {
     return (
       <AvailabilityCard
-        coverage={completedCoverageLabel(completed, created, "monthly")}
-        description="This calendar-month review is ready to start automatically."
+        coverage={evidenceCoverageLabel(availability, completed, created)}
+        description={<>This exact calendar-month evidence is meaningful enough for an AI review and remains automatically due until its request is frozen{availability.automaticAtUtc ? <>, starting <LocalReviewTime value={availability.automaticAtUtc} /></> : null}.</>}
         details={details}
         period={period}
         status="Ready"
@@ -375,11 +473,11 @@ function MonthlyAvailability({ availability }: {
       />
     );
   }
-  if (availability.state === "no_completed_reflections") {
+  if (availability.state === "insufficient_evidence") {
     return (
       <AvailabilityCard
-        coverage={completedCoverageLabel(0, created, "monthly")}
-        description="No monthly AI review is generated without at least one completed Trade Tracker review. Completing one later can make this month available."
+        coverage={evidenceCoverageLabel(availability, completed, created)}
+        description="This month does not yet contain enough verified trade activity or substantive saved-note evidence to support a useful AI review. The exact facts remain available."
         details={details}
         period={period}
         status="Not ready"
@@ -388,21 +486,26 @@ function MonthlyAvailability({ availability }: {
     );
   }
   if (availability.state === "already_requested") {
+    const requestCopy = availability.requestState === "generating"
+      ? Object.freeze({ status: "Generating", description: "Your monthly AI Review is being written from the saved evidence for this calendar month." })
+      : availability.requestState === "retrying"
+        ? Object.freeze({ status: "Retrying", description: "A temporary issue stopped the review. It will retry with the same saved calendar-month evidence." })
+        : Object.freeze({ status: "Pending", description: "Your monthly review is saved and waiting to begin." });
     return (
       <AvailabilityCard
-        coverage={completedCoverageLabel(completed, created, "monthly")}
-        description="This monthly review has already been requested. It will appear below when it is issued."
+        coverage={evidenceCoverageLabel(availability, completed, created)}
+        description={requestCopy.description}
         details={details}
         period={period}
-        status="Requested"
+        status={requestCopy.status}
         title="Monthly review"
       />
     );
   }
   return (
     <AvailabilityCard
-      coverage={completedCoverageLabel(completed, created, "monthly")}
-      description="This review uses exact calendar-month facts and becomes available at 8:00 AM on the day after month end."
+      coverage={evidenceCoverageLabel(availability, completed, created)}
+      description="This review uses exact calendar-month facts and becomes available at 8:00 AM on the day after month end. Everything saved in Trade Tracker by generation time can be used."
       details={details}
       period={period}
       status="Scheduled"
@@ -414,9 +517,13 @@ function MonthlyAvailability({ availability }: {
 function ReviewAvailability({
   monthlyAvailability,
   periodicAvailability,
+  gate,
+  timingMode,
 }: {
   monthlyAvailability: CoachMonthlyReviewAvailabilityV2 | null;
   periodicAvailability: CoachPeriodicReviewAvailabilityV2 | null;
+  gate: CoachAiReviewGenerationGateV2;
+  timingMode: CoachAiReviewTimingModeV2;
 }) {
   if (!monthlyAvailability && !periodicAvailability) return null;
   return (
@@ -428,21 +535,23 @@ function ReviewAvailability({
       }}
     >
       {periodicAvailability
-        ? <PeriodicAvailability availability={periodicAvailability} />
+        ? <PeriodicAvailability availability={periodicAvailability} gate={gate} timingMode={timingMode} />
         : null}
       {monthlyAvailability
-        ? <MonthlyAvailability availability={monthlyAvailability} />
+        ? <MonthlyAvailability availability={monthlyAvailability} gate={gate} />
         : null}
     </Box>
   );
 }
 
 export default async function AiReviewsPage() {
-  const scope = await requireTraderLinkPlatformPageScope();
+  const identity = await requireTraderLinkPlatformPageIdentity();
+  const scope = identity.scope;
   const now = new Date();
   const {
     monthlyReviews,
     availability,
+    generationGate,
     marketMonday,
     reviews,
     settings,
@@ -457,6 +566,7 @@ export default async function AiReviewsPage() {
       settings: scheduleRepository.readV2(scope),
       v2Reviews: repository.listIssuedReviewsV2(scope),
       availability: new CoachAiReviewAvailabilityService(database).read(scope, now),
+      generationGate: new CoachAiReviewGenerationCoordinatorV2(database).readGate(scope),
       marketMonday: calendar.cohortForDate(calendar.marketDateAt(now)).mondayDate,
     });
   });
@@ -471,8 +581,18 @@ export default async function AiReviewsPage() {
       <Box>
         <Typography component="h1" variant="h1">AI Reviews</Typography>
         <Typography color="text.secondary" sx={{ maxWidth: 760, mt: 1 }} variant="body2">
-          Turn your completed daily Trade Tracker reviews into a clear view of what improved, what held you back and what to focus on next.
+          Turn verified trading results and anything you choose to save in Trade Tracker into a clear view of what improved, what held you back and what to focus on next.
         </Typography>
+        {identity.mode === "local_development" || identity.discord?.guildOwner ? (
+          <Button
+            href="/ai-reviews/benchmark-preview"
+            size="small"
+            sx={{ mt: 1.5 }}
+            variant="outlined"
+          >
+            Preview power-user reviews
+          </Button>
+        ) : null}
       </Box>
 
       <DashboardPanel
@@ -494,10 +614,17 @@ export default async function AiReviewsPage() {
 
       {settings?.isEnabled ? (
         <DashboardPanel title="Review availability">
-          <ReviewAvailability
-            monthlyAvailability={availability.monthly}
-            periodicAvailability={availability.periodic}
-          />
+          <Stack spacing={1.5}>
+            {generationGate.state !== "available" ? (
+              <Alert severity="info">{unavailableCopy(generationGate)?.description}</Alert>
+            ) : null}
+            <ReviewAvailability
+              gate={generationGate}
+              monthlyAvailability={availability.monthly}
+              periodicAvailability={availability.periodic}
+              timingMode={settings.timingMode}
+            />
+          </Stack>
         </DashboardPanel>
       ) : null}
 

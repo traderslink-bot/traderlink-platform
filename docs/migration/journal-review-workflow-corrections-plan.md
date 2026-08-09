@@ -466,8 +466,8 @@ trader-configured preset:
 
 ### Correction 11: Daily Trade Tracker one-day review workflow
 
-**Implementation status:** Implemented locally on 2026-08-04; owner visual
-review remains pending.
+**Implementation status:** Implemented locally on 2026-08-04; existing Daily
+Trade Tracker visual design owner-approved on 2026-08-07.
 
 - A Day Tracker manual-entry submission may contain executions for any date,
   but all submitted rows must belong to one Eastern Time trading date. The

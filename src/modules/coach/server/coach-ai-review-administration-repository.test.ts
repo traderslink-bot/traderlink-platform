@@ -44,8 +44,19 @@ INSERT INTO coach_monthly_review_requests VALUES ('${monthlyRequestId}', '${user
   new CoachAiProviderSettingsRepository(database).save({
     modelId: "gpt-review-test",
     inputCostUsdPerMillionTokens: "1",
+    cachedInputCostUsdPerMillionTokens: "0.1",
+    cacheWriteInputCostUsdPerMillionTokens: "1.25",
     outputCostUsdPerMillionTokens: "2",
   });
+  const budgetAvailable = Boolean(database.prepare<[], Readonly<{ found: number }>>(
+    "SELECT 1 AS found FROM sqlite_schema WHERE type = 'table' AND name = 'coach_ai_review_budget_controls'",
+  ).get());
+  if (budgetAvailable) {
+    database.prepare(`UPDATE coach_ai_review_budget_controls SET
+  trailing_30_day_estimated_spend_cap_usd = '10',
+  updated_at_utc = '2026-08-10T00:00:00.000Z'
+WHERE control_key = 'ai_reviews'`).run();
+  }
   return Object.freeze({ database, repository: new CoachAiReviewAdministrationRepository({ database, scope: scope() }) });
 }
 

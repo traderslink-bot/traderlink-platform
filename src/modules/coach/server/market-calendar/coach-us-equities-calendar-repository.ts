@@ -34,6 +34,16 @@ type SnapshotRow = Readonly<{
   snapshot_json: string;
 }>;
 
+export type CoachCalendarYearStatus = Readonly<{
+  targetYear: number;
+  coverageAvailable: boolean;
+  status: VerificationStatus | "verified_baseline" | "unverified";
+  resultCode: string | null;
+  calendarId: string | null;
+  lastCheckedAtUtc: string | null;
+  nextCheckAfterUtc: string | null;
+}>;
+
 export type CoachCalendarVerificationWrite = Readonly<{
   targetYear: number;
   status: VerificationStatus;
@@ -130,6 +140,35 @@ export class CoachUsEquitiesCalendarRepository {
 FROM coach_us_equities_calendar_verification_state
 WHERE target_year = ?`).get(targetYear);
     return !state || state.next_check_after_utc <= now.toISOString();
+  }
+
+  readYearStatus(targetYear: number): CoachCalendarYearStatus {
+    const state = this.database.prepare<[number], Readonly<{
+      latest_status: VerificationStatus;
+      latest_result_code: string;
+      active_calendar_id: string | null;
+      last_checked_at_utc: string;
+      next_check_after_utc: string;
+    }>>(`SELECT latest_status, latest_result_code, active_calendar_id,
+  last_checked_at_utc, next_check_after_utc
+FROM coach_us_equities_calendar_verification_state
+WHERE target_year = ?`).get(targetYear);
+    let coverageAvailable = false;
+    try {
+      this.calendar().session(`${targetYear}-07-01`);
+      coverageAvailable = true;
+    } catch {
+      coverageAvailable = false;
+    }
+    return Object.freeze({
+      targetYear,
+      coverageAvailable,
+      status: state?.latest_status ?? (coverageAvailable ? "verified_baseline" : "unverified"),
+      resultCode: state?.latest_result_code ?? null,
+      calendarId: state?.active_calendar_id ?? null,
+      lastCheckedAtUtc: state?.last_checked_at_utc ?? null,
+      nextCheckAfterUtc: state?.next_check_after_utc ?? null,
+    });
   }
 
   activeSnapshotJsons(): readonly unknown[] {

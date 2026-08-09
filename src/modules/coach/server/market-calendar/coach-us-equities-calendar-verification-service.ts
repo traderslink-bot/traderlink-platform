@@ -53,12 +53,15 @@ export class CoachUsEquitiesCalendarVerificationService {
     this.#repository = new CoachUsEquitiesCalendarRepository(database);
   }
 
-  async run(now = new Date()): Promise<CoachCalendarVerificationRunResult> {
+  async run(
+    now = new Date(),
+    options: Readonly<{ force?: boolean }> = {},
+  ): Promise<CoachCalendarVerificationRunResult> {
     if (!(now instanceof Date) || !Number.isFinite(now.getTime())) {
       throw new RangeError("A valid calendar verification instant is required");
     }
     const targetYear = easternYear(now) + 1;
-    if (!this.#repository.shouldCheck(targetYear, now)) {
+    if (!options.force && !this.#repository.shouldCheck(targetYear, now)) {
       return Object.freeze({ state: "not_due", targetYear });
     }
     const checkedAtUtc = now.toISOString();

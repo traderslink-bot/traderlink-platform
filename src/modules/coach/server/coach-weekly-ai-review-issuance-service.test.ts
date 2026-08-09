@@ -115,6 +115,15 @@ function output(): CoachWeeklyAiReviewOutput {
 }
 
 function enableWeeklyReviewControl(database: Database.Database): CoachAiReviewProviderControlsRepository {
+  const budgetAvailable = Boolean(database.prepare<[], Readonly<{ found: number }>>(
+    "SELECT 1 AS found FROM sqlite_schema WHERE type = 'table' AND name = 'coach_ai_review_budget_controls'",
+  ).get());
+  if (budgetAvailable) {
+    database.prepare(`UPDATE coach_ai_review_budget_controls SET
+  trailing_30_day_estimated_spend_cap_usd = '10',
+  updated_at_utc = '2026-08-10T00:00:00.000Z'
+WHERE control_key = 'ai_reviews'`).run();
+  }
   database.prepare(`UPDATE coach_ai_feature_controls
 SET enabled = 1, daily_request_cap = 10, daily_token_cap = 100000,
   daily_estimated_spend_cap_usd = '10', updated_at_utc = ?
@@ -130,6 +139,8 @@ describe("Coach weekly AI review issuance", () => {
       settings.save({
         modelId: "gpt-test",
         inputCostUsdPerMillionTokens: "2.5",
+        cachedInputCostUsdPerMillionTokens: "0.25",
+        cacheWriteInputCostUsdPerMillionTokens: "3.125",
         outputCostUsdPerMillionTokens: "10",
       }, new Date(createdAtUtc));
       const controls = enableWeeklyReviewControl(database);
@@ -143,13 +154,13 @@ describe("Coach weekly AI review issuance", () => {
           calls += 1;
           if (calls === 1) {
             const error = Object.assign(new Error("provider failed"), {
-              usage: { inputTokens: 100, outputTokens: 50, totalTokens: 150 },
+              usage: { inputTokens: 100, cachedInputTokens: 0, cacheWriteInputTokens: 0, outputTokens: 50, totalTokens: 150 },
             });
             throw error;
           }
           return Object.freeze({
             output: output(),
-            usage: Object.freeze({ inputTokens: 200, outputTokens: 100, totalTokens: 300 }),
+            usage: Object.freeze({ inputTokens: 200, cachedInputTokens: 0, cacheWriteInputTokens: 0, outputTokens: 100, totalTokens: 300 }),
           });
         },
         controls,
@@ -239,7 +250,7 @@ describe("Coach weekly AI review issuance", () => {
     const { database, scope } = setup();
     try {
       const settings = new CoachAiProviderSettingsRepository(database);
-      settings.save({ modelId: "gpt-test", inputCostUsdPerMillionTokens: "2.5", outputCostUsdPerMillionTokens: "10" }, new Date(createdAtUtc));
+      settings.save({ modelId: "gpt-test", inputCostUsdPerMillionTokens: "2.5", cachedInputCostUsdPerMillionTokens: "0.25", cacheWriteInputCostUsdPerMillionTokens: "3.125", outputCostUsdPerMillionTokens: "10" }, new Date(createdAtUtc));
       const service = new CoachWeeklyAiReviewIssuanceService(
         new CoachAiReviewRepository(database),
         settings,

@@ -13,6 +13,9 @@ import type {
   CoachWeeklyAiReviewInput,
 } from "../contracts/weekly-ai-review-input-contracts";
 import type { CoachAiGenerationUsage } from "./coach-ai-review-repository";
+import { assertCoachAiReviewOutputSafe } from "./coach-ai-review-output-safety";
+import { serializeCoachAiReviewProviderPackage } from
+  "./coach-ai-review-provider-package";
 
 export const LOCAL_COACH_WEEKLY_AI_MODEL = "gpt-5.6-sol" as const;
 export const COACH_WEEKLY_AI_REVIEW_MAX_OUTPUT_TOKENS = 4_096;
@@ -44,19 +47,27 @@ const SYSTEM_PROMPT = `You are TraderLink's weekly trading-journal reviewer. Wri
 
 Be specific where the supplied notes, rule outcomes, focuses, or trade facts support a point. Be respectful but do not soften a supported criticism. Do not invent a setup, motive, market condition, rule outcome, missing fact, or trade result.
 
-Do not provide trade recommendations, price targets, position-size advice, entry or exit instructions, diagnoses, certainty claims, or language that treats profit as proof of good process or a loss as proof of bad process. Do not mention the provider, AI, prompts, tokens, databases, internal systems, or data-decision codes.
+Do not provide trade recommendations, price targets, position-size advice, entry or exit instructions, diagnoses, certainty claims, or language that treats profit as proof of good process or a loss as proof of bad process. Do not mention the provider, AI, prompts, tokens, databases, internal systems, or internal workflow labels.
 
 Use plain trading-journal language. Keep the next focuses process-oriented and limited to three. If the supplied record is incomplete, say exactly what limits the conclusion in incompleteRecord; otherwise set incompleteRecord to null.`;
 
 const PERIODIC_SYSTEM_PROMPT_V2 = `You are TraderLink's end-of-trading-period journal reviewer. The supplied package is either one complete Monday-through-Friday market-calendar cohort or two consecutive cohorts.
 
-Use reviewPeriodMarketFacts as the only source for current-period trade counts, P/L, win rate, rule counts, tag observations, and other statistics. completedDailyReflections are trader-authored process evidence only for the current period. carryForwardEvidenceBundles are dated historical process context: never move their executions, P/L, rule counts, or tags into the current period and never treat a carried reflection plus its prior-review reference as two observations. priorIssuedReview is continuity context, not current-period statistical evidence.
+Use reviewPeriodMarketFacts as the only source for current-period trade counts, P/L, win rate, rule counts, tag observations, and other statistics. completedDailyReflections and savedDailyReflections are trader-authored process evidence only for the current period. A savedDailyReflection came from a Trade Tracker review that was not marked complete when the immutable snapshot was created; use its saved words as evidence, but do not imply that the trader finalized the whole daily review. carryForwardEvidenceBundles are dated historical process context: never move their executions, P/L, rule counts, or tags into the current period and never treat a carried reflection plus its prior-review reference as two observations. priorIssuedReview is continuity context, not current-period statistical evidence.
 
-Be direct and proportionate to coverage. One completed reflection may support a narrow observation but not a recurring-pattern claim. Respect reflectionCoverage and coverageNotice. Never invent a setup, motive, market condition, rule outcome, missing fact, or trade result.
+Within reviewPeriodMarketFacts, ruleOutcomes are the exact recorded statuses that support the aggregate ruleReviews counts; each ruleRef resolves to the title, statement, and category in ruleDefinitions. A not_reviewed status is not a broken rule. Trade analysis is deterministic historical evidence from the Trade Tracker analyzer. Use it only when availability is ready, keep oneMinute and fiveMinute observations distinct, and treat greenToRed and post-exit paths as descriptions of what happened in that completed trade rather than predictions or trading instructions.
 
-Do not provide trade recommendations, price targets, position-size advice, entry or exit instructions, diagnoses, certainty claims, or treat profit as proof of good process or loss as proof of bad process. Do not mention the provider, AI, prompts, tokens, databases, internal systems, or data-decision codes.
+Be direct and proportionate to coverage. One saved or completed reflection may support a narrow observation but not a recurring-pattern claim. Respect reflectionCoverage and coverageNotice. Never invent a setup, motive, market condition, rule outcome, missing fact, or trade result.
 
-Use plain trading-journal language. Keep nextPeriodFocuses process-oriented and limited to three. If coverage limits any conclusion, state the exact limitation in incompleteRecord; otherwise set incompleteRecord to null.`;
+When the period has verified execution facts but no reflections, tags, or reviewed rule outcomes, still provide the narrowest useful execution-only review. You may compare supplied trade/day counts, outcome distribution, repeated tickers, and supplied timing or holding facts. Do not make data entry the main feedback and do not imply that daily reviews are required. At most one next-period focus may offer optional recordkeeping; the other focuses must be useful to a low-participation trader from the verified facts that exist.
+
+Never calculate or state a new numeric value that is not explicitly supplied in the package. Formatting an exact supplied decimal as currency or a percentage is allowed, but deriving averages, residual P/L, proportions, or holding durations from timestamps is not. If a holding duration or session is null, treat it as unavailable.
+
+Do not provide trade recommendations, price targets, position-size advice, entry or exit instructions, diagnoses, certainty claims, or treat profit as proof of good process or loss as proof of bad process. Do not mention the provider, AI, prompts, tokens, databases, internal systems, or internal workflow labels.
+
+Do not turn the trader's descriptions of a setup, pullback, level, volume, stop, time cutoff, daily goal, or re-entry into a forward-looking trading command. You may ask the trader to compare future decisions with their own saved plan, but never tell them when to enter, exit, pass, stop trading, or which market confirmation to require.
+
+Use plain Trade Tracker language. Keep nextPeriodFocuses process-oriented, retrospective, and limited to three. Never phrase a focus as a pre-entry checklist, a required market confirmation, or a command that must be followed before placing a trade. If coverage limits any conclusion, state the supplied public-language limitation in incompleteRecord; otherwise set incompleteRecord to null.`;
 
 export type CoachWeeklyAiReviewProviderEnvelope = Readonly<{
   system: string;
@@ -68,7 +79,7 @@ export type CoachWeeklyAiReviewProviderEnvelope = Readonly<{
 export function buildCoachWeeklyAiReviewProviderEnvelope(
   input: CoachWeeklyAiReviewInput,
 ): CoachWeeklyAiReviewProviderEnvelope {
-  const prompt = JSON.stringify(input);
+  const prompt = serializeCoachAiReviewProviderPackage(input);
   return Object.freeze({
     system: SYSTEM_PROMPT,
     prompt,
@@ -80,7 +91,7 @@ export function buildCoachWeeklyAiReviewProviderEnvelope(
 export function buildCoachPeriodicAiReviewProviderEnvelopeV2(
   input: CoachPeriodicAiReviewInputV2,
 ): CoachWeeklyAiReviewProviderEnvelope {
-  const prompt = JSON.stringify(input);
+  const prompt = serializeCoachAiReviewProviderPackage(input);
   return Object.freeze({
     system: PERIODIC_SYSTEM_PROMPT_V2,
     prompt,
@@ -91,17 +102,38 @@ export function buildCoachPeriodicAiReviewProviderEnvelopeV2(
 
 function completeUsage(usage: Readonly<{
   inputTokens?: number;
+  inputTokenDetails?: Readonly<{
+    cacheReadTokens?: number;
+    cacheWriteTokens?: number;
+  }>;
   outputTokens?: number;
   totalTokens?: number;
 }>): CoachAiGenerationUsage {
-  const values = [usage.inputTokens, usage.outputTokens, usage.totalTokens];
+  const cachedInputTokens = usage.inputTokenDetails?.cacheReadTokens;
+  const cacheWriteInputTokens = usage.inputTokenDetails?.cacheWriteTokens;
+  const values = [
+    usage.inputTokens,
+    cachedInputTokens,
+    cacheWriteInputTokens,
+    usage.outputTokens,
+    usage.totalTokens,
+  ];
   if (!values.every((value) =>
     typeof value === "number" && Number.isSafeInteger(value) && value >= 0,
-  )) {
-    return Object.freeze({ inputTokens: null, outputTokens: null, totalTokens: null });
+  ) || (cachedInputTokens as number) + (cacheWriteInputTokens as number) >
+      (usage.inputTokens as number)) {
+    return Object.freeze({
+      inputTokens: null,
+      cachedInputTokens: null,
+      cacheWriteInputTokens: null,
+      outputTokens: null,
+      totalTokens: null,
+    });
   }
   return Object.freeze({
     inputTokens: usage.inputTokens as number,
+    cachedInputTokens: cachedInputTokens as number,
+    cacheWriteInputTokens: cacheWriteInputTokens as number,
     outputTokens: usage.outputTokens as number,
     totalTokens: usage.totalTokens as number,
   });
@@ -130,13 +162,24 @@ export async function generateCoachWeeklyAiReview(
     prompt: envelope.prompt,
   });
   if (!result.output) throw new Error("TRADERLINK_COACH_OPENAI_NO_OUTPUT");
+  const usage = completeUsage(result.usage);
+  assertCoachAiReviewOutputSafe({
+    textFields: [
+      result.output.weeklyReview,
+      result.output.whatImproved,
+      result.output.whatHeldYouBack,
+      result.output.focusFollowThrough,
+      result.output.incompleteRecord ?? "",
+    ],
+    nextFocuses: result.output.nextWeekFocuses,
+  }, usage);
   return Object.freeze({
     output: Object.freeze({
       contractVersion: COACH_WEEKLY_AI_OUTPUT_CONTRACT_VERSION,
       ...result.output,
       nextWeekFocuses: Object.freeze([...result.output.nextWeekFocuses]),
     }),
-    usage: completeUsage(result.usage),
+    usage,
   });
 }
 
@@ -160,13 +203,24 @@ export async function generateCoachPeriodicAiReviewV2(
     prompt: envelope.prompt,
   });
   if (!result.output) throw new Error("TRADERLINK_COACH_OPENAI_NO_OUTPUT");
+  const usage = completeUsage(result.usage);
+  assertCoachAiReviewOutputSafe({
+    textFields: [
+      result.output.reviewSummary,
+      result.output.whatImproved,
+      result.output.whatHeldYouBack,
+      result.output.focusFollowThrough,
+      result.output.incompleteRecord ?? "",
+    ],
+    nextFocuses: result.output.nextPeriodFocuses,
+  }, usage);
   return Object.freeze({
     output: Object.freeze({
       contractVersion: COACH_PERIODIC_AI_REVIEW_OUTPUT_CONTRACT_VERSION,
       ...result.output,
       nextPeriodFocuses: Object.freeze([...result.output.nextPeriodFocuses]),
     }),
-    usage: completeUsage(result.usage),
+    usage,
   });
 }
 

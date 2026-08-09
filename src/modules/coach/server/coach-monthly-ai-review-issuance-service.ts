@@ -42,6 +42,7 @@ function failureCode(error: unknown): string {
   if (error instanceof Error) {
     if (error.message === "TRADERLINK_COACH_OPENAI_UNAVAILABLE") return error.message;
     if (error.message === "TRADERLINK_COACH_OPENAI_NO_OUTPUT") return error.message;
+    if (error.message.startsWith("TRADERLINK_COACH_OPENAI_UNSAFE_")) return error.message;
   }
   return "TRADERLINK_COACH_PROVIDER_FAILED";
 }
@@ -52,15 +53,28 @@ function failureUsage(error: unknown): CoachAiGenerationUsage | null {
   if (!usage || typeof usage !== "object") return null;
   const candidate = usage as Readonly<{
     inputTokens?: unknown;
+    cachedInputTokens?: unknown;
+    cacheWriteInputTokens?: unknown;
     outputTokens?: unknown;
     totalTokens?: unknown;
   }>;
-  const values = [candidate.inputTokens, candidate.outputTokens, candidate.totalTokens];
+  const values = [
+    candidate.inputTokens,
+    candidate.cachedInputTokens,
+    candidate.cacheWriteInputTokens,
+    candidate.outputTokens,
+    candidate.totalTokens,
+  ];
   if (!values.every((value) =>
     typeof value === "number" && Number.isSafeInteger(value) && value >= 0,
-  )) return null;
+  ) || (candidate.cachedInputTokens as number) +
+      (candidate.cacheWriteInputTokens as number) > (candidate.inputTokens as number)) {
+    return null;
+  }
   return Object.freeze({
     inputTokens: candidate.inputTokens as number,
+    cachedInputTokens: candidate.cachedInputTokens as number,
+    cacheWriteInputTokens: candidate.cacheWriteInputTokens as number,
     outputTokens: candidate.outputTokens as number,
     totalTokens: candidate.totalTokens as number,
   });
@@ -183,7 +197,10 @@ export class CoachMonthlyAiReviewIssuanceService {
         retryAvailable: true,
       });
     }
-    if (generated.usage.inputTokens === null || generated.usage.outputTokens === null ||
+    if (generated.usage.inputTokens === null ||
+        generated.usage.cachedInputTokens === null ||
+        generated.usage.cachedInputTokens === undefined ||
+        generated.usage.outputTokens === null ||
         generated.usage.totalTokens === null) {
       const code = "TRADERLINK_COACH_PROVIDER_USAGE_UNAVAILABLE";
       this.reviews.failAttemptV2(scope, attempt.attemptId, code, null, null, now);
