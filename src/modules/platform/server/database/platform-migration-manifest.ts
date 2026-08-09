@@ -42,6 +42,7 @@ import { platformMoomooConnectionsMigration } from "./migrations/0033_platform_m
 import { platformMoomooReconnectionMigration } from "./migrations/0034_platform_moomoo_reconnection";
 import { platformReportingCurrencyCoverageMigration } from "./migrations/0035_platform_reporting_currency_coverage";
 import { platformWhopAiReviewEntitlementsMigration } from "./migrations/0045_platform_whop_ai_review_entitlements";
+import { platformWhopAiReviewReconciliationMigration } from "./migrations/0048_platform_whop_ai_review_reconciliation";
 import { dailyTradeMoomooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer";
 import { dailyTradeExactTurnoverMigration } from "@/src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover";
 import { dailyTradePathMaterializationMigration } from "@/src/modules/level-analysis/server/database/migrations/0040_daily_trade_path_materialization";
@@ -245,6 +246,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/journal/server/database/migrations/0047_moomoo_execution_import_foundation.ts",
       migration: moomooExecutionImportFoundationMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0048_platform_whop_ai_review_reconciliation.ts",
+      migration: platformWhopAiReviewReconciliationMigration,
     }),
   ]);
 
@@ -482,6 +487,9 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "journal_broker_import_ranges",
       "journal_broker_fill_receipts",
       "journal_broker_import_coverage",
+    ]),
+    "0048_platform_whop_ai_review_reconciliation": Object.freeze([
+      "platform_whop_reconciliation_runs",
     ]),
   });
 
