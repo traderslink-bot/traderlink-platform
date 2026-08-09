@@ -236,6 +236,27 @@ export type ManualExecutionBatchInput = Readonly<{
   now?: Date;
 }>;
 
+export type MoomooApiFillInput = Readonly<{
+  providerExecutionIdentity: string;
+  normalizedSymbol: string;
+  tradeCurrency: string;
+  side: "buy" | "sell";
+  quantityDecimal: string;
+  priceDecimal: string;
+  createdMicroseconds: number;
+  updatedMicroseconds: number;
+}>;
+
+export type MoomooApiFillBatchInput = Readonly<{
+  accountId: string;
+  sourceIdentityId: string;
+  pageIdentitySha256: string;
+  evidenceObjectKey: string;
+  sourceDisplayLabel: string;
+  fills: readonly MoomooApiFillInput[];
+  now?: Date;
+}>;
+
 type PlannedExecution = Readonly<{
   execution: JournalAdapterExecution;
   activeStrongAliasSha256: string | null;
@@ -1043,6 +1064,169 @@ export class JournalImportService {
       statementPeriodStartDate: null, statementPeriodEndDate: null, sourceTimezone: null,
       rows, issues, coverageIntervals, positionFacts: [], plannedExecutions: planned,
       sourceIdentityForRows: `${scope.workspaceId}\u001f${input.accountId}\u001f${input.idempotencyKey}`,
+      now: input.now,
+    });
+  }
+
+  commitMoomooApiFills(
+    scope: WorkspaceAccessScope,
+    input: MoomooApiFillBatchInput,
+  ): JournalImportCommitResult {
+    safeLabel(input.sourceDisplayLabel);
+    if (
+      !/^[0-9a-f]{64}$/u.test(input.pageIdentitySha256) ||
+      !/^[A-Za-z0-9_-]{1,255}$/u.test(input.evidenceObjectKey) ||
+      input.fills.length < 1 ||
+      input.fills.length > 50
+    ) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+        field: "moomooFillBatch",
+      });
+    }
+    const account = this.accounts.requireAccountRecord(scope, input.accountId);
+    this.imports.requireSourceIdentity(
+      scope.workspaceId,
+      input.accountId,
+      input.sourceIdentityId,
+    );
+    const prior = this.imports.findByFileDigest(
+      scope.workspaceId,
+      "moomoo",
+      input.pageIdentitySha256,
+    );
+    if (prior) return this.alreadyImportedResult(scope, prior);
+
+    const contentCounts = new Map<string, number>();
+    const adapterExecutions: JournalAdapterExecution[] = input.fills.map((fill, index) => {
+      assertJournalCurrency(fill.tradeCurrency, "tradeCurrency");
+      assertCanonicalJournalDecimal(fill.quantityDecimal, "quantityDecimal", { positive: true });
+      assertCanonicalJournalDecimal(fill.priceDecimal, "priceDecimal", { positive: true });
+      if (
+        fill.providerExecutionIdentity.length < 1 ||
+        fill.providerExecutionIdentity.length > 512 ||
+        !Number.isSafeInteger(fill.createdMicroseconds) ||
+        !Number.isSafeInteger(fill.updatedMicroseconds) ||
+        fill.createdMicroseconds <= 0 ||
+        fill.updatedMicroseconds < fill.createdMicroseconds
+      ) {
+        platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+          field: "moomooFill",
+        });
+      }
+      const normalizedSymbol = normalizeJournalStockSymbol(fill.normalizedSymbol);
+      const executedAtUtc = new Date(
+        Math.floor(fill.createdMicroseconds / 1_000),
+      ).toISOString();
+      const sourceTimestampText = executedAtUtc.slice(0, 19).replace("T", " ");
+      const normalizedContentIdentity = sha256(JSON.stringify([
+        "execution-content-v1", "stock", normalizedSymbol, fill.tradeCurrency,
+        executedAtUtc, fill.side, fill.quantityDecimal, fill.priceDecimal,
+      ]));
+      const occurrence = (contentCounts.get(normalizedContentIdentity) ?? 0) + 1;
+      contentCounts.set(normalizedContentIdentity, occurrence);
+      return Object.freeze({
+        recordOrdinal: index + 1,
+        normalizedSymbol,
+        assetClass: "stock" as const,
+        tradeCurrency: fill.tradeCurrency,
+        sourceTimestampText,
+        sourceTimezone: "UTC",
+        timeParserVersion: "moomoo_microseconds_v1",
+        executedAtUtc,
+        sourceOrderKey: `${executedAtUtc}|${String(fill.createdMicroseconds).padStart(16, "0")}|${sha256(fill.providerExecutionIdentity)}`,
+        side: fill.side,
+        quantityDecimal: fill.quantityDecimal,
+        priceDecimal: fill.priceDecimal,
+        feesDecimal: null,
+        feeCurrency: null,
+        feeSignConvention: "not_reported" as const,
+        factCompleteness: "complete" as const,
+        providerExecutionIdentity: fill.providerExecutionIdentity,
+        normalizedContentIdentity,
+        contentOccurrenceOrdinal: occurrence,
+      });
+    });
+    const rows: JournalAdapterSourceRow[] = adapterExecutions.map((execution) => {
+      const fill = input.fills[execution.recordOrdinal - 1]!;
+      const fields = Object.freeze([
+        "moomoo_fill_v1",
+        sha256(fill.providerExecutionIdentity),
+        normalizeJournalStockSymbol(fill.normalizedSymbol),
+        fill.side,
+        fill.quantityDecimal,
+        fill.priceDecimal,
+        String(fill.createdMicroseconds),
+        String(fill.updatedMicroseconds),
+      ]);
+      const rawFieldsJson = JSON.stringify(fields);
+      const fingerprint = sha256(rawFieldsJson);
+      return Object.freeze({
+        recordOrdinal: execution.recordOrdinal,
+        fields,
+        rawRecord: rawFieldsJson,
+        rawRecordSha256: fingerprint,
+        rawFieldsJson,
+        contentFingerprintSha256: fingerprint,
+        occurrenceOrdinal: 1,
+        sectionName: "Moomoo execution fills",
+        recordType: "Data",
+        assetCategory: "Stocks",
+        classification: "mapped_execution" as const,
+      });
+    });
+    const coverage = new Map<string, Readonly<{
+      localDate: string;
+      sourceTimezone: string;
+    }>>();
+    for (const execution of adapterExecutions) {
+      const localDate = localDateAtUtc(execution.executedAtUtc, account.tradingTimezone);
+      coverage.set(`${localDate}\u001f${account.tradingTimezone}`, Object.freeze({
+        localDate,
+        sourceTimezone: account.tradingTimezone,
+      }));
+    }
+    const planned = this.planExecutions(
+      scope.workspaceId,
+      input.accountId,
+      adapterExecutions,
+      "broker_statement",
+    );
+    return this.commitPreparedImport(scope, {
+      accountId: input.accountId,
+      sourceIdentityId: input.sourceIdentityId,
+      sourceKind: "broker_statement",
+      sourceSystem: "moomoo",
+      sourceFileSha256: input.pageIdentitySha256,
+      sourceFileSizeBytes: Buffer.byteLength(JSON.stringify(rows), "utf8"),
+      sourceMimeType: "application/json",
+      sourceEncoding: "utf-8",
+      sourceDisplayLabel: input.sourceDisplayLabel,
+      evidenceObjectKey: input.evidenceObjectKey,
+      manualIdempotencyKey: null,
+      adapterId: "moomoo_api_fill",
+      adapterVersion: "moomoo_api_fill_v1",
+      parserVersion: "moomoo_microseconds_v1",
+      mappingVersion: "moomoo_api_fill_mapping_v1",
+      mappingContractJson: JSON.stringify({
+        contractVersion: "moomoo_api_fill_mapping_v1",
+        evidence: "encrypted_provider_fill_receipt",
+      }),
+      statementPeriodStartDate: null,
+      statementPeriodEndDate: null,
+      sourceTimezone: "UTC",
+      rows,
+      issues: this.overlapIssues(planned),
+      coverageIntervals: [...coverage.values()].sort((left, right) =>
+        left.localDate.localeCompare(right.localDate)).map((item) => Object.freeze({
+          assetClass: "stock" as const,
+          coverageKind: "point_only" as const,
+          localStartDate: item.localDate,
+          localEndDate: item.localDate,
+          sourceTimezone: item.sourceTimezone,
+        })),
+      positionFacts: [],
+      plannedExecutions: planned,
+      sourceIdentityForRows: `${input.sourceIdentityId}\u001f${input.pageIdentitySha256}`,
       now: input.now,
     });
   }

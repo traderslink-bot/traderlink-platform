@@ -55,4 +55,24 @@ export class MoomooConnectionAccessService {
     });
     return refreshed.accessToken;
   }
+
+  async executionAccessToken(scope: WorkspaceAccessScope): Promise<string> {
+    const connection = this.repository.find(scope);
+    if (
+      !connection || connection.state !== "active" ||
+      !connection.authorizedScopes.includes("trade:read")
+    ) {
+      platformFailure("TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED", {
+        stage: "trade_scope",
+      });
+    }
+    const accessToken = await this.accessToken(scope);
+    const refreshed = this.repository.find(scope);
+    if (!refreshed?.authorizedScopes.includes("trade:read")) {
+      platformFailure("TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED", {
+        stage: "trade_scope_after_refresh",
+      });
+    }
+    return accessToken;
+  }
 }

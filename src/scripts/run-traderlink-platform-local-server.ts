@@ -81,6 +81,36 @@ function startDailyTradeAnalyzerWorker(input: Readonly<{
   setInterval(() => void processOne(), 60_000);
 }
 
+function startMoomooExecutionImportWorker(input: Readonly<{
+  hostname: string;
+  port: number;
+}>): void {
+  let processing = false;
+  const processOne = async (): Promise<void> => {
+    if (processing) return;
+    processing = true;
+    try {
+      const response = await fetch(
+        `http://${input.hostname}:${input.port}/api/platform/moomoo-execution-import/run`,
+        { method: "POST" },
+      );
+      if (!response.ok) {
+        console.error("TraderLink Moomoo execution import worker failed.", {
+          status: response.status,
+        });
+      }
+    } catch (error) {
+      console.error("TraderLink Moomoo execution import worker failed.", {
+        errorName: error instanceof Error ? error.name : "UnknownError",
+      });
+    } finally {
+      processing = false;
+    }
+  };
+  void processOne();
+  setInterval(() => void processOne(), 15_000);
+}
+
 async function main(): Promise<void> {
   if (!process.argv.includes("--dev")) {
     throw new Error("platform_local_development_mode_required");
@@ -129,6 +159,7 @@ async function main(): Promise<void> {
       port: listenerPort,
     });
     startDailyTradeAnalyzerWorker({ hostname: listenerHost, port: listenerPort });
+    startMoomooExecutionImportWorker({ hostname: listenerHost, port: listenerPort });
   });
 }
 
