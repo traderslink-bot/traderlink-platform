@@ -319,6 +319,20 @@
   adopted now. Removed the chart's typical-price VWAP fallback. Exact Moomoo
   turnover produces VWAP; otherwise the chart hides the line and exposes a
   plain-language unavailable reason.
+- [x] Completed the exact VWAP/timeframe audit on 2026-08-09 across all five
+  finalized Moomoo sessions and all 44 saved execution snapshots for DSY, MB,
+  NAMI, WWR and YJ. Saved one-minute VWAP and EMA 9 values reproduced from the
+  underlying Moomoo tape within `7.3e-15` and `5.8e-15` respectively. The final
+  audit set had complete usable Moomoo turnover coverage for every candle. The
+  exact turnover/volume Session VWAP was identical across `1m`, `5m`, `15m`
+  and `1h` for every session (maximum difference `0`). In contrast, a
+  typical-price chart approximation changed by as much as `$1.294329` at the
+  session final (`20.67%`) and `$1.598232` at an execution (`23.59%`) when the
+  aggregation interval changed. The audit therefore retains exact
+  4:00 AM-8:00 PM Eastern Session VWAP as TraderLink's stable analysis
+  benchmark and keeps EMA 9 timeframe-sensitive. Moomoo's OAuth History K-Line
+  response does not return its rendered chart VWAP, so the product does not
+  claim numeric equality with Moomoo's on-screen indicator.
 
 ## Boundary
 

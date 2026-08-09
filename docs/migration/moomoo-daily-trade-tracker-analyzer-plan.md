@@ -52,7 +52,11 @@ slice.
 9. Persist Moomoo's exact per-candle traded amount (`turnover`) and calculate
    VWAP from cumulative turnover divided by cumulative volume. The analyzer
    must not silently substitute a typical-price approximation when exact
-   turnover is unavailable; VWAP is then explicitly unavailable.
+   turnover is unavailable; VWAP is then explicitly unavailable. This is the
+   TraderLink **Session VWAP** for the supported 4:00 AM-8:00 PM Eastern
+   extended session. It is not presented as a reproduction of Moomoo's
+   timeframe-selected chart indicator, whose rendered value is not returned by
+   the OAuth History K-Line response.
 10. After the immediate and exit-plus-60-minute lifecycle, make exactly one
     off-page post-session reconciliation against Moomoo's finalized History
     K-Line data. Reuse the shared cache so the same ticker/date is fetched only
@@ -400,7 +404,11 @@ Higher intervals are derived entirely from the saved one-minute candle revision:
 - buckets align to the exchange-hour clock and retain the first open, maximum
   high, minimum low, final close, summed volume and summed exact turnover;
 - VWAP remains cumulative turnover divided by cumulative volume at the selected
-  bucket closes, while EMA 9 is recalculated for the displayed interval;
+  bucket closes, while EMA 9 is recalculated for the displayed interval. The
+  same completed session therefore has one final Session VWAP on every view;
+  intermediate plotted points occur only when that view's candle closes and
+  can differ from a one-minute point carrying the same displayed bucket-start
+  time;
 - execution annotations retain the exact execution price and timestamp in their
   details and attach to the containing aggregate candle;
 - `1m`, `5m` and `15m` independently detect and save candle structures from
