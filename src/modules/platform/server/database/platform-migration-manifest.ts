@@ -40,6 +40,7 @@ import { platformReportingCurrencyCoverageMigration } from "./migrations/0035_pl
 import { dailyTradeMoomooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer";
 import { dailyTradeExactTurnoverMigration } from "@/src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover";
 import { dailyTradePathMaterializationMigration } from "@/src/modules/level-analysis/server/database/migrations/0040_daily_trade_path_materialization";
+import { dailyTradePatternContextV2Migration } from "@/src/modules/level-analysis/server/database/migrations/0042_daily_trade_pattern_context_v2";
 import {
   type PlatformMigration,
   validatePlatformMigrationManifest,
@@ -215,6 +216,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/coach/server/database/migrations/0041_coach_ai_review_reservation_scope_trigger.ts",
       migration: coachAiReviewReservationScopeTriggerMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/level-analysis/server/database/migrations/0042_daily_trade_pattern_context_v2.ts",
+      migration: dailyTradePatternContextV2Migration,
     }),
   ]);
 
@@ -433,6 +438,7 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "journal_round_trip_daily_trade_analysis_profit_opportunities",
     ]),
     "0041_coach_ai_review_reservation_scope_trigger": Object.freeze([]),
+    "0042_daily_trade_pattern_context_v2": Object.freeze([]),
   });
 
 export function expectedPlatformTableNamesForPrefix(
