@@ -27,6 +27,9 @@ import { coachAiReviewProviderControlsMigration } from "@/src/modules/coach/serv
 import { coachAiReviewPeriodsV2Migration } from "@/src/modules/coach/server/database/migrations/0037_coach_ai_review_periods_v2";
 import { coachUsEquitiesReviewCalendarsMigration } from "@/src/modules/coach/server/database/migrations/0039_coach_us_equities_review_calendars";
 import { coachAiReviewReservationScopeTriggerMigration } from "@/src/modules/coach/server/database/migrations/0041_coach_ai_review_reservation_scope_trigger";
+import { coachAiReviewTimingModesMigration } from "@/src/modules/coach/server/database/migrations/0043_coach_ai_review_timing_modes";
+import { coachAiReviewSchedulerHealthV2Migration } from "@/src/modules/coach/server/database/migrations/0044_coach_ai_review_scheduler_health_v2";
+import { coachAiReviewCachedInputPricingMigration } from "@/src/modules/coach/server/database/migrations/0046_coach_ai_review_cached_input_pricing";
 
 import { platformIdentityMigration } from "./migrations/0001_platform_identity";
 import { platformAuthenticationIdentitiesMigration } from "./migrations/0012_platform_authentication_identities";
@@ -37,6 +40,7 @@ import { platformCurrencyPreferencesMigration } from "./migrations/0024_platform
 import { platformMoomooConnectionsMigration } from "./migrations/0033_platform_moomoo_connections";
 import { platformMoomooReconnectionMigration } from "./migrations/0034_platform_moomoo_reconnection";
 import { platformReportingCurrencyCoverageMigration } from "./migrations/0035_platform_reporting_currency_coverage";
+import { platformWhopAiReviewEntitlementsMigration } from "./migrations/0045_platform_whop_ai_review_entitlements";
 import { dailyTradeMoomooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer";
 import { dailyTradeExactTurnoverMigration } from "@/src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover";
 import { dailyTradePathMaterializationMigration } from "@/src/modules/level-analysis/server/database/migrations/0040_daily_trade_path_materialization";
@@ -220,6 +224,22 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/level-analysis/server/database/migrations/0042_daily_trade_pattern_context_v2.ts",
       migration: dailyTradePatternContextV2Migration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/coach/server/database/migrations/0043_coach_ai_review_timing_modes.ts",
+      migration: coachAiReviewTimingModesMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/coach/server/database/migrations/0044_coach_ai_review_scheduler_health_v2.ts",
+      migration: coachAiReviewSchedulerHealthV2Migration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0045_platform_whop_ai_review_entitlements.ts",
+      migration: platformWhopAiReviewEntitlementsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/coach/server/database/migrations/0046_coach_ai_review_cached_input_pricing.ts",
+      migration: coachAiReviewCachedInputPricingMigration,
     }),
   ]);
 
@@ -439,6 +459,16 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     ]),
     "0041_coach_ai_review_reservation_scope_trigger": Object.freeze([]),
     "0042_daily_trade_pattern_context_v2": Object.freeze([]),
+    "0043_coach_ai_review_timing_modes": Object.freeze([]),
+    "0044_coach_ai_review_scheduler_health_v2": Object.freeze([
+      "coach_ai_review_scheduler_runs_v2",
+    ]),
+    "0045_platform_whop_ai_review_entitlements": Object.freeze([
+      "platform_whop_user_links",
+      "platform_whop_membership_projections",
+      "platform_whop_webhook_receipts",
+    ]),
+    "0046_coach_ai_review_cached_input_pricing": Object.freeze([]),
   });
 
 export function expectedPlatformTableNamesForPrefix(
