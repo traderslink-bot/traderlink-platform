@@ -1,8 +1,12 @@
+import { AI_REVIEWS_HELP_GUIDES } from "./ai-reviews-guides";
 import { DAILY_TRADE_TRACKER_HELP_GUIDES } from "./daily-trade-tracker-guides";
+import type { HelpGuide } from "./help-guide-types";
+import { PAID_PLAN_HELP_GUIDES } from "./paid-plan-guides";
 
 export type HelpNavigationItem = Readonly<{
   depth?: 0 | 1;
   href: string;
+  icon: "home" | "trade_tracker" | "ai_reviews" | "paid_plan";
   label: string;
   summary: string;
 }>;
@@ -16,24 +20,75 @@ export type HelpSearchRecord = Readonly<{
   title: string;
 }>;
 
+function guideNavigationItems(
+  baseHref: string,
+  guides: readonly HelpGuide[],
+  icon: HelpNavigationItem["icon"],
+): readonly HelpNavigationItem[] {
+  return guides.map((guide) => Object.freeze({
+    depth: 1 as const,
+    href: `${baseHref}/${guide.slug}`,
+    icon,
+    label: guide.title,
+    summary: guide.description,
+  }));
+}
+
 export const HELP_NAVIGATION_ITEMS: readonly HelpNavigationItem[] = Object.freeze([
   Object.freeze({
     href: "/help",
+    icon: "home",
     label: "Help Center",
     summary: "Search TraderLink help and browse available guides.",
   }),
   Object.freeze({
     href: "/help/daily-trade-tracker",
+    icon: "trade_tracker",
     label: "Daily Trade Tracker",
     summary: "Record trades, review executions and finish your trading day.",
   }),
-  ...DAILY_TRADE_TRACKER_HELP_GUIDES.map((guide) => Object.freeze({
-    depth: 1 as const,
-    href: `/help/daily-trade-tracker/${guide.slug}`,
-    label: guide.title,
-    summary: guide.description,
-  })),
+  ...guideNavigationItems("/help/daily-trade-tracker", DAILY_TRADE_TRACKER_HELP_GUIDES, "trade_tracker"),
+  Object.freeze({
+    href: "/help/ai-reviews",
+    icon: "ai_reviews",
+    label: "AI Reviews",
+    summary: "Schedule, prepare, read and troubleshoot your AI Reviews.",
+  }),
+  ...guideNavigationItems("/help/ai-reviews", AI_REVIEWS_HELP_GUIDES, "ai_reviews"),
+  Object.freeze({
+    href: "/help/paid-plan",
+    icon: "paid_plan",
+    label: "Paid plan and billing",
+    summary: "Connect Whop, manage billing and understand paid access.",
+  }),
+  ...guideNavigationItems("/help/paid-plan", PAID_PLAN_HELP_GUIDES, "paid_plan"),
 ]);
+
+function guideSearchRecords(
+  collectionId: string,
+  collectionTitle: string,
+  baseHref: string,
+  guides: readonly HelpGuide[],
+): readonly HelpSearchRecord[] {
+  return guides.flatMap((guide) => [
+    Object.freeze({
+      href: `${baseHref}/${guide.slug}`,
+      id: `${collectionId}-${guide.slug}`,
+      keywords: Object.freeze(guide.sections.flatMap((section) => section.keywords)),
+      section: collectionTitle,
+      summary: guide.description,
+      title: guide.title,
+    }),
+    ...guide.sections.map((section) => Object.freeze({
+      href: `${baseHref}/${guide.slug}#${section.id}`,
+      id: `${collectionId}-${guide.slug}-${section.id}`,
+      keywords: section.keywords,
+      section: guide.title,
+      summary: section.summary,
+      title: section.title,
+    })),
+  ]);
+}
 
 export const HELP_SEARCH_RECORDS: readonly HelpSearchRecord[] = Object.freeze([
   Object.freeze({
@@ -44,32 +99,38 @@ export const HELP_SEARCH_RECORDS: readonly HelpSearchRecord[] = Object.freeze([
     summary: "See how executions, trades, charts, rules and notes fit into one daily review.",
     title: "Daily Trade Tracker overview",
   }),
-  ...DAILY_TRADE_TRACKER_HELP_GUIDES.flatMap((guide) => [
-    Object.freeze({
-      href: `/help/daily-trade-tracker/${guide.slug}`,
-      id: `daily-trade-tracker-${guide.slug}`,
-      keywords: Object.freeze(guide.sections.flatMap((section) => section.keywords)),
-      section: "Daily Trade Tracker",
-      summary: guide.description,
-      title: guide.title,
-    }),
-    ...guide.sections.map((section) => Object.freeze({
-      href: `/help/daily-trade-tracker/${guide.slug}#${section.id}`,
-      id: `daily-trade-tracker-${guide.slug}-${section.id}`,
-      keywords: section.keywords,
-      section: guide.title,
-      summary: section.summary,
-      title: section.title,
-    })),
-  ]),
+  ...guideSearchRecords(
+    "daily-trade-tracker",
+    "Daily Trade Tracker",
+    "/help/daily-trade-tracker",
+    DAILY_TRADE_TRACKER_HELP_GUIDES,
+  ),
+  Object.freeze({
+    href: "/help/ai-reviews",
+    id: "ai-reviews-overview",
+    keywords: Object.freeze(["AI feedback", "weekly review", "monthly review", "trade review"]),
+    section: "AI Reviews",
+    summary: "Choose a schedule, understand review evidence and use saved feedback.",
+    title: "AI Reviews overview",
+  }),
+  ...guideSearchRecords("ai-reviews", "AI Reviews", "/help/ai-reviews", AI_REVIEWS_HELP_GUIDES),
+  Object.freeze({
+    href: "/help/paid-plan",
+    id: "paid-plan-overview",
+    keywords: Object.freeze(["subscription", "Whop", "billing", "paid access", "membership"]),
+    section: "Paid plan and billing",
+    summary: "Connect Whop, manage the wider TraderLink paid plan and fix access problems.",
+    title: "Paid plan and billing overview",
+  }),
+  ...guideSearchRecords("paid-plan", "Paid plan and billing", "/help/paid-plan", PAID_PLAN_HELP_GUIDES),
 ]);
 
 export const HELP_POPULAR_RECORD_IDS: readonly string[] = Object.freeze([
   "daily-trade-tracker-add-edit-trades-enter-executions",
-  "daily-trade-tracker-review-trades-view-analysis",
-  "daily-trade-tracker-charts-analysis-candle-patterns",
-  "daily-trade-tracker-rules-notes-day-review-mark-reviewed",
-  "daily-trade-tracker-data-timing-limitations-same-day-timing",
+  "ai-reviews-choose-schedule-frequency-options",
+  "ai-reviews-what-ai-uses-saved-reflections",
+  "ai-reviews-weekly-two-week-cross-month-week",
+  "paid-plan-access-troubleshooting-active-in-whop-not-traderlink",
 ]);
 
 export function helpPopularRecords(): readonly HelpSearchRecord[] {

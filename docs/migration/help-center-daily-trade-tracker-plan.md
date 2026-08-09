@@ -9,6 +9,7 @@ Related product records:
 - [Day Trade Tracker And Swing Trade Tracker Plan](./day-and-swing-trade-tracker-plan.md)
 - [Moomoo Daily Trade Tracker Analyzer Plan](./moomoo-daily-trade-tracker-analyzer-plan.md)
 - [Moomoo Daily Trade Tracker Analyzer Progress](./moomoo-daily-trade-tracker-analyzer-progress.md)
+- [AI Reviews And Paid Plan Help Guides Plan](./help-center-ai-reviews-and-paid-plan-plan.md)
 
 ## 1. Outcome
 
@@ -801,7 +802,8 @@ The first Help Center release is complete only when:
 ## 16. Deferred scope
 
 - Help collections for Swing Trade Tracker, Imports, Data Decisions, Rules,
-  Analytics, AI Chat, AI Reviews, Account and Administration.
+  Analytics, AI Chat, remaining Account features and Administration. AI Reviews
+  and Paid plan and billing are now governed by the linked Help plan.
 - Personalized recommendations based on the user's account or trades.
 - AI-generated Help answers.
 - External documentation hosting or a content-management system.

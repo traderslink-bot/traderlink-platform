@@ -5,7 +5,9 @@ import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded";
+import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
 import TodayRoundedIcon from "@mui/icons-material/TodayRounded";
+import WorkspacePremiumOutlinedIcon from "@mui/icons-material/WorkspacePremiumOutlined";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
@@ -82,7 +84,13 @@ function HelpNavigation({
           const expanded = expandable && (
             collectionExpansionOverrides.get(item.href) ?? currentCollectionHref === item.href
           );
-          const Icon = item.href === "/help" ? HomeRoundedIcon : TodayRoundedIcon;
+          const Icon = item.icon === "home"
+            ? HomeRoundedIcon
+            : item.icon === "ai_reviews"
+              ? SmartToyOutlinedIcon
+              : item.icon === "paid_plan"
+                ? WorkspacePremiumOutlinedIcon
+                : TodayRoundedIcon;
           return (
             <Box key={item.href} sx={{ mb: 0.5 }}>
               <Box sx={{ alignItems: "stretch", display: "flex" }}>

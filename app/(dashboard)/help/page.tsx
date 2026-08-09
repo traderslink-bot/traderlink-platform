@@ -1,6 +1,8 @@
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
+import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
 import TodayRoundedIcon from "@mui/icons-material/TodayRounded";
+import WorkspacePremiumOutlinedIcon from "@mui/icons-material/WorkspacePremiumOutlined";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
@@ -20,9 +22,30 @@ import {
 import { HelpSearch } from "./help-search";
 
 export const metadata: Metadata = {
-  description: "Search TraderLink help and learn how to use the Daily Trade Tracker.",
+  description: "Search TraderLink help for the Trade Tracker, AI Reviews and paid plan.",
   title: "Help Center | TraderLink Platform",
 };
+
+const HELP_COLLECTIONS = Object.freeze([
+  Object.freeze({
+    description: "Learn how executions become trades, review charts and analysis, use rules and notes, and finish your trading day.",
+    href: "/help/daily-trade-tracker",
+    Icon: TodayRoundedIcon,
+    title: "Daily Trade Tracker",
+  }),
+  Object.freeze({
+    description: "Choose a review schedule, understand what AI can use, and turn saved weekly and monthly feedback into a practical next focus.",
+    href: "/help/ai-reviews",
+    Icon: SmartToyOutlinedIcon,
+    title: "AI Reviews",
+  }),
+  Object.freeze({
+    description: "Learn how the wider TraderLink paid plan works, connect Whop, manage billing and fix access problems.",
+    href: "/help/paid-plan",
+    Icon: WorkspacePremiumOutlinedIcon,
+    title: "Paid plan and billing",
+  }),
+]);
 
 export default function HelpCenterPage() {
   const popularRecords = helpPopularRecords();
@@ -55,34 +78,41 @@ export default function HelpCenterPage() {
       </Box>
 
       <Box sx={{ display: "grid", gap: 2.5, gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1.15fr) minmax(320px, 0.85fr)" } }}>
-        <Card variant="outlined">
-          <Link href="/help/daily-trade-tracker" style={{ color: "inherit", textDecoration: "none" }}>
-            <CardActionArea component="div" sx={{ height: "100%" }}>
-              <CardContent sx={{ p: { xs: 2.25, sm: 2.75 }, "&:last-child": { pb: { xs: 2.25, sm: 2.75 } } }}>
-                <Stack direction="row" spacing={1.5} sx={{ alignItems: "flex-start" }}>
-                  <Box sx={{ alignItems: "center", bgcolor: "rgba(1, 30, 86, 0.08)", borderRadius: 1.5, color: "primary.main", display: "flex", flexShrink: 0, height: 44, justifyContent: "center", width: 44 }}>
-                    <TodayRoundedIcon />
-                  </Box>
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">
-                      Available guide
-                    </Typography>
-                    <Typography component="h2" sx={{ mt: 0.35 }} variant="h2">
-                      Daily Trade Tracker
-                    </Typography>
-                    <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">
-                      Learn how executions become trades, review charts and analysis, use rules and notes, and finish your trading day.
-                    </Typography>
-                    <Stack direction="row" spacing={0.75} sx={{ alignItems: "center", color: "primary.main", mt: 2 }}>
-                      <Typography sx={{ fontWeight: 800 }} variant="body2">Open guide</Typography>
-                      <ArrowForwardRoundedIcon fontSize="small" />
-                    </Stack>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </CardActionArea>
-          </Link>
-        </Card>
+        <Stack spacing={1.5}>
+          {HELP_COLLECTIONS.map((collection) => {
+            const Icon = collection.Icon;
+            return (
+              <Card key={collection.href} variant="outlined">
+                <Link href={collection.href} style={{ color: "inherit", textDecoration: "none" }}>
+                  <CardActionArea component="div" sx={{ height: "100%" }}>
+                    <CardContent sx={{ p: { xs: 2.25, sm: 2.75 }, "&:last-child": { pb: { xs: 2.25, sm: 2.75 } } }}>
+                      <Stack direction="row" spacing={1.5} sx={{ alignItems: "flex-start" }}>
+                        <Box sx={{ alignItems: "center", bgcolor: "rgba(1, 30, 86, 0.08)", borderRadius: 1.5, color: "primary.main", display: "flex", flexShrink: 0, height: 44, justifyContent: "center", width: 44 }}>
+                          <Icon />
+                        </Box>
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">
+                            Available guide
+                          </Typography>
+                          <Typography component="h2" sx={{ mt: 0.35 }} variant="h2">
+                            {collection.title}
+                          </Typography>
+                          <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">
+                            {collection.description}
+                          </Typography>
+                          <Stack direction="row" spacing={0.75} sx={{ alignItems: "center", color: "primary.main", mt: 2 }}>
+                            <Typography sx={{ fontWeight: 800 }} variant="body2">Open guide</Typography>
+                            <ArrowForwardRoundedIcon fontSize="small" />
+                          </Stack>
+                        </Box>
+                      </Stack>
+                    </CardContent>
+                  </CardActionArea>
+                </Link>
+              </Card>
+            );
+          })}
+        </Stack>
 
         <DashboardPanel title="Popular help">
           <Stack divider={<Divider flexItem />}>

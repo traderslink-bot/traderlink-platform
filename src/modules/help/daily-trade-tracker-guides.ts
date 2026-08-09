@@ -1,28 +1,11 @@
-export type HelpArticleBlock =
-  | Readonly<{ kind: "paragraph"; text: string }>
-  | Readonly<{ kind: "bullets"; items: readonly string[] }>
-  | Readonly<{ kind: "steps"; items: readonly Readonly<{ title: string; text: string }>[] }>
-  | Readonly<{ kind: "callout"; title: string; text: string; tone?: "info" | "warning" }>
-  | Readonly<{
-      kind: "table";
-      columns: readonly string[];
-      rows: readonly (readonly string[])[];
-    }>;
+import type {
+  HelpArticleBlock,
+  HelpArticleSection,
+  HelpGuide,
+} from "./help-guide-types";
 
-export type HelpArticleSection = Readonly<{
-  blocks: readonly HelpArticleBlock[];
-  id: string;
-  keywords: readonly string[];
-  summary: string;
-  title: string;
-}>;
-
-export type DailyTradeTrackerHelpGuide = Readonly<{
-  description: string;
-  sections: readonly HelpArticleSection[];
-  slug: string;
-  title: string;
-}>;
+export type { HelpArticleBlock, HelpArticleSection };
+export type DailyTradeTrackerHelpGuide = HelpGuide;
 
 export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuide[] = Object.freeze([
   Object.freeze({
