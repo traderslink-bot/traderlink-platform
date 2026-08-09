@@ -10,6 +10,7 @@ export type DashboardNavigationIconKey =
   | "marketCharts"
   | "data"
   | "execution"
+  | "help"
   | "import"
   | "lab"
   | "manualEntry"
@@ -134,6 +135,11 @@ export const DASHBOARD_STANDALONE_ITEMS: readonly DashboardNavigationItem[] =
       icon: "marketCharts" as const,
     }),
     Object.freeze({
+      href: "/help",
+      label: "Help Center",
+      icon: "help" as const,
+    }),
+    Object.freeze({
       href: "/account",
       label: "Account",
       icon: "account" as const,
@@ -174,6 +180,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/analytics/execution": "Execution",
     "/analytics/trade-explorer": "Trade Explorer",
     "/charts": "Market Charts",
+    "/help": "Help Center",
     "/ai-reviews": "AI Reviews",
     "/ai-chat": "AI Chat",
     "/rules": "Trading Rules",

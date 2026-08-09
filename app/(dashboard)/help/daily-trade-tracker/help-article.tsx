@@ -1,0 +1,216 @@
+import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
+import Box from "@mui/material/Box";
+import Breadcrumbs from "@mui/material/Breadcrumbs";
+import Button from "@mui/material/Button";
+import Card from "@mui/material/Card";
+import CardActionArea from "@mui/material/CardActionArea";
+import CardContent from "@mui/material/CardContent";
+import Chip from "@mui/material/Chip";
+import Divider from "@mui/material/Divider";
+import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
+import Link from "next/link";
+
+import { DashboardPage } from "../../../dashboard-template";
+import {
+  DAILY_TRADE_TRACKER_HELP_GUIDES,
+  type DailyTradeTrackerHelpGuide,
+  type HelpArticleBlock,
+} from "@/src/modules/help/daily-trade-tracker-guides";
+
+function ArticleBlock({ block }: { block: HelpArticleBlock }) {
+  if (block.kind === "paragraph") {
+    return <Typography color="text.secondary" variant="body1">{block.text}</Typography>;
+  }
+
+  if (block.kind === "bullets") {
+    return (
+      <Box component="ul" sx={{ color: "text.secondary", m: 0, pl: 2.75 }}>
+        {block.items.map((item) => (
+          <Typography component="li" key={item} sx={{ mb: 0.8, pl: 0.4 }} variant="body1">
+            {item}
+          </Typography>
+        ))}
+      </Box>
+    );
+  }
+
+  if (block.kind === "steps") {
+    return (
+      <Stack spacing={1.25}>
+        {block.items.map((item) => (
+          <Box key={item.title} sx={{ borderLeft: 3, borderColor: "primary.main", pl: 1.5, py: 0.25 }}>
+            <Typography sx={{ fontWeight: 850 }} variant="body1">{item.title}</Typography>
+            <Typography color="text.secondary" sx={{ mt: 0.25 }} variant="body2">{item.text}</Typography>
+          </Box>
+        ))}
+      </Stack>
+    );
+  }
+
+  if (block.kind === "callout") {
+    const warning = block.tone === "warning";
+    return (
+      <Box
+        sx={{
+          bgcolor: warning ? "rgba(237, 108, 2, 0.07)" : "rgba(25, 118, 210, 0.06)",
+          border: 1,
+          borderColor: warning ? "rgba(237, 108, 2, 0.28)" : "rgba(25, 118, 210, 0.22)",
+          borderRadius: 1.5,
+          p: 1.75,
+        }}
+      >
+        <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start" }}>
+          {warning ? <WarningAmberRoundedIcon color="warning" fontSize="small" /> : <InfoOutlinedIcon color="primary" fontSize="small" />}
+          <Box>
+            <Typography sx={{ fontWeight: 850 }} variant="body2">{block.title}</Typography>
+            <Typography color="text.secondary" sx={{ mt: 0.35 }} variant="body2">{block.text}</Typography>
+          </Box>
+        </Stack>
+      </Box>
+    );
+  }
+
+  return (
+    <Paper variant="outlined">
+      <TableContainer>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              {block.columns.map((column) => (
+                <TableCell key={column} sx={{ bgcolor: "rgba(1, 30, 86, 0.045)", fontWeight: 850 }}>
+                  {column}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {block.rows.map((row, rowIndex) => (
+              <TableRow key={`${rowIndex}-${row[0]}`}>
+                {row.map((cell, cellIndex) => (
+                  <TableCell key={`${cellIndex}-${cell}`} sx={{ color: cellIndex === 0 ? "text.primary" : "text.secondary", fontWeight: cellIndex === 0 ? 750 : 400, minWidth: cellIndex === 0 ? 150 : 260, verticalAlign: "top" }}>
+                    {cell}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Paper>
+  );
+}
+
+function GuideNavigation({ guide }: { guide: DailyTradeTrackerHelpGuide }) {
+  const currentIndex = DAILY_TRADE_TRACKER_HELP_GUIDES.findIndex((candidate) => candidate.slug === guide.slug);
+  const previous = currentIndex > 0 ? DAILY_TRADE_TRACKER_HELP_GUIDES[currentIndex - 1] : undefined;
+  const next = currentIndex < DAILY_TRADE_TRACKER_HELP_GUIDES.length - 1
+    ? DAILY_TRADE_TRACKER_HELP_GUIDES[currentIndex + 1]
+    : undefined;
+
+  return (
+    <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" } }}>
+      {previous ? (
+        <Link href={`/help/daily-trade-tracker/${previous.slug}`} style={{ color: "inherit", textDecoration: "none" }}>
+          <Card sx={{ height: "100%" }} variant="outlined">
+            <CardActionArea component="div" sx={{ height: "100%" }}>
+              <CardContent>
+                <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                  <ArrowBackRoundedIcon color="primary" fontSize="small" />
+                  <Box>
+                    <Typography color="text.secondary" variant="caption">Previous guide</Typography>
+                    <Typography sx={{ fontWeight: 850 }} variant="body2">{previous.title}</Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </CardActionArea>
+          </Card>
+        </Link>
+      ) : <Box />}
+      {next ? (
+        <Link href={`/help/daily-trade-tracker/${next.slug}`} style={{ color: "inherit", textDecoration: "none" }}>
+          <Card sx={{ height: "100%" }} variant="outlined">
+            <CardActionArea component="div" sx={{ height: "100%" }}>
+              <CardContent>
+                <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "flex-end", textAlign: "right" }}>
+                  <Box>
+                    <Typography color="text.secondary" variant="caption">Next guide</Typography>
+                    <Typography sx={{ fontWeight: 850 }} variant="body2">{next.title}</Typography>
+                  </Box>
+                  <ArrowForwardRoundedIcon color="primary" fontSize="small" />
+                </Stack>
+              </CardContent>
+            </CardActionArea>
+          </Card>
+        </Link>
+      ) : null}
+    </Box>
+  );
+}
+
+export function DailyTradeTrackerHelpArticle({ guide }: { guide: DailyTradeTrackerHelpGuide }) {
+  return (
+    <DashboardPage>
+      <Box>
+        <Breadcrumbs aria-label="Help breadcrumb" sx={{ mb: 1.25 }}>
+          <Link href="/help">Help Center</Link>
+          <Link href="/help/daily-trade-tracker">Daily Trade Tracker</Link>
+          <Typography color="text.primary">{guide.title}</Typography>
+        </Breadcrumbs>
+        <Typography component="h1" variant="h1">{guide.title}</Typography>
+        <Typography color="text.secondary" sx={{ maxWidth: 820, mt: 1 }} variant="body1">
+          {guide.description}
+        </Typography>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25} sx={{ mt: 2 }}>
+          <Link href="/trade-tracker" style={{ textDecoration: "none" }}>
+            <Button component="span" fullWidth variant="contained">Open Daily Trade Tracker</Button>
+          </Link>
+          {guide.slug === "rules-notes-day-review" ? (
+            <Link href="/rules" style={{ textDecoration: "none" }}>
+              <Button component="span" fullWidth variant="outlined">Open Trading Rules</Button>
+            </Link>
+          ) : null}
+        </Stack>
+      </Box>
+
+      <Card variant="outlined">
+        <CardContent sx={{ p: { xs: 2, sm: 2.5 }, "&:last-child": { pb: { xs: 2, sm: 2.5 } } }}>
+          <Typography component="h2" variant="h2">In this guide</Typography>
+          <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1, mt: 1.5 }}>
+            {guide.sections.map((section) => (
+              <Link href={`#${section.id}`} key={section.id} style={{ textDecoration: "none" }}>
+                <Chip component="span" label={section.title} variant="outlined" />
+              </Link>
+            ))}
+          </Stack>
+        </CardContent>
+      </Card>
+
+      <Stack divider={<Divider flexItem />} spacing={3}>
+        {guide.sections.map((section) => (
+          <Box component="section" id={section.id} key={section.id} sx={{ scrollMarginTop: 96 }}>
+            <Typography component="h2" variant="h2">{section.title}</Typography>
+            <Typography color="text.secondary" sx={{ mt: 0.65 }} variant="body2">{section.summary}</Typography>
+            <Stack spacing={1.75} sx={{ mt: 1.75 }}>
+              {section.blocks.map((block, index) => (
+                <ArticleBlock block={block} key={`${section.id}-${block.kind}-${index}`} />
+              ))}
+            </Stack>
+          </Box>
+        ))}
+      </Stack>
+
+      <GuideNavigation guide={guide} />
+    </DashboardPage>
+  );
+}

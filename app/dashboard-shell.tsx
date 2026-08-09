@@ -14,6 +14,7 @@ import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import EventRepeatIcon from "@mui/icons-material/EventRepeat";
 import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
 import GavelRoundedIcon from "@mui/icons-material/GavelRounded";
+import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import NoteAltRoundedIcon from "@mui/icons-material/NoteAltRounded";
@@ -80,6 +81,7 @@ function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
     marketCharts: <CandlestickChartIcon />,
     data: <ViewDayRoundedIcon />,
     execution: <InsightsRoundedIcon />,
+    help: <HelpOutlineRoundedIcon />,
     import: <CloudUploadRoundedIcon />,
     lab: <ScienceRoundedIcon />,
     manualEntry: <NoteAltRoundedIcon />,
