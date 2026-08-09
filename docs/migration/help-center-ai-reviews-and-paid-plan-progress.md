@@ -1,6 +1,6 @@
 # AI Reviews And Paid Plan Help Guides Progress
 
-Status: implementation and technical QA complete; final owner UI approval pending
+Status: complete; implementation, technical QA and owner UI approval accepted
 
 Controlling plan: [AI Reviews And Paid Plan Help Guides Plan](./help-center-ai-reviews-and-paid-plan-plan.md)
 
@@ -28,7 +28,8 @@ Controlling plan: [AI Reviews And Paid Plan Help Guides Plan](./help-center-ai-r
 - [x] Registered navigation, search, popular links and a direct paid-plan Help
   action from AI Review availability troubleshooting.
 - [x] Completed focused low-resource verification.
-- [ ] Complete final owner UI approval.
+- [x] Complete final owner UI approval. The owner approved the finished Help
+  Center presentation on 2026-08-09.
 - [x] Create a narrow local implementation checkpoint commit. Record final
   owner approval in the follow-up acceptance checkpoint.
 
@@ -74,6 +75,15 @@ section-level results across all three collections.
   with an unbounded heap. The new routes compiled successfully in Next.js.
 - No Vitest, migration, provider call, Whop activation, push or deployment was
   performed.
+
+## Acceptance checkpoint
+
+- Implementation commit: `465648b5`
+  (`feat(help): add AI reviews and paid plan guides`).
+- The owner approved the final desktop/mobile Help presentation on 2026-08-09.
+- AI Reviews and Paid plan and billing are accepted as separate Help
+  collections. Future visible behavior changes must update the corresponding
+  guide in the same coherent feature slice.
 
 ## Concurrent-work boundary
 
