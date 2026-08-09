@@ -8,6 +8,7 @@ import { journalLevelAnalysisLinksMigration } from "@/src/modules/journal/server
 import { journalImportOperationsMigration } from "@/src/modules/journal/server/database/migrations/0020_journal_import_operations";
 import { journalTradeTrackingAndReconciliationMigration } from "@/src/modules/journal/server/database/migrations/0021_journal_trade_tracking_and_reconciliation";
 import { journalTradingDayReviewsMigration } from "@/src/modules/journal/server/database/migrations/0022_journal_trading_day_reviews";
+import { moomooExecutionImportFoundationMigration } from "@/src/modules/journal/server/database/migrations/0047_moomoo_execution_import_foundation";
 import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
 import { levelAnalysisCandleReviewMigration } from "@/src/modules/level-analysis/server/database/migrations/0009_level_analysis_candle_review";
 import { levelAnalysisDeliveriesMigration } from "@/src/modules/level-analysis/server/database/migrations/0010_level_analysis_deliveries";
@@ -241,6 +242,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/coach/server/database/migrations/0046_coach_ai_review_cached_input_pricing.ts",
       migration: coachAiReviewCachedInputPricingMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/journal/server/database/migrations/0047_moomoo_execution_import_foundation.ts",
+      migration: moomooExecutionImportFoundationMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -469,6 +474,15 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "platform_whop_webhook_receipts",
     ]),
     "0046_coach_ai_review_cached_input_pricing": Object.freeze([]),
+    "0047_moomoo_execution_import_foundation": Object.freeze([
+      "journal_daily_tracker_settings",
+      "journal_trade_analyzer_entitlement_intervals",
+      "journal_broker_account_links",
+      "journal_broker_import_jobs",
+      "journal_broker_import_ranges",
+      "journal_broker_fill_receipts",
+      "journal_broker_import_coverage",
+    ]),
   });
 
 export function expectedPlatformTableNamesForPrefix(
