@@ -1,6 +1,6 @@
 # TraderLink Platform Migration Register
 
-**Status:** Phases 0-6 are locally accepted. Phase 6 passed sequential regression, production build, packaged-runtime inspection, two-account browser/API/privacy verification and final backup/restore. The accepted source is now published at `traderslink-bot/traderlink-platform`, and the narrow landing/Academy release is live on Vercel. Production-source transfer, public owner linking, Docker execution, Railway persistent-volume deployment and full replacement application/DNS cutover remain external. The completed Journal review-correction package passes its focused, final build and fresh browser gates; port 3010 is active for owner visual/product review. The accepted real-data baseline is 331 ready closed round trips, zero automatically legitimate-open round trips, and two contained Data Decisions. Four clearly labelled `TLDEMO` local review imports were added on 2026-08-04; they are temporary pending examples, not real trader data or accepted Analytics results.
+**Status:** Phases 0-6 are locally accepted. Phase 6 passed sequential regression, production build, packaged-runtime inspection, two-account browser/API/privacy verification and final backup/restore. The accepted source is now published at `traderslink-bot/traderlink-platform`, and the narrow landing/Academy release is live on Vercel. Production-source transfer, public owner linking, Docker execution, persistent-volume deployment and full replacement application/DNS cutover remain external. The completed Journal review-correction package passes its focused, final build and fresh browser gates; port 3010 is currently closed. The accepted real-data baseline is 331 ready closed round trips, zero automatically legitimate-open round trips, and two contained Data Decisions. Four clearly labelled `TLDEMO` local review imports were added on 2026-08-04; they are temporary pending examples, not real trader data or accepted Analytics results.
 **Phase 2 foundation commit:** `fea56307fbd0142ef99b9f13c020451a6a503cc7`; preserved locally, not pushed or deployed.
 **Phase 4 implementation commit:** `4575dafd0fb62804ac090c4a149152506d8db7b1`; preserved locally, not pushed or deployed. See [Phase 4 Handoff](phase-4-core-analytics-handoff.md).
 **Phase 6 accepted source commit:** `b9575e2ed8ba93c23c3c4b8e35d80c26f71477c6`; historical accepted package. Published `main` is now `c0c998d8e456b9e70433e73123e8024b13ece203` in the new Platform repository.
@@ -16,6 +16,9 @@ preserve GPT-5.6 cache-write usage and pricing separately from ordinary input
 and cache reads. The normal per-subscriber AI Review paid-cycle cap is USD 2.00;
 AI Chat remains outside that allowance. No provider, scheduler, hosted runtime,
 push or deployment was activated by this checkpoint.
+The complete local beta checkpoint is `68cb4d4d`; see
+[AI Reviews Beta Handoff](ai-reviews-beta-handoff.md) for QA-first continuation
+and hosted activation requirements.
 
 **2026-08-09 AI Review subscriber-safeguard checkpoint:** migration
 `0050_coach_ai_review_subscriber_budget_safeguards` is registered,

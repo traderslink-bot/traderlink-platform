@@ -4,6 +4,8 @@ The consolidated production go-live checklist is maintained in
 [TraderLink Platform Live Launch Readiness](traderlink-platform-live-launch-readiness.md).
 This inventory supplies configuration evidence; the launch-readiness document
 is the single cross-feature status and acceptance view.
+The AI Reviews-specific resume state and hosted activation sequence are in
+[AI Reviews Beta Handoff](ai-reviews-beta-handoff.md).
 
 **Phase:** 1 - inventory and baseline  
 **Status:** Legacy source inventory complete; accepted replacement configuration names are updated through Phase 3. Installed Big Time machine-schedule state remains deferred and is not a Journal blocker.

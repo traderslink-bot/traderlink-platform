@@ -108,7 +108,10 @@ correction is complete; migrations 0050 and 0051 are frozen.
 
 ## 2026-08-09 beta QA correction checkpoint
 
-- The local database is exactly current through migration 0050 with SQLite
+- This subsection records the pre-0051 finding. The completed current state is
+  the cache-write correction checkpoint immediately below.
+- Before 0051 was applied, the local database was current through migration
+  0050 with SQLite
   integrity `ok` and zero foreign-key failures.
 - Current official Luna rates are USD 1.00 input, USD 0.10 cache read and USD
   6.00 output per million tokens; cache writes cost USD 1.25 per million.
@@ -151,3 +154,8 @@ correction is complete; migrations 0050 and 0051 are frozen.
   corrected four-rate estimate was USD 0.00835275, proving the live
   SDK/provider boundary supplies cache-write usage instead of requiring a
   guessed zero.
+
+## Handoff
+
+The complete beta state, QA-first resume instructions and exact hosted go-live
+work are consolidated in [AI Reviews Beta Handoff](ai-reviews-beta-handoff.md).

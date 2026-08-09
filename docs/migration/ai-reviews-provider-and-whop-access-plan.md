@@ -80,15 +80,14 @@ contracts; it does not redesign the Daily Trade Tracker or AI Chat.
 ## Phase C - production AI configuration
 
 - [x] Select the production model from measured acceptance quality and cost.
-- [x] Record current official input/cached-input/output prices and require all
-  three values before enabling provider work.
+- [x] Record current official ordinary-input, cache-read, cache-write and output
+  prices and require all four values before enabling provider work.
 - [x] Configure the server-only provider credential.
-- [ ] Set separate weekly and monthly emergency platform limits in Admin to an
-  owner-approved amount that protects against abuse without acting as a normal
-  customer quota. Daily request/token/spend limits protect against bursts. Add
-  one Admin-only trailing-30-day AI Reviews spend ceiling shared by weekly and
-  monthly reviews because daily limits alone do not guarantee the owner's total
-  budget.
+- [x] Set the accepted USD 2.00 per-subscriber Whop paid-cycle safeguard across
+  weekly, two-week and monthly AI Reviews. Keep daily request/token/spend limits
+  as burst protection, the shared trailing-30-day amount as a non-blocking
+  Admin warning and a separately configured emergency global stop as the only
+  spend control that may pause every subscriber. AI Chat remains separate.
 - [x] Run one end-to-end fixture issuance through reservation, provider call,
   immutable receipt and saved-review reopening. Reopening must make no call.
 - [x] Keep the global Admin switch off until Whop access, provider configuration,
@@ -137,7 +136,7 @@ No work in Phases A-C authorizes deployment or customer activation.
     discarded. Two closed trades, one trade with saved context, or substantive
     saved reflection evidence can support a review.
 12. A daily spend cap limits a sudden loop or key-abuse burst but cannot contain
-    one subscriber across a paid month. The accepted correction is a USD 1.00
+    one subscriber across a paid month. The accepted correction is a USD 2.00
     per-subscriber paid-cycle limit, using stored Whop renewal boundaries, plus
     a non-blocking global warning and a separately configured emergency global
     stop. The detailed correction is governed by the
@@ -175,3 +174,5 @@ separately accepted and activated.
 
 The high-volume cost and payload follow-up is governed by the
 [AI Reviews Monthly Cost Benchmark Plan](ai-reviews-monthly-cost-benchmark-plan.md).
+The exact beta checkpoint and remaining hosted launch work are consolidated in
+[AI Reviews Beta Handoff](ai-reviews-beta-handoff.md).

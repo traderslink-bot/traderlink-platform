@@ -2,6 +2,10 @@
 
 ## 2026-08-09 AI Review subscriber and cache-write safeguards
 
+- AI Reviews local beta source and documentation are checkpointed at
+  `68cb4d4d` (`feat(ai-reviews): complete beta safeguards and access`). The
+  production checklist and QA-first resume state are consolidated in
+  [AI Reviews Beta Handoff](ai-reviews-beta-handoff.md).
 - Migrations `0050_coach_ai_review_subscriber_budget_safeguards` and
   `0051_coach_ai_review_cache_write_accounting` are registered,
   disposable-verified, backup/restore protected and locally applied. The local

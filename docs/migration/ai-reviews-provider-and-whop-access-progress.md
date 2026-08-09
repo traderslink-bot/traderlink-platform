@@ -6,8 +6,10 @@ Phase A provider acceptance and the Phase B paid-access implementation are
 complete in source as of 2026-08-09 under the owner-approved
 [plan](ai-reviews-provider-and-whop-access-plan.md). Migrations 0045, 0046,
 0048 and 0049 are registered, disposable-copy verified and locally applied.
-The local model and three-rate pricing are configured while both AI Review
-controls and their limits remain disabled/unset for owner configuration. No
+The local Luna model and four-rate pricing are configured. The accepted USD
+2.00 per-subscriber paid-cycle safeguard, non-blocking global warning and
+separate emergency-stop contract are implemented while customer generation
+remains deliberately inactive. No
 production deployment, hosted scheduler, customer
 entitlement or provider activation has occurred.
 
@@ -49,6 +51,8 @@ entitlement or provider activation has occurred.
   applied migration 0048.
 - [x] Shared trailing-30-day spend guard, disposable-copy proof and locally
   applied migration 0049.
+- [x] Per-subscriber paid-cycle safeguards, exact cache-write accounting,
+  disposable-copy/backup proof and locally applied migrations 0050 and 0051.
 
 ## 2026-08-09 zero-call preparation checkpoint
 
@@ -233,3 +237,20 @@ entitlement or provider activation has occurred.
   `$500` is not an accepted daily or 30-day default.
 - A final no-op migration-runner check after both applications returned no
   pending migrations. Port 3010 was not started, stopped or restarted.
+
+## 2026-08-09 subscriber safeguard and cache-write completion
+
+- Migrations `0050_coach_ai_review_subscriber_budget_safeguards` and
+  `0051_coach_ai_review_cache_write_accounting` are registered,
+  disposable-copy verified, backed up, locally applied and frozen. The local
+  database and manifest are current at 51/51.
+- The superseded shared hard ceiling is now a non-blocking Admin warning. The
+  normal blocking safeguard is USD 2.00 per subscriber per stored Whop paid
+  cycle across every owned Trade Tracker account. Only a separately configured
+  emergency global stop may pause all subscribers. AI Chat is excluded.
+- Reservations and immutable receipts distinguish ordinary input, cache read,
+  cache write and output. The controlled Luna cache-write proof returned an
+  exact four-rate estimate of USD 0.00835275 without persisting a review.
+- Customer provider calls, real Whop entitlement, hosted scheduling and
+  deployment remain inactive. The QA-first resume point and production launch
+  checklist are in [AI Reviews Beta Handoff](ai-reviews-beta-handoff.md).

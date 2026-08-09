@@ -121,9 +121,10 @@ migration, backup and restore evidence.
 - [x] Complete the initial Whop packaging, entitlement and customer-access
   contract for AI Reviews. Whop owns price/trial/renewal truth; TraderLink owns
   only privacy-safe access projection and generation enforcement.
-- [ ] Configure provider/model, verified token prices, daily burst caps, one
-  trailing-30-day AI Reviews platform spend ceiling and server-only provider
-  credentials.
+- [ ] Configure provider/model, all four verified token prices, cadence burst
+  caps, the USD 2.00 per-subscriber Whop paid-cycle safeguard, a non-blocking
+  trailing-30-day warning, an optional separate emergency global stop and
+  server-only provider credentials. AI Chat remains outside this allowance.
 - [ ] Prove requests use immutable account-scoped snapshots, retries reuse the
   same request, and saved reviews never call the provider again when reopened.
 - [ ] Keep missing credentials, calendar coverage, entitlement or price data as
@@ -151,7 +152,7 @@ migration, backup and restore evidence.
 - [ ] Rehearse rollback without deleting production data or reverting an
   irreversible migration.
 
-## Current known readiness state — 2026-08-08
+## Current known readiness state — 2026-08-09
 
 - The complete replacement is local-only and uses SQLite for its core Platform,
   Journal, Trade Tracker and AI Review repositories.
@@ -174,13 +175,12 @@ migration, backup and restore evidence.
   entitlement enforcement, signed webhook/OAuth foundation, Admin health and
   Account controls are implemented. Luna and four-rate pricing are configured
   locally; the USD 2.00 per-subscriber paid-cycle safeguard is stored,
-  emergency limits remain unset and both controls remain disabled
-  pending the owner's Admin decision. A daily cap alone does not guarantee a
-  monthly business budget, so a trailing-30-day platform ceiling is also a
-  pre-activation gate. Real Whop configuration, customer activation and hosted
-  automatic generation remain inactive. The disposable end-to-end
-  issuance/reopen proof passed; source-verified Whop API reconciliation still
-  awaits coordinated migration registration and local application.
+  customer generation remains disabled pending hosted launch. A daily cap alone
+  does not guarantee a monthly business budget, so the non-blocking warning and
+  optional explicit emergency stop remain visible Admin safeguards. Real Whop
+  configuration, customer activation and hosted automatic generation remain
+  inactive. The disposable end-to-end issuance/reopen proof and Whop API
+  reconciliation migration/application passed locally.
 - Hosting provisioning, production database creation/transfer, owner linking,
   production scheduler activation, full-app DNS cutover and rollback rehearsal
   remain open.
@@ -195,6 +195,7 @@ migration, backup and restore evidence.
 - [AI Reviews Plan](ai-weekly-review-plan.md)
 - [AI Reviews Provider Acceptance and Whop Access Plan](ai-reviews-provider-and-whop-access-plan.md)
 - [Weekly and Monthly AI Review Boundary Progress](ai-weekly-monthly-review-boundary-progress.md)
+- [AI Reviews Beta Handoff](ai-reviews-beta-handoff.md)
 
 ## Maintenance rule
 

@@ -2,7 +2,13 @@
 
 ## Status
 
-Approved product direction recorded on 2026-08-05. Implementation is active;
+Approved product direction recorded on 2026-08-05. Local beta implementation
+and owner visual acceptance are complete through the AI Reviews checkpoint
+`68cb4d4d` and migration 0051. Hosted configuration, scheduling and activation
+remain launch work. The durable QA-first resume point is
+[AI Reviews Beta Handoff](ai-reviews-beta-handoff.md).
+
+The historical implementation record follows. Implementation began as active;
 the [progress record](ai-weekly-review-progress.md) tracks completed slices.
 The owner-approved cross-month review policy and its pending implementation
 boundary are recorded in the [weekly/monthly review boundary progress

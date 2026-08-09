@@ -161,3 +161,7 @@ Migrations 0050 and 0051 are applied and frozen. The correction also keeps the
 timing, scheduler-health, cached-pricing and safeguard verification paths
 repeatable against a fully migrated disposable copy. Hosted scheduler launch
 acceptance remains a separate production operation.
+
+The exact current checkpoint, QA-first continuation boundary and hosted go-live
+requirements are maintained in
+[AI Reviews Beta Handoff](ai-reviews-beta-handoff.md).

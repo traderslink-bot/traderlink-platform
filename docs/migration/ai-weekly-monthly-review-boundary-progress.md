@@ -4,8 +4,11 @@
 
 Owner-approved product boundary recorded on 2026-08-06. This document began as
 the design and implementation record and now tracks the accepted implementation
-slices below. No implementation slice rewrites Journal facts or activates an AI
-provider.
+slices below. Local beta implementation and owner visual acceptance are now
+complete through checkpoint `68cb4d4d` and migration 0051. No implementation
+slice rewrites Trade Tracker facts or activates hosted customer provider work.
+The current QA-first resume point and remaining go-live operations are in
+[AI Reviews Beta Handoff](ai-reviews-beta-handoff.md).
 
 Completion-driven generation and late-review behavior were refined with the
 owner on 2026-08-07. The owner then approved the QA simplifications, one-time
