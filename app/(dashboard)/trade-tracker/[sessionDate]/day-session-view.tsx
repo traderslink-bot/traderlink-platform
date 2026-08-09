@@ -637,10 +637,11 @@ function shortDayLabel(date: string): string {
   });
 }
 
-function timeLabel(value: string, timezone: string): string {
+function timeLabel(value: string, timezone: string, includeSeconds = false): string {
   return new Date(value).toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
+    ...(includeSeconds ? { second: "2-digit" as const } : {}),
     timeZone: timezone,
   });
 }
@@ -1648,7 +1649,7 @@ function TradeReview({
             py: 0.45,
           }}
         >
-          <Typography variant="body2">{timeLabel(execution.executedAt, roundTrip.timezone)}</Typography>
+          <Typography variant="body2">{timeLabel(execution.executedAt, roundTrip.timezone, true)}</Typography>
           <Typography sx={{ textTransform: "capitalize" }} variant="body2">{execution.side}</Typography>
           <Typography sx={{ fontFamily: "var(--font-geist-mono)" }} variant="body2">
             {formatJournalAnalyticsDecimal(execution.quantity)} shares
@@ -3117,7 +3118,7 @@ export function DaySessionView({
                                   py: 0.9,
                                 }}
                               >
-                                <Typography variant="body2">{timeLabel(execution.executedAt, position.timezone)}</Typography>
+                                <Typography variant="body2">{timeLabel(execution.executedAt, position.timezone, true)}</Typography>
                                 <Typography sx={{ textTransform: "capitalize" }} variant="body2">{execution.side}</Typography>
                                 <Typography sx={{ fontFamily: "var(--font-geist-mono)" }} variant="body2">
                                   {formatJournalAnalyticsDecimal(execution.quantity)} shares

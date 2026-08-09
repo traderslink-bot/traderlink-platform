@@ -76,6 +76,13 @@ slice.
     candle cache before requesting missing coverage. Notes, tags and rule
     reviews do not trigger this refresh because they do not change the trade's
     execution path.
+14. During the initial beta, Moomoo is the only market-data source used inside
+    user accounts for chart replay and trade analysis. A free Moomoo account is
+    sufficient for this market-data connection. EODHD remains isolated to the
+    owner's separate Levels System and is not a user-dashboard fallback. No
+    pre-beta or unrelated historical candle cache is adopted in this slice. If
+    exact Moomoo turnover cannot be obtained or refreshed, the chart states
+    that VWAP is unavailable; it never estimates VWAP from OHLCV.
 
 ## Implementation
 

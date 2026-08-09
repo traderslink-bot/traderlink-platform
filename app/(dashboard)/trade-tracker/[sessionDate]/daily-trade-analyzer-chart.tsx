@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Stack, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import { Box, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from "@mui/material";
 import Decimal from "decimal.js";
 import {
   CandlestickSeries,
@@ -199,10 +199,11 @@ function initialVisibleSpan(
   );
 }
 
-function easternTime(timestamp: number): string {
+function easternTime(timestamp: number, includeSeconds = false): string {
   return new Intl.DateTimeFormat("en-US", {
     hour: "2-digit",
     minute: "2-digit",
+    ...(includeSeconds ? { second: "2-digit" as const } : {}),
     hour12: false,
     timeZone: "America/New_York",
   }).format(new Date(timestamp * 1000));
@@ -347,6 +348,12 @@ export function DailyTradeAnalyzerChart({
   const chartInterval = interval;
 
   const [mobilePatternKeyOpen, setMobilePatternKeyOpen] = useState(false);
+  const exactTurnoverAvailable = useMemo(
+    () => analysis.candles.length > 0 && analysis.candles.every((candle) =>
+      candle.turnover !== null && Number.isFinite(Number(candle.turnover)) && Number(candle.turnover) >= 0,
+    ),
+    [analysis.candles],
+  );
   const chartPatterns = useMemo(
     () => patternsForChartInterval(analysis, chartInterval),
     [analysis, chartInterval],
@@ -423,22 +430,23 @@ export function DailyTradeAnalyzerChart({
       time: candle.time as Time,
     })));
 
-    const hasExactTurnover = numericCandles.every((candle) => candle.turnover !== null);
     const indicators = calculateIndicatorPoints(
       numericCandles,
-      { vwapSource: hasExactTurnover ? "turnover" : "typical_price" },
+      { vwapSource: "turnover" },
     );
-    const vwap = chart.addSeries(LineSeries, {
-      color: "#7b1fa2",
-      crosshairMarkerVisible: false,
-      lastValueVisible: false,
-      lineWidth: 2,
-      priceLineVisible: false,
-      title: "Session VWAP",
-    });
-    vwap.setData(indicators.flatMap((point) =>
-      point.vwap === null ? [] : [{ time: point.time as Time, value: point.vwap }],
-    ));
+    if (exactTurnoverAvailable) {
+      const vwap = chart.addSeries(LineSeries, {
+        color: "#7b1fa2",
+        crosshairMarkerVisible: false,
+        lastValueVisible: false,
+        lineWidth: 2,
+        priceLineVisible: false,
+        title: "Session VWAP",
+      });
+      vwap.setData(indicators.flatMap((point) =>
+        point.vwap === null ? [] : [{ time: point.time as Time, value: point.vwap }],
+      ));
+    }
     const ema9 = chart.addSeries(LineSeries, {
       color: "#ef6c00",
       crosshairMarkerVisible: false,
@@ -602,7 +610,7 @@ export function DailyTradeAnalyzerChart({
       eventCandleIndexesRef.current = new Map();
       chart.remove();
     };
-  }, [analysis, chartInterval, chartPatterns, currency, direction]);
+  }, [analysis, chartInterval, chartPatterns, currency, direction, exactTurnoverAvailable]);
 
   useEffect(() => {
     selectedEventIdRef.current = selectedEventId;
@@ -694,12 +702,26 @@ export function DailyTradeAnalyzerChart({
           onZoomIn={() => zoomFromControl(CHART_ZOOM_IN_FACTOR)}
           onZoomOut={() => zoomFromControl(CHART_ZOOM_OUT_FACTOR)}
         />
-        <Typography sx={{ color: "#41516a", fontSize: "0.66rem", fontWeight: 800 }}>
-          {chartInterval === "1h" ? "1h chart only" : `Pattern context: ${chartInterval}`}
-        </Typography>
-        <Typography sx={{ color: "#7b1fa2", display: { xs: "none", md: "block" }, fontWeight: 800 }} variant="caption">
-          - Session VWAP
-        </Typography>
+        {exactTurnoverAvailable ? (
+          <Typography sx={{ color: "#41516a", fontSize: "0.66rem", fontWeight: 800 }}>
+            {chartInterval === "1h" ? "1h chart only" : `Pattern context: ${chartInterval}`}
+          </Typography>
+        ) : (
+          <Tooltip title="Moomoo did not return complete turnover data for this chart.">
+            <Typography
+              aria-label="VWAP unavailable because Moomoo did not return complete turnover data for this chart"
+              component="span"
+              sx={{ color: "error.main", cursor: "help", fontSize: "0.66rem", fontWeight: 850 }}
+            >
+              VWAP unavailable
+            </Typography>
+          </Tooltip>
+        )}
+        {exactTurnoverAvailable ? (
+          <Typography sx={{ color: "#7b1fa2", display: { xs: "none", md: "block" }, fontWeight: 800 }} variant="caption">
+            - Session VWAP
+          </Typography>
+        ) : null}
         <Typography sx={{ color: "#ef6c00", display: { xs: "none", md: "block" }, fontWeight: 800 }} variant="caption">
           - {chartInterval} EMA 9
         </Typography>
@@ -816,7 +838,7 @@ export function DailyTradeAnalyzerChart({
         >
           <Typography sx={{ fontWeight: 850 }} variant="caption">
             {detail.event
-              ? easternTime(Math.floor(Date.parse(detail.event.executedAt) / 1000))
+              ? easternTime(Math.floor(Date.parse(detail.event.executedAt) / 1000), true)
               : easternTime(detail.candle.time)} ET
             {detail.event ? " execution" : ` · ${chartInterval} candle`}
           </Typography>

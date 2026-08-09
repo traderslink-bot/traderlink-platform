@@ -313,6 +313,12 @@
   coverage, finalized-session use, full extended-session requests and exact
   turnover coverage all passed. Focused ESLint, Tracker/analyzer TypeScript
   filtering and diff-whitespace verification also pass.
+- [x] Recorded the owner-confirmed beta market-data boundary on 2026-08-09:
+  Moomoo is the only user-account chart/analyzer source; EODHD remains outside
+  the dashboard in the separate Levels System; and no old candle database is
+  adopted now. Removed the chart's typical-price VWAP fallback. Exact Moomoo
+  turnover produces VWAP; otherwise the chart hides the line and exposes a
+  plain-language unavailable reason.
 
 ## Boundary
 
