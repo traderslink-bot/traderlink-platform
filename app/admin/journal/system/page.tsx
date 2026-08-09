@@ -29,6 +29,18 @@ import {
 export const metadata: Metadata = { title: "System | Journal Administration" };
 export const dynamic = "force-dynamic";
 
+function formatOperationalDetails(counts: Readonly<Record<string, number>>): string {
+  const details: string[] = [];
+  if (counts.http_status !== undefined) details.push(`HTTP ${counts.http_status}`);
+  if (counts.provider_code !== undefined) {
+    const providerCode = counts.provider_code_negative === 1
+      ? -counts.provider_code
+      : counts.provider_code;
+    details.push(`Provider ${providerCode}`);
+  }
+  return details.length > 0 ? details.join(" · ") : "—";
+}
+
 export default async function JournalAdminSystemPage() {
   const system = await withJournalAdminPageDatabase((database, scope) =>
     new PlatformAdminSystemService(createJournalAdminReadContext({ database, scope })).read());
@@ -80,13 +92,14 @@ export default async function JournalAdminSystemPage() {
       <JournalAdminPanel title="Operational receipts">
         <JournalAdminTable>
           <Table size="small">
-            <TableHead><TableRow><TableCell>Operation</TableCell><TableCell>State</TableCell><TableCell>Outcome</TableCell><TableCell>Started</TableCell><TableCell>Completed</TableCell></TableRow></TableHead>
+            <TableHead><TableRow><TableCell>Operation</TableCell><TableCell>State</TableCell><TableCell>Outcome</TableCell><TableCell>Details</TableCell><TableCell>Started</TableCell><TableCell>Completed</TableCell></TableRow></TableHead>
             <TableBody>
               {system.latestOperations.map((item) => (
                 <TableRow key={item.operationRef}>
                   <TableCell sx={{ textTransform: "capitalize" }}>{item.kind.replaceAll("_", " ")}</TableCell>
                   <TableCell><JournalAdminStatus state={item.state} /></TableCell>
                   <TableCell sx={{ textTransform: "capitalize" }}>{item.outcomeCode.replaceAll("_", " ")}</TableCell>
+                  <TableCell>{formatOperationalDetails(item.safeCounts)}</TableCell>
                   <TableCell>{formatAdminUtc(item.startedAtUtc)}</TableCell>
                   <TableCell>{formatAdminUtc(item.completedAtUtc)}</TableCell>
                 </TableRow>

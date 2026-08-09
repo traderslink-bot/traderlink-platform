@@ -1,7 +1,10 @@
 # Moomoo Direct Connection Plan
 
-**Status:** Approved to begin the read-only foundation on 2026-08-06. Visible
-connection UI requires owner review before implementation.
+**Status:** OAuth, quote-backed analyzer access and the durable execution-import
+implementation are built. The owner approved the Account progress experience
+on 2026-08-09. Real `trade:read` provider proof is deliberately deferred to
+the invited public beta and remains a release checkpoint rather than an
+implementation claim.
 
 ## Goal
 
@@ -194,6 +197,19 @@ Moomoo execution importing remains the execution-import scope below.
    local credentials and removes that broker from the visible connected list.
    Selecting it later starts a fresh connection; it does not silently reuse an
    old credential.
+5. Before connection, explain the two Moomoo capability levels plainly. A free
+   Moomoo user account can connect the quote data used for chart replay and
+   analyzer features without opening a Moomoo trading account. Automatic
+   execution imports additionally require `trade:read` and at least one
+   authorized trading account returned by Moomoo. TradersLink detects this
+   after authorization instead of inventing a balance, funding or trade-history
+   minimum that Moomoo does not document for this endpoint.
+6. After connection, show the exact TradersLink features unlocked by the
+   returned capabilities. A quote-only/free account shows chart replay and
+   eligible-date trade analysis as available, with execution imports not
+   enabled. A trade-read connection with an authorized trading account can be
+   linked for automatic imports. If no authorized trading account is returned,
+   keep chart features available and direct the trader to statement imports.
 
 ### Authorization and source contract
 
@@ -211,6 +227,59 @@ Moomoo execution importing remains the execution-import scope below.
 4. Broker-imported exact fills are accepted automatically after deterministic
    validation. Data Decisions are only for genuine duplicate/source conflicts,
    missing facts or impossible arithmetic; they are not a blanket review step.
+
+### Historical Journal facts versus Daily Tracker work
+
+1. Execution-import coverage and Daily Trade Tracker participation are
+   independent. A trader may import years of Moomoo fills into the Journal
+   without creating years of incomplete Daily Tracker reviews, missing-note
+   prompts, tag prompts or rule-review obligations.
+2. The first import records a **Daily Tracker start date**. It defaults to the
+   connection/import setup date. Imported trading dates before that boundary
+   remain available as historical Journal and analytics facts, but are not
+   presented as Daily Tracker work the trader failed to complete. The trader
+   may still open an older date and add context voluntarily.
+3. Trading rules are versioned behavior commitments with an effective start
+   date. A rule created, enabled or materially changed today is not evaluated
+   against an earlier trade unless the trader explicitly assigns a historically
+   accurate rule version to that earlier period. Importing old executions must
+   never rewrite historical rule outcomes using current rules.
+4. Notes and tags remain optional historical context. Their absence on an
+   imported date before the Daily Tracker start date is an explicit
+   not-requested state, not missing evidence and not a negative completion
+   signal.
+
+### Analyzer eligibility and bounded historical candles
+
+1. Execution history does not automatically create candle-history work. A
+   trade is analyzer-eligible only when its trading date falls within a saved
+   active paid-plan interval for that Platform user and workspace. The first
+   paid trading date is eligible in full, including trades made earlier that
+   same date before the activation time.
+2. Cancelling or losing paid access closes the active eligibility interval.
+   Existing saved analyses and replays remain visible, but no newly traded
+   dates during the unpaid gap become eligible. Reactivation starts a new
+   interval and never backfills that gap.
+3. A delayed broker import may still be analyzed after the interval closes if
+   the fill's actual trading date was eligible. Eligibility follows the broker
+   execution date, not the later arrival, page-view or job-completion date.
+4. Do not offer normal-plan analysis of history before the first eligible paid
+   date or of trades from an unpaid gap. A distinct
+   ticker/trading-date can require an extended-hours one-minute candle session,
+   and Moomoo caps each History K-Line response at 370 candles. Automatically
+   expanding years of executions into candle requests and stored replays would
+   create provider and storage work and would let one paid month consume years
+   of analyzer value. A future separately priced historical-analysis product
+   would require its own explicit contract; it is not part of this plan.
+5. Every eligible analysis checks the shared candle cache first, queues only
+   missing ticker/date coverage, and reports complete, partial, unavailable or
+   provider-limited coverage truthfully. Candle availability never blocks the
+   execution import.
+6. Long-term statistics must state their population. Execution-only measures
+   can use the imported Journal coverage; candle-derived measures use only
+   analyzer-eligible trades with complete required candle coverage. Neither
+   population may be described as the trader's complete history unless its
+   corresponding coverage is complete.
 
 ### Initial history selection and durable progress
 
@@ -251,6 +320,25 @@ Moomoo execution importing remains the execution-import scope below.
    A page cursor advances only after that page's private evidence and bounded
    Journal commit have both succeeded, so a crash cannot skip received fills.
 
+### Beta failure visibility
+
+1. User accounts show only useful process states: queued, importing, retrying,
+   complete or unable to finish. They never receive internal error codes,
+   provider codes, raw broker identifiers or support/event references.
+2. When a server-received operation fails, the user is told that the details
+   were automatically sent to TradersLink administration and are being worked
+   on. A browser/network failure that never reaches the server must not be
+   described as reported.
+3. Privacy-safe failure categories, HTTP status codes and numeric provider
+   codes are written to immutable operational receipts visible only in Journal
+   Administration. Tokens, account/deal/order IDs and provider payload values
+   are never written to those receipts or logs.
+4. The invited beta uses hand-picked Moomoo traders after the public site is
+   live. Live account/deal proof is performed there because the current owner
+   account cannot supply representative trading-account history. A failed beta
+   import remains recoverable through durable range/page state and broker
+   statement fallback.
+
 ### Extending imported history backward
 
 1. Persist successfully processed coverage intervals by provider account and
@@ -284,6 +372,10 @@ Moomoo execution importing remains the execution-import scope below.
 - Use a durable worker/queue suitable for hosted execution. The browser is a
   status surface only; local development can run the same job processor
   explicitly.
+- The implementation provides a CRON-secret-protected hosted worker entrypoint
+  that processes one bounded provider page per invocation and a local launcher
+  bridge for development. Deployment must schedule the hosted entrypoint; it
+  must not expose the worker publicly or rely on an open browser tab.
 - Prove the returned execution schema and account/market pagination with a
   bounded live `trade:read` test before creating Journal facts from it.
 - Preserve every existing import, Data Decisions, manual execution and
@@ -383,3 +475,14 @@ The following are required before this slice may be called complete.
     not pass, activate the documented recent-history-plus-statements fallback,
     select and disclose the exact supported day count, and retain the same
     duplicate, coverage and Journal-truth safeguards across both sources.
+14. **Historical imports do not create review debt.** Persist a Daily Tracker
+    start boundary separately from broker coverage. Dates before it do not
+    become incomplete Tracker days merely because executions were imported.
+15. **Rules do not apply backward silently.** Rule evaluation uses the rule
+    version effective for the trade date. A missing historical rule version is
+    shown as not evaluated, never inferred from the trader's current settings.
+16. **Analyzer work follows paid trading-date intervals.** The first paid date
+    is eligible in full. Cancellation closes the interval, reactivation starts
+    another, and unpaid gaps or history before first activation are never
+    backfilled by the normal plan. Saved eligible analyses remain readable and
+    execution importing continues when analysis is ineligible or unavailable.

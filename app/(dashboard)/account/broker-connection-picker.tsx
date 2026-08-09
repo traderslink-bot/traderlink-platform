@@ -50,6 +50,12 @@ export function BrokerConnectionPicker({
         <Typography sx={{ fontWeight: 800 }} variant="body1">{broker.label}</Typography>
         <Stack spacing={0.75} sx={{ mt: 1 }}>
           <Typography color="text.secondary" variant="body2">
+            A free Moomoo account is enough to connect the market data used for chart replay and trade analysis. You do not need to open a Moomoo trading account for these chart features.
+          </Typography>
+          <Typography color="text.secondary" variant="body2">
+            Automatic execution imports require an eligible Moomoo trading account. TradersLink checks this for you after you connect. If your account cannot import executions automatically, you can still import broker statements.
+          </Typography>
+          <Typography color="text.secondary" variant="body2">
             Connection method: {broker.method}.
           </Typography>
           <Typography color="text.secondary" variant="body2">

@@ -12,10 +12,12 @@ import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/serve
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformAccountProfileReadService } from "@/src/modules/platform/server/identity/platform-account-profile-read-service";
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
+import { MoomooExecutionImportCommandService } from "@/src/modules/journal/server/broker-imports/moomoo-execution-import-command-service";
 import { AccountManagementClient } from "./account-management-client";
 import { AiReviewFrequencySettings } from "./ai-review-delivery-settings";
 import { BrokerConnectionPicker } from "./broker-connection-picker";
 import { MoomooConnectionSettings } from "./moomoo-connection-settings";
+import { MoomooExecutionImportSetup } from "./moomoo-execution-import-setup";
 import { ReportingCurrencySettings } from "./reporting-currency-settings";
 
 export const metadata: Metadata = {
@@ -28,11 +30,21 @@ export const revalidate = 0;
 
 export default async function AccountPage() {
   const scope = await requireTraderLinkPlatformPageScope();
-  const { profile, aiReviewSettings, moomooConnection } = withReadonlyPlatformDatabase({}, (database) => Object.freeze({
-    profile: new PlatformAccountProfileReadService(database).get(scope),
-    aiReviewSettings: new CoachReviewDeliveryScheduleRepository(database).readV2(scope),
-    moomooConnection: new MoomooConnectionRepository(database).find(scope),
-  }));
+  const { profile, aiReviewSettings, moomooConnection, moomooAccountLinks } = withReadonlyPlatformDatabase({}, (database) => {
+    const currentProfile = new PlatformAccountProfileReadService(database).get(scope);
+    const currentAccount = currentProfile.journalAccounts.find((account) => account.active);
+    return Object.freeze({
+      profile: currentProfile,
+      aiReviewSettings: new CoachReviewDeliveryScheduleRepository(database).readV2(scope),
+      moomooConnection: new MoomooConnectionRepository(database).find(scope),
+      moomooAccountLinks: currentAccount
+        ? new MoomooExecutionImportCommandService(database).list(
+            scope,
+            scope.activeAccountId ?? "",
+          )
+        : [],
+    });
+  });
   const activeAccount = profile.journalAccounts.find((account) => account.active);
   if (!activeAccount) throw new Error("TRADERLINK_ACCOUNT_ACCESS_DENIED");
 
@@ -86,6 +98,14 @@ export default async function AccountPage() {
             <Chip color="success" label="Connected" size="small" />
             <MoomooConnectionSettings state="active" />
           </Stack>
+        ) : null}
+        {moomooConnection?.state === "active" ? (
+          <MoomooExecutionImportSetup
+            activeAccountName={activeAccount.displayName}
+            activeAccountSelectionRef={activeAccount.selectionRef}
+            executionReadAuthorized={moomooConnection.authorizedScopes.includes("trade:read")}
+            initialLinkedAccounts={moomooAccountLinks}
+          />
         ) : null}
       </DashboardPanel>
 
