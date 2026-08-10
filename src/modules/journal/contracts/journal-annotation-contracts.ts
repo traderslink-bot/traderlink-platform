@@ -17,6 +17,8 @@ export type JournalRuleRecord = Readonly<{
   versionId: string;
   revision: number;
   effectiveFromUtc: string;
+  effectiveUntilUtc?: string | null;
+  activeIntervals?: readonly Readonly<{ fromUtc: string; untilUtc: string | null }>[];
   createdAtUtc: string;
   updatedAtUtc: string;
 }>;
@@ -29,6 +31,7 @@ export type JournalRuleReviewRecord = Readonly<{
   tradingDayId: string | null;
   roundTripId: string | null;
   status: JournalRuleReviewStatus;
+  note: string;
   revision: number;
   updatedAtUtc: string;
 }>;

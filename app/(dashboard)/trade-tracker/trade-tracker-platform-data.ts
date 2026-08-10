@@ -568,9 +568,10 @@ function annotationSnapshot(
     `${review.ruleId}:${review.targetKind}:${review.tradingDayId ?? review.roundTripId}`,
     review,
   ]));
-  const rules = service.listRules(account).filter(
-    (rule) => rule.lifecycleState === "active",
-  );
+  const rangeStart = `${model.date}T00:00:00.000Z`;
+  const rangeEndDate = new Date(rangeStart);
+  rangeEndDate.setUTCDate(rangeEndDate.getUTCDate() + 2);
+  const rules = service.listRulesForEvaluation(account, rangeStart, rangeEndDate.toISOString());
   const automaticResults = evaluateJournalPresetRules(
     rules,
     model,
@@ -582,6 +583,7 @@ function annotationSnapshot(
     targetRoundTripKey: string | null,
     targetLabel: string | null,
     automaticStatus?: Extract<DaySessionRule["status"], "followed" | "broken" | "n/a">,
+    automaticEvidence?: import("@/src/modules/journal/server/annotations/journal-preset-rule-evaluator").JournalPresetRuleEvidence,
   ): DaySessionRule => {
     const targetKind = applicability === "day" ? "trading_day" : "round_trip";
     const targetId = applicability === "day" ? tradingDayId : targetRoundTripKey;
@@ -591,7 +593,28 @@ function annotationSnapshot(
     return {
       applicability,
       custom: rule.sourceKind === "custom",
+      evidence: automaticEvidence ? {
+        feeCoverage: automaticEvidence.feeCoverage,
+        limitation: automaticEvidence.limitation,
+        trigger: automaticEvidence.trigger ? {
+          kind: automaticEvidence.trigger.kind,
+          netPnl: automaticEvidence.trigger.netPnlDecimal,
+          occurredAt: automaticEvidence.trigger.occurredAtUtc,
+          roundTripKey: automaticEvidence.trigger.roundTripId,
+          valueAfter: automaticEvidence.trigger.valueAfter,
+          valueBefore: automaticEvidence.trigger.valueBefore,
+        } : null,
+        violations: automaticEvidence.violations.map((item) => ({
+          kind: item.kind,
+          netPnl: item.netPnlDecimal,
+          occurredAt: item.occurredAtUtc,
+          roundTripKey: item.roundTripId,
+          valueAfter: item.valueAfter,
+          valueBefore: item.valueBefore,
+        })),
+      } : null,
       label: rule.title,
+      note: review?.note ?? "",
       revision: review ? String(review.revision) : null,
       ruleId: rule.ruleId,
       ruleVersion: rule.versionId,
@@ -601,24 +624,38 @@ function annotationSnapshot(
     };
   };
   const customRules = rules.filter((rule) => rule.sourceKind === "custom");
-  const rulesById = new Map(rules.map((rule) => [rule.ruleId, rule]));
+  const rulesById = new Map(rules.map((rule) => [`${rule.ruleId}:${rule.versionId}`, rule]));
   const dayRules = customRules
     .filter((rule) => rule.reviewScope === "day" || rule.reviewScope === "both")
     .map((rule) => toRule(rule, "day", null, null));
   const tradeRules = customRules
     .filter((rule) => rule.reviewScope === "trade" || rule.reviewScope === "both")
-    .flatMap((rule) => roundTrips.map((roundTrip) =>
-      toRule(rule, "trade", roundTrip.id, roundTrip.label)));
+    .flatMap((rule) => roundTrips.flatMap((roundTrip) => {
+      const trade = model.tickers.flatMap((ticker) => ticker.roundTrips)
+        .find((candidate) => candidate.roundTripId === roundTrip.id);
+      if (!trade || trade.entryAtUtc < rule.effectiveFromUtc ||
+          (rule.effectiveUntilUtc && trade.entryAtUtc >= rule.effectiveUntilUtc) ||
+          (rule.activeIntervals && !rule.activeIntervals.some((interval) =>
+            trade.entryAtUtc >= interval.fromUtc && (!interval.untilUtc || trade.entryAtUtc < interval.untilUtc)))) return [];
+      return [toRule(rule, "trade", roundTrip.id, roundTrip.label)];
+    }));
   for (const result of automaticResults) {
-    const rule = rulesById.get(result.ruleId);
+    const rule = rulesById.get(`${result.ruleId}:${result.ruleVersionId}`);
     if (!rule) continue;
     if (result.targetKind === "trading_day") {
-      dayRules.push(toRule(rule, "day", null, null, result.status));
+      dayRules.push(toRule(rule, "day", null, null, result.status, result.evidence));
       continue;
     }
     const target = roundTripsById.get(result.targetRoundTripId ?? "");
     if (target) {
-      tradeRules.push(toRule(rule, "trade", target.id, target.label, result.status));
+      tradeRules.push(toRule(
+        rule,
+        "trade",
+        target.id,
+        target.label,
+        result.status,
+        result.evidence,
+      ));
     }
   }
   return Object.freeze({
@@ -1165,7 +1202,9 @@ export function getReplacementSwingPositionDetail(
           return {
             applicability: "trade",
             custom: rule.sourceKind === "custom",
+            evidence: null,
             label: rule.title,
+            note: review?.note ?? "",
             revision: review ? String(review.revision) : null,
             ruleId: rule.ruleId,
             ruleVersion: rule.versionId,

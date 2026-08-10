@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from "@mui/material";
 import Decimal from "decimal.js";
 import {
   CandlestickSeries,
@@ -314,7 +314,18 @@ type ChartDetail = Readonly<{
   candle: ChartCandle;
   event: DaySessionTradeAnalyzer["events"][number] | null;
   priceAction: Readonly<{ explanation: string; title: string }> | null;
+  rules: readonly ChartRuleDetail[];
 }>;
+
+export type ChartRuleEvidence = Readonly<{
+  label: string;
+  netPnl: string | null;
+  occurredAt: string;
+  ruleId: string;
+  triggerAt: string | null;
+}>;
+type ChartRuleDetail = ChartRuleEvidence & Readonly<{ violationCount: number }>;
+const EMPTY_RULE_EVIDENCE: readonly ChartRuleEvidence[] = Object.freeze([]);
 
 export function DailyTradeAnalyzerChart({
   analysis,
@@ -322,6 +333,7 @@ export function DailyTradeAnalyzerChart({
   direction,
   interval,
   onIntervalChange,
+  ruleEvidence = EMPTY_RULE_EVIDENCE,
   selectedEventId,
   symbol,
   tradeLabelColor,
@@ -332,6 +344,7 @@ export function DailyTradeAnalyzerChart({
   direction: "long" | "short";
   interval: DailyTradeChartInterval;
   onIntervalChange: (interval: DailyTradeChartInterval) => void;
+  ruleEvidence?: readonly ChartRuleEvidence[];
   selectedEventId: string | null;
   symbol: string;
   tradeLabelColor: "success" | "error";
@@ -344,6 +357,7 @@ export function DailyTradeAnalyzerChart({
   const eventCandleIndexesRef = useRef<Map<string, number>>(new Map());
   const selectedEventIdRef = useRef(selectedEventId);
   const pinnedDetailRef = useRef(false);
+  const dismissedDetailRef = useRef(false);
   const [detail, setDetail] = useState<ChartDetail | null>(null);
   const chartInterval = interval;
 
@@ -363,6 +377,7 @@ export function DailyTradeAnalyzerChart({
     const container = containerRef.current;
     if (!container || !["pending", "ready", "provider_unavailable"].includes(analysis.status) || analysis.candles.length === 0) return;
     pinnedDetailRef.current = false;
+    dismissedDetailRef.current = false;
     const clearDetailTimer = window.setTimeout(() => setDetail(null), 0);
     const displayedCandles = aggregateChartCandles(analysis.candles, chartInterval);
     const numericCandles = displayedCandles.map((candle) => ({
@@ -506,7 +521,7 @@ export function DailyTradeAnalyzerChart({
       const candle = candleByTime.get(model.time) ?? null;
       if (!candle) return [];
       const id = `execution-${model.event.eventId}`;
-      annotationDetails.set(id, { candle, event: model.event, priceAction: null });
+      annotationDetails.set(id, { candle, event: model.event, priceAction: null, rules: [] });
       return [{
         color: model.color,
         id,
@@ -526,6 +541,7 @@ export function DailyTradeAnalyzerChart({
           explanation: PATTERN_EXPLANATIONS[model.kind] ?? "Observed price action at this candle.",
           title: PATTERN_FULL_NAMES[model.kind] ?? patternLabel(model.kind),
         },
+        rules: [],
       });
       return {
         color: model.color,
@@ -537,8 +553,40 @@ export function DailyTradeAnalyzerChart({
         time: model.time,
       };
     });
+    const rulesByCandle = new Map<number, ChartRuleEvidence[]>();
+    for (const rule of ruleEvidence) {
+      const occurredAt = Date.parse(rule.occurredAt);
+      if (!Number.isFinite(occurredAt)) continue;
+      const time = chartBucketTime(Math.floor(occurredAt / 1000), chartInterval);
+      rulesByCandle.set(time, [...(rulesByCandle.get(time) ?? []), rule]);
+    }
+    const ruleAnnotations = [...rulesByCandle.entries()].flatMap(([time, rules]) => {
+      const candle = candleByTime.get(time);
+      if (!candle) return [];
+      const occurrencesByRule = new Map<string, ChartRuleEvidence[]>();
+      for (const rule of rules) occurrencesByRule.set(rule.ruleId, [...(occurrencesByRule.get(rule.ruleId) ?? []), rule]);
+      const groupedRules: ChartRuleDetail[] = [...occurrencesByRule.values()].map((occurrences) => ({
+        ...occurrences[0]!,
+        netPnl: occurrences.every((item) => item.netPnl !== null)
+          ? Decimal.sum(...occurrences.map((item) => new Decimal(item.netPnl!))).toFixed()
+          : null,
+        violationCount: occurrences.length,
+      }));
+      const id = `rule-${time}`;
+      annotationDetails.set(id, { candle, event: null, priceAction: null, rules: groupedRules });
+      return [{
+        color: "#9A6700",
+        id,
+        kind: "rule" as const,
+        label: groupedRules.length === 1 ? "1 RULE" : `${groupedRules.length} RULES`,
+        preferredPosition: "above" as const,
+        price: Number(candle.high),
+        time,
+      }];
+    });
     const annotationPrimitive = new TradeAnalyzerAnnotationPrimitive([
       ...executionAnnotations,
+      ...ruleAnnotations,
       ...patternAnnotations,
     ]);
     candles.attachPrimitive(annotationPrimitive);
@@ -557,14 +605,16 @@ export function DailyTradeAnalyzerChart({
       if (!candle) return null;
       const candleEvent = analysis.events.find((event) =>
         event.candleTime !== null && chartBucketTime(event.candleTime, chartInterval) === param.time) ?? null;
-      return { candle, event: candleEvent, priceAction: null };
+      return { candle, event: candleEvent, priceAction: null, rules: [] };
     }
     const handleCrosshairMove = (param: MouseEventParams<Time>) => {
-      if (!pinnedDetailRef.current) setDetail(detailFromEvent(param));
+      if (!pinnedDetailRef.current && !dismissedDetailRef.current) setDetail(detailFromEvent(param));
     };
     const handleClick = (param: MouseEventParams<Time>) => {
-      pinnedDetailRef.current = false;
-      setDetail(detailFromEvent(param));
+      dismissedDetailRef.current = false;
+      const next = detailFromEvent(param);
+      pinnedDetailRef.current = next !== null;
+      setDetail(next);
     };
     chart.subscribeCrosshairMove(handleCrosshairMove);
     chart.subscribeClick(handleClick);
@@ -610,7 +660,7 @@ export function DailyTradeAnalyzerChart({
       eventCandleIndexesRef.current = new Map();
       chart.remove();
     };
-  }, [analysis, chartInterval, chartPatterns, currency, direction, exactTurnoverAvailable]);
+  }, [analysis, chartInterval, chartPatterns, currency, direction, exactTurnoverAvailable, ruleEvidence]);
 
   useEffect(() => {
     selectedEventIdRef.current = selectedEventId;
@@ -829,13 +879,25 @@ export function DailyTradeAnalyzerChart({
             boxShadow: "0 4px 16px rgba(1,30,86,0.12)",
             maxWidth: 310,
             p: 1.25,
-            pointerEvents: "none",
+            pointerEvents: "auto",
             position: "absolute",
             right: 64,
             top: { xs: 92, md: 86 },
             zIndex: 5,
           }}
         >
+          <Button
+            aria-label="Close chart details"
+            onClick={() => {
+              pinnedDetailRef.current = false;
+              dismissedDetailRef.current = true;
+              setDetail(null);
+            }}
+            size="small"
+            sx={{ minWidth: 28, position: "absolute", right: 2, top: 2 }}
+          >
+            ×
+          </Button>
           <Typography sx={{ fontWeight: 850 }} variant="caption">
             {detail.event
               ? easternTime(Math.floor(Date.parse(detail.event.executedAt) / 1000), true)
@@ -867,6 +929,27 @@ export function DailyTradeAnalyzerChart({
             <Typography sx={{ display: "block", fontWeight: 850, mt: 0.5 }} variant="caption">
               {eventLabel(detail.event.kind)}: {detail.event.quantity} shares at {formatPrice(Number(detail.event.price), currency)}
             </Typography>
+          ) : null}
+          {detail.rules.length > 0 ? (
+            <Stack spacing={0.75} sx={{ borderTop: 1, borderColor: "divider", mt: 1, pt: 1 }}>
+              <Typography sx={{ color: "#9A6700", fontWeight: 900 }} variant="caption">
+                Broken rule{detail.rules.length === 1 ? "" : "s"}
+              </Typography>
+              {detail.rules.map((rule) => (
+                <Box key={`${rule.label}:${rule.occurredAt}`}>
+                  <Typography sx={{ fontWeight: 800 }} variant="caption">{rule.label}</Typography>
+                  <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">
+                    {easternTime(Math.floor(Date.parse(rule.occurredAt) / 1000), true)} ET · {rule.violationCount} violation{rule.violationCount === 1 ? "" : "s"} on this candle
+                    {rule.netPnl === null ? " · P/L unavailable" : ` · ${formatPrice(Number(rule.netPnl), currency)} P/L`}
+                  </Typography>
+                  {rule.triggerAt ? (
+                    <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">
+                      Trigger {easternTime(Math.floor(Date.parse(rule.triggerAt) / 1000), true)} ET
+                    </Typography>
+                  ) : null}
+                </Box>
+              ))}
+            </Stack>
           ) : null}
         </Box>
       ) : null}

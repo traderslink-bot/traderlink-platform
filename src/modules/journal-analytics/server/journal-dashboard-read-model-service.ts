@@ -590,19 +590,31 @@ function tradingDayPositions(
 export class JournalDashboardReadModelService {
   constructor(private readonly facts: JournalAnalyticsFactSetService) {}
 
+  private cachedRead: Readonly<{
+    scopeKey: string;
+    value: Readonly<{
+      factSet: JournalAnalyticsFactSet;
+      normalized: NormalizedJournalAnalyticsSet;
+    }>;
+  }> | null = null;
+
   private read(scope: WorkspaceAccessScope): Readonly<{
     factSet: JournalAnalyticsFactSet;
     normalized: NormalizedJournalAnalyticsSet;
   }> {
+    const scopeKey = `${scope.workspaceId}:${activeAccountId(scope)}`;
+    if (this.cachedRead?.scopeKey === scopeKey) return this.cachedRead.value;
     const factSet = this.facts.getJournalAnalyticsFactSet(scope, {
       accountIds: Object.freeze([activeAccountId(scope)]),
       closingDateRange: Object.freeze({ kind: "all_available" as const }),
       currencySelection: Object.freeze({ kind: "all_partitions" as const }),
     });
-    return Object.freeze({
+    const value = Object.freeze({
       factSet,
       normalized: normalizeJournalAnalyticsFacts(factSet),
     });
+    this.cachedRead = Object.freeze({ scopeKey, value });
+    return value;
   }
 
   getCalendar(

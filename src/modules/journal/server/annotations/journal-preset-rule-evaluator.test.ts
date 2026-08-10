@@ -3,6 +3,7 @@ import type {
   JournalTradingDayReadModel,
   JournalTradingDayRoundTrip,
 } from "@/src/modules/journal-analytics/contracts/journal-dashboard-read-models";
+import { JOURNAL_RULE_TEMPLATE_CATALOG } from "./journal-trading-rules-dashboard";
 
 import { evaluateJournalPresetRules } from "./journal-preset-rule-evaluator";
 
@@ -103,6 +104,24 @@ function rule(
 }
 
 describe("Journal preset rule evaluator", () => {
+  it.each(JOURNAL_RULE_TEMPLATE_CATALOG)("returns a complete factual result for $templateId", (template) => {
+    const configuration = template.templateId === "cooldown_after_loss"
+      ? { cooldownMinutes: "15" }
+      : template.exampleConfiguration;
+    const results = evaluateJournalPresetRules([
+      rule(template.templateId, configuration),
+    ], model([
+      trade(1, { entryAtUtc: "2026-08-05T13:30:00.000Z", exitAtUtc: "2026-08-05T13:40:00.000Z", netPnlDecimal: "-10" }),
+      trade(2, { entryAtUtc: "2026-08-05T14:00:00.000Z", exitAtUtc: "2026-08-05T14:10:00.000Z", netPnlDecimal: "20" }),
+    ]), new Set());
+
+    expect(results.length).toBeGreaterThan(0);
+    expect(results.every((result) =>
+      result.ruleVersionId === `version-${template.templateId}` &&
+      result.evidence.feeCoverage === "complete" &&
+      Array.isArray(result.evidence.violations))).toBe(true);
+  });
+
   it("evaluates a same-ticker cooldown from completed flat-to-flat trade times regardless of P/L", () => {
     const results = evaluateJournalPresetRules([
       rule("cooldown_before_same_ticker_reentry", { cooldownMinutes: "15" }),
@@ -152,6 +171,20 @@ describe("Journal preset rule evaluator", () => {
       targetRoundTripId: null,
       status: "broken",
     })]);
+    expect(results[0]?.evidence.trigger).toEqual(expect.objectContaining({
+      kind: "trigger",
+      occurredAtUtc: "2026-08-05T14:10:00.000Z",
+      roundTripId: "trade-3",
+      valueAfter: "2",
+      valueBefore: "1",
+    }));
+    expect(results[0]?.evidence.violations).toEqual([
+      expect.objectContaining({
+        kind: "violation",
+        occurredAtUtc: "2026-08-05T14:15:00.000Z",
+        roundTripId: "trade-4",
+      }),
+    ]);
   });
 
   it("keeps the daily total-loss rule followed when the threshold is reached on the final trade", () => {
@@ -174,5 +207,29 @@ describe("Journal preset rule evaluator", () => {
     ]), new Set());
 
     expect(results).toEqual([expect.objectContaining({ status: "n/a" })]);
+    expect(results[0]?.evidence.limitation).toContain("trade P/L");
+  });
+
+  it("checks only trades inside the exact active interval for a rule version", () => {
+    const configured = {
+      ...rule("no_new_trades_after_time", { cutoffTime: "09:00:00" }),
+      activeIntervals: [{
+        fromUtc: "2026-08-05T14:00:00.000Z",
+        untilUtc: "2026-08-05T15:00:00.000Z",
+      }],
+      effectiveUntilUtc: "2026-08-05T15:00:00.000Z",
+    };
+    const results = evaluateJournalPresetRules([configured], model([
+      trade(1, { entryAtUtc: "2026-08-05T13:30:00.000Z", exitAtUtc: "2026-08-05T13:40:00.000Z", netPnlDecimal: "1" }),
+      trade(2, { entryAtUtc: "2026-08-05T14:10:00.000Z", exitAtUtc: "2026-08-05T14:20:00.000Z", netPnlDecimal: "2" }),
+      trade(3, { entryAtUtc: "2026-08-05T15:10:00.000Z", exitAtUtc: "2026-08-05T15:20:00.000Z", netPnlDecimal: "3" }),
+    ]), new Set());
+
+    expect(results).toHaveLength(1);
+    expect(results[0]).toEqual(expect.objectContaining({
+      ruleVersionId: configured.versionId,
+      status: "broken",
+      targetRoundTripId: "trade-2",
+    }));
   });
 });

@@ -33,7 +33,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   DashboardPage,
@@ -66,8 +66,11 @@ import { ManualExecutionEditDialog } from "../manual-execution-edit-dialog";
 import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
 import {
   DailyTradeAnalyzerChart,
+  type ChartRuleEvidence,
   type DailyTradeChartInterval,
 } from "./daily-trade-analyzer-chart";
+
+const EMPTY_CHART_RULE_EVIDENCE: readonly ChartRuleEvidence[] = Object.freeze([]);
 
 type ApiResult<T> = {
   data?: T;
@@ -1411,7 +1414,65 @@ function statusPresentation(
       label: "N/A",
     };
   }
-  return null;
+  return { color: "default", icon: null, label: "Not selected" };
+}
+
+function ruleEventLabel(event: NonNullable<DaySessionRule["evidence"]>["violations"][number], currency: string): string {
+  const at = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+  }).format(new Date(event.occurredAt));
+  const pnl = event.netPnl === null
+    ? "P/L unavailable"
+    : `${event.netPnl.startsWith("-") ? "-" : ""}${currency === "USD" ? "$" : `${currency} `}${formatJournalAnalyticsDecimal(event.netPnl.replace(/^-/, ""), 2, true)} P/L`;
+  return `${at} · ${pnl}`;
+}
+
+function PresetRuleRow({ currency, rule }: { currency: string; rule: DaySessionRule }) {
+  const [open, setOpen] = useState(false);
+  const presentation = statusPresentation(rule.status);
+  const canOpen = rule.status === "broken" || rule.status === "n/a";
+  return (
+    <Box sx={{ py: 0.65 }}>
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}>
+        <Typography sx={{ lineHeight: 1.25, pr: 0.5 }} variant="body2">{rule.label}</Typography>
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", flexShrink: 0 }}>
+          {canOpen ? (
+            <Button aria-expanded={open} onClick={() => setOpen((value) => !value)} size="small">
+              {rule.status === "n/a" ? "Why N/A" : "Details"}
+            </Button>
+          ) : null}
+          {presentation ? <Chip color={presentation.color} icon={presentation.icon ? <presentation.icon /> : undefined} label={presentation.label} size="small" /> : null}
+        </Stack>
+      </Stack>
+      <Collapse in={open}>
+        <Box sx={{ bgcolor: "rgba(154, 103, 0, 0.06)", borderLeft: "3px solid #9A6700", mt: 0.75, p: 1.25 }}>
+          <Typography color="text.secondary" sx={{ display: "block", mb: 0.75 }} variant="caption">
+            Fee coverage: {rule.evidence?.feeCoverage ?? "unavailable"}
+          </Typography>
+          {rule.evidence?.limitation ? <Typography variant="body2">{rule.evidence.limitation}</Typography> : null}
+          {rule.evidence?.trigger ? (
+            <Box>
+              <Typography color="text.secondary" variant="caption">Trigger</Typography>
+              <Typography variant="body2">{ruleEventLabel(rule.evidence.trigger, currency)}</Typography>
+              {rule.evidence.trigger.valueBefore !== null || rule.evidence.trigger.valueAfter !== null ? (
+                <Typography color="text.secondary" variant="caption">
+                  {rule.evidence.trigger.valueBefore ?? "Unavailable"} → {rule.evidence.trigger.valueAfter ?? "Unavailable"}
+                </Typography>
+              ) : null}
+            </Box>
+          ) : null}
+          {(rule.evidence?.violations.length ?? 0) > 0 ? (
+            <Stack spacing={0.5} sx={{ mt: rule.evidence?.trigger ? 1 : 0 }}>
+              <Typography color="text.secondary" variant="caption">Violating trade{rule.evidence!.violations.length === 1 ? "" : "s"}</Typography>
+              {rule.evidence!.violations.map((item) => <Typography key={`${item.roundTripKey}:${item.occurredAt}`} variant="body2">{ruleEventLabel(item, currency)}</Typography>)}
+            </Stack>
+          ) : null}
+        </Box>
+      </Collapse>
+    </Box>
+  );
 }
 
 function TradeReview({
@@ -1428,6 +1489,7 @@ function TradeReview({
   onManageTags,
   onOpen,
   onRuleStatusChange,
+  onRuleNoteSave,
   onSaveNotes,
   onSelectAnalysisEvent,
   onSelectForChart,
@@ -1459,6 +1521,7 @@ function TradeReview({
     rule: DaySessionRule,
     status: DaySessionRule["status"],
   ) => Promise<void>;
+  onRuleNoteSave: (rule: DaySessionRule, note: string) => Promise<void>;
   onSaveNotes: () => Promise<void>;
   onSelectAnalysisEvent: (eventId: string | null) => void;
   onSelectForChart?: () => void;
@@ -1485,6 +1548,7 @@ function TradeReview({
   const selectedCustomRule =
     customRules.find((rule) => rule.ruleId === selectedCustomRuleId) ??
     customRules[0];
+  const [customRuleNote, setCustomRuleNote] = useState(selectedCustomRule?.note ?? "");
   const finalExit = { patterns: analyzer?.events.find((event) => event.kind === "final_exit")?.patterns ?? [] };
   const selectedAnalysisEvent = selectedAnalysisEventId
     ? analyzer?.events.find((event) => event.eventId === selectedAnalysisEventId) ?? null
@@ -1519,7 +1583,10 @@ function TradeReview({
     >
       <TextField
         label="Custom rule"
-        onChange={(event) => setSelectedCustomRuleId(event.target.value)}
+        onChange={(event) => {
+          setSelectedCustomRuleId(event.target.value);
+          setCustomRuleNote(customRules.find((rule) => rule.ruleId === event.target.value)?.note ?? "");
+        }}
         select
         size="small"
         value={selectedCustomRule?.ruleId ?? ""}
@@ -1545,10 +1612,23 @@ function TradeReview({
         size="small"
         value={selectedCustomRule?.status ?? "not-reviewed"}
       >
-        <MenuItem value="not-reviewed">Not reviewed</MenuItem>
+        <MenuItem value="not-reviewed">Not selected</MenuItem>
         <MenuItem value="followed">Followed</MenuItem>
         <MenuItem value="broken">Broken</MenuItem>
       </TextField>
+      <Box sx={{ gridColumn: { sm: "1 / -1" } }}>
+        <TextField
+          fullWidth
+          label="Rule note (optional)"
+          minRows={2}
+          multiline
+          onChange={(event) => setCustomRuleNote(event.target.value)}
+          value={customRuleNote}
+        />
+        <Button disabled={readOnly || !selectedCustomRule} onClick={() => selectedCustomRule ? void onRuleNoteSave(selectedCustomRule, customRuleNote) : undefined} size="small" sx={{ mt: 0.5 }}>
+          {selectedCustomRule?.note ? "Update note" : "Add note"}
+        </Button>
+      </Box>
     </Box>
   );
   const followedPresetCount = presetRules.filter((rule) => rule.status === "followed").length;
@@ -1559,7 +1639,7 @@ function TradeReview({
     followedPresetCount > 0 ? `${followedPresetCount} followed` : null,
     brokenPresetCount > 0 ? `${brokenPresetCount} broken` : null,
     unavailablePresetCount > 0 ? `${unavailablePresetCount} N/A` : null,
-    pendingPresetCount > 0 ? `${pendingPresetCount} not reviewed` : null,
+    pendingPresetCount > 0 ? `${pendingPresetCount} not selected` : null,
   ].filter((item): item is string => item !== null).join(" · ") || "No preset rules selected";
   const renderRuleDetails = () => (
     <>
@@ -1569,29 +1649,7 @@ function TradeReview({
         </Typography>
         {presetRules.length > 0 ? (
           <Stack divider={<Divider flexItem />} spacing={0}>
-            {presetRules.map((rule) => {
-              const presentation = statusPresentation(rule.status);
-              return (
-                <Stack
-                  direction="row"
-                  key={rule.ruleId}
-                  spacing={1}
-                  sx={{ alignItems: "center", justifyContent: "space-between", py: 0.4 }}
-                >
-                  <Typography sx={{ lineHeight: 1.25, pr: 0.5 }} variant="body2">
-                    {rule.label}
-                  </Typography>
-                  {presentation ? (
-                    <Chip
-                      color={presentation.color}
-                      icon={presentation.icon ? <presentation.icon /> : undefined}
-                      label={presentation.label}
-                      size="small"
-                    />
-                  ) : null}
-                </Stack>
-              );
-            })}
+            {presetRules.map((rule) => <PresetRuleRow currency={currency} key={`${rule.ruleId}:${rule.ruleVersion}`} rule={rule} />)}
           </Stack>
         ) : (
           <Button
@@ -2305,6 +2363,28 @@ export function DaySessionView({
     0,
   );
   const tickerCount = data.tickers.length;
+  const brokenRules = rules.filter((rule) => rule.status === "broken");
+  const brokenRuleCount = new Set(brokenRules.map((rule) => `${rule.ruleId}:${rule.ruleVersion}`)).size;
+  const brokenEventCount = brokenRules.reduce((count, rule) =>
+    count + (rule.custom ? 1 : Math.max(1, rule.evidence?.violations.length ?? 0)), 0);
+  const chartRuleEvidenceByRoundTrip = useMemo(() => {
+    const byRoundTrip: Record<string, ChartRuleEvidence[]> = {};
+    for (const rule of rules.filter((candidate) => candidate.status === "broken" && !candidate.custom)) {
+      for (const violation of rule.evidence?.violations ?? []) {
+        byRoundTrip[violation.roundTripKey] = [
+          ...(byRoundTrip[violation.roundTripKey] ?? []),
+          {
+            label: rule.label,
+            netPnl: violation.netPnl,
+            occurredAt: violation.occurredAt,
+            ruleId: rule.ruleId,
+            triggerAt: rule.evidence?.trigger?.occurredAt ?? null,
+          },
+        ];
+      }
+    }
+    return byRoundTrip;
+  }, [rules]);
   const dayPresetRules = rules.filter(
     (rule) => rule.applicability === "day" && !rule.custom,
   );
@@ -2314,6 +2394,11 @@ export function DaySessionView({
   const selectedDayCustomRule =
     dayCustomRules.find((rule) => rule.ruleId === selectedDayCustomRuleId) ??
     dayCustomRules[0];
+  const [dailyRuleNote, setDailyRuleNote] = useState(selectedDayCustomRule?.note ?? "");
+  const dayRuleTimeline = dayPresetRules.flatMap((rule) => [
+    ...(rule.evidence?.trigger ? [{ at: rule.evidence.trigger.occurredAt, kind: "Trigger", rule }] : []),
+    ...(rule.evidence?.violations ?? []).map((violation) => ({ at: violation.occurredAt, kind: "Broken event", rule })),
+  ]).sort((left, right) => left.at.localeCompare(right.at));
 
   function updateTradeNote(targetKey: string, tradeNote: string): void {
     setTradeNotes((current) => current[targetKey] === tradeNote
@@ -2365,7 +2450,9 @@ export function DaySessionView({
       const dayRule: DaySessionRule = {
         applicability: "day",
         custom: true,
+        evidence: null,
         label: created.title,
+        note: "",
         revision: null,
         ruleId: created.ruleId,
         ruleVersion: created.ruleVersionId,
@@ -2396,6 +2483,7 @@ export function DaySessionView({
       setRules((current) =>
         current.map((rule) =>
           rule.ruleId === selectedRule.ruleId &&
+          rule.ruleVersion === selectedRule.ruleVersion &&
           rule.targetRoundTripKey === selectedRule.targetRoundTripKey
             ? { ...rule, status }
             : rule,
@@ -2424,11 +2512,43 @@ export function DaySessionView({
     setRules((current) =>
       current.map((rule) =>
         rule.ruleId === selectedRule.ruleId &&
+        rule.ruleVersion === selectedRule.ruleVersion &&
         rule.targetRoundTripKey === selectedRule.targetRoundTripKey
           ? { ...rule, revision: saved.revision, status: saved.status }
           : rule,
       ),
     );
+  }
+
+  async function saveRuleNote(selectedRule: DaySessionRule, note: string): Promise<void> {
+    if (readOnly) return;
+    if (designPreview || (pendingExecutions && selectedRule.applicability === "trade")) {
+      setRules((current) => current.map((rule) =>
+        rule.ruleId === selectedRule.ruleId && rule.ruleVersion === selectedRule.ruleVersion && rule.targetRoundTripKey === selectedRule.targetRoundTripKey
+          ? { ...rule, note }
+          : rule));
+      return;
+    }
+    const saved = await api<{ note: string; revision: string; status: DaySessionRule["status"] }>(
+      `/api/intelligence/day-session/${encodeURIComponent(data.date)}/rule-reviews`,
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          applicability: selectedRule.applicability,
+          expectedAccountSelectionRef: data.expectedAccountSelectionRef,
+          expectedRevision: selectedRule.revision,
+          note,
+          ruleId: selectedRule.ruleId,
+          ruleVersion: selectedRule.ruleVersion,
+          status: selectedRule.status,
+          targetRoundTripKey: selectedRule.targetRoundTripKey,
+        }),
+      },
+    );
+    setRules((current) => current.map((rule) =>
+      rule.ruleId === selectedRule.ruleId && rule.ruleVersion === selectedRule.ruleVersion && rule.targetRoundTripKey === selectedRule.targetRoundTripKey
+        ? { ...rule, note: saved.note, revision: saved.revision, status: saved.status }
+        : rule));
   }
 
   async function saveTradeNotes(roundTripKey: string): Promise<boolean> {
@@ -2744,7 +2864,7 @@ export function DaySessionView({
             gap: 2,
             gridTemplateColumns: {
               xs: "repeat(2, minmax(0, 1fr))",
-              md: "repeat(4, minmax(0, 1fr))",
+              md: "repeat(5, minmax(0, 1fr))",
             },
             mt: 2.5,
           }}
@@ -2755,9 +2875,10 @@ export function DaySessionView({
             ["Tickers", String(tickerCount), "text.primary"],
             [
               "Rules broken",
-              String(rules.filter((rule) => rule.status === "broken").length),
+              String(brokenRuleCount),
               "error.main",
             ],
+            ["Broken events", String(brokenEventCount), "error.main"],
           ].map(([label, value, color]) => (
             <Box
               key={label}
@@ -2821,6 +2942,7 @@ export function DaySessionView({
                     [ticker.stableInstrumentKey]: interval,
                   }));
                 }}
+                ruleEvidence={chartRuleEvidenceByRoundTrip[selectedTrade.roundTripKey] ?? EMPTY_CHART_RULE_EVIDENCE}
                 selectedEventId={selectedAnalysisEventIds[selectedTrade.roundTripKey] ?? null}
                 symbol={ticker.symbol}
                 tradeLabelColor={pnlColor(selectedTrade.netPnl) === "success.main" ? "success" : "error"}
@@ -2928,6 +3050,7 @@ export function DaySessionView({
                     noteState={tradeNoteStates[roundTrip.roundTripKey] ?? "idle"}
                     onOpen={() => selectTrade(roundTrip.roundTripKey, true)}
                     onRuleStatusChange={saveRuleStatus}
+                    onRuleNoteSave={saveRuleNote}
                     onSaveNotes={async () => {
                       await saveTradeNotes(roundTrip.roundTripKey);
                     }}
@@ -3264,29 +3387,7 @@ export function DaySessionView({
             </Typography>
             {dayPresetRules.length > 0 ? (
               <Stack divider={<Divider flexItem />} spacing={0}>
-                {dayPresetRules.map((rule) => {
-                  const presentation = statusPresentation(rule.status);
-                  return (
-                    <Stack
-                      direction="row"
-                      key={rule.ruleId}
-                      spacing={1}
-                      sx={{ alignItems: "center", justifyContent: "space-between", py: 0.5 }}
-                    >
-                      <Typography sx={{ lineHeight: 1.25, pr: 0.5 }} variant="body2">
-                        {rule.label}
-                      </Typography>
-                      {presentation ? (
-                        <Chip
-                          color={presentation.color}
-                          icon={presentation.icon ? <presentation.icon /> : undefined}
-                          label={presentation.label}
-                          size="small"
-                        />
-                      ) : null}
-                    </Stack>
-                  );
-                })}
+                {dayPresetRules.map((rule) => <PresetRuleRow currency={data.currency} key={`${rule.ruleId}:${rule.ruleVersion}`} rule={rule} />)}
               </Stack>
             ) : (
               <Button
@@ -3315,11 +3416,15 @@ export function DaySessionView({
                 You have no custom rules set up.
               </Typography>
             ) : (
+              <>
               <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
                 <TextField
                   fullWidth
                   label="Custom day rule"
-                  onChange={(event) => setSelectedDayCustomRuleId(event.target.value)}
+                  onChange={(event) => {
+                    setSelectedDayCustomRuleId(event.target.value);
+                    setDailyRuleNote(dayCustomRules.find((rule) => rule.ruleId === event.target.value)?.note ?? "");
+                  }}
                   select
                   size="small"
                   value={selectedDayCustomRule?.ruleId ?? ""}
@@ -3346,11 +3451,24 @@ export function DaySessionView({
                   sx={{ minWidth: 145 }}
                   value={selectedDayCustomRule?.status ?? "not-reviewed"}
                 >
-                  <MenuItem value="not-reviewed">Not reviewed</MenuItem>
+                  <MenuItem value="not-reviewed">Not selected</MenuItem>
                   <MenuItem value="followed">Followed</MenuItem>
                   <MenuItem value="broken">Broken</MenuItem>
                 </TextField>
               </Stack>
+              <TextField
+                fullWidth
+                label="Rule note (optional)"
+                minRows={2}
+                multiline
+                onChange={(event) => setDailyRuleNote(event.target.value)}
+                sx={{ mt: 1 }}
+                value={dailyRuleNote}
+              />
+              <Button disabled={readOnly || !selectedDayCustomRule} onClick={() => selectedDayCustomRule ? void saveRuleNote(selectedDayCustomRule, dailyRuleNote) : undefined} size="small" sx={{ mt: 0.5 }}>
+                {selectedDayCustomRule?.note ? "Update note" : "Add note"}
+              </Button>
+              </>
             )}
             <Button
               disabled={readOnly}
@@ -3364,6 +3482,23 @@ export function DaySessionView({
               Add custom day rule
             </Button>
           </Box>
+        </Box>
+        <Box sx={{ borderTop: 1, borderColor: "divider", mt: 2, pt: 2 }}>
+          <Typography sx={{ fontWeight: 750 }} variant="body2">Daily rules timeline</Typography>
+          {dayRuleTimeline.length === 0 ? (
+            <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">No preset rule trigger or violation was recorded for this day.</Typography>
+          ) : (
+            <Stack divider={<Divider flexItem />} sx={{ mt: 0.75 }}>
+              {dayRuleTimeline.map(({ rule, at, kind }, index) => (
+                <Stack direction={{ xs: "column", sm: "row" }} key={`${rule.ruleId}:${at}:${kind}:${index}`} sx={{ gap: { xs: 0.25, sm: 1.5 }, py: 0.75 }}>
+                  <Typography color="text.secondary" sx={{ minWidth: 92 }} variant="caption">
+                    {new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit" }).format(new Date(at))}
+                  </Typography>
+                  <Typography variant="body2">{rule.label} · {kind}</Typography>
+                </Stack>
+              ))}
+            </Stack>
+          )}
         </Box>
         <Dialog
           fullWidth
@@ -3413,13 +3548,13 @@ export function DaySessionView({
           </DialogActions>
         </Dialog>
         <Stack divider={<Divider flexItem />} sx={{ display: "none" }}>
-          {rules.filter((rule) => rule.applicability === "day").length === 0 ? (
+          {rules.filter((rule) => rule.applicability === "day" && rule.custom).length === 0 ? (
             <Typography color="text.secondary" sx={{ py: 1.5 }} variant="body2">
               No rule reviews recorded for this trading day.
             </Typography>
           ) : null}
           {rules
-            .filter((rule) => rule.applicability === "day")
+            .filter((rule) => rule.applicability === "day" && rule.custom)
             .map((rule) => {
             return (
               <Box
@@ -3456,7 +3591,7 @@ export function DaySessionView({
                   sx={{ minWidth: 145 }}
                   value={rule.status}
                 >
-                  <MenuItem value="not-reviewed">Not reviewed</MenuItem>
+                  <MenuItem value="not-reviewed">Not selected</MenuItem>
                   <MenuItem value="followed">Followed</MenuItem>
                   <MenuItem value="broken">Broken</MenuItem>
                 </TextField>

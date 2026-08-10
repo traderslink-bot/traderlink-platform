@@ -193,13 +193,29 @@ export type DaySessionOpenPosition = {
 export type DaySessionRule = {
   applicability: "day" | "trade";
   custom: boolean;
+  evidence: {
+    feeCoverage: "complete" | "partial" | "unavailable";
+    limitation: string | null;
+    trigger: DaySessionRuleEvidenceEvent | null;
+    violations: DaySessionRuleEvidenceEvent[];
+  } | null;
   label: string;
+  note: string;
   revision: string | null;
   ruleId: string;
   ruleVersion: string;
   status: "followed" | "broken" | "not-reviewed" | "n/a";
   targetLabel: string | null;
   targetRoundTripKey: string | null;
+};
+
+export type DaySessionRuleEvidenceEvent = {
+  kind: "trigger" | "violation";
+  netPnl: string | null;
+  occurredAt: string;
+  roundTripKey: string;
+  valueAfter: string | null;
+  valueBefore: string | null;
 };
 
 export type DaySessionDailyNote = {

@@ -426,9 +426,26 @@ WHERE round_trip_id = ?`)
       targetKind: "round_trip",
       targetId: context.first.roundTripId,
       status: "followed",
+      note: "The setup confirmed after the catalyst.",
       expectedRevision: null,
       now: new Date(at),
     });
+    expect(review.note).toBe("The setup confirmed after the catalyst.");
+    const noteOnlyRevision = context.service.saveRuleReview(context.first.scope, {
+      ruleId: created.ruleId,
+      ruleVersionId: created.versionId,
+      targetKind: "round_trip",
+      targetId: context.first.roundTripId,
+      status: "followed",
+      note: "The catalyst and tape both confirmed the entry.",
+      expectedRevision: review.revision,
+      now: new Date("2026-08-02T12:00:30.000Z"),
+    });
+    expect(noteOnlyRevision).toEqual(expect.objectContaining({
+      note: "The catalyst and tape both confirmed the entry.",
+      revision: 2,
+      status: "followed",
+    }));
     const revised = context.service.reviseRule(context.first.scope, {
       ruleId: created.ruleId,
       expectedRevision: created.revision,
@@ -457,6 +474,21 @@ FROM journal_rule_versions WHERE rule_id = ?`).get(created.ruleId)).toEqual({
     expect(context.database.prepare(`SELECT COUNT(*) AS count
 FROM journal_rule_lifecycle_events WHERE rule_id = ?`).get(created.ruleId))
       .toEqual({ count: 2 });
+    expect(context.service.listRulesForEvaluation(
+      context.first.scope,
+      "2026-08-02T12:00:30.000Z",
+      "2026-08-02T12:00:45.000Z",
+    )).toEqual([expect.objectContaining({ versionId: created.versionId })]);
+    expect(context.service.listRulesForEvaluation(
+      context.first.scope,
+      "2026-08-02T12:01:30.000Z",
+      "2026-08-02T12:01:45.000Z",
+    )).toEqual([expect.objectContaining({ versionId: revised.versionId })]);
+    expect(context.service.listRulesForEvaluation(
+      context.first.scope,
+      "2026-08-02T12:02:30.000Z",
+      "2026-08-02T12:02:45.000Z",
+    )).toEqual([]);
     context.database.close();
   });
 

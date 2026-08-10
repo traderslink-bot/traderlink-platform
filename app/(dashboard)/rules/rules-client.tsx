@@ -29,6 +29,7 @@ import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import Link from "next/link";
 
 import {
   DashboardMetricCard,
@@ -388,6 +389,9 @@ export function RulesClient({
           </Typography>
         </Box>
         <Stack direction="row" spacing={1}>
+          <Button component={Link} href="/rules/results" variant="outlined">
+            Rule Results
+          </Button>
           <Button
             onClick={() =>
               document

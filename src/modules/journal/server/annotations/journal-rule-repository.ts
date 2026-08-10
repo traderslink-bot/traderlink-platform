@@ -37,8 +37,15 @@ type ReviewRow = Readonly<{
   trading_day_id: string | null;
   round_trip_id: string | null;
   status: JournalRuleReviewStatus;
+  note_text: string;
   revision: number;
   updated_at_utc: string;
+}>;
+
+type LifecycleRow = Readonly<{
+  rule_id: string;
+  new_state: JournalRuleLifecycleState;
+  effective_at_utc: string;
 }>;
 
 const RULE_SELECT = `SELECT r.rule_id, r.source_kind, r.template_key,
@@ -53,7 +60,7 @@ JOIN journal_rule_versions v
 
 const REVIEW_SELECT = `SELECT r.rule_review_id, r.rule_id,
   v.rule_version_id, r.target_kind, r.trading_day_id, r.round_trip_id,
-  v.status, r.revision, r.updated_at_utc
+  v.status, v.note_text, r.revision, r.updated_at_utc
 FROM journal_rule_reviews r
 JOIN journal_rule_review_versions v
   ON v.workspace_id = r.workspace_id AND v.account_id = r.account_id
@@ -102,6 +109,7 @@ function mapReview(row: ReviewRow): JournalRuleReviewRecord {
     tradingDayId: row.trading_day_id,
     roundTripId: row.round_trip_id,
     status: row.status,
+    note: row.note_text,
     revision: Number(row.revision),
     updatedAtUtc: row.updated_at_utc,
   });
@@ -123,6 +131,58 @@ ORDER BY r.updated_at_utc DESC, r.rule_id`).all(
       scope.workspaceId,
       scope.accountId,
     ) as RuleRow[]).map(mapRule));
+  }
+
+  listForEvaluation(
+    scope: AccountScope,
+    fromUtc: string,
+    untilUtc: string,
+  ): readonly JournalRuleRecord[] {
+    const versions = this.database.prepare(`SELECT r.rule_id, r.source_kind, r.template_key,
+  r.lifecycle_state, r.revision, v.rule_version_id AS current_version_id,
+  v.version_number, v.title, v.statement, v.category, v.review_scope,
+  v.is_focus, v.configuration_json, v.effective_from_utc,
+  r.created_at_utc, r.updated_at_utc
+FROM journal_rules r
+JOIN journal_rule_versions v
+  ON v.workspace_id = r.workspace_id AND v.account_id = r.account_id AND v.rule_id = r.rule_id
+WHERE r.workspace_id = ? AND r.account_id = ? AND v.effective_from_utc < ?
+ORDER BY r.rule_id, v.effective_from_utc, v.version_number`).all(
+      scope.workspaceId, scope.accountId, untilUtc,
+    ) as RuleRow[];
+    const lifecycle = this.database.prepare(`SELECT rule_id, new_state, effective_at_utc
+FROM journal_rule_lifecycle_events
+WHERE workspace_id = ? AND account_id = ? AND effective_at_utc < ?
+ORDER BY rule_id, effective_at_utc, sequence_number`).all(
+      scope.workspaceId, scope.accountId, untilUtc,
+    ) as LifecycleRow[];
+    const eventsByRule = new Map<string, LifecycleRow[]>();
+    for (const event of lifecycle) eventsByRule.set(event.rule_id, [...(eventsByRule.get(event.rule_id) ?? []), event]);
+    return Object.freeze(versions.flatMap((row, index) => {
+      const next = versions.slice(index + 1).find((candidate) => candidate.rule_id === row.rule_id);
+      const versionUntil = next?.effective_from_utc ?? null;
+      const events = eventsByRule.get(row.rule_id) ?? [];
+      const activeIntervals: Array<{ fromUtc: string; untilUtc: string | null }> = [];
+      let activeFrom: string | null = null;
+      for (const event of events) {
+        if (event.new_state === "active" && activeFrom === null) activeFrom = event.effective_at_utc;
+        if (event.new_state !== "active" && activeFrom !== null) {
+          activeIntervals.push({ fromUtc: activeFrom, untilUtc: event.effective_at_utc });
+          activeFrom = null;
+        }
+      }
+      if (activeFrom !== null) activeIntervals.push({ fromUtc: activeFrom, untilUtc: null });
+      const intersects = activeIntervals.some((interval) =>
+        interval.fromUtc < untilUtc && (!interval.untilUtc || interval.untilUtc > fromUtc) &&
+        row.effective_from_utc < untilUtc && (!versionUntil || versionUntil > fromUtc));
+      if (!intersects) return [];
+      return [{
+        ...mapRule(row),
+        activeIntervals: Object.freeze(activeIntervals),
+        effectiveUntilUtc: versionUntil,
+        lifecycleState: "active" as const,
+      }];
+    }));
   }
 
   find(scope: AccountScope, ruleId: string): JournalRuleRecord | null {
@@ -308,6 +368,7 @@ WHERE workspace_id = ? AND account_id = ? AND rule_id = ?
     targetKind: "trading_day" | "round_trip";
     targetId: string;
     status: JournalRuleReviewStatus;
+    note?: string;
     timestamp: string;
   }>): void {
     this.database.prepare(`INSERT INTO journal_rule_reviews (
@@ -332,16 +393,17 @@ WHERE workspace_id = ? AND account_id = ? AND rule_id = ?
     ruleId: string;
     ruleVersionId: string;
     status: JournalRuleReviewStatus;
+    note?: string;
     timestamp: string;
   }>): void {
     this.database.prepare(`INSERT INTO journal_rule_review_versions (
   rule_review_version_id, workspace_id, account_id, rule_review_id,
-  version_number, rule_id, rule_version_id, status, authored_by_user_id,
+  version_number, rule_id, rule_version_id, status, note_text, authored_by_user_id,
   created_at_utc
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
       .run(input.reviewVersionId, input.scope.workspaceId,
         input.scope.accountId, input.reviewId, input.versionNumber,
-        input.ruleId, input.ruleVersionId, input.status, input.scope.userId,
+        input.ruleId, input.ruleVersionId, input.status, input.note ?? "", input.scope.userId,
         input.timestamp);
   }
 

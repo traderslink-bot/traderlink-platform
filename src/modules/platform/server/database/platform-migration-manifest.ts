@@ -9,6 +9,7 @@ import { journalImportOperationsMigration } from "@/src/modules/journal/server/d
 import { journalTradeTrackingAndReconciliationMigration } from "@/src/modules/journal/server/database/migrations/0021_journal_trade_tracking_and_reconciliation";
 import { journalTradingDayReviewsMigration } from "@/src/modules/journal/server/database/migrations/0022_journal_trading_day_reviews";
 import { moomooExecutionImportFoundationMigration } from "@/src/modules/journal/server/database/migrations/0047_moomoo_execution_import_foundation";
+import { journalRuleReviewNotesMigration } from "@/src/modules/journal/server/database/migrations/0052_journal_rule_review_notes";
 import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
 import { levelAnalysisCandleReviewMigration } from "@/src/modules/level-analysis/server/database/migrations/0009_level_analysis_candle_review";
 import { levelAnalysisDeliveriesMigration } from "@/src/modules/level-analysis/server/database/migrations/0010_level_analysis_deliveries";
@@ -266,6 +267,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/coach/server/database/migrations/0051_coach_ai_review_cache_write_accounting.ts",
       migration: coachAiReviewCacheWriteAccountingMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/journal/server/database/migrations/0052_journal_rule_review_notes.ts",
+      migration: journalRuleReviewNotesMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -511,6 +516,7 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     ]),
     "0050_coach_ai_review_subscriber_budget_safeguards": Object.freeze([]),
     "0051_coach_ai_review_cache_write_accounting": Object.freeze([]),
+    "0052_journal_rule_review_notes": Object.freeze([]),
   });
 
 export function expectedPlatformTableNamesForPrefix(

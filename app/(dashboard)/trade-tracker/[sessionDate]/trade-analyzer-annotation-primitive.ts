@@ -13,7 +13,7 @@ import type {
 export type TradeAnalyzerAnnotation = Readonly<{
   color: string;
   id: string;
-  kind: "execution" | "pattern";
+  kind: "execution" | "pattern" | "rule";
   label: string;
   price: number;
   preferredPosition: "above" | "below";
@@ -56,7 +56,7 @@ class AnnotationRenderer implements IPrimitivePaneRenderer {
         context.textAlign = "center";
         context.textBaseline = "middle";
 
-        if (item.kind === "execution") {
+        if (item.kind === "execution" || item.kind === "rule") {
           const lineEndX = Math.max(item.x, Math.min(item.x + item.width, item.anchorX));
           const lineEndY = item.anchorY < item.y
             ? item.y
@@ -64,13 +64,13 @@ class AnnotationRenderer implements IPrimitivePaneRenderer {
               ? item.y + item.height
               : item.anchorY;
           context.strokeStyle = item.color;
-          context.lineWidth = selected ? 2.75 : 1.75;
+          context.lineWidth = item.kind === "rule" ? (selected ? 2 : 1.25) : (selected ? 2.75 : 1.75);
           context.beginPath();
           context.moveTo(item.anchorX, item.anchorY);
           context.lineTo(lineEndX, lineEndY);
           context.stroke();
 
-          context.fillStyle = selected ? "#fff7d6" : "#ffffff";
+          context.fillStyle = item.kind === "rule" ? item.color : selected ? "#fff7d6" : "#ffffff";
           context.strokeStyle = item.color;
           context.lineWidth = selected ? 3 : 2;
           if (selected) {
@@ -81,7 +81,7 @@ class AnnotationRenderer implements IPrimitivePaneRenderer {
           context.roundRect(item.x, item.y, item.width, item.height, 4);
           context.fill();
           context.stroke();
-          context.fillStyle = item.color;
+          context.fillStyle = item.kind === "rule" ? "#ffffff" : item.color;
           context.font = "900 11px Arial, sans-serif";
           context.fillText(item.label, textX, textY);
         } else {
@@ -208,7 +208,7 @@ export class TradeAnalyzerAnnotationPrimitive implements ISeriesPrimitive<Time> 
     };
 
     const ordered = [...this.annotations].sort((left, right) =>
-      left.kind === right.kind ? left.time - right.time : left.kind === "execution" ? -1 : 1);
+      left.kind === right.kind ? left.time - right.time : left.kind === "execution" ? -1 : right.kind === "execution" ? 1 : left.kind === "rule" ? -1 : 1);
 
     this.rendered = ordered.flatMap((annotation): RenderedAnnotation[] => {
       const anchorX = chart.timeScale().timeToCoordinate(annotation.time as Time);
@@ -218,9 +218,11 @@ export class TradeAnalyzerAnnotationPrimitive implements ISeriesPrimitive<Time> 
 
       const labelWidth = annotation.kind === "execution"
         ? Math.max(58, Math.min(78, annotation.label.length * 7 + 14))
+        : annotation.kind === "rule"
+          ? Math.max(62, Math.min(92, annotation.label.length * 7 + 16))
         : Math.max(44, Math.min(90, annotation.label.length * 5.8 + 6));
-      const labelHeight = annotation.kind === "execution" ? 24 : 20;
-      const distances = annotation.kind === "execution" ? [42, 74, 106, 138] : [18, 42, 66, 90];
+      const labelHeight = annotation.kind === "execution" || annotation.kind === "rule" ? 24 : 20;
+      const distances = annotation.kind === "execution" ? [42, 74, 106, 138] : annotation.kind === "rule" ? [96, 132, 168, 204] : [18, 42, 66, 90];
       const candidates = distances.flatMap((distance) => {
         const y = annotation.preferredPosition === "above"
           ? anchorY - labelHeight - distance

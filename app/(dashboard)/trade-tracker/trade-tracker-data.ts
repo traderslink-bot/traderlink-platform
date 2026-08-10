@@ -56,7 +56,9 @@ export function getWorkingDayReviewConfiguration(
       applicability:
         rule.template.scope === "trade" ? ("trade" as const) : ("day" as const),
       custom: false,
+      evidence: null,
       label: rule.template.label,
+      note: "",
       revision: null,
       ruleId: rule.ruleInstanceId,
       ruleVersion: rule.currentVersion.versionOrdinal,
@@ -67,7 +69,9 @@ export function getWorkingDayReviewConfiguration(
     .flatMap((rule) => {
       const shared = {
         custom: true,
+        evidence: null,
         label: rule.title,
+        note: "",
         revision: null,
         ruleId: rule.ruleId,
         ruleVersion: rule.versionOrdinal,
@@ -406,6 +410,8 @@ export async function getGovernedDaySession(
     );
     return {
       ...definition,
+      evidence: null,
+      note: "",
       revision: review?.revision ?? null,
       status: review?.status ?? ("not-reviewed" as const),
     };

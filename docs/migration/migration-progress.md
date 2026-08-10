@@ -1,5 +1,11 @@
 # TraderLink Platform Migration Progress
 
+**Notifications and AI import repair:** The owner authorized the shared
+[Notifications And AI Import Repair Plan](notifications-and-ai-import-repair-plan.md)
+and its [progress record](notifications-and-ai-import-repair-progress.md) on
+2026-08-10. The feature is in implementation; production Railway/OpenAI/Discord
+configuration remains a separate hosted activation gate.
+
 ## 2026-08-09 AI Review subscriber and cache-write safeguards
 
 - AI Reviews local beta source and documentation are checkpointed at
@@ -155,6 +161,11 @@ coverage notices and missing Calendar annotation indicators. The owner-approved
 The owner-approved [Cooldown After Loss Rule Progress](cooldown-after-loss-rule-progress.md)
 records the active addition of a trader-configured, automatically evaluated
 Day-trade cooldown preset; owner visual review remains required.
+The owner-approved [Trading Rules Evidence And Results Plan](trading-rules-evidence-and-results-plan.md)
+and [progress record](trading-rules-evidence-and-results-progress.md) now control
+the factual preset-evidence, manual Not selected/note, Daily Tracker disclosure,
+grouped chart-marker and `/rules/results` implementation. That feature reports
+facts only and never recommends keeping, removing or changing a rule.
 The correction preserves server preview/validation, immutable evidence,
 account isolation and Data Decisions while replacing internal/system language
 with focused trader questions. Earlier Tracker browser acceptance remains

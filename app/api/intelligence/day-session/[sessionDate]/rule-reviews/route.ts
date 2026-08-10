@@ -30,6 +30,7 @@ function nullableRevision(value: unknown): number | null {
 
 function reviewView(review: JournalRuleReviewRecord) {
   return {
+    note: review.note,
     revision: String(review.revision),
     status: review.status === "not_reviewed" ? "not-reviewed" : review.status,
   };
@@ -48,10 +49,12 @@ export async function PUT(
       if (typeof body.ruleId !== "string" || typeof body.ruleVersion !== "string") {
         platformFailure("TRADERLINK_JOURNAL_ANNOTATION_INVALID");
       }
-      const rule = service.listRules(account).find((candidate) =>
+      const rangeStart = `${sessionDate}T00:00:00.000Z`;
+      const rangeEndDate = new Date(rangeStart);
+      rangeEndDate.setUTCDate(rangeEndDate.getUTCDate() + 2);
+      const rule = service.listRulesForEvaluation(account, rangeStart, rangeEndDate.toISOString()).find((candidate) =>
         candidate.ruleId === body.ruleId &&
-        candidate.versionId === body.ruleVersion &&
-        candidate.lifecycleState === "active");
+        candidate.versionId === body.ruleVersion);
       if (
         !rule ||
         rule.sourceKind !== "custom" ||
@@ -77,6 +80,7 @@ export async function PUT(
         ruleId: rule.ruleId,
         ruleVersionId: rule.versionId,
         status: body.status === "not-reviewed" ? "not_reviewed" : body.status,
+        note: body.note,
         targetId,
         targetKind: body.applicability === "day" ? "trading_day" : "round_trip",
       }));

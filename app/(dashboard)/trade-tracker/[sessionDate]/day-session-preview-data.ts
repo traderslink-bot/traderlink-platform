@@ -356,7 +356,9 @@ export function getDaySessionDesignPreview(
       {
         applicability: "day",
         custom: false,
+        evidence: null,
         label: "Maximum daily loss respected",
+        note: "",
         revision: null,
         ruleId: "preview-maximum-daily-loss",
         ruleVersion: "preview-1",
@@ -367,7 +369,9 @@ export function getDaySessionDesignPreview(
       {
         applicability: "day",
         custom: true,
+        evidence: null,
         label: "Do not trade after 11:30 AM",
+        note: "",
         revision: null,
         ruleId: "preview-cutoff",
         ruleVersion: "preview-1",
@@ -378,7 +382,9 @@ export function getDaySessionDesignPreview(
       {
         applicability: "trade",
         custom: false,
+        evidence: null,
         label: "Wait for entry confirmation",
+        note: "",
         revision: null,
         ruleId: "preview-preset-confirmation-followed",
         ruleVersion: "preview-1",
@@ -389,7 +395,28 @@ export function getDaySessionDesignPreview(
       {
         applicability: "trade",
         custom: false,
+        evidence: {
+          feeCoverage: "complete",
+          limitation: null,
+          trigger: {
+            kind: "violation",
+            netPnl: "78",
+            occurredAt: `${date}T17:26:00.000Z`,
+            roundTripKey: "preview_nvda_3",
+            valueAfter: "13:26:00",
+            valueBefore: "11:30:00",
+          },
+          violations: [{
+            kind: "violation",
+            netPnl: "78",
+            occurredAt: `${date}T17:26:00.000Z`,
+            roundTripKey: "preview_nvda_3",
+            valueAfter: "13:26:00",
+            valueBefore: "11:30:00",
+          }],
+        },
         label: "Respect the trading cutoff",
+        note: "",
         revision: null,
         ruleId: "preview-preset-cutoff-broken",
         ruleVersion: "preview-1",
@@ -400,7 +427,9 @@ export function getDaySessionDesignPreview(
       {
         applicability: "trade",
         custom: true,
+        evidence: null,
         label: "Wait for entry confirmation",
+        note: "Entered before the pullback confirmed.",
         revision: null,
         ruleId: "preview-entry-confirmation",
         ruleVersion: "preview-1",

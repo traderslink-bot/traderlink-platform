@@ -503,6 +503,10 @@ export class JournalAnnotationService {
     return this.rules.list(scope);
   }
 
+  listRulesForEvaluation(scope: AccountScope, fromUtc: string, untilUtc: string): readonly JournalRuleRecord[] {
+    return this.rules.listForEvaluation(scope, fromUtc, untilUtc);
+  }
+
   createRule(
     scope: AccountScope,
     input: Readonly<{
@@ -655,6 +659,7 @@ export class JournalAnnotationService {
       targetKind: "trading_day" | "round_trip";
       targetId: string;
       status: unknown;
+      note?: unknown;
       expectedRevision: unknown;
       now?: Date;
     }>,
@@ -678,6 +683,9 @@ export class JournalAnnotationService {
     if ((current?.revision ?? null) !== expected) conflict();
     const at = timestamp(input.now);
     const status = reviewStatus(input.status);
+    if (input.note !== undefined && typeof input.note !== "string") invalid("note");
+    const note = typeof input.note === "string" ? input.note.trim() : current?.note ?? "";
+    if (note.length > 10_000) invalid("note");
     return this.rules.immediate(() => {
       const reviewId = current?.ruleReviewId ?? createCanonicalUuidV4();
       const reviewVersionId = createCanonicalUuidV4();
@@ -691,6 +699,7 @@ export class JournalAnnotationService {
           targetKind: input.targetKind,
           targetId: input.targetId,
           status,
+          note,
           timestamp: at,
         });
       } else {
@@ -702,6 +711,7 @@ export class JournalAnnotationService {
           ruleId: input.ruleId,
           ruleVersionId: input.ruleVersionId,
           status,
+          note,
           timestamp: at,
         });
         if (!this.rules.updateReview({

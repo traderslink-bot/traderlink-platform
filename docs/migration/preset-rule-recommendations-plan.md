@@ -11,6 +11,10 @@ the owner approves the detector and its calibration rules.
 
 **Progress record:** [Preset Rule Recommendations Progress](preset-rule-recommendations-progress.md)
 
+Factual evidence and results for rules the trader already selected are governed
+separately by the [Trading Rules Evidence And Results Plan](trading-rules-evidence-and-results-plan.md).
+That feature does not recommend, rank, activate or retire rules.
+
 ## Purpose
 
 Help a trader discover a small number of existing preset Rules that are worth
