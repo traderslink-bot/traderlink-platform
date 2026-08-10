@@ -33,6 +33,9 @@
 - [ ] Complete final integrated desktop/mobile visual review.
 - [x] Created narrow local implementation checkpoint `91579840`
   (`feat(trade-analyzer): split day analysis capabilities`).
+- [x] Corrected the accordion Help-control boundary in `f795baec`
+  (`fix(trade-analyzer): isolate contextual help controls`) so the Help action
+  is not nested inside the accordion toggle.
 
 ## Coordination
 
@@ -41,3 +44,9 @@
 - No migration number is reserved by this planning checkpoint.
 - The initial paid lookback value remains intentionally unset pending a later
   Moomoo test-account exercise.
+- Focused ESLint, the capped narrow TypeScript project, saved-fact
+  reconciliation and Help target/anchor checks pass. Three bounded canonical
+  dashboard starts did not reach a port 3010 listener before CPU progress
+  stalled at roughly 1.5 GB working set. Every process created by those starts
+  was stopped and port 3010 was confirmed released. Final browser review
+  remains an acceptance gate rather than being inferred from static checks.

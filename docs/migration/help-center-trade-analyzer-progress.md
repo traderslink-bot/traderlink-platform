@@ -38,3 +38,9 @@
   approved.
 - No migration, provider request or paid-plan activation is part of Help
   authoring.
+- Static Help verification confirms eight guides, 38 unique sections, 47
+  Analyzer search records, nine navigation items and 19 valid contextual
+  product Help targets. Final desktop/mobile browser review remains pending
+  because the bounded canonical dashboard starts did not reach a port 3010
+  listener; the stalled processes were stopped rather than left consuming
+  resources.
