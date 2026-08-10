@@ -5,11 +5,12 @@ import { NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES } from "./notifications-and-impor
 import { PAID_PLAN_HELP_GUIDES } from "./paid-plan-guides";
 import { TRADE_ANALYZER_HELP_GUIDES } from "./trade-analyzer-guides";
 import { TRADING_RULES_HELP_GUIDES } from "./trading-rules-guides";
+import { TRADE_TAGS_HELP_GUIDES } from "./trade-tags-guides";
 
 export type HelpNavigationItem = Readonly<{
   depth?: 0 | 1;
   href: string;
-  icon: "home" | "trade_tracker" | "trade_analyzer" | "trading_rules" | "ai_reviews" | "paid_plan" | "notifications";
+  icon: "home" | "trade_tracker" | "trade_analyzer" | "trading_rules" | "trade_tags" | "ai_reviews" | "paid_plan" | "notifications";
   label: string;
   summary: string;
 }>;
@@ -58,6 +59,13 @@ export const HELP_NAVIGATION_ITEMS: readonly HelpNavigationItem[] = Object.freez
     summary: "Choose rules, review results and understand the evidence behind each check.",
   }),
   ...guideNavigationItems("/help/trading-rules", TRADING_RULES_HELP_GUIDES, "trading_rules"),
+  Object.freeze({
+    href: "/help/trade-tags",
+    icon: "trade_tags",
+    label: "Trade Tags",
+    summary: "Label individual trades with preset or custom observations you choose.",
+  }),
+  ...guideNavigationItems("/help/trade-tags", TRADE_TAGS_HELP_GUIDES, "trade_tags"),
   Object.freeze({
     href: "/help/trade-analyzer",
     icon: "trade_analyzer",
@@ -144,6 +152,20 @@ export const HELP_SEARCH_RECORDS: readonly HelpSearchRecord[] = Object.freeze([
     TRADING_RULES_HELP_GUIDES,
   ),
   Object.freeze({
+    href: "/help/trade-tags",
+    id: "trade-tags-overview",
+    keywords: Object.freeze(["trade tags", "preset tags", "custom tags", "tag a trade"]),
+    section: "Trade Tags",
+    summary: "Label individual Day trades and supported Swing positions with tags you choose.",
+    title: "Trade Tags overview",
+  }),
+  ...guideSearchRecords(
+    "trade-tags",
+    "Trade Tags",
+    "/help/trade-tags",
+    TRADE_TAGS_HELP_GUIDES,
+  ),
+  Object.freeze({
     href: "/help/trade-analyzer",
     id: "trade-analyzer-overview",
     keywords: Object.freeze(["trade analyzer", "chart replay", "entry exit", "green to red", "candle patterns"]),
@@ -189,6 +211,7 @@ export const HELP_SEARCH_RECORDS: readonly HelpSearchRecord[] = Object.freeze([
 export const HELP_POPULAR_RECORD_IDS: readonly string[] = Object.freeze([
   "daily-trade-tracker-add-edit-trades-enter-executions",
   "trading-rules-understand-results-result-meanings",
+  "trade-tags-add-edit-tags-open-tag-editor",
   "trade-analyzer-entry-exit-analysis-individual-executions",
   "trade-analyzer-green-to-red-analysis-profit-capture",
   "ai-reviews-choose-schedule-frequency-options",

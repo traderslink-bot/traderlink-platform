@@ -4,6 +4,7 @@
 **Created:** 2026-07-30
 **Parent feature:** [Day Session Page Plan](./day-session-page-plan.md)
 **Progress:** [Trade Tag System Progress](./trade-tag-system-progress.md)
+**Help collection:** [Trade Tags Help Center Plan](./migration/help-center-trade-tags-plan.md)
 
 ## Goal
 

@@ -10,6 +10,7 @@ import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
 import TodayRoundedIcon from "@mui/icons-material/TodayRounded";
 import ShowChartRoundedIcon from "@mui/icons-material/ShowChartRounded";
 import RuleRoundedIcon from "@mui/icons-material/RuleRounded";
+import LabelOutlinedIcon from "@mui/icons-material/LabelOutlined";
 import WorkspacePremiumOutlinedIcon from "@mui/icons-material/WorkspacePremiumOutlined";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -93,6 +94,8 @@ function HelpNavigation({
               ? ShowChartRoundedIcon
             : item.icon === "trading_rules"
               ? RuleRoundedIcon
+            : item.icon === "trade_tags"
+              ? LabelOutlinedIcon
             : item.icon === "ai_reviews"
               ? SmartToyOutlinedIcon
             : item.icon === "paid_plan"

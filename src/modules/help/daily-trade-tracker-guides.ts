@@ -178,6 +178,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
             "Rename a custom tag when the wording improves.",
             "Retire a tag you no longer use. Prior trades keep their historical tag instead of being rewritten.",
           ]) }),
+          Object.freeze({ kind: "link", href: "/help/trade-tags", label: "Open Trade Tags help", text: "The Trade Tags collection explains all presets, custom tags, Swing tags, limits and where saved tags are used." }),
         ]),
       }),
       Object.freeze({
