@@ -3,6 +3,7 @@ export type HelpArticleBlock =
   | Readonly<{ kind: "bullets"; items: readonly string[] }>
   | Readonly<{ kind: "steps"; items: readonly Readonly<{ title: string; text: string }>[] }>
   | Readonly<{ kind: "callout"; title: string; text: string; tone?: "info" | "warning" }>
+  | Readonly<{ kind: "link"; href: string; label: string; text: string }>
   | Readonly<{
       kind: "table";
       columns: readonly string[];

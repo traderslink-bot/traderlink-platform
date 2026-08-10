@@ -4,6 +4,8 @@ Status: Help 1-3 owner approved; scalable collection navigation adjustment imple
 
 Controlling plan: [Help Center And Daily Trade Tracker Guides Plan](./help-center-daily-trade-tracker-plan.md)
 
+Planned Analyzer revision: [Trade Analyzer Help Center Plan](./help-center-trade-analyzer-plan.md)
+
 ## Current checkpoint
 
 - [x] Confirmed the Help Center belongs inside the authenticated Material
@@ -75,6 +77,13 @@ Controlling plan: [Help Center And Daily Trade Tracker Guides Plan](./help-cente
   rule statuses, all five open-position labels, tag groups and all 12 chart
   pattern names/explanations. The candle-pattern guide now states the exact
   close or following-candle confirmation boundary used by the chart copy.
+- [x] Documented the future Daily Tracker Help revision: retain Tracker-specific
+  workflow instructions while linking detailed chart, Entry/Exit,
+  Green-to-red, candle-pattern and long-term statistics to the standalone Trade
+  Analyzer Help collection.
+- [x] Published the Trade Analyzer Help routes and stable anchors, then revised
+  the Daily Tracker articles to retain workflow instructions and link the
+  reusable Analyzer reference without losing current coverage.
 - [ ] Complete production-build verification. The first local build reached
   Next.js production compilation and produced partial server/static output,
   but Windows terminated the compiler under local memory pressure before the
@@ -112,7 +121,7 @@ The published collection now contains:
 1. Getting started.
 2. Add and edit trades.
 3. Review trades and executions.
-4. Charts and trade analysis.
+4. Chart replay and Trade Analyzer.
 5. Rules, notes and finish the day.
 6. Data timing and limitations.
 

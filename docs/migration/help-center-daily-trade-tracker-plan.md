@@ -9,6 +9,7 @@ Related product records:
 - [Day Trade Tracker And Swing Trade Tracker Plan](./day-and-swing-trade-tracker-plan.md)
 - [Moomoo Daily Trade Tracker Analyzer Plan](./moomoo-daily-trade-tracker-analyzer-plan.md)
 - [Moomoo Daily Trade Tracker Analyzer Progress](./moomoo-daily-trade-tracker-analyzer-progress.md)
+- [Trade Analyzer Help Center Plan](./help-center-trade-analyzer-plan.md)
 - [AI Reviews And Paid Plan Help Guides Plan](./help-center-ai-reviews-and-paid-plan-plan.md)
 
 ## 1. Outcome
@@ -186,6 +187,26 @@ The page does not show placeholders such as **More coming soon**. New
 collections appear when their real guides are ready.
 
 ## 6. Daily Trade Tracker collection overview
+
+### Trade Analyzer collection revision
+
+The Daily Trade Tracker remains responsible for the daily workflow: executions,
+trade selection, tags, rules, notes, open-position classification and Mark day
+reviewed. Chart replay and trade analysis are the embedded **Trade Analyzer**
+capability.
+
+When the dedicated Trade Analyzer Help collection publishes:
+
+- Daily Tracker guides retain instructions for finding, selecting and using
+  the Analyzer inside the Tracker;
+- detailed chart, Entry/Exit, Green-to-red, candle-pattern and long-term metric
+  definitions move to the reusable Trade Analyzer collection;
+- every retained summary links to the exact matching Analyzer Help anchor; and
+- the Daily Tracker articles do not duplicate definitions that would diverge
+  when standalone or Swing Analyzer surfaces are added.
+
+The exact article revisions and cross-links are controlled by the
+[Trade Analyzer Help Center Plan](help-center-trade-analyzer-plan.md).
 
 The collection overview explains the full workflow before sending the user
 into individual guides:

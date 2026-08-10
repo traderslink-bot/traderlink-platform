@@ -7,6 +7,7 @@ import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded";
 import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
 import TodayRoundedIcon from "@mui/icons-material/TodayRounded";
+import ShowChartRoundedIcon from "@mui/icons-material/ShowChartRounded";
 import WorkspacePremiumOutlinedIcon from "@mui/icons-material/WorkspacePremiumOutlined";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -86,6 +87,8 @@ function HelpNavigation({
           );
           const Icon = item.icon === "home"
             ? HomeRoundedIcon
+            : item.icon === "trade_analyzer"
+              ? ShowChartRoundedIcon
             : item.icon === "ai_reviews"
               ? SmartToyOutlinedIcon
               : item.icon === "paid_plan"

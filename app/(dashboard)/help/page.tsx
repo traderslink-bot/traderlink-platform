@@ -2,6 +2,7 @@ import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
 import TodayRoundedIcon from "@mui/icons-material/TodayRounded";
+import ShowChartRoundedIcon from "@mui/icons-material/ShowChartRounded";
 import WorkspacePremiumOutlinedIcon from "@mui/icons-material/WorkspacePremiumOutlined";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -27,6 +28,12 @@ export const metadata: Metadata = {
 };
 
 const HELP_COLLECTIONS = Object.freeze([
+  Object.freeze({
+    description: "Replay trades and understand entry, exit, Green-to-red, candle-pattern and long-term Analyzer results.",
+    href: "/help/trade-analyzer",
+    Icon: ShowChartRoundedIcon,
+    title: "Trade Analyzer",
+  }),
   Object.freeze({
     description: "Learn how executions become trades, review charts and analysis, use rules and notes, and finish your trading day.",
     href: "/help/daily-trade-tracker",

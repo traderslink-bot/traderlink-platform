@@ -82,6 +82,18 @@ function ArticleBlock({ block }: { block: HelpArticleBlock }) {
       </Box>
     );
   }
+  if (block.kind === "link") {
+    return (
+      <Box>
+        <Typography color="text.secondary" variant="body1">{block.text}</Typography>
+        <Link href={block.href} style={{ textDecoration: "none" }}>
+          <Button component="span" endIcon={<ArrowForwardRoundedIcon />} sx={{ mt: 1 }} variant="outlined">
+            {block.label}
+          </Button>
+        </Link>
+      </Box>
+    );
+  }
   return (
     <Paper variant="outlined">
       <TableContainer>

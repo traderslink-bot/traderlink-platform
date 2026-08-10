@@ -102,6 +102,11 @@ export default function DailyTradeTrackerHelpPage() {
               Open Trading Rules
             </Button>
           </Link>
+          <Link href="/help/trade-analyzer" style={{ textDecoration: "none" }}>
+            <Button component="span" fullWidth variant="outlined">
+              Open Trade Analyzer help
+            </Button>
+          </Link>
         </Stack>
       </Box>
 
@@ -155,6 +160,9 @@ export default function DailyTradeTrackerHelpPage() {
         </DashboardPanel>
         <DashboardPanel title="What the analysis covers">
           <HelpFeatureList items={analysisAreas} />
+          <Typography color="text.secondary" sx={{ mt: 1.5 }} variant="body2">
+            Chart replay and written analysis are the embedded Trade Analyzer. Use the Trade Analyzer Help collection for complete metric, pattern and long-term result definitions.
+          </Typography>
         </DashboardPanel>
       </Box>
 

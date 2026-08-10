@@ -195,6 +195,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
           ]) }),
           Object.freeze({ kind: "paragraph", text: "For a Long trade, a buy that opens or adds is Entry analysis and a sell that reduces or closes is Exit analysis. For a Short trade, the opening sell is an entry and a covering buy is an exit." }),
           Object.freeze({ kind: "callout", title: "View analysis changes the review only", text: "It does not edit, split or reclassify the execution." }),
+          Object.freeze({ kind: "link", href: "/help/trade-analyzer/entry-exit-analysis#individual-executions", label: "Read individual execution analysis help", text: "For every fill-level measure, definition and unavailable state, use the reusable Trade Analyzer guide." }),
         ]),
       }),
       Object.freeze({
@@ -220,14 +221,16 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph", text: "Individual analysis explains one fill. Combined analysis weights entries and exits by quantity and explains the complete trade, including actual P/L, holding time, MFE, MAE and profit-opportunity results." }),
           Object.freeze({ kind: "paragraph", text: "Green-to-red analysis is trade-level because it follows the changing quantity and calculated P/L across the full position. It appears with Combined overview, not with one isolated fill." }),
+          Object.freeze({ kind: "link", href: "/help/trade-analyzer/entry-exit-analysis#combined-trade", label: "Read combined trade analysis help", text: "See how quantity-weighted entries, exits, MFE, MAE and holding time describe the complete trade." }),
+          Object.freeze({ kind: "link", href: "/help/trade-analyzer/green-to-red-analysis", label: "Read Green-to-red analysis help", text: "See every Green-to-red status, profit-capture result and recovery measurement." }),
         ]),
       }),
     ]),
   }),
   Object.freeze({
     slug: "charts-analysis",
-    title: "Charts and trade analysis",
-    description: "Read the chart, timeframes, indicators, candle patterns and complete trade-path analysis.",
+    title: "Chart replay and Trade Analyzer",
+    description: "Use the embedded Trade Analyzer chart, timeframes, indicators, patterns and written analysis.",
     sections: Object.freeze([
       Object.freeze({
         id: "chart-basics",
@@ -244,6 +247,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
             "On mobile, drag horizontally to move through time, pinch to zoom and swipe the page vertically without the chart trapping the page scroll.",
             "Expand Candle patterns on mobile to see the pattern key without permanently covering the chart.",
           ]) }),
+          Object.freeze({ kind: "link", href: "/help/trade-analyzer/chart-replay", label: "Open the complete chart replay guide", text: "Use the reusable chart guide for every candle, execution marker, indicator, timeframe and navigation control." }),
         ]),
       }),
       Object.freeze({
@@ -282,25 +286,12 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
       Object.freeze({
         id: "candle-patterns",
         title: "Detected candle patterns",
-        summary: "Learn all 12 supported pattern labels and why confirmation matters.",
+        summary: "Use the chart labels and open the reusable pattern reference for detector details.",
         keywords: Object.freeze(["compression", "engulfing", "expansion", "hammer", "shooting star", "wick rejection", "exhaustion"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "table", columns: Object.freeze(["Pattern", "What the analyzer observed", "When it is confirmed"]), rows: Object.freeze([
-            Object.freeze(["Compression", "Range and volume contracted materially inside the preceding candle.", "When the compressed candle closes."]),
-            Object.freeze(["Bullish compression break", "Price closed decisively above a confirmed compressed range on increased activity.", "When the breakout candle closes."]),
-            Object.freeze(["Bearish compression break", "Price closed decisively below a confirmed compressed range on increased activity.", "When the breakdown candle closes."]),
-            Object.freeze(["Bullish engulfing shift", "A meaningful bullish body fully engulfed the preceding bearish body.", "When the engulfing candle closes."]),
-            Object.freeze(["Bearish engulfing shift", "A meaningful bearish body fully engulfed the preceding bullish body.", "When the engulfing candle closes."]),
-            Object.freeze(["Bullish expansion", "Range and body expanded materially and the candle closed near its high.", "When the expansion candle closes."]),
-            Object.freeze(["Bearish expansion", "Range and body expanded materially and the candle closed near its low.", "When the expansion candle closes."]),
-            Object.freeze(["Confirmed Hammer", "After a meaningful decline, a dominant lower wick rejected a local low.", "Only after the next candle confirms recovery."]),
-            Object.freeze(["Confirmed Shooting Star", "After a meaningful advance, a dominant upper wick rejected a local high.", "Only after the next candle confirms weakness."]),
-            Object.freeze(["Lower-wick rejection", "Price tested a local low, left a dominant lower wick and closed back in the candle's upper portion.", "When the rejection candle closes."]),
-            Object.freeze(["Upper-wick rejection", "Price tested a local high, left a dominant upper wick and closed back in the candle's lower portion.", "When the rejection candle closes."]),
-            Object.freeze(["Possible high-volume exhaustion", "An extended move stalled at a local extreme on exceptional volume.", "Only after the following candle confirms the failure; the result remains labelled possible."]),
-          ]) }),
-          Object.freeze({ kind: "paragraph", text: "A pattern can be on the execution candle or on a nearby preceding candle. Individual analysis identifies which, and whether it was already complete before the fill. Patterns that require a following candle are not treated as confirmed until that candle closes." }),
-          Object.freeze({ kind: "callout", title: "Observation, not prediction", text: "A detected pattern describes completed candle facts. It does not promise the next move. A candle that only looks vaguely similar may correctly receive no label when its measured conditions or confirmation are missing." }),
+          Object.freeze({ kind: "paragraph", text: "The selected trade chart can label supported 1-minute and 5-minute patterns on or before executions. The short chart key expands on mobile. Confirmation-sensitive patterns appear only after their required completed candle exists." }),
+          Object.freeze({ kind: "callout", title: "Observation, not prediction", text: "A label describes completed candle facts; it is not a trading signal." }),
+          Object.freeze({ kind: "link", href: "/help/trade-analyzer/candle-patterns#supported-patterns", label: "Open all supported pattern definitions", text: "The Trade Analyzer pattern guide is the current source for detector definitions, confirmation rules and long-term comparisons." }),
         ]),
       }),
       Object.freeze({
@@ -321,18 +312,13 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
       Object.freeze({
         id: "green-to-red",
         title: "Green-to-red and recovery analysis",
-        summary: "Understand profitable paths, reversals below breakeven, recoveries and final results.",
+        summary: "Open the combined trade view to see the complete path around breakeven.",
         keywords: Object.freeze(["green to red", "never green", "stayed green", "recovered", "breakeven", "peak profit", "left on table"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "table", columns: Object.freeze(["Result", "Meaning"]), rows: Object.freeze([
-            Object.freeze(["Never green", "No exact fill or completed one-minute close showed positive calculated trade P/L before the position became flat."]),
-            Object.freeze(["Stayed green", "After the trade became profitable, its calculated path did not later move below breakeven before the final exit."]),
-            Object.freeze(["Green to red, ended red", "The path was profitable, later moved below breakeven and the actual trade finished negative."]),
-            Object.freeze(["Green to red, recovered", "The path moved below breakeven, later returned above it and records the recovery time and final result."]),
-            Object.freeze(["Green to red, ended flat", "The path was profitable and later below breakeven before the actual result finished approximately flat."]),
-          ]) }),
-          Object.freeze({ kind: "paragraph", text: "Supporting facts can include first profitable time, peak calculated P/L and time, first move below breakeven, reversal amount, elapsed time, position size at each point, adds after the peak, and partial exits before the reversal." }),
+          Object.freeze({ kind: "paragraph", text: "Combined overview can show whether the saved path never moved green, stayed above breakeven, ended red after first moving green, recovered, or ended approximately flat. Supporting facts can include the profit peak, reversal, recovery, later adds and partial exits." }),
           Object.freeze({ kind: "paragraph", text: "Transitions use exact fills and completed one-minute closes because the order of a one-minute candle's high and low is unknown. Calculated final path P/L may differ from actual net P/L when executions or reported fees make the real result different." }),
+          Object.freeze({ kind: "link", href: "/help/trade-analyzer/green-to-red-analysis", label: "Open the complete Green-to-red guide", text: "Use the Trade Analyzer reference for every status, recovery, profit-capture and risk-management comparison." }),
+          Object.freeze({ kind: "link", href: "/help/trade-analyzer/day-trade-analysis", label: "Open Day Trade Analysis help", text: "Long-term entry, exit, Green-to-red and pattern comparisons live in the separate Trade Analyzer collection." }),
         ]),
       }),
     ]),
@@ -419,6 +405,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph", text: "Current Daily Trade Tracker charts use the configured Moomoo market-data connection. TradersLink checks its saved server-side candles first and requests only missing data. Users do not manage or see this shared storage." }),
           Object.freeze({ kind: "callout", title: "Market data and execution imports are separate", text: "A Moomoo market-data connection can supply chart candles even when that account has no trading history. Importing a user's broker executions is a separate permission and workflow." }),
+          Object.freeze({ kind: "link", href: "/help/trade-analyzer/data-availability#market-data-and-imports", label: "Read Analyzer data availability help", text: "See the reusable Moomoo, paid eligibility, same-day timing and unavailable-state explanation." }),
         ]),
       }),
       Object.freeze({

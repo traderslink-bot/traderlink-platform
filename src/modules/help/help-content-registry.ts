@@ -2,11 +2,12 @@ import { AI_REVIEWS_HELP_GUIDES } from "./ai-reviews-guides";
 import { DAILY_TRADE_TRACKER_HELP_GUIDES } from "./daily-trade-tracker-guides";
 import type { HelpGuide } from "./help-guide-types";
 import { PAID_PLAN_HELP_GUIDES } from "./paid-plan-guides";
+import { TRADE_ANALYZER_HELP_GUIDES } from "./trade-analyzer-guides";
 
 export type HelpNavigationItem = Readonly<{
   depth?: 0 | 1;
   href: string;
-  icon: "home" | "trade_tracker" | "ai_reviews" | "paid_plan";
+  icon: "home" | "trade_tracker" | "trade_analyzer" | "ai_reviews" | "paid_plan";
   label: string;
   summary: string;
 }>;
@@ -48,6 +49,13 @@ export const HELP_NAVIGATION_ITEMS: readonly HelpNavigationItem[] = Object.freez
     summary: "Record trades, review executions and finish your trading day.",
   }),
   ...guideNavigationItems("/help/daily-trade-tracker", DAILY_TRADE_TRACKER_HELP_GUIDES, "trade_tracker"),
+  Object.freeze({
+    href: "/help/trade-analyzer",
+    icon: "trade_analyzer",
+    label: "Trade Analyzer",
+    summary: "Replay trades and understand entry, exit, Green-to-red and candle-pattern analysis.",
+  }),
+  ...guideNavigationItems("/help/trade-analyzer", TRADE_ANALYZER_HELP_GUIDES, "trade_analyzer"),
   Object.freeze({
     href: "/help/ai-reviews",
     icon: "ai_reviews",
@@ -106,6 +114,20 @@ export const HELP_SEARCH_RECORDS: readonly HelpSearchRecord[] = Object.freeze([
     DAILY_TRADE_TRACKER_HELP_GUIDES,
   ),
   Object.freeze({
+    href: "/help/trade-analyzer",
+    id: "trade-analyzer-overview",
+    keywords: Object.freeze(["trade analyzer", "chart replay", "entry exit", "green to red", "candle patterns"]),
+    section: "Trade Analyzer",
+    summary: "Replay supported trades and understand every saved Analyzer result.",
+    title: "Trade Analyzer overview",
+  }),
+  ...guideSearchRecords(
+    "trade-analyzer",
+    "Trade Analyzer",
+    "/help/trade-analyzer",
+    TRADE_ANALYZER_HELP_GUIDES,
+  ),
+  Object.freeze({
     href: "/help/ai-reviews",
     id: "ai-reviews-overview",
     keywords: Object.freeze(["AI feedback", "weekly review", "monthly review", "trade review"]),
@@ -127,6 +149,8 @@ export const HELP_SEARCH_RECORDS: readonly HelpSearchRecord[] = Object.freeze([
 
 export const HELP_POPULAR_RECORD_IDS: readonly string[] = Object.freeze([
   "daily-trade-tracker-add-edit-trades-enter-executions",
+  "trade-analyzer-entry-exit-analysis-individual-executions",
+  "trade-analyzer-green-to-red-analysis-profit-capture",
   "ai-reviews-choose-schedule-frequency-options",
   "ai-reviews-what-ai-uses-saved-reflections",
   "ai-reviews-weekly-two-week-cross-month-week",
