@@ -4,6 +4,8 @@
 
 **Progress:** [Trading Rules Evidence And Results Progress](trading-rules-evidence-and-results-progress.md)
 
+**Help collection:** [Trading Rules Help Center Plan](help-center-trading-rules-plan.md)
+
 **Related planning:** [Preset Rule Recommendations Plan](preset-rule-recommendations-plan.md)
 is a separate future recommendation feature. This plan reports facts about
 rules the trader already chose. It never recommends keeping, removing or

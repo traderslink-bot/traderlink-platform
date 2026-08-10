@@ -342,6 +342,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
           ]) }),
           Object.freeze({ kind: "paragraph", text: "N/A means a preset rule could not meaningfully apply to that trade or day. It is different from Not reviewed and is not a result the trader needs to override." }),
           Object.freeze({ kind: "callout", title: "Rules broken", text: "The day-summary count is the number of recorded broken rule results for that trading date. It is not an AI opinion." }),
+          Object.freeze({ kind: "link", href: "/help/trading-rules", label: "Open Trading Rules help", text: "The Trading Rules collection explains every preset, custom-rule reviews, automatic details, chart markers and Rule Results history." }),
         ]),
       }),
       Object.freeze({

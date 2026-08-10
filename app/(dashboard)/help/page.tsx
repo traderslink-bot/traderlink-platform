@@ -4,6 +4,7 @@ import NotificationsNoneRoundedIcon from "@mui/icons-material/NotificationsNoneR
 import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
 import TodayRoundedIcon from "@mui/icons-material/TodayRounded";
 import ShowChartRoundedIcon from "@mui/icons-material/ShowChartRounded";
+import RuleRoundedIcon from "@mui/icons-material/RuleRounded";
 import WorkspacePremiumOutlinedIcon from "@mui/icons-material/WorkspacePremiumOutlined";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -24,7 +25,7 @@ import {
 import { HelpSearch } from "./help-search";
 
 export const metadata: Metadata = {
-  description: "Search TraderLink help for the Trade Tracker, AI Reviews and paid plan.",
+  description: "Search TraderLink help for Trading Rules, Trade Tracker, Trade Analyzer, AI Reviews, notifications, imports and paid access.",
   title: "Help Center | TraderLink Platform",
 };
 
@@ -40,6 +41,12 @@ const HELP_COLLECTIONS = Object.freeze([
     href: "/help/daily-trade-tracker",
     Icon: TodayRoundedIcon,
     title: "Daily Trade Tracker",
+  }),
+  Object.freeze({
+    description: "Choose preset or custom rules, review automatic evidence, and compare factual results over time.",
+    href: "/help/trading-rules",
+    Icon: RuleRoundedIcon,
+    title: "Trading Rules",
   }),
   Object.freeze({
     description: "Choose a review schedule, understand what AI can use, and turn saved weekly and monthly feedback into a practical next focus.",
