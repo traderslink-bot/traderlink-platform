@@ -49,7 +49,8 @@
   Candle Patterns and Analyzed Trades pages with dedicated navigation,
   contextual Help and growing-result pagination.
 - [ ] Obtain final owner desktop/mobile visual approval.
-- [ ] Create the narrow local source checkpoint.
+- [x] Created narrow local source checkpoint `91579840`
+  (`feat(trade-analyzer): split day analysis capabilities`).
 
 ## Coordination
 

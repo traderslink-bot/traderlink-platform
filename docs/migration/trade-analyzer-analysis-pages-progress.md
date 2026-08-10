@@ -31,7 +31,8 @@
 - [x] Redirected transitional `/analytics/trade-analysis` requests while
   preserving supported filter query parameters.
 - [ ] Complete final integrated desktop/mobile visual review.
-- [ ] Create the narrow local implementation checkpoint.
+- [x] Created narrow local implementation checkpoint `91579840`
+  (`feat(trade-analyzer): split day analysis capabilities`).
 
 ## Coordination
 

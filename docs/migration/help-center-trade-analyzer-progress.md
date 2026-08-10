@@ -27,7 +27,8 @@
 - [x] Verified all 19 product contextual Help links resolve to a published
   Analyzer article and an existing stable anchor.
 - [ ] Obtain final integrated desktop/mobile owner visual approval.
-- [ ] Create the narrow local Help checkpoint.
+- [x] Created narrow local Help checkpoint `1a9bba2e`
+  (`docs(help): add trade analyzer guide collection`).
 
 ## Coordination
 
