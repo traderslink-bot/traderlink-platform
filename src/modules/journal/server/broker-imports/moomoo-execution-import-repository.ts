@@ -713,7 +713,7 @@ WHERE broker_import_range_id = ? AND range_state = 'running'`)
     matchedExecutionCount: number;
     decisionRequiredCount: number;
     timestamp: string;
-  }>): void {
+  }>): MoomooBrokerImportJobSummary | null {
     assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
     const nextState = input.providerCompleted ? "committed" : "queued";
     const cursor = input.providerCompleted ? null : input.encryptedNextCursor;
@@ -722,7 +722,7 @@ WHERE broker_import_range_id = ? AND range_state = 'running'`)
         stage: "missing_committed_page_cursor",
       });
     }
-    this.immediate(() => {
+    return this.immediate(() => {
       const resolveReceipt = this.database.prepare(`UPDATE journal_broker_fill_receipts
 SET receipt_state = CASE WHEN EXISTS (
     SELECT 1 FROM journal_execution_identity_aliases alias
@@ -817,6 +817,19 @@ WHERE broker_import_job_id = ? AND job_state IN ('queued', 'running', 'waiting_r
           input.providerCompleted ? 1 : 0, input.timestamp, input.timestamp,
           input.claimed.brokerImportJobId,
         );
+      const job = this.database.prepare<[string, string, string], JobSummaryRow>(`SELECT
+  broker_import_job_id, broker_account_link_id, import_kind, job_state,
+  requested_start_date, cutoff_at_utc, total_work_units, completed_work_units,
+  received_fill_count, accepted_execution_count, existing_execution_count,
+  decision_required_count, safe_error_code, next_attempt_at_utc,
+  created_at_utc, updated_at_utc
+FROM journal_broker_import_jobs
+WHERE workspace_id = ? AND account_id = ? AND broker_import_job_id = ?`).get(
+        input.claimed.workspaceId,
+        input.claimed.accountId,
+        input.claimed.brokerImportJobId,
+      );
+      return job ? mapJobSummary(job) : null;
     });
   }
 

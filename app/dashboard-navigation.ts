@@ -227,6 +227,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/manual-entry": "Manual Entry",
     "/data-decisions": "Data Decisions",
     "/account": "Account",
+    "/notifications": "Notifications",
   });
 
 export const DASHBOARD_NAVIGATION_HREFS: readonly string[] = Object.freeze([

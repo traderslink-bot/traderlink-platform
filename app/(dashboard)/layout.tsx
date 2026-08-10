@@ -5,6 +5,7 @@ import { TraderLinkPlatformDashboardTemplate } from "../dashboard-template";
 import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformAccountProfileReadService } from "@/src/modules/platform/server/identity/platform-account-profile-read-service";
+import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
 import { readJournalDataDecisionNoticeSummary } from "@/src/modules/journal/server/decisions/journal-data-decision-notice";
 
 export const dynamic = "force-dynamic";
@@ -39,8 +40,11 @@ export default async function DashboardLayout({
     }
     throw error;
   }
-  const journalAccounts = withReadonlyPlatformDatabase({}, (database) =>
-    new PlatformAccountProfileReadService(database).get(scope).journalAccounts);
+  const { journalAccounts, notifications } = withReadonlyPlatformDatabase({}, (database) =>
+    Object.freeze({
+      journalAccounts: new PlatformAccountProfileReadService(database).get(scope).journalAccounts,
+      notifications: new PlatformNotificationRepository(database).list(scope, 5),
+    }));
   const dataDecisionNotice = readJournalDataDecisionNoticeSummary(scope);
 
   return (
@@ -49,6 +53,7 @@ export default async function DashboardLayout({
     >
       <TraderLinkPlatformDashboardTemplate
         journalAccounts={journalAccounts}
+        notifications={notifications}
         pendingDataDecisionCount={dataDecisionNotice.pendingCount}
       >
         {children}

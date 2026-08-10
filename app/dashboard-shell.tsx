@@ -49,6 +49,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
+import type { PlatformNotification } from "@/src/modules/platform/contracts/platform-notification-contracts";
 import {
   DASHBOARD_DATA_NAVIGATION_GROUP,
   DASHBOARD_HOME_ITEM,
@@ -64,6 +65,7 @@ import {
   DashboardAccountSwitcher,
   type DashboardJournalAccountOption,
 } from "./dashboard-account-switcher";
+import { NotificationCenter } from "./(dashboard)/notifications/notification-center";
 
 const expandedWidth = 272;
 const collapsedWidth = 76;
@@ -206,10 +208,12 @@ function NavigationLink({
 export function DashboardShell({
   children,
   journalAccounts,
+  notifications = [],
   pendingDataDecisionCount,
 }: {
   children: ReactNode;
   journalAccounts: readonly DashboardJournalAccountOption[];
+  notifications?: readonly PlatformNotification[];
   pendingDataDecisionCount: number;
 }) {
   const pathname = usePathname();
@@ -498,6 +502,7 @@ export function DashboardShell({
               </Typography>
             </Box>
             <Box sx={{ flexGrow: 1 }} />
+            <NotificationCenter notifications={notifications} />
             <DashboardAccountSwitcher accounts={journalAccounts} />
             <Button
               component={Link}

@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { deriveJournalAccountSelectionRef } from "@/src/modules/platform/contracts/journal-account-selection";
 import { resolvePlatformDatabaseConfig } from "@/src/modules/platform/server/database/platform-database-config";
+import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
 import {
   createCanonicalUtcTimestamp,
   platformFailure,
@@ -491,6 +492,27 @@ export function commitJournalIbkrUpload(
               pending_decisions: committed.relatedDecisionIds.length,
             },
           });
+          if (terminalState !== "duplicate") {
+            new PlatformNotificationRepository(database).create({
+              category: "statement_import",
+              destinationPath: terminalState === "committed_with_decisions"
+                ? "/data-decisions"
+                : "/imports",
+              journalAccountId: preview.accountId,
+              kind: terminalState === "committed_with_decisions"
+                ? "statement_import_needs_action"
+                : "statement_import_completed",
+              occurredAtUtc: timestamp,
+              scope,
+              sourceEventKey: `statement_import_${current.importAttemptId}`,
+              summary: terminalState === "committed_with_decisions"
+                ? "Your statement was imported, and a few items need your review."
+                : "Your statement is now available in your journal.",
+              title: terminalState === "committed_with_decisions"
+                ? "Statement import needs attention"
+                : "Statement import complete",
+            });
+          }
           return Object.freeze({
             status: committed.status,
             preservedRowCount: committed.preservedRowCount,
@@ -632,6 +654,27 @@ export function commitJournalGenericMappedUpload(
               pending_decisions: committed.relatedDecisionIds.length,
             },
           });
+          if (terminalState !== "duplicate") {
+            new PlatformNotificationRepository(database).create({
+              category: "statement_import",
+              destinationPath: terminalState === "committed_with_decisions"
+                ? "/data-decisions"
+                : "/imports",
+              journalAccountId: preview.accountId,
+              kind: terminalState === "committed_with_decisions"
+                ? "statement_import_needs_action"
+                : "statement_import_completed",
+              occurredAtUtc: timestamp,
+              scope,
+              sourceEventKey: `statement_import_${current.importAttemptId}`,
+              summary: terminalState === "committed_with_decisions"
+                ? "Your statement was imported, and a few items need your review."
+                : "Your statement is now available in your journal.",
+              title: terminalState === "committed_with_decisions"
+                ? "Statement import needs attention"
+                : "Statement import complete",
+            });
+          }
           return Object.freeze({
             status: committed.status,
             preservedRowCount: committed.preservedRowCount,

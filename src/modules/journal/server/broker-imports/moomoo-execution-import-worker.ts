@@ -7,6 +7,7 @@ import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/work
 import { MoomooConnectionAccessService } from "@/src/modules/platform/server/broker-connections/moomoo-connection-access-service";
 import { loadMoomooCredentialKeyConfiguration } from "@/src/modules/platform/server/broker-connections/moomoo-connection-credentials";
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
+import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
 import {
   decryptMoomooPrivateData,
   encryptMoomooPrivateData,
@@ -156,6 +157,19 @@ export class MoomooExecutionImportWorker {
             ),
         timestamp: createCanonicalUtcTimestamp(failedAt),
       });
+      if (retryDelay === null) {
+        new PlatformNotificationRepository(this.database).create({
+          category: "broker_import",
+          destinationPath: "/imports",
+          journalAccountId: claimed.accountId,
+          kind: "broker_import_failed",
+          occurredAtUtc: createCanonicalUtcTimestamp(failedAt),
+          scope: scopeFor(claimed),
+          sourceEventKey: `broker_import_failed_${claimed.brokerImportJobId}`,
+          summary: "Your broker import could not be completed. You can review the import and try again.",
+          title: "Broker import needs attention",
+        });
+      }
       return true;
     }
   }
@@ -245,7 +259,7 @@ export class MoomooExecutionImportWorker {
             fills: inScopeFills.map((fill) => toJournalFill(claimed, fill)),
             now: processedAt,
           });
-      this.repository.commitProcessedPage({
+      const job = this.repository.commitProcessedPage({
         claimed,
         receiptIdentities,
         encryptedNextCursor,
@@ -256,6 +270,19 @@ export class MoomooExecutionImportWorker {
         decisionRequiredCount: result?.pendingSourceDecisionCount ?? 0,
         timestamp,
       });
+      if (job?.state === "completed") {
+        new PlatformNotificationRepository(this.database).create({
+          category: "broker_import",
+          destinationPath: "/imports",
+          journalAccountId: claimed.accountId,
+          kind: "broker_import_completed",
+          occurredAtUtc: timestamp,
+          scope,
+          sourceEventKey: `broker_import_completed_${claimed.brokerImportJobId}`,
+          summary: "Your latest broker trades are available in your journal.",
+          title: "Broker import complete",
+        });
+      }
     }).immediate();
   }
 }

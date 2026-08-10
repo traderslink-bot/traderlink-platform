@@ -13,6 +13,7 @@ import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/serve
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformAccountProfileReadService } from "@/src/modules/platform/server/identity/platform-account-profile-read-service";
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
+import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
 import { MoomooExecutionImportCommandService } from "@/src/modules/journal/server/broker-imports/moomoo-execution-import-command-service";
 import {
   readWhopAiReviewConfigurationHealth,
@@ -29,6 +30,7 @@ import { BrokerConnectionPicker } from "./broker-connection-picker";
 import { MoomooConnectionSettings } from "./moomoo-connection-settings";
 import { MoomooExecutionImportSetup } from "./moomoo-execution-import-setup";
 import { ReportingCurrencySettings } from "./reporting-currency-settings";
+import { NotificationPreferences } from "./notification-preferences";
 
 export const metadata: Metadata = {
   description: "Review the active TraderLink profile, workspace and Trade Tracker account.",
@@ -45,7 +47,7 @@ export default async function AccountPage({
 }) {
   const query = await searchParams;
   const scope = await requireTraderLinkPlatformPageScope();
-  const { profile, aiReviewSettings, moomooConnection, aiReviewAccess, moomooAccountLinks } = withReadonlyPlatformDatabase({}, (database) => {
+  const { profile, aiReviewSettings, moomooConnection, aiReviewAccess, moomooAccountLinks, notificationPreferences } = withReadonlyPlatformDatabase({}, (database) => {
     const currentProfile = new PlatformAccountProfileReadService(database).get(scope);
     const currentAccount = currentProfile.journalAccounts.find((account) => account.active);
     return Object.freeze({
@@ -61,6 +63,7 @@ export default async function AccountPage({
           scope.activeAccountId ?? "",
         )
       : [],
+    notificationPreferences: new PlatformNotificationRepository(database).readPreferences(scope),
   });
   });
   const whopHealth = readWhopAiReviewConfigurationHealth();
@@ -116,6 +119,10 @@ export default async function AccountPage({
           checkoutUrl={whopUrls.checkoutUrl}
           configured={whopHealth.readyForEntitlement}
         />
+      </DashboardPanel>
+
+      <DashboardPanel title="Notifications">
+        <NotificationPreferences initialDiscordDmCategories={notificationPreferences.discordDmCategories} />
       </DashboardPanel>
 
       <DashboardPanel title="Broker connections">

@@ -4,7 +4,15 @@
 [Notifications And AI Import Repair Plan](notifications-and-ai-import-repair-plan.md)
 and its [progress record](notifications-and-ai-import-repair-progress.md) on
 2026-08-10. The feature is in implementation; production Railway/OpenAI/Discord
-configuration remains a separate hosted activation gate.
+configuration remains a separate hosted activation gate. The local source
+implementation is now owner-UI-approved: it adds `0053_platform_notifications`
+and `0054_journal_ai_import_repair`, dashboard notification/read-preference UI,
+safe terminal statement/Moomoo events, a fail-closed consented-statement repair
+worker and bounded Admin health page. Targeted lint has zero errors and empty
+disposable initialization applied both migrations through `0054`; the explicit
+remaining Railway/OpenAI/Discord/paid-entitlement/scheduler release checklist
+is maintained in the feature progress record. No host, secret, bot, API call,
+deployment or real Journal database change is authorized by this local result.
 
 ## 2026-08-09 AI Review subscriber and cache-write safeguards
 

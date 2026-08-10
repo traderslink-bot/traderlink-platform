@@ -10,6 +10,7 @@ import { journalTradeTrackingAndReconciliationMigration } from "@/src/modules/jo
 import { journalTradingDayReviewsMigration } from "@/src/modules/journal/server/database/migrations/0022_journal_trading_day_reviews";
 import { moomooExecutionImportFoundationMigration } from "@/src/modules/journal/server/database/migrations/0047_moomoo_execution_import_foundation";
 import { journalRuleReviewNotesMigration } from "@/src/modules/journal/server/database/migrations/0052_journal_rule_review_notes";
+import { journalAiImportRepairMigration } from "@/src/modules/journal/server/database/migrations/0054_journal_ai_import_repair";
 import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
 import { levelAnalysisCandleReviewMigration } from "@/src/modules/level-analysis/server/database/migrations/0009_level_analysis_candle_review";
 import { levelAnalysisDeliveriesMigration } from "@/src/modules/level-analysis/server/database/migrations/0010_level_analysis_deliveries";
@@ -47,6 +48,7 @@ import { platformMoomooReconnectionMigration } from "./migrations/0034_platform_
 import { platformReportingCurrencyCoverageMigration } from "./migrations/0035_platform_reporting_currency_coverage";
 import { platformWhopAiReviewEntitlementsMigration } from "./migrations/0045_platform_whop_ai_review_entitlements";
 import { platformWhopAiReviewReconciliationMigration } from "./migrations/0048_platform_whop_ai_review_reconciliation";
+import { platformNotificationsMigration } from "./migrations/0053_platform_notifications";
 import { dailyTradeMoomooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer";
 import { dailyTradeExactTurnoverMigration } from "@/src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover";
 import { dailyTradePathMaterializationMigration } from "@/src/modules/level-analysis/server/database/migrations/0040_daily_trade_path_materialization";
@@ -270,6 +272,14 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/journal/server/database/migrations/0052_journal_rule_review_notes.ts",
       migration: journalRuleReviewNotesMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0053_platform_notifications.ts",
+      migration: platformNotificationsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/journal/server/database/migrations/0054_journal_ai_import_repair.ts",
+      migration: journalAiImportRepairMigration,
     }),
   ]);
 
@@ -517,6 +527,14 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     "0050_coach_ai_review_subscriber_budget_safeguards": Object.freeze([]),
     "0051_coach_ai_review_cache_write_accounting": Object.freeze([]),
     "0052_journal_rule_review_notes": Object.freeze([]),
+    "0053_platform_notifications": Object.freeze([
+      "platform_notifications",
+      "platform_notification_receipts",
+      "platform_notification_delivery_preferences",
+    ]),
+    "0054_journal_ai_import_repair": Object.freeze([
+      "journal_ai_import_repair_jobs",
+    ]),
   });
 
 export function expectedPlatformTableNamesForPrefix(

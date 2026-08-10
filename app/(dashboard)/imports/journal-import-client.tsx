@@ -6,6 +6,12 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
+import Checkbox from "@mui/material/Checkbox";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
@@ -34,6 +40,7 @@ import { DashboardPanel } from "../../dashboard-template";
 const PREVIEW_ENDPOINT = "/api/platform/journal/imports/preview";
 const COMMIT_ENDPOINT = "/api/platform/journal/imports/commit";
 const HISTORY_ENDPOINT = "/api/platform/journal/imports/history";
+const AI_REPAIR_ENDPOINT = "/api/platform/journal/imports/ai-repair";
 
 const MAPPING_FIELDS = Object.freeze([
   ["symbol", "Ticker", true],
@@ -75,6 +82,9 @@ export function JournalImportClient({
   const [brokerName, setBrokerName] = useState("");
   const [sourceTimezone, setSourceTimezone] = useState("America/New_York");
   const [preview, setPreview] = useState<JournalImportMappingPreview | null>(null);
+  const [importRef, setImportRef] = useState<string | null>(null);
+  const [aiRepairOpen, setAiRepairOpen] = useState(false);
+  const [discordCompletionRequested, setDiscordCompletionRequested] = useState(false);
   const [mappingSupport, setMappingSupport] = useState<JournalMappingSupportPackageV2 | null>(null);
   const [selectedTableSignature, setSelectedTableSignature] = useState("");
   const [manualColumns, setManualColumns] = useState<Partial<Record<JournalGenericMappingField, string>>>({});
@@ -84,7 +94,7 @@ export function JournalImportClient({
   const [feeSignConvention, setFeeSignConvention] = useState<"cost_positive" | "cash_effect">("cost_positive");
   const [confirmedAccount, setConfirmedAccount] = useState(false);
   const [history, setHistory] = useState<readonly JournalImportHistoryItem[]>([]);
-  const [working, setWorking] = useState<"preview" | "commit" | null>(null);
+  const [working, setWorking] = useState<"preview" | "commit" | "ai_repair" | null>(null);
   const [notice, setNotice] = useState<Readonly<{
     severity: "success" | "warning" | "error";
     text: string;
@@ -116,6 +126,7 @@ export function JournalImportClient({
     setWorking("preview");
     setNotice(null);
     setPreview(null);
+    setImportRef(null);
     acceptMappingSupport(null);
     setConfirmedAccount(false);
     try {
@@ -132,14 +143,16 @@ export function JournalImportClient({
       const packet = await response.json() as {
         preview?: JournalImportMappingPreview;
         mappingSupport?: JournalMappingSupportPackageV2;
+        importRef?: string;
         status?: string;
         code?: string;
       };
       if (packet.status === "mapping_required" && packet.mappingSupport) {
         acceptMappingSupport(packet.mappingSupport);
+        setImportRef(packet.importRef ?? null);
         setNotice({
           severity: "warning",
-          text: "TraderLink could not map this statement safely. Your broker name and statement headers have been recorded so this format can be added without retaining statement values.",
+          text: "TraderLink could not map this statement safely. You can map it yourself, or allow AI to review this statement privately and configure it for import.",
         });
         return;
       }
@@ -147,6 +160,7 @@ export function JournalImportClient({
         throw new Error(packet.code ?? "The statement could not be mapped.");
       }
       setPreview(packet.preview);
+      setImportRef(packet.importRef ?? null);
       acceptMappingSupport(packet.mappingSupport ?? null);
       setNotice({
         severity: packet.preview.canCommit ? "success" : "warning",
@@ -164,6 +178,25 @@ export function JournalImportClient({
     } finally {
       setWorking(null);
     }
+  }
+
+  async function startAiRepair(): Promise<void> {
+    if (!file || !importRef || working) return;
+    setWorking("ai_repair");
+    try {
+      const data = new FormData();
+      data.set("statement", file);
+      data.set("importRef", importRef);
+      data.set("discordCompletionRequested", discordCompletionRequested ? "yes" : "no");
+      const response = await fetch(AI_REPAIR_ENDPOINT, {
+        method: "POST", headers: { [JOURNAL_MUTATION_REQUEST_HEADER]: "1" }, body: data,
+      });
+      if (!response.ok) throw new Error("AI review could not be started. Please try again.");
+      setAiRepairOpen(false);
+      setNotice({ severity: "success", text: "AI review has been requested. TraderLink will continue this import when the secure importer is available." });
+    } catch (error) {
+      setNotice({ severity: "error", text: error instanceof Error ? error.message : "AI review could not be started." });
+    } finally { setWorking(null); }
   }
 
   function downloadMappingSupport() {
@@ -402,6 +435,11 @@ export function JournalImportClient({
             ) : null}
             {!preview && mappingSupport.tables.length > 0 ? (
               <Stack spacing={2}>
+                {importRef ? (
+                  <Button onClick={() => setAiRepairOpen(true)} variant="contained">
+                    Allow AI to review this statement
+                  </Button>
+                ) : null}
                 <FormControl fullWidth>
                   <InputLabel id="statement-table-label">Statement table or section</InputLabel>
                   <Select
@@ -498,6 +536,21 @@ export function JournalImportClient({
           </Stack>
         </DashboardPanel>
       ) : null}
+
+      <Dialog fullWidth maxWidth="sm" onClose={() => !working && setAiRepairOpen(false)} open={aiRepairOpen}>
+        <DialogTitle>Allow AI to review your statement</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Typography>Your statement is not yet supported, so the import failed.</Typography>
+            <Typography>Allow AI to review your statement so TraderLink can configure it for a successful import. Your statement remains private to your TraderLink journal. AI processing is used only to complete this import.</Typography>
+            <FormControlLabel control={<Checkbox checked={discordCompletionRequested} onChange={(event) => setDiscordCompletionRequested(event.target.checked)} />} label="Send me a Discord DM when this import is complete" />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button disabled={working !== null} onClick={() => setAiRepairOpen(false)}>Not now</Button>
+          <Button disabled={working !== null} onClick={() => void startAiRepair()} variant="contained">{working === "ai_repair" ? "Starting..." : "Allow AI review"}</Button>
+        </DialogActions>
+      </Dialog>
 
 
       {preview ? (
