@@ -1042,25 +1042,43 @@ function executionAnalysisSections(
   ].filter((section) => section.lines.length > 0);
 }
 
-function TradeAnalysisSectionBlock({
-  keyPrefix,
-  section,
-}: {
-  keyPrefix: string;
-  section: TradeAnalysisSection;
-}) {
+function TradeAnalysisSectionBlock({ section }: { section: TradeAnalysisSection }) {
   return (
     <Box>
       <Typography sx={{ fontWeight: 850, mb: 0.4 }} variant="body2">
         {section.title}
       </Typography>
-      <Stack spacing={0.6}>
-        {section.lines.map((line, index) => (
-          <Typography key={`${keyPrefix}-${section.title}-${index}`} variant="body2">
-            {line}
-          </Typography>
-        ))}
-      </Stack>
+      <AnalysisBulletList lines={section.lines} />
+    </Box>
+  );
+}
+
+function AnalysisBulletList({
+  color,
+  lines,
+  variant = "body2",
+}: {
+  color?: string;
+  lines: readonly string[];
+  variant?: "body2" | "caption";
+}) {
+  return (
+    <Box
+      component="ul"
+      sx={{
+        display: "grid",
+        gap: 0.6,
+        listStyleType: "disc",
+        m: 0,
+        pl: 2.5,
+        "& li::marker": { color: "#000", fontSize: "0.9em" },
+      }}
+    >
+      {lines.map((line, index) => (
+        <Box component="li" key={`${index}-${line}`} sx={{ pl: 0.25 }}>
+          <Typography color={color} variant={variant}>{line}</Typography>
+        </Box>
+      ))}
     </Box>
   );
 }
@@ -1136,23 +1154,16 @@ function ProfitOpportunityWindowSummary({
       <Typography sx={{ fontWeight: 850, mb: 0.4 }} variant="body2">
         {label}
       </Typography>
-      <Stack spacing={0.6}>
-        <Typography variant="body2">{durationLabel}</Typography>
-        {opportunity.completedCloseCount === 1 ? (
-          <Typography variant="body2">
-            Calculated P/L at that close was {money(opportunity.peakPnlDecimal, currency)}.
-          </Typography>
-        ) : (
-          <Typography variant="body2">
-            Calculated P/L stayed between {money(opportunity.lowestPnlDecimal, currency)} and {money(opportunity.peakPnlDecimal, currency)}
-            {peakAt ? `, with the local peak at ${peakAt}` : ""}.
-          </Typography>
-        )}
-        <Typography variant="body2">{strongRetentionLabel}</Typography>
-        <Typography variant="body2">
-          From this window&apos;s local peak to the final calculated path result, {price(opportunity.peakToFinalReversalDecimal, currency)} reversed.
-        </Typography>
-      </Stack>
+      <AnalysisBulletList
+        lines={[
+          durationLabel,
+          opportunity.completedCloseCount === 1
+            ? `Calculated P/L at that close was ${money(opportunity.peakPnlDecimal, currency)}.`
+            : `Calculated P/L stayed between ${money(opportunity.lowestPnlDecimal, currency)} and ${money(opportunity.peakPnlDecimal, currency)}${peakAt ? `, with the local peak at ${peakAt}` : ""}.`,
+          strongRetentionLabel,
+          `From this window's local peak to the final calculated path result, ${price(opportunity.peakToFinalReversalDecimal, currency)} reversed.`,
+        ]}
+      />
     </Box>
   );
 }
@@ -1215,26 +1226,20 @@ function GreenToRedAnalysis({
           sx={{ alignSelf: "flex-start", fontWeight: 800 }}
         />
         {analysis.status === "unavailable" ? (
-          <Typography variant="body2">
-            The complete saved candle and execution path needed for this analysis is unavailable.
-          </Typography>
+          <AnalysisBulletList lines={["The complete saved candle and execution path needed for this analysis is unavailable."]} />
         ) : analysis.status === "never_green" ? (
-          <Typography variant="body2">
-            No completed one-minute candle close or exact execution showed a positive trade P/L before the position became flat.
-          </Typography>
+          <AnalysisBulletList lines={["No completed one-minute candle close or exact execution showed a positive trade P/L before the position became flat."]} />
         ) : (
           <>
             <Box>
               <Typography sx={{ fontWeight: 850, mb: 0.4 }} variant="body2">
                 Profitable phase
               </Typography>
-              <Typography variant="body2">
-                The trade first moved into profit{firstGreenAt ? ` at ${firstGreenAt}` : ""}
-                {analysis.peakPnlDecimal !== null
-                  ? ` and reached a peak calculated P/L of ${money(analysis.peakPnlDecimal, currency)}`
-                  : ""}
-                {peakAt ? ` at ${peakAt}` : ""}.
-              </Typography>
+              <AnalysisBulletList
+                lines={[
+                  `The trade first moved into profit${firstGreenAt ? ` at ${firstGreenAt}` : ""}${analysis.peakPnlDecimal !== null ? ` and reached a peak calculated P/L of ${money(analysis.peakPnlDecimal, currency)}` : ""}${peakAt ? ` at ${peakAt}` : ""}.`,
+                ]}
+              />
             </Box>
             {bestOpportunity ? (
               <Box>
@@ -1273,9 +1278,13 @@ function GreenToRedAnalysis({
                   </>
                 ) : null}
                 {analysis.profitOpportunityThresholdDecimal !== null ? (
-                  <Typography color="text.secondary" sx={{ display: "block", mt: 0.6 }} variant="caption">
-                    Windows contain consecutive completed closes with calculated P/L of at least {money(analysis.profitOpportunityThresholdDecimal, currency)}. Missing minutes split the windows.
-                  </Typography>
+                  <Box sx={{ mt: 0.6 }}>
+                    <AnalysisBulletList
+                      color="text.secondary"
+                      lines={[`Windows contain consecutive completed closes with calculated P/L of at least ${money(analysis.profitOpportunityThresholdDecimal, currency)}. Missing minutes split the windows.`]}
+                      variant="caption"
+                    />
+                  </Box>
                 ) : null}
               </Box>
             ) : null}
@@ -1284,35 +1293,23 @@ function GreenToRedAnalysis({
                 {transitionDetected ? "Move below breakeven" : "Price path result"}
               </Typography>
               {transitionDetected ? (
-                <Stack spacing={0.6}>
-                  <Typography variant="body2">
-                    The trade moved below breakeven{firstRedAt ? ` at ${firstRedAt}` : ""}
-                    {analysis.firstRedPnlDecimal !== null
-                      ? ` with a calculated P/L of ${money(analysis.firstRedPnlDecimal, currency)}`
-                      : ""}.
-                  </Typography>
-                  {analysis.peakToRedReversalDecimal !== null ? (
-                    <Typography variant="body2">
-                      From the peak to that red point, {price(analysis.peakToRedReversalDecimal, currency)} reversed
-                      {analysis.minutesFromPeakToRed === null
-                        ? ""
-                        : ` over ${analysis.minutesFromPeakToRed} minute${analysis.minutesFromPeakToRed === 1 ? "" : "s"}`}.
-                    </Typography>
-                  ) : null}
-                  {analysis.status === "green_to_red_recovered" && firstRecoveryAt ? (
-                    <Typography variant="body2">
-                      The trade returned above breakeven at {firstRecoveryAt}.
-                    </Typography>
-                  ) : analysis.status === "green_to_red_ended_flat" ? (
-                    <Typography variant="body2">The calculated price path finished flat.</Typography>
-                  ) : analysis.status === "green_to_red_ended_red" ? (
-                    <Typography variant="body2">The calculated price path finished below breakeven.</Typography>
-                  ) : null}
-                </Stack>
+                <AnalysisBulletList
+                  lines={[
+                    `The trade moved below breakeven${firstRedAt ? ` at ${firstRedAt}` : ""}${analysis.firstRedPnlDecimal !== null ? ` with a calculated P/L of ${money(analysis.firstRedPnlDecimal, currency)}` : ""}.`,
+                    ...(analysis.peakToRedReversalDecimal !== null
+                      ? [`From the peak to that red point, ${price(analysis.peakToRedReversalDecimal, currency)} reversed${analysis.minutesFromPeakToRed === null ? "" : ` over ${analysis.minutesFromPeakToRed} minute${analysis.minutesFromPeakToRed === 1 ? "" : "s"}`}.`]
+                      : []),
+                    ...(analysis.status === "green_to_red_recovered" && firstRecoveryAt
+                      ? [`The trade returned above breakeven at ${firstRecoveryAt}.`]
+                      : analysis.status === "green_to_red_ended_flat"
+                        ? ["The calculated price path finished flat."]
+                        : analysis.status === "green_to_red_ended_red"
+                          ? ["The calculated price path finished below breakeven."]
+                          : []),
+                  ]}
+                />
               ) : (
-                <Typography variant="body2">
-                  After becoming profitable, the calculated trade path did not later move below breakeven before the final exit.
-                </Typography>
+                <AnalysisBulletList lines={["After becoming profitable, the calculated trade path did not later move below breakeven before the final exit."]} />
               )}
             </Box>
             {transitionDetected && analysis.positionQuantityAtPeakDecimal !== null &&
@@ -1321,29 +1318,33 @@ function GreenToRedAnalysis({
                 <Typography sx={{ fontWeight: 850, mb: 0.4 }} variant="body2">
                   Position changes
                 </Typography>
-                <Stack spacing={0.6}>
-                  <Typography variant="body2">
-                    Position size was {compactNumber(Number(analysis.positionQuantityAtPeakDecimal))} shares at the peak and {compactNumber(Number(analysis.positionQuantityAtRedDecimal))} shares when the trade moved below breakeven.
-                  </Typography>
-                  {actionFacts.map((line) => <Typography key={line} variant="body2">{line}</Typography>)}
-                </Stack>
+                <AnalysisBulletList
+                  lines={[
+                    `Position size was ${compactNumber(Number(analysis.positionQuantityAtPeakDecimal))} shares at the peak and ${compactNumber(Number(analysis.positionQuantityAtRedDecimal))} shares when the trade moved below breakeven.`,
+                    ...actionFacts,
+                  ]}
+                />
               </Box>
             ) : null}
           </>
         )}
         {analysis.finalPnlDecimal !== null ? (
-          <Typography color="text.secondary" variant="caption">
-            Calculated final path P/L: {money(analysis.finalPnlDecimal, currency)}.
-          </Typography>
+          <AnalysisBulletList
+            color="text.secondary"
+            lines={[`Calculated final path P/L: ${money(analysis.finalPnlDecimal, currency)}.`]}
+            variant="caption"
+          />
         ) : null}
         {actualNetPnl !== null ? (
-          <Typography sx={{ fontWeight: 800 }} variant="body2">
-            {Number(actualNetPnl) > 0
-              ? `Actual net profit: ${money(actualNetPnl, currency)}.`
-              : Number(actualNetPnl) < 0
-                ? `Actual net loss: ${money(actualNetPnl, currency)}.`
-                : `Actual net result: ${money(actualNetPnl, currency)}.`}
-          </Typography>
+          <Box sx={{ fontWeight: 800 }}>
+            <AnalysisBulletList
+              lines={[Number(actualNetPnl) > 0
+                ? `Actual net profit: ${money(actualNetPnl, currency)}.`
+                : Number(actualNetPnl) < 0
+                  ? `Actual net loss: ${money(actualNetPnl, currency)}.`
+                  : `Actual net result: ${money(actualNetPnl, currency)}.`]}
+            />
+          </Box>
         ) : null}
         <Typography color="text.secondary" variant="caption">
           {analysis.feesComplete
@@ -2118,7 +2119,6 @@ function TradeReview({
                     {analysisSections.map((section) => (
                       <TradeAnalysisSectionBlock
                         key={section.title}
-                        keyPrefix={roundTrip.roundTripKey}
                         section={section}
                       />
                     ))}
@@ -2139,7 +2139,6 @@ function TradeReview({
                     {analysisSections.map((section) => (
                       <TradeAnalysisSectionBlock
                         key={section.title}
-                        keyPrefix={roundTrip.roundTripKey}
                         section={section}
                       />
                     ))}
