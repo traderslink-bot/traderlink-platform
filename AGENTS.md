@@ -332,6 +332,7 @@ home for all new human-readable project documents.
 ## Trader Intelligence Dashboard Baseline And Parallel Work
 
 - The current approved design baseline is the light, Material-style dashboard on the `/workspace` route. Preserve that visual language and shell unless the user explicitly approves a replacement.
+- Before completing any change to a dashboard feature, review the Help Center guides for that feature and explicitly confirm whether the change requires corresponding guide updates. When updates are required, keep the affected guides aligned with the feature change as part of the same work.
 - Every Trader Intelligence dashboard page must live under `app/(dashboard)` and inherit `app/(dashboard)/layout.tsx`. That layout must render `V3DashboardTemplate`; pages must not rebuild the application frame locally.
 - `app/dashboard-template.tsx` is the public dashboard UI contract. Import `DashboardPage`, `DashboardPanel`, `DashboardMetricCard`, `DashboardPrimaryAction`, and `DashboardSecondaryAction` from it instead of creating local page containers, card conventions, or action styles.
 - `app/dashboard-shell.tsx` exclusively owns the header, TradersLink logo, responsive collapsible sidebar, and full-width page container. Dashboard pages must not create or import their own `AppBar`, `Toolbar`, `Drawer`, logo, `<main>`, or `DashboardShell`.
