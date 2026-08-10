@@ -1,13 +1,14 @@
 import { AI_REVIEWS_HELP_GUIDES } from "./ai-reviews-guides";
 import { DAILY_TRADE_TRACKER_HELP_GUIDES } from "./daily-trade-tracker-guides";
 import type { HelpGuide } from "./help-guide-types";
+import { NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES } from "./notifications-and-imports-guides";
 import { PAID_PLAN_HELP_GUIDES } from "./paid-plan-guides";
 import { TRADE_ANALYZER_HELP_GUIDES } from "./trade-analyzer-guides";
 
 export type HelpNavigationItem = Readonly<{
   depth?: 0 | 1;
   href: string;
-  icon: "home" | "trade_tracker" | "trade_analyzer" | "ai_reviews" | "paid_plan";
+  icon: "home" | "trade_tracker" | "trade_analyzer" | "ai_reviews" | "paid_plan" | "notifications";
   label: string;
   summary: string;
 }>;
@@ -70,6 +71,13 @@ export const HELP_NAVIGATION_ITEMS: readonly HelpNavigationItem[] = Object.freez
     summary: "Connect Whop, manage billing and understand paid access.",
   }),
   ...guideNavigationItems("/help/paid-plan", PAID_PLAN_HELP_GUIDES, "paid_plan"),
+  Object.freeze({
+    href: "/help/notifications-and-imports",
+    icon: "notifications",
+    label: "Notifications and imports",
+    summary: "Find updates, choose Discord messages and finish a statement that needs help.",
+  }),
+  ...guideNavigationItems("/help/notifications-and-imports", NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES, "notifications"),
 ]);
 
 function guideSearchRecords(
@@ -145,6 +153,15 @@ export const HELP_SEARCH_RECORDS: readonly HelpSearchRecord[] = Object.freeze([
     title: "Paid plan and billing overview",
   }),
   ...guideSearchRecords("paid-plan", "Paid plan and billing", "/help/paid-plan", PAID_PLAN_HELP_GUIDES),
+  Object.freeze({
+    href: "/help/notifications-and-imports",
+    id: "notifications-and-imports-overview",
+    keywords: Object.freeze(["notifications", "Discord", "statement import", "unsupported statement", "import help"]),
+    section: "Notifications and imports",
+    summary: "Find updates, choose Discord messages and finish a statement that needs help.",
+    title: "Notifications and imports overview",
+  }),
+  ...guideSearchRecords("notifications-and-imports", "Notifications and imports", "/help/notifications-and-imports", NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES),
 ]);
 
 export const HELP_POPULAR_RECORD_IDS: readonly string[] = Object.freeze([
@@ -155,6 +172,7 @@ export const HELP_POPULAR_RECORD_IDS: readonly string[] = Object.freeze([
   "ai-reviews-what-ai-uses-saved-reflections",
   "ai-reviews-weekly-two-week-cross-month-week",
   "paid-plan-access-troubleshooting-active-in-whop-not-traderlink",
+  "notifications-and-imports-statement-will-not-import",
 ]);
 
 export function helpPopularRecords(): readonly HelpSearchRecord[] {

@@ -1,5 +1,6 @@
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
+import NotificationsNoneRoundedIcon from "@mui/icons-material/NotificationsNoneRounded";
 import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
 import TodayRoundedIcon from "@mui/icons-material/TodayRounded";
 import ShowChartRoundedIcon from "@mui/icons-material/ShowChartRounded";
@@ -51,6 +52,12 @@ const HELP_COLLECTIONS = Object.freeze([
     href: "/help/paid-plan",
     Icon: WorkspacePremiumOutlinedIcon,
     title: "Paid plan and billing",
+  }),
+  Object.freeze({
+    description: "Find updates, choose Discord messages and finish a statement that needs help.",
+    href: "/help/notifications-and-imports",
+    Icon: NotificationsNoneRoundedIcon,
+    title: "Notifications and imports",
   }),
 ]);
 

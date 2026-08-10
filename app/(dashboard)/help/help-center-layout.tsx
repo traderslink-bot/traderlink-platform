@@ -3,6 +3,7 @@
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
+import NotificationsNoneRoundedIcon from "@mui/icons-material/NotificationsNoneRounded";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded";
 import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
@@ -91,8 +92,10 @@ function HelpNavigation({
               ? ShowChartRoundedIcon
             : item.icon === "ai_reviews"
               ? SmartToyOutlinedIcon
-              : item.icon === "paid_plan"
-                ? WorkspacePremiumOutlinedIcon
+            : item.icon === "paid_plan"
+              ? WorkspacePremiumOutlinedIcon
+              : item.icon === "notifications"
+                ? NotificationsNoneRoundedIcon
                 : TodayRoundedIcon;
           return (
             <Box key={item.href} sx={{ mb: 0.5 }}>
