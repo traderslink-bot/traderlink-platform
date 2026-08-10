@@ -36,17 +36,18 @@ export async function POST(request: Request): Promise<Response> {
         field: "journalAccount",
       });
     }
-    requireExpectedJournalAccountSelection(
-      scope,
-      body.expectedAccountSelectionRef,
-    );
+    if (scope.allowedAccountIds.length > 0) {
+      requireExpectedJournalAccountSelection(scope, body.expectedAccountSelectionRef);
+    } else if (body.expectedAccountSelectionRef !== null) {
+      platformFailure("TRADERLINK_ACCOUNT_SELECTION_CONFLICT");
+    }
     const account = withWritableJournalIntegrityRuntime(scope, (runtime) =>
       runtime.accounts.createAccount(scope, {
         workspaceId: scope.workspaceId,
         displayName: requiredString(body, "displayName"),
         baseCurrency: requiredString(body, "baseCurrency").toUpperCase(),
         tradingTimezone: requiredString(body, "tradingTimezone"),
-      }));
+      }), { allowNoActiveAccount: true });
     const selectionRef = deriveJournalAccountSelectionRef(
       scope.workspaceId,
       account.accountId,

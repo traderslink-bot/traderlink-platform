@@ -43,8 +43,7 @@ export default async function AccountTradingPage({
       profile: currentProfile,
     });
   });
-  const activeAccount = profile.journalAccounts.find((account) => account.active);
-  if (!activeAccount) throw new Error("TRADERLINK_ACCOUNT_ACCESS_DENIED");
+  const activeAccount = profile.journalAccounts.find((account) => account.active) ?? null;
   const moomooConnectionFailed = ["failed", "invalid-state", "unavailable"].includes(query.moomoo ?? "");
 
   return (
@@ -68,7 +67,7 @@ export default async function AccountTradingPage({
       </DashboardPanel>
 
       <DashboardPanel title="Create a Trade Tracker account">
-        <AccountManagementClient activeAccountSelectionRef={activeAccount.selectionRef} defaultTradingTimezone={profile.workspace.defaultTradingTimezone} />
+        <AccountManagementClient activeAccountSelectionRef={activeAccount?.selectionRef ?? null} defaultTradingTimezone={profile.workspace.defaultTradingTimezone} />
       </DashboardPanel>
 
       <DashboardPanel title="Broker connections">
@@ -90,7 +89,7 @@ export default async function AccountTradingPage({
             <MoomooConnectionSettings state="active" />
           </Stack>
         ) : null}
-        {moomooConnection?.state === "active" ? (
+        {moomooConnection?.state === "active" && activeAccount ? (
           <MoomooExecutionImportSetup
             activeAccountName={activeAccount.displayName}
             activeAccountSelectionRef={activeAccount.selectionRef}

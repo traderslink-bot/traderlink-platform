@@ -442,3 +442,35 @@ export function readVerifiedJournalEvidenceObject(
     input.sourceFileSizeBytes,
   );
 }
+
+/**
+ * Permanently removes one verified private evidence object. Callers must first
+ * establish that no remaining import batch references this shared object.
+ */
+export function purgeJournalEvidenceObject(
+  boundary: JournalEvidenceVaultBoundary,
+  input: Readonly<{
+    evidenceObjectKey: string;
+    sourceFileSha256: string;
+    sourceFileSizeBytes: number;
+    evidenceNamespace?: JournalEvidenceNamespace;
+  }>,
+): void {
+  const namespace = evidenceNamespace(input.evidenceNamespace);
+  const expectedObjectKey = `${namespace}/${input.sourceFileSha256}.csv`;
+  if (input.evidenceObjectKey !== expectedObjectKey) {
+    platformFailure("TRADERLINK_JOURNAL_EVIDENCE_VAULT_CONFLICT");
+  }
+  const objectPath = join(boundary.rootPath, namespace, `${input.sourceFileSha256}.csv`);
+  readAndVerifyEvidenceFile(
+    objectPath,
+    input.sourceFileSha256,
+    input.sourceFileSizeBytes,
+  );
+  unlinkSync(/* turbopackIgnore: true */ objectPath);
+  if (existsSync(/* turbopackIgnore: true */ objectPath)) {
+    platformFailure("TRADERLINK_JOURNAL_EVIDENCE_VAULT_WRITE_FAILED", {
+      check: "evidence_object_purge",
+    });
+  }
+}

@@ -84,15 +84,18 @@ people's data by implication.
 
 ## Technical safeguards
 
-- Existing Journal and Coach rows deliberately reject ordinary deletion. Add a
-  narrowly scoped erasure authorization rather than dropping integrity triggers
-  or disabling foreign-key checks.
+- Existing Journal and Coach rows deliberately reject ordinary deletion. The
+  server-owned erasure command temporarily lifts those guards only inside one
+  immediate SQLite transaction, restores every original guard before commit,
+  and runs a foreign-key check before it can succeed. Ordinary application
+  writes never receive this capability.
 - Use a server-owned one-time erasure command, a fixed deletion order, an
   immediate database transaction and explicit source-vault cleanup. The browser
   only supplies an opaque account-selection reference and the required
   confirmation phrase.
-- The action must be idempotent at its public boundary: a completed deletion
-  cannot be replayed against a newly created account.
+- A completed account-only deletion cannot be replayed against a newly created
+  account because the browser submits an opaque selection that the server
+  resolves against the current authorized account before deletion.
 - Do not display source identifiers, login subjects, evidence contents or
   deletion internals in the UI or response.
 - An active operational database is erased immediately. Private disaster
@@ -126,3 +129,9 @@ people's data by implication.
   user-scoped records while preserving unrelated users' and platform-wide data.
 - Owner visual review accepts the Settings hub and Privacy language before
   either deletion control is accepted.
+
+## Owner acceptance record
+
+- The owner visually approved the Privacy UI and its account-only/full-account
+  deletion language on 2026-08-10. The Settings hub was approved earlier that
+  day.

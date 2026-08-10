@@ -25,8 +25,8 @@ type CountRow = Readonly<{ count: number }>;
 
 export type DevelopmentOwnerJournalScope = Readonly<{
   scope: WorkspaceAccessScope;
-  accountId: string;
-  accountSelectionRef: JournalAccountSelectionRef;
+  accountId: string | null;
+  accountSelectionRef: JournalAccountSelectionRef | null;
 }>;
 
 export function requireSingleActivePlatformWorkspace(
@@ -74,11 +74,20 @@ ORDER BY membership.workspace_id, user.user_id`)
   }
   const owner = owners[0];
   const activeAccounts = accounts.listActiveAccounts(owner.workspace_id);
-  const selection = resolveJournalAccountSelection(
-    owner.workspace_id,
-    suppliedSelectionRef,
-    activeAccounts,
-  );
+  if (activeAccounts.length === 0) {
+    return Object.freeze({
+      accountId: null,
+      accountSelectionRef: null,
+      scope: Object.freeze({
+        userId: owner.user_id,
+        workspaceId: owner.workspace_id,
+        workspaceRole: "owner" as const,
+        allowedAccountIds: Object.freeze([]),
+        activeAccountId: null,
+      }),
+    });
+  }
+  const selection = resolveJournalAccountSelection(owner.workspace_id, suppliedSelectionRef, activeAccounts);
   return Object.freeze({
     accountId: selection.accountId,
     accountSelectionRef: selection.selectionRef,

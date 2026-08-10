@@ -21413,3 +21413,22 @@ Current best next step:
 - Owner reviews `http://127.0.0.1:3010/workspace`. After review, stop the exact
   port-3010 process tree and restore the daily controller/watchdog scheduling
   state before the next 03:55 start. Production activation remains separate.
+
+# 2026-08-10 Account Privacy erasure resume point
+
+- Account Settings Privacy is owner-approved. It adds
+  an unobtrusive Privacy section with typed permanent-deletion dialogs for the
+  selected Trade Tracker account and the whole TraderLink account.
+- The server command removes scoped live data in an immediate SQLite
+  transaction, temporarily restores immutable guards before commit, verifies
+  foreign keys, clears selection/session cookies as appropriate and purges
+  unshared primary evidence and support-source vault objects.
+- `src/scripts/verify-platform-account-erasure.ts` passed against a freshly
+  initialized synthetic-only temporary database. It proved account isolation,
+  rollback on a simulated vault-purge failure, private-object cleanup, full
+  owner deletion, unrelated-user preservation, guard restoration and empty
+  foreign-key check. It never opened the configured development database.
+- The owner approved `/account/privacy` on 2026-08-10. Next step: stage only
+  the explicit Privacy-slice allowlist and make the requested narrow local
+  commit. Do not run a broad test suite, start/restart the dashboard or touch
+  real account data for this review.

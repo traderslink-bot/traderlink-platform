@@ -174,10 +174,13 @@ export function withReadonlyJournalIntegrityRuntime<T>(
 export function withWritableJournalIntegrityRuntime<T>(
   scope: WorkspaceAccessScope,
   operation: (runtime: JournalIntegrityRuntime, database: Database.Database) => T,
+  options: Readonly<{ allowNoActiveAccount?: boolean }> = {},
 ): T {
   return withPlatformDatabase({ mode: "runtime" }, (database) => {
     const runtime = createJournalIntegrityRuntime(database);
-    assertScope(runtime, scope);
+    if (!(options.allowNoActiveAccount && scope.allowedAccountIds.length === 0 && scope.activeAccountId === null)) {
+      assertScope(runtime, scope);
+    }
     return operation(runtime, database);
   });
 }

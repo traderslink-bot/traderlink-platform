@@ -530,3 +530,20 @@ before any real product-route write. At that verification checkpoint, port
 3010 remained off and no commit, push, deployment or real database mutation
 occurred. The accepted package was subsequently preserved in the Phase 6 local
 source commit recorded above; the database remained unchanged.
+
+## 2026-08-10 Account Settings privacy-erasure slice
+
+- The owner-approved sectioned Account Settings hub is committed at
+  `76d91531`. Preferences, Trading, AI & plan and Profile & access retain their
+  existing controls under stable routes.
+- The uncommitted follow-up Privacy slice provides account-only and whole
+  TraderLink erasure with typed confirmation, server-resolved account scope,
+  immediate transactional deletion, temporary in-transaction immutable-guard
+  restoration, foreign-key proof and private evidence/support-source cleanup.
+- Its disposable synthetic-only verifier passed account isolation, full-owner
+  erasure, rollback on vault purge failure, foreign-key integrity and delete
+  guard restoration. No configured development database, user evidence or
+  live account was read or changed.
+- The owner visually approved the Privacy UI on 2026-08-10. Hosted
+  backup-retention and public-session reauthentication remain separate launch
+  gates in the controlling plan.

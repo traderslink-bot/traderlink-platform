@@ -11,7 +11,8 @@ export type AccountSettingsSection =
   | "preferences"
   | "trading"
   | "ai"
-  | "profile";
+  | "profile"
+  | "privacy";
 
 const ACCOUNT_SETTINGS_SECTIONS: readonly Readonly<{
   description: string;
@@ -42,6 +43,12 @@ const ACCOUNT_SETTINGS_SECTIONS: readonly Readonly<{
     href: "/account/profile",
     id: "profile",
     label: "Profile & access",
+  }),
+  Object.freeze({
+    description: "Permanent data deletion",
+    href: "/account/privacy",
+    id: "privacy",
+    label: "Privacy",
   }),
 ]);
 

@@ -14,7 +14,7 @@ export function AccountManagementClient({
   activeAccountSelectionRef,
   defaultTradingTimezone,
 }: {
-  activeAccountSelectionRef: string;
+  activeAccountSelectionRef: string | null;
   defaultTradingTimezone: string;
 }) {
   const [displayName, setDisplayName] = useState("");

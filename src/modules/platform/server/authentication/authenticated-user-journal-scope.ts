@@ -34,11 +34,16 @@ FROM platform_workspaces WHERE workspace_id = ?`)
   }
   const accounts = new JournalAccountRepository(database)
     .listActiveAccounts(membership.workspaceId);
-  const selection = resolveJournalAccountSelection(
-    membership.workspaceId,
-    suppliedSelectionRef,
-    accounts,
-  );
+  if (accounts.length === 0) {
+    return Object.freeze({
+      userId,
+      workspaceId: membership.workspaceId,
+      workspaceRole: membership.role,
+      allowedAccountIds: Object.freeze([]),
+      activeAccountId: null,
+    });
+  }
+  const selection = resolveJournalAccountSelection(membership.workspaceId, suppliedSelectionRef, accounts);
   return Object.freeze({
     userId,
     workspaceId: membership.workspaceId,
