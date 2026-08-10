@@ -128,17 +128,17 @@ function Section({
   title: string;
 }) {
   return (
-    <Accordion defaultExpanded={defaultExpanded} disableGutters sx={{ border: 1, borderColor: "divider", borderRadius: "8px !important", boxShadow: "none", overflow: "hidden", "&:before": { display: "none" } }}>
-      <Box sx={{ alignItems: "center", display: "flex" }}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ flexGrow: 1, minWidth: 0, px: { xs: 1.5, sm: 2.25 }, py: 0.5 }}>
+    <Box sx={{ position: "relative" }}>
+      <Accordion defaultExpanded={defaultExpanded} disableGutters sx={{ border: 1, borderColor: "divider", borderRadius: "8px !important", boxShadow: "none", overflow: "hidden", "&:before": { display: "none" } }}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minWidth: 0, pl: { xs: 1.5, sm: 2.25 }, pr: { xs: 8, sm: 9 }, py: 0.5 }}>
           <Box><Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">{title}</Typography><Typography color="text.secondary" variant="body2">{description}</Typography></Box>
         </AccordionSummary>
-        <Box sx={{ pr: { xs: 0.75, sm: 1.25 } }}>
-          <TradeAnalyzerHelpLink href={helpHref} label={title} />
-        </Box>
+        <AccordionDetails sx={{ px: { xs: 1.5, sm: 2.25 }, pb: 2.25, pt: 0 }}>{children}</AccordionDetails>
+      </Accordion>
+      <Box sx={{ position: "absolute", right: { xs: 40, sm: 46 }, top: 10, zIndex: 1 }}>
+        <TradeAnalyzerHelpLink href={helpHref} label={title} />
       </Box>
-      <AccordionDetails sx={{ px: { xs: 1.5, sm: 2.25 }, pb: 2.25, pt: 0 }}>{children}</AccordionDetails>
-    </Accordion>
+    </Box>
   );
 }
 
