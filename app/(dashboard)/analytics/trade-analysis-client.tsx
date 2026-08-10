@@ -29,6 +29,8 @@ import { useMemo, useState } from "react";
 import { DashboardMetricCard } from "@/app/dashboard-template";
 import type {
   DailyTradeLongTermAnalyticsModel,
+  TradeAnalysisExcursionBreakdownRow,
+  TradeAnalysisExcursionRow,
   TradeAnalysisBreakdownRow,
   TradeAnalysisTradeRow,
 } from "@/src/modules/level-analysis/server/daily-trade-long-term-analytics-service";
@@ -40,7 +42,7 @@ import {
   TradeAnalyzerTablePagination,
 } from "./trade-analyzer-table-pagination";
 
-export type TradeAnalysisView = "day" | "entry-exit" | "green-to-red" | "candle-patterns" | "trades";
+export type TradeAnalysisView = "day" | "entry-exit" | "mfe-mae" | "green-to-red" | "candle-patterns" | "trades";
 
 function money(value: string | null, currency: string | null): string {
   if (value === null || currency === null) return "N/A";
@@ -235,6 +237,47 @@ function TradeTable({ model }: { model: DailyTradeLongTermAnalyticsModel }) {
   );
 }
 
+function ExcursionBreakdownTable({
+  currency,
+  rows,
+}: {
+  currency: string | null;
+  rows: readonly TradeAnalysisExcursionBreakdownRow[];
+}) {
+  if (rows.length === 0) return <Typography color="text.secondary">No measured entries or adds are available for these comparisons.</Typography>;
+  return <TableContainer><Table size="small"><TableHead><TableRow>
+    <TableCell>Group</TableCell><TableCell align="right">Measured</TableCell><TableCell align="right">Avg MFE</TableCell><TableCell align="right">Avg MAE</TableCell><TableCell align="right">Avg MFE %</TableCell><TableCell align="right">Avg MAE %</TableCell>
+  </TableRow></TableHead><TableBody>{rows.map((row) => <TableRow hover key={row.label}>
+    <TableCell sx={{ fontWeight: 750 }}>{row.label}</TableCell><TableCell align="right">{row.measuredExecutionCount}</TableCell><TableCell align="right">{money(row.averageFavorableMoveDecimal, currency)}</TableCell><TableCell align="right">{money(row.averageAdverseMoveDecimal, currency)}</TableCell><TableCell align="right">{percent(row.averageFavorableMovePercent)}</TableCell><TableCell align="right">{percent(row.averageAdverseMovePercent)}</TableCell>
+  </TableRow>)}</TableBody></Table></TableContainer>;
+}
+
+function MfeMaeTable({ model }: { model: DailyTradeLongTermAnalyticsModel }) {
+  const [ticker, setTicker] = useState("");
+  const [entryType, setEntryType] = useState<"all" | TradeAnalysisExcursionRow["eventKind"]>("all");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const rows = useMemo(() => model.excursions.filter((row) =>
+    row.symbol.toUpperCase().includes(ticker.trim().toUpperCase()) &&
+    (entryType === "all" || row.eventKind === entryType)), [entryType, model.excursions, ticker]);
+  const currentPage = boundedPage(page, rows.length, pageSize);
+  const visibleRows = paginatedRows(rows, currentPage, pageSize);
+  return <Stack spacing={1.5}>
+    <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+      <TextField label="Ticker" onChange={(event) => { setTicker(event.target.value); setPage(1); }} size="small" value={ticker} />
+      <TextField label="Execution" onChange={(event) => { setEntryType(event.target.value as typeof entryType); setPage(1); }} select size="small" sx={{ minWidth: 160 }} value={entryType}>
+        <MenuItem value="all">Entries and adds</MenuItem><MenuItem value="Entry">Entries</MenuItem><MenuItem value="Add">Adds</MenuItem>
+      </TextField>
+    </Stack>
+    <TradeAnalyzerTablePagination onPageChange={setPage} onPageSizeChange={(nextSize) => { setPageSize(nextSize); setPage(1); }} page={currentPage} pageSize={pageSize} rowCount={rows.length} />
+    {rows.length === 0 ? <Typography color="text.secondary">No measured entries or adds match these filters.</Typography> : <TableContainer><Table size="small"><TableHead><TableRow>
+      <TableCell>Ticker</TableCell><TableCell>Type</TableCell><TableCell>Direction</TableCell><TableCell>Closed</TableCell><TableCell align="right">Entry price</TableCell><TableCell align="right">MFE</TableCell><TableCell align="right">MAE</TableCell><TableCell align="right">MFE %</TableCell><TableCell align="right">MAE %</TableCell><TableCell align="right">Until flat</TableCell><TableCell align="right">Actual P/L</TableCell><TableCell />
+    </TableRow></TableHead><TableBody>{visibleRows.map((row) => <TableRow hover key={`${row.roundTripId}-${row.executionSequence}`}>
+      <TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell><TableCell>{row.eventKind}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.closeDate}</TableCell><TableCell align="right">{money(row.entryPriceDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: "success.main", fontWeight: 750 }}>{money(row.favorableMoveDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: "error.main", fontWeight: 750 }}>{money(row.adverseMoveDecimal, model.currency)}</TableCell><TableCell align="right">{percent(row.favorableMovePercent)}</TableCell><TableCell align="right">{percent(row.adverseMovePercent)}</TableCell><TableCell align="right">{row.minutesUntilFlat} min</TableCell><TableCell align="right" sx={{ color: Number(row.actualPnlDecimal) < 0 ? "error.main" : "success.main", fontWeight: 750 }}>{money(row.actualPnlDecimal, model.currency)}</TableCell><TableCell><Button endIcon={<OpenInNewIcon fontSize="small" />} href={`/trade-tracker/${row.trackerDate}`} size="small" variant="outlined">View day</Button></TableCell>
+    </TableRow>)}</TableBody></Table></TableContainer>}
+  </Stack>;
+}
+
 function PatternRanking({ model }: { model: DailyTradeLongTermAnalyticsModel }) {
   const rows = model.patterns.slice(0, 10);
   const maximum = Math.max(1, ...rows.map((row) => row.occurrenceCount));
@@ -257,6 +300,7 @@ function PatternRanking({ model }: { model: DailyTradeLongTermAnalyticsModel }) 
 }
 
 const CAPABILITIES = Object.freeze([
+  Object.freeze({ href: "/analytics/trade-analyzer/day/mfe-mae", title: "MFE & MAE", description: "Study favorable and adverse movement after every measured entry or add." }),
   Object.freeze({ href: "/analytics/trade-analyzer/day/entry-exit", title: "Entry & Exit", description: "Compare entry timing, favorable and adverse movement, market context and exit giveback." }),
   Object.freeze({ href: "/analytics/trade-analyzer/day/green-to-red", title: "Green-to-Red", description: "Review profit capture, reversals below breakeven, recoveries and risk-management behavior." }),
   Object.freeze({ href: "/analytics/trade-analyzer/day/candle-patterns", title: "Candle Patterns", description: "Compare saved one-minute and five-minute patterns observed on or before executions." }),
@@ -293,8 +337,8 @@ export function TradeAnalysisClient({
         <DashboardMetricCard caption="Waiting for the approved eligibility boundary" label="Coverage" value="N/A" />
         <DashboardMetricCard caption="Trades that finished above breakeven" label="Win rate" value={percent(model.winRatePercent)} />
         <DashboardMetricCard caption="Average percentage return per analyzed trade" label="Average return" value={percent(model.averageReturnPercent)} />
-        <DashboardMetricCard caption={`Journal ${model.moneyBasis} P/L per analyzed trade`} label={`Average ${model.moneyBasis} result`} value={money(model.averagePnlDecimal, model.currency)} />
-        <DashboardMetricCard caption={`Combined Journal ${model.moneyBasis} P/L`} label="Total actual result" value={money(model.profitCapture.totalActualPnlDecimal, model.currency)} />
+        <DashboardMetricCard caption={`Trade Tracker ${model.moneyBasis} P/L per analyzed trade`} label={`Average ${model.moneyBasis} result`} value={money(model.averagePnlDecimal, model.currency)} />
+        <DashboardMetricCard caption={`Combined Trade Tracker ${model.moneyBasis} P/L`} label="Total actual result" value={money(model.profitCapture.totalActualPnlDecimal, model.currency)} />
         <DashboardMetricCard caption="Actual result plus measured additional opportunity" label="Result at sustained opportunities" value={money(model.profitCapture.totalPotentialPnlDecimal, model.currency)} />
         <DashboardMetricCard caption="Difference between actual and measured opportunity" label="Total missed opportunity" value={money(model.profitCapture.totalAdditionalOpportunityDecimal, model.currency)} />
         </Box>
@@ -338,7 +382,7 @@ export function TradeAnalysisClient({
       {view === "green-to-red" ? <Section defaultExpanded description="Actual results compared with the strongest profit opportunities that remained available through completed candle closes." helpHref="/help/trade-analyzer/green-to-red-analysis#profit-capture" title="Profit capture">
         <Stack spacing={2.25}>
           <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } }}>
-            <DashboardMetricCard caption={`Combined Journal ${model.moneyBasis} P/L`} label="Total actual result" value={money(model.profitCapture.totalActualPnlDecimal, model.currency)} />
+            <DashboardMetricCard caption={`Combined Trade Tracker ${model.moneyBasis} P/L`} label="Total actual result" value={money(model.profitCapture.totalActualPnlDecimal, model.currency)} />
             <DashboardMetricCard caption="Actual result plus the measured additional opportunity" label="Result at best sustained opportunities" value={money(model.profitCapture.totalPotentialPnlDecimal, model.currency)} />
             <DashboardMetricCard caption={`${model.opportunityTradeCount} trades had a measured sustained opportunity`} label="Total additional opportunity" value={money(model.profitCapture.totalAdditionalOpportunityDecimal, model.currency)} />
             <DashboardMetricCard caption="Mean percentage retained" label="Average peak profit retained" value={percent(model.profitCapture.averageCapturedPercent)} />
@@ -385,6 +429,28 @@ export function TradeAnalysisClient({
           <DashboardMetricCard caption="Average movement against the execution" label="Average adverse move per share" value={money(model.entryOpportunityRisk.averageAdverseMoveDecimal, model.currency)} />
           <DashboardMetricCard caption="Middle adverse movement across measured executions" label="Median adverse move per share" value={money(model.entryOpportunityRisk.medianAdverseMoveDecimal, model.currency)} />
         </Box>
+      </Section> : null}
+
+      {view === "mfe-mae" ? <Section defaultExpanded description="Complete-population favorable and adverse movement after each measured entry or add, before the position became flat." helpHref="/help/trade-analyzer/mfe-mae#overview" title="MFE & MAE">
+        <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))" } }}>
+          <DashboardMetricCard caption="Entries and adds with saved one-minute candle coverage" label="Measured executions" value={String(model.entryOpportunityRisk.measuredExecutionCount)} />
+          <DashboardMetricCard caption="Average price movement in the trade's favor per share" label="Average MFE" value={money(model.entryOpportunityRisk.averageFavorableMoveDecimal, model.currency)} />
+          <DashboardMetricCard caption="Middle favorable price movement per share" label="Median MFE" value={money(model.entryOpportunityRisk.medianFavorableMoveDecimal, model.currency)} />
+          <DashboardMetricCard caption="Average price movement against the trade per share" label="Average MAE" value={money(model.entryOpportunityRisk.averageAdverseMoveDecimal, model.currency)} />
+          <DashboardMetricCard caption="Middle adverse price movement per share" label="Median MAE" value={money(model.entryOpportunityRisk.medianAdverseMoveDecimal, model.currency)} />
+          <DashboardMetricCard caption="Average favorable movement relative to the entry price" label="Average MFE %" value={percent(model.mfeMae.averageFavorableMovePercent)} />
+          <DashboardMetricCard caption="Middle favorable movement relative to the entry price" label="Median MFE %" value={percent(model.mfeMae.medianFavorableMovePercent)} />
+          <DashboardMetricCard caption="Average adverse movement relative to the entry price" label="Average MAE %" value={percent(model.mfeMae.averageAdverseMovePercent)} />
+          <DashboardMetricCard caption="Middle adverse movement relative to the entry price" label="Median MAE %" value={percent(model.mfeMae.medianAdverseMovePercent)} />
+        </Box>
+      </Section> : null}
+
+      {view === "mfe-mae" ? <Section description="Compare the same measured execution population by entry type and direction. These rows describe observed price movement; they do not prescribe a stop or target." helpHref="/help/trade-analyzer/mfe-mae#comparisons" title="Comparisons">
+        <ExcursionBreakdownTable currency={model.currency} rows={model.mfeMae.breakdown} />
+      </Section> : null}
+
+      {view === "mfe-mae" ? <Section description="The individual saved Moomoo-candle observations behind the long-term MFE and MAE results. Ticker and execution filters apply before pagination." helpHref="/help/trade-analyzer/mfe-mae#measured-executions" title="Measured executions">
+        <MfeMaeTable model={model} />
       </Section> : null}
 
       {view === "entry-exit" ? <Section description={`Results grouped by entry time and total holding duration in ${model.timezone}.`} helpHref="/help/trade-analyzer/entry-exit-analysis#timing-holding" title="Timing and holding">

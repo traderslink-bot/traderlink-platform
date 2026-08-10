@@ -12,12 +12,12 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Replay a saved trade and compare its recorded price path with the execution decisions.",
         keywords: ["trade analyzer", "chart replay", "day trade analysis", "historical analytics"],
         blocks: [
-          { kind: "paragraph", text: "The Trade Analyzer combines your exact Journal executions with supported Moomoo candles. Inside Daily Trade Tracker it replays one selected trade and explains its entries, exits, price path and completed candle patterns. Day Trade Analysis compares saved Analyzer results across eligible day trades." },
+          { kind: "paragraph", text: "The Trade Analyzer combines your exact Trade Tracker executions with supported Moomoo candles. Inside Daily Trade Tracker it replays one selected trade and explains its entries, exits, price path and completed candle patterns. Day Trade Analysis compares saved Analyzer results across eligible day trades." },
           { kind: "table", columns: ["Area", "Purpose"], rows: [
             ["Daily Trade Tracker", "Review one trading day, select a ticker and trade, replay the chart, inspect executions and save notes, tags and rules."],
             ["Trade Analyzer", "The reusable chart, execution analysis, Green-to-red analysis and candle-pattern capability."],
             ["Day Trade Analysis", "Long-term comparisons over eligible day trades that already have saved Analyzer results."],
-            ["Analytics", "Ordinary Journal analytics over supported historical trading facts. It does not share the Analyzer eligibility population."],
+            ["Analytics", "Regular Trade Tracker analytics over supported historical trading facts. It does not share the Analyzer eligibility population."],
           ] },
           { kind: "callout", title: "Recorded evidence, not a signal", text: "The Analyzer describes what happened in saved executions and completed candles. It does not predict the next move or give investment advice." },
         ],
@@ -29,7 +29,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: ["execution time", "seconds", "price", "quantity", "manual entry"],
         blocks: [
           { kind: "paragraph", text: "The chart places each buy and sell at its recorded timestamp and price. A wrong minute can attach the execution to the wrong candle; wrong seconds can change which completed evidence was available before the fill. A wrong price or quantity changes weighted entries, exits, P/L paths and Green-to-red calculations." },
-          { kind: "paragraph", text: "If you correct an execution, TraderLink refreshes the affected trade so the chart and analysis stay aligned with the corrected Journal facts." },
+          { kind: "paragraph", text: "If you correct an execution, TraderLink refreshes the affected trade so the chart and analysis stay aligned with the corrected Trade Tracker facts." },
         ],
       },
       {
@@ -154,7 +154,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Read several fills as one quantity-weighted trade without losing the individual evidence.",
         keywords: ["combined entry", "combined exit", "weighted price", "mfe", "mae", "holding time"],
         blocks: [
-          { kind: "paragraph", text: "Combined entry and exit use share-weighted fill prices. The complete trade runs from its first entry until the position returns to zero. It can report actual Journal result, holding time, maximum favorable excursion (MFE), maximum adverse excursion (MAE), partial exits and giveback." },
+          { kind: "paragraph", text: "Combined entry and exit use share-weighted fill prices. The complete trade runs from its first entry until the position returns to zero. It can report actual Trade Tracker result, holding time, maximum favorable excursion (MFE), maximum adverse excursion (MAE), partial exits and giveback." },
           { kind: "paragraph", text: "A combined result answers how the complete trade behaved. Individual execution analysis answers what followed one particular fill. Both views are useful and their populations should not be mixed." },
         ],
       },
@@ -195,7 +195,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
             ["Trades", "Distinct analyzed trades represented by those executions."],
             ["Opportunity trades", "Distinct trades with a measured sustained opportunity."],
             ["Win rate", "Percentage of represented trades with positive actual result."],
-            ["Avg return / Avg result", "Average percentage return and average actual Journal result."],
+            ["Avg return / Avg result", "Average percentage return and average actual Trade Tracker result."],
             ["Avg potential result", "Average actual result plus measured additional opportunity."],
             ["Avg missed opportunity", "Average positive difference between actual result and sustained opportunity."],
           ] },
@@ -213,6 +213,47 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     ],
   },
   {
+    slug: "mfe-mae",
+    title: "MFE & MAE",
+    description: "Study long-term favorable and adverse movement after measured entries and adds.",
+    sections: [
+      {
+        id: "overview",
+        title: "MFE & MAE",
+        summary: "Compare the largest observed favorable and adverse move after each measured entry or add.",
+        keywords: ["mfe", "mae", "favorable movement", "adverse movement", "one-minute candles"],
+        blocks: [
+          { kind: "paragraph", text: "Maximum favorable excursion (MFE) is the largest measured price movement in the trade's favor after an entry or add and before the position becomes flat. Maximum adverse excursion (MAE) is the largest measured movement against it over that same interval." },
+          { kind: "table", columns: ["Card", "Meaning"], rows: [
+            ["Average / Median MFE", "Mean and middle favorable price movement per share across the complete measured population."],
+            ["Average / Median MAE", "Mean and middle adverse price movement per share across the complete measured population."],
+            ["MFE % / MAE %", "The same movement relative to that execution's price, making differently priced tickers easier to compare."],
+          ] },
+          { kind: "callout", title: "Measured candle range", text: "The page uses saved Moomoo one-minute candle evidence. A candle that shares a fill does not prove whether its high or low occurred before the fill, so the Analyzer does not claim that unknown sequence." },
+        ],
+      },
+      {
+        id: "comparisons",
+        title: "Comparisons",
+        summary: "Separate original entries, adds, longs and shorts without turning observation into a trading rule.",
+        keywords: ["entries", "adds", "long", "short", "comparison"],
+        blocks: [
+          { kind: "paragraph", text: "The four comparison rows reuse the same measured execution facts. They show count plus average MFE/MAE in price and percentage terms. They describe the observed sample and do not prescribe a stop, target or adding strategy." },
+        ],
+      },
+      {
+        id: "measured-executions",
+        title: "Measured executions",
+        summary: "Audit the entry and add observations behind the long-term statistics.",
+        keywords: ["ticker", "entries", "adds", "pagination", "view day"],
+        blocks: [
+          { kind: "paragraph", text: "Ticker and execution filters apply before pagination. The table shows entry price, MFE, MAE, percentage movement, time until flat and the actual trade result. View day opens the associated Daily Trade Tracker date without changing the Analyzer population." },
+          { kind: "paragraph", text: "Results per page offers 10, 25, 50 or 100 rows. Paging changes only the visible evidence rows; every card and comparison remains calculated from the complete selected date, currency and gross/net population." },
+        ],
+      },
+    ],
+  },
+  {
     slug: "green-to-red-analysis",
     title: "Green-to-red analysis",
     description: "Understand profit capture, reversals below breakeven, recoveries and observed risk-management behavior.",
@@ -224,7 +265,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: ["profit capture", "left on table", "missed opportunity", "peak retained", "giveback"],
         blocks: [
           { kind: "table", columns: ["Result", "Definition"], rows: [
-            ["Total actual result", "Combined actual Journal gross or net P/L for analyzed eligible trades."],
+            ["Total actual result", "Combined actual Trade Tracker gross or net P/L for analyzed eligible trades."],
             ["Result at best sustained opportunities", "Actual result plus each trade's measured additional opportunity."],
             ["Total additional opportunity", "Positive difference between actual result and the strongest supported sustained opportunity."],
             ["Average / median peak profit retained", "Percentage of measured opportunity represented by the actual result, shown as mean and middle value."],
@@ -316,7 +357,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
             ["Location", "Exact execution candle or completed candle before execution."],
             ["Occurrences", "Number of detected execution occurrences."],
             ["Trades", "Number of distinct analyzed trades represented."],
-            ["Win rate / Avg return / Avg result", "Actual Journal outcome statistics for the complete represented trade group."],
+            ["Win rate / Avg return / Avg result", "Actual Trade Tracker outcome statistics for the complete represented trade group."],
           ] },
           { kind: "paragraph", text: "When more than 10 grouped rows exist, Results per page offers 10, 25, 50 or 100. Showing X-Y of Z and Previous/Next change only the visible rows, never the complete-group calculations." },
         ],
@@ -350,7 +391,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       {
         id: "eligibility-coverage",
         title: "Eligibility and coverage",
-        summary: "Read analyzed eligible trades as a supported paid Analyzer population, not all historical Journal trades.",
+        summary: "Read analyzed eligible trades as a supported paid Analyzer population, not all historical Trade Tracker trades.",
         keywords: ["eligible trades", "analyzed trades", "coverage", "paid plan", "historical imports"],
         blocks: [
           { kind: "paragraph", text: "Coverage is analyzed eligible trades divided by all eligible trades. Older historical imports outside the Analyzer eligibility period do not enter either number. A trade missing required supported facts is not eligible rather than being counted as a failed zero." },
@@ -369,7 +410,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
             ["Coverage", "Analyzed eligible trades divided by all eligible trades."],
             ["Win rate", "Percentage of analyzed trades with positive actual result."],
             ["Average return", "Mean percentage return across analyzed trades with a supported return denominator."],
-            ["Average gross/net result", "Mean actual Journal result under the selected money basis."],
+            ["Average gross/net result", "Mean actual Trade Tracker result under the selected money basis."],
           ] },
         ],
       },
@@ -380,7 +421,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: ["actual result", "sustained opportunity", "missed opportunity", "potential result"],
         blocks: [
           { kind: "table", columns: ["Card", "Meaning"], rows: [
-            ["Total actual result", "Combined actual Journal P/L."],
+            ["Total actual result", "Combined actual Trade Tracker P/L."],
             ["Result at sustained opportunities", "Actual result plus measured additional opportunity."],
             ["Total missed opportunity", "Positive difference between actual and supported sustained opportunity."],
           ] },
@@ -399,9 +440,10 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         id: "capability-navigation",
         title: "Capability pages",
         summary: "Open the focused page for the question you want to answer.",
-        keywords: ["entry exit", "green to red", "candle patterns", "analyzed trades"],
+        keywords: ["entry exit", "mfe", "mae", "green to red", "candle patterns", "analyzed trades"],
         blocks: [
           { kind: "bullets", items: [
+            "MFE & MAE compares favorable and adverse movement after measured entries and adds, then exposes the paginated execution evidence.",
             "Entry & Exit compares execution timing, context, favorable/adverse movement and exit giveback.",
             "Green-to-Red compares profit capture, reversal, recovery and observed risk-management behavior.",
             "Candle Patterns compares saved 1-minute and 5-minute pattern occurrences.",
@@ -433,7 +475,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         blocks: [
           { kind: "table", columns: ["Column", "Meaning"], rows: [
             ["Ticker / Direction / Closed", "Symbol, Long or Short direction and local close date."],
-            ["Gross or Net P/L", "Actual Journal result under the selected basis."],
+            ["Gross or Net P/L", "Actual Trade Tracker result under the selected basis."],
             ["Return", "Percentage result when a supported denominator is available."],
             ["Outcome", "Saved Green-to-red path classification."],
             ["Executions", "Number of saved entry, add, partial-exit and final-exit snapshots."],
@@ -528,7 +570,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Create new analyses while paid and keep completed analysis readable afterward.",
         keywords: ["paid eligibility", "cancellation", "historical lookback", "old imports", "retained access"],
         blocks: [
-          { kind: "paragraph", text: "An active paid plan is required to create new Analyzer results. Completed analyses remain readable after paid access ends. Older historical Journal imports outside the Analyzer eligibility period remain available in Journal and ordinary Analytics but do not enter Analyzer coverage." },
+          { kind: "paragraph", text: "An active paid plan is required to create new Analyzer results. Completed analyses remain readable after paid access ends. Older historical Trade Tracker imports outside the Analyzer eligibility period remain available in Trade Tracker and regular Analytics but do not enter Analyzer coverage." },
           { kind: "callout", title: "Historical lookback is still being tested", text: "TraderLink has not published a fixed initial lookback. It will be chosen after Moomoo testing rather than being assumed to be 30 days or another arbitrary value." },
         ],
       },

@@ -9,6 +9,13 @@
 **Branch:** `codex/traderlink-platform-replacement`
 **Entry HEAD:** `f8cfa6481682439f926777afface51f8ea87ed7f`
 
+## Owner-authorized MFE & MAE Analyzer follow-on
+
+The dedicated long-term [MFE & MAE Trade Analyzer Page](mfe-mae-trade-analyzer-page-progress.md)
+is complete and owner visually approved on 2026-08-10. It uses the already
+versioned, account-scoped Daily Trade Analyzer candle facts and adds no tracker
+UI, provider request, Journal write or migration.
+
 ## Entry state
 
 - Phase 4 implementation commit:

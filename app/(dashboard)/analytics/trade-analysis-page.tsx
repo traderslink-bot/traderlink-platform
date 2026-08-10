@@ -28,6 +28,7 @@ const VIEW_DETAILS: Readonly<Record<TradeAnalysisView, Readonly<{
 }>>> = Object.freeze({
   day: Object.freeze({ helpHref: "/help/trade-analyzer/day-trade-analysis", title: "Day Trade Analysis" }),
   "entry-exit": Object.freeze({ helpHref: "/help/trade-analyzer/entry-exit-analysis", title: "Entry & Exit" }),
+  "mfe-mae": Object.freeze({ helpHref: "/help/trade-analyzer/mfe-mae", title: "MFE & MAE" }),
   "green-to-red": Object.freeze({ helpHref: "/help/trade-analyzer/green-to-red-analysis", title: "Green-to-Red" }),
   "candle-patterns": Object.freeze({ helpHref: "/help/trade-analyzer/candle-patterns", title: "Candle Patterns" }),
   trades: Object.freeze({ helpHref: "/help/trade-analyzer/analyzed-trades", title: "Analyzed Trades" }),

@@ -132,6 +132,11 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
           icon: "execution" as const,
         }),
         Object.freeze({
+          href: "/analytics/trade-analyzer/day/mfe-mae",
+          label: "MFE & MAE",
+          icon: "tradeAnalysis" as const,
+        }),
+        Object.freeze({
           href: "/analytics/trade-analyzer/day/green-to-red",
           label: "Green-to-Red",
           icon: "tradeAnalysis" as const,
@@ -214,6 +219,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/analytics/trade-analysis": "Day Trade Analysis",
     "/analytics/trade-analyzer/day": "Day Trade Analysis",
     "/analytics/trade-analyzer/day/entry-exit": "Entry & Exit",
+    "/analytics/trade-analyzer/day/mfe-mae": "MFE & MAE",
     "/analytics/trade-analyzer/day/green-to-red": "Green-to-Red",
     "/analytics/trade-analyzer/day/candle-patterns": "Candle Patterns",
     "/analytics/trade-analyzer/day/trades": "Analyzed Trades",

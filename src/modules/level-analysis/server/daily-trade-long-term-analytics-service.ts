@@ -28,6 +28,7 @@ type EventFact = Readonly<{
   candleLocationRatio: number | null;
   ema9DistancePercent: number | null;
   eventKind: SnapshotRow["event_kind"];
+  eventSequence: number;
   executedAtUtc: string;
   excursionAdverseDecimal: string | null;
   excursionFavorableDecimal: string | null;
@@ -35,6 +36,7 @@ type EventFact = Readonly<{
   givebackDecimal: string | null;
   patterns: readonly PatternFact[];
   priorFavorableExtremePriceDecimal: string | null;
+  priceDecimal: string;
   relativeVolume: number | null;
   vwapDistancePercent: number | null;
 }>;
@@ -88,6 +90,34 @@ export type TradeAnalysisTradeRow = Readonly<{
   trackerDate: string;
 }>;
 
+export type TradeAnalysisExcursionRow = Readonly<{
+  actualPnlDecimal: string;
+  adverseMoveDecimal: string;
+  adverseMovePercent: number;
+  closeDate: string;
+  direction: "long" | "short";
+  entryPriceDecimal: string;
+  eventKind: "Entry" | "Add";
+  executionSequence: number;
+  favorableMoveDecimal: string;
+  favorableMovePercent: number;
+  minutesUntilFlat: number;
+  roundTripId: string;
+  symbol: string;
+  trackerDate: string;
+}>;
+
+export type TradeAnalysisExcursionBreakdownRow = Readonly<{
+  averageAdverseMoveDecimal: string | null;
+  averageAdverseMovePercent: number | null;
+  averageFavorableMoveDecimal: string | null;
+  averageFavorableMovePercent: number | null;
+  label: string;
+  measuredExecutionCount: number;
+  medianAdverseMoveDecimal: string | null;
+  medianFavorableMoveDecimal: string | null;
+}>;
+
 export type DailyTradeLongTermAnalyticsModel = Readonly<{
   analyzedExecutionCount: number;
   analyzedTradeCount: number;
@@ -126,6 +156,14 @@ export type DailyTradeLongTermAnalyticsModel = Readonly<{
     medianAdverseMoveDecimal: string | null;
     medianFavorableMoveDecimal: string | null;
     measuredExecutionCount: number;
+  }>;
+  excursions: readonly TradeAnalysisExcursionRow[];
+  mfeMae: Readonly<{
+    averageAdverseMovePercent: number | null;
+    averageFavorableMovePercent: number | null;
+    breakdown: readonly TradeAnalysisExcursionBreakdownRow[];
+    medianAdverseMovePercent: number | null;
+    medianFavorableMovePercent: number | null;
   }>;
   malformedSnapshotCount: number;
   moneyBasis: "gross" | "net";
@@ -196,6 +234,9 @@ function parseEvent(row: SnapshotRow): EventFact | null {
     const metrics = record(snapshot?.metrics);
     if (!snapshot || !event || !metrics || typeof event.executedAtUtc !== "string" ||
         Number.isNaN(Date.parse(event.executedAtUtc))) return null;
+    const eventSequence = finiteNumber(event.sequence);
+    const priceDecimal = decimalString(event.priceDecimal);
+    if (eventSequence === null || !Number.isInteger(eventSequence) || priceDecimal === null || new Decimal(priceDecimal).lte(0)) return null;
     const indicators = record(snapshot.indicators);
     const vwapDistance = record(metrics.vwapDistance);
     const ema9Distance = record(metrics.ema9Distance);
@@ -220,6 +261,7 @@ function parseEvent(row: SnapshotRow): EventFact | null {
       candleLocationRatio: finiteNumber(metrics.candleLocationRatio),
       ema9DistancePercent: finiteNumber(ema9Distance?.signedDistancePercent),
       eventKind: row.event_kind,
+      eventSequence,
       executedAtUtc: event.executedAtUtc,
       excursionAdverseDecimal: decimalString(excursion?.adverseMoveDecimal),
       excursionFavorableDecimal: decimalString(excursion?.favorableMoveDecimal),
@@ -227,6 +269,7 @@ function parseEvent(row: SnapshotRow): EventFact | null {
       givebackDecimal: decimalString(metrics.givebackFromPriorFavorableExtremeDecimal),
       patterns: Object.freeze(patterns),
       priorFavorableExtremePriceDecimal: decimalString(metrics.priorFavorableExtremePriceDecimal),
+      priceDecimal,
       relativeVolume: finiteNumber(indicators?.relativeVolume),
       vwapDistancePercent: finiteNumber(vwapDistance?.signedDistancePercent),
     });
@@ -411,6 +454,34 @@ function holdingRows(joined: readonly Joined[]): readonly TradeAnalysisBreakdown
 }
 
 type EventJoined = Readonly<{ event: EventFact; trade: Joined }>;
+
+function excursionPercent(moveDecimal: string, entryPriceDecimal: string): number {
+  const entry = new Decimal(entryPriceDecimal);
+  if (entry.lte(0)) throw new Error("Daily Trade Analyzer excursion requires a positive entry price.");
+  return new Decimal(moveDecimal).div(entry).mul(100).toNumber();
+}
+
+function excursionBreakdown(
+  label: string,
+  events: readonly EventJoined[],
+): TradeAnalysisExcursionBreakdownRow {
+  const measured = events.filter(({ event }) =>
+    event.excursionFavorableDecimal !== null && event.excursionAdverseDecimal !== null);
+  const favorablePercent = measured.map(({ event }) =>
+    excursionPercent(event.excursionFavorableDecimal!, event.priceDecimal));
+  const adversePercent = measured.map(({ event }) =>
+    excursionPercent(event.excursionAdverseDecimal!, event.priceDecimal));
+  return Object.freeze({
+    averageAdverseMoveDecimal: averageDecimals(measured.map(({ event }) => event.excursionAdverseDecimal!)),
+    averageAdverseMovePercent: averageNumbers(adversePercent),
+    averageFavorableMoveDecimal: averageDecimals(measured.map(({ event }) => event.excursionFavorableDecimal!)),
+    averageFavorableMovePercent: averageNumbers(favorablePercent),
+    label,
+    measuredExecutionCount: measured.length,
+    medianAdverseMoveDecimal: medianDecimals(measured.map(({ event }) => event.excursionAdverseDecimal!)),
+    medianFavorableMoveDecimal: medianDecimals(measured.map(({ event }) => event.excursionFavorableDecimal!)),
+  });
+}
 
 function eventBreakdown(
   events: readonly EventJoined[],
@@ -597,6 +668,26 @@ export function buildDailyTradeLongTermAnalytics(
   });
   const measuredEntryExcursions = entryEvents.filter(({ event }) =>
     event.excursionFavorableDecimal !== null && event.excursionAdverseDecimal !== null);
+  const excursionRows = Object.freeze(measuredEntryExcursions.map(({ event, trade }): TradeAnalysisExcursionRow => Object.freeze({
+    actualPnlDecimal: trade.actualPnl,
+    adverseMoveDecimal: event.excursionAdverseDecimal!,
+    adverseMovePercent: excursionPercent(event.excursionAdverseDecimal!, event.priceDecimal),
+    closeDate: trade.journal.closeLocalDate,
+    direction: trade.journal.direction,
+    entryPriceDecimal: event.priceDecimal,
+    eventKind: event.eventKind === "entry" ? "Entry" : "Add",
+    executionSequence: event.eventSequence,
+    favorableMoveDecimal: event.excursionFavorableDecimal!,
+    favorableMovePercent: excursionPercent(event.excursionFavorableDecimal!, event.priceDecimal),
+    minutesUntilFlat: event.excursionMinutes ?? 0,
+    roundTripId: trade.journal.roundTripId,
+    symbol: trade.journal.displayedSymbol,
+    trackerDate: trade.journal.entryLocalDate,
+  })).sort((left, right) => right.closeDate.localeCompare(left.closeDate) || left.symbol.localeCompare(right.symbol) || left.executionSequence - right.executionSequence));
+  const excursionPercentRows = measuredEntryExcursions.map(({ event }) => Object.freeze({
+    adverse: excursionPercent(event.excursionAdverseDecimal!, event.priceDecimal),
+    favorable: excursionPercent(event.excursionFavorableDecimal!, event.priceDecimal),
+  }));
   const peakEligibleTrades = joined.filter((row) => row.analyzer.path.peakAtUtcSeconds !== null);
   return Object.freeze({
     analyzedExecutionCount: allEvents.length,
@@ -646,6 +737,19 @@ export function buildDailyTradeLongTermAnalytics(
       medianAdverseMoveDecimal: medianDecimals(measuredEntryExcursions.map(({ event }) => event.excursionAdverseDecimal!)),
       medianFavorableMoveDecimal: medianDecimals(measuredEntryExcursions.map(({ event }) => event.excursionFavorableDecimal!)),
       measuredExecutionCount: measuredEntryExcursions.length,
+    }),
+    excursions: excursionRows,
+    mfeMae: Object.freeze({
+      averageAdverseMovePercent: averageNumbers(excursionPercentRows.map((row) => row.adverse)),
+      averageFavorableMovePercent: averageNumbers(excursionPercentRows.map((row) => row.favorable)),
+      breakdown: Object.freeze([
+        excursionBreakdown("Entries", measuredEntryExcursions.filter(({ event }) => event.eventKind === "entry")),
+        excursionBreakdown("Adds", measuredEntryExcursions.filter(({ event }) => event.eventKind === "add")),
+        excursionBreakdown("Long", measuredEntryExcursions.filter(({ trade }) => trade.journal.direction === "long")),
+        excursionBreakdown("Short", measuredEntryExcursions.filter(({ trade }) => trade.journal.direction === "short")),
+      ].filter((row) => row.measuredExecutionCount > 0)),
+      medianAdverseMovePercent: medianNumbers(excursionPercentRows.map((row) => row.adverse)),
+      medianFavorableMovePercent: medianNumbers(excursionPercentRows.map((row) => row.favorable)),
     }),
     malformedSnapshotCount: joined.reduce((sum, row) => sum + row.analyzer.malformedSnapshotCount, 0),
     moneyBasis,
