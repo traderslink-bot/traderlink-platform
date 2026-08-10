@@ -86,12 +86,12 @@ function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
     lab: <ScienceRoundedIcon />,
     manualEntry: <NoteAltRoundedIcon />,
     overview: <SpaceDashboardRoundedIcon />,
-    performance: <ShowChartRoundedIcon />,
     reflection: <NoteAltRoundedIcon />,
     results: <QueryStatsRoundedIcon />,
     rules: <GavelRoundedIcon />,
     ticker: <FormatListBulletedIcon />,
     timing: <TimelineRoundedIcon />,
+    tradeAnalysis: <ShowChartRoundedIcon />,
     tradeExplorer: <TravelExploreRoundedIcon />,
     tradeGroup: <SwapVertRoundedIcon />,
     trades: <TableRowsRoundedIcon />,
@@ -219,7 +219,8 @@ export function DashboardShell({
     Readonly<Record<DashboardNavigationGroup["id"], boolean>>
   >({
     trades: pathname.startsWith("/trades"),
-    analytics: pathname.startsWith("/analytics"),
+    analytics: pathname.startsWith("/analytics") && !pathname.startsWith("/analytics/trade-analyzer"),
+    tradeAnalyzer: pathname.startsWith("/analytics/trade-analyzer"),
     data: pathname === "/imports" || pathname === "/manual-entry",
   });
 

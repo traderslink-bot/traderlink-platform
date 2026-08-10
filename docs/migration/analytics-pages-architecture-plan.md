@@ -14,6 +14,7 @@ application-maintenance statistics.
 | Overview | Approved for implementation | Give the trader an immediate account snapshot. |
 | Results | In implementation | Show results grouped by trader-relevant dimensions, starting with ticker. |
 | Execution | Scope approved, retained only if useful | Show trade construction and execution behavior. |
+| Trade Analyzer transition | Owner approved for separation | Move paid eligible Analyzer results into the dedicated Trade Analyzer navigation and capability pages. |
 | Timing | Implemented / iterative visual review | Show performance by entry/exit time, weekday and trading session. |
 
 ## Overview
@@ -90,6 +91,15 @@ done without guessing, the page keeps the useful confirmed facts rather than
 inventing behavior classifications.
 
 Execution replaces the retired standalone Round Trips page.
+
+## Trade Analyzer transition
+
+The accepted combined Trade Analysis prototype proved the useful saved-result
+facts, but it does not remain a generic historical Analytics page. Its paid
+eligibility, Moomoo evidence and limited historical population belong to the
+dedicated **Trade Analyzer** navigation group. The controlling page split,
+pagination, eligibility and Help-link contract is defined in the
+[Trade Analyzer Analysis Pages Plan](trade-analyzer-analysis-pages-plan.md).
 
 ## Implementation rules
 

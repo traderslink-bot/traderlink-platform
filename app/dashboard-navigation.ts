@@ -20,6 +20,7 @@ export type DashboardNavigationIconKey =
   | "rules"
   | "ticker"
   | "timing"
+  | "tradeAnalysis"
   | "tradeExplorer"
   | "tradeGroup"
   | "trades"
@@ -32,7 +33,7 @@ export type DashboardNavigationItem = Readonly<{
 }>;
 
 export type DashboardNavigationGroup = Readonly<{
-  id: "trades" | "analytics" | "data";
+  id: "trades" | "analytics" | "tradeAnalyzer" | "data";
   label: string;
   icon: DashboardNavigationIconKey;
   items: readonly DashboardNavigationItem[];
@@ -115,6 +116,38 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
         }),
       ]),
     }),
+    Object.freeze({
+      id: "tradeAnalyzer" as const,
+      label: "Trade Analyzer",
+      icon: "tradeAnalysis" as const,
+      items: Object.freeze([
+        Object.freeze({
+          href: "/analytics/trade-analyzer/day",
+          label: "Day Trade Analysis",
+          icon: "overview" as const,
+        }),
+        Object.freeze({
+          href: "/analytics/trade-analyzer/day/entry-exit",
+          label: "Entry & Exit",
+          icon: "execution" as const,
+        }),
+        Object.freeze({
+          href: "/analytics/trade-analyzer/day/green-to-red",
+          label: "Green-to-Red",
+          icon: "tradeAnalysis" as const,
+        }),
+        Object.freeze({
+          href: "/analytics/trade-analyzer/day/candle-patterns",
+          label: "Candle Patterns",
+          icon: "marketCharts" as const,
+        }),
+        Object.freeze({
+          href: "/analytics/trade-analyzer/day/trades",
+          label: "Analyzed Trades",
+          icon: "trades" as const,
+        }),
+      ]),
+    }),
   ]);
 
 export const DASHBOARD_STANDALONE_ITEMS: readonly DashboardNavigationItem[] =
@@ -178,6 +211,12 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/analytics/results": "Results by Ticker",
     "/analytics/timing": "Timing",
     "/analytics/execution": "Execution",
+    "/analytics/trade-analysis": "Day Trade Analysis",
+    "/analytics/trade-analyzer/day": "Day Trade Analysis",
+    "/analytics/trade-analyzer/day/entry-exit": "Entry & Exit",
+    "/analytics/trade-analyzer/day/green-to-red": "Green-to-Red",
+    "/analytics/trade-analyzer/day/candle-patterns": "Candle Patterns",
+    "/analytics/trade-analyzer/day/trades": "Analyzed Trades",
     "/analytics/trade-explorer": "Trade Explorer",
     "/charts": "Market Charts",
     "/help": "Help Center",

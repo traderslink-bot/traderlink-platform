@@ -4,6 +4,9 @@
 **Progress:** [Moomoo Daily Trade Tracker Analyzer Progress](moomoo-daily-trade-tracker-analyzer-progress.md)
 **Status:** Complete and owner-approved locally on 2026-08-09, including manual-execution correction refresh. Automatic Moomoo execution importing remains a separate later slice.
 
+**Long-term analytics:** [Daily Trade Analyzer Long-Term Analytics Plan](daily-trade-analyzer-long-term-analytics-plan.md)
+and [progress](daily-trade-analyzer-long-term-analytics-progress.md).
+
 ## Purpose
 
 Restore the Daily Trade Tracker chart, replay and analysis with
