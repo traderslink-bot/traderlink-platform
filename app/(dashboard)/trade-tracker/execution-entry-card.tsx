@@ -266,6 +266,9 @@ export function ExecutionEntryCard({
       <Typography sx={{ fontWeight: 800 }} variant="body2">
         Times use Eastern Time.
       </Typography>
+      <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
+        Enter the exact execution time shown by your broker. Trade replay and analysis use this time to match each execution to the correct chart candle.
+      </Typography>
       <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">
         {entryMode === "quick" ? (
           <>
