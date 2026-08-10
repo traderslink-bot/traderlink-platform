@@ -3,6 +3,9 @@ const INTERNAL_COVERAGE_FIELDS = new Set([
   "accountPendingDataDecisionCount",
 ]);
 
+const EXCLUDED_PENDING_RECORD_LIMITATION =
+  "Unresolved account records were excluded from the review facts.";
+
 const PUBLIC_LIMITATIONS: Readonly<Record<string, string>> = Object.freeze({
   detailed_execution_facts_unavailable:
     "Detailed execution facts were unavailable for some included trade records.",
@@ -12,16 +15,12 @@ const PUBLIC_LIMITATIONS: Readonly<Record<string, string>> = Object.freeze({
     "Open positions were excluded from realized results.",
   no_trade_review_signal_unavailable:
     "No-trade review coverage was unavailable for at least one market date.",
-  pending_data_decisions_excluded:
-    "Unresolved account records were excluded from the review facts.",
   pre_enable_reflection_excluded:
     "Reflections saved before AI Reviews were enabled were excluded.",
 });
 
 function publicText(value: string): string {
   return value
-    .replace(/pending_data_decisions_excluded/giu,
-      "unresolved account records were excluded")
     .replace(/data[-_ ]decisions?/giu, "unresolved records");
 }
 
@@ -66,12 +65,21 @@ function providerValue(
   ruleRefs: ReadonlyMap<string, string>,
   key = "",
 ): unknown {
-  if (typeof value === "string") return publicText(value);
+  if (typeof value === "string") {
+    if (key === "incompleteRecord" &&
+        value.trim().toLocaleLowerCase() ===
+          EXCLUDED_PENDING_RECORD_LIMITATION.toLocaleLowerCase()) {
+      return null;
+    }
+    return publicText(value);
+  }
   if (Array.isArray(value)) {
     if (key === "limitationReasonCodes") {
-      return value.map((reason) => typeof reason === "string"
-        ? PUBLIC_LIMITATIONS[reason] ?? publicText(reason.replaceAll("_", " "))
-        : reason);
+      return value
+        .filter((reason) => reason !== "pending_data_decisions_excluded")
+        .map((reason) => typeof reason === "string"
+          ? PUBLIC_LIMITATIONS[reason] ?? publicText(reason.replaceAll("_", " "))
+          : reason);
     }
     if (key === "ruleOutcomes") {
       return value.map((outcome) => {
@@ -93,9 +101,16 @@ function providerValue(
     return value.map((item) => providerValue(item, ruleRefs));
   }
   if (!value || typeof value !== "object") return value;
-  return Object.fromEntries(Object.entries(value)
+  const transformed = Object.fromEntries(Object.entries(value)
     .filter(([entryKey]) => !INTERNAL_COVERAGE_FIELDS.has(entryKey))
     .map(([entryKey, item]) => [entryKey, providerValue(item, ruleRefs, entryKey)]));
+  if (key === "coverageNotice" && Array.isArray(transformed.limitationReasonCodes)) {
+    return Object.freeze({
+      ...transformed,
+      incompleteRecordRequired: transformed.limitationReasonCodes.length > 0,
+    });
+  }
+  return transformed;
 }
 
 /**
