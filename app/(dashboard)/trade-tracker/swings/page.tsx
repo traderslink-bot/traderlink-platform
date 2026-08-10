@@ -56,9 +56,9 @@ export default async function SwingTradeTrackerPage({
       <DashboardPage>
         <DashboardUnavailableState
           actionHref="/account"
-          actionLabel="Choose a Journal account"
-          description="Select the Journal account whose swing trades you want to review."
-          title="No Journal account selected"
+          actionLabel="Choose a Trade Tracker account"
+          description="Select the Trade Tracker account whose swing trades you want to review."
+          title="No Trade Tracker account selected"
         />
       </DashboardPage>
     );

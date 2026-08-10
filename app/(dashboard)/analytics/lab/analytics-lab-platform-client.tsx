@@ -304,7 +304,7 @@ export default function AnalyticsLabPlatformClient({
         <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">Analytics</Typography>
         <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">Analytics Lab</Typography>
         <Typography color="text.secondary" sx={{ maxWidth: 900, mt: 1 }} variant="body2">
-          Explore every accepted Journal Analytics capability for the selected Journal account. Missing facts stay visible as unavailable coverage; no V3 or sample results are substituted.
+          Explore every accepted Trade Tracker analytics capability for the selected Trade Tracker account. Missing facts stay visible as unavailable coverage; no V3 or sample results are substituted.
         </Typography>
       </Box>
 
@@ -423,7 +423,7 @@ export default function AnalyticsLabPlatformClient({
           </DashboardSecondaryAction>
         </Stack>
         <Typography color="text.secondary" sx={{ mt: 1.5 }} variant="caption">
-          Saved views belong only to the selected Journal account. Retiring a view preserves its version history.
+          Saved views belong only to the selected Trade Tracker account. Retiring a view preserves its version history.
         </Typography>
       </DashboardPanel>
 

@@ -118,7 +118,7 @@ function pageTitle(pathname: string): string {
   const match = Object.entries(DASHBOARD_ROUTE_TITLES)
     .sort(([left], [right]) => right.length - left.length)
     .find(([href]) => pathname.startsWith(`${href}/`));
-  return match?.[1] ?? "Trader Intelligence";
+  return match?.[1] ?? "Trade Tracker";
 }
 
 function NavigationLink({
@@ -411,7 +411,7 @@ export function DashboardShell({
         ) : (
           <Box sx={{ px: 2, py: 1.5 }}>
             <Typography color="text.secondary" variant="caption">
-              TraderLink Platform
+              Trade Tracker
             </Typography>
           </Box>
         )}
@@ -490,7 +490,7 @@ export function DashboardShell({
                 noWrap
                 variant="caption"
               >
-                Trader Intelligence
+                Trade Tracker
               </Typography>
               <Typography
                 component="h1"

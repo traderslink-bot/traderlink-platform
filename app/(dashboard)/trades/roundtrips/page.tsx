@@ -111,7 +111,7 @@ export default async function RoundTripsPage({
           <DashboardUnavailableState
             actionHref="/imports"
             actionLabel="Import trades"
-            description="No analytics-ready round trips are available in the replacement Journal. No V3 or sample rows are substituted."
+            description="No analytics-ready round trips are available in Trade Tracker. No V3 or sample rows are substituted."
           />
         </DashboardPanel>
       </DashboardPage>
@@ -130,8 +130,8 @@ export default async function RoundTripsPage({
         </Typography>
         <Typography color="text.secondary" sx={{ maxWidth: 860, mt: 1 }} variant="body2">
           {instrumentId
-            ? `Completed history for the selected stable instrument${selectedDate ? ` on ${selectedDate}` : ""}, reconstructed from the canonical Journal execution ledger.`
-            : "Completed trades are reconstructed from the canonical Journal execution ledger."}
+            ? `Completed history for the selected stable instrument${selectedDate ? ` on ${selectedDate}` : ""}, reconstructed from the Trade Tracker execution history.`
+            : "Completed trades are reconstructed from the Trade Tracker execution history."}
         </Typography>
       </Box>
 

@@ -41,6 +41,7 @@ import {
   DashboardPrimaryAction,
   DashboardSecondaryAction,
 } from "../../../dashboard-template";
+import { FeatureHelpLink } from "../../feature-help-link";
 import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import {
   JOURNAL_TAG_PRESET_CATALOG,
@@ -363,6 +364,7 @@ function TradeTagEditor({
     <>
       <Stack direction="row" sx={{ alignItems: "center", flexWrap: "wrap", gap: 0.75, mt: 0.5 }}>
         {tags.map((tag) => <Chip key={tag.tagId} label={tag.name} size="small" />)}
+        <FeatureHelpLink href="/help/trade-tags/add-edit-tags#open-tag-editor" label="trade tags" />
         <Button
           disabled={disabled}
           onClick={showEditor}
@@ -2729,7 +2731,7 @@ export function DaySessionView({
       setDayReviewError(null);
       router.refresh();
     } catch {
-      setDayReviewError("The day review could not be saved. Your journal entries are unchanged.");
+      setDayReviewError("The day review could not be saved. Your Trade Tracker entries are unchanged.");
       setDayReviewState("error");
     }
   }
@@ -2763,29 +2765,31 @@ export function DaySessionView({
             Daily Trade Tracker
           </Typography>
           <Typography color="text.secondary" sx={{ maxWidth: 900, mt: 1 }} variant="body2">
-            The Daily Trade Tracker allows you to journal one trading day and the
+            The Daily Trade Tracker helps you review one trading day and the
             trades you took on that particular day. Add tags, notes and track rules
             for each trade. Add notes and track rules that apply to the trading day
             as a whole.
           </Typography>
         </Box>
-        <Button
-          component={Link}
-          href={`/ai-chat?date=${encodeURIComponent(data.date)}&currency=${encodeURIComponent(data.currency)}`}
-          startIcon={<ChatBubbleOutlineRoundedIcon />}
-          sx={{ justifySelf: { md: "end" } }}
-          variant="outlined"
-        >
-          Ask about this day
-        </Button>
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", justifySelf: { md: "end" } }}>
+          <FeatureHelpLink href="/help/daily-trade-tracker" label="Daily Trade Tracker" size="medium" />
+          <Button
+            component={Link}
+            href={`/ai-chat?date=${encodeURIComponent(data.date)}&currency=${encodeURIComponent(data.currency)}`}
+            startIcon={<ChatBubbleOutlineRoundedIcon />}
+            variant="outlined"
+          >
+            Ask about this day
+          </Button>
+        </Stack>
       </Box>
       {topContent}
       {readOnly ? (
         <Alert severity="info">
-          This historical trading day is read-only. Its saved Journal rules, tags, and notes are shown without allowing retrospective edits.
+          This historical trading day is read-only. Its saved Trade Tracker rules, tags, and notes are shown without allowing retrospective edits.
         </Alert>
       ) : null}
-      <DashboardPanel title="This week">
+      <DashboardPanel action={<FeatureHelpLink href="/help/daily-trade-tracker/getting-started#open-and-navigate" label="week navigation" />} title="This week">
         <Box
           sx={{
             alignItems: { md: "center" },
@@ -3746,7 +3750,7 @@ export function DaySessionView({
       <DashboardPanel title="Day review">
         <Stack spacing={1.5} sx={{ mt: 1.5 }}>
           <Typography color="text.secondary" variant="body2">
-            When you have finished journaling this trading day, choose its review
+            When you have finished reviewing this trading day, choose its review
             status. You can still edit your executions, tags, and notes later.
           </Typography>
           {dayReview.unclassifiedOpenPositionCount > 0 ? (
@@ -3764,7 +3768,7 @@ export function DaySessionView({
           ) : null}
           {dayReviewState === "error" ? (
             <Alert severity="error">
-              {dayReviewError ?? "The day review could not be saved. Your journal entries are unchanged."}
+              {dayReviewError ?? "The day review could not be saved. Your Trade Tracker entries are unchanged."}
             </Alert>
           ) : null}
           {!readOnly ? (

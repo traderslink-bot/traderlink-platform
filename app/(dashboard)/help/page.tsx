@@ -44,6 +44,48 @@ const HELP_COLLECTIONS = Object.freeze([
     title: "Daily Trade Tracker",
   }),
   Object.freeze({
+    description: "Enter completed broker executions across past trading dates without beginning a Tracker review.",
+    href: "/help/quick-trade-entry",
+    Icon: TodayRoundedIcon,
+    title: "Quick Trade Entry",
+  }),
+  Object.freeze({
+    description: "Use the current beta workflow for intentional swing positions, dated notes and completed swing history.",
+    href: "/help/swing-trade-tracker",
+    Icon: TodayRoundedIcon,
+    title: "Swing Trade Tracker",
+  }),
+  Object.freeze({
+    description: "Read accepted completed trades by month or week and inspect a selected trading day.",
+    href: "/help/calendar",
+    Icon: TodayRoundedIcon,
+    title: "Calendar",
+  }),
+  Object.freeze({
+    description: "See confirmed open positions and choose their current trader-defined status.",
+    href: "/help/open-positions",
+    Icon: TodayRoundedIcon,
+    title: "Open Positions",
+  }),
+  Object.freeze({
+    description: "Answer specific Trade Tracker questions from broker evidence while unrelated valid trades remain available.",
+    href: "/help/data-decisions",
+    Icon: HelpOutlineRoundedIcon,
+    title: "Data Decisions",
+  }),
+  Object.freeze({
+    description: "Request and read the available price-path context for an eligible completed stock trade.",
+    href: "/help/candle-review",
+    Icon: ShowChartRoundedIcon,
+    title: "Candle Review",
+  }),
+  Object.freeze({
+    description: "Compare completed-trade results by date, ticker, timing and execution characteristics.",
+    href: "/help/core-analytics",
+    Icon: ShowChartRoundedIcon,
+    title: "Core Analytics",
+  }),
+  Object.freeze({
     description: "Choose preset or custom rules, review automatic evidence, and compare factual results over time.",
     href: "/help/trading-rules",
     Icon: RuleRoundedIcon,

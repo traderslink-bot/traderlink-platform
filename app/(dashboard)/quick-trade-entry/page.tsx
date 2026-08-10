@@ -12,7 +12,7 @@ import { ManualExecutionEntry } from "../trade-tracker/manual-execution-entry";
 import { getReplacementTradeTrackerAccount } from "../trade-tracker/trade-tracker-platform-data";
 
 export const metadata: Metadata = {
-  description: "Enter Journal trade executions without a tracker review.",
+  description: "Enter Trade Tracker executions without a tracker review.",
   title: "Quick Trade Entry | TraderLink Platform",
 };
 
@@ -39,9 +39,9 @@ export default async function QuickTradeEntryPage() {
       <DashboardPage>
         <DashboardUnavailableState
           actionHref="/account"
-          actionLabel="Choose a Journal account"
-          description="Select the Journal account where you want to save executions."
-          title="No Journal account selected"
+          actionLabel="Choose a Trade Tracker account"
+          description="Select the Trade Tracker account where you want to save executions."
+          title="No Trade Tracker account selected"
         />
       </DashboardPage>
     );

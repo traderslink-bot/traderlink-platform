@@ -611,7 +611,7 @@ export function AiChatClient({
             <Stack spacing={1} sx={{ alignItems: "center", justifyContent: "center", minHeight: "100%", textAlign: "center" }}>
               <ChatBubbleOutlineRoundedIcon color="primary" sx={{ fontSize: 42 }} />
               <Typography sx={{ fontWeight: 800 }} variant="h3">What would you like to explore?</Typography>
-              <Typography color="text.secondary" sx={{ maxWidth: 520 }} variant="body2">Ask about completed trades, results, timing, tickers, or patterns in the trading record saved to this Journal account.</Typography>
+              <Typography color="text.secondary" sx={{ maxWidth: 520 }} variant="body2">Ask about completed trades, results, timing, tickers, or patterns in the trading record saved to this Trade Tracker account.</Typography>
             </Stack>
           ) : null}
           {!activeConversation && !loadingConversations ? (

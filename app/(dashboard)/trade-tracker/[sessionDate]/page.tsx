@@ -50,7 +50,7 @@ export default async function TradeTrackerDayPage({
       <DashboardUnavailableState
         actionHref="/trade-tracker"
         actionLabel="Open latest traded day"
-        description="This date is not present in the accepted Journal activity available to Trade Tracker. No V3 or sample rows are substituted."
+        description="This date is not present in the accepted Trade Tracker activity. No V3 or sample rows are substituted."
         title="No trades for this day"
       />
     </DashboardPage>

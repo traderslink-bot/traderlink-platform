@@ -7,6 +7,7 @@ import { Box, Button, Chip, InputAdornment, MenuItem, Stack, TextField, Typograp
 import Link from "next/link";
 
 import { DashboardMetricCard, DashboardPage, DashboardPanel } from "../../../dashboard-template";
+import { FeatureHelpLink } from "../../feature-help-link";
 import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 
 import type { RuleResultEvent, RuleResultsView } from "./rule-results-data";
@@ -70,7 +71,7 @@ export function RuleResultsClient({ initialView }: { initialView: RuleResultsVie
           <Typography component="h1" variant="h1">Rule Results</Typography>
           <Typography color="text.secondary" sx={{ mt: 0.5 }}>Facts from automatic preset checks and saved manual selections. The app does not judge whether a rule should be kept or changed.</Typography>
         </Box>
-        <Button component={Link} href="/rules" startIcon={<ArrowBackRoundedIcon />} variant="outlined">Trading Rules</Button>
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}><FeatureHelpLink href="/help/trading-rules/results-history" label="Rule Results" size="medium" /><Button component={Link} href="/rules" startIcon={<ArrowBackRoundedIcon />} variant="outlined">Trading Rules</Button></Stack>
       </Stack>
 
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", sm: "repeat(2,1fr)", lg: "repeat(4,1fr)" } }}>

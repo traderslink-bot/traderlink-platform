@@ -17,8 +17,8 @@ import { PlatformAccountProfileReadService } from "@/src/modules/platform/server
 import { getWorkspaceReportingSummary } from "@/src/modules/platform/server/reporting/workspace-reporting-summary";
 
 export const metadata: Metadata = {
-  title: "Workspace | Trader Intelligence",
-  description: "Trader Intelligence performance, manual entry, and day sessions.",
+  title: "Workspace | Trade Tracker",
+  description: "Trade Tracker performance, manual entry, and day sessions.",
 };
 
 export const dynamic = "force-dynamic";

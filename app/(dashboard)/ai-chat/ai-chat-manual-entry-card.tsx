@@ -239,7 +239,7 @@ export function AiChatManualEntryCard({
     (draft.expiresAtUtc !== null && Date.parse(draft.expiresAtUtc) <= Date.now());
 
   if (draft.state === "committed") {
-    return <Alert severity="success">These executions are saved in your Journal.</Alert>;
+    return <Alert severity="success">These executions are saved in your Trade Tracker.</Alert>;
   }
   if (expired) {
     return <Alert severity="info">This execution draft expired. Start trade entry again to create a fresh draft.</Alert>;

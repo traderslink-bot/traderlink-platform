@@ -185,7 +185,7 @@ export function WorkspaceDashboard({
         <DashboardPanel title="Reporting equivalent">
           {reportingSummary.status === "native_usd" ? (
             <Typography color="text.secondary" variant="body2">
-              You are viewing your original USD Journal amounts. Choose another currency in Account Settings to see a daily reporting equivalent here.
+              You are viewing your original USD Trade Tracker amounts. Choose another currency in Account Settings to see a daily reporting equivalent here.
             </Typography>
           ) : reportingSummary.status === "ready" && reportingSummary.convertedNetPnlDecimal !== null ? (
             <Stack spacing={0.5}>
@@ -199,12 +199,12 @@ export function WorkspaceDashboard({
                 Net realized P/L reporting equivalent from {reportingSummary.convertedTradingDayCount} USD trading day{reportingSummary.convertedTradingDayCount === 1 ? "" : "s"}, using Bank of Canada daily indicative rates.
               </Typography>
               <Typography color="text.secondary" variant="caption">
-                Your original USD Journal amounts remain authoritative.
+                Your original USD Trade Tracker amounts remain authoritative.
               </Typography>
             </Stack>
           ) : (
             <Typography color="text.secondary" variant="body2">
-              A {reportingSummary.reportingCurrency} reporting equivalent is not available for all {reportingSummary.tradingDayCount} USD trading day{reportingSummary.tradingDayCount === 1 ? "" : "s"}. Your original USD Journal amounts remain visible and unchanged.
+              A {reportingSummary.reportingCurrency} reporting equivalent is not available for all {reportingSummary.tradingDayCount} USD trading day{reportingSummary.tradingDayCount === 1 ? "" : "s"}. Your original USD Trade Tracker amounts remain visible and unchanged.
             </Typography>
           )}
         </DashboardPanel>
@@ -360,7 +360,7 @@ export function WorkspaceDashboard({
           {analyticsMetrics ? (
             <Stack spacing={1}>
               <Typography color="success.main" sx={{ fontWeight: 700 }}>
-                Replacement Journal analytics are connected.
+                Trade Tracker analytics are connected.
               </Typography>
               <Typography color="text.secondary" variant="body2">
                 Open Performance details for exact daily, drawdown, streak,
@@ -500,7 +500,7 @@ export function WorkspaceDashboard({
               actionHref="/imports"
               actionLabel="Add trading history"
               compact
-              description="Trading days appear here after the selected Journal account has a confirmed completed trade. Open positions and decisions remain visible in their own workflows."
+              description="Trading days appear here after the selected Trade Tracker account has a confirmed completed trade. Open positions and decisions remain visible in their own workflows."
               title="No completed trading days available"
             />
           )}

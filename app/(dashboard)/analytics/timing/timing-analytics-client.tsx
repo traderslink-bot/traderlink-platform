@@ -8,6 +8,8 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useMemo, useState } from "react";
 
+import { FeatureHelpLink } from "../../feature-help-link";
+
 export type TimingMetricId = "net_pnl" | "average_pnl" | "win_rate" | "included_count";
 type TimingChartId = "entry_time_bucket" | "exit_time_bucket" | "entry_weekday" | "entry_session";
 type TimingChartStyle = "columns" | "line" | "horizontal_bars";
@@ -233,10 +235,11 @@ export function TimingAnalyticsClient({ chartData, completedTradeCount, timezone
   const [metricId, setMetricId] = useState<TimingMetricId>("net_pnl");
   return (
     <Stack spacing={2.5}>
-      <Stack direction="row" sx={{ justifyContent: "flex-end" }}>
+      <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", justifyContent: "flex-end" }}>
         <TextField label="Measure" onChange={(event) => setMetricId(event.target.value as TimingMetricId)} select size="small" sx={{ minWidth: 220 }} value={metricId}>
           {MEASURES.map((option) => <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>)}
         </TextField>
+        <FeatureHelpLink href="/help/core-analytics/timing-and-execution#read-timing" label="Timing measures" />
       </Stack>
       <Box sx={{ display: "grid", gap: 2.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", lg: "repeat(2, minmax(0, 1fr))" } }}>
         {CHARTS.map((chart) => <ChartPanel chart={chart} key={chart.id} metricId={metricId} points={chartData[chart.id]} styles={chart.id === "entry_time_bucket" || chart.id === "exit_time_bucket" ? TIME_CHART_STYLES : CATEGORY_CHART_STYLES} timezone={timezone} />)}

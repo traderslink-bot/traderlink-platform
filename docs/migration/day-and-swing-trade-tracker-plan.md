@@ -21,6 +21,9 @@ visual/product review pending
 **Quick-entry progress:**
 [Quick Trade Entry Progress](quick-trade-entry-progress.md)
 
+**Help coverage:**
+[Journal And Trade Tracker Help Coverage Plan](help-center-journal-trade-tracker-coverage-plan.md)
+
 ## 1. Outcome
 
 Replace the overloaded single Trade Tracker workflow with two clearly named

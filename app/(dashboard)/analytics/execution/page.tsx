@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { ExecutionAnalyticsPage } from "../execution-analytics-page";
 
 export const metadata: Metadata = {
-  title: "Execution | Trader Intelligence",
+  title: "Execution | Trade Tracker",
 };
 
 export default async function ExecutionPage({

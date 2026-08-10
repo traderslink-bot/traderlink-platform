@@ -41,7 +41,7 @@ const workflowSteps = Object.freeze([
     title: "Record what happened",
   }),
   Object.freeze({
-    description: "Classify open positions and mark the day reviewed when your journaling is complete.",
+    description: "Classify open positions and mark the day reviewed when your day review is complete.",
     id: "finish-day",
     title: "Finish the day",
   }),
@@ -52,7 +52,7 @@ const pageAreas = Object.freeze([
   Object.freeze({ title: "Ticker cards", description: "All completed trades for the same symbol stay together." }),
   Object.freeze({ title: "Selected trade", description: "Trade 1, Trade 2 or another selection controls the chart and expanded details for that ticker." }),
   Object.freeze({ title: "Executions", description: "Every accepted broker fill remains visible, including adds and partial exits." }),
-  Object.freeze({ title: "Day review", description: "Daily rules, notes and open-position choices complete the journaling workflow." }),
+  Object.freeze({ title: "Day review", description: "Daily rules, notes and open-position choices complete the day-review workflow." }),
 ]);
 
 const analysisAreas = Object.freeze([

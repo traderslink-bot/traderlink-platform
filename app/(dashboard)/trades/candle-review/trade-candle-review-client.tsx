@@ -23,6 +23,7 @@ import {
   DashboardPrimaryAction,
   DashboardSecondaryAction,
 } from "../../../dashboard-template";
+import { FeatureHelpLink } from "../../feature-help-link";
 
 const PATTERN_LABELS: Record<string, string> = {
   compression: "Compression",
@@ -159,7 +160,10 @@ export function TradeCandleReviewClient({
   return (
     <Stack spacing={2.5}>
       <DashboardPanel
-        action={review === null ? (
+        action={(
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+            <FeatureHelpLink href="/help/candle-review/run-and-read-review#analyze-on-demand" label="candle review action" />
+            {review === null ? (
           <DashboardPrimaryAction disabled={loading} onClick={analyze}>
             {loading ? "Analyzing trade…" : "Analyze this trade"}
           </DashboardPrimaryAction>
@@ -167,6 +171,8 @@ export function TradeCandleReviewClient({
           <DashboardSecondaryAction disabled={loading} onClick={analyze}>
             {loading ? "Refreshing…" : "Refresh candle review"}
           </DashboardSecondaryAction>
+            )}
+          </Stack>
         )}
         title="Candle review"
       >
@@ -192,14 +198,14 @@ export function TradeCandleReviewClient({
         <Alert severity="warning">The market-data provider was unavailable. The failed request was recorded, but no chart or feedback was invented.</Alert>
       ) : null}
       {review?.status === "no_coverage" ? (
-        <Alert severity="info">The required one-minute coverage was unavailable or incomplete. The trade remains valid Journal data; only this market-data-dependent review is unavailable.</Alert>
+        <Alert severity="info">The required one-minute coverage was unavailable or incomplete. The trade remains valid Trade Tracker data; only this market-data-dependent review is unavailable.</Alert>
       ) : null}
       {review?.status === "unsupported" ? (
         <Alert severity="info">This longer-duration or non-stock trade needs a reviewed market-data interval before Candle Review can analyze it.</Alert>
       ) : null}
 
       {review && review.candles.length > 0 ? (
-        <DashboardPanel title="Price path">
+        <DashboardPanel action={<FeatureHelpLink href="/help/candle-review/run-and-read-review#read-price-path" label="price path" />} title="Price path">
           <CandleChart review={review} />
         </DashboardPanel>
       ) : null}

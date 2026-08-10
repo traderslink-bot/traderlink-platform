@@ -18,6 +18,8 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 
+import { FeatureHelpLink } from "../../feature-help-link";
+
 import {
   JOURNAL_TAG_PRESET_CATALOG,
   JOURNAL_TAG_PRESET_CATEGORY_LABELS,
@@ -210,7 +212,7 @@ export function SwingAnnotationEditor({
   return (
     <Stack spacing={2}>
       <Box>
-        <Typography sx={{ fontWeight: 800 }} variant="subtitle2">Trade tags</Typography>
+        <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}><Typography sx={{ fontWeight: 800 }} variant="subtitle2">Trade tags</Typography><FeatureHelpLink href="/help/trade-tags/swing-trade-tracker#find-swing-tags" label="Swing Trade Tags" /></Stack>
         <Stack direction="row" sx={{ alignItems: "center", flexWrap: "wrap", gap: 0.75, mt: 1 }}>
           {tags.map((tag) => <Chip key={tag.tagId} label={tag.name} size="small" />)}
           <Button onClick={openTags} size="small" variant="outlined">

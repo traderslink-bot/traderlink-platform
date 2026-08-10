@@ -15,11 +15,12 @@ export default function NotificationsAndImportsHelpPage() {
         Object.freeze({ href: "/notifications", label: "Open Notifications", variant: "contained" as const }),
         Object.freeze({ href: "/imports", label: "Open Import Trades", variant: "outlined" as const }),
       ])}
-      description="Find updates, choose which messages you want, and get a statement moving again when its layout needs extra help."
+  description="Find updates, choose which messages you want, import a broker statement, and get a statement moving again when its layout needs extra help."
       guides={NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES}
       highlights={Object.freeze([
         "Every update remains available in Notifications, whether or not you choose Discord messages.",
-        "A stopped statement import does not change the trades already in your journal.",
+        "A stopped statement import does not change the trades already in your Trade Tracker.",
+        "Import Trades lets you review the statement format and mapping before executions are saved.",
         "You can allow a private statement review or map the columns yourself.",
       ])}
       href="/help/notifications-and-imports"
@@ -27,6 +28,7 @@ export default function NotificationsAndImportsHelpPage() {
         Object.freeze({ title: "Check updates", description: "Open the bell or the Notifications page to see what finished and what needs attention." }),
         Object.freeze({ title: "Choose messages", description: "Use Account settings to choose which updates may also arrive by Discord." }),
         Object.freeze({ title: "Finish the import", description: "Choose private statement review or map the columns yourself when a statement stops." }),
+        Object.freeze({ title: "Review the result", description: "Use Import history and handle only the specific facts that need a decision." }),
       ])}
       title="Notifications and imports"
     />

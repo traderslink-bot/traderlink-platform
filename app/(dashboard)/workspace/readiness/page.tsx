@@ -87,7 +87,7 @@ export default async function PlatformReadinessPage({
           <Box sx={{ flex: 1 }}>
             <Typography sx={{ fontWeight: 800 }}>Stable Platform ownership is active</Typography>
             <Typography color="text.secondary" variant="body2">
-              The current workspace has {readiness.ownership.allowedJournalAccountCount} available Journal account{readiness.ownership.allowedJournalAccountCount === 1 ? "" : "s"}, and the active account is selected inside the authorized workspace.
+              The current workspace has {readiness.ownership.allowedJournalAccountCount} available Trade Tracker account{readiness.ownership.allowedJournalAccountCount === 1 ? "" : "s"}, and the active account is selected inside the authorized workspace.
             </Typography>
           </Box>
           <Chip color="success" label="Ready for local review" size="small" />

@@ -36,6 +36,7 @@ import type {
 import type { JournalImportMappingPreview } from "@/src/modules/journal/server/product/journal-import-product-service";
 import type { JournalMappingSupportPackageV2 } from "@/src/modules/journal/server/product/journal-mapping-support-package";
 import { DashboardPanel } from "../../dashboard-template";
+import { FeatureHelpLink } from "../feature-help-link";
 
 const PREVIEW_ENDPOINT = "/api/platform/journal/imports/preview";
 const COMMIT_ENDPOINT = "/api/platform/journal/imports/commit";
@@ -351,21 +352,24 @@ export function JournalImportClient({
 
   return (
     <Stack spacing={2.5}>
-      <Box>
-        <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">
-          Journal
-        </Typography>
-        <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">
-          Import Trades
-        </Typography>
-        <Typography color="text.secondary" sx={{ maxWidth: 820, mt: 1 }} variant="body2">
-          Import historical broker statements in any order. TraderLink detects verified formats, previews the mapping before saving executions, preserves accepted source evidence, and sends uncertain facts to Data Decisions without hiding valid trades.
-        </Typography>
-      </Box>
+      <Stack direction="row" sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+        <Box>
+          <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">
+            Trade Tracker
+          </Typography>
+          <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">
+            Import Trades
+          </Typography>
+          <Typography color="text.secondary" sx={{ maxWidth: 820, mt: 1 }} variant="body2">
+            Import historical broker statements in any order. TraderLink detects verified formats, previews the mapping before saving executions, preserves accepted source evidence, and sends uncertain facts to Data Decisions without hiding valid trades.
+          </Typography>
+        </Box>
+        <FeatureHelpLink href="/help/notifications-and-imports" label="Import Trades" size="medium" />
+      </Stack>
 
       {notice ? <Alert severity={notice.severity}>{notice.text}</Alert> : null}
 
-      <DashboardPanel title="Choose a statement">
+      <DashboardPanel action={<FeatureHelpLink href="/help/notifications-and-imports/import-a-statement#choose-a-statement" label="choose a statement" />} title="Choose a statement">
         <Box component="form" onSubmit={(event) => void previewStatement(event)}>
           <Stack spacing={2}>
             <Alert severity="info">
@@ -542,7 +546,7 @@ export function JournalImportClient({
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
             <Typography>Your statement is not yet supported, so the import failed.</Typography>
-            <Typography>Allow AI to review your statement so TraderLink can configure it for a successful import. Your statement remains private to your TraderLink journal. AI processing is used only to complete this import.</Typography>
+            <Typography>Allow AI to review your statement so TraderLink can configure it for a successful import. Your statement remains private to your Trade Tracker. AI processing is used only to complete this import.</Typography>
             <FormControlLabel control={<Checkbox checked={discordCompletionRequested} onChange={(event) => setDiscordCompletionRequested(event.target.checked)} />} label="Send me a Discord DM when this import is complete" />
           </Stack>
         </DialogContent>
@@ -554,7 +558,7 @@ export function JournalImportClient({
 
 
       {preview ? (
-        <DashboardPanel title="Mapping review">
+        <DashboardPanel action={<FeatureHelpLink href="/help/notifications-and-imports/review-import-result#mapping-review" label="mapping review" />} title="Mapping review">
           <Stack spacing={2}>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ flexWrap: "wrap" }}>
               <Chip label={preview.adapter} size="small" />
@@ -638,9 +642,9 @@ export function JournalImportClient({
         </DashboardPanel>
       ) : null}
 
-      <DashboardPanel title="Import history">
+      <DashboardPanel action={<FeatureHelpLink href="/help/notifications-and-imports/import-history-and-follow-up#import-history" label="Import history" />} title="Import history">
         {history.length === 0 ? (
-          <Typography color="text.secondary" variant="body2">No replacement Journal imports are recorded yet.</Typography>
+          <Typography color="text.secondary" variant="body2">No Trade Tracker imports are recorded yet.</Typography>
         ) : (
           <TableContainer>
             <Table size="small">

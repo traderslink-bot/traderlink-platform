@@ -20,7 +20,7 @@ import type {
 
 export const metadata: Metadata = {
   title: "Calendar | TraderLink Platform",
-  description: "Daily and ticker-level performance from accepted Journal executions.",
+  description: "Daily and ticker-level performance from accepted Trade Tracker executions.",
 };
 
 export const dynamic = "force-dynamic";

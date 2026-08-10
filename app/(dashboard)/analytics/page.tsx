@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { AnalyticsOverviewPage as AnalyticsOverviewContent } from "./analytics-overview-page";
 
 export const metadata: Metadata = {
-  title: "Analytics Overview | Trader Intelligence",
+  title: "Analytics Overview | Trade Tracker",
 };
 
 export default async function AnalyticsOverviewPage({

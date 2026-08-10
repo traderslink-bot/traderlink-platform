@@ -34,6 +34,7 @@ import { useRouter } from "next/navigation";
 
 import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import { DismissibleDataDecisionNotice } from "../../dismissible-data-decision-notice";
+import { FeatureHelpLink } from "../feature-help-link";
 
 import {
   DashboardDataScopeChip,
@@ -272,7 +273,7 @@ function DayCell({
             <Typography color="text.secondary" sx={{ mt: 0.25 }} variant="caption">
               {day.tradeCount > 0
                 ? `${day.tradeCount} trades · ${percent(day.winRatePercentDecimal)} win rate`
-                : "Swing journal activity"}
+                : "Swing Trade Tracker activity"}
             </Typography>
             <Stack spacing={0.65} sx={{ flexGrow: 1, mt: mode === "week" ? 3 : 1.5 }}>
               {(mode === "week" ? day.tickers : day.tickers.slice(0, 4)).map((ticker) => (
@@ -562,19 +563,23 @@ export function CalendarClient({
   return (
     <DashboardPage>
       <Stack direction={{ xs: "column", lg: "row" }} spacing={1} sx={{ alignItems: { lg: "center" }, justifyContent: "space-between" }}>
-        <ToggleButtonGroup exclusive onChange={(_, value: CalendarView | null) => {
-          if (!value) return;
-          if (value === "month") {
-            navigatePeriod("month", selectedWeek.slice(0, 7));
-            return;
-          }
-          const weekInDisplayedMonth = availableWeeks.filter((week) =>
-            week.startsWith(`${activeMonth}-`)).at(-1);
-          navigatePeriod("week", weekInDisplayedMonth ?? selectedWeek);
-        }} size="small" value={view}>
-          <ToggleButton value="month">Month</ToggleButton>
-          <ToggleButton value="week">Week</ToggleButton>
-        </ToggleButtonGroup>
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+          <ToggleButtonGroup exclusive onChange={(_, value: CalendarView | null) => {
+            if (!value) return;
+            if (value === "month") {
+              navigatePeriod("month", selectedWeek.slice(0, 7));
+              return;
+            }
+            const weekInDisplayedMonth = availableWeeks.filter((week) =>
+              week.startsWith(`${activeMonth}-`)).at(-1);
+            navigatePeriod("week", weekInDisplayedMonth ?? selectedWeek);
+          }} size="small" value={view}>
+            <ToggleButton value="month">Month</ToggleButton>
+            <ToggleButton value="week">Week</ToggleButton>
+          </ToggleButtonGroup>
+          <FeatureHelpLink href="/help/calendar/month-and-week#navigate-periods" label="month and week views" />
+        </Stack>
+        <FeatureHelpLink href="/help/calendar" label="Calendar" size="medium" />
         {showLegacyCalendarControls ? <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1 }}>
           <Button onClick={() => setFiltersOpen(true)} startIcon={<DateRangeRoundedIcon />} variant="outlined">Date range</Button>
           <Button onClick={() => setFiltersOpen(true)} startIcon={<FilterAltRoundedIcon />} variant="outlined">P/L and session filters{activeFilterCount ? ` (${activeFilterCount})` : ""}</Button>
@@ -584,6 +589,7 @@ export function CalendarClient({
 
       <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
         {initialData.state !== "unavailable" ? <DashboardDataScopeChip /> : null}
+        <FeatureHelpLink href="/help/calendar/coverage-and-limits#included-trades" label="Calendar coverage" />
         <Typography color="text.secondary" sx={{ alignSelf: "center", display: initialData.state === "ready" ? "none" : undefined }} variant="caption">
           {initialData.state === "ready"
             ? `${initialData.currency} · accepted completed trades · ${initialData.timezone}`
@@ -654,7 +660,7 @@ export function CalendarClient({
           ) : null}
           <FilterSelect label="Ticker" value={filters.symbol} onChange={(value) => setFilters((current) => ({ ...current, symbol: value }))} items={[["all", "All tickers"], ...initialData.symbols.map((symbol) => [symbol, symbol])]} />
           <FilterSelect label="Direction" value={filters.direction} onChange={(value) => setFilters((current) => ({ ...current, direction: value as CalendarDirectionFilter }))} items={[["all", "Long and short"], ["long", "Long only"], ["short", "Short only"]]} />
-          <TextField disabled helperText="Session classification has not been accepted into the replacement Journal yet." label="Session" value="Not available yet" />
+          <TextField disabled helperText="Session classification is not available in Trade Tracker yet." label="Session" value="Not available yet" />
           <FilterSelect label="Trade count" value={filters.tradeCount} onChange={(value) => setFilters((current) => ({ ...current, tradeCount: value as CalendarTradeCountFilter }))} items={[["all", "Any trade count"], ["1-3", "1–3 trades"], ["4-6", "4–6 trades"], ["7+", "7+ trades"]]} />
           <Button onClick={resetFilters}>Reset filters</Button>
           <Button onClick={() => applyFilters()} variant="contained">Apply filters</Button>
@@ -674,11 +680,14 @@ export function CalendarClient({
           <>
             <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
               <Typography component="h2" variant="h5">{new Date(`${selected.date}T12:00:00.000Z`).toLocaleDateString("en-US", { day: "numeric", month: "long", weekday: "long" })}</Typography>
-              <Button aria-label="Close day details" onClick={() => { setDetailsOpen(false); setExpandedTickerId(null); }} size="small" startIcon={<CloseRoundedIcon />}>Close</Button>
+              <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+                <FeatureHelpLink href="/help/calendar/inspect-a-day#open-details" label="selected-day details" />
+                <Button aria-label="Close day details" onClick={() => { setDetailsOpen(false); setExpandedTickerId(null); }} size="small" startIcon={<CloseRoundedIcon />}>Close</Button>
+              </Stack>
             </Stack>
             <Stack direction="row" sx={{ alignItems: "baseline", justifyContent: "space-between", mt: 0.75 }}>
               <Typography color="text.secondary" variant="body2">
-                {selected.tradeCount > 0 ? `${selected.tradeCount} trades · ${percent(selected.winRatePercentDecimal)} win rate` : "Swing journal activity"}
+                {selected.tradeCount > 0 ? `${selected.tradeCount} trades · ${percent(selected.winRatePercentDecimal)} win rate` : "Swing Trade Tracker activity"}
               </Typography>
               <Typography color={selected.pnlSign === -1 ? "error.main" : "success.main"} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 850 }}>
                 {money(selected.pnlDecimal, initialData.currency)}
@@ -748,7 +757,7 @@ export function CalendarClient({
           <Typography component="h2" variant="h5">{new Date(`${selected.date}T12:00:00.000Z`).toLocaleDateString("en-US", { day: "numeric", month: "long", weekday: "long" })}</Typography>
           {selected.tradeCount > 0 ? <Typography color={selected.pnlSign === -1 ? "error.main" : "success.main"} sx={{ fontWeight: 850 }} variant="h6">{money(selected.pnlDecimal, initialData.currency)}</Typography> : null}
         </Stack>
-        <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">{selected.tradeCount > 0 ? `${selected.tradeCount} trades · ${percent(selected.winRatePercentDecimal)} win rate · Peak giveback ${money(selected.peakGivebackDecimal, initialData.currency)}` : "Swing journal activity"}</Typography>
+        <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">{selected.tradeCount > 0 ? `${selected.tradeCount} trades · ${percent(selected.winRatePercentDecimal)} win rate · Peak giveback ${money(selected.peakGivebackDecimal, initialData.currency)}` : "Swing Trade Tracker activity"}</Typography>
         <Divider sx={{ my: 2.5 }} />
         <Typography sx={{ fontWeight: 800 }} variant="body2">Ticker results</Typography>
         <Stack divider={<Divider flexItem />} sx={{ mt: 1 }}>{selected.tickers.map((ticker) => <Stack key={ticker.instrumentId} sx={{ py: 1.4 }}><Stack direction="row" sx={{ justifyContent: "space-between" }}><Typography sx={{ fontWeight: 800 }}>{ticker.symbol}</Typography><Typography color={ticker.pnlSign === -1 ? "error.main" : "success.main"} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 800 }}>{money(ticker.pnlDecimal, initialData.currency)}</Typography></Stack><TickerAnnotationChips compact={false} noteCount={ticker.noteCount} ruleReviewCount={ticker.ruleReviewCount} tagCount={ticker.tagCount} /></Stack>)}</Stack>

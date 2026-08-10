@@ -53,7 +53,7 @@ export function DashboardAccountSwitcher({
     <Tooltip arrow title={error ?? "Choose the trading account shown across this dashboard"}>
       <FormControl error={Boolean(error)} size="small" sx={{ minWidth: { xs: 130, md: 190 } }}>
         <Select
-          aria-label="Active Journal account"
+          aria-label="Active Trade Tracker account"
           disabled={working}
           onChange={(event) => void select(event.target.value)}
           value={activeSelectionRef}

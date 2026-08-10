@@ -2,6 +2,85 @@ import type { HelpGuide } from "./help-guide-types";
 
 export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   Object.freeze({
+    slug: "import-a-statement",
+    title: "Import a statement",
+    description: "Add a broker CSV statement, review its format and save the accepted executions to your Trade Tracker.",
+    sections: Object.freeze([
+      Object.freeze({
+        id: "choose-a-statement",
+        title: "Choose a CSV statement",
+        summary: "Start with the broker statement you want to add to the selected Trade Tracker account.",
+        keywords: Object.freeze(["import trades", "csv", "broker statement", "choose statement", "upload"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph", text: "Open Import Trades and choose the CSV statement from your broker. Statements can be imported in any order; TradersLink keeps accepted source evidence with the Trade Tracker records it creates." }),
+          Object.freeze({ kind: "callout", title: "Use the selected Trade Tracker account", text: "An import belongs to the Trade Tracker account currently selected in TraderLink. Confirm that account before continuing." }),
+        ]),
+      }),
+      Object.freeze({
+        id: "review-the-format",
+        title: "Review the statement format",
+        summary: "Use a verified format when it is recognized, or map the columns when the layout is new.",
+        keywords: Object.freeze(["verified format", "map columns", "statement format", "broker layout"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph", text: "TradersLink recognizes verified statement formats when it can. When a layout is new, map the columns that contain the ticker, date and time, Buy or Sell side, quantity and price. Add fees, currency or an execution reference when the statement includes them." }),
+          Object.freeze({ kind: "callout", title: "Changed layouts are reviewed", text: "A successful mapping can be reused for the same trading account. A changed statement layout returns for your review instead of being guessed." }),
+        ]),
+      }),
+    ]),
+  }),
+  Object.freeze({
+    slug: "review-import-result",
+    title: "Review the mapping and import result",
+    description: "Check the preview before saving and understand what happens after an import completes.",
+    sections: Object.freeze([
+      Object.freeze({
+        id: "mapping-review",
+        title: "Review the mapping",
+        summary: "Check that each required statement column is assigned before you continue.",
+        keywords: Object.freeze(["mapping review", "preview", "ticker", "date", "price", "fees"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph", text: "The mapping review is your chance to check that TradersLink read the statement columns as intended before it saves executions. Correct the mapping when a column does not match the broker statement." }),
+          Object.freeze({ kind: "callout", title: "Unknown is better than guessed", text: "Leave an unavailable fact unavailable rather than entering an invented value just to complete a field." }),
+        ]),
+      }),
+      Object.freeze({
+        id: "after-completion",
+        title: "After the import completes",
+        summary: "Review the Import history and follow up only when a specific factual question remains.",
+        keywords: Object.freeze(["import complete", "import history", "data decisions", "duplicate", "follow up"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph", text: "A completed import appears in Import history. Accepted executions join the same Trade Tracker history as manual entries. If a genuine duplicate, contradiction or missing fact needs attention, TradersLink directs only that item to Data Decisions." }),
+          Object.freeze({ kind: "link", href: "/help/data-decisions/getting-started", label: "Read Data Decisions help", text: "See how to answer a factual follow-up without hiding unrelated valid trades." }),
+        ]),
+      }),
+    ]),
+  }),
+  Object.freeze({
+    slug: "import-history-and-follow-up",
+    title: "Use import history and follow-up decisions",
+    description: "Find prior imports and use the appropriate Trade Tracker page for the next step.",
+    sections: Object.freeze([
+      Object.freeze({
+        id: "import-history",
+        title: "Use Import history",
+        summary: "Return to Import Trades to see the statements already added for the selected account.",
+        keywords: Object.freeze(["import history", "previous import", "reimport", "trade tracker account"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph", text: "Import history keeps the added statements together for the selected Trade Tracker account. Use it to confirm an import outcome before deciding whether you need another statement or a factual follow-up." }),
+        ]),
+      }),
+      Object.freeze({
+        id: "choose-the-follow-up-page",
+        title: "Choose the follow-up page",
+        summary: "Use the page that matches the work you need to do next.",
+        keywords: Object.freeze(["after import", "daily tracker", "quick entry", "data decisions", "open positions"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "bullets", items: Object.freeze(["Open Data Decisions only for a specific item that needs source evidence.", "Open Daily Trade Tracker to review a current or recent trading day.", "Open Quick Trade Entry to add manual executions across past trading dates.", "Open Open Positions to view confirmed positions that remain open."]) }),
+        ]),
+      }),
+    ]),
+  }),
+  Object.freeze({
     slug: "notifications",
     title: "Notifications",
     description: "See what finished, what needs your attention and where to find every update in TraderLink.",
@@ -27,9 +106,9 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
         keywords: Object.freeze(["statement import", "broker import", "data decisions", "chart update", "ai review"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "table", columns: Object.freeze(["Update", "What it means"]), rows: Object.freeze([
-            Object.freeze(["Statement import complete", "Your statement was added to your journal and is ready to review."]),
+            Object.freeze(["Statement import complete", "Your statement was added to your Trade Tracker and is ready to review."]),
             Object.freeze(["Statement import needs attention", "TraderLink added what it could and needs you to look at a few items before they can be settled."]),
-            Object.freeze(["Broker import complete", "Newly imported broker trades are available in your journal."]),
+            Object.freeze(["Broker import complete", "Newly imported broker trades are available in your Trade Tracker."]),
             Object.freeze(["Broker import needs attention", "The import could not finish. Open the update to review the next step."]),
             Object.freeze(["Chart update ready", "A completed chart update is available for an eligible trade review."]),
             Object.freeze(["AI Review ready", "A saved weekly or monthly review is ready to read when AI Reviews are available for your account."]),
@@ -81,7 +160,7 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
         summary: "A broker can use a layout TraderLink has not seen before or change a layout it used before.",
         keywords: Object.freeze(["statement failed", "unsupported", "format", "layout", "import stopped"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "A statement can stop before anything is added when TraderLink cannot safely recognize its layout. This is meant to protect your journal from guessing at columns or trade details." }),
+          Object.freeze({ kind: "paragraph", text: "A statement can stop before anything is added when TraderLink cannot safely recognize its layout. This is meant to protect your Trade Tracker from guessing at columns or trade details." }),
           Object.freeze({ kind: "callout", title: "Nothing is changed yet", text: "A stopped import does not change your existing trades. You can choose the next step without losing the statement you selected." }),
         ]),
       }),
@@ -91,10 +170,10 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
         summary: "Let TraderLink use the statement to prepare a safe import when you choose to do so.",
         keywords: Object.freeze(["allow AI", "private", "review statement", "successful import", "consent"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "Choose Allow AI to review this statement when you want help with a statement TraderLink does not yet recognize. The review is used only to prepare this import. Your statement remains private to your TraderLink journal." }),
+          Object.freeze({ kind: "paragraph", text: "Choose Allow AI to review this statement when you want help with a statement TraderLink does not yet recognize. The review is used only to prepare this import. Your statement remains private to your Trade Tracker." }),
           Object.freeze({ kind: "bullets", items: Object.freeze([
             "TraderLink checks the statement format and prepares the column choices needed for the import.",
-            "It checks the result against the same statement before adding anything to your journal.",
+            "It checks the result against the same statement before adding anything to your Trade Tracker.",
             "If the check succeeds, TraderLink continues your original import. It does not replace trades you already have.",
             "You can choose a Discord message for this import if you would like to know when it is ready.",
           ]) }),

@@ -27,6 +27,7 @@ import type {
 } from "@/src/modules/journal/contracts/journal-product-read-models";
 import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import { DashboardPage, DashboardPanel } from "../../dashboard-template";
+import { FeatureHelpLink } from "../feature-help-link";
 
 const ENDPOINT = "/api/platform/journal/data-decisions";
 
@@ -187,6 +188,13 @@ function executionOptionLabel(
 }
 
 type DataDecisionsView = "trades" | "statement-issues" | "statement-details" | "history";
+
+const DATA_DECISIONS_VIEW_HELP: Readonly<Record<DataDecisionsView, Readonly<{ href: string; label: string }>>> = Object.freeze({
+  history: Object.freeze({ href: "/help/data-decisions/statement-issues-and-history#review-history", label: "Review history" }),
+  "statement-details": Object.freeze({ href: "/help/data-decisions/statement-issues-and-history#statement-issues", label: "Statement details" }),
+  "statement-issues": Object.freeze({ href: "/help/data-decisions/statement-issues-and-history#statement-issues", label: "Statement issues" }),
+  trades: Object.freeze({ href: "/help/data-decisions/resolve-a-trade-question#review-and-decide", label: "Trades needing a decision" }),
+});
 type ConfirmedOpenPosition = Readonly<{
   expectedRevision: number | null;
   positionRef: string;
@@ -953,17 +961,21 @@ export function JournalDataDecisionsClient({
 
   return (
     <DashboardPage>
-      <Box>
-        <Typography component="h1" variant="h1">Data Decisions</Typography>
-        <Typography color="text.secondary" sx={{ maxWidth: 860, mt: 1 }} variant="body2">
-          Review your imported statement rows and decide how flagged trades should be handled.
-        </Typography>
-      </Box>
+      <Stack direction="row" sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+        <Box>
+          <Typography component="h1" variant="h1">Data Decisions</Typography>
+          <Typography color="text.secondary" sx={{ maxWidth: 860, mt: 1 }} variant="body2">
+            Review your imported statement rows and decide how flagged trades should be handled.
+          </Typography>
+        </Box>
+        <FeatureHelpLink href="/help/data-decisions" label="Data Decisions" size="medium" />
+      </Stack>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
         <Button onClick={() => setView("trades")} variant={view === "trades" ? "contained" : "outlined"}>Trades needing a decision</Button>
         <Button onClick={() => setView("statement-issues")} variant={view === "statement-issues" ? "contained" : "outlined"}>Statement issues</Button>
         <Button onClick={() => setView("statement-details")} variant={view === "statement-details" ? "contained" : "outlined"}>Statement details</Button>
         <Button onClick={() => setView("history")} variant={view === "history" ? "contained" : "outlined"}>Review history</Button>
+        <FeatureHelpLink href={DATA_DECISIONS_VIEW_HELP[view].href} label={DATA_DECISIONS_VIEW_HELP[view].label} />
       </Stack>
       {notice ? <Alert severity="success">{notice}</Alert> : null}
       {openPositionToClassify ? (

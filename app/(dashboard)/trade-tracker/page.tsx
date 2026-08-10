@@ -18,7 +18,7 @@ import { TradeTrackerWorkingDayPreview } from "./working-day-preview";
 import { DaySessionView } from "./[sessionDate]/day-session-view";
 
 export const metadata: Metadata = {
-  description: "Enter and review the current trading week's Journal executions.",
+  description: "Enter and review the current trading week's Trade Tracker executions.",
   title: "Daily Trade Tracker | TraderLink Platform",
 };
 

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { TradeCandleAnalysisPreview } from "./trade-candle-analysis-preview";
 
 export const metadata: Metadata = {
-  title: "Trade Candle Analysis | Trader Intelligence",
+  title: "Trade Candle Analysis | Trade Tracker",
   description:
     "Experimental candle-path review for profit giveback, exit timing, and entry timing.",
 };

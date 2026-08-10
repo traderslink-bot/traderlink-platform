@@ -271,7 +271,7 @@ export function MoomooExecutionImportSetup({
                 variant="determinate"
               />
               <Typography color="text.secondary" variant="caption">
-                {account.latestImport.completedWorkUnits} of {account.latestImport.totalWorkUnits} date ranges complete · {account.latestImport.acceptedExecutionCount} new executions · {account.latestImport.existingExecutionCount} already in your Journal
+                {account.latestImport.completedWorkUnits} of {account.latestImport.totalWorkUnits} date ranges complete · {account.latestImport.acceptedExecutionCount} new executions · {account.latestImport.existingExecutionCount} already in your Trade Tracker
               </Typography>
               {account.latestImport.decisionRequiredCount > 0 ? (
                 <Typography color="warning.main" variant="caption">
@@ -338,7 +338,7 @@ export function MoomooExecutionImportSetup({
       ) : null}
 
       <Typography color="text.secondary" variant="caption">
-        Historical executions can be added to your Journal without creating old Daily Trade Tracker review work. Trade analysis begins with trading dates covered by an active paid analyzer plan. Statement imports remain available whether or not Moomoo execution access is available.
+        Historical executions can be added to your Trade Tracker without creating old Daily Trade Tracker review work. Trade analysis begins with trading dates covered by an active paid analyzer plan. Statement imports remain available whether or not Moomoo execution access is available.
       </Typography>
       {error ? (
         <Alert severity="error">

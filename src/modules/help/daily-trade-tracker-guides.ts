@@ -67,7 +67,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
             Object.freeze({ title: "2. Review each trade", text: "Open every ticker, select each trade and check the executions, tags, rules and notes." }),
             Object.freeze({ title: "3. Study the chart", text: "Review the selected trade's entries, exits, candles and written analysis." }),
             Object.freeze({ title: "4. Record the lesson", text: "Add useful tags, trade notes and Daily Notes while the decisions are still fresh." }),
-            Object.freeze({ title: "5. Finish the day", text: "Classify any open position, review daily rules and mark the day reviewed when journaling is complete." }),
+            Object.freeze({ title: "5. Finish the day", text: "Classify any open position, review daily rules and mark the day reviewed when your day review is complete." }),
           ]) }),
           Object.freeze({ kind: "paragraph", text: "On desktop, completed trade cards can stay expanded while you work. On smaller screens they begin more compactly to keep the day scrollable. Expanding a card never changes the saved trade." }),
         ]),
@@ -91,7 +91,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
             "Enter the ticker, Buy or Sell side, filled quantity and execution price for every fill.",
             "Enter fees only when the broker reports them. Leaving an unknown fee blank is more accurate than guessing.",
             "Add rows for partial entries, adds and partial exits. Remove an unused row before saving.",
-            "One save can use any past date, but every row in that save must belong to the same Eastern Time trading date.",
+            "Every row in one Daily Trade Tracker save must belong to the same Eastern Time trading date. This keeps the day review, notes and rules tied to one trading day.",
           ]) }),
           Object.freeze({ kind: "callout", tone: "warning", title: "Use the fill, not the order", text: "An order can be cancelled, partially filled or filled at several prices. Record the completed broker fills that actually changed the position." }),
         ]),
@@ -130,7 +130,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
             "A manual execution can be edited later. If it is being compared with possible broker data, resolve that Data Decision first so the same fill is not silently counted twice.",
             "When one position has returned to zero, use Start another trade if you need to record a later trade in the same ticker.",
           ]) }),
-          Object.freeze({ kind: "callout", title: "Manual and imported fills share one history", text: "Broker imports do not create a second Journal. When an imported fill may duplicate a manual one, TradersLink asks for a decision instead of deleting or double-counting it automatically." }),
+          Object.freeze({ kind: "callout", title: "Manual and imported fills share one history", text: "Broker imports do not create a second Trade Tracker. When an imported fill may duplicate a manual one, TradersLink asks for a decision instead of deleting or double-counting it automatically." }),
         ]),
       }),
       Object.freeze({
@@ -139,7 +139,8 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
         summary: "Choose the workflow that matches the data you have.",
         keywords: Object.freeze(["manual", "broker import", "statement", "bulk history", "moomoo"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "Manual entry is useful for same-day review and for brokers that do not yet connect directly. Broker or statement imports are better for larger histories. Both ultimately feed the same execution history and use the same trade-building rules." }),
+          Object.freeze({ kind: "paragraph", text: "Daily Trade Tracker manual entry is useful for reviewing one current or recent trading day and for brokers that do not yet connect directly. Use Quick Trade Entry when one batch contains executions from multiple past trading dates. Broker or statement imports are better for larger histories. All three paths ultimately feed the same execution history and use the same trade-building rules." }),
+          Object.freeze({ kind: "link", href: "/help/quick-trade-entry", label: "Open Quick Trade Entry help", text: "Quick Trade Entry is the execution-only path for multiple past trading dates; it does not begin the Daily Tracker notes, tags, rules or day-review workflow." }),
           Object.freeze({ kind: "paragraph", text: "A broker connection can provide strong execution evidence, but it does not make every row immune from genuine duplicates or contradictions. TradersLink preserves the source and asks only when the facts conflict." }),
         ]),
       }),
@@ -306,7 +307,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
             "Price response reports movement in favor of and against the position after an execution. Available 5, 15, 30 and 60-minute paths show what followed without claiming it was knowable at the fill.",
             "Trade-level MFE, MAE and holding time use the position from first entry until it becomes flat.",
             "Profit opportunities identify sustained price windows rather than treating a one-second high as an easily captured exit.",
-            "Actual Journal P/L remains separate from calculated price-path opportunity. The latter shows what occurred in the market, not what the trader actually earned.",
+            "Actual Trade Tracker P/L remains separate from calculated price-path opportunity. The latter shows what occurred in the market, not what the trader actually earned.",
           ]) }),
         ]),
       }),
@@ -379,10 +380,10 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
       Object.freeze({
         id: "mark-reviewed",
         title: "Mark the day reviewed",
-        summary: "Record that journaling is complete without locking the day.",
+        summary: "Record that the day review is complete without locking the day.",
         keywords: Object.freeze(["mark day reviewed", "complete", "ai reviews", "save notes", "edit later"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "Mark day reviewed is your signal that journaling for that trading date is complete. It is more meaningful than saving notes alone." }),
+          Object.freeze({ kind: "paragraph", text: "Mark day reviewed is your signal that the Trade Tracker review for that trading date is complete. It is more meaningful than saving notes alone." }),
           Object.freeze({ kind: "bullets", items: Object.freeze([
             "Pending trade notes and Daily Notes are saved before completion is recorded.",
             "Every open position must be classified first.",

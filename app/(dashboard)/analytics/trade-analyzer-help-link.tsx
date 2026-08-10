@@ -1,8 +1,6 @@
 "use client";
 
-import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
-import IconButton from "@mui/material/IconButton";
-import Tooltip from "@mui/material/Tooltip";
+import { FeatureHelpLink } from "../feature-help-link";
 
 export function TradeAnalyzerHelpLink({
   href,
@@ -13,20 +11,5 @@ export function TradeAnalyzerHelpLink({
   label: string;
   size?: "small" | "medium";
 }) {
-  const accessibleLabel = `Help for ${label}`;
-  return (
-    <Tooltip title={accessibleLabel}>
-      <IconButton
-        aria-label={accessibleLabel}
-        component="a"
-        href={href}
-        onClick={(event) => event.stopPropagation()}
-        rel="noopener noreferrer"
-        size={size}
-        target="_blank"
-      >
-        <HelpOutlineRoundedIcon fontSize={size} />
-      </IconButton>
-    </Tooltip>
-  );
+  return <FeatureHelpLink href={href} label={label} size={size} />;
 }

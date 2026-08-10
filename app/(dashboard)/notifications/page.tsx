@@ -7,7 +7,7 @@ import { PlatformNotificationRepository } from "@/src/modules/platform/server/no
 import { NotificationList } from "./notification-list";
 
 export const metadata: Metadata = {
-  description: "Review updates about your TraderLink journal.",
+  description: "Review updates about your TraderLink Trade Tracker.",
   title: "Notifications | TraderLink Platform",
 };
 

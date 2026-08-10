@@ -12,6 +12,7 @@ import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/serve
 
 import { MonthlyPnlChart, type MonthlyPnlChartRow } from "./monthly-pnl-chart";
 import { OverviewDateRangeControl, type OverviewDateRange } from "./overview-date-range-control";
+import { FeatureHelpLink } from "../feature-help-link";
 
 const OVERVIEW_METRICS = [
   { id: "net_pnl", label: "Net P/L", caption: "All completed trades" },
@@ -117,11 +118,17 @@ export async function AnalyticsOverviewPage({ searchParams }: { searchParams: Re
   const response = withJournalAnalyticsDashboardService(scope, (service) => service.getAnalyticsOverview(scope, query));
   return (
     <DashboardPage>
-      <Box>
-        <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">Analytics</Typography>
-        <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">Overview</Typography>
-      </Box>
-      <OverviewDateRangeControl value={dateRange} />
+      <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+        <Box>
+          <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">Analytics</Typography>
+          <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">Overview</Typography>
+        </Box>
+        <FeatureHelpLink href="/help/core-analytics" label="Core Analytics" size="medium" />
+      </Stack>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={0.5} sx={{ alignItems: { sm: "center" } }}>
+        <OverviewDateRangeControl value={dateRange} />
+        <FeatureHelpLink href="/help/core-analytics/overview-and-date-range#set-a-date-range" label="Analytics date range" />
+      </Stack>
       {response.partitions.map((partition) => <OverviewPartition key={partition.currency ?? "currency-unavailable"} partition={partition} showCurrency={response.partitions.length > 1} />)}
     </DashboardPage>
   );

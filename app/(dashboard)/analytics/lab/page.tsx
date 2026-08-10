@@ -11,7 +11,7 @@ export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: "Analytics Lab | TraderLink Platform",
-  description: "Build custom analytics views from replacement Journal facts.",
+  description: "Build custom analytics views from Trade Tracker facts.",
 };
 
 export default async function AnalyticsLabPage() {

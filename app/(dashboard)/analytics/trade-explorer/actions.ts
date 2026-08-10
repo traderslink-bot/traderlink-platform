@@ -21,7 +21,7 @@ export async function runTradeExplorer(
     return Object.freeze({
       ok: false as const,
       message: accountChanged
-        ? "The selected Journal account changed. Refresh this page and try again."
+        ? "The selected Trade Tracker account changed. Refresh this page and try again."
         : "Those results could not be displayed. Check the selected filters and try again.",
     });
   }

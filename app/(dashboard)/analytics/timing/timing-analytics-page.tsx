@@ -10,6 +10,7 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
 import { TimingAnalyticsClient, type TimingChartData, type TimingMetricId } from "./timing-analytics-client";
+import { FeatureHelpLink } from "../../feature-help-link";
 
 const GROUPINGS: readonly JournalAnalyticsGrouping[] = [
   "entry_time_bucket",
@@ -82,13 +83,16 @@ export async function TimingAnalyticsPage() {
 
   return (
     <DashboardPage>
-      <Box>
-        <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">
-          Analytics
-        </Typography>
-        <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">
-          Timing
-        </Typography>
+      <Box sx={{ alignItems: "flex-start", display: "flex", gap: 1, justifyContent: "space-between" }}>
+        <Box>
+          <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">
+            Analytics
+          </Typography>
+          <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">
+            Timing
+          </Typography>
+        </Box>
+        <FeatureHelpLink href="/help/core-analytics" label="Core Analytics" size="medium" />
       </Box>
 
       <TimingAnalyticsClient

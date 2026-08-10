@@ -27,7 +27,7 @@ function savedViewFailure(error: unknown): AnalyticsLabSavedViewMutationResult {
   return Object.freeze({
     ok: false as const,
     message: conflict
-      ? "This saved view changed or the selected Journal account changed. Refresh before trying again."
+      ? "This saved view changed or the selected Trade Tracker account changed. Refresh before trying again."
       : "This saved view was not accepted. Check its name and analytics filters.",
   });
 }
@@ -47,7 +47,7 @@ export async function runAnalyticsLabQuery(
     return Object.freeze({
       ok: false as const,
       message: conflict
-        ? "The selected Journal account changed. Refresh before running this view."
+        ? "The selected Trade Tracker account changed. Refresh before running this view."
         : "This analytics request was not accepted. Review the selected filters and coverage.",
     });
   }

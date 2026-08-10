@@ -16,6 +16,7 @@ import {
   DashboardPage,
   DashboardPanel,
 } from "../../../dashboard-template";
+import { FeatureHelpLink } from "../../feature-help-link";
 import { PositionStyleControl } from "../../trade-tracker/position-style-control";
 import { positionStatusLabel } from "../../trade-tracker/position-style-labels";
 import { getReplacementOpenPositionStyles } from "../../trade-tracker/trade-tracker-platform-data";
@@ -58,17 +59,20 @@ export default async function OpenPositionsPage() {
 
   return (
     <DashboardPage>
-      <Box>
-        <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">
-          Trades
-        </Typography>
-        <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">
-          Open Positions
-        </Typography>
-        <Typography color="text.secondary" sx={{ maxWidth: 860, mt: 1 }} variant="body2">
-          Confirmed open positions stay visible whether they are active swing trades, long-term holds, unplanned holds (bag holds), or another trader-defined situation. Time held never decides that status automatically.
-        </Typography>
-      </Box>
+      <Stack direction="row" sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+        <Box>
+          <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">
+            Trades
+          </Typography>
+          <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">
+            Open Positions
+          </Typography>
+          <Typography color="text.secondary" sx={{ maxWidth: 860, mt: 1 }} variant="body2">
+            Confirmed open positions stay visible whether they are active swing trades, long-term holds, unplanned holds (bag holds), or another trader-defined situation. Time held never decides that status automatically.
+          </Typography>
+        </Box>
+        <FeatureHelpLink href="/help/open-positions" label="Open Positions" size="medium" />
+      </Stack>
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
         <DashboardDataScopeChip />
@@ -125,7 +129,7 @@ export default async function OpenPositionsPage() {
       </DashboardPanel>
 
       {result.positions.length > 0 ? (
-        <DashboardPanel title="Manage open position types">
+        <DashboardPanel action={<FeatureHelpLink href="/help/open-positions/choose-status" label="open position types" />} title="Manage open position types">
           <Typography color="text.secondary" sx={{ mb: 2 }} variant="body2">
             Your choice is shared by Daily Trade Tracker, Swing Trade Tracker, and Open Positions. Time held never changes it automatically.
           </Typography>

@@ -20,6 +20,7 @@ import {
   DashboardPrimaryAction,
   DashboardSecondaryAction,
 } from "../../dashboard-template";
+import { FeatureHelpLink } from "../feature-help-link";
 
 export type ExecutionDraft = {
   date: string;
@@ -260,6 +261,7 @@ export function ExecutionEntryCard({
 
   return (
     <DashboardPanel
+      action={<FeatureHelpLink href={entryMode === "quick" ? "/help/quick-trade-entry/enter-executions" : "/help/daily-trade-tracker/add-edit-trades#enter-executions"} label="manual execution entry" />}
       eyebrow="Manual execution entry"
       title="Enter trades"
     >

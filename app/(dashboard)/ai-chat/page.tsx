@@ -37,7 +37,7 @@ export default async function AiChatPage({ searchParams }: AiChatPageProps) {
       <Box>
         <Typography component="h1" variant="h1">AI Chat</Typography>
         <Typography color="text.secondary" sx={{ maxWidth: 760, mt: 1 }} variant="body2">
-          Ask questions about your completed trades, explore what has been working, and keep each conversation saved with the Journal account you are viewing.
+          Ask questions about your completed trades, explore what has been working, and keep each conversation saved with the Trade Tracker account you are viewing.
         </Typography>
       </Box>
       <AiChatClient initialContext={initialContext} />

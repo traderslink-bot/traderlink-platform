@@ -36,6 +36,7 @@ import {
   DashboardPage,
   DashboardPanel,
 } from "../../dashboard-template";
+import { FeatureHelpLink } from "../feature-help-link";
 import type {
   TradingRulesDashboardView,
   TradingRulesTemplateView,
@@ -388,7 +389,8 @@ export function RulesClient({
             Start with a few rules that matter to you.
           </Typography>
         </Box>
-        <Stack direction="row" spacing={1}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+          <FeatureHelpLink href="/help/trading-rules" label="Trading Rules" size="medium" />
           <Button component={Link} href="/rules/results" variant="outlined">
             Rule Results
           </Button>

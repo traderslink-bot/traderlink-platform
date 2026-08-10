@@ -6,7 +6,7 @@ import { RuleResultsClient } from "./rule-results-client";
 import { readRuleResults } from "./rule-results-data";
 
 export const metadata: Metadata = {
-  title: "Rule Results | Trader Intelligence",
+  title: "Rule Results | Trade Tracker",
   description: "Factual preset and manual trading-rule results.",
 };
 export const dynamic = "force-dynamic";

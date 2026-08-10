@@ -10,7 +10,7 @@ import {
 import { RulesClient } from "./rules-client";
 
 export const metadata: Metadata = {
-  title: "Trading Rules | Trader Intelligence",
+  title: "Trading Rules | Trade Tracker",
   description: "Create and manage deterministic, versioned trading rules.",
 };
 

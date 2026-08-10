@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Alert,
   Box,
   Button,
   Card,
@@ -18,6 +19,7 @@ import {
   DashboardPanel,
   DashboardSecondaryAction,
 } from "../../../dashboard-template";
+import { FeatureHelpLink } from "../../feature-help-link";
 import { ManualExecutionEditDialog } from "../manual-execution-edit-dialog";
 import { PositionStyleControl } from "../position-style-control";
 import { SwingAnnotationEditor } from "./swing-annotation-editor";
@@ -261,14 +263,21 @@ export function SwingTrackerView({
 }) {
   return (
     <DashboardPage>
-      <Box>
-        <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">
-          Trade Tracker
-        </Typography>
-        <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">
-          Swing Trade Tracker
-        </Typography>
-      </Box>
+      <Stack direction="row" sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+        <Box>
+          <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">
+            Trade Tracker
+          </Typography>
+          <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">
+            Swing Trade Tracker
+          </Typography>
+        </Box>
+        <FeatureHelpLink href="/help/swing-trade-tracker" label="Swing Trade Tracker" size="medium" />
+      </Stack>
+
+      <Alert severity="info">
+        Swing Trade Tracker is in early beta. Use the available workflow today, and share feature suggestions that would make your review more useful.
+      </Alert>
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
         <Chip label={`${active.length} active swing${active.length === 1 ? "" : "s"}`} size="small" variant="outlined" />
@@ -277,7 +286,7 @@ export function SwingTrackerView({
 
       {topContent}
 
-      <DashboardPanel action={<Chip color="primary" label={`${active.length} active`} size="small" />} title="Active swing trades">
+      <DashboardPanel action={<Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}><FeatureHelpLink href="/help/swing-trade-tracker/review-and-journal" label="active swing trades" /><Chip color="primary" label={`${active.length} active`} size="small" /></Stack>} title="Active swing trades">
         {active.length === 0 ? (
           <Typography color="text.secondary" variant="body2">
             No positions are currently confirmed as active swings. Enter a planned swing above or classify a confirmed open position.

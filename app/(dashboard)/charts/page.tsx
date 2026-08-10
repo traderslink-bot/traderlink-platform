@@ -4,7 +4,7 @@ import { DashboardPage } from "../../dashboard-template";
 import { TradingViewChart } from "./trading-view-chart";
 
 export const metadata: Metadata = {
-  title: "Market Charts | Trader Intelligence",
+  title: "Market Charts | Trade Tracker",
 };
 
 export default function MarketChartsPage() {

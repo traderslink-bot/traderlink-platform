@@ -64,7 +64,7 @@ export default async function TradesByTickerPage() {
           <DashboardUnavailableState
             actionHref="/imports"
             actionLabel="Import trades"
-            description="No analytics-ready closed trades are available in the replacement Journal. No V3 or sample rows are substituted."
+            description="No analytics-ready closed trades are available in Trade Tracker. No V3 or sample rows are substituted."
           />
         ) : (
           <TableContainer>
