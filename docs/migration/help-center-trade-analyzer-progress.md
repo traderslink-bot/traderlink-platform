@@ -26,7 +26,8 @@
   38 unique guide sections.
 - [x] Verified all 19 product contextual Help links resolve to a published
   Analyzer article and an existing stable anchor.
-- [ ] Obtain final integrated desktop/mobile owner visual approval.
+- [x] Owner accepted the completed Help design and waived any additional
+  integrated desktop/mobile visual review.
 - [x] Created narrow local Help checkpoint `1a9bba2e`
   (`docs(help): add trade analyzer guide collection`).
 
@@ -40,7 +41,7 @@
   authoring.
 - Static Help verification confirms eight guides, 38 unique sections, 47
   Analyzer search records, nine navigation items and 19 valid contextual
-  product Help targets. Final desktop/mobile browser review remains pending
-  because the bounded canonical dashboard starts did not reach a port 3010
-  listener; the stalled processes were stopped rather than left consuming
-  resources.
+  product Help targets. Bounded canonical dashboard starts did not reach a port
+  3010 listener, so the stalled processes were stopped rather than left
+  consuming resources. The owner accepted the design from the completed UI
+  already reviewed and waived another browser pass.

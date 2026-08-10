@@ -30,7 +30,8 @@
   denominator while the Moomoo lookback decision remains deferred.
 - [x] Redirected transitional `/analytics/trade-analysis` requests while
   preserving supported filter query parameters.
-- [ ] Complete final integrated desktop/mobile visual review.
+- [x] Owner accepted the completed design and waived any additional integrated
+  desktop/mobile visual review after reviewing enough of the implemented UI.
 - [x] Created narrow local implementation checkpoint `91579840`
   (`feat(trade-analyzer): split day analysis capabilities`).
 - [x] Corrected the accordion Help-control boundary in `f795baec`
@@ -39,8 +40,8 @@
 
 ## Coordination
 
-- The current combined Trade Analysis implementation remains the factual source
-  and review reference until the replacement pages are accepted.
+- The dedicated Trade Analyzer route family is the accepted presentation over
+  the existing saved Analyzer facts.
 - No migration number is reserved by this planning checkpoint.
 - The initial paid lookback value remains intentionally unset pending a later
   Moomoo test-account exercise.
@@ -48,5 +49,5 @@
   reconciliation and Help target/anchor checks pass. Three bounded canonical
   dashboard starts did not reach a port 3010 listener before CPU progress
   stalled at roughly 1.5 GB working set. Every process created by those starts
-  was stopped and port 3010 was confirmed released. Final browser review
-  remains an acceptance gate rather than being inferred from static checks.
+  was stopped and port 3010 was confirmed released. The owner subsequently
+  accepted the completed design and explicitly waived another browser review.
