@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -147,7 +145,7 @@ function ReviewCard({
             {summary}
           </Typography>
         </Box>
-        <Button component={Link} href={href} size="small" variant="outlined">
+        <Button href={href} size="small" variant="outlined">
           Open review
         </Button>
       </Stack>
