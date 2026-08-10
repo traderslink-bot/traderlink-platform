@@ -130,7 +130,7 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
         keywords: Object.freeze(["Discord", "DM", "account settings", "broker imports", "statement imports"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "steps", items: Object.freeze([
-            Object.freeze({ title: "1. Open Account settings", text: "Open Account from the main menu and find Discord notifications." }),
+            Object.freeze({ title: "1. Open Account settings", text: "Open Account from the main menu, then choose Preferences and find Notifications." }),
             Object.freeze({ title: "2. Choose the updates you want", text: "Choose AI Reviews, broker imports, chart updates, statement imports, or any combination that helps you." }),
             Object.freeze({ title: "3. Save your choices", text: "You can change these choices whenever you want." }),
           ]) }),

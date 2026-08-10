@@ -14,6 +14,18 @@ remaining Railway/OpenAI/Discord/paid-entitlement/scheduler release checklist
 is maintained in the feature progress record. No host, secret, bot, API call,
 deployment or real Journal database change is authorized by this local result.
 
+**Account Settings and erasure:** The owner authorized the
+[Account Settings And Erasure Plan](account-settings-and-erasure-plan.md) and
+its [progress record](account-settings-and-erasure-progress.md) on
+2026-08-10. The owner has visually approved the Settings hub, which organizes
+existing controls into stable sections. A future guarded, permanent deletion
+flow will cover one Trade
+Tracker account or the whole TraderLink account. Account deletion is strictly
+scoped: deleting one Trade Tracker account never reaches another account. The
+underlying erase command and private-backup retention policy must be proven
+before any delete control is accepted or any hosted data-deletion claim is
+made.
+
 ## 2026-08-09 AI Review subscriber and cache-write safeguards
 
 - AI Reviews local beta source and documentation are checkpointed at

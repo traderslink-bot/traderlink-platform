@@ -1,3 +1,19 @@
+# 2026-08-10 - Account Settings hub approved; scoped erasure remains next
+
+- Replaced the long single-page `/account` view with clear routes for
+  Preferences, Trading, AI & plan, and Profile & access. Existing controls are
+  retained and the affected AI Review/Discord notification Help guides now name
+  their new destination.
+- The owner visually approved the Settings hub on 2026-08-10. Focused lint and
+  whitespace checks passed; no test suite, server, database mutation, hosted
+  action or deployment occurred.
+- The user-approved next slice is a real, separately scoped erasure contract:
+  delete one Trade Tracker account without touching another, or delete the
+  complete TraderLink account. Do not add a non-functional deletion control.
+  Follow `docs/migration/account-settings-and-erasure-plan.md` and its progress
+  record; retain immutable-row safeguards except through the future, narrowly
+  authorized erasure command.
+
 # 2026-08-02 - Day Trade Tracker and Swing Trade Tracker split approved
 
 - Replaced the planned single mixed Trade Tracker workflow with two clearly
