@@ -95,6 +95,22 @@ function main(): void {
       const dataDecisions = product.listDataDecisions(
         narrowWorkspaceAccessToAccount(owner.scope, owner.accountId),
       );
+      const pendingDecisionCountsByIssue = new Map<string, number>();
+      for (const decision of dataDecisions.pending) {
+        pendingDecisionCountsByIssue.set(
+          decision.issueCode,
+          (pendingDecisionCountsByIssue.get(decision.issueCode) ?? 0) + 1,
+        );
+      }
+      const openDecisionCountsByReason = new Map<string, number>();
+      for (const decision of open.decisions) {
+        for (const reasonCode of decision.reasonCodes) {
+          openDecisionCountsByReason.set(
+            reasonCode,
+            (openDecisionCountsByReason.get(reasonCode) ?? 0) + 1,
+          );
+        }
+      }
 
       const tickerRoundTrips = ticker.rows.reduce((total, row) =>
         total + row.roundTripCount, 0);
@@ -110,7 +126,8 @@ function main(): void {
       ) {
         fail("open_and_decision_separation");
       }
-      if (dataDecisions.pending.length !== open.coverage.needsDecisionCount) {
+      if ([...openDecisionCountsByReason].some(([reasonCode, count]) =>
+        (pendingDecisionCountsByIssue.get(reasonCode) ?? 0) < count)) {
         fail("product_data_decision_reconciliation");
       }
       if (
