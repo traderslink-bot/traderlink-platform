@@ -56,6 +56,13 @@ activation, DNS changes or legacy deletion.
 1. The Workspace `Performance details` action links to
    `/analytics/performance`, but the route does not exist. The action currently
    leads to a 404 and must be repaired before launch acceptance.
+2. `/account` redirects to `/account/preferences`, where the shared Account
+   Settings layout crashed because a Next.js link function crossed the Server
+   Component boundary into a Material UI client component. All five Settings
+   sections were unusable. The intended layout is now isolated behind the
+   required client boundary. Preferences, Trading, AI & plan, Profile & access
+   and Privacy all render with their expected headings and no browser errors in
+   the worker-disabled canonical runtime.
 
 ### Runtime blockers
 
@@ -77,6 +84,7 @@ activation, DNS changes or legacy deletion.
 - [x] Statically verify the worker-disabled review runtime with package JSON
   parsing, targeted ESLint and `git diff --check`.
 - [ ] Complete source-level route, promise and Settings audit.
+- [x] Repair and browser-verify the shared Account Settings runtime boundary.
 - [ ] Complete controlled desktop and narrow-mobile browser audit.
 - [ ] Present visible UI corrections for owner approval.
 - [ ] Implement approved launch-blocker fixes in coherent slices.
