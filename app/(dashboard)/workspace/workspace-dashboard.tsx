@@ -348,10 +348,10 @@ export function WorkspaceDashboard({
           action={
             <Button
               endIcon={<ArrowForwardRoundedIcon />}
-              href="/analytics/performance"
+              href="/analytics/trade-explorer"
               size="small"
             >
-              Performance details
+              Explore performance
             </Button>
           }
           eyebrow="Account performance"
@@ -363,8 +363,8 @@ export function WorkspaceDashboard({
                 Trade Tracker analytics are connected.
               </Typography>
               <Typography color="text.secondary" variant="body2">
-                Open Performance details for exact daily, drawdown, streak,
-                outlier, and period packets.
+                Compare daily P/L, drawdown, recovery, giveback, and other
+                available performance groupings.
               </Typography>
             </Stack>
           ) : (

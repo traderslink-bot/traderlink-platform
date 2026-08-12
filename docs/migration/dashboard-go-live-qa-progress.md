@@ -55,7 +55,9 @@ activation, DNS changes or legacy deletion.
 
 1. The Workspace `Performance details` action links to
    `/analytics/performance`, but the route does not exist. The action currently
-   leads to a 404 and must be repaired before launch acceptance.
+   led to a 404. The approved correction now uses `Explore performance`, links
+   to `/analytics/trade-explorer`, accurately describes the available
+   performance groupings and opens Trade Explorer without browser errors.
 2. `/account` redirects to `/account/preferences`, where the shared Account
    Settings layout crashed because a Next.js link function crossed the Server
    Component boundary into a Material UI client component. All five Settings
@@ -81,7 +83,8 @@ starts the canonical loopback runtime with both background workers disabled.
    card, rename its action to `Explore performance`, link it to
    `/analytics/trade-explorer`, and revise the description so it accurately
    describes Trade Explorer's daily P/L, drawdown, recovery, giveback and other
-   available groupings. This visible correction requires owner approval.
+   available groupings. The owner approved this exact correction, and it is now
+   implemented and focused-browser verified.
 
 ## Review evidence — 2026-08-12
 
@@ -121,7 +124,8 @@ starts the canonical loopback runtime with both background workers disabled.
 - [x] Repair and browser-verify the Help Center compilation failure.
 - [ ] Complete controlled desktop and narrow-mobile browser audit.
 - [ ] Present visible UI corrections for owner approval.
-- [ ] Implement approved launch-blocker fixes in coherent slices.
+- [x] Present the Workspace performance correction for owner approval.
+- [x] Implement and browser-verify the approved Workspace performance repair.
 - [ ] Complete focused verification for each accepted slice.
 - [ ] Complete final release-candidate regression, build and browser acceptance.
 - [ ] Produce the final go/no-go report.
