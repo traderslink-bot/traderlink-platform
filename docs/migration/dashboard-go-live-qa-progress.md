@@ -71,9 +71,37 @@ activation, DNS changes or legacy deletion.
 
 ### Runtime blockers
 
-1. A controlled worker-disabled local review runtime is not currently exposed
-   by the canonical launcher. Add an explicit opt-in review mode before using
-   the real local database for browser QA.
+No active runtime blocker remains for controlled local QA. `npm run dev:review`
+starts the canonical loopback runtime with both background workers disabled.
+
+### Owner decision required
+
+1. The removed Performance page intentionally overlapped the accepted Analytics
+   architecture. The recommended repair is to keep the `Performance over time`
+   card, rename its action to `Explore performance`, link it to
+   `/analytics/trade-explorer`, and revise the description so it accurately
+   describes Trade Explorer's daily P/L, drawdown, recovery, giveback and other
+   available groupings. This visible correction requires owner approval.
+
+## Review evidence — 2026-08-12
+
+- All 25 primary navigation routes returned their intended page or accepted
+  redirect after the Account and Help repairs. No additional primary-route 404
+  or HTTP 500 was found.
+- Additional dashboard routes for Analytics Lab, legacy Analytics aliases,
+  manual entry, reflection, Rule Results, Candle Review, day sessions, Round
+  Trips, ticker results, Platform Readiness, AI Review preview, notifications
+  and Journal Administration returned their intended page or accepted redirect.
+- Daily Trade Tracker, Swing Trade Tracker and Quick Trade Entry render their
+  expected execution controls. Incomplete execution rows cannot be saved, and
+  Daily Trade Tracker presented a leave-page confirmation for unsaved rows.
+- Imports renders its statement chooser, mapping action, history and Data
+  Decisions/Help paths. A repository-provided synthetic upload did not open the
+  browser file chooser before timeout; no upload or Journal mutation occurred.
+  Import preview/commit remains for the disposable-data acceptance checkpoint.
+- Data Decisions renders the current factual questions and plain-language
+  resolution actions without browser errors. No real decision was submitted.
+- No real Journal, Settings, provider or production data was changed.
 
 ### External launch gates
 
@@ -100,4 +128,6 @@ activation, DNS changes or legacy deletion.
 
 ## Commit record
 
-No QA slice commit has been created yet.
+- `fe07262b` — safe worker-disabled dashboard review runtime and QA tracker.
+- `18df1629` — shared Account Settings client-boundary repair.
+- `7bc48c7a` — Data Decisions Help guide compilation repair.
