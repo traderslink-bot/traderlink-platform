@@ -28,6 +28,9 @@ production deployment, data transfer, DNS cutover, or paid service purchase.
   the complete app runs on Railway.
 - [ ] Approve an invited beta first, with a small named user group, before a
   public launch.
+- [ ] Include direct Moomoo connection as a priority invited-beta feature for
+  selected Moomoo users. The live beta is where provider behavior, corrections,
+  larger histories, recovery, and the final sync cadence must be proven.
 - [ ] Decide who receives launch alerts and support requests.
 - [ ] Decide the beta launch date only after every **Launch blocker** below is
   checked.
@@ -166,6 +169,9 @@ Railway through its authorized access.
 | `TRADERLINK_PLATFORM_JOURNAL_HMAC_ACTIVE_KEY_VERSION` | Active version supplied by Codex. |
 | `TRADERSLINK_WATCHLIST_PUBLISHER_TOKEN` | Codex generates if the hosted Watchlist publisher is enabled; secret. |
 | `NEWS_PUBLISH_TOKEN` | Codex generates if the hosted News publisher is enabled; secret. |
+| `TRADERLINK_MOOMOO_OAUTH_CLIENT_ID` | Production Moomoo OAuth application client ID. |
+| `TRADERLINK_MOOMOO_CREDENTIAL_ACTIVE_KEY_VERSION` | Active encryption-key version supplied by Codex. |
+| `TRADERLINK_MOOMOO_CREDENTIAL_KEYS_BASE64` | Codex generates the versioned 32-byte credential-encryption key map; secret. |
 
 Railway supplies `PORT` and `RAILWAY_VOLUME_MOUNT_PATH`; do not create or
 override them.
@@ -241,8 +247,10 @@ database volume in another process.
 - [ ] Codex configures the endpoint caller with
   `Authorization: Bearer <CRON_SECRET>` without exposing the value.
 - [ ] Confirm each job has failure alerts and that retries cannot overlap.
-- [ ] Keep the AI Reviews and Moomoo jobs disabled until their separate live
-  acceptance gates pass.
+- [ ] Keep AI Reviews issuance disabled until its hosted acceptance gates pass.
+- [ ] Enable the Moomoo import job for the selected invited-beta users after
+  Codex verifies production OAuth, encrypted credential storage, read-only
+  permissions, account mapping, bounded writes, alerts, and safe retry behavior.
 
 Reference: [Railway cron jobs](https://docs.railway.com/cron-jobs).
 
@@ -293,18 +301,35 @@ Reference: [Railway custom domains](https://docs.railway.com/networking/domains/
 - [ ] Review account deletion with one disposable account before real users
   are admitted. Do not use the production owner account for this test.
 
-## Moomoo direct connection - keep deferred for now
+## Moomoo direct connection - priority invited-beta feature
 
-Direct Moomoo connection is implemented locally but still has open live-provider,
-production OAuth identity, high-volume history, correction-behavior, and final
-sync-cadence acceptance gates.
+Direct Moomoo connection is one of the most important invited-beta features.
+Its local safety and workflow proofs are complete enough to prepare the hosted
+beta, while its remaining live-provider, correction, high-volume history,
+recovery, and cadence evidence must be collected from controlled beta use. Those
+remaining evidence gates limit unrestricted public release; they are not a
+reason to exclude Moomoo from the invited beta.
 
-- [ ] Do not advertise or enable direct Moomoo connection at initial launch.
-- [ ] Launch with statement/manual import where accepted, or visibly label the
-  connection unavailable.
-- [ ] Later, approve a separate invited-beta Moomoo setup and live-account
-  verification. It must remain read-only and must never request order-placement,
-  modification, cancellation, or other trading authority.
+- [ ] Approve direct Moomoo connection for the invited beta.
+- [ ] Choose a small first group of Moomoo beta users, including at least one
+  representative high-fill or multi-year account when available.
+- [ ] Create or approve the production Moomoo OAuth client and register this
+  exact callback: `https://app.traderslink.pro/api/connections/moomoo/callback`.
+- [ ] Give Codex the production OAuth client ID through the agreed private
+  setup method so Codex can configure and verify it in Railway.
+- [ ] Confirm the requested provider access is read-only. It must never request
+  order placement, modification, cancellation, or other trading authority.
+- [ ] Let each beta user deliberately select the destination Journal account
+  and first execution date; never infer or silently change either choice.
+- [ ] Test connection, account selection, initial history, incremental import,
+  progress, disconnect, reconnect, retry, and failure recovery with beta users.
+- [ ] Ask beta users to report missing fills, duplicates, provider corrections,
+  delayed updates, unexplained Data Decisions, and misleading coverage.
+- [ ] Include a controlled high-fill or multi-year pagination and recovery test.
+- [ ] Review Codex's beta evidence and approve the final incremental-sync
+  cadence. If representative history cannot be proven reliable, approve a
+  clearly disclosed recent-history limit and keep statement import available
+  for older records.
 - [ ] Do not enter a Moomoo password or broker account identifier into Railway,
   Git, this file, or chat.
 
@@ -343,8 +368,9 @@ Only check these after Codex supplies the launch evidence.
 - [ ] The final domain, Discord login, owner Admin access, normal-user denial,
   Settings, Whop billing, enabled scheduled jobs, backups, restore, monitoring,
   and rollback all pass.
-- [ ] AI Reviews and Moomoo are either fully accepted or visibly off—not
-  partially configured or described as live.
+- [ ] AI Reviews is either fully accepted or visibly off. Moomoo is clearly
+  labeled as an invited-beta feature until its provider, correction,
+  high-volume history, recovery, and final cadence evidence passes.
 - [ ] No secret, raw Discord identity, broker identifier, statement name,
   payment data, or database has been placed in Git, chat, browser bundles, or
   public logs.
