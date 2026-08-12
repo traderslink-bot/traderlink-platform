@@ -34,8 +34,13 @@ function main(): void {
   const database = new Database(":memory:");
   try {
     database.pragma("foreign_keys = ON");
+    const migrationIndex = platformMigrationManifest.findIndex((migration) =>
+      migration.migrationId === coachAiReviewCacheWriteAccountingMigration.migrationId);
+    if (migrationIndex < 1) {
+      throw new Error("COACH_AI_CACHE_WRITE_MIGRATION_NOT_REGISTERED");
+    }
     runPlatformMigrations(database, {
-      manifest: platformMigrationManifest.slice(0, -1),
+      manifest: platformMigrationManifest.slice(0, migrationIndex),
       now: () => BASE,
     });
     database.prepare(`UPDATE coach_ai_provider_settings SET
