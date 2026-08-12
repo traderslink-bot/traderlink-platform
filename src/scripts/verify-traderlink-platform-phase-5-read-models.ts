@@ -75,6 +75,8 @@ function main(): void {
     const accountDigests: unknown[] = [];
     const owners = deriveAllDevelopmentOwnerJournalScopes(database);
     for (const owner of owners) {
+      const accountId = owner.accountId;
+      if (!accountId) fail("active_account_missing");
       const calendar = service.getCalendar(owner.scope, {
         currency: null,
         startDate: null,
@@ -93,7 +95,7 @@ function main(): void {
         currency: calendar.currency,
       });
       const dataDecisions = product.listDataDecisions(
-        narrowWorkspaceAccessToAccount(owner.scope, owner.accountId),
+        narrowWorkspaceAccessToAccount(owner.scope, accountId),
       );
       const pendingDecisionCountsByIssue = new Map<string, number>();
       for (const decision of dataDecisions.pending) {

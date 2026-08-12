@@ -136,7 +136,7 @@ describe("CoachAiChatFactualToolService", () => {
     const base = {
       contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
       toolName: "summarize_closed_trades" as const,
-      metricIds: ["gross_pnl"],
+      metricIds: ["gross_pnl"] as const,
       moneyBasis: "gross" as const,
     };
     expect(() => service.summarizeClosedTrades(scope, accountId, {

@@ -1003,9 +1003,13 @@ function verifyTraderLinkPlatformJournalIntegrityInternal(
       database,
       sourceIdentity.accountId,
     );
+    const accountId = owner.accountId;
+    if (!accountId) {
+      integrityFailure("prepared_account_scope");
+    }
     const accountScope = narrowWorkspaceAccessToAccount(
       owner.scope,
-      owner.accountId,
+      accountId,
     );
     const brokerImports = database.prepare<[string, string], {
       import_batch_id: string;
@@ -1030,7 +1034,7 @@ function verifyTraderLinkPlatformJournalIntegrityInternal(
 FROM journal_import_batches
 WHERE workspace_id = ? AND account_id = ? AND source_kind = 'broker_statement'
   AND source_system = 'ibkr'
-ORDER BY import_batch_id`).all(owner.scope.workspaceId, owner.accountId);
+ORDER BY import_batch_id`).all(owner.scope.workspaceId, accountId);
     if (
       brokerImports.length !== 1 ||
       !brokerImports[0] ||
@@ -1120,43 +1124,43 @@ ORDER BY account_id, accepted_at_utc, import_batch_id`).all(owner.scope.workspac
     const authority = requireAuthority(
       database,
       owner.scope.workspaceId,
-      owner.accountId,
+      accountId,
       accountConfiguration,
       environment,
     );
     requireEvidenceSourceAccountIdentity(
       database,
       owner.scope,
-      owner.accountId,
+      accountId,
       privatePreview.rawSourceAccountId,
       accountConfiguration,
     );
     requireStoredSourceRowsMatchPreview(
       database,
       owner.scope.workspaceId,
-      owner.accountId,
+      accountId,
       brokerImport.import_batch_id,
       privatePreview,
     );
     requireStoredPositionFactsMatchPreview(
       database,
       owner.scope.workspaceId,
-      owner.accountId,
+      accountId,
       brokerImport.import_batch_id,
       privatePreview,
     );
     requireStoredExecutionsMatchPreview(
       database,
       owner.scope.workspaceId,
-      owner.accountId,
+      accountId,
       brokerImport.import_batch_id,
       privatePreview,
       environment,
     );
-    requireScopeIsolation(database, owner.scope.workspaceId, owner.accountId);
-    requireAppendOnlyRelationships(database, owner.scope.workspaceId, owner.accountId);
-    requireAllocationConservation(database, owner.scope.workspaceId, owner.accountId);
-    requireTradingDayRelationships(database, owner.scope.workspaceId, owner.accountId);
+    requireScopeIsolation(database, owner.scope.workspaceId, accountId);
+    requireAppendOnlyRelationships(database, owner.scope.workspaceId, accountId);
+    requireAllocationConservation(database, owner.scope.workspaceId, accountId);
+    requireTradingDayRelationships(database, owner.scope.workspaceId, accountId);
     const rebuildVerification = new JournalRoundTripService(
       new JournalRoundTripRepository(database),
     ).verifyAccountRebuildsCurrent(accountScope);
@@ -1193,7 +1197,7 @@ ORDER BY account_id, accepted_at_utc, import_batch_id`).all(owner.scope.workspac
       scopeRefSha256: sha256Text([
         "traderlink:journal-integrity-scope:v1",
         owner.scope.workspaceId,
-        owner.accountId,
+        accountId,
       ].join("\n")),
       sourceIdentityRefSha256: sha256Text([
         "traderlink:journal-integrity-source-identity:v1",

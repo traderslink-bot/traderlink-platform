@@ -115,12 +115,12 @@ function annotations(): JournalAnnotationService {
     if (candidate.accountId !== accountId) throw new Error("wrong account");
   };
   return {
-    listDailyFocusRevisions: (account, startDate, endDate) => {
+    listDailyFocusRevisions: (account: Readonly<{ accountId: string }>, startDate: string, endDate: string) => {
       requireAccount(account);
       return focusRevisions.filter((focus) =>
         focus.tradingDate >= startDate && focus.tradingDate <= endDate);
     },
-    readDailyNote: (account, tradingDate) => {
+    readDailyNote: (account: Readonly<{ accountId: string }>, tradingDate: string) => {
       requireAccount(account);
       return tradingDate === "2026-08-27" ? {
         whatWorked: "Followed the plan.",
@@ -129,7 +129,7 @@ function annotations(): JournalAnnotationService {
         anythingElse: "",
       } : null;
     },
-    readRoundTripNotes: (account, roundTripIds) => {
+    readRoundTripNotes: (account: Readonly<{ accountId: string }>, roundTripIds: readonly string[]) => {
       requireAccount(account);
       return roundTripIds.includes("00000000-0000-4000-8000-000000000011")
         ? Object.freeze({
@@ -139,7 +139,7 @@ function annotations(): JournalAnnotationService {
         })
         : Object.freeze({});
     },
-    listTagsForRoundTrips: (account, roundTripIds) => {
+    listTagsForRoundTrips: (account: Readonly<{ accountId: string }>, roundTripIds: readonly string[]) => {
       requireAccount(account);
       return roundTripIds.includes("00000000-0000-4000-8000-000000000011")
         ? Object.freeze({
@@ -155,7 +155,7 @@ function annotations(): JournalAnnotationService {
 
 function issuedWeeklyReviews(): Pick<CoachAiReviewRepository, "listIssuedWeeklyReviews"> {
   return {
-    listIssuedWeeklyReviews: (candidate) => {
+    listIssuedWeeklyReviews: (candidate: Readonly<{ activeAccountId: string | null }>) => {
       if (candidate.activeAccountId !== accountId) throw new Error("wrong account");
       return Object.freeze([
         Object.freeze({
@@ -185,7 +185,7 @@ describe("Coach monthly AI review input service", () => {
     const result = new CoachMonthlyAiReviewInputService(
       { read: () => reflection } as unknown as CoachReflectionService,
       annotations(),
-      { read: (_account, date) => date === "2026-08-27" ? { status: "reviewed" } : null } as unknown as JournalTradingDayReviewService,
+      { read: (_account: unknown, date: string) => date === "2026-08-27" ? { status: "reviewed" } : null } as unknown as JournalTradingDayReviewService,
       issuedWeeklyReviews(),
     ).read(scope, {
       startDate: "2026-08-25",

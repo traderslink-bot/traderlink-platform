@@ -397,7 +397,12 @@ export function seedAiWeeklyReviewTestFixture(
   try {
     const owner = deriveDevelopmentOwnerJournalScope(database);
     const scope = owner.scope;
-    const accountScope = narrowWorkspaceAccessToAccount(scope, owner.accountId);
+    const accountId = owner.accountId;
+    const accountSelectionRef = owner.accountSelectionRef;
+    if (!accountId || !accountSelectionRef) {
+      throw new Error("ai_review_fixture_account_required");
+    }
+    const accountScope = narrowWorkspaceAccessToAccount(scope, accountId);
     const journal = createFixtureRuntime(database);
     const annotations = journal.annotations;
     let createdOrMatchedExecutionCount = 0;
@@ -415,13 +420,13 @@ export function seedAiWeeklyReviewTestFixture(
     }));
     const entries = preparedTrades.flatMap((item) => item.entries);
     const preview = journal.previews.preview(scope, {
-      accountSelectionRef: owner.accountSelectionRef,
+      accountSelectionRef,
       tracker: "quick",
       entries,
     });
-    const commit = journal.manualTrades.commit(scope, owner.accountSelectionRef, {
+    const commit = journal.manualTrades.commit(scope, accountSelectionRef, {
       tracker: "quick",
-      expectedAccountSelectionRef: owner.accountSelectionRef,
+      expectedAccountSelectionRef: accountSelectionRef,
       idempotencyKey: "ai-review-fixture-two-week-v1",
       entries,
       previewRef: preview.previewRef,
@@ -498,7 +503,7 @@ WHERE trip.workspace_id = ? AND trip.account_id = ?
   AND trip.round_trip_id IN (${placeholders})
   AND version.projection_state <> 'ready_closed'`).get(
       scope.workspaceId,
-      owner.accountId,
+      accountId,
       ...fixtureRoundTripIdValues,
     )?.count ?? 0;
     if (openFixturePositions !== 0) {

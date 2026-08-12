@@ -71,21 +71,26 @@ function fixture() {
       remainingQuantityDecimal: "0",
       allocations: Object.freeze([]),
       existingPosition: null,
-      allowedRelationships: Object.freeze(["start_new_trade"]),
-      allowedStyles: Object.freeze(["day_trade"]),
+      allowedRelationships: Object.freeze(["start_new_trade" as const]),
+      allowedStyles: Object.freeze(["day_trade" as const]),
       suggestedStyle: "day_trade",
     })]),
   });
   const previewMethod = vi.fn(() => preview);
-  const commitMethod = vi.fn(() => Object.freeze({
-    importBatchId: "canonical-import-batch",
-    status: "committed",
-    executionIds: Object.freeze(["execution-1", "execution-2"]),
-    createdExecutionCount: 2,
-    matchedExecutionCount: 0,
-    relatedDecisionIds: Object.freeze([]),
-    affectedDates: Object.freeze(["2026-08-05"]),
-  }));
+  const commitMethod = vi.fn((scopeArgument: unknown, requestArgument: unknown, nowArgument: Date) => {
+    void scopeArgument;
+    void requestArgument;
+    void nowArgument;
+    return Object.freeze({
+      importBatchId: "canonical-import-batch",
+      status: "committed",
+      executionIds: Object.freeze(["execution-1", "execution-2"]),
+      createdExecutionCount: 2,
+      matchedExecutionCount: 0,
+      relatedDecisionIds: Object.freeze([]),
+      affectedDates: Object.freeze(["2026-08-05"]),
+    });
+  });
   const journal = {
     manualTradePreviews: { preview: previewMethod },
     manualTrades: { commit: commitMethod },

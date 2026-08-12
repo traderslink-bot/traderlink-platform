@@ -74,11 +74,13 @@ function main(): void {
     let eligibleTargets = 0;
     const repository = new CandleReviewRepository(database);
     for (const owner of owners) {
-      const accountScope = narrowWorkspaceAccessToAccount(owner.scope, owner.accountId);
+      const accountId = owner.accountId;
+      if (!accountId) fail("active_account_missing");
+      const accountScope = narrowWorkspaceAccessToAccount(owner.scope, accountId);
       const rows = database.prepare<[string, string], { round_trip_id: string }>(`
 SELECT round_trip_id FROM journal_round_trips
 WHERE workspace_id = ? AND account_id = ? AND lifecycle_state = 'active'
-ORDER BY round_trip_id`).all(owner.scope.workspaceId, owner.accountId);
+ORDER BY round_trip_id`).all(owner.scope.workspaceId, accountId);
       for (const row of rows) {
         const target = repository.findTarget(accountScope, row.round_trip_id);
         if (target) {

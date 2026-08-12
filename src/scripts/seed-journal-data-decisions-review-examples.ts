@@ -220,7 +220,7 @@ const result = withPlatformDatabase({ mode: "runtime" }, (database) => {
       privacySafeAccountDisplay: "Data Decisions Review Examples",
       sourceDisplayLabel: `Data Decisions review example: ${example.label}`,
       evidenceObjectKey: `ibkr/${preview.sourceFileSha256}.csv`,
-      confirmedSourceIdentityAccountId: scope.activeAccountId,
+      confirmedSourceIdentityAccountId: scope.activeAccountId ?? undefined,
       now: new Date(`2026-08-04T${String(16 + index).padStart(2, "0")}:00:00.000Z`),
     });
     return Object.freeze({

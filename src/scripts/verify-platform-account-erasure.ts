@@ -125,7 +125,7 @@ function createFixture(database: ReturnType<typeof openPlatformDatabase>, input:
     databasePath: input.databasePath,
     sourcePath: input.databasePath,
     protectedStorageRoots: [join(tmpdir(), "synthetic-protected-root")],
-    environment: { TRADERLINK_PLATFORM_JOURNAL_EVIDENCE_VAULT_ROOT: input.evidenceVaultRoot },
+    environment: { NODE_ENV: "test", TRADERLINK_PLATFORM_JOURNAL_EVIDENCE_VAULT_ROOT: input.evidenceVaultRoot },
   });
   const primaryObject = promoteJournalEvidenceObject(primaryVault, {
     sourceBytes: primaryBytes,
@@ -162,7 +162,7 @@ function createFixture(database: ReturnType<typeof openPlatformDatabase>, input:
   const supportBytes = Buffer.from("synthetic support source", "utf8");
   const supportVault = resolveJournalSupportSourceVault({
     databasePath: input.databasePath,
-    environment: { TRADERLINK_PLATFORM_JOURNAL_SUPPORT_SOURCE_ROOT: input.supportVaultRoot },
+    environment: { NODE_ENV: "test", TRADERLINK_PLATFORM_JOURNAL_SUPPORT_SOURCE_ROOT: input.supportVaultRoot },
   });
   const supportSource = writeJournalSupportSource(supportVault, supportBytes);
   const instrumentationEpochId = createCanonicalUuidV4();

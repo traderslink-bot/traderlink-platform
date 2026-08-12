@@ -252,10 +252,14 @@ if (!local.databasePath.endsWith("\\traderlink-platform\\development.sqlite")) {
 const database = openPlatformDatabase({ mode: "runtime" });
 try {
   const owner = deriveDevelopmentOwnerJournalScope(database);
+  const accountSelectionRef = owner.accountSelectionRef;
+  if (!accountSelectionRef) {
+    throw new Error("multi_trade_review_account_required");
+  }
   const services = createManualTradeServices(database);
   const entries = FIXTURE.map(manualExecution);
   const preview = services.previews.preview(owner.scope, {
-    accountSelectionRef: owner.accountSelectionRef,
+    accountSelectionRef,
     entries,
     tracker: "day",
   });
@@ -265,7 +269,7 @@ try {
   }
   const committed = services.command.commit(
     owner.scope,
-    owner.accountSelectionRef,
+    accountSelectionRef,
     {
       confirmations: preview.groups.map((group) => Object.freeze({
         completeExecutionSetConfirmed: true,
@@ -275,7 +279,7 @@ try {
         style: "day_trade" as const,
       })),
       entries,
-      expectedAccountSelectionRef: owner.accountSelectionRef,
+      expectedAccountSelectionRef: accountSelectionRef,
       idempotencyKey: "daily-trade-multi-trade-review-20260807-v2",
       previewRef: preview.previewRef,
       tracker: "day",

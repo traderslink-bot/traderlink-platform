@@ -231,7 +231,7 @@ WHERE broker_account_link_id <> ? AND link_state = 'active'`)
     const scheduledCount = new MoomooExecutionImportScheduler(
       database,
       () => new Date("2026-08-09T14:16:00.000Z"),
-      { TRADERLINK_MOOMOO_INCREMENTAL_SYNC_MINUTES: "15" },
+      { NODE_ENV: "test", TRADERLINK_MOOMOO_INCREMENTAL_SYNC_MINUTES: "15" },
     ).scheduleDue();
     const scheduledJob = repository.latestJobForLink(
       fixture.workspace_id,

@@ -192,9 +192,11 @@ function main(): void {
     verifyPlatformDatabaseConnectionPragmas(database);
 
     const owner = deriveDevelopmentOwnerJournalScope(database);
+    const accountId = owner.accountId;
+    if (!accountId) fail("active_account_missing");
     const accountScope = narrowWorkspaceAccessToAccount(
       owner.scope,
-      owner.accountId,
+      accountId,
     );
     const accountRepository = new JournalAccountRepository(database);
     const accountService = new JournalAccountService(
@@ -267,7 +269,7 @@ function main(): void {
     ) fail("private_exact_reimport");
 
     const manual = command.commitManualExecutions(owner.scope, {
-      accountId: owner.accountId,
+      accountId,
       idempotencyKey: "phase-5-disposable-manual-proof-v1",
       sourceDisplayLabel: "Disposable Trade Tracker verification",
       now: new Date("2026-08-02T16:00:00.000Z"),
@@ -360,7 +362,7 @@ function main(): void {
     });
     const genericPreview = importService.previewGenericMappedForWorkspace(owner.scope, {
       sourceBytes: genericBytes,
-      accountId: owner.accountId,
+      accountId,
       mapping,
     });
     if (
@@ -381,7 +383,7 @@ function main(): void {
       });
       return command.commitGenericMappedStatement(owner.scope, {
         sourceBytes: genericBytes,
-        accountId: owner.accountId,
+        accountId,
         mapping,
         sourceDisplayLabel: "Disposable mapped statement",
         evidenceObjectKey: promotion.evidenceObjectKey,
@@ -389,7 +391,7 @@ function main(): void {
       });
     });
     const savedMapping = importService.findSavedGenericMappingForWorkspace(owner.scope, {
-      accountId: owner.accountId,
+      accountId,
       structuralSignatureSha256: mapping.structuralSignatureSha256,
     });
     if (
@@ -401,11 +403,11 @@ function main(): void {
       !accountRepository.listNonSupersededSourceIdentities(
         owner.scope.workspaceId,
         "ibkr",
-      ).some((identity) => identity.accountId === owner.accountId) ||
+      ).some((identity) => identity.accountId === accountId) ||
       !accountRepository.listNonSupersededSourceIdentities(
         owner.scope.workspaceId,
         "mapped_csv",
-      ).some((identity) => identity.accountId === owner.accountId)
+      ).some((identity) => identity.accountId === accountId)
     ) fail("multiple_sources_same_journal_account");
     const reusableBytes = new TextEncoder().encode([
       "Trade Date,Trade Time,Ticker,Action,Shares,Fill Price,Commission,Fill ID",
@@ -413,7 +415,7 @@ function main(): void {
     ].join("\n"));
     const reusablePreview = importService.previewGenericMappedForWorkspace(owner.scope, {
       sourceBytes: reusableBytes,
-      accountId: owner.accountId,
+      accountId,
       mapping: savedMapping,
     });
     if (reusablePreview.mappedExecutionCount !== 1) fail("generic_mapping_reuse");
@@ -426,7 +428,7 @@ function main(): void {
     });
     const twoAccountScope = Object.freeze({
       ...owner.scope,
-      allowedAccountIds: Object.freeze([owner.accountId, secondAccount.accountId]),
+      allowedAccountIds: Object.freeze([accountId, secondAccount.accountId]),
     });
     if (importService.findSavedGenericMappingForWorkspace(twoAccountScope, {
       accountId: secondAccount.accountId,
@@ -434,7 +436,7 @@ function main(): void {
     })) fail("generic_mapping_account_isolation");
     const accountASelectionRef = deriveJournalAccountSelectionRef(
       owner.scope.workspaceId,
-      owner.accountId,
+      accountId,
     );
     const accountBSelectionRef = deriveJournalAccountSelectionRef(
       owner.scope.workspaceId,
@@ -442,7 +444,7 @@ function main(): void {
     );
     const accountAScope = Object.freeze({
       ...twoAccountScope,
-      activeAccountId: owner.accountId,
+      activeAccountId: accountId,
     });
     const accountBScope = Object.freeze({
       ...twoAccountScope,
@@ -460,7 +462,7 @@ function main(): void {
     if (
       reads.listImports(narrowWorkspaceAccessToAccount(
         accountAScope,
-        owner.accountId,
+        accountId,
       )).length === 0 ||
       reads.listImports(narrowWorkspaceAccessToAccount(
         accountBScope,

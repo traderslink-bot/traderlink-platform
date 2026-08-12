@@ -2,8 +2,6 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import type Database from "better-sqlite3";
-
 import { prepareAnalyticsLabSavedViewPayload } from "@/app/(dashboard)/analytics/lab/analytics-lab-platform-query";
 import type { AnalyticsLabPlatformQuery } from "@/app/(dashboard)/analytics/lab/analytics-lab-platform-types";
 import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
@@ -104,6 +102,7 @@ function query(
     direction: null,
     provenance: null,
     outcome: null,
+    tradeClassification: null,
     entryWeekday: null,
     entryTimeBucketMinutes: 30,
     entryTimeBucket: null,

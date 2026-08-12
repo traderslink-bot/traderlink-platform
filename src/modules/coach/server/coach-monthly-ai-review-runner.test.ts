@@ -85,6 +85,7 @@ function monthlyInput(
     contractVersion: COACH_MONTHLY_AI_INPUT_CONTRACT_VERSION,
     month: Object.freeze({
       ...period,
+      timezone: "America/New_York",
       currency: "USD",
     }),
     coverage: Object.freeze({

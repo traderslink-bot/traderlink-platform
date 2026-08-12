@@ -122,6 +122,8 @@ function main(): void {
       fail("registry_counts");
     }
     for (const owner of owners) {
+      const accountId = owner.accountId;
+      if (!accountId) fail("active_account_missing");
       const calendar = dashboard.getCalendar(owner.scope, {
         currency: null,
         startDate: null,
@@ -158,10 +160,10 @@ function main(): void {
         maximumEntryNotional: null,
         evidenceRows: 24,
       });
-      const query = analyticsQuery(owner.accountId, input);
+      const query = analyticsQuery(accountId, input);
       const response = analytics.getAnalyticsOverview(owner.scope, query);
       const evidence = analytics.getRoundTripAnalyticsTable(owner.scope, query);
-      const unavailableQuery = analyticsQuery(owner.accountId, Object.freeze({
+      const unavailableQuery = analyticsQuery(accountId, Object.freeze({
         ...input,
         metricId: "unrealized_pnl",
       }));

@@ -106,7 +106,10 @@ describe("CoachAiChatGenerationService", () => {
   it("persists one bounded, no-tool answer and reuses the exact attempt before and after completion", async () => {
     const f = fixture();
     try {
-      const generator = vi.fn(async () => answer()); const subject = service(f, generator);
+      const generator = vi.fn(async (input: Parameters<CoachAiChatGenerator>[0]) => {
+        void input;
+        return answer();
+      }); const subject = service(f, generator);
       const input = { conversationId: f.conversationId, question: "What can you answer?", idempotencySha256: "a".repeat(64) };
       await expect(subject.generateSavedAnswer(f.scope, input, now)).resolves.toMatchObject({ state: "completed" });
       await expect(subject.generateSavedAnswer(f.scope, input, now)).resolves.toMatchObject({ state: "completed" });

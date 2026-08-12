@@ -56,6 +56,8 @@ function item(
     sourceSection: "Trades",
     effectiveAtUtc: "2026-08-02T14:00:00.000Z",
     updatedAtUtc: "2026-08-02T15:00:00.000Z",
+    resolution: null,
+    flaggedStatementRow: null,
     allowedActions,
     executions: Object.freeze([
       Object.freeze({

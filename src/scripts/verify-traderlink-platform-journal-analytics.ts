@@ -631,11 +631,13 @@ function verifyTraderLinkPlatformJournalAnalyticsInternal(
       database,
       activeIbkrIdentities[0].accountId,
     );
+    const accountId = owner.accountId;
+    if (!accountId) verificationFailure("accepted_account_scope");
     const factSetService = new JournalAnalyticsFactSetService(
       new JournalAnalyticsFactSetRepository(database, () => fixedNow),
     );
     const factSet = factSetService.getJournalAnalyticsFactSet(owner.scope, {
-      accountIds: Object.freeze([owner.accountId]),
+      accountIds: Object.freeze([accountId]),
       closingDateRange: Object.freeze({ kind: "all_available" as const }),
       currencySelection: Object.freeze({ kind: "all_partitions" as const }),
     });
@@ -680,7 +682,7 @@ function verifyTraderLinkPlatformJournalAnalyticsInternal(
     }
     const factSetAndNormalizationAt = performance.now();
     const query = buildVerificationQuery(
-      owner.accountId,
+      accountId,
       fixedNow.toISOString(),
     );
     const analytics = new JournalAnalyticsService(factSetService);
@@ -777,7 +779,7 @@ function verifyTraderLinkPlatformJournalAnalyticsInternal(
     do {
       const table = analytics.getRoundTripAnalyticsTable(
         owner.scope,
-        buildVerificationQuery(owner.accountId, fixedNow.toISOString(), afterCursor),
+        buildVerificationQuery(accountId, fixedNow.toISOString(), afterCursor),
       );
       if (
         table.factSetRevisionSha256 !== factSet.sourceRevisionSha256 ||

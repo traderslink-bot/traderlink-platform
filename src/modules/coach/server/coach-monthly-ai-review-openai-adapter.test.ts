@@ -35,7 +35,7 @@ describe("Coach monthly OpenAI adapter", () => {
   it("returns an honest unavailable result before sending any package without a credential", async () => {
     await expect(generateCoachMonthlyAiReview(input, {
       modelId: "gpt-test",
-      environment: {},
+      environment: { NODE_ENV: "test" },
     })).rejects.toThrowError("TRADERLINK_COACH_OPENAI_UNAVAILABLE");
   });
 });

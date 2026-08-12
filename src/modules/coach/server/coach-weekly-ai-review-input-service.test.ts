@@ -90,20 +90,20 @@ function annotations(): JournalAnnotationService {
     if (candidate.accountId !== accountId) throw new Error("wrong account");
   };
   return {
-    listDailyFocusRevisions: (account, startDate, endDate) => {
+    listDailyFocusRevisions: (account: Readonly<{ accountId: string }>, startDate: string, endDate: string) => {
       requireAccount(account);
       return focusRevisions.filter((focus) =>
         focus.tradingDate >= startDate && focus.tradingDate <= endDate);
     },
-    readDailyNote: (account) => {
+    readDailyNote: (account: Readonly<{ accountId: string }>) => {
       requireAccount(account);
       return null;
     },
-    readRoundTripNotes: (account) => {
+    readRoundTripNotes: (account: Readonly<{ accountId: string }>) => {
       requireAccount(account);
       return Object.freeze({});
     },
-    listTagsForRoundTrips: (account) => {
+    listTagsForRoundTrips: (account: Readonly<{ accountId: string }>) => {
       requireAccount(account);
       return Object.freeze({});
     },
