@@ -8,7 +8,12 @@ import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/data
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import type { JournalCalendarReadModel } from "@/src/modules/journal-analytics/contracts/journal-dashboard-read-models";
 
-import type { CalendarData, CalendarFilterInput } from "./calendar-types";
+import type {
+  CalendarData,
+  CalendarDay,
+  CalendarFilterInput,
+  CalendarTickerResult,
+} from "./calendar-types";
 
 type AnnotationRow = Readonly<{
   round_trip_id: string;
@@ -56,6 +61,10 @@ type CalendarAnnotationEvidence = Readonly<{
   reviewStatusByDate: ReadonlyMap<string, "reviewed" | "needs_review">;
 }>;
 
+type MutableCalendarDay = Omit<CalendarDay, "tickers"> & Readonly<{
+  tickers: CalendarTickerResult[];
+}>;
+
 function localDate(utc: string, timezone: string): string {
   const parts = new Intl.DateTimeFormat("en-US", {
     day: "2-digit",
@@ -73,9 +82,9 @@ function calendarAnnotationEvidence(
 ): CalendarAnnotationEvidence {
   const accountId = scope.activeAccountId;
   if (!accountId) return Object.freeze({
-    annotations: new Map(),
-    dailyTrackerDates: new Set(),
-    reviewStatusByDate: new Map(),
+    annotations: new Map<string, Readonly<AnnotationTotal>>(),
+    dailyTrackerDates: new Set<string>(),
+    reviewStatusByDate: new Map<string, "reviewed" | "needs_review">(),
   });
   const evidence = withReadonlyPlatformDatabase({}, (database) => Object.freeze({
     roundTrips: database.prepare<[string, string], AnnotationRow>(`SELECT
@@ -214,10 +223,11 @@ WHERE execution.workspace_id = ? AND execution.account_id = ?
     annotations: totals,
     dailyTrackerDates: new Set(evidence.manualExecutions.map((row) =>
       localDate(row.executed_at_utc, timezone))),
-    reviewStatusByDate: new Map(evidence.reviews.map((row) => [
+    reviewStatusByDate: new Map<string, "reviewed" | "needs_review">(
+      evidence.reviews.map((row) => [
       row.trading_date,
       row.review_status === "reviewed" ? "reviewed" : "needs_review",
-    ])),
+      ] as const)),
   });
 }
 
@@ -226,10 +236,16 @@ function withCalendarAnnotations(
   data: JournalCalendarReadModel,
   input: CalendarFilterInput,
 ): CalendarData {
-  if (!data.timezone) return data;
+  if (!data.timezone) return Object.freeze({
+    ...data,
+    days: Object.freeze(data.days.map((day) => Object.freeze({
+      ...day,
+      hasDailyTracker: false,
+    }))),
+  });
   const evidence = calendarAnnotationEvidence(scope, data.timezone);
   const index = evidence.annotations;
-  const days = data.days.map((day) => ({
+  const days: MutableCalendarDay[] = data.days.map((day) => ({
     ...day,
     hasDailyTracker: evidence.dailyTrackerDates.has(day.date),
     reviewStatus: day.tradeCount > 0

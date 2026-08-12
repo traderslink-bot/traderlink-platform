@@ -284,6 +284,7 @@ export async function getGovernedDaySession(
       roundTrips: [...rows]
         .sort((left, right) => left.firstEntryAt.localeCompare(right.firstEntryAt))
         .map((row) => ({
+          analyzer: null,
           direction: row.direction,
           entryAt: row.firstEntryAt,
           ...roundTripPrices(row),

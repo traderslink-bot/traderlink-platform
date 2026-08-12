@@ -99,6 +99,7 @@ export function AiChatManualEntryCard({
   const [completeSetConfirmed, setCompleteSetConfirmed] = useState(false);
   const [working, setWorking] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [noticeSeverity, setNoticeSeverity] = useState<"info" | "success">("info");
 
   useEffect(() => {
     setRows(editableRows(draft));
@@ -125,6 +126,7 @@ export function AiChatManualEntryCard({
     setConfirmations([]);
     setCompleteSetConfirmed(false);
     commitRequestId.current = null;
+    setNoticeSeverity("info");
     setNotice(null);
   }
 
@@ -151,6 +153,7 @@ export function AiChatManualEntryCard({
   async function reviewExecutions(): Promise<void> {
     if (!complete || working) return;
     setWorking(true);
+    setNoticeSeverity("info");
     setNotice(null);
     try {
       const response = await fetch(`/api/coach/chat/conversations/${conversationId}/manual-entry-drafts/${draft.draftId}/preview`, {
@@ -202,6 +205,7 @@ export function AiChatManualEntryCard({
     if (!preview || !completeSetConfirmed || working ||
         confirmations.some((item) => item.relationship === "not_finished")) return;
     setWorking(true);
+    setNoticeSeverity("info");
     setNotice(null);
     const clientRequestId = commitRequestId.current ?? crypto.randomUUID();
     commitRequestId.current = clientRequestId;
@@ -225,6 +229,7 @@ export function AiChatManualEntryCard({
       }
       onDraftChange(body.draft);
       commitRequestId.current = null;
+      setNoticeSeverity("success");
       setNotice(body.result && body.result.pendingDecisionCount > 0
         ? `Executions saved. ${body.result.pendingDecisionCount} item${body.result.pendingDecisionCount === 1 ? "" : "s"} can be reviewed in Data Decisions.`
         : "Executions saved.");
@@ -352,7 +357,7 @@ export function AiChatManualEntryCard({
           </Button>
         </Stack>
       ) : null}
-      {notice ? <Alert severity={draft.state === "committed" ? "success" : "info"} sx={{ mt: 1.5 }}>{notice}</Alert> : null}
+      {notice ? <Alert severity={noticeSeverity} sx={{ mt: 1.5 }}>{notice}</Alert> : null}
     </Paper>
   );
 }

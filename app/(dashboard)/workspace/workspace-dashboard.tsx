@@ -309,7 +309,7 @@ export function WorkspaceDashboard({
                     sx={{ fontWeight: 800 }}
                     variant="body2"
                   >
-                    {calendarMoney(trade.netPnlDecimal, reviewSummary.previousReview.currency)}
+                    {calendarMoney(trade.netPnlDecimal, reviewSummary.previousReview!.currency)}
                   </Typography>
                 </Stack>
                 {trade.ruleOutcomes.length > 0 ? (

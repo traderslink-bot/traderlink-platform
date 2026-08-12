@@ -153,7 +153,7 @@ export type TradeExplorerPageModel = Readonly<{
   symbols: AnalyticsLabPlatformPageModel["symbols"];
   minimumDate: AnalyticsLabPlatformPageModel["minimumDate"];
   maximumDate: AnalyticsLabPlatformPageModel["maximumDate"];
-  groupings: readonly Readonly<{ value: AnalyticsLabPlatformQuery["grouping"]; label: string }>;
+  groupings: readonly Readonly<{ value: AnalyticsLabPlatformQuery["grouping"]; label: string }>[];
   initialQuery: AnalyticsLabPlatformQuery;
   initialPreview: AnalyticsLabPlatformPreview;
 }>;

@@ -125,6 +125,7 @@ function previewFromExecutions(
         const entryPrice = cycle.entryNotional / cycle.entryQuantity;
         tickerEntryCapital += cycle.entryNotional;
         roundTrips.push({
+          analyzer: null,
           direction: cycle.direction,
           entryAt: cycle.entryAt,
           entryPrice: rounded(entryPrice),
@@ -194,6 +195,15 @@ function previewFromExecutions(
       openPositions.push({
         averageEntryPrice: rounded(remainingNotional / remainingQuantity),
         direction: lots[0].direction,
+        executions: [],
+        journal: {
+          noteRevision: null,
+          ruleStatus: "not-reviewed",
+          ruleSummary: "No rule review recorded",
+          tags: [],
+          technicalNote: "",
+          tradeNote: "",
+        },
         openedAt: cycle.entryAt,
         positionKey: `design-open-${symbol.toLowerCase()}`,
         positionRef: null,
@@ -334,6 +344,15 @@ export function getDaySessionDesignPreview(
       {
         averageEntryPrice: "62.40",
         direction: "long",
+        executions: [],
+        journal: {
+          noteRevision: null,
+          ruleStatus: "not-reviewed",
+          ruleSummary: "No rule review recorded",
+          tags: [],
+          technicalNote: "",
+          tradeNote: "",
+        },
         openedAt: `${date}T18:12:00-04:00`,
         positionKey: "preview-open-amd",
         positionRef: null,
@@ -446,6 +465,7 @@ export function getDaySessionDesignPreview(
         symbol: "NVDA",
         roundTrips: [
           {
+            analyzer: null,
             direction: "long",
             entryAt: `${date}T13:42:00.000Z`,
             entryPrice: "142.20",
@@ -469,6 +489,7 @@ export function getDaySessionDesignPreview(
             timezone: "America/New_York",
           },
           {
+            analyzer: null,
             direction: "long",
             entryAt: `${date}T14:18:00.000Z`,
             entryPrice: "143.10",
@@ -492,6 +513,7 @@ export function getDaySessionDesignPreview(
             timezone: "America/New_York",
           },
           {
+            analyzer: null,
             direction: "long",
             entryAt: `${date}T17:26:00.000Z`,
             entryPrice: "145.60",
@@ -522,6 +544,7 @@ export function getDaySessionDesignPreview(
         symbol: "TSLA",
         roundTrips: [
           {
+            analyzer: null,
             direction: "short",
             entryAt: `${date}T14:06:00.000Z`,
             entryPrice: "318.40",
@@ -545,6 +568,7 @@ export function getDaySessionDesignPreview(
             timezone: "America/New_York",
           },
           {
+            analyzer: null,
             direction: "short",
             entryAt: `${date}T15:51:00.000Z`,
             entryPrice: "316.20",

@@ -95,7 +95,7 @@ const RESULT_VIEWS: Readonly<Record<Exclude<ExplorerResultView, "trades">, Explo
       { label: "Losses", metricId: "loss_count" },
       { label: "Net P/L", metricId: "net_pnl" },
       { label: "Win rate", metricId: "win_rate" },
-      { label: "Day movement", metricId: "red_to_green_day_count", kind: "day_path" },
+      { label: "Day movement", metricId: "red_to_green_day_count", kind: "day_path" as const },
     ]),
   }),
   tickers: Object.freeze({
@@ -333,7 +333,7 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
   const statisticMetricIds = statisticGroups.flatMap((group) => [...group.metricIds]);
   const explorerMetrics = useMemo(() => new Map(model.metrics.map((item) => [item.metricId, item])), [model.metrics]);
   const selectedStatistic = explorerMetrics.get(query.metricId) ?? null;
-  const displayedColumns = activeView === null || activeView.columns.some((column) => column.metricId === query.metricId)
+  const displayedColumns: readonly ExplorerGroupColumn[] = activeView === null || activeView.columns.some((column) => column.metricId === query.metricId)
     ? activeView?.columns ?? Object.freeze([])
     : Object.freeze([...activeView.columns, Object.freeze({
         label: selectedStatistic ? explorerMetricLabel(selectedStatistic.metricId, selectedStatistic.title) : "Selected statistic",

@@ -5,7 +5,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { DashboardMetricCard, DashboardPage } from "@/app/dashboard-template";
-import type { JournalAnalyticsExactValue, JournalAnalyticsMetricResult, JournalAnalyticsPartition } from "@/src/modules/journal-analytics/contracts/analytics-result";
+import type { JournalAnalyticsExactValue, JournalAnalyticsMetricResult, JournalAnalyticsResponse } from "@/src/modules/journal-analytics/contracts/analytics-result";
 import { formatJournalAnalyticsMetric } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import { buildJournalAnalyticsDashboardQuery, withJournalAnalyticsDashboardService } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -75,7 +75,7 @@ function dateRangeFromSearchParams(searchParams: Readonly<Record<string, string 
   return { endDate: null, kind: "all", startDate: null };
 }
 
-function MonthlyPnlChartForPartition({ partition }: { partition: JournalAnalyticsPartition }) {
+function MonthlyPnlChartForPartition({ partition }: { partition: JournalAnalyticsResponse }) {
   const rows: readonly MonthlyPnlChartRow[] = partition.groups
     .filter((group) => group.grouping === "closing_month")
     .map((group) => {
@@ -90,7 +90,7 @@ function MonthlyPnlChartForPartition({ partition }: { partition: JournalAnalytic
   return <MonthlyPnlChart rows={rows} />;
 }
 
-function OverviewPartition({ partition, showCurrency }: { partition: JournalAnalyticsPartition; showCurrency: boolean }) {
+function OverviewPartition({ partition, showCurrency }: { partition: JournalAnalyticsResponse; showCurrency: boolean }) {
   return (
     <Stack spacing={2.5}>
       {showCurrency ? <Typography sx={{ fontWeight: 800 }}>{partition.currency ?? "Currency unavailable"}</Typography> : null}
