@@ -12,6 +12,11 @@ const retiredLegacyAnalyticsLabClient = join(
   "lab",
   "analytics-lab-client.tsx",
 );
+const reviewedFeaturePanelFiles = new Set([
+  join(dashboardRoot, "ai-chat", "ai-chat-client.tsx"),
+  join(dashboardRoot, "ai-reviews", "trade-tracker-review-coverage.tsx"),
+  join(dashboardRoot, "calendar", "calendar-client.tsx"),
+]);
 
 function filesBelow(root: string): readonly string[] {
   return readdirSync(root).flatMap((entry) => {
@@ -26,6 +31,13 @@ function routeForPage(path: string): string {
     path.replace(/[\\/]page\.tsx$/, ""),
   );
   return directory ? `/${directory.split(sep).join("/")}` : "/";
+}
+
+function importsMaterialDrawer(source: string): boolean {
+  return (
+    /import\s+Drawer\s+from\s+["']@mui\/material\/Drawer["']/.test(source) ||
+    /import\s*\{[^}]*\bDrawer\b[^}]*\}\s*from\s*["']@mui\/material["']/.test(source)
+  );
 }
 
 describe("TraderLink Platform dashboard template enforcement", () => {
@@ -50,7 +62,6 @@ describe("TraderLink Platform dashboard template enforcement", () => {
   it("rejects local dashboard shells, headers, sidebars, and page containers", () => {
     const forbidden = [
       /from ["']@mui\/material\/AppBar["']/,
-      /from ["']@mui\/material\/Drawer["']/,
       /from ["']@mui\/material\/Toolbar["']/,
       /DashboardShell/,
       /logo-horizontal-main\.png/,
@@ -71,8 +82,18 @@ describe("TraderLink Platform dashboard template enforcement", () => {
           .map(
             (pattern) => `${relative(process.cwd(), path)}:${pattern.source}`,
           );
-      });
+    });
     expect(violations).toEqual([]);
+    const featurePanelViolations = filesBelow(dashboardRoot)
+      .filter((path) => path.endsWith(".tsx"))
+      .filter((path) => importsMaterialDrawer(readFileSync(path, "utf8")))
+      .filter((path) => !reviewedFeaturePanelFiles.has(path))
+      .map((path) => relative(process.cwd(), path));
+    expect(featurePanelViolations).toEqual([]);
+    expect(
+      [...reviewedFeaturePanelFiles].filter((path) =>
+        !importsMaterialDrawer(readFileSync(path, "utf8"))),
+    ).toEqual([]);
     const labPage = readFileSync(
       join(dashboardRoot, "analytics", "lab", "page.tsx"),
       "utf8",

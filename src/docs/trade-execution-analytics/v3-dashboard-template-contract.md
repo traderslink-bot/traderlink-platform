@@ -51,9 +51,19 @@ export function ExampleDashboardPage() {
 }
 ~~~
 
-Pages must not import or recreate `AppBar`, `Toolbar`, `Drawer`,
-`DashboardShell`, the TradersLink logo, or a local `<main>` page container.
-They also must not duplicate navigation arrays or route-title maps.
+Pages must not import or recreate `AppBar`, `Toolbar`, `DashboardShell`, the
+TradersLink logo, or a local `<main>` page container. They also must not
+duplicate navigation arrays or route-title maps.
+
+Material `Drawer` is reserved by default because the shared shell owns the
+application navigation drawer. A dashboard feature may use a Drawer only when
+it is a locally scoped feature panel, does not contain application navigation,
+and is explicitly reviewed in the architecture enforcement allowlist. The
+reviewed feature panels are the AI Chat mobile conversation list, the monthly
+AI Review coverage panel, and Calendar filters, saved views, and day details.
+Adding another feature Drawer requires updating this contract and the explicit
+allowlist; importing Drawer must never be used to build another dashboard
+shell or sidebar.
 
 ## Navigation
 
@@ -97,6 +107,8 @@ The verification fails when:
 - a configured navigation destination has no dashboard page;
 - a dashboard page attempts to create its own shell, header, sidebar, logo, or
   `<main>` container;
+- a dashboard component imports Material Drawer without being one of the
+  explicitly reviewed feature-panel files;
 - a canonical dashboard surface bypasses the template exports;
 - the shell duplicates navigation configuration; or
 - the shared primary-action tokens drift from the approved design.

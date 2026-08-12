@@ -119,17 +119,21 @@ cannot manually or periodically trigger broker-import or analyzer work.
    over two decimals in the saved-review list or full review document; values
    such as `-$311.20859225` now display as `-$311.21`. A direct formatter check
    also proved that trade counts and percentages remain unchanged.
-4. The dashboard-template enforcement source currently rejects direct Material
-   `Drawer` imports in every component beneath `app/(dashboard)`. It reports the
-   AI Chat mobile conversation panel and the monthly AI Review coverage panel,
+4. The dashboard-template enforcement source previously rejected direct
+   Material `Drawer` imports in every component beneath `app/(dashboard)`. It
+   reported the AI Chat mobile conversation panel and the monthly AI Review
+   coverage panel,
    while Calendar already has four accepted feature-specific drawers through a
    grouped Material import that the same check does not detect. These panels do
    not recreate the application header or navigation shell. The recommended
    correction is to preserve their approved behavior and update the dashboard
    contract plus enforcement with an explicit, narrowly reviewed distinction
    between feature panels and a forbidden duplicate application shell. The
-   alternative is a visible redesign of all feature drawers as dialogs. This
-   architecture/UX choice remains pending owner approval.
+   alternative is a visible redesign of all feature drawers as dialogs. The
+   owner approved preserving the existing feature drawers. The contract and
+   enforcement now distinguish those three reviewed feature-panel files from a
+   forbidden duplicate application shell; every new Drawer remains blocked
+   until it is explicitly reviewed and allowlisted.
 
 ## Review evidence — 2026-08-12
 
@@ -251,12 +255,12 @@ cannot manually or periodically trigger broker-import or analyzer work.
 
 No known local runtime product defect remains in the reviewed inventory, and
 the source passes TypeScript, lint, production build and browser acceptance.
-The repository is not yet a technically complete release candidate because the
-dashboard-template enforcement decision above remains unresolved.
+The approved dashboard-template enforcement correction is implemented without
+changing the reviewed feature-panel UI.
 
-Public go-live remains **no-go** until that local enforcement decision and the
-external launch gates are completed: the release must be intentionally
-reconciled and published through the approved `main` workflow; Railway
+Public go-live remains **no-go** until the external launch gates are completed:
+the release must be intentionally reconciled and published through the approved
+`main` workflow; Railway
 single-node persistent storage and protected paths must be provisioned; the
 production database/source transfer and private write proof must pass;
 production Discord identity, Whop, scheduler and secret configuration must be
@@ -284,9 +288,9 @@ production boundary exists.
   narrative while preserving exact stored facts and non-money numbers.
 - [x] Complete focused verification for each accepted slice.
 - [x] Complete final release-candidate regression, build and browser acceptance.
-- [ ] Resolve the dashboard feature-panel enforcement decision under owner
-  approval and return the architecture gate to green without another local
-  Vitest run.
+- [x] Resolve the dashboard feature-panel enforcement decision under owner
+  approval and verify the narrowed source rule without another local Vitest
+  run.
 - [x] Produce the final go/no-go report.
 
 ## Commit record
