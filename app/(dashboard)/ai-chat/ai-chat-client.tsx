@@ -40,6 +40,7 @@ import type {
 } from "@/src/modules/coach/contracts/ai-daily-companion-contracts";
 import type { CoachAiManualEntryDraft } from "@/src/modules/coach/contracts/ai-manual-entry-draft-contracts";
 import type { CoachAiReviewDeliveryChangeDraft } from "@/src/modules/coach/contracts/ai-review-delivery-change-contracts";
+import { formatCoachAiMoneyForDisplay } from "@/src/modules/coach/presentation/coach-ai-money-formatters";
 
 import { AiChatManualEntryCard } from "./ai-chat-manual-entry-card";
 import { AiChatDailyCompanionCard } from "./ai-chat-daily-companion-card";
@@ -627,7 +628,11 @@ export function AiChatClient({
           <Stack spacing={1.5}>
             {messages.map((message) => {
               const user = message.role === "user";
-              const text = user ? message.originalUserTextPrivate : message.assistantTextPrivate;
+              const text = user
+                ? message.originalUserTextPrivate
+                : message.assistantTextPrivate === null
+                  ? null
+                  : formatCoachAiMoneyForDisplay(message.assistantTextPrivate);
               if (!text && message.generationState !== "pending" && message.generationState !== "failed") return null;
               return (
                 <Box key={message.messageId} sx={{ alignSelf: user ? "flex-end" : "flex-start", bgcolor: user ? "primary.main" : "#EEF4FF", borderRadius: 2, color: user ? "primary.contrastText" : "text.primary", maxWidth: { xs: "92%", sm: "78%" }, px: 2, py: 1.5 }}>

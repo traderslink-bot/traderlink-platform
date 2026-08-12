@@ -3,6 +3,8 @@ import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
+import { formatCoachAiMoneyForDisplay } from "@/src/modules/coach/presentation/coach-ai-money-formatters";
+
 export type AiReviewDocumentView = Readonly<{
   reviewTypeLabel: "Weekly AI Review" | "Two-week AI Review" | "Monthly AI Review";
   periodLabel: string;
@@ -88,7 +90,7 @@ export function AiReviewDocument({ view }: Readonly<{ view: AiReviewDocumentView
           Review summary
         </Typography>
         <Typography sx={{ fontSize: { sm: "1.0625rem" }, lineHeight: 1.75, whiteSpace: "pre-wrap" }} variant="body1">
-          {view.reviewSummary}
+          {formatCoachAiMoneyForDisplay(view.reviewSummary)}
         </Typography>
       </Box>
 
@@ -101,19 +103,19 @@ export function AiReviewDocument({ view }: Readonly<{ view: AiReviewDocumentView
       >
         <ReviewSection title="What improved" tone="positive">
           <Typography sx={{ lineHeight: 1.7, whiteSpace: "pre-wrap" }} variant="body1">
-            {view.whatImproved}
+            {formatCoachAiMoneyForDisplay(view.whatImproved)}
           </Typography>
         </ReviewSection>
         <ReviewSection title="What held you back" tone="caution">
           <Typography sx={{ lineHeight: 1.7, whiteSpace: "pre-wrap" }} variant="body1">
-            {view.whatHeldYouBack}
+            {formatCoachAiMoneyForDisplay(view.whatHeldYouBack)}
           </Typography>
         </ReviewSection>
       </Box>
 
       <ReviewSection title="Focus follow-through">
         <Typography sx={{ lineHeight: 1.7, whiteSpace: "pre-wrap" }} variant="body1">
-          {view.focusFollowThrough}
+          {formatCoachAiMoneyForDisplay(view.focusFollowThrough)}
         </Typography>
       </ReviewSection>
 
@@ -143,7 +145,9 @@ export function AiReviewDocument({ view }: Readonly<{ view: AiReviewDocumentView
                 >
                   {index + 1}
                 </Box>
-                <Typography sx={{ lineHeight: 1.65, pt: 0.35 }} variant="body1">{focus}</Typography>
+                <Typography sx={{ lineHeight: 1.65, pt: 0.35 }} variant="body1">
+                  {formatCoachAiMoneyForDisplay(focus)}
+                </Typography>
               </Box>
             ))}
           </Stack>
@@ -161,7 +165,7 @@ export function AiReviewDocument({ view }: Readonly<{ view: AiReviewDocumentView
         >
           <Typography sx={{ fontWeight: 800, mb: 0.5 }} variant="body2">Coverage note</Typography>
           <Typography color="text.secondary" sx={{ lineHeight: 1.6, whiteSpace: "pre-wrap" }} variant="body2">
-            {view.incompleteRecord}
+            {formatCoachAiMoneyForDisplay(view.incompleteRecord)}
           </Typography>
         </Box>
       ) : null}

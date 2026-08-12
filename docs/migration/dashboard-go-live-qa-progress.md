@@ -108,8 +108,13 @@ starts the canonical loopback runtime with both background workers disabled.
    future AI Review and AI Chat responses to follow the same display rule. The
    presentation guard should cover saved review cards, full review documents
    and assistant narrative, while leaving trader-entered execution quantities,
-   prices, fees and other editable exact facts untouched. This visible
-   correction awaits owner approval.
+   prices, fees and other editable exact facts untouched. The owner approved
+   this correction and established standing approval for the same money-only
+   rule elsewhere. It is implemented at the presentation boundary and in future
+   AI Review/AI Chat instructions. Focused browser proof found no money value
+   over two decimals in the saved-review list or full review document; values
+   such as `-$311.20859225` now display as `-$311.21`. A direct formatter check
+   also proved that trade counts and percentages remain unchanged.
 
 ## Review evidence — 2026-08-12
 
@@ -139,6 +144,21 @@ starts the canonical loopback runtime with both background workers disabled.
   chart controls and the expected light dashboard shell. Notifications renders
   its factual empty state, and the Journal Administration overview renders its
   full navigation and operational sections without browser errors.
+- A rendered-HTML precision sweep across Workspace, both trackers, Calendar,
+  Rules and Rule Results, Trade Explorer, Open Positions, Round Trips, every
+  Core Analytics and Trade Analyzer page, AI Chat, AI Reviews and Data
+  Decisions found no remaining dollar-denominated value with more than two
+  decimal places.
+- All ten Journal Administration sections return their intended page. The first
+  `/admin/journal/users` request took 30.8 seconds because Next compiled that
+  route for the first time; its warm request returned HTTP 200 in 5.0 seconds.
+- Source review confirmed every Account Settings save path re-authorizes the
+  active user/account server-side, validates its input and exposes a factual
+  success/failure state. The privacy API additionally requires mutation-request
+  security, exact confirmation text and the selected-account revision boundary.
+- Help Center review found no guide change required for the money presentation
+  guard because it does not change AI Review evidence, storage, availability or
+  workflow behavior.
 - At a 390 by 844 responsive viewport, Workspace, Daily Trade Tracker, Swing
   Trade Tracker, Quick Trade Entry, Account Preferences and Help Center showed
   no page-level horizontal overflow. The mobile navigation drawer opened and
@@ -162,14 +182,17 @@ starts the canonical loopback runtime with both background workers disabled.
 - [x] Add a worker-disabled review runtime through `npm run dev:review`.
 - [x] Statically verify the worker-disabled review runtime with package JSON
   parsing, targeted ESLint and `git diff --check`.
-- [ ] Complete source-level route, promise and Settings audit.
+- [x] Complete source-level route, promise and Settings audit.
 - [x] Repair and browser-verify the shared Account Settings runtime boundary.
 - [x] Repair and browser-verify the Help Center compilation failure.
-- [ ] Complete controlled desktop and narrow-mobile browser audit.
-- [ ] Present visible UI corrections for owner approval.
+- [x] Complete controlled desktop and narrow-mobile browser audit.
+- [x] Present visible UI corrections for owner approval.
 - [x] Present the Workspace performance correction for owner approval.
 - [x] Implement and browser-verify the approved Workspace performance repair.
-- [ ] Complete focused verification for each accepted slice.
+- [x] Implement and browser-verify the approved Daily Tracker date repair.
+- [x] Implement and browser-verify the standing money-display correction for AI
+  narrative while preserving exact stored facts and non-money numbers.
+- [x] Complete focused verification for each accepted slice.
 - [ ] Complete final release-candidate regression, build and browser acceptance.
 - [ ] Produce the final go/no-go report.
 

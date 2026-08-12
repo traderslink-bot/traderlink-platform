@@ -34,6 +34,7 @@ import {
   CoachAiReviewGenerationCoordinatorV2,
   type CoachAiReviewGenerationGateV2,
 } from "@/src/modules/coach/server/coach-ai-review-generation-coordinator-v2";
+import { formatCoachAiMoneyForDisplay } from "@/src/modules/coach/presentation/coach-ai-money-formatters";
 import { CoachUsEquitiesCalendarRepository } from "@/src/modules/coach/server/market-calendar/coach-us-equities-calendar-repository";
 import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
@@ -142,7 +143,7 @@ function ReviewCard({
             sx={{ mt: 0.75, whiteSpace: "pre-wrap" }}
             variant="body2"
           >
-            {summary}
+            {formatCoachAiMoneyForDisplay(summary)}
           </Typography>
         </Box>
         <Button href={href} size="small" variant="outlined">
