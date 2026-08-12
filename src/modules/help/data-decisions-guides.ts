@@ -28,7 +28,7 @@ export const DATA_DECISIONS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       ]),
     ]),
     section("common-decisions", "Common decisions", "The available choices change with the facts in the item.", ["match duplicate", "separate executions", "fix row", "execution order", "exclude execution"], [
-      bullets(["Match this to the broker execution when both sources show the same fill.", "Choose These are separate executions only when the broker record shows both fills occurred.", "Use Fix this row when a shown execution fact is wrong and the source supports the correction.", "Set execution order when more than one fill has the same recorded time and their order matters.", "Keep an item out of trade results only when it is not a trade execution, is a duplicate, correction, reversal or corporate action."),
+      bullets(["Match this to the broker execution when both sources show the same fill.", "Choose These are separate executions only when the broker record shows both fills occurred.", "Use Fix this row when a shown execution fact is wrong and the source supports the correction.", "Set execution order when more than one fill has the same recorded time and their order matters.", "Keep an item out of trade results only when it is not a trade execution, is a duplicate, correction, reversal or corporate action."]),
       callout("The source history remains", "Excluding an execution keeps its original source history available. It removes that row from active trade reconstruction only after you save.", "warning"),
     ]),
   ]),

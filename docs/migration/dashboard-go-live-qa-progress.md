@@ -63,6 +63,11 @@ activation, DNS changes or legacy deletion.
    required client boundary. Preferences, Trading, AI & plan, Profile & access
    and Privacy all render with their expected headings and no browser errors in
    the worker-disabled canonical runtime.
+3. `/help` returned HTTP 500 because the Data Decisions `Common decisions`
+   bullet list was missing its closing array bracket. The guide wording and
+   layout are unchanged. Help Center and the affected
+   `/help/data-decisions/resolve-a-trade-question` article now render with the
+   expected headings and no browser errors.
 
 ### Runtime blockers
 
@@ -85,6 +90,7 @@ activation, DNS changes or legacy deletion.
   parsing, targeted ESLint and `git diff --check`.
 - [ ] Complete source-level route, promise and Settings audit.
 - [x] Repair and browser-verify the shared Account Settings runtime boundary.
+- [x] Repair and browser-verify the Help Center compilation failure.
 - [ ] Complete controlled desktop and narrow-mobile browser audit.
 - [ ] Present visible UI corrections for owner approval.
 - [ ] Implement approved launch-blocker fixes in coherent slices.
