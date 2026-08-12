@@ -75,6 +75,10 @@ activation, DNS changes or legacy deletion.
 
 No active runtime blocker remains for controlled local QA. `npm run dev:review`
 starts the canonical loopback runtime with both background workers disabled.
+The initial switch stopped worker polling but still allowed a direct loopback
+POST to reach either internal worker bridge. The launcher now returns HTTP 404
+for both worker paths whenever `--no-workers` is active, so the review runtime
+cannot manually or periodically trigger broker-import or analyzer work.
 
 ### Owner decision required
 
@@ -168,6 +172,12 @@ starts the canonical loopback runtime with both background workers disabled.
   delete actions disabled before confirmation. Both dialogs were cancelled;
   no deletion was submitted.
 - No real Journal, Settings, provider or production data was changed.
+- During the worker-boundary check, direct loopback POSTs reached both internal
+  bridges before the launcher correction. A privacy-safe read-only database
+  audit immediately afterward found zero broker-import jobs and zero analyzer
+  jobs updated in the surrounding ten minutes, proving that neither call found
+  or processed work. After the correction both paths return HTTP 404 while
+  `/workspace` continues to return HTTP 200.
 
 ### External launch gates
 

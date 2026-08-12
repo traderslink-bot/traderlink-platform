@@ -16,6 +16,11 @@ import {
 import { loadTraderLinkPlatformLocalDevelopmentConfiguration } from "../modules/platform/server/authentication/local-development-configuration";
 import { TRADERLINK_LEVEL_ANALYSIS_ALLOWED_PROVIDERS_ENV } from "../modules/level-analysis/server/level-analysis-delivery-request";
 
+const LOCAL_WORKER_PATHS = new Set([
+  "/api/platform/daily-trade-analyzer/run",
+  "/api/platform/moomoo-execution-import/run",
+]);
+
 function argument(name: string): string | undefined {
   const index = process.argv.indexOf(name);
   return index >= 0 ? process.argv[index + 1] : undefined;
@@ -143,6 +148,11 @@ async function main(): Promise<void> {
     const boundary = validateDevelopmentDashboardInboundRequest(headersFrom(request));
     if (!boundary.ok) {
       reject(response, 400, boundary.code);
+      return;
+    }
+    const requestPath = request.url?.split("?", 1)[0] ?? "";
+    if (!workersEnabled && LOCAL_WORKER_PATHS.has(requestPath)) {
+      reject(response, 404, "platform_local_worker_disabled");
       return;
     }
     request.headers[TRADERLINK_PLATFORM_LOCAL_DASHBOARD_ASSERTION_HEADER] = token;
