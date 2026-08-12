@@ -7,6 +7,8 @@ external and unchanged
 
 **Controlling contract:** [Phase 5 Slice F6 - Public Identity And Hosted Transfer](phase-5-slice-f6-public-identity-and-hosted-transfer-plan.md)
 
+**Owner actions:** [owners to do list before live launch](owners-to-do-list-before-live-launch.md)
+
 ## Purpose
 
 Launch the accepted TraderLink Platform as one long-running Next.js Node
