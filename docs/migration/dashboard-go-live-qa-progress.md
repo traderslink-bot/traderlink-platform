@@ -99,6 +99,17 @@ starts the canonical loopback runtime with both background workers disabled.
    Material UI warnings, Previous resolves to `/trade-tracker/2026-08-07`, Next
    remains unavailable because there is no later traded session, and the August
    7 session renders `7 / Aug / 2026` without console warnings or errors.
+3. Saved AI Review summaries and full review documents currently render exact
+   provider prose unchanged, including P/L values with more than two decimal
+   places. That conflicts with the accepted dashboard display rule even though
+   the stored Journal facts remain exact. The recommended correction is to keep
+   every stored review and source fact unchanged, format decimal values only at
+   the AI narrative presentation boundary to at most two places, and instruct
+   future AI Review and AI Chat responses to follow the same display rule. The
+   presentation guard should cover saved review cards, full review documents
+   and assistant narrative, while leaving trader-entered execution quantities,
+   prices, fees and other editable exact facts untouched. This visible
+   correction awaits owner approval.
 
 ## Review evidence — 2026-08-12
 
@@ -118,6 +129,16 @@ starts the canonical loopback runtime with both background workers disabled.
   Import preview/commit remains for the disposable-data acceptance checkpoint.
 - Data Decisions renders the current factual questions and plain-language
   resolution actions without browser errors. No real decision was submitted.
+- AI Chat loads its saved account-scoped conversation surface, manual-entry
+  draft action and disabled empty-message submit state without browser errors.
+  No provider request or conversation mutation was submitted.
+- AI Reviews loads its schedule, availability, saved weekly/two-week/monthly
+  review inventory and full saved-review documents without browser errors. Its
+  presentation-precision defect is recorded above; no review was generated.
+- Market Charts loads the TradingView advanced-chart embed with live candles,
+  chart controls and the expected light dashboard shell. Notifications renders
+  its factual empty state, and the Journal Administration overview renders its
+  full navigation and operational sections without browser errors.
 - At a 390 by 844 responsive viewport, Workspace, Daily Trade Tracker, Swing
   Trade Tracker, Quick Trade Entry, Account Preferences and Help Center showed
   no page-level horizontal overflow. The mobile navigation drawer opened and
