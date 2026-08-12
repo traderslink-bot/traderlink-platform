@@ -9,6 +9,8 @@ import { useState, useTransition } from "react";
 
 import type { CoachAiReviewBudgetControl } from
   "@/src/modules/coach/server/coach-ai-review-administration-repository";
+import { formatJournalAnalyticsDecimal } from
+  "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 
 import { saveAiReviewBudgetControl } from "./ai-review-feature-control-actions";
 
@@ -65,7 +67,11 @@ export function AiReviewBudgetControl(input: Readonly<{
   return (
     <Stack spacing={2}>
       <Alert severity={input.initialControl.globalWarningReached ? "warning" : "info"}>
-        Estimated AI Review spend during the last 30 days is ${input.initialControl.globalTrailing30DayEstimatedSpendUsd}.
+        Estimated AI Review spend during the last 30 days is ${formatJournalAnalyticsDecimal(
+          input.initialControl.globalTrailing30DayEstimatedSpendUsd,
+          2,
+          true,
+        )}.
         {input.initialControl.globalWarningReached
           ? " This is at or above the warning amount; subscribers under their own limit remain available."
           : " The warning amount does not interrupt subscriber service."}
