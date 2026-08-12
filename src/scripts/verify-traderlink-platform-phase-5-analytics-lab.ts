@@ -56,6 +56,9 @@ function analyticsQuery(
     instrumentIds: Object.freeze([]),
     symbols: Object.freeze(input.symbol === null ? [] : [input.symbol]),
     directions: Object.freeze(input.direction === null ? [] : [input.direction]),
+    tradeClassifications: Object.freeze(
+      input.tradeClassification === null ? [] : [input.tradeClassification],
+    ),
     provenance: Object.freeze(input.provenance === null ? [] : [input.provenance]),
     outcomes: Object.freeze(input.outcome === null ? [] : [input.outcome]),
     entryWeekdays: Object.freeze(input.entryWeekday === null ? [] : [input.entryWeekday]),
@@ -82,7 +85,7 @@ function analyticsQuery(
     }),
     groupings: Object.freeze([input.grouping]),
     entryTimeBucketMinutes: input.entryTimeBucketMinutes,
-    asOfUtc: "2026-08-02T12:00:00.000Z",
+    asOfUtc: new Date().toISOString(),
     table: Object.freeze({ pageSize: input.evidenceRows, afterCursor: null }),
   });
 }
