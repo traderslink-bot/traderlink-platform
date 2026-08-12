@@ -91,8 +91,14 @@ starts the canonical loopback runtime with both background workers disabled.
    `03`, `04` and `07`; the visible Day field was blank and Material UI emitted
    repeated warnings. The recommended correction is to include the currently
    open date in the selector options while keeping previous/next navigation
-   scoped to actual available trading sessions. This visible correction awaits
-   owner approval.
+   scoped to actual available trading sessions. The owner approved this exact
+   correction. The selector now includes the requested date, and the shared
+   Journal Analytics read model resolves nearest earlier/later actual sessions
+   even when the requested date is not itself a traded date. Focused browser
+   verification passed on `/trade-tracker`: `12 / Aug / 2026` renders without
+   Material UI warnings, Previous resolves to `/trade-tracker/2026-08-07`, Next
+   remains unavailable because there is no later traded session, and the August
+   7 session renders `7 / Aug / 2026` without console warnings or errors.
 
 ## Review evidence — 2026-08-12
 

@@ -92,7 +92,7 @@ function TradeTrackerDateNavigation({
   previousDate: string | null;
 }>) {
   const router = useRouter();
-  const safeDates = dates.length > 0 ? [...dates].sort() : [date];
+  const safeDates = [...new Set([...dates, date])].sort();
   const [selectedYear, selectedMonth, selectedDay] = date.split("-");
   const years = [...new Set(safeDates.map((value) => value.slice(0, 4)))].sort();
   const months = [...new Set(safeDates

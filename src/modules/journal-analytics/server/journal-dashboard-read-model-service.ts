@@ -757,7 +757,8 @@ export class JournalDashboardReadModelService {
     const dates = allTradingDates(factSet, normalized);
     const date = requestedDate ?? dates.at(-1) ??
       factSet.latestAvailableLocalDate ?? new Date().toISOString().slice(0, 10);
-    const selectedIndex = dates.indexOf(date);
+    const previousTradingDate = dates.findLast((candidate) => candidate < date) ?? null;
+    const nextTradingDate = dates.find((candidate) => candidate > date) ?? null;
     const dayRows = normalized.realizedRows.filter((row) =>
       row.closeLocal.localDate === date);
     const availableCurrencies = [...new Set(factSet.roundTrips.map((roundTrip) =>
@@ -839,10 +840,8 @@ export class JournalDashboardReadModelService {
       decisionActivity: Object.freeze(decisionActivity),
       availableTradingDates: Object.freeze(dates),
       executionActivity,
-      previousTradingDate: selectedIndex > 0 ? dates[selectedIndex - 1] : null,
-      nextTradingDate: selectedIndex >= 0 && selectedIndex < dates.length - 1
-        ? dates[selectedIndex + 1]
-        : null,
+      previousTradingDate,
+      nextTradingDate,
       latestTradingDate: dates.at(-1) ?? null,
       tickers: tradingDayTickers(selectedRows),
       openPositions: Object.freeze(openPositions),
