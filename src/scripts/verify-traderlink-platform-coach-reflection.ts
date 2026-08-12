@@ -4,6 +4,7 @@ import { readFileSync, statSync } from "node:fs";
 import Database from "better-sqlite3";
 
 import { deriveDevelopmentOwnerJournalScope } from "@/src/modules/journal/server/accounts/journal-development-owner-scope";
+import { narrowWorkspaceAccessToAccount } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { JournalAnalyticsFactSetRepository } from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-repository";
 import { JournalAnalyticsFactSetService } from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-service";
 import { JournalAnnotationRepository } from "@/src/modules/journal/server/annotations/journal-annotation-repository";
@@ -29,37 +30,52 @@ function main(): void {
   database.pragma("query_only = ON");
   verifyCompletedPlatformDatabase(database);
   verifyPlatformDatabaseConnectionPragmas(database);
-  const scope = deriveDevelopmentOwnerJournalScope(database).scope;
+  const owner = deriveDevelopmentOwnerJournalScope(database);
+  const accountId = owner.accountId;
+  if (!accountId) {
+    throw new Error("TRADERLINK_COACH_REFLECTION_ACCOUNT_REQUIRED");
+  }
+  const scope = owner.scope;
+  const account = narrowWorkspaceAccessToAccount(scope, accountId);
   const facts = new JournalAnalyticsFactSetService(
     new JournalAnalyticsFactSetRepository(database),
   );
+  const annotations = new JournalAnnotationService(
+    new JournalAnnotationRepository(database),
+    new JournalRuleRepository(database),
+  );
+  const products = new JournalProductReadService(database);
   const result = new CoachReflectionService(
     new JournalDashboardReadModelService(facts),
-    new JournalAnnotationService(
-      new JournalAnnotationRepository(database),
-      new JournalRuleRepository(database),
-    ),
-    new JournalProductReadService(database),
+    annotations,
+    products,
   ).read(scope, Object.freeze({
       period: "monthly",
       anchorDate: null,
       currency: null,
     }));
+  const trades = result.days.flatMap((day) => day.trades);
+  const activeRules = annotations.listRules(account)
+    .filter((rule) => rule.lifecycleState === "active");
+  const pendingDataDecisionCount = products.listDataDecisions(account).pending.length;
   database.close();
   const after = Object.freeze({ size: statSync(path).size, sha256: sha256(path) });
   if (
     before.size !== after.size ||
     before.sha256 !== after.sha256 ||
     result.source !== "journal_facts" ||
-    result.coverage.readyClosedCount !== 331 ||
-    result.coverage.legitimateOpenCount !== 0 ||
+    result.coverage.readyClosedCount !== 364 ||
+    result.coverage.legitimateOpenCount !== 2 ||
     result.coverage.needsDecisionCount !== 2 ||
-    result.summary.accountPendingDataDecisionCount !== 2 ||
-    result.summary.dailyNotesSavedCount !== 0 ||
-    result.summary.roundTripNotesSavedCount !== 0 ||
-    result.summary.taggedTradeCount !== 0 ||
-    result.summary.activeRuleCount !== 0 ||
-    result.summary.focusRuleCount !== 0
+    result.summary.accountPendingDataDecisionCount !== pendingDataDecisionCount ||
+    result.summary.dailyNotesSavedCount !==
+      result.days.filter((day) => day.dailyNoteSaved).length ||
+    result.summary.roundTripNotesSavedCount !==
+      trades.filter((trade) => trade.noteSaved).length ||
+    result.summary.taggedTradeCount !==
+      trades.filter((trade) => trade.tagNames.length > 0).length ||
+    result.summary.activeRuleCount !== activeRules.length ||
+    result.summary.focusRuleCount !== activeRules.filter((rule) => rule.isFocus).length
   ) {
     throw new Error("TRADERLINK_COACH_REFLECTION_VERIFICATION_FAILED");
   }
