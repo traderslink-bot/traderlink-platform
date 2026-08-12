@@ -85,6 +85,14 @@ starts the canonical loopback runtime with both background workers disabled.
    describes Trade Explorer's daily P/L, drawdown, recovery, giveback and other
    available groupings. The owner approved this exact correction, and it is now
    implemented and focused-browser verified.
+2. Daily Trade Tracker opens today's valid no-trade review page, but the Day
+   selector derives its options only from historical trading sessions. On
+   2026-08-12 it therefore held the out-of-range value `12` while showing only
+   `03`, `04` and `07`; the visible Day field was blank and Material UI emitted
+   repeated warnings. The recommended correction is to include the currently
+   open date in the selector options while keeping previous/next navigation
+   scoped to actual available trading sessions. This visible correction awaits
+   owner approval.
 
 ## Review evidence — 2026-08-12
 
@@ -104,6 +112,14 @@ starts the canonical loopback runtime with both background workers disabled.
   Import preview/commit remains for the disposable-data acceptance checkpoint.
 - Data Decisions renders the current factual questions and plain-language
   resolution actions without browser errors. No real decision was submitted.
+- At a 390 by 844 responsive viewport, Workspace, Daily Trade Tracker, Swing
+  Trade Tracker, Quick Trade Entry, Account Preferences and Help Center showed
+  no page-level horizontal overflow. The mobile navigation drawer opened and
+  closed with the keyboard.
+- Privacy presents separate account-only and full-account deletion dialogs,
+  states their different scopes and exact confirmation phrases, and keeps both
+  delete actions disabled before confirmation. Both dialogs were cancelled;
+  no deletion was submitted.
 - No real Journal, Settings, provider or production data was changed.
 
 ### External launch gates
