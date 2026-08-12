@@ -295,6 +295,7 @@ production boundary exists.
 
 ## Commit record
 
+- `266c3455` - approved feature-panel versus application-shell enforcement.
 - `3ac330e4` - primary dashboard route audit record.
 - `6a82a5b8` - Workspace performance action correction.
 - `c3565b25` - mobile and privacy audit record.
