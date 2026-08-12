@@ -248,7 +248,7 @@ function main(): void {
   if (
     !open.includes("dashboard.getOpenPositions") ||
     !open.includes("Confirmed open positions") ||
-    !open.includes("Needs a trader decision") ||
+    !open.includes("waiting for a Data Decision") ||
     open.includes("Swing Trades")
   ) {
     fail("open_position_decision_separation");
@@ -278,6 +278,10 @@ function main(): void {
     repository,
     "app/(dashboard)/trade-tracker/swings/[positionRef]/page.tsx",
   );
+  const swingTrackerView = read(
+    repository,
+    "app/(dashboard)/trade-tracker/swings/swing-tracker-view.tsx",
+  );
   const positionStyleControl = read(
     repository,
     "app/(dashboard)/trade-tracker/position-style-control.tsx",
@@ -292,7 +296,7 @@ function main(): void {
     !tracker.includes("ManualExecutionEntry") ||
     !tracker.includes("topContent={topContent}") ||
     !datedTracker.includes("getReplacementDaySession") ||
-    !datedTracker.includes("readOnly") ||
+    !datedTracker.includes("DaySessionView") ||
     !manualEntry.includes("/api/platform/journal/manual-trades/preview") ||
     !manualEntry.includes("/api/platform/journal/manual-trades/commit") ||
     !entryCard.includes("Save executions") ||
@@ -301,12 +305,14 @@ function main(): void {
     manualEntry.includes("/api/platform/journal/manual-executions") ||
     entryCard.includes("day-session-executions/v1") ||
     !swingTracker.includes("getReplacementSwingTrackerPositions") ||
+    !swingTracker.includes("getReplacementSwingPositionDetail") ||
     !swingTracker.includes('tracker="swing"') ||
-    !swingDetail.includes("getReplacementSwingPositionDetail") ||
-    !swingDetail.includes("SwingNoteEditor") ||
-    !swingDetail.includes("SwingAnnotationEditor") ||
-    !swingDetail.includes("ManualExecutionEditDialog") ||
-    !swingDetail.includes("PositionStyleControl") ||
+    !swingTracker.includes("SwingTrackerView") ||
+    !swingDetail.includes("/trade-tracker/swings#swing-") ||
+    !swingTrackerView.includes("SwingNoteEditor") ||
+    !swingTrackerView.includes("SwingAnnotationEditor") ||
+    !swingTrackerView.includes("ManualExecutionEditDialog") ||
+    !swingTrackerView.includes("PositionStyleControl") ||
     !positionStyleControl.includes("/api/platform/journal/trade-style/") ||
     !swingNoteEditor.includes("/api/platform/journal/swings/") ||
     !open.includes("getReplacementOpenPositionStyles") ||
@@ -567,6 +573,14 @@ function main(): void {
   }
 
   const account = read(repository, "app/(dashboard)/account/page.tsx");
+  const accountProfile = read(
+    repository,
+    "app/(dashboard)/account/profile/page.tsx",
+  );
+  const accountTrading = read(
+    repository,
+    "app/(dashboard)/account/trading/page.tsx",
+  );
   const accountManagement = read(
     repository,
     "app/(dashboard)/account/account-management-client.tsx",
@@ -590,10 +604,11 @@ function main(): void {
     "src/modules/platform/server/authentication/journal-account-selection-authorization.ts",
   );
   if (
-    !account.includes("PlatformAccountProfileReadService") ||
-    !account.includes("AccountManagementClient") ||
-    !account.includes("Local review remains available only from this computer") ||
-    !account.includes("Discord is the first public login provider") ||
+    !account.includes('redirect("/account/preferences")') ||
+    !accountProfile.includes("PlatformAccountProfileReadService") ||
+    !accountTrading.includes("AccountManagementClient") ||
+    !accountProfile.includes("Local review remains available only from this computer") ||
+    !accountProfile.includes("Discord will be the first public sign-in method") ||
     !accountManagement.includes("expectedAccountSelectionRef") ||
     !accountSwitcher.includes("expectedAccountSelectionRef") ||
     !dashboardShell.includes("DashboardAccountSwitcher") ||
@@ -623,8 +638,7 @@ function main(): void {
     "src/modules/coach/server/coach-reflection-service.ts",
   );
   if (
-    !reflectionPage.includes("readCoachReflection") ||
-    !reflectionPage.includes("requireTraderLinkPlatformPageScope") ||
+    !reflectionPage.includes('redirect("/ai-reviews")') ||
     !coachRoute.includes("requireTraderLinkPlatformRequestScope") ||
     !coachRoute.includes('source: "journal_facts"') ||
     !reviewRoute.includes("requireTraderLinkPlatformRequestScope") ||
