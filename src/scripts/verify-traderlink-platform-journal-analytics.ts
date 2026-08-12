@@ -41,8 +41,8 @@ import { verifyCompletedPlatformDatabase } from "@/src/modules/platform/server/d
 export const JOURNAL_ANALYTICS_VERIFICATION_ACTION =
   "verify_journal_analytics" as const;
 
-const EXPECTED_READY_CLOSED_COUNT = 331;
-const EXPECTED_LEGITIMATE_OPEN_COUNT = 0;
+const EXPECTED_READY_CLOSED_COUNT = 364;
+const EXPECTED_LEGITIMATE_OPEN_COUNT = 2;
 const EXPECTED_NEEDS_DECISION_COUNT = 2;
 const VERIFIED_METRIC_IDS = Object.freeze([
   "ready_closed_count",
@@ -482,6 +482,7 @@ function buildVerificationQuery(
     instrumentIds: Object.freeze([]),
     symbols: Object.freeze([]),
     directions: Object.freeze([]),
+    tradeClassifications: Object.freeze([]),
     provenance: Object.freeze([]),
     outcomes: Object.freeze([]),
     entryWeekdays: Object.freeze([]),
@@ -616,12 +617,19 @@ function verifyTraderLinkPlatformJournalAnalyticsInternal(
     const ownerBoundary = deriveDevelopmentOwnerJournalScope(database);
     const ibkrIdentities = new JournalAccountRepository(database)
       .listNonSupersededSourceIdentities(ownerBoundary.scope.workspaceId, "ibkr");
-    if (ibkrIdentities.length !== 1 || !ibkrIdentities[0]) {
+    const activeIbkrIdentities = ibkrIdentities.filter((identity) =>
+      identity.status === "active_current");
+    const ibkrAccountIds = new Set(ibkrIdentities.map((identity) => identity.accountId));
+    if (
+      activeIbkrIdentities.length !== 1 ||
+      !activeIbkrIdentities[0] ||
+      ibkrAccountIds.size !== 1
+    ) {
       verificationFailure("accepted_ibkr_identity_cardinality");
     }
     const owner = deriveDevelopmentOwnerJournalScopeForAccount(
       database,
-      ibkrIdentities[0].accountId,
+      activeIbkrIdentities[0].accountId,
     );
     const factSetService = new JournalAnalyticsFactSetService(
       new JournalAnalyticsFactSetRepository(database, () => fixedNow),
@@ -637,11 +645,21 @@ function verifyTraderLinkPlatformJournalAnalyticsInternal(
       roundTrip.projectionState === "legitimate_open").length;
     const needsDecision = factSet.roundTrips.filter((roundTrip) =>
       roundTrip.projectionState === "needs_decision").length;
+    const pendingDecisionIds = new Set(
+      factSet.pendingDecisions.map((decision) => decision.decisionId),
+    );
+    const decisionCoverageComplete = factSet.roundTrips
+      .filter((roundTrip) => roundTrip.projectionState === "needs_decision")
+      .every((roundTrip) =>
+        roundTrip.pendingDecisionIds.length > 0 &&
+        roundTrip.pendingDecisionReasonCodes.length > 0 &&
+        roundTrip.pendingDecisionIds.every((decisionId) =>
+          pendingDecisionIds.has(decisionId)));
     if (
       readyClosed !== EXPECTED_READY_CLOSED_COUNT ||
       legitimateOpen !== EXPECTED_LEGITIMATE_OPEN_COUNT ||
       needsDecision !== EXPECTED_NEEDS_DECISION_COUNT ||
-      factSet.pendingDecisions.length !== EXPECTED_NEEDS_DECISION_COUNT
+      !decisionCoverageComplete
     ) {
       verificationFailure("accepted_projection_counts");
     }
