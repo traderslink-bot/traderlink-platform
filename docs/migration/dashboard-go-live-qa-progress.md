@@ -293,6 +293,28 @@ production boundary exists.
   run.
 - [x] Produce the final go/no-go report.
 
+## Independent re-review - 2026-08-12
+
+The owner requested a second full acceptance run after the first run found and
+repaired additional defects. This run starts at commit `55c1db56` on
+`codex/traderlink-platform-replacement` and treats current source and runtime
+behavior as fresh evidence rather than assuming the prior result remains true.
+
+The controlling inventory is 73 dashboard pages (including dynamic and Help
+surfaces), the Account hub plus Preferences, Trading, AI & plan, Profile &
+access and Privacy, and the Journal Administration overview plus AI Reviews,
+Audit, Data Decisions, Errors, Imports, Notifications, Statement Formats,
+System and Users. Dynamic review, tracker, swing, Help and statement-format
+routes will be exercised through current links or safe known records.
+
+- [x] Reconfirm repository, branch, commit, dirty-file and process boundaries.
+- [x] Rebuild the current route, Account, admin and verifier inventory.
+- [ ] Run safe source, read-only and disposable contract verification.
+- [ ] Exercise all dashboard, Account and Journal Administration surfaces.
+- [ ] Verify representative interactive behavior and narrow mobile behavior.
+- [ ] Repair and focus-verify newly found obvious defects.
+- [ ] Record the independent final outcome and remaining hosted gates.
+
 ## Commit record
 
 - `266c3455` - approved feature-panel versus application-shell enforcement.
