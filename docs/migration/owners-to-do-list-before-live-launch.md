@@ -6,16 +6,20 @@
 
 **Last reviewed:** 2026-08-12
 
-This is the single checklist for the account, billing, identity, secret-entry,
-and approval work that only the owner can complete before TraderLink Platform
-goes live on Railway. Codex should handle the database transfer, generated
-security material, migrations, verification, and release tests.
+This is the single checklist for the account, billing, identity, provider, and
+approval work that only the owner can complete before TraderLink Platform goes
+live. Codex has Railway access and should perform every Railway task it can,
+including project and service configuration, variables, volume, deployment,
+backups, schedules, domain setup, database transfer, migrations, verification,
+and release tests. Railway access does not replace owner approval for a
+production deployment, data transfer, DNS cutover, or paid service purchase.
 
 > **Never paste a password, API key, OAuth secret, webhook secret, recovery
 > code, broker identifier, statement, or database into this file, GitHub, or
 > chat.** Enter secrets directly in the provider's protected settings page.
-> If Codex generates a value for you, copy it directly into Railway and do not
-> save it in project files.
+> Codex may generate and enter production security values directly in Railway.
+> If only you can retrieve a provider secret, paste it directly into Railway or
+> use an agreed secure handoff; never place it in chat or project files.
 
 ## The important decisions
 
@@ -49,17 +53,21 @@ own the TradersLink Discord server. It requests the user scopes `identify`,
   and create or select the TraderLink Platform OAuth application.
 - [ ] In **OAuth2**, add this exact redirect:
   `https://app.traderslink.pro/api/auth/discord/callback`
-- [ ] Copy the OAuth **Client ID** and **Client Secret** directly into Railway
-  as `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET`.
+- [ ] Make the OAuth **Client ID** and **Client Secret** available through an
+  agreed secure handoff, or paste them directly into Railway if only you can
+  retrieve them. Codex will verify `DISCORD_CLIENT_ID` and
+  `DISCORD_CLIENT_SECRET` in the deployed service without revealing them.
 - [ ] Enable Discord Developer Mode and copy your **User ID**, the TradersLink
   **Server ID**, and, if Watchlist Premium uses a Discord role, the exact
   **Premium Role ID**. Use Discord's
   [ID instructions](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID).
-- [ ] Enter those values directly in Railway as:
-  `TRADERLINK_PLATFORM_INITIAL_OWNER_DISCORD_SUBJECT`, `DISCORD_GUILD_ID`, and
-  `TRADERSLINK_PREMIUM_DISCORD_ROLE_ID`.
-- [ ] Create or confirm a permanent TradersLink server invite and enter it as
-  `DISCORD_INVITE_URL`.
+- [ ] Make the Discord IDs available through the agreed private setup method,
+  or enter them directly in Railway if preferred. Codex will configure and
+  verify `TRADERLINK_PLATFORM_INITIAL_OWNER_DISCORD_SUBJECT`,
+  `DISCORD_GUILD_ID`, and `TRADERSLINK_PREMIUM_DISCORD_ROLE_ID` without
+  exposing their values.
+- [ ] Create or confirm a permanent TradersLink server invite. Codex will
+  configure it as `DISCORD_INVITE_URL` through Railway access.
 - [ ] After the Railway app is online, sign in once with Discord and approve
   the requested scopes.
 - [ ] Tell Codex that the first Discord sign-in is complete. Codex will preview
@@ -78,30 +86,34 @@ Helpful Discord reference:
 
 ## Railway account and service - Launch blocker
 
-### Your Railway account
+### Your Railway owner-only tasks
 
-- [ ] Open the [Railway dashboard](https://railway.com/dashboard), create or
-  confirm the business workspace, and add a valid payment method.
+- [ ] Open the [Railway dashboard](https://railway.com/dashboard), confirm the
+  correct business workspace, and add or approve the valid payment method.
 - [ ] Enable Railway
   [multi-factor authentication](https://docs.railway.com/access/multi-factor-authentication)
   and store recovery codes privately.
-- [ ] Connect only the official
-  [TraderLink Platform repository](https://github.com/traderslink-bot/traderlink-platform).
+- [ ] Confirm Codex has access to the correct Railway workspace and permission
+  to manage the TraderLink project, services, variables, volumes, deployments,
+  backups, schedules, and domains.
 - [ ] Do not share your Railway password, recovery codes, or a broad account
-  token. If a CLI token is later needed, approve a narrow project token only.
+  token. Codex should use its authorized Railway access; if automation later
+  needs a token, use only a narrow project-scoped token.
 
-### Required Railway layout
+### Railway layout Codex will configure
 
-- [ ] Create one Railway project and one `production` environment.
-- [ ] Create one long-running application service from the approved clean
+- [ ] Codex creates one Railway project and one `production` environment.
+- [ ] Codex connects only the official
+  [TraderLink Platform repository](https://github.com/traderslink-bot/traderlink-platform).
+- [ ] Codex creates one long-running application service from the approved clean
   `main` release commit.
-- [ ] Set the service to **exactly one replica**. Never enable horizontal
+- [ ] Codex sets the service to **exactly one replica**. Never enable horizontal
   scaling while SQLite is the database.
-- [ ] Attach exactly one persistent volume at `/data`.
-- [ ] Disable app sleeping.
-- [ ] Keep deployment overlap at zero and the drain window at 30 seconds.
-- [ ] Confirm the health-check path is `/api/platform/health`.
-- [ ] Do not attach a second service to the volume.
+- [ ] Codex attaches exactly one persistent volume at `/data`.
+- [ ] Codex disables app sleeping.
+- [ ] Codex keeps deployment overlap at zero and the drain window at 30 seconds.
+- [ ] Codex confirms the health-check path is `/api/platform/health`.
+- [ ] Codex verifies that no second service is attached to the volume.
 
 Railway references:
 [variables](https://docs.railway.com/variables),
@@ -109,10 +121,13 @@ Railway references:
 [health checks](https://docs.railway.com/deployments/healthchecks), and
 [volume backups](https://docs.railway.com/volumes/backups).
 
-### Values you enter in Railway
+### Values Codex will configure in Railway
 
-Use Railway's protected **Variables** page. The value column below explains
-where the value comes from; it is not a place to record the value.
+Codex will use Railway's protected **Variables** page. The value column below
+explains where the value comes from; it is not a place to record the value.
+You remain responsible only for creating or retrieving provider-owned values
+that Codex cannot obtain. Codex will enter or verify the complete set in
+Railway through its authorized access.
 
 | Railway variable | Where the value comes from |
 |---|---|
@@ -168,11 +183,12 @@ must be removed before the service is reopened.
   support contact.
 - [ ] Create or confirm the AI Reviews product, price, billing interval, trial
   terms, cancellation wording, refund policy, and checkout page.
-- [ ] Record the exact product ID in Railway's
+- [ ] Give Codex the exact product ID so Codex can configure Railway's
   `WHOP_AI_REVIEWS_PRODUCT_IDS` allowlist. Do not use a broad company-wide
   entitlement rule.
-- [ ] Create a company API key from the Whop developer area and place it only
-  in Railway as `WHOP_API_KEY`. See the
+- [ ] Create a company API key from the Whop developer area and make it
+  available through the agreed secure handoff, or paste it directly into
+  Railway if only you can retrieve it. Codex will verify `WHOP_API_KEY`. See the
   [Whop API quickstart](https://docs.whop.com/developer/api/quickstart).
 - [ ] Create the TraderLink Whop OAuth application and register this exact
   redirect: `https://app.traderslink.pro/api/billing/whop/callback`. See
@@ -181,11 +197,12 @@ must be removed before the service is reopened.
   `https://app.traderslink.pro/api/webhooks/whop`.
 - [ ] Subscribe it to `membership.activated`, `membership.deactivated`,
   `membership.cancel_at_period_end_changed`, and `payment.failed`.
-- [ ] Copy the webhook secret directly into Railway as
+- [ ] Make the webhook secret available through the agreed secure handoff, or
+  paste it directly into Railway if only you can retrieve it. Codex will verify
   `WHOP_WEBHOOK_SECRET`. See
   [Whop webhooks](https://docs.whop.com/developer/guides/webhooks).
 - [ ] Create or confirm the checkout link and billing-management link, then
-  enter them in Railway. See
+  give the URLs to Codex to configure in Railway. See
   [Whop checkout links](https://docs.whop.com/manage-your-business/payment-processing/create-checkout-link).
 - [ ] Buy the product with one controlled test customer and let Codex verify
   activation, duplicate delivery, cancellation at period end, payment failure,
@@ -201,8 +218,9 @@ paid AI Reviews is active.
 
 - [ ] Open [OpenAI API keys](https://platform.openai.com/api-keys), use a
   dedicated TraderLink production project, and create a server-side key.
-- [ ] Enter the key directly into Railway as `OPENAI_API_KEY`; never put it in
-  browser code, Git, this checklist, or chat.
+- [ ] Make the key available through the agreed secure handoff, or paste it
+  directly into Railway if only you can retrieve it. Codex will verify
+  `OPENAI_API_KEY`; never put it in browser code, Git, this checklist, or chat.
 - [ ] Confirm API billing is active and set an owner-approved project budget
   and usage alert in the OpenAI platform.
 - [ ] In TraderLink Admin, leave the AI Reviews master switch off until Codex
@@ -220,7 +238,7 @@ database volume in another process.
   `/api/cron/ai-review-calendar`, `/api/cron/ai-reviews`,
   `/api/cron/journal-ai-import-repair`, and
   `/api/cron/moomoo-execution-import`.
-- [ ] Let Codex configure the endpoint caller with
+- [ ] Codex configures the endpoint caller with
   `Authorization: Bearer <CRON_SECRET>` without exposing the value.
 - [ ] Confirm each job has failure alerts and that retries cannot overlap.
 - [ ] Keep the AI Reviews and Moomoo jobs disabled until their separate live
@@ -230,23 +248,24 @@ Reference: [Railway cron jobs](https://docs.railway.com/cron-jobs).
 
 ## Domain and DNS - Launch blocker
 
-- [ ] First let Codex verify the Railway-provided HTTPS address and health
+- [ ] Codex first verifies the Railway-provided HTTPS address and health
   endpoint before changing DNS.
-- [ ] In Railway, add the custom domain `app.traderslink.pro`.
+- [ ] Codex adds the custom domain `app.traderslink.pro` in Railway.
 - [ ] Open the DNS manager for `traderslink.pro` and add the exact CNAME and
   verification record Railway displays. Do not change the root or `www`
   records during this step.
-- [ ] Wait for Railway to show the domain and certificate as active.
-- [ ] Recheck every Discord and Whop callback/webhook URL against the final
-  hostname before inviting users.
-- [ ] Let Codex verify secure cookies, redirects, sign-out, account isolation,
+- [ ] Codex waits for Railway to show the domain and certificate as active.
+- [ ] Codex rechecks every Discord and Whop callback/webhook URL against the
+  final hostname before inviting users.
+- [ ] Codex verifies secure cookies, redirects, sign-out, account isolation,
   and no secret or identity leakage on the final HTTPS address.
 
 Reference: [Railway custom domains](https://docs.railway.com/networking/domains/working-with-domains).
 
 ## Backups, monitoring, and recovery - Launch blocker
 
-- [ ] Enable Railway volume backups with daily, weekly, and monthly retention.
+- [ ] Codex enables Railway volume backups with daily, weekly, and monthly
+  retention.
 - [ ] Approve the off-host encrypted backup destination and retention period.
   Railway volume backups alone are not independent disaster recovery.
 - [ ] Give Codex approval for a clean-environment restore drill using a backup
@@ -297,7 +316,8 @@ the provider accounts and non-secret choices above are ready.
 - [ ] Reconcile the repository into a clean, reviewed release commit and run
   the final acceptance checks.
 - [ ] Generate the production HMAC/encryption key material and `CRON_SECRET`
-  through a safe handoff that does not expose them in chat or files.
+  and enter them directly in Railway without exposing them in chat or project
+  files.
 - [ ] Stop the service, create the protected `/data` directories, transfer only
   approved production data/evidence, apply the current migration manifest, and
   verify integrity, foreign keys, ownership, account isolation, and one writer.
