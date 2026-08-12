@@ -31,6 +31,9 @@ function main(): void {
     verifyPlatformDatabaseConnectionPragmas(database);
     const scope = deriveDevelopmentOwnerJournalScope(database).scope;
     const readiness = new PlatformReadinessReadService(database).get(scope);
+    const expectedModuleBoundaryCount = new Set(
+      platformMigrationManifest.map((migration) => migration.moduleNamespace),
+    ).size;
     const privacySafeObservedState = Object.freeze({
       storage: readiness.storage,
       ownership: Object.freeze({
@@ -53,7 +56,7 @@ function main(): void {
       readiness.storage.observedTableCount !== currentPlatformTableNames.size ||
       readiness.storage.expectedTableCount !== currentPlatformTableNames.size ||
       readiness.storage.domainTableCount !== currentPlatformDomainTableNames.length ||
-      readiness.modules.length !== 7 ||
+      readiness.modules.length !== expectedModuleBoundaryCount ||
       !readiness.ownership.stablePlatformOwnerAvailable ||
       !readiness.ownership.stableWorkspaceAvailable ||
       !readiness.ownership.activeJournalAccountAvailable ||
