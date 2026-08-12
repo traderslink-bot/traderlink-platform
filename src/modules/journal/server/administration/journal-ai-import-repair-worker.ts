@@ -32,7 +32,12 @@ export class JournalAiImportRepairWorker {
       const vault = resolveJournalSupportSourceVault({
         databasePath: resolvePlatformDatabaseConfig({}).databasePath,
       });
-      const sourceBytes = readJournalSupportSource({ vault, ...claimed.supportObject });
+      const sourceBytes = readJournalSupportSource({
+        vault,
+        objectKey: claimed.supportObject.objectKey,
+        expectedSha256: claimed.supportObject.sourceFileSha256,
+        expectedSizeBytes: claimed.supportObject.sourceFileSizeBytes,
+      });
       const mapping = parseJournalGenericStatementMappingContract(await this.provider({
         sourceText: new TextDecoder("utf-8", { fatal: true }).decode(sourceBytes),
       }));

@@ -76,7 +76,7 @@ WHERE user_id = ? AND workspace_id = ? AND account_id = ? AND import_attempt_id 
   AND current_state = 'awaiting_mapping'`).get(
       input.scope.userId, input.scope.workspaceId, accountId, input.importAttemptId,
     );
-    const consent = this.database.prepare<[string, string, string, string], { found: number }>(`SELECT 1 AS found
+    const consent = this.database.prepare<[string, string, string, string, string], { found: number }>(`SELECT 1 AS found
 FROM journal_statement_support_consents
 WHERE user_id = ? AND workspace_id = ? AND account_id = ? AND support_consent_id = ?
   AND source_kind = 'support_object' AND consent_state = 'active'
@@ -107,7 +107,7 @@ WHERE user_id = ? AND workspace_id = ? AND account_id = ? AND support_consent_id
   claimNext(timestamp: string): ClaimedJournalAiImportRepairJob | null {
     assertCanonicalUtcTimestamp(timestamp, "repairClaimedAtUtc");
     return this.immediate(() => {
-      const row = this.database.prepare<[], Readonly<{
+      const row = this.database.prepare<[string], Readonly<{
         repair_job_id: string; job_state: JournalAiImportRepairJob["state"];
         discord_completion_requested: number; created_at_utc: string;
         user_id: string; workspace_id: string; account_id: string; import_attempt_id: string;

@@ -383,7 +383,7 @@ LIMIT 1`).get(conversationId, sourceMessageId, scope.userId, scope.workspaceId, 
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "limit" });
     }
     const state = input.state === undefined ? null : assertState(input.state);
-    const rows = this.database.prepare<[string, string, string, string, CoachAiManualEntryDraftState | null, number], DraftRow>(`SELECT
+    const rows = this.database.prepare<[string, string, string, string, CoachAiManualEntryDraftState | null, CoachAiManualEntryDraftState | null, number], DraftRow>(`SELECT
   coach_ai_manual_entry_draft_id, coach_ai_chat_conversation_id, source_message_id,
   draft_rows_json, journal_write_state, canonical_journal_command,
   canonical_journal_reference, write_failure_code, state, created_at_utc,

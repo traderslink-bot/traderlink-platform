@@ -113,10 +113,16 @@ function prepareWithinImmediateTransaction(
 ): Omit<TraderLinkJournalSourceIdentityPreparationResult, "evidence"> {
   requireExactSixMigrationSchema(database);
   const repository = new JournalAccountRepository(database);
-  const { scope, accountId } = deriveSoleDevelopmentOwnerJournalScope(
+  const { scope } = deriveSoleDevelopmentOwnerJournalScope(
     database,
     repository,
   );
+  const accountId = scope.allowedAccountIds[0];
+  if (!accountId) {
+    platformFailure("TRADERLINK_JOURNAL_SOURCE_IDENTITY_PRECONDITION_FAILED", {
+      check: "active_journal_account_cardinality",
+    });
+  }
   const identityConfiguration = loadAccountIdentityConfiguration(
     options.environment,
     IBKR_SOURCE_ACCOUNT_CANONICALIZERS,

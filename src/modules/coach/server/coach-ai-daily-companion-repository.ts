@@ -290,25 +290,26 @@ export class CoachAiDailyCompanionRepository {
     assertCanonicalUuidV4(input.sourceMessageId, "sourceMessageId");
     const context = input.resolvedContext.context;
     let content: StoredDraftContent;
-    if (input.extraction.kind === "daily_note_draft") {
+    const extraction = input.extraction;
+    if (extraction.kind === "daily_note_draft") {
       content = storedContent({
         contractVersion: STORED_DRAFT_VERSION,
-        kind: input.extraction.kind,
+        kind: extraction.kind,
         factSetRevisionSha256: context.factSetRevisionSha256,
         expectedRevision: input.resolvedContext.dailyNoteRevision,
-        updates: input.extraction.updates,
+        updates: extraction.updates,
       });
-    } else if (input.extraction.kind === "current_focus_draft") {
+    } else if (extraction.kind === "current_focus_draft") {
       content = storedContent({
         contractVersion: STORED_DRAFT_VERSION,
-        kind: input.extraction.kind,
+        kind: extraction.kind,
         factSetRevisionSha256: context.factSetRevisionSha256,
         expectedRevision: input.resolvedContext.dailyNoteRevision,
-        currentFocuses: input.extraction.currentFocuses,
+        currentFocuses: extraction.currentFocuses,
       });
     } else {
       const target = input.resolvedContext.trades.find((trade) =>
-        trade.tradeNumber === input.extraction.tradeNumber);
+        trade.tradeNumber === extraction.tradeNumber);
       if (!target) {
         platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
           field: "dailyCompanionTradeNumber",
@@ -316,14 +317,14 @@ export class CoachAiDailyCompanionRepository {
       }
       content = storedContent({
         contractVersion: STORED_DRAFT_VERSION,
-        kind: input.extraction.kind,
+        kind: extraction.kind,
         factSetRevisionSha256: context.factSetRevisionSha256,
         expectedRevision: target.noteRevision,
         tradeNumber: target.tradeNumber,
         roundTripId: target.roundTripId,
         ticker: target.ticker,
         direction: target.direction,
-        content: input.extraction.content,
+        content: extraction.content,
       });
     }
     const interactionId = createCanonicalUuidV4();

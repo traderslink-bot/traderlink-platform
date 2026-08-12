@@ -379,7 +379,7 @@ WHERE coach_ai_chat_conversation_id = ? AND user_id = ? AND workspace_id = ? AND
     const rows = this.database.prepare<[
       string, string, string, "active" | "archived",
       string, string, string, string, string, string,
-      string, string, string, string, number,
+      string, string, string, string, string, number,
     ], ConversationRow>(`SELECT
   conversation.coach_ai_chat_conversation_id, conversation.title, conversation.state,
   conversation.created_at_utc, conversation.updated_at_utc, conversation.archived_at_utc
@@ -497,7 +497,7 @@ WHERE coach_ai_chat_conversation_id = ? AND role = 'assistant' AND generation_st
       if (pending) platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { state: "generation_pending" });
       const next = this.database.prepare<[string], Readonly<{ maximum: number }>>(`SELECT
   COALESCE(MAX(message_sequence), 0) AS maximum
-FROM coach_ai_chat_messages WHERE coach_ai_chat_conversation_id = ?`).get(conversationId);
+FROM coach_ai_chat_messages WHERE coach_ai_chat_conversation_id = ?`).get(conversationId) ?? { maximum: 0 };
       const userMessageId = createCanonicalUuidV4();
       const assistantMessageId = createCanonicalUuidV4();
       this.database.prepare(`INSERT INTO coach_ai_chat_messages (

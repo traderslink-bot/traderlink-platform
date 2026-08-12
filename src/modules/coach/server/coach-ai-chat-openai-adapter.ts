@@ -20,7 +20,11 @@ import type {
   CoachAiReviewDeliveryChangeExtraction,
   CoachAiReviewDeliveryScheduleSnapshot,
 } from "../contracts/ai-review-delivery-change-contracts";
-import { COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION } from "../contracts/coach-ai-chat-factual-tool-contracts";
+import {
+  COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
+  COACH_AI_CHAT_FACTUAL_TOOL_GROUPINGS,
+  COACH_AI_CHAT_FACTUAL_TOOL_METRIC_IDS,
+} from "../contracts/coach-ai-chat-factual-tool-contracts";
 import type { CoachAiChatGenerationAttempt } from "../contracts/ai-provider-controls-contracts";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 
@@ -40,8 +44,8 @@ const filtersSchema = z.object({
   outcomes: z.array(z.enum(["win", "loss", "flat"])).optional(),
 }).strict();
 
-const summaryInput = z.object({ metricIds: z.array(z.string()), moneyBasis: z.enum(["gross", "net"]), filters: filtersSchema.optional() }).strict();
-const groupingInput = summaryInput.extend({ grouping: z.string() }).strict();
+const summaryInput = z.object({ metricIds: z.array(z.enum(COACH_AI_CHAT_FACTUAL_TOOL_METRIC_IDS)), moneyBasis: z.enum(["gross", "net"]), filters: filtersSchema.optional() }).strict();
+const groupingInput = summaryInput.extend({ grouping: z.enum(COACH_AI_CHAT_FACTUAL_TOOL_GROUPINGS) }).strict();
 const listInput = z.object({ moneyBasis: z.enum(["gross", "net"]), pageSize: z.number().int(), afterCursor: z.string().nullable(), filters: filtersSchema.optional() }).strict();
 const detailInput = z.object({ roundTripId: z.string() }).strict();
 

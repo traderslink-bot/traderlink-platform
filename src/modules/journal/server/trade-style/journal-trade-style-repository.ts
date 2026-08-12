@@ -5,6 +5,7 @@ import type Database from "better-sqlite3";
 import type {
   JournalOpenPositionStatus,
   JournalTradeStyle,
+  JournalTradeStyleChange,
   JournalTradeStyleLifecycle,
 } from "@/src/modules/journal/contracts/journal-trade-style-contracts";
 import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
@@ -237,7 +238,7 @@ WHERE workspace_id = ? AND account_id = ? AND round_trip_id = ?`)
     plannedFromEntry: boolean;
     claimedEffectiveAtUtc: string;
     reasonCode: string;
-    sourceUi: "day_trade_tracker" | "swing_trade_tracker" | "open_positions";
+    sourceUi: JournalTradeStyleChange["sourceUi"];
     idempotencyKey: string;
     timestamp: string;
   }>): JournalTradeStylePlanRow {

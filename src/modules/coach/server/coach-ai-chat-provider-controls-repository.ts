@@ -81,7 +81,8 @@ function caps(value: Readonly<{
     }
     return Object.freeze({ dailyRequestCap: null, dailyTokenCap: null, dailyEstimatedSpendCapUsd: null });
   }
-  if (!Number.isSafeInteger(request) || request <= 0 || !Number.isSafeInteger(tokens) || tokens <= 0 || spend === null) {
+  if (typeof request !== "number" || !Number.isSafeInteger(request) || request <= 0 ||
+      typeof tokens !== "number" || !Number.isSafeInteger(tokens) || tokens <= 0 || spend === null) {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "dailyCaps" });
   }
   return Object.freeze({ dailyRequestCap: request, dailyTokenCap: tokens, dailyEstimatedSpendCapUsd: spend });
@@ -254,13 +255,15 @@ WHERE feature_key = ? AND scope_kind = 'account' AND workspace_id = ? AND accoun
     if (typeof input.providerInputText !== "string") platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "providerInputText" });
     const maxInputTokens = Buffer.byteLength(input.providerInputText, "utf8");
     if (maxInputTokens < 1 || maxInputTokens > MAX_PROVIDER_INPUT_BYTES) platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "providerInputText" });
-    if (!Number.isSafeInteger(input.maxOutputTokens) || input.maxOutputTokens < 1 || input.maxOutputTokens > MAX_OUTPUT_TOKENS) platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "maxOutputTokens" });
+    if (typeof input.maxOutputTokens !== "number" || !Number.isSafeInteger(input.maxOutputTokens) || input.maxOutputTokens < 1 || input.maxOutputTokens > MAX_OUTPUT_TOKENS) platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "maxOutputTokens" });
+    const idempotencySha256 = input.idempotencySha256 as string;
+    const maxOutputTokens = input.maxOutputTokens as number;
     return this.transaction(() => {
       const existing = this.database.prepare<[string, string], AttemptRow>(`SELECT coach_ai_chat_generation_attempt_id,
   coach_ai_chat_conversation_id, coach_ai_chat_message_id, state, provider_key, model_id,
   input_cost_usd_per_million_tokens, output_cost_usd_per_million_tokens,
   reserved_max_input_tokens, reserved_max_output_tokens, reserved_max_total_tokens, reserved_maximum_cost_usd
-FROM coach_ai_chat_generation_attempts WHERE account_id = ? AND idempotency_sha256 = ?`).get(accountId, input.idempotencySha256);
+FROM coach_ai_chat_generation_attempts WHERE account_id = ? AND idempotency_sha256 = ?`).get(accountId, idempotencySha256);
       if (existing) {
         if (existing.coach_ai_chat_conversation_id !== input.conversationId || existing.coach_ai_chat_message_id !== input.assistantMessageId) {
           platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { field: "idempotencySha256" });
@@ -305,8 +308,8 @@ FROM coach_ai_chat_generation_attempts WHERE account_id = ? AND idempotency_sha2
           .reduce((minimum, value) => new ExactDecimal(value).lt(minimum) ? value : minimum);
       const platformSpendCap = minimumSpendCap(platformControls);
       const accountSpendCap = minimumSpendCap(accountControls);
-      const maxTotalTokens = maxInputTokens + input.maxOutputTokens;
-      const maxCost = money(maxInputTokens, input.maxOutputTokens, settings.inputCostUsdPerMillionTokens, settings.outputCostUsdPerMillionTokens);
+      const maxTotalTokens = maxInputTokens + maxOutputTokens;
+      const maxCost = money(maxInputTokens, maxOutputTokens, settings.inputCostUsdPerMillionTokens, settings.outputCostUsdPerMillionTokens);
       const day = easternCalendarDate(now);
       const totals = this.database.prepare<[string], Readonly<{ requests: number; tokens: number }>>(`SELECT COUNT(*) AS requests,
   COALESCE(SUM(CASE WHEN state = 'blocked' THEN 0 WHEN actual_total_tokens IS NULL THEN reserved_max_total_tokens ELSE actual_total_tokens END), 0) AS tokens
@@ -329,7 +332,7 @@ FROM coach_ai_chat_generation_attempts WHERE account_id = ? AND eastern_calendar
   input_cost_usd_per_million_tokens, output_cost_usd_per_million_tokens, reserved_max_input_tokens,
   reserved_max_output_tokens, reserved_max_total_tokens, reserved_maximum_cost_usd, state, failure_code,
   actual_input_tokens, actual_output_tokens, actual_total_tokens, actual_cost_usd, reserved_at_utc, started_at_utc, finalized_at_utc
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, ?, NULL, ?)`).run(attemptId, scope.userId, scope.workspaceId, accountId, input.conversationId, input.assistantMessageId, input.idempotencySha256, day, settings.providerKey, settings.modelId, settings.inputCostUsdPerMillionTokens, settings.outputCostUsdPerMillionTokens, maxInputTokens, input.maxOutputTokens, maxTotalTokens, maxCost, blocked ? "blocked" : "reserved", blocked ? "TRADERLINK_COACH_CHAT_DAILY_CAP_REACHED" : null, timestamp, blocked ? timestamp : null);
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, ?, NULL, ?)`).run(attemptId, scope.userId, scope.workspaceId, accountId, input.conversationId, input.assistantMessageId, idempotencySha256, day, settings.providerKey, settings.modelId, settings.inputCostUsdPerMillionTokens, settings.outputCostUsdPerMillionTokens, maxInputTokens, maxOutputTokens, maxTotalTokens, maxCost, blocked ? "blocked" : "reserved", blocked ? "TRADERLINK_COACH_CHAT_DAILY_CAP_REACHED" : null, timestamp, blocked ? timestamp : null);
       const attempt = this.attempt(scope, attemptId, accountId);
       return Object.freeze({ state: blocked ? "blocked" as const : "reserved" as const, attempt });
     });

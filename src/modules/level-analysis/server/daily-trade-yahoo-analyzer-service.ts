@@ -1,11 +1,18 @@
 import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 
-import { DailyTradeAnalyzerRepository } from "./daily-trade-analyzer-repository";
+import {
+  DailyTradeAnalyzerRepository,
+  type DailyTradeMarketDataProviderIdentity,
+} from "./daily-trade-analyzer-repository";
 import { newYorkExtendedSession } from "./daily-trade-analyzer-session";
 import { dailyTradeYahooAnalyzerEnabled } from "./daily-trade-analyzer-feature";
 
 const ONE_MINUTE_RETENTION_MILLISECONDS = 7 * 24 * 60 * 60 * 1000;
 const FINAL_EXIT_FOLLOW_UP_SECONDS = 60 * 60;
+const YAHOO_DAILY_TRADE_PROVIDER: DailyTradeMarketDataProviderIdentity = Object.freeze({
+  key: "yahoo_chart",
+  adapterVersion: "yahoo_chart_v1",
+});
 
 /**
  * Creates durable work only. It deliberately does not request Yahoo while a
@@ -38,7 +45,13 @@ export class DailyTradeYahooAnalyzerService {
         session.endTime,
         Math.floor(finalExitMilliseconds / 1000) + FINAL_EXIT_FOLLOW_UP_SECONDS,
       ) * 1000).toISOString();
-      this.repository.queueTarget({ scope, target, desiredCoverageEndUtc, now });
+      this.repository.queueTarget({
+        scope,
+        target,
+        provider: YAHOO_DAILY_TRADE_PROVIDER,
+        desiredCoverageEndUtc,
+        now,
+      });
       queued.push(target.roundTripId);
     }
     return Object.freeze(queued);

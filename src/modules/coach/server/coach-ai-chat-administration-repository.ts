@@ -19,12 +19,12 @@ import { CoachAiProviderSettingsRepository } from "./coach-ai-provider-settings-
 const ExactDecimal = Decimal.clone({ precision: 80, toExpNeg: -1000, toExpPos: 1000 });
 const PRICE_PATTERN = /^(?:0|[1-9]\d*)(?:\.\d{1,6})?$/u;
 
-const CHAT_ADMINISTRATION_TABLES = Object.freeze([
+const CHAT_ADMINISTRATION_TABLES = [
   "coach_ai_chat_provider_settings",
   "coach_ai_feature_controls",
   "coach_ai_chat_generation_attempts",
   "coach_ai_chat_generation_receipts",
-]);
+] as const;
 
 type AccountRow = Readonly<{
   account_id: string;
@@ -120,7 +120,8 @@ function validateControl(input: Readonly<{
     }
     return Object.freeze({ enabled: input.enabled, dailyRequestCap: null, dailyTokenCap: null, dailyEstimatedSpendCapUsd: null });
   }
-  if (!Number.isSafeInteger(request) || request <= 0 || !Number.isSafeInteger(tokens) || tokens <= 0 ||
+  if (typeof request !== "number" || !Number.isSafeInteger(request) || request <= 0 ||
+    typeof tokens !== "number" || !Number.isSafeInteger(tokens) || tokens <= 0 ||
     typeof spend !== "string" || !PRICE_PATTERN.test(spend) || new ExactDecimal(spend).lte(0)) {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "dailyCaps" });
   }
@@ -141,7 +142,7 @@ function totals(rows: readonly CoachAiCostAggregation[]): CoachAiChatAdminCostTo
 }
 
 export function isCoachAiChatAdministrationSchemaAvailable(database: Database.Database): boolean {
-  const rows = database.prepare<[], { name: string }>(`SELECT name FROM sqlite_schema WHERE type = 'table' AND name IN (${CHAT_ADMINISTRATION_TABLES.map(() => "?").join(", ")})`).all(...CHAT_ADMINISTRATION_TABLES);
+  const rows = database.prepare<[string, string, string, string], { name: string }>(`SELECT name FROM sqlite_schema WHERE type = 'table' AND name IN (${CHAT_ADMINISTRATION_TABLES.map(() => "?").join(", ")})`).all(...CHAT_ADMINISTRATION_TABLES);
   return rows.length === CHAT_ADMINISTRATION_TABLES.length;
 }
 
@@ -201,7 +202,8 @@ ORDER BY account.display_name, account.account_id`).all()
 
   savePlatformControl(input: Readonly<{ enabled: unknown; dailyRequestCap: unknown; dailyTokenCap: unknown; dailyEstimatedSpendCapUsd: unknown }>): CoachAiChatAdminFeatureControl {
     const normalized = validateControl(input);
-    return this.controls.savePlatformFeatureControl({ featureKey: "ai_chat", ...normalized });
+    const saved = this.controls.savePlatformFeatureControl({ featureKey: "ai_chat", ...normalized });
+    return Object.freeze({ enabled: saved.enabled, ...saved.caps });
   }
 
   saveAccountControl(accountRef: unknown, input: Readonly<{ enabled: unknown; dailyRequestCap: unknown; dailyTokenCap: unknown; dailyEstimatedSpendCapUsd: unknown }>): CoachAiChatAdminFeatureControl {
