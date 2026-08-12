@@ -9,7 +9,6 @@ import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import FilterAltRoundedIcon from "@mui/icons-material/FilterAltRounded";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 import {
-  Alert,
   Accordion,
   AccordionDetails,
   AccordionSummary,
@@ -73,6 +72,7 @@ type TickerTradeDetail = Readonly<{
 }>;
 
 type TickerDetailState = Readonly<{
+  requestKey: string | null;
   status: "idle" | "loading" | "ready" | "error";
   trades: readonly TickerTradeDetail[];
 }>;
@@ -461,12 +461,13 @@ export function CalendarClient({
   selectedWeek: string;
 }) {
   const router = useRouter();
-  const [view, setView] = useState<CalendarView>(initialView);
-  const [activeMonth, setActiveMonth] = useState(selectedMonth);
+  const view = initialView;
+  const activeMonth = selectedMonth;
   const [selectedDate, setSelectedDate] = useState(initialData.activeDate);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [expandedTickerId, setExpandedTickerId] = useState<string | null>(null);
   const [tickerDetailState, setTickerDetailState] = useState<TickerDetailState>({
+    requestKey: null,
     status: "idle",
     trades: [],
   });
@@ -481,39 +482,35 @@ export function CalendarClient({
   const expandedTicker = expandedTickerId === null
     ? null
     : selected.tickers.find((ticker) => ticker.instrumentId === expandedTickerId) ?? null;
+  const expandedTickerRoundTripIds = expandedTicker?.trades
+    .map((trade) => trade.roundTripId)
+    .join(",") ?? "";
+  const expandedTickerRequestKey = expandedTicker
+    ? `${selectedDate}:${expandedTicker.instrumentId}:${expandedTickerRoundTripIds}`
+    : null;
 
   useEffect(() => {
-    setActiveMonth(selectedMonth);
-    setSelectedDate(initialData.activeDate);
-    setDetailsOpen(false);
-    setExpandedTickerId(null);
-    setView(initialView);
-  }, [initialData.activeDate, initialView, selectedMonth]);
-
-  useEffect(() => {
-    if (!detailsOpen || !expandedTicker) {
-      setTickerDetailState({ status: "idle", trades: [] });
-      return;
-    }
+    if (!detailsOpen || !expandedTickerRequestKey) return;
     const controller = new AbortController();
-    setTickerDetailState({ status: "loading", trades: [] });
-    const roundTripIds = expandedTicker.trades.map((trade) => trade.roundTripId);
-    void fetch(`/api/platform/journal/calendar/ticker-details?roundTripIds=${encodeURIComponent(roundTripIds.join(","))}`, {
+    void fetch(`/api/platform/journal/calendar/ticker-details?roundTripIds=${encodeURIComponent(expandedTickerRoundTripIds)}`, {
       cache: "no-store",
       signal: controller.signal,
     }).then(async (response) => {
       if (!response.ok) throw new Error("ticker_details_unavailable");
       return response.json() as Promise<Readonly<{ trades: readonly TickerTradeDetail[] }>>;
     }).then((result) => {
-      setTickerDetailState({ status: "ready", trades: result.trades });
+      setTickerDetailState({ requestKey: expandedTickerRequestKey, status: "ready", trades: result.trades });
     }).catch((error: unknown) => {
       if (error instanceof DOMException && error.name === "AbortError") return;
-      setTickerDetailState({ status: "error", trades: [] });
+      setTickerDetailState({ requestKey: expandedTickerRequestKey, status: "error", trades: [] });
     });
     return () => controller.abort();
-  }, [detailsOpen, expandedTickerId, selectedDate]);
+  }, [detailsOpen, expandedTickerRequestKey, expandedTickerRoundTripIds]);
 
-  const tickerDetailsByRoundTripId = new Map(tickerDetailState.trades.map((trade) => [
+  const visibleTickerDetailState = tickerDetailState.requestKey === expandedTickerRequestKey
+    ? tickerDetailState
+    : { requestKey: expandedTickerRequestKey, status: expandedTickerRequestKey ? "loading" as const : "idle" as const, trades: [] };
+  const tickerDetailsByRoundTripId = new Map(visibleTickerDetailState.trades.map((trade) => [
     trade.roundTripId,
     trade,
   ]));
@@ -717,9 +714,9 @@ export function CalendarClient({
                     </Box>
                   </AccordionSummary>
                   <AccordionDetails sx={{ pt: 0 }}>
-                    {expandedTicker?.instrumentId === ticker.instrumentId && tickerDetailState.status === "loading" ? <Typography color="text.secondary" variant="body2">Loading trade details...</Typography> : null}
-                    {expandedTicker?.instrumentId === ticker.instrumentId && tickerDetailState.status === "error" ? <Typography color="error.main" variant="body2">Trade details could not be loaded.</Typography> : null}
-                    {expandedTicker?.instrumentId === ticker.instrumentId && tickerDetailState.status === "ready" ? (
+                    {expandedTicker?.instrumentId === ticker.instrumentId && visibleTickerDetailState.status === "loading" ? <Typography color="text.secondary" variant="body2">Loading trade details...</Typography> : null}
+                    {expandedTicker?.instrumentId === ticker.instrumentId && visibleTickerDetailState.status === "error" ? <Typography color="error.main" variant="body2">Trade details could not be loaded.</Typography> : null}
+                    {expandedTicker?.instrumentId === ticker.instrumentId && visibleTickerDetailState.status === "ready" ? (
                       <Stack divider={<Divider flexItem />}>
                         {ticker.trades.map((trade, index) => {
                           const tone = pnlTone(trade.pnlSign);

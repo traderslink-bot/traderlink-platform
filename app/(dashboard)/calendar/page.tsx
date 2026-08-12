@@ -139,6 +139,7 @@ export default async function CalendarPage({
 
   return (
     <CalendarClient
+      key={`${initialView}:${selectedMonth}:${selectedWeek}:${JSON.stringify(initialFilters)}`}
       accountSelectionRef={currentJournalAccountSelectionRef(scope)}
       availableMonths={availableMonths}
       availableWeeks={availableWeeks}

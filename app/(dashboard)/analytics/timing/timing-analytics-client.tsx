@@ -167,15 +167,15 @@ function PieChart({ points, donut }: { points: readonly TimingPoint[]; donut: bo
   if (!total) return <EmptyChart />;
   const circumference = 2 * Math.PI * 76;
   const colors = ["#00796b", "#1565c0", "#7b1fa2", "#ef6c00", "#c62828", "#455a64", "#6d4c41"];
-  let offset = 0;
+  const lengths = values.map((value) => (value / total) * circumference);
+  const offsets = lengths.map((_length, index) =>
+    lengths.slice(0, index).reduce((sum, length) => sum + length, 0));
   return (
     <Stack direction={{ xs: "column", sm: "row" }} spacing={2.5} sx={{ alignItems: "center", mt: 2.5 }}>
       <Box component="svg" sx={{ flex: "0 0 auto", height: 210, width: 210 }} viewBox="0 0 210 210">
         {points.map((point, index) => {
-          const length = (values[index]! / total) * circumference;
-          const circle = <circle cx="105" cy="105" fill="none" key={point.key} r="76" stroke={colors[index % colors.length]} strokeDasharray={`${length} ${circumference - length}`} strokeDashoffset={-offset} strokeWidth={donut ? 42 : 152} transform="rotate(-90 105 105)"><title>{`${point.label}: ${values[index]} trades`}</title></circle>;
-          offset += length;
-          return circle;
+          const length = lengths[index]!;
+          return <circle cx="105" cy="105" fill="none" key={point.key} r="76" stroke={colors[index % colors.length]} strokeDasharray={`${length} ${circumference - length}`} strokeDashoffset={-offsets[index]!} strokeWidth={donut ? 42 : 152} transform="rotate(-90 105 105)"><title>{`${point.label}: ${values[index]} trades`}</title></circle>;
         })}
         {donut ? <><circle cx="105" cy="105" fill="white" r="48" /><text fill="#1c2736" fontSize="13" fontWeight="700" textAnchor="middle" x="105" y="101">Trade count</text><text fill="#1c2736" fontSize="22" fontWeight="800" textAnchor="middle" x="105" y="126">{total}</text></> : null}
       </Box>
