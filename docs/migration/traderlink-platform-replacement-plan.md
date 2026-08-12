@@ -379,6 +379,11 @@ replacement is the canonical local development application, while the old
 repository stays intact as recovery/current-production reference until an
 authorized hosted cutover.
 
+The final dashboard product and go-live review is tracked in
+[Dashboard Go-Live QA Progress](dashboard-go-live-qa-progress.md). It uses the
+complete accepted product inventory, preserves the live-launch checklist as the
+operational authority and retains owner approval for every visible correction.
+
 Within Phase 2, the exact schema digest, migration identity, initialization recovery, versioned account fingerprinting, `WorkspaceAccessScope`, owner/admin/member permission model, separate ownership-seed gate, focused verification plan, and exact implementation-file list in [Replacement Database Schema and Migrations](replacement-database-schema-and-migrations.md) are implemented and correction-verified. The coordinating technical auditor accepted the code, verified empty database, and 10-file/53-test result under the owner's delegated technical checkpoint authority. The follow-on [Development Owner Seed Progress](development-owner-seed-progress.md) checkpoint is also complete: the database was backed up, previewed, atomically seeded, and independently verified at domain counts 1/1/1/1/0 with matching schema/migration digests and no trading data. Phase 3 may proceed and is not blocked on public login. Discord-first login, optional email/password, and user-facing account management are reconciled in the Platform portion of Phase 5 before go-live without changing stable Journal ownership IDs.
 
 Phase 3 completed the required Phase 2 verifier refactor. The five

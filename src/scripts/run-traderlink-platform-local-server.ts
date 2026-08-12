@@ -115,6 +115,7 @@ async function main(): Promise<void> {
   if (!process.argv.includes("--dev")) {
     throw new Error("platform_local_development_mode_required");
   }
+  const workersEnabled = !process.argv.includes("--no-workers");
   const listenerHost = hostname();
   const listenerPort = port();
   loadTraderLinkPlatformLocalDevelopmentConfiguration({
@@ -157,9 +158,12 @@ async function main(): Promise<void> {
     console.info("TraderLink Platform local dashboard ready.", {
       hostname: listenerHost,
       port: listenerPort,
+      workersEnabled,
     });
-    startDailyTradeAnalyzerWorker({ hostname: listenerHost, port: listenerPort });
-    startMoomooExecutionImportWorker({ hostname: listenerHost, port: listenerPort });
+    if (workersEnabled) {
+      startDailyTradeAnalyzerWorker({ hostname: listenerHost, port: listenerPort });
+      startMoomooExecutionImportWorker({ hostname: listenerHost, port: listenerPort });
+    }
   });
 }
 
