@@ -309,11 +309,80 @@ routes will be exercised through current links or safe known records.
 
 - [x] Reconfirm repository, branch, commit, dirty-file and process boundaries.
 - [x] Rebuild the current route, Account, admin and verifier inventory.
-- [ ] Run safe source, read-only and disposable contract verification.
-- [ ] Exercise all dashboard, Account and Journal Administration surfaces.
-- [ ] Verify representative interactive behavior and narrow mobile behavior.
-- [ ] Repair and focus-verify newly found obvious defects.
-- [ ] Record the independent final outcome and remaining hosted gates.
+- [x] Run safe source, read-only and disposable contract verification.
+- [x] Exercise all dashboard, Account and Journal Administration surfaces.
+- [x] Verify representative interactive behavior and narrow mobile behavior.
+- [x] Repair and focus-verify newly found obvious defects.
+- [x] Record the independent final outcome and remaining hosted gates.
+
+### Independent re-review evidence
+
+- Read-only readiness, Journal Administration, Phase 5 route/read-model, Core
+  Analytics, Analytics Lab and Candle Review verification passed against the
+  current 54-migration database. The accepted reconciliation remains 364
+  ready-closed round trips, two confirmed open positions and two round trips
+  withheld for decisions. Database hashes and read-only boundaries remained
+  unchanged.
+- Disposable public-identity and Account-erasure verification passed. Whop,
+  Moomoo and the local AI Review generation, timing, subscriber-budget,
+  rolling-spend, cached-pricing, cache-write-accounting and scheduler contracts
+  passed without a real provider call. The protected historical Level Analysis
+  source path is not configured, so that separate historical proof remains
+  unavailable rather than being replaced with invented evidence.
+- The Reflection verifier was stale: it assumed the old 331/zero-open snapshot
+  and zero annotations. It now reconciles the current scoped Reflection service
+  with the accepted Journal coverage, pending decisions, daily and trade notes,
+  tags and active/focus rules. The corrected verifier passed without changing
+  Journal data.
+- Academy, Watchlist and News/Affiliate verifiers incorrectly treated old
+  platform-wide migration and Journal counts as module contracts. They now
+  derive the current migration boundary, verify only their owned data and
+  integrity rules, and prove the database is unchanged. All three passed.
+- A fresh worker-disabled browser run exercised every static dashboard page,
+  all five Account settings destinations plus the Account redirect, all ten
+  Journal Administration destinations, current saved AI Review details and at
+  least one valid detail guide for every Help family. Current compatibility
+  routes reached their intended replacement destinations. No application error
+  or browser-console warning/error appeared.
+- Account controls exposed their expected saved/disabled states. Empty Quick
+  Trade Entry and Import mapping actions stayed disabled, AI Chat could not
+  submit an empty question, and Calendar changed from Month to Week while
+  preserving the same selected-period facts. Both Privacy deletion dialogs
+  remained disabled until their exact confirmation phrase and were cancelled;
+  no mutation was submitted.
+- Every Journal Administration API route was confirmed to use the admin request
+  boundary. Mutation routes additionally require mutation-request security,
+  explicit permissions, scoped rate limits, optimistic revisions and validated
+  inputs. Rendered Admin pages exposed no email address or raw UUID.
+- At a 390 by 844 responsive viewport, Account Preferences, Account Privacy,
+  Journal Administration overview, Admin AI Reviews and the dated Daily Trade
+  Tracker had no page-level horizontal overflow or application error. Both the
+  application navigation and the Administration drawer remained accessible;
+  the latter exposed all ten Admin destinations.
+- The rendered money scan found one new defect: the Admin AI Review 30-day
+  estimated spend used its exact stored precision (`$0.1540195`). Under the
+  owner's standing money-display approval, only its presentation was rounded;
+  the page now shows `$0.15` and exact stored cost remains unchanged. The full
+  post-fix browser scan found no money value with more than two decimal places.
+- Standalone TypeScript and repository-wide ESLint passed. ESLint reports zero
+  errors and the same 20 unrelated unused-code warnings. The production build
+  passed with Next.js 16.2.6, including Academy registry validation, TypeScript,
+  page-data collection and all 199 generated static pages. An initial build
+  compiled successfully but hit the intentionally low 1.5 GB heap cap during
+  Next's duplicate type-check; the single 2.25 GB retry completed.
+- No Vitest command or suite was run in this independent re-review. No real
+  Journal, Account setting, provider or production data was changed, and no
+  push, merge or deployment was performed.
+
+### Independent re-review conclusion
+
+No known local product defect remains in the reviewed dashboard, Account or
+Journal Administration inventory. Public go-live remains **no-go** for the
+same external boundaries: approved publication through `main`, Railway
+single-node persistent storage, protected production paths and source transfer,
+Discord identity, Whop and scheduler activation, secrets, backup/restore,
+observability, rollback, multi-user production acceptance and owner-authorized
+DNS/application cutover.
 
 ## Commit record
 
@@ -337,6 +406,10 @@ routes will be exercised through current links or safe known records.
 - `ba2dc927` - current server contract typing and validation.
 - `b3e775a0` - complete project typecheck restoration.
 - `4c1f7004` - React-safe Timing and Calendar state handling.
+- `389fb30b` - independent re-review inventory and checkpoint record.
+- `089325fa` - current scoped Reflection verification reconciliation.
+- `68321efe` - module-owned Academy, Watchlist and News verification boundaries.
+- `262c83eb` - two-decimal Admin AI Review spend presentation.
 
 - `fe07262b` — safe worker-disabled dashboard review runtime and QA tracker.
 - `18df1629` — shared Account Settings client-boundary repair.
