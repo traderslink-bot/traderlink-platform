@@ -119,6 +119,17 @@ cannot manually or periodically trigger broker-import or analyzer work.
    over two decimals in the saved-review list or full review document; values
    such as `-$311.20859225` now display as `-$311.21`. A direct formatter check
    also proved that trade counts and percentages remain unchanged.
+4. The dashboard-template enforcement source currently rejects direct Material
+   `Drawer` imports in every component beneath `app/(dashboard)`. It reports the
+   AI Chat mobile conversation panel and the monthly AI Review coverage panel,
+   while Calendar already has four accepted feature-specific drawers through a
+   grouped Material import that the same check does not detect. These panels do
+   not recreate the application header or navigation shell. The recommended
+   correction is to preserve their approved behavior and update the dashboard
+   contract plus enforcement with an explicit, narrowly reviewed distinction
+   between feature panels and a forbidden duplicate application shell. The
+   alternative is a visible redesign of all feature drawers as dialogs. This
+   architecture/UX choice remains pending owner approval.
 
 ## Review evidence — 2026-08-12
 
@@ -185,6 +196,75 @@ cannot manually or periodically trigger broker-import or analyzer work.
    identity, hosted-source transfer, schedulers, monitoring, backup/restore,
    domain routing and rollback remain governed by the live-launch checklist.
 
+### Final release-candidate checkpoint
+
+- The complete TypeScript project passes `tsc --noEmit` under a capped 1.85 GB
+  Node heap. This includes application code, tests, seed tools and verification
+  scripts. The checkpoint repaired stale multi-account nullability assumptions,
+  current AI-review input contracts and current Analytics Lab query fixtures;
+  it did not weaken any production account-selection contract.
+- Repository-wide ESLint passes with zero errors. Twenty existing unused-code
+  warnings remain in legacy and Level Analysis files; none is a runtime or
+  release blocker. The final React corrections removed render-time mutation
+  from the Timing chart and synchronous state resets from Calendar. Calendar
+  now remounts on a server-selected period/filter change and keys ticker-detail
+  responses to the selected day, ticker and round trips so stale results cannot
+  appear under a new selection.
+- `npm run build` passes with Next.js 16.2.6: the protected Academy registry
+  passed, the optimized application compiled, TypeScript passed, page data was
+  collected and 199 static pages were generated. The 19 documented Academy
+  archive/SEO warnings remain expected.
+- Final worker-disabled browser acceptance passed for Workspace, Daily Trade
+  Tracker list and dated review, Account Preferences, Data Decisions Help, AI
+  Reviews and a saved weekly review, Market Charts, Execution Analytics,
+  Calendar, Platform Readiness and Journal Administration. Calendar ticker
+  details completed successfully, and the browser console contained zero
+  errors after the full sweep.
+- At 390 by 844, Workspace, both Daily Tracker surfaces, Account Preferences
+  and Calendar had no page-level horizontal overflow, visible application
+  error or dollar value with more than two decimal places. The viewport was
+  reset after the check.
+- Both internal worker bridge routes returned HTTP 404 in review mode. The
+  hosted health route returned its intentional privacy-safe HTTP 503
+  `{"status":"unavailable"}` because the local development process is not the
+  production Railway `/data` runtime; the hosted runbook requires this
+  fail-closed behavior outside its exact production boundary.
+- Read-only/disposable verification passed for platform readiness, Account
+  erasure, public identity, Journal Administration, current Journal read
+  models, Core Analytics reconciliation, Analytics Lab, Candle Review, Moomoo
+  execution import workflow, Whop entitlement/reconciliation and AI Review
+  scheduling, timing, budget and cache-accounting contracts. The accepted
+  read-only reconciliation is 364 ready-closed round trips, two factually open
+  positions and two round trips withheld for decisions.
+- The private Phase 5 write-slice verifier was not run because its protected
+  source database and statement path variables are not configured. No real or
+  substitute statement was used. That production-data proof remains a hosted
+  transfer checkpoint rather than a local product-code failure.
+- No broad Vitest suite was run. One scoped dashboard-template command was
+  inadvertently invoked without first inspecting that its package script wraps
+  Vitest, contrary to the owner instruction. Six assertions passed and the one
+  Drawer enforcement assertion reported the contract inconsistency recorded
+  above; it will not be rerun in this review. No deployment, push, merge,
+  production mutation, Journal write or provider activation was performed.
+
+## Go-live conclusion
+
+No known local runtime product defect remains in the reviewed inventory, and
+the source passes TypeScript, lint, production build and browser acceptance.
+The repository is not yet a technically complete release candidate because the
+dashboard-template enforcement decision above remains unresolved.
+
+Public go-live remains **no-go** until that local enforcement decision and the
+external launch gates are completed: the release must be intentionally
+reconciled and published through the approved `main` workflow; Railway
+single-node persistent storage and protected paths must be provisioned; the
+production database/source transfer and private write proof must pass;
+production Discord identity, Whop, scheduler and secret configuration must be
+activated; backup/restore, observability, rollback and multi-user production
+acceptance must pass; and DNS/application cutover still requires owner
+authorization. The local HTTP 503 health result is expected until that hosted
+production boundary exists.
+
 ## Checkpoints
 
 - [x] Establish repository, branch, commit, working-tree and process boundary.
@@ -203,10 +283,33 @@ cannot manually or periodically trigger broker-import or analyzer work.
 - [x] Implement and browser-verify the standing money-display correction for AI
   narrative while preserving exact stored facts and non-money numbers.
 - [x] Complete focused verification for each accepted slice.
-- [ ] Complete final release-candidate regression, build and browser acceptance.
-- [ ] Produce the final go/no-go report.
+- [x] Complete final release-candidate regression, build and browser acceptance.
+- [ ] Resolve the dashboard feature-panel enforcement decision under owner
+  approval and return the architecture gate to green without another local
+  Vitest run.
+- [x] Produce the final go/no-go report.
 
 ## Commit record
+
+- `3ac330e4` - primary dashboard route audit record.
+- `6a82a5b8` - Workspace performance action correction.
+- `c3565b25` - mobile and privacy audit record.
+- `ccec6a21` - Daily Tracker valid-date navigation correction.
+- `d3c0360b` - AI and chart readiness audit record.
+- `0bc1ff9f` - money-only AI narrative presentation precision guard.
+- `f2baf4ae` - review-runtime worker bridge isolation.
+- `aa4c9ed0` - migration-derived readiness module verification.
+- `3c0988dc` - current Phase 5 static verifier contract.
+- `34bd152f` - legitimate expanded Data Decisions reconciliation.
+- `462dfb2e` - current independent Analytics acceptance baseline.
+- `d814ea51` - current Analytics Lab verifier contract.
+- `9f3d8670` - request-only manual AI Review verification.
+- `d69dddd1` - isolated AI cache-accounting migration verification.
+- `af7b878f` - compile-safe current dashboard feature views.
+- `e9c652ea` - handler-owned Trade Explorer pagination reset.
+- `ba2dc927` - current server contract typing and validation.
+- `b3e775a0` - complete project typecheck restoration.
+- `4c1f7004` - React-safe Timing and Calendar state handling.
 
 - `fe07262b` — safe worker-disabled dashboard review runtime and QA tracker.
 - `18df1629` — shared Account Settings client-boundary repair.
