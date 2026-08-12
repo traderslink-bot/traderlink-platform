@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
+import { platformMigrationManifest } from "@/src/modules/platform/server/database/platform-migration-manifest";
 import { isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
 
 function requiredExpectedCount(name: string, fallback: number): number {
@@ -81,7 +82,9 @@ LEFT JOIN news_articles article ON article.id = version.article_id
 WHERE article.id IS NULL`).get() as { count: number }).count,
     );
     if (
-      migrationIds.at(-1)?.migration_id !== "0017_platform_discord_memberships" ||
+      migrationIds.length !== platformMigrationManifest.length ||
+      migrationIds.at(-1)?.migration_id !==
+        platformMigrationManifest.at(-1)?.migrationId ||
       !migrationIds.some(({ migration_id }) => migration_id === "0016_affiliate_attribution") ||
       !migrationIds.some(({ migration_id }) => migration_id === "0015_news_content") ||
       counts.newsArticles !== expectedNews ||

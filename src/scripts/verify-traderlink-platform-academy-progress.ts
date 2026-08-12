@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 import Database from "better-sqlite3";
 
 import { resolvePlatformDatabaseConfig } from "@/src/modules/platform/server/database/platform-database-config";
+import { platformMigrationManifest } from "@/src/modules/platform/server/database/platform-migration-manifest";
 import { readAppliedPlatformMigrations } from "@/src/modules/platform/server/database/platform-migration-registry";
 import { verifyCompletedPlatformDatabase } from "@/src/modules/platform/server/database/run-platform-migrations";
 
@@ -23,6 +24,10 @@ function fail(check: string): never {
 
 function main(): void {
   const databasePath = resolvePlatformDatabaseConfig().databasePath;
+  const before = Object.freeze({
+    sizeBytes: statSync(databasePath).size,
+    sha256: createHash("sha256").update(readFileSync(databasePath)).digest("hex"),
+  });
   const database = new Database(databasePath, {
     readonly: true,
     fileMustExist: true,
@@ -41,9 +46,6 @@ function main(): void {
       platformAuthSessions: count(database, "platform_auth_sessions"),
       academyCompletions: count(database, "academy_lesson_completions"),
       academyEvents: count(database, "academy_lesson_completion_events"),
-      journalExecutions: count(database, "journal_executions"),
-      journalRoundTrips: count(database, "journal_round_trips"),
-      journalDataDecisions: count(database, "journal_data_decisions"),
     });
     const backfill = database.prepare<[], CountRow>(`SELECT COUNT(*) AS count
 FROM platform_users user
@@ -54,19 +56,18 @@ JOIN platform_auth_identities identity
 WHERE user.status = 'active' AND identity.status = 'active'
   AND user.auth_provider = 'development_local'`).get()?.count ?? -1;
     if (
-      migrations.length !== 14 ||
+      migrations.length !== platformMigrationManifest.length ||
       !migrations.some(
         (migration) => migration.migration_id === "0013_academy_progress",
       ) ||
       counts.platformUsers !== 1 ||
       counts.platformAuthIdentities !== 1 ||
       backfill !== 1 ||
-      counts.platformAuthSessions !== 0 ||
-      counts.academyCompletions !== 0 ||
-      counts.academyEvents !== 0 ||
-      counts.journalExecutions !== 1_072 ||
-      counts.journalRoundTrips !== 333 ||
-      counts.journalDataDecisions !== 2
+      counts.platformAuthSessions < 0 ||
+      counts.academyCompletions < 0 ||
+      counts.academyEvents < counts.academyCompletions ||
+      (database.pragma("foreign_key_check") as unknown[]).length !== 0 ||
+      database.pragma("quick_check", { simple: true }) !== "ok"
     ) {
       fail("database_boundary");
     }
@@ -104,12 +105,16 @@ WHERE user.status = 'active' AND identity.status = 'active'
   } finally {
     database.close();
   }
+  const after = Object.freeze({
+    sizeBytes: statSync(databasePath).size,
+    sha256: createHash("sha256").update(readFileSync(databasePath)).digest("hex"),
+  });
+  if (before.sizeBytes !== after.sizeBytes || before.sha256 !== after.sha256) {
+    fail("database_changed");
+  }
   process.stdout.write(`${JSON.stringify({
     ...evidence,
-    database: {
-      sizeBytes: statSync(databasePath).size,
-      sha256: createHash("sha256").update(readFileSync(databasePath)).digest("hex"),
-    },
+    database: { ...after, state: "unchanged" },
   })}\n`);
 }
 

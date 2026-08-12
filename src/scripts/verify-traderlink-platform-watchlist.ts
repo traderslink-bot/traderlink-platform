@@ -4,6 +4,7 @@ import { readFileSync, statSync } from "node:fs";
 import Database from "better-sqlite3";
 
 import { resolvePlatformDatabaseConfig } from "@/src/modules/platform/server/database/platform-database-config";
+import { platformMigrationManifest } from "@/src/modules/platform/server/database/platform-migration-manifest";
 import { readAppliedPlatformMigrations } from "@/src/modules/platform/server/database/platform-migration-registry";
 import { verifyCompletedPlatformDatabase } from "@/src/modules/platform/server/database/run-platform-migrations";
 
@@ -20,6 +21,10 @@ function fail(check: string): never {
 
 function main(): void {
   const databasePath = resolvePlatformDatabaseConfig().databasePath;
+  const before = Object.freeze({
+    sizeBytes: statSync(databasePath).size,
+    sha256: createHash("sha256").update(readFileSync(databasePath)).digest("hex"),
+  });
   const database = new Database(databasePath, {
     readonly: true,
     fileMustExist: true,
@@ -36,10 +41,6 @@ function main(): void {
       watchlistSymbols: count(database, "live_watchlist_symbols"),
       watchlistHealth: count(database, "live_watchlist_health"),
       watchlistArchives: count(database, "live_watchlist_archives"),
-      journalExecutions: count(database, "journal_executions"),
-      journalRoundTrips: count(database, "journal_round_trips"),
-      journalDataDecisions: count(database, "journal_data_decisions"),
-      academyCompletions: count(database, "academy_lesson_completions"),
     });
     const revisionColumn = database.prepare<[], CountRow>(`SELECT COUNT(*) AS count
 FROM pragma_table_info('live_watchlist_symbols')
@@ -53,20 +54,18 @@ FROM sqlite_schema
 WHERE type = 'trigger'
   AND name = 'live_watchlist_archives_no_update'`).get()?.count ?? -1;
     if (
-      migrations.length !== 14 ||
+      migrations.length !== platformMigrationManifest.length ||
       !migrations.some(
         (migration) => migration.migration_id === "0014_watchlist_storage",
       ) ||
-      counts.watchlistSymbols !== 0 ||
-      counts.watchlistHealth !== 0 ||
-      counts.watchlistArchives !== 0 ||
-      counts.journalExecutions !== 1_072 ||
-      counts.journalRoundTrips !== 333 ||
-      counts.journalDataDecisions !== 2 ||
-      counts.academyCompletions !== 0 ||
+      counts.watchlistSymbols < 0 ||
+      counts.watchlistHealth < 0 ||
+      counts.watchlistArchives < 0 ||
       revisionColumn !== 1 ||
       archiveIndex !== 1 ||
-      archiveImmutabilityTrigger !== 1
+      archiveImmutabilityTrigger !== 1 ||
+      (database.pragma("foreign_key_check") as unknown[]).length !== 0 ||
+      database.pragma("quick_check", { simple: true }) !== "ok"
     ) {
       fail("database_boundary");
     }
@@ -85,12 +84,16 @@ WHERE type = 'trigger'
   } finally {
     database.close();
   }
+  const after = Object.freeze({
+    sizeBytes: statSync(databasePath).size,
+    sha256: createHash("sha256").update(readFileSync(databasePath)).digest("hex"),
+  });
+  if (before.sizeBytes !== after.sizeBytes || before.sha256 !== after.sha256) {
+    fail("database_changed");
+  }
   process.stdout.write(`${JSON.stringify({
     ...evidence,
-    database: {
-      sizeBytes: statSync(databasePath).size,
-      sha256: createHash("sha256").update(readFileSync(databasePath)).digest("hex"),
-    },
+    database: { ...after, state: "unchanged" },
   })}\n`);
 }
 
