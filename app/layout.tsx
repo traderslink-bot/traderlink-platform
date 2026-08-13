@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { GoogleAnalytics } from "./google-analytics";
+import { AnalyticsConsent } from "./analytics-consent";
 import { MuiProviders } from "./mui-provider";
 import "./globals.css";
 
@@ -37,7 +37,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <MuiProviders>
           {children}
-          <GoogleAnalytics />
+          <AnalyticsConsent />
         </MuiProviders>
       </body>
     </html>

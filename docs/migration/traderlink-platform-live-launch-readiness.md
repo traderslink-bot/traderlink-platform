@@ -78,6 +78,12 @@ migration, backup and restore evidence.
 ### 4. Authentication, authorization and privacy
 
 - [ ] Configure production Discord/OAuth identity and callback domains.
+- [ ] Publish the owner-approved Privacy Policy and Terms and Conditions, and
+  confirm `privacy@traderslink.pro` can receive privacy questions, complaints
+  and access requests before the links are released.
+- [ ] Verify regional Google Analytics consent on the production edge: required
+  and unknown regions load no Google tag before acceptance, rejected visits
+  send no Google Analytics data, and other regions retain normal Analytics.
 - [ ] Verify owner, workspace and account isolation with at least two isolated
   production-like identities before public traffic.
 - [ ] Configure versioned account-identity and Journal privacy keys; confirm
@@ -134,6 +140,10 @@ migration, backup and restore evidence.
 
 - [ ] Configure the complete-app hostname, TLS, cookie domain, OAuth callbacks
   and allowed origins for the selected host.
+- [ ] Put a trusted geo-aware proxy in front of Railway and enable
+  `CF-IPCountry` plus `CF-Region-Code` origin headers; Railway does not provide
+  country/province headers and the consent resolver intentionally treats
+  missing location as requiring a choice.
 - [ ] Decide which routes remain on Vercel and which route to the complete app;
   document rewrites/proxying without creating duplicate user-facing apps.
 - [ ] Lower DNS TTL before cutover when appropriate and record the rollback DNS

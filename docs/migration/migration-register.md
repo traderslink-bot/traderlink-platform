@@ -6,6 +6,7 @@
 **Phase 6 accepted source commit:** `b9575e2ed8ba93c23c3c4b8e35d80c26f71477c6`; historical accepted package. Published `main` is now `c0c998d8e456b9e70433e73123e8024b13ece203` in the new Platform repository.
 **Phase 5 plan:** [Phase 5 Module Transfer Plan](phase-5-module-transfer-plan.md) is locally complete; external pre-launch operations remain.
 **Phase 6 acceptance:** [Replacement Acceptance Report](phase-6-replacement-acceptance-report.md); no external launch operation is implied by local verification.
+**Public legal pages:** [Public Legal Pages and Regional Analytics Consent Plan](public-legal-pages-and-regional-analytics-consent-plan.md) is locally complete and owner accepted; implementation is tracked in its linked progress record. Publication remains blocked until the intended privacy email can receive messages and trusted country/region headers reach the Railway origin.
 **Rule:** A legacy item cannot be removed until its row is `Owner accepted` and its legacy dependency check is complete.
 
 **2026-08-09 AI Review cache-write accounting checkpoint:** migration

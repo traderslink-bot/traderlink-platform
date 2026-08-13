@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { LandingHeroCanvas } from "./landing-hero-canvas";
 import { FreeDiscordPrompt } from "./free-discord-prompt";
 import { HomeScrollReveal } from "./home-scroll-reveal";
+import { PublicSiteFooter } from "./public-site-footer";
 import { getAcademyCoursePage } from "@/src/lib/academy/academy-content";
 import { TRADERSLINK_TWITTER_HANDLE } from "@/src/lib/academy/academy-seo";
 
@@ -600,11 +601,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="border-t border-slate-800 px-5 py-8 text-sm text-slate-500 sm:px-8">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <span>TradersLink. Trading involves risk.</span>
-        </div>
-      </footer>
+      <PublicSiteFooter />
     </main>
   );
 }

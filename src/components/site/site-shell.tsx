@@ -7,6 +7,7 @@ import {
   TRADERSLINK_DISCORD_INVITE_URL,
   TRADERSLINK_X_URL,
 } from "@/src/lib/academy/academy-seo";
+import { PublicSiteFooter } from "@/app/public-site-footer";
 
 type SiteTheme = "light" | "dark";
 type SiteAuthSnapshot =
@@ -175,6 +176,7 @@ export function SiteShell({
         </div>
       </header>
       {children}
+      <PublicSiteFooter />
     </ShellElement>
   );
 }

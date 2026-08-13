@@ -44,8 +44,8 @@ const isGoogleAnalyticsEnabled =
   (process.env.NODE_ENV === "production" ||
     process.env.NEXT_PUBLIC_ENABLE_GA_IN_DEV === "true");
 
-export function GoogleAnalytics() {
-  if (!isGoogleAnalyticsEnabled) {
+export function GoogleAnalytics({ enabled = true }: { enabled?: boolean }) {
+  if (!enabled || !isGoogleAnalyticsEnabled) {
     return null;
   }
 
