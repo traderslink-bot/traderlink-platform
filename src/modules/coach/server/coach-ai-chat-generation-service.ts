@@ -18,6 +18,7 @@ import type {
   CoachAiReviewDeliveryChangeDraft,
   CoachAiReviewDeliveryScheduleSnapshot,
 } from "../contracts/ai-review-delivery-change-contracts";
+import type { CoachAiChatActionDraft } from "../contracts/ai-chat-action-draft-contracts";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
 
@@ -37,6 +38,7 @@ import type { CoachAiChatDashboardContextService } from "./coach-ai-chat-dashboa
 import type { CoachAiChatAnalyticsPageToolService } from "./coach-ai-chat-analytics-page-tool-service";
 import type { CoachAiChatProductContextService } from "./coach-ai-chat-product-context-service";
 import type { CoachAiChatTradeAnalyzerToolService } from "./coach-ai-chat-trade-analyzer-tool-service";
+import type { CoachAiChatActionDraftService } from "./coach-ai-chat-action-draft-service";
 import { coachAiChatFactualToolRegistry } from "./coach-ai-chat-factual-tool-registry";
 
 export const COACH_AI_CHAT_MAX_RECENT_MESSAGES = 12;
@@ -71,6 +73,7 @@ export type CoachAiChatGenerationServiceResult = Readonly<{
   manualEntryDraft: CoachAiManualEntryDraft | null;
   dailyCompanionDraft: CoachAiDailyCompanionDraft | null;
   reviewDeliveryChangeDraft: CoachAiReviewDeliveryChangeDraft | null;
+  actionDraft: CoachAiChatActionDraft | null;
 }>;
 
 function completeUsage(usage: CoachAiChatGenerationUsage): boolean {
@@ -172,6 +175,8 @@ export class CoachAiChatGenerationService {
       tradeAnalyzer?: Pick<CoachAiChatTradeAnalyzerToolService,
         "results" | "listTrades" | "savedCandleReview">;
     }> = Object.freeze({}),
+    private readonly actionDrafts: Pick<CoachAiChatActionDraftService,
+      "create" | "list" | "readForSourceMessage"> | null = null,
   ) {}
 
   async generateSavedAnswer(
@@ -219,9 +224,14 @@ export class CoachAiChatGenerationService {
         input.conversationId,
         pair.userMessage.messageId,
       ) ?? null;
+      const actionDraft = this.actionDrafts?.readForSourceMessage(
+        scope,
+        input.conversationId,
+        pair.userMessage.messageId,
+      ) ?? null;
       return Object.freeze({ state: existing.state === "reserved" || existing.state === "started" ? "pending" : existing.state,
         assistantMessageId: existing.assistantMessageId, attemptId: existing.attemptId,
-        manualEntryDraft, dailyCompanionDraft, reviewDeliveryChangeDraft });
+        manualEntryDraft, dailyCompanionDraft, reviewDeliveryChangeDraft, actionDraft });
     }
 
     const resolvedTrustedContext = input.resolveTrustedContext?.() ?? null;
@@ -280,7 +290,7 @@ export class CoachAiChatGenerationService {
       return Object.freeze({ pair, history, reservation });
     });
     if (created.reservation.state === "blocked") {
-      return Object.freeze({ state: "blocked", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: created.reservation.attempt.attemptId, manualEntryDraft: null, dailyCompanionDraft: null, reviewDeliveryChangeDraft: null });
+      return Object.freeze({ state: "blocked", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: created.reservation.attempt.attemptId, manualEntryDraft: null, dailyCompanionDraft: null, reviewDeliveryChangeDraft: null, actionDraft: null });
     }
     if (created.reservation.state !== "reserved") {
       platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { state: "unexpected_reservation" });
@@ -328,12 +338,13 @@ export class CoachAiChatGenerationService {
           this.controls.failStartedWithoutUsage(scope, attempt.attemptId, providerError.message, now);
         }
       });
-      return Object.freeze({ state: "failed", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: attempt.attemptId, manualEntryDraft: null, dailyCompanionDraft: null, reviewDeliveryChangeDraft: null });
+      return Object.freeze({ state: "failed", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: attempt.attemptId, manualEntryDraft: null, dailyCompanionDraft: null, reviewDeliveryChangeDraft: null, actionDraft: null });
     }
     // A receipt/attempt mismatch must roll this whole persistence transition back; it is not a provider failure.
     let manualEntryDraft: CoachAiManualEntryDraft | null = null;
     let dailyCompanionDraft: CoachAiDailyCompanionDraft | null = null;
     let reviewDeliveryChangeDraft: CoachAiReviewDeliveryChangeDraft | null = null;
+    let actionDraft: CoachAiChatActionDraft | null = null;
     this.chat.runAtomically(() => {
       this.chat.finalizeAssistantSuccess(scope, created.pair.assistantMessage.messageId, {
         assistantTextPrivate: safeAssistantText(result),
@@ -342,7 +353,8 @@ export class CoachAiChatGenerationService {
           totalFactualResultBytes: dispatcher.totalSerializedResultBytes(), trustedContext,
           manualEntryExtraction: result.manualEntryExtraction,
           dailyCompanionDraftExtraction: result.dailyCompanionDraftExtraction,
-          reviewDeliveryChangeExtraction: result.reviewDeliveryChangeExtraction }),
+          reviewDeliveryChangeExtraction: result.reviewDeliveryChangeExtraction,
+          actionDraftExtraction: result.actionDraftExtraction ?? null }),
         receipt: { providerKey: attempt.providerKey, modelId: attempt.modelId, usage: result.usage,
           inputCostUsdPerMillionTokens: attempt.inputCostUsdPerMillionTokens,
           outputCostUsdPerMillionTokens: attempt.outputCostUsdPerMillionTokens },
@@ -408,7 +420,19 @@ export class CoachAiChatGenerationService {
           proposed: result.reviewDeliveryChangeExtraction,
         }, now);
       }
+      if (result.actionDraftExtraction) {
+        if (!this.actionDrafts) {
+          platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+            component: "chatActionDraft",
+          });
+        }
+        actionDraft = this.actionDrafts.create(scope, {
+          conversationId: input.conversationId,
+          sourceMessageId: created.pair.userMessage.messageId,
+          extraction: result.actionDraftExtraction,
+        }, now);
+      }
     });
-    return Object.freeze({ state: "completed", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: attempt.attemptId, manualEntryDraft, dailyCompanionDraft, reviewDeliveryChangeDraft });
+    return Object.freeze({ state: "completed", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: attempt.attemptId, manualEntryDraft, dailyCompanionDraft, reviewDeliveryChangeDraft, actionDraft });
   }
 }

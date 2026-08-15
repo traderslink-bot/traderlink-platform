@@ -112,6 +112,23 @@ export const AI_CHAT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       }),
     ]),
   }),
+  Object.freeze({
+    slug: "confirm-changes",
+    title: "Confirm changes",
+    description: "Review a clear before-and-after preview when AI Chat prepares a supported account change.",
+    sections: Object.freeze([
+      Object.freeze({
+        id: "supported-changes",
+        title: "Supported changes",
+        summary: "Change reporting currency, mark one notification read or switch to an existing Journal account.",
+        keywords: Object.freeze(["reporting currency", "notification", "switch account", "confirm"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph" as const, text: "Ask AI Chat to change your reporting currency, mark one exact notification read or switch to one of your existing Journal accounts. Chat checks the current value or target before it prepares anything." }),
+          Object.freeze({ kind: "paragraph" as const, text: "The proposed change appears in the conversation with a clear preview. Nothing changes until you choose Confirm change. You can cancel the proposal instead, and an unconfirmed proposal expires after 24 hours." }),
+        ]),
+      }),
+    ]),
+  }),
 ]);
 
 export function aiChatGuideBySlug(slug: string): HelpGuide | undefined {

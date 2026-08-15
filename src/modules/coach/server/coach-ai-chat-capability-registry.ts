@@ -134,4 +134,15 @@ export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
       "Large candle series and internal analysis identifiers are not sent to the model.",
     ]),
   }),
+  Object.freeze({
+    id: "confirmed_product_changes",
+    kind: "confirmed_draft" as const,
+    plainLanguage: "Prepare a reporting-currency change, mark one notification read, or switch the selected Journal account.",
+    canonicalNames: Object.freeze([]),
+    limitations: Object.freeze([
+      "Chat must read the current exact value or target before it can prepare the change.",
+      "Nothing changes until the trader confirms the saved preview.",
+      "Login, broker connections, payment, deletion, administration, and unsupported settings remain outside this path.",
+    ]),
+  }),
 ] satisfies readonly CoachAiChatRuntimeCapability[]);

@@ -58,7 +58,8 @@ describe("TraderLink Platform migrations", () => {
         expect(database.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get()).toEqual({
           count: table === "coach_ai_provider_settings" ? 1
             : table === "coach_ai_chat_provider_settings" ? 1
-              : table === "coach_ai_feature_controls" ? 4 : 0,
+              : table === "coach_ai_feature_controls" ? 4
+                : table === "coach_ai_review_budget_controls" ? 1 : 0,
         });
       }
     } finally {

@@ -112,6 +112,7 @@ export async function POST(
       manualEntryDraft: result.manualEntryDraft,
       dailyCompanionDraft: result.dailyCompanionDraft,
       reviewDeliveryChangeDraft: result.reviewDeliveryChangeDraft,
+      actionDraft: result.actionDraft,
     }, status);
   } catch (error) {
     return respondToChatRouteError(error);

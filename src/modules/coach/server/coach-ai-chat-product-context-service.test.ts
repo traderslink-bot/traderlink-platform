@@ -38,7 +38,7 @@ function fixture() {
     effectiveAtUtc: "2026-08-05T13:30:00.000Z",
     updatedAtUtc: "2026-08-05T14:00:00.000Z",
     resolution: null,
-    allowedActions: Object.freeze(["correct_execution_fact", "exclude_execution"]),
+    allowedActions: Object.freeze(["correct_execution_fact", "exclude_execution"] as const),
     executions: Object.freeze([Object.freeze({
       executionId: "private-execution-id",
       currentVersionId: "private-version-id",

@@ -268,6 +268,16 @@ is implemented and promoted in the runtime registry.
 | Manual execution capture | I bought/sold/added/covered... | editable execution draft and canonical preview/commit |
 | Trade Analyzer results | entry/exit analysis, MFE/MAE, Green-to-Red, saved candle-pattern facts | saved analysis only, with exact coverage and unavailable states through the current Trade Analyzer contract |
 
+### Trade Explorer change boundary
+
+Trade Explorer is a current but incomplete product feature and is expected to
+change. AI Chat accesses only its currently implemented filters, groupings and
+metrics through an isolated, versioned adapter. The current Explorer design is
+not a permanent Chat contract, unsupported Explorer behavior stays unavailable,
+and the adapter must be revised when the owner accepts the updated Trade
+Explorer. No unrelated Chat capability may depend on the current Explorer page
+structure, wording or unfinished views.
+
 Unsupported questions receive a brief honest answer describing what the chat can
 help with now. It must not quietly turn an unsupported request into unrelated
 analysis.
@@ -307,8 +317,8 @@ identity, credentials, other accounts, or invented narrative.
 
 ### New AI Companion records
 
-One future Coach migration, numbered only at implementation, should add the
-following account-scoped records:
+Coach migrations add the following account-scoped records as their guarded
+feature slices become executable:
 
 | Record | Purpose |
 | --- | --- |
@@ -319,6 +329,7 @@ following account-scoped records:
 | `coach_ai_manual_entry_drafts` | explicit user-owned chat drafts, confirmation state, and expiry/archive policy |
 | `coach_ai_daily_companion_interactions` | optional saved daily reflection drafts and their approved/rejected disposition |
 | `coach_ai_archive_events` | append-only archive/restore actions |
+| `coach_ai_chat_action_drafts` | expiring before/after previews, confirmation state and privacy-safe canonical command references for allowlisted product changes |
 
 This does not duplicate executions, notes, tags, rules, Current Focuses, or
 reviews. Those stay in their owning Journal/Coach tables and are referenced
@@ -465,13 +476,18 @@ once. The following sequence controls safe delivery:
 5. **Conversational manual entry:** structured drafts, explicit confirmation,
    existing Journal preview/commit integration, duplicate/reconciliation and
    tracker routing.
-6. **Entitlements and production operations:** public login boundary, feature
+6. **Confirmed product actions:** one allowlisted canonical command family at
+   a time, with durable expiry, stale-state rejection, exact preview and an
+   explicit trader confirmation. Reporting currency, notification read state
+   and selected Journal account are the first completed family; Swing, tags,
+   rules and Data Decisions remain later guarded slices.
+7. **Entitlements and production operations:** public login boundary, feature
    eligibility, scheduled delivery execution, monitoring, costs, and support
    workflow.
-7. **Future analysis expansion:** only data-backed chart/candle or enhanced
+8. **Future analysis expansion:** only data-backed chart/candle or enhanced
    coaching capabilities after their market-data, product, cost, and privacy
    contracts are separately approved.
-8. **Rules evidence integration:** connect only the owner-approved saved
+9. **Rules evidence integration:** connect only the owner-approved saved
    recommendation evidence from the [Preset Rule Recommendations
    Plan](preset-rule-recommendations-plan.md) after its deterministic service
    exists. AI may explain saved recommendation evidence. It cannot create a

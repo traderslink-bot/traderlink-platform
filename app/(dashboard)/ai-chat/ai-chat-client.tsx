@@ -40,11 +40,13 @@ import type {
 } from "@/src/modules/coach/contracts/ai-daily-companion-contracts";
 import type { CoachAiManualEntryDraft } from "@/src/modules/coach/contracts/ai-manual-entry-draft-contracts";
 import type { CoachAiReviewDeliveryChangeDraft } from "@/src/modules/coach/contracts/ai-review-delivery-change-contracts";
+import type { CoachAiChatActionDraft } from "@/src/modules/coach/contracts/ai-chat-action-draft-contracts";
 import { formatCoachAiMoneyForDisplay } from "@/src/modules/coach/presentation/coach-ai-money-formatters";
 
 import { AiChatManualEntryCard } from "./ai-chat-manual-entry-card";
 import { AiChatDailyCompanionCard } from "./ai-chat-daily-companion-card";
 import { AiChatReviewDeliveryChangeCard } from "./ai-chat-review-delivery-change-card";
+import { AiChatActionDraftCard } from "./ai-chat-action-draft-card";
 
 type ConversationResponse = Readonly<{
   status: "ready";
@@ -65,6 +67,7 @@ type GenerationResponse = Readonly<{
   manualEntryDraft: CoachAiManualEntryDraft | null;
   dailyCompanionDraft: CoachAiDailyCompanionDraft | null;
   reviewDeliveryChangeDraft: CoachAiReviewDeliveryChangeDraft | null;
+  actionDraft: CoachAiChatActionDraft | null;
 }>;
 
 type ManualEntryDraftResponse = Readonly<{
@@ -83,6 +86,12 @@ type ReviewDeliveryChangeDraftResponse = Readonly<{
   status: "ready";
   conversationId: string;
   drafts: readonly CoachAiReviewDeliveryChangeDraft[];
+}>;
+
+type ActionDraftResponse = Readonly<{
+  status: "ready";
+  conversationId: string;
+  drafts: readonly CoachAiChatActionDraft[];
 }>;
 
 type RetryRequest = Readonly<{
@@ -225,6 +234,7 @@ export function AiChatClient({
   const [manualEntryDrafts, setManualEntryDrafts] = useState<readonly CoachAiManualEntryDraft[]>([]);
   const [dailyCompanionDrafts, setDailyCompanionDrafts] = useState<readonly CoachAiDailyCompanionDraft[]>([]);
   const [reviewDeliveryChangeDrafts, setReviewDeliveryChangeDrafts] = useState<readonly CoachAiReviewDeliveryChangeDraft[]>([]);
+  const [actionDrafts, setActionDrafts] = useState<readonly CoachAiChatActionDraft[]>([]);
   const [messageCursor, setMessageCursor] = useState<string | null>(null);
   const [question, setQuestion] = useState("");
   const [loadingConversations, setLoadingConversations] = useState(true);
@@ -348,6 +358,19 @@ export function AiChatClient({
     }
   }, []);
 
+  const loadActionDrafts = useCallback(async (conversationId: string) => {
+    try {
+      const response = await readJson<ActionDraftResponse>(await fetch(
+        `${conversationsEndpoint}/${conversationId}/action-drafts`,
+        { cache: "no-store" },
+      ));
+      setActionDrafts(response.drafts);
+    } catch {
+      setActionDrafts([]);
+      setNotice("Proposed changes could not be loaded right now.");
+    }
+  }, []);
+
   useEffect(() => {
     const timeout = window.setTimeout(() => {
       setActiveConversationSearch(conversationSearch.trim());
@@ -375,15 +398,17 @@ export function AiChatClient({
       void loadManualEntryDrafts(activeConversationId);
       void loadDailyCompanionDrafts(activeConversationId);
       void loadReviewDeliveryChangeDrafts(activeConversationId);
+      void loadActionDrafts(activeConversationId);
     }
     else {
       setMessages([]);
       setManualEntryDrafts([]);
       setDailyCompanionDrafts([]);
       setReviewDeliveryChangeDrafts([]);
+      setActionDrafts([]);
       setMessageCursor(null);
     }
-  }, [activeConversationId, loadDailyCompanionDrafts, loadManualEntryDrafts, loadMessages, loadReviewDeliveryChangeDrafts]);
+  }, [activeConversationId, loadActionDrafts, loadDailyCompanionDrafts, loadManualEntryDrafts, loadMessages, loadReviewDeliveryChangeDrafts]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, sending]);
 
   async function createConversation(): Promise<CoachAiChatConversation | null> {
@@ -492,6 +517,12 @@ export function AiChatClient({
           body.reviewDeliveryChangeDraft!,
           ...current.filter((draft) =>
             draft.draftId !== body.reviewDeliveryChangeDraft!.draftId),
+        ]);
+      }
+      if (body.actionDraft) {
+        setActionDrafts((current) => [
+          body.actionDraft!,
+          ...current.filter((draft) => draft.draftId !== body.actionDraft!.draftId),
         ]);
       }
       await loadMessages(conversation.conversationId);
@@ -836,6 +867,20 @@ export function AiChatClient({
                   draft={draft}
                   key={draft.draftId}
                   onDraftChange={(updatedDraft) => setReviewDeliveryChangeDrafts((current) => [
+                    updatedDraft,
+                    ...current.filter((item) => item.draftId !== updatedDraft.draftId),
+                  ])}
+                />
+              ))}
+            {actionDrafts
+              .filter((draft) => draft.disposition !== "rejected" && draft.disposition !== "expired")
+              .slice(0, 1)
+              .map((draft) => (
+                <AiChatActionDraftCard
+                  conversationId={draft.conversationId}
+                  draft={draft}
+                  key={draft.draftId}
+                  onDraftChange={(updatedDraft) => setActionDrafts((current) => [
                     updatedDraft,
                     ...current.filter((item) => item.draftId !== updatedDraft.draftId),
                   ])}

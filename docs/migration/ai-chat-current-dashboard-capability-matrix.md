@@ -206,9 +206,9 @@ broker credentials.
 | Data Decision correction/classification/exclusion | Not implemented yet in Chat | Yes | Existing `/api/platform/journal/data-decisions` command; Chat-specific persisted expiring draft/confirm contract still required |
 | AI Review delivery schedule | Supported | Yes | Existing Chat review-delivery draft/confirm routes and Account command |
 | AI Review opt-out or eligible request | Not implemented yet in Chat | Yes | Existing Account/Review commands plus entitlement/cost checks; Chat-specific persisted draft/confirm contract still required |
-| Notification read state/preferences | Not implemented yet in Chat | Yes | Existing notification action and preference action; Chat-specific persisted draft/confirm contract still required |
-| Reporting currency | Not implemented yet in Chat | Yes | Existing reporting-currency action; Chat-specific persisted draft/confirm contract still required |
-| Selected Journal account and new Journal account | Not implemented yet in Chat | Yes | Existing `/api/platform/account-selection` and `/api/platform/journal/accounts` commands; Chat-specific persisted draft/confirm contract still required |
+| Notification read state/preferences | One-notification read state supported; delivery preferences not implemented yet in Chat | Yes | Persisted expiring Chat action draft now confirms through `PlatformNotificationRepository.markRead`; preference changes still require a later exact draft contract |
+| Reporting currency | Supported | Yes | Persisted expiring Chat action draft confirms through `PlatformUserPreferenceRepository.updateActiveUserReportingCurrency` after a stale-value check |
+| Selected Journal account and new Journal account | Existing-account selection supported; account creation not implemented yet in Chat | Yes | Persisted expiring Chat action draft resolves one exact existing account and returns the normal opaque selection cookie; account creation still requires a later exact draft contract |
 | Import upload/mapping/commit or Moomoo authentication/connection changes | Product-excluded from current Chat | No | Guarded Import/Account UI only |
 | Raw statement, credentials, account numbers, private identity or secret access | Safety-protected | No | Never enters trader Chat or provider context |
 | Delete or directly rewrite an execution/Journal fact | Safety-protected | No | Corrections use canonical Data Decisions/manual-edit UI with exact evidence; no direct Chat deletion path |

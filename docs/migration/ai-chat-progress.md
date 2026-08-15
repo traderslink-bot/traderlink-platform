@@ -69,7 +69,9 @@ The private persistence API checkpoint is tracked in
 - [x] Implement Import, Data Decisions, Notifications, Account and entitlement
   reads without exposing statements, credentials, admin data or secrets.
 - [ ] Add allowlisted Swing, tag, rule, Data Decision, notification and account
-  setting drafts/confirmed actions through canonical commands.
+  setting drafts/confirmed actions through canonical commands. Reporting
+  currency, one-notification read state and selected-account switching are
+  complete; the remaining command families stay pending.
 - [ ] Promote the language registry and Help Center only as each deterministic
   family becomes executable.
 - [ ] Complete representative agent evaluations, live OpenAI Agents SDK
@@ -203,6 +205,51 @@ The private persistence API checkpoint is tracked in
   focused one-worker suites passed 11 tests covering product-data redaction,
   account isolation, opaque Analyzer references, bounded saved evidence and
   no-candle-series Candle Review projection.
+
+### Completed: first confirmed product actions
+
+- AI Chat can now prepare three expiring product changes: reporting currency,
+  marking one exact notification read, and switching to one existing Journal
+  account. Each proposal is built from the current account-scoped value or
+  target and shown as a plain before/after confirmation card.
+- Generation never performs the action. Migration
+  `0055_coach_ai_chat_action_drafts` persists the private target payload,
+  public preview digest, disposition, expiry and privacy-safe canonical
+  command reference. Confirm and cancel are separate same-origin mutation
+  routes.
+- Confirmation re-reads the current value or target and fails on stale or
+  cross-account state. Reporting currency and notification read state use the
+  same repositories as their dashboard controls. Account selection returns the
+  normal opaque account-selection cookie and reloads the dashboard only after
+  the saved confirmation succeeds.
+- Migration 0055 reserves only the reviewed allowlist of later action-family
+  identifiers. Those reserved identifiers have no model schema, proposal path
+  or executable command until their individual implementation and verification
+  checkpoints are complete.
+- Login, broker connection, payment, deletion, administration, raw statements,
+  secrets and unsupported settings remain outside the action schema.
+- The full no-emit TypeScript check passed. Three focused one-worker files
+  passed 15 action/migration checks, including no-write-before-confirm,
+  account-scoped notification targeting, account-switch cookie authority and
+  the static migration contract.
+- The protected pre-migration online backup and independent restore are
+  preserved at checkpoint `ai-chat-actions-20260815T230111Z`. The backup and
+  restored main files are byte-identical at SHA-256
+  `b1585de8a8ca0e6e7759db3651dd7a2302754a053248f0f6313ce7dfc13228bd`;
+  the exact 54-row registry, all 150 table counts, page geometry and recovery
+  authority match.
+- Migration `0055_coach_ai_chat_action_drafts` applied once. The protected
+  database now has 55 migrations and schema digest
+  `af6eb5ad0d79a023e109b2f338d654a504cecd34d8f28b44b9d841ef1723e035`.
+  Foreign-key, quick and full integrity checks pass, and the new action-draft
+  table is empty. Journal facts remain exactly one account, 1,172 executions
+  and 372 round trips before and after the migration.
+- The post-migration online backup and independent restore are preserved at
+  checkpoint `ai-chat-actions-post-20260815T230224Z`. The backup and restored
+  main files are byte-identical at SHA-256
+  `d4f6be4c91a2b0857e06047f90825bf9d22429988f387599bdc6a1d7c8683989`;
+  all 55 migration rows, 151 table counts, page geometry and recovery authority
+  match.
 
 ## Completed: scheduled AI Review control enforcement
 

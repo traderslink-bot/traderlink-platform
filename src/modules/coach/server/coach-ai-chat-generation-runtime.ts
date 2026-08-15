@@ -38,6 +38,7 @@ import { CoachReflectionService } from "./coach-reflection-service";
 import { CoachAiDailyCompanionRepository } from "./coach-ai-daily-companion-repository";
 import { CoachAiManualEntryDraftRepository } from "./coach-ai-manual-entry-draft-repository";
 import { CoachAiReviewDeliveryChangeRepository } from "./coach-ai-review-delivery-change-repository";
+import { CoachAiChatActionDraftService } from "./coach-ai-chat-action-draft-service";
 import type { CoachAiDailyCompanionResolvedContext } from "../contracts/ai-daily-companion-contracts";
 import type {
   CoachAiChatAnalysisScope,
@@ -118,6 +119,7 @@ export async function generateCoachAiChatSavedAnswer(
         productContext: new CoachAiChatProductContextService(database),
         tradeAnalyzer: new CoachAiChatTradeAnalyzerToolService(database, analyticsService),
       }),
+      new CoachAiChatActionDraftService(database),
     ).generateSavedAnswer(scope, input);
   } finally {
     database.close();

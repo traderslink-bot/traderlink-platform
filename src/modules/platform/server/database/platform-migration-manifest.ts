@@ -36,6 +36,7 @@ import { coachAiReviewCachedInputPricingMigration } from "@/src/modules/coach/se
 import { coachAiReviewRollingSpendGuardMigration } from "@/src/modules/coach/server/database/migrations/0049_coach_ai_review_rolling_spend_guard";
 import { coachAiReviewSubscriberBudgetSafeguardsMigration } from "@/src/modules/coach/server/database/migrations/0050_coach_ai_review_subscriber_budget_safeguards";
 import { coachAiReviewCacheWriteAccountingMigration } from "@/src/modules/coach/server/database/migrations/0051_coach_ai_review_cache_write_accounting";
+import { coachAiChatActionDraftsMigration } from "@/src/modules/coach/server/database/migrations/0055_coach_ai_chat_action_drafts";
 
 import { platformIdentityMigration } from "./migrations/0001_platform_identity";
 import { platformAuthenticationIdentitiesMigration } from "./migrations/0012_platform_authentication_identities";
@@ -280,6 +281,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/journal/server/database/migrations/0054_journal_ai_import_repair.ts",
       migration: journalAiImportRepairMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/coach/server/database/migrations/0055_coach_ai_chat_action_drafts.ts",
+      migration: coachAiChatActionDraftsMigration,
     }),
   ]);
 
@@ -534,6 +539,9 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     ]),
     "0054_journal_ai_import_repair": Object.freeze([
       "journal_ai_import_repair_jobs",
+    ]),
+    "0055_coach_ai_chat_action_drafts": Object.freeze([
+      "coach_ai_chat_action_drafts",
     ]),
   });
 
