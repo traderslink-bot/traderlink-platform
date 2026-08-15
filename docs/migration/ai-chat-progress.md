@@ -68,8 +68,9 @@ The private persistence API checkpoint is tracked in
   coverage and unavailable states.
 - [x] Implement Import, Data Decisions, Notifications, Account and entitlement
   reads without exposing statements, credentials, admin data or secrets.
-- [ ] Add allowlisted Swing, tag, rule, Data Decision, notification and account
-  setting drafts/confirmed actions through canonical commands. Reporting
+- [ ] Add allowlisted Swing, tag, rule, Data Decision and remaining account
+  setting drafts/confirmed actions through canonical commands. Trading Rules
+  and completed-trade annotations now have deterministic reads. Reporting
   currency, notification read/preferences, selected-account switching and
   existing AI Review on/off changes are complete; the remaining command
   families stay pending.
@@ -266,6 +267,27 @@ The private persistence API checkpoint is tracked in
 - Generation still performs no write. Both changes use the existing expiring
   action-draft record, separate confirmation route, idempotent final state and
   privacy-safe canonical reference.
+
+### Completed: Trading Rules and completed-trade annotation reads
+
+- Three deterministic tools now list saved preset/custom Trading Rules, read
+  exact preset and custom-rule results for a bounded period, and read one
+  completed trade's saved trade note, Trade Tags and custom-rule reviews.
+- Preset outcomes come from the existing deterministic evaluator. Custom-rule
+  outcomes come only from saved trader selections. Chat does not create a rule
+  result, turn a tag into evidence or expose the separately planned rule-
+  recommendation capability before its canonical service exists.
+- Rule-result requests cover no more than 62 days. The period summaries remain
+  exact while individual events are limited to 50 and explicitly report when
+  more events exist. Selected date/ticker scope is enforced by the dispatcher.
+- The responses omit rule, review, note and tag record identifiers. The exact
+  saved wording and configuration remain available because they are the facts
+  the trader asked Chat to discuss.
+- Focused ESLint and the full no-emit TypeScript check pass. Two one-worker
+  files pass six tests covering selected-account isolation, private identifier
+  removal, exact saved annotations, bounded periods and dispatcher behavior.
+  This read-only slice performed no provider request, Journal write, migration,
+  protected database change, push or deployment.
 
 ## Completed: scheduled AI Review control enforcement
 

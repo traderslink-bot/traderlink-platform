@@ -130,7 +130,10 @@ export type CoachAiChatFactualToolName =
   | "get_account_ai_plan"
   | "get_trade_analyzer_results"
   | "list_analyzed_trades"
-  | "get_saved_candle_review";
+  | "get_saved_candle_review"
+  | "list_trading_rules"
+  | "get_trading_rule_results"
+  | "get_trade_annotations";
 
 export type CoachAiChatFactualToolFilters = Readonly<{
   closingDateRange?: Readonly<{
@@ -341,6 +344,25 @@ export type CoachAiChatCandleReviewRequest = Readonly<{
   tradeRef: string;
 }>;
 
+export type CoachAiChatTradingRulesRequest = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
+  toolName: "list_trading_rules";
+  state: "active" | "paused" | "retired" | "all";
+}>;
+
+export type CoachAiChatTradingRuleResultsRequest = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
+  toolName: "get_trading_rule_results";
+  startDate: string;
+  endDate: string;
+}>;
+
+export type CoachAiChatTradeAnnotationsRequest = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
+  toolName: "get_trade_annotations";
+  roundTripId: string;
+}>;
+
 export type CoachAiChatFactualToolRequest =
   | CoachAiChatClosedTradeSummaryRequest
   | CoachAiChatClosedTradeGroupingRequest
@@ -364,7 +386,10 @@ export type CoachAiChatFactualToolRequest =
   | CoachAiChatAccountContextRequest
   | CoachAiChatTradeAnalyzerResultsRequest
   | CoachAiChatAnalyzedTradeListRequest
-  | CoachAiChatCandleReviewRequest;
+  | CoachAiChatCandleReviewRequest
+  | CoachAiChatTradingRulesRequest
+  | CoachAiChatTradingRuleResultsRequest
+  | CoachAiChatTradeAnnotationsRequest;
 
 export type CoachAiChatFactualAnalyticsResponse = Readonly<{
   contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
@@ -490,6 +515,15 @@ export type CoachAiChatTradeAnalyzerResponse = Readonly<{
   result: unknown;
 }>;
 
+export type CoachAiChatAnnotationContextResponse = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
+  toolName:
+    | "list_trading_rules"
+    | "get_trading_rule_results"
+    | "get_trade_annotations";
+  result: unknown;
+}>;
+
 export type CoachAiChatFactualToolResponse =
   | CoachAiChatFactualAnalyticsResponse
   | CoachAiChatFactualTradeListResponse
@@ -501,7 +535,8 @@ export type CoachAiChatFactualToolResponse =
   | CoachAiChatDashboardContextResponse
   | CoachAiChatAnalyticsPageResponse
   | CoachAiChatProductContextResponse
-  | CoachAiChatTradeAnalyzerResponse;
+  | CoachAiChatTradeAnalyzerResponse
+  | CoachAiChatAnnotationContextResponse;
 
 export type CoachAiChatFactualToolErrorCode =
   | "invalid_request"

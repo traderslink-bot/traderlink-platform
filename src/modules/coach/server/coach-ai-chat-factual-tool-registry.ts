@@ -258,6 +258,39 @@ export const coachAiChatFactualToolRegistry = Object.freeze([
     ]),
     contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
   }),
+  Object.freeze({
+    name: "list_trading_rules" as const,
+    description: "Lists exact saved preset and custom Trading Rules with their settings, scope, and current status.",
+    supportedMetricIds: Object.freeze([]),
+    supportedGroupings: Object.freeze([]),
+    limitations: Object.freeze([
+      "This read does not recommend, activate, pause, revise, or retire a rule.",
+      "A tag, note, or model opinion is never treated as a rule result.",
+    ]),
+    contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
+  }),
+  Object.freeze({
+    name: "get_trading_rule_results" as const,
+    description: "Returns deterministic preset-rule outcomes and saved custom-rule reviews for a bounded period.",
+    supportedMetricIds: Object.freeze([]),
+    supportedGroupings: Object.freeze([]),
+    limitations: Object.freeze([
+      "A request covers at most 62 days and returns at most 50 individual result events.",
+      "Unavailable evidence remains N/A and custom rules without a saved selection remain Not selected.",
+    ]),
+    contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
+  }),
+  Object.freeze({
+    name: "get_trade_annotations" as const,
+    description: "Returns one completed trade's exact saved trade note, tags, and custom-rule reviews.",
+    supportedMetricIds: Object.freeze([]),
+    supportedGroupings: Object.freeze([]),
+    limitations: Object.freeze([
+      "Tags and notes are trader observations, not proof of cause, emotion, setup quality, or rule outcome.",
+      "This read does not add, remove, rename, or retire a tag.",
+    ]),
+    contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
+  }),
 ] satisfies readonly CoachAiChatFactualToolDefinition[]);
 
 export function findCoachAiChatFactualToolDefinition(

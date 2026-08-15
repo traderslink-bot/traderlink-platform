@@ -33,6 +33,7 @@ import { CoachAiChatDashboardContextService } from "./coach-ai-chat-dashboard-co
 import { CoachAiChatAnalyticsPageToolService } from "./coach-ai-chat-analytics-page-tool-service";
 import { CoachAiChatProductContextService } from "./coach-ai-chat-product-context-service";
 import { CoachAiChatTradeAnalyzerToolService } from "./coach-ai-chat-trade-analyzer-tool-service";
+import { CoachAiChatAnnotationContextService } from "./coach-ai-chat-annotation-context-service";
 import { CoachAiReviewRepository } from "./coach-ai-review-repository";
 import { CoachReflectionService } from "./coach-reflection-service";
 import { CoachAiDailyCompanionRepository } from "./coach-ai-daily-companion-repository";
@@ -118,6 +119,7 @@ export async function generateCoachAiChatSavedAnswer(
         analyticsPages: new CoachAiChatAnalyticsPageToolService(analyticsService),
         productContext: new CoachAiChatProductContextService(database),
         tradeAnalyzer: new CoachAiChatTradeAnalyzerToolService(database, analyticsService),
+        annotations: new CoachAiChatAnnotationContextService(facts, dashboard, annotations),
       }),
       new CoachAiChatActionDraftService(database),
     ).generateSavedAnswer(scope, input);

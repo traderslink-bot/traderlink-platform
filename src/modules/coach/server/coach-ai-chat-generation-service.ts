@@ -38,6 +38,7 @@ import type { CoachAiChatDashboardContextService } from "./coach-ai-chat-dashboa
 import type { CoachAiChatAnalyticsPageToolService } from "./coach-ai-chat-analytics-page-tool-service";
 import type { CoachAiChatProductContextService } from "./coach-ai-chat-product-context-service";
 import type { CoachAiChatTradeAnalyzerToolService } from "./coach-ai-chat-trade-analyzer-tool-service";
+import type { CoachAiChatAnnotationContextService } from "./coach-ai-chat-annotation-context-service";
 import type { CoachAiChatActionDraftService } from "./coach-ai-chat-action-draft-service";
 import { coachAiChatFactualToolRegistry } from "./coach-ai-chat-factual-tool-registry";
 
@@ -174,6 +175,8 @@ export class CoachAiChatGenerationService {
         "listNotifications" | "accountContext">;
       tradeAnalyzer?: Pick<CoachAiChatTradeAnalyzerToolService,
         "results" | "listTrades" | "savedCandleReview">;
+      annotations?: Pick<CoachAiChatAnnotationContextService,
+        "listRules" | "ruleResults" | "tradeAnnotations">;
     }> = Object.freeze({}),
     private readonly actionDrafts: Pick<CoachAiChatActionDraftService,
       "create" | "list" | "readForSourceMessage"> | null = null,

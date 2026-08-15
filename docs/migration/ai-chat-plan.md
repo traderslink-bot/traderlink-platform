@@ -46,6 +46,14 @@ added after this plan began. Full Chat completion now means completing that
 finite matrix, not merely rendering Chat, compiling the language inventory or
 making the initial eight tools available.
 
+Current deterministic coverage includes the stable Journal, Tracker,
+Analytics, Import, Data Decisions, Notifications, Account, saved Analyzer,
+Trading Rules and completed-trade annotation reads recorded in the progress
+tracker. Trade Explorer remains an incomplete product surface; its current
+bounded Chat adapter is intentionally isolated and must be revised when the
+owner accepts the Explorer update rather than being treated as a frozen Chat
+contract.
+
 ## Product direction
 
 TraderLink AI is a private companion for a trader's own Journal. It helps the

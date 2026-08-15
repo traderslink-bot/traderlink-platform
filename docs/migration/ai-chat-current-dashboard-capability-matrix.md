@@ -63,7 +63,11 @@ AI Chat completion checkpoint. It provides:
   settings;
 - the shared desktop/mobile drawer plus the `/ai-chat` direct-link fallback.
 
-It does **not** yet make the remaining dashboard features Chat-capable.
+Subsequent protected checkpoints expanded that foundation with current
+dashboard Journal, Tracker, Analytics, Import, Data Decisions, Notifications,
+Account, saved Analyzer, Trading Rules and Trade Tags reads plus the first
+confirmed product-setting actions. The row-by-row states below, not this
+historical foundation description, are the current implementation truth.
 
 ## Current dashboard inventory
 
@@ -75,7 +79,7 @@ It does **not** yet make the remaining dashboard features Chat-capable.
 | Swing Trade Tracker | `/trade-tracker/swings` | `JournalTradeTrackerReadService`, Swing note, tag and trade-style services | List/detail active swings and their executions, notes, tags and status. Draft notes/tags/status changes; require confirmation through canonical commands. | Read implemented; actions planned |
 | Quick Trade Entry | `/quick-trade-entry` | Manual trade preview and command services | Convert supplied facts into an editable preview and save only after explicit confirmation. Explain duplicate/reconciliation outcomes without bypassing Data Decisions. | Confirm implemented |
 | Calendar | `/calendar` | `JournalDashboardReadModelService.getCalendar`, Calendar annotation evidence in `calendar-data.ts`, trading-day review state and ticker/day detail reads | Answer month/week/day questions, list exact daily trades, annotations and review state, and open the selected day. | Read implemented |
-| Trading Rules | `/rules`, `/rules/results` | Rule dashboard and annotation service. Rule recommendation evidence requires the separate planned deterministic recommendation service and does not exist yet. | List active presets/custom rules, settings, applicable scope and exact results. When the separately approved recommendation service exists, explain its saved evidence. Draft activation/settings/custom-rule changes; confirm through canonical rule commands. Never mark a result by model judgment or activate a rule autonomously. | Planned read/draft/confirm; recommendation read not implemented yet |
+| Trading Rules | `/rules`, `/rules/results` | Rule dashboard, deterministic preset evaluator and saved custom-rule reviews. Rule recommendation evidence requires the separate planned deterministic recommendation service and does not exist yet. | List saved presets/custom rules, settings, applicable scope and exact results for a bounded period. When the separately approved recommendation service exists, explain its saved evidence. Draft activation/settings/custom-rule changes; confirm through canonical rule commands. Never mark a result by model judgment or activate a rule autonomously. | Read implemented; draft/confirm planned; recommendation read not implemented yet |
 | Trade Explorer | `/analytics/trade-explorer` | Bounded current Trade Explorer page model/query | Apply only the filters, groupings and metrics the current Explorer supports and return the exact resulting trades/summary. Reuse the page query contract rather than creating a second analytics engine. The Trade Explorer is incomplete and will be updated; keep this adapter isolated, describe unsupported Explorer behavior as unavailable, and revise its contract when the accepted Explorer update lands. | Current bounded read implemented; product incomplete |
 | Open Positions | `/trades/open` | Open-position dashboard read model and trade-style service | List/detail factual open positions and current trader-defined type. Draft a type/status change and require confirmation. Never infer swing, long-term hold or bag holding. | Read implemented; actions planned |
 | Analytics Overview | `/analytics` | `JournalAnalyticsService.getAnalyticsOverview` | Return exact overview cards and supported date/currency scope with coverage. | Dedicated read implemented |
@@ -101,7 +105,7 @@ It does **not** yet make the remaining dashboard features Chat-capable.
 | Account AI | `/account/ai` | AI Review delivery and entitlement settings | Read enabled features, schedule and availability; confirm supported schedule/opt-out settings. | Read and schedule confirmation implemented |
 | Account privacy | `/account/privacy` | Privacy settings and erasure boundary | Explain privacy/retention and link to controls. Account/data erasure always stays outside Chat. | Help/read only |
 | Help Center | `/help` and maintained guide collections | `HELP_SEARCH_RECORDS` | Search and answer from maintained product help with links. | Read implemented |
-| Trade Tags | Daily/Swing Tracker annotation surfaces and `/help/trade-tags` | Annotation service and preset/custom tag catalog | Read the exact tags saved on a trade, explain available tags, and draft a replacement set. Saving requires an exact before/after preview and the canonical tag command. Tags remain trader observations, never proof of cause, emotion, setup quality or a rule outcome. | Trade-detail read partial; dedicated read/draft/confirm planned |
+| Trade Tags | Daily/Swing Tracker annotation surfaces and `/help/trade-tags` | Annotation service and preset/custom tag catalog | Read the exact tags, trade note and saved custom-rule reviews on one completed trade, explain available tags through maintained Help, and draft a replacement set. Saving requires an exact before/after preview and the canonical tag command. Tags remain trader observations, never proof of cause, emotion, setup quality or a rule outcome. | Dedicated completed-trade read implemented; draft/confirm planned |
 | Paid plan and billing | Account/Help billing surfaces | Entitlement read and customer billing URLs | Explain current entitlement and link to billing. No purchase, cancellation or payment action through Chat. | Planned read/help; actions unavailable |
 
 ## Aliases and non-product routes
@@ -148,6 +152,12 @@ coverage state and representative evaluation cases.
   deterministic rule-recommendation evidence service; it must not be exposed
   before that source exists.
 - `get_trade_annotations`
+
+The three implemented reads above are selected-account scoped. Rule-result
+requests cover at most 62 days and return no more than 50 individual events;
+their exact summaries remain complete for the requested period. Preset
+outcomes come only from the deterministic evaluator, custom outcomes come only
+from saved trader reviews, and unavailable evidence remains unavailable.
 
 ### Analytics and exploration
 

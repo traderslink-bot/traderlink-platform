@@ -135,6 +135,17 @@ export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
     ]),
   }),
   Object.freeze({
+    id: "trading_rule_and_tag_reads",
+    kind: "factual_read" as const,
+    plainLanguage: "Read saved Trading Rules, deterministic rule results, trade notes, Trade Tags, and custom-rule reviews.",
+    canonicalNames: Object.freeze([]),
+    limitations: Object.freeze([
+      "Chat does not create a rule recommendation or judge a rule outcome itself.",
+      "Tags and notes remain trader observations and are not proof of why a trade happened.",
+      "Rule-result periods are limited to 62 days per factual request.",
+    ]),
+  }),
+  Object.freeze({
     id: "confirmed_product_changes",
     kind: "confirmed_draft" as const,
     plainLanguage: "Prepare supported currency, notification, account-selection, or AI Review on/off changes.",

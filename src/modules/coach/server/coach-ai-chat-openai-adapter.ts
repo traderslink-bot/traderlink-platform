@@ -170,6 +170,16 @@ const analyzedTradeListInput = z.object({
 const savedCandleReviewInput = z.object({
   tradeRef: z.string().regex(/^[0-9a-f]{64}$/u),
 }).strict();
+const tradingRulesInput = z.object({
+  state: z.enum(["active", "paused", "retired", "all"]),
+}).strict();
+const tradingRuleResultsInput = z.object({
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/u),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/u),
+}).strict();
+const tradeAnnotationsInput = z.object({
+  roundTripId: z.string().uuid(),
+}).strict();
 
 const answerSchema = z.object({
   directAnswer: z.string().min(1).max(1_600),
@@ -717,6 +727,36 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
           parameters: savedCandleReviewInput,
           execute: (value, _context, details) => dispatch(
             "get_saved_candle_review",
+            value,
+            details?.toolCall?.callId,
+          ),
+        }),
+        tool({
+          name: "list_trading_rules",
+          description: "List the trader's exact saved preset and custom rules, settings, scope, and current status.",
+          parameters: tradingRulesInput,
+          execute: (value, _context, details) => dispatch(
+            "list_trading_rules",
+            value,
+            details?.toolCall?.callId,
+          ),
+        }),
+        tool({
+          name: "get_trading_rule_results",
+          description: "Read deterministic preset-rule results and saved custom-rule reviews for up to 62 days.",
+          parameters: tradingRuleResultsInput,
+          execute: (value, _context, details) => dispatch(
+            "get_trading_rule_results",
+            value,
+            details?.toolCall?.callId,
+          ),
+        }),
+        tool({
+          name: "get_trade_annotations",
+          description: "Read the exact saved trade note, tags, and custom-rule reviews for one completed trade.",
+          parameters: tradeAnnotationsInput,
+          execute: (value, _context, details) => dispatch(
+            "get_trade_annotations",
             value,
             details?.toolCall?.callId,
           ),

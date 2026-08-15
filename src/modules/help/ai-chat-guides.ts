@@ -23,6 +23,7 @@ export const AI_CHAT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: Object.freeze(["questions", "results", "patterns", "notes", "rules", "focuses"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph" as const, text: "You can ask about completed-trade results, timing, tickers and repeated patterns. AI Chat can also help you reflect on saved notes, rules and Current Focuses, or discuss a saved weekly, two-week or monthly AI Review." }),
+          Object.freeze({ kind: "paragraph" as const, text: "Ask which Trading Rules are active, what settings they use, which preset checks were Followed, Broken or unavailable, or which tags and trade note you saved on one completed trade. AI Chat reads those saved results; it does not decide a rule outcome or treat a tag as proof." }),
           Object.freeze({ kind: "paragraph" as const, text: "You can also ask about saved Trade Analyzer results, an existing Candle Review, recent imports, Data Decisions, notifications, account preferences and whether a Moomoo connection or automatic import is set up." }),
           Object.freeze({ kind: "paragraph" as const, text: "A specific question usually gives a more useful answer. Include the result or behavior you want to understand, then use the Explore control to choose the matching period or ticker." }),
         ]),

@@ -21,6 +21,7 @@ import type { CoachAiChatDashboardContextService } from "./coach-ai-chat-dashboa
 import type { CoachAiChatAnalyticsPageToolService } from "./coach-ai-chat-analytics-page-tool-service";
 import type { CoachAiChatProductContextService } from "./coach-ai-chat-product-context-service";
 import type { CoachAiChatTradeAnalyzerToolService } from "./coach-ai-chat-trade-analyzer-tool-service";
+import type { CoachAiChatAnnotationContextService } from "./coach-ai-chat-annotation-context-service";
 
 /** A generation has one shared factual-result budget. Results are never shortened to fit it. */
 /** Across at most two tool steps; later model calls can receive this package twice. */
@@ -150,6 +151,16 @@ function applyScope(
       }),
     });
   }
+  if (request.toolName === "get_trading_rule_results") {
+    const selectedRange = scopeDateRange(scope);
+    if (!selectedRange) return request;
+    const startDate = selectedRange.startDate > request.startDate
+      ? selectedRange.startDate : request.startDate;
+    const endDate = selectedRange.endDate < request.endDate
+      ? selectedRange.endDate : request.endDate;
+    if (startDate > endDate) throw new CoachAiChatFactualToolError("invalid_request");
+    return Object.freeze({ ...request, startDate, endDate });
+  }
   if (request.toolName === "summarize_journal_period") {
     if (scope.kind === "day") {
       return Object.freeze({ ...request, period: "daily", anchorDate: scope.date });
@@ -236,6 +247,8 @@ export class CoachAiChatFactualToolDispatcher {
         "listNotifications" | "accountContext">;
       tradeAnalyzer?: Pick<CoachAiChatTradeAnalyzerToolService,
         "results" | "listTrades" | "savedCandleReview">;
+      annotations?: Pick<CoachAiChatAnnotationContextService,
+        "listRules" | "ruleResults" | "tradeAnnotations">;
     }> = Object.freeze({}),
     private readonly analysisScope: CoachAiChatAnalysisScope = Object.freeze({ kind: "recent" }),
   ) {}
@@ -422,6 +435,31 @@ export class CoachAiChatFactualToolDispatcher {
           this.scope,
           this.selectedAccountId,
           request,
+        );
+        break;
+      case "list_trading_rules":
+        if (!this.extensions.annotations) return unsupportedTool(request as never);
+        result = this.extensions.annotations.listRules(
+          this.scope,
+          this.selectedAccountId,
+          request,
+        );
+        break;
+      case "get_trading_rule_results":
+        if (!this.extensions.annotations) return unsupportedTool(request as never);
+        result = this.extensions.annotations.ruleResults(
+          this.scope,
+          this.selectedAccountId,
+          request,
+        );
+        break;
+      case "get_trade_annotations":
+        if (!this.extensions.annotations) return unsupportedTool(request as never);
+        result = this.extensions.annotations.tradeAnnotations(
+          this.scope,
+          this.selectedAccountId,
+          request,
+          enforcedAnalysisScope,
         );
         break;
       default:
