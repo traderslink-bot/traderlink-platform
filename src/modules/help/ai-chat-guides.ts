@@ -121,11 +121,12 @@ export const AI_CHAT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       Object.freeze({
         id: "supported-changes",
         title: "Supported changes",
-        summary: "Change supported account preferences or one completed trade's tags through a clear confirmation preview.",
-        keywords: Object.freeze(["reporting currency", "notification", "Discord", "AI Reviews", "switch account", "trade tags", "confirm"]),
+        summary: "Change supported preferences, completed-trade tags, or Trading Rules through a clear confirmation preview.",
+        keywords: Object.freeze(["reporting currency", "notification", "Discord", "AI Reviews", "switch account", "trade tags", "trading rules", "confirm"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph" as const, text: "Ask AI Chat to change your reporting currency, mark one exact notification read, choose which updates go to Discord, turn existing AI Reviews on or off, switch to one of your existing Journal accounts, or change the tags on one exact completed trade. Chat checks the current value or target before it prepares anything." }),
+          Object.freeze({ kind: "paragraph" as const, text: "Ask AI Chat to change your reporting currency, mark one exact notification read, choose which updates go to Discord, turn existing AI Reviews on or off, switch to one of your existing Journal accounts, change the tags on one exact completed trade, or add and manage a Trading Rule. Chat checks the current value or target before it prepares anything." }),
           Object.freeze({ kind: "paragraph" as const, text: "For trade tags, Chat shows the complete current and proposed tag lists. It uses only tags you explicitly requested from the available saved or preset choices; it does not add a setup, emotion, mistake or rule tag based on its own interpretation." }),
+          Object.freeze({ kind: "paragraph" as const, text: "For Trading Rules, Chat can add a maintained preset with every required setting, create or revise a custom rule, or pause, resume, and retire an exact saved rule. It will not activate a suggested rule unless you explicitly ask for that exact change." }),
           Object.freeze({ kind: "paragraph" as const, text: "The proposed change appears in the conversation with a clear preview. Nothing changes until you choose Confirm change. You can cancel the proposal instead, and an unconfirmed proposal expires after 24 hours." }),
         ]),
       }),

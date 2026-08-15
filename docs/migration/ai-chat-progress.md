@@ -68,10 +68,10 @@ The private persistence API checkpoint is tracked in
   coverage and unavailable states.
 - [x] Implement Import, Data Decisions, Notifications, Account and entitlement
   reads without exposing statements, credentials, admin data or secrets.
-- [ ] Add allowlisted Swing, remaining tag, rule, Data Decision and remaining
+- [ ] Add allowlisted Swing, remaining tag, Data Decision and remaining
   account setting drafts/confirmed actions through canonical commands. Trading
   Rules and completed-trade annotations have deterministic reads, and exact
-  completed-Day-trade tag replacement is complete. Reporting
+  completed-Day-trade tag replacement and confirmed Trading Rule changes are complete. Reporting
   currency, notification read/preferences, selected-account switching and
   existing AI Review on/off changes are complete; the remaining command
   families stay pending.
@@ -307,6 +307,29 @@ The private persistence API checkpoint is tracked in
   replacement and selected-account isolation. This action reused the accepted
   AI Chat action registry; it required no migration or protected-database
   change and performed no provider request, push or deployment.
+
+### Completed: confirmed Trading Rule changes
+
+- `list_trading_rules` now returns each exact saved rule through a privacy-safe
+  opaque reference plus the maintained preset catalog and every required
+  setting. Raw rule identifiers remain private.
+- Chat can prepare a maintained preset rule, create or revise a custom rule,
+  revise preset settings, or pause, resume and retire one exact saved rule. The
+  preview shows the current and complete proposed state, and generation writes
+  nothing.
+- Confirmation rechecks the selected account, exact rule revision and lifecycle
+  state before calling the canonical Trading Rules mutation. A changed rule,
+  invalid transition, missing preset field or already-satisfied change fails
+  closed.
+- The model cannot activate a rule merely because analysis suggests it. A
+  trader must explicitly request the exact rule change and separately confirm
+  its persisted preview. Rule-result outcomes remain deterministic and cannot
+  be changed by Chat.
+- Focused ESLint, the full no-emit TypeScript check and two one-worker test
+  files pass. Eleven tests cover opaque references, maintained preset choices,
+  no-write previews, confirmed preset/custom mutations, lifecycle changes and
+  selected-account isolation. This slice required no migration or protected-
+  database change and performed no provider request, push or deployment.
 
 ## Completed: scheduled AI Review control enforcement
 

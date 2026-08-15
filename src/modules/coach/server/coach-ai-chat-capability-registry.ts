@@ -39,7 +39,7 @@ export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
     canonicalNames: canonicalNames("daily_tracker_drafts"),
     limitations: Object.freeze([
       "The trader reviews and saves the draft themselves.",
-      "Chat cannot change tags, rules, rule outcomes, position classifications, executions, or review completion.",
+      "This note-draft flow cannot change tags, rules, rule outcomes, position classifications, executions, or review completion.",
     ]),
   }),
   Object.freeze({
@@ -148,12 +148,13 @@ export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
   Object.freeze({
     id: "confirmed_product_changes",
     kind: "confirmed_draft" as const,
-    plainLanguage: "Prepare supported currency, notification, account-selection, AI Review on/off, or completed-trade tag changes.",
+    plainLanguage: "Prepare supported currency, notification, account-selection, AI Review, completed-trade tag, or Trading Rule changes.",
     canonicalNames: Object.freeze([]),
     limitations: Object.freeze([
       "Chat must read the current exact value or target before it can prepare the change.",
       "Nothing changes until the trader confirms the saved preview.",
       "A trade-tag proposal uses only the trader's exact requested tags from the available saved or preset list.",
+      "A Trading Rule proposal uses an exact saved rule or maintained preset, and Chat never activates a rule only because it recommends one.",
       "Login, broker connections, payment, deletion, administration, and unsupported settings remain outside this path.",
     ]),
   }),

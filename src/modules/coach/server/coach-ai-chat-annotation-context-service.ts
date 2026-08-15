@@ -1,5 +1,7 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
+
 import Decimal from "decimal.js";
 
 import type { CoachAiChatAnalysisScope } from "../contracts/ai-chat-contracts";
@@ -24,6 +26,8 @@ import {
 } from "@/src/modules/journal/contracts/journal-tag-preset-catalog";
 import { evaluateJournalPresetRules } from
   "@/src/modules/journal/server/annotations/journal-preset-rule-evaluator";
+import { JOURNAL_RULE_TEMPLATE_CATALOG } from
+  "@/src/modules/journal/server/annotations/journal-trading-rules-dashboard";
 import type { WorkspaceAccessScope } from
   "@/src/modules/platform/contracts/workspace-access-scope";
 import { narrowWorkspaceAccessToAccount } from
@@ -53,6 +57,15 @@ function invalid(): never {
 
 function notFound(): never {
   throw new CoachAiChatFactualToolError("not_found");
+}
+
+function ruleRef(workspaceId: string, accountId: string, ruleId: string): string {
+  return createHash("sha256").update([
+    "coach-rule-ref-v1",
+    workspaceId,
+    accountId,
+    ruleId,
+  ].join("\u001f"), "utf8").digest("hex");
 }
 
 function assertDate(value: string): void {
@@ -179,6 +192,7 @@ export class CoachAiChatAnnotationContextService {
       result: Object.freeze({
         state: request.state,
         rules: Object.freeze(rules.map((rule) => Object.freeze({
+          ruleRef: ruleRef(account.workspaceId, account.accountId, rule.ruleId),
           title: rule.title,
           description: rule.statement,
           kind: rule.sourceKind === "template" ? "Preset" : "Custom",
@@ -193,6 +207,18 @@ export class CoachAiChatAnnotationContextService {
           effectiveFromUtc: rule.effectiveFromUtc,
           effectiveUntilUtc: rule.effectiveUntilUtc ?? null,
         }))),
+        availablePresetRules: Object.freeze(JOURNAL_RULE_TEMPLATE_CATALOG.map((template) =>
+          Object.freeze({
+            presetKey: template.templateId,
+            title: template.label,
+            description: template.description,
+            category: template.category,
+            appliesTo: template.scope === "day_session" ? "Trading day"
+              : template.scope === "trade" ? "Trade" : "Trading day and trade",
+            parameters: template.parameters,
+            exampleConfiguration: template.exampleConfiguration,
+            limitation: template.limitationSummary,
+          }))),
         links: Object.freeze({ tradingRules: "/rules", ruleResults: "/rules/results" }),
       }),
     });

@@ -122,12 +122,19 @@ describe("CoachAiChatAnnotationContextService", () => {
     expect(response.result).toMatchObject({
       state: "active",
       rules: [{
+        ruleRef: expect.stringMatching(/^[0-9a-f]{64}$/u),
         title: "Maximum completed trades per day",
         kind: "Preset",
         appliesTo: "Trading day",
         configuration: { maximumTrades: "3" },
         status: "active",
       }],
+      availablePresetRules: expect.arrayContaining([
+        expect.objectContaining({
+          presetKey: "maximum_trades_per_day",
+          title: "Maximum completed trades per day",
+        }),
+      ]),
     });
     expect(JSON.stringify(response)).not.toContain(ruleId);
   });

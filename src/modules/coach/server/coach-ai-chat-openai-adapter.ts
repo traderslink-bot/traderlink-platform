@@ -218,6 +218,41 @@ const dailyCompanionAnswerSchema = answerSchema.extend({
   }).strict().nullable(),
 }).strict();
 
+const ruleConfigurationSchema = z.record(
+  z.string().regex(/^[a-z][A-Za-z0-9]{0,63}$/u),
+  z.string().trim().min(1).max(80),
+).refine((value) => Object.keys(value).length <= 4);
+const customRuleFields = {
+  title: z.string().trim().min(1).max(100),
+  statement: z.string().trim().min(1).max(1_000),
+  category: z.enum(["process", "setup", "mindset", "review"]),
+  reviewScope: z.enum(["day_session", "trade", "both"]),
+  isFocus: z.boolean(),
+} as const;
+const ruleChangeOperationSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("create_preset"),
+    presetKey: z.string().regex(/^[a-z][a-z0-9_]{0,63}$/u),
+    configuration: ruleConfigurationSchema,
+  }).strict(),
+  z.object({
+    kind: z.literal("revise_preset"),
+    ruleRef: z.string().regex(/^[0-9a-f]{64}$/u),
+    configuration: ruleConfigurationSchema,
+  }).strict(),
+  z.object({
+    kind: z.literal("transition"),
+    ruleRef: z.string().regex(/^[0-9a-f]{64}$/u),
+    newStatus: z.enum(["active", "paused", "retired"]),
+  }).strict(),
+  z.object({ kind: z.literal("create_custom"), ...customRuleFields }).strict(),
+  z.object({
+    kind: z.literal("revise_custom"),
+    ruleRef: z.string().regex(/^[0-9a-f]{64}$/u),
+    ...customRuleFields,
+  }).strict(),
+]);
+
 const actionDraftSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("reporting_currency"),
@@ -245,6 +280,10 @@ const actionDraftSchema = z.discriminatedUnion("kind", [
     kind: z.literal("trade_tags"),
     roundTripId: z.string().uuid(),
     tagNames: z.array(z.string().trim().min(1).max(40)).max(10),
+  }).strict(),
+  z.object({
+    kind: z.literal("rule_change"),
+    operation: ruleChangeOperationSchema,
   }).strict(),
 ]);
 
@@ -282,7 +321,7 @@ Create a dailyCompanionDraft only when the trader explicitly asks you to draft, 
 
 Create a reviewDeliveryChangeDraft only when the trader explicitly asks to change the weekly AI Review delivery day or Eastern delivery time and both final values are clear. The only permitted days are Friday, Saturday, and Sunday. The only permitted times are 4:00 PM through 11:30 PM Eastern in 30-minute steps. Use the supplied currentReviewDelivery value for an unchanged field. Return null when the request is unclear or concerns any other user, login, billing, privacy, ownership, provider, model, admin, or account setting. Never claim the setting was changed; the trader will review and confirm it separately.
 
-Create an actionDraft only when the trader explicitly asks to change their reporting currency, mark one exact notification read, switch to one exact existing Journal account, change the exact Discord notification categories, turn existing AI Reviews on or off, or replace the complete tag set on one exact completed trade. Before proposing it, call get_account_preferences, list_notifications, get_account_trading, get_account_ai_plan, or get_trade_annotations as appropriate and use only values, tag names, or references returned by that tool in this generation. For notification preferences, return the complete final category list, including unchanged categories. For trade tags, return the complete final tag list, including unchanged tags; use only names in availableTags, and never add a tag because you inferred a setup, emotion, mistake, cause, or rule outcome. Return null if the target is unclear, already satisfied, absent from the tool result, or concerns any other setting or action. If AI Reviews have never been configured, direct the trader to Account settings instead of inventing a schedule. The trader will see an exact preview and must confirm it separately. Never claim the action was completed during generation.
+Create an actionDraft only when the trader explicitly asks to change their reporting currency, mark one exact notification read, switch to one exact existing Journal account, change the exact Discord notification categories, turn existing AI Reviews on or off, replace the complete tag set on one exact completed trade, or add/change/pause/resume/retire one exact Trading Rule. Before proposing it, call get_account_preferences, list_notifications, get_account_trading, get_account_ai_plan, get_trade_annotations, or list_trading_rules as appropriate and use only values, tag names, preset definitions, or opaque references returned by that tool in this generation. For notification preferences, return the complete final category list, including unchanged categories. For trade tags, return the complete final tag list, including unchanged tags; use only names in availableTags, and never add a tag because you inferred a setup, emotion, mistake, cause, or rule outcome. For a preset rule, use only a returned presetKey and provide every required configuration field. For an existing rule, use its returned ruleRef. A custom-rule revision must return every final field, including unchanged fields. Never activate or change a rule merely because analysis or a recommendation suggests it; the trader must explicitly request the exact change. Return null if the target is unclear, already satisfied, absent from the tool result, or concerns any other setting or action. If AI Reviews have never been configured, direct the trader to Account settings instead of inventing a schedule. The trader will see an exact preview and must confirm it separately. Never claim the action was completed during generation.
 
 Create a manualExecutionDraft when the current message clearly asks to enter, record, add, correct, or continue a set of manual trade executions. The trader does not need to select a special mode first. A shortcut hint may be present, but it is only a hint and never proof of intent. Use only execution facts explicitly supplied in the current message or the existing draft. Never guess a date, Eastern execution time, ticker, side, quantity, price, or fee. Fees are optional and may remain null. Preserve exact decimal digits. Words such as bought, added, sold, reduced, exited, covered, or shorted may establish side only when their meaning is clear. Do not convert relative dates such as today or yesterday into a date; ask for the actual date. Times are Eastern Time. Return the complete proposed rows, including unchanged existing rows when the trader is clarifying a prior draft. If the trader only asks how manual entry works, return null. Never claim an execution was saved; the trader will edit and explicitly confirm the draft through the normal Journal preview.
 

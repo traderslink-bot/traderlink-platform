@@ -100,12 +100,22 @@ function fixture() {
   });
   const chat = new CoachAiChatRepository(database);
   const conversationId = chat.createConversation(scope, "Changes", now).conversationId;
-  const message = (text: string) => chat.appendUserMessageAndReserveAssistant(
-    scope,
-    conversationId,
-    { originalUserTextPrivate: text },
-    now,
-  ).userMessage.messageId;
+  const message = (text: string) => {
+    const reserved = chat.appendUserMessageAndReserveAssistant(
+      scope,
+      conversationId,
+      { originalUserTextPrivate: text },
+      now,
+    );
+    chat.finalizeAssistantFailure(
+      scope,
+      reserved.assistantMessage.messageId,
+      "TEST_TURN_CLOSED",
+      null,
+      now,
+    );
+    return reserved.userMessage.messageId;
+  };
   return { database, scope, conversationId, message, roundTripId };
 }
 
@@ -286,6 +296,124 @@ describe("CoachAiChatActionDraftService", () => {
       }, new Date("2026-08-15T12:01:00.000Z"));
       expect(annotations.listTagsForRoundTrips(account, [f.roundTripId])[f.roundTripId]
         ?.map((tag) => tag.name).sort()).toEqual(["Breakout", "Patient entry"]);
+    } finally {
+      f.database.close();
+    }
+  });
+
+  it("adds a configured preset rule only after confirmation", () => {
+    const f = fixture();
+    try {
+      const service = new CoachAiChatActionDraftService(f.database);
+      const annotations = new JournalAnnotationService(
+        new JournalAnnotationRepository(f.database),
+        new JournalRuleRepository(f.database),
+      );
+      const account = narrowWorkspaceAccessToAccount(f.scope, f.scope.activeAccountId!);
+      const draft = service.create(f.scope, {
+        conversationId: f.conversationId,
+        sourceMessageId: f.message("Add a maximum of four completed trades per day."),
+        extraction: Object.freeze({
+          kind: "rule_change",
+          operation: Object.freeze({
+            kind: "create_preset",
+            presetKey: "maximum_trades_per_day",
+            configuration: Object.freeze({ maximumTrades: "4" }),
+          }),
+        }),
+      }, now);
+      expect(draft.preview).toMatchObject({
+        kind: "rule_change",
+        title: "Add trading rule",
+        ruleTitle: "Maximum completed trades per day",
+      });
+      expect(annotations.listRules(account)).toEqual([]);
+      service.confirm(f.scope, {
+        conversationId: f.conversationId,
+        draftId: draft.draftId,
+      }, new Date("2026-08-15T12:01:00.000Z"));
+      expect(annotations.listRules(account)).toMatchObject([{
+        templateKey: "maximum_trades_per_day",
+        lifecycleState: "active",
+        configuration: { maximumTrades: "4" },
+      }]);
+    } finally {
+      f.database.close();
+    }
+  });
+
+  it("creates, revises, and pauses an exact custom rule through separate confirmations", () => {
+    const f = fixture();
+    try {
+      const service = new CoachAiChatActionDraftService(f.database);
+      const annotations = new JournalAnnotationService(
+        new JournalAnnotationRepository(f.database),
+        new JournalRuleRepository(f.database),
+      );
+      const account = narrowWorkspaceAccessToAccount(f.scope, f.scope.activeAccountId!);
+      const created = service.create(f.scope, {
+        conversationId: f.conversationId,
+        sourceMessageId: f.message("Add my custom rule to wait for confirmation."),
+        extraction: Object.freeze({
+          kind: "rule_change",
+          operation: Object.freeze({
+            kind: "create_custom",
+            title: "Wait for confirmation",
+            statement: "Wait for the setup to confirm before entering.",
+            category: "process",
+            reviewScope: "trade",
+            isFocus: true,
+          }),
+        }),
+      }, now);
+      service.confirm(f.scope, {
+        conversationId: f.conversationId,
+        draftId: created.draftId,
+      }, new Date("2026-08-15T12:01:00.000Z"));
+      const saved = annotations.listRules(account)[0]!;
+      const opaqueRef = createHash("sha256").update([
+        "coach-rule-ref-v1",
+        account.workspaceId,
+        account.accountId,
+        saved.ruleId,
+      ].join("\u001f"), "utf8").digest("hex");
+      const revised = service.create(f.scope, {
+        conversationId: f.conversationId,
+        sourceMessageId: f.message("Change that rule wording."),
+        extraction: Object.freeze({
+          kind: "rule_change",
+          operation: Object.freeze({
+            kind: "revise_custom",
+            ruleRef: opaqueRef,
+            title: "Wait for confirmation",
+            statement: "Wait for both the setup and entry trigger to confirm.",
+            category: "process",
+            reviewScope: "trade",
+            isFocus: true,
+          }),
+        }),
+      }, new Date("2026-08-15T12:02:00.000Z"));
+      expect(annotations.listRules(account)[0]?.statement)
+        .toBe("Wait for the setup to confirm before entering.");
+      service.confirm(f.scope, {
+        conversationId: f.conversationId,
+        draftId: revised.draftId,
+      }, new Date("2026-08-15T12:03:00.000Z"));
+      expect(annotations.listRules(account)[0]?.statement)
+        .toBe("Wait for both the setup and entry trigger to confirm.");
+      const paused = service.create(f.scope, {
+        conversationId: f.conversationId,
+        sourceMessageId: f.message("Pause that rule."),
+        extraction: Object.freeze({
+          kind: "rule_change",
+          operation: Object.freeze({ kind: "transition", ruleRef: opaqueRef, newStatus: "paused" }),
+        }),
+      }, new Date("2026-08-15T12:04:00.000Z"));
+      service.confirm(f.scope, {
+        conversationId: f.conversationId,
+        draftId: paused.draftId,
+      }, new Date("2026-08-15T12:05:00.000Z"));
+      expect(annotations.listRules(account)[0]?.lifecycleState).toBe("paused");
     } finally {
       f.database.close();
     }

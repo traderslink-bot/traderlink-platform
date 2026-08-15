@@ -63,6 +63,29 @@ function Details({ draft }: Readonly<{ draft: CoachAiChatActionDraft }>) {
       </Stack>
     );
   }
+  if (preview.kind === "rule_change") {
+    return (
+      <Stack spacing={1}>
+        <Typography sx={{ fontWeight: 750 }} variant="body2">{preview.ruleTitle}</Typography>
+        {preview.currentDetails.length > 0 ? (
+          <Stack spacing={0.25}>
+            <Typography color="text.secondary" variant="caption">Currently</Typography>
+            {preview.currentDetails.map((detail) => (
+              <Typography color="text.secondary" key={`current-${detail}`} variant="body2">
+                {detail}
+              </Typography>
+            ))}
+          </Stack>
+        ) : null}
+        <Stack spacing={0.25}>
+          <Typography color="text.secondary" variant="caption">Change to</Typography>
+          {preview.proposedDetails.map((detail) => (
+            <Typography key={`proposed-${detail}`} variant="body2">{detail}</Typography>
+          ))}
+        </Stack>
+      </Stack>
+    );
+  }
   return (
     <Stack spacing={0.5}>
       <Typography sx={{ fontWeight: 750 }} variant="body2">{preview.notificationTitle}</Typography>

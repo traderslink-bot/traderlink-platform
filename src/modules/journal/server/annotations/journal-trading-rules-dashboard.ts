@@ -315,6 +315,13 @@ function validatedTemplateConfiguration(
   return Object.freeze(result);
 }
 
+export function validateJournalTradingRuleTemplateConfiguration(
+  templateId: string,
+  value: unknown,
+): Readonly<Record<string, string>> {
+  return validatedTemplateConfiguration(template(templateId), value);
+}
+
 export function journalTradingRuleValidationMessage(field: unknown): string {
   if (typeof field !== "string") {
     return "Check the rule settings and try again.";

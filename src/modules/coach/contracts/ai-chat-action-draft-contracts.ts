@@ -26,6 +26,42 @@ export type CoachAiChatActionDraftExtraction =
       kind: "trade_tags";
       roundTripId: string;
       tagNames: readonly string[];
+    }>
+  | Readonly<{
+      kind: "rule_change";
+      operation:
+        | Readonly<{
+            kind: "create_preset";
+            presetKey: string;
+            configuration: Readonly<Record<string, string>>;
+          }>
+        | Readonly<{
+            kind: "revise_preset";
+            ruleRef: string;
+            configuration: Readonly<Record<string, string>>;
+          }>
+        | Readonly<{
+            kind: "transition";
+            ruleRef: string;
+            newStatus: "active" | "paused" | "retired";
+          }>
+        | Readonly<{
+            kind: "create_custom";
+            title: string;
+            statement: string;
+            category: "process" | "setup" | "mindset" | "review";
+            reviewScope: "day_session" | "trade" | "both";
+            isFocus: boolean;
+          }>
+        | Readonly<{
+            kind: "revise_custom";
+            ruleRef: string;
+            title: string;
+            statement: string;
+            category: "process" | "setup" | "mindset" | "review";
+            reviewScope: "day_session" | "trade" | "both";
+            isFocus: boolean;
+          }>;
     }>;
 
 export type CoachAiChatActionDraftPreview =
@@ -66,6 +102,13 @@ export type CoachAiChatActionDraftPreview =
       ticker: string;
       currentTagNames: readonly string[];
       proposedTagNames: readonly string[];
+    }>
+  | Readonly<{
+      kind: "rule_change";
+      title: "Add trading rule" | "Change trading rule";
+      ruleTitle: string;
+      currentDetails: readonly string[];
+      proposedDetails: readonly string[];
     }>;
 
 export type CoachAiChatActionCanonicalCommand =
@@ -74,7 +117,8 @@ export type CoachAiChatActionCanonicalCommand =
   | "platform_account_selection"
   | "platform_notification_preferences_update"
   | "coach_ai_review_account_setting_save"
-  | "journal_trade_tags_replace";
+  | "journal_trade_tags_replace"
+  | "journal_trading_rules_mutate";
 
 export type CoachAiChatActionDraft = Readonly<{
   contractVersion: typeof COACH_AI_CHAT_ACTION_DRAFT_CONTRACT_VERSION;

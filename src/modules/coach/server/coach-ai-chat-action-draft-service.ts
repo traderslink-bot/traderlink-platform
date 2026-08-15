@@ -22,6 +22,13 @@ import { JournalAnnotationService } from
   "@/src/modules/journal/server/annotations/journal-annotation-service";
 import { JournalRuleRepository } from
   "@/src/modules/journal/server/annotations/journal-rule-repository";
+import type { JournalRuleRecord } from
+  "@/src/modules/journal/contracts/journal-annotation-contracts";
+import {
+  JOURNAL_RULE_TEMPLATE_CATALOG,
+  mutateJournalTradingRules,
+  validateJournalTradingRuleTemplateConfiguration,
+} from "@/src/modules/journal/server/annotations/journal-trading-rules-dashboard";
 import {
   JOURNAL_TAG_PRESET_CATALOG,
 } from "@/src/modules/journal/contracts/journal-tag-preset-catalog";
@@ -50,6 +57,15 @@ function notificationRef(scope: WorkspaceAccessScope, privateId: string): string
     scope.workspaceId,
     scope.userId,
     privateId,
+  ].join("\u001f"), "utf8").digest("hex");
+}
+
+function ruleRef(scope: Readonly<{ workspaceId: string; accountId: string }>, ruleId: string): string {
+  return createHash("sha256").update([
+    "coach-rule-ref-v1",
+    scope.workspaceId,
+    scope.accountId,
+    ruleId,
   ].join("\u001f"), "utf8").digest("hex");
 }
 
@@ -107,6 +123,67 @@ function stringArray(value: unknown, field: string): readonly string[] {
     platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { field });
   }
   return Object.freeze(value as string[]);
+}
+
+function record(value: unknown, field: string): Readonly<Record<string, unknown>> {
+  if (!value || Array.isArray(value) || typeof value !== "object") {
+    platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { field });
+  }
+  return value as Readonly<Record<string, unknown>>;
+}
+
+function normalizedRuleText(value: unknown, field: string, maximum: number): string {
+  if (typeof value !== "string") {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field });
+  }
+  const normalized = value.trim().replace(/\s+/gu, " ").normalize("NFKC");
+  if (normalized.length < 1 || normalized.length > maximum) {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field });
+  }
+  return normalized;
+}
+
+function ruleConfiguration(value: unknown): Readonly<Record<string, string>> {
+  const source = record(value, "configuration");
+  const result: Record<string, string> = {};
+  for (const [key, item] of Object.entries(source)) {
+    if (typeof item !== "string") {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "configuration" });
+    }
+    result[key] = item;
+  }
+  return Object.freeze(result);
+}
+
+function ruleDetails(rule: JournalRuleRecord): readonly string[] {
+  return Object.freeze([
+    rule.sourceKind === "template" ? "Preset rule" : "Custom rule",
+    `Status: ${rule.lifecycleState}`,
+    ...(rule.sourceKind === "template"
+      ? Object.entries(rule.configuration).map(([key, value]) => `${key}: ${value}`)
+      : [
+          `Applies to: ${rule.reviewScope === "day" ? "trading day"
+            : rule.reviewScope === "trade" ? "trade" : "trading day and trade"}`,
+          `Category: ${rule.category}`,
+          `Focus rule: ${rule.isFocus ? "yes" : "no"}`,
+          rule.statement,
+        ]),
+  ]);
+}
+
+function presetDetails(
+  presetKey: string,
+  configuration: Readonly<Record<string, string>>,
+  status = "active",
+): readonly string[] {
+  const template = JOURNAL_RULE_TEMPLATE_CATALOG.find((item) => item.templateId === presetKey);
+  if (!template) platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+  return Object.freeze([
+    "Preset rule",
+    `Status: ${status}`,
+    ...template.parameters.map((parameter) =>
+      `${parameter.label}: ${configuration[parameter.key]}${parameter.unit ? ` ${parameter.unit}` : ""}`),
+  ]);
 }
 
 function normalizedTagName(value: unknown): string {
@@ -269,7 +346,7 @@ export class CoachAiChatActionDraftService {
         currentRevision: current.revision,
         proposedEnabled: input.extraction.isEnabled,
       });
-    } else {
+    } else if (input.extraction.kind === "trade_tags") {
       const account = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId!);
       const trade = this.database.prepare<[string, string, string], TagTradeRow>(`SELECT
  instrument.normalized_symbol
@@ -355,6 +432,138 @@ WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
           .sort((left, right) => left.tagId.localeCompare(right.tagId))),
         proposedPresetKeys: Object.freeze([...proposedPresetKeys].sort()),
       });
+    } else {
+      const account = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId!);
+      const operation = input.extraction.operation;
+      const rules = this.annotations.listRules(account);
+      if (operation.kind === "create_preset") {
+        const template = JOURNAL_RULE_TEMPLATE_CATALOG.find((item) =>
+          item.templateId === operation.presetKey);
+        if (!template || rules.some((rule) => rule.templateKey === operation.presetKey &&
+            rule.lifecycleState !== "retired")) {
+          platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+        }
+        const configuration = validateJournalTradingRuleTemplateConfiguration(
+          operation.presetKey,
+          operation.configuration,
+        );
+        preview = Object.freeze({
+          kind: input.extraction.kind,
+          title: "Add trading rule",
+          ruleTitle: template.label,
+          currentDetails: Object.freeze([]),
+          proposedDetails: presetDetails(operation.presetKey, configuration),
+        });
+        privatePayload = Object.freeze({
+          operation: operation.kind,
+          presetKey: operation.presetKey,
+          configuration,
+        });
+      } else if (operation.kind === "create_custom") {
+        const title = normalizedRuleText(operation.title, "title", 100);
+        const statement = normalizedRuleText(operation.statement, "statement", 1_000);
+        preview = Object.freeze({
+          kind: input.extraction.kind,
+          title: "Add trading rule",
+          ruleTitle: title,
+          currentDetails: Object.freeze([]),
+          proposedDetails: Object.freeze([
+            "Custom rule",
+            "Status: active",
+            `Applies to: ${operation.reviewScope === "day_session" ? "trading day"
+              : operation.reviewScope === "trade" ? "trade" : "trading day and trade"}`,
+            `Category: ${operation.category}`,
+            `Focus rule: ${operation.isFocus ? "yes" : "no"}`,
+            statement,
+          ]),
+        });
+        privatePayload = Object.freeze({
+          operation: operation.kind,
+          title,
+          statement,
+          category: operation.category,
+          reviewScope: operation.reviewScope,
+          isFocus: operation.isFocus,
+        });
+      } else {
+        if (!/^[0-9a-f]{64}$/u.test(operation.ruleRef)) {
+          platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "ruleRef" });
+        }
+        const matches = rules.filter((rule) => ruleRef(account, rule.ruleId) === operation.ruleRef);
+        if (matches.length !== 1) platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+        const current = matches[0]!;
+        let proposedDetails: readonly string[];
+        let proposed: Readonly<Record<string, unknown>>;
+        if (operation.kind === "revise_preset") {
+          if (current.sourceKind !== "template" || current.lifecycleState !== "active" ||
+              !current.templateKey) {
+            platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+          }
+          const configuration = validateJournalTradingRuleTemplateConfiguration(
+            current.templateKey,
+            operation.configuration,
+          );
+          if (JSON.stringify(current.configuration) === JSON.stringify(configuration)) {
+            platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+          }
+          proposedDetails = presetDetails(current.templateKey, configuration);
+          proposed = Object.freeze({ configuration });
+        } else if (operation.kind === "revise_custom") {
+          if (current.sourceKind !== "custom" || current.lifecycleState !== "active") {
+            platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+          }
+          const title = normalizedRuleText(operation.title, "title", 100);
+          const statement = normalizedRuleText(operation.statement, "statement", 1_000);
+          proposedDetails = Object.freeze([
+            "Custom rule",
+            "Status: active",
+            `Applies to: ${operation.reviewScope === "day_session" ? "trading day"
+              : operation.reviewScope === "trade" ? "trade" : "trading day and trade"}`,
+            `Category: ${operation.category}`,
+            `Focus rule: ${operation.isFocus ? "yes" : "no"}`,
+            statement,
+          ]);
+          proposed = Object.freeze({
+            title,
+            statement,
+            category: operation.category,
+            reviewScope: operation.reviewScope,
+            isFocus: operation.isFocus,
+          });
+          if (current.title === title && current.statement === statement &&
+              current.category === operation.category &&
+              current.reviewScope === (operation.reviewScope === "day_session"
+                ? "day" : operation.reviewScope) && current.isFocus === operation.isFocus) {
+            platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+          }
+        } else {
+          const allowed = (current.lifecycleState === "active" &&
+              (operation.newStatus === "paused" || operation.newStatus === "retired")) ||
+            (current.lifecycleState === "paused" &&
+              (operation.newStatus === "active" || operation.newStatus === "retired"));
+          if (!allowed) platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+          proposedDetails = Object.freeze([
+            ...ruleDetails(current).filter((detail) => !detail.startsWith("Status:")),
+            `Status: ${operation.newStatus}`,
+          ]);
+          proposed = Object.freeze({ newStatus: operation.newStatus });
+        }
+        preview = Object.freeze({
+          kind: input.extraction.kind,
+          title: "Change trading rule",
+          ruleTitle: operation.kind === "revise_custom"
+            ? string(proposed.title, "title") : current.title,
+          currentDetails: ruleDetails(current),
+          proposedDetails,
+        });
+        privatePayload = Object.freeze({
+          operation: operation.kind,
+          ruleId: current.ruleId,
+          expectedRevision: current.revision,
+          expectedStatus: current.lifecycleState,
+          ...proposed,
+        });
+      }
     }
     return this.drafts.create(scope, {
       conversationId: input.conversationId,
@@ -474,7 +683,7 @@ WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
           expectedRevision: current.revision,
         }, now);
         reference = `ai_review_settings:${saved.revision}`;
-      } else {
+      } else if (draft.preview.kind === "trade_tags") {
         const account = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId!);
         const roundTripId = string(payload.roundTripId, "roundTripId");
         const current = (this.annotations.listTagsForRoundTrips(
@@ -520,6 +729,81 @@ WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
           scope.activeAccountId,
           roundTripId,
           ...saved.map((tag) => tag.tagId).sort(),
+        ].join("\u001f"), "utf8").digest("hex")}`;
+      } else {
+        const account = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId!);
+        const operation = string(payload.operation, "operation");
+        const rules = this.annotations.listRules(account);
+        let mutation: Readonly<Record<string, unknown> & { action: string }>;
+        if (operation === "create_preset") {
+          const presetKey = string(payload.presetKey, "presetKey");
+          if (rules.some((rule) => rule.templateKey === presetKey &&
+              rule.lifecycleState !== "retired")) {
+            platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+          }
+          mutation = Object.freeze({
+            action: "create",
+            templateId: presetKey,
+            configuration: ruleConfiguration(payload.configuration),
+          });
+        } else if (operation === "create_custom") {
+          mutation = Object.freeze({
+            action: "create_manual",
+            title: string(payload.title, "title"),
+            statement: string(payload.statement, "statement"),
+            category: string(payload.category, "category"),
+            reviewScope: string(payload.reviewScope, "reviewScope"),
+            isFocus: boolean(payload.isFocus, "isFocus"),
+          });
+        } else {
+          const ruleId = string(payload.ruleId, "ruleId");
+          const current = rules.find((rule) => rule.ruleId === ruleId);
+          const expectedRevision = positiveInteger(payload.expectedRevision, "expectedRevision");
+          const expectedStatus = string(payload.expectedStatus, "expectedStatus");
+          if (!current || current.revision !== expectedRevision ||
+              current.lifecycleState !== expectedStatus) {
+            platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+          }
+          if (operation === "revise_preset") {
+            mutation = Object.freeze({
+              action: "revise",
+              ruleInstanceId: ruleId,
+              expectedRevision,
+              configuration: ruleConfiguration(payload.configuration),
+            });
+          } else if (operation === "revise_custom") {
+            mutation = Object.freeze({
+              action: "revise_manual",
+              ruleId,
+              expectedRevision,
+              title: string(payload.title, "title"),
+              statement: string(payload.statement, "statement"),
+              category: string(payload.category, "category"),
+              reviewScope: string(payload.reviewScope, "reviewScope"),
+              isFocus: boolean(payload.isFocus, "isFocus"),
+            });
+          } else if (operation === "transition") {
+            mutation = Object.freeze({
+              action: current.sourceKind === "custom" ? "transition_manual" : "transition",
+              ...(current.sourceKind === "custom"
+                ? { ruleId }
+                : { ruleInstanceId: ruleId }),
+              expectedRevision,
+              expectedCurrentStatus: current.lifecycleState,
+              newStatus: string(payload.newStatus, "newStatus"),
+            });
+          } else {
+            platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { field: "operation" });
+          }
+        }
+        command = "journal_trading_rules_mutate";
+        draft = this.drafts.beginConfirm(scope, input.draftId, command, now);
+        mutateJournalTradingRules(this.annotations, account, mutation);
+        reference = `trading_rule:${createHash("sha256").update([
+          scope.workspaceId,
+          scope.activeAccountId,
+          input.draftId,
+          operation,
         ].join("\u001f"), "utf8").digest("hex")}`;
       }
       draft = this.drafts.markCommitted(scope, input.draftId, reference);
