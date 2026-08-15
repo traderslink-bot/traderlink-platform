@@ -68,9 +68,10 @@ The private persistence API checkpoint is tracked in
   coverage and unavailable states.
 - [x] Implement Import, Data Decisions, Notifications, Account and entitlement
   reads without exposing statements, credentials, admin data or secrets.
-- [ ] Add allowlisted Swing, tag, rule, Data Decision and remaining account
-  setting drafts/confirmed actions through canonical commands. Trading Rules
-  and completed-trade annotations now have deterministic reads. Reporting
+- [ ] Add allowlisted Swing, remaining tag, rule, Data Decision and remaining
+  account setting drafts/confirmed actions through canonical commands. Trading
+  Rules and completed-trade annotations have deterministic reads, and exact
+  completed-Day-trade tag replacement is complete. Reporting
   currency, notification read/preferences, selected-account switching and
   existing AI Review on/off changes are complete; the remaining command
   families stay pending.
@@ -288,6 +289,24 @@ The private persistence API checkpoint is tracked in
   removal, exact saved annotations, bounded periods and dispatcher behavior.
   This read-only slice performed no provider request, Journal write, migration,
   protected database change, push or deployment.
+
+### Completed: confirmed completed-Day-trade tag changes
+
+- Chat can prepare a complete replacement of the saved tags on one exact,
+  analytics-ready completed Day trade. The preview shows the ticker, current
+  tags and proposed final tags; generation itself writes nothing.
+- The proposed list is limited to ten unique tags that already exist for the
+  account or belong to the maintained preset catalog. Chat cannot invent a
+  custom tag, infer a tag from P/L or notes, or silently add a tag that the
+  trader did not request.
+- Confirmation rechecks the selected account, completed trade and exact current
+  tag revisions before calling the same canonical Journal annotation command
+  used by the dashboard. A stale trade or changed tag list fails closed.
+- Focused ESLint, the full no-emit TypeScript check and two one-worker test files
+  pass. Nine tests cover the read boundary, no-write preview, confirmed
+  replacement and selected-account isolation. This action reused the accepted
+  AI Chat action registry; it required no migration or protected-database
+  change and performed no provider request, push or deployment.
 
 ## Completed: scheduled AI Review control enforcement
 

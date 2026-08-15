@@ -14,6 +14,17 @@ import { CoachReviewDeliveryScheduleRepository } from
   "./coach-weekly-review-schedule-repository";
 import type { WorkspaceAccessScope } from
   "@/src/modules/platform/contracts/workspace-access-scope";
+import { narrowWorkspaceAccessToAccount } from
+  "@/src/modules/platform/contracts/workspace-access-scope";
+import { JournalAnnotationRepository } from
+  "@/src/modules/journal/server/annotations/journal-annotation-repository";
+import { JournalAnnotationService } from
+  "@/src/modules/journal/server/annotations/journal-annotation-service";
+import { JournalRuleRepository } from
+  "@/src/modules/journal/server/annotations/journal-rule-repository";
+import {
+  JOURNAL_TAG_PRESET_CATALOG,
+} from "@/src/modules/journal/contracts/journal-tag-preset-catalog";
 import {
   PLATFORM_NOTIFICATION_CATEGORIES,
   type PlatformNotificationCategory,
@@ -91,12 +102,67 @@ function positiveInteger(value: unknown, field: string): number {
   return Number(value);
 }
 
+function stringArray(value: unknown, field: string): readonly string[] {
+  if (!Array.isArray(value) || value.some((item) => typeof item !== "string")) {
+    platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { field });
+  }
+  return Object.freeze(value as string[]);
+}
+
+function normalizedTagName(value: unknown): string {
+  if (typeof value !== "string") {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "tagNames" });
+  }
+  const name = value.trim().replace(/\s+/gu, " ").normalize("NFKC");
+  if (name.length < 1 || name.length > 40) {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "tagNames" });
+  }
+  return name;
+}
+
+function tagKey(value: string): string {
+  return value.toLocaleLowerCase("en-US");
+}
+
+function sameTagSnapshots(
+  left: readonly Readonly<{ tagId: string; name: string; revision: number }>[],
+  right: readonly Readonly<{ tagId: string; name: string; revision: number }>[],
+): boolean {
+  return left.length === right.length && left.every((item, index) =>
+    item.tagId === right[index]?.tagId && item.name === right[index]?.name &&
+    item.revision === right[index]?.revision);
+}
+
+function tagSnapshots(value: unknown, field: string): readonly Readonly<{
+  tagId: string;
+  name: string;
+  revision: number;
+}>[] {
+  if (!Array.isArray(value)) {
+    platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { field });
+  }
+  return Object.freeze(value.map((item) => {
+    if (!item || Array.isArray(item) || typeof item !== "object") {
+      platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { field });
+    }
+    const record = item as Record<string, unknown>;
+    return Object.freeze({
+      tagId: string(record.tagId, `${field}.tagId`),
+      name: string(record.name, `${field}.name`),
+      revision: positiveInteger(record.revision, `${field}.revision`),
+    });
+  }).sort((left, right) => left.tagId.localeCompare(right.tagId)));
+}
+
+type TagTradeRow = Readonly<{ normalized_symbol: string }>;
+
 export class CoachAiChatActionDraftService {
   private readonly drafts: CoachAiChatActionDraftRepository;
   private readonly preferences: PlatformUserPreferenceRepository;
   private readonly notifications: PlatformNotificationRepository;
   private readonly profile: PlatformAccountProfileReadService;
   private readonly reviewSchedules: CoachReviewDeliveryScheduleRepository;
+  private readonly annotations: JournalAnnotationService;
 
   constructor(private readonly database: Database.Database) {
     this.drafts = new CoachAiChatActionDraftRepository(database);
@@ -104,6 +170,10 @@ export class CoachAiChatActionDraftService {
     this.notifications = new PlatformNotificationRepository(database);
     this.profile = new PlatformAccountProfileReadService(database);
     this.reviewSchedules = new CoachReviewDeliveryScheduleRepository(database);
+    this.annotations = new JournalAnnotationService(
+      new JournalAnnotationRepository(database),
+      new JournalRuleRepository(database),
+    );
   }
 
   create(
@@ -184,7 +254,7 @@ export class CoachAiChatActionDraftService {
         currentCategories: current,
         proposedCategories: proposed,
       });
-    } else {
+    } else if (input.extraction.kind === "ai_review_account_setting") {
       const current = this.reviewSchedules.readV2(scope);
       if (!current || current.isEnabled === input.extraction.isEnabled) {
         platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
@@ -198,6 +268,92 @@ export class CoachAiChatActionDraftService {
       privatePayload = Object.freeze({
         currentRevision: current.revision,
         proposedEnabled: input.extraction.isEnabled,
+      });
+    } else {
+      const account = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId!);
+      const trade = this.database.prepare<[string, string, string], TagTradeRow>(`SELECT
+ instrument.normalized_symbol
+FROM journal_round_trips round_trip
+JOIN journal_round_trip_versions version
+  ON version.workspace_id = round_trip.workspace_id
+ AND version.account_id = round_trip.account_id
+ AND version.round_trip_id = round_trip.round_trip_id
+ AND version.round_trip_version_id = round_trip.current_version_id
+JOIN journal_instruments instrument
+  ON instrument.workspace_id = version.workspace_id
+ AND instrument.instrument_id = version.instrument_id
+WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
+  AND round_trip.round_trip_id = ? AND round_trip.lifecycle_state = 'active'
+  AND version.projection_state = 'ready_closed'`).get(
+        account.workspaceId,
+        account.accountId,
+        input.extraction.roundTripId,
+      );
+      if (!trade) platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+      const requestedNames = input.extraction.tagNames.map(normalizedTagName);
+      const requestedKeys = requestedNames.map(tagKey);
+      if (requestedNames.length > 10 || new Set(requestedKeys).size !== requestedNames.length) {
+        platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "tagNames" });
+      }
+      const activeTags = this.annotations.listTags(account)
+        .filter((tag) => tag.lifecycleState === "active");
+      const activeByName = new Map(activeTags.map((tag) => [tagKey(tag.name), tag]));
+      const presetByName = new Map(JOURNAL_TAG_PRESET_CATALOG.map((preset) =>
+        [tagKey(preset.name), preset]));
+      const proposedExisting = [] as Array<Readonly<{
+        tagId: string;
+        name: string;
+        revision: number;
+      }>>;
+      const proposedPresetKeys: string[] = [];
+      const proposedTagNames: string[] = [];
+      for (const key of requestedKeys) {
+        const active = activeByName.get(key);
+        if (active) {
+          proposedExisting.push(Object.freeze({
+            tagId: active.tagId,
+            name: active.name,
+            revision: active.revision,
+          }));
+          proposedTagNames.push(active.name);
+          continue;
+        }
+        const preset = presetByName.get(key);
+        if (!preset) {
+          platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT", { field: "tagNames" });
+        }
+        proposedPresetKeys.push(preset.presetKey);
+        proposedTagNames.push(preset.name);
+      }
+      const current = (this.annotations.listTagsForRoundTrips(
+        account,
+        [input.extraction.roundTripId],
+      )[input.extraction.roundTripId] ?? []).map((tag) => Object.freeze({
+        tagId: tag.tagId,
+        name: tag.name,
+        revision: tag.revision,
+      })).sort((left, right) => left.tagId.localeCompare(right.tagId));
+      if (sameStrings(
+        current.map((tag) => tagKey(tag.name)).sort(),
+        proposedTagNames.map(tagKey).sort(),
+      )) {
+        platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+      }
+      preview = Object.freeze({
+        kind: input.extraction.kind,
+        title: "Change trade tags",
+        ticker: trade.normalized_symbol,
+        currentTagNames: Object.freeze(current.map((tag) => tag.name)
+          .sort((left, right) => left.localeCompare(right))),
+        proposedTagNames: Object.freeze([...proposedTagNames]
+          .sort((left, right) => left.localeCompare(right))),
+      });
+      privatePayload = Object.freeze({
+        roundTripId: input.extraction.roundTripId,
+        currentTags: current,
+        proposedExistingTags: Object.freeze(proposedExisting
+          .sort((left, right) => left.tagId.localeCompare(right.tagId))),
+        proposedPresetKeys: Object.freeze([...proposedPresetKeys].sort()),
       });
     }
     return this.drafts.create(scope, {
@@ -295,7 +451,7 @@ export class CoachAiChatActionDraftService {
         });
         reference = `notification_preferences:${createHash("sha256")
           .update(saved.discordDmCategories.join("\u001f"), "utf8").digest("hex")}`;
-      } else {
+      } else if (draft.preview.kind === "ai_review_account_setting") {
         const current = this.reviewSchedules.readV2(scope);
         if (!current || current.revision !== positiveInteger(payload.currentRevision, "currentRevision")) {
           platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
@@ -318,6 +474,53 @@ export class CoachAiChatActionDraftService {
           expectedRevision: current.revision,
         }, now);
         reference = `ai_review_settings:${saved.revision}`;
+      } else {
+        const account = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId!);
+        const roundTripId = string(payload.roundTripId, "roundTripId");
+        const current = (this.annotations.listTagsForRoundTrips(
+          account,
+          [roundTripId],
+        )[roundTripId] ?? []).map((tag) => Object.freeze({
+          tagId: tag.tagId,
+          name: tag.name,
+          revision: tag.revision,
+        })).sort((left, right) => left.tagId.localeCompare(right.tagId));
+        const expectedCurrent = tagSnapshots(payload.currentTags, "currentTags");
+        if (!sameTagSnapshots(current, expectedCurrent)) {
+          platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+        }
+        const proposedExisting = tagSnapshots(
+          payload.proposedExistingTags,
+          "proposedExistingTags",
+        );
+        const active = new Map(this.annotations.listTags(account)
+          .filter((tag) => tag.lifecycleState === "active")
+          .map((tag) => [tag.tagId, tag]));
+        if (proposedExisting.some((expected) => {
+          const found = active.get(expected.tagId);
+          return !found || found.name !== expected.name || found.revision !== expected.revision;
+        })) {
+          platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+        }
+        const presetKeys = stringArray(payload.proposedPresetKeys, "proposedPresetKeys");
+        if (presetKeys.some((key) => !JOURNAL_TAG_PRESET_CATALOG.some((preset) =>
+          preset.presetKey === key))) {
+          platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { field: "proposedPresetKeys" });
+        }
+        command = "journal_trade_tags_replace";
+        draft = this.drafts.beginConfirm(scope, input.draftId, command, now);
+        const saved = this.annotations.replaceRoundTripTagsWithPresets(account, {
+          roundTripId,
+          tagIds: proposedExisting.map((tag) => tag.tagId),
+          presetKeys,
+          now,
+        });
+        reference = `trade_tags:${createHash("sha256").update([
+          scope.workspaceId,
+          scope.activeAccountId,
+          roundTripId,
+          ...saved.map((tag) => tag.tagId).sort(),
+        ].join("\u001f"), "utf8").digest("hex")}`;
       }
       draft = this.drafts.markCommitted(scope, input.draftId, reference);
       return Object.freeze({ draft, accountSelectionRef });

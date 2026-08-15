@@ -21,6 +21,11 @@ export type CoachAiChatActionDraftExtraction =
   | Readonly<{
       kind: "ai_review_account_setting";
       isEnabled: boolean;
+    }>
+  | Readonly<{
+      kind: "trade_tags";
+      roundTripId: string;
+      tagNames: readonly string[];
     }>;
 
 export type CoachAiChatActionDraftPreview =
@@ -54,6 +59,13 @@ export type CoachAiChatActionDraftPreview =
       title: "Change AI Reviews";
       currentEnabled: boolean;
       proposedEnabled: boolean;
+    }>
+  | Readonly<{
+      kind: "trade_tags";
+      title: "Change trade tags";
+      ticker: string;
+      currentTagNames: readonly string[];
+      proposedTagNames: readonly string[];
     }>;
 
 export type CoachAiChatActionCanonicalCommand =
@@ -61,7 +73,8 @@ export type CoachAiChatActionCanonicalCommand =
   | "platform_notification_mark_read"
   | "platform_account_selection"
   | "platform_notification_preferences_update"
-  | "coach_ai_review_account_setting_save";
+  | "coach_ai_review_account_setting_save"
+  | "journal_trade_tags_replace";
 
 export type CoachAiChatActionDraft = Readonly<{
   contractVersion: typeof COACH_AI_CHAT_ACTION_DRAFT_CONTRACT_VERSION;

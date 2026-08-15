@@ -48,6 +48,21 @@ function Details({ draft }: Readonly<{ draft: CoachAiChatActionDraft }>) {
   if (preview.kind === "ai_review_account_setting") {
     return <Typography variant="body2"><strong>{preview.currentEnabled ? "On" : "Off"}</strong> → <strong>{preview.proposedEnabled ? "On" : "Off"}</strong></Typography>;
   }
+  if (preview.kind === "trade_tags") {
+    const current = preview.currentTagNames.length > 0
+      ? preview.currentTagNames.join(", ")
+      : "No tags";
+    const proposed = preview.proposedTagNames.length > 0
+      ? preview.proposedTagNames.join(", ")
+      : "No tags";
+    return (
+      <Stack spacing={0.5}>
+        <Typography sx={{ fontWeight: 750 }} variant="body2">{preview.ticker}</Typography>
+        <Typography color="text.secondary" variant="body2">Currently: {current}</Typography>
+        <Typography variant="body2"><strong>Change to: {proposed}</strong></Typography>
+      </Stack>
+    );
+  }
   return (
     <Stack spacing={0.5}>
       <Typography sx={{ fontWeight: 750 }} variant="body2">{preview.notificationTitle}</Typography>

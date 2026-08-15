@@ -17,6 +17,11 @@ import type { JournalAnalyticsFactSetService } from
   "@/src/modules/journal/server/analytics/journal-analytics-fact-set-service";
 import type { JournalAnnotationService } from
   "@/src/modules/journal/server/annotations/journal-annotation-service";
+import {
+  JOURNAL_TAG_PRESET_CATALOG,
+  JOURNAL_TAG_PRESET_CATEGORY_LABELS,
+  journalTagPresetForName,
+} from "@/src/modules/journal/contracts/journal-tag-preset-catalog";
 import { evaluateJournalPresetRules } from
   "@/src/modules/journal/server/annotations/journal-preset-rule-evaluator";
 import type { WorkspaceAccessScope } from
@@ -151,7 +156,7 @@ export class CoachAiChatAnnotationContextService {
     private readonly facts: Pick<JournalAnalyticsFactSetService, "getJournalAnalyticsFactSet">,
     private readonly dashboard: Pick<JournalDashboardReadModelService, "getTradingDay">,
     private readonly annotations: Pick<JournalAnnotationService,
-      "listRules" | "listRulesForEvaluation" | "listRuleReviews" |
+      "listTags" | "listRules" | "listRulesForEvaluation" | "listRuleReviews" |
       "readRoundTripNotes" | "listTagsForRoundTrips" | "resolveTradingDayId">,
   ) {}
 
@@ -355,6 +360,24 @@ export class CoachAiChatAnnotationContextService {
       roundTripIds: Object.freeze([trade.roundTripId]),
     });
     const rules = new Map(this.annotations.listRules(account).map((rule) => [rule.ruleId, rule]));
+    const activeTags = this.annotations.listTags(account)
+      .filter((tag) => tag.lifecycleState === "active");
+    const availableByName = new Map<string, Readonly<{ name: string; category: string }>>();
+    for (const preset of JOURNAL_TAG_PRESET_CATALOG) {
+      availableByName.set(preset.name.toLocaleLowerCase("en-US"), Object.freeze({
+        name: preset.name,
+        category: JOURNAL_TAG_PRESET_CATEGORY_LABELS[preset.category],
+      }));
+    }
+    for (const tag of activeTags) {
+      const preset = journalTagPresetForName(tag.name);
+      availableByName.set(tag.name.toLocaleLowerCase("en-US"), Object.freeze({
+        name: tag.name,
+        category: preset
+          ? JOURNAL_TAG_PRESET_CATEGORY_LABELS[preset.category]
+          : JOURNAL_TAG_PRESET_CATEGORY_LABELS.custom,
+      }));
+    }
     const timezone = factSet.accounts.find((candidate) => candidate.accountId === selectedAccountId)
       ?.tradingTimezone;
     if (!timezone) notFound();
@@ -375,6 +398,9 @@ export class CoachAiChatAnnotationContextService {
         }) : null,
         tags: Object.freeze(tags.map((tag) => tag.name)
           .sort((left, right) => left.localeCompare(right))),
+        availableTags: Object.freeze([...availableByName.values()]
+          .sort((left, right) => left.category.localeCompare(right.category) ||
+            left.name.localeCompare(right.name))),
         customRuleReviews: Object.freeze(reviews.map((review) => {
           const rule = rules.get(review.ruleId);
           return Object.freeze({

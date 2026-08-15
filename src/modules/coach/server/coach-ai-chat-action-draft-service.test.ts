@@ -14,6 +14,14 @@ import { PlatformNotificationRepository } from
   "@/src/modules/platform/server/notifications/platform-notification-repository";
 import { PlatformUserPreferenceRepository } from
   "@/src/modules/platform/server/identity/platform-user-preference-repository";
+import { JournalAnnotationRepository } from
+  "@/src/modules/journal/server/annotations/journal-annotation-repository";
+import { JournalAnnotationService } from
+  "@/src/modules/journal/server/annotations/journal-annotation-service";
+import { JournalRuleRepository } from
+  "@/src/modules/journal/server/annotations/journal-rule-repository";
+import { narrowWorkspaceAccessToAccount } from
+  "@/src/modules/platform/contracts/workspace-access-scope";
 
 import { CoachAiChatRepository } from "./coach-ai-chat-repository";
 import { CoachAiChatActionDraftService } from "./coach-ai-chat-action-draft-service";
@@ -40,6 +48,49 @@ function fixture() {
     .run(accountId, workspaceId, userId, now.toISOString(), now.toISOString());
   database.prepare(`INSERT INTO journal_accounts VALUES (?, ?, 'Swing Trades', 'USD', 'America/New_York', 'active', ?, ?, ?)`)
     .run(secondAccountId, workspaceId, userId, now.toISOString(), now.toISOString());
+  const instrumentId = createCanonicalUuidV4();
+  const rebuildId = createCanonicalUuidV4();
+  const roundTripId = createCanonicalUuidV4();
+  const roundTripVersionId = createCanonicalUuidV4();
+  database.exec("BEGIN IMMEDIATE");
+  database.prepare(`INSERT INTO journal_instruments (
+  instrument_id, workspace_id, asset_class, normalized_symbol, quote_currency,
+  venue, identity_scheme_version, provider_identity_sha256, status,
+  created_at_utc, updated_at_utc
+) VALUES (?, ?, 'stock', 'TEST', 'USD', NULL, NULL, NULL, 'active', ?, ?)`)
+    .run(instrumentId, workspaceId, now.toISOString(), now.toISOString());
+  database.prepare(`INSERT INTO journal_chain_rebuilds (
+  rebuild_id, workspace_id, account_id, instrument_id, trade_currency,
+  chain_key_sha256, trigger_kind, trigger_import_event_id,
+  trigger_decision_event_id, maintenance_reason_code, previous_rebuild_id,
+  algorithm_version, ordered_input_sha256, output_sha256, coverage_state,
+  ready_closed_count, legitimate_open_count, needs_decision_count,
+  excluded_count, first_execution_at_utc, last_execution_at_utc,
+  completed_at_utc
+) VALUES (?, ?, ?, ?, 'USD', ?, 'maintenance', NULL, NULL,
+  'ai_chat_tag_test', NULL, 'round_trip_v1', ?, ?, 'complete', 1, 0, 0, 0,
+  ?, ?, ?)`)
+    .run(rebuildId, workspaceId, accountId, instrumentId, "a".repeat(64),
+      "b".repeat(64), "c".repeat(64), now.toISOString(), now.toISOString(),
+      now.toISOString());
+  database.prepare(`INSERT INTO journal_round_trips (
+  round_trip_id, workspace_id, account_id, current_version_id,
+  lifecycle_state, created_at_utc, updated_at_utc
+) VALUES (?, ?, ?, ?, 'active', ?, ?)`)
+    .run(roundTripId, workspaceId, accountId, roundTripVersionId,
+      now.toISOString(), now.toISOString());
+  database.prepare(`INSERT INTO journal_round_trip_versions (
+  round_trip_version_id, workspace_id, account_id, round_trip_id,
+  version_number, rebuild_id, instrument_id, trade_currency,
+  chain_key_sha256, direction, opened_at_utc, closed_at_utc,
+  final_position_decimal, projection_state, coverage_reason_code,
+  projection_fingerprint_sha256, created_at_utc
+) VALUES (?, ?, ?, ?, 1, ?, ?, 'USD', ?, 'long', ?, ?, '0',
+  'ready_closed', NULL, ?, ?)`)
+    .run(roundTripVersionId, workspaceId, accountId, roundTripId, rebuildId,
+      instrumentId, "a".repeat(64), now.toISOString(), now.toISOString(),
+      "d".repeat(64), now.toISOString());
+  database.exec("COMMIT");
   const scope: WorkspaceAccessScope = Object.freeze({
     userId,
     workspaceId,
@@ -55,7 +106,7 @@ function fixture() {
     { originalUserTextPrivate: text },
     now,
   ).userMessage.messageId;
-  return { database, scope, conversationId, message };
+  return { database, scope, conversationId, message, roundTripId };
 }
 
 describe("CoachAiChatActionDraftService", () => {
@@ -198,6 +249,43 @@ describe("CoachAiChatActionDraftService", () => {
         draftId: draft.draftId,
       }, new Date("2026-08-15T12:01:00.000Z"));
       expect(schedules.readV2(f.scope)?.isEnabled).toBe(false);
+    } finally {
+      f.database.close();
+    }
+  });
+
+  it("replaces one completed trade's exact tag set only after confirmation", () => {
+    const f = fixture();
+    try {
+      const service = new CoachAiChatActionDraftService(f.database);
+      const annotations = new JournalAnnotationService(
+        new JournalAnnotationRepository(f.database),
+        new JournalRuleRepository(f.database),
+      );
+      const account = narrowWorkspaceAccessToAccount(f.scope, f.scope.activeAccountId!);
+      const draft = service.create(f.scope, {
+        conversationId: f.conversationId,
+        sourceMessageId: f.message("Tag this TEST trade as a Breakout and Patient entry."),
+        extraction: Object.freeze({
+          kind: "trade_tags",
+          roundTripId: f.roundTripId,
+          tagNames: Object.freeze(["Breakout", "Patient entry"]),
+        }),
+      }, now);
+      expect(draft.preview).toMatchObject({
+        kind: "trade_tags",
+        ticker: "TEST",
+        currentTagNames: [],
+        proposedTagNames: ["Breakout", "Patient entry"],
+      });
+      expect(annotations.listTagsForRoundTrips(account, [f.roundTripId])[f.roundTripId])
+        .toEqual([]);
+      service.confirm(f.scope, {
+        conversationId: f.conversationId,
+        draftId: draft.draftId,
+      }, new Date("2026-08-15T12:01:00.000Z"));
+      expect(annotations.listTagsForRoundTrips(account, [f.roundTripId])[f.roundTripId]
+        ?.map((tag) => tag.name).sort()).toEqual(["Breakout", "Patient entry"]);
     } finally {
       f.database.close();
     }

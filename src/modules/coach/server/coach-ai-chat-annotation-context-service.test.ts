@@ -61,6 +61,7 @@ function fixture() {
   };
   const dashboard = { getTradingDay: vi.fn() };
   const annotations = {
+    listTags: vi.fn(() => Object.freeze([])),
     listRules: vi.fn(() => Object.freeze([rule()])),
     listRulesForEvaluation: vi.fn(() => Object.freeze([])),
     listRuleReviews: vi.fn(() => Object.freeze([Object.freeze({

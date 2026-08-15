@@ -148,11 +148,12 @@ export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
   Object.freeze({
     id: "confirmed_product_changes",
     kind: "confirmed_draft" as const,
-    plainLanguage: "Prepare supported currency, notification, account-selection, or AI Review on/off changes.",
+    plainLanguage: "Prepare supported currency, notification, account-selection, AI Review on/off, or completed-trade tag changes.",
     canonicalNames: Object.freeze([]),
     limitations: Object.freeze([
       "Chat must read the current exact value or target before it can prepare the change.",
       "Nothing changes until the trader confirms the saved preview.",
+      "A trade-tag proposal uses only the trader's exact requested tags from the available saved or preset list.",
       "Login, broker connections, payment, deletion, administration, and unsupported settings remain outside this path.",
     ]),
   }),
