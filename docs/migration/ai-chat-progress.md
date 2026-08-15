@@ -3,6 +3,8 @@
 ## Status
 
 Implementation is active. The parent plan is [TraderLink AI Companion Plan](ai-chat-plan.md).
+The complete current-product target is the
+[AI Chat Current Dashboard Capability Matrix](ai-chat-current-dashboard-capability-matrix.md).
 The private persistence API checkpoint is tracked in
 [AI Chat Persistence API Progress](ai-chat-api-progress.md).
 
@@ -39,8 +41,9 @@ The private persistence API checkpoint is tracked in
 - [x] Replace the transitional four-tool Vercel AI SDK Chat loop with the
   official OpenAI Agents SDK/Responses orchestration layer while preserving all
   existing TraderLink persistence, cost, scope and confirmation authorities.
-- [x] Implement the currently supportable private AI Chat question families through a
-  machine-readable capability registry and deterministic factual tools.
+- [x] Implement the first supportable private AI Chat question families through
+  a machine-readable capability registry and eight deterministic factual
+  tools.
 - [x] Replace navigation-away Chat as the primary experience with the shared
   closable desktop/mobile dashboard drawer; retain `/ai-chat` as a direct-link
   fallback over the same reusable Chat surface.
@@ -55,10 +58,25 @@ The private persistence API checkpoint is tracked in
 - [x] Finish the scheduled AI Review control-enforcement slice: audit the
   Weekly/Monthly reservation retry and timeout paths, finish its owner-only
   controls, and record its narrow verification/commit checkpoint.
+- [ ] Implement the current-dashboard Journal/Tracker read families: Workspace,
+  Daily Tracker, Swing Tracker, Calendar and Open Positions.
+- [ ] Implement page-aligned Analytics and Trade Explorer reads without
+  creating a second calculation engine.
+- [ ] Implement saved Trade Analyzer and Candle Review result reads with exact
+  coverage and unavailable states.
+- [ ] Implement Import, Data Decisions, Notifications, Account and entitlement
+  reads without exposing statements, credentials, admin data or secrets.
+- [ ] Add allowlisted Swing, tag, rule, Data Decision, notification and account
+  setting drafts/confirmed actions through canonical commands.
+- [ ] Promote the language registry and Help Center only as each deterministic
+  family becomes executable.
+- [ ] Complete representative agent evaluations, live OpenAI Agents SDK
+  verification, account/privacy/cost/action safeguards and responsive
+  drawer/direct-page browser acceptance across the capability matrix.
 - [ ] Implement production entitlement, scheduled-delivery, operational, and
   privacy-deletion decisions at their separate launch boundaries.
 
-## Completed: Agents SDK and global AI Chat companion
+## Completed foundation: Agents SDK and global AI Chat companion
 
 ### 2026-08-15 checkpoint
 
@@ -119,6 +137,20 @@ The private persistence API checkpoint is tracked in
   The drawer preserved the current route and exposed a visible close action.
 - No provider request, Journal write, database initialization, push or
   deployment was performed by this implementation checkpoint.
+
+### Current-dashboard expansion checkpoint
+
+- The original plan predates current Trade Analyzer pages, the current Trade
+  Explorer, expanded Account surfaces, Notifications, Import/connection work
+  and several completed Tracker/Analytics revisions.
+- The current navigation, active dashboard pages, Help collections, server
+  services and command routes were re-audited on 2026-08-15.
+- The new capability matrix records every current product surface, its
+  canonical data/command source, required Chat behavior, exact current status,
+  deliberate exclusions and final evaluation gate.
+- Commit `2b4527ac` remains the protected first-slice foundation with eight
+  factual tools and three confirmed-draft families. It is no longer described
+  as full chatbot completion.
 
 ## Completed: scheduled AI Review control enforcement
 

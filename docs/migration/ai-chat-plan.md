@@ -38,6 +38,14 @@ truthfully answer.
 
 Implementation status is tracked in [AI Companion Progress](ai-chat-progress.md).
 
+The [AI Chat Current Dashboard Capability Matrix](ai-chat-current-dashboard-capability-matrix.md)
+is the controlling implementation inventory. It was rebuilt on 2026-08-15 from
+the current navigation, dashboard routes, Help Center, deterministic read
+services and canonical command routes because several product features were
+added after this plan began. Full Chat completion now means completing that
+finite matrix, not merely rendering Chat, compiling the language inventory or
+making the initial eight tools available.
+
 ## Product direction
 
 TraderLink AI is a private companion for a trader's own Journal. It helps the
@@ -245,6 +253,11 @@ same financial safeguards as every other entry surface.
 
 ### Supported question families
 
+This table describes the end-state product. The exact current-versus-planned
+status for every dashboard feature is maintained in the capability matrix. A
+family is not live until its deterministic tool or confirmed canonical action
+is implemented and promoted in the runtime registry.
+
 | Family | Examples | What the AI may return |
 | --- | --- | --- |
 | Results and patterns | best/worst days, ticker results, hold-time patterns, re-entries, scaling | filtered Journal facts plus supported observations |
@@ -253,7 +266,7 @@ same financial safeguards as every other entry surface.
 | Saved review follow-up | what should I take from last week’s review? | prior review context paired with current factual context |
 | Journal guidance | how does this tracker work? what does this status mean? | product help without exposing internals |
 | Manual execution capture | I bought/sold/added/covered... | editable execution draft and canonical preview/commit |
-| Future data-backed analysis | entry/exit analysis, chart/candle facts, tagged setup comparison | only after the required market-data coverage and product contract exist |
+| Trade Analyzer results | entry/exit analysis, MFE/MAE, Green-to-Red, saved candle-pattern facts | saved analysis only, with exact coverage and unavailable states through the current Trade Analyzer contract |
 
 Unsupported questions receive a brief honest answer describing what the chat can
 help with now. It must not quietly turn an unsupported request into unrelated
@@ -460,8 +473,11 @@ once. The following sequence controls safe delivery:
    contracts are separately approved.
 8. **Rules evidence integration:** connect only the owner-approved saved
    recommendation evidence from the [Preset Rule Recommendations
-   Plan](preset-rule-recommendations-plan.md). AI may explain a recommendation
-   but cannot create one or activate a rule itself.
+   Plan](preset-rule-recommendations-plan.md) after its deterministic service
+   exists. AI may explain saved recommendation evidence. It cannot create a
+   recommendation or activate a rule autonomously; it may prepare an exact
+   rule change for the trader to review and confirm through the canonical rule
+   command.
 
 ## Verification and acceptance
 
@@ -508,3 +524,11 @@ and are understandable to a trader without system language. A chat response,
 manual-entry draft, daily companion prompt, or scheduled review is never
 considered complete merely because it renders: it must preserve factual
 boundaries, trader control, privacy, and truthful availability.
+
+For AI Chat specifically, completion also requires every row in the current
+dashboard capability matrix to reach its planned Read, Draft, Confirm or
+deliberately Unavailable state; its representative agent evaluations and live
+provider checks must pass; and the language registry, Help Center and visible
+drawer must agree with those executable capabilities. The protected
+`2b4527ac` Agents SDK checkpoint is the first complete foundation slice, not
+the full dashboard-capable chatbot.
