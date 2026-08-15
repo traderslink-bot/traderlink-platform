@@ -64,9 +64,9 @@ The private persistence API checkpoint is tracked in
   for the currently incomplete Trade Explorer without creating a second
   calculation engine. Revisit that adapter when the accepted Explorer update
   is implemented.
-- [ ] Implement saved Trade Analyzer and Candle Review result reads with exact
+- [x] Implement saved Trade Analyzer and Candle Review result reads with exact
   coverage and unavailable states.
-- [ ] Implement Import, Data Decisions, Notifications, Account and entitlement
+- [x] Implement Import, Data Decisions, Notifications, Account and entitlement
   reads without exposing statements, credentials, admin data or secrets.
 - [ ] Add allowlisted Swing, tag, rule, Data Decision, notification and account
   setting drafts/confirmed actions through canonical commands.
@@ -175,6 +175,34 @@ The private persistence API checkpoint is tracked in
   focused one-worker suites passed eight tests covering account isolation,
   selected page contracts, raw identifier stripping, bounded evidence and
   exact high-precision decimal-range validation.
+
+### Completed: current product status and saved Analyzer reads
+
+- Eight deterministic product-status tools now cover privacy-safe import
+  history, pending/resolved Data Decisions, recent notifications, Account
+  profile/preferences/AI plan state and Account Trading status. The Trading
+  read includes privacy-safe Moomoo connection, linked-account and automatic
+  import status while withholding credentials, tokens, broker account values,
+  encrypted link references, internal account selectors and payment IDs.
+- Three saved-analysis tools cover the current Trade Analyzer result families,
+  bounded analyzed-trade rows and an existing Candle Review. These reads reuse
+  the canonical Journal Analytics rows and saved Analyzer/Candle Review
+  repositories. They never run or queue analysis and never contact Yahoo,
+  Moomoo or another market-data provider.
+- Analyzer trade identifiers are replaced by selected-account-scoped opaque
+  references. Candle Review responses omit stored candle series, provider
+  request records, review/version IDs and raw analyzer snapshot JSON.
+- The trader's selected date or ticker scope is enforced before dispatch.
+  Analyzer result summaries reject a ticker-only scope when the current saved
+  summary service cannot apply that filter; bounded analyzed-trade lists can
+  apply it exactly.
+- The factual result budget remains fixed and fail-closed. The conservative
+  provider reservation now accounts for the full registered tool inventory,
+  not only the original eight-tool foundation.
+- Targeted ESLint and a full no-emit TypeScript pass completed cleanly. Three
+  focused one-worker suites passed 11 tests covering product-data redaction,
+  account isolation, opaque Analyzer references, bounded saved evidence and
+  no-candle-series Candle Review projection.
 
 ## Completed: scheduled AI Review control enforcement
 

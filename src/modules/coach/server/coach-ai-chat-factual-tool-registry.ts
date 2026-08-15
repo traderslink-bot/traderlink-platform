@@ -175,6 +175,89 @@ export const coachAiChatFactualToolRegistry = Object.freeze([
     ]),
     contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
   }),
+  Object.freeze({
+    name: "list_imports" as const,
+    description: "Lists bounded privacy-safe import history for the selected account.",
+    supportedMetricIds: Object.freeze([]),
+    supportedGroupings: Object.freeze([]),
+    limitations: Object.freeze([
+      "Raw statement rows, broker account identifiers, source hashes, and uploaded files are never returned.",
+      "Upload, mapping, connection, and import-run actions stay in their guarded product pages.",
+    ]),
+    contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
+  }),
+  Object.freeze({
+    name: "list_data_decisions" as const,
+    description: "Lists pending or resolved Data Decisions with plain-language questions and effects.",
+    supportedMetricIds: Object.freeze([]),
+    supportedGroupings: Object.freeze([]),
+    limitations: Object.freeze(["Returns at most 50 decisions and no raw statement row content."]),
+    contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
+  }),
+  Object.freeze({
+    name: "get_data_decision_details" as const,
+    description: "Returns one authorized Data Decision's normalized execution and position evidence.",
+    supportedMetricIds: Object.freeze([]),
+    supportedGroupings: Object.freeze([]),
+    limitations: Object.freeze([
+      "Raw statement fields, provider timestamps, broker identifiers, and internal record identifiers are not returned.",
+      "This read never resolves or changes the decision.",
+    ]),
+    contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
+  }),
+  Object.freeze({
+    name: "list_notifications" as const,
+    description: "Lists recent privacy-safe TraderLink notifications for the current user.",
+    supportedMetricIds: Object.freeze([]),
+    supportedGroupings: Object.freeze([]),
+    limitations: Object.freeze(["Returns at most 50 notifications and only allowlisted local destinations."]),
+    contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
+  }),
+  ...(["get_account_profile", "get_account_trading", "get_account_preferences",
+    "get_account_ai_plan"] as const).map((name) => Object.freeze({
+    name,
+    description: `Returns privacy-safe ${name.replace(/^get_account_/u, "account ").replaceAll("_", " ")} status.`,
+    supportedMetricIds: Object.freeze([]),
+    supportedGroupings: Object.freeze([]),
+    limitations: Object.freeze([
+      "Credentials, provider tokens, broker account identifiers, payment identifiers, and account selectors are not returned.",
+      "Authentication, connection, billing, and destructive privacy actions remain in guarded product pages.",
+    ]),
+    contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
+  })),
+  Object.freeze({
+    name: "get_trade_analyzer_results" as const,
+    description: "Returns saved Trade Analyzer results for one current Analyzer view.",
+    supportedMetricIds: Object.freeze([]),
+    supportedGroupings: Object.freeze([]),
+    limitations: Object.freeze([
+      "Only completed day trades with a current saved analysis are included.",
+      "This read never runs an analyzer or requests market data.",
+    ]),
+    contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
+  }),
+  Object.freeze({
+    name: "list_analyzed_trades" as const,
+    description: "Lists bounded trader-facing rows for completed day trades with saved analysis.",
+    supportedMetricIds: Object.freeze([]),
+    supportedGroupings: Object.freeze([]),
+    limitations: Object.freeze([
+      "Returns at most 50 rows and replaces internal trade identifiers with account-scoped opaque references.",
+      "This read never runs an analyzer or requests market data.",
+    ]),
+    contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
+  }),
+  Object.freeze({
+    name: "get_saved_candle_review" as const,
+    description: "Returns one existing Candle Review summary without its candle series.",
+    supportedMetricIds: Object.freeze([]),
+    supportedGroupings: Object.freeze([]),
+    limitations: Object.freeze([
+      "No new review or refresh is started, and no provider is contacted.",
+      "The stored candle series and internal review identifiers are not returned.",
+    ]),
+    contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
+  }),
 ] satisfies readonly CoachAiChatFactualToolDefinition[]);
 
 export function findCoachAiChatFactualToolDefinition(

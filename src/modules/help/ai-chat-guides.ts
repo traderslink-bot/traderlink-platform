@@ -22,7 +22,8 @@ export const AI_CHAT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Ask about results, patterns, notes, rules, focuses, saved AI Reviews or TraderLink features.",
         keywords: Object.freeze(["questions", "results", "patterns", "notes", "rules", "focuses"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph" as const, text: "You can ask about completed-trade results, timing, tickers and repeated patterns. AI Chat can also help you reflect on saved notes, rules and Current Focuses, or discuss a saved weekly or monthly AI Review." }),
+          Object.freeze({ kind: "paragraph" as const, text: "You can ask about completed-trade results, timing, tickers and repeated patterns. AI Chat can also help you reflect on saved notes, rules and Current Focuses, or discuss a saved weekly, two-week or monthly AI Review." }),
+          Object.freeze({ kind: "paragraph" as const, text: "You can also ask about saved Trade Analyzer results, an existing Candle Review, recent imports, Data Decisions, notifications, account preferences and whether a Moomoo connection or automatic import is set up." }),
           Object.freeze({ kind: "paragraph" as const, text: "A specific question usually gives a more useful answer. Include the result or behavior you want to understand, then use the Explore control to choose the matching period or ticker." }),
         ]),
       }),
@@ -94,6 +95,7 @@ export const AI_CHAT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: Object.freeze(["coverage", "unavailable", "completed trades", "open positions"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph" as const, text: "Factual answers come from the completed trades and saved review details available for the selected Trade Tracker account. Open positions stay separate from realized results." }),
+          Object.freeze({ kind: "paragraph" as const, text: "Analyzer questions use results TraderLink has already saved. Asking in Chat does not start a new analysis, refresh a Candle Review or request market data." }),
           Object.freeze({ kind: "paragraph" as const, text: "When the requested fact is missing, unsupported or based on too little activity, the answer should say so rather than fill the gap with a guess." }),
         ]),
       }),
@@ -104,6 +106,7 @@ export const AI_CHAT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: Object.freeze(["privacy", "history", "archive", "account"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph" as const, text: "Your conversation text and the trading details used for an answer are kept with your selected Trade Tracker account. Normal operating reports use request counts, status, timing and cost information rather than displaying private messages." }),
+          Object.freeze({ kind: "paragraph" as const, text: "AI Chat can explain import and connection status without receiving your uploaded statement rows, broker account number, connection credentials, access tokens or payment identifiers." }),
           Object.freeze({ kind: "paragraph" as const, text: "Archiving removes a conversation from the active list but keeps its history available to restore. Permanent account-data deletion follows the account deletion policy rather than the archive action." }),
         ]),
       }),

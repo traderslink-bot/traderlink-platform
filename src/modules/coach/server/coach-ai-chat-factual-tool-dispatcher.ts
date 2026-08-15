@@ -19,6 +19,8 @@ import type { CoachAiChatProductHelpService } from "./coach-ai-chat-product-help
 import type { CoachAiChatSavedReviewService } from "./coach-ai-chat-saved-review-service";
 import type { CoachAiChatDashboardContextService } from "./coach-ai-chat-dashboard-context-service";
 import type { CoachAiChatAnalyticsPageToolService } from "./coach-ai-chat-analytics-page-tool-service";
+import type { CoachAiChatProductContextService } from "./coach-ai-chat-product-context-service";
+import type { CoachAiChatTradeAnalyzerToolService } from "./coach-ai-chat-trade-analyzer-tool-service";
 
 /** A generation has one shared factual-result budget. Results are never shortened to fit it. */
 /** Across at most two tool steps; later model calls can receive this package twice. */
@@ -109,6 +111,45 @@ function applyScope(
       ? Object.freeze({ ...request, ticker: scope.ticker })
       : request;
   }
+  if (request.toolName === "list_data_decisions") {
+    return scope.kind === "ticker"
+      ? Object.freeze({ ...request, ticker: scope.ticker })
+      : request;
+  }
+  if (request.toolName === "get_trade_analyzer_results" ||
+      request.toolName === "list_analyzed_trades") {
+    if (scope.kind === "ticker" && request.toolName === "get_trade_analyzer_results") {
+      throw new CoachAiChatFactualToolError("invalid_request");
+    }
+    const selectedRange = scopeDateRange(scope);
+    const requestedRange = request.filters.startDate && request.filters.endDate
+      ? Object.freeze({
+          startDate: request.filters.startDate,
+          endDate: request.filters.endDate,
+        })
+      : null;
+    const dateRange = selectedRange && requestedRange
+      ? Object.freeze({
+          startDate: selectedRange.startDate > requestedRange.startDate
+            ? selectedRange.startDate : requestedRange.startDate,
+          endDate: selectedRange.endDate < requestedRange.endDate
+            ? selectedRange.endDate : requestedRange.endDate,
+        })
+      : selectedRange ?? requestedRange;
+    if (dateRange && dateRange.startDate > dateRange.endDate) {
+      throw new CoachAiChatFactualToolError("invalid_request");
+    }
+    return Object.freeze({
+      ...request,
+      filters: Object.freeze({
+        ...request.filters,
+        ...(dateRange ? dateRange : {}),
+        ...(scope.kind === "ticker" && request.toolName === "list_analyzed_trades"
+          ? { ticker: scope.ticker }
+          : {}),
+      }),
+    });
+  }
   if (request.toolName === "summarize_journal_period") {
     if (scope.kind === "day") {
       return Object.freeze({ ...request, period: "daily", anchorDate: scope.date });
@@ -190,6 +231,11 @@ export class CoachAiChatFactualToolDispatcher {
         "workspaceSummary" | "tradingDayDetails" | "calendarPeriod" |
         "positionList" | "positionDetail">;
       analyticsPages?: Pick<CoachAiChatAnalyticsPageToolService, "readPage" | "tradeExplorer">;
+      productContext?: Pick<CoachAiChatProductContextService,
+        "listImports" | "listDataDecisions" | "dataDecisionDetail" |
+        "listNotifications" | "accountContext">;
+      tradeAnalyzer?: Pick<CoachAiChatTradeAnalyzerToolService,
+        "results" | "listTrades" | "savedCandleReview">;
     }> = Object.freeze({}),
     private readonly analysisScope: CoachAiChatAnalysisScope = Object.freeze({ kind: "recent" }),
   ) {}
@@ -311,6 +357,71 @@ export class CoachAiChatFactualToolDispatcher {
           this.selectedAccountId,
           request,
           this.asOfUtc,
+        );
+        break;
+      case "list_imports":
+        if (!this.extensions.productContext) return unsupportedTool(request as never);
+        result = this.extensions.productContext.listImports(
+          this.scope,
+          this.selectedAccountId,
+          request,
+        );
+        break;
+      case "list_data_decisions":
+        if (!this.extensions.productContext) return unsupportedTool(request as never);
+        result = this.extensions.productContext.listDataDecisions(
+          this.scope,
+          this.selectedAccountId,
+          request,
+        );
+        break;
+      case "get_data_decision_details":
+        if (!this.extensions.productContext) return unsupportedTool(request as never);
+        result = this.extensions.productContext.dataDecisionDetail(
+          this.scope,
+          this.selectedAccountId,
+          request,
+        );
+        break;
+      case "list_notifications":
+        if (!this.extensions.productContext) return unsupportedTool(request as never);
+        result = this.extensions.productContext.listNotifications(this.scope, request);
+        break;
+      case "get_account_profile":
+      case "get_account_trading":
+      case "get_account_preferences":
+      case "get_account_ai_plan":
+        if (!this.extensions.productContext) return unsupportedTool(request as never);
+        result = this.extensions.productContext.accountContext(
+          this.scope,
+          this.selectedAccountId,
+          request,
+        );
+        break;
+      case "get_trade_analyzer_results":
+        if (!this.extensions.tradeAnalyzer) return unsupportedTool(request as never);
+        result = this.extensions.tradeAnalyzer.results(
+          this.scope,
+          this.selectedAccountId,
+          request,
+          this.asOfUtc,
+        );
+        break;
+      case "list_analyzed_trades":
+        if (!this.extensions.tradeAnalyzer) return unsupportedTool(request as never);
+        result = this.extensions.tradeAnalyzer.listTrades(
+          this.scope,
+          this.selectedAccountId,
+          request,
+          this.asOfUtc,
+        );
+        break;
+      case "get_saved_candle_review":
+        if (!this.extensions.tradeAnalyzer) return unsupportedTool(request as never);
+        result = this.extensions.tradeAnalyzer.savedCandleReview(
+          this.scope,
+          this.selectedAccountId,
+          request,
         );
         break;
       default:

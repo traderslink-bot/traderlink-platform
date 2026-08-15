@@ -112,4 +112,26 @@ export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
       "Trade Explorer returns at most 50 supporting trades per request.",
     ]),
   }),
+  Object.freeze({
+    id: "current_product_status_reads",
+    kind: "factual_read" as const,
+    plainLanguage: "Read import history, Data Decisions, notifications, account settings, plan access, and privacy-safe Moomoo connection/import status.",
+    canonicalNames: Object.freeze([]),
+    limitations: Object.freeze([
+      "Chat never receives raw statement rows, uploaded files, broker account identifiers, credentials, tokens, or payment identifiers.",
+      "Moomoo connection and automatic-import actions stay in Account and Import pages.",
+      "Data Decision reads do not change or resolve a decision.",
+    ]),
+  }),
+  Object.freeze({
+    id: "saved_trade_analyzer_reads",
+    kind: "factual_read" as const,
+    plainLanguage: "Read saved Trade Analyzer results, analyzed day trades, and existing Candle Reviews.",
+    canonicalNames: Object.freeze([]),
+    limitations: Object.freeze([
+      "Only completed day trades with current saved analysis are included.",
+      "Chat does not run or refresh Trade Analyzer or Candle Review work and does not request market data.",
+      "Large candle series and internal analysis identifiers are not sent to the model.",
+    ]),
+  }),
 ] satisfies readonly CoachAiChatRuntimeCapability[]);

@@ -120,6 +120,50 @@ const tradeExplorerInput = z.object({
   afterCursor: z.string().nullable(),
   filters: tradeExplorerFiltersSchema.optional(),
 }).strict();
+const importListInput = z.object({
+  sourceKind: z.enum(["broker_statements", "manual_entries", "all"]),
+  limit: z.number().int().min(1).max(50),
+}).strict();
+const dataDecisionListInput = z.object({
+  state: z.enum(["pending", "resolved"]),
+  limit: z.number().int().min(1).max(50),
+  ticker: z.string().regex(/^[A-Za-z0-9._-]{1,32}$/u).optional(),
+}).strict();
+const dataDecisionDetailInput = z.object({
+  decisionRef: z.string().regex(/^[0-9a-f]{64}$/u),
+}).strict();
+const notificationListInput = z.object({
+  limit: z.number().int().min(1).max(50),
+}).strict();
+const accountContextInput = z.object({}).strict();
+const tradeAnalyzerFiltersInput = z.object({
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/u).optional(),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/u).optional(),
+  currency: z.string().regex(/^[A-Z]{3}$/u).optional(),
+  moneyBasis: z.enum(["gross", "net"]),
+}).strict();
+const tradeAnalyzerResultsInput = z.object({
+  view: z.enum(["day", "entry_exit", "mfe_mae", "green_to_red", "candle_patterns"]),
+  filters: tradeAnalyzerFiltersInput,
+}).strict();
+const analyzedTradeListInput = z.object({
+  filters: tradeAnalyzerFiltersInput.extend({
+    ticker: z.string().regex(/^[A-Za-z0-9._-]{1,32}$/u).optional(),
+    greenToRedStatus: z.enum([
+      "unavailable",
+      "never_green",
+      "green_no_red",
+      "green_to_red_ended_red",
+      "green_to_red_recovered",
+      "green_to_red_ended_flat",
+    ]).optional(),
+  }).strict(),
+  page: z.number().int().min(1),
+  pageSize: z.number().int().min(1).max(50),
+}).strict();
+const savedCandleReviewInput = z.object({
+  tradeRef: z.string().regex(/^[0-9a-f]{64}$/u),
+}).strict();
 
 const answerSchema = z.object({
   directAnswer: z.string().min(1).max(1_600),
@@ -558,6 +602,87 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
           parameters: tradeExplorerInput,
           execute: (value, _context, details) => dispatch(
             "query_trade_explorer",
+            value,
+            details?.toolCall?.callId,
+          ),
+        }),
+        tool({
+          name: "list_imports",
+          description: "List privacy-safe statement or manual import history without raw statement rows.",
+          parameters: importListInput,
+          execute: (value, _context, details) => dispatch(
+            "list_imports",
+            value,
+            details?.toolCall?.callId,
+          ),
+        }),
+        tool({
+          name: "list_data_decisions",
+          description: "List bounded pending or resolved Data Decisions in plain trader language.",
+          parameters: dataDecisionListInput,
+          execute: (value, _context, details) => dispatch(
+            "list_data_decisions",
+            value,
+            details?.toolCall?.callId,
+          ),
+        }),
+        tool({
+          name: "get_data_decision_details",
+          description: "Read one Data Decision's normalized affected executions and position facts without raw statement content.",
+          parameters: dataDecisionDetailInput,
+          execute: (value, _context, details) => dispatch(
+            "get_data_decision_details",
+            value,
+            details?.toolCall?.callId,
+          ),
+        }),
+        tool({
+          name: "list_notifications",
+          description: "List recent private TraderLink notifications and safe destinations.",
+          parameters: notificationListInput,
+          execute: (value, _context, details) => dispatch(
+            "list_notifications",
+            value,
+            details?.toolCall?.callId,
+          ),
+        }),
+        ...(["get_account_profile", "get_account_trading", "get_account_preferences",
+          "get_account_ai_plan"] as const).map((name) => tool({
+          name,
+          description: `Read the current privacy-safe ${name.replace(/^get_account_/u, "account ").replaceAll("_", " ")} settings and status.`,
+          parameters: accountContextInput,
+          execute: (value, _context, details) => dispatch(
+            name,
+            value,
+            details?.toolCall?.callId,
+          ),
+        })),
+        tool({
+          name: "get_trade_analyzer_results",
+          description: "Read saved Trade Analyzer results for one current Analyzer view without running new analysis or requesting market data.",
+          parameters: tradeAnalyzerResultsInput,
+          execute: (value, _context, details) => dispatch(
+            "get_trade_analyzer_results",
+            value,
+            details?.toolCall?.callId,
+          ),
+        }),
+        tool({
+          name: "list_analyzed_trades",
+          description: "List bounded completed day trades that already have current saved Trade Analyzer results.",
+          parameters: analyzedTradeListInput,
+          execute: (value, _context, details) => dispatch(
+            "list_analyzed_trades",
+            value,
+            details?.toolCall?.callId,
+          ),
+        }),
+        tool({
+          name: "get_saved_candle_review",
+          description: "Read an existing saved Candle Review without running or refreshing market-data analysis.",
+          parameters: savedCandleReviewInput,
+          execute: (value, _context, details) => dispatch(
+            "get_saved_candle_review",
             value,
             details?.toolCall?.callId,
           ),

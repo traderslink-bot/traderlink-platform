@@ -70,35 +70,35 @@ It does **not** yet make the remaining dashboard features Chat-capable.
 | Product area | Current routes | Deterministic source of truth | Required Chat behavior | Current state |
 | --- | --- | --- | --- | --- |
 | AI Chat | Global drawer and `/ai-chat` | Account-scoped conversation, message, snapshot and receipt repositories | Create, rename, search, archive and restore private conversations; preserve bounded follow-ups and exact selected context; show factual/action cards from the same reusable Chat surface. | Implemented foundation; matrix capabilities expanding |
-| Workspace | `/workspace` | Journal analytics/calendar, `readWorkspaceReviewSummary` for Current Focuses and the latest completed trading-day review, plus a separate planned `CoachAiReviewRepository` read for the latest AI Review | Explain the current workspace summary and open the exact related feature. No invented readiness statement. | Planned read |
-| Daily Trade Tracker | `/trade-tracker`, `/trade-tracker/[date]` | Trading-day read model, annotations, rules and review service | Read one day, trades, executions, notes, tags, rule results and review state. Draft notes/focuses. Confirm only the existing allowlisted note/focus save path. | Partial read and confirm |
-| Swing Trade Tracker | `/trade-tracker/swings` | `JournalTradeTrackerReadService`, Swing note, tag and trade-style services | List/detail active swings and their executions, notes, tags and status. Draft notes/tags/status changes; require confirmation through canonical commands. | Planned read/draft/confirm |
+| Workspace | `/workspace` | Journal analytics/calendar, `readWorkspaceReviewSummary` for Current Focuses and the latest completed trading-day review, plus `CoachAiReviewRepository` for the latest saved AI Review | Explain the current workspace summary and open the exact related feature. No invented readiness statement. | Read implemented |
+| Daily Trade Tracker | `/trade-tracker`, `/trade-tracker/[date]` | Trading-day read model, annotations, rules and review service | Read one day, trades, executions, notes, tags, rule results and review state. Draft notes/focuses. Confirm only the existing allowlisted note/focus save path. | Read and note/focus confirm implemented |
+| Swing Trade Tracker | `/trade-tracker/swings` | `JournalTradeTrackerReadService`, Swing note, tag and trade-style services | List/detail active swings and their executions, notes, tags and status. Draft notes/tags/status changes; require confirmation through canonical commands. | Read implemented; actions planned |
 | Quick Trade Entry | `/quick-trade-entry` | Manual trade preview and command services | Convert supplied facts into an editable preview and save only after explicit confirmation. Explain duplicate/reconciliation outcomes without bypassing Data Decisions. | Confirm implemented |
-| Calendar | `/calendar` | `JournalDashboardReadModelService.getCalendar`, Calendar annotation evidence in `calendar-data.ts`, trading-day review state and ticker/day detail reads | Answer month/week/day questions, list exact daily trades, annotations and review state, and open the selected day. | Planned read |
+| Calendar | `/calendar` | `JournalDashboardReadModelService.getCalendar`, Calendar annotation evidence in `calendar-data.ts`, trading-day review state and ticker/day detail reads | Answer month/week/day questions, list exact daily trades, annotations and review state, and open the selected day. | Read implemented |
 | Trading Rules | `/rules`, `/rules/results` | Rule dashboard and annotation service. Rule recommendation evidence requires the separate planned deterministic recommendation service and does not exist yet. | List active presets/custom rules, settings, applicable scope and exact results. When the separately approved recommendation service exists, explain its saved evidence. Draft activation/settings/custom-rule changes; confirm through canonical rule commands. Never mark a result by model judgment or activate a rule autonomously. | Planned read/draft/confirm; recommendation read not implemented yet |
-| Trade Explorer | `/analytics/trade-explorer` | Bounded current Trade Explorer page model/query | Apply only the filters, groupings and metrics the current Explorer supports and return the exact resulting trades/summary. Reuse the page query contract rather than creating a second analytics engine. The Trade Explorer is incomplete and will be updated; keep this adapter isolated, describe unsupported Explorer behavior as unavailable, and revise its contract when the accepted Explorer update lands. | Planned read; current product incomplete |
-| Open Positions | `/trades/open` | Open-position dashboard read model and trade-style service | List/detail factual open positions and current trader-defined type. Draft a type/status change and require confirmation. Never infer swing, long-term hold or bag holding. | Planned read/draft/confirm |
-| Analytics Overview | `/analytics` | `JournalAnalyticsService.getAnalyticsOverview` | Return exact overview cards and supported date/currency scope with coverage. | Partial through generic tools; dedicated read planned |
-| Results by Ticker | `/analytics/results` | `getResultAnalytics` | Return exact ticker results, sortable fields and supporting completed trades. | Partial through grouping; dedicated read planned |
-| Timing | `/analytics/timing` | `getTimingAnalytics` | Return entry/exit time, weekday and session results with exact population and coverage. | Partial through grouping; dedicated read planned |
-| Execution | `/analytics/execution` | `getExecutionAnalytics` and round-trip table | Return execution-count, scaling, quantity and related execution analytics without implying market-volume facts. | Partial through trade detail; dedicated read planned |
-| Day Trade Analysis | `/analytics/trade-analyzer/day` | Daily Trade Analyzer repository and long-term analytics service | Report analyzed coverage and saved analysis for eligible completed day trades only. | Planned read |
-| Entry & Exit | `/analytics/trade-analyzer/day/entry-exit` | Saved analyzer entry/exit facts | Explain the trader's saved entry/exit results and unavailable coverage. | Planned read |
-| MFE & MAE | `/analytics/trade-analyzer/day/mfe-mae` | Saved MFE/MAE facts | Return saved excursion facts and supported aggregates; never calculate from missing candles. | Planned read |
-| Green-to-Red | `/analytics/trade-analyzer/day/green-to-red` | Saved analyzer path facts | Return saved Green-to-Red evidence and exact population. | Planned read |
-| Candle Patterns | `/analytics/trade-analyzer/day/candle-patterns` | Saved analyzer pattern facts | Return detected supported candle patterns as observations, not trading signals. | Planned read |
-| Analyzed Trades | `/analytics/trade-analyzer/day/trades` | Daily Trade Analyzer repository | List/paginate analyzed trades and open the associated detail. | Planned read |
-| Candle Review | `/trades/candle-review` | `CandleReviewService` | Read eligible saved candle review results and status. Requesting new provider work remains outside normal conversational reads until its paid-use confirmation contract is accepted. | Planned read; provider action unavailable |
+| Trade Explorer | `/analytics/trade-explorer` | Bounded current Trade Explorer page model/query | Apply only the filters, groupings and metrics the current Explorer supports and return the exact resulting trades/summary. Reuse the page query contract rather than creating a second analytics engine. The Trade Explorer is incomplete and will be updated; keep this adapter isolated, describe unsupported Explorer behavior as unavailable, and revise its contract when the accepted Explorer update lands. | Current bounded read implemented; product incomplete |
+| Open Positions | `/trades/open` | Open-position dashboard read model and trade-style service | List/detail factual open positions and current trader-defined type. Draft a type/status change and require confirmation. Never infer swing, long-term hold or bag holding. | Read implemented; actions planned |
+| Analytics Overview | `/analytics` | `JournalAnalyticsService.getAnalyticsOverview` | Return exact overview cards and supported date/currency scope with coverage. | Dedicated read implemented |
+| Results by Ticker | `/analytics/results` | `getResultAnalytics` | Return exact ticker results, sortable fields and supporting completed trades. | Dedicated read implemented |
+| Timing | `/analytics/timing` | `getTimingAnalytics` | Return entry/exit time, weekday and session results with exact population and coverage. | Dedicated read implemented |
+| Execution | `/analytics/execution` | `getExecutionAnalytics` and round-trip table | Return execution-count, scaling, quantity and related execution analytics without implying market-volume facts. | Dedicated read implemented |
+| Day Trade Analysis | `/analytics/trade-analyzer/day` | Daily Trade Analyzer repository and long-term analytics service | Report analyzed coverage and saved analysis for eligible completed day trades only. | Saved read implemented |
+| Entry & Exit | `/analytics/trade-analyzer/day/entry-exit` | Saved analyzer entry/exit facts | Explain the trader's saved entry/exit results and unavailable coverage. | Saved read implemented |
+| MFE & MAE | `/analytics/trade-analyzer/day/mfe-mae` | Saved MFE/MAE facts | Return saved excursion facts and supported aggregates; never calculate from missing candles. | Saved read implemented |
+| Green-to-Red | `/analytics/trade-analyzer/day/green-to-red` | Saved analyzer path facts | Return saved Green-to-Red evidence and exact population. | Saved read implemented |
+| Candle Patterns | `/analytics/trade-analyzer/day/candle-patterns` | Saved analyzer pattern facts | Return detected supported candle patterns as observations, not trading signals. | Saved read implemented |
+| Analyzed Trades | `/analytics/trade-analyzer/day/trades` | Daily Trade Analyzer repository | List/paginate analyzed trades and open the associated detail. | Saved read implemented |
+| Candle Review | `/trades/candle-review` | `CandleReviewRepository.findTarget/readCurrent` | Read eligible saved candle review results and status. Requesting new provider work remains outside normal conversational reads until its paid-use confirmation contract is accepted. | Saved read implemented; provider action unavailable |
 | AI Reviews | `/ai-reviews`, saved weekly/two-week/monthly review detail routes | Saved-review service and review schedule/settings commands | List/read weekly, two-week and monthly saved reviews, compare a review with later exact facts, request an eligible review when the canonical command allows it, and confirm delivery settings. | Partial read and confirm |
 | Market Charts | `/charts` | Current chart UI and its approved market-data sources | Explain how to use charts and open the route. Do not claim live quote/candle access through Chat unless a dedicated bounded market-data tool is later approved. | Help only; market facts unavailable |
-| Import Trades | `/imports` | Import history/product service and broker-connection status | List imports, status, counts, supported formats and next repair step. No raw statement content enters Chat. Upload, mapping and broker authentication stay in their guarded UI. | Planned read |
-| Data Decisions | `/data-decisions` | `JournalProductReadService` and `JournalDataDecisionService` | List/detail unresolved items in plain language with the exact affected rows/trades. Draft a correction/classification/exclusion only from trader-supplied facts and require the existing confirmation path. | Planned read/draft/confirm |
-| Notifications | `/notifications` | `PlatformNotificationRepository` | List recent notifications, explain their destination, mark one read, and confirm notification preference changes. | Planned read/confirm |
-| Account profile | `/account/profile` | Account profile read service | Explain current non-secret profile/account state. Profile identity changes remain in Account UI unless a canonical confirmed command is accepted. | Planned read |
-| Account trading accounts | `/account/trading` | Journal account service and account selector | List privacy-safe Journal accounts, explain selected account and confirm selection/create-account actions through canonical commands. Never merge, delete or reassign ownership through Chat. | Planned read/confirm |
-| Moomoo connection and automatic imports | `/account/trading`, `/imports` | `MoomooConnectionRepository`, connected-account link state and `MoomooExecutionImportCommandService` status | Explain privacy-safe connection, linked-account and automatic-import configuration state. OAuth/sign-in, disconnect, link changes, backfill, schedule changes and import runs remain in the guarded Account/Import UI until a separately reviewed confirmation contract exists. | Planned read; guarded actions product-excluded from current Chat |
-| Account preferences | `/account/preferences` | User preference repository | Read and confirm supported display/reporting-currency preferences. | Planned read/confirm |
-| Account AI | `/account/ai` | AI Review delivery and entitlement settings | Read enabled features, schedule and availability; confirm supported schedule/opt-out settings. | Partial confirm; read planned |
+| Import Trades | `/imports` | Import history/product service and broker-connection status | List imports, status, counts, supported formats and next repair step. No raw statement content enters Chat. Upload, mapping and broker authentication stay in their guarded UI. | Read implemented; guarded actions excluded |
+| Data Decisions | `/data-decisions` | `JournalProductReadService` and `JournalDataDecisionService` | List/detail unresolved items in plain language with the exact affected rows/trades. Draft a correction/classification/exclusion only from trader-supplied facts and require the existing confirmation path. | Read implemented; actions planned |
+| Notifications | `/notifications` | `PlatformNotificationRepository` | List recent notifications, explain their destination, mark one read, and confirm notification preference changes. | Read implemented; actions planned |
+| Account profile | `/account/profile` | Account profile read service | Explain current non-secret profile/account state. Profile identity changes remain in Account UI unless a canonical confirmed command is accepted. | Read implemented; actions remain in Account UI |
+| Account trading accounts | `/account/trading` | Journal account service and account selector | List privacy-safe Journal accounts, explain selected account and confirm selection/create-account actions through canonical commands. Never merge, delete or reassign ownership through Chat. | Read implemented; actions planned |
+| Moomoo connection and automatic imports | `/account/trading`, `/imports` | `MoomooConnectionRepository`, connected-account link state and `MoomooExecutionImportCommandService` status | Explain privacy-safe connection, linked-account and automatic-import configuration state. OAuth/sign-in, disconnect, link changes, backfill, schedule changes and import runs remain in the guarded Account/Import UI until a separately reviewed confirmation contract exists. | Privacy-safe read implemented; guarded actions product-excluded from current Chat |
+| Account preferences | `/account/preferences` | User preference repository | Read and confirm supported display/reporting-currency preferences. | Read implemented; actions planned |
+| Account AI | `/account/ai` | AI Review delivery and entitlement settings | Read enabled features, schedule and availability; confirm supported schedule/opt-out settings. | Read and schedule confirmation implemented |
 | Account privacy | `/account/privacy` | Privacy settings and erasure boundary | Explain privacy/retention and link to controls. Account/data erasure always stays outside Chat. | Help/read only |
 | Help Center | `/help` and maintained guide collections | `HELP_SEARCH_RECORDS` | Search and answer from maintained product help with links. | Read implemented |
 | Trade Tags | Daily/Swing Tracker annotation surfaces and `/help/trade-tags` | Annotation service and preset/custom tag catalog | Read the exact tags saved on a trade, explain available tags, and draft a replacement set. Saving requires an exact before/after preview and the canonical tag command. Tags remain trader observations, never proof of cause, emotion, setup quality or a rule outcome. | Trade-detail read partial; dedicated read/draft/confirm planned |
@@ -169,11 +169,8 @@ coverage and sorting as the dashboard.
 
 ### Trade Analyzer and market-context results
 
-- `get_trade_analyzer_overview`
-- `get_entry_exit_analysis`
-- `get_mfe_mae_analysis`
-- `get_green_to_red_analysis`
-- `get_candle_pattern_analysis`
+- `get_trade_analyzer_results` — one strict `view` selects Day, Entry/Exit,
+  MFE/MAE, Green-to-Red or Candle Patterns without multiplying provider tools.
 - `list_analyzed_trades`
 - `get_saved_candle_review`
 
@@ -182,16 +179,14 @@ turn patterns into signals, or imply that missing coverage is zero.
 
 ### Data, settings and platform state
 
-- `list_trade_imports`
-- `get_trade_import_details`
+- `list_imports`
 - `list_data_decisions`
 - `get_data_decision_details`
 - `list_notifications`
-- `get_account_summary`
-- `list_journal_accounts`
-- `get_user_preferences`
-- `get_ai_review_settings`
-- `get_paid_access_status`
+- `get_account_profile`
+- `get_account_trading`
+- `get_account_preferences`
+- `get_account_ai_plan`
 
 Raw statement rows may be shown only inside the existing private Data Decisions
 or Import UI. Chat receives bounded, redacted deterministic fields needed to

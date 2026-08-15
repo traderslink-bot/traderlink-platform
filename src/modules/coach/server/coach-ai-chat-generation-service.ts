@@ -35,6 +35,9 @@ import type { CoachAiChatProductHelpService } from "./coach-ai-chat-product-help
 import type { CoachAiChatSavedReviewService } from "./coach-ai-chat-saved-review-service";
 import type { CoachAiChatDashboardContextService } from "./coach-ai-chat-dashboard-context-service";
 import type { CoachAiChatAnalyticsPageToolService } from "./coach-ai-chat-analytics-page-tool-service";
+import type { CoachAiChatProductContextService } from "./coach-ai-chat-product-context-service";
+import type { CoachAiChatTradeAnalyzerToolService } from "./coach-ai-chat-trade-analyzer-tool-service";
+import { coachAiChatFactualToolRegistry } from "./coach-ai-chat-factual-tool-registry";
 
 export const COACH_AI_CHAT_MAX_RECENT_MESSAGES = 12;
 export const COACH_AI_CHAT_MAX_HISTORY_BYTES = 16 * 1024;
@@ -42,8 +45,9 @@ export const COACH_AI_CHAT_MAX_OUTPUT_TOKENS = 1_200;
 export const COACH_AI_CHAT_MAX_QUESTION_BYTES = 4 * 1024;
 export const COACH_AI_CHAT_MAX_TRUSTED_CONTEXT_BYTES = 20 * 1024;
 export const COACH_AI_CHAT_MAX_MANUAL_DRAFT_CONTEXT_BYTES = 16 * 1024;
-// Covers the real system contract, eight Zod tool schemas, structured output, and all three model steps.
-export const COACH_AI_CHAT_SYSTEM_AND_TOOL_ENVELOPE_RESERVED_BYTES = 32 * 1024;
+// Covers the full current system contract, all registered tool schemas,
+// structured output, and all three possible model steps.
+export const COACH_AI_CHAT_SYSTEM_AND_TOOL_ENVELOPE_RESERVED_BYTES = 64 * 1024;
 
 export type CoachAiChatGenerator = (input: Readonly<{
   scope: WorkspaceAccessScope;
@@ -121,16 +125,7 @@ export function createCoachAiChatReservationEnvelope(
     currentReviewDelivery,
     analysisScope,
     manualEntryShortcutSelected: intent === "prepare_manual_execution_draft",
-    toolDefinitions: [
-      "summarize_closed_trades",
-      "group_closed_trades",
-      "list_closed_trades",
-      "get_closed_trade_details",
-      "summarize_journal_period",
-      "list_saved_ai_reviews",
-      "get_saved_ai_review",
-      "search_product_help",
-    ],
+    toolDefinitions: coachAiChatFactualToolRegistry.map((definition) => definition.name),
     maximumFactualResultsBytes: COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES,
     maximumOutputTokens: COACH_AI_CHAT_MAX_OUTPUT_TOKENS,
     // A first and second tool result may both be included in the final model step;
@@ -171,6 +166,11 @@ export class CoachAiChatGenerationService {
         "workspaceSummary" | "tradingDayDetails" | "calendarPeriod" |
         "positionList" | "positionDetail">;
       analyticsPages?: Pick<CoachAiChatAnalyticsPageToolService, "readPage" | "tradeExplorer">;
+      productContext?: Pick<CoachAiChatProductContextService,
+        "listImports" | "listDataDecisions" | "dataDecisionDetail" |
+        "listNotifications" | "accountContext">;
+      tradeAnalyzer?: Pick<CoachAiChatTradeAnalyzerToolService,
+        "results" | "listTrades" | "savedCandleReview">;
     }> = Object.freeze({}),
   ) {}
 
