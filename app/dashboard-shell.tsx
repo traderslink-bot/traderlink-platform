@@ -47,7 +47,7 @@ import Typography from "@mui/material/Typography";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import type { PlatformNotification } from "@/src/modules/platform/contracts/platform-notification-contracts";
 import {
@@ -65,7 +65,13 @@ import {
   DashboardAccountSwitcher,
   type DashboardJournalAccountOption,
 } from "./dashboard-account-switcher";
+import { AiChatClient } from "./(dashboard)/ai-chat/ai-chat-client";
 import { NotificationCenter } from "./(dashboard)/notifications/notification-center";
+import {
+  TRADERLINK_OPEN_AI_CHAT_EVENT,
+  type TraderLinkOpenAiChatEventDetail,
+} from "./ai-chat-drawer-events";
+import type { CoachAiDailyCompanionContextSelector } from "@/src/modules/coach/contracts/ai-daily-companion-contracts";
 
 const expandedWidth = 272;
 const collapsedWidth = 76;
@@ -126,20 +132,30 @@ function NavigationLink({
   collapsed,
   item,
   onNavigate,
+  onOpenAiChat,
   pathname,
 }: {
   badgeCount?: number;
   collapsed: boolean;
   item: DashboardNavigationItem;
   onNavigate: () => void;
+  onOpenAiChat: () => void;
   pathname: string;
 }) {
+  const opensAiChat = item.href === "/ai-chat";
   const link = (
     <ListItemButton
       aria-current={isActive(pathname, item.href) ? "page" : undefined}
       component={Link}
       href={item.href}
-      onClick={onNavigate}
+      onClick={(event) => {
+        if (opensAiChat) {
+          event.preventDefault();
+          onOpenAiChat();
+          return;
+        }
+        onNavigate();
+      }}
       selected={isActive(pathname, item.href)}
       sx={{
         borderRadius: 2,
@@ -219,6 +235,10 @@ export function DashboardShell({
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [aiChatOpen, setAiChatOpen] = useState(false);
+  const [aiChatContext, setAiChatContext] = useState<CoachAiDailyCompanionContextSelector | null>(null);
+  const [aiChatSuggestedQuestion, setAiChatSuggestedQuestion] = useState<string | null>(null);
+  const [aiChatContextRequestId, setAiChatContextRequestId] = useState(0);
   const [expandedGroups, setExpandedGroups] = useState<
     Readonly<Record<DashboardNavigationGroup["id"], boolean>>
   >({
@@ -230,6 +250,26 @@ export function DashboardShell({
 
   const desktopWidth = collapsed ? collapsedWidth : expandedWidth;
   const closeMobile = () => setMobileOpen(false);
+  const openAiChat = () => {
+    closeMobile();
+    setAiChatContext(null);
+    setAiChatSuggestedQuestion(null);
+    setAiChatContextRequestId((current) => current + 1);
+    setAiChatOpen(true);
+  };
+
+  useEffect(() => {
+    const openFromDashboard = (event: Event) => {
+      const detail = (event as CustomEvent<TraderLinkOpenAiChatEventDetail>).detail;
+      setAiChatContext(detail?.dailyContext ?? null);
+      setAiChatSuggestedQuestion(detail?.suggestedQuestion ?? null);
+      setAiChatContextRequestId((current) => current + 1);
+      setMobileOpen(false);
+      setAiChatOpen(true);
+    };
+    window.addEventListener(TRADERLINK_OPEN_AI_CHAT_EVENT, openFromDashboard);
+    return () => window.removeEventListener(TRADERLINK_OPEN_AI_CHAT_EVENT, openFromDashboard);
+  }, []);
 
   const navigation = (mobile: boolean) => {
     const compact = mobile ? false : collapsed;
@@ -281,6 +321,7 @@ export function DashboardShell({
               collapsed={compact}
               item={DASHBOARD_HOME_ITEM}
               onNavigate={closeMobile}
+              onOpenAiChat={openAiChat}
               pathname={pathname}
             />
             {DASHBOARD_MAIN_NAVIGATION_GROUPS.map((group) => {
@@ -325,6 +366,7 @@ export function DashboardShell({
                           item={item}
                           key={item.href}
                           onNavigate={closeMobile}
+                          onOpenAiChat={openAiChat}
                           pathname={pathname}
                         />
                       ))}
@@ -340,6 +382,7 @@ export function DashboardShell({
                 item={item}
                 key={item.href}
                 onNavigate={closeMobile}
+                onOpenAiChat={openAiChat}
                 pathname={pathname}
               />
             ))}
@@ -386,6 +429,7 @@ export function DashboardShell({
                           item={item}
                           key={item.href}
                           onNavigate={closeMobile}
+                          onOpenAiChat={openAiChat}
                           pathname={pathname}
                         />
                       ))}
@@ -532,6 +576,40 @@ export function DashboardShell({
           {children}
         </Box>
       </Box>
+      <Drawer
+        anchor="right"
+        ModalProps={{ keepMounted: true }}
+        onClose={() => {
+          setAiChatContext(null);
+          setAiChatSuggestedQuestion(null);
+          setAiChatContextRequestId((current) => current + 1);
+          setAiChatOpen(false);
+        }}
+        open={aiChatOpen}
+        slotProps={{
+          paper: {
+            sx: {
+              height: "100dvh",
+              maxWidth: "100vw",
+              width: { xs: "100vw", md: 520 },
+            },
+          },
+        }}
+        variant="temporary"
+      >
+        <AiChatClient
+          contextRequestId={aiChatContextRequestId}
+          initialContext={aiChatContext}
+          initialQuestion={aiChatSuggestedQuestion}
+          onClose={() => {
+            setAiChatContext(null);
+            setAiChatSuggestedQuestion(null);
+            setAiChatContextRequestId((current) => current + 1);
+            setAiChatOpen(false);
+          }}
+          presentation="drawer"
+        />
+      </Drawer>
     </Box>
   );
 }

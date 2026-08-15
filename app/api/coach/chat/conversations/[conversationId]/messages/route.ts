@@ -63,6 +63,7 @@ export async function POST(
       conversationId: id,
       question: input.question,
       intent: input.intent,
+      analysisScope: input.analysisScope,
       idempotencySha256: createChatGenerationIdempotencySha256(
         id,
         input.clientRequestId,
@@ -80,20 +81,18 @@ export async function POST(
             return context;
         }
         : null,
-      resolveManualEntryDefaults: input.intent === "prepare_manual_execution_draft"
-        ? () => {
-            const account = getReplacementTradeTrackerAccount(scope);
-            if (!account || account.tradingTimezone !== "America/New_York") {
-              platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
-                field: "manualEntryTimezone",
-              });
-            }
-            return Object.freeze({
-              sourceTimezone: "America/New_York",
-              tradeCurrency: account.baseCurrency,
-            });
-          }
-        : null,
+      resolveManualEntryDefaults: () => {
+        const account = getReplacementTradeTrackerAccount(scope);
+        if (!account || account.tradingTimezone !== "America/New_York") {
+          platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+            field: "manualEntryTimezone",
+          });
+        }
+        return Object.freeze({
+          sourceTimezone: "America/New_York",
+          tradeCurrency: account.baseCurrency,
+        });
+      },
       resolveReviewDelivery: () => withReadonlyPlatformDatabase({}, (database) => {
         const saved = new CoachReviewDeliveryScheduleRepository(database).read(scope);
         return saved ?? Object.freeze({

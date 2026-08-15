@@ -269,9 +269,10 @@ describe("private AI Chat persistence routes", () => {
       conversationId,
       question: "How did I trade this week?",
       intent: "answer_question",
+      analysisScope: { kind: "recent" },
       idempotencySha256: expect.stringMatching(/^[0-9a-f]{64}$/u),
       resolveTrustedContext: null,
-      resolveManualEntryDefaults: null,
+      resolveManualEntryDefaults: expect.any(Function),
       resolveReviewDelivery: expect.any(Function),
     });
     expect(JSON.stringify(body)).not.toContain("attemptId");

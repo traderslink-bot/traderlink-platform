@@ -7,7 +7,9 @@ import { JournalAnalyticsFactSetService } from "@/src/modules/journal/server/ana
 import { JournalAnnotationRepository } from "@/src/modules/journal/server/annotations/journal-annotation-repository";
 import { JournalAnnotationService } from "@/src/modules/journal/server/annotations/journal-annotation-service";
 import { JournalRuleRepository } from "@/src/modules/journal/server/annotations/journal-rule-repository";
+import { JournalProductReadService } from "@/src/modules/journal/server/product/journal-product-read-service";
 import { JournalAnalyticsService } from "@/src/modules/journal-analytics/server/analytics-service";
+import { JournalDashboardReadModelService } from "@/src/modules/journal-analytics/server/journal-dashboard-read-model-service";
 
 import { CoachAiChatFactualToolService } from "./coach-ai-chat-factual-tool-service";
 import {
@@ -17,11 +19,19 @@ import {
 import { CoachAiChatProviderControlsRepository } from "./coach-ai-chat-provider-controls-repository";
 import { CoachAiChatRepository } from "./coach-ai-chat-repository";
 import { CoachAiChatTradeDetailService } from "./coach-ai-chat-trade-detail-service";
+import { CoachAiChatJournalContextService } from "./coach-ai-chat-journal-context-service";
+import { CoachAiChatProductHelpService } from "./coach-ai-chat-product-help-service";
+import { CoachAiChatSavedReviewService } from "./coach-ai-chat-saved-review-service";
+import { CoachAiReviewRepository } from "./coach-ai-review-repository";
+import { CoachReflectionService } from "./coach-reflection-service";
 import { CoachAiDailyCompanionRepository } from "./coach-ai-daily-companion-repository";
 import { CoachAiManualEntryDraftRepository } from "./coach-ai-manual-entry-draft-repository";
 import { CoachAiReviewDeliveryChangeRepository } from "./coach-ai-review-delivery-change-repository";
 import type { CoachAiDailyCompanionResolvedContext } from "../contracts/ai-daily-companion-contracts";
-import type { CoachAiChatMessageIntent } from "../contracts/ai-chat-contracts";
+import type {
+  CoachAiChatAnalysisScope,
+  CoachAiChatMessageIntent,
+} from "../contracts/ai-chat-contracts";
 import type { CoachAiReviewDeliveryScheduleSnapshot } from "../contracts/ai-review-delivery-change-contracts";
 
 export async function generateCoachAiChatSavedAnswer(
@@ -30,6 +40,7 @@ export async function generateCoachAiChatSavedAnswer(
     conversationId: string;
     question: string;
     intent?: CoachAiChatMessageIntent;
+    analysisScope?: CoachAiChatAnalysisScope;
     idempotencySha256: string;
     resolveTrustedContext?: (() => CoachAiDailyCompanionResolvedContext) | null;
     resolveManualEntryDefaults?: (() => Readonly<{
@@ -48,6 +59,7 @@ export async function generateCoachAiChatSavedAnswer(
       new JournalAnnotationRepository(database),
       new JournalRuleRepository(database),
     );
+    const dashboard = new JournalDashboardReadModelService(facts);
     return await new CoachAiChatGenerationService(
       new CoachAiChatRepository(database),
       new CoachAiChatProviderControlsRepository(database),
@@ -57,6 +69,20 @@ export async function generateCoachAiChatSavedAnswer(
       new CoachAiDailyCompanionRepository(database),
       new CoachAiManualEntryDraftRepository(database),
       new CoachAiReviewDeliveryChangeRepository(database),
+      Object.freeze({
+        journalContext: new CoachAiChatJournalContextService(
+          new CoachReflectionService(
+            dashboard,
+            annotations,
+            new JournalProductReadService(database),
+          ),
+          annotations,
+        ),
+        productHelp: new CoachAiChatProductHelpService(),
+        savedReviews: new CoachAiChatSavedReviewService(
+          new CoachAiReviewRepository(database),
+        ),
+      }),
     ).generateSavedAnswer(scope, input);
   } finally {
     database.close();

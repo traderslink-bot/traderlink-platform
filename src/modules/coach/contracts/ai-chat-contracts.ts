@@ -42,6 +42,14 @@ export type CoachAiChatMessageIntent =
   | "answer_question"
   | "prepare_manual_execution_draft";
 
+export type CoachAiChatAnalysisScope =
+  | Readonly<{ kind: "recent" }>
+  | Readonly<{ kind: "day"; date: string }>
+  | Readonly<{ kind: "week"; anchorDate: string }>
+  | Readonly<{ kind: "month"; month: string }>
+  | Readonly<{ kind: "custom"; startDate: string; endDate: string }>
+  | Readonly<{ kind: "ticker"; ticker: string }>;
+
 export type CoachAiChatGenerationUsage = Readonly<{
   inputTokens: number | null;
   outputTokens: number | null;

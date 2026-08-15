@@ -59,6 +59,45 @@ export const coachAiChatFactualToolRegistry = Object.freeze([
     ]),
     contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
   }),
+  Object.freeze({
+    name: "summarize_journal_period" as const,
+    description: "Returns a bounded day, week, or month Journal summary with saved rule, focus, note, and tag context.",
+    supportedMetricIds: Object.freeze([]),
+    supportedGroupings: Object.freeze([]),
+    limitations: Object.freeze([
+      "A period includes at most 100 trade detail rows; full-period counts remain exact when details are truncated.",
+      "Rule results are saved Journal outcomes and are not inferred by the model.",
+    ]),
+    contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
+  }),
+  Object.freeze({
+    name: "list_saved_ai_reviews" as const,
+    description: "Lists the current account's saved weekly, two-week, or monthly AI Reviews.",
+    supportedMetricIds: Object.freeze([]),
+    supportedGroupings: Object.freeze([]),
+    limitations: Object.freeze(["Returns at most 20 saved reviews." ]),
+    contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
+  }),
+  Object.freeze({
+    name: "get_saved_ai_review" as const,
+    description: "Returns one account-scoped saved AI Review for follow-up discussion.",
+    supportedMetricIds: Object.freeze([]),
+    supportedGroupings: Object.freeze([]),
+    limitations: Object.freeze([
+      "A saved review is prior coaching context, not new evidence about later trading.",
+    ]),
+    contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
+  }),
+  Object.freeze({
+    name: "search_product_help" as const,
+    description: "Searches the maintained TraderLink Help Center for product guidance.",
+    supportedMetricIds: Object.freeze([]),
+    supportedGroupings: Object.freeze([]),
+    limitations: Object.freeze([
+      "Returns maintained product help only, not trading advice or broker support guidance.",
+    ]),
+    contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
+  }),
 ] satisfies readonly CoachAiChatFactualToolDefinition[]);
 
 export function findCoachAiChatFactualToolDefinition(

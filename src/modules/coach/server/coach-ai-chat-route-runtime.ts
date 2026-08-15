@@ -2,6 +2,7 @@ import { Buffer } from "node:buffer";
 import { createHash } from "node:crypto";
 
 import type {
+  CoachAiChatAnalysisScope,
   CoachAiChatConversationCursor,
   CoachAiChatMessageIntent,
   CoachAiChatMessageCursor,
@@ -41,6 +42,7 @@ export type GenerateChatMessageInput = Readonly<{
   question: string;
   clientRequestId: string;
   context: CoachAiDailyCompanionContextSelector | null;
+  analysisScope: CoachAiChatAnalysisScope;
   intent: CoachAiChatMessageIntent;
 }>;
 
@@ -224,6 +226,7 @@ export function parseGenerateChatMessageBody(body: Record<string, unknown>): Gen
     "question",
     "clientRequestId",
     ...(body.context === undefined ? [] : ["context"]),
+    ...(body.analysisScope === undefined ? [] : ["analysisScope"]),
     ...(body.intent === undefined ? [] : ["intent"]),
   ];
   if (!hasExactKeys(body, expectedKeys) ||
@@ -251,12 +254,45 @@ export function parseGenerateChatMessageBody(body: Record<string, unknown>): Gen
     });
   }
   if (context && intent !== "answer_question") invalidRequest("intent");
+  const analysisScope = parseAnalysisScope(body.analysisScope);
   return Object.freeze({
     question: body.question,
     clientRequestId: body.clientRequestId,
     context,
+    analysisScope,
     intent,
   });
+}
+
+function parseAnalysisScope(value: unknown): CoachAiChatAnalysisScope {
+  if (value === undefined) return Object.freeze({ kind: "recent" });
+  if (!isRecord(value) || typeof value.kind !== "string") invalidRequest("analysisScope");
+  if (value.kind === "recent" && hasExactKeys(value, ["kind"])) {
+    return Object.freeze({ kind: "recent" });
+  }
+  if (value.kind === "day" && hasExactKeys(value, ["kind", "date"]) &&
+      typeof value.date === "string" && /^\d{4}-\d{2}-\d{2}$/u.test(value.date)) {
+    return Object.freeze({ kind: "day", date: value.date });
+  }
+  if (value.kind === "week" && hasExactKeys(value, ["kind", "anchorDate"]) &&
+      typeof value.anchorDate === "string" && /^\d{4}-\d{2}-\d{2}$/u.test(value.anchorDate)) {
+    return Object.freeze({ kind: "week", anchorDate: value.anchorDate });
+  }
+  if (value.kind === "month" && hasExactKeys(value, ["kind", "month"]) &&
+      typeof value.month === "string" && /^\d{4}-\d{2}$/u.test(value.month)) {
+    return Object.freeze({ kind: "month", month: value.month });
+  }
+  if (value.kind === "custom" && hasExactKeys(value, ["kind", "startDate", "endDate"]) &&
+      typeof value.startDate === "string" && typeof value.endDate === "string" &&
+      /^\d{4}-\d{2}-\d{2}$/u.test(value.startDate) && /^\d{4}-\d{2}-\d{2}$/u.test(value.endDate) &&
+      value.startDate <= value.endDate) {
+    return Object.freeze({ kind: "custom", startDate: value.startDate, endDate: value.endDate });
+  }
+  if (value.kind === "ticker" && hasExactKeys(value, ["kind", "ticker"]) &&
+      typeof value.ticker === "string" && /^[A-Za-z0-9.\-]{1,32}$/u.test(value.ticker.trim())) {
+    return Object.freeze({ kind: "ticker", ticker: value.ticker.trim().toUpperCase() });
+  }
+  invalidRequest("analysisScope");
 }
 
 export function createChatGenerationIdempotencySha256(

@@ -7,7 +7,6 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import RestoreRoundedIcon from "@mui/icons-material/RestoreRounded";
-import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import Alert from "@mui/material/Alert";
@@ -15,11 +14,11 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
-import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
+import MenuItem from "@mui/material/MenuItem";
 import InputAdornment from "@mui/material/InputAdornment";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -31,6 +30,7 @@ import { useTheme } from "@mui/material/styles";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type {
+  CoachAiChatAnalysisScope,
   CoachAiChatConversation,
   CoachAiChatMessage,
 } from "@/src/modules/coach/contracts/ai-chat-contracts";
@@ -93,6 +93,17 @@ type RetryRequest = Readonly<{
 }>;
 
 const conversationsEndpoint = "/api/coach/chat/conversations";
+
+function currentEasternDate(): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "America/New_York",
+    year: "numeric",
+  }).formatToParts(new Date());
+  const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${value.year}-${value.month}-${value.day}`;
+}
 
 function dateTime(value: string): string {
   return new Intl.DateTimeFormat("en-US", {
@@ -188,11 +199,20 @@ function ConversationList({
 
 export function AiChatClient({
   initialContext = null,
+  initialQuestion = null,
+  contextRequestId = 0,
+  onClose,
+  presentation = "page",
 }: Readonly<{
   initialContext?: CoachAiDailyCompanionContextSelector | null;
+  initialQuestion?: string | null;
+  contextRequestId?: number;
+  onClose?: () => void;
+  presentation?: "page" | "drawer";
 }>) {
   const theme = useTheme();
   const mobile = useMediaQuery(theme.breakpoints.down("md"));
+  const drawerPresentation = presentation === "drawer";
   const endRef = useRef<HTMLDivElement | null>(null);
   const dailyContextConversationIdRef = useRef<string | null>(null);
   const [archived, setArchived] = useState(false);
@@ -216,7 +236,31 @@ export function AiChatClient({
   const [notice, setNotice] = useState<string | null>(null);
   const [retryRequest, setRetryRequest] = useState<RetryRequest | null>(null);
   const [dailyContext, setDailyContext] = useState(initialContext);
-  const [manualEntryMode, setManualEntryMode] = useState(false);
+  const initialScopeDate = initialContext?.tradingDate ?? currentEasternDate();
+  const [analysisKind, setAnalysisKind] = useState<CoachAiChatAnalysisScope["kind"]>(
+    initialContext ? "day" : "recent",
+  );
+  const [scopeDate, setScopeDate] = useState(initialScopeDate);
+  const [scopeMonth, setScopeMonth] = useState(initialScopeDate.slice(0, 7));
+  const [scopeStartDate, setScopeStartDate] = useState(initialScopeDate);
+  const [scopeEndDate, setScopeEndDate] = useState(initialScopeDate);
+  const [scopeTicker, setScopeTicker] = useState("");
+
+  const analysisScope = useMemo<CoachAiChatAnalysisScope | null>(() => {
+    if (analysisKind === "recent") return Object.freeze({ kind: "recent" });
+    if (analysisKind === "day") return Object.freeze({ kind: "day", date: scopeDate });
+    if (analysisKind === "week") return Object.freeze({ kind: "week", anchorDate: scopeDate });
+    if (analysisKind === "month") return Object.freeze({ kind: "month", month: scopeMonth });
+    if (analysisKind === "custom") {
+      return scopeStartDate <= scopeEndDate
+        ? Object.freeze({ kind: "custom", startDate: scopeStartDate, endDate: scopeEndDate })
+        : null;
+    }
+    const ticker = scopeTicker.trim().toUpperCase();
+    return /^[A-Z0-9.\-]{1,32}$/u.test(ticker)
+      ? Object.freeze({ kind: "ticker", ticker })
+      : null;
+  }, [analysisKind, scopeDate, scopeEndDate, scopeMonth, scopeStartDate, scopeTicker]);
 
   const activeConversation = useMemo(
     () => conversations.find((item) => item.conversationId === activeConversationId) ?? null,
@@ -310,6 +354,20 @@ export function AiChatClient({
     }, 250);
     return () => window.clearTimeout(timeout);
   }, [conversationSearch]);
+  const appliedContextRequestIdRef = useRef(contextRequestId);
+  useEffect(() => {
+    if (contextRequestId === 0 || appliedContextRequestIdRef.current === contextRequestId) return;
+    appliedContextRequestIdRef.current = contextRequestId;
+    dailyContextConversationIdRef.current = null;
+    setArchived(false);
+    setDailyContext(initialContext);
+    if (initialContext) {
+      setAnalysisKind("day");
+      setScopeDate(initialContext.tradingDate);
+    }
+    if (initialQuestion?.trim()) setQuestion(initialQuestion.trim());
+    if (initialContext) setActiveConversationId(null);
+  }, [contextRequestId, initialContext, initialQuestion]);
   useEffect(() => { void loadConversations(); }, [loadConversations]);
   useEffect(() => {
     if (activeConversationId) {
@@ -328,18 +386,14 @@ export function AiChatClient({
   }, [activeConversationId, loadDailyCompanionDrafts, loadManualEntryDrafts, loadMessages, loadReviewDeliveryChangeDrafts]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, sending]);
 
-  async function createConversation(
-    kind: "standard" | "manual" = "standard",
-  ): Promise<CoachAiChatConversation | null> {
+  async function createConversation(): Promise<CoachAiChatConversation | null> {
     setNotice(null);
     try {
       const response = await readJson<Readonly<{ status: "ready"; conversation: CoachAiChatConversation }>>(await fetch(conversationsEndpoint, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          title: kind === "manual"
-            ? "Trade entry"
-            : dailyContext
+          title: dailyContext
             ? `${dailyContext.tradingDate} daily review`
             : "New conversation",
         }),
@@ -350,11 +404,6 @@ export function AiChatClient({
       setConversations((current) => [response.conversation, ...current]);
       if (dailyContext) {
         dailyContextConversationIdRef.current = response.conversation.conversationId;
-      }
-      if (kind === "manual") {
-        dailyContextConversationIdRef.current = null;
-        setDailyContext(null);
-        setManualEntryMode(true);
       }
       setActiveConversationId(response.conversation.conversationId);
       setMobileOpen(false);
@@ -368,16 +417,24 @@ export function AiChatClient({
   async function sendQuestion(): Promise<void> {
     const text = question.trim();
     if (!text || sending) return;
+    if (!analysisScope) {
+      setNotice(analysisKind === "ticker"
+        ? "Enter a ticker before sending your question."
+        : "Choose a valid date range before sending your question.");
+      return;
+    }
     let conversation = activeConversation;
     if (!conversation || conversation.state !== "active") conversation = await createConversation();
     if (!conversation) return;
     setQuestion("");
     setSending(true);
     setNotice(null);
-    const intent = manualEntryMode ? "prepare_manual_execution_draft" : "answer_question";
-    const contextKey = dailyContext
+    // Trade entry is recognized from the trader's words. The visible shortcut
+    // only changes helpful UI copy; it is never required before entering rows.
+    const intent = "answer_question";
+    const contextKey = `${dailyContext
       ? `${dailyContext.kind}:${dailyContext.tradingDate}:${dailyContext.currency}`
-      : intent;
+      : intent}:${JSON.stringify(analysisScope)}`;
     const clientRequestId = retryRequest?.conversationId === conversation.conversationId &&
         retryRequest.question === text && retryRequest.contextKey === contextKey
       ? retryRequest.clientRequestId
@@ -409,6 +466,7 @@ export function AiChatClient({
           question: text,
           clientRequestId,
           intent,
+          analysisScope,
           ...(dailyContext ? { context: dailyContext } : {}),
         }),
       });
@@ -498,14 +556,12 @@ export function AiChatClient({
           dailyContextConversationIdRef.current = null;
           setDailyContext(null);
         }
-        setManualEntryMode(false);
         setActiveConversationId(conversationId);
         setMobileOpen(false);
       }}
       onToggleArchived={() => {
         dailyContextConversationIdRef.current = null;
         setDailyContext(null);
-        setManualEntryMode(false);
         setArchived((value) => !value);
         setActiveConversationId(null);
       }}
@@ -514,15 +570,50 @@ export function AiChatClient({
   );
 
   return (
-    <Paper sx={{ border: 1, borderColor: "divider", borderRadius: 2, display: "flex", height: { xs: "calc(100dvh - 230px)", md: 680 }, minHeight: 520, overflow: "hidden" }} variant="outlined">
+    <Paper
+      sx={{
+        border: drawerPresentation ? 0 : 1,
+        borderColor: "divider",
+        borderRadius: drawerPresentation ? 0 : 2,
+        display: "flex",
+        height: drawerPresentation ? "100%" : { xs: "calc(100dvh - 230px)", md: 680 },
+        minHeight: drawerPresentation ? 0 : 520,
+        overflow: "hidden",
+        position: "relative",
+      }}
+      variant="outlined"
+    >
       {!mobile ? <Box sx={{ borderRight: 1, borderColor: "divider", flex: "0 0 288px", minWidth: 0 }}>{list}</Box> : null}
-      <Drawer anchor="left" onClose={() => setMobileOpen(false)} open={mobile && mobileOpen} slotProps={{ paper: { sx: { width: "min(88vw, 320px)" } } }}>
-        <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", px: 2, pt: 1 }}>
-          <Typography sx={{ fontWeight: 800 }}>Conversations</Typography>
-          <IconButton aria-label="Close conversations" onClick={() => setMobileOpen(false)}><CloseRoundedIcon /></IconButton>
-        </Stack>
-        {list}
-      </Drawer>
+      {mobile && mobileOpen ? (
+        <Box
+          sx={{
+            bgcolor: "background.paper",
+            display: "flex",
+            flexDirection: "column",
+            inset: 0,
+            position: "absolute",
+            zIndex: 2,
+          }}
+        >
+          <Stack
+            direction="row"
+            sx={{
+              alignItems: "center",
+              borderBottom: 1,
+              borderColor: "divider",
+              justifyContent: "space-between",
+              px: 1.5,
+              py: 1,
+            }}
+          >
+            <Typography sx={{ fontWeight: 800 }}>Conversations</Typography>
+            <IconButton aria-label="Close conversations" onClick={() => setMobileOpen(false)}>
+              <CloseRoundedIcon />
+            </IconButton>
+          </Stack>
+          <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>{list}</Box>
+        </Box>
+      ) : null}
 
       <Stack sx={{ flex: 1, minWidth: 0 }}>
         <Stack direction="row" spacing={1} sx={{ alignItems: "center", borderBottom: 1, borderColor: "divider", minHeight: 64, px: { xs: 1.25, sm: 2 } }}>
@@ -533,13 +624,31 @@ export function AiChatClient({
                 <TextField autoFocus fullWidth onChange={(event) => setRenameTitle(event.target.value)} size="small" value={renameTitle} />
                 <Button onClick={() => void saveRename()} size="small">Save</Button>
               </Stack>
-            ) : <Typography noWrap sx={{ fontWeight: 800 }}>{activeConversation?.title ?? "Choose a conversation"}</Typography>}
+            ) : (
+              <>
+                {drawerPresentation ? (
+                  <Typography color="text.secondary" variant="caption">
+                    AI Chat
+                  </Typography>
+                ) : null}
+                <Typography noWrap sx={{ fontWeight: 800 }}>
+                  {activeConversation?.title ?? "Choose a conversation"}
+                </Typography>
+              </>
+            )}
           </Box>
           {activeConversation && !renaming ? (
             <>
               <Tooltip title="Rename conversation"><IconButton aria-label="Rename conversation" onClick={() => { setRenameTitle(activeConversation.title); setRenaming(true); }}><EditRoundedIcon /></IconButton></Tooltip>
               <Tooltip title={activeConversation.state === "active" ? "Archive conversation" : "Restore conversation"}><IconButton aria-label={activeConversation.state === "active" ? "Archive conversation" : "Restore conversation"} onClick={() => void changeArchiveState()}>{activeConversation.state === "active" ? <ArchiveRoundedIcon /> : <RestoreRoundedIcon />}</IconButton></Tooltip>
             </>
+          ) : null}
+          {onClose ? (
+            <Tooltip title="Close AI Chat">
+              <IconButton aria-label="Close AI Chat" onClick={onClose}>
+                <CloseRoundedIcon />
+              </IconButton>
+            </Tooltip>
           ) : null}
         </Stack>
 
@@ -577,32 +686,82 @@ export function AiChatClient({
           </Stack>
         ) : null}
 
-        {manualEntryMode ? (
-          <Stack
-            direction="row"
-            spacing={1}
-            sx={{
-              alignItems: "center",
-              bgcolor: "#EAF2FF",
-              borderBottom: 1,
-              borderColor: "#C8DAF7",
-              px: { xs: 1.5, sm: 2 },
-              py: 1,
-            }}
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={1}
+          sx={{
+            alignItems: { sm: "center" },
+            borderBottom: 1,
+            borderColor: "divider",
+            px: { xs: 1.5, sm: 2 },
+            py: 1,
+          }}
+        >
+          <Typography sx={{ flexShrink: 0, fontWeight: 800 }} variant="body2">
+            Explore
+          </Typography>
+          <TextField
+            onChange={(event) => setAnalysisKind(event.target.value as CoachAiChatAnalysisScope["kind"])}
+            select
+            size="small"
+            value={analysisKind}
           >
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography color="primary.main" sx={{ fontWeight: 850 }} variant="body2">
-                Enter trades in chat
-              </Typography>
-              <Typography color="text.secondary" variant="caption">
-                Describe the executions shown by your broker. You will review and confirm every row before anything is saved.
-              </Typography>
-            </Box>
-            <IconButton aria-label="Stop entering trades" onClick={() => setManualEntryMode(false)} size="small">
-              <CloseRoundedIcon fontSize="small" />
-            </IconButton>
-          </Stack>
-        ) : null}
+              <MenuItem value="recent">Recent 90 days</MenuItem>
+            <MenuItem value="day">One day</MenuItem>
+            <MenuItem value="week">One week</MenuItem>
+            <MenuItem value="month">One month</MenuItem>
+            <MenuItem value="custom">Custom dates</MenuItem>
+            <MenuItem value="ticker">One ticker</MenuItem>
+          </TextField>
+          {analysisKind === "day" || analysisKind === "week" ? (
+            <TextField
+              label={analysisKind === "day" ? "Trading day" : "A day in the week"}
+              onChange={(event) => setScopeDate(event.target.value)}
+              size="small"
+              slotProps={{ inputLabel: { shrink: true } }}
+              type="date"
+              value={scopeDate}
+            />
+          ) : null}
+          {analysisKind === "month" ? (
+            <TextField
+              label="Month"
+              onChange={(event) => setScopeMonth(event.target.value)}
+              size="small"
+              slotProps={{ inputLabel: { shrink: true } }}
+              type="month"
+              value={scopeMonth}
+            />
+          ) : null}
+          {analysisKind === "custom" ? (
+            <>
+              <TextField
+                label="From"
+                onChange={(event) => setScopeStartDate(event.target.value)}
+                size="small"
+                slotProps={{ inputLabel: { shrink: true } }}
+                type="date"
+                value={scopeStartDate}
+              />
+              <TextField
+                label="To"
+                onChange={(event) => setScopeEndDate(event.target.value)}
+                size="small"
+                slotProps={{ inputLabel: { shrink: true } }}
+                type="date"
+                value={scopeEndDate}
+              />
+            </>
+          ) : null}
+          {analysisKind === "ticker" ? (
+            <TextField
+              label="Ticker"
+              onChange={(event) => setScopeTicker(event.target.value.toUpperCase())}
+              size="small"
+              value={scopeTicker}
+            />
+          ) : null}
+        </Stack>
 
         {notice ? <Alert onClose={() => setNotice(null)} severity="info" sx={{ borderRadius: 0 }}>{notice}</Alert> : null}
         <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", px: { xs: 1.5, sm: 3 }, py: 2 }}>
@@ -619,10 +778,7 @@ export function AiChatClient({
             <Stack spacing={2} sx={{ alignItems: "center", justifyContent: "center", minHeight: "100%", textAlign: "center" }}>
               <ChatBubbleOutlineRoundedIcon color="primary" sx={{ fontSize: 46 }} />
               <Typography sx={{ fontWeight: 800 }} variant="h3">Start a conversation about your trading</Typography>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                <Button onClick={() => void createConversation()} startIcon={<AddRoundedIcon />} variant="contained">New conversation</Button>
-                <Button onClick={() => void createConversation("manual")} startIcon={<ReceiptLongRoundedIcon />} variant="outlined">Enter trades in chat</Button>
-              </Stack>
+              <Button onClick={() => void createConversation()} startIcon={<AddRoundedIcon />} variant="contained">New conversation</Button>
             </Stack>
           ) : null}
           <Stack spacing={1.5}>
@@ -692,23 +848,6 @@ export function AiChatClient({
 
         <Box sx={{ borderTop: 1, borderColor: "divider", p: { xs: 1.25, sm: 2 } }}>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "flex-end" } }}>
-            <Button
-              disabled={activeConversation?.state === "archived" || sending}
-              onClick={async () => {
-                if (!activeConversation) {
-                  await createConversation("manual");
-                  return;
-                }
-                dailyContextConversationIdRef.current = null;
-                setDailyContext(null);
-                setManualEntryMode((current) => !current);
-              }}
-              startIcon={<ReceiptLongRoundedIcon />}
-              sx={{ flexShrink: 0 }}
-              variant={manualEntryMode ? "contained" : "outlined"}
-            >
-              {manualEntryMode ? "Entering trades" : "Enter trades in chat"}
-            </Button>
             <TextField
               disabled={!activeConversation || activeConversation.state !== "active" || sending}
               fullWidth
@@ -723,13 +862,11 @@ export function AiChatClient({
                 }
               }}
               placeholder={activeConversation
-                ? manualEntryMode
-                  ? "Describe the executions shown by your broker..."
-                  : dailyContext ? "Ask about this trading day..." : "Ask about your trading..."
+                ? dailyContext ? "Ask about this trading day..." : "Ask about your trading or enter executions..."
                 : "Start a conversation to ask a question"}
               value={question}
             />
-            <IconButton aria-label="Send question" color="primary" disabled={!question.trim() || !activeConversation || sending} onClick={() => void sendQuestion()} sx={{ height: 48, width: 48 }}><SendRoundedIcon /></IconButton>
+            <IconButton aria-label="Send question" color="primary" disabled={!question.trim() || !activeConversation || sending || !analysisScope} onClick={() => void sendQuestion()} sx={{ height: 48, width: 48 }}><SendRoundedIcon /></IconButton>
           </Stack>
           <Typography color="text.secondary" sx={{ mt: 0.75 }} variant="caption">Press Enter to send. Use Shift + Enter for a new line.</Typography>
         </Box>

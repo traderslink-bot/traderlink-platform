@@ -168,6 +168,15 @@ The finalized natural-language/query contract is maintained in the
 [AI Chatbot Complete Language Plan](traderslink_ai_chatbot_complete_language_plan.md);
 it requires deterministic capability routing, account scope, explicit action
 confirmation and truthful unavailable states throughout Chat implementation.
+All twenty language-inventory categories are now complete, independently
+reviewed and locked at Version 1 with 417 canonical names. The active 2026-08-15
+Chat slice replaces the transitional four-tool `generateText` loop with the
+official OpenAI Agents SDK/Responses orchestration layer, retains TraderLink's
+account-scoped persistence and canonical confirmation commands, and moves the
+primary experience into a closable desktop/mobile dashboard drawer that keeps
+the current page in place. Natural execution requests will not require a mode
+button; every actual Journal save still requires an editable preview and the
+trader's explicit confirmation.
 
 **Daily Trade Tracker Yahoo Analyzer implementation:** The owner approved the [Daily Trade Tracker Yahoo Analyzer Plan](daily-trade-tracker-yahoo-analyzer-plan.md) and [progress tracker](daily-trade-tracker-yahoo-analyzer-progress.md) on 2026-08-04. The shared extended-hours ticker/session cache, durable automatic work, per-event analyzer, and real Daily Tracker manual-save queue are now implemented locally. After a recovery backup/restore verification, migration 0023 applied cleanly to the local development database and the protected local worker loop restarted. Yahoo remains the provider; the product is Daily Trade Tracker-only, excludes Round Trips and Market Charts, captures every entry/add/partial-exit/final-exit snapshot, and retains 5/15/30/60-minute post-exit paths. The temporary readable analysis-details presentation is next.
 

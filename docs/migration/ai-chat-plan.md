@@ -9,6 +9,14 @@ Administration controls. The owner accepted the integrated direction and
 delegated technical sequencing on 2026-08-05. Each remaining release, provider
 and irreversible Journal action still follows its own protected boundary.
 
+On 2026-08-15 the owner expanded the quality target: AI Chat must be built as a
+best-in-market trading-journal companion, not as a narrow demonstration. The
+complete locked language inventory, truthful factual coverage, conversational
+continuity, useful Journal actions, responsive global drawer and evaluation
+program are controlling product requirements. This raises the quality bar; it
+does not weaken any privacy, account-scope, cost, confirmation or factual-truth
+boundary in this plan.
+
 The owner accepted the integrated direction and delegated technical sequencing
 on 2026-08-05. Work begins with account-scoped persistence, factual snapshots,
 provider/cost boundaries and the already-started AI Reviews foundation. Each
@@ -43,7 +51,7 @@ The complete product has four connected experiences:
 | Experience | Where it appears | Purpose |
 | --- | --- | --- |
 | Daily Review Companion | Daily Trade Tracker | Helps the trader turn the day's facts and their own observations into a completed review. |
-| AI Chat | `/ai-chat` | Lets the trader ask questions, examine their record, and enter a draft of manual executions conversationally. |
+| AI Chat | Global dashboard drawer, with `/ai-chat` as a direct-link fallback | Lets the trader ask questions, examine their record, and enter a draft of manual executions without leaving their current dashboard page. |
 | AI Reviews | `/ai-reviews` | Delivers and saves scheduled weekly and calendar-month reviews. |
 | AI controls | Account Settings and Journal Administration | Lets the trader choose a review schedule and lets the owner manage availability, models, spending, and delivery health. |
 
@@ -195,16 +203,29 @@ same financial safeguards as every other entry surface.
 
 ### Route and layout
 
-- Add `/ai-chat` to the dashboard navigation beside **AI Reviews**.
-- The page has a concise, trader-facing introduction; no database, prompt,
-  token, or system-language copy appears in the visible product.
-- Desktop: saved private conversations on the left, active conversation in the
-  center, and a compact account/date context control above the composer.
-- Mobile: conversations open in a drawer; the conversation and composer remain
-  the main screen. Factual cards stack without wide tables.
+- **AI Chat** in dashboard navigation opens a persistent, closable companion;
+  it does not navigate the trader away from the page they are using.
+- Desktop uses a right overlay drawer approximately 520 pixels wide, bounded by
+  the viewport. It contains a compact header, current account/context, active
+  conversation, inline factual/action cards, a pinned composer, conversation
+  history control and a clear close action. Opening it does not unmount or
+  replace the current dashboard page.
+- Mobile uses the same shared Chat surface in a full-width, closable drawer or
+  sheet with safe-area spacing, an always-visible close action and a clear back
+  action from conversation history. It must never create a nested panel the
+  trader cannot dismiss.
+- `/ai-chat` remains a direct-link, recovery and saved-history surface built
+  from the same reusable Chat component. It is not a second implementation or
+  a divergent set of capabilities.
+- The visible experience uses concise trader-facing language; no database,
+  prompt, token, provider, agent, or system-language copy appears in normal UI.
 - The account follows the normal account selector. A conversation never moves
   between accounts. Default analysis scope is recent history, but the trader
   can choose a supported date range before asking.
+- The drawer may receive the current route, trading date, ticker, trade or
+  review as an untrusted selection hint. The server resolves every hint again
+  inside the authenticated account before it becomes factual context. The
+  trader can see and remove active context.
 
 ### Conversation features
 
@@ -214,7 +235,11 @@ same financial safeguards as every other entry surface.
   discusses. These open existing TraderLink details, not raw broker rows.
 - An explicit context selector: current day, selected week, selected month,
   custom date range, selected ticker, or selected trade where supported.
-- A visible entry-mode switch for conversational manual execution drafts.
+- Natural recognition of clear execution-entry requests. An optional **Enter
+  trades** shortcut may prime the composer or show useful guidance, but the
+  trader never has to select a mode before typing an execution request.
+- Manual execution text always becomes an editable draft and canonical preview;
+  the trader must explicitly confirm before any Journal execution is saved.
 - Suggested opening questions only in an empty conversation and only as generic
   examples; never as fake results.
 
@@ -301,6 +326,21 @@ through bounded snapshots.
 
 ## Prompt, model, and output design
 
+- The production Chat orchestration layer uses the official OpenAI Agents SDK
+  for TypeScript on the Responses API. One primary TraderLink manager agent is
+  the normal conversational entry point. Specialist agents or handoffs are
+  added only for a truly isolated schema or workflow after evaluation proves a
+  quality benefit that justifies their added cost and latency.
+- The Agents SDK is an orchestration layer, never the application authority.
+  The agent selects from narrow TraderLink functions; deterministic,
+  account-scoped services calculate facts, and existing TraderLink commands
+  perform explicitly confirmed changes. The agent receives no arbitrary SQL,
+  database, statement-file, browser, network, shell, code-interpreter or MCP
+  access.
+- TraderLink's database remains the authoritative conversation and action
+  history. Provider-managed conversation state is not the permanent source of
+  truth. Each run receives bounded recent messages plus server-built structured
+  state and, when needed, a validated summary of older context.
 - A short system instruction defines the allowed question family, factual
   grounding, privacy boundary, non-advice boundary, and user-control rules.
 - The model receives the minimum typed factual package for the request, plus
@@ -316,6 +356,21 @@ through bounded snapshots.
 - Any future chart/candle analysis must be separately approved and must state
   actual coverage. AI cannot claim a technical indicator or candle pattern
   without retained, verified market-data evidence.
+- Agents SDK tracing is disabled for private message/tool content unless a
+  later owner-approved implementation proves that only privacy-safe metadata is
+  exported. Normal operational records contain safe IDs or hashes, status,
+  model, timing, token and cost fields; original messages, notes, tool payloads,
+  factual snapshots and answers remain only in the private account-scoped
+  application records required by this plan.
+- The locked twenty-category language inventory is compiled into a
+  machine-readable capability registry. A vocabulary item can be understood
+  before it is executable, but Chat may claim runtime support only when the
+  associated deterministic tool and coverage contract exist.
+- The runtime capability registry exposes only implemented deterministic
+  boundaries. The locked 417-entry language inventory is compiled into a
+  digest-checked machine registry, but only entries mapped to a live capability
+  are included in the manager agent's runtime context. Vocabulary coverage
+  never turns a planned or unavailable calculation into product support.
 
 ## Settings, entitlements, administration, and cost controls
 
@@ -360,6 +415,10 @@ The owner-only AI area should include:
   and spend cap. Do not make a partial call that will be discarded.
 - Price is snapshotted with the actual completed generation. Admin totals show
   estimates truthfully and never invent a cost when provider usage is absent.
+- Responses usage accounting retains ordinary input, cache writes, cache reads,
+  output and any other billable token class the selected model exposes. A
+  provider response cannot be finalized as cost-complete until its supported
+  usage fields have been validated or explicitly recorded as unavailable.
 - Operational logs contain only privacy-safe status/count information, never
   prompts, answers, credentials, raw statement contents, or raw identities.
 
@@ -426,6 +485,18 @@ contract. The final product must prove at least:
   unrelated Journal activity;
 - the light Material UI is responsive and visually accepted before broadening a
   visible AI surface;
+- the desktop drawer preserves the current page and closes by its visible close
+  action, Escape and backdrop where appropriate; the mobile drawer is fully
+  closable and does not trap the trader in conversation/history navigation;
+- clear execution requests work without an entry-mode prerequisite while vague
+  or unsafe requests are clarified and every save still requires explicit
+  confirmation;
+- the locked twenty-category evaluation inventory is exercised against the
+  machine capability registry so interpretation coverage cannot be confused
+  with calculation support;
+- factual answer evaluations cover exact values, population/date scope,
+  conversation follow-ups, unavailable states, evidence references, refusal
+  boundaries and action-confirmation behavior before a capability is promoted;
 - focused service and browser checks run during each completed slice; broader
   test/build/CI verification happens at the approved launch checkpoint.
 

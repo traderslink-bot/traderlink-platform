@@ -18,6 +18,10 @@ The private persistence API checkpoint is tracked in
 - The category-by-category language delivery program is governed by the
   [AI Language Inventory Master](traderslink_ai_language_inventory_master.md)
   and its [required category template](category_completion_template_example.md).
+- All twenty language-inventory categories are complete, independently
+  reviewed and locked at Version 1. The inventory contains 417 canonical names
+  and now controls runtime-registry generation and evaluation; it is no longer
+  an unfinished planning dependency.
 
 ## Planned work
 
@@ -30,9 +34,16 @@ The private persistence API checkpoint is tracked in
   `0029`.
 - [x] Implement the separate Chat provider boundary and cost-control service.
 - [x] Add the responsive saved-conversation Chat page and dashboard navigation.
-- [ ] Complete the twenty-category language inventory program and review/lock
+- [x] Complete the twenty-category language inventory program and review/lock
   its canonical vocabulary before generating runtime registries.
-- [ ] Implement the private AI Chat experience and factual question families.
+- [x] Replace the transitional four-tool Vercel AI SDK Chat loop with the
+  official OpenAI Agents SDK/Responses orchestration layer while preserving all
+  existing TraderLink persistence, cost, scope and confirmation authorities.
+- [x] Implement the currently supportable private AI Chat question families through a
+  machine-readable capability registry and deterministic factual tools.
+- [x] Replace navigation-away Chat as the primary experience with the shared
+  closable desktop/mobile dashboard drawer; retain `/ai-chat` as a direct-link
+  fallback over the same reusable Chat surface.
 - [x] Implement the Daily Trade Tracker companion drafting/confirmation flow
   for daily notes, one selected trade note, and Current Focuses. Tags, rule
   outcomes, executions, position classifications and review completion remain
@@ -41,13 +52,75 @@ The private persistence API checkpoint is tracked in
   Journal preview and commit commands.
 - [x] Let Chat prepare an allowlisted AI Review delivery day/time change and
   require explicit trader confirmation through the normal settings command.
-- [ ] Finish the scheduled AI Review control-enforcement slice: audit the
+- [x] Finish the scheduled AI Review control-enforcement slice: audit the
   Weekly/Monthly reservation retry and timeout paths, finish its owner-only
   controls, and record its narrow verification/commit checkpoint.
 - [ ] Implement production entitlement, scheduled-delivery, operational, and
   privacy-deletion decisions at their separate launch boundaries.
 
-## Active: scheduled AI Review control enforcement
+## Completed: Agents SDK and global AI Chat companion
+
+### 2026-08-15 checkpoint
+
+- The owner set the target as a best-in-market trading-journal companion and
+  approved continuing the complete AI Chat program without narrowing the
+  language or product plan.
+- The current protected foundation is reusable: migrations `0029`-`0031`,
+  account-scoped conversations/messages/snapshots, cost reservations and
+  receipts, Daily Companion drafts, AI Review setting drafts, and the canonical
+  manual-execution preview/commit path remain authoritative.
+- The former transitional Chat adapter used `@ai-sdk/openai` and a hand-written
+  `generateText` loop with four closed-trade factual tools. The official
+  `@openai/agents` package now owns Chat orchestration over the Responses API.
+  One bounded manager agent can call eight narrow deterministic tools, while
+  private-content tracing and provider response storage remain disabled.
+- AI Reviews and import-repair provider adapters remain unchanged. The Chat
+  migration does not authorize moving those separate features to the Agents SDK.
+- The final Chat uses one primary manager agent, narrow server-bound tools,
+  bounded locally persisted context, a privacy-safe hashed provider safety
+  identifier, saved usage receipts and explicit confirmation for every
+  proposed Journal or Account Settings change. The existing reservation model
+  remains conservative when provider caching lowers the final bill; separate
+  cached-input pricing is retained as a production-launch accounting boundary.
+- The shared dashboard shell now has a closable right drawer on
+  desktop and a full-width closable surface on mobile. It preserves the current
+  dashboard page and uses the existing Chat component; `/ai-chat` remains the
+  direct-link fallback. Daily Tracker and saved AI Review actions can open that
+  same drawer with server-resolved context and a suggested opening question.
+- Natural execution requests no longer require the visible **Enter trades in
+  chat** mode. The optional shortcut may remain as guidance, but extraction,
+  editable preview and explicit final confirmation remain mandatory.
+- The locked twenty-category language inventory is compiled into a generated,
+  digest-checked registry containing all 417 accepted entries. Only canonical
+  names mapped to a deterministic runtime capability are exposed to the
+  manager agent; the remaining vocabulary stays recognized-but-unavailable and
+  cannot authorize a fabricated calculation.
+- The runtime capability registry exposes completed-trade analytics, bounded
+  day/week/month Journal context, saved AI Review follow-ups, maintained
+  product help, selected-day writing drafts, manual-execution drafts, and the
+  review-delivery setting draft.
+- The trader can enforce **Recent 90 days**, one day, one week, one month,
+  custom dates, or one ticker before asking. The server intersects or replaces
+  tool filters with that selection and applies it to trade details as well as
+  summaries, so the model cannot silently broaden the chosen population.
+- The maintained Help Center now includes AI Chat getting-started, scope,
+  manual-entry, answer-boundary, and privacy guidance. Chat product-help
+  answers search the same registry rather than relying on model memory.
+- The current working tree contains unrelated active changes in shared shell,
+  layout and Daily Tracker files. Drawer integration must preserve those edits
+  and stage only an explicit AI Chat allowlist at a coherent checkpoint.
+- Focused lint and the full no-emit TypeScript check passed after the Agents SDK,
+  deterministic tools, selected-scope, saved-review and Help integrations. Six
+  focused AI Chat suites passed with one worker: 46 persistence, route, factual
+  scope, trade-detail, generation-budget and language-registry tests.
+- Controlled no-worker browser verification passed on 2026-08-15. The direct
+  `/ai-chat` surface, maintained Help Center guides, global drawer, saved-review
+  handoff and mobile-width drawer all loaded from the replacement dashboard.
+  The drawer preserved the current route and exposed a visible close action.
+- No provider request, Journal write, database initialization, push or
+  deployment was performed by this implementation checkpoint.
+
+## Completed: scheduled AI Review control enforcement
 
 ### Current checkpoint
 
@@ -59,11 +132,10 @@ The private persistence API checkpoint is tracked in
   completed on 2026-08-06. The completed database has 32 ordered migrations;
   `quick_check`, `integrity_check`, foreign-key verification and the current
   schema-digest check passed after the apply.
-- The implementation and focused migration/file-contract tests are present,
-  but the full runtime/administration slice is still active and uncommitted.
-  In particular, the retry/timeout behavior for an interrupted provider attempt
-  must be reviewed so a stale reservation cannot silently consume a future
-  scheduled review allowance.
+- The runtime and administration enforcement slice is complete and preserved in
+  local commit `8df62c25` (`feat(coach): control scheduled AI review generation`).
+  Weekly, Monthly and Chat controls remain independent, and later AI Review
+  safeguards/cost checkpoints build on this accepted boundary.
 
 - Preserve each trader's saved Friday/Saturday/Sunday and Eastern-time delivery
   preference when an owner disables a review feature; disabling generation must

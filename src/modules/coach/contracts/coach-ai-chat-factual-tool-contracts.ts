@@ -72,7 +72,11 @@ export type CoachAiChatFactualToolName =
   | "summarize_closed_trades"
   | "group_closed_trades"
   | "list_closed_trades"
-  | "get_closed_trade_details";
+  | "get_closed_trade_details"
+  | "summarize_journal_period"
+  | "list_saved_ai_reviews"
+  | "get_saved_ai_review"
+  | "search_product_help";
 
 export type CoachAiChatFactualToolFilters = Readonly<{
   closingDateRange?: Readonly<{
@@ -119,11 +123,43 @@ export type CoachAiChatClosedTradeDetailRequest = Readonly<{
   roundTripId: string;
 }>;
 
+export type CoachAiChatJournalPeriodRequest = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
+  toolName: "summarize_journal_period";
+  period: "daily" | "weekly" | "monthly";
+  anchorDate: string;
+  currency?: string;
+}>;
+
+export type CoachAiChatSavedReviewListRequest = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
+  toolName: "list_saved_ai_reviews";
+  reviewKind?: "weekly" | "two_week" | "monthly";
+  limit: number;
+}>;
+
+export type CoachAiChatSavedReviewDetailRequest = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
+  toolName: "get_saved_ai_review";
+  reviewId: string;
+}>;
+
+export type CoachAiChatProductHelpRequest = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
+  toolName: "search_product_help";
+  query: string;
+  limit: number;
+}>;
+
 export type CoachAiChatFactualToolRequest =
   | CoachAiChatClosedTradeSummaryRequest
   | CoachAiChatClosedTradeGroupingRequest
   | CoachAiChatClosedTradeListRequest
-  | CoachAiChatClosedTradeDetailRequest;
+  | CoachAiChatClosedTradeDetailRequest
+  | CoachAiChatJournalPeriodRequest
+  | CoachAiChatSavedReviewListRequest
+  | CoachAiChatSavedReviewDetailRequest
+  | CoachAiChatProductHelpRequest;
 
 export type CoachAiChatFactualAnalyticsResponse = Readonly<{
   contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
@@ -173,10 +209,43 @@ export type CoachAiChatClosedTradeDetailResponse = Readonly<{
   result: CoachAiChatClosedTradeDetail;
 }>;
 
+export type CoachAiChatJournalPeriodResponse = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
+  toolName: "summarize_journal_period";
+  result: unknown;
+}>;
+
+export type CoachAiChatSavedReviewListResponse = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
+  toolName: "list_saved_ai_reviews";
+  result: readonly unknown[];
+}>;
+
+export type CoachAiChatSavedReviewDetailResponse = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
+  toolName: "get_saved_ai_review";
+  result: unknown;
+}>;
+
+export type CoachAiChatProductHelpResponse = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
+  toolName: "search_product_help";
+  result: readonly Readonly<{
+    title: string;
+    summary: string;
+    section: string;
+    href: string;
+  }>[];
+}>;
+
 export type CoachAiChatFactualToolResponse =
   | CoachAiChatFactualAnalyticsResponse
   | CoachAiChatFactualTradeListResponse
-  | CoachAiChatClosedTradeDetailResponse;
+  | CoachAiChatClosedTradeDetailResponse
+  | CoachAiChatJournalPeriodResponse
+  | CoachAiChatSavedReviewListResponse
+  | CoachAiChatSavedReviewDetailResponse
+  | CoachAiChatProductHelpResponse;
 
 export type CoachAiChatFactualToolErrorCode =
   | "invalid_request"

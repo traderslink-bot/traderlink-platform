@@ -42,6 +42,7 @@ import {
   DashboardSecondaryAction,
 } from "../../../dashboard-template";
 import { FeatureHelpLink } from "../../feature-help-link";
+import { openTraderLinkAiChat } from "@/app/ai-chat-drawer-events";
 import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import {
   JOURNAL_TAG_PRESET_CATALOG,
@@ -2774,8 +2775,13 @@ export function DaySessionView({
         <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", justifySelf: { md: "end" } }}>
           <FeatureHelpLink href="/help/daily-trade-tracker" label="Daily Trade Tracker" size="medium" />
           <Button
-            component={Link}
-            href={`/ai-chat?date=${encodeURIComponent(data.date)}&currency=${encodeURIComponent(data.currency)}`}
+            onClick={() => openTraderLinkAiChat({
+              dailyContext: Object.freeze({
+                kind: "daily_review",
+                tradingDate: data.date,
+                currency: data.currency,
+              }),
+            })}
             startIcon={<ChatBubbleOutlineRoundedIcon />}
             variant="outlined"
           >

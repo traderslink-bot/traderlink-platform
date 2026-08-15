@@ -1,4 +1,5 @@
 import { AI_REVIEWS_HELP_GUIDES } from "./ai-reviews-guides";
+import { AI_CHAT_HELP_GUIDES } from "./ai-chat-guides";
 import { CANDLE_REVIEW_HELP_GUIDES } from "./candle-review-guides";
 import { CORE_ANALYTICS_HELP_GUIDES } from "./core-analytics-guides";
 import { DAILY_TRADE_TRACKER_HELP_GUIDES } from "./daily-trade-tracker-guides";
@@ -129,6 +130,13 @@ export const HELP_NAVIGATION_ITEMS: readonly HelpNavigationItem[] = Object.freez
     summary: "Replay trades and understand entry, exit, Green-to-red and candle-pattern analysis.",
   }),
   ...guideNavigationItems("/help/trade-analyzer", TRADE_ANALYZER_HELP_GUIDES, "trade_analyzer"),
+  Object.freeze({
+    href: "/help/ai-chat",
+    icon: "ai_reviews",
+    label: "AI Chat",
+    summary: "Ask about your trading, continue saved reviews and prepare editable drafts.",
+  }),
+  ...guideNavigationItems("/help/ai-chat", AI_CHAT_HELP_GUIDES, "ai_reviews"),
   Object.freeze({
     href: "/help/ai-reviews",
     icon: "ai_reviews",
@@ -298,6 +306,15 @@ export const HELP_SEARCH_RECORDS: readonly HelpSearchRecord[] = Object.freeze([
     "/help/trade-analyzer",
     TRADE_ANALYZER_HELP_GUIDES,
   ),
+  Object.freeze({
+    href: "/help/ai-chat",
+    id: "ai-chat-overview",
+    keywords: Object.freeze(["ai chat", "trading questions", "conversation", "execution draft"]),
+    section: "AI Chat",
+    summary: "Ask about your trading, choose what to explore and prepare editable drafts.",
+    title: "AI Chat overview",
+  }),
+  ...guideSearchRecords("ai-chat", "AI Chat", "/help/ai-chat", AI_CHAT_HELP_GUIDES),
   Object.freeze({
     href: "/help/ai-reviews",
     id: "ai-reviews-overview",

@@ -1,6 +1,7 @@
 import { Buffer } from "node:buffer";
 
 import type {
+  CoachAiChatAnalysisScope,
   CoachAiChatGenerationResult,
   CoachAiChatGenerationUsage,
   CoachAiChatMessageIntent,
@@ -29,6 +30,9 @@ import type { CoachAiManualEntryDraftRepository } from "./coach-ai-manual-entry-
 import type { CoachAiReviewDeliveryChangeRepository } from "./coach-ai-review-delivery-change-repository";
 import type { CoachAiChatFactualToolService } from "./coach-ai-chat-factual-tool-service";
 import type { CoachAiChatTradeDetailService } from "./coach-ai-chat-trade-detail-service";
+import type { CoachAiChatJournalContextService } from "./coach-ai-chat-journal-context-service";
+import type { CoachAiChatProductHelpService } from "./coach-ai-chat-product-help-service";
+import type { CoachAiChatSavedReviewService } from "./coach-ai-chat-saved-review-service";
 
 export const COACH_AI_CHAT_MAX_RECENT_MESSAGES = 12;
 export const COACH_AI_CHAT_MAX_HISTORY_BYTES = 16 * 1024;
@@ -36,7 +40,7 @@ export const COACH_AI_CHAT_MAX_OUTPUT_TOKENS = 1_200;
 export const COACH_AI_CHAT_MAX_QUESTION_BYTES = 4 * 1024;
 export const COACH_AI_CHAT_MAX_TRUSTED_CONTEXT_BYTES = 20 * 1024;
 export const COACH_AI_CHAT_MAX_MANUAL_DRAFT_CONTEXT_BYTES = 16 * 1024;
-// Covers the real system contract, four Zod tool schemas, structured output, and all three model steps.
+// Covers the real system contract, eight Zod tool schemas, structured output, and all three model steps.
 export const COACH_AI_CHAT_SYSTEM_AND_TOOL_ENVELOPE_RESERVED_BYTES = 32 * 1024;
 
 export type CoachAiChatGenerator = (input: Readonly<{
@@ -50,6 +54,7 @@ export type CoachAiChatGenerator = (input: Readonly<{
   trustedContext: CoachAiChatTrustedContext | null;
   existingManualEntryDraft: CoachAiManualEntryDraft | null;
   currentReviewDelivery: CoachAiReviewDeliveryScheduleSnapshot | null;
+  analysisScope: CoachAiChatAnalysisScope;
   dispatcher: CoachAiChatFactualToolDispatcher;
 }>) => Promise<CoachAiChatGenerationResult>;
 
@@ -96,8 +101,8 @@ export function createCoachAiChatReservationEnvelope(
   existingManualEntryDraft: CoachAiManualEntryDraft | null = null,
   intent: CoachAiChatMessageIntent = "answer_question",
   currentReviewDelivery: CoachAiReviewDeliveryScheduleSnapshot | null = null,
+  analysisScope: CoachAiChatAnalysisScope = Object.freeze({ kind: "recent" }),
 ): string {
-  const manualEntry = intent === "prepare_manual_execution_draft";
   const trustedContextBytes = Buffer.byteLength(JSON.stringify(trustedContext), "utf8");
   const manualDraftBytes = Buffer.byteLength(JSON.stringify(existingManualEntryDraft), "utf8");
   const context = history.map((message) => ({
@@ -107,33 +112,38 @@ export function createCoachAiChatReservationEnvelope(
   // The padding is a conservative reservation for every permitted factual result, not an actual prompt value.
   return JSON.stringify({
     systemInstruction: "grounded Journal answers only; no advice; evidence references must resolve to deterministic factual tools",
-    recentConversation: manualEntry ? [] : context,
+    recentConversation: context,
     currentQuestion: question,
     trustedContext,
     existingManualEntryDraft,
     currentReviewDelivery,
-    toolDefinitions: manualEntry
-      ? []
-      : ["summarize_closed_trades", "group_closed_trades", "list_closed_trades", "get_closed_trade_details"],
-    maximumFactualResultsBytes: manualEntry ? 0 : COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES,
+    analysisScope,
+    manualEntryShortcutSelected: intent === "prepare_manual_execution_draft",
+    toolDefinitions: [
+      "summarize_closed_trades",
+      "group_closed_trades",
+      "list_closed_trades",
+      "get_closed_trade_details",
+      "summarize_journal_period",
+      "list_saved_ai_reviews",
+      "get_saved_ai_review",
+      "search_product_help",
+    ],
+    maximumFactualResultsBytes: COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES,
     maximumOutputTokens: COACH_AI_CHAT_MAX_OUTPUT_TOKENS,
     // A first and second tool result may both be included in the final model step;
     // their total bounded package can also be included in the second step.
-    repeatedFactualResultsReservation: manualEntry
-      ? ""
-      : "x".repeat(COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES * 2),
-    repeatedHistoryReservation: manualEntry ? "" : "x".repeat(COACH_AI_CHAT_MAX_HISTORY_BYTES * 2),
+    repeatedFactualResultsReservation: "x".repeat(COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES * 2),
+    repeatedHistoryReservation: "x".repeat(COACH_AI_CHAT_MAX_HISTORY_BYTES * 2),
     repeatedQuestionReservation: "x".repeat(COACH_AI_CHAT_MAX_QUESTION_BYTES * 2),
-    trustedContextReservation: manualEntry ? "" : "x".repeat(Math.max(
+    trustedContextReservation: "x".repeat(Math.max(
       0,
       COACH_AI_CHAT_MAX_TRUSTED_CONTEXT_BYTES - trustedContextBytes,
     )),
-    manualDraftContextReservation: manualEntry
-      ? "x".repeat(Math.max(
-          0,
-          COACH_AI_CHAT_MAX_MANUAL_DRAFT_CONTEXT_BYTES - manualDraftBytes,
-        ))
-      : "",
+    manualDraftContextReservation: "x".repeat(Math.max(
+      0,
+      COACH_AI_CHAT_MAX_MANUAL_DRAFT_CONTEXT_BYTES - manualDraftBytes,
+    )),
     systemAndToolEnvelopeReservation: "x".repeat(COACH_AI_CHAT_SYSTEM_AND_TOOL_ENVELOPE_RESERVED_BYTES),
   });
 }
@@ -151,6 +161,11 @@ export class CoachAiChatGenerationService {
       "createDraft" | "listDrafts" | "readDraftForSourceMessage" | "transitionDraft"> | null = null,
     private readonly reviewDeliveryChanges: Pick<CoachAiReviewDeliveryChangeRepository,
       "create" | "readForSourceMessage"> | null = null,
+    private readonly toolExtensions: Readonly<{
+      journalContext?: Pick<CoachAiChatJournalContextService, "summarize">;
+      productHelp?: Pick<CoachAiChatProductHelpService, "search">;
+      savedReviews?: Pick<CoachAiChatSavedReviewService, "list" | "read">;
+    }> = Object.freeze({}),
   ) {}
 
   async generateSavedAnswer(
@@ -159,6 +174,7 @@ export class CoachAiChatGenerationService {
       conversationId: string;
       question: string;
       intent?: CoachAiChatMessageIntent;
+      analysisScope?: CoachAiChatAnalysisScope;
       idempotencySha256: string;
       resolveTrustedContext?: (() => CoachAiDailyCompanionResolvedContext) | null;
       resolveManualEntryDefaults?: (() => Readonly<{
@@ -173,6 +189,7 @@ export class CoachAiChatGenerationService {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "question" });
     }
     const intent = input.intent ?? "answer_question";
+    const analysisScope = input.analysisScope ?? Object.freeze({ kind: "recent" as const });
     const existing = this.controls.findChatGenerationByIdempotency(scope, input.idempotencySha256);
     if (existing) {
       if (existing.conversationId !== input.conversationId) {
@@ -207,15 +224,13 @@ export class CoachAiChatGenerationService {
         COACH_AI_CHAT_MAX_TRUSTED_CONTEXT_BYTES) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "trustedContext" });
     }
-    const manualEntryDefaults = intent === "prepare_manual_execution_draft"
-      ? input.resolveManualEntryDefaults?.() ?? null
-      : null;
+    const manualEntryDefaults = input.resolveManualEntryDefaults?.() ?? null;
     const currentReviewDelivery = input.resolveReviewDelivery?.() ?? null;
     if (intent === "prepare_manual_execution_draft" && (!manualEntryDefaults || !this.manualDrafts)) {
       platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { component: "manualEntryDraft" });
     }
-    const existingManualEntryDraft = intent === "prepare_manual_execution_draft"
-      ? this.manualDrafts!.listDrafts(scope, {
+    const existingManualEntryDraft = manualEntryDefaults && this.manualDrafts
+      ? this.manualDrafts.listDrafts(scope, {
           conversationId: input.conversationId,
           limit: 10,
         }).find((draft) => draft.state === "draft" || draft.state === "ready_for_confirmation") ?? null
@@ -230,10 +245,10 @@ export class CoachAiChatGenerationService {
       const pair = this.chat.appendUserMessageAndReserveAssistant(scope, input.conversationId, {
         originalUserTextPrivate: input.question,
         structuredInterpretation: intent === "prepare_manual_execution_draft"
-          ? Object.freeze({ intent })
+          ? Object.freeze({ intent, analysisScope })
           : trustedContext
-          ? Object.freeze({ intent: "assist_daily_review", trustedContext })
-          : undefined,
+          ? Object.freeze({ intent: "assist_daily_review", trustedContext, analysisScope })
+          : Object.freeze({ intent, analysisScope }),
       }, now);
       const history = boundedHistory(this.chat.listMessages(scope, input.conversationId, { limit: COACH_AI_CHAT_MAX_RECENT_MESSAGES }).messages
         .filter((message) => message.messageId !== pair.userMessage.messageId && message.messageId !== pair.assistantMessage.messageId));
@@ -248,6 +263,7 @@ export class CoachAiChatGenerationService {
           boundedExistingManualEntryDraft,
           intent,
           currentReviewDelivery,
+          analysisScope,
         ),
         maxOutputTokens: COACH_AI_CHAT_MAX_OUTPUT_TOKENS,
         additionalFeatureKey: trustedContext ? "daily_companion" : undefined,
@@ -265,13 +281,22 @@ export class CoachAiChatGenerationService {
     }
 
     const attempt = this.controls.markProviderStarted(scope, created.reservation.attempt.attemptId, now);
-    const dispatcher = new CoachAiChatFactualToolDispatcher(this.factualTools, this.tradeDetails, scope, scope.activeAccountId!, now.toISOString());
+    const dispatcher = new CoachAiChatFactualToolDispatcher(
+      this.factualTools,
+      this.tradeDetails,
+      scope,
+      scope.activeAccountId!,
+      now.toISOString(),
+      this.toolExtensions,
+      analysisScope,
+    );
     let result: CoachAiChatGenerationResult;
     try {
       result = await this.generator({ scope, selectedAccountId: scope.activeAccountId!, asOfUtc: now.toISOString(), attempt,
         recentMessages: created.history, question: input.question, intent, trustedContext,
-        existingManualEntryDraft: boundedExistingManualEntryDraft, currentReviewDelivery, dispatcher });
-      if ((intent === "prepare_manual_execution_draft") !== (result.manualEntryExtraction !== null)) {
+        existingManualEntryDraft: boundedExistingManualEntryDraft, currentReviewDelivery,
+        analysisScope, dispatcher });
+      if (result.manualEntryExtraction && (!manualEntryDefaults || !this.manualDrafts)) {
         throw new CoachAiChatProviderGenerationError(
           result.usage,
           "TRADERLINK_COACH_MANUAL_ENTRY_EXTRACTION_INVALID",

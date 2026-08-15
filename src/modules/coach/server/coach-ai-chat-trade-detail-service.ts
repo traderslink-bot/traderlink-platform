@@ -7,6 +7,9 @@ import type { AccountScope, WorkspaceAccessScope } from "@/src/modules/platform/
 import { narrowWorkspaceAccessToAccount } from "@/src/modules/platform/contracts/workspace-access-scope";
 
 import {
+  type CoachAiChatAnalysisScope,
+} from "../contracts/ai-chat-contracts";
+import {
   COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
   CoachAiChatFactualToolError,
   type CoachAiChatClosedTradeDetail,
@@ -41,16 +44,45 @@ export class CoachAiChatTradeDetailService {
     scope: WorkspaceAccessScope,
     selectedAccountId: string,
     request: CoachAiChatClosedTradeDetailRequest,
+    analysisScope: CoachAiChatAnalysisScope = Object.freeze({ kind: "recent" }),
   ): CoachAiChatClosedTradeDetailResponse {
     if (request.contractVersion !== COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION ||
         request.toolName !== "get_closed_trade_details" ||
         Object.keys(request).some((key) => !["contractVersion", "toolName", "roundTripId"].includes(key))) notFound();
     const accountScope = narrowWorkspaceAccessToAccount(scope, selectedAccountId);
     let factSet: JournalAnalyticsFactSet;
+    const closingDateRange = analysisScope.kind === "day"
+      ? Object.freeze({ kind: "inclusive_closing_date" as const, startDate: analysisScope.date, endDate: analysisScope.date })
+      : analysisScope.kind === "custom"
+        ? Object.freeze({ kind: "inclusive_closing_date" as const, startDate: analysisScope.startDate, endDate: analysisScope.endDate })
+        : analysisScope.kind === "month"
+          ? Object.freeze({
+              kind: "inclusive_closing_date" as const,
+              startDate: `${analysisScope.month}-01`,
+              endDate: new Date(Date.UTC(
+                Number(analysisScope.month.slice(0, 4)),
+                Number(analysisScope.month.slice(5, 7)),
+                0,
+              )).toISOString().slice(0, 10),
+            })
+          : analysisScope.kind === "week"
+            ? (() => {
+                const anchor = new Date(`${analysisScope.anchorDate}T12:00:00.000Z`);
+                const start = new Date(anchor);
+                start.setUTCDate(anchor.getUTCDate() - ((anchor.getUTCDay() + 6) % 7));
+                const end = new Date(start);
+                end.setUTCDate(start.getUTCDate() + 6);
+                return Object.freeze({
+                  kind: "inclusive_closing_date" as const,
+                  startDate: start.toISOString().slice(0, 10),
+                  endDate: end.toISOString().slice(0, 10),
+                });
+              })()
+            : Object.freeze({ kind: "all_available" as const });
     try {
       factSet = this.facts.getJournalAnalyticsFactSet(scope, {
         accountIds: Object.freeze([selectedAccountId]),
-        closingDateRange: Object.freeze({ kind: "all_available" }),
+        closingDateRange,
         currencySelection: Object.freeze({ kind: "all_partitions" }),
       });
     } catch {
@@ -59,6 +91,8 @@ export class CoachAiChatTradeDetailService {
     const trade = factSet.roundTrips.find((roundTrip) =>
       roundTrip.accountId === selectedAccountId &&
       roundTrip.roundTripId === request.roundTripId &&
+      (analysisScope.kind !== "ticker" ||
+        roundTrip.displayedSymbol.toUpperCase() === analysisScope.ticker) &&
       roundTrip.projectionState === "ready_closed" && roundTrip.closedAtUtc !== null);
     if (!trade || trade.closedAtUtc === null) notFound();
     let note: JournalRoundTripNoteRecord | null;
