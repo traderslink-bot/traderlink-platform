@@ -19,6 +19,33 @@ export const COACH_AI_CHAT_FACTUAL_TOOL_MAX_PAGE_SIZE = 50 as const;
 export const COACH_AI_CHAT_FACTUAL_TOOL_MAX_SYMBOLS = 25 as const;
 export const COACH_AI_CHAT_FACTUAL_TOOL_MAX_METRICS = 22 as const;
 export const COACH_AI_CHAT_FACTUAL_TOOL_MAX_GROUPS = 100 as const;
+export const COACH_AI_CHAT_TRADE_EXPLORER_METRIC_IDS = Object.freeze([
+  "total_trades",
+  "win_count",
+  "loss_count",
+  "flat_count",
+  "net_pnl",
+  "gross_pnl",
+  "win_rate",
+  "loss_rate",
+  "average_pnl",
+  "median_pnl",
+  "profit_factor",
+  "expectancy",
+  "best_trade",
+  "worst_trade",
+  "average_holding_time",
+  "median_holding_time",
+  "average_share_quantity",
+  "maximum_share_quantity",
+  "average_position_size",
+  "average_entry_notional",
+  "average_entry_price",
+  "average_exit_price",
+  "return_on_entry_notional",
+  "green_to_red_day_count",
+  "red_to_green_day_count",
+] as const);
 
 export const COACH_AI_CHAT_FACTUAL_TOOL_METRIC_IDS = Object.freeze([
   "candidate_count",
@@ -68,6 +95,8 @@ export type CoachAiChatFactualToolMetricId =
   (typeof COACH_AI_CHAT_FACTUAL_TOOL_METRIC_IDS)[number];
 export type CoachAiChatFactualToolGrouping =
   (typeof COACH_AI_CHAT_FACTUAL_TOOL_GROUPINGS)[number];
+export type CoachAiChatTradeExplorerMetricId =
+  (typeof COACH_AI_CHAT_TRADE_EXPLORER_METRIC_IDS)[number];
 export type CoachAiChatFactualToolName =
   | "summarize_closed_trades"
   | "group_closed_trades"
@@ -76,7 +105,19 @@ export type CoachAiChatFactualToolName =
   | "summarize_journal_period"
   | "list_saved_ai_reviews"
   | "get_saved_ai_review"
-  | "search_product_help";
+  | "search_product_help"
+  | "get_workspace_summary"
+  | "get_trading_day_details"
+  | "get_calendar_period"
+  | "list_open_positions"
+  | "get_open_position_details"
+  | "list_swing_positions"
+  | "get_swing_position_details"
+  | "get_analytics_overview"
+  | "get_results_by_ticker"
+  | "get_timing_analytics"
+  | "get_execution_analytics"
+  | "query_trade_explorer";
 
 export type CoachAiChatFactualToolFilters = Readonly<{
   closingDateRange?: Readonly<{
@@ -151,6 +192,75 @@ export type CoachAiChatProductHelpRequest = Readonly<{
   limit: number;
 }>;
 
+export type CoachAiChatWorkspaceSummaryRequest = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
+  toolName: "get_workspace_summary";
+}>;
+
+export type CoachAiChatTradingDayDetailsRequest = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
+  toolName: "get_trading_day_details";
+  tradingDate: string;
+  currency?: string;
+}>;
+
+export type CoachAiChatCalendarPeriodRequest = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
+  toolName: "get_calendar_period";
+  startDate: string;
+  endDate: string;
+  currency?: string;
+  ticker?: string;
+}>;
+
+export type CoachAiChatPositionListRequest = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
+  toolName: "list_open_positions" | "list_swing_positions";
+  reviewDate: string;
+  ticker?: string;
+}>;
+
+export type CoachAiChatPositionDetailRequest = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
+  toolName: "get_open_position_details" | "get_swing_position_details";
+  positionRef: string;
+  reviewDate: string;
+  ticker?: string;
+}>;
+
+export type CoachAiChatAnalyticsPageRequest = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
+  toolName:
+    | "get_analytics_overview"
+    | "get_results_by_ticker"
+    | "get_timing_analytics"
+    | "get_execution_analytics";
+  moneyBasis: JournalAnalyticsMoneyBasis;
+  filters?: CoachAiChatFactualToolFilters;
+}>;
+
+export type CoachAiChatTradeExplorerRequest = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
+  toolName: "query_trade_explorer";
+  metricId: CoachAiChatTradeExplorerMetricId;
+  grouping: CoachAiChatFactualToolGrouping;
+  moneyBasis: JournalAnalyticsMoneyBasis;
+  pageSize: number;
+  afterCursor: string | null;
+  filters?: CoachAiChatFactualToolFilters & Readonly<{
+    entryWeekdays?: readonly string[];
+    entryTimeBuckets?: readonly string[];
+    minimumHoldingMilliseconds?: number;
+    maximumHoldingMilliseconds?: number;
+    minimumEnteredQuantity?: string;
+    maximumEnteredQuantity?: string;
+    minimumPositionQuantity?: string;
+    maximumPositionQuantity?: string;
+    minimumEntryNotional?: string;
+    maximumEntryNotional?: string;
+  }>;
+}>;
+
 export type CoachAiChatFactualToolRequest =
   | CoachAiChatClosedTradeSummaryRequest
   | CoachAiChatClosedTradeGroupingRequest
@@ -159,7 +269,14 @@ export type CoachAiChatFactualToolRequest =
   | CoachAiChatJournalPeriodRequest
   | CoachAiChatSavedReviewListRequest
   | CoachAiChatSavedReviewDetailRequest
-  | CoachAiChatProductHelpRequest;
+  | CoachAiChatProductHelpRequest
+  | CoachAiChatWorkspaceSummaryRequest
+  | CoachAiChatTradingDayDetailsRequest
+  | CoachAiChatCalendarPeriodRequest
+  | CoachAiChatPositionListRequest
+  | CoachAiChatPositionDetailRequest
+  | CoachAiChatAnalyticsPageRequest
+  | CoachAiChatTradeExplorerRequest;
 
 export type CoachAiChatFactualAnalyticsResponse = Readonly<{
   contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
@@ -238,6 +355,30 @@ export type CoachAiChatProductHelpResponse = Readonly<{
   }>[];
 }>;
 
+export type CoachAiChatDashboardContextResponse = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
+  toolName:
+    | "get_workspace_summary"
+    | "get_trading_day_details"
+    | "get_calendar_period"
+    | "list_open_positions"
+    | "get_open_position_details"
+    | "list_swing_positions"
+    | "get_swing_position_details";
+  result: unknown;
+}>;
+
+export type CoachAiChatAnalyticsPageResponse = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
+  toolName:
+    | "get_analytics_overview"
+    | "get_results_by_ticker"
+    | "get_timing_analytics"
+    | "get_execution_analytics"
+    | "query_trade_explorer";
+  result: unknown;
+}>;
+
 export type CoachAiChatFactualToolResponse =
   | CoachAiChatFactualAnalyticsResponse
   | CoachAiChatFactualTradeListResponse
@@ -245,7 +386,9 @@ export type CoachAiChatFactualToolResponse =
   | CoachAiChatJournalPeriodResponse
   | CoachAiChatSavedReviewListResponse
   | CoachAiChatSavedReviewDetailResponse
-  | CoachAiChatProductHelpResponse;
+  | CoachAiChatProductHelpResponse
+  | CoachAiChatDashboardContextResponse
+  | CoachAiChatAnalyticsPageResponse;
 
 export type CoachAiChatFactualToolErrorCode =
   | "invalid_request"

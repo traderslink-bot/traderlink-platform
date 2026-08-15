@@ -76,7 +76,7 @@ It does **not** yet make the remaining dashboard features Chat-capable.
 | Quick Trade Entry | `/quick-trade-entry` | Manual trade preview and command services | Convert supplied facts into an editable preview and save only after explicit confirmation. Explain duplicate/reconciliation outcomes without bypassing Data Decisions. | Confirm implemented |
 | Calendar | `/calendar` | `JournalDashboardReadModelService.getCalendar`, Calendar annotation evidence in `calendar-data.ts`, trading-day review state and ticker/day detail reads | Answer month/week/day questions, list exact daily trades, annotations and review state, and open the selected day. | Planned read |
 | Trading Rules | `/rules`, `/rules/results` | Rule dashboard and annotation service. Rule recommendation evidence requires the separate planned deterministic recommendation service and does not exist yet. | List active presets/custom rules, settings, applicable scope and exact results. When the separately approved recommendation service exists, explain its saved evidence. Draft activation/settings/custom-rule changes; confirm through canonical rule commands. Never mark a result by model judgment or activate a rule autonomously. | Planned read/draft/confirm; recommendation read not implemented yet |
-| Trade Explorer | `/analytics/trade-explorer` | Bounded Trade Explorer page model/query | Apply supported filters, sorting and pagination and return the exact resulting trades/summary. Reuse the page query contract rather than creating a second analytics engine. | Planned read |
+| Trade Explorer | `/analytics/trade-explorer` | Bounded current Trade Explorer page model/query | Apply only the filters, groupings and metrics the current Explorer supports and return the exact resulting trades/summary. Reuse the page query contract rather than creating a second analytics engine. The Trade Explorer is incomplete and will be updated; keep this adapter isolated, describe unsupported Explorer behavior as unavailable, and revise its contract when the accepted Explorer update lands. | Planned read; current product incomplete |
 | Open Positions | `/trades/open` | Open-position dashboard read model and trade-style service | List/detail factual open positions and current trader-defined type. Draft a type/status change and require confirmation. Never infer swing, long-term hold or bag holding. | Planned read/draft/confirm |
 | Analytics Overview | `/analytics` | `JournalAnalyticsService.getAnalyticsOverview` | Return exact overview cards and supported date/currency scope with coverage. | Partial through generic tools; dedicated read planned |
 | Results by Ticker | `/analytics/results` | `getResultAnalytics` | Return exact ticker results, sortable fields and supporting completed trades. | Partial through grouping; dedicated read planned |
@@ -156,6 +156,11 @@ coverage state and representative evaluation cases.
 - `get_timing_analytics`
 - `get_execution_analytics`
 - `query_trade_explorer`
+
+`query_trade_explorer` is a versioned adapter to the currently implemented
+Explorer, not a declaration that the page is complete. Its current factual
+coverage must remain narrow and replaceable so future Explorer work does not
+require rewriting unrelated Chat capabilities.
 
 The existing completed-trade summary/group/list/detail tools remain the shared
 lower-level factual primitives. Dedicated page-aligned tools must not duplicate

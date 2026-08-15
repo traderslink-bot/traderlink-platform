@@ -28,6 +28,8 @@ import {
   COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
   COACH_AI_CHAT_FACTUAL_TOOL_GROUPINGS,
   COACH_AI_CHAT_FACTUAL_TOOL_METRIC_IDS,
+  COACH_AI_CHAT_TRADE_EXPLORER_METRIC_IDS,
+  type CoachAiChatFactualToolName,
   type CoachAiChatFactualToolRequest,
 } from "../contracts/coach-ai-chat-factual-tool-contracts";
 import type { CoachAiChatGenerationAttempt } from "../contracts/ai-provider-controls-contracts";
@@ -73,6 +75,50 @@ const savedReviewDetailInput = z.object({ reviewId: z.string().uuid() }).strict(
 const productHelpInput = z.object({
   query: z.string().min(1).max(160),
   limit: z.number().int().min(1).max(8),
+}).strict();
+const workspaceSummaryInput = z.object({}).strict();
+const tradingDayDetailsInput = z.object({
+  tradingDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/u),
+  currency: z.string().regex(/^[A-Z]{3}$/u).optional(),
+}).strict();
+const calendarPeriodInput = z.object({
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/u),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/u),
+  currency: z.string().regex(/^[A-Z]{3}$/u).optional(),
+  ticker: z.string().regex(/^[A-Za-z0-9._-]{1,32}$/u).optional(),
+}).strict();
+const positionListInput = z.object({
+  reviewDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/u),
+}).strict();
+const positionDetailInput = z.object({
+  positionRef: z.string().regex(/^[0-9a-f]{64}$/u),
+  reviewDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/u),
+}).strict();
+const analyticsPageInput = z.object({
+  moneyBasis: z.enum(["gross", "net"]),
+  filters: filtersSchema.optional(),
+}).strict();
+const tradeExplorerFiltersSchema = filtersSchema.extend({
+  entryWeekdays: z.array(z.enum([
+    "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+  ])).optional(),
+  entryTimeBuckets: z.array(z.string().regex(/^\d{2}:\d{2}$/u)).optional(),
+  minimumHoldingMilliseconds: z.number().int().nonnegative().optional(),
+  maximumHoldingMilliseconds: z.number().int().nonnegative().optional(),
+  minimumEnteredQuantity: z.string().regex(/^\d+(?:\.\d+)?$/u).optional(),
+  maximumEnteredQuantity: z.string().regex(/^\d+(?:\.\d+)?$/u).optional(),
+  minimumPositionQuantity: z.string().regex(/^\d+(?:\.\d+)?$/u).optional(),
+  maximumPositionQuantity: z.string().regex(/^\d+(?:\.\d+)?$/u).optional(),
+  minimumEntryNotional: z.string().regex(/^\d+(?:\.\d+)?$/u).optional(),
+  maximumEntryNotional: z.string().regex(/^\d+(?:\.\d+)?$/u).optional(),
+}).strict();
+const tradeExplorerInput = z.object({
+  metricId: z.enum(COACH_AI_CHAT_TRADE_EXPLORER_METRIC_IDS),
+  grouping: z.enum(COACH_AI_CHAT_FACTUAL_TOOL_GROUPINGS),
+  moneyBasis: z.enum(["gross", "net"]),
+  pageSize: z.number().int().min(1).max(50),
+  afterCursor: z.string().nullable(),
+  filters: tradeExplorerFiltersSchema.optional(),
 }).strict();
 
 const answerSchema = z.object({
@@ -286,10 +332,7 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
   }));
   try {
     const dispatch = (
-      toolName: "summarize_closed_trades" | "group_closed_trades" |
-        "list_closed_trades" | "get_closed_trade_details" |
-        "summarize_journal_period" | "list_saved_ai_reviews" |
-        "get_saved_ai_review" | "search_product_help",
+      toolName: CoachAiChatFactualToolName,
       value: Record<string, unknown>,
       sdkCallId?: string,
     ): Readonly<{ toolCallId: string; result: unknown }> => {
@@ -395,6 +438,126 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
           parameters: productHelpInput,
           execute: (value, _context, details) => dispatch(
             "search_product_help",
+            value,
+            details?.toolCall?.callId,
+          ),
+        }),
+        tool({
+          name: "get_workspace_summary",
+          description: "Read the latest Workspace context, Current Focuses, active rules, latest trading day, and latest saved AI Review.",
+          parameters: workspaceSummaryInput,
+          execute: (value, _context, details) => dispatch(
+            "get_workspace_summary",
+            value,
+            details?.toolCall?.callId,
+          ),
+        }),
+        tool({
+          name: "get_trading_day_details",
+          description: "Read one Daily Trade Tracker day with trades, executions, notes, tags, rules, review state, and coverage.",
+          parameters: tradingDayDetailsInput,
+          execute: (value, _context, details) => dispatch(
+            "get_trading_day_details",
+            value,
+            details?.toolCall?.callId,
+          ),
+        }),
+        tool({
+          name: "get_calendar_period",
+          description: "Read up to 62 calendar days with exact daily results, tickers, review state, and annotation counts.",
+          parameters: calendarPeriodInput,
+          execute: (value, _context, details) => dispatch(
+            "get_calendar_period",
+            value,
+            details?.toolCall?.callId,
+          ),
+        }),
+        tool({
+          name: "list_open_positions",
+          description: "List factual open positions and their trader-selected status for this account.",
+          parameters: positionListInput,
+          execute: (value, _context, details) => dispatch(
+            "list_open_positions",
+            value,
+            details?.toolCall?.callId,
+          ),
+        }),
+        tool({
+          name: "get_open_position_details",
+          description: "Read one factual open position and its executions.",
+          parameters: positionDetailInput,
+          execute: (value, _context, details) => dispatch(
+            "get_open_position_details",
+            value,
+            details?.toolCall?.callId,
+          ),
+        }),
+        tool({
+          name: "list_swing_positions",
+          description: "List active and recently completed trader-confirmed Swing positions.",
+          parameters: positionListInput,
+          execute: (value, _context, details) => dispatch(
+            "list_swing_positions",
+            value,
+            details?.toolCall?.callId,
+          ),
+        }),
+        tool({
+          name: "get_swing_position_details",
+          description: "Read one trader-confirmed Swing position with executions and dated notes.",
+          parameters: positionDetailInput,
+          execute: (value, _context, details) => dispatch(
+            "get_swing_position_details",
+            value,
+            details?.toolCall?.callId,
+          ),
+        }),
+        tool({
+          name: "get_analytics_overview",
+          description: "Read the same Overview metrics and monthly results shown on TraderLink Analytics.",
+          parameters: analyticsPageInput,
+          execute: (value, _context, details) => dispatch(
+            "get_analytics_overview",
+            value,
+            details?.toolCall?.callId,
+          ),
+        }),
+        tool({
+          name: "get_results_by_ticker",
+          description: "Read the same exact ticker results shown on the Results page.",
+          parameters: analyticsPageInput,
+          execute: (value, _context, details) => dispatch(
+            "get_results_by_ticker",
+            value,
+            details?.toolCall?.callId,
+          ),
+        }),
+        tool({
+          name: "get_timing_analytics",
+          description: "Read entry time, exit time, weekday, and trading-session results from the Timing page.",
+          parameters: analyticsPageInput,
+          execute: (value, _context, details) => dispatch(
+            "get_timing_analytics",
+            value,
+            details?.toolCall?.callId,
+          ),
+        }),
+        tool({
+          name: "get_execution_analytics",
+          description: "Read execution-count, position-size, and holding-time results plus bounded supporting trades.",
+          parameters: analyticsPageInput,
+          execute: (value, _context, details) => dispatch(
+            "get_execution_analytics",
+            value,
+            details?.toolCall?.callId,
+          ),
+        }),
+        tool({
+          name: "query_trade_explorer",
+          description: "Filter and group completed trades with the same Journal analytics engine used by Trade Explorer.",
+          parameters: tradeExplorerInput,
+          execute: (value, _context, details) => dispatch(
+            "query_trade_explorer",
             value,
             details?.toolCall?.callId,
           ),

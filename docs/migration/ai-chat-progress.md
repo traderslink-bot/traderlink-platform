@@ -58,10 +58,12 @@ The private persistence API checkpoint is tracked in
 - [x] Finish the scheduled AI Review control-enforcement slice: audit the
   Weekly/Monthly reservation retry and timeout paths, finish its owner-only
   controls, and record its narrow verification/commit checkpoint.
-- [ ] Implement the current-dashboard Journal/Tracker read families: Workspace,
+- [x] Implement the current-dashboard Journal/Tracker read families: Workspace,
   Daily Tracker, Swing Tracker, Calendar and Open Positions.
-- [ ] Implement page-aligned Analytics and Trade Explorer reads without
-  creating a second calculation engine.
+- [x] Implement page-aligned Analytics reads and an isolated, versioned adapter
+  for the currently incomplete Trade Explorer without creating a second
+  calculation engine. Revisit that adapter when the accepted Explorer update
+  is implemented.
 - [ ] Implement saved Trade Analyzer and Candle Review result reads with exact
   coverage and unavailable states.
 - [ ] Implement Import, Data Decisions, Notifications, Account and entitlement
@@ -151,6 +153,28 @@ The private persistence API checkpoint is tracked in
 - Commit `2b4527ac` remains the protected first-slice foundation with eight
   factual tools and three confirmed-draft families. It is no longer described
   as full chatbot completion.
+
+### Completed: current Journal, Tracker and Analytics reads
+
+- Twelve page-aligned deterministic tools now cover Workspace, one Daily
+  Tracker day, Calendar periods, Open Positions, active Swing positions,
+  Analytics Overview, Results by Ticker, Timing, Execution and the currently
+  supported Trade Explorer query surface.
+- The tools reuse the canonical Journal dashboard, Tracker and Analytics
+  services. They do not recalculate P/L, infer position types, broaden the
+  trader's selected date/ticker scope or expose raw broker/source identifiers.
+- Calendar periods are capped at 62 days, open-position collections at 100,
+  Trade Explorer evidence at 50 rows and current page queries at their existing
+  canonical page sizes. Oversized or unsupported requests fail rather than
+  silently truncating or inventing facts.
+- Trade Explorer remains an incomplete product feature. Its Chat integration
+  is deliberately isolated and versioned to the current supported filters,
+  groupings and metrics; future accepted Explorer work must revise that adapter
+  without changing unrelated Chat capabilities.
+- Focused ESLint and a full no-emit TypeScript pass completed cleanly. Three
+  focused one-worker suites passed eight tests covering account isolation,
+  selected page contracts, raw identifier stripping, bounded evidence and
+  exact high-precision decimal-range validation.
 
 ## Completed: scheduled AI Review control enforcement
 

@@ -90,4 +90,26 @@ export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
       "Product help does not include trading advice or unsupported broker instructions.",
     ]),
   }),
+  Object.freeze({
+    id: "current_dashboard_journal_reads",
+    kind: "factual_read" as const,
+    plainLanguage: "Read the current Workspace, Daily Trade Tracker, Calendar, Open Positions, and Swing Trade Tracker.",
+    canonicalNames: Object.freeze([]),
+    limitations: Object.freeze([
+      "Open positions never contribute to realized profit and loss.",
+      "Swing and open-position types come from the trader's saved classification and are not inferred by Chat.",
+      "Calendar questions are limited to 62 days per factual request.",
+    ]),
+  }),
+  Object.freeze({
+    id: "current_dashboard_analytics_reads",
+    kind: "factual_read" as const,
+    plainLanguage: "Read Analytics Overview, Results by Ticker, Timing, Execution, and bounded Trade Explorer results.",
+    canonicalNames: Object.freeze([]),
+    limitations: Object.freeze([
+      "Analytics use completed trades; legitimate open positions and unresolved decisions remain outside realized results.",
+      "Different trade currencies remain separate unless the trader selects one currency.",
+      "Trade Explorer returns at most 50 supporting trades per request.",
+    ]),
+  }),
 ] satisfies readonly CoachAiChatRuntimeCapability[]);

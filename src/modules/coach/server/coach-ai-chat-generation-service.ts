@@ -33,6 +33,8 @@ import type { CoachAiChatTradeDetailService } from "./coach-ai-chat-trade-detail
 import type { CoachAiChatJournalContextService } from "./coach-ai-chat-journal-context-service";
 import type { CoachAiChatProductHelpService } from "./coach-ai-chat-product-help-service";
 import type { CoachAiChatSavedReviewService } from "./coach-ai-chat-saved-review-service";
+import type { CoachAiChatDashboardContextService } from "./coach-ai-chat-dashboard-context-service";
+import type { CoachAiChatAnalyticsPageToolService } from "./coach-ai-chat-analytics-page-tool-service";
 
 export const COACH_AI_CHAT_MAX_RECENT_MESSAGES = 12;
 export const COACH_AI_CHAT_MAX_HISTORY_BYTES = 16 * 1024;
@@ -165,6 +167,10 @@ export class CoachAiChatGenerationService {
       journalContext?: Pick<CoachAiChatJournalContextService, "summarize">;
       productHelp?: Pick<CoachAiChatProductHelpService, "search">;
       savedReviews?: Pick<CoachAiChatSavedReviewService, "list" | "read">;
+      dashboardContext?: Pick<CoachAiChatDashboardContextService,
+        "workspaceSummary" | "tradingDayDetails" | "calendarPeriod" |
+        "positionList" | "positionDetail">;
+      analyticsPages?: Pick<CoachAiChatAnalyticsPageToolService, "readPage" | "tradeExplorer">;
     }> = Object.freeze({}),
   ) {}
 

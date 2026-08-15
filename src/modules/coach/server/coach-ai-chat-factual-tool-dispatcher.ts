@@ -17,6 +17,8 @@ import type { CoachAiChatTradeDetailService } from "./coach-ai-chat-trade-detail
 import type { CoachAiChatJournalContextService } from "./coach-ai-chat-journal-context-service";
 import type { CoachAiChatProductHelpService } from "./coach-ai-chat-product-help-service";
 import type { CoachAiChatSavedReviewService } from "./coach-ai-chat-saved-review-service";
+import type { CoachAiChatDashboardContextService } from "./coach-ai-chat-dashboard-context-service";
+import type { CoachAiChatAnalyticsPageToolService } from "./coach-ai-chat-analytics-page-tool-service";
 
 /** A generation has one shared factual-result budget. Results are never shortened to fit it. */
 /** Across at most two tool steps; later model calls can receive this package twice. */
@@ -76,6 +78,37 @@ function applyScope(
   request: CoachAiChatFactualToolRequest,
   scope: CoachAiChatAnalysisScope,
 ): CoachAiChatFactualToolRequest {
+  if (request.toolName === "get_trading_day_details") {
+    const selectedRange = scopeDateRange(scope);
+    if (scope.kind === "day") return Object.freeze({ ...request, tradingDate: scope.date });
+    if (selectedRange && (request.tradingDate < selectedRange.startDate ||
+        request.tradingDate > selectedRange.endDate)) {
+      throw new CoachAiChatFactualToolError("invalid_request");
+    }
+    return request;
+  }
+  if (request.toolName === "get_calendar_period") {
+    const selectedRange = scopeDateRange(scope);
+    const startDate = selectedRange && selectedRange.startDate > request.startDate
+      ? selectedRange.startDate : request.startDate;
+    const endDate = selectedRange && selectedRange.endDate < request.endDate
+      ? selectedRange.endDate : request.endDate;
+    if (startDate > endDate) throw new CoachAiChatFactualToolError("invalid_request");
+    return Object.freeze({
+      ...request,
+      startDate,
+      endDate,
+      ...(scope.kind === "ticker" ? { ticker: scope.ticker } : {}),
+    });
+  }
+  if (request.toolName === "list_open_positions" ||
+      request.toolName === "list_swing_positions" ||
+      request.toolName === "get_open_position_details" ||
+      request.toolName === "get_swing_position_details") {
+    return scope.kind === "ticker"
+      ? Object.freeze({ ...request, ticker: scope.ticker })
+      : request;
+  }
   if (request.toolName === "summarize_journal_period") {
     if (scope.kind === "day") {
       return Object.freeze({ ...request, period: "daily", anchorDate: scope.date });
@@ -104,7 +137,12 @@ function applyScope(
   }
   if (request.toolName !== "summarize_closed_trades" &&
       request.toolName !== "group_closed_trades" &&
-      request.toolName !== "list_closed_trades") return request;
+      request.toolName !== "list_closed_trades" &&
+      request.toolName !== "get_analytics_overview" &&
+      request.toolName !== "get_results_by_ticker" &&
+      request.toolName !== "get_timing_analytics" &&
+      request.toolName !== "get_execution_analytics" &&
+      request.toolName !== "query_trade_explorer") return request;
   const selectedRange = scopeDateRange(scope);
   const requestedRange = request.filters?.closingDateRange;
   const closingDateRange = selectedRange && requestedRange
@@ -148,6 +186,10 @@ export class CoachAiChatFactualToolDispatcher {
       journalContext?: Pick<CoachAiChatJournalContextService, "summarize">;
       productHelp?: Pick<CoachAiChatProductHelpService, "search">;
       savedReviews?: Pick<CoachAiChatSavedReviewService, "list" | "read">;
+      dashboardContext?: Pick<CoachAiChatDashboardContextService,
+        "workspaceSummary" | "tradingDayDetails" | "calendarPeriod" |
+        "positionList" | "positionDetail">;
+      analyticsPages?: Pick<CoachAiChatAnalyticsPageToolService, "readPage" | "tradeExplorer">;
     }> = Object.freeze({}),
     private readonly analysisScope: CoachAiChatAnalysisScope = Object.freeze({ kind: "recent" }),
   ) {}
@@ -206,6 +248,70 @@ export class CoachAiChatFactualToolDispatcher {
           toolName: request.toolName,
           result: this.extensions.productHelp.search(request),
         });
+        break;
+      case "get_workspace_summary":
+        if (!this.extensions.dashboardContext) return unsupportedTool(request as never);
+        result = this.extensions.dashboardContext.workspaceSummary(
+          this.scope,
+          this.selectedAccountId,
+          this.asOfUtc,
+        );
+        break;
+      case "get_trading_day_details":
+        if (!this.extensions.dashboardContext) return unsupportedTool(request as never);
+        result = this.extensions.dashboardContext.tradingDayDetails(
+          this.scope,
+          this.selectedAccountId,
+          request,
+          this.asOfUtc,
+        );
+        break;
+      case "get_calendar_period":
+        if (!this.extensions.dashboardContext) return unsupportedTool(request as never);
+        result = this.extensions.dashboardContext.calendarPeriod(
+          this.scope,
+          this.selectedAccountId,
+          request,
+        );
+        break;
+      case "list_open_positions":
+      case "list_swing_positions":
+        if (!this.extensions.dashboardContext) return unsupportedTool(request as never);
+        result = this.extensions.dashboardContext.positionList(
+          this.scope,
+          this.selectedAccountId,
+          request,
+        );
+        break;
+      case "get_open_position_details":
+      case "get_swing_position_details":
+        if (!this.extensions.dashboardContext) return unsupportedTool(request as never);
+        result = this.extensions.dashboardContext.positionDetail(
+          this.scope,
+          this.selectedAccountId,
+          request,
+        );
+        break;
+      case "get_analytics_overview":
+      case "get_results_by_ticker":
+      case "get_timing_analytics":
+      case "get_execution_analytics":
+        if (!this.extensions.analyticsPages) return unsupportedTool(request as never);
+        result = this.extensions.analyticsPages.readPage(
+          this.scope,
+          this.selectedAccountId,
+          request,
+          this.asOfUtc,
+        );
+        break;
+      case "query_trade_explorer":
+        if (!this.extensions.analyticsPages) return unsupportedTool(request as never);
+        result = this.extensions.analyticsPages.tradeExplorer(
+          this.scope,
+          this.selectedAccountId,
+          request,
+          this.asOfUtc,
+        );
         break;
       default:
         return unsupportedTool(request);
