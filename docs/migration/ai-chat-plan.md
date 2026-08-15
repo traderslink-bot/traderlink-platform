@@ -479,8 +479,9 @@ once. The following sequence controls safe delivery:
 6. **Confirmed product actions:** one allowlisted canonical command family at
    a time, with durable expiry, stale-state rejection, exact preview and an
    explicit trader confirmation. Reporting currency, notification read state
-   and selected Journal account are the first completed family; Swing, tags,
-   rules and Data Decisions remain later guarded slices.
+   and preferences, selected Journal account, and existing AI Review on/off
+   state are complete; Swing, tags, rules and Data Decisions remain later
+   guarded slices.
 7. **Entitlements and production operations:** public login boundary, feature
    eligibility, scheduled delivery execution, monitoring, costs, and support
    workflow.

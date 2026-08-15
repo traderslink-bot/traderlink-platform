@@ -13,6 +13,14 @@ export type CoachAiChatActionDraftExtraction =
   | Readonly<{
       kind: "select_journal_account";
       accountDisplayName: string;
+    }>
+  | Readonly<{
+      kind: "notification_preferences";
+      discordDmCategories: readonly string[];
+    }>
+  | Readonly<{
+      kind: "ai_review_account_setting";
+      isEnabled: boolean;
     }>;
 
 export type CoachAiChatActionDraftPreview =
@@ -34,7 +42,26 @@ export type CoachAiChatActionDraftPreview =
       title: "Switch Journal account";
       currentAccountDisplayName: string;
       proposedAccountDisplayName: string;
+    }>
+  | Readonly<{
+      kind: "notification_preferences";
+      title: "Change Discord notifications";
+      currentCategoryLabels: readonly string[];
+      proposedCategoryLabels: readonly string[];
+    }>
+  | Readonly<{
+      kind: "ai_review_account_setting";
+      title: "Change AI Reviews";
+      currentEnabled: boolean;
+      proposedEnabled: boolean;
     }>;
+
+export type CoachAiChatActionCanonicalCommand =
+  | "platform_reporting_currency_update"
+  | "platform_notification_mark_read"
+  | "platform_account_selection"
+  | "platform_notification_preferences_update"
+  | "coach_ai_review_account_setting_save";
 
 export type CoachAiChatActionDraft = Readonly<{
   contractVersion: typeof COACH_AI_CHAT_ACTION_DRAFT_CONTRACT_VERSION;

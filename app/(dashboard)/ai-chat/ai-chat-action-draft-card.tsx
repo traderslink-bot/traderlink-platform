@@ -31,6 +31,23 @@ function Details({ draft }: Readonly<{ draft: CoachAiChatActionDraft }>) {
   if (preview.kind === "select_journal_account") {
     return <Typography variant="body2"><strong>{preview.currentAccountDisplayName}</strong> → <strong>{preview.proposedAccountDisplayName}</strong></Typography>;
   }
+  if (preview.kind === "notification_preferences") {
+    const current = preview.currentCategoryLabels.length > 0
+      ? preview.currentCategoryLabels.join(", ")
+      : "None";
+    const proposed = preview.proposedCategoryLabels.length > 0
+      ? preview.proposedCategoryLabels.join(", ")
+      : "None";
+    return (
+      <Stack spacing={0.5}>
+        <Typography color="text.secondary" variant="body2">Currently: {current}</Typography>
+        <Typography variant="body2"><strong>Change to: {proposed}</strong></Typography>
+      </Stack>
+    );
+  }
+  if (preview.kind === "ai_review_account_setting") {
+    return <Typography variant="body2"><strong>{preview.currentEnabled ? "On" : "Off"}</strong> → <strong>{preview.proposedEnabled ? "On" : "Off"}</strong></Typography>;
+  }
   return (
     <Stack spacing={0.5}>
       <Typography sx={{ fontWeight: 750 }} variant="body2">{preview.notificationTitle}</Typography>

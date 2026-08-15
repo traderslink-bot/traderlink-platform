@@ -120,10 +120,10 @@ export const AI_CHAT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       Object.freeze({
         id: "supported-changes",
         title: "Supported changes",
-        summary: "Change reporting currency, mark one notification read or switch to an existing Journal account.",
-        keywords: Object.freeze(["reporting currency", "notification", "switch account", "confirm"]),
+        summary: "Change supported account preferences through a clear confirmation preview.",
+        keywords: Object.freeze(["reporting currency", "notification", "Discord", "AI Reviews", "switch account", "confirm"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph" as const, text: "Ask AI Chat to change your reporting currency, mark one exact notification read or switch to one of your existing Journal accounts. Chat checks the current value or target before it prepares anything." }),
+          Object.freeze({ kind: "paragraph" as const, text: "Ask AI Chat to change your reporting currency, mark one exact notification read, choose which updates go to Discord, turn existing AI Reviews on or off, or switch to one of your existing Journal accounts. Chat checks the current value or target before it prepares anything." }),
           Object.freeze({ kind: "paragraph" as const, text: "The proposed change appears in the conversation with a clear preview. Nothing changes until you choose Confirm change. You can cancel the proposal instead, and an unconfirmed proposal expires after 24 hours." }),
         ]),
       }),

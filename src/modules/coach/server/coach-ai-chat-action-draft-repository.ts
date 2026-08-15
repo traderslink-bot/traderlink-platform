@@ -6,6 +6,7 @@ import type Database from "better-sqlite3";
 
 import {
   COACH_AI_CHAT_ACTION_DRAFT_CONTRACT_VERSION,
+  type CoachAiChatActionCanonicalCommand,
   type CoachAiChatActionDraft,
   type CoachAiChatActionDraftPreview,
 } from "../contracts/ai-chat-action-draft-contracts";
@@ -181,7 +182,7 @@ WHERE coach_ai_chat_conversation_id = ? AND source_message_id = ?
   beginConfirm(
     scope: WorkspaceAccessScope,
     draftId: string,
-    command: "platform_reporting_currency_update" | "platform_notification_mark_read" | "platform_account_selection",
+    command: CoachAiChatActionCanonicalCommand,
     now = new Date(),
   ): CoachAiChatActionDraft {
     const finalizedAtUtc = createCanonicalUtcTimestamp(now);

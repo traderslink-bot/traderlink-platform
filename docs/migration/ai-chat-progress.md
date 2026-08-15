@@ -70,8 +70,9 @@ The private persistence API checkpoint is tracked in
   reads without exposing statements, credentials, admin data or secrets.
 - [ ] Add allowlisted Swing, tag, rule, Data Decision, notification and account
   setting drafts/confirmed actions through canonical commands. Reporting
-  currency, one-notification read state and selected-account switching are
-  complete; the remaining command families stay pending.
+  currency, notification read/preferences, selected-account switching and
+  existing AI Review on/off changes are complete; the remaining command
+  families stay pending.
 - [ ] Promote the language registry and Help Center only as each deterministic
   family becomes executable.
 - [ ] Complete representative agent evaluations, live OpenAI Agents SDK
@@ -250,6 +251,21 @@ The private persistence API checkpoint is tracked in
   `d4f6be4c91a2b0857e06047f90825bf9d22429988f387599bdc6a1d7c8683989`;
   all 55 migration rows, 151 table counts, page geometry and recovery authority
   match.
+
+### Completed: notification preferences and AI Review on/off actions
+
+- Chat can now prepare the complete final set of Discord notification
+  categories and show the current and proposed selections in plain language.
+  Confirmation calls the same notification-preference repository as Account
+  Settings; stale current preferences fail closed.
+- A trader with existing AI Review settings can ask Chat to turn reviews on or
+  off. Confirmation preserves the accepted cadence and timing choices, uses
+  the current settings revision, and clears pending cadence changes when the
+  trader turns reviews off. Chat does not invent a schedule for an account that
+  has never configured AI Reviews.
+- Generation still performs no write. Both changes use the existing expiring
+  action-draft record, separate confirmation route, idempotent final state and
+  privacy-safe canonical reference.
 
 ## Completed: scheduled AI Review control enforcement
 

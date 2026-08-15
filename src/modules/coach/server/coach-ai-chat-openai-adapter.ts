@@ -28,6 +28,8 @@ import type { CoachAiChatActionDraftExtraction } from
   "../contracts/ai-chat-action-draft-contracts";
 import { PLATFORM_REPORTING_CURRENCIES } from
   "@/src/modules/platform/server/identity/platform-user-preference-repository";
+import { PLATFORM_NOTIFICATION_CATEGORIES } from
+  "@/src/modules/platform/contracts/platform-notification-contracts";
 import {
   COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
   COACH_AI_CHAT_FACTUAL_TOOL_GROUPINGS,
@@ -219,6 +221,16 @@ const actionDraftSchema = z.discriminatedUnion("kind", [
     kind: z.literal("select_journal_account"),
     accountDisplayName: z.string().trim().min(1).max(120),
   }).strict(),
+  z.object({
+    kind: z.literal("notification_preferences"),
+    discordDmCategories: z.array(z.enum(PLATFORM_NOTIFICATION_CATEGORIES)).max(
+      PLATFORM_NOTIFICATION_CATEGORIES.length,
+    ),
+  }).strict(),
+  z.object({
+    kind: z.literal("ai_review_account_setting"),
+    isEnabled: z.boolean(),
+  }).strict(),
 ]);
 
 const manualExecutionRowSchema = z.object({
@@ -255,7 +267,7 @@ Create a dailyCompanionDraft only when the trader explicitly asks you to draft, 
 
 Create a reviewDeliveryChangeDraft only when the trader explicitly asks to change the weekly AI Review delivery day or Eastern delivery time and both final values are clear. The only permitted days are Friday, Saturday, and Sunday. The only permitted times are 4:00 PM through 11:30 PM Eastern in 30-minute steps. Use the supplied currentReviewDelivery value for an unchanged field. Return null when the request is unclear or concerns any other user, login, billing, privacy, ownership, provider, model, admin, or account setting. Never claim the setting was changed; the trader will review and confirm it separately.
 
-Create an actionDraft only when the trader explicitly asks to change their reporting currency, mark one exact notification read, or switch to one exact existing Journal account. Before proposing it, call get_account_preferences, list_notifications, or get_account_trading as appropriate and use only a value or opaque reference returned by that tool in this generation. Return null if the target is unclear, already satisfied, absent from the tool result, or concerns any other setting or action. The trader will see an exact preview and must confirm it separately. Never claim the action was completed during generation.
+Create an actionDraft only when the trader explicitly asks to change their reporting currency, mark one exact notification read, switch to one exact existing Journal account, change the exact Discord notification categories, or turn existing AI Reviews on or off. Before proposing it, call get_account_preferences, list_notifications, get_account_trading, or get_account_ai_plan as appropriate and use only values or opaque references returned by that tool in this generation. For notification preferences, return the complete final category list, including unchanged categories. Return null if the target is unclear, already satisfied, absent from the tool result, or concerns any other setting or action. If AI Reviews have never been configured, direct the trader to Account settings instead of inventing a schedule. The trader will see an exact preview and must confirm it separately. Never claim the action was completed during generation.
 
 Create a manualExecutionDraft when the current message clearly asks to enter, record, add, correct, or continue a set of manual trade executions. The trader does not need to select a special mode first. A shortcut hint may be present, but it is only a hint and never proof of intent. Use only execution facts explicitly supplied in the current message or the existing draft. Never guess a date, Eastern execution time, ticker, side, quantity, price, or fee. Fees are optional and may remain null. Preserve exact decimal digits. Words such as bought, added, sold, reduced, exited, covered, or shorted may establish side only when their meaning is clear. Do not convert relative dates such as today or yesterday into a date; ask for the actual date. Times are Eastern Time. Return the complete proposed rows, including unchanged existing rows when the trader is clarifying a prior draft. If the trader only asks how manual entry works, return null. Never claim an execution was saved; the trader will edit and explicitly confirm the draft through the normal Journal preview.
 

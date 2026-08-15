@@ -17,6 +17,8 @@ import { PlatformUserPreferenceRepository } from
 
 import { CoachAiChatRepository } from "./coach-ai-chat-repository";
 import { CoachAiChatActionDraftService } from "./coach-ai-chat-action-draft-service";
+import { CoachReviewDeliveryScheduleRepository } from
+  "./coach-weekly-review-schedule-repository";
 
 const now = new Date("2026-08-15T12:00:00.000Z");
 
@@ -135,6 +137,67 @@ describe("CoachAiChatActionDraftService", () => {
         draftId: draft.draftId,
       }, new Date("2026-08-04T15:01:00.000Z"));
       expect(retried.accountSelectionRef).toBe(result.accountSelectionRef);
+    } finally {
+      f.database.close();
+    }
+  });
+
+  it("shows the complete Discord notification selection before saving it", () => {
+    const f = fixture();
+    try {
+      const notifications = new PlatformNotificationRepository(f.database);
+      const service = new CoachAiChatActionDraftService(f.database);
+      const draft = service.create(f.scope, {
+        conversationId: f.conversationId,
+        sourceMessageId: f.message("Send AI Review and statement import updates to Discord."),
+        extraction: Object.freeze({
+          kind: "notification_preferences",
+          discordDmCategories: Object.freeze(["statement_import", "ai_review"]),
+        }),
+      }, now);
+      expect(draft.preview).toMatchObject({
+        kind: "notification_preferences",
+        currentCategoryLabels: [],
+        proposedCategoryLabels: ["AI Reviews", "Statement imports"],
+      });
+      expect(notifications.readPreferences(f.scope).discordDmCategories).toEqual([]);
+      service.confirm(f.scope, {
+        conversationId: f.conversationId,
+        draftId: draft.draftId,
+      }, new Date("2026-08-15T12:01:00.000Z"));
+      expect(notifications.readPreferences(f.scope).discordDmCategories)
+        .toEqual(["ai_review", "statement_import"]);
+    } finally {
+      f.database.close();
+    }
+  });
+
+  it("turns off existing AI Reviews only after confirmation", () => {
+    const f = fixture();
+    try {
+      const schedules = new CoachReviewDeliveryScheduleRepository(f.database);
+      schedules.saveV2(f.scope, {
+        isEnabled: true,
+        currentFrequency: "weekly",
+        timingMode: "automatic_after_12_hours",
+        twoWeekAnchorMondayDate: null,
+        pendingFrequency: null,
+        pendingEffectiveMondayDate: null,
+        pendingTwoWeekAnchorMondayDate: null,
+        expectedRevision: null,
+      }, now);
+      const service = new CoachAiChatActionDraftService(f.database);
+      const draft = service.create(f.scope, {
+        conversationId: f.conversationId,
+        sourceMessageId: f.message("Turn off my AI Reviews."),
+        extraction: Object.freeze({ kind: "ai_review_account_setting", isEnabled: false }),
+      }, now);
+      expect(schedules.readV2(f.scope)?.isEnabled).toBe(true);
+      service.confirm(f.scope, {
+        conversationId: f.conversationId,
+        draftId: draft.draftId,
+      }, new Date("2026-08-15T12:01:00.000Z"));
+      expect(schedules.readV2(f.scope)?.isEnabled).toBe(false);
     } finally {
       f.database.close();
     }
