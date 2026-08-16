@@ -50,6 +50,8 @@ export const COACH_AI_CHAT_MAX_OUTPUT_TOKENS = 1_200;
 export const COACH_AI_CHAT_MAX_QUESTION_BYTES = 4 * 1024;
 export const COACH_AI_CHAT_MAX_TRUSTED_CONTEXT_BYTES = 20 * 1024;
 export const COACH_AI_CHAT_MAX_MANUAL_DRAFT_CONTEXT_BYTES = 16 * 1024;
+export const COACH_AI_CHAT_DERIVED_CONTENT_FAILURE_CODE =
+  "TRADERLINK_COACH_CHAT_DERIVED_CONTENT_INVALID";
 // Covers the full current system contract, all registered tool schemas,
 // structured output, and all three possible model steps.
 export const COACH_AI_CHAT_SYSTEM_AND_TOOL_ENVELOPE_RESERVED_BYTES = 64 * 1024;
@@ -356,99 +358,132 @@ export class CoachAiChatGenerationService {
       });
       return Object.freeze({ state: "failed", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: attempt.attemptId, manualEntryDraft: null, dailyCompanionDraft: null, reviewDeliveryChangeDraft: null, actionDraft: null });
     }
-    // A receipt/attempt mismatch must roll this whole persistence transition back; it is not a provider failure.
+    // Derived drafts are materialized before the completed answer. If that bounded
+    // materialization fails, the paid provider response is still terminalized with
+    // its actual usage receipt instead of being left pending for lease recovery.
+    // A receipt/attempt mismatch must still roll the whole transition back because
+    // it is an integrity failure, not a provider or draft failure.
     let manualEntryDraft: CoachAiManualEntryDraft | null = null;
     let dailyCompanionDraft: CoachAiDailyCompanionDraft | null = null;
     let reviewDeliveryChangeDraft: CoachAiReviewDeliveryChangeDraft | null = null;
     let actionDraft: CoachAiChatActionDraft | null = null;
-    this.chat.runAtomically(() => {
-      this.chat.finalizeAssistantSuccess(scope, created.pair.assistantMessage.messageId, {
-        assistantTextPrivate: safeAssistantText(result),
-        snapshotContractVersion: "traderlink_coach_ai_chat_generation_v1",
-        factualSnapshot: Object.freeze({ answer: result.answer, factualToolCalls: result.factualToolCalls,
-          totalFactualResultBytes: dispatcher.totalSerializedResultBytes(), trustedContext,
-          manualEntryExtraction: result.manualEntryExtraction,
-          dailyCompanionDraftExtraction: result.dailyCompanionDraftExtraction,
-          reviewDeliveryChangeExtraction: result.reviewDeliveryChangeExtraction,
-          actionDraftExtraction: result.actionDraftExtraction ?? null }),
-        receipt: { providerKey: attempt.providerKey, modelId: attempt.modelId, usage: result.usage,
-          inputCostUsdPerMillionTokens: attempt.inputCostUsdPerMillionTokens,
-          outputCostUsdPerMillionTokens: attempt.outputCostUsdPerMillionTokens },
-      }, now);
-      this.controls.finalizeFromChatReceipt(scope, attempt.attemptId, "completed", null, now);
-      if (trustedContext) {
-        if (!this.dailyCompanion) {
-          platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { component: "dailyCompanion" });
-        }
-        this.dailyCompanion.recordProposedReflection(scope, {
-          conversationId: input.conversationId,
-          sourceMessageId: created.pair.userMessage.messageId,
-          tradingDate: trustedContext.tradingDate,
-          proposedContent: Object.freeze({
-            assistantMessageId: created.pair.assistantMessage.messageId,
-            answer: result.answer,
-          }),
-        }, now);
-        if (result.dailyCompanionDraftExtraction) {
-          dailyCompanionDraft = this.dailyCompanion.recordProposedDraft(scope, {
+    const persistence = { receiptStarted: false };
+    try {
+      this.chat.runAtomically(() => {
+        if (trustedContext) {
+          if (!this.dailyCompanion) {
+            platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { component: "dailyCompanion" });
+          }
+          this.dailyCompanion.recordProposedReflection(scope, {
             conversationId: input.conversationId,
             sourceMessageId: created.pair.userMessage.messageId,
-            resolvedContext: resolvedTrustedContext!,
-            extraction: result.dailyCompanionDraftExtraction,
+            tradingDate: trustedContext.tradingDate,
+            proposedContent: Object.freeze({
+              assistantMessageId: created.pair.assistantMessage.messageId,
+              answer: result.answer,
+            }),
           }, now);
-        }
-      } else if (result.dailyCompanionDraftExtraction) {
-        platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
-          component: "dailyCompanionDraft",
-        });
-      }
-      if (result.manualEntryExtraction) {
-        const activeDrafts = this.manualDrafts!.listDrafts(scope, {
-          conversationId: input.conversationId,
-          limit: 50,
-        }).filter((draft) => draft.state === "draft" || draft.state === "ready_for_confirmation");
-        for (const activeDraft of activeDrafts) {
-          this.manualDrafts!.transitionDraft(scope, activeDraft.draftId, {
-            state: "archived",
-          }, now);
-        }
-        const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1_000);
-        manualEntryDraft = this.manualDrafts!.createDraft(scope, {
-          conversationId: input.conversationId,
-          sourceMessageId: created.pair.userMessage.messageId,
-          sourceTimezone: manualEntryDefaults!.sourceTimezone,
-          tradeCurrency: manualEntryDefaults!.tradeCurrency,
-          state: result.manualEntryExtraction.state,
-          rows: result.manualEntryExtraction.rows,
-          expiresAtUtc: expiresAt.toISOString(),
-        }, now);
-      }
-      if (result.reviewDeliveryChangeExtraction) {
-        if (!this.reviewDeliveryChanges || !currentReviewDelivery) {
+          if (result.dailyCompanionDraftExtraction) {
+            dailyCompanionDraft = this.dailyCompanion.recordProposedDraft(scope, {
+              conversationId: input.conversationId,
+              sourceMessageId: created.pair.userMessage.messageId,
+              resolvedContext: resolvedTrustedContext!,
+              extraction: result.dailyCompanionDraftExtraction,
+            }, now);
+          }
+        } else if (result.dailyCompanionDraftExtraction) {
           platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
-            component: "reviewDeliveryChange",
+            component: "dailyCompanionDraft",
           });
         }
-        reviewDeliveryChangeDraft = this.reviewDeliveryChanges.create(scope, {
-          conversationId: input.conversationId,
-          sourceMessageId: created.pair.userMessage.messageId,
-          current: currentReviewDelivery,
-          proposed: result.reviewDeliveryChangeExtraction,
-        }, now);
-      }
-      if (result.actionDraftExtraction) {
-        if (!this.actionDrafts) {
-          platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
-            component: "chatActionDraft",
-          });
+        if (result.manualEntryExtraction) {
+          const activeDrafts = this.manualDrafts!.listDrafts(scope, {
+            conversationId: input.conversationId,
+            limit: 50,
+          }).filter((draft) => draft.state === "draft" || draft.state === "ready_for_confirmation");
+          for (const activeDraft of activeDrafts) {
+            this.manualDrafts!.transitionDraft(scope, activeDraft.draftId, {
+              state: "archived",
+            }, now);
+          }
+          const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1_000);
+          manualEntryDraft = this.manualDrafts!.createDraft(scope, {
+            conversationId: input.conversationId,
+            sourceMessageId: created.pair.userMessage.messageId,
+            sourceTimezone: manualEntryDefaults!.sourceTimezone,
+            tradeCurrency: manualEntryDefaults!.tradeCurrency,
+            state: result.manualEntryExtraction.state,
+            rows: result.manualEntryExtraction.rows,
+            expiresAtUtc: expiresAt.toISOString(),
+          }, now);
         }
-        actionDraft = this.actionDrafts.create(scope, {
-          conversationId: input.conversationId,
-          sourceMessageId: created.pair.userMessage.messageId,
-          extraction: result.actionDraftExtraction,
+        if (result.reviewDeliveryChangeExtraction) {
+          if (!this.reviewDeliveryChanges || !currentReviewDelivery) {
+            platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+              component: "reviewDeliveryChange",
+            });
+          }
+          reviewDeliveryChangeDraft = this.reviewDeliveryChanges.create(scope, {
+            conversationId: input.conversationId,
+            sourceMessageId: created.pair.userMessage.messageId,
+            current: currentReviewDelivery,
+            proposed: result.reviewDeliveryChangeExtraction,
+          }, now);
+        }
+        if (result.actionDraftExtraction) {
+          if (!this.actionDrafts) {
+            platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+              component: "chatActionDraft",
+            });
+          }
+          actionDraft = this.actionDrafts.create(scope, {
+            conversationId: input.conversationId,
+            sourceMessageId: created.pair.userMessage.messageId,
+            extraction: result.actionDraftExtraction,
+          }, now);
+        }
+        this.chat.finalizeAssistantSuccess(scope, created.pair.assistantMessage.messageId, {
+          assistantTextPrivate: safeAssistantText(result),
+          snapshotContractVersion: "traderlink_coach_ai_chat_generation_v1",
+          factualSnapshot: Object.freeze({ answer: result.answer, factualToolCalls: result.factualToolCalls,
+            totalFactualResultBytes: dispatcher.totalSerializedResultBytes(), trustedContext,
+            manualEntryExtraction: result.manualEntryExtraction,
+            dailyCompanionDraftExtraction: result.dailyCompanionDraftExtraction,
+            reviewDeliveryChangeExtraction: result.reviewDeliveryChangeExtraction,
+            actionDraftExtraction: result.actionDraftExtraction ?? null }),
+          receipt: { providerKey: attempt.providerKey, modelId: attempt.modelId, usage: result.usage,
+            inputCostUsdPerMillionTokens: attempt.inputCostUsdPerMillionTokens,
+            outputCostUsdPerMillionTokens: attempt.outputCostUsdPerMillionTokens },
         }, now);
-      }
-    });
+        persistence.receiptStarted = true;
+        this.controls.finalizeFromChatReceipt(scope, attempt.attemptId, "completed", null, now);
+      });
+    } catch (error) {
+      if (persistence.receiptStarted) throw error;
+      this.chat.runAtomically(() => {
+        this.chat.finalizeAssistantFailure(
+          scope,
+          created.pair.assistantMessage.messageId,
+          COACH_AI_CHAT_DERIVED_CONTENT_FAILURE_CODE,
+          {
+            providerKey: attempt.providerKey,
+            modelId: attempt.modelId,
+            usage: result.usage,
+            inputCostUsdPerMillionTokens: attempt.inputCostUsdPerMillionTokens,
+            outputCostUsdPerMillionTokens: attempt.outputCostUsdPerMillionTokens,
+          },
+          now,
+        );
+        this.controls.finalizeFromChatReceipt(
+          scope,
+          attempt.attemptId,
+          "failed",
+          COACH_AI_CHAT_DERIVED_CONTENT_FAILURE_CODE,
+          now,
+        );
+      });
+      return Object.freeze({ state: "failed", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: attempt.attemptId, manualEntryDraft: null, dailyCompanionDraft: null, reviewDeliveryChangeDraft: null, actionDraft: null });
+    }
     return Object.freeze({ state: "completed", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: attempt.attemptId, manualEntryDraft, dailyCompanionDraft, reviewDeliveryChangeDraft, actionDraft });
   }
 }

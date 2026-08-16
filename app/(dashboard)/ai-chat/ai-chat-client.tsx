@@ -464,10 +464,18 @@ export function AiChatClient({
   useEffect(() => {
     if (!activeConversationId || !hasPendingAssistantMessage) return undefined;
     const interval = window.setInterval(() => {
-      void loadMessages(activeConversationId);
+      void Promise.all([
+        loadMessages(activeConversationId),
+        loadManualEntryDrafts(activeConversationId),
+        loadDailyCompanionDrafts(activeConversationId),
+        loadReviewDeliveryChangeDrafts(activeConversationId),
+        loadActionDrafts(activeConversationId),
+      ]);
     }, 12_000);
     return () => window.clearInterval(interval);
-  }, [activeConversationId, hasPendingAssistantMessage, loadMessages]);
+  }, [activeConversationId, hasPendingAssistantMessage, loadActionDrafts,
+    loadDailyCompanionDrafts, loadManualEntryDrafts, loadMessages,
+    loadReviewDeliveryChangeDrafts]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, sending]);
 
   async function createConversation(): Promise<CoachAiChatConversation | null> {

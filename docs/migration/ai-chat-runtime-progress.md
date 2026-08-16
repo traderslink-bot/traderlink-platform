@@ -72,6 +72,32 @@ factual evidence or action authority.
   service exists. In particular, rule recommendations remain planning-only and
   Trade Explorer remains an incomplete versioned adapter.
 
+## 2026-08-16 second whole-feature QA
+
+- The complete current product inventory was audited again: 13 live capability
+  families, 34 deterministic factual tools, 12 confirmed action kinds, current
+  dashboard routes and aliases, saved Analyzer/Candle facts, Help, account
+  scope, privacy-safe Moomoo status and the 417-entry language reconciliation.
+- Paid provider usage can no longer be stranded when an invalid derived draft
+  fails after generation. Derived content rolls back, the assistant and attempt
+  fail terminally, and the actual usage/cost receipt is preserved. A true
+  receipt/reservation integrity mismatch still fails closed and is not
+  converted into an ordinary provider failure.
+- Pending-answer polling now refreshes messages and every supported
+  confirmation collection together, so execution, Daily Companion, review
+  delivery and product-action cards do not require a reload after an
+  idempotent or cross-request completion.
+- The final no-provider, one-worker regression passed 161 tests across 26
+  files, with only the opt-in paid-provider file/test skipped. Focused lint and
+  the full no-emit TypeScript check passed. The one initial resource-timing
+  timeout was isolated, passed alone, and disappeared in the final full run
+  with a ten-second per-test boundary.
+- Controlled desktop and 390 by 844 mobile browser checks reopened the shared
+  drawer from `/workspace`, preserved that route, exposed a visible close
+  action, loaded the direct `/ai-chat` surface and completed all scoped read
+  requests without browser warnings or errors. The no-worker review server was
+  stopped afterward.
+
 ## 2026-08-15 verification
 
 - The final focused Chat suite covers conversation persistence, routes,

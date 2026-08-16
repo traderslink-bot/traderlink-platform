@@ -32,6 +32,27 @@ the [runtime progress record](ai-chat-runtime-progress.md), and the
 
 ## Findings corrected
 
+### Paid-answer terminalization
+
+A valid paid provider answer could previously be rolled back and left pending
+when a derived confirmation draft was rejected during final persistence. That
+lost the actual usage receipt until lease recovery eventually marked the
+attempt failed. Derived drafts are now validated and materialized before the
+answer is finalized. If that bounded step fails, the answer and attempt reach
+one failed terminal state and the immutable receipt still records the actual
+provider usage and cost. Receipt-versus-reservation mismatches remain integrity
+failures and still roll back without being misreported as an ordinary draft
+failure.
+
+### Pending confirmation-card refresh
+
+The saved answer poll previously refreshed only conversation messages. A reply
+that completed in another request could appear without its execution, daily
+note, AI Review delivery or supported product-change confirmation card until a
+page reload. While one answer is pending, the client now refreshes the message
+and all four account-scoped draft collections together. A finished reply and
+its required confirmation surface therefore arrive in the same polling cycle.
+
 ### Interrupted generation recovery
 
 A generation that was interrupted after its attempt started could remain
@@ -113,6 +134,20 @@ promoted to live support.
 - The final consolidated one-worker Chat regression passed 160 tests across
   26 files. The opt-in live-provider file and test were the only skipped
   checks. Targeted lint and the full no-emit TypeScript check passed.
+- A second independent whole-feature audit on 2026-08-16 rechecked all 13 live
+  capability families, all 34 factual tools, all 12 confirmation-draft kinds,
+  current routes and compatibility redirects, Moomoo privacy-safe status,
+  account erasure coverage, provider privacy/cost controls, recovery, evidence,
+  Help and the locked language mapping. Its final one-worker regression passed
+  161 tests across 26 files; the opt-in paid-provider file and test were the
+  only skipped checks. The full no-emit TypeScript check and focused lint also
+  passed. One initial consolidated run hit a five-second timeout in a
+  pre-existing AI Review schedule test under local resource pressure; that file
+  passed alone and the unchanged full population passed with a ten-second test
+  timeout. A fresh no-worker browser pass then verified the shared drawer on
+  desktop and a 390 by 844 mobile viewport, direct `/ai-chat`, route
+  preservation, all five scoped conversation/draft reads and a visible close
+  action with no browser warnings or errors. The review server was stopped.
 - The full working-tree whitespace check passed. Controlled no-worker desktop
   and 390 by 844 mobile checks opened and closed the drawer without leaving
   `/workspace`; the direct `/ai-chat` page showed the same Chat surface; no

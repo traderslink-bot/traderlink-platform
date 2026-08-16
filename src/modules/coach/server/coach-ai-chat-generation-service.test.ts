@@ -20,7 +20,7 @@ import { CoachAiDailyCompanionRepository } from "./coach-ai-daily-companion-repo
 import { CoachAiManualEntryDraftRepository } from "./coach-ai-manual-entry-draft-repository";
 import { CoachAiReviewDeliveryChangeRepository } from "./coach-ai-review-delivery-change-repository";
 import { COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES } from "./coach-ai-chat-factual-tool-dispatcher";
-import { CoachAiChatGenerationService, COACH_AI_CHAT_MAX_TRUSTED_CONTEXT_BYTES, COACH_AI_CHAT_SYSTEM_AND_TOOL_ENVELOPE_RESERVED_BYTES, createCoachAiChatReservationEnvelope, type CoachAiChatGenerator } from "./coach-ai-chat-generation-service";
+import { CoachAiChatGenerationService, COACH_AI_CHAT_DERIVED_CONTENT_FAILURE_CODE, COACH_AI_CHAT_MAX_TRUSTED_CONTEXT_BYTES, COACH_AI_CHAT_SYSTEM_AND_TOOL_ENVELOPE_RESERVED_BYTES, createCoachAiChatReservationEnvelope, type CoachAiChatGenerator } from "./coach-ai-chat-generation-service";
 
 const now = new Date("2026-08-05T12:00:00.000Z");
 
@@ -52,7 +52,11 @@ function answer(): CoachAiChatGenerationResult {
   return Object.freeze({ answer: Object.freeze({ contractVersion: COACH_AI_CHAT_ANSWER_CONTRACT_VERSION, directAnswer: "Your saved Journal does not have enough facts for that yet.", supportingObservations: Object.freeze(["No closed-trade result was requested."]), limitation: "Ask about a saved trade or date range when you are ready.", nextQuestion: null, evidenceReferences: Object.freeze([]) }), usage: Object.freeze({ inputTokens: 20, outputTokens: 10, totalTokens: 30 }), factualToolCalls: Object.freeze([]), manualEntryExtraction: null, dailyCompanionDraftExtraction: null, reviewDeliveryChangeExtraction: null });
 }
 
-function service(f: ReturnType<typeof fixture>, generator: CoachAiChatGenerator) {
+function service(
+  f: ReturnType<typeof fixture>,
+  generator: CoachAiChatGenerator,
+  actionDrafts: ConstructorParameters<typeof CoachAiChatGenerationService>[9] = null,
+) {
   const factualTools = { summarizeClosedTrades: vi.fn(() => ({ contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION, toolName: "summarize_closed_trades", result: { state: "unavailable" } })), groupClosedTrades: vi.fn(() => ({ contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION, toolName: "group_closed_trades", result: { state: "unavailable" } })), listClosedTrades: vi.fn() };
   const details = { getClosedTradeDetails: vi.fn() };
   return new CoachAiChatGenerationService(
@@ -64,6 +68,8 @@ function service(f: ReturnType<typeof fixture>, generator: CoachAiChatGenerator)
     new CoachAiDailyCompanionRepository(f.database),
     f.manualDrafts,
     f.reviewDeliveryChanges,
+    Object.freeze({}),
+    actionDrafts,
   );
 }
 
@@ -460,6 +466,55 @@ FROM coach_ai_chat_answer_snapshots`).get() as { factual_snapshot_json: string }
       const mismatch = service(f, async (input) => Object.freeze({ ...answer(), usage: Object.freeze({ inputTokens: input.attempt.maximumInputTokens + 1, outputTokens: 1, totalTokens: input.attempt.maximumInputTokens + 2 }) }));
       await expect(mismatch.generateSavedAnswer(f.scope, { conversationId: mismatchConversation.conversationId, question: "Mismatch", idempotencySha256: "f".repeat(64) }, now)).rejects.toThrow("TRADERLINK_PLATFORM_INTEGRITY_FAILED");
       expect(f.database.prepare(`SELECT state FROM coach_ai_chat_generation_attempts WHERE idempotency_sha256 = ?`).get("f".repeat(64))).toEqual({ state: "started" });
+    } finally { f.database.close(); }
+  });
+
+  it("records paid usage and fails terminally when derived action materialization is rejected", async () => {
+    const f = fixture();
+    try {
+      const create = vi.fn(() => {
+        throw new Error("invalid derived action");
+      });
+      const subject = service(
+        f,
+        async () => Object.freeze({
+          ...answer(),
+          actionDraftExtraction: Object.freeze({
+            kind: "reporting_currency" as const,
+            reportingCurrency: "CAD",
+          }),
+        }),
+        {
+          create,
+          list: vi.fn(() => Object.freeze([])),
+          readForSourceMessage: vi.fn(() => null),
+        },
+      );
+
+      await expect(subject.generateSavedAnswer(f.scope, {
+        conversationId: f.conversationId,
+        question: "Change my reporting currency to CAD.",
+        idempotencySha256: "6".repeat(64),
+      }, now)).resolves.toMatchObject({ state: "failed" });
+
+      expect(create).toHaveBeenCalledTimes(1);
+      expect(f.database.prepare(`SELECT generation_state, failure_code
+FROM coach_ai_chat_messages WHERE role = 'assistant'`).get()).toEqual({
+        generation_state: "failed",
+        failure_code: COACH_AI_CHAT_DERIVED_CONTENT_FAILURE_CODE,
+      });
+      expect(f.controls.findChatGenerationByIdempotency(f.scope, "6".repeat(64))).toMatchObject({
+        state: "failed",
+        failureCode: COACH_AI_CHAT_DERIVED_CONTENT_FAILURE_CODE,
+      });
+      expect(f.database.prepare(`SELECT input_tokens, output_tokens, total_tokens
+FROM coach_ai_chat_generation_receipts`).get()).toEqual({
+        input_tokens: 20,
+        output_tokens: 10,
+        total_tokens: 30,
+      });
+      expect(f.database.prepare(`SELECT COUNT(*) AS count
+FROM coach_ai_chat_action_drafts`).get()).toEqual({ count: 0 });
     } finally { f.database.close(); }
   });
 

@@ -275,10 +275,13 @@ is promoted from unavailable to live:
 5. **Privacy:** provider input and normal logs contain no raw statement,
    credential, account number, Discord identity, admin-only data or secret.
 6. **Cost:** bounded tool calls, context, output and reservation/receipt totals
-   are enforced independently for Chat, Weekly Reviews and Monthly Reviews.
+   are enforced independently for Chat, Weekly Reviews and Monthly Reviews. A
+   provider response with complete usage reaches a receipted terminal success
+   or failure even when derived confirmation content is rejected.
 7. **UI:** drawer/direct page use the same capability, stay closable on desktop
    and mobile, preserve the current dashboard page and show clear factual or
-   confirmation cards in plain trader language.
+   confirmation cards in plain trader language. Pending completion refreshes
+   the reply and every associated confirmation collection together.
 8. **Links and page context:** every returned link is selected from an
    allowlisted TraderLink route contract; day/trade/ticker/review references are
    server-resolved; stale or mismatched current-page hints fail closed; and the
@@ -321,3 +324,9 @@ The 2026-08-15 plan audit confirms:
   confirmation; and
 - the completion gate measures executable capability, not language inventory
   size, UI presence or model fluency.
+
+The 2026-08-16 whole-feature audit rechecked this inventory against the current
+routes, factual-tool registry, action contract, Help and locked-language
+mapping. No new product family was found outside the matrix. Trade Explorer
+remains an incomplete product dependency and its versioned Chat adapter must be
+re-audited after that product update is accepted.

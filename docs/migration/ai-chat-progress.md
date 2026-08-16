@@ -105,6 +105,27 @@ The private persistence API checkpoint is tracked in
 
 ## Completed foundation: Agents SDK and global AI Chat companion
 
+### 2026-08-16 second whole-feature QA checkpoint
+
+- A second independent audit reconciled the current dashboard inventory with
+  the runtime, Help and language registry. The live boundary remains exactly 13
+  capability families, 34 deterministic factual tools and 12 confirmed action
+  kinds. The remaining locked language entries do not become executable merely
+  because their wording is recognized in planning documents.
+- Two reliability defects were corrected. Paid usage is now receipted and the
+  generation reaches a failed terminal state if derived confirmation content
+  cannot be materialized. Pending-answer polling also refreshes all four draft
+  collections so a completed reply never requires a page reload to reveal its
+  confirmation card.
+- The final one-worker Chat population passed 161 tests across 26 files; only
+  the opt-in paid-provider file/test was skipped. Focused lint and the full
+  no-emit TypeScript check passed. Trade Explorer remains explicitly incomplete
+  and isolated behind its versioned bounded adapter.
+- Fresh desktop and 390 by 844 mobile browser checks verified the shared
+  drawer, direct page, route preservation, close action and account-scoped
+  conversation/draft reads with no browser warnings or errors. The controlled
+  no-worker review server was stopped.
+
 ### 2026-08-15 final local acceptance checkpoint
 
 - The current dashboard capability matrix is implemented for every approved
