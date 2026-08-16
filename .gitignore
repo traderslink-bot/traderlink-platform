@@ -44,6 +44,11 @@ yarn-error.log*
 .pnpm-debug.log*
 .codex-dev-server/
 
+# local Codex and dashboard runtime artifacts
+/.codex-node-userinfo-fallback.cjs
+/.local-logs/
+/*.lnk
+
 # env files (can opt-in for committing if needed)
 .env*
 
