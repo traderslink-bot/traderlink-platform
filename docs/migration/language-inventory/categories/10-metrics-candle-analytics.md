@@ -16,6 +16,9 @@
 | Dependencies | Category 1 Intents version 1; locked Categories 2-8; account-scoped current Journal execution/allocation facts; saved, versioned market-data delivery with interval, UTC coverage, source and adjustment evidence; later Categories 11-19 |
 | Owner | AI language inventory workflow |
 
+> **Runtime reconciliation (2026-08-15):** Saved Analyzer and Candle Review
+> mappings do not approve market-data retrieval, refresh, signals, or absent calculations.
+
 **Controller state:** The exact 18-item Version 1 inventory, all 18 canonical
 records, all 18 language registries, all 396 evaluation cases, and the Section
 8 coverage report passed comprehensive and clerical independent Terra review.

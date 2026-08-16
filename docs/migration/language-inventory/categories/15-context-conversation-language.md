@@ -16,6 +16,9 @@
 | Dependencies | Locked Categories 1, 11, 13, 14, and 18; accepted structured-query, Journal authorization, selected-entity, factual-snapshot, coverage, and privacy contracts |
 | Owner | AI language inventory workflow |
 
+> **Runtime reconciliation (2026-08-15):** Mapped context remains subject to
+> fresh server-side revalidation; it grants no raw IDs, cross-account scope, or mutation.
+
 **Production and approval state:** Historical Version 0 production began when
 the lead controller accepted the exact source-backed 18-item planning inventory
 and authorized bounded canonical production on 2026-08-11. Canonical Batch 1 produced complete Version 0

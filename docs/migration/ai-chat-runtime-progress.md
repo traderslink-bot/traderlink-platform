@@ -7,7 +7,9 @@ capability matrix. This supplements the controlling
 [AI Companion Plan](ai-chat-plan.md), the
 [current dashboard capability matrix](ai-chat-current-dashboard-capability-matrix.md),
 and the complete
-[language plan](traderslink_ai_chatbot_complete_language_plan.md).
+[language plan](traderslink_ai_chatbot_complete_language_plan.md). The focused
+whole-feature result is recorded in the
+[AI Chat Complete QA Report](ai-chat-complete-qa-report.md).
 
 The live-provider technical checkpoint is complete. Production Chat remains
 off because the platform control is deliberately disabled and its production
@@ -43,19 +45,44 @@ another application or bypass the control.
 
 ## Retry boundary
 
-If a provider call finishes but the final receipt/attempt validation cannot be
-persisted atomically, the transaction intentionally rolls back, leaving the
-assistant pending and the attempt started. A retry with the same digest returns
-that pending attempt and does not begin a second provider call.
+Provider calls have a two-minute abort boundary. A pending generation that
+outlives its ten-minute lease is reconciled to a failed terminal state within
+the same user, workspace, Journal account and conversation before generation
+retry or message-history display. The client polls while an answer is pending
+and prevents a second send until that attempt becomes terminal. The same
+idempotency digest never starts a duplicate provider request.
 
-## 2026-08-16 verification
+The digest binds the normalized question, selected analysis scope, trusted
+Daily Tracker context and reduced current-page hint. The current-page value is
+strictly allowlisted and is a conversational navigation hint only; it is never
+factual evidence or action authority.
 
-- Seventeen focused Chat files cover conversation persistence, routes,
+## Language and evidence reconciliation
+
+- All 13 current bounded factual-read and confirmation-draft capability
+  families have non-empty mappings to the locked 417-entry language inventory.
+- Representative fixtures name their exact expected tools. Their deduplicated
+  union equals all 34 deterministic factual tools, and the confirmation
+  fixtures equal all 12 canonical action-draft kinds.
+- Completed assistant answers may display at most four compact evidence cards
+  derived from their immutable factual snapshot. Digest, account, conversation
+  and message scope are verified; only allowlisted internal routes can be
+  linked. Raw IDs, hashes, secrets and untrusted links are suppressed.
+- Future language concepts remain unavailable until their deterministic
+  service exists. In particular, rule recommendations remain planning-only and
+  Trade Explorer remains an incomplete versioned adapter.
+
+## 2026-08-15 verification
+
+- The final focused Chat suite covers conversation persistence, routes,
   deterministic tools, dashboard/page context, saved Analyzer reads, action
-  drafts, privacy redaction, provider controls, generation budgeting and the
-  locked language registry and privacy-safe paid-plan Help. The final
-  no-provider acceptance population is 100 tests with one worker and no file
-  parallelism; the separately gated live test is skipped by default.
+  drafts, privacy redaction, provider controls, generation budgeting,
+  interrupted-attempt recovery, display-safe evidence, the locked language
+  registry and privacy-safe paid-plan Help. The separately gated live test is
+  skipped by default. The final one-worker run passed 160 tests across 26
+  files, with only that one live-provider file and test skipped.
+- Targeted ESLint and the full no-emit TypeScript check passed after the
+  integrated QA fixes.
 - Action-draft route and service checks directly cover account-scoped listing,
   mutation-request enforcement, empty-body confirm/reject, extra-field
   rejection, no-write rejection, 24-hour expiry and stable terminal retries.
@@ -72,6 +99,8 @@ that pending attempt and does not begin a second provider call.
   action draft, unsupported-advice refusal and complete usage accounting under
   a $2 caller-supplied ceiling. The verifier exposes no key or private Journal
   content and opens no platform database.
-- No project dependency or lockfile changed. No protected database mutation,
-  product action, server start, push or deployment occurred. Production Chat
-  remains disabled pending owner-selected caps and launch activation.
+- No project dependency or lockfile changed. No protected Journal mutation,
+  confirmed product action, provider request, push or deployment occurred. The
+  controlled no-worker review server was stopped after browser acceptance.
+  Production Chat remains disabled pending owner-selected caps and launch
+  activation.

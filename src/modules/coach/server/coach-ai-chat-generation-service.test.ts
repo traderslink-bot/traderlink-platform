@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { CoachAiChatGenerationResult } from "../contracts/ai-chat-contracts";
 import { COACH_AI_CHAT_ANSWER_CONTRACT_VERSION } from "../contracts/ai-chat-contracts";
+import type { CoachAiChatPageContext } from "../contracts/ai-chat-page-context-contracts";
 import type { CoachAiDailyCompanionContext } from "../contracts/ai-daily-companion-contracts";
 import { COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION } from "../contracts/coach-ai-chat-factual-tool-contracts";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
@@ -13,6 +14,7 @@ import { runPlatformMigrations } from "@/src/modules/platform/server/database/ru
 
 import { CoachAiChatProviderGenerationError } from "./coach-ai-chat-openai-adapter";
 import { CoachAiChatProviderControlsRepository } from "./coach-ai-chat-provider-controls-repository";
+import { COACH_AI_CHAT_GENERATION_INTERRUPTED_FAILURE_CODE, COACH_AI_CHAT_GENERATION_LEASE_MILLISECONDS } from "./coach-ai-chat-generation-recovery-service";
 import { CoachAiChatRepository } from "./coach-ai-chat-repository";
 import { CoachAiDailyCompanionRepository } from "./coach-ai-daily-companion-repository";
 import { CoachAiManualEntryDraftRepository } from "./coach-ai-manual-entry-draft-repository";
@@ -118,6 +120,51 @@ describe("CoachAiChatGenerationService", () => {
         message.originalUserTextPrivate === input.question)).toBe(false);
       expect(f.database.prepare(`SELECT COUNT(*) AS count FROM coach_ai_chat_messages`).get()).toEqual({ count: 2 });
     } finally { f.database.close(); }
+  });
+
+  it("passes a reduced current-page hint to generation without persisting it as factual evidence", async () => {
+    const f = fixture();
+    try {
+      const pageContext = Object.freeze({
+        contractVersion: "traderlink_coach_ai_chat_page_context_v1",
+        authority: "conversation_hint_only",
+        feature: "calendar",
+        featureLabel: "Calendar",
+        canonicalPath: "/calendar",
+        tradingDate: null,
+      }) satisfies CoachAiChatPageContext;
+      const generator = vi.fn(async (input: Parameters<CoachAiChatGenerator>[0]) => {
+        expect(input.pageContext).toEqual(pageContext);
+        return answer();
+      });
+      const subject = service(f, generator);
+
+      await expect(subject.generateSavedAnswer(f.scope, {
+        conversationId: f.conversationId,
+        question: "What can I ask about this page?",
+        idempotencySha256: "d".repeat(64),
+        pageContext,
+      }, now)).resolves.toMatchObject({ state: "completed" });
+
+      const userMessage = f.database.prepare(`SELECT structured_interpretation_json
+FROM coach_ai_chat_messages WHERE role = 'user'`).get() as { structured_interpretation_json: string };
+      const snapshot = f.database.prepare(`SELECT factual_snapshot_json
+FROM coach_ai_chat_answer_snapshots`).get() as { factual_snapshot_json: string };
+      expect(userMessage.structured_interpretation_json).not.toContain("/calendar");
+      expect(snapshot.factual_snapshot_json).not.toContain("/calendar");
+      expect(createCoachAiChatReservationEnvelope(
+        "What can I ask about this page?",
+        [],
+        null,
+        null,
+        "answer_question",
+        null,
+        { kind: "recent" },
+        pageContext,
+      )).toContain('"currentPageHint"');
+    } finally {
+      f.database.close();
+    }
   });
 
   it("gates and persists one server-trusted Daily Tracker interaction with the completed answer", async () => {
@@ -413,6 +460,39 @@ FROM coach_ai_chat_answer_snapshots`).get() as { factual_snapshot_json: string }
       const mismatch = service(f, async (input) => Object.freeze({ ...answer(), usage: Object.freeze({ inputTokens: input.attempt.maximumInputTokens + 1, outputTokens: 1, totalTokens: input.attempt.maximumInputTokens + 2 }) }));
       await expect(mismatch.generateSavedAnswer(f.scope, { conversationId: mismatchConversation.conversationId, question: "Mismatch", idempotencySha256: "f".repeat(64) }, now)).rejects.toThrow("TRADERLINK_PLATFORM_INTEGRITY_FAILED");
       expect(f.database.prepare(`SELECT state FROM coach_ai_chat_generation_attempts WHERE idempotency_sha256 = ?`).get("f".repeat(64))).toEqual({ state: "started" });
+    } finally { f.database.close(); }
+  });
+
+  it("recovers an expired idempotent generation before reporting its saved state", async () => {
+    const f = fixture();
+    try {
+      const oldConversation = f.chat.createConversation(f.scope, "Interrupted", now);
+      const pair = f.chat.appendUserMessageAndReserveAssistant(
+        f.scope,
+        oldConversation.conversationId,
+        { originalUserTextPrivate: "Will this recover?" },
+        now,
+      );
+      f.controls.reserveChatGeneration(f.scope, {
+        conversationId: oldConversation.conversationId,
+        assistantMessageId: pair.assistantMessage.messageId,
+        idempotencySha256: "7".repeat(64),
+        providerInputText: "bounded provider input",
+        maxOutputTokens: 100,
+      }, now);
+      const generator = vi.fn(async () => answer());
+      const subject = service(f, generator);
+      const recoveryNow = new Date(now.getTime() + COACH_AI_CHAT_GENERATION_LEASE_MILLISECONDS + 1);
+      await expect(subject.generateSavedAnswer(f.scope, {
+        conversationId: oldConversation.conversationId,
+        question: "Will this recover?",
+        idempotencySha256: "7".repeat(64),
+      }, recoveryNow)).resolves.toMatchObject({ state: "failed" });
+      expect(generator).not.toHaveBeenCalled();
+      expect(f.controls.findChatGenerationByIdempotency(f.scope, "7".repeat(64))).toMatchObject({
+        state: "failed",
+        failureCode: COACH_AI_CHAT_GENERATION_INTERRUPTED_FAILURE_CODE,
+      });
     } finally { f.database.close(); }
   });
 

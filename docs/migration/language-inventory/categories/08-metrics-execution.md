@@ -16,6 +16,9 @@
 | Dependencies | Category 1 Intents version 1; locked Categories 2-6; active Category 7 time/duration boundaries; replacement Journal Analytics Fact Set, accepted allocation graph, current execution versions, round-trip projections, account scope, unit/currency/timezone, and coverage contracts; later dimensions, operators, date/time language, comparison/ranking, context, terminology, presentation, and policy categories |
 | Owner | AI language inventory workflow |
 
+> **Runtime reconciliation (2026-08-15):** Mapped terms do not authorize
+> execution reconstruction, reconciliation, or a write.
+
 **Controller state:** After final independent PASS, the controller accepted the
 exact 19-item planning inventory and authorized Section 5 canonical production.
 All Section 5 records `C8-EXEC-001` through `C8-EXEC-019` are complete below

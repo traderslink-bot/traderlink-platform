@@ -13,6 +13,7 @@ export const AI_CHAT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: Object.freeze(["open chat", "close chat", "drawer", "conversation"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph" as const, text: "AI Chat opens beside the page you are using on a larger screen and fills the screen on mobile. Close it whenever you want to return to the page underneath." }),
+          Object.freeze({ kind: "paragraph" as const, text: "You can refer to the supported dashboard page you are viewing as “this page.” AI Chat uses that only to understand the conversation; it still checks your selected account’s saved facts before giving a factual answer." }),
           Object.freeze({ kind: "paragraph" as const, text: "Your conversations are saved to the selected Trade Tracker account. You can start a new conversation, rename one, search your history, or archive a conversation you no longer need in the main list." }),
         ]),
       }),
@@ -96,6 +97,7 @@ export const AI_CHAT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: Object.freeze(["coverage", "unavailable", "completed trades", "open positions"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph" as const, text: "Factual answers come from the completed trades and saved review details available for the selected Trade Tracker account. Open positions stay separate from realized results." }),
+          Object.freeze({ kind: "paragraph" as const, text: "When an answer uses saved TraderLink facts, a compact card can appear below it with a link to the related dashboard feature. The card never opens an uploaded broker statement or reveals private account identifiers." }),
           Object.freeze({ kind: "paragraph" as const, text: "Analyzer questions use results TraderLink has already saved. Asking in Chat does not start a new analysis, refresh a Candle Review or request market data." }),
           Object.freeze({ kind: "paragraph" as const, text: "When the requested fact is missing, unsupported or based on too little activity, the answer should say so rather than fill the gap with a guess." }),
         ]),

@@ -16,6 +16,9 @@
 | Dependencies | Locked Categories 1-10; replacement Journal fact-set, execution, round-trip, provenance, account-scope, currency, account-IANA timezone, coverage, and Data Decisions contracts; later Categories 12-19 |
 | Owner | AI language inventory workflow |
 
+> **Runtime reconciliation (2026-08-15):** A mapped read still requires its
+> owning service's account scope, coverage, and privacy checks.
+
 **Approved state:** Version 1 is Complete, controller-approved, and locked.
 Approved documentation gates create no Chat route, runtime support, saved
 definition, schema, query, test, or implementation authorization.

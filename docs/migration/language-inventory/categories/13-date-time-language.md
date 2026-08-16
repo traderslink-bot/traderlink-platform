@@ -16,6 +16,9 @@
 | Dependencies | Locked Category 1 intents; locked Category 7 time and duration metrics; locked Category 11 dimensions; locked Category 12 operators; Journal authorization, accepted-fact, UTC, account-IANA, coverage, and Data Decisions contracts |
 | Owner | AI language inventory workflow |
 
+> **Runtime reconciliation (2026-08-15):** Bounded reads retain their account,
+> Tracker-Eastern, calendar, and coverage rules; the map cannot invent time facts.
+
 **Completion state:** Version 1 is Complete after comprehensive independent
 PASS and lead-controller approval on 2026-08-11. All nine exact canonical names
 and all nine 38-subsection language registries are approved and locked; all 198

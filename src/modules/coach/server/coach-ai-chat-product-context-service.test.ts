@@ -123,7 +123,7 @@ function fixture() {
       })),
     },
     schedules: { read: vi.fn(() => null), readV2: vi.fn(() => null) },
-    reviewAvailability: { read: vi.fn(() => Object.freeze([])) },
+    reviewAvailability: { read: vi.fn(() => Object.freeze({ periodic: null, monthly: null })) },
     connection: {
       find: vi.fn(() => Object.freeze({
         connectionId: "private-connection-id",

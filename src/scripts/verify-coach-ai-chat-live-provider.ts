@@ -160,7 +160,11 @@ async function runCase(input: Readonly<{
     intent: input.intent ?? "answer_question",
     trustedContext: null,
     existingManualEntryDraft: null,
-    currentReviewDelivery: Object.freeze({ deliveryDay: "Saturday", deliveryTimeEastern: "18:00" }),
+    currentReviewDelivery: Object.freeze({
+      weeklyDeliveryDay: "saturday",
+      deliveryTimeEastern: "18:00",
+      updatedAtUtc: null,
+    }),
     analysisScope: Object.freeze({ kind: "recent" }),
     dispatcher: dispatcher(input.scope),
   });
@@ -198,6 +202,10 @@ export async function verifyCoachAiChatLiveProvider(): Promise<void> {
     maximumOutputTokens: 800,
     maximumTotalTokens: 256_800,
     maximumCostUsd: String(maximumCost),
+    reservedAtUtc: AS_OF_UTC,
+    startedAtUtc: AS_OF_UTC,
+    finalizedAtUtc: null,
+    failureCode: null,
   });
 
   const read = await runCase({

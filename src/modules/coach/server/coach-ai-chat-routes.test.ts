@@ -68,7 +68,9 @@ const { mocks, FakeRepository } = vi.hoisted(() => {
     archiveConversation: vi.fn(),
     restoreConversation: vi.fn(),
     listMessages: vi.fn(),
+    readMessageEvidence: vi.fn(),
     generateSavedAnswer: vi.fn(),
+    reconcileStaleGenerations: vi.fn(),
     getDailyCompanionContext: vi.fn(),
     getTradeTrackerAccount: vi.fn(),
     withReadonlyPlatformDatabase: vi.fn(),
@@ -100,6 +102,12 @@ vi.mock("@/src/modules/coach/server/coach-ai-chat-repository", () => ({
 }));
 vi.mock("@/src/modules/coach/server/coach-ai-chat-generation-runtime", () => ({
   generateCoachAiChatSavedAnswer: mocks.generateSavedAnswer,
+  reconcileStaleCoachAiChatGenerations: mocks.reconcileStaleGenerations,
+}));
+vi.mock("@/src/modules/coach/server/coach-ai-chat-evidence-service", () => ({
+  CoachAiChatEvidenceService: class {
+    readForMessages(...args: unknown[]) { return mocks.readMessageEvidence(...args); }
+  },
 }));
 vi.mock("@/app/(dashboard)/trade-tracker/trade-tracker-platform-data", () => ({
   getReplacementDailyCompanionResolvedContext: mocks.getDailyCompanionContext,
@@ -143,6 +151,7 @@ describe("private AI Chat persistence routes", () => {
       messages: [message],
       nextCursor: Object.freeze({ beforeSequence: 2 }),
     });
+    mocks.readMessageEvidence.mockReturnValue(Object.freeze([]));
     mocks.generateSavedAnswer.mockResolvedValue({
       state: "completed",
       assistantMessageId: "00000000-0000-4000-8000-000000000012",
@@ -247,6 +256,39 @@ describe("private AI Chat persistence routes", () => {
       limit: 5,
       cursor: null,
     });
+    expect(mocks.reconcileStaleGenerations).toHaveBeenCalledWith(scope, { conversationId });
+    expect(mocks.readMessageEvidence).toHaveBeenCalledWith(scope, conversationId, []);
+  });
+
+  it("returns only display-safe evidence associated with completed assistant messages", async () => {
+    const assistant: CoachAiChatMessage = Object.freeze({
+      ...message,
+      messageId: "00000000-0000-4000-8000-000000000012",
+      role: "assistant",
+      originalUserTextPrivate: null,
+      assistantTextPrivate: "Your entries were strongest in the morning.",
+      generationState: "completed",
+      finalizedAtUtc: "2026-08-05T12:02:00.000Z",
+    });
+    const evidence = Object.freeze([Object.freeze({
+      messageId: assistant.messageId,
+      cards: Object.freeze([Object.freeze({
+        title: "Entry & Exit",
+        detail: "Saved Analyzer results were used for this answer.",
+        href: "/analytics/trade-analyzer/day/entry-exit",
+        linkLabel: "Open Entry & Exit",
+      })]),
+    })]);
+    mocks.listMessages.mockReturnValue({ messages: [assistant], nextCursor: null });
+    mocks.readMessageEvidence.mockReturnValue(evidence);
+
+    const response = await listMessages(request(`${conversationPath}/messages?limit=5`), params());
+    const body = await response.json() as Record<string, unknown>;
+
+    expect(response.status).toBe(200);
+    expect(body.evidence).toEqual(evidence);
+    expect(mocks.readMessageEvidence).toHaveBeenCalledWith(scope, conversationId, [assistant.messageId]);
+    expect(JSON.stringify(body.evidence)).not.toContain("toolCallId");
   });
 
   it("generates one saved answer with a server-derived idempotency digest", async () => {
@@ -270,12 +312,85 @@ describe("private AI Chat persistence routes", () => {
       question: "How did I trade this week?",
       intent: "answer_question",
       analysisScope: { kind: "recent" },
+      pageContext: null,
       idempotencySha256: expect.stringMatching(/^[0-9a-f]{64}$/u),
       resolveTrustedContext: null,
       resolveManualEntryDefaults: expect.any(Function),
       resolveReviewDelivery: expect.any(Function),
     });
     expect(JSON.stringify(body)).not.toContain("attemptId");
+  });
+
+  it("accepts only a reduced current-page hint and binds it into the generation request", async () => {
+    const response = await generateMessage(request(`${conversationPath}/messages`, {
+      method: "POST",
+      body: JSON.stringify({
+        question: "What can I do on this page?",
+        clientRequestId: "00000000-0000-4000-8000-000000000018",
+        pagePathname: "/analytics/trade-analyzer/day/mfe-mae",
+      }),
+    }), params());
+
+    expect(response.status).toBe(200);
+    expect(mocks.generateSavedAnswer).toHaveBeenCalledWith(scope, expect.objectContaining({
+      pageContext: expect.objectContaining({
+        authority: "conversation_hint_only",
+        feature: "trade_analyzer_mfe_mae",
+        canonicalPath: "/analytics/trade-analyzer/day/mfe-mae",
+      }),
+    }));
+  });
+
+  it.each([
+    "https://traderslink.pro/workspace",
+    "/calendar?month=2026-08",
+    "/calendar#day",
+  ])("rejects malformed page context before provider work: %s", async (pagePathname) => {
+    const response = await generateMessage(request(`${conversationPath}/messages`, {
+      method: "POST",
+      body: JSON.stringify({
+        question: "Private question",
+        clientRequestId: "00000000-0000-4000-8000-000000000018",
+        pagePathname,
+      }),
+    }), params());
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ status: "unavailable", code: "invalid_request" });
+    expect(mocks.generateSavedAnswer).not.toHaveBeenCalled();
+  });
+
+  it("uses different idempotency digests when a period or page hint changes", async () => {
+    const clientRequestId = "00000000-0000-4000-8000-000000000018";
+    for (const body of [
+      { question: "Compare this.", clientRequestId, analysisScope: { kind: "day", date: "2026-08-04" }, pagePathname: "/calendar" },
+      { question: "Compare this.", clientRequestId, analysisScope: { kind: "day", date: "2026-08-05" }, pagePathname: "/trade-tracker" },
+    ]) {
+      const response = await generateMessage(request(`${conversationPath}/messages`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      }), params());
+      expect(response.status).toBe(200);
+    }
+    const first = mocks.generateSavedAnswer.mock.calls.at(-2)?.[1] as { idempotencySha256: string };
+    const second = mocks.generateSavedAnswer.mock.calls.at(-1)?.[1] as { idempotencySha256: string };
+    expect(first.idempotencySha256).toMatch(/^[0-9a-f]{64}$/u);
+    expect(second.idempotencySha256).toMatch(/^[0-9a-f]{64}$/u);
+    expect(first.idempotencySha256).not.toBe(second.idempotencySha256);
+  });
+
+  it("uses different idempotency digests when the question changes", async () => {
+    const clientRequestId = "00000000-0000-4000-8000-000000000019";
+    for (const question of ["Show my wins.", "Show my losses."]) {
+      const response = await generateMessage(new Request("http://local.test/api/coach/chat/messages", {
+        method: "POST",
+        body: JSON.stringify({ question, clientRequestId }),
+      }), params());
+      expect(response.status).toBe(200);
+    }
+    const first = mocks.generateSavedAnswer.mock.calls.at(-2)?.[1] as { idempotencySha256: string };
+    const second = mocks.generateSavedAnswer.mock.calls.at(-1)?.[1] as { idempotencySha256: string };
+    expect(first.idempotencySha256).not.toBe(second.idempotencySha256);
   });
 
   it("accepts only a date selector and replaces it with server-derived Daily Tracker context", async () => {

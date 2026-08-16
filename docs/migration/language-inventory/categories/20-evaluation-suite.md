@@ -16,6 +16,9 @@
 | Dependencies | Locked Categories 1-19 Version 1; AI Chatbot Complete Language Plan Sections 38, 39, and 47; master evaluation schema and completion template |
 | Owner | AI language inventory workflow |
 
+> **Runtime reconciliation (2026-08-15):** This historic semantic suite remains
+> no-runtime; separate current-capability fixtures validate live language routes.
+
 Category 20 is Complete at Version 1. Its exact ten-record inventory, ten
 canonical records, and ten language registries passed review and controller
 acceptance. Evaluation arrays `C20-E1` through `C20-E10` contain 220 exact

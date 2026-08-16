@@ -16,6 +16,10 @@
 | Dependencies | Category 1 Intents version 1; locked Category 2 profit-and-loss basis and fee boundaries; replacement Journal Analytics Fact Set, capability catalog, metric/query/result contracts, account-scope, date/timezone, and coverage contracts |
 | Owner | AI language inventory workflow |
 
+> **Runtime reconciliation (2026-08-15):** Bounded current Chat reads may use
+> mapped outcome language without promoting future or unavailable concepts or
+> replacing deterministic population, coverage, and account-scope checks.
+
 **Lead-review state:** After independent Terra review returned a final PASS,
 the lead project controller approved and locked Category 3 at Version 1 on
 2026-08-10. The category is Complete. Planned and Unavailable capabilities and

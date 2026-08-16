@@ -105,7 +105,9 @@ describe("Coach AI Chat provider controls repository", () => {
       const repeated = fixture.controls.reserveChatGeneration(fixture.scope, firstInput);
       expect(repeated).toMatchObject({ state: "idempotent", attempt: { attemptId: first.attempt.attemptId } });
       expect(fixture.controls.findChatGenerationByIdempotency(fixture.scope, "d".repeat(64)))
-        .toMatchObject({ attemptId: first.attempt.attemptId, conversationId: firstInput.conversationId, assistantMessageId: firstInput.assistantMessageId });
+        .toMatchObject({ attemptId: first.attempt.attemptId, conversationId: firstInput.conversationId,
+          assistantMessageId: firstInput.assistantMessageId, reservedAtUtc: "2026-03-08T04:59:59.000Z",
+          startedAtUtc: null, finalizedAtUtc: null, failureCode: null });
       const differentMessage = reservationInput(assistantReservation(fixture), "d".repeat(64), "x".repeat(5_000));
       expect(() => fixture.controls.reserveChatGeneration(fixture.scope, differentMessage)).toThrow("TRADERLINK_PLATFORM_INTEGRITY_FAILED");
       expect(first.attempt.maximumInputTokens).toBe(Buffer.byteLength(firstInput.providerInputText, "utf8"));

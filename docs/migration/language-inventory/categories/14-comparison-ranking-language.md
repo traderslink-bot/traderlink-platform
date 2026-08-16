@@ -16,6 +16,9 @@
 | Dependencies | Locked Categories 1-13; Journal authorization, accepted-fact, metric, dimension, operator, temporal, coverage, currency, fee, and Data Decisions contracts |
 | Owner | AI language inventory workflow |
 
+> **Runtime reconciliation (2026-08-15):** Mapping retains exact comparison
+> language only where a bounded factual service owns the result.
+
 **Completion state:** The exact 29-item planning inventory, all 29 Version 1
 canonical records, all 29 registries with 38 required subsections each, and
 all ten evaluation batches independently passed their substantive review

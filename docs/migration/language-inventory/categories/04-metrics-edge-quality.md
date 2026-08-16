@@ -16,6 +16,10 @@
 | Dependencies | Category 1 Intents version 1; Category 2 Profit and Loss Metrics version 1; Category 3 Outcome Metrics version 1; replacement Journal Analytics Fact Set, metric registry, query/result contracts, fee, currency, account-scope, date, and coverage contracts |
 | Owner | AI language inventory workflow |
 
+> **Runtime reconciliation (2026-08-15):** A language mapping does not make
+> an edge/quality metric predictive, causal, executable, or supported beyond
+> its individual source capability status.
+
 **Controller state:** Final comprehensive independent Terra review passed and
 the controller accepted Category 4. All 286 C4-E1 through C4-E13 cases passed
 with Clarification 16, Unsupported 132, and Cross-category 13; those arrays

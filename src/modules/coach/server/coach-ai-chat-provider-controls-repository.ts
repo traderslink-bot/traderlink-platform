@@ -57,6 +57,10 @@ type AttemptRow = Readonly<{
   reserved_max_output_tokens: number;
   reserved_max_total_tokens: number;
   reserved_maximum_cost_usd: string;
+  failure_code: string | null;
+  reserved_at_utc: string;
+  started_at_utc: string | null;
+  finalized_at_utc: string | null;
 }>;
 
 function positivePrice(value: unknown, field: string): string | null {
@@ -190,9 +194,69 @@ ORDER BY feature_key, scope_kind`).all(scope.workspaceId, accountId).map(control
     const row = this.database.prepare<[string, string], AttemptRow>(`SELECT coach_ai_chat_generation_attempt_id,
   coach_ai_chat_conversation_id, coach_ai_chat_message_id, state, provider_key, model_id,
   input_cost_usd_per_million_tokens, output_cost_usd_per_million_tokens,
-  reserved_max_input_tokens, reserved_max_output_tokens, reserved_max_total_tokens, reserved_maximum_cost_usd
+  reserved_max_input_tokens, reserved_max_output_tokens, reserved_max_total_tokens, reserved_maximum_cost_usd,
+  failure_code, reserved_at_utc, started_at_utc, finalized_at_utc
 FROM coach_ai_chat_generation_attempts WHERE account_id = ? AND idempotency_sha256 = ?`).get(accountId, idempotencySha256);
     return row ? this.attemptRecord(row) : null;
+  }
+
+  listExpiredChatGenerationAttempts(
+    scope: WorkspaceAccessScope,
+    input: Readonly<{ olderThanUtc: string; conversationId?: string | null }>,
+  ): readonly CoachAiChatGenerationAttempt[] {
+    const accountId = this.accountId(scope);
+    if (typeof input.olderThanUtc !== "string" || Number.isNaN(Date.parse(input.olderThanUtc))) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "olderThanUtc" });
+    }
+    if (input.conversationId !== undefined && input.conversationId !== null) {
+      assertCanonicalUuidV4(input.conversationId, "conversationId");
+    }
+    const rows = this.database.prepare<[
+      string, string, string, string | null, string | null, string, string
+    ], AttemptRow>(`SELECT
+  coach_ai_chat_generation_attempt_id, coach_ai_chat_conversation_id, coach_ai_chat_message_id, state, provider_key, model_id,
+  input_cost_usd_per_million_tokens, output_cost_usd_per_million_tokens,
+  reserved_max_input_tokens, reserved_max_output_tokens, reserved_max_total_tokens, reserved_maximum_cost_usd,
+  failure_code, reserved_at_utc, started_at_utc, finalized_at_utc
+FROM coach_ai_chat_generation_attempts
+WHERE user_id = ? AND workspace_id = ? AND account_id = ?
+  AND (? IS NULL OR coach_ai_chat_conversation_id = ?)
+  AND ((state = 'reserved' AND reserved_at_utc < ?) OR (state = 'started' AND started_at_utc < ?))
+ORDER BY reserved_at_utc, coach_ai_chat_generation_attempt_id`).all(
+      scope.userId, scope.workspaceId, accountId, input.conversationId ?? null, input.conversationId ?? null,
+      input.olderThanUtc, input.olderThanUtc,
+    );
+    return Object.freeze(rows.map((row) => this.attemptRecord(row)));
+  }
+
+  failExpiredChatGenerationAttempt(
+    scope: WorkspaceAccessScope,
+    input: Readonly<{
+      attemptId: string;
+      conversationId: string;
+      olderThanUtc: string;
+      failureCode: string;
+    }>,
+    now = new Date(),
+  ): boolean {
+    const accountId = this.accountId(scope);
+    assertCanonicalUuidV4(input.attemptId, "attemptId");
+    assertCanonicalUuidV4(input.conversationId, "conversationId");
+    if (typeof input.olderThanUtc !== "string" || Number.isNaN(Date.parse(input.olderThanUtc))) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "olderThanUtc" });
+    }
+    if (!/^[A-Z][A-Z0-9_]{0,95}$/u.test(input.failureCode)) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "failureCode" });
+    }
+    const result = this.database.prepare(`UPDATE coach_ai_chat_generation_attempts
+SET state = 'failed', failure_code = ?, finalized_at_utc = ?
+WHERE coach_ai_chat_generation_attempt_id = ? AND coach_ai_chat_conversation_id = ?
+  AND user_id = ? AND workspace_id = ? AND account_id = ?
+  AND ((state = 'reserved' AND reserved_at_utc < ?) OR (state = 'started' AND started_at_utc < ?))`).run(
+      input.failureCode, createCanonicalUtcTimestamp(now), input.attemptId, input.conversationId,
+      scope.userId, scope.workspaceId, accountId, input.olderThanUtc, input.olderThanUtc,
+    );
+    return result.changes === 1;
   }
 
   savePlatformFeatureControl(input: Readonly<{ featureKey: unknown; enabled: unknown; dailyRequestCap: unknown; dailyTokenCap: unknown; dailyEstimatedSpendCapUsd: unknown }>, now = new Date()): CoachAiFeatureControl {
@@ -262,7 +326,8 @@ WHERE feature_key = ? AND scope_kind = 'account' AND workspace_id = ? AND accoun
       const existing = this.database.prepare<[string, string], AttemptRow>(`SELECT coach_ai_chat_generation_attempt_id,
   coach_ai_chat_conversation_id, coach_ai_chat_message_id, state, provider_key, model_id,
   input_cost_usd_per_million_tokens, output_cost_usd_per_million_tokens,
-  reserved_max_input_tokens, reserved_max_output_tokens, reserved_max_total_tokens, reserved_maximum_cost_usd
+  reserved_max_input_tokens, reserved_max_output_tokens, reserved_max_total_tokens, reserved_maximum_cost_usd,
+  failure_code, reserved_at_utc, started_at_utc, finalized_at_utc
 FROM coach_ai_chat_generation_attempts WHERE account_id = ? AND idempotency_sha256 = ?`).get(accountId, idempotencySha256);
       if (existing) {
         if (existing.coach_ai_chat_conversation_id !== input.conversationId || existing.coach_ai_chat_message_id !== input.assistantMessageId) {
@@ -381,7 +446,8 @@ WHERE coach_ai_chat_generation_attempt_id = ? AND user_id = ? AND workspace_id =
     const row = this.database.prepare<[string, string, string, string], AttemptRow>(`SELECT coach_ai_chat_generation_attempt_id,
   coach_ai_chat_conversation_id, coach_ai_chat_message_id, state, provider_key, model_id,
   input_cost_usd_per_million_tokens, output_cost_usd_per_million_tokens,
-  reserved_max_input_tokens, reserved_max_output_tokens, reserved_max_total_tokens, reserved_maximum_cost_usd
+  reserved_max_input_tokens, reserved_max_output_tokens, reserved_max_total_tokens, reserved_maximum_cost_usd,
+  failure_code, reserved_at_utc, started_at_utc, finalized_at_utc
 FROM coach_ai_chat_generation_attempts WHERE coach_ai_chat_generation_attempt_id = ? AND user_id = ? AND workspace_id = ? AND account_id = ?`).get(attemptId, scope.userId, scope.workspaceId, accountId);
     if (!row) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED"); return this.attemptRecord(row);
   }
@@ -400,6 +466,10 @@ FROM coach_ai_chat_generation_attempts WHERE coach_ai_chat_generation_attempt_id
       maximumOutputTokens: row.reserved_max_output_tokens,
       maximumTotalTokens: row.reserved_max_total_tokens,
       maximumCostUsd: row.reserved_maximum_cost_usd,
+      reservedAtUtc: row.reserved_at_utc,
+      startedAtUtc: row.started_at_utc,
+      finalizedAtUtc: row.finalized_at_utc,
+      failureCode: row.failure_code,
     });
   }
 }

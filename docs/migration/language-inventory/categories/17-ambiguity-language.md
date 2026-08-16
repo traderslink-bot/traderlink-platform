@@ -16,6 +16,9 @@
 | Dependencies | Locked Categories 1-16; Category 15 accepted-query and pending-ambiguity lifecycle; Category 19 policy; Category 20 evaluation |
 | Owner | AI language inventory workflow |
 
+> **Runtime reconciliation (2026-08-15):** Mapped routes retain the one-field
+> clarification and no-hidden-default boundary; they do not supply missing facts.
+
 The exact Version 0 seventeen-record controlling inventory independently
 PASSed planning review and was accepted by the lead controller on 2026-08-11.
 The master tracker is synchronized and canonical production is authorized.

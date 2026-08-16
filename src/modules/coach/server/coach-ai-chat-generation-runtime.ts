@@ -24,6 +24,7 @@ import {
   type CoachAiChatGenerationServiceResult,
 } from "./coach-ai-chat-generation-service";
 import { CoachAiChatProviderControlsRepository } from "./coach-ai-chat-provider-controls-repository";
+import { CoachAiChatGenerationRecoveryService } from "./coach-ai-chat-generation-recovery-service";
 import { CoachAiChatRepository } from "./coach-ai-chat-repository";
 import { CoachAiChatTradeDetailService } from "./coach-ai-chat-trade-detail-service";
 import { CoachAiChatJournalContextService } from "./coach-ai-chat-journal-context-service";
@@ -45,7 +46,25 @@ import type {
   CoachAiChatAnalysisScope,
   CoachAiChatMessageIntent,
 } from "../contracts/ai-chat-contracts";
+import type { CoachAiChatPageContext } from "../contracts/ai-chat-page-context-contracts";
 import type { CoachAiReviewDeliveryScheduleSnapshot } from "../contracts/ai-review-delivery-change-contracts";
+
+/** Allows route-level reads to clear only safely expired pending messages first. */
+export function reconcileStaleCoachAiChatGenerations(
+  scope: WorkspaceAccessScope,
+  input: Readonly<{ conversationId?: string | null }> = Object.freeze({}),
+  now = new Date(),
+): number {
+  const database = openPlatformDatabase({ mode: "runtime" });
+  try {
+    return new CoachAiChatGenerationRecoveryService(
+      new CoachAiChatRepository(database),
+      new CoachAiChatProviderControlsRepository(database),
+    ).reconcile(scope, input, now);
+  } finally {
+    database.close();
+  }
+}
 
 export async function generateCoachAiChatSavedAnswer(
   scope: WorkspaceAccessScope,
@@ -54,6 +73,7 @@ export async function generateCoachAiChatSavedAnswer(
     question: string;
     intent?: CoachAiChatMessageIntent;
     analysisScope?: CoachAiChatAnalysisScope;
+    pageContext?: CoachAiChatPageContext | null;
     idempotencySha256: string;
     resolveTrustedContext?: (() => CoachAiDailyCompanionResolvedContext) | null;
     resolveManualEntryDefaults?: (() => Readonly<{

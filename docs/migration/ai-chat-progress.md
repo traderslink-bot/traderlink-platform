@@ -7,6 +7,8 @@ Production provider enablement, final caps and launch operations remain owner
 launch decisions. The parent plan is [TraderLink AI Companion Plan](ai-chat-plan.md).
 The complete current-product target is the
 [AI Chat Current Dashboard Capability Matrix](ai-chat-current-dashboard-capability-matrix.md).
+The completed whole-feature audit is recorded in the
+[AI Chat Complete QA Report](ai-chat-complete-qa-report.md).
 The private persistence API checkpoint is tracked in
 [AI Chat Persistence API Progress](ai-chat-api-progress.md).
 
@@ -103,7 +105,7 @@ The private persistence API checkpoint is tracked in
 
 ## Completed foundation: Agents SDK and global AI Chat companion
 
-### 2026-08-16 final local acceptance checkpoint
+### 2026-08-15 final local acceptance checkpoint
 
 - The current dashboard capability matrix is implemented for every approved
   deterministic Read, Draft and Confirm family. Deliberately excluded
@@ -143,10 +145,11 @@ The private persistence API checkpoint is tracked in
   is intentional after technical verification: production model/pricing,
   request/token/spend caps, entitlement and activation remain owner launch
   settings rather than an implementation shortcut.
-- The final no-provider regression passed 100 tests across 17 Chat files with
-  one worker and no file parallelism; the opt-in live test was correctly
-  skipped in that ordinary run. Targeted ESLint, full no-emit TypeScript and
-  diff checks also passed.
+- The final no-provider regression passed 160 tests across 26 Chat files with
+  one worker and no file parallelism; the opt-in live-provider file and test
+  were correctly skipped in that ordinary run. Targeted ESLint and the full
+  no-emit TypeScript check also passed. The final diff and browser results are
+  recorded in the complete QA report and runtime progress record.
 - Controlled no-worker browser acceptance passed on `/workspace` and
   `/ai-chat`. On desktop and a 390 by 844 mobile viewport, AI Chat opened from
   navigation without changing `/workspace`, exposed a visible close action,
@@ -191,7 +194,9 @@ The private persistence API checkpoint is tracked in
 - The locked twenty-category language inventory is compiled into a generated,
   digest-checked registry containing all 417 accepted entries. Only canonical
   names mapped to a deterministic runtime capability are exposed to the
-  manager agent; the remaining vocabulary stays recognized-but-unavailable and
+  manager agent. The remaining vocabulary stays locked for future language and
+  evaluation work; this checkpoint does not claim a deterministic runtime
+  parser or unavailable-state router for those unmapped entries, and they
   cannot authorize a fabricated calculation.
 - The runtime capability registry exposes completed-trade analytics, bounded
   day/week/month Journal context, saved AI Review follow-ups, maintained
@@ -765,9 +770,10 @@ existing migration, Journal, and account boundaries.
 
 ## Completed: confirmed conversational manual execution drafts
 
-- AI Chat now has a deliberate **Enter trades in chat** mode. Ordinary trading
-  questions and Daily Companion discussions cannot silently become execution
-  drafts, and manual-entry extraction receives no analytics tools.
+- Clear natural-language requests to record executions work without a required
+  **Enter trades in chat** mode. The optional shortcut only guides the trader.
+  Ambiguous discussion does not silently become an execution draft, and
+  manual-entry extraction receives no analytics tools.
 - The provider may propose at most eight editable rows per response. Required
   date, Eastern time, ticker, side, quantity or price facts stay blank when the
   trader did not provide them; relative dates are never converted into guessed

@@ -27,6 +27,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type {
@@ -34,6 +35,10 @@ import type {
   CoachAiChatConversation,
   CoachAiChatMessage,
 } from "@/src/modules/coach/contracts/ai-chat-contracts";
+import type {
+  CoachAiChatEvidenceCard,
+  CoachAiChatMessageEvidence,
+} from "@/src/modules/coach/contracts/coach-ai-chat-evidence-contracts";
 import type {
   CoachAiDailyCompanionContextSelector,
   CoachAiDailyCompanionDraft,
@@ -58,6 +63,7 @@ type MessageResponse = Readonly<{
   status: "ready";
   conversationId: string;
   messages: readonly CoachAiChatMessage[];
+  evidence: readonly CoachAiChatMessageEvidence[];
   nextCursor: string | null;
 }>;
 
@@ -127,6 +133,32 @@ async function readJson<T>(response: Response): Promise<T> {
   const value = await response.json() as unknown;
   if (!response.ok || typeof value !== "object" || value === null) throw new Error("request_failed");
   return value as T;
+}
+
+function EvidenceCards({ cards }: Readonly<{ cards: readonly CoachAiChatEvidenceCard[] }>) {
+  if (cards.length === 0) return null;
+  return (
+    <Stack spacing={0.75} sx={{ mt: 0.75, width: "100%" }}>
+      {cards.map((card, index) => (
+        <Paper
+          key={`${card.title}-${index}`}
+          sx={{ bgcolor: "background.paper", borderColor: "#C8DAF7", p: 1.25 }}
+          variant="outlined"
+        >
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={0.75} sx={{ alignItems: { sm: "center" } }}>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography sx={{ fontWeight: 800 }} variant="caption">{card.title}</Typography>
+            </Box>
+            {card.href && card.linkLabel ? (
+              <Button href={card.href} size="small" sx={{ alignSelf: { xs: "flex-start", sm: "center" }, flexShrink: 0 }}>
+                {card.linkLabel}
+              </Button>
+            ) : null}
+          </Stack>
+        </Paper>
+      ))}
+    </Stack>
+  );
 }
 
 function ConversationList({
@@ -220,6 +252,7 @@ export function AiChatClient({
   presentation?: "page" | "drawer";
 }>) {
   const theme = useTheme();
+  const pathname = usePathname();
   const mobile = useMediaQuery(theme.breakpoints.down("md"));
   const drawerPresentation = presentation === "drawer";
   const endRef = useRef<HTMLDivElement | null>(null);
@@ -231,6 +264,7 @@ export function AiChatClient({
   const [conversationCursor, setConversationCursor] = useState<string | null>(null);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<readonly CoachAiChatMessage[]>([]);
+  const [messageEvidence, setMessageEvidence] = useState<readonly CoachAiChatMessageEvidence[]>([]);
   const [manualEntryDrafts, setManualEntryDrafts] = useState<readonly CoachAiManualEntryDraft[]>([]);
   const [dailyCompanionDrafts, setDailyCompanionDrafts] = useState<readonly CoachAiDailyCompanionDraft[]>([]);
   const [reviewDeliveryChangeDrafts, setReviewDeliveryChangeDrafts] = useState<readonly CoachAiReviewDeliveryChangeDraft[]>([]);
@@ -276,6 +310,14 @@ export function AiChatClient({
     () => conversations.find((item) => item.conversationId === activeConversationId) ?? null,
     [activeConversationId, conversations],
   );
+  const evidenceByMessageId = useMemo(
+    () => new Map(messageEvidence.map((item) => [item.messageId, item.cards])),
+    [messageEvidence],
+  );
+  const hasPendingAssistantMessage = useMemo(
+    () => messages.some((message) => message.role === "assistant" && message.generationState === "pending"),
+    [messages],
+  );
 
   const loadConversations = useCallback(async (append = false, cursor: string | null = null) => {
     setLoadingConversations(true);
@@ -310,9 +352,18 @@ export function AiChatClient({
       if (cursor) query.set("cursor", cursor);
       const response = await readJson<MessageResponse>(await fetch(`${conversationsEndpoint}/${conversationId}/messages?${query}`, { cache: "no-store" }));
       setMessages((current) => appendOlder ? [...response.messages, ...current] : response.messages);
+      setMessageEvidence((current) => {
+        if (!appendOlder) return response.evidence;
+        const byMessageId = new Map(current.map((item) => [item.messageId, item]));
+        for (const item of response.evidence) byMessageId.set(item.messageId, item);
+        return Object.freeze([...byMessageId.values()]);
+      });
       setMessageCursor(response.nextCursor);
     } catch {
-      if (!appendOlder) setMessages([]);
+      if (!appendOlder) {
+        setMessages([]);
+        setMessageEvidence([]);
+      }
       setNotice("This conversation could not be loaded right now.");
     } finally {
       setLoadingMessages(false);
@@ -402,6 +453,7 @@ export function AiChatClient({
     }
     else {
       setMessages([]);
+      setMessageEvidence([]);
       setManualEntryDrafts([]);
       setDailyCompanionDrafts([]);
       setReviewDeliveryChangeDrafts([]);
@@ -409,6 +461,13 @@ export function AiChatClient({
       setMessageCursor(null);
     }
   }, [activeConversationId, loadActionDrafts, loadDailyCompanionDrafts, loadManualEntryDrafts, loadMessages, loadReviewDeliveryChangeDrafts]);
+  useEffect(() => {
+    if (!activeConversationId || !hasPendingAssistantMessage) return undefined;
+    const interval = window.setInterval(() => {
+      void loadMessages(activeConversationId);
+    }, 12_000);
+    return () => window.clearInterval(interval);
+  }, [activeConversationId, hasPendingAssistantMessage, loadMessages]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, sending]);
 
   async function createConversation(): Promise<CoachAiChatConversation | null> {
@@ -441,7 +500,7 @@ export function AiChatClient({
 
   async function sendQuestion(): Promise<void> {
     const text = question.trim();
-    if (!text || sending) return;
+    if (!text || sending || hasPendingAssistantMessage) return;
     if (!analysisScope) {
       setNotice(analysisKind === "ticker"
         ? "Enter a ticker before sending your question."
@@ -457,9 +516,13 @@ export function AiChatClient({
     // Trade entry is recognized from the trader's words. The visible shortcut
     // only changes helpful UI copy; it is never required before entering rows.
     const intent = "answer_question";
-    const contextKey = `${dailyContext
-      ? `${dailyContext.kind}:${dailyContext.tradingDate}:${dailyContext.currency}`
-      : intent}:${JSON.stringify(analysisScope)}`;
+    const submittedPagePathname = pathname;
+    const contextKey = JSON.stringify({
+      intent,
+      analysisScope,
+      dailyContext,
+      pagePathname: submittedPagePathname,
+    });
     const clientRequestId = retryRequest?.conversationId === conversation.conversationId &&
         retryRequest.question === text && retryRequest.contextKey === contextKey
       ? retryRequest.clientRequestId
@@ -492,6 +555,7 @@ export function AiChatClient({
           clientRequestId,
           intent,
           analysisScope,
+          pagePathname: submittedPagePathname,
           ...(dailyContext ? { context: dailyContext } : {}),
         }),
       });
@@ -822,11 +886,16 @@ export function AiChatClient({
                   : formatCoachAiMoneyForDisplay(message.assistantTextPrivate);
               if (!text && message.generationState !== "pending" && message.generationState !== "failed") return null;
               return (
-                <Box key={message.messageId} sx={{ alignSelf: user ? "flex-end" : "flex-start", bgcolor: user ? "primary.main" : "#EEF4FF", borderRadius: 2, color: user ? "primary.contrastText" : "text.primary", maxWidth: { xs: "92%", sm: "78%" }, px: 2, py: 1.5 }}>
-                  {message.generationState === "pending" ? <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}><CircularProgress size={16} /><Typography variant="body2">Thinking...</Typography></Stack>
-                    : message.generationState === "failed" ? <Typography variant="body2">I couldn’t complete that answer. You can try asking again.</Typography>
-                      : <Typography sx={{ overflowWrap: "anywhere", whiteSpace: "pre-wrap" }} variant="body2">{text}</Typography>}
-                </Box>
+                <Stack key={message.messageId} sx={{ alignSelf: user ? "flex-end" : "flex-start", maxWidth: { xs: "92%", sm: "78%" }, width: "100%" }}>
+                  <Box sx={{ alignSelf: user ? "flex-end" : "flex-start", bgcolor: user ? "primary.main" : "#EEF4FF", borderRadius: 2, color: user ? "primary.contrastText" : "text.primary", px: 2, py: 1.5 }}>
+                    {message.generationState === "pending" ? <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}><CircularProgress size={16} /><Typography variant="body2">Thinking...</Typography></Stack>
+                      : message.generationState === "failed" ? <Typography variant="body2">I couldn’t complete that answer. You can try asking again.</Typography>
+                        : <Typography sx={{ overflowWrap: "anywhere", whiteSpace: "pre-wrap" }} variant="body2">{text}</Typography>}
+                  </Box>
+                  {!user && message.generationState === "completed" ? (
+                    <EvidenceCards cards={evidenceByMessageId.get(message.messageId) ?? []} />
+                  ) : null}
+                </Stack>
               );
             })}
             {manualEntryDrafts
@@ -894,7 +963,7 @@ export function AiChatClient({
         <Box sx={{ borderTop: 1, borderColor: "divider", p: { xs: 1.25, sm: 2 } }}>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "flex-end" } }}>
             <TextField
-              disabled={!activeConversation || activeConversation.state !== "active" || sending}
+              disabled={!activeConversation || activeConversation.state !== "active" || sending || hasPendingAssistantMessage}
               fullWidth
               maxRows={6}
               minRows={2}
@@ -911,9 +980,11 @@ export function AiChatClient({
                 : "Start a conversation to ask a question"}
               value={question}
             />
-            <IconButton aria-label="Send question" color="primary" disabled={!question.trim() || !activeConversation || sending || !analysisScope} onClick={() => void sendQuestion()} sx={{ height: 48, width: 48 }}><SendRoundedIcon /></IconButton>
+            <IconButton aria-label="Send question" color="primary" disabled={!question.trim() || !activeConversation || sending || hasPendingAssistantMessage || !analysisScope} onClick={() => void sendQuestion()} sx={{ height: 48, width: 48 }}><SendRoundedIcon /></IconButton>
           </Stack>
-          <Typography color="text.secondary" sx={{ mt: 0.75 }} variant="caption">Press Enter to send. Use Shift + Enter for a new line.</Typography>
+          <Typography color="text.secondary" sx={{ mt: 0.75 }} variant="caption">
+            {hasPendingAssistantMessage ? "Your last question is still being completed." : "Press Enter to send. Use Shift + Enter for a new line."}
+          </Typography>
         </Box>
       </Stack>
     </Paper>

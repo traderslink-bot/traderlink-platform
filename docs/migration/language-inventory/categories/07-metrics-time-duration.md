@@ -16,6 +16,9 @@
 | Dependencies | Category 1 Intents version 1; locked Categories 2-5; active Category 6 boundaries; replacement Journal Analytics Fact Set, allocation graph, metric registry, query/result, authorized account scope, account IANA timezone, currency, and coverage contracts; later Categories 8 and 11-19 |
 | Owner | AI language inventory workflow |
 
+> **Runtime reconciliation (2026-08-15):** Current mappings retain this
+> category's locked capability split and do not create an absent time calculation.
+
 **Controller state:** The controller accepted the exact 19-item inventory and
 capability split: Supported `C7-TIME-001` through `C7-TIME-005`,
 `C7-TIME-009`, `C7-TIME-010`, and `C7-TIME-012`; Planned `C7-TIME-006`,

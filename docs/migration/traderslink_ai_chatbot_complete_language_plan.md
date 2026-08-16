@@ -22,6 +22,30 @@ plan remains the architecture/behavior authority when an inventory item would
 otherwise imply an unavailable metric, unsafe action, missing data, or a change
 to account scope.
 
+## Current runtime language reconciliation — 2026-08-15
+
+The 417 locked canonical names remain the language contract; their individual
+source capability statuses are not a runtime support switch. The current Chat
+implementation now has thirteen bounded factual-read or confirmation-draft
+families. Each family has one or more exact canonical routes and a
+representative fixture in the generated language registry, recorded in the
+[focused reconciliation progress record](traderlink-ai-chat-language-reconciliation-progress.md).
+
+The mapping covers completed-trade facts; Daily Tracker drafts; manual
+execution drafts; AI Review delivery drafts; Journal period context; saved AI
+Review follow-up; product Help; current dashboard Journal and Analytics reads;
+current product-status reads; saved Trade Analyzer and Candle Review facts;
+rules and tags; and confirmed product changes. It preserves the current
+Dashboard Capability Matrix as the runtime truth: Trade Explorer remains a
+bounded, versioned/incomplete read; raw statements, secrets, identity
+internals, arbitrary market data, signals, advice, autonomous mutation, and
+guarded Moomoo actions remain unavailable to Chat.
+
+This reconciliation supersedes only older blanket wording that treated every
+newer bounded capability as future implementation. It does not promote
+unmapped future concepts, replace deterministic service validation, or convert
+an action draft/confirmation into a direct write.
+
 ## 1. Purpose
 
 The TradersLink chatbot will let users ask questions naturally about their trading history, performance, behaviour, journal entries, executions, market context, rules, tags, setups, and account activity.

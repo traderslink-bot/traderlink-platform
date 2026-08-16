@@ -7,6 +7,7 @@ import type {
   CoachAiChatMessageIntent,
   CoachAiChatMessage,
 } from "../contracts/ai-chat-contracts";
+import type { CoachAiChatPageContext } from "../contracts/ai-chat-page-context-contracts";
 import type { CoachAiManualEntryDraft } from "../contracts/ai-manual-entry-draft-contracts";
 import type { CoachAiChatTrustedContext } from "../contracts/ai-daily-companion-contracts";
 import type {
@@ -25,6 +26,7 @@ import { platformFailure } from "@/src/modules/platform/server/database/platform
 import { CoachAiChatFactualToolDispatcher, COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES } from "./coach-ai-chat-factual-tool-dispatcher";
 import { CoachAiChatProviderGenerationError, generateCoachAiChatOpenAiAnswer } from "./coach-ai-chat-openai-adapter";
 import { CoachAiChatProviderControlsRepository } from "./coach-ai-chat-provider-controls-repository";
+import { CoachAiChatGenerationRecoveryService } from "./coach-ai-chat-generation-recovery-service";
 import { CoachAiChatRepository } from "./coach-ai-chat-repository";
 import type { CoachAiDailyCompanionRepository } from "./coach-ai-daily-companion-repository";
 import type { CoachAiManualEntryDraftRepository } from "./coach-ai-manual-entry-draft-repository";
@@ -64,6 +66,7 @@ export type CoachAiChatGenerator = (input: Readonly<{
   existingManualEntryDraft: CoachAiManualEntryDraft | null;
   currentReviewDelivery: CoachAiReviewDeliveryScheduleSnapshot | null;
   analysisScope: CoachAiChatAnalysisScope;
+  pageContext: CoachAiChatPageContext | null;
   dispatcher: CoachAiChatFactualToolDispatcher;
 }>) => Promise<CoachAiChatGenerationResult>;
 
@@ -112,6 +115,7 @@ export function createCoachAiChatReservationEnvelope(
   intent: CoachAiChatMessageIntent = "answer_question",
   currentReviewDelivery: CoachAiReviewDeliveryScheduleSnapshot | null = null,
   analysisScope: CoachAiChatAnalysisScope = Object.freeze({ kind: "recent" }),
+  pageContext: CoachAiChatPageContext | null = null,
 ): string {
   const trustedContextBytes = Buffer.byteLength(JSON.stringify(trustedContext), "utf8");
   const manualDraftBytes = Buffer.byteLength(JSON.stringify(existingManualEntryDraft), "utf8");
@@ -128,6 +132,7 @@ export function createCoachAiChatReservationEnvelope(
     existingManualEntryDraft,
     currentReviewDelivery,
     analysisScope,
+    currentPageHint: pageContext,
     manualEntryShortcutSelected: intent === "prepare_manual_execution_draft",
     toolDefinitions: coachAiChatFactualToolRegistry.map((definition) => definition.name),
     maximumFactualResultsBytes: COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES,
@@ -189,6 +194,7 @@ export class CoachAiChatGenerationService {
       question: string;
       intent?: CoachAiChatMessageIntent;
       analysisScope?: CoachAiChatAnalysisScope;
+      pageContext?: CoachAiChatPageContext | null;
       idempotencySha256: string;
       resolveTrustedContext?: (() => CoachAiDailyCompanionResolvedContext) | null;
       resolveManualEntryDefaults?: (() => Readonly<{
@@ -204,6 +210,12 @@ export class CoachAiChatGenerationService {
     }
     const intent = input.intent ?? "answer_question";
     const analysisScope = input.analysisScope ?? Object.freeze({ kind: "recent" as const });
+    const pageContext = input.pageContext ?? null;
+    new CoachAiChatGenerationRecoveryService(this.chat, this.controls).reconcile(
+      scope,
+      { conversationId: input.conversationId },
+      now,
+    );
     const existing = this.controls.findChatGenerationByIdempotency(scope, input.idempotencySha256);
     if (existing) {
       if (existing.conversationId !== input.conversationId) {
@@ -283,6 +295,7 @@ export class CoachAiChatGenerationService {
           intent,
           currentReviewDelivery,
           analysisScope,
+          pageContext,
         ),
         maxOutputTokens: COACH_AI_CHAT_MAX_OUTPUT_TOKENS,
         additionalFeatureKey: trustedContext ? "daily_companion" : undefined,
@@ -314,7 +327,7 @@ export class CoachAiChatGenerationService {
       result = await this.generator({ scope, selectedAccountId: scope.activeAccountId!, asOfUtc: now.toISOString(), attempt,
         recentMessages: created.history, question: input.question, intent, trustedContext,
         existingManualEntryDraft: boundedExistingManualEntryDraft, currentReviewDelivery,
-        analysisScope, dispatcher });
+        analysisScope, pageContext, dispatcher });
       if (result.manualEntryExtraction && (!manualEntryDefaults || !this.manualDrafts)) {
         throw new CoachAiChatProviderGenerationError(
           result.usage,

@@ -7,6 +7,7 @@ import type {
   CoachAiChatMessageIntent,
   CoachAiChatMessageCursor,
 } from "@/src/modules/coach/contracts/ai-chat-contracts";
+import type { CoachAiChatPageContext } from "@/src/modules/coach/contracts/ai-chat-page-context-contracts";
 import type { CoachAiDailyCompanionContextSelector } from "@/src/modules/coach/contracts/ai-daily-companion-contracts";
 import { CoachAiChatRepository } from "@/src/modules/coach/server/coach-ai-chat-repository";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
@@ -298,15 +299,32 @@ function parseAnalysisScope(value: unknown): CoachAiChatAnalysisScope {
 export function createChatGenerationIdempotencySha256(
   conversationId: string,
   clientRequestId: string,
-  intent: CoachAiChatMessageIntent = "answer_question",
+  request: Readonly<{
+    question: string;
+    intent: CoachAiChatMessageIntent;
+    analysisScope: CoachAiChatAnalysisScope;
+    context: CoachAiDailyCompanionContextSelector | null;
+    pageContext: CoachAiChatPageContext | null;
+  }>,
 ): string {
+  // The browser request UUID is reusable only for the exact same bounded
+  // generation request. Binding every selector prevents an old answer from
+  // being replayed after the trader changes a period, ticker, Tracker day, or
+  // current-page hint.
+  const canonicalRequest = JSON.stringify({
+    question: request.question,
+    intent: request.intent,
+    analysisScope: request.analysisScope,
+    context: request.context,
+    pageContext: request.pageContext,
+  });
   return createHash("sha256")
-    .update("traderlink-coach-chat-generation-v2\0", "utf8")
+    .update("traderlink-coach-chat-generation-v3\0", "utf8")
     .update(conversationId, "utf8")
     .update("\0", "utf8")
     .update(clientRequestId, "utf8")
     .update("\0", "utf8")
-    .update(intent, "utf8")
+    .update(canonicalRequest, "utf8")
     .digest("hex");
 }
 

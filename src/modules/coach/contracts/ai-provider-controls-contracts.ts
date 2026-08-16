@@ -46,4 +46,8 @@ export type CoachAiChatGenerationAttempt = Readonly<{
   maximumOutputTokens: number;
   maximumTotalTokens: number;
   maximumCostUsd: string;
+  reservedAtUtc: string;
+  startedAtUtc: string | null;
+  finalizedAtUtc: string | null;
+  failureCode: string | null;
 }>;

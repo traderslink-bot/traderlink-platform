@@ -16,6 +16,9 @@
 | Dependencies | Locked Categories 1-18; TradersLink AI Companion Plan; AI Chatbot Complete Language Plan; Category 20 final evaluation |
 | Owner | AI language inventory workflow |
 
+> **Runtime reconciliation (2026-08-15):** Every current mapping remains
+> governed by these scope, privacy, missing-data, and protected-action policies.
+
 Category 19 is Complete at Version 1: all eleven exact canonical names and
 registries are controller-approved, locked, and master-synchronized as of
 2026-08-12. Its original Version 0 controlling inventory passed independent

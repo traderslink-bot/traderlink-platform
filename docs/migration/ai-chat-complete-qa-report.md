@@ -1,0 +1,136 @@
+# AI Chat Complete QA Report
+
+## Status
+
+Complete for the current locally implemented TraderLink Platform product
+surface. Production activation, production caps, entitlement rollout, and
+provider operations remain owner launch decisions. Trade Explorer remains an
+explicitly incomplete, versioned product dependency and must be re-audited
+when its accepted implementation changes.
+
+This report closes the focused whole-feature QA run governed by the
+[AI Companion Plan](ai-chat-plan.md), the
+[current dashboard capability matrix](ai-chat-current-dashboard-capability-matrix.md),
+the [runtime progress record](ai-chat-runtime-progress.md), and the
+[language reconciliation record](traderlink-ai-chat-language-reconciliation-progress.md).
+
+## Audited product coverage
+
+- One private account-scoped conversation surface shared by the global
+  desktop/mobile drawer and the `/ai-chat` page.
+- The 13 current bounded factual-read or confirmation-draft capability
+  families in the runtime registry.
+- All 34 deterministic factual tools and all 12 confirmed action-draft kinds.
+- Daily Tracker assistance, natural-language manual execution drafts, saved AI
+  Review follow-up, review scheduling changes, Journal reads, Analytics,
+  Imports, Data Decisions, Notifications, Account settings, privacy-safe
+  Moomoo connection/import status, saved Trade Analyzer/Candle Review facts,
+  Trading Rules, Trade Tags, Help, and bounded Trade Explorer reads.
+- Conversation persistence, provider reservations, usage/cost receipts,
+  retries, stale generation recovery, confirmation expiry, page context,
+  evidence presentation, and Help language.
+
+## Findings corrected
+
+### Interrupted generation recovery
+
+A generation that was interrupted after its attempt started could remain
+pending indefinitely. Provider requests now have a two-minute abort boundary,
+and account-plus-conversation-scoped reconciliation expires pending attempts
+after a ten-minute lease. Reconciliation runs before idempotent generation
+lookup and before message-history reads. The client polls a pending answer and
+prevents a second send until that attempt reaches a terminal state.
+
+### Factual evidence presentation
+
+Completed answers now expose at most four compact, display-safe evidence cards
+from the immutable saved factual snapshot. The service verifies the snapshot
+digest and exact user, workspace, account, conversation, and message scope.
+Only allowlisted current product routes can become links. Raw IDs, hashes,
+unknown tools, untrusted links, raw statement data, credentials, and secrets
+are never presented.
+
+### Current-page conversation hint
+
+The drawer and direct page now pass a strictly validated reduced pathname as a
+conversation hint. It supports ordinary phrases such as “this page,” but it is
+not factual evidence and cannot establish account scope, filters, dates, trade
+state, results, permissions, or action authority. Unsupported, operational,
+admin, malformed, encoded, query-string, hash, URL, traversal, and control-
+character inputs fail closed or reduce to no hint.
+
+### Retry identity
+
+The generation idempotency digest now binds the canonical question intent,
+analysis scope, trusted Daily Tracker context, and reduced current-page hint.
+Reusing the same request identifier with materially different filters or
+context cannot return an answer created for another population.
+
+### Language-to-runtime coverage
+
+The locked 417-entry language inventory is reconciled to every current live
+capability family. Representative fixtures now name their exact expected
+factual tools or action-draft kind. Focused guards require the fixture-tool
+union to equal all 34 names in the factual-tool registry and require the action
+fixtures to equal all 12 top-level kinds in the canonical action contract.
+Future, unavailable, product-excluded, and safety-protected language was not
+promoted to live support.
+
+## Boundaries confirmed
+
+- The official OpenAI Agents SDK uses the Responses API with provider response
+  storage disabled and private-content tracing disabled.
+- The server derives identity and selected Journal account scope. The model
+  receives no database, filesystem, arbitrary network, raw statement, secret,
+  credential, billing identity, or owner-administration access.
+- Factual tools reuse canonical Journal and product services. The model does
+  not calculate financial results from raw rows and cannot refresh market
+  data. Analyzer and Candle Review reads use saved facts only.
+- Every supported mutation remains a preview with an explicit trader
+  confirmation, canonical command validation, stale-state protection,
+  idempotency, and 24-hour draft expiry. The model cannot directly write.
+- Moomoo coverage is privacy-safe status and Help only. Sign-in, OAuth,
+  disconnect, linking, backfill, scheduling, and import-run changes stay in
+  their guarded product UI.
+- The complete 34-tool catalog remains available because Chat is a global
+  companion and a trader may ask about another feature without navigating
+  away. Tools are bounded and deterministic; current-page context is only a
+  relevance hint.
+- Ordinary operational logs do not contain original messages, full answers,
+  raw Journal facts, secrets, or provider bodies. Private conversation content
+  remains in its account-scoped record.
+
+## Verification record
+
+- The language generator produced all 417 locked entries.
+- The focused language inventory suite passed three tests with one worker and
+  proved exact 34-tool and 12-action coverage.
+- The page-context suite passed 28 tests with one worker.
+- The evidence and message-route suites passed 28 tests with one worker.
+- The interrupted-generation recovery suite passed two tests with one worker.
+- Targeted lint passed for the integrated runtime, API, UI, evidence, recovery,
+  page-context, and Help files.
+- The final consolidated one-worker Chat regression passed 160 tests across
+  26 files. The opt-in live-provider file and test were the only skipped
+  checks. Targeted lint and the full no-emit TypeScript check passed.
+- The full working-tree whitespace check passed. Controlled no-worker desktop
+  and 390 by 844 mobile checks opened and closed the drawer without leaving
+  `/workspace`; the direct `/ai-chat` page showed the same Chat surface; no
+  browser console errors were observed. The review server was stopped.
+
+The opt-in live-provider evaluation is not repeated during this low-resource
+QA pass. Its previously accepted synthetic Agents SDK run remains recorded in
+the runtime progress document. No private Journal data or product mutation is
+required for that verifier.
+
+## Remaining launch and product boundaries
+
+- Select and enable production model, pricing, request/token/spend caps,
+  entitlement, support, and monitoring settings.
+- Re-audit the isolated Trade Explorer adapter after the owner accepts the
+  updated Trade Explorer product contract.
+- Implement the separately planned deterministic rule-recommendation service
+  before Chat can read or explain saved recommendation evidence.
+- Keep raw statement review opt-in and outside ordinary Chat context.
+
+No deployment or push is authorized by this QA acceptance.

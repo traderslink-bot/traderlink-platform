@@ -16,6 +16,9 @@
 | Dependencies | Locked Category 1 intents; locked Category 11 dimensions; future Categories 13-14 date/time and comparison/ranking language; replacement Journal authorization, fact-set, coverage, currency, timezone, and Data Decisions contracts |
 | Owner | AI language inventory workflow |
 
+> **Runtime reconciliation (2026-08-15):** Mapping does not independently
+> authorize parsing, matching, text search, or a broader data query.
+
 **Completion state:** Version 1 has controller-approved and locked canonical,
 registry, evaluation, and coverage deliverables. It still authorizes neither a Chat
 route nor a parser, query, data source, test, schema, or runtime capability.

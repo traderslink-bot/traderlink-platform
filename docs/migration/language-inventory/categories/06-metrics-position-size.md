@@ -16,6 +16,9 @@
 | Dependencies | Category 1 Intents version 1; Category 2 P/L basis; Category 3 outcome/sequence terminology; Category 5 fee basis; replacement Journal Analytics Fact Set, allocation graph, metric registry, query/result, account-scope, currency, timezone, and coverage contracts; later dimensions, operators, dates, comparison/ranking, context, terminology, ambiguity, presentation, and policy categories |
 | Owner | AI language inventory workflow |
 
+> **Runtime reconciliation (2026-08-15):** Mapped language does not authorize
+> a size calculation, exposure inference, or mutation absent its owning service.
+
 **Controller state:** The controller accepted and locked all 14 Version 1
 canonical records and all 14 language registries after comprehensive
 independent PASS, including the seven-case final recheck. All 308 of 308

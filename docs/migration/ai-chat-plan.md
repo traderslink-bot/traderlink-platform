@@ -38,7 +38,9 @@ jointly controlling: this document governs product behavior and protected
 actions; the language plan governs what Chat understands, validates and can
 truthfully answer.
 
-Implementation status is tracked in [AI Companion Progress](ai-chat-progress.md).
+Implementation status is tracked in [AI Companion Progress](ai-chat-progress.md),
+and the completed whole-feature audit is recorded in the
+[AI Chat Complete QA Report](ai-chat-complete-qa-report.md).
 
 The [AI Chat Current Dashboard Capability Matrix](ai-chat-current-dashboard-capability-matrix.md)
 is the controlling implementation inventory. It was rebuilt on 2026-08-15 from
@@ -76,6 +78,13 @@ The complete product has four connected experiences:
 All four experiences read the same selected Journal account. Broker imports and
 manual executions remain in the one canonical account ledger. AI never becomes
 an alternate ledger, a source of market facts, or a hidden decision-maker.
+
+The browser may supply only a strictly reduced, allowlisted pathname so Chat
+can understand phrases such as “this page.” This is a conversation and
+navigation hint, not an active filter or factual source. The server still
+resolves every account, period, trade, result and permission through its
+deterministic services. Explicit analysis scope and Daily Tracker context stay
+visible and removable under their existing controls.
 
 ## Non-negotiable rules
 

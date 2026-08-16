@@ -16,6 +16,10 @@
 | Dependencies | Category 1 Intents version 1; replacement Journal Analytics Fact Set, metric registry, query/result contracts, dimensions, operators, dates, fees, and account-scope contracts |
 | Owner | AI language inventory workflow |
 
+> **Runtime reconciliation (2026-08-15):** A current mapping preserves every
+> existing population, coverage, currency, and account-scope requirement; it
+> does not promote an individual metric or authorize a calculation by itself.
+
 ---
 
 # 1. Category Purpose

@@ -16,6 +16,10 @@
 | Dependencies | None from earlier inventory categories; implementation depends on Journal contracts and later metric, dimension, operator, context, and policy categories |
 | Owner | AI language inventory workflow |
 
+> **Runtime reconciliation (2026-08-15):** This locked language contract may
+> map individual terms to a bounded current Chat capability, but never changes
+> a term's source status or independently authorizes a tool, data access, or write.
+
 ---
 
 # 1. Category Purpose

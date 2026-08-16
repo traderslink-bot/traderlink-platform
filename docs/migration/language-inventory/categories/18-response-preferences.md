@@ -16,6 +16,9 @@
 | Dependencies | Category 1 Intents version 1; an already resolved, server-authorized underlying request; deterministic result, evidence, coverage, privacy, and capability contracts owned by their source categories |
 | Owner | AI language inventory workflow |
 
+> **Runtime reconciliation (2026-08-15):** Presentation mapping cannot change
+> the factual query, capability, authorization, privacy, coverage, or confirmation boundary.
+
 **Final state:** The controller accepted and locked the exact six canonical
 names after comprehensive independent Terra semantic/schema PASS. Version 1 is
 Complete. Every response-mode capability remains `Planned`; completion of this

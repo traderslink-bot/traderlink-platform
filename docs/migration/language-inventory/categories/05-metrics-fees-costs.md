@@ -16,6 +16,9 @@
 | Dependencies | Category 1 Intents version 1; Category 2 Profit and Loss Metrics version 1; replacement Journal Analytics Fact Set, charge-allocation, metric-registry, query/result, account-scope, currency, and coverage contracts; Category 4 and Category 11 remain later owners for expectancy and broker grouping semantics |
 | Owner | AI language inventory workflow |
 
+> **Runtime reconciliation (2026-08-15):** A current mapping cannot infer
+> charge kind, fee coverage, broker identity, or a `Planned`/`Unavailable` fee result.
+
 ---
 
 # 1. Category Purpose

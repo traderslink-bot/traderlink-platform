@@ -16,6 +16,9 @@
 | Dependencies | Locked Categories 1 through 8; replacement Journal Analytics fact/coverage contracts; accepted execution and round-trip projections; trader-authored rules, rule applicability/adherence reviews, setup and plan labels where required; later Category 10 exact candle `profit_giveback` contract and Categories 11 through 19 language/policy contracts |
 | Owner | AI language inventory workflow |
 
+> **Runtime reconciliation (2026-08-15):** Mapped rules, tags, and Journal
+> reads never become a causal conclusion, recommendation, or new runtime metric.
+
 **Controller state:** The exact 21-item planning inventory, all 21 Section 5
 canonical records, all 21 Section 6 language registries, all 462 Section 7
 cases, and the Section 8 coverage report passed comprehensive and clerical

@@ -14,6 +14,7 @@ import {
   type CoachAiChatMessageIntent,
   type CoachAiChatMessage,
 } from "../contracts/ai-chat-contracts";
+import type { CoachAiChatPageContext } from "../contracts/ai-chat-page-context-contracts";
 import type {
   CoachAiManualEntryDraft,
   CoachAiManualExecutionExtraction,
@@ -48,6 +49,7 @@ import { coachAiChatFactualToolRegistry } from "./coach-ai-chat-factual-tool-reg
 // Two factual turns permit a bounded sequential lookup before the structured answer.
 const COACH_AI_CHAT_MAX_TURNS = 3;
 const COACH_AI_CHAT_MAX_TOOL_CALLS = 4;
+export const COACH_AI_CHAT_PROVIDER_TIMEOUT_MILLISECONDS = 2 * 60 * 1_000;
 
 function privacySafeSafetyIdentifier(scope: WorkspaceAccessScope): string {
   return createHash("sha256")
@@ -391,6 +393,8 @@ The server gives you an exact runtime capability list. Treat it as a hard bounda
 
 The trader may select an analysis scope. It is an enforced data boundary, not a suggestion. Keep closed-trade analysis inside that period or ticker. Product-help and saved-review questions may still use their dedicated tools.
 
+A currentPageHint may be present so you can understand phrases such as "this page." It is a navigation and conversation hint only. It is never factual evidence and cannot establish an account, filter, date fact, trade state, result, or permission. Use deterministic tools for every factual claim. Do not repeat internal route paths unless the trader asks where to find a feature.
+
 Return the requested answer structure. Start with a direct answer, include one to four supporting observations, and use evidenceReferences only for factual tools actually called in this generation. A no-tool answer must have no evidence references and must be honest about why a factual answer is unavailable.`;
 
 export type CoachAiChatOpenAiAdapterInput = Readonly<{
@@ -405,6 +409,7 @@ export type CoachAiChatOpenAiAdapterInput = Readonly<{
   existingManualEntryDraft: CoachAiManualEntryDraft | null;
   currentReviewDelivery: CoachAiReviewDeliveryScheduleSnapshot | null;
   analysisScope: CoachAiChatAnalysisScope;
+  pageContext?: CoachAiChatPageContext | null;
   dispatcher: CoachAiChatFactualToolDispatcher;
   environment?: NodeJS.ProcessEnv;
 }>;
@@ -537,6 +542,12 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
     role: message.role,
     text: message.role === "user" ? message.originalUserTextPrivate : message.assistantTextPrivate,
   }));
+  const providerAbort = new AbortController();
+  let providerTimedOut = false;
+  const providerTimeout = setTimeout(() => {
+    providerTimedOut = true;
+    providerAbort.abort();
+  }, COACH_AI_CHAT_PROVIDER_TIMEOUT_MILLISECONDS);
   try {
     const dispatch = (
       toolName: CoachAiChatFactualToolName,
@@ -895,10 +906,12 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
         manualEntryShortcutSelected: input.intent === "prepare_manual_execution_draft",
         currentReviewDelivery: input.currentReviewDelivery,
         selectedAnalysisScope: input.analysisScope,
+        currentPageHint: input.pageContext ?? null,
         runtimeCapabilities: coachAiChatRuntimeCapabilityRegistry,
       }),
       {
         maxTurns: COACH_AI_CHAT_MAX_TURNS,
+        signal: providerAbort.signal,
         toolExecution: { maxFunctionToolConcurrency: 1 },
       },
     );
@@ -931,8 +944,15 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
     });
   } catch (error) {
     if (error instanceof CoachAiChatProviderGenerationError) throw error;
+    if (providerTimedOut) {
+      throw new CoachAiChatProviderGenerationError(
+        Object.freeze({ inputTokens: null, outputTokens: null, totalTokens: null }),
+        "TRADERLINK_COACH_PROVIDER_TIMEOUT",
+      );
+    }
     throw new CoachAiChatProviderGenerationError(Object.freeze({ inputTokens: null, outputTokens: null, totalTokens: null }));
   } finally {
+    clearTimeout(providerTimeout);
     await provider.close().catch(() => undefined);
   }
 }

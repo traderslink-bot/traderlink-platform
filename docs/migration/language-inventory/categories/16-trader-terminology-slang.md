@@ -16,6 +16,9 @@
 | Dependencies | Locked Categories 1-15 and 18; approved account-scoped vocabulary storage; Category 17 ambiguity policy; Category 19 policy; Category 20 evaluation |
 | Owner | AI language inventory workflow |
 
+> **Runtime reconciliation (2026-08-15):** Current mappings use the same
+> authorized exact-resolution rules; recognition never proves membership or permission.
+
 The lead controller accepted the exact fifteen-record controlling inventory
 and 36-child-term boundary on 2026-08-11 and authorized canonical production.
 The lead controller approved and locked all fifteen exact canonical names and

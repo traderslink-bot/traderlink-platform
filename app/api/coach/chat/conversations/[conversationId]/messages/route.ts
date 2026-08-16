@@ -11,7 +11,16 @@ import {
   respondToChatRouteError,
   withReadonlyChatRepository,
 } from "@/src/modules/coach/server/coach-ai-chat-route-runtime";
-import { generateCoachAiChatSavedAnswer } from "@/src/modules/coach/server/coach-ai-chat-generation-runtime";
+import {
+  generateCoachAiChatSavedAnswer,
+  reconcileStaleCoachAiChatGenerations,
+} from "@/src/modules/coach/server/coach-ai-chat-generation-runtime";
+import { CoachAiChatEvidenceService } from "@/src/modules/coach/server/coach-ai-chat-evidence-service";
+import type { CoachAiChatPageContext } from "@/src/modules/coach/contracts/ai-chat-page-context-contracts";
+import {
+  CoachAiChatPageContextValidationError,
+  parseCoachAiChatPageContext,
+} from "@/src/modules/coach/server/coach-ai-chat-page-context";
 import {
   getReplacementDailyCompanionResolvedContext,
   getReplacementTradeTrackerAccount,
@@ -36,12 +45,24 @@ export async function GET(
     const query = parseMessageHistoryQuery(new URL(request.url));
     const { conversationId } = await params;
     const id = parseConversationId(conversationId);
+    // The recovery service owns timeout reconciliation. A read never invents
+    // an answer; it only makes a safely-finalized pending state visible.
+    reconcileStaleCoachAiChatGenerations(scope, { conversationId: id });
     const result = withReadonlyChatRepository(scope, (repository) =>
       repository.listMessages(scope, id, query));
+    const evidence = withReadonlyPlatformDatabase({}, (database) =>
+      new CoachAiChatEvidenceService(database).readForMessages(
+        scope,
+        id,
+        result.messages
+          .filter((message) => message.role === "assistant" && message.generationState === "completed")
+          .map((message) => message.messageId),
+      ));
     return readyResponse({
       status: "ready",
       conversationId: id,
       messages: result.messages,
+      evidence,
       nextCursor: encodeMessagePageCursor(result.nextCursor),
     });
   } catch (error) {
@@ -58,16 +79,37 @@ export async function POST(
     assertNoQueryParameters(new URL(request.url));
     const { conversationId } = await params;
     const id = parseConversationId(conversationId);
-    const input = parseGenerateChatMessageBody(await parseJsonBody(request));
+    const body = await parseJsonBody(request);
+    let pageContext: CoachAiChatPageContext | null;
+    try {
+      pageContext = parseCoachAiChatPageContext(body.pagePathname);
+    } catch (error) {
+      if (error instanceof CoachAiChatPageContextValidationError) {
+        platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+          field: "pagePathname",
+        });
+      }
+      throw error;
+    }
+    const messageBody = { ...body };
+    delete messageBody.pagePathname;
+    const input = parseGenerateChatMessageBody(messageBody);
     const result = await generateCoachAiChatSavedAnswer(scope, {
       conversationId: id,
       question: input.question,
       intent: input.intent,
       analysisScope: input.analysisScope,
+      pageContext,
       idempotencySha256: createChatGenerationIdempotencySha256(
         id,
         input.clientRequestId,
-        input.intent,
+        {
+          question: input.question,
+          intent: input.intent,
+          analysisScope: input.analysisScope,
+          context: input.context,
+          pageContext,
+        },
       ),
       resolveTrustedContext: input.context
         ? () => {
