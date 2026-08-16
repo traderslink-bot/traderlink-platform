@@ -123,6 +123,7 @@ function fixture() {
       })),
     },
     schedules: { read: vi.fn(() => null), readV2: vi.fn(() => null) },
+    reviewAvailability: { read: vi.fn(() => Object.freeze([])) },
     connection: {
       find: vi.fn(() => Object.freeze({
         connectionId: "private-connection-id",
@@ -240,6 +241,34 @@ describe("CoachAiChatProductContextService", () => {
       "private-encrypted-link-ref", "private-account-selection-ref"]) {
       expect(serialized).not.toContain(privateValue);
     }
+  });
+
+  it("returns only privacy-safe paid-access state for account AI questions", () => {
+    const { dependencies, service } = fixture();
+    dependencies.entitlementSchemaAvailable.mockReturnValue(true);
+    dependencies.entitlementAccess.mockReturnValue(Object.freeze({
+      state: "active" as const,
+      cancelAtPeriodEnd: true,
+      renewalPeriodStartUtc: "2026-08-01T00:00:00.000Z",
+      renewalPeriodEndUtc: "2026-09-01T00:00:00.000Z",
+    }));
+
+    const response = service.accountContext(scope, accountId, {
+      contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
+      toolName: "get_account_ai_plan",
+    });
+
+    expect(response.result).toMatchObject({
+      entitlement: {
+        state: "active",
+        cancelAtPeriodEnd: true,
+        renewalPeriodEndUtc: "2026-09-01T00:00:00.000Z",
+      },
+      link: "/account/ai",
+    });
+    expect(JSON.stringify(response)).not.toMatch(
+      /whop|membership|payment|credential|subscription[_-]?id/iu,
+    );
   });
 
   it("rejects a different account before reading private product state", () => {

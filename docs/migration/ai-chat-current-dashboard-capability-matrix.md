@@ -106,7 +106,7 @@ historical foundation description, are the current implementation truth.
 | Account privacy | `/account/privacy` | Privacy settings and erasure boundary | Explain privacy/retention and link to controls. Account/data erasure always stays outside Chat. | Help/read only |
 | Help Center | `/help` and maintained guide collections | `HELP_SEARCH_RECORDS` | Search and answer from maintained product help with links. | Read implemented |
 | Trade Tags | Daily/Swing Tracker annotation surfaces and `/help/trade-tags` | Annotation service and preset/custom tag catalog | Read the exact tags, trade note and saved custom-rule reviews on one completed trade or Swing position, explain available tags, and draft a complete replacement set. Saving requires an exact before/after preview and the canonical tag command. Tags remain trader observations, never proof of cause, emotion, setup quality or a rule outcome. | Completed-trade and Swing read/draft/confirm implemented |
-| Paid plan and billing | Account/Help billing surfaces | Entitlement read and customer billing URLs | Explain current entitlement and link to billing. No purchase, cancellation or payment action through Chat. | Planned read/help; actions unavailable |
+| Paid plan and billing | Account/Help billing surfaces | `WhopAiReviewEntitlementRepository.readAccess` and maintained Paid plan Help guides | Explain the current privacy-safe entitlement state and link to the maintained billing guidance. No Whop identity, membership reference, payment detail or credential enters Chat. Purchase, cancellation and payment actions remain in the guarded Account/Whop flow. | Read/help implemented; actions product-excluded from Chat |
 
 ## Aliases and non-product routes
 

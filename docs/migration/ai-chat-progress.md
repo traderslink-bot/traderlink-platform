@@ -67,7 +67,10 @@ The private persistence API checkpoint is tracked in
 - [x] Implement saved Trade Analyzer and Candle Review result reads with exact
   coverage and unavailable states.
 - [x] Implement Import, Data Decisions, Notifications, Account and entitlement
-  reads without exposing statements, credentials, admin data or secrets.
+  reads without exposing statements, credentials, billing identity, admin data
+  or secrets. Paid-plan questions use the privacy-safe entitlement projection
+  plus the maintained billing Help guides; purchases, cancellations and payment
+  changes remain outside Chat.
 - [x] Add allowlisted Swing note, explicit open-position type and Swing tag
   drafts/confirmed actions through canonical commands. Position types are
   always selected by the trader and never inferred by Chat.
