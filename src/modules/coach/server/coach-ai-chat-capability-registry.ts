@@ -120,7 +120,7 @@ export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
     limitations: Object.freeze([
       "Chat never receives raw statement rows, uploaded files, broker account identifiers, credentials, tokens, or payment identifiers.",
       "Moomoo connection and automatic-import actions stay in Account and Import pages.",
-      "Data Decision reads do not change or resolve a decision.",
+      "Reading a Data Decision never changes it; only a separate supported preview and confirmation can resolve it.",
     ]),
   }),
   Object.freeze({
@@ -148,13 +148,14 @@ export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
   Object.freeze({
     id: "confirmed_product_changes",
     kind: "confirmed_draft" as const,
-    plainLanguage: "Prepare supported currency, notification, account-selection, AI Review, completed-trade tag, or Trading Rule changes.",
+    plainLanguage: "Prepare supported currency, notification, account-selection, AI Review, completed-trade tag, Trading Rule, or Data Decision changes.",
     canonicalNames: Object.freeze([]),
     limitations: Object.freeze([
       "Chat must read the current exact value or target before it can prepare the change.",
       "Nothing changes until the trader confirms the saved preview.",
       "A trade-tag proposal uses only the trader's exact requested tags from the available saved or preset list.",
       "A Trading Rule proposal uses an exact saved rule or maintained preset, and Chat never activates a rule only because it recommends one.",
+      "Data Decision proposals use one exact pending item and returned evidence references; numeric corrections and raw-statement comparisons stay on the Data Decisions page.",
       "Login, broker connections, payment, deletion, administration, and unsupported settings remain outside this path.",
     ]),
   }),

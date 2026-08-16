@@ -4,6 +4,8 @@ import Database from "better-sqlite3";
 
 import type { WorkspaceAccessScope } from
   "@/src/modules/platform/contracts/workspace-access-scope";
+import type { JournalDataDecisionItem } from
+  "@/src/modules/journal/contracts/journal-product-read-models";
 import { createCanonicalUuidV4 } from
   "@/src/modules/platform/server/database/platform-migration-contract";
 import { platformMigrationManifest } from
@@ -414,6 +416,94 @@ describe("CoachAiChatActionDraftService", () => {
         draftId: paused.draftId,
       }, new Date("2026-08-15T12:05:00.000Z"));
       expect(annotations.listRules(account)[0]?.lifecycleState).toBe("paused");
+    } finally {
+      f.database.close();
+    }
+  });
+
+  it("confirms an exact supported open-position decision only after preview", () => {
+    const f = fixture();
+    try {
+      const decisionId = createCanonicalUuidV4();
+      const supportedPositionFactId = createCanonicalUuidV4();
+      const contradictoryPositionFactId = createCanonicalUuidV4();
+      const decision: JournalDataDecisionItem = Object.freeze({
+        decisionId,
+        importBatchIds: Object.freeze([]),
+        revision: 2,
+        state: "pending",
+        issueCode: "position_fact_open_position_conflict",
+        effectCode: "position_chain_unavailable",
+        question: "Is this position still open?",
+        impactSummary: "The open position needs your confirmation.",
+        targetKind: "position_fact",
+        instrumentRef: createCanonicalUuidV4(),
+        symbol: "TEST",
+        currency: "USD",
+        sourceRowNumber: null,
+        sourceSection: null,
+        effectiveAtUtc: now.toISOString(),
+        updatedAtUtc: now.toISOString(),
+        resolution: null,
+        allowedActions: Object.freeze(["confirm_legitimate_open_position"] as const),
+        executions: Object.freeze([]),
+        flaggedStatementRow: null,
+        positionFacts: Object.freeze([]),
+        openPositionConfirmation: Object.freeze({
+          supportedQuantityDecimal: "25",
+          supportedPositionFactId,
+          contradictoryPositionFactId,
+        }),
+        suggestedCoverage: null,
+      });
+      const resolved: Array<unknown> = [];
+      const service = new CoachAiChatActionDraftService(f.database, {
+        dataDecisions: {
+          listDataDecisions: () => Object.freeze({
+            pending: Object.freeze([decision]),
+            resolved: Object.freeze([]),
+          }),
+        },
+        resolveDataDecision: (_account, resolution) => {
+          resolved.push(resolution);
+          return Object.freeze({
+            decision: Object.freeze({ state: "resolved" }),
+            rebuildCount: 1,
+            openedFollowupDecisionIds: Object.freeze([]),
+          });
+        },
+      });
+      const decisionRef = createHash("sha256").update([
+        "coach-data-decision-ref-v1",
+        f.scope.workspaceId,
+        f.scope.activeAccountId,
+        decisionId,
+      ].join("\u001f"), "utf8").digest("hex");
+      const draft = service.create(f.scope, {
+        conversationId: f.conversationId,
+        sourceMessageId: f.message("Yes, TEST is still open."),
+        extraction: Object.freeze({
+          kind: "data_decision",
+          decisionRef,
+          resolution: Object.freeze({ action: "confirm_legitimate_open_position" }),
+        }),
+      }, now);
+      expect(draft.preview).toMatchObject({
+        kind: "data_decision",
+        ticker: "TEST",
+        question: "Is this position still open?",
+        actionLabel: "Confirm this open position",
+        details: ["Supported open quantity: 25"],
+      });
+      expect(resolved).toEqual([]);
+      service.confirm(f.scope, {
+        conversationId: f.conversationId,
+        draftId: draft.draftId,
+      }, new Date("2026-08-15T12:01:00.000Z"));
+      expect(resolved).toMatchObject([{
+        action: "confirm_legitimate_open_position",
+        positionFactId: supportedPositionFactId,
+      }]);
     } finally {
       f.database.close();
     }

@@ -68,10 +68,11 @@ The private persistence API checkpoint is tracked in
   coverage and unavailable states.
 - [x] Implement Import, Data Decisions, Notifications, Account and entitlement
   reads without exposing statements, credentials, admin data or secrets.
-- [ ] Add allowlisted Swing, remaining tag, Data Decision and remaining
+- [ ] Add allowlisted Swing, remaining tag and remaining
   account setting drafts/confirmed actions through canonical commands. Trading
   Rules and completed-trade annotations have deterministic reads, and exact
-  completed-Day-trade tag replacement and confirmed Trading Rule changes are complete. Reporting
+  completed-Day-trade tag replacement, confirmed Trading Rule changes and the
+  bounded safe Data Decision action set are complete. Reporting
   currency, notification read/preferences, selected-account switching and
   existing AI Review on/off changes are complete; the remaining command
   families stay pending.
@@ -330,6 +331,29 @@ The private persistence API checkpoint is tracked in
   no-write previews, confirmed preset/custom mutations, lifecycle changes and
   selected-account isolation. This slice required no migration or protected-
   database change and performed no provider request, push or deployment.
+
+### Completed: bounded confirmed Data Decision actions
+
+- Data Decision detail reads now expose privacy-safe references for the exact
+  affected executions while keeping decision, execution, version, import,
+  instrument and raw-statement identifiers private.
+- Chat can prepare only the bounded resolutions that do not require it to see
+  or invent missing statement facts: confirm a supported open position,
+  reconcile grouped fills, accept a source limitation, exclude/restore/keep an
+  exact returned execution, or merge one exact supported duplicate pair.
+- The trader sees the decision question, ticker, chosen action and affected
+  execution summary before confirmation. Creating the preview performs no
+  Journal write. Confirmation reloads the pending decision at the exact saved
+  revision, recreates the canonical resolution and calls the existing Journal
+  decision service.
+- Numeric corrections, missing executions, coverage facts and any task that
+  requires comparison with the original statement remain on Data Decisions.
+  Chat never receives raw statement rows and never invents an exclusion reason
+  or duplicate choice.
+- Focused ESLint, the full no-emit TypeScript check and 13 focused action and
+  product-context tests across two files passed with one worker. This slice
+  made no migration or protected-database change and performed no provider
+  request, push or deployment.
 
 ## Completed: scheduled AI Review control enforcement
 

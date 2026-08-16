@@ -86,6 +86,20 @@ function Details({ draft }: Readonly<{ draft: CoachAiChatActionDraft }>) {
       </Stack>
     );
   }
+  if (preview.kind === "data_decision") {
+    return (
+      <Stack spacing={0.75}>
+        {preview.ticker ? (
+          <Typography sx={{ fontWeight: 750 }} variant="body2">{preview.ticker}</Typography>
+        ) : null}
+        <Typography color="text.secondary" variant="body2">{preview.question}</Typography>
+        <Typography sx={{ fontWeight: 750 }} variant="body2">{preview.actionLabel}</Typography>
+        {preview.details.map((detail) => (
+          <Typography color="text.secondary" key={detail} variant="body2">{detail}</Typography>
+        ))}
+      </Stack>
+    );
+  }
   return (
     <Stack spacing={0.5}>
       <Typography sx={{ fontWeight: 750 }} variant="body2">{preview.notificationTitle}</Typography>

@@ -117,6 +117,7 @@ function decisionDetail(
   return Object.freeze({
     ...decisionSummary(scope, decision),
     executions: Object.freeze(decision.executions.map((execution) => Object.freeze({
+      executionRef: opaqueRef("data-decision-execution", scope, execution.executionId),
       executedAtUtc: execution.executedAtUtc,
       sourceTimezone: execution.sourceTimezone,
       ticker: execution.symbol,
@@ -131,6 +132,7 @@ function decisionDetail(
       sourceLabel: execution.sourceLabel,
     }))),
     positionFacts: Object.freeze(decision.positionFacts.map((fact) => Object.freeze({
+      positionFactRef: opaqueRef("data-decision-position-fact", scope, fact.positionFactId),
       ticker: fact.symbol,
       currency: fact.currency,
       factKind: fact.factKind,

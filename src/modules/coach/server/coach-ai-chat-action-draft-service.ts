@@ -24,6 +24,18 @@ import { JournalRuleRepository } from
   "@/src/modules/journal/server/annotations/journal-rule-repository";
 import type { JournalRuleRecord } from
   "@/src/modules/journal/contracts/journal-annotation-contracts";
+import type { JournalExecutionVersionRecord } from
+  "@/src/modules/journal/contracts/journal-execution-contracts";
+import type { JournalDecisionResolution } from
+  "@/src/modules/journal/server/decisions/journal-data-decision-service";
+import { JournalExecutionRepository } from
+  "@/src/modules/journal/server/executions/journal-execution-repository";
+import { createJournalIntegrityRuntime } from
+  "@/src/modules/journal/server/journal-integrity-runtime";
+import { createJournalDataDecisionResolution } from
+  "@/src/modules/journal/server/product/journal-data-decision-resolution";
+import { JournalProductReadService } from
+  "@/src/modules/journal/server/product/journal-product-read-service";
 import {
   JOURNAL_RULE_TEMPLATE_CATALOG,
   mutateJournalTradingRules,
@@ -68,6 +80,29 @@ function ruleRef(scope: Readonly<{ workspaceId: string; accountId: string }>, ru
     ruleId,
   ].join("\u001f"), "utf8").digest("hex");
 }
+
+function dataDecisionRef(
+  kind: "data-decision" | "data-decision-execution",
+  scope: Readonly<{ workspaceId: string; accountId: string }>,
+  privateId: string,
+): string {
+  return createHash("sha256").update([
+    `coach-${kind}-ref-v1`,
+    scope.workspaceId,
+    scope.accountId,
+    privateId,
+  ].join("\u001f"), "utf8").digest("hex");
+}
+
+const DATA_DECISION_ACTION_LABELS = Object.freeze({
+  confirm_legitimate_open_position: "Confirm this open position",
+  reconcile_grouped_fills: "Group the supported fills",
+  accept_source_limitation: "Accept the source limitation",
+  exclude_execution: "Exclude this execution",
+  restore_execution: "Restore this execution",
+  keep_distinct: "Keep this execution separate",
+  merge_supported_duplicate: "Merge the duplicate execution",
+} as const);
 
 function string(value: unknown, field: string): string {
   if (typeof value !== "string" || value.length === 0) {
@@ -233,6 +268,12 @@ function tagSnapshots(value: unknown, field: string): readonly Readonly<{
 
 type TagTradeRow = Readonly<{ normalized_symbol: string }>;
 
+type DataDecisionResolutionResult = Readonly<{
+  decision: Readonly<{ state: string }>;
+  rebuildCount: number;
+  openedFollowupDecisionIds: readonly string[];
+}>;
+
 export class CoachAiChatActionDraftService {
   private readonly drafts: CoachAiChatActionDraftRepository;
   private readonly preferences: PlatformUserPreferenceRepository;
@@ -240,8 +281,32 @@ export class CoachAiChatActionDraftService {
   private readonly profile: PlatformAccountProfileReadService;
   private readonly reviewSchedules: CoachReviewDeliveryScheduleRepository;
   private readonly annotations: JournalAnnotationService;
+  private readonly dataDecisions: Pick<JournalProductReadService, "listDataDecisions">;
+  private readonly loadExecution: (
+    workspaceId: string,
+    accountId: string,
+    executionId: string,
+  ) => JournalExecutionVersionRecord | null;
+  private readonly resolveDataDecision: (
+    scope: ReturnType<typeof narrowWorkspaceAccessToAccount>,
+    resolution: JournalDecisionResolution,
+  ) => DataDecisionResolutionResult;
 
-  constructor(private readonly database: Database.Database) {
+  constructor(
+    private readonly database: Database.Database,
+    dependencies: Readonly<{
+      dataDecisions?: Pick<JournalProductReadService, "listDataDecisions">;
+      loadExecution?: (
+        workspaceId: string,
+        accountId: string,
+        executionId: string,
+      ) => JournalExecutionVersionRecord | null;
+      resolveDataDecision?: (
+        scope: ReturnType<typeof narrowWorkspaceAccessToAccount>,
+        resolution: JournalDecisionResolution,
+      ) => DataDecisionResolutionResult;
+    }> = Object.freeze({}),
+  ) {
     this.drafts = new CoachAiChatActionDraftRepository(database);
     this.preferences = new PlatformUserPreferenceRepository(database);
     this.notifications = new PlatformNotificationRepository(database);
@@ -251,6 +316,12 @@ export class CoachAiChatActionDraftService {
       new JournalAnnotationRepository(database),
       new JournalRuleRepository(database),
     );
+    this.dataDecisions = dependencies.dataDecisions ?? new JournalProductReadService(database);
+    const executions = new JournalExecutionRepository(database);
+    this.loadExecution = dependencies.loadExecution ?? ((workspaceId, accountId, executionId) =>
+      executions.currentVersion(executionId, workspaceId, accountId));
+    this.resolveDataDecision = dependencies.resolveDataDecision ?? ((account, resolution) =>
+      createJournalIntegrityRuntime(this.database).decisions.resolve(account, resolution));
   }
 
   create(
@@ -432,7 +503,7 @@ WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
           .sort((left, right) => left.tagId.localeCompare(right.tagId))),
         proposedPresetKeys: Object.freeze([...proposedPresetKeys].sort()),
       });
-    } else {
+    } else if (input.extraction.kind === "rule_change") {
       const account = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId!);
       const operation = input.extraction.operation;
       const rules = this.annotations.listRules(account);
@@ -564,6 +635,87 @@ WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
           ...proposed,
         });
       }
+    } else {
+      const account = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId!);
+      const dataDecisionExtraction = input.extraction as Extract<
+        CoachAiChatActionDraftExtraction,
+        Readonly<{ kind: "data_decision" }>
+      >;
+      if (!/^[0-9a-f]{64}$/u.test(dataDecisionExtraction.decisionRef)) {
+        platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "decisionRef" });
+      }
+      const decisions = this.dataDecisions.listDataDecisions(account).pending.filter((decision) =>
+        dataDecisionRef("data-decision", account, decision.decisionId) ===
+          dataDecisionExtraction.decisionRef);
+      if (decisions.length !== 1) platformFailure("TRADERLINK_DATA_DECISION_CONFLICT");
+      const decision = decisions[0]!;
+      const requested = dataDecisionExtraction.resolution;
+      const body: Record<string, unknown> = { action: requested.action };
+      const details: string[] = [];
+      const executionForRef = (opaqueExecutionRef: string) => {
+        if (!/^[0-9a-f]{64}$/u.test(opaqueExecutionRef)) {
+          platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+            field: "executionRef",
+          });
+        }
+        const matches = decision.executions.filter((execution) =>
+          dataDecisionRef("data-decision-execution", account, execution.executionId) ===
+            opaqueExecutionRef);
+        if (matches.length !== 1) platformFailure("TRADERLINK_DATA_DECISION_INVALID_ACTION");
+        return matches[0]!;
+      };
+      if (requested.action === "confirm_legitimate_open_position") {
+        if (!decision.openPositionConfirmation) {
+          platformFailure("TRADERLINK_DATA_DECISION_INVALID_ACTION");
+        }
+        body.positionFactId = decision.openPositionConfirmation.supportedPositionFactId;
+        details.push(
+          `Supported open quantity: ${decision.openPositionConfirmation.supportedQuantityDecimal}`,
+        );
+      } else if (requested.action === "exclude_execution" ||
+          requested.action === "restore_execution" || requested.action === "keep_distinct") {
+        const execution = executionForRef(requested.executionRef);
+        body.executionId = execution.executionId;
+        if (requested.action === "exclude_execution") {
+          body.exclusionReason = requested.exclusionReason;
+        }
+        details.push(
+          `${execution.executedAtUtc} · ${execution.side} ${execution.quantityDecimal}` +
+            ` ${execution.symbol} at ${execution.priceDecimal ?? "price unavailable"}`,
+        );
+      } else if (requested.action === "merge_supported_duplicate") {
+        const duplicate = executionForRef(requested.duplicateExecutionRef);
+        const retained = executionForRef(requested.retainedExecutionRef);
+        if (duplicate.executionId === retained.executionId) {
+          platformFailure("TRADERLINK_DATA_DECISION_INVALID_ACTION");
+        }
+        body.duplicateExecutionId = duplicate.executionId;
+        body.retainedExecutionId = retained.executionId;
+        details.push(
+          `Remove duplicate: ${duplicate.executedAtUtc} · ${duplicate.side}` +
+            ` ${duplicate.quantityDecimal} ${duplicate.symbol}`,
+          `Keep: ${retained.executedAtUtc} · ${retained.side}` +
+            ` ${retained.quantityDecimal} ${retained.symbol}`,
+        );
+      }
+      createJournalDataDecisionResolution(
+        decision,
+        body,
+        (executionId) => this.loadExecution(account.workspaceId, account.accountId, executionId),
+      );
+      preview = Object.freeze({
+        kind: input.extraction.kind,
+        title: "Resolve data decision",
+        ticker: decision.symbol,
+        question: decision.question,
+        actionLabel: DATA_DECISION_ACTION_LABELS[requested.action],
+        details: Object.freeze(details),
+      });
+      privatePayload = Object.freeze({
+        decisionId: decision.decisionId,
+        expectedRevision: decision.revision,
+        resolutionBody: Object.freeze(body),
+      });
     }
     return this.drafts.create(scope, {
       conversationId: input.conversationId,
@@ -730,7 +882,7 @@ WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
           roundTripId,
           ...saved.map((tag) => tag.tagId).sort(),
         ].join("\u001f"), "utf8").digest("hex")}`;
-      } else {
+      } else if (draft.preview.kind === "rule_change") {
         const account = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId!);
         const operation = string(payload.operation, "operation");
         const rules = this.annotations.listRules(account);
@@ -804,6 +956,30 @@ WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
           scope.activeAccountId,
           input.draftId,
           operation,
+        ].join("\u001f"), "utf8").digest("hex")}`;
+      } else {
+        const account = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId!);
+        const decisionId = string(payload.decisionId, "decisionId");
+        const expectedRevision = positiveInteger(payload.expectedRevision, "expectedRevision");
+        const current = this.dataDecisions.listDataDecisions(account).pending.find((decision) =>
+          decision.decisionId === decisionId && decision.revision === expectedRevision);
+        if (!current) platformFailure("TRADERLINK_DATA_DECISION_CONFLICT");
+        const body = record(payload.resolutionBody, "resolutionBody");
+        const resolution = createJournalDataDecisionResolution(
+          current,
+          { ...body },
+          (executionId) => this.loadExecution(account.workspaceId, account.accountId, executionId),
+        );
+        command = "journal_data_decision_resolve";
+        draft = this.drafts.beginConfirm(scope, input.draftId, command, now);
+        const resolved = this.resolveDataDecision(account, resolution);
+        reference = `data_decision:${createHash("sha256").update([
+          scope.workspaceId,
+          scope.activeAccountId,
+          decisionId,
+          resolved.decision.state,
+          String(resolved.rebuildCount),
+          String(resolved.openedFollowupDecisionIds.length),
         ].join("\u001f"), "utf8").digest("hex")}`;
       }
       draft = this.drafts.markCommitted(scope, input.draftId, reference);

@@ -62,6 +62,35 @@ export type CoachAiChatActionDraftExtraction =
             reviewScope: "day_session" | "trade" | "both";
             isFocus: boolean;
           }>;
+    }>
+  | Readonly<{
+      kind: "data_decision";
+      decisionRef: string;
+      resolution:
+        | Readonly<{
+            action:
+              | "confirm_legitimate_open_position"
+              | "reconcile_grouped_fills"
+              | "accept_source_limitation";
+          }>
+        | Readonly<{
+            action: "exclude_execution";
+            executionRef: string;
+            exclusionReason:
+              | "not_a_trade_execution"
+              | "duplicate_execution"
+              | "broker_correction_or_reversal"
+              | "corporate_action";
+          }>
+        | Readonly<{
+            action: "restore_execution" | "keep_distinct";
+            executionRef: string;
+          }>
+        | Readonly<{
+            action: "merge_supported_duplicate";
+            duplicateExecutionRef: string;
+            retainedExecutionRef: string;
+          }>;
     }>;
 
 export type CoachAiChatActionDraftPreview =
@@ -109,6 +138,14 @@ export type CoachAiChatActionDraftPreview =
       ruleTitle: string;
       currentDetails: readonly string[];
       proposedDetails: readonly string[];
+    }>
+  | Readonly<{
+      kind: "data_decision";
+      title: "Resolve data decision";
+      ticker: string | null;
+      question: string;
+      actionLabel: string;
+      details: readonly string[];
     }>;
 
 export type CoachAiChatActionCanonicalCommand =
@@ -118,7 +155,8 @@ export type CoachAiChatActionCanonicalCommand =
   | "platform_notification_preferences_update"
   | "coach_ai_review_account_setting_save"
   | "journal_trade_tags_replace"
-  | "journal_trading_rules_mutate";
+  | "journal_trading_rules_mutate"
+  | "journal_data_decision_resolve";
 
 export type CoachAiChatActionDraft = Readonly<{
   contractVersion: typeof COACH_AI_CHAT_ACTION_DRAFT_CONTRACT_VERSION;

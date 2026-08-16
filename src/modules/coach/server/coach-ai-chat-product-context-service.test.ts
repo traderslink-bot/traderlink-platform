@@ -204,7 +204,11 @@ describe("CoachAiChatProductContextService", () => {
     expect(detailed.result).toMatchObject({
       decisionRef,
       ticker: "TEST",
-      executions: [{ ticker: "TEST", quantityDecimal: "100" }],
+      executions: [{
+        executionRef: expect.stringMatching(/^[0-9a-f]{64}$/u),
+        ticker: "TEST",
+        quantityDecimal: "100",
+      }],
       rawStatementRowsAvailableInChat: false,
     });
     const serialized = JSON.stringify(detailed);

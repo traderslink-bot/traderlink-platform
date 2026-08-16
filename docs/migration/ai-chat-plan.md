@@ -488,8 +488,9 @@ once. The following sequence controls safe delivery:
    a time, with durable expiry, stale-state rejection, exact preview and an
    explicit trader confirmation. Reporting currency, notification read state
    and preferences, selected Journal account, and existing AI Review on/off
-   state, completed-Day-trade tags, and exact Trading Rule changes are complete;
-   Swing and Data Decisions remain later guarded slices.
+   state, completed-Day-trade tags, exact Trading Rule changes, and the bounded
+   Data Decision resolutions that do not require raw statement comparison are
+   complete; Swing remains a later guarded slice.
 7. **Entitlements and production operations:** public login boundary, feature
    eligibility, scheduled delivery execution, monitoring, costs, and support
    workflow.
