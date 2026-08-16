@@ -102,7 +102,7 @@ export class CoachAiChatActionDraftRepository {
   ): CoachAiChatActionDraft {
     const previewJson = canonicalJson(input.preview);
     const privatePayloadJson = canonicalJson(input.privatePayload);
-    if (previewJson.length > 8_192 || privatePayloadJson.length > 4_096) {
+    if (previewJson.length > 32_768 || privatePayloadJson.length > 32_768) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "actionDraft" });
     }
     const draftId = createCanonicalUuidV4();

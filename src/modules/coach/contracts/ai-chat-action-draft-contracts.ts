@@ -21,6 +21,22 @@ export type CoachAiChatActionDraftExtraction =
       tradingTimezone: string;
     }>
   | Readonly<{
+      kind: "swing_note";
+      positionRef: string;
+      reviewDate: string;
+      note: string;
+      nextSessionPlan: string | null;
+    }>
+  | Readonly<{
+      kind: "trade_style";
+      positionRef: string;
+      classification:
+        | "active_swing"
+        | "day_trade_still_open"
+        | "bag_hold"
+        | "long_term_hold";
+    }>
+  | Readonly<{
       kind: "notification_preferences";
       discordDmCategories: readonly string[];
     }>
@@ -30,7 +46,8 @@ export type CoachAiChatActionDraftExtraction =
     }>
   | Readonly<{
       kind: "trade_tags";
-      roundTripId: string;
+      roundTripId: string | null;
+      positionRef: string | null;
       tagNames: readonly string[];
     }>
   | Readonly<{
@@ -128,6 +145,23 @@ export type CoachAiChatActionDraftPreview =
       becomesActive: true;
     }>
   | Readonly<{
+      kind: "swing_note";
+      title: "Save swing note";
+      ticker: string;
+      reviewDate: string;
+      currentNote: string | null;
+      currentNextSessionPlan: string | null;
+      proposedNote: string;
+      proposedNextSessionPlan: string | null;
+    }>
+  | Readonly<{
+      kind: "trade_style";
+      title: "Change open position type";
+      ticker: string;
+      currentLabel: string;
+      proposedLabel: string;
+    }>
+  | Readonly<{
       kind: "notification_preferences";
       title: "Change Discord notifications";
       currentCategoryLabels: readonly string[];
@@ -167,6 +201,8 @@ export type CoachAiChatActionCanonicalCommand =
   | "platform_notification_mark_read"
   | "platform_account_selection"
   | "journal_account_create"
+  | "journal_swing_note_save"
+  | "journal_trade_style_change"
   | "platform_notification_preferences_update"
   | "coach_ai_review_account_setting_save"
   | "journal_trade_tags_replace"

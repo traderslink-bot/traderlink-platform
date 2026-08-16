@@ -42,6 +42,47 @@ function Details({ draft }: Readonly<{ draft: CoachAiChatActionDraft }>) {
       </Stack>
     );
   }
+  if (preview.kind === "swing_note") {
+    return (
+      <Stack spacing={1}>
+        <Typography sx={{ fontWeight: 750 }} variant="body2">
+          {preview.ticker} · {preview.reviewDate}
+        </Typography>
+        {preview.currentNote ? (
+          <Stack spacing={0.25}>
+            <Typography color="text.secondary" variant="caption">Current note</Typography>
+            <Typography sx={{ whiteSpace: "pre-wrap" }} variant="body2">{preview.currentNote}</Typography>
+            {preview.currentNextSessionPlan ? (
+              <Typography color="text.secondary" sx={{ whiteSpace: "pre-wrap" }} variant="body2">
+                Next session: {preview.currentNextSessionPlan}
+              </Typography>
+            ) : null}
+          </Stack>
+        ) : null}
+        <Stack spacing={0.25}>
+          <Typography color="text.secondary" variant="caption">
+            {preview.currentNote ? "Change to" : "New note"}
+          </Typography>
+          <Typography sx={{ whiteSpace: "pre-wrap" }} variant="body2">{preview.proposedNote}</Typography>
+          {preview.proposedNextSessionPlan ? (
+            <Typography color="text.secondary" sx={{ whiteSpace: "pre-wrap" }} variant="body2">
+              Next session: {preview.proposedNextSessionPlan}
+            </Typography>
+          ) : null}
+        </Stack>
+      </Stack>
+    );
+  }
+  if (preview.kind === "trade_style") {
+    return (
+      <Stack spacing={0.5}>
+        <Typography sx={{ fontWeight: 750 }} variant="body2">{preview.ticker}</Typography>
+        <Typography variant="body2">
+          <strong>{preview.currentLabel}</strong> → <strong>{preview.proposedLabel}</strong>
+        </Typography>
+      </Stack>
+    );
+  }
   if (preview.kind === "notification_preferences") {
     const current = preview.currentCategoryLabels.length > 0
       ? preview.currentCategoryLabels.join(", ")

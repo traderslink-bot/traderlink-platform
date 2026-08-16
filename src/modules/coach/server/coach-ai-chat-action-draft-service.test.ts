@@ -264,6 +264,152 @@ FROM journal_accounts WHERE display_name = 'Long-Term Holds'`).get()).toEqual({
     }
   });
 
+  it("saves an exact long Swing note only after confirmation", () => {
+    const f = fixture();
+    try {
+      const positionRef = "e".repeat(64);
+      const note = "Followed the plan and waited for confirmation.\n" + "x".repeat(8_000);
+      const savedInputs: unknown[] = [];
+      const detail = Object.freeze({
+        positionRef,
+        symbol: "SWNG",
+        currency: "USD",
+        timezone: "America/New_York",
+        direction: "long" as const,
+        openedAtUtc: "2026-08-14T14:00:00.000Z",
+        closedAtUtc: null,
+        remainingQuantityDecimal: "100",
+        averageEntryPriceDecimal: "2.50",
+        projectionState: "legitimate_open" as const,
+        style: Object.freeze({
+          revision: 1,
+          tradeStyle: "swing" as const,
+          openStatus: "swing" as const,
+          plannedFromEntry: false,
+          claimedEffectiveAtUtc: "2026-08-14T14:00:00.000Z",
+          declaredAtUtc: "2026-08-14T14:00:00.000Z",
+          lifecycleState: "active" as const,
+          updatedAtUtc: "2026-08-14T14:00:00.000Z",
+        }),
+        latestSwingNote: null,
+        reviewDateSwingNote: null,
+        executions: Object.freeze([]),
+        notes: Object.freeze([]),
+      });
+      const service = new CoachAiChatActionDraftService(f.database, {
+        swingDetail: () => detail,
+        saveSwingNote: (_scope, input, savedAt) => {
+          savedInputs.push(input);
+          return Object.freeze({
+            positionRef,
+            reviewDate: input.reviewDate,
+            note: input.note,
+            nextSessionPlan: input.nextSessionPlan,
+            revision: 1,
+            createdAtUtc: savedAt.toISOString(),
+            updatedAtUtc: savedAt.toISOString(),
+            addedRetrospectively: false,
+          });
+        },
+      });
+      const draft = service.create(f.scope, {
+        conversationId: f.conversationId,
+        sourceMessageId: f.message("Save my Swing note."),
+        extraction: Object.freeze({
+          kind: "swing_note",
+          positionRef,
+          reviewDate: "2026-08-15",
+          note,
+          nextSessionPlan: "Wait for the next planned add level.",
+        }),
+      }, now);
+      expect(draft.preview).toMatchObject({
+        kind: "swing_note",
+        ticker: "SWNG",
+        proposedNote: note,
+      });
+      expect(savedInputs).toEqual([]);
+      service.confirm(f.scope, {
+        conversationId: f.conversationId,
+        draftId: draft.draftId,
+      }, new Date("2026-08-15T12:01:00.000Z"));
+      expect(savedInputs).toMatchObject([{ note, expectedRevision: null }]);
+    } finally {
+      f.database.close();
+    }
+  });
+
+  it("classifies one exact open position with AI Chat audit provenance after confirmation", () => {
+    const f = fixture();
+    try {
+      const positionRef = "f".repeat(64);
+      const changes: unknown[] = [];
+      const detail = Object.freeze({
+        positionRef,
+        symbol: "HOLD",
+        currency: "USD",
+        timezone: "America/New_York",
+        direction: "long" as const,
+        openedAtUtc: "2026-08-15T14:00:00.000Z",
+        closedAtUtc: null,
+        remainingQuantityDecimal: "25",
+        averageEntryPriceDecimal: "4.00",
+        projectionState: "legitimate_open" as const,
+        style: null,
+        latestSwingNote: null,
+        reviewDateSwingNote: null,
+        executions: Object.freeze([]),
+      });
+      const service = new CoachAiChatActionDraftService(f.database, {
+        positionDetail: () => detail,
+        changeTradeStyle: (_scope, input, savedAt) => {
+          changes.push(input);
+          return Object.freeze({
+            positionRef,
+            revision: 1,
+            tradeStyle: input.tradeStyle,
+            openStatus: input.openStatus,
+            plannedFromEntry: input.plannedFromEntry,
+            claimedEffectiveAtUtc: input.claimedEffectiveAtUtc,
+            declaredAtUtc: savedAt.toISOString(),
+            lifecycleState: "active" as const,
+            updatedAtUtc: savedAt.toISOString(),
+          });
+        },
+      });
+      const draft = service.create(f.scope, {
+        conversationId: f.conversationId,
+        sourceMessageId: f.message("Mark HOLD as a bag hold."),
+        extraction: Object.freeze({
+          kind: "trade_style",
+          positionRef,
+          classification: "bag_hold",
+        }),
+      }, now);
+      expect(draft.preview).toMatchObject({
+        kind: "trade_style",
+        ticker: "HOLD",
+        currentLabel: "Not classified",
+        proposedLabel: "Unplanned hold (bag hold)",
+      });
+      expect(changes).toEqual([]);
+      service.confirm(f.scope, {
+        conversationId: f.conversationId,
+        draftId: draft.draftId,
+      }, new Date("2026-08-15T12:01:00.000Z"));
+      expect(changes).toMatchObject([{
+        positionRef,
+        tradeStyle: "other",
+        openStatus: "unplanned_hold",
+        plannedFromEntry: false,
+        reason: "unplanned_hold",
+        sourceUi: "ai_chat",
+      }]);
+    } finally {
+      f.database.close();
+    }
+  });
+
   it("shows the complete Discord notification selection before saving it", () => {
     const f = fixture();
     try {
@@ -340,6 +486,7 @@ FROM journal_accounts WHERE display_name = 'Long-Term Holds'`).get()).toEqual({
         extraction: Object.freeze({
           kind: "trade_tags",
           roundTripId: f.roundTripId,
+          positionRef: null,
           tagNames: Object.freeze(["Breakout", "Patient entry"]),
         }),
       }, now);
@@ -357,6 +504,73 @@ FROM journal_accounts WHERE display_name = 'Long-Term Holds'`).get()).toEqual({
       }, new Date("2026-08-15T12:01:00.000Z"));
       expect(annotations.listTagsForRoundTrips(account, [f.roundTripId])[f.roundTripId]
         ?.map((tag) => tag.name).sort()).toEqual(["Breakout", "Patient entry"]);
+    } finally {
+      f.database.close();
+    }
+  });
+
+  it("replaces one Swing position's exact tag set only after confirmation", () => {
+    const f = fixture();
+    try {
+      const positionRef = "d".repeat(64);
+      const detail = Object.freeze({
+        positionRef,
+        symbol: "SWNG",
+        currency: "USD",
+        timezone: "America/New_York",
+        direction: "long" as const,
+        openedAtUtc: "2026-08-14T14:00:00.000Z",
+        closedAtUtc: null,
+        remainingQuantityDecimal: "100",
+        averageEntryPriceDecimal: "2.50",
+        projectionState: "legitimate_open" as const,
+        style: Object.freeze({
+          revision: 1,
+          tradeStyle: "swing" as const,
+          openStatus: "swing" as const,
+          plannedFromEntry: true,
+          claimedEffectiveAtUtc: "2026-08-14T14:00:00.000Z",
+          declaredAtUtc: "2026-08-14T14:00:00.000Z",
+          lifecycleState: "active" as const,
+          updatedAtUtc: "2026-08-14T14:00:00.000Z",
+        }),
+        latestSwingNote: null,
+        reviewDateSwingNote: null,
+        executions: Object.freeze([]),
+      });
+      const service = new CoachAiChatActionDraftService(f.database, {
+        positionDetail: () => detail,
+        resolvePositionRoundTripId: () => f.roundTripId,
+      });
+      const annotations = new JournalAnnotationService(
+        new JournalAnnotationRepository(f.database),
+        new JournalRuleRepository(f.database),
+      );
+      const account = narrowWorkspaceAccessToAccount(f.scope, f.scope.activeAccountId!);
+      const draft = service.create(f.scope, {
+        conversationId: f.conversationId,
+        sourceMessageId: f.message("Tag this Swing as a Breakout."),
+        extraction: Object.freeze({
+          kind: "trade_tags",
+          roundTripId: null,
+          positionRef,
+          tagNames: Object.freeze(["Breakout"]),
+        }),
+      }, now);
+      expect(draft.preview).toMatchObject({
+        kind: "trade_tags",
+        ticker: "SWNG",
+        currentTagNames: [],
+        proposedTagNames: ["Breakout"],
+      });
+      expect(annotations.listTagsForRoundTrips(account, [f.roundTripId])[f.roundTripId])
+        .toEqual([]);
+      service.confirm(f.scope, {
+        conversationId: f.conversationId,
+        draftId: draft.draftId,
+      }, new Date("2026-08-15T12:01:00.000Z"));
+      expect(annotations.listTagsForRoundTrips(account, [f.roundTripId])[f.roundTripId]
+        ?.map((tag) => tag.name)).toEqual(["Breakout"]);
     } finally {
       f.database.close();
     }

@@ -30,6 +30,11 @@ export type JournalTradeStyleChange = Readonly<{
   plannedFromEntry: boolean;
   claimedEffectiveAtUtc: string;
   reason: "planned_from_entry" | "reclassified" | "unplanned_hold" | "other";
-  sourceUi: "data_decisions" | "day_trade_tracker" | "swing_trade_tracker" | "open_positions";
+  sourceUi:
+    | "data_decisions"
+    | "day_trade_tracker"
+    | "swing_trade_tracker"
+    | "open_positions"
+    | "ai_chat";
   idempotencyKey: string;
 }>;

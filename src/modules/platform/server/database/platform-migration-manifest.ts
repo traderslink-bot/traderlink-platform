@@ -11,6 +11,7 @@ import { journalTradingDayReviewsMigration } from "@/src/modules/journal/server/
 import { moomooExecutionImportFoundationMigration } from "@/src/modules/journal/server/database/migrations/0047_moomoo_execution_import_foundation";
 import { journalRuleReviewNotesMigration } from "@/src/modules/journal/server/database/migrations/0052_journal_rule_review_notes";
 import { journalAiImportRepairMigration } from "@/src/modules/journal/server/database/migrations/0054_journal_ai_import_repair";
+import { journalAiChatTradeStyleSourceMigration } from "@/src/modules/journal/server/database/migrations/0057_journal_ai_chat_trade_style_source";
 import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
 import { levelAnalysisCandleReviewMigration } from "@/src/modules/level-analysis/server/database/migrations/0009_level_analysis_candle_review";
 import { levelAnalysisDeliveriesMigration } from "@/src/modules/level-analysis/server/database/migrations/0010_level_analysis_deliveries";
@@ -37,6 +38,7 @@ import { coachAiReviewRollingSpendGuardMigration } from "@/src/modules/coach/ser
 import { coachAiReviewSubscriberBudgetSafeguardsMigration } from "@/src/modules/coach/server/database/migrations/0050_coach_ai_review_subscriber_budget_safeguards";
 import { coachAiReviewCacheWriteAccountingMigration } from "@/src/modules/coach/server/database/migrations/0051_coach_ai_review_cache_write_accounting";
 import { coachAiChatActionDraftsMigration } from "@/src/modules/coach/server/database/migrations/0055_coach_ai_chat_action_drafts";
+import { coachAiChatActionExpansionMigration } from "@/src/modules/coach/server/database/migrations/0056_coach_ai_chat_action_expansion";
 
 import { platformIdentityMigration } from "./migrations/0001_platform_identity";
 import { platformAuthenticationIdentitiesMigration } from "./migrations/0012_platform_authentication_identities";
@@ -285,6 +287,14 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/coach/server/database/migrations/0055_coach_ai_chat_action_drafts.ts",
       migration: coachAiChatActionDraftsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/coach/server/database/migrations/0056_coach_ai_chat_action_expansion.ts",
+      migration: coachAiChatActionExpansionMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/journal/server/database/migrations/0057_journal_ai_chat_trade_style_source.ts",
+      migration: journalAiChatTradeStyleSourceMigration,
     }),
   ]);
 

@@ -68,11 +68,14 @@ The private persistence API checkpoint is tracked in
   coverage and unavailable states.
 - [x] Implement Import, Data Decisions, Notifications, Account and entitlement
   reads without exposing statements, credentials, admin data or secrets.
-- [ ] Add allowlisted Swing, remaining tag and remaining
-  account setting drafts/confirmed actions through canonical commands. Trading
-  Rules and completed-trade annotations have deterministic reads, and exact
-  completed-Day-trade tag replacement, confirmed Trading Rule changes and the
-  bounded safe Data Decision action set are complete. Reporting
+- [x] Add allowlisted Swing note, explicit open-position type and Swing tag
+  drafts/confirmed actions through canonical commands. Position types are
+  always selected by the trader and never inferred by Chat.
+- [ ] Add remaining account setting and eligible AI Review request actions
+  through canonical commands. Trading Rules and completed-trade annotations
+  have deterministic reads, and exact completed-trade/Swing tag replacement,
+  confirmed Trading Rule changes and the bounded safe Data Decision action set
+  are complete. Reporting
   currency, notification read/preferences, selected-account switching, exact
   confirmed Trade Tracker account creation and
   existing AI Review on/off changes are complete; the remaining command
@@ -374,6 +377,32 @@ The private persistence API checkpoint is tracked in
   tests passed. This slice reused migration 0055's accepted action registry;
   it performed no migration, protected-database write, provider request, push
   or deployment.
+
+### Completed in source: Swing notes, position type and Swing tags
+
+- Chat can prepare one exact dated Swing note, including its complete note and
+  optional next-session plan, after reading the current note and revision.
+  Confirmation re-reads the note and calls `JournalSwingNoteService.save` with
+  a stable Chat idempotency key. Long notes up to the Journal's 12,000-character
+  limit remain intact in the durable private draft.
+- Chat can change one exact open position only when the trader explicitly
+  selects active swing, day trade still open, unplanned hold (bag hold), or
+  long-term hold. It never infers a type from executions, age, ticker or P/L.
+  Confirmation re-reads the position and style revision, then calls
+  `JournalTradeStyleService.change` with distinct `ai_chat` audit provenance.
+- The same complete tag-replacement preview and confirmation now supports an
+  exact Swing position as well as a completed trade. The private position
+  reference is resolved server-side to the canonical round trip and is never
+  exposed as a Journal identifier.
+- Migrations `0056_coach_ai_chat_action_expansion` and
+  `0057_journal_ai_chat_trade_style_source` expand durable private draft
+  capacity and the Journal audit source without changing existing action
+  behavior. Clean initialization, migration-file integrity, action behavior
+  and no-write-before-confirm passed 25 focused tests across three files with
+  one worker. Focused ESLint and the full no-emit TypeScript check also passed.
+- The migrations have not yet been applied to the protected development
+  database. No provider request, protected data write, process start, push or
+  deployment occurred in this source checkpoint.
 
 ## Completed: scheduled AI Review control enforcement
 

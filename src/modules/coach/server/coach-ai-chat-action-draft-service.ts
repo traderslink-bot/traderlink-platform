@@ -30,6 +30,18 @@ import type { JournalExecutionVersionRecord } from
   "@/src/modules/journal/contracts/journal-execution-contracts";
 import type { JournalDecisionResolution } from
   "@/src/modules/journal/server/decisions/journal-data-decision-service";
+import type {
+  JournalSwingPositionDetail,
+  JournalTrackedPositionDetail,
+} from "@/src/modules/journal/contracts/journal-trade-tracker-contracts";
+import type {
+  JournalSwingDailyNoteChange,
+  JournalSwingDailyNoteRecord,
+} from "@/src/modules/journal/contracts/journal-swing-note-contracts";
+import type {
+  JournalTradeStyleChange,
+  JournalTradeStyleRecord,
+} from "@/src/modules/journal/contracts/journal-trade-style-contracts";
 import { JournalExecutionRepository } from
   "@/src/modules/journal/server/executions/journal-execution-repository";
 import { createJournalIntegrityRuntime } from
@@ -230,6 +242,86 @@ function accountTimezone(value: unknown): string {
   return normalized;
 }
 
+function canonicalDate(value: unknown, field: string): string {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/u.test(value)) {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field });
+  }
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.valueOf()) || parsed.toISOString().slice(0, 10) !== value) {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field });
+  }
+  return value;
+}
+
+function swingNoteText(value: unknown, field: string, required: boolean): string | null {
+  if (value === null && !required) return null;
+  if (typeof value !== "string") {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field });
+  }
+  const normalized = value.replace(/\r\n?/gu, "\n");
+  if (normalized.length > 12_000 || normalized.includes("\u0000") ||
+      (required && normalized.trim().length === 0)) {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field });
+  }
+  return !required && normalized.trim().length === 0 ? null : normalized;
+}
+
+function swingNoteSha256(note: JournalSwingDailyNoteRecord | null): string {
+  return createHash("sha256").update(note ? [
+    String(note.revision),
+    note.reviewDate,
+    note.note,
+    note.nextSessionPlan ?? "",
+  ].join("\u001f") : "none", "utf8").digest("hex");
+}
+
+const TRADE_STYLE_CLASSIFICATIONS = Object.freeze({
+  active_swing: Object.freeze({
+    label: "Active swing",
+    tradeStyle: "swing" as const,
+    openStatus: "swing" as const,
+    reason: "reclassified" as const,
+  }),
+  day_trade_still_open: Object.freeze({
+    label: "Day trade still open",
+    tradeStyle: "day_trade" as const,
+    openStatus: "day_trade_still_open" as const,
+    reason: "reclassified" as const,
+  }),
+  bag_hold: Object.freeze({
+    label: "Unplanned hold (bag hold)",
+    tradeStyle: "other" as const,
+    openStatus: "unplanned_hold" as const,
+    reason: "unplanned_hold" as const,
+  }),
+  long_term_hold: Object.freeze({
+    label: "Long-term hold",
+    tradeStyle: "other" as const,
+    openStatus: "other" as const,
+    reason: "other" as const,
+  }),
+});
+
+function currentTradeStyleLabel(position: JournalTrackedPositionDetail): string {
+  const status = position.style?.openStatus;
+  if (status === "swing") return "Active swing";
+  if (status === "day_trade_still_open") return "Day trade still open";
+  if (status === "unplanned_hold") return "Unplanned hold (bag hold)";
+  if (status === "other") return "Long-term hold";
+  return "Not classified";
+}
+
+function tradeStyleSha256(style: JournalTrackedPositionDetail["style"]): string {
+  return createHash("sha256").update(style ? [
+    String(style.revision),
+    style.tradeStyle,
+    style.openStatus,
+    String(style.plannedFromEntry),
+    style.claimedEffectiveAtUtc,
+    style.lifecycleState,
+  ].join("\u001f") : "none", "utf8").digest("hex");
+}
+
 function ruleConfiguration(value: unknown): Readonly<Record<string, string>> {
   const source = record(value, "configuration");
   const result: Record<string, string> = {};
@@ -361,6 +453,30 @@ export class CoachAiChatActionDraftService {
       now: Date;
     }>,
   ) => CreatedJournalAccount;
+  private readonly swingDetail: (
+    scope: ReturnType<typeof narrowWorkspaceAccessToAccount>,
+    positionRef: string,
+    reviewDate: string,
+  ) => JournalSwingPositionDetail;
+  private readonly positionDetail: (
+    scope: ReturnType<typeof narrowWorkspaceAccessToAccount>,
+    positionRef: string,
+    reviewDate: string,
+  ) => JournalTrackedPositionDetail;
+  private readonly saveSwingNote: (
+    scope: ReturnType<typeof narrowWorkspaceAccessToAccount>,
+    input: JournalSwingDailyNoteChange,
+    now: Date,
+  ) => JournalSwingDailyNoteRecord;
+  private readonly changeTradeStyle: (
+    scope: ReturnType<typeof narrowWorkspaceAccessToAccount>,
+    input: JournalTradeStyleChange,
+    now: Date,
+  ) => JournalTradeStyleRecord;
+  private readonly resolvePositionRoundTripId: (
+    scope: ReturnType<typeof narrowWorkspaceAccessToAccount>,
+    positionRef: string,
+  ) => string;
 
   constructor(
     private readonly database: Database.Database,
@@ -386,6 +502,30 @@ export class CoachAiChatActionDraftService {
           now: Date;
         }>,
       ) => CreatedJournalAccount;
+      swingDetail?: (
+        scope: ReturnType<typeof narrowWorkspaceAccessToAccount>,
+        positionRef: string,
+        reviewDate: string,
+      ) => JournalSwingPositionDetail;
+      positionDetail?: (
+        scope: ReturnType<typeof narrowWorkspaceAccessToAccount>,
+        positionRef: string,
+        reviewDate: string,
+      ) => JournalTrackedPositionDetail;
+      saveSwingNote?: (
+        scope: ReturnType<typeof narrowWorkspaceAccessToAccount>,
+        input: JournalSwingDailyNoteChange,
+        now: Date,
+      ) => JournalSwingDailyNoteRecord;
+      changeTradeStyle?: (
+        scope: ReturnType<typeof narrowWorkspaceAccessToAccount>,
+        input: JournalTradeStyleChange,
+        now: Date,
+      ) => JournalTradeStyleRecord;
+      resolvePositionRoundTripId?: (
+        scope: ReturnType<typeof narrowWorkspaceAccessToAccount>,
+        positionRef: string,
+      ) => string;
     }> = Object.freeze({}),
   ) {
     this.drafts = new CoachAiChatActionDraftRepository(database);
@@ -405,6 +545,25 @@ export class CoachAiChatActionDraftService {
       createJournalIntegrityRuntime(this.database).decisions.resolve(account, resolution));
     this.createJournalAccount = dependencies.createJournalAccount ?? ((accountScope, input) =>
       createJournalIntegrityRuntime(this.database).accounts.createAccount(accountScope, input));
+    this.swingDetail = dependencies.swingDetail ?? ((account, positionRef, reviewDate) =>
+      createJournalIntegrityRuntime(this.database).tradeTrackerReads.swingDetail(
+        account,
+        positionRef,
+        reviewDate,
+      ));
+    this.positionDetail = dependencies.positionDetail ?? ((account, positionRef, reviewDate) =>
+      createJournalIntegrityRuntime(this.database).tradeTrackerReads.positionDetail(
+        account,
+        positionRef,
+        reviewDate,
+      ));
+    this.saveSwingNote = dependencies.saveSwingNote ?? ((account, input, savedAt) =>
+      createJournalIntegrityRuntime(this.database).swingNotes.save(account, input, savedAt));
+    this.changeTradeStyle = dependencies.changeTradeStyle ?? ((account, input, savedAt) =>
+      createJournalIntegrityRuntime(this.database).tradeStyles.change(account, input, savedAt));
+    this.resolvePositionRoundTripId = dependencies.resolvePositionRoundTripId ??
+      ((account, positionRef) => createJournalIntegrityRuntime(this.database)
+        .tradeStyles.resolvePosition(account, positionRef).roundTripId);
   }
 
   create(
@@ -495,6 +654,71 @@ export class CoachAiChatActionDraftService {
         expectedAccountRosterSha256: accountRosterSha256(profile.journalAccounts),
         proposedSelectionRef: deriveJournalAccountSelectionRef(scope.workspaceId, accountId),
       });
+    } else if (input.extraction.kind === "swing_note") {
+      const account = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId!);
+      const positionRef = input.extraction.positionRef;
+      if (!/^[0-9a-f]{64}$/u.test(positionRef)) {
+        platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "positionRef" });
+      }
+      const reviewDate = canonicalDate(input.extraction.reviewDate, "reviewDate");
+      const detail = this.swingDetail(account, positionRef, reviewDate);
+      const current = detail.notes.find((note) => note.reviewDate === reviewDate) ?? null;
+      const note = swingNoteText(input.extraction.note, "note", true)!;
+      const nextSessionPlan = swingNoteText(
+        input.extraction.nextSessionPlan,
+        "nextSessionPlan",
+        false,
+      );
+      if (current?.note === note && current.nextSessionPlan === nextSessionPlan) {
+        platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+      }
+      preview = Object.freeze({
+        kind: input.extraction.kind,
+        title: "Save swing note",
+        ticker: detail.symbol,
+        reviewDate,
+        currentNote: current?.note ?? null,
+        currentNextSessionPlan: current?.nextSessionPlan ?? null,
+        proposedNote: note,
+        proposedNextSessionPlan: nextSessionPlan,
+      });
+      privatePayload = Object.freeze({
+        positionRef,
+        reviewDate,
+        expectedRevision: current?.revision ?? null,
+        expectedNoteSha256: swingNoteSha256(current),
+        note,
+        nextSessionPlan,
+      });
+    } else if (input.extraction.kind === "trade_style") {
+      const account = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId!);
+      const positionRef = input.extraction.positionRef;
+      if (!/^[0-9a-f]{64}$/u.test(positionRef)) {
+        platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "positionRef" });
+      }
+      const classification = TRADE_STYLE_CLASSIFICATIONS[input.extraction.classification];
+      const detail = this.positionDetail(account, positionRef, now.toISOString().slice(0, 10));
+      if (detail.projectionState !== "legitimate_open") {
+        platformFailure("TRADERLINK_TRADE_STYLE_CONFLICT");
+      }
+      if (detail.style?.tradeStyle === classification.tradeStyle &&
+          detail.style.openStatus === classification.openStatus) {
+        platformFailure("TRADERLINK_TRADE_STYLE_CONFLICT");
+      }
+      preview = Object.freeze({
+        kind: input.extraction.kind,
+        title: "Change open position type",
+        ticker: detail.symbol,
+        currentLabel: currentTradeStyleLabel(detail),
+        proposedLabel: classification.label,
+      });
+      privatePayload = Object.freeze({
+        positionRef,
+        classification: input.extraction.classification,
+        expectedRevision: detail.style?.revision ?? null,
+        expectedStyleSha256: tradeStyleSha256(detail.style),
+        claimedEffectiveAtUtc: createCanonicalUtcTimestamp(now),
+      });
     } else if (input.extraction.kind === "notification_preferences") {
       const current = this.notifications.readPreferences(scope).discordDmCategories;
       const proposed = notificationCategories(input.extraction.discordDmCategories);
@@ -528,7 +752,26 @@ export class CoachAiChatActionDraftService {
       });
     } else if (input.extraction.kind === "trade_tags") {
       const account = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId!);
-      const trade = this.database.prepare<[string, string, string], TagTradeRow>(`SELECT
+      const hasRoundTripId = input.extraction.roundTripId !== null;
+      const hasPositionRef = input.extraction.positionRef !== null;
+      if (hasRoundTripId === hasPositionRef) {
+        platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "tradeTarget" });
+      }
+      let roundTripId: string;
+      let ticker: string;
+      if (input.extraction.positionRef !== null) {
+        const positionRef = input.extraction.positionRef;
+        if (!/^[0-9a-f]{64}$/u.test(positionRef)) {
+          platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+            field: "positionRef",
+          });
+        }
+        const detail = this.positionDetail(account, positionRef, now.toISOString().slice(0, 10));
+        roundTripId = this.resolvePositionRoundTripId(account, positionRef);
+        ticker = detail.symbol;
+      } else {
+        const requestedRoundTripId = input.extraction.roundTripId!;
+        const trade = this.database.prepare<[string, string, string], TagTradeRow>(`SELECT
  instrument.normalized_symbol
 FROM journal_round_trips round_trip
 JOIN journal_round_trip_versions version
@@ -544,9 +787,12 @@ WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
   AND version.projection_state = 'ready_closed'`).get(
         account.workspaceId,
         account.accountId,
-        input.extraction.roundTripId,
+        requestedRoundTripId,
       );
-      if (!trade) platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+        if (!trade) platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+        roundTripId = requestedRoundTripId;
+        ticker = trade.normalized_symbol;
+      }
       const requestedNames = input.extraction.tagNames.map(normalizedTagName);
       const requestedKeys = requestedNames.map(tagKey);
       if (requestedNames.length > 10 || new Set(requestedKeys).size !== requestedNames.length) {
@@ -584,8 +830,8 @@ WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
       }
       const current = (this.annotations.listTagsForRoundTrips(
         account,
-        [input.extraction.roundTripId],
-      )[input.extraction.roundTripId] ?? []).map((tag) => Object.freeze({
+        [roundTripId],
+      )[roundTripId] ?? []).map((tag) => Object.freeze({
         tagId: tag.tagId,
         name: tag.name,
         revision: tag.revision,
@@ -599,14 +845,14 @@ WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
       preview = Object.freeze({
         kind: input.extraction.kind,
         title: "Change trade tags",
-        ticker: trade.normalized_symbol,
+        ticker,
         currentTagNames: Object.freeze(current.map((tag) => tag.name)
           .sort((left, right) => left.localeCompare(right))),
         proposedTagNames: Object.freeze([...proposedTagNames]
           .sort((left, right) => left.localeCompare(right))),
       });
       privatePayload = Object.freeze({
-        roundTripId: input.extraction.roundTripId,
+        roundTripId,
         currentTags: current,
         proposedExistingTags: Object.freeze(proposedExisting
           .sort((left, right) => left.tagId.localeCompare(right.tagId))),
@@ -941,6 +1187,74 @@ WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
         reference = `journal_account:${createHash("sha256").update([
           scope.workspaceId,
           accountId,
+        ].join("\u001f"), "utf8").digest("hex")}`;
+      } else if (draft.preview.kind === "swing_note") {
+        const account = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId!);
+        const positionRef = string(payload.positionRef, "positionRef");
+        const reviewDate = canonicalDate(payload.reviewDate, "reviewDate");
+        const current = this.swingDetail(account, positionRef, reviewDate).notes
+          .find((note) => note.reviewDate === reviewDate) ?? null;
+        if (swingNoteSha256(current) !== string(payload.expectedNoteSha256, "expectedNoteSha256") ||
+            (current?.revision ?? null) !== (payload.expectedRevision ?? null)) {
+          platformFailure("TRADERLINK_SWING_NOTE_CONFLICT");
+        }
+        command = "journal_swing_note_save";
+        draft = this.drafts.beginConfirm(scope, input.draftId, command, now);
+        const saved = this.saveSwingNote(account, {
+          positionRef,
+          reviewDate,
+          note: swingNoteText(payload.note, "note", true)!,
+          nextSessionPlan: swingNoteText(payload.nextSessionPlan, "nextSessionPlan", false),
+          expectedRevision: current?.revision ?? null,
+          idempotencyKey: `ai-chat-swing-note:${input.draftId}`,
+        }, now);
+        reference = `swing_note:${createHash("sha256").update([
+          scope.workspaceId,
+          scope.activeAccountId,
+          positionRef,
+          reviewDate,
+          String(saved.revision),
+        ].join("\u001f"), "utf8").digest("hex")}`;
+      } else if (draft.preview.kind === "trade_style") {
+        const account = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId!);
+        const positionRef = string(payload.positionRef, "positionRef");
+        const currentDetail = this.positionDetail(
+          account,
+          positionRef,
+          now.toISOString().slice(0, 10),
+        );
+        if (currentDetail.projectionState !== "legitimate_open" ||
+            tradeStyleSha256(currentDetail.style) !==
+              string(payload.expectedStyleSha256, "expectedStyleSha256") ||
+            (currentDetail.style?.revision ?? null) !== (payload.expectedRevision ?? null)) {
+          platformFailure("TRADERLINK_TRADE_STYLE_CONFLICT");
+        }
+        const classificationKey = string(payload.classification, "classification") as
+          keyof typeof TRADE_STYLE_CLASSIFICATIONS;
+        const classification = TRADE_STYLE_CLASSIFICATIONS[classificationKey];
+        if (!classification) {
+          platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { field: "classification" });
+        }
+        command = "journal_trade_style_change";
+        draft = this.drafts.beginConfirm(scope, input.draftId, command, now);
+        const saved = this.changeTradeStyle(account, {
+          positionRef,
+          expectedRevision: currentDetail.style?.revision ?? null,
+          tradeStyle: classification.tradeStyle,
+          openStatus: classification.openStatus,
+          plannedFromEntry: false,
+          claimedEffectiveAtUtc: string(payload.claimedEffectiveAtUtc, "claimedEffectiveAtUtc"),
+          reason: classification.reason,
+          sourceUi: "ai_chat",
+          idempotencyKey: `ai-chat-trade-style:${input.draftId}`,
+        }, now);
+        reference = `trade_style:${createHash("sha256").update([
+          scope.workspaceId,
+          scope.activeAccountId,
+          positionRef,
+          String(saved.revision),
+          saved.tradeStyle,
+          saved.openStatus,
         ].join("\u001f"), "utf8").digest("hex")}`;
       } else if (draft.preview.kind === "notification_preferences") {
         const current = this.notifications.readPreferences(scope).discordDmCategories;

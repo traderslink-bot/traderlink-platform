@@ -488,9 +488,11 @@ once. The following sequence controls safe delivery:
    a time, with durable expiry, stale-state rejection, exact preview and an
    explicit trader confirmation. Reporting currency, notification read state
    and preferences, selected or newly created Journal account, and existing AI Review on/off
-   state, completed-Day-trade tags, exact Trading Rule changes, and the bounded
+   state, completed-trade and Swing tags, exact Swing notes and position
+   classifications, exact Trading Rule changes, and the bounded
    Data Decision resolutions that do not require raw statement comparison are
-   complete; Swing remains a later guarded slice.
+   complete. Position type is always the trader's explicit choice; Chat never
+   infers it from executions, age, ticker or P/L.
 7. **Entitlements and production operations:** public login boundary, feature
    eligibility, scheduled delivery execution, monitoring, costs, and support
    workflow.
