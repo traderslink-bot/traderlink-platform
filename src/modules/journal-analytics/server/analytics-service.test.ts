@@ -5,9 +5,13 @@ import type {
 } from "@/src/modules/journal/contracts/journal-analytics-fact-set";
 import { JOURNAL_ANALYTICS_FACT_SET_CONTRACT_VERSION } from "@/src/modules/journal/contracts/journal-analytics-fact-set";
 
-import type { JournalAnalyticsQuery } from "../contracts/analytics-query";
+import type {
+  JournalAnalyticsQuery,
+  JournalAnalyticsTableSortField,
+} from "../contracts/analytics-query";
 import { JOURNAL_ANALYTICS_QUERY_VERSION } from "../contracts/analytics-query";
 import { accumulateJournalAnalyticsMetrics } from "./analytics-accumulator";
+import { sumExactDecimals } from "./exact-analytics-math";
 import { groupJournalAnalyticsPopulation } from "./analytics-grouping";
 import {
   buildJournalAnalyticsPopulations,
@@ -567,6 +571,75 @@ describe("Journal Analytics population, accumulation and grouping", () => {
     expect(populations[0].coverage.needsDecisionCount).toBe(0);
   });
 
+  it("applies every primary Trade Explorer population filter independently", () => {
+    const ids = (overrides: Partial<JournalAnalyticsQuery>) =>
+      buildJournalAnalyticsPopulations(normalizedSet(), query(overrides))[0]
+        .basisRows.map((row) => row.roundTripId);
+
+    expect(ids({
+      closingDateRange: Object.freeze({
+        kind: "inclusive_closing_date",
+        startDate: "2026-01-06",
+        endDate: "2026-01-06",
+      }),
+    })).toEqual(["trade-3", "trade-4"]);
+    expect(ids({ symbols: Object.freeze(["AAA"]) }))
+      .toEqual(["trade-1", "trade-2"]);
+    expect(ids({ directions: Object.freeze(["short"]) }))
+      .toEqual(["trade-2", "trade-4"]);
+    expect(ids({ outcomes: Object.freeze(["win"]) }))
+      .toEqual(["trade-1", "trade-4"]);
+    expect(ids({ outcomes: Object.freeze(["loss"]) }))
+      .toEqual(["trade-2"]);
+    expect(ids({ outcomes: Object.freeze(["flat"]) }))
+      .toEqual(["trade-3"]);
+    expect(ids({
+      moneyBasis: "net",
+      outcomes: Object.freeze(["flat"]),
+    })).toEqual([]);
+  });
+
+  it("applies trade type without attributing unclassified coverage rows", () => {
+    const dayTrade = normalizedRow(1, {
+      gross: "10",
+      net: "8",
+      date: "2026-01-05",
+      weekday: "monday",
+      bucket: "09:30",
+      instrumentId: instrumentA,
+      symbol: "AAA",
+    });
+    const multiDayTrade = Object.freeze({
+      ...normalizedRow(2, {
+        gross: "5",
+        net: "4",
+        date: "2026-01-06",
+        weekday: "tuesday",
+        bucket: "10:00",
+        instrumentId: instrumentB,
+        symbol: "BBB",
+      }),
+      roundTripId: "multi-day-trade",
+      closeLocal: local("2026-01-07", "wednesday", "10:00"),
+      tradeClassification: "multi_day_trade" as const,
+      isOvernight: true,
+    });
+    const population = buildJournalAnalyticsPopulations(
+      normalizedSet([dayTrade, multiDayTrade]),
+      query({
+        tradeClassifications: Object.freeze(["multi_day_trade"]),
+      }),
+    )[0];
+
+    expect(population.basisRows.map((row) => row.roundTripId))
+      .toEqual(["multi-day-trade"]);
+    expect(population.coverage).toMatchObject({
+      legitimateOpenCount: 0,
+      needsDecisionCount: 0,
+      unsupportedCount: 0,
+    });
+  });
+
   it("returns an honest empty partition and rejects unknown query contracts", () => {
     const nonEmptyFixture = normalizedSet([]);
     const empty: NormalizedJournalAnalyticsSet = Object.freeze({
@@ -606,7 +679,8 @@ function factAllocation(input: Readonly<{
   side: "buy" | "sell";
   quantity: string;
   price: string;
-  fee: string;
+  fee: string | null;
+  feeCurrency?: string;
   atUtc: string;
 }>): JournalAnalyticsAllocationFact {
   return Object.freeze({
@@ -623,8 +697,8 @@ function factAllocation(input: Readonly<{
     executionQuantityDecimal: input.quantity,
     priceDecimal: input.price,
     feesDecimal: input.fee,
-    feeCurrency: "USD",
-    feeSignConvention: "cash_effect",
+    feeCurrency: input.fee === null ? null : input.feeCurrency ?? "USD",
+    feeSignConvention: input.fee === null ? "not_reported" : "cash_effect",
     factCompleteness: "complete",
     provenanceKinds: Object.freeze(["manual"] as const),
     feePolicyCandidates: Object.freeze([]),
@@ -635,9 +709,25 @@ function factReadyRoundTrip(
   id: string,
   symbol: string,
   date: string,
-  buyPrice: string,
-  sellPrice: string,
+  entryPrice: string,
+  exitPrice: string,
+  options: Readonly<{
+    closingFee?: string | null;
+    closedTime?: string;
+    currency?: string;
+    direction?: "long" | "short";
+    openingFee?: string | null;
+    openedTime?: string;
+    quantity?: string;
+  }> = {},
 ): JournalAnalyticsRoundTripFact {
+  const closedTime = options.closedTime ?? "15:00";
+  const currency = options.currency ?? "USD";
+  const direction = options.direction ?? "long";
+  const openedTime = options.openedTime ?? "14:30";
+  const quantity = options.quantity ?? "1";
+  const openingFee = options.openingFee === undefined ? "-0.1" : options.openingFee;
+  const closingFee = options.closingFee === undefined ? "-0.1" : options.closingFee;
   return Object.freeze({
     roundTripId: id,
     roundTripVersionId: `${id}-version`,
@@ -646,10 +736,10 @@ function factReadyRoundTrip(
     instrumentId: symbol === "AAA" ? instrumentA : instrumentB,
     displayedSymbol: symbol,
     assetClass: "stock",
-    tradeCurrency: "USD",
-    direction: "long",
-    openedAtUtc: `${date}T14:30:00.000Z`,
-    closedAtUtc: `${date}T15:00:00.000Z`,
+    tradeCurrency: currency,
+    direction,
+    openedAtUtc: `${date}T${openedTime}:00.000Z`,
+    closedAtUtc: `${date}T${closedTime}:00.000Z`,
     finalPositionDecimal: "0",
     projectionState: "ready_closed",
     coverageReasonCode: null,
@@ -668,8 +758,8 @@ function factReadyRoundTrip(
       completedAtUtc: "2026-08-01T12:00:00.000Z",
     }),
     allocations: Object.freeze([
-      factAllocation({ id: `${id}-buy`, sequence: 1, role: "opening", side: "buy", quantity: "1", price: buyPrice, fee: "-0.1", atUtc: `${date}T14:30:00.000Z` }),
-      factAllocation({ id: `${id}-sell`, sequence: 2, role: "closing", side: "sell", quantity: "1", price: sellPrice, fee: "-0.1", atUtc: `${date}T15:00:00.000Z` }),
+      factAllocation({ id: `${id}-open`, sequence: 1, role: "opening", side: direction === "long" ? "buy" : "sell", quantity, price: entryPrice, fee: openingFee, feeCurrency: currency, atUtc: `${date}T${openedTime}:00.000Z` }),
+      factAllocation({ id: `${id}-close`, sequence: 2, role: "closing", side: direction === "long" ? "sell" : "buy", quantity, price: exitPrice, fee: closingFee, feeCurrency: currency, atUtc: `${date}T${closedTime}:00.000Z` }),
     ]),
     pendingDecisionIds: Object.freeze([]),
     pendingDecisionReasonCodes: Object.freeze([]),
@@ -702,6 +792,91 @@ function serviceFactSet(): JournalAnalyticsFactSet {
       stateRoundTrip("decision-service", "needs_decision"),
     ]),
     pendingDecisions: Object.freeze([]),
+  });
+}
+
+function orderingFactSet(): JournalAnalyticsFactSet {
+  return Object.freeze({
+    ...serviceFactSet(),
+    roundTrips: Object.freeze([
+      factReadyRoundTrip("order-a", "AAA", "2026-01-01", "10", "12"),
+      factReadyRoundTrip("order-b", "BBB", "2026-01-02", "4", "5", {
+        closedTime: "15:30",
+        openedTime: "14:30",
+        quantity: "5",
+      }),
+      factReadyRoundTrip("order-c", "AAA", "2026-01-03", "20", "15", {
+        closedTime: "14:40",
+        openedTime: "14:30",
+        quantity: "2",
+      }),
+      factReadyRoundTrip("order-d", "BBB", "2026-01-04", "2", "2.5", {
+        closedTime: "16:30",
+        openedTime: "14:30",
+        quantity: "3",
+      }),
+    ]),
+  });
+}
+
+function selectedBasisFactSet(): JournalAnalyticsFactSet {
+  return Object.freeze({
+    ...serviceFactSet(),
+    roundTrips: Object.freeze([
+      factReadyRoundTrip("basis-a", "AAA", "2026-01-01", "10", "12", {
+        closingFee: "-2.5",
+        openingFee: "-2.5",
+      }),
+      factReadyRoundTrip("basis-b", "BBB", "2026-01-02", "10", "11"),
+    ]),
+  });
+}
+
+function directionFactSet(): JournalAnalyticsFactSet {
+  return Object.freeze({
+    ...serviceFactSet(),
+    roundTrips: Object.freeze([
+      factReadyRoundTrip("direction-long", "AAA", "2026-01-01", "10", "11"),
+      factReadyRoundTrip("direction-short", "BBB", "2026-01-02", "10", "9", {
+        direction: "short",
+      }),
+    ]),
+  });
+}
+
+function partialFeeCoverageFactSet(): JournalAnalyticsFactSet {
+  return Object.freeze({
+    ...serviceFactSet(),
+    roundTrips: Object.freeze([
+      factReadyRoundTrip("fee-complete", "AAA", "2026-01-01", "10", "11"),
+      factReadyRoundTrip("fee-missing", "BBB", "2026-01-02", "10", "12", {
+        closingFee: null,
+        openingFee: null,
+      }),
+    ]),
+  });
+}
+
+function orderingEdgeFactSet(): JournalAnalyticsFactSet {
+  return Object.freeze({
+    ...serviceFactSet(),
+    roundTrips: Object.freeze([
+      factReadyRoundTrip("return-high", "AAA", "2026-01-01", "1", "2"),
+      factReadyRoundTrip("return-low", "BBB", "2026-01-02", "100", "101"),
+      factReadyRoundTrip("return-unavailable", "AAA", "2026-01-03", "0", "1"),
+    ]),
+  });
+}
+
+function multiCurrencyFactSet(): JournalAnalyticsFactSet {
+  return Object.freeze({
+    ...serviceFactSet(),
+    roundTrips: Object.freeze([
+      factReadyRoundTrip("currency-usd", "AAA", "2026-01-01", "10", "11"),
+      factReadyRoundTrip("currency-cad", "BBB", "2026-01-02", "10", "12", {
+        currency: "CAD",
+      }),
+    ]),
   });
 }
 
@@ -756,5 +931,357 @@ describe("Journal Analytics shared service", () => {
     expect(serialized).not.toContain(accountId);
     expect(serialized).not.toContain(instrumentA);
     expect(serialized).not.toContain(instrumentB);
+  });
+
+  it("orders the complete trade population by every Trade Explorer row promise", () => {
+    const factSet = orderingFactSet();
+    const expected = Object.freeze({
+      "closed_at:descending": ["order-d", "order-c", "order-b", "order-a"],
+      "closed_at:ascending": ["order-a", "order-b", "order-c", "order-d"],
+      "selected_pnl:descending": ["order-b", "order-a", "order-d", "order-c"],
+      "selected_pnl:ascending": ["order-c", "order-d", "order-a", "order-b"],
+      "return_percent:descending": ["order-d", "order-b", "order-a", "order-c"],
+      "return_percent:ascending": ["order-c", "order-a", "order-d", "order-b"],
+      "holding_duration:descending": ["order-d", "order-b", "order-a", "order-c"],
+      "holding_duration:ascending": ["order-c", "order-a", "order-b", "order-d"],
+      "entered_quantity:descending": ["order-b", "order-d", "order-c", "order-a"],
+      "entered_quantity:ascending": ["order-a", "order-c", "order-d", "order-b"],
+      "entry_notional:descending": ["order-c", "order-b", "order-a", "order-d"],
+      "entry_notional:ascending": ["order-d", "order-a", "order-b", "order-c"],
+    } as const);
+
+    for (const [key, roundTripIds] of Object.entries(expected)) {
+      const [field, direction] = key.split(":") as [
+        JournalAnalyticsTableSortField,
+        "ascending" | "descending",
+      ];
+      const response = calculateJournalAnalyticsRoundTripTableResponse(
+        factSet,
+        query({
+          groupings: Object.freeze(["total"]),
+          table: Object.freeze({ pageSize: 100, afterCursor: null }),
+        }),
+        Object.freeze({ field, direction }),
+      );
+      expect(response.rows.map((row) => row.roundTripId)).toEqual(roundTripIds);
+    }
+  });
+
+  it("keeps custom trade ordering correct across bounded pages", () => {
+    const factSet = orderingFactSet();
+    const first = calculateJournalAnalyticsRoundTripTableResponse(
+      factSet,
+      query({
+        groupings: Object.freeze(["total"]),
+        table: Object.freeze({ pageSize: 2, afterCursor: null }),
+      }),
+      Object.freeze({ field: "selected_pnl", direction: "ascending" }),
+    );
+    const second = calculateJournalAnalyticsRoundTripTableResponse(
+      factSet,
+      query({
+        groupings: Object.freeze(["total"]),
+        table: Object.freeze({
+          pageSize: 2,
+          afterCursor: first.continuationCursor,
+        }),
+      }),
+      Object.freeze({ field: "selected_pnl", direction: "ascending" }),
+    );
+    expect([...first.rows, ...second.rows].map((row) => row.roundTripId))
+      .toEqual(["order-c", "order-d", "order-a", "order-b"]);
+    expect(second.continuationCursor).toBeNull();
+    expect(() => calculateJournalAnalyticsRoundTripTableResponse(
+      factSet,
+      query({
+        groupings: Object.freeze(["total"]),
+        table: Object.freeze({
+          pageSize: 2,
+          afterCursor: first.continuationCursor,
+        }),
+      }),
+      Object.freeze({ field: "closed_at", direction: "descending" }),
+    )).toThrowError("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED");
+    expect(() => calculateJournalAnalyticsRoundTripTableResponse(
+      factSet,
+      query({
+        directions: Object.freeze(["long"]),
+        groupings: Object.freeze(["total"]),
+        table: Object.freeze({
+          pageSize: 2,
+          afterCursor: first.continuationCursor,
+        }),
+      }),
+      Object.freeze({ field: "selected_pnl", direction: "ascending" }),
+    )).toThrowError("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED");
+    expect(() => calculateJournalAnalyticsRoundTripTableResponse(
+      factSet,
+      query({
+        tradeClassifications: Object.freeze(["day_trade"]),
+        groupings: Object.freeze(["total"]),
+        table: Object.freeze({
+          pageSize: 2,
+          afterCursor: first.continuationCursor,
+        }),
+      }),
+      Object.freeze({ field: "selected_pnl", direction: "ascending" }),
+    )).toThrowError("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED");
+    expect(() => calculateJournalAnalyticsRoundTripTableResponse(
+      Object.freeze({
+        ...factSet,
+        sourceRevisionSha256: "6".repeat(64),
+      }),
+      query({
+        groupings: Object.freeze(["total"]),
+        table: Object.freeze({
+          pageSize: 2,
+          afterCursor: first.continuationCursor,
+        }),
+      }),
+      Object.freeze({ field: "selected_pnl", direction: "ascending" }),
+    )).toThrowError("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED");
+  });
+
+  it("uses the selected gross or net basis for P/L, return and Result promises", () => {
+    const factSet = selectedBasisFactSet();
+    const rows = (
+      moneyBasis: "gross" | "net",
+      field: "selected_pnl" | "return_percent",
+      outcomes: JournalAnalyticsQuery["outcomes"] = Object.freeze([]),
+    ) => calculateJournalAnalyticsRoundTripTableResponse(
+      factSet,
+      query({
+        groupings: Object.freeze(["total"]),
+        moneyBasis,
+        outcomes,
+        table: Object.freeze({ pageSize: 100, afterCursor: null }),
+      }),
+      Object.freeze({ field, direction: "descending" }),
+    ).rows.map((row) => row.roundTripId);
+
+    expect(rows("gross", "selected_pnl")).toEqual(["basis-a", "basis-b"]);
+    expect(rows("net", "selected_pnl")).toEqual(["basis-b", "basis-a"]);
+    expect(rows("gross", "return_percent")).toEqual(["basis-a", "basis-b"]);
+    expect(rows("net", "return_percent")).toEqual(["basis-b", "basis-a"]);
+    expect(rows("gross", "selected_pnl", Object.freeze(["win"])))
+      .toEqual(["basis-a", "basis-b"]);
+    expect(rows("net", "selected_pnl", Object.freeze(["win"])))
+      .toEqual(["basis-b"]);
+  });
+
+  it("keeps the visible trade count and P/L summary reconciled with every Result basis", () => {
+    const factSet = selectedBasisFactSet();
+    for (const moneyBasis of ["gross", "net"] as const) {
+      for (const outcomes of [
+        Object.freeze([]),
+        Object.freeze(["win"] as const),
+        Object.freeze(["loss"] as const),
+        Object.freeze(["flat"] as const),
+      ]) {
+        const selectedQuery = query({
+          groupings: Object.freeze(["total"]),
+          moneyBasis,
+          outcomes,
+          table: Object.freeze({ pageSize: 100, afterCursor: null }),
+        });
+        const overview = calculateJournalAnalyticsResponse(factSet, selectedQuery);
+        const table = calculateJournalAnalyticsRoundTripTableResponse(
+          factSet,
+          selectedQuery,
+        );
+        const partition = overview.partitions[0];
+        const totalTrades = partition.metrics.find((item) =>
+          item.metricId === "total_trades");
+        const selectedPnl = partition.metrics.find((item) =>
+          item.metricId === (moneyBasis === "gross" ? "gross_pnl" : "net_pnl"));
+
+        expect(totalTrades?.value).toEqual(Object.freeze({
+          kind: "integer",
+          value: table.totalRowCount,
+        }));
+        if (table.totalRowCount === 0) {
+          expect(selectedPnl?.value).toEqual(Object.freeze({
+            kind: "decimal",
+            valueDecimal: "0",
+          }));
+        } else {
+          expect(selectedPnl?.value).toEqual(Object.freeze({
+            kind: "decimal",
+            valueDecimal: sumExactDecimals(table.rows.map((row) =>
+              row.selectedPnlDecimal!)),
+          }));
+        }
+      }
+    }
+  });
+
+  it("reports when Net P/L shows only the fee-covered closed trades", () => {
+    const factSet = partialFeeCoverageFactSet();
+    const grossQuery = query({
+      groupings: Object.freeze(["total"]),
+      moneyBasis: "gross",
+      table: Object.freeze({ pageSize: 100, afterCursor: null }),
+    });
+    const netQuery = query({
+      groupings: Object.freeze(["total"]),
+      moneyBasis: "net",
+      table: Object.freeze({ pageSize: 100, afterCursor: null }),
+    });
+    const grossTable = calculateJournalAnalyticsRoundTripTableResponse(
+      factSet,
+      grossQuery,
+    );
+    const netTable = calculateJournalAnalyticsRoundTripTableResponse(
+      factSet,
+      netQuery,
+    );
+    const netOverview = calculateJournalAnalyticsResponse(factSet, netQuery);
+    const totalTrades = netOverview.partitions[0].metrics.find((item) =>
+      item.metricId === "total_trades");
+
+    expect(grossTable.totalRowCount).toBe(2);
+    expect(netTable.totalRowCount).toBe(1);
+    expect(netTable.rows.map((row) => row.roundTripId)).toEqual(["fee-complete"]);
+    expect(netOverview.crossPartitionCounts.feeIncompleteCount).toBe(1);
+    expect(totalTrades).toMatchObject({
+      state: "partial",
+      value: { kind: "integer", value: 1 },
+      limitationReasonCodes: ["fee_coverage_partial"],
+    });
+
+    const netWins = calculateJournalAnalyticsResponse(factSet, query({
+      groupings: Object.freeze(["total"]),
+      moneyBasis: "net",
+      outcomes: Object.freeze(["win"]),
+      table: Object.freeze({ pageSize: 100, afterCursor: null }),
+    }));
+    expect(netWins.crossPartitionCounts.includedCount).toBe(1);
+    expect(netWins.crossPartitionCounts.feeIncompleteCount).toBe(1);
+    expect(netWins.partitions[0].metrics.find((item) =>
+      item.metricId === "total_trades")).toMatchObject({
+        state: "partial",
+        value: { kind: "integer", value: 1 },
+        limitationReasonCodes: ["fee_coverage_partial"],
+      });
+
+    const grossLosses = calculateJournalAnalyticsResponse(factSet, query({
+      groupings: Object.freeze(["total"]),
+      moneyBasis: "gross",
+      outcomes: Object.freeze(["loss"]),
+      table: Object.freeze({ pageSize: 100, afterCursor: null }),
+    }));
+    expect(grossLosses.crossPartitionCounts.includedCount).toBe(0);
+    expect(grossLosses.crossPartitionCounts.feeIncompleteCount).toBe(0);
+  });
+
+  it("keeps unavailable returns last and resolves equal P/L deterministically", () => {
+    const factSet = orderingEdgeFactSet();
+    const orderedIds = (
+      field: "selected_pnl" | "return_percent",
+      direction: "ascending" | "descending",
+    ) => calculateJournalAnalyticsRoundTripTableResponse(
+      factSet,
+      query({
+        groupings: Object.freeze(["total"]),
+        moneyBasis: "gross",
+        table: Object.freeze({ pageSize: 100, afterCursor: null }),
+      }),
+      Object.freeze({ field, direction }),
+    ).rows.map((row) => row.roundTripId);
+
+    expect(orderedIds("selected_pnl", "ascending")).toEqual([
+      "return-unavailable",
+      "return-low",
+      "return-high",
+    ]);
+    expect(orderedIds("selected_pnl", "descending")).toEqual([
+      "return-unavailable",
+      "return-low",
+      "return-high",
+    ]);
+    expect(orderedIds("return_percent", "descending")).toEqual([
+      "return-high",
+      "return-low",
+      "return-unavailable",
+    ]);
+    expect(orderedIds("return_percent", "ascending")).toEqual([
+      "return-low",
+      "return-high",
+      "return-unavailable",
+    ]);
+  });
+
+  it("keeps unlike currencies partitioned and requires one currency for trade rows", () => {
+    const factSet = multiCurrencyFactSet();
+    const allCurrenciesQuery = query({
+      currency: null,
+      groupings: Object.freeze(["instrument"]),
+      moneyBasis: "gross",
+      table: Object.freeze({ pageSize: 100, afterCursor: null }),
+    });
+    const response = calculateJournalAnalyticsResponse(
+      factSet,
+      allCurrenciesQuery,
+    );
+
+    expect(response.partitions.map((partition) => partition.currency)).toEqual([
+      "CAD",
+      "USD",
+    ]);
+    expect(response.limitations).toContain("money_partitioned_by_currency");
+    expect(() => calculateJournalAnalyticsRoundTripTableResponse(
+      factSet,
+      allCurrenciesQuery,
+    )).toThrowError("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED");
+
+    const cadTable = calculateJournalAnalyticsRoundTripTableResponse(
+      factSet,
+      query({
+        currency: "CAD",
+        groupings: Object.freeze(["instrument"]),
+        moneyBasis: "gross",
+        table: Object.freeze({ pageSize: 100, afterCursor: null }),
+      }),
+    );
+    expect(cadTable.currency).toBe("CAD");
+    expect(cadTable.rows.map((row) => row.roundTripId)).toEqual(["currency-cad"]);
+
+    const losingResponse = calculateJournalAnalyticsResponse(
+      factSet,
+      query({
+        currency: null,
+        groupings: Object.freeze(["instrument"]),
+        moneyBasis: "gross",
+        outcomes: Object.freeze(["loss"]),
+      }),
+    );
+    expect(losingResponse.crossPartitionCounts.readyClosedCount).toBe(2);
+    expect(losingResponse.crossPartitionCounts.includedCount).toBe(0);
+    expect(losingResponse.partitions.flatMap((partition) => partition.metrics)
+      .filter((item) => item.metricId === "total_trades")
+      .map((item) => item.value)).toEqual([
+      { kind: "integer", value: 0 },
+      { kind: "integer", value: 0 },
+    ]);
+  });
+
+  it("includes both directions by default and narrows only on an explicit filter", () => {
+    const factSet = directionFactSet();
+    const rows = (directions: JournalAnalyticsQuery["directions"]) =>
+      calculateJournalAnalyticsRoundTripTableResponse(
+        factSet,
+        query({
+          directions,
+          groupings: Object.freeze(["total"]),
+          table: Object.freeze({ pageSize: 100, afterCursor: null }),
+        }),
+      ).rows.map((row) => row.roundTripId);
+
+    expect(rows(Object.freeze([]))).toEqual([
+      "direction-short",
+      "direction-long",
+    ]);
+    expect(rows(Object.freeze(["long"]))).toEqual(["direction-long"]);
+    expect(rows(Object.freeze(["short"]))).toEqual(["direction-short"]);
   });
 });

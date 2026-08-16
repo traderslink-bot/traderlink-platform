@@ -8,6 +8,7 @@ const query = Object.freeze({
   currency: "USD",
   symbol: null,
   direction: null,
+  tradeClassification: null,
   provenance: null,
   outcome: null,
   entryWeekday: null,

@@ -8,8 +8,17 @@ import {
 import {
   JOURNAL_ANALYTICS_QUERY_VERSION,
   type JournalAnalyticsQuery,
+  type JournalAnalyticsTableOrder,
 } from "@/src/modules/journal-analytics/contracts/analytics-query";
 import type { JournalAnalyticsMetricResult } from "@/src/modules/journal-analytics/contracts/analytics-result";
+import {
+  TRADE_EXPLORER_DAY_STATISTIC_GROUPS,
+  TRADE_EXPLORER_TRADE_STATISTIC_GROUPS,
+  tradeExplorerMetricForMoneyBasis,
+  tradeExplorerMetricForOutcome,
+  tradeExplorerTableOrder,
+  tradeExplorerTradeSortForOutcome,
+} from "@/src/modules/journal-analytics/presentation/trade-explorer-ordering";
 import { journalAnalyticsMetricRegistry } from "@/src/modules/journal-analytics/server/analytics-metric-registry";
 import type { JournalAnalyticsService } from "@/src/modules/journal-analytics/server/analytics-service";
 import {
@@ -31,29 +40,24 @@ const EXPLORER_METRICS = Object.freeze([
   "total_trades",
   "win_count",
   "loss_count",
-  "flat_count",
   "net_pnl",
   "gross_pnl",
   "win_rate",
-  "loss_rate",
   "average_pnl",
-  "median_pnl",
   "profit_factor",
-  "expectancy",
   "best_trade",
   "worst_trade",
   "average_holding_time",
-  "median_holding_time",
   "average_share_quantity",
-  "maximum_share_quantity",
-  "average_position_size",
   "average_entry_notional",
-  "average_entry_price",
-  "average_exit_price",
-  "return_on_entry_notional",
   "green_to_red_day_count",
   "red_to_green_day_count",
 ] as const);
+
+const EXPLORER_SELECTOR_METRIC_IDS: ReadonlySet<string> = new Set<string>([
+  ...TRADE_EXPLORER_DAY_STATISTIC_GROUPS.flatMap((group) => group.metricIds),
+  ...TRADE_EXPLORER_TRADE_STATISTIC_GROUPS.flatMap((group) => group.metricIds),
+]);
 
 function journalQuery(
   scope: WorkspaceAccessScope,
@@ -116,9 +120,10 @@ function execute(
   scope: WorkspaceAccessScope,
   input: AnalyticsLabPlatformQuery,
   afterCursor: string | null = null,
+  tableOrder: JournalAnalyticsTableOrder = tradeExplorerTableOrder("closed_desc"),
 ): AnalyticsLabPlatformPreview {
   return withJournalAnalyticsDashboardRuntime(scope, ({ service }) =>
-    buildPreview(scope, input, afterCursor, service));
+    buildPreview(scope, input, afterCursor, service, tableOrder));
 }
 
 function buildPreview(
@@ -126,6 +131,7 @@ function buildPreview(
   input: AnalyticsLabPlatformQuery,
   afterCursor: string | null,
   service: JournalAnalyticsService,
+  tableOrder: JournalAnalyticsTableOrder,
 ): AnalyticsLabPlatformPreview {
   requireExpectedJournalAccountSelection(scope, input.expectedAccountSelectionRef);
   const query = journalQuery(scope, input, afterCursor);
@@ -134,8 +140,19 @@ function buildPreview(
     .flatMap((partition) => partition.metrics)
     .find((metric) => metric.metricId === input.metricId) ?? null;
   const evidence = response.partitions.length === 1
-    ? service.getRoundTripAnalyticsTable(scope, query)
+    ? service.getRoundTripAnalyticsTable(
+        scope,
+        query,
+        tableOrder,
+      )
     : null;
+  if (evidence !== null && (
+    evidence.factSetRevisionSha256 !== response.factSetRevisionSha256 ||
+    evidence.moneyBasis !== input.moneyBasis ||
+    evidence.currency !== response.partitions[0].currency
+  )) {
+    throw new TypeError("Trade Explorer summary and rows were calculated from different facts.");
+  }
   return Object.freeze({
     selectedMetric: selected as JournalAnalyticsMetricResult | null,
     response,
@@ -162,11 +179,29 @@ export function runTradeExplorerQuery(
   scope: WorkspaceAccessScope,
   input: unknown,
   afterCursor?: unknown,
+  tradeSort?: unknown,
 ): AnalyticsLabPlatformPreview {
+  const normalized = normalizeAnalyticsLabPlatformQuery(input);
+  if (!EXPLORER_SELECTOR_METRIC_IDS.has(normalized.metricId)) {
+    throw new TypeError("Invalid Trade Explorer metric.");
+  }
+  const basisMetricId = tradeExplorerMetricForMoneyBasis(
+    normalized.metricId,
+    normalized.moneyBasis,
+  );
+  const explorerQuery = Object.freeze({
+    ...normalized,
+    metricId: tradeExplorerMetricForOutcome(basisMetricId, normalized.outcome),
+  });
+  const explorerTradeSort = tradeExplorerTradeSortForOutcome(
+    tradeSort ?? "closed_desc",
+    explorerQuery.outcome,
+  );
   return execute(
     scope,
-    normalizeAnalyticsLabPlatformQuery(input),
+    explorerQuery,
     normalizeEvidenceCursor(afterCursor),
+    tradeExplorerTableOrder(explorerTradeSort),
   );
 }
 
@@ -174,7 +209,7 @@ export function readTradeExplorerPageModel(
   scope: WorkspaceAccessScope,
 ): TradeExplorerPageModel {
   const page = withJournalAnalyticsDashboardRuntime(scope, ({ dashboard, service }) => {
-    const calendar = dashboard.getCalendar(scope, {
+    const calendarInput = Object.freeze({
       currency: null,
       startDate: null,
       endDate: null,
@@ -185,6 +220,20 @@ export function readTradeExplorerPageModel(
       tradeCountBand: null,
       session: null,
     });
+    const calendar = dashboard.getCalendar(scope, calendarInput);
+    const currencyCalendars = calendar.availableCurrencies.map((currency) =>
+      currency === calendar.currency
+        ? calendar
+        : dashboard.getCalendar(scope, Object.freeze({
+            ...calendarInput,
+            currency,
+          })));
+    const minimumDate = currencyCalendars.map((item) => item.minimumDate).sort()[0] ??
+      calendar.minimumDate;
+    const maximumDate = currencyCalendars.map((item) => item.maximumDate).sort().at(-1) ??
+      calendar.maximumDate;
+    const symbols = Object.freeze([...new Set(currencyCalendars.flatMap((item) =>
+      item.symbols))].sort());
     const initialQuery: AnalyticsLabPlatformQuery = Object.freeze({
       expectedAccountSelectionRef: currentJournalAccountSelectionRef(scope),
       metricId: "total_trades",
@@ -192,15 +241,15 @@ export function readTradeExplorerPageModel(
       moneyBasis: "net",
       currency: calendar.currency,
       symbol: null,
-      direction: "long",
+      direction: null,
       tradeClassification: null,
       provenance: null,
       outcome: null,
       entryWeekday: null,
       entryTimeBucketMinutes: 30,
       entryTimeBucket: null,
-      startDate: calendar.minimumDate,
-      endDate: calendar.maximumDate,
+      startDate: minimumDate,
+      endDate: maximumDate,
       minimumHoldingSeconds: null,
       maximumHoldingSeconds: null,
       minimumEnteredQuantity: null,
@@ -213,23 +262,31 @@ export function readTradeExplorerPageModel(
     });
     return Object.freeze({
       expectedAccountSelectionRef: initialQuery.expectedAccountSelectionRef,
-      metrics: Object.freeze(journalAnalyticsMetricRegistry.definitions.map((definition) => Object.freeze({
-        metricId: definition.metricId,
-        title: definition.title,
-        description: definition.description,
-        capabilityState: definition.capabilityState,
-        valueKind: definition.valueKind,
-        unit: definition.unit,
-        moneyBasis: definition.moneyBasis,
-        displayPolicy: definition.displayPolicy,
-        unavailableReasonCode: definition.unavailableReasonCode,
-      }))),
+      metrics: Object.freeze(journalAnalyticsMetricRegistry.definitions
+        .filter((definition) => EXPLORER_SELECTOR_METRIC_IDS.has(definition.metricId))
+        .map((definition) => Object.freeze({
+          metricId: definition.metricId,
+          title: definition.title,
+          description: definition.description,
+          capabilityState: definition.capabilityState,
+          valueKind: definition.valueKind,
+          unit: definition.unit,
+          moneyBasis: definition.moneyBasis,
+          displayPolicy: definition.displayPolicy,
+          unavailableReasonCode: definition.unavailableReasonCode,
+        }))),
       currencies: calendar.availableCurrencies,
-      symbols: calendar.symbols,
-      minimumDate: calendar.minimumDate,
-      maximumDate: calendar.maximumDate,
+      symbols,
+      minimumDate,
+      maximumDate,
       initialQuery,
-      initialPreview: buildPreview(scope, initialQuery, null, service),
+      initialPreview: buildPreview(
+        scope,
+        initialQuery,
+        null,
+        service,
+        tradeExplorerTableOrder("closed_desc"),
+      ),
     });
   });
   return Object.freeze({

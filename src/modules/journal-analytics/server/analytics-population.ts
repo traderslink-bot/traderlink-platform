@@ -428,6 +428,7 @@ function roundTripMatches(
       !query.entryWeekdays.includes(openedLocal.weekday)) ||
     (query.entryTimeBuckets.length > 0 &&
       !query.entryTimeBuckets.includes(bucket)) ||
+    query.tradeClassifications.length > 0 ||
     query.outcomes.length > 0 ||
     query.holdingDurationRange.minimumMillisecondsInclusive !== null ||
     query.holdingDurationRange.maximumMillisecondsInclusive !== null ||
@@ -464,6 +465,7 @@ function unavailableMatches(
       query.instrumentIds.includes(row.instrumentId)) &&
     (query.symbols.length === 0 || query.symbols.includes(row.displayedSymbol)) &&
     (query.directions.length === 0 || query.directions.includes(row.direction)) &&
+    query.tradeClassifications.length === 0 &&
     (query.provenance.length === 0 ||
       query.provenance.includes(row.provenanceGroup)) &&
     query.outcomes.length === 0 &&
@@ -514,6 +516,7 @@ function scopeCoverageIsExactlyAttributable(
     query.instrumentIds.length === 0 &&
     query.symbols.length === 0 &&
     query.directions.length === 0 &&
+    query.tradeClassifications.length === 0 &&
     query.provenance.length === 0 &&
     query.outcomes.length === 0 &&
     query.entryWeekdays.length === 0 &&
@@ -543,6 +546,7 @@ export function buildJournalAnalyticsPopulations(
       instrumentIds: query.instrumentIds,
       symbols: query.symbols,
       directions: query.directions,
+      tradeClassifications: query.tradeClassifications,
       provenance: query.provenance,
       outcomes: query.outcomes,
       entryWeekdays: query.entryWeekdays,
@@ -621,7 +625,13 @@ export function buildJournalAnalyticsPopulations(
     });
     const partitionUnavailable = unavailable.filter((row) =>
       row.tradeCurrency === currency && row.tradingTimezone === tradingTimezone);
-    const feeIncomplete = outcomeRows.filter((row) =>
+    // A fee-incomplete trade cannot be classified by a Net P/L Result filter.
+    // Keep all such trades in Net coverage; a Gross result can still narrow
+    // them factually before fee coverage is counted.
+    const feeCoverageRows = query.moneyBasis === "net" && query.outcomes.length > 0
+      ? partitionRows
+      : outcomeRows;
+    const feeIncomplete = feeCoverageRows.filter((row) =>
       row.netPnlDecimal === null);
     const reasonCounts: Record<string, number> = {};
     for (const row of partitionDecisions) {

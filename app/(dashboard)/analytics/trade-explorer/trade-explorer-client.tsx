@@ -1,5 +1,6 @@
 "use client";
 
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import FilterAltRoundedIcon from "@mui/icons-material/FilterAltRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
@@ -8,8 +9,11 @@ import {
   Autocomplete,
   Box,
   Button,
+  Chip,
   Collapse,
+  Drawer,
   FormControl,
+  IconButton,
   InputLabel,
   ListSubheader,
   MenuItem,
@@ -32,8 +36,24 @@ import type {
 } from "@/src/modules/journal-analytics/contracts/analytics-result";
 import {
   formatJournalAnalyticsDecimal,
+  formatJournalAnalyticsDuration,
   formatJournalAnalyticsMetric,
 } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
+import {
+  canonicalTradeExplorerDecimalInput,
+  canonicalTradeExplorerTimeInput,
+  compareTradeExplorerMetricValues,
+  TRADE_EXPLORER_DAY_STATISTIC_GROUPS,
+  TRADE_EXPLORER_TRADE_SORT_OPTIONS,
+  TRADE_EXPLORER_TRADE_STATISTIC_GROUPS,
+  tradeExplorerDefaultRankDirection,
+  tradeExplorerMetricForMoneyBasis,
+  tradeExplorerMetricForOutcome,
+  tradeExplorerMetricMatchesMoneyBasis,
+  tradeExplorerMetricMatchesOutcome,
+  tradeExplorerTradeSortForOutcome,
+  type TradeExplorerTradeSort,
+} from "@/src/modules/journal-analytics/presentation/trade-explorer-ordering";
 import {
   DashboardPage,
   DashboardPanel,
@@ -51,6 +71,8 @@ import type { TradeExplorerPageModel } from "./trade-explorer-service";
 type ExplorerGroup = Readonly<{
   id: string;
   label: string;
+  partitionKey: string;
+  partitionLabel: string;
   group: JournalAnalyticsGroupResult;
 }>;
 
@@ -83,6 +105,8 @@ type ExplorerViewDefinition = Readonly<{
   columns: readonly ExplorerGroupColumn[];
 }>;
 
+const RESULTS_UPDATE_FAILURE = "The results could not be updated. The table still shows your last successful results. Try again.";
+
 const RESULT_VIEWS: Readonly<Record<Exclude<ExplorerResultView, "trades">, ExplorerViewDefinition>> = Object.freeze({
   days: Object.freeze({
     label: "Trading Days",
@@ -109,10 +133,10 @@ const RESULT_VIEWS: Readonly<Record<Exclude<ExplorerResultView, "trades">, Explo
       { label: "Losses", metricId: "loss_count" },
       { label: "Win rate", metricId: "win_rate" },
       { label: "Net P/L", metricId: "net_pnl" },
-      { label: "Average P/L", metricId: "average_pnl" },
-      { label: "Average hold", metricId: "average_holding_time" },
-      { label: "Average shares", metricId: "average_share_quantity" },
-      { label: "Average entry amount", metricId: "average_entry_notional" },
+      { label: "Avg P/L", metricId: "average_pnl" },
+      { label: "Avg hold", metricId: "average_holding_time" },
+      { label: "Avg shares", metricId: "average_share_quantity" },
+      { label: "Avg entry value", metricId: "average_entry_notional" },
     ]),
   }),
   entry_times: Object.freeze({
@@ -124,9 +148,9 @@ const RESULT_VIEWS: Readonly<Record<Exclude<ExplorerResultView, "trades">, Explo
       { label: "Trades", metricId: "total_trades" },
       { label: "Win rate", metricId: "win_rate" },
       { label: "Net P/L", metricId: "net_pnl" },
-      { label: "Average P/L", metricId: "average_pnl" },
-      { label: "Average hold", metricId: "average_holding_time" },
-      { label: "Average shares", metricId: "average_share_quantity" },
+      { label: "Avg P/L", metricId: "average_pnl" },
+      { label: "Avg hold", metricId: "average_holding_time" },
+      { label: "Avg shares", metricId: "average_share_quantity" },
     ]),
   }),
   holding_time: Object.freeze({
@@ -138,9 +162,9 @@ const RESULT_VIEWS: Readonly<Record<Exclude<ExplorerResultView, "trades">, Explo
       { label: "Trades", metricId: "total_trades" },
       { label: "Win rate", metricId: "win_rate" },
       { label: "Net P/L", metricId: "net_pnl" },
-      { label: "Average P/L", metricId: "average_pnl" },
-      { label: "Average hold", metricId: "average_holding_time" },
-      { label: "Average shares", metricId: "average_share_quantity" },
+      { label: "Avg P/L", metricId: "average_pnl" },
+      { label: "Avg hold", metricId: "average_holding_time" },
+      { label: "Avg shares", metricId: "average_share_quantity" },
     ]),
   }),
   position_size: Object.freeze({
@@ -152,10 +176,10 @@ const RESULT_VIEWS: Readonly<Record<Exclude<ExplorerResultView, "trades">, Explo
       { label: "Trades", metricId: "total_trades" },
       { label: "Win rate", metricId: "win_rate" },
       { label: "Net P/L", metricId: "net_pnl" },
-      { label: "Average P/L", metricId: "average_pnl" },
-      { label: "Average shares", metricId: "average_share_quantity" },
-      { label: "Average entry amount", metricId: "average_entry_notional" },
-      { label: "Average hold", metricId: "average_holding_time" },
+      { label: "Avg P/L", metricId: "average_pnl" },
+      { label: "Avg shares", metricId: "average_share_quantity" },
+      { label: "Avg entry value", metricId: "average_entry_notional" },
+      { label: "Avg hold", metricId: "average_holding_time" },
     ]),
   }),
   periods: Object.freeze({
@@ -169,60 +193,34 @@ const RESULT_VIEWS: Readonly<Record<Exclude<ExplorerResultView, "trades">, Explo
       { label: "Losses", metricId: "loss_count" },
       { label: "Win rate", metricId: "win_rate" },
       { label: "Net P/L", metricId: "net_pnl" },
-      { label: "Average P/L", metricId: "average_pnl" },
+      { label: "Avg P/L", metricId: "average_pnl" },
       { label: "Best trade", metricId: "best_trade" },
       { label: "Worst trade", metricId: "worst_trade" },
     ]),
   }),
 });
 
-const TRADE_STATISTIC_GROUPS = Object.freeze([
-  Object.freeze({ label: "P/L and results", metricIds: Object.freeze(["total_trades", "net_pnl", "gross_pnl", "average_pnl", "median_pnl", "best_trade", "worst_trade", "profit_factor", "expectancy", "return_on_entry_notional"]) }),
-  Object.freeze({ label: "Wins and losses", metricIds: Object.freeze(["win_count", "loss_count", "flat_count", "win_rate", "loss_rate", "flat_rate", "average_winning_trade", "average_losing_trade", "average_win_loss_ratio"]) }),
-  Object.freeze({ label: "Holding time", metricIds: Object.freeze(["average_holding_time", "median_holding_time", "minimum_holding_time", "maximum_holding_time", "average_winner_holding_time", "average_loser_holding_time"]) }),
-  Object.freeze({ label: "Shares and entry amount", metricIds: Object.freeze(["average_share_quantity", "median_share_quantity", "maximum_share_quantity", "average_entry_notional", "median_entry_notional", "maximum_entry_notional"]) }),
-  Object.freeze({ label: "Trade prices", metricIds: Object.freeze(["average_entry_price", "average_exit_price"]) }),
-] as const);
-
-const DAY_STATISTIC_GROUPS = Object.freeze([
-  Object.freeze({ label: "Trading-day results", metricIds: Object.freeze(["profitable_trading_day_count", "losing_trading_day_count", "flat_trading_day_count", "average_daily_pnl", "median_daily_pnl", "best_trading_day", "worst_trading_day"]) }),
-  Object.freeze({ label: "Daily movement", metricIds: Object.freeze(["red_to_green_day_count", "green_to_red_day_count", "maximum_intraday_realized_drawdown", "maximum_intraday_realized_recovery_from_trough", "maximum_peak_profit_giveback", "average_peak_profit_giveback"]) }),
-] as const);
-
 function explorerMetricLabel(metricId: string, title: string): string {
-  if (metricId.includes("entry_notional")) return title.replaceAll("Entry Notional", "Entry Amount").replaceAll("entry notional", "entry amount");
+  if (metricId === "net_pnl") return "Net P/L";
+  if (metricId === "gross_pnl") return "Gross P/L";
+  if (metricId.includes("entry_notional")) return title.replaceAll("Entry Notional", "Entry Value").replaceAll("entry notional", "entry value");
   return title;
-}
-
-function tradeOutcomeForStatistic(metricId: string): "win" | "loss" | "flat" | null {
-  if (metricId === "flat_count") return "flat";
-  if (metricId === "win_count" || metricId.includes("winning_trade") || metricId.includes("winner_")) return "win";
-  if (metricId === "loss_count" || metricId.includes("losing_trade") || metricId.includes("loser_")) return "loss";
-  return null;
-}
-
-function dayStatisticIsSubset(metricId: string): boolean {
-  return [
-    "profitable_trading_day_count",
-    "losing_trading_day_count",
-    "flat_trading_day_count",
-    "red_to_green_day_count",
-    "green_to_red_day_count",
-  ].includes(metricId);
 }
 
 function SelectField({
   children,
+  idSuffix = "",
   label,
   onChange,
   value,
 }: Readonly<{
   children: React.ReactNode;
+  idSuffix?: string;
   label: string;
   onChange: (value: string) => void;
   value: string;
 }>) {
-  const id = `trade-explorer-${label.toLowerCase().replaceAll(" ", "-")}`;
+  const id = `trade-explorer-${label.toLowerCase().replaceAll(" ", "-")}${idSuffix}`;
   return (
     <FormControl fullWidth size="small">
       <InputLabel id={`${id}-label`}>{label}</InputLabel>
@@ -233,33 +231,45 @@ function SelectField({
   );
 }
 
-function metric(group: JournalAnalyticsGroupResult | null, metricId: string): JournalAnalyticsMetricResult | null {
+function metric(
+  group: Pick<JournalAnalyticsGroupResult, "metrics"> | null,
+  metricId: string,
+): JournalAnalyticsMetricResult | null {
   return group?.metrics.find((candidate) => candidate.metricId === metricId) ?? null;
 }
 
-function value(group: JournalAnalyticsGroupResult | null, metricId: string): string {
+function value(
+  group: Pick<JournalAnalyticsGroupResult, "metrics"> | null,
+  metricId: string,
+): string {
   const result = metric(group, metricId);
   return result?.state === "unavailable" || result?.state === "empty"
     ? "N/A"
-    : result ? formatJournalAnalyticsMetric(result) : "N/A";
+    : result ? formatExplorerMetric(result) : "N/A";
 }
 
-function metricSortValue(group: JournalAnalyticsGroupResult, metricId: string): number | null {
-  const exactValue = metric(group, metricId)?.value;
-  if (!exactValue) return null;
-  const numeric = exactValue.kind === "integer"
-    ? exactValue.value
-    : exactValue.kind === "decimal"
-      ? Number(exactValue.valueDecimal)
-      : exactValue.kind === "rational"
-        ? Number(exactValue.roundedDecimal)
-        : exactValue.kind === "duration"
-          ? exactValue.milliseconds
-          : Number.NaN;
-  return Number.isFinite(numeric) ? numeric : null;
+function formatExplorerMetric(result: JournalAnalyticsMetricResult): string {
+  const formatted = formatJournalAnalyticsMetric(result);
+  if (result.valueKind !== "money" || result.currency === null || formatted === "N/A") {
+    return formatted;
+  }
+  return `${result.currency} ${formatted.replace("$", "")}`;
+}
+
+function metricSortValue(
+  group: JournalAnalyticsGroupResult,
+  metricId: string,
+): JournalAnalyticsMetricResult["value"] {
+  return metric(group, metricId)?.value ?? null;
 }
 
 function dayMovement(group: JournalAnalyticsGroupResult): string {
+  const redToGreenResult = metric(group, "red_to_green_day_count");
+  const greenToRedResult = metric(group, "green_to_red_day_count");
+  if (
+    redToGreenResult === null || redToGreenResult.value === null ||
+    greenToRedResult === null || greenToRedResult.value === null
+  ) return "N/A";
   const redToGreen = value(group, "red_to_green_day_count") === "1";
   const greenToRed = value(group, "green_to_red_day_count") === "1";
   if (redToGreen && greenToRed) return "Red → green and green → red";
@@ -268,23 +278,58 @@ function dayMovement(group: JournalAnalyticsGroupResult): string {
   return "Neither";
 }
 
-function money(valueDecimal: string | null): string {
+function groupColumnIsUnavailable(
+  group: JournalAnalyticsGroupResult,
+  column: ExplorerGroupColumn,
+): boolean {
+  if (column.kind === "day_path") {
+    return ["red_to_green_day_count", "green_to_red_day_count"].some((metricId) => {
+      const result = metric(group, metricId);
+      return result === null || result.value === null;
+    });
+  }
+  const result = metric(group, column.metricId);
+  return result === null || result.value === null;
+}
+
+function groupColumnDisplaysMetric(
+  column: ExplorerGroupColumn,
+  metricId: string,
+): boolean {
+  return column.metricId === metricId;
+}
+
+function money(valueDecimal: string | null, currency: string | null): string {
   if (valueDecimal === null) return "N/A";
   const formatted = formatJournalAnalyticsDecimal(valueDecimal, 2, true);
-  return formatted.startsWith("-") ? `-$${formatted.slice(1)}` : `$${formatted}`;
+  return currency === null ? formatted : `${currency} ${formatted}`;
 }
 
-function holdingTime(milliseconds: number): string {
-  if (milliseconds < 60_000) return `${Math.round(milliseconds / 1_000)} sec`;
-  if (milliseconds < 3_600_000) return `${Math.round(milliseconds / 60_000)} min`;
-  return `${formatJournalAnalyticsDecimal(String(milliseconds / 3_600_000))} hr`;
+function pnlColor(valueDecimal: string | null): "error.main" | "success.main" | "text.primary" {
+  if (valueDecimal === null || /^-?0(?:\.0+)?$/u.test(valueDecimal)) return "text.primary";
+  return valueDecimal.startsWith("-") ? "error.main" : "success.main";
 }
 
-function executionTime(value: string): string {
+function executionTime(value: string, timeZone: string): string {
   return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "medium",
-    timeZone: "America/New_York",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    month: "short",
+    second: "2-digit",
+    timeZone,
+    timeZoneName: "short",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
+function tradeCloseTime(value: string, timeZone: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    timeZone,
+    timeZoneName: "short",
   }).format(new Date(value));
 }
 
@@ -305,70 +350,243 @@ function exactField(
   );
 }
 
+function canonicalizeExactQueryFields(
+  input: AnalyticsLabPlatformQuery,
+): AnalyticsLabPlatformQuery {
+  const basisMetricId = tradeExplorerMetricForMoneyBasis(
+    input.metricId,
+    input.moneyBasis,
+  );
+  return Object.freeze({
+    ...input,
+    metricId: tradeExplorerMetricForOutcome(basisMetricId, input.outcome),
+    minimumHoldingSeconds: canonicalTradeExplorerDecimalInput(input.minimumHoldingSeconds),
+    maximumHoldingSeconds: canonicalTradeExplorerDecimalInput(input.maximumHoldingSeconds),
+    minimumEnteredQuantity: canonicalTradeExplorerDecimalInput(input.minimumEnteredQuantity),
+    maximumEnteredQuantity: canonicalTradeExplorerDecimalInput(input.maximumEnteredQuantity),
+    minimumPositionQuantity: canonicalTradeExplorerDecimalInput(input.minimumPositionQuantity),
+    maximumPositionQuantity: canonicalTradeExplorerDecimalInput(input.maximumPositionQuantity),
+    minimumEntryNotional: canonicalTradeExplorerDecimalInput(input.minimumEntryNotional),
+    maximumEntryNotional: canonicalTradeExplorerDecimalInput(input.maximumEntryNotional),
+    entryTimeBucket: canonicalTradeExplorerTimeInput(input.entryTimeBucket),
+  });
+}
+
+function tradeExplorerQueriesMatch(
+  left: AnalyticsLabPlatformQuery,
+  right: AnalyticsLabPlatformQuery,
+): boolean {
+  const leftKeys = Object.keys(left) as readonly (keyof AnalyticsLabPlatformQuery)[];
+  const rightKeys = Object.keys(right);
+  return leftKeys.length === rightKeys.length &&
+    leftKeys.every((key) => left[key] === right[key]);
+}
+
 export default function TradeExplorerClient({ model }: Readonly<{ model: TradeExplorerPageModel }>) {
   const [query, setQuery] = useState(model.initialQuery);
+  const [appliedQuery, setAppliedQuery] = useState(model.initialQuery);
   const [preview, setPreview] = useState<AnalyticsLabPlatformPreview>(model.initialPreview);
   const [resultView, setResultView] = useState<ExplorerResultView>("trades");
-  const [sortMetricId, setSortMetricId] = useState("net_pnl");
+  const [appliedResultView, setAppliedResultView] = useState<ExplorerResultView>("trades");
+  const [tradeSort, setTradeSort] = useState<TradeExplorerTradeSort>("closed_desc");
+  const [appliedTradeSort, setAppliedTradeSort] = useState<TradeExplorerTradeSort>("closed_desc");
+  const [sortMetricId, setSortMetricId] = useState(model.initialQuery.metricId);
   const [sortDirection, setSortDirection] = useState<"descending" | "ascending">("descending");
   const [pageCursors, setPageCursors] = useState<readonly (string | null)[]>(Object.freeze([null]));
   const [pageIndex, setPageIndex] = useState(0);
+  const [groupPageSize, setGroupPageSize] = useState<10 | 25 | 50 | 100>(25);
+  const [groupPageIndex, setGroupPageIndex] = useState(0);
   const [advanced, setAdvanced] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedRoundTripId, setExpandedRoundTripId] = useState<string | null>(null);
   const [expandedExecutions, setExpandedExecutions] = useState<readonly TradeExecution[]>(Object.freeze([]));
   const [executionDetailsStatus, setExecutionDetailsStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const executionRequestRef = useRef(0);
+  const previewRequestRef = useRef(0);
+  const sortDirectionRevisionRef = useRef(0);
   const [isPending, startTransition] = useTransition();
   const patch = <K extends keyof AnalyticsLabPlatformQuery>(key: K, next: AnalyticsLabPlatformQuery[K]) =>
     setQuery((current) => Object.freeze({ ...current, [key]: next }));
-  const groups = useMemo<readonly ExplorerGroup[]>(() => preview.response.partitions.flatMap((partition) =>
-    partition.groups.map((group) => Object.freeze({
-      id: `${partition.currency ?? "none"}:${group.groupKey}`,
+  const showPartitionColumn = preview.response.partitions.length > 1;
+  const showPartitionTimezone = new Set(preview.response.partitions.map((partition) =>
+    partition.timezone)).size > 1;
+  const partitionColumnLabel = showPartitionTimezone
+    ? "Currency / timezone"
+    : "Currency";
+  const hasUnappliedChanges = !tradeExplorerQueriesMatch(
+    canonicalizeExactQueryFields(query),
+    appliedQuery,
+  ) ||
+    resultView !== appliedResultView ||
+    tradeSort !== appliedTradeSort;
+  const groups = useMemo<readonly ExplorerGroup[]>(() => preview.response.partitions.flatMap((partition) => {
+    const partitionKey = `${partition.currency ?? "none"}:${partition.timezone ?? "none"}`;
+    const currencyLabel = partition.currency ?? "No currency";
+    const partitionLabel = showPartitionTimezone
+      ? `${currencyLabel} · ${partition.timezone ?? "No timezone"}`
+      : currencyLabel;
+    return partition.groups.map((group) => Object.freeze({
+      id: `${partitionKey}:${group.groupKey}`,
       label: group.label,
+      partitionKey,
+      partitionLabel,
       group,
-    }))), [preview]);
-  const activeView = resultView === "trades" ? null : RESULT_VIEWS[resultView];
-  const statisticGroups = resultView === "days" ? DAY_STATISTIC_GROUPS : TRADE_STATISTIC_GROUPS;
+    }));
+  }), [preview, showPartitionTimezone]);
+  const activeView = appliedResultView === "trades" ? null : RESULT_VIEWS[appliedResultView];
+  const statisticGroups = (resultView === "days"
+    ? TRADE_EXPLORER_DAY_STATISTIC_GROUPS
+    : TRADE_EXPLORER_TRADE_STATISTIC_GROUPS).map((group) => Object.freeze({
+      ...group,
+      metricIds: Object.freeze(group.metricIds.filter((metricId) =>
+        tradeExplorerMetricMatchesMoneyBasis(metricId, query.moneyBasis) &&
+        tradeExplorerMetricMatchesOutcome(metricId, query.outcome))),
+    }));
   const statisticMetricIds = statisticGroups.flatMap((group) => [...group.metricIds]);
+  const tradeSortOptions = TRADE_EXPLORER_TRADE_SORT_OPTIONS.filter((option) =>
+    tradeExplorerTradeSortForOutcome(option.value, query.outcome) === option.value);
   const explorerMetrics = useMemo(() => new Map(model.metrics.map((item) => [item.metricId, item])), [model.metrics]);
-  const selectedStatistic = explorerMetrics.get(query.metricId) ?? null;
-  const displayedColumns: readonly ExplorerGroupColumn[] = activeView === null || activeView.columns.some((column) => column.metricId === query.metricId)
-    ? activeView?.columns ?? Object.freeze([])
-    : Object.freeze([...activeView.columns, Object.freeze({
+  const selectedStatistic = explorerMetrics.get(appliedQuery.metricId) ?? null;
+  const tradeSummaryPartition = preview.response.partitions.length === 1
+    ? preview.response.partitions[0]
+    : null;
+  const feeIncompleteTradeCount = preview.response.crossPartitionCounts
+    .feeIncompleteCount;
+  const tradeProfitFactorUnavailable = appliedQuery.outcome === null &&
+    tradeSummaryPartition !== null &&
+    preview.response.crossPartitionCounts.includedCount > 0 &&
+    metric(tradeSummaryPartition, "profit_factor")?.value === null;
+  const tradeRowsHaveUnavailable = preview.evidence?.rows.some((trade) =>
+    trade.averageEntryPriceDecimal === null ||
+    trade.averageExitPriceDecimal === null ||
+    trade.selectedPnlDecimal === null ||
+    trade.returnPercentDecimal === null) ?? false;
+  const emptyTradeMessage = appliedQuery.moneyBasis === "net"
+    ? "No fee-covered trades match these filters."
+    : "No completed trades match these filters.";
+  const tradeSummary = tradeSummaryPartition === null
+    ? Object.freeze([
+        Object.freeze({
+          label: appliedQuery.moneyBasis === "net" ? "Fee-covered trades" : "Closed trades",
+          value: String(preview.response.crossPartitionCounts.includedCount),
+        }),
+      ])
+    : Object.freeze([
+        Object.freeze({ label: appliedQuery.moneyBasis === "net" ? "Fee-covered trades" : "Closed trades", value: value(tradeSummaryPartition, "total_trades") }),
+        Object.freeze({ label: appliedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L", value: value(tradeSummaryPartition, appliedQuery.moneyBasis === "gross" ? "gross_pnl" : "net_pnl") }),
+        ...(appliedQuery.outcome === null
+          ? [Object.freeze({ label: "Win rate", value: value(tradeSummaryPartition, "win_rate") })]
+          : []),
+        ...(appliedQuery.outcome === null
+          ? [Object.freeze({ label: "Profit factor", value: value(tradeSummaryPartition, "profit_factor") })]
+          : []),
+        Object.freeze({ label: "Currency", value: tradeSummaryPartition.currency ?? "Not recorded" }),
+      ]);
+  const activeViewColumns = activeView?.columns.filter((column) =>
+    appliedQuery.outcome === null || (
+      !["win_count", "loss_count", "win_rate"].includes(column.metricId) &&
+      column.kind !== "day_path"
+    )).map((column) =>
+    column.metricId === "net_pnl"
+      ? Object.freeze({
+          ...column,
+          label: appliedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L",
+          metricId: tradeExplorerMetricForMoneyBasis(
+            column.metricId,
+            appliedQuery.moneyBasis,
+          ),
+        })
+      : column) ?? Object.freeze([]);
+  const displayedColumns: readonly ExplorerGroupColumn[] = activeView === null || activeViewColumns.some((column) =>
+    groupColumnDisplaysMetric(column, appliedQuery.metricId))
+    ? activeViewColumns
+    : Object.freeze([...activeViewColumns, Object.freeze({
         label: selectedStatistic ? explorerMetricLabel(selectedStatistic.metricId, selectedStatistic.title) : "Selected statistic",
-        metricId: query.metricId,
+        metricId: appliedQuery.metricId,
       })]);
   const sortedGroups = useMemo(() => [...groups].sort((left, right) => {
+    if (showPartitionColumn) {
+      const partitionComparison = left.partitionKey.localeCompare(right.partitionKey);
+      if (partitionComparison !== 0) return partitionComparison;
+    }
     const leftValue = metricSortValue(left.group, sortMetricId);
     const rightValue = metricSortValue(right.group, sortMetricId);
     if (leftValue === null && rightValue === null) return left.label.localeCompare(right.label);
     if (leftValue === null) return 1;
     if (rightValue === null) return -1;
-    const comparison = leftValue - rightValue;
+    const comparison = compareTradeExplorerMetricValues(leftValue, rightValue);
+    if (comparison === null) return left.label.localeCompare(right.label);
     return sortDirection === "ascending" ? comparison : -comparison;
-  }), [groups, sortDirection, sortMetricId]);
-  const visibleGroups = useMemo(() => resultView === "days" && dayStatisticIsSubset(query.metricId)
-    ? sortedGroups.filter((item) => {
-        const selectedValue = metricSortValue(item.group, query.metricId);
-        return selectedValue !== null && selectedValue > 0;
-      })
-    : sortedGroups, [query.metricId, resultView, sortedGroups]);
+  }), [groups, showPartitionColumn, sortDirection, sortMetricId]);
+  const groupPageStart = groupPageIndex * groupPageSize;
+  const visibleGroups = sortedGroups.slice(groupPageStart, groupPageStart + groupPageSize);
+  const groupPageEnd = Math.min(groupPageStart + visibleGroups.length, sortedGroups.length);
+  const selectedRankingUnavailable = activeView !== null && groups.length > 0 &&
+    groups.every((item) => {
+      const result = metric(item.group, appliedQuery.metricId);
+      return result === null || result.value === null;
+    });
+  const groupedResultsHaveUnavailable = activeView !== null && visibleGroups.some((item) =>
+    displayedColumns.some((column) => groupColumnIsUnavailable(item.group, column)));
 
-  function run(nextQuery = query): void {
-    setError(null);
+  function clearExpandedTrade(): void {
+    executionRequestRef.current += 1;
     setExpandedRoundTripId(null);
     setExpandedExecutions(Object.freeze([]));
     setExecutionDetailsStatus("idle");
+  }
+
+  function run(
+    nextQuery = query,
+    nextTradeSort = tradeSort,
+    nextResultView = resultView,
+    nextSortDirection = sortDirection,
+  ): void {
+    const canonicalQuery = canonicalizeExactQueryFields(nextQuery);
+    const canonicalTradeSort = tradeExplorerTradeSortForOutcome(
+      nextTradeSort,
+      canonicalQuery.outcome,
+    );
+    const sortDirectionRevision = sortDirectionRevisionRef.current;
+    const requestNumber = previewRequestRef.current + 1;
+    previewRequestRef.current = requestNumber;
+    setError(null);
+    clearExpandedTrade();
     startTransition(async () => {
-      const result = await runTradeExplorer(nextQuery);
-      if (!result.ok) {
-        setError(result.message);
-        return;
+      try {
+        const result = await runTradeExplorer(canonicalQuery, null, canonicalTradeSort);
+        if (previewRequestRef.current !== requestNumber) return;
+        if (!result.ok) {
+          if (result.refreshRequired) {
+            window.location.reload();
+            return;
+          }
+          setError(result.message);
+          return;
+        }
+        setQuery((current) => tradeExplorerQueriesMatch(
+          canonicalizeExactQueryFields(current),
+          canonicalQuery,
+        )
+          ? canonicalQuery
+          : current);
+        setAppliedQuery(canonicalQuery);
+        setAppliedResultView(nextResultView);
+        setTradeSort((current) => current === nextTradeSort ? canonicalTradeSort : current);
+        setAppliedTradeSort(canonicalTradeSort);
+        setSortMetricId(canonicalQuery.metricId);
+        if (sortDirectionRevisionRef.current === sortDirectionRevision) {
+          setSortDirection(nextSortDirection);
+        }
+        setPreview(result.preview);
+        setPageCursors(Object.freeze([null]));
+        setPageIndex(0);
+        setGroupPageIndex(0);
+      } catch {
+        if (previewRequestRef.current !== requestNumber) return;
+        setError(RESULTS_UPDATE_FAILURE);
       }
-      setPreview(result.preview);
-      setPageCursors(Object.freeze([null]));
-      setPageIndex(0);
     });
   }
 
@@ -408,32 +626,77 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
     run(nextQuery);
   }
 
+  function chooseTradeSort(nextTradeSort: TradeExplorerTradeSort): void {
+    setTradeSort(nextTradeSort);
+    run(query, nextTradeSort);
+  }
+
+  function chooseMoneyBasis(moneyBasis: "gross" | "net"): void {
+    setQuery((current) => Object.freeze({
+      ...current,
+      moneyBasis,
+      metricId: tradeExplorerMetricForMoneyBasis(current.metricId, moneyBasis),
+    }));
+  }
+
+  function chooseOutcome(outcome: "win" | "loss" | "flat" | null): void {
+    setQuery((current) => Object.freeze({
+      ...current,
+      outcome,
+      metricId: tradeExplorerMetricForOutcome(current.metricId, outcome),
+    }));
+    setTradeSort((current) => tradeExplorerTradeSortForOutcome(current, outcome));
+  }
+
+  function chooseEntryTimeDetail(entryTimeBucketMinutes: 5 | 15 | 30 | 60): void {
+    setQuery((current) => {
+      const canonicalTime = canonicalTradeExplorerTimeInput(current.entryTimeBucket);
+      const selectedMinute = canonicalTime === null || !/^\d{2}:\d{2}$/u.test(canonicalTime)
+        ? null
+        : Number(canonicalTime.slice(3));
+      return Object.freeze({
+        ...current,
+        entryTimeBucketMinutes,
+        entryTimeBucket: selectedMinute !== null && selectedMinute % entryTimeBucketMinutes === 0
+          ? canonicalTime
+          : null,
+      });
+    });
+  }
+
   function chooseStatistic(metricId: string): void {
-    const statisticOutcome = tradeOutcomeForStatistic(metricId);
-    const selectedOutcome = resultView === "trades" && statisticOutcome !== null
-      ? statisticOutcome
-      : query.outcome;
-    const nextQuery = Object.freeze({ ...query, metricId, outcome: selectedOutcome });
+    const nextQuery = Object.freeze({ ...query, metricId });
     setQuery(nextQuery);
-    if (resultView !== "trades") setSortMetricId(metricId);
-    run(nextQuery);
+    run(
+      nextQuery,
+      tradeSort,
+      resultView,
+      tradeExplorerDefaultRankDirection(metricId),
+    );
+  }
+
+  function chooseSortDirection(nextSortDirection: "descending" | "ascending"): void {
+    sortDirectionRevisionRef.current += 1;
+    setSortDirection(nextSortDirection);
+    setGroupPageIndex(0);
   }
 
   function chooseResultView(nextView: ExplorerResultView): void {
     setResultView(nextView);
     const definition = nextView === "trades" ? null : RESULT_VIEWS[nextView];
     const metricId = nextView === "days"
-      ? "average_daily_pnl"
-      : definition?.defaultSortMetricId ?? "total_trades";
-    setSortMetricId(definition?.defaultSortMetricId ?? "net_pnl");
-    setSortDirection("descending");
+      ? tradeExplorerMetricForMoneyBasis("net_pnl", query.moneyBasis)
+      : tradeExplorerMetricForMoneyBasis(
+          definition?.defaultSortMetricId ?? "total_trades",
+          query.moneyBasis,
+        );
     const nextQuery = Object.freeze({
       ...query,
       grouping: definition?.grouping ?? "closing_month",
       metricId,
     });
     setQuery(nextQuery);
-    run(nextQuery);
+    run(nextQuery, tradeSort, nextView, "descending");
   }
 
   function choosePeriodGrouping(grouping: "closing_day" | "closing_iso_week" | "closing_month" | "closing_year"): void {
@@ -443,30 +706,149 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
   }
 
   function loadTradePage(nextPageIndex: number, cursor: string | null): void {
+    const requestNumber = previewRequestRef.current + 1;
+    previewRequestRef.current = requestNumber;
     setError(null);
+    clearExpandedTrade();
     startTransition(async () => {
-      const result = await runTradeExplorer(query, cursor);
-      if (!result.ok) {
-        setError(result.message);
-        return;
+      try {
+        const result = await runTradeExplorer(appliedQuery, cursor, appliedTradeSort);
+        if (previewRequestRef.current !== requestNumber) return;
+        if (!result.ok) {
+          if (result.refreshRequired) {
+            window.location.reload();
+            return;
+          }
+          setError(result.message);
+          return;
+        }
+        setPreview(result.preview);
+        setPageCursors((current) => nextPageIndex > pageIndex
+          ? Object.freeze([...current.slice(0, pageIndex + 1), cursor])
+          : current);
+        setPageIndex(nextPageIndex);
+      } catch {
+        if (previewRequestRef.current !== requestNumber) return;
+        setError(RESULTS_UPDATE_FAILURE);
       }
-      setPreview(result.preview);
-      setPageCursors((current) => nextPageIndex > pageIndex
-        ? Object.freeze([...current.slice(0, pageIndex + 1), cursor])
-        : current);
-      setPageIndex(nextPageIndex);
     });
   }
 
   function reset(): void {
+    previewRequestRef.current += 1;
+    sortDirectionRevisionRef.current += 1;
+    clearExpandedTrade();
     setQuery(model.initialQuery);
+    setAppliedQuery(model.initialQuery);
     setPreview(model.initialPreview);
     setResultView("trades");
-    setSortMetricId("net_pnl");
+    setAppliedResultView("trades");
+    setTradeSort("closed_desc");
+    setAppliedTradeSort("closed_desc");
+    setSortMetricId(model.initialQuery.metricId);
     setSortDirection("descending");
     setPageCursors(Object.freeze([null]));
     setPageIndex(0);
+    setGroupPageSize(25);
+    setGroupPageIndex(0);
     setError(null);
+  }
+
+  function renderFilterControls(compact: boolean) {
+    const idSuffix = compact ? "-drawer" : "-desktop";
+    return <>
+      <Box sx={{
+        display: "grid",
+        gap: compact ? 2 : 1.25,
+        gridTemplateColumns: compact
+          ? "1fr"
+          : { md: "repeat(3, minmax(0, 1fr))", xl: "repeat(6, minmax(0, 1fr))" },
+      }}>
+        <TextField fullWidth label="From" onChange={(event) => patch("startDate", event.target.value)} size="small" type="date" value={query.startDate} slotProps={{ inputLabel: { shrink: true } }} />
+        <TextField fullWidth label="To" onChange={(event) => patch("endDate", event.target.value)} size="small" type="date" value={query.endDate} slotProps={{ inputLabel: { shrink: true } }} />
+        <SelectField idSuffix={idSuffix} label="Currency" onChange={(next) => patch("currency", next === "all" ? null : next)} value={query.currency ?? "all"}>
+          <MenuItem value="all">All currencies</MenuItem>
+          {model.currencies.map((currency) => <MenuItem key={currency} value={currency}>{currency}</MenuItem>)}
+        </SelectField>
+        <Autocomplete
+          autoHighlight
+          fullWidth
+          onChange={(_event, next) => patch("symbol", next)}
+          options={model.symbols}
+          renderInput={(params) => <TextField {...params} label="Ticker" size="small" />}
+          value={query.symbol}
+        />
+        <SelectField idSuffix={idSuffix} label="Direction" onChange={(next) => patch("direction", next === "all" ? null : next as "long" | "short")} value={query.direction ?? "all"}>
+          <MenuItem value="all">All directions</MenuItem><MenuItem value="long">Long</MenuItem><MenuItem value="short">Short</MenuItem>
+        </SelectField>
+        <SelectField idSuffix={idSuffix} label="Result basis" onChange={(next) => chooseMoneyBasis(next as "gross" | "net")} value={query.moneyBasis}>
+          <MenuItem value="net">Net P/L</MenuItem><MenuItem value="gross">Gross P/L</MenuItem>
+        </SelectField>
+        <SelectField idSuffix={idSuffix} label="Result" onChange={(next) => chooseOutcome(next === "all" ? null : next as "win" | "loss" | "flat")} value={query.outcome ?? "all"}>
+          <MenuItem value="all">All results</MenuItem><MenuItem value="win">Wins</MenuItem><MenuItem value="loss">Losses</MenuItem><MenuItem value="flat">Flat</MenuItem>
+        </SelectField>
+        <SelectField idSuffix={idSuffix} label="View" onChange={(next) => chooseResultView(next as ExplorerResultView)} value={resultView}>
+          <MenuItem value="trades">Trades</MenuItem>
+          <MenuItem value="days">Trading Days</MenuItem>
+          <MenuItem value="tickers">Tickers</MenuItem>
+          <MenuItem value="entry_times">Entry Times</MenuItem>
+          <MenuItem value="holding_time">Holding Time</MenuItem>
+          <MenuItem value="position_size">Position Size</MenuItem>
+          <MenuItem value="periods">Periods</MenuItem>
+        </SelectField>
+        {resultView === "trades" ? (
+          <SelectField idSuffix={idSuffix} label="Sort trades" onChange={(next) => chooseTradeSort(next as TradeExplorerTradeSort)} value={tradeSort}>
+            {tradeSortOptions.map((option) => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
+          </SelectField>
+        ) : (
+          <SelectField idSuffix={idSuffix} label="Rank by" onChange={chooseStatistic} value={statisticMetricIds.includes(query.metricId) ? query.metricId : statisticMetricIds[0] ?? "total_trades"}>
+            {statisticGroups.map((group) => [
+              <ListSubheader key={`${group.label}-heading`}>{group.label}</ListSubheader>,
+              ...group.metricIds.flatMap((metricId) => {
+                const item = explorerMetrics.get(metricId);
+                return item ? [<MenuItem key={item.metricId} value={item.metricId}>{explorerMetricLabel(item.metricId, item.title)}</MenuItem>] : [];
+              }),
+            ])}
+          </SelectField>
+        )}
+        {resultView === "trades" ? (
+          <SelectField idSuffix={idSuffix} label="Results per page" onChange={(next) => choosePageSize(Number(next) as 12 | 24 | 50 | 100)} value={String(query.evidenceRows)}>
+            <MenuItem value="12">12</MenuItem><MenuItem value="24">24</MenuItem><MenuItem value="50">50</MenuItem><MenuItem value="100">100</MenuItem>
+          </SelectField>
+        ) : null}
+      </Box>
+      <Button
+        endIcon={<ExpandMoreRoundedIcon sx={{ transform: advanced ? "rotate(180deg)" : "none" }} />}
+        onClick={() => setAdvanced((current) => !current)}
+        sx={{ minHeight: 44, mt: 1.5 }}
+      >
+        More filters
+      </Button>
+      <Collapse in={advanced}>
+        <Box sx={{ display: "grid", gap: compact ? 2 : 1.25, gridTemplateColumns: compact ? "1fr" : "repeat(3, minmax(0, 1fr))", mt: 1.5 }}>
+          <SelectField idSuffix={idSuffix} label="Entry weekday" onChange={(next) => patch("entryWeekday", next === "all" ? null : next as AnalyticsLabPlatformQuery["entryWeekday"])} value={query.entryWeekday ?? "all"}>
+            <MenuItem value="all">Any weekday</MenuItem>{["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"].map((day) => <MenuItem key={day} value={day}>{day.slice(0, 1).toUpperCase() + day.slice(1)}</MenuItem>)}
+          </SelectField>
+          <SelectField idSuffix={idSuffix} label="Entry-time detail" onChange={(next) => chooseEntryTimeDetail(Number(next) as 5 | 15 | 30 | 60)} value={String(query.entryTimeBucketMinutes)}>
+            <MenuItem value="5">5 minutes</MenuItem><MenuItem value="15">15 minutes</MenuItem><MenuItem value="30">30 minutes</MenuItem><MenuItem value="60">60 minutes</MenuItem>
+          </SelectField>
+          <TextField fullWidth label="Entry time (HH:MM)" onChange={(event) => patch("entryTimeBucket", event.target.value === "" ? null : event.target.value)} placeholder="09:30" size="small" value={query.entryTimeBucket ?? ""} />
+          {exactField("Minimum hold (seconds)", query.minimumHoldingSeconds, (next) => patch("minimumHoldingSeconds", next))}
+          {exactField("Maximum hold (seconds)", query.maximumHoldingSeconds, (next) => patch("maximumHoldingSeconds", next))}
+          {exactField("Minimum entered quantity", query.minimumEnteredQuantity, (next) => patch("minimumEnteredQuantity", next))}
+          {exactField("Maximum entered quantity", query.maximumEnteredQuantity, (next) => patch("maximumEnteredQuantity", next))}
+          {exactField("Minimum position size", query.minimumPositionQuantity, (next) => patch("minimumPositionQuantity", next))}
+          {exactField("Maximum position size", query.maximumPositionQuantity, (next) => patch("maximumPositionQuantity", next))}
+          {exactField("Minimum entry value", query.minimumEntryNotional, (next) => patch("minimumEntryNotional", next))}
+          {exactField("Maximum entry value", query.maximumEntryNotional, (next) => patch("maximumEntryNotional", next))}
+        </Box>
+      </Collapse>
+      {hasUnappliedChanges && !isPending ? (
+        <Typography aria-live="polite" color="text.secondary" sx={{ mt: 1 }} variant="body2">
+          Some controls have changed. Choose Update results to apply them.
+        </Typography>
+      ) : null}
+    </>;
   }
 
   return (
@@ -477,121 +859,119 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
       </Box>
       <DashboardPanel
         action={
-          <Stack direction="row" spacing={1}>
-            <DashboardSecondaryAction onClick={reset} startIcon={<RefreshRoundedIcon />}>Reset</DashboardSecondaryAction>
-            <DashboardPrimaryAction disabled={isPending} onClick={() => run()} startIcon={<FilterAltRoundedIcon />}>
-              {isPending ? "Updating" : "Update results"}
-            </DashboardPrimaryAction>
-          </Stack>
+          <>
+            <Box sx={{ display: { xs: "block", md: "none" } }}>
+              <DashboardPrimaryAction
+                aria-label="Open Trade Explorer filters"
+                onClick={() => setMobileFiltersOpen(true)}
+                startIcon={<FilterAltRoundedIcon />}
+                sx={{ minHeight: 44 }}
+              >
+                Filters
+              </DashboardPrimaryAction>
+            </Box>
+            <Stack direction="row" spacing={1} sx={{ display: { xs: "none", md: "flex" } }}>
+              <DashboardSecondaryAction onClick={reset} startIcon={<RefreshRoundedIcon />}>Reset</DashboardSecondaryAction>
+              <DashboardPrimaryAction disabled={isPending} onClick={() => run()} startIcon={<FilterAltRoundedIcon />}>
+                {isPending ? "Updating" : "Update results"}
+              </DashboardPrimaryAction>
+            </Stack>
+          </>
         }
         title="Explore trades"
       >
-        <Box sx={{ display: "grid", gap: 1.25, gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))", xl: "repeat(6, minmax(0, 1fr))" } }}>
-          <TextField fullWidth label="From" onChange={(event) => patch("startDate", event.target.value)} size="small" type="date" value={query.startDate} slotProps={{ inputLabel: { shrink: true } }} />
-          <TextField fullWidth label="To" onChange={(event) => patch("endDate", event.target.value)} size="small" type="date" value={query.endDate} slotProps={{ inputLabel: { shrink: true } }} />
-          <SelectField label="Currency" onChange={(next) => patch("currency", next === "all" ? null : next)} value={query.currency ?? "all"}>
-            <MenuItem value="all">All currencies</MenuItem>
-            {model.currencies.map((currency) => <MenuItem key={currency} value={currency}>{currency}</MenuItem>)}
-          </SelectField>
-          <Autocomplete
-            autoHighlight
-            fullWidth
-            onChange={(_event, next) => patch("symbol", next)}
-            options={model.symbols}
-            renderInput={(params) => <TextField {...params} label="Ticker" size="small" />}
-            value={query.symbol}
-          />
-          <SelectField label="Direction" onChange={(next) => patch("direction", next === "all" ? null : next as "long" | "short")} value={query.direction ?? "all"}>
-            <MenuItem value="all">All directions</MenuItem><MenuItem value="long">Long</MenuItem><MenuItem value="short">Short</MenuItem>
-          </SelectField>
-          <SelectField label="Result basis" onChange={(next) => patch("moneyBasis", next as "gross" | "net")} value={query.moneyBasis}>
-            <MenuItem value="net">Net P/L</MenuItem><MenuItem value="gross">Gross P/L</MenuItem>
-          </SelectField>
-          <SelectField label="Result" onChange={(next) => patch("outcome", next === "all" ? null : next as "win" | "loss" | "flat")} value={query.outcome ?? "all"}>
-            <MenuItem value="all">All results</MenuItem><MenuItem value="win">Wins</MenuItem><MenuItem value="loss">Losses</MenuItem><MenuItem value="flat">Flat</MenuItem>
-          </SelectField>
-          <SelectField label="View" onChange={(next) => chooseResultView(next as ExplorerResultView)} value={resultView}>
-            <MenuItem value="trades">Trades</MenuItem>
-            <MenuItem value="days">Trading Days</MenuItem>
-            <MenuItem value="tickers">Tickers</MenuItem>
-            <MenuItem value="entry_times">Entry Times</MenuItem>
-            <MenuItem value="holding_time">Holding Time</MenuItem>
-            <MenuItem value="position_size">Position Size</MenuItem>
-            <MenuItem value="periods">Periods</MenuItem>
-          </SelectField>
-          <SelectField label="Statistic" onChange={chooseStatistic} value={statisticMetricIds.includes(query.metricId) ? query.metricId : statisticMetricIds[0] ?? "total_trades"}>
-            {statisticGroups.map((group) => [
-              <ListSubheader key={`${group.label}-heading`}>{group.label}</ListSubheader>,
-              ...group.metricIds.flatMap((metricId) => {
-                const item = explorerMetrics.get(metricId);
-                return item ? [<MenuItem key={item.metricId} value={item.metricId}>{explorerMetricLabel(item.metricId, item.title)}</MenuItem>] : [];
-              }),
-            ])}
-          </SelectField>
-          {resultView === "trades" ? (
-            <SelectField label="Results per page" onChange={(next) => choosePageSize(Number(next) as 12 | 24 | 50 | 100)} value={String(query.evidenceRows)}>
-              <MenuItem value="12">12</MenuItem><MenuItem value="24">24</MenuItem><MenuItem value="50">50</MenuItem><MenuItem value="100">100</MenuItem>
-            </SelectField>
-          ) : null}
+        <Box sx={{ display: { xs: "block", md: "none" } }}>
+          <Stack direction="row" sx={{ alignItems: "center", columnGap: 1, flexWrap: "wrap", rowGap: 0.75 }}>
+            <Chip label={resultView === "trades" ? "Trades" : RESULT_VIEWS[resultView].label} size="small" />
+            <Chip label={query.currency ?? "All currencies"} size="small" variant="outlined" />
+            {query.symbol ? <Chip label={query.symbol} size="small" variant="outlined" /> : null}
+            {hasUnappliedChanges && !isPending ? (
+              <Typography aria-live="polite" color="text.secondary" variant="body2">Filters need to be applied.</Typography>
+            ) : null}
+          </Stack>
         </Box>
-        <Button endIcon={<ExpandMoreRoundedIcon sx={{ transform: advanced ? "rotate(180deg)" : "none" }} />} onClick={() => setAdvanced((current) => !current)} sx={{ mt: 1.5 }}>
-          More filters
-        </Button>
-        <Collapse in={advanced}>
-          <Box sx={{ display: "grid", gap: 1.25, gridTemplateColumns: { xs: "1fr", md: "repeat(3, minmax(0, 1fr))" }, mt: 1.5 }}>
-            <SelectField label="Entry weekday" onChange={(next) => patch("entryWeekday", next === "all" ? null : next as AnalyticsLabPlatformQuery["entryWeekday"])} value={query.entryWeekday ?? "all"}>
-              <MenuItem value="all">Any weekday</MenuItem>{["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"].map((day) => <MenuItem key={day} value={day}>{day.slice(0, 1).toUpperCase() + day.slice(1)}</MenuItem>)}
-            </SelectField>
-            <SelectField label="Entry-time detail" onChange={(next) => patch("entryTimeBucketMinutes", Number(next) as 5 | 15 | 30 | 60)} value={String(query.entryTimeBucketMinutes)}>
-              <MenuItem value="5">5 minutes</MenuItem><MenuItem value="15">15 minutes</MenuItem><MenuItem value="30">30 minutes</MenuItem><MenuItem value="60">60 minutes</MenuItem>
-            </SelectField>
-            <TextField fullWidth label="Entry time (HH:MM)" onChange={(event) => patch("entryTimeBucket", event.target.value === "" ? null : event.target.value)} placeholder="09:30" size="small" value={query.entryTimeBucket ?? ""} />
-            {exactField("Minimum hold (seconds)", query.minimumHoldingSeconds, (next) => patch("minimumHoldingSeconds", next))}
-            {exactField("Maximum hold (seconds)", query.maximumHoldingSeconds, (next) => patch("maximumHoldingSeconds", next))}
-            {exactField("Minimum entered quantity", query.minimumEnteredQuantity, (next) => patch("minimumEnteredQuantity", next))}
-            {exactField("Maximum entered quantity", query.maximumEnteredQuantity, (next) => patch("maximumEnteredQuantity", next))}
-            {exactField("Minimum position size", query.minimumPositionQuantity, (next) => patch("minimumPositionQuantity", next))}
-            {exactField("Maximum position size", query.maximumPositionQuantity, (next) => patch("maximumPositionQuantity", next))}
-            {exactField("Minimum entry value", query.minimumEntryNotional, (next) => patch("minimumEntryNotional", next))}
-            {exactField("Maximum entry value", query.maximumEntryNotional, (next) => patch("maximumEntryNotional", next))}
-          </Box>
-        </Collapse>
+        <Box sx={{ display: { xs: "none", md: "block" } }}>
+          {renderFilterControls(false)}
+        </Box>
 
         <Box sx={{ borderTop: 1, borderColor: "divider", mt: 2, pt: 2 }}>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { xs: "flex-start", sm: "center" }, justifyContent: "space-between", mb: 1.5 }}>
             <Box>
               <Typography sx={{ fontWeight: 800 }}>{activeView?.label ?? "Trades"}</Typography>
-              <Typography color="text.secondary" variant="body2">
-                {selectedStatistic ? `${explorerMetricLabel(selectedStatistic.metricId, selectedStatistic.title)}: ` : ""}
-                {preview.selectedMetric ? formatJournalAnalyticsMetric(preview.selectedMetric) : "N/A"}
-              </Typography>
+              {activeView ? (
+                <Box>
+                  <Typography color="text.secondary" variant="body2">
+                    {showPartitionColumn
+                      ? "Results are ranked separately within each currency and trading timezone."
+                      : <>{selectedStatistic ? `${explorerMetricLabel(selectedStatistic.metricId, selectedStatistic.title)}: ` : ""}{preview.selectedMetric ? formatExplorerMetric(preview.selectedMetric) : "N/A"}</>}
+                  </Typography>
+                  {tradeSummaryPartition ? (
+                    <Typography color="text.secondary" variant="body2">
+                      Currency: {tradeSummaryPartition.currency ?? "Not recorded"} · Trading timezone: {tradeSummaryPartition.timezone ?? "Not recorded"}
+                    </Typography>
+                  ) : null}
+                  {selectedRankingUnavailable ? (
+                    <Typography color="text.secondary" variant="body2">
+                      This Rank by result cannot be calculated for any matching group. Choose another result.
+                    </Typography>
+                  ) : null}
+                </Box>
+              ) : (
+                <Box>
+                  <Stack direction="row" sx={{ columnGap: 2, flexWrap: "wrap", rowGap: 0.25 }}>
+                    {tradeSummary.map((item) => (
+                      <Typography color="text.secondary" key={item.label} variant="body2">
+                        {item.label}: <Box component="span" sx={{ color: "text.primary", fontWeight: 700 }}>{item.value}</Box>
+                      </Typography>
+                    ))}
+                  </Stack>
+                  {tradeProfitFactorUnavailable ? (
+                    <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
+                      Profit factor needs at least one winning trade and one losing trade in these results.
+                    </Typography>
+                  ) : null}
+                </Box>
+              )}
             </Box>
           </Stack>
+          {appliedQuery.moneyBasis === "net" && feeIncompleteTradeCount > 0 ? (
+            <Typography color="text.secondary" sx={{ mb: 1.5 }} variant="body2">
+              Net P/L excludes {feeIncompleteTradeCount} closed {feeIncompleteTradeCount === 1 ? "trade" : "trades"} without complete fee details. Choose Gross P/L to include {feeIncompleteTradeCount === 1 ? "it" : "them"}.
+            </Typography>
+          ) : null}
           {activeView ? (
             <>
-              <Box sx={{ display: "grid", gap: 1.25, gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(3, minmax(0, 1fr))" }, mb: 1.5 }}>
-                {resultView === "periods" ? (
-                  <SelectField label="Period" onChange={(next) => choosePeriodGrouping(next as "closing_day" | "closing_iso_week" | "closing_month" | "closing_year")} value={query.grouping}>
+              <Box sx={{ display: "grid", gap: 1.25, gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" }, mb: 1.5 }}>
+                {appliedResultView === "periods" ? (
+                  <SelectField label="Period" onChange={(next) => choosePeriodGrouping(next as "closing_day" | "closing_iso_week" | "closing_month" | "closing_year")} value={appliedQuery.grouping}>
                     <MenuItem value="closing_day">Day</MenuItem><MenuItem value="closing_iso_week">Week</MenuItem><MenuItem value="closing_month">Month</MenuItem><MenuItem value="closing_year">Year</MenuItem>
                   </SelectField>
                 ) : null}
-                <SelectField label="Sort by" onChange={setSortMetricId} value={sortMetricId}>
-                  {displayedColumns.filter((column) => column.kind !== "day_path").map((column) => <MenuItem key={column.metricId} value={column.metricId}>{column.label}</MenuItem>)}
-                </SelectField>
-                <SelectField label="Order" onChange={(next) => setSortDirection(next as "descending" | "ascending")} value={sortDirection}>
+                <SelectField label="Order" onChange={(next) => chooseSortDirection(next as "descending" | "ascending")} value={sortDirection}>
                   <MenuItem value="descending">Highest first</MenuItem><MenuItem value="ascending">Lowest first</MenuItem>
                 </SelectField>
+                <SelectField
+                  label="Rows per page"
+                  onChange={(next) => {
+                    setGroupPageSize(Number(next) as 10 | 25 | 50 | 100);
+                    setGroupPageIndex(0);
+                  }}
+                  value={String(groupPageSize)}
+                >
+                  <MenuItem value="10">10</MenuItem><MenuItem value="25">25</MenuItem><MenuItem value="50">50</MenuItem><MenuItem value="100">100</MenuItem>
+                </SelectField>
               </Box>
-              {sortedGroups.length === 0 ? (
-                <Typography color="text.secondary">No completed trades match these filters.</Typography>
+              {visibleGroups.length === 0 ? (
+                <Typography color="text.secondary">{emptyTradeMessage}</Typography>
               ) : (
-                <TableContainer sx={{ maxHeight: 560 }}>
+                <TableContainer sx={{ display: { xs: "none", md: "block" }, maxHeight: 560 }}>
                   <Table size="small" stickyHeader>
-                    <TableHead><TableRow><TableCell>{activeView.firstColumnLabel}</TableCell>{displayedColumns.map((column) => <TableCell key={column.label}>{column.label}</TableCell>)}</TableRow></TableHead>
+                    <TableHead><TableRow><TableCell>{activeView.firstColumnLabel}</TableCell>{showPartitionColumn ? <TableCell>{partitionColumnLabel}</TableCell> : null}{displayedColumns.map((column) => <TableCell key={column.label}>{column.label}</TableCell>)}</TableRow></TableHead>
                     <TableBody>
                       {visibleGroups.map((item) => (
                         <TableRow hover key={item.id}>
-                          <TableCell sx={{ fontWeight: 800, textTransform: resultView === "entry_times" ? "none" : "capitalize" }}>{item.label}</TableCell>
+                          <TableCell sx={{ fontWeight: 800, textTransform: appliedResultView === "entry_times" ? "none" : "capitalize" }}>{item.label}</TableCell>
+                          {showPartitionColumn ? <TableCell>{item.partitionLabel}</TableCell> : null}
                           {displayedColumns.map((column) => <TableCell key={column.label}>{column.kind === "day_path" ? dayMovement(item.group) : value(item.group, column.metricId)}</TableCell>)}
                         </TableRow>
                       ))}
@@ -599,71 +979,346 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
                   </Table>
                 </TableContainer>
               )}
+              {visibleGroups.length > 0 ? (
+                <Stack spacing={1.25} sx={{ display: { xs: "flex", md: "none" } }}>
+                  {visibleGroups.map((item) => (
+                    <Box
+                      component="article"
+                      key={item.id}
+                      sx={{ border: 1, borderColor: "divider", borderRadius: 2, p: 1.5 }}
+                    >
+                      <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography
+                            sx={{
+                              fontWeight: 800,
+                              overflowWrap: "anywhere",
+                              textTransform: appliedResultView === "entry_times" ? "none" : "capitalize",
+                            }}
+                          >
+                            {item.label}
+                          </Typography>
+                          <Typography color="text.secondary" variant="caption">{activeView.firstColumnLabel}</Typography>
+                        </Box>
+                        {showPartitionColumn ? <Chip label={item.partitionLabel} size="small" variant="outlined" /> : null}
+                      </Stack>
+                      <Box sx={{ display: "grid", gap: 1.25, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1.5 }}>
+                        {displayedColumns.map((column) => (
+                          <Box key={column.label} sx={{ minWidth: 0 }}>
+                            <Typography color="text.secondary" display="block" variant="caption">{column.label}</Typography>
+                            <Typography sx={{ fontWeight: 700, overflowWrap: "anywhere" }} variant="body2">
+                              {column.kind === "day_path" ? dayMovement(item.group) : value(item.group, column.metricId)}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Box>
+                  ))}
+                </Stack>
+              ) : null}
+              {sortedGroups.length > groupPageSize ? (
+                <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: { xs: "space-between", md: "flex-end" }, mt: 1.5 }}>
+                  <Button
+                    disabled={groupPageIndex === 0}
+                    onClick={() => setGroupPageIndex((current) => Math.max(0, current - 1))}
+                    sx={{ minHeight: 44 }}
+                    variant="outlined"
+                  >
+                    Previous
+                  </Button>
+                  <Typography color="text.secondary" sx={{ whiteSpace: "nowrap" }} variant="body2">
+                    {groupPageStart + 1}-{groupPageEnd} of {sortedGroups.length}
+                  </Typography>
+                  <Button
+                    disabled={groupPageEnd >= sortedGroups.length}
+                    onClick={() => setGroupPageIndex((current) => current + 1)}
+                    sx={{ minHeight: 44 }}
+                    variant="outlined"
+                  >
+                    Next
+                  </Button>
+                </Stack>
+              ) : null}
+              {groupedResultsHaveUnavailable ? (
+                <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">
+                  N/A means the matching trades do not have the facts or mix of results needed for that calculation.
+                </Typography>
+              ) : null}
             </>
           ) : preview.evidence === null ? (
-            <Typography color="text.secondary">Choose one currency to view individual trades.</Typography>
+            <Typography color="text.secondary">
+              {preview.response.crossPartitionCounts.includedCount === 0
+                ? emptyTradeMessage
+                : preview.evidenceUnavailableReason ?? "Choose one currency to view individual trades."}
+            </Typography>
           ) : preview.evidence.rows.length === 0 ? (
-            <Typography color="text.secondary">No completed trades match these filters.</Typography>
+            <Typography color="text.secondary">{emptyTradeMessage}</Typography>
           ) : (
-            <TableContainer sx={{ maxHeight: 560 }}>
-              <Table size="small" stickyHeader>
-                <TableHead><TableRow><TableCell>Closed</TableCell><TableCell>Ticker</TableCell><TableCell>Direction</TableCell><TableCell>Shares</TableCell><TableCell>Average entry</TableCell><TableCell>Average exit</TableCell><TableCell>Total entry amount</TableCell><TableCell>P/L</TableCell><TableCell>Return</TableCell><TableCell>Hold</TableCell><TableCell>Executions</TableCell></TableRow></TableHead>
-                <TableBody>
-                  {preview.evidence.rows.map((trade) => {
-                    const expanded = expandedRoundTripId === trade.roundTripId;
-                    return <Fragment key={trade.roundTripId}>
-                      <TableRow
-                        aria-expanded={expanded}
-                        hover
-                        onClick={() => void toggleTradeExecutions(trade.roundTripId)}
-                        selected={expanded}
-                        sx={{ cursor: "pointer" }}
-                      >
-                        <TableCell>{trade.closeLocalDate}</TableCell>
-                        <TableCell sx={{ fontWeight: 800 }}>{trade.displayedSymbol}</TableCell>
-                        <TableCell sx={{ textTransform: "capitalize" }}>{trade.direction}</TableCell>
-                        <TableCell>{formatJournalAnalyticsDecimal(trade.enteredQuantityDecimal)}</TableCell>
-                        <TableCell>{trade.averageEntryPriceDecimal ? money(trade.averageEntryPriceDecimal) : "N/A"}</TableCell>
-                        <TableCell>{trade.averageExitPriceDecimal ? money(trade.averageExitPriceDecimal) : "N/A"}</TableCell>
-                        <TableCell>{money(trade.entryNotionalDecimal)}</TableCell>
-                        <TableCell sx={{ color: trade.selectedPnlDecimal?.startsWith("-") ? "error.main" : "success.main", fontWeight: 800 }}>{money(trade.selectedPnlDecimal)}</TableCell>
-                        <TableCell>{trade.returnPercentDecimal === null || trade.returnPercentDecimal === undefined ? "N/A" : `${formatJournalAnalyticsDecimal(trade.returnPercentDecimal)}%`}</TableCell>
-                        <TableCell>{holdingTime(trade.holdingDurationMilliseconds)}</TableCell>
-                        <TableCell>{trade.uniqueExecutionCount}</TableCell>
-                      </TableRow>
-                      {expanded ? <TableRow>
-                        <TableCell colSpan={11} sx={{ backgroundColor: "action.hover", px: 3, py: 2 }}>
+            <>
+              <TableContainer sx={{ display: { xs: "none", md: "block" }, maxHeight: 560, overflowX: "auto" }}>
+                <Table
+                  size="small"
+                  stickyHeader
+                  sx={{
+                    minWidth: 980,
+                    width: "max-content",
+                    "& > tbody > tr > td, & > thead > tr > th": {
+                      px: 1,
+                      whiteSpace: "nowrap",
+                    },
+                  }}
+                >
+                  <TableHead><TableRow><TableCell>Closed</TableCell><TableCell>Ticker</TableCell><TableCell>Direction</TableCell><TableCell>Shares</TableCell><TableCell>Avg entry</TableCell><TableCell>Avg exit</TableCell><TableCell>Entry value</TableCell><TableCell>{appliedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L"}</TableCell><TableCell>Return</TableCell><TableCell>Hold</TableCell><TableCell>Executions</TableCell></TableRow></TableHead>
+                  <TableBody>
+                    {preview.evidence.rows.map((trade) => {
+                      const expanded = expandedRoundTripId === trade.roundTripId;
+                      return <Fragment key={trade.roundTripId}>
+                        <TableRow
+                          aria-label={`${expanded ? "Hide" : "Show"} executions for ${trade.displayedSymbol} closed ${trade.closeLocalDate}`}
+                          aria-expanded={expanded}
+                          hover
+                          onKeyDown={(event) => {
+                            if (event.key !== "Enter" && event.key !== " ") return;
+                            event.preventDefault();
+                            void toggleTradeExecutions(trade.roundTripId);
+                          }}
+                          onClick={() => void toggleTradeExecutions(trade.roundTripId)}
+                          selected={expanded}
+                          sx={{ cursor: "pointer" }}
+                          tabIndex={0}
+                        >
+                          <TableCell>
+                            <Box>{trade.closeLocalDate}</Box>
+                            <Typography color="text.secondary" variant="caption">
+                              {tradeCloseTime(trade.closedAtUtc, preview.evidence?.timezone ?? "UTC")}
+                            </Typography>
+                          </TableCell>
+                          <TableCell sx={{ fontWeight: 800 }}>{trade.displayedSymbol}</TableCell>
+                          <TableCell sx={{ textTransform: "capitalize" }}>{trade.direction}</TableCell>
+                          <TableCell>{formatJournalAnalyticsDecimal(trade.enteredQuantityDecimal)}</TableCell>
+                          <TableCell>{trade.averageEntryPriceDecimal ? money(trade.averageEntryPriceDecimal, preview.evidence?.currency ?? null) : "N/A"}</TableCell>
+                          <TableCell>{trade.averageExitPriceDecimal ? money(trade.averageExitPriceDecimal, preview.evidence?.currency ?? null) : "N/A"}</TableCell>
+                          <TableCell>{money(trade.entryNotionalDecimal, preview.evidence?.currency ?? null)}</TableCell>
+                          <TableCell sx={{ color: pnlColor(trade.selectedPnlDecimal), fontWeight: 800 }}>{money(trade.selectedPnlDecimal, preview.evidence?.currency ?? null)}</TableCell>
+                          <TableCell>{trade.returnPercentDecimal === null || trade.returnPercentDecimal === undefined ? "N/A" : `${formatJournalAnalyticsDecimal(trade.returnPercentDecimal)}%`}</TableCell>
+                          <TableCell>{formatJournalAnalyticsDuration(trade.holdingDurationMilliseconds)}</TableCell>
+                          <TableCell>{trade.uniqueExecutionCount}</TableCell>
+                        </TableRow>
+                        {expanded ? <TableRow>
+                          <TableCell colSpan={11} sx={{ backgroundColor: "action.hover", px: 3, py: 2, whiteSpace: "normal" }}>
+                            {executionDetailsStatus === "loading" ? <Typography color="text.secondary">Loading executions…</Typography> : null}
+                            {executionDetailsStatus === "error" ? <Alert severity="error">The executions could not be loaded.</Alert> : null}
+                            {executionDetailsStatus === "ready" && expandedExecutions.length === 0 ? <Typography color="text.secondary">No executions are available for this trade.</Typography> : null}
+                            {executionDetailsStatus === "ready" && expandedExecutions.length > 0 ? <TableContainer sx={{ maxWidth: 650 }}>
+                              <Table aria-label={`${trade.displayedSymbol} trade executions`} size="small" sx={{ tableLayout: "fixed" }}>
+                                <TableHead><TableRow><TableCell sx={{ width: 230 }}>Executed</TableCell><TableCell sx={{ width: 90 }}>Side</TableCell><TableCell sx={{ width: 110 }}>Shares</TableCell><TableCell sx={{ width: 110 }}>Price</TableCell></TableRow></TableHead>
+                                <TableBody>{expandedExecutions.map((execution, index) => <TableRow key={`${execution.executed_at_utc}-${execution.side}-${index}`}>
+                                  <TableCell>{executionTime(execution.executed_at_utc, preview.evidence?.timezone ?? "UTC")}</TableCell>
+                                  <TableCell sx={{ textTransform: "capitalize" }}>{execution.side}</TableCell>
+                                  <TableCell>{formatJournalAnalyticsDecimal(execution.quantity_decimal)}</TableCell>
+                                  <TableCell>{execution.price_decimal === null ? "Not recorded" : money(execution.price_decimal, preview.evidence?.currency ?? null)}</TableCell>
+                                </TableRow>)}</TableBody>
+                              </Table>
+                            </TableContainer> : null}
+                          </TableCell>
+                        </TableRow> : null}
+                      </Fragment>;
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <Stack spacing={1.25} sx={{ display: { xs: "flex", md: "none" } }}>
+                {preview.evidence.rows.map((trade) => {
+                  const expanded = expandedRoundTripId === trade.roundTripId;
+                  const executionRegionId = `trade-explorer-executions-${trade.roundTripId}`;
+                  return (
+                    <Box
+                      component="article"
+                      key={trade.roundTripId}
+                      sx={{ border: 1, borderColor: expanded ? "primary.main" : "divider", borderRadius: 2, overflow: "hidden" }}
+                    >
+                      <Box sx={{ p: 1.5 }}>
+                        <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography sx={{ fontWeight: 800 }} variant="h6">{trade.displayedSymbol}</Typography>
+                            <Typography color="text.secondary" variant="body2">
+                              {trade.closeLocalDate} · {tradeCloseTime(trade.closedAtUtc, preview.evidence?.timezone ?? "UTC")}
+                            </Typography>
+                          </Box>
+                          <Chip label={trade.direction} size="small" sx={{ textTransform: "capitalize" }} variant="outlined" />
+                        </Stack>
+                        <Box sx={{ display: "grid", gap: 1.25, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1.5 }}>
+                          <Box>
+                            <Typography color="text.secondary" display="block" variant="caption">{appliedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L"}</Typography>
+                            <Typography sx={{ color: pnlColor(trade.selectedPnlDecimal), fontWeight: 800 }}>
+                              {money(trade.selectedPnlDecimal, preview.evidence?.currency ?? null)}
+                            </Typography>
+                          </Box>
+                          <Box>
+                            <Typography color="text.secondary" display="block" variant="caption">Return</Typography>
+                            <Typography sx={{ fontWeight: 700 }}>
+                              {trade.returnPercentDecimal === null || trade.returnPercentDecimal === undefined ? "N/A" : `${formatJournalAnalyticsDecimal(trade.returnPercentDecimal)}%`}
+                            </Typography>
+                          </Box>
+                          <Box>
+                            <Typography color="text.secondary" display="block" variant="caption">Shares</Typography>
+                            <Typography sx={{ fontWeight: 700 }}>{formatJournalAnalyticsDecimal(trade.enteredQuantityDecimal)}</Typography>
+                          </Box>
+                          <Box>
+                            <Typography color="text.secondary" display="block" variant="caption">Hold</Typography>
+                            <Typography sx={{ fontWeight: 700 }}>{formatJournalAnalyticsDuration(trade.holdingDurationMilliseconds)}</Typography>
+                          </Box>
+                          <Box>
+                            <Typography color="text.secondary" display="block" variant="caption">Avg entry</Typography>
+                            <Typography sx={{ fontWeight: 700 }}>{trade.averageEntryPriceDecimal ? money(trade.averageEntryPriceDecimal, preview.evidence?.currency ?? null) : "N/A"}</Typography>
+                          </Box>
+                          <Box>
+                            <Typography color="text.secondary" display="block" variant="caption">Avg exit</Typography>
+                            <Typography sx={{ fontWeight: 700 }}>{trade.averageExitPriceDecimal ? money(trade.averageExitPriceDecimal, preview.evidence?.currency ?? null) : "N/A"}</Typography>
+                          </Box>
+                          <Box>
+                            <Typography color="text.secondary" display="block" variant="caption">Entry value</Typography>
+                            <Typography sx={{ fontWeight: 700 }}>{money(trade.entryNotionalDecimal, preview.evidence?.currency ?? null)}</Typography>
+                          </Box>
+                          <Box>
+                            <Typography color="text.secondary" display="block" variant="caption">Executions</Typography>
+                            <Typography sx={{ fontWeight: 700 }}>{trade.uniqueExecutionCount}</Typography>
+                          </Box>
+                        </Box>
+                        <Button
+                          aria-controls={expanded ? executionRegionId : undefined}
+                          aria-expanded={expanded}
+                          endIcon={<ExpandMoreRoundedIcon sx={{ transform: expanded ? "rotate(180deg)" : "none" }} />}
+                          fullWidth
+                          onClick={() => void toggleTradeExecutions(trade.roundTripId)}
+                          sx={{ minHeight: 44, mt: 1.5 }}
+                          variant="outlined"
+                        >
+                          {expanded ? "Hide executions" : "View executions"}
+                        </Button>
+                      </Box>
+                      <Collapse in={expanded}>
+                        <Box id={executionRegionId} sx={{ backgroundColor: "action.hover", borderTop: 1, borderColor: "divider", p: 1.5 }}>
                           {executionDetailsStatus === "loading" ? <Typography color="text.secondary">Loading executions…</Typography> : null}
                           {executionDetailsStatus === "error" ? <Alert severity="error">The executions could not be loaded.</Alert> : null}
                           {executionDetailsStatus === "ready" && expandedExecutions.length === 0 ? <Typography color="text.secondary">No executions are available for this trade.</Typography> : null}
-                          {executionDetailsStatus === "ready" && expandedExecutions.length > 0 ? <TableContainer sx={{ maxWidth: 650 }}>
-                            <Table aria-label={`${trade.displayedSymbol} trade executions`} size="small" sx={{ tableLayout: "fixed" }}>
-                              <TableHead><TableRow><TableCell sx={{ width: 230 }}>Executed (Eastern Time)</TableCell><TableCell sx={{ width: 90 }}>Side</TableCell><TableCell sx={{ width: 110 }}>Shares</TableCell><TableCell sx={{ width: 110 }}>Price</TableCell></TableRow></TableHead>
-                              <TableBody>{expandedExecutions.map((execution, index) => <TableRow key={`${execution.executed_at_utc}-${execution.side}-${index}`}>
-                                <TableCell>{executionTime(execution.executed_at_utc)}</TableCell>
-                                <TableCell sx={{ textTransform: "capitalize" }}>{execution.side}</TableCell>
-                                <TableCell>{formatJournalAnalyticsDecimal(execution.quantity_decimal)}</TableCell>
-                                <TableCell>{execution.price_decimal === null ? "N/A" : money(execution.price_decimal)}</TableCell>
-                              </TableRow>)}</TableBody>
-                            </Table>
-                          </TableContainer> : null}
-                        </TableCell>
-                      </TableRow> : null}
-                    </Fragment>;
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                          {executionDetailsStatus === "ready" && expandedExecutions.length > 0 ? (
+                            <Stack aria-label={`${trade.displayedSymbol} trade executions`} spacing={1}>
+                              {expandedExecutions.map((execution, index) => (
+                                <Box key={`${execution.executed_at_utc}-${execution.side}-${index}`} sx={{ backgroundColor: "background.paper", border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.25 }}>
+                                  <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+                                    <Box>
+                                      <Typography sx={{ fontWeight: 700 }} variant="body2">{executionTime(execution.executed_at_utc, preview.evidence?.timezone ?? "UTC")}</Typography>
+                                      <Typography color="text.secondary" sx={{ textTransform: "capitalize" }} variant="caption">{execution.side}</Typography>
+                                    </Box>
+                                    <Box sx={{ textAlign: "right" }}>
+                                      <Typography sx={{ fontWeight: 700 }} variant="body2">{formatJournalAnalyticsDecimal(execution.quantity_decimal)} shares</Typography>
+                                      <Typography color="text.secondary" variant="caption">
+                                        {execution.price_decimal === null ? "Price not recorded" : money(execution.price_decimal, preview.evidence?.currency ?? null)}
+                                      </Typography>
+                                    </Box>
+                                  </Stack>
+                                </Box>
+                              ))}
+                            </Stack>
+                          ) : null}
+                        </Box>
+                      </Collapse>
+                    </Box>
+                  );
+                })}
+              </Stack>
+              {tradeRowsHaveUnavailable ? (
+                <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">
+                  N/A means this trade does not have the confirmed details needed for that value.
+                </Typography>
+              ) : null}
+            </>
           )}
           {!activeView && preview.evidence && (pageIndex > 0 || preview.evidence.continuationCursor) ? (
-            <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "flex-end", mt: 1.5 }}>
-              <Button disabled={isPending || pageIndex === 0} onClick={() => loadTradePage(pageIndex - 1, pageCursors[pageIndex - 1] ?? null)} variant="outlined">Previous</Button>
-              <Typography color="text.secondary" variant="body2">Page {pageIndex + 1}</Typography>
-              <Button disabled={isPending || !preview.evidence.continuationCursor} onClick={() => loadTradePage(pageIndex + 1, preview.evidence!.continuationCursor)} variant="outlined">Next</Button>
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: { xs: "space-between", md: "flex-end" }, mt: 1.5 }}>
+              <Button disabled={isPending || pageIndex === 0} onClick={() => loadTradePage(pageIndex - 1, pageCursors[pageIndex - 1] ?? null)} sx={{ minHeight: 44 }} variant="outlined">Previous</Button>
+              <Typography color="text.secondary" sx={{ whiteSpace: "nowrap" }} variant="body2">Page {pageIndex + 1}</Typography>
+              <Button disabled={isPending || !preview.evidence.continuationCursor} onClick={() => loadTradePage(pageIndex + 1, preview.evidence!.continuationCursor)} sx={{ minHeight: 44 }} variant="outlined">Next</Button>
             </Stack>
           ) : null}
         </Box>
       </DashboardPanel>
+
+      <Drawer
+          anchor="right"
+          onClose={() => setMobileFiltersOpen(false)}
+          open={mobileFiltersOpen}
+          slotProps={{
+            paper: {
+              sx: {
+                height: "100dvh",
+                maxWidth: 480,
+                width: "100%",
+              },
+            },
+          }}
+        >
+          <Box sx={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+            <Stack
+              direction="row"
+              sx={{
+                alignItems: "center",
+                borderBottom: 1,
+                borderColor: "divider",
+                justifyContent: "space-between",
+                px: 2,
+                py: 1.25,
+              }}
+            >
+              <Box>
+                <Typography component="h2" sx={{ fontWeight: 800 }} variant="h6">Filter trades</Typography>
+                <Typography color="text.secondary" variant="body2">Choose what you want to compare.</Typography>
+              </Box>
+              <IconButton aria-label="Close Trade Explorer filters" onClick={() => setMobileFiltersOpen(false)} sx={{ minHeight: 44, minWidth: 44 }}>
+                <CloseRoundedIcon />
+              </IconButton>
+            </Stack>
+            <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", px: 2, py: 2 }}>
+              {renderFilterControls(true)}
+            </Box>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{
+                borderTop: 1,
+                borderColor: "divider",
+                pb: "calc(12px + env(safe-area-inset-bottom))",
+                px: 2,
+                pt: 1.5,
+              }}
+            >
+              <DashboardSecondaryAction
+                fullWidth
+                onClick={() => {
+                  reset();
+                  setMobileFiltersOpen(false);
+                }}
+                startIcon={<RefreshRoundedIcon />}
+                sx={{ minHeight: 44 }}
+              >
+                Reset
+              </DashboardSecondaryAction>
+              <DashboardPrimaryAction
+                disabled={isPending}
+                fullWidth
+                onClick={() => {
+                  run();
+                  setMobileFiltersOpen(false);
+                }}
+                startIcon={<FilterAltRoundedIcon />}
+                sx={{ minHeight: 44 }}
+              >
+                {isPending ? "Updating" : "Apply"}
+              </DashboardPrimaryAction>
+            </Stack>
+          </Box>
+      </Drawer>
 
       {error ? <Alert severity="error">{error}</Alert> : null}
     </DashboardPage>

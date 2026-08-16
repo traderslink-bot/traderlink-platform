@@ -3,7 +3,10 @@ import { platformFailure } from "@/src/modules/platform/server/database/platform
 import type { JournalAnalyticsFactSet } from "@/src/modules/journal/contracts/journal-analytics-fact-set";
 import type { JournalAnalyticsFactSetService } from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-service";
 
-import type { JournalAnalyticsQuery } from "../contracts/analytics-query";
+import type {
+  JournalAnalyticsQuery,
+  JournalAnalyticsTableOrder,
+} from "../contracts/analytics-query";
 import type {
   JournalAnalyticsPartitionedResponse,
   JournalAnalyticsResponse,
@@ -111,6 +114,7 @@ export function calculateJournalAnalyticsResponse(
 export function calculateJournalAnalyticsRoundTripTableResponse(
   factSet: JournalAnalyticsFactSet,
   query: JournalAnalyticsQuery,
+  tableOrder?: JournalAnalyticsTableOrder,
 ): JournalAnalyticsRoundTripTableResponse {
   const normalized = normalizeJournalAnalyticsFacts(factSet);
   const populations = buildJournalAnalyticsPopulations(normalized, query);
@@ -125,6 +129,7 @@ export function calculateJournalAnalyticsRoundTripTableResponse(
     query.table.pageSize,
     query.table.afterCursor,
     factSet.generatedAtUtc,
+    tableOrder,
   );
 }
 
@@ -179,6 +184,7 @@ export class JournalAnalyticsService {
   getRoundTripAnalyticsTable(
     scope: WorkspaceAccessScope,
     query: JournalAnalyticsQuery,
+    tableOrder?: JournalAnalyticsTableOrder,
   ): JournalAnalyticsRoundTripTableResponse {
     const factSet = this.facts.getJournalAnalyticsFactSet(scope, {
       accountIds: query.accountIds,
@@ -190,7 +196,11 @@ export class JournalAnalyticsService {
             currency: query.currency,
           }),
     });
-    return calculateJournalAnalyticsRoundTripTableResponse(factSet, query);
+    return calculateJournalAnalyticsRoundTripTableResponse(
+      factSet,
+      query,
+      tableOrder,
+    );
   }
 
   getAnalyticsCapabilityMetadata() {

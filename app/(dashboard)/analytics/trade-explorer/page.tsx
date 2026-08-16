@@ -10,7 +10,7 @@ export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: "Trade Explorer | TraderLink Platform",
-  description: "Compare your confirmed Trade Tracker results.",
+  description: "Explore your confirmed Trade Tracker results.",
 };
 
 export default async function TradeExplorerPage() {

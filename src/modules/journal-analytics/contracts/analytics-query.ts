@@ -12,6 +12,17 @@ export const JOURNAL_ANALYTICS_TIME_BUCKET_MINUTES = Object.freeze([
 ] as const);
 
 export type JournalAnalyticsMoneyBasis = "gross" | "net";
+export type JournalAnalyticsTableSortField =
+  | "closed_at"
+  | "selected_pnl"
+  | "return_percent"
+  | "holding_duration"
+  | "entered_quantity"
+  | "entry_notional";
+export type JournalAnalyticsTableOrder = Readonly<{
+  field: JournalAnalyticsTableSortField;
+  direction: "ascending" | "descending";
+}>;
 export type JournalAnalyticsDirection = "long" | "short";
 export type JournalAnalyticsOutcome = "win" | "loss" | "flat";
 /**

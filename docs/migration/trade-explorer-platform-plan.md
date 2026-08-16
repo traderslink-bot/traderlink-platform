@@ -1,16 +1,19 @@
 # Trade Explorer Plan
 
-**Status:** Active Explorer 1 implementation. The owner approved construction
-of the real trade-exploration workspace on 2026-08-04. This plan remains the full
-target; controls appear only when they execute against accepted Journal facts.
-Future session, tag, rule and analyzer fact contracts still require their own
-review before their Explorer controls are enabled.
+**Status:** Explorer 1 truthful-ordering correction implemented and tenth-pass
+QA complete with the tenth pass finding no new Trade Explorer issue; owner
+visual/product review remains. The owner approved construction
+of the real trade-exploration workspace on 2026-08-04 and approved the truthful
+Trades ordering plus trade-review workflow direction on 2026-08-16. This plan remains
+the full target; controls appear only when they execute against accepted Trade Tracker
+facts. Future session and analyzer fact contracts still require their own review
+before their Explorer controls are enabled.
 
 **Progress:** [Trade Explorer Progress](trade-explorer-platform-progress.md)
 
 ## 1. Outcome
 
-Trade Explorer will be the Journal's completed-trade exploration workspace. A
+Trade Explorer will be Trade Tracker's completed-trade exploration workspace. A
 trader will filter completed trades, choose a metric, inspect the actual trades
 that produced the result and save useful views for later. Period comparison is
 a separate optional tool rather than the page's primary purpose.
@@ -27,7 +30,7 @@ generic charts. It is a clear, practical place to answer questions such as:
 - Which exact trades make up a result so the trader can review the evidence
   rather than trust a black-box statistic?
 
-The finished feature should show everything the accepted Journal facts can
+The finished feature should show everything the accepted Trade Tracker facts can
 support. It must not hold back a useful calculation merely because it is more
 advanced, but it must never invent a value, combine incompatible populations,
 or make a thin sample look conclusive.
@@ -81,7 +84,7 @@ moving between them.
 | **Timeline** | Completed-trade and daily P/L views across the selected period, with selectable date ranges and the ability to open the exact day or trade. |
 | **Sessions** | Compare pre-market, regular-hours and post-market entries/exits. This is a focused view of the session filters and time-of-day results, not a separate calculation system. |
 | **Patterns** | Compare saved tags, setups, rule results and—when available—stored entry/exit analyzer observations. It never guesses a pattern that was not saved or observed. |
-| **Saved studies** | Reopen a named comparison with its original filters, groups and selected basis. A saved study is private to the selected Journal account. |
+| **Saved studies** | Reopen a named comparison with its original filters, groups and selected basis. A saved study is private to the selected trading account. |
 
 The first implementation organizes results into factual table families rather
 than forcing unrelated metrics into one table: Trades, Trading Days, Tickers,
@@ -90,6 +93,16 @@ labels, columns and useful sort choices. Day-path metrics such as red-to-green
 and green-to-red appear only in Trading Days. The unfinished comparison builder
 is withheld from this first draft and will return as a separate feature after
 the Explorer views are accepted.
+
+The approved Trades correction separates individual-trade ordering from group
+statistics. Trades defaults to all directions with the most recently closed
+trade first. Its `Sort trades` choices may order only factual row values such as
+close time, P/L, return, holding time, shares and entry value. Profit factor,
+win rate, averages, medians and expectancy remain clearly labelled summaries of
+the selected population; they never pretend to rank one trade. Winning, losing
+and flat trades remain explicit Result filters rather than hidden side effects
+of a statistic choice. Grouped views use `Rank by` only where the selected
+statistic can truthfully order the returned groups.
 
 The first screen should be compact: date, ticker, metric and other primary
 filters followed immediately by the actual matching-trade list. Advanced
@@ -101,16 +114,16 @@ execution-origin filter and no repeated data-integrity language.
 
 A study starts with a base population of completed trades, then adds two to
 four named comparison groups. A group can be built from one or several of the
-following confirmed Journal facts:
+following confirmed Trade Tracker facts:
 
 | Area | Available comparison choices |
 | --- | --- |
 | Time | closed date range, month, week, year, entry weekday, entry-time bucket, holding-duration range |
 | Market session | entry session and exit session: pre-market, regular hours, post-market or a trade that crossed sessions |
-| Instrument | ticker/instrument, direction, currency, selected Journal account |
+| Instrument | ticker/instrument, direction, currency, selected trading account |
 | Trade shape | automatically derived day trade or other completed trade, entered quantity, maximum position size, entry value, holding-duration buckets |
 | Result | win/loss/flat, gross or net basis, P/L range |
-| Trader journal | tags, setups, trade notes present, day review state, and rules only when their saved meaning makes the comparison factual |
+| Trade review | tags, setups, trade notes present, day review state, and rules only when their saved meaning makes the comparison factual |
 | Market analysis | entry/exit snapshots, candle observations and supported candle types only where a saved normalized analysis snapshot exists |
 
 The initial screen must make common comparisons easy without forcing a trader
@@ -186,7 +199,7 @@ The page also provides useful visual summaries when they clarify a comparison:
 
 Charts are helpers, not a second source of truth. Each chart has a matching
 table or accessible details list; no chart is created for a measure that the
-Journal cannot calculate honestly.
+Trade Tracker cannot calculate honestly.
 
 ### 3.5 Trade evidence and drill-down
 
@@ -232,7 +245,7 @@ The comparison controls must make these distinctions obvious:
 | Intentional swing / long-term / bag-holding state | Trader-authored open-position classification. It may be filtered or shown as context only after a closed-trade history contract is confirmed; it never turns an open position into realized performance. |
 | Legitimate open position | Separate inventory view only, with no realized comparison metrics. |
 | Needs Decision / excluded / superseded | Never used as a completed-trade metric. They remain in Data Decisions and are not presented in Trade Explorer. |
-| Unresolved market-analysis snapshot | The trade remains in normal Journal comparisons; it is excluded only from the related analyzer statistic. |
+| Unresolved market-analysis snapshot | The trade remains in normal Trade Tracker comparisons; it is excluded only from the related analyzer statistic. |
 
 This prevents the confusing comparison of active swings against day trades
 while still allowing a trader to make a deliberate completed-trade study later.
@@ -248,6 +261,13 @@ while still allowing a trader to make a deliberate completed-trade study later.
    clear title, a compact filter/study bar, comparison groups, scorecards,
    breakdowns and evidence. It must remain usable on mobile by stacking cards
    and using an intentional details panel rather than horizontal overflow.
+   The completed-trade table keeps its useful financial columns compact, using
+   `Avg entry`, `Avg exit` and `Entry value` labels with tighter cell spacing.
+   Notes, tags and rules do not become additional data columns. A narrow Review
+   action opens a right-side trade-review panel on desktop and the same editor
+   as a full-screen sheet on mobile. Previous/next controls support reviewing
+   many matching trades without returning to the top of the page. Existing
+   execution detail remains separately available from the trade row.
 3. Start with an understandable empty state: “Add completed trades to compare
    results here.” It does not show fixtures or sample comparisons.
 4. Explain only the immediate value of a control in trader language. Avoid
@@ -335,14 +355,21 @@ storage, backfill policy and verification are accepted.
 2. Add the filter builder, metric selector, actual matching-trade list and
    evidence drill-down, with period comparison kept as a separate optional
    section.
-3. Obtain owner visual approval before adding more controls or charts.
+3. Correct the Trades contract so all directions/newest-first is the default,
+   individual rows receive only truthful server-side sort choices and grouped
+   statistics rank only factual groups.
+4. Obtain owner visual approval before adding the trade-review editor, more
+   controls or charts.
 
 ### Explorer 3 — advanced studies and saved work
 
 1. Add up-to-four groups, named comparisons, comparison deltas, sorting,
    chart/table views and versioned saved studies.
-2. Add only the journal facts that have an accepted contract: tags, setup,
-   rules, daily review and closed lifecycle context.
+2. Add the approved completed-trade Review panel over the existing stable
+   round-trip note, tag and trade-rule-review contracts. Custom trade rules may
+   be marked Followed, Broken or Not reviewed; deterministic preset results
+   remain factual and read-only. Add other Journal facts only after their own
+   accepted contract.
 3. Prove saved study ownership, optimistic update behavior, immutable history
    and that a saved study refreshes visibly rather than silently changing its
    definition.

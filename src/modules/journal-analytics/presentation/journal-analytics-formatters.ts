@@ -55,9 +55,13 @@ export function formatJournalAnalyticsDecimal(
   return parts.negative && units !== BigInt(0) ? `-${rendered}` : rendered;
 }
 
-function formatDuration(milliseconds: number): string {
-  if (milliseconds < 60_000) return `${Math.round(milliseconds / 1_000)} sec`;
-  if (milliseconds < 3_600_000) return `${Math.round(milliseconds / 60_000)} min`;
+export function formatJournalAnalyticsDuration(milliseconds: number): string {
+  if (milliseconds < 60_000) {
+    return `${formatJournalAnalyticsDecimal(String(milliseconds / 1_000))} sec`;
+  }
+  if (milliseconds < 3_600_000) {
+    return `${formatJournalAnalyticsDecimal(String(milliseconds / 60_000))} min`;
+  }
   return `${formatJournalAnalyticsDecimal(String(milliseconds / 3_600_000))} hr`;
 }
 
@@ -65,8 +69,18 @@ function formatExactValue(
   value: JournalAnalyticsExactValue,
   metric: JournalAnalyticsMetricResult,
 ): string {
+  if (metric.valueKind === "duration" && value.kind !== "text") {
+    const milliseconds = value.kind === "duration"
+      ? value.milliseconds
+      : value.kind === "integer"
+        ? value.value
+        : Number(value.kind === "decimal" ? value.valueDecimal : value.roundedDecimal);
+    if (Number.isFinite(milliseconds) && milliseconds >= 0) {
+      return formatJournalAnalyticsDuration(milliseconds);
+    }
+  }
   if (value.kind === "integer") return value.value.toLocaleString("en-US");
-  if (value.kind === "duration") return formatDuration(value.milliseconds);
+  if (value.kind === "duration") return formatJournalAnalyticsDuration(value.milliseconds);
   if (value.kind === "text") return value.value;
   const decimal = value.kind === "decimal"
     ? value.valueDecimal

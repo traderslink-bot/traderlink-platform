@@ -8,12 +8,13 @@ const section = (id: string, title: string, summary: string, keywords: readonly 
 const guide = (slug: string, title: string, description: string, sections: readonly HelpArticleSection[]): HelpGuide => Object.freeze({ description, sections: Object.freeze(sections), slug, title });
 
 export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
-  guide("getting-started", "Getting started", "Use Core Analytics to compare the completed-trade facts in your Trade Tracker without changing any executions.", [
+  guide("getting-started", "Getting started", "Use Core Analytics to compare confirmed completed-trade facts in Trade Tracker without changing any executions.", [
     section("what-core-analytics-shows", "What Core Analytics shows", "The standard Analytics pages summarize the completed trades that have enough accepted facts for each result.", ["analytics", "completed trades", "trade tracker", "results", "performance"], [
-      paragraph("Core Analytics is the regular factual view of saved Trade Tracker results. It includes Analytics Overview, Results, Timing and Execution. It helps you compare recorded outcomes; it does not predict a future trade or recommend an action."),
+      paragraph("Core Analytics is the regular factual view of confirmed Trade Tracker results, including imported and manually entered trades. It includes Analytics Overview, Trade Explorer, Ticker, Timing and Execution. It helps you compare recorded outcomes; it does not predict a future trade or recommend an action."),
       table(["Page", "Use it for"], [
         ["Overview", "Read key completed-trade measures and their monthly Net P/L history."],
-        ["Results", "Compare completed-trade results by ticker."],
+        ["Trade Explorer", "Filter individual completed trades or rank factual groups such as trading days and tickers."],
+        ["Ticker", "Compare completed-trade results by ticker."],
         ["Timing", "Compare completed-trade results by entry time, exit time, day of week and trading session."],
         ["Execution", "Compare completed trades by entry size, maximum position and holding time."],
       ]),
@@ -22,13 +23,27 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       paragraph("Use Daily Trade Tracker, Quick Trade Entry, Import Trades or Data Decisions when you need to add, correct or resolve factual trade information. Analytics only arranges the facts that are currently available."),
       link("/help/daily-trade-tracker/getting-started", "Read Daily Trade Tracker help", "Open the Daily Tracker when you want to review one trading date or work with its supporting tools."),
     ]),
+    section("use-trade-explorer", "Use Trade Explorer", "Inspect individual completed trades or rank factual groups without changing Trade Tracker records.", ["trade explorer", "sort trades", "rank by", "result filter", "gross p/l", "net p/l"], [
+      bullets([
+        "The Trades view starts with all directions and the most recently closed trade first.",
+        "Sort trades orders individual rows only by facts each trade has, such as P/L, return, hold time, shares or entry value.",
+        "Result narrows the current Gross or Net P/L population to Wins, Losses or Flat trades.",
+        "Trading Days, Tickers, Entry Times, Holding Time, Position Size and Periods use Rank by to order their factual groups.",
+        "Rank by offers the Gross or Net P/L that matches the selected Result basis, never the opposite basis.",
+        "Rank by hides calculations that the selected Result makes impossible or unable to change the order, such as Profit factor when only Wins are selected.",
+        "Net P/L shows fee-covered trades. If fee details are incomplete, Trade Explorer states how many closed trades are omitted and Gross P/L can include them.",
+        "Money results stay ranked within their recorded currency and trading timezone when more than one partition is present.",
+        "On a phone, choose Filters to open the full filter drawer. Apply returns to results, which are shown as readable cards; View executions expands the recorded fills inside one trade card.",
+        "Grouped views use Rows per page and Previous or Next so a long ticker, day or period history stays bounded.",
+      ]),
+    ]),
   ]),
   guide("overview-and-date-range", "Read the overview and date range", "Choose a completed-trade date range, then read the key results and monthly Net P/L without mixing currencies.", [
-    section("set-a-date-range", "Set a date range", "Analytics Overview, Results and Execution use the selected completed-trade date range.", ["date range", "all time", "last 3 months", "custom date", "update analytics"], [
+    section("set-a-date-range", "Set a date range", "Analytics Overview, Ticker and Execution use the selected completed-trade date range.", ["date range", "all time", "last 3 months", "custom date", "update analytics"], [
       bullets([
         "Choose All time, Last 3 months, Last 6 months, Last 12 months, This year or Custom range.",
         "For a Custom range, enter a start and end date, then choose Update.",
-        "The range is based on the completed trade's closing date. It does not move an execution or change the original Trade Tracker date.",
+        "The range is based on the completed trade's closing date. It does not move an execution or change its recorded date.",
       ]),
       paragraph("Timing currently shows the available completed-trade population without this date-range control. Its time labels identify the displayed timezone."),
     ]),
@@ -46,8 +61,8 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       paragraph("If the selected completed trades use more than one currency, Analytics displays the monetary results separately. Do not compare or add separate currency figures as if they were one amount unless you have the conversion information you need outside this page."),
     ]),
   ]),
-  guide("compare-results-by-ticker", "Compare results by ticker", "Use the Results table to search, sort and compare the selected completed-trade results by ticker.", [
-    section("read-the-results-table", "Read the Results table", "Each row groups the selected completed trades for one ticker.", ["results", "ticker", "net p/l", "average p/l", "trade count"], [
+  guide("compare-results-by-ticker", "Use the Ticker page", "Use the Ticker table to search, sort, paginate and compare the selected completed-trade results by ticker.", [
+    section("read-the-results-table", "Read the Ticker table", "Each row groups the selected completed trades for one ticker.", ["results", "ticker", "net p/l", "average p/l", "trade count"], [
       table(["Column", "Meaning"], [
         ["Net P/L", "The selected completed-trade result for the ticker."],
         ["Win rate", "The percentage of included completed trades for that ticker with a positive result."],
@@ -56,8 +71,8 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         ["Average P/L", "The average selected result per included completed trade for that ticker."],
       ]),
     ]),
-    section("search-and-sort", "Search and sort", "Search for a ticker, then choose a column heading to change the order of the current rows.", ["search ticker", "sort results", "table columns", "results filter"], [
-      paragraph("The Ticker field narrows the displayed rows to matching symbols. Selecting a column heading sorts by that column; select it again to reverse the direction. These controls only change the view in your browser."),
+    section("search-and-sort", "Search, sort and paginate", "Search for a ticker, choose a column heading to change the order, and select how many rows appear on each page.", ["search ticker", "sort results", "table columns", "results filter", "rows per page", "pagination"], [
+      paragraph("The Ticker field narrows the displayed rows to matching symbols. Desktop uses sortable column headings; mobile uses a Sort control and ticker cards with the same results. Rows per page changes the page size, and the pagination controls move through the remaining tickers. These controls only change the view in your browser."),
     ]),
   ]),
   guide("timing-and-execution", "Review timing and execution", "Compare recorded timing and completed-trade execution characteristics without treating a summary as a trading rule.", [
@@ -65,7 +80,7 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       bullets([
         "Choose Net P/L, Average P/L per trade, Win rate or Trade count to change the measure in the charts.",
         "Entry time and Exit time show the timezone named in the chart title.",
-        "Use the chart-style control to change how the same recorded groups are displayed.",
+        "Charts start with phone-friendly horizontal bars. Use the chart-style control to change how the same recorded groups are displayed.",
         "The Best label identifies the highest displayed value for the selected measure; it is an observation, not a recommendation.",
       ]),
     ]),
@@ -73,14 +88,15 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       bullets([
         "Choose Net P/L, Win rate or Trade count to change the chart measure.",
         "Use the chart-style control to switch between horizontal bars and columns.",
-        "Use the ticker, direction and trade-type filters to narrow the completed-trade table.",
-        "Sort the table and change its page size to inspect the recorded trades behind the current view.",
+        "Use the ticker, direction and trade-type filters to narrow the completed-trade evidence.",
+        "Desktop uses a sortable table. Mobile uses a Sort control and trade cards with the same execution facts.",
+        "Rows per page offers 10, 25, 50 or 100 while pagination keeps long histories bounded.",
       ]),
       paragraph("A larger or smaller group result describes the included past trades. It does not establish a future position size, target or stop."),
     ]),
   ]),
   guide("coverage-and-limits", "Coverage and limits", "Understand why a Core Analytics result can be complete, partial, empty or unavailable.", [
-    section("included-trades", "Which trades contribute", "Core Analytics uses completed Trade Tracker trades that have the facts required for the selected result.", ["coverage", "included trades", "completed trade", "open positions", "data decisions"], [
+    section("included-trades", "Which trades contribute", "Core Analytics uses confirmed completed Trade Tracker trades that have the facts required for the selected result.", ["coverage", "included trades", "completed trade", "open positions", "data decisions"], [
       paragraph("Confirmed open positions remain separate from realized P/L. A pending Data Decision can keep the affected chain out of a calculation, but it does not hide unrelated completed trades that are ready to use."),
       link("/help/open-positions/getting-started", "Read Open Positions help", "See why a confirmed open position remains outside realized completed-trade results."),
       link("/help/data-decisions/getting-started", "Read Data Decisions help", "Resolve a factual question with broker evidence when the page asks for one."),
