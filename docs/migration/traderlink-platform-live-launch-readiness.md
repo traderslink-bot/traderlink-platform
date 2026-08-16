@@ -1,8 +1,8 @@
-# TraderLink Platform Live Launch Readiness
+# TradersLink Platform Live Launch Readiness
 
 ## Purpose
 
-This is the single operational checklist for making the complete TraderLink
+This is the single operational checklist for making the complete TradersLink
 Platform work correctly for real users. It consolidates hosting, Vercel, Neon,
 SQLite, persistent storage, migrations, identity, secrets, scheduled work,
 backups, monitoring, DNS and rollback. Feature plans remain authoritative for
@@ -17,20 +17,42 @@ privacy-safe evidence.
 | Surface | Current state | Storage/runtime | Launch meaning |
 | --- | --- | --- | --- |
 | Public landing and Academy | Live on Vercel | Existing Vercel/Neon-backed public services where configured | This is not the complete replacement dashboard. |
-| Complete TraderLink Platform replacement | Local testing only | One Platform-owned SQLite database plus protected private evidence roots | It is not yet publicly deployed. |
-| Full replacement hosting target | Not provisioned | Persistent single-node host and persistent disk; Railway is one suitable candidate, not a required brand | Required because the current Platform/Journal repositories use SQLite. |
+| Complete TradersLink Platform replacement | Local testing only | One Platform-owned SQLite database plus protected private evidence roots | It is not yet publicly deployed. |
+| Full replacement hosting target | Not provisioned | Railway persistent single-node service and persistent disk | Required because the current Platform/Journal repositories use SQLite. |
 | Full replacement on Vercel/Neon | Not implemented | Would require a deliberate Platform-wide SQLite-to-Postgres repository/migration program | Do not assume existing Neon use makes the replacement Vercel-ready. |
 
 ### Current architecture decision
 
-For the near-term launch, use a persistent single-node host with a persistent
-disk for the complete replacement. Keep the calendar and background-job
-contracts host-neutral so Railway can be replaced by an equivalent provider.
+For the near-term launch, use one Railway persistent single-node service with a
+persistent disk for the complete replacement. Keep the calendar and background-job
+contracts host-neutral so Railway can later be replaced by an equivalent provider.
 Do not move the complete replacement to Vercel until its core Platform database
 has an accepted Neon/Postgres adapter and equivalent transaction, isolation,
 migration, backup and restore evidence.
 
 ## Launch gates
+
+### 0. Railway account and controlled operator access
+
+- [ ] The owner creates the Railway account and a dedicated TradersLink workspace;
+  the owner remains an Admin and billing owner. Enable MFA or a passkey and save
+  recovery codes outside the repository.
+- [ ] Connect only the published `traderslink-bot/traderlink-platform` GitHub
+  repository when Railway asks for a source. Do not connect the preserved legacy
+  repository as the replacement service source.
+- [ ] Do not share a Railway password, recovery code, workspace API token or a
+  broadly scoped account token with Codex or in chat. At the approved provisioning
+  session, the owner authenticates the local Railway CLI through its browser/device
+  flow; that local session is enough for Codex to inspect and operate the one
+  selected project under the owner's active supervision.
+- [ ] After the project exists, use a project-scoped `RAILWAY_TOKEN` only for a
+  narrowly approved automated deployment or maintenance procedure, store it only
+  in Railway/GitHub protected secrets, and rotate/revoke it when that procedure
+  ends. Do not create an account/workspace-scoped `RAILWAY_API_TOKEN` for ordinary
+  Platform operation.
+- [ ] Do not create a Railway project, attach a volume, enter secrets, upload a
+  database, generate a public domain or deploy merely by completing this account
+  setup. Those remain the later explicit launch operations below.
 
 ### 1. Source and release integrity
 
@@ -46,8 +68,9 @@ migration, backup and restore evidence.
 
 ### 2. Hosting and persistent storage
 
-- [ ] Provision one accepted persistent single-node runtime (Railway or an
-  equivalent provider) for the complete replacement.
+- [ ] Provision one accepted Railway persistent single-node runtime for the
+  complete replacement. Use an equivalent provider only if Railway cannot meet
+  the same accepted storage, single-writer and recovery contract.
 - [ ] Attach a persistent volume at the exact configured Platform database and
   protected evidence-root paths. Container-local or ephemeral paths fail the
   gate.
@@ -125,7 +148,7 @@ migration, backup and restore evidence.
 ### 7. AI and paid-feature controls
 
 - [x] Complete the initial Whop packaging, entitlement and customer-access
-  contract for AI Reviews. Whop owns price/trial/renewal truth; TraderLink owns
+  contract for AI Reviews. Whop owns price/trial/renewal truth; TradersLink owns
   only privacy-safe access projection and generation enforcement.
 - [ ] Configure provider/model, all four verified token prices, cadence burst
   caps, the USD 2.00 per-subscriber Whop paid-cycle safeguard, a non-blocking
@@ -162,7 +185,7 @@ migration, backup and restore evidence.
 - [ ] Rehearse rollback without deleting production data or reverting an
   irreversible migration.
 
-## Current known readiness state — 2026-08-09
+## Current known readiness state — 2026-08-16
 
 - The complete replacement is local-only and uses SQLite for its core Platform,
   Journal, Trade Tracker and AI Review repositories.
@@ -170,11 +193,11 @@ migration, backup and restore evidence.
   replacement has not been ported to a Neon/Postgres Platform database.
 - A prior full-replacement Vercel attempt correctly failed the persistent `/data`
   readiness contract and was rolled back.
-- Local migrations are current through
-  `0051_coach_ai_review_cache_write_accounting`, including the
-  disposable-verified Whop entitlement, subscriber safeguards and exact
-  ordinary-input/cache-read/cache-write/output pricing foundations. None of
-  these local migration states implies production application.
+- The source manifest and controlled local database are current through 59
+  applied migrations, ending at `0059_daily_trade_pattern_occurrences`.
+  This includes the accepted AI Review and AI Chat accounting foundations plus
+  immutable analyzed-trade pattern occurrences. None of these local migration
+  states implies production application.
 - The verified baseline AI Review calendar covers 2026. Next-year coverage is
   accepted only after the stored two-source verifier confirms Nasdaq and NYSE
   agree; otherwise it remains visibly fail-closed and retries on schedule.
@@ -191,13 +214,16 @@ migration, backup and restore evidence.
   configuration, customer activation and hosted automatic generation remain
   inactive. The disposable end-to-end issuance/reopen proof and Whop API
   reconciliation migration/application passed locally.
-- Hosting provisioning, production database creation/transfer, owner linking,
-  production scheduler activation, full-app DNS cutover and rollback rehearsal
-  remain open.
+- Railway was selected for the first hosted replacement runtime, but its account,
+  workspace, project, volume, secrets and domain are intentionally not yet
+  provisioned. The owner must first complete the controlled account setup in
+  Launch Gate 0; no credential should be pasted into chat or committed locally.
+- Production database creation/transfer, owner linking, production scheduler
+  activation, full-app DNS cutover and rollback rehearsal remain open.
 
 ## Evidence links
 
-- [TraderLink Platform Replacement Plan](traderlink-platform-replacement-plan.md)
+- [TradersLink Platform Replacement Plan](traderlink-platform-replacement-plan.md)
 - [Migration Progress](migration-progress.md)
 - [Migration Register](migration-register.md)
 - [Operational and Configuration Inventory](operational-and-configuration-inventory.md)
