@@ -25,7 +25,11 @@ import type { CoachAiChatAnnotationContextService } from "./coach-ai-chat-annota
 
 /** A generation has one shared factual-result budget. Results are never shortened to fit it. */
 /** Across at most two tool steps; later model calls can receive this package twice. */
-export const COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES = 64 * 1024;
+// Keep the complete, cumulative result set large enough for bounded trade and
+// analytics rows while leaving room for Chat's expanded tool inventory,
+// structured output, trusted page context, and repeated model steps inside the
+// immutable 256 KB provider-input ceiling.
+export const COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES = 48 * 1024;
 
 function isoDate(value: Date): string {
   return value.toISOString().slice(0, 10);

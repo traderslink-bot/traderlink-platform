@@ -2,58 +2,61 @@
 
 ## Status
 
-Implemented locally as a server-only saved-question orchestration slice. This
-supplements the controlling [AI Companion Plan](ai-chat-plan.md), the complete
-[language plan](traderslink_ai_chatbot_complete_language_plan.md), and the
-existing Chat persistence/provider-control records. It does not authorize a
-route, UI, provider call, migration, Journal write, manual entry, deployment,
-or entitlement change.
+The local AI Chat runtime is implemented against the complete current-dashboard
+capability matrix. This supplements the controlling
+[AI Companion Plan](ai-chat-plan.md), the
+[current dashboard capability matrix](ai-chat-current-dashboard-capability-matrix.md),
+and the complete
+[language plan](traderslink_ai_chatbot_complete_language_plan.md).
 
-## Completed in this slice
+The remaining live-provider checkpoint requires the owner to configure a Chat
+API key in TraderLink's own runtime and enable the platform Chat control. It is
+not permission to copy a credential from another application or to bypass the
+disabled control.
 
-- A strict stored answer contract: direct answer, one to four supporting
-  observations, optional honest limitation, optional next question, and
-  evidence references that must resolve to saved deterministic-tool calls.
-- A dispatcher over only the four implemented closed-trade factual tools. It
-  preserves returned coverage, unavailable states, limitations, revisions, and
-  current notes/tags. It records exact request/result snapshots and fails if
-  their combined serialized result exceeds 72 KB; no result is shortened.
-- A direct OpenAI AI SDK adapter that reads `OPENAI_API_KEY` server-side only,
-  uses the immutable provider/model/pricing snapshot on the reserved attempt,
-  permits only the four deterministic tools, and performs at most two factual
-  tool steps followed by one structured-answer step. This permits a bounded
-  sequential lookup without allowing open-ended tool loops.
-- Reservation includes the bounded history and question, the maximum factual
-  result budget twice (its repeated inclusion in the two later model steps),
-  bounded history/question repeats, and a separate 32 KB allowance for the
-  real system contract, all four tool schemas, structured output, and all three
-  model steps. The complete reserved representation remains below the
-  provider-control 256 KB input guard. Actual recorded usage/cost is checked
-  against that immutable reservation before completion.
-- The generation service verifies scope before all work; atomically appends a
-  user message, creates its pending assistant, and reserves the provider
-  attempt; marks the attempt started immediately before a provider call; and
-  atomically records either the completed answer/snapshot/receipt or a
-  failure/receipt state. SQLite transactions do not remain open during the
-  external call.
-- Account-scoped retry digests are read before a new message is appended. The
-  same conversation/question reuses its existing pending, completed, failed,
-  or blocked attempt. Reuse for another conversation or question fails closed.
+## Implemented runtime
 
-## Important retry boundary
+- The official OpenAI Agents SDK over the Responses API owns one bounded
+  manager-agent loop. Private-content tracing and provider response storage are
+  disabled.
+- Account-scoped conversations retain bounded history, exact deterministic
+  factual snapshots, immutable usage/cost receipts, safe retries and private
+  original messages. Operational records and logs contain no full chat text.
+- The deterministic dispatcher covers the current Journal, Tracker, Analytics,
+  saved Trade Analyzer/Candle Review, Import, Data Decisions, Notifications,
+  Account, Help, AI Review, Trading Rules and Trade Tags read families recorded
+  in the capability matrix.
+- The cumulative factual-result ceiling is 48 KB. Provider reservation includes
+  its repeated use, bounded history/question/context, expanded tool schemas and
+  structured output while remaining below the immutable 256 KB input guard.
+  Oversized results fail closed and are never silently shortened.
+- Every supported write begins as an account-scoped, expiring preview. Manual
+  executions, notes/focuses, Swing changes, tags, Trading Rules, bounded Data
+  Decisions, notifications, reporting currency, Journal account changes and AI
+  Review settings/requests use their canonical command only after explicit
+  confirmation. Generation itself performs no product mutation.
+- The global responsive drawer and `/ai-chat` direct route reuse the same Chat
+  surface. Drawer navigation preserves the trader's current dashboard route.
+- Trade Explorer is intentionally isolated behind its current versioned adapter
+  because that product feature is incomplete and will be updated.
+
+## Retry boundary
 
 If a provider call finishes but the final receipt/attempt validation cannot be
 persisted atomically, the transaction intentionally rolls back, leaving the
 assistant pending and the attempt started. A retry with the same digest returns
-that pending attempt and does not begin a second provider call. This slice does
-not claim automatic recovery of an answer that was received but could not be
-saved; safe reconciliation/owner-operational handling remains a later
-explicitly designed boundary.
+that pending attempt and does not begin a second provider call.
 
-## Verification
+## 2026-08-16 verification
 
-- Focused one-worker tests use fake injected generators/tools for success,
-  factual snapshots, no-tool answers, pre-provider cap blocking, failures with
-  and without usage, receipt mismatch rollback, duplicate retry, scope denial,
-  bounded history, reservation overhead, and privacy-safe errors.
-- No test invokes OpenAI. No dependency was installed or downloaded.
+- Fifteen focused Chat files cover conversation persistence, routes,
+  deterministic tools, dashboard/page context, saved Analyzer reads, action
+  drafts, privacy redaction, provider controls, generation budgeting and the
+  locked language registry. The final acceptance population is 91 tests with
+  one worker and no file parallelism.
+- Controlled no-worker browser checks passed on desktop and a 390 by 844 mobile
+  viewport. The drawer opened and closed without leaving `/workspace`; the
+  direct page loaded the same conversation surface; no browser console errors
+  were observed.
+- No verification test invoked OpenAI. No dependency was installed or
+  downloaded, and no provider request, push or deployment occurred.

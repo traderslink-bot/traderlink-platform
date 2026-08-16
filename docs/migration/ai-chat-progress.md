@@ -74,24 +74,57 @@ The private persistence API checkpoint is tracked in
 - [x] Add the eligible AI Review request action through the canonical
   availability and pending-request services. Confirmation does not start a
   provider call.
-- [ ] Add any remaining owner-approved account setting actions through
+- [x] Add the owner-approved account setting actions through
   canonical commands. Trading Rules and completed-trade annotations
   have deterministic reads, and exact completed-trade/Swing tag replacement,
   confirmed Trading Rule changes and the bounded safe Data Decision action set
   are complete. Reporting
   currency, notification read/preferences, selected-account switching, exact
   confirmed Trade Tracker account creation and
-  existing AI Review on/off changes are complete; the remaining command
-  families stay pending.
-- [ ] Promote the language registry and Help Center only as each deterministic
+  existing AI Review on/off changes are complete. Profile/authentication,
+  broker-connection, billing, deletion and owner-administration changes remain
+  deliberately in their guarded product surfaces.
+- [x] Promote the language registry and Help Center only as each deterministic
   family becomes executable.
-- [ ] Complete representative agent evaluations, live OpenAI Agents SDK
-  verification, account/privacy/cost/action safeguards and responsive
-  drawer/direct-page browser acceptance across the capability matrix.
+- [ ] Complete the owner-configured live OpenAI Agents SDK verification. The
+  representative deterministic evaluations, account/privacy/cost/action
+  safeguards and responsive drawer/direct-page browser acceptance are
+  complete. Live generation remains blocked because TraderLink has no
+  configured Chat API key and the platform Chat control is disabled.
 - [ ] Implement production entitlement, scheduled-delivery, operational, and
   privacy-deletion decisions at their separate launch boundaries.
 
 ## Completed foundation: Agents SDK and global AI Chat companion
+
+### 2026-08-16 final local acceptance checkpoint
+
+- The current dashboard capability matrix is implemented for every approved
+  deterministic Read, Draft and Confirm family. Deliberately excluded
+  authentication, billing, erasure, raw-statement, secret, broker-connection
+  and owner-administration operations remain in their guarded product UI.
+- Trade Explorer remains an incomplete product feature. Chat uses only the
+  current bounded, versioned adapter; the accepted future Explorer update can
+  replace that adapter without changing unrelated Chat behavior.
+- The cumulative factual-tool result ceiling is 48 KB. This keeps bounded
+  trade and analytics evidence available while reserving the expanded tool
+  schemas, trusted page context, bounded conversation and structured response
+  inside the immutable 256 KB provider-input ceiling. Oversized results still
+  fail closed rather than being shortened or guessed.
+- A focused one-worker acceptance run covered 15 Chat test files. Fourteen
+  files and 82 tests passed on the first run; the run exposed the expanded
+  provider envelope exceeding its ceiling. After the bounded-result correction,
+  the generation and dispatcher files passed all 12 tests, completing the same
+  91-case acceptance population without a provider request.
+- Controlled no-worker browser acceptance passed on `/workspace` and
+  `/ai-chat`. On desktop and a 390 by 844 mobile viewport, AI Chat opened from
+  navigation without changing `/workspace`, exposed a visible close action,
+  closed without trapping the trader, and reported no browser console errors.
+  The direct page loaded the same saved-conversation surface.
+- TraderLink's local Chat provider state remains disabled and no Chat API key
+  is configured. A representative live Agents SDK request therefore remains
+  an owner-only launch input, not an implementation workaround. No key was
+  copied from another application, no provider request was made, and no push
+  or deployment occurred.
 
 ### 2026-08-15 checkpoint
 
