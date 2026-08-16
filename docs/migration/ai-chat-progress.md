@@ -420,9 +420,25 @@ The private persistence API checkpoint is tracked in
   behavior. Clean initialization, migration-file integrity, action behavior
   and no-write-before-confirm passed 25 focused tests across three files with
   one worker. Focused ESLint and the full no-emit TypeScript check also passed.
-- The migrations have not yet been applied to the protected development
-  database. No provider request, protected data write, process start, push or
-  deployment occurred in this source checkpoint.
+- Before the protected apply, the database remained at 55 migrations with
+  schema digest `af6eb5ad0d79a023e109b2f338d654a504cecd34d8f28b44b9d841ef1723e035`,
+  one Journal account, 1,172 execution versions and 372 round trips. The
+  checkpoint `ai-chat-actions-0056-0057-pre-20260816T004824Z` created an online
+  backup and independent restore that are byte-identical at SHA-256
+  `d4f6be4c91a2b0857e06047f90825bf9d22429988f387599bdc6a1d7c8683989`;
+  registry, table counts, page geometry and recovery authority match.
+- Migrations 0056 and 0057 then applied once. The protected database now has
+  57 migrations and schema digest
+  `389e481a012ff6fb4cd6a3052c6209886662b711964871a33a036349140ac43c`.
+  Quick check, full integrity check and foreign-key verification pass. Journal
+  facts remain exactly 1,172 execution versions and 372 round trips, and the
+  expanded AI Chat action-draft table remains empty.
+- The post-apply checkpoint
+  `ai-chat-actions-0056-0057-post-20260816T004914Z` created an online backup and
+  independent restore that are byte-identical at SHA-256
+  `e841ee2e86af9a175f04f8c367df654c4040a91e91930f2aed92684e43c64363`;
+  all 57 migration rows, table counts, page geometry and recovery authority
+  match. No provider request, process start, push or deployment occurred.
 
 ## Completed: scheduled AI Review control enforcement
 
