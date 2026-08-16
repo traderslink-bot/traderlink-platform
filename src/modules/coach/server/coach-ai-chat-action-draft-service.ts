@@ -1201,7 +1201,10 @@ WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
           : null;
         return Object.freeze({ draft, accountSelectionRef });
       }
-      if (draft.disposition === "expired" || now.toISOString() >= draft.expiresAtUtc) {
+      if (draft.disposition === "expired") {
+        return Object.freeze({ draft, accountSelectionRef: null });
+      }
+      if (now.toISOString() >= draft.expiresAtUtc) {
         draft = this.drafts.expire(scope, input.draftId, now);
         return Object.freeze({ draft, accountSelectionRef: null });
       }

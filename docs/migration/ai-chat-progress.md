@@ -110,11 +110,21 @@ The private persistence API checkpoint is tracked in
   schemas, trusted page context, bounded conversation and structured response
   inside the immutable 256 KB provider-input ceiling. Oversized results still
   fail closed rather than being shortened or guessed.
-- A focused one-worker acceptance run covered 15 Chat test files. Fourteen
+- A focused one-worker acceptance run covered 16 Chat test files. Fourteen
   files and 82 tests passed on the first run; the run exposed the expanded
   provider envelope exceeding its ceiling. After the bounded-result correction,
   the generation and dispatcher files passed all 12 tests, completing the same
-  91-case acceptance population without a provider request.
+  original 91-case acceptance population without a provider request. Six added
+  action-safeguard checks plus one registry-drift check bring the final
+  population to 98 cases and directly
+  prove scoped list/confirm/reject routes, mutation-request enforcement,
+  no-write rejection, 24-hour expiry and stable expired-draft retries.
+- The expiry evaluation exposed and corrected one retry defect: confirming an
+  already-expired action now returns the same terminal draft instead of trying
+  to expire it again and reporting a conflict. A runtime inventory guard also
+  compares the Agents SDK tool list with the deterministic factual-tool
+  registry before any provider call; capability drift fails closed and is
+  covered by the focused inventory suite.
 - Controlled no-worker browser acceptance passed on `/workspace` and
   `/ai-chat`. On desktop and a 390 by 844 mobile viewport, AI Chat opened from
   navigation without changing `/workspace`, exposed a visible close action,

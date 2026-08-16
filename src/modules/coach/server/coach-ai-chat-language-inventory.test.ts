@@ -5,10 +5,12 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { coachAiChatRuntimeCapabilityRegistry } from "./coach-ai-chat-capability-registry";
+import { coachAiChatFactualToolRegistry } from "./coach-ai-chat-factual-tool-registry";
 import {
   COACH_AI_CHAT_LANGUAGE_INVENTORY_SOURCE_SHA256,
   coachAiChatLanguageInventory,
 } from "./coach-ai-chat-language-inventory.generated";
+import { verifyCoachAiChatFactualToolInventory } from "./coach-ai-chat-openai-adapter";
 
 describe("Coach AI Chat language inventory", () => {
   it("stays synchronized with all locked category files and maps only real runtime capabilities", () => {
@@ -39,5 +41,18 @@ describe("Coach AI Chat language inventory", () => {
         expect(runtimeCapabilityIds.has(entry.runtimeCapabilityId)).toBe(true);
       }
     }
+  });
+
+  it("fails closed when the Agents SDK tool inventory drifts from the deterministic registry", () => {
+    const exactToolNames = coachAiChatFactualToolRegistry.map(({ name }) => name);
+
+    expect(() => verifyCoachAiChatFactualToolInventory(exactToolNames)).not.toThrow();
+    expect(() => verifyCoachAiChatFactualToolInventory(exactToolNames.slice(0, -1)))
+      .toThrow("TRADERLINK_COACH_CAPABILITY_REGISTRY_MISMATCH");
+    expect(() => verifyCoachAiChatFactualToolInventory([
+      exactToolNames[1]!,
+      exactToolNames[0]!,
+      ...exactToolNames.slice(2),
+    ])).toThrow("TRADERLINK_COACH_CAPABILITY_REGISTRY_MISMATCH");
   });
 });

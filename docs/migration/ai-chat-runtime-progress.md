@@ -49,11 +49,16 @@ that pending attempt and does not begin a second provider call.
 
 ## 2026-08-16 verification
 
-- Fifteen focused Chat files cover conversation persistence, routes,
+- Sixteen focused Chat files cover conversation persistence, routes,
   deterministic tools, dashboard/page context, saved Analyzer reads, action
   drafts, privacy redaction, provider controls, generation budgeting and the
-  locked language registry. The final acceptance population is 91 tests with
+  locked language registry. The final acceptance population is 98 tests with
   one worker and no file parallelism.
+- Action-draft route and service checks directly cover account-scoped listing,
+  mutation-request enforcement, empty-body confirm/reject, extra-field
+  rejection, no-write rejection, 24-hour expiry and stable terminal retries.
+  The Agents SDK adapter also checks its exact exposed tool-name inventory
+  against the deterministic registry before a provider request.
 - Controlled no-worker browser checks passed on desktop and a 390 by 844 mobile
   viewport. The drawer opened and closed without leaving `/workspace`; the
   direct page loaded the same conversation surface; no browser console errors

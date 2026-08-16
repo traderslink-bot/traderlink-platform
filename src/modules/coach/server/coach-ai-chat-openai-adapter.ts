@@ -43,6 +43,7 @@ import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/work
 
 import { CoachAiChatFactualToolDispatcher } from "./coach-ai-chat-factual-tool-dispatcher";
 import { coachAiChatRuntimeCapabilityRegistry } from "./coach-ai-chat-capability-registry";
+import { coachAiChatFactualToolRegistry } from "./coach-ai-chat-factual-tool-registry";
 
 // Two factual turns permit a bounded sequential lookup before the structured answer.
 const COACH_AI_CHAT_MAX_TURNS = 3;
@@ -415,6 +416,19 @@ export class CoachAiChatProviderGenerationError extends Error {
   }
 }
 
+export function verifyCoachAiChatFactualToolInventory(
+  exposedToolNames: readonly string[],
+): void {
+  const registeredToolNames = coachAiChatFactualToolRegistry.map(({ name }) => name);
+  if (registeredToolNames.length !== exposedToolNames.length ||
+      registeredToolNames.some((name, index) => exposedToolNames[index] !== name)) {
+    throw new CoachAiChatProviderGenerationError(
+      Object.freeze({ inputTokens: null, outputTokens: null, totalTokens: null }),
+      "TRADERLINK_COACH_CAPABILITY_REGISTRY_MISMATCH",
+    );
+  }
+}
+
 function requireOpenAiKey(environment: NodeJS.ProcessEnv): string {
   const key = environment.OPENAI_API_KEY?.trim();
   if (!key) throw new CoachAiChatProviderGenerationError(Object.freeze({ inputTokens: null, outputTokens: null, totalTokens: null }), "TRADERLINK_COACH_OPENAI_UNAVAILABLE");
@@ -539,22 +553,7 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
       const result = input.dispatcher.dispatch(toolCallId, request);
       return Object.freeze({ toolCallId, result });
     };
-    const agent = new Agent({
-      name: "TraderLink Journal Companion",
-      instructions: SYSTEM_INSTRUCTION,
-      model: input.attempt.modelId,
-      modelSettings: {
-        maxTokens: input.attempt.maximumOutputTokens,
-        parallelToolCalls: false,
-        store: false,
-        preserveRawUsage: true,
-        providerData: {
-          safety_identifier: privacySafeSafetyIdentifier(input.scope),
-        },
-        retry: { maxRetries: 0 },
-      },
-      outputType: agentAnswerSchema,
-      tools: [
+    const agentTools = [
         tool({
           name: "summarize_closed_trades",
           description: "Get verified closed-trade metrics for this trader.",
@@ -866,7 +865,25 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
             details?.toolCall?.callId,
           ),
         }),
-      ],
+      ];
+    const exposedToolNames = agentTools.map(({ name }) => name);
+    verifyCoachAiChatFactualToolInventory(exposedToolNames);
+    const agent = new Agent({
+      name: "TraderLink Journal Companion",
+      instructions: SYSTEM_INSTRUCTION,
+      model: input.attempt.modelId,
+      modelSettings: {
+        maxTokens: input.attempt.maximumOutputTokens,
+        parallelToolCalls: false,
+        store: false,
+        preserveRawUsage: true,
+        providerData: {
+          safety_identifier: privacySafeSafetyIdentifier(input.scope),
+        },
+        retry: { maxRetries: 0 },
+      },
+      outputType: agentAnswerSchema,
+      tools: agentTools,
     });
     const result = await runner.run(
       agent,

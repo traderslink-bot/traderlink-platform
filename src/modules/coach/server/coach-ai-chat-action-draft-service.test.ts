@@ -124,6 +124,74 @@ function fixture() {
 }
 
 describe("CoachAiChatActionDraftService", () => {
+  it("expires an old action draft without writing and keeps the expired result on retry", () => {
+    const f = fixture();
+    try {
+      const service = new CoachAiChatActionDraftService(f.database);
+      const draft = service.create(f.scope, {
+        conversationId: f.conversationId,
+        sourceMessageId: f.message("Use CAD for reporting."),
+        extraction: Object.freeze({ kind: "reporting_currency", reportingCurrency: "CAD" }),
+      }, now);
+      const afterExpiry = new Date("2026-08-16T12:00:00.001Z");
+
+      const expired = service.confirm(f.scope, {
+        conversationId: f.conversationId,
+        draftId: draft.draftId,
+      }, afterExpiry);
+
+      expect(expired).toMatchObject({
+        draft: {
+          disposition: "expired",
+          writeState: "not_written",
+          finalizedAtUtc: afterExpiry.toISOString(),
+        },
+        accountSelectionRef: null,
+      });
+      expect(new PlatformUserPreferenceRepository(f.database)
+        .getActiveUserReportingCurrency(f.scope.userId)).toBe("USD");
+      expect(service.confirm(f.scope, {
+        conversationId: f.conversationId,
+        draftId: draft.draftId,
+      }, new Date("2026-08-16T13:00:00.000Z"))).toEqual(expired);
+    } finally {
+      f.database.close();
+    }
+  });
+
+  it("rejects an action without writing and denies the same draft in another account", () => {
+    const f = fixture();
+    try {
+      const service = new CoachAiChatActionDraftService(f.database);
+      const draft = service.create(f.scope, {
+        conversationId: f.conversationId,
+        sourceMessageId: f.message("Use CAD for reporting."),
+        extraction: Object.freeze({ kind: "reporting_currency", reportingCurrency: "CAD" }),
+      }, now);
+      const otherAccountScope = Object.freeze({
+        ...f.scope,
+        activeAccountId: f.scope.allowedAccountIds[1]!,
+      });
+
+      expect(() => service.confirm(otherAccountScope, {
+        conversationId: f.conversationId,
+        draftId: draft.draftId,
+      }, now)).toThrow("TRADERLINK_ACCOUNT_ACCESS_DENIED");
+      expect(service.reject(f.scope, {
+        conversationId: f.conversationId,
+        draftId: draft.draftId,
+      }, now)).toMatchObject({ disposition: "rejected", writeState: "not_written" });
+      expect(new PlatformUserPreferenceRepository(f.database)
+        .getActiveUserReportingCurrency(f.scope.userId)).toBe("USD");
+      expect(() => service.confirm(f.scope, {
+        conversationId: f.conversationId,
+        draftId: draft.draftId,
+      }, now)).toThrow("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+    } finally {
+      f.database.close();
+    }
+  });
+
   it("requires explicit confirmation before changing reporting currency", () => {
     const f = fixture();
     try {
