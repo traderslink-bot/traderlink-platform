@@ -19,6 +19,7 @@ import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/serve
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 
 import { OverviewDateRangeControl, type OverviewDateRange } from "./overview-date-range-control";
+import { AnalyzedTradesIndex } from "./analyzed-trades-index";
 import { TradeAnalysisClient, type TradeAnalysisView } from "./trade-analysis-client";
 import { TradeAnalyzerHelpLink } from "./trade-analyzer-help-link";
 
@@ -113,6 +114,52 @@ export async function TradeAnalysisPage({
   const dateRange = selectedDateRange(searchParams);
   const requestedCurrency = typeof searchParams.currency === "string" ? searchParams.currency.toUpperCase() : null;
   const moneyBasis = searchParams.basis === "net" ? "net" as const : "gross" as const;
+  const details = VIEW_DETAILS[view];
+
+  if (view === "trades") {
+    const tradeIndex = withReadonlyPlatformDatabase({}, (database) => {
+      const availableCurrencies = readDailyTradeAnalysisCurrencies(database, scope);
+      return Object.freeze({
+        availableCurrencies,
+        currency: requestedCurrency && availableCurrencies.includes(requestedCurrency)
+          ? requestedCurrency
+          : availableCurrencies[0] ?? null,
+      });
+    });
+    return (
+      <DashboardPage>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+          <Box>
+            <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">Trade Analyzer</Typography>
+            <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">{details.title}</Typography>
+          </Box>
+          <TradeAnalyzerHelpLink href={details.helpHref} label={details.title} size="medium" />
+        </Stack>
+        <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} sx={{ alignItems: { md: "center" }, justifyContent: "space-between" }}>
+          <OverviewDateRangeControl href={baseHref} value={dateRange} />
+          <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap" }}>
+            {(["gross", "net"] as const).map((basis) => (
+              <Button href={basisHref(baseHref, basis, searchParams)} key={basis} size="small" variant={basis === moneyBasis ? "contained" : "outlined"}>
+                {basis === "gross" ? "Gross" : "Net"}
+              </Button>
+            ))}
+            {tradeIndex.availableCurrencies.length > 1 ? tradeIndex.availableCurrencies.map((currency) => (
+              <Button href={currencyHref(baseHref, currency, searchParams)} key={currency} size="small" variant={currency === tradeIndex.currency ? "contained" : "outlined"}>
+                {currency}
+              </Button>
+            )) : null}
+          </Stack>
+        </Stack>
+        <AnalyzedTradesIndex
+          currency={tradeIndex.currency}
+          endDate={dateRange.endDate}
+          moneyBasis={moneyBasis}
+          startDate={dateRange.startDate}
+        />
+      </DashboardPage>
+    );
+  }
+
   const result = withReadonlyPlatformDatabase({}, (database) => {
     const facts = new JournalAnalyticsFactSetService(new JournalAnalyticsFactSetRepository(database));
     const analytics = new JournalAnalyticsService(facts);
@@ -147,8 +194,6 @@ export async function TradeAnalysisPage({
       model: buildDailyTradeLongTermAnalytics(database, scope, Object.freeze(rows), moneyBasis, currency, timezone),
     });
   });
-  const details = VIEW_DETAILS[view];
-
   return (
     <DashboardPage>
       <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
@@ -187,7 +232,16 @@ export async function TradeAnalysisPage({
           ) : null}
         </Stack>
       </Stack>
-      <TradeAnalysisClient model={result.model} view={view} />
+      <TradeAnalysisClient
+        evidenceQuery={{
+          currency: result.model.currency,
+          endDate: dateRange.endDate,
+          moneyBasis,
+          startDate: dateRange.startDate,
+        }}
+        model={result.model}
+        view={view}
+      />
     </DashboardPage>
   );
 }

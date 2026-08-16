@@ -245,9 +245,9 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         id: "measured-executions",
         title: "Measured executions",
         summary: "Audit the entry and add observations behind the long-term statistics.",
-        keywords: ["ticker", "entries", "adds", "pagination", "view day"],
+        keywords: ["ticker", "entries", "adds", "pagination", "view full analysis", "mobile cards"],
         blocks: [
-          { kind: "paragraph", text: "Ticker and execution filters apply before pagination. The table shows entry price, MFE, MAE, percentage movement, time until flat and the actual trade result. View day opens the associated Daily Trade Tracker date without changing the Analyzer population." },
+          { kind: "paragraph", text: "Ticker and execution filters apply before pagination. Desktop uses a detailed table and mobile uses readable evidence cards. Both show entry price, MFE, MAE, percentage movement, time until flat and the actual trade result. View full analysis opens the exact trade in Daily Trade Tracker without changing the Analyzer population." },
           { kind: "paragraph", text: "Results per page offers 10, 25, 50 or 100 rows. Paging changes only the visible evidence rows; every card and comparison remains calculated from the complete selected date, currency and gross/net population." },
         ],
       },
@@ -312,9 +312,9 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         id: "supporting-trades",
         title: "Supporting trades",
         summary: "Inspect the trades behind the Green-to-red comparisons.",
-        keywords: ["supporting trades", "filters", "results per page", "view day"],
+        keywords: ["supporting trades", "filters", "results per page", "view full analysis", "mobile cards"],
         blocks: [
-          { kind: "paragraph", text: "Use ticker and outcome filters, sortable headings and View day to inspect the exact replay behind a comparison. Filters and sorting apply before pagination and return the list to page 1." },
+          { kind: "paragraph", text: "This is the detailed Green-to-red evidence view. Desktop uses sortable table headings; mobile uses a Sort control and trade cards. Use ticker and outcome filters, then View full analysis to open the exact Daily Trade Tracker trade behind a comparison. Sustained opportunity, additional opportunity, captured percentage and peak-to-exit time stay here because they describe profit capture and reversal behavior." },
           { kind: "paragraph", text: "Results per page offers 10, 25, 50 or 100 rows. Showing X-Y of Z and Previous/Next describe only the visible slice; summary cards continue to describe the complete filtered analysis population." },
         ],
       },
@@ -338,20 +338,21 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       {
         id: "ranked-patterns",
         title: "Most observed patterns",
-        summary: "See the ten pattern groups with the most saved execution occurrences.",
+        summary: "See the ten candle patterns with the most saved occurrences.",
         keywords: ["ranked patterns", "top patterns", "occurrences", "bar chart"],
         blocks: [
-          { kind: "paragraph", text: "Each bar represents one pattern, timeframe and execution-side group. Its length and label use occurrence count. The view shows at most the ten most frequent groups and does not change the complete calculations in the pattern table." },
+          { kind: "paragraph", text: "Each bar represents one candle pattern across all of its saved 1-minute and 5-minute execution groups. Its length and label use the pattern's total occurrence count. The view shows at most the ten most frequently observed patterns and does not change the complete calculations below." },
         ],
       },
       {
         id: "pattern-results",
         title: "Pattern results",
-        summary: "Read occurrence counts, distinct trades and results for each timeframe, side and location.",
+        summary: "Read each pattern's timeframe, execution, location, counts and results.",
         keywords: ["occurrences", "trades", "win rate", "average return", "pagination", "ranked patterns"],
         blocks: [
+          { kind: "paragraph", text: "Each card groups every result for one candle pattern. Within a card, results remain separate by timeframe, execution side and location so those different observations are never blended together. Desktop uses a table inside the card; mobile uses stacked result cards without horizontal scrolling." },
           { kind: "table", columns: ["Column", "Meaning"], rows: [
-            ["Pattern", "Canonical plain-language pattern name."],
+            ["Pattern group", "Canonical plain-language pattern name and its total saved occurrences."],
             ["Timeframe", "1-minute or 5-minute candle construction used for detection."],
             ["Execution", "Whether the saved occurrence relates to an entry/add or partial/final exit."],
             ["Location", "Exact execution candle or completed candle before execution."],
@@ -359,7 +360,19 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
             ["Trades", "Number of distinct analyzed trades represented."],
             ["Win rate / Avg return / Avg result", "Actual Trade Tracker outcome statistics for the complete represented trade group."],
           ] },
-          { kind: "paragraph", text: "When more than 10 grouped rows exist, Results per page offers 10, 25, 50 or 100. Showing X-Y of Z and Previous/Next change only the visible rows, never the complete-group calculations." },
+          { kind: "paragraph", text: "When more than 10 pattern groups exist, Results per page offers 10, 25, 50 or 100. Showing X-Y of Z and Previous/Next change only the visible pattern groups, never their complete calculations." },
+        ],
+      },
+      {
+        id: "pattern-occurrences",
+        title: "Pattern occurrences",
+        summary: "Open the exact trade and candle context behind a grouped pattern.",
+        keywords: ["view occurrences", "chart", "drawer", "daily trade tracker", "ticker filter", "timeframe"],
+        blocks: [
+          { kind: "paragraph", text: "Select View occurrences on a pattern card to load its exact saved execution occurrences. Ticker, timeframe, execution and location filters apply before the server returns a page. Results per page offers 10, 25, 50 or 100 and defaults to 25." },
+          { kind: "paragraph", text: "Desktop shows an occurrence table and opens one chart in a right drawer. Mobile shows occurrence cards and opens the chart full screen. Only the selected chart is loaded, so a long history does not create dozens of hidden chart instances." },
+          { kind: "paragraph", text: "The replay focuses the selected execution at the saved 1-minute or 5-minute timeframe. Previous and Next move through the visible occurrence page. Open Daily Trade Tracker keeps the exact trade, execution and interval selected for the full review." },
+          { kind: "callout", title: "Context, not a signal", text: "The chart helps explain the completed candle context around a recorded execution. It does not predict what the same pattern will do next." },
         ],
       },
       {
@@ -390,12 +403,12 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     sections: [
       {
         id: "eligibility-coverage",
-        title: "Eligibility and coverage",
-        summary: "Read analyzed eligible trades as a supported paid Analyzer population, not all historical Trade Tracker trades.",
-        keywords: ["eligible trades", "analyzed trades", "coverage", "paid plan", "historical imports"],
+        title: "Analyzed trades",
+        summary: "See the saved analyzed trades that support the current results.",
+        keywords: ["analyzed trades", "supporting trades", "paid plan", "historical imports"],
         blocks: [
-          { kind: "paragraph", text: "Coverage is analyzed eligible trades divided by all eligible trades. Older historical imports outside the Analyzer eligibility period do not enter either number. A trade missing required supported facts is not eligible rather than being counted as a failed zero." },
-          { kind: "paragraph", text: "An active paid plan is required to create new analysis. Analysis completed while paid remains readable after cancellation. The initial historical lookback is still being tested and is not advertised as a fixed number of days." },
+          { kind: "paragraph", text: "The Analyzed trades card shows how many saved trade analyses support the results on the current page. Select it to inspect the exact trade replays behind the summaries." },
+          { kind: "paragraph", text: "An active paid plan is required to create new analysis. Analysis completed while paid remains readable after cancellation." },
         ],
       },
       {
@@ -407,7 +420,6 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
           { kind: "table", columns: ["Card", "Meaning"], rows: [
             ["Analyzed trades", "Eligible trades with a current saved Analyzer result in the selected range."],
             ["Analyzed executions", "Saved buy and sell analysis snapshots across those trades."],
-            ["Coverage", "Analyzed eligible trades divided by all eligible trades."],
             ["Win rate", "Percentage of analyzed trades with positive actual result."],
             ["Average return", "Mean percentage return across analyzed trades with a supported return denominator."],
             ["Average gross/net result", "Mean actual Trade Tracker result under the selected money basis."],
@@ -456,45 +468,32 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   {
     slug: "analyzed-trades",
     title: "Analyzed trades",
-    description: "Search, sort and page through the exact Daily Trade Tracker replays behind long-term Analyzer results.",
+    description: "Find every current saved trade analysis and open its exact Daily Trade Tracker review.",
     sections: [
       {
         id: "filters",
-        title: "Filters and sorting",
-        summary: "Narrow the evidence list without changing saved facts.",
-        keywords: ["ticker filter", "outcome filter", "sorting", "page 1"],
+        title: "Ticker search",
+        summary: "Narrow the analyzed-trade directory without changing saved facts.",
+        keywords: ["ticker filter", "ticker search", "page 1"],
         blocks: [
-          { kind: "paragraph", text: "Ticker search matches the displayed symbol. Green-to-red outcome narrows the path status. Select a sortable heading to change ascending or descending order. Changing search, outcome or sort returns the visible list to page 1." },
+          { kind: "paragraph", text: "Ticker search matches the displayed symbol and returns the list to page 1. The shared date range, currency and Gross or Net choice continue to apply. Green-to-red-specific outcome and opportunity filters live on the Green-to-red page." },
         ],
       },
       {
         id: "trade-table",
         title: "Trade table",
-        summary: "Read the complete evidence row and return to its exact Tracker day.",
-        keywords: ["trade table", "ticker", "direction", "closed", "executions", "view day"],
+        summary: "Read the neutral trade index and open its full analysis.",
+        keywords: ["trade table", "ticker", "direction", "entry time", "exit time", "executions", "full analysis"],
         blocks: [
           { kind: "table", columns: ["Column", "Meaning"], rows: [
-            ["Ticker / Direction / Closed", "Symbol, Long or Short direction and local close date."],
-            ["Gross or Net P/L", "Actual Trade Tracker result under the selected basis."],
+            ["Date / Ticker / Direction", "Local trade date, displayed symbol and Long or Short direction."],
+            ["Entry time / Exit time", "First entry and final exit in the selected account's trading timezone."],
+            ["Gross or Net result", "Actual saved trade result under the selected basis."],
             ["Return", "Percentage result when a supported denominator is available."],
-            ["Outcome", "Saved Green-to-red path classification."],
             ["Executions", "Number of saved entry, add, partial-exit and final-exit snapshots."],
-            ["View day", "Opens the exact Daily Trade Tracker replay date."],
+            ["View full analysis", "Opens the exact Daily Trade Tracker trade and focuses its saved analysis."],
           ] },
-        ],
-      },
-      {
-        id: "opportunity-columns",
-        title: "Opportunity columns",
-        summary: "Keep actual results separate from calculated opportunity.",
-        keywords: ["sustained opportunity", "additional opportunity", "captured", "peak to exit"],
-        blocks: [
-          { kind: "table", columns: ["Column", "Meaning"], rows: [
-            ["Sustained opportunity", "Strongest supported calculated profit available through completed-close evidence."],
-            ["Additional opportunity", "Positive difference between sustained opportunity and actual result."],
-            ["Captured", "Actual result as a percentage of measured opportunity when the denominator is positive."],
-            ["Peak to exit", "Elapsed minutes from measured peak opportunity to final exit."],
-          ] },
+          { kind: "paragraph", text: "The directory intentionally keeps Green-to-red opportunity, capture and reversal columns off this page. Open the full analysis for entry, exit, pattern and Green-to-red context, or use the Green-to-red page for those cross-trade comparisons." },
         ],
       },
       {

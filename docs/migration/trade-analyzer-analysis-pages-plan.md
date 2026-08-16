@@ -9,6 +9,11 @@
 - [Daily Trade Analyzer Long-Term Analytics Plan](daily-trade-analyzer-long-term-analytics-plan.md)
 - [Moomoo Daily Trade Tracker Analyzer Plan](moomoo-daily-trade-tracker-analyzer-plan.md)
 - [Trade Analyzer Help Center Plan](help-center-trade-analyzer-plan.md)
+- [Trade Analyzer Evidence Drilldown Plan](trade-analyzer-evidence-drilldown-plan.md)
+
+The later evidence-drilldown plan supersedes this plan's section-level Help
+icon contract. Trade Analyzer pages now keep one Help icon in the page's top
+right corner; section-level question-mark controls are removed.
 
 ## Outcome
 

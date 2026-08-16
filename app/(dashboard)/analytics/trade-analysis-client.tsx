@@ -10,7 +10,6 @@ import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardActionArea from "@mui/material/CardActionArea";
 import CardContent from "@mui/material/CardContent";
-import LinearProgress from "@mui/material/LinearProgress";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -32,10 +31,11 @@ import type {
   TradeAnalysisExcursionBreakdownRow,
   TradeAnalysisExcursionRow,
   TradeAnalysisBreakdownRow,
+  TradeAnalysisPatternRow,
   TradeAnalysisTradeRow,
 } from "@/src/modules/level-analysis/server/daily-trade-long-term-analytics-service";
 
-import { TradeAnalyzerHelpLink } from "./trade-analyzer-help-link";
+import { CandlePatternOccurrenceExplorer } from "./candle-pattern-occurrence-explorer";
 import {
   boundedPage,
   paginatedRows,
@@ -45,7 +45,7 @@ import {
 export type TradeAnalysisView = "day" | "entry-exit" | "mfe-mae" | "green-to-red" | "candle-patterns" | "trades";
 
 function money(value: string | null, currency: string | null): string {
-  if (value === null || currency === null) return "N/A";
+  if (value === null || currency === null) return "Unavailable";
   return new Intl.NumberFormat("en-US", {
     currency,
     maximumFractionDigits: 2,
@@ -55,12 +55,37 @@ function money(value: string | null, currency: string | null): string {
 }
 
 function percent(value: number | null): string {
-  return value === null ? "N/A" : `${value.toFixed(1)}%`;
+  return value === null ? "Unavailable" : `${value.toFixed(1)}%`;
 }
 
 function friendlyPattern(value: string): string {
   return value.replaceAll("_", " ").replaceAll("-", " ")
     .replace(/\b\w/gu, (character) => character.toUpperCase());
+}
+
+type PatternGroup = Readonly<{
+  occurrenceCount: number;
+  pattern: string;
+  rows: readonly TradeAnalysisPatternRow[];
+}>;
+
+function groupPatternRows(rows: readonly TradeAnalysisPatternRow[]): readonly PatternGroup[] {
+  const rowsByPattern = new Map<string, TradeAnalysisPatternRow[]>();
+  for (const row of rows) {
+    const patternRows = rowsByPattern.get(row.pattern) ?? [];
+    patternRows.push(row);
+    rowsByPattern.set(row.pattern, patternRows);
+  }
+
+  return [...rowsByPattern.entries()].map(([pattern, patternRows]) => ({
+    occurrenceCount: patternRows.reduce((total, row) => total + row.occurrenceCount, 0),
+    pattern,
+    rows: [...patternRows].sort((left, right) =>
+      left.timeframe.localeCompare(right.timeframe) ||
+      left.executionSide.localeCompare(right.executionSide) ||
+      left.location.localeCompare(right.location)),
+  })).sort((left, right) =>
+    right.occurrenceCount - left.occurrenceCount || friendlyPattern(left.pattern).localeCompare(friendlyPattern(right.pattern)));
 }
 
 function greenToRedLabel(value: TradeAnalysisTradeRow["greenToRedStatus"]): string {
@@ -89,37 +114,56 @@ function BreakdownTable({
 }) {
   if (rows.length === 0) return <Typography color="text.secondary">Not enough analyzed evidence is available for this breakdown.</Typography>;
   return (
-    <TableContainer>
-      <Table size="small">
-        <TableHead><TableRow>
-          <TableCell>Group</TableCell>{showOccurrences ? <TableCell align="right">Executions</TableCell> : null}<TableCell align="right">Trades</TableCell><TableCell align="right">Opportunity trades</TableCell>
-          <TableCell align="right">Win rate</TableCell><TableCell align="right">Avg return</TableCell><TableCell align="right">Avg result</TableCell>
-          <TableCell align="right">Avg potential result</TableCell><TableCell align="right">Avg missed opportunity</TableCell>
-          {valueLabel ? <TableCell align="right">{valueLabel}</TableCell> : null}
-        </TableRow></TableHead>
-        <TableBody>{rows.map((row) => (
-          <TableRow hover key={row.label}>
-            <TableCell sx={{ fontWeight: 750 }}>{row.label}</TableCell>
-            {showOccurrences ? <TableCell align="right">{row.occurrenceCount}</TableCell> : null}
-            <TableCell align="right">{row.tradeCount}</TableCell>
-            <TableCell align="right">{row.opportunityTradeCount}</TableCell>
-            <TableCell align="right">{percent(row.winRatePercent)}</TableCell>
-            <TableCell align="right" sx={{ color: row.averageReturnPercent !== null && row.averageReturnPercent < 0 ? "error.main" : undefined }}>{percent(row.averageReturnPercent)}</TableCell>
-            <TableCell align="right">{money(row.averagePnlDecimal, currency)}</TableCell>
-            <TableCell align="right">{money(row.averagePotentialPnlDecimal, currency)}</TableCell>
-            <TableCell align="right">{money(row.averageAdditionalOpportunityDecimal, currency)}</TableCell>
-            {valueLabel ? <TableCell align="right">{row.averageValue === null ? "N/A" : `${row.averageValue.toFixed(1)}${valueSuffix}`}</TableCell> : null}
-          </TableRow>
-        ))}</TableBody>
-      </Table>
-    </TableContainer>
+    <>
+      <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
+        <Table size="small">
+          <TableHead><TableRow>
+            <TableCell>Group</TableCell>{showOccurrences ? <TableCell align="right">Executions</TableCell> : null}<TableCell align="right">Trades</TableCell><TableCell align="right">Opportunity trades</TableCell>
+            <TableCell align="right">Win rate</TableCell><TableCell align="right">Avg return</TableCell><TableCell align="right">Avg result</TableCell>
+            <TableCell align="right">Avg potential result</TableCell><TableCell align="right">Avg missed opportunity</TableCell>
+            {valueLabel ? <TableCell align="right">{valueLabel}</TableCell> : null}
+          </TableRow></TableHead>
+          <TableBody>{rows.map((row) => (
+            <TableRow hover key={row.label}>
+              <TableCell sx={{ fontWeight: 750 }}>{row.label}</TableCell>
+              {showOccurrences ? <TableCell align="right">{row.occurrenceCount}</TableCell> : null}
+              <TableCell align="right">{row.tradeCount}</TableCell>
+              <TableCell align="right">{row.opportunityTradeCount}</TableCell>
+              <TableCell align="right">{percent(row.winRatePercent)}</TableCell>
+              <TableCell align="right" sx={{ color: row.averageReturnPercent !== null && row.averageReturnPercent < 0 ? "error.main" : undefined }}>{percent(row.averageReturnPercent)}</TableCell>
+              <TableCell align="right">{money(row.averagePnlDecimal, currency)}</TableCell>
+              <TableCell align="right">{money(row.averagePotentialPnlDecimal, currency)}</TableCell>
+              <TableCell align="right">{money(row.averageAdditionalOpportunityDecimal, currency)}</TableCell>
+              {valueLabel ? <TableCell align="right">{row.averageValue === null ? "Unavailable" : `${row.averageValue.toFixed(1)}${valueSuffix}`}</TableCell> : null}
+            </TableRow>
+          ))}</TableBody>
+        </Table>
+      </TableContainer>
+      <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" } }}>
+        {rows.map((row) => (
+          <Box key={row.label} sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.25 }}>
+            <Typography sx={{ fontWeight: 850 }} variant="body2">{row.label}</Typography>
+            <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1.25 }}>
+              {showOccurrences ? <Box><Typography color="text.secondary" variant="caption">Executions</Typography><Typography variant="body2">{row.occurrenceCount}</Typography></Box> : null}
+              <Box><Typography color="text.secondary" variant="caption">Trades</Typography><Typography variant="body2">{row.tradeCount}</Typography></Box>
+              <Box><Typography color="text.secondary" variant="caption">Opportunity trades</Typography><Typography variant="body2">{row.opportunityTradeCount}</Typography></Box>
+              <Box><Typography color="text.secondary" variant="caption">Win rate</Typography><Typography variant="body2">{percent(row.winRatePercent)}</Typography></Box>
+              <Box><Typography color="text.secondary" variant="caption">Average return</Typography><Typography color={row.averageReturnPercent !== null && row.averageReturnPercent < 0 ? "error.main" : undefined} variant="body2">{percent(row.averageReturnPercent)}</Typography></Box>
+              <Box><Typography color="text.secondary" variant="caption">Average result</Typography><Typography variant="body2">{money(row.averagePnlDecimal, currency)}</Typography></Box>
+              <Box><Typography color="text.secondary" variant="caption">Average potential</Typography><Typography variant="body2">{money(row.averagePotentialPnlDecimal, currency)}</Typography></Box>
+              <Box><Typography color="text.secondary" variant="caption">Average missed</Typography><Typography variant="body2">{money(row.averageAdditionalOpportunityDecimal, currency)}</Typography></Box>
+              {valueLabel ? <Box><Typography color="text.secondary" variant="caption">{valueLabel}</Typography><Typography variant="body2">{row.averageValue === null ? "Unavailable" : `${row.averageValue.toFixed(1)}${valueSuffix}`}</Typography></Box> : null}
+            </Box>
+          </Box>
+        ))}
+      </Stack>
+    </>
   );
 }
 
 function Section({
   children,
   description,
-  helpHref,
   title,
   defaultExpanded = false,
 }: {
@@ -130,17 +174,12 @@ function Section({
   title: string;
 }) {
   return (
-    <Box sx={{ position: "relative" }}>
-      <Accordion defaultExpanded={defaultExpanded} disableGutters sx={{ border: 1, borderColor: "divider", borderRadius: "8px !important", boxShadow: "none", overflow: "hidden", "&:before": { display: "none" } }}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minWidth: 0, pl: { xs: 1.5, sm: 2.25 }, pr: { xs: 8, sm: 9 }, py: 0.5 }}>
-          <Box><Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">{title}</Typography><Typography color="text.secondary" variant="body2">{description}</Typography></Box>
-        </AccordionSummary>
-        <AccordionDetails sx={{ px: { xs: 1.5, sm: 2.25 }, pb: 2.25, pt: 0 }}>{children}</AccordionDetails>
-      </Accordion>
-      <Box sx={{ position: "absolute", right: { xs: 40, sm: 46 }, top: 10, zIndex: 1 }}>
-        <TradeAnalyzerHelpLink href={helpHref} label={title} />
-      </Box>
-    </Box>
+    <Accordion defaultExpanded={defaultExpanded} disableGutters sx={{ border: 1, borderColor: "divider", borderRadius: "8px !important", boxShadow: "none", overflow: "hidden", "&:before": { display: "none" } }}>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minWidth: 0, px: { xs: 1.5, sm: 2.25 }, py: 0.5 }}>
+        <Box><Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">{title}</Typography><Typography color="text.secondary" variant="body2">{description}</Typography></Box>
+      </AccordionSummary>
+      <AccordionDetails sx={{ px: { xs: 1.5, sm: 2.25 }, pb: 2.25, pt: 0 }}>{children}</AccordionDetails>
+    </Accordion>
   );
 }
 
@@ -190,9 +229,11 @@ function TradeTable({ model }: { model: DailyTradeLongTermAnalyticsModel }) {
   const heading = (column: SortColumn, label: string) => (
     <TableSortLabel active={sortColumn === column} direction={sortColumn === column ? sortDirection : "asc"} onClick={() => changeSort(column)}>{label}</TableSortLabel>
   );
+  const trackerHref = (row: TradeAnalysisTradeRow) =>
+    `/trade-tracker/${row.trackerDate}?${new URLSearchParams({ interval: "1m", trade: row.roundTripId }).toString()}`;
   return (
     <Stack spacing={1.5}>
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+      <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
         <TextField label="Ticker" onChange={(event) => { setTicker(event.target.value); setPage(1); }} size="small" value={ticker} />
         <TextField label="Green-to-red outcome" onChange={(event) => { setOutcome(event.target.value as typeof outcome); setPage(1); }} select size="small" sx={{ minWidth: 230 }} value={outcome}>
           <MenuItem value="all">All outcomes</MenuItem>
@@ -201,6 +242,32 @@ function TradeTable({ model }: { model: DailyTradeLongTermAnalyticsModel }) {
           <MenuItem value="green_to_red_ended_red">Green to red, ended red</MenuItem>
           <MenuItem value="green_to_red_recovered">Green to red, recovered</MenuItem>
           <MenuItem value="green_to_red_ended_flat">Green to red, ended flat</MenuItem>
+        </TextField>
+        <TextField
+          label="Sort"
+          onChange={(event) => {
+            const [column, direction] = event.target.value.split(":") as [SortColumn, "asc" | "desc"];
+            setSortColumn(column);
+            setSortDirection(direction);
+            setPage(1);
+          }}
+          select
+          size="small"
+          sx={{ display: { xs: "flex", md: "none" } }}
+          value={`${sortColumn}:${sortDirection}`}
+        >
+          <MenuItem value="closeDate:desc">Newest closed</MenuItem>
+          <MenuItem value="closeDate:asc">Oldest closed</MenuItem>
+          <MenuItem value="symbol:asc">Ticker A–Z</MenuItem>
+          <MenuItem value="symbol:desc">Ticker Z–A</MenuItem>
+          <MenuItem value="actual:desc">Highest result</MenuItem>
+          <MenuItem value="actual:asc">Lowest result</MenuItem>
+          <MenuItem value="return:desc">Highest return</MenuItem>
+          <MenuItem value="return:asc">Lowest return</MenuItem>
+          <MenuItem value="opportunity:desc">Highest opportunity</MenuItem>
+          <MenuItem value="additional:desc">Most additional opportunity</MenuItem>
+          <MenuItem value="capture:desc">Highest captured</MenuItem>
+          <MenuItem value="peakToExit:desc">Longest peak to exit</MenuItem>
         </TextField>
       </Stack>
       <TradeAnalyzerTablePagination
@@ -211,27 +278,56 @@ function TradeTable({ model }: { model: DailyTradeLongTermAnalyticsModel }) {
         rowCount={rows.length}
       />
       {rows.length === 0 ? <Typography color="text.secondary">No analyzed trades match these filters.</Typography> : (
-        <TableContainer>
-          <Table size="small">
-            <TableHead><TableRow>
-              <TableCell>{heading("symbol", "Ticker")}</TableCell><TableCell>Direction</TableCell><TableCell>{heading("closeDate", "Closed")}</TableCell>
-              <TableCell align="right">{heading("actual", `${model.moneyBasis === "gross" ? "Gross" : "Net"} P/L`)}</TableCell><TableCell align="right">{heading("return", "Return")}</TableCell><TableCell align="right">{heading("opportunity", "Sustained opportunity")}</TableCell>
-              <TableCell align="right">{heading("additional", "Additional opportunity")}</TableCell><TableCell align="right">{heading("capture", "Captured")}</TableCell>
-              <TableCell align="right">{heading("peakToExit", "Peak to exit")}</TableCell><TableCell>Outcome</TableCell><TableCell align="right">Executions</TableCell><TableCell />
-            </TableRow></TableHead>
-            <TableBody>{visibleRows.map((row) => (
-              <TableRow hover key={row.roundTripId}>
-                <TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.closeDate}</TableCell>
-                <TableCell align="right" sx={{ color: Number(row.actualPnlDecimal) < 0 ? "error.main" : "success.main", fontWeight: 800 }}>{money(row.actualPnlDecimal, model.currency)}</TableCell>
-                <TableCell align="right" sx={{ color: row.returnPercent !== null && row.returnPercent < 0 ? "error.main" : undefined }}>{percent(row.returnPercent)}</TableCell>
-                <TableCell align="right">{money(row.sustainedOpportunityDecimal, model.currency)}</TableCell><TableCell align="right">{money(row.additionalOpportunityDecimal, model.currency)}</TableCell>
-                <TableCell align="right">{percent(row.capturedPercent)}</TableCell><TableCell align="right">{row.peakToExitMinutes === null ? "N/A" : `${row.peakToExitMinutes} min`}</TableCell>
-                <TableCell>{greenToRedLabel(row.greenToRedStatus)}</TableCell><TableCell align="right">{row.executionCount}</TableCell>
-                <TableCell><Button endIcon={<OpenInNewIcon fontSize="small" />} href={`/trade-tracker/${row.trackerDate}`} size="small" variant="outlined">View day</Button></TableCell>
-              </TableRow>
-            ))}</TableBody>
-          </Table>
-        </TableContainer>
+        <>
+          <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
+            <Table size="small">
+              <TableHead><TableRow>
+                <TableCell>{heading("symbol", "Ticker")}</TableCell><TableCell>Direction</TableCell><TableCell>{heading("closeDate", "Closed")}</TableCell>
+                <TableCell align="right">{heading("actual", `${model.moneyBasis === "gross" ? "Gross" : "Net"} P/L`)}</TableCell><TableCell align="right">{heading("return", "Return")}</TableCell><TableCell align="right">{heading("opportunity", "Sustained opportunity")}</TableCell>
+                <TableCell align="right">{heading("additional", "Additional opportunity")}</TableCell><TableCell align="right">{heading("capture", "Captured")}</TableCell>
+                <TableCell align="right">{heading("peakToExit", "Peak to exit")}</TableCell><TableCell>Outcome</TableCell><TableCell align="right">Executions</TableCell><TableCell />
+              </TableRow></TableHead>
+              <TableBody>{visibleRows.map((row) => (
+                <TableRow hover key={row.roundTripId}>
+                  <TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.closeDate}</TableCell>
+                  <TableCell align="right" sx={{ color: Number(row.actualPnlDecimal) < 0 ? "error.main" : "success.main", fontWeight: 800 }}>{money(row.actualPnlDecimal, model.currency)}</TableCell>
+                  <TableCell align="right" sx={{ color: row.returnPercent !== null && row.returnPercent < 0 ? "error.main" : undefined }}>{percent(row.returnPercent)}</TableCell>
+                  <TableCell align="right">{money(row.sustainedOpportunityDecimal, model.currency)}</TableCell><TableCell align="right">{money(row.additionalOpportunityDecimal, model.currency)}</TableCell>
+                  <TableCell align="right">{percent(row.capturedPercent)}</TableCell><TableCell align="right">{row.peakToExitMinutes === null ? "Unavailable" : `${row.peakToExitMinutes} min`}</TableCell>
+                  <TableCell>{greenToRedLabel(row.greenToRedStatus)}</TableCell><TableCell align="right">{row.executionCount}</TableCell>
+                  <TableCell><Button endIcon={<OpenInNewIcon fontSize="small" />} href={trackerHref(row)} size="small" variant="outlined">View full analysis</Button></TableCell>
+                </TableRow>
+              ))}</TableBody>
+            </Table>
+          </TableContainer>
+          <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" } }}>
+            {visibleRows.map((row) => (
+              <Card key={row.roundTripId} variant="outlined">
+                <CardContent>
+                  <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+                    <Box>
+                      <Typography sx={{ fontWeight: 900 }} variant="h6">{row.symbol}</Typography>
+                      <Typography color="text.secondary" sx={{ textTransform: "capitalize" }} variant="body2">{row.closeDate} · {row.direction}</Typography>
+                    </Box>
+                    <Typography color={Number(row.actualPnlDecimal) < 0 ? "error.main" : "success.main"} sx={{ fontWeight: 850 }}>
+                      {money(row.actualPnlDecimal, model.currency)}
+                    </Typography>
+                  </Stack>
+                  <Typography sx={{ fontWeight: 750, mt: 1.25 }} variant="body2">{greenToRedLabel(row.greenToRedStatus)}</Typography>
+                  <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1.25 }}>
+                    <Box><Typography color="text.secondary" variant="caption">Return</Typography><Typography color={row.returnPercent !== null && row.returnPercent < 0 ? "error.main" : undefined} variant="body2">{percent(row.returnPercent)}</Typography></Box>
+                    <Box><Typography color="text.secondary" variant="caption">Executions</Typography><Typography variant="body2">{row.executionCount}</Typography></Box>
+                    <Box><Typography color="text.secondary" variant="caption">Sustained opportunity</Typography><Typography variant="body2">{money(row.sustainedOpportunityDecimal, model.currency)}</Typography></Box>
+                    <Box><Typography color="text.secondary" variant="caption">Additional opportunity</Typography><Typography variant="body2">{money(row.additionalOpportunityDecimal, model.currency)}</Typography></Box>
+                    <Box><Typography color="text.secondary" variant="caption">Captured</Typography><Typography variant="body2">{percent(row.capturedPercent)}</Typography></Box>
+                    <Box><Typography color="text.secondary" variant="caption">Peak to exit</Typography><Typography variant="body2">{row.peakToExitMinutes === null ? "Unavailable" : `${row.peakToExitMinutes} min`}</Typography></Box>
+                  </Box>
+                  <Button fullWidth href={trackerHref(row)} sx={{ mt: 1.5 }} variant="outlined">View full analysis</Button>
+                </CardContent>
+              </Card>
+            ))}
+          </Stack>
+        </>
       )}
     </Stack>
   );
@@ -245,11 +341,24 @@ function ExcursionBreakdownTable({
   rows: readonly TradeAnalysisExcursionBreakdownRow[];
 }) {
   if (rows.length === 0) return <Typography color="text.secondary">No measured entries or adds are available for these comparisons.</Typography>;
-  return <TableContainer><Table size="small"><TableHead><TableRow>
-    <TableCell>Group</TableCell><TableCell align="right">Measured</TableCell><TableCell align="right">Avg MFE</TableCell><TableCell align="right">Avg MAE</TableCell><TableCell align="right">Avg MFE %</TableCell><TableCell align="right">Avg MAE %</TableCell>
-  </TableRow></TableHead><TableBody>{rows.map((row) => <TableRow hover key={row.label}>
-    <TableCell sx={{ fontWeight: 750 }}>{row.label}</TableCell><TableCell align="right">{row.measuredExecutionCount}</TableCell><TableCell align="right">{money(row.averageFavorableMoveDecimal, currency)}</TableCell><TableCell align="right">{money(row.averageAdverseMoveDecimal, currency)}</TableCell><TableCell align="right">{percent(row.averageFavorableMovePercent)}</TableCell><TableCell align="right">{percent(row.averageAdverseMovePercent)}</TableCell>
-  </TableRow>)}</TableBody></Table></TableContainer>;
+  return <>
+    <TableContainer sx={{ display: { xs: "none", md: "block" } }}><Table size="small"><TableHead><TableRow>
+      <TableCell>Group</TableCell><TableCell align="right">Measured</TableCell><TableCell align="right">Avg MFE</TableCell><TableCell align="right">Avg MAE</TableCell><TableCell align="right">Avg MFE %</TableCell><TableCell align="right">Avg MAE %</TableCell>
+    </TableRow></TableHead><TableBody>{rows.map((row) => <TableRow hover key={row.label}>
+      <TableCell sx={{ fontWeight: 750 }}>{row.label}</TableCell><TableCell align="right">{row.measuredExecutionCount}</TableCell><TableCell align="right">{money(row.averageFavorableMoveDecimal, currency)}</TableCell><TableCell align="right">{money(row.averageAdverseMoveDecimal, currency)}</TableCell><TableCell align="right">{percent(row.averageFavorableMovePercent)}</TableCell><TableCell align="right">{percent(row.averageAdverseMovePercent)}</TableCell>
+    </TableRow>)}</TableBody></Table></TableContainer>
+    <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" } }}>
+      {rows.map((row) => <Box key={row.label} sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.25 }}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "baseline", justifyContent: "space-between" }}><Typography sx={{ fontWeight: 850 }} variant="body2">{row.label}</Typography><Typography color="text.secondary" variant="caption">{row.measuredExecutionCount} measured</Typography></Stack>
+        <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1.25 }}>
+          <Box><Typography color="text.secondary" variant="caption">Average MFE</Typography><Typography variant="body2">{money(row.averageFavorableMoveDecimal, currency)}</Typography></Box>
+          <Box><Typography color="text.secondary" variant="caption">Average MAE</Typography><Typography variant="body2">{money(row.averageAdverseMoveDecimal, currency)}</Typography></Box>
+          <Box><Typography color="text.secondary" variant="caption">Average MFE %</Typography><Typography variant="body2">{percent(row.averageFavorableMovePercent)}</Typography></Box>
+          <Box><Typography color="text.secondary" variant="caption">Average MAE %</Typography><Typography variant="body2">{percent(row.averageAdverseMovePercent)}</Typography></Box>
+        </Box>
+      </Box>)}
+    </Stack>
+  </>;
 }
 
 function MfeMaeTable({ model }: { model: DailyTradeLongTermAnalyticsModel }) {
@@ -270,24 +379,41 @@ function MfeMaeTable({ model }: { model: DailyTradeLongTermAnalyticsModel }) {
       </TextField>
     </Stack>
     <TradeAnalyzerTablePagination onPageChange={setPage} onPageSizeChange={(nextSize) => { setPageSize(nextSize); setPage(1); }} page={currentPage} pageSize={pageSize} rowCount={rows.length} />
-    {rows.length === 0 ? <Typography color="text.secondary">No measured entries or adds match these filters.</Typography> : <TableContainer><Table size="small"><TableHead><TableRow>
-      <TableCell>Ticker</TableCell><TableCell>Type</TableCell><TableCell>Direction</TableCell><TableCell>Closed</TableCell><TableCell align="right">Entry price</TableCell><TableCell align="right">MFE</TableCell><TableCell align="right">MAE</TableCell><TableCell align="right">MFE %</TableCell><TableCell align="right">MAE %</TableCell><TableCell align="right">Until flat</TableCell><TableCell align="right">Actual P/L</TableCell><TableCell />
-    </TableRow></TableHead><TableBody>{visibleRows.map((row) => <TableRow hover key={`${row.roundTripId}-${row.executionSequence}`}>
-      <TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell><TableCell>{row.eventKind}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.closeDate}</TableCell><TableCell align="right">{money(row.entryPriceDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: "success.main", fontWeight: 750 }}>{money(row.favorableMoveDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: "error.main", fontWeight: 750 }}>{money(row.adverseMoveDecimal, model.currency)}</TableCell><TableCell align="right">{percent(row.favorableMovePercent)}</TableCell><TableCell align="right">{percent(row.adverseMovePercent)}</TableCell><TableCell align="right">{row.minutesUntilFlat} min</TableCell><TableCell align="right" sx={{ color: Number(row.actualPnlDecimal) < 0 ? "error.main" : "success.main", fontWeight: 750 }}>{money(row.actualPnlDecimal, model.currency)}</TableCell><TableCell><Button endIcon={<OpenInNewIcon fontSize="small" />} href={`/trade-tracker/${row.trackerDate}`} size="small" variant="outlined">View day</Button></TableCell>
-    </TableRow>)}</TableBody></Table></TableContainer>}
+    {rows.length === 0 ? <Typography color="text.secondary">No measured entries or adds match these filters.</Typography> : <>
+      <TableContainer sx={{ display: { xs: "none", md: "block" } }}><Table size="small"><TableHead><TableRow>
+        <TableCell>Ticker</TableCell><TableCell>Type</TableCell><TableCell>Direction</TableCell><TableCell>Closed</TableCell><TableCell align="right">Entry price</TableCell><TableCell align="right">MFE</TableCell><TableCell align="right">MAE</TableCell><TableCell align="right">MFE %</TableCell><TableCell align="right">MAE %</TableCell><TableCell align="right">Until flat</TableCell><TableCell align="right">Actual P/L</TableCell><TableCell />
+      </TableRow></TableHead><TableBody>{visibleRows.map((row) => <TableRow hover key={`${row.roundTripId}-${row.executionSequence}`}>
+        <TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell><TableCell>{row.eventKind}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.closeDate}</TableCell><TableCell align="right">{money(row.entryPriceDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: "success.main", fontWeight: 750 }}>{money(row.favorableMoveDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: "error.main", fontWeight: 750 }}>{money(row.adverseMoveDecimal, model.currency)}</TableCell><TableCell align="right">{percent(row.favorableMovePercent)}</TableCell><TableCell align="right">{percent(row.adverseMovePercent)}</TableCell><TableCell align="right">{row.minutesUntilFlat} min</TableCell><TableCell align="right" sx={{ color: Number(row.actualPnlDecimal) < 0 ? "error.main" : "success.main", fontWeight: 750 }}>{money(row.actualPnlDecimal, model.currency)}</TableCell><TableCell><Button endIcon={<OpenInNewIcon fontSize="small" />} href={`/trade-tracker/${row.trackerDate}?${new URLSearchParams({ interval: "1m", trade: row.roundTripId }).toString()}`} size="small" variant="outlined">View full analysis</Button></TableCell>
+      </TableRow>)}</TableBody></Table></TableContainer>
+      <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" } }}>
+        {visibleRows.map((row) => <Card key={`${row.roundTripId}-${row.executionSequence}`} variant="outlined"><CardContent>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+            <Box><Typography sx={{ fontWeight: 900 }} variant="h6">{row.symbol}</Typography><Typography color="text.secondary" sx={{ textTransform: "capitalize" }} variant="body2">{row.closeDate} · {row.direction} · {row.eventKind}</Typography></Box>
+            <Typography color={Number(row.actualPnlDecimal) < 0 ? "error.main" : "success.main"} sx={{ fontWeight: 850 }}>{money(row.actualPnlDecimal, model.currency)}</Typography>
+          </Stack>
+          <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1.25 }}>
+            <Box><Typography color="text.secondary" variant="caption">Entry price</Typography><Typography variant="body2">{money(row.entryPriceDecimal, model.currency)}</Typography></Box>
+            <Box><Typography color="text.secondary" variant="caption">Until flat</Typography><Typography variant="body2">{row.minutesUntilFlat} min</Typography></Box>
+            <Box><Typography color="text.secondary" variant="caption">MFE</Typography><Typography color="success.main" variant="body2">{money(row.favorableMoveDecimal, model.currency)} · {percent(row.favorableMovePercent)}</Typography></Box>
+            <Box><Typography color="text.secondary" variant="caption">MAE</Typography><Typography color="error.main" variant="body2">{money(row.adverseMoveDecimal, model.currency)} · {percent(row.adverseMovePercent)}</Typography></Box>
+          </Box>
+          <Button fullWidth href={`/trade-tracker/${row.trackerDate}?${new URLSearchParams({ interval: "1m", trade: row.roundTripId }).toString()}`} sx={{ mt: 1.5 }} variant="outlined">View full analysis</Button>
+        </CardContent></Card>)}
+      </Stack>
+    </>}
   </Stack>;
 }
 
-function PatternRanking({ model }: { model: DailyTradeLongTermAnalyticsModel }) {
-  const rows = model.patterns.slice(0, 10);
+function PatternRanking({ groups }: { groups: readonly PatternGroup[] }) {
+  const rows = groups.slice(0, 10);
   const maximum = Math.max(1, ...rows.map((row) => row.occurrenceCount));
   if (rows.length === 0) return <Typography color="text.secondary">No qualifying saved candle patterns are available in this range.</Typography>;
   return (
     <Stack spacing={1.25}>
       {rows.map((row) => (
-        <Box key={`${row.timeframe}-${row.executionSide}-${row.location}-${row.pattern}`}>
+        <Box key={row.pattern}>
           <Stack direction="row" spacing={1} sx={{ alignItems: "baseline", justifyContent: "space-between" }}>
-            <Typography sx={{ fontWeight: 750 }} variant="body2">{friendlyPattern(row.pattern)} · {row.timeframe} · {row.executionSide}</Typography>
+            <Typography sx={{ fontWeight: 750 }} variant="body2">{friendlyPattern(row.pattern)}</Typography>
             <Typography color="text.secondary" variant="caption">{row.occurrenceCount} occurrence{row.occurrenceCount === 1 ? "" : "s"}</Typography>
           </Stack>
           <Box sx={{ bgcolor: "rgba(1, 30, 86, 0.08)", borderRadius: 999, height: 8, mt: 0.5, overflow: "hidden" }}>
@@ -308,16 +434,25 @@ const CAPABILITIES = Object.freeze([
 ]);
 
 export function TradeAnalysisClient({
+  evidenceQuery,
   model,
   view,
 }: {
+  evidenceQuery: Readonly<{
+    currency: string | null;
+    endDate: string | null;
+    moneyBasis: "gross" | "net";
+    startDate: string | null;
+  }>;
   model: DailyTradeLongTermAnalyticsModel;
   view: TradeAnalysisView;
 }) {
   const [patternPage, setPatternPage] = useState(1);
-  const [patternPageSize, setPatternPageSize] = useState(25);
-  const currentPatternPage = boundedPage(patternPage, model.patterns.length, patternPageSize);
-  const visiblePatterns = paginatedRows(model.patterns, currentPatternPage, patternPageSize);
+  const [patternPageSize, setPatternPageSize] = useState(10);
+  const patternGroups = useMemo(() => groupPatternRows(model.patterns), [model.patterns]);
+  const currentPatternPage = boundedPage(patternPage, patternGroups.length, patternPageSize);
+  const visiblePatternGroups = paginatedRows(patternGroups, currentPatternPage, patternPageSize);
+  const [selectedPattern, setSelectedPattern] = useState<string | null>(null);
   if (model.eligibleDayTradeCount === 0) {
     return <Paper sx={{ p: { xs: 2, sm: 3 } }} variant="outlined"><Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">No completed day trades</Typography><Typography color="text.secondary" sx={{ mt: 0.75 }}>Trade Analysis will begin after completed day trades are available in this account.</Typography></Paper>;
   }
@@ -327,14 +462,9 @@ export function TradeAnalysisClient({
   return (
     <Stack spacing={2.5}>
       {view === "day" ? <Stack spacing={1.25}>
-        <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
-          <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Overall results</Typography>
-          <TradeAnalyzerHelpLink href="/help/trade-analyzer/day-trade-analysis#overall-results" label="Overall results" />
-        </Stack>
+        <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Overall results</Typography>
         <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } }}>
-        <DashboardMetricCard caption="Eligible trade count will appear after the paid lookback is configured" label="Analyzed trades" value={String(model.analyzedTradeCount)} />
         <DashboardMetricCard caption="Every saved buy and sell snapshot" label="Analyzed executions" value={String(model.analyzedExecutionCount)} />
-        <DashboardMetricCard caption="Waiting for the approved eligibility boundary" label="Coverage" value="N/A" />
         <DashboardMetricCard caption="Trades that finished above breakeven" label="Win rate" value={percent(model.winRatePercent)} />
         <DashboardMetricCard caption="Average percentage return per analyzed trade" label="Average return" value={percent(model.averageReturnPercent)} />
         <DashboardMetricCard caption={`Trade Tracker ${model.moneyBasis} P/L per analyzed trade`} label={`Average ${model.moneyBasis} result`} value={money(model.averagePnlDecimal, model.currency)} />
@@ -344,26 +474,20 @@ export function TradeAnalysisClient({
         </Box>
       </Stack> : null}
 
-      <Paper sx={{ p: { xs: 1.5, sm: 2.25 } }} variant="outlined">
-        <Stack spacing={0.75}>
-          <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
-            <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-              <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Analysis coverage</Typography>
-              <TradeAnalyzerHelpLink href="/help/trade-analyzer/day-trade-analysis#eligibility-coverage" label="Analysis coverage" />
-            </Stack>
-            <Typography sx={{ fontWeight: 800 }} variant="body2">{model.analyzedTradeCount} analyzed</Typography>
-          </Stack>
-          <LinearProgress aria-label="Trade analysis eligibility is not configured" value={0} variant="determinate" />
-          <Typography color="text.secondary" variant="body2">The eligible-trade total and coverage percentage will appear after the initial paid lookback is tested and configured. The {model.analyzedTradeCount} current saved analyses remain available; older historical imports are not being treated as failed or zero. {model.moneyBasis === "gross" ? "Gross results do not subtract fees." : "Net results include only trades with complete fee details."}</Typography>
-        </Stack>
-      </Paper>
+      <Card sx={{ maxWidth: { xs: "100%", sm: 240 } }} variant="outlined">
+        <CardActionArea component={Link} href="/analytics/trade-analyzer/day/trades">
+          <CardContent>
+            <Typography color="text.secondary" variant="caption">Analyzed trades</Typography>
+            <Typography component="div" sx={{ fontSize: "1.75rem", fontWeight: 800, mt: 0.5 }}>
+              {model.analyzedTradeCount}
+            </Typography>
+          </CardContent>
+        </CardActionArea>
+      </Card>
 
       {view === "day" ? (
         <Stack spacing={1.25}>
-          <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
-            <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Explore your analysis</Typography>
-            <TradeAnalyzerHelpLink href="/help/trade-analyzer/day-trade-analysis#capability-navigation" label="Capability pages" />
-          </Stack>
+          <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Explore your analysis</Typography>
           <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" } }}>
           {CAPABILITIES.map((capability) => (
             <Card key={capability.href} variant="outlined">
@@ -397,9 +521,9 @@ export function TradeAnalysisClient({
         <Stack spacing={2.25}>
           <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } }}>
             <DashboardMetricCard caption="Moved above breakeven and later fell below it" label="Green-to-red trades" value={`${model.greenToRedTradeCount} of ${model.analyzedTradeCount}`} />
-            <DashboardMetricCard caption="Average time from first green to first red" label="Time before turning red" value={model.greenToRedDamage.averageGreenToRedMinutes === null ? "N/A" : `${model.greenToRedDamage.averageGreenToRedMinutes.toFixed(1)} min`} />
+            <DashboardMetricCard caption="Average time from first green to first red" label="Time before turning red" value={model.greenToRedDamage.averageGreenToRedMinutes === null ? "Unavailable" : `${model.greenToRedDamage.averageGreenToRedMinutes.toFixed(1)} min`} />
             <DashboardMetricCard caption="Turned positive again after first going red" label="Recovery rate" value={percent(model.greenToRedDamage.recoveryRatePercent)} />
-            <DashboardMetricCard caption="Average time from first red to first recovery" label="Recovery time" value={model.greenToRedDamage.averageRecoveryMinutes === null ? "N/A" : `${model.greenToRedDamage.averageRecoveryMinutes.toFixed(1)} min`} />
+            <DashboardMetricCard caption="Average time from first red to first recovery" label="Recovery time" value={model.greenToRedDamage.averageRecoveryMinutes === null ? "Unavailable" : `${model.greenToRedDamage.averageRecoveryMinutes.toFixed(1)} min`} />
             <DashboardMetricCard caption="Average profit reversal before first turning red" label="Peak-to-red damage" value={money(model.greenToRedDamage.averagePeakToRedDamageDecimal, model.currency)} />
             <DashboardMetricCard caption="Average profit reversal from peak to final exit" label="Peak-to-exit damage" value={money(model.greenToRedDamage.averagePeakToFinalDamageDecimal, model.currency)} />
             <DashboardMetricCard caption={`${model.greenToRedDamage.endedRedTradeCount} trades finished red after first moving green`} label="Ended-red actual result" value={money(model.greenToRedDamage.endedRedActualPnlDecimal, model.currency)} />
@@ -472,27 +596,83 @@ export function TradeAnalysisClient({
         <BreakdownTable currency={model.currency} rows={model.exitContext} valueLabel="Avg giveback" valueSuffix="%" />
       </Section> : null}
 
-      {view === "candle-patterns" ? <Section defaultExpanded description="The ten most frequently observed saved pattern groups in this filtered population." helpHref="/help/trade-analyzer/candle-patterns#ranked-patterns" title="Most observed patterns">
-        <PatternRanking model={model} />
+      {view === "candle-patterns" ? <Section defaultExpanded description="The ten most frequently observed candle patterns." helpHref="/help/trade-analyzer/candle-patterns#ranked-patterns" title="Most observed patterns">
+        <PatternRanking groups={patternGroups} />
       </Section> : null}
 
-      {view === "candle-patterns" ? <Section defaultExpanded description="Observed one-minute and five-minute candle patterns on or immediately before saved executions." helpHref="/help/trade-analyzer/candle-patterns#pattern-results" title="Candle patterns">
+      {view === "candle-patterns" ? <Section defaultExpanded description="Each pattern groups its one-minute and five-minute results by execution and location." helpHref="/help/trade-analyzer/candle-patterns#pattern-results" title="Candle patterns">
         <TradeAnalyzerTablePagination
           onPageChange={setPatternPage}
           onPageSizeChange={(nextSize) => { setPatternPageSize(nextSize); setPatternPage(1); }}
           page={currentPatternPage}
           pageSize={patternPageSize}
-          rowCount={model.patterns.length}
+          rowCount={patternGroups.length}
         />
-        {model.patterns.length === 0 ? <Typography color="text.secondary">No qualifying saved candle patterns are available in this range.</Typography> : (
-          <TableContainer><Table size="small"><TableHead><TableRow><TableCell>Pattern</TableCell><TableCell>Timeframe</TableCell><TableCell>Execution</TableCell><TableCell>Location</TableCell><TableCell align="right">Occurrences</TableCell><TableCell align="right">Trades</TableCell><TableCell align="right">Win rate</TableCell><TableCell align="right">Avg return</TableCell><TableCell align="right">Avg result</TableCell></TableRow></TableHead>
-          <TableBody>{visiblePatterns.map((row) => <TableRow hover key={`${row.timeframe}-${row.executionSide}-${row.location}-${row.pattern}`}><TableCell sx={{ fontWeight: 750 }}>{friendlyPattern(row.pattern)}</TableCell><TableCell>{row.timeframe}</TableCell><TableCell>{row.executionSide}</TableCell><TableCell>{row.location}</TableCell><TableCell align="right">{row.occurrenceCount}</TableCell><TableCell align="right">{row.tradeCount}</TableCell><TableCell align="right">{percent(row.winRatePercent)}</TableCell><TableCell align="right" sx={{ color: row.averageReturnPercent !== null && row.averageReturnPercent < 0 ? "error.main" : undefined }}>{percent(row.averageReturnPercent)}</TableCell><TableCell align="right">{money(row.averagePnlDecimal, model.currency)}</TableCell></TableRow>)}</TableBody></Table></TableContainer>
+        {patternGroups.length === 0 ? <Typography color="text.secondary">No qualifying saved candle patterns are available in this range.</Typography> : (
+          <Stack spacing={1.5} sx={{ mt: patternGroups.length > 10 ? 1.5 : 0 }}>
+            {visiblePatternGroups.map((group) => (
+              <Paper key={group.pattern} sx={{ overflow: "hidden" }} variant="outlined">
+                <Box sx={{ alignItems: { sm: "center" }, bgcolor: "rgba(1, 30, 86, 0.04)", display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 1, justifyContent: "space-between", px: { xs: 1.5, sm: 2 }, py: 1.25 }}>
+                  <Box>
+                    <Typography component="h3" sx={{ fontWeight: 850 }} variant="subtitle1">{friendlyPattern(group.pattern)}</Typography>
+                    <Typography color="text.secondary" variant="body2">{group.occurrenceCount} total occurrence{group.occurrenceCount === 1 ? "" : "s"}</Typography>
+                  </Box>
+                  <Button
+                    aria-label={`View ${group.occurrenceCount} ${friendlyPattern(group.pattern)} occurrences`}
+                    onClick={() => setSelectedPattern(group.pattern)}
+                    size="small"
+                    variant={selectedPattern === group.pattern ? "contained" : "outlined"}
+                  >
+                    View occurrences ({group.occurrenceCount})
+                  </Button>
+                </Box>
+                <TableContainer sx={{ display: { xs: "none", md: "block" }, overflowX: "auto" }}>
+                  <Table aria-label={`${friendlyPattern(group.pattern)} breakdown`} size="small" sx={{ minWidth: 760 }}>
+                    <TableHead><TableRow><TableCell>Timeframe</TableCell><TableCell>Execution</TableCell><TableCell>Location</TableCell><TableCell align="right">Occurrences</TableCell><TableCell align="right">Trades</TableCell><TableCell align="right">Win rate</TableCell><TableCell align="right">Avg return</TableCell><TableCell align="right">Avg result</TableCell></TableRow></TableHead>
+                    <TableBody>{group.rows.map((row) => <TableRow hover key={`${row.timeframe}-${row.executionSide}-${row.location}`}><TableCell sx={{ fontWeight: 750 }}>{row.timeframe}</TableCell><TableCell>{row.executionSide}</TableCell><TableCell>{row.location}</TableCell><TableCell align="right">{row.occurrenceCount}</TableCell><TableCell align="right">{row.tradeCount}</TableCell><TableCell align="right">{percent(row.winRatePercent)}</TableCell><TableCell align="right" sx={{ color: row.averageReturnPercent !== null && row.averageReturnPercent < 0 ? "error.main" : undefined }}>{percent(row.averageReturnPercent)}</TableCell><TableCell align="right">{money(row.averagePnlDecimal, model.currency)}</TableCell></TableRow>)}</TableBody>
+                  </Table>
+                </TableContainer>
+                <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" }, p: 1.5 }}>
+                  {group.rows.map((row) => (
+                    <Box
+                      key={`${row.timeframe}-${row.executionSide}-${row.location}`}
+                      sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.25 }}
+                    >
+                      <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+                        <Box>
+                          <Typography sx={{ fontWeight: 850 }} variant="body2">
+                            {row.timeframe} · {row.executionSide}
+                          </Typography>
+                          <Typography color="text.secondary" variant="caption">{row.location}</Typography>
+                        </Box>
+                        <Typography sx={{ fontWeight: 800 }} variant="body2">
+                          {row.occurrenceCount} occurrence{row.occurrenceCount === 1 ? "" : "s"}
+                        </Typography>
+                      </Stack>
+                      <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1.25 }}>
+                        <Box><Typography color="text.secondary" variant="caption">Trades</Typography><Typography variant="body2">{row.tradeCount}</Typography></Box>
+                        <Box><Typography color="text.secondary" variant="caption">Win rate</Typography><Typography variant="body2">{percent(row.winRatePercent)}</Typography></Box>
+                        <Box><Typography color="text.secondary" variant="caption">Average return</Typography><Typography color={row.averageReturnPercent !== null && row.averageReturnPercent < 0 ? "error.main" : undefined} variant="body2">{percent(row.averageReturnPercent)}</Typography></Box>
+                        <Box><Typography color="text.secondary" variant="caption">Average result</Typography><Typography variant="body2">{money(row.averagePnlDecimal, model.currency)}</Typography></Box>
+                      </Box>
+                    </Box>
+                  ))}
+                </Stack>
+              </Paper>
+            ))}
+          </Stack>
         )}
       </Section> : null}
 
-      {view === "trades" ? <Section defaultExpanded description="The exact analyzed trades behind these summaries, with a link back to each Daily Trade Tracker replay." helpHref="/help/trade-analyzer/analyzed-trades#trade-table" title="Analyzed trades">
-        <TradeTable model={model} />
-      </Section> : null}
+      {view === "candle-patterns" && selectedPattern ? (
+        <CandlePatternOccurrenceExplorer
+          currency={evidenceQuery.currency}
+          endDate={evidenceQuery.endDate}
+          moneyBasis={evidenceQuery.moneyBasis}
+          pattern={selectedPattern}
+          startDate={evidenceQuery.startDate}
+        />
+      ) : null}
 
       {model.malformedSnapshotCount > 0 ? <Typography color="warning.main" variant="body2">{model.malformedSnapshotCount} saved execution snapshots could not be read and were excluded from execution-level breakdowns.</Typography> : null}
     </Stack>

@@ -57,6 +57,7 @@ import { dailyTradeMoomooAnalyzerMigration } from "@/src/modules/level-analysis/
 import { dailyTradeExactTurnoverMigration } from "@/src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover";
 import { dailyTradePathMaterializationMigration } from "@/src/modules/level-analysis/server/database/migrations/0040_daily_trade_path_materialization";
 import { dailyTradePatternContextV2Migration } from "@/src/modules/level-analysis/server/database/migrations/0042_daily_trade_pattern_context_v2";
+import { dailyTradePatternOccurrencesMigration } from "@/src/modules/level-analysis/server/database/migrations/0059_daily_trade_pattern_occurrences";
 import {
   type PlatformMigration,
   validatePlatformMigrationManifest,
@@ -300,6 +301,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/coach/server/database/migrations/0058_coach_ai_chat_cache_accounting.ts",
       migration: coachAiChatCacheAccountingMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/level-analysis/server/database/migrations/0059_daily_trade_pattern_occurrences.ts",
+      migration: dailyTradePatternOccurrencesMigration,
     }),
   ]);
 
@@ -557,6 +562,9 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     ]),
     "0055_coach_ai_chat_action_drafts": Object.freeze([
       "coach_ai_chat_action_drafts",
+    ]),
+    "0059_daily_trade_pattern_occurrences": Object.freeze([
+      "journal_round_trip_daily_trade_analysis_pattern_occurrences",
     ]),
   });
 

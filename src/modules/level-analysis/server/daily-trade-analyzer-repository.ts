@@ -12,6 +12,7 @@ import {
 } from "../contracts/daily-trade-analyzer-contracts";
 import type { NormalizedMarketCandle } from "../contracts/candle-review-contracts";
 import { persistDailyTradePathMaterialization } from "./daily-trade-path-materialization-repository";
+import { persistDailyTradePatternOccurrences } from "./daily-trade-pattern-occurrence-repository";
 
 export type DailyTradeAnalyzerTarget = Readonly<{
   assetClass: "stock";
@@ -445,6 +446,12 @@ WHERE daily_trade_analysis_id = ?`).run(input.target.roundTripVersionId,
         insertSnapshot.run(versionId, snapshot.event.eventId, snapshot.event.kind,
           snapshot.candleTime, JSON.stringify(snapshot));
       }
+      persistDailyTradePatternOccurrences(this.database, {
+        analysisVersionId: versionId,
+        analyzed: input.analyzed,
+        roundTripId: input.target.roundTripId,
+        scope: input.scope,
+      });
       const insertPath = this.database.prepare(`INSERT INTO journal_round_trip_daily_trade_analysis_post_exit_paths (
   daily_trade_analysis_version_id, minutes_after_exit, favorable_move_decimal, observed_at_candle_time_utc_seconds
 ) VALUES (?, ?, ?, ?)`);

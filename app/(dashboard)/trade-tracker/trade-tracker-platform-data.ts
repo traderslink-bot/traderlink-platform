@@ -539,6 +539,16 @@ ORDER BY candle_time_utc_seconds`);
   });
 }
 
+export function getReplacementDailyTradeAnalyzerReplay(
+  scope: WorkspaceAccessScope,
+  input: Readonly<{
+    direction: "long" | "short";
+    roundTripId: string;
+  }>,
+): DaySessionTradeAnalyzer | null {
+  return readDailyTradeAnalyzers(scope, [input]).get(input.roundTripId) ?? null;
+}
+
 function annotationSnapshot(
   service: JournalAnnotationService,
   account: Parameters<JournalAnnotationService["listTags"]>[0],
