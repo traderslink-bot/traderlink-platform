@@ -71,8 +71,11 @@ The private persistence API checkpoint is tracked in
 - [x] Add allowlisted Swing note, explicit open-position type and Swing tag
   drafts/confirmed actions through canonical commands. Position types are
   always selected by the trader and never inferred by Chat.
-- [ ] Add remaining account setting and eligible AI Review request actions
-  through canonical commands. Trading Rules and completed-trade annotations
+- [x] Add the eligible AI Review request action through the canonical
+  availability and pending-request services. Confirmation does not start a
+  provider call.
+- [ ] Add any remaining owner-approved account setting actions through
+  canonical commands. Trading Rules and completed-trade annotations
   have deterministic reads, and exact completed-trade/Swing tag replacement,
   confirmed Trading Rule changes and the bounded safe Data Decision action set
   are complete. Reporting
@@ -377,6 +380,23 @@ The private persistence API checkpoint is tracked in
   tests passed. This slice reused migration 0055's accepted action registry;
   it performed no migration, protected-database write, provider request, push
   or deployment.
+
+### Completed in source: eligible AI Review requests
+
+- `get_account_ai_plan` now returns the exact currently available periodic and
+  monthly review periods from `CoachAiReviewAvailabilityService`, alongside
+  the existing schedule, delivery and entitlement state.
+- Chat may prepare a request only when its review kind and both period dates
+  exactly match a `manual_available` or `automatic_ready` period and the
+  generation gate is available. The preview identifies the review kind and
+  exact date range.
+- Confirmation rechecks the generation gate and calls
+  `CoachAiReviewRequestService.requestManualV2`. It creates or reuses only the
+  immutable pending request; it never starts issuance, reserves provider
+  capacity or contacts OpenAI.
+- Focused ESLint, the full no-emit TypeScript check and 18 focused action and
+  product-context tests across two files passed with one worker. No protected
+  database write, provider request, process start, push or deployment occurred.
 
 ### Completed in source: Swing notes, position type and Swing tags
 

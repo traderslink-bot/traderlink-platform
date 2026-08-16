@@ -27,6 +27,8 @@ import { narrowWorkspaceAccessToAccount } from
 
 import { CoachAiChatRepository } from "./coach-ai-chat-repository";
 import { CoachAiChatActionDraftService } from "./coach-ai-chat-action-draft-service";
+import type { CoachAiReviewAvailabilityV2 } from
+  "./coach-ai-review-availability-service";
 import { CoachReviewDeliveryScheduleRepository } from
   "./coach-weekly-review-schedule-repository";
 
@@ -466,6 +468,79 @@ FROM journal_accounts WHERE display_name = 'Long-Term Holds'`).get()).toEqual({
         draftId: draft.draftId,
       }, new Date("2026-08-15T12:01:00.000Z"));
       expect(schedules.readV2(f.scope)?.isEnabled).toBe(false);
+    } finally {
+      f.database.close();
+    }
+  });
+
+  it("creates one eligible AI Review request only after confirmation", () => {
+    const f = fixture();
+    try {
+      const requests: unknown[] = [];
+      const availability = Object.freeze({
+        periodic: Object.freeze({
+          period: Object.freeze({
+            cadence: "weekly" as const,
+            startDate: "2026-08-03",
+            endDate: "2026-08-07",
+            timezone: "America/New_York" as const,
+            cohorts: Object.freeze([]),
+            calendarId: "test-calendar",
+            calendarEvidenceDigestSha256: "a".repeat(64),
+          }),
+          state: "manual_available" as const,
+          completedReviewCount: 3,
+          incompleteReviewCount: 1,
+          reviewDays: Object.freeze([]),
+          evidence: Object.freeze({
+            readyClosedTradeCount: 12,
+            substantiveReflectionCount: 3,
+            savedTagCount: 4,
+            reviewedRuleOutcomeCount: 2,
+          }),
+          automaticAtUtc: "2026-08-15T16:00:00.000Z",
+          requestState: null,
+        }),
+        monthly: null,
+      }) satisfies CoachAiReviewAvailabilityV2;
+      const requestId = createCanonicalUuidV4();
+      const service = new CoachAiChatActionDraftService(f.database, {
+        reviewAvailability: () => availability,
+        reviewGenerationGate: () => Object.freeze({
+          state: "available" as const,
+          paidAccess: "available" as const,
+        }),
+        requestAiReview: (_scope, request) => {
+          requests.push(request);
+          return Object.freeze({ state: "requested" as const, requestId });
+        },
+      });
+      const draft = service.create(f.scope, {
+        conversationId: f.conversationId,
+        sourceMessageId: f.message("Request my available weekly review."),
+        extraction: Object.freeze({
+          kind: "ai_review_request",
+          reviewKind: "weekly",
+          periodStartDate: "2026-08-03",
+          periodEndDate: "2026-08-07",
+        }),
+      }, now);
+      expect(draft.preview).toEqual(expect.objectContaining({
+        kind: "ai_review_request",
+        reviewLabel: "Weekly Review",
+        periodStartDate: "2026-08-03",
+        periodEndDate: "2026-08-07",
+      }));
+      expect(requests).toEqual([]);
+      service.confirm(f.scope, {
+        conversationId: f.conversationId,
+        draftId: draft.draftId,
+      }, new Date("2026-08-15T12:01:00.000Z"));
+      expect(requests).toEqual([{
+        reviewKind: "weekly",
+        periodStartDate: "2026-08-03",
+        periodEndDate: "2026-08-07",
+      }]);
     } finally {
       f.database.close();
     }

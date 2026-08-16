@@ -38,6 +38,8 @@ import {
 } from "../contracts/coach-ai-chat-factual-tool-contracts";
 import { CoachReviewDeliveryScheduleRepository } from
   "./coach-weekly-review-schedule-repository";
+import { CoachAiReviewAvailabilityService } from
+  "./coach-ai-review-availability-service";
 
 const TICKER_PATTERN = /^[A-Za-z0-9._-]{1,32}$/u;
 const OPAQUE_REF_PATTERN = /^[0-9a-f]{64}$/u;
@@ -158,6 +160,7 @@ export class CoachAiChatProductContextService {
   private readonly notifications: Pick<PlatformNotificationRepository, "list" | "readPreferences">;
   private readonly profile: Pick<PlatformAccountProfileReadService, "get">;
   private readonly schedules: Pick<CoachReviewDeliveryScheduleRepository, "read" | "readV2">;
+  private readonly reviewAvailability: Pick<CoachAiReviewAvailabilityService, "read">;
   private readonly connection: Pick<MoomooConnectionRepository, "find">;
   private readonly moomooImports: Pick<MoomooExecutionImportCommandService, "list">;
   private readonly entitlementSchemaAvailable: () => boolean;
@@ -170,6 +173,7 @@ export class CoachAiChatProductContextService {
       notifications?: Pick<PlatformNotificationRepository, "list" | "readPreferences">;
       profile?: Pick<PlatformAccountProfileReadService, "get">;
       schedules?: Pick<CoachReviewDeliveryScheduleRepository, "read" | "readV2">;
+      reviewAvailability?: Pick<CoachAiReviewAvailabilityService, "read">;
       connection?: Pick<MoomooConnectionRepository, "find">;
       moomooImports?: Pick<MoomooExecutionImportCommandService, "list">;
       entitlementSchemaAvailable?: () => boolean;
@@ -180,6 +184,8 @@ export class CoachAiChatProductContextService {
     this.notifications = dependencies.notifications ?? new PlatformNotificationRepository(database);
     this.profile = dependencies.profile ?? new PlatformAccountProfileReadService(database);
     this.schedules = dependencies.schedules ?? new CoachReviewDeliveryScheduleRepository(database);
+    this.reviewAvailability = dependencies.reviewAvailability ??
+      new CoachAiReviewAvailabilityService(database);
     this.connection = dependencies.connection ?? new MoomooConnectionRepository(database);
     this.moomooImports = dependencies.moomooImports ?? new MoomooExecutionImportCommandService(database);
     this.entitlementSchemaAvailable = dependencies.entitlementSchemaAvailable ??
@@ -338,6 +344,7 @@ export class CoachAiChatProductContextService {
         result: Object.freeze({
           reviewSettings: this.schedules.readV2(scope),
           reviewDelivery: this.schedules.read(scope),
+          availableReviews: this.reviewAvailability.read(scope),
           entitlement,
           link: "/account/ai",
         }),

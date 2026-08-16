@@ -489,7 +489,8 @@ once. The following sequence controls safe delivery:
    explicit trader confirmation. Reporting currency, notification read state
    and preferences, selected or newly created Journal account, and existing AI Review on/off
    state, completed-trade and Swing tags, exact Swing notes and position
-   classifications, exact Trading Rule changes, and the bounded
+   classifications, eligible AI Review pending requests, exact Trading Rule
+   changes, and the bounded
    Data Decision resolutions that do not require raw statement comparison are
    complete. Position type is always the trader's explicit choice; Chat never
    infers it from executions, age, ticker or P/L.

@@ -100,6 +100,19 @@ function Details({ draft }: Readonly<{ draft: CoachAiChatActionDraft }>) {
   if (preview.kind === "ai_review_account_setting") {
     return <Typography variant="body2"><strong>{preview.currentEnabled ? "On" : "Off"}</strong> → <strong>{preview.proposedEnabled ? "On" : "Off"}</strong></Typography>;
   }
+  if (preview.kind === "ai_review_request") {
+    return (
+      <Stack spacing={0.5}>
+        <Typography sx={{ fontWeight: 750 }} variant="body2">{preview.reviewLabel}</Typography>
+        <Typography color="text.secondary" variant="body2">
+          {preview.periodStartDate} through {preview.periodEndDate}
+        </Typography>
+        <Typography variant="body2">
+          Confirmation saves the request. The review will appear after it is generated.
+        </Typography>
+      </Stack>
+    );
+  }
   if (preview.kind === "trade_tags") {
     const current = preview.currentTagNames.length > 0
       ? preview.currentTagNames.join(", ")

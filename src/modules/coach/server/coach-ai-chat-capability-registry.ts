@@ -148,7 +148,7 @@ export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
   Object.freeze({
     id: "confirmed_product_changes",
     kind: "confirmed_draft" as const,
-    plainLanguage: "Prepare supported currency, notification, Trade Tracker account, AI Review, Swing note, position type, trade tag, Trading Rule, or Data Decision changes.",
+    plainLanguage: "Prepare supported currency, notification, Trade Tracker account, AI Review setting or eligible review request, Swing note, position type, trade tag, Trading Rule, or Data Decision changes.",
     canonicalNames: Object.freeze([]),
     limitations: Object.freeze([
       "Chat must read the current exact value or target before it can prepare the change.",
@@ -156,6 +156,7 @@ export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
       "A new Trade Tracker account uses an exact name, currency and trading timezone, and becomes active only after confirmation.",
       "Swing notes retain their exact review date and complete note text; Chat never invents missing note content.",
       "Position type is always the trader's explicit choice and is never inferred from age, executions, ticker or profit and loss.",
+      "An AI Review request must match an exact currently available period and confirmation saves only the pending request.",
       "A trade-tag proposal uses only the trader's exact requested tags from the available saved or preset list.",
       "A Trading Rule proposal uses an exact saved rule or maintained preset, and Chat never activates a rule only because it recommends one.",
       "Data Decision proposals use one exact pending item and returned evidence references; numeric corrections and raw-statement comparisons stay on the Data Decisions page.",

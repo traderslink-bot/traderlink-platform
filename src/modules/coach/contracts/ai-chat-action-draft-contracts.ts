@@ -45,6 +45,12 @@ export type CoachAiChatActionDraftExtraction =
       isEnabled: boolean;
     }>
   | Readonly<{
+      kind: "ai_review_request";
+      reviewKind: "weekly" | "two_week" | "monthly";
+      periodStartDate: string;
+      periodEndDate: string;
+    }>
+  | Readonly<{
       kind: "trade_tags";
       roundTripId: string | null;
       positionRef: string | null;
@@ -174,6 +180,13 @@ export type CoachAiChatActionDraftPreview =
       proposedEnabled: boolean;
     }>
   | Readonly<{
+      kind: "ai_review_request";
+      title: "Request AI Review";
+      reviewLabel: "Weekly Review" | "Two-Week Review" | "Monthly Review";
+      periodStartDate: string;
+      periodEndDate: string;
+    }>
+  | Readonly<{
       kind: "trade_tags";
       title: "Change trade tags";
       ticker: string;
@@ -205,6 +218,7 @@ export type CoachAiChatActionCanonicalCommand =
   | "journal_trade_style_change"
   | "platform_notification_preferences_update"
   | "coach_ai_review_account_setting_save"
+  | "coach_ai_review_request_create"
   | "journal_trade_tags_replace"
   | "journal_trading_rules_mutate"
   | "journal_data_decision_resolve";

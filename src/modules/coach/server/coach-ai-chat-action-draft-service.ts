@@ -12,6 +12,19 @@ import type {
 } from "../contracts/ai-chat-action-draft-contracts";
 import { CoachReviewDeliveryScheduleRepository } from
   "./coach-weekly-review-schedule-repository";
+import {
+  CoachAiReviewAvailabilityService,
+  type CoachAiReviewAvailabilityV2,
+} from "./coach-ai-review-availability-service";
+import {
+  CoachAiReviewGenerationCoordinatorV2,
+  type CoachAiReviewGenerationGateV2,
+} from "./coach-ai-review-generation-coordinator-v2";
+import {
+  CoachAiReviewRequestService,
+  type CoachAiReviewManualRequestResultV2,
+  type CoachAiReviewManualRequestV2,
+} from "./coach-ai-review-request-service";
 import type { WorkspaceAccessScope } from
   "@/src/modules/platform/contracts/workspace-access-scope";
 import { narrowWorkspaceAccessToAccount } from
@@ -131,6 +144,12 @@ const DATA_DECISION_ACTION_LABELS = Object.freeze({
   restore_execution: "Restore this execution",
   keep_distinct: "Keep this execution separate",
   merge_supported_duplicate: "Merge the duplicate execution",
+} as const);
+
+const AI_REVIEW_LABELS = Object.freeze({
+  weekly: "Weekly Review",
+  two_week: "Two-Week Review",
+  monthly: "Monthly Review",
 } as const);
 
 function string(value: unknown, field: string): string {
@@ -477,6 +496,18 @@ export class CoachAiChatActionDraftService {
     scope: ReturnType<typeof narrowWorkspaceAccessToAccount>,
     positionRef: string,
   ) => string;
+  private readonly reviewAvailability: (
+    scope: WorkspaceAccessScope,
+    now: Date,
+  ) => CoachAiReviewAvailabilityV2;
+  private readonly reviewGenerationGate: (
+    scope: WorkspaceAccessScope,
+  ) => CoachAiReviewGenerationGateV2;
+  private readonly requestAiReview: (
+    scope: WorkspaceAccessScope,
+    input: CoachAiReviewManualRequestV2,
+    now: Date,
+  ) => CoachAiReviewManualRequestResultV2;
 
   constructor(
     private readonly database: Database.Database,
@@ -526,6 +557,18 @@ export class CoachAiChatActionDraftService {
         scope: ReturnType<typeof narrowWorkspaceAccessToAccount>,
         positionRef: string,
       ) => string;
+      reviewAvailability?: (
+        scope: WorkspaceAccessScope,
+        now: Date,
+      ) => CoachAiReviewAvailabilityV2;
+      reviewGenerationGate?: (
+        scope: WorkspaceAccessScope,
+      ) => CoachAiReviewGenerationGateV2;
+      requestAiReview?: (
+        scope: WorkspaceAccessScope,
+        input: CoachAiReviewManualRequestV2,
+        now: Date,
+      ) => CoachAiReviewManualRequestResultV2;
     }> = Object.freeze({}),
   ) {
     this.drafts = new CoachAiChatActionDraftRepository(database);
@@ -564,6 +607,15 @@ export class CoachAiChatActionDraftService {
     this.resolvePositionRoundTripId = dependencies.resolvePositionRoundTripId ??
       ((account, positionRef) => createJournalIntegrityRuntime(this.database)
         .tradeStyles.resolvePosition(account, positionRef).roundTripId);
+    this.reviewAvailability = dependencies.reviewAvailability ??
+      ((requestScope, requestedAt) => new CoachAiReviewAvailabilityService(this.database)
+        .read(requestScope, requestedAt));
+    this.reviewGenerationGate = dependencies.reviewGenerationGate ??
+      ((requestScope) => new CoachAiReviewGenerationCoordinatorV2(this.database)
+        .readGate(requestScope));
+    this.requestAiReview = dependencies.requestAiReview ??
+      ((requestScope, request, requestedAt) => new CoachAiReviewRequestService(this.database)
+        .requestManualV2(requestScope, request, requestedAt));
   }
 
   create(
@@ -750,6 +802,43 @@ export class CoachAiChatActionDraftService {
         currentRevision: current.revision,
         proposedEnabled: input.extraction.isEnabled,
       });
+    } else if (input.extraction.kind === "ai_review_request") {
+      const reviewKind = input.extraction.reviewKind;
+      const periodStartDate = canonicalDate(
+        input.extraction.periodStartDate,
+        "periodStartDate",
+      );
+      const periodEndDate = canonicalDate(input.extraction.periodEndDate, "periodEndDate");
+      const gate = this.reviewGenerationGate(scope);
+      if (gate.state !== "available") {
+        platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+      }
+      const availability = this.reviewAvailability(scope, now);
+      const candidate = reviewKind === "monthly"
+        ? availability.monthly
+        : availability.periodic;
+      const candidateMatches = reviewKind === "monthly"
+        ? candidate !== null &&
+          "calendarMonthStartDate" in candidate.period &&
+          candidate.period.calendarMonthStartDate === periodStartDate &&
+          candidate.period.calendarMonthEndDate === periodEndDate
+        : candidate !== null &&
+          "cadence" in candidate.period &&
+          candidate.period.cadence === reviewKind &&
+          candidate.period.startDate === periodStartDate &&
+          candidate.period.endDate === periodEndDate;
+      if (!candidateMatches || !candidate ||
+          (candidate.state !== "manual_available" && candidate.state !== "automatic_ready")) {
+        platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+      }
+      preview = Object.freeze({
+        kind: input.extraction.kind,
+        title: "Request AI Review",
+        reviewLabel: AI_REVIEW_LABELS[reviewKind],
+        periodStartDate,
+        periodEndDate,
+      });
+      privatePayload = Object.freeze({ reviewKind, periodStartDate, periodEndDate });
     } else if (input.extraction.kind === "trade_tags") {
       const account = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId!);
       const hasRoundTripId = input.extraction.roundTripId !== null;
@@ -1295,6 +1384,32 @@ WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
           expectedRevision: current.revision,
         }, now);
         reference = `ai_review_settings:${saved.revision}`;
+      } else if (draft.preview.kind === "ai_review_request") {
+        const gate = this.reviewGenerationGate(scope);
+        if (gate.state !== "available") {
+          platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+        }
+        const reviewKind = string(payload.reviewKind, "reviewKind");
+        if (reviewKind !== "weekly" && reviewKind !== "two_week" &&
+            reviewKind !== "monthly") {
+          platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { field: "reviewKind" });
+        }
+        const reviewRequest = Object.freeze({
+          reviewKind,
+          periodStartDate: canonicalDate(payload.periodStartDate, "periodStartDate"),
+          periodEndDate: canonicalDate(payload.periodEndDate, "periodEndDate"),
+        });
+        command = "coach_ai_review_request_create";
+        draft = this.drafts.beginConfirm(scope, input.draftId, command, now);
+        const requested = this.requestAiReview(scope, reviewRequest, now);
+        if (requested.state === "not_available") {
+          platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+        }
+        reference = `ai_review_request:${createHash("sha256").update([
+          scope.workspaceId,
+          scope.activeAccountId,
+          requested.requestId,
+        ].join("\u001f"), "utf8").digest("hex")}`;
       } else if (draft.preview.kind === "trade_tags") {
         const account = narrowWorkspaceAccessToAccount(scope, scope.activeAccountId!);
         const roundTripId = string(payload.roundTripId, "roundTripId");
