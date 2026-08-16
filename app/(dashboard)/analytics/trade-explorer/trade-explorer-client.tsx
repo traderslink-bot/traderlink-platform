@@ -1005,7 +1005,7 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
                       <Box sx={{ display: "grid", gap: 1.25, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1.5 }}>
                         {displayedColumns.map((column) => (
                           <Box key={column.label} sx={{ minWidth: 0 }}>
-                            <Typography color="text.secondary" display="block" variant="caption">{column.label}</Typography>
+                            <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">{column.label}</Typography>
                             <Typography sx={{ fontWeight: 700, overflowWrap: "anywhere" }} variant="body2">
                               {column.kind === "day_path" ? dayMovement(item.group) : value(item.group, column.metricId)}
                             </Typography>
@@ -1149,39 +1149,39 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
                         </Stack>
                         <Box sx={{ display: "grid", gap: 1.25, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1.5 }}>
                           <Box>
-                            <Typography color="text.secondary" display="block" variant="caption">{appliedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L"}</Typography>
+                            <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">{appliedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L"}</Typography>
                             <Typography sx={{ color: pnlColor(trade.selectedPnlDecimal), fontWeight: 800 }}>
                               {money(trade.selectedPnlDecimal, preview.evidence?.currency ?? null)}
                             </Typography>
                           </Box>
                           <Box>
-                            <Typography color="text.secondary" display="block" variant="caption">Return</Typography>
+                            <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">Return</Typography>
                             <Typography sx={{ fontWeight: 700 }}>
                               {trade.returnPercentDecimal === null || trade.returnPercentDecimal === undefined ? "N/A" : `${formatJournalAnalyticsDecimal(trade.returnPercentDecimal)}%`}
                             </Typography>
                           </Box>
                           <Box>
-                            <Typography color="text.secondary" display="block" variant="caption">Shares</Typography>
+                            <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">Shares</Typography>
                             <Typography sx={{ fontWeight: 700 }}>{formatJournalAnalyticsDecimal(trade.enteredQuantityDecimal)}</Typography>
                           </Box>
                           <Box>
-                            <Typography color="text.secondary" display="block" variant="caption">Hold</Typography>
+                            <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">Hold</Typography>
                             <Typography sx={{ fontWeight: 700 }}>{formatJournalAnalyticsDuration(trade.holdingDurationMilliseconds)}</Typography>
                           </Box>
                           <Box>
-                            <Typography color="text.secondary" display="block" variant="caption">Avg entry</Typography>
+                            <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">Avg entry</Typography>
                             <Typography sx={{ fontWeight: 700 }}>{trade.averageEntryPriceDecimal ? money(trade.averageEntryPriceDecimal, preview.evidence?.currency ?? null) : "N/A"}</Typography>
                           </Box>
                           <Box>
-                            <Typography color="text.secondary" display="block" variant="caption">Avg exit</Typography>
+                            <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">Avg exit</Typography>
                             <Typography sx={{ fontWeight: 700 }}>{trade.averageExitPriceDecimal ? money(trade.averageExitPriceDecimal, preview.evidence?.currency ?? null) : "N/A"}</Typography>
                           </Box>
                           <Box>
-                            <Typography color="text.secondary" display="block" variant="caption">Entry value</Typography>
+                            <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">Entry value</Typography>
                             <Typography sx={{ fontWeight: 700 }}>{money(trade.entryNotionalDecimal, preview.evidence?.currency ?? null)}</Typography>
                           </Box>
                           <Box>
-                            <Typography color="text.secondary" display="block" variant="caption">Executions</Typography>
+                            <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">Executions</Typography>
                             <Typography sx={{ fontWeight: 700 }}>{trade.uniqueExecutionCount}</Typography>
                           </Box>
                         </Box>
