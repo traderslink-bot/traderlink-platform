@@ -205,6 +205,65 @@ describe("CoachAiChatActionDraftService", () => {
     }
   });
 
+  it("creates and selects a new Trade Tracker account only after confirmation", () => {
+    const f = fixture();
+    try {
+      const service = new CoachAiChatActionDraftService(f.database, {
+        createJournalAccount: (scope, input) => {
+          f.database.prepare(`INSERT INTO journal_accounts (
+  account_id, workspace_id, display_name, base_currency, trading_timezone,
+  status, created_by_user_id, created_at_utc, updated_at_utc
+) VALUES (?, ?, ?, ?, ?, 'active', ?, ?, ?)`)
+            .run(input.accountId, input.workspaceId, input.displayName, input.baseCurrency,
+              input.tradingTimezone, scope.userId, input.now.toISOString(), input.now.toISOString());
+          return Object.freeze({
+            accountId: input.accountId,
+            displayName: input.displayName,
+            baseCurrency: input.baseCurrency,
+            tradingTimezone: input.tradingTimezone,
+          });
+        },
+      });
+      const draft = service.create(f.scope, {
+        conversationId: f.conversationId,
+        sourceMessageId: f.message("Create a Long-Term Holds account."),
+        extraction: Object.freeze({
+          kind: "create_journal_account",
+          displayName: "Long-Term Holds",
+          baseCurrency: "USD",
+          tradingTimezone: "America/New_York",
+        }),
+      }, now);
+      expect(draft.preview).toEqual(expect.objectContaining({
+        kind: "create_journal_account",
+        displayName: "Long-Term Holds",
+        baseCurrency: "USD",
+        tradingTimezone: "America/New_York",
+        becomesActive: true,
+      }));
+      expect(f.database.prepare("SELECT COUNT(*) AS count FROM journal_accounts")
+        .get()).toEqual({ count: 2 });
+      const result = service.confirm(f.scope, {
+        conversationId: f.conversationId,
+        draftId: draft.draftId,
+      }, new Date("2026-08-15T12:01:00.000Z"));
+      expect(result.accountSelectionRef).toMatch(/^[0-9a-f]{64}$/u);
+      expect(f.database.prepare(`SELECT display_name, base_currency, trading_timezone
+FROM journal_accounts WHERE display_name = 'Long-Term Holds'`).get()).toEqual({
+        display_name: "Long-Term Holds",
+        base_currency: "USD",
+        trading_timezone: "America/New_York",
+      });
+      const retried = service.confirm(f.scope, {
+        conversationId: f.conversationId,
+        draftId: draft.draftId,
+      }, new Date("2026-08-15T12:02:00.000Z"));
+      expect(retried.accountSelectionRef).toBe(result.accountSelectionRef);
+    } finally {
+      f.database.close();
+    }
+  });
+
   it("shows the complete Discord notification selection before saving it", () => {
     const f = fixture();
     try {

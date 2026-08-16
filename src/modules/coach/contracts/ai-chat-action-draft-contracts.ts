@@ -15,6 +15,12 @@ export type CoachAiChatActionDraftExtraction =
       accountDisplayName: string;
     }>
   | Readonly<{
+      kind: "create_journal_account";
+      displayName: string;
+      baseCurrency: string;
+      tradingTimezone: string;
+    }>
+  | Readonly<{
       kind: "notification_preferences";
       discordDmCategories: readonly string[];
     }>
@@ -114,6 +120,14 @@ export type CoachAiChatActionDraftPreview =
       proposedAccountDisplayName: string;
     }>
   | Readonly<{
+      kind: "create_journal_account";
+      title: "Create Trade Tracker account";
+      displayName: string;
+      baseCurrency: string;
+      tradingTimezone: string;
+      becomesActive: true;
+    }>
+  | Readonly<{
       kind: "notification_preferences";
       title: "Change Discord notifications";
       currentCategoryLabels: readonly string[];
@@ -152,6 +166,7 @@ export type CoachAiChatActionCanonicalCommand =
   | "platform_reporting_currency_update"
   | "platform_notification_mark_read"
   | "platform_account_selection"
+  | "journal_account_create"
   | "platform_notification_preferences_update"
   | "coach_ai_review_account_setting_save"
   | "journal_trade_tags_replace"

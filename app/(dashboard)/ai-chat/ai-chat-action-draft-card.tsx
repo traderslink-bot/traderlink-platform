@@ -31,6 +31,17 @@ function Details({ draft }: Readonly<{ draft: CoachAiChatActionDraft }>) {
   if (preview.kind === "select_journal_account") {
     return <Typography variant="body2"><strong>{preview.currentAccountDisplayName}</strong> → <strong>{preview.proposedAccountDisplayName}</strong></Typography>;
   }
+  if (preview.kind === "create_journal_account") {
+    return (
+      <Stack spacing={0.5}>
+        <Typography sx={{ fontWeight: 750 }} variant="body2">{preview.displayName}</Typography>
+        <Typography color="text.secondary" variant="body2">
+          {preview.baseCurrency} · {preview.tradingTimezone}
+        </Typography>
+        <Typography variant="body2">This account will become active after creation.</Typography>
+      </Stack>
+    );
+  }
   if (preview.kind === "notification_preferences") {
     const current = preview.currentCategoryLabels.length > 0
       ? preview.currentCategoryLabels.join(", ")
@@ -137,7 +148,9 @@ export function AiChatActionDraftCard({
         body: "{}",
       }));
       onDraftChange(result.draft);
-      if (action === "confirm" && draft.preview.kind === "select_journal_account" &&
+      if (action === "confirm" &&
+          (draft.preview.kind === "select_journal_account" ||
+            draft.preview.kind === "create_journal_account") &&
           result.draft.writeState === "committed") {
         window.location.reload();
       }

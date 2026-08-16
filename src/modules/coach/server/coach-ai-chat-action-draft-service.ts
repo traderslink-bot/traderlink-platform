@@ -16,6 +16,8 @@ import type { WorkspaceAccessScope } from
   "@/src/modules/platform/contracts/workspace-access-scope";
 import { narrowWorkspaceAccessToAccount } from
   "@/src/modules/platform/contracts/workspace-access-scope";
+import { deriveJournalAccountSelectionRef } from
+  "@/src/modules/platform/contracts/journal-account-selection";
 import { JournalAnnotationRepository } from
   "@/src/modules/journal/server/annotations/journal-annotation-repository";
 import { JournalAnnotationService } from
@@ -58,6 +60,7 @@ import { PlatformNotificationRepository } from
   "@/src/modules/platform/server/notifications/platform-notification-repository";
 import {
   createCanonicalUtcTimestamp,
+  createCanonicalUuidV4,
   platformFailure,
 } from "@/src/modules/platform/server/database/platform-migration-contract";
 
@@ -92,6 +95,20 @@ function dataDecisionRef(
     scope.accountId,
     privateId,
   ].join("\u001f"), "utf8").digest("hex");
+}
+
+function accountRosterSha256(accounts: readonly Readonly<{
+  selectionRef: string;
+  displayName: string;
+  baseCurrency: string;
+  tradingTimezone: string;
+}>[]): string {
+  return createHash("sha256").update(accounts.map((account) => [
+    account.selectionRef,
+    account.displayName,
+    account.baseCurrency,
+    account.tradingTimezone,
+  ].join("\u001e")).sort().join("\u001f"), "utf8").digest("hex");
 }
 
 const DATA_DECISION_ACTION_LABELS = Object.freeze({
@@ -174,6 +191,41 @@ function normalizedRuleText(value: unknown, field: string, maximum: number): str
   const normalized = value.trim().replace(/\s+/gu, " ").normalize("NFKC");
   if (normalized.length < 1 || normalized.length > maximum) {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field });
+  }
+  return normalized;
+}
+
+function accountDisplayName(value: unknown): string {
+  if (typeof value !== "string") {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "displayName" });
+  }
+  const normalized = value.trim().normalize("NFKC");
+  if (normalized.length < 1 || normalized.length > 120 || /[\u0000-\u001f\u007f]/u.test(normalized)) {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "displayName" });
+  }
+  return normalized;
+}
+
+function accountCurrency(value: unknown): string {
+  if (typeof value !== "string") {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "baseCurrency" });
+  }
+  const normalized = value.trim().toUpperCase();
+  if (!Intl.supportedValuesOf("currency").includes(normalized)) {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "baseCurrency" });
+  }
+  return normalized;
+}
+
+function accountTimezone(value: unknown): string {
+  if (typeof value !== "string") {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "tradingTimezone" });
+  }
+  const normalized = value.trim();
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: normalized }).format(0);
+  } catch {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "tradingTimezone" });
   }
   return normalized;
 }
@@ -274,6 +326,13 @@ type DataDecisionResolutionResult = Readonly<{
   openedFollowupDecisionIds: readonly string[];
 }>;
 
+type CreatedJournalAccount = Readonly<{
+  accountId: string;
+  displayName: string;
+  baseCurrency: string;
+  tradingTimezone: string;
+}>;
+
 export class CoachAiChatActionDraftService {
   private readonly drafts: CoachAiChatActionDraftRepository;
   private readonly preferences: PlatformUserPreferenceRepository;
@@ -291,6 +350,17 @@ export class CoachAiChatActionDraftService {
     scope: ReturnType<typeof narrowWorkspaceAccessToAccount>,
     resolution: JournalDecisionResolution,
   ) => DataDecisionResolutionResult;
+  private readonly createJournalAccount: (
+    scope: WorkspaceAccessScope,
+    input: Readonly<{
+      workspaceId: string;
+      displayName: string;
+      baseCurrency: string;
+      tradingTimezone: string;
+      accountId: string;
+      now: Date;
+    }>,
+  ) => CreatedJournalAccount;
 
   constructor(
     private readonly database: Database.Database,
@@ -305,6 +375,17 @@ export class CoachAiChatActionDraftService {
         scope: ReturnType<typeof narrowWorkspaceAccessToAccount>,
         resolution: JournalDecisionResolution,
       ) => DataDecisionResolutionResult;
+      createJournalAccount?: (
+        scope: WorkspaceAccessScope,
+        input: Readonly<{
+          workspaceId: string;
+          displayName: string;
+          baseCurrency: string;
+          tradingTimezone: string;
+          accountId: string;
+          now: Date;
+        }>,
+      ) => CreatedJournalAccount;
     }> = Object.freeze({}),
   ) {
     this.drafts = new CoachAiChatActionDraftRepository(database);
@@ -322,6 +403,8 @@ export class CoachAiChatActionDraftService {
       executions.currentVersion(executionId, workspaceId, accountId));
     this.resolveDataDecision = dependencies.resolveDataDecision ?? ((account, resolution) =>
       createJournalIntegrityRuntime(this.database).decisions.resolve(account, resolution));
+    this.createJournalAccount = dependencies.createJournalAccount ?? ((accountScope, input) =>
+      createJournalIntegrityRuntime(this.database).accounts.createAccount(accountScope, input));
   }
 
   create(
@@ -385,6 +468,32 @@ export class CoachAiChatActionDraftService {
       privatePayload = Object.freeze({
         currentSelectionRef: current.selectionRef,
         proposedSelectionRef: matches[0]!.selectionRef,
+      });
+    } else if (input.extraction.kind === "create_journal_account") {
+      const profile = this.profile.get(scope);
+      if ((scope.workspaceRole !== "owner" && scope.workspaceRole !== "admin") ||
+          profile.journalAccounts.length >= 25) {
+        platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
+      }
+      const displayName = accountDisplayName(input.extraction.displayName);
+      const baseCurrency = accountCurrency(input.extraction.baseCurrency);
+      const tradingTimezone = accountTimezone(input.extraction.tradingTimezone);
+      const accountId = createCanonicalUuidV4();
+      preview = Object.freeze({
+        kind: input.extraction.kind,
+        title: "Create Trade Tracker account",
+        displayName,
+        baseCurrency,
+        tradingTimezone,
+        becomesActive: true,
+      });
+      privatePayload = Object.freeze({
+        accountId,
+        displayName,
+        baseCurrency,
+        tradingTimezone,
+        expectedAccountRosterSha256: accountRosterSha256(profile.journalAccounts),
+        proposedSelectionRef: deriveJournalAccountSelectionRef(scope.workspaceId, accountId),
       });
     } else if (input.extraction.kind === "notification_preferences") {
       const current = this.notifications.readPreferences(scope).discordDmCategories;
@@ -748,7 +857,8 @@ WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
         platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
       }
       if (draft.disposition === "confirmed" && draft.writeState === "committed") {
-        const accountSelectionRef = draft.preview.kind === "select_journal_account"
+        const accountSelectionRef = draft.preview.kind === "select_journal_account" ||
+            draft.preview.kind === "create_journal_account"
           ? string(
               this.drafts.readPrivatePayload(scope, input.draftId).proposedSelectionRef,
               "proposedSelectionRef",
@@ -796,6 +906,42 @@ WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
         command = "platform_account_selection";
         draft = this.drafts.beginConfirm(scope, input.draftId, command, now);
         reference = `account_selection:${createHash("sha256").update(accountSelectionRef, "utf8").digest("hex")}`;
+      } else if (draft.preview.kind === "create_journal_account") {
+        const accountPreview = draft.preview;
+        const profile = this.profile.get(scope);
+        const expectedRoster = string(
+          payload.expectedAccountRosterSha256,
+          "expectedAccountRosterSha256",
+        );
+        if ((scope.workspaceRole !== "owner" && scope.workspaceRole !== "admin") ||
+            profile.journalAccounts.length >= 25 ||
+            accountRosterSha256(profile.journalAccounts) !== expectedRoster) {
+          platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+        }
+        const accountId = string(payload.accountId, "accountId");
+        accountSelectionRef = string(payload.proposedSelectionRef, "proposedSelectionRef");
+        if (deriveJournalAccountSelectionRef(scope.workspaceId, accountId) !== accountSelectionRef) {
+          platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { field: "proposedSelectionRef" });
+        }
+        command = "journal_account_create";
+        draft = this.drafts.beginConfirm(scope, input.draftId, command, now);
+        const created = this.createJournalAccount(scope, {
+          workspaceId: scope.workspaceId,
+          accountId,
+          displayName: accountDisplayName(payload.displayName),
+          baseCurrency: accountCurrency(payload.baseCurrency),
+          tradingTimezone: accountTimezone(payload.tradingTimezone),
+          now,
+        });
+        if (created.accountId !== accountId || created.displayName !== accountPreview.displayName ||
+            created.baseCurrency !== accountPreview.baseCurrency ||
+            created.tradingTimezone !== accountPreview.tradingTimezone) {
+          platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { component: "journalAccountCreate" });
+        }
+        reference = `journal_account:${createHash("sha256").update([
+          scope.workspaceId,
+          accountId,
+        ].join("\u001f"), "utf8").digest("hex")}`;
       } else if (draft.preview.kind === "notification_preferences") {
         const current = this.notifications.readPreferences(scope).discordDmCategories;
         const expected = notificationCategories(payload.currentCategories);

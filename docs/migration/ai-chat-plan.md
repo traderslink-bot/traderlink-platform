@@ -487,7 +487,7 @@ once. The following sequence controls safe delivery:
 6. **Confirmed product actions:** one allowlisted canonical command family at
    a time, with durable expiry, stale-state rejection, exact preview and an
    explicit trader confirmation. Reporting currency, notification read state
-   and preferences, selected Journal account, and existing AI Review on/off
+   and preferences, selected or newly created Journal account, and existing AI Review on/off
    state, completed-Day-trade tags, exact Trading Rule changes, and the bounded
    Data Decision resolutions that do not require raw statement comparison are
    complete; Swing remains a later guarded slice.

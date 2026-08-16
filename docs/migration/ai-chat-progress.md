@@ -73,7 +73,8 @@ The private persistence API checkpoint is tracked in
   Rules and completed-trade annotations have deterministic reads, and exact
   completed-Day-trade tag replacement, confirmed Trading Rule changes and the
   bounded safe Data Decision action set are complete. Reporting
-  currency, notification read/preferences, selected-account switching and
+  currency, notification read/preferences, selected-account switching, exact
+  confirmed Trade Tracker account creation and
   existing AI Review on/off changes are complete; the remaining command
   families stay pending.
 - [ ] Promote the language registry and Help Center only as each deterministic
@@ -354,6 +355,25 @@ The private persistence API checkpoint is tracked in
   product-context tests across two files passed with one worker. This slice
   made no migration or protected-database change and performed no provider
   request, push or deployment.
+
+### Completed: confirmed Trade Tracker account creation
+
+- Chat can prepare a new Trade Tracker account only when its final name,
+  three-letter base currency and IANA trading timezone are known. An omitted
+  currency or timezone may reuse the exact active-account value returned by
+  the account tool; Chat cannot invent a different value.
+- The preview states that the account becomes active after creation. Preparing
+  it writes no Journal account. Confirmation rejects a changed account roster,
+  rechecks workspace manager access and the 25-account limit, then calls the
+  canonical Journal account service and returns the normal account-selection
+  cookie.
+- A server-generated account identifier makes confirmation retry-safe without
+  exposing the identifier to the model or trader. Account merge, deletion,
+  ownership changes and broker connections remain outside this action.
+- Focused ESLint, the full no-emit TypeScript check and 10 one-worker action
+  tests passed. This slice reused migration 0055's accepted action registry;
+  it performed no migration, protected-database write, provider request, push
+  or deployment.
 
 ## Completed: scheduled AI Review control enforcement
 
