@@ -14,6 +14,7 @@ import {
   type ExecutionDraft,
   type ExecutionSaveResult,
 } from "./execution-entry-card";
+import { useTradeTrackerUnsavedChanges } from "./trade-tracker-unsaved-changes";
 
 type PreviewResponse = Readonly<{
   status?: string;
@@ -32,11 +33,20 @@ type CommitResponse = Readonly<{
   }>;
 }>;
 
-function friendlyFailure(code?: string): string {
+function friendlyFailure(
+  code: string | undefined,
+  tracker: JournalManualTrackerKind,
+): string {
   if (code === "TRADERLINK_MANUAL_TRADE_SINGLE_DAY_REQUIRED") {
     return "Enter executions for one trading day at a time.";
   }
   if (code === "TRADERLINK_MANUAL_TRADE_RECENT_ENTRY_REQUIRED") {
+    if (tracker === "day") {
+      return "Enter a trading date from today or the previous six calendar days and make sure the execution time is not in the future. Use Imports for older activity.";
+    }
+    if (tracker === "swing") {
+      return "Check the execution dates and times. New swing entries must be current or recently closed, and future executions cannot be saved. Use Imports for older completed trades.";
+    }
     return "Check the execution date and time. Future executions cannot be saved.";
   }
   if (
@@ -89,6 +99,7 @@ export function ManualExecutionEntry({
   const router = useRouter();
   const idempotencyKey = useRef<string | null>(null);
   const [collapsed, setCollapsed] = useState(false);
+  const [draftDirty, setDraftDirty] = useState(false);
   const [submittedCount, setSubmittedCount] = useState<number | null>(null);
   const [submittedExecutions, setSubmittedExecutions] = useState<ExecutionDraft[]>(() =>
     initialSymbol
@@ -119,6 +130,10 @@ export function ManualExecutionEntry({
           ]
       : [],
   );
+  useTradeTrackerUnsavedChanges(
+    `daily-trade-tracker:manual-execution:${tracker}`,
+    draftDirty,
+  );
 
   async function save(
     executions: readonly ExecutionDraft[],
@@ -146,7 +161,7 @@ export function ManualExecutionEntry({
       previewBody.status !== "ready" ||
       !previewBody.preview
     ) {
-      throw new Error(friendlyFailure(previewBody.code));
+      throw new Error(friendlyFailure(previewBody.code, tracker));
     }
 
     const confirmations = previewBody.preview.groups.map((group) => Object.freeze({
@@ -182,7 +197,7 @@ export function ManualExecutionEntry({
     });
     const commitBody = await commitResponse.json() as CommitResponse;
     if (!commitResponse.ok || commitBody.status !== "ready" || !commitBody.result) {
-      throw new Error(friendlyFailure(commitBody.code));
+      throw new Error(friendlyFailure(commitBody.code, tracker));
     }
 
     idempotencyKey.current = null;
@@ -202,6 +217,7 @@ export function ManualExecutionEntry({
       entryMode={tracker}
       initialExecutions={submittedExecutions}
       onCollapsedChange={setCollapsed}
+      onDirtyChange={setDraftDirty}
       onSave={save}
       onStartAnother={() => {
         idempotencyKey.current = null;

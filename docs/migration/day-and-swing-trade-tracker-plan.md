@@ -18,6 +18,9 @@ visual/product review pending
 **Implementation progress:**
 [Day And Swing Trade Tracker Progress](day-and-swing-trade-tracker-progress.md)
 
+**Current Daily Tracker QA:**
+[Daily Trade Tracker QA Progress](daily-trade-tracker-qa-progress.md)
+
 **Quick-entry progress:**
 [Quick Trade Entry Progress](quick-trade-entry-progress.md)
 

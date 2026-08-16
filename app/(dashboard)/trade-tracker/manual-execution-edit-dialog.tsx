@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
+import { useTradeTrackerUnsavedChanges } from "./trade-tracker-unsaved-changes";
 
 export type EditableManualExecutionView = Readonly<{
   editRef: string;
@@ -49,6 +50,15 @@ type ManualExecutionEditDraft = {
   tradeCurrency: string;
 };
 
+function draftsMatch(
+  left: ManualExecutionEditDraft,
+  right: ManualExecutionEditDraft,
+): boolean {
+  return Object.keys(left).every((key) =>
+    left[key as keyof ManualExecutionEditDraft] ===
+      right[key as keyof ManualExecutionEditDraft]);
+}
+
 export function ManualExecutionEditDialog({
   execution,
   expectedAccountSelectionRef,
@@ -74,6 +84,10 @@ export function ManualExecutionEditDialog({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<string | null>(null);
+  useTradeTrackerUnsavedChanges(
+    `daily-trade-tracker:manual-execution-edit:${editable?.editRef ?? "unavailable"}`,
+    Boolean(editable) && open && !draftsMatch(draft, initialDraft()),
+  );
 
   if (!editable) return null;
   const editRef = editable.editRef;

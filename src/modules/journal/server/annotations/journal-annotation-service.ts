@@ -373,6 +373,16 @@ export class JournalAnnotationService {
     return this.annotations.findTradingDayId(scope, tradingDate);
   }
 
+  ensureTradingDayId(
+    scope: AccountScope,
+    tradingDate: string,
+    now?: Date,
+  ): string {
+    if (!/^\d{4}-\d{2}-\d{2}$/u.test(tradingDate)) invalid("tradingDate");
+    return this.annotations.immediate(() =>
+      this.annotations.ensureTradingDayId(scope, tradingDate, timestamp(now)));
+  }
+
   saveDailyNote(
     scope: AccountScope,
     input: Readonly<{
@@ -386,8 +396,6 @@ export class JournalAnnotationService {
       now?: Date;
     }>,
   ): JournalDailyNoteRecord {
-    const tradingDayId = this.annotations.findTradingDayId(scope, input.tradingDate);
-    if (!tradingDayId) conflict();
     const expected = expectedRevision(input.expectedRevision, true);
     const values = [
       normalizedText(input.whatWorked, "whatWorked", 10_000, false),
@@ -397,10 +405,15 @@ export class JournalAnnotationService {
       normalizedText(input.anythingElse, "anythingElse", 10_000, false),
     ] as const;
     return this.annotations.immediate(() => {
+      const at = timestamp(input.now);
+      const tradingDayId = this.annotations.ensureTradingDayId(
+        scope,
+        input.tradingDate,
+        at,
+      );
       const current = this.annotations.readDailyNote(scope, tradingDayId);
       if ((current?.revision ?? null) !== expected) conflict();
       const revisionId = createCanonicalUuidV4();
-      const at = timestamp(input.now);
       if (!current) {
         this.annotations.insertDailyNote({
           scope,

@@ -65,6 +65,11 @@ import type {
 } from "./day-session-types";
 import { PositionStyleControl } from "../position-style-control";
 import { ManualExecutionEditDialog } from "../manual-execution-edit-dialog";
+import {
+  useTradeTrackerHasUnsavedChangesExcept,
+  useTradeTrackerNavigationGuard,
+  useTradeTrackerUnsavedChanges,
+} from "../trade-tracker-unsaved-changes";
 import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
 import {
   DailyTradeAnalyzerChart,
@@ -73,6 +78,37 @@ import {
 } from "./daily-trade-analyzer-chart";
 
 const EMPTY_CHART_RULE_EVIDENCE: readonly ChartRuleEvidence[] = Object.freeze([]);
+const DAY_REVIEW_AUTOSAVED_UNSAVED_SOURCES = Object.freeze([
+  "daily-trade-tracker:day-session-notes",
+]);
+
+type DailyNoteTextField = Exclude<keyof DaySessionDailyNote, "revision">;
+
+function dailyNoteTextMatches(
+  left: DaySessionDailyNote,
+  right: DaySessionDailyNote,
+): boolean {
+  return left.anythingElse === right.anythingElse &&
+    left.technicalRecap === right.technicalRecap &&
+    left.tomorrowsFocus === right.tomorrowsFocus &&
+    left.whatNeedsWork === right.whatNeedsWork &&
+    left.whatWorked === right.whatWorked;
+}
+
+function initialTradeNotes(data: DaySessionData): Record<string, string> {
+  return Object.fromEntries([
+    ...data.tickers.flatMap((ticker) =>
+      ticker.roundTrips.map((roundTrip) => [
+        roundTrip.roundTripKey,
+        roundTrip.journal.tradeNote,
+      ]),
+    ),
+    ...data.openPositions.map((position) => [
+      position.positionKey,
+      position.journal.tradeNote,
+    ]),
+  ]);
+}
 
 type ApiResult<T> = {
   data?: T;
@@ -93,6 +129,7 @@ function TradeTrackerDateNavigation({
   previousDate: string | null;
 }>) {
   const router = useRouter();
+  const confirmNavigation = useTradeTrackerNavigationGuard();
   const safeDates = [...new Set([...dates, date])].sort();
   const [selectedYear, selectedMonth, selectedDay] = date.split("-");
   const years = [...new Set(safeDates.map((value) => value.slice(0, 4)))].sort();
@@ -104,6 +141,7 @@ function TradeTrackerDateNavigation({
     .map((value) => value.slice(8, 10));
   const previewSuffix = designPreview ? "?preview=design" : "";
   const navigate = (year: string, month: string, day: string) => {
+    if (!confirmNavigation()) return;
     const direct = `${year}-${month}-${day}`;
     const fallback = safeDates.find((value) => value.startsWith(`${year}-${month}-`)) ??
       safeDates.find((value) => value.startsWith(`${year}-`)) ?? safeDates.at(-1) ?? date;
@@ -175,6 +213,18 @@ async function api<T>(url: string, init: RequestInit): Promise<T> {
   return result.data;
 }
 
+function ruleSaveErrorKey(rule: DaySessionRule): string {
+  return rule.applicability === "day"
+    ? "day"
+    : `trade:${rule.targetRoundTripKey ?? "unknown"}`;
+}
+
+function ruleSaveFailure(error: unknown): string {
+  const typed = error as Error & { status?: number };
+  if (typeof typed.status === "number" && typed.message) return typed.message;
+  return "The rule change could not be saved. Check your connection and try again.";
+}
+
 const TAG_CATEGORY_ORDER: readonly (JournalTagPresetCategory | "custom")[] =
   Object.freeze([
     "setup",
@@ -224,6 +274,15 @@ function TradeTagEditor({
   >([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const savedTagSelection = tags.map((tag) => tag.tagId).sort().join("|");
+  const draftTagSelection = [...selectedIds].sort().join("|");
+  useTradeTrackerUnsavedChanges(
+    `daily-trade-tracker:tags:${targetKind}:${targetKey}`,
+    open && (
+      newName.trim().length > 0 ||
+      draftTagSelection !== savedTagSelection
+    ),
+  );
   const persistedPresetKeys = new Set([...availableTags, ...previewCreatedTags]
     .map((tag) => journalTagPresetForName(tag.name)?.presetKey)
     .filter((value): value is string => Boolean(value)));
@@ -432,20 +491,33 @@ function TradeTagEditor({
           </Stack>
           {error ? <Typography color="error" sx={{ mt: 1.5 }} variant="body2">{error}</Typography> : null}
         </DialogContent>
-        <DialogActions>
+        <DialogActions
+          sx={{
+            alignItems: { xs: "stretch", sm: "center" },
+            flexDirection: { xs: "column", sm: "row" },
+            gap: { xs: 1, sm: 0 },
+            "& > :not(style) ~ :not(style)": { ml: { xs: 0, sm: 1 } },
+          }}
+        >
           {onManageTags ? (
             <Button
               onClick={() => {
                 setOpen(false);
                 onManageTags();
               }}
+              sx={{ width: { xs: "100%", sm: "auto" } }}
             >
               Manage tags
             </Button>
           ) : null}
-          <Box sx={{ flex: 1 }} />
-          <Button onClick={() => setOpen(false)}>Cancel</Button>
-          <Button disabled={busy || selectedIds.length > 10} onClick={() => void save()} variant="contained">
+          <Box sx={{ display: { xs: "none", sm: "block" }, flex: 1 }} />
+          <Button onClick={() => setOpen(false)} sx={{ width: { xs: "100%", sm: "auto" } }}>Cancel</Button>
+          <Button
+            disabled={busy || selectedIds.length > 10}
+            onClick={() => void save()}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
+            variant="contained"
+          >
             Save tags
           </Button>
         </DialogActions>
@@ -470,6 +542,10 @@ function ManageTagsDialog({
   const [names, setNames] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
+  useTradeTrackerUnsavedChanges(
+    "daily-trade-tracker:manage-tags",
+    open && tags.some((tag) => (names[tag.tagId] ?? tag.name) !== tag.name),
+  );
 
   async function rename(tag: DaySessionTradeTag): Promise<void> {
     const name = names[tag.tagId] ?? tag.name;
@@ -1503,6 +1579,7 @@ function TradeReview({
   noteState,
   readOnly,
   roundTrip,
+  ruleSaveError,
   sessionDate,
   selectedAnalysisEventId,
   tags,
@@ -1535,6 +1612,7 @@ function TradeReview({
   noteState: "idle" | "saving" | "saved" | "error";
   readOnly: boolean;
   roundTrip: DaySessionRoundTrip;
+  ruleSaveError: string | null;
   sessionDate: string;
   selectedAnalysisEventId: string | null;
   tags: DaySessionTradeTag[];
@@ -1553,6 +1631,10 @@ function TradeReview({
     customRules.find((rule) => rule.ruleId === selectedCustomRuleId) ??
     customRules[0];
   const [customRuleNote, setCustomRuleNote] = useState(selectedCustomRule?.note ?? "");
+  useTradeTrackerUnsavedChanges(
+    `daily-trade-tracker:rule-note:${roundTrip.roundTripKey}`,
+    customRuleNote !== (selectedCustomRule?.note ?? ""),
+  );
   const finalExit = { patterns: analyzer?.events.find((event) => event.kind === "final_exit")?.patterns ?? [] };
   const selectedAnalysisEvent = selectedAnalysisEventId
     ? analyzer?.events.find((event) => event.eventId === selectedAnalysisEventId) ?? null
@@ -1633,6 +1715,11 @@ function TradeReview({
           {selectedCustomRule?.note ? "Update note" : "Add note"}
         </Button>
       </Box>
+      {ruleSaveError ? (
+        <Alert severity="error" sx={{ gridColumn: { sm: "1 / -1" } }}>
+          {ruleSaveError}
+        </Alert>
+      ) : null}
     </Box>
   );
   const followedPresetCount = presetRules.filter((rule) => rule.status === "followed").length;
@@ -1742,7 +1829,7 @@ function TradeReview({
   );
 
   return (
-    <>
+    <Box id={`trade-${roundTrip.roundTripKey}`} sx={{ scrollMarginTop: 16 }}>
       <Box
         sx={{
           bgcolor: "rgba(1, 30, 86, 0.02)",
@@ -2183,7 +2270,7 @@ function TradeReview({
       ) : null}
 
       </Box>
-    </>
+    </Box>
   );
 }
 
@@ -2246,17 +2333,29 @@ function WeekDayCard({
 export function DaySessionView({
   data,
   designPreview = false,
+  initialAnalyzerFocus = null,
   pendingExecutions = false,
   readOnly = false,
   topContent,
 }: {
   data: DaySessionData;
   designPreview?: boolean;
+  initialAnalyzerFocus?: Readonly<{
+    eventId: string | null;
+    interval: DailyTradeChartInterval;
+    roundTripId: string;
+  }> | null;
   pendingExecutions?: boolean;
   readOnly?: boolean;
   topContent?: ReactNode;
 }) {
   const router = useRouter();
+  const initialFocusTarget = useMemo(() => initialAnalyzerFocus
+    ? data.tickers.flatMap((ticker) => ticker.roundTrips.map((roundTrip) => ({
+        roundTrip,
+        stableInstrumentKey: ticker.stableInstrumentKey,
+      }))).find(({ roundTrip }) => roundTrip.roundTripKey === initialAnalyzerFocus.roundTripId) ?? null
+    : null, [data.tickers, initialAnalyzerFocus]);
   const [availableTags, setAvailableTags] = useState<DaySessionTradeTag[]>(data.availableTags);
   const [tradeTags, setTradeTags] = useState<Record<string, DaySessionTradeTag[]>>(
     () =>
@@ -2282,7 +2381,9 @@ export function DaySessionView({
   const [customDayRuleState, setCustomDayRuleState] = useState<
     "idle" | "saving" | "error"
   >("idle");
+  const [ruleSaveErrors, setRuleSaveErrors] = useState<Record<string, string>>({});
   const [dailyNote, setDailyNote] = useState(data.dailyNote);
+  const [savedDailyNote, setSavedDailyNote] = useState(data.dailyNote);
   const [openPositionTags, setOpenPositionTags] = useState<
     Record<string, DaySessionTradeTag[]>
   >(() => Object.fromEntries(data.openPositions.map((position) => [
@@ -2304,21 +2405,10 @@ export function DaySessionView({
       ),
   );
   const [tradeNotes, setTradeNotes] = useState<Record<string, string>>(
-    () =>
-      Object.fromEntries(
-        [
-          ...data.tickers.flatMap((ticker) =>
-            ticker.roundTrips.map((roundTrip) => [
-              roundTrip.roundTripKey,
-              roundTrip.journal.tradeNote,
-            ]),
-          ),
-          ...data.openPositions.map((position) => [
-            position.positionKey,
-            position.journal.tradeNote,
-          ]),
-        ],
-      ),
+    () => initialTradeNotes(data),
+  );
+  const [savedTradeNotes, setSavedTradeNotes] = useState<Record<string, string>>(
+    () => initialTradeNotes(data),
   );
   const [tradeNoteRevisions, setTradeNoteRevisions] = useState<
     Record<string, string | null>
@@ -2352,14 +2442,32 @@ export function DaySessionView({
     "idle" | "saving" | "error"
   >("idle");
   const [dayReviewError, setDayReviewError] = useState<string | null>(null);
-  const [selectedAnalyzerTradeKeys, setSelectedAnalyzerTradeKeys] = useState<Record<string, string>>({});
-  const [selectedAnalysisEventIds, setSelectedAnalysisEventIds] = useState<Record<string, string | null>>({});
+  const [reviewWithOtherDraftsOpen, setReviewWithOtherDraftsOpen] = useState(false);
+  const hasOtherUnsavedChanges = useTradeTrackerHasUnsavedChangesExcept(
+    DAY_REVIEW_AUTOSAVED_UNSAVED_SOURCES,
+  );
+  const [selectedAnalyzerTradeKeys, setSelectedAnalyzerTradeKeys] = useState<Record<string, string>>(() =>
+    initialFocusTarget ? { [initialFocusTarget.stableInstrumentKey]: initialFocusTarget.roundTrip.roundTripKey } : {});
+  const [selectedAnalysisEventIds, setSelectedAnalysisEventIds] = useState<Record<string, string | null>>(() =>
+    initialFocusTarget ? { [initialFocusTarget.roundTrip.roundTripKey]: initialAnalyzerFocus?.eventId ?? null } : {});
   const [selectedAnalyzerIntervals, setSelectedAnalyzerIntervals] = useState<
     Record<string, DailyTradeChartInterval>
-  >({});
+  >(() => initialFocusTarget && initialAnalyzerFocus
+    ? { [initialFocusTarget.stableInstrumentKey]: initialAnalyzerFocus.interval }
+    : {});
   const [expandedMobileTradeKeys, setExpandedMobileTradeKeys] = useState<
     Record<string, string | null>
-  >({});
+  >(() => initialFocusTarget
+    ? { [initialFocusTarget.stableInstrumentKey]: initialFocusTarget.roundTrip.roundTripKey }
+    : {});
+  useEffect(() => {
+    if (!initialFocusTarget) return;
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(`trade-${initialFocusTarget.roundTrip.roundTripKey}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [initialFocusTarget]);
   const tradeCount = data.tickers.reduce(
     (count, ticker) => count + ticker.roundTrips.length,
     0,
@@ -2390,6 +2498,9 @@ export function DaySessionView({
   const dayPresetRules = rules.filter(
     (rule) => rule.applicability === "day" && !rule.custom,
   );
+  const hasDayPresetRuleResult = dayPresetRules.some(
+    (rule) => rule.status === "followed" || rule.status === "broken",
+  );
   const dayCustomRules = rules.filter(
     (rule) => rule.applicability === "day" && rule.custom,
   );
@@ -2409,9 +2520,37 @@ export function DaySessionView({
     setTradeNoteStates((current) => current[targetKey] === "idle"
       ? current
       : { ...current, [targetKey]: "idle" });
-    setDirtyTradeNoteKeys((current) => current.has(targetKey)
-      ? current
-      : new Set(current).add(targetKey));
+    setDirtyTradeNoteKeys((current) => {
+      const next = new Set(current);
+      if (tradeNote === (savedTradeNotes[targetKey] ?? "")) next.delete(targetKey);
+      else next.add(targetKey);
+      return next;
+    });
+  }
+
+  function updateDailyNote(field: DailyNoteTextField, value: string): void {
+    const next = { ...dailyNote, [field]: value };
+    setDailyNote(next);
+    setNotesState("idle");
+    setDailyNotesDirty(!dailyNoteTextMatches(next, savedDailyNote));
+  }
+
+  function clearRuleSaveError(rule: DaySessionRule): void {
+    const key = ruleSaveErrorKey(rule);
+    setRuleSaveErrors((current) => {
+      if (!(key in current)) return current;
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
+  }
+
+  function showRuleSaveError(rule: DaySessionRule, error: unknown): void {
+    const key = ruleSaveErrorKey(rule);
+    setRuleSaveErrors((current) => ({
+      ...current,
+      [key]: ruleSaveFailure(error),
+    }));
   }
 
   async function createCustomDayRule(): Promise<void> {
@@ -2478,6 +2617,7 @@ export function DaySessionView({
     status: DaySessionRule["status"],
   ): Promise<void> {
     if (readOnly) return;
+    clearRuleSaveError(selectedRule);
     if (
       designPreview ||
       (pendingExecutions && selectedRule.applicability === "trade")
@@ -2493,37 +2633,42 @@ export function DaySessionView({
       );
       return;
     }
-    const saved = await api<{
-      revision: string;
-      status: DaySessionRule["status"];
-    }>(
-      `/api/intelligence/day-session/${encodeURIComponent(data.date)}/rule-reviews`,
-      {
-        body: JSON.stringify({
-          applicability: selectedRule.applicability,
-          expectedAccountSelectionRef: data.expectedAccountSelectionRef,
-          expectedRevision: selectedRule.revision,
-          ruleId: selectedRule.ruleId,
-          ruleVersion: selectedRule.ruleVersion,
-          status,
-          targetRoundTripKey: selectedRule.targetRoundTripKey,
-        }),
-        method: "PUT",
-      },
-    );
-    setRules((current) =>
-      current.map((rule) =>
-        rule.ruleId === selectedRule.ruleId &&
-        rule.ruleVersion === selectedRule.ruleVersion &&
-        rule.targetRoundTripKey === selectedRule.targetRoundTripKey
-          ? { ...rule, revision: saved.revision, status: saved.status }
-          : rule,
-      ),
-    );
+    try {
+      const saved = await api<{
+        revision: string;
+        status: DaySessionRule["status"];
+      }>(
+        `/api/intelligence/day-session/${encodeURIComponent(data.date)}/rule-reviews`,
+        {
+          body: JSON.stringify({
+            applicability: selectedRule.applicability,
+            expectedAccountSelectionRef: data.expectedAccountSelectionRef,
+            expectedRevision: selectedRule.revision,
+            ruleId: selectedRule.ruleId,
+            ruleVersion: selectedRule.ruleVersion,
+            status,
+            targetRoundTripKey: selectedRule.targetRoundTripKey,
+          }),
+          method: "PUT",
+        },
+      );
+      setRules((current) =>
+        current.map((rule) =>
+          rule.ruleId === selectedRule.ruleId &&
+          rule.ruleVersion === selectedRule.ruleVersion &&
+          rule.targetRoundTripKey === selectedRule.targetRoundTripKey
+            ? { ...rule, revision: saved.revision, status: saved.status }
+            : rule,
+        ),
+      );
+    } catch (error) {
+      showRuleSaveError(selectedRule, error);
+    }
   }
 
   async function saveRuleNote(selectedRule: DaySessionRule, note: string): Promise<void> {
     if (readOnly) return;
+    clearRuleSaveError(selectedRule);
     if (designPreview || (pendingExecutions && selectedRule.applicability === "trade")) {
       setRules((current) => current.map((rule) =>
         rule.ruleId === selectedRule.ruleId && rule.ruleVersion === selectedRule.ruleVersion && rule.targetRoundTripKey === selectedRule.targetRoundTripKey
@@ -2531,26 +2676,30 @@ export function DaySessionView({
           : rule));
       return;
     }
-    const saved = await api<{ note: string; revision: string; status: DaySessionRule["status"] }>(
-      `/api/intelligence/day-session/${encodeURIComponent(data.date)}/rule-reviews`,
-      {
-        method: "PUT",
-        body: JSON.stringify({
-          applicability: selectedRule.applicability,
-          expectedAccountSelectionRef: data.expectedAccountSelectionRef,
-          expectedRevision: selectedRule.revision,
-          note,
-          ruleId: selectedRule.ruleId,
-          ruleVersion: selectedRule.ruleVersion,
-          status: selectedRule.status,
-          targetRoundTripKey: selectedRule.targetRoundTripKey,
-        }),
-      },
-    );
-    setRules((current) => current.map((rule) =>
-      rule.ruleId === selectedRule.ruleId && rule.ruleVersion === selectedRule.ruleVersion && rule.targetRoundTripKey === selectedRule.targetRoundTripKey
-        ? { ...rule, note: saved.note, revision: saved.revision, status: saved.status }
-        : rule));
+    try {
+      const saved = await api<{ note: string; revision: string; status: DaySessionRule["status"] }>(
+        `/api/intelligence/day-session/${encodeURIComponent(data.date)}/rule-reviews`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            applicability: selectedRule.applicability,
+            expectedAccountSelectionRef: data.expectedAccountSelectionRef,
+            expectedRevision: selectedRule.revision,
+            note,
+            ruleId: selectedRule.ruleId,
+            ruleVersion: selectedRule.ruleVersion,
+            status: selectedRule.status,
+            targetRoundTripKey: selectedRule.targetRoundTripKey,
+          }),
+        },
+      );
+      setRules((current) => current.map((rule) =>
+        rule.ruleId === selectedRule.ruleId && rule.ruleVersion === selectedRule.ruleVersion && rule.targetRoundTripKey === selectedRule.targetRoundTripKey
+          ? { ...rule, note: saved.note, revision: saved.revision, status: saved.status }
+          : rule));
+    } catch (error) {
+      showRuleSaveError(selectedRule, error);
+    }
   }
 
   async function saveTradeNotes(roundTripKey: string): Promise<boolean> {
@@ -2558,6 +2707,10 @@ export function DaySessionView({
     setTradeNoteStates((current) => ({ ...current, [roundTripKey]: "saving" }));
     if (designPreview || pendingExecutions) {
       setTradeNoteStates((current) => ({ ...current, [roundTripKey]: "saved" }));
+      setSavedTradeNotes((current) => ({
+        ...current,
+        [roundTripKey]: tradeNotes[roundTripKey] ?? "",
+      }));
       setDirtyTradeNoteKeys((current) => {
         const next = new Set(current);
         next.delete(roundTripKey);
@@ -2587,6 +2740,10 @@ export function DaySessionView({
         ...current,
         [roundTripKey]: saved.tradeNote,
       }));
+      setSavedTradeNotes((current) => ({
+        ...current,
+        [roundTripKey]: saved.tradeNote,
+      }));
       setTradeNoteRevisions((current) => ({
         ...current,
         [roundTripKey]: saved.revision,
@@ -2609,6 +2766,7 @@ export function DaySessionView({
     setNotesState("saving");
     if (designPreview) {
       setNotesState("saved");
+      setSavedDailyNote(dailyNote);
       setDailyNotesDirty(false);
       return true;
     }
@@ -2625,6 +2783,7 @@ export function DaySessionView({
         },
       );
       setDailyNote(saved);
+      setSavedDailyNote(saved);
       setNotesState("saved");
       setDailyNotesDirty(false);
       return true;
@@ -2635,40 +2794,22 @@ export function DaySessionView({
   }
 
   const hasUnsavedNotes = dailyNotesDirty || dirtyTradeNoteKeys.size > 0;
-  const shouldWarnBeforeLeaving = hasUnsavedNotes || dayReview.status !== "reviewed";
-
-  useEffect(() => {
-    function warnBeforeUnload(event: BeforeUnloadEvent): void {
-      if (!shouldWarnBeforeLeaving) return;
-      event.preventDefault();
-      event.returnValue = "";
-    }
-    function warnBeforeNavigation(event: MouseEvent): void {
-      if (!shouldWarnBeforeLeaving || event.defaultPrevented || event.button !== 0 ||
-          event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      const source = event.target;
-      if (!(source instanceof Element)) return;
-      const link = source.closest("a[href]");
-      if (!(link instanceof HTMLAnchorElement) || link.target || link.hasAttribute("download")) return;
-      const destination = new URL(link.href, window.location.href);
-      if (destination.origin !== window.location.origin ||
-          destination.pathname === window.location.pathname) return;
-      if (!window.confirm(
-        hasUnsavedNotes
-          ? "You have notes that have not been saved. Leave this page anyway?"
-          : "This day is not marked reviewed. Leave this page anyway?",
-      )) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    }
-    window.addEventListener("beforeunload", warnBeforeUnload);
-    document.addEventListener("click", warnBeforeNavigation, true);
-    return () => {
-      window.removeEventListener("beforeunload", warnBeforeUnload);
-      document.removeEventListener("click", warnBeforeNavigation, true);
-    };
-  }, [hasUnsavedNotes, shouldWarnBeforeLeaving, dayReview.status]);
+  const hasUnsavedDayRuleNote = dailyRuleNote !== (selectedDayCustomRule?.note ?? "");
+  const hasUnsavedCustomDayRule = customDayRuleOpen && (
+    customDayRuleName.trim().length > 0 || customDayRuleStatement.trim().length > 0
+  );
+  useTradeTrackerUnsavedChanges(
+    "daily-trade-tracker:day-session-notes",
+    hasUnsavedNotes,
+  );
+  useTradeTrackerUnsavedChanges(
+    "daily-trade-tracker:day-rule-note",
+    hasUnsavedDayRuleNote,
+  );
+  useTradeTrackerUnsavedChanges(
+    "daily-trade-tracker:custom-day-rule",
+    hasUnsavedCustomDayRule,
+  );
 
   async function savePendingNotes(): Promise<boolean> {
     const saves: Array<Promise<boolean>> = [];
@@ -2735,6 +2876,14 @@ export function DaySessionView({
       setDayReviewError("The day review could not be saved. Your Trade Tracker entries are unchanged.");
       setDayReviewState("error");
     }
+  }
+
+  function requestReviewedStatus(): void {
+    if (hasOtherUnsavedChanges) {
+      setReviewWithOtherDraftsOpen(true);
+      return;
+    }
+    void saveDayReview("reviewed");
   }
 
   const activeSwingPositionsForDay = data.openPositions.filter((position) =>
@@ -3094,6 +3243,7 @@ export function DaySessionView({
                         tradeNote: tradeNotes[roundTrip.roundTripKey] ?? "",
                       },
                     }}
+                    ruleSaveError={ruleSaveErrors[`trade:${roundTrip.roundTripKey}`] ?? null}
                     sessionDate={data.date}
                     selectedAnalysisEventId={selectedAnalysisEventIds[roundTrip.roundTripKey] ?? null}
                     tags={tradeTags[roundTrip.roundTripKey] ?? []}
@@ -3387,17 +3537,25 @@ export function DaySessionView({
           }}
         >
           <Box sx={{ minWidth: 0 }}>
-            <Typography
-              color="text.secondary"
-              sx={{ display: "block", mb: 0.75 }}
-              variant="caption"
-            >
-              Preset day rules
-            </Typography>
-            {dayPresetRules.length > 0 ? (
-              <Stack divider={<Divider flexItem />} spacing={0}>
-                {dayPresetRules.map((rule) => <PresetRuleRow currency={data.currency} key={`${rule.ruleId}:${rule.ruleVersion}`} rule={rule} />)}
-              </Stack>
+            {hasDayPresetRuleResult ? (
+              <>
+                <Typography
+                  color="text.secondary"
+                  sx={{ display: "block", mb: 0.75 }}
+                  variant="caption"
+                >
+                  Preset day rules
+                </Typography>
+                <Stack divider={<Divider flexItem />} spacing={0}>
+                  {dayPresetRules.map((rule) => <PresetRuleRow currency={data.currency} key={`${rule.ruleId}:${rule.ruleVersion}`} rule={rule} />)}
+                </Stack>
+              </>
+            ) : dayPresetRules.length > 0 ? (
+              <Typography color="text.secondary" variant="body2">
+                {data.executionActivity.length === 0
+                  ? "No trades were entered for this day, so there are no daily rule results to show yet."
+                  : "No preset daily rules were recorded as followed or broken for this day."}
+              </Typography>
             ) : (
               <Button
                 component={Link}
@@ -3477,6 +3635,11 @@ export function DaySessionView({
               <Button disabled={readOnly || !selectedDayCustomRule} onClick={() => selectedDayCustomRule ? void saveRuleNote(selectedDayCustomRule, dailyRuleNote) : undefined} size="small" sx={{ mt: 0.5 }}>
                 {selectedDayCustomRule?.note ? "Update note" : "Add note"}
               </Button>
+              {ruleSaveErrors.day ? (
+                <Alert severity="error" sx={{ mt: 1 }}>
+                  {ruleSaveErrors.day}
+                </Alert>
+              ) : null}
               </>
             )}
             <Button
@@ -3653,14 +3816,7 @@ export function DaySessionView({
             label="What worked"
             minRows={4}
             multiline
-            onChange={(event) => {
-              setDailyNote((current) => ({
-                ...current,
-                whatWorked: event.target.value,
-              }));
-              setNotesState("idle");
-              setDailyNotesDirty(true);
-            }}
+            onChange={(event) => updateDailyNote("whatWorked", event.target.value)}
             placeholder="What did you execute well today?"
             value={dailyNote.whatWorked}
           />
@@ -3669,14 +3825,7 @@ export function DaySessionView({
             label="What needs work"
             minRows={4}
             multiline
-            onChange={(event) => {
-              setDailyNote((current) => ({
-                ...current,
-                whatNeedsWork: event.target.value,
-              }));
-              setNotesState("idle");
-              setDailyNotesDirty(true);
-            }}
+            onChange={(event) => updateDailyNote("whatNeedsWork", event.target.value)}
             placeholder="What should you improve next time?"
             value={dailyNote.whatNeedsWork}
           />
@@ -3685,14 +3834,7 @@ export function DaySessionView({
             label="Technical recap"
             minRows={4}
             multiline
-            onChange={(event) => {
-              setDailyNote((current) => ({
-                ...current,
-                technicalRecap: event.target.value,
-              }));
-              setNotesState("idle");
-              setDailyNotesDirty(true);
-            }}
+            onChange={(event) => updateDailyNote("technicalRecap", event.target.value)}
             placeholder="Setup, stop, target, or execution observations across the day."
             value={dailyNote.technicalRecap}
           />
@@ -3701,14 +3843,7 @@ export function DaySessionView({
             label="Current Focuses"
             minRows={4}
             multiline
-            onChange={(event) => {
-              setDailyNote((current) => ({
-                ...current,
-                tomorrowsFocus: event.target.value,
-              }));
-              setNotesState("idle");
-              setDailyNotesDirty(true);
-            }}
+            onChange={(event) => updateDailyNote("tomorrowsFocus", event.target.value)}
             placeholder="Keep the trading focuses you want to carry forward."
             value={dailyNote.tomorrowsFocus}
           />
@@ -3717,14 +3852,7 @@ export function DaySessionView({
             label="Anything else"
             minRows={4}
             multiline
-            onChange={(event) => {
-              setDailyNote((current) => ({
-                ...current,
-                anythingElse: event.target.value,
-              }));
-              setNotesState("idle");
-              setDailyNotesDirty(true);
-            }}
+            onChange={(event) => updateDailyNote("anythingElse", event.target.value)}
             placeholder="Write anything else you want to remember."
             sx={{ gridColumn: { md: "1 / -1" } }}
             value={dailyNote.anythingElse}
@@ -3784,7 +3912,7 @@ export function DaySessionView({
                   dayReviewState === "saving" ||
                   dayReview.unclassifiedOpenPositionCount > 0
                 }
-                onClick={() => void saveDayReview("reviewed")}
+                onClick={requestReviewedStatus}
               >
                 {dayReviewState === "saving" ? "Saving..." : "Mark day reviewed"}
               </DashboardPrimaryAction>
@@ -3812,6 +3940,42 @@ export function DaySessionView({
         open={manageTagsOpen}
         tags={availableTags}
       />
+      <Dialog
+        aria-labelledby="review-with-unsaved-changes-title"
+        fullWidth
+        maxWidth="sm"
+        onClose={() => setReviewWithOtherDraftsOpen(false)}
+        open={reviewWithOtherDraftsOpen}
+      >
+        <DialogTitle id="review-with-unsaved-changes-title">
+          Unsaved changes
+        </DialogTitle>
+        <DialogContent>
+          <Typography color="text.secondary" variant="body2">
+            You still have changes that are not saved. Marking this day reviewed
+            will save pending Daily Notes and trade notes, but it will not save
+            your other changes. You can keep reviewing or mark the day reviewed
+            now and decide what to do with those changes later.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ flexDirection: { xs: "column-reverse", sm: "row" }, p: 2 }}>
+          <DashboardSecondaryAction
+            onClick={() => setReviewWithOtherDraftsOpen(false)}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
+          >
+            Keep reviewing
+          </DashboardSecondaryAction>
+          <DashboardPrimaryAction
+            onClick={() => {
+              setReviewWithOtherDraftsOpen(false);
+              void saveDayReview("reviewed");
+            }}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
+          >
+            Mark reviewed anyway
+          </DashboardPrimaryAction>
+        </DialogActions>
+      </Dialog>
     </DashboardPage>
   );
 }

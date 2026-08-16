@@ -6,6 +6,11 @@ import Select from "@mui/material/Select";
 import Tooltip from "@mui/material/Tooltip";
 import { useState } from "react";
 
+import {
+  cancelTradeTrackerProgrammaticNavigation,
+  confirmTradeTrackerProgrammaticNavigation,
+} from "./(dashboard)/trade-tracker/trade-tracker-navigation-events";
+
 export type DashboardJournalAccountOption = Readonly<{
   selectionRef: string;
   displayName: string;
@@ -27,6 +32,7 @@ export function DashboardAccountSwitcher({
 
   async function select(accountSelectionRef: string) {
     if (working || accountSelectionRef === activeSelectionRef) return;
+    if (!confirmTradeTrackerProgrammaticNavigation()) return;
     setWorking(true);
     setError(null);
     try {
@@ -44,6 +50,7 @@ export function DashboardAccountSwitcher({
       }
       window.location.reload();
     } catch {
+      cancelTradeTrackerProgrammaticNavigation();
       setError("The account changed in another tab. Refresh and choose it again.");
       setWorking(false);
     }
@@ -51,11 +58,22 @@ export function DashboardAccountSwitcher({
 
   return (
     <Tooltip arrow title={error ?? "Choose the trading account shown across this dashboard"}>
-      <FormControl error={Boolean(error)} size="small" sx={{ minWidth: { xs: 130, md: 190 } }}>
+      <FormControl
+        error={Boolean(error)}
+        size="small"
+        sx={{ minWidth: 0, width: { xs: "100%", sm: 240 } }}
+      >
         <Select
           aria-label="Active Trade Tracker account"
           disabled={working}
           onChange={(event) => void select(event.target.value)}
+          sx={{
+            "& .MuiSelect-select": {
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            },
+          }}
           value={activeSelectionRef}
         >
           {accounts.map((account) => (

@@ -66,17 +66,18 @@ export async function PUT(
         ? rule.reviewScope === "day" || rule.reviewScope === "both"
         : rule.reviewScope === "trade" || rule.reviewScope === "both";
       if (!allowed) platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+      if (body.status !== "not-reviewed" && body.status !== "followed" && body.status !== "broken") {
+        platformFailure("TRADERLINK_JOURNAL_ANNOTATION_INVALID");
+      }
+      const expectedRevision = nullableRevision(body.expectedRevision);
       const targetId = body.applicability === "day"
-        ? service.resolveTradingDayId(account, sessionDate)
+        ? service.ensureTradingDayId(account, sessionDate)
         : typeof body.targetRoundTripKey === "string"
           ? body.targetRoundTripKey
           : null;
       if (!targetId) platformFailure("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
-      if (body.status !== "not-reviewed" && body.status !== "followed" && body.status !== "broken") {
-        platformFailure("TRADERLINK_JOURNAL_ANNOTATION_INVALID");
-      }
       return reviewView(service.saveRuleReview(account, {
-        expectedRevision: nullableRevision(body.expectedRevision),
+        expectedRevision,
         ruleId: rule.ruleId,
         ruleVersionId: rule.versionId,
         status: body.status === "not-reviewed" ? "not_reviewed" : body.status,

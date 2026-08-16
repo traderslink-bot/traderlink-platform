@@ -7,6 +7,7 @@ import type {
   JournalTagRecord,
 } from "@/src/modules/journal/contracts/journal-annotation-contracts";
 import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
+import { ensureJournalTradingDay } from "../trading-days/ensure-journal-trading-day";
 
 type TagRow = Readonly<{
   tag_id: string;
@@ -296,6 +297,14 @@ LIMIT 1`).get(scope.workspaceId, scope.accountId, tradingDate) as
       | { trading_day_id: string }
       | undefined;
     return row?.trading_day_id ?? null;
+  }
+
+  ensureTradingDayId(
+    scope: AccountScope,
+    tradingDate: string,
+    timestamp: string,
+  ): string {
+    return ensureJournalTradingDay(this.database, scope, tradingDate, timestamp);
   }
 
   tradingDayExists(scope: AccountScope, tradingDayId: string): boolean {

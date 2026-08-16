@@ -12,6 +12,7 @@ import {
   createCanonicalUuidV4,
   platformFailure,
 } from "@/src/modules/platform/server/database/platform-migration-contract";
+import { ensureJournalTradingDay } from "../trading-days/ensure-journal-trading-day";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
 const IDEMPOTENCY_PATTERN = /^[A-Za-z0-9_-]{16,128}$/u;
@@ -145,11 +146,12 @@ WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
       .update(`${input.idempotencyKey}\n`, "utf8")
       .digest("hex");
     return this.immediate(() => {
-      const day = this.database.prepare<[string, string, string], { trading_day_id: string }>(`SELECT trading_day_id
-FROM journal_trading_days
-WHERE workspace_id = ? AND account_id = ? AND trading_date = ?`)
-        .get(scope.workspaceId, scope.accountId, input.tradingDate);
-      if (!day) platformFailure("TRADERLINK_TRADING_DAY_REVIEW_INVALID");
+      const tradingDayId = ensureJournalTradingDay(
+        this.database,
+        scope,
+        input.tradingDate,
+        timestamp,
+      );
       const current = this.read(scope, input.tradingDate);
       if ((current?.revision ?? null) !== input.expectedRevision) {
         platformFailure("TRADERLINK_TRADING_DAY_REVIEW_CONFLICT");
@@ -174,7 +176,7 @@ WHERE event.workspace_id = ? AND event.account_id = ? AND event.idempotency_sha2
         ? this.database.prepare<[string, string, string], { trading_day_review_id: string }>(`SELECT trading_day_review_id
 FROM journal_trading_day_reviews
 WHERE workspace_id = ? AND account_id = ? AND trading_day_id = ?`)
-          .get(scope.workspaceId, scope.accountId, day.trading_day_id)!.trading_day_review_id
+          .get(scope.workspaceId, scope.accountId, tradingDayId)!.trading_day_review_id
         : createCanonicalUuidV4();
       const revision = (current?.revision ?? 0) + 1;
       if (current) {
@@ -191,7 +193,7 @@ WHERE workspace_id = ? AND account_id = ? AND trading_day_review_id = ?
   trading_day_review_id, user_id, workspace_id, account_id, trading_day_id,
   review_status, current_revision, created_at_utc, updated_at_utc
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-          .run(reviewId, input.userId, scope.workspaceId, scope.accountId, day.trading_day_id,
+          .run(reviewId, input.userId, scope.workspaceId, scope.accountId, tradingDayId,
             input.status, revision, timestamp, timestamp);
       }
       this.database.prepare(`INSERT INTO journal_trading_day_review_events (

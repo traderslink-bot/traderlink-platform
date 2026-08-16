@@ -12,7 +12,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import NextLink from "next/link";
 
 import {
@@ -68,6 +68,7 @@ export function ExecutionEntryCard({
   collapsed,
   initialExecutions = [],
   onCollapsedChange,
+  onDirtyChange,
   onSave,
   onStartAnother,
   onSubmitted,
@@ -80,6 +81,7 @@ export function ExecutionEntryCard({
   collapsed: boolean;
   initialExecutions?: ExecutionDraft[];
   onCollapsedChange: (collapsed: boolean) => void;
+  onDirtyChange?: (dirty: boolean) => void;
   onSave?: (
     executions: readonly ExecutionDraft[],
   ) => Promise<ExecutionSaveResult>;
@@ -115,6 +117,19 @@ export function ExecutionEntryCard({
       }
     | { kind: "error"; message: string }
   >({ kind: "idle" });
+  const hasDraftContent = state.kind !== "saved" && rows.some((row) =>
+    row.symbol.trim().length > 0 ||
+    row.time.length > 0 ||
+    row.quantity.trim().length > 0 ||
+    row.price.trim().length > 0 ||
+    row.fees.trim().length > 0
+  );
+
+  useEffect(() => {
+    onDirtyChange?.(hasDraftContent);
+    return () => onDirtyChange?.(false);
+  }, [hasDraftContent, onDirtyChange]);
+
   function update(
     id: number,
     field: keyof Omit<ExecutionDraft, "id">,

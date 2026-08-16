@@ -343,6 +343,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
             Object.freeze(["Custom rule", "Written in your own words and reviewed as Followed, Broken or Not reviewed."]),
           ]) }),
           Object.freeze({ kind: "paragraph", text: "N/A means a preset rule could not meaningfully apply to that trade or day. It is different from Not reviewed and is not a result the trader needs to override." }),
+          Object.freeze({ kind: "paragraph", text: "When no trades were entered for a day, or no preset daily rule was recorded as Followed or Broken, the Daily Trading Rules card shows one short no-results message instead of a list of N/A rows." }),
           Object.freeze({ kind: "callout", title: "Rules broken", text: "The day-summary count is the number of recorded broken rule results for that trading date. It is not an AI opinion." }),
           Object.freeze({ kind: "link", href: "/help/trading-rules", label: "Open Trading Rules help", text: "The Trading Rules collection explains every preset, custom-rule reviews, automatic details, chart markers and Rule Results history." }),
         ]),
@@ -386,6 +387,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
           Object.freeze({ kind: "paragraph", text: "Mark day reviewed is your signal that the Trade Tracker review for that trading date is complete. It is more meaningful than saving notes alone." }),
           Object.freeze({ kind: "bullets", items: Object.freeze([
             "Pending trade notes and Daily Notes are saved before completion is recorded.",
+            "If another change is still unsaved, you can keep reviewing or mark the day reviewed without completing that draft. The draft stays unsaved until you save it or leave it behind.",
             "Every open position must be classified first.",
             "The day is not locked. Executions, tags and notes can still be corrected later.",
             "TraderLink and AI Reviews can distinguish a completed daily review from notes that were saved but not marked complete.",

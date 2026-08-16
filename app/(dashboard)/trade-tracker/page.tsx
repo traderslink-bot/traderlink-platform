@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Typography from "@mui/material/Typography";
 
 import {
   DashboardPage,
@@ -16,6 +17,7 @@ import {
 import { ManualExecutionEntry } from "./manual-execution-entry";
 import { TradeTrackerWorkingDayPreview } from "./working-day-preview";
 import { DaySessionView } from "./[sessionDate]/day-session-view";
+import { TradeTrackerUnsavedChangesProvider } from "./trade-tracker-unsaved-changes";
 
 export const metadata: Metadata = {
   description: "Enter and review the current trading week's Trade Tracker executions.",
@@ -77,22 +79,27 @@ export default async function TradeTrackerPage({
   );
   if (data) {
     return (
-      <DaySessionView
-        data={data}
-        topContent={topContent}
-      />
+      <TradeTrackerUnsavedChangesProvider>
+        <DaySessionView
+          data={data}
+          topContent={topContent}
+        />
+      </TradeTrackerUnsavedChangesProvider>
     );
   }
 
   return (
-    <DashboardPage>
-      {topContent}
-      <DashboardUnavailableState
-        actionHref="/imports"
-        actionLabel="Import trades"
-        description="No accepted execution activity is available for Trade Tracker. No V3 or sample rows are substituted."
-        title="No trading day available"
-      />
-    </DashboardPage>
+    <TradeTrackerUnsavedChangesProvider>
+      <DashboardPage>
+        <Typography component="h1" variant="h1">Daily Trade Tracker</Typography>
+        {topContent}
+        <DashboardUnavailableState
+          actionHref="/imports"
+          actionLabel="Import trades"
+          description="No accepted execution activity is available for Trade Tracker. No V3 or sample rows are substituted."
+          title="No trading day available"
+        />
+      </DashboardPage>
+    </TradeTrackerUnsavedChangesProvider>
   );
 }

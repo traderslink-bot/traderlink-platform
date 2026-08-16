@@ -4,6 +4,11 @@ import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlin
 import {
   Alert,
   Box,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   MenuItem,
   Stack,
   TextField,
@@ -21,6 +26,7 @@ import {
   DashboardSecondaryAction,
 } from "../../dashboard-template";
 import type { PositionStyleDisplay } from "./position-style-labels";
+import { useTradeTrackerUnsavedChanges } from "./trade-tracker-unsaved-changes";
 
 type OpenClassification = Exclude<JournalOpenPositionStatus, "closed">;
 type Selection = OpenClassification | JournalTradeStyle;
@@ -98,10 +104,17 @@ function PositionStyleControlForm({
   const router = useRouter();
   const [selection, setSelection] = useState<Selection>(() =>
     initialSelection(style, closed));
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
   const [state, setState] = useState<
     { kind: "idle" } | { kind: "saving" } | { kind: "saved" } |
     { kind: "error"; message: string }
   >({ kind: "idle" });
+  useTradeTrackerUnsavedChanges(
+    `daily-trade-tracker:position-style:${positionRef}`,
+    mode === "full" &&
+      state.kind !== "saved" &&
+      selection !== initialSelection(style, closed),
+  );
 
   async function save() {
     if (state.kind === "saving") return;
@@ -113,33 +126,38 @@ function PositionStyleControlForm({
           tradeStyle: "other" as const,
         }
       : changeForSelection(selection, closed);
-    const response = await fetch(
-      `/api/platform/journal/trade-style/${encodeURIComponent(positionRef)}`,
-      {
-        body: JSON.stringify({
-          ...change,
-          claimedEffectiveAtUtc: new Date().toISOString(),
-          expectedAccountSelectionRef,
-          expectedRevision: style?.revision ?? null,
-          idempotencyKey: crypto.randomUUID(),
-          plannedFromEntry: false,
-          reason: change.reason,
-          sourceUi,
-        }),
-        headers: {
-          "content-type": "application/json",
-          [JOURNAL_MUTATION_REQUEST_HEADER]: "1",
+    try {
+      const response = await fetch(
+        `/api/platform/journal/trade-style/${encodeURIComponent(positionRef)}`,
+        {
+          body: JSON.stringify({
+            ...change,
+            claimedEffectiveAtUtc: new Date().toISOString(),
+            expectedAccountSelectionRef,
+            expectedRevision: style?.revision ?? null,
+            idempotencyKey: crypto.randomUUID(),
+            plannedFromEntry: false,
+            reason: change.reason,
+            sourceUi,
+          }),
+          headers: {
+            "content-type": "application/json",
+            [JOURNAL_MUTATION_REQUEST_HEADER]: "1",
+          },
+          method: "POST",
         },
-        method: "POST",
-      },
-    );
-    const body = await response.json() as { code?: string; status?: string };
-    if (!response.ok || body.status !== "ready") {
-      setState({ kind: "error", message: failureMessage(body.code) });
-      return;
+      );
+      const body = await response.json() as { code?: string; status?: string };
+      if (!response.ok || body.status !== "ready") {
+        setState({ kind: "error", message: failureMessage(body.code) });
+        return;
+      }
+      setConfirmationOpen(false);
+      setState({ kind: "saved" });
+      router.refresh();
+    } catch {
+      setState({ kind: "error", message: failureMessage() });
     }
-    setState({ kind: "saved" });
-    router.refresh();
   }
 
   if (mode === "mark-failed-swing") {
@@ -147,12 +165,76 @@ function PositionStyleControlForm({
       <Stack spacing={1}>
         <DashboardSecondaryAction
           disabled={state.kind === "saving"}
-          onClick={() => void save()}
+          onClick={() => {
+            setState({ kind: "idle" });
+            setConfirmationOpen(true);
+          }}
           startIcon={state.kind === "saved" ? <CheckCircleOutlineRoundedIcon /> : undefined}
         >
           {state.kind === "saving" ? "Saving..." : state.kind === "saved" ? "Marked failed swing" : "Mark failed swing"}
         </DashboardSecondaryAction>
         {state.kind === "error" ? <Alert severity="error">{state.message}</Alert> : null}
+        <Dialog
+          aria-describedby="mark-failed-swing-description"
+          aria-labelledby="mark-failed-swing-title"
+          fullWidth
+          maxWidth="xs"
+          onClose={() => {
+            if (state.kind !== "saving") setConfirmationOpen(false);
+          }}
+          open={confirmationOpen}
+          slotProps={{
+            paper: {
+              sx: {
+                m: { xs: 2, sm: 4 },
+                width: { xs: "calc(100% - 32px)", sm: "100%" },
+              },
+            },
+          }}
+        >
+          <DialogTitle id="mark-failed-swing-title">
+            Mark this swing as failed?
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="mark-failed-swing-description">
+              This changes the position from Active swing to Unplanned hold
+              (bag hold) everywhere it appears. It does not change any saved
+              executions.
+            </DialogContentText>
+            {state.kind === "error" ? (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                {state.message}
+              </Alert>
+            ) : null}
+          </DialogContent>
+          <DialogActions
+            sx={{
+              alignItems: "stretch",
+              flexDirection: { xs: "column", sm: "row" },
+              gap: 1,
+              px: 3,
+              pb: 3,
+              "& .MuiButton-root": {
+                minHeight: 44,
+                ml: "0 !important",
+                width: { xs: "100%", sm: "auto" },
+              },
+            }}
+          >
+            <DashboardSecondaryAction
+              disabled={state.kind === "saving"}
+              onClick={() => setConfirmationOpen(false)}
+            >
+              Keep as active swing
+            </DashboardSecondaryAction>
+            <DashboardPrimaryAction
+              disabled={state.kind === "saving"}
+              onClick={() => void save()}
+            >
+              {state.kind === "saving" ? "Saving..." : "Mark failed swing"}
+            </DashboardPrimaryAction>
+          </DialogActions>
+        </Dialog>
       </Stack>
     );
   }
