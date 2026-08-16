@@ -11,6 +11,7 @@ import type { PlatformReportingCurrency } from "../identity/platform-user-prefer
 
 const RATE_PROVIDER_KEY = "bank_of_canada_valet";
 const USD_TO_CAD_SERIES = "FXUSDCAD";
+const RATE_REQUEST_TIMEOUT_MS = 5_000;
 const TARGET_SERIES: Readonly<Record<Exclude<PlatformReportingCurrency, "USD" | "CAD">, string>> = Object.freeze({
   AUD: "FXAUDCAD",
   BRL: "FXBRLCAD",
@@ -103,7 +104,10 @@ async function fetchMissingRates(input: Readonly<{
     const url = new URL(`https://www.bankofcanada.ca/valet/observations/${series}/json`);
     url.searchParams.set("start_date", startDate);
     url.searchParams.set("end_date", endDate);
-    const response = await fetch(url, { cache: "no-store" });
+    const response = await fetch(url, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(RATE_REQUEST_TIMEOUT_MS),
+    });
     if (!response.ok) return new Map();
     const payload = asRecord(await response.json());
     const observations = Array.isArray(payload?.observations) ? payload.observations : [];
