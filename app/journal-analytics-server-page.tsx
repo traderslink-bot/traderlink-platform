@@ -9,7 +9,6 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 
-import { DismissibleDataDecisionNotice } from "./dismissible-data-decision-notice";
 import {
   DashboardDataScopeChip,
   DashboardMetricCard,
@@ -29,11 +28,7 @@ import {
   buildJournalAnalyticsDashboardQuery,
   withJournalAnalyticsDashboardService,
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
-import { readJournalDataDecisionNoticeRef } from "@/src/modules/journal/server/decisions/journal-data-decision-notice";
-import {
-  currentJournalAccountSelectionRef,
-  requireTraderLinkPlatformPageScope,
-} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
 export type AnalyticsServerPageKind =
   | "overview"
@@ -137,11 +132,6 @@ export async function AnalyticsServerPage({
     ...response.limitations,
     ...response.partitions.flatMap((partition) => partition.limitations),
   ])];
-  const decisionNoticeRef = response.crossPartitionCounts.needsDecisionCount > 0
-    ? readJournalDataDecisionNoticeRef(scope)
-    : null;
-  const accountSelectionRef = currentJournalAccountSelectionRef(scope);
-
   return (
     <DashboardPage>
       <Box>
@@ -173,15 +163,7 @@ export async function AnalyticsServerPage({
         />
       </Stack>
 
-      {response.crossPartitionCounts.needsDecisionCount > 0 && decisionNoticeRef ? (
-        <DismissibleDataDecisionNotice
-          accountSelectionRef={accountSelectionRef}
-          evidenceRef={decisionNoticeRef}
-          surface={`analytics-${page}`}
-        >
-          {response.crossPartitionCounts.needsDecisionCount} unresolved items are contained and excluded from dependent calculations. Unrelated valid trades remain visible.
-        </DismissibleDataDecisionNotice>
-      ) : limitations.length > 0 ? (
+      {limitations.length > 0 ? (
         <Typography color="text.secondary" variant="body2">
           Some results are unavailable because the required facts do not exist in this Journal account.
         </Typography>

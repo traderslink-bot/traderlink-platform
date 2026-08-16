@@ -38,7 +38,6 @@ function listLegacyIntelligencePageRoutes(
 function main(): void {
   const repository = process.cwd();
   const activeReadFiles = [
-    "app/dismissible-data-decision-notice.tsx",
     "app/(dashboard)/calendar/calendar-data.ts",
     "app/(dashboard)/calendar/page.tsx",
     "app/(dashboard)/trades/ticker/page.tsx",
@@ -173,7 +172,6 @@ function main(): void {
     "src/modules/journal/server/annotations/journal-annotation-runtime.ts",
     "src/modules/journal/server/annotations/journal-annotation-service.ts",
     "src/modules/journal/server/annotations/journal-trading-rules-dashboard.ts",
-    "src/modules/journal/server/decisions/journal-data-decision-notice.ts",
     "src/modules/journal/server/manual-trades/journal-manual-execution-edit-service.ts",
     "src/modules/journal-analytics/server/journal-dashboard-read-model-service.ts",
     "src/modules/journal-analytics/server/analytics-lab-saved-view-repository.ts",
@@ -611,7 +609,7 @@ function main(): void {
     !accountProfile.includes("Discord will be the first public sign-in method") ||
     !accountManagement.includes("expectedAccountSelectionRef") ||
     !accountSwitcher.includes("expectedAccountSelectionRef") ||
-    !dashboardShell.includes("DashboardAccountSwitcher") ||
+    !accountTrading.includes("DashboardAccountSwitcher") ||
     !selectionRoute.includes("resolveJournalAccountSelection") ||
     !selectionRoute.includes("requireExpectedJournalAccountSelection") ||
     !accountRoute.includes("createAccount") ||

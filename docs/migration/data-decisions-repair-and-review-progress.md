@@ -6,10 +6,11 @@
 
 ## Current checkpoint
 
-The prior Journal correction plan established progressive disclosure and
-dismissible notices. Owner review then clarified that the remaining page work
-must be repair-first: statement rows remain visible, row repair is the normal
-action, and unresolved trades are grouped only for focused decision review.
+The prior Journal correction plan established progressive disclosure. Owner
+review then clarified that the page must be repair-first and that unresolved
+work should not repeat as banners or a count badge throughout the dashboard:
+statement rows remain visible, row repair is the normal action, and unresolved
+trades are grouped only for focused decision review.
 
 The current platform already preserves immutable source evidence, versioned
 execution corrections, account-scoped decisions, deterministic rebuilds and
@@ -94,18 +95,19 @@ database, process or deployment is changed by this page work.
   account-selection protections. It cannot classify an arbitrary position from
   a Data Decisions card.
 
-## Slice 4 in-progress record
+## Slice 4 refinement record
 
-- A dismissal now follows the selected account and current pending-decision
-  evidence across dashboard pages instead of returning once per page. The
-  dashboard navigation displays the account-scoped pending count beside Data
-  Decisions. Resolving or changing pending evidence naturally creates a new
-  notice state.
-- Duplicate reconciliation and resolved-history presentation remain in scope
-  for Slice 4 and are not marked complete by this checkpoint.
+- Data Decisions remains directly available in primary navigation without a
+  repeated dashboard banner or unresolved-count badge.
+- Duplicate reconciliation and resolved-history presentation remain within the
+  dedicated account-scoped page.
 
 ## Slice 4 implementation record
 
+- Later owner review simplified the notice behavior: Data Decisions remains a
+  clear primary-navigation destination, while repeated Journal/Analytics
+  banners and the unresolved-count navigation badge are removed. The queue and
+  review history remain account-scoped and unchanged.
 - Exact statement re-import is already idempotent at import commit: the Import
   page reports that the statement was already saved and creates no duplicate
   execution or new decision. Certain broker duplicates use the same safe

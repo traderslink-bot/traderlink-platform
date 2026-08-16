@@ -120,13 +120,11 @@ underlying broker evidence.
 
 ### 2.6 Notice and navigation behavior
 
-- Repeated Journal/Analytics notices can be closed without hiding the actual
-  work queue.
-- The dismissal follows the selected account and unchanged pending-decision set
-  across relevant surfaces, not one individual page.
-- A changed decision set appears again.
-- The Data Decisions navigation item shows a colored unresolved-count badge
-  after a notice has been dismissed.
+- Data Decisions remains visible in the primary navigation and is the one place
+  to review unresolved work.
+- Journal and Analytics pages do not repeat the same unresolved-work banner.
+- The navigation item does not add a persistent unresolved-count badge; the
+  queue itself shows the current account-scoped state.
 - Resolved decisions leave the default queue but remain available in review
   history with their original evidence and correction history.
 
@@ -190,8 +188,9 @@ exists.
 
 - Verify exact statement reimports, certain broker duplicates and uncertain
   manual/broker overlaps use the correct path.
-- Make notice dismissal account-wide and digest-bound.
-- Add the unresolved-count navigation badge and resolved-history access.
+- Keep unresolved work in the dedicated Data Decisions queue without repeating
+  banners or a navigation badge elsewhere.
+- Add resolved-history access.
 
 ### Slice 5: acceptance
 
@@ -215,8 +214,8 @@ exists.
   and rebuild affected facts without deleting evidence.
 - Exact reimports never create duplicate activity; uncertain manual/broker
   matches never silently overwrite manual facts.
-- Unresolved work is visible in Data Decisions and the navigation badge but can
-  stop repeating as a banner elsewhere after dismissal.
+- Unresolved work is visible in Data Decisions without repeating as banners or
+  a count badge elsewhere in the dashboard.
 - Valid unrelated trades remain available throughout the dashboard.
 
 ## 5. Explicitly deferred

@@ -395,7 +395,7 @@ function ExecutionEvidence({
             sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.25 }}
           >
             <Stack spacing={0.75}>
-              <Stack direction="row" justifyContent="space-between" spacing={1}>
+              <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between" }}>
                 <Typography sx={{ fontWeight: 800 }} variant="body2">
                   {execution.sourceLabel ?? "Execution"}
                 </Typography>
@@ -404,7 +404,7 @@ function ExecutionEvidence({
               <Typography color="text.secondary" variant="caption">
                 {displayTimestamp(execution.executedAtUtc)}
               </Typography>
-              <Stack direction="row" justifyContent="space-between" spacing={2}>
+              <Stack direction="row" spacing={2} sx={{ justifyContent: "space-between" }}>
                 <Typography variant="body2">Shares: {displayDecimal(execution.quantityDecimal)}</Typography>
                 <Typography variant="body2">Price: {displayDecimal(execution.priceDecimal)}</Typography>
               </Stack>
@@ -544,9 +544,11 @@ function StatementRows({
                   <Stack spacing={1.25}>
                     <Stack
                       direction={{ xs: "column", sm: "row" }}
-                      justifyContent="space-between"
                       spacing={1}
-                      sx={{ alignItems: { sm: "center" } }}
+                      sx={{
+                        alignItems: { sm: "center" },
+                        justifyContent: "space-between",
+                      }}
                     >
                       <Typography sx={{ fontWeight: 800 }} variant="subtitle2">
                         Statement row {row.recordOrdinal}
