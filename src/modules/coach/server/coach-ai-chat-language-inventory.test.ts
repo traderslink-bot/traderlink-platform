@@ -30,23 +30,55 @@ describe("Coach AI Chat language inventory", () => {
       .join("");
     const digest = createHash("sha256").update(source, "utf8").digest("hex");
     const runtimeCapabilityIds = new Set<string>(
-      coachAiChatRuntimeCapabilityRegistry.map((capability) => capability.id),
+      coachAiChatRuntimeCapabilityRegistry.capabilities.map((capability) => capability.id),
+    );
+    const mappedEntries = coachAiChatLanguageInventory
+      .filter((entry) => entry.runtimeCapabilityIds.length > 0);
+    const dispositions = Object.groupBy(
+      coachAiChatLanguageInventory,
+      (entry) => entry.runtimeMappingDisposition,
     );
 
     expect(coachAiChatLanguageInventory).toHaveLength(417);
     expect(digest).toBe(COACH_AI_CHAT_LANGUAGE_INVENTORY_SOURCE_SHA256);
-    expect(coachAiChatLanguageInventory.filter((entry) => entry.runtimeCapabilityIds.length > 0).length)
-      .toBeGreaterThanOrEqual(30);
+    expect(mappedEntries).toHaveLength(239);
+    expect(new Set(mappedEntries.map((entry) => entry.canonicalName)).size).toBe(235);
+    expect(mappedEntries.reduce((total, entry) => total + entry.runtimeCapabilityIds.length, 0))
+      .toBe(774);
+    expect(dispositions.mapped_live).toHaveLength(239);
+    expect(dispositions.not_exposed_by_current_runtime).toHaveLength(136);
+    expect(dispositions.source_status_unavailable).toHaveLength(32);
+    expect(dispositions.evaluation_only).toHaveLength(10);
     for (const entry of coachAiChatLanguageInventory) {
+      expect(entry.runtimeMappingReason.trim()).not.toBe("");
+      expect(entry.runtimeMappingDisposition === "mapped_live")
+        .toBe(entry.runtimeCapabilityIds.length > 0);
       for (const runtimeCapabilityId of entry.runtimeCapabilityIds) {
         expect(runtimeCapabilityIds.has(runtimeCapabilityId)).toBe(true);
       }
     }
+
+    const globalPolicies = coachAiChatLanguageInventory
+      .filter((entry) => entry.categoryFile === "19-language-policies.md");
+    expect(globalPolicies).toHaveLength(11);
+    for (const policy of globalPolicies) {
+      expect(policy.runtimeCapabilityIds).toEqual([...runtimeCapabilityIds].sort());
+    }
+
+    const evaluationOnly = coachAiChatLanguageInventory
+      .filter((entry) => entry.categoryFile === "20-evaluation-suite.md");
+    expect(evaluationOnly).toHaveLength(10);
+    expect(evaluationOnly.every((entry) =>
+      entry.runtimeCapabilityIds.length === 0 &&
+      entry.runtimeMappingDisposition === "evaluation_only")).toBe(true);
   });
 
-  it("requires a canonical mapping and validated representative language fixture for every live capability family", () => {
-    const capabilityById = new Map<string, (typeof coachAiChatRuntimeCapabilityRegistry)[number]>(
-      coachAiChatRuntimeCapabilityRegistry.map((capability) => [capability.id, capability]),
+  it("requires canonical mappings and contract-validated fixture metadata for every live capability family", () => {
+    const capabilityById = new Map<
+      string,
+      (typeof coachAiChatRuntimeCapabilityRegistry.capabilities)[number]
+    >(
+      coachAiChatRuntimeCapabilityRegistry.capabilities.map((capability) => [capability.id, capability]),
     );
     const coverageById = new Map(
       coachAiChatRuntimeCapabilityCoverage.map((coverage) => [coverage.runtimeCapabilityId, coverage]),
@@ -55,18 +87,30 @@ describe("Coach AI Chat language inventory", () => {
     const fixtureToolNames = new Set<string>();
     const actionDraftKinds = new Set<string>();
 
-    expect(coverageById.size).toBe(coachAiChatRuntimeCapabilityRegistry.length);
+    expect(coachAiChatRuntimeCapabilityRegistry.capabilities).toHaveLength(13);
+    expect(coachAiChatRuntimeCapabilityCoverage)
+      .toHaveLength(coachAiChatRuntimeCapabilityRegistry.capabilities.length);
+    expect(new Set(coachAiChatRuntimeCapabilityCoverage
+      .map((coverage) => coverage.runtimeCapabilityId)).size)
+      .toBe(coachAiChatRuntimeCapabilityCoverage.length);
+    expect(coverageById.size).toBe(coachAiChatRuntimeCapabilityRegistry.capabilities.length);
 
-    for (const capability of coachAiChatRuntimeCapabilityRegistry) {
+    for (const capability of coachAiChatRuntimeCapabilityRegistry.capabilities) {
       const coverage = coverageById.get(capability.id);
       expect(coverage).toBeDefined();
       expect(coverage!.canonicalNames.length).toBeGreaterThan(0);
-      expect(capability.canonicalNames).toEqual([...coverage!.canonicalNames].sort());
+      const compactRegistryNames = coachAiChatRuntimeCapabilityRegistry.canonicalLanguageGroups
+        .filter((group) => group.runtimeCapabilityIds.includes(capability.id))
+        .flatMap((group) => group.canonicalNames)
+        .sort();
+      expect(compactRegistryNames).toEqual([...coverage!.canonicalNames].sort());
 
       for (const canonicalName of coverage!.canonicalNames) {
-        const entry = coachAiChatLanguageInventory.find((candidate) => candidate.canonicalName === canonicalName);
-        expect(entry).toBeDefined();
-        expect(entry!.runtimeCapabilityIds).toContain(capability.id);
+        const entries = coachAiChatLanguageInventory
+          .filter((candidate) => candidate.canonicalName === canonicalName);
+        expect(entries.length).toBeGreaterThan(0);
+        expect(entries.every((entry) => entry.runtimeCapabilityIds.includes(capability.id)))
+          .toBe(true);
       }
 
       expect(coverage!.representativeFixtures.length).toBeGreaterThan(0);
@@ -88,8 +132,21 @@ describe("Coach AI Chat language inventory", () => {
     }
 
     expect([...coverageById.keys()].every((id) => capabilityById.has(id))).toBe(true);
+    expect(fixtureIds.size).toBe(24);
+
+    const compactRoutes = new Map(
+      coachAiChatRuntimeCapabilityRegistry.canonicalLanguageGroups.flatMap((group) =>
+        group.canonicalNames.map((canonicalName) => [canonicalName, group.runtimeCapabilityIds] as const)),
+    );
+    expect(compactRoutes.size).toBe(235);
+    for (const entry of coachAiChatLanguageInventory.filter((candidate) =>
+      candidate.runtimeCapabilityIds.length > 0)) {
+      expect(compactRoutes.get(entry.canonicalName)).toEqual(entry.runtimeCapabilityIds);
+    }
 
     const registryToolNames = coachAiChatFactualToolRegistry.map(({ name }) => name).sort();
+    expect(registryToolNames).toHaveLength(34);
+    expect(fixtureToolNames.size).toBe(34);
     expect([...fixtureToolNames].sort()).toEqual(registryToolNames);
 
     const actionContract = readFileSync(path.join(
@@ -111,6 +168,8 @@ describe("Coach AI Chat language inventory", () => {
     // union rather than a runtime list. Parsing its top-level branches here
     // makes the fixture guard track the canonical contract without changing
     // the concurrent action service.
+    expect(new Set(contractActionKinds).size).toBe(12);
+    expect(actionDraftKinds.size).toBe(12);
     expect([...actionDraftKinds].sort()).toEqual([...new Set(contractActionKinds)].sort());
   });
 

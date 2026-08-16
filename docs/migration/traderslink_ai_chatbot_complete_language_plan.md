@@ -22,14 +22,30 @@ plan remains the architecture/behavior authority when an inventory item would
 otherwise imply an unavailable metric, unsafe action, missing data, or a change
 to account scope.
 
-## Current runtime language reconciliation — 2026-08-15
+## Current runtime language reconciliation — 2026-08-16
 
 The 417 locked canonical names remain the language contract; their individual
 source capability statuses are not a runtime support switch. The current Chat
 implementation now has thirteen bounded factual-read or confirmation-draft
-families. Each family has one or more exact canonical routes and a
-representative fixture in the generated language registry, recorded in the
+families. The entry-by-entry audit maps 239 inventory entries, representing
+235 distinct canonical names, through 774 exact family associations. Each
+family has exact canonical routes and contract-validated representative
+fixture metadata in the generated language registry, recorded in the
 [focused reconciliation progress record](traderlink-ai-chat-language-reconciliation-progress.md).
+
+The remaining 178 entries are not silently ignored: 136 exact concepts are not
+exposed by a current factual-tool or confirmed-action contract, 32 retain a
+locked Unavailable boundary, and 10 are evaluation-only records rather than
+user capability routes. Generated metadata carries the disposition and reason
+for every one of the 417 entries. Runtime metadata groups each mapped canonical
+term once by its exact family set to limit repeated provider context.
+
+Current product feature nouns that are not separate names in the locked
+417-entry source are represented by the applicable live-family descriptions
+and fixture metadata; no synthetic canonical names are added. The focused test
+validates the metadata contract and exact tool/action unions. It does not
+execute a deterministic language router, provider call, factual tool, or
+confirmed action.
 
 The mapping covers completed-trade facts; Daily Tracker drafts; manual
 execution drafts; AI Review delivery drafts; Journal period context; saved AI

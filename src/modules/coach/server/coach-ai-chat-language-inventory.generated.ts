@@ -8,6 +8,12 @@ export type CoachAiChatLanguageInventoryEntry = Readonly<{
   categoryFile: string;
   sourceCapabilityStatus: string;
   runtimeCapabilityIds: readonly string[];
+  runtimeMappingDisposition:
+    | "mapped_live"
+    | "source_status_unavailable"
+    | "not_exposed_by_current_runtime"
+    | "evaluation_only";
+  runtimeMappingReason: string;
 }>;
 
 export type CoachAiChatRuntimeCapabilityCoverage = Readonly<{
@@ -24,16 +30,23 @@ export type CoachAiChatRuntimeCapabilityCoverage = Readonly<{
   }>[];
 }>;
 
-export const coachAiChatLanguageInventory = Object.freeze([
+export const coachAiChatLanguageInventory: readonly CoachAiChatLanguageInventoryEntry[] = Object.freeze([
   {
     "canonicalName": "retrieve_records",
     "categoryFile": "01-intents.md",
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
       "closed_trade_facts",
+      "current_dashboard_analytics_reads",
       "current_dashboard_journal_reads",
-      "journal_period_context"
-    ]
+      "current_product_status_reads",
+      "journal_period_context",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, journal_period_context, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "summarize_performance",
@@ -41,8 +54,15 @@ export const coachAiChatLanguageInventory = Object.freeze([
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
       "closed_trade_facts",
-      "current_dashboard_analytics_reads"
-    ]
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "journal_period_context",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads, journal_period_context, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "calculate_metric",
@@ -50,8 +70,12 @@ export const coachAiChatLanguageInventory = Object.freeze([
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
       "closed_trade_facts",
-      "current_dashboard_analytics_reads"
-    ]
+      "current_dashboard_analytics_reads",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "compare_groups",
@@ -59,8 +83,12 @@ export const coachAiChatLanguageInventory = Object.freeze([
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
       "closed_trade_facts",
-      "current_dashboard_analytics_reads"
-    ]
+      "current_dashboard_analytics_reads",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "group_and_aggregate",
@@ -68,23 +96,29 @@ export const coachAiChatLanguageInventory = Object.freeze([
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
       "closed_trade_facts",
-      "current_dashboard_analytics_reads"
-    ]
+      "current_dashboard_analytics_reads",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "rank_results",
     "categoryFile": "01-intents.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": [
-      "closed_trade_facts",
-      "current_dashboard_analytics_reads"
-    ]
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "detect_pattern",
     "categoryFile": "01-intents.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "explain_result",
@@ -92,80 +126,116 @@ export const coachAiChatLanguageInventory = Object.freeze([
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
       "closed_trade_facts",
-      "saved_ai_review_follow_up"
-    ]
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "journal_period_context",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, journal_period_context, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "diagnose_performance",
     "categoryFile": "01-intents.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "journal_period_context",
+      "saved_ai_review_follow_up"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: journal_period_context, saved_ai_review_follow_up."
   },
   {
     "canonicalName": "identify_strengths",
     "categoryFile": "01-intents.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "journal_period_context",
+      "saved_ai_review_follow_up"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: journal_period_context, saved_ai_review_follow_up."
   },
   {
     "canonicalName": "evaluate_rule",
     "categoryFile": "01-intents.md",
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
-      "confirmed_product_changes",
       "trading_rule_and_tag_reads"
-    ]
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "evaluate_label",
     "categoryFile": "01-intents.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "analyze_trade",
     "categoryFile": "01-intents.md",
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
-      "current_dashboard_journal_reads",
       "saved_trade_analyzer_reads"
-    ]
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "find_similar_trades",
     "categoryFile": "01-intents.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "analyze_sequence",
     "categoryFile": "01-intents.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "analyze_trend",
     "categoryFile": "01-intents.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "run_counterfactual",
     "categoryFile": "01-intents.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "evaluate_goal",
     "categoryFile": "01-intents.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "generate_coaching",
     "categoryFile": "01-intents.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "saved_ai_review_follow_up"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: saved_ai_review_follow_up."
   },
   {
     "canonicalName": "explain_concept",
@@ -173,15 +243,20 @@ export const coachAiChatLanguageInventory = Object.freeze([
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
       "product_help"
-    ]
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: product_help."
   },
   {
     "canonicalName": "inspect_data_quality",
     "categoryFile": "01-intents.md",
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
+      "confirmed_product_changes",
       "current_product_status_reads"
-    ]
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: confirmed_product_changes, current_product_status_reads."
   },
   {
     "canonicalName": "assist_journaling",
@@ -190,7 +265,9 @@ export const coachAiChatLanguageInventory = Object.freeze([
     "runtimeCapabilityIds": [
       "confirmed_product_changes",
       "daily_tracker_drafts"
-    ]
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: confirmed_product_changes, daily_tracker_drafts."
   },
   {
     "canonicalName": "product_help",
@@ -198,13 +275,31 @@ export const coachAiChatLanguageInventory = Object.freeze([
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
       "product_help"
-    ]
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: product_help."
   },
   {
     "canonicalName": "unsupported_request",
     "categoryFile": "01-intents.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "daily_tracker_drafts",
+      "journal_period_context",
+      "manual_execution_drafts",
+      "product_help",
+      "review_delivery_draft",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, daily_tracker_drafts, journal_period_context, manual_execution_drafts, product_help, review_delivery_draft, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "prepare_manual_execution_draft",
@@ -213,7 +308,9 @@ export const coachAiChatLanguageInventory = Object.freeze([
     "runtimeCapabilityIds": [
       "confirmed_product_changes",
       "manual_execution_drafts"
-    ]
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: confirmed_product_changes, manual_execution_drafts."
   },
   {
     "canonicalName": "prepare_user_setting_change",
@@ -222,7 +319,9 @@ export const coachAiChatLanguageInventory = Object.freeze([
     "runtimeCapabilityIds": [
       "confirmed_product_changes",
       "review_delivery_draft"
-    ]
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: confirmed_product_changes, review_delivery_draft."
   },
   {
     "canonicalName": "assist_daily_review",
@@ -230,23 +329,31 @@ export const coachAiChatLanguageInventory = Object.freeze([
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
       "daily_tracker_drafts"
-    ]
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: daily_tracker_drafts."
   },
   {
     "canonicalName": "gross_profit",
     "categoryFile": "02-metrics-profit-loss.md",
     "sourceCapabilityStatus": "Supported",
     "runtimeCapabilityIds": [
-      "closed_trade_facts"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "gross_loss",
     "categoryFile": "02-metrics-profit-loss.md",
     "sourceCapabilityStatus": "Supported",
     "runtimeCapabilityIds": [
-      "closed_trade_facts"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "gross_pnl",
@@ -255,7 +362,9 @@ export const coachAiChatLanguageInventory = Object.freeze([
     "runtimeCapabilityIds": [
       "closed_trade_facts",
       "current_dashboard_analytics_reads"
-    ]
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "net_pnl",
@@ -263,180 +372,258 @@ export const coachAiChatLanguageInventory = Object.freeze([
     "sourceCapabilityStatus": "Supported",
     "runtimeCapabilityIds": [
       "closed_trade_facts",
-      "current_dashboard_analytics_reads"
-    ]
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "journal_period_context"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads, journal_period_context."
   },
   {
     "canonicalName": "realized_pnl",
     "categoryFile": "02-metrics-profit-loss.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "unrealized_pnl",
     "categoryFile": "02-metrics-profit-loss.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "total_return",
     "categoryFile": "02-metrics-profit-loss.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "average_net_pnl_per_trade",
     "categoryFile": "02-metrics-profit-loss.md",
     "sourceCapabilityStatus": "Supported",
     "runtimeCapabilityIds": [
-      "closed_trade_facts"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "median_net_pnl_per_trade",
     "categoryFile": "02-metrics-profit-loss.md",
     "sourceCapabilityStatus": "Supported",
     "runtimeCapabilityIds": [
-      "closed_trade_facts"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "average_percentage_return",
     "categoryFile": "02-metrics-profit-loss.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "median_percentage_return",
     "categoryFile": "02-metrics-profit-loss.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "largest_win",
     "categoryFile": "02-metrics-profit-loss.md",
     "sourceCapabilityStatus": "Supported",
     "runtimeCapabilityIds": [
-      "closed_trade_facts"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "largest_loss",
     "categoryFile": "02-metrics-profit-loss.md",
     "sourceCapabilityStatus": "Supported",
     "runtimeCapabilityIds": [
-      "closed_trade_facts"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "average_winning_trade",
     "categoryFile": "02-metrics-profit-loss.md",
     "sourceCapabilityStatus": "Supported",
     "runtimeCapabilityIds": [
-      "closed_trade_facts"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "average_losing_trade",
     "categoryFile": "02-metrics-profit-loss.md",
     "sourceCapabilityStatus": "Supported",
     "runtimeCapabilityIds": [
-      "closed_trade_facts"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "average_daily_pnl",
     "categoryFile": "02-metrics-profit-loss.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "average_weekly_pnl",
     "categoryFile": "02-metrics-profit-loss.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "average_monthly_pnl",
     "categoryFile": "02-metrics-profit-loss.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "profit_per_share",
     "categoryFile": "02-metrics-profit-loss.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "pnl_by_direction",
     "categoryFile": "02-metrics-profit-loss.md",
     "sourceCapabilityStatus": "Supported",
     "runtimeCapabilityIds": [
-      "closed_trade_facts"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "pnl_before_fees",
     "categoryFile": "02-metrics-profit-loss.md",
     "sourceCapabilityStatus": "Supported",
     "runtimeCapabilityIds": [
-      "closed_trade_facts"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "pnl_after_fees",
     "categoryFile": "02-metrics-profit-loss.md",
     "sourceCapabilityStatus": "Supported",
     "runtimeCapabilityIds": [
-      "closed_trade_facts"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "trade_count",
     "categoryFile": "03-metrics-outcomes.md",
     "sourceCapabilityStatus": "Supported",
     "runtimeCapabilityIds": [
-      "closed_trade_facts"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "journal_period_context",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads, journal_period_context, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "winning_trades",
     "categoryFile": "03-metrics-outcomes.md",
     "sourceCapabilityStatus": "Supported",
     "runtimeCapabilityIds": [
-      "closed_trade_facts"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "losing_trades",
     "categoryFile": "03-metrics-outcomes.md",
     "sourceCapabilityStatus": "Supported",
     "runtimeCapabilityIds": [
-      "closed_trade_facts"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "breakeven_trades",
     "categoryFile": "03-metrics-outcomes.md",
     "sourceCapabilityStatus": "Supported",
     "runtimeCapabilityIds": [
-      "closed_trade_facts"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "open_trades",
     "categoryFile": "03-metrics-outcomes.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_journal_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_journal_reads."
   },
   {
     "canonicalName": "closed_trades",
     "categoryFile": "03-metrics-outcomes.md",
     "sourceCapabilityStatus": "Supported",
     "runtimeCapabilityIds": [
-      "closed_trade_facts"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads."
   },
   {
     "canonicalName": "win_rate",
@@ -444,72 +631,98 @@ export const coachAiChatLanguageInventory = Object.freeze([
     "sourceCapabilityStatus": "Supported",
     "runtimeCapabilityIds": [
       "closed_trade_facts",
-      "current_dashboard_analytics_reads"
-    ]
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "loss_rate",
     "categoryFile": "03-metrics-outcomes.md",
     "sourceCapabilityStatus": "Supported",
     "runtimeCapabilityIds": [
-      "closed_trade_facts"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "breakeven_rate",
     "categoryFile": "03-metrics-outcomes.md",
     "sourceCapabilityStatus": "Supported",
     "runtimeCapabilityIds": [
-      "closed_trade_facts"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "green_days",
     "categoryFile": "03-metrics-outcomes.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "red_days",
     "categoryFile": "03-metrics-outcomes.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "flat_days",
     "categoryFile": "03-metrics-outcomes.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "percentage_of_profitable_days",
     "categoryFile": "03-metrics-outcomes.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "consecutive_wins",
     "categoryFile": "03-metrics-outcomes.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "consecutive_losses",
     "categoryFile": "03-metrics-outcomes.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "maximum_win_streak",
     "categoryFile": "03-metrics-outcomes.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "maximum_loss_streak",
     "categoryFile": "03-metrics-outcomes.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "expectancy",
@@ -518,587 +731,861 @@ export const coachAiChatLanguageInventory = Object.freeze([
     "runtimeCapabilityIds": [
       "closed_trade_facts",
       "current_dashboard_analytics_reads"
-    ]
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "profit_factor",
     "categoryFile": "04-metrics-edge-quality.md",
     "sourceCapabilityStatus": "Supported",
     "runtimeCapabilityIds": [
-      "closed_trade_facts"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "payoff_ratio",
     "categoryFile": "04-metrics-edge-quality.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "average_win_to_average_loss_ratio",
     "categoryFile": "04-metrics-edge-quality.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "median_win_to_median_loss_ratio",
     "categoryFile": "04-metrics-edge-quality.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "consistency",
     "categoryFile": "04-metrics-edge-quality.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "return_dispersion",
     "categoryFile": "04-metrics-edge-quality.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "standard_deviation",
     "categoryFile": "04-metrics-edge-quality.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "percentage_of_total_profit_from_top_trades",
     "categoryFile": "04-metrics-edge-quality.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "percentage_of_total_loss_from_worst_trades",
     "categoryFile": "04-metrics-edge-quality.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "dependency_on_outliers",
     "categoryFile": "04-metrics-edge-quality.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "results_excluding_best_trade",
     "categoryFile": "04-metrics-edge-quality.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "results_excluding_worst_trade",
     "categoryFile": "04-metrics-edge-quality.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "total_commissions",
     "categoryFile": "05-metrics-fees-costs.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "total_regulatory_fees",
     "categoryFile": "05-metrics-fees-costs.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "total_transaction_costs",
     "categoryFile": "05-metrics-fees-costs.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "fees_per_trade",
     "categoryFile": "05-metrics-fees-costs.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "fees_per_share",
     "categoryFile": "05-metrics-fees-costs.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "fees_as_percentage_of_gross_profit",
     "categoryFile": "05-metrics-fees-costs.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "trades_turned_from_green_to_red_by_fees",
     "categoryFile": "05-metrics-fees-costs.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "fee_impact_on_expectancy",
     "categoryFile": "05-metrics-fees-costs.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "fee_impact_by_broker",
     "categoryFile": "05-metrics-fees-costs.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "fee_completeness",
     "categoryFile": "05-metrics-fees-costs.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "shares_purchased",
     "categoryFile": "06-metrics-position-size.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "manual_execution_drafts"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: manual_execution_drafts."
   },
   {
     "canonicalName": "shares_sold",
     "categoryFile": "06-metrics-position-size.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "manual_execution_drafts"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: manual_execution_drafts."
   },
   {
     "canonicalName": "average_position_size",
     "categoryFile": "06-metrics-position-size.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "median_position_size",
     "categoryFile": "06-metrics-position-size.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "maximum_position_size",
     "categoryFile": "06-metrics-position-size.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "average_dollar_exposure",
     "categoryFile": "06-metrics-position-size.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "maximum_dollar_exposure",
     "categoryFile": "06-metrics-position-size.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "size_relative_to_normal_size",
     "categoryFile": "06-metrics-position-size.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "performance_by_size_bucket",
     "categoryFile": "06-metrics-position-size.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "size_after_wins",
     "categoryFile": "06-metrics-position-size.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "size_after_losses",
     "categoryFile": "06-metrics-position-size.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "size_escalation",
     "categoryFile": "06-metrics-position-size.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "size_reduction",
     "categoryFile": "06-metrics-position-size.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "profit_per_dollar_exposed",
     "categoryFile": "06-metrics-position-size.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "entry_time",
     "categoryFile": "07-metrics-time-duration.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "manual_execution_drafts",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads, manual_execution_drafts, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "exit_time",
     "categoryFile": "07-metrics-time-duration.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "manual_execution_drafts"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads, manual_execution_drafts."
   },
   {
     "canonicalName": "hold_duration",
     "categoryFile": "07-metrics-time-duration.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "average_hold_duration",
     "categoryFile": "07-metrics-time-duration.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "median_hold_duration",
     "categoryFile": "07-metrics-time-duration.md",
     "sourceCapabilityStatus": "Supported",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "time_to_first_exit",
     "categoryFile": "07-metrics-time-duration.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "session",
     "categoryFile": "07-metrics-time-duration.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "weekday",
     "categoryFile": "07-metrics-time-duration.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "review_delivery_draft"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, review_delivery_draft."
   },
   {
     "canonicalName": "week",
     "categoryFile": "07-metrics-time-duration.md",
     "sourceCapabilityStatus": "Supported",
     "runtimeCapabilityIds": [
-      "closed_trade_facts"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "journal_period_context"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, journal_period_context."
   },
   {
     "canonicalName": "month",
     "categoryFile": "07-metrics-time-duration.md",
     "sourceCapabilityStatus": "Supported",
     "runtimeCapabilityIds": [
-      "closed_trade_facts"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "journal_period_context"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, journal_period_context."
   },
   {
     "canonicalName": "quarter",
     "categoryFile": "07-metrics-time-duration.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "year",
     "categoryFile": "07-metrics-time-duration.md",
     "sourceCapabilityStatus": "Supported",
     "runtimeCapabilityIds": [
-      "closed_trade_facts"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "journal_period_context"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, journal_period_context."
   },
   {
     "canonicalName": "days_held",
     "categoryFile": "07-metrics-time-duration.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "trades_per_day",
     "categoryFile": "07-metrics-time-duration.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "time_between_trades",
     "categoryFile": "07-metrics-time-duration.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "time_after_previous_loss",
     "categoryFile": "07-metrics-time-duration.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "time_after_previous_win",
     "categoryFile": "07-metrics-time-duration.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "first_trade_time",
     "categoryFile": "07-metrics-time-duration.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "last_trade_time",
     "categoryFile": "07-metrics-time-duration.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "number_of_entries",
     "categoryFile": "08-metrics-execution.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "number_of_exits",
     "categoryFile": "08-metrics-execution.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "average_entry_price",
     "categoryFile": "08-metrics-execution.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "average_exit_price",
     "categoryFile": "08-metrics-execution.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "weighted_average_entry_price",
     "categoryFile": "08-metrics-execution.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "weighted_average_exit_price",
     "categoryFile": "08-metrics-execution.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "entry_execution_count",
     "categoryFile": "08-metrics-execution.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "exit_execution_count",
     "categoryFile": "08-metrics-execution.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "scale_in_count",
     "categoryFile": "08-metrics-execution.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "scale_out_count",
     "categoryFile": "08-metrics-execution.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "partial_exit_percentage",
     "categoryFile": "08-metrics-execution.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "position_flips",
     "categoryFile": "08-metrics-execution.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "repeat_attempts",
     "categoryFile": "08-metrics-execution.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "trade_sequence",
     "categoryFile": "08-metrics-execution.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "manual_execution_drafts"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: manual_execution_drafts."
   },
   {
     "canonicalName": "average_shares_per_execution",
     "categoryFile": "08-metrics-execution.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "execution_duration",
     "categoryFile": "08-metrics-execution.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "entry_to_exit_quantity_reconciliation",
     "categoryFile": "08-metrics-execution.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "confirmed_product_changes",
+      "current_product_status_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: confirmed_product_changes, current_product_status_reads."
   },
   {
     "canonicalName": "unmatched_executions",
     "categoryFile": "08-metrics-execution.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "confirmed_product_changes",
+      "current_product_status_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: confirmed_product_changes, current_product_status_reads."
   },
   {
     "canonicalName": "remaining_open_quantity",
     "categoryFile": "08-metrics-execution.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "confirmed_product_changes",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: confirmed_product_changes, current_dashboard_journal_reads, current_product_status_reads."
   },
   {
     "canonicalName": "overtrading_frequency",
     "categoryFile": "09-metrics-behaviour.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "fourth_or_later_performance",
     "categoryFile": "09-metrics-behaviour.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "performance_after_a_loss",
     "categoryFile": "09-metrics-behaviour.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "performance_after_two_losses",
     "categoryFile": "09-metrics-behaviour.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "performance_after_a_win",
     "categoryFile": "09-metrics-behaviour.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "performance_after_a_large_win",
     "categoryFile": "09-metrics-behaviour.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "performance_after_a_large_loss",
     "categoryFile": "09-metrics-behaviour.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "repeat_attempt_performance",
     "categoryFile": "09-metrics-behaviour.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "loss_chasing_proxy",
     "categoryFile": "09-metrics-behaviour.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "size_increase_after_losses",
     "categoryFile": "09-metrics-behaviour.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "shortened_wait_time_after_losses",
     "categoryFile": "09-metrics-behaviour.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "profit_giveback",
     "categoryFile": "09-metrics-behaviour.md",
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
-      "saved_trade_analyzer_reads"
-    ]
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "daily_loss_limit_violations",
     "categoryFile": "09-metrics-behaviour.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "continued_trading_after_profit_target",
     "categoryFile": "09-metrics-behaviour.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "continued_trading_after_stop_threshold",
     "categoryFile": "09-metrics-behaviour.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "time_cutoff_violations",
     "categoryFile": "09-metrics-behaviour.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "rule_adherence",
     "categoryFile": "09-metrics-behaviour.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "mistake_frequency",
     "categoryFile": "09-metrics-behaviour.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "mistake_cost",
     "categoryFile": "09-metrics-behaviour.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "setup_discipline",
     "categoryFile": "09-metrics-behaviour.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "plan_adherence",
     "categoryFile": "09-metrics-behaviour.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "mfe",
@@ -1106,7 +1593,9 @@ export const coachAiChatLanguageInventory = Object.freeze([
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
       "saved_trade_analyzer_reads"
-    ]
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "mae",
@@ -1114,111 +1603,156 @@ export const coachAiChatLanguageInventory = Object.freeze([
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
       "saved_trade_analyzer_reads"
-    ]
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "profit_giveback",
     "categoryFile": "10-metrics-candle-analytics.md",
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
-      "saved_trade_analyzer_reads"
-    ]
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "maximum_favourable_price",
     "categoryFile": "10-metrics-candle-analytics.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "maximum_adverse_price",
     "categoryFile": "10-metrics-candle-analytics.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "percentage_of_available_move_captured",
     "categoryFile": "10-metrics-candle-analytics.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "entry_distance_from_vwap",
     "categoryFile": "10-metrics-candle-analytics.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "entry_distance_from_high_of_day",
     "categoryFile": "10-metrics-candle-analytics.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "entry_distance_from_low_of_day",
     "categoryFile": "10-metrics-candle-analytics.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "volume_at_entry",
     "categoryFile": "10-metrics-candle-analytics.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "relative_volume",
     "categoryFile": "10-metrics-candle-analytics.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "price_change_after_entry",
     "categoryFile": "10-metrics-candle-analytics.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "time_to_maximum_favourable_excursion",
     "categoryFile": "10-metrics-candle-analytics.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "time_to_maximum_adverse_excursion",
     "categoryFile": "10-metrics-candle-analytics.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "recovery_to_entry",
     "categoryFile": "10-metrics-candle-analytics.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "post_exit_continuation",
     "categoryFile": "10-metrics-candle-analytics.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "stop_distance",
     "categoryFile": "10-metrics-candle-analytics.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "target_distance",
     "categoryFile": "10-metrics-candle-analytics.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "user",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_product_status_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_product_status_reads."
   },
   {
     "canonicalName": "account",
@@ -1226,651 +1760,1046 @@ export const coachAiChatLanguageInventory = Object.freeze([
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
       "current_product_status_reads"
-    ]
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_product_status_reads."
   },
   {
     "canonicalName": "broker",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_product_status_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_product_status_reads."
   },
   {
     "canonicalName": "import_source",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads",
       "current_product_status_reads"
-    ]
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads, current_product_status_reads."
   },
   {
     "canonicalName": "currency",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
-      "current_product_status_reads"
-    ]
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "journal_period_context",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, journal_period_context, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "instrument_type",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "ticker",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "journal_period_context",
+      "manual_execution_drafts",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, journal_period_context, manual_execution_drafts, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "exchange",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "trade_id",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "journal_entry_id",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "execution_id",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "import_batch",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_product_status_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_product_status_reads."
   },
   {
     "canonicalName": "exact_date",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "daily_tracker_drafts",
+      "journal_period_context",
+      "manual_execution_drafts",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, current_dashboard_journal_reads, daily_tracker_drafts, journal_period_context, manual_execution_drafts, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "date_range",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "journal_period_context",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, current_dashboard_journal_reads, journal_period_context, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "today",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_journal_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_journal_reads."
   },
   {
     "canonicalName": "yesterday",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_journal_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_journal_reads."
   },
   {
     "canonicalName": "this_week",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_journal_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_journal_reads."
   },
   {
     "canonicalName": "last_week",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_journal_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_journal_reads."
   },
   {
     "canonicalName": "this_month",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_journal_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_journal_reads."
   },
   {
     "canonicalName": "last_month",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_journal_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_journal_reads."
   },
   {
     "canonicalName": "this_year",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "rolling_number_of_days",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "last_number_of_trades",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "before_or_after_a_time",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "review_delivery_draft"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: review_delivery_draft."
   },
   {
     "canonicalName": "between_two_times",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "premarket",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "regular_session",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "after_hours",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "weekday",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "review_delivery_draft"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, review_delivery_draft."
   },
   {
     "canonicalName": "month",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
-      "closed_trade_facts"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "journal_period_context"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, journal_period_context."
   },
   {
     "canonicalName": "quarter",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "year",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
-      "closed_trade_facts"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "journal_period_context"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, journal_period_context."
   },
   {
     "canonicalName": "earnings_period_if_supplied_by_external_data",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "custom_trading_session",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "entry_price",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_journal_reads",
+      "manual_execution_drafts",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_journal_reads, manual_execution_drafts, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "exit_price",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_journal_reads",
+      "manual_execution_drafts",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_journal_reads, manual_execution_drafts, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "lowest_execution_price",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "highest_execution_price",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "trade_price_range",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "stocks_under_a_price",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "stocks_over_a_price",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "price_buckets",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "penny_stocks_where_explicitly_defined",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "sub_dollar_stocks",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "average_entry_cost",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_journal_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_journal_reads."
   },
   {
     "canonicalName": "winning",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "losing",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "breakeven",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "open",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
-      "current_dashboard_journal_reads"
-    ]
+      "confirmed_product_changes",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: confirmed_product_changes, current_dashboard_journal_reads, current_product_status_reads."
   },
   {
     "canonicalName": "closed",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
       "current_dashboard_journal_reads"
-    ]
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads."
   },
   {
     "canonicalName": "gross_winner",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "net_winner",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "gross_winner_turned_into_net_loser_by_fees",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "reached_green_then_closed_red",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "recovered",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "did_not_recover",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "long",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "journal_period_context",
+      "manual_execution_drafts",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads, journal_period_context, manual_execution_drafts, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "short",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "journal_period_context",
+      "manual_execution_drafts",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads, journal_period_context, manual_execution_drafts, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "buy_to_open",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_journal_reads",
+      "manual_execution_drafts"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_journal_reads, manual_execution_drafts."
   },
   {
     "canonicalName": "sell_to_open",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_journal_reads",
+      "manual_execution_drafts"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_journal_reads, manual_execution_drafts."
   },
   {
     "canonicalName": "mixed_or_flipped_position",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "confirmed_product_changes",
+      "current_product_status_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: confirmed_product_changes, current_product_status_reads."
   },
   {
     "canonicalName": "unknown_direction",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_product_status_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_product_status_reads."
   },
   {
     "canonicalName": "share_size_range",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "dollar_size_range",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "size_bucket",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "size_relative_to_personal_median",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "size_relative_to_recent_baseline",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "largest_positions",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "smallest_positions",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "first_trade_of_the_day",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "second_trade",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "third_trade",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "fourth_or_later_trade",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "first_attempt_on_ticker",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "second_attempt",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "third_attempt",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "fourth_or_later_attempt",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "trade_after_win",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "trade_after_loss",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "trade_after_two_losses",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "trade_during_a_winning_streak",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "trade_during_a_losing_streak",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "trade_after_daily_target_reached",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "trade_after_daily_loss_threshold_reached",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "setup",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "strategy",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "playbook",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "custom_tag",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
+      "confirmed_product_changes",
+      "current_dashboard_journal_reads",
       "journal_period_context",
       "trading_rule_and_tag_reads"
-    ]
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: confirmed_product_changes, current_dashboard_journal_reads, journal_period_context, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "mistake",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "emotion",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "rule",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
+      "confirmed_product_changes",
+      "current_dashboard_journal_reads",
       "journal_period_context",
       "trading_rule_and_tag_reads"
-    ]
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: confirmed_product_changes, current_dashboard_journal_reads, journal_period_context, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "rule_followed",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_journal_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_journal_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "rule_broken",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_journal_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_journal_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "confidence_rating",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "quality_rating",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "notes_present",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
-      "journal_period_context"
-    ]
+      "current_dashboard_journal_reads",
+      "daily_tracker_drafts",
+      "journal_period_context",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_journal_reads, daily_tracker_drafts, journal_period_context, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "notes_missing",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_journal_reads",
+      "daily_tracker_drafts",
+      "journal_period_context",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_journal_reads, daily_tracker_drafts, journal_period_context, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "screenshot_present",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "screenshot_missing",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "planned_trade",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "unplanned_trade",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "reviewed",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_journal_reads",
+      "journal_period_context",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_journal_reads, journal_period_context, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "not_reviewed",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_journal_reads",
+      "journal_period_context",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_journal_reads, journal_period_context, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "scalp",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "intraday",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads."
   },
   {
     "canonicalName": "overnight",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads."
   },
   {
     "canonicalName": "swing",
@@ -1878,854 +2807,1695 @@ export const coachAiChatLanguageInventory = Object.freeze([
     "sourceCapabilityStatus": "Unavailable",
     "runtimeCapabilityIds": [
       "current_dashboard_journal_reads"
-    ]
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_journal_reads."
   },
   {
     "canonicalName": "custom_duration",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "source_status_unavailable",
+    "runtimeMappingReason": "The locked concept requires evidence or a deterministic result that no current factual tool or confirmed action exposes."
   },
   {
     "canonicalName": "under_a_number_of_minutes",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "over_a_number_of_minutes",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "duration_buckets",
     "categoryFile": "11-dimensions.md",
     "sourceCapabilityStatus": "Unavailable",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "equality",
     "categoryFile": "12-operators.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "journal_period_context",
+      "manual_execution_drafts",
+      "review_delivery_draft",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, journal_period_context, manual_execution_drafts, review_delivery_draft, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "inequality",
     "categoryFile": "12-operators.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "greater_than",
     "categoryFile": "12-operators.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "greater_than_or_equal",
     "categoryFile": "12-operators.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "less_than",
     "categoryFile": "12-operators.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "less_than_or_equal",
     "categoryFile": "12-operators.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "range",
     "categoryFile": "12-operators.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "inclusion",
     "categoryFile": "12-operators.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "journal_period_context",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, journal_period_context, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "exclusion",
     "categoryFile": "12-operators.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "membership",
     "categoryFile": "12-operators.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "text_search",
     "categoryFile": "12-operators.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "product_help"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: product_help."
   },
   {
     "canonicalName": "calendar_dates",
     "categoryFile": "13-date-time-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "journal_period_context",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, current_dashboard_journal_reads, journal_period_context, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "relative_dates",
     "categoryFile": "13-date-time-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads."
   },
   {
     "canonicalName": "trading_dates",
     "categoryFile": "13-date-time-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "daily_tracker_drafts",
+      "journal_period_context",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, current_dashboard_journal_reads, daily_tracker_drafts, journal_period_context, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "rolling_windows",
     "categoryFile": "13-date-time-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "record_count_windows",
     "categoryFile": "13-date-time-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "session_times",
     "categoryFile": "13-date-time-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "display_timezone",
     "categoryFile": "13-date-time-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads, current_dashboard_journal_reads."
   },
   {
     "canonicalName": "account_timezone",
     "categoryFile": "13-date-time-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads, current_dashboard_journal_reads."
   },
   {
     "canonicalName": "daily_trade_tracker_eastern_market_time",
     "categoryFile": "13-date-time-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "manual_execution_drafts"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: manual_execution_drafts."
   },
   {
     "canonicalName": "best",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "worst",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "top",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "bottom",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "most_profitable",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "least_profitable",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "biggest",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "smallest",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "most_consistent",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "most_frequent",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "most_costly",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "highest_win_rate",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "lowest_expectancy",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "better_than",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "worse_than",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "improved",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "declined",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "more_profitable",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "less_consistent",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "larger_losses",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "smaller_positions",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "higher_frequency",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "before_versus_after",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "current_versus_previous",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "journal_period_context",
+      "saved_ai_review_follow_up"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, journal_period_context, saved_ai_review_follow_up."
   },
   {
     "canonicalName": "selected_trade_versus_similar_trades",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "one_ticker_versus_all_other_tickers",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "tagged_versus_untagged",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "followed_rule_versus_broke_rule",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "superlative_and_extremum_questions",
     "categoryFile": "14-comparison-ranking-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "last_intent",
     "categoryFile": "15-context-conversation-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "daily_tracker_drafts",
+      "journal_period_context",
+      "manual_execution_drafts",
+      "product_help",
+      "review_delivery_draft",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, daily_tracker_drafts, journal_period_context, manual_execution_drafts, product_help, review_delivery_draft, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "last_metric_or_metric_set",
     "categoryFile": "15-context-conversation-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "daily_tracker_drafts",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, daily_tracker_drafts, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "active_date_range",
     "categoryFile": "15-context-conversation-language.md",
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "daily_tracker_drafts",
       "journal_period_context",
-      "saved_ai_review_follow_up"
-    ]
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, current_dashboard_journal_reads, daily_tracker_drafts, journal_period_context, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "active_filters",
     "categoryFile": "15-context-conversation-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "active_comparison",
     "categoryFile": "15-context-conversation-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "active_grouping",
     "categoryFile": "15-context-conversation-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "selected_trade",
     "categoryFile": "15-context-conversation-language.md",
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
       "current_dashboard_journal_reads",
       "saved_trade_analyzer_reads",
       "trading_rule_and_tag_reads"
-    ]
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, current_dashboard_journal_reads, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "selected_ticker",
     "categoryFile": "15-context-conversation-language.md",
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
+      "closed_trade_facts",
       "current_dashboard_analytics_reads",
-      "current_dashboard_journal_reads"
-    ]
+      "current_dashboard_journal_reads",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "selected_journal_entry",
     "categoryFile": "15-context-conversation-language.md",
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
+      "confirmed_product_changes",
       "current_dashboard_journal_reads",
       "daily_tracker_drafts",
       "journal_period_context",
       "saved_ai_review_follow_up"
-    ]
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: confirmed_product_changes, current_dashboard_journal_reads, daily_tracker_drafts, journal_period_context, saved_ai_review_follow_up."
   },
   {
     "canonicalName": "current_account",
     "categoryFile": "15-context-conversation-language.md",
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
+      "closed_trade_facts",
       "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
       "current_dashboard_journal_reads",
       "current_product_status_reads",
       "daily_tracker_drafts",
+      "journal_period_context",
       "manual_execution_drafts",
-      "review_delivery_draft"
-    ]
+      "product_help",
+      "review_delivery_draft",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, daily_tracker_drafts, journal_period_context, manual_execution_drafts, product_help, review_delivery_draft, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "response_detail_level",
     "categoryFile": "15-context-conversation-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "daily_tracker_drafts",
+      "journal_period_context",
+      "product_help",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, daily_tracker_drafts, journal_period_context, product_help, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "unresolved_ambiguity",
     "categoryFile": "15-context-conversation-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "daily_tracker_drafts",
+      "journal_period_context",
+      "manual_execution_drafts",
+      "product_help",
+      "review_delivery_draft",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, daily_tracker_drafts, journal_period_context, manual_execution_drafts, product_help, review_delivery_draft, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "filter_modification",
     "categoryFile": "15-context-conversation-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "time_modification",
     "categoryFile": "15-context-conversation-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "metric_modification",
     "categoryFile": "15-context-conversation-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "grouping_modification",
     "categoryFile": "15-context-conversation-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "detail_modification",
     "categoryFile": "15-context-conversation-language.md",
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
-      "saved_ai_review_follow_up"
-    ]
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "daily_tracker_drafts",
+      "journal_period_context",
+      "product_help",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, daily_tracker_drafts, journal_period_context, product_help, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "comparison_continuation",
     "categoryFile": "15-context-conversation-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "trade_outcome_vocabulary",
     "categoryFile": "16-trader-terminology-slang.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "trading_frequency_vocabulary",
     "categoryFile": "16-trader-terminology-slang.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "profit_giveback_vocabulary",
     "categoryFile": "16-trader-terminology-slang.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "repeat_trading_vocabulary",
     "categoryFile": "16-trader-terminology-slang.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "position_size_vocabulary",
     "categoryFile": "16-trader-terminology-slang.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "price_terms_vocabulary",
     "categoryFile": "16-trader-terminology-slang.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "user_tag_language",
     "categoryFile": "16-trader-terminology-slang.md",
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
+      "confirmed_product_changes",
+      "current_dashboard_journal_reads",
+      "journal_period_context",
       "trading_rule_and_tag_reads"
-    ]
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: confirmed_product_changes, current_dashboard_journal_reads, journal_period_context, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "user_setup_language",
     "categoryFile": "16-trader-terminology-slang.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "confirmed_product_changes",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: confirmed_product_changes, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "user_strategy_language",
     "categoryFile": "16-trader-terminology-slang.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "confirmed_product_changes",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: confirmed_product_changes, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "user_rule_language",
     "categoryFile": "16-trader-terminology-slang.md",
     "sourceCapabilityStatus": "Planned",
     "runtimeCapabilityIds": [
+      "confirmed_product_changes",
+      "current_dashboard_journal_reads",
+      "journal_period_context",
       "trading_rule_and_tag_reads"
-    ]
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: confirmed_product_changes, current_dashboard_journal_reads, journal_period_context, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "user_mistake_language",
     "categoryFile": "16-trader-terminology-slang.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "confirmed_product_changes",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: confirmed_product_changes, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "user_playbook_language",
     "categoryFile": "16-trader-terminology-slang.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "confirmed_product_changes",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: confirmed_product_changes, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "user_session_name_language",
     "categoryFile": "16-trader-terminology-slang.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "user_price_bucket_language",
     "categoryFile": "16-trader-terminology-slang.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "user_goal_language",
     "categoryFile": "16-trader-terminology-slang.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "daily_tracker_drafts",
+      "journal_period_context"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: daily_tracker_drafts, journal_period_context."
   },
   {
     "canonicalName": "best_ambiguity",
     "categoryFile": "17-ambiguity-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "worst_ambiguity",
     "categoryFile": "17-ambiguity-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "better_ambiguity",
     "categoryFile": "17-ambiguity-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "profit_ambiguity",
     "categoryFile": "17-ambiguity-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "size_ambiguity",
     "categoryFile": "17-ambiguity-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "risk_ambiguity",
     "categoryFile": "17-ambiguity-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "later_trades_ambiguity",
     "categoryFile": "17-ambiguity-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "recent_ambiguity",
     "categoryFile": "17-ambiguity-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "journal_period_context",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads, journal_period_context, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "cheap_stocks_ambiguity",
     "categoryFile": "17-ambiguity-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "scalp_ambiguity",
     "categoryFile": "17-ambiguity-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "overtrading_ambiguity",
     "categoryFile": "17-ambiguity-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "good_trade_ambiguity",
     "categoryFile": "17-ambiguity-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "bad_trade_ambiguity",
     "categoryFile": "17-ambiguity-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "normal_size_ambiguity",
     "categoryFile": "17-ambiguity-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "current_dashboard_analytics_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: current_dashboard_analytics_reads."
   },
   {
     "canonicalName": "large_loss_ambiguity",
     "categoryFile": "17-ambiguity-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "performance_ambiguity",
     "categoryFile": "17-ambiguity-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, saved_ai_review_follow_up, saved_trade_analyzer_reads."
   },
   {
     "canonicalName": "consistency_ambiguity",
     "categoryFile": "17-ambiguity-language.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "brief",
     "categoryFile": "18-response-preferences.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "journal_period_context",
+      "product_help",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, journal_period_context, product_help, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "standard",
     "categoryFile": "18-response-preferences.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "journal_period_context",
+      "product_help",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, journal_period_context, product_help, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "detailed",
     "categoryFile": "18-response-preferences.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "journal_period_context",
+      "product_help",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, journal_period_context, product_help, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "table",
     "categoryFile": "18-response-preferences.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "not_exposed_by_current_runtime",
+    "runtimeMappingReason": "No current factual-tool or confirmed-action contract exposes this exact concept; source recognition does not make it live."
   },
   {
     "canonicalName": "coach",
     "categoryFile": "18-response-preferences.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "saved_ai_review_follow_up"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: saved_ai_review_follow_up."
   },
   {
     "canonicalName": "audit",
     "categoryFile": "18-response-preferences.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "journal_period_context",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, journal_period_context, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "deterministic_truth_policy",
     "categoryFile": "19-language-policies.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "daily_tracker_drafts",
+      "journal_period_context",
+      "manual_execution_drafts",
+      "product_help",
+      "review_delivery_draft",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, daily_tracker_drafts, journal_period_context, manual_execution_drafts, product_help, review_delivery_draft, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "server_authoritative_scope_policy",
     "categoryFile": "19-language-policies.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "daily_tracker_drafts",
+      "journal_period_context",
+      "manual_execution_drafts",
+      "product_help",
+      "review_delivery_draft",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, daily_tracker_drafts, journal_period_context, manual_execution_drafts, product_help, review_delivery_draft, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "privacy_minimization_policy",
     "categoryFile": "19-language-policies.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "daily_tracker_drafts",
+      "journal_period_context",
+      "manual_execution_drafts",
+      "product_help",
+      "review_delivery_draft",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, daily_tracker_drafts, journal_period_context, manual_execution_drafts, product_help, review_delivery_draft, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "evidence_and_coverage_policy",
     "categoryFile": "19-language-policies.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "daily_tracker_drafts",
+      "journal_period_context",
+      "manual_execution_drafts",
+      "product_help",
+      "review_delivery_draft",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, daily_tracker_drafts, journal_period_context, manual_execution_drafts, product_help, review_delivery_draft, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "missing_data_no_invention_policy",
     "categoryFile": "19-language-policies.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "daily_tracker_drafts",
+      "journal_period_context",
+      "manual_execution_drafts",
+      "product_help",
+      "review_delivery_draft",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, daily_tracker_drafts, journal_period_context, manual_execution_drafts, product_help, review_delivery_draft, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "unsupported_request_policy",
     "categoryFile": "19-language-policies.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "daily_tracker_drafts",
+      "journal_period_context",
+      "manual_execution_drafts",
+      "product_help",
+      "review_delivery_draft",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, daily_tracker_drafts, journal_period_context, manual_execution_drafts, product_help, review_delivery_draft, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "causation_policy",
     "categoryFile": "19-language-policies.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "daily_tracker_drafts",
+      "journal_period_context",
+      "manual_execution_drafts",
+      "product_help",
+      "review_delivery_draft",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, daily_tracker_drafts, journal_period_context, manual_execution_drafts, product_help, review_delivery_draft, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "prediction_policy",
     "categoryFile": "19-language-policies.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "daily_tracker_drafts",
+      "journal_period_context",
+      "manual_execution_drafts",
+      "product_help",
+      "review_delivery_draft",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, daily_tracker_drafts, journal_period_context, manual_execution_drafts, product_help, review_delivery_draft, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "advice_policy",
     "categoryFile": "19-language-policies.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "daily_tracker_drafts",
+      "journal_period_context",
+      "manual_execution_drafts",
+      "product_help",
+      "review_delivery_draft",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, daily_tracker_drafts, journal_period_context, manual_execution_drafts, product_help, review_delivery_draft, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "protected_action_confirmation_policy",
     "categoryFile": "19-language-policies.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "daily_tracker_drafts",
+      "journal_period_context",
+      "manual_execution_drafts",
+      "product_help",
+      "review_delivery_draft",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, daily_tracker_drafts, journal_period_context, manual_execution_drafts, product_help, review_delivery_draft, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "untrusted_content_policy",
     "categoryFile": "19-language-policies.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [
+      "closed_trade_facts",
+      "confirmed_product_changes",
+      "current_dashboard_analytics_reads",
+      "current_dashboard_journal_reads",
+      "current_product_status_reads",
+      "daily_tracker_drafts",
+      "journal_period_context",
+      "manual_execution_drafts",
+      "product_help",
+      "review_delivery_draft",
+      "saved_ai_review_follow_up",
+      "saved_trade_analyzer_reads",
+      "trading_rule_and_tag_reads"
+    ],
+    "runtimeMappingDisposition": "mapped_live",
+    "runtimeMappingReason": "Backed by current bounded runtime families: closed_trade_facts, confirmed_product_changes, current_dashboard_analytics_reads, current_dashboard_journal_reads, current_product_status_reads, daily_tracker_drafts, journal_period_context, manual_execution_drafts, product_help, review_delivery_draft, saved_ai_review_follow_up, saved_trade_analyzer_reads, trading_rule_and_tag_reads."
   },
   {
     "canonicalName": "canonical_question_coverage",
     "categoryFile": "20-evaluation-suite.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "evaluation_only",
+    "runtimeMappingReason": "Evaluation coverage metadata validates language behavior but is not a user capability route."
   },
   {
     "canonicalName": "paraphrase_coverage",
     "categoryFile": "20-evaluation-suite.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "evaluation_only",
+    "runtimeMappingReason": "Evaluation coverage metadata validates language behavior but is not a user capability route."
   },
   {
     "canonicalName": "misspelling_coverage",
     "categoryFile": "20-evaluation-suite.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "evaluation_only",
+    "runtimeMappingReason": "Evaluation coverage metadata validates language behavior but is not a user capability route."
   },
   {
     "canonicalName": "shorthand_coverage",
     "categoryFile": "20-evaluation-suite.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "evaluation_only",
+    "runtimeMappingReason": "Evaluation coverage metadata validates language behavior but is not a user capability route."
   },
   {
     "canonicalName": "multi_part_request_coverage",
     "categoryFile": "20-evaluation-suite.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "evaluation_only",
+    "runtimeMappingReason": "Evaluation coverage metadata validates language behavior but is not a user capability route."
   },
   {
     "canonicalName": "follow_up_context_coverage",
     "categoryFile": "20-evaluation-suite.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "evaluation_only",
+    "runtimeMappingReason": "Evaluation coverage metadata validates language behavior but is not a user capability route."
   },
   {
     "canonicalName": "negation_scope_coverage",
     "categoryFile": "20-evaluation-suite.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "evaluation_only",
+    "runtimeMappingReason": "Evaluation coverage metadata validates language behavior but is not a user capability route."
   },
   {
     "canonicalName": "ambiguity_handling_coverage",
     "categoryFile": "20-evaluation-suite.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "evaluation_only",
+    "runtimeMappingReason": "Evaluation coverage metadata validates language behavior but is not a user capability route."
   },
   {
     "canonicalName": "adversarial_language_coverage",
     "categoryFile": "20-evaluation-suite.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "evaluation_only",
+    "runtimeMappingReason": "Evaluation coverage metadata validates language behavior but is not a user capability route."
   },
   {
     "canonicalName": "cross_category_combination_coverage",
     "categoryFile": "20-evaluation-suite.md",
     "sourceCapabilityStatus": "Planned",
-    "runtimeCapabilityIds": []
+    "runtimeCapabilityIds": [],
+    "runtimeMappingDisposition": "evaluation_only",
+    "runtimeMappingReason": "Evaluation coverage metadata validates language behavior but is not a user capability route."
   }
-]) satisfies readonly CoachAiChatLanguageInventoryEntry[];
+]);
 
-export const coachAiChatRuntimeCapabilityCoverage = Object.freeze([
+export const coachAiChatRuntimeCapabilityCoverage: readonly CoachAiChatRuntimeCapabilityCoverage[] = Object.freeze([
   {
     "runtimeCapabilityId": "closed_trade_facts",
     "canonicalNames": [
-      "retrieve_records",
-      "summarize_performance",
+      "active_comparison",
+      "active_date_range",
+      "active_filters",
+      "active_grouping",
+      "advice_policy",
+      "audit",
+      "average_losing_trade",
+      "average_net_pnl_per_trade",
+      "average_winning_trade",
+      "best_ambiguity",
+      "better_ambiguity",
+      "better_than",
+      "breakeven",
+      "breakeven_rate",
+      "breakeven_trades",
+      "brief",
       "calculate_metric",
+      "calendar_dates",
+      "causation_policy",
+      "closed",
+      "closed_trades",
       "compare_groups",
-      "group_and_aggregate",
-      "rank_results",
+      "comparison_continuation",
+      "currency",
+      "current_account",
+      "current_versus_previous",
+      "date_range",
+      "declined",
+      "detail_modification",
+      "detailed",
+      "deterministic_truth_policy",
+      "entry_time",
+      "equality",
+      "evidence_and_coverage_policy",
+      "exact_date",
+      "exclusion",
+      "exit_time",
+      "expectancy",
       "explain_result",
-      "gross_profit",
+      "fee_completeness",
+      "filter_modification",
       "gross_loss",
       "gross_pnl",
-      "net_pnl",
-      "average_net_pnl_per_trade",
-      "median_net_pnl_per_trade",
-      "largest_win",
+      "gross_profit",
+      "gross_winner",
+      "group_and_aggregate",
+      "grouping_modification",
+      "higher_frequency",
+      "hold_duration",
+      "improved",
+      "inclusion",
+      "inequality",
+      "intraday",
+      "large_loss_ambiguity",
+      "larger_losses",
       "largest_loss",
-      "average_winning_trade",
-      "average_losing_trade",
-      "pnl_by_direction",
-      "pnl_before_fees",
-      "pnl_after_fees",
-      "trade_count",
-      "winning_trades",
+      "largest_win",
+      "last_intent",
+      "last_metric_or_metric_set",
+      "long",
+      "losing",
       "losing_trades",
-      "breakeven_trades",
-      "closed_trades",
-      "win_rate",
       "loss_rate",
-      "breakeven_rate",
-      "expectancy",
-      "profit_factor",
-      "week",
+      "median_net_pnl_per_trade",
+      "membership",
+      "metric_modification",
+      "missing_data_no_invention_policy",
       "month",
+      "more_profitable",
+      "net_pnl",
+      "net_winner",
+      "one_ticker_versus_all_other_tickers",
+      "overnight",
+      "performance_ambiguity",
+      "pnl_after_fees",
+      "pnl_before_fees",
+      "pnl_by_direction",
+      "prediction_policy",
+      "privacy_minimization_policy",
+      "profit_ambiguity",
+      "profit_factor",
+      "protected_action_confirmation_policy",
+      "range",
+      "realized_pnl",
+      "recent_ambiguity",
+      "relative_dates",
+      "response_detail_level",
+      "retrieve_records",
+      "selected_ticker",
+      "selected_trade",
+      "server_authoritative_scope_policy",
+      "short",
+      "standard",
+      "summarize_performance",
+      "ticker",
+      "time_modification",
+      "trade_count",
+      "trade_outcome_vocabulary",
+      "trading_dates",
+      "unresolved_ambiguity",
+      "unsupported_request",
+      "unsupported_request_policy",
+      "untrusted_content_policy",
+      "week",
+      "weekday",
+      "win_rate",
+      "winning",
+      "winning_trades",
+      "worse_than",
+      "worst_ambiguity",
       "year"
     ],
     "representativeFixtures": [
@@ -2747,10 +4517,33 @@ export const coachAiChatRuntimeCapabilityCoverage = Object.freeze([
   {
     "runtimeCapabilityId": "daily_tracker_drafts",
     "canonicalNames": [
-      "assist_journaling",
+      "active_date_range",
+      "advice_policy",
       "assist_daily_review",
+      "assist_journaling",
+      "causation_policy",
+      "current_account",
+      "detail_modification",
+      "deterministic_truth_policy",
+      "evidence_and_coverage_policy",
+      "exact_date",
+      "last_intent",
+      "last_metric_or_metric_set",
+      "missing_data_no_invention_policy",
+      "notes_missing",
+      "notes_present",
+      "prediction_policy",
+      "privacy_minimization_policy",
+      "protected_action_confirmation_policy",
+      "response_detail_level",
       "selected_journal_entry",
-      "current_account"
+      "server_authoritative_scope_policy",
+      "trading_dates",
+      "unresolved_ambiguity",
+      "unsupported_request",
+      "unsupported_request_policy",
+      "untrusted_content_policy",
+      "user_goal_language"
     ],
     "representativeFixtures": [
       {
@@ -2766,8 +4559,37 @@ export const coachAiChatRuntimeCapabilityCoverage = Object.freeze([
   {
     "runtimeCapabilityId": "manual_execution_drafts",
     "canonicalNames": [
+      "advice_policy",
+      "buy_to_open",
+      "causation_policy",
+      "current_account",
+      "daily_trade_tracker_eastern_market_time",
+      "deterministic_truth_policy",
+      "entry_price",
+      "entry_time",
+      "equality",
+      "evidence_and_coverage_policy",
+      "exact_date",
+      "exit_price",
+      "exit_time",
+      "last_intent",
+      "long",
+      "missing_data_no_invention_policy",
+      "prediction_policy",
       "prepare_manual_execution_draft",
-      "current_account"
+      "privacy_minimization_policy",
+      "protected_action_confirmation_policy",
+      "sell_to_open",
+      "server_authoritative_scope_policy",
+      "shares_purchased",
+      "shares_sold",
+      "short",
+      "ticker",
+      "trade_sequence",
+      "unresolved_ambiguity",
+      "unsupported_request",
+      "unsupported_request_policy",
+      "untrusted_content_policy"
     ],
     "representativeFixtures": [
       {
@@ -2783,8 +4605,25 @@ export const coachAiChatRuntimeCapabilityCoverage = Object.freeze([
   {
     "runtimeCapabilityId": "review_delivery_draft",
     "canonicalNames": [
+      "advice_policy",
+      "before_or_after_a_time",
+      "causation_policy",
+      "current_account",
+      "deterministic_truth_policy",
+      "equality",
+      "evidence_and_coverage_policy",
+      "last_intent",
+      "missing_data_no_invention_policy",
+      "prediction_policy",
       "prepare_user_setting_change",
-      "current_account"
+      "privacy_minimization_policy",
+      "protected_action_confirmation_policy",
+      "server_authoritative_scope_policy",
+      "unresolved_ambiguity",
+      "unsupported_request",
+      "unsupported_request_policy",
+      "untrusted_content_policy",
+      "weekday"
     ],
     "representativeFixtures": [
       {
@@ -2800,12 +4639,60 @@ export const coachAiChatRuntimeCapabilityCoverage = Object.freeze([
   {
     "runtimeCapabilityId": "journal_period_context",
     "canonicalNames": [
-      "retrieve_records",
-      "selected_journal_entry",
-      "rule",
+      "active_date_range",
+      "advice_policy",
+      "audit",
+      "brief",
+      "calendar_dates",
+      "causation_policy",
+      "currency",
+      "current_account",
+      "current_versus_previous",
       "custom_tag",
+      "date_range",
+      "detail_modification",
+      "detailed",
+      "deterministic_truth_policy",
+      "diagnose_performance",
+      "equality",
+      "evidence_and_coverage_policy",
+      "exact_date",
+      "explain_result",
+      "identify_strengths",
+      "inclusion",
+      "last_intent",
+      "long",
+      "missing_data_no_invention_policy",
+      "month",
+      "net_pnl",
+      "not_reviewed",
+      "notes_missing",
       "notes_present",
-      "active_date_range"
+      "prediction_policy",
+      "privacy_minimization_policy",
+      "protected_action_confirmation_policy",
+      "recent_ambiguity",
+      "response_detail_level",
+      "retrieve_records",
+      "reviewed",
+      "rule",
+      "selected_journal_entry",
+      "server_authoritative_scope_policy",
+      "short",
+      "standard",
+      "summarize_performance",
+      "ticker",
+      "trade_count",
+      "trading_dates",
+      "unresolved_ambiguity",
+      "unsupported_request",
+      "unsupported_request_policy",
+      "untrusted_content_policy",
+      "user_goal_language",
+      "user_rule_language",
+      "user_tag_language",
+      "week",
+      "year"
     ],
     "representativeFixtures": [
       {
@@ -2823,10 +4710,45 @@ export const coachAiChatRuntimeCapabilityCoverage = Object.freeze([
   {
     "runtimeCapabilityId": "saved_ai_review_follow_up",
     "canonicalNames": [
-      "explain_result",
-      "detail_modification",
       "active_date_range",
-      "selected_journal_entry"
+      "advice_policy",
+      "audit",
+      "brief",
+      "calendar_dates",
+      "causation_policy",
+      "coach",
+      "current_account",
+      "current_versus_previous",
+      "date_range",
+      "detail_modification",
+      "detailed",
+      "deterministic_truth_policy",
+      "diagnose_performance",
+      "equality",
+      "evidence_and_coverage_policy",
+      "exact_date",
+      "explain_result",
+      "generate_coaching",
+      "identify_strengths",
+      "inclusion",
+      "last_intent",
+      "missing_data_no_invention_policy",
+      "performance_ambiguity",
+      "prediction_policy",
+      "privacy_minimization_policy",
+      "protected_action_confirmation_policy",
+      "recent_ambiguity",
+      "response_detail_level",
+      "retrieve_records",
+      "selected_journal_entry",
+      "server_authoritative_scope_policy",
+      "standard",
+      "summarize_performance",
+      "trading_dates",
+      "unresolved_ambiguity",
+      "unsupported_request",
+      "unsupported_request_policy",
+      "untrusted_content_policy"
     ],
     "representativeFixtures": [
       {
@@ -2845,8 +4767,29 @@ export const coachAiChatRuntimeCapabilityCoverage = Object.freeze([
   {
     "runtimeCapabilityId": "product_help",
     "canonicalNames": [
+      "advice_policy",
+      "brief",
+      "causation_policy",
+      "current_account",
+      "detail_modification",
+      "detailed",
+      "deterministic_truth_policy",
+      "evidence_and_coverage_policy",
+      "explain_concept",
+      "last_intent",
+      "missing_data_no_invention_policy",
+      "prediction_policy",
+      "privacy_minimization_policy",
       "product_help",
-      "explain_concept"
+      "protected_action_confirmation_policy",
+      "response_detail_level",
+      "server_authoritative_scope_policy",
+      "standard",
+      "text_search",
+      "unresolved_ambiguity",
+      "unsupported_request",
+      "unsupported_request_policy",
+      "untrusted_content_policy"
     ],
     "representativeFixtures": [
       {
@@ -2864,15 +4807,83 @@ export const coachAiChatRuntimeCapabilityCoverage = Object.freeze([
   {
     "runtimeCapabilityId": "current_dashboard_journal_reads",
     "canonicalNames": [
-      "retrieve_records",
-      "analyze_trade",
-      "selected_trade",
-      "selected_ticker",
-      "selected_journal_entry",
-      "open",
+      "account_timezone",
+      "active_date_range",
+      "advice_policy",
+      "audit",
+      "average_entry_cost",
+      "brief",
+      "buy_to_open",
+      "calendar_dates",
+      "causation_policy",
       "closed",
+      "closed_trades",
+      "currency",
+      "current_account",
+      "custom_tag",
+      "date_range",
+      "detail_modification",
+      "detailed",
+      "deterministic_truth_policy",
+      "display_timezone",
+      "entry_price",
+      "entry_time",
+      "equality",
+      "evidence_and_coverage_policy",
+      "exact_date",
+      "exit_price",
+      "exit_time",
+      "explain_result",
+      "inclusion",
+      "intraday",
+      "last_intent",
+      "last_month",
+      "last_week",
+      "long",
+      "missing_data_no_invention_policy",
+      "net_pnl",
+      "not_reviewed",
+      "notes_missing",
+      "notes_present",
+      "open",
+      "open_trades",
+      "overnight",
+      "prediction_policy",
+      "privacy_minimization_policy",
+      "protected_action_confirmation_policy",
+      "recent_ambiguity",
+      "relative_dates",
+      "remaining_open_quantity",
+      "response_detail_level",
+      "retrieve_records",
+      "reviewed",
+      "rule",
+      "rule_broken",
+      "rule_followed",
+      "selected_journal_entry",
+      "selected_ticker",
+      "selected_trade",
+      "sell_to_open",
+      "server_authoritative_scope_policy",
+      "short",
+      "standard",
+      "summarize_performance",
       "swing",
-      "current_account"
+      "this_month",
+      "this_week",
+      "ticker",
+      "today",
+      "trade_count",
+      "trade_outcome_vocabulary",
+      "trading_dates",
+      "unresolved_ambiguity",
+      "unsupported_request",
+      "unsupported_request_policy",
+      "untrusted_content_policy",
+      "user_rule_language",
+      "user_tag_language",
+      "win_rate",
+      "yesterday"
     ],
     "representativeFixtures": [
       {
@@ -2896,16 +4907,151 @@ export const coachAiChatRuntimeCapabilityCoverage = Object.freeze([
   {
     "runtimeCapabilityId": "current_dashboard_analytics_reads",
     "canonicalNames": [
-      "summarize_performance",
+      "account_timezone",
+      "active_comparison",
+      "active_date_range",
+      "active_filters",
+      "active_grouping",
+      "advice_policy",
+      "after_hours",
+      "audit",
+      "average_entry_price",
+      "average_exit_price",
+      "average_hold_duration",
+      "average_losing_trade",
+      "average_net_pnl_per_trade",
+      "average_position_size",
+      "average_winning_trade",
+      "bad_trade_ambiguity",
+      "before_versus_after",
+      "best_ambiguity",
+      "better_ambiguity",
+      "better_than",
+      "breakeven",
+      "breakeven_rate",
+      "breakeven_trades",
+      "brief",
       "calculate_metric",
+      "calendar_dates",
+      "causation_policy",
+      "closed",
+      "closed_trades",
       "compare_groups",
-      "group_and_aggregate",
-      "rank_results",
-      "gross_pnl",
-      "net_pnl",
-      "win_rate",
+      "comparison_continuation",
+      "currency",
+      "current_account",
+      "current_versus_previous",
+      "date_range",
+      "declined",
+      "detail_modification",
+      "detailed",
+      "deterministic_truth_policy",
+      "display_timezone",
+      "dollar_size_range",
+      "duration_buckets",
+      "entry_time",
+      "equality",
+      "evidence_and_coverage_policy",
+      "exact_date",
+      "exclusion",
+      "exit_time",
       "expectancy",
-      "selected_ticker"
+      "explain_result",
+      "fee_completeness",
+      "filter_modification",
+      "good_trade_ambiguity",
+      "greater_than_or_equal",
+      "gross_loss",
+      "gross_pnl",
+      "gross_profit",
+      "gross_winner",
+      "group_and_aggregate",
+      "grouping_modification",
+      "higher_frequency",
+      "hold_duration",
+      "import_source",
+      "improved",
+      "inclusion",
+      "inequality",
+      "intraday",
+      "large_loss_ambiguity",
+      "larger_losses",
+      "largest_loss",
+      "largest_positions",
+      "largest_win",
+      "last_intent",
+      "last_metric_or_metric_set",
+      "later_trades_ambiguity",
+      "less_than_or_equal",
+      "long",
+      "losing",
+      "losing_trades",
+      "loss_rate",
+      "maximum_position_size",
+      "median_hold_duration",
+      "median_net_pnl_per_trade",
+      "membership",
+      "metric_modification",
+      "missing_data_no_invention_policy",
+      "month",
+      "more_profitable",
+      "net_pnl",
+      "net_winner",
+      "normal_size_ambiguity",
+      "one_ticker_versus_all_other_tickers",
+      "over_a_number_of_minutes",
+      "overnight",
+      "overtrading_ambiguity",
+      "performance_ambiguity",
+      "pnl_after_fees",
+      "pnl_before_fees",
+      "pnl_by_direction",
+      "position_size_vocabulary",
+      "prediction_policy",
+      "premarket",
+      "privacy_minimization_policy",
+      "profit_ambiguity",
+      "profit_factor",
+      "protected_action_confirmation_policy",
+      "range",
+      "realized_pnl",
+      "recent_ambiguity",
+      "regular_session",
+      "relative_dates",
+      "response_detail_level",
+      "retrieve_records",
+      "risk_ambiguity",
+      "selected_ticker",
+      "selected_trade",
+      "server_authoritative_scope_policy",
+      "session",
+      "session_times",
+      "share_size_range",
+      "short",
+      "size_ambiguity",
+      "size_bucket",
+      "smallest_positions",
+      "standard",
+      "summarize_performance",
+      "ticker",
+      "time_modification",
+      "trade_count",
+      "trade_outcome_vocabulary",
+      "trading_dates",
+      "trading_frequency_vocabulary",
+      "under_a_number_of_minutes",
+      "unresolved_ambiguity",
+      "unsupported_request",
+      "unsupported_request_policy",
+      "untrusted_content_policy",
+      "week",
+      "weekday",
+      "win_rate",
+      "winning",
+      "winning_trades",
+      "worse_than",
+      "worst_ambiguity",
+      "year"
     ],
     "representativeFixtures": [
       {
@@ -2927,11 +5073,45 @@ export const coachAiChatRuntimeCapabilityCoverage = Object.freeze([
   {
     "runtimeCapabilityId": "current_product_status_reads",
     "canonicalNames": [
-      "inspect_data_quality",
-      "import_source",
       "account",
+      "advice_policy",
+      "audit",
+      "brief",
+      "broker",
+      "causation_policy",
+      "currency",
       "current_account",
-      "currency"
+      "detail_modification",
+      "detailed",
+      "deterministic_truth_policy",
+      "entry_to_exit_quantity_reconciliation",
+      "equality",
+      "evidence_and_coverage_policy",
+      "explain_result",
+      "import_batch",
+      "import_source",
+      "inclusion",
+      "inspect_data_quality",
+      "last_intent",
+      "missing_data_no_invention_policy",
+      "mixed_or_flipped_position",
+      "open",
+      "prediction_policy",
+      "privacy_minimization_policy",
+      "protected_action_confirmation_policy",
+      "remaining_open_quantity",
+      "response_detail_level",
+      "retrieve_records",
+      "server_authoritative_scope_policy",
+      "standard",
+      "ticker",
+      "unknown_direction",
+      "unmatched_executions",
+      "unresolved_ambiguity",
+      "unsupported_request",
+      "unsupported_request_policy",
+      "untrusted_content_policy",
+      "user"
     ],
     "representativeFixtures": [
       {
@@ -2956,11 +5136,85 @@ export const coachAiChatRuntimeCapabilityCoverage = Object.freeze([
   {
     "runtimeCapabilityId": "saved_trade_analyzer_reads",
     "canonicalNames": [
+      "active_comparison",
+      "active_date_range",
+      "active_filters",
+      "active_grouping",
+      "advice_policy",
       "analyze_trade",
-      "mfe",
+      "audit",
+      "average_hold_duration",
+      "average_net_pnl_per_trade",
+      "average_percentage_return",
+      "best_ambiguity",
+      "better_ambiguity",
+      "brief",
+      "calculate_metric",
+      "calendar_dates",
+      "causation_policy",
+      "compare_groups",
+      "comparison_continuation",
+      "currency",
+      "current_account",
+      "date_range",
+      "detail_modification",
+      "detailed",
+      "detect_pattern",
+      "deterministic_truth_policy",
+      "did_not_recover",
+      "entry_distance_from_vwap",
+      "entry_price",
+      "entry_time",
+      "equality",
+      "evidence_and_coverage_policy",
+      "exact_date",
+      "exit_price",
+      "explain_result",
+      "filter_modification",
+      "group_and_aggregate",
+      "grouping_modification",
+      "inclusion",
+      "large_loss_ambiguity",
+      "last_intent",
+      "last_metric_or_metric_set",
+      "long",
       "mae",
+      "metric_modification",
+      "mfe",
+      "missing_data_no_invention_policy",
+      "percentage_of_available_move_captured",
+      "performance_ambiguity",
+      "prediction_policy",
+      "price_terms_vocabulary",
+      "privacy_minimization_policy",
+      "profit_ambiguity",
       "profit_giveback",
-      "selected_trade"
+      "profit_giveback_vocabulary",
+      "protected_action_confirmation_policy",
+      "reached_green_then_closed_red",
+      "recent_ambiguity",
+      "recovered",
+      "relative_volume",
+      "response_detail_level",
+      "retrieve_records",
+      "risk_ambiguity",
+      "selected_ticker",
+      "selected_trade",
+      "server_authoritative_scope_policy",
+      "short",
+      "standard",
+      "summarize_performance",
+      "ticker",
+      "time_modification",
+      "trade_count",
+      "trade_outcome_vocabulary",
+      "trading_dates",
+      "unresolved_ambiguity",
+      "unsupported_request",
+      "unsupported_request_policy",
+      "untrusted_content_policy",
+      "win_rate",
+      "worst_ambiguity"
     ],
     "representativeFixtures": [
       {
@@ -2980,12 +5234,81 @@ export const coachAiChatRuntimeCapabilityCoverage = Object.freeze([
   {
     "runtimeCapabilityId": "trading_rule_and_tag_reads",
     "canonicalNames": [
-      "evaluate_rule",
-      "rule",
+      "active_date_range",
+      "advice_policy",
+      "audit",
+      "before_versus_after",
+      "brief",
+      "calculate_metric",
+      "calendar_dates",
+      "causation_policy",
+      "compare_groups",
+      "continued_trading_after_profit_target",
+      "continued_trading_after_stop_threshold",
+      "current_account",
       "custom_tag",
+      "daily_loss_limit_violations",
+      "date_range",
+      "detail_modification",
+      "detailed",
+      "deterministic_truth_policy",
+      "equality",
+      "evaluate_rule",
+      "evidence_and_coverage_policy",
+      "exact_date",
+      "explain_result",
+      "followed_rule_versus_broke_rule",
+      "fourth_or_later_attempt",
+      "fourth_or_later_trade",
+      "inclusion",
+      "last_intent",
+      "later_trades_ambiguity",
+      "missing_data_no_invention_policy",
+      "not_reviewed",
+      "notes_missing",
+      "notes_present",
+      "overtrading_ambiguity",
+      "overtrading_frequency",
+      "prediction_policy",
+      "privacy_minimization_policy",
+      "profit_giveback",
+      "protected_action_confirmation_policy",
+      "recent_ambiguity",
+      "repeat_attempt_performance",
+      "repeat_attempts",
+      "repeat_trading_vocabulary",
+      "response_detail_level",
+      "retrieve_records",
+      "reviewed",
+      "rule",
+      "rule_adherence",
+      "rule_broken",
+      "rule_followed",
+      "selected_trade",
+      "server_authoritative_scope_policy",
+      "setup_discipline",
+      "shortened_wait_time_after_losses",
+      "standard",
+      "summarize_performance",
+      "ticker",
+      "time_after_previous_loss",
+      "time_cutoff_violations",
+      "trade_after_daily_loss_threshold_reached",
+      "trade_after_daily_target_reached",
+      "trade_after_loss",
+      "trade_after_two_losses",
+      "trading_dates",
+      "trading_frequency_vocabulary",
+      "unresolved_ambiguity",
+      "unsupported_request",
+      "unsupported_request_policy",
+      "untrusted_content_policy",
+      "user_mistake_language",
+      "user_playbook_language",
       "user_rule_language",
-      "user_tag_language",
-      "selected_trade"
+      "user_setup_language",
+      "user_strategy_language",
+      "user_tag_language"
     ],
     "representativeFixtures": [
       {
@@ -3005,11 +5328,50 @@ export const coachAiChatRuntimeCapabilityCoverage = Object.freeze([
   {
     "runtimeCapabilityId": "confirmed_product_changes",
     "canonicalNames": [
-      "prepare_user_setting_change",
+      "active_date_range",
+      "advice_policy",
       "assist_journaling",
-      "evaluate_rule",
+      "calendar_dates",
+      "causation_policy",
+      "currency",
+      "current_account",
+      "custom_tag",
+      "date_range",
+      "deterministic_truth_policy",
+      "entry_to_exit_quantity_reconciliation",
+      "equality",
+      "evidence_and_coverage_policy",
+      "exact_date",
+      "filter_modification",
+      "inspect_data_quality",
+      "last_intent",
+      "missing_data_no_invention_policy",
+      "mixed_or_flipped_position",
+      "open",
+      "prediction_policy",
       "prepare_manual_execution_draft",
-      "current_account"
+      "prepare_user_setting_change",
+      "privacy_minimization_policy",
+      "protected_action_confirmation_policy",
+      "remaining_open_quantity",
+      "rule",
+      "selected_journal_entry",
+      "selected_trade",
+      "server_authoritative_scope_policy",
+      "ticker",
+      "time_modification",
+      "trading_dates",
+      "unmatched_executions",
+      "unresolved_ambiguity",
+      "unsupported_request",
+      "unsupported_request_policy",
+      "untrusted_content_policy",
+      "user_mistake_language",
+      "user_playbook_language",
+      "user_rule_language",
+      "user_setup_language",
+      "user_strategy_language",
+      "user_tag_language"
     ],
     "representativeFixtures": [
       {
@@ -3122,4 +5484,4 @@ export const coachAiChatRuntimeCapabilityCoverage = Object.freeze([
       }
     ]
   }
-]) satisfies readonly CoachAiChatRuntimeCapabilityCoverage[];
+]);

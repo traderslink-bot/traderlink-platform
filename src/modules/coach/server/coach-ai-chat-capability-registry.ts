@@ -10,23 +10,35 @@ export type CoachAiChatRuntimeCapability = Readonly<{
   id: string;
   kind: "factual_read" | "confirmed_draft";
   plainLanguage: string;
-  canonicalNames: readonly string[];
   limitations: readonly string[];
 }>;
 
-function canonicalNames(runtimeCapabilityId: string): readonly string[] {
-  return Object.freeze([...new Set(coachAiChatLanguageInventory
-    .filter((entry) => entry.runtimeCapabilityIds.includes(runtimeCapabilityId))
-    .map((entry) => entry.canonicalName))]
-    .sort((left, right) => left.localeCompare(right)));
+export type CoachAiChatCanonicalLanguageGroup = Readonly<{
+  runtimeCapabilityIds: readonly string[];
+  canonicalNames: readonly string[];
+}>;
+
+function canonicalLanguageGroups(): readonly CoachAiChatCanonicalLanguageGroup[] {
+  const groups = new Map<string, Set<string>>();
+  for (const entry of coachAiChatLanguageInventory) {
+    if (entry.runtimeCapabilityIds.length === 0) continue;
+    const key = JSON.stringify(entry.runtimeCapabilityIds);
+    const names = groups.get(key) ?? new Set<string>();
+    names.add(entry.canonicalName);
+    groups.set(key, names);
+  }
+  return Object.freeze([...groups.entries()].map(([key, names]) => Object.freeze({
+    runtimeCapabilityIds: Object.freeze(JSON.parse(key) as string[]),
+    canonicalNames: Object.freeze([...names].sort((left, right) => left.localeCompare(right))),
+  })).sort((left, right) =>
+    left.runtimeCapabilityIds.join("\u001f").localeCompare(right.runtimeCapabilityIds.join("\u001f"))));
 }
 
-export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
+const capabilities = Object.freeze([
   Object.freeze({
     id: "closed_trade_facts",
     kind: "factual_read" as const,
     plainLanguage: "Completed-trade results, filtered trade lists, and supported comparisons.",
-    canonicalNames: canonicalNames("closed_trade_facts"),
     limitations: Object.freeze([
       "Open positions and items still awaiting a trader decision are not included in realized results.",
       "TraderLink keeps different trade currencies separate instead of estimating a combined total.",
@@ -36,7 +48,6 @@ export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
     id: "daily_tracker_drafts",
     kind: "confirmed_draft" as const,
     plainLanguage: "Draft a Daily Trade Tracker note, one trade note, or Current Focuses for the selected trading day.",
-    canonicalNames: canonicalNames("daily_tracker_drafts"),
     limitations: Object.freeze([
       "The trader reviews and saves the draft themselves.",
       "This note-draft flow cannot change tags, rules, rule outcomes, position classifications, executions, or review completion.",
@@ -46,7 +57,6 @@ export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
     id: "manual_execution_drafts",
     kind: "confirmed_draft" as const,
     plainLanguage: "Turn clearly supplied execution details into an editable manual-entry draft.",
-    canonicalNames: canonicalNames("manual_execution_drafts"),
     limitations: Object.freeze([
       "Every date, Eastern time, ticker, side, quantity, and price must come from the trader.",
       "Nothing is saved until the trader checks the normal Journal preview and confirms it.",
@@ -56,7 +66,6 @@ export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
     id: "review_delivery_draft",
     kind: "confirmed_draft" as const,
     plainLanguage: "Prepare a change to the weekly AI Review delivery day or Eastern delivery time.",
-    canonicalNames: canonicalNames("review_delivery_draft"),
     limitations: Object.freeze([
       "Only Friday, Saturday, or Sunday and the supported evening Eastern times are available.",
       "The trader must review and confirm the change before Account Settings saves it.",
@@ -66,7 +75,6 @@ export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
     id: "journal_period_context",
     kind: "factual_read" as const,
     plainLanguage: "Discuss a saved trading day, week, or month with its rules, focuses, notes, and tags.",
-    canonicalNames: canonicalNames("journal_period_context"),
     limitations: Object.freeze([
       "The model does not infer why a rule was broken or treat a tag as proof.",
       "Large periods may show exact totals with a bounded sample of individual trades.",
@@ -76,7 +84,6 @@ export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
     id: "saved_ai_review_follow_up",
     kind: "factual_read" as const,
     plainLanguage: "Read saved weekly, two-week, and monthly AI Reviews and answer follow-up questions.",
-    canonicalNames: canonicalNames("saved_ai_review_follow_up"),
     limitations: Object.freeze([
       "A saved review describes its original period and does not prove what happened later.",
     ]),
@@ -85,7 +92,6 @@ export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
     id: "product_help",
     kind: "factual_read" as const,
     plainLanguage: "Explain TraderLink features using the maintained Help Center.",
-    canonicalNames: canonicalNames("product_help"),
     limitations: Object.freeze([
       "Product help does not include trading advice or unsupported broker instructions.",
     ]),
@@ -94,7 +100,6 @@ export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
     id: "current_dashboard_journal_reads",
     kind: "factual_read" as const,
     plainLanguage: "Read the current Workspace, Daily Trade Tracker, Calendar, Open Positions, and Swing Trade Tracker.",
-    canonicalNames: canonicalNames("current_dashboard_journal_reads"),
     limitations: Object.freeze([
       "Open positions never contribute to realized profit and loss.",
       "Swing and open-position types come from the trader's saved classification and are not inferred by Chat.",
@@ -105,7 +110,6 @@ export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
     id: "current_dashboard_analytics_reads",
     kind: "factual_read" as const,
     plainLanguage: "Read Analytics Overview, Results by Ticker, Timing, Execution, and bounded Trade Explorer results.",
-    canonicalNames: canonicalNames("current_dashboard_analytics_reads"),
     limitations: Object.freeze([
       "Analytics use completed trades; legitimate open positions and unresolved decisions remain outside realized results.",
       "Different trade currencies remain separate unless the trader selects one currency.",
@@ -116,7 +120,6 @@ export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
     id: "current_product_status_reads",
     kind: "factual_read" as const,
     plainLanguage: "Read import history, Data Decisions, notifications, account settings, plan access, and privacy-safe Moomoo connection/import status.",
-    canonicalNames: canonicalNames("current_product_status_reads"),
     limitations: Object.freeze([
       "Chat never receives raw statement rows, uploaded files, broker account identifiers, credentials, tokens, or payment identifiers.",
       "Moomoo connection and automatic-import actions stay in Account and Import pages.",
@@ -127,7 +130,6 @@ export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
     id: "saved_trade_analyzer_reads",
     kind: "factual_read" as const,
     plainLanguage: "Read saved Trade Analyzer results, analyzed day trades, and existing Candle Reviews.",
-    canonicalNames: canonicalNames("saved_trade_analyzer_reads"),
     limitations: Object.freeze([
       "Only completed day trades with current saved analysis are included.",
       "Chat does not run or refresh Trade Analyzer or Candle Review work and does not request market data.",
@@ -138,7 +140,6 @@ export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
     id: "trading_rule_and_tag_reads",
     kind: "factual_read" as const,
     plainLanguage: "Read saved Trading Rules, deterministic rule results, trade notes, Trade Tags, and custom-rule reviews.",
-    canonicalNames: canonicalNames("trading_rule_and_tag_reads"),
     limitations: Object.freeze([
       "Chat does not create a rule recommendation or judge a rule outcome itself.",
       "Tags and notes remain trader observations and are not proof of why a trade happened.",
@@ -149,7 +150,6 @@ export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
     id: "confirmed_product_changes",
     kind: "confirmed_draft" as const,
     plainLanguage: "Prepare supported currency, notification, Trade Tracker account, AI Review setting or eligible review request, Swing note, position type, trade tag, Trading Rule, or Data Decision changes.",
-    canonicalNames: canonicalNames("confirmed_product_changes"),
     limitations: Object.freeze([
       "Chat must read the current exact value or target before it can prepare the change.",
       "Nothing changes until the trader confirms the saved preview.",
@@ -164,3 +164,14 @@ export const coachAiChatRuntimeCapabilityRegistry = Object.freeze([
     ]),
   }),
 ] satisfies readonly CoachAiChatRuntimeCapability[]);
+
+/**
+ * Passed to the model as one compact contract. Canonical terms are grouped by
+ * their exact family set so shared language appears once instead of being
+ * repeated in every family on every provider request.
+ */
+export const coachAiChatRuntimeCapabilityRegistry = Object.freeze({
+  contractVersion: "coach_ai_chat_runtime_capabilities_v2" as const,
+  capabilities,
+  canonicalLanguageGroups: canonicalLanguageGroups(),
+});

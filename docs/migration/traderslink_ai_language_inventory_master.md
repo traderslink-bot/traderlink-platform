@@ -85,9 +85,15 @@ factual-tool registry/contracts, action-draft contracts, and the current
 dashboard capability matrix. The result is recorded in
 [AI Chat Language Reconciliation Progress](traderlink-ai-chat-language-reconciliation-progress.md).
 
-All thirteen currently live capability families now require a non-empty mapping
-to exact canonical names and at least one validated representative language
-fixture. The generated registry and focused test enforce those conditions.
+All 417 entries now require an explicit runtime disposition. The current audit
+maps 239 entries (235 distinct canonical names) through 774 exact associations
+to the thirteen live capability families. Of the 178 intentionally unmapped
+entries, 136 are not exposed by a current factual-tool or confirmed-action
+contract, 32 retain a locked Unavailable boundary, and 10 are evaluation-only
+records. Every live family also requires contract-validated representative
+fixture metadata. The generated registry and focused test enforce those
+conditions and the exact 34-tool and 12-action unions; they do not execute a
+deterministic language router, provider call, factual tool, or action.
 Category-level `Planned` and `Unavailable` statuses remain truthful language
 boundaries; a mapping only means the present bounded service can recognize that
 language, not that every related metric, tool, action, or future product surface
@@ -820,7 +826,8 @@ Update this table whenever category status changes.
 
 | Date | Category/File | Change | Reason | Version |
 |---|---|---|---|---:|
-| 2026-08-15 | Current runtime language reconciliation | Added generated multi-family mappings and validated representative fixtures for all 13 current AI Chat capability families | Keep the locked 417-entry language contract aligned with current bounded reads, the exact 34 factual-tool names, and 12 confirmation-draft action kinds without promoting future concepts or changing category source statuses | 1 |
+| 2026-08-15 | Current runtime language reconciliation | Added generated multi-family mappings and contract-validated representative fixture metadata for all 13 current AI Chat capability families | Keep the locked 417-entry language contract aligned with current bounded reads, the exact 34 factual-tool names, and 12 confirmation-draft action kinds without promoting future concepts or changing category source statuses | 1 |
+| 2026-08-16 | Full entry-by-entry runtime mapping audit | Classified all 417 entries; mapped 239 entries/235 distinct names through 774 live-family associations and retained exact reasons for 178 unmapped entries | Replace the earlier non-empty-family minimum with complete auditable coverage while preserving deterministic tools, locked statuses, safety boundaries, and compact runtime metadata | 1 |
 | 2026-08-12 | Category 20 - Evaluation Suite | Accepted and locked Category 20 and completed the all-20 inventory program | Record 10 approved records/registries, 220 reviewed cases, IQA-001 20/20, locked-owner crosswalk 407/407, Section 47 criteria 22/22, exact no-runtime boundary, and master totals of 20 Complete/20 locked | 1 |
 | 2026-08-12 | Category 20 - Evaluation Suite | Accepted the exact 10-record planning inventory after independent Terra review and authorized canonical production | Preserve the universal exact-query/state/policy oracle, IQA-001 paraphrase quota, eight-axis combination proof, closed 407-name crosswalk, privacy, capability, and no-runtime boundaries before suite generation | 0 |
 | 2026-08-12 | Category 20 - Evaluation Suite | Began bounded planning after Category 19 locked | Establish the complete final proof suite for canonical, paraphrase, misspelling, shorthand, multi-part, follow-up, negation, ambiguity, adversarial, and cross-category combination coverage before deliverable production | 0 |
