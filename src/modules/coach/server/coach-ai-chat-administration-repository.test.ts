@@ -81,7 +81,7 @@ describe("Coach AI Chat administration repository", () => {
         dailyEstimatedSpendCapUsd: "10",
       })).toThrow("coach_ai_feature_control_transition_invalid");
 
-      fixture.repository.saveSettings({ modelId: "gpt-chat-test", inputCostUsdPerMillionTokens: "1", outputCostUsdPerMillionTokens: "2" });
+      fixture.repository.saveSettings({ modelId: "gpt-chat-test", inputCostUsdPerMillionTokens: "1", cachedInputCostUsdPerMillionTokens: "0.1", cacheWriteInputCostUsdPerMillionTokens: "1.25", outputCostUsdPerMillionTokens: "2" });
       expect(fixture.repository.savePlatformControl({
         enabled: true,
         dailyRequestCap: 20,
@@ -121,7 +121,7 @@ describe("Coach AI Chat administration repository", () => {
     const fixture = setup();
     try {
       const accountRef = fixture.repository.read().accounts[0]!.accountRef;
-      fixture.repository.saveSettings({ modelId: "gpt-chat-test", inputCostUsdPerMillionTokens: "1", outputCostUsdPerMillionTokens: "2" });
+      fixture.repository.saveSettings({ modelId: "gpt-chat-test", inputCostUsdPerMillionTokens: "1", cachedInputCostUsdPerMillionTokens: "0.1", cacheWriteInputCostUsdPerMillionTokens: "1.25", outputCostUsdPerMillionTokens: "2" });
       fixture.repository.savePlatformControl({ enabled: true, dailyRequestCap: 20, dailyTokenCap: 10_000, dailyEstimatedSpendCapUsd: "10" });
       fixture.database.prepare(`UPDATE platform_workspace_memberships SET status = 'suspended'`).run();
       expect(() => fixture.repository.saveAccountControl(accountRef, {

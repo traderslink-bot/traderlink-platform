@@ -99,6 +99,11 @@ export default async function JournalAdminAiReviewsPage() {
     state.settings.cachedInputCostUsdPerMillionTokens !== null &&
     state.settings.cacheWriteInputCostUsdPerMillionTokens !== null &&
     state.settings.outputCostUsdPerMillionTokens !== null;
+  const chatPricingConfigured = state.chat !== null &&
+    state.chat.settings.inputCostUsdPerMillionTokens !== null &&
+    state.chat.settings.cachedInputCostUsdPerMillionTokens !== null &&
+    state.chat.settings.cacheWriteInputCostUsdPerMillionTokens !== null &&
+    state.chat.settings.outputCostUsdPerMillionTokens !== null;
   const whopHealth = readWhopAiReviewConfigurationHealth();
   return (
     <JournalAdminPage>
@@ -260,10 +265,15 @@ export default async function JournalAdminAiReviewsPage() {
         <Stack spacing={1.25}>
           <Stack direction="row" sx={{ justifyContent: "space-between" }}><Typography>Server credential</Typography><JournalAdminStatus state={credentialConfigured ? "active" : "unavailable"} /></Stack>
           <Typography color="text.secondary" variant="body2">Chat uses a separate model, verified pricing, enablement and caps. The server credential itself is never stored or shown.</Typography>
+          {state.chat && !chatPricingConfigured ? (
+            <Alert severity="warning">AI Chat stays unavailable until all four token prices are configured.</Alert>
+          ) : null}
           {state.chat ? (
             <>
               <Stack direction="row" sx={{ justifyContent: "space-between" }}><Typography>Platform Chat</Typography><JournalAdminStatus state={state.chat.platformControl.enabled ? "active" : "disabled"} /></Stack>
               <AiChatProviderSettings
+                initialCachedInputRate={state.chat.settings.cachedInputCostUsdPerMillionTokens}
+                initialCacheWriteInputRate={state.chat.settings.cacheWriteInputCostUsdPerMillionTokens}
                 initialInputRate={state.chat.settings.inputCostUsdPerMillionTokens}
                 initialModelId={state.chat.settings.modelId}
                 initialOutputRate={state.chat.settings.outputCostUsdPerMillionTokens}

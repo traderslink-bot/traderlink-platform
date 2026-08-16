@@ -421,6 +421,16 @@ export class CoachAiChatProviderGenerationError extends Error {
   }
 }
 
+function unavailableUsage(): CoachAiChatGenerationUsage {
+  return Object.freeze({
+    inputTokens: null,
+    cachedInputTokens: null,
+    cacheWriteInputTokens: null,
+    outputTokens: null,
+    totalTokens: null,
+  });
+}
+
 export function verifyCoachAiChatFactualToolInventory(
   exposedToolNames: readonly string[],
 ): void {
@@ -428,7 +438,7 @@ export function verifyCoachAiChatFactualToolInventory(
   if (registeredToolNames.length !== exposedToolNames.length ||
       registeredToolNames.some((name, index) => exposedToolNames[index] !== name)) {
     throw new CoachAiChatProviderGenerationError(
-      Object.freeze({ inputTokens: null, outputTokens: null, totalTokens: null }),
+      unavailableUsage(),
       "TRADERLINK_COACH_CAPABILITY_REGISTRY_MISMATCH",
     );
   }
@@ -436,21 +446,40 @@ export function verifyCoachAiChatFactualToolInventory(
 
 function requireOpenAiKey(environment: NodeJS.ProcessEnv): string {
   const key = environment.OPENAI_API_KEY?.trim();
-  if (!key) throw new CoachAiChatProviderGenerationError(Object.freeze({ inputTokens: null, outputTokens: null, totalTokens: null }), "TRADERLINK_COACH_OPENAI_UNAVAILABLE");
+  if (!key) throw new CoachAiChatProviderGenerationError(unavailableUsage(), "TRADERLINK_COACH_OPENAI_UNAVAILABLE");
   return key;
 }
 
-function completeUsage(value: Readonly<{ inputTokens?: number; outputTokens?: number; totalTokens?: number }>): CoachAiChatGenerationUsage {
-  if (![value.inputTokens, value.outputTokens, value.totalTokens].every((item) => Number.isSafeInteger(item) && (item as number) >= 0) || value.totalTokens !== (value.inputTokens as number) + (value.outputTokens as number)) {
-    return Object.freeze({ inputTokens: null, outputTokens: null, totalTokens: null });
+function completeUsage(value: Readonly<{
+  inputTokens?: number;
+  inputTokenDetails?: Readonly<{
+    cacheReadTokens?: number;
+    cacheWriteTokens?: number;
+  }>;
+  outputTokens?: number;
+  totalTokens?: number;
+}>): CoachAiChatGenerationUsage {
+  const cachedInputTokens = value.inputTokenDetails?.cacheReadTokens;
+  const cacheWriteInputTokens = value.inputTokenDetails?.cacheWriteTokens;
+  if (![value.inputTokens, cachedInputTokens, cacheWriteInputTokens, value.outputTokens, value.totalTokens]
+      .every((item) => Number.isSafeInteger(item) && (item as number) >= 0) ||
+      (cachedInputTokens as number) + (cacheWriteInputTokens as number) > (value.inputTokens as number) ||
+      value.totalTokens !== (value.inputTokens as number) + (value.outputTokens as number)) {
+    return unavailableUsage();
   }
-  return Object.freeze({ inputTokens: value.inputTokens!, outputTokens: value.outputTokens!, totalTokens: value.totalTokens! });
+  return Object.freeze({
+    inputTokens: value.inputTokens!,
+    cachedInputTokens: cachedInputTokens!,
+    cacheWriteInputTokens: cacheWriteInputTokens!,
+    outputTokens: value.outputTokens!,
+    totalTokens: value.totalTokens!,
+  });
 }
 
 function answer(value: z.infer<typeof answerSchema>, dispatcher: CoachAiChatFactualToolDispatcher): CoachAiChatAnswer {
   const callIds = new Set(dispatcher.snapshotsForPersistence().map((item) => item.toolCallId));
   if (value.evidenceReferences.some((reference) => !callIds.has(reference.toolCallId))) {
-    throw new CoachAiChatProviderGenerationError(Object.freeze({ inputTokens: null, outputTokens: null, totalTokens: null }), "TRADERLINK_COACH_UNGROUNDED_ANSWER");
+    throw new CoachAiChatProviderGenerationError(unavailableUsage(), "TRADERLINK_COACH_UNGROUNDED_ANSWER");
   }
   return Object.freeze({ contractVersion: COACH_AI_CHAT_ANSWER_CONTRACT_VERSION, ...value,
     supportingObservations: Object.freeze([...value.supportingObservations]),
@@ -496,14 +525,14 @@ function dailyCompanionExtraction(
   if (value === null) return null;
   if (!context) {
     throw new CoachAiChatProviderGenerationError(
-      Object.freeze({ inputTokens: null, outputTokens: null, totalTokens: null }),
+      unavailableUsage(),
       "TRADERLINK_COACH_DAILY_COMPANION_DRAFT_INVALID",
     );
   }
   if (value.kind === "trade_note_draft" &&
       !context.trades.some((trade) => trade.tradeNumber === value.tradeNumber)) {
     throw new CoachAiChatProviderGenerationError(
-      Object.freeze({ inputTokens: null, outputTokens: null, totalTokens: null }),
+      unavailableUsage(),
       "TRADERLINK_COACH_DAILY_COMPANION_DRAFT_INVALID",
     );
   }
@@ -511,7 +540,7 @@ function dailyCompanionExtraction(
     const fields = new Set(value.updates.map((update) => update.field));
     if (fields.size !== value.updates.length) {
       throw new CoachAiChatProviderGenerationError(
-        Object.freeze({ inputTokens: null, outputTokens: null, totalTokens: null }),
+        unavailableUsage(),
         "TRADERLINK_COACH_DAILY_COMPANION_DRAFT_INVALID",
       );
     }
@@ -946,11 +975,11 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
     if (error instanceof CoachAiChatProviderGenerationError) throw error;
     if (providerTimedOut) {
       throw new CoachAiChatProviderGenerationError(
-        Object.freeze({ inputTokens: null, outputTokens: null, totalTokens: null }),
+        unavailableUsage(),
         "TRADERLINK_COACH_PROVIDER_TIMEOUT",
       );
     }
-    throw new CoachAiChatProviderGenerationError(Object.freeze({ inputTokens: null, outputTokens: null, totalTokens: null }));
+    throw new CoachAiChatProviderGenerationError(unavailableUsage());
   } finally {
     clearTimeout(providerTimeout);
     await provider.close().catch(() => undefined);

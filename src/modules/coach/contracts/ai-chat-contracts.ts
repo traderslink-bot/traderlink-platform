@@ -54,6 +54,8 @@ export type CoachAiChatAnalysisScope =
 
 export type CoachAiChatGenerationUsage = Readonly<{
   inputTokens: number | null;
+  cachedInputTokens: number | null;
+  cacheWriteInputTokens: number | null;
   outputTokens: number | null;
   totalTokens: number | null;
 }>;
@@ -63,6 +65,8 @@ export type CoachAiChatGenerationReceiptInput = Readonly<{
   modelId: string;
   usage: CoachAiChatGenerationUsage;
   inputCostUsdPerMillionTokens: string | null;
+  cachedInputCostUsdPerMillionTokens: string | null;
+  cacheWriteInputCostUsdPerMillionTokens: string | null;
   outputCostUsdPerMillionTokens: string | null;
 }>;
 
@@ -72,6 +76,8 @@ export type CoachAiChatGenerationReceipt = Readonly<{
   modelId: string;
   usage: CoachAiChatGenerationUsage;
   inputCostUsdPerMillionTokens: string | null;
+  cachedInputCostUsdPerMillionTokens: string | null;
+  cacheWriteInputCostUsdPerMillionTokens: string | null;
   outputCostUsdPerMillionTokens: string | null;
   estimatedCostUsd: string | null;
   recordedAtUtc: string;

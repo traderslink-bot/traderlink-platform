@@ -40,7 +40,9 @@ truthfully answer.
 
 Implementation status is tracked in [AI Companion Progress](ai-chat-progress.md),
 and the completed whole-feature audit is recorded in the
-[AI Chat Complete QA Report](ai-chat-complete-qa-report.md).
+[AI Chat Complete QA Report](ai-chat-complete-qa-report.md). The 2026-08-16
+cache-accounting and responsive-drawer corrections are recorded in the
+[AI Chat QA Findings Remediation](ai-chat-qa-findings-remediation-progress.md).
 
 The [AI Chat Current Dashboard Capability Matrix](ai-chat-current-dashboard-capability-matrix.md)
 is the controlling implementation inventory. It was rebuilt on 2026-08-15 from
@@ -232,8 +234,9 @@ same financial safeguards as every other entry surface.
 
 - **AI Chat** in dashboard navigation opens a persistent, closable companion;
   it does not navigate the trader away from the page they are using.
-- Desktop uses a right overlay drawer approximately 520 pixels wide, bounded by
-  the viewport. It contains a compact header, current account/context, active
+- Desktop uses a right overlay drawer with enough room for conversation history
+  and the active thread, bounded by the viewport. It contains a compact header,
+  current account/context, active
   conversation, inline factual/action cards, a pinned composer, conversation
   history control and a clear close action. Opening it does not unmount or
   replace the current dashboard page.

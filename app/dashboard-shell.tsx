@@ -591,7 +591,11 @@ export function DashboardShell({
             sx: {
               height: "100dvh",
               maxWidth: "100vw",
-              width: { xs: "100vw", md: 520 },
+              width: {
+                xs: "100vw",
+                md: "min(860px, calc(100vw - 80px))",
+                xl: 960,
+              },
             },
           },
         }}

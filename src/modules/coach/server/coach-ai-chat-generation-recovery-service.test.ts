@@ -45,7 +45,7 @@ function fixture() {
   const scope = scopeFixture(database);
   const chat = new CoachAiChatRepository(database);
   const controls = new CoachAiChatProviderControlsRepository(database);
-  controls.saveChatSettings({ modelId: "gpt-chat-test", inputCostUsdPerMillionTokens: "1", outputCostUsdPerMillionTokens: "2" }, base);
+  controls.saveChatSettings({ modelId: "gpt-chat-test", inputCostUsdPerMillionTokens: "1", cachedInputCostUsdPerMillionTokens: "0.1", cacheWriteInputCostUsdPerMillionTokens: "1.25", outputCostUsdPerMillionTokens: "2" }, base);
   controls.savePlatformFeatureControl({ featureKey: "ai_chat", enabled: true, dailyRequestCap: 20, dailyTokenCap: 100_000, dailyEstimatedSpendCapUsd: "10" }, base);
   controls.saveAccountFeatureControl(scope, { featureKey: "ai_chat", enabled: true, dailyRequestCap: 20, dailyTokenCap: 100_000, dailyEstimatedSpendCapUsd: "10" }, base);
   return { database, scope, chat, controls, recovery: new CoachAiChatGenerationRecoveryService(chat, controls) };

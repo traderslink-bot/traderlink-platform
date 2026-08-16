@@ -51,7 +51,7 @@ VALUES (?, ?, 'member', 'active', ?, ?, ?)`).run(scope.workspaceId, sharedUserId
 }
 
 function configure(fixture: Fixture, input: Readonly<{ platformRequests?: number; accountRequests?: number; platformTokens?: number; accountTokens?: number }> = {}): void {
-  fixture.controls.saveChatSettings({ modelId: "gpt-chat-a", inputCostUsdPerMillionTokens: "1", outputCostUsdPerMillionTokens: "2" });
+  fixture.controls.saveChatSettings({ modelId: "gpt-chat-a", inputCostUsdPerMillionTokens: "1", cachedInputCostUsdPerMillionTokens: "0.1", cacheWriteInputCostUsdPerMillionTokens: "1.25", outputCostUsdPerMillionTokens: "2" });
   fixture.controls.savePlatformFeatureControl({ featureKey: "ai_chat", enabled: true, dailyRequestCap: input.platformRequests ?? 20, dailyTokenCap: input.platformTokens ?? 10_000, dailyEstimatedSpendCapUsd: "10" });
   fixture.controls.saveAccountFeatureControl(fixture.scope, { featureKey: "ai_chat", enabled: true, dailyRequestCap: input.accountRequests ?? 20, dailyTokenCap: input.accountTokens ?? 10_000, dailyEstimatedSpendCapUsd: "10" });
 }
@@ -75,7 +75,7 @@ describe("Coach AI Chat provider controls repository", () => {
         ["ai_chat", false], ["daily_companion", false], ["monthly_reviews", false], ["weekly_reviews", false],
       ]);
       expect(() => fixture.controls.savePlatformFeatureControl({ featureKey: "ai_chat", enabled: true, dailyRequestCap: 1, dailyTokenCap: 1, dailyEstimatedSpendCapUsd: "1" })).toThrow("coach_ai_feature_control_transition_invalid");
-      fixture.controls.saveChatSettings({ modelId: "gpt-chat-a", inputCostUsdPerMillionTokens: "1", outputCostUsdPerMillionTokens: "2" });
+      fixture.controls.saveChatSettings({ modelId: "gpt-chat-a", inputCostUsdPerMillionTokens: "1", cachedInputCostUsdPerMillionTokens: "0.1", cacheWriteInputCostUsdPerMillionTokens: "1.25", outputCostUsdPerMillionTokens: "2" });
       expect(() => fixture.controls.savePlatformFeatureControl({ featureKey: "ai_chat", enabled: true, dailyRequestCap: null, dailyTokenCap: null, dailyEstimatedSpendCapUsd: null })).toThrow("coach_ai_feature_control_transition_invalid");
     } finally { fixture.database.close(); }
   });
@@ -130,22 +130,24 @@ describe("Coach AI Chat provider controls repository", () => {
       configure(fixture, { platformTokens: 250, accountTokens: 250 });
       const chat = assistantReservation(fixture);
       const reserved = fixture.controls.reserveChatGeneration(fixture.scope, reservationInput(chat, "f".repeat(64)));
-      fixture.controls.saveChatSettings({ modelId: "gpt-chat-b", inputCostUsdPerMillionTokens: "3", outputCostUsdPerMillionTokens: "4" });
+      fixture.controls.saveChatSettings({ modelId: "gpt-chat-b", inputCostUsdPerMillionTokens: "3", cachedInputCostUsdPerMillionTokens: "0.3", cacheWriteInputCostUsdPerMillionTokens: "3.75", outputCostUsdPerMillionTokens: "4" });
       expect(reserved.attempt).toMatchObject({
         providerKey: "openai_direct",
         modelId: "gpt-chat-a",
         inputCostUsdPerMillionTokens: "1",
+        cachedInputCostUsdPerMillionTokens: "0.1",
+        cacheWriteInputCostUsdPerMillionTokens: "1.25",
         outputCostUsdPerMillionTokens: "2",
       });
       expect(fixture.database.prepare(`SELECT model_id, input_cost_usd_per_million_tokens FROM coach_ai_chat_generation_attempts WHERE coach_ai_chat_generation_attempt_id = ?`).get(reserved.attempt.attemptId)).toEqual({ model_id: "gpt-chat-a", input_cost_usd_per_million_tokens: "1" });
       fixture.controls.markProviderStarted(fixture.scope, reserved.attempt.attemptId);
-      fixture.chat.finalizeAssistantSuccess(fixture.scope, chat.assistantMessageId, { assistantTextPrivate: "Safe answer", snapshotContractVersion: "v1", factualSnapshot: { coverage: "available" }, receipt: { providerKey: "openai_direct", modelId: "gpt-chat-a", usage: { inputTokens: 1, outputTokens: 2, totalTokens: 3 }, inputCostUsdPerMillionTokens: "1", outputCostUsdPerMillionTokens: "2" } });
+      fixture.chat.finalizeAssistantSuccess(fixture.scope, chat.assistantMessageId, { assistantTextPrivate: "Safe answer", snapshotContractVersion: "v1", factualSnapshot: { coverage: "available" }, receipt: { providerKey: "openai_direct", modelId: "gpt-chat-a", usage: { inputTokens: 1, cachedInputTokens: 1, cacheWriteInputTokens: 0, outputTokens: 2, totalTokens: 3 }, inputCostUsdPerMillionTokens: "1", cachedInputCostUsdPerMillionTokens: "0.1", cacheWriteInputCostUsdPerMillionTokens: "1.25", outputCostUsdPerMillionTokens: "2" } });
       fixture.controls.finalizeFromChatReceipt(fixture.scope, reserved.attempt.attemptId, "completed", null);
       expect(fixture.controls.reserveChatGeneration(
         fixture.scope,
         reservationInput(assistantReservation(fixture), "1".repeat(64)),
       )).toMatchObject({ state: "reserved" });
-      expect(new CoachAiProviderSettingsRepository(fixture.database).readCostAggregation()).toEqual(expect.arrayContaining([expect.objectContaining({ featureKey: "ai_chat", modelId: "gpt-chat-a", totalTokens: 3, estimatedCostUsd: "0.000005" })]));
+      expect(new CoachAiProviderSettingsRepository(fixture.database).readCostAggregation()).toEqual(expect.arrayContaining([expect.objectContaining({ featureKey: "ai_chat", modelId: "gpt-chat-a", totalTokens: 3, estimatedCostUsd: "0.0000041" })]));
     } finally { fixture.database.close(); }
   });
 
@@ -177,7 +179,7 @@ describe("Coach AI Chat provider controls repository", () => {
       const chat = assistantReservation(fixture);
       const reserved = fixture.controls.reserveChatGeneration(fixture.scope, reservationInput(chat, "4".repeat(64), "full provider envelope"));
       fixture.controls.markProviderStarted(fixture.scope, reserved.attempt.attemptId);
-      fixture.chat.finalizeAssistantSuccess(fixture.scope, chat.assistantMessageId, { assistantTextPrivate: "Safe answer", snapshotContractVersion: "v1", factualSnapshot: { coverage: "available" }, receipt: { providerKey: "openai_direct", modelId: "gpt-chat-a", usage: { inputTokens: reserved.attempt.maximumInputTokens + 1, outputTokens: 2, totalTokens: reserved.attempt.maximumInputTokens + 3 }, inputCostUsdPerMillionTokens: "1", outputCostUsdPerMillionTokens: "2" } });
+      fixture.chat.finalizeAssistantSuccess(fixture.scope, chat.assistantMessageId, { assistantTextPrivate: "Safe answer", snapshotContractVersion: "v1", factualSnapshot: { coverage: "available" }, receipt: { providerKey: "openai_direct", modelId: "gpt-chat-a", usage: { inputTokens: reserved.attempt.maximumInputTokens + 1, cachedInputTokens: 0, cacheWriteInputTokens: 0, outputTokens: 2, totalTokens: reserved.attempt.maximumInputTokens + 3 }, inputCostUsdPerMillionTokens: "1", cachedInputCostUsdPerMillionTokens: "0.1", cacheWriteInputCostUsdPerMillionTokens: "1.25", outputCostUsdPerMillionTokens: "2" } });
       expect(() => fixture.controls.finalizeFromChatReceipt(fixture.scope, reserved.attempt.attemptId, "completed", null)).toThrow("TRADERLINK_PLATFORM_INTEGRITY_FAILED");
       expect(fixture.database.prepare(`SELECT state, actual_total_tokens FROM coach_ai_chat_generation_attempts WHERE coach_ai_chat_generation_attempt_id = ?`).get(reserved.attempt.attemptId)).toEqual({ state: "started", actual_total_tokens: null });
     } finally { fixture.database.close(); }

@@ -98,8 +98,10 @@ function receipt(): CoachAiChatGenerationReceiptInput {
   return Object.freeze({
     providerKey: "openai_direct",
     modelId: "gpt-test",
-    usage: Object.freeze({ inputTokens: 10, outputTokens: 5, totalTokens: 15 }),
+    usage: Object.freeze({ inputTokens: 10, cachedInputTokens: 3, cacheWriteInputTokens: 2, outputTokens: 5, totalTokens: 15 }),
     inputCostUsdPerMillionTokens: "1.5",
+    cachedInputCostUsdPerMillionTokens: "0.15",
+    cacheWriteInputCostUsdPerMillionTokens: "1.875",
     outputCostUsdPerMillionTokens: "2",
   });
 }
@@ -207,7 +209,7 @@ WHERE workspace_id = ? AND user_id = ?`).run(
         new Date("2026-08-05T12:02:00.000Z"),
       );
       expect(completed.message.generationState).toBe("completed");
-      expect(completed.receipt.estimatedCostUsd).toBe("0.000025");
+      expect(completed.receipt.estimatedCostUsd).toBe("0.0000217");
       expect(fixture.database.prepare(`SELECT COUNT(*) AS count FROM coach_ai_chat_answer_snapshots
 WHERE coach_ai_chat_message_id = ?`).get(reserved.assistantMessage.messageId)).toEqual({ count: 1 });
       expect(fixture.database.prepare(`SELECT COUNT(*) AS count FROM coach_ai_chat_generation_receipts

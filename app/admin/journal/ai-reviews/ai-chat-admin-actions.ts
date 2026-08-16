@@ -58,6 +58,8 @@ function resultFor(error: unknown, invalidMessage: string): ActionResult {
 export async function saveAiChatProviderSettings(input: Readonly<{
   modelId: unknown;
   inputCostUsdPerMillionTokens: unknown;
+  cachedInputCostUsdPerMillionTokens: unknown;
+  cacheWriteInputCostUsdPerMillionTokens: unknown;
   outputCostUsdPerMillionTokens: unknown;
 }>): Promise<ActionResult> {
   try {
@@ -66,7 +68,7 @@ export async function saveAiChatProviderSettings(input: Readonly<{
     revalidatePath("/admin/journal/ai-reviews");
     return Object.freeze({ ok: true as const });
   } catch (error) {
-    return resultFor(error, "Enter a model ID and either both verified token prices or leave both prices blank.");
+    return resultFor(error, "Enter a model ID and all four verified token prices, or leave all four prices blank.");
   }
 }
 

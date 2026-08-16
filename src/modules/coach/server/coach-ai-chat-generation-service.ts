@@ -83,8 +83,21 @@ export type CoachAiChatGenerationServiceResult = Readonly<{
 }>;
 
 function completeUsage(usage: CoachAiChatGenerationUsage): boolean {
-  return usage.inputTokens !== null && usage.outputTokens !== null && usage.totalTokens !== null &&
+  return usage.inputTokens !== null && usage.cachedInputTokens !== null &&
+    usage.cacheWriteInputTokens !== null && usage.outputTokens !== null &&
+    usage.totalTokens !== null &&
+    usage.cachedInputTokens + usage.cacheWriteInputTokens <= usage.inputTokens &&
     usage.totalTokens === usage.inputTokens + usage.outputTokens;
+}
+
+function unavailableUsage(): CoachAiChatGenerationUsage {
+  return Object.freeze({
+    inputTokens: null,
+    cachedInputTokens: null,
+    cacheWriteInputTokens: null,
+    outputTokens: null,
+    totalTokens: null,
+  });
 }
 
 function safeAssistantText(result: CoachAiChatGenerationResult): string {
@@ -342,12 +355,14 @@ export class CoachAiChatGenerationService {
     } catch (error) {
       const providerError = error instanceof CoachAiChatProviderGenerationError
         ? error
-        : new CoachAiChatProviderGenerationError(Object.freeze({ inputTokens: null, outputTokens: null, totalTokens: null }));
+        : new CoachAiChatProviderGenerationError(unavailableUsage());
       this.chat.runAtomically(() => {
         if (completeUsage(providerError.usage)) {
           this.chat.finalizeAssistantFailure(scope, created.pair.assistantMessage.messageId, providerError.message, {
             providerKey: attempt.providerKey, modelId: attempt.modelId, usage: providerError.usage,
             inputCostUsdPerMillionTokens: attempt.inputCostUsdPerMillionTokens,
+            cachedInputCostUsdPerMillionTokens: attempt.cachedInputCostUsdPerMillionTokens,
+            cacheWriteInputCostUsdPerMillionTokens: attempt.cacheWriteInputCostUsdPerMillionTokens,
             outputCostUsdPerMillionTokens: attempt.outputCostUsdPerMillionTokens,
           }, now);
           this.controls.finalizeFromChatReceipt(scope, attempt.attemptId, "failed", providerError.message, now);
@@ -453,6 +468,8 @@ export class CoachAiChatGenerationService {
             actionDraftExtraction: result.actionDraftExtraction ?? null }),
           receipt: { providerKey: attempt.providerKey, modelId: attempt.modelId, usage: result.usage,
             inputCostUsdPerMillionTokens: attempt.inputCostUsdPerMillionTokens,
+            cachedInputCostUsdPerMillionTokens: attempt.cachedInputCostUsdPerMillionTokens,
+            cacheWriteInputCostUsdPerMillionTokens: attempt.cacheWriteInputCostUsdPerMillionTokens,
             outputCostUsdPerMillionTokens: attempt.outputCostUsdPerMillionTokens },
         }, now);
         persistence.receiptStarted = true;
@@ -470,6 +487,8 @@ export class CoachAiChatGenerationService {
             modelId: attempt.modelId,
             usage: result.usage,
             inputCostUsdPerMillionTokens: attempt.inputCostUsdPerMillionTokens,
+            cachedInputCostUsdPerMillionTokens: attempt.cachedInputCostUsdPerMillionTokens,
+            cacheWriteInputCostUsdPerMillionTokens: attempt.cacheWriteInputCostUsdPerMillionTokens,
             outputCostUsdPerMillionTokens: attempt.outputCostUsdPerMillionTokens,
           },
           now,

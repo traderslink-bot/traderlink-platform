@@ -29,6 +29,8 @@ export type CoachAiChatProviderSettings = Readonly<{
   providerKey: "openai_direct";
   modelId: string;
   inputCostUsdPerMillionTokens: string | null;
+  cachedInputCostUsdPerMillionTokens: string | null;
+  cacheWriteInputCostUsdPerMillionTokens: string | null;
   outputCostUsdPerMillionTokens: string | null;
   updatedAtUtc: string;
 }>;
@@ -41,6 +43,8 @@ export type CoachAiChatGenerationAttempt = Readonly<{
   providerKey: "openai_direct";
   modelId: string;
   inputCostUsdPerMillionTokens: string;
+  cachedInputCostUsdPerMillionTokens: string;
+  cacheWriteInputCostUsdPerMillionTokens: string;
   outputCostUsdPerMillionTokens: string;
   maximumInputTokens: number;
   maximumOutputTokens: number;

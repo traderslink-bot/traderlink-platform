@@ -133,12 +133,22 @@ function dispatcher(scope: WorkspaceAccessScope): CoachAiChatFactualToolDispatch
   );
 }
 
-function cost(result: CoachAiChatGenerationResult, inputRate: number, outputRate: number): number {
+function cost(
+  result: CoachAiChatGenerationResult,
+  inputRate: number,
+  cachedInputRate: number,
+  cacheWriteInputRate: number,
+  outputRate: number,
+): number {
   const usage = result.usage;
-  requireCondition(usage.inputTokens !== null && usage.outputTokens !== null &&
+  requireCondition(usage.inputTokens !== null && usage.cachedInputTokens !== null &&
+    usage.cacheWriteInputTokens !== null && usage.outputTokens !== null &&
+    usage.cachedInputTokens + usage.cacheWriteInputTokens <= usage.inputTokens &&
     usage.totalTokens === usage.inputTokens + usage.outputTokens,
   "live provider did not return complete usage");
-  return usage.inputTokens * inputRate / 1_000_000 +
+  return (usage.inputTokens - usage.cachedInputTokens - usage.cacheWriteInputTokens) * inputRate / 1_000_000 +
+    usage.cachedInputTokens * cachedInputRate / 1_000_000 +
+    usage.cacheWriteInputTokens * cacheWriteInputRate / 1_000_000 +
     usage.outputTokens * outputRate / 1_000_000;
 }
 
@@ -180,6 +190,8 @@ export async function verifyCoachAiChatLiveProvider(): Promise<void> {
 
   const modelId = argument("--model");
   const inputRate = positiveDecimal("--input-cost-usd-per-million");
+  const cachedInputRate = positiveDecimal("--cached-input-cost-usd-per-million");
+  const cacheWriteInputRate = positiveDecimal("--cache-write-input-cost-usd-per-million");
   const outputRate = positiveDecimal("--output-cost-usd-per-million");
   const maximumCost = positiveDecimal("--maximum-total-cost-usd");
   const scope: WorkspaceAccessScope = Object.freeze({
@@ -197,6 +209,8 @@ export async function verifyCoachAiChatLiveProvider(): Promise<void> {
     providerKey: "openai_direct",
     modelId,
     inputCostUsdPerMillionTokens: String(inputRate),
+    cachedInputCostUsdPerMillionTokens: String(cachedInputRate),
+    cacheWriteInputCostUsdPerMillionTokens: String(cacheWriteInputRate),
     outputCostUsdPerMillionTokens: String(outputRate),
     maximumInputTokens: 256_000,
     maximumOutputTokens: 800,
@@ -275,7 +289,9 @@ export async function verifyCoachAiChatLiveProvider(): Promise<void> {
   "unsupported advice request used a factual or mutation path");
 
   const results = Object.freeze([read, followUp, manual, draft, refusal]);
-  const costs = results.map((result) => cost(result, inputRate, outputRate));
+  const costs = results.map((result) => cost(
+    result, inputRate, cachedInputRate, cacheWriteInputRate, outputRate,
+  ));
   const estimatedCostUsd = costs.reduce((sum, value) => sum + value, 0);
   requireCondition(estimatedCostUsd <= maximumCost,
     `live verification cost ${estimatedCostUsd.toFixed(6)} exceeded ${maximumCost}`);

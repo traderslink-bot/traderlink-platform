@@ -158,9 +158,44 @@ QA pass. Its previously accepted synthetic Agents SDK run remains recorded in
 the runtime progress document. No private Journal data or product mutation is
 required for that verifier.
 
+## 2026-08-16 post-audit remediation
+
+A follow-up engineering pass corrected two issues found after the original QA
+acceptance:
+
+- Chat receipts, provider reservations and spend-cap accounting now preserve
+  ordinary input, cached-read input, cache-write input and output usage as four
+  separate price classes. Migration 0058 adds immutable rate snapshots and
+  actual cache-token counts without inventing prices for the existing local
+  configuration. Chat remains unavailable until all four prices are explicitly
+  configured.
+- The desktop companion is now wide enough for both conversation history and
+  the active thread at a 1280-pixel viewport. Mobile remains a full-width,
+  closable surface and opening Chat still preserves the dashboard route.
+
+The controlling capability matrix was also rechecked against the current
+dashboard. Selection Loop is not a current feature, `/reflection-loop`
+redirects to AI Reviews, and the incomplete Analytics Lab routes redirect to
+Analytics. They are intentionally excluded from Chat coverage rather than
+being revived as AI capabilities.
+
+The protected local database received migration 0058 only after a pre-migration
+online backup, independent restore verification and disposable-copy rehearsal.
+The focused cache verifier proved exact receipt cost, complete-price guards,
+row preservation, schema columns, foreign keys and SQLite quick check both
+before and after the local migration. No provider request, Journal mutation,
+deployment or push was part of this pass. The repository instruction prohibited
+running Vitest or another test runner; this follow-up used the dedicated
+operational verifier, targeted static checks and controlled browser acceptance.
+That browser pass confirmed an 860-pixel desktop drawer at 1280 by 720, a
+full-width 390 by 844 mobile drawer, separate mobile conversation-list and Chat
+close controls, direct `/ai-chat`, route preservation and no browser warnings
+or errors. The no-worker review server was stopped afterward.
+
 ## Remaining launch and product boundaries
 
-- Select and enable production model, pricing, request/token/spend caps,
+- Select and enable the production model, all four token prices (ordinary
+  input, cached input, cache-write input and output), request/token/spend caps,
   entitlement, support, and monitoring settings.
 - Re-audit the isolated Trade Explorer adapter after the owner accepts the
   updated Trade Explorer product contract.

@@ -1,6 +1,7 @@
 "use client";
 
 import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import FormControl from "@mui/material/FormControl";
 import FormControlLabel from "@mui/material/FormControlLabel";
@@ -95,25 +96,37 @@ function ControlEditor({
 }
 
 export function AiChatProviderSettings({
+  initialCachedInputRate,
+  initialCacheWriteInputRate,
   initialInputRate,
   initialModelId,
   initialOutputRate,
 }: Readonly<{
+  initialCachedInputRate: string | null;
+  initialCacheWriteInputRate: string | null;
   initialInputRate: string | null;
   initialModelId: string;
   initialOutputRate: string | null;
 }>) {
   const [modelId, setModelId] = useState(initialModelId);
   const [inputRate, setInputRate] = useState(initialInputRate ?? "");
+  const [cachedInputRate, setCachedInputRate] = useState(initialCachedInputRate ?? "");
+  const [cacheWriteInputRate, setCacheWriteInputRate] = useState(initialCacheWriteInputRate ?? "");
   const [outputRate, setOutputRate] = useState(initialOutputRate ?? "");
-  const [saved, setSaved] = useState(`${initialModelId}|${initialInputRate ?? ""}|${initialOutputRate ?? ""}`);
+  const [saved, setSaved] = useState(`${initialModelId}|${initialInputRate ?? ""}|${initialCachedInputRate ?? ""}|${initialCacheWriteInputRate ?? ""}|${initialOutputRate ?? ""}`);
   const [message, setMessage] = useState<string | null>(null);
   const [working, startTransition] = useTransition();
-  const current = `${modelId}|${inputRate}|${outputRate}`;
+  const current = `${modelId}|${inputRate}|${cachedInputRate}|${cacheWriteInputRate}|${outputRate}`;
 
   function save(): void {
     startTransition(async () => {
-      const result = await saveAiChatProviderSettings({ modelId, inputCostUsdPerMillionTokens: inputRate, outputCostUsdPerMillionTokens: outputRate });
+      const result = await saveAiChatProviderSettings({
+        modelId,
+        inputCostUsdPerMillionTokens: inputRate,
+        cachedInputCostUsdPerMillionTokens: cachedInputRate,
+        cacheWriteInputCostUsdPerMillionTokens: cacheWriteInputRate,
+        outputCostUsdPerMillionTokens: outputRate,
+      });
       if (result.ok) {
         setSaved(current);
         setMessage("AI Chat provider settings saved.");
@@ -125,14 +138,16 @@ export function AiChatProviderSettings({
     <Stack spacing={1.5}>
       <Typography color="text.secondary" variant="body2">Choose the separate model used for future AI Chat requests. Prices are saved with each request reservation and must be verified before Chat can be enabled.</Typography>
       {message ? <Alert severity={message === "AI Chat provider settings saved." ? "success" : "error"}>{message}</Alert> : null}
-      <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
+      <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))", xl: "repeat(5, minmax(0, 1fr))" } }}>
         <TextField fullWidth label="OpenAI Chat model ID" onChange={(event) => setModelId(event.target.value.trim())} value={modelId} />
-        <TextField fullWidth inputMode="decimal" label="Chat input price per million tokens (USD)" onChange={(event) => setInputRate(event.target.value.trim())} value={inputRate} />
-        <TextField fullWidth inputMode="decimal" label="Chat output price per million tokens (USD)" onChange={(event) => setOutputRate(event.target.value.trim())} value={outputRate} />
-      </Stack>
+        <TextField fullWidth inputMode="decimal" label="Uncached input price per million (USD)" onChange={(event) => setInputRate(event.target.value.trim())} value={inputRate} />
+        <TextField fullWidth inputMode="decimal" label="Cached input price per million (USD)" onChange={(event) => setCachedInputRate(event.target.value.trim())} value={cachedInputRate} />
+        <TextField fullWidth inputMode="decimal" label="Cache write price per million (USD)" onChange={(event) => setCacheWriteInputRate(event.target.value.trim())} value={cacheWriteInputRate} />
+        <TextField fullWidth inputMode="decimal" label="Output price per million (USD)" onChange={(event) => setOutputRate(event.target.value.trim())} value={outputRate} />
+      </Box>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25} sx={{ alignItems: { sm: "center" } }}>
         <Button disabled={working || current === saved} onClick={save} variant="contained">{working ? "Saving..." : "Save AI Chat settings"}</Button>
-        <Typography color="text.secondary" variant="caption">Leave both prices blank until pricing is confirmed.</Typography>
+        <Typography color="text.secondary" variant="caption">Leave all four prices blank until the model&apos;s uncached input, cached input, cache write and output prices are confirmed.</Typography>
       </Stack>
     </Stack>
   );

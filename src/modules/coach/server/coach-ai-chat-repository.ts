@@ -120,10 +120,16 @@ function immutableSnapshot(value: unknown): Readonly<{ json: string; sha256: str
 }
 
 function usage(value: CoachAiChatGenerationUsage): CoachAiChatGenerationUsage {
-  const values = [value.inputTokens, value.outputTokens, value.totalTokens];
+  const values = [value.inputTokens, value.cachedInputTokens, value.cacheWriteInputTokens,
+    value.outputTokens, value.totalTokens];
   if (values.some((item) => item !== null && (!Number.isSafeInteger(item) || item < 0)) ||
       (value.inputTokens === null) !== (value.outputTokens === null) ||
       (value.inputTokens === null) !== (value.totalTokens === null) ||
+      (value.inputTokens === null) !== (value.cachedInputTokens === null) ||
+      (value.inputTokens === null) !== (value.cacheWriteInputTokens === null) ||
+      (value.inputTokens !== null && value.cachedInputTokens !== null &&
+        value.cacheWriteInputTokens !== null &&
+        value.cachedInputTokens + value.cacheWriteInputTokens > value.inputTokens) ||
       (value.inputTokens !== null && value.outputTokens !== null && value.totalTokens !== value.inputTokens + value.outputTokens)) {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "generationUsage" });
   }
@@ -143,6 +149,8 @@ function receiptInput(value: CoachAiChatGenerationReceiptInput): Readonly<{
   modelId: string;
   usage: CoachAiChatGenerationUsage;
   inputRate: string | null;
+  cachedInputRate: string | null;
+  cacheWriteInputRate: string | null;
   outputRate: string | null;
   estimatedCostUsd: string | null;
 }> {
@@ -151,15 +159,24 @@ function receiptInput(value: CoachAiChatGenerationReceiptInput): Readonly<{
   }
   const normalizedUsage = usage(value.usage);
   const inputRate = rate(value.inputCostUsdPerMillionTokens, "inputCostUsdPerMillionTokens");
+  const cachedInputRate = rate(value.cachedInputCostUsdPerMillionTokens, "cachedInputCostUsdPerMillionTokens");
+  const cacheWriteInputRate = rate(value.cacheWriteInputCostUsdPerMillionTokens, "cacheWriteInputCostUsdPerMillionTokens");
   const outputRate = rate(value.outputCostUsdPerMillionTokens, "outputCostUsdPerMillionTokens");
-  if ((inputRate === null) !== (outputRate === null) ||
+  if ((inputRate === null) !== (cachedInputRate === null) ||
+      (inputRate === null) !== (cacheWriteInputRate === null) ||
+      (inputRate === null) !== (outputRate === null) ||
       ((inputRate === null || normalizedUsage.inputTokens === null) && (inputRate !== null || normalizedUsage.inputTokens !== null))) {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "generationPricing" });
   }
-  const estimatedCostUsd = inputRate === null || outputRate === null ||
-      normalizedUsage.inputTokens === null || normalizedUsage.outputTokens === null
+  const estimatedCostUsd = inputRate === null || cachedInputRate === null ||
+      cacheWriteInputRate === null || outputRate === null ||
+      normalizedUsage.inputTokens === null || normalizedUsage.cachedInputTokens === null ||
+      normalizedUsage.cacheWriteInputTokens === null || normalizedUsage.outputTokens === null
     ? null
-    : new ExactDecimal(normalizedUsage.inputTokens).times(inputRate)
+    : new ExactDecimal(normalizedUsage.inputTokens - normalizedUsage.cachedInputTokens -
+        normalizedUsage.cacheWriteInputTokens).times(inputRate)
+      .plus(new ExactDecimal(normalizedUsage.cachedInputTokens).times(cachedInputRate))
+      .plus(new ExactDecimal(normalizedUsage.cacheWriteInputTokens).times(cacheWriteInputRate))
       .plus(new ExactDecimal(normalizedUsage.outputTokens).times(outputRate))
       .dividedBy(1_000_000).toFixed(12).replace(/\.?0+$/u, "") || "0";
   return Object.freeze({
@@ -167,6 +184,8 @@ function receiptInput(value: CoachAiChatGenerationReceiptInput): Readonly<{
     modelId: value.modelId,
     usage: normalizedUsage,
     inputRate,
+    cachedInputRate,
+    cacheWriteInputRate,
     outputRate,
     estimatedCostUsd,
   });
@@ -617,6 +636,8 @@ WHERE coach_ai_chat_message_id = ? AND user_id = ? AND workspace_id = ?
       modelId: string;
       usage: CoachAiChatGenerationUsage;
       inputRate: string | null;
+      cachedInputRate: string | null;
+      cacheWriteInputRate: string | null;
       outputRate: string | null;
       estimatedCostUsd: string | null;
     }>,
@@ -625,14 +646,18 @@ WHERE coach_ai_chat_message_id = ? AND user_id = ? AND workspace_id = ?
     const receiptId = createCanonicalUuidV4();
     this.database.prepare(`INSERT INTO coach_ai_chat_generation_receipts (
   coach_ai_chat_generation_receipt_id, coach_ai_chat_message_id, coach_ai_chat_conversation_id,
-  user_id, workspace_id, account_id, provider_key, model_id, input_tokens, output_tokens,
-  total_tokens, input_cost_usd_per_million_tokens, output_cost_usd_per_million_tokens,
+  user_id, workspace_id, account_id, provider_key, model_id, input_tokens, cached_input_tokens,
+  cache_write_input_tokens, output_tokens, total_tokens, input_cost_usd_per_million_tokens,
+  cached_input_cost_usd_per_million_tokens, cache_write_input_cost_usd_per_million_tokens,
+  output_cost_usd_per_million_tokens,
   estimated_cost_usd, recorded_at_utc
 ) VALUES (?, ?, (SELECT coach_ai_chat_conversation_id FROM coach_ai_chat_messages WHERE coach_ai_chat_message_id = ?),
-  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
       receiptId, assistantMessageId, assistantMessageId, scope.userId, scope.workspaceId,
-      accountId, input.providerKey, input.modelId, input.usage.inputTokens, input.usage.outputTokens,
-      input.usage.totalTokens, input.inputRate, input.outputRate, input.estimatedCostUsd, recordedAtUtc,
+      accountId, input.providerKey, input.modelId, input.usage.inputTokens,
+      input.usage.cachedInputTokens, input.usage.cacheWriteInputTokens, input.usage.outputTokens,
+      input.usage.totalTokens, input.inputRate, input.cachedInputRate, input.cacheWriteInputRate,
+      input.outputRate, input.estimatedCostUsd, recordedAtUtc,
     );
     return Object.freeze({
       receiptId,
@@ -640,6 +665,8 @@ WHERE coach_ai_chat_message_id = ? AND user_id = ? AND workspace_id = ?
       modelId: input.modelId,
       usage: input.usage,
       inputCostUsdPerMillionTokens: input.inputRate,
+      cachedInputCostUsdPerMillionTokens: input.cachedInputRate,
+      cacheWriteInputCostUsdPerMillionTokens: input.cacheWriteInputRate,
       outputCostUsdPerMillionTokens: input.outputRate,
       estimatedCostUsd: input.estimatedCostUsd,
       recordedAtUtc,

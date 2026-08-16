@@ -196,7 +196,13 @@ ORDER BY account.display_name, account.account_id`).all()
     });
   }
 
-  saveSettings(input: Readonly<{ modelId: unknown; inputCostUsdPerMillionTokens: unknown; outputCostUsdPerMillionTokens: unknown }>): CoachAiChatProviderSettings {
+  saveSettings(input: Readonly<{
+    modelId: unknown;
+    inputCostUsdPerMillionTokens: unknown;
+    cachedInputCostUsdPerMillionTokens: unknown;
+    cacheWriteInputCostUsdPerMillionTokens: unknown;
+    outputCostUsdPerMillionTokens: unknown;
+  }>): CoachAiChatProviderSettings {
     return this.controls.saveChatSettings(input);
   }
 

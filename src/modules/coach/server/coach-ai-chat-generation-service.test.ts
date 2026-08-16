@@ -34,7 +34,7 @@ function fixture() {
   database.prepare(`INSERT INTO journal_accounts VALUES (?, ?, 'Test', 'USD', 'America/New_York', 'active', ?, ?, ?)`).run(accountId, workspaceId, userId, now.toISOString(), now.toISOString());
   const scope: WorkspaceAccessScope = Object.freeze({ userId, workspaceId, workspaceRole: "owner", allowedAccountIds: Object.freeze([accountId]), activeAccountId: accountId });
   const chat = new CoachAiChatRepository(database); const controls = new CoachAiChatProviderControlsRepository(database);
-  controls.saveChatSettings({ modelId: "gpt-chat-test", inputCostUsdPerMillionTokens: "1", outputCostUsdPerMillionTokens: "2" });
+  controls.saveChatSettings({ modelId: "gpt-chat-test", inputCostUsdPerMillionTokens: "1", cachedInputCostUsdPerMillionTokens: "0.1", cacheWriteInputCostUsdPerMillionTokens: "1.25", outputCostUsdPerMillionTokens: "2" });
   controls.savePlatformFeatureControl({ featureKey: "ai_chat", enabled: true, dailyRequestCap: 20, dailyTokenCap: 2_000_000, dailyEstimatedSpendCapUsd: "10" });
   controls.saveAccountFeatureControl(scope, { featureKey: "ai_chat", enabled: true, dailyRequestCap: 20, dailyTokenCap: 2_000_000, dailyEstimatedSpendCapUsd: "10" });
   return {
@@ -49,7 +49,7 @@ function fixture() {
 }
 
 function answer(): CoachAiChatGenerationResult {
-  return Object.freeze({ answer: Object.freeze({ contractVersion: COACH_AI_CHAT_ANSWER_CONTRACT_VERSION, directAnswer: "Your saved Journal does not have enough facts for that yet.", supportingObservations: Object.freeze(["No closed-trade result was requested."]), limitation: "Ask about a saved trade or date range when you are ready.", nextQuestion: null, evidenceReferences: Object.freeze([]) }), usage: Object.freeze({ inputTokens: 20, outputTokens: 10, totalTokens: 30 }), factualToolCalls: Object.freeze([]), manualEntryExtraction: null, dailyCompanionDraftExtraction: null, reviewDeliveryChangeExtraction: null });
+  return Object.freeze({ answer: Object.freeze({ contractVersion: COACH_AI_CHAT_ANSWER_CONTRACT_VERSION, directAnswer: "Your saved Journal does not have enough facts for that yet.", supportingObservations: Object.freeze(["No closed-trade result was requested."]), limitation: "Ask about a saved trade or date range when you are ready.", nextQuestion: null, evidenceReferences: Object.freeze([]) }), usage: Object.freeze({ inputTokens: 20, cachedInputTokens: 0, cacheWriteInputTokens: 0, outputTokens: 10, totalTokens: 30 }), factualToolCalls: Object.freeze([]), manualEntryExtraction: null, dailyCompanionDraftExtraction: null, reviewDeliveryChangeExtraction: null });
 }
 
 function service(
@@ -457,13 +457,13 @@ FROM coach_ai_chat_answer_snapshots`).get() as { factual_snapshot_json: string }
   it("finalizes provider failures honestly and rolls back a receipt mismatch", async () => {
     const f = fixture();
     try {
-      const noUsage = service(f, async () => { throw new CoachAiChatProviderGenerationError(Object.freeze({ inputTokens: null, outputTokens: null, totalTokens: null })); });
+      const noUsage = service(f, async () => { throw new CoachAiChatProviderGenerationError(Object.freeze({ inputTokens: null, cachedInputTokens: null, cacheWriteInputTokens: null, outputTokens: null, totalTokens: null })); });
       await expect(noUsage.generateSavedAnswer(f.scope, { conversationId: f.conversationId, question: "Private failure", idempotencySha256: "d".repeat(64) }, now)).resolves.toMatchObject({ state: "failed" });
       const usageConversation = f.chat.createConversation(f.scope, "Usage", now);
-      const usage = service(f, async () => { throw new CoachAiChatProviderGenerationError(Object.freeze({ inputTokens: 2, outputTokens: 3, totalTokens: 5 })); });
+      const usage = service(f, async () => { throw new CoachAiChatProviderGenerationError(Object.freeze({ inputTokens: 2, cachedInputTokens: 0, cacheWriteInputTokens: 0, outputTokens: 3, totalTokens: 5 })); });
       await expect(usage.generateSavedAnswer(f.scope, { conversationId: usageConversation.conversationId, question: "Usage failure", idempotencySha256: "e".repeat(64) }, now)).resolves.toMatchObject({ state: "failed" });
       const mismatchConversation = f.chat.createConversation(f.scope, "Mismatch", now);
-      const mismatch = service(f, async (input) => Object.freeze({ ...answer(), usage: Object.freeze({ inputTokens: input.attempt.maximumInputTokens + 1, outputTokens: 1, totalTokens: input.attempt.maximumInputTokens + 2 }) }));
+      const mismatch = service(f, async (input) => Object.freeze({ ...answer(), usage: Object.freeze({ inputTokens: input.attempt.maximumInputTokens + 1, cachedInputTokens: 0, cacheWriteInputTokens: 0, outputTokens: 1, totalTokens: input.attempt.maximumInputTokens + 2 }) }));
       await expect(mismatch.generateSavedAnswer(f.scope, { conversationId: mismatchConversation.conversationId, question: "Mismatch", idempotencySha256: "f".repeat(64) }, now)).rejects.toThrow("TRADERLINK_PLATFORM_INTEGRITY_FAILED");
       expect(f.database.prepare(`SELECT state FROM coach_ai_chat_generation_attempts WHERE idempotency_sha256 = ?`).get("f".repeat(64))).toEqual({ state: "started" });
     } finally { f.database.close(); }
