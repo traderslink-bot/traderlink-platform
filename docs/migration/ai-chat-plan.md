@@ -2,12 +2,14 @@
 
 ## Status
 
-**Implementation active.** This is the main, end-state plan for the TraderLink AI
-Companion: AI Chat, the Daily Trade Tracker companion, saved weekly and monthly
-reviews, conversational manual execution entry, account settings, and Journal
-Administration controls. The owner accepted the integrated direction and
-delegated technical sequencing on 2026-08-05. Each remaining release, provider
-and irreversible Journal action still follows its own protected boundary.
+**Current-plan technical implementation complete; production activation remains
+an owner launch boundary.** This is the main, end-state plan for the TraderLink
+AI Companion: AI Chat, the Daily Trade Tracker companion, saved weekly and
+monthly reviews, conversational manual execution entry, account settings, and
+Journal Administration controls. The owner accepted the integrated direction
+and delegated technical sequencing on 2026-08-05. Each remaining release,
+provider-enable, entitlement and irreversible Journal action still follows its
+own protected boundary.
 
 On 2026-08-15 the owner expanded the quality target: AI Chat must be built as a
 best-in-market trading-journal companion, not as a narrow demonstration. The

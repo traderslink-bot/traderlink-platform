@@ -9,10 +9,11 @@ capability matrix. This supplements the controlling
 and the complete
 [language plan](traderslink_ai_chatbot_complete_language_plan.md).
 
-The remaining live-provider checkpoint requires the owner to configure a Chat
-API key in TraderLink's own runtime and enable the platform Chat control. It is
-not permission to copy a credential from another application or to bypass the
-disabled control.
+The live-provider technical checkpoint is complete. Production Chat remains
+off because the platform control is deliberately disabled and its production
+request, token and spend caps have not been selected. Enabling those settings
+is an owner launch decision; it is not permission to copy a credential from
+another application or bypass the control.
 
 ## Implemented runtime
 
@@ -49,11 +50,12 @@ that pending attempt and does not begin a second provider call.
 
 ## 2026-08-16 verification
 
-- Sixteen focused Chat files cover conversation persistence, routes,
+- Seventeen focused Chat files cover conversation persistence, routes,
   deterministic tools, dashboard/page context, saved Analyzer reads, action
   drafts, privacy redaction, provider controls, generation budgeting and the
-  locked language registry. The final acceptance population is 98 tests with
-  one worker and no file parallelism.
+  locked language registry and privacy-safe paid-plan Help. The final
+  no-provider acceptance population is 100 tests with one worker and no file
+  parallelism; the separately gated live test is skipped by default.
 - Action-draft route and service checks directly cover account-scoped listing,
   mutation-request enforcement, empty-body confirm/reject, extra-field
   rejection, no-write rejection, 24-hour expiry and stable terminal retries.
@@ -63,5 +65,13 @@ that pending attempt and does not begin a second provider call.
   viewport. The drawer opened and closed without leaving `/workspace`; the
   direct page loaded the same conversation surface; no browser console errors
   were observed.
-- No verification test invoked OpenAI. No dependency was installed or
-  downloaded, and no provider request, push or deployment occurred.
+- `verify-coach-ai-chat-live-provider.ts` plus its opt-in Node-only Vitest entry
+  passed five synthetic cases through the actual OpenAI Agents SDK and
+  `gpt-5.6-sol` Responses runtime in 28.4 seconds. It verified grounded account
+  facts, a grounded follow-up, manual execution extraction, a confirmation-only
+  action draft, unsupported-advice refusal and complete usage accounting under
+  a $2 caller-supplied ceiling. The verifier exposes no key or private Journal
+  content and opens no platform database.
+- No project dependency or lockfile changed. No protected database mutation,
+  product action, server start, push or deployment occurred. Production Chat
+  remains disabled pending owner-selected caps and launch activation.

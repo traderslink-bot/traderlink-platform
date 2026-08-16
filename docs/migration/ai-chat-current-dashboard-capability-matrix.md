@@ -13,6 +13,11 @@ the dashboard gained features after the original AI Companion plan was
 written. A feature is not considered supported merely because the model knows
 its name or the language inventory recognizes the trader's wording.
 
+Every approved current-product Read, Draft and Confirm row is implemented and
+covered by the final focused, browser and live-provider checkpoints. Rows
+marked safety-protected, product-excluded or dependent on a separately planned
+service remain intentionally unavailable rather than being simulated.
+
 ## Completion rule
 
 Every current user-facing feature must appear once in this inventory and end in

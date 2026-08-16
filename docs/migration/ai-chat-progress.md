@@ -2,7 +2,9 @@
 
 ## Status
 
-Implementation is active. The parent plan is [TraderLink AI Companion Plan](ai-chat-plan.md).
+The current-plan technical implementation and local acceptance are complete.
+Production provider enablement, final caps and launch operations remain owner
+launch decisions. The parent plan is [TraderLink AI Companion Plan](ai-chat-plan.md).
 The complete current-product target is the
 [AI Chat Current Dashboard Capability Matrix](ai-chat-current-dashboard-capability-matrix.md).
 The private persistence API checkpoint is tracked in
@@ -89,11 +91,13 @@ The private persistence API checkpoint is tracked in
   deliberately in their guarded product surfaces.
 - [x] Promote the language registry and Help Center only as each deterministic
   family becomes executable.
-- [ ] Complete the owner-configured live OpenAI Agents SDK verification. The
-  representative deterministic evaluations, account/privacy/cost/action
-  safeguards and responsive drawer/direct-page browser acceptance are
-  complete. Live generation remains blocked because TraderLink has no
-  configured Chat API key and the platform Chat control is disabled.
+- [x] Complete live OpenAI Agents SDK verification. Five synthetic cases passed
+  through the real configured `gpt-5.6-sol` Responses/Agents runtime: grounded
+  entitlement read, refreshed follow-up, conversational manual executions,
+  confirmation-only reporting-currency draft and unsupported stock-advice
+  refusal. The verifier enforces complete usage accounting and a caller-supplied
+  total cost ceiling. It reads no private Journal data and performs no product
+  mutation.
 - [ ] Implement production entitlement, scheduled-delivery, operational, and
   privacy-deletion decisions at their separate launch boundaries.
 
@@ -118,8 +122,9 @@ The private persistence API checkpoint is tracked in
   provider envelope exceeding its ceiling. After the bounded-result correction,
   the generation and dispatcher files passed all 12 tests, completing the same
   original 91-case acceptance population without a provider request. Six added
-  action-safeguard checks plus one registry-drift check bring the final
-  population to 98 cases and directly
+  action-safeguard checks plus one registry-drift check and the final
+  privacy-safe paid-access/Help checks bring the deterministic acceptance
+  population to 100 cases and directly
   prove scoped list/confirm/reject routes, mutation-request enforcement,
   no-write rejection, 24-hour expiry and stable expired-draft retries.
 - The expiry evaluation exposed and corrected one retry defect: confirming an
@@ -128,6 +133,20 @@ The private persistence API checkpoint is tracked in
   compares the Agents SDK tool list with the deterministic factual-tool
   registry before any provider call; capability drift fails closed and is
   covered by the focused inventory suite.
+- A Node-only live verifier now covers five synthetic cases against the actual
+  OpenAI Agents SDK. The accepted run completed in 28.4 seconds and remained
+  below its $2 estimated-cost ceiling. It proved grounded factual tool use,
+  follow-up fact refresh, execution extraction without a mode button, an exact
+  confirmation draft and a no-tool refusal. It printed no key, prompt, answer,
+  provider body or private Journal value and did not open the platform database.
+- The platform `ai_chat` control remains disabled with no production caps. That
+  is intentional after technical verification: production model/pricing,
+  request/token/spend caps, entitlement and activation remain owner launch
+  settings rather than an implementation shortcut.
+- The final no-provider regression passed 100 tests across 17 Chat files with
+  one worker and no file parallelism; the opt-in live test was correctly
+  skipped in that ordinary run. Targeted ESLint, full no-emit TypeScript and
+  diff checks also passed.
 - Controlled no-worker browser acceptance passed on `/workspace` and
   `/ai-chat`. On desktop and a 390 by 844 mobile viewport, AI Chat opened from
   navigation without changing `/workspace`, exposed a visible close action,
