@@ -13,7 +13,10 @@ import {
   MoomooExecutionImportAccountService,
   type MoomooLinkedAccountOption,
 } from "./moomoo-execution-import-account-service";
-import { planMoomooExecutionImport } from "./moomoo-execution-import-planning";
+import {
+  planMoomooExecutionImport,
+  planMoomooIncrementalExecutionImport,
+} from "./moomoo-execution-import-planning";
 import {
   MoomooExecutionImportRepository,
   type MoomooBrokerImportJobSummary,
@@ -191,6 +194,66 @@ export class MoomooExecutionImportCommandService {
       if (!created || created.brokerImportJobId !== brokerImportJobId) {
         platformFailure("TRADERLINK_BROKER_CONNECTION_STORAGE_INVALID", {
           stage: "import_job_creation",
+        });
+      }
+      return safeJob(created);
+    });
+  }
+
+  startLatest(input: Readonly<{
+    scope: WorkspaceAccessScope;
+    journalAccountId: string;
+    linkRef: string;
+  }>): SafeMoomooImportJob {
+    const link = this.accounts.resolveLinkedAccount(input);
+    const cutoff = this.now();
+    return this.repository.immediate(() => {
+      const active = this.repository.activeJobForLink(
+        input.scope.workspaceId,
+        input.journalAccountId,
+        link.brokerAccountLinkId,
+      );
+      if (active) return safeJob(active);
+
+      const latest = this.repository.latestJobForLink(
+        input.scope.workspaceId,
+        input.journalAccountId,
+        link.brokerAccountLinkId,
+      );
+      if (!latest || latest.state !== "completed") {
+        platformFailure("TRADERLINK_BROKER_CONNECTION_STORAGE_INVALID", {
+          stage: "latest_import_requires_completed_history",
+        });
+      }
+      const plan = planMoomooIncrementalExecutionImport({
+        earliestExecutionDate: latest.requestedStartDate,
+        enabledMarketCodes: link.enabledMarketCodes,
+        latestCompletedCutoffAtUtc: latest.cutoffAtUtc,
+        cutoff,
+      });
+      const timestamp = createCanonicalUtcTimestamp(cutoff);
+      const brokerImportJobId = createCanonicalUuidV4();
+      this.repository.createJob({
+        brokerImportJobId,
+        workspaceId: link.workspaceId,
+        accountId: link.accountId,
+        brokerAccountLinkId: link.brokerAccountLinkId,
+        importKind: "incremental_sync",
+        requestedStartDate: latest.requestedStartDate,
+        cutoffAtUtc: timestamp,
+        exactStartMicroseconds: plan.exactStartMicroseconds,
+        exactEndMicroseconds: plan.exactEndMicroseconds,
+        ranges: plan.ranges,
+        timestamp,
+      });
+      const created = this.repository.latestJobForLink(
+        input.scope.workspaceId,
+        input.journalAccountId,
+        link.brokerAccountLinkId,
+      );
+      if (!created || created.brokerImportJobId !== brokerImportJobId) {
+        platformFailure("TRADERLINK_BROKER_CONNECTION_STORAGE_INVALID", {
+          stage: "latest_import_job_creation",
         });
       }
       return safeJob(created);

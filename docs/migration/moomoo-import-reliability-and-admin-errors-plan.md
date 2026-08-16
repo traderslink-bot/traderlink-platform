@@ -8,6 +8,31 @@ import. Live `trade:read` proof remains deferred to invited beta users.
 
 **Continuation handoff:** [Moomoo Import Reliability And Admin Errors Handoff](moomoo-import-reliability-and-admin-errors-handoff.md)
 
+## Approved incremental-import usability follow-on - 2026-08-16
+
+The owner approved a hybrid import experience for the invited beta:
+
+1. The first history import remains an explicit user action with the trader's
+   first-execution date.
+2. Automatic incremental imports remain the normal ongoing behavior after that
+   first import completes. The existing server-configurable 15-minute due
+   interval and protected worker boundary remain unchanged.
+3. Every completed linked account also offers **Import latest trades** for an
+   immediate user-requested check. It reuses the account's completed import
+   boundary and the same bounded 24-hour provider-update overlap as an automatic
+   incremental job; it does not ask for another historical start date.
+4. **Import older trades** remains a separate dated action. The two actions
+   must not be combined or described as statement importing.
+5. The Account page explains that automatic checks continue without keeping
+   the page open and that the manual latest-trades action is optional.
+6. No new table, migration, OAuth permission, provider payload, heartbeat or
+   hosted scheduler activation is required for this follow-on.
+7. The Daily Trade Tracker Help guide is updated with the same distinction.
+
+The owner approved the interaction contract and explicitly waived a separate
+visual-review gate for this small Account-page follow-on. Port 3010 remains
+closed.
+
 ## Outcome
 
 Make the existing Moomoo OAuth and execution-import path dependable enough for

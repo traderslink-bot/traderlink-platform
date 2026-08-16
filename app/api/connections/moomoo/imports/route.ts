@@ -72,7 +72,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (
       !isRecord(body) ||
       typeof body.linkRef !== "string" ||
-      typeof body.earliestExecutionDate !== "string"
+      (body.mode !== undefined && body.mode !== "history" && body.mode !== "latest") ||
+      (body.mode !== "latest" && typeof body.earliestExecutionDate !== "string")
     ) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
         field: "moomooImportRequest",
@@ -83,12 +84,19 @@ export async function POST(request: Request): Promise<NextResponse> {
       body.expectedAccountSelectionRef,
     );
     if (!scope.activeAccountId) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
-    const job = new MoomooExecutionImportCommandService(database).start({
-      scope,
-      journalAccountId: scope.activeAccountId,
-      linkRef: body.linkRef,
-      earliestExecutionDate: body.earliestExecutionDate,
-    });
+    const service = new MoomooExecutionImportCommandService(database);
+    const job = body.mode === "latest"
+      ? service.startLatest({
+          scope,
+          journalAccountId: scope.activeAccountId,
+          linkRef: body.linkRef,
+        })
+      : service.start({
+          scope,
+          journalAccountId: scope.activeAccountId,
+          linkRef: body.linkRef,
+          earliestExecutionDate: body.earliestExecutionDate as string,
+        });
     return NextResponse.json(
       { status: "queued", job },
       { status: 202, headers: { "cache-control": "no-store" } },

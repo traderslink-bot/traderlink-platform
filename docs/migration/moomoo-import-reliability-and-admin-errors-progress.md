@@ -56,6 +56,22 @@
   handoff. The next task must begin with a read-only QA run before changing
   code, migration state, scheduler configuration or the local server.
 
+## Incremental-import usability follow-on - 2026-08-16
+
+- [x] Owner approved keeping automatic incremental imports and adding an
+  optional **Import latest trades** action.
+- [x] Confirmed the existing 15-minute due scheduler, durable worker and
+  24-hour provider-update overlap remain the correct automatic boundary.
+- [x] Added a dedicated latest-trades command that uses the last completed cutoff
+  and correction overlap without requesting a historical date.
+- [x] Added the Account action while preserving the separate first/older-history
+  date workflow and existing process status.
+- [x] Updated the related Daily Trade Tracker Help guidance.
+- [x] Owner approved the interaction contract and waived a separate visual
+  review; port 3010 remained closed.
+- [x] Ran focused low-resource non-Vitest checks and created a narrow local
+  follow-on commit.
+
 ## Coordination
 
 - The shared database and migration manifest are current through migration

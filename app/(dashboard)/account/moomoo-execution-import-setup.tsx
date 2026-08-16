@@ -184,9 +184,15 @@ export function MoomooExecutionImportSetup({
     }
   }
 
-  async function startImport(account: SafeLinkedAccount): Promise<void> {
-    const earliestExecutionDate = earliestDates[account.linkRef] ?? "";
-    if (!earliestExecutionDate || loading) return;
+  async function startImport(
+    account: SafeLinkedAccount,
+    request: Readonly<
+      { mode: "latest" } |
+      { mode: "history"; earliestExecutionDate: string }
+    >,
+  ): Promise<void> {
+    if (request.mode === "history" && !request.earliestExecutionDate) return;
+    if (loading) return;
     setLoading(true);
     setError(null);
     try {
@@ -200,7 +206,7 @@ export function MoomooExecutionImportSetup({
         body: JSON.stringify({
           expectedAccountSelectionRef: activeAccountSelectionRef,
           linkRef: account.linkRef,
-          earliestExecutionDate,
+          ...request,
         }),
       });
       const packet = await response.json() as SafeFailurePacket & { job?: SafeImportJob };
@@ -287,10 +293,26 @@ export function MoomooExecutionImportSetup({
               ) : null}
             </Stack>
           ) : null}
+          {account.latestImport?.state === "completed" ? (
+            <Stack spacing={0.75}>
+              <Button
+                disabled={loading}
+                onClick={() => void startImport(account, { mode: "latest" })}
+                size="small"
+                sx={{ alignSelf: "flex-start" }}
+                variant="contained"
+              >
+                Import latest trades
+              </Button>
+              <Typography color="text.secondary" variant="caption">
+                Automatic imports continue regularly. Use this button when you want TradersLink to check Moomoo immediately.
+              </Typography>
+            </Stack>
+          ) : null}
           {!account.latestImport || ["completed", "failed", "cancelled"].includes(account.latestImport.state) ? (
             <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" } }}>
               <TextField
-                label="Date of first execution"
+                label={account.latestImport ? "Earlier execution date" : "Date of first execution"}
                 onChange={(event) => setEarliestDates((current) => ({
                   ...current,
                   [account.linkRef]: event.target.value,
@@ -300,13 +322,23 @@ export function MoomooExecutionImportSetup({
                 type="date"
                 value={earliestDates[account.linkRef] ?? ""}
               />
-              <Button disabled={loading || !(earliestDates[account.linkRef] ?? "")} onClick={() => void startImport(account)} size="small" variant="contained">
-                {account.latestImport ? "Import more history" : "Start execution import"}
+              <Button
+                disabled={loading || !(earliestDates[account.linkRef] ?? "")}
+                onClick={() => void startImport(account, {
+                  mode: "history",
+                  earliestExecutionDate: earliestDates[account.linkRef] ?? "",
+                })}
+                size="small"
+                variant={account.latestImport ? "outlined" : "contained"}
+              >
+                {account.latestImport ? "Import older trades" : "Start execution import"}
               </Button>
             </Stack>
           ) : null}
           <Typography color="text.secondary" variant="caption">
-            Enter the date of the first execution in this trading account. Moomoo limits each history request to 90 days, so TradersLink works backward in saved date ranges and you can leave this page while it runs.
+            {account.latestImport
+              ? "Use an earlier date only when you want to extend the saved history. Moomoo limits each history request to 90 days, so TradersLink works backward in saved date ranges."
+              : "Enter the date of the first execution in this trading account. Moomoo limits each history request to 90 days, so TradersLink works backward in saved date ranges and you can leave this page while it runs."}
           </Typography>
         </Stack>
       ))}
