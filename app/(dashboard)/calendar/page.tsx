@@ -2,9 +2,7 @@ import type { Metadata } from "next";
 
 import { CalendarClient } from "./calendar-client";
 import { emptyCalendarData, getCalendarData } from "./calendar-data";
-import { readJournalDataDecisionNoticeRef } from "@/src/modules/journal/server/decisions/journal-data-decision-notice";
 import {
-  currentJournalAccountSelectionRef,
   requireTraderLinkPlatformPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import type {
@@ -19,7 +17,7 @@ import type {
 } from "./calendar-types";
 
 export const metadata: Metadata = {
-  title: "Calendar | TraderLink Platform",
+  title: "Trading Calendar | TraderLink Platform",
   description: "Daily and ticker-level performance from accepted Trade Tracker executions.",
 };
 
@@ -135,18 +133,14 @@ export default async function CalendarPage({
     endDate: initialView === "month" ? monthEnd(selectedMonth) : weekEnd(selectedWeek),
     startDate: initialView === "month" ? monthStart(selectedMonth) : selectedWeek,
   };
-  const scope = await requireTraderLinkPlatformPageScope();
+  await requireTraderLinkPlatformPageScope();
 
   return (
     <CalendarClient
       key={`${initialView}:${selectedMonth}:${selectedWeek}:${JSON.stringify(initialFilters)}`}
-      accountSelectionRef={currentJournalAccountSelectionRef(scope)}
       availableMonths={availableMonths}
       availableWeeks={availableWeeks}
       availableWeekOptions={availableWeekOptions}
-      decisionNoticeRef={initialData.coverage.needsDecisionCount > 0
-        ? readJournalDataDecisionNoticeRef(scope)
-        : null}
       initialData={initialData}
       initialFilters={initialFilters}
       initialView={initialView}

@@ -710,7 +710,7 @@ export function AiChatClient({
             }}
           >
             <Typography sx={{ fontWeight: 800 }}>Conversations</Typography>
-            <IconButton aria-label="Close conversations" onClick={() => setMobileOpen(false)}>
+            <IconButton aria-label="Close conversations" onClick={() => setMobileOpen(false)} sx={{ height: 44, width: 44 }}>
               <CloseRoundedIcon />
             </IconButton>
           </Stack>
@@ -720,7 +720,7 @@ export function AiChatClient({
 
       <Stack sx={{ flex: 1, minWidth: 0 }}>
         <Stack direction="row" spacing={1} sx={{ alignItems: "center", borderBottom: 1, borderColor: "divider", minHeight: 64, px: { xs: 1.25, sm: 2 } }}>
-          {mobile ? <IconButton aria-label="Open conversations" onClick={() => setMobileOpen(true)}><MenuRoundedIcon /></IconButton> : null}
+          {mobile ? <IconButton aria-label="Open conversations" onClick={() => setMobileOpen(true)} sx={{ height: 44, width: 44 }}><MenuRoundedIcon /></IconButton> : null}
           <Box sx={{ flex: 1, minWidth: 0 }}>
             {renaming ? (
               <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
@@ -742,13 +742,13 @@ export function AiChatClient({
           </Box>
           {activeConversation && !renaming ? (
             <>
-              <Tooltip title="Rename conversation"><IconButton aria-label="Rename conversation" onClick={() => { setRenameTitle(activeConversation.title); setRenaming(true); }}><EditRoundedIcon /></IconButton></Tooltip>
-              <Tooltip title={activeConversation.state === "active" ? "Archive conversation" : "Restore conversation"}><IconButton aria-label={activeConversation.state === "active" ? "Archive conversation" : "Restore conversation"} onClick={() => void changeArchiveState()}>{activeConversation.state === "active" ? <ArchiveRoundedIcon /> : <RestoreRoundedIcon />}</IconButton></Tooltip>
+              <Tooltip title="Rename conversation"><IconButton aria-label="Rename conversation" onClick={() => { setRenameTitle(activeConversation.title); setRenaming(true); }} sx={{ height: 44, width: 44 }}><EditRoundedIcon /></IconButton></Tooltip>
+              <Tooltip title={activeConversation.state === "active" ? "Archive conversation" : "Restore conversation"}><IconButton aria-label={activeConversation.state === "active" ? "Archive conversation" : "Restore conversation"} onClick={() => void changeArchiveState()} sx={{ height: 44, width: 44 }}>{activeConversation.state === "active" ? <ArchiveRoundedIcon /> : <RestoreRoundedIcon />}</IconButton></Tooltip>
             </>
           ) : null}
           {onClose ? (
             <Tooltip title="Close AI Chat">
-              <IconButton aria-label="Close AI Chat" onClick={onClose}>
+              <IconButton aria-label="Close AI Chat" onClick={onClose} sx={{ height: 44, width: 44 }}>
                 <CloseRoundedIcon />
               </IconButton>
             </Tooltip>
@@ -968,7 +968,15 @@ export function AiChatClient({
           </Stack>
         </Box>
 
-        <Box sx={{ borderTop: 1, borderColor: "divider", p: { xs: 1.25, sm: 2 } }}>
+        <Box
+          sx={{
+            borderTop: 1,
+            borderColor: "divider",
+            pb: { xs: "calc(10px + env(safe-area-inset-bottom))", sm: 2 },
+            px: { xs: 1.25, sm: 2 },
+            pt: { xs: 1.25, sm: 2 },
+          }}
+        >
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "flex-end" } }}>
             <TextField
               disabled={!activeConversation || activeConversation.state !== "active" || sending || hasPendingAssistantMessage}
@@ -988,7 +996,7 @@ export function AiChatClient({
                 : "Start a conversation to ask a question"}
               value={question}
             />
-            <IconButton aria-label="Send question" color="primary" disabled={!question.trim() || !activeConversation || sending || hasPendingAssistantMessage || !analysisScope} onClick={() => void sendQuestion()} sx={{ height: 48, width: 48 }}><SendRoundedIcon /></IconButton>
+            <IconButton aria-label="Send question" color="primary" disabled={!question.trim() || !activeConversation || sending || hasPendingAssistantMessage || !analysisScope} onClick={() => void sendQuestion()} sx={{ alignSelf: { xs: "flex-end", sm: "auto" }, height: 48, width: 48 }}><SendRoundedIcon /></IconButton>
           </Stack>
           <Typography color="text.secondary" sx={{ mt: 0.75 }} variant="caption">
             {hasPendingAssistantMessage ? "Your last question is still being completed." : "Press Enter to send. Use Shift + Enter for a new line."}

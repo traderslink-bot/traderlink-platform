@@ -141,9 +141,22 @@ export function AccountErasureControls({
             {error ? <Alert severity="error">{error}</Alert> : null}
           </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button disabled={working} onClick={closeDialog}>Cancel</Button>
-          <Button color="error" disabled={working || confirmation !== expectedConfirmation} onClick={() => void erase()} variant="contained">
+        <DialogActions
+          sx={{
+            alignItems: { xs: "stretch", sm: "center" },
+            flexDirection: { xs: "column", sm: "row" },
+            gap: { xs: 1, sm: 0 },
+            "& > :not(style) ~ :not(style)": { ml: { xs: 0, sm: 1 } },
+          }}
+        >
+          <Button disabled={working} onClick={closeDialog} sx={{ width: { xs: "100%", sm: "auto" } }}>Cancel</Button>
+          <Button
+            color="error"
+            disabled={working || confirmation !== expectedConfirmation}
+            onClick={() => void erase()}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
+            variant="contained"
+          >
             {working ? "Deleting..." : dialog === "traderlink_account" ? "Delete account" : "Delete Trade Tracker account"}
           </Button>
         </DialogActions>

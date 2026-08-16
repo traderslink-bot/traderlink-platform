@@ -9,7 +9,7 @@ const guide = (slug: string, title: string, description: string, sections: reado
 export const OPEN_POSITIONS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   guide("getting-started", "Getting started", "Use Open Positions to see confirmed positions that have not returned to zero and record their current trader-defined status.", [
     section("confirmed-open-positions", "Confirmed open positions", "A confirmed position remains open until the saved quantity returns to zero.", ["open positions", "remaining quantity", "average entry", "confirmed open"], [
-      paragraph("The table shows confirmed positions with their opened time, ticker, side, remaining quantity, average entry, age and current trade status. Time held does not choose that status for you."),
+      paragraph("Desktop uses a table and mobile uses position cards. Both show each confirmed position's opened time, ticker, side, remaining quantity, average entry, age and current trade status. Time held does not choose that status for you."),
       bullets(["An Active swing is an intentional swing position.", "Day trade still open means the day-trade position has not yet returned to zero.", "Unplanned hold records a position that no longer matches the original Day-trade intention.", "Not classified means you have not recorded the current position type yet."]),
     ]),
     section("what-is-not-in-the-total", "What is not in the confirmed total", "A factual chain needing confirmation remains separate until the evidence is resolved.", ["pending", "data decisions", "needs decision", "confirmed total"], [

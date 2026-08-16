@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Typography from "@mui/material/Typography";
 
 import {
   DashboardPage,
@@ -37,6 +38,7 @@ export default async function QuickTradeEntryPage() {
   if (!account) {
     return (
       <DashboardPage>
+        <Typography component="h1" variant="h1">Quick Trade Entry</Typography>
         <DashboardUnavailableState
           actionHref="/account"
           actionLabel="Choose a Trade Tracker account"
@@ -49,6 +51,7 @@ export default async function QuickTradeEntryPage() {
 
   return (
     <DashboardPage>
+      <Typography component="h1" variant="h1">Quick Trade Entry</Typography>
       <ManualExecutionEntry
         accountCurrency={account.baseCurrency}
         accountTimezone={account.tradingTimezone}

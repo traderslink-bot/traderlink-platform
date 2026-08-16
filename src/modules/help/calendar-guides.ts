@@ -10,7 +10,7 @@ export const CALENDAR_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   guide("getting-started", "Getting started", "Use Calendar to see completed trades in your Trade Tracker by month or trading week and open the details behind a date.", [
     section("what-calendar-shows", "What Calendar shows", "Calendar groups accepted completed trades by the selected Trade Tracker account and trading date.", ["calendar", "completed trades", "p/l", "win rate", "trade tracker"], [
       paragraph("Calendar gives a visual view of completed trades. The summary cards show the selected period's P/L, trade count and win rate when the available facts support those results."),
-      bullets(["Select Month for a broader trading-month view.", "Select Week for a five-day trading-week view with more space for each date.", "Select a day or ticker to open the recorded trade details."]),
+      bullets(["Select Month for a broader trading-month view. Phones use a compact five-column grid so every weekday stays visible without sideways scrolling.", "Select Week for a five-day trading-week view. Phones use one readable card per day.", "Select a day or ticker to open the complete recorded details in the side panel or full-width mobile drawer."]),
     ]),
     section("empty-and-unavailable", "Empty and unavailable states", "An empty date and an unavailable calculation mean different things.", ["empty calendar", "unavailable", "coverage", "no trades"], [
       paragraph("A date with no completed trades does not pretend that a review exists. When the available facts cannot support a calculation, Calendar says so instead of showing a zero or a guessed result."),
@@ -26,7 +26,7 @@ export const CALENDAR_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   ]),
   guide("inspect-a-day", "Inspect a day and its trades", "Open a day or ticker to see the saved trade information behind the Calendar cell.", [
     section("open-details", "Open the selected-day details", "Select a populated day, or select a ticker inside it, to review the available details.", ["selected day", "ticker details", "calendar drawer", "executions"], [
-      paragraph("The selected-day panel lists the tickers in that date. Opening a ticker shows its completed trades, saved tags, notes and execution list when those facts are available."),
+      paragraph("The selected-day panel lists the tickers in that date. It opens as a side drawer on desktop and uses the full phone width on mobile. Opening a ticker shows its completed trades, saved tags, notes and execution list when those facts are available."),
       link("/help/daily-trade-tracker/review-trades", "Read Daily Trade Tracker trade review help", "Use the Daily Tracker for the complete trade-review workflow and chart analysis."),
     ]),
     section("calendar-is-read-only", "Calendar is a review surface", "Use the original feature when you need to change a trade or add a new entry.", ["edit trade", "read only", "import trades", "daily tracker"], [

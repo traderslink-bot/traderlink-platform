@@ -344,15 +344,75 @@ function ResolvedDecisionCard({
             {item.executions.length > 0 ? (
               <Box>
                 <Typography sx={{ fontWeight: 800, mb: 0.5 }} variant="subtitle2">Executions used by this trade</Typography>
-                <TableContainer sx={{ maxHeight: 280 }}><Table size="small" stickyHeader><TableHead><TableRow><TableCell>Source</TableCell><TableCell>Executed</TableCell><TableCell>Side</TableCell><TableCell align="right">Shares</TableCell><TableCell align="right">Price</TableCell></TableRow></TableHead><TableBody>{item.executions.map((execution) => (
-                  <TableRow key={execution.executionId}><TableCell>{execution.sourceLabel ?? "Execution"}</TableCell><TableCell>{displayTimestamp(execution.executedAtUtc)}</TableCell><TableCell>{execution.side}</TableCell><TableCell align="right">{displayDecimal(execution.quantityDecimal)}</TableCell><TableCell align="right">{displayDecimal(execution.priceDecimal)}</TableCell></TableRow>
-                ))}</TableBody></Table></TableContainer>
+                <ExecutionEvidence executions={item.executions} />
               </Box>
             ) : null}
           </Stack>
         ) : null}
       </Stack>
     </DashboardPanel>
+  );
+}
+
+function ExecutionEvidence({
+  executions,
+}: {
+  executions: JournalDataDecisionItem["executions"];
+}) {
+  return (
+    <>
+      <TableContainer sx={{ display: { xs: "none", md: "block" }, maxHeight: 280 }}>
+        <Table size="small" stickyHeader>
+          <TableHead>
+            <TableRow>
+              <TableCell>Source</TableCell>
+              <TableCell>Executed</TableCell>
+              <TableCell>Side</TableCell>
+              <TableCell align="right">Shares</TableCell>
+              <TableCell align="right">Price</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {executions.map((execution) => (
+              <TableRow key={execution.executionId}>
+                <TableCell>{execution.sourceLabel ?? "Execution"}</TableCell>
+                <TableCell>{displayTimestamp(execution.executedAtUtc)}</TableCell>
+                <TableCell>{execution.side}</TableCell>
+                <TableCell align="right">{displayDecimal(execution.quantityDecimal)}</TableCell>
+                <TableCell align="right">{displayDecimal(execution.priceDecimal)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <Stack
+        spacing={1}
+        sx={{ display: { xs: "flex", md: "none" }, maxHeight: 360, overflowY: "auto" }}
+      >
+        {executions.map((execution) => (
+          <Box
+            key={execution.executionId}
+            sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.25 }}
+          >
+            <Stack spacing={0.75}>
+              <Stack direction="row" justifyContent="space-between" spacing={1}>
+                <Typography sx={{ fontWeight: 800 }} variant="body2">
+                  {execution.sourceLabel ?? "Execution"}
+                </Typography>
+                <Chip label={execution.side} size="small" variant="outlined" />
+              </Stack>
+              <Typography color="text.secondary" variant="caption">
+                {displayTimestamp(execution.executedAtUtc)}
+              </Typography>
+              <Stack direction="row" justifyContent="space-between" spacing={2}>
+                <Typography variant="body2">Shares: {displayDecimal(execution.quantityDecimal)}</Typography>
+                <Typography variant="body2">Price: {displayDecimal(execution.priceDecimal)}</Typography>
+              </Stack>
+            </Stack>
+          </Box>
+        ))}
+      </Stack>
+    </>
   );
 }
 
@@ -407,7 +467,8 @@ function StatementRows({
           <Alert severity="success">This statement has no rows waiting for a decision.</Alert>
         ) : null}
         {rows.length > 0 ? (
-          <TableContainer sx={{ maxHeight: 640 }}>
+          <>
+          <TableContainer sx={{ display: { xs: "none", md: "block" }, maxHeight: 640 }}>
             <Table size="small" stickyHeader>
               <TableHead><TableRow>
                 <TableCell>Row</TableCell>
@@ -467,6 +528,80 @@ function StatementRows({
               })}</TableBody>
             </Table>
           </TableContainer>
+          <Stack spacing={1.5} sx={{ display: { xs: "flex", md: "none" } }}>
+            {rows.map((row) => {
+              const decision = statement
+                ? decisions.find((item) =>
+                    item.sourceRowNumber === row.recordOrdinal &&
+                    item.importBatchIds.includes(statement.importBatchId)) ?? null
+                : null;
+              const expanded = expandedRecordOrdinal === row.recordOrdinal;
+              return (
+                <Box
+                  key={row.recordOrdinal}
+                  sx={{ border: 1, borderColor: "divider", borderRadius: 2, minWidth: 0, p: 1.5 }}
+                >
+                  <Stack spacing={1.25}>
+                    <Stack
+                      direction={{ xs: "column", sm: "row" }}
+                      justifyContent="space-between"
+                      spacing={1}
+                      sx={{ alignItems: { sm: "center" } }}
+                    >
+                      <Typography sx={{ fontWeight: 800 }} variant="subtitle2">
+                        Statement row {row.recordOrdinal}
+                      </Typography>
+                      <Chip
+                        label={row.sectionName ?? statementClassificationLabel(row.initialClassification)}
+                        size="small"
+                        sx={{ alignSelf: "flex-start", maxWidth: "100%" }}
+                        variant="outlined"
+                      />
+                    </Stack>
+                    <Typography sx={{ overflowWrap: "anywhere" }} variant="body2">
+                      {row.fields.join(" · ") || "The imported values could not be read."}
+                    </Typography>
+                    {row.issues.map((issue, index) => (
+                      <Chip
+                        color={issue.severity === "error" ? "error" : "warning"}
+                        key={`${row.recordOrdinal}-${index}`}
+                        label={issue.message}
+                        size="small"
+                        sx={{
+                          alignSelf: "flex-start",
+                          height: "auto",
+                          maxWidth: "100%",
+                          "& .MuiChip-label": { display: "block", py: 0.5, whiteSpace: "normal" },
+                        }}
+                      />
+                    ))}
+                    {decision ? (
+                      <Button
+                        onClick={() => setExpandedRecordOrdinal((current) =>
+                          current === row.recordOrdinal ? null : row.recordOrdinal)}
+                        sx={{ alignSelf: "flex-start" }}
+                        variant="outlined"
+                      >
+                        {expanded ? "Hide editor" : "Fix this row"}
+                      </Button>
+                    ) : null}
+                    {expanded && decision ? (
+                      <DecisionCard
+                        cardNumber={row.recordOrdinal}
+                        expectedAccountSelectionRef={expectedAccountSelectionRef}
+                        item={decision}
+                        initiallyExpanded
+                        onOpenPositionConfirmed={onOpenPositionConfirmed}
+                        onResolved={onResolved}
+                        shouldFocus={false}
+                      />
+                    ) : null}
+                  </Stack>
+                </Box>
+              );
+            })}
+          </Stack>
+          </>
         ) : null}
       </Stack>
     </DashboardPanel>
@@ -713,9 +848,7 @@ function DecisionCard({
         {item.executions.length > 0 ? (
           <Box>
             <Typography sx={{ fontWeight: 800, mb: 1 }} variant="subtitle2">Executions used by this trade</Typography>
-            <TableContainer sx={{ maxHeight: 280 }}><Table size="small" stickyHeader><TableHead><TableRow><TableCell>Source</TableCell><TableCell>Executed</TableCell><TableCell>Side</TableCell><TableCell align="right">Shares</TableCell><TableCell align="right">Price</TableCell></TableRow></TableHead><TableBody>{item.executions.map((execution) => (
-              <TableRow key={execution.executionId}><TableCell>{execution.sourceLabel ?? "Execution"}</TableCell><TableCell>{execution.executedAtUtc.replace("T", " ").replace(".000Z", " UTC")}</TableCell><TableCell>{execution.side}</TableCell><TableCell align="right">{displayDecimal(execution.quantityDecimal)}</TableCell><TableCell align="right">{displayDecimal(execution.priceDecimal)}</TableCell></TableRow>
-            ))}</TableBody></Table></TableContainer>
+            <ExecutionEvidence executions={item.executions} />
           </Box>
         ) : null}
 

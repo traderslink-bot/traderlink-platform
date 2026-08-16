@@ -27,7 +27,7 @@ function metricNumber(value: JournalAnalyticsExactValue | null): number | null {
 }
 
 function money(value: string | null): string {
-  if (value === null) return "N/A";
+  if (value === null) return "Unavailable";
   const display = formatJournalAnalyticsDecimal(value, 2, true);
   return display.startsWith("-") ? `-$${display.slice(1)}` : `$${display}`;
 }

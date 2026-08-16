@@ -374,23 +374,24 @@ export function RulesClient({
           justifyContent: "space-between",
         }}
       >
-        <Box>
-          <Typography
-            color="primary.main"
-            sx={{ fontWeight: 700 }}
-            variant="caption"
-          >
-            TRADING PLAN
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+          <Typography component="h1" variant="h1">
+            Trading Rules
           </Typography>
-          <Typography component="h2" sx={{ mt: 0.25 }} variant="h1">
-            Rules you chose to follow
-          </Typography>
-          <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-            Start with a few rules that matter to you.
-          </Typography>
-        </Box>
-        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
           <FeatureHelpLink href="/help/trading-rules" label="Trading Rules" size="medium" />
+        </Stack>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          sx={{
+            alignItems: { xs: "stretch", sm: "center" },
+            gap: 1,
+            width: { xs: "100%", sm: "auto" },
+            "& .MuiButton-root": {
+              minHeight: 44,
+              width: { xs: "100%", sm: "auto" },
+            },
+          }}
+        >
           <Button component={Link} href="/rules/results" variant="outlined">
             Rule Results
           </Button>

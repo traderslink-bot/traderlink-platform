@@ -190,7 +190,7 @@ function PieChart({ points, donut }: { points: readonly TimingPoint[]; donut: bo
 }
 
 function ChartPanel({ chart, points, metricId, timezone, styles }: { chart: (typeof CHARTS)[number]; points: readonly TimingPoint[]; metricId: TimingMetricId; timezone: string; styles: readonly Readonly<{ id: TimingChartStyle; label: string }>[] }) {
-  const [chartStyle, setChartStyle] = useState<TimingChartStyle>(chart.id === "entry_time_bucket" || chart.id === "exit_time_bucket" ? "line" : "horizontal_bars");
+  const [chartStyle, setChartStyle] = useState<TimingChartStyle>("horizontal_bars");
   return (
     <Paper sx={{ minWidth: 0, p: { xs: 1.5, sm: 2.25 } }} variant="outlined">
       <Stack direction={{ xs: "column", sm: "row" }} spacing={0.5} sx={{ alignItems: { sm: "baseline" }, justifyContent: "space-between" }}>
@@ -200,14 +200,14 @@ function ChartPanel({ chart, points, metricId, timezone, styles }: { chart: (typ
           </Typography>
           <Typography color="text.secondary" variant="body2">{MEASURES.find((measure) => measure.id === metricId)?.label}</Typography>
         </Box>
-        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" } }}>
           <BestLabel chart={chart} metricId={metricId} points={points} />
           <TextField
             aria-label={`${chart.title} chart type`}
             onChange={(event) => setChartStyle(event.target.value as TimingChartStyle)}
             select
             size="small"
-            sx={{ minWidth: 112 }}
+            sx={{ minWidth: { sm: 112 } }}
             value={chartStyle}
           >
             {styles.map((option) => <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>)}
@@ -235,8 +235,8 @@ export function TimingAnalyticsClient({ chartData, completedTradeCount, timezone
   const [metricId, setMetricId] = useState<TimingMetricId>("net_pnl");
   return (
     <Stack spacing={2.5}>
-      <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", justifyContent: "flex-end" }}>
-        <TextField label="Measure" onChange={(event) => setMetricId(event.target.value as TimingMetricId)} select size="small" sx={{ minWidth: 220 }} value={metricId}>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={0.5} sx={{ alignItems: { sm: "center" }, justifyContent: "flex-end" }}>
+        <TextField label="Measure" onChange={(event) => setMetricId(event.target.value as TimingMetricId)} select size="small" sx={{ minWidth: { sm: 220 } }} value={metricId}>
           {MEASURES.map((option) => <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>)}
         </TextField>
         <FeatureHelpLink href="/help/core-analytics/timing-and-execution#read-timing" label="Timing measures" />

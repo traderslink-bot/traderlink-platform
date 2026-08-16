@@ -1,6 +1,8 @@
 "use client";
 
 import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
@@ -39,6 +41,16 @@ type SortColumn = "ticker" | "direction" | "tradeType" | "opened" | "closed" | "
 const COLUMNS: readonly Readonly<{ id: SortColumn; label: string }>[] = [
   { id: "ticker", label: "Ticker" }, { id: "direction", label: "Direction" }, { id: "tradeType", label: "Trade type" }, { id: "opened", label: "Opened" }, { id: "closed", label: "Closed" }, { id: "executions", label: "Executions" }, { id: "averageEntry", label: "Average entry" }, { id: "averageExit", label: "Average exit" }, { id: "maximumPosition", label: "Max shares" }, { id: "holdTime", label: "Hold time" }, { id: "netPnl", label: "Net P/L" },
 ];
+
+function mobileSortLabel(column: (typeof COLUMNS)[number], direction: "asc" | "desc"): string {
+  if (column.id === "opened" || column.id === "closed") {
+    return `${column.label}: ${direction === "desc" ? "newest" : "oldest"}`;
+  }
+  if (column.id === "ticker" || column.id === "direction" || column.id === "tradeType") {
+    return `${column.label}: ${direction === "asc" ? "A–Z" : "Z–A"}`;
+  }
+  return `${column.label}: ${direction === "desc" ? "high to low" : "low to high"}`;
+}
 
 function sortValue(row: ExecutionTradeRow, column: SortColumn): string | number {
   switch (column) {
@@ -79,9 +91,88 @@ export function ExecutionAnalyticsClient({ chartData, rows }: { chartData: Execu
   const [sortColumn, setSortColumn] = useState<SortColumn>("closed");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const visibleRows = useMemo(() => rows.filter((row) => row.ticker.toUpperCase().includes(ticker.trim().toUpperCase()) && (direction === "all" || row.direction === direction) && (tradeType === "all" || row.tradeTypeValue === tradeType)).sort((left, right) => { const leftValue = sortValue(left, sortColumn); const rightValue = sortValue(right, sortColumn); const comparison = typeof leftValue === "string" ? leftValue.localeCompare(rightValue as string) : leftValue - (rightValue as number); return sortDirection === "asc" ? comparison : -comparison; }), [direction, rows, sortColumn, sortDirection, ticker, tradeType]);
   const paginatedRows = visibleRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   const changeSort = (column: SortColumn) => { setPage(0); if (column === sortColumn) setSortDirection((value) => value === "asc" ? "desc" : "asc"); else { setSortColumn(column); setSortDirection(column === "ticker" || column === "direction" || column === "tradeType" ? "asc" : "desc"); } };
-  return <Stack spacing={2.5}><Stack direction={{ xs: "column", sm: "row" }} spacing={0.5} sx={{ alignItems: { sm: "center" }, justifyContent: "flex-end" }}><TextField label="Measure" onChange={(event) => setMetricId(event.target.value as ExecutionMetricId)} select size="small" sx={{ minWidth: 180 }} value={metricId}>{MEASURES.map((measure) => <MenuItem key={measure.id} value={measure.id}>{measure.label}</MenuItem>)}</TextField><FeatureHelpLink href="/help/core-analytics/timing-and-execution#read-execution" label="Execution measures" /></Stack><Box sx={{ display: "grid", gap: 2.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", lg: "repeat(2, minmax(0, 1fr))" } }}>{CHARTS.map((chart) => <ChartPanel chart={chart} key={chart.id} metricId={metricId} points={chartData[chart.id]} />)}</Box><Paper sx={{ overflow: "hidden" }} variant="outlined"><Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ p: { xs: 1.5, sm: 2.25 } }}><TextField label="Ticker" onChange={(event) => { setTicker(event.target.value); setPage(0); }} placeholder="Search tickers" size="small" sx={{ minWidth: { md: 210 } }} value={ticker} /><TextField label="Direction" onChange={(event) => { setDirection(event.target.value as typeof direction); setPage(0); }} select size="small" sx={{ minWidth: { md: 150 } }} value={direction}><MenuItem value="all">All directions</MenuItem><MenuItem value="long">Long</MenuItem><MenuItem value="short">Short</MenuItem></TextField><TextField label="Trade type" onChange={(event) => { setTradeType(event.target.value as typeof tradeType); setPage(0); }} select size="small" sx={{ minWidth: { md: 170 } }} value={tradeType}><MenuItem value="all">All trade types</MenuItem><MenuItem value="day_trade">Day trades</MenuItem><MenuItem value="multi_day_trade">Multi-day trades</MenuItem></TextField><Box sx={{ flex: 1 }} /><TablePagination component="div" count={visibleRows.length} labelRowsPerPage="Rows per page:" onPageChange={(_, nextPage) => setPage(nextPage)} onRowsPerPageChange={(event) => { setRowsPerPage(Number(event.target.value)); setPage(0); }} page={page} rowsPerPage={rowsPerPage} rowsPerPageOptions={[25, 50, 100]} sx={{ alignSelf: { md: "center" }, ml: { md: "auto" }, ".MuiTablePagination-toolbar": { minHeight: 36, pl: 0 }, ".MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows": { fontSize: 12 } }} /></Stack>{visibleRows.length === 0 ? <Typography color="text.secondary" sx={{ px: 2.25, pb: 3 }}>No completed trades match these filters.</Typography> : <TableContainer><Table size="small"><TableHead><TableRow>{COLUMNS.map((column) => <TableCell key={column.id}><TableSortLabel active={sortColumn === column.id} direction={sortColumn === column.id ? sortDirection : "asc"} hideSortIcon={false} onClick={() => changeSort(column.id)} slotProps={{ icon: { sx: { opacity: sortColumn === column.id ? 1 : 0.45 } } }}>{column.label}</TableSortLabel></TableCell>)}</TableRow></TableHead><TableBody>{paginatedRows.map((row) => <TableRow hover key={row.roundTripId}><TableCell sx={{ fontWeight: 850 }}>{row.ticker}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.tradeType}</TableCell><TableCell>{row.opened}</TableCell><TableCell>{row.closed}</TableCell><TableCell>{row.executions}</TableCell><TableCell>{row.averageEntry}</TableCell><TableCell>{row.averageExit}</TableCell><TableCell>{row.maximumPosition}</TableCell><TableCell>{row.holdTime}</TableCell><TableCell sx={{ color: row.netPnlValue < 0 ? "error.main" : "success.main", fontWeight: 800 }}>{row.netPnl}</TableCell></TableRow>)}</TableBody></Table></TableContainer>}</Paper></Stack>;
+  return (
+    <Stack spacing={2.5}>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={0.5} sx={{ alignItems: { sm: "center" }, justifyContent: "flex-end" }}>
+        <TextField label="Measure" onChange={(event) => setMetricId(event.target.value as ExecutionMetricId)} select size="small" sx={{ minWidth: { sm: 180 } }} value={metricId}>
+          {MEASURES.map((measure) => <MenuItem key={measure.id} value={measure.id}>{measure.label}</MenuItem>)}
+        </TextField>
+        <FeatureHelpLink href="/help/core-analytics/timing-and-execution#read-execution" label="Execution measures" />
+      </Stack>
+      <Box sx={{ display: "grid", gap: 2.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", lg: "repeat(2, minmax(0, 1fr))" } }}>
+        {CHARTS.map((chart) => <ChartPanel chart={chart} key={chart.id} metricId={metricId} points={chartData[chart.id]} />)}
+      </Box>
+      <Paper sx={{ overflow: "hidden" }} variant="outlined">
+        <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ p: { xs: 1.5, sm: 2.25 } }}>
+          <TextField label="Ticker" onChange={(event) => { setTicker(event.target.value); setPage(0); }} placeholder="Search tickers" size="small" sx={{ minWidth: { md: 210 } }} value={ticker} />
+          <TextField label="Direction" onChange={(event) => { setDirection(event.target.value as typeof direction); setPage(0); }} select size="small" sx={{ minWidth: { md: 150 } }} value={direction}><MenuItem value="all">All directions</MenuItem><MenuItem value="long">Long</MenuItem><MenuItem value="short">Short</MenuItem></TextField>
+          <TextField label="Trade type" onChange={(event) => { setTradeType(event.target.value as typeof tradeType); setPage(0); }} select size="small" sx={{ minWidth: { md: 170 } }} value={tradeType}><MenuItem value="all">All trade types</MenuItem><MenuItem value="day_trade">Day trades</MenuItem><MenuItem value="multi_day_trade">Multi-day trades</MenuItem></TextField>
+          <TextField
+            label="Sort"
+            onChange={(event) => {
+              const [column, directionValue] = event.target.value.split(":") as [SortColumn, "asc" | "desc"];
+              setSortColumn(column);
+              setSortDirection(directionValue);
+              setPage(0);
+            }}
+            select
+            size="small"
+            sx={{ display: { xs: "flex", md: "none" } }}
+            value={`${sortColumn}:${sortDirection}`}
+          >
+            {COLUMNS.flatMap((column) => (["desc", "asc"] as const).map((directionValue) => (
+              <MenuItem key={`${column.id}:${directionValue}`} value={`${column.id}:${directionValue}`}>
+                {mobileSortLabel(column, directionValue)}
+              </MenuItem>
+            )))}
+          </TextField>
+          <Box sx={{ flex: 1 }} />
+          <TablePagination
+            component="div"
+            count={visibleRows.length}
+            labelRowsPerPage="Rows per page:"
+            onPageChange={(_, nextPage) => setPage(nextPage)}
+            onRowsPerPageChange={(event) => { setRowsPerPage(Number(event.target.value)); setPage(0); }}
+            page={page}
+            rowsPerPage={rowsPerPage}
+            rowsPerPageOptions={[10, 25, 50, 100]}
+            sx={{
+              alignSelf: { md: "center" },
+              ml: { md: "auto" },
+              ".MuiTablePagination-toolbar": { flexWrap: "wrap", gap: 0.5, justifyContent: { xs: "space-between", sm: "flex-end" }, minHeight: 40, pl: 0 },
+              ".MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows": { fontSize: 12 },
+            }}
+          />
+        </Stack>
+        {visibleRows.length === 0 ? (
+          <Typography color="text.secondary" sx={{ px: 2.25, pb: 3 }}>No completed trades match these filters.</Typography>
+        ) : (
+          <>
+            <TableContainer sx={{ display: { xs: "none", md: "block" } }}><Table size="small"><TableHead><TableRow>{COLUMNS.map((column) => <TableCell key={column.id}><TableSortLabel active={sortColumn === column.id} direction={sortColumn === column.id ? sortDirection : "asc"} hideSortIcon={false} onClick={() => changeSort(column.id)} slotProps={{ icon: { sx: { opacity: sortColumn === column.id ? 1 : 0.45 } } }}>{column.label}</TableSortLabel></TableCell>)}</TableRow></TableHead><TableBody>{paginatedRows.map((row) => <TableRow hover key={row.roundTripId}><TableCell sx={{ fontWeight: 850 }}>{row.ticker}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.tradeType}</TableCell><TableCell>{row.opened}</TableCell><TableCell>{row.closed}</TableCell><TableCell>{row.executions}</TableCell><TableCell>{row.averageEntry}</TableCell><TableCell>{row.averageExit}</TableCell><TableCell>{row.maximumPosition}</TableCell><TableCell>{row.holdTime}</TableCell><TableCell sx={{ color: row.netPnlValue < 0 ? "error.main" : "success.main", fontWeight: 800 }}>{row.netPnl}</TableCell></TableRow>)}</TableBody></Table></TableContainer>
+            <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" }, px: 1.5, pb: 1.5 }}>
+              {paginatedRows.map((row) => <Card key={row.roundTripId} variant="outlined"><CardContent>
+                <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+                  <Box><Typography sx={{ fontWeight: 900 }} variant="h6">{row.ticker}</Typography><Typography color="text.secondary" sx={{ textTransform: "capitalize" }} variant="body2">{row.direction} · {row.tradeType}</Typography></Box>
+                  <Typography color={row.netPnlValue < 0 ? "error.main" : "success.main"} sx={{ fontWeight: 850 }}>{row.netPnl}</Typography>
+                </Stack>
+                <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1.25 }}>
+                  <Box><Typography color="text.secondary" variant="caption">Opened</Typography><Typography variant="body2">{row.opened}</Typography></Box>
+                  <Box><Typography color="text.secondary" variant="caption">Closed</Typography><Typography variant="body2">{row.closed}</Typography></Box>
+                  <Box><Typography color="text.secondary" variant="caption">Average entry</Typography><Typography variant="body2">{row.averageEntry}</Typography></Box>
+                  <Box><Typography color="text.secondary" variant="caption">Average exit</Typography><Typography variant="body2">{row.averageExit}</Typography></Box>
+                  <Box><Typography color="text.secondary" variant="caption">Executions</Typography><Typography variant="body2">{row.executions}</Typography></Box>
+                  <Box><Typography color="text.secondary" variant="caption">Max shares</Typography><Typography variant="body2">{row.maximumPosition}</Typography></Box>
+                  <Box sx={{ gridColumn: "1 / -1" }}><Typography color="text.secondary" variant="caption">Hold time</Typography><Typography variant="body2">{row.holdTime}</Typography></Box>
+                </Box>
+              </CardContent></Card>)}
+            </Stack>
+          </>
+        )}
+      </Paper>
+    </Stack>
+  );
 }

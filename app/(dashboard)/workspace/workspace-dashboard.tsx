@@ -6,7 +6,6 @@ import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import DateRangeRoundedIcon from "@mui/icons-material/DateRangeRounded";
 import FileUploadRoundedIcon from "@mui/icons-material/FileUploadRounded";
 import Box from "@mui/material/Box";
-import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Card from "@mui/material/Card";
@@ -25,8 +24,6 @@ import {
 } from "../../dashboard-template";
 import type { JournalCalendarReadModel } from "@/src/modules/journal-analytics/contracts/journal-dashboard-read-models";
 import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
-import type { WorkspaceReportingSummary } from "@/src/modules/platform/server/reporting/workspace-reporting-summary";
-import { DismissibleDataDecisionNotice } from "../../dismissible-data-decision-notice";
 import type { WorkspaceReviewSummary } from "./workspace-review-summary";
 
 export type WorkspaceMetric = Readonly<{
@@ -69,7 +66,7 @@ const unavailableMetrics: readonly WorkspaceMetric[] = [
 ];
 
 function calendarMoney(value: string | null, currency: string | null): string {
-  if (value === null || currency === null) return "N/A";
+  if (value === null || currency === null) return "Unavailable";
   const formatted = formatJournalAnalyticsDecimal(value, 2, true);
   return formatted.startsWith("-") ? `-$${formatted.slice(1)}` : `+$${formatted}`;
 }
@@ -81,13 +78,6 @@ function calendarDate(value: string): string {
     timeZone: "UTC",
     weekday: "short",
   });
-}
-
-function reportingMoney(value: string, currency: string): string {
-  const formatted = formatJournalAnalyticsDecimal(value, 2, true);
-  return formatted.startsWith("-")
-    ? `-${currency} ${formatted.slice(1)}`
-    : `${currency} ${formatted}`;
 }
 
 function ruleOutcomeColor(status: "followed" | "broken"): "success" | "error" {
@@ -102,26 +92,12 @@ function ruleOutcomeLabel(input: Readonly<{
 }
 
 export function WorkspaceDashboard({
-  accountSelectionRef,
-  analyticsCoverage,
   analyticsMetrics,
   calendarData,
-  decisionNoticeRef,
-  reportingSummary,
   reviewSummary,
 }: {
-  accountSelectionRef?: string;
-  analyticsCoverage?: Readonly<{
-    readyClosedCount: number;
-    legitimateOpenCount: number;
-    needsDecisionCount: number;
-    feeCompleteCount: number;
-    feeIncompleteCount: number;
-  }>;
   analyticsMetrics?: readonly WorkspaceMetric[];
   calendarData?: JournalCalendarReadModel;
-  decisionNoticeRef?: string | null;
-  reportingSummary?: WorkspaceReportingSummary;
   reviewSummary?: WorkspaceReviewSummary;
 }) {
   const metrics = analyticsMetrics ?? unavailableMetrics;
@@ -130,6 +106,7 @@ export function WorkspaceDashboard({
     .slice(-7) ?? [];
   return (
     <DashboardPage>
+      <Typography component="h1" variant="h1">Workspace</Typography>
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={1}
@@ -153,7 +130,8 @@ export function WorkspaceDashboard({
           display: "grid",
           gap: 1.5,
           gridTemplateColumns: {
-            xs: "repeat(2, minmax(0, 1fr))",
+            xs: "minmax(0, 1fr)",
+            sm: "repeat(2, minmax(0, 1fr))",
             md: "repeat(3, minmax(0, 1fr))",
             xl: "repeat(6, minmax(0, 1fr))",
           },
@@ -163,52 +141,6 @@ export function WorkspaceDashboard({
           <DashboardMetricCard key={metric.label} {...metric} />
         ))}
       </Box>
-
-      {analyticsCoverage && analyticsCoverage.needsDecisionCount > 0 &&
-      accountSelectionRef && decisionNoticeRef ? (
-        <DismissibleDataDecisionNotice
-          accountSelectionRef={accountSelectionRef}
-          evidenceRef={decisionNoticeRef}
-          surface="workspace"
-        >
-          {analyticsCoverage.readyClosedCount} closed round trips are available.
-          {` ${analyticsCoverage.legitimateOpenCount} positions are classified as open.`}
-        </DismissibleDataDecisionNotice>
-      ) : analyticsCoverage ? (
-        <Alert severity="success">
-          {analyticsCoverage.readyClosedCount} closed round trips are available.
-          {` ${analyticsCoverage.legitimateOpenCount} positions are classified as open.`}
-        </Alert>
-      ) : null}
-
-      {reportingSummary ? (
-        <DashboardPanel title="Reporting equivalent">
-          {reportingSummary.status === "native_usd" ? (
-            <Typography color="text.secondary" variant="body2">
-              You are viewing your original USD Trade Tracker amounts. Choose another currency in Account Settings to see a daily reporting equivalent here.
-            </Typography>
-          ) : reportingSummary.status === "ready" && reportingSummary.convertedNetPnlDecimal !== null ? (
-            <Stack spacing={0.5}>
-              <Typography sx={{ fontWeight: 850 }} variant="h2">
-                {reportingMoney(
-                  reportingSummary.convertedNetPnlDecimal,
-                  reportingSummary.reportingCurrency,
-                )}
-              </Typography>
-              <Typography color="text.secondary" variant="body2">
-                Net realized P/L reporting equivalent from {reportingSummary.convertedTradingDayCount} USD trading day{reportingSummary.convertedTradingDayCount === 1 ? "" : "s"}, using Bank of Canada daily indicative rates.
-              </Typography>
-              <Typography color="text.secondary" variant="caption">
-                Your original USD Trade Tracker amounts remain authoritative.
-              </Typography>
-            </Stack>
-          ) : (
-            <Typography color="text.secondary" variant="body2">
-              A {reportingSummary.reportingCurrency} reporting equivalent is not available for all {reportingSummary.tradingDayCount} USD trading day{reportingSummary.tradingDayCount === 1 ? "" : "s"}. Your original USD Trade Tracker amounts remain visible and unchanged.
-            </Typography>
-          )}
-        </DashboardPanel>
-      ) : null}
 
       {reviewSummary?.currentFocuses || reviewSummary?.focusRules.length ? (
         <Box
@@ -435,17 +367,22 @@ export function WorkspaceDashboard({
       >
         <Stack spacing={1.5}>
           <Stack
-            direction="row"
-            sx={{ alignItems: "center", justifyContent: "space-between" }}
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1}
+            sx={{ alignItems: { xs: "stretch", sm: "center" }, justifyContent: "space-between" }}
           >
-            <Button disabled size="small">
+            <Button disabled size="small" sx={{ order: { xs: 2, sm: 1 } }}>
               Previous
             </Button>
-            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ alignItems: "center", justifyContent: "center", order: { xs: 1, sm: 2 } }}
+            >
               <CalendarMonthRoundedIcon color="primary" fontSize="small" />
               <Typography sx={{ fontWeight: 700 }}>Available trading history</Typography>
             </Stack>
-            <Button disabled size="small">
+            <Button disabled size="small" sx={{ order: 3 }}>
               Next
             </Button>
           </Stack>

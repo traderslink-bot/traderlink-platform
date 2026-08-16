@@ -7,17 +7,13 @@ import {
   buildJournalAnalyticsDashboardQuery,
   withJournalAnalyticsDashboardRuntime,
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
-import { readJournalDataDecisionNoticeRef } from "@/src/modules/journal/server/decisions/journal-data-decision-notice";
 import {
-  currentJournalAccountSelectionRef,
   requireTraderLinkPlatformPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
-import { PlatformAccountProfileReadService } from "@/src/modules/platform/server/identity/platform-account-profile-read-service";
-import { getWorkspaceReportingSummary } from "@/src/modules/platform/server/reporting/workspace-reporting-summary";
 
 export const metadata: Metadata = {
-  title: "Workspace | Trade Tracker",
+  title: "Workspace | TraderLink Platform",
   description: "Trade Tracker performance, manual entry, and day sessions.",
 };
 
@@ -53,29 +49,18 @@ export default async function WorkspacePage() {
       }),
     }),
   );
-  const { profile, reviewSummary } = withReadonlyPlatformDatabase({}, (database) => Object.freeze({
-    profile: new PlatformAccountProfileReadService(database).get(scope),
+  const { reviewSummary } = withReadonlyPlatformDatabase({}, (database) => Object.freeze({
     reviewSummary: readWorkspaceReviewSummary(database, scope),
   }));
-  const reportingSummary = await getWorkspaceReportingSummary(
-    calendar,
-    profile.reportingCurrency,
-  );
   return (
     <WorkspaceDashboard
-      accountSelectionRef={currentJournalAccountSelectionRef(scope)}
-      analyticsCoverage={response.crossPartitionCounts}
       analyticsMetrics={WORKSPACE_METRICS.map(([label, metricId, caption]) => ({
         label,
         caption,
         value: formatJournalAnalyticsPartitionedMetric(response, metricId),
       }))}
       calendarData={calendar}
-      reportingSummary={reportingSummary}
       reviewSummary={reviewSummary}
-      decisionNoticeRef={response.crossPartitionCounts.needsDecisionCount > 0
-        ? readJournalDataDecisionNoticeRef(scope)
-        : null}
     />
   );
 }

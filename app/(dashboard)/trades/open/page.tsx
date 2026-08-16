@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 
 import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
@@ -88,7 +90,8 @@ export default async function OpenPositionsPage() {
             There are no confirmed open positions. This does not include execution chains waiting for a Data Decision.
           </Typography>
         ) : (
-          <TableContainer>
+          <>
+          <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -110,7 +113,7 @@ export default async function OpenPositionsPage() {
                     <TableCell sx={{ fontWeight: 800 }}>{position.symbol}</TableCell>
                     <TableCell sx={{ textTransform: "capitalize" }}>{position.direction}</TableCell>
                     <TableCell align="right">{formatJournalAnalyticsDecimal(position.remainingQuantityDecimal)}</TableCell>
-                    <TableCell align="right">{position.averageEntryPriceDecimal === null ? "N/A" : `$${formatJournalAnalyticsDecimal(position.averageEntryPriceDecimal, 2, true)}`}</TableCell>
+                    <TableCell align="right">{position.averageEntryPriceDecimal === null ? "Unavailable" : `$${formatJournalAnalyticsDecimal(position.averageEntryPriceDecimal, 2, true)}`}</TableCell>
                     <TableCell align="right">{age(position.ageMilliseconds)}</TableCell>
                     <TableCell>
                       <Chip
@@ -125,6 +128,36 @@ export default async function OpenPositionsPage() {
               </TableBody>
             </Table>
           </TableContainer>
+          <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" } }}>
+            {result.positions.map((position) => {
+              const tracking = positionStyles[position.roundTripId] ?? null;
+              return (
+                <Card key={position.roundTripId} variant="outlined">
+                  <CardContent>
+                    <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+                      <Box>
+                        <Typography sx={{ fontWeight: 900 }} variant="h6">{position.symbol}</Typography>
+                        <Typography color="text.secondary" sx={{ textTransform: "capitalize" }} variant="body2">
+                          {position.direction} · {age(position.ageMilliseconds)}
+                        </Typography>
+                      </Box>
+                      <Chip
+                        color={tracking?.style?.openStatus === "swing" ? "primary" : "warning"}
+                        label={positionStatusLabel(tracking?.style ?? null)}
+                        size="small"
+                      />
+                    </Stack>
+                    <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1.5 }}>
+                      <Box sx={{ gridColumn: "1 / -1" }}><Typography color="text.secondary" variant="caption">Opened</Typography><Typography variant="body2">{timestamp(position.openedAtUtc, position.timezone)}</Typography></Box>
+                      <Box><Typography color="text.secondary" variant="caption">Remaining quantity</Typography><Typography variant="body2">{formatJournalAnalyticsDecimal(position.remainingQuantityDecimal)}</Typography></Box>
+                      <Box><Typography color="text.secondary" variant="caption">Average entry</Typography><Typography variant="body2">{position.averageEntryPriceDecimal === null ? "Unavailable" : `$${formatJournalAnalyticsDecimal(position.averageEntryPriceDecimal, 2, true)}`}</Typography></Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </Stack>
+          </>
         )}
       </DashboardPanel>
 

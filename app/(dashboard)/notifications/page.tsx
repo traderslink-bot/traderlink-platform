@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Typography from "@mui/material/Typography";
 
 import { DashboardPage, DashboardPanel } from "../../dashboard-template";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -19,7 +20,8 @@ export default async function NotificationsPage() {
   );
   return (
     <DashboardPage>
-      <DashboardPanel title="Notifications">
+      <Typography component="h1" variant="h1">Notifications</Typography>
+      <DashboardPanel title="All notifications">
         <NotificationList notifications={notifications} />
       </DashboardPanel>
     </DashboardPage>

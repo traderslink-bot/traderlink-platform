@@ -24,7 +24,8 @@ export default async function TradeCandleReviewPage({
   if (!key || !isCanonicalUuidV4(key)) {
     return (
       <DashboardPage>
-        <DashboardPanel title="Candle review">
+        <Typography component="h1" variant="h1">Candle Review</Typography>
+        <DashboardPanel title="Completed trade">
           <DashboardUnavailableState
             actionHref="/analytics/execution"
             actionLabel="View completed trades"
@@ -39,7 +40,8 @@ export default async function TradeCandleReviewPage({
   if (!model) {
     return (
       <DashboardPage>
-        <DashboardPanel title="Candle review">
+        <Typography component="h1" variant="h1">Candle Review</Typography>
+        <DashboardPanel title="Completed trade">
           <Alert severity="info">This completed trade is not available from the selected Trade Tracker account.</Alert>
         </DashboardPanel>
       </DashboardPage>

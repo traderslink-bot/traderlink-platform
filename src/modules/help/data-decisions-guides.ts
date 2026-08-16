@@ -35,10 +35,12 @@ export const DATA_DECISIONS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   guide("statement-issues-and-history", "Review statement issues and history", "Use the statement views to inspect what was imported and the history view to revisit a completed decision.", [
     section("statement-issues", "Statement issues and details", "Choose the matching tab to see rows needing attention or the complete selected statement details.", ["statement issues", "statement details", "broker statement", "fix this row"], [
       paragraph("Statement issues narrows the view to rows that need attention. Statement details lets you inspect the selected broker statement more broadly. A row can show a Fix this row action when there is a related decision."),
+      paragraph("On a phone, statement rows and related executions are shown as stacked cards so the imported values and review action remain readable without horizontal scrolling. Larger screens keep the table view."),
       link("/help/notifications-and-imports/statement-will-not-import", "Read statement import help", "Learn how mapping, import review and the follow-up path fit together."),
     ]),
     section("review-history", "Review history", "Open Review history to see that a decision was reviewed and revisit its original details.", ["review history", "reviewed", "original details", "decision history"], [
       paragraph("A reviewed decision remains part of the Trade Tracker record. Review history shows the completed state and lets you inspect the original details without treating the prior question as an active issue again."),
+      paragraph("Execution evidence uses the same compact card layout on phones and the full table on larger screens."),
     ]),
   ]),
   guide("open-position-decisions", "Open-position decisions", "Confirm or correct an open position only when the broker evidence supports that fact.", [

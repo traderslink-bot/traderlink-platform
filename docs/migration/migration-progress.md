@@ -1,5 +1,20 @@
 # TraderLink Platform Migration Progress
 
+**Mobile dashboard experience:** The owner approved the complete
+[Mobile Dashboard Experience Plan](mobile-dashboard-experience-plan.md) and its
+[progress record](mobile-dashboard-experience-progress.md) on 2026-08-16.
+Implementation and controlled desktop, 390-pixel, 320-pixel and landscape
+browser acceptance are complete; owner visual/product approval remains. Route
+titles are removed from the shared top header, mobile header controls and safe
+areas are improved, page bodies own one clear title, the outlined SmartToy AI
+control opens the existing drawer, the top header contains only AI Chat and
+Notifications, Import Trades is a standalone left-nav link, account selection
+moved to Account -> Trading, and active dashboard routes keep one route-aware
+top-right Help link. Results is now Ticker with bounded pagination. Trade
+Explorer plus its responsive presentation are preserved in `4ca2a5ac`, fresh
+Daily Trade Tracker QA in `33144610`, and the Trade Analyzer evidence drilldown
+plus migration 0059 in `0544e42f`. No push or deployment was run.
+
 **Notifications and AI import repair:** The owner authorized the shared
 [Notifications And AI Import Repair Plan](notifications-and-ai-import-repair-plan.md)
 and its [progress record](notifications-and-ai-import-repair-progress.md) on

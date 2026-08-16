@@ -2,7 +2,6 @@
 
 import AnalyticsRoundedIcon from "@mui/icons-material/AnalyticsRounded";
 import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
-import ChatRoundedIcon from "@mui/icons-material/ChatRounded";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import CandlestickChartIcon from "@mui/icons-material/CandlestickChart";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
@@ -23,6 +22,7 @@ import QueryStatsRoundedIcon from "@mui/icons-material/QueryStatsRounded";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import ScienceRoundedIcon from "@mui/icons-material/ScienceRounded";
 import ShowChartRoundedIcon from "@mui/icons-material/ShowChartRounded";
+import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
 import SpaceDashboardRoundedIcon from "@mui/icons-material/SpaceDashboardRounded";
 import SwapVertRoundedIcon from "@mui/icons-material/SwapVertRounded";
 import TableRowsRoundedIcon from "@mui/icons-material/TableRowsRounded";
@@ -55,16 +55,12 @@ import {
   DASHBOARD_HOME_ITEM,
   DASHBOARD_MAIN_NAVIGATION_GROUPS,
   DASHBOARD_NAVIGATION_HREFS,
-  DASHBOARD_ROUTE_TITLES,
   DASHBOARD_STANDALONE_ITEMS,
+  dashboardHelpTarget,
   type DashboardNavigationGroup,
   type DashboardNavigationIconKey,
   type DashboardNavigationItem,
 } from "./dashboard-navigation";
-import {
-  DashboardAccountSwitcher,
-  type DashboardJournalAccountOption,
-} from "./dashboard-account-switcher";
 import { AiChatClient } from "./(dashboard)/ai-chat/ai-chat-client";
 import { NotificationCenter } from "./(dashboard)/notifications/notification-center";
 import {
@@ -79,7 +75,7 @@ const collapsedWidth = 76;
 function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
   const icons: Record<DashboardNavigationIconKey, ReactNode> = {
     account: <PersonRoundedIcon />,
-    aiChat: <ChatRoundedIcon />,
+    aiChat: <SmartToyOutlinedIcon />,
     aiReviews: <AutoAwesomeRoundedIcon />,
     analytics: <AnalyticsRoundedIcon />,
     calendar: <CalendarMonthRoundedIcon />,
@@ -116,26 +112,13 @@ function isActive(pathname: string, href: string): boolean {
   return activeHref === href;
 }
 
-function pageTitle(pathname: string): string {
-  const exact = DASHBOARD_ROUTE_TITLES[pathname];
-  if (exact) {
-    return exact;
-  }
-  const match = Object.entries(DASHBOARD_ROUTE_TITLES)
-    .sort(([left], [right]) => right.length - left.length)
-    .find(([href]) => pathname.startsWith(`${href}/`));
-  return match?.[1] ?? "Trade Tracker";
-}
-
 function NavigationLink({
-  badgeCount = 0,
   collapsed,
   item,
   onNavigate,
   onOpenAiChat,
   pathname,
 }: {
-  badgeCount?: number;
   collapsed: boolean;
   item: DashboardNavigationItem;
   onNavigate: () => void;
@@ -189,26 +172,6 @@ function NavigationLink({
           }}
         />
       )}
-      {badgeCount > 0 ? (
-        <Box
-          aria-label={`${badgeCount} unresolved data decision${badgeCount === 1 ? "" : "s"}`}
-          sx={{
-            alignItems: "center",
-            bgcolor: "warning.main",
-            borderRadius: "999px",
-            color: "warning.contrastText",
-            display: "flex",
-            fontSize: 12,
-            fontWeight: 800,
-            height: 20,
-            justifyContent: "center",
-            minWidth: 20,
-            px: 0.75,
-          }}
-        >
-          {badgeCount}
-        </Box>
-      ) : null}
     </ListItemButton>
   );
 
@@ -223,16 +186,13 @@ function NavigationLink({
 
 export function DashboardShell({
   children,
-  journalAccounts,
   notifications = [],
-  pendingDataDecisionCount,
 }: {
   children: ReactNode;
-  journalAccounts: readonly DashboardJournalAccountOption[];
   notifications?: readonly PlatformNotification[];
-  pendingDataDecisionCount: number;
 }) {
   const pathname = usePathname();
+  const pageHelpTarget = dashboardHelpTarget(pathname);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [aiChatOpen, setAiChatOpen] = useState(false);
@@ -424,7 +384,6 @@ export function DashboardShell({
                     <List disablePadding>
                       {group.items.map((item) => (
                         <NavigationLink
-                          badgeCount={item.href === "/data-decisions" ? pendingDataDecisionCount : 0}
                           collapsed={compact}
                           item={item}
                           key={item.href}
@@ -471,7 +430,12 @@ export function DashboardShell({
         open={mobileOpen}
         sx={{
           display: { xs: "block", lg: "none" },
-          "& .MuiDrawer-paper": { width: expandedWidth },
+          "& .MuiDrawer-paper": {
+            boxSizing: "border-box",
+            pb: "env(safe-area-inset-bottom)",
+            pt: "env(safe-area-inset-top)",
+            width: expandedWidth,
+          },
         }}
         variant="temporary"
       >
@@ -519,7 +483,23 @@ export function DashboardShell({
             zIndex: (theme) => theme.zIndex.appBar,
           }}
         >
-          <Toolbar sx={{ gap: 1.5, minHeight: 64, px: { xs: 1.5, sm: 2.5 } }}>
+          <Toolbar
+            sx={{
+              gap: { xs: 0.5, sm: 1.5 },
+              minHeight: {
+                xs: "calc(64px + env(safe-area-inset-top))",
+                sm: 64,
+              },
+              pt: { xs: "env(safe-area-inset-top)", sm: 0 },
+              px: { xs: 1.5, sm: 2.5 },
+              "& .MuiIconButton-root": {
+                flexShrink: 0,
+                minHeight: 44,
+                minWidth: 44,
+              },
+              "& .MuiInputBase-root": { minHeight: 44 },
+            }}
+          >
             <IconButton
               aria-label="Open navigation"
               onClick={() => setMobileOpen(true)}
@@ -527,52 +507,90 @@ export function DashboardShell({
             >
               <MenuRoundedIcon />
             </IconButton>
-            <Box sx={{ minWidth: 0 }}>
-              <Typography
-                color="text.secondary"
-                component="div"
-                noWrap
-                variant="caption"
-              >
-                Trade Tracker
-              </Typography>
-              <Typography
-                component="h1"
-                noWrap
-                sx={{ fontWeight: 720 }}
-                variant="h6"
-              >
-                {pageTitle(pathname)}
-              </Typography>
-            </Box>
             <Box sx={{ flexGrow: 1 }} />
-            <NotificationCenter notifications={notifications} />
-            <DashboardAccountSwitcher accounts={journalAccounts} />
             <Button
-              component={Link}
-              href="/imports"
-              startIcon={<CloudUploadRoundedIcon />}
+              aria-controls={aiChatOpen ? "ai-chat-drawer" : undefined}
+              aria-expanded={aiChatOpen}
+              aria-haspopup="dialog"
+              aria-label="Open AI Chat"
+              onClick={openAiChat}
+              startIcon={(
+                <Box
+                  component="span"
+                  sx={{
+                    alignItems: "center",
+                    bgcolor: "primary.main",
+                    borderRadius: 1,
+                    color: "primary.contrastText",
+                    display: "inline-flex",
+                    height: 24,
+                    justifyContent: "center",
+                    width: 24,
+                  }}
+                >
+                  <SmartToyOutlinedIcon sx={{ fontSize: 18 }} />
+                </Box>
+              )}
               sx={{
-                color: "common.white",
-                display: { xs: "none", sm: "inline-flex" },
+                bgcolor: "background.paper",
+                borderColor: "primary.main",
+                color: "primary.main",
                 flexShrink: 0,
+                fontWeight: 800,
+                minHeight: 44,
+                minWidth: 56,
+                px: 0.5,
                 whiteSpace: "nowrap",
+                "& .MuiButton-startIcon": {
+                  ml: 0,
+                  mr: 0.25,
+                },
+                "&:hover": {
+                  bgcolor: "rgba(1, 30, 86, 0.04)",
+                  borderColor: "primary.dark",
+                },
               }}
-              variant="contained"
+              variant="outlined"
             >
-              Import trades
+              AI
             </Button>
+            <NotificationCenter notifications={notifications} />
           </Toolbar>
         </Box>
         <Box
           component="main"
           sx={{
             minWidth: 0,
+            pb: { xs: "max(16px, env(safe-area-inset-bottom))", sm: 2.5 },
+            position: "relative",
             px: { xs: 1.5, sm: 2.5, xl: 3 },
-            py: { xs: 2, sm: 2.5 },
+            pt: { xs: 2, sm: 2.5 },
             width: "100%",
+            "& [data-traderlink-platform-dashboard-page] > :first-child": pageHelpTarget
+              ? { pr: { xs: 6, sm: 6.5 } }
+              : undefined,
           }}
         >
+          {pageHelpTarget ? (
+            <Tooltip title={`Help for ${pageHelpTarget.label}`}>
+              <IconButton
+                aria-label={`Help for ${pageHelpTarget.label}`}
+                component={Link}
+                href={pageHelpTarget.href}
+                sx={{
+                  bgcolor: "background.default",
+                  minHeight: 44,
+                  minWidth: 44,
+                  position: "absolute",
+                  right: { xs: 1.5, sm: 2.5, xl: 3 },
+                  top: { xs: 2, sm: 2.5 },
+                  zIndex: 1,
+                }}
+              >
+                <HelpOutlineRoundedIcon />
+              </IconButton>
+            </Tooltip>
+          ) : null}
           {children}
         </Box>
       </Box>
@@ -588,9 +606,13 @@ export function DashboardShell({
         open={aiChatOpen}
         slotProps={{
           paper: {
+            id: "ai-chat-drawer",
             sx: {
+              boxSizing: "border-box",
               height: "100dvh",
               maxWidth: "100vw",
+              pb: { xs: "env(safe-area-inset-bottom)", md: 0 },
+              pt: { xs: "env(safe-area-inset-top)", md: 0 },
               width: {
                 xs: "100vw",
                 md: "min(860px, calc(100vw - 80px))",

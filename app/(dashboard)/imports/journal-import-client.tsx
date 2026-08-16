@@ -604,19 +604,34 @@ export function JournalImportClient({
             </Box>
 
             {preview.issues.length > 0 ? (
-              <TableContainer>
-                <Table size="small">
-                  <TableHead><TableRow><TableCell>Mapping issue</TableCell><TableCell>Severity</TableCell><TableCell align="right">Rows</TableCell><TableCell>Blocks save</TableCell></TableRow></TableHead>
-                  <TableBody>{preview.issues.map((issue) => (
-                    <TableRow key={`${issue.issueCode}-${issue.severity}`}>
-                      <TableCell>{humanize(issue.issueCode)}</TableCell>
-                      <TableCell>{humanize(issue.severity)}</TableCell>
-                      <TableCell align="right">{issue.count}</TableCell>
-                      <TableCell>{issue.isBlocking ? "Yes" : "No - Data Decisions"}</TableCell>
-                    </TableRow>
-                  ))}</TableBody>
-                </Table>
-              </TableContainer>
+              <>
+                <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
+                  <Table size="small">
+                    <TableHead><TableRow><TableCell>Mapping issue</TableCell><TableCell>Severity</TableCell><TableCell align="right">Rows</TableCell><TableCell>Blocks save</TableCell></TableRow></TableHead>
+                    <TableBody>{preview.issues.map((issue) => (
+                      <TableRow key={`${issue.issueCode}-${issue.severity}`}>
+                        <TableCell>{humanize(issue.issueCode)}</TableCell>
+                        <TableCell>{humanize(issue.severity)}</TableCell>
+                        <TableCell align="right">{issue.count}</TableCell>
+                        <TableCell>{issue.isBlocking ? "Yes" : "No - Data Decisions"}</TableCell>
+                      </TableRow>
+                    ))}</TableBody>
+                  </Table>
+                </TableContainer>
+                <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" } }}>
+                  {preview.issues.map((issue) => (
+                    <Box key={`${issue.issueCode}-${issue.severity}`} sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.25 }}>
+                      <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+                        <Typography sx={{ fontWeight: 800 }} variant="body2">{humanize(issue.issueCode)}</Typography>
+                        <Chip color={issue.isBlocking ? "error" : "warning"} label={humanize(issue.severity)} size="small" />
+                      </Stack>
+                      <Typography color="text.secondary" sx={{ mt: 0.75 }} variant="body2">
+                        {issue.count} affected row{issue.count === 1 ? "" : "s"} · {issue.isBlocking ? "Blocks save" : "Continues in Data Decisions"}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Stack>
+              </>
             ) : <Alert severity="success">No mapping issues were found.</Alert>}
 
             <FormControlLabel
@@ -646,26 +661,45 @@ export function JournalImportClient({
         {history.length === 0 ? (
           <Typography color="text.secondary" variant="body2">No Trade Tracker imports are recorded yet.</Typography>
         ) : (
-          <TableContainer>
-            <Table size="small">
-              <TableHead><TableRow><TableCell>Source</TableCell><TableCell>Period</TableCell><TableCell>Status</TableCell><TableCell align="right">Executions</TableCell><TableCell align="right">Decisions</TableCell></TableRow></TableHead>
-              <TableBody>{history.map((item) => (
-                <TableRow key={item.importBatchId}>
-                  <TableCell>{item.sourceDisplayLabel}</TableCell>
-                  <TableCell>{item.sourceKind === "broker_statement" ? period(item) : "Manual execution batch"}</TableCell>
-                  <TableCell><Chip color={item.pendingDecisionCount > 0 ? "warning" : "success"} label={humanize(item.currentState)} size="small" /></TableCell>
-                  <TableCell align="right">{item.mappedExecutionCount}</TableCell>
-                  <TableCell align="right">
-                    {item.pendingDecisionCount > 0 ? (
-                      <Button href={`/data-decisions?importBatchId=${encodeURIComponent(item.importBatchId)}`} size="small">
-                        {item.pendingDecisionCount}
-                      </Button>
-                    ) : 0}
-                  </TableCell>
-                </TableRow>
-              ))}</TableBody>
-            </Table>
-          </TableContainer>
+          <>
+            <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
+              <Table size="small">
+                <TableHead><TableRow><TableCell>Source</TableCell><TableCell>Period</TableCell><TableCell>Status</TableCell><TableCell align="right">Executions</TableCell><TableCell align="right">Decisions</TableCell></TableRow></TableHead>
+                <TableBody>{history.map((item) => (
+                  <TableRow key={item.importBatchId}>
+                    <TableCell>{item.sourceDisplayLabel}</TableCell>
+                    <TableCell>{item.sourceKind === "broker_statement" ? period(item) : "Manual execution batch"}</TableCell>
+                    <TableCell><Chip color={item.pendingDecisionCount > 0 ? "warning" : "success"} label={humanize(item.currentState)} size="small" /></TableCell>
+                    <TableCell align="right">{item.mappedExecutionCount}</TableCell>
+                    <TableCell align="right">
+                      {item.pendingDecisionCount > 0 ? (
+                        <Button href={`/data-decisions?importBatchId=${encodeURIComponent(item.importBatchId)}`} size="small">
+                          {item.pendingDecisionCount}
+                        </Button>
+                      ) : 0}
+                    </TableCell>
+                  </TableRow>
+                ))}</TableBody>
+              </Table>
+            </TableContainer>
+            <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" } }}>
+              {history.map((item) => (
+                <Box key={item.importBatchId} sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.25 }}>
+                  <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
+                    <Box>
+                      <Typography sx={{ fontWeight: 850 }} variant="body2">{item.sourceDisplayLabel}</Typography>
+                      <Typography color="text.secondary" variant="caption">{item.sourceKind === "broker_statement" ? period(item) : "Manual execution batch"}</Typography>
+                    </Box>
+                    <Chip color={item.pendingDecisionCount > 0 ? "warning" : "success"} label={humanize(item.currentState)} size="small" />
+                  </Stack>
+                  <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between", mt: 1 }}>
+                    <Typography variant="body2">{item.mappedExecutionCount} execution{item.mappedExecutionCount === 1 ? "" : "s"}</Typography>
+                    {item.pendingDecisionCount > 0 ? <Button href={`/data-decisions?importBatchId=${encodeURIComponent(item.importBatchId)}`} size="small" variant="outlined">{item.pendingDecisionCount} decision{item.pendingDecisionCount === 1 ? "" : "s"}</Button> : <Typography color="text.secondary" variant="body2">No decisions</Typography>}
+                  </Stack>
+                </Box>
+              ))}
+            </Stack>
+          </>
         )}
       </DashboardPanel>
     </Stack>

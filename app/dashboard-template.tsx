@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 
 import { DashboardShell } from "./dashboard-shell";
-import type { DashboardJournalAccountOption } from "./dashboard-account-switcher";
 import type { PlatformNotification } from "@/src/modules/platform/contracts/platform-notification-contracts";
 
 export {
@@ -24,21 +23,13 @@ export {
 
 export function TraderLinkPlatformDashboardTemplate({
   children,
-  journalAccounts,
   notifications = [],
-  pendingDataDecisionCount,
 }: {
   children: ReactNode;
-  journalAccounts: readonly DashboardJournalAccountOption[];
   notifications?: readonly PlatformNotification[];
-  pendingDataDecisionCount: number;
 }) {
   return (
-    <DashboardShell
-      journalAccounts={journalAccounts}
-      notifications={notifications}
-      pendingDataDecisionCount={pendingDataDecisionCount}
-    >
+    <DashboardShell notifications={notifications}>
       {children}
     </DashboardShell>
   );

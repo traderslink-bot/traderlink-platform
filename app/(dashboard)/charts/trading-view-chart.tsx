@@ -1,6 +1,7 @@
 "use client";
 
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -13,6 +14,7 @@ export function TradingViewChart() {
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [hasLoadError, setHasLoadError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   useEffect(() => {
     const chartContainer = chartContainerRef.current;
@@ -21,6 +23,9 @@ export function TradingViewChart() {
       return;
     }
 
+    chartContainer.replaceChildren();
+    setHasLoaded(false);
+    setHasLoadError(false);
     const script = document.createElement("script");
     script.async = true;
     script.src = TRADING_VIEW_WIDGET_URL;
@@ -52,7 +57,7 @@ export function TradingViewChart() {
     return () => {
       chartContainer.replaceChildren();
     };
-  }, []);
+  }, [loadAttempt]);
 
   return (
     <Box
@@ -61,8 +66,8 @@ export function TradingViewChart() {
         border: 1,
         borderColor: "divider",
         borderRadius: 2,
-        height: { xs: "calc(100vh - 132px)", sm: "calc(100vh - 112px)" },
-        minHeight: { xs: 560, sm: 720 },
+        height: { xs: "calc(100dvh - 156px)", sm: "calc(100dvh - 148px)" },
+        minHeight: { xs: 420, sm: 640 },
         overflow: "hidden",
         position: "relative",
         width: "100%",
@@ -70,6 +75,7 @@ export function TradingViewChart() {
     >
       {!hasLoaded && !hasLoadError ? (
         <Stack
+          aria-live="polite"
           spacing={1.5}
           sx={{
             alignItems: "center",
@@ -83,12 +89,13 @@ export function TradingViewChart() {
         >
           <CircularProgress size={28} />
           <Typography color="text.secondary" variant="body2">
-            Loading market chart...
+            Loading market chart…
           </Typography>
         </Stack>
       ) : null}
       {hasLoadError ? (
         <Stack
+          aria-live="polite"
           spacing={0.75}
           sx={{
             alignItems: "center",
@@ -103,6 +110,9 @@ export function TradingViewChart() {
           <Typography color="text.secondary" variant="body2">
             Please check your connection and try again.
           </Typography>
+          <Button onClick={() => setLoadAttempt((attempt) => attempt + 1)} variant="contained">
+            Try again
+          </Button>
         </Stack>
       ) : null}
       <Box

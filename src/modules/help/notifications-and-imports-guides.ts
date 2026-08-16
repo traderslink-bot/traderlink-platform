@@ -39,7 +39,7 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
         summary: "Check that each required statement column is assigned before you continue.",
         keywords: Object.freeze(["mapping review", "preview", "ticker", "date", "price", "fees"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "The mapping review is your chance to check that TradersLink read the statement columns as intended before it saves executions. Correct the mapping when a column does not match the broker statement." }),
+          Object.freeze({ kind: "paragraph", text: "The mapping review is your chance to check that TradersLink read the statement columns as intended before it saves executions. Desktop shows mapping issues in a table and mobile uses readable issue cards. Correct the mapping when a column does not match the broker statement." }),
           Object.freeze({ kind: "callout", title: "Unknown is better than guessed", text: "Leave an unavailable fact unavailable rather than entering an invented value just to complete a field." }),
         ]),
       }),
@@ -66,7 +66,7 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
         summary: "Return to Import Trades to see the statements already added for the selected account.",
         keywords: Object.freeze(["import history", "previous import", "reimport", "trade tracker account"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "Import history keeps the added statements together for the selected Trade Tracker account. Use it to confirm an import outcome before deciding whether you need another statement or a factual follow-up." }),
+          Object.freeze({ kind: "paragraph", text: "Import history keeps the added statements together for the selected Trade Tracker account. Desktop shows a table and mobile uses one card per import with its source, period, status, execution count and any Data Decisions link. Use it to confirm an import outcome before deciding whether you need another statement or a factual follow-up." }),
         ]),
       }),
       Object.freeze({
@@ -92,10 +92,11 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
         keywords: Object.freeze(["bell", "unread", "notifications page", "updates", "import complete"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph", text: "Select the bell at the top of TraderLink to see your most recent updates. A number on the bell means you have unread updates. Select View all notifications to see the full list." }),
+          Object.freeze({ kind: "paragraph", text: "On a phone, the recent-updates menu fits the available screen height, wraps long update text and keeps each dismiss control easy to reach." }),
           Object.freeze({ kind: "bullets", items: Object.freeze([
             "Select an update to open the related page, such as Import Trades, Data Decisions or a chart.",
             "Opening an update marks it as read. This only changes the update, never your trades or statement.",
-            "Your Notifications page keeps updates together, so you do not need to rely on a message arriving at the right time.",
+            "Close an update after you have seen it to remove it from your notifications. This never changes your trades or statement.",
           ]) }),
         ]),
       }),

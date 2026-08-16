@@ -5,6 +5,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import type { Metadata } from "next";
 
+import { DashboardAccountSwitcher } from "@/app/dashboard-account-switcher";
 import { DashboardPanel } from "../../../dashboard-template";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
@@ -52,7 +53,10 @@ export default async function AccountTradingPage({
       description="Manage separate Trade Tracker accounts and the brokers connected to the selected account."
       title="Trading"
     >
-      <DashboardPanel title="Trade Tracker accounts">
+      <DashboardPanel
+        action={<DashboardAccountSwitcher accounts={profile.journalAccounts} />}
+        title="Trade Tracker accounts"
+      >
         <Stack spacing={1.5}>
           {profile.journalAccounts.map((account) => (
             <Box key={account.selectionRef} sx={{ alignItems: { sm: "center" }, border: 1, borderColor: "divider", borderRadius: 1.5, display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 1.5, justifyContent: "space-between", p: 2 }}>
