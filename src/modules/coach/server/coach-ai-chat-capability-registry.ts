@@ -112,7 +112,7 @@ const capabilities = Object.freeze([
     plainLanguage: "Read Analytics Overview, Results by Ticker, Timing, Execution, and bounded Trade Explorer results.",
     limitations: Object.freeze([
       "Analytics use completed trades; legitimate open positions and unresolved decisions remain outside realized results.",
-      "Different trade currencies remain separate unless the trader selects one currency.",
+      "Money follows the Account reporting currency only when the exact required conversion is available.",
       "Trade Explorer returns at most 50 supporting trades per request.",
     ]),
   }),

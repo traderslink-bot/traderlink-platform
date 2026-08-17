@@ -51,7 +51,7 @@ export const TRADING_RULES_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         blocks: Object.freeze([
           Object.freeze({ kind: "steps", items: Object.freeze([
             Object.freeze({ title: "1. Choose a rule", text: "Open Trading Rules and add a preset from the Rule library, or create a custom rule in your own words." }),
-            Object.freeze({ title: "2. Set the limit", text: "Enter the time, trade count, loss count, price range or dollar amount requested by the preset." }),
+            Object.freeze({ title: "2. Set the limit", text: "Enter the time, trade count, loss count, price range or account-currency amount requested by the preset." }),
             Object.freeze({ title: "3. Review the day", text: "Open Daily Trade Tracker to see automatic results, add custom-rule selections and read any Broken or N/A details." }),
             Object.freeze({ title: "4. Compare the history", text: "Open Rule Results to search individual checks and view factual totals for each rule version." }),
           ]) }),
@@ -85,7 +85,7 @@ export const TRADING_RULES_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Enter the value from your own trading plan instead of a guessed value.",
         keywords: Object.freeze(["setting", "limit", "time", "price", "amount", "wait time"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "Each preset asks only for the setting it needs. For example, a cooldown asks for minutes, a daily stop asks for a dollar amount, and a time rule asks for the latest allowed entry time." }),
+          Object.freeze({ kind: "paragraph", text: "Each preset asks only for the setting it needs. For example, a cooldown asks for minutes, a daily stop asks for an account-currency amount, and a time rule asks for the latest allowed entry time." }),
           Object.freeze({ kind: "callout", title: "The setting is yours", text: "TraderLink checks the limit you choose. The Rules page does not choose a risk limit or trading plan for you." }),
         ]),
       }),

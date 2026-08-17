@@ -17,6 +17,10 @@ import { createJournalManualTradePreviewAuthority } from "@/src/modules/journal/
 import { loadJournalPrivacyHmacConfiguration } from "@/src/modules/journal/server/imports/journal-import-service";
 import { JournalAnalyticsService } from "@/src/modules/journal-analytics/server/analytics-service";
 import { JournalDashboardReadModelService } from "@/src/modules/journal-analytics/server/journal-dashboard-read-model-service";
+import {
+  createJournalReportingCurrencyFactSetReader,
+  type JournalReportingCurrencyContext,
+} from "@/src/modules/journal-analytics/server/journal-reporting-currency-fact-set";
 
 import { CoachAiChatFactualToolService } from "./coach-ai-chat-factual-tool-service";
 import {
@@ -74,6 +78,7 @@ export async function generateCoachAiChatSavedAnswer(
     intent?: CoachAiChatMessageIntent;
     analysisScope?: CoachAiChatAnalysisScope;
     pageContext?: CoachAiChatPageContext | null;
+    reportingContext: JournalReportingCurrencyContext;
     idempotencySha256: string;
     resolveTrustedContext?: (() => CoachAiDailyCompanionResolvedContext) | null;
     resolveManualEntryDefaults?: (() => Readonly<{
@@ -85,8 +90,12 @@ export async function generateCoachAiChatSavedAnswer(
 ): Promise<CoachAiChatGenerationServiceResult> {
   const database = openPlatformDatabase({ mode: "runtime" });
   try {
-    const facts = new JournalAnalyticsFactSetService(
+    const sourceFacts = new JournalAnalyticsFactSetService(
       new JournalAnalyticsFactSetRepository(database),
+    );
+    const facts = createJournalReportingCurrencyFactSetReader(
+      sourceFacts,
+      input.reportingContext,
     );
     const annotations = new JournalAnnotationService(
       new JournalAnnotationRepository(database),
@@ -115,7 +124,21 @@ export async function generateCoachAiChatSavedAnswer(
     const savedReviews = new CoachAiChatSavedReviewService(
       new CoachAiReviewRepository(database),
     );
-    const analyticsService = new JournalAnalyticsService(facts);
+    const analyticsService = new JournalAnalyticsService(
+      facts,
+      input.reportingContext.reportingCurrency,
+    );
+    if (!scope.activeAccountId) {
+      throw new TypeError("AI Chat requires an active Journal account.");
+    }
+    const ruleSourceCurrency = database.prepare<[string, string], Readonly<{
+      base_currency: string;
+    }>>(`SELECT base_currency
+FROM journal_accounts
+WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
+      scope.workspaceId,
+      scope.activeAccountId,
+    )?.base_currency;
     return await new CoachAiChatGenerationService(
       new CoachAiChatRepository(database),
       new CoachAiChatProviderControlsRepository(database),
@@ -135,13 +158,31 @@ export async function generateCoachAiChatSavedAnswer(
           new JournalTradeTrackerReadService(database, tradeStyles, swingNotes),
           journalContext,
           savedReviews,
+          Object.freeze({
+            reportingContext: input.reportingContext,
+            resolveRoundTripId: (account, positionRef) =>
+              tradeStyles.resolvePosition(account, positionRef).roundTripId,
+          }),
         ),
         analyticsPages: new CoachAiChatAnalyticsPageToolService(analyticsService),
         productContext: new CoachAiChatProductContextService(database),
-        tradeAnalyzer: new CoachAiChatTradeAnalyzerToolService(database, analyticsService),
-        annotations: new CoachAiChatAnnotationContextService(facts, dashboard, annotations),
+        tradeAnalyzer: new CoachAiChatTradeAnalyzerToolService(
+          database,
+          analyticsService,
+          Object.freeze({ reportingContext: input.reportingContext }),
+        ),
+        annotations: new CoachAiChatAnnotationContextService(
+          facts,
+          dashboard,
+          annotations,
+          Object.freeze({
+            reportingContext: input.reportingContext,
+            ...(ruleSourceCurrency ? { ruleSourceCurrency } : {}),
+          }),
+        ),
       }),
       new CoachAiChatActionDraftService(database),
+      input.reportingContext.reportingCurrency,
     ).generateSavedAnswer(scope, input);
   } finally {
     database.close();

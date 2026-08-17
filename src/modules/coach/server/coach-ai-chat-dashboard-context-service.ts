@@ -9,6 +9,10 @@ import type { JournalDashboardReadModelService } from
   "@/src/modules/journal-analytics/server/journal-dashboard-read-model-service";
 import type { JournalTradeTrackerReadService } from
   "@/src/modules/journal/server/product/journal-trade-tracker-read-service";
+import {
+  journalReportingCurrencyAmount,
+  type JournalReportingCurrencyContext,
+} from "@/src/modules/journal-analytics/server/journal-reporting-currency-fact-set";
 
 import {
   COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
@@ -76,17 +80,22 @@ function positionSummary(position: Readonly<{
   style: unknown;
   latestSwingNote: unknown;
   reviewDateSwingNote: unknown;
-}>): Readonly<Record<string, unknown>> {
+}>, reporting: Readonly<{
+  averageEntryPriceDecimal: string | null;
+  currency: string;
+}> | null = null): Readonly<Record<string, unknown>> {
   return Object.freeze({
     positionRef: position.positionRef,
     ticker: position.symbol,
-    currency: position.currency,
+    currency: reporting?.currency ?? position.currency,
     timezone: position.timezone,
     direction: position.direction,
     openedAtUtc: position.openedAtUtc,
     closedAtUtc: position.closedAtUtc,
     remainingQuantityDecimal: position.remainingQuantityDecimal,
-    averageEntryPriceDecimal: position.averageEntryPriceDecimal,
+    averageEntryPriceDecimal: reporting
+      ? reporting.averageEntryPriceDecimal
+      : position.averageEntryPriceDecimal,
     projectionState: position.projectionState,
     style: position.style,
     latestSwingNote: position.latestSwingNote,
@@ -95,6 +104,10 @@ function positionSummary(position: Readonly<{
 }
 
 export class CoachAiChatDashboardContextService {
+  private readonly reportingContext: JournalReportingCurrencyContext | null;
+  private readonly resolveRoundTripId:
+    ((scope: AccountScope, positionRef: string) => string) | null;
+
   constructor(
     private readonly database: Database.Database,
     private readonly dashboard: Pick<JournalDashboardReadModelService,
@@ -103,7 +116,14 @@ export class CoachAiChatDashboardContextService {
       "listPositions" | "listSwings" | "positionDetail" | "swingDetail">,
     private readonly journalContext: Pick<CoachAiChatJournalContextService, "summarize">,
     private readonly savedReviews: Pick<CoachAiChatSavedReviewService, "list">,
-  ) {}
+    dependencies: Readonly<{
+      reportingContext?: JournalReportingCurrencyContext;
+      resolveRoundTripId?: (scope: AccountScope, positionRef: string) => string;
+    }> = Object.freeze({}),
+  ) {
+    this.reportingContext = dependencies.reportingContext ?? null;
+    this.resolveRoundTripId = dependencies.resolveRoundTripId ?? null;
+  }
 
   workspaceSummary(
     scope: WorkspaceAccessScope,
@@ -339,8 +359,10 @@ WHERE review.workspace_id = ? AND review.account_id = ?
       toolName: request.toolName,
       result: Object.freeze({
         reviewDate: request.reviewDate,
-        active: Object.freeze(active.slice(0, MAX_POSITIONS).map(positionSummary)),
-        completed: Object.freeze(completed.slice(0, 50).map(positionSummary)),
+        active: Object.freeze(active.slice(0, MAX_POSITIONS).map((position) =>
+          this.reportPositionSummary(account, position))),
+        completed: Object.freeze(completed.slice(0, 50).map((position) =>
+          this.reportPositionSummary(account, position))),
         truncated: active.length > MAX_POSITIONS,
         link: request.toolName === "list_swing_positions"
           ? "/trade-tracker/swings" : "/trades/open",
@@ -368,17 +390,44 @@ WHERE review.workspace_id = ? AND review.account_id = ?
         detail.symbol !== request.ticker.toUpperCase()) {
       throw new CoachAiChatFactualToolError("not_found");
     }
+    const reporting = this.reportingPosition(account, detail);
+    const feeCurrencies = reporting
+      ? this.feeCurrencies(account, reporting.roundTripId)
+      : new Map<string, string | null>();
     return Object.freeze({
       contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
       toolName: request.toolName,
       result: Object.freeze({
-        ...positionSummary(detail),
+        ...positionSummary(detail, reporting && Object.freeze({
+          averageEntryPriceDecimal: this.reportAmount(
+            detail.averageEntryPriceDecimal,
+            reporting.sourceCurrency,
+            reporting.sourceDate,
+          ),
+          currency: reporting.currency,
+        })),
         executions: Object.freeze(detail.executions.map((execution) => Object.freeze({
           executedAtUtc: execution.executedAtUtc,
           side: execution.side,
           quantityDecimal: execution.quantityDecimal,
-          priceDecimal: execution.priceDecimal,
-          feesDecimal: execution.feesDecimal,
+          priceDecimal: reporting
+            ? this.reportAmount(
+                execution.priceDecimal,
+                reporting.sourceCurrency,
+                reporting.sourceDate,
+              )
+            : execution.priceDecimal,
+          feesDecimal: reporting && execution.feesDecimal !== null
+            ? this.reportAmount(
+                execution.feesDecimal,
+                feeCurrencies.get(execution.executionId) ?? null,
+                reporting.sourceDate,
+              )
+            : execution.feesDecimal,
+          ...(reporting && execution.feesDecimal !== null &&
+              !feeCurrencies.get(execution.executionId)
+            ? { feesAvailableInReportingCurrency: false }
+            : {}),
           allocationRole: execution.allocationRole,
         }))),
         ...(request.toolName === "get_swing_position_details" && "notes" in detail
@@ -389,6 +438,97 @@ WHERE review.workspace_id = ? AND review.account_id = ?
           : "/trades/open",
       }),
     });
+  }
+
+  private reportPositionSummary(
+    account: AccountScope,
+    position: Parameters<typeof positionSummary>[0],
+  ): Readonly<Record<string, unknown>> {
+    const reporting = this.reportingPosition(account, position);
+    return positionSummary(position, reporting && Object.freeze({
+      averageEntryPriceDecimal: this.reportAmount(
+        position.averageEntryPriceDecimal,
+        reporting.sourceCurrency,
+        reporting.sourceDate,
+      ),
+      currency: reporting.currency,
+    }));
+  }
+
+  private reportingPosition(
+    account: AccountScope,
+    position: Parameters<typeof positionSummary>[0],
+  ): Readonly<{
+    currency: string;
+    roundTripId: string;
+    sourceCurrency: string;
+    sourceDate: string;
+  }> | null {
+    if (!this.reportingContext || !this.resolveRoundTripId) return null;
+    const roundTripId = this.resolveRoundTripId(account, position.positionRef);
+    const sourceCurrency = this.reportingContext.sourceCurrencyByRoundTrip
+      .get(roundTripId);
+    const sourceDate = this.reportingContext.sourceDateByRoundTrip.get(roundTripId);
+    if (!sourceCurrency || !sourceDate) {
+      throw new CoachAiChatFactualToolError("not_found");
+    }
+    return Object.freeze({
+      currency: this.reportingContext.reportingCurrency,
+      roundTripId,
+      sourceCurrency,
+      sourceDate,
+    });
+  }
+
+  private reportAmount(
+    amount: string | null,
+    sourceCurrency: string | null,
+    sourceDate: string,
+  ): string | null {
+    if (amount === null || sourceCurrency === null || !this.reportingContext) {
+      return null;
+    }
+    try {
+      return journalReportingCurrencyAmount(
+        amount,
+        sourceCurrency,
+        this.reportingContext.reportingCurrency,
+        sourceDate,
+        this.reportingContext,
+      );
+    } catch {
+      throw new CoachAiChatFactualToolError("not_found");
+    }
+  }
+
+  private feeCurrencies(
+    account: AccountScope,
+    roundTripId: string,
+  ): ReadonlyMap<string, string | null> {
+    const rows = this.database.prepare<[string, string, string], Readonly<{
+      execution_id: string;
+      fee_currency: string | null;
+    }>>(`SELECT execution_version.execution_id, execution_version.fee_currency
+FROM journal_round_trips round_trip
+JOIN journal_round_trip_versions version
+  ON version.workspace_id = round_trip.workspace_id
+ AND version.account_id = round_trip.account_id
+ AND version.round_trip_version_id = round_trip.current_version_id
+JOIN journal_round_trip_execution_allocations allocation
+  ON allocation.workspace_id = version.workspace_id
+ AND allocation.account_id = version.account_id
+ AND allocation.round_trip_version_id = version.round_trip_version_id
+JOIN journal_execution_versions execution_version
+  ON execution_version.workspace_id = allocation.workspace_id
+ AND execution_version.account_id = allocation.account_id
+ AND execution_version.execution_version_id = allocation.execution_version_id
+WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
+  AND round_trip.round_trip_id = ?`).all(
+      account.workspaceId,
+      account.accountId,
+      roundTripId,
+    );
+    return new Map(rows.map((row) => [row.execution_id, row.fee_currency] as const));
   }
 
   private calendarAnnotations(

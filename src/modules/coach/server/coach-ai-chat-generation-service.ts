@@ -200,6 +200,7 @@ export class CoachAiChatGenerationService {
     }> = Object.freeze({}),
     private readonly actionDrafts: Pick<CoachAiChatActionDraftService,
       "create" | "list" | "readForSourceMessage"> | null = null,
+    private readonly reportingCurrency: string | null = null,
   ) {}
 
   async generateSavedAnswer(
@@ -336,6 +337,7 @@ export class CoachAiChatGenerationService {
       now.toISOString(),
       this.toolExtensions,
       analysisScope,
+      this.reportingCurrency,
     );
     let result: CoachAiChatGenerationResult;
     try {

@@ -97,6 +97,7 @@ export const AI_CHAT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: Object.freeze(["coverage", "unavailable", "completed trades", "open positions"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph" as const, text: "Factual answers come from the completed trades and saved review details available for the selected Trade Tracker account. Open positions stay separate from realized results." }),
+          Object.freeze({ kind: "paragraph" as const, text: "New factual money values follow the reporting currency selected in Account settings. TraderLink converts the value only when the exact required rate is available. Manual execution drafts, imports and Data Decisions keep the original broker amounts, and already-issued AI Review wording is not rewritten after a preference change." }),
           Object.freeze({ kind: "paragraph" as const, text: "When an answer uses saved TraderLink facts, a compact card can appear below it with a link to the related dashboard feature. The card never opens an uploaded broker statement or reveals private account identifiers." }),
           Object.freeze({ kind: "paragraph" as const, text: "Analyzer questions use results TraderLink has already saved. Asking in Chat does not start a new analysis, refresh a Candle Review or request market data." }),
           Object.freeze({ kind: "paragraph" as const, text: "When the requested fact is missing, unsupported or based on too little activity, the answer should say so rather than fill the gap with a guess." }),

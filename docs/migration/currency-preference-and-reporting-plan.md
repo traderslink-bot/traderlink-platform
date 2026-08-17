@@ -55,8 +55,10 @@ broker execution, settlement, correction, or manual-entry value.
     ordinary review UI and an editor share a row, the review value is converted
     while the editor receives the untouched source value.
 11. Stored AI Review text remains immutable evidence of what was issued. New
-    server-derived dashboard context uses the active reporting preference;
-    already-issued text is not numerically rewritten after a preference change.
+    live AI Chat factual answers and server-derived dashboard context use the
+    active reporting preference; already-issued text is not numerically
+    rewritten after a preference change. AI Chat manual-entry drafts, import
+    details and Data Decisions retain source values.
 
 ## Implementation slice
 
@@ -77,7 +79,10 @@ broker execution, settlement, correction, or manual-entry value.
 5. Route every normal dashboard read through the selected reporting context,
    remove page-level currency overrides, refresh the dashboard immediately
    after saving a preference, and retain source values for editors and evidence.
-6. Show a safe dashboard recovery state when an exact required rate is
+6. Apply the same reporting context to new AI Chat factual reads, including
+   Workspace, Calendar, analytics, trade details, Open Positions, Swings and
+   saved Trade Analyzer results. Do not rewrite saved conversation evidence.
+7. Show a safe dashboard recovery state when an exact required rate is
    unavailable; never leave the user with a mislabeled source value.
 
 ## Explicitly out of scope

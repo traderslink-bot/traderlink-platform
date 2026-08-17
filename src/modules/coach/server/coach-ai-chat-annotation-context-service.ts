@@ -32,6 +32,10 @@ import type { WorkspaceAccessScope } from
   "@/src/modules/platform/contracts/workspace-access-scope";
 import { narrowWorkspaceAccessToAccount } from
   "@/src/modules/platform/contracts/workspace-access-scope";
+import {
+  journalReportingCurrencyAmount,
+  type JournalReportingCurrencyContext,
+} from "@/src/modules/journal-analytics/server/journal-reporting-currency-fact-set";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
 const MAX_RULE_RESULT_DAYS = 62;
@@ -165,13 +169,23 @@ function summarize(events: readonly RuleEvent[]) {
 }
 
 export class CoachAiChatAnnotationContextService {
+  private readonly reportingContext: JournalReportingCurrencyContext | null;
+  private readonly ruleSourceCurrency: string | null;
+
   constructor(
     private readonly facts: Pick<JournalAnalyticsFactSetService, "getJournalAnalyticsFactSet">,
     private readonly dashboard: Pick<JournalDashboardReadModelService, "getTradingDay">,
     private readonly annotations: Pick<JournalAnnotationService,
       "listTags" | "listRules" | "listRulesForEvaluation" | "listRuleReviews" |
       "readRoundTripNotes" | "listTagsForRoundTrips" | "resolveTradingDayId">,
-  ) {}
+    dependencies: Readonly<{
+      reportingContext?: JournalReportingCurrencyContext;
+      ruleSourceCurrency?: string;
+    }> = Object.freeze({}),
+  ) {
+    this.reportingContext = dependencies.reportingContext ?? null;
+    this.ruleSourceCurrency = dependencies.ruleSourceCurrency ?? null;
+  }
 
   listRules(
     scope: WorkspaceAccessScope,
@@ -203,6 +217,11 @@ export class CoachAiChatAnnotationContextService {
           isFocusRule: rule.isFocus,
           status: rule.lifecycleState,
           configuration: rule.configuration,
+          reportingConfiguration: this.reportingRuleConfiguration(
+            rule.templateKey,
+            rule.configuration,
+          ),
+          reportingCurrency: this.reportingContext?.reportingCurrency ?? null,
           version: rule.versionNumber,
           effectiveFromUtc: rule.effectiveFromUtc,
           effectiveUntilUtc: rule.effectiveUntilUtc ?? null,
@@ -217,11 +236,50 @@ export class CoachAiChatAnnotationContextService {
               : template.scope === "trade" ? "Trade" : "Trading day and trade",
             parameters: template.parameters,
             exampleConfiguration: template.exampleConfiguration,
+            reportingExampleConfiguration: this.reportingRuleConfiguration(
+              template.templateId,
+              template.exampleConfiguration,
+            ),
+            reportingCurrency: this.reportingContext?.reportingCurrency ?? null,
             limitation: template.limitationSummary,
           }))),
         links: Object.freeze({ tradingRules: "/rules", ruleResults: "/rules/results" }),
       }),
     });
+  }
+
+  private reportingRuleConfiguration(
+    templateKey: string | null,
+    configuration: Readonly<Record<string, string>>,
+  ): Readonly<Record<string, string>> | null {
+    if (!templateKey || !this.reportingContext || !this.ruleSourceCurrency) {
+      return null;
+    }
+    const context = this.reportingContext;
+    const sourceCurrency = this.ruleSourceCurrency;
+    const template = JOURNAL_RULE_TEMPLATE_CATALOG.find((candidate) =>
+      candidate.templateId === templateKey);
+    if (!template) return null;
+    const sourceDate = context.requestedAtUtc.slice(0, 10);
+    return Object.freeze(Object.fromEntries(Object.entries(configuration).map(
+      ([key, value]) => {
+        const parameter = template.parameters.find((candidate) => candidate.key === key);
+        if (parameter?.unit !== "$" && parameter?.unit !== "$ per share") {
+          return [key, value];
+        }
+        try {
+          return [key, journalReportingCurrencyAmount(
+            value,
+            sourceCurrency,
+            context.reportingCurrency,
+            sourceDate,
+            context,
+          )];
+        } catch {
+          throw new CoachAiChatFactualToolError("not_found");
+        }
+      },
+    )));
   }
 
   ruleResults(

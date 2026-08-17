@@ -48,6 +48,10 @@ final owner visual acceptance remains available
   request instead of loading the complete analytics fact set twice.
 - [x] Preserved statement/import/Data Decision values and already-issued AI
   Review prose as original evidence rather than rewriting facts.
+- [x] Applied the same selected reporting currency to new live AI Chat factual
+  reads across Workspace, Calendar, analytics, completed-trade details, Open
+  Positions, Swings and saved Trade Analyzer results. Manual-entry drafts and
+  source-evidence tools remain untouched.
 
 ## Verification checkpoint
 
@@ -61,6 +65,9 @@ final owner visual acceptance remains available
   sideways-scroll cues; the mobile AI drawer retained a working Close action.
 - The browser reported no console warnings or errors. Port 3010 was shut down
   after review.
+- The live AI Chat reporting-context extension passes focused ESLint and the
+  whole-project TypeScript check. No provider generation was triggered because
+  that would create a saved answer and billable external request merely for QA.
 - The owner's saved USD preference was not changed for QA. A future owner
   acceptance check can select another preferred currency in Account settings;
   the server-side reporting adapter and unavailable-rate guard are already the

@@ -28,6 +28,8 @@ import {
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { CoachReviewDeliveryScheduleRepository } from "@/src/modules/coach/server/coach-weekly-review-schedule-repository";
+import { withJournalAnalyticsReportingDashboardRuntime } from
+  "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -94,6 +96,10 @@ export async function POST(
     const messageBody = { ...body };
     delete messageBody.pagePathname;
     const input = parseGenerateChatMessageBody(messageBody);
+    const reportingContext = await withJournalAnalyticsReportingDashboardRuntime(
+      scope,
+      ({ reportingContext: context }) => context,
+    );
     const trustedContext = input.context
       ? await getReplacementReportingDailyCompanionResolvedContext(scope, {
           tradingDate: input.context.tradingDate,
@@ -110,6 +116,7 @@ export async function POST(
       question: input.question,
       intent: input.intent,
       analysisScope: input.analysisScope,
+      reportingContext,
       pageContext,
       idempotencySha256: createChatGenerationIdempotencySha256(
         id,

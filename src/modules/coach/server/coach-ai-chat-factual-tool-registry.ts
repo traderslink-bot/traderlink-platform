@@ -16,7 +16,7 @@ export type CoachAiChatFactualToolDefinition = Readonly<{
 
 const closedTradeLimitations = Object.freeze([
   "Closed-trade facts exclude legitimate open positions and unresolved decisions from realized metrics.",
-  "Money is returned in separate trade-currency partitions; no cross-currency total is inferred.",
+  "Money is converted to the Account reporting currency only when an exact rate is available; source Journal values are never relabelled.",
 ]);
 
 export const coachAiChatFactualToolRegistry = Object.freeze([
@@ -169,7 +169,7 @@ export const coachAiChatFactualToolRegistry = Object.freeze([
     supportedMetricIds: Object.freeze([]),
     supportedGroupings: COACH_AI_CHAT_FACTUAL_TOOL_GROUPINGS,
     limitations: Object.freeze([
-      "Individual trade evidence is available only when one trade currency is selected.",
+      "Individual trade evidence uses the Account reporting currency without changing each trade's source currency.",
       "Results are limited to 50 supporting trades per request.",
       ...closedTradeLimitations,
     ]),
@@ -265,6 +265,7 @@ export const coachAiChatFactualToolRegistry = Object.freeze([
     supportedGroupings: Object.freeze([]),
     limitations: Object.freeze([
       "This read does not recommend, activate, pause, revise, or retire a rule.",
+      "Reporting configurations are for explanation; source configurations remain authoritative for a confirmed rule change.",
       "A tag, note, or model opinion is never treated as a rule result.",
     ]),
     contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,

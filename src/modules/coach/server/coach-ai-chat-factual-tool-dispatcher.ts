@@ -222,6 +222,45 @@ function applyScope(
   });
 }
 
+function applyReportingCurrency(
+  request: CoachAiChatFactualToolRequest,
+  reportingCurrency: string | null,
+): CoachAiChatFactualToolRequest {
+  if (reportingCurrency === null) return request;
+  if (request.toolName === "summarize_journal_period" ||
+      request.toolName === "get_trading_day_details" ||
+      request.toolName === "get_calendar_period") {
+    return Object.freeze({ ...request, currency: reportingCurrency });
+  }
+  if (request.toolName === "summarize_closed_trades" ||
+      request.toolName === "group_closed_trades" ||
+      request.toolName === "list_closed_trades" ||
+      request.toolName === "get_analytics_overview" ||
+      request.toolName === "get_results_by_ticker" ||
+      request.toolName === "get_timing_analytics" ||
+      request.toolName === "get_execution_analytics" ||
+      request.toolName === "query_trade_explorer") {
+    return Object.freeze({
+      ...request,
+      filters: Object.freeze({
+        ...request.filters,
+        currency: reportingCurrency,
+      }),
+    });
+  }
+  if (request.toolName === "get_trade_analyzer_results" ||
+      request.toolName === "list_analyzed_trades") {
+    return Object.freeze({
+      ...request,
+      filters: Object.freeze({
+        ...request.filters,
+        currency: reportingCurrency,
+      }),
+    });
+  }
+  return request;
+}
+
 function unsupportedTool(request: never): never {
   void request;
   throw new CoachAiChatFactualToolError("invalid_request");
@@ -255,12 +294,14 @@ export class CoachAiChatFactualToolDispatcher {
         "listRules" | "ruleResults" | "tradeAnnotations">;
     }> = Object.freeze({}),
     private readonly analysisScope: CoachAiChatAnalysisScope = Object.freeze({ kind: "recent" }),
+    private readonly reportingCurrency: string | null = null,
   ) {}
 
   dispatch(toolCallId: string, request: CoachAiChatFactualToolRequest): CoachAiChatFactualToolResponse {
     if (this.snapshots.length >= 4) throw new CoachAiChatFactualToolError("result_too_large");
     const enforcedAnalysisScope = resolveRecentScope(this.analysisScope, this.asOfUtc);
     request = applyScope(request, enforcedAnalysisScope);
+    request = applyReportingCurrency(request, this.reportingCurrency);
     let result: CoachAiChatFactualToolResponse;
     switch (request.toolName) {
       case "summarize_closed_trades":

@@ -23,6 +23,13 @@ import {
   type AccountScope,
   type WorkspaceAccessScope,
 } from "@/src/modules/platform/contracts/workspace-access-scope";
+import {
+  journalReportingCurrencyAmount,
+  journalReportingCurrencyMultiplier,
+  type JournalReportingCurrencyContext,
+} from "@/src/modules/journal-analytics/server/journal-reporting-currency-fact-set";
+import { reportCandleReviewRecord } from
+  "@/src/modules/level-analysis/server/candle-review-reporting";
 
 import {
   COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
@@ -192,6 +199,7 @@ export class CoachAiChatTradeAnalyzerToolService {
   private readonly readCurrencies: typeof readDailyTradeAnalysisCurrencies;
   private readonly buildModel: typeof buildDailyTradeLongTermAnalytics;
   private readonly resolveTrade: ((scope: AccountScope, tradeRef: string) => string | null) | null;
+  private readonly reportingContext: JournalReportingCurrencyContext | null;
 
   constructor(
     private readonly database: Database.Database,
@@ -201,12 +209,14 @@ export class CoachAiChatTradeAnalyzerToolService {
       readCurrencies?: typeof readDailyTradeAnalysisCurrencies;
       buildModel?: typeof buildDailyTradeLongTermAnalytics;
       resolveTrade?: (scope: AccountScope, tradeRef: string) => string | null;
+      reportingContext?: JournalReportingCurrencyContext;
     }> = Object.freeze({}),
   ) {
     this.candles = dependencies.candles ?? new CandleReviewRepository(database);
     this.readCurrencies = dependencies.readCurrencies ?? readDailyTradeAnalysisCurrencies;
     this.buildModel = dependencies.buildModel ?? buildDailyTradeLongTermAnalytics;
     this.resolveTrade = dependencies.resolveTrade ?? null;
+    this.reportingContext = dependencies.reportingContext ?? null;
   }
 
   results(
@@ -279,6 +289,17 @@ export class CoachAiChatTradeAnalyzerToolService {
     const target = this.candles.findTarget(selected, roundTripId);
     if (!target) throw new CoachAiChatFactualToolError("not_found");
     const review = this.candles.readCurrent(selected, target);
+    const entryPriceDecimal = this.reportedAmount(
+      target.roundTripId,
+      target.entryPriceDecimal,
+    );
+    const exitPriceDecimal = this.reportedAmount(
+      target.roundTripId,
+      target.exitPriceDecimal,
+    );
+    const reportedReview = review && this.reportingContext
+      ? reportCandleReviewRecord(review, this.reportingContext)
+      : review;
     return Object.freeze({
       contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
       toolName: request.toolName,
@@ -288,17 +309,18 @@ export class CoachAiChatTradeAnalyzerToolService {
         direction: target.direction,
         openedAtUtc: target.openedAtUtc,
         closedAtUtc: target.closedAtUtc,
-        entryPriceDecimal: target.entryPriceDecimal,
-        exitPriceDecimal: target.exitPriceDecimal,
-        savedReviewAvailable: review !== null,
-        review: review === null ? null : Object.freeze({
-          status: review.status,
-          analyzedAtUtc: review.analyzedAtUtc,
-          entryTiming: review.analysis.entryTiming,
-          exitTiming: review.analysis.exitTiming,
-          profitGiveback: review.analysis.profitGiveback,
-          observations: review.observations,
-          indicators: review.indicators,
+        currency: this.reportingContext?.reportingCurrency ?? null,
+        entryPriceDecimal,
+        exitPriceDecimal,
+        savedReviewAvailable: reportedReview !== null,
+        review: reportedReview === null ? null : Object.freeze({
+          status: reportedReview.status,
+          analyzedAtUtc: reportedReview.analyzedAtUtc,
+          entryTiming: reportedReview.analysis.entryTiming,
+          exitTiming: reportedReview.analysis.exitTiming,
+          profitGiveback: reportedReview.analysis.profitGiveback,
+          observations: reportedReview.observations,
+          indicators: reportedReview.indicators,
         }),
         candleSeriesIncluded: false,
         link: "/trades/candle-review",
@@ -316,8 +338,10 @@ export class CoachAiChatTradeAnalyzerToolService {
     if (filters.currency !== undefined && !CURRENCY_PATTERN.test(filters.currency)) invalid();
     const range = closingRange(filters);
     const analyzedCurrencies = this.readCurrencies(this.database, scope);
-    const currency = filters.currency ?? analyzedCurrencies[0] ?? null;
-    if (filters.currency !== undefined && !analyzedCurrencies.includes(filters.currency)) {
+    const currency = this.reportingContext?.reportingCurrency ??
+      filters.currency ?? analyzedCurrencies[0] ?? null;
+    if (!this.reportingContext && filters.currency !== undefined &&
+        !analyzedCurrencies.includes(filters.currency)) {
       throw new CoachAiChatFactualToolError("not_found");
     }
     const rows = [];
@@ -341,6 +365,22 @@ export class CoachAiChatTradeAnalyzerToolService {
       timezone = response.timezone;
       cursor = response.continuationCursor;
     } while (cursor !== null);
+    const reportingMultipliers = new Map<string, string>();
+    if (this.reportingContext) {
+      for (const [roundTripId, sourceCurrency] of
+        this.reportingContext.sourceCurrencyByRoundTrip) {
+        const sourceDate = this.reportingContext.sourceDateByRoundTrip.get(roundTripId);
+        if (!sourceDate) continue;
+        reportingMultipliers.set(
+          roundTripId,
+          journalReportingCurrencyMultiplier(
+            sourceCurrency,
+            sourceDate,
+            this.reportingContext,
+          ),
+        );
+      }
+    }
     return this.buildModel(
       this.database,
       scope,
@@ -348,7 +388,29 @@ export class CoachAiChatTradeAnalyzerToolService {
       filters.moneyBasis,
       currency,
       timezone,
+      reportingMultipliers,
     );
+  }
+
+  private reportedAmount(roundTripId: string, amount: string): string {
+    if (!this.reportingContext) return amount;
+    const sourceCurrency = this.reportingContext.sourceCurrencyByRoundTrip
+      .get(roundTripId);
+    const sourceDate = this.reportingContext.sourceDateByRoundTrip.get(roundTripId);
+    if (!sourceCurrency || !sourceDate) {
+      throw new CoachAiChatFactualToolError("not_found");
+    }
+    try {
+      return journalReportingCurrencyAmount(
+        amount,
+        sourceCurrency,
+        this.reportingContext.reportingCurrency,
+        sourceDate,
+        this.reportingContext,
+      );
+    } catch {
+      throw new CoachAiChatFactualToolError("not_found");
+    }
   }
 
   private resolveRoundTripId(scope: AccountScope, tradeRef: string): string | null {
