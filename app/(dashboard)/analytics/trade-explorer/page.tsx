@@ -15,5 +15,5 @@ export const metadata: Metadata = {
 
 export default async function TradeExplorerPage() {
   const scope = await requireTraderLinkPlatformPageScope();
-  return <TradeExplorerClient model={readTradeExplorerPageModel(scope)} />;
+  return <TradeExplorerClient model={await readTradeExplorerPageModel(scope)} />;
 }

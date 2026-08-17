@@ -1,6 +1,7 @@
 # Currency Preference And Reporting Progress
 
-**Status:** Owner-approved coverage expansion implemented; local checkpoint pending
+**Status:** Dashboard-wide reporting implementation and local verification complete;
+final owner visual acceptance remains available
 
 **Controlling plan:**
 [Currency Preference And Reporting Plan](currency-preference-and-reporting-plan.md)
@@ -25,10 +26,42 @@
   SGD, ZAR, KRW, SEK, CHF, TWD, THB, TRY and GBP.
 - [x] Added migration 0035 to preserve existing preferences and cached rate
   observations while expanding the database allowlist.
+- [x] Established the dashboard-wide display rule that ordinary money values
+  use the selected currency symbol without an ISO code, and removed redundant
+  selected-currency descriptions while preserving currency selectors and
+  currency-specific Data Decision evidence.
+- [x] Added one server-derived reporting fact-set adapter so historical
+  prices, fees, notionals, P/L and aggregates are converted before dashboard
+  calculations rather than merely relabelled.
+- [x] Applied the active Platform-user preference to Workspace, Calendar,
+  Analytics, Trade Explorer, Trade Analyzer, Rules results, Daily Trade
+  Tracker, Swing Trade Tracker, Open Positions and Candle Review.
+- [x] Converted saved analyzer snapshots, market candles, indicator price
+  values and turnover for reporting while preserving source values for manual
+  execution edits.
+- [x] Removed page-level currency overrides from Calendar, Trade Explorer and
+  Trade Analyzer. Saving the Account preference now refreshes server-rendered
+  dashboard data immediately.
+- [x] Added a safe dashboard recovery view for unavailable conversion coverage.
+- [x] Kept page reads bounded by preparing reporting dates and currencies with
+  a narrow metadata query, then reusing converted fact sets inside the same
+  request instead of loading the complete analytics fact set twice.
+- [x] Preserved statement/import/Data Decision values and already-issued AI
+  Review prose as original evidence rather than rewriting facts.
 
-## Resume point
+## Verification checkpoint
 
-Apply migration 0035 to the local Platform database, then refresh the local
-dashboard and choose any non-USD preference in Account Settings. Preserve
-original USD Journal facts and expose unavailable coverage instead of a guessed
-conversion.
+- Focused ESLint and whole-project TypeScript pass without errors.
+- The canonical no-worker dashboard passed representative desktop and 390 px
+  browser review for Workspace, Calendar, Trade Explorer, Ticker, Trading
+  Rules, Daily and Swing Trade Tracker, Open Positions, Execution Analytics,
+  Candle Patterns and Analyzed Trades.
+- Ordinary review pages showed symbol-formatted money with no visible `USD`
+  suffix or prefix; horizontal tables retained readable widths and visible
+  sideways-scroll cues; the mobile AI drawer retained a working Close action.
+- The browser reported no console warnings or errors. Port 3010 was shut down
+  after review.
+- The owner's saved USD preference was not changed for QA. A future owner
+  acceptance check can select another preferred currency in Account settings;
+  the server-side reporting adapter and unavailable-rate guard are already the
+  shared path used by the reviewed pages.

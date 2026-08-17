@@ -743,4 +743,76 @@ export class JournalAnnotationService {
       })!;
     });
   }
+
+  saveTradeReview(
+    scope: AccountScope,
+    input: Readonly<{
+      roundTripId: string;
+      note: Readonly<{
+        expectedRevision: unknown;
+        tradeNote: unknown;
+      }> | null;
+      tags: Readonly<{
+        expectedTagIds: readonly string[];
+        tagIds: readonly string[];
+        presetKeys: readonly string[];
+      }> | null;
+      ruleReviews: readonly Readonly<{
+        ruleId: string;
+        ruleVersionId: string;
+        status: unknown;
+        expectedRevision: unknown;
+      }>[];
+      now?: Date;
+    }>,
+  ): void {
+    assertCanonicalUuidV4(input.roundTripId, "roundTripId");
+    if (
+      input.note === null &&
+      input.tags === null &&
+      input.ruleReviews.length === 0
+    ) {
+      invalid("tradeReview");
+    }
+    this.annotations.immediate(() => {
+      if (input.note !== null) {
+        const currentNote = this.readRoundTripNotes(scope, [input.roundTripId])[
+          input.roundTripId
+        ] ?? null;
+        this.saveRoundTripNote(scope, {
+          ...input.note,
+          roundTripId: input.roundTripId,
+          technicalNote: currentNote?.technicalNote ?? "",
+          now: input.now,
+        });
+      }
+      if (input.tags !== null) {
+        const currentTagIds = this.listTagsForRoundTrips(scope, [input.roundTripId])[
+          input.roundTripId
+        ]?.map((tag) => tag.tagId).sort() ?? [];
+        const expectedTagIds = [...new Set(input.tags.expectedTagIds)].sort();
+        expectedTagIds.forEach((tagId) => assertCanonicalUuidV4(tagId, "expectedTagIds"));
+        if (
+          currentTagIds.length !== expectedTagIds.length ||
+          currentTagIds.some((tagId, index) => tagId !== expectedTagIds[index])
+        ) {
+          conflict();
+        }
+        this.replaceRoundTripTagsWithPresets(scope, {
+          presetKeys: input.tags.presetKeys,
+          roundTripId: input.roundTripId,
+          tagIds: input.tags.tagIds,
+          now: input.now,
+        });
+      }
+      for (const review of input.ruleReviews) {
+        this.saveRuleReview(scope, {
+          ...review,
+          targetKind: "round_trip",
+          targetId: input.roundTripId,
+          now: input.now,
+        });
+      }
+    });
+  }
 }

@@ -1,9 +1,11 @@
 # Trade Explorer Progress
 
-**Status:** Explorer 1 truthful-ordering correction implemented, tenth-pass QA
-complete with the tenth pass finding no new Trade Explorer issue, and awaiting
-owner visual/product review. The owner approved implementation on 2026-08-04
-and the corrected Trades/review direction on 2026-08-16.
+**Status:** Explorer 1 truthful-ordering correction remains complete. The
+owner-approved completed-trade Review editor is implemented over the existing
+note, tag and rule-review contracts. Focused source, TypeScript and local
+mobile-browser QA are complete; final owner visual/product acceptance remains
+available. The owner approved implementation
+on 2026-08-04 and the corrected Trades/review direction on 2026-08-16.
 
 **Controlling plan:** [Trade Explorer Plan](trade-explorer-platform-plan.md)
 
@@ -91,12 +93,83 @@ The approved correction is implemented and:
 - tighten the evidence table with `Avg entry`, `Avg exit` and `Entry value`
   without removing useful columns.
 
-The separately approved trade-review direction will follow this correctness
-checkpoint and its owner visual review. Notes, tags and rule reviews will open
-from one narrow Review action in a desktop side panel or mobile full-screen
-sheet rather than becoming more table columns. The other active dashboard-wide
-mobile-friendliness chat owns shared shell and general responsive changes; this
-slice will not overwrite those files.
+The separately approved trade-review direction now follows this correctness
+checkpoint. Notes, tags and rule reviews open from one narrow Review action in
+a desktop side panel or mobile full-screen editor rather than becoming more
+table columns. The other active dashboard-wide mobile/currency chat owns shared
+shell, reporting-currency behavior and general responsive changes; this slice
+does not overwrite those files.
+
+### Completed-trade Review editor
+
+The Explorer Review action now opens the selected confirmed completed trade
+without changing its execution details. The editor reads and writes only the
+active Trade Tracker account selected by the server. It provides:
+
+- one trade-note field using the existing versioned completed-trade note;
+- up to 10 trader-selected preset or custom tags, with reusable custom-tag
+  creation and no inferred or automatically suggested labels;
+- editable custom trade-rule results of Followed, Broken or Not reviewed,
+  pinned to the exact rule version that applied when the trade opened; and
+- factual automatic preset trade-rule results as read-only context.
+
+One Save action writes the changed note, tag assignment and custom-rule results
+inside one database transaction. Unchanged sections do not create needless
+revisions. A version or account conflict asks the trader to reload rather than
+overwriting newer work.
+
+Desktop uses a bounded right-side panel. Phone-sized screens use the full
+viewport and retain an explicit, visible Close button in the header. Closing or
+using Previous/Next with unsaved changes opens a discard confirmation. Previous
+and Next are truthfully limited to the current bounded results page. Existing
+execution expansion remains a separate row action.
+
+### Completed-trade Review editor QA
+
+The complete editor QA passes found and corrected four edge cases:
+Save could ignore an unfinished custom-tag name when another review field had
+changed, and an 844-pixel-wide phone in landscape would have received the
+desktop-width panel. A rapid double-click could also start a second write before
+the disabled state repainted. The first draft also sent the hidden technical
+note to the browser only so it could be echoed back unchanged. Save now requires the pending tag name to be created or
+cleared, and one immediate lock prevents overlapping Save, tag creation, close
+or trade-navigation actions. The atomic server command now preserves the
+technical note without exposing it to the editor. Phone portrait and landscape use the full viewport through the
+900-pixel breakpoint, include top and bottom safe-area handling, keep the Close
+action visible and place Previous/Next plus the current-page position without
+cramping a narrow screen. A saved-success message is also cleared as soon as a
+new edit begins.
+
+The following clean source checkpoint then passed:
+
+- targeted ESLint for the editor, client integration, server actions/service,
+  annotation transaction, Help and the three focused test files;
+- 16 focused checks across the completed-trade review service, mobile/desktop
+  UI contract and atomic annotation service; the database-heavy annotation
+  file passed by itself with one worker after the initial combined run exceeded
+  the machine's five-second per-test limit under concurrent load; and
+- targeted whitespace checks for tracked and new Review files.
+
+The review service checks prove that only the exact `ready_closed` trade from
+the active selected account opens, custom rules use the version that applied
+when the trade opened, automatic preset results remain read-only, stale or
+inapplicable rule changes are refused before writing, and the accepted changes
+reach the one atomic review command. The transaction check proves stale note,
+tag or rule state rolls the whole save back.
+
+Whole-project TypeScript passes against the current integrated working tree.
+Two repository-wide checks remain outside this slice while concurrent work is
+active. The existing Trade Explorer visible contract passes five of six checks and retains one stale expectation for a
+page-level Currency selector removed by that reporting-currency work. The
+dashboard-template verifier remains five of seven because of the separately
+owned `feature-help-link.tsx` and `dashboard-shell.tsx` changes. None reports a
+Review-editor-owned failure, and those concurrent files were not changed here.
+The integrated 390 px browser review confirmed the Trade Explorer table keeps
+readable columns with a visible sideways-scroll cue, uses reporting-currency
+symbols without a visible `USD` label and opens the shared mobile AI drawer
+with a working Close action. Port 3010 was shut down after review. A real
+Review save/reload remains an owner acceptance action because it would change
+the owner's Journal annotations.
 
 The correction implementation is now assembled. Trade ordering is applied to
 the complete filtered server population before bounded pagination, uses exact
@@ -320,10 +393,10 @@ review boundaries.
 
 ## Next action after plan approval
 
-Complete the owner visual/interaction check when requested. After owner
-approval, add the completed-trade Review panel over the existing stable
-annotation contracts without placeholder controls. Recheck the now-aligned
-Trade Explorer Help coverage if the approved interaction changes.
+Complete the owner visual/interaction check when requested. Verify the desktop
+side panel, phone full-screen editor, visible Close action, unsaved-change
+warning, current-page Previous/Next behavior and a real save/reload round trip.
+Port 3010 remains off until the owner asks to review or starts it independently.
 
 ### Mobile presentation integration
 

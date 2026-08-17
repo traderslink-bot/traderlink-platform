@@ -38,6 +38,7 @@ import {
   formatJournalAnalyticsDecimal,
   formatJournalAnalyticsDuration,
   formatJournalAnalyticsMetric,
+  formatJournalAnalyticsMoney,
 } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import {
   canonicalTradeExplorerDecimalInput,
@@ -67,6 +68,8 @@ import type {
 import { HorizontalScrollRegion } from "../../horizontal-scroll-region";
 
 import { runTradeExplorer } from "./actions";
+import { TradeExplorerReviewEditor } from "./trade-review-editor";
+import type { TradeExplorerReviewTarget } from "./trade-review-model";
 import type { TradeExplorerPageModel } from "./trade-explorer-service";
 
 type ExplorerGroup = Readonly<{
@@ -250,11 +253,7 @@ function value(
 }
 
 function formatExplorerMetric(result: JournalAnalyticsMetricResult): string {
-  const formatted = formatJournalAnalyticsMetric(result);
-  if (result.valueKind !== "money" || result.currency === null || formatted === "N/A") {
-    return formatted;
-  }
-  return `${result.currency} ${formatted.replace("$", "")}`;
+  return formatJournalAnalyticsMetric(result);
 }
 
 function metricSortValue(
@@ -302,8 +301,7 @@ function groupColumnDisplaysMetric(
 
 function money(valueDecimal: string | null, currency: string | null): string {
   if (valueDecimal === null) return "N/A";
-  const formatted = formatJournalAnalyticsDecimal(valueDecimal, 2, true);
-  return currency === null ? formatted : `${currency} ${formatted}`;
+  return formatJournalAnalyticsMoney(valueDecimal, currency);
 }
 
 function pnlColor(valueDecimal: string | null): "error.main" | "success.main" | "text.primary" {
@@ -399,6 +397,7 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
   const [groupPageIndex, setGroupPageIndex] = useState(0);
   const [advanced, setAdvanced] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [reviewRoundTripId, setReviewRoundTripId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [expandedRoundTripId, setExpandedRoundTripId] = useState<string | null>(null);
   const [expandedExecutions, setExpandedExecutions] = useState<readonly TradeExecution[]>(Object.freeze([]));
@@ -482,7 +481,6 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
         ...(appliedQuery.outcome === null
           ? [Object.freeze({ label: "Profit factor", value: value(tradeSummaryPartition, "profit_factor") })]
           : []),
-        Object.freeze({ label: "Currency", value: tradeSummaryPartition.currency ?? "Not recorded" }),
       ]);
   const activeViewColumns = activeView?.columns.filter((column) =>
     appliedQuery.outcome === null || (
@@ -530,6 +528,16 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
     });
   const groupedResultsHaveUnavailable = activeView !== null && visibleGroups.some((item) =>
     displayedColumns.some((column) => groupColumnIsUnavailable(item.group, column)));
+  const reviewTargets = useMemo<readonly TradeExplorerReviewTarget[]>(() =>
+    Object.freeze((preview.evidence?.rows ?? []).map((trade) => Object.freeze({
+      closeLocalDate: trade.closeLocalDate,
+      closedAtUtc: trade.closedAtUtc,
+      direction: trade.direction,
+      displayedSymbol: trade.displayedSymbol,
+      roundTripId: trade.roundTripId,
+    }))), [preview.evidence]);
+  const reviewOpen = reviewRoundTripId !== null && reviewTargets.some((trade) =>
+    trade.roundTripId === reviewRoundTripId);
 
   function clearExpandedTrade(): void {
     executionRequestRef.current += 1;
@@ -767,10 +775,6 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
       }}>
         <TextField fullWidth label="From" onChange={(event) => patch("startDate", event.target.value)} size="small" type="date" value={query.startDate} slotProps={{ inputLabel: { shrink: true } }} />
         <TextField fullWidth label="To" onChange={(event) => patch("endDate", event.target.value)} size="small" type="date" value={query.endDate} slotProps={{ inputLabel: { shrink: true } }} />
-        <SelectField idSuffix={idSuffix} label="Currency" onChange={(next) => patch("currency", next === "all" ? null : next)} value={query.currency ?? "all"}>
-          <MenuItem value="all">All currencies</MenuItem>
-          {model.currencies.map((currency) => <MenuItem key={currency} value={currency}>{currency}</MenuItem>)}
-        </SelectField>
         <Autocomplete
           autoHighlight
           fullWidth
@@ -884,7 +888,6 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
         <Box sx={{ display: { xs: "block", md: "none" } }}>
           <Stack direction="row" sx={{ alignItems: "center", columnGap: 1, flexWrap: "wrap", rowGap: 0.75 }}>
             <Chip label={resultView === "trades" ? "Trades" : RESULT_VIEWS[resultView].label} size="small" />
-            <Chip label={query.currency ?? "All currencies"} size="small" variant="outlined" />
             {query.symbol ? <Chip label={query.symbol} size="small" variant="outlined" /> : null}
             {hasUnappliedChanges && !isPending ? (
               <Typography aria-live="polite" color="text.secondary" variant="body2">Filters need to be applied.</Typography>
@@ -908,7 +911,7 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
                   </Typography>
                   {tradeSummaryPartition ? (
                     <Typography color="text.secondary" variant="body2">
-                      Currency: {tradeSummaryPartition.currency ?? "Not recorded"} · Trading timezone: {tradeSummaryPartition.timezone ?? "Not recorded"}
+                      Trading timezone: {tradeSummaryPartition.timezone ?? "Not recorded"}
                     </Typography>
                   ) : null}
                   {selectedRankingUnavailable ? (
@@ -1024,7 +1027,7 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
             <Typography color="text.secondary">{emptyTradeMessage}</Typography>
           ) : (
             <>
-              <HorizontalScrollRegion label="Individual trades table" maxHeight={560} minTableWidth={1260} stickyFirstColumn>
+              <HorizontalScrollRegion label="Individual trades table" maxHeight={560} minTableWidth={1360} stickyFirstColumn>
                 <Table
                   size="small"
                   stickyHeader
@@ -1036,7 +1039,7 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
                     },
                   }}
                 >
-                  <TableHead><TableRow><TableCell>Ticker</TableCell><TableCell>Closed</TableCell><TableCell>Direction</TableCell><TableCell>Shares</TableCell><TableCell>Avg entry</TableCell><TableCell>Avg exit</TableCell><TableCell>Entry value</TableCell><TableCell>{appliedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L"}</TableCell><TableCell>Return</TableCell><TableCell>Hold</TableCell><TableCell>Executions</TableCell></TableRow></TableHead>
+                  <TableHead><TableRow><TableCell>Ticker</TableCell><TableCell>Review</TableCell><TableCell>Closed</TableCell><TableCell>Direction</TableCell><TableCell>Shares</TableCell><TableCell>Avg entry</TableCell><TableCell>Avg exit</TableCell><TableCell>Entry value</TableCell><TableCell>{appliedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L"}</TableCell><TableCell>Return</TableCell><TableCell>Hold</TableCell><TableCell>Executions</TableCell></TableRow></TableHead>
                   <TableBody>
                     {preview.evidence.rows.map((trade) => {
                       const expanded = expandedRoundTripId === trade.roundTripId;
@@ -1057,6 +1060,21 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
                         >
                           <TableCell sx={{ fontWeight: 800 }}>{trade.displayedSymbol}</TableCell>
                           <TableCell>
+                            <Button
+                              aria-label={`Review notes, tags and rules for ${trade.displayedSymbol} closed ${trade.closeLocalDate}`}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setReviewRoundTripId(trade.roundTripId);
+                              }}
+                              onKeyDown={(event) => event.stopPropagation()}
+                              size="small"
+                              sx={{ minHeight: 36 }}
+                              variant="outlined"
+                            >
+                              Review
+                            </Button>
+                          </TableCell>
+                          <TableCell>
                             <Box>{trade.closeLocalDate}</Box>
                             <Typography color="text.secondary" variant="caption">
                               {tradeCloseTime(trade.closedAtUtc, preview.evidence?.timezone ?? "UTC")}
@@ -1073,7 +1091,7 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
                           <TableCell>{trade.uniqueExecutionCount}</TableCell>
                         </TableRow>
                         {expanded ? <TableRow>
-                          <TableCell colSpan={11} sx={{ backgroundColor: "action.hover", boxShadow: "none !important", left: "auto !important", position: "static !important", px: 3, py: 2, whiteSpace: "normal" }}>
+                          <TableCell colSpan={12} sx={{ backgroundColor: "action.hover", boxShadow: "none !important", left: "auto !important", position: "static !important", px: 3, py: 2, whiteSpace: "normal" }}>
                             {executionDetailsStatus === "loading" ? <Typography color="text.secondary">Loading executions…</Typography> : null}
                             {executionDetailsStatus === "error" ? <Alert severity="error">The executions could not be loaded.</Alert> : null}
                             {executionDetailsStatus === "ready" && expandedExecutions.length === 0 ? <Typography color="text.secondary">No executions are available for this trade.</Typography> : null}
@@ -1186,6 +1204,15 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
             </Stack>
           </Box>
       </Drawer>
+
+      <TradeExplorerReviewEditor
+        expectedAccountSelectionRef={model.expectedAccountSelectionRef}
+        onClose={() => setReviewRoundTripId(null)}
+        onSelectTrade={setReviewRoundTripId}
+        open={reviewOpen}
+        selectedRoundTripId={reviewRoundTripId}
+        trades={reviewTargets}
+      />
 
       {error ? <Alert severity="error">{error}</Alert> : null}
     </DashboardPage>

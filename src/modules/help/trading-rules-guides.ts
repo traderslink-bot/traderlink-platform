@@ -257,6 +257,7 @@ export const TRADING_RULES_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
             "A ticker-day rule can use several completed attempts in the same ticker.",
             "A daily rule uses the ordered results across the complete trading day.",
             "Custom rules show a result selector. Preset rules display the automatic result.",
+            "Trade Explorer's Review editor offers the same custom result choices for one completed trade and shows automatic trade-rule results as read-only. Daily rule results remain in Daily Trade Tracker.",
           ]) }),
         ]),
       }),

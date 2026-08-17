@@ -182,9 +182,11 @@ describe("Trade Explorer visible contract", () => {
     expect(client).toContain('event.key !== "Enter" && event.key !== " "');
     expect(client).toContain("tabIndex={0}");
     expect(client).toContain("pnlColor(trade.selectedPnlDecimal)");
-    expect(client).toContain("Currency: {tradeSummaryPartition.currency");
-    expect(client).toContain('return `${result.currency} ${formatted.replace("$", "")}`;');
-    expect(client).toContain('return currency === null ? formatted : `${currency} ${formatted}`;');
+    expect(client).not.toContain("Currency: {tradeSummaryPartition.currency");
+    expect(client).not.toContain('`${result.currency} ${formatted.replace("$", "")}`');
+    expect(client).not.toContain('`${currency} ${formatted}`');
+    expect(client).not.toContain('Chip label={query.currency ?? "All currencies"}');
+    expect(client).toContain("formatJournalAnalyticsMoney(valueDecimal, currency)");
     expect(client).toContain('width: "max-content"');
     expect(client).toContain("This Rank by result cannot be calculated");
     expect(client).toContain("groupColumnDisplaysMetric(column, appliedQuery.metricId)");

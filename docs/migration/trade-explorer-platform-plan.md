@@ -1,8 +1,9 @@
 # Trade Explorer Plan
 
-**Status:** Explorer 1 truthful-ordering correction implemented and tenth-pass
-QA complete with the tenth pass finding no new Trade Explorer issue; owner
-visual/product review remains. The owner approved construction
+**Status:** Explorer 1 truthful-ordering correction and the completed-trade
+Review editor are implemented. Ordering reached its clean tenth QA pass and the
+Review editor's focused source QA is complete; owner visual/product review
+remains. The owner approved construction
 of the real trade-exploration workspace on 2026-08-04 and approved the truthful
 Trades ordering plus trade-review workflow direction on 2026-08-16. This plan remains
 the full target; controls appear only when they execute against accepted Trade Tracker
@@ -268,6 +269,14 @@ while still allowing a trader to make a deliberate completed-trade study later.
    as a full-screen sheet on mobile. Previous/next controls support reviewing
    many matching trades without returning to the top of the page. Existing
    execution detail remains separately available from the trade row.
+   The approved Review editor uses one explicit Save action for the trade note,
+   selected tags and changed custom-rule results. Closing the editor or moving
+   to another trade warns before discarding unsaved changes. Desktop uses a
+   bounded right-side panel. Phone-sized screens use the full viewport and
+   keep a visible `Close` action in the header plus safe-area-aware Save
+   controls. Previous and Next move through the trades on the current bounded
+   results page. Preset rule results remain factual and read-only; only custom
+   trade-rule results can be changed to Followed, Broken or Not reviewed.
 3. Start with an understandable empty state: “Add completed trades to compare
    results here.” It does not show fixtures or sample comparisons.
 4. Explain only the immediate value of a control in trader language. Avoid

@@ -408,6 +408,116 @@ WHERE round_trip_id = ?`)
     context.database.close();
   });
 
+  it("saves one completed-trade review atomically", () => {
+    const context = setup();
+    const tag = context.service.createTag(context.first.scope, {
+      name: "Patient entry",
+      now: new Date(at),
+    });
+    const rule = context.service.createRule(context.first.scope, {
+      sourceKind: "custom",
+      title: "Wait for confirmation",
+      statement: "Wait for the planned confirmation before entering.",
+      category: "discipline",
+      reviewScope: "trade",
+      isFocus: false,
+      configuration: {},
+      now: new Date(at),
+    });
+    const existingNote = context.service.saveRoundTripNote(context.first.scope, {
+      expectedRevision: null,
+      roundTripId: context.first.roundTripId,
+      technicalNote: "Preserve this technical note.",
+      tradeNote: "Original review.",
+      now: new Date(at),
+    });
+
+    context.service.saveTradeReview(context.first.scope, {
+      roundTripId: context.first.roundTripId,
+      note: {
+        expectedRevision: existingNote.revision,
+        tradeNote: "Waited for the setup.",
+      },
+      tags: { expectedTagIds: [], tagIds: [tag.tagId], presetKeys: [] },
+      ruleReviews: [{
+        expectedRevision: null,
+        ruleId: rule.ruleId,
+        ruleVersionId: rule.versionId,
+        status: "followed",
+      }],
+      now: new Date(at),
+    });
+
+    const savedNote = context.service.readRoundTripNotes(
+      context.first.scope,
+      [context.first.roundTripId],
+    )[context.first.roundTripId]!;
+    const savedReview = context.service.listRuleReviews(context.first.scope, {
+      tradingDayId: context.first.dayId,
+      roundTripIds: [context.first.roundTripId],
+    })[0]!;
+    expect(savedNote).toMatchObject({
+      revision: 2,
+      technicalNote: "Preserve this technical note.",
+      tradeNote: "Waited for the setup.",
+    });
+    expect(savedReview).toMatchObject({ revision: 1, status: "followed" });
+
+    expect(() => context.service.saveTradeReview(context.first.scope, {
+      roundTripId: context.first.roundTripId,
+      note: {
+        expectedRevision: savedNote.revision,
+        tradeNote: "A stale tag selection must roll this back.",
+      },
+      tags: { expectedTagIds: [], tagIds: [], presetKeys: [] },
+      ruleReviews: [],
+      now: new Date("2026-08-02T12:00:30.000Z"),
+    })).toThrowError("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+
+    expect(context.service.readRoundTripNotes(
+      context.first.scope,
+      [context.first.roundTripId],
+    )[context.first.roundTripId]).toMatchObject({
+      revision: 2,
+      technicalNote: "Preserve this technical note.",
+      tradeNote: "Waited for the setup.",
+    });
+
+    expect(() => context.service.saveTradeReview(context.first.scope, {
+      roundTripId: context.first.roundTripId,
+      note: {
+        expectedRevision: savedNote.revision,
+        tradeNote: "This must roll back.",
+      },
+      tags: { expectedTagIds: [tag.tagId], tagIds: [], presetKeys: [] },
+      ruleReviews: [{
+        expectedRevision: savedReview.revision + 1,
+        ruleId: rule.ruleId,
+        ruleVersionId: rule.versionId,
+        status: "broken",
+      }],
+      now: new Date("2026-08-02T12:01:00.000Z"),
+    })).toThrowError("TRADERLINK_JOURNAL_ANNOTATION_CONFLICT");
+
+    expect(context.service.readRoundTripNotes(
+      context.first.scope,
+      [context.first.roundTripId],
+    )[context.first.roundTripId]).toMatchObject({
+      revision: 2,
+      technicalNote: "Preserve this technical note.",
+      tradeNote: "Waited for the setup.",
+    });
+    expect(context.service.listTagsForRoundTrips(
+      context.first.scope,
+      [context.first.roundTripId],
+    )[context.first.roundTripId]).toMatchObject([{ tagId: tag.tagId }]);
+    expect(context.service.listRuleReviews(context.first.scope, {
+      tradingDayId: context.first.dayId,
+      roundTripIds: [context.first.roundTripId],
+    })[0]).toMatchObject({ revision: 1, status: "followed" });
+    context.database.close();
+  });
+
   it("pins reviews to immutable rule versions and keeps lifecycle history", () => {
     const context = setup();
     const created = context.service.createRule(context.first.scope, {

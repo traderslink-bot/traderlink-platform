@@ -23,7 +23,7 @@ import { journalAnalyticsMetricRegistry } from "@/src/modules/journal-analytics/
 import type { JournalAnalyticsService } from "@/src/modules/journal-analytics/server/analytics-service";
 import {
   requireActiveJournalAnalyticsAccountId,
-  withJournalAnalyticsDashboardRuntime,
+  withJournalAnalyticsReportingDashboardRuntime,
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 
 import {
@@ -116,13 +116,13 @@ function normalizeEvidenceCursor(input: unknown): string | null {
   throw new TypeError("Invalid Trade Explorer evidence cursor.");
 }
 
-function execute(
+async function execute(
   scope: WorkspaceAccessScope,
   input: AnalyticsLabPlatformQuery,
   afterCursor: string | null = null,
   tableOrder: JournalAnalyticsTableOrder = tradeExplorerTableOrder("closed_desc"),
-): AnalyticsLabPlatformPreview {
-  return withJournalAnalyticsDashboardRuntime(scope, ({ service }) =>
+): Promise<AnalyticsLabPlatformPreview> {
+  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ service }) =>
     buildPreview(scope, input, afterCursor, service, tableOrder));
 }
 
@@ -175,12 +175,12 @@ export type TradeExplorerPageModel = Readonly<{
   initialPreview: AnalyticsLabPlatformPreview;
 }>;
 
-export function runTradeExplorerQuery(
+export async function runTradeExplorerQuery(
   scope: WorkspaceAccessScope,
   input: unknown,
   afterCursor?: unknown,
   tradeSort?: unknown,
-): AnalyticsLabPlatformPreview {
+): Promise<AnalyticsLabPlatformPreview> {
   const normalized = normalizeAnalyticsLabPlatformQuery(input);
   if (!EXPLORER_SELECTOR_METRIC_IDS.has(normalized.metricId)) {
     throw new TypeError("Invalid Trade Explorer metric.");
@@ -205,10 +205,10 @@ export function runTradeExplorerQuery(
   );
 }
 
-export function readTradeExplorerPageModel(
+export async function readTradeExplorerPageModel(
   scope: WorkspaceAccessScope,
-): TradeExplorerPageModel {
-  const page = withJournalAnalyticsDashboardRuntime(scope, ({ dashboard, service }) => {
+): Promise<TradeExplorerPageModel> {
+  const page = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ dashboard, service }) => {
     const calendarInput = Object.freeze({
       currency: null,
       startDate: null,

@@ -19,11 +19,12 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         ["Execution", "Compare completed trades by entry size, maximum position and holding time."],
       ]),
     ]),
-    section("what-it-does-not-change", "Analytics is read-only", "Changing a view, range, sort or filter never edits a Trade Tracker execution, note, tag or rule result.", ["read only", "change trade", "filters", "sort"], [
-      paragraph("Use Daily Trade Tracker, Quick Trade Entry, Import Trades or Data Decisions when you need to add, correct or resolve factual trade information. Analytics only arranges the facts that are currently available."),
+    section("what-it-does-not-change", "Analytics does not change executions", "Changing a view, range, sort or filter never edits a Trade Tracker execution or review.", ["read only", "change trade", "filters", "sort", "review trade"], [
+      paragraph("Trade Explorer has one deliberate exception to the read-only Analytics views: Review opens the selected completed trade so you can save its note, tags and custom-rule results. It never changes the trade's executions, price, quantity, date or P/L."),
+      paragraph("Use Daily Trade Tracker, Quick Trade Entry, Import Trades or Data Decisions when you need to add, correct or resolve factual trade information. Analytics filters and sorting only arrange the facts that are currently available."),
       link("/help/daily-trade-tracker/getting-started", "Read Daily Trade Tracker help", "Open the Daily Tracker when you want to review one trading date or work with its supporting tools."),
     ]),
-    section("use-trade-explorer", "Use Trade Explorer", "Inspect individual completed trades or rank factual groups without changing Trade Tracker records.", ["trade explorer", "sort trades", "rank by", "result filter", "gross p/l", "net p/l"], [
+    section("use-trade-explorer", "Use Trade Explorer", "Inspect individual completed trades, add trade-review details or rank factual groups.", ["trade explorer", "sort trades", "rank by", "result filter", "gross p/l", "net p/l", "notes", "tags", "rules"], [
       bullets([
         "The Trades view starts with all directions and the most recently closed trade first.",
         "Sort trades orders individual rows only by facts each trade has, such as P/L, return, hold time, shares or entry value.",
@@ -32,7 +33,11 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         "Rank by offers the Gross or Net P/L that matches the selected Result basis, never the opposite basis.",
         "Rank by hides calculations that the selected Result makes impossible or unable to change the order, such as Profit factor when only Wins are selected.",
         "Net P/L shows fee-covered trades. If fee details are incomplete, Trade Explorer states how many closed trades are omitted and Gross P/L can include them.",
-        "Money results stay ranked within their recorded currency and trading timezone when more than one partition is present.",
+        "Money results use your Account reporting-currency preference and the trade's effective close-date conversion rate.",
+        "Choose Review on a completed trade to edit its trade note, select up to 10 trader-chosen tags and mark applicable custom trade rules Followed, Broken or Not reviewed.",
+        "Automatic preset-rule results are calculated from the recorded facts and stay read-only in the Review editor.",
+        "Previous and Next move through the trades on the current results page. Unsaved changes must be saved or deliberately discarded first.",
+        "On a phone, Review opens a full-screen editor. Use the visible Close button in its header when you are finished.",
         "On a phone, choose Filters to open the full filter drawer. Apply returns to the complete results table. The swipe cue marks tables that move sideways, and selecting a trade row expands its recorded fills.",
         "Grouped views use Rows per page and Previous or Next so a long ticker, day or period history stays bounded.",
       ]),
@@ -57,8 +62,10 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       ]),
       paragraph("A result can be unavailable when the required facts or a valid denominator are missing. That is different from a real zero result."),
     ]),
-    section("currency-partitions", "Keep currencies separate", "Money results stay in their own currency partition rather than being converted or added together without a recorded conversion fact.", ["currency", "multiple currencies", "conversion", "separate results"], [
-      paragraph("If the selected completed trades use more than one currency, Analytics displays the monetary results separately. Do not compare or add separate currency figures as if they were one amount unless you have the conversion information you need outside this page."),
+    section("reporting-currency", "Use your preferred currency", "Normal Analytics money is converted to the reporting currency selected in Account settings without changing recorded trades.", ["currency", "preferred currency", "conversion", "account settings"], [
+      paragraph("Each closed trade uses the effective daily rate for its closing date before Analytics calculates totals and averages. Prices, fees and P/L therefore use the same reporting basis. If an exact required rate is unavailable, the page says it could not load instead of relabelling the original amount."),
+      paragraph("Statement previews, Import Trades, Data Decisions and manual execution editors keep the original broker currency because those screens record or correct source facts."),
+      link("/account", "Open Account settings", "Choose the reporting currency used throughout the normal dashboard."),
     ]),
   ]),
   guide("compare-results-by-ticker", "Use the Ticker page", "Use the Ticker table to search, sort, paginate and compare the selected completed-trade results by ticker.", [

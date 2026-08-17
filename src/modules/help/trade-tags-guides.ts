@@ -353,13 +353,14 @@ export const TRADE_TAGS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     sections: Object.freeze([
       Object.freeze({
         id: "trade-tracker-views",
-        title: "Daily and Swing Trade Tracker",
-        summary: "Saved tags appear as chips on their matching trade or supported position.",
-        keywords: Object.freeze(["where tags appear", "tag chips", "daily tracker", "swing tracker"]),
+        title: "Trade Tracker and Trade Explorer",
+        summary: "Saved tags appear with their matching trade or supported position and can be edited from the matching review tools.",
+        keywords: Object.freeze(["where tags appear", "tag chips", "daily tracker", "swing tracker", "trade explorer"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "bullets", items: Object.freeze([
             "Daily Trade Tracker shows tags on the matching completed trade.",
             "Swing Trade Tracker shows tags on the matching supported Swing position.",
+            "Trade Explorer opens the same completed-trade tag assignment from its Review action.",
             "Switching between two completed trades in one ticker switches their separate tag lists.",
             "Renaming an active tag updates its wording wherever that reusable tag appears in current views.",
           ]) }),
@@ -424,14 +425,15 @@ export const TRADE_TAGS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       Object.freeze({
         id: "supported-trades",
         title: "Where tags can be saved",
-        summary: "Completed Day trades and connected Swing positions support saved tags today.",
+        summary: "Completed trades and connected Swing positions support saved tags today.",
         keywords: Object.freeze(["supported tag targets", "completed trade", "open position", "swing position", "read only"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "bullets", items: Object.freeze([
             "A completed Day trade can save tags from its Daily Trade Tracker card.",
+            "Any confirmed completed trade shown in Trade Explorer can save tags from its Review editor.",
             "A connected Swing position can save tags from Swing Trade Tracker.",
             "An ordinary open-position row inside Daily Trade Tracker does not currently save a tag selection. If the position is an intentional Swing, classify it and use Swing Trade Tracker.",
-            "A historical read-only page displays saved tags but does not allow retrospective tag changes from that page.",
+            "Other historical read-only pages can display saved tags without offering the Trade Explorer Review editor.",
           ]) }),
         ]),
       }),

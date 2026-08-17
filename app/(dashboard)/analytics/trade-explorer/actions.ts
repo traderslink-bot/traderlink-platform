@@ -10,14 +10,14 @@ export async function runTradeExplorer(
   afterCursor?: unknown,
   tradeSort?: unknown,
 ): Promise<
-  | Readonly<{ ok: true; preview: ReturnType<typeof runTradeExplorerQuery> }>
+  | Readonly<{ ok: true; preview: Awaited<ReturnType<typeof runTradeExplorerQuery>> }>
   | Readonly<{ ok: false; message: string; refreshRequired: boolean }>
 > {
   try {
     const scope = await requireTraderLinkPlatformPageScope();
     return Object.freeze({
       ok: true as const,
-      preview: runTradeExplorerQuery(scope, input, afterCursor, tradeSort),
+      preview: await runTradeExplorerQuery(scope, input, afterCursor, tradeSort),
     });
   } catch (error) {
     const accessChanged = isTraderLinkPlatformError(error) && [
