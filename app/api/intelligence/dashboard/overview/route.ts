@@ -1,7 +1,7 @@
 import { formatJournalAnalyticsPartitionedMetric } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import {
   buildJournalAnalyticsDashboardQuery,
-  withJournalAnalyticsDashboardService,
+  withJournalAnalyticsReportingDashboardService,
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
@@ -24,7 +24,7 @@ export async function GET(request: Request): Promise<Response> {
     const query = buildJournalAnalyticsDashboardQuery(scope, {
       metricIds: WORKSPACE_METRICS.map(([, metricId]) => metricId),
     });
-    const response = withJournalAnalyticsDashboardService(scope, (service) =>
+    const response = await withJournalAnalyticsReportingDashboardService(scope, (service) =>
       service.getWorkspaceJournalAnalyticsSummary(scope, query));
     return Response.json({
       status: "ready",

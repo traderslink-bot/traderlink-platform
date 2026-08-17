@@ -1,7 +1,8 @@
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
 import type { JournalAnalyticsFactSet } from "@/src/modules/journal/contracts/journal-analytics-fact-set";
-import type { JournalAnalyticsFactSetService } from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-service";
+import type { JournalAnalyticsFactSetReader } from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-service";
+import type { PlatformReportingCurrency } from "@/src/modules/platform/server/identity/platform-user-preference-repository";
 
 import type {
   JournalAnalyticsQuery,
@@ -134,12 +135,22 @@ export function calculateJournalAnalyticsRoundTripTableResponse(
 }
 
 export class JournalAnalyticsService {
-  constructor(private readonly facts: JournalAnalyticsFactSetService) {}
+  constructor(
+    private readonly facts: JournalAnalyticsFactSetReader,
+    private readonly reportingCurrency: PlatformReportingCurrency | null = null,
+  ) {}
+
+  private reportingQuery(query: JournalAnalyticsQuery): JournalAnalyticsQuery {
+    return this.reportingCurrency === null
+      ? query
+      : Object.freeze({ ...query, currency: this.reportingCurrency });
+  }
 
   getAnalyticsOverview(
     scope: WorkspaceAccessScope,
     query: JournalAnalyticsQuery,
   ): JournalAnalyticsPartitionedResponse {
+    query = this.reportingQuery(query);
     const factSet = this.facts.getJournalAnalyticsFactSet(scope, {
       accountIds: query.accountIds,
       closingDateRange: query.closingDateRange,
@@ -186,6 +197,7 @@ export class JournalAnalyticsService {
     query: JournalAnalyticsQuery,
     tableOrder?: JournalAnalyticsTableOrder,
   ): JournalAnalyticsRoundTripTableResponse {
+    query = this.reportingQuery(query);
     const factSet = this.facts.getJournalAnalyticsFactSet(scope, {
       accountIds: query.accountIds,
       closingDateRange: query.closingDateRange,

@@ -31,7 +31,11 @@ import {
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 
-import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
+import {
+  formatJournalAnalyticsDecimal,
+  formatJournalAnalyticsMoney,
+  journalAnalyticsCurrencySymbol,
+} from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import { FeatureHelpLink } from "../feature-help-link";
 import { HorizontalScrollHint } from "../horizontal-scroll-region";
 
@@ -81,14 +85,12 @@ const weekdayLabels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
 function money(value: string | null, currency: string | null): string {
   if (value === null || currency === null) return "Unavailable";
-  const formatted = formatJournalAnalyticsDecimal(value, 2, true);
-  return formatted.startsWith("-") ? `-$${formatted.slice(1)}` : `+$${formatted}`;
+  return formatJournalAnalyticsMoney(value, currency, { showPositiveSign: true });
 }
 
 function price(value: string | null, currency: string | null): string {
   if (value === null || currency === null) return "Unavailable";
-  const formatted = formatJournalAnalyticsDecimal(value, 2, true);
-  return formatted.startsWith("-") ? `-$${formatted.slice(1)}` : `$${formatted}`;
+  return formatJournalAnalyticsMoney(value, currency);
 }
 
 function executionTimestamp(value: string, timezone: string | null): string {
@@ -670,20 +672,20 @@ export function CalendarClient({
   const weekDays = buildWeek(selectedWeek, initialData.days);
   const showingCurrentWeek = selectedWeek === currentWeekInTimezone(initialData.timezone);
   const activeFilterCount = [
-    filters.currency,
     filters.direction,
     filters.performance,
     filters.pnlRange,
     filters.session,
     filters.symbol,
     filters.tradeCount,
-  ].filter((value) => value !== "all" && value !== initialData.currency).length +
+  ].filter((value) => value !== "all").length +
     Number(filters.startDate !== initialData.minimumDate || filters.endDate !== initialData.maximumDate);
 
   const applyFilters = (next = filters) => {
     const query = new URLSearchParams();
     if (view === "week") query.set("view", "week");
     Object.entries(next).forEach(([key, value]) => {
+      if (key === "currency") return;
       if (value !== "all") query.set(key, value);
     });
     router.push(`/calendar${query.size ? `?${query.toString()}` : ""}`);
@@ -753,7 +755,7 @@ export function CalendarClient({
         <FeatureHelpLink href="/help/calendar/coverage-and-limits#included-trades" label="Calendar coverage" />
         <Typography color="text.secondary" sx={{ alignSelf: "center", display: initialData.state === "ready" ? "none" : undefined }} variant="caption">
           {initialData.state === "ready"
-            ? `${initialData.currency} · accepted completed trades · ${initialData.timezone}`
+            ? `Accepted completed trades · ${initialData.timezone}`
             : initialData.state === "empty"
               ? "No completed trades match this calendar view"
               : "This calendar filter cannot be calculated from the available facts"}
@@ -849,10 +851,7 @@ export function CalendarClient({
             <TextField fullWidth label="To" onChange={(event) => setFilters((current) => ({ ...current, endDate: event.target.value }))} slotProps={{ inputLabel: { shrink: true } }} type="date" value={filters.endDate} />
           </Stack>
           <FilterSelect label="P/L outcome" value={filters.performance} onChange={(value) => setFilters((current) => ({ ...current, performance: value as CalendarPerformanceFilter }))} items={[["all", "All results"], ["profitable", "Profitable days"], ["losing", "Losing days"]]} />
-          <FilterSelect label="Daily P/L band" value={filters.pnlRange} onChange={(value) => setFilters((current) => ({ ...current, pnlRange: value as CalendarPnlFilter }))} items={[["all", "Any daily P/L"], ["loss200", "Below −$200"], ["flat", "Within ±$200"], ["profit200", "Above +$200"]]} />
-          {initialData.availableCurrencies.length > 1 ? (
-            <FilterSelect label="Currency" value={filters.currency} onChange={(currency) => setFilters((current) => ({ ...current, currency }))} items={initialData.availableCurrencies.map((currency) => [currency, currency])} />
-          ) : null}
+          <FilterSelect label="Daily P/L band" value={filters.pnlRange} onChange={(value) => setFilters((current) => ({ ...current, pnlRange: value as CalendarPnlFilter }))} items={[["all", "Any daily P/L"], ["loss200", `Below −${journalAnalyticsCurrencySymbol(initialData.currency ?? "") ?? ""}200`], ["flat", `Within ±${journalAnalyticsCurrencySymbol(initialData.currency ?? "") ?? ""}200`], ["profit200", `Above +${journalAnalyticsCurrencySymbol(initialData.currency ?? "") ?? ""}200`]]} />
           <FilterSelect label="Ticker" value={filters.symbol} onChange={(value) => setFilters((current) => ({ ...current, symbol: value }))} items={[["all", "All tickers"], ...initialData.symbols.map((symbol) => [symbol, symbol])]} />
           <FilterSelect label="Direction" value={filters.direction} onChange={(value) => setFilters((current) => ({ ...current, direction: value as CalendarDirectionFilter }))} items={[["all", "Long and short"], ["long", "Long only"], ["short", "Short only"]]} />
           <TextField disabled helperText="Session classification is not available in Trade Tracker yet." label="Session" value="Not available yet" />

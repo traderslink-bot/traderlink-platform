@@ -5,7 +5,7 @@ import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/serve
 import type { JournalAnalyticsGrouping } from "@/src/modules/journal-analytics/contracts/analytics-query";
 import type { JournalAnalyticsExactValue, JournalAnalyticsMetricResult } from "@/src/modules/journal-analytics/contracts/analytics-result";
 import { formatJournalAnalyticsMetric } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
-import { buildJournalAnalyticsDashboardQuery, withJournalAnalyticsDashboardService } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
+import { buildJournalAnalyticsDashboardQuery, withJournalAnalyticsReportingDashboardService } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
@@ -57,7 +57,7 @@ export async function TimingAnalyticsPage() {
     groupings: GROUPINGS,
     metricIds: METRIC_IDS,
   });
-  const response = withJournalAnalyticsDashboardService(scope, (service) =>
+  const response = await withJournalAnalyticsReportingDashboardService(scope, (service) =>
     service.getTimingAnalytics(scope, query));
   const chartData: TimingChartData = Object.freeze(Object.fromEntries(
     GROUPINGS.map((grouping) => [grouping, Object.freeze(response.partitions.flatMap((partition) =>

@@ -6,7 +6,14 @@ import type {
 } from "../../contracts/journal-analytics-fact-set";
 import { JournalAnalyticsFactSetRepository } from "./journal-analytics-fact-set-repository";
 
-export class JournalAnalyticsFactSetService {
+export interface JournalAnalyticsFactSetReader {
+  getJournalAnalyticsFactSet(
+    scope: WorkspaceAccessScope,
+    request: JournalAnalyticsFactSetRequest,
+  ): JournalAnalyticsFactSet;
+}
+
+export class JournalAnalyticsFactSetService implements JournalAnalyticsFactSetReader {
   constructor(private readonly repository: JournalAnalyticsFactSetRepository) {}
 
   getJournalAnalyticsFactSet(

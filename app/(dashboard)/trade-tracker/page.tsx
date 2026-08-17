@@ -11,7 +11,7 @@ import {
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
 import {
-  getReplacementDaySession,
+  getReplacementReportingDaySession,
   getReplacementTradeTrackerAccount,
 } from "./trade-tracker-platform-data";
 import { ManualExecutionEntry } from "./manual-execution-entry";
@@ -56,17 +56,15 @@ export default async function TradeTrackerPage({
   const scope = await requireTraderLinkPlatformPageScope();
   const account = getReplacementTradeTrackerAccount(scope);
   const utcDate = new Date().toISOString().slice(0, 10);
-  const initialData = getReplacementDaySession(scope, {
+  const initialData = await getReplacementReportingDaySession(scope, {
     date: utcDate,
-    currency: query.currency?.toUpperCase() ?? null,
   });
   const accountTimezone = account?.tradingTimezone ?? initialData?.timezone ?? "UTC";
   const currentDate = currentDateInTimezone(accountTimezone);
   const data = currentDate === utcDate
     ? initialData
-    : getReplacementDaySession(scope, {
+    : await getReplacementReportingDaySession(scope, {
         date: currentDate,
-        currency: query.currency?.toUpperCase() ?? null,
       });
   const topContent = (
     <ManualExecutionEntry

@@ -7,7 +7,7 @@ import {
 } from "../../../dashboard-template";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
-import { getReplacementDaySession } from "../trade-tracker-platform-data";
+import { getReplacementReportingDaySession } from "../trade-tracker-platform-data";
 import { getDaySessionDesignPreview } from "./day-session-preview-data";
 import { DaySessionView } from "./day-session-view";
 import { TradeTrackerUnsavedChangesProvider } from "../trade-tracker-unsaved-changes";
@@ -48,9 +48,8 @@ export default async function TradeTrackerDayPage({
   }
 
   const scope = await requireTraderLinkPlatformPageScope();
-  const data = getReplacementDaySession(scope, {
+  const data = await getReplacementReportingDaySession(scope, {
     date: sessionDate,
-    currency: query.currency?.toUpperCase() ?? null,
   });
   if (data) {
     const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;

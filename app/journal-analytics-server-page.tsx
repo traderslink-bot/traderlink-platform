@@ -26,7 +26,7 @@ import {
 } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import {
   buildJournalAnalyticsDashboardQuery,
-  withJournalAnalyticsDashboardService,
+  withJournalAnalyticsReportingDashboardService,
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
@@ -120,7 +120,7 @@ export async function AnalyticsServerPage({
     metricIds: definition.metricIds,
     groupings: [definition.grouping],
   });
-  const response = withJournalAnalyticsDashboardService(scope, (service) =>
+  const response = await withJournalAnalyticsReportingDashboardService(scope, (service) =>
     executePageQuery(page, {
       overview: () => service.getAnalyticsOverview(scope, query),
       performance: () => service.getPerformanceAnalytics(scope, query),

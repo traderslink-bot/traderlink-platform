@@ -1,6 +1,10 @@
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { isTraderLinkPlatformError, platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { withJournalAnalyticsReportingDashboardRuntime } from
+  "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
+import { journalReportingCurrencyAmount } from
+  "@/src/modules/journal-analytics/server/journal-reporting-currency-fact-set";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,7 +42,10 @@ export async function GET(request: Request): Promise<Response> {
     if (!accountId) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
     const roundTripIds = requestedRoundTripIds(request);
     const placeholders = roundTripIds.map(() => "?").join(", ");
-    const evidence = withReadonlyPlatformDatabase({}, (database) => Object.freeze({
+    const reporting = await withJournalAnalyticsReportingDashboardRuntime(
+      scope,
+      ({ reportingContext, reportingCurrency }) => Object.freeze({
+        evidence: withReadonlyPlatformDatabase({}, (database) => Object.freeze({
       details: database.prepare<unknown[], TradeDetailRow>(`SELECT
  round_trip.round_trip_id,
  COALESCE((SELECT GROUP_CONCAT(tag.current_name, char(31))
@@ -97,11 +104,32 @@ JOIN journal_execution_versions execution
 WHERE allocation.workspace_id = ? AND allocation.account_id = ?
   AND version.round_trip_id IN (${placeholders})
 ORDER BY version.round_trip_id, execution.executed_at_utc, allocation.allocation_sequence`).all(scope.workspaceId, accountId, ...roundTripIds),
-    }));
+        })),
+        reportingContext,
+        reportingCurrency,
+      }),
+    );
+    const evidence = reporting.evidence;
     const executionsByRoundTripId = new Map<string, TradeExecutionRow[]>();
     for (const execution of evidence.executions) {
+      const sourceCurrency = reporting.reportingContext.sourceCurrencyByRoundTrip
+        .get(execution.round_trip_id);
+      const sourceDate = reporting.reportingContext.sourceDateByRoundTrip
+        .get(execution.round_trip_id);
+      const reportedExecution = execution.price_decimal === null || !sourceCurrency || !sourceDate
+        ? execution
+        : Object.freeze({
+            ...execution,
+            price_decimal: journalReportingCurrencyAmount(
+              execution.price_decimal,
+              sourceCurrency,
+              reporting.reportingCurrency,
+              sourceDate,
+              reporting.reportingContext,
+            ),
+          });
       const current = executionsByRoundTripId.get(execution.round_trip_id) ?? [];
-      current.push(execution);
+      current.push(reportedExecution);
       executionsByRoundTripId.set(execution.round_trip_id, current);
     }
     const detailsByRoundTripId = new Map(evidence.details.map((detail) => [detail.round_trip_id, detail]));

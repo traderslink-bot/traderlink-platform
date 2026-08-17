@@ -15,5 +15,5 @@ export const revalidate = 0;
 
 export default async function RuleResultsPage() {
   const scope = await requireTraderLinkPlatformPageScope();
-  return <RuleResultsClient initialView={readRuleResults(scope)} />;
+  return <RuleResultsClient initialView={await readRuleResults(scope)} />;
 }

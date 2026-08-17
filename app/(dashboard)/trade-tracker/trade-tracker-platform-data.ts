@@ -1,5 +1,7 @@
 import "server-only";
 
+import Decimal from "decimal.js";
+
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import type {
   JournalSwingPositionDetail,
@@ -9,7 +11,14 @@ import type {
 import type { JournalTradeStyleRecord } from "@/src/modules/journal/contracts/journal-trade-style-contracts";
 import type { JournalEditableManualExecution } from "@/src/modules/journal/server/manual-trades/journal-manual-execution-edit-service";
 import type { JournalTradingDayReadModel } from "@/src/modules/journal-analytics/contracts/journal-dashboard-read-models";
-import { withJournalAnalyticsDashboardRuntime } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
+import {
+  withJournalAnalyticsDashboardRuntime,
+  withJournalAnalyticsReportingDashboardRuntime,
+} from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
+import {
+  journalReportingCurrencyMultiplier,
+  type JournalReportingCurrencyContext,
+} from "@/src/modules/journal-analytics/server/journal-reporting-currency-fact-set";
 import type {
   JournalDailyNoteRecord,
   JournalRoundTripNoteRecord,
@@ -47,7 +56,7 @@ import type {
   DaySessionTradeTag,
 } from "./[sessionDate]/day-session-types";
 
-export type ReplacementSwingPositionDetail = Omit<JournalSwingPositionDetail, "executions"> & Readonly<{
+type ReplacementSwingPositionSourceDetail = Omit<JournalSwingPositionDetail, "executions"> & Readonly<{
   availableTags: readonly DaySessionTradeTag[];
   executions: readonly (Omit<JournalSwingPositionDetail["executions"][number], "executionId"> & Readonly<{
     manualEdit: {
@@ -55,12 +64,21 @@ export type ReplacementSwingPositionDetail = Omit<JournalSwingPositionDetail, "e
       fees: string | null;
       localDate: string;
       localTime: string;
+      sourcePrice: string | null;
       sourceTimezone: string;
       tradeCurrency: string;
     } | null;
   }>)[];
   rules: readonly DaySessionRule[];
   tags: readonly DaySessionTradeTag[];
+}>;
+
+export type ReplacementSwingPositionDetail = Omit<ReplacementSwingPositionSourceDetail, "executions"> & Readonly<{
+  currency: string;
+  executions: readonly (ReplacementSwingPositionSourceDetail["executions"][number] & Readonly<{
+    reportingFeesDecimal: string | null;
+    reportingPriceDecimal: string | null;
+  }>)[];
 }>;
 
 function emptyNote(): DaySessionDailyNote {
@@ -539,6 +557,189 @@ ORDER BY candle_time_utc_seconds`);
   });
 }
 
+function scaleReportingDecimal(value: string | null, multiplier: string): string | null {
+  return value === null ? null : new Decimal(value).times(multiplier).toString();
+}
+
+function scaleReportingNumber(value: number | null, multiplier: string): number | null {
+  return value === null ? null : new Decimal(value).times(multiplier).toNumber();
+}
+
+function scaleReferenceDistance<Reference extends {
+  anchor: string;
+  signedDistance: string;
+  signedDistancePercent: number;
+}>(reference: Reference | null, multiplier: string): Reference | null {
+  return reference === null
+    ? null
+    : Object.freeze({
+        ...reference,
+        anchor: scaleReportingDecimal(reference.anchor, multiplier)!,
+        signedDistance: scaleReportingDecimal(reference.signedDistance, multiplier)!,
+      });
+}
+
+export function scaleDaySessionTradeAnalyzer(
+  analyzer: DaySessionTradeAnalyzer,
+  multiplier: string,
+): DaySessionTradeAnalyzer {
+  if (multiplier === "1") return analyzer;
+  const scaleFiveMinute = (
+    context: DaySessionTradeAnalyzer["events"][number]["fiveMinuteContext"],
+  ): DaySessionTradeAnalyzer["events"][number]["fiveMinuteContext"] => Object.freeze({
+    completedBeforeExecution: context.completedBeforeExecution === null
+      ? null
+      : Object.freeze({
+          ...context.completedBeforeExecution,
+          ema9Distance: scaleReferenceDistance(
+            context.completedBeforeExecution.ema9Distance,
+            multiplier,
+          ),
+          turnover: scaleReportingDecimal(
+            context.completedBeforeExecution.turnover,
+            multiplier,
+          ),
+        }),
+    containingCandle: context.containingCandle === null
+      ? null
+      : Object.freeze({
+          ...context.containingCandle,
+          ema9Distance: scaleReferenceDistance(
+            context.containingCandle.ema9Distance,
+            multiplier,
+          ),
+          executionEdgeDistance: scaleReportingDecimal(
+            context.containingCandle.executionEdgeDistance,
+            multiplier,
+          ),
+          turnover: scaleReportingDecimal(context.containingCandle.turnover, multiplier),
+        }),
+    preExecutionPartial: context.preExecutionPartial === null
+      ? null
+      : Object.freeze({
+          ...context.preExecutionPartial,
+          turnover: scaleReportingDecimal(context.preExecutionPartial.turnover, multiplier),
+        }),
+  });
+  const scaleGreenToRed = (
+    analysis: DaySessionTradeAnalyzer["greenToRed"],
+  ): DaySessionTradeAnalyzer["greenToRed"] => Object.freeze({
+    ...analysis,
+    completedClosePeakPnlDecimal: scaleReportingDecimal(
+      analysis.completedClosePeakPnlDecimal,
+      multiplier,
+    ),
+    finalPnlDecimal: scaleReportingDecimal(analysis.finalPnlDecimal, multiplier),
+    firstRedPnlDecimal: scaleReportingDecimal(analysis.firstRedPnlDecimal, multiplier),
+    peakPnlDecimal: scaleReportingDecimal(analysis.peakPnlDecimal, multiplier),
+    peakToFinalReversalDecimal: scaleReportingDecimal(
+      analysis.peakToFinalReversalDecimal,
+      multiplier,
+    ),
+    peakToRedReversalDecimal: scaleReportingDecimal(
+      analysis.peakToRedReversalDecimal,
+      multiplier,
+    ),
+    profitOpportunities: Object.freeze(analysis.profitOpportunities.map((opportunity) =>
+      Object.freeze({
+        ...opportunity,
+        lowestPnlDecimal: scaleReportingDecimal(opportunity.lowestPnlDecimal, multiplier)!,
+        peakPnlDecimal: scaleReportingDecimal(opportunity.peakPnlDecimal, multiplier)!,
+        peakToFinalReversalDecimal: scaleReportingDecimal(
+          opportunity.peakToFinalReversalDecimal,
+          multiplier,
+        )!,
+      }))),
+    profitOpportunityThresholdDecimal: scaleReportingDecimal(
+      analysis.profitOpportunityThresholdDecimal,
+      multiplier,
+    ),
+    strongOpportunityThresholdDecimal: scaleReportingDecimal(
+      analysis.strongOpportunityThresholdDecimal,
+      multiplier,
+    ),
+  });
+  return Object.freeze({
+    ...analyzer,
+    candles: analyzer.candles.map((candle) => Object.freeze({
+      ...candle,
+      close: scaleReportingDecimal(candle.close, multiplier)!,
+      high: scaleReportingDecimal(candle.high, multiplier)!,
+      low: scaleReportingDecimal(candle.low, multiplier)!,
+      open: scaleReportingDecimal(candle.open, multiplier)!,
+      turnover: scaleReportingDecimal(candle.turnover, multiplier),
+    })),
+    events: analyzer.events.map((event) => Object.freeze({
+      ...event,
+      fees: scaleReportingDecimal(event.fees, multiplier),
+      fiveMinuteContext: scaleFiveMinute(event.fiveMinuteContext),
+      indicators: event.indicators === null
+        ? null
+        : Object.freeze({
+            ...event.indicators,
+            adr20: scaleReportingNumber(event.indicators.adr20, multiplier),
+            atr14: scaleReportingNumber(event.indicators.atr14, multiplier),
+            ema9: scaleReportingNumber(event.indicators.ema9, multiplier),
+            ema20: scaleReportingNumber(event.indicators.ema20, multiplier),
+            macd: scaleReportingNumber(event.indicators.macd, multiplier),
+            macdHistogram: scaleReportingNumber(event.indicators.macdHistogram, multiplier),
+            macdSignal: scaleReportingNumber(event.indicators.macdSignal, multiplier),
+            vwap: scaleReportingNumber(event.indicators.vwap, multiplier),
+          }),
+      metrics: Object.freeze({
+        ...event.metrics,
+        averageEntryPriceAfter: scaleReportingDecimal(
+          event.metrics.averageEntryPriceAfter,
+          multiplier,
+        ),
+        candleTurnover: scaleReportingDecimal(event.metrics.candleTurnover, multiplier),
+        cumulativeSessionTurnover: scaleReportingDecimal(
+          event.metrics.cumulativeSessionTurnover,
+          multiplier,
+        ),
+        ema9Distance: scaleReferenceDistance(event.metrics.ema9Distance, multiplier),
+        executionEdgeDistance: scaleReportingDecimal(
+          event.metrics.executionEdgeDistance,
+          multiplier,
+        ),
+        excursionUntilFlat: event.metrics.excursionUntilFlat === null
+          ? null
+          : Object.freeze({
+              ...event.metrics.excursionUntilFlat,
+              adverseMove: scaleReportingDecimal(
+                event.metrics.excursionUntilFlat.adverseMove,
+                multiplier,
+              )!,
+              favorableMove: scaleReportingDecimal(
+                event.metrics.excursionUntilFlat.favorableMove,
+                multiplier,
+              )!,
+            }),
+        givebackFromPriorFavorableExtreme: scaleReportingDecimal(
+          event.metrics.givebackFromPriorFavorableExtreme,
+          multiplier,
+        ),
+        postEventPaths: event.metrics.postEventPaths.map((path) => Object.freeze({
+          ...path,
+          oppositeDirectionMove: scaleReportingDecimal(path.oppositeDirectionMove, multiplier),
+          tradeDirectionMove: scaleReportingDecimal(path.tradeDirectionMove, multiplier),
+        })),
+        priorFavorableExtremePrice: scaleReportingDecimal(
+          event.metrics.priorFavorableExtremePrice,
+          multiplier,
+        ),
+        vwapDistance: scaleReferenceDistance(event.metrics.vwapDistance, multiplier),
+      }),
+      price: scaleReportingDecimal(event.price, multiplier)!,
+    })),
+    finalExitPaths: analyzer.finalExitPaths.map((path) => Object.freeze({
+      ...path,
+      favorableMove: scaleReportingDecimal(path.favorableMove, multiplier),
+    })),
+    greenToRed: scaleGreenToRed(analyzer.greenToRed),
+  });
+}
+
 export function getReplacementDailyTradeAnalyzerReplay(
   scope: WorkspaceAccessScope,
   input: Readonly<{
@@ -735,6 +936,7 @@ function toDaySessionData(
               fees: editable.feesDecimal,
               localDate: editable.localDate,
               localTime: editable.localTime,
+              sourcePrice: editable.priceDecimal,
               sourceTimezone: editable.sourceTimezone,
               tradeCurrency: editable.tradeCurrency,
             }
@@ -772,6 +974,7 @@ function toDaySessionData(
                   fees: editable.feesDecimal,
                   localDate: editable.localDate,
                   localTime: editable.localTime,
+                  sourcePrice: editable.priceDecimal,
                   sourceTimezone: editable.sourceTimezone,
                   tradeCurrency: editable.tradeCurrency,
                 }
@@ -874,18 +1077,11 @@ function toDaySessionData(
   };
 }
 
-export function getReplacementDaySession(
+function buildReplacementDaySession(
   scope: WorkspaceAccessScope,
-  input: Readonly<{
-    date: string | null;
-    currency: string | null;
-  }>,
+  model: JournalTradingDayReadModel,
+  reportingContext: JournalReportingCurrencyContext | null,
 ): DaySessionData | null {
-  const model = withJournalAnalyticsDashboardRuntime(scope, ({ dashboard }) =>
-    dashboard.getTradingDay(scope, {
-      requestedDate: input.date,
-      currency: input.currency,
-    }));
   if (model.currency === null) return null;
   const trackerState = withReadonlyJournalIntegrityRuntime(scope, (journal) => {
     const account = journal.tradeStyles.accountScope(scope);
@@ -920,9 +1116,30 @@ export function getReplacementDaySession(
     const openPositionDetails = new Map(model.openPositions.flatMap((position) => {
       const tracked = trackedPositions.get(position.roundTripId);
       if (!tracked) return [];
+      const detail = journal.tradeTrackerReads.positionDetail(
+        account,
+        tracked.positionRef,
+        model.date,
+      );
+      const sourceCurrency = reportingContext?.sourceCurrencyByRoundTrip
+        .get(position.roundTripId);
+      const sourceDate = reportingContext?.sourceDateByRoundTrip
+        .get(position.roundTripId);
+      const multiplier = reportingContext && sourceCurrency && sourceDate
+        ? journalReportingCurrencyMultiplier(sourceCurrency, sourceDate, reportingContext)
+        : "1";
       return [[
         position.roundTripId,
-        journal.tradeTrackerReads.positionDetail(account, tracked.positionRef, model.date),
+        multiplier === "1"
+          ? detail
+          : Object.freeze({
+              ...detail,
+              executions: Object.freeze(detail.executions.map((execution) => Object.freeze({
+                ...execution,
+                feesDecimal: scaleReportingDecimal(execution.feesDecimal, multiplier),
+                priceDecimal: scaleReportingDecimal(execution.priceDecimal, multiplier),
+              }))),
+            }),
       ] as const];
     }));
     const review = journal.tradingDayReviews.read(account, model.date);
@@ -946,13 +1163,23 @@ export function getReplacementDaySession(
   );
   const annotations = withReadonlyJournalAnnotations(scope, (service, account) =>
     annotationSnapshot(service, account, model, swingRoundTripIds));
-  const analyzers = readDailyTradeAnalyzers(
+  const sourceAnalyzers = readDailyTradeAnalyzers(
     scope,
     model.tickers.flatMap((ticker) => ticker.roundTrips.map((roundTrip) => ({
       direction: roundTrip.direction,
       roundTripId: roundTrip.roundTripId,
     }))),
   );
+  const analyzers = reportingContext === null
+    ? sourceAnalyzers
+    : new Map([...sourceAnalyzers.entries()].map(([roundTripId, analyzer]) => {
+        const sourceCurrency = reportingContext.sourceCurrencyByRoundTrip.get(roundTripId);
+        const sourceDate = reportingContext.sourceDateByRoundTrip.get(roundTripId);
+        const multiplier = sourceCurrency && sourceDate
+          ? journalReportingCurrencyMultiplier(sourceCurrency, sourceDate, reportingContext)
+          : "1";
+        return [roundTripId, scaleDaySessionTradeAnalyzer(analyzer, multiplier)] as const;
+      }));
   return toDaySessionData(
     model,
     annotations,
@@ -962,6 +1189,38 @@ export function getReplacementDaySession(
     trackerState.editableManualExecutions,
     analyzers,
     trackerState.review,
+  );
+}
+
+export function getReplacementDaySession(
+  scope: WorkspaceAccessScope,
+  input: Readonly<{
+    date: string | null;
+    currency: string | null;
+  }>,
+): DaySessionData | null {
+  const model = withJournalAnalyticsDashboardRuntime(scope, ({ dashboard }) =>
+    dashboard.getTradingDay(scope, {
+      requestedDate: input.date,
+      currency: input.currency,
+    }));
+  return buildReplacementDaySession(scope, model, null);
+}
+
+export async function getReplacementReportingDaySession(
+  scope: WorkspaceAccessScope,
+  input: Readonly<{ date: string | null }>,
+): Promise<DaySessionData | null> {
+  return withJournalAnalyticsReportingDashboardRuntime(
+    scope,
+    ({ dashboard, reportingContext, reportingCurrency }) => buildReplacementDaySession(
+      scope,
+      dashboard.getTradingDay(scope, {
+        requestedDate: input.date,
+        currency: reportingCurrency,
+      }),
+      reportingContext,
+    ),
   );
 }
 
@@ -1011,14 +1270,11 @@ function positionClassification(
 }
 
 /** Builds bounded, server-derived context for one explicit Daily Tracker request. */
-export function getReplacementDailyCompanionResolvedContext(
+function buildReplacementDailyCompanionResolvedContext(
   scope: WorkspaceAccessScope,
   input: Readonly<{ tradingDate: string; currency: string | null }>,
+  data: DaySessionData | null,
 ): CoachAiDailyCompanionResolvedContext | null {
-  const data = getReplacementDaySession(scope, {
-    date: input.tradingDate,
-    currency: input.currency,
-  });
   if (!data || data.date !== input.tradingDate) return null;
 
   let contextTruncated = false;
@@ -1127,6 +1383,33 @@ export function getReplacementDailyCompanionResolvedContext(
   });
 }
 
+export function getReplacementDailyCompanionResolvedContext(
+  scope: WorkspaceAccessScope,
+  input: Readonly<{ tradingDate: string; currency: string | null }>,
+): CoachAiDailyCompanionResolvedContext | null {
+  return buildReplacementDailyCompanionResolvedContext(
+    scope,
+    input,
+    getReplacementDaySession(scope, {
+      date: input.tradingDate,
+      currency: input.currency,
+    }),
+  );
+}
+
+export async function getReplacementReportingDailyCompanionResolvedContext(
+  scope: WorkspaceAccessScope,
+  input: Readonly<{ tradingDate: string; currency: string | null }>,
+): Promise<CoachAiDailyCompanionResolvedContext | null> {
+  return buildReplacementDailyCompanionResolvedContext(
+    scope,
+    input,
+    await getReplacementReportingDaySession(scope, {
+      date: input.tradingDate,
+    }),
+  );
+}
+
 export function getReplacementDailyCompanionContext(
   scope: WorkspaceAccessScope,
   input: Readonly<{ tradingDate: string; currency: string | null }>,
@@ -1148,11 +1431,14 @@ export function getReplacementSwingTrackerPositions(
     ));
 }
 
-export function getReplacementSwingPositionDetail(
+function getReplacementSwingPositionSourceDetail(
   scope: WorkspaceAccessScope,
   positionRef: string,
   reviewDate: string,
-): ReplacementSwingPositionDetail {
+): Readonly<{
+  detail: ReplacementSwingPositionSourceDetail;
+  roundTripId: string;
+}> {
   const state = withReadonlyJournalIntegrityRuntime(scope, (journal) => {
     const account = journal.tradeStyles.accountScope(scope);
     const position = journal.tradeStyles.resolvePosition(account, positionRef);
@@ -1183,6 +1469,7 @@ export function getReplacementSwingPositionDetail(
                 fees: editable.feesDecimal,
                 localDate: editable.localDate,
                 localTime: editable.localTime,
+                sourcePrice: editable.priceDecimal,
                 sourceTimezone: editable.sourceTimezone,
                 tradeCurrency: editable.tradeCurrency,
               })
@@ -1229,9 +1516,49 @@ export function getReplacementSwingPositionDetail(
     });
   });
   return Object.freeze({
-    ...state.publicDetail,
-    ...annotations,
+    detail: Object.freeze({
+      ...state.publicDetail,
+      ...annotations,
+    }),
+    roundTripId: state.roundTripId,
   });
+}
+
+export async function getReplacementSwingPositionDetail(
+  scope: WorkspaceAccessScope,
+  positionRef: string,
+  reviewDate: string,
+): Promise<ReplacementSwingPositionDetail> {
+  return withJournalAnalyticsReportingDashboardRuntime(
+    scope,
+    ({ reportingContext, reportingCurrency }) => {
+      const source = getReplacementSwingPositionSourceDetail(
+        scope,
+        positionRef,
+        reviewDate,
+      );
+      const sourceCurrency = reportingContext.sourceCurrencyByRoundTrip
+        .get(source.roundTripId);
+      const sourceDate = reportingContext.sourceDateByRoundTrip
+        .get(source.roundTripId);
+      const multiplier = sourceCurrency && sourceDate
+        ? journalReportingCurrencyMultiplier(sourceCurrency, sourceDate, reportingContext)
+        : "1";
+      return Object.freeze({
+        ...source.detail,
+        averageEntryPriceDecimal: scaleReportingDecimal(
+          source.detail.averageEntryPriceDecimal,
+          multiplier,
+        ),
+        currency: reportingCurrency,
+        executions: Object.freeze(source.detail.executions.map((execution) => Object.freeze({
+          ...execution,
+          reportingFeesDecimal: scaleReportingDecimal(execution.feesDecimal, multiplier),
+          reportingPriceDecimal: scaleReportingDecimal(execution.priceDecimal, multiplier),
+        }))),
+      });
+    },
+  );
 }
 
 export function getReplacementOpenPositionStyles(

@@ -7,7 +7,7 @@ import Typography from "@mui/material/Typography";
 import { DashboardMetricCard, DashboardPage } from "@/app/dashboard-template";
 import type { JournalAnalyticsExactValue, JournalAnalyticsMetricResult, JournalAnalyticsResponse } from "@/src/modules/journal-analytics/contracts/analytics-result";
 import { formatJournalAnalyticsMetric } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
-import { buildJournalAnalyticsDashboardQuery, withJournalAnalyticsDashboardService } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
+import { buildJournalAnalyticsDashboardQuery, withJournalAnalyticsReportingDashboardService } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
 import { MonthlyPnlChart, type MonthlyPnlChartRow } from "./monthly-pnl-chart";
@@ -115,7 +115,7 @@ export async function AnalyticsOverviewPage({ searchParams }: { searchParams: Re
     groupings: ["closing_month"],
     metricIds: OVERVIEW_METRICS.map((metric) => metric.id),
   });
-  const response = withJournalAnalyticsDashboardService(scope, (service) => service.getAnalyticsOverview(scope, query));
+  const response = await withJournalAnalyticsReportingDashboardService(scope, (service) => service.getAnalyticsOverview(scope, query));
   return (
     <DashboardPage>
       <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>

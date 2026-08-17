@@ -49,6 +49,7 @@ function money(value: string | null, currency: string | null): string {
   if (value === null || currency === null) return "Unavailable";
   return new Intl.NumberFormat("en-US", {
     currency,
+    currencyDisplay: "narrowSymbol",
     maximumFractionDigits: 2,
     minimumFractionDigits: 2,
     style: "currency",

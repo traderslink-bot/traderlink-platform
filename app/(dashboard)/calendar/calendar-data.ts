@@ -1,7 +1,7 @@
 import "server-only";
 
 import {
-  withJournalAnalyticsDashboardRuntime,
+  withJournalAnalyticsReportingDashboardRuntime,
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
@@ -350,7 +350,7 @@ export function emptyCalendarData(): CalendarData {
 
 export async function getCalendarData(input: CalendarFilterInput): Promise<CalendarData> {
   const scope = await requireTraderLinkPlatformPageScope();
-  const data = withJournalAnalyticsDashboardRuntime(scope, ({ dashboard }) =>
+  const data = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ dashboard }) =>
     dashboard.getCalendar(scope, {
       currency: input.currency === "all" ? null : input.currency,
       startDate: input.startDate || null,

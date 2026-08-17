@@ -158,6 +158,7 @@ export type DaySessionExecutionActivity = {
     localTime: string;
     sourceTimezone: string;
     tradeCurrency: string;
+    sourcePrice: string | null;
   } | null;
   needsDecision: boolean;
   price: string | null;

@@ -1,5 +1,9 @@
 import { readDailyTradePatternOccurrences } from
   "@/src/modules/level-analysis/server/daily-trade-analysis-evidence-service";
+import { reportDailyTradePatternOccurrences } from
+  "@/src/modules/level-analysis/server/daily-trade-analysis-reporting";
+import { withJournalAnalyticsReportingDashboardRuntime } from
+  "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { requireTraderLinkPlatformRequestScope } from
   "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { isTraderLinkPlatformError } from
@@ -14,7 +18,7 @@ function optionalDate(value: string | null): string | null {
   return value?.trim() || null;
 }
 
-export function GET(request: Request): Response {
+export async function GET(request: Request): Promise<Response> {
   try {
     const url = new URL(request.url);
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
@@ -29,20 +33,26 @@ export function GET(request: Request): Response {
     ) {
       return Response.json({ status: "invalid_filters" }, { status: 400 });
     }
-    const page = withReadonlyPlatformDatabase({}, (database) =>
-      readDailyTradePatternOccurrences(database, scope, {
-        afterCursor: url.searchParams.get("cursor"),
-        currency: (url.searchParams.get("currency") ?? "").toUpperCase(),
-        endDate: optionalDate(url.searchParams.get("end")),
-        execution: execution as "all" | "entry" | "exit",
-        location: location as "all" | "exact" | "before",
-        moneyBasis: basis,
-        pageSize: Number(url.searchParams.get("pageSize") ?? 25),
-        pattern: url.searchParams.get("pattern") ?? "",
-        startDate: optionalDate(url.searchParams.get("start")),
-        ticker: (url.searchParams.get("ticker") ?? "").slice(0, 32),
-        timeframe: timeframe as "all" | "1m" | "5m",
-      }));
+    const page = await withJournalAnalyticsReportingDashboardRuntime(
+      scope,
+      ({ reportingContext }) => withReadonlyPlatformDatabase({}, (database) =>
+        reportDailyTradePatternOccurrences(
+          readDailyTradePatternOccurrences(database, scope, {
+            afterCursor: url.searchParams.get("cursor"),
+            currency: null,
+            endDate: optionalDate(url.searchParams.get("end")),
+            execution: execution as "all" | "entry" | "exit",
+            location: location as "all" | "exact" | "before",
+            moneyBasis: basis,
+            pageSize: Number(url.searchParams.get("pageSize") ?? 25),
+            pattern: url.searchParams.get("pattern") ?? "",
+            startDate: optionalDate(url.searchParams.get("start")),
+            ticker: (url.searchParams.get("ticker") ?? "").slice(0, 32),
+            timeframe: timeframe as "all" | "1m" | "5m",
+          }),
+          reportingContext,
+        )),
+    );
     return Response.json({ status: "ready", page }, {
       headers: { "cache-control": "no-store" },
     });

@@ -24,6 +24,8 @@ import {
   DashboardSecondaryAction,
 } from "../../../dashboard-template";
 import { FeatureHelpLink } from "../../feature-help-link";
+import { formatJournalAnalyticsMoney } from
+  "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 
 const PATTERN_LABELS: Record<string, string> = {
   compression: "Compression",
@@ -57,7 +59,7 @@ function easternTime(value: string | number): string {
   }).format(date);
 }
 
-function CandleChart({ review }: { review: CandleReviewRecord }) {
+function CandleChart({ currency, review }: { currency: string; review: CandleReviewRecord }) {
   const container = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     if (!container.current || review.candles.length === 0) return;
@@ -97,27 +99,29 @@ function CandleChart({ review }: { review: CandleReviewRecord }) {
         position: review.target.direction === "long" ? "belowBar" : "aboveBar",
         color: "#011E56",
         shape: review.target.direction === "long" ? "arrowUp" : "arrowDown",
-        text: `Entry $${decimal(review.target.entryPriceDecimal)}`,
+        text: `Entry ${formatJournalAnalyticsMoney(review.target.entryPriceDecimal, currency)}`,
       },
       {
         time: Math.floor(Date.parse(review.target.closedAtUtc) / 1000) as UTCTimestamp,
         position: review.target.direction === "long" ? "aboveBar" : "belowBar",
         color: "#7c3aed",
         shape: review.target.direction === "long" ? "arrowDown" : "arrowUp",
-        text: `Exit $${decimal(review.target.exitPriceDecimal)}`,
+        text: `Exit ${formatJournalAnalyticsMoney(review.target.exitPriceDecimal, currency)}`,
       },
     ]);
     chart.timeScale().fitContent();
     return () => chart.remove();
-  }, [review]);
+  }, [currency, review]);
   return <Box ref={container} sx={{ height: 420, width: "100%" }} />;
 }
 
 export function TradeCandleReviewClient({
+  currency,
   initialReview,
   selectionRef,
   trade,
 }: {
+  currency: string;
   initialReview: CandleReviewRecord | null;
   selectionRef: string;
   trade: CandleReviewTarget;
@@ -139,6 +143,7 @@ export function TradeCandleReviewClient({
         method: "POST",
       });
       const body = await response.json() as {
+        currency?: string;
         ok?: unknown;
         message?: unknown;
         record?: CandleReviewRecord;
@@ -182,8 +187,8 @@ export function TradeCandleReviewClient({
           </Typography>
           <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1 }}>
             <Chip label={`${trade.direction === "long" ? "Long" : "Short"} ${trade.symbol}`} size="small" />
-            <Chip label={`Entry $${decimal(trade.entryPriceDecimal)} · ${easternTime(trade.openedAtUtc)}`} size="small" variant="outlined" />
-            <Chip label={`Exit $${decimal(trade.exitPriceDecimal)} · ${easternTime(trade.closedAtUtc)}`} size="small" variant="outlined" />
+            <Chip label={`Entry ${formatJournalAnalyticsMoney(trade.entryPriceDecimal, currency)} · ${easternTime(trade.openedAtUtc)}`} size="small" variant="outlined" />
+            <Chip label={`Exit ${formatJournalAnalyticsMoney(trade.exitPriceDecimal, currency)} · ${easternTime(trade.closedAtUtc)}`} size="small" variant="outlined" />
           </Stack>
           <Typography color="text.secondary" variant="caption">
             {review
@@ -206,7 +211,7 @@ export function TradeCandleReviewClient({
 
       {review && review.candles.length > 0 ? (
         <DashboardPanel action={<FeatureHelpLink href="/help/candle-review/run-and-read-review#read-price-path" label="price path" />} title="Price path">
-          <CandleChart review={review} />
+          <CandleChart currency={currency} review={review} />
         </DashboardPanel>
       ) : null}
 

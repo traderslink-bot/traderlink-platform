@@ -24,6 +24,7 @@ import { useMemo, useState, useTransition } from "react";
 import {
   formatJournalAnalyticsDecimal,
   formatJournalAnalyticsMetric,
+  formatJournalAnalyticsMoney,
   journalAnalyticsMetricCaption,
 } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import type { JournalAnalyticsMetricResult } from "@/src/modules/journal-analytics/contracts/analytics-result";
@@ -130,6 +131,7 @@ function GroupChart({ preview }: { preview: AnalyticsLabPlatformPreview }) {
         : [];
     }));
   const maximum = Math.max(1, ...rows.map((row) => Math.abs(row.value)));
+  const showCurrency = new Set(rows.flatMap((row) => row.currency ? [row.currency] : [])).size > 1;
   if (rows.length === 0) {
     return <Alert severity="info">No chartable value is available for this metric and filter combination.</Alert>;
   }
@@ -139,7 +141,7 @@ function GroupChart({ preview }: { preview: AnalyticsLabPlatformPreview }) {
         <Box key={`${row.currency ?? "none"}-${row.label}-${index}`}>
           <Stack direction="row" spacing={2} sx={{ justifyContent: "space-between" }}>
             <Typography noWrap variant="body2">
-              {row.label}{row.currency ? ` · ${row.currency}` : ""}
+              {row.label}{showCurrency && row.currency ? ` · ${row.currency}` : ""}
             </Typography>
             <Typography sx={{ fontWeight: 700 }} variant="body2">
               {formatJournalAnalyticsMetric(row.metric)}
@@ -459,7 +461,7 @@ export default function AnalyticsLabPlatformClient({
                     <TableCell>{row.closeLocalDate}</TableCell>
                     <TableCell>{row.displayedSymbol}</TableCell>
                     <TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell>
-                    <TableCell align="right">{row.selectedPnlDecimal === null ? "N/A" : (formatJournalAnalyticsDecimal(row.selectedPnlDecimal, 2, true).startsWith("-") ? `-$${formatJournalAnalyticsDecimal(row.selectedPnlDecimal, 2, true).slice(1)}` : `$${formatJournalAnalyticsDecimal(row.selectedPnlDecimal, 2, true)}`)}</TableCell>
+                    <TableCell align="right">{row.selectedPnlDecimal === null ? "N/A" : formatJournalAnalyticsMoney(row.selectedPnlDecimal, preview.evidence?.currency ?? null)}</TableCell>
                     <TableCell align="right">{formatJournalAnalyticsDecimal(row.enteredQuantityDecimal)}</TableCell>
                     <TableCell align="right">{formatJournalAnalyticsDecimal(String(row.holdingDurationMilliseconds / 60_000))} min</TableCell>
                     <TableCell>{row.chargeCoverage === "complete" ? "Fee covered" : "Fees unavailable"}</TableCell>

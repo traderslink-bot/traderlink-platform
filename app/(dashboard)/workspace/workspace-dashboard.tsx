@@ -23,7 +23,7 @@ import {
   DashboardUnavailableState,
 } from "../../dashboard-template";
 import type { JournalCalendarReadModel } from "@/src/modules/journal-analytics/contracts/journal-dashboard-read-models";
-import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
+import { formatJournalAnalyticsMoney } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import type { WorkspaceReviewSummary } from "./workspace-review-summary";
 
 export type WorkspaceMetric = Readonly<{
@@ -67,8 +67,7 @@ const unavailableMetrics: readonly WorkspaceMetric[] = [
 
 function calendarMoney(value: string | null, currency: string | null): string {
   if (value === null || currency === null) return "Unavailable";
-  const formatted = formatJournalAnalyticsDecimal(value, 2, true);
-  return formatted.startsWith("-") ? `-$${formatted.slice(1)}` : `+$${formatted}`;
+  return formatJournalAnalyticsMoney(value, currency, { showPositiveSign: true });
 }
 
 function calendarDate(value: string): string {

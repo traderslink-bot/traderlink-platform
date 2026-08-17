@@ -4,6 +4,34 @@ import type {
   JournalAnalyticsPartitionedResponse,
 } from "../contracts/analytics-result";
 
+const JOURNAL_ANALYTICS_CURRENCY_SYMBOLS: Readonly<Record<string, string>> = Object.freeze({
+  AUD: "$",
+  BRL: "R$",
+  CAD: "$",
+  CHF: "Fr",
+  CNY: "¥",
+  EUR: "€",
+  GBP: "£",
+  HKD: "$",
+  IDR: "Rp",
+  INR: "₹",
+  JPY: "¥",
+  KRW: "₩",
+  MXN: "$",
+  MYR: "RM",
+  NOK: "kr",
+  NZD: "$",
+  PEN: "S/",
+  PLN: "zł",
+  SEK: "kr",
+  SGD: "$",
+  THB: "฿",
+  TRY: "₺",
+  TWD: "$",
+  USD: "$",
+  ZAR: "R",
+});
+
 function decimalParts(value: string): Readonly<{
   negative: boolean;
   units: bigint;
@@ -55,6 +83,24 @@ export function formatJournalAnalyticsDecimal(
   return parts.negative && units !== BigInt(0) ? `-${rendered}` : rendered;
 }
 
+export function journalAnalyticsCurrencySymbol(currency: string): string | null {
+  return JOURNAL_ANALYTICS_CURRENCY_SYMBOLS[currency.toUpperCase()] ?? null;
+}
+
+export function formatJournalAnalyticsMoney(
+  value: string | null,
+  currency: string | null,
+  options: Readonly<{ showPositiveSign?: boolean }> = {},
+): string {
+  if (value === null) return "Unavailable";
+  const formatted = formatJournalAnalyticsDecimal(value, 2, true);
+  const symbol = currency === null ? null : journalAnalyticsCurrencySymbol(currency);
+  if (symbol === null) return formatted;
+  return formatted.startsWith("-")
+    ? `-${symbol}${formatted.slice(1)}`
+    : `${options.showPositiveSign ? "+" : ""}${symbol}${formatted}`;
+}
+
 export function formatJournalAnalyticsDuration(milliseconds: number): string {
   if (milliseconds < 60_000) {
     return `${formatJournalAnalyticsDecimal(String(milliseconds / 1_000))} sec`;
@@ -88,7 +134,7 @@ function formatExactValue(
   const formatted = formatJournalAnalyticsDecimal(decimal, 2, metric.valueKind === "money");
   if (metric.unit === "percent") return `${formatted}%`;
   if (metric.valueKind === "money" && metric.currency) {
-    return formatted.startsWith("-") ? `-$${formatted.slice(1)}` : `$${formatted}`;
+    return formatJournalAnalyticsMoney(decimal, metric.currency);
   }
   return formatted;
 }

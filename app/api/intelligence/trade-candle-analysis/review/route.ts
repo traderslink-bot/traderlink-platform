@@ -12,6 +12,10 @@ import {
   isTraderLinkPlatformError,
 } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
+import { reportCandleReviewRecord } from
+  "@/src/modules/level-analysis/server/candle-review-reporting";
+import { withJournalAnalyticsReportingDashboardRuntime } from
+  "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,8 +24,12 @@ function unavailable(message: string, status = 422): Response {
   return Response.json({ ok: false, message }, { status });
 }
 
-function responseFor(record: CandleReviewRecord, reused: boolean): Response {
-  return Response.json({ ok: true, record, reused });
+function responseFor(
+  record: CandleReviewRecord,
+  currency: string,
+  reused: boolean,
+): Response {
+  return Response.json({ currency, ok: true, record, reused });
 }
 
 export async function POST(request: Request): Promise<Response> {
@@ -54,7 +62,16 @@ export async function POST(request: Request): Promise<Response> {
       new CandleReviewRepository(database),
       new YahooChartMarketDataProvider(),
     ).run(accountScope, roundTripId);
-    return responseFor(result.record, result.reused);
+    database.close();
+    database = null;
+    const reported = await withJournalAnalyticsReportingDashboardRuntime(
+      scope,
+      ({ reportingContext, reportingCurrency }) => Object.freeze({
+        currency: reportingCurrency,
+        record: reportCandleReviewRecord(result.record, reportingContext),
+      }),
+    );
+    return responseFor(reported.record, reported.currency, result.reused);
   } catch (error) {
     if (isTraderLinkPlatformError(error)) {
       if (error.code === "TRADERLINK_ACCOUNT_SELECTION_CONFLICT") {

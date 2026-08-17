@@ -248,7 +248,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: ["ticker", "entries", "adds", "pagination", "view full analysis", "mobile table", "swipe"],
         blocks: [
           { kind: "paragraph", text: "Ticker and execution filters apply before pagination. On a phone, the complete evidence table keeps readable column widths and moves sideways inside its card; use the visible swipe cue and pinned Ticker column to compare entry price, MFE, MAE, percentage movement, time until flat and the actual trade result. View full analysis opens the exact trade in Daily Trade Tracker without changing the Analyzer population." },
-          { kind: "paragraph", text: "Results per page offers 10, 25, 50 or 100 rows. Paging changes only the visible evidence rows; every card and comparison remains calculated from the complete selected date, currency and gross/net population." },
+          { kind: "paragraph", text: "Results per page offers 10, 25, 50 or 100 rows. Paging changes only the visible evidence rows; every card and comparison remains calculated from the complete selected date range, Account reporting currency and gross/net population." },
         ],
       },
     ],
@@ -441,11 +441,11 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       },
       {
         id: "filters",
-        title: "Date, currency and money-basis filters",
-        summary: "Apply one shared population boundary without mixing currencies.",
+        title: "Date, reporting currency and money basis",
+        summary: "Apply one shared date and money basis while Account settings supplies the reporting currency.",
         keywords: ["date range", "currency", "gross", "net", "filters"],
         blocks: [
-          { kind: "paragraph", text: "The selected date range, currency and Gross/Net basis apply to every card and capability page. Different currencies are never added together. Gross does not subtract fees; Net includes only trades with supported complete fee treatment." },
+          { kind: "paragraph", text: "The selected date range and Gross/Net basis apply to every card and capability page. Your Account reporting-currency preference applies automatically; there is no separate page-level currency filter. Gross does not subtract fees; Net includes only trades with supported complete fee treatment." },
         ],
       },
       {
@@ -476,7 +476,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Narrow the analyzed-trade directory without changing saved facts.",
         keywords: ["ticker filter", "ticker search", "page 1"],
         blocks: [
-          { kind: "paragraph", text: "Ticker search matches the displayed symbol and returns the list to page 1. The shared date range, currency and Gross or Net choice continue to apply. Green-to-red-specific outcome and opportunity filters live on the Green-to-red page." },
+          { kind: "paragraph", text: "Ticker search matches the displayed symbol and returns the list to page 1. The shared date range, Account reporting currency and Gross or Net choice continue to apply. Green-to-red-specific outcome and opportunity filters live on the Green-to-red page." },
         ],
       },
       {

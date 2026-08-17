@@ -36,7 +36,7 @@ export default async function TradeCandleReviewPage({
     );
   }
   const scope = await requireTraderLinkPlatformPageScope();
-  const model = readCandleReviewPageModel(scope, key);
+  const model = await readCandleReviewPageModel(scope, key);
   if (!model) {
     return (
       <DashboardPage>
@@ -60,7 +60,7 @@ export default async function TradeCandleReviewPage({
         <FeatureHelpLink href="/help/candle-review" label="Candle Review" size="medium" />
       </Stack>
       <DashboardDataScopeChip />
-      <TradeCandleReviewClient initialReview={model.review} selectionRef={model.expectedAccountSelectionRef} trade={model.target} />
+      <TradeCandleReviewClient currency={model.currency} initialReview={model.review} selectionRef={model.expectedAccountSelectionRef} trade={model.target} />
     </DashboardPage>
   );
 }

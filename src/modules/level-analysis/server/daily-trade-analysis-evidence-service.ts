@@ -583,7 +583,7 @@ export function readDailyTradePatternOccurrences(
   scope: WorkspaceAccessScope,
   input: Readonly<{
     afterCursor: string | null;
-    currency: string;
+    currency: string | null;
     endDate: string | null;
     execution: DailyTradePatternExecutionFilter;
     location: DailyTradePatternLocationFilter;
@@ -597,7 +597,11 @@ export function readDailyTradePatternOccurrences(
 ): DailyTradePatternOccurrencePage {
   const accountId = activeAccountId(scope);
   const pageSize = requirePageSize(input.pageSize);
-  if (!input.pattern.trim() || input.pattern.length > 120 || !/^[A-Z]{3}$/u.test(input.currency)) {
+  if (
+    !input.pattern.trim() ||
+    input.pattern.length > 120 ||
+    (input.currency !== null && !/^[A-Z]{3}$/u.test(input.currency))
+  ) {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
       field: "occurrenceFilters",
     });
@@ -606,12 +610,15 @@ export function readDailyTradePatternOccurrences(
   const bounds = dateBounds(input.startDate, input.endDate, timezone);
   const projected = hasDailyTradePatternOccurrenceProjection(database);
   const cte = occurrenceCandidateCte(projected);
-  const filters = ["pattern_kind = ?", "trade_currency = ?"];
+  const filters = ["pattern_kind = ?"];
   const parameters: (string | number)[] = [
     ...occurrenceScopeParams(projected, scope.workspaceId, accountId),
     input.pattern,
-    input.currency,
   ];
+  if (input.currency !== null) {
+    filters.push("trade_currency = ?");
+    parameters.push(input.currency);
+  }
   if (bounds) {
     filters.push("executed_at_utc >= ?", "executed_at_utc < ?");
     parameters.push(bounds.startUtc, bounds.endExclusiveUtc);
@@ -762,7 +769,7 @@ export function readDailyTradeAnalyzedTrades(
   scope: WorkspaceAccessScope,
   input: Readonly<{
     afterCursor: string | null;
-    currency: string;
+    currency: string | null;
     endDate: string | null;
     moneyBasis: DailyTradeEvidenceMoneyBasis;
     pageSize: number;
@@ -772,7 +779,7 @@ export function readDailyTradeAnalyzedTrades(
 ): DailyTradeAnalyzedTradePage {
   const accountId = activeAccountId(scope);
   const pageSize = requirePageSize(input.pageSize);
-  if (!/^[A-Z]{3}$/u.test(input.currency)) {
+  if (input.currency !== null && !/^[A-Z]{3}$/u.test(input.currency)) {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
       field: "currency",
     });
@@ -785,6 +792,7 @@ export function readDailyTradeAnalyzedTrades(
   round_trip_version.direction,
   round_trip_version.opened_at_utc,
   round_trip_version.closed_at_utc,
+  round_trip_version.trade_currency,
   instrument.normalized_symbol AS symbol
 FROM journal_round_trip_daily_trade_analyses analysis
 JOIN journal_round_trip_daily_trade_analysis_versions version
@@ -807,14 +815,16 @@ WHERE analysis.workspace_id = ? AND analysis.account_id = ?
   AND analysis.status = 'ready' AND version.status = 'ready'
   AND round_trip_version.projection_state = 'ready_closed'
   AND round_trip_version.closed_at_utc IS NOT NULL
-  AND round_trip_version.trade_currency = ?
 )`;
   const filters: string[] = [];
   const parameters: (string | number)[] = [
     scope.workspaceId,
     accountId,
-    input.currency,
   ];
+  if (input.currency !== null) {
+    filters.push("trade_currency = ?");
+    parameters.push(input.currency);
+  }
   if (bounds) {
     filters.push("closed_at_utc >= ?", "closed_at_utc < ?");
     parameters.push(bounds.startUtc, bounds.endExclusiveUtc);

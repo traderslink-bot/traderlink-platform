@@ -362,6 +362,42 @@ function opportunityFor(fact: AnalyzerFact): string | null {
   return index === null ? null : fact.path.profitOpportunities[index]?.peakPnlDecimal ?? null;
 }
 
+function scaledDecimal(value: string | null, multiplier: string): string | null {
+  return value === null ? null : new Decimal(value).times(multiplier).toString();
+}
+
+function scaleAnalyzerFact(fact: AnalyzerFact, multiplier: string): AnalyzerFact {
+  if (multiplier === "1") return fact;
+  return Object.freeze({
+    ...fact,
+    events: Object.freeze(fact.events.map((event) => Object.freeze({
+      ...event,
+      excursionAdverseDecimal: scaledDecimal(event.excursionAdverseDecimal, multiplier),
+      excursionFavorableDecimal: scaledDecimal(event.excursionFavorableDecimal, multiplier),
+      givebackDecimal: scaledDecimal(event.givebackDecimal, multiplier),
+      priorFavorableExtremePriceDecimal: scaledDecimal(event.priorFavorableExtremePriceDecimal, multiplier),
+      priceDecimal: scaledDecimal(event.priceDecimal, multiplier)!,
+    }))),
+    path: Object.freeze({
+      ...fact.path,
+      completedClosePeakPnlDecimal: scaledDecimal(fact.path.completedClosePeakPnlDecimal, multiplier),
+      finalPnlDecimal: scaledDecimal(fact.path.finalPnlDecimal, multiplier),
+      firstRedPnlDecimal: scaledDecimal(fact.path.firstRedPnlDecimal, multiplier),
+      peakPnlDecimal: scaledDecimal(fact.path.peakPnlDecimal, multiplier),
+      peakToFinalReversalDecimal: scaledDecimal(fact.path.peakToFinalReversalDecimal, multiplier),
+      peakToRedReversalDecimal: scaledDecimal(fact.path.peakToRedReversalDecimal, multiplier),
+      profitOpportunityThresholdDecimal: scaledDecimal(fact.path.profitOpportunityThresholdDecimal, multiplier),
+      strongOpportunityThresholdDecimal: scaledDecimal(fact.path.strongOpportunityThresholdDecimal, multiplier),
+      profitOpportunities: Object.freeze(fact.path.profitOpportunities.map((opportunity) => Object.freeze({
+        ...opportunity,
+        lowestPnlDecimal: scaledDecimal(opportunity.lowestPnlDecimal, multiplier)!,
+        peakPnlDecimal: scaledDecimal(opportunity.peakPnlDecimal, multiplier)!,
+        peakToFinalReversalDecimal: scaledDecimal(opportunity.peakToFinalReversalDecimal, multiplier)!,
+      }))),
+    }),
+  });
+}
+
 function additionalOpportunity(actual: string, opportunity: string | null): string | null {
   if (opportunity === null) return null;
   return Decimal.max(new Decimal(opportunity).minus(actual), 0).toString();
@@ -633,12 +669,17 @@ export function buildDailyTradeLongTermAnalytics(
   moneyBasis: "gross" | "net",
   currency: string | null,
   timezone = "America/New_York",
+  reportingMultiplierByRoundTrip: ReadonlyMap<string, string> = new Map(),
 ): DailyTradeLongTermAnalyticsModel {
   const analyzer = readAnalyzerFacts(database, scope);
   const eligibleDayTrades = journalRows.filter((row) => row.tradeClassification === "day_trade");
   const joined: readonly Joined[] = Object.freeze(eligibleDayTrades.flatMap((journal) => {
-    const fact = analyzer.get(journal.roundTripId);
-    if (!fact || journal.selectedPnlDecimal === null) return [];
+    const sourceFact = analyzer.get(journal.roundTripId);
+    if (!sourceFact || journal.selectedPnlDecimal === null) return [];
+    const fact = scaleAnalyzerFact(
+      sourceFact,
+      reportingMultiplierByRoundTrip.get(journal.roundTripId) ?? "1",
+    );
     const opportunity = opportunityFor(fact);
     return [Object.freeze({
       actualPnl: journal.selectedPnlDecimal,

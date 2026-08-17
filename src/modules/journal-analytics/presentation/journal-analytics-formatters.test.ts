@@ -7,6 +7,7 @@ import type {
 import {
   formatJournalAnalyticsDuration,
   formatJournalAnalyticsMetric,
+  formatJournalAnalyticsMoney,
 } from "./journal-analytics-formatters";
 
 function durationMetric(value: JournalAnalyticsExactValue): JournalAnalyticsMetricResult {
@@ -31,5 +32,14 @@ describe("Journal Analytics duration formatting", () => {
       kind: "duration",
       milliseconds: 7_200_000,
     }))).toBe("2 hr");
+  });
+});
+
+describe("Journal Analytics money formatting", () => {
+  it("uses currency symbols without ISO currency codes", () => {
+    expect(formatJournalAnalyticsMoney("1.675", "USD")).toBe("$1.68");
+    expect(formatJournalAnalyticsMoney("-12", "CAD")).toBe("-$12.00");
+    expect(formatJournalAnalyticsMoney("9.5", "EUR")).toBe("€9.50");
+    expect(formatJournalAnalyticsMoney("4", "USD", { showPositiveSign: true })).toBe("+$4.00");
   });
 });

@@ -17,5 +17,5 @@ export const metadata: Metadata = {
 export default async function AnalyticsLabPage() {
   redirect("/analytics");
   const scope = await requireTraderLinkPlatformPageScope();
-  return <AnalyticsLabPlatformClient model={readAnalyticsLabPlatformPageModel(scope)} />;
+  return <AnalyticsLabPlatformClient model={await readAnalyticsLabPlatformPageModel(scope)} />;
 }

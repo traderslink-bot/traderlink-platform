@@ -74,6 +74,7 @@ export function readWorkspaceReviewSummary(
   database: Database.Database,
   scope: WorkspaceAccessScope,
   now = new Date(),
+  dashboard?: Pick<JournalDashboardReadModelService, "getTradingDay">,
 ): WorkspaceReviewSummary {
   const accountId = scope.activeAccountId;
   if (!accountId || !scope.allowedAccountIds.includes(accountId)) {
@@ -102,10 +103,10 @@ export function readWorkspaceReviewSummary(
     return Object.freeze({ currentFocuses, focusRules, previousReview: null });
   }
 
-  const facts = new JournalAnalyticsFactSetService(
+  const facts = dashboard ? null : new JournalAnalyticsFactSetService(
     new JournalAnalyticsFactSetRepository(database),
   );
-  const tradingDay = new JournalDashboardReadModelService(facts).getTradingDay(scope, {
+  const tradingDay = (dashboard ?? new JournalDashboardReadModelService(facts!)).getTradingDay(scope, {
     requestedDate: previousReview.tradingDate,
     currency: null,
   });

@@ -6,8 +6,12 @@ import Typography from "@mui/material/Typography";
 import { DashboardPage } from "@/app/dashboard-template";
 import type { JournalAnalyticsGrouping } from "@/src/modules/journal-analytics/contracts/analytics-query";
 import type { JournalAnalyticsExactValue, JournalAnalyticsMetricResult } from "@/src/modules/journal-analytics/contracts/analytics-result";
-import { formatJournalAnalyticsDecimal, formatJournalAnalyticsMetric } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
-import { buildJournalAnalyticsDashboardQuery, withJournalAnalyticsDashboardService } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
+import {
+  formatJournalAnalyticsDecimal,
+  formatJournalAnalyticsMetric,
+  formatJournalAnalyticsMoney,
+} from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
+import { buildJournalAnalyticsDashboardQuery, withJournalAnalyticsReportingDashboardService } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
 import { ExecutionAnalyticsClient, type ExecutionChartData, type ExecutionTradeRow } from "./execution-analytics-client";
@@ -26,10 +30,9 @@ function metricNumber(value: JournalAnalyticsExactValue | null): number | null {
   return value.kind === "integer" ? value.value : Number(value.kind === "decimal" ? value.valueDecimal : value.roundedDecimal);
 }
 
-function money(value: string | null): string {
+function money(value: string | null, currency: string | null): string {
   if (value === null) return "Unavailable";
-  const display = formatJournalAnalyticsDecimal(value, 2, true);
-  return display.startsWith("-") ? `-$${display.slice(1)}` : `$${display}`;
+  return formatJournalAnalyticsMoney(value, currency);
 }
 
 function timestamp(value: string): string {
@@ -69,7 +72,7 @@ export async function ExecutionAnalyticsPage({ searchParams }: { searchParams: R
   const closingDateRange = selectedRange.startDate && selectedRange.endDate
     ? { endDate: selectedRange.endDate, kind: "inclusive_closing_date" as const, startDate: selectedRange.startDate }
     : { kind: "all_available" as const };
-  const result = withJournalAnalyticsDashboardService(scope, (service) => {
+  const result = await withJournalAnalyticsReportingDashboardService(scope, (service) => {
     const chartQuery = buildJournalAnalyticsDashboardQuery(scope, { closingDateRange, groupings: GROUPINGS, metricIds: METRICS });
     const charts = service.getExecutionAnalytics(scope, chartQuery);
     const currency = charts.partitions[0]?.currency ?? null;
@@ -90,6 +93,6 @@ export async function ExecutionAnalyticsPage({ searchParams }: { searchParams: R
       })));
     return [grouping, Object.freeze(points)];
   }))) as ExecutionChartData;
-  const rows: readonly ExecutionTradeRow[] = result.trades?.rows.map((row) => ({ averageEntry: money(row.averageEntryPriceDecimal ?? null), averageEntryValue: Number(row.averageEntryPriceDecimal ?? 0), averageExit: money(row.averageExitPriceDecimal ?? null), averageExitValue: Number(row.averageExitPriceDecimal ?? 0), closed: timestamp(row.closedAtUtc), closedValue: row.closedAtUtc, direction: row.direction, executions: row.uniqueExecutionCount, maximumPosition: formatJournalAnalyticsDecimal(row.maximumPositionQuantityDecimal, 2, true), maximumPositionValue: Number(row.maximumPositionQuantityDecimal), netPnl: money(row.selectedPnlDecimal), netPnlValue: Number(row.selectedPnlDecimal ?? 0), opened: timestamp(row.openedAtUtc), openedValue: row.openedAtUtc, roundTripId: row.roundTripId, ticker: row.displayedSymbol, tradeType: row.tradeClassification === "day_trade" ? "Day trade" : "Multi-day trade", tradeTypeValue: row.tradeClassification, holdTime: duration(row.holdingDurationMilliseconds), holdTimeValue: row.holdingDurationMilliseconds })) ?? [];
+  const rows: readonly ExecutionTradeRow[] = result.trades?.rows.map((row) => ({ averageEntry: money(row.averageEntryPriceDecimal ?? null, result.trades?.currency ?? null), averageEntryValue: Number(row.averageEntryPriceDecimal ?? 0), averageExit: money(row.averageExitPriceDecimal ?? null, result.trades?.currency ?? null), averageExitValue: Number(row.averageExitPriceDecimal ?? 0), closed: timestamp(row.closedAtUtc), closedValue: row.closedAtUtc, direction: row.direction, executions: row.uniqueExecutionCount, maximumPosition: formatJournalAnalyticsDecimal(row.maximumPositionQuantityDecimal, 2, true), maximumPositionValue: Number(row.maximumPositionQuantityDecimal), netPnl: money(row.selectedPnlDecimal, result.trades?.currency ?? null), netPnlValue: Number(row.selectedPnlDecimal ?? 0), opened: timestamp(row.openedAtUtc), openedValue: row.openedAtUtc, roundTripId: row.roundTripId, ticker: row.displayedSymbol, tradeType: row.tradeClassification === "day_trade" ? "Day trade" : "Multi-day trade", tradeTypeValue: row.tradeClassification, holdTime: duration(row.holdingDurationMilliseconds), holdTimeValue: row.holdingDurationMilliseconds })) ?? [];
   return <DashboardPage><Box sx={{ alignItems: "flex-start", display: "flex", gap: 1, justifyContent: "space-between" }}><Box><Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">Analytics</Typography><Typography component="h1" sx={{ mt: 0.5 }} variant="h1">Execution</Typography></Box><FeatureHelpLink href="/help/core-analytics" label="Core Analytics" size="medium" /></Box><Box sx={{ alignItems: { sm: "center" }, display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 0.5 }}><OverviewDateRangeControl href="/analytics/execution" value={selectedRange} /><FeatureHelpLink href="/help/core-analytics/overview-and-date-range#set-a-date-range" label="Analytics date range" /></Box><ExecutionAnalyticsClient chartData={chartData} rows={rows} /></DashboardPage>;
 }

@@ -8,31 +8,25 @@ import Link from "next/link";
 
 import { DashboardMetricCard, DashboardPage, DashboardPanel } from "../../../dashboard-template";
 import { FeatureHelpLink } from "../../feature-help-link";
-import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
+import { formatJournalAnalyticsMoney } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 
 import type { RuleResultEvent, RuleResultsView } from "./rule-results-data";
 
 const PAGE_SIZE = 25;
 
-function money(value: string | null): string {
-  if (value === null) return "Unavailable";
-  const negative = value.startsWith("-");
-  return `${negative ? "-" : ""}$${formatJournalAnalyticsDecimal(value.replace(/^-/, ""), 2, true)}`;
-}
-
-function factSentence(summary: RuleResultsView["summaries"][number]): string {
+function factSentence(summary: RuleResultsView["summaries"][number], currency: string): string {
   const parts = [
     `${summary.broken} broken across ${summary.tradingDays} trading day${summary.tradingDays === 1 ? "" : "s"}`,
     `${summary.followed} followed`,
     `${summary.notSelected} not selected`,
     `${summary.nA} N/A`,
     `eligible on ${summary.eligibleTradingDays} trading day${summary.eligibleTradingDays === 1 ? "" : "s"}`,
-    `broken-event P/L ${money(summary.combinedPnl)}`,
+    `broken-event P/L ${formatJournalAnalyticsMoney(summary.combinedPnl, currency)}`,
     `${summary.brokenWins} gains and ${summary.brokenLosses} losses`,
   ];
-  if (summary.largestGain !== null) parts.push(`largest gain ${money(summary.largestGain)}`);
+  if (summary.largestGain !== null) parts.push(`largest gain ${formatJournalAnalyticsMoney(summary.largestGain, currency)}`);
   if (summary.largestGainSharePercent !== null && summary.brokenWins > 1) parts.push(`largest gain supplied ${summary.largestGainSharePercent}% of broken-event gains`);
-  if (summary.largestLoss !== null) parts.push(`largest loss ${money(summary.largestLoss)}`);
+  if (summary.largestLoss !== null) parts.push(`largest loss ${formatJournalAnalyticsMoney(summary.largestLoss, currency)}`);
   if (summary.mostFrequentTicker && summary.mostFrequentTickerCount > 1) parts.push(`${summary.mostFrequentTickerCount} broken events occurred in ${summary.mostFrequentTicker}`);
   if (summary.feeCoverage) parts.push(`fee coverage ${summary.feeCoverage}`);
   return `${parts.join(" · ")}.`;
@@ -90,7 +84,7 @@ export function RuleResultsClient({ initialView }: { initialView: RuleResultsVie
                   <Typography sx={{ fontWeight: 800 }}>{summary.label}</Typography>
                   <Stack direction="row" spacing={0.5}><Chip label={summary.source} size="small" /><Chip label={`v${summary.ruleVersion}`} size="small" variant="outlined" /></Stack>
                 </Stack>
-                <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">{factSentence(summary)}</Typography>
+                <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">{factSentence(summary, initialView.currency)}</Typography>
               </Box>
             ))}
           </Box>
@@ -111,7 +105,7 @@ export function RuleResultsClient({ initialView }: { initialView: RuleResultsVie
               <Typography variant="body2">{event.date}</Typography>
               <Box><Typography sx={{ fontWeight: 700 }} variant="body2">{event.label}</Typography><Typography color="text.secondary" variant="caption">{event.source} · v{event.ruleVersion} · {event.target}{event.ticker ? ` · ${event.ticker}` : ""}{event.note ? ` · Note: ${event.note}` : ""}</Typography></Box>
               <Chip label={event.result} size="small" sx={{ justifySelf: "start" }} />
-              <Typography variant="body2">{money(event.netPnl)}</Typography>
+              <Typography variant="body2">{formatJournalAnalyticsMoney(event.netPnl, initialView.currency)}</Typography>
               <Button component={Link} href={`/trade-tracker/${event.date}`} size="small">View day</Button>
             </Box>
           ))}

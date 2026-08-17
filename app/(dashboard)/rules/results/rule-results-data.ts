@@ -3,7 +3,10 @@ import "server-only";
 import Decimal from "decimal.js";
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
-import { withJournalAnalyticsDashboardRuntime } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
+import {
+  withJournalAnalyticsDashboardRuntime,
+  withJournalAnalyticsReportingDashboardRuntime,
+} from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { withReadonlyJournalAnnotations } from "@/src/modules/journal/server/annotations/journal-annotation-runtime";
 import { evaluateJournalPresetRules } from "@/src/modules/journal/server/annotations/journal-preset-rule-evaluator";
 
@@ -45,6 +48,7 @@ export type RuleResultSummary = Readonly<{
 }>;
 
 export type RuleResultsView = Readonly<{
+  currency: string;
   events: readonly RuleResultEvent[];
   summaries: readonly RuleResultSummary[];
 }>;
@@ -93,17 +97,26 @@ function summarize(events: readonly RuleResultEvent[]): readonly RuleResultSumma
   }).sort((left, right) => left.label.localeCompare(right.label)));
 }
 
-export function readRuleResults(scope: WorkspaceAccessScope): RuleResultsView {
-  const models = withJournalAnalyticsDashboardRuntime(scope, ({ dashboard }) => {
+export async function readRuleResults(scope: WorkspaceAccessScope): Promise<RuleResultsView> {
+  const reporting = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ dashboard, reportingCurrency }) => {
     const latest = dashboard.getTradingDay(scope, { currency: null, requestedDate: null });
-    return latest.availableTradingDates.map((date) => dashboard.getTradingDay(scope, {
-      currency: latest.currency,
-      requestedDate: date,
-    }));
+    return Object.freeze({
+      currency: reportingCurrency,
+      models: latest.availableTradingDates.map((date) => dashboard.getTradingDay(scope, {
+        currency: reportingCurrency,
+        requestedDate: date,
+      })),
+    });
   });
+  const sourceModels = withJournalAnalyticsDashboardRuntime(scope, ({ dashboard }) =>
+    reporting.models.map((model) => dashboard.getTradingDay(scope, {
+      currency: null,
+      requestedDate: model.date,
+    })));
   return withReadonlyJournalAnnotations(scope, (service, account) => {
     const events: RuleResultEvent[] = [];
-    for (const model of models) {
+    for (const [modelIndex, model] of sourceModels.entries()) {
+      const reportingModel = reporting.models[modelIndex]!;
       const rangeStart = `${model.date}T00:00:00.000Z`;
       const rangeEndDate = new Date(rangeStart);
       rangeEndDate.setUTCDate(rangeEndDate.getUTCDate() + 2);
@@ -114,6 +127,8 @@ export function readRuleResults(scope: WorkspaceAccessScope): RuleResultsView {
         pnl: trade.netPnlDecimal,
         ticker: ticker.symbol,
       })));
+      const reportingPnlByRoundTrip = new Map(reportingModel.tickers.flatMap((ticker) =>
+        ticker.roundTrips.map((trade) => [trade.roundTripId, trade.netPnlDecimal] as const)));
       const tradeById = new Map(trades.map((trade) => [trade.id, trade]));
       for (const result of evaluateJournalPresetRules(rules, model, new Set())) {
         const rule = rules.find((candidate) => candidate.ruleId === result.ruleId && candidate.versionId === result.ruleVersionId);
@@ -127,7 +142,7 @@ export function readRuleResults(scope: WorkspaceAccessScope): RuleResultsView {
             date: model.date,
             feeCoverage: result.evidence.feeCoverage,
             label: rule.title,
-            netPnl: trade?.pnl ?? null,
+            netPnl: trade ? reportingPnlByRoundTrip.get(trade.id) ?? null : null,
             note: "",
             result: result.status === "n/a" ? "N/A" : result.status === "broken" ? "Broken" : "Followed",
             ruleId: rule.ruleId,
@@ -159,7 +174,9 @@ export function readRuleResults(scope: WorkspaceAccessScope): RuleResultsView {
             date: model.date,
             feeCoverage: null,
             label: rule.title,
-            netPnl: target.trade?.pnl ?? model.netPnlDecimal,
+            netPnl: target.trade
+              ? reportingPnlByRoundTrip.get(target.trade.id) ?? null
+              : reportingModel.netPnlDecimal,
             note: review?.note ?? "",
             result: review?.status === "broken" ? "Broken" : review?.status === "followed" ? "Followed" : "Not selected",
             ruleId: rule.ruleId,
@@ -171,6 +188,10 @@ export function readRuleResults(scope: WorkspaceAccessScope): RuleResultsView {
         }
       }
     }
-    return Object.freeze({ events: Object.freeze(events), summaries: summarize(events) });
+    return Object.freeze({
+      currency: reporting.currency,
+      events: Object.freeze(events),
+      summaries: summarize(events),
+    });
   });
 }

@@ -22,7 +22,7 @@ import {
   parseCoachAiChatPageContext,
 } from "@/src/modules/coach/server/coach-ai-chat-page-context";
 import {
-  getReplacementDailyCompanionResolvedContext,
+  getReplacementReportingDailyCompanionResolvedContext,
   getReplacementTradeTrackerAccount,
 } from "@/app/(dashboard)/trade-tracker/trade-tracker-platform-data";
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
@@ -94,6 +94,17 @@ export async function POST(
     const messageBody = { ...body };
     delete messageBody.pagePathname;
     const input = parseGenerateChatMessageBody(messageBody);
+    const trustedContext = input.context
+      ? await getReplacementReportingDailyCompanionResolvedContext(scope, {
+          tradingDate: input.context.tradingDate,
+          currency: input.context.currency,
+        })
+      : null;
+    if (input.context && !trustedContext) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+        field: "context",
+      });
+    }
     const result = await generateCoachAiChatSavedAnswer(scope, {
       conversationId: id,
       question: input.question,
@@ -112,16 +123,7 @@ export async function POST(
         },
       ),
       resolveTrustedContext: input.context
-        ? () => {
-            const context = getReplacementDailyCompanionResolvedContext(scope, {
-              tradingDate: input.context!.tradingDate,
-              currency: input.context!.currency,
-            });
-            if (!context) {
-              platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "context" });
-            }
-            return context;
-        }
+        ? () => trustedContext!
         : null,
       resolveManualEntryDefaults: () => {
         const account = getReplacementTradeTrackerAccount(scope);

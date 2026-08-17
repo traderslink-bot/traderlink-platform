@@ -289,6 +289,7 @@ function patternPosition(kind: string): "aboveBar" | "belowBar" {
 function formatPrice(value: number, currency: string): string {
   return new Intl.NumberFormat("en-US", {
     currency,
+    currencyDisplay: "narrowSymbol",
     maximumFractionDigits: 2,
     minimumFractionDigits: 2,
     style: "currency",
@@ -302,9 +303,10 @@ function formatVolume(value: number): string {
   }).format(value);
 }
 
-function formatTurnover(value: number): string {
+function formatTurnover(value: number, currency: string): string {
   return new Intl.NumberFormat("en-US", {
-    currency: "USD",
+    currency,
+    currencyDisplay: "narrowSymbol",
     maximumFractionDigits: 1,
     notation: "compact",
     style: "currency",
@@ -915,7 +917,7 @@ export function DailyTradeAnalyzerChart({
           </Typography>
           {detail.candle.turnover === null ? null : (
             <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">
-              Candle turnover {formatTurnover(Number(detail.candle.turnover))}
+              Candle turnover {formatTurnover(Number(detail.candle.turnover), currency)}
             </Typography>
           )}
           {detail.priceAction ? (

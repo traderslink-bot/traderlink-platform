@@ -1,5 +1,9 @@
 import { readDailyTradeAnalyzedTrades } from
   "@/src/modules/level-analysis/server/daily-trade-analysis-evidence-service";
+import { reportDailyTradeAnalyzedTrades } from
+  "@/src/modules/level-analysis/server/daily-trade-analysis-reporting";
+import { withJournalAnalyticsReportingDashboardRuntime } from
+  "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { requireTraderLinkPlatformRequestScope } from
   "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { isTraderLinkPlatformError } from
@@ -14,20 +18,26 @@ function optionalDate(value: string | null): string | null {
   return value?.trim() || null;
 }
 
-export function GET(request: Request): Response {
+export async function GET(request: Request): Promise<Response> {
   try {
     const url = new URL(request.url);
     const scope = requireTraderLinkPlatformRequestScope(request.headers);
-    const page = withReadonlyPlatformDatabase({}, (database) =>
-      readDailyTradeAnalyzedTrades(database, scope, {
-        afterCursor: url.searchParams.get("cursor"),
-        currency: (url.searchParams.get("currency") ?? "").toUpperCase(),
-        endDate: optionalDate(url.searchParams.get("end")),
-        moneyBasis: url.searchParams.get("basis") === "net" ? "net" : "gross",
-        pageSize: Number(url.searchParams.get("pageSize") ?? 25),
-        startDate: optionalDate(url.searchParams.get("start")),
-        ticker: (url.searchParams.get("ticker") ?? "").slice(0, 32),
-      }));
+    const page = await withJournalAnalyticsReportingDashboardRuntime(
+      scope,
+      ({ reportingContext }) => withReadonlyPlatformDatabase({}, (database) =>
+        reportDailyTradeAnalyzedTrades(
+          readDailyTradeAnalyzedTrades(database, scope, {
+            afterCursor: url.searchParams.get("cursor"),
+            currency: null,
+            endDate: optionalDate(url.searchParams.get("end")),
+            moneyBasis: url.searchParams.get("basis") === "net" ? "net" : "gross",
+            pageSize: Number(url.searchParams.get("pageSize") ?? 25),
+            startDate: optionalDate(url.searchParams.get("start")),
+            ticker: (url.searchParams.get("ticker") ?? "").slice(0, 32),
+          }),
+          reportingContext,
+        )),
+    );
     return Response.json({ status: "ready", page }, {
       headers: { "cache-control": "no-store" },
     });

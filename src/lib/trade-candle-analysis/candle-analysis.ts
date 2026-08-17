@@ -68,8 +68,13 @@ function observedCandlesInWindow(
   return observed;
 }
 
-function formatPrice(price: number): string {
-  return `$${price.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
+function formatPrice(price: number, currency = "USD"): string {
+  return new Intl.NumberFormat("en-US", {
+    currency,
+    currencyDisplay: "narrowSymbol",
+    maximumFractionDigits: 2,
+    style: "currency",
+  }).format(price);
 }
 
 function formatTime(time: number): string {
@@ -98,6 +103,7 @@ function peak(candles: readonly TradeCandle[], direction: CandleDirection): Trad
 
 export function analyzeTradeCandles(args: {
   candles: readonly TradeCandle[];
+  currency?: string;
   trade: CandleAnalysisTrade;
 }): TradeCandleAnalysis {
   const { candles, trade } = args;
@@ -135,13 +141,13 @@ export function analyzeTradeCandles(args: {
           return {
             kind: "finding" as const,
             title: "Exit was at the observed held-position extreme.",
-            detail: `The observed ${trade.direction === "long" ? "high" : "low"} while held was ${formatPrice(trade.direction === "long" ? observedPeak.high : observedPeak.low)}.`,
+            detail: `The observed ${trade.direction === "long" ? "high" : "low"} while held was ${formatPrice(trade.direction === "long" ? observedPeak.high : observedPeak.low, args.currency)}.`,
           };
         }
         return {
           kind: "finding" as const,
-          title: `Observed ${formatPrice(leftFromPeak)} remained from the held-position peak.`,
-          detail: `The observed ${trade.direction === "long" ? "high" : "low"} while held was ${formatPrice(trade.direction === "long" ? observedPeak.high : observedPeak.low)}; the exit was ${formatPrice(trade.exitPrice)}.`,
+          title: `Observed ${formatPrice(leftFromPeak, args.currency)} remained from the held-position peak.`,
+          detail: `The observed ${trade.direction === "long" ? "high" : "low"} while held was ${formatPrice(trade.direction === "long" ? observedPeak.high : observedPeak.low, args.currency)}; the exit was ${formatPrice(trade.exitPrice, args.currency)}.`,
         };
       })();
 
@@ -171,7 +177,7 @@ export function analyzeTradeCandles(args: {
         return {
           kind: "finding" as const,
           title: `Price continued ${trade.direction === "long" ? "higher" : "lower"} after exit.`,
-          detail: `The observed ${trade.direction === "long" ? "high" : "low"} reached ${formatPrice(trade.direction === "long" ? primaryExtreme.high : primaryExtreme.low)} at ${formatTime(primaryExtreme.time)} in the first 30 minutes after the ${formatPrice(trade.exitPrice)} exit.${persisted ? " The continuation also extended in the 30-to-60-minute context." : ""}`,
+          detail: `The observed ${trade.direction === "long" ? "high" : "low"} reached ${formatPrice(trade.direction === "long" ? primaryExtreme.high : primaryExtreme.low, args.currency)} at ${formatTime(primaryExtreme.time)} in the first 30 minutes after the ${formatPrice(trade.exitPrice, args.currency)} exit.${persisted ? " The continuation also extended in the 30-to-60-minute context." : ""}`,
         };
       })();
 
@@ -193,7 +199,7 @@ export function analyzeTradeCandles(args: {
         return {
           kind: "finding" as const,
           title: "Observed favorable continuation followed entry.",
-          detail: `The observed ${trade.direction === "long" ? "high" : "low"} reached ${formatPrice(trade.direction === "long" ? postEntryExtreme.high : postEntryExtreme.low)} at ${formatTime(postEntryExtreme.time)} after the ${formatPrice(trade.entryPrice)} entry.`,
+          detail: `The observed ${trade.direction === "long" ? "high" : "low"} reached ${formatPrice(trade.direction === "long" ? postEntryExtreme.high : postEntryExtreme.low, args.currency)} at ${formatTime(postEntryExtreme.time)} after the ${formatPrice(trade.entryPrice, args.currency)} entry.`,
         };
       })();
 

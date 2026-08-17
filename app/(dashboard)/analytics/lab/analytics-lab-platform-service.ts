@@ -13,7 +13,7 @@ import type { JournalAnalyticsMetricResult } from "@/src/modules/journal-analyti
 import { journalAnalyticsMetricRegistry } from "@/src/modules/journal-analytics/server/analytics-metric-registry";
 import {
   requireActiveJournalAnalyticsAccountId,
-  withJournalAnalyticsDashboardRuntime,
+  withJournalAnalyticsReportingDashboardRuntime,
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 
 import {
@@ -84,12 +84,12 @@ function journalQuery(
   });
 }
 
-function execute(
+async function execute(
   scope: WorkspaceAccessScope,
   input: AnalyticsLabPlatformQuery,
-): AnalyticsLabPlatformPreview {
+): Promise<AnalyticsLabPlatformPreview> {
   requireExpectedJournalAccountSelection(scope, input.expectedAccountSelectionRef);
-  return withJournalAnalyticsDashboardRuntime(scope, ({ service }) => {
+  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ service }) => {
     const query = journalQuery(scope, input);
     const response = service.getAnalyticsOverview(scope, query);
     const selected = response.partitions
@@ -109,17 +109,17 @@ function execute(
   });
 }
 
-export function runAnalyticsLabPlatformQuery(
+export async function runAnalyticsLabPlatformQuery(
   scope: WorkspaceAccessScope,
   input: unknown,
-): AnalyticsLabPlatformPreview {
+): Promise<AnalyticsLabPlatformPreview> {
   return execute(scope, normalizeAnalyticsLabPlatformQuery(input));
 }
 
-export function readAnalyticsLabPlatformPageModel(
+export async function readAnalyticsLabPlatformPageModel(
   scope: WorkspaceAccessScope,
-): AnalyticsLabPlatformPageModel {
-  return withJournalAnalyticsDashboardRuntime(scope, ({ dashboard }) => {
+): Promise<AnalyticsLabPlatformPageModel> {
+  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ dashboard, service }) => {
     const calendar = dashboard.getCalendar(scope, {
       currency: null,
       startDate: null,
@@ -181,7 +181,24 @@ export function readAnalyticsLabPlatformPageModel(
       minimumDate: calendar.minimumDate,
       maximumDate: calendar.maximumDate,
       initialQuery,
-      initialPreview: execute(scope, initialQuery),
+      initialPreview: (() => {
+        const query = journalQuery(scope, initialQuery);
+        const response = service.getAnalyticsOverview(scope, query);
+        const selected = response.partitions
+          .flatMap((partition) => partition.metrics)
+          .find((metric) => metric.metricId === initialQuery.metricId) ?? null;
+        const evidence = response.partitions.length === 1
+          ? service.getRoundTripAnalyticsTable(scope, query)
+          : null;
+        return Object.freeze({
+          selectedMetric: selected as JournalAnalyticsMetricResult | null,
+          response,
+          evidence,
+          evidenceUnavailableReason: evidence === null
+            ? "Individual trades are unavailable for these results."
+            : null,
+        });
+      })(),
       savedViews: listAnalyticsLabSavedViews(scope),
     });
   });

@@ -6,6 +6,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { saveReportingCurrency } from "./reporting-currency-actions";
@@ -43,6 +44,7 @@ export function ReportingCurrencySettings({
 }: {
   reportingCurrency: string;
 }) {
+  const router = useRouter();
   const [selectedCurrency, setSelectedCurrency] = useState(reportingCurrency);
   const [message, setMessage] = useState<string | null>(null);
   const [working, startTransition] = useTransition();
@@ -53,6 +55,7 @@ export function ReportingCurrencySettings({
       if (result.ok) {
         setSelectedCurrency(result.reportingCurrency);
         setMessage("Reporting currency saved.");
+        router.refresh();
       } else {
         setMessage(result.message);
       }
@@ -61,7 +64,7 @@ export function ReportingCurrencySettings({
 
   return (
     <Stack spacing={1.5}>
-      <Typography color="text.secondary" variant="body2">Select the currency you want displayed in your dashboard. Your USD trade execution records stay unchanged.</Typography>
+      <Typography color="text.secondary" variant="body2">Select the currency you want displayed in your dashboard. Your trade execution records stay unchanged.</Typography>
       {message ? <Alert severity={message === "Reporting currency saved." ? "success" : "error"}>{message}</Alert> : null}
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ alignItems: { sm: "center" } }}>
         <TextField

@@ -7,16 +7,18 @@ import Typography from "@mui/material/Typography";
 
 import { DashboardPage } from "@/app/dashboard-template";
 import type { JournalAnalyticsClosingDateRange } from "@/src/modules/journal/contracts/journal-analytics-fact-set";
-import { JournalAnalyticsFactSetRepository } from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-repository";
-import { JournalAnalyticsFactSetService } from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-service";
-import { JournalAnalyticsService } from "@/src/modules/journal-analytics/server/analytics-service";
-import { buildJournalAnalyticsDashboardQuery } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
+import {
+  buildJournalAnalyticsDashboardQuery,
+  withJournalAnalyticsReportingDashboardRuntime,
+} from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
+import { journalReportingCurrencyMultiplier } from "@/src/modules/journal-analytics/server/journal-reporting-currency-fact-set";
 import {
   buildDailyTradeLongTermAnalytics,
   readDailyTradeAnalysisCurrencies,
 } from "@/src/modules/level-analysis/server/daily-trade-long-term-analytics-service";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
+import { PlatformUserPreferenceRepository } from "@/src/modules/platform/server/identity/platform-user-preference-repository";
 
 import { OverviewDateRangeControl, type OverviewDateRange } from "./overview-date-range-control";
 import { AnalyzedTradesIndex } from "./analyzed-trades-index";
@@ -73,20 +75,6 @@ function closingRange(value: OverviewDateRange): JournalAnalyticsClosingDateRang
     : Object.freeze({ kind: "all_available" as const });
 }
 
-function currencyHref(
-  baseHref: string,
-  currency: string,
-  searchParams: Readonly<Record<string, string | string[] | undefined>>,
-): string {
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(searchParams)) {
-    if (key === "currency") continue;
-    if (typeof value === "string") params.set(key, value);
-  }
-  params.set("currency", currency);
-  return `${baseHref}?${params.toString()}`;
-}
-
 function basisHref(
   baseHref: string,
   basis: "gross" | "net",
@@ -112,7 +100,6 @@ export async function TradeAnalysisPage({
 }) {
   const scope = await requireTraderLinkPlatformPageScope();
   const dateRange = selectedDateRange(searchParams);
-  const requestedCurrency = typeof searchParams.currency === "string" ? searchParams.currency.toUpperCase() : null;
   const moneyBasis = searchParams.basis === "net" ? "net" as const : "gross" as const;
   const details = VIEW_DETAILS[view];
 
@@ -120,10 +107,10 @@ export async function TradeAnalysisPage({
     const tradeIndex = withReadonlyPlatformDatabase({}, (database) => {
       const availableCurrencies = readDailyTradeAnalysisCurrencies(database, scope);
       return Object.freeze({
-        availableCurrencies,
-        currency: requestedCurrency && availableCurrencies.includes(requestedCurrency)
-          ? requestedCurrency
-          : availableCurrencies[0] ?? null,
+        currency: availableCurrencies.length > 0
+          ? new PlatformUserPreferenceRepository(database)
+              .getActiveUserReportingCurrency(scope.userId)
+          : null,
       });
     });
     return (
@@ -143,11 +130,6 @@ export async function TradeAnalysisPage({
                 {basis === "gross" ? "Gross" : "Net"}
               </Button>
             ))}
-            {tradeIndex.availableCurrencies.length > 1 ? tradeIndex.availableCurrencies.map((currency) => (
-              <Button href={currencyHref(baseHref, currency, searchParams)} key={currency} size="small" variant={currency === tradeIndex.currency ? "contained" : "outlined"}>
-                {currency}
-              </Button>
-            )) : null}
           </Stack>
         </Stack>
         <AnalyzedTradesIndex
@@ -160,19 +142,20 @@ export async function TradeAnalysisPage({
     );
   }
 
-  const result = withReadonlyPlatformDatabase({}, (database) => {
-    const facts = new JournalAnalyticsFactSetService(new JournalAnalyticsFactSetRepository(database));
-    const analytics = new JournalAnalyticsService(facts);
+  const result = await withJournalAnalyticsReportingDashboardRuntime(scope, ({
+    reportingContext,
+    reportingCurrency,
+    service: analytics,
+  }) => withReadonlyPlatformDatabase({}, (database) => {
     const overview = analytics.getAnalyticsOverview(scope, buildJournalAnalyticsDashboardQuery(scope, {
       closingDateRange: closingRange(dateRange),
       metricIds: ["included_count"],
       moneyBasis: "gross",
     }));
     const currencies = Object.freeze(overview.partitions.flatMap((partition) => partition.currency ? [partition.currency] : []));
-    const analyzedCurrencies = readDailyTradeAnalysisCurrencies(database, scope);
-    const currency = requestedCurrency && currencies.includes(requestedCurrency)
-      ? requestedCurrency
-      : analyzedCurrencies.find((value) => currencies.includes(value)) ?? currencies[0] ?? null;
+    const currency = currencies.includes(reportingCurrency)
+      ? reportingCurrency
+      : currencies[0] ?? null;
     const rows = [];
     let cursor: string | null = null;
     let timezone = "America/New_York";
@@ -189,11 +172,29 @@ export async function TradeAnalysisPage({
       rows.push(...response.rows);
       cursor = response.continuationCursor;
     } while (cursor !== null);
+    const multipliers = new Map(rows.flatMap((row) => {
+      const sourceCurrency = reportingContext.sourceCurrencyByRoundTrip.get(row.roundTripId);
+      const sourceDate = reportingContext.sourceDateByRoundTrip.get(row.roundTripId);
+      return sourceCurrency && sourceDate
+        ? [[row.roundTripId, journalReportingCurrencyMultiplier(
+            sourceCurrency,
+            sourceDate,
+            reportingContext,
+          )] as const]
+        : [];
+    }));
     return Object.freeze({
-      availableCurrencies: currencies,
-      model: buildDailyTradeLongTermAnalytics(database, scope, Object.freeze(rows), moneyBasis, currency, timezone),
+      model: buildDailyTradeLongTermAnalytics(
+        database,
+        scope,
+        Object.freeze(rows),
+        moneyBasis,
+        currency,
+        timezone,
+        multipliers,
+      ),
     });
-  });
+  }));
   return (
     <DashboardPage>
       <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
@@ -216,20 +217,6 @@ export async function TradeAnalysisPage({
               {basis === "gross" ? "Gross" : "Net"}
             </Button>
           ))}
-          {result.availableCurrencies.length > 1 ? (
-            <>
-            {result.availableCurrencies.map((currency) => (
-              <Button
-                href={currencyHref(baseHref, currency, searchParams)}
-                key={currency}
-                size="small"
-                variant={currency === result.model.currency ? "contained" : "outlined"}
-              >
-                {currency}
-              </Button>
-            ))}
-            </>
-          ) : null}
         </Stack>
       </Stack>
       <TradeAnalysisClient

@@ -190,9 +190,62 @@ export async function loadUsdReportingRates(
   return existingRates(database, targetCurrency, sourceDates);
 }
 
+function shiftDate(date: string, days: number): string {
+  const value = new Date(`${date}T12:00:00.000Z`);
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
+}
+
+export async function loadUsdEffectiveReportingRates(
+  database: Database.Database,
+  input: Readonly<{
+    targetCurrency: PlatformReportingCurrency;
+    sourceDates: readonly string[];
+  }>,
+): Promise<ReadonlyMap<string, string>> {
+  if (input.targetCurrency === "USD") return new Map();
+  const requestedDates = [...new Set(input.sourceDates.filter(isDate))].sort();
+  if (requestedDates.length === 0) return new Map();
+  const candidateDates = [...new Set(requestedDates.flatMap((date) =>
+    Array.from({ length: 8 }, (_value, index) => shiftDate(date, -index))))].sort();
+  const targetCurrency = input.targetCurrency;
+  let observations = existingRates(database, targetCurrency, candidateDates);
+  const hasEffectiveRate = (date: string): boolean =>
+    Array.from({ length: 8 }, (_value, index) => shiftDate(date, -index))
+      .some((candidate) => observations.has(candidate));
+  if (requestedDates.some((date) => !hasEffectiveRate(date))) {
+    const fetched = await fetchMissingRates({
+      targetCurrency,
+      dates: candidateDates,
+    });
+    cacheRates(database, targetCurrency, fetched);
+    observations = existingRates(database, targetCurrency, candidateDates);
+  }
+  return new Map(requestedDates.flatMap((date) => {
+    const effectiveDate = Array.from(
+      { length: 8 },
+      (_value, index) => shiftDate(date, -index),
+    ).find((candidate) => observations.has(candidate));
+    const rate = effectiveDate ? observations.get(effectiveDate) : null;
+    return rate ? [[date, rate] as const] : [];
+  }));
+}
+
 export function convertUsdReportingAmount(
   usdDecimal: string,
   usdToTargetDecimal: string,
 ): string {
   return compactDecimal(new TradingDecimal(usdDecimal).times(usdToTargetDecimal));
+}
+
+export function convertReportingAmount(
+  amountDecimal: string,
+  usdToSourceDecimal: string,
+  usdToTargetDecimal: string,
+): string {
+  return compactDecimal(
+    new TradingDecimal(amountDecimal)
+      .dividedBy(usdToSourceDecimal)
+      .times(usdToTargetDecimal),
+  );
 }

@@ -13,7 +13,10 @@ import {
 import { useState, type ReactNode } from "react";
 
 import type { ReplacementSwingPositionDetail } from "../trade-tracker-platform-data";
-import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
+import {
+  formatJournalAnalyticsDecimal,
+  formatJournalAnalyticsMoney,
+} from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import {
   DashboardPage,
   DashboardPanel,
@@ -58,15 +61,6 @@ function timestamp(value: string, timezone: string): string {
 
 function decimal(value: string | null): string {
   return value === null ? "N/A" : formatJournalAnalyticsDecimal(value);
-}
-
-function price(value: string | null): string {
-  if (value === null) return "N/A";
-  const formatted = formatJournalAnalyticsDecimal(value);
-  const negative = formatted.startsWith("-");
-  const unsigned = negative ? formatted.slice(1) : formatted;
-  const [whole, fraction = ""] = unsigned.split(".");
-  return `${negative ? "-" : ""}$${whole}.${`${fraction}00`.slice(0, 2)}`;
 }
 
 function actionHref(
@@ -149,7 +143,7 @@ function SwingCard({
             <Box>
               <Typography color="text.secondary" variant="caption">Average entry</Typography>
               <Typography sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 850 }} variant="h6">
-                {price(position.averageEntryPriceDecimal)}
+                {formatJournalAnalyticsMoney(position.averageEntryPriceDecimal, position.currency)}
               </Typography>
             </Box>
             <Box>
@@ -225,8 +219,8 @@ function SwingCard({
                 <Typography color="text.secondary" variant="body2">{timestamp(execution.executedAtUtc, position.timezone)}</Typography>
                 <Typography sx={{ textTransform: "capitalize" }} variant="body2">{execution.side}</Typography>
                 <Typography variant="body2">{decimal(execution.quantityDecimal)} shares</Typography>
-                <Typography sx={{ fontFamily: "var(--font-geist-mono)" }} variant="body2">{price(execution.priceDecimal)}</Typography>
-                <Typography color="text.secondary" variant="body2">{execution.feesDecimal === null ? "No fees" : price(execution.feesDecimal)}</Typography>
+                <Typography sx={{ fontFamily: "var(--font-geist-mono)" }} variant="body2">{formatJournalAnalyticsMoney(execution.reportingPriceDecimal, position.currency)}</Typography>
+                <Typography color="text.secondary" variant="body2">{execution.reportingFeesDecimal === null ? "No fees" : formatJournalAnalyticsMoney(execution.reportingFeesDecimal, position.currency)}</Typography>
                 <ManualExecutionEditDialog
                   execution={{
                     manualEdit: execution.manualEdit,

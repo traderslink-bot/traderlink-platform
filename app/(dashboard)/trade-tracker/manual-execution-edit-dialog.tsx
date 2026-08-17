@@ -27,6 +27,7 @@ export type EditableManualExecutionView = Readonly<{
   localDate: string;
   localTime: string;
   sourceTimezone: string;
+  sourcePrice?: string | null;
   tradeCurrency: string;
 }>;
 
@@ -72,7 +73,7 @@ export function ManualExecutionEditDialog({
     fees: editable?.fees ?? "",
     localDate: editable?.localDate ?? "",
     localTime: editable?.localTime ?? "",
-    price: execution.price ?? "",
+    price: editable?.sourcePrice ?? execution.price ?? "",
     quantity: execution.quantity,
     side: execution.side,
     sourceTimezone: editable?.sourceTimezone ?? "",

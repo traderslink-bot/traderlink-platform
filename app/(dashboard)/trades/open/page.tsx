@@ -22,8 +22,11 @@ import { FeatureHelpLink } from "../../feature-help-link";
 import { PositionStyleControl } from "../../trade-tracker/position-style-control";
 import { positionStatusLabel } from "../../trade-tracker/position-style-labels";
 import { getReplacementOpenPositionStyles } from "../../trade-tracker/trade-tracker-platform-data";
-import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
-import { withJournalAnalyticsDashboardRuntime } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
+import {
+  formatJournalAnalyticsDecimal,
+  formatJournalAnalyticsMoney,
+} from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
+import { withJournalAnalyticsReportingDashboardRuntime } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import {
   currentJournalAccountSelectionRef,
   requireTraderLinkPlatformPageScope,
@@ -54,7 +57,7 @@ function age(milliseconds: number): string {
 
 export default async function OpenPositionsPage() {
   const scope = await requireTraderLinkPlatformPageScope();
-  const result = withJournalAnalyticsDashboardRuntime(scope, ({ dashboard }) =>
+  const result = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ dashboard }) =>
     dashboard.getOpenPositions(scope));
   const positionStyles = getReplacementOpenPositionStyles(scope);
   const expectedAccountSelectionRef = currentJournalAccountSelectionRef(scope);
@@ -113,7 +116,7 @@ export default async function OpenPositionsPage() {
                     <TableCell sx={{ fontWeight: 800 }}>{position.symbol}</TableCell>
                     <TableCell sx={{ textTransform: "capitalize" }}>{position.direction}</TableCell>
                     <TableCell align="right">{formatJournalAnalyticsDecimal(position.remainingQuantityDecimal)}</TableCell>
-                    <TableCell align="right">{position.averageEntryPriceDecimal === null ? "Unavailable" : `$${formatJournalAnalyticsDecimal(position.averageEntryPriceDecimal, 2, true)}`}</TableCell>
+                    <TableCell align="right">{position.averageEntryPriceDecimal === null ? "Unavailable" : formatJournalAnalyticsMoney(position.averageEntryPriceDecimal, position.currency)}</TableCell>
                     <TableCell align="right">{age(position.ageMilliseconds)}</TableCell>
                     <TableCell>
                       <Chip
@@ -150,7 +153,7 @@ export default async function OpenPositionsPage() {
                     <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1.5 }}>
                       <Box sx={{ gridColumn: "1 / -1" }}><Typography color="text.secondary" variant="caption">Opened</Typography><Typography variant="body2">{timestamp(position.openedAtUtc, position.timezone)}</Typography></Box>
                       <Box><Typography color="text.secondary" variant="caption">Remaining quantity</Typography><Typography variant="body2">{formatJournalAnalyticsDecimal(position.remainingQuantityDecimal)}</Typography></Box>
-                      <Box><Typography color="text.secondary" variant="caption">Average entry</Typography><Typography variant="body2">{position.averageEntryPriceDecimal === null ? "Unavailable" : `$${formatJournalAnalyticsDecimal(position.averageEntryPriceDecimal, 2, true)}`}</Typography></Box>
+                      <Box><Typography color="text.secondary" variant="caption">Average entry</Typography><Typography variant="body2">{position.averageEntryPriceDecimal === null ? "Unavailable" : formatJournalAnalyticsMoney(position.averageEntryPriceDecimal, position.currency)}</Typography></Box>
                     </Box>
                   </CardContent>
                 </Card>

@@ -44,7 +44,10 @@ import {
 import { FeatureHelpLink } from "../../feature-help-link";
 import { HorizontalScrollHint } from "../../horizontal-scroll-region";
 import { openTraderLinkAiChat } from "@/app/ai-chat-drawer-events";
-import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
+import {
+  formatJournalAnalyticsDecimal,
+  formatJournalAnalyticsMoney,
+} from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import {
   JOURNAL_TAG_PRESET_CATALOG,
   JOURNAL_TAG_PRESET_CATEGORY_LABELS,
@@ -934,6 +937,7 @@ function weightedFiveMinuteRelativeVolumeText(
 function combinedActivityText(
   events: readonly DaySessionTradeAnalyzer["events"][number][],
   label: string,
+  currency: string,
 ): string | null {
   const byCandle = new Map<number, DaySessionTradeAnalyzer["events"][number]>();
   for (const event of events) {
@@ -944,12 +948,13 @@ function combinedActivityText(
   const volume = unique.reduce((total, event) => total + Number(event.metrics.candleVolume ?? 0), 0);
   const turnoverAvailable = unique.every((event) => event.metrics.candleTurnover !== null);
   const turnover = unique.reduce((total, event) => total + Number(event.metrics.candleTurnover ?? 0), 0);
-  return `${label} candle activity: ${compactNumber(volume)} shares${turnoverAvailable ? ` and ${price(String(turnover), "USD")} turnover` : ""}${unique.length < events.length ? "; fills in the same minute are counted once" : ""}.`;
+  return `${label} candle activity: ${compactNumber(volume)} shares${turnoverAvailable ? ` and ${price(String(turnover), currency)} turnover` : ""}${unique.length < events.length ? "; fills in the same minute are counted once" : ""}.`;
 }
 
 function combinedFiveMinuteActivityText(
   events: readonly DaySessionTradeAnalyzer["events"][number][],
   label: string,
+  currency: string,
 ): string | null {
   const byCandle = new Map<number, DaySessionTradeAnalyzer["events"][number]>();
   for (const event of events) {
@@ -964,7 +969,7 @@ function combinedFiveMinuteActivityText(
     event.fiveMinuteContext.containingCandle?.turnover !== null);
   const turnover = unique.reduce((total, event) =>
     total + Number(event.fiveMinuteContext.containingCandle?.turnover ?? 0), 0);
-  return `After the containing 5-minute candle${unique.length === 1 ? "" : "s"} closed, ${label.toLowerCase()} activity totaled ${compactNumber(volume)} shares${turnoverAvailable ? ` and ${price(String(turnover), "USD")} turnover` : ""}${unique.length < events.length ? "; fills in the same 5-minute candle are counted once" : ""}. This is retrospective context.`;
+  return `After the containing 5-minute candle${unique.length === 1 ? "" : "s"} closed, ${label.toLowerCase()} activity totaled ${compactNumber(volume)} shares${turnoverAvailable ? ` and ${price(String(turnover), currency)} turnover` : ""}${unique.length < events.length ? "; fills in the same 5-minute candle are counted once" : ""}. This is retrospective context.`;
 }
 
 function combinedTradeAnalysisSections(
@@ -1021,8 +1026,8 @@ function combinedTradeAnalysisSections(
         ? `After each containing 5-minute candle closed, the quantity-weighted execution was ${price(String(entryEdge), currency)} from its favorable edge. This is retrospective candle location, not information available at the fill.`
         : `Average entry precision was ${price(String(entryEdge), currency)} from each fill's favorable edge inside its own 1-minute candle.`,
     timeframe === "5m"
-      ? combinedFiveMinuteActivityText(entries, "Entry")
-      : combinedActivityText(entries, "Entry"),
+      ? combinedFiveMinuteActivityText(entries, "Entry", currency)
+      : combinedActivityText(entries, "Entry", currency),
   ].filter((line): line is string => line !== null);
   const exitLines = [
     exits.length === 0
@@ -1037,8 +1042,8 @@ function combinedTradeAnalysisSections(
         ? `After each containing 5-minute candle closed, the quantity-weighted exit was ${price(String(exitEdge), currency)} from its favorable edge. This is retrospective candle location, not information available at the fill.`
         : `Average exit precision was ${price(String(exitEdge), currency)} from each fill's favorable edge inside its own 1-minute candle.`,
     timeframe === "5m"
-      ? combinedFiveMinuteActivityText(exits, "Exit")
-      : combinedActivityText(exits, "Exit"),
+      ? combinedFiveMinuteActivityText(exits, "Exit", currency)
+      : combinedActivityText(exits, "Exit", currency),
   ].filter((line): line is string => line !== null);
   const outcomeLines = [
     `Trade result: ${money(roundTrip.netPnl, currency)}${roundTrip.gainLossPercent === null ? "" : ` (${percentage(roundTrip.gainLossPercent)})`}.`,
@@ -1106,20 +1111,20 @@ function executionAnalysisSections(
   const oneMinuteMarketActivity = [
     event.indicators?.relativeVolume === null || event.indicators?.relativeVolume === undefined
       ? null
-      : `Execution-candle volume was ${event.indicators.relativeVolume.toFixed(2)}× its recent 1-minute average (${compactNumber(Number(event.metrics.candleVolume ?? 0))} shares${event.metrics.candleTurnover === null ? "" : `, ${price(event.metrics.candleTurnover, "USD")} turnover`}).`,
+      : `Execution-candle volume was ${event.indicators.relativeVolume.toFixed(2)}× its recent 1-minute average (${compactNumber(Number(event.metrics.candleVolume ?? 0))} shares${event.metrics.candleTurnover === null ? "" : `, ${price(event.metrics.candleTurnover, currency)} turnover`}).`,
     event.metrics.cumulativeSessionVolume === null
       ? null
-      : `By the end of that candle, the session had traded ${compactNumber(Number(event.metrics.cumulativeSessionVolume))} shares${event.metrics.cumulativeSessionTurnover === null ? "" : ` and ${price(event.metrics.cumulativeSessionTurnover, "USD")} in turnover`}.`,
+      : `By the end of that candle, the session had traded ${compactNumber(Number(event.metrics.cumulativeSessionVolume))} shares${event.metrics.cumulativeSessionTurnover === null ? "" : ` and ${price(event.metrics.cumulativeSessionTurnover, currency)} in turnover`}.`,
   ].filter((line): line is string => line !== null);
   const fiveMinuteMarketActivity = [
     completedFiveMinute
-      ? `Before the fill, the last completed 5-minute candle (${timeLabel(new Date(completedFiveMinute.candleTime * 1000).toISOString(), roundTrip.timezone)}) traded ${compactNumber(Number(completedFiveMinute.volume))} shares${completedFiveMinute.turnover === null ? "" : ` and ${price(completedFiveMinute.turnover, "USD")} in turnover`}${completedFiveMinute.relativeVolume === null ? "" : `, or ${completedFiveMinute.relativeVolume.toFixed(2)}× its recent 5-minute volume average`}.`
+      ? `Before the fill, the last completed 5-minute candle (${timeLabel(new Date(completedFiveMinute.candleTime * 1000).toISOString(), roundTrip.timezone)}) traded ${compactNumber(Number(completedFiveMinute.volume))} shares${completedFiveMinute.turnover === null ? "" : ` and ${price(completedFiveMinute.turnover, currency)} in turnover`}${completedFiveMinute.relativeVolume === null ? "" : `, or ${completedFiveMinute.relativeVolume.toFixed(2)}× its recent 5-minute volume average`}.`
       : null,
     event.fiveMinuteContext.preExecutionPartial
-      ? `Before the execution minute, ${event.fiveMinuteContext.preExecutionPartial.completedMinuteCount} completed minute${event.fiveMinuteContext.preExecutionPartial.completedMinuteCount === 1 ? "" : "s"} inside the active 5-minute window had traded ${compactNumber(Number(event.fiveMinuteContext.preExecutionPartial.volume))} shares${event.fiveMinuteContext.preExecutionPartial.turnover === null ? "" : ` and ${price(event.fiveMinuteContext.preExecutionPartial.turnover, "USD")} in turnover`}.`
+      ? `Before the execution minute, ${event.fiveMinuteContext.preExecutionPartial.completedMinuteCount} completed minute${event.fiveMinuteContext.preExecutionPartial.completedMinuteCount === 1 ? "" : "s"} inside the active 5-minute window had traded ${compactNumber(Number(event.fiveMinuteContext.preExecutionPartial.volume))} shares${event.fiveMinuteContext.preExecutionPartial.turnover === null ? "" : ` and ${price(event.fiveMinuteContext.preExecutionPartial.turnover, currency)} in turnover`}.`
       : "The execution occurred before another full 1-minute candle had completed inside its active 5-minute window.",
     containingFiveMinute
-      ? `After the containing 5-minute candle closed, it had traded ${compactNumber(Number(containingFiveMinute.volume))} shares${containingFiveMinute.turnover === null ? "" : ` and ${price(containingFiveMinute.turnover, "USD")} in turnover`}${containingFiveMinute.relativeVolume === null ? "" : `, or ${containingFiveMinute.relativeVolume.toFixed(2)}× its recent 5-minute volume average`}. This final candle activity was not fully known at the fill.`
+      ? `After the containing 5-minute candle closed, it had traded ${compactNumber(Number(containingFiveMinute.volume))} shares${containingFiveMinute.turnover === null ? "" : ` and ${price(containingFiveMinute.turnover, currency)} in turnover`}${containingFiveMinute.relativeVolume === null ? "" : `, or ${containingFiveMinute.relativeVolume.toFixed(2)}× its recent 5-minute volume average`}. This final candle activity was not fully known at the fill.`
       : null,
     containingFiveMinute?.ema9Distance
       ? `After that candle closed, the execution price was ${relativeAnchorText(Number(event.price), Number(containingFiveMinute.ema9Distance.anchor), "resulting 5-minute EMA 9", currency)}. This comparison is retrospective.`
@@ -1533,7 +1538,7 @@ function ruleEventLabel(event: NonNullable<DaySessionRule["evidence"]>["violatio
   }).format(new Date(event.occurredAt));
   const pnl = event.netPnl === null
     ? "P/L unavailable"
-    : `${event.netPnl.startsWith("-") ? "-" : ""}${currency === "USD" ? "$" : `${currency} `}${formatJournalAnalyticsDecimal(event.netPnl.replace(/^-/, ""), 2, true)} P/L`;
+    : `${formatJournalAnalyticsMoney(event.netPnl, currency)} P/L`;
   return `${at} · ${pnl}`;
 }
 

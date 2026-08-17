@@ -5,7 +5,7 @@ import { readWorkspaceReviewSummary } from "./workspace-review-summary";
 import { formatJournalAnalyticsPartitionedMetric } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import {
   buildJournalAnalyticsDashboardQuery,
-  withJournalAnalyticsDashboardRuntime,
+  withJournalAnalyticsReportingDashboardRuntime,
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import {
   requireTraderLinkPlatformPageScope,
@@ -32,7 +32,7 @@ export default async function WorkspacePage() {
   const query = buildJournalAnalyticsDashboardQuery(scope, {
     metricIds: WORKSPACE_METRICS.map(([, metricId]) => metricId),
   });
-  const { calendar, response } = withJournalAnalyticsDashboardRuntime(
+  const { calendar, response, reviewSummary } = await withJournalAnalyticsReportingDashboardRuntime(
     scope,
     ({ dashboard, service }) => Object.freeze({
       response: service.getWorkspaceJournalAnalyticsSummary(scope, query),
@@ -47,11 +47,10 @@ export default async function WorkspacePage() {
         tradeCountBand: null,
         session: null,
       }),
+      reviewSummary: withReadonlyPlatformDatabase({}, (database) =>
+        readWorkspaceReviewSummary(database, scope, new Date(), dashboard)),
     }),
   );
-  const { reviewSummary } = withReadonlyPlatformDatabase({}, (database) => Object.freeze({
-    reviewSummary: readWorkspaceReviewSummary(database, scope),
-  }));
   return (
     <WorkspaceDashboard
       analyticsMetrics={WORKSPACE_METRICS.map(([label, metricId, caption]) => ({

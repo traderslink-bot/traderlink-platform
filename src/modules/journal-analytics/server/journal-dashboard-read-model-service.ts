@@ -5,7 +5,7 @@ import type {
   JournalAnalyticsFactSet,
   JournalAnalyticsRoundTripFact,
 } from "@/src/modules/journal/contracts/journal-analytics-fact-set";
-import type { JournalAnalyticsFactSetService } from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-service";
+import type { JournalAnalyticsFactSetReader } from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-service";
 
 import type {
   JournalCalendarDayReadModel,
@@ -588,7 +588,7 @@ function tradingDayPositions(
 }
 
 export class JournalDashboardReadModelService {
-  constructor(private readonly facts: JournalAnalyticsFactSetService) {}
+  constructor(private readonly facts: JournalAnalyticsFactSetReader) {}
 
   private cachedRead: Readonly<{
     scopeKey: string;

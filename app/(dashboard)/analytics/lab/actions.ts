@@ -39,7 +39,7 @@ export async function runAnalyticsLabQuery(
     const scope = await requireTraderLinkPlatformPageScope();
     return Object.freeze({
       ok: true as const,
-      preview: runAnalyticsLabPlatformQuery(scope, input),
+      preview: await runAnalyticsLabPlatformQuery(scope, input),
     });
   } catch (error) {
     const conflict = isTraderLinkPlatformError(error) &&

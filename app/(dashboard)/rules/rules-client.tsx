@@ -36,6 +36,7 @@ import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
 import Link from "next/link";
+import Decimal from "decimal.js";
 
 import {
   DashboardMetricCard,
@@ -51,6 +52,10 @@ import type {
   ExecutionRuleDashboardCard,
   ExecutionRuleLifecycleStatus,
 } from "@/src/modules/journal/server/annotations/journal-trading-rules-dashboard";
+import {
+  formatJournalAnalyticsMoney,
+  journalAnalyticsCurrencySymbol,
+} from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 
 type RuleEditorState = Readonly<{
   mode: "create" | "revise";
@@ -132,42 +137,61 @@ function statusColor(
 function configurationLabel(
   template: TradingRulesTemplateView,
   configuration: Readonly<Record<string, string>>,
+  reportingCurrency: string,
+  monetaryMultiplier: string,
 ): string {
   return template.parameters
     .map((parameter) => {
       const value = configuration[parameter.key] ?? "—";
+      const convertedValue = /^-?(?:\d+|\d*\.\d+)$/u.test(value.trim())
+        ? new Decimal(value).times(monetaryMultiplier).toString()
+        : null;
       if (parameter.unit === "$") {
-        return `${parameter.label}: $${value}`;
+        return `${parameter.label}: ${convertedValue === null
+          ? value
+          : formatJournalAnalyticsMoney(convertedValue, reportingCurrency)}`;
       }
       if (parameter.unit === "$ per share") {
-        return `${parameter.label}: $${value} per share`;
+        return `${parameter.label}: ${convertedValue === null
+          ? value
+          : formatJournalAnalyticsMoney(convertedValue, reportingCurrency)} per share`;
       }
       return `${parameter.label}: ${value}${parameter.unit ? ` ${parameter.unit}` : ""}`;
     })
     .join(" · ");
 }
 
-function exampleLabel(template: TradingRulesTemplateView): string {
+function exampleLabel(
+  template: TradingRulesTemplateView,
+  reportingCurrency: string,
+  monetaryMultiplier: string,
+): string {
   if (Object.values(template.exampleConfiguration).some((value) => value.trim().length === 0)) {
     return "Choose your wait time when you add this rule.";
   }
   const configuration = configurationLabel(
     template,
     template.exampleConfiguration,
+    reportingCurrency,
+    monetaryMultiplier,
   );
   return configuration || "This rule has no additional settings.";
 }
 
-function parameterHelperText(parameter: TradingRulesTemplateView["parameters"][number]): string {
+function parameterHelperText(
+  parameter: TradingRulesTemplateView["parameters"][number],
+  sourceCurrency: string,
+): string {
+  const symbol = journalAnalyticsCurrencySymbol(sourceCurrency) ?? "";
   if (parameter.unit === "$") {
     return parameter.maximum
-      ? `Enter a dollar amount. Maximum: ${parameter.maximum}.`
-      : "Enter a dollar amount.";
+      ? `Enter the account-currency amount. Maximum: ${symbol}${parameter.maximum}.`
+      : "Enter the account-currency amount.";
   }
   if (parameter.unit === "$ per share") {
     return parameter.maximum
-      ? `Enter a price in dollars per share. Maximum: ${parameter.maximum}.`
-      : "Enter a price in dollars per share.";
+      ? `Enter the account-currency price per share. Maximum: ${symbol}${parameter.maximum}.`
+      : "Enter the account-currency price per share.";
   }
   return parameter.maximum
     ? `Unit: ${parameter.unit}. Maximum: ${parameter.maximum}.`
@@ -181,8 +205,14 @@ function latestResultLabel(rule: ExecutionRuleDashboardCard): string {
 
 export function RulesClient({
   initialView,
+  monetaryMultiplier,
+  reportingCurrency,
+  sourceCurrency,
 }: {
   initialView: TradingRulesDashboardView;
+  monetaryMultiplier: string;
+  reportingCurrency: string;
+  sourceCurrency: string;
 }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -499,7 +529,7 @@ export function RulesClient({
                   sx={{ mt: 1.25 }}
                   variant="caption"
                 >
-                  Example: {exampleLabel(template)}
+                  Example: {exampleLabel(template, reportingCurrency, monetaryMultiplier)}
                 </Typography>
                 <Button
                   disabled={busyId === template.templateId}
@@ -712,6 +742,8 @@ export function RulesClient({
                           ? configurationLabel(
                               template,
                               rule.currentVersion.configuration,
+                              reportingCurrency,
+                              monetaryMultiplier,
                             )
                           : "Configured rule"}
                       </Typography>
@@ -1116,7 +1148,7 @@ export function RulesClient({
                   ) : (
                     <TextField
                       fullWidth
-                      helperText={parameterHelperText(parameter)}
+                      helperText={parameterHelperText(parameter, sourceCurrency)}
                       key={parameter.key}
                       label={parameter.label}
                       onChange={(event) =>

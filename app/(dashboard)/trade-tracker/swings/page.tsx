@@ -88,8 +88,8 @@ export default async function SwingTradeTrackerPage({
   );
   return (
     <SwingTrackerView
-      active={positions.active.map((position) => detail(position.positionRef))}
-      completed={positions.completed.map((position) => detail(position.positionRef))}
+      active={await Promise.all(positions.active.map((position) => detail(position.positionRef)))}
+      completed={await Promise.all(positions.completed.map((position) => detail(position.positionRef)))}
       expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
       reviewDate={reviewDate}
       topContent={entry}
