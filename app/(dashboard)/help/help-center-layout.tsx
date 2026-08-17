@@ -147,8 +147,7 @@ function HelpNavigation({
                     aria-label={`${expanded ? "Collapse" : "Expand"} ${item.label} guides`}
                     aria-expanded={expanded}
                     onClick={() => setCollectionExpanded(item.href, !expanded)}
-                    size="small"
-                    sx={{ alignSelf: "center", ml: 0.25 }}
+                    sx={{ alignSelf: "center", ml: 0.25, minHeight: 44, minWidth: 44 }}
                   >
                     {expanded ? <RemoveRoundedIcon fontSize="small" /> : <AddRoundedIcon fontSize="small" />}
                   </IconButton>
@@ -169,7 +168,7 @@ function HelpNavigation({
                           selected={childSelected}
                           sx={{
                             borderRadius: 1.5,
-                            minHeight: 42,
+                            minHeight: 44,
                             pl: 2.25,
                             pr: 1,
                             "&.Mui-selected": {
@@ -224,7 +223,7 @@ export function HelpCenterLayout({
             fullWidth
             onClick={() => setMobileNavigationOpen((current) => !current)}
             startIcon={<HelpOutlineRoundedIcon />}
-            sx={{ justifyContent: "space-between" }}
+            sx={{ justifyContent: "space-between", minHeight: 44 }}
             variant="outlined"
           >
             Browse help

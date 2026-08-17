@@ -101,7 +101,7 @@ function ArticleBlock({ block }: { block: HelpArticleBlock }) {
           <TableHead>
             <TableRow>
               {block.columns.map((column) => (
-                <TableCell key={column} sx={{ bgcolor: "rgba(1, 30, 86, 0.045)", fontWeight: 850 }}>
+                <TableCell key={column} sx={{ bgcolor: "rgba(1, 30, 86, 0.045)", fontSize: 14, fontWeight: 850 }}>
                   {column}
                 </TableCell>
               ))}
@@ -227,7 +227,12 @@ export function HelpArticle({
           <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1, mt: 1.5 }}>
             {guide.sections.map((section) => (
               <Link href={`#${section.id}`} key={section.id} style={{ textDecoration: "none" }}>
-                <Chip component="span" label={section.title} variant="outlined" />
+                <Chip
+                  component="span"
+                  label={section.title}
+                  sx={{ height: "auto", minHeight: 44, "& .MuiChip-label": { py: 1, whiteSpace: "normal" } }}
+                  variant="outlined"
+                />
               </Link>
             ))}
           </Stack>

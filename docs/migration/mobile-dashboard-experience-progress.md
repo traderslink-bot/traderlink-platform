@@ -439,3 +439,56 @@ the first comparison column without moving the whole document.
 
 Owner visual approval remains the only product-acceptance gate. No push or
 deployment was performed.
+
+### 2026-08-16 - second mobile usability follow-up
+
+The owner requested another phone-first QA pass and approved the resulting
+recommendations. This follow-up treats fitting inside the document viewport as
+only a safety baseline: information must remain readable, organized and usable.
+
+- [x] Replace the 7,000-pixel-plus Trading Rules phone page with compact saved
+  rule summaries, on-demand rule details and a separately collapsible custom
+  rule section.
+- [x] Move the 12-card preset library into a searchable full-screen phone
+  browser with an explicit 44-pixel Close action. Desktop keeps the visible
+  preset library.
+- [x] Increase Help collection expand controls, child guide rows, the mobile
+  Browse help control and in-guide anchor chips to at least 44 pixels.
+- [x] Increase Help comparison-table headings to a readable 14 pixels while
+  retaining full column widths, the pinned first column and the swipe cue.
+- [x] Put Ticker first and pin it in the Analyzed Trades, Candle Pattern
+  occurrences and Trade Explorer individual-trades tables so row identity
+  stays visible during a horizontal swipe.
+- [x] Complete fresh 320 x 568, 390 x 844 and 844 x 390 browser acceptance for
+  Rules, Help and the three corrected long-table surfaces.
+- [x] Create the narrow local checkpoint commit after the focused source and
+  browser gates pass.
+
+The Trading Rules changes do not alter rule meaning, lifecycle, effective
+dates, automatic checks or Journal mutations. The Help guide content remains
+factually aligned because this follow-up changes navigation target sizes and
+presentation only; no workflow instruction changed.
+
+Fresh browser evidence confirmed:
+
+- Trading Rules has no document-level horizontal movement at 320, 390 or 844
+  pixels. Its default phone height fell from more than 7,000 pixels to 2,495
+  pixels at 320 and 2,306 pixels at 390 while every saved rule still shows its
+  status, name, category, scope and configured value before expansion.
+- Every saved-rule disclosure, custom-rule disclosure and preset-browser Close
+  action is 44 pixels high or square. The preset browser fills the phone and
+  uses two readable columns in 844 x 390 landscape. Desktop continues to show
+  the inline preset library, expanded saved-rule details and both custom rules.
+- The first live 320-pixel pass exposed a server/client breakpoint mismatch in
+  the new Rules conditional. The responsive initialization was corrected and a
+  fresh load no longer reports the hydration error.
+- Help renders its Browse control and guide anchors at 44 pixels, visible Help
+  collection expand controls at 44 x 44 and comparison-table headings at 14
+  pixels. The 520-pixel comparison table physically scrolled to its 241-pixel
+  maximum while its first cell stayed aligned with the 12.8-pixel panel edge.
+- Analyzed Trades physically scrolled 500 pixels inside its 1,040-pixel table,
+  Trade Explorer scrolled 600 pixels inside its 1,260-pixel table and Candle
+  occurrences scrolled 500 pixels inside its 1,060-pixel table. In each case,
+  the first Ticker cell stayed aligned with the table panel while the document
+  width remained unchanged. Trade Explorer's expanded 11-column execution row
+  remains a normal full-width detail row instead of becoming sticky.

@@ -14,6 +14,13 @@ top-right Help link. Results is now Ticker with bounded pagination. Trade
 Explorer plus its responsive presentation are preserved in `4ca2a5ac`, fresh
 Daily Trade Tracker QA in `33144610`, and the Trade Analyzer evidence drilldown
 plus migration 0059 in `0544e42f`. No push or deployment was run.
+The owner-approved second mobile usability follow-up is also implemented and
+browser-accepted: Trading Rules now uses compact saved-rule disclosures and a
+full-screen preset browser below 900 pixels, shared Help targets are at least
+44 pixels with 14-pixel table headings, and Analyzed Trades, Candle occurrences
+and Trade Explorer retain pinned ticker identity during contained horizontal
+scrolling. The implementation and its progress records are preserved together
+in the narrow local checkpoint.
 
 **Notifications and AI import repair:** The owner authorized the shared
 [Notifications And AI Import Repair Plan](notifications-and-ai-import-repair-plan.md)

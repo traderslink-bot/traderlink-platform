@@ -183,12 +183,12 @@ export function AnalyzedTradesIndex({
       ) : null}
 
       {rows.length > 0 ? (
-          <HorizontalScrollRegion label="Analyzed trades table" minTableWidth={1040}>
+          <HorizontalScrollRegion label="Analyzed trades table" minTableWidth={1040} stickyFirstColumn>
             <Table aria-label="Analyzed trades" size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>Date</TableCell>
                   <TableCell>Ticker</TableCell>
+                  <TableCell>Date</TableCell>
                   <TableCell>Direction</TableCell>
                   <TableCell>Entry time</TableCell>
                   <TableCell>Exit time</TableCell>
@@ -205,8 +205,8 @@ export function AnalyzedTradesIndex({
                   const negative = row.resultDecimal !== null && Number(row.resultDecimal) < 0;
                   return (
                     <TableRow hover key={row.roundTripId}>
-                      <TableCell>{closed.date}</TableCell>
                       <TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell>
+                      <TableCell>{closed.date}</TableCell>
                       <TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell>
                       <TableCell>{opened.time}</TableCell>
                       <TableCell>{closed.time}</TableCell>

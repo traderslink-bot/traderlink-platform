@@ -148,3 +148,16 @@ The working tree contains active AI Reviews work owned by another task. This
 Help slice will not edit or stage AI Review files, shared migration records or
 unknown untracked files. Any eventual Help commit will stage only the explicit
 Help/navigation allowlist.
+
+## 2026-08-16 mobile accessibility follow-up
+
+The second full mobile QA pass found that shared Help comparison-table headings
+rendered at 12 pixels, in-guide anchor chips were only 32 pixels high and Help
+collection expand controls were only 30 pixels square. The shared Help renderer
+and the preserved Daily Trade Tracker renderer now use 14-pixel table headings,
+44-pixel wrapping guide anchors and 44-pixel navigation controls. Comparison
+tables retain their readable widths, pinned first column and explicit sideways
+scroll cue. This is presentation-only; the guide facts and workflow copy do not
+require revision. Fresh 320-pixel browser acceptance confirmed 44-pixel shared
+Help controls, 14-pixel headings, no document overflow and physical contained
+table scrolling with the first comparison cell pinned to the panel edge.

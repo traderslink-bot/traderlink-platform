@@ -3,7 +3,10 @@
 import { useMemo, useState } from "react";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ArchiveRoundedIcon from "@mui/icons-material/ArchiveRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
+import ExpandLessRoundedIcon from "@mui/icons-material/ExpandLessRounded";
+import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import PauseRoundedIcon from "@mui/icons-material/PauseRounded";
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
@@ -20,6 +23,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
 import FormControl from "@mui/material/FormControl";
 import FormControlLabel from "@mui/material/FormControlLabel";
+import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
@@ -29,6 +33,8 @@ import Stack from "@mui/material/Stack";
 import Switch from "@mui/material/Switch";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { useTheme } from "@mui/material/styles";
 import Link from "next/link";
 
 import {
@@ -178,6 +184,8 @@ export function RulesClient({
 }: {
   initialView: TradingRulesDashboardView;
 }) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [view, setView] = useState(initialView);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
@@ -193,6 +201,14 @@ export function RulesClient({
     useState<ManualRuleValues>(defaultManualRuleValues);
   const [retireManualRule, setRetireManualRule] =
     useState<ManualCustomRuleRecord | null>(null);
+  const [presetLibraryOpen, setPresetLibraryOpen] = useState(false);
+  const [customRulesOpen, setCustomRulesOpen] = useState(false);
+  const [expandedRuleIds, setExpandedRuleIds] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+  const [expandedManualRuleIds, setExpandedManualRuleIds] = useState<
+    ReadonlySet<string>
+  >(() => new Set());
 
   const activeRules = view.packet.rules.filter(
     (rule) => rule.status === "active",
@@ -263,8 +279,27 @@ export function RulesClient({
   }
 
   function openCreate(template: TradingRulesTemplateView): void {
+    setPresetLibraryOpen(false);
     setEditor({ mode: "create", template, rule: null });
     setEditorValues({ ...template.exampleConfiguration });
+  }
+
+  function toggleExpandedRule(ruleInstanceId: string): void {
+    setExpandedRuleIds((current) => {
+      const next = new Set(current);
+      if (next.has(ruleInstanceId)) next.delete(ruleInstanceId);
+      else next.add(ruleInstanceId);
+      return next;
+    });
+  }
+
+  function toggleExpandedManualRule(ruleId: string): void {
+    setExpandedManualRuleIds((current) => {
+      const next = new Set(current);
+      if (next.has(ruleId)) next.delete(ruleId);
+      else next.add(ruleId);
+      return next;
+    });
   }
 
   function openRevise(rule: ExecutionRuleDashboardCard): void {
@@ -364,6 +399,125 @@ export function RulesClient({
     );
   }
 
+  const presetLibrary = (
+    <>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={1.5}
+        sx={{ mt: 2 }}
+      >
+        <TextField
+          fullWidth
+          label="Search preset rules"
+          onChange={(event) => setSearch(event.target.value)}
+          size="small"
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchRoundedIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            },
+          }}
+          value={search}
+        />
+        <FormControl
+          size="small"
+          sx={{
+            minWidth: { xs: 0, sm: 190 },
+            width: { xs: "100%", sm: "auto" },
+          }}
+        >
+          <InputLabel id="rule-category-label">Category</InputLabel>
+          <Select
+            label="Category"
+            labelId="rule-category-label"
+            onChange={(event) => setCategory(event.target.value)}
+            value={category}
+          >
+            <MenuItem value="all">All rule groups</MenuItem>
+            {Object.entries(categoryLabels).map(([value, label]) => (
+              <MenuItem key={value} value={value}>
+                {label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Stack>
+      {filteredTemplates.length === 0 ? (
+        <Alert severity="info" sx={{ mt: 2 }}>
+          No preset rules match that search and category.
+        </Alert>
+      ) : (
+        <Box
+          sx={{
+            display: "grid",
+            gap: 1.5,
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(2, minmax(0, 1fr))",
+              xl: "repeat(3, minmax(0, 1fr))",
+            },
+            mt: 1.5,
+          }}
+        >
+          {filteredTemplates.map((template) => (
+            <Card key={template.templateId} variant="outlined">
+              <CardContent
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  height: "100%",
+                  p: 2,
+                  "&:last-child": { pb: 2 },
+                }}
+              >
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+                  <Chip
+                    label={categoryLabels[template.category]}
+                    size="small"
+                  />
+                  <Chip
+                    label={scopeLabels[template.scope]}
+                    size="small"
+                    variant="outlined"
+                  />
+                </Box>
+                <Typography sx={{ mt: 1.25 }} variant="h3">
+                  {template.label}
+                </Typography>
+                <Typography
+                  color="text.secondary"
+                  sx={{ flexGrow: 1, mt: 0.5 }}
+                  variant="body2"
+                >
+                  {template.description}
+                </Typography>
+                <Typography
+                  color="text.secondary"
+                  sx={{ mt: 1.25 }}
+                  variant="caption"
+                >
+                  Example: {exampleLabel(template)}
+                </Typography>
+                <Button
+                  disabled={busyId === template.templateId}
+                  onClick={() => openCreate(template)}
+                  startIcon={<AddRoundedIcon />}
+                  sx={{ alignSelf: "flex-start", minHeight: 44, mt: 1.5 }}
+                  variant="outlined"
+                >
+                  Add rule
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </Box>
+      )}
+    </>
+  );
+
   return (
     <DashboardPage>
       <Stack
@@ -396,11 +550,15 @@ export function RulesClient({
             Rule Results
           </Button>
           <Button
-            onClick={() =>
+            onClick={() => {
+              if (isMobile) {
+                setPresetLibraryOpen(true);
+                return;
+              }
               document
                 .getElementById("rule-library")
-                ?.scrollIntoView({ behavior: "smooth", block: "start" })
-            }
+                ?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
             variant="outlined"
           >
             Browse presets
@@ -497,6 +655,8 @@ export function RulesClient({
                 (candidate) =>
                   candidate.templateId === rule.template.templateId,
               );
+              const expanded = expandedRuleIds.has(rule.ruleInstanceId);
+              const detailsId = `rule-details-${rule.ruleInstanceId}`;
               return (
                 <Card key={rule.ruleInstanceId} variant="outlined">
                   <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
@@ -509,7 +669,7 @@ export function RulesClient({
                       }}
                     >
                       <Box sx={{ minWidth: 0 }}>
-                        <Stack direction="row" spacing={0.75} sx={{ mb: 1 }}>
+                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mb: 1 }}>
                           <Chip
                             color={statusColor(rule.status)}
                             label={rule.status}
@@ -530,7 +690,7 @@ export function RulesClient({
                             size="small"
                             variant="outlined"
                           />
-                        </Stack>
+                        </Box>
                         <Typography component="h3" variant="h3">
                           {rule.template.label}
                         </Typography>
@@ -539,13 +699,6 @@ export function RulesClient({
                         v{rule.currentVersion.versionOrdinal}
                       </Typography>
                     </Stack>
-                    <Typography
-                      color="text.secondary"
-                      sx={{ mt: 0.75 }}
-                      variant="body2"
-                    >
-                      {rule.template.description}
-                    </Typography>
                     <Box
                       sx={{
                         bgcolor: "background.default",
@@ -564,75 +717,95 @@ export function RulesClient({
                       </Typography>
                       <Typography
                         color="text.secondary"
-                        sx={{ display: "block", mt: 0.5 }}
+                        sx={{ display: { xs: expanded ? "block" : "none", md: "block" }, mt: 0.5 }}
                         variant="caption"
                       >
                         Effective {formatDate(rule.currentVersion.effectiveFrom)}
                       </Typography>
                     </Box>
-                    <Stack
-                      direction={{ xs: "column", sm: "row" }}
-                      spacing={1.5}
-                      sx={{
-                        alignItems: { xs: "flex-start", sm: "center" },
-                        justifyContent: "space-between",
-                        mt: 1.5,
-                      }}
+                    <Button
+                      aria-controls={detailsId}
+                      aria-expanded={expanded}
+                      endIcon={expanded ? <ExpandLessRoundedIcon /> : <ExpandMoreRoundedIcon />}
+                      fullWidth
+                      onClick={() => toggleExpandedRule(rule.ruleInstanceId)}
+                      sx={{ display: { xs: "flex", md: "none" }, justifyContent: "space-between", minHeight: 44, mt: 1 }}
                     >
-                      <Box>
-                        <Typography color="text.secondary" variant="caption">
-                          Latest result
-                        </Typography>
-                        <Typography
-                          sx={{ fontWeight: 650, textTransform: "capitalize" }}
-                          variant="body2"
-                        >
-                          {latestResultLabel(rule)}
-                        </Typography>
-                      </Box>
-                      {busyId === rule.ruleInstanceId ? (
-                        <Skeleton height={40} width={152} />
-                      ) : rule.status === "retired" ? null : (
-                        <Stack direction="row" spacing={0.75}>
-                          {rule.status === "active" ? (
+                      {expanded ? "Hide details" : "View details"}
+                    </Button>
+                    <Box
+                      id={detailsId}
+                      sx={{ display: { xs: expanded ? "block" : "none", md: "block" } }}
+                    >
+                      <Typography color="text.secondary" sx={{ mt: 1.25 }} variant="body2">
+                        {rule.template.description}
+                      </Typography>
+                      <Stack
+                        direction={{ xs: "column", sm: "row" }}
+                        spacing={1.5}
+                        sx={{
+                          alignItems: { xs: "stretch", sm: "center" },
+                          justifyContent: "space-between",
+                          mt: 1.5,
+                        }}
+                      >
+                        <Box>
+                          <Typography color="text.secondary" variant="caption">
+                            Latest result
+                          </Typography>
+                          <Typography
+                            sx={{ fontWeight: 650, textTransform: "capitalize" }}
+                            variant="body2"
+                          >
+                            {latestResultLabel(rule)}
+                          </Typography>
+                        </Box>
+                        {busyId === rule.ruleInstanceId ? (
+                          <Skeleton height={44} width={152} />
+                        ) : rule.status === "retired" ? null : (
+                          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+                            {rule.status === "active" ? (
+                              <Button
+                                onClick={() => openRevise(rule)}
+                                size="small"
+                                startIcon={<EditRoundedIcon />}
+                                sx={{ minHeight: 44 }}
+                              >
+                                Adjust
+                              </Button>
+                            ) : null}
                             <Button
-                              onClick={() => openRevise(rule)}
+                              onClick={() =>
+                                void transition(
+                                  rule,
+                                  rule.status === "active" ? "paused" : "active",
+                                )
+                              }
                               size="small"
-                              startIcon={<EditRoundedIcon />}
+                              startIcon={
+                                rule.status === "active" ? (
+                                  <PauseRoundedIcon />
+                                ) : (
+                                  <PlayArrowRoundedIcon />
+                                )
+                              }
+                              sx={{ minHeight: 44 }}
+                              variant="outlined"
                             >
-                              Adjust
+                              {rule.status === "active" ? "Pause" : "Resume"}
                             </Button>
-                          ) : null}
-                          <Button
-                            onClick={() =>
-                              void transition(
-                                rule,
-                                rule.status === "active" ? "paused" : "active",
-                              )
-                            }
-                            size="small"
-                            startIcon={
-                              rule.status === "active" ? (
-                                <PauseRoundedIcon />
-                              ) : (
-                                <PlayArrowRoundedIcon />
-                              )
-                            }
-                            variant="outlined"
-                          >
-                            {rule.status === "active" ? "Pause" : "Resume"}
-                          </Button>
-                          <Button
-                            aria-label={`Retire ${rule.template.label}`}
-                            color="inherit"
-                            onClick={() => setRetireRule(rule)}
-                            size="small"
-                          >
-                            <ArchiveRoundedIcon fontSize="small" />
-                          </Button>
-                        </Stack>
-                      )}
-                    </Stack>
+                            <IconButton
+                              aria-label={`Retire ${rule.template.label}`}
+                              color="inherit"
+                              onClick={() => setRetireRule(rule)}
+                              sx={{ minHeight: 44, minWidth: 44 }}
+                            >
+                              <ArchiveRoundedIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        )}
+                      </Stack>
+                    </Box>
                   </CardContent>
                 </Card>
               );
@@ -647,6 +820,7 @@ export function RulesClient({
             onClick={openCreateManual}
             size="small"
             startIcon={<AddRoundedIcon />}
+            sx={{ display: { xs: "none", md: "inline-flex" } }}
           >
             Create custom rule
           </Button>
@@ -658,6 +832,23 @@ export function RulesClient({
           Use this for a rule that matters to you but cannot be confirmed from
           trade data alone.
         </Typography>
+        <Button
+          aria-controls="custom-rules-list"
+          aria-expanded={customRulesOpen}
+          endIcon={customRulesOpen ? <ExpandLessRoundedIcon /> : <ExpandMoreRoundedIcon />}
+          fullWidth
+          onClick={() => setCustomRulesOpen((current) => !current)}
+          sx={{ display: { xs: "flex", md: "none" }, justifyContent: "space-between", mb: customRulesOpen ? 1.5 : 0, minHeight: 44 }}
+          variant="outlined"
+        >
+          {customRulesOpen
+            ? "Hide custom rules"
+            : `Show custom rules (${view.manualRules.length})`}
+        </Button>
+        <Box
+          id="custom-rules-list"
+          sx={{ display: { xs: customRulesOpen ? "block" : "none", md: "block" } }}
+        >
         {view.manualRules.length === 0 ? (
           <Box
             sx={{
@@ -686,7 +877,10 @@ export function RulesClient({
             }}
           >
             {[...activeManualRules, ...pausedManualRules, ...retiredManualRules].map(
-              (rule) => (
+              (rule) => {
+                const expanded = expandedManualRuleIds.has(rule.ruleId);
+                const detailsId = `manual-rule-details-${rule.ruleId}`;
+                return (
                 <Card key={rule.ruleId} variant="outlined">
                   <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
                     <Stack
@@ -698,7 +892,7 @@ export function RulesClient({
                       }}
                     >
                       <Box sx={{ minWidth: 0 }}>
-                        <Stack direction="row" spacing={0.75} sx={{ mb: 1 }}>
+                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mb: 1 }}>
                           <Chip
                             color={statusColor(rule.status)}
                             label={rule.status}
@@ -706,7 +900,7 @@ export function RulesClient({
                           />
                           <Chip label="Manual" size="small" variant="outlined" />
                           {rule.isFocus ? <Chip color="primary" label="Focus" size="small" /> : null}
-                        </Stack>
+                        </Box>
                         <Typography component="h3" variant="h3">
                           {rule.title}
                         </Typography>
@@ -715,84 +909,103 @@ export function RulesClient({
                         v{rule.versionOrdinal}
                       </Typography>
                     </Stack>
-                    <Typography color="text.secondary" sx={{ mt: 0.75 }} variant="body2">
-                      {rule.statement}
-                    </Typography>
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 1.5 }}>
                       <Chip label={manualCategoryLabels[rule.category]} size="small" />
                       <Chip label={manualReviewScopeLabels[rule.reviewScope]} size="small" variant="outlined" />
                     </Box>
-                    <Stack
-                      direction={{ xs: "column", sm: "row" }}
-                      spacing={1.5}
-                      sx={{
-                        alignItems: { xs: "flex-start", sm: "center" },
-                        justifyContent: "space-between",
-                        mt: 1.5,
-                      }}
+                    <Button
+                      aria-controls={detailsId}
+                      aria-expanded={expanded}
+                      endIcon={expanded ? <ExpandLessRoundedIcon /> : <ExpandMoreRoundedIcon />}
+                      fullWidth
+                      onClick={() => toggleExpandedManualRule(rule.ruleId)}
+                      sx={{ display: { xs: "flex", md: "none" }, justifyContent: "space-between", minHeight: 44, mt: 1 }}
                     >
-                      <Box>
-                        <Typography color="text.secondary" variant="caption">
-                          Check-ins
-                        </Typography>
-                        <Typography sx={{ fontWeight: 650 }} variant="body2">
-                          Available with the future Day Session review
-                        </Typography>
-                      </Box>
-                      {busyId === `manual-${rule.ruleId}` ? (
-                        <Skeleton height={40} width={152} />
-                      ) : rule.status === "retired" ? null : (
-                        <Stack direction="row" spacing={0.75}>
-                          {rule.status === "active" ? (
+                      {expanded ? "Hide details" : "View details"}
+                    </Button>
+                    <Box
+                      id={detailsId}
+                      sx={{ display: { xs: expanded ? "block" : "none", md: "block" } }}
+                    >
+                      <Typography color="text.secondary" sx={{ mt: 1.25 }} variant="body2">
+                        {rule.statement}
+                      </Typography>
+                      <Stack
+                        direction={{ xs: "column", sm: "row" }}
+                        spacing={1.5}
+                        sx={{
+                          alignItems: { xs: "stretch", sm: "center" },
+                          justifyContent: "space-between",
+                          mt: 1.5,
+                        }}
+                      >
+                        <Box>
+                          <Typography color="text.secondary" variant="caption">
+                            Check-ins
+                          </Typography>
+                          <Typography sx={{ fontWeight: 650 }} variant="body2">
+                            Available with the future Day Session review
+                          </Typography>
+                        </Box>
+                        {busyId === `manual-${rule.ruleId}` ? (
+                          <Skeleton height={44} width={152} />
+                        ) : rule.status === "retired" ? null : (
+                          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+                            {rule.status === "active" ? (
+                              <Button
+                                onClick={() => openReviseManual(rule)}
+                                size="small"
+                                startIcon={<EditRoundedIcon />}
+                                sx={{ minHeight: 44 }}
+                              >
+                                Edit
+                              </Button>
+                            ) : null}
                             <Button
-                              onClick={() => openReviseManual(rule)}
+                              onClick={() =>
+                                void transitionManual(
+                                  rule,
+                                  rule.status === "active" ? "paused" : "active",
+                                )
+                              }
                               size="small"
-                              startIcon={<EditRoundedIcon />}
+                              startIcon={
+                                rule.status === "active" ? (
+                                  <PauseRoundedIcon />
+                                ) : (
+                                  <PlayArrowRoundedIcon />
+                                )
+                              }
+                              sx={{ minHeight: 44 }}
+                              variant="outlined"
                             >
-                              Edit
+                              {rule.status === "active" ? "Pause" : "Resume"}
                             </Button>
-                          ) : null}
-                          <Button
-                            onClick={() =>
-                              void transitionManual(
-                                rule,
-                                rule.status === "active" ? "paused" : "active",
-                              )
-                            }
-                            size="small"
-                            startIcon={
-                              rule.status === "active" ? (
-                                <PauseRoundedIcon />
-                              ) : (
-                                <PlayArrowRoundedIcon />
-                              )
-                            }
-                            variant="outlined"
-                          >
-                            {rule.status === "active" ? "Pause" : "Resume"}
-                          </Button>
-                          <Button
-                            aria-label={`Retire ${rule.title}`}
-                            color="inherit"
-                            onClick={() => setRetireManualRule(rule)}
-                            size="small"
-                          >
-                            <ArchiveRoundedIcon fontSize="small" />
-                          </Button>
-                        </Stack>
-                      )}
-                    </Stack>
+                            <IconButton
+                              aria-label={`Retire ${rule.title}`}
+                              color="inherit"
+                              onClick={() => setRetireManualRule(rule)}
+                              sx={{ minHeight: 44, minWidth: 44 }}
+                            >
+                              <ArchiveRoundedIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        )}
+                      </Stack>
+                    </Box>
                   </CardContent>
                 </Card>
-              ),
+                );
+              },
             )}
           </Box>
         )}
+        </Box>
       </DashboardPanel>
 
-      <Divider />
+      <Divider sx={{ display: { xs: "none", md: "block" } }} />
 
-      <Box component="section" id="rule-library" sx={{ scrollMarginTop: 88 }}>
+      {!isMobile ? <Box component="section" id="rule-library" sx={{ scrollMarginTop: 88 }}>
         <Typography
           color="primary.main"
           sx={{ fontWeight: 700 }}
@@ -808,110 +1021,45 @@ export function RulesClient({
           an individual trade, a ticker, or a day session. Browse the library,
           then turn on only the rules you want to follow.
         </Typography>
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={1.5}
-          sx={{ mt: 2 }}
-        >
-          <TextField
-            fullWidth
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search rules"
-            size="small"
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchRoundedIcon fontSize="small" />
-                  </InputAdornment>
-                ),
-              },
-            }}
-            value={search}
-          />
-          <FormControl size="small" sx={{ minWidth: { xs: 0, sm: 190 }, width: { xs: "100%", sm: "auto" } }}>
-            <InputLabel id="rule-category-label">Category</InputLabel>
-            <Select
-              label="Category"
-              labelId="rule-category-label"
-              onChange={(event) => setCategory(event.target.value)}
-              value={category}
-            >
-              <MenuItem value="all">All rule groups</MenuItem>
-              {Object.entries(categoryLabels).map(([value, label]) => (
-                <MenuItem key={value} value={value}>
-                  {label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Stack>
-        <Box
+        {presetLibrary}
+      </Box> : null}
+
+      <Dialog
+        aria-labelledby="mobile-preset-library-title"
+        fullScreen
+        onClose={() => setPresetLibraryOpen(false)}
+        open={isMobile && presetLibraryOpen}
+      >
+        <DialogTitle
+          id="mobile-preset-library-title"
           sx={{
-            display: "grid",
-            gap: 1.5,
-            gridTemplateColumns: {
-              xs: "1fr",
-              md: "repeat(2, minmax(0, 1fr))",
-              xl: "repeat(3, minmax(0, 1fr))",
-            },
-            mt: 1.5,
+            alignItems: "center",
+            bgcolor: "background.paper",
+            borderBottom: 1,
+            borderColor: "divider",
+            display: "flex",
+            justifyContent: "space-between",
+            position: "sticky",
+            top: 0,
+            zIndex: 2,
           }}
         >
-          {filteredTemplates.map((template) => (
-            <Card key={template.templateId} variant="outlined">
-              <CardContent
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  height: "100%",
-                  p: 2,
-                  "&:last-child": { pb: 2 },
-                }}
-              >
-                <Stack direction="row" spacing={0.75}>
-                  <Chip
-                    label={categoryLabels[template.category]}
-                    size="small"
-                  />
-                  <Chip
-                    label={scopeLabels[template.scope]}
-                    size="small"
-                    variant="outlined"
-                  />
-                </Stack>
-                <Typography sx={{ mt: 1.25 }} variant="h3">
-                  {template.label}
-                </Typography>
-                <Typography
-                  color="text.secondary"
-                  sx={{ flexGrow: 1, mt: 0.5 }}
-                  variant="body2"
-                >
-                  {template.description}
-                </Typography>
-                <Typography
-                  color="text.secondary"
-                  sx={{ mt: 1.25 }}
-                  variant="caption"
-                >
-                  Example:{" "}
-                  {exampleLabel(template)}
-                </Typography>
-                <Button
-                  disabled={busyId === template.templateId}
-                  onClick={() => openCreate(template)}
-                  startIcon={<AddRoundedIcon />}
-                  sx={{ alignSelf: "flex-start", mt: 1.5 }}
-                  variant="outlined"
-                >
-                  Add rule
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </Box>
-      </Box>
+          Browse preset rules
+          <IconButton
+            aria-label="Close preset rules"
+            onClick={() => setPresetLibraryOpen(false)}
+            sx={{ minHeight: 44, minWidth: 44 }}
+          >
+            <CloseRoundedIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ p: 2 }}>
+          <Typography color="text.secondary" variant="body2">
+            Search the rules the app can check automatically, then add only the ones you want to follow.
+          </Typography>
+          {presetLibrary}
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         fullWidth

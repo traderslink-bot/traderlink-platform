@@ -1024,7 +1024,7 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
             <Typography color="text.secondary">{emptyTradeMessage}</Typography>
           ) : (
             <>
-              <HorizontalScrollRegion label="Individual trades table" maxHeight={560} minTableWidth={1260}>
+              <HorizontalScrollRegion label="Individual trades table" maxHeight={560} minTableWidth={1260} stickyFirstColumn>
                 <Table
                   size="small"
                   stickyHeader
@@ -1036,7 +1036,7 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
                     },
                   }}
                 >
-                  <TableHead><TableRow><TableCell>Closed</TableCell><TableCell>Ticker</TableCell><TableCell>Direction</TableCell><TableCell>Shares</TableCell><TableCell>Avg entry</TableCell><TableCell>Avg exit</TableCell><TableCell>Entry value</TableCell><TableCell>{appliedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L"}</TableCell><TableCell>Return</TableCell><TableCell>Hold</TableCell><TableCell>Executions</TableCell></TableRow></TableHead>
+                  <TableHead><TableRow><TableCell>Ticker</TableCell><TableCell>Closed</TableCell><TableCell>Direction</TableCell><TableCell>Shares</TableCell><TableCell>Avg entry</TableCell><TableCell>Avg exit</TableCell><TableCell>Entry value</TableCell><TableCell>{appliedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L"}</TableCell><TableCell>Return</TableCell><TableCell>Hold</TableCell><TableCell>Executions</TableCell></TableRow></TableHead>
                   <TableBody>
                     {preview.evidence.rows.map((trade) => {
                       const expanded = expandedRoundTripId === trade.roundTripId;
@@ -1055,13 +1055,13 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
                           sx={{ cursor: "pointer" }}
                           tabIndex={0}
                         >
+                          <TableCell sx={{ fontWeight: 800 }}>{trade.displayedSymbol}</TableCell>
                           <TableCell>
                             <Box>{trade.closeLocalDate}</Box>
                             <Typography color="text.secondary" variant="caption">
                               {tradeCloseTime(trade.closedAtUtc, preview.evidence?.timezone ?? "UTC")}
                             </Typography>
                           </TableCell>
-                          <TableCell sx={{ fontWeight: 800 }}>{trade.displayedSymbol}</TableCell>
                           <TableCell sx={{ textTransform: "capitalize" }}>{trade.direction}</TableCell>
                           <TableCell>{formatJournalAnalyticsDecimal(trade.enteredQuantityDecimal)}</TableCell>
                           <TableCell>{trade.averageEntryPriceDecimal ? money(trade.averageEntryPriceDecimal, preview.evidence?.currency ?? null) : "N/A"}</TableCell>
@@ -1073,7 +1073,7 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
                           <TableCell>{trade.uniqueExecutionCount}</TableCell>
                         </TableRow>
                         {expanded ? <TableRow>
-                          <TableCell colSpan={11} sx={{ backgroundColor: "action.hover", px: 3, py: 2, whiteSpace: "normal" }}>
+                          <TableCell colSpan={11} sx={{ backgroundColor: "action.hover", boxShadow: "none !important", left: "auto !important", position: "static !important", px: 3, py: 2, whiteSpace: "normal" }}>
                             {executionDetailsStatus === "loading" ? <Typography color="text.secondary">Loading executions…</Typography> : null}
                             {executionDetailsStatus === "error" ? <Alert severity="error">The executions could not be loaded.</Alert> : null}
                             {executionDetailsStatus === "ready" && expandedExecutions.length === 0 ? <Typography color="text.secondary">No executions are available for this trade.</Typography> : null}
