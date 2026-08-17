@@ -72,10 +72,11 @@ function ChartZoomControls({
     cursor: "pointer",
     fontSize: "1rem",
     fontWeight: 900,
-    height: 28,
+    height: 44,
     lineHeight: 1,
     p: 0,
-    width: 28,
+    touchAction: "manipulation",
+    width: 44,
     "&:hover": {
       bgcolor: "#0b3475",
       borderColor: "#0b3475",
@@ -725,14 +726,14 @@ export function DailyTradeAnalyzerChart({
           size="small"
           sx={{
             bgcolor: "rgba(255,255,255,0.96)",
-            height: 28,
+            height: { xs: 44, md: 28 },
             pointerEvents: "auto",
             "& .MuiToggleButton-root": {
               borderColor: "#b8c6d9",
               color: "#41516a",
-              fontSize: "0.66rem",
+              fontSize: { xs: 12, md: "0.66rem" },
               fontWeight: 850,
-              minWidth: 34,
+              minWidth: { xs: 40, md: 34 },
               px: 0.65,
               py: 0.25,
             },
@@ -753,7 +754,7 @@ export function DailyTradeAnalyzerChart({
           onZoomOut={() => zoomFromControl(CHART_ZOOM_OUT_FACTOR)}
         />
         {exactTurnoverAvailable ? (
-          <Typography sx={{ color: "#41516a", fontSize: "0.66rem", fontWeight: 800 }}>
+          <Typography sx={{ color: "#41516a", display: { xs: "none", md: "block" }, fontSize: "0.66rem", fontWeight: 800 }}>
             {chartInterval === "1h" ? "1h chart only" : `Pattern context: ${chartInterval}`}
           </Typography>
         ) : (
@@ -817,10 +818,12 @@ export function DailyTradeAnalyzerChart({
               borderColor: "divider",
               borderRadius: 1,
               display: { xs: "flex", md: "none" },
-              fontSize: "0.68rem",
+              fontSize: 12,
               fontWeight: 850,
               gap: 0.55,
-              p: 0.6,
+              minHeight: 44,
+              px: 1,
+              py: 0.5,
               position: "absolute",
               right: 8,
               top: 52,
@@ -854,7 +857,7 @@ export function DailyTradeAnalyzerChart({
                 {visiblePatternKinds.map((kind) => (
                   <Stack direction="row" key={kind} spacing={0.65} sx={{ alignItems: "center" }}>
                     <Box sx={{ bgcolor: patternColor(kind), borderRadius: "50%", height: 9, width: 9 }} />
-                    <Typography sx={{ fontSize: "0.72rem", fontWeight: 750 }}>
+                    <Typography sx={{ fontSize: 12, fontWeight: 750 }}>
                       {PATTERN_FULL_NAMES[kind] ?? patternLabel(kind)}
                     </Typography>
                   </Stack>
@@ -894,7 +897,7 @@ export function DailyTradeAnalyzerChart({
               setDetail(null);
             }}
             size="small"
-            sx={{ minWidth: 28, position: "absolute", right: 2, top: 2 }}
+            sx={{ minHeight: 40, minWidth: 40, position: "absolute", right: 2, top: 2 }}
           >
             ×
           </Button>

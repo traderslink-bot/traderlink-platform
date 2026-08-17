@@ -64,6 +64,7 @@ import type {
   AnalyticsLabPlatformPreview,
   AnalyticsLabPlatformQuery,
 } from "../lab/analytics-lab-platform-types";
+import { HorizontalScrollRegion } from "../../horizontal-scroll-region";
 
 import { runTradeExplorer } from "./actions";
 import type { TradeExplorerPageModel } from "./trade-explorer-service";
@@ -964,7 +965,12 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
               {visibleGroups.length === 0 ? (
                 <Typography color="text.secondary">{emptyTradeMessage}</Typography>
               ) : (
-                <TableContainer sx={{ display: { xs: "none", md: "block" }, maxHeight: 560 }}>
+                <HorizontalScrollRegion
+                  label={`${activeView.label} results table`}
+                  maxHeight={560}
+                  minTableWidth={Math.max(760, 220 + (showPartitionColumn ? 150 : 0) + displayedColumns.length * 150)}
+                  stickyFirstColumn
+                >
                   <Table size="small" stickyHeader>
                     <TableHead><TableRow><TableCell>{activeView.firstColumnLabel}</TableCell>{showPartitionColumn ? <TableCell>{partitionColumnLabel}</TableCell> : null}{displayedColumns.map((column) => <TableCell key={column.label}>{column.label}</TableCell>)}</TableRow></TableHead>
                     <TableBody>
@@ -977,45 +983,8 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
                       ))}
                     </TableBody>
                   </Table>
-                </TableContainer>
+                </HorizontalScrollRegion>
               )}
-              {visibleGroups.length > 0 ? (
-                <Stack spacing={1.25} sx={{ display: { xs: "flex", md: "none" } }}>
-                  {visibleGroups.map((item) => (
-                    <Box
-                      component="article"
-                      key={item.id}
-                      sx={{ border: 1, borderColor: "divider", borderRadius: 2, p: 1.5 }}
-                    >
-                      <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
-                        <Box sx={{ minWidth: 0 }}>
-                          <Typography
-                            sx={{
-                              fontWeight: 800,
-                              overflowWrap: "anywhere",
-                              textTransform: appliedResultView === "entry_times" ? "none" : "capitalize",
-                            }}
-                          >
-                            {item.label}
-                          </Typography>
-                          <Typography color="text.secondary" variant="caption">{activeView.firstColumnLabel}</Typography>
-                        </Box>
-                        {showPartitionColumn ? <Chip label={item.partitionLabel} size="small" variant="outlined" /> : null}
-                      </Stack>
-                      <Box sx={{ display: "grid", gap: 1.25, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1.5 }}>
-                        {displayedColumns.map((column) => (
-                          <Box key={column.label} sx={{ minWidth: 0 }}>
-                            <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">{column.label}</Typography>
-                            <Typography sx={{ fontWeight: 700, overflowWrap: "anywhere" }} variant="body2">
-                              {column.kind === "day_path" ? dayMovement(item.group) : value(item.group, column.metricId)}
-                            </Typography>
-                          </Box>
-                        ))}
-                      </Box>
-                    </Box>
-                  ))}
-                </Stack>
-              ) : null}
               {sortedGroups.length > groupPageSize ? (
                 <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: { xs: "space-between", md: "flex-end" }, mt: 1.5 }}>
                   <Button
@@ -1055,12 +1024,11 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
             <Typography color="text.secondary">{emptyTradeMessage}</Typography>
           ) : (
             <>
-              <TableContainer sx={{ display: { xs: "none", md: "block" }, maxHeight: 560, overflowX: "auto" }}>
+              <HorizontalScrollRegion label="Individual trades table" maxHeight={560} minTableWidth={1260}>
                 <Table
                   size="small"
                   stickyHeader
                   sx={{
-                    minWidth: 980,
                     width: "max-content",
                     "& > tbody > tr > td, & > thead > tr > th": {
                       px: 1,
@@ -1126,108 +1094,7 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
                     })}
                   </TableBody>
                 </Table>
-              </TableContainer>
-              <Stack spacing={1.25} sx={{ display: { xs: "flex", md: "none" } }}>
-                {preview.evidence.rows.map((trade) => {
-                  const expanded = expandedRoundTripId === trade.roundTripId;
-                  const executionRegionId = `trade-explorer-executions-${trade.roundTripId}`;
-                  return (
-                    <Box
-                      component="article"
-                      key={trade.roundTripId}
-                      sx={{ border: 1, borderColor: expanded ? "primary.main" : "divider", borderRadius: 2, overflow: "hidden" }}
-                    >
-                      <Box sx={{ p: 1.5 }}>
-                        <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
-                          <Box sx={{ minWidth: 0 }}>
-                            <Typography sx={{ fontWeight: 800 }} variant="h6">{trade.displayedSymbol}</Typography>
-                            <Typography color="text.secondary" variant="body2">
-                              {trade.closeLocalDate} · {tradeCloseTime(trade.closedAtUtc, preview.evidence?.timezone ?? "UTC")}
-                            </Typography>
-                          </Box>
-                          <Chip label={trade.direction} size="small" sx={{ textTransform: "capitalize" }} variant="outlined" />
-                        </Stack>
-                        <Box sx={{ display: "grid", gap: 1.25, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1.5 }}>
-                          <Box>
-                            <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">{appliedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L"}</Typography>
-                            <Typography sx={{ color: pnlColor(trade.selectedPnlDecimal), fontWeight: 800 }}>
-                              {money(trade.selectedPnlDecimal, preview.evidence?.currency ?? null)}
-                            </Typography>
-                          </Box>
-                          <Box>
-                            <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">Return</Typography>
-                            <Typography sx={{ fontWeight: 700 }}>
-                              {trade.returnPercentDecimal === null || trade.returnPercentDecimal === undefined ? "N/A" : `${formatJournalAnalyticsDecimal(trade.returnPercentDecimal)}%`}
-                            </Typography>
-                          </Box>
-                          <Box>
-                            <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">Shares</Typography>
-                            <Typography sx={{ fontWeight: 700 }}>{formatJournalAnalyticsDecimal(trade.enteredQuantityDecimal)}</Typography>
-                          </Box>
-                          <Box>
-                            <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">Hold</Typography>
-                            <Typography sx={{ fontWeight: 700 }}>{formatJournalAnalyticsDuration(trade.holdingDurationMilliseconds)}</Typography>
-                          </Box>
-                          <Box>
-                            <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">Avg entry</Typography>
-                            <Typography sx={{ fontWeight: 700 }}>{trade.averageEntryPriceDecimal ? money(trade.averageEntryPriceDecimal, preview.evidence?.currency ?? null) : "N/A"}</Typography>
-                          </Box>
-                          <Box>
-                            <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">Avg exit</Typography>
-                            <Typography sx={{ fontWeight: 700 }}>{trade.averageExitPriceDecimal ? money(trade.averageExitPriceDecimal, preview.evidence?.currency ?? null) : "N/A"}</Typography>
-                          </Box>
-                          <Box>
-                            <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">Entry value</Typography>
-                            <Typography sx={{ fontWeight: 700 }}>{money(trade.entryNotionalDecimal, preview.evidence?.currency ?? null)}</Typography>
-                          </Box>
-                          <Box>
-                            <Typography color="text.secondary" sx={{ display: "block" }} variant="caption">Executions</Typography>
-                            <Typography sx={{ fontWeight: 700 }}>{trade.uniqueExecutionCount}</Typography>
-                          </Box>
-                        </Box>
-                        <Button
-                          aria-controls={expanded ? executionRegionId : undefined}
-                          aria-expanded={expanded}
-                          endIcon={<ExpandMoreRoundedIcon sx={{ transform: expanded ? "rotate(180deg)" : "none" }} />}
-                          fullWidth
-                          onClick={() => void toggleTradeExecutions(trade.roundTripId)}
-                          sx={{ minHeight: 44, mt: 1.5 }}
-                          variant="outlined"
-                        >
-                          {expanded ? "Hide executions" : "View executions"}
-                        </Button>
-                      </Box>
-                      <Collapse in={expanded}>
-                        <Box id={executionRegionId} sx={{ backgroundColor: "action.hover", borderTop: 1, borderColor: "divider", p: 1.5 }}>
-                          {executionDetailsStatus === "loading" ? <Typography color="text.secondary">Loading executions…</Typography> : null}
-                          {executionDetailsStatus === "error" ? <Alert severity="error">The executions could not be loaded.</Alert> : null}
-                          {executionDetailsStatus === "ready" && expandedExecutions.length === 0 ? <Typography color="text.secondary">No executions are available for this trade.</Typography> : null}
-                          {executionDetailsStatus === "ready" && expandedExecutions.length > 0 ? (
-                            <Stack aria-label={`${trade.displayedSymbol} trade executions`} spacing={1}>
-                              {expandedExecutions.map((execution, index) => (
-                                <Box key={`${execution.executed_at_utc}-${execution.side}-${index}`} sx={{ backgroundColor: "background.paper", border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.25 }}>
-                                  <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
-                                    <Box>
-                                      <Typography sx={{ fontWeight: 700 }} variant="body2">{executionTime(execution.executed_at_utc, preview.evidence?.timezone ?? "UTC")}</Typography>
-                                      <Typography color="text.secondary" sx={{ textTransform: "capitalize" }} variant="caption">{execution.side}</Typography>
-                                    </Box>
-                                    <Box sx={{ textAlign: "right" }}>
-                                      <Typography sx={{ fontWeight: 700 }} variant="body2">{formatJournalAnalyticsDecimal(execution.quantity_decimal)} shares</Typography>
-                                      <Typography color="text.secondary" variant="caption">
-                                        {execution.price_decimal === null ? "Price not recorded" : money(execution.price_decimal, preview.evidence?.currency ?? null)}
-                                      </Typography>
-                                    </Box>
-                                  </Stack>
-                                </Box>
-                              ))}
-                            </Stack>
-                          ) : null}
-                        </Box>
-                      </Collapse>
-                    </Box>
-                  );
-                })}
-              </Stack>
+              </HorizontalScrollRegion>
               {tradeRowsHaveUnavailable ? (
                 <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">
                   N/A means this trade does not have the confirmed details needed for that value.

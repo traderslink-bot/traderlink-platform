@@ -15,13 +15,13 @@ import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import Link from "next/link";
 
 import { DashboardPage } from "../../dashboard-template";
+import { HorizontalScrollRegion } from "../horizontal-scroll-region";
 import type { HelpArticleBlock, HelpGuide } from
   "@/src/modules/help/help-guide-types";
 
@@ -96,7 +96,7 @@ function ArticleBlock({ block }: { block: HelpArticleBlock }) {
   }
   return (
     <Paper variant="outlined">
-      <TableContainer>
+      <HorizontalScrollRegion label="Help comparison table" minTableWidth={Math.max(520, 150 + Math.max(0, block.columns.length - 1) * 260)} stickyFirstColumn>
         <Table size="small">
           <TableHead>
             <TableRow>
@@ -127,7 +127,7 @@ function ArticleBlock({ block }: { block: HelpArticleBlock }) {
             ))}
           </TableBody>
         </Table>
-      </TableContainer>
+      </HorizontalScrollRegion>
     </Paper>
   );
 }

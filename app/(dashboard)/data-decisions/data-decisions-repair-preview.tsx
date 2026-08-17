@@ -21,7 +21,6 @@ import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
@@ -32,6 +31,7 @@ import {
   DashboardPanel,
   DashboardUnavailableState,
 } from "../../dashboard-template";
+import { HorizontalScrollRegion } from "../horizontal-scroll-region";
 
 type RepairAction = "Save correction" | "Keep as imported" | "Exclude row" | "Reset to source";
 
@@ -493,7 +493,7 @@ export function DataDecisionsRepairPreview() {
               Each row explains what needs attention. Edit the values shown by your broker, choose how to handle the row, then save and recheck the statement.
             </Typography>
             <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ alignItems: { md: "center" } }}>
-              <TextField aria-label="Sort rows" label="Sort rows" onChange={(event) => setSortOrder(event.target.value as SortOrder)} select size="small" sx={{ minWidth: 210 }} value={sortOrder}>
+              <TextField aria-label="Sort rows" label="Sort rows" onChange={(event) => setSortOrder(event.target.value as SortOrder)} select size="small" sx={{ minWidth: { xs: 0, md: 210 }, width: { xs: "100%", md: "auto" } }} value={sortOrder}>
                 <MenuItem value="statement">Statement row</MenuItem>
                 <MenuItem value="symbol-asc">Ticker A–Z</MenuItem>
                 <MenuItem value="symbol-desc">Ticker Z–A</MenuItem>
@@ -507,7 +507,8 @@ export function DataDecisionsRepairPreview() {
               <Button disabled={selectedRowIds.length === 0} onClick={() => setSelectedAction("Exclude row")} size="small" variant="outlined">Exclude selected</Button>
               <Button disabled={selectedRowIds.length === 0} onClick={() => setSelectedAction("Reset to source")} size="small" variant="outlined">Reset selected</Button>
             </Stack>
-            <TableContainer sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, maxHeight: 620 }}>
+            <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, overflow: "hidden" }}>
+            <HorizontalScrollRegion label="Import repair rows table" maxHeight={620} minTableWidth={1320}>
               <Table size="small" stickyHeader sx={{ minWidth: 1320 }}>
                 <TableHead><TableRow>
                   <TableCell padding="checkbox"><Checkbox aria-label="Select all visible review rows" checked={allVisibleSelected} indeterminate={selectedRowIds.length > 0 && !allVisibleSelected} onChange={(event) => setSelectedRowIds(event.target.checked ? visibleRows.map((row) => row.id) : [])} /></TableCell>
@@ -527,11 +528,12 @@ export function DataDecisionsRepairPreview() {
                   <TableCell sx={{ minWidth: 180 }}><TextField aria-label={`Action for statement row ${row.row}`} fullWidth onChange={(event) => setRows((current) => updateRowField(current, row.id, "action", event.target.value as RepairAction))} select size="small" value={row.action}>{ACTIONS.map((action) => <MenuItem key={action} value={action}>{action}</MenuItem>)}</TextField></TableCell>
                 </TableRow>)}{!loading && rows.length === 0 ? <TableRow><TableCell colSpan={11}><Typography color="text.secondary" variant="body2">{statement ? "No rows need review in this statement." : "No repair rows are available. Older imports need to be imported again once to retain their original broker-row details."}</Typography></TableCell></TableRow> : null}</TableBody>
               </Table>
-            </TableContainer>
+            </HorizontalScrollRegion>
+            </Box>
             {automaticRows(statement).length > 0 ? <DashboardPanel title="Automatically set aside">
               <Stack spacing={1}>
                 <Typography color="text.secondary" variant="body2">{automaticRows(statement).length} statement rows were identified as headings, cash/FX, unfilled orders, or another non-stock record. They remain visible and do not need an exclusion decision.</Typography>
-                <TableContainer sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, maxHeight: 340 }}><Table size="small" stickyHeader sx={{ minWidth: 680 }}><TableHead><TableRow><TableCell>Statement row</TableCell><TableCell>Why it was set aside</TableCell><TableCell>Date</TableCell><TableCell>Time</TableCell><TableCell>Ticker</TableCell></TableRow></TableHead><TableBody>{automaticRows(statement).map((row) => { const parts = splitTimestamp(row.timestamp ?? ""); return <TableRow key={row.sourceRowNumber}><TableCell sx={{ fontWeight: 700 }}>{row.sourceRowNumber}</TableCell><TableCell><Typography variant="body2">{row.issues.map((issue) => issue.message).join(" ")}</Typography></TableCell><TableCell>{parts.date || "—"}</TableCell><TableCell>{parts.time || "—"}</TableCell><TableCell>{row.symbol ?? "—"}</TableCell></TableRow>; })}</TableBody></Table></TableContainer>
+                <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, overflow: "hidden" }}><HorizontalScrollRegion label="Automatically set aside rows table" maxHeight={340} minTableWidth={680} stickyFirstColumn><Table size="small" stickyHeader><TableHead><TableRow><TableCell>Statement row</TableCell><TableCell>Why it was set aside</TableCell><TableCell>Date</TableCell><TableCell>Time</TableCell><TableCell>Ticker</TableCell></TableRow></TableHead><TableBody>{automaticRows(statement).map((row) => { const parts = splitTimestamp(row.timestamp ?? ""); return <TableRow key={row.sourceRowNumber}><TableCell sx={{ fontWeight: 700 }}>{row.sourceRowNumber}</TableCell><TableCell><Typography variant="body2">{row.issues.map((issue) => issue.message).join(" ")}</Typography></TableCell><TableCell>{parts.date || "—"}</TableCell><TableCell>{parts.time || "—"}</TableCell><TableCell>{row.symbol ?? "—"}</TableCell></TableRow>; })}</TableBody></Table></HorizontalScrollRegion></Box>
               </Stack>
             </DashboardPanel> : null}
             <Divider />

@@ -164,7 +164,7 @@ export function ManualExecutionEditDialog({
       <Button
         onClick={openEditor}
         size="small"
-        sx={{ lineHeight: 1.2, minHeight: 26, minWidth: 0, px: 0.75, py: 0.2 }}
+        sx={{ lineHeight: 1.2, minHeight: { xs: 44, sm: 36 }, minWidth: 56, px: 1, py: 0.5 }}
         variant="outlined"
       >
         Edit

@@ -303,7 +303,7 @@ export function AiChatManualEntryCard({
           setPreview(null);
           setConfirmations([]);
           setCompleteSetConfirmed(false);
-        }} select size="small" sx={{ minWidth: 190 }} value={tracker}>
+        }} select size="small" sx={{ minWidth: { xs: 0, sm: 190 }, width: { xs: "100%", sm: "auto" } }} value={tracker}>
           <MenuItem value="quick">Quick trade entry</MenuItem>
           <MenuItem value="swing">Swing trade</MenuItem>
           <MenuItem value="day">Daily Trade Tracker</MenuItem>

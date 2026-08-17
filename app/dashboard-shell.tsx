@@ -6,6 +6,7 @@ import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import CandlestickChartIcon from "@mui/icons-material/CandlestickChart";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
 import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
 import ExpandLessRoundedIcon from "@mui/icons-material/ExpandLessRounded";
@@ -262,7 +263,17 @@ export function DashboardShell({
               width={compact ? 44 : 170}
             />
           </Link>
-          {compact || mobile ? null : (
+          {mobile ? (
+            <Tooltip title="Close navigation">
+              <IconButton
+                aria-label="Close navigation"
+                onClick={closeMobile}
+                sx={{ minHeight: 44, minWidth: 44 }}
+              >
+                <CloseRoundedIcon />
+              </IconButton>
+            </Tooltip>
+          ) : compact ? null : (
             <Tooltip title="Collapse navigation">
               <IconButton
                 aria-label="Collapse navigation"
@@ -604,17 +615,18 @@ export function DashboardShell({
           setAiChatOpen(false);
         }}
         open={aiChatOpen}
+        sx={{ overflowX: "hidden" }}
         slotProps={{
           paper: {
             id: "ai-chat-drawer",
             sx: {
               boxSizing: "border-box",
               height: "100dvh",
-              maxWidth: "100vw",
+              maxWidth: "100%",
               pb: { xs: "env(safe-area-inset-bottom)", md: 0 },
               pt: { xs: "env(safe-area-inset-top)", md: 0 },
               width: {
-                xs: "100vw",
+                xs: "100%",
                 md: "min(860px, calc(100vw - 80px))",
                 xl: 960,
               },

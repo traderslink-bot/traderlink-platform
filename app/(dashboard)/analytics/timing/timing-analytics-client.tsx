@@ -9,6 +9,7 @@ import Typography from "@mui/material/Typography";
 import { useMemo, useState } from "react";
 
 import { FeatureHelpLink } from "../../feature-help-link";
+import { HorizontalScrollHint } from "../../horizontal-scroll-region";
 
 export type TimingMetricId = "net_pnl" | "average_pnl" | "win_rate" | "included_count";
 type TimingChartId = "entry_time_bucket" | "exit_time_bucket" | "entry_weekday" | "entry_session";
@@ -85,6 +86,10 @@ function EmptyChart() {
   return <Typography color="text.secondary" sx={{ display: "block", py: 9 }} variant="body2">No completed trades are available for this view.</Typography>;
 }
 
+function MobileChartScrollHint() {
+  return <HorizontalScrollHint label="Swipe sideways to see the full chart" />;
+}
+
 function TrendChart({ chartId, points, metricId }: { chartId: TimingChartId; points: readonly TimingPoint[]; metricId: TimingMetricId }) {
   if (!points.length) return <EmptyChart />;
   const values = valuesFor(points, metricId);
@@ -95,8 +100,10 @@ function TrendChart({ chartId, points, metricId }: { chartId: TimingChartId; poi
   const line = points.map((point, index) => `${pointX(index)},${yFor(point.metrics[metricId].value ?? 0, range)}`).join(" ");
   const labelIndexes = new Set([0, Math.floor((points.length - 1) / 3), Math.floor(((points.length - 1) * 2) / 3), points.length - 1]);
   return (
-    <Box sx={{ mt: 2, overflowX: "auto" }}>
-      <Box component="svg" preserveAspectRatio="none" sx={{ display: "block", height: 230, minWidth: 480, width: "100%" }} viewBox="0 0 640 230">
+    <>
+      <MobileChartScrollHint />
+      <Box sx={{ WebkitOverflowScrolling: "touch", "&::-webkit-scrollbar": { display: "none" }, mt: 0.5, overflowX: "auto", overscrollBehaviorX: "contain", scrollbarWidth: "none" }}>
+        <Box component="svg" preserveAspectRatio="none" sx={{ display: "block", height: 230, minWidth: 480, width: "100%" }} viewBox="0 0 640 230">
         <line stroke="#d9e1ec" strokeWidth="1" x1="30" x2="610" y1={baseline} y2={baseline} />
         <polyline fill="none" points={line} stroke="#00796b" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
         {points.map((point, index) => {
@@ -109,8 +116,9 @@ function TrendChart({ chartId, points, metricId }: { chartId: TimingChartId; poi
             {labelIndexes.has(index) ? <text fill="#627083" fontSize="11" textAnchor="middle" x={x} y="211">{labelFor(chartId, point)}</text> : null}
           </g>;
         })}
+        </Box>
       </Box>
-    </Box>
+    </>
   );
 }
 
@@ -120,8 +128,10 @@ function ColumnChart({ points, metricId }: { points: readonly TimingPoint[]; met
   const range = chartRange(values);
   const baseline = yFor(0, range);
   return (
-    <Box sx={{ mt: 2, overflowX: "auto" }}>
-      <Box component="svg" preserveAspectRatio="none" sx={{ display: "block", height: 230, minWidth: 480, width: "100%" }} viewBox="0 0 640 230">
+    <>
+      <MobileChartScrollHint />
+      <Box sx={{ WebkitOverflowScrolling: "touch", "&::-webkit-scrollbar": { display: "none" }, mt: 0.5, overflowX: "auto", overscrollBehaviorX: "contain", scrollbarWidth: "none" }}>
+        <Box component="svg" preserveAspectRatio="none" sx={{ display: "block", height: 230, minWidth: 480, width: "100%" }} viewBox="0 0 640 230">
         <line stroke="#d9e1ec" strokeWidth="1" x1="20" x2="620" y1={baseline} y2={baseline} />
         {points.map((point, index) => {
           const value = point.metrics[metricId].value ?? 0;
@@ -134,8 +144,9 @@ function ColumnChart({ points, metricId }: { points: readonly TimingPoint[]; met
             <text fill="#627083" fontSize="11" textAnchor="middle" x={x + Math.max(28, 430 / points.length) / 2} y="211">{point.label.slice(0, 3)}</text>
           </g>;
         })}
+        </Box>
       </Box>
-    </Box>
+    </>
   );
 }
 

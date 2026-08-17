@@ -1,16 +1,17 @@
 # Mobile Dashboard Experience Progress
 
-**Status:** Responsive implementation and controlled browser acceptance complete; owner visual approval pending
+**Status:** Implementation and four-viewport QA complete; owner visual approval pending
 **Plan:** [Mobile Dashboard Experience Plan](mobile-dashboard-experience-plan.md)
 **Started:** 2026-08-16
 
 ## Current boundary
 
-The owner approved the complete mobile direction and the system-wide removal of
-duplicated route titles from the shared top header. Implementation and the
-controlled responsive browser review are complete. The owner released the two
-completed concurrent boundaries and authorized narrow local checkpoints. No
-push, deployment or hosted mutation is authorized.
+The owner approved the system-wide removal of duplicated route titles from the
+shared top header, then rejected the earlier responsive pass's blanket removal
+of contained horizontal scrolling. Mobile acceptance is reopened. Every dense
+dashboard surface must now prove either an information-complete record card or
+a readable contained sideways-scrolling table with an obvious cue. No push,
+deployment or hosted mutation is authorized.
 
 ## Concurrency note
 
@@ -281,3 +282,160 @@ deliberately excluded from this route sweep while chat
 autosave in-progress drafts. After release, that chat completed its own fresh
 desktop and 390-pixel browser acceptance and cleaned its QA data. Owner visual
 approval remains the next gate.
+
+### 2026-08-16 - owner-directed mobile readability correction
+
+- [x] Re-run the integrated dashboard in controlled no-worker review mode at
+  desktop, 390 x 844 and 320 x 568 before changing accepted UI.
+- [x] Confirm the compact Calendar month grid keeps all five weekdays visible
+  only by reducing day cells to 48-63 pixels and meaningful facts to 9-10
+  pixels.
+- [x] Owner rejected shrinking or removing useful information merely to avoid
+  contained horizontal scrolling.
+- [x] Replace the compact month grid with a contained snap-scrolling grid that
+  shows one readable day card at narrow phone widths, keeps weekday headings
+  aligned, and preserves day P/L, trade count, win rate and ticker results.
+- [x] Correct the clipped 320-pixel Calendar period navigation and restore
+  comfortable touch targets.
+- [x] Re-audit other condensed responsive surfaces and retain or restore
+  contained horizontal scrolling wherever it provides a more readable and
+  complete experience than the current presentation.
+- [x] Recheck desktop, 390 x 844, 320 x 568 and 844 x 390, update Calendar Help,
+  and request owner visual approval.
+
+Browser acceptance evidence:
+
+- The Calendar month view shows one complete 232-pixel day at 320 pixels and
+  one complete 302-pixel day at 390 pixels, with a visible slice of the next
+  day, a plain swipe instruction and snap scrolling. Populated cards preserve
+  exact day P/L, trade count, win rate and up to four ticker results.
+- Calendar month/year selectors remain legible at 320 pixels, both period
+  arrows are 44 x 44 pixels and remain inside the viewport. Landscape presents
+  several 220-pixel day cards when space genuinely supports them; desktop
+  continues to use the complete five-column grid.
+- Calendar day details still open as a full-width phone drawer, ticker rows
+  remain reachable, and the drawer introduces no page-level horizontal scroll.
+- The closed and open AI Chat drawer no longer expands the document beyond the
+  phone viewport. Its open width exactly matched 320 pixels during acceptance.
+- Monthly P/L, Timing and Execution chart scrollers now explain that the chart
+  can be swiped and use an arrow cue without an old-style visible scrollbar.
+  The Daily Trade Tracker week strip uses the same discoverable treatment.
+- Daily Trade Tracker date navigation fits one row at 390 pixels and uses an
+  intentional two-row layout at 320 pixels. Chart timeframe controls are 40 x
+  44 pixels with 12-pixel labels; chart zoom controls are 44 x 44 pixels; the
+  Candle patterns control is 44 pixels high.
+- Swing execution Edit actions and other reviewed compact controls now expose
+  44-pixel phone targets. The Notifications menu's View all notifications link
+  is also 44 pixels high.
+- Candle Pattern View occurrences now opens a 320-pixel full-width mobile
+  drawer and a 760-pixel desktop right drawer instead of inserting the browser
+  far below the selected pattern. Closing it restores the pattern-list scroll
+  position. Opening an individual replay retains the existing full-screen
+  mobile chart and desktop replay drawer.
+- Desktop, 390 x 844, 320 x 568 and 844 x 390 checks all retained zero
+  page-level horizontal movement while the intended internal scrollers
+  remained operable.
+
+### 2026-08-16 - dense-view acceptance reopened
+
+- [x] Confirm from commit `21051fb9` that the earlier mobile pass hid the
+  horizontally scrollable Execution Analytics table and substituted cards.
+- [x] Replace the prior blanket card rule in the controlling plan with an
+  information-design rule: comparison tables scroll inside their panel;
+  record cards are allowed only when every desktop field remains present.
+- [x] Inventory every desktop table column and its current phone
+  representation across Analytics, Trade Analyzer, Trade Explorer, Journal,
+  Help and all remaining dashboard routes.
+- [x] Restore every comparison-heavy phone table with readable column widths,
+  a visible swipe instruction and arrow, contained overscroll and no page-level
+  overflow.
+- [x] Correct any record card that omits or compresses a meaningful field.
+- [x] Re-run the complete active-route browser review at desktop, 390 x 844,
+  320 x 568 and 844 x 390 before requesting owner approval.
+
+The corrected dense-surface inventory now uses these presentations:
+
+- Ticker keeps all seven columns in a 760-pixel contained table with a pinned
+  Ticker column, mobile Sort control and bounded pagination.
+- Execution keeps all eleven trade columns in a 1,280-pixel contained table
+  with a pinned Ticker column, mobile Sort control and bounded pagination.
+- Day Trade Analysis comparison rows, Green-to-Red supporting trades, MFE/MAE
+  comparison and measured executions keep their complete comparison tables at
+  readable widths from 760 to 1,520 pixels.
+- Candle Pattern group breakdowns and the paginated occurrence browser keep
+  their complete tables; the selected replay remains a full-screen phone
+  dialog and is loaded only when requested.
+- Analyzed Trades, Trade Explorer grouped results, Trade Explorer individual
+  trades, Analytics Lab and Help comparison blocks use the same contained
+  table contract. Trade Explorer keeps the full mobile filter drawer and
+  bounded result pages.
+- Open Positions, Import mapping issues/history and Data Decisions evidence
+  retain cards on phones only because source comparison confirmed every
+  meaningful desktop field is present and row-to-row column comparison is not
+  their primary task. Import field mapping and Data Decisions repair grids
+  remain contained tables.
+- Calendar shows one complete day at narrow phone widths with a visible part of
+  the next day plus the swipe cue. Month cards retain P/L, trade count, win
+  rate and available ticker results. The phone week remains a readable card
+  list.
+
+Every retained horizontal table, chart, Calendar strip and Daily Trade Tracker
+week strip now shows a plain scroll instruction with a directional arrow before
+the scrollable content. Native scrollbars remain visually quiet. The shared
+table region is keyboard focusable, contains horizontal overscroll and can pin
+the first comparison column without moving the whole document.
+
+### Corrected route evidence
+
+- Live 320-pixel browser evidence verified Ticker and Execution have no
+  document overflow, show the 13.5-pixel swipe cue, preserve their complete
+  760/1,280-pixel tables and physically scroll inside the panel. Ticker reached
+  its maximum horizontal offset while its pinned first column remained aligned
+  to the panel edge.
+- The controlled no-worker server returned complete `200` responses for every
+  active top-level dashboard destination: Workspace; Daily and Swing Trade
+  Tracker; Quick Trade Entry; Calendar; Trading Rules and Rule Results; Open
+  Positions; Analytics Overview, Ticker, Timing, Execution, Day Trade Analysis,
+  MFE & MAE, Green-to-Red, Candle Patterns, Analyzed Trades and Trade Explorer;
+  Imports; Data Decisions; Notifications; Market Charts; AI Chat; AI Reviews;
+  Help; Account and all Account subsections. The dated Daily Trade Tracker and
+  preserved redirect routes also rendered successfully.
+- Entry & Exit was not retried after the in-app browser navigation safety layer
+  blocked that exact URL following the first review server's low-memory crash.
+  Its responsive tables are rendered by the same corrected shared Day Trade
+  Analysis client that passed lint and rendered successfully through the other
+  Analyzer routes.
+- The first full four-viewport rerun was interrupted when its controlled review
+  process reached its memory limit and the in-app browser retained the failed
+  navigation. No alternate browser was used to bypass that safeguard. The fresh
+  worker-free acceptance below supersedes that temporary boundary.
+
+### 2026-08-16 - final four-viewport and drawer acceptance
+
+- [x] Replaced the failed review process with a fresh worker-free server after
+  verifying and stopping only the stale port-3010 process tree.
+- [x] Rechecked the active dashboard inventory at 390 x 844 and 320 x 568,
+  including Workspace, trackers, Calendar, Rules, Open Positions, Imports,
+  Data Decisions, all Core Analytics and Trade Analyzer destinations, Trade
+  Explorer, AI, Charts, Help, Notifications, Account subsections and supported
+  redirect routes. No active page introduced document-level horizontal
+  movement.
+- [x] Physically scrolled Calendar and Ticker at 320 pixels. Calendar moved to
+  later complete day cards while retaining P/L, trade count, win rate and
+  tickers. Ticker moved 320 pixels while its pinned ticker cell remained
+  aligned with the panel edge.
+- [x] Made shared table cues reflect actual overflow. A fitting 760-pixel
+  Ticker table has no misleading landscape cue; the 1,280-pixel Execution table
+  keeps `Scroll sideways to see all columns` in landscape and desktop because
+  it still scrolls inside its panel.
+- [x] Rechecked representative desktop and 844 x 390 layouts after the clean
+  restart. Calendar, Ticker and Execution retain one body title and no page
+  overflow, and the shared overflow rule covers every corrected dense table.
+- [x] Audited every active drawer implementation for an explicit exit. AI Chat,
+  Trade Explorer filters, AI Review coverage, Candle Pattern occurrences and
+  replay already had visible Close actions. Added 44-pixel labeled Close
+  controls to mobile navigation, Calendar filters and saved views, and verified
+  Calendar day details closes through a visible 44-pixel action.
+
+Owner visual approval remains the only product-acceptance gate. No push or
+deployment was performed.

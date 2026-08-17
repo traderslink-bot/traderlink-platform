@@ -8,7 +8,6 @@ import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
@@ -23,6 +22,7 @@ import { withJournalAnalyticsDashboardRuntime } from "@/src/modules/journal-anal
 import {
   requireTraderLinkPlatformPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { HorizontalScrollRegion } from "../../horizontal-scroll-region";
 
 export const metadata: Metadata = {
   title: "Trades by Ticker | TraderLink Platform",
@@ -67,7 +67,7 @@ export default async function TradesByTickerPage() {
             description="No analytics-ready closed trades are available in Trade Tracker. No V3 or sample rows are substituted."
           />
         ) : (
-          <TableContainer>
+          <HorizontalScrollRegion label="Ticker history table" minTableWidth={780} stickyFirstColumn>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -100,7 +100,7 @@ export default async function TradesByTickerPage() {
                 ))}
               </TableBody>
             </Table>
-          </TableContainer>
+          </HorizontalScrollRegion>
         )}
       </DashboardPanel>
     </DashboardPage>

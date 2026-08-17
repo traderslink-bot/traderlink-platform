@@ -6,9 +6,6 @@ import {
   Alert,
   Box,
   Button,
-  Card,
-  CardActionArea,
-  CardContent,
   CircularProgress,
   Dialog,
   DialogContent,
@@ -21,7 +18,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   TextField,
@@ -30,7 +26,7 @@ import {
   useTheme,
 } from "@mui/material";
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import type {
   DailyTradePatternOccurrencePage,
@@ -42,6 +38,7 @@ import type { DailyTradeChartInterval } from
   "@/app/(dashboard)/trade-tracker/[sessionDate]/daily-trade-analyzer-chart";
 
 import { TradeAnalyzerTablePagination } from "./trade-analyzer-table-pagination";
+import { HorizontalScrollRegion } from "../horizontal-scroll-region";
 
 const DailyTradeAnalyzerChart = dynamic(
   () => import("@/app/(dashboard)/trade-tracker/[sessionDate]/daily-trade-analyzer-chart")
@@ -145,12 +142,14 @@ export function CandlePatternOccurrenceExplorer({
   currency,
   endDate,
   moneyBasis,
+  onClose,
   pattern,
   startDate,
 }: {
   currency: string | null;
   endDate: string | null;
   moneyBasis: "gross" | "net";
+  onClose: () => void;
   pattern: string;
   startDate: string | null;
 }) {
@@ -177,37 +176,15 @@ export function CandlePatternOccurrenceExplorer({
       setTicker(draftTicker.trim());
       setPage(1);
       setCursors({ 1: null });
+      setSelectedIndex(null);
     }, 250);
     return () => window.clearTimeout(timeout);
   }, [draftTicker]);
 
-  useEffect(() => {
-    setPage(1);
-    setCursors({ 1: null });
-    setSelectedIndex(null);
-  }, [execution, location, pattern, timeframe]);
-
-  const queryKey = useMemo(() => JSON.stringify({
-    currency,
-    cursor: cursors[page] ?? null,
-    endDate,
-    execution,
-    location,
-    moneyBasis,
-    page,
-    pageSize,
-    pattern,
-    startDate,
-    ticker,
-    timeframe,
-  }), [currency, cursors, endDate, execution, location, moneyBasis, page, pageSize, pattern, startDate, ticker, timeframe]);
+  const cursor = cursors[page] ?? null;
 
   useEffect(() => {
-    if (!currency) {
-      setResult(null);
-      setState("ready");
-      return;
-    }
+    if (!currency) return;
     const controller = new AbortController();
     const params = new URLSearchParams({
       basis: moneyBasis,
@@ -223,9 +200,10 @@ export function CandlePatternOccurrenceExplorer({
       params.set("start", startDate);
       params.set("end", endDate);
     }
-    const cursor = cursors[page];
     if (cursor) params.set("cursor", cursor);
-    setState("loading");
+    queueMicrotask(() => {
+      if (!controller.signal.aborted) setState("loading");
+    });
     void fetch(`/api/platform/trade-analyzer/candle-patterns/occurrences?${params.toString()}`, {
       cache: "no-store",
       signal: controller.signal,
@@ -235,7 +213,9 @@ export function CandlePatternOccurrenceExplorer({
         throw new Error("Pattern occurrences are unavailable.");
       }
       setResult(payload.page);
-      setCursors((current) => ({ ...current, [page + 1]: payload.page!.continuationCursor }));
+      setCursors((current) => current[page + 1] === payload.page!.continuationCursor
+        ? current
+        : { ...current, [page + 1]: payload.page!.continuationCursor });
       setState("ready");
     }).catch((error: unknown) => {
       if (controller.signal.aborted) return;
@@ -245,20 +225,17 @@ export function CandlePatternOccurrenceExplorer({
       setState("error");
     });
     return () => controller.abort();
-  // queryKey intentionally captures the complete bounded request.
-  }, [queryKey]);
+  }, [currency, cursor, endDate, execution, location, moneyBasis, page, pageSize, pattern, startDate, ticker, timeframe]);
 
   useEffect(() => {
-    if (!selected) {
-      setReplay(null);
-      setReplayState("idle");
-      return;
-    }
-    setChartInterval(selected.timeframe);
+    if (!selected) return;
     const controller = new AbortController();
     const params = new URLSearchParams({ basis: moneyBasis, ref: selected.occurrenceRef });
-    setReplayState("loading");
-    setReplay(null);
+    queueMicrotask(() => {
+      if (controller.signal.aborted) return;
+      setReplayState("loading");
+      setReplay(null);
+    });
     void fetch(`/api/platform/trade-analyzer/candle-patterns/replay?${params.toString()}`, {
       cache: "no-store",
       signal: controller.signal,
@@ -279,7 +256,21 @@ export function CandlePatternOccurrenceExplorer({
     return () => controller.abort();
   }, [moneyBasis, selected]);
 
-  const closeReplay = () => setSelectedIndex(null);
+  const resetPaging = () => {
+    setPage(1);
+    setCursors({ 1: null });
+    setSelectedIndex(null);
+  };
+  const selectOccurrence = (index: number) => {
+    const occurrence = result?.rows[index];
+    if (occurrence) setChartInterval(occurrence.timeframe);
+    setSelectedIndex(index);
+  };
+  const closeReplay = () => {
+    setSelectedIndex(null);
+    setReplay(null);
+    setReplayState("idle");
+  };
   const replayBody = selected ? (
     <Stack
       sx={{
@@ -305,8 +296,8 @@ export function CandlePatternOccurrenceExplorer({
         </Stack>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ px: { xs: 1.5, sm: 2 }, pb: 1.5 }}>
           <Stack direction="row" spacing={1}>
-            <Button disabled={selectedIndex === 0} onClick={() => setSelectedIndex((value) => value === null ? null : Math.max(0, value - 1))} size="small" variant="outlined">Previous</Button>
-            <Button disabled={selectedIndex === (result?.rows.length ?? 1) - 1} onClick={() => setSelectedIndex((value) => value === null ? null : Math.min((result?.rows.length ?? 1) - 1, value + 1))} size="small" variant="outlined">Next</Button>
+            <Button disabled={selectedIndex === 0} onClick={() => { if (selectedIndex !== null) selectOccurrence(Math.max(0, selectedIndex - 1)); }} size="small" variant="outlined">Previous</Button>
+            <Button disabled={selectedIndex === (result?.rows.length ?? 1) - 1} onClick={() => { if (selectedIndex !== null) selectOccurrence(Math.min((result?.rows.length ?? 1) - 1, selectedIndex + 1)); }} size="small" variant="outlined">Next</Button>
           </Stack>
           <Button endIcon={<OpenInNewIcon />} href={trackerHref(selected)} size="small" sx={{ ml: { sm: "auto !important" } }} variant="contained">Open Daily Trade Tracker</Button>
         </Stack>
@@ -333,35 +324,35 @@ export function CandlePatternOccurrenceExplorer({
     </Stack>
   ) : null;
 
-  const rows = result?.rows ?? [];
+  const resolvedState = currency ? state : "ready";
+  const rows = currency ? result?.rows ?? [] : [];
   return (
-    <Paper sx={{ p: { xs: 1.5, sm: 2.25 } }} variant="outlined">
+    <Paper square sx={{ border: 0, minHeight: "100%", p: { xs: 1.5, sm: 2.25 } }} variant="outlined">
       <Stack spacing={1.5}>
-        <Typography component="h2" sx={{ fontWeight: 900 }} variant="h6">
-          {friendlyPattern(pattern)} occurrences
-        </Typography>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center", bgcolor: "background.paper", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 3 }}>
+          <Typography component="h2" sx={{ fontWeight: 900 }} variant="h6">
+            {friendlyPattern(pattern)} occurrences
+          </Typography>
+          <IconButton aria-label="Close pattern occurrences" onClick={onClose} sx={{ minHeight: 44, minWidth: 44 }}><CloseIcon /></IconButton>
+        </Stack>
         <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(4, minmax(0, 1fr))" } }}>
           <TextField label="Ticker" onChange={(event) => setDraftTicker(event.target.value)} size="small" value={draftTicker} />
-          <TextField label="Timeframe" onChange={(event) => setTimeframe(event.target.value as typeof timeframe)} select size="small" value={timeframe}><MenuItem value="all">All timeframes</MenuItem><MenuItem value="1m">1 minute</MenuItem><MenuItem value="5m">5 minutes</MenuItem></TextField>
-          <TextField label="Execution" onChange={(event) => setExecution(event.target.value as typeof execution)} select size="small" value={execution}><MenuItem value="all">All executions</MenuItem><MenuItem value="entry">Entries and adds</MenuItem><MenuItem value="exit">Partial and final exits</MenuItem></TextField>
-          <TextField label="Location" onChange={(event) => setLocation(event.target.value as typeof location)} select size="small" value={location}><MenuItem value="all">All locations</MenuItem><MenuItem value="exact">Execution candle</MenuItem><MenuItem value="before">Before execution</MenuItem></TextField>
+          <TextField label="Timeframe" onChange={(event) => { setTimeframe(event.target.value as typeof timeframe); resetPaging(); }} select size="small" value={timeframe}><MenuItem value="all">All timeframes</MenuItem><MenuItem value="1m">1 minute</MenuItem><MenuItem value="5m">5 minutes</MenuItem></TextField>
+          <TextField label="Execution" onChange={(event) => { setExecution(event.target.value as typeof execution); resetPaging(); }} select size="small" value={execution}><MenuItem value="all">All executions</MenuItem><MenuItem value="entry">Entries and adds</MenuItem><MenuItem value="exit">Partial and final exits</MenuItem></TextField>
+          <TextField label="Location" onChange={(event) => { setLocation(event.target.value as typeof location); resetPaging(); }} select size="small" value={location}><MenuItem value="all">All locations</MenuItem><MenuItem value="exact">Execution candle</MenuItem><MenuItem value="before">Before execution</MenuItem></TextField>
         </Box>
         {currency ? <TradeAnalyzerTablePagination onPageChange={(nextPage) => { if (nextPage < page || cursors[nextPage]) setPage(nextPage); }} onPageSizeChange={(nextSize) => { setPageSize(nextSize); setPage(1); setCursors({ 1: null }); }} page={page} pageSize={pageSize} rowCount={result?.totalRowCount ?? 0} /> : null}
-        {state === "loading" && !result ? <Stack direction="row" spacing={1} sx={{ alignItems: "center", py: 3 }}><CircularProgress size={20} /><Typography color="text.secondary">Loading occurrences…</Typography></Stack> : null}
-        {state === "error" ? <Alert severity="error">Pattern occurrences could not be loaded. Try again.</Alert> : null}
-        {state === "ready" && rows.length === 0 ? <Typography color="text.secondary">No occurrences match these filters.</Typography> : null}
+        {resolvedState === "loading" && !result ? <Stack direction="row" spacing={1} sx={{ alignItems: "center", py: 3 }}><CircularProgress size={20} /><Typography color="text.secondary">Loading occurrences…</Typography></Stack> : null}
+        {resolvedState === "error" ? <Alert severity="error">Pattern occurrences could not be loaded. Try again.</Alert> : null}
+        {resolvedState === "ready" && rows.length === 0 ? <Typography color="text.secondary">No occurrences match these filters.</Typography> : null}
 
-        {rows.length > 0 ? <>
-          <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
+        {rows.length > 0 ?
+          <HorizontalScrollRegion label={`${friendlyPattern(pattern)} occurrences table`} minTableWidth={1060}>
             <Table aria-label={`${friendlyPattern(pattern)} occurrences`} size="small">
               <TableHead><TableRow><TableCell>Date and time</TableCell><TableCell>Ticker</TableCell><TableCell>Direction</TableCell><TableCell>Timeframe</TableCell><TableCell>Execution</TableCell><TableCell>Location</TableCell><TableCell align="right">Result</TableCell><TableCell /></TableRow></TableHead>
-              <TableBody>{rows.map((row, index) => <TableRow hover key={row.occurrenceRef}><TableCell>{dateTime(row.executedAtUtc, result!.timezone)}</TableCell><TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.timeframe}</TableCell><TableCell>{eventLabel(row.eventKind)}</TableCell><TableCell>{locationLabel(row.candlesBeforeExecution)}</TableCell><TableCell align="right" sx={{ color: row.resultDecimal !== null && Number(row.resultDecimal) < 0 ? "error.main" : "success.main", fontWeight: 800 }}>{money(row.resultDecimal, row.currency)}</TableCell><TableCell align="right"><Button onClick={() => setSelectedIndex(index)} size="small" variant="outlined">View chart</Button></TableCell></TableRow>)}</TableBody>
+              <TableBody>{rows.map((row, index) => <TableRow hover key={row.occurrenceRef}><TableCell>{dateTime(row.executedAtUtc, result!.timezone)}</TableCell><TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.timeframe}</TableCell><TableCell>{eventLabel(row.eventKind)}</TableCell><TableCell>{locationLabel(row.candlesBeforeExecution)}</TableCell><TableCell align="right" sx={{ color: row.resultDecimal !== null && Number(row.resultDecimal) < 0 ? "error.main" : "success.main", fontWeight: 800 }}>{money(row.resultDecimal, row.currency)}</TableCell><TableCell align="right"><Button onClick={() => selectOccurrence(index)} size="small" variant="outlined">View chart</Button></TableCell></TableRow>)}</TableBody>
             </Table>
-          </TableContainer>
-          <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" } }}>
-            {rows.map((row, index) => <Card key={row.occurrenceRef} variant="outlined"><CardActionArea aria-label={`View ${row.symbol} ${friendlyPattern(row.pattern)} chart`} onClick={() => setSelectedIndex(index)}><CardContent><Stack direction="row" sx={{ alignItems: "flex-start", justifyContent: "space-between" }}><Box><Typography sx={{ fontWeight: 900 }} variant="h6">{row.symbol}</Typography><Typography color="text.secondary" sx={{ textTransform: "capitalize" }} variant="body2">{dateTime(row.executedAtUtc, result!.timezone)} · {row.direction}</Typography></Box><Typography color={row.resultDecimal !== null && Number(row.resultDecimal) < 0 ? "error.main" : "success.main"} sx={{ fontWeight: 850 }}>{money(row.resultDecimal, row.currency)}</Typography></Stack><Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1.5 }}><Box><Typography color="text.secondary" variant="caption">Execution</Typography><Typography variant="body2">{eventLabel(row.eventKind)}</Typography></Box><Box><Typography color="text.secondary" variant="caption">Timeframe</Typography><Typography variant="body2">{row.timeframe}</Typography></Box><Box sx={{ gridColumn: "1 / -1" }}><Typography color="text.secondary" variant="caption">Location</Typography><Typography variant="body2">{locationLabel(row.candlesBeforeExecution)}</Typography></Box></Box><Typography color="primary.main" sx={{ fontWeight: 800, mt: 1.5 }} variant="body2">View chart</Typography></CardContent></CardActionArea></Card>)}
-          </Stack>
-        </> : null}
+          </HorizontalScrollRegion> : null}
       </Stack>
 
       {mobile ? (

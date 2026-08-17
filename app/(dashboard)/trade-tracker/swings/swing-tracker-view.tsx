@@ -187,7 +187,7 @@ function SwingCard({
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}>
             <Typography sx={{ fontWeight: 850 }} variant="subtitle2">Saved notes</Typography>
             {active ? (
-              <Button onClick={() => setEditingNoteDate(reviewDate)} size="small" variant="outlined">
+              <Button onClick={() => setEditingNoteDate(reviewDate)} size="small" sx={{ minHeight: { xs: 44, sm: 36 } }} variant="outlined">
                 Add additional note
               </Button>
             ) : null}
@@ -197,7 +197,7 @@ function SwingCard({
           ) : (
             <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.75, mt: 1 }}>
               {position.notes.map((note) => (
-                <Button key={`${note.reviewDate}:${note.revision}`} onClick={() => setEditingNoteDate(note.reviewDate)} size="small" variant="outlined">
+                <Button key={`${note.reviewDate}:${note.revision}`} onClick={() => setEditingNoteDate(note.reviewDate)} size="small" sx={{ minHeight: { xs: 44, sm: 36 } }} variant="outlined">
                   {note.reviewDate}
                 </Button>
               ))}

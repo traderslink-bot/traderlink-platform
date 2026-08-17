@@ -245,9 +245,9 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         id: "measured-executions",
         title: "Measured executions",
         summary: "Audit the entry and add observations behind the long-term statistics.",
-        keywords: ["ticker", "entries", "adds", "pagination", "view full analysis", "mobile cards"],
+        keywords: ["ticker", "entries", "adds", "pagination", "view full analysis", "mobile table", "swipe"],
         blocks: [
-          { kind: "paragraph", text: "Ticker and execution filters apply before pagination. Desktop uses a detailed table and mobile uses readable evidence cards. Both show entry price, MFE, MAE, percentage movement, time until flat and the actual trade result. View full analysis opens the exact trade in Daily Trade Tracker without changing the Analyzer population." },
+          { kind: "paragraph", text: "Ticker and execution filters apply before pagination. On a phone, the complete evidence table keeps readable column widths and moves sideways inside its card; use the visible swipe cue and pinned Ticker column to compare entry price, MFE, MAE, percentage movement, time until flat and the actual trade result. View full analysis opens the exact trade in Daily Trade Tracker without changing the Analyzer population." },
           { kind: "paragraph", text: "Results per page offers 10, 25, 50 or 100 rows. Paging changes only the visible evidence rows; every card and comparison remains calculated from the complete selected date, currency and gross/net population." },
         ],
       },
@@ -312,9 +312,9 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         id: "supporting-trades",
         title: "Supporting trades",
         summary: "Inspect the trades behind the Green-to-red comparisons.",
-        keywords: ["supporting trades", "filters", "results per page", "view full analysis", "mobile cards"],
+        keywords: ["supporting trades", "filters", "results per page", "view full analysis", "mobile table", "swipe"],
         blocks: [
-          { kind: "paragraph", text: "This is the detailed Green-to-red evidence view. Desktop uses sortable table headings; mobile uses a Sort control and trade cards. Use ticker and outcome filters, then View full analysis to open the exact Daily Trade Tracker trade behind a comparison. Sustained opportunity, additional opportunity, captured percentage and peak-to-exit time stay here because they describe profit capture and reversal behavior." },
+          { kind: "paragraph", text: "This is the detailed Green-to-red evidence view. On a phone, use the Sort control and swipe the contained table sideways to keep every comparison column readable; the Ticker column stays pinned as a reference. Use ticker and outcome filters, then View full analysis to open the exact Daily Trade Tracker trade behind a comparison. Sustained opportunity, additional opportunity, captured percentage and peak-to-exit time stay here because they describe profit capture and reversal behavior." },
           { kind: "paragraph", text: "Results per page offers 10, 25, 50 or 100 rows. Showing X-Y of Z and Previous/Next describe only the visible slice; summary cards continue to describe the complete filtered analysis population." },
         ],
       },
@@ -350,7 +350,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Read each pattern's timeframe, execution, location, counts and results.",
         keywords: ["occurrences", "trades", "win rate", "average return", "pagination", "ranked patterns"],
         blocks: [
-          { kind: "paragraph", text: "Each card groups every result for one candle pattern. Within a card, results remain separate by timeframe, execution side and location so those different observations are never blended together. Desktop uses a table inside the card; mobile uses stacked result cards without horizontal scrolling." },
+          { kind: "paragraph", text: "Each card groups every result for one candle pattern. Within a card, results remain separate by timeframe, execution side and location so those different observations are never blended together. On a phone, swipe the contained table sideways to keep every result column readable; the Timeframe column stays pinned as a reference." },
           { kind: "table", columns: ["Column", "Meaning"], rows: [
             ["Pattern group", "Canonical plain-language pattern name and its total saved occurrences."],
             ["Timeframe", "1-minute or 5-minute candle construction used for detection."],
@@ -369,8 +369,8 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Open the exact trade and candle context behind a grouped pattern.",
         keywords: ["view occurrences", "chart", "drawer", "daily trade tracker", "ticker filter", "timeframe"],
         blocks: [
-          { kind: "paragraph", text: "Select View occurrences on a pattern card to load its exact saved execution occurrences. Ticker, timeframe, execution and location filters apply before the server returns a page. Results per page offers 10, 25, 50 or 100 and defaults to 25." },
-          { kind: "paragraph", text: "Desktop shows an occurrence table and opens one chart in a right drawer. Mobile shows occurrence cards and opens the chart full screen. Only the selected chart is loaded, so a long history does not create dozens of hidden chart instances." },
+          { kind: "paragraph", text: "Select View occurrences on a pattern card to open its exact saved execution occurrences without losing your place in the pattern list. The occurrence browser uses a right drawer on desktop and a full-width drawer on mobile. Ticker, timeframe, execution and location filters apply before the server returns a page. Results per page offers 10, 25, 50 or 100 and defaults to 25." },
+          { kind: "paragraph", text: "The occurrence browser keeps the complete table on every screen. On a phone, swipe it sideways to read all columns, then select View chart to open the chosen chart full screen. Desktop opens that chart in a second right drawer. Only the selected chart is loaded, so a long history does not create dozens of hidden chart instances." },
           { kind: "paragraph", text: "The replay focuses the selected execution at the saved 1-minute or 5-minute timeframe. Previous and Next move through the visible occurrence page. Open Daily Trade Tracker keeps the exact trade, execution and interval selected for the full review." },
           { kind: "callout", title: "Context, not a signal", text: "The chart helps explain the completed candle context around a recorded execution. It does not predict what the same pattern will do next." },
         ],
@@ -494,6 +494,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
             ["View full analysis", "Opens the exact Daily Trade Tracker trade and focuses its saved analysis."],
           ] },
           { kind: "paragraph", text: "The directory intentionally keeps Green-to-red opportunity, capture and reversal columns off this page. Open the full analysis for entry, exit, pattern and Green-to-red context, or use the Green-to-red page for those cross-trade comparisons." },
+          { kind: "paragraph", text: "On a phone, swipe the contained table sideways to read every column without shrinking it into unreadable text." },
         ],
       },
       {

@@ -121,6 +121,7 @@ export function MonthlyTradeTrackerReviewDrawer({
         anchor="right"
         onClose={() => setOpen(false)}
         open={open}
+        sx={{ overflowX: "hidden" }}
         slotProps={{
           paper: {
             "aria-labelledby": "monthly-trade-tracker-reviews-title",
@@ -128,8 +129,8 @@ export function MonthlyTradeTrackerReviewDrawer({
             id: "monthly-trade-tracker-reviews",
             role: "dialog",
             sx: {
-              maxWidth: "100vw",
-              width: { xs: "100vw", sm: 460 },
+              maxWidth: "100%",
+              width: { xs: "100%", sm: 460 },
             },
           },
         }}
@@ -161,6 +162,7 @@ export function MonthlyTradeTrackerReviewDrawer({
             <IconButton
               aria-label="Close monthly Trade Tracker reviews"
               onClick={() => setOpen(false)}
+              sx={{ minHeight: 44, minWidth: 44 }}
             >
               <CloseRoundedIcon />
             </IconButton>

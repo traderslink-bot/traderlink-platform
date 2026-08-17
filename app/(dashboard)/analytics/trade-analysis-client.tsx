@@ -10,13 +10,13 @@ import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardActionArea from "@mui/material/CardActionArea";
 import CardContent from "@mui/material/CardContent";
+import Drawer from "@mui/material/Drawer";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
@@ -36,6 +36,7 @@ import type {
 } from "@/src/modules/level-analysis/server/daily-trade-long-term-analytics-service";
 
 import { CandlePatternOccurrenceExplorer } from "./candle-pattern-occurrence-explorer";
+import { HorizontalScrollRegion } from "../horizontal-scroll-region";
 import {
   boundedPage,
   paginatedRows,
@@ -114,8 +115,7 @@ function BreakdownTable({
 }) {
   if (rows.length === 0) return <Typography color="text.secondary">Not enough analyzed evidence is available for this breakdown.</Typography>;
   return (
-    <>
-      <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
+      <HorizontalScrollRegion label="Trade analysis comparison table" minTableWidth={valueLabel ? 1240 : 1120} stickyFirstColumn>
         <Table size="small">
           <TableHead><TableRow>
             <TableCell>Group</TableCell>{showOccurrences ? <TableCell align="right">Executions</TableCell> : null}<TableCell align="right">Trades</TableCell><TableCell align="right">Opportunity trades</TableCell>
@@ -138,26 +138,7 @@ function BreakdownTable({
             </TableRow>
           ))}</TableBody>
         </Table>
-      </TableContainer>
-      <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" } }}>
-        {rows.map((row) => (
-          <Box key={row.label} sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.25 }}>
-            <Typography sx={{ fontWeight: 850 }} variant="body2">{row.label}</Typography>
-            <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1.25 }}>
-              {showOccurrences ? <Box><Typography color="text.secondary" variant="caption">Executions</Typography><Typography variant="body2">{row.occurrenceCount}</Typography></Box> : null}
-              <Box><Typography color="text.secondary" variant="caption">Trades</Typography><Typography variant="body2">{row.tradeCount}</Typography></Box>
-              <Box><Typography color="text.secondary" variant="caption">Opportunity trades</Typography><Typography variant="body2">{row.opportunityTradeCount}</Typography></Box>
-              <Box><Typography color="text.secondary" variant="caption">Win rate</Typography><Typography variant="body2">{percent(row.winRatePercent)}</Typography></Box>
-              <Box><Typography color="text.secondary" variant="caption">Average return</Typography><Typography color={row.averageReturnPercent !== null && row.averageReturnPercent < 0 ? "error.main" : undefined} variant="body2">{percent(row.averageReturnPercent)}</Typography></Box>
-              <Box><Typography color="text.secondary" variant="caption">Average result</Typography><Typography variant="body2">{money(row.averagePnlDecimal, currency)}</Typography></Box>
-              <Box><Typography color="text.secondary" variant="caption">Average potential</Typography><Typography variant="body2">{money(row.averagePotentialPnlDecimal, currency)}</Typography></Box>
-              <Box><Typography color="text.secondary" variant="caption">Average missed</Typography><Typography variant="body2">{money(row.averageAdditionalOpportunityDecimal, currency)}</Typography></Box>
-              {valueLabel ? <Box><Typography color="text.secondary" variant="caption">{valueLabel}</Typography><Typography variant="body2">{row.averageValue === null ? "Unavailable" : `${row.averageValue.toFixed(1)}${valueSuffix}`}</Typography></Box> : null}
-            </Box>
-          </Box>
-        ))}
-      </Stack>
-    </>
+      </HorizontalScrollRegion>
   );
 }
 
@@ -235,7 +216,7 @@ function TradeTable({ model }: { model: DailyTradeLongTermAnalyticsModel }) {
     <Stack spacing={1.5}>
       <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
         <TextField label="Ticker" onChange={(event) => { setTicker(event.target.value); setPage(1); }} size="small" value={ticker} />
-        <TextField label="Green-to-red outcome" onChange={(event) => { setOutcome(event.target.value as typeof outcome); setPage(1); }} select size="small" sx={{ minWidth: 230 }} value={outcome}>
+        <TextField label="Green-to-red outcome" onChange={(event) => { setOutcome(event.target.value as typeof outcome); setPage(1); }} select size="small" sx={{ minWidth: { xs: 0, md: 230 }, width: { xs: "100%", md: "auto" } }} value={outcome}>
           <MenuItem value="all">All outcomes</MenuItem>
           <MenuItem value="never_green">Never green</MenuItem>
           <MenuItem value="green_no_red">Green, stayed above breakeven</MenuItem>
@@ -278,8 +259,7 @@ function TradeTable({ model }: { model: DailyTradeLongTermAnalyticsModel }) {
         rowCount={rows.length}
       />
       {rows.length === 0 ? <Typography color="text.secondary">No analyzed trades match these filters.</Typography> : (
-        <>
-          <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
+          <HorizontalScrollRegion label="Green-to-red trades table" minTableWidth={1520} stickyFirstColumn>
             <Table size="small">
               <TableHead><TableRow>
                 <TableCell>{heading("symbol", "Ticker")}</TableCell><TableCell>Direction</TableCell><TableCell>{heading("closeDate", "Closed")}</TableCell>
@@ -299,35 +279,7 @@ function TradeTable({ model }: { model: DailyTradeLongTermAnalyticsModel }) {
                 </TableRow>
               ))}</TableBody>
             </Table>
-          </TableContainer>
-          <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" } }}>
-            {visibleRows.map((row) => (
-              <Card key={row.roundTripId} variant="outlined">
-                <CardContent>
-                  <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
-                    <Box>
-                      <Typography sx={{ fontWeight: 900 }} variant="h6">{row.symbol}</Typography>
-                      <Typography color="text.secondary" sx={{ textTransform: "capitalize" }} variant="body2">{row.closeDate} · {row.direction}</Typography>
-                    </Box>
-                    <Typography color={Number(row.actualPnlDecimal) < 0 ? "error.main" : "success.main"} sx={{ fontWeight: 850 }}>
-                      {money(row.actualPnlDecimal, model.currency)}
-                    </Typography>
-                  </Stack>
-                  <Typography sx={{ fontWeight: 750, mt: 1.25 }} variant="body2">{greenToRedLabel(row.greenToRedStatus)}</Typography>
-                  <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1.25 }}>
-                    <Box><Typography color="text.secondary" variant="caption">Return</Typography><Typography color={row.returnPercent !== null && row.returnPercent < 0 ? "error.main" : undefined} variant="body2">{percent(row.returnPercent)}</Typography></Box>
-                    <Box><Typography color="text.secondary" variant="caption">Executions</Typography><Typography variant="body2">{row.executionCount}</Typography></Box>
-                    <Box><Typography color="text.secondary" variant="caption">Sustained opportunity</Typography><Typography variant="body2">{money(row.sustainedOpportunityDecimal, model.currency)}</Typography></Box>
-                    <Box><Typography color="text.secondary" variant="caption">Additional opportunity</Typography><Typography variant="body2">{money(row.additionalOpportunityDecimal, model.currency)}</Typography></Box>
-                    <Box><Typography color="text.secondary" variant="caption">Captured</Typography><Typography variant="body2">{percent(row.capturedPercent)}</Typography></Box>
-                    <Box><Typography color="text.secondary" variant="caption">Peak to exit</Typography><Typography variant="body2">{row.peakToExitMinutes === null ? "Unavailable" : `${row.peakToExitMinutes} min`}</Typography></Box>
-                  </Box>
-                  <Button fullWidth href={trackerHref(row)} sx={{ mt: 1.5 }} variant="outlined">View full analysis</Button>
-                </CardContent>
-              </Card>
-            ))}
-          </Stack>
-        </>
+          </HorizontalScrollRegion>
       )}
     </Stack>
   );
@@ -341,24 +293,11 @@ function ExcursionBreakdownTable({
   rows: readonly TradeAnalysisExcursionBreakdownRow[];
 }) {
   if (rows.length === 0) return <Typography color="text.secondary">No measured entries or adds are available for these comparisons.</Typography>;
-  return <>
-    <TableContainer sx={{ display: { xs: "none", md: "block" } }}><Table size="small"><TableHead><TableRow>
+  return <HorizontalScrollRegion label="MFE and MAE comparison table" minTableWidth={760} stickyFirstColumn><Table size="small"><TableHead><TableRow>
       <TableCell>Group</TableCell><TableCell align="right">Measured</TableCell><TableCell align="right">Avg MFE</TableCell><TableCell align="right">Avg MAE</TableCell><TableCell align="right">Avg MFE %</TableCell><TableCell align="right">Avg MAE %</TableCell>
     </TableRow></TableHead><TableBody>{rows.map((row) => <TableRow hover key={row.label}>
       <TableCell sx={{ fontWeight: 750 }}>{row.label}</TableCell><TableCell align="right">{row.measuredExecutionCount}</TableCell><TableCell align="right">{money(row.averageFavorableMoveDecimal, currency)}</TableCell><TableCell align="right">{money(row.averageAdverseMoveDecimal, currency)}</TableCell><TableCell align="right">{percent(row.averageFavorableMovePercent)}</TableCell><TableCell align="right">{percent(row.averageAdverseMovePercent)}</TableCell>
-    </TableRow>)}</TableBody></Table></TableContainer>
-    <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" } }}>
-      {rows.map((row) => <Box key={row.label} sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.25 }}>
-        <Stack direction="row" spacing={1} sx={{ alignItems: "baseline", justifyContent: "space-between" }}><Typography sx={{ fontWeight: 850 }} variant="body2">{row.label}</Typography><Typography color="text.secondary" variant="caption">{row.measuredExecutionCount} measured</Typography></Stack>
-        <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1.25 }}>
-          <Box><Typography color="text.secondary" variant="caption">Average MFE</Typography><Typography variant="body2">{money(row.averageFavorableMoveDecimal, currency)}</Typography></Box>
-          <Box><Typography color="text.secondary" variant="caption">Average MAE</Typography><Typography variant="body2">{money(row.averageAdverseMoveDecimal, currency)}</Typography></Box>
-          <Box><Typography color="text.secondary" variant="caption">Average MFE %</Typography><Typography variant="body2">{percent(row.averageFavorableMovePercent)}</Typography></Box>
-          <Box><Typography color="text.secondary" variant="caption">Average MAE %</Typography><Typography variant="body2">{percent(row.averageAdverseMovePercent)}</Typography></Box>
-        </Box>
-      </Box>)}
-    </Stack>
-  </>;
+    </TableRow>)}</TableBody></Table></HorizontalScrollRegion>;
 }
 
 function MfeMaeTable({ model }: { model: DailyTradeLongTermAnalyticsModel }) {
@@ -374,33 +313,17 @@ function MfeMaeTable({ model }: { model: DailyTradeLongTermAnalyticsModel }) {
   return <Stack spacing={1.5}>
     <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
       <TextField label="Ticker" onChange={(event) => { setTicker(event.target.value); setPage(1); }} size="small" value={ticker} />
-      <TextField label="Execution" onChange={(event) => { setEntryType(event.target.value as typeof entryType); setPage(1); }} select size="small" sx={{ minWidth: 160 }} value={entryType}>
+      <TextField label="Execution" onChange={(event) => { setEntryType(event.target.value as typeof entryType); setPage(1); }} select size="small" sx={{ minWidth: { xs: 0, sm: 160 }, width: { xs: "100%", sm: "auto" } }} value={entryType}>
         <MenuItem value="all">Entries and adds</MenuItem><MenuItem value="Entry">Entries</MenuItem><MenuItem value="Add">Adds</MenuItem>
       </TextField>
     </Stack>
     <TradeAnalyzerTablePagination onPageChange={setPage} onPageSizeChange={(nextSize) => { setPageSize(nextSize); setPage(1); }} page={currentPage} pageSize={pageSize} rowCount={rows.length} />
-    {rows.length === 0 ? <Typography color="text.secondary">No measured entries or adds match these filters.</Typography> : <>
-      <TableContainer sx={{ display: { xs: "none", md: "block" } }}><Table size="small"><TableHead><TableRow>
+    {rows.length === 0 ? <Typography color="text.secondary">No measured entries or adds match these filters.</Typography> :
+      <HorizontalScrollRegion label="Measured entries and adds table" minTableWidth={1420} stickyFirstColumn><Table size="small"><TableHead><TableRow>
         <TableCell>Ticker</TableCell><TableCell>Type</TableCell><TableCell>Direction</TableCell><TableCell>Closed</TableCell><TableCell align="right">Entry price</TableCell><TableCell align="right">MFE</TableCell><TableCell align="right">MAE</TableCell><TableCell align="right">MFE %</TableCell><TableCell align="right">MAE %</TableCell><TableCell align="right">Until flat</TableCell><TableCell align="right">Actual P/L</TableCell><TableCell />
       </TableRow></TableHead><TableBody>{visibleRows.map((row) => <TableRow hover key={`${row.roundTripId}-${row.executionSequence}`}>
         <TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell><TableCell>{row.eventKind}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.closeDate}</TableCell><TableCell align="right">{money(row.entryPriceDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: "success.main", fontWeight: 750 }}>{money(row.favorableMoveDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: "error.main", fontWeight: 750 }}>{money(row.adverseMoveDecimal, model.currency)}</TableCell><TableCell align="right">{percent(row.favorableMovePercent)}</TableCell><TableCell align="right">{percent(row.adverseMovePercent)}</TableCell><TableCell align="right">{row.minutesUntilFlat} min</TableCell><TableCell align="right" sx={{ color: Number(row.actualPnlDecimal) < 0 ? "error.main" : "success.main", fontWeight: 750 }}>{money(row.actualPnlDecimal, model.currency)}</TableCell><TableCell><Button endIcon={<OpenInNewIcon fontSize="small" />} href={`/trade-tracker/${row.trackerDate}?${new URLSearchParams({ interval: "1m", trade: row.roundTripId }).toString()}`} size="small" variant="outlined">View full analysis</Button></TableCell>
-      </TableRow>)}</TableBody></Table></TableContainer>
-      <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" } }}>
-        {visibleRows.map((row) => <Card key={`${row.roundTripId}-${row.executionSequence}`} variant="outlined"><CardContent>
-          <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
-            <Box><Typography sx={{ fontWeight: 900 }} variant="h6">{row.symbol}</Typography><Typography color="text.secondary" sx={{ textTransform: "capitalize" }} variant="body2">{row.closeDate} · {row.direction} · {row.eventKind}</Typography></Box>
-            <Typography color={Number(row.actualPnlDecimal) < 0 ? "error.main" : "success.main"} sx={{ fontWeight: 850 }}>{money(row.actualPnlDecimal, model.currency)}</Typography>
-          </Stack>
-          <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1.25 }}>
-            <Box><Typography color="text.secondary" variant="caption">Entry price</Typography><Typography variant="body2">{money(row.entryPriceDecimal, model.currency)}</Typography></Box>
-            <Box><Typography color="text.secondary" variant="caption">Until flat</Typography><Typography variant="body2">{row.minutesUntilFlat} min</Typography></Box>
-            <Box><Typography color="text.secondary" variant="caption">MFE</Typography><Typography color="success.main" variant="body2">{money(row.favorableMoveDecimal, model.currency)} · {percent(row.favorableMovePercent)}</Typography></Box>
-            <Box><Typography color="text.secondary" variant="caption">MAE</Typography><Typography color="error.main" variant="body2">{money(row.adverseMoveDecimal, model.currency)} · {percent(row.adverseMovePercent)}</Typography></Box>
-          </Box>
-          <Button fullWidth href={`/trade-tracker/${row.trackerDate}?${new URLSearchParams({ interval: "1m", trade: row.roundTripId }).toString()}`} sx={{ mt: 1.5 }} variant="outlined">View full analysis</Button>
-        </CardContent></Card>)}
-      </Stack>
-    </>}
+      </TableRow>)}</TableBody></Table></HorizontalScrollRegion>}
   </Stack>;
 }
 
@@ -626,52 +549,37 @@ export function TradeAnalysisClient({
                     View occurrences ({group.occurrenceCount})
                   </Button>
                 </Box>
-                <TableContainer sx={{ display: { xs: "none", md: "block" }, overflowX: "auto" }}>
-                  <Table aria-label={`${friendlyPattern(group.pattern)} breakdown`} size="small" sx={{ minWidth: 760 }}>
+                <HorizontalScrollRegion label={`${friendlyPattern(group.pattern)} breakdown table`} minTableWidth={860} stickyFirstColumn>
+                  <Table aria-label={`${friendlyPattern(group.pattern)} breakdown`} size="small">
                     <TableHead><TableRow><TableCell>Timeframe</TableCell><TableCell>Execution</TableCell><TableCell>Location</TableCell><TableCell align="right">Occurrences</TableCell><TableCell align="right">Trades</TableCell><TableCell align="right">Win rate</TableCell><TableCell align="right">Avg return</TableCell><TableCell align="right">Avg result</TableCell></TableRow></TableHead>
                     <TableBody>{group.rows.map((row) => <TableRow hover key={`${row.timeframe}-${row.executionSide}-${row.location}`}><TableCell sx={{ fontWeight: 750 }}>{row.timeframe}</TableCell><TableCell>{row.executionSide}</TableCell><TableCell>{row.location}</TableCell><TableCell align="right">{row.occurrenceCount}</TableCell><TableCell align="right">{row.tradeCount}</TableCell><TableCell align="right">{percent(row.winRatePercent)}</TableCell><TableCell align="right" sx={{ color: row.averageReturnPercent !== null && row.averageReturnPercent < 0 ? "error.main" : undefined }}>{percent(row.averageReturnPercent)}</TableCell><TableCell align="right">{money(row.averagePnlDecimal, model.currency)}</TableCell></TableRow>)}</TableBody>
                   </Table>
-                </TableContainer>
-                <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" }, p: 1.5 }}>
-                  {group.rows.map((row) => (
-                    <Box
-                      key={`${row.timeframe}-${row.executionSide}-${row.location}`}
-                      sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.25 }}
-                    >
-                      <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
-                        <Box>
-                          <Typography sx={{ fontWeight: 850 }} variant="body2">
-                            {row.timeframe} · {row.executionSide}
-                          </Typography>
-                          <Typography color="text.secondary" variant="caption">{row.location}</Typography>
-                        </Box>
-                        <Typography sx={{ fontWeight: 800 }} variant="body2">
-                          {row.occurrenceCount} occurrence{row.occurrenceCount === 1 ? "" : "s"}
-                        </Typography>
-                      </Stack>
-                      <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1.25 }}>
-                        <Box><Typography color="text.secondary" variant="caption">Trades</Typography><Typography variant="body2">{row.tradeCount}</Typography></Box>
-                        <Box><Typography color="text.secondary" variant="caption">Win rate</Typography><Typography variant="body2">{percent(row.winRatePercent)}</Typography></Box>
-                        <Box><Typography color="text.secondary" variant="caption">Average return</Typography><Typography color={row.averageReturnPercent !== null && row.averageReturnPercent < 0 ? "error.main" : undefined} variant="body2">{percent(row.averageReturnPercent)}</Typography></Box>
-                        <Box><Typography color="text.secondary" variant="caption">Average result</Typography><Typography variant="body2">{money(row.averagePnlDecimal, model.currency)}</Typography></Box>
-                      </Box>
-                    </Box>
-                  ))}
-                </Stack>
+                </HorizontalScrollRegion>
               </Paper>
             ))}
           </Stack>
         )}
       </Section> : null}
 
-      {view === "candle-patterns" && selectedPattern ? (
-        <CandlePatternOccurrenceExplorer
-          currency={evidenceQuery.currency}
-          endDate={evidenceQuery.endDate}
-          moneyBasis={evidenceQuery.moneyBasis}
-          pattern={selectedPattern}
-          startDate={evidenceQuery.startDate}
-        />
+      {view === "candle-patterns" ? (
+        <Drawer
+          anchor="right"
+          onClose={() => setSelectedPattern(null)}
+          open={selectedPattern !== null}
+          slotProps={{ paper: { sx: { maxWidth: "100%", width: { xs: "100%", md: 760 } } } }}
+          sx={{ overflowX: "hidden" }}
+        >
+          {selectedPattern ? (
+            <CandlePatternOccurrenceExplorer
+              currency={evidenceQuery.currency}
+              endDate={evidenceQuery.endDate}
+              moneyBasis={evidenceQuery.moneyBasis}
+              onClose={() => setSelectedPattern(null)}
+              pattern={selectedPattern}
+              startDate={evidenceQuery.startDate}
+            />
+          ) : null}
+        </Drawer>
       ) : null}
 
       {model.malformedSnapshotCount > 0 ? <Typography color="warning.main" variant="body2">{model.malformedSnapshotCount} saved execution snapshots could not be read and were excluded from execution-level breakdowns.</Typography> : null}

@@ -42,6 +42,7 @@ import {
   DashboardSecondaryAction,
 } from "../../../dashboard-template";
 import { FeatureHelpLink } from "../../feature-help-link";
+import { HorizontalScrollHint } from "../../horizontal-scroll-region";
 import { openTraderLinkAiChat } from "@/app/ai-chat-drawer-events";
 import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import {
@@ -153,43 +154,70 @@ function TradeTrackerDateNavigation({
   }).format(new Date(`2000-${value}-01T12:00:00.000Z`));
 
   return (
-    <Stack direction="row" spacing={0.75} sx={{ alignItems: "center", flexWrap: "wrap", gap: 0.75 }}>
+    <Stack
+      direction="row"
+      spacing={0.5}
+      sx={{
+        alignItems: "center",
+        flexWrap: "nowrap",
+        width: "100%",
+        "@media (max-width: 340px)": {
+          display: "grid",
+          gridTemplateColumns: "44px 1fr 44px",
+          gridTemplateRows: "auto 44px",
+        },
+      }}
+    >
       <DashboardSecondaryAction
         aria-label="Previous trading day"
         component={Link}
         disabled={!previousDate}
         href={previousDate ? `/trade-tracker/${previousDate}${previewSuffix}` : "#"}
-        sx={{ minWidth: 40, px: 1 }}
+        sx={{ height: 44, minWidth: 44, px: 1, "@media (max-width: 340px)": { gridColumn: 1, gridRow: 2 } }}
       >
         <ArrowBackRoundedIcon fontSize="small" />
       </DashboardSecondaryAction>
-      <FormControl size="small" sx={{ minWidth: 68 }}>
-        <InputLabel id="trade-tracker-day-label">Day</InputLabel>
-        <Select label="Day" labelId="trade-tracker-day-label" onChange={(event) =>
-          navigate(selectedYear, selectedMonth, event.target.value)} value={selectedDay}>
-          {days.map((value) => <MenuItem key={value} value={value}>{Number(value)}</MenuItem>)}
-        </Select>
-      </FormControl>
-      <FormControl size="small" sx={{ minWidth: 86 }}>
-        <InputLabel id="trade-tracker-month-label">Month</InputLabel>
-        <Select label="Month" labelId="trade-tracker-month-label" onChange={(event) =>
-          navigate(selectedYear, event.target.value, selectedDay)} value={selectedMonth}>
-          {months.map((value) => <MenuItem key={value} value={value}>{monthLabel(value)}</MenuItem>)}
-        </Select>
-      </FormControl>
-      <FormControl size="small" sx={{ minWidth: 86 }}>
-        <InputLabel id="trade-tracker-year-label">Year</InputLabel>
-        <Select label="Year" labelId="trade-tracker-year-label" onChange={(event) =>
-          navigate(event.target.value, selectedMonth, selectedDay)} value={selectedYear}>
-          {years.map((value) => <MenuItem key={value} value={value}>{value}</MenuItem>)}
-        </Select>
-      </FormControl>
+      <Stack
+        direction="row"
+        spacing={0.5}
+        sx={{
+          alignItems: "center",
+          minWidth: 0,
+          "@media (max-width: 340px)": {
+            gridColumn: "1 / -1",
+            gridRow: 1,
+            justifyContent: "space-between",
+          },
+        }}
+      >
+        <FormControl size="small" sx={{ minWidth: 60, "& .MuiInputBase-root": { minHeight: 44 }, "& .MuiSelect-select": { paddingLeft: "10px", paddingRight: "26px !important" } }}>
+          <InputLabel id="trade-tracker-day-label">Day</InputLabel>
+          <Select label="Day" labelId="trade-tracker-day-label" onChange={(event) =>
+            navigate(selectedYear, selectedMonth, event.target.value)} value={selectedDay}>
+            {days.map((value) => <MenuItem key={value} value={value}>{Number(value)}</MenuItem>)}
+          </Select>
+        </FormControl>
+        <FormControl size="small" sx={{ minWidth: 68, "& .MuiInputBase-root": { minHeight: 44 }, "& .MuiSelect-select": { paddingLeft: "10px", paddingRight: "26px !important" } }}>
+          <InputLabel id="trade-tracker-month-label">Month</InputLabel>
+          <Select label="Month" labelId="trade-tracker-month-label" onChange={(event) =>
+            navigate(selectedYear, event.target.value, selectedDay)} value={selectedMonth}>
+            {months.map((value) => <MenuItem key={value} value={value}>{monthLabel(value)}</MenuItem>)}
+          </Select>
+        </FormControl>
+        <FormControl size="small" sx={{ minWidth: 76, "& .MuiInputBase-root": { minHeight: 44 }, "& .MuiSelect-select": { paddingLeft: "8px", paddingRight: "26px !important" } }}>
+          <InputLabel id="trade-tracker-year-label">Year</InputLabel>
+          <Select label="Year" labelId="trade-tracker-year-label" onChange={(event) =>
+            navigate(event.target.value, selectedMonth, selectedDay)} value={selectedYear}>
+            {years.map((value) => <MenuItem key={value} value={value}>{value}</MenuItem>)}
+          </Select>
+        </FormControl>
+      </Stack>
       <DashboardSecondaryAction
         aria-label="Next trading day"
         component={Link}
         disabled={!nextDate}
         href={nextDate ? `/trade-tracker/${nextDate}${previewSuffix}` : "#"}
-        sx={{ minWidth: 40, px: 1 }}
+        sx={{ height: 44, minWidth: 44, px: 1, "@media (max-width: 340px)": { gridColumn: 3, gridRow: 2 } }}
       >
         <ArrowForwardRoundedIcon fontSize="small" />
       </DashboardSecondaryAction>
@@ -429,7 +457,7 @@ function TradeTagEditor({
           disabled={disabled}
           onClick={showEditor}
           size="small"
-          sx={{ lineHeight: 1.2, minHeight: 26, minWidth: 0, px: 0.75, py: 0.2 }}
+          sx={{ lineHeight: 1.2, minHeight: { xs: 44, sm: 36 }, minWidth: 64, px: 1, py: 0.5 }}
           variant="outlined"
         >
           {tags.length === 0 ? "Add tags" : "Edit tags"}
@@ -1812,7 +1840,7 @@ function TradeReview({
               <Button
                 onClick={() => onSelectAnalysisEvent(analysisEvent.eventId)}
                 size="small"
-                sx={{ lineHeight: 1.2, minHeight: 26, minWidth: 0, px: 0.75, py: 0.2 }}
+                sx={{ lineHeight: 1.2, minHeight: { xs: 44, sm: 36 }, minWidth: 96, px: 1, py: 0.5 }}
                 variant={selectedAnalysisEventId === analysisEvent.eventId ? "contained" : "outlined"}
               >
                 View analysis
@@ -2954,25 +2982,32 @@ export function DaySessionView({
             mt: 1.5,
           }}
         >
-          <Stack
-            direction="row"
-            spacing={1}
-            sx={{
-              minWidth: 0,
-              overflowX: "auto",
-              pb: 0.75,
-            }}
-          >
-            {data.week.days.map((day) => (
-              <WeekDayCard
-                currency={data.currency}
-                day={day}
-                designPreview={designPreview}
-                key={day.date}
-                selected={day.date === data.date}
-              />
-            ))}
-          </Stack>
+          <Box sx={{ minWidth: 0 }}>
+            <HorizontalScrollHint label="Swipe sideways to see the full week" />
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{
+                WebkitOverflowScrolling: "touch",
+                "&::-webkit-scrollbar": { display: "none" },
+                minWidth: 0,
+                overflowX: "auto",
+                overscrollBehaviorX: "contain",
+                pb: 0.75,
+                scrollbarWidth: "none",
+              }}
+            >
+              {data.week.days.map((day) => (
+                <WeekDayCard
+                  currency={data.currency}
+                  day={day}
+                  designPreview={designPreview}
+                  key={day.date}
+                  selected={day.date === data.date}
+                />
+              ))}
+            </Stack>
+          </Box>
           <Box
             sx={{
               bgcolor: pnlBackground(data.week.netPnl),

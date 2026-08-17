@@ -1,15 +1,12 @@
 "use client";
 
 import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
@@ -17,6 +14,8 @@ import TableSortLabel from "@mui/material/TableSortLabel";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useMemo, useState } from "react";
+
+import { HorizontalScrollRegion } from "../horizontal-scroll-region";
 
 export type ResultsTickerRow = Readonly<{
   ticker: string;
@@ -178,8 +177,7 @@ export function ResultsTickerTable({
           No tickers match this date range.
         </Typography>
       ) : (
-        <>
-        <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
+        <HorizontalScrollRegion label="Ticker results table" minTableWidth={760} stickyFirstColumn>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -223,27 +221,7 @@ export function ResultsTickerTable({
               ))}
             </TableBody>
           </Table>
-        </TableContainer>
-        <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" }, px: 1.5, pb: 1.5 }}>
-          {paginatedRows.map((row) => (
-            <Card key={row.ticker} variant="outlined">
-              <CardContent>
-                <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
-                  <Typography sx={{ fontWeight: 900 }} variant="h6">{row.ticker}</Typography>
-                  <Typography color={row.netPnlValue < 0 ? "error.main" : "success.main"} sx={{ fontWeight: 850 }}>{row.netPnl}</Typography>
-                </Stack>
-                <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1.25 }}>
-                  <Box><Typography color="text.secondary" variant="caption">Win rate</Typography><Typography variant="body2">{row.winRate}</Typography></Box>
-                  <Box><Typography color="text.secondary" variant="caption">Profit factor</Typography><Typography variant="body2">{row.profitFactor}</Typography></Box>
-                  <Box><Typography color="text.secondary" variant="caption">Trades</Typography><Typography variant="body2">{row.trades}</Typography></Box>
-                  <Box><Typography color="text.secondary" variant="caption">Trading days</Typography><Typography variant="body2">{row.tradingDays}</Typography></Box>
-                  <Box sx={{ gridColumn: "1 / -1" }}><Typography color="text.secondary" variant="caption">Average P/L</Typography><Typography variant="body2">{row.averagePnl}</Typography></Box>
-                </Box>
-              </CardContent>
-            </Card>
-          ))}
-        </Stack>
-        </>
+        </HorizontalScrollRegion>
       )}
       <Box sx={{ borderTop: 1, borderColor: "divider" }}>
         <TablePagination

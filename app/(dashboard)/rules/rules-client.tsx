@@ -829,7 +829,7 @@ export function RulesClient({
             }}
             value={search}
           />
-          <FormControl size="small" sx={{ minWidth: 190 }}>
+          <FormControl size="small" sx={{ minWidth: { xs: 0, sm: 190 }, width: { xs: "100%", sm: "auto" } }}>
             <InputLabel id="rule-category-label">Category</InputLabel>
             <Select
               label="Category"

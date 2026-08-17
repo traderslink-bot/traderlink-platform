@@ -15,7 +15,6 @@ import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
@@ -35,6 +34,7 @@ import {
   DashboardPrimaryAction,
   DashboardSecondaryAction,
 } from "../../../dashboard-template";
+import { HorizontalScrollRegion } from "../../horizontal-scroll-region";
 
 import {
   createAnalyticsLabSavedView,
@@ -450,7 +450,7 @@ export default function AnalyticsLabPlatformClient({
 
       <DashboardPanel title="Matching trades">
         {preview.evidence ? (
-          <TableContainer>
+          <HorizontalScrollRegion label="Analytics Lab matching trades table" minTableWidth={820}>
             <Table size="small">
               <TableHead><TableRow><TableCell>Closed</TableCell><TableCell>Ticker</TableCell><TableCell>Direction</TableCell><TableCell align="right">P/L</TableCell><TableCell align="right">Quantity</TableCell><TableCell align="right">Hold</TableCell><TableCell>Coverage</TableCell></TableRow></TableHead>
               <TableBody>
@@ -467,7 +467,7 @@ export default function AnalyticsLabPlatformClient({
                 ))}
               </TableBody>
             </Table>
-          </TableContainer>
+          </HorizontalScrollRegion>
         ) : <Alert severity="info">{preview.evidenceUnavailableReason}</Alert>}
       </DashboardPanel>
     </DashboardPage>

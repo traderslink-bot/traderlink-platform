@@ -33,6 +33,7 @@ import { useRouter } from "next/navigation";
 
 import { formatJournalAnalyticsDecimal } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import { FeatureHelpLink } from "../feature-help-link";
+import { HorizontalScrollHint } from "../horizontal-scroll-region";
 
 import {
   DashboardDataScopeChip,
@@ -102,12 +103,6 @@ function executionTimestamp(value: string, timezone: string | null): string {
 
 function percent(value: string | null): string {
   return value === null ? "—" : `${formatJournalAnalyticsDecimal(value)}%`;
-}
-
-function compactMoney(value: string | null, currency: string | null): string {
-  if (value === null || currency === null) return "—";
-  const formatted = formatJournalAnalyticsDecimal(value, 0, true);
-  return formatted.startsWith("-") ? `-$${formatted.slice(1)}` : `+$${formatted}`;
 }
 
 function monthLabel(monthKey: string): string {
@@ -346,11 +341,13 @@ function MobileMonthCell({
   currency,
   day,
   onSelect,
+  onTickerClick,
   selected,
 }: {
   currency: string | null;
   day: CalendarDay;
   onSelect: () => void;
+  onTickerClick: (ticker: CalendarTickerResult) => void;
   selected: boolean;
 }) {
   const hasActivity = day.tradeCount > 0 || day.tickers.some((ticker) =>
@@ -361,41 +358,75 @@ function MobileMonthCell({
     weekday: "long",
   });
   return (
-    <ButtonBase
-      aria-label={`${label}. ${day.tradeCount} trade${day.tradeCount === 1 ? "" : "s"}. ${money(day.pnlDecimal, currency)}.`}
-      disabled={!hasActivity}
-      onClick={onSelect}
+    <Box
       sx={{
-        alignItems: "stretch",
         borderBottom: 1,
         borderColor: "divider",
         borderRight: 1,
         display: "flex",
-        minHeight: 66,
+        flexDirection: "column",
+        minHeight: 248,
         minWidth: 0,
-        p: 0.5,
-        textAlign: "left",
+        p: 1,
+        scrollSnapAlign: "start",
         ...daySurface(day, selected),
       }}
     >
-      <Stack sx={{ minWidth: 0, width: "100%" }}>
-        <Typography sx={{ fontSize: 12, fontWeight: 850 }}>{Number(day.date.slice(-2))}</Typography>
-        {hasActivity ? (
-          <>
+      <ButtonBase
+        aria-label={`${label}. ${day.tradeCount} trade${day.tradeCount === 1 ? "" : "s"}. ${money(day.pnlDecimal, currency)}.`}
+        disabled={!hasActivity}
+        onClick={onSelect}
+        sx={{ display: "block", minHeight: 52, textAlign: "left", width: "100%" }}
+      >
+        <Stack direction="row" spacing={0.75} sx={{ alignItems: "baseline", justifyContent: "space-between", minWidth: 0 }}>
+          <Typography sx={{ fontSize: 16, fontWeight: 850 }}>{Number(day.date.slice(-2))}</Typography>
+          {day.pnlDecimal === null ? null : (
             <Typography
               color={day.pnlSign === -1 ? "error.main" : "success.main"}
               noWrap
-              sx={{ fontFamily: "var(--font-geist-mono)", fontSize: 10, fontWeight: 850, mt: "auto" }}
+              sx={{ fontFamily: "var(--font-geist-mono)", fontSize: 12, fontWeight: 850 }}
             >
-              {compactMoney(day.pnlDecimal, currency)}
+              {money(day.pnlDecimal, currency)}
             </Typography>
-            <Typography color="text.secondary" noWrap sx={{ fontSize: 9 }}>
-              {day.tradeCount > 0 ? `${day.tradeCount} trade${day.tradeCount === 1 ? "" : "s"}` : "Journal"}
-            </Typography>
-          </>
+          )}
+        </Stack>
+        {hasActivity ? (
+          <Typography color="text.secondary" sx={{ fontSize: 12, lineHeight: 1.35, mt: 0.25 }}>
+            {day.tradeCount > 0
+              ? `${day.tradeCount} trade${day.tradeCount === 1 ? "" : "s"} · ${percent(day.winRatePercentDecimal)} win rate`
+              : "Swing Trade Tracker activity"}
+          </Typography>
         ) : null}
-      </Stack>
-    </ButtonBase>
+      </ButtonBase>
+      {day.tickers.length > 0 ? (
+        <Stack spacing={0.25} sx={{ borderTop: 1, borderColor: "divider", mt: 0.75, pt: 0.5 }}>
+          {day.tickers.slice(0, 4).map((ticker) => (
+            <ButtonBase
+              aria-label={`View ${ticker.symbol} trades`}
+              key={ticker.instrumentId}
+              onClick={() => onTickerClick(ticker)}
+              sx={{ borderRadius: 1, display: "block", minHeight: 44, px: 0.5, textAlign: "left", width: "100%" }}
+            >
+              <Stack direction="row" spacing={0.5} sx={{ alignItems: "baseline", justifyContent: "space-between", minWidth: 0 }}>
+                <Typography noWrap sx={{ fontSize: 12, fontWeight: 750, minWidth: 0 }}>{ticker.symbol}</Typography>
+                <Typography
+                  color={ticker.pnlSign === -1 ? "error.main" : "success.main"}
+                  noWrap
+                  sx={{ flexShrink: 0, fontFamily: "var(--font-geist-mono)", fontSize: 12, fontWeight: 750 }}
+                >
+                  {money(ticker.pnlDecimal, currency)}
+                </Typography>
+              </Stack>
+            </ButtonBase>
+          ))}
+          {day.tickers.length > 4 ? (
+            <Typography color="text.secondary" sx={{ fontSize: 12, px: 0.5, pt: 0.25 }}>
+              {day.tickers.length - 4} more ticker{day.tickers.length === 5 ? "" : "s"}
+            </Typography>
+          ) : null}
+        </Stack>
+      ) : null}
+    </Box>
   );
 }
 
@@ -504,24 +535,34 @@ function CalendarPeriodNavigation({
   };
 
   return (
-    <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", flexWrap: "nowrap", mb: 2, minWidth: 0 }}>
+    <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", flexWrap: "nowrap", mb: 2, minWidth: 0, width: "100%" }}>
       <Button
         aria-label={view === "month" ? "Previous month" : "Previous week"}
         disabled={activeIndex <= 0}
         onClick={() => move(-1)}
         size="small"
-        sx={{ flexShrink: 0, minWidth: 36, px: 0.5 }}
+        sx={{ flexShrink: 0, height: 44, minWidth: 44, px: 0.5 }}
         variant="outlined"
       >
         <ChevronLeftRoundedIcon />
       </Button>
-      <Stack direction="row" spacing={0.5} sx={{ display: view === "week" ? { xs: "none", sm: "flex" } : "flex", flexShrink: 0 }}>
-        <FormControl size="small" sx={{ flexShrink: 0, minWidth: { xs: 110, sm: 130 } }}>
-          <Select aria-label="Displayed month" onChange={(event) => selectMonth(event.target.value)} value={displayedMonth}>
+      <Stack direction="row" spacing={0.5} sx={{ display: view === "week" ? { xs: "none", sm: "flex" } : "flex", flexGrow: { xs: 1, sm: 0 }, flexShrink: 1, minWidth: 0 }}>
+        <FormControl size="small" sx={{ flexGrow: { xs: 1, sm: 0 }, flexShrink: 1, minWidth: { xs: 0, sm: 130 }, "& .MuiInputBase-root": { minHeight: 44 }, "& .MuiSelect-select": { paddingLeft: { xs: "10px", sm: "14px" }, paddingRight: { xs: "28px !important", sm: "32px !important" } } }}>
+          <Select
+            aria-label="Displayed month"
+            onChange={(event) => selectMonth(event.target.value)}
+            renderValue={(value) => (
+              <>
+                <Box component="span" sx={{ display: { xs: "inline", sm: "none" } }}>{monthLabel(value).slice(0, 3)}</Box>
+                <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>{monthLabel(value)}</Box>
+              </>
+            )}
+            value={displayedMonth}
+          >
             {monthsInSelectedYear.map((value) => <MenuItem key={value} value={value}>{monthLabel(value)}</MenuItem>)}
           </Select>
         </FormControl>
-        <FormControl size="small" sx={{ flexShrink: 0, minWidth: { xs: 76, sm: 92 } }}>
+        <FormControl size="small" sx={{ flexShrink: 0, minWidth: { xs: 80, sm: 92 }, width: { xs: 80, sm: "auto" }, "& .MuiInputBase-root": { minHeight: 44 }, "& .MuiSelect-select": { paddingLeft: { xs: "8px", sm: "14px" }, paddingRight: { xs: "28px !important", sm: "32px !important" } } }}>
           <Select aria-label="Displayed year" onChange={(event) => {
             const nextMonth = selectableMonths.find((value) =>
               value.startsWith(`${event.target.value}-`));
@@ -532,7 +573,7 @@ function CalendarPeriodNavigation({
         </FormControl>
       </Stack>
       {view === "week" ? (
-        <FormControl size="small" sx={{ flexGrow: { xs: 1, sm: 0 }, minWidth: { xs: 0, sm: 205 } }}>
+        <FormControl size="small" sx={{ flexGrow: { xs: 1, sm: 0 }, minWidth: { xs: 0, sm: 205 }, "& .MuiInputBase-root": { minHeight: 44 } }}>
           <Select aria-label="Displayed week" onChange={(event) => onNavigate("week", event.target.value)} value={week}>
             {weeksInDisplayedMonth.map((value) => <MenuItem key={value} value={value}>{weekLabel(value)}</MenuItem>)}
           </Select>
@@ -543,7 +584,7 @@ function CalendarPeriodNavigation({
         disabled={activeIndex < 0 || activeIndex >= activePeriods.length - 1}
         onClick={() => move(1)}
         size="small"
-        sx={{ flexShrink: 0, minWidth: 36, px: 0.5 }}
+        sx={{ flexShrink: 0, height: 44, minWidth: 44, px: 0.5 }}
         variant="outlined"
       >
         <ChevronRightRoundedIcon />
@@ -693,7 +734,7 @@ export function CalendarClient({
             const weekInDisplayedMonth = availableWeeks.filter((week) =>
               week.startsWith(`${activeMonth}-`)).at(-1);
             navigatePeriod("week", weekInDisplayedMonth ?? selectedWeek);
-          }} size="small" value={view}>
+          }} size="small" sx={{ "& .MuiToggleButton-root": { minHeight: 44 } }} value={view}>
             <ToggleButton value="month">Month</ToggleButton>
             <ToggleButton value="week">Week</ToggleButton>
           </ToggleButtonGroup>
@@ -737,11 +778,39 @@ export function CalendarClient({
         />
         {view === "month" ? (
           <>
-            <Box sx={{ borderColor: "divider", borderLeft: 1, borderTop: 1, display: { xs: "grid", md: "none" }, gridTemplateColumns: "repeat(5, minmax(0, 1fr))" }}>
-              {weekdayLabels.map((label) => <Box key={label} sx={{ borderBottom: 1, borderColor: "divider", borderRight: 1, py: 0.75, textAlign: "center" }}><Typography aria-label={label} color="text.secondary" sx={{ fontSize: 10, fontWeight: 850 }}>{label.slice(0, 1)}</Typography></Box>)}
-              {monthGrid.map((day, index) => day === null
-                ? <Box key={`mobile-blank-${index}`} sx={{ bgcolor: "rgba(246, 248, 252, 0.7)", borderBottom: 1, borderColor: "divider", borderRight: 1, minHeight: 66 }} />
-                : <MobileMonthCell currency={initialData.currency} day={day} key={day.date} onSelect={() => { setSelectedDate(day.date); setExpandedTickerId(null); setDetailsOpen(true); }} selected={selectedDate === day.date} />)}
+            <Box sx={{ display: { xs: "block", md: "none" }, mx: { xs: -1, sm: 0 } }}>
+              <HorizontalScrollHint label="Swipe sideways to see more days" />
+              <Box
+                sx={{
+                  WebkitOverflowScrolling: "touch",
+                  "&::-webkit-scrollbar": { display: "none" },
+                  overflowX: "auto",
+                  overscrollBehaviorX: "contain",
+                  pb: 1,
+                  px: { xs: 1, sm: 0 },
+                  scrollbarWidth: "none",
+                  scrollSnapType: "x mandatory",
+                }}
+              >
+                <Box
+                  sx={{
+                    borderColor: "divider",
+                    borderLeft: 1,
+                    borderTop: 1,
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "repeat(5, calc(100vw - 88px))",
+                      sm: "repeat(5, minmax(220px, 1fr))",
+                    },
+                    minWidth: { xs: "calc(500vw - 440px)", sm: 1100 },
+                  }}
+                >
+                  {weekdayLabels.map((label) => <Box key={label} sx={{ borderBottom: 1, borderColor: "divider", borderRight: 1, py: 0.75, textAlign: "center" }}><Typography color="text.secondary" sx={{ fontSize: 12, fontWeight: 850 }}>{label}</Typography></Box>)}
+                  {monthGrid.map((day, index) => day === null
+                    ? <Box key={`mobile-blank-${index}`} sx={{ bgcolor: "rgba(246, 248, 252, 0.7)", borderBottom: 1, borderColor: "divider", borderRight: 1, minHeight: 248, scrollSnapAlign: "start" }} />
+                    : <MobileMonthCell currency={initialData.currency} day={day} key={day.date} onSelect={() => { setSelectedDate(day.date); setExpandedTickerId(null); setDetailsOpen(true); }} onTickerClick={(ticker) => { setSelectedDate(day.date); setExpandedTickerId(ticker.instrumentId); setDetailsOpen(true); }} selected={selectedDate === day.date} />)}
+                </Box>
+              </Box>
             </Box>
             <Box sx={{ display: { xs: "none", md: "block" }, overflowX: "auto" }}>
               <Box sx={{ minWidth: 900 }}>
@@ -770,7 +839,10 @@ export function CalendarClient({
       </DashboardPanel>
 
       <Drawer anchor="right" onClose={() => setFiltersOpen(false)} open={filtersOpen} slotProps={{ paper: { sx: { p: 3, width: { xs: "100%", sm: 400 } } } }}>
-        <Typography component="h2" variant="h2">Calendar filters</Typography>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}>
+          <Typography component="h2" variant="h2">Calendar filters</Typography>
+          <Button aria-label="Close calendar filters" onClick={() => setFiltersOpen(false)} size="small" startIcon={<CloseRoundedIcon />} sx={{ minHeight: 44 }}>Close</Button>
+        </Stack>
         <Stack spacing={2.25} sx={{ mt: 3 }}>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
             <TextField fullWidth label="From" onChange={(event) => setFilters((current) => ({ ...current, startDate: event.target.value }))} slotProps={{ inputLabel: { shrink: true } }} type="date" value={filters.startDate} />
@@ -791,7 +863,10 @@ export function CalendarClient({
       </Drawer>
 
       <Drawer anchor="right" onClose={() => setSavedViewsOpen(false)} open={savedViewsOpen} slotProps={{ paper: { sx: { p: 3, width: { xs: "100%", sm: 400 } } } }}>
-        <Typography component="h2" variant="h2">Saved views</Typography>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}>
+          <Typography component="h2" variant="h2">Saved views</Typography>
+          <Button aria-label="Close saved calendar views" onClick={() => setSavedViewsOpen(false)} size="small" startIcon={<CloseRoundedIcon />} sx={{ minHeight: 44 }}>Close</Button>
+        </Stack>
         <Button onClick={() => setSavedViews((current) => [...current, { filters, name: `Calendar view ${current.length + 1}` }])} startIcon={<SaveRoundedIcon />} sx={{ mt: 3 }} variant="contained">Save current view</Button>
         <Stack divider={<Divider flexItem />} sx={{ mt: 2 }}>
           {savedViews.length === 0 ? <Typography color="text.secondary" sx={{ py: 2 }} variant="body2">No saved views yet.</Typography> : savedViews.map((saved) => <CardActionArea key={saved.name} onClick={() => { setFilters(saved.filters); setSavedViewsOpen(false); applyFilters(saved.filters); }} sx={{ py: 1.5 }}><Typography sx={{ fontWeight: 750 }}>{saved.name}</Typography></CardActionArea>)}
@@ -805,7 +880,7 @@ export function CalendarClient({
               <Typography component="h2" variant="h5">{new Date(`${selected.date}T12:00:00.000Z`).toLocaleDateString("en-US", { day: "numeric", month: "long", weekday: "long" })}</Typography>
               <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
                 <FeatureHelpLink href="/help/calendar/inspect-a-day#open-details" label="selected-day details" />
-                <Button aria-label="Close day details" onClick={() => { setDetailsOpen(false); setExpandedTickerId(null); }} size="small" startIcon={<CloseRoundedIcon />}>Close</Button>
+                <Button aria-label="Close day details" onClick={() => { setDetailsOpen(false); setExpandedTickerId(null); }} size="small" startIcon={<CloseRoundedIcon />} sx={{ minHeight: 44 }}>Close</Button>
               </Stack>
             </Stack>
             <Stack direction="row" sx={{ alignItems: "baseline", justifyContent: "space-between", mt: 0.75 }}>

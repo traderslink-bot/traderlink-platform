@@ -1,6 +1,6 @@
 # Mobile Dashboard Experience Plan
 
-**Status:** Owner approved; implementation and controlled responsive browser acceptance complete, with owner visual/product approval pending on 2026-08-16
+**Status:** Implementation and four-viewport QA complete; owner visual approval pending
 **Repository:** `C:\Users\jerac\Documents\TraderLink\traderlink-platform`
 **Branch:** `codex/traderlink-platform-replacement`
 **Progress record:** [Mobile Dashboard Experience Progress](mobile-dashboard-experience-progress.md)
@@ -61,11 +61,27 @@ by session `01a00ab5-56fc-76d0-9d6b-4e33cf6938b8`.
 
 ### 3.2 Responsive information design
 
-- Dense desktop tables remain available on desktop. On narrow phones, rows use
-  identity-preserving cards or an equally clear responsive presentation so a
-  ticker or trade cannot disappear when horizontally scrolling.
-- Calendar uses a compact five-column mobile month summary with selected-day
-  details in a drawer, and stacked cards for the mobile week view.
+- Dense desktop tables remain readable rather than being compressed to fit a
+  phone. Comparison-heavy tables remain tables inside a contained horizontal
+  scroller on phones. The scroller must show a plain swipe instruction and
+  directional cue, preserve comfortable type and row height, expose keyboard
+  focus, and keep the page itself from moving sideways.
+- A record list may use phone cards only when every meaningful desktop column
+  is mapped to a clearly labeled, readable card field and row-to-row column
+  comparison is not the main task. No field may be silently removed to make a
+  card fit. When either condition is not met, the contained table is the mobile
+  presentation.
+- A swipeable table or chart must be discoverable before the user interacts
+  with it. The phone view shows the swipe instruction and arrow, and the
+  content width leaves additional columns or items available beyond the right
+  edge. Native scrollbars may remain visually quiet, but scrolling must never
+  be hidden without another visible cue.
+- Calendar uses a contained, horizontally scrollable mobile month grid with one
+  readable information-complete day card visible at narrow phone widths. Each
+  populated day preserves its P/L, trade count, win rate and available ticker
+  results instead of shrinking or removing them merely to avoid sideways
+  scrolling. Selected-day details remain in a full-width mobile drawer, and
+  mobile week view remains a stacked card list.
 - Trade Explorer's long filter set becomes a mobile filter drawer with clear,
   reachable Apply and Reset actions. The session currently owning Trade
   Explorer source will be allowed to finish before those files are integrated.
@@ -101,7 +117,8 @@ new corrective revision, not a database rewrite.
 
 ### Slice 2 - Calendar and Trading Rules
 
-- Implement the approved mobile month and week Calendar presentations.
+- Implement the approved readable, horizontally scrollable mobile month grid
+  and stacked mobile week Calendar presentation.
 - Remove duplicate or floating Help affordances and keep one contextual Help
   entry in the correct section.
 - Make Rules actions wrap cleanly at 320 pixels and keep expanded details
@@ -126,6 +143,21 @@ new corrective revision, not a database rewrite.
   popover, loading state and phone orientation from the complete inventory.
 - Record owner decisions and any deliberately deferred item.
 
+### Slice 5 - owner-directed dense-view correction
+
+- Re-audit every active dashboard route after the owner rejected blanket
+  horizontal-scroll removal.
+- Compare every desktop table column with its phone presentation and record
+  whether the surface is a comparison table or a record list.
+- Restore contained sideways-scrolling tables for Ticker, Execution Analytics
+  and every Trade Analyzer breakdown where column comparison is central.
+- Keep record cards only where the complete desktop row remains visible and
+  readable; correct any incomplete mapping.
+- Add an obvious swipe cue to every retained table, chart, calendar strip or
+  other contained horizontal surface.
+- Repeat desktop, 390-pixel, 320-pixel and phone-landscape acceptance across
+  the complete dashboard route inventory before marking this work complete.
+
 ## 5. Verification and resource boundary
 
 During active visual work, do not run Vitest, broad tests, full regression or a
@@ -145,8 +177,9 @@ for final acceptance or merge readiness.
   them.
 - Shared files must be re-read immediately before each patch, and patches must
   retain concurrent notification, Data Decision and shell changes.
-- No commit, push, merge, deployment or remote operation is authorized by this
-  plan.
+- A narrow local commit is authorized at the completed checkpoint under the
+  repository Git-hygiene rule. No push, merge, deployment or remote operation
+  is authorized.
 
 ## 7. Help Center decision
 

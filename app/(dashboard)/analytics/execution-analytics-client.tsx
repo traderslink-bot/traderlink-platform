@@ -1,15 +1,12 @@
 "use client";
 
 import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
 import MenuItem from "@mui/material/MenuItem";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TablePagination from "@mui/material/TablePagination";
@@ -19,6 +16,7 @@ import Typography from "@mui/material/Typography";
 import { useMemo, useState } from "react";
 
 import { FeatureHelpLink } from "../feature-help-link";
+import { HorizontalScrollHint, HorizontalScrollRegion } from "../horizontal-scroll-region";
 
 type ExecutionMetricId = "net_pnl" | "win_rate" | "included_count";
 type ChartId = "entered_quantity_bucket" | "maximum_position_bucket" | "holding_duration_bucket";
@@ -75,7 +73,7 @@ function Chart({ points, metricId, style }: { points: readonly Point[]; metricId
   if (style === "horizontal_bars") return <Stack spacing={1.15} sx={{ mt: 2.25 }}>{points.map((point) => { const value = point.metrics[metricId].value ?? 0; return <Stack direction="row" key={point.key} spacing={1} sx={{ alignItems: "center" }} title={`${point.label}: ${point.metrics[metricId].display}`}><Typography color="text.secondary" sx={{ flex: "0 0 96px", fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{point.label}</Typography><Box sx={{ bgcolor: "#edf1f6", borderRadius: 99, flex: 1, height: 14, overflow: "hidden" }}><Box sx={{ bgcolor: value < 0 ? "error.main" : "success.main", borderRadius: 99, height: "100%", width: `${Math.max(3, Math.abs(value) / max * 100)}%` }} /></Box><Typography sx={{ flex: "0 0 72px", fontSize: 12, fontWeight: 800, textAlign: "right", whiteSpace: "nowrap" }}>{point.metrics[metricId].display}</Typography></Stack>; })}</Stack>;
   const width = 640;
   const baseline = 112;
-  return <Box sx={{ mt: 2, overflowX: "auto" }}><Box component="svg" preserveAspectRatio="none" sx={{ display: "block", height: 230, minWidth: 480, width: "100%" }} viewBox={`0 0 ${width} 230`}><line stroke="#d9e1ec" strokeWidth="1" x1="20" x2="620" y1={baseline} y2={baseline} />{points.map((point, index) => { const value = point.metrics[metricId].value ?? 0; const barHeight = Math.max(2, Math.abs(value) / max * 88); const barWidth = Math.max(24, 440 / points.length); const x = 42 + index * (560 / points.length); return <g key={point.key}><title>{`${point.label}: ${point.metrics[metricId].display}`}</title><rect fill={value < 0 ? "#c62828" : "#00796b"} height={barHeight} rx="4" width={barWidth} x={x} y={value < 0 ? baseline : baseline - barHeight} /><text fill="#627083" fontSize="11" textAnchor="middle" x={x + barWidth / 2} y="211">{point.label.slice(0, 9)}</text></g>; })}</Box></Box>;
+  return <><HorizontalScrollHint label="Swipe sideways to see the full chart" /><Box sx={{ WebkitOverflowScrolling: "touch", "&::-webkit-scrollbar": { display: "none" }, mt: 0.5, overflowX: "auto", overscrollBehaviorX: "contain", scrollbarWidth: "none" }}><Box component="svg" preserveAspectRatio="none" sx={{ display: "block", height: 230, minWidth: 480, width: "100%" }} viewBox={`0 0 ${width} 230`}><line stroke="#d9e1ec" strokeWidth="1" x1="20" x2="620" y1={baseline} y2={baseline} />{points.map((point, index) => { const value = point.metrics[metricId].value ?? 0; const barHeight = Math.max(2, Math.abs(value) / max * 88); const barWidth = Math.max(24, 440 / points.length); const x = 42 + index * (560 / points.length); return <g key={point.key}><title>{`${point.label}: ${point.metrics[metricId].display}`}</title><rect fill={value < 0 ? "#c62828" : "#00796b"} height={barHeight} rx="4" width={barWidth} x={x} y={value < 0 ? baseline : baseline - barHeight} /><text fill="#627083" fontSize="11" textAnchor="middle" x={x + barWidth / 2} y="211">{point.label.slice(0, 9)}</text></g>; })}</Box></Box></>;
 }
 
 function ChartPanel({ chart, points, metricId }: { chart: (typeof CHARTS)[number]; points: readonly Point[]; metricId: ExecutionMetricId }) {
@@ -151,26 +149,9 @@ export function ExecutionAnalyticsClient({ chartData, rows }: { chartData: Execu
         {visibleRows.length === 0 ? (
           <Typography color="text.secondary" sx={{ px: 2.25, pb: 3 }}>No completed trades match these filters.</Typography>
         ) : (
-          <>
-            <TableContainer sx={{ display: { xs: "none", md: "block" } }}><Table size="small"><TableHead><TableRow>{COLUMNS.map((column) => <TableCell key={column.id}><TableSortLabel active={sortColumn === column.id} direction={sortColumn === column.id ? sortDirection : "asc"} hideSortIcon={false} onClick={() => changeSort(column.id)} slotProps={{ icon: { sx: { opacity: sortColumn === column.id ? 1 : 0.45 } } }}>{column.label}</TableSortLabel></TableCell>)}</TableRow></TableHead><TableBody>{paginatedRows.map((row) => <TableRow hover key={row.roundTripId}><TableCell sx={{ fontWeight: 850 }}>{row.ticker}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.tradeType}</TableCell><TableCell>{row.opened}</TableCell><TableCell>{row.closed}</TableCell><TableCell>{row.executions}</TableCell><TableCell>{row.averageEntry}</TableCell><TableCell>{row.averageExit}</TableCell><TableCell>{row.maximumPosition}</TableCell><TableCell>{row.holdTime}</TableCell><TableCell sx={{ color: row.netPnlValue < 0 ? "error.main" : "success.main", fontWeight: 800 }}>{row.netPnl}</TableCell></TableRow>)}</TableBody></Table></TableContainer>
-            <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" }, px: 1.5, pb: 1.5 }}>
-              {paginatedRows.map((row) => <Card key={row.roundTripId} variant="outlined"><CardContent>
-                <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
-                  <Box><Typography sx={{ fontWeight: 900 }} variant="h6">{row.ticker}</Typography><Typography color="text.secondary" sx={{ textTransform: "capitalize" }} variant="body2">{row.direction} · {row.tradeType}</Typography></Box>
-                  <Typography color={row.netPnlValue < 0 ? "error.main" : "success.main"} sx={{ fontWeight: 850 }}>{row.netPnl}</Typography>
-                </Stack>
-                <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1.25 }}>
-                  <Box><Typography color="text.secondary" variant="caption">Opened</Typography><Typography variant="body2">{row.opened}</Typography></Box>
-                  <Box><Typography color="text.secondary" variant="caption">Closed</Typography><Typography variant="body2">{row.closed}</Typography></Box>
-                  <Box><Typography color="text.secondary" variant="caption">Average entry</Typography><Typography variant="body2">{row.averageEntry}</Typography></Box>
-                  <Box><Typography color="text.secondary" variant="caption">Average exit</Typography><Typography variant="body2">{row.averageExit}</Typography></Box>
-                  <Box><Typography color="text.secondary" variant="caption">Executions</Typography><Typography variant="body2">{row.executions}</Typography></Box>
-                  <Box><Typography color="text.secondary" variant="caption">Max shares</Typography><Typography variant="body2">{row.maximumPosition}</Typography></Box>
-                  <Box sx={{ gridColumn: "1 / -1" }}><Typography color="text.secondary" variant="caption">Hold time</Typography><Typography variant="body2">{row.holdTime}</Typography></Box>
-                </Box>
-              </CardContent></Card>)}
-            </Stack>
-          </>
+          <HorizontalScrollRegion label="Execution trade table" minTableWidth={1280} stickyFirstColumn>
+            <Table size="small"><TableHead><TableRow>{COLUMNS.map((column) => <TableCell key={column.id}><TableSortLabel active={sortColumn === column.id} direction={sortColumn === column.id ? sortDirection : "asc"} hideSortIcon={false} onClick={() => changeSort(column.id)} slotProps={{ icon: { sx: { opacity: sortColumn === column.id ? 1 : 0.45 } } }}>{column.label}</TableSortLabel></TableCell>)}</TableRow></TableHead><TableBody>{paginatedRows.map((row) => <TableRow hover key={row.roundTripId}><TableCell sx={{ fontWeight: 850 }}>{row.ticker}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.tradeType}</TableCell><TableCell>{row.opened}</TableCell><TableCell>{row.closed}</TableCell><TableCell>{row.executions}</TableCell><TableCell>{row.averageEntry}</TableCell><TableCell>{row.averageExit}</TableCell><TableCell>{row.maximumPosition}</TableCell><TableCell>{row.holdTime}</TableCell><TableCell sx={{ color: row.netPnlValue < 0 ? "error.main" : "success.main", fontWeight: 800 }}>{row.netPnl}</TableCell></TableRow>)}</TableBody></Table>
+          </HorizontalScrollRegion>
         )}
       </Paper>
     </Stack>

@@ -215,7 +215,7 @@ export function SwingAnnotationEditor({
         <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}><Typography sx={{ fontWeight: 800 }} variant="subtitle2">Trade tags</Typography><FeatureHelpLink href="/help/trade-tags/swing-trade-tracker#find-swing-tags" label="Swing Trade Tags" /></Stack>
         <Stack direction="row" sx={{ alignItems: "center", flexWrap: "wrap", gap: 0.75, mt: 1 }}>
           {tags.map((tag) => <Chip key={tag.tagId} label={tag.name} size="small" />)}
-          <Button onClick={openTags} size="small" variant="outlined">
+          <Button onClick={openTags} size="small" sx={{ minHeight: { xs: 44, sm: 36 } }} variant="outlined">
             {tags.length === 0 ? "Add tags" : "Edit tags"}
           </Button>
         </Stack>

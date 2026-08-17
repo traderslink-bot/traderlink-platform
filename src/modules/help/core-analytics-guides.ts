@@ -33,7 +33,7 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         "Rank by hides calculations that the selected Result makes impossible or unable to change the order, such as Profit factor when only Wins are selected.",
         "Net P/L shows fee-covered trades. If fee details are incomplete, Trade Explorer states how many closed trades are omitted and Gross P/L can include them.",
         "Money results stay ranked within their recorded currency and trading timezone when more than one partition is present.",
-        "On a phone, choose Filters to open the full filter drawer. Apply returns to results, which are shown as readable cards; View executions expands the recorded fills inside one trade card.",
+        "On a phone, choose Filters to open the full filter drawer. Apply returns to the complete results table. The swipe cue marks tables that move sideways, and selecting a trade row expands its recorded fills.",
         "Grouped views use Rows per page and Previous or Next so a long ticker, day or period history stays bounded.",
       ]),
     ]),
@@ -72,7 +72,7 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       ]),
     ]),
     section("search-and-sort", "Search, sort and paginate", "Search for a ticker, choose a column heading to change the order, and select how many rows appear on each page.", ["search ticker", "sort results", "table columns", "results filter", "rows per page", "pagination"], [
-      paragraph("The Ticker field narrows the displayed rows to matching symbols. Desktop uses sortable column headings; mobile uses a Sort control and ticker cards with the same results. Rows per page changes the page size, and the pagination controls move through the remaining tickers. These controls only change the view in your browser."),
+      paragraph("The Ticker field narrows the displayed rows to matching symbols. On a phone, use the Sort control and swipe the contained table sideways to read every column; the Ticker column stays pinned as a reference. Rows per page changes the page size, and the pagination controls move through the remaining tickers. These controls only change the view in your browser."),
     ]),
   ]),
   guide("timing-and-execution", "Review timing and execution", "Compare recorded timing and completed-trade execution characteristics without treating a summary as a trading rule.", [
@@ -89,7 +89,7 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         "Choose Net P/L, Win rate or Trade count to change the chart measure.",
         "Use the chart-style control to switch between horizontal bars and columns.",
         "Use the ticker, direction and trade-type filters to narrow the completed-trade evidence.",
-        "Desktop uses a sortable table. Mobile uses a Sort control and trade cards with the same execution facts.",
+        "On a phone, use the Sort control and swipe the contained table sideways to read the complete execution facts. The Ticker column stays pinned as a reference.",
         "Rows per page offers 10, 25, 50 or 100 while pagination keeps long histories bounded.",
       ]),
       paragraph("A larger or smaller group result describes the included past trades. It does not establish a future position size, target or stop."),

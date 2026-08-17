@@ -37,6 +37,7 @@ import type { JournalImportMappingPreview } from "@/src/modules/journal/server/p
 import type { JournalMappingSupportPackageV2 } from "@/src/modules/journal/server/product/journal-mapping-support-package";
 import { DashboardPanel } from "../../dashboard-template";
 import { FeatureHelpLink } from "../feature-help-link";
+import { HorizontalScrollRegion } from "../horizontal-scroll-region";
 
 const PREVIEW_ENDPOINT = "/api/platform/journal/imports/preview";
 const COMMIT_ENDPOINT = "/api/platform/journal/imports/commit";
@@ -78,6 +79,7 @@ export function JournalImportClient({
 }: {
   expectedAccountSelectionRef: string;
 }) {
+  void expectedAccountSelectionRef;
   const [file, setFile] = useState<File | null>(null);
   const [attemptIdempotencyRef, setAttemptIdempotencyRef] = useState("");
   const [brokerName, setBrokerName] = useState("");
@@ -406,7 +408,7 @@ export function JournalImportClient({
                   setPreview(null);
                 }}
                 placeholder="Auto detect or enter broker"
-                sx={{ minWidth: 220 }}
+                sx={{ minWidth: { xs: 0, md: 220 }, width: { xs: "100%", md: "auto" } }}
                 value={brokerName}
               />
               <TextField
@@ -415,7 +417,7 @@ export function JournalImportClient({
                   setSourceTimezone(event.target.value);
                   setPreview(null);
                 }}
-                sx={{ minWidth: 240 }}
+                sx={{ minWidth: { xs: 0, md: 240 }, width: { xs: "100%", md: "auto" } }}
                 value={sourceTimezone}
               />
               <Button disabled={!file || working !== null} type="submit" variant="contained">
@@ -576,7 +578,7 @@ export function JournalImportClient({
                   : "You selected these columns. Confirm the fields and trading account before saving; the accepted mapping will become this account's reusable exact template."}
             </Alert>
 
-            <TableContainer>
+            <HorizontalScrollRegion label="Statement field mapping table" minTableWidth={520} stickyFirstColumn>
               <Table size="small">
                 <TableHead><TableRow><TableCell>Statement field</TableCell><TableCell>Saved as</TableCell></TableRow></TableHead>
                 <TableBody>{preview.mappedFields.map((field) => (
@@ -586,7 +588,7 @@ export function JournalImportClient({
                   </TableRow>
                 ))}</TableBody>
               </Table>
-            </TableContainer>
+            </HorizontalScrollRegion>
 
             <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", sm: "repeat(3, minmax(0, 1fr))" } }}>
               <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.5 }}><Typography color="text.secondary" variant="caption">New executions</Typography><Typography sx={{ fontWeight: 800 }} variant="h3">{preview.plannedNewExecutionCount}</Typography></Box>

@@ -3,27 +3,24 @@
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import {
   Alert,
-  Box,
   Button,
-  Card,
-  CardContent,
   CircularProgress,
   Stack,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   TextField,
   Typography,
 } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import type { DailyTradeAnalyzedTradePage } from
   "@/src/modules/level-analysis/server/daily-trade-analysis-evidence-service";
 
 import { TradeAnalyzerTablePagination } from "./trade-analyzer-table-pagination";
+import { HorizontalScrollRegion } from "../horizontal-scroll-region";
 
 type PageResponse = Readonly<{
   page?: DailyTradeAnalyzedTradePage;
@@ -100,23 +97,10 @@ export function AnalyzedTradesIndex({
     return () => window.clearTimeout(timeout);
   }, [draftTicker]);
 
-  const queryKey = useMemo(() => JSON.stringify({
-    currency,
-    cursor: cursors[page] ?? null,
-    endDate,
-    moneyBasis,
-    page,
-    pageSize,
-    startDate,
-    ticker,
-  }), [currency, cursors, endDate, moneyBasis, page, pageSize, startDate, ticker]);
+  const cursor = cursors[page] ?? null;
 
   useEffect(() => {
-    if (!currency) {
-      setResult(null);
-      setState("ready");
-      return;
-    }
+    if (!currency) return;
     const controller = new AbortController();
     const params = new URLSearchParams({
       basis: moneyBasis,
@@ -128,9 +112,10 @@ export function AnalyzedTradesIndex({
       params.set("start", startDate);
       params.set("end", endDate);
     }
-    const cursor = cursors[page];
     if (cursor) params.set("cursor", cursor);
-    setState("loading");
+    queueMicrotask(() => {
+      if (!controller.signal.aborted) setState("loading");
+    });
     void fetch(`/api/platform/trade-analyzer/analyzed-trades?${params.toString()}`, {
       cache: "no-store",
       signal: controller.signal,
@@ -140,10 +125,9 @@ export function AnalyzedTradesIndex({
         throw new Error("Analyzed trades are unavailable.");
       }
       setResult(payload.page);
-      setCursors((current) => ({
-        ...current,
-        [page + 1]: payload.page!.continuationCursor,
-      }));
+      setCursors((current) => current[page + 1] === payload.page!.continuationCursor
+        ? current
+        : { ...current, [page + 1]: payload.page!.continuationCursor });
       setState("ready");
     }).catch((error: unknown) => {
       if (controller.signal.aborted) return;
@@ -153,10 +137,10 @@ export function AnalyzedTradesIndex({
       setState("error");
     });
     return () => controller.abort();
-  // queryKey intentionally captures the complete bounded request.
-  }, [queryKey]);
+  }, [currency, cursor, endDate, moneyBasis, page, pageSize, startDate, ticker]);
 
-  const rows = result?.rows ?? [];
+  const resolvedState = currency ? state : "ready";
+  const rows = currency ? result?.rows ?? [] : [];
   return (
     <Stack spacing={1.5}>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
@@ -183,24 +167,23 @@ export function AnalyzedTradesIndex({
           rowCount={result?.totalRowCount ?? 0}
         />
       ) : null}
-      {state === "loading" && !result ? (
+      {resolvedState === "loading" && !result ? (
         <Stack direction="row" spacing={1} sx={{ alignItems: "center", py: 4 }}>
           <CircularProgress size={20} />
           <Typography color="text.secondary">Loading analyzed trades…</Typography>
         </Stack>
       ) : null}
-      {state === "error" ? (
+      {resolvedState === "error" ? (
         <Alert severity="error">Analyzed trades could not be loaded. Try again.</Alert>
       ) : null}
-      {state === "ready" && rows.length === 0 ? (
+      {resolvedState === "ready" && rows.length === 0 ? (
         <Typography color="text.secondary">
           {currency ? "No analyzed trades match these filters." : "No saved trade analyses are available."}
         </Typography>
       ) : null}
 
       {rows.length > 0 ? (
-        <>
-          <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
+          <HorizontalScrollRegion label="Analyzed trades table" minTableWidth={1040}>
             <Table aria-label="Analyzed trades" size="small">
               <TableHead>
                 <TableRow>
@@ -242,42 +225,7 @@ export function AnalyzedTradesIndex({
                 })}
               </TableBody>
             </Table>
-          </TableContainer>
-
-          <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" } }}>
-            {rows.map((row) => {
-              const opened = dateTime(row.openedAtUtc, result!.timezone);
-              const closed = dateTime(row.closedAtUtc, result!.timezone);
-              const negative = row.resultDecimal !== null && Number(row.resultDecimal) < 0;
-              return (
-                <Card key={row.roundTripId} variant="outlined">
-                  <CardContent>
-                    <Stack direction="row" sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
-                      <Box>
-                        <Typography sx={{ fontWeight: 900 }} variant="h6">{row.symbol}</Typography>
-                        <Typography color="text.secondary" sx={{ textTransform: "capitalize" }} variant="body2">
-                          {closed.date} · {row.direction}
-                        </Typography>
-                      </Box>
-                      <Typography color={negative ? "error.main" : "success.main"} sx={{ fontWeight: 850 }}>
-                        {money(row.resultDecimal, currency!)}
-                      </Typography>
-                    </Stack>
-                    <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", mt: 1.5 }}>
-                      <Box><Typography color="text.secondary" variant="caption">Entry</Typography><Typography variant="body2">{opened.time}</Typography></Box>
-                      <Box><Typography color="text.secondary" variant="caption">Exit</Typography><Typography variant="body2">{closed.time}</Typography></Box>
-                      <Box><Typography color="text.secondary" variant="caption">Return</Typography><Typography variant="body2">{percent(row.returnPercentDecimal)}</Typography></Box>
-                      <Box><Typography color="text.secondary" variant="caption">Executions</Typography><Typography variant="body2">{row.executionCount}</Typography></Box>
-                    </Box>
-                    <Button fullWidth href={trackerHref(row)} sx={{ mt: 1.5 }} variant="outlined">
-                      View full analysis
-                    </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </Stack>
-        </>
+          </HorizontalScrollRegion>
       ) : null}
     </Stack>
   );

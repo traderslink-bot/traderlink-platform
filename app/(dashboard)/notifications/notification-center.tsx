@@ -8,7 +8,7 @@ import Menu from "@mui/material/Menu";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import type { PlatformNotification } from "@/src/modules/platform/contracts/platform-notification-contracts";
 import { isNotificationDismissed } from "./notification-dismissal";
@@ -20,11 +20,10 @@ export function NotificationCenter({
   notifications: readonly PlatformNotification[];
 }) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
-  const [visibleNotifications, setVisibleNotifications] = useState(notifications);
-  useEffect(() => {
-    setVisibleNotifications(notifications.filter((notification) =>
-      !isNotificationDismissed(notification.notificationRef)));
-  }, [notifications]);
+  const [dismissedNotificationRefs, setDismissedNotificationRefs] = useState<readonly string[]>([]);
+  const visibleNotifications = notifications.filter((notification) =>
+    !dismissedNotificationRefs.includes(notification.notificationRef) &&
+    !isNotificationDismissed(notification.notificationRef));
   const unreadCount = visibleNotifications.filter((notification) => notification.readAtUtc === null).length;
 
   return (
@@ -62,15 +61,15 @@ export function NotificationCenter({
           }}
         >
           <Typography sx={{ fontWeight: 800 }}>Notifications</Typography>
-          <Typography color="primary" component={Link} href="/notifications" onClick={() => setAnchor(null)} sx={{ fontSize: 14, fontWeight: 750, textDecoration: "none" }}>
+          <Typography color="primary" component={Link} href="/notifications" onClick={() => setAnchor(null)} sx={{ alignItems: "center", display: "inline-flex", fontSize: 14, fontWeight: 750, minHeight: 44, textDecoration: "none" }}>
             View all notifications
           </Typography>
         </Box>
         <NotificationList
           compact
           notifications={visibleNotifications.slice(0, 5)}
-          onNotificationDismissed={(notificationRef) => setVisibleNotifications((current) =>
-            current.filter((notification) => notification.notificationRef !== notificationRef))}
+          onNotificationDismissed={(notificationRef) => setDismissedNotificationRefs((current) =>
+            current.includes(notificationRef) ? current : [...current, notificationRef])}
         />
       </Menu>
     </>
