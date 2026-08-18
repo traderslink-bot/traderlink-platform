@@ -8,6 +8,7 @@ import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
+import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
 import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
 import ExpandLessRoundedIcon from "@mui/icons-material/ExpandLessRounded";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
@@ -80,6 +81,7 @@ function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
     aiReviews: <AutoAwesomeRoundedIcon />,
     analytics: <AnalyticsRoundedIcon />,
     calendar: <CalendarMonthRoundedIcon />,
+    compareArrows: <CompareArrowsIcon />,
     tradingDay: <TodayIcon />,
     swing: <EventRepeatIcon />,
     roundTrips: <RestartAltIcon />,

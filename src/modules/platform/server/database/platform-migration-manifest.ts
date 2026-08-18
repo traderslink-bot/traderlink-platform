@@ -13,6 +13,7 @@ import { journalRuleReviewNotesMigration } from "@/src/modules/journal/server/da
 import { journalAiImportRepairMigration } from "@/src/modules/journal/server/database/migrations/0054_journal_ai_import_repair";
 import { journalAiChatTradeStyleSourceMigration } from "@/src/modules/journal/server/database/migrations/0057_journal_ai_chat_trade_style_source";
 import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
+import { tradeExplorerComparisonStudiesMigration } from "@/src/modules/journal-analytics/server/database/migrations/0060_trade_explorer_comparison_studies";
 import { levelAnalysisCandleReviewMigration } from "@/src/modules/level-analysis/server/database/migrations/0009_level_analysis_candle_review";
 import { levelAnalysisDeliveriesMigration } from "@/src/modules/level-analysis/server/database/migrations/0010_level_analysis_deliveries";
 import { dailyTradeYahooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0023_daily_trade_yahoo_analyzer";
@@ -306,6 +307,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/level-analysis/server/database/migrations/0059_daily_trade_pattern_occurrences.ts",
       migration: dailyTradePatternOccurrencesMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/journal-analytics/server/database/migrations/0060_trade_explorer_comparison_studies.ts",
+      migration: tradeExplorerComparisonStudiesMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -565,6 +570,10 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     ]),
     "0059_daily_trade_pattern_occurrences": Object.freeze([
       "journal_round_trip_daily_trade_analysis_pattern_occurrences",
+    ]),
+    "0060_trade_explorer_comparison_studies": Object.freeze([
+      "journal_trade_explorer_comparison_studies",
+      "journal_trade_explorer_comparison_study_versions",
     ]),
   });
 

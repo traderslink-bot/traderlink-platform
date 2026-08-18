@@ -1,5 +1,9 @@
 # Trade Explorer Plan
 
+The owner-approved implementation of the previously withheld Compare and saved
+study slice is controlled by the [Trade Explorer Comparison And Rule Ideas
+Plan](trade-explorer-comparison-and-rule-ideas-plan.md).
+
 **Status:** Explorer 1 truthful-ordering correction and the completed-trade
 Review editor are implemented. Ordering reached its clean tenth QA pass and the
 Review editor's focused source QA is complete; owner visual/product review

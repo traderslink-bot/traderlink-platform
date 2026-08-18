@@ -1,5 +1,9 @@
 # TraderLink AI Companion Plan
 
+The owner-approved implementation of Trade Explorer comparison reads and saved
+deterministic Rule-idea evidence is controlled by the [Trade Explorer
+Comparison And Rule Ideas Plan](trade-explorer-comparison-and-rule-ideas-plan.md).
+
 ## Status
 
 **Current-plan technical implementation complete; production activation remains

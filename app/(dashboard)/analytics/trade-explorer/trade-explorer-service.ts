@@ -1,5 +1,7 @@
 import "server-only";
 
+import Decimal from "decimal.js";
+
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import {
   currentJournalAccountSelectionRef,
@@ -10,7 +12,10 @@ import {
   type JournalAnalyticsQuery,
   type JournalAnalyticsTableOrder,
 } from "@/src/modules/journal-analytics/contracts/analytics-query";
-import type { JournalAnalyticsMetricResult } from "@/src/modules/journal-analytics/contracts/analytics-result";
+import type {
+  JournalAnalyticsExactValue,
+  JournalAnalyticsMetricResult,
+} from "@/src/modules/journal-analytics/contracts/analytics-result";
 import {
   TRADE_EXPLORER_DAY_STATISTIC_GROUPS,
   TRADE_EXPLORER_TRADE_STATISTIC_GROUPS,
@@ -35,6 +40,20 @@ import type {
   AnalyticsLabPlatformPreview,
   AnalyticsLabPlatformQuery,
 } from "../lab/analytics-lab-platform-types";
+import {
+  TRADE_EXPLORER_COMPARISON_METRIC_IDS,
+  TRADE_EXPLORER_COMPARISON_VERSION,
+  type TradeExplorerComparisonDifference,
+  type TradeExplorerComparisonInput,
+  type TradeExplorerComparisonResult,
+} from "./trade-explorer-comparison-model";
+
+const ExactDecimal = Decimal.clone({
+  precision: 120,
+  rounding: Decimal.ROUND_HALF_UP,
+  toExpNeg: -1000,
+  toExpPos: 1000,
+});
 
 const EXPLORER_METRICS = Object.freeze([
   "total_trades",
@@ -50,6 +69,8 @@ const EXPLORER_METRICS = Object.freeze([
   "average_holding_time",
   "average_share_quantity",
   "average_entry_notional",
+  "expectancy",
+  "return_on_entry_notional",
   "green_to_red_day_count",
   "red_to_green_day_count",
 ] as const);
@@ -63,6 +84,7 @@ function journalQuery(
   scope: WorkspaceAccessScope,
   input: AnalyticsLabPlatformQuery,
   afterCursor: string | null,
+  asOfUtc: string,
 ): JournalAnalyticsQuery {
   const secondsToMilliseconds = (value: string | null): number | null =>
     value === null ? null : Number(value) * 1_000;
@@ -105,7 +127,7 @@ function journalQuery(
     }),
     groupings: Object.freeze([input.grouping]),
     entryTimeBucketMinutes: input.entryTimeBucketMinutes,
-    asOfUtc: new Date().toISOString(),
+    asOfUtc,
     table: Object.freeze({ pageSize: input.evidenceRows, afterCursor }),
   });
 }
@@ -122,8 +144,9 @@ async function execute(
   afterCursor: string | null = null,
   tableOrder: JournalAnalyticsTableOrder = tradeExplorerTableOrder("closed_desc"),
 ): Promise<AnalyticsLabPlatformPreview> {
+  const asOfUtc = new Date().toISOString();
   return withJournalAnalyticsReportingDashboardRuntime(scope, ({ service }) =>
-    buildPreview(scope, input, afterCursor, service, tableOrder));
+    buildPreview(scope, input, afterCursor, service, tableOrder, asOfUtc));
 }
 
 function buildPreview(
@@ -132,9 +155,10 @@ function buildPreview(
   afterCursor: string | null,
   service: JournalAnalyticsService,
   tableOrder: JournalAnalyticsTableOrder,
+  asOfUtc: string,
 ): AnalyticsLabPlatformPreview {
   requireExpectedJournalAccountSelection(scope, input.expectedAccountSelectionRef);
-  const query = journalQuery(scope, input, afterCursor);
+  const query = journalQuery(scope, input, afterCursor, asOfUtc);
   const response = service.getAnalyticsOverview(scope, query);
   const selected = response.partitions
     .flatMap((partition) => partition.metrics)
@@ -203,6 +227,220 @@ export async function runTradeExplorerQuery(
     normalizeEvidenceCursor(afterCursor),
     tradeExplorerTableOrder(explorerTradeSort),
   );
+}
+
+function comparisonRecord(value: unknown): Readonly<Record<string, unknown>> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new TypeError("Invalid Trade Explorer comparison.");
+  }
+  return value as Readonly<Record<string, unknown>>;
+}
+
+function comparisonName(value: unknown): string {
+  if (typeof value !== "string") throw new TypeError("Invalid comparison group name.");
+  const normalized = value.trim().replace(/\s+/gu, " ");
+  if (normalized.length < 1 || normalized.length > 40 ||
+      /[\u0000-\u001f\u007f]/u.test(normalized)) {
+    throw new TypeError("Invalid comparison group name.");
+  }
+  return normalized;
+}
+
+export function normalizeTradeExplorerComparison(
+  input: unknown,
+): TradeExplorerComparisonInput {
+  const value = comparisonRecord(input);
+  if (Object.keys(value).sort().join("\u0000") !==
+      ["comparisonVersion", "groups"].sort().join("\u0000") ||
+      value.comparisonVersion !== TRADE_EXPLORER_COMPARISON_VERSION ||
+      !Array.isArray(value.groups) || value.groups.length < 2 || value.groups.length > 4) {
+    throw new TypeError("Invalid Trade Explorer comparison.");
+  }
+  const groups = Object.freeze(value.groups.map((candidate) => {
+    const group = comparisonRecord(candidate);
+    if (Object.keys(group).sort().join("\u0000") !== ["name", "query"].sort().join("\u0000")) {
+      throw new TypeError("Invalid Trade Explorer comparison group.");
+    }
+    return Object.freeze({
+      name: comparisonName(group.name),
+      query: normalizeAnalyticsLabPlatformQuery(group.query),
+    });
+  }));
+  if (new Set(groups.map((group) => group.name.toLocaleLowerCase("en-US"))).size !== groups.length) {
+    throw new TypeError("Comparison group names must be different.");
+  }
+  const baseline = groups[0].query;
+  for (const group of groups.slice(1)) {
+    if (group.query.expectedAccountSelectionRef !== baseline.expectedAccountSelectionRef ||
+        group.query.moneyBasis !== baseline.moneyBasis ||
+        group.query.currency !== baseline.currency) {
+      throw new TypeError("Comparison groups must use the same account, P/L basis and currency.");
+    }
+  }
+  return Object.freeze({
+    comparisonVersion: TRADE_EXPLORER_COMPARISON_VERSION,
+    groups,
+  });
+}
+
+function canonicalDecimal(value: Decimal): string {
+  const fixed = value.toFixed();
+  if (!fixed.includes(".")) return fixed === "-0" ? "0" : fixed;
+  const normalized = fixed.replace(/\.0+$/u, "").replace(/(\.\d*?)0+$/u, "$1");
+  return normalized === "-0" ? "0" : normalized;
+}
+
+function decimalPlaces(value: string): number {
+  return value.includes(".") ? value.length - value.indexOf(".") - 1 : 0;
+}
+
+function subtractExactValues(
+  baseline: JournalAnalyticsExactValue,
+  compared: JournalAnalyticsExactValue,
+): JournalAnalyticsExactValue | null {
+  if (baseline.kind !== compared.kind || baseline.kind === "text") return null;
+  if (baseline.kind === "integer" && compared.kind === "integer") {
+    const difference = compared.value - baseline.value;
+    return Number.isSafeInteger(difference)
+      ? Object.freeze({ kind: "integer" as const, value: difference })
+      : null;
+  }
+  if (baseline.kind === "decimal" && compared.kind === "decimal") {
+    return Object.freeze({
+      kind: "decimal" as const,
+      valueDecimal: canonicalDecimal(
+        new ExactDecimal(compared.valueDecimal).minus(baseline.valueDecimal),
+      ),
+    });
+  }
+  if (baseline.kind === "duration" && compared.kind === "duration") {
+    const difference = compared.milliseconds - baseline.milliseconds;
+    return Number.isSafeInteger(difference)
+      ? Object.freeze({ kind: "duration" as const, milliseconds: difference })
+      : null;
+  }
+  if (baseline.kind === "rational" && compared.kind === "rational") {
+    const baselineDenominator = new ExactDecimal(baseline.denominatorInteger);
+    const comparedDenominator = new ExactDecimal(compared.denominatorInteger);
+    if (baselineDenominator.isZero() || comparedDenominator.isZero()) return null;
+    const numerator = new ExactDecimal(compared.numeratorDecimal)
+      .times(baselineDenominator)
+      .minus(new ExactDecimal(baseline.numeratorDecimal).times(comparedDenominator));
+    const denominator = comparedDenominator.times(baselineDenominator);
+    const scale = Math.max(
+      decimalPlaces(baseline.roundedDecimal),
+      decimalPlaces(compared.roundedDecimal),
+    );
+    return Object.freeze({
+      kind: "rational" as const,
+      numeratorDecimal: canonicalDecimal(numerator),
+      denominatorInteger: canonicalDecimal(denominator),
+      roundedDecimal: numerator.dividedBy(denominator).toFixed(scale),
+      roundingPolicy: baseline.roundingPolicy,
+    });
+  }
+  return null;
+}
+
+function comparisonMetric(
+  preview: AnalyticsLabPlatformPreview,
+  metricId: string,
+): Readonly<{ metric: JournalAnalyticsMetricResult; timezone: string | null }> | null {
+  if (preview.response.partitions.length !== 1) return null;
+  const partition = preview.response.partitions[0];
+  const metric = partition.metrics.find((candidate) => candidate.metricId === metricId);
+  return metric ? Object.freeze({ metric, timezone: partition.timezone }) : null;
+}
+
+function difference(
+  baselineName: string,
+  baseline: AnalyticsLabPlatformPreview,
+  comparedName: string,
+  compared: AnalyticsLabPlatformPreview,
+  metricId: string,
+): TradeExplorerComparisonDifference {
+  const left = comparisonMetric(baseline, metricId);
+  const right = comparisonMetric(compared, metricId);
+  const compatible = left !== null && right !== null &&
+    left.timezone === right.timezone &&
+    left.metric.formulaVersion === right.metric.formulaVersion &&
+    left.metric.valueKind === right.metric.valueKind &&
+    left.metric.unit === right.metric.unit &&
+    left.metric.moneyBasis === right.metric.moneyBasis &&
+    left.metric.currency === right.metric.currency &&
+    left.metric.timezonePolicy === right.metric.timezonePolicy &&
+    left.metric.dateAttributionPolicy === right.metric.dateAttributionPolicy &&
+    left.metric.value !== null && right.metric.value !== null;
+  const value = compatible
+    ? subtractExactValues(left.metric.value!, right.metric.value!)
+    : null;
+  return Object.freeze({
+    baselineGroupName: baselineName,
+    comparedGroupName: comparedName,
+    metricId,
+    state: value === null ? "unavailable" as const : "complete" as const,
+    value,
+    unavailableReason: value === null
+      ? "These two values do not share one compatible factual basis."
+      : null,
+  });
+}
+
+export async function runTradeExplorerComparison(
+  scope: WorkspaceAccessScope,
+  input: unknown,
+): Promise<TradeExplorerComparisonResult> {
+  const normalized = normalizeTradeExplorerComparison(input);
+  const generatedAtUtc = new Date().toISOString();
+  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ service }) => {
+    const groups = normalized.groups.map((group) => {
+      const query = Object.freeze({
+        ...group.query,
+        grouping: "total" as const,
+        metricId: "total_trades",
+        evidenceRows: 50 as const,
+      });
+      return Object.freeze({
+        name: group.name,
+        query,
+        preview: buildPreview(
+          scope,
+          query,
+          null,
+          service,
+          tradeExplorerTableOrder("closed_desc"),
+          generatedAtUtc,
+        ),
+      });
+    });
+    const factSetRevisions = new Set(groups.map((group) =>
+      group.preview.response.factSetRevisionSha256));
+    if (factSetRevisions.size !== 1) {
+      throw new TypeError("Comparison groups were calculated from different facts.");
+    }
+    const baseline = groups[0];
+    const selectedPnlMetricId = baseline.query.moneyBasis === "net" ? "net_pnl" : "gross_pnl";
+    const differenceMetricIds = TRADE_EXPLORER_COMPARISON_METRIC_IDS.filter((metricId) =>
+      metricId !== (baseline.query.moneyBasis === "net" ? "gross_pnl" : "net_pnl"));
+    return Object.freeze({
+      comparisonVersion: TRADE_EXPLORER_COMPARISON_VERSION,
+      factSetRevisionSha256: [...factSetRevisions][0],
+      generatedAtUtc,
+      groups: Object.freeze(groups),
+      differences: Object.freeze(groups.slice(1).flatMap((compared) =>
+        differenceMetricIds.map((metricId) => difference(
+          baseline.name,
+          baseline.preview,
+          compared.name,
+          compared.preview,
+          metricId === "net_pnl" || metricId === "gross_pnl" ? selectedPnlMetricId : metricId,
+        )))),
+      limitations: Object.freeze([
+        "Differences describe these completed-trade groups only and do not predict future results.",
+        "Unavailable values remain unavailable and are not replaced with estimates.",
+      ]),
+    });
+  });
 }
 
 export async function readTradeExplorerPageModel(
@@ -286,6 +524,7 @@ export async function readTradeExplorerPageModel(
         null,
         service,
         tradeExplorerTableOrder("closed_desc"),
+        new Date().toISOString(),
       ),
     });
   });

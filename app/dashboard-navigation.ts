@@ -4,6 +4,7 @@ export type DashboardNavigationIconKey =
   | "aiReviews"
   | "aiChat"
   | "calendar"
+  | "compareArrows"
   | "tradingDay"
   | "swing"
   | "roundTrips"
@@ -81,6 +82,11 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
           href: "/analytics/trade-explorer",
           label: "Trade Explorer",
           icon: "tradeExplorer" as const,
+        }),
+        Object.freeze({
+          href: "/analytics/trade-explorer/compare",
+          label: "Compare Trades",
+          icon: "compareArrows" as const,
         }),
         Object.freeze({
           href: "/trades/open",
@@ -224,6 +230,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/analytics/trade-analyzer/day/candle-patterns": "Candle Patterns",
     "/analytics/trade-analyzer/day/trades": "Analyzed Trades",
     "/analytics/trade-explorer": "Trade Explorer",
+    "/analytics/trade-explorer/compare": "Compare Trades",
     "/charts": "Market Charts",
     "/help": "Help Center",
     "/ai-reviews": "AI Reviews",

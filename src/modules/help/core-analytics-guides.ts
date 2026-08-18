@@ -14,6 +14,7 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       table(["Page", "Use it for"], [
         ["Overview", "Read key completed-trade measures and their monthly Net P/L history."],
         ["Trade Explorer", "Filter individual completed trades or rank factual groups such as trading days and tickers."],
+        ["Compare Trades", "Compare the recorded results of two to four completed-trade groups side by side."],
         ["Ticker", "Compare completed-trade results by ticker."],
         ["Timing", "Compare completed-trade results by entry time, exit time, day of week and trading session."],
         ["Execution", "Compare completed trades by entry size, maximum position and holding time."],
@@ -41,6 +42,17 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         "On a phone, choose Filters to open the full filter drawer. Apply returns to the complete results table. The swipe cue marks tables that move sideways, and selecting a trade row expands its recorded fills.",
         "Grouped views use Rows per page and Previous or Next so a long ticker, day or period history stays bounded.",
       ]),
+    ]),
+    section("compare-trades", "Compare completed-trade groups", "Use Compare Trades to examine factual differences between two to four groups from the selected trading account.", ["compare trades", "comparison", "saved comparison", "baseline", "groups"], [
+      bullets([
+        "Open Compare Trades from the left navigation directly below Trade Explorer.",
+        "Create two to four named groups. Each group can use its own completed-trade filters, such as date range, ticker, direction, result, holding time or position size.",
+        "The first group is the baseline. Other groups show an exact difference only when both results use the same compatible P/L basis, currency, formula and timezone.",
+        "The comparison can show completed trades, P/L, win rate, average P/L, profit factor, expectancy, return on entry value and average holding time when the required facts are available.",
+        "Save a useful comparison to the selected trading account, update it later or remove it. Saved versions do not change any trade, note, tag or rule.",
+      ]),
+      paragraph("A difference describes the completed trades in those groups. Compare Trades does not prove why a result occurred, label one group best or predict what will happen next."),
+      link("/analytics/trade-explorer/compare", "Open Compare Trades", "Compare two to four groups of your completed trades."),
     ]),
   ]),
   guide("overview-and-date-range", "Read the overview and date range", "Choose a completed-trade date range, then read the key results and monthly Net P/L without mixing currencies.", [
