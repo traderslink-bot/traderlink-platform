@@ -2,7 +2,7 @@
 
 ## Status
 
-Design and six implementation-readiness QA passes complete under the owner's
+Design and seven implementation-readiness QA passes complete under the owner's
 delegated product authority on 2026-08-18. Implementation has not started. The
 owner does not need to approve individual formulas or weight calculations, but
 the completed engine and its generated reviews remain subject to owner
@@ -133,6 +133,38 @@ not provider instructions. The serializer places them in clearly delimited
 fields and tells the provider not to follow commands found inside them. Text
 such as `ignore the review instructions` cannot change candidate generation,
 lane ranks, allowed selection references or server validation.
+
+### Provider projection privacy allowlist
+
+`Every permitted exact-month fact` means every field in the versioned AI Review
+provider allowlist, not every row or object held by TraderLink. The prompt-safe
+projection may contain the accepted review-period trade facts, dated rule
+outcomes, tags, saved note/reflection text, compact Analyzer evidence, coverage
+state and same-account issued-review context already authorized by this plan.
+It must never contain raw statement/source rows or files, broker-account values,
+private Platform/Journal UUIDs, identity fingerprints, email/Discord/payment
+identity, Data Decisions records or internal issue text, attachment/screenshot
+content or locations, object-storage keys, secrets, credentials, HMAC material,
+or facts from another account.
+
+The serializer is recursively allowlist-based: every object uses an exact known
+schema, every unknown key fails closed, and no increase in token/context budget
+authorizes an additional field. A forbidden-field scan plus exact comparison
+against the scoped source's known private identifiers runs on the canonical
+provider projection before its package digest is frozen. It does not use a
+broad UUID/account-number regex that would reject harmless user-authored text
+while pretending to prove privacy. The full package is private review evidence.
+Application logs, exception text, support summaries and Admin aggregate views
+may retain only bounded failure codes, versions, counts, lengths and digests—
+not the package, notes, prior review prose, provider raw errors or rendered
+private review text.
+
+The immutable calculation source and provider package remain account-scoped
+review history until Platform erasure; later edits do not rewrite them. The
+existing AI Review enablement and entitlement gates still apply before this
+projection can be created. Before activation, the Help/Privacy language must be
+checked against the exact field allowlist and retention behavior; any needed
+visible disclosure is a separately owner-reviewed copy change.
 
 ### Consistent source snapshot
 
@@ -1313,6 +1345,14 @@ frozen request package. Reusing a response or private plan reference from
 another request fails even when the two visible reviews happen to contain the
 same words.
 
+The snapshot table enforces global uniqueness for `providerPackageKey`; a
+mocked collision fails request creation as an integrity defect rather than
+silently accepting an ambiguous replay token. The key is correlation evidence,
+not authentication: account scope, entitlement, feature state, the persisted
+selection lease and issuance compare-and-set remain mandatory. Retries compare
+the returned key with the frozen literal and never recompute it with a current
+HMAC secret. Key rotation therefore cannot invalidate a pending saved package.
+
 Each claim also carries a `factualJobKey` derived from claim kind, subject,
 primary metric, population/comparison definition and attribution kind. Global
 nonduplication compares those keys and exact rendered-clause digests; it does
@@ -1391,18 +1431,26 @@ truthfully represent the insight renderer or a deterministic-default issuance.
 The implementation therefore does not reuse the old prompt marker, omit it, or
 mislabel a server-rendered review as provider-authored.
 
-A forward-only Coach migration adds the insight snapshot and selection-audit
-tables plus a new immutable v3 issued-review table. New periodic and monthly v3
-output contracts retain the same visible fields while using new contract and
-prompt/renderer versions. The existing customer read model and page read v2 and
-v3 rows into the same visible shape; every already-issued v2 row remains
-unchanged.
+A forward-only Coach migration adds the insight snapshot, provider-dispatch,
+dispatch-recovery-state and selection-audit tables plus a new immutable v3
+issued-review table. New periodic and monthly v3 output contracts retain the
+same visible fields while using new contract and prompt/renderer versions. The
+existing customer read model and page read v2 and v3 rows into the same visible
+shape; every already-issued v2 row remains unchanged.
 
 The planned table identities are `coach_ai_review_insight_snapshots`,
+`coach_ai_review_insight_provider_dispatches`,
+`coach_ai_review_dispatch_recovery_state`,
 `coach_ai_review_insight_selection_audits` and
-`coach_ai_issued_reviews_v3`. All three carry the request's account scope,
-reject updates/deletes and participate in erasure, administration,
-backup/restore and integrity verification.
+`coach_ai_issued_reviews_v3`. The four review/request tables carry the request's
+account scope and participate in erasure. The recovery-state table is one
+database-wide singleton, carries no account facts and is never erased with one
+account. All five participate in administration, backup/restore and integrity
+verification. Snapshot, selection-audit and issued rows reject ordinary
+updates/deletes. A dispatch row permits only the fenced lease/dispatch/
+settlement transitions defined below, becomes immutable when fully settled and
+always rejects ordinary deletion. The recovery singleton permits only the
+restore/startup epoch transition defined below and cannot be deleted.
 
 The exact new output identities are
 `traderlink_coach_periodic_ai_review_output_v3` with
@@ -1432,6 +1480,9 @@ request and contains:
 - prompt-safe reference derivation version, never HMAC key material;
 - insight-engine version;
 - renderer, section-plan, review-plan and provider-selection schema versions;
+- frozen provider key/model ID, selection-instruction bytes/digest, strict
+  structured-output schema bytes/digest, provider-envelope version and safe-
+  context/token-count profile, never credentials or API secrets;
 - complete eligible candidate JSON and digest;
 - balanced shortlist and deduplicated section-plan catalog JSON/digest;
 - all authorized fully rendered review-plan outputs, their digests and the
@@ -1466,13 +1517,130 @@ reproduce the monthly calculation. Storage-size verification must measure this
 snapshot separately from provider-token cost; implementation cannot add an
 arbitrary new refusal limit before that benchmark exists.
 
+Large canonical artifacts are stored as versioned compressed BLOBs rather than
+duplicated uncompressed SQLite text. Identity always uses the canonical
+uncompressed byte length and SHA-256 digest; codec output is storage only and
+cannot change a reference. Each read uses bounded streaming decompression,
+emits no more than the recorded uncompressed length and verifies both length and
+digest before parsing. Corruption, trailing bytes, an unknown codec or a size
+mismatch fails closed. Snapshot-size benchmarks must cover compressed and
+uncompressed bytes, compression/decompression time, peak memory, annual
+retention growth and backup/restore size for the 10-, 80-, 100- and 420-trade
+profiles. The implementation cannot keep redundant raw text columns beside the
+same compressed artifact merely for convenience.
+
+### Provider envelope pinning and configuration drift
+
+Request creation requires the normal active provider configuration and freezes
+the non-secret provider/model/envelope contract listed above. Every attempt for
+that request uses those exact instruction, schema, package and model identities;
+a deployment or settings edit cannot substitute a different model, provider,
+prompt, schema or context profile. Current pricing is still snapshotted by each
+real attempt's immutable reservation/receipt so a later price change is recorded
+truthfully rather than backdated into the request.
+
+Before each attempt and before deterministic issuance, the coordinator rechecks
+account scope, entitlement, the account's AI Review feature control and the
+platform AI Review feature control. Disabling either control—including an
+operational kill action—or revoking entitlement fails closed and cannot be
+bypassed by the default. By contrast, ordinary operational drift after a valid
+snapshot—such as the pinned model becoming unavailable or a still-active
+configuration moving to a newer model—never rewrites the request or silently
+fails over. If the request remains fully authorized and both controls remain
+enabled, it uses the frozen deterministic default with
+`provider_configuration_drift`; otherwise it remains stopped/failed under the
+controlling gate. Missing/invalid provider configuration at request creation
+still prevents snapshot creation.
+
+The context check uses the pinned envelope and the more restrictive of its
+frozen safe limit and any current authoritative limit for that same model. A
+retry reads the stored instruction/schema/package bytes and compares the
+returned package key with the stored literal. It does not re-render, rebuild or
+re-HMAC an old request with current code or secrets.
+
+### Provider dispatch leases and crash recovery
+
+Every real provider attempt owns one persisted dispatch row. It records the
+attempt and package digests, a monotonically increasing lease generation, the
+then-current database-recovery epoch, an unguessable fencing token kept out of
+the provider package, lease acquisition/expiry times, whether transport was
+allowed to start (`transport_may_have_started_at_utc`), bounded provider-
+response identity when available and usage-settlement state. The provider
+transport hard deadline must expire before the lease-recovery deadline. The
+singleton recovery-state row stores the current
+cryptographically random epoch value and its transition time. Only a dispatch
+whose epoch equals that singleton and whose generation/token own the current
+lease can commit that transport boundary, accept a response or participate in
+issuance. An expired, pre-restore or superseded worker is permanently fenced out
+even if its response later completes.
+
+The database and external transport cannot commit atomically. Therefore the
+current worker first commits a `transport_may_have_started` transition under its
+epoch/generation/token and only then invokes the provider. A crash after that
+commit but before the network call is conservatively treated as unknown
+exposure; the same attempt is never resent. Marking dispatch only after the
+network call is prohibited because a crash between send and mark could hide a
+real charge and authorize a duplicate call.
+
+Recovery processes expired rows one at a time before ordinary retries:
+
+- an expired lease that never crossed the committed transport boundary
+  finalizes the attempt/reservation as failed with no usage exposure;
+- an expired lease whose committed dispatch boundary says transport may have
+  started becomes terminal for selection with `usage_unknown_after_dispatch`;
+  it never creates a fabricated receipt;
+- the reservation's maximum cost remains counted as unresolved paid-cycle
+  exposure until an exact late receipt is recorded or an explicit provider-
+  invoice reconciliation resolves it; actual and maximum exposure are never
+  counted together; and
+- an expired pre-boundary attempt may follow the normal bounded retry policy,
+  but a request with `usage_unknown_after_dispatch` may issue only its frozen
+  deterministic default after the attempt is selection-terminal; it cannot
+  create another paid provider attempt.
+
+Recovery never resends the same attempt, starts a second provider attempt after
+unknown transport or assumes an external call did not happen. A crash after
+provider success but before the local issuance transaction therefore cannot
+silently lose cost protection or duplicate a call. If the original process
+later receives exact usage, it may append the one real receipt
+through a dedicated late-settlement path that requires the exact persisted
+retired dispatch token plus a unique provider-response identity, revalidates the
+frozen provider/model/rates and compares actual usage with the reservation
+without mutating the terminal attempt/reservation. The retired token can settle
+cost but can never regain selection/issuance authority. Actual usage is factual
+evidence: if it exceeds a reserved token or cost maximum, the system still
+records the exact receipt, marks `reservation_overrun`, uses actual cost in every
+cap/aggregate and blocks further provider calls under the bounded control policy
+until the overrun is handled. It never clips, rejects or rewrites usage to make
+the reservation appear correct. The receipt replaces unresolved maximum
+exposure, but the expired fence cannot select or issue. A crash inside the
+SQLite issuance transaction rolls back the issued row, accepted audit and
+notification together.
+
+Backup restore requires the prior runtime/scheduler to be stopped before the
+restored database becomes authoritative. In one exclusive startup transaction,
+the restored runtime replaces the singleton's persisted epoch with a new
+cryptographically random value, then reconciles every copied nonterminal lease
+before ordinary scheduler work. Every copied pre-restore lease is fenced even
+when its wall-clock expiry has not arrived. The platform's single-writer/one-
+authoritative-database rule remains mandatory; an epoch does not make concurrent
+restored clones supported.
+
+Account/workspace erasure wins over every lease: a late response must re-read
+the scoped request and current fence, and if the rows were erased it is
+discarded without recreating evidence, issuing a review or notifying the user.
+Provider aggregate billing may still show that external call, but no erased
+private payload or account-linked receipt is reintroduced locally.
+
 ### Attempt selection
 
 Each provider attempt may append one private selection audit, and a final
 deterministic-default issuance may append one accepted audit without pretending
 that another provider call occurred. Each audit contains:
 
-- request reference and nullable provider-attempt reference;
+- request reference, nullable provider-attempt/dispatch references and the
+  accepted recovery epoch/lease generation when a provider response was
+  evaluated;
 - selection source (`provider_selected` or `deterministic_default`);
 - engine, shortlist and authorized-review-plan digests;
 - structured provider selection JSON and digest when parseable;
@@ -1519,8 +1687,10 @@ terminal for selection while its actual-usage settlement remains pending if
 remote cancellation was not confirmed. A response arriving after the fallback
 may append the real attempt receipt and bounded late-result settlement code,
 but it can never validate a selection or issue/replace the review. Failed and
-late real calls remain included in provider usage/cost totals; the deterministic
-issuance itself contributes no provider receipt or cost.
+late real calls with receipts remain included in actual provider usage/cost
+totals; unresolved calls whose committed dispatch boundary was crossed remain
+separate conservative maximum-cost exposure. The deterministic issuance itself
+contributes no provider receipt or cost.
 
 ### Retry and activation behavior
 
@@ -1534,9 +1704,10 @@ deployment cannot silently re-render old evidence with a newer template.
 Before any provider attempt, the coordinator measures the full frozen envelope:
 system instructions, strict selection schema, canonical package and the
 512-token response allowance plus the existing protocol headroom. It uses the
-configured model's authoritative input count when required and the existing
-conservative estimator/reservation otherwise. The package must fit the model's
-configured safe input and total-context boundaries. It is never silently
+pinned model's authoritative input count when required and the existing
+conservative estimator/reservation otherwise. The package must fit both the
+frozen and currently authoritative safe input/total-context boundaries for that
+same model. It is never silently
 truncated, summarized, split into independently selectable subpackages or
 rebuilt with omitted monthly facts. When an otherwise activated and authorized
 request cannot fit or reserve that complete envelope, the coordinator issues
@@ -1552,9 +1723,10 @@ fails. This avoids silently mixing old inputs with new ranking behavior.
 
 The migration uses the next available Coach migration identity at
 implementation time because concurrent platform work may claim an earlier
-number. The migration manifest, initialization digest, account-erasure order,
-administration counts and backup/restore verification must include all three
-new tables.
+number. The migration manifest, initialization digest, administration counts
+and backup/restore verification must include all five new tables. Account-
+erasure ordering includes the four scoped tables but never deletes the database-
+wide recovery singleton.
 
 ## Provider selection contract
 
@@ -1714,6 +1886,14 @@ Before persistence, validate that:
 - the request, period, source-snapshot digest, canonical provider-package digest
   and selection-schema version all match that mapping, preventing cross-request
   replay;
+- the provider projection passed its exact recursive field allowlist and
+  forbidden private/internal-field scan before freezing, with no raw source,
+  identity, attachment, secret, Data Decision or cross-account value;
+- every compressed snapshot artifact reproduces its recorded canonical
+  uncompressed length and digest before it is parsed or sent;
+- a provider-selected path used the frozen provider/model/instruction/schema
+  envelope and the dispatch's current recovery epoch, unexpired lease
+  generation and matching fencing token;
 - the selected complete plan, ordered section plans, focus questions, rendered
   output and digests exactly match the immutable snapshot;
 - every selected finding and focus reference exists;
@@ -1767,9 +1947,10 @@ Before persistence, validate that:
   checks;
 - generation source, provider/model nullability and receipt presence match the
   actual issuance path; and
-- this request still owns the pending issuance transition, so a late provider
-  result or competing fallback cannot create a second accepted selection,
-  issued row or ready notification.
+- account scope, entitlement, both account/platform feature controls and the
+  request's pending issuance transition still authorize this
+  result, so erasure, revocation, a late provider result or competing fallback
+  cannot create a second accepted selection, issued row or ready notification.
 
 A failed selection uses the existing immutable retry boundary. The engine does
 not rebuild findings from later-edited Journal data during a retry.
@@ -1962,6 +2143,15 @@ In addition to the 420-trade acceptance fixture, cover:
   facts and hidden focus metadata remain unchanged;
 - user-authored note, custom rule title and tag text containing provider prompt
   injection attempts;
+- nested unknown provider-projection keys and planted raw statement, broker-
+  account, private UUID, identity, Data Decision, attachment/location and
+  cross-account fields, each rejected before package freezing;
+- a harmless UUID-shaped note value that matches no known private identifier,
+  which remains valid, beside an exact private identifier copied into an
+  allowed text field, which is rejected;
+- captured application logs, normalized provider exceptions, Admin summaries
+  and support audit output containing no note, package, prior-review or rendered-
+  review text;
 - custom rule/tag labels that would be ungrammatical or directive-like if
   inserted as verbs, proving templates render them only as quoted noun labels;
 - unchanged structured facts with materially different note wording;
@@ -1989,6 +2179,9 @@ In addition to the 420-trade acceptance fixture, cover:
   the write, never a hybrid;
 - prompt-safe HMAC key rotation with unchanged semantic facts to prove that
   ranks and selections do not move;
+- HMAC rotation after a request is frozen, proving package validation uses the
+  stored literal, plus a mocked 128-bit package-key collision that must fail
+  request creation;
 - periodic and monthly renderer boundaries with zero/negative-zero money,
   singular/plural counts, unavailable currency, 81-plus-grapheme custom labels,
   combining marks/astral symbols, multiline/control-character text and
@@ -2019,14 +2212,43 @@ In addition to the 420-trade acceptance fixture, cover:
 - canonical package and digest fixtures covering object insertion order,
   process restarts, Windows/Unix envelope line endings, JSON escaping,
   combining characters and astral symbols without normalizing stored evidence;
+- compressed snapshot round trips plus corrupt/truncated/trailing-byte, wrong-
+  length, wrong-digest and unknown-codec cases, all rejected before parsing;
+- a retry after provider settings and adapter code change, proving the frozen
+  provider/model/instruction/schema/package envelope is used with no silent
+  model substitution;
+- configuration drift while the feature remains authorized, which may use the
+  frozen default, versus account/platform control disable—including an
+  operational kill action—and entitlement loss, which must remain fail-closed;
 - a renderer registry matrix covering every candidate family, section purpose,
   claim/attribution kind, availability, currency and partial-coverage variant,
   plus a planted missing-template combination that must fail closed;
 - sections with necessary local covered-subset denominators beside a review-
   wide limitation, proving `incompleteRecord` owns the generic coverage sentence
   exactly once;
-- deliberately inactive AI Reviews or missing/disabled provider configuration,
-  which must not issue a deterministic fallback;
+- deliberately inactive AI Reviews or missing/invalid provider configuration at
+  request creation, which must not create a snapshot or deterministic fallback;
+- process termination before the committed transport boundary, after that
+  boundary, after a response but before issuance and inside the issuance
+  transaction, proving fenced recovery, no duplicate call/issuance/notification
+  and conservative unknown-cost exposure only when the boundary was crossed;
+- process termination after the committed `transport_may_have_started` boundary
+  but before the network call, proving conservative unresolved exposure without
+  resending that attempt, starting another provider attempt or fabricating an
+  actual receipt;
+- a late exact receipt replacing—not adding to—unresolved maximum exposure;
+- actual provider usage one token and one cost unit over reservation, proving the
+  exact receipt is retained, `reservation_overrun` is raised and subsequent
+  provider spend is blocked without rewriting the issued review;
+- backup/restore with reserved, dispatch-boundary-crossed and already-issued
+  dispatch rows,
+  proving the prior runtime is stopped, the recovery epoch advances, every
+  copied lease is fenced even before its former expiry and bounded
+  reconciliation occurs before scheduler work;
+- a response from a pre-restore worker after the restored database is
+  authoritative, proving the stale epoch cannot settle selection or issue;
+- account erasure while a provider call is in flight, proving its late result
+  cannot recreate private rows, issue a review or notify;
 - an engine, scope, renderer or output-safety failure that must remain failed
   and cannot use deterministic fallback;
 - a request retried after renderer code changes to prove its previously frozen
@@ -2072,6 +2294,10 @@ one planted fixture:
   cannot render a full-cohort money claim and cannot label covered-subset P/L as
   the period total;
 - provider serialization cannot alter the frozen engine snapshot;
+- provider serialization emits only recursively allowlisted prompt-safe fields;
+  adding any unknown/private/internal field fails even when context remains;
+- package, provider exception, support and Admin logging contains no raw note,
+  historical review, provider prompt or rendered private review text;
 - every normalized source snapshot is transactionally consistent across
   Journal, rule, note, Analyzer and issued-focus reads;
 - an idempotent request race returns one request and its one winning insight
@@ -2114,6 +2340,8 @@ one planted fixture:
 - fixed-order canonical serialization produces byte-identical UTF-8 packages
   and digests regardless of object insertion order, locale, process or host line
   endings, while distinct user-authored source code points remain distinct;
+- compressed persistence round-trips to those exact canonical bytes, and any
+  codec, length, digest, truncation or trailing-byte defect fails before parse;
 - the renderer coverage registry is complete for every activatable combination;
   removing one template fails snapshot creation rather than suppressing the
   finding or using a generic sentence;
@@ -2127,6 +2355,9 @@ one planted fixture:
   and snapshots never cross-read;
 - rotating only the prompt-safe HMAC key may change new scoped evidence
   references but cannot change structural tie keys, scores or semantic order;
+- rotating the HMAC secret after snapshot creation cannot change the frozen
+  package key or break retry validation; a forced package-key collision fails
+  atomically;
 - instruction-shaped text in a note cannot affect measurements, ranks or
   allowed selections; the literal value of a custom rule title or tag may
   affect only its ordinary subject identity, display label and exact cohort
@@ -2148,13 +2379,30 @@ one planted fixture:
   pending-to-issued winner, one accepted audit and one ready notification;
   a late real provider result can settle actual usage but cannot issue;
 - repeated fallback invocation is idempotent and returns the existing review;
+- provider/model/instruction/schema settings changes cannot alter a frozen
+  retry or silently substitute a model; eligible operational drift uses the
+  default, while account/platform disable and entitlement-revocation gates
+  remain fail-closed;
+- an expired lease before the dispatch boundary creates no usage exposure,
+  while an expired lease after that boundary retains one unresolved maximum
+  exposure, cannot issue its provider result and cannot start another provider
+  attempt;
+- a late exact receipt replaces unresolved exposure without double-counting it;
+- actual usage above a reservation is persisted exactly and becomes the spend-
+  control amount with an overrun flag; it is never clipped or discarded;
+- restoring a database requires exclusive runtime authority, advances the
+  recovery epoch and fences every copied lease before creating a new attempt,
+  resending work or issuing fallback;
+- account erasure removes the scope and permanently prevents any in-flight or
+  late provider result from recreating or issuing it;
 - an over-context or refused full provider package is never truncated or split
   and issues the same complete-source default without a provider call;
 - one authorized plan short-circuits provider selection only after normal
   activation/configuration/authorization and records `single_authorized_plan`;
 - a deterministic fallback is impossible after any scope, entitlement,
-  activation/provider-configuration, source, engine, renderer, safety,
-  contract, persistence or stopped-request failure;
+  account/platform feature-control, source, engine, renderer, safety, contract,
+  persistence or stopped-request failure, or invalid provider configuration at
+  request creation;
 - a retry after renderer deployment changes returns the original rendered
   output digest;
 - existing v2 rows and both v3 generation sources parse to the same visible
@@ -2186,6 +2434,13 @@ trade.
   snapshot bytes, section/review-plan count, renderer time and peak process
   memory for 10-, 80-, 100- and 420-trade inputs. Snapshot storage and provider-
   token cost are reported separately.
+- The storage benchmark reports canonical versus compressed bytes, peak
+  compression/decompression memory, backup size and projected one-year growth
+  for weekly-plus-monthly and Monthly-only cadences. It proves large source and
+  package strings are not simultaneously copied through avoidable intermediate
+  JSON values.
+- Lease recovery scans an indexed bounded batch and processes one dispatch at a
+  time; it cannot load all pending packages or all account evidence into memory.
 - Provider preflight measures one frozen complete package against the configured
   model envelope. It does not make repeated trial calls or create a multi-stage
   model workflow merely because the exact-month evidence is large.
@@ -2207,21 +2462,31 @@ For each generated review, retain server-side:
 - eligibility gates, confidence adjustments, penalties and sensitivity results;
 - provider selections and request-local choice-key resolution;
 - authorized review-plan count, default/selected `reviewPlanRef`, renderer and
-  selection-schema versions, canonical provider-package byte/token counts and
-  digest, rendered-output digest and generation source;
+  selection-schema versions, frozen provider/model/envelope identities,
+  canonical/compressed provider-package byte counts, token counts and digest,
+  rendered-output digest and generation source;
 - rejected-attempt selection errors;
 - deterministic-fallback reason when used;
-- issuance compare-and-set winner, accepted-audit/notification identity and any
-  bounded late-provider settlement code;
+- database-recovery epoch, dispatch lease generation/state, nullable
+  `transport_may_have_started_at_utc`, issuance compare-and-set winner, accepted-
+  audit/notification identity and any bounded recovery/late-provider settlement
+  code;
 - final section-to-finding references;
 - focus-tracking metadata;
 - provider usage and cost through the existing receipt system, including real
   failed/late calls, with no receipt or cost created for a provider call that
-  did not occur.
+  did not occur;
+- unresolved maximum-cost exposure for calls whose committed dispatch boundary
+  was crossed but usage is unknown, reported separately from actual receipt
+  cost and never added after an exact receipt replaces it; and
+- reservation-overrun count and exact excess, with subsequent provider-call
+  block state, never substituted for or deducted from actual usage.
 
 Journal notes and private identities retain their existing privacy boundary.
-Admin aggregate health views may later report candidate/selection counts but
-must not expose private review prose or trade facts.
+Admin aggregate health views may later report candidate/selection counts,
+compressed sizes, lease health and unresolved cost exposure but must not expose
+private review prose, packages, notes or trade facts. Operational errors are
+normalized to bounded codes before logging or persistence.
 
 ## Failure handling
 
@@ -2258,21 +2523,46 @@ must not expose private review prose or trade facts.
   not truncate, summarize or split it. After the normal activation and
   authorization gates, issue the complete-source deterministic default with
   `provider_input_limit` and make no provider call.
+- **Pinned provider/model/envelope becomes unavailable after valid request
+  creation:** never substitute a new model or rebuild the package. If scope,
+  entitlement and both account/platform feature controls still allow issuance,
+  use the frozen default with `provider_configuration_drift`.
+- **Provider configuration is invalid at creation, either account/platform
+  feature control is disabled—including an operational kill action—or
+  entitlement is revoked:** fail closed; no snapshot/default may bypass the
+  controlling gate.
 - **Provider response arrives after fallback won issuance:** preserve any real
   usage/receipt on that attempt and record the bounded late-result state, but do
   not validate its choice, replace the issued output or notify again.
 - **Provider success and fallback arrive together:** the atomic pending-to-
   issued transition chooses one winner. The loser idempotently reads the issued
   review and cannot create another accepted audit or ready notification.
+- **Worker dies before provider dispatch:** expire/fence the lease, fail the
+  attempt without usage exposure and continue only through the bounded retry
+  policy.
+- **Worker dies after the committed dispatch boundary:** fence the attempt for
+  selection, retain its maximum reservation as unresolved exposure and never
+  invent an actual receipt or make another provider attempt; reconcile an exact
+  late receipt if one becomes available and otherwise issue only the frozen
+  deterministic default after recovery.
+- **Actual usage exceeds the reservation:** store the exact receipt and flag
+  `reservation_overrun`; use actual cost in spend controls and block subsequent
+  provider calls under the bounded control policy. Never clip or reject factual
+  usage merely to preserve the estimate.
+- **Compressed snapshot cannot reproduce its canonical length/digest:** fail
+  closed before provider, rendering or issuance; never regenerate it from later
+  Journal state.
+- **Account is erased while transport is in flight:** discard the result. It
+  cannot recreate scoped history, issue, notify or persist erased private data.
 - **Renderer registry lacks a required template:** fail snapshot creation as a
   renderer defect. Do not hide the candidate or misreport that the trader had no
   qualifying pattern.
-- **Scope, entitlement, feature activation, missing/disabled provider
-  configuration, source snapshot, engine arithmetic, renderer, output-safety,
-  contract-version or persistence integrity fails, or the request was
-  stopped:** fail closed under the existing request state. Deterministic
-  fallback is continuity for an activated feature, never a way to activate or
-  bypass these boundaries.
+- **Scope, entitlement, account/platform feature controls, provider-
+  configuration-at-creation, source snapshot, engine arithmetic, renderer,
+  output-safety, contract-version or persistence integrity fails, or the request
+  was stopped:** fail closed under the existing request state. Deterministic
+  fallback is continuity for a valid activated request, never a way to activate
+  or bypass these boundaries.
 
 ## Planned implementation ownership
 
@@ -2292,6 +2582,7 @@ plan must record it before that file is edited.
 - `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-selection-validator.ts`
 - `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-renderer.ts`
 - `src/modules/coach/server/coach-ai-review-insight-repository.ts`
+- `src/modules/coach/server/coach-ai-review-insight-dispatch-recovery.ts`
 - one next-available forward Coach insight migration under
   `src/modules/coach/server/database/migrations/`
 - `src/scripts/verify-coach-ai-review-insight-engine.ts`
@@ -2309,6 +2600,7 @@ plan must record it before that file is edited.
 - `src/modules/coach/server/coach-ai-review-request-service.ts`
 - `src/modules/coach/server/coach-ai-review-repository.ts`
 - `src/modules/coach/server/coach-ai-review-administration-repository.ts`
+- `src/modules/coach/server/coach-ai-provider-settings-repository.ts`
 - `src/modules/coach/server/coach-ai-review-provider-controls-repository.ts`
 - `src/modules/coach/server/coach-ai-review-generation-coordinator-v2.ts`
 - `src/modules/coach/server/coach-ai-review-provider-package.ts`
@@ -2331,8 +2623,10 @@ plan must record it before that file is edited.
   complete and concurrent edits can be preserved safely.
 
 No dashboard presentation, Trade Tracker editor, Journal fact writer, legacy
-V3 runtime, Help page, scheduler activation, hosted configuration or deployment
-file belongs to this implementation.
+V3 runtime, scheduler activation, hosted configuration or deployment file
+belongs to this implementation. A Help/Privacy mismatch found at final review
+becomes a separate owner-approved copy slice rather than being silently bundled
+into engine code.
 
 ## Implementation slices
 
@@ -2355,6 +2649,10 @@ file belongs to this implementation.
 - Freeze canonical provider-package bytes and the request-local choice-to-plan
   mapping; add the strict selection schema that rejects raw provider prose and
   uses the reduced output-token ceiling.
+- Enforce the recursive provider privacy allowlist/forbidden-field scan and
+  store large canonical artifacts in verified versioned compressed form.
+- Pin the non-secret provider/model/instruction/schema envelope and add fenced
+  dispatch leases, bounded crash/restore recovery and unresolved-cost exposure.
 - Preflight the complete unsplit provider envelope against the configured model
   budget without omitting exact-month source facts.
 - Add v3 output/issued-review persistence, dual v2/v3 reads, exact provenance,
@@ -2380,6 +2678,13 @@ file belongs to this implementation.
   deterministic default is issued/reopened without a fake provider receipt.
 - Race a delayed provider result against fallback and verify one issued review,
   one accepted audit, one ready notification and truthful late usage.
+- Crash/restart each dispatch/issuance boundary, restore a pending database only
+  after stopping its former runtime, advance the recovery epoch, then erase an
+  account in flight; prove every copied lease is immediately fenced, no stale
+  runtime can issue, no data is resurrected and actual versus unresolved cost
+  accounting remains correct.
+- Prove provider/model/settings drift cannot rewrite a frozen request and that
+  account/platform disable and entitlement revocation remain fail-closed.
 - Verify below/above-context packages remain complete and choose provider or
   deterministic issuance without truncation or splitting.
 - Run bounded non-persisted stability replays.
@@ -2389,8 +2694,10 @@ file belongs to this implementation.
 - Record exact accepted formulas, engine version, known limitations and live
   outputs.
 - Update the narrative-quality progress record and AI Review beta handoff.
-- Confirm whether Help needs a user-facing explanation; internal ranking and
-  evidence selection alone should not require one.
+- Compare the exact provider field allowlist and immutable retention behavior
+  with AI Reviews Help and Privacy language. Any visible correction requires
+  owner copy approval; do not assume internal ranking alone makes the expanded
+  monthly factual projection disclosure-neutral.
 
 ## Plan QA pass - 2026-08-18
 
@@ -2789,17 +3096,95 @@ plan thresholds are version-one calibration values rather than universal truths;
 they must still pass the independent calculations, sealed holdouts and true-
 month acceptance before activation.
 
+## Seventh adversarial plan QA pass - 2026-08-18
+
+The seventh pass attacked privacy expansion, frozen-provider reproducibility,
+process/backup recovery, unknown external-call cost, erasure races and long-term
+snapshot storage rather than candidate math or prose quality.
+
+Additional resolved findings:
+
+1. **`All exact-month facts` could be misread as all stored account data:** fixed
+   with an exact prompt-safe field allowlist and explicit exclusions for raw
+   statements, identities, Data Decisions, attachments, secrets and other
+   accounts.
+2. **A larger context budget could accidentally expand the data boundary:**
+   fixed by rejecting every unknown nested field independently of package size.
+3. **Full notes or review prose could leak through logs and support errors:**
+   fixed by retaining only bounded codes, counts, versions, lengths and digests
+   outside the private account-scoped snapshot.
+4. **The new full monthly projection/retention behavior lacked a disclosure
+   checkpoint:** fixed by requiring an exact Help/Privacy comparison and a
+   separate owner-approved copy slice if current language is incomplete.
+5. **A retry could recompute its package key with a rotated HMAC secret:** fixed
+   by validating the frozen literal and using HMAC only at request creation.
+6. **The short package-key collision case was undefined:** fixed with database
+   uniqueness and atomic integrity failure under a mocked collision.
+7. **A deployment/settings edit could change the model, instructions or schema
+   on retry:** fixed by freezing the non-secret provider/model/envelope contract
+   in the insight snapshot.
+8. **Provider failover could silently change the review-selection behavior:**
+   fixed by prohibiting model/provider substitution for an existing request.
+9. **Configuration drift and an intentional kill action were conflated:** fixed
+   by allowing the default only for still-authorized operational drift while
+   the existing account/platform feature controls and entitlement gate remain
+   fail-closed, without inventing a second stop mechanism.
+10. **A crashed process could leave an in-progress attempt stuck forever:**
+    fixed with persisted, expiring, generation-fenced dispatch leases and
+    bounded recovery before scheduler work.
+11. **An expired or pre-restore worker could still issue a late provider
+    result:** fixed by requiring the current recovery epoch, lease generation
+    and token as well as the request issuance compare-and-set.
+12. **The database dispatch marker and external call cannot be atomic:** fixed
+    by committing `transport_may_have_started` before transport and treating a
+    crash in the gap as conservative unknown exposure; the attempt is never
+    resent and no receipt is invented.
+13. **A crash after the committed dispatch boundary could lose cost
+    protection:** fixed by retaining the attempt's maximum reservation as
+    unresolved exposure without inventing an actual receipt.
+14. **An unknown boundary-crossed call could be followed by another paid
+    attempt:** fixed by prohibiting further provider attempts for that request
+    and allowing only the frozen deterministic default after recovery.
+15. **A late exact receipt could be counted in addition to that maximum:** fixed
+    by replacing unresolved exposure with actual receipt cost exactly once.
+16. **Actual usage over the reservation could be rejected as an integrity
+    error:** fixed by recording the exact receipt, flagging the overrun and using
+    actual cost to block/control later provider calls.
+17. **A restored copy retained the original database's lease authority:** fixed
+    by requiring the former runtime to stop, advancing a recovery epoch, fencing
+    every copied lease immediately and reconciling before any attempt, fallback
+    or scheduler action. Concurrent restored clones remain unsupported.
+18. **Account erasure during transport could be followed by data resurrection:**
+    fixed by mandatory scope/fence re-read and discard after erasure.
+19. **Full source plus provider bytes could cause uncontrolled SQLite/backup
+    growth:** fixed with versioned compressed large artifacts and annual
+    retention/backup resource benchmarks.
+20. **Compressed corruption could become valid-looking review data:** fixed with
+    bounded decompression and exact canonical length/digest verification before
+    parsing.
+21. **The verification and ownership lists omitted these boundaries:** fixed
+    with privacy/log, frozen-envelope, collision/rotation, crash/restore,
+    unknown-cost, erasure and compressed-integrity fixtures plus the required
+    settings/recovery source ownership.
+
+No unresolved critical design blocker remains after this pass. Compression
+settings, lease duration and recovery batch size must be chosen from the focused
+resource and failure benchmarks and frozen in their respective versioned
+contracts before activation.
+
 ## Completion boundary
 
 This redesign is complete only when:
 
 - each request is calculated from one consistent account-scoped source
   snapshot rather than a hybrid of concurrent Journal revisions;
+- every provider field is explicitly allowlisted and private/internal/cross-
+  account data cannot enter packages, logs, Admin or support output;
 - deterministic planted findings, independent score calculations and sealed
   holdouts rank correctly before provider involvement;
 - the monthly provider package contains the four actually issued weekly
-  reviews and all exact-month facts, while historical prose cannot change a
-  current monthly measurement or claim;
+  reviews and every permitted exact-month fact, while historical prose cannot
+  change a current monthly measurement or claim;
 - every available visible section identifies a useful finding and does not
   duplicate another section's explanatory job;
 - every authorized whole-review plan passes global compatibility and renderer
@@ -2826,6 +3211,19 @@ This redesign is complete only when:
   to that attempt without replacing the output;
 - complete provider packages are frozen and preflighted without truncating,
   summarizing or splitting monthly facts;
+- retries preserve the exact pinned provider/model/instruction/schema envelope
+  with no silent model failover, while account/platform disable and entitlement
+  revocation still prevent deterministic issuance;
+- crash and backup recovery require one authoritative runtime, advance a
+  recovery epoch, fence every abandoned or pre-restore worker, do not make
+  another provider attempt after unknown transport, distinguish pre-boundary
+  attempts from boundary-crossed calls with unknown usage and never double-
+  count actual versus unresolved maximum cost;
+- exact provider usage is retained even when it exceeds reservation, with the
+  overrun controlling later spend rather than being clipped or discarded;
+- in-flight results cannot survive account erasure or recreate scoped data;
+- every compressed snapshot artifact reproduces its canonical bytes before use
+  and meets the accepted peak-memory, database-growth and backup-size bounds;
 - every activatable finding/section/attribution/coverage combination has an
   explicit safe renderer template and no generic prose fallback;
 - existing v2 and both v3 generation sources reopen through one customer read

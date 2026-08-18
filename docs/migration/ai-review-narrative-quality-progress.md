@@ -79,10 +79,14 @@ four actually issued weekly reviews plus all 420 exact-month trades.
   duplicate issuance/notifications, cross-request plan replay, complete-package
   context limits, whole-plan alternative quality, canonical bytes and renderer-
   template coverage.
+- [x] Complete the seventh adversarial QA pass against provider-data expansion,
+  raw logging, frozen model/envelope drift, HMAC rotation/collision, crash and
+  recovery-epoch/backup fencing, unknown boundary-crossed-call cost, reservation
+  overruns, erasure races and compressed-snapshot integrity/growth.
 - [ ] Implement and calibrate the deterministic insight engine.
 - [ ] Run the true-month issuance and provider stability acceptance.
 
-The sixth-pass design supersedes the prompt-only path's proposed multi-stage
+The seventh-pass design supersedes the prompt-only path's proposed multi-stage
 oversize handling. Once the insight engine is active, TraderLink calculates and
 renders the complete review locally from all exact facts. If the full frozen
 selection package cannot fit the configured model envelope, it issues that
