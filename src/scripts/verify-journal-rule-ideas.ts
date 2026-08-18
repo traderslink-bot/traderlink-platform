@@ -9,7 +9,7 @@ import { JOURNAL_RULE_IDEA_EVIDENCE_VERSION, type JournalRuleIdeaEvidence } from
 import { JournalAnalyticsFactSetRepository } from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-repository";
 import { JournalAnalyticsFactSetService } from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-service";
 import { JournalRuleRepository } from "@/src/modules/journal/server/annotations/journal-rule-repository";
-import { detectJournalRuleIdeas } from "@/src/modules/journal/server/rule-ideas/journal-rule-idea-detector";
+import { detectJournalRuleIdeasInRepresentativeWindow } from "@/src/modules/journal/server/rule-ideas/journal-rule-idea-window";
 import { JournalRuleIdeaRepository } from "@/src/modules/journal/server/rule-ideas/journal-rule-idea-repository";
 import { JournalRuleIdeaService } from "@/src/modules/journal/server/rule-ideas/journal-rule-idea-service";
 import { JournalDashboardReadModelService } from "@/src/modules/journal-analytics/server/journal-dashboard-read-model-service";
@@ -69,7 +69,7 @@ WHERE workspace_id = ? AND account_id = ? AND lifecycle_state = 'active' AND tra
     .all(account.workspaceId, account.accountId) as Array<{ round_trip_id: string }>).map((row) => row.round_trip_id));
   const activeTemplates = new Set(new JournalRuleRepository(scopeDatabase).list(account)
     .filter((rule) => rule.lifecycleState === "active" && rule.templateKey).map((rule) => rule.templateKey!));
-  const candidates = latest.availableCurrencies.flatMap((currency) => detectJournalRuleIdeas({
+  const candidates = latest.availableCurrencies.flatMap((currency) => detectJournalRuleIdeasInRepresentativeWindow({
     models: latest.availableTradingDates.map((date) => dashboard.getTradingDay(scope, { requestedDate: date, currency })),
     swingRoundTripIds: swings,
     activeTemplateIds: activeTemplates,

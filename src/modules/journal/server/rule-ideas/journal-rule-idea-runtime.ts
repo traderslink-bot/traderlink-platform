@@ -3,7 +3,6 @@ import "server-only";
 import type Database from "better-sqlite3";
 
 import { narrowWorkspaceAccessToAccount, type WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
-import type { JournalTradingDayReadModel } from "@/src/modules/journal-analytics/contracts/journal-dashboard-read-models";
 import { JournalDashboardReadModelService } from "@/src/modules/journal-analytics/server/journal-dashboard-read-model-service";
 import type { JournalRuleIdeaDisposition, JournalRuleIdeaEvidence, JournalRuleIdeaRecord } from "@/src/modules/journal/contracts/journal-rule-idea-contracts";
 import { JournalAnalyticsFactSetRepository } from "@/src/modules/journal/server/analytics/journal-analytics-fact-set-repository";
@@ -13,9 +12,9 @@ import { withWritableJournalIntegrityRuntime } from "@/src/modules/journal/serve
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
 
-import { detectJournalRuleIdeas } from "./journal-rule-idea-detector";
 import { JournalRuleIdeaRepository } from "./journal-rule-idea-repository";
 import { JournalRuleIdeaService } from "./journal-rule-idea-service";
+import { detectJournalRuleIdeasInRepresentativeWindow } from "./journal-rule-idea-window";
 
 function accountScope(scope: WorkspaceAccessScope) {
   if (!scope.activeAccountId || !scope.allowedAccountIds.includes(scope.activeAccountId)) {
@@ -32,31 +31,6 @@ WHERE workspace_id = ? AND account_id = ? AND lifecycle_state = 'active'
     .map((row) => row.round_trip_id));
 }
 
-function dayTradeCount(model: JournalTradingDayReadModel, swings: ReadonlySet<string>): number {
-  return model.tickers.flatMap((ticker) => ticker.roundTrips).filter((trade) =>
-    !swings.has(trade.roundTripId) && trade.entryAtUtc.slice(0, 10) <= model.date && trade.exitAtUtc.slice(0, 10) >= model.date,
-  ).length;
-}
-
-function representativeWindow(models: readonly JournalTradingDayReadModel[], swings: ReadonlySet<string>): readonly JournalTradingDayReadModel[] {
-  if (models.length === 0) return Object.freeze([]);
-  const sorted = [...models].sort((left, right) => left.date.localeCompare(right.date));
-  const latest = Date.parse(`${sorted.at(-1)!.date}T00:00:00.000Z`);
-  let first = sorted.findIndex((model) => latest - Date.parse(`${model.date}T00:00:00.000Z`) <= 13 * 86_400_000);
-  if (first < 0) first = sorted.length - 1;
-  while (first > 0) {
-    const selected = sorted.slice(first);
-    const days = selected.filter((model) => dayTradeCount(model, swings) > 0).length;
-    const trades = selected.reduce((count, model) => count + dayTradeCount(model, swings), 0);
-    const executions = new Set(selected.flatMap((model) => model.executionActivity
-      .filter((execution) => !execution.needsDecision && execution.projectionStates.includes("ready_closed"))
-      .map((execution) => execution.executionVersionId))).size;
-    if (days >= 3 && trades >= 20 && executions >= 50) break;
-    first -= 1;
-  }
-  return Object.freeze(sorted.slice(first));
-}
-
 export function readJournalRuleIdeaCandidates(scope: WorkspaceAccessScope, asOfUtc = new Date().toISOString()): readonly JournalRuleIdeaEvidence[] {
   return withReadonlyPlatformDatabase({}, (database) => {
     const account = accountScope(scope);
@@ -68,12 +42,12 @@ export function readJournalRuleIdeaCandidates(scope: WorkspaceAccessScope, asOfU
       .filter((rule) => rule.lifecycleState === "active" && rule.sourceKind === "template" && rule.templateKey)
       .map((rule) => rule.templateKey!));
     const results = latest.availableCurrencies.flatMap((currency) => {
-      const models = representativeWindow(latest.availableTradingDates.map((date) => dashboard.getTradingDay(scope, {
+      const models = latest.availableTradingDates.map((date) => dashboard.getTradingDay(scope, {
         requestedDate: date,
         currency,
         asOfUtc,
-      })), swings);
-      return detectJournalRuleIdeas({ models, swingRoundTripIds: swings, activeTemplateIds, asOfUtc });
+      }));
+      return detectJournalRuleIdeasInRepresentativeWindow({ models, swingRoundTripIds: swings, activeTemplateIds, asOfUtc });
     });
     return Object.freeze(results.sort((left, right) =>
       right.triggerDays - left.triggerDays || right.affectedTradeCount - left.affectedTradeCount ||

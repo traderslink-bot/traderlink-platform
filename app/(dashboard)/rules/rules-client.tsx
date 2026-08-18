@@ -56,6 +56,8 @@ import {
   formatJournalAnalyticsMoney,
   journalAnalyticsCurrencySymbol,
 } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
+import type { JournalRuleIdeaRecord } from
+  "@/src/modules/journal/contracts/journal-rule-idea-contracts";
 
 type RuleEditorState = Readonly<{
   mode: "create" | "revise";
@@ -205,11 +207,13 @@ function latestResultLabel(rule: ExecutionRuleDashboardCard): string {
 
 export function RulesClient({
   initialView,
+  initialRuleIdeas,
   monetaryMultiplier,
   reportingCurrency,
   sourceCurrency,
 }: {
   initialView: TradingRulesDashboardView;
+  initialRuleIdeas: readonly JournalRuleIdeaRecord[];
   monetaryMultiplier: string;
   reportingCurrency: string;
   sourceCurrency: string;
@@ -217,6 +221,10 @@ export function RulesClient({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [view, setView] = useState(initialView);
+  const [ruleIdeas, setRuleIdeas] = useState(initialRuleIdeas);
+  const [ruleIdeaBusy, setRuleIdeaBusy] = useState(false);
+  const [ruleIdeaCheckComplete, setRuleIdeaCheckComplete] = useState(false);
+  const [addingIdeaId, setAddingIdeaId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -309,9 +317,56 @@ export function RulesClient({
   }
 
   function openCreate(template: TradingRulesTemplateView): void {
+    setAddingIdeaId(null);
     setPresetLibraryOpen(false);
     setEditor({ mode: "create", template, rule: null });
     setEditorValues({ ...template.exampleConfiguration });
+  }
+
+  async function mutateRuleIdea(
+    action: "check" | "save_for_later" | "not_for_me" | "added",
+    idea: JournalRuleIdeaRecord | null = null,
+  ): Promise<boolean> {
+    setRuleIdeaBusy(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/intelligence/rule-ideas", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          action,
+          expectedAccountSelectionRef: view.expectedAccountSelectionRef,
+          ideaId: idea?.ideaId,
+          expectedRevision: idea?.revision,
+        }),
+      });
+      const result = await response.json() as
+        | Readonly<{ ok: true; ideas: readonly JournalRuleIdeaRecord[] }>
+        | Readonly<{ ok: false; error: Readonly<{ message: string }> }>;
+      if (!response.ok || !result.ok) {
+        setError(result.ok ? "The Rule idea was not updated." : result.error.message);
+        return false;
+      }
+      setRuleIdeas(result.ideas);
+      setRuleIdeaCheckComplete(action === "check" && !result.ideas.some((candidate) =>
+        candidate.disposition === "available" || candidate.disposition === "saved_for_later"));
+      return true;
+    } catch {
+      setError("The Rule idea could not reach the local dashboard server.");
+      return false;
+    } finally {
+      setRuleIdeaBusy(false);
+    }
+  }
+
+  function openRuleIdea(idea: JournalRuleIdeaRecord): void {
+    const template = view.templates.find((candidate) =>
+      candidate.templateId === idea.evidence.templateId);
+    if (!template) return;
+    setAddingIdeaId(idea.ideaId);
+    setEditor({ mode: "create", template, rule: null });
+    setEditorValues({ ...idea.evidence.configuration });
   }
 
   function toggleExpandedRule(ruleInstanceId: string): void {
@@ -360,7 +415,14 @@ export function RulesClient({
       mutation,
       editor.rule?.ruleInstanceId ?? editor.template.templateId,
     );
-    if (saved) setEditor(null);
+    if (saved) {
+      if (addingIdeaId) {
+        const idea = ruleIdeas.find((candidate) => candidate.ideaId === addingIdeaId);
+        if (idea) await mutateRuleIdea("added", idea);
+      }
+      setAddingIdeaId(null);
+      setEditor(null);
+    }
   }
 
   async function transition(
@@ -548,6 +610,12 @@ export function RulesClient({
     </>
   );
 
+  const currentRuleIdea = ruleIdeas.find((idea) =>
+    idea.disposition === "available" || idea.disposition === "saved_for_later") ?? null;
+  const currentRuleIdeaTemplate = currentRuleIdea
+    ? view.templates.find((template) => template.templateId === currentRuleIdea.evidence.templateId) ?? null
+    : null;
+
   return (
     <DashboardPage>
       <Stack
@@ -635,6 +703,83 @@ export function RulesClient({
           value="Automatic"
         />
       </Box>
+
+      <DashboardPanel
+        action={currentRuleIdea?.disposition === "saved_for_later"
+          ? <Chip label="Saved for later" size="small" variant="outlined" />
+          : undefined}
+        title="Rule idea"
+      >
+        {currentRuleIdea && currentRuleIdeaTemplate ? (
+          <Stack spacing={2}>
+            <Box>
+              <Typography component="h3" variant="h3">
+                {currentRuleIdeaTemplate.label}
+              </Typography>
+              <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+                {configurationLabel(
+                  currentRuleIdeaTemplate,
+                  currentRuleIdea.evidence.configuration,
+                  currentRuleIdea.evidence.currency,
+                  "1",
+                )}
+              </Typography>
+            </Box>
+            <Typography>
+              Across {currentRuleIdea.evidence.triggerDays} trading days, {currentRuleIdea.evidence.affectedTradeCount} later trades had a combined result of {formatJournalAnalyticsMoney(currentRuleIdea.evidence.affectedPnlDecimal, currentRuleIdea.evidence.currency)}. Their average was {formatJournalAnalyticsMoney(currentRuleIdea.evidence.affectedAveragePnlDecimal, currentRuleIdea.evidence.currency)} per trade.
+            </Typography>
+            <Typography color="text.secondary">
+              The {currentRuleIdea.evidence.comparisonTradeCount} other trades on those days had a combined result of {formatJournalAnalyticsMoney(currentRuleIdea.evidence.comparisonPnlDecimal, currentRuleIdea.evidence.currency)} and averaged {formatJournalAnalyticsMoney(currentRuleIdea.evidence.comparisonAveragePnlDecimal, currentRuleIdea.evidence.currency)} per trade. After removing the single worst affected trade, the remaining affected result was still {formatJournalAnalyticsMoney(currentRuleIdea.evidence.affectedPnlWithoutWorstTradeDecimal, currentRuleIdea.evidence.currency)}.
+            </Typography>
+            <Alert severity="info">
+              This is a factual pattern in completed trades, not proof that the rule caused the difference or will improve future results.
+            </Alert>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+              <Button
+                disabled={ruleIdeaBusy}
+                onClick={() => openRuleIdea(currentRuleIdea)}
+                variant="contained"
+              >
+                Add rule
+              </Button>
+              {currentRuleIdea.disposition === "available" ? (
+                <Button
+                  disabled={ruleIdeaBusy}
+                  onClick={() => void mutateRuleIdea("save_for_later", currentRuleIdea)}
+                  variant="outlined"
+                >
+                  Save for later
+                </Button>
+              ) : null}
+              <Button
+                disabled={ruleIdeaBusy}
+                onClick={() => void mutateRuleIdea("not_for_me", currentRuleIdea)}
+              >
+                Not for me
+              </Button>
+            </Stack>
+          </Stack>
+        ) : (
+          <Stack spacing={1.5} sx={{ alignItems: "flex-start" }}>
+            {ruleIdeaCheckComplete ? (
+              <Alert severity="info">
+                I checked your completed Day trades, but none currently meet all the evidence checks for a Rule idea. Nothing was changed.
+              </Alert>
+            ) : (
+              <Typography color="text.secondary">
+                Check your completed Day trades for a repeated, well-supported pattern that matches an available preset rule.
+              </Typography>
+            )}
+            <Button
+              disabled={ruleIdeaBusy}
+              onClick={() => void mutateRuleIdea("check")}
+              variant="outlined"
+            >
+              {ruleIdeaBusy ? "Checking…" : ruleIdeaCheckComplete ? "Check again" : "Check my trades"}
+            </Button>
+          </Stack>
+        )}
+      </DashboardPanel>
 
       <DashboardPanel
         action={

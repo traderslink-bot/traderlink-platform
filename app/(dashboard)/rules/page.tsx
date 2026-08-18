@@ -13,6 +13,8 @@ import { withJournalAnalyticsReportingDashboardRuntime } from
   "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { journalReportingCurrencyMultiplier } from
   "@/src/modules/journal-analytics/server/journal-reporting-currency-fact-set";
+import { listJournalRuleIdeas } from
+  "@/src/modules/journal/server/rule-ideas/journal-rule-idea-runtime";
 
 export const metadata: Metadata = {
   title: "Trading Rules | Trade Tracker",
@@ -34,6 +36,7 @@ export default async function TradingRulesPage() {
     ),
   );
   const account = getReplacementTradeTrackerAccount(scope);
+  const initialRuleIdeas = listJournalRuleIdeas(scope);
   const reporting = await withJournalAnalyticsReportingDashboardRuntime(
     scope,
     ({ reportingContext, reportingCurrency }) => {
@@ -53,6 +56,7 @@ export default async function TradingRulesPage() {
   return (
     <RulesClient
       initialView={initialView}
+      initialRuleIdeas={initialRuleIdeas}
       monetaryMultiplier={reporting.monetaryMultiplier}
       reportingCurrency={reporting.reportingCurrency}
       sourceCurrency={reporting.sourceCurrency}

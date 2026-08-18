@@ -61,6 +61,72 @@ export const TRADING_RULES_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     ]),
   }),
   Object.freeze({
+    slug: "rule-ideas",
+    title: "Use Rule ideas",
+    description: "Check completed Day trades for a well-supported pattern and decide whether to add, save or dismiss the suggested preset.",
+    sections: Object.freeze([
+      Object.freeze({
+        id: "check-trades",
+        title: "Check your trades",
+        summary: "Run a factual check without adding or changing a rule.",
+        keywords: Object.freeze(["rule idea", "check my trades", "suggested rule", "preset recommendation"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "steps", items: Object.freeze([
+            Object.freeze({ title: "1. Start the check", text: "Open Trading Rules and choose Check my trades in the Rule idea card." }),
+            Object.freeze({ title: "2. Read the comparison", text: "If a pattern qualifies, review the suggested preset setting, affected trades, comparison trades and their actual completed results." }),
+            Object.freeze({ title: "3. Make your choice", text: "Choose Add rule, Save for later or Not for me. Add rule still opens the normal rule form so you can review the setting before activating it." }),
+          ]) }),
+          Object.freeze({ kind: "callout", title: "Checking changes nothing", text: "The check cannot activate, adjust, pause or retire a rule. If no pattern passes every evidence check, TraderLink says so and leaves your rules unchanged." }),
+        ]),
+      }),
+      Object.freeze({
+        id: "history-checked",
+        title: "How much history is checked",
+        summary: "Start with recent trades and extend backward only when more evidence is needed.",
+        keywords: Object.freeze(["rule idea history", "14 days", "20 trades", "50 executions", "evidence window"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "bullets", items: Object.freeze([
+            "The check starts with the latest 14 calendar days.",
+            "It extends backward until it has at least 3 active Day-trading days, 20 eligible completed Day trades and 50 accepted executions.",
+            "If that window has no qualifying idea, it adds 14 available trading dates at a time and checks again.",
+            "It stops at the first window with a qualifying idea or after all available history for the selected account has been checked.",
+          ]) }),
+          Object.freeze({ kind: "paragraph", text: "The check uses the currently selected Trade Tracker account. Intentional Swing trades, open trades and facts still waiting for a required Data Decision are not treated as completed Day-trade evidence." }),
+        ]),
+      }),
+      Object.freeze({
+        id: "evidence-required",
+        title: "What qualifies as a Rule idea",
+        summary: "A repeated loss pattern must survive several checks before it can appear.",
+        keywords: Object.freeze(["rule idea evidence", "comparison trades", "worst trade", "ticker concentration", "historical pattern"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "bullets", items: Object.freeze([
+            "The pattern must occur across at least 3 trading days and meet the minimum event and affected-trade counts for that preset.",
+            "The affected trades must have a negative combined result and a worse average result than the other completed trades on those days.",
+            "The affected result must remain negative after its single worst trade is removed.",
+            "One ticker cannot supply more than half of the affected trades.",
+            "When enough history exists, both the earlier and more recent portions must show a negative affected result.",
+          ]) }),
+          Object.freeze({ kind: "callout", title: "A pattern is not proof", text: "Historical results do not prove that the rule caused the difference or that using it will improve future results." }),
+        ]),
+      }),
+      Object.freeze({
+        id: "existing-and-dismissed-rules",
+        title: "Existing, saved and dismissed ideas",
+        summary: "Avoid duplicate active rules and keep every choice explicit.",
+        keywords: Object.freeze(["active rule", "save for later", "not for me", "dismiss rule idea", "duplicate rule"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "table", columns: Object.freeze(["Situation", "What happens"]), rows: Object.freeze([
+            Object.freeze(["The preset is already active", "TraderLink does not recommend that preset again. It checks for another qualifying idea instead."]),
+            Object.freeze(["Save for later", "The idea remains available without activating the rule or changing its setting."]),
+            Object.freeze(["Not for me", "The idea is dismissed and the same preset is suppressed for 90 days."]),
+            Object.freeze(["No idea qualifies", "TraderLink confirms that the check finished and that nothing was changed."]),
+          ]) }),
+        ]),
+      }),
+    ]),
+  }),
+  Object.freeze({
     slug: "manage-preset-rules",
     title: "Add and manage preset rules",
     description: "Choose a preset, enter its setting, and understand adjusting, pausing, resuming and retiring it.",
