@@ -2,7 +2,7 @@
 
 ## Status
 
-Design and four implementation-readiness QA passes complete under the owner's
+Design and five implementation-readiness QA passes complete under the owner's
 delegated product authority on 2026-08-18. Implementation has not started. The
 owner does not need to approve individual formulas or weight calculations, but
 the completed engine and its generated reviews remain subject to owner
@@ -66,16 +66,17 @@ The engine has seven deterministic stages:
    families.
 4. Score candidates inside their eligible lanes and apply confidence,
    outlier, overlap and coverage adjustments.
-5. Build a balanced 15-25 candidate provider brief with required-consideration
-   ranks and representative evidence.
-6. Ask the provider for structured section, claim and authorized narrative-
-   clause selections tied to exact candidate references.
-7. Validate the selections and supporting values before the existing issuance
-   service can persist the review.
+5. Build a balanced 15-25 candidate brief, bounded section plans and a small
+   globally compatible set of complete review plans.
+6. Ask the provider to select one exact authorized `reviewPlanRef` from that
+   frozen set; it cannot assemble sections, claims or prose independently.
+7. Validate the selected or deterministic-default review plan and persist its
+   already-rendered output through the versioned issuance service.
 
 Candidate generation and ranking must remain a pure, deterministic operation.
 The same immutable input and engine version must produce the same candidates,
-measurements, scores and ordering.
+measurements, scores and ordering. With the same renderer/plan versions it must
+also produce the same section plans, complete review plans and visible bytes.
 
 ## Input authority
 
@@ -118,7 +119,9 @@ status or score by themselves.
 
 Free-text daily, trade and rule notes are never keyword-scored or converted
 into deterministic categories by this engine. They accompany already-eligible
-findings so the provider can explain the trader's own context. A note alone may
+findings as untrusted context and may authorize only the exact safe excerpt
+boundary defined below. A provider may consider a note while choosing among
+complete plans but cannot paraphrase it into the output. A note alone may
 support a specific example, but it cannot create a recurring pattern, assign a
 motive or increase a candidate's financial/repetition rank. Future structured
 plan fields would require a separate accepted contract.
@@ -213,6 +216,11 @@ reference. No reference is an array index:
   rendering version;
 - `bridgeRef` binds one server-rendered bounded interpretation/transition clause
   to the exact compatible claim-reference set and rendering version;
+- `sectionPlanRef` binds one visible section purpose to its ordered finding,
+  claim and optional bridge references plus the fully rendered section text;
+- `reviewPlanRef` binds the ordered opening, improvement, friction and follow-
+  through section plans, one-to-three focus questions, incomplete-record value,
+  visible output contract and renderer version;
 - `focusRef` identifies the accepted issued focus and its source review; and
 - `focusTargetRef` binds a proposed focus to its source finding, metric,
   direction, baseline, eligibility boundary and target version; each
@@ -1184,9 +1192,10 @@ The brief includes lane rank and a `requiredConsideration` tier:
   strength and follow-through before the provider call;
 - the engine precomputes each section's bounded alternatives from the top three
   lane candidates using the score, confidence, overlap, focus and specificity
-  rules; the provider cannot nominate another candidate or reason;
+  rules; the later review-plan builder cannot nominate another candidate or
+  reason;
 - `What held you back` and `What improved` use their default unless one of
-  those frozen alternatives is selected;
+  those frozen alternatives appears in an authorized complete review plan;
 - if no improvement qualifies, the engine supplies a specific unchanged or
   mixed comparison with its weekly series, followed by a concrete execution or
   maintained strength when one exists; generic `no clear improvement`
@@ -1200,14 +1209,144 @@ The brief includes lane rank and a `requiredConsideration` tier:
 Raw notes and compact evidence remain available after the brief for context,
 but the model is not asked to recalculate the ranked measurements.
 
+### Global section and review plans
+
+The provider cannot independently mix individually valid findings into a weak
+whole. The server first creates at most three plans for each visible section:
+one default and up to two engine-authorized alternatives. A section plan owns
+its purpose, exact ordered claim roles, no more than two fact clauses, at most
+one bridge clause and its final rendered text. `claimRefs[]` inside a section
+plan is the only claim list; there is no second provider-supplied
+`sectionClaims[]` representation that could disagree with it.
+
+The server then evaluates the exact bounded product of opening, improvement,
+held-back and follow-through plans. With at most three plans for each of four
+sections, there are at most 81 combinations. It rejects global conflicts, adds
+the deterministically derived focus targets/questions, orders every surviving
+combination and retains at most six complete plans. Exhausting this small fixed
+space prevents an early beam from discarding the only later-compatible plan and
+still forbids unbounded search.
+
+Every complete plan must satisfy all of these global checks before the provider
+package exists:
+
+- each section has its distinct required job and minimum evidence role;
+- improvement and held-back cannot select the same finding, purpose and primary
+  measurement;
+- repeated evidence and subjects obey the cross-section overlap limits;
+- a required genuine strength appears in the opening or improvement section;
+- no two rendered clauses repeat the same factual job;
+- focus questions are distinct and compatible with the selected findings;
+- incomplete-record language matches the exact coverage state; and
+- every final visible field fits the output and sentence budgets below.
+
+The default review plan is the first globally valid plan under the section
+defaults and deterministic conflict resolution. Other plans are ordered by
+least total lane-score loss from those defaults, then greater overlap reduction,
+stronger focus connection, greater specificity and finally a non-secret
+structural plan tie key. The provider receives the deduplicated section-plan
+catalog, no more than six complete `reviewPlanRef` mappings and their bounded
+server-owned selection rationales. It selects one whole plan or the attempt
+fails; it cannot return a new combination.
+
+When exactly one complete plan survives, there is nothing for the provider to
+narrow. After normal feature activation, provider configuration and request
+authorization, the coordinator issues that plan directly as
+`deterministic_default` with reason `single_authorized_plan`; it creates no
+provider attempt or receipt. Two-to-six plans use the ordinary provider-
+selection path and retain the same frozen first plan as operational fallback.
+
+These plan-order terms are exact. Total lane-score loss is the sum, across the
+four sections, of each default post-penalty lane score minus its replacement
+score, floored at zero per section. Cross-section overlap burden is the sum of
+the already-defined containment coefficients for every eligible pair of primary
+evidence sets; lower burden is better. Focus connection and specificity are the
+sums of their existing versioned candidate components. No display rounding is
+used. Ties use the ordered structural section-plan keys and focus-target
+semantic keys, never HMAC output or rendered prose.
+
+Each claim also carries a `factualJobKey` derived from claim kind, subject,
+primary metric, population/comparison definition and attribution kind. Global
+nonduplication compares those keys and exact rendered-clause digests; it does
+not rely on a fuzzy prose-similarity threshold. The same subject may still serve
+improvement and held-back only through different purposes, primary metrics and
+factual-job keys.
+
+### Renderer and visible-output boundaries
+
+The renderer produces plain text, not Markdown or HTML. Version one targets no
+more than three sentences in each narrative section, one sentence per focus and
+one deterministic coverage sentence in `incompleteRecord` when required.
+Every fact and bridge template emits exactly one sentence, so this budget is
+counted structurally rather than by guessing from punctuation in labels.
+It must also preserve the current hard maximums when creating the new output
+contract: the current v2 narrative/focus maximums plus explicit v3
+`incompleteRecord` maximums aligned with the legacy coverage boundary. Hard
+field limits are counted exactly like the runtime string schema (JavaScript
+UTF-16 code units); grapheme limits below are a separate display-quality rule:
+
+- periodic/two-week: 1,800 characters for the opening, 1,500 for each other
+  narrative section, 280 for each focus and 1,000 for `incompleteRecord`;
+- monthly: 2,400 characters for the opening, 1,800 for each other narrative
+  section, 280 for each focus and 1,200 for `incompleteRecord`.
+
+The renderer never cuts a sentence, number, label or claim to make it fit. It
+selects a shorter authorized clause plan before the provider package is frozen;
+if no globally valid plan fits, snapshot creation fails with a renderer defect
+rather than issuing truncated or incomplete prose.
+
+All user-authored labels are whitespace/control-normalized only for display and
+remain unchanged in stored evidence. A label longer than 80 Unicode grapheme
+clusters is rendered as an explicitly partial label such as `the custom rule
+beginning ...`; that display form never becomes identity or scoring input. A
+note may appear only as a complete, output-safe exact excerpt of at most 180
+grapheme clusters. If no complete safe excerpt fits, the renderer omits the note
+without discarding the measured finding.
+
+Count grammar, singular/plural forms, signs, currency availability and partial-
+coverage phrases are renderer-owned. Exact zero always displays as zero rather
+than negative zero, and sign-aware clauses cannot produce forms such as `lost
+-$200` or call a covered-subset result the period total. Every complete plan is
+run through the existing trading-direction/internal-language safety boundary
+and the new semantic reference validator before it can enter the shortlist.
+
 ## Immutable persistence and atomicity
 
-The existing v2 request stores one immutable provider input, while the issued
-output contract stores only the visible review fields. Adding undocumented
-optional fields to those JSON objects would weaken their versioned contract.
-The insight workflow therefore uses a forward-only Coach migration and two
-append-only private tables rather than silently changing already-accepted v2
-output semantics.
+The existing v2 output contracts are frozen to the old prompt version, and the
+current issued-review table records every output as `openai_direct`. Neither can
+truthfully represent the insight renderer or a deterministic-default issuance.
+The implementation therefore does not reuse the old prompt marker, omit it, or
+mislabel a server-rendered review as provider-authored.
+
+A forward-only Coach migration adds the insight snapshot and selection-audit
+tables plus a new immutable v3 issued-review table. New periodic and monthly v3
+output contracts retain the same visible fields while using new contract and
+prompt/renderer versions. The existing customer read model and page read v2 and
+v3 rows into the same visible shape; every already-issued v2 row remains
+unchanged.
+
+The planned table identities are `coach_ai_review_insight_snapshots`,
+`coach_ai_review_insight_selection_audits` and
+`coach_ai_issued_reviews_v3`. All three carry the request's account scope,
+reject updates/deletes and participate in erasure, administration,
+backup/restore and integrity verification.
+
+The exact new output identities are
+`traderlink_coach_periodic_ai_review_output_v3` with
+`periodic_insight_v1_renderer_v1`, and
+`traderlink_coach_monthly_ai_review_output_v3` with
+`monthly_insight_v1_renderer_v1`. Each JSON object contains those required
+version fields, `reviewSummary`, `whatImproved`, `whatHeldYouBack`,
+`focusFollowThrough`, one-to-three `nextPeriodFocuses` and the server-owned
+nullable `incompleteRecord`. Generation source and private plan references stay
+in the scoped issued/selection rows rather than leaking into visible copy.
+
+The v3 issued row records `generationSource` as `provider_selected` or
+`deterministic_default`. Provider/model identity is required only for
+`provider_selected` and is null for a deterministic default. The existing
+request's issued-review integrity trigger is replaced by a scoped trigger that
+accepts exactly one matching immutable v2 or v3 issued row. It cannot accept a
+cross-account row or both versions for one request.
 
 ### Insight snapshot
 
@@ -1219,8 +1358,11 @@ request and contains:
   the Analyzer evidence used before monthly provider deduplication;
 - prompt-safe reference derivation version, never HMAC key material;
 - insight-engine version;
+- renderer, section-plan, review-plan and provider-selection schema versions;
 - complete eligible candidate JSON and digest;
-- balanced shortlist JSON and digest;
+- balanced shortlist and deduplicated section-plan catalog JSON/digest;
+- all authorized fully rendered review-plan outputs, their digests and the
+  deterministic-default `reviewPlanRef`;
 - calculation coverage and created time.
 
 The table is keyed one-to-one to `coach_ai_review_period_requests_v2`, carries
@@ -1247,19 +1389,23 @@ new refusal limit before that benchmark exists.
 
 ### Attempt selection
 
-Each provider attempt may append one private selection audit containing:
+Each provider attempt may append one private selection audit, and a final
+deterministic-default issuance may append one accepted audit without pretending
+that another provider call occurred. Each audit contains:
 
-- attempt and request references;
-- engine and shortlist digests;
+- request reference and nullable provider-attempt reference;
+- selection source (`provider_selected` or `deterministic_default`);
+- engine, shortlist and authorized-review-plan digests;
 - structured provider selection JSON and digest when parseable;
+- selected `reviewPlanRef` and exact rendered-output digest when accepted;
 - validation state and a bounded failure code;
 - issued-review reference only for the accepted selection;
 - recorded time.
 
 The selection table also rejects updates and deletes. The accepted selection's
 focus targets are the authority for later follow-through. The customer-facing
-v2 review JSON remains unchanged and the existing review page continues to
-read its normal prose fields.
+v3 JSON preserves the normal visible review fields, v2 JSON remains unchanged,
+and the existing review page reads both through one customer view model.
 
 When building a later periodic or monthly insight snapshot, the repository
 loads accepted focus targets for each included issued review and joins them to
@@ -1267,17 +1413,22 @@ the visible `nextPeriodFocuses` by review and focus ordinal. Missing audit data
 on a legacy issued review takes the documented lower-confidence compatibility
 path; it is never mistaken for a tracked target.
 
-For an accepted attempt, the issued review, valid selection audit, receipt,
-attempt finalization and request finalization are written in one transaction.
-An invalid selection can append a rejected selection audit and finalize only
-that attempt as failed; it cannot create an issued review.
+For an accepted provider selection, the v3 issued review, valid selection audit,
+receipt, attempt finalization and request finalization are written in one
+transaction. An invalid selection can append a rejected selection audit and
+finalize only that attempt as failed; it cannot create an issued review. A
+deterministic default writes the v3 issued review, accepted selection audit and
+request finalization atomically with no fabricated provider attempt or receipt;
+any real failed attempts and their actual usage remain separately immutable.
 
 ### Retry and activation behavior
 
 The runner reads the frozen insight snapshot by request ID and builds every
 retry from the same input, candidate shortlist and digests. It never reruns the
 engine against later Journal state. Reservation bytes and provider token counts
-include the frozen shortlist.
+include the frozen shortlist and bounded plan catalog. Because every authorized
+plan's complete visible output is frozen in the snapshot, a retry after a code
+deployment cannot silently re-render old evidence with a newer template.
 
 Issued and pending requests created before insight-engine activation are not
 retrofitted. Already-issued reviews remain immutable. A pre-activation pending
@@ -1288,37 +1439,40 @@ fails. This avoids silently mixing old inputs with new ranking behavior.
 The migration uses the next available Coach migration identity at
 implementation time because concurrent platform work may claim an earlier
 number. The migration manifest, initialization digest, account-erasure order,
-administration counts and backup/restore verification must include both new
-tables.
+administration counts and backup/restore verification must include all three
+new tables.
 
 ## Provider selection contract
 
-The provider returns structured selections rather than only free prose:
+The provider returns one strict whole-review selection:
 
 ```text
-reviewSummary: selectionState + selectionMode + sectionPurpose + findingRefs[] + claimRefs[] + bridgeRef?
-whatImproved: selectionState + selectionMode + sectionPurpose + findingRefs[] + claimRefs[] + bridgeRef?
-whatHeldYouBack: selectionState + selectionMode + sectionPurpose + findingRefs[] + claimRefs[] + bridgeRef?
-focusFollowThrough: selectionState + selectionMode + sectionPurpose + focusRef? + findingRefs[] + claimRefs[] + bridgeRef?
-nextPeriodFocuses[]: sourceFindingRef + focusTargetRef + focusQuestionRef
-sectionClaims[]: section + claimRef
+contractVersion: traderlink_coach_ai_review_plan_selection_v1
+reviewPlanRef
 ```
 
-The existing customer-facing review continues to display the normal text and
-focus list. New hidden selection metadata is stored with newly issued reviews
-so future follow-through and support audits can identify exactly which finding
-was used. Older v2 outputs remain readable without metadata.
+The implementation uses an exact strict object schema that rejects unknown
+keys; it cannot rely on a default object parser that strips an unexpected raw
+prose field. The reference must name one of the frozen authorized complete
+plans. The provider response is intentionally tiny, so the version-one provider
+output reservation has a 512-token ceiling rather than retaining the legacy
+free-prose output allowance. Actual usage remains receipt-tracked.
 
-The frozen shortlist includes an `allowedSectionClaims` catalog. Each
+The new customer-facing v3 review continues to display the normal text and
+focus list. Hidden plan, section, claim and focus metadata is stored privately
+so future follow-through and support audits can identify exactly what was used.
+Older v2 outputs remain readable without metadata.
+
+The frozen section-plan catalog includes the allowed claims. Each
 `claimRef` binds the exact selected finding, subject, measurements,
 numerator/denominator, population coverage, trade/day examples, note
 attributions, attribution kind and a server-rendered trader-facing fact clause.
-The shortlist also contains bounded server-owned `bridgeRef` clauses that can
+The catalog also contains bounded server-owned `bridgeRef` clauses that can
 connect or emphasize only compatible selected claims without adding a new fact.
-The server assembles the final visible section from the selected exact fact and
-bridge clauses; the provider never writes or edits visible prose. Two unrelated
-measurements may both display `25%`, but their different semantic claim
-references and clauses cannot be swapped.
+The server assembled and froze every visible section before the provider call;
+the provider never writes, edits, reorders or recombines visible prose. Two
+unrelated measurements may both display `25%`, but their different semantic
+claim references and clauses cannot be swapped.
 
 Improvement and friction cannot reuse the same `findingRef`, but the same rule
 or behavior subject may legitimately appear in both lanes through distinct
@@ -1327,23 +1481,22 @@ remaining breaks still account for the largest share of losses. Each section
 must use its lane's own measurements and do a different explanatory job. A
 contrast candidate may support the opening and one other section.
 
-The engine, not the provider, freezes `allowedSectionSelections` in the
-shortlist. Each entry contains the default finding and any permitted alternative
-with its server-owned reason. An alternative must be within ten lane points,
-no more than five confidence points below the default and deterministically
-qualify as `avoids_overlap`, `stronger_focus_connection` or
+The engine freezes `allowedSectionSelections` before building review plans.
+Each entry contains the default finding and any permitted alternative with its
+server-owned reason. An alternative must be within ten lane points, no more
+than five confidence points below the default and deterministically qualify as
+`avoids_overlap`, `stronger_focus_connection` or
 `stronger_evidence_specificity`. Subjective `stronger section coherence` is not
-an override. The provider may choose only a pre-authorized reference; the
-server appends the reason to the private selection audit.
+an override. Only globally valid combinations become a `reviewPlanRef`; the
+provider cannot reach the section-level alternatives directly.
 
 Every factual numerical, behavior, rule, ticker, date, result or representative-
-example statement must come from a selected server-owned claim. Counts are
-rendered as digits rather than unvalidated number words. Every bridge is also a
-server-owned clause authorized for the exact selected claim combination and can
-only state its bounded verdict or rank-based importance. Unknown references or
-any provider-returned raw prose field fail schema validation. Semantic
-`claimRef`/`bridgeRef` binding and server assembly are the primary controls; a
-prose grounding scan remains only a defense against renderer defects.
+example statement comes from a server-owned claim. Counts are rendered as
+digits rather than unvalidated number words. Every bridge is authorized for the
+exact section-plan claim set and can only state its bounded verdict or rank-
+based importance. Semantic claim/bridge binding and the frozen whole-review
+plan are the primary controls; a prose grounding scan remains a defense against
+renderer defects.
 
 A note-derived statement is also a server-owned attributed claim carrying its
 exact `noteRef` and a bounded exact excerpt introduced by language such as `you
@@ -1353,11 +1506,11 @@ hesitation, discipline, intent or another motive from a note. It may show only
 the attributed excerpt or omit the note; provider paraphrases do not enter the
 output contract.
 
-`selectionState` is `selected` or `not_available`. `not_available` requires one
-bounded engine reason: `no_qualifying_pattern`, `insufficient_coverage`,
+Each section plan's `selectionState` is `selected` or `not_available`.
+`not_available` requires one bounded engine reason: `no_qualifying_pattern`, `insufficient_coverage`,
 `no_compatible_baseline`, `no_later_evidence` or `required_facts_unavailable`.
 Each reason has a server-rendered clause. It is accepted only when its exact
-gate state is true, and the provider cannot skip a populated lane. In
+gate state is true, and the plan builder cannot skip a populated lane. In
 particular, insufficient evidence cannot be rewritten as `nothing held you
 back`, and no compatible baseline cannot be rewritten as no improvement.
 
@@ -1375,8 +1528,8 @@ improvement exists, or `maintained_strength` when no compatible earlier/later
 baseline exists but a measured strength does. When the friction lane is empty,
 `What held you back` may use `mixed_result` for an eligible contrast or
 `no_friction_strength` for a measured strength; otherwise it is
-`not_available` with the exact engine reason. The provider cannot invent or
-select a fallback mode when a normal eligible candidate exists.
+`not_available` with the exact engine reason. The review-plan builder cannot
+insert a fallback mode when a normal eligible candidate exists.
 
 `sectionPurpose` is also bounded. The opening uses `period_outcome` or
 `result_process_contrast`; improvement uses `directional_change`,
@@ -1410,13 +1563,13 @@ These requirements make the sections useful without turning the review into a
 stat dump; prose remains concise and trader-facing.
 
 The engine also supplies one to three bounded next-period focus targets derived
-from selected measurable findings. The provider selects a `focusTargetRef` and
-one compatible server-owned `focusQuestionRef`; it cannot author visible focus
-prose, a hidden target, metric, direction or eligibility date. Focus targets
-must be distinct, measurable and traceable to their source finding. When only
-one or two distinct targets qualify, the review returns fewer than three rather
-than padding the list. Generic advice or rewordings of the same subject fail
-validation.
+from selected measurable findings. Each complete review plan owns the
+`focusTargetRef` and compatible server-owned `focusQuestionRef`; the provider
+cannot choose or author visible focus prose, a hidden target, metric, direction
+or eligibility date. Focus targets must be distinct, measurable and traceable
+to their source finding. When only one or two distinct targets qualify, the
+review returns fewer than three rather than padding the list. Generic advice or
+rewordings of the same subject fail validation.
 
 An exact prior `focusTargetRef` cannot be emitted again. An unresolved subject
 may be carried forward only through a new current finding with a changed later-
@@ -1424,15 +1577,20 @@ evidence measurement or a more specific measurable boundary; the selection
 audit records the carried-forward relationship. Cosmetic rewording never
 creates a new target.
 
-Each target supplies one or more server-rendered retrospective questions bound
-to its exact subject and metric. An unknown or incompatible `focusQuestionRef`
-rejects the attempt, so another behavior, entity, amount or threshold cannot be
-introduced through free text.
+Each target supplies one canonical version-one server-rendered retrospective
+question bound to its exact subject and metric. An unknown or incompatible
+`focusQuestionRef` rejects the attempt, so another behavior, entity, amount or
+threshold cannot be introduced through free text. Later wording variants
+require a new question-rendering version rather than multiplying plan choices.
 
 ## Server validation
 
 Before persistence, validate that:
 
+- the provider response has exactly the selection contract version and one
+  authorized `reviewPlanRef`, with no unknown or raw-prose field;
+- the selected complete plan, ordered section plans, focus questions, rendered
+  output and digests exactly match the immutable snapshot;
 - every selected finding and focus reference exists;
 - `not_available` appears only with the exact engine-confirmed reason and its
   matching coverage, baseline or later-evidence state;
@@ -1452,7 +1610,7 @@ Before persistence, validate that:
 - identical display literals belonging to different metrics, subjects or
   denominators cannot satisfy one another's claim reference;
 - every selected `bridgeRef` is authorized for that exact section claim set and
-  every unexpected raw prose field fails the provider-result schema;
+  its position matches the frozen section plan;
 - every financial claim uses the measurement's period-result, cohort-
   association or Analyzer-path attribution kind and does not convert
   association/giveback into invented causal or guaranteed-profit language;
@@ -1461,8 +1619,11 @@ Before persistence, validate that:
   required by its mode;
 - follow-through uses later evidence after the source focus;
 - a recurring claim passes the recurrence gate;
-- section purposes are valid, and two sections cannot reuse the same purpose,
-  primary measurement and substantially identical normalized prose;
+- section purposes are valid, and sections cannot repeat the same
+  `factualJobKey` or rendered-clause digest; same-subject improvement/friction
+  uses different purposes and primary measurements;
+- the global plan satisfies the strength, overlap, nonduplication and section-
+  job constraints rather than only validating each section in isolation;
 - hidden focus-tracking targets refer to measurable engine families;
 - every next-period focus uses an engine-authorized distinct `focusTargetRef`
   linked to its source finding and is not a cosmetic duplicate of an earlier
@@ -1470,7 +1631,12 @@ Before persistence, validate that:
 - every `focusQuestionRef` is authorized for its exact target and supplies the
   complete visible next-focus question;
 - coverage limitations remain attached;
-- the review contains a strength when the brief contains a required strength.
+- the review contains a strength when the brief contains a required strength;
+- every visible field fits its cadence-specific character and sentence budget;
+- the final v3 output passes deterministic semantic and existing output-safety
+  checks; and
+- generation source, provider/model nullability and receipt presence match the
+  actual issuance path.
 
 A failed selection uses the existing immutable retry boundary. The engine does
 not rebuild findings from later-edited Journal data during a retry.
@@ -1546,6 +1712,10 @@ asserted before any provider call.
   partial calendar-week bucket.
 - The coverage-shift trap does not enter the improvement lane as a clean win.
 - The two overlapping rule candidates never produce a combined-loss claim.
+- Every authorized complete review plan satisfies the four distinct section
+  jobs, required-strength and cross-section overlap gates before provider input.
+- The default and every alternative fit the renderer/output budgets, and no
+  more than six complete plans enter the provider package.
 - The month contains four issued weekly narrative contexts, not zero and not
   synthetic summaries created only inside the monthly fixture.
 - August 31 facts are included exactly once.
@@ -1580,12 +1750,17 @@ After deterministic acceptance:
 4. Replay the exact monthly provider package at least twice without persistence
    to test selection stability.
 5. Require the same primary friction and improvement families across all
-   monthly generations. Representative examples may vary only within the
-   selected candidate's evidence set.
+   selected authorized review plans. Representative examples cannot vary
+   inside one frozen `reviewPlanRef`.
+6. In a separate persisted run, exhaust provider selection attempts and require
+   the byte-identical frozen default v3 output to issue with deterministic
+   provenance and no fabricated provider receipt.
+7. Reopen one legacy v2, one provider-selected v3 and one deterministic-default
+   v3 review through the normal customer path.
 
-The review fails even when its prose is polished if it selects a materially
-weaker candidate, omits an available strength, repeats one issue across all
-sections or cannot connect follow-through to a real earlier focus.
+The review fails even when its rendered prose reads smoothly if its plan uses a
+materially weaker candidate, omits an available strength, repeats one issue
+across all sections or cannot connect follow-through to a real earlier focus.
 
 ### Calibration and sealed holdout boundary
 
@@ -1650,10 +1825,12 @@ In addition to the 420-trade acceptance fixture, cover:
 - a sparse final partial week;
 - a U.S. market holiday/early-close period and both Eastern DST transitions;
 - the same subject as both improving trend and material residual friction;
-- provider selection of a top-three candidate that was not pre-authorized by
-  `allowedSectionSelections`;
-- a provider result containing raw section prose, an unknown `bridgeRef` or a
-  bridge authorized for a different claim set;
+- individually valid section plans that become repetitive, contradictory or
+  omit the required strength when combined;
+- a provider selection of an unknown complete plan whose underlying finding
+  existed in the shortlist but was never authorized in a review plan;
+- a provider result containing raw section prose or any extra object key, plus
+  an internally malformed section plan with a cross-claim `bridgeRef`;
 - two authorized measurements with the same display literal, such as a 25% win
   rate and a 25% loss share, to prove semantic claim binding;
 - overlapping high-impact rule and Analyzer candidates whose P/L evidence sets
@@ -1665,6 +1842,28 @@ In addition to the 420-trade acceptance fixture, cover:
   the write, never a hybrid;
 - prompt-safe HMAC key rotation with unchanged semantic facts to prove that
   ranks and selections do not move;
+- periodic and monthly renderer boundaries with zero/negative-zero money,
+  singular/plural counts, unavailable currency, 81-plus-grapheme custom labels,
+  combining marks/astral symbols, multiline/control-character text and
+  safe/unsafe long notes;
+- six eligible complete plans plus a seventh otherwise-valid plan to prove the
+  hard bound and deterministic ordering;
+- exactly one eligible complete plan, which must issue without a provider call
+  and record `single_authorized_plan` provenance;
+- a case where the only globally valid combination would fall below a
+  twelve-partial-plan beam, proving that all at-most-81 bounded combinations are
+  checked before the best six are retained;
+- a legacy issued v2 review beside provider-selected and deterministic-default
+  v3 reviews on the same account, all reopened through the normal customer path;
+- an activated provider's per-request reservation rejected before a call,
+  repeated transport failures, invalid structured selections and exhausted
+  retries, each reaching the exact frozen default without a fabricated receipt;
+- deliberately inactive AI Reviews or missing/disabled provider configuration,
+  which must not issue a deterministic fallback;
+- an engine, scope, renderer or output-safety failure that must remain failed
+  and cannot use deterministic fallback;
+- a request retried after renderer code changes to prove its previously frozen
+  visible plan text does not change;
 - identical factual inputs under two account scopes to prove isolation and
   account-scoped prompt-safe references.
 
@@ -1720,12 +1919,26 @@ one planted fixture:
   substituted for one another in prose;
 - equal display literals from semantically different measurements cannot be
   substituted because their `claimRef` and server fact clause differ;
-- raw provider prose and unknown or cross-claim `bridgeRef` values fail before
-  visible section assembly;
-- the provider cannot select a non-default finding absent from the frozen
-  `allowedSectionSelections` set;
+- raw provider prose or any unknown response key fails strict schema validation,
+  and an internal cross-claim `bridgeRef` prevents section-plan creation;
+- the provider can return only an authorized whole `reviewPlanRef`; it cannot
+  select a finding or section plan directly;
 - same-subject improvement/friction sections require distinct purposes and
   primary measurements;
+- section-plan claim order and rendered text are deterministic, and two valid
+  sections cannot bypass global nonduplication, overlap, strength or focus
+  checks by being combined later;
+- two differently worded clauses with one `factualJobKey` collapse as one job,
+  while similarly worded clauses with different metrics/populations remain
+  distinct;
+- plan ordering independently reproduces total lane-score loss, summed pairwise
+  containment burden, focus connection, specificity and structural tie keys;
+- section/review planning evaluates no more than 81 exact combinations and
+  retains no more than six complete plans;
+- every rendered periodic/monthly field stays within its exact character and
+  sentence budget without cutting a claim;
+- negative zero, sign wording, count grammar, partial labels and omitted unsafe
+  note excerpts cannot alter measurements or create unsafe final text;
 - a sparse partial week cannot receive full-week trend-consistency weight;
 - equivalent facts in two account scopes produce equal score/rank tuples and
   the same semantic selected-finding set, while prompt-safe references differ
@@ -1745,13 +1958,26 @@ one planted fixture:
   pattern and insufficient or non-comparable evidence;
 - an earlier focus target cannot be repeated through cosmetic rewording;
 - a raw next-focus question or a `focusQuestionRef` authorized for a different
-  target is rejected.
+  target is rejected;
+- provider success issues only its selected frozen v3 plan, while provider
+  blockage/failure issues the byte-identical frozen default with
+  `deterministic_default` provenance and no invented provider receipt;
+- one authorized plan short-circuits provider selection only after normal
+  activation/configuration/authorization and records `single_authorized_plan`;
+- a deterministic fallback is impossible after any scope, entitlement,
+  activation/provider-configuration, source, engine, renderer, safety,
+  contract, persistence or stopped-request failure;
+- a retry after renderer deployment changes returns the original rendered
+  output digest;
+- existing v2 rows and both v3 generation sources parse to the same visible
+  customer shape without rewriting v2 history.
 
 An independent reference calculation verifies period totals, rule-cohort P/L,
 loss/profit shares, coverage-adjusted comparisons, weekly rates, medians, every
 applicable component score, normalized lane weights, post-lane penalties,
-allowed alternatives and final ranks without calling the implementation's
-aggregation or scoring helpers.
+allowed alternatives, final ranks, section-plan ordering, bounded global-plan
+retention, default review plan and rendered-output digests without calling the
+implementation's aggregation, scoring, plan-builder or renderer helpers.
 
 ## Performance and resource boundary
 
@@ -1765,9 +1991,13 @@ trade.
 - Evidence overlap uses compact reference sets only after semantic clustering
   and the 50-candidate-per-lane bound.
 - The engine emits a bounded shortlist regardless of raw trade count.
+- Section planning evaluates at most 81 exact section combinations and retains
+  at most six complete plans; focus questions and claim/bridge construction
+  cannot multiply beyond those declared bounds.
 - Focused benchmarks record normalization time, candidate count, insight-
-  snapshot bytes and peak process memory for 10-, 80-, 100- and 420-trade
-  inputs. Snapshot storage and provider-token cost are reported separately.
+  snapshot bytes, section/review-plan count, renderer time and peak process
+  memory for 10-, 80-, 100- and 420-trade inputs. Snapshot storage and provider-
+  token cost are reported separately.
 - A new safety limit requires measured database/provider evidence and a plan
   update; no arbitrary trade-count or snapshot-byte refusal is introduced.
 - Focused static scripts and type checks run with one worker where applicable.
@@ -1785,10 +2015,14 @@ For each generated review, retain server-side:
   traces for every shortlisted score;
 - eligibility gates, confidence adjustments, penalties and sensitivity results;
 - provider selections;
+- authorized review-plan count, default/selected `reviewPlanRef`, renderer and
+  selection-schema versions, rendered-output digest and generation source;
 - rejected-attempt selection errors;
+- deterministic-fallback reason when used;
 - final section-to-finding references;
 - focus-tracking metadata;
-- provider usage and cost through the existing receipt system.
+- provider usage and cost through the existing receipt system, with no receipt
+  created for a provider call that did not occur.
 
 Journal notes and private identities retain their existing privacy boundary.
 Admin aggregate health views may later report candidate/selection counts but
@@ -1813,10 +2047,24 @@ must not expose private review prose or trade facts.
 - **Insufficient money coverage:** suppress unavailable money scores and use
   counts/rates; when a valid subset remains, state both affected and money-
   eligible counts in its server-rendered fact clause.
-- **Provider selects invalid evidence:** reject and retry from the immutable
-  package.
-- **All provider attempts fail:** preserve the request under the existing
-  retryable failure contract; never save a degraded generic review.
+- **Provider selects an invalid or unknown plan:** reject that attempt and retry
+  from the immutable package.
+- **Exactly one authorized plan exists:** after normal activation,
+  configuration and authorization, issue it as a deterministic single-plan
+  result without a pointless provider call or receipt.
+- **After feature/provider activation and ordinary request authorization, a
+  per-request reservation, transport, structured-output or all retry attempts
+  fail:** issue the frozen deterministic-default review plan when it already
+  passed every engine, renderer, output-safety and v3 contract check. Record the
+  precise fallback reason and `deterministic_default` source without inventing
+  provider usage or a receipt. This is the same evidence-backed rendered plan,
+  not a generic degraded review.
+- **Scope, entitlement, feature activation, missing/disabled provider
+  configuration, source snapshot, engine arithmetic, renderer, output-safety,
+  contract-version or persistence integrity fails, or the request was
+  stopped:** fail closed under the existing request state. Deterministic
+  fallback is continuity for an activated feature, never a way to activate or
+  bypass these boundaries.
 
 ## Planned implementation ownership
 
@@ -1843,12 +2091,16 @@ plan must record it before that file is edited.
 ### Existing source permitted to change
 
 - `src/modules/coach/contracts/weekly-ai-review-input-contracts.ts`
+- `src/modules/coach/contracts/weekly-ai-review-output-contracts.ts`
+- `src/modules/coach/contracts/monthly-ai-review-output-contracts.ts`
 - `src/modules/coach/server/coach-ai-review-supplemental-evidence-repository.ts`
 - `src/modules/coach/server/coach-weekly-ai-review-input-service.ts`
 - `src/modules/coach/server/coach-weekly-ai-review-input-runtime.ts`
 - `src/modules/coach/server/coach-monthly-ai-review-input-runtime.ts`
 - `src/modules/coach/server/coach-ai-review-request-service.ts`
 - `src/modules/coach/server/coach-ai-review-repository.ts`
+- `src/modules/coach/server/coach-ai-review-administration-repository.ts`
+- `src/modules/coach/server/coach-ai-review-provider-controls-repository.ts`
 - `src/modules/coach/server/coach-ai-review-generation-coordinator-v2.ts`
 - `src/modules/coach/server/coach-ai-review-provider-package.ts`
 - `src/modules/coach/server/coach-weekly-ai-review-openai-adapter.ts`
@@ -1887,11 +2139,13 @@ file belongs to this implementation.
 
 - Serialize the balanced insight brief ahead of raw context.
 - Add server-owned fact, bridge and focus-question clause catalogs.
-- Add structured section/focus selection references and strict schemas that
-  reject raw provider prose.
-- Add server validation, deterministic trader-facing rendering and immutable
-  retry behavior.
-- Preserve existing visible review fields and legacy output reads.
+- Build bounded section plans and at most six globally compatible complete
+  review plans with frozen rendered output.
+- Add the strict whole-review selection schema that rejects raw provider prose
+  and uses the reduced output-token ceiling.
+- Add v3 output/issued-review persistence, dual v2/v3 reads, exact provenance,
+  deterministic fallback and immutable retry behavior.
+- Preserve existing visible review fields and all legacy v2 output reads.
 
 ### Slice C - weekly focus tracking
 
@@ -1907,6 +2161,8 @@ file belongs to this implementation.
 - Prove all four issued weekly reviews entered the monthly package.
 - Inspect deterministic ranks before provider generation.
 - Save, reopen and audit the monthly result.
+- Exhaust provider attempts in a separate run and prove the exact frozen
+  deterministic default is issued/reopened without a fake provider receipt.
 - Run bounded non-persisted stability replays.
 
 ### Slice E - documentation and handoff
@@ -2174,6 +2430,76 @@ Additional resolved findings:
     question:** fixed with target-owned server-rendered `focusQuestionRef`
     choices and no provider-authored focus prose.
 
+## Fifth adversarial plan QA pass - 2026-08-18
+
+The fifth pass assumed every individual server-owned clause was factual, then
+attacked whole-review composition, renderer boundaries, retry drift, provider
+outages and the current immutable output/provenance schema.
+
+Additional resolved findings:
+
+1. **The provider contract repeated claim choices in both section fields and
+   `sectionClaims[]`:** fixed by making one server-owned ordered section plan
+   the only claim authority.
+2. **Individually valid sections could form a repetitive or contradictory
+   review:** fixed with global whole-review compatibility checks before the
+   provider package exists.
+3. **Claim and bridge order was undefined:** fixed by freezing ordered claims,
+   one optional bridge and the complete rendered section in `sectionPlanRef`.
+4. **Section alternatives could create a combinatorial plan explosion:** fixed
+   with three plans per section, at most 81 exact combinations and a six-
+   complete-plan hard bound.
+5. **The provider could still construct an untested section combination:**
+   fixed by reducing its result to one strict authorized `reviewPlanRef`.
+6. **A default object parser could silently strip an unexpected raw-prose
+   field:** fixed by requiring an exact strict selection schema with no unknown
+   keys.
+7. **The old free-prose output-token reservation remained unnecessarily large:**
+   fixed with a 512-token ceiling for the tiny selection result.
+8. **Exhausted provider retries still denied the trader a review even though a
+   safe rendered default existed:** fixed with exact deterministic-default
+   issuance after eligible activated-provider failures.
+9. **A deterministic fallback could be mislabeled as OpenAI output:** fixed
+   with truthful v3 generation-source/provider/model/receipt conditions and no
+   fabricated provider attempt.
+10. **The old v2 output prompt marker could not represent the insight engine:**
+    fixed with new periodic/monthly v3 contracts and immutable v2/v3 dual reads
+    rather than reusing or omitting the old marker.
+11. **Retries after a renderer deployment could change visible wording:** fixed
+    by freezing every authorized plan's complete visible output and digest in
+    the request snapshot.
+12. **The renderer had no contract-aligned output limits:** fixed with the exact
+    current v2 narrative/focus maximums, explicit v3 coverage limits, sentence
+    budgets and no mid-claim truncation.
+13. **Server-owned text could still produce bad grammar or misleading signs:**
+    fixed with sign, negative-zero, singular/plural, currency and partial-
+    coverage rendering rules.
+14. **Long labels and raw note excerpts could break limits or reintroduce unsafe
+    text:** fixed with grapheme-aware label display, complete safe note excerpts
+    and omission when no safe excerpt fits.
+15. **A deterministic fallback could accidentally bypass product activation:**
+    fixed by allowing it only for an already-activated and authorized request;
+    scope, entitlement, configuration, engine, safety and stop failures remain
+    fail-closed.
+16. **The implementation allowlist omitted required output, administration and
+    provider-control files:** fixed by adding the exact existing contracts and
+    repositories needed for v3/provenance/output-token behavior.
+17. **The verification plan did not test whole-plan bounds, legacy/v3 reads,
+    strict schemas, renderer edge cases or truthful fallback:** fixed with
+    planted, metamorphic and persisted acceptance cases for each boundary.
+18. **A twelve-partial-plan beam could prune the only globally valid review:**
+    fixed by exhaustively evaluating the small at-most-81 combination space
+    before retaining the best six complete plans.
+19. **A one-option provider call added cost and a failure point without making a
+    decision:** fixed by issuing the sole safe plan deterministically after all
+    normal activation, configuration and authorization gates pass.
+20. **Whole-review ordering still used undefined aggregate terms:** fixed with
+    exact lane-score loss, summed containment burden, component sums and
+    structural tie keys.
+21. **Global duplication still depended on fuzzy prose similarity:** fixed with
+    semantic `factualJobKey` values and exact rendered-clause digests while
+    preserving legitimate same-subject change-versus-residual comparisons.
+
 No unresolved critical design blocker remains. Calibration values are
 deliberately versioned defaults and must pass the deterministic planted and
 metamorphic gates, sealed holdouts, both true-month flows and the resource
@@ -2192,6 +2518,8 @@ This redesign is complete only when:
   current monthly measurement or claim;
 - every available visible section identifies a useful finding and does not
   duplicate another section's explanatory job;
+- every authorized whole-review plan passes global compatibility and renderer
+  limits before the provider can select it;
 - `What improved` uses a real comparison or the exact engine-authorized no-
   comparison fallback;
 - `What held you back` identifies measurable affected behavior and impact;
@@ -2202,8 +2530,13 @@ This redesign is complete only when:
 - follow-through connects an issued focus only to evidence occurring after its
   actual issuance boundary;
 - an available genuine strength is recognized;
-- provider selections validate against exact candidate and semantic claim
-  references plus frozen server-owned alternatives/focus targets;
+- the provider can select only one frozen whole `reviewPlanRef`, while every
+  section, semantic claim, focus target and rendered byte derives from it;
+- exhausted or blocked provider selection issues the exact safe deterministic
+  default without false provider/model/receipt provenance, while engine or
+  safety defects still fail closed;
+- existing v2 and both v3 generation sources reopen through one customer read
+  path without changing old output;
 - repeated live monthly generations retain the same main friction and
   improvement families;
 - the saved review reopens through the normal customer read path;

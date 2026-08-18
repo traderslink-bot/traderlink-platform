@@ -71,6 +71,10 @@ four actually issued weekly reviews plus all 420 exact-month trades.
   overlapping comparison periods, stale weekly prose, partial P/L coverage,
   semantic claim swaps, unsupported provider prose, undefined overlap math and
   secret-dependent ties.
+- [x] Complete the fifth adversarial QA pass against whole-review composition,
+  plan/catalog growth, strict selection schemas, renderer/output limits,
+  retry-version drift, truthful v3 provenance and deterministic provider-
+  failure continuity.
 - [ ] Implement and calibrate the deterministic insight engine.
 - [ ] Run the true-month issuance and provider stability acceptance.
 
