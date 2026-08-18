@@ -2,10 +2,11 @@
 
 ## Status
 
-Design complete under the owner's delegated product authority on 2026-08-18.
-Implementation has not started. The owner does not need to approve individual
-formulas or weight calculations, but the completed engine and its generated
-reviews remain subject to owner product-quality review.
+Design and implementation-readiness QA pass complete under the owner's
+delegated product authority on 2026-08-18. Implementation has not started. The
+owner does not need to approve individual formulas or weight calculations, but
+the completed engine and its generated reviews remain subject to owner
+product-quality review.
 
 This plan continues the
 [AI Review Narrative Quality Progress](ai-review-narrative-quality-progress.md)
@@ -105,6 +106,13 @@ evidence record and shortlisted provider context. They can explain why the
 trader marked a rule followed or broken, but they do not change the recorded
 status or score by themselves.
 
+Free-text daily, trade and rule notes are never keyword-scored or converted
+into deterministic categories by this engine. They accompany already-eligible
+findings so the provider can explain the trader's own context. A note alone may
+support a specific example, but it cannot create a recurring pattern, assign a
+motive or increase a candidate's financial/repetition rank. Future structured
+plan fields would require a separate accepted contract.
+
 ### Additional identity needed by the engine
 
 Rule definitions supplied to the engine need prompt-safe structural identity,
@@ -152,6 +160,7 @@ The engine builds the following indexes in one bounded pass:
 - day records by calendar-week bucket;
 - trades and days by rule subject and rule version;
 - trades by exact tag, ticker, session and historical direction;
+- trades by fixed Eastern entry-time, holding-duration and weekday buckets;
 - trades by Analyzer availability and green-to-red state;
 - trades by presence of entry, add, partial-exit and final-exit events;
 - issued focuses by source review and source-period end date;
@@ -162,6 +171,19 @@ The engine builds the following indexes in one bounded pass:
 All monetary calculations use exact decimal strings. Missing money values are
 excluded from monetary denominators but can remain in count-only candidates.
 Rates always carry their numerator, denominator and coverage count.
+
+Candidate generation cannot search arbitrary combinations until something
+looks important. Ticker, tag, direction, weekday, time and holding-duration
+families are evaluated one dimension at a time against fixed product buckets.
+Two-dimension intersections are allowed only when a named rule, tracked focus
+or existing Analyzer classification defines the intersection before results
+are examined. Groups failing the minimum count gate are discarded before full
+scoring so high-cardinality tags cannot create an unbounded candidate set.
+
+Entry-time and holding-duration buckets are versioned product definitions, not
+windows optimized against the current month's winners and losers. A null
+session, holding duration or execution count is unavailable rather than placed
+in an inferred bucket.
 
 ### Monthly calculation before provider deduplication
 
@@ -193,6 +215,25 @@ The engine supports four- and five-Friday months, partial first months,
 two-week cadence and Monthly-only cadence. Weekly comparisons do not require
 weekly reviews to exist; issued weekly reviews add narrative and focus context.
 
+### Cadence-specific improvement baselines
+
+- A first weekly review has no prior-period improvement baseline. It can report
+  strengths, friction and within-week differences but cannot call them an
+  improvement trend.
+- A later weekly review compares compatible current measurements with the
+  immediately prior issued weekly/two-week insight snapshot, not with its prose.
+- A two-week review may compare its first and second complete cohorts and may
+  also use a compatible prior issued snapshot for longer follow-through.
+- A monthly review uses exact-month week buckets and the early/later gates in
+  this plan. Monthly-only cadence still has week buckets even though it has no
+  issued weekly narratives.
+
+Cross-request comparison requires the same metric definition and a compatible
+engine measurement version. If calibration changes, the engine either
+recomputes both periods from their frozen source measurements under a declared
+compatible version or marks the comparison unavailable; it cannot compare two
+different score scales as though they were identical.
+
 ## Candidate record
 
 Every candidate has this conceptual shape:
@@ -221,6 +262,16 @@ rankExplanation[]
 Each measurement contains a stable metric name, exact value, unit, numerator,
 denominator and availability state. Provider prose is never used as a
 measurement.
+
+`engineVersion` freezes candidate families, gates, formulas, weights and tie
+breaks, for example `traderlink_ai_review_insights_v1`. `findingRef` is a
+deterministic prompt-safe digest of engine version, period, family, subject,
+cohort and comparison definition. Input order cannot change it. Existing
+requests always use their frozen engine version even after later calibration.
+
+Every directional metric also declares its interpretation explicitly:
+`lower_is_better`, `higher_is_better` or `context_only`. The engine never
+infers improvement direction from a metric name or provider prose.
 
 ## Candidate families
 
@@ -322,10 +373,12 @@ historical trade:
 - final result and later management evidence.
 
 A repeatable positive entry candidate requires more than a winning outcome.
-The default high-confidence form requires an entry/setup rule followed or a
-saved setup description, no conflicting broken entry/risk rule, ready Analyzer
-evidence and at least two comparable examples. A single especially clear trade
-may be offered as an example candidate but not as a recurring pattern.
+The default high-confidence form requires an entry/setup rule followed, no
+conflicting broken entry/risk rule, ready Analyzer evidence and at least two
+comparable examples. A trader-authored note can add context to a specific
+example but cannot replace the structured rule gate for a recurring plan-
+alignment claim. A single especially clear trade may be offered as an example
+candidate but not as a recurring pattern.
 
 The engine must not combine one-minute and five-minute observations into an
 invented signal or infer a strategy edge from a small sample.
@@ -336,7 +389,7 @@ summed across tickers or ranked as financial impact. Cross-trade percentage
 claims require an accepted percentage field with an explicit denominator; the
 engine will not manufacture a percentage from fields that lack one.
 
-### 6. Adds and size changes
+### 6. Adds and add sequence
 
 Calculate:
 
@@ -353,6 +406,13 @@ Calculate:
 
 An add cohort is not automatically a problem. Positive, negative and mixed
 add candidates are generated separately.
+
+The current AI Review facts expose add events but not share quantity, position
+notional, planned risk or size added at each event. The engine can review add
+frequency, sequence, path and named sizing-rule outcomes; it cannot calculate
+oversizing or size escalation from unavailable quantities. A sizing finding
+therefore requires a recorded named sizing/risk rule until an accepted
+quantity/risk contract is added.
 
 ### 7. Partial and final exits
 
@@ -425,7 +485,7 @@ Calculate:
 One-off material outliers remain eligible as explicit outlier findings but
 receive a recurrence penalty and cannot be described as repeated behavior.
 
-### 11. Ticker, tag, session, direction and time cohorts
+### 11. Ticker, tag, session, direction, time and duration cohorts
 
 Generate a cohort only when the compared population is large enough:
 
@@ -435,6 +495,11 @@ Generate a cohort only when the compared population is large enough:
 - applicable rule and Analyzer coverage;
 - representative trades;
 - sensitivity after removing the cohort's largest winner and loser.
+
+Session candidates remain unavailable while `tradingSession` is null. Entry
+time may still use the exact timestamp and accepted Eastern timezone. Holding
+duration uses the supplied duration and fixed buckets; it is not reconstructed
+from prose. Weekday is derived from the authoritative market date.
 
 Exact tags are observations, not proof that a setup caused the result.
 Historical long/short direction can be reviewed, but the output cannot become
@@ -546,20 +611,51 @@ A ticker, tag, session, direction or time segment normally requires:
 - Period-wide Analyzer language requires at least 60% trade coverage.
 - Below 60%, the finding must state the exact covered population and cannot be
   described as representative of all trades.
-- Monetary peak/giveback aggregation requires compatible fee treatment.
+- Monetary peak/giveback aggregation requires `feesComplete = true` for every
+  included Analyzer path. A path with incomplete fees remains eligible for
+  count/status observations but not pooled peak, reversal or final-P/L money.
+- Price-move decimals from entry and post-exit paths remain per-trade evidence
+  and never enter pooled money or percentage calculations.
 
 ### Improvement gate
 
 Improvement or deterioration requires:
 
 - at least three observed week buckets for a monthly trend;
-- eligible observations on both sides of the comparison;
-- a meaningful count, rate, money or path change;
+- at least five eligible observations in both the early and later comparison
+  populations for a rate trend;
+- a family-declared primary metric and improvement direction;
+- a meaningful count, rate, money or path change under the default thresholds
+  below;
 - later evidence after the comparison baseline;
 - no material rule-definition change across the compared observations.
 
 A flat or contradictory series produces an unchanged or mixed candidate, not
 an improvement candidate.
+
+The default meaningful-rate threshold requires at least two fewer/more
+affected observations and either:
+
+- at least a 10-percentage-point activity-weighted rate change; or
+- at least a 5-percentage-point change, at least five affected-observation
+  difference and support from three week buckets.
+
+A money/path-only trend requires a comparable opportunity population, at
+least three observations on each side, a 20% change in the median per-
+observation value and an absolute contribution of at least 5% of the period's
+total winning- or losing-trade P/L. These are initial versioned calibration
+thresholds, not universal statistical truths.
+
+When the earlier median is zero, relative percentage change is unavailable.
+The candidate can qualify only through an explicit absolute materiality
+threshold and the required affected-count/rate change; the engine never reports
+an infinite or manufactured percentage improvement.
+
+Each family declares one primary trend metric. Supporting P/L, count and path
+measurements cannot be averaged together to hide disagreement. When a
+material supporting metric moves in the opposite direction, the engine emits
+a mixed candidate or lowers confidence instead of calling the behavior simply
+improved.
 
 ### Strength gate
 
@@ -591,6 +687,10 @@ Key definitions:
   is not recreated from unrelated price fields.
 - **First-half/later-half change:** later activity-weighted rate minus earlier
   activity-weighted rate.
+
+Average, median, contribution and profit-factor measurements are unavailable
+when their required population or denominator is empty. The engine does not
+store infinity, substitute zero or invent a display placeholder.
 
 Money from different or unavailable currencies is never combined. When the
 period lacks one comparable currency, financial candidate dimensions become
@@ -726,6 +826,10 @@ dimensions.
 - 10% financial relevance;
 - 10% evidence confidence.
 
+Lane ties resolve deterministically by post-penalty score, evidence confidence,
+available financial materiality, repetition and finally lexical `findingRef`,
+in that order. Provider output never breaks an engine-rank tie.
+
 ## Penalties and sensitivity checks
 
 Apply explicit penalties after lane scoring:
@@ -741,10 +845,18 @@ Apply explicit penalties after lane scoring:
 - cross-month evidence restriction;
 - duplicate or near-duplicate candidate penalty;
 - weak comparison-population penalty;
+- exploratory-cohort penalty for ticker, tag, weekday, time or duration
+  findings selected from many eligible groups;
 - contradiction penalty when rule, Analyzer and note evidence disagree.
 
 No penalty silently deletes a candidate. The audit record shows the pre- and
 post-penalty score and reason.
+
+Exploratory cohort families must also record the number of sibling groups
+tested. Their minimum sample, week-spread and outlier-resistance requirements
+increase as sibling-group count increases. The engine does not claim a stable
+pattern from the best-looking member of dozens of tiny tags or tickers merely
+because one happens to have extreme P/L.
 
 ## Overlap and candidate merging
 
@@ -804,17 +916,100 @@ The brief includes lane rank and a `requiredConsideration` tier:
 Raw notes and compact evidence remain available after the brief for context,
 but the model is not asked to recalculate the ranked measurements.
 
+## Immutable persistence and atomicity
+
+The existing v2 request stores one immutable provider input, while the issued
+output contract stores only the visible review fields. Adding undocumented
+optional fields to those JSON objects would weaken their versioned contract.
+The insight workflow therefore uses a forward-only Coach migration and two
+append-only private tables rather than silently changing already-accepted v2
+output semantics.
+
+### Insight snapshot
+
+One account-scoped insight snapshot is created atomically with each new period
+request and contains:
+
+- request reference and source input/evidence digests;
+- full normalized prompt-safe calculation source JSON and digest, including
+  the Analyzer evidence used before monthly provider deduplication;
+- insight-engine version;
+- complete eligible candidate JSON and digest;
+- balanced shortlist JSON and digest;
+- calculation coverage and created time.
+
+The table is keyed one-to-one to `coach_ai_review_period_requests_v2`, carries
+the same user/workspace/account scope, has restrictive foreign keys and rejects
+updates or deletes. Request creation computes the pure snapshot before entering
+the repository transaction, then inserts the request and snapshot together. An
+idempotent period-identity race must return the already-saved request and its
+matching snapshot; it cannot replace the snapshot with a later calculation.
+
+The calculation source contains only the fields needed to reproduce candidate
+measurements and evidence selection. It may be larger than the provider brief,
+but it is private local persistence and is not resent to the provider. Storing
+only a digest would be insufficient because later Analyzer revisions could no
+longer reproduce the monthly calculation. Storage-size verification must
+measure this snapshot separately from provider-token cost.
+
+### Attempt selection
+
+Each provider attempt may append one private selection audit containing:
+
+- attempt and request references;
+- engine and shortlist digests;
+- structured provider selection JSON and digest when parseable;
+- validation state and a bounded failure code;
+- issued-review reference only for the accepted selection;
+- recorded time.
+
+The selection table also rejects updates and deletes. The accepted selection's
+focus targets are the authority for later follow-through. The customer-facing
+v2 review JSON remains unchanged and the existing review page continues to
+read its normal prose fields.
+
+When building a later periodic or monthly insight snapshot, the repository
+loads accepted focus targets for each included issued review and joins them to
+the visible `nextPeriodFocuses` by review and focus ordinal. Missing audit data
+on a legacy issued review takes the documented lower-confidence compatibility
+path; it is never mistaken for a tracked target.
+
+For an accepted attempt, the issued review, valid selection audit, receipt,
+attempt finalization and request finalization are written in one transaction.
+An invalid selection can append a rejected selection audit and finalize only
+that attempt as failed; it cannot create an issued review.
+
+### Retry and activation behavior
+
+The runner reads the frozen insight snapshot by request ID and builds every
+retry from the same input, candidate shortlist and digests. It never reruns the
+engine against later Journal state. Reservation bytes and provider token counts
+include the frozen shortlist.
+
+Issued and pending requests created before insight-engine activation are not
+retrofitted. Already-issued reviews remain immutable. A pre-activation pending
+request follows its original prompt path; every request created after the
+activation marker must have an atomic insight snapshot or request creation
+fails. This avoids silently mixing old inputs with new ranking behavior.
+
+The migration uses the next available Coach migration identity at
+implementation time because concurrent platform work may claim an earlier
+number. The migration manifest, initialization digest, account-erasure order,
+administration counts and backup/restore verification must include both new
+tables.
+
 ## Provider selection contract
 
 The provider returns structured selections rather than only free prose:
 
 ```text
-reviewSummary: text + findingRefs[]
-whatImproved: text + findingRefs[]
-whatHeldYouBack: text + findingRefs[]
-focusFollowThrough: text + focusRef + findingRefs[]
+reviewSummary: text + selectionState + findingRefs[]
+whatImproved: text + selectionState + findingRefs[]
+whatHeldYouBack: text + selectionState + findingRefs[]
+focusFollowThrough: text + selectionState + focusRef? + findingRefs[]
 nextPeriodFocuses[]: text + sourceFindingRefs[] + tracking target
 machineSelectionReasons[]
+sectionClaims[]: section + findingRef + measurementRefs[] + tradeRefs[]
 ```
 
 The existing customer-facing review continues to display the normal text and
@@ -829,17 +1024,32 @@ Selecting a non-default lane candidate requires one machine-only reason:
 `stronger_evidence_specificity` or `stronger_section_coherence`. The server
 checks the score-distance and reason; the reason is not customer-facing prose.
 
+Every numerical or representative-trade statement must also appear in
+`sectionClaims`. Counts are rendered as digits rather than unvalidated number
+words. The existing prose grounding scan remains a secondary defense, while
+measurement references provide the primary proof that a number belongs to the
+selected finding.
+
+`selectionState` is `selected` or `not_available`. `not_available` requires a
+bounded engine-supplied reason and is accepted only when that lane or focus
+truly has no eligible candidate. The provider cannot skip a populated lane by
+declaring it unavailable.
+
 ## Server validation
 
 Before persistence, validate that:
 
 - every selected finding and focus reference exists;
+- `not_available` appears only for an engine-confirmed empty lane or
+  unmeasurable focus population;
 - every selection is eligible for its visible lane;
 - default-selection, score-distance and allowed-alternative rules are
   respected;
 - cited trades belong to the selected finding;
-- every rendered count, percentage and money value exists in selected
-  candidate measurements;
+- every section claim points to measurements and trades owned by its selected
+  finding;
+- every rendered count, percentage and money value exists in the section's
+  selected measurement references;
 - improvement has a valid earlier/later comparison;
 - follow-through uses later evidence after the source focus;
 - a recurring claim passes the recurrence gate;
@@ -962,6 +1172,40 @@ In addition to the 420-trade acceptance fixture, cover:
 - no eligible improvement;
 - no measurable earlier focus;
 - prior focus with clear improvement, mixed evidence and worsening evidence.
+- first weekly review with no prior measurement baseline;
+- later weekly review using a compatible frozen prior insight snapshot;
+- engine-version change that makes a prior comparison incompatible.
+
+### Deterministic and metamorphic checks
+
+The focused engine verifier must also prove invariants that do not depend on
+one planted fixture:
+
+- reordering equivalent input arrays does not change candidate references,
+  measurements, scores or ranks;
+- a duplicate day, trade or rule outcome is rejected rather than double
+  counted;
+- increasing a cohort's loss share cannot lower its financial-materiality
+  component when every other input is unchanged;
+- spreading the same affected observations across more independent weeks
+  cannot lower week-spread repetition;
+- lowering evidence coverage cannot increase confidence;
+- changing `not_reviewed` to `broken` changes the correct numerator and
+  denominator exactly once;
+- removing one outlier produces the documented sensitivity and penalty change;
+- a rule-version change prevents a cross-version improvement claim;
+- mixed currency suppresses money dimensions without deleting valid counts;
+- cross-month facts never enter the wrong month's financial measurements;
+- provider serialization cannot alter the frozen engine snapshot;
+- an idempotent request race returns one request and one identical insight
+  snapshot;
+- a retry reads the original shortlist after later Journal edits;
+- invalid candidate, measurement, trade and focus references all fail before
+  issuance.
+
+An independent reference calculation verifies period totals, rule-cohort P/L,
+loss/profit shares, weekly rates, medians and the planted rank inputs without
+calling the implementation's aggregation helpers.
 
 ## Performance and resource boundary
 
@@ -1013,6 +1257,60 @@ must not expose private review prose or trade facts.
 - **All provider attempts fail:** preserve the request under the existing
   retryable failure contract; never save a degraded generic review.
 
+## Planned implementation ownership
+
+Implementation is limited to the following owned files and directly related
+focused verifier changes. If source audit proves another file necessary, this
+plan must record it before that file is edited.
+
+### New source
+
+- `src/modules/coach/contracts/coach-ai-review-insight-contracts.ts`
+- `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-normalizer.ts`
+- `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-measurements.ts`
+- `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-candidates.ts`
+- `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-ranking.ts`
+- `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-shortlist.ts`
+- `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-selection-validator.ts`
+- `src/modules/coach/server/coach-ai-review-insight-repository.ts`
+- one next-available forward Coach insight migration under
+  `src/modules/coach/server/database/migrations/`
+- `src/scripts/verify-coach-ai-review-insight-engine.ts`
+- one synthetic true-month fixture/helper under `src/scripts/`
+
+### Existing source permitted to change
+
+- `src/modules/coach/contracts/weekly-ai-review-input-contracts.ts`
+- `src/modules/coach/server/coach-ai-review-supplemental-evidence-repository.ts`
+- `src/modules/coach/server/coach-weekly-ai-review-input-service.ts`
+- `src/modules/coach/server/coach-weekly-ai-review-input-runtime.ts`
+- `src/modules/coach/server/coach-monthly-ai-review-input-runtime.ts`
+- `src/modules/coach/server/coach-ai-review-request-service.ts`
+- `src/modules/coach/server/coach-ai-review-repository.ts`
+- `src/modules/coach/server/coach-ai-review-generation-coordinator-v2.ts`
+- `src/modules/coach/server/coach-ai-review-provider-package.ts`
+- `src/modules/coach/server/coach-weekly-ai-review-openai-adapter.ts`
+- `src/modules/coach/server/coach-monthly-ai-review-openai-adapter.ts`
+- `src/modules/coach/server/coach-ai-review-output-safety.ts`
+- `src/modules/coach/server/coach-weekly-ai-review-issuance-service.ts`
+- `src/modules/coach/server/coach-monthly-ai-review-issuance-service.ts`
+- `src/modules/platform/server/database/platform-migration-manifest.ts`
+- `src/modules/platform/server/privacy/platform-erasure-service.ts`
+- focused AI Review provider/fixture verification scripts already under
+  `src/scripts/`
+
+### Documentation
+
+- this plan;
+- `docs/migration/ai-review-narrative-quality-progress.md`;
+- `docs/migration/ai-reviews-beta-handoff.md` at final acceptance;
+- `docs/migration/migration-progress.md` only when the implementation slice is
+  complete and concurrent edits can be preserved safely.
+
+No dashboard presentation, Trade Tracker editor, Journal fact writer, legacy
+V3 runtime, Help page, scheduler activation, hosted configuration or deployment
+file belongs to this implementation.
+
 ## Implementation slices
 
 ### Slice A - deterministic contracts and calculations
@@ -1052,6 +1350,56 @@ must not expose private review prose or trade facts.
 - Update the narrative-quality progress record and AI Review beta handoff.
 - Confirm whether Help needs a user-facing explanation; internal ranking and
   evidence selection alone should not require one.
+
+## Plan QA pass - 2026-08-18
+
+The implementation-readiness QA pass checked the plan against the current v2
+input contracts, monthly snapshot assembly, rule repository, Analyzer evidence,
+request/attempt/issued-review schema and immutable retry flow.
+
+Resolved findings:
+
+1. **Full-month Analyzer loss at the provider deduplication boundary:** fixed by
+   requiring local candidate calculation before represented weekly Analyzer
+   detail is removed, then freezing the derived brief.
+2. **No structured saved-plan object:** fixed by limiting plan-alignment claims
+   to named rules or explicit trader-authored notes.
+3. **Non-comparable Analyzer price moves:** fixed by prohibiting pooled money or
+   percentage calculations from per-ticker price-move decimals.
+4. **Unavailable size facts:** fixed by limiting add analysis to sequence/path
+   evidence and sizing analysis to named sizing/risk rules until quantities and
+   planned risk are accepted inputs.
+5. **Null session and execution-detail fields:** fixed by keeping those families
+   unavailable while preserving exact timestamp and duration alternatives.
+6. **Undefined meaningful improvement:** fixed with versioned early/later
+   denominators, rate and money/path thresholds, direction metadata and mixed-
+   evidence handling.
+7. **Exploratory ticker/tag false patterns:** fixed with predetermined buckets,
+   no arbitrary intersections, sibling-group accounting, stronger gates and an
+   exploratory-cohort penalty.
+8. **Candidate/output version ambiguity:** fixed with a frozen engine version
+   and deterministic candidate references.
+9. **No immutable home for candidates and selections:** fixed with planned
+   append-only insight snapshot and attempt-selection tables created by a
+   forward migration.
+10. **Provider could cite a valid candidate but invent a nearby number:** fixed
+    by structured per-section measurement and trade references plus secondary
+    prose scanning.
+11. **One planted fixture could hide calculation bugs:** fixed with ordering,
+    monotonicity, coverage, outlier, currency, cross-month, idempotency and
+    retry metamorphic checks plus an independent calculation reference.
+12. **Unbounded source scope:** fixed with a concrete implementation allowlist
+    and explicit exclusions.
+13. **A digest could not reproduce later-changed Analyzer evidence:** fixed by
+    freezing the normalized calculation source, its digest, candidates and
+    shortlist in the immutable insight snapshot.
+14. **Free-text could become an untestable scoring classifier:** fixed by
+    keeping notes as explanatory context for already-eligible findings rather
+    than keyword-scoring them into patterns or motives.
+
+No unresolved critical design blocker remains. Calibration values are
+deliberately versioned defaults and must pass the deterministic planted and
+metamorphic gates before any live provider acceptance is considered meaningful.
 
 ## Completion boundary
 

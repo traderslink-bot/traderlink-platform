@@ -59,6 +59,8 @@ four actually issued weekly reviews plus all 420 exact-month trades.
 - [x] Define evidence gates, penalties, overlap handling and shortlist quotas.
 - [x] Define structured provider selections and post-generation validation.
 - [x] Define the real four-week-plus-month 420-trade acceptance fixture.
+- [x] Complete the implementation-readiness QA pass against current v2 input,
+  Analyzer, rule, request, attempt, output and retry contracts.
 - [ ] Implement and calibrate the deterministic insight engine.
 - [ ] Run the true-month issuance and provider stability acceptance.
 
