@@ -2,12 +2,13 @@
 
 ## Status
 
-Active — the owner visually approved the completed Compare Trades page on
-2026-08-18. The deterministic Rule-idea detector, immutable evidence storage,
-issuance/disposition safeguards and first Rules-page card are now implemented.
-The card is ready for owner visual review. No Rule idea was silently issued on
-page load, no rule was activated, and no Chat exposure, provider request,
-trading-fact mutation or deployment has been accepted.
+Active — the owner visually approved the completed Compare Trades page, Rule
+idea workflow and related Help structure on 2026-08-18. The deterministic
+Rule-idea detector, immutable evidence storage, issuance/disposition safeguards,
+Rules-page card and explicit no-result state are implemented. No Rule idea is
+silently issued on page load, no rule is activated without the existing visible
+confirmation, and no Chat exposure, provider request, trading-fact mutation or
+deployment has been accepted.
 
 The owner corrected the navigation boundary: Compare Trades is directly below
 Trade Explorer in the left Trades navigation, not in Analytics. Both cross-page
@@ -31,9 +32,11 @@ stage only its explicit files at a verified checkpoint.
 - [x] Add the first Compare UI and obtain owner visual/product approval.
 - [x] Expand to four groups and saved studies.
 - [x] Implement deterministic Rule evidence, lifecycle and dispositions.
-- [ ] Add the Rule ideas UI and obtain owner visual/product approval. The UI is implemented and awaiting review.
-- [ ] Add bounded AI Chat reads and maintained Help/capability coverage.
-- [ ] Complete final verification and narrow local commits.
+- [x] Add the Rule ideas UI and obtain owner visual/product approval.
+- [x] Add and visually approve maintained Rule ideas, Trade Explorer and Compare
+  Trades Help coverage.
+- [ ] Add bounded AI Chat reads and capability coverage.
+- [x] Complete the current UI/Help verification and narrow local commits.
 
 ## Verification record
 
@@ -87,3 +90,25 @@ Focused ESLint and live HTTP checks passed; no test runner was used.
   opens the existing preset editor and its explicit **Activate rule**
   confirmation. Page load, evidence, Save for later and Not for me cannot
   activate a rule.
+- The live search starts with the latest 14 calendar days, extends one trading
+  date at a time until the shared 3-day/20-trade/50-execution gates are met, and
+  then adds 14 available trading dates per pass only when no candidate qualifies.
+  It stops at the first qualifying window or after all available account history.
+  The shared runtime/verifier path still found five candidates and 1,521 evidence
+  rows while leaving the protected database unchanged.
+- A completed check with no qualifying candidate now says that no Rule idea met
+  every evidence check and that nothing changed. The action becomes **Check
+  again** instead of silently returning to the initial prompt.
+- Help now uses the visible **Analytics** group and **Analytics Overview** page
+  names instead of the internal `Core Analytics` label. A separate **Trade
+  Explorer** Help collection owns **Use Trade Explorer** and **Compare Trades**.
+  Trading Rules Help documents the Rule idea window, evidence safeguards,
+  active-preset exclusion, Save for later, Not for me and confirmation boundary.
+- Focused ESLint and whitespace checks passed. The Rule-idea operational verifier
+  passed, and the Trade Explorer Help overview, Compare Trades article, Rule ideas
+  article and Analytics Help overview each returned HTTP 200 from the canonical
+  no-worker port 3010 server. The owner visually approved the result.
+- Local commits `e748c956` (**complete rule idea workflow**) and `07ab8799`
+  (**separate trade explorer help**) preserve the accepted UI/Help slice. Compare
+  Trades remains preserved separately at `e388d083`, and deterministic evidence
+  remains preserved at `21339d33`.
