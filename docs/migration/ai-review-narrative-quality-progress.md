@@ -75,8 +75,19 @@ four actually issued weekly reviews plus all 420 exact-month trades.
   plan/catalog growth, strict selection schemas, renderer/output limits,
   retry-version drift, truthful v3 provenance and deterministic provider-
   failure continuity.
+- [x] Complete the sixth adversarial QA pass against provider/fallback races,
+  duplicate issuance/notifications, cross-request plan replay, complete-package
+  context limits, whole-plan alternative quality, canonical bytes and renderer-
+  template coverage.
 - [ ] Implement and calibrate the deterministic insight engine.
 - [ ] Run the true-month issuance and provider stability acceptance.
+
+The sixth-pass design supersedes the prompt-only path's proposed multi-stage
+oversize handling. Once the insight engine is active, TraderLink calculates and
+renders the complete review locally from all exact facts. If the full frozen
+selection package cannot fit the configured model envelope, it issues that
+complete-source deterministic default; it does not split one review into two
+independent provider judgments or omit monthly evidence.
 
 ## Owner-directed production hardening continuation — 2026-08-18
 

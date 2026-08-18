@@ -2,7 +2,7 @@
 
 ## Status
 
-Design and five implementation-readiness QA passes complete under the owner's
+Design and six implementation-readiness QA passes complete under the owner's
 delegated product authority on 2026-08-18. Implementation has not started. The
 owner does not need to approve individual formulas or weight calculations, but
 the completed engine and its generated reviews remain subject to owner
@@ -68,8 +68,10 @@ The engine has seven deterministic stages:
    outlier, overlap and coverage adjustments.
 5. Build a balanced 15-25 candidate brief, bounded section plans and a small
    globally compatible set of complete review plans.
-6. Ask the provider to select one exact authorized `reviewPlanRef` from that
-   frozen set; it cannot assemble sections, claims or prose independently.
+6. Ask the provider to return the short frozen `providerPackageKey` and select
+   one request-local `providerChoiceKey` from that set; the server verifies the
+   package key, maps the choice to one exact private `reviewPlanRef`, and the
+   provider cannot assemble sections, claims or prose independently.
 7. Validate the selected or deterministic-default review plan and persist its
    already-rendered output through the versioned issuance service.
 
@@ -218,9 +220,10 @@ reference. No reference is an array index:
   to the exact compatible claim-reference set and rendering version;
 - `sectionPlanRef` binds one visible section purpose to its ordered finding,
   claim and optional bridge references plus the fully rendered section text;
-- `reviewPlanRef` binds the ordered opening, improvement, friction and follow-
-  through section plans, one-to-three focus questions, incomplete-record value,
-  visible output contract and renderer version;
+- `reviewPlanRef` binds the source-snapshot digest, exact request/period
+  identity, ordered opening, improvement, friction and follow-through section
+  plans, one-to-three focus questions, incomplete-record value, visible output
+  contract and renderer version;
 - `focusRef` identifies the accepted issued focus and its source review; and
 - `focusTargetRef` binds a proposed focus to its source finding, metric,
   direction, baseline, eligibility boundary and target version; each
@@ -232,6 +235,18 @@ change these references. HMAC key rotation may change scoped evidence
 references for a newly created request, but it cannot change measurements,
 scores, structural tie keys or semantic ordering. Reference derivation versions
 are frozen in the insight snapshot.
+
+All references and frozen-package digests use one versioned canonical-byte
+format. Schema objects use a declared fixed key order, permitted dynamic maps
+are encoded as key-sorted tuples, arrays retain their declared semantic order,
+exact decimals remain strings, timestamps use their frozen ISO
+form, and the envelope is UTF-8 JSON with no byte-order mark or insignificant
+whitespace. Serializer output never depends on property insertion order,
+locale or operating-system line endings. User-authored source strings retain
+their exact code points in source identity; display-only whitespace/control
+normalization happens before a rendered display literal is frozen and never
+silently NFC-normalizes or rewrites stored evidence. JSON escaping is
+deterministic, including combining and astral characters.
 
 ## Normalized evidence matrix
 
@@ -266,31 +281,38 @@ windows optimized against the current month's winners and losers. A null
 session, holding duration or execution count is unavailable rather than placed
 in an inferred bucket.
 
-### Monthly calculation before provider deduplication
+### Monthly calculation before canonical provider packaging
 
-The current monthly snapshot intentionally removes raw Analyzer detail from
-dates already represented by an issued weekly review before serializing the
-provider package. That token-saving boundary cannot become the insight
-engine's input boundary.
+The current monthly snapshot removes raw Analyzer detail from dates already
+represented by an issued weekly review before serializing the provider package.
+That old token-saving boundary does not apply to the insight engine or its new
+provider-selection package.
 
 Monthly candidate calculation must run while the local snapshot builder still
 has the complete exact-month weekly snapshots and their Analyzer evidence. It
 then freezes the derived candidate brief, measurements, representative compact
-evidence and source digests into the immutable monthly request. Only after that
-step may the provider serializer omit duplicated raw Analyzer/reflection detail.
+evidence and source digests into the immutable monthly request. The provider
+serializer then emits one canonical copy of the permitted exact-month source
+rather than inheriting the old omission behavior.
 
-This preserves all-month Analyzer calculations without sending the same raw
-evidence twice. A provider retry uses the frozen brief; it never reopens later
-Journal state or recalculates against edited evidence. Weekly inputs remain the
-immutable audit source for Analyzer evidence represented through an issued
-weekly review.
+This preserves all-month Analyzer facts without sending the same raw evidence
+twice. A provider retry uses the frozen brief and canonical factual projection;
+it never reopens later Journal state or recalculates against edited evidence.
+Weekly inputs remain an immutable audit source, while the monthly factual
+projection—not weekly prose—supplies the exact-month Analyzer record.
 
-The monthly provider package may use prior weekly prose to understand what was
-previously communicated, but no monthly `claimRef` may cite that prose as its
-factual source. Replacing a weekly review's visible text with stale numbers,
-generic boilerplate or prompt-like instructions while leaving the exact monthly
-facts unchanged must not change monthly candidates, measurements, scores,
-selection options or server-rendered fact clauses.
+The monthly provider package contains the four actually issued weekly reviews
+and one canonical copy of every permitted exact-month fact: trades, rule
+outcomes, tags, daily/trade/rule notes and reflections, Analyzer evidence and
+coverage state. It may avoid sending the same exact source record twice merely
+because that record also appeared in a weekly input, but it cannot omit,
+summarize, truncate or replace an exact-month fact with weekly prose. Prior
+weekly prose may help the provider understand what was previously communicated,
+but no monthly `claimRef` may cite that prose as its factual source. Replacing a
+weekly review's visible text with stale numbers, generic boilerplate or prompt-
+like instructions while leaving the exact monthly facts unchanged must not
+change monthly candidates, measurements, scores, selection options or server-
+rendered fact clauses.
 
 ### Calendar-week buckets
 
@@ -1245,9 +1267,11 @@ defaults and deterministic conflict resolution. Other plans are ordered by
 least total lane-score loss from those defaults, then greater overlap reduction,
 stronger focus connection, greater specificity and finally a non-secret
 structural plan tie key. The provider receives the deduplicated section-plan
-catalog, no more than six complete `reviewPlanRef` mappings and their bounded
-server-owned selection rationales. It selects one whole plan or the attempt
-fails; it cannot return a new combination.
+catalog, no more than six complete plans labelled with request-local
+`providerChoiceKey` values and their bounded server-owned selection rationales.
+It selects one whole plan or the attempt fails; it cannot return a new
+combination. The key-to-`reviewPlanRef` mapping remains private and no internal
+digest is exposed merely for the model to copy.
 
 When exactly one complete plan survives, there is nothing for the provider to
 narrow. After normal feature activation, provider configuration and request
@@ -1265,12 +1289,43 @@ sums of their existing versioned candidate components. No display rounding is
 used. Ties use the ordered structural section-plan keys and focus-target
 semantic keys, never HMAC output or rendered prose.
 
+Ordering alone is not enough to make every retained alternative useful. The
+default always remains first. A non-default complete plan may enter the final
+catalog only when its total lane-score loss is at most 12 points and it provides
+at least one exact compensating benefit over the default: overlap burden falls
+by at least `0.20`, total focus-connection score rises by at least 10 points, or
+total specificity score rises by at least 10 points. It must also retain the
+existing per-section ten-point lane-loss and five-point confidence-loss limits.
+These version-one thresholds are part of the engine version. A merely different
+but weaker plan is not sent to the provider. This bounds prompt injection or
+provider variability to a set of near-equivalent, independently acceptable
+reviews rather than allowing the sixth-ranked plan to be materially worse.
+
+After final plan ordering, the package assigns `plan_1` through `plan_6` as its
+only possible `providerChoiceKey` values and freezes the exact key-to-
+`reviewPlanRef` mapping. Because `plan_1` alone is not request proof, the package
+also includes a 128-bit base64url `providerPackageKey`. It is a versioned HMAC
+over the request, period, source-snapshot digest, selection-schema version and a
+canonical selection-payload digest calculated before the package key is added;
+no private identity or HMAC material is exposed. The final canonical package
+digest then includes the key. A choice is valid only when both keys match that
+frozen request package. Reusing a response or private plan reference from
+another request fails even when the two visible reviews happen to contain the
+same words.
+
 Each claim also carries a `factualJobKey` derived from claim kind, subject,
 primary metric, population/comparison definition and attribution kind. Global
 nonduplication compares those keys and exact rendered-clause digests; it does
 not rely on a fuzzy prose-similarity threshold. The same subject may still serve
 improvement and held-back only through different purposes, primary metrics and
 factual-job keys.
+
+The single `incompleteRecord` sentence owns the review-wide coverage-limitation
+job. Individual fact clauses still state measurement-local denominators and
+covered subsets, such as `among 4 of 6 affected trades`, but cannot repeat the
+generic record limitation in another section. A versioned `coverageJobKey`
+participates in global nonduplication so the limitation is rendered exactly
+once without suppressing necessary local denominator language.
 
 ### Renderer and visible-output boundaries
 
@@ -1309,6 +1364,24 @@ than negative zero, and sign-aware clauses cannot produce forms such as `lost
 -$200` or call a covered-subset result the period total. Every complete plan is
 run through the existing trading-direction/internal-language safety boundary
 and the new semantic reference validator before it can enter the shortlist.
+
+The renderer has a versioned coverage registry, not a generic
+`subject + metric + result` fallback. Every candidate family, section purpose,
+claim kind, attribution kind, availability state and required currency/
+coverage variant must map to an explicit fact or bridge template before that
+combination can become visible. Custom rule and tag labels are inserted only as
+quoted noun labels; their text can never become a verb, instruction or grammar
+fragment. Adding or changing a family/template combination requires a renderer
+version change and the complete grammar, sign, currency, partial-coverage and
+output-safety fixture matrix.
+
+During development, a candidate whose otherwise-eligible combination has no
+template remains audit-visible with `renderer_template_unavailable`. Production
+snapshot creation treats that as a renderer coverage defect and fails closed;
+it cannot silently discard the candidate, report `no_qualifying_pattern` or
+fall through to a generic sentence. A catalog-completeness verifier proves that
+every activatable family/role/variant has safe templates before the engine
+version can be activated.
 
 ## Immutable persistence and atomicity
 
@@ -1355,7 +1428,7 @@ request and contains:
 
 - request reference and source input/evidence digests;
 - full normalized prompt-safe calculation source JSON and digest, including
-  the Analyzer evidence used before monthly provider deduplication;
+  complete exact-month Analyzer evidence;
 - prompt-safe reference derivation version, never HMAC key material;
 - insight-engine version;
 - renderer, section-plan, review-plan and provider-selection schema versions;
@@ -1363,6 +1436,10 @@ request and contains:
 - balanced shortlist and deduplicated section-plan catalog JSON/digest;
 - all authorized fully rendered review-plan outputs, their digests and the
   deterministic-default `reviewPlanRef`;
+- frozen `providerPackageKey` and ordered request-local `providerChoiceKey` to
+  `reviewPlanRef` mapping;
+- exact canonical provider-package bytes, byte digest, selection instruction/
+  schema versions and output allowance;
 - calculation coverage and created time.
 
 The table is keyed one-to-one to `coach_ai_review_period_requests_v2`, carries
@@ -1379,13 +1456,15 @@ read or write transaction open.
 
 The calculation source contains only the fields needed to reproduce candidate
 measurements and evidence selection. A note or Analyzer record is stored once
-and referenced by candidates rather than copied into every candidate. The
-source may be larger than the provider brief, but it is private local
-persistence and is not resent to the provider. Storing only a digest would be
-insufficient because later Analyzer revisions could no longer reproduce the
-monthly calculation. Storage-size verification must measure this snapshot
-separately from provider-token cost; implementation cannot add an arbitrary
-new refusal limit before that benchmark exists.
+and referenced by candidates rather than copied into every candidate. The full
+private source may be larger than the provider package because it retains
+engine-only reproduction identities and structures that are never exposed. The
+provider receives one exact prompt-safe projection of every permitted factual
+record, not the private IDs or repeated candidate copies. Storing only a digest
+would be insufficient because later Analyzer revisions could no longer
+reproduce the monthly calculation. Storage-size verification must measure this
+snapshot separately from provider-token cost; implementation cannot add an
+arbitrary new refusal limit before that benchmark exists.
 
 ### Attempt selection
 
@@ -1397,6 +1476,9 @@ that another provider call occurred. Each audit contains:
 - selection source (`provider_selected` or `deterministic_default`);
 - engine, shortlist and authorized-review-plan digests;
 - structured provider selection JSON and digest when parseable;
+- returned/resolved package and request-local choice keys, model context-
+  envelope version and exact reservation/input-count result when a provider
+  attempt occurred;
 - selected `reviewPlanRef` and exact rendered-output digest when accepted;
 - validation state and a bounded failure code;
 - issued-review reference only for the accepted selection;
@@ -1421,6 +1503,25 @@ deterministic default writes the v3 issued review, accepted selection audit and
 request finalization atomically with no fabricated provider attempt or receipt;
 any real failed attempts and their actual usage remain separately immutable.
 
+Database uniqueness and conditional state transitions enforce one accepted
+selection audit and one v3 issued row per request. Every issuance transaction
+must first win an atomic pending-to-issued compare-and-set on the scoped request;
+only that winner may insert the accepted audit, issued row and the one
+`ai_review_ready` notification/source event. Repeating the same issuance call
+returns the already-issued review. A losing provider success or fallback path
+cannot replace the output, append a second accepted audit or notify twice.
+
+A deterministic fallback is eligible only after every provider attempt is
+terminal for selection, no reservation or transport owns the request's active
+selection lease, and the request is still pending. Transport timeout separates
+issuance authority from provider-cost settlement: an attempt can become
+terminal for selection while its actual-usage settlement remains pending if
+remote cancellation was not confirmed. A response arriving after the fallback
+may append the real attempt receipt and bounded late-result settlement code,
+but it can never validate a selection or issue/replace the review. Failed and
+late real calls remain included in provider usage/cost totals; the deterministic
+issuance itself contributes no provider receipt or cost.
+
 ### Retry and activation behavior
 
 The runner reads the frozen insight snapshot by request ID and builds every
@@ -1429,6 +1530,19 @@ engine against later Journal state. Reservation bytes and provider token counts
 include the frozen shortlist and bounded plan catalog. Because every authorized
 plan's complete visible output is frozen in the snapshot, a retry after a code
 deployment cannot silently re-render old evidence with a newer template.
+
+Before any provider attempt, the coordinator measures the full frozen envelope:
+system instructions, strict selection schema, canonical package and the
+512-token response allowance plus the existing protocol headroom. It uses the
+configured model's authoritative input count when required and the existing
+conservative estimator/reservation otherwise. The package must fit the model's
+configured safe input and total-context boundaries. It is never silently
+truncated, summarized, split into independently selectable subpackages or
+rebuilt with omitted monthly facts. When an otherwise activated and authorized
+request cannot fit or reserve that complete envelope, the coordinator issues
+the already-frozen deterministic default with `provider_input_limit` or
+`provider_reservation_refused` provenance and makes no partial provider call.
+The local engine has still calculated the review from the complete exact source.
 
 Issued and pending requests created before insight-engine activation are not
 retrofitted. Already-issued reviews remain immutable. A pre-activation pending
@@ -1448,15 +1562,21 @@ The provider returns one strict whole-review selection:
 
 ```text
 contractVersion: traderlink_coach_ai_review_plan_selection_v1
-reviewPlanRef
+packageKey: <the exact short providerPackageKey supplied in this package>
+choiceKey: plan_1 | plan_2 | plan_3 | plan_4 | plan_5 | plan_6
 ```
 
 The implementation uses an exact strict object schema that rejects unknown
 keys; it cannot rely on a default object parser that strips an unexpected raw
-prose field. The reference must name one of the frozen authorized complete
-plans. The provider response is intentionally tiny, so the version-one provider
-output reservation has a 512-token ceiling rather than retaining the legacy
-free-prose output allowance. Actual usage remains receipt-tracked.
+prose field. `packageKey` must exactly equal the short frozen key in the current
+package, and the request-local choice must map to one of that package's frozen
+authorized complete plans. The server resolves it to the private
+`reviewPlanRef`; the provider never has to reproduce a long digest. An unknown,
+out-of-range or cross-request package/choice key fails the attempt. The provider
+schema requires the unpadded 22-character base64url package-key shape as well as
+the exact value match. The response is intentionally tiny, so the version-one
+provider output reservation has a 512-token ceiling rather than retaining the
+legacy free-prose output allowance. Actual usage remains receipt-tracked.
 
 The new customer-facing v3 review continues to display the normal text and
 focus list. Hidden plan, section, claim and focus metadata is stored privately
@@ -1587,8 +1707,13 @@ require a new question-rendering version rather than multiplying plan choices.
 
 Before persistence, validate that:
 
-- the provider response has exactly the selection contract version and one
-  authorized `reviewPlanRef`, with no unknown or raw-prose field;
+- the provider response has exactly the selection contract version, current
+  `providerPackageKey` and one request-local authorized `providerChoiceKey`,
+  with no unknown or raw-prose field, and the frozen mapping resolves it to one
+  private `reviewPlanRef`;
+- the request, period, source-snapshot digest, canonical provider-package digest
+  and selection-schema version all match that mapping, preventing cross-request
+  replay;
 - the selected complete plan, ordered section plans, focus questions, rendered
   output and digests exactly match the immutable snapshot;
 - every selected finding and focus reference exists;
@@ -1596,8 +1721,8 @@ Before persistence, validate that:
   matching coverage, baseline or later-evidence state;
 - every selection is eligible for its visible lane or the exact engine-
   authorized fallback mode;
-- default-selection, score-distance and allowed-alternative rules are
-  respected;
+- default-selection, per-section distance, whole-plan 12-point loss and exact
+  compensating-benefit rules are respected;
 - cited trades belong to the selected finding;
 - cited notes belong to the selected finding/evidence record and note-derived
   prose is explicitly attributed to the trader;
@@ -1620,8 +1745,8 @@ Before persistence, validate that:
 - follow-through uses later evidence after the source focus;
 - a recurring claim passes the recurrence gate;
 - section purposes are valid, and sections cannot repeat the same
-  `factualJobKey` or rendered-clause digest; same-subject improvement/friction
-  uses different purposes and primary measurements;
+  `factualJobKey`, `coverageJobKey` or rendered-clause digest; same-subject
+  improvement/friction uses different purposes and primary measurements;
 - the global plan satisfies the strength, overlap, nonduplication and section-
   job constraints rather than only validating each section in isolation;
 - hidden focus-tracking targets refer to measurable engine families;
@@ -1630,13 +1755,21 @@ Before persistence, validate that:
   target;
 - every `focusQuestionRef` is authorized for its exact target and supplies the
   complete visible next-focus question;
-- coverage limitations remain attached;
+- the review-wide coverage limitation is attached exactly once through
+  `incompleteRecord`, while measurement-local subset denominators remain in
+  their owning fact clauses;
+- every selected claim/bridge combination exists in the activated renderer
+  coverage registry, including its grammar, currency, attribution,
+  availability and partial-coverage variant;
 - the review contains a strength when the brief contains a required strength;
 - every visible field fits its cadence-specific character and sentence budget;
 - the final v3 output passes deterministic semantic and existing output-safety
-  checks; and
+  checks;
 - generation source, provider/model nullability and receipt presence match the
-  actual issuance path.
+  actual issuance path; and
+- this request still owns the pending issuance transition, so a late provider
+  result or competing fallback cannot create a second accepted selection,
+  issued row or ready notification.
 
 A failed selection uses the existing immutable retry boundary. The engine does
 not rebuild findings from later-edited Journal data during a retry.
@@ -1716,9 +1849,14 @@ asserted before any provider call.
   jobs, required-strength and cross-section overlap gates before provider input.
 - The default and every alternative fit the renderer/output budgets, and no
   more than six complete plans enter the provider package.
+- Every retained alternative stays within the whole-plan lane-loss limit and
+  proves its exact overlap, focus-connection or specificity benefit; a merely
+  different weaker plan is excluded.
 - The month contains four issued weekly narrative contexts, not zero and not
   synthetic summaries created only inside the monthly fixture.
-- August 31 facts are included exactly once.
+- Every permitted exact-month fact, note and Analyzer record is present once in
+  the canonical monthly data, the four weekly reviews are also present, and
+  August 31 facts are included exactly once.
 
 ### Realistic usefulness fixture
 
@@ -1757,6 +1895,13 @@ After deterministic acceptance:
    provenance and no fabricated provider receipt.
 7. Reopen one legacy v2, one provider-selected v3 and one deterministic-default
    v3 review through the normal customer path.
+8. Race a delayed valid provider response against the fallback boundary and
+   prove exactly one path issues/notifies, the losing path cannot replace the
+   review, and any real late usage is still settled to its failed attempt.
+9. Run canonical packages just below and above the configured provider context
+   envelope. Neither package may be truncated or split; the over-limit request
+   must issue the same full-source deterministic default without a provider
+   call.
 
 The review fails even when its rendered prose reads smoothly if its plan uses a
 materially weaker candidate, omits an available strength, repeats one issue
@@ -1817,6 +1962,8 @@ In addition to the 420-trade acceptance fixture, cover:
   facts and hidden focus metadata remain unchanged;
 - user-authored note, custom rule title and tag text containing provider prompt
   injection attempts;
+- custom rule/tag labels that would be ungrammatical or directive-like if
+  inserted as verbs, proving templates render them only as quoted noun labels;
 - unchanged structured facts with materially different note wording;
 - early/later rate movement caused only by not-reviewed/Analyzer coverage
   changes;
@@ -1848,6 +1995,8 @@ In addition to the 420-trade acceptance fixture, cover:
   safe/unsafe long notes;
 - six eligible complete plans plus a seventh otherwise-valid plan to prove the
   hard bound and deterministic ordering;
+- alternatives that pass section-level gates but exceed the whole-review
+  12-point loss boundary or provide no threshold-level compensating benefit;
 - exactly one eligible complete plan, which must issue without a provider call
   and record `single_authorized_plan` provenance;
 - a case where the only globally valid combination would fall below a
@@ -1858,6 +2007,24 @@ In addition to the 420-trade acceptance fixture, cover:
 - an activated provider's per-request reservation rejected before a call,
   repeated transport failures, invalid structured selections and exhausted
   retries, each reaching the exact frozen default without a fabricated receipt;
+- the exact complete provider envelope immediately below and above its model-
+  specific safe context boundary, proving no source fact is truncated,
+  summarized or split into a second selection call;
+- a delayed provider success racing deterministic fallback, repeated fallback
+  invocation and notification retry, proving one issued row, one accepted
+  audit, one ready notification and exact late usage settlement;
+- another request's valid package-key/`plan_1` response, the current package key
+  paired with another request's choice response, and an unknown `plan_7`, all
+  rejected before private `reviewPlanRef` resolution;
+- canonical package and digest fixtures covering object insertion order,
+  process restarts, Windows/Unix envelope line endings, JSON escaping,
+  combining characters and astral symbols without normalizing stored evidence;
+- a renderer registry matrix covering every candidate family, section purpose,
+  claim/attribution kind, availability, currency and partial-coverage variant,
+  plus a planted missing-template combination that must fail closed;
+- sections with necessary local covered-subset denominators beside a review-
+  wide limitation, proving `incompleteRecord` owns the generic coverage sentence
+  exactly once;
 - deliberately inactive AI Reviews or missing/disabled provider configuration,
   which must not issue a deterministic fallback;
 - an engine, scope, renderer or output-safety failure that must remain failed
@@ -1921,8 +2088,13 @@ one planted fixture:
   substituted because their `claimRef` and server fact clause differ;
 - raw provider prose or any unknown response key fails strict schema validation,
   and an internal cross-claim `bridgeRef` prevents section-plan creation;
-- the provider can return only an authorized whole `reviewPlanRef`; it cannot
-  select a finding or section plan directly;
+- the provider must return the current short `providerPackageKey` and only an
+  authorized request-local `providerChoiceKey`; the server resolves them to one
+  frozen whole `reviewPlanRef`, and the provider cannot select a finding or
+  section plan directly;
+- a package/choice pair or private plan reference from another request cannot
+  validate against the current request, source snapshot, period or package
+  digest;
 - same-subject improvement/friction sections require distinct purposes and
   primary measurements;
 - section-plan claim order and rendered text are deterministic, and two valid
@@ -1933,10 +2105,20 @@ one planted fixture:
   distinct;
 - plan ordering independently reproduces total lane-score loss, summed pairwise
   containment burden, focus connection, specificity and structural tie keys;
+- every non-default retained plan independently reproduces the whole-review
+  lane-loss cap and at least one threshold-level compensating benefit;
 - section/review planning evaluates no more than 81 exact combinations and
   retains no more than six complete plans;
 - every rendered periodic/monthly field stays within its exact character and
   sentence budget without cutting a claim;
+- fixed-order canonical serialization produces byte-identical UTF-8 packages
+  and digests regardless of object insertion order, locale, process or host line
+  endings, while distinct user-authored source code points remain distinct;
+- the renderer coverage registry is complete for every activatable combination;
+  removing one template fails snapshot creation rather than suppressing the
+  finding or using a generic sentence;
+- review-wide limitation language has exactly one `coverageJobKey`, while local
+  affected/money-eligible denominators remain attached to their own claims;
 - negative zero, sign wording, count grammar, partial labels and omitted unsafe
   note excerpts cannot alter measurements or create unsafe final text;
 - a sparse partial week cannot receive full-week trend-consistency weight;
@@ -1962,6 +2144,12 @@ one planted fixture:
 - provider success issues only its selected frozen v3 plan, while provider
   blockage/failure issues the byte-identical frozen default with
   `deterministic_default` provenance and no invented provider receipt;
+- simultaneous provider success and deterministic fallback produce one atomic
+  pending-to-issued winner, one accepted audit and one ready notification;
+  a late real provider result can settle actual usage but cannot issue;
+- repeated fallback invocation is idempotent and returns the existing review;
+- an over-context or refused full provider package is never truncated or split
+  and issues the same complete-source default without a provider call;
 - one authorized plan short-circuits provider selection only after normal
   activation/configuration/authorization and records `single_authorized_plan`;
 - a deterministic fallback is impossible after any scope, entitlement,
@@ -1998,6 +2186,9 @@ trade.
   snapshot bytes, section/review-plan count, renderer time and peak process
   memory for 10-, 80-, 100- and 420-trade inputs. Snapshot storage and provider-
   token cost are reported separately.
+- Provider preflight measures one frozen complete package against the configured
+  model envelope. It does not make repeated trial calls or create a multi-stage
+  model workflow merely because the exact-month evidence is large.
 - A new safety limit requires measured database/provider evidence and a plan
   update; no arbitrary trade-count or snapshot-byte refusal is introduced.
 - Focused static scripts and type checks run with one worker where applicable.
@@ -2014,15 +2205,19 @@ For each generated review, retain server-side:
 - component applicability, raw values, normalized weights and calculation
   traces for every shortlisted score;
 - eligibility gates, confidence adjustments, penalties and sensitivity results;
-- provider selections;
+- provider selections and request-local choice-key resolution;
 - authorized review-plan count, default/selected `reviewPlanRef`, renderer and
-  selection-schema versions, rendered-output digest and generation source;
+  selection-schema versions, canonical provider-package byte/token counts and
+  digest, rendered-output digest and generation source;
 - rejected-attempt selection errors;
 - deterministic-fallback reason when used;
+- issuance compare-and-set winner, accepted-audit/notification identity and any
+  bounded late-provider settlement code;
 - final section-to-finding references;
 - focus-tracking metadata;
-- provider usage and cost through the existing receipt system, with no receipt
-  created for a provider call that did not occur.
+- provider usage and cost through the existing receipt system, including real
+  failed/late calls, with no receipt or cost created for a provider call that
+  did not occur.
 
 Journal notes and private identities retain their existing privacy boundary.
 Admin aggregate health views may later report candidate/selection counts but
@@ -2059,6 +2254,19 @@ must not expose private review prose or trade facts.
   precise fallback reason and `deterministic_default` source without inventing
   provider usage or a receipt. This is the same evidence-backed rendered plan,
   not a generic degraded review.
+- **Complete provider package exceeds the configured safe model envelope:** do
+  not truncate, summarize or split it. After the normal activation and
+  authorization gates, issue the complete-source deterministic default with
+  `provider_input_limit` and make no provider call.
+- **Provider response arrives after fallback won issuance:** preserve any real
+  usage/receipt on that attempt and record the bounded late-result state, but do
+  not validate its choice, replace the issued output or notify again.
+- **Provider success and fallback arrive together:** the atomic pending-to-
+  issued transition chooses one winner. The loser idempotently reads the issued
+  review and cannot create another accepted audit or ready notification.
+- **Renderer registry lacks a required template:** fail snapshot creation as a
+  renderer defect. Do not hide the candidate or misreport that the trader had no
+  qualifying pattern.
 - **Scope, entitlement, feature activation, missing/disabled provider
   configuration, source snapshot, engine arithmetic, renderer, output-safety,
   contract-version or persistence integrity fails, or the request was
@@ -2080,6 +2288,7 @@ plan must record it before that file is edited.
 - `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-candidates.ts`
 - `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-ranking.ts`
 - `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-shortlist.ts`
+- `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-canonical.ts`
 - `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-selection-validator.ts`
 - `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-renderer.ts`
 - `src/modules/coach/server/coach-ai-review-insight-repository.ts`
@@ -2141,10 +2350,16 @@ file belongs to this implementation.
 - Add server-owned fact, bridge and focus-question clause catalogs.
 - Build bounded section plans and at most six globally compatible complete
   review plans with frozen rendered output.
-- Add the strict whole-review selection schema that rejects raw provider prose
-  and uses the reduced output-token ceiling.
+- Enforce the whole-plan alternative quality gate and complete renderer-template
+  registry before assigning request-local choice keys.
+- Freeze canonical provider-package bytes and the request-local choice-to-plan
+  mapping; add the strict selection schema that rejects raw provider prose and
+  uses the reduced output-token ceiling.
+- Preflight the complete unsplit provider envelope against the configured model
+  budget without omitting exact-month source facts.
 - Add v3 output/issued-review persistence, dual v2/v3 reads, exact provenance,
-  deterministic fallback and immutable retry behavior.
+  deterministic fallback, single-winner issuance/notification and immutable
+  retry/late-usage behavior.
 - Preserve existing visible review fields and all legacy v2 output reads.
 
 ### Slice C - weekly focus tracking
@@ -2163,6 +2378,10 @@ file belongs to this implementation.
 - Save, reopen and audit the monthly result.
 - Exhaust provider attempts in a separate run and prove the exact frozen
   deterministic default is issued/reopened without a fake provider receipt.
+- Race a delayed provider result against fallback and verify one issued review,
+  one accepted audit, one ready notification and truthful late usage.
+- Verify below/above-context packages remain complete and choose provider or
+  deterministic issuance without truncation or splitting.
 - Run bounded non-persisted stability replays.
 
 ### Slice E - documentation and handoff
@@ -2505,6 +2724,71 @@ deliberately versioned defaults and must pass the deterministic planted and
 metamorphic gates, sealed holdouts, both true-month flows and the resource
 benchmark before any live provider acceptance is considered meaningful.
 
+## Sixth adversarial plan QA pass - 2026-08-18
+
+The sixth pass attacked operational races, very large normal-month packages,
+cross-request replay, canonical byte stability, provider-selection quality and
+the ability to add future finding families without degrading visible language.
+
+Additional resolved findings:
+
+1. **A long internal plan digest was a brittle model output:** fixed with a
+   short 128-bit package key plus request-local `plan_1` through `plan_6` choice
+   keys mapped privately to exact `reviewPlanRef` values.
+2. **`plan_1` alone could not detect a response replayed across requests:**
+   fixed by requiring the HMAC-derived `providerPackageKey` and binding it to
+   the request, period, source snapshot, canonical selection payload and schema
+   version.
+3. **A delayed provider success and fallback could both issue:** fixed with one
+   atomic pending-to-issued compare-and-set plus unique issued/accepted-audit
+   constraints.
+4. **A race loser could create a second notification:** fixed by allowing only
+   the issuance winner to create the unique ready source event in the same
+   transaction.
+5. **Waiting for a late provider result or falling back could lose real cost
+   facts:** fixed by separating selection authority from late usage settlement;
+   real failed/late calls retain receipts but cannot replace the review.
+6. **Repeated fallback execution was not explicitly idempotent:** fixed by
+   returning the one already-issued row and forbidding another accepted audit or
+   notification.
+7. **An oversized selection package had no exact continuity rule:** fixed with
+   a complete-envelope model-context preflight and deterministic-default
+   issuance when the unsplit full package cannot fit or reserve.
+8. **Context handling could silently omit evidence:** fixed by freezing one
+   canonical copy of every permitted exact-month fact plus all four issued
+   weekly reviews and forbidding truncation, summarization or independent
+   selection subpackages.
+9. **Section-level alternative limits still allowed a materially weaker whole
+   review:** fixed with a 12-point total lane-loss cap and a required threshold-
+   level overlap, focus-connection or specificity benefit.
+10. **Provider variability could choose arbitrary differences without improving
+    the review:** fixed by excluding every non-default plan that does not prove
+    one exact compensating benefit.
+11. **Byte-identical retry claims lacked a canonical serialization contract:**
+    fixed with versioned fixed-order UTF-8 JSON, exact decimal/timestamp rules,
+    deterministic escaping and no locale/host-line-ending dependence.
+12. **A future candidate family could reach users through generic grammar:**
+    fixed with an exhaustive renderer coverage registry and no generic template
+    fallback.
+13. **Custom titles or tags could become awkward or directive prose:** fixed by
+    inserting every user label only as a quoted noun label inside an explicit
+    family-specific template.
+14. **A missing renderer template could be mistaken for no trader pattern:**
+    fixed by keeping the candidate audit-visible and failing production snapshot
+    creation as a renderer defect.
+15. **Coverage limitations could be repeated across sections:** fixed with one
+    review-wide `coverageJobKey` owned by `incompleteRecord` while preserving
+    necessary measurement-local subset denominators.
+16. **The verification plan did not prove these operational boundaries:** fixed
+    with cross-request replay, just-under/over-context, provider/fallback race,
+    late-usage, notification-idempotency, canonical-byte and renderer-registry
+    fixtures.
+
+No unresolved critical design blocker remains after this pass. The new whole-
+plan thresholds are version-one calibration values rather than universal truths;
+they must still pass the independent calculations, sealed holdouts and true-
+month acceptance before activation.
+
 ## Completion boundary
 
 This redesign is complete only when:
@@ -2530,11 +2814,20 @@ This redesign is complete only when:
 - follow-through connects an issued focus only to evidence occurring after its
   actual issuance boundary;
 - an available genuine strength is recognized;
-- the provider can select only one frozen whole `reviewPlanRef`, while every
-  section, semantic claim, focus target and rendered byte derives from it;
+- the provider must echo the current short `providerPackageKey` and can select
+  only one request-local `providerChoiceKey`, which the server resolves to one
+  frozen whole `reviewPlanRef`, while every section, semantic claim, focus
+  target and rendered byte derives from it;
 - exhausted or blocked provider selection issues the exact safe deterministic
   default without false provider/model/receipt provenance, while engine or
   safety defects still fail closed;
+- provider success/fallback races produce exactly one issued review, accepted
+  audit and ready notification, while any real late-call usage remains billed
+  to that attempt without replacing the output;
+- complete provider packages are frozen and preflighted without truncating,
+  summarizing or splitting monthly facts;
+- every activatable finding/section/attribution/coverage combination has an
+  explicit safe renderer template and no generic prose fallback;
 - existing v2 and both v3 generation sources reopen through one customer read
   path without changing old output;
 - repeated live monthly generations retain the same main friction and
