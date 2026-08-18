@@ -2,7 +2,7 @@
 
 ## Status
 
-Design and three implementation-readiness QA passes complete under the owner's
+Design and four implementation-readiness QA passes complete under the owner's
 delegated product authority on 2026-08-18. Implementation has not started. The
 owner does not need to approve individual formulas or weight calculations, but
 the completed engine and its generated reviews remain subject to owner
@@ -19,8 +19,9 @@ reviews remain immutable.
 TraderLink, not the model, will discover and calculate the candidate findings
 for a weekly, two-week or monthly AI Review. The model will receive a short,
 ranked and balanced evidence brief plus the underlying permitted context. Its
-job is to select a coherent combination of supported findings and explain them
-in normal trader-facing language.
+job is to select a coherent combination of supported findings and authorized
+narrative clauses. A deterministic server renderer turns that structured plan
+into normal trader-facing language.
 
 The engine will not use one global score to decide the whole review. It will
 rank findings inside five separate lanes:
@@ -67,8 +68,8 @@ The engine has seven deterministic stages:
    outlier, overlap and coverage adjustments.
 5. Build a balanced 15-25 candidate provider brief with required-consideration
    ranks and representative evidence.
-6. Ask the provider for structured section selections and prose tied to exact
-   candidate references.
+6. Ask the provider for structured section, claim and authorized narrative-
+   clause selections tied to exact candidate references.
 7. Validate the selections and supporting values before the existing issuance
    service can persist the review.
 
@@ -95,6 +96,15 @@ The engine must not import a legacy V3 analytics runtime or a second trade
 authority. It may reuse accepted exact-decimal utilities and the current
 replacement Journal/Analyzer contracts.
 
+Prior issued-review prose is historical narrative context, not measurement
+authority. A monthly request still includes the four actually issued weekly
+reviews, but current-month counts, rates, P/L, trends and claims are always
+recalculated from the exact current-month source. A stale or inaccurate number
+inside earlier review prose cannot become a monthly measurement, candidate or
+claim. Historical prose is delimited as untrusted data and can never act as a
+provider instruction. Accepted hidden focus metadata remains the authority for
+focus follow-through.
+
 The current AI Review input has trader-authored daily and trade notes but no
 separate structured saved-trade-plan object. A candidate may discuss alignment
 with a plan only when a named rule or the trader's own note supplies that plan
@@ -118,6 +128,24 @@ not provider instructions. The serializer places them in clearly delimited
 fields and tells the provider not to follow commands found inside them. Text
 such as `ignore the review instructions` cannot change candidate generation,
 lane ranks, allowed selection references or server validation.
+
+### Consistent source snapshot
+
+All facts used by one request must come from one account-scoped, transactionally
+consistent SQLite read snapshot. The snapshot builder opens a read transaction,
+loads the exact-period Journal facts, rule definitions and outcomes, note
+revisions, Analyzer evidence, coverage state, issued-review metadata and
+accepted hidden focus metadata, and then copies the normalized immutable source
+before closing the transaction. It cannot perform a sequence of unrelated live
+reads that could combine an old note with a new rule result or a revised
+Analyzer record.
+
+No provider call, network work or candidate ranking runs while the read
+transaction is open. If any required scoped row, revision link or identity
+manifest cannot be read consistently, request creation fails without saving a
+partial request. Candidate calculation runs afterward from only the copied
+source. The request and completed insight snapshot are then inserted together
+under the atomic persistence boundary below.
 
 ### Additional identity needed by the engine
 
@@ -149,7 +177,7 @@ If a rule changes materially during a month, trend calculations split at the
 version boundary. The engine must not claim improvement across two different
 thresholds or statements merely because they share a stable rule identity.
 
-### Prompt-safe trade references
+### Prompt-safe evidence references
 
 Each exact-period trade receives a stable period-scoped prompt-safe reference
 derived with the Platform's versioned HMAC boundary from the account scope,
@@ -171,6 +199,31 @@ representative trade record may contain:
 
 No private round-trip, execution, account or user identifier or HMAC material
 is exposed.
+
+Every other selectable or citable object also receives a deterministic typed
+reference. No reference is an array index:
+
+- `noteRef` is a versioned account/period-scoped HMAC reference over the
+  private note identity, exact revision and linked evidence target;
+- `measurementRef` is a canonical digest of the engine version, `findingRef`,
+  metric and unit, population/comparison definition, exact value, numerator,
+  denominator, availability, coverage and attribution kind;
+- `claimRef` is a canonical digest of its finding, ordered measurement
+  references, claim kind, subject, attribution, coverage clause and fact-clause
+  rendering version;
+- `bridgeRef` binds one server-rendered bounded interpretation/transition clause
+  to the exact compatible claim-reference set and rendering version;
+- `focusRef` identifies the accepted issued focus and its source review; and
+- `focusTargetRef` binds a proposed focus to its source finding, metric,
+  direction, baseline, eligibility boundary and target version; each
+  `focusQuestionRef` then binds one server-rendered question to that exact
+  target and question-rendering version.
+
+Canonical collections are sorted before hashing, so input reordering cannot
+change these references. HMAC key rotation may change scoped evidence
+references for a newly created request, but it cannot change measurements,
+scores, structural tie keys or semantic ordering. Reference derivation versions
+are frozen in the insight snapshot.
 
 ## Normalized evidence matrix
 
@@ -224,6 +277,13 @@ Journal state or recalculates against edited evidence. Weekly inputs remain the
 immutable audit source for Analyzer evidence represented through an issued
 weekly review.
 
+The monthly provider package may use prior weekly prose to understand what was
+previously communicated, but no monthly `claimRef` may cite that prose as its
+factual source. Replacing a weekly review's visible text with stale numbers,
+generic boilerplate or prompt-like instructions while leaving the exact monthly
+facts unchanged must not change monthly candidates, measurements, scores,
+selection options or server-rendered fact clauses.
+
 ### Calendar-week buckets
 
 Monthly week comparisons are recalculated from exact calendar-month facts.
@@ -254,6 +314,14 @@ recomputes both periods from their frozen source measurements under a declared
 compatible version or marks the comparison unavailable; it cannot compare two
 different score scales as though they were identical.
 
+Comparison populations must also be disjoint. A trade, day aggregate, rule
+outcome or Analyzer event cannot appear on both the earlier and later side of
+one improvement claim. If nominal request periods overlap, the engine may use
+only explicitly constructed earlier-only and later-only remainders that still
+pass every evidence and coverage gate; otherwise the comparison is unavailable.
+Focus follow-through likewise excludes evidence already used by the source
+focus's baseline or source period.
+
 ## Candidate record
 
 Every candidate has this conceptual shape:
@@ -280,12 +348,16 @@ penalties[]
 rankExplanation[]
 ```
 
-Each measurement contains a stable metric name, exact value, unit, numerator,
-denominator, availability state and server-generated `displayLiteral`. The
-literal uses the accepted currency/percentage/count formatter and never guesses
-a currency symbol when the period currency is unavailable. The provider copies
-that literal when it cites the measurement; it does not round or reformat the
-raw value. Provider prose is never used as a measurement.
+Each measurement contains its `measurementRef`, stable metric name, exact value,
+unit, numerator, denominator, affected count, applicable coverage counts,
+availability state, attribution kind and server-generated `displayLiteral`.
+Money measurements also contain a money-eligible count. The literal uses
+the accepted currency/percentage/count formatter and never guesses a currency
+symbol when the period currency is unavailable. When money coverage is partial,
+the literal states the covered subset, for example `among the 4 of 6 affected
+trades with complete P/L`. The provider cannot silently apply that money result
+to all six trades because only the server-owned covered-subset claim is
+selectable. Provider output is never used as a measurement.
 
 `engineVersion` freezes candidate families, gates, formulas, weights and tie
 breaks, for example `traderlink_ai_review_insights_v1`. `findingRef` is a
@@ -295,7 +367,7 @@ requests always use their frozen engine version even after later calibration.
 
 Every directional metric also declares its interpretation explicitly:
 `lower_is_better`, `higher_is_better` or `context_only`. The engine never
-infers improvement direction from a metric name or provider prose.
+infers improvement direction from a metric name or provider selection.
 
 ## Candidate families
 
@@ -758,6 +830,16 @@ Average, median, contribution and profit-factor measurements are unavailable
 when their required population or denominator is empty. The engine does not
 store infinity, substitute zero or invent a display placeholder.
 
+Every money measurement records both the full affected population and the
+money-eligible subset. A section can say that a pattern appeared on six trades
+and that the four with complete P/L lost a stated amount; it cannot describe the
+amount as the result of all six. The opening similarly distinguishes completed
+trade count from P/L-eligible trade count whenever they differ. A partial money
+population may contribute only under its declared coverage/confidence rules and
+never supplies an unstated full-population denominator. Net P/L is labeled as
+the period total only when every included trade is money-eligible; otherwise it
+is explicitly the known P/L among the covered subset.
+
 Money from different or unavailable currencies is never combined. When the
 period lacks one comparable currency, financial candidate dimensions become
 unavailable and count/rate dimensions remain eligible.
@@ -943,7 +1025,7 @@ Every other named lane component is also deterministic:
 ## Lane formulas
 
 Weights are defaults to calibrate against planted fixtures. They are versioned
-and inspectable rather than hidden in provider prose.
+and inspectable rather than hidden in provider discretion.
 
 ### Friction priority
 
@@ -993,8 +1075,15 @@ points; the missing 30 points remain visible as unavailable evidence.
 - 10% evidence confidence.
 
 Lane ties resolve deterministically by post-penalty score, evidence confidence,
-available financial materiality, repetition and finally lexical `findingRef`,
-in that order. Provider output never breaks an engine-rank tie.
+available financial materiality, repetition, process relevance, specificity
+and a server-owned structural `rankTieKey`, in that order. The tie key is a
+canonical serialization of non-secret candidate semantics: family priority,
+polarity, subject kind/template key or typed custom definition, cohort,
+comparison and representative-evidence ordering. It excludes HMAC output,
+account/user identity, note prose and provider text. A stable private source
+identity is permitted only as the final collision guard for two otherwise
+identical definitions and is never exposed. HMAC key rotation therefore cannot
+change ranks. Provider output never breaks an engine-rank tie.
 
 ## Gates, adjustments, penalties and sensitivity checks
 
@@ -1039,10 +1128,21 @@ evidence-set overlap calculation; lower-ranked candidates remain in the private
 audit snapshot but cannot enter the provider shortlist. This keeps overlap work
 bounded on months with many rules, tickers or tags.
 
+Version one uses an exact containment coefficient for merge and penalty
+thresholds: `intersection size / min(left size, right size)`. Empty sets have
+zero overlap. Trade candidates use contributing trade-reference sets; day-only
+candidates use day-reference sets. A day and trade candidate can be compared
+across granularities only when the day measurement retains its exact
+contributing trade set, in which case both sides use trade references. The audit
+also records Jaccard overlap, `intersection / union`, for diagnosis, but Jaccard
+does not drive version-one thresholds. The 35%, 50% and 65% schedules above all
+refer to the containment coefficient.
+
 - Candidates in the same family and subject with at least 65% evidence overlap
   collapse into the stronger candidate.
 - A narrower rule candidate may merge into a broader giveback candidate when
-  the same rule and trades directly explain the relationship.
+  both describe the same measured rule-and-trade evidence. Overlap alone never
+  establishes that the rule caused the giveback.
 - Different rule findings remain separate even when some trades overlap.
 - A candidate cannot claim the sum of P/L from overlapping cohorts.
 - The provider shortlist normally uses a trade in no more than two visible
@@ -1055,6 +1155,14 @@ Representative examples are selected for both impact and typicality:
 3. most recent independent example.
 
 This prevents every section from citing only the largest loser.
+
+The candidate declares the exact representative metric before examples are
+selected. Its median uses sorted exact-decimal values: the middle value for an
+odd population and the exact arithmetic mean of the two middle values for an
+even population. `Closest-to-median` minimizes exact absolute distance. Ties in
+all three representative slots resolve by exact event timestamp, normalized
+ticker, historical direction and the non-secret structural evidence key; they
+never depend on input array order or a rotating scoped reference.
 
 ## Shortlist construction
 
@@ -1117,12 +1225,15 @@ request and contains:
 
 The table is keyed one-to-one to `coach_ai_review_period_requests_v2`, carries
 the same user/workspace/account scope, has restrictive foreign keys and rejects
-updates or deletes. Request creation computes the pure snapshot before entering
-the repository transaction, then inserts the request and snapshot together. An
-idempotent period-identity race must return the request and snapshot that won
-the insert. A losing concurrent calculation is discarded even if Journal state
-changed while it was being built and its digest differs; it cannot replace or
-partially combine with the saved snapshot.
+updates or deletes. Request creation first copies the normalized source under
+the consistent read transaction defined above, closes that transaction, and
+computes the pure candidate snapshot outside it. A short write transaction then
+inserts the request and completed insight snapshot together. An idempotent
+period-identity race must return the request and snapshot that won the insert.
+A losing concurrent calculation is discarded even if Journal state changed
+while it was being built and its digest differs; it cannot replace or partially
+combine with the saved snapshot. No provider or ranking work holds a database
+read or write transaction open.
 
 The calculation source contains only the fields needed to reproduce candidate
 measurements and evidence selection. A note or Analyzer record is stored once
@@ -1185,18 +1296,29 @@ tables.
 The provider returns structured selections rather than only free prose:
 
 ```text
-reviewSummary: text + selectionState + selectionMode + sectionPurpose + findingRefs[]
-whatImproved: text + selectionState + selectionMode + sectionPurpose + findingRefs[]
-whatHeldYouBack: text + selectionState + selectionMode + sectionPurpose + findingRefs[]
-focusFollowThrough: text + selectionState + selectionMode + sectionPurpose + focusRef? + findingRefs[]
-nextPeriodFocuses[]: text + sourceFindingRef + focusTargetRef
-sectionClaims[]: section + findingRef + measurementRefs[] + tradeRefs[] + noteRefs[] + attributionKind
+reviewSummary: selectionState + selectionMode + sectionPurpose + findingRefs[] + claimRefs[] + bridgeRef?
+whatImproved: selectionState + selectionMode + sectionPurpose + findingRefs[] + claimRefs[] + bridgeRef?
+whatHeldYouBack: selectionState + selectionMode + sectionPurpose + findingRefs[] + claimRefs[] + bridgeRef?
+focusFollowThrough: selectionState + selectionMode + sectionPurpose + focusRef? + findingRefs[] + claimRefs[] + bridgeRef?
+nextPeriodFocuses[]: sourceFindingRef + focusTargetRef + focusQuestionRef
+sectionClaims[]: section + claimRef
 ```
 
 The existing customer-facing review continues to display the normal text and
 focus list. New hidden selection metadata is stored with newly issued reviews
 so future follow-through and support audits can identify exactly which finding
 was used. Older v2 outputs remain readable without metadata.
+
+The frozen shortlist includes an `allowedSectionClaims` catalog. Each
+`claimRef` binds the exact selected finding, subject, measurements,
+numerator/denominator, population coverage, trade/day examples, note
+attributions, attribution kind and a server-rendered trader-facing fact clause.
+The shortlist also contains bounded server-owned `bridgeRef` clauses that can
+connect or emphasize only compatible selected claims without adding a new fact.
+The server assembles the final visible section from the selected exact fact and
+bridge clauses; the provider never writes or edits visible prose. Two unrelated
+measurements may both display `25%`, but their different semantic claim
+references and clauses cannot be swapped.
 
 Improvement and friction cannot reuse the same `findingRef`, but the same rule
 or behavior subject may legitimately appear in both lanes through distinct
@@ -1214,21 +1336,37 @@ qualify as `avoids_overlap`, `stronger_focus_connection` or
 an override. The provider may choose only a pre-authorized reference; the
 server appends the reason to the private selection audit.
 
-Every numerical or representative-trade statement must also appear in
-`sectionClaims`. Counts are rendered as digits rather than unvalidated number
-words. The existing prose grounding scan remains a secondary defense, while
-measurement references provide the primary proof that a number belongs to the
-selected finding.
+Every factual numerical, behavior, rule, ticker, date, result or representative-
+example statement must come from a selected server-owned claim. Counts are
+rendered as digits rather than unvalidated number words. Every bridge is also a
+server-owned clause authorized for the exact selected claim combination and can
+only state its bounded verdict or rank-based importance. Unknown references or
+any provider-returned raw prose field fail schema validation. Semantic
+`claimRef`/`bridgeRef` binding and server assembly are the primary controls; a
+prose grounding scan remains only a defense against renderer defects.
 
-A note-derived statement also carries its exact `noteRef` and uses explicit
-trader attribution such as `you noted`. Notes may explain a selected example;
-they cannot become a measured recurring pattern, causal explanation or motive.
-Unreferenced note paraphrases fail validation.
+A note-derived statement is also a server-owned attributed claim carrying its
+exact `noteRef` and a bounded exact excerpt introduced by language such as `you
+noted`. Notes may explain a selected example; they cannot become a measured
+recurring pattern or causal explanation. The renderer cannot infer emotion,
+hesitation, discipline, intent or another motive from a note. It may show only
+the attributed excerpt or omit the note; provider paraphrases do not enter the
+output contract.
 
-`selectionState` is `selected` or `not_available`. `not_available` requires a
-bounded engine-supplied reason and is accepted only when that lane or focus
-truly has no eligible candidate. The provider cannot skip a populated lane by
-declaring it unavailable.
+`selectionState` is `selected` or `not_available`. `not_available` requires one
+bounded engine reason: `no_qualifying_pattern`, `insufficient_coverage`,
+`no_compatible_baseline`, `no_later_evidence` or `required_facts_unavailable`.
+Each reason has a server-rendered clause. It is accepted only when its exact
+gate state is true, and the provider cannot skip a populated lane. In
+particular, insufficient evidence cannot be rewritten as `nothing held you
+back`, and no compatible baseline cannot be rewritten as no improvement.
+
+When more than one boundary is true, reason selection is deterministic:
+`required_facts_unavailable`, then `no_compatible_baseline`, then
+`no_later_evidence` for focus follow-through, then `insufficient_coverage`, and
+finally `no_qualifying_pattern` only after the required facts and evidence gates
+were sufficient to search for one. The audit retains every applicable boundary
+even though the visible section uses one primary reason.
 
 `selectionMode` is section-specific and engine-authorized. Normal lane choices
 use `primary`. `What improved` may use `no_improvement_comparison` when a
@@ -1273,19 +1411,31 @@ stat dump; prose remains concise and trader-facing.
 
 The engine also supplies one to three bounded next-period focus targets derived
 from selected measurable findings. The provider selects a `focusTargetRef` and
-writes the visible retrospective review question; it cannot author a hidden
-target, metric, direction or eligibility date. Focus targets must be distinct,
-measurable and traceable to their source finding. When only one or two distinct
-targets qualify, the review returns fewer than three rather than padding the
-list. Generic advice or rewordings of the same subject fail validation.
+one compatible server-owned `focusQuestionRef`; it cannot author visible focus
+prose, a hidden target, metric, direction or eligibility date. Focus targets
+must be distinct, measurable and traceable to their source finding. When only
+one or two distinct targets qualify, the review returns fewer than three rather
+than padding the list. Generic advice or rewordings of the same subject fail
+validation.
+
+An exact prior `focusTargetRef` cannot be emitted again. An unresolved subject
+may be carried forward only through a new current finding with a changed later-
+evidence measurement or a more specific measurable boundary; the selection
+audit records the carried-forward relationship. Cosmetic rewording never
+creates a new target.
+
+Each target supplies one or more server-rendered retrospective questions bound
+to its exact subject and metric. An unknown or incompatible `focusQuestionRef`
+rejects the attempt, so another behavior, entity, amount or threshold cannot be
+introduced through free text.
 
 ## Server validation
 
 Before persistence, validate that:
 
 - every selected finding and focus reference exists;
-- `not_available` appears only for an engine-confirmed empty lane or
-  unmeasurable focus population;
+- `not_available` appears only with the exact engine-confirmed reason and its
+  matching coverage, baseline or later-evidence state;
 - every selection is eligible for its visible lane or the exact engine-
   authorized fallback mode;
 - default-selection, score-distance and allowed-alternative rules are
@@ -1293,11 +1443,16 @@ Before persistence, validate that:
 - cited trades belong to the selected finding;
 - cited notes belong to the selected finding/evidence record and note-derived
   prose is explicitly attributed to the trader;
-- every section claim points to measurements and trades owned by its selected
-  finding;
-- every rendered count, percentage and money value exists in the section's
-  selected measurement references and matches its server-generated display
-  literal;
+- every section `claimRef` is an authorized semantic claim for the selected
+  finding and its server-rendered fact clause is assembled without provider
+  modification;
+- every rendered count, percentage and money value exists in that exact claim's
+  measurements, matches its server-generated display literal and keeps the
+  affected-versus-money-eligible coverage clause;
+- identical display literals belonging to different metrics, subjects or
+  denominators cannot satisfy one another's claim reference;
+- every selected `bridgeRef` is authorized for that exact section claim set and
+  every unexpected raw prose field fails the provider-result schema;
 - every financial claim uses the measurement's period-result, cohort-
   association or Analyzer-path attribution kind and does not convert
   association/giveback into invented causal or guaranteed-profit language;
@@ -1310,7 +1465,10 @@ Before persistence, validate that:
   primary measurement and substantially identical normalized prose;
 - hidden focus-tracking targets refer to measurable engine families;
 - every next-period focus uses an engine-authorized distinct `focusTargetRef`
-  linked to its source finding;
+  linked to its source finding and is not a cosmetic duplicate of an earlier
+  target;
+- every `focusQuestionRef` is authorized for its exact target and supplies the
+  complete visible next-focus question;
 - coverage limitations remain attached;
 - the review contains a strength when the brief contains a required strength.
 
@@ -1440,9 +1598,10 @@ tune the same engine version after a failure. A failed holdout requires either
 a general defect correction plus a new engine version/resealed holdout, or an
 honest documented limitation; no fixture-specific exception is allowed.
 
-Provider prose acceptance occurs only after deterministic calibration and
-holdouts pass. Later weight/threshold changes create a new engine version and
-rerun all calculation fixtures, holdouts and stability checks.
+Provider selection and server-rendered review acceptance occur only after
+deterministic calibration and holdouts pass. Later weight/threshold changes
+create a new engine version and rerun all calculation fixtures, holdouts and
+stability checks.
 
 ## Broader verification matrix
 
@@ -1465,8 +1624,11 @@ In addition to the 420-trade acceptance fixture, cover:
 - rule definition changed mid-month;
 - custom rules only;
 - mixed or unavailable currency;
-- incomplete P/L;
+- incomplete P/L where six affected trades include only four money-eligible
+  trades;
 - overlapping rule cohorts;
+- overlapping prior/current request periods whose shared trades would otherwise
+  appear on both sides of an improvement;
 - one-trade outlier;
 - contradictory notes, rule outcomes and Analyzer evidence;
 - no eligible improvement;
@@ -1475,6 +1637,9 @@ In addition to the 420-trade acceptance fixture, cover:
 - first weekly review with no prior measurement baseline;
 - later weekly review using a compatible frozen prior insight snapshot;
 - engine-version change that makes a prior comparison incompatible;
+- a monthly package whose four historical weekly prose blocks contain stale
+  numbers, boilerplate and prompt-like instructions while their exact source
+  facts and hidden focus metadata remain unchanged;
 - user-authored note, custom rule title and tag text containing provider prompt
   injection attempts;
 - unchanged structured facts with materially different note wording;
@@ -1487,8 +1652,19 @@ In addition to the 420-trade acceptance fixture, cover:
 - the same subject as both improving trend and material residual friction;
 - provider selection of a top-three candidate that was not pre-authorized by
   `allowedSectionSelections`;
+- a provider result containing raw section prose, an unknown `bridgeRef` or a
+  bridge authorized for a different claim set;
+- two authorized measurements with the same display literal, such as a 25% win
+  rate and a 25% loss share, to prove semantic claim binding;
 - overlapping high-impact rule and Analyzer candidates whose P/L evidence sets
   are identical;
+- each distinct `not_available` reason to prove that missing coverage, missing
+  baseline and no qualifying pattern produce different truthful clauses;
+- a Journal writer changing a note, rule result and Analyzer revision between
+  attempted source reads to prove one request is wholly before or wholly after
+  the write, never a hybrid;
+- prompt-safe HMAC key rotation with unchanged semantic facts to prove that
+  ranks and selections do not move;
 - identical factual inputs under two account scopes to prove isolation and
   account-scoped prompt-safe references.
 
@@ -1498,7 +1674,7 @@ The focused engine verifier must also prove invariants that do not depend on
 one planted fixture:
 
 - reordering equivalent input arrays does not change candidate references,
-  measurements, scores or ranks;
+  measurement/claim/bridge/focus references, measurements, scores or ranks;
 - a duplicate day, trade or rule outcome is rejected rather than double
   counted;
 - increasing a cohort's loss share cannot lower its financial-materiality
@@ -1521,7 +1697,17 @@ one planted fixture:
 - a rule-version change prevents a cross-version improvement claim;
 - mixed currency suppresses money dimensions without deleting valid counts;
 - cross-month facts never enter the wrong month's financial measurements;
+- replacing only prior weekly visible prose cannot change a monthly candidate,
+  measurement, score, claim clause or allowed selection;
+- earlier/later comparison evidence sets are disjoint, and removing overlapping
+  evidence either creates two gate-passing remainders or makes the comparison
+  unavailable;
+- incomplete money coverage always exposes affected and money-eligible counts,
+  cannot render a full-cohort money claim and cannot label covered-subset P/L as
+  the period total;
 - provider serialization cannot alter the frozen engine snapshot;
+- every normalized source snapshot is transactionally consistent across
+  Journal, rule, note, Analyzer and issued-focus reads;
 - an idempotent request race returns one request and its one winning insight
   snapshot while discarding any losing calculation, including a different
   later-state digest;
@@ -1532,20 +1718,34 @@ one planted fixture:
   measurement;
 - cohort net P/L, affected losing-trade P/L and affected counts cannot be
   substituted for one another in prose;
+- equal display literals from semantically different measurements cannot be
+  substituted because their `claimRef` and server fact clause differ;
+- raw provider prose and unknown or cross-claim `bridgeRef` values fail before
+  visible section assembly;
 - the provider cannot select a non-default finding absent from the frozen
   `allowedSectionSelections` set;
 - same-subject improvement/friction sections require distinct purposes and
   primary measurements;
 - a sparse partial week cannot receive full-week trend-consistency weight;
-- equivalent facts in two account scopes produce equal measurements/ranks but
-  different prompt-safe references and never cross-read snapshots;
-- prompt-injection text in notes, rule titles or tags cannot change candidate
-  references, measurements, ranks or the validator's allowed selections;
+- equivalent facts in two account scopes produce equal score/rank tuples and
+  the same semantic selected-finding set, while prompt-safe references differ
+  and snapshots never cross-read;
+- rotating only the prompt-safe HMAC key may change new scoped evidence
+  references but cannot change structural tie keys, scores or semantic order;
+- instruction-shaped text in a note cannot affect measurements, ranks or
+  allowed selections; the literal value of a custom rule title or tag may
+  affect only its ordinary subject identity, display label and exact cohort
+  grouping, never execute as an instruction or bypass a gate;
 - causal, guaranteed-capture and `statistically significant` prose is rejected
   unless the exact claim type is supported (this engine performs no statistical
   significance test);
-- invalid candidate, measurement, trade and focus references all fail before
-  issuance.
+- invalid candidate, measurement, claim, bridge, trade, note, focus-target and
+  focus-question references all fail before issuance;
+- every `not_available` clause preserves the difference between no supported
+  pattern and insufficient or non-comparable evidence;
+- an earlier focus target cannot be repeated through cosmetic rewording;
+- a raw next-focus question or a `focusQuestionRef` authorized for a different
+  target is rejected.
 
 An independent reference calculation verifies period totals, rule-cohort P/L,
 loss/profit shares, coverage-adjusted comparisons, weekly rates, medians, every
@@ -1597,8 +1797,10 @@ must not expose private review prose or trade facts.
 ## Failure handling
 
 - **No eligible friction:** use the engine-authorized mixed-result or measured-
-  strength fallback when one exists; otherwise state that no supported pattern
-  held the trader back. Do not manufacture a problem.
+  strength fallback when one exists. Say that no qualifying held-back pattern
+  was found only when the reason is `no_qualifying_pattern`; state the actual
+  coverage or missing-fact boundary for every other reason. Do not manufacture
+  either a problem or a clean-process conclusion.
 - **No eligible improvement:** provide the most informative unchanged or mixed
   or worsening weekly comparison; when no compatible baseline exists, state
   that boundary and use a measured maintained strength instead of generic
@@ -1608,7 +1810,9 @@ must not expose private review prose or trade facts.
   and generate measurable focus metadata for the next review.
 - **Missing Analyzer:** continue with rules, results, tags, notes and chronology.
 - **Missing reviewed rules:** continue with exact result and Analyzer families.
-- **Insufficient money coverage:** suppress money scores and use counts/rates.
+- **Insufficient money coverage:** suppress unavailable money scores and use
+  counts/rates; when a valid subset remains, state both affected and money-
+  eligible counts in its server-rendered fact clause.
 - **Provider selects invalid evidence:** reject and retry from the immutable
   package.
 - **All provider attempts fail:** preserve the request under the existing
@@ -1629,6 +1833,7 @@ plan must record it before that file is edited.
 - `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-ranking.ts`
 - `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-shortlist.ts`
 - `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-selection-validator.ts`
+- `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-renderer.ts`
 - `src/modules/coach/server/coach-ai-review-insight-repository.ts`
 - one next-available forward Coach insight migration under
   `src/modules/coach/server/database/migrations/`
@@ -1681,8 +1886,11 @@ file belongs to this implementation.
 ### Slice B - provider shortlist and structured selections
 
 - Serialize the balanced insight brief ahead of raw context.
-- Add structured section/focus selection references.
-- Add server validation and immutable retry behavior.
+- Add server-owned fact, bridge and focus-question clause catalogs.
+- Add structured section/focus selection references and strict schemas that
+  reject raw provider prose.
+- Add server validation, deterministic trader-facing rendering and immutable
+  retry behavior.
 - Preserve existing visible review fields and legacy output reads.
 
 ### Slice C - weekly focus tracking
@@ -1907,6 +2115,65 @@ Additional resolved findings:
     win/loss cohort:** fixed by separating affected count, losing count, cohort
     net P/L and losing-trade P/L in both measurements and prose validation.
 
+## Fourth adversarial plan QA pass - 2026-08-18
+
+The fourth pass treated the database, historical review context and provider
+claim layer as hostile concurrency and semantic-boundary surfaces. It looked
+for outputs that could pass reference and arithmetic validation while still
+describing the wrong fact.
+
+Additional resolved findings:
+
+1. **Separate live reads could create a source state that never existed:**
+   fixed with one account-scoped consistent SQLite read snapshot covering
+   Journal, rules, notes, Analyzer revisions and issued-focus metadata.
+2. **Historical weekly prose could contaminate a current monthly conclusion:**
+   fixed by making the four issued reviews untrusted narrative context while
+   recalculating every monthly fact and claim from exact monthly source data.
+3. **Overlapping requests could call the same trades both earlier and later:**
+   fixed by requiring disjoint comparison evidence or two explicit disjoint
+   remainders that independently pass all gates.
+4. **A cohort's money result could silently cover fewer trades than its count:**
+   fixed with affected and money-eligible counts on every money measurement and
+   a mandatory visible subset clause.
+5. **Only trade references had a complete derivation contract:** fixed with
+   typed, canonical note, measurement, claim, focus and focus-target references
+   that never depend on array position.
+6. **Two different facts with the same display literal could pass number-only
+   validation:** fixed with semantic `claimRef` binding and server-rendered fact
+   clauses that the provider cannot edit.
+7. **Nonnumeric provider prose could still invent a behavior or motive:** fixed
+   by removing provider-authored visible prose, using only server-owned claim
+   and bridge clauses, and limiting notes to bounded attributed excerpts.
+8. **`not_available` could turn insufficient evidence into an undeserved clean
+   conclusion:** fixed with five distinct engine reason states and matching
+   server-rendered clauses.
+9. **Overlap percentages had no defined set or formula:** fixed with typed
+   evidence sets, a version-one containment coefficient and separately audited
+   Jaccard overlap.
+10. **A merge rule implied that overlapping evidence proved causation:** fixed
+    by allowing merge only for the same measured evidence while preserving the
+    association boundary.
+11. **Median and representative-example ties were under-specified:** fixed with
+    exact even/odd median arithmetic, exact distance and non-secret structural
+    tie keys.
+12. **Lexical `findingRef` ties allowed an HMAC key to change rank order:** fixed
+    with a semantic structural `rankTieKey` independent of scoped references,
+    note prose and provider text.
+13. **A previous focus could be repeated through cosmetic rewording:** fixed by
+    rejecting an exact prior target and requiring changed measurable evidence
+    or a genuinely narrower boundary for a carried-forward subject.
+14. **The verification matrix did not falsify these boundaries:** fixed with
+    hybrid-read, stale-prose, overlapping-period, partial-money, identical-
+    literal, unavailable-reason and HMAC-rotation fixtures and invariants.
+15. **Prompt-injection invariance was stated more broadly than the product's
+    literal tag/rule semantics allow:** fixed by distinguishing harmless note
+    text from a legitimate change to a tag/rule subject while still proving
+    that instruction-shaped text cannot execute or bypass an evidence gate.
+16. **A valid hidden focus target could still receive an unrelated visible
+    question:** fixed with target-owned server-rendered `focusQuestionRef`
+    choices and no provider-authored focus prose.
+
 No unresolved critical design blocker remains. Calibration values are
 deliberately versioned defaults and must pass the deterministic planted and
 metamorphic gates, sealed holdouts, both true-month flows and the resource
@@ -1916,10 +2183,13 @@ benchmark before any live provider acceptance is considered meaningful.
 
 This redesign is complete only when:
 
+- each request is calculated from one consistent account-scoped source
+  snapshot rather than a hybrid of concurrent Journal revisions;
 - deterministic planted findings, independent score calculations and sealed
   holdouts rank correctly before provider involvement;
 - the monthly provider package contains the four actually issued weekly
-  reviews and all exact-month facts;
+  reviews and all exact-month facts, while historical prose cannot change a
+  current monthly measurement or claim;
 - every available visible section identifies a useful finding and does not
   duplicate another section's explanatory job;
 - `What improved` uses a real comparison or the exact engine-authorized no-
@@ -1927,11 +2197,13 @@ This redesign is complete only when:
 - `What held you back` identifies measurable affected behavior and impact;
 - financial wording preserves result/path/association boundaries and never
   presents overlapping cohort P/L as caused or additive loss;
+- every earlier/later comparison uses disjoint evidence and every partial-money
+  claim states its exact covered subset;
 - follow-through connects an issued focus only to evidence occurring after its
   actual issuance boundary;
 - an available genuine strength is recognized;
-- provider selections validate against exact candidate references and frozen
-  server-owned alternatives/focus targets;
+- provider selections validate against exact candidate and semantic claim
+  references plus frozen server-owned alternatives/focus targets;
 - repeated live monthly generations retain the same main friction and
   improvement families;
 - the saved review reopens through the normal customer read path;
