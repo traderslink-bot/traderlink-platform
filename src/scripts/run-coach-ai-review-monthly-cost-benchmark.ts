@@ -32,10 +32,10 @@ import {
 
 const CONFIRMATION = "--confirm-synthetic-monthly-cost-provider-calls";
 const MODEL_ID = "gpt-5.6-luna";
-const INPUT_PRICE_PER_MILLION = new Decimal("1.00");
-const CACHED_INPUT_PRICE_PER_MILLION = new Decimal("0.10");
-const CACHE_WRITE_INPUT_PRICE_PER_MILLION = new Decimal("1.25");
-const OUTPUT_PRICE_PER_MILLION = new Decimal("6.00");
+const INPUT_PRICE_PER_MILLION = new Decimal("0.20");
+const CACHED_INPUT_PRICE_PER_MILLION = new Decimal("0.02");
+const CACHE_WRITE_INPUT_PRICE_PER_MILLION = new Decimal("0.25");
+const OUTPUT_PRICE_PER_MILLION = new Decimal("1.20");
 const LONG_CONTEXT_THRESHOLD = 272_000;
 
 type ProfileName = "low" | "planning" | "heavy";
@@ -619,7 +619,8 @@ function assertProfileInput(
     description.tradeNoteCount !== ("completedDailyReflections" in input
       ? expectedTrades : profile.tradesPerOpenDay) ||
     description.tradeNoteCharacters !== ("completedDailyReflections" in input
-      ? expectedTrades * 500 : profile.tradesPerOpenDay * 500) ||
+      ? expectedTrades * profile.tradeNoteCharacters
+      : profile.tradesPerOpenDay * profile.tradeNoteCharacters) ||
     description.namedTradeRuleOutcomeCount !== expectedTrades * 10 ||
     description.tagCount < expectedTrades * 5 ||
     description.tagCount > expectedTrades * 10
@@ -730,9 +731,22 @@ async function main(): Promise<void> {
   if (arguments_.length > 0 && !confirmed && arguments_[0] !== "--prepare-only") {
     throw new Error("monthly_cost_benchmark_confirmation_required");
   }
+  const profileOptionIndex = arguments_.indexOf("--profile");
+  const requestedProfileName = profileOptionIndex >= 0
+    ? arguments_[profileOptionIndex + 1]
+    : null;
+  const requestedProfile = requestedProfileName === null
+    ? null
+    : PROFILES.find((profile) => profile.name === requestedProfileName);
+  if (profileOptionIndex >= 0 && !requestedProfile) {
+    throw new Error("monthly_cost_benchmark_profile_invalid");
+  }
+  const selectedProfiles = requestedProfile
+    ? Object.freeze([requestedProfile])
+    : PROFILES;
   loadEnvConfig(process.cwd(), true);
   const profileArtifacts = [];
-  for (const profile of PROFILES) {
+  for (const profile of selectedProfiles) {
     const weeklyInputs: CoachPeriodicAiReviewInputV2[] = [];
     const weeklyOutputs: CoachPeriodicAiReviewOutputV2[] = [];
     const callResults: CallResult[] = [];
@@ -833,8 +847,8 @@ async function main(): Promise<void> {
     status: providerCalls ? "provider_benchmark_completed"
       : countOnly ? "provider_benchmark_counted" : "provider_benchmark_prepared",
     modelId: MODEL_ID,
-    providerCallCount: providerCalls ? PROFILES.length * 5 : 0,
-    tokenCountRequestCount: countOnly ? PROFILES.length * 5 : 0,
+    providerCallCount: providerCalls ? selectedProfiles.length * 5 : 0,
+    tokenCountRequestCount: countOnly ? selectedProfiles.length * 5 : 0,
     artifactName,
     profiles: profileArtifacts.map((artifact) => Object.freeze({
       profile: artifact.profile,

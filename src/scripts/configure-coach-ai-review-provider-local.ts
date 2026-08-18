@@ -31,10 +31,10 @@ function main(): void {
   try {
     const settings = new CoachAiProviderSettingsRepository(database).save({
       modelId: "gpt-5.6-luna",
-      inputCostUsdPerMillionTokens: "1",
-      cachedInputCostUsdPerMillionTokens: "0.1",
-      cacheWriteInputCostUsdPerMillionTokens: "1.25",
-      outputCostUsdPerMillionTokens: "6",
+      inputCostUsdPerMillionTokens: "0.20",
+      cachedInputCostUsdPerMillionTokens: "0.02",
+      cacheWriteInputCostUsdPerMillionTokens: "0.25",
+      outputCostUsdPerMillionTokens: "1.20",
     });
     const budgetAvailable = Boolean(database.prepare<[], Readonly<{ found: number }>>(
       "SELECT 1 AS found FROM sqlite_schema WHERE type = 'table' AND name = 'coach_ai_review_budget_controls'",

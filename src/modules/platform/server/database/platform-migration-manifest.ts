@@ -39,6 +39,7 @@ import { coachAiReviewCachedInputPricingMigration } from "@/src/modules/coach/se
 import { coachAiReviewRollingSpendGuardMigration } from "@/src/modules/coach/server/database/migrations/0049_coach_ai_review_rolling_spend_guard";
 import { coachAiReviewSubscriberBudgetSafeguardsMigration } from "@/src/modules/coach/server/database/migrations/0050_coach_ai_review_subscriber_budget_safeguards";
 import { coachAiReviewCacheWriteAccountingMigration } from "@/src/modules/coach/server/database/migrations/0051_coach_ai_review_cache_write_accounting";
+import { coachAiReviewLunaPricingRefreshMigration } from "@/src/modules/coach/server/database/migrations/0062_coach_ai_review_luna_pricing_refresh";
 import { coachAiChatActionDraftsMigration } from "@/src/modules/coach/server/database/migrations/0055_coach_ai_chat_action_drafts";
 import { coachAiChatActionExpansionMigration } from "@/src/modules/coach/server/database/migrations/0056_coach_ai_chat_action_expansion";
 import { coachAiChatCacheAccountingMigration } from "@/src/modules/coach/server/database/migrations/0058_coach_ai_chat_cache_accounting";
@@ -315,6 +316,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/journal/server/database/migrations/0061_journal_rule_ideas.ts",
       migration: journalRuleIdeasMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/coach/server/database/migrations/0062_coach_ai_review_luna_pricing_refresh.ts",
+      migration: coachAiReviewLunaPricingRefreshMigration,
     }),
   ]);
 

@@ -45,6 +45,9 @@ resume state for this slice.
 
 ## Review presentation contract
 
+The owner-directed narrative-quality follow-on is tracked in
+[AI Review Narrative Quality Progress](ai-review-narrative-quality-progress.md).
+
 1. Weekly, two-week and monthly saved-review routes remain owner/account scoped
    Server Components. No benchmark output is written to a user's database.
 2. Use one shared review-document presentation for real saved reviews and the

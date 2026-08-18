@@ -3,6 +3,12 @@ const INTERNAL_COVERAGE_FIELDS = new Set([
   "accountPendingDataDecisionCount",
 ]);
 
+const HISTORICAL_REVIEW_CONTEXT_KEYS = new Set([
+  "priorIssuedReview",
+  "priorMonthlyReview",
+  "reviewNarrativeContextEntry",
+]);
+
 const EXCLUDED_PENDING_RECORD_LIMITATION =
   "Unresolved account records were excluded from the review facts.";
 
@@ -11,6 +17,8 @@ const PUBLIC_LIMITATIONS: Readonly<Record<string, string>> = Object.freeze({
     "Detailed execution facts were unavailable for some included trade records.",
   incomplete_daily_review_coverage:
     "Some Trade Tracker reviews were not marked complete when this review began.",
+  incomplete_daily_reflection_coverage:
+    "Some Trade Tracker reflections were not marked complete when this review began.",
   legitimate_open_positions_excluded:
     "Open positions were excluded from realized results.",
   no_trade_review_signal_unavailable:
@@ -60,6 +68,44 @@ function collectRuleDefinitions(value: unknown, result: Map<string, ProviderRule
   }
 }
 
+/**
+ * The immutable input retains the complete deterministic analyzer result. The
+ * provider only needs the decision-relevant observations; raw volume/turnover
+ * magnitudes and duplicate partial-candle fields made a 100-trade week exceed
+ * the real issuance boundary without improving the narrative.
+ */
+function compactTradeAnalysis(value: CoachAiReviewTradeAnalysisV2): unknown {
+  return Object.freeze({
+    availability: value.availability,
+    unavailableReason: value.unavailableReason,
+    analyzerContractVersion: value.analyzerContractVersion,
+    events: Object.freeze(value.events.map((event) => Object.freeze({
+      kind: event.kind,
+      sequence: event.sequence,
+      executedAtUtc: event.executedAtUtc,
+      oneMinute: Object.freeze({
+        relativeVolume: event.oneMinute.relativeVolume,
+        rsi14: event.oneMinute.rsi14,
+        ema9DistancePercent: event.oneMinute.ema9DistancePercent,
+        vwapDistancePercent: event.oneMinute.vwapDistancePercent,
+        favorableMoveUntilFlatDecimal: event.oneMinute.favorableMoveUntilFlatDecimal,
+        adverseMoveUntilFlatDecimal: event.oneMinute.adverseMoveUntilFlatDecimal,
+        givebackFromPriorFavorableExtremeDecimal:
+          event.oneMinute.givebackFromPriorFavorableExtremeDecimal,
+      }),
+      fiveMinuteCompletedBeforeExecution: event.fiveMinute.completedBeforeExecution
+        ? Object.freeze({
+            ema9DistancePercent:
+              event.fiveMinute.completedBeforeExecution.ema9DistancePercent,
+            relativeVolume: event.fiveMinute.completedBeforeExecution.relativeVolume,
+          })
+        : null,
+    }))),
+    greenToRed: value.greenToRed,
+    finalExitPaths: value.finalExitPaths,
+  });
+}
+
 function providerValue(
   value: unknown,
   ruleRefs: ReadonlyMap<string, string>,
@@ -98,11 +144,19 @@ function providerValue(
         return Object.freeze({ ruleRef, status: candidate.status });
       });
     }
-    return value.map((item) => providerValue(item, ruleRefs));
+    const itemKey = key === "reviewNarrativeContext"
+      ? "reviewNarrativeContextEntry"
+      : "";
+    return value.map((item) => providerValue(item, ruleRefs, itemKey));
   }
   if (!value || typeof value !== "object") return value;
+  if (key === "analysis") {
+    return providerValue(compactTradeAnalysis(value as CoachAiReviewTradeAnalysisV2), ruleRefs);
+  }
   const transformed = Object.fromEntries(Object.entries(value)
-    .filter(([entryKey]) => !INTERNAL_COVERAGE_FIELDS.has(entryKey))
+    .filter(([entryKey]) =>
+      !INTERNAL_COVERAGE_FIELDS.has(entryKey) &&
+      !(HISTORICAL_REVIEW_CONTEXT_KEYS.has(key) && entryKey === "focusFollowThrough"))
     .map(([entryKey, item]) => [entryKey, providerValue(item, ruleRefs, entryKey)]));
   if (key === "coverageNotice" && Array.isArray(transformed.limitationReasonCodes)) {
     return Object.freeze({
@@ -117,7 +171,8 @@ function providerValue(
  * Serializes the immutable review snapshot into the smaller public-language
  * package sent to the provider. Internal workflow labels and their counters
  * stay in TraderLink storage for coverage/audit purposes and never cross the
- * provider boundary.
+ * provider boundary. Historical follow-through prose is also withheld because
+ * it can quote an older focus; the exact next-focus arrays remain authoritative.
  */
 export function serializeCoachAiReviewProviderPackage(input: unknown): string {
   if (!input || Array.isArray(input) || typeof input !== "object") {
@@ -144,3 +199,29 @@ export function serializeCoachAiReviewProviderPackage(input: unknown): string {
   }
   return serialized;
 }
+
+/** Coverage limitations are deterministic input facts, not generated advice. */
+export function incompleteRecordFromCoachAiReviewProviderPackage(
+  serialized: string,
+): string | null {
+  const parsed = JSON.parse(serialized) as Readonly<{
+    coverageNotice?: Readonly<{
+      incompleteRecordRequired?: unknown;
+      limitationReasonCodes?: unknown;
+    }>;
+  }>;
+  const notice = parsed.coverageNotice;
+  if (notice?.incompleteRecordRequired !== true) return null;
+  if (!Array.isArray(notice.limitationReasonCodes)) {
+    throw new Error("TRADERLINK_COACH_PROVIDER_COVERAGE_INVALID");
+  }
+  const reasons = notice.limitationReasonCodes.filter((reason): reason is string =>
+    typeof reason === "string" && reason.trim().length > 0,
+  );
+  if (reasons.length === 0) {
+    throw new Error("TRADERLINK_COACH_PROVIDER_COVERAGE_INVALID");
+  }
+  return reasons.join(" ");
+}
+import type { CoachAiReviewTradeAnalysisV2 } from
+  "../contracts/weekly-ai-review-input-contracts";

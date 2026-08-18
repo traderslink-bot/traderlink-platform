@@ -3,6 +3,7 @@ import { generateText, Output } from "ai";
 import { z } from "zod";
 
 import {
+  COACH_PERIODIC_AI_REVIEW_PROMPT_VERSION,
   COACH_PERIODIC_AI_REVIEW_OUTPUT_CONTRACT_VERSION,
   COACH_WEEKLY_AI_OUTPUT_CONTRACT_VERSION,
   type CoachPeriodicAiReviewOutputV2,
@@ -13,8 +14,14 @@ import type {
   CoachWeeklyAiReviewInput,
 } from "../contracts/weekly-ai-review-input-contracts";
 import type { CoachAiGenerationUsage } from "./coach-ai-review-repository";
-import { assertCoachAiReviewOutputSafe } from "./coach-ai-review-output-safety";
-import { serializeCoachAiReviewProviderPackage } from
+import {
+  assertCoachAiReviewOutputGrounded,
+  assertCoachAiReviewOutputSafe,
+} from "./coach-ai-review-output-safety";
+import {
+  incompleteRecordFromCoachAiReviewProviderPackage,
+  serializeCoachAiReviewProviderPackage,
+} from
   "./coach-ai-review-provider-package";
 
 export const LOCAL_COACH_WEEKLY_AI_MODEL = "gpt-5.6-sol" as const;
@@ -40,7 +47,6 @@ const periodicReviewSchemaV2 = z.object({
   whatHeldYouBack: z.string().min(1).max(1_500),
   focusFollowThrough: z.string().min(1).max(1_500),
   nextPeriodFocuses: z.array(z.string().min(1).max(280)).min(1).max(3),
-  incompleteRecord: z.string().min(1).max(1_000).nullable(),
 });
 
 const SYSTEM_PROMPT = `You are TraderLink's weekly trading-journal reviewer. Write a direct, useful review only from the supplied weekly Journal package.
@@ -71,7 +77,17 @@ Do not provide trade recommendations, price targets, position-size advice, entry
 
 Do not turn the trader's descriptions of a setup, pullback, level, volume, stop, time cutoff, daily goal, or re-entry into a forward-looking trading command. You may ask the trader to compare future decisions with their own saved plan, but never tell them when to enter, exit, pass, stop trading, or which market confirmation to require.
 
-Use plain Trade Tracker language. Keep nextPeriodFocuses process-oriented, retrospective, and limited to three. Never phrase a focus as a pre-entry checklist, a required market confirmation, or a command that must be followed before placing a trade. If coverage limits any conclusion, state the supplied public-language limitation in incompleteRecord; otherwise set incompleteRecord to null.`;
+Completion, tags, saved plans, notes, and analyzer availability are evidence context, not an improvement by themselves. Never praise the trader merely for recording, preserving, tagging, or reviewing information, and do not make recordkeeping the review's main message. Do not treat a tag, an available one-minute/five-minute observation, or a completed reflection as proof of disciplined execution, setup quality, or plan follow-through. An improvement claim must explicitly compare earlier and later evidence; describing one good behavior such as respecting stops does not establish that it improved. If no supported comparison exists, say that no clear improvement was established.
+
+Make each output field do a different job. reviewSummary states the period result and one supported takeaway. whatImproved names one specific behavior or result that genuinely improved; if the package does not support one, say that no clear improvement was established rather than praising recordkeeping. Do not list absent notes, tags, reflections, or rule reviews in whatImproved as the reason improvement was not established; TraderLink adds any coverage limitation separately from deterministic facts. whatHeldYouBack identifies the most useful supported process issue without dumping a list of rule names or outcome categories, and missing recordkeeping is not itself something that held the trader back. focusFollowThrough compares an earlier issued focus with later current-period evidence only when that earlier focus exists. When there is no earlier issued focus to compare, say so plainly instead of inventing progress.
+
+Describe P/L and win rate only as financial or outcome results. Never call a profitable result strong execution, strong performance, discipline, quality, or improvement unless separate supplied behavioral evidence directly supports that description.
+
+For weekly and two-week reviews, priorIssuedReview.nextPeriodFocuses is the only source of earlier issued focuses. If priorIssuedReview is null, say no earlier issued focus was available. If it is present, quote one exact item verbatim from priorIssuedReview.nextPeriodFocuses and compare it only with current-period evidence. Ignore every focus phrase embedded in priorIssuedReview.reviewSummary, whatImproved, whatHeldYouBack, focusFollowThrough, or incompleteRecord; those fields may quote an older focus and never identify the focus to evaluate now. currentFocuses is current context and never qualifies as an earlier issued focus. Never substitute a current focus, completed reflection, or recordkeeping activity for prior-review follow-through.
+
+Use repeated-pattern language only for the same supported behavior across independent current-period evidence. Different broken rules, tags, green-to-red outcomes, adds, partial exits, and final exits are not automatically one recurring problem. Mention a rule, tag, or analyzer label only when it directly supports the one point being made, and explain that connection; never recite an inventory of available fields. Keep the three nextPeriodFocuses distinct, tied to separate supported review questions, and free of generic repetitions such as "compare with the saved plan." Do not copy a focus from the earlier issued review. If an earlier issue remains unresolved, write a materially different, more specific retrospective question using the current period's evidence.
+
+Use plain Trade Tracker language. Keep nextPeriodFocuses process-oriented, retrospective, and limited to three. Never phrase a focus as a pre-entry checklist, a required market confirmation, or a command that must be followed before placing a trade. Coverage limitations are server-owned facts and are added separately; do not move them into the narrative sections.`;
 
 export type CoachWeeklyAiReviewProviderEnvelope = Readonly<{
   system: string;
@@ -208,21 +224,39 @@ export async function generateCoachPeriodicAiReviewV2(
   });
   if (!result.output) throw new Error("TRADERLINK_COACH_OPENAI_NO_OUTPUT");
   const usage = completeUsage(result.usage);
+  const output = Object.freeze({
+    ...result.output,
+    incompleteRecord: incompleteRecordFromCoachAiReviewProviderPackage(envelope.prompt),
+  });
   assertCoachAiReviewOutputSafe({
     textFields: [
-      result.output.reviewSummary,
-      result.output.whatImproved,
-      result.output.whatHeldYouBack,
-      result.output.focusFollowThrough,
-      result.output.incompleteRecord ?? "",
+      output.reviewSummary,
+      output.whatImproved,
+      output.whatHeldYouBack,
+      output.focusFollowThrough,
+      output.incompleteRecord ?? "",
     ],
-    nextFocuses: result.output.nextPeriodFocuses,
+    nextFocuses: output.nextPeriodFocuses,
+  }, usage);
+  assertCoachAiReviewOutputGrounded({
+    providerPackage: envelope.prompt,
+    priorFocuses: input.priorIssuedReview?.nextPeriodFocuses ?? Object.freeze([]),
+    previouslyIssuedFocuses:
+      input.priorIssuedReview?.nextPeriodFocuses ?? Object.freeze([]),
+    focusFollowThroughMayBeUnavailable: false,
+    reviewSummary: output.reviewSummary,
+    whatImproved: output.whatImproved,
+    whatHeldYouBack: output.whatHeldYouBack,
+    focusFollowThrough: output.focusFollowThrough,
+    nextFocuses: output.nextPeriodFocuses,
+    incompleteRecord: output.incompleteRecord,
   }, usage);
   return Object.freeze({
     output: Object.freeze({
       contractVersion: COACH_PERIODIC_AI_REVIEW_OUTPUT_CONTRACT_VERSION,
-      ...result.output,
-      nextPeriodFocuses: Object.freeze([...result.output.nextPeriodFocuses]),
+      promptVersion: COACH_PERIODIC_AI_REVIEW_PROMPT_VERSION,
+      ...output,
+      nextPeriodFocuses: Object.freeze([...output.nextPeriodFocuses]),
     }),
     usage,
   });

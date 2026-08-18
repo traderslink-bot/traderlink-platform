@@ -3,6 +3,7 @@ import { generateText, Output } from "ai";
 import { z } from "zod";
 
 import {
+  COACH_MONTHLY_AI_REVIEW_PROMPT_VERSION_V2,
   COACH_MONTHLY_AI_REVIEW_OUTPUT_CONTRACT_VERSION_V2,
   COACH_MONTHLY_AI_OUTPUT_CONTRACT_VERSION,
   type CoachMonthlyAiReviewOutputV2,
@@ -13,8 +14,14 @@ import type {
   CoachMonthlyAiReviewInput,
 } from "../contracts/monthly-ai-review-input-contracts";
 import type { CoachAiGenerationUsage } from "./coach-ai-review-repository";
-import { assertCoachAiReviewOutputSafe } from "./coach-ai-review-output-safety";
-import { serializeCoachAiReviewProviderPackage } from
+import {
+  assertCoachAiReviewOutputGrounded,
+  assertCoachAiReviewOutputSafe,
+} from "./coach-ai-review-output-safety";
+import {
+  incompleteRecordFromCoachAiReviewProviderPackage,
+  serializeCoachAiReviewProviderPackage,
+} from
   "./coach-ai-review-provider-package";
 
 export const COACH_MONTHLY_AI_REVIEW_MAX_OUTPUT_TOKENS = 4_096;
@@ -39,7 +46,6 @@ const monthlyReviewSchemaV2 = z.object({
   whatHeldYouBack: z.string().min(1).max(1_800),
   focusFollowThrough: z.string().min(1).max(1_800),
   nextPeriodFocuses: z.array(z.string().min(1).max(280)).min(1).max(3),
-  incompleteRecord: z.string().min(1).max(1_200).nullable(),
 });
 
 const SYSTEM_PROMPT = `You are TraderLink's monthly trading-journal reviewer. Write a direct, useful review only from the supplied monthly Journal package.
@@ -70,7 +76,17 @@ Be direct but do not invent a setup, motive, market condition, rule outcome, mis
 
 Do not turn the trader's descriptions of a setup, pullback, level, volume, stop, time cutoff, daily goal, or re-entry into a forward-looking trading command. You may ask the trader to compare future decisions with their own saved plan, but never tell them when to enter, exit, pass, stop trading, or which market confirmation to require.
 
-Use plain Trade Tracker language. Keep nextPeriodFocuses process-oriented, retrospective, and limited to three. Never phrase a focus as a pre-entry checklist, a required market confirmation, or a command that must be followed before placing a trade. If coverage limits any conclusion, state the supplied public-language limitation in incompleteRecord; otherwise set incompleteRecord to null.`;
+Completion, tags, saved plans, notes, and analyzer availability are evidence context, not an improvement by themselves. Never praise the trader merely for recording, preserving, tagging, or reviewing information, and do not make recordkeeping the review's main message. Do not treat a tag, an available one-minute/five-minute observation, or a completed reflection as proof of disciplined execution, setup quality, or plan follow-through. An improvement claim must explicitly compare earlier and later evidence; describing one good behavior such as respecting stops does not establish that it improved. If no supported comparison exists, say that no clear improvement was established.
+
+Make each output field do a different job. reviewSummary states the month result and one supported takeaway. whatImproved names one specific behavior or result that genuinely improved; if the package does not support one, say that no clear improvement was established rather than praising recordkeeping. Do not list absent notes, tags, reflections, or rule reviews in whatImproved as the reason improvement was not established; TraderLink adds any coverage limitation separately from deterministic facts. whatHeldYouBack identifies the most useful supported process issue without dumping a list of rule names or outcome categories, and missing recordkeeping is not itself something that held the trader back. focusFollowThrough compares an earlier issued focus with later current-month evidence only when that earlier focus exists. When there is no earlier issued focus to compare, say so plainly instead of inventing progress.
+
+Describe P/L and win rate only as financial or outcome results. Never call a profitable result strong execution, strong performance, discipline, quality, or improvement unless separate supplied behavioral evidence directly supports that description.
+
+For monthly reviews, eligibleFocusFollowThrough is the exhaustive server-derived list of earlier issued focuses that have later-dated current-month evidence. Quote one exact focus from that list verbatim only when the later evidence can evaluate it. If the list is empty or none of its focuses can be evaluated from the supplied evidence, say follow-through could not be assessed. Focuses elsewhere in priorMonthlyReview or reviewNarrativeContext are context only and are ineligible when absent from eligibleFocusFollowThrough. Ignore focus wording embedded in reviewSummary, whatImproved, whatHeldYouBack, focusFollowThrough, or incompleteRecord because those fields may quote an older focus and never identify the focus to evaluate now. currentFocuses is current context and never qualifies as an earlier issued focus. Never substitute a current focus, completed reflection, or recordkeeping activity for prior-review follow-through.
+
+Use repeated-pattern language only for the same supported behavior across independent current-month evidence. Different broken rules, tags, green-to-red outcomes, adds, partial exits, and final exits are not automatically one recurring problem. Mention a rule, tag, or analyzer label only when it directly supports the one point being made, and explain that connection; never recite an inventory of available fields. Keep the three nextPeriodFocuses distinct, tied to separate supported review questions, and free of generic repetitions such as "compare with the saved plan." Do not copy a focus from any earlier issued review. If an issue remains unresolved, write a materially different, more specific retrospective question using current-month evidence.
+
+Use plain Trade Tracker language. Keep nextPeriodFocuses process-oriented, retrospective, and limited to three. Never phrase a focus as a pre-entry checklist, a required market confirmation, or a command that must be followed before placing a trade. Coverage limitations are server-owned facts and are added separately; do not move them into the narrative sections.`;
 
 export type CoachMonthlyAiReviewProviderEnvelope = Readonly<{
   system: string;
@@ -78,6 +94,54 @@ export type CoachMonthlyAiReviewProviderEnvelope = Readonly<{
   maximumOutputTokens: number;
   reservationText: string;
 }>;
+
+type EligibleMonthlyFocus = Readonly<{
+  sourceKind: "prior_monthly" | "periodic";
+  sourcePeriodEndDate: string;
+  focus: string;
+}>;
+
+function eligibleMonthlyFocusFollowThrough(
+  input: CoachMonthlyAiReviewInputV2,
+): readonly EligibleMonthlyFocus[] {
+  const evidenceDates = new Set([
+    ...input.calendarMonthFacts.days
+      .filter((day) => day.readyClosedTradeCount > 0)
+      .map((day) => day.reviewMarketDate),
+    ...input.rawReflectionContext.map((context) =>
+      context.reflection.reviewMarketDate),
+  ]);
+  const hasLaterEvidence = (periodEndDate: string): boolean =>
+    [...evidenceDates].some((date) => date > periodEndDate &&
+      date <= input.calendarMonth.calendarMonthEndDate);
+  const eligible: EligibleMonthlyFocus[] = [];
+  if (input.priorMonthlyReview &&
+      hasLaterEvidence(input.priorMonthlyReview.calendarMonthEndDate)) {
+    for (const focus of input.priorMonthlyReview.nextPeriodFocuses) {
+      eligible.push(Object.freeze({
+        sourceKind: "prior_monthly",
+        sourcePeriodEndDate: input.priorMonthlyReview.calendarMonthEndDate,
+        focus,
+      }));
+    }
+  }
+  for (const review of input.reviewNarrativeContext) {
+    if (!hasLaterEvidence(review.periodEndDate)) continue;
+    for (const focus of review.nextPeriodFocuses) {
+      eligible.push(Object.freeze({
+        sourceKind: "periodic",
+        sourcePeriodEndDate: review.periodEndDate,
+        focus,
+      }));
+    }
+  }
+  const seen = new Set<string>();
+  return Object.freeze(eligible.filter((entry) => {
+    if (seen.has(entry.focus)) return false;
+    seen.add(entry.focus);
+    return true;
+  }));
+}
 
 export function buildCoachMonthlyAiReviewProviderEnvelope(
   input: CoachMonthlyAiReviewInput,
@@ -94,7 +158,10 @@ export function buildCoachMonthlyAiReviewProviderEnvelope(
 export function buildCoachMonthlyAiReviewProviderEnvelopeV2(
   input: CoachMonthlyAiReviewInputV2,
 ): CoachMonthlyAiReviewProviderEnvelope {
-  const prompt = serializeCoachAiReviewProviderPackage(input);
+  const prompt = serializeCoachAiReviewProviderPackage({
+    ...input,
+    eligibleFocusFollowThrough: eligibleMonthlyFocusFollowThrough(input),
+  });
   return Object.freeze({
     system: MONTHLY_SYSTEM_PROMPT_V2,
     prompt,
@@ -207,21 +274,43 @@ export async function generateCoachMonthlyAiReviewV2(
   });
   if (!result.output) throw new Error("TRADERLINK_COACH_OPENAI_NO_OUTPUT");
   const usage = completeUsage(result.usage);
+  const output = Object.freeze({
+    ...result.output,
+    incompleteRecord: incompleteRecordFromCoachAiReviewProviderPackage(envelope.prompt),
+  });
   assertCoachAiReviewOutputSafe({
     textFields: [
-      result.output.reviewSummary,
-      result.output.whatImproved,
-      result.output.whatHeldYouBack,
-      result.output.focusFollowThrough,
-      result.output.incompleteRecord ?? "",
+      output.reviewSummary,
+      output.whatImproved,
+      output.whatHeldYouBack,
+      output.focusFollowThrough,
+      output.incompleteRecord ?? "",
     ],
-    nextFocuses: result.output.nextPeriodFocuses,
+    nextFocuses: output.nextPeriodFocuses,
+  }, usage);
+  const eligibleFocuses = eligibleMonthlyFocusFollowThrough(input);
+  const previouslyIssuedFocuses = Object.freeze([
+    ...(input.priorMonthlyReview?.nextPeriodFocuses ?? []),
+    ...input.reviewNarrativeContext.flatMap((review) => review.nextPeriodFocuses),
+  ]);
+  assertCoachAiReviewOutputGrounded({
+    providerPackage: envelope.prompt,
+    priorFocuses: Object.freeze(eligibleFocuses.map((entry) => entry.focus)),
+    previouslyIssuedFocuses,
+    focusFollowThroughMayBeUnavailable: true,
+    reviewSummary: output.reviewSummary,
+    whatImproved: output.whatImproved,
+    whatHeldYouBack: output.whatHeldYouBack,
+    focusFollowThrough: output.focusFollowThrough,
+    nextFocuses: output.nextPeriodFocuses,
+    incompleteRecord: output.incompleteRecord,
   }, usage);
   return Object.freeze({
     output: Object.freeze({
       contractVersion: COACH_MONTHLY_AI_REVIEW_OUTPUT_CONTRACT_VERSION_V2,
-      ...result.output,
-      nextPeriodFocuses: Object.freeze([...result.output.nextPeriodFocuses]),
+      promptVersion: COACH_MONTHLY_AI_REVIEW_PROMPT_VERSION_V2,
+      ...output,
+      nextPeriodFocuses: Object.freeze([...output.nextPeriodFocuses]),
     }),
     usage,
   });

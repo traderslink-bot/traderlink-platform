@@ -19,7 +19,7 @@ const DEFAULT_SOURCE =
 const MODEL_PRICES = Object.freeze({
   "gpt-5.6-sol": Object.freeze({ cachedInput: "0.50", cacheWriteInput: "6.25", input: "5.00", output: "30.00" }),
   "gpt-5.6-terra": Object.freeze({ cachedInput: "0.25", cacheWriteInput: "3.125", input: "2.50", output: "15.00" }),
-  "gpt-5.6-luna": Object.freeze({ cachedInput: "0.10", cacheWriteInput: "1.25", input: "1.00", output: "6.00" }),
+  "gpt-5.6-luna": Object.freeze({ cachedInput: "0.02", cacheWriteInput: "0.25", input: "0.20", output: "1.20" }),
 });
 
 type ModelId = keyof typeof MODEL_PRICES;

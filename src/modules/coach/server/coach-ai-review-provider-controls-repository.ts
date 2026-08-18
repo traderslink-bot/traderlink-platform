@@ -23,7 +23,12 @@ const REVIEW_FEATURES = Object.freeze({
   two_week: "weekly_reviews",
   monthly: "monthly_reviews",
 } as const);
-const MAX_PROVIDER_INPUT_BYTES = 256_000;
+// The current Luna context window is 1,050,000 tokens. A UTF-8 byte is a safe
+// upper bound for a token in these validated JSON/natural-language packages,
+// so this ceiling leaves room for the response while accepting the measured
+// 100-trade stress package. It is a per-call reliability boundary, not a claim
+// that the provider has a 900 KB limit.
+const MAX_PROVIDER_INPUT_BYTES = 900_000;
 const MAX_OUTPUT_TOKENS = 16_384;
 const FAILURE_CODE_PATTERN = /^[A-Z][A-Z0-9_]{0,95}$/u;
 
@@ -294,10 +299,14 @@ FROM coach_ai_provider_settings WHERE settings_key = 'coach_reviews'`).get();
     if (typeof providerInputText !== "string") {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "providerInputText" });
     }
-    const maximumInputTokens = Buffer.byteLength(providerInputText, "utf8");
-    if (maximumInputTokens < 1 || maximumInputTokens > MAX_PROVIDER_INPUT_BYTES) {
+    const providerInputBytes = Buffer.byteLength(providerInputText, "utf8");
+    if (providerInputBytes < 1 || providerInputBytes > MAX_PROVIDER_INPUT_BYTES) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "providerInputText" });
     }
+    // Provider token use is normally much lower than the UTF-8 byte count, but
+    // reserving one token per byte keeps the spend guard conservative without
+    // needing a model-specific tokenizer in the request path.
+    const maximumInputTokens = providerInputBytes;
     const maxOutputTokens = input.maxOutputTokens;
     if (typeof maxOutputTokens !== "number" || !Number.isSafeInteger(maxOutputTokens) ||
         maxOutputTokens < 1 || maxOutputTokens > MAX_OUTPUT_TOKENS) {

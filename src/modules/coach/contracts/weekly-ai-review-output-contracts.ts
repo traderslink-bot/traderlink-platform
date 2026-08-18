@@ -14,8 +14,13 @@ export type CoachWeeklyAiReviewOutput = Readonly<{
 export const COACH_PERIODIC_AI_REVIEW_OUTPUT_CONTRACT_VERSION =
   "traderlink_coach_periodic_ai_review_output_v2" as const;
 
+export const COACH_PERIODIC_AI_REVIEW_PROMPT_VERSION =
+  "periodic_v2_grounded_2026_08_18" as const;
+
 export type CoachPeriodicAiReviewOutputV2 = Readonly<{
   contractVersion: typeof COACH_PERIODIC_AI_REVIEW_OUTPUT_CONTRACT_VERSION;
+  /** Server-owned generation marker. Optional only for already-issued v2 rows. */
+  promptVersion?: typeof COACH_PERIODIC_AI_REVIEW_PROMPT_VERSION;
   reviewSummary: string;
   whatImproved: string;
   whatHeldYouBack: string;

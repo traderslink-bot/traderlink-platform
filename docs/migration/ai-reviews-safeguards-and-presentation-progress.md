@@ -6,8 +6,12 @@ Plan, implementation and focused non-provider verification completed on
 2026-08-09. Migrations `0050_coach_ai_review_subscriber_budget_safeguards` and
 `0051_coach_ai_review_cache_write_accounting` are registered, disposable-copy
 verified, backed up and locally applied. The local database and manifest are
-current at 51/51. The owner approved the UI. The beta QA pricing/cache-write
-correction is complete; migrations 0050 and 0051 are frozen.
+recorded at their 51/51 completion boundary. The owner approved the UI. The
+beta QA pricing/cache-write correction is complete; migrations 0050 and 0051
+are frozen. Later platform migrations are tracked by their own feature records.
+
+The owner-directed narrative-quality prompt correction is tracked separately
+in [AI Review Narrative Quality Progress](ai-review-narrative-quality-progress.md).
 
 ## Checklist
 
