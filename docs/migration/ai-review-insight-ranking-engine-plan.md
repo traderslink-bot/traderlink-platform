@@ -2,7 +2,7 @@
 
 ## Status
 
-Design and implementation-readiness QA pass complete under the owner's
+Design and two implementation-readiness QA passes complete under the owner's
 delegated product authority on 2026-08-18. Implementation has not started. The
 owner does not need to approve individual formulas or weight calculations, but
 the completed engine and its generated reviews remain subject to owner
@@ -113,6 +113,12 @@ support a specific example, but it cannot create a recurring pattern, assign a
 motive or increase a candidate's financial/repetition rank. Future structured
 plan fields would require a separate accepted contract.
 
+Trader-authored notes, custom rule titles and tags are untrusted evidence data,
+not provider instructions. The serializer places them in clearly delimited
+fields and tells the provider not to follow commands found inside them. Text
+such as `ignore the review instructions` cannot change candidate generation,
+lane ranks, allowed selection references or server validation.
+
 ### Additional identity needed by the engine
 
 Rule definitions supplied to the engine need prompt-safe structural identity,
@@ -130,14 +136,27 @@ These fields let the engine distinguish a preset risk rule from an unrelated
 custom review rule and detect a rule definition that changed mid-period.
 Private rule IDs and versions never enter the provider package.
 
+The current v2 provider shapes intentionally omit stable trade/rule identities
+and reduce saved trade notes to ticker plus text. Before that projection, the
+snapshot builder needs an engine-only transient evidence manifest containing
+the exact round-trip/version, rule/version, review target and note revision
+links. It converts private identities to prompt-safe references, attaches each
+trade note and rule-review note to that exact reference, and then discards the
+private IDs from the normalized calculation source. The engine must never join
+a note to a trade by ticker, date or array position.
+
 If a rule changes materially during a month, trend calculations split at the
 version boundary. The engine must not claim improvement across two different
 thresholds or statements merely because they share a stable rule identity.
 
 ### Prompt-safe trade references
 
-Each exact-period trade receives a stable reference derived from its ordered
-position in the immutable package, for example `trade_2026_08_18_003`. A
+Each exact-period trade receives a stable period-scoped prompt-safe reference
+derived with the Platform's versioned HMAC boundary from the account scope,
+period identity, private round-trip identity and exact reviewed version. It is
+stable across input reordering but cannot be reversed or used as a raw private
+identifier. The private insight source retains the scoped reference on the
+matching evidence record. A
 representative trade record may contain:
 
 - reference;
@@ -150,7 +169,8 @@ representative trade record may contain:
 - compact analyzer observations;
 - the relevant trader-authored note when available.
 
-No private round-trip, execution, account or user identifier is exposed.
+No private round-trip, execution, account or user identifier or HMAC material
+is exposed.
 
 ## Normalized evidence matrix
 
@@ -255,13 +275,17 @@ relatedFocusRefs[]
 overlapKeys[]
 coverage
 scores
+adjustments[]
 penalties[]
 rankExplanation[]
 ```
 
 Each measurement contains a stable metric name, exact value, unit, numerator,
-denominator and availability state. Provider prose is never used as a
-measurement.
+denominator, availability state and server-generated `displayLiteral`. The
+literal uses the accepted currency/percentage/count formatter and never guesses
+a currency symbol when the period currency is unavailable. The provider copies
+that literal when it cites the measurement; it does not round or reformat the
+raw value. Provider prose is never used as a measurement.
 
 `engineVersion` freezes candidate families, gates, formulas, weights and tie
 breaks, for example `traderlink_ai_review_insights_v1`. `findingRef` is a
@@ -461,13 +485,17 @@ When exact trade order exists, calculate:
 - same-ticker attempts and re-entries;
 - trades after daily or ticker loss thresholds;
 - trades after realized peak-profit giveback;
-- later-session trades after a day was already materially green or red;
+- later-session trades after a day was already net positive or negative, with
+  exact cumulative realized P/L at the later entry;
 - P/L and rule outcomes for each sequence cohort;
 - whether the pattern repeated on separate days or weeks.
 
 This family uses exact chronology and existing evaluated rules. It does not
 infer revenge, frustration or motive from trade order alone. A trader-authored
-note or named rule may support the trader's own behavioral label.
+note or named rule may support the trader's own behavioral label. Trading again
+after a day turns green or red is not itself called a violation; a negative
+process conclusion requires a named boundary rule or a repeated materially
+harmful result under the normal evidence gates.
 
 ### 10. Concentration and outliers
 
@@ -483,13 +511,13 @@ Calculate:
 - whether an apparent pattern disappears when one outlier is removed.
 
 One-off material outliers remain eligible as explicit outlier findings but
-receive a recurrence penalty and cannot be described as repeated behavior.
+receive no recurrence credit and cannot be described as repeated behavior.
 
 ### 11. Ticker, tag, session, direction, time and duration cohorts
 
 Generate a cohort only when the compared population is large enough:
 
-- trade count, P/L, win rate and gross-loss share;
+- trade count, P/L, win rate and loss share;
 - comparison with the remaining eligible trades;
 - weekly spread;
 - applicable rule and Analyzer coverage;
@@ -565,6 +593,7 @@ A follow-through verdict is one of:
 - unchanged;
 - worsened;
 - mixed;
+- measured without a directional target;
 - not measurable from later evidence.
 
 The candidate records the exact later weeks, denominators, measurements and
@@ -574,11 +603,16 @@ contradictory evidence behind the verdict.
 
 ### General pattern gate
 
-A recurring pattern normally requires either:
+A recurring pattern uses the cadence's independent spread axis:
 
-- at least three affected observations across at least two weeks; or
-- at least two affected observations across separate weeks and a material
-  financial contribution.
+- a weekly review uses separate market dates;
+- a two-week or monthly review uses separate calendar-week buckets.
+
+It normally requires either at least three affected observations across two
+independent spread buckets, or at least two affected observations across
+separate buckets plus a material financial contribution. This allows a weekly
+review to identify repetition across trading days without pretending that
+multiple trades on one day establish a period-wide habit.
 
 A single observation can qualify only as an explicit material outlier or a
 specific execution example.
@@ -591,15 +625,16 @@ specific execution example.
 - A recurring broken-rule finding normally requires at least two breaks.
 - One break may qualify as a material outlier when its loss represents at least
   10% of the period's total losing-trade P/L.
-- Trend requires eligible reviewed outcomes in at least three week buckets and
-  a non-empty early and later comparison population.
+- Rule improvement follows the cadence-specific improvement gate below rather
+  than requiring three current-period week buckets for every cadence.
 
 ### Segment gate
 
 A ticker, tag, session, direction or time segment normally requires:
 
 - at least five trades; or
-- at least three trades spread across two weeks;
+- at least three trades spread across two cadence-appropriate independent
+  buckets;
 - at least five eligible trades in the comparison population;
 - no single trade contributing more than 70% of the segment's absolute P/L,
   unless the finding is explicitly classified as outlier-dependent.
@@ -619,11 +654,19 @@ A ticker, tag, session, direction or time segment normally requires:
 
 ### Improvement gate
 
-Improvement or deterioration requires:
+Improvement or deterioration requires one valid comparison shape:
 
-- at least three observed week buckets for a monthly trend;
-- at least five eligible observations in both the early and later comparison
-  populations for a rate trend;
+- a monthly within-period comparison has at least three observed week buckets
+  and at least five eligible observations in each early/later population;
+- a two-week within-period comparison has two complete eligible cohorts and at
+  least five observations in each;
+- a later weekly or two-week cross-request comparison has at least five
+  eligible observations in both the compatible frozen prior measurement and
+  current measurement. Two points support `improved since the prior review`,
+  while a sustained-trend claim requires at least three compatible periods;
+
+Every shape also requires:
+
 - a family-declared primary metric and improvement direction;
 - a meaningful count, rate, money or path change under the default thresholds
   below;
@@ -638,7 +681,7 @@ affected observations and either:
 
 - at least a 10-percentage-point activity-weighted rate change; or
 - at least a 5-percentage-point change, at least five affected-observation
-  difference and support from three week buckets.
+  difference and support from three compatible comparison buckets or periods.
 
 A money/path-only trend requires a comparable opportunity population, at
 least three observations on each side, a 20% change in the median per-
@@ -647,9 +690,10 @@ total winning- or losing-trade P/L. These are initial versioned calibration
 thresholds, not universal statistical truths.
 
 When the earlier median is zero, relative percentage change is unavailable.
-The candidate can qualify only through an explicit absolute materiality
-threshold and the required affected-count/rate change; the engine never reports
-an infinite or manufactured percentage improvement.
+The candidate can qualify only through an explicit non-relative count/rate
+threshold or the defined period-relative contribution threshold; the engine
+never reports an infinite, universal-dollar or manufactured percentage
+improvement.
 
 Each family declares one primary trend metric. Supporting P/L, count and path
 measurements cannot be averaged together to hide disagreement. When a
@@ -659,9 +703,11 @@ improved.
 
 ### Strength gate
 
-A recurring strength requires at least three examples across two weeks. One
-trade can be a strength example when its process evidence is unusually clear,
-but the review must not generalize it to the whole month.
+A recurring strength requires at least three examples across two cadence-
+appropriate independent spread buckets: market dates for a weekly review and
+calendar-week buckets for a two-week or monthly review. One trade can be a
+strength example when its process evidence is unusually clear, but the review
+must not generalize it to the period.
 
 ## Exact measurements
 
@@ -674,6 +720,9 @@ Key definitions:
   P/L. This is a performance population, not the trade's unavailable broker
   gross-P/L field.
 - **Total winning-trade P/L:** sum of all positive included net trade P/L.
+- **Win rate:** positive-P/L trades divided by every included trade with a
+  non-null P/L, including flat trades in the denominator, matching the current
+  v2 input calculation.
 - **Loss share:** absolute negative P/L inside a cohort divided by the period's
   total losing-trade P/L.
 - **Profit share:** positive P/L inside a cohort divided by the period's total
@@ -681,8 +730,9 @@ Key definitions:
 - **Broken rate:** broken divided by followed plus broken.
 - **Affected rate:** affected eligible observations divided by the candidate's
   exact eligible population.
-- **Week spread:** affected week buckets divided by eligible observed week
-  buckets.
+- **Independent spread:** affected market dates divided by eligible observed
+  market dates for a weekly review; affected week buckets divided by eligible
+  observed week buckets for a two-week or monthly review.
 - **Peak-to-final giveback:** Analyzer-supplied peak-to-final reversal only; it
   is not recreated from unrelated price fields.
 - **First-half/later-half change:** later activity-weighted rate minus earlier
@@ -698,16 +748,26 @@ unavailable and count/rate dimensions remain eligible.
 
 ## Scoring dimensions
 
-Every dimension is stored as an integer from 0 to 100 with its inputs and
-explanation.
+Every dimension is clamped to an integer from 0 to 100 and stored with its raw
+inputs, unclamped intermediate value and explanation. Dimension values round
+half away from zero only after the raw dimension calculation. Lane scores use
+`sum(weight * available dimension) / sum(available weights)`, round half away
+from zero once, subtract integer post-lane penalties and clamp at zero. A
+candidate with no available weighted dimension is ineligible. Ratios such as
+measured peak-to-final giveback may exceed 100% in the source evidence; the raw
+ratio is retained for display and audit even though the score contribution is
+capped.
 
 ### Financial materiality
 
 For negative candidates, the main component is cohort loss share. For positive
 candidates, it is cohort profit share or protected measured profit. Giveback
 candidates use measured reversal relative to the Analyzer-covered peak-profit
-population. A secondary absolute-impact component prevents a low-activity
-month from treating every small value as equally important.
+population. Exact dollars remain an important displayed measurement, but there
+is no universal absolute-dollar scoring threshold across account sizes. A
+money score is relative to the comparable period population; recurrence,
+coverage and specificity determine whether a small low-activity result is a
+period-wide finding or only an example.
 
 The component is unavailable, not zero, when comparable money is unavailable.
 Weights redistribute across the remaining dimensions.
@@ -717,19 +777,25 @@ Weights redistribute across the remaining dimensions.
 The default repetition score combines:
 
 - 45% affected rate;
-- 35% count saturation, reaching full credit at eight affected observations;
-- 20% week spread.
+- 35% count saturation, reaching full credit at the versioned adaptive target
+  `max(3, min(20, ceil(eligible population * 0.10)))`;
+- 20% cadence-appropriate independent spread.
 
-This prevents 420-trade months from winning solely through raw count while
-still recognizing a problem affecting a high proportion of a smaller month.
+This prevents eight observations in a 420-trade month from receiving the same
+count credit as eight observations in a 20-trade month, while still recognizing
+a repeated pattern in a smaller period. A family-specific override requires a
+versioned fixture-backed calibration record. Explicit outlier and single-
+example candidates receive a repetition score of zero regardless of their
+affected-rate or spread inputs.
 
 ### Trend magnitude
 
 Trend uses activity-weighted early and later rates, supported by the complete
-weekly series. A 25-percentage-point adverse-rate change reaches the default
-full magnitude score. Smaller changes scale proportionally. Money and count
-changes remain supporting measurements rather than being silently mixed into
-the rate.
+weekly series. A 25-percentage-point direction-aligned change reaches the
+default full magnitude score: a decrease for `lower_is_better`, an increase for
+`higher_is_better`, and no improvement score for `context_only`. Smaller
+changes scale proportionally. Money and count changes remain supporting
+measurements rather than being silently mixed into the rate.
 
 Trend consistency separately records how many intermediate week-to-week moves
 support, contradict or remain flat against the overall direction.
@@ -750,7 +816,7 @@ Confidence combines:
 
 - required-field coverage;
 - sample size against the family gate;
-- week spread;
+- cadence-appropriate independent spread;
 - agreement among rule, Analyzer and trader-authored evidence;
 - sensitivity to the largest outlier;
 - compatible fee and currency treatment.
@@ -830,38 +896,47 @@ Lane ties resolve deterministically by post-penalty score, evidence confidence,
 available financial materiality, repetition and finally lexical `findingRef`,
 in that order. Provider output never breaks an engine-rank tie.
 
-## Penalties and sensitivity checks
+## Gates, adjustments, penalties and sensitivity checks
 
-Apply explicit penalties after lane scoring:
+The engine must not subtract the same weakness twice. The order is explicit:
 
-- single-observation recurring-pattern penalty;
-- one-day-only penalty;
-- one-week-only penalty;
-- largest-outlier dependence penalty;
-- incomplete Analyzer coverage penalty;
-- incomplete rule review coverage penalty;
-- mixed-currency financial suppression;
-- rule-version-change suppression;
-- cross-month evidence restriction;
-- duplicate or near-duplicate candidate penalty;
-- weak comparison-population penalty;
-- exploratory-cohort penalty for ticker, tag, weekday, time or duration
-  findings selected from many eligible groups;
-- contradiction penalty when rule, Analyzer and note evidence disagree.
+1. Eligibility gates mark invalid populations ineligible before lane scoring.
+   This covers wrong-period evidence, incompatible rule versions, missing
+   required comparisons and populations below a hard family minimum.
+2. Dimension availability suppresses only the unavailable dimension. Mixed
+   currency suppresses combined money scoring; it does not create an extra
+   penalty or delete valid count evidence.
+3. Evidence confidence incorporates field coverage, observed week span,
+   outlier dependence, source disagreement and weak comparison populations.
+   Those facts do not receive another post-score subtraction.
+4. Only exploratory multiplicity and unresolved cross-family duplication use
+   an explicit post-lane penalty.
 
-No penalty silently deletes a candidate. The audit record shows the pre- and
-post-penalty score and reason.
+The version-one exploratory multiplicity schedule is 0 points for at most five
+eligible sibling groups, 5 points for 6-10 groups, 10 points for 11-25 groups
+and 15 points for more than 25 groups. It applies only to ticker, tag, weekday,
+time and duration cohort candidates. The version-one unresolved-overlap
+schedule is 0 points below 35% evidence overlap, 5 points at 35-49%, 10 points
+at 50-64% and 15 points at 65% or more when two cross-family candidates cannot
+be merged without losing a materially distinct finding. The stronger candidate
+keeps its score; the lower-ranked duplicate receives the subtraction.
 
-Exploratory cohort families must also record the number of sibling groups
-tested. Their minimum sample, week-spread and outlier-resistance requirements
+Exploratory cohort families must record the number of eligible sibling groups
+tested. Their minimum sample, independent-spread and outlier-resistance requirements
 increase as sibling-group count increases. The engine does not claim a stable
 pattern from the best-looking member of dozens of tiny tags or tickers merely
-because one happens to have extreme P/L.
+because one happens to have extreme P/L. Every exclusion, unavailable
+dimension, confidence adjustment and post-lane penalty is separately named in
+the audit record with its inputs and pre/post value.
 
 ## Overlap and candidate merging
 
 Each candidate retains its affected trade/day reference set and semantic
-overlap keys. The engine calculates evidence-set overlap.
+overlap keys. Candidates are first clustered by those keys and collapsed within
+family/subject. At most the top 50 remaining candidates per lane enter pairwise
+evidence-set overlap calculation; lower-ranked candidates remain in the private
+audit snapshot but cannot enter the provider shortlist. This keeps overlap work
+bounded on months with many rules, tickers or tags.
 
 - Candidates in the same family and subject with at least 65% evidence overlap
   collapse into the stronger candidate.
@@ -933,6 +1008,7 @@ request and contains:
 - request reference and source input/evidence digests;
 - full normalized prompt-safe calculation source JSON and digest, including
   the Analyzer evidence used before monthly provider deduplication;
+- prompt-safe reference derivation version, never HMAC key material;
 - insight-engine version;
 - complete eligible candidate JSON and digest;
 - balanced shortlist JSON and digest;
@@ -942,15 +1018,20 @@ The table is keyed one-to-one to `coach_ai_review_period_requests_v2`, carries
 the same user/workspace/account scope, has restrictive foreign keys and rejects
 updates or deletes. Request creation computes the pure snapshot before entering
 the repository transaction, then inserts the request and snapshot together. An
-idempotent period-identity race must return the already-saved request and its
-matching snapshot; it cannot replace the snapshot with a later calculation.
+idempotent period-identity race must return the request and snapshot that won
+the insert. A losing concurrent calculation is discarded even if Journal state
+changed while it was being built and its digest differs; it cannot replace or
+partially combine with the saved snapshot.
 
 The calculation source contains only the fields needed to reproduce candidate
-measurements and evidence selection. It may be larger than the provider brief,
-but it is private local persistence and is not resent to the provider. Storing
-only a digest would be insufficient because later Analyzer revisions could no
-longer reproduce the monthly calculation. Storage-size verification must
-measure this snapshot separately from provider-token cost.
+measurements and evidence selection. A note or Analyzer record is stored once
+and referenced by candidates rather than copied into every candidate. The
+source may be larger than the provider brief, but it is private local
+persistence and is not resent to the provider. Storing only a digest would be
+insufficient because later Analyzer revisions could no longer reproduce the
+monthly calculation. Storage-size verification must measure this snapshot
+separately from provider-token cost; implementation cannot add an arbitrary
+new refusal limit before that benchmark exists.
 
 ### Attempt selection
 
@@ -1003,10 +1084,10 @@ tables.
 The provider returns structured selections rather than only free prose:
 
 ```text
-reviewSummary: text + selectionState + findingRefs[]
-whatImproved: text + selectionState + findingRefs[]
-whatHeldYouBack: text + selectionState + findingRefs[]
-focusFollowThrough: text + selectionState + focusRef? + findingRefs[]
+reviewSummary: text + selectionState + selectionMode + findingRefs[]
+whatImproved: text + selectionState + selectionMode + findingRefs[]
+whatHeldYouBack: text + selectionState + selectionMode + findingRefs[]
+focusFollowThrough: text + selectionState + selectionMode + focusRef? + findingRefs[]
 nextPeriodFocuses[]: text + sourceFindingRefs[] + tracking target
 machineSelectionReasons[]
 sectionClaims[]: section + findingRef + measurementRefs[] + tradeRefs[]
@@ -1017,8 +1098,12 @@ focus list. New hidden selection metadata is stored with newly issued reviews
 so future follow-through and support audits can identify exactly which finding
 was used. Older v2 outputs remain readable without metadata.
 
-The provider must choose different primary findings for improvement and
-friction. A contrast candidate may support the opening and one other section.
+Improvement and friction cannot reuse the same `findingRef`, but the same rule
+or behavior subject may legitimately appear in both lanes through distinct
+candidates. For example, a rule-break rate may improve materially while the
+remaining breaks still account for the largest share of losses. Each section
+must use its lane's own measurements and do a different explanatory job. A
+contrast candidate may support the opening and one other section.
 Selecting a non-default lane candidate requires one machine-only reason:
 `avoids_overlap`, `stronger_focus_connection`,
 `stronger_evidence_specificity` or `stronger_section_coherence`. The server
@@ -1035,6 +1120,37 @@ bounded engine-supplied reason and is accepted only when that lane or focus
 truly has no eligible candidate. The provider cannot skip a populated lane by
 declaring it unavailable.
 
+`selectionMode` is section-specific and engine-authorized. Normal lane choices
+use `primary`. `What improved` may use `no_improvement_comparison` when a
+compatible series is unchanged, mixed or worsening and no qualifying
+improvement exists, or `maintained_strength` when no compatible earlier/later
+baseline exists but a measured strength does. When the friction lane is empty,
+`What held you back` may use `mixed_result` for an eligible contrast or
+`no_friction_strength` for a measured strength; otherwise it is
+`not_available` with the exact engine reason. The provider cannot invent or
+select a fallback mode when a normal eligible candidate exists.
+
+Selections also have minimum useful content, enforced through referenced
+measurements rather than wording alone:
+
+- the opening states the exact period outcome when available, otherwise its
+  bounded coverage state, and identifies one main takeaway or strength;
+- `What improved` cites early and later measurements plus their delta, or the
+  exact unchanged/mixed/worsening weekly series; when no comparison exists, it
+  uses a measured maintained strength rather than generic no-improvement
+  wording;
+- `What held you back` cites the affected count and denominator, the financial
+  or Analyzer path impact when available, and a representative trade/day when
+  the candidate has an eligible example;
+- focus follow-through names the issued focus, its later evidence span and one
+  exact bounded engine verdict, including a non-directional measured verdict
+  for an examination focus;
+- every required strength cites its count/rate or its exact representative
+  evidence.
+
+These requirements make the sections useful without turning the review into a
+stat dump; prose remains concise and trader-facing.
+
 ## Server validation
 
 Before persistence, validate that:
@@ -1042,15 +1158,19 @@ Before persistence, validate that:
 - every selected finding and focus reference exists;
 - `not_available` appears only for an engine-confirmed empty lane or
   unmeasurable focus population;
-- every selection is eligible for its visible lane;
+- every selection is eligible for its visible lane or the exact engine-
+  authorized fallback mode;
 - default-selection, score-distance and allowed-alternative rules are
   respected;
 - cited trades belong to the selected finding;
 - every section claim points to measurements and trades owned by its selected
   finding;
 - every rendered count, percentage and money value exists in the section's
-  selected measurement references;
-- improvement has a valid earlier/later comparison;
+  selected measurement references and matches its server-generated display
+  literal;
+- improvement has a valid earlier/later comparison, while an authorized
+  no-improvement fallback has the exact series or maintained-strength evidence
+  required by its mode;
 - follow-through uses later evidence after the source focus;
 - a recurring claim passes the recurrence gate;
 - sections are not duplicate restatements;
@@ -1087,15 +1207,16 @@ The fixture must contain independent and overlapping patterns with known
 expected rank behavior:
 
 1. A repeated high-financial-impact rule problem that improves materially from
-   Weeks 1-2 to Weeks 3-4.
+   the first two calendar-week buckets to the final two, with the middle bucket
+   supporting the direction.
 2. Green-to-red ended-red trades with measurable combined peak-to-final
    reversal, concentrated early but not eliminated later.
 3. A separate harmful add-after-peak cohort with lower financial impact but
    strong repetition.
 4. A one-off very large loser that must rank as a material outlier without
    being called recurring behavior.
-5. Clean profitable trades with followed entry/risk/exit rules across all four
-   weeks.
+5. Clean profitable trades with followed entry/risk/exit rules across the
+   month, including the final partial week.
 6. Rule-followed losing trades that demonstrate good process without positive
    outcomes.
 7. Profitable trades with broken rules that demonstrate outcome/process
@@ -1107,7 +1228,7 @@ expected rank behavior:
 11. One strong individual entry example that is eligible as an example but not
     a month-wide pattern.
 12. Incomplete Analyzer coverage for a minority of trades to test exact
-    denominators and coverage penalties.
+    denominators and confidence adjustments.
 13. Distinct daily and trade reflections based on the planted facts; no
     repeated boilerplate strength or weakness text.
 
@@ -1122,10 +1243,31 @@ asserted before any provider call.
   because of its size.
 - The weak outlier-dependent ticker/tag pattern is visibly penalized.
 - At least one clean execution or process strength reaches the provider brief.
-- The Week 1 focus has measurable Weeks 2-4 follow-through.
+- The Week 1 focus has measurable Weeks 2-5 follow-through, including the final
+  partial calendar-week bucket.
 - The month contains four issued weekly narrative contexts, not zero and not
   synthetic summaries created only inside the monthly fixture.
 - August 31 facts are included exactly once.
+
+### Realistic usefulness fixture
+
+The 420-trade month is a scale and known-ranking stress test, not the only
+product acceptance case. A second synthetic true-month fixture uses July 2026:
+16 trades on July 6-10, 21 on July 13-17, 18 on July 20-24 and 25 on July 27-31,
+with four actually issued weekly reviews and one ordinary July 1-31 monthly
+review. July 1-2 contain no trades. It has varied short notes with some blanks,
+a mix of preset and custom rules, ordinary missing/not-reviewed outcomes,
+incomplete-but-usable Analyzer coverage, several modest winners and losers,
+and no repeated boilerplate or 700-character note on every trade.
+
+Its planted findings are intentionally less dominant: one financially material
+repeated problem, one later-month improvement that remains a residual problem,
+one credible maintained strength, one result/process contrast and one issued
+Week 1 focus with Weeks 2-4 evidence. Expected ranks are asserted before the
+provider call. The four weekly reviews and the complete exact-month facts must
+enter the monthly package through the ordinary persisted flow. This fixture
+fails unless the saved monthly review gives a trader direct, measurable and
+non-repetitive takeaways even when no single pattern overwhelms the month.
 
 ### Provider quality and stability
 
@@ -1171,10 +1313,12 @@ In addition to the 420-trade acceptance fixture, cover:
 - contradictory notes, rule outcomes and Analyzer evidence;
 - no eligible improvement;
 - no measurable earlier focus;
-- prior focus with clear improvement, mixed evidence and worsening evidence.
+- prior focus with clear improvement, mixed evidence and worsening evidence;
 - first weekly review with no prior measurement baseline;
 - later weekly review using a compatible frozen prior insight snapshot;
-- engine-version change that makes a prior comparison incompatible.
+- engine-version change that makes a prior comparison incompatible;
+- user-authored note, custom rule title and tag text containing provider prompt
+  injection attempts.
 
 ### Deterministic and metamorphic checks
 
@@ -1187,19 +1331,23 @@ one planted fixture:
   counted;
 - increasing a cohort's loss share cannot lower its financial-materiality
   component when every other input is unchanged;
-- spreading the same affected observations across more independent weeks
-  cannot lower week-spread repetition;
+- spreading the same affected observations across more cadence-appropriate
+  independent buckets cannot lower repetition;
 - lowering evidence coverage cannot increase confidence;
 - changing `not_reviewed` to `broken` changes the correct numerator and
   denominator exactly once;
-- removing one outlier produces the documented sensitivity and penalty change;
+- removing one outlier produces the documented sensitivity and confidence
+  change;
 - a rule-version change prevents a cross-version improvement claim;
 - mixed currency suppresses money dimensions without deleting valid counts;
 - cross-month facts never enter the wrong month's financial measurements;
 - provider serialization cannot alter the frozen engine snapshot;
-- an idempotent request race returns one request and one identical insight
-  snapshot;
+- an idempotent request race returns one request and its one winning insight
+  snapshot while discarding any losing calculation, including a different
+  later-state digest;
 - a retry reads the original shortlist after later Journal edits;
+- prompt-injection text in notes, rule titles or tags cannot change candidate
+  references, measurements, ranks or the validator's allowed selections;
 - invalid candidate, measurement, trade and focus references all fail before
   issuance.
 
@@ -1216,8 +1364,14 @@ trade.
 
 - One pass builds indexes and period totals.
 - Family generators consume those indexes.
-- Evidence overlap uses compact reference sets only for eligible candidates.
+- Evidence overlap uses compact reference sets only after semantic clustering
+  and the 50-candidate-per-lane bound.
 - The engine emits a bounded shortlist regardless of raw trade count.
+- Focused benchmarks record normalization time, candidate count, insight-
+  snapshot bytes and peak process memory for 10-, 80-, 100- and 420-trade
+  inputs. Snapshot storage and provider-token cost are reported separately.
+- A new safety limit requires measured database/provider evidence and a plan
+  update; no arbitrary trade-count or snapshot-byte refusal is introduced.
 - Focused static scripts and type checks run with one worker where applicable.
 - Do not run Vitest, broad regression or production builds during active
   implementation.
@@ -1229,7 +1383,7 @@ For each generated review, retain server-side:
 - insight-engine version;
 - candidate counts by family and lane;
 - complete shortlisted candidate measurements and ranks;
-- penalties and sensitivity results;
+- eligibility gates, confidence adjustments, penalties and sensitivity results;
 - provider selections;
 - rejected-attempt selection errors;
 - final section-to-finding references;
@@ -1242,10 +1396,13 @@ must not expose private review prose or trade facts.
 
 ## Failure handling
 
-- **No eligible friction:** describe the strongest supported strength or mixed
-  result; do not manufacture a problem.
+- **No eligible friction:** use the engine-authorized mixed-result or measured-
+  strength fallback when one exists; otherwise state that no supported pattern
+  held the trader back. Do not manufacture a problem.
 - **No eligible improvement:** provide the most informative unchanged or mixed
-  weekly comparison instead of generic boilerplate.
+  or worsening weekly comparison; when no compatible baseline exists, state
+  that boundary and use a measured maintained strength instead of generic
+  boilerplate.
 - **No strength:** do not force praise unsupported by the record.
 - **No measurable earlier focus:** explain that exact tracking was unavailable
   and generate measurable focus metadata for the next review.
@@ -1336,8 +1493,9 @@ file belongs to this implementation.
 
 ### Slice D - true-month live acceptance
 
-- Generate four sequential weekly reviews and one monthly review from the
-  420-trade August fixture through the ordinary issuance flow.
+- Generate four sequential weekly reviews and one monthly review from both the
+  420-trade stress fixture and the 80-trade realistic fixture through the
+  ordinary issuance flow.
 - Prove all four issued weekly reviews entered the monthly package.
 - Inspect deterministic ranks before provider generation.
 - Save, reopen and audit the monthly result.
@@ -1397,9 +1555,93 @@ Resolved findings:
     keeping notes as explanatory context for already-eligible findings rather
     than keyword-scoring them into patterns or motives.
 
+## Second adversarial plan QA pass - 2026-08-18
+
+The second pass tried to falsify the design with large/small-population
+counterexamples, legitimate cross-lane subject overlap, concurrent request
+creation, hostile user-authored text, high-cardinality candidate sets and a
+less-obvious realistic month.
+
+Additional resolved findings:
+
+1. **Order-derived trade references contradicted reorder invariance:** fixed
+   with account/period-scoped versioned HMAC references and exact evidence
+   linkage.
+2. **Eight occurrences received full count credit in both 20- and 420-trade
+   months:** fixed with an adaptive population-based saturation target.
+3. **Absolute-dollar scoring would rank account sizes inconsistently:** fixed
+   by using comparable period-relative financial materiality while retaining
+   exact dollars as visible measurements.
+4. **Extreme ratios could exceed the declared 0-100 score contract:** fixed by
+   clamping score dimensions while preserving raw values for display and audit.
+5. **Coverage, outlier and contradiction weaknesses could be penalized twice:**
+   fixed with an ordered gate/availability/confidence/penalty pipeline and exact
+   version-one multiplicity and overlap schedules.
+6. **Pairwise overlap could grow quadratically across every raw candidate:**
+   fixed with semantic pre-clustering and a 50-candidate-per-lane comparison
+   bound before the final 15-25 provider shortlist.
+7. **One subject could not be both a real improvement and the largest residual
+   problem:** fixed by requiring distinct finding references and measurements,
+   not unrelated subjects.
+8. **The no-improvement fallback contradicted lane-only validation:** fixed with
+   engine-authorized section selection modes and mode-specific evidence checks.
+9. **A valid selection could still produce vague prose:** fixed with section-
+   specific minimum measurement, denominator, impact, example and verdict
+   requirements.
+10. **A concurrent loser could be incorrectly expected to match the winning
+    snapshot digest:** fixed by keeping only the atomic winner and discarding
+    every losing calculation without mixing state.
+11. **Trader-authored text could contain prompt instructions:** fixed by
+    treating notes, custom titles and tags as delimited untrusted data and
+    adding an injection-invariance fixture.
+12. **The 420-trade stress month was not representative product acceptance:**
+    fixed by adding a separate 80-trade four-week-plus-month persisted fixture
+    with messier coverage and subtler findings.
+13. **Frozen calculation-source storage had no resource proof:** fixed by
+    deduplicating referenced evidence and requiring separate snapshot-size,
+    runtime and memory benchmarks before any new refusal limit is considered.
+14. **Ticker-only saved notes could be attached to the wrong same-ticker
+    trade:** fixed with a transient engine-only private evidence manifest and
+    exact prompt-safe trade/rule note linkage before provider projection.
+15. **The August fixture described four-week comparisons even though August 31
+    creates a fifth calendar bucket:** fixed by using the declared five-bucket
+    comparison and requiring the final partial week in pattern and follow-
+    through measurements.
+16. **The trend formula described only adverse movement:** fixed by applying
+    each metric's declared beneficial direction and excluding context-only
+    metrics from improvement scoring.
+17. **Score rounding and unavailable-weight redistribution were ambiguous:**
+    fixed with one deterministic weighted normalization, rounding rule and
+    zero-floor after integer penalties.
+18. **Trading after a green/red daily state could be mislabeled as a violation:**
+    fixed by keeping the chronology factual and requiring a named boundary rule
+    or repeated material harm for a negative process conclusion.
+19. **An examination focus had no truthful directional verdict:** fixed with a
+    bounded non-directional measured result that reports later evidence without
+    inventing improvement or deterioration.
+20. **The empty-friction fallback had no valid selection mode:** fixed with
+    explicit mixed-result, measured-strength and truly unavailable paths rather
+    than forcing the provider to manufacture a problem.
+21. **A two-week recurrence gate made recurring weekly findings impossible:**
+    fixed with market-date spread for weekly reviews and calendar-week spread
+    for two-week/monthly reviews, including the segment and strength gates.
+22. **The monthly trend gate incorrectly applied to later weekly comparisons:**
+    fixed with separate monthly, two-week and compatible cross-request
+    comparison shapes and honest two-point versus sustained-trend language.
+23. **A one-trade outlier could still receive a high repetition formula score:**
+    fixed by assigning zero repetition to explicit outlier and single-example
+    candidates before lane scoring.
+24. **The provider could cite the correct measurement but round or relabel it
+    incorrectly:** fixed with server-generated display literals tied to exact
+    measurement references and validated before issuance.
+25. **Prompt-safe references lacked a persisted derivation version:** fixed by
+    freezing the non-secret reference version in the immutable insight
+    snapshot so later key/version changes do not make the audit ambiguous.
+
 No unresolved critical design blocker remains. Calibration values are
 deliberately versioned defaults and must pass the deterministic planted and
-metamorphic gates before any live provider acceptance is considered meaningful.
+metamorphic gates, both true-month fixtures and the resource benchmark before
+any live provider acceptance is considered meaningful.
 
 ## Completion boundary
 
@@ -1408,8 +1650,10 @@ This redesign is complete only when:
 - deterministic planted findings rank correctly before provider involvement;
 - the monthly provider package contains the four actually issued weekly
   reviews and all exact-month facts;
-- every visible section identifies a distinct useful finding;
-- `What improved` uses a real comparison;
+- every available visible section identifies a useful finding and does not
+  duplicate another section's explanatory job;
+- `What improved` uses a real comparison or the exact engine-authorized no-
+  comparison fallback;
 - `What held you back` identifies measurable affected behavior and impact;
 - follow-through connects an issued focus to later evidence;
 - an available genuine strength is recognized;
