@@ -52,6 +52,17 @@ function weekStart(date: string): string {
   return value.toISOString().slice(0, 10);
 }
 
+function currentWeekInTimezone(timezone: string | null): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: timezone ?? "America/New_York",
+    year: "numeric",
+  }).formatToParts(new Date());
+  const byType = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return weekStart(`${byType.year}-${byType.month}-${byType.day}`);
+}
+
 function weekEnd(week: string): string {
   const value = new Date(`${week}T12:00:00.000Z`);
   value.setUTCDate(value.getUTCDate() + 4);
@@ -96,22 +107,27 @@ export default async function CalendarPage({
   const activityDates = catalogData.days
     .filter((day) => day.tradeCount > 0)
     .map((day) => day.date);
-  const availableMonths = [...new Set(activityDates.map((date) => date.slice(0, 7)))];
-  const availableWeeks = [...new Set(activityDates.map(weekStart))];
+  const activityMonths = [...new Set(activityDates.map((date) => date.slice(0, 7)))];
+  const currentWeek = currentWeekInTimezone(catalogData.timezone);
+  const availableMonths = [...new Set([...activityMonths, currentWeek.slice(0, 7)])].sort();
+  const availableWeeks = [...new Set([...activityDates.map(weekStart), currentWeek])].sort();
   const availableWeekOptions: readonly CalendarWeekOption[] = availableWeeks.map((week) => Object.freeze({
-    months: Object.freeze([...new Set(activityDates
-      .filter((date) => weekStart(date) === week)
-      .map((date) => date.slice(0, 7)))]),
+    months: Object.freeze([...new Set([
+      ...activityDates
+        .filter((date) => weekStart(date) === week)
+        .map((date) => date.slice(0, 7)),
+      ...(week === currentWeek ? [currentWeek.slice(0, 7)] : []),
+    ])]),
     week,
   }));
   const requestedMonth = value(query.month);
   const requestedWeek = validDate(value(query.week));
   const selectedMonth = requestedMonth && availableMonths.includes(requestedMonth)
     ? requestedMonth
-    : availableMonths.at(-1) ?? catalogData.activeDate.slice(0, 7);
+    : activityMonths.at(-1) ?? currentWeek.slice(0, 7);
   const selectedWeek = requestedWeek && availableWeeks.includes(weekStart(requestedWeek))
     ? weekStart(requestedWeek)
-    : availableWeeks.at(-1) ?? weekStart(catalogData.activeDate);
+    : currentWeek;
   const initialData = reviewLayout
     ? emptyCalendarData()
     : initialView === "month"
