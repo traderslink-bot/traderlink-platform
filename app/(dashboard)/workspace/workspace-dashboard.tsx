@@ -16,6 +16,8 @@ import {
   DashboardMetricCard,
   DashboardPage,
   DashboardPanel,
+  DashboardPrimaryAction,
+  DashboardSecondaryAction,
   DashboardUnavailableState,
 } from "../../dashboard-template";
 import type { JournalCalendarReadModel } from "@/src/modules/journal-analytics/contracts/journal-dashboard-read-models";
@@ -129,6 +131,14 @@ export function WorkspaceDashboard({
   reviewSummary?: WorkspaceReviewSummary;
 }) {
   const metrics = analyticsMetrics ?? unavailableMetrics;
+  const currentFocuses = reviewSummary?.currentFocuses?.trim() || null;
+  const focusRules = reviewSummary?.focusRules.filter((rule) =>
+    rule.title.trim().length > 0 || rule.statement.trim().length > 0,
+  ) ?? [];
+  const previousReview = reviewSummary?.previousReview ?? null;
+  const hasPreviousReviewContent = previousReview !== null && (
+    previousReview.trades.length > 0 || previousReview.dayRuleOutcomes.length > 0
+  );
   const recentTradingDays = calendarData?.days
     .filter((day) => day.tradeCount > 0)
     .slice(-7) ?? [];
@@ -170,48 +180,56 @@ export function WorkspaceDashboard({
         ))}
       </Box>
 
-      {reviewSummary?.currentFocuses || reviewSummary?.focusRules.length || reviewSummary?.previousReview ? (
-        <Box
-          sx={{
-            display: "grid",
-            gap: 2,
-            gridTemplateColumns: {
-              xs: "minmax(0, 1fr)",
-              sm: "repeat(2, minmax(0, 1fr))",
-              lg: "repeat(3, minmax(0, 1fr))",
-            },
-          }}
-        >
-          {reviewSummary.currentFocuses ? (
-            <DashboardPanel sx={{ minWidth: 0 }} title="Current Focuses">
-              <CurrentFocusContent content={reviewSummary.currentFocuses} />
-            </DashboardPanel>
-          ) : null}
+      <Box
+        sx={{
+          display: "grid",
+          gap: 2,
+          gridTemplateColumns: {
+            xs: "minmax(0, 1fr)",
+            sm: "repeat(2, minmax(0, 1fr))",
+            lg: "repeat(3, minmax(0, 1fr))",
+          },
+        }}
+      >
+        {currentFocuses ? (
+          <DashboardPanel sx={{ minWidth: 0 }} title="Current Focuses">
+            <CurrentFocusContent content={currentFocuses} />
+          </DashboardPanel>
+        ) : null}
 
-          {reviewSummary.focusRules.length > 0 ? (
-            <DashboardPanel title="Focus rules">
-              <Stack
-                spacing={1.25}
-                sx={{ "& > :not(:first-of-type)": { borderColor: "divider", borderTop: 1, pt: 1.25 } }}
-              >
-                {reviewSummary.focusRules.map((rule) => (
-                  <Box key={rule.ruleId}>
-                    <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-                      <Typography sx={{ fontWeight: 800 }}>{rule.title}</Typography>
-                      <Chip label={rule.reviewScope} size="small" variant="outlined" />
-                    </Stack>
-                    <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
-                      {rule.statement}
-                    </Typography>
-                  </Box>
-                ))}
-              </Stack>
-            </DashboardPanel>
-          ) : null}
-      {reviewSummary?.previousReview ? (
+        {focusRules.length > 0 ? (
+          <DashboardPanel title="Focus Rules">
+            <Stack
+              spacing={1.25}
+              sx={{ "& > :not(:first-of-type)": { borderColor: "divider", borderTop: 1, pt: 1.25 } }}
+            >
+              {focusRules.map((rule) => (
+                <Box key={rule.ruleId}>
+                  <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+                    <Typography sx={{ fontWeight: 800 }}>{rule.title}</Typography>
+                    <Chip label={rule.reviewScope} size="small" variant="outlined" />
+                  </Stack>
+                  <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
+                    {rule.statement}
+                  </Typography>
+                </Box>
+              ))}
+            </Stack>
+          </DashboardPanel>
+        ) : null}
+
+        <DashboardPanel title="Add Trades">
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+            <DashboardPrimaryAction href="/imports">Import trades</DashboardPrimaryAction>
+            <DashboardSecondaryAction href="/quick-trade-entry">Quick trade entry</DashboardSecondaryAction>
+          </Stack>
+        </DashboardPanel>
+      </Box>
+
+      {previousReview && hasPreviousReviewContent ? (
         <DashboardPanel
           action={(
-            <Button href={`/trade-tracker/${encodeURIComponent(reviewSummary.previousReview.date)}`} size="small">
+            <Button href={`/trade-tracker/${encodeURIComponent(previousReview.date)}`} size="small">
               Open Daily Trade Tracker
             </Button>
           )}
@@ -219,21 +237,21 @@ export function WorkspaceDashboard({
         >
           <Stack spacing={1.25}>
             <Box>
-              <Typography sx={{ fontWeight: 850 }}>{reviewSummary.previousReview.date}</Typography>
+              <Typography sx={{ fontWeight: 850 }}>{previousReview.date}</Typography>
               <Typography color="text.secondary" variant="body2">
-                {reviewSummary.previousReview.tradeCount} completed trade{reviewSummary.previousReview.tradeCount === 1 ? "" : "s"}
+                {previousReview.tradeCount} completed trade{previousReview.tradeCount === 1 ? "" : "s"}
                 {" · "}{calendarMoney(
-                  reviewSummary.previousReview.netPnlDecimal,
-                  reviewSummary.previousReview.currency,
+                  previousReview.netPnlDecimal,
+                  previousReview.currency,
                 )}
               </Typography>
             </Box>
 
-            {reviewSummary.previousReview.dayRuleOutcomes.length > 0 ? (
+            {previousReview.dayRuleOutcomes.length > 0 ? (
               <Box>
                 <Typography color="text.secondary" variant="caption">Day rules</Typography>
                 <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", mt: 0.5 }}>
-                  {reviewSummary.previousReview.dayRuleOutcomes.map((outcome) => (
+                  {previousReview.dayRuleOutcomes.map((outcome) => (
                     <Chip
                       color={ruleOutcomeColor(outcome.status)}
                       key={`${outcome.ruleId}-${outcome.status}`}
@@ -245,7 +263,7 @@ export function WorkspaceDashboard({
               </Box>
             ) : null}
 
-            {reviewSummary.previousReview.trades.map((trade) => (
+            {previousReview.trades.map((trade) => (
               <Box
                 key={trade.roundTripId}
                 sx={{ borderColor: "divider", borderTop: 1, pt: 1.25 }}
@@ -265,7 +283,7 @@ export function WorkspaceDashboard({
                     sx={{ fontWeight: 800 }}
                     variant="body2"
                   >
-                    {calendarMoney(trade.netPnlDecimal, reviewSummary.previousReview!.currency)}
+                    {calendarMoney(trade.netPnlDecimal, previousReview.currency)}
                   </Typography>
                 </Stack>
                 {trade.ruleOutcomes.length > 0 ? (
@@ -289,9 +307,6 @@ export function WorkspaceDashboard({
           </Stack>
         </DashboardPanel>
       ) : null}
-        </Box>
-      ) : null}
-
       <Box
         sx={{
           display: "grid",
@@ -346,7 +361,7 @@ export function WorkspaceDashboard({
           </ButtonGroup>
         }
         eyebrow="Day sessions"
-        title="Trading calendar"
+        title="Trading Calendar"
       >
         <Stack spacing={1.5}>
           <Stack
