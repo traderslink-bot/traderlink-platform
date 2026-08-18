@@ -64,6 +64,9 @@ four actually issued weekly reviews plus all 420 exact-month trades.
 - [x] Complete the second adversarial QA pass against ranking counterexamples,
   stable references, concurrency, prompt injection, resource bounds and a
   realistic four-week-plus-month fixture.
+- [x] Complete the third adversarial QA pass against misleading attribution,
+  denominator drift, delayed-focus chronology, undefined score components,
+  provider choice leakage and fixture overfitting.
 - [ ] Implement and calibrate the deterministic insight engine.
 - [ ] Run the true-month issuance and provider stability acceptance.
 

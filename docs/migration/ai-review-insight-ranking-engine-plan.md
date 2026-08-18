@@ -2,7 +2,7 @@
 
 ## Status
 
-Design and two implementation-readiness QA passes complete under the owner's
+Design and three implementation-readiness QA passes complete under the owner's
 delegated product authority on 2026-08-18. Implementation has not started. The
 owner does not need to approve individual formulas or weight calculations, but
 the completed engine and its generated reviews remain subject to owner
@@ -571,10 +571,10 @@ review from equating results with process.
 
 Every newly generated weekly focus must carry hidden tracking metadata:
 
-- source review reference and end date;
+- source review reference, period end and actual issued-at timestamp;
 - originating finding family and subject reference;
 - later metrics capable of evaluating it;
-- baseline values and eligible later-evidence date;
+- baseline values and exact eligible-later-evidence timestamp;
 - whether the focus concerns reduction, consistency, examination or strength
   repetition.
 
@@ -596,8 +596,13 @@ A follow-through verdict is one of:
 - measured without a directional target;
 - not measurable from later evidence.
 
-The candidate records the exact later weeks, denominators, measurements and
-contradictory evidence behind the verdict.
+Later evidence begins after both the source period's final market seal and the
+actual review issuance timestamp. Exact trade/event evidence must occur after
+that boundary. Day-level evidence begins on the next market date when the
+issuance-day aggregate would mix pre- and post-focus activity. A delayed review
+therefore cannot claim follow-through from trades that occurred before the
+trader received its focus. The candidate records the exact later weeks,
+denominators, measurements and contradictory evidence behind the verdict.
 
 ## Evidence gates
 
@@ -668,6 +673,8 @@ Improvement or deterioration requires one valid comparison shape:
 Every shape also requires:
 
 - a family-declared primary metric and improvement direction;
+- the same metric, unit, eligibility definition and rule/Analyzer version on
+  both sides;
 - a meaningful count, rate, money or path change under the default thresholds
   below;
 - later evidence after the comparison baseline;
@@ -675,6 +682,15 @@ Every shape also requires:
 
 A flat or contradictory series produces an unchanged or mixed candidate, not
 an improvement candidate.
+
+Activity weighting does not by itself make changing denominators comparable.
+For rule rates, each side records reviewed, not-reviewed and applicable counts.
+For Analyzer rates, each side records ready and total eligible trades. A
+version-one shift of more than 15 percentage points in review/Analyzer coverage
+forces a mixed or unavailable comparison unless a fixed common eligible cohort
+can be calculated. If the affected rate improves while the affected count or
+financial/path effect materially worsens, the candidate is mixed rather than
+an unqualified improvement.
 
 The default meaningful-rate threshold requires at least two fewer/more
 affected observations and either:
@@ -746,13 +762,37 @@ Money from different or unavailable currencies is never combined. When the
 period lacks one comparable currency, financial candidate dimensions become
 unavailable and count/rate dimensions remain eligible.
 
+### Financial association, not invented causation
+
+Rule, tag, ticker, time and sequence cohorts establish association. Their
+measurements distinguish affected count, affected losing-trade count, cohort
+net P/L and losing-trade P/L. They support language such as `this rule was
+broken on 6 trades; the 4 losing trades lost USD 2,333, 25% of the period's
+losing-trade P/L, and all 6 finished with a net loss of USD 1,900`. They do not support
+claiming that all 6 lost when two won, `this rule break cost you USD 2,333`,
+`you would have saved USD 2,333`, or another counterfactual causal claim.
+Overlapping cohorts never divide, assign or sum the same loss as though each
+behavior independently caused it.
+
+Analyzer peak-to-final P/L can be described as measured giveback between the
+recorded peak and final result. It is not guaranteed executable profit and must
+not be called money the trader could certainly have captured. The provider
+brief labels every financial measurement as period result, cohort association
+or Analyzer path measurement, and server validation rejects incompatible
+causal/counterfactual wording.
+
 ## Scoring dimensions
 
 Every dimension is clamped to an integer from 0 to 100 and stored with its raw
 inputs, unclamped intermediate value and explanation. Dimension values round
-half away from zero only after the raw dimension calculation. Lane scores use
-`sum(weight * available dimension) / sum(available weights)`, round half away
-from zero once, subtract integer post-lane penalties and clamp at zero. A
+half away from zero only after the raw dimension calculation. A subscore that
+explicitly reweights applicable components uses
+`sum(weight * component) / sum(applicable weights)`. Lane scores keep their
+fixed 100-point weights and use `sum(weight * available dimension) / 100`;
+unavailable dimensions contribute no lane points and the available-weight
+total remains visible. This prevents missing financial evidence from increasing
+a candidate's score merely through redistribution. Round the lane score half
+away from zero once, subtract integer post-lane penalties and clamp at zero. A
 candidate with no available weighted dimension is ineligible. Ratios such as
 measured peak-to-final giveback may exceed 100% in the source evidence; the raw
 ratio is retained for display and audit even though the score contribution is
@@ -769,8 +809,17 @@ money score is relative to the comparable period population; recurrence,
 coverage and specificity determine whether a small low-activity result is a
 period-wide finding or only an example.
 
-The component is unavailable, not zero, when comparable money is unavailable.
-Weights redistribute across the remaining dimensions.
+The component is unavailable, not fabricated as zero, when comparable money is
+unavailable. Other dimensions remain eligible, but the missing financial weight
+does not redistribute and inflate the lane score.
+
+The version-one score is the declared comparable share multiplied by 100:
+loss share for a negative result, profit share for a positive result, measured
+reversal divided by total positive Analyzer-covered peak P/L for giveback, or
+retained favorable P/L divided by the same covered peak population for path
+protection. The raw share remains visible and the score is clamped under the
+common rule. A candidate cannot choose whichever denominator produces the
+largest score; its family fixes the denominator in `engineVersion`.
 
 ### Repetition
 
@@ -798,31 +847,49 @@ changes scale proportionally. Money and count changes remain supporting
 measurements rather than being silently mixed into the rate.
 
 Trend consistency separately records how many intermediate week-to-week moves
-support, contradict or remain flat against the overall direction.
+support, contradict or remain flat against the overall direction. It stores
+both the raw bucket sequence and eligible-observation weight; the score uses
+the latter so a one-day partial week does not receive the same evidentiary
+weight as a full high-activity week. Visible prose calls a partial bucket a
+partial week and states its exact eligible count.
 
 ### Process relevance
 
-High-confidence preset risk, stop, sizing, re-entry and exit families receive
-the highest process relevance. Entry, add, management and focus-linked
-findings follow. Generic ticker/tag correlations receive lower process
-relevance unless rule, note or Analyzer evidence directly connects them to a
-reviewable behavior.
+Version-one uses a fixed structural table:
 
-Custom rule titles do not receive semantic priority from keyword guessing.
+- 100 for an exact preset risk, stop, sizing, re-entry, exit or daily-boundary
+  rule family;
+- 90 for another exact named rule or exact hidden tracked-focus subject;
+- 80 for an Analyzer execution behavior corroborated by an applicable named
+  rule;
+- 70 for an Analyzer-only entry/add/exit/path behavior;
+- 55 for an exact chronology/sequence behavior without a named rule; and
+- 35 for a ticker, tag, direction, weekday, time or duration result cohort with
+  no structured behavior link.
+
+The highest structurally eligible row applies. A custom rule title, tag or note
+cannot move a candidate to a higher row through keyword guessing.
 
 ### Evidence confidence
 
-Confidence combines:
+Version-one confidence combines only applicable deterministic components:
 
-- required-field coverage;
-- sample size against the family gate;
-- cadence-appropriate independent spread;
-- agreement among rule, Analyzer and trader-authored evidence;
-- sensitivity to the largest outlier;
-- compatible fee and currency treatment.
+- 30% required-field coverage: observed eligible records divided by the
+  family's expected eligible population;
+- 25% sample sufficiency: `min(100, 50 * eligible count / family minimum)`, so
+  a just-passing population receives 50 and twice the minimum receives 100;
+- 20% cadence-appropriate independent spread;
+- 15% outlier resistance: the share of the candidate effect that remains after
+  removing its largest absolute contributor; and
+- 10% structured-source consistency when the family expects two independent
+  structured sources.
 
-Conflicting evidence lowers confidence but can create a useful mixed or
-contrast candidate.
+Unavailable confidence components reweight under the common weighted formula.
+Currency/fee absence makes a money dimension unavailable and is not also a
+confidence penalty. Free-text notes can explain an already-selected finding but
+cannot raise or lower deterministic confidence because this engine does not
+classify their meaning. Disagreement between structured rule and Analyzer facts
+lowers source consistency and may create a useful mixed or contrast candidate.
 
 ### Focus relevance
 
@@ -832,13 +899,46 @@ receives zero.
 
 ### Specificity and usefulness
 
-A candidate scores higher when it has:
+Version-one specificity is additive and capped at 100:
 
-- an identifiable behavior rather than a broad outcome category;
-- a clear denominator;
-- representative trades or days;
-- a measurable later review path;
-- a conclusion that is not duplicated by a stronger candidate.
+- 30 points for an exact named/structural behavior subject, or 15 for a fixed
+  result cohort rather than a broad outcome;
+- 25 points for an exact eligible denominator;
+- 20 points for at least one eligible representative trade/day;
+- 15 points for an exact sequence or comparison definition; and
+- 10 points for a measurable future tracking target.
+
+Duplication is handled by overlap merging/penalties and is not scored again as
+specificity.
+
+### Remaining lane components
+
+Every other named lane component is also deterministic:
+
+- `persistence or adverse trend` is the larger of later-window repetition and
+  direction-aligned adverse trend magnitude;
+- `financial improvement` is direction-aligned median-per-opportunity money or
+  Analyzer-path improvement, with a 50% relative improvement receiving 100;
+  it is unavailable for a zero/non-comparable baseline;
+- `baseline recurrence` is the repetition score calculated on the frozen
+  baseline population;
+- strength `process relevance` uses the process-relevance table above;
+- strength `outcome support` is positive profit share or measured favorable-
+  path retention. It is unavailable, rather than zero, for a rule-followed
+  losing-trade strength because planned risk is not an accepted input;
+- `cross-period consistency` is supporting independent buckets divided by
+  eligible independent buckets;
+- `result/process divergence` is the smaller of the result-polarity score and
+  process-polarity score, ensuring both sides of a contrast are material. The
+  result side uses financial materiality when available, otherwise the exact
+  win/loss outcome rate; the process side uses the applicable followed/broken
+  rule rate or structured Analyzer behavior rate;
+- `exact focus measurability` is 100 for hidden tracking metadata, at most 60
+  for a structural legacy match and zero for prose similarity;
+- `later-evidence span` reaches 100 at three eligible independent later
+  buckets and scales proportionally below that; and
+- focus change/financial relevance reuse trend magnitude and financial
+  materiality rather than introducing new formulas.
 
 ## Lane formulas
 
@@ -854,8 +954,8 @@ and inspectable rather than hidden in provider prose.
 - 10% persistence or adverse trend;
 - 5% earlier-focus relevance.
 
-If money is unavailable, its 30% redistributes proportionally across the other
-dimensions.
+If money is unavailable, the other dimensions can still contribute up to 70
+points; the missing 30 points remain visible as unavailable evidence.
 
 ### Improvement priority
 
@@ -868,10 +968,10 @@ dimensions.
 
 ### Strength priority
 
-- 25% process evidence;
+- 25% process relevance;
 - 25% repetition;
-- 20% positive financial participation or controlled loss;
-- 15% cross-week consistency;
+- 20% outcome support;
+- 15% cross-period consistency;
 - 10% evidence confidence;
 - 5% earlier-focus relevance.
 
@@ -906,8 +1006,9 @@ The engine must not subtract the same weakness twice. The order is explicit:
 2. Dimension availability suppresses only the unavailable dimension. Mixed
    currency suppresses combined money scoring; it does not create an extra
    penalty or delete valid count evidence.
-3. Evidence confidence incorporates field coverage, observed week span,
-   outlier dependence, source disagreement and weak comparison populations.
+3. Evidence confidence incorporates field coverage, independent spread,
+   outlier dependence, structured-source disagreement and weak comparison
+   populations.
    Those facts do not receive another post-score subtraction.
 4. Only exploratory multiplicity and unresolved cross-family duplication use
    an explicit post-lane penalty.
@@ -973,11 +1074,11 @@ The brief includes lane rank and a `requiredConsideration` tier:
 
 - the engine identifies one default selection for friction, improvement,
   strength and follow-through before the provider call;
-- the visible `What held you back` selection defaults to the first friction
-  candidate and may use the second or third only when it is within ten score
-  points and avoids material overlap or creates a stronger focus connection;
-- `What improved` follows the same default/ten-point rule inside the
-  improvement lane;
+- the engine precomputes each section's bounded alternatives from the top three
+  lane candidates using the score, confidence, overlap, focus and specificity
+  rules; the provider cannot nominate another candidate or reason;
+- `What held you back` and `What improved` use their default unless one of
+  those frozen alternatives is selected;
 - if no improvement qualifies, the engine supplies a specific unchanged or
   mixed comparison with its weekly series, followed by a concrete execution or
   maintained strength when one exists; generic `no clear improvement`
@@ -1084,13 +1185,12 @@ tables.
 The provider returns structured selections rather than only free prose:
 
 ```text
-reviewSummary: text + selectionState + selectionMode + findingRefs[]
-whatImproved: text + selectionState + selectionMode + findingRefs[]
-whatHeldYouBack: text + selectionState + selectionMode + findingRefs[]
-focusFollowThrough: text + selectionState + selectionMode + focusRef? + findingRefs[]
-nextPeriodFocuses[]: text + sourceFindingRefs[] + tracking target
-machineSelectionReasons[]
-sectionClaims[]: section + findingRef + measurementRefs[] + tradeRefs[]
+reviewSummary: text + selectionState + selectionMode + sectionPurpose + findingRefs[]
+whatImproved: text + selectionState + selectionMode + sectionPurpose + findingRefs[]
+whatHeldYouBack: text + selectionState + selectionMode + sectionPurpose + findingRefs[]
+focusFollowThrough: text + selectionState + selectionMode + sectionPurpose + focusRef? + findingRefs[]
+nextPeriodFocuses[]: text + sourceFindingRef + focusTargetRef
+sectionClaims[]: section + findingRef + measurementRefs[] + tradeRefs[] + noteRefs[] + attributionKind
 ```
 
 The existing customer-facing review continues to display the normal text and
@@ -1104,16 +1204,26 @@ candidates. For example, a rule-break rate may improve materially while the
 remaining breaks still account for the largest share of losses. Each section
 must use its lane's own measurements and do a different explanatory job. A
 contrast candidate may support the opening and one other section.
-Selecting a non-default lane candidate requires one machine-only reason:
-`avoids_overlap`, `stronger_focus_connection`,
-`stronger_evidence_specificity` or `stronger_section_coherence`. The server
-checks the score-distance and reason; the reason is not customer-facing prose.
+
+The engine, not the provider, freezes `allowedSectionSelections` in the
+shortlist. Each entry contains the default finding and any permitted alternative
+with its server-owned reason. An alternative must be within ten lane points,
+no more than five confidence points below the default and deterministically
+qualify as `avoids_overlap`, `stronger_focus_connection` or
+`stronger_evidence_specificity`. Subjective `stronger section coherence` is not
+an override. The provider may choose only a pre-authorized reference; the
+server appends the reason to the private selection audit.
 
 Every numerical or representative-trade statement must also appear in
 `sectionClaims`. Counts are rendered as digits rather than unvalidated number
 words. The existing prose grounding scan remains a secondary defense, while
 measurement references provide the primary proof that a number belongs to the
 selected finding.
+
+A note-derived statement also carries its exact `noteRef` and uses explicit
+trader attribution such as `you noted`. Notes may explain a selected example;
+they cannot become a measured recurring pattern, causal explanation or motive.
+Unreferenced note paraphrases fail validation.
 
 `selectionState` is `selected` or `not_available`. `not_available` requires a
 bounded engine-supplied reason and is accepted only when that lane or focus
@@ -1129,6 +1239,16 @@ baseline exists but a measured strength does. When the friction lane is empty,
 `no_friction_strength` for a measured strength; otherwise it is
 `not_available` with the exact engine reason. The provider cannot invent or
 select a fallback mode when a normal eligible candidate exists.
+
+`sectionPurpose` is also bounded. The opening uses `period_outcome` or
+`result_process_contrast`; improvement uses `directional_change`,
+`no_improvement_comparison` or `maintained_strength`; held-back uses
+`residual_friction`, `mixed_result` or `no_friction_strength`; follow-through
+uses `focus_change` or `focus_measurement`. When improvement and friction share
+a subject, they must use `directional_change` and `residual_friction`, cite
+different primary measurement references and explain change versus remaining
+impact. This is how the validator permits a useful shared subject without
+accepting duplicated sections.
 
 Selections also have minimum useful content, enforced through referenced
 measurements rather than wording alone:
@@ -1151,6 +1271,14 @@ measurements rather than wording alone:
 These requirements make the sections useful without turning the review into a
 stat dump; prose remains concise and trader-facing.
 
+The engine also supplies one to three bounded next-period focus targets derived
+from selected measurable findings. The provider selects a `focusTargetRef` and
+writes the visible retrospective review question; it cannot author a hidden
+target, metric, direction or eligibility date. Focus targets must be distinct,
+measurable and traceable to their source finding. When only one or two distinct
+targets qualify, the review returns fewer than three rather than padding the
+list. Generic advice or rewordings of the same subject fail validation.
+
 ## Server validation
 
 Before persistence, validate that:
@@ -1163,18 +1291,26 @@ Before persistence, validate that:
 - default-selection, score-distance and allowed-alternative rules are
   respected;
 - cited trades belong to the selected finding;
+- cited notes belong to the selected finding/evidence record and note-derived
+  prose is explicitly attributed to the trader;
 - every section claim points to measurements and trades owned by its selected
   finding;
 - every rendered count, percentage and money value exists in the section's
   selected measurement references and matches its server-generated display
   literal;
+- every financial claim uses the measurement's period-result, cohort-
+  association or Analyzer-path attribution kind and does not convert
+  association/giveback into invented causal or guaranteed-profit language;
 - improvement has a valid earlier/later comparison, while an authorized
   no-improvement fallback has the exact series or maintained-strength evidence
   required by its mode;
 - follow-through uses later evidence after the source focus;
 - a recurring claim passes the recurrence gate;
-- sections are not duplicate restatements;
+- section purposes are valid, and two sections cannot reuse the same purpose,
+  primary measurement and substantially identical normalized prose;
 - hidden focus-tracking targets refer to measurable engine families;
+- every next-period focus uses an engine-authorized distinct `focusTargetRef`
+  linked to its source finding;
 - coverage limitations remain attached;
 - the review contains a strength when the brief contains a required strength.
 
@@ -1231,6 +1367,11 @@ expected rank behavior:
     denominators and confidence adjustments.
 13. Distinct daily and trade reflections based on the planted facts; no
     repeated boilerplate strength or weakness text.
+14. A false rate improvement created only by much higher later rule-review
+    coverage; it must become mixed/unavailable rather than rank as improvement.
+15. Two broken rules on the same losing trades; each association remains
+    visible, but their losses must never be added or described as independently
+    caused by both rules.
 
 The precise values are fixed before generation. The expected engine ranks are
 asserted before any provider call.
@@ -1245,6 +1386,8 @@ asserted before any provider call.
 - At least one clean execution or process strength reaches the provider brief.
 - The Week 1 focus has measurable Weeks 2-5 follow-through, including the final
   partial calendar-week bucket.
+- The coverage-shift trap does not enter the improvement lane as a clean win.
+- The two overlapping rule candidates never produce a combined-loss claim.
 - The month contains four issued weekly narrative contexts, not zero and not
   synthetic summaries created only inside the monthly fixture.
 - August 31 facts are included exactly once.
@@ -1286,6 +1429,21 @@ The review fails even when its prose is polished if it selects a materially
 weaker candidate, omits an available strength, repeats one issue across all
 sections or cannot connect follow-through to a real earlier focus.
 
+### Calibration and sealed holdout boundary
+
+Small single-purpose calculation fixtures and the 420-trade planted month may
+calibrate version-one thresholds and weights. The realistic 80-trade month and
+a counterexample suite covering denominator drift, overlap, sparse periods and
+mixed evidence are sealed holdouts: their expected qualitative ordering is
+recorded before implementation output is inspected and they are not used to
+tune the same engine version after a failure. A failed holdout requires either
+a general defect correction plus a new engine version/resealed holdout, or an
+honest documented limitation; no fixture-specific exception is allowed.
+
+Provider prose acceptance occurs only after deterministic calibration and
+holdouts pass. Later weight/threshold changes create a new engine version and
+rerun all calculation fixtures, holdouts and stability checks.
+
 ## Broader verification matrix
 
 In addition to the 420-trade acceptance fixture, cover:
@@ -1318,7 +1476,21 @@ In addition to the 420-trade acceptance fixture, cover:
 - later weekly review using a compatible frozen prior insight snapshot;
 - engine-version change that makes a prior comparison incompatible;
 - user-authored note, custom rule title and tag text containing provider prompt
-  injection attempts.
+  injection attempts;
+- unchanged structured facts with materially different note wording;
+- early/later rate movement caused only by not-reviewed/Analyzer coverage
+  changes;
+- delayed review issuance after some nominal later-period trades already
+  occurred;
+- a sparse final partial week;
+- a U.S. market holiday/early-close period and both Eastern DST transitions;
+- the same subject as both improving trend and material residual friction;
+- provider selection of a top-three candidate that was not pre-authorized by
+  `allowedSectionSelections`;
+- overlapping high-impact rule and Analyzer candidates whose P/L evidence sets
+  are identical;
+- identical factual inputs under two account scopes to prove isolation and
+  account-scoped prompt-safe references.
 
 ### Deterministic and metamorphic checks
 
@@ -1334,8 +1506,16 @@ one planted fixture:
 - spreading the same affected observations across more cadence-appropriate
   independent buckets cannot lower repetition;
 - lowering evidence coverage cannot increase confidence;
+- making an otherwise unchanged lane dimension unavailable cannot increase the
+  candidate's lane score;
+- changing only free-text notes cannot change candidate eligibility,
+  measurements, scores or ranks;
 - changing `not_reviewed` to `broken` changes the correct numerator and
   denominator exactly once;
+- adding `not_reviewed` outcomes leaves the reviewed broken rate unchanged,
+  lowers review coverage and cannot create an improvement;
+- a coverage shift beyond the versioned threshold cannot produce a clean rate
+  improvement without a fixed common cohort;
 - removing one outlier produces the documented sensitivity and confidence
   change;
 - a rule-version change prevents a cross-version improvement claim;
@@ -1346,14 +1526,32 @@ one planted fixture:
   snapshot while discarding any losing calculation, including a different
   later-state digest;
 - a retry reads the original shortlist after later Journal edits;
+- moving the source review's issuance timestamp later excludes every trade,
+  event and day aggregate that occurred before the focus was actually issued;
+- overlapping candidates cannot create an additive or causal combined-loss
+  measurement;
+- cohort net P/L, affected losing-trade P/L and affected counts cannot be
+  substituted for one another in prose;
+- the provider cannot select a non-default finding absent from the frozen
+  `allowedSectionSelections` set;
+- same-subject improvement/friction sections require distinct purposes and
+  primary measurements;
+- a sparse partial week cannot receive full-week trend-consistency weight;
+- equivalent facts in two account scopes produce equal measurements/ranks but
+  different prompt-safe references and never cross-read snapshots;
 - prompt-injection text in notes, rule titles or tags cannot change candidate
   references, measurements, ranks or the validator's allowed selections;
+- causal, guaranteed-capture and `statistically significant` prose is rejected
+  unless the exact claim type is supported (this engine performs no statistical
+  significance test);
 - invalid candidate, measurement, trade and focus references all fail before
   issuance.
 
 An independent reference calculation verifies period totals, rule-cohort P/L,
-loss/profit shares, weekly rates, medians and the planted rank inputs without
-calling the implementation's aggregation helpers.
+loss/profit shares, coverage-adjusted comparisons, weekly rates, medians, every
+applicable component score, normalized lane weights, post-lane penalties,
+allowed alternatives and final ranks without calling the implementation's
+aggregation or scoring helpers.
 
 ## Performance and resource boundary
 
@@ -1383,6 +1581,8 @@ For each generated review, retain server-side:
 - insight-engine version;
 - candidate counts by family and lane;
 - complete shortlisted candidate measurements and ranks;
+- component applicability, raw values, normalized weights and calculation
+  traces for every shortlisted score;
 - eligibility gates, confidence adjustments, penalties and sensitivity results;
 - provider selections;
 - rejected-attempt selection errors;
@@ -1638,16 +1838,86 @@ Additional resolved findings:
     freezing the non-secret reference version in the immutable insight
     snapshot so later key/version changes do not make the audit ambiguous.
 
+## Third adversarial plan QA pass - 2026-08-18
+
+The third pass assumed every candidate reference and arithmetic result was
+technically valid, then looked for ways the resulting review could still
+mislead a trader or allow an implementation to pass weak tests.
+
+Additional resolved findings:
+
+1. **Associated cohort losses could be written as caused losses:** fixed with
+   explicit period-result/cohort-association/Analyzer-path attribution and
+   rejection of counterfactual or guaranteed-capture language.
+2. **A rate could appear improved only because later review/Analyzer coverage
+   changed:** fixed with identical eligibility definitions, exact coverage on
+   both sides and a versioned 15-point drift boundary.
+3. **Delayed review issuance could count trades that happened before the focus
+   was delivered:** fixed by using the later of period seal and actual issuance
+   timestamp, with stricter day-aggregate handling.
+4. **Financial materiality still lacked one deterministic denominator per
+   family:** fixed with exact loss-share, profit-share, reversal and retention
+   mappings frozen in the engine version.
+5. **Process relevance was descriptive rather than implementable:** fixed with
+   a structural six-level score table that cannot be raised by keywords.
+6. **Evidence confidence had no weights and still mixed fee/currency absence
+   into confidence:** fixed with five exact applicable components while keeping
+   unavailable money separate.
+7. **Confidence implicitly required semantic classification of free text:**
+   fixed by allowing only structured-source agreement to affect scores; notes
+   remain attributed explanatory context.
+8. **Specificity and several lane components were undefined:** fixed with exact
+   additive specificity and definitions for persistence, financial change,
+   baseline recurrence, consistency, divergence and focus span.
+9. **A rule-followed loss could be called a controlled loss without planned
+   risk data:** fixed by making strength outcome support unavailable for that
+   case while preserving its process strength.
+10. **The provider could self-authorize a lower-ranked alternative:** fixed by
+    freezing server-calculated allowed alternatives and removing subjective
+    coherence as an override.
+11. **Duplicate-section validation had no structured distinction for one
+    subject serving improvement and friction:** fixed with bounded section
+    purposes and different primary measurements.
+12. **Note-derived prose had no exact evidence reference:** fixed with
+    `noteRefs`, explicit trader attribution and rejection of unreferenced note
+    paraphrases.
+13. **The provider could author hidden next-focus targets:** fixed with engine-
+    owned distinct `focusTargetRef` choices tied to measurable findings.
+14. **The planted fixtures lacked denominator-drift and overlapping-loss
+    traps:** fixed by adding both with asserted pre-provider behavior.
+15. **The independent reference check covered totals but not the full ranking
+    path:** fixed by independently calculating every component, normalized
+    weight, penalty, alternative and final rank.
+16. **A sparse partial week could receive full-week consistency weight:** fixed
+    with eligible-observation weighting and explicit partial-week display.
+17. **Calibration and acceptance used the same visible fixtures:** fixed with a
+    sealed realistic/edge-case holdout boundary and engine-version changes for
+    post-failure recalibration.
+18. **Calendar and isolation edge cases were absent:** fixed with holiday,
+    early-close, DST and two-account reference/isolation checks.
+19. **The provider could imply statistical significance without a statistical
+    test:** fixed by explicitly rejecting that language.
+20. **The next-focus prompt could force three questions when only one or two
+    findings were measurable:** fixed by using the output contract's supported
+    one-to-three range and prohibiting padded duplicate targets.
+21. **Redistributing an unavailable lane dimension could reward missing
+    evidence:** fixed by keeping fixed lane weights while reweighting only
+    explicitly applicable subscore components.
+22. **Cohort net P/L could be confused with the losses inside a mixed
+    win/loss cohort:** fixed by separating affected count, losing count, cohort
+    net P/L and losing-trade P/L in both measurements and prose validation.
+
 No unresolved critical design blocker remains. Calibration values are
 deliberately versioned defaults and must pass the deterministic planted and
-metamorphic gates, both true-month fixtures and the resource benchmark before
-any live provider acceptance is considered meaningful.
+metamorphic gates, sealed holdouts, both true-month flows and the resource
+benchmark before any live provider acceptance is considered meaningful.
 
 ## Completion boundary
 
 This redesign is complete only when:
 
-- deterministic planted findings rank correctly before provider involvement;
+- deterministic planted findings, independent score calculations and sealed
+  holdouts rank correctly before provider involvement;
 - the monthly provider package contains the four actually issued weekly
   reviews and all exact-month facts;
 - every available visible section identifies a useful finding and does not
@@ -1655,9 +1925,13 @@ This redesign is complete only when:
 - `What improved` uses a real comparison or the exact engine-authorized no-
   comparison fallback;
 - `What held you back` identifies measurable affected behavior and impact;
-- follow-through connects an issued focus to later evidence;
+- financial wording preserves result/path/association boundaries and never
+  presents overlapping cohort P/L as caused or additive loss;
+- follow-through connects an issued focus only to evidence occurring after its
+  actual issuance boundary;
 - an available genuine strength is recognized;
-- provider selections validate against exact candidate references;
+- provider selections validate against exact candidate references and frozen
+  server-owned alternatives/focus targets;
 - repeated live monthly generations retain the same main friction and
   improvement families;
 - the saved review reopens through the normal customer read path;
