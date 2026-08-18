@@ -10,13 +10,15 @@ import type {
   JournalAnalyticsPartitionedResponse,
   JournalAnalyticsRoundTripTableResponse,
 } from "@/src/modules/journal-analytics/contracts/analytics-result";
+import type { TradeExplorerTradeSort } from
+  "@/src/modules/journal-analytics/presentation/trade-explorer-ordering";
 import type { JournalAnalyticsRoundTripFact } from "@/src/modules/journal/contracts/journal-analytics-fact-set";
 import type { JournalAnalyticsFirstSliceMetricId } from "@/src/modules/journal-analytics/server/analytics-metric-registry";
 import type { DailyTradeGreenToRedStatus } from
   "@/src/modules/level-analysis/contracts/daily-trade-analyzer-contracts";
 
 export const COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION =
-  "coach_ai_chat_factual_tools_v1" as const;
+  "coach_ai_chat_factual_tools_v2" as const;
 export const COACH_AI_CHAT_FACTUAL_TOOL_MAX_PAGE_SIZE = 50 as const;
 export const COACH_AI_CHAT_FACTUAL_TOOL_MAX_SYMBOLS = 25 as const;
 export const COACH_AI_CHAT_FACTUAL_TOOL_MAX_METRICS = 22 as const;
@@ -30,24 +32,60 @@ export const COACH_AI_CHAT_TRADE_EXPLORER_METRIC_IDS = Object.freeze([
   "gross_pnl",
   "win_rate",
   "loss_rate",
+  "flat_rate",
   "average_pnl",
   "median_pnl",
   "profit_factor",
-  "expectancy",
   "best_trade",
   "worst_trade",
+  "average_winning_trade",
+  "average_losing_trade",
+  "average_win_loss_ratio",
   "average_holding_time",
   "median_holding_time",
+  "minimum_holding_time",
+  "maximum_holding_time",
+  "average_winner_holding_time",
+  "average_loser_holding_time",
   "average_share_quantity",
+  "median_share_quantity",
   "maximum_share_quantity",
-  "average_position_size",
   "average_entry_notional",
+  "median_entry_notional",
+  "maximum_entry_notional",
   "average_entry_price",
   "average_exit_price",
   "return_on_entry_notional",
-  "green_to_red_day_count",
-  "red_to_green_day_count",
+  "maximum_intraday_realized_drawdown",
+  "maximum_intraday_realized_recovery_from_trough",
+  "maximum_peak_profit_giveback",
 ] as const);
+
+export const COACH_AI_CHAT_TRADE_EXPLORER_GROUPINGS = Object.freeze([
+  "closing_day",
+  "closing_iso_week",
+  "closing_month",
+  "closing_year",
+  "entry_time_bucket",
+  "instrument",
+  "holding_duration_bucket",
+  "maximum_position_bucket",
+] as const satisfies readonly JournalAnalyticsGrouping[]);
+
+export const COACH_AI_CHAT_TRADE_EXPLORER_TRADE_SORTS = Object.freeze([
+  "closed_desc",
+  "closed_asc",
+  "pnl_desc",
+  "pnl_asc",
+  "return_desc",
+  "return_asc",
+  "hold_desc",
+  "hold_asc",
+  "shares_desc",
+  "shares_asc",
+  "entry_value_desc",
+  "entry_value_asc",
+] as const satisfies readonly TradeExplorerTradeSort[]);
 
 export const COACH_AI_CHAT_FACTUAL_TOOL_METRIC_IDS = Object.freeze([
   "candidate_count",
@@ -97,6 +135,8 @@ export type CoachAiChatFactualToolMetricId =
   (typeof COACH_AI_CHAT_FACTUAL_TOOL_METRIC_IDS)[number];
 export type CoachAiChatFactualToolGrouping =
   (typeof COACH_AI_CHAT_FACTUAL_TOOL_GROUPINGS)[number];
+export type CoachAiChatTradeExplorerGrouping =
+  (typeof COACH_AI_CHAT_TRADE_EXPLORER_GROUPINGS)[number];
 export type CoachAiChatTradeExplorerMetricId =
   (typeof COACH_AI_CHAT_TRADE_EXPLORER_METRIC_IDS)[number];
 export type CoachAiChatFactualToolName =
@@ -258,11 +298,21 @@ export type CoachAiChatAnalyticsPageRequest = Readonly<{
 export type CoachAiChatTradeExplorerRequest = Readonly<{
   contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
   toolName: "query_trade_explorer";
-  metricId: CoachAiChatTradeExplorerMetricId;
-  grouping: CoachAiChatFactualToolGrouping;
+  resultView:
+    | "trades"
+    | "trading_days"
+    | "tickers"
+    | "entry_times"
+    | "holding_time"
+    | "position_size"
+    | "periods";
+  metricId?: CoachAiChatTradeExplorerMetricId;
+  grouping?: CoachAiChatTradeExplorerGrouping;
+  tradeSort?: TradeExplorerTradeSort;
+  rankDirection?: "ascending" | "descending";
   moneyBasis: JournalAnalyticsMoneyBasis;
-  pageSize: number;
-  afterCursor: string | null;
+  pageSize?: number;
+  afterCursor?: string | null;
   filters?: CoachAiChatFactualToolFilters & Readonly<{
     entryWeekdays?: readonly string[];
     entryTimeBuckets?: readonly string[];

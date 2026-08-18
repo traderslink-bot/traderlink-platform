@@ -4,15 +4,42 @@
 
 Complete for the current locally implemented TraderLink Platform product
 surface. Production activation, production caps, entitlement rollout, and
-provider operations remain owner launch decisions. Trade Explorer remains an
-explicitly incomplete, versioned product dependency and must be re-audited
-when its accepted implementation changes.
+provider operations remain owner launch decisions. The accepted Trade Explorer
+Sort/Rank and completed-trade Review slice was reconciled into its isolated
+versioned Chat adapter on 2026-08-18. Advanced comparison studies remain an
+unavailable future product dependency.
 
 This report closes the focused whole-feature QA run governed by the
 [AI Companion Plan](ai-chat-plan.md), the
 [current dashboard capability matrix](ai-chat-current-dashboard-capability-matrix.md),
 the [runtime progress record](ai-chat-runtime-progress.md), and the
 [language reconciliation record](traderlink-ai-chat-language-reconciliation-progress.md).
+
+## 2026-08-18 Trade Explorer capability follow-up
+
+- The isolated Trade Explorer tool now uses the accepted page result families.
+  Individual Trades accept only factual row sorts and bind the selected order
+  to the bounded cursor. Trading Days, Tickers, Entry Times, Holding Time,
+  Position Size and Periods accept only their current grouping and supported
+  Rank by metric, with unavailable values kept last inside each required
+  currency/timezone partition.
+- Win/loss/flat remain explicit Result filters. Population metrics cannot
+  become individual-trade sorts, and grouped requests do not return or imply a
+  separately sorted supporting-trade list.
+- One exact confirmed completed trade's saved annotation read now links to its
+  Trade Explorer Review workflow. Chat does not receive a combined Review
+  mutation; the editor retains one atomic Save, stale/account checks and
+  read-only preset results. Existing Chat tag proposals retain their expiring
+  preview and explicit confirmation.
+- The AI Chat Help guide, runtime capability registry, current-dashboard
+  matrix, parent plan and progress records were reconciled without changing
+  unrelated product families. The runtime capability contract is now v3 and
+  the factual-tool contract is v2; historical immutable answer snapshots are
+  preserved rather than replayed as current requests.
+- Repository instructions prohibited Vitest and other test-runner execution
+  for this slice. The updated contract fixtures compile; targeted ESLint, the
+  full no-emit TypeScript check and diff/static checks pass. No provider call,
+  Journal write, browser server, push or deployment was performed.
 
 ## Audited product coverage
 
@@ -197,8 +224,8 @@ or errors. The no-worker review server was stopped afterward.
 - Select and enable the production model, all four token prices (ordinary
   input, cached input, cache-write input and output), request/token/spend caps,
   entitlement, support, and monitoring settings.
-- Re-audit the isolated Trade Explorer adapter after the owner accepts the
-  updated Trade Explorer product contract.
+- Keep Trade Explorer advanced comparison studies unavailable until their own
+  deterministic query, factual coverage and evaluation contract is accepted.
 - Implement the separately planned deterministic rule-recommendation service
   before Chat can read or explain saved recommendation evidence.
 - Keep raw statement review opt-in and outside ordinary Chat context.

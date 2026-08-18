@@ -85,7 +85,7 @@ historical foundation description, are the current implementation truth.
 | Quick Trade Entry | `/quick-trade-entry` | Manual trade preview and command services | Convert supplied facts into an editable preview and save only after explicit confirmation. Explain duplicate/reconciliation outcomes without bypassing Data Decisions. | Confirm implemented |
 | Calendar | `/calendar` | `JournalDashboardReadModelService.getCalendar`, Calendar annotation evidence in `calendar-data.ts`, trading-day review state and ticker/day detail reads | Answer month/week/day questions, list exact daily trades, annotations and review state, and open the selected day. | Read implemented |
 | Trading Rules | `/rules`, `/rules/results` | Rule dashboard, deterministic preset evaluator and saved custom-rule reviews. Rule recommendation evidence requires the separate planned deterministic recommendation service and does not exist yet. | List saved presets/custom rules, settings, applicable scope and exact results for a bounded period. Add/revise a preset or custom rule and pause/resume/retire an exact rule only through preview and trader confirmation. Never mark a result by model judgment or activate a rule autonomously. | Read and draft/confirm implemented; recommendation read not implemented yet |
-| Trade Explorer | `/analytics/trade-explorer` | Bounded current Trade Explorer page model/query | Apply only the filters, groupings and metrics the current Explorer supports and return the exact resulting trades/summary. Reuse the page query contract rather than creating a second analytics engine. The Trade Explorer is incomplete and will be updated; keep this adapter isolated, describe unsupported Explorer behavior as unavailable, and revise its contract when the accepted Explorer update lands. | Current bounded read implemented; product incomplete |
+| Trade Explorer | `/analytics/trade-explorer` | Bounded current Trade Explorer query, canonical row-order contract, completed-trade annotation read and bounded rule-result read | For Trades, apply one factual `Sort trades` choice to the complete filtered population before bounded pagination; Result remains an explicit filter. For grouped views, apply one supported `Rank by` metric and highest/lowest direction, keeping currencies and trading timezones separate where required. Read one exact confirmed completed trade's saved note, tags and custom-rule reviews through the annotation service. Explain a preset result only when the bounded rule-result read returns its exact applicable event; otherwise direct the trader to Review. The combined note/tag/custom-rule Review remains one explicit Save in Trade Explorer; preset results are read-only and Chat never invents an outcome. Advanced comparison studies remain unavailable. | Truthful Sort/Rank read and Review read/handoff implemented; advanced studies unavailable |
 | Open Positions | `/trades/open` | Open-position dashboard read model and trade-style service | List/detail factual open positions and current trader-defined type. Draft a type/status change and require confirmation. Never infer swing, long-term hold or bag holding. | Read and explicit type/status draft/confirm implemented |
 | Analytics Overview | `/analytics` | `JournalAnalyticsService.getAnalyticsOverview` | Return exact overview cards and supported date/currency scope with coverage. | Dedicated read implemented |
 | Results by Ticker | `/analytics/results` | `getResultAnalytics` | Return exact ticker results, sortable fields and supporting completed trades. | Dedicated read implemented |
@@ -173,9 +173,25 @@ from saved trader reviews, and unavailable evidence remains unavailable.
 - `query_trade_explorer`
 
 `query_trade_explorer` is a versioned adapter to the currently implemented
-Explorer, not a declaration that the page is complete. Its current factual
-coverage must remain narrow and replaceable so future Explorer work does not
-require rewriting unrelated Chat capabilities.
+Explorer. Its Trades form accepts only factual per-trade ordering: close time,
+P/L, return, holding time, shares or entry value. Its grouped form accepts one
+supported grouping, one `Rank by` metric and an ascending/descending direction;
+unavailable values sort last. Win/loss/flat remain explicit Result filters and
+never become a hidden side effect of a statistic. Both forms reuse the
+canonical Journal Analytics engine, preserve exact coverage, reporting
+currency and selected-account scope, and keep supporting trade evidence at 50
+rows per request.
+
+For one exact confirmed completed trade, Chat may call
+`get_trade_annotations` to explain its saved note, selected tags and saved
+custom-rule reviews. A preset result may be explained only when
+`get_trading_rule_results` returned the exact applicable event; otherwise Chat
+states that the factual result is available in Review. Chat does not gain a
+combined Review mutation. The full Review stays in Trade Explorer, where one
+explicit Save writes the note, tags and changed custom-rule results atomically,
+rejects stale or cross-account state and keeps preset results read-only.
+Existing Chat tag proposals retain their separate exact preview and explicit
+confirmation boundary.
 
 The existing completed-trade summary/group/list/detail tools remain the shared
 lower-level factual primitives. Dedicated page-aligned tools must not duplicate
@@ -218,6 +234,7 @@ broker credentials.
 | Open-position or Swing status/type | Implemented | Yes | Persisted expiring Chat action draft re-reads the exact position and style revision, then confirms through `JournalTradeStyleService.change` with `ai_chat` audit provenance; classification comes only from the trader |
 | Preset/custom rule activation or settings | Implemented | Yes | Persisted expiring Chat action draft resolves an opaque rule reference or maintained preset, validates every setting, rejects stale revisions, and confirms through `mutateJournalTradingRules`. Trader-confirmed activation is allowed; autonomous activation is forbidden. |
 | Trade tags | Completed-trade and Swing replacement implemented | Yes | Persisted expiring Chat action draft resolves exactly one completed trade or Swing position, confirms through `JournalAnnotationService.replaceRoundTripTagsWithPresets`, and rejects stale current-tag or catalog revisions |
+| Completed-trade Review note, tags and custom-rule outcomes as one combined change | Product workflow is implemented in Trade Explorer, not as a Chat mutation | No combined Chat action | `JournalAnnotationService.saveTradeReview` remains behind the Trade Explorer Review editor's one explicit Save. Chat may read the exact saved Review and may separately prepare an already-supported tag replacement, but it cannot infer or change custom-rule outcomes or edit preset results. |
 | Data Decision confirmation/exclusion/duplicate resolution | Bounded supported subset implemented | Yes | Persisted expiring Chat action draft resolves an opaque pending decision and execution references, recreates the canonical resolution against the current revision, and confirms through `JournalDataDecisionService.resolve`. Numeric corrections, missing rows, coverage facts and raw-statement comparisons remain in the guarded Data Decisions UI. |
 | AI Review delivery schedule | Supported | Yes | Existing Chat review-delivery draft/confirm routes and Account command |
 | AI Review opt-out or eligible request | Implemented | Yes | Persisted expiring Chat action drafts reuse `CoachReviewDeliveryScheduleRepository.saveV2` with revision protection or match an exact `manual_available`/`automatic_ready` period from `CoachAiReviewAvailabilityService` and call `CoachAiReviewRequestService.requestManualV2`. Confirmation creates only a pending request; provider generation remains separately gated. |
@@ -327,6 +344,9 @@ The 2026-08-15 plan audit confirms:
 
 The 2026-08-16 whole-feature audit rechecked this inventory against the current
 routes, factual-tool registry, action contract, Help and locked-language
-mapping. No new product family was found outside the matrix. Trade Explorer
-remains an incomplete product dependency and its versioned Chat adapter must be
-re-audited after that product update is accepted.
+mapping. No new product family was found outside the matrix. The 2026-08-18
+Trade Explorer reconciliation then replaced the older generic metric/grouping
+shape with the accepted truthful Trades Sort/Result and grouped Rank by
+contract, plus the completed-trade Review read/handoff boundary. Future
+advanced comparison studies remain unavailable until their own deterministic
+product contract is accepted.

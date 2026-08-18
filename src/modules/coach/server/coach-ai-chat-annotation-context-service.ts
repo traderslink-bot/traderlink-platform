@@ -89,15 +89,6 @@ function exactKeys(value: object, expected: readonly string[]): void {
       Object.keys(value).length !== expected.length) invalid();
 }
 
-function localDate(instantUtc: string, timezone: string): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date(instantUtc));
-}
-
 function closingDateRange(scope: CoachAiChatAnalysisScope) {
   if (scope.kind === "day") {
     return Object.freeze({ kind: "inclusive_closing_date" as const,
@@ -462,9 +453,6 @@ export class CoachAiChatAnnotationContextService {
           : JOURNAL_TAG_PRESET_CATEGORY_LABELS.custom,
       }));
     }
-    const timezone = factSet.accounts.find((candidate) => candidate.accountId === selectedAccountId)
-      ?.tradingTimezone;
-    if (!timezone) notFound();
     return Object.freeze({
       contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
       toolName: request.toolName,
@@ -495,7 +483,7 @@ export class CoachAiChatAnnotationContextService {
             updatedAtUtc: review.updatedAtUtc,
           });
         }).sort((left, right) => left.title.localeCompare(right.title))),
-        link: `/trade-tracker/${localDate(trade.openedAtUtc, timezone)}`,
+        link: "/analytics/trade-explorer",
       }),
     });
   }

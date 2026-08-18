@@ -2,6 +2,7 @@ import {
   COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
   COACH_AI_CHAT_FACTUAL_TOOL_GROUPINGS,
   COACH_AI_CHAT_FACTUAL_TOOL_METRIC_IDS,
+  COACH_AI_CHAT_TRADE_EXPLORER_GROUPINGS,
   type CoachAiChatFactualToolName,
 } from "../contracts/coach-ai-chat-factual-tool-contracts";
 
@@ -165,12 +166,15 @@ export const coachAiChatFactualToolRegistry = Object.freeze([
     })),
   Object.freeze({
     name: "query_trade_explorer" as const,
-    description: "Runs a bounded Trade Explorer query through the canonical Journal analytics engine.",
+    description: "Sorts individual completed trades or ranks grouped Trade Explorer results through the canonical Journal analytics engine.",
     supportedMetricIds: Object.freeze([]),
-    supportedGroupings: COACH_AI_CHAT_FACTUAL_TOOL_GROUPINGS,
+    supportedGroupings: COACH_AI_CHAT_TRADE_EXPLORER_GROUPINGS,
     limitations: Object.freeze([
       "Individual trade evidence uses the Account reporting currency without changing each trade's source currency.",
+      "Individual trades sort only by factual row values; population statistics rank groups and never silently change the Result filter.",
       "Results are limited to 50 supporting trades per request.",
+      "Chat can read one exact completed trade's saved Review facts, but the combined note, tags, and custom-rule Review is saved with one explicit Save in Trade Explorer.",
+      "Preset rule results are factual and read-only; Chat never invents or changes a custom-rule outcome.",
       ...closedTradeLimitations,
     ]),
     contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,

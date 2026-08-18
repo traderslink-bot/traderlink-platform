@@ -109,11 +109,13 @@ const capabilities = Object.freeze([
   Object.freeze({
     id: "current_dashboard_analytics_reads",
     kind: "factual_read" as const,
-    plainLanguage: "Read Analytics Overview, Results by Ticker, Timing, Execution, and bounded Trade Explorer results.",
+    plainLanguage: "Read Analytics Overview, Results by Ticker, Timing, Execution, and bounded Trade Explorer Sort trades or Rank by results.",
     limitations: Object.freeze([
       "Analytics use completed trades; legitimate open positions and unresolved decisions remain outside realized results.",
       "Money follows the Account reporting currency only when the exact required conversion is available.",
+      "Trade rows sort only by facts each completed trade has; population statistics rank grouped results and never act as a hidden Result filter.",
       "Trade Explorer returns at most 50 supporting trades per request.",
+      "Chat can read the saved Review facts for one exact completed trade, but the combined note, tags, and custom-rule Review is saved with one explicit Save in Trade Explorer.",
     ]),
   }),
   Object.freeze({
@@ -171,7 +173,7 @@ const capabilities = Object.freeze([
  * repeated in every family on every provider request.
  */
 export const coachAiChatRuntimeCapabilityRegistry = Object.freeze({
-  contractVersion: "coach_ai_chat_runtime_capabilities_v2" as const,
+  contractVersion: "coach_ai_chat_runtime_capabilities_v3" as const,
   capabilities,
   canonicalLanguageGroups: canonicalLanguageGroups(),
 });

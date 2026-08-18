@@ -65,9 +65,10 @@ The private persistence API checkpoint is tracked in
 - [x] Implement the current-dashboard Journal/Tracker read families: Workspace,
   Daily Tracker, Swing Tracker, Calendar and Open Positions.
 - [x] Implement page-aligned Analytics reads and an isolated, versioned adapter
-  for the currently incomplete Trade Explorer without creating a second
-  calculation engine. Revisit that adapter when the accepted Explorer update
-  is implemented.
+  for Trade Explorer without creating a second calculation engine. The
+  accepted follow-up now separates factual per-trade sorting from grouped
+  ranking, keeps Result explicit and preserves the exact completed-trade Review
+  handoff.
 - [x] Implement saved Trade Analyzer and Candle Review result reads with exact
   coverage and unavailable states.
 - [x] Implement Import, Data Decisions, Notifications, Account and entitlement
@@ -105,9 +106,41 @@ The private persistence API checkpoint is tracked in
 
 ## Completed foundation: Agents SDK and global AI Chat companion
 
+### 2026-08-18 Trade Explorer capability reconciliation
+
+- `query_trade_explorer` now has explicit result families. `trades` accepts
+  only one factual row sort and applies it before bounded pagination. Trading
+  Days, Tickers, Entry Times, Holding Time, Position Size and Periods each
+  accept only their current supported grouping, one Rank by metric and an
+  ascending or descending direction, with unavailable values last inside each
+  factual currency/timezone partition.
+- The compact runtime capability registry advanced to
+  `coach_ai_chat_runtime_capabilities_v3` so provider instructions cannot reuse
+  the superseded generic Trade Explorer description. The factual-tool contract
+  advanced to `coach_ai_chat_factual_tools_v2` for the new result-family shape;
+  existing immutable answer snapshots remain historical evidence and are not
+  replayed as current requests.
+- Win, loss and flat remain explicit outcome filters. Profit factor, win rate,
+  averages, medians and expectancy cannot be used as individual-trade sorts.
+  The adapter still reuses the canonical Journal Analytics service, exact
+  reporting-currency coverage and the server-selected account scope.
+- Chat can read one exact confirmed completed trade's saved note, tags and
+  custom-rule reviews. It explains a preset result only when the bounded
+  rule-result read returned the exact applicable event; otherwise it points to
+  Review. The combined Review is not a Chat mutation:
+  the Trade Explorer editor retains one explicit atomic Save, stale-state
+  rejection and read-only preset results. Existing tag proposals still require
+  their exact before/after confirmation card.
+- The maintained AI Chat Help guide and current-dashboard capability matrix now
+  describe this boundary. Advanced comparison studies remain unavailable.
+- Repository instructions prohibited Vitest and other test-runner execution
+  for this slice. Verification used targeted lint, no-emit TypeScript and
+  diff/static contract checks without a provider call, Journal write, browser
+  server, push or deployment.
+
 ### 2026-08-16 second whole-feature QA checkpoint
 
-- A second independent audit reconciled the current dashboard inventory with
+- A second independent audit reconciled the then-current dashboard inventory with
   the runtime, Help and language registry. The live boundary remains exactly 13
   capability families, 34 deterministic factual tools and 12 confirmed action
   kinds. The remaining locked language entries do not become executable merely
@@ -116,11 +149,12 @@ The private persistence API checkpoint is tracked in
   generation reaches a failed terminal state if derived confirmation content
   cannot be materialized. Pending-answer polling also refreshes all four draft
   collections so a completed reply never requires a page reload to reveal its
-  confirmation card.
+  confirmation card. The later 2026-08-18 Trade Explorer-only reconciliation is
+  recorded above and does not change the 13/34/12 family, tool or action counts.
 - The final one-worker Chat population passed 161 tests across 26 files; only
   the opt-in paid-provider file/test was skipped. Focused lint and the full
-  no-emit TypeScript check passed. Trade Explorer remains explicitly incomplete
-  and isolated behind its versioned bounded adapter.
+  no-emit TypeScript check passed. That evidence predates the separately
+  recorded 2026-08-18 Trade Explorer adapter reconciliation.
 - Fresh desktop and 390 by 844 mobile browser checks verified the shared
   drawer, direct page, route preservation, close action and account-scoped
   conversation/draft reads with no browser warnings or errors. The controlled
@@ -132,9 +166,9 @@ The private persistence API checkpoint is tracked in
   deterministic Read, Draft and Confirm family. Deliberately excluded
   authentication, billing, erasure, raw-statement, secret, broker-connection
   and owner-administration operations remain in their guarded product UI.
-- Trade Explorer remains an incomplete product feature. Chat uses only the
-  current bounded, versioned adapter; the accepted future Explorer update can
-  replace that adapter without changing unrelated Chat behavior.
+- At this 2026-08-15 checkpoint, Trade Explorer still used its earlier generic
+  bounded adapter. The accepted Sort/Rank and Review contract was reconciled
+  separately on 2026-08-18 as recorded above.
 - The cumulative factual-tool result ceiling is 48 KB. This keeps bounded
   trade and analytics evidence available while reserving the expanded tool
   schemas, trusted page context, bounded conversation and structured response
@@ -271,10 +305,10 @@ The private persistence API checkpoint is tracked in
   Trade Explorer evidence at 50 rows and current page queries at their existing
   canonical page sizes. Oversized or unsupported requests fail rather than
   silently truncating or inventing facts.
-- Trade Explorer remains an incomplete product feature. Its Chat integration
-  is deliberately isolated and versioned to the current supported filters,
-  groupings and metrics; future accepted Explorer work must revise that adapter
-  without changing unrelated Chat capabilities.
+- Trade Explorer remains deliberately isolated and versioned. Its current
+  adapter now implements the accepted factual Sort trades, explicit Result,
+  grouped Rank by and completed-trade Review read/handoff boundaries; advanced
+  comparison studies remain unavailable.
 - Focused ESLint and a full no-emit TypeScript pass completed cleanly. Three
   focused one-worker suites passed eight tests covering account isolation,
   selected page contracts, raw identifier stripping, bounded evidence and

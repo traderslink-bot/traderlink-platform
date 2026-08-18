@@ -40,8 +40,11 @@ another application or bypass the control.
   confirmation. Generation itself performs no product mutation.
 - The global responsive drawer and `/ai-chat` direct route reuse the same Chat
   surface. Drawer navigation preserves the trader's current dashboard route.
-- Trade Explorer is intentionally isolated behind its current versioned adapter
-  because that product feature is incomplete and will be updated.
+- Trade Explorer remains isolated behind a versioned adapter. Its accepted
+  current contract separates factual per-trade Sort choices from grouped Rank
+  by choices, keeps Result explicit, and hands combined completed-trade Review
+  changes back to the editor's one explicit Save. Advanced comparison studies
+  remain unavailable.
 
 ## Retry boundary
 
@@ -69,8 +72,29 @@ factual evidence or action authority.
   and message scope are verified; only allowlisted internal routes can be
   linked. Raw IDs, hashes, secrets and untrusted links are suppressed.
 - Future language concepts remain unavailable until their deterministic
-  service exists. In particular, rule recommendations remain planning-only and
-  Trade Explorer remains an incomplete versioned adapter.
+  service exists. In particular, rule recommendations and Trade Explorer
+  advanced comparison studies remain unavailable.
+
+## 2026-08-18 Trade Explorer adapter checkpoint
+
+- The factual tool now distinguishes individual `trades` results from the
+  named Trading Days, Tickers, Entry Times, Holding Time, Position Size and
+  Periods result families. Trades accept only the canonical close-time, P/L,
+  return, holding-time, shares and entry-value sorts and bind that order to
+  bounded pagination. Each grouped family accepts only its current grouping,
+  one supported Rank by metric and direction, then ranks separately inside
+  each required currency/timezone partition.
+- Result remains an explicit win/loss/flat filter. Population statistics never
+  masquerade as individual-trade sorts, and unavailable grouped values remain
+  last rather than becoming zero.
+- The tool exposes only the factual handoff for one exact completed trade's
+  Review. Chat reads saved annotations through the selected-account service;
+  the full note/tag/custom-rule change remains the Trade Explorer editor's one
+  atomic Save. Preset results stay read-only and existing Chat tag changes keep
+  their expiring preview plus explicit confirmation.
+- AI Chat Help and the current-dashboard capability matrix were updated for
+  the same boundary. No provider call, Journal mutation, browser server, push
+  or deployment was part of this slice.
 
 ## 2026-08-16 second whole-feature QA
 

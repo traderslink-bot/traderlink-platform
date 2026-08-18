@@ -55,10 +55,10 @@ making the initial eight tools available.
 Current deterministic coverage includes the stable Journal, Tracker,
 Analytics, Import, Data Decisions, Notifications, Account, saved Analyzer,
 Trading Rules and completed-trade annotation reads recorded in the progress
-tracker. Trade Explorer remains an incomplete product surface; its current
-bounded Chat adapter is intentionally isolated and must be revised when the
-owner accepts the Explorer update rather than being treated as a frozen Chat
-contract.
+tracker. The bounded Trade Explorer adapter now follows the accepted factual
+`Sort trades`/explicit Result contract, grouped `Rank by` contract and exact
+completed-trade Review read/handoff. Advanced comparison studies remain
+unavailable until their own deterministic product contract is accepted.
 
 ## Product direction
 
@@ -292,13 +292,13 @@ is implemented and promoted in the runtime registry.
 
 ### Trade Explorer change boundary
 
-Trade Explorer is a current but incomplete product feature and is expected to
-change. AI Chat accesses only its currently implemented filters, groupings and
-metrics through an isolated, versioned adapter. The current Explorer design is
-not a permanent Chat contract, unsupported Explorer behavior stays unavailable,
-and the adapter must be revised when the owner accepts the updated Trade
-Explorer. No unrelated Chat capability may depend on the current Explorer page
-structure, wording or unfinished views.
+Trade Explorer remains an isolated, versioned Chat capability so later product
+work cannot silently broaden factual coverage. The accepted current adapter
+separates individual `Sort trades` choices from grouped `Rank by` choices,
+keeps Result explicit, and reads the exact saved Review facts for one confirmed
+completed trade. The combined note/tag/custom-rule Review remains one explicit
+Save in Trade Explorer. Unsupported advanced comparison studies stay
+unavailable, and no unrelated Chat capability may depend on unfinished views.
 
 Unsupported questions receive a brief honest answer describing what the chat can
 help with now. It must not quietly turn an unsupported request into unrelated

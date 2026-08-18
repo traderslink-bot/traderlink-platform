@@ -155,6 +155,7 @@ describe("CoachAiChatAnnotationContextService", () => {
         status: "Followed",
         note: "Waited for the setup.",
       }],
+      link: "/analytics/trade-explorer",
     });
     const serialized = JSON.stringify(response);
     for (const value of [roundTripId, ruleId, "private-review-id", "private-note-id",

@@ -56,6 +56,17 @@ export const AI_CHAT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
           Object.freeze({ kind: "paragraph" as const, text: "A draft never changes the trading day by itself. Read and edit the proposed wording, then use the normal save action if you want to keep it." }),
         ]),
       }),
+      Object.freeze({
+        id: "trade-explorer-questions",
+        title: "Ask about Trade Explorer",
+        summary: "Sort completed trades by trade facts, rank grouped results, or review one exact completed trade.",
+        keywords: Object.freeze(["trade explorer", "sort trades", "rank by", "result", "review", "tags", "rules"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph" as const, text: "For individual completed trades, ask AI Chat to use one of the factual Sort trades choices, such as newest, P/L, return, holding time, shares or entry value. Winning, losing and flat trades remain an explicit Result choice. Profit factor, win rate, averages, medians and expectancy describe a group of trades; they do not sort individual trade rows." }),
+          Object.freeze({ kind: "paragraph" as const, text: "For Trading Days, Tickers, Entry Times, Holding Time, Position Size or Periods, ask AI Chat to Rank by one supported result and say whether you want the highest or lowest groups first. Results stay separate by currency and trading timezone when they cannot be combined truthfully." }),
+          Object.freeze({ kind: "paragraph" as const, text: "AI Chat can explain the saved note, tags and rule results for one exact completed trade. To change the complete Review, open that trade in Trade Explorer, edit its note, tags and custom-rule results, then choose Save once. Preset rule results remain read-only. A tag change prepared in Chat still shows an exact preview and changes nothing until you confirm it." }),
+        ]),
+      }),
     ]),
   }),
   Object.freeze({

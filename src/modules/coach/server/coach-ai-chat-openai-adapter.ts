@@ -35,7 +35,9 @@ import {
   COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
   COACH_AI_CHAT_FACTUAL_TOOL_GROUPINGS,
   COACH_AI_CHAT_FACTUAL_TOOL_METRIC_IDS,
+  COACH_AI_CHAT_TRADE_EXPLORER_GROUPINGS,
   COACH_AI_CHAT_TRADE_EXPLORER_METRIC_IDS,
+  COACH_AI_CHAT_TRADE_EXPLORER_TRADE_SORTS,
   type CoachAiChatFactualToolName,
   type CoachAiChatFactualToolRequest,
 } from "../contracts/coach-ai-chat-factual-tool-contracts";
@@ -107,11 +109,21 @@ const analyticsPageInput = z.object({
   moneyBasis: z.enum(["gross", "net"]),
   filters: filtersSchema.optional(),
 }).strict();
-const tradeExplorerFiltersSchema = filtersSchema.extend({
+const tradeExplorerFiltersSchema = filtersSchema.omit({
+  symbols: true,
+  directions: true,
+  tradeClassifications: true,
+  provenance: true,
+  outcomes: true,
+}).extend({
+  symbols: z.array(z.string()).max(1).optional(),
+  directions: z.array(z.enum(["long", "short"])).max(1).optional(),
+  tradeClassifications: z.array(z.enum(["day_trade", "multi_day_trade"])).max(1).optional(),
+  outcomes: z.array(z.enum(["win", "loss", "flat"])).max(1).optional(),
   entryWeekdays: z.array(z.enum([
     "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
-  ])).optional(),
-  entryTimeBuckets: z.array(z.string().regex(/^\d{2}:\d{2}$/u)).optional(),
+  ])).max(1).optional(),
+  entryTimeBuckets: z.array(z.string().regex(/^\d{2}:\d{2}$/u)).max(1).optional(),
   minimumHoldingMilliseconds: z.number().int().nonnegative().optional(),
   maximumHoldingMilliseconds: z.number().int().nonnegative().optional(),
   minimumEnteredQuantity: z.string().regex(/^\d+(?:\.\d+)?$/u).optional(),
@@ -122,11 +134,17 @@ const tradeExplorerFiltersSchema = filtersSchema.extend({
   maximumEntryNotional: z.string().regex(/^\d+(?:\.\d+)?$/u).optional(),
 }).strict();
 const tradeExplorerInput = z.object({
-  metricId: z.enum(COACH_AI_CHAT_TRADE_EXPLORER_METRIC_IDS),
-  grouping: z.enum(COACH_AI_CHAT_FACTUAL_TOOL_GROUPINGS),
+  resultView: z.enum([
+    "trades", "trading_days", "tickers", "entry_times", "holding_time",
+    "position_size", "periods",
+  ]),
+  metricId: z.enum(COACH_AI_CHAT_TRADE_EXPLORER_METRIC_IDS).optional(),
+  grouping: z.enum(COACH_AI_CHAT_TRADE_EXPLORER_GROUPINGS).optional(),
+  tradeSort: z.enum(COACH_AI_CHAT_TRADE_EXPLORER_TRADE_SORTS).optional(),
+  rankDirection: z.enum(["ascending", "descending"]).optional(),
   moneyBasis: z.enum(["gross", "net"]),
-  pageSize: z.number().int().min(1).max(50),
-  afterCursor: z.string().nullable(),
+  pageSize: z.number().int().min(1).max(50).optional(),
+  afterCursor: z.string().nullable().optional(),
   filters: tradeExplorerFiltersSchema.optional(),
 }).strict();
 const importListInput = z.object({
@@ -386,6 +404,8 @@ Create a dailyCompanionDraft only when the trader explicitly asks you to draft, 
 Create a reviewDeliveryChangeDraft only when the trader explicitly asks to change the weekly AI Review delivery day or Eastern delivery time and both final values are clear. The only permitted days are Friday, Saturday, and Sunday. The only permitted times are 4:00 PM through 11:30 PM Eastern in 30-minute steps. Use the supplied currentReviewDelivery value for an unchanged field. Return null when the request is unclear or concerns any other user, login, billing, privacy, ownership, provider, model, admin, or account setting. Never claim the setting was changed; the trader will review and confirm it separately.
 
 Create an actionDraft only when the trader explicitly asks to change their reporting currency, mark one exact notification read, switch to one exact existing Journal account, create a new Trade Tracker account, save or revise a dated note on one exact Swing, classify one exact open position, change the exact Discord notification categories, turn existing AI Reviews on or off, request one exact eligible AI Review, replace the complete tag set on one exact completed trade or Swing position, add/change/pause/resume/retire one exact Trading Rule, or resolve one exact supported Data Decision. Before proposing it, call get_account_preferences, list_notifications, get_account_trading, get_account_ai_plan, get_trade_annotations, list_trading_rules, get_swing_position_details, get_open_position_details, or get_data_decision_details as appropriate and use only values, tag names, preset definitions, actions, periods, or opaque references returned by that tool in this generation. For a new Trade Tracker account, every final field must be clear: name, three-letter base currency, and IANA trading timezone. When the trader omits currency or timezone, you may reuse the returned active account value, but never invent a different value. State that the new account becomes active only after confirmation. A Swing note requires the exact returned positionRef, one explicit review date, and the complete final note and optional next-session plan; never infer missing note content. An open-position classification must use one exact returned positionRef and only the trader's explicit choice: active swing, day trade still open, unplanned hold (bag hold), or long-term hold. Never classify a position from its age, P/L, ticker, executions, or Chat's opinion. An AI Review request must exactly match a manual_available or automatic_ready period returned by get_account_ai_plan. Never invent or modify its kind or dates, and never claim that confirmation immediately generates the review. For notification preferences, return the complete final category list, including unchanged categories. For trade tags, return the complete final tag list, including unchanged tags; use only names in availableTags, and never add a tag because you inferred a setup, emotion, mistake, cause, or rule outcome. For a completed trade, return its roundTripId and null positionRef. For a Swing position, return its positionRef and null roundTripId. Exactly one target must be non-null. For a preset rule, use only a returned presetKey and provide every required configuration field. For an existing rule, use its returned ruleRef. A custom-rule revision must return every final field, including unchanged fields. Never activate or change a rule merely because analysis or a recommendation suggests it; the trader must explicitly request the exact change. For Data Decisions, use only an allowed action returned by the exact detail tool. You may confirm a supported open position, reconcile grouped fills, accept a source limitation, exclude/restore/keep distinct one returned execution, or merge an exact returned duplicate pair. Never infer a correction, exclusion reason, or duplicate choice. Numeric corrections, missing rows, coverage facts, and any action requiring raw statement comparison stay in Data Decisions. Return null if the target is unclear, already satisfied, absent from the tool result, or concerns any other setting or action. If AI Reviews have never been configured, direct the trader to Account settings instead of inventing a schedule. The trader will see an exact preview and must confirm it separately. Never claim the action was completed during generation.
+
+For Trade Explorer, use resultView trades with one factual tradeSort, pageSize, and afterCursor when ordering individual completed trades. To rank groups, omit pageSize and afterCursor and use the matching named resultView: trading_days, tickers, entry_times, holding_time, position_size, or periods, together with its supported grouping, metricId, and rankDirection. Profit factor, win rate, averages, medians, and expectancy describe a population and must never be presented as an individual-trade sort. Win, loss, and flat stay explicit outcome filters. If the trader asks about one completed trade's Review, call get_trade_annotations for that exact trade. You may explain its saved note, tags, and saved custom-rule reviews. Explain a preset result only when get_trading_rule_results returned the exact applicable event; otherwise say that Review shows the factual preset result. The complete note/tag/custom-rule Review is saved with one explicit Save in Trade Explorer. Never invent or change a custom-rule outcome, and never present a preset result as editable.
 
 Create a manualExecutionDraft when the current message clearly asks to enter, record, add, correct, or continue a set of manual trade executions. The trader does not need to select a special mode first. A shortcut hint may be present, but it is only a hint and never proof of intent. Use only execution facts explicitly supplied in the current message or the existing draft. Never guess a date, Eastern execution time, ticker, side, quantity, price, or fee. Fees are optional and may remain null. Preserve exact decimal digits. Words such as bought, added, sold, reduced, exited, covered, or shorted may establish side only when their meaning is clear. Do not convert relative dates such as today or yesterday into a date; ask for the actual date. Times are Eastern Time. Return the complete proposed rows, including unchanged existing rows when the trader is clarifying a prior draft. If the trader only asks how manual entry works, return null. Never claim an execution was saved; the trader will edit and explicitly confirm the draft through the normal Journal preview.
 
@@ -786,7 +806,7 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
         }),
         tool({
           name: "query_trade_explorer",
-          description: "Filter and group completed trades with the same Journal analytics engine used by Trade Explorer.",
+          description: "Sort individual completed trades by factual row values or rank grouped Trade Explorer results by one supported population metric.",
           parameters: tradeExplorerInput,
           execute: (value, _context, details) => dispatch(
             "query_trade_explorer",

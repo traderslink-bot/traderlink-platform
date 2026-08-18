@@ -72,7 +72,7 @@ const EVIDENCE_DEFINITIONS: Readonly<Record<string, EvidenceDefinition>> = Objec
   get_saved_candle_review: { title: "Candle review", href: "/trades/candle-review", linkLabel: "Open candle review" },
   list_trading_rules: { title: "Trading rules", href: "/rules", linkLabel: "Open rules" },
   get_trading_rule_results: { title: "Trading rule results", href: "/rules/results", linkLabel: "Open rule results" },
-  get_trade_annotations: { title: "Daily Trade Tracker", href: "/trade-tracker", linkLabel: "Open tracker" },
+  get_trade_annotations: { title: "Completed trade Review", href: "/analytics/trade-explorer", linkLabel: "Open Trade Explorer" },
 });
 
 function isRecord(value: unknown): value is JsonRecord {
