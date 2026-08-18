@@ -2,7 +2,7 @@
 
 ## Status
 
-Design and seven implementation-readiness QA passes complete under the owner's
+Design and eight implementation-readiness QA passes complete under the owner's
 delegated product authority on 2026-08-18. Implementation has not started. The
 owner does not need to approve individual formulas or weight calculations, but
 the completed engine and its generated reviews remain subject to owner
@@ -1432,25 +1432,28 @@ The implementation therefore does not reuse the old prompt marker, omit it, or
 mislabel a server-rendered review as provider-authored.
 
 A forward-only Coach migration adds the insight snapshot, provider-dispatch,
-dispatch-recovery-state and selection-audit tables plus a new immutable v3
-issued-review table. New periodic and monthly v3 output contracts retain the
-same visible fields while using new contract and prompt/renderer versions. The
-existing customer read model and page read v2 and v3 rows into the same visible
-shape; every already-issued v2 row remains unchanged.
+dispatch-recovery-state, generation-contract-state and selection-audit tables
+plus a new immutable v3 issued-review table. New periodic and monthly v3 output
+contracts retain the same visible fields while using new contract and prompt/
+renderer versions. The existing customer read model and page read v2 and v3
+rows into the same visible shape; every already-issued v2 row remains unchanged.
 
 The planned table identities are `coach_ai_review_insight_snapshots`,
 `coach_ai_review_insight_provider_dispatches`,
 `coach_ai_review_dispatch_recovery_state`,
+`coach_ai_review_generation_contract_state`,
 `coach_ai_review_insight_selection_audits` and
 `coach_ai_issued_reviews_v3`. The four review/request tables carry the request's
-account scope and participate in erasure. The recovery-state table is one
-database-wide singleton, carries no account facts and is never erased with one
-account. All five participate in administration, backup/restore and integrity
-verification. Snapshot, selection-audit and issued rows reject ordinary
+account scope and participate in erasure. The recovery-state and generation-
+contract-state tables are database-wide singletons, carry no account facts and
+are never erased with one account. All six participate in administration,
+backup/restore and integrity verification. Snapshot, selection-audit and issued rows reject ordinary
 updates/deletes. A dispatch row permits only the fenced lease/dispatch/
 settlement transitions defined below, becomes immutable when fully settled and
 always rejects ordinary deletion. The recovery singleton permits only the
 restore/startup epoch transition defined below and cannot be deleted.
+The generation singleton permits only the verified one-way v2-to-v3 activation
+and reader-compatibility-floor transitions defined below and cannot be deleted.
 
 The exact new output identities are
 `traderlink_coach_periodic_ai_review_output_v3` with
@@ -1469,6 +1472,70 @@ request's issued-review integrity trigger is replaced by a scoped trigger that
 accepts exactly one matching immutable v2 or v3 issued row. It cannot accept a
 cross-account row or both versions for one request.
 
+### Generation-contract cutover and rollback
+
+The existing request table name remains
+`coach_ai_review_period_requests_v2`, but its current
+`input_contract_version` permits only the existing v2 input contracts and does
+not tell a worker which generation/output path owns the request. The forward
+migration therefore rebuilds that table and
+`coach_ai_review_generation_attempts_v2` with required, immutable
+`generation_contract_version` columns that have no insert default. Existing
+rows are backfilled as `openai_direct_v2`; new insight requests and attempts use
+`insight_selection_v3`. The historical input contract may remain v2 because
+the new private insight snapshot carries the additional normalized calculation
+source, but generation ownership is never inferred merely from snapshot
+presence or current code.
+
+The new `coach_ai_review_generation_contract_state` singleton is the
+authoritative activation marker. It begins at `openai_direct_v2`, records the
+minimum compatible reader contract and may advance once to
+`insight_selection_v3` only after the cutover verifier passes. Request creation
+reads that row inside its atomic insert transaction; it never selects a
+generation contract from deployment time, process memory, feature-control age
+or the request's reviewed period.
+
+Rebuilt scope/transition triggers enforce all of the following:
+
+- a v2 request can create only a v2 attempt and exactly one v2 issued row;
+- a v3 request can create only a v3 attempt/dispatch and exactly one v3 issued
+  row;
+- neither output family can be attached to the other generation contract;
+- an old binary that omits the required no-default contract column fails before
+  it can create a request or attempt; and
+- one account/period identity still owns one immutable request. If that identity
+  already exists as v2—pending, issued, failed or stopped—request creation
+  returns it unchanged and never grafts on a v3 snapshot or upgrades history.
+
+Cutover is a single-node maintenance boundary, not a rolling mixed-writer
+deployment. Stop new automatic/manual request intake, let every existing v2
+request, attempt and reservation reach a reconciled terminal state, verify each
+billable attempt's receipt or explicit no-usage state, and require zero pending
+v2 work before proceeding. If zero cannot be proven, abort activation rather
+than guessing whether an old provider call occurred.
+Once zero is proven, disable both platform AI Review feature controls, take and
+verify the normal evidence backup, stop every old app/worker process, migrate,
+start only the v3-capable binary, reconcile byte-for-byte row counts/digests/
+triggers and v2 reads, and
+only then advance the generation singleton to v3 and re-enable request intake.
+The singleton transition precedes feature-control enablement, so no request can
+be created in the gap under v2. The first monthly v3 review may legitimately
+contain a mixture of already-issued v2 and v3 weekly reviews; all are included,
+while hidden follow-through metadata remains unavailable for v2 history.
+
+The rebuilt feature-control guards reject re-enabling weekly or monthly AI
+Reviews while the singleton remains in cutover v2 state. This internal
+compatibility guard does not replace the existing account/platform feature
+switches; after verified v3 activation those switches retain their ordinary
+authorization and operational-kill behavior.
+
+Once any v3 row exists, a v2-only binary is below the database's reader/writer
+compatibility floor. Operational rollback may disable generation and run the
+last v3-capable reader or deploy a forward fix; it may not reinstall a v2-only
+binary, down-migrate, delete v3 history or restore an older database that loses
+issued reviews. The activation report records the first v3 request and issued
+row so this boundary is unambiguous.
+
 ### Insight snapshot
 
 One account-scoped insight snapshot is created atomically with each new period
@@ -1483,6 +1550,11 @@ request and contains:
 - frozen provider key/model ID, selection-instruction bytes/digest, strict
   structured-output schema bytes/digest, provider-envelope version and safe-
   context/token-count profile, never credentials or API secrets;
+- frozen provider-invocation manifest/digest: versioned adapter, API family,
+  official endpoint identity, exact installed AI SDK/provider versions,
+  non-streaming one-call mode, timeout, retry count, storage/telemetry/tool/
+  continuation settings and every supported behavior/cost-affecting model
+  option, never the API key or authorization header;
 - complete eligible candidate JSON and digest;
 - balanced shortlist and deduplicated section-plan catalog JSON/digest;
 - all authorized fully rendered review-plan outputs, their digests and the
@@ -1558,6 +1630,70 @@ retry reads the stored instruction/schema/package bytes and compares the
 returned package key with the stored literal. It does not re-render, rebuild or
 re-HMAC an old request with current code or secrets.
 
+### Provider invocation manifest and Railway portability
+
+The installed `ai` and `@ai-sdk/openai` packages are ordinary host-neutral Node
+dependencies despite the Vercel AI SDK name. They run inside the Railway app and
+call OpenAI directly; this design does not require Vercel hosting, Vercel AI
+Gateway or another Vercel service. Railway acceptance still requires the
+approved Node runtime, outbound TLS/DNS to OpenAI, `OPENAI_API_KEY` in Railway
+secrets, persistent SQLite `/data`, the single authoritative app/worker process
+and the separate OpenAI API/data-control launch gates already recorded in the
+AI Review beta handoff.
+
+The source-audited v2 weekly/monthly adapters currently omit explicit retry,
+timeout, OpenAI storage and telemetry settings. No further live AI Review
+provider benchmark, test issuance or activation is permitted through those
+unhardened call sites. The implementation must apply the same endpoint,
+`store: false`, telemetry-off, zero-hidden-retry and timeout controls to any v2
+compatibility call that remains reachable before cutover, or make that call
+unreachable before provider testing resumes.
+
+No provider-library default is part of the contract. The versioned selection
+adapter must explicitly use the OpenAI Responses API and official
+`https://api.openai.com/v1` endpoint, not the provider callable's current
+default API family. `OPENAI_BASE_URL`, a Vercel gateway variable or another
+ambient endpoint override cannot redirect AI Review traffic. Tests may inject a
+local fake transport only through a non-activatable test dependency boundary;
+the activated adapter fails closed for any non-approved scheme, host, port or
+path.
+
+Each real selection call explicitly freezes and applies:
+
+- non-streaming `generateText` with one structured-output model call and no
+  tools, output-repair call, conversation or previous-response continuation;
+- `maxRetries: 0`, because the installed AI SDK otherwise defaults to two
+  retries that would be invisible inside one persisted attempt;
+- a calibrated total timeout shorter than the persisted lease-recovery
+  deadline;
+- `providerOptions.openai.store: false`; the installed OpenAI provider otherwise
+  defaults to storing the generation;
+- AI SDK telemetry disabled for this call, with no callback, diagnostics-channel
+  or integration allowed to retain prompt/output bodies;
+- the exact output-token allowance and strict schema; and
+- every other supported behavior-, privacy- or cost-affecting option as an
+  explicit calibrated value or explicit `not_applicable`, including reasoning
+  effort and service tier where the pinned model supports them.
+
+A one-shot audited fetch boundary validates the final outbound request before
+network I/O. It permits one POST to the frozen Responses path, validates an
+exact JSON field allowlist and the expected canonical instruction/package/
+schema identities, requires `store: false`, rejects tools/continuations/unknown
+fields, forces redirect handling to `error`, and records only a canonical
+request-manifest digest plus bounded metadata. Authorization remains secret and
+raw request/response bodies never enter logs. A second fetch invocation for the
+same dispatch is rejected even if a future SDK version reintroduces internal
+retry or repair behavior.
+
+The snapshot records the actual adapter and exact installed `ai`/
+`@ai-sdk/openai` versions used to produce that manifest. A dependency or adapter
+upgrade must pass a captured-request compatibility fixture. If an old frozen
+manifest cannot be reproduced exactly by the active versioned adapter, the
+request uses `provider_configuration_drift` and its frozen deterministic default
+rather than silently sending a changed request. Historical compressed codecs
+and invocation-manifest decoders are append-only compatibility registries; they
+cannot be removed while an unerased snapshot still depends on them.
+
 ### Provider dispatch leases and crash recovery
 
 Every real provider attempt owns one persisted dispatch row. It records the
@@ -1616,6 +1752,15 @@ the reservation appear correct. The receipt replaces unresolved maximum
 exposure, but the expired fence cannot select or issue. A crash inside the
 SQLite issuance transaction rolls back the issued row, accepted audit and
 notification together.
+
+The same outcome classification applies without a crash. Any exception,
+timeout, malformed structured output or provider refusal after the committed
+transport boundary records an exact receipt when trustworthy usage is present.
+If trustworthy usage is absent, it becomes `usage_unknown_after_dispatch`,
+retains maximum exposure and prohibits another provider attempt. Only a failure
+provably rejected by the local validator before the transport boundary has zero
+usage exposure. HTTP/library error labels alone never prove that OpenAI did not
+process a billable request.
 
 Backup restore requires the prior runtime/scheduler to be stopped before the
 restored database becomes authoritative. In one exclusive startup transaction,
@@ -1715,18 +1860,22 @@ the already-frozen deterministic default with `provider_input_limit` or
 `provider_reservation_refused` provenance and makes no partial provider call.
 The local engine has still calculated the review from the complete exact source.
 
-Issued and pending requests created before insight-engine activation are not
-retrofitted. Already-issued reviews remain immutable. A pre-activation pending
-request follows its original prompt path; every request created after the
-activation marker must have an atomic insight snapshot or request creation
-fails. This avoids silently mixing old inputs with new ranking behavior.
+Already-issued, failed and stopped v2 requests remain immutable and are never
+retrofitted. The cutover gate above requires no pending v2 request, attempt or
+reservation, so a pre-activation request never crosses activation and silently
+changes generation path. Every request created after activation explicitly
+stores `insight_selection_v3` and must have its atomic insight snapshot or
+request creation fails.
 
 The migration uses the next available Coach migration identity at
 implementation time because concurrent platform work may claim an earlier
 number. The migration manifest, initialization digest, administration counts
-and backup/restore verification must include all five new tables. Account-
+and backup/restore verification must include all six new tables. Account-
 erasure ordering includes the four scoped tables but never deletes the database-
-wide recovery singleton.
+wide singletons. The same migration's request/attempt table rebuilds
+must preserve every existing row and JSON byte, foreign key, unique identity,
+index and immutable transition trigger; backfill counts/digests and
+`PRAGMA foreign_key_check` must reconcile independently before activation.
 
 ## Provider selection contract
 
@@ -1886,14 +2035,21 @@ Before persistence, validate that:
 - the request, period, source-snapshot digest, canonical provider-package digest
   and selection-schema version all match that mapping, preventing cross-request
   replay;
+- request, attempt, dispatch and selected output all carry the same immutable
+  `insight_selection_v3` generation contract; a v2 attempt/output or missing
+  contract cannot enter this path;
 - the provider projection passed its exact recursive field allowlist and
   forbidden private/internal-field scan before freezing, with no raw source,
   identity, attachment, secret, Data Decision or cross-account value;
 - every compressed snapshot artifact reproduces its recorded canonical
   uncompressed length and digest before it is parsed or sent;
 - a provider-selected path used the frozen provider/model/instruction/schema
-  envelope and the dispatch's current recovery epoch, unexpired lease
-  generation and matching fencing token;
+  envelope and exact invocation-manifest version/digest, passed the one-shot
+  outbound host/path/body audit, and used the dispatch's current recovery epoch,
+  unexpired lease generation and matching fencing token;
+- the actual call was one non-streaming Responses request with `maxRetries: 0`,
+  bounded timeout, `store: false`, telemetry disabled, no tools/repair/
+  continuation and no second fetch invocation;
 - the selected complete plan, ordered section plans, focus questions, rendered
   output and digests exactly match the immutable snapshot;
 - every selected finding and focus reference exists;
@@ -2197,9 +2353,32 @@ In addition to the 420-trade acceptance fixture, cover:
   checked before the best six are retained;
 - a legacy issued v2 review beside provider-selected and deterministic-default
   v3 reviews on the same account, all reopened through the normal customer path;
-- an activated provider's per-request reservation rejected before a call,
-  repeated transport failures, invalid structured selections and exhausted
-  retries, each reaching the exact frozen default without a fabricated receipt;
+- a cutover database containing issued, failed and stopped v2 requests plus zero
+  pending requests/attempts/reservations, proving the request/attempt rebuild
+  preserves every byte/count/digest and backfills only
+  `generation_contract_version`;
+- a missing/duplicate generation-contract singleton, a backward v3-to-v2
+  transition and feature-control enablement before the verified v3 transition,
+  each failing closed without request creation;
+- a planted pending v2 request/attempt/reservation or billable attempt without
+  reconciled receipt/no-usage evidence at the cutover gate, each blocking
+  activation rather than being silently upgraded;
+- an old-writer request/attempt insert that omits the required no-default
+  generation contract, a v2 attempt against a v3 request and each crossed v2/v3
+  output insertion, all rejected before a provider call or issuance;
+- an existing v2 account/period identity requested after activation, proving it
+  is returned unchanged without a v3 snapshot, second request or history
+  upgrade;
+- a first v3 monthly review containing two actually issued v2 and two actually
+  issued v3 weekly reviews, proving all four enter monthly context while v2
+  weeks do not fabricate hidden focus metadata;
+- a post-v3 attempt to start a v2-only binary or restore the pre-v3 backup,
+  proving the documented compatibility floor blocks destructive rollback;
+- an activated provider's local per-request reservation rejected before a call,
+  a receipt-bearing invalid structured selection and a post-boundary failure
+  with unknown usage, each reaching the exact frozen default while preserving
+  its distinct exact-or-maximum exposure and never fabricating a receipt or
+  making a second provider call;
 - the exact complete provider envelope immediately below and above its model-
   specific safe context boundary, proving no source fact is truncated,
   summarized or split into a second selection call;
@@ -2217,6 +2396,26 @@ In addition to the 420-trade acceptance fixture, cover:
 - a retry after provider settings and adapter code change, proving the frozen
   provider/model/instruction/schema/package envelope is used with no silent
   model substitution;
+- captured outbound requests proving the adapter uses one non-streaming
+  Responses POST to the approved OpenAI host/path with `store: false`, no tools/
+  continuation, the exact schema/package and the calibrated timeout/options;
+- a retryable provider error with `generateText` configured at `maxRetries: 0`,
+  plus a deliberately retrying fake SDK/fetch path, proving the one-shot
+  boundary permits at most one network invocation for one persisted dispatch;
+- receipt-bearing malformed output/refusal and a post-boundary SDK/network error
+  without trustworthy usage, proving the former records exact usage while the
+  latter becomes unresolved maximum exposure and cannot start another attempt;
+- a registered global AI SDK telemetry integration and Node diagnostics-channel
+  subscriber, proving explicit per-call telemetry disablement exposes no
+  prompt, package, output or provider body;
+- a hostile `OPENAI_BASE_URL`, gateway-related environment variable, redirect,
+  non-TLS URL, alternate port and unexpected Responses path, each rejected or
+  ignored before private data leaves the process;
+- an AI SDK/provider upgrade that adds or changes a body field/default and an
+  old compressed codec/invocation manifest, proving exact compatibility or
+  `provider_configuration_drift` fallback without silent request changes;
+- a provider timeout immediately below and above the frozen hard deadline,
+  proving the hard deadline precedes lease recovery and no hidden retry occurs;
 - configuration drift while the feature remains authorized, which may use the
   frozen default, versus account/platform control disable—including an
   operational kill action—and entitlement loss, which must remain fail-closed;
@@ -2303,6 +2502,16 @@ one planted fixture:
 - an idempotent request race returns one request and its one winning insight
   snapshot while discarding any losing calculation, including a different
   later-state digest;
+- generation contract is immutable from request through attempt, dispatch and
+  issued row; v2/v3 attempt or output substitution always fails;
+- the singleton generation contract advances at most once from v2 to v3,
+  request creation reads it in the insert transaction and no current-time/code-
+  default value can substitute for it;
+- an existing v2 period identity is never upgraded or duplicated after v3
+  activation, and a mixed v2/v3 month retains all actually issued weekly rows;
+- no v3 activation is possible while any v2 request, attempt, reservation or
+  receipt is pending/unreconciled, and no old writer can omit the required
+  generation contract after migration;
 - a retry reads the original shortlist after later Journal edits;
 - moving the source review's issuance timestamp later excludes every trade,
   event and day aggregate that occurred before the focus was actually issued;
@@ -2383,6 +2592,20 @@ one planted fixture:
   retry or silently substitute a model; eligible operational drift uses the
   default, while account/platform disable and entitlement-revocation gates
   remain fail-closed;
+- ambient endpoint/gateway variables and SDK/provider upgrades cannot change the
+  frozen provider API family, approved host/path or canonical invocation
+  manifest;
+- one persisted dispatch can cross the one-shot fetch boundary at most once;
+  SDK retry, repair, tool, continuation or streaming behavior cannot create a
+  hidden second provider request;
+- every post-boundary exception either records trustworthy exact usage or enters
+  `usage_unknown_after_dispatch`; an error class/status cannot manufacture a
+  zero-cost failure or authorize another provider attempt;
+- explicit `store: false` and disabled call telemetry remain true in the final
+  outbound body/runtime even when provider defaults or global telemetry
+  registration change;
+- removing a historical codec or invocation-manifest decoder while any
+  unerased snapshot references it fails compatibility verification;
 - an expired lease before the dispatch boundary creates no usage exposure,
   while an expired lease after that boundary retains one unresolved maximum
   exposure, cannot issue its provider result and cannot start another provider
@@ -2406,7 +2629,9 @@ one planted fixture:
 - a retry after renderer deployment changes returns the original rendered
   output digest;
 - existing v2 rows and both v3 generation sources parse to the same visible
-  customer shape without rewriting v2 history.
+  customer shape without rewriting v2 history; and
+- after the first v3 row, a v2-only runtime cannot pass the compatibility gate
+  and an older database restore cannot replace the authoritative history.
 
 An independent reference calculation verifies period totals, rule-cohort P/L,
 loss/profit shares, coverage-adjusted comparisons, weekly rates, medians, every
@@ -2444,6 +2669,12 @@ trade.
 - Provider preflight measures one frozen complete package against the configured
   model envelope. It does not make repeated trial calls or create a multi-stage
   model workflow merely because the exact-month evidence is large.
+- Each persisted dispatch permits at most one audited outbound fetch. Retryable
+  errors, structured-output failure, timeout and provider refusal cannot produce
+  hidden SDK retries, repair calls, tool steps or continuation requests.
+- The captured invocation fixture reports request-body validation and adapter
+  overhead without retaining the private body; telemetry remains disabled and
+  cannot copy the package into a second observability buffer.
 - A new safety limit requires measured database/provider evidence and a plan
   update; no arbitrary trade-count or snapshot-byte refusal is introduced.
 - Focused static scripts and type checks run with one worker where applicable.
@@ -2455,6 +2686,8 @@ trade.
 For each generated review, retain server-side:
 
 - insight-engine version;
+- active generation-contract singleton, minimum compatible reader contract and
+  first-v3 activation/request/issuance identities;
 - candidate counts by family and lane;
 - complete shortlisted candidate measurements and ranks;
 - component applicability, raw values, normalized weights and calculation
@@ -2465,6 +2698,11 @@ For each generated review, retain server-side:
   selection-schema versions, frozen provider/model/envelope identities,
   canonical/compressed provider-package byte counts, token counts and digest,
   rendered-output digest and generation source;
+- immutable generation-contract, provider-adapter, provider-invocation-manifest,
+  exact AI SDK/provider package versions and canonical outbound-manifest digest;
+- approved provider API family/host/path, bounded timeout, one-shot fetch count,
+  explicit retry/storage/telemetry/tool/continuation settings and Railway direct-
+  OpenAI runtime mode, never the API key, authorization header or raw body;
 - rejected-attempt selection errors;
 - deterministic-fallback reason when used;
 - database-recovery epoch, dispatch lease generation/state, nullable
@@ -2476,6 +2714,9 @@ For each generated review, retain server-side:
 - provider usage and cost through the existing receipt system, including real
   failed/late calls, with no receipt or cost created for a provider call that
   did not occur;
+- post-boundary outcome class (`exact_usage` or
+  `usage_unknown_after_dispatch`) and the evidence that allowed any pre-boundary
+  zero-usage classification;
 - unresolved maximum-cost exposure for calls whose committed dispatch boundary
   was crossed but usage is unknown, reported separately from actual receipt
   cost and never added after an exact receipt replaces it; and
@@ -2489,6 +2730,44 @@ private review prose, packages, notes or trade facts. Operational errors are
 normalized to bounded codes before logging or persistence.
 
 ## Failure handling
+
+- **Generation-contract singleton is missing, duplicated, invalid or below the
+  database's compatibility floor:** fail startup/request creation before any
+  provider work; do not infer a contract from code or existing snapshot rows.
+- **Cutover finds pending or unreconciled v2 work:** keep request intake and v3
+  activation stopped. Do not migrate the request onto v3, assume a call did not
+  occur or manufacture a terminal receipt.
+- **Old writer omits/mismatches `generation_contract_version`:** reject the
+  request/attempt before provider dispatch. A v2 attempt/output can never service
+  a v3 request and vice versa.
+- **A v2-only binary is proposed after a v3 row exists:** reject rollback below
+  the compatibility floor. Keep generation disabled on a v3-capable reader and
+  forward-fix instead; never restore an older database over issued history.
+- **Outbound endpoint/body or invocation manifest differs from the frozen
+  contract:** reject before network I/O and, when every normal authorization and
+  engine/safety gate still passes, issue the frozen default with
+  `provider_configuration_drift`.
+- **The SDK tries a second fetch, repair, tool step or continuation:** the one-
+  shot transport rejects it. If the first dispatch boundary was crossed, retain
+  unknown maximum exposure and use only deterministic fallback; never start a
+  replacement provider attempt.
+- **Provider timeout fires:** abort at the frozen hard deadline before lease
+  recovery, treat the boundary-crossed call conservatively and do not rely on
+  client-library retry.
+- **SDK/provider error or invalid structured output arrives after the transport
+  boundary:** persist an exact receipt when trustworthy usage exists. Without
+  trustworthy usage, record `usage_unknown_after_dispatch`, retain maximum
+  exposure and prohibit another provider attempt regardless of error label or
+  HTTP status.
+- **`store: false`, telemetry disablement, official OpenAI endpoint or another
+  privacy-critical invocation setting cannot be verified:** fail the provider
+  path before sending the private package. A previously valid, fully authorized
+  snapshot may issue only its local frozen deterministic default; no fallback
+  is permitted to send data across the uncertain boundary.
+- **Railway lacks the approved Node runtime, direct OpenAI egress/API key,
+  persistent `/data` or single-writer process boundary:** leave hosted AI Review
+  generation inactive. The Vercel AI SDK package name is not a reason to add a
+  Vercel hosting or gateway dependency.
 
 - **No eligible friction:** use the engine-authorized mixed-result or measured-
   strength fallback when one exists. Say that no qualifying held-back pattern
@@ -2507,16 +2786,19 @@ normalized to bounded codes before logging or persistence.
 - **Insufficient money coverage:** suppress unavailable money scores and use
   counts/rates; when a valid subset remains, state both affected and money-
   eligible counts in its server-rendered fact clause.
-- **Provider selects an invalid or unknown plan:** reject that attempt and retry
-  from the immutable package.
+- **Provider selects an invalid or unknown plan:** reject that attempt. Persist
+  its trustworthy exact usage when supplied; otherwise record
+  `usage_unknown_after_dispatch`. Issue only the frozen deterministic default
+  and never send the package again.
 - **Exactly one authorized plan exists:** after normal activation,
   configuration and authorization, issue it as a deterministic single-plan
   result without a pointless provider call or receipt.
 - **After feature/provider activation and ordinary request authorization, a
-  per-request reservation, transport, structured-output or all retry attempts
-  fail:** issue the frozen deterministic-default review plan when it already
-  passed every engine, renderer, output-safety and v3 contract check. Record the
-  precise fallback reason and `deterministic_default` source without inventing
+  local pre-boundary reservation fails or the one permitted provider call ends
+  without an acceptable selection:** issue the frozen deterministic-default
+  review plan when it already passed every engine, renderer, output-safety and
+  v3 contract check. Record the precise fallback reason,
+  `deterministic_default` source and exact-or-maximum exposure without inventing
   provider usage or a receipt. This is the same evidence-backed rendered plan,
   not a generic degraded review.
 - **Complete provider package exceeds the configured safe model envelope:** do
@@ -2582,6 +2864,8 @@ plan must record it before that file is edited.
 - `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-selection-validator.ts`
 - `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-renderer.ts`
 - `src/modules/coach/server/coach-ai-review-insight-repository.ts`
+- `src/modules/coach/server/coach-ai-review-insight-openai-adapter.ts`
+- `src/modules/coach/server/coach-ai-review-generation-compatibility.ts`
 - `src/modules/coach/server/coach-ai-review-insight-dispatch-recovery.ts`
 - one next-available forward Coach insight migration under
   `src/modules/coach/server/database/migrations/`
@@ -2653,6 +2937,16 @@ into engine code.
   store large canonical artifacts in verified versioned compressed form.
 - Pin the non-secret provider/model/instruction/schema envelope and add fenced
   dispatch leases, bounded crash/restore recovery and unresolved-cost exposure.
+- Add immutable request/attempt generation contracts, rebuild and reconcile the
+  v2 tables without changing historical bytes, and bind each attempt/output
+  family to its owning request contract.
+- Add the versioned host-neutral OpenAI Responses adapter with official endpoint,
+  `store: false`, telemetry disabled, `maxRetries: 0`, bounded timeout and the
+  one-shot outbound request validator. Keep Vercel hosting/Gateway out of the
+  runtime contract; the same Node adapter runs directly on Railway.
+- Harden or make unreachable both legacy v2 provider adapters before any further
+  live provider test; no old call site may retain implicit storage, retry,
+  telemetry, endpoint or timeout behavior during the cutover window.
 - Preflight the complete unsplit provider envelope against the configured model
   budget without omitting exact-month source facts.
 - Add v3 output/issued-review persistence, dual v2/v3 reads, exact provenance,
@@ -2685,6 +2979,15 @@ into engine code.
   accounting remains correct.
 - Prove provider/model/settings drift cannot rewrite a frozen request and that
   account/platform disable and entitlement revocation remain fail-closed.
+- Rehearse the no-pending-v2 cutover, table rebuild/backfill, old-writer fences,
+  mixed-v2/v3 first month and post-v3 rollback floor on a disposable copy.
+- Capture the final outbound request through a fake transport and prove one
+  Responses POST, official endpoint, exact allowlisted body, `store: false`, no
+  telemetry/hidden retry and timeout-before-lease ordering using the exact
+  installed AI SDK/provider versions.
+- Verify the adapter is host-neutral under a Railway-shaped Node environment;
+  real Railway secrets, persistent volume, worker and OpenAI data controls remain
+  separate hosted activation gates and are not changed by this slice.
 - Verify below/above-context packages remain complete and choose provider or
   deterministic issuance without truncation or splitting.
 - Run bounded non-persisted stability replays.
@@ -2694,6 +2997,9 @@ into engine code.
 - Record exact accepted formulas, engine version, known limitations and live
   outputs.
 - Update the narrative-quality progress record and AI Review beta handoff.
+- Record the no-mixed-writer cutover, generation compatibility floor and the
+  fact that Vercel AI SDK is a host-neutral package used directly from Railway,
+  not a Vercel hosting/Gateway dependency.
 - Compare the exact provider field allowlist and immutable retention behavior
   with AI Reviews Help and Privacy language. Any visible correction requires
   owner copy approval; do not assume internal ranking alone makes the expanded
@@ -3172,12 +3478,100 @@ settings, lease duration and recovery batch size must be chosen from the focused
 resource and failure benchmarks and frozen in their respective versioned
 contracts before activation.
 
+## Eighth adversarial plan QA pass - 2026-08-18
+
+The eighth pass attacked mixed-version deployment, destructive rollback, hidden
+provider-client behavior and Railway runtime portability. The source audit used
+the installed `ai@7.0.52` and `@ai-sdk/openai@4.0.30` documentation/source plus
+the active v2 adapters and migration contracts; it did not call a provider or
+change application code.
+
+Additional resolved findings:
+
+1. **The v2 request row did not identify which generation path owned it:** fixed
+   with an authoritative one-way generation-contract singleton and required
+   immutable request/attempt `generation_contract_version` columns distinguishing
+   `openai_direct_v2` from `insight_selection_v3`.
+2. **An old binary could create work after migration without understanding the
+   new engine:** fixed by rebuilding those columns without insert defaults, so
+   an omitted contract fails before an attempt or provider call.
+3. **The proposed issued-row trigger accepted either version without binding it
+   to request generation:** fixed by exact request→attempt→dispatch→output
+   contract matching and crossed-family rejection.
+4. **An existing v2 account/period identity could be silently upgraded:** fixed
+   by returning every existing request unchanged and never adding a v3 snapshot
+   or second request for the same period.
+5. **Pending v2 work at activation had no safe disposition:** fixed by requiring
+   zero pending/unreconciled v2 requests, attempts, reservations and receipts;
+   otherwise activation aborts.
+6. **A first v3 month may contain both v2 and v3 weekly reviews:** fixed with an
+   explicit mixed-month contract and fixture that includes every issued week
+   without inventing v2 hidden-focus metadata.
+7. **Rolling or concurrent old/new writers could spend on the wrong path:** fixed
+   with a single-node maintenance cutover, stopped old processes and database
+   contract fences rather than a rolling deployment.
+8. **A normal code rollback could make v3 reviews unreadable:** fixed with a
+   recorded post-v3 compatibility floor; rollback disables generation on a v3-
+   capable reader or forward-fixes, never down-migrates or restores away issued
+   history.
+9. **The SQLite table rebuild could lose constraints or alter immutable bytes:**
+   fixed with byte/count/digest, index, trigger, foreign-key and backup
+   reconciliation before activation.
+10. **One persisted attempt could hide the AI SDK's default two retries:** fixed
+    by explicit `maxRetries: 0` plus a one-shot fetch boundary that rejects a
+    second network invocation.
+11. **Structured-output repair, tools, continuation or streaming could add
+    hidden calls:** fixed with a non-streaming, no-tools, no-repair, stateless
+    one-call Responses manifest and captured-fetch fixture.
+12. **The current adapters have no hard timeout:** fixed by freezing a calibrated
+    total timeout that ends before lease recovery and cannot trigger SDK retry.
+13. **A thrown post-boundary error could be treated as a free retry even when
+    OpenAI processed the request:** fixed by requiring exact usage evidence or
+    `usage_unknown_after_dispatch`; an unknown-cost call cannot be followed by
+    another provider attempt.
+14. **The installed OpenAI provider defaults generation storage to true:** fixed
+    by requiring and outbound-validating `providerOptions.openai.store: false`.
+15. **A future global AI SDK telemetry integration could capture full private
+    inputs/outputs:** fixed by explicit per-call telemetry disablement and a
+    planted integration/diagnostics-channel leakage fixture.
+16. **Ambient `OPENAI_BASE_URL` could redirect the private package:** fixed by
+    explicitly pinning the official OpenAI endpoint, rejecting redirects and
+    disallowing activated gateway/alternate-host overrides.
+17. **Calling `openai(model)` relied on the library's current default API
+    family:** fixed by explicitly selecting the Responses API and freezing the
+    API family/path in the invocation manifest.
+18. **Reasoning effort, service tier or another provider default could change
+    behavior/cost after deployment:** fixed by freezing every supported material
+    option as a calibrated value or `not_applicable`.
+19. **An SDK/adapter upgrade could change the final HTTP body while package
+    digests still matched:** fixed with an exact outbound JSON allowlist,
+    canonical invocation digest and drift-to-default behavior before network
+    I/O.
+20. **Removing an old manifest or compression decoder could strand immutable
+    snapshots:** fixed with append-only compatibility registries while any
+    unerased row references the version.
+21. **The Vercel AI SDK name could be mistaken for a Vercel hosting dependency:**
+    fixed by specifying direct OpenAI calls from Railway and keeping Vercel
+    hosting/Gateway out of the runtime contract.
+22. **Verification, failure handling and implementation ownership did not cover
+    these boundaries:** fixed with cutover, old-writer, rollback, captured-
+    request, hidden-retry, storage, telemetry, endpoint, timeout, SDK-drift and
+    Railway-shaped fixtures plus explicit adapter/compatibility ownership.
+
+No unresolved critical design blocker remains after this pass. The exact
+reasoning/service-tier values and hard timeout remain calibration outputs, while
+Railway secrets, persistent volume, single-worker process and OpenAI data
+controls remain hosted activation gates rather than assumptions of local design.
+
 ## Completion boundary
 
 This redesign is complete only when:
 
 - each request is calculated from one consistent account-scoped source
   snapshot rather than a hybrid of concurrent Journal revisions;
+- request, attempt, dispatch and output share one immutable generation contract;
+  its singleton advances only after zero pending v2 work and no mixed old/new
+  writer, then prevents destructive rollback below the first v3 row;
 - every provider field is explicitly allowlisted and private/internal/cross-
   account data cannot enter packages, logs, Admin or support output;
 - deterministic planted findings, independent score calculations and sealed
@@ -3214,6 +3608,14 @@ This redesign is complete only when:
 - retries preserve the exact pinned provider/model/instruction/schema envelope
   with no silent model failover, while account/platform disable and entitlement
   revocation still prevent deterministic issuance;
+- the final outbound call is one audited non-streaming OpenAI Responses POST to
+  the approved endpoint with `maxRetries: 0`, bounded timeout, `store: false`,
+  telemetry disabled and no hidden tools/repair/continuation;
+- ambient environment variables, redirects, SDK/provider upgrades and default
+  changes cannot alter the frozen invocation manifest or leak the private body;
+- the host-neutral Node adapter runs directly on Railway without requiring
+  Vercel hosting or Gateway, while Railway/OpenAI hosted gates remain inactive
+  until separately verified;
 - crash and backup recovery require one authoritative runtime, advance a
   recovery epoch, fence every abandoned or pre-restore worker, do not make
   another provider attempt after unknown transport, distinguish pre-boundary

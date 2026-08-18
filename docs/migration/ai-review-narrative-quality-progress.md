@@ -83,15 +83,26 @@ four actually issued weekly reviews plus all 420 exact-month trades.
   raw logging, frozen model/envelope drift, HMAC rotation/collision, crash and
   recovery-epoch/backup fencing, unknown boundary-crossed-call cost, reservation
   overruns, erasure races and compressed-snapshot integrity/growth.
+- [x] Complete the eighth adversarial QA pass against v2/v3 cutover and rollback,
+  old-writer fencing, hidden AI SDK retries/repair, OpenAI storage/telemetry/
+  endpoint defaults, post-boundary unknown usage, invocation drift and direct
+  Railway runtime portability.
 - [ ] Implement and calibrate the deterministic insight engine.
 - [ ] Run the true-month issuance and provider stability acceptance.
 
-The seventh-pass design supersedes the prompt-only path's proposed multi-stage
+The eighth-pass design supersedes the prompt-only path's proposed multi-stage
 oversize handling. Once the insight engine is active, TraderLink calculates and
 renders the complete review locally from all exact facts. If the full frozen
 selection package cannot fit the configured model envelope, it issues that
 complete-source deterministic default; it does not split one review into two
 independent provider judgments or omit monthly evidence.
+
+The eighth source audit also pauses further live provider tests through the
+current v2 adapters: their installed AI SDK/OpenAI defaults permit hidden retries
+and provider storage unless explicitly overridden. Provider testing resumes only
+after the planned endpoint, `store: false`, telemetry-off, zero-hidden-retry and
+timeout boundary is implemented and captured-request verified. The same library
+runs directly on Railway; no Vercel hosting or Gateway dependency is required.
 
 ## Owner-directed production hardening continuation — 2026-08-18
 
