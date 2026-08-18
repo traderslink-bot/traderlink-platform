@@ -7,7 +7,7 @@
 ## Owner-approved changes
 
 - Data Decisions is a direct navigation link; the separate Data group is removed.
-- Import Trades follows Account, and Market Charts is the final navigation link.
+- Import Trades follows Account; Market Charts, Data Decisions, and Help Center are the final three links in that order.
 - Trading Rules and Rule Results follow Open Positions in the Trades group.
 - Workspace places Current Focuses, Focus rules, and Previous trading-day review in one responsive row on large screens.
 - Long Current Focuses text stays within its card and provides a View more control.

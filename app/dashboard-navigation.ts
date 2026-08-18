@@ -179,11 +179,6 @@ export const DASHBOARD_STANDALONE_ITEMS: readonly DashboardNavigationItem[] =
       icon: "aiReviews" as const,
     }),
     Object.freeze({
-      href: "/help",
-      label: "Help Center",
-      icon: "help" as const,
-    }),
-    Object.freeze({
       href: "/account",
       label: "Account",
       icon: "account" as const,
@@ -194,14 +189,19 @@ export const DASHBOARD_STANDALONE_ITEMS: readonly DashboardNavigationItem[] =
       icon: "import" as const,
     }),
     Object.freeze({
+      href: "/charts",
+      label: "Market Charts",
+      icon: "marketCharts" as const,
+    }),
+    Object.freeze({
       href: "/data-decisions",
       label: "Data Decisions",
       icon: "data" as const,
     }),
     Object.freeze({
-      href: "/charts",
-      label: "Market Charts",
-      icon: "marketCharts" as const,
+      href: "/help",
+      label: "Help Center",
+      icon: "help" as const,
     }),
   ]);
 
