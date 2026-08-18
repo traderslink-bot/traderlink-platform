@@ -270,17 +270,31 @@ export class MoomooExecutionImportWorker {
         decisionRequiredCount: result?.pendingSourceDecisionCount ?? 0,
         timestamp,
       });
-      if (job?.state === "completed") {
+      const shouldNotifyCompletion = job?.state === "completed" && (
+        job.importKind !== "incremental_sync" ||
+        job.acceptedExecutionCount > 0 ||
+        job.decisionRequiredCount > 0
+      );
+      if (job && shouldNotifyCompletion) {
+        const needsDecision = job.decisionRequiredCount > 0;
         new PlatformNotificationRepository(this.database).create({
           category: "broker_import",
-          destinationPath: "/imports",
+          destinationPath: needsDecision ? "/data-decisions" : "/imports",
           journalAccountId: claimed.accountId,
           kind: "broker_import_completed",
           occurredAtUtc: timestamp,
           scope,
           sourceEventKey: `broker_import_completed_${claimed.brokerImportJobId}`,
-          summary: "Your latest broker trades are available in your journal.",
-          title: "Broker import complete",
+          summary: needsDecision
+            ? "Your broker import found a few items that need your review."
+            : job.importKind === "incremental_sync"
+              ? "Your latest broker trades are available in your journal."
+              : "Your requested broker import is ready in your journal.",
+          title: needsDecision
+            ? "Broker import needs attention"
+            : job.importKind === "incremental_sync"
+              ? "New broker trades are available"
+              : "Broker import complete",
         });
       }
     }).immediate();

@@ -4,6 +4,7 @@ import type Database from "better-sqlite3";
 import Decimal from "decimal.js";
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
+import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
 import { coachAiReviewLongContextMultipliers } from
   "./coach-ai-review-model-limits";
 import {
@@ -1888,6 +1889,20 @@ WHERE coach_ai_review_period_request_id = ? AND state = 'pending'`).run(
           table: "coach_ai_review_period_requests_v2",
         });
       }
+      const reviewLabel = request.reviewKind === "two_week"
+        ? "two-week"
+        : request.reviewKind;
+      new PlatformNotificationRepository(this.database).create({
+        category: "ai_review",
+        destinationPath: "/ai-reviews",
+        journalAccountId: accountId(scope),
+        kind: "ai_review_ready",
+        occurredAtUtc: issuedAtUtc,
+        scope,
+        sourceEventKey: `ai_review_ready_${issuedReviewId}`,
+        summary: `Your ${reviewLabel} AI Review is ready to read.`,
+        title: "Your AI Review is ready",
+      });
       return this.readIssuedReviewV2(scope, issuedReviewId);
     });
   }

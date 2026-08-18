@@ -16,8 +16,10 @@ import { saveDiscordDmNotificationCategories } from "./notification-preferences-
 
 const labels: Readonly<Record<PlatformNotificationCategory, string>> = Object.freeze({
   ai_review: "AI Reviews",
+  broker_connection: "Broker connection",
   broker_import: "Broker imports",
   chart_update: "Chart updates",
+  data_decision: "Data Decisions",
   statement_import: "Statement imports",
 });
 

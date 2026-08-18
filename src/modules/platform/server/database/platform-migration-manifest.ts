@@ -56,6 +56,7 @@ import { platformReportingCurrencyCoverageMigration } from "./migrations/0035_pl
 import { platformWhopAiReviewEntitlementsMigration } from "./migrations/0045_platform_whop_ai_review_entitlements";
 import { platformWhopAiReviewReconciliationMigration } from "./migrations/0048_platform_whop_ai_review_reconciliation";
 import { platformNotificationsMigration } from "./migrations/0053_platform_notifications";
+import { platformNotificationCoverageMigration } from "./migrations/0063_platform_notification_coverage";
 import { dailyTradeMoomooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer";
 import { dailyTradeExactTurnoverMigration } from "@/src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover";
 import { dailyTradePathMaterializationMigration } from "@/src/modules/level-analysis/server/database/migrations/0040_daily_trade_path_materialization";
@@ -320,6 +321,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/coach/server/database/migrations/0062_coach_ai_review_luna_pricing_refresh.ts",
       migration: coachAiReviewLunaPricingRefreshMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0063_platform_notification_coverage.ts",
+      migration: platformNotificationCoverageMigration,
     }),
   ]);
 
@@ -589,6 +594,7 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "journal_rule_ideas",
       "journal_rule_idea_versions",
     ]),
+    "0063_platform_notification_coverage": Object.freeze([]),
   });
 
 export function expectedPlatformTableNamesForPrefix(

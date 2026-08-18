@@ -21432,3 +21432,16 @@ Current best next step:
   the explicit Privacy-slice allowlist and make the requested narrow local
   commit. Do not run a broad test suite, start/restart the dashboard or touch
   real account data for this review.
+
+# 2026-08-18 Notification coverage acceptance
+
+- The owner approved the local notification coverage expansion: exact issued
+  AI Review readiness, quiet meaningful-result-only Moomoo automatic imports,
+  requested-history completion, Moomoo reconnection required, and standalone
+  manual-trade Data Decisions.
+- Migration `0063_platform_notification_coverage` was applied only after a
+  verified private backup and independent restore checkpoint; the completed
+  migration integrity gate passes.
+- Discord delivery, final chart-update events, and AI Review failure alerts
+  remain separate hosted/retry-contract gates. Do not activate them merely
+  because local in-app notification writers are accepted.

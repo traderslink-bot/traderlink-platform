@@ -4,6 +4,8 @@
 
 **Progress record:** [Notifications And AI Import Repair Progress](notifications-and-ai-import-repair-progress.md)
 
+**Follow-on coverage implementation:** [Notification Coverage Expansion Plan](notification-coverage-expansion-plan.md) records the owner-approved 2026-08-18 expansion for AI Review readiness, Data Decisions, Moomoo reauthorization, and quiet automatic-sync behavior. Its progress record names the remaining visual and hosted-activation gates.
+
 ## Goal
 
 Give every TraderLink user one clear place to see completed work and anything

@@ -5,8 +5,10 @@
  */
 export const PLATFORM_NOTIFICATION_CATEGORIES = [
   "ai_review",
+  "broker_connection",
   "broker_import",
   "chart_update",
+  "data_decision",
   "statement_import",
 ] as const;
 
@@ -23,9 +25,12 @@ export type PlatformNotificationDeliveryChannel =
 
 export const PLATFORM_NOTIFICATION_KINDS = [
   "ai_review_ready",
+  "ai_review_needs_attention",
+  "broker_connection_reauthorization_required",
   "broker_import_completed",
   "broker_import_failed",
   "chart_update_ready",
+  "data_decision_needs_review",
   "statement_import_completed",
   "statement_import_needs_action",
   "statement_ai_repair_started",

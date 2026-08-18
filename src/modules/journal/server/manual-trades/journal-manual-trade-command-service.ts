@@ -5,6 +5,7 @@ import {
   createCanonicalUtcTimestamp,
   platformFailure,
 } from "@/src/modules/platform/server/database/platform-migration-contract";
+import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
 import type {
   JournalManualTradeCommitRequest,
   JournalManualTradeGroupConfirmation,
@@ -64,6 +65,7 @@ export class JournalManualTradeCommandService {
     private readonly roundTrips: JournalRoundTripService,
     private readonly previews: JournalManualTradePreviewService,
     private readonly dailyTradeAnalyzer?: DailyTradeMoomooAnalyzerService,
+    private readonly notifications?: PlatformNotificationRepository,
   ) {}
 
   commit(
@@ -225,6 +227,23 @@ export class JournalManualTradeCommandService {
         now,
         new Set(rebuilds.map((rebuild) => rebuild.chainKeySha256)),
       );
+      const openedDecisionCount = new Set([
+        ...sourceDecisions,
+        ...chainDecisions,
+      ].map((decision: JournalDataDecisionRecord) => decision.decisionId)).size;
+      if (openedDecisionCount > 0) {
+        this.notifications?.create({
+          category: "data_decision",
+          destinationPath: "/data-decisions",
+          journalAccountId: accountId,
+          kind: "data_decision_needs_review",
+          occurredAtUtc: timestamp,
+          scope,
+          sourceEventKey: `data_decision_manual_${committed.importBatchId}`,
+          summary: "Some trade details need your confirmation before every affected result can be complete.",
+          title: "Data Decisions need your review",
+        });
+      }
       for (const group of preview.groups) {
         const confirmation = confirmations.get(group.groupRef)!;
         const allocations: JournalManualAllocationTarget[] = group.allocations.map(

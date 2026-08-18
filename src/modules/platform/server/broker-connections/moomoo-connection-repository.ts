@@ -9,6 +9,7 @@ import {
   createCanonicalUuidV4,
   platformFailure,
 } from "../database/platform-migration-contract";
+import { PlatformNotificationRepository } from "../notifications/platform-notification-repository";
 import type { EncryptedMoomooCredentials } from "./moomoo-connection-credentials";
 
 export type MoomooConnectionRecord = Readonly<{
@@ -65,11 +66,35 @@ export class MoomooConnectionRepository {
 
   markReauthorizationRequired(scope: WorkspaceAccessScope, timestamp: string): void {
     assertCanonicalUtcTimestamp(timestamp, "timestamp");
-    const result = this.database.prepare(`UPDATE platform_broker_connections
+    const transition = () => {
+      const current = this.find(scope);
+      if (!current || current.state !== "active") {
+        platformFailure("TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED");
+      }
+      const result = this.database.prepare(`UPDATE platform_broker_connections
 SET connection_state = 'reauthorization_required', updated_at_utc = ?
 WHERE user_id = ? AND workspace_id = ? AND provider = 'moomoo'
   AND connection_state = 'active'`).run(timestamp, scope.userId, scope.workspaceId);
-    if (result.changes !== 1) platformFailure("TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED");
+      if (result.changes !== 1) {
+        platformFailure("TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED");
+      }
+      new PlatformNotificationRepository(this.database).create({
+        category: "broker_connection",
+        destinationPath: "/account/trading",
+        journalAccountId: scope.activeAccountId,
+        kind: "broker_connection_reauthorization_required",
+        occurredAtUtc: timestamp,
+        scope,
+        sourceEventKey: `broker_connection_reauthorization_${current.connectionId}`,
+        summary: "Your Moomoo connection needs to be reconnected before TraderLink can continue updates.",
+        title: "Reconnect Moomoo",
+      });
+    };
+    if (this.database.inTransaction) {
+      transition();
+    } else {
+      this.database.transaction(transition).immediate();
+    }
   }
 
   revoke(scope: WorkspaceAccessScope, input: Readonly<{

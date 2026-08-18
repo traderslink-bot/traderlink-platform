@@ -111,6 +111,8 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
             Object.freeze(["Statement import needs attention", "TraderLink added what it could and needs you to look at a few items before they can be settled."]),
             Object.freeze(["Broker import complete", "Newly imported broker trades are available in your Trade Tracker."]),
             Object.freeze(["Broker import needs attention", "The import could not finish. Open the update to review the next step."]),
+            Object.freeze(["Reconnect Moomoo", "Your Moomoo connection needs to be reconnected before TraderLink can continue updates."]),
+            Object.freeze(["Data Decisions need your review", "Some trade details need your confirmation before every affected result can be complete."]),
             Object.freeze(["Chart update ready", "A completed chart update is available for an eligible trade review."]),
             Object.freeze(["AI Review ready", "A saved weekly or monthly review is ready to read when AI Reviews are available for your account."]),
           ]) }),
@@ -132,7 +134,7 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
         blocks: Object.freeze([
           Object.freeze({ kind: "steps", items: Object.freeze([
             Object.freeze({ title: "1. Open Account settings", text: "Open Account from the main menu, then choose Preferences and find Notifications." }),
-            Object.freeze({ title: "2. Choose the updates you want", text: "Choose AI Reviews, broker imports, chart updates, statement imports, or any combination that helps you." }),
+            Object.freeze({ title: "2. Choose the updates you want", text: "Choose AI Reviews, broker connection, broker imports, Data Decisions, chart updates, statement imports, or any combination that helps you." }),
             Object.freeze({ title: "3. Save your choices", text: "You can change these choices whenever you want." }),
           ]) }),
           Object.freeze({ kind: "callout", title: "Discord is optional", text: "Every update still appears in the Notifications page. Turning a Discord category off does not hide it from TraderLink." }),

@@ -42,6 +42,7 @@ import { JournalTradingDayReviewService } from "./reviews/journal-trading-day-re
 import { DailyTradeAnalyzerRepository } from "@/src/modules/level-analysis/server/daily-trade-analyzer-repository";
 import { DailyTradeMoomooAnalyzerService } from "@/src/modules/level-analysis/server/daily-trade-moomoo-analyzer-service";
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
+import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
 
 export type JournalIntegrityRuntime = Readonly<{
   accounts: JournalAccountService;
@@ -138,6 +139,7 @@ export function createJournalIntegrityRuntime(
       roundTrips,
       manualTradePreviews,
       dailyTradeAnalyzer,
+      new PlatformNotificationRepository(database),
     ),
     manualTradePreviews,
     reads: new JournalProductReadService(database),
