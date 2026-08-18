@@ -12,6 +12,7 @@ import { moomooExecutionImportFoundationMigration } from "@/src/modules/journal/
 import { journalRuleReviewNotesMigration } from "@/src/modules/journal/server/database/migrations/0052_journal_rule_review_notes";
 import { journalAiImportRepairMigration } from "@/src/modules/journal/server/database/migrations/0054_journal_ai_import_repair";
 import { journalAiChatTradeStyleSourceMigration } from "@/src/modules/journal/server/database/migrations/0057_journal_ai_chat_trade_style_source";
+import { journalRuleIdeasMigration } from "@/src/modules/journal/server/database/migrations/0061_journal_rule_ideas";
 import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
 import { tradeExplorerComparisonStudiesMigration } from "@/src/modules/journal-analytics/server/database/migrations/0060_trade_explorer_comparison_studies";
 import { levelAnalysisCandleReviewMigration } from "@/src/modules/level-analysis/server/database/migrations/0009_level_analysis_candle_review";
@@ -311,6 +312,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/journal-analytics/server/database/migrations/0060_trade_explorer_comparison_studies.ts",
       migration: tradeExplorerComparisonStudiesMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/journal/server/database/migrations/0061_journal_rule_ideas.ts",
+      migration: journalRuleIdeasMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -574,6 +579,10 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     "0060_trade_explorer_comparison_studies": Object.freeze([
       "journal_trade_explorer_comparison_studies",
       "journal_trade_explorer_comparison_study_versions",
+    ]),
+    "0061_journal_rule_ideas": Object.freeze([
+      "journal_rule_ideas",
+      "journal_rule_idea_versions",
     ]),
   });
 

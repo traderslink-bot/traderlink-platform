@@ -3,10 +3,11 @@
 ## Status
 
 Active — the owner visually approved the completed Compare Trades page on
-2026-08-18. It supports two to four groups and private,
-immutable-versioned saved comparisons. Deterministic Rule evidence is the next
-checkpoint. No Rule idea, Chat exposure, provider request, trading-fact
-mutation or deployment has been accepted yet.
+2026-08-18. The deterministic Rule-idea detector, immutable evidence storage,
+issuance/disposition safeguards and first Rules-page card are now implemented.
+The card is ready for owner visual review. No Rule idea was silently issued on
+page load, no rule was activated, and no Chat exposure, provider request,
+trading-fact mutation or deployment has been accepted.
 
 The owner corrected the navigation boundary: Compare Trades is directly below
 Trade Explorer in the left Trades navigation, not in Analytics. Both cross-page
@@ -29,8 +30,8 @@ stage only its explicit files at a verified checkpoint.
 - [x] Implement and reconcile the two-group comparison server contract.
 - [x] Add the first Compare UI and obtain owner visual/product approval.
 - [x] Expand to four groups and saved studies.
-- [ ] Implement deterministic Rule evidence, lifecycle and dispositions.
-- [ ] Add the Rule ideas UI and obtain owner visual/product approval.
+- [x] Implement deterministic Rule evidence, lifecycle and dispositions.
+- [ ] Add the Rule ideas UI and obtain owner visual/product approval. The UI is implemented and awaiting review.
 - [ ] Add bounded AI Chat reads and maintained Help/capability coverage.
 - [ ] Complete final verification and narrow local commits.
 
@@ -61,3 +62,28 @@ cross-page buttons were removed. The final operational comparison verifier
 reconciled four groups, 24 compatible metric pairs and all 331 supporting
 completed trades while confirming that the protected database was unchanged.
 Focused ESLint and live HTTP checks passed; no test runner was used.
+
+## Deterministic Rule evidence checkpoint
+
+- Migration `0061_journal_rule_ideas` adds one account-scoped current record
+  and immutable evidence versions. A verified 60-migration backup and restored
+  copy were created before the local database advanced to migration 61.
+- Candidate evidence reuses the existing preset evaluator. Shared eligibility
+  requires three active days, 20 completed Day trades and 50 accepted
+  executions. Each issued candidate must also pass its family-specific trigger
+  and affected-trade minimums, underperform in total and per-trade average,
+  remain negative without its single worst trade, span at least three days and
+  keep its largest ticker share at or below one half.
+- One new idea may be issued within 28 days. `Not for me` suppresses the same
+  preset for 90 days. `Save for later` retains the same record. Every
+  disposition uses stale-state and account checks.
+- The real-account read-only verifier found five eligible candidates over
+  1,521 affected/comparison evidence rows and confirmed the protected database
+  hash did not change. An isolated database copy verified four immutable
+  lifecycle versions, reissue timing, suppression, retention and stale-change
+  rejection. Identifiers stayed redacted.
+- The Rules page now has a Rule ideas card. An empty account shows **Check my
+  trades**; checking explicitly issues at most one factual idea. **Add rule**
+  opens the existing preset editor and its explicit **Activate rule**
+  confirmation. Page load, evidence, Save for later and Not for me cannot
+  activate a rule.
