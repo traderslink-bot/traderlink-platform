@@ -53,7 +53,6 @@ import { useEffect, useState, type ReactNode } from "react";
 
 import type { PlatformNotification } from "@/src/modules/platform/contracts/platform-notification-contracts";
 import {
-  DASHBOARD_DATA_NAVIGATION_GROUP,
   DASHBOARD_HOME_ITEM,
   DASHBOARD_MAIN_NAVIGATION_GROUPS,
   DASHBOARD_NAVIGATION_HREFS,
@@ -208,7 +207,6 @@ export function DashboardShell({
     trades: pathname.startsWith("/trades"),
     analytics: pathname.startsWith("/analytics") && !pathname.startsWith("/analytics/trade-analyzer"),
     tradeAnalyzer: pathname.startsWith("/analytics/trade-analyzer"),
-    data: pathname === "/imports" || pathname === "/manual-entry",
   });
 
   const desktopWidth = collapsed ? collapsedWidth : expandedWidth;
@@ -359,57 +357,6 @@ export function DashboardShell({
                 pathname={pathname}
               />
             ))}
-            {[DASHBOARD_DATA_NAVIGATION_GROUP].map((group) => {
-              const open = expandedGroups[group.id] || group.items.some((item) =>
-                isActive(pathname, item.href));
-              return (
-                <Box key={group.id}>
-                  {compact ? null : (
-                    <ListItemButton
-                      aria-expanded={open}
-                      onClick={() =>
-                        setExpandedGroups((current) => ({
-                          ...current,
-                          [group.id]: !current[group.id],
-                        }))
-                      }
-                      sx={{ borderRadius: 2, minHeight: 40, mx: 1, mt: 0.75 }}
-                    >
-                      <ListItemIcon sx={{ minWidth: 38 }}>
-                        {navigationIcon(group.icon)}
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={group.label}
-                        slotProps={{
-                          primary: {
-                            sx: { fontSize: 13, fontWeight: 720 },
-                          },
-                        }}
-                      />
-                      {open ? (
-                        <ExpandLessRoundedIcon fontSize="small" />
-                      ) : (
-                        <ExpandMoreRoundedIcon fontSize="small" />
-                      )}
-                    </ListItemButton>
-                  )}
-                  <Collapse in={compact || open} timeout="auto" unmountOnExit>
-                    <List disablePadding>
-                      {group.items.map((item) => (
-                        <NavigationLink
-                          collapsed={compact}
-                          item={item}
-                          key={item.href}
-                          onNavigate={closeMobile}
-                          onOpenAiChat={openAiChat}
-                          pathname={pathname}
-                        />
-                      ))}
-                    </List>
-                  </Collapse>
-                </Box>
-              );
-            })}
           </List>
         </Box>
         {compact ? (

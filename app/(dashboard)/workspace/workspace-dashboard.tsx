@@ -1,19 +1,15 @@
 "use client";
 
-import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import DateRangeRoundedIcon from "@mui/icons-material/DateRangeRounded";
-import FileUploadRoundedIcon from "@mui/icons-material/FileUploadRounded";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
-import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { useState } from "react";
 
 import {
   DashboardDataScopeChip,
@@ -83,6 +79,39 @@ function ruleOutcomeColor(status: "followed" | "broken"): "success" | "error" {
   return status === "followed" ? "success" : "error";
 }
 
+function CurrentFocusContent({ content }: { content: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const needsToggle = content.trim().length > 500;
+
+  return (
+    <>
+      <Typography
+        color="text.secondary"
+        sx={{
+          overflowWrap: "anywhere",
+          whiteSpace: "pre-wrap",
+          ...(needsToggle && !expanded
+            ? {
+              WebkitBoxOrient: "vertical",
+              WebkitLineClamp: 8,
+              display: "-webkit-box",
+              overflow: "hidden",
+            }
+            : {}),
+        }}
+        variant="body2"
+      >
+        {content}
+      </Typography>
+      {needsToggle ? (
+        <Button onClick={() => setExpanded((current) => !current)} size="small" sx={{ mt: 0.75 }}>
+          {expanded ? "Show less" : "View more"}
+        </Button>
+      ) : null}
+    </>
+  );
+}
+
 function ruleOutcomeLabel(input: Readonly<{
   ruleTitle: string;
   status: "followed" | "broken";
@@ -141,22 +170,21 @@ export function WorkspaceDashboard({
         ))}
       </Box>
 
-      {reviewSummary?.currentFocuses || reviewSummary?.focusRules.length ? (
+      {reviewSummary?.currentFocuses || reviewSummary?.focusRules.length || reviewSummary?.previousReview ? (
         <Box
           sx={{
             display: "grid",
             gap: 2,
             gridTemplateColumns: {
               xs: "minmax(0, 1fr)",
-              lg: "repeat(2, minmax(0, 1fr))",
+              sm: "repeat(2, minmax(0, 1fr))",
+              lg: "repeat(3, minmax(0, 1fr))",
             },
           }}
         >
           {reviewSummary.currentFocuses ? (
-            <DashboardPanel title="Current Focuses">
-              <Typography color="text.secondary" sx={{ whiteSpace: "pre-wrap" }} variant="body2">
-                {reviewSummary.currentFocuses}
-              </Typography>
+            <DashboardPanel sx={{ minWidth: 0 }} title="Current Focuses">
+              <CurrentFocusContent content={reviewSummary.currentFocuses} />
             </DashboardPanel>
           ) : null}
 
@@ -180,9 +208,6 @@ export function WorkspaceDashboard({
               </Stack>
             </DashboardPanel>
           ) : null}
-        </Box>
-      ) : null}
-
       {reviewSummary?.previousReview ? (
         <DashboardPanel
           action={(
@@ -264,6 +289,8 @@ export function WorkspaceDashboard({
           </Stack>
         </DashboardPanel>
       ) : null}
+        </Box>
+      ) : null}
 
       <Box
         sx={{
@@ -307,49 +334,6 @@ export function WorkspaceDashboard({
           )}
         </DashboardPanel>
 
-        <Card sx={{ height: "100%" }}>
-          <CardContent
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              height: "100%",
-              p: { xs: 2, sm: 2.5 },
-              "&:last-child": { pb: { xs: 2, sm: 2.5 } },
-            }}
-          >
-            <Typography color="primary.main" sx={{ fontWeight: 700 }} variant="caption">
-              Quick action
-            </Typography>
-            <Typography component="h2" variant="h2">
-              Add a manual trade
-            </Typography>
-            <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">
-              Enter the ticker, side, execution date and time, quantity, price,
-              and trading costs in the complete manual-entry form.
-            </Typography>
-            <Stack spacing={1.25} sx={{ mt: 2 }}>
-              <Button
-                href="/manual-entry"
-                startIcon={<AddRoundedIcon />}
-                variant="contained"
-              >
-                Open manual entry
-              </Button>
-              <Button
-                href="/imports"
-                startIcon={<FileUploadRoundedIcon />}
-                variant="outlined"
-              >
-                Import a statement
-              </Button>
-            </Stack>
-            <Box sx={{ flexGrow: 1 }} />
-            <Divider sx={{ my: 2 }} />
-            <Typography color="text.secondary" variant="caption">
-              Account and owner scope are assigned securely by the server.
-            </Typography>
-          </CardContent>
-        </Card>
       </Box>
 
       <DashboardPanel

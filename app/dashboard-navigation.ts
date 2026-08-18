@@ -34,7 +34,7 @@ export type DashboardNavigationItem = Readonly<{
 }>;
 
 export type DashboardNavigationGroup = Readonly<{
-  id: "trades" | "analytics" | "tradeAnalyzer" | "data";
+  id: "trades" | "analytics" | "tradeAnalyzer";
   label: string;
   icon: DashboardNavigationIconKey;
   items: readonly DashboardNavigationItem[];
@@ -74,11 +74,6 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
           icon: "calendar" as const,
         }),
         Object.freeze({
-          href: "/rules",
-          label: "Trading Rules",
-          icon: "rules" as const,
-        }),
-        Object.freeze({
           href: "/analytics/trade-explorer",
           label: "Trade Explorer",
           icon: "tradeExplorer" as const,
@@ -92,6 +87,16 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
           href: "/trades/open",
           label: "Open Positions",
           icon: "data" as const,
+        }),
+        Object.freeze({
+          href: "/rules",
+          label: "Trading Rules",
+          icon: "rules" as const,
+        }),
+        Object.freeze({
+          href: "/rules/results",
+          label: "Rule Results",
+          icon: "results" as const,
         }),
       ]),
     }),
@@ -164,11 +169,6 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
 export const DASHBOARD_STANDALONE_ITEMS: readonly DashboardNavigationItem[] =
   Object.freeze([
     Object.freeze({
-      href: "/imports",
-      label: "Import Trades",
-      icon: "import" as const,
-    }),
-    Object.freeze({
       href: "/ai-chat",
       label: "AI Chat",
       icon: "aiChat" as const,
@@ -177,11 +177,6 @@ export const DASHBOARD_STANDALONE_ITEMS: readonly DashboardNavigationItem[] =
       href: "/ai-reviews",
       label: "AI Reviews",
       icon: "aiReviews" as const,
-    }),
-    Object.freeze({
-      href: "/charts",
-      label: "Market Charts",
-      icon: "marketCharts" as const,
     }),
     Object.freeze({
       href: "/help",
@@ -193,21 +188,22 @@ export const DASHBOARD_STANDALONE_ITEMS: readonly DashboardNavigationItem[] =
       label: "Account",
       icon: "account" as const,
     }),
+    Object.freeze({
+      href: "/imports",
+      label: "Import Trades",
+      icon: "import" as const,
+    }),
+    Object.freeze({
+      href: "/data-decisions",
+      label: "Data Decisions",
+      icon: "data" as const,
+    }),
+    Object.freeze({
+      href: "/charts",
+      label: "Market Charts",
+      icon: "marketCharts" as const,
+    }),
   ]);
-
-export const DASHBOARD_DATA_NAVIGATION_GROUP: DashboardNavigationGroup =
-  Object.freeze({
-    id: "data",
-    label: "Data",
-    icon: "import",
-    items: Object.freeze([
-      Object.freeze({
-        href: "/data-decisions",
-        label: "Data Decisions",
-        icon: "data" as const,
-      }),
-    ]),
-  });
 
 export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
   Object.freeze({
@@ -236,6 +232,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/ai-reviews": "AI Reviews",
     "/ai-chat": "AI Chat",
     "/rules": "Trading Rules",
+    "/rules/results": "Rule Results",
     "/imports": "Import Trades",
     "/manual-entry": "Manual Entry",
     "/data-decisions": "Data Decisions",
@@ -249,7 +246,6 @@ export const DASHBOARD_NAVIGATION_HREFS: readonly string[] = Object.freeze([
     group.items.map((item) => item.href),
   ),
   ...DASHBOARD_STANDALONE_ITEMS.map((item) => item.href),
-  ...DASHBOARD_DATA_NAVIGATION_GROUP.items.map((item) => item.href),
 ]);
 
 export type DashboardHelpTarget = Readonly<{

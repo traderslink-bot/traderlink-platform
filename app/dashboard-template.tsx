@@ -13,7 +13,6 @@ export {
   DashboardUnavailableState,
 } from "./dashboard-ui";
 export {
-  DASHBOARD_DATA_NAVIGATION_GROUP,
   DASHBOARD_HOME_ITEM,
   DASHBOARD_MAIN_NAVIGATION_GROUPS,
   DASHBOARD_NAVIGATION_HREFS,
