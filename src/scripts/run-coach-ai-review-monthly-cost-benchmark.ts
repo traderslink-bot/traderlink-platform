@@ -39,6 +39,7 @@ const OUTPUT_PRICE_PER_MILLION = new Decimal("1.20");
 const LONG_CONTEXT_THRESHOLD = 272_000;
 
 type ProfileName = "low" | "planning" | "heavy";
+type MonthlyScenario = "weekly_context_deduplicated" | "monthly_only_full_evidence";
 type Profile = Readonly<{
   name: ProfileName;
   tradesPerOpenDay: number;
@@ -501,6 +502,72 @@ function buildMonthlyInput(
   });
 }
 
+function buildMonthlyOnlyInput(
+  profile: Profile,
+  weeklyInputs: readonly CoachPeriodicAiReviewInputV2[],
+): CoachMonthlyAiReviewInputV2 {
+  const august31 = buildDay(profile, "2026-08-31", 20);
+  const days = Object.freeze([
+    ...weeklyInputs.flatMap((input) => input.reviewPeriodMarketFacts.days),
+    august31.facts,
+  ]);
+  const rawReflectionContext = Object.freeze([
+    ...weeklyInputs.flatMap((input) => input.completedDailyReflections.map((reflection) =>
+      Object.freeze({
+        reflection,
+        sourcePeriodStartDate: input.period.startDate,
+        sourcePeriodEndDate: input.period.endDate,
+        narrativeOwnerMonth: "2026-08",
+        contextKind: "current_month_raw" as const,
+        statisticalUse: "prohibited" as const,
+      }))),
+    Object.freeze({
+      reflection: august31.reflection,
+      sourcePeriodStartDate: "2026-08-31",
+      sourcePeriodEndDate: "2026-08-31",
+      narrativeOwnerMonth: "2026-08",
+      contextKind: "current_month_raw" as const,
+      statisticalUse: "prohibited" as const,
+    }),
+  ]);
+  return Object.freeze({
+    contractVersion: COACH_MONTHLY_AI_REVIEW_INPUT_CONTRACT_VERSION_V2,
+    calendarMonth: Object.freeze({
+      calendarMonthStartDate: "2026-08-01",
+      calendarMonthEndDate: "2026-08-31",
+      coverageStartDate: "2026-08-01",
+      coverageEndDate: "2026-08-31",
+      periodCoverage: "complete_month",
+      calendarTimezone: "America/New_York",
+      currency: "USD",
+      calendarId: "XNYS-synthetic-benchmark",
+      calendarEvidenceDigestSha256: "synthetic-august-2026-calendar-benchmark",
+      scheduledAtUtc: "2026-09-01T12:00:00.000Z",
+    }),
+    calendarMonthFacts: Object.freeze({
+      ...calculateSummary(days),
+      accountLegitimateOpenCount: 0,
+      accountNeedsDecisionCount: 0,
+      accountPendingDataDecisionCount: 0,
+      days,
+    }),
+    reviewNarrativeContext: Object.freeze([]),
+    rawReflectionContext,
+    reflectionCoverage: Object.freeze(rawReflectionContext.map(({ reflection }) =>
+      Object.freeze({
+        reviewMarketDate: reflection.reviewMarketDate,
+        marketSessionState: "open" as const,
+        reflectionState: "completed" as const,
+        noTradeReview: false,
+      }))),
+    priorMonthlyReview: null,
+    currentFocuses: Object.freeze([
+      Object.freeze({ effectiveFromDate: "2026-08-03", tradingDate: "2026-08-03", revisionNumber: 1, text: "Compare saved trade plans with execution and analyzer evidence." }),
+    ]),
+    coverageNotice: Object.freeze({ limitationReasonCodes: Object.freeze([]), incompleteRecordRequired: false }),
+  });
+}
+
 function cost(usage: Usage): string | null {
   if (usage.inputTokens === null || usage.cachedInputTokens === null ||
       usage.cacheWriteInputTokens === null || usage.outputTokens === null ||
@@ -605,22 +672,23 @@ function assertProfileInput(
   profile: Profile,
   input: CoachPeriodicAiReviewInputV2 | CoachMonthlyAiReviewInputV2,
   expectedTrades: number,
+  expectedAnalyzerTrades = "completedDailyReflections" in input
+    ? expectedTrades
+    : profile.activeDayIndexes === null ? profile.tradesPerOpenDay : 0,
 ): void {
   const description = describeInput(input);
-  const expectedAnalyzerTrades = "completedDailyReflections" in input
-    ? expectedTrades
-    : profile.activeDayIndexes === null ? profile.tradesPerOpenDay : 0;
   if (description.tradeCount !== expectedTrades ||
       description.analyzerTradeCount !== expectedAnalyzerTrades ||
       description.analyzerEventCount !== expectedAnalyzerTrades * 4) {
     throw new Error(`monthly_cost_benchmark_trade_shape_failed:${profile.name}`);
   }
+  const expectedReflectionTrades = "completedDailyReflections" in input
+    ? expectedTrades
+    : expectedAnalyzerTrades;
   if (profile.name === "heavy" && (
-    description.tradeNoteCount !== ("completedDailyReflections" in input
-      ? expectedTrades : profile.tradesPerOpenDay) ||
-    description.tradeNoteCharacters !== ("completedDailyReflections" in input
-      ? expectedTrades * profile.tradeNoteCharacters
-      : profile.tradesPerOpenDay * profile.tradeNoteCharacters) ||
+    description.tradeNoteCount !== expectedReflectionTrades ||
+    description.tradeNoteCharacters !==
+      expectedReflectionTrades * profile.tradeNoteCharacters ||
     description.namedTradeRuleOutcomeCount !== expectedTrades * 10 ||
     description.tagCount < expectedTrades * 5 ||
     description.tagCount > expectedTrades * 10
@@ -728,6 +796,10 @@ async function main(): Promise<void> {
   const confirmed = arguments_[0] === CONFIRMATION;
   const countOnly = confirmed && arguments_.includes("--count-only");
   const providerCalls = confirmed && !countOnly;
+  const monthlyOnly = arguments_.includes("--monthly-only");
+  const monthlyScenario: MonthlyScenario = monthlyOnly
+    ? "monthly_only_full_evidence"
+    : "weekly_context_deduplicated";
   if (arguments_.length > 0 && !confirmed && arguments_[0] !== "--prepare-only") {
     throw new Error("monthly_cost_benchmark_confirmation_required");
   }
@@ -759,7 +831,7 @@ async function main(): Promise<void> {
         : profile.tradesPerOpenDay * profile.activeDayIndexes.length;
       assertProfileInput(profile, input, expectedTrades);
       weeklyInputs.push(input);
-      if (providerCalls) {
+      if (providerCalls && !monthlyOnly) {
         process.stdout.write(`${JSON.stringify({ status: "calling_provider", profile: profile.name, review: `weekly_${weekIndex + 1}` })}\n`);
         const result = await weeklyCall(`${profile.name}_weekly_${weekIndex + 1}`, input);
         callResults.push(result);
@@ -767,7 +839,7 @@ async function main(): Promise<void> {
         weeklyOutputs.push(output);
         prior = priorReview(profile, weekIndex, output, input);
       } else {
-        if (countOnly) {
+        if (countOnly && !monthlyOnly) {
           process.stdout.write(`${JSON.stringify({ status: "counting_tokens", profile: profile.name, review: `weekly_${weekIndex + 1}` })}\n`);
           tokenCounts.push(await countEnvelopeInputTokens(
             "weekly",
@@ -788,11 +860,19 @@ async function main(): Promise<void> {
         prior = priorReview(profile, weekIndex, placeholder, input);
       }
     }
-    const monthlyInput = buildMonthlyInput(profile, weeklyInputs, weeklyOutputs);
+    const monthlyInput = monthlyOnly
+      ? buildMonthlyOnlyInput(profile, weeklyInputs)
+      : buildMonthlyInput(profile, weeklyInputs, weeklyOutputs);
     const expectedMonthlyTrades = profile.activeDayIndexes === null
       ? profile.tradesPerOpenDay * 21
       : profile.tradesPerOpenDay * profile.activeDayIndexes.length * 4;
-    assertProfileInput(profile, monthlyInput, expectedMonthlyTrades);
+    assertProfileInput(
+      profile,
+      monthlyInput,
+      expectedMonthlyTrades,
+      monthlyOnly ? expectedMonthlyTrades
+        : profile.activeDayIndexes === null ? profile.tradesPerOpenDay : 0,
+    );
     if (providerCalls) {
       process.stdout.write(`${JSON.stringify({ status: "calling_provider", profile: profile.name, review: "monthly" })}\n`);
       callResults.push(await monthlyCall(`${profile.name}_monthly`, monthlyInput));
@@ -806,6 +886,7 @@ async function main(): Promise<void> {
     }
     profileArtifacts.push(Object.freeze({
       profile: profile.name,
+      monthlyScenario,
       specification: profile,
       weeklyInputs: Object.freeze(weeklyInputs),
       monthlyInput,
@@ -825,12 +906,13 @@ async function main(): Promise<void> {
   mkdirSync(join(process.cwd(), ".local-logs"), { recursive: true });
   const artifactName = `ai-review-monthly-cost-benchmark-${completedAtUtc.replaceAll(":", "-")}.json`;
   writeFileSync(join(process.cwd(), ".local-logs", artifactName), `${JSON.stringify({
-    contractVersion: "traderlink_ai_review_monthly_cost_benchmark_v1",
+    contractVersion: "traderlink_ai_review_monthly_cost_benchmark_v2",
     completedAtUtc,
     providerCalls,
     countOnly,
+    monthlyScenario,
     modelId: MODEL_ID,
-    pricingObservedDate: "2026-08-09",
+    pricingObservedDate: "2026-08-18",
     pricingSource: "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
     pricingUsdPerMillionTokens: Object.freeze({
       input: INPUT_PRICE_PER_MILLION.toFixed(2),
@@ -847,11 +929,14 @@ async function main(): Promise<void> {
     status: providerCalls ? "provider_benchmark_completed"
       : countOnly ? "provider_benchmark_counted" : "provider_benchmark_prepared",
     modelId: MODEL_ID,
-    providerCallCount: providerCalls ? selectedProfiles.length * 5 : 0,
-    tokenCountRequestCount: countOnly ? selectedProfiles.length * 5 : 0,
+    providerCallCount: providerCalls
+      ? selectedProfiles.length * (monthlyOnly ? 1 : 5) : 0,
+    tokenCountRequestCount: countOnly
+      ? selectedProfiles.length * (monthlyOnly ? 1 : 5) : 0,
     artifactName,
     profiles: profileArtifacts.map((artifact) => Object.freeze({
       profile: artifact.profile,
+      monthlyScenario: artifact.monthlyScenario,
       weeklyInputDescriptions: artifact.weeklyInputDescriptions,
       monthlyInputDescription: artifact.monthlyInputDescription,
       weeklyProviderPackages: artifact.weeklyProviderPackages,

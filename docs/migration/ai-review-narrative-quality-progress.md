@@ -63,8 +63,10 @@ source of that size.
   single-call ceiling below the model context window. Keep byte-count token
   reservation as the conservative spend guard; bytes are not presented as
   actual provider token use.
-- [ ] Treat a larger package as a multi-stage evidence workflow rather than a
-  permanently unavailable review. Do not split it into unrelated final reviews.
+- [ ] Replace the byte-only single-call rejection with a token-aware reservation.
+  Use a multi-stage evidence workflow only when the counted package genuinely
+  exceeds the model's safe one-call input budget; never split it into unrelated
+  final reviews.
 - [x] Require `incompleteRecord` whenever the immutable coverage notice says a
   limitation exists, and reject an invented limitation when it does not.
 - [x] Require focus follow-through to contain an exact eligible earlier focus;
@@ -92,11 +94,26 @@ source of that size.
 
 The provider's documented GPT-5.6 Luna context window is 1,050,000 tokens. The
 TraderLink ceiling is therefore a per-call quality, retry and spend boundary,
-not a provider limit. The measured compact 100-trade stress package is about
-465,000 UTF-8 bytes and remains a normal one-call review. A package above the
-single-call ceiling must be handled by bounded evidence extraction followed by
-one final synthesis, with all calls included in the same reservation and cost
-receipt before that fallback can be accepted.
+not a provider limit. The weekly-context monthly package is about 465,000 UTF-8
+bytes and remains a normal one-call review.
+
+The added monthly-only heavy scenario preserves all 420 trades, 420 Analyzer
+records with 1,680 events, 3,066 tags, 4,200 trade-rule outcomes, 210 daily-rule
+outcomes, 21 completed daily reflections containing 58,800 note characters,
+and 420 trade notes containing 294,000 characters. Its exact provider prompt is
+1,786,512 UTF-8 bytes, while OpenAI's model-specific input-token endpoint counts
+the complete Luna instructions and prompt at 506,884 tokens. It fits the model's
+one-call context window, but the current 900,000-byte reservation guard would
+incorrectly reject it. The next provider-control correction must reserve from a
+model-specific token count with explicit headroom for the structured-output
+schema and response. Multi-stage extraction is necessary only if that complete
+counted envelope exceeds the safe one-call budget.
+
+Because 506,884 input tokens exceed Luna's 272,000-token long-context pricing
+threshold, the same correction must apply the provider's 2x input and 1.5x
+output multipliers to both the conservative reservation and the final recorded
+receipt. The earlier three saved July reviews stayed below that threshold, so
+their recorded $0.01004625 combined cost is unaffected.
 
 The original Luna price configuration was five times the current official
 rate. Current settings and live cost tools use $0.20 per million uncached input
@@ -157,10 +174,12 @@ reviews for this QA. The January cleanup is recoverable from the private local
 backup at `private-data/traderlink-platform/backups/ai-review-reset-20260818T1840Z/`.
 The pricing migration and the three new July fixture reviews changed the local
 development database; no real customer review, Journal fact or account setting
-was removed. No broad test suite, UI change, deployment or production
-activation is part of this correction. The AI Reviews Help guide already says
-reviews are retrospective evidence summaries rather than trading signals,
-predictions or investment advice, and this internal prompt/safety change does
-not change the customer workflow, so no Help update is required. Rendered-route
-inspection and the multi-stage package fallback remain open; owner wording
-review remains the acceptance gate.
+was removed. The owner-requested removal of the top-right `Ask AI Chat` action
+from weekly and monthly saved-review detail pages is the only presentation
+change; the review document itself is unchanged. No broad test suite,
+deployment or production activation is part of this correction. The AI Reviews
+Help guide already says reviews are retrospective evidence summaries rather
+than trading signals, predictions or investment advice, and it does not
+describe the removed page action, so no Help update is required. Rendered-route
+inspection and the token-aware large-package reservation remain open; owner
+wording review remains the acceptance gate.

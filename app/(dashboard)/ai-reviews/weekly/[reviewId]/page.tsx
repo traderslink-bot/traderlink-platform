@@ -17,7 +17,6 @@ import {
   AiReviewDocument,
   type AiReviewDocumentView,
 } from "../../ai-review-document";
-import { AiReviewChatButton } from "../../ai-review-chat-button";
 
 export const metadata: Metadata = {
   title: "AI Review | TraderLink Platform",
@@ -95,15 +94,9 @@ export default async function WeeklyAiReviewPage({
   return (
     <DashboardPage>
       <Box sx={{ mb: -0.75 }}>
-        <Box sx={{ alignItems: "center", display: "flex", gap: 1, justifyContent: "space-between" }}>
-          <Button href="/ai-reviews" size="small" variant="text">
-            Back to AI Reviews
-          </Button>
-          <AiReviewChatButton
-            periodLabel={view.periodLabel}
-            reviewTypeLabel={view.reviewTypeLabel}
-          />
-        </Box>
+        <Button href="/ai-reviews" size="small" variant="text">
+          Back to AI Reviews
+        </Button>
       </Box>
       <AiReviewDocument view={view} />
     </DashboardPage>
