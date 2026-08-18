@@ -8,6 +8,9 @@ and require a distinct, evidence-backed insight in each review section. This
 does not alter Journal facts, account scope, or review presentation. The later
 owner-directed hardening continuation updates current provider pricing and the
 single-call package boundary, and resets only the confirmed local test reviews.
+The owner subsequently rejected the prompt-only review quality as too vague and
+delegated the full deterministic redesign recorded in the
+[AI Review Insight Ranking Engine Plan](ai-review-insight-ranking-engine-plan.md).
 
 ## Design rules
 
@@ -36,6 +39,28 @@ single-call package boundary, and resets only the confirmed local test reviews.
   final provider boundary.
 - [ ] Review the revised wording with the owner before accepting this
   prompt-quality slice.
+
+## Owner-delegated insight-engine redesign - 2026-08-18
+
+The owner correctly rejected the live 420-trade monthly-only output because it
+repeated broad descriptions such as an inconsistent response after favorable
+movement without identifying affected trades, associated P/L, weekly change or
+a useful strength. The issue is not solvable by adding more prompt wording.
+
+The [AI Review Insight Ranking Engine Plan](ai-review-insight-ranking-engine-plan.md)
+now defines the required deterministic layer between Journal evidence and the
+provider. It covers candidate families, exact measurements, separate friction/
+improvement/strength/contrast/follow-through rankings, evidence thresholds,
+outlier and overlap handling, hidden focus tracking, structured provider
+selection, server validation and a true August 2026 acceptance month containing
+four actually issued weekly reviews plus all 420 exact-month trades.
+
+- [x] Define the candidate, measurement and ranking architecture.
+- [x] Define evidence gates, penalties, overlap handling and shortlist quotas.
+- [x] Define structured provider selections and post-generation validation.
+- [x] Define the real four-week-plus-month 420-trade acceptance fixture.
+- [ ] Implement and calibrate the deterministic insight engine.
+- [ ] Run the true-month issuance and provider stability acceptance.
 
 ## Owner-directed production hardening continuation — 2026-08-18
 
