@@ -180,6 +180,29 @@ export const coachAiChatFactualToolRegistry = Object.freeze([
     contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
   }),
   Object.freeze({
+    name: "list_saved_trade_comparisons" as const,
+    description: "Lists bounded, validated saved Compare Trades group definitions for the selected account.",
+    supportedMetricIds: Object.freeze([]),
+    supportedGroupings: Object.freeze([]),
+    limitations: Object.freeze([
+      "Returns at most 10 active saved comparisons and never exposes study IDs, digests, or account selectors.",
+      "This read does not create, update, retire, or recalculate a saved comparison.",
+    ]),
+    contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
+  }),
+  Object.freeze({
+    name: "list_rule_ideas" as const,
+    description: "Lists bounded saved deterministic Rule-idea evidence for the selected account.",
+    supportedMetricIds: Object.freeze([]),
+    supportedGroupings: Object.freeze([]),
+    limitations: Object.freeze([
+      "Returns at most 10 saved ideas without internal IDs, digests, or supporting trade UUIDs.",
+      "Chat cannot generate evidence, change an idea disposition, or activate a rule through this read.",
+      "Historical results do not prove what a rule would do in future trading.",
+    ]),
+    contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
+  }),
+  Object.freeze({
     name: "list_imports" as const,
     description: "Lists bounded privacy-safe import history for the selected account.",
     supportedMetricIds: Object.freeze([]),

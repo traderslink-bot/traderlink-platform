@@ -22,6 +22,7 @@ import type { CoachAiChatAnalyticsPageToolService } from "./coach-ai-chat-analyt
 import type { CoachAiChatProductContextService } from "./coach-ai-chat-product-context-service";
 import type { CoachAiChatTradeAnalyzerToolService } from "./coach-ai-chat-trade-analyzer-tool-service";
 import type { CoachAiChatAnnotationContextService } from "./coach-ai-chat-annotation-context-service";
+import type { CoachAiChatSavedAnalysisService } from "./coach-ai-chat-saved-analysis-service";
 
 /** A generation has one shared factual-result budget. Results are never shortened to fit it. */
 /** Across at most two tool steps; later model calls can receive this package twice. */
@@ -292,6 +293,8 @@ export class CoachAiChatFactualToolDispatcher {
         "results" | "listTrades" | "savedCandleReview">;
       annotations?: Pick<CoachAiChatAnnotationContextService,
         "listRules" | "ruleResults" | "tradeAnnotations">;
+      savedAnalysis?: Pick<CoachAiChatSavedAnalysisService,
+        "listComparisons" | "listRuleIdeas">;
     }> = Object.freeze({}),
     private readonly analysisScope: CoachAiChatAnalysisScope = Object.freeze({ kind: "recent" }),
     private readonly reportingCurrency: string | null = null,
@@ -415,6 +418,22 @@ export class CoachAiChatFactualToolDispatcher {
           this.selectedAccountId,
           request,
           this.asOfUtc,
+        );
+        break;
+      case "list_saved_trade_comparisons":
+        if (!this.extensions.savedAnalysis) return unsupportedTool(request as never);
+        result = this.extensions.savedAnalysis.listComparisons(
+          this.scope,
+          this.selectedAccountId,
+          request,
+        );
+        break;
+      case "list_rule_ideas":
+        if (!this.extensions.savedAnalysis) return unsupportedTool(request as never);
+        result = this.extensions.savedAnalysis.listRuleIdeas(
+          this.scope,
+          this.selectedAccountId,
+          request,
         );
         break;
       case "list_imports":

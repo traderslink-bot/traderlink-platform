@@ -109,13 +109,14 @@ const capabilities = Object.freeze([
   Object.freeze({
     id: "current_dashboard_analytics_reads",
     kind: "factual_read" as const,
-    plainLanguage: "Read Analytics Overview, Results by Ticker, Timing, Execution, and bounded Trade Explorer Sort trades or Rank by results.",
+    plainLanguage: "Read Analytics Overview, Results by Ticker, Timing, Execution, bounded Trade Explorer results, and saved Compare Trades studies.",
     limitations: Object.freeze([
       "Analytics use completed trades; legitimate open positions and unresolved decisions remain outside realized results.",
       "Money follows the Account reporting currency only when the exact required conversion is available.",
       "Trade rows sort only by facts each completed trade has; population statistics rank grouped results and never act as a hidden Result filter.",
       "Trade Explorer returns at most 50 supporting trades per request.",
       "Chat can read the saved Review facts for one exact completed trade, but the combined note, tags, and custom-rule Review is saved with one explicit Save in Trade Explorer.",
+      "Saved comparison reads return validated group definitions only and cannot create, update, retire, or silently recalculate a study.",
     ]),
   }),
   Object.freeze({
@@ -141,11 +142,12 @@ const capabilities = Object.freeze([
   Object.freeze({
     id: "trading_rule_and_tag_reads",
     kind: "factual_read" as const,
-    plainLanguage: "Read saved Trading Rules, deterministic rule results, trade notes, Trade Tags, and custom-rule reviews.",
+    plainLanguage: "Read saved Trading Rules, deterministic rule results, saved Rule-idea evidence, trade notes, Trade Tags, and custom-rule reviews.",
     limitations: Object.freeze([
       "Chat does not create a rule recommendation or judge a rule outcome itself.",
       "Tags and notes remain trader observations and are not proof of why a trade happened.",
       "Rule-result periods are limited to 62 days per factual request.",
+      "Rule ideas are deterministic saved evidence; Chat cannot generate one, dismiss one, or activate a rule from it.",
     ]),
   }),
   Object.freeze({
@@ -173,7 +175,7 @@ const capabilities = Object.freeze([
  * repeated in every family on every provider request.
  */
 export const coachAiChatRuntimeCapabilityRegistry = Object.freeze({
-  contractVersion: "coach_ai_chat_runtime_capabilities_v3" as const,
+  contractVersion: "coach_ai_chat_runtime_capabilities_v4" as const,
   capabilities,
   canonicalLanguageGroups: canonicalLanguageGroups(),
 });

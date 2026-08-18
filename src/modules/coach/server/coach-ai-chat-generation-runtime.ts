@@ -39,6 +39,7 @@ import { CoachAiChatAnalyticsPageToolService } from "./coach-ai-chat-analytics-p
 import { CoachAiChatProductContextService } from "./coach-ai-chat-product-context-service";
 import { CoachAiChatTradeAnalyzerToolService } from "./coach-ai-chat-trade-analyzer-tool-service";
 import { CoachAiChatAnnotationContextService } from "./coach-ai-chat-annotation-context-service";
+import { CoachAiChatSavedAnalysisService } from "./coach-ai-chat-saved-analysis-service";
 import { CoachAiReviewRepository } from "./coach-ai-review-repository";
 import { CoachReflectionService } from "./coach-reflection-service";
 import { CoachAiDailyCompanionRepository } from "./coach-ai-daily-companion-repository";
@@ -180,6 +181,7 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
             ...(ruleSourceCurrency ? { ruleSourceCurrency } : {}),
           }),
         ),
+        savedAnalysis: new CoachAiChatSavedAnalysisService(database),
       }),
       new CoachAiChatActionDraftService(database),
       input.reportingContext.reportingCurrency,

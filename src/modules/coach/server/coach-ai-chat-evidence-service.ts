@@ -59,6 +59,7 @@ const EVIDENCE_DEFINITIONS: Readonly<Record<string, EvidenceDefinition>> = Objec
   get_timing_analytics: { title: "Timing", href: "/analytics/timing", linkLabel: "Open timing" },
   get_execution_analytics: { title: "Executions", href: "/analytics/execution", linkLabel: "Open executions" },
   query_trade_explorer: { title: "Trade Explorer", href: "/analytics/trade-explorer", linkLabel: "Open Trade Explorer" },
+  list_saved_trade_comparisons: { title: "Compare Trades", href: "/analytics/trade-explorer/compare", linkLabel: "Open Compare Trades" },
   list_imports: { title: "Imports", href: "/imports", linkLabel: "Open imports" },
   list_data_decisions: { title: "Data Decisions", href: "/data-decisions", linkLabel: "Open Data Decisions" },
   get_data_decision_details: { title: "Data Decision", href: "/data-decisions", linkLabel: "Open Data Decisions" },
@@ -73,6 +74,7 @@ const EVIDENCE_DEFINITIONS: Readonly<Record<string, EvidenceDefinition>> = Objec
   list_trading_rules: { title: "Trading rules", href: "/rules", linkLabel: "Open rules" },
   get_trading_rule_results: { title: "Trading rule results", href: "/rules/results", linkLabel: "Open rule results" },
   get_trade_annotations: { title: "Completed trade Review", href: "/analytics/trade-explorer", linkLabel: "Open Trade Explorer" },
+  list_rule_ideas: { title: "Rule ideas", href: "/rules", linkLabel: "Open Trading Rules" },
 });
 
 function isRecord(value: unknown): value is JsonRecord {

@@ -18,7 +18,7 @@ import type { DailyTradeGreenToRedStatus } from
   "@/src/modules/level-analysis/contracts/daily-trade-analyzer-contracts";
 
 export const COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION =
-  "coach_ai_chat_factual_tools_v2" as const;
+  "coach_ai_chat_factual_tools_v3" as const;
 export const COACH_AI_CHAT_FACTUAL_TOOL_MAX_PAGE_SIZE = 50 as const;
 export const COACH_AI_CHAT_FACTUAL_TOOL_MAX_SYMBOLS = 25 as const;
 export const COACH_AI_CHAT_FACTUAL_TOOL_MAX_METRICS = 22 as const;
@@ -160,6 +160,8 @@ export type CoachAiChatFactualToolName =
   | "get_timing_analytics"
   | "get_execution_analytics"
   | "query_trade_explorer"
+  | "list_saved_trade_comparisons"
+  | "list_rule_ideas"
   | "list_imports"
   | "list_data_decisions"
   | "get_data_decision_details"
@@ -327,6 +329,19 @@ export type CoachAiChatTradeExplorerRequest = Readonly<{
   }>;
 }>;
 
+export type CoachAiChatSavedTradeComparisonsRequest = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
+  toolName: "list_saved_trade_comparisons";
+  limit: number;
+}>;
+
+export type CoachAiChatRuleIdeasRequest = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
+  toolName: "list_rule_ideas";
+  disposition: "available" | "saved_for_later" | "not_for_me" | "added" | "all";
+  limit: number;
+}>;
+
 export type CoachAiChatImportListRequest = Readonly<{
   contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
   toolName: "list_imports";
@@ -429,6 +444,8 @@ export type CoachAiChatFactualToolRequest =
   | CoachAiChatPositionDetailRequest
   | CoachAiChatAnalyticsPageRequest
   | CoachAiChatTradeExplorerRequest
+  | CoachAiChatSavedTradeComparisonsRequest
+  | CoachAiChatRuleIdeasRequest
   | CoachAiChatImportListRequest
   | CoachAiChatDataDecisionListRequest
   | CoachAiChatDataDecisionDetailRequest
@@ -574,6 +591,12 @@ export type CoachAiChatAnnotationContextResponse = Readonly<{
   result: unknown;
 }>;
 
+export type CoachAiChatSavedAnalysisResponse = Readonly<{
+  contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
+  toolName: "list_saved_trade_comparisons" | "list_rule_ideas";
+  result: unknown;
+}>;
+
 export type CoachAiChatFactualToolResponse =
   | CoachAiChatFactualAnalyticsResponse
   | CoachAiChatFactualTradeListResponse
@@ -586,7 +609,8 @@ export type CoachAiChatFactualToolResponse =
   | CoachAiChatAnalyticsPageResponse
   | CoachAiChatProductContextResponse
   | CoachAiChatTradeAnalyzerResponse
-  | CoachAiChatAnnotationContextResponse;
+  | CoachAiChatAnnotationContextResponse
+  | CoachAiChatSavedAnalysisResponse;
 
 export type CoachAiChatFactualToolErrorCode =
   | "invalid_request"
