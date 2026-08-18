@@ -2,7 +2,7 @@
 
 ## Status
 
-Active — the owner visually approved the completed Compare Trades page, Rule
+Complete locally — the owner visually approved the completed Compare Trades page, Rule
 idea workflow and related Help structure on 2026-08-18. The deterministic
 Rule-idea detector, immutable evidence storage, issuance/disposition safeguards,
 Rules-page card and explicit no-result state are implemented. No Rule idea is
@@ -35,7 +35,7 @@ stage only its explicit files at a verified checkpoint.
 - [x] Add the Rule ideas UI and obtain owner visual/product approval.
 - [x] Add and visually approve maintained Rule ideas, Trade Explorer and Compare
   Trades Help coverage.
-- [ ] Add bounded AI Chat reads and capability coverage.
+- [x] Add bounded AI Chat reads and capability coverage.
 - [x] Complete the current UI/Help verification and narrow local commits.
 
 ## Verification record
@@ -112,3 +112,26 @@ Focused ESLint and live HTTP checks passed; no test runner was used.
   (**separate trade explorer help**) preserve the accepted UI/Help slice. Compare
   Trades remains preserved separately at `e388d083`, and deterministic evidence
   remains preserved at `21339d33`.
+
+## Bounded AI Chat reads checkpoint
+
+- Factual tool contract v3 adds `list_saved_trade_comparisons` and
+  `list_rule_ideas`. Both derive the account from the server-owned Chat scope,
+  accept at most 10 rows and are read-only.
+- Saved comparison results contain validated group names and allowlisted factual
+  filters. Study IDs, digests and account-selection references are excluded.
+- Saved Rule-idea results contain the exact deterministic configuration,
+  disposition, period, eligibility counts, affected/comparison results,
+  outlier/concentration checks and historical limitation. Idea IDs, evidence
+  digests, fact revisions and supporting round-trip UUIDs are excluded.
+- Runtime capabilities v4, provider tool schemas, factual-tool registry,
+  dispatcher, evidence links and AI Chat Help match the new reads. The system
+  instruction explicitly forbids claiming that Chat created, recalculated,
+  saved, dismissed or acted on this evidence.
+- The read-only operational verifier returned the one real saved Rule idea. The
+  account currently has zero saved comparisons, so a disposable database copy
+  proved one non-empty two-group result. Cross-account access was rejected,
+  protected identifiers were absent, the private database hash stayed unchanged
+  and no provider request was made.
+- Focused ESLint and the full TypeScript check pass. Local commit `aad3ef50`
+  (**expose saved analysis to AI chat**) preserves this checkpoint.

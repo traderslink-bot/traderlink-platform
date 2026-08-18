@@ -2,10 +2,11 @@
 
 ## Status
 
-Owner approved on 2026-08-18. The two-to-four-group Compare Trades page and
-saved-study workflow are implemented and visually approved. Deterministic Rule
-ideas are the active next checkpoint; bounded AI Chat reads follow only after
-their saved factual evidence exists.
+Implemented and owner approved locally on 2026-08-18. The two-to-four-group
+Compare Trades page, saved-study workflow, deterministic Rule ideas, related
+Help and bounded AI Chat reads are complete. AI Chat reads saved selected-account
+definitions and evidence only; it does not create, recalculate, dismiss, save or
+activate anything through these tools.
 
 **Progress record:** [Trade Explorer Comparison And Rule Ideas Progress](trade-explorer-comparison-and-rule-ideas-progress.md)
 
@@ -83,16 +84,16 @@ evidence, which remains exploration-only until its range contract is approved.
 
 ## Delivery checkpoints
 
-1. Prove two unsaved comparison groups through a deterministic server contract
+1. [x] Prove two unsaved comparison groups through a deterministic server contract
    and an operational reconciliation verifier.
-2. Add the first Compare UI on `/analytics/trade-explorer/compare` and obtain
+2. [x] Add the first Compare UI on `/analytics/trade-explorer/compare` and obtain
    owner visual/product approval without changing the existing Review workspace.
-3. Expand to four groups and private saved-study lifecycle.
-4. Implement deterministic candidate snapshots, issuance and disposition.
-5. Add the Rules `Rule ideas` UI and obtain owner visual/product approval.
-6. Expose saved studies and saved recommendation evidence through bounded AI
+3. [x] Expand to four groups and private saved-study lifecycle.
+4. [x] Implement deterministic candidate snapshots, issuance and disposition.
+5. [x] Add the Rules `Rule ideas` UI and obtain owner visual/product approval.
+6. [x] Expose saved studies and saved recommendation evidence through bounded AI
    Chat reads; update Help and the capability matrix.
-7. Complete targeted static, operational, browser and account-isolation checks,
+7. [x] Complete targeted static, operational, browser and account-isolation checks,
    then create narrow local commits without staging concurrent work.
 
 ## Safety and ownership
