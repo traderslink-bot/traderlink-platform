@@ -8,55 +8,23 @@ const section = (id: string, title: string, summary: string, keywords: readonly 
 const guide = (slug: string, title: string, description: string, sections: readonly HelpArticleSection[]): HelpGuide => Object.freeze({ description, sections: Object.freeze(sections), slug, title });
 
 export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
-  guide("getting-started", "Getting started", "Use Core Analytics to compare confirmed completed-trade facts in Trade Tracker without changing any executions.", [
-    section("what-core-analytics-shows", "What Core Analytics shows", "The standard Analytics pages summarize the completed trades that have enough accepted facts for each result.", ["analytics", "completed trades", "trade tracker", "results", "performance"], [
-      paragraph("Core Analytics is the regular factual view of confirmed Trade Tracker results, including imported and manually entered trades. It includes Analytics Overview, Trade Explorer, Ticker, Timing and Execution. It helps you compare recorded outcomes; it does not predict a future trade or recommend an action."),
+  guide("getting-started", "Analytics Overview", "Use Analytics Overview and the Analytics pages to compare confirmed completed-trade facts without changing any executions.", [
+    section("what-analytics-shows", "What Analytics shows", "The Analytics pages summarize completed trades that have enough accepted facts for each result.", ["analytics", "analytics overview", "completed trades", "trade tracker", "results", "performance"], [
+      paragraph("Analytics is the factual view of confirmed Trade Tracker results, including imported and manually entered trades. It includes Analytics Overview, Ticker, Timing and Trade Breakdown. It helps you compare recorded outcomes; it does not predict a future trade or recommend an action."),
       table(["Page", "Use it for"], [
         ["Overview", "Read key completed-trade measures and their monthly Net P/L history."],
-        ["Trade Explorer", "Filter individual completed trades or rank factual groups such as trading days and tickers."],
-        ["Compare Trades", "Compare the recorded results of two to four completed-trade groups side by side."],
         ["Ticker", "Compare completed-trade results by ticker."],
         ["Timing", "Compare completed-trade results by entry time, exit time, day of week and trading session."],
-        ["Execution", "Compare completed trades by entry size, maximum position and holding time."],
+        ["Trade Breakdown", "Compare completed trades by entry size, maximum position and holding time, then open exact executions."],
       ]),
     ]),
-    section("what-it-does-not-change", "Analytics does not change executions", "Changing a view, range, sort or filter never edits a Trade Tracker execution or review.", ["read only", "change trade", "filters", "sort", "review trade"], [
-      paragraph("Trade Explorer has one deliberate exception to the read-only Analytics views: Review opens the selected completed trade so you can save its note, tags and custom-rule results. It never changes the trade's executions, price, quantity, date or P/L."),
+    section("what-it-does-not-change", "Analytics does not change executions", "Changing a view, range, sort or filter never edits a Trade Tracker execution or review.", ["read only", "change trade", "filters", "sort"], [
       paragraph("Use Daily Trade Tracker, Quick Trade Entry, Import Trades or Data Decisions when you need to add, correct or resolve factual trade information. Analytics filters and sorting only arrange the facts that are currently available."),
       link("/help/daily-trade-tracker/getting-started", "Read Daily Trade Tracker help", "Open the Daily Tracker when you want to review one trading date or work with its supporting tools."),
     ]),
-    section("use-trade-explorer", "Use Trade Explorer", "Inspect individual completed trades, add trade-review details or rank factual groups.", ["trade explorer", "sort trades", "rank by", "result filter", "gross p/l", "net p/l", "notes", "tags", "rules"], [
-      bullets([
-        "The Trades view starts with all directions and the most recently closed trade first.",
-        "Sort trades orders individual rows only by facts each trade has, such as P/L, return, hold time, shares or entry value.",
-        "Result narrows the current Gross or Net P/L population to Wins, Losses or Flat trades.",
-        "Trading Days, Tickers, Entry Times, Holding Time, Position Size and Periods use Rank by to order their factual groups.",
-        "Rank by offers the Gross or Net P/L that matches the selected Result basis, never the opposite basis.",
-        "Rank by hides calculations that the selected Result makes impossible or unable to change the order, such as Profit factor when only Wins are selected.",
-        "Net P/L shows fee-covered trades. If fee details are incomplete, Trade Explorer states how many closed trades are omitted and Gross P/L can include them.",
-        "Money results use your Account reporting-currency preference and the trade's effective close-date conversion rate.",
-        "Choose Review on a completed trade to edit its trade note, select up to 10 trader-chosen tags and mark applicable custom trade rules Followed, Broken or Not reviewed.",
-        "Automatic preset-rule results are calculated from the recorded facts and stay read-only in the Review editor.",
-        "Previous and Next move through the trades on the current results page. Unsaved changes must be saved or deliberately discarded first.",
-        "On a phone, Review opens a full-screen editor. Use the visible Close button in its header when you are finished.",
-        "On a phone, choose Filters to open the full filter drawer. Apply returns to the complete results table. The swipe cue marks tables that move sideways, and selecting a trade row expands its recorded fills.",
-        "Grouped views use Rows per page and Previous or Next so a long ticker, day or period history stays bounded.",
-      ]),
-    ]),
-    section("compare-trades", "Compare completed-trade groups", "Use Compare Trades to examine factual differences between two to four groups from the selected trading account.", ["compare trades", "comparison", "saved comparison", "baseline", "groups"], [
-      bullets([
-        "Open Compare Trades from the left navigation directly below Trade Explorer.",
-        "Create two to four named groups. Each group can use its own completed-trade filters, such as date range, ticker, direction, result, holding time or position size.",
-        "The first group is the baseline. Other groups show an exact difference only when both results use the same compatible P/L basis, currency, formula and timezone.",
-        "The comparison can show completed trades, P/L, win rate, average P/L, profit factor, expectancy, return on entry value and average holding time when the required facts are available.",
-        "Save a useful comparison to the selected trading account, update it later or remove it. Saved versions do not change any trade, note, tag or rule.",
-      ]),
-      paragraph("A difference describes the completed trades in those groups. Compare Trades does not prove why a result occurred, label one group best or predict what will happen next."),
-      link("/analytics/trade-explorer/compare", "Open Compare Trades", "Compare two to four groups of your completed trades."),
-    ]),
   ]),
   guide("overview-and-date-range", "Read the overview and date range", "Choose a completed-trade date range, then read the key results and monthly Net P/L without mixing currencies.", [
-    section("set-a-date-range", "Set a date range", "Analytics Overview, Ticker and Execution use the selected completed-trade date range.", ["date range", "all time", "last 3 months", "custom date", "update analytics"], [
+    section("set-a-date-range", "Set a date range", "Analytics Overview, Ticker and Trade Breakdown use the selected completed-trade date range.", ["date range", "all time", "last 3 months", "custom date", "update analytics"], [
       bullets([
         "Choose All time, Last 3 months, Last 6 months, Last 12 months, This year or Custom range.",
         "For a Custom range, enter a start and end date, then choose Update.",
@@ -92,6 +60,7 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     ]),
     section("search-and-sort", "Search, sort and paginate", "Search for a ticker, choose a column heading to change the order, and select how many rows appear on each page.", ["search ticker", "sort results", "table columns", "results filter", "rows per page", "pagination"], [
       paragraph("The Ticker field narrows the displayed rows to matching symbols. On a phone, use the Sort control and swipe the contained table sideways to read every column; the Ticker column stays pinned as a reference. Rows per page changes the page size, and the pagination controls move through the remaining tickers. These controls only change the view in your browser."),
+      paragraph("Select a ticker row to open its completed trades in a responsive side panel. Each trade shows its P/L and can expand to the exact buy and sell executions. When a saved Trade Analyzer chart exists, the same panel shows the complete chart and lets a selected execution highlight its marker."),
     ]),
   ]),
   guide("timing-and-execution", "Review timing and execution", "Compare recorded timing and completed-trade execution characteristics without treating a summary as a trading rule.", [
@@ -103,19 +72,20 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         "The Best label identifies the highest displayed value for the selected measure; it is an observation, not a recommendation.",
       ]),
     ]),
-    section("read-execution", "Read Execution", "Execution groups completed trades by entry size, maximum position and holding duration.", ["execution analytics", "entry size", "maximum position", "holding time", "long short"], [
+    section("read-execution", "Read Trade Breakdown", "Trade Breakdown groups completed trades by entry size, maximum position and holding duration.", ["trade breakdown", "execution analytics", "entry size", "maximum position", "holding time", "long short"], [
       bullets([
         "Choose Net P/L, Win rate or Trade count to change the chart measure.",
         "Use the chart-style control to switch between horizontal bars and columns.",
         "Use the ticker, direction and trade-type filters to narrow the completed-trade evidence.",
         "On a phone, use the Sort control and swipe the contained table sideways to read the complete execution facts. The Ticker column stays pinned as a reference.",
         "Rows per page offers 10, 25, 50 or 100 while pagination keeps long histories bounded.",
+        "Select a trade row to open the complete trade, its exact executions and its saved Trade Analyzer chart when chart coverage exists.",
       ]),
       paragraph("A larger or smaller group result describes the included past trades. It does not establish a future position size, target or stop."),
     ]),
   ]),
-  guide("coverage-and-limits", "Coverage and limits", "Understand why a Core Analytics result can be complete, partial, empty or unavailable.", [
-    section("included-trades", "Which trades contribute", "Core Analytics uses confirmed completed Trade Tracker trades that have the facts required for the selected result.", ["coverage", "included trades", "completed trade", "open positions", "data decisions"], [
+  guide("coverage-and-limits", "Coverage and limits", "Understand why an Analytics result can be complete, partial, empty or unavailable.", [
+    section("included-trades", "Which trades contribute", "Analytics uses confirmed completed Trade Tracker trades that have the facts required for the selected result.", ["coverage", "included trades", "completed trade", "open positions", "data decisions"], [
       paragraph("Confirmed open positions remain separate from realized P/L. A pending Data Decision can keep the affected chain out of a calculation, but it does not hide unrelated completed trades that are ready to use."),
       link("/help/open-positions/getting-started", "Read Open Positions help", "See why a confirmed open position remains outside realized completed-trade results."),
       link("/help/data-decisions/getting-started", "Read Data Decisions help", "Resolve a factual question with broker evidence when the page asks for one."),
@@ -123,8 +93,8 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     section("unavailable-and-empty", "Unavailable is not zero", "Analytics leaves a result visibly unavailable when the necessary facts are missing or a calculation has no valid denominator.", ["unavailable", "empty analytics", "zero result", "missing facts", "partial coverage"], [
       paragraph("No completed trades in a view is an empty population. A displayed zero is a calculated zero. An unavailable value means Analytics does not have enough accepted information to calculate that specific result safely. Help does not turn any of those states into a guess."),
     ]),
-    section("trade-analyzer-difference", "Core Analytics and Trade Analyzer are different", "Core Analytics uses its own completed-trade population; Trade Analyzer has separate market-data and replay requirements.", ["trade analyzer", "analytics difference", "market data", "candle replay"], [
-      paragraph("A trade can appear in Core Analytics without being eligible for a Trade Analyzer replay. Use Trade Analyzer Help when you are reviewing saved chart and candle evidence rather than regular Trade Tracker outcome summaries."),
+    section("trade-analyzer-difference", "Analytics and Trade Analyzer are different", "Analytics uses its own completed-trade population; Trade Analyzer has separate market-data and replay requirements.", ["trade analyzer", "analytics difference", "market data", "candle replay"], [
+      paragraph("A trade can appear in Analytics without being eligible for a Trade Analyzer replay. Use Trade Analyzer Help when you are reviewing saved chart and candle evidence rather than regular Trade Tracker outcome summaries."),
       link("/help/trade-analyzer/overview", "Read Trade Analyzer help", "Learn about chart replay and its separate eligibility and data requirements."),
     ]),
   ]),

@@ -4,8 +4,8 @@ import { HelpCollectionOverview } from "../help-collection-overview";
 import { CORE_ANALYTICS_HELP_GUIDES } from "@/src/modules/help/core-analytics-guides";
 
 export const metadata: Metadata = {
-  description: "Learn how to read TraderLink's completed-trade Analytics and Trade Explorer pages.",
-  title: "Core Analytics Help | TraderLink Platform",
+  description: "Learn how to read TraderLink's Analytics Overview, Ticker, Timing and Trade Breakdown pages.",
+  title: "Analytics Help | TraderLink Platform",
 };
 
 export default function CoreAnalyticsHelpPage() {
@@ -15,7 +15,7 @@ export default function CoreAnalyticsHelpPage() {
         Object.freeze({ href: "/analytics", label: "Open Analytics Overview", variant: "contained" as const }),
         Object.freeze({ href: "/trade-tracker", label: "Open Daily Trade Tracker", variant: "outlined" as const }),
       ])}
-      description="Use Core Analytics to compare confirmed Trade Tracker results by date, ticker, timing and execution characteristics."
+      description="Use Analytics Overview and the Analytics pages to compare confirmed Trade Tracker results by date, ticker, timing and execution characteristics."
       guides={CORE_ANALYTICS_HELP_GUIDES}
       highlights={Object.freeze([
         "Analytics is a factual, read-only view of available completed trades.",
@@ -28,7 +28,7 @@ export default function CoreAnalyticsHelpPage() {
         Object.freeze({ title: "Compare the facts", description: "Use the tables and charts to compare the recorded completed-trade groups." }),
         Object.freeze({ title: "Check coverage", description: "Read an empty, zero or unavailable state before drawing a conclusion." }),
       ])}
-      title="Core Analytics"
+      title="Analytics"
     />
   );
 }

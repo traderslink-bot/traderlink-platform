@@ -80,10 +80,16 @@ const HELP_COLLECTIONS = Object.freeze([
     title: "Candle Review",
   }),
   Object.freeze({
-    description: "Compare completed-trade results by date, ticker, timing and execution characteristics.",
+    description: "Read Analytics Overview and compare completed trades by ticker, timing and execution characteristics.",
     href: "/help/core-analytics",
     Icon: ShowChartRoundedIcon,
-    title: "Core Analytics",
+    title: "Analytics",
+  }),
+  Object.freeze({
+    description: "Inspect individual completed trades, maintain their reviews or compare the results of two to four groups.",
+    href: "/help/trade-explorer",
+    Icon: ShowChartRoundedIcon,
+    title: "Trade Explorer",
   }),
   Object.freeze({
     description: "Choose preset or custom rules, review automatic evidence, and compare factual results over time.",

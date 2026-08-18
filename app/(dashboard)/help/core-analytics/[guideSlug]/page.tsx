@@ -17,7 +17,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: GuidePageProps): Promise<Metadata> {
   const guide = coreAnalyticsGuideBySlug((await params).guideSlug);
-  return guide ? { description: guide.description, title: `${guide.title} | Core Analytics Help` } : {};
+  return guide ? { description: guide.description, title: `${guide.title} | Analytics Help` } : {};
 }
 
 export default async function CoreAnalyticsGuidePage({ params }: GuidePageProps) {
@@ -30,7 +30,7 @@ export default async function CoreAnalyticsGuidePage({ params }: GuidePageProps)
         Object.freeze({ href: "/analytics", label: "Open Analytics Overview", variant: "contained" as const }),
       ])}
       collectionHref="/help/core-analytics"
-      collectionTitle="Core Analytics"
+      collectionTitle="Analytics"
       guide={guide}
       guides={CORE_ANALYTICS_HELP_GUIDES}
     />

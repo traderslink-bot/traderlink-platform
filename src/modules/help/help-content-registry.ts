@@ -12,6 +12,7 @@ import { PAID_PLAN_HELP_GUIDES } from "./paid-plan-guides";
 import { QUICK_TRADE_ENTRY_HELP_GUIDES } from "./quick-trade-entry-guides";
 import { SWING_TRADE_TRACKER_HELP_GUIDES } from "./swing-trade-tracker-guides";
 import { TRADE_ANALYZER_HELP_GUIDES } from "./trade-analyzer-guides";
+import { TRADE_EXPLORER_HELP_GUIDES } from "./trade-explorer-guides";
 import { TRADING_RULES_HELP_GUIDES } from "./trading-rules-guides";
 import { TRADE_TAGS_HELP_GUIDES } from "./trade-tags-guides";
 
@@ -105,10 +106,17 @@ export const HELP_NAVIGATION_ITEMS: readonly HelpNavigationItem[] = Object.freez
   Object.freeze({
     href: "/help/core-analytics",
     icon: "trade_tracker",
-    label: "Core Analytics",
-    summary: "Compare completed Trade Tracker facts by date, ticker, timing and execution characteristics.",
+    label: "Analytics",
+    summary: "Read Analytics Overview and compare completed trades by ticker, timing and execution characteristics.",
   }),
   ...guideNavigationItems("/help/core-analytics", CORE_ANALYTICS_HELP_GUIDES, "trade_tracker"),
+  Object.freeze({
+    href: "/help/trade-explorer",
+    icon: "trade_tracker",
+    label: "Trade Explorer",
+    summary: "Inspect individual completed trades or compare the factual results of two to four groups.",
+  }),
+  ...guideNavigationItems("/help/trade-explorer", TRADE_EXPLORER_HELP_GUIDES, "trade_tracker"),
   Object.freeze({
     href: "/help/trading-rules",
     icon: "trading_rules",
@@ -258,12 +266,21 @@ export const HELP_SEARCH_RECORDS: readonly HelpSearchRecord[] = Object.freeze([
   Object.freeze({
     href: "/help/core-analytics",
     id: "core-analytics-overview",
-    keywords: Object.freeze(["analytics", "performance", "results", "timing", "execution", "date range"]),
-    section: "Core Analytics",
-    summary: "Compare completed Trade Tracker facts by date, ticker, timing and execution characteristics.",
-    title: "Core Analytics overview",
+    keywords: Object.freeze(["analytics", "analytics overview", "performance", "results", "timing", "execution", "date range"]),
+    section: "Analytics",
+    summary: "Read Analytics Overview and compare completed trades by ticker, timing and execution characteristics.",
+    title: "Analytics overview",
   }),
-  ...guideSearchRecords("core-analytics", "Core Analytics", "/help/core-analytics", CORE_ANALYTICS_HELP_GUIDES),
+  ...guideSearchRecords("core-analytics", "Analytics", "/help/core-analytics", CORE_ANALYTICS_HELP_GUIDES),
+  Object.freeze({
+    href: "/help/trade-explorer",
+    id: "trade-explorer-overview",
+    keywords: Object.freeze(["trade explorer", "compare trades", "sort trades", "rank groups", "trade review"]),
+    section: "Trade Explorer",
+    summary: "Inspect individual completed trades or compare the factual results of two to four groups.",
+    title: "Trade Explorer overview",
+  }),
+  ...guideSearchRecords("trade-explorer", "Trade Explorer", "/help/trade-explorer", TRADE_EXPLORER_HELP_GUIDES),
   Object.freeze({
     href: "/help/trading-rules",
     id: "trading-rules-overview",
