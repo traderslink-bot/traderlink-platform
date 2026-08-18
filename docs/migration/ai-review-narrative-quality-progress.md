@@ -59,11 +59,10 @@ source of that size.
   immutable Journal input snapshot or silently truncating trader notes.
 - [x] Keep actual provider usage separate from the deliberately conservative
   one-token-per-byte pre-call spend reservation.
-- [x] Replace the mistaken 256,000-byte terminal boundary with a 900,000-byte
-  single-call ceiling below the model context window. Keep byte-count token
-  reservation as the conservative spend guard; bytes are not presented as
-  actual provider token use.
-- [ ] Replace the byte-only single-call rejection with a token-aware reservation.
+- [x] Remove the mistaken 256,000-byte terminal boundary. Keep 900,000 bytes only
+  as the threshold for requesting an authoritative model-specific token count;
+  normal smaller packages retain the conservative one-token-per-byte reservation.
+- [x] Replace the byte-only single-call rejection with a token-aware reservation.
   Use a multi-stage evidence workflow only when the counted package genuinely
   exceeds the model's safe one-call input budget; never split it into unrelated
   final reviews.
@@ -89,6 +88,9 @@ source of that size.
   attempts from the real-flow run.
 - [x] Refresh the active GPT-5.6 Luna rates to the official 2026-08-18 prices
   without rewriting historical reservation or receipt prices.
+- [x] Run the complete 420-trade monthly-only package through provider token
+  counting, reservation, Luna generation, output validation, cost receipt,
+  immutable save and reopen in a synthetic-only in-memory database.
 
 ### Size and cost boundary
 
@@ -103,16 +105,32 @@ outcomes, 21 completed daily reflections containing 58,800 note characters,
 and 420 trade notes containing 294,000 characters. Its exact provider prompt is
 1,786,512 UTF-8 bytes, while OpenAI's model-specific input-token endpoint counts
 the complete Luna instructions and prompt at 506,884 tokens. It fits the model's
-one-call context window, but the current 900,000-byte reservation guard would
-incorrectly reject it. The next provider-control correction must reserve from a
-model-specific token count with explicit headroom for the structured-output
-schema and response. Multi-stage extraction is necessary only if that complete
-counted envelope exceeds the safe one-call budget.
+one-call context window, but the former 900,000-byte reservation guard would
+have incorrectly rejected it. Provider controls now reserve from the
+model-specific count with explicit headroom for the structured-output schema
+and response. Multi-stage extraction is necessary only if that complete counted
+envelope exceeds the safe one-call budget.
+
+The first live provider generation used 506,950 input tokens and 646 output
+tokens, passed the structured-output, safety and grounding checks on its first
+attempt, and cost $0.25463750 at the current long-context rates. The provider
+input-token endpoint's 506,884 count was 66 tokens below the actual generation,
+confirming that the reservation needs explicit schema/protocol headroom rather
+than treating the count as a perfect ceiling.
+
+The corrected production-style proof used the same 420-trade package in a new
+synthetic-only in-memory database. The serialized reservation was 1,961,857
+bytes; OpenAI reported 507,175 input and 702 output tokens. TraderLink reserved
+515,301 input tokens and $0.2650233, recorded the exact $0.2548508 receipt,
+saved and reopened the immutable monthly review, and passed foreign-key checks.
+No local Journal database was opened, copied or changed. The generated review
+also rendered the exact stored `75.0000` win-rate value as the human-readable
+`75%` after the percentage-formatting prompt correction.
 
 Because 506,884 input tokens exceed Luna's 272,000-token long-context pricing
-threshold, the same correction must apply the provider's 2x input and 1.5x
-output multipliers to both the conservative reservation and the final recorded
-receipt. The earlier three saved July reviews stayed below that threshold, so
+threshold, provider controls now apply the provider's 2x input and 1.5x output
+multipliers to both the conservative reservation and the final recorded receipt.
+The earlier three saved July reviews stayed below that threshold, so
 their recorded $0.01004625 combined cost is unaffected.
 
 The original Luna price configuration was five times the current official
@@ -181,5 +199,4 @@ deployment or production activation is part of this correction. The AI Reviews
 Help guide already says reviews are retrospective evidence summaries rather
 than trading signals, predictions or investment advice, and it does not
 describe the removed page action, so no Help update is required. Rendered-route
-inspection and the token-aware large-package reservation remain open; owner
-wording review remains the acceptance gate.
+inspection remains open; owner wording review remains the acceptance gate.

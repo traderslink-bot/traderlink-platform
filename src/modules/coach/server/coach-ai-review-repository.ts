@@ -4,6 +4,8 @@ import type Database from "better-sqlite3";
 import Decimal from "decimal.js";
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
+import { coachAiReviewLongContextMultipliers } from
+  "./coach-ai-review-model-limits";
 import {
   assertCanonicalUuidV4,
   createCanonicalUtcTimestamp,
@@ -444,15 +446,24 @@ export function calculateCoachAiReviewEstimatedCost(
       settings.cachedInputCostUsdPerMillionTokens === null ||
       settings.cacheWriteInputCostUsdPerMillionTokens === null ||
       settings.outputCostUsdPerMillionTokens === null) return null;
+  const multipliers = coachAiReviewLongContextMultipliers(
+    settings.modelId,
+    usage.inputTokens,
+  );
   return new ExactDecimal(
     usage.inputTokens - usage.cachedInputTokens - usage.cacheWriteInputTokens,
   )
     .times(settings.inputCostUsdPerMillionTokens)
+    .times(multipliers.input)
     .plus(new ExactDecimal(usage.cachedInputTokens)
-      .times(settings.cachedInputCostUsdPerMillionTokens))
+      .times(settings.cachedInputCostUsdPerMillionTokens)
+      .times(multipliers.input))
     .plus(new ExactDecimal(usage.cacheWriteInputTokens)
-      .times(settings.cacheWriteInputCostUsdPerMillionTokens))
-    .plus(new ExactDecimal(usage.outputTokens).times(settings.outputCostUsdPerMillionTokens))
+      .times(settings.cacheWriteInputCostUsdPerMillionTokens)
+      .times(multipliers.input))
+    .plus(new ExactDecimal(usage.outputTokens)
+      .times(settings.outputCostUsdPerMillionTokens)
+      .times(multipliers.output))
     .dividedBy(1_000_000)
     .toFixed(12)
     .replace(/\.?0+$/u, "") || "0";

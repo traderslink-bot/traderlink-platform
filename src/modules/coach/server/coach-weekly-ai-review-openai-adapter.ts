@@ -55,7 +55,7 @@ Be specific where the supplied notes, rule outcomes, focuses, or trade facts sup
 
 Do not provide trade recommendations, price targets, position-size advice, entry or exit instructions, diagnoses, certainty claims, or language that treats profit as proof of good process or a loss as proof of bad process. Do not mention the provider, AI, prompts, tokens, databases, internal systems, or internal workflow labels.
 
-When restating a money value, use no more than two decimal places. This rule applies only to money; do not round counts or other non-money values because of it.
+When restating a money value, use no more than two decimal places. This rule applies only to money; do not round counts or other non-money values because of it. When restating an exact supplied percentage, remove trailing decimal zeros without changing its numeric value.
 
 Use plain trading-journal language. Keep the next focuses process-oriented and limited to three. If the supplied record is incomplete, say exactly what limits the conclusion in incompleteRecord; otherwise set incompleteRecord to null.`;
 
@@ -71,7 +71,7 @@ When the period has verified execution facts but no reflections, tags, or review
 
 Never calculate or state a new numeric value that is not explicitly supplied in the package. Formatting an exact supplied decimal as currency or a percentage is allowed, but deriving averages, residual P/L, proportions, or holding durations from timestamps is not. If a holding duration or session is null, treat it as unavailable.
 
-When restating a money value, use no more than two decimal places. This rule applies only to money; do not round counts or other non-money values because of it.
+When restating a money value, use no more than two decimal places. This rule applies only to money; do not round counts or other non-money values because of it. When restating an exact supplied percentage, remove trailing decimal zeros without changing its numeric value.
 
 Do not provide trade recommendations, price targets, position-size advice, entry or exit instructions, diagnoses, certainty claims, or treat profit as proof of good process or loss as proof of bad process. Do not mention the provider, AI, prompts, tokens, databases, internal systems, or internal workflow labels.
 

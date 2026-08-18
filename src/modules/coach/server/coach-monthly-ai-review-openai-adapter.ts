@@ -54,7 +54,7 @@ Be specific where the supplied notes, rule outcomes, focuses, issued weekly revi
 
 Do not provide trade recommendations, price targets, position-size advice, entry or exit instructions, diagnoses, certainty claims, or language that treats profit as proof of good process or a loss as proof of bad process. Do not mention the provider, AI, prompts, tokens, databases, internal systems, or internal workflow labels.
 
-When restating a money value, use no more than two decimal places. This rule applies only to money; do not round counts or other non-money values because of it.
+When restating a money value, use no more than two decimal places. This rule applies only to money; do not round counts or other non-money values because of it. When restating an exact supplied percentage, remove trailing decimal zeros without changing its numeric value.
 
 Use plain trading-journal language. Keep the next-month focuses process-oriented and limited to three. A recurring theme from an issued weekly review must also be supported by the current month's Journal package. If the supplied record is incomplete, say exactly what limits the conclusion in incompleteRecord; otherwise set incompleteRecord to null.`;
 
@@ -70,7 +70,7 @@ When the month has verified execution facts but no reflections, tags, or reviewe
 
 Never calculate or state a new numeric value that is not explicitly supplied in the package. Formatting an exact supplied decimal as currency or a percentage is allowed, but deriving averages, residual P/L, proportions, or holding durations from timestamps is not. If a holding duration or session is null, treat it as unavailable.
 
-When restating a money value, use no more than two decimal places. This rule applies only to money; do not round counts or other non-money values because of it.
+When restating a money value, use no more than two decimal places. This rule applies only to money; do not round counts or other non-money values because of it. When restating an exact supplied percentage, remove trailing decimal zeros without changing its numeric value.
 
 Be direct but do not invent a setup, motive, market condition, rule outcome, missing fact, pattern, or trade result. Do not provide trade recommendations, price targets, position-size advice, entry or exit instructions, diagnoses, certainty claims, or treat profit as proof of good process or loss as proof of bad process. Do not mention the provider, AI, prompts, tokens, databases, internal systems, or internal workflow labels.
 

@@ -5,6 +5,11 @@ import type {
   CoachMonthlyAiReviewInput,
 } from "../contracts/monthly-ai-review-input-contracts";
 import { CoachAiReviewProviderControlsRepository } from "./coach-ai-review-provider-controls-repository";
+import {
+  coachAiReviewInputNeedsProviderTokenCount,
+  countCoachAiReviewOpenAiInputTokens,
+  type CoachAiReviewInputTokenCounter,
+} from "./coach-ai-review-openai-input-token-counter";
 import type { CoachAiProviderSettingsRepository } from "./coach-ai-provider-settings-repository";
 import {
   type CoachAiGenerationUsage,
@@ -41,6 +46,12 @@ export type CoachMonthlyReviewIssuanceResultV2 =
 function failureCode(error: unknown): string {
   if (error instanceof Error) {
     if (error.message === "TRADERLINK_COACH_OPENAI_UNAVAILABLE") return error.message;
+    if (error.message === "TRADERLINK_COACH_OPENAI_TOKEN_COUNT_UNAVAILABLE") {
+      return error.message;
+    }
+    if (error.message === "TRADERLINK_COACH_REVIEW_INPUT_TOO_LARGE") {
+      return error.message;
+    }
     if (error.message === "TRADERLINK_COACH_OPENAI_NO_OUTPUT") return error.message;
     if (error.message.startsWith("TRADERLINK_COACH_OPENAI_UNSAFE_")) return error.message;
   }
@@ -87,6 +98,8 @@ export class CoachMonthlyAiReviewIssuanceService {
     private readonly generate: CoachMonthlyReviewGenerator = generateCoachMonthlyAiReview,
     private readonly controls: CoachAiReviewProviderControlsRepository,
     private readonly generateV2: CoachMonthlyReviewGeneratorV2 = generateCoachMonthlyAiReviewV2,
+    private readonly countInputTokens: CoachAiReviewInputTokenCounter =
+      countCoachAiReviewOpenAiInputTokens,
   ) {}
 
   async issueExistingV2(
@@ -142,10 +155,35 @@ export class CoachMonthlyAiReviewIssuanceService {
       return Object.freeze({ state: "in_progress", requestId: request.requestId });
     }
     const envelope = buildCoachMonthlyAiReviewProviderEnvelopeV2(providerInput);
+    let providerInputTokens: number | null = null;
+    try {
+      if (coachAiReviewInputNeedsProviderTokenCount(envelope.reservationText)) {
+        providerInputTokens = await this.countInputTokens({
+          modelId: settings.modelId,
+          system: envelope.system,
+          prompt: envelope.prompt,
+        });
+      }
+    } catch (error) {
+      this.reviews.failAttemptV2(
+        scope,
+        attempt.attemptId,
+        failureCode(error),
+        null,
+        null,
+        now,
+      );
+      return Object.freeze({
+        state: "failed",
+        requestId: request.requestId,
+        retryAvailable: true,
+      });
+    }
     const reservation = this.controls.reserveReviewGenerationV2(scope, {
       attemptId: attempt.attemptId,
       reviewKind: "monthly",
       providerInputText: envelope.reservationText,
+      providerInputTokens,
       maxOutputTokens: envelope.maximumOutputTokens,
     }, now);
     if (reservation.reservation.state === "blocked") {
@@ -251,10 +289,35 @@ export class CoachMonthlyAiReviewIssuanceService {
       return Object.freeze({ state: "in_progress", requestId: request.requestId });
     }
     const envelope = buildCoachMonthlyAiReviewProviderEnvelope(input);
+    let providerInputTokens: number | null = null;
+    try {
+      if (coachAiReviewInputNeedsProviderTokenCount(envelope.reservationText)) {
+        providerInputTokens = await this.countInputTokens({
+          modelId: settings.modelId,
+          system: envelope.system,
+          prompt: envelope.prompt,
+        });
+      }
+    } catch (error) {
+      this.reviews.failMonthlyAttempt(
+        scope,
+        attempt.attemptId,
+        failureCode(error),
+        null,
+        null,
+        now,
+      );
+      return Object.freeze({
+        state: "failed",
+        requestId: request.requestId,
+        retryAvailable: true,
+      });
+    }
     const reservation = this.controls.reserveReviewGeneration(scope, {
       attemptId: attempt.attemptId,
       reviewKind: "monthly",
       providerInputText: envelope.reservationText,
+      providerInputTokens,
       maxOutputTokens: envelope.maximumOutputTokens,
     }, now);
     if (reservation.reservation.state === "blocked") {

@@ -15,7 +15,7 @@ export const COACH_PERIODIC_AI_REVIEW_OUTPUT_CONTRACT_VERSION =
   "traderlink_coach_periodic_ai_review_output_v2" as const;
 
 export const COACH_PERIODIC_AI_REVIEW_PROMPT_VERSION =
-  "periodic_v2_grounded_2026_08_18" as const;
+  "periodic_v2_grounded_2026_08_18_pct" as const;
 
 export type CoachPeriodicAiReviewOutputV2 = Readonly<{
   contractVersion: typeof COACH_PERIODIC_AI_REVIEW_OUTPUT_CONTRACT_VERSION;

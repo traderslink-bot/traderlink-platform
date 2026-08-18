@@ -16,6 +16,14 @@ import {
   createCanonicalUuidV4,
   platformFailure,
 } from "@/src/modules/platform/server/database/platform-migration-contract";
+import {
+  COACH_AI_REVIEW_CONTEXT_SAFETY_TOKENS,
+  COACH_AI_REVIEW_INPUT_TOKEN_HEADROOM,
+  COACH_AI_REVIEW_LARGE_INPUT_THRESHOLD_BYTES,
+  COACH_AI_REVIEW_MAX_SERIALIZED_INPUT_BYTES,
+  coachAiReviewLongContextMultipliers,
+  coachAiReviewModelContextTokens,
+} from "./coach-ai-review-model-limits";
 
 const ExactDecimal = Decimal.clone({ precision: 80, toExpNeg: -1000, toExpPos: 1000 });
 const REVIEW_FEATURES = Object.freeze({
@@ -23,12 +31,6 @@ const REVIEW_FEATURES = Object.freeze({
   two_week: "weekly_reviews",
   monthly: "monthly_reviews",
 } as const);
-// The current Luna context window is 1,050,000 tokens. A UTF-8 byte is a safe
-// upper bound for a token in these validated JSON/natural-language packages,
-// so this ceiling leaves room for the response while accepting the measured
-// 100-trade stress package. It is a per-call reliability boundary, not a claim
-// that the provider has a 900 KB limit.
-const MAX_PROVIDER_INPUT_BYTES = 900_000;
 const MAX_OUTPUT_TOKENS = 16_384;
 const FAILURE_CODE_PATTERN = /^[A-Z][A-Z0-9_]{0,95}$/u;
 
@@ -163,6 +165,7 @@ function hasCompleteCaps(control: CoachAiFeatureControl): control is CoachAiFeat
 }
 
 function reservedCost(
+  modelId: string,
   inputTokens: number,
   outputTokens: number,
   inputRate: string,
@@ -171,8 +174,10 @@ function reservedCost(
 ): string {
   const conservativeInputRate = new ExactDecimal(inputRate).gte(cacheWriteInputRate)
     ? inputRate : cacheWriteInputRate;
+  const multipliers = coachAiReviewLongContextMultipliers(modelId, inputTokens);
   return new ExactDecimal(inputTokens).times(conservativeInputRate)
-    .plus(new ExactDecimal(outputTokens).times(outputRate))
+    .times(multipliers.input)
+    .plus(new ExactDecimal(outputTokens).times(outputRate).times(multipliers.output))
     .dividedBy(1_000_000).toFixed(12).replace(/\.?0+$/u, "") || "0";
 }
 
@@ -258,6 +263,7 @@ FROM coach_ai_provider_settings WHERE settings_key = 'coach_reviews'`).get();
       attemptId: unknown;
       reviewKind: unknown;
       providerInputText: unknown;
+      providerInputTokens?: unknown;
       maxOutputTokens: unknown;
     }>,
     now = new Date(),
@@ -271,6 +277,7 @@ FROM coach_ai_provider_settings WHERE settings_key = 'coach_reviews'`).get();
       attemptId: unknown;
       reviewKind: unknown;
       providerInputText: unknown;
+      providerInputTokens?: unknown;
       maxOutputTokens: unknown;
     }>,
     now = new Date(),
@@ -284,6 +291,7 @@ FROM coach_ai_provider_settings WHERE settings_key = 'coach_reviews'`).get();
       attemptId: unknown;
       reviewKind: unknown;
       providerInputText: unknown;
+      providerInputTokens?: unknown;
       maxOutputTokens: unknown;
     }>,
     version: "v1" | "v2",
@@ -300,13 +308,37 @@ FROM coach_ai_provider_settings WHERE settings_key = 'coach_reviews'`).get();
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "providerInputText" });
     }
     const providerInputBytes = Buffer.byteLength(providerInputText, "utf8");
-    if (providerInputBytes < 1 || providerInputBytes > MAX_PROVIDER_INPUT_BYTES) {
+    if (providerInputBytes < 1 ||
+        providerInputBytes > COACH_AI_REVIEW_MAX_SERIALIZED_INPUT_BYTES) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "providerInputText" });
     }
-    // Provider token use is normally much lower than the UTF-8 byte count, but
-    // reserving one token per byte keeps the spend guard conservative without
-    // needing a model-specific tokenizer in the request path.
-    const maximumInputTokens = providerInputBytes;
+    const providerInputTokens = input.providerInputTokens;
+    const hasProviderTokenCount = providerInputTokens !== undefined &&
+      providerInputTokens !== null;
+    if (hasProviderTokenCount &&
+        (typeof providerInputTokens !== "number" ||
+          !Number.isSafeInteger(providerInputTokens) || providerInputTokens < 1)) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+        field: "providerInputTokens",
+      });
+    }
+    if (!hasProviderTokenCount &&
+        providerInputBytes > COACH_AI_REVIEW_LARGE_INPUT_THRESHOLD_BYTES) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+        field: "providerInputTokens",
+      });
+    }
+    // Normal packages keep the conservative one-token-per-byte reservation.
+    // Larger packages use OpenAI's model-specific count plus fixed headroom for
+    // structured-output schema and provider protocol tokens.
+    const maximumInputTokens = hasProviderTokenCount
+      ? (providerInputTokens as number) + COACH_AI_REVIEW_INPUT_TOKEN_HEADROOM
+      : providerInputBytes;
+    if (!Number.isSafeInteger(maximumInputTokens)) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+        field: "providerInputTokens",
+      });
+    }
     const maxOutputTokens = input.maxOutputTokens;
     if (typeof maxOutputTokens !== "number" || !Number.isSafeInteger(maxOutputTokens) ||
         maxOutputTokens < 1 || maxOutputTokens > MAX_OUTPUT_TOKENS) {
@@ -318,6 +350,18 @@ FROM coach_ai_provider_settings WHERE settings_key = 'coach_reviews'`).get();
         : this.attemptV2(scope, accountId, attemptId);
       if (attempt.review_kind !== reviewKind || featureKey !== REVIEW_FEATURES[attempt.review_kind]) {
         platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", { table: "coach_ai_review_generation_attempts" });
+      }
+      const contextTokens = coachAiReviewModelContextTokens(attempt.model_id);
+      if (hasProviderTokenCount && contextTokens === null) {
+        platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+          field: "modelId",
+        });
+      }
+      if (contextTokens !== null && maximumInputTokens + maxOutputTokens +
+          COACH_AI_REVIEW_CONTEXT_SAFETY_TOKENS > contextTokens) {
+        platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+          field: "providerInputTokens",
+        });
       }
       const existing = version === "v1"
         ? this.reservationRow(scope, accountId, attemptId)
@@ -354,6 +398,7 @@ FROM coach_ai_provider_settings WHERE settings_key = 'coach_reviews'`).get();
       const maximumCostUsd = inputCost !== null && cacheWriteInputCost !== null &&
           outputCost !== null
         ? reservedCost(
+            attempt.model_id,
             maximumInputTokens,
             maxOutputTokens,
             inputCost,

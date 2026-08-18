@@ -15,7 +15,7 @@ export const COACH_MONTHLY_AI_REVIEW_OUTPUT_CONTRACT_VERSION_V2 =
   "traderlink_coach_monthly_ai_review_output_v2" as const;
 
 export const COACH_MONTHLY_AI_REVIEW_PROMPT_VERSION_V2 =
-  "monthly_v2_grounded_2026_08_18" as const;
+  "monthly_v2_grounded_2026_08_18_pct" as const;
 
 export type CoachMonthlyAiReviewOutputV2 = Readonly<{
   contractVersion: typeof COACH_MONTHLY_AI_REVIEW_OUTPUT_CONTRACT_VERSION_V2;
