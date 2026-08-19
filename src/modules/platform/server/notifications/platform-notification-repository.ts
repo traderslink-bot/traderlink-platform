@@ -10,6 +10,8 @@ import {
   type PlatformNotificationPreferences,
 } from "@/src/modules/platform/contracts/platform-notification-contracts";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
+import { loadPlatformWebPushEncryptionConfiguration } from "./platform-web-push-configuration";
+import { PlatformWebPushRepository } from "./platform-web-push-repository";
 import {
   assertCanonicalUtcTimestamp,
   assertCanonicalUuidV4,
@@ -32,6 +34,7 @@ type NotificationRow = Readonly<{
 type PreferenceRow = Readonly<{
   category: string;
   discord_dm_enabled: number;
+  web_push_enabled: number;
 }>;
 
 function parseCategory(value: unknown): PlatformNotificationCategory {
@@ -57,7 +60,11 @@ function assertNotificationText(value: unknown, field: string, maximumLength: nu
 
 function parseDestinationPath(value: unknown): string | null {
   if (value === null) return null;
-  if (typeof value !== "string" || value.length === 0 || value.length > 512 || !value.startsWith("/") || value.includes("://") || /[\r\n]/u.test(value)) {
+  if (
+    typeof value !== "string" || value.length === 0 || value.length > 512 ||
+    !value.startsWith("/") || value.startsWith("//") || value.includes("\\") ||
+    value.includes("://") || /[\r\n]/u.test(value)
+  ) {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "notificationDestination" });
   }
   return value;
@@ -180,6 +187,19 @@ WHERE notification.workspace_id = ? AND notification.recipient_user_id = ?
 ) VALUES (?, ?, NULL, ?)`).run(notificationId, input.scope.userId, input.occurredAtUtc);
     });
     insert();
+    try {
+      new PlatformWebPushRepository(
+        this.database,
+        loadPlatformWebPushEncryptionConfiguration(),
+      ).enqueueNotification({
+        category,
+        notificationRef: notificationId,
+        occurredAtUtc: input.occurredAtUtc,
+        userId: input.scope.userId,
+      });
+    } catch {
+      // In-app notifications remain authoritative when hosted Web Push is not configured.
+    }
     return Object.freeze({
       category,
       destinationPath,
@@ -217,14 +237,19 @@ WHERE notification.notification_id = ? AND notification.workspace_id = ?
 
   readPreferences(scope: WorkspaceAccessScope): PlatformNotificationPreferences {
     this.assertActiveScope(scope);
-    const enabled = new Set(this.database.prepare<[string], PreferenceRow>(`SELECT category, discord_dm_enabled
+    const rows = this.database.prepare<[string], PreferenceRow>(`SELECT category, discord_dm_enabled, web_push_enabled
 FROM platform_notification_delivery_preferences
-WHERE user_id = ? AND discord_dm_enabled = 1`).all(scope.userId)
+WHERE user_id = ?`).all(scope.userId);
+    const enabled = new Set(rows
       .filter((row) => row.discord_dm_enabled === 1)
+      .map((row) => parseCategory(row.category)));
+    const webPushEnabled = new Set(rows
+      .filter((row) => row.web_push_enabled === 1)
       .map((row) => parseCategory(row.category)));
     return Object.freeze({
       ...DEFAULT_PLATFORM_NOTIFICATION_PREFERENCES,
       discordDmCategories: Object.freeze(PLATFORM_NOTIFICATION_CATEGORIES.filter((category) => enabled.has(category))),
+      webPushCategories: Object.freeze(PLATFORM_NOTIFICATION_CATEGORIES.filter((category) => webPushEnabled.has(category))),
     });
   }
 
@@ -254,6 +279,37 @@ ON CONFLICT(user_id, category) DO UPDATE SET
     save();
     return Object.freeze({
       discordDmCategories: Object.freeze(PLATFORM_NOTIFICATION_CATEGORIES.filter((category) => selected.has(category))),
+      webPushCategories: this.readPreferences(input.scope).webPushCategories,
+    });
+  }
+
+  replaceWebPushCategories(input: Readonly<{
+    categories: readonly unknown[];
+    scope: WorkspaceAccessScope;
+    updatedAtUtc: string;
+  }>): PlatformNotificationPreferences {
+    this.assertActiveScope(input.scope);
+    assertCanonicalUtcTimestamp(input.updatedAtUtc, "notificationPreferencesUpdatedAtUtc");
+    const selected = new Set(input.categories.map(parseCategory));
+    const save = this.database.transaction(() => {
+      for (const category of PLATFORM_NOTIFICATION_CATEGORIES) {
+        this.database.prepare(`INSERT INTO platform_notification_delivery_preferences (
+  user_id, category, discord_dm_enabled, web_push_enabled, updated_at_utc
+) VALUES (?, ?, 0, ?, ?)
+ON CONFLICT(user_id, category) DO UPDATE SET
+  web_push_enabled = excluded.web_push_enabled,
+  updated_at_utc = excluded.updated_at_utc`).run(
+          input.scope.userId,
+          category,
+          selected.has(category) ? 1 : 0,
+          input.updatedAtUtc,
+        );
+      }
+    });
+    save();
+    return Object.freeze({
+      discordDmCategories: this.readPreferences(input.scope).discordDmCategories,
+      webPushCategories: Object.freeze(PLATFORM_NOTIFICATION_CATEGORIES.filter((category) => selected.has(category))),
     });
   }
 }

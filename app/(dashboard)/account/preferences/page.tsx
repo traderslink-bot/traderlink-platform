@@ -40,7 +40,10 @@ export default async function AccountPreferencesPage() {
         <ReportingCurrencySettings reportingCurrency={profile.reportingCurrency} />
       </DashboardPanel>
       <DashboardPanel title="Notifications">
-        <NotificationPreferences initialDiscordDmCategories={notificationPreferences.discordDmCategories} />
+        <NotificationPreferences
+          initialDiscordDmCategories={notificationPreferences.discordDmCategories}
+          initialWebPushCategories={notificationPreferences.webPushCategories}
+        />
       </DashboardPanel>
       <DashboardPanel title="Offline data">
         <OfflineDataSettings

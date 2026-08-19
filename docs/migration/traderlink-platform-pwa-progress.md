@@ -1,6 +1,6 @@
 # TraderLink Platform PWA Progress
 
-**Status:** PWA 0-2 owner-approved; PWA 3 implementation assembled for owner/runtime review
+**Status:** PWA 0-2 owner-approved; PWA 3-4 implementation assembled for owner/runtime review
 
 **Started:** 2026-08-18
 
@@ -95,13 +95,13 @@ caching authenticated HTML.
 
 ### PWA 4 - Web Push
 
-**Status:** Pending
+**Status:** Implementation assembled; owner/runtime/hosted review pending
 
-- [ ] Add encrypted subscription persistence and authenticated endpoints.
-- [ ] Add category-specific Web Push preferences.
-- [ ] Add user-gesture enable/disable controls.
-- [ ] Add generic service-worker push display and click routing.
-- [ ] Verify expired-subscription cleanup and privacy-safe payloads.
+- [x] Add encrypted subscription persistence and authenticated endpoints.
+- [x] Add category-specific Web Push preferences.
+- [x] Add user-gesture enable/disable controls.
+- [x] Add generic service-worker push display and click routing.
+- [x] Add expired-subscription cleanup and privacy-safe payload contracts.
 
 ### PWA 5 - acceptance and hosted gate
 
@@ -115,10 +115,11 @@ caching authenticated HTML.
 
 ## Current exact resume point
 
-PWA 2 owner approval and its narrow local checkpoint are complete at
-`58f62e9d`. Implement PWA 3 with bounded server-rendered page projections and
-the current opaque user/account partition. Preserve private `no-store` network
-headers and do not cache authenticated HTML or raw Journal source records.
+PWA 3 is preserved at local commit `09cda0db`. PWA 4 is assembled for the
+owner's notification-settings review. Do not apply migration 0064 to the
+private database or configure local/hosted VAPID and encryption secrets until
+that visible treatment is approved. Then complete the resource-aware runtime
+and browser gate without writing a Journal trade.
 
 ## 2026-08-18 PWA 1 assembly note
 
@@ -224,3 +225,42 @@ headers and do not cache authenticated HTML or raw Journal source records.
   command, Journal write, provider call, deployment or production build ran.
 - Desktop, narrow-mobile and real offline reload acceptance remain open for the
   controlled browser/hosted gate.
+
+## 2026-08-18 PWA 4 assembly note
+
+- Added migration 0064 with stable Platform-user/device subscription identity,
+  encrypted endpoint and browser-key material, an append-preserving delivery
+  queue and bounded retry/expiration state.
+- The subscription API requires the authenticated Platform scope, same-origin
+  browser evidence and a dedicated mutation header. A browser endpoint can
+  belong to only one active Platform user at a time.
+- Account Preferences now keeps Discord messages and Push notifications as
+  separate choices. Browser permission is requested only when the trader
+  presses **Enable push notifications**. Turning push off revokes only the
+  current device; category choices remain available for other enabled devices.
+- Added a generic service-worker notification with authenticated in-app route
+  opening. The payload contains only a version and a bounded same-origin
+  destination path; lock-screen content contains no trading, account,
+  statement, broker, note or AI Review facts.
+- Added best-effort local and hosted delivery entry points. HTTP 404/410
+  responses expire unreachable subscriptions; retryable failures use bounded
+  backoff and never trigger silent trade upload.
+- Removing offline data now also turns push off on that browser before removing
+  the current opaque account partition. Sign-out unsubscribes the browser push
+  endpoint while keeping prior offline records hidden from a later user.
+- The Notifications and Imports Help guide now covers opt-in behavior, generic
+  lock-screen text, per-device disable behavior and the authenticated
+  Notifications Center destination.
+- Added exact `web-push` and type dependencies. No VAPID/encryption secrets were
+  generated or configured, no private database migration was applied, and no
+  real push, provider, deployment, production build or Journal write ran before
+  the owner review gate.
+- Targeted ESLint for the PWA 4 files, service-worker JavaScript syntax,
+  dependency resolution, `git diff --check` and the bounded PWA 4 TypeScript
+  project pass. The first TypeScript command inherited the whole-project include
+  and surfaced an unrelated concurrent Workspace `sx` prop error; the corrected
+  PWA-only boundary passes without changing that work.
+- A production-dependency audit reports five high-severity advisories through
+  the current Next.js/PostCSS/Sharp dependency line. None names `web-push` or
+  its added dependency chain. This remains a separate release-readiness gate;
+  no broad framework or image-library upgrade was folded into PWA 4.

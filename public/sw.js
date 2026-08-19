@@ -9,6 +9,22 @@ const SHELL_ASSETS = Object.freeze([
   "/icons/traderlink-maskable-512.png",
 ]);
 
+async function unsubscribeCurrentPushDevice() {
+  try {
+    const subscription = await self.registration.pushManager.getSubscription();
+    await subscription?.unsubscribe();
+  } catch {
+    // The push service will expire an unreachable subscription server-side.
+  }
+}
+
+function safeDestinationPath(value) {
+  return typeof value === "string" && value.length <= 512 && value.startsWith("/") &&
+    !value.startsWith("//") && !value.includes("\\") && !value.includes("://")
+    ? value
+    : "/notifications";
+}
+
 function clearCurrentOfflineScope() {
   return new Promise((resolve) => {
     const request = indexedDB.open("traderlink-pwa-v1", 2);
@@ -40,14 +56,16 @@ function clearCurrentOfflineScope() {
       transaction.objectStore("deviceState").delete("current");
       transaction.addEventListener("complete", () => {
         database.close();
-        resolve();
+        void unsubscribeCurrentPushDevice().then(resolve);
       });
       transaction.addEventListener("error", () => {
         database.close();
-        resolve();
+        void unsubscribeCurrentPushDevice().then(resolve);
       });
     });
-    request.addEventListener("error", () => resolve());
+    request.addEventListener("error", () => {
+      void unsubscribeCurrentPushDevice().then(resolve);
+    });
   });
 }
 
@@ -119,12 +137,19 @@ self.addEventListener("sync", (event) => {
 });
 
 self.addEventListener("push", (event) => {
+  let path = "/notifications";
+  try {
+    const data = event.data?.json();
+    if (data?.version === 1) path = safeDestinationPath(data.destinationPath);
+  } catch {
+    path = "/notifications";
+  }
   event.waitUntil(
     self.registration.showNotification("TraderLink Platform", {
       body: "You have a new TraderLink update.",
       icon: "/icons/traderlink-192.png",
       badge: "/icons/traderlink-192.png",
-      data: { path: "/notifications" },
+      data: { path },
       tag: "traderlink-update",
     }),
   );
@@ -132,15 +157,16 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
+  const path = safeDestinationPath(event.notification.data?.path);
   event.waitUntil(
     self.clients.matchAll({ includeUncontrolled: true, type: "window" })
       .then(async (clients) => {
         const existingClient = clients.find((client) => "focus" in client);
         if (existingClient) {
-          await existingClient.navigate("/notifications");
+          await existingClient.navigate(path);
           return existingClient.focus();
         }
-        return self.clients.openWindow("/notifications");
+        return self.clients.openWindow(path);
       }),
   );
 });

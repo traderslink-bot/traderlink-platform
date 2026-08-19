@@ -37,3 +37,31 @@ export async function saveDiscordDmNotificationCategories(
     });
   }
 }
+
+export async function saveWebPushNotificationCategories(
+  categories: readonly string[],
+): Promise<Readonly<{ ok: true; categories: readonly string[] }> | Readonly<{ ok: false; message: string }>> {
+  try {
+    const scope = await requireTraderLinkPlatformPageScope();
+    const preferences = withPlatformDatabase(
+      { mode: "runtime" },
+      (database) => new PlatformNotificationRepository(database)
+        .replaceWebPushCategories({
+          categories,
+          scope,
+          updatedAtUtc: createCanonicalUtcTimestamp(),
+        }),
+    );
+    revalidatePath("/account/preferences");
+    return Object.freeze({ ok: true as const, categories: preferences.webPushCategories });
+  } catch (error) {
+    const invalid = isTraderLinkPlatformError(error) &&
+      error.code === "TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED";
+    return Object.freeze({
+      ok: false as const,
+      message: invalid
+        ? "Choose notifications from the available categories."
+        : "Your push notification choices could not be saved. Try again.",
+    });
+  }
+}

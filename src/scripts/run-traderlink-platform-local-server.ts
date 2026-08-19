@@ -19,6 +19,7 @@ import { TRADERLINK_LEVEL_ANALYSIS_ALLOWED_PROVIDERS_ENV } from "../modules/leve
 const LOCAL_WORKER_PATHS = new Set([
   "/api/platform/daily-trade-analyzer/run",
   "/api/platform/moomoo-execution-import/run",
+  "/api/platform/pwa/push/run",
 ]);
 
 function argument(name: string): string | undefined {
@@ -116,6 +117,29 @@ function startMoomooExecutionImportWorker(input: Readonly<{
   setInterval(() => void processOne(), 15_000);
 }
 
+function startWebPushWorker(input: Readonly<{
+  hostname: string;
+  port: number;
+}>): void {
+  let processing = false;
+  const processOne = async (): Promise<void> => {
+    if (processing) return;
+    processing = true;
+    try {
+      await fetch(
+        `http://${input.hostname}:${input.port}/api/platform/pwa/push/run`,
+        { method: "POST" },
+      );
+    } catch {
+      // Push remains queued until the local/hosted configuration is available.
+    } finally {
+      processing = false;
+    }
+  };
+  void processOne();
+  setInterval(() => void processOne(), 15_000);
+}
+
 async function main(): Promise<void> {
   if (!process.argv.includes("--dev")) {
     throw new Error("platform_local_development_mode_required");
@@ -173,6 +197,7 @@ async function main(): Promise<void> {
     if (workersEnabled) {
       startDailyTradeAnalyzerWorker({ hostname: listenerHost, port: listenerPort });
       startMoomooExecutionImportWorker({ hostname: listenerHost, port: listenerPort });
+      startWebPushWorker({ hostname: listenerHost, port: listenerPort });
     }
   });
 }

@@ -113,7 +113,10 @@ function dispatcher(scope: WorkspaceAccessScope): CoachAiChatFactualToolDispatch
           toolName: request.toolName,
           result: Object.freeze({
             reportingCurrency: "USD",
-            notifications: Object.freeze({ discordDmCategories: Object.freeze([]) }),
+            notifications: Object.freeze({
+              discordDmCategories: Object.freeze([]),
+              webPushCategories: Object.freeze([]),
+            }),
             link: "/account/preferences",
           }),
         });

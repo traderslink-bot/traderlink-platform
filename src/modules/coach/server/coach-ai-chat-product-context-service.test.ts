@@ -100,7 +100,10 @@ function fixture() {
         summary: "Your trades are ready.",
         destinationPath: "/imports?privateId=hidden",
       })])),
-      readPreferences: vi.fn(() => Object.freeze({ discordDmCategories: Object.freeze([]) })),
+      readPreferences: vi.fn(() => Object.freeze({
+        discordDmCategories: Object.freeze([]),
+        webPushCategories: Object.freeze([]),
+      })),
     },
     profile: {
       get: vi.fn(() => Object.freeze({
