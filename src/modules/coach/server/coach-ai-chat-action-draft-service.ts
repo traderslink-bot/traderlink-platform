@@ -617,7 +617,7 @@ export class CoachAiChatActionDraftService {
         .readGate(requestScope));
     this.requestAiReview = dependencies.requestAiReview ??
       ((requestScope, request, requestedAt) => new CoachAiReviewRequestService(this.database)
-        .requestManualV2(requestScope, request, requestedAt));
+        .requestManual(requestScope, request, requestedAt));
   }
 
   create(

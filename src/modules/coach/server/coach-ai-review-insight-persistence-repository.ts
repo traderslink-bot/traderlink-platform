@@ -509,6 +509,10 @@ WHERE snapshot.coach_ai_review_period_request_id = ?
     if (artifact.request.reviewKind !== input.reviewKind ||
         artifact.request.periodStartDate !== input.periodStartDate ||
         artifact.request.periodEndDate !== input.periodEndDate ||
+        artifact.sourceSnapshot.source.period.coverageStartDate !==
+          input.coverageStartDate ||
+        artifact.sourceSnapshot.source.period.coverageEndDate !==
+          input.coverageEndDate ||
         artifact.request.inputContractVersion !== input.inputContractVersion ||
         artifact.request.inputDigestSha256 !== input.inputSha256 ||
         artifact.request.evidenceManifestDigestSha256 !==
@@ -557,6 +561,12 @@ WHERE snapshot.coach_ai_review_period_request_id = ?
       ? periodRecord.calendarMonthEndDate
       : periodRecord.endDate;
     if (sourceStart !== input.periodStartDate || sourceEnd !== input.periodEndDate ||
+        (input.reviewKind === "monthly" &&
+          (periodRecord.coverageStartDate !== input.coverageStartDate ||
+            periodRecord.coverageEndDate !== input.coverageEndDate)) ||
+        (input.reviewKind !== "monthly" &&
+          (input.coverageStartDate !== input.periodStartDate ||
+            input.coverageEndDate !== input.periodEndDate)) ||
         (input.reviewKind !== "monthly" && periodRecord.cadence !== input.reviewKind)) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
         field: "requestPeriod",

@@ -166,23 +166,20 @@ export type CoachAiReviewOpenAiSelectionEnvelope = Readonly<{
   reservationText: string;
 }>;
 
-export async function buildCoachAiReviewOpenAiSelectionEnvelope(input: Readonly<{
+export function buildCoachAiReviewOpenAiSelectionEnvelope(input: Readonly<{
   frozenPackage: CoachAiReviewFrozenProviderPlanPackage;
   modelId: string;
   timeoutMs: number;
-}>): Promise<CoachAiReviewOpenAiSelectionEnvelope> {
+}>): CoachAiReviewOpenAiSelectionEnvelope {
   invariant(MODEL_PATTERN.test(input.modelId),
     "TRADERLINK_AI_REVIEW_SELECTOR_MODEL_UNSUPPORTED");
   invariant(Number.isSafeInteger(input.timeoutMs) && input.timeoutMs >= 1_000 &&
     input.timeoutMs <= 120_000, "TRADERLINK_AI_REVIEW_SELECTOR_TIMEOUT_INVALID");
-  const output = Output.object({
-    schema: selectionSchema(input.frozenPackage.providerPackage.packageKey),
-    name: "coach_ai_review_plan_selection",
-  });
-  const responseFormat = await output.responseFormat;
-  invariant(responseFormat?.type === "json" && responseFormat.schema !== undefined,
-    "TRADERLINK_AI_REVIEW_SELECTOR_SCHEMA_UNAVAILABLE");
-  const selectionSchemaDigest = digestCanonicalCoachAiReviewInsight(responseFormat.schema);
+  const responseSchema = z.toJSONSchema(
+    selectionSchema(input.frozenPackage.providerPackage.packageKey),
+    { target: "draft-7", io: "input", reused: "inline" },
+  );
+  const selectionSchemaDigest = digestCanonicalCoachAiReviewInsight(responseSchema);
   const instructionDigest = digestCanonicalCoachAiReviewInsight(
     COACH_AI_REVIEW_SELECTION_SYSTEM_INSTRUCTION,
   );
@@ -223,13 +220,13 @@ export async function buildCoachAiReviewOpenAiSelectionEnvelope(input: Readonly<
   const reservationText = canonicalCoachAiReviewInsightBytes(Object.freeze({
     system: COACH_AI_REVIEW_SELECTION_SYSTEM_INSTRUCTION,
     prompt: input.frozenPackage.canonicalProviderPackage,
-    schema: responseFormat.schema,
+    schema: responseSchema,
   })).toString("utf8");
   return deepFreezeCoachAiReviewInsight({
     system: COACH_AI_REVIEW_SELECTION_SYSTEM_INSTRUCTION,
     prompt: input.frozenPackage.canonicalProviderPackage,
     maximumOutputTokens: COACH_AI_REVIEW_PLAN_SELECTION_MAX_OUTPUT_TOKENS,
-    selectionSchema: responseFormat.schema,
+    selectionSchema: responseSchema,
     selectionSchemaDigestSha256: selectionSchemaDigest.digestSha256,
     invocationManifest,
     invocationManifestDigestSha256: invocationManifestDigest.digestSha256,
@@ -277,10 +274,12 @@ function createOneShotAuditedFetch(input: Readonly<{
   state: () => Readonly<{
     fetchCount: number;
     transportAudit: CoachAiReviewOpenAiTransportAudit | null;
+    transportAuthorized: boolean;
   }>;
 }> {
   let fetchCount = 0;
   let transportAudit: CoachAiReviewOpenAiTransportAudit | null = null;
+  let transportAuthorized = false;
   const fetch: typeof globalThis.fetch = async (resource, init) => {
     fetchCount += 1;
     invariant(fetchCount === 1, "TRADERLINK_AI_REVIEW_SELECTOR_MULTIPLE_FETCHES");
@@ -347,6 +346,7 @@ function createOneShotAuditedFetch(input: Readonly<{
       requestBodyDigestSha256: digestCanonicalCoachAiReviewInsight(parsed).digestSha256,
     });
     await input.authorizeTransport(transportAudit);
+    transportAuthorized = true;
     return input.underlyingFetch(resource, { ...init, redirect: "error" });
   };
   return Object.freeze({
@@ -356,7 +356,11 @@ function createOneShotAuditedFetch(input: Readonly<{
         "TRADERLINK_AI_REVIEW_SELECTOR_TRANSPORT_NOT_CAPTURED");
       return transportAudit;
     },
-    state: () => Object.freeze({ fetchCount, transportAudit }),
+    state: () => Object.freeze({
+      fetchCount,
+      transportAudit,
+      transportAuthorized,
+    }),
   });
 }
 
@@ -372,6 +376,7 @@ export type CoachAiReviewOpenAiPlanSelectionGeneration = Readonly<{
 
 export async function selectCoachAiReviewPlanWithOpenAi(input: Readonly<{
   frozenPackage: CoachAiReviewFrozenProviderPlanPackage;
+  frozenEnvelope?: CoachAiReviewOpenAiSelectionEnvelope;
   apiKey: string;
   modelId: string;
   timeoutMs: number;
@@ -381,7 +386,13 @@ export async function selectCoachAiReviewPlanWithOpenAi(input: Readonly<{
   invariant(input.apiKey.trim().length > 0, "TRADERLINK_AI_REVIEW_SELECTOR_API_KEY_MISSING");
   invariant(typeof input.authorizeTransport === "function",
     "TRADERLINK_AI_REVIEW_SELECTOR_TRANSPORT_AUTHORITY_MISSING");
-  const envelope = await buildCoachAiReviewOpenAiSelectionEnvelope(input);
+  const envelope = input.frozenEnvelope ?? buildCoachAiReviewOpenAiSelectionEnvelope(input);
+  invariant(envelope.prompt === input.frozenPackage.canonicalProviderPackage &&
+    envelope.invocationManifest.modelId === input.modelId &&
+    envelope.invocationManifest.timeoutMs === input.timeoutMs &&
+    envelope.invocationManifest.providerPackageDigestSha256 ===
+      input.frozenPackage.providerPackageDigestSha256,
+  "TRADERLINK_AI_REVIEW_SELECTOR_FROZEN_ENVELOPE_MISMATCH");
   const auditedTransport = createOneShotAuditedFetch({
     envelope,
     underlyingFetch: input.capturedTestFetch ?? globalThis.fetch,
@@ -421,6 +432,10 @@ export async function selectCoachAiReviewPlanWithOpenAi(input: Readonly<{
     });
     const usage = completeUsage(result.usage);
     try {
+      invariant(usage.inputTokens !== null && usage.cachedInputTokens !== null &&
+        usage.cacheWriteInputTokens !== null && usage.outputTokens !== null &&
+        usage.totalTokens !== null,
+      "TRADERLINK_AI_REVIEW_SELECTOR_USAGE_UNAVAILABLE");
       invariant(result.output !== undefined && result.output !== null,
         "TRADERLINK_AI_REVIEW_SELECTOR_NO_OUTPUT");
       invariant(RESPONSE_ID_PATTERN.test(result.response.id),
@@ -461,7 +476,7 @@ export async function selectCoachAiReviewPlanWithOpenAi(input: Readonly<{
       : "TRADERLINK_AI_REVIEW_SELECTOR_PROVIDER_FAILED";
     throw new CoachAiReviewOpenAiSelectionError({
       failureCode,
-      transportMayHaveStarted: state.transportAudit !== null,
+      transportMayHaveStarted: state.transportAuthorized,
       transportAudit: state.transportAudit,
     });
   }

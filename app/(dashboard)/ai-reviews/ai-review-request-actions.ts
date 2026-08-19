@@ -58,7 +58,7 @@ export async function requestAiReview(
           message: "Connect or renew AI Review access from Account, then try again.",
         });
       }
-      result = new CoachAiReviewRequestService(database).requestManualV2(scope, {
+      result = new CoachAiReviewRequestService(database).requestManual(scope, {
         reviewKind: reviewKind as CoachAiReviewKindV2,
         periodStartDate,
         periodEndDate,

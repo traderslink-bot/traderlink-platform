@@ -64,6 +64,20 @@ export type CoachAiIssuedReviewRecord = Readonly<{
   issuedAtUtc: string;
 }>;
 
+export type CoachAiIssuedReviewPresentationRecord = Pick<
+  CoachAiIssuedReviewRecord,
+  | "issuedReviewId"
+  | "requestId"
+  | "reviewKind"
+  | "periodStartDate"
+  | "periodEndDate"
+  | "output"
+  | "generationContractVersion"
+  | "generationSource"
+  | "modelId"
+  | "issuedAtUtc"
+>;
+
 type FocusAuditItem = Readonly<{
   ordinal: number;
   focusTargetRef: string;
@@ -193,6 +207,62 @@ WHERE coach_ai_issued_review_id = ? AND user_id = ?
     });
   }
 
+  readIssuedReviewOutput(
+    scope: WorkspaceAccessScope,
+    issuedReviewId: string,
+  ): CoachAiIssuedReviewPresentationRecord {
+    assertCanonicalUuidV4(issuedReviewId, "issuedReviewId");
+    const activeAccountId = accountId(scope);
+    const v2 = this.database.prepare<[string, string, string, string], Readonly<{
+      present: number;
+    }>>(`SELECT 1 AS present
+FROM coach_ai_issued_reviews_v2 review
+JOIN coach_ai_review_period_requests_v2 request
+  ON request.coach_ai_review_period_request_id = review.coach_ai_review_period_request_id
+WHERE review.coach_ai_issued_review_id = ? AND request.user_id = ?
+  AND request.workspace_id = ? AND request.account_id = ?`).get(
+      issuedReviewId,
+      scope.userId,
+      scope.workspaceId,
+      activeAccountId,
+    );
+    const v3 = this.insightTablesAvailable()
+      ? this.database.prepare<[string, string, string, string], Readonly<{
+          present: number;
+        }>>(`SELECT 1 AS present FROM coach_ai_issued_reviews_v3
+WHERE coach_ai_issued_review_id = ? AND user_id = ?
+  AND workspace_id = ? AND account_id = ?`).get(
+          issuedReviewId,
+          scope.userId,
+          scope.workspaceId,
+          activeAccountId,
+        )
+      : undefined;
+    if (v2 && v3) this.integrity("issuedReviewGenerationCollision");
+    if (v3) {
+      const review = this.v3.read(scope, issuedReviewId);
+      return Object.freeze({
+        issuedReviewId: review.issuedReviewId,
+        requestId: review.requestId,
+        reviewKind: review.reviewKind,
+        periodStartDate: review.periodStartDate,
+        periodEndDate: review.periodEndDate,
+        output: review.output,
+        generationContractVersion: "insight_selection_v3" as const,
+        generationSource: review.generationSource,
+        modelId: review.modelId,
+        issuedAtUtc: review.issuedAtUtc,
+      });
+    }
+    if (!v2) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
+    const review = this.v2.readIssuedReviewV2(scope, issuedReviewId);
+    return Object.freeze({
+      ...review,
+      generationContractVersion: "openai_direct_v2" as const,
+      generationSource: "legacy_provider" as const,
+    });
+  }
+
   listIssuedReviews(
     scope: WorkspaceAccessScope,
     input: Readonly<{
@@ -238,11 +308,53 @@ WHERE coach_ai_issued_review_id = ? AND user_id = ?
       requestVersions.set(row.requestId, row.generationContractVersion);
     }
     return Object.freeze(rows
-      .map((row) => this.readIssuedReview(scope, row.issuedReviewId))
       .sort((left, right) => right.periodEndDate.localeCompare(left.periodEndDate) ||
         right.issuedAtUtc.localeCompare(left.issuedAtUtc) ||
         left.issuedReviewId.localeCompare(right.issuedReviewId))
-      .slice(0, limit));
+      .slice(0, limit)
+      .map((row) => this.readIssuedReview(scope, row.issuedReviewId)));
+  }
+
+  listIssuedReviewOutputs(
+    scope: WorkspaceAccessScope,
+    input: Readonly<{
+      beforePeriodEndDate?: string;
+      reviewKinds?: readonly CoachAiReviewKindV2[];
+      limit?: number;
+    }> = {},
+  ): readonly CoachAiIssuedReviewPresentationRecord[] {
+    const limit = input.limit ?? 100;
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 500) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "limit" });
+    }
+    const reviewKinds = input.reviewKinds ?? ["weekly", "two_week", "monthly"];
+    if (reviewKinds.length === 0) return Object.freeze([]);
+    const allowed = new Set<CoachAiReviewKindV2>(["weekly", "two_week", "monthly"]);
+    if (reviewKinds.some((kind) => !allowed.has(kind))) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+        field: "reviewKinds",
+      });
+    }
+    const activeAccountId = accountId(scope);
+    const rows = [
+      ...this.listIds("coach_ai_issued_reviews_v2", scope, activeAccountId, {
+        ...input,
+        reviewKinds,
+        limit,
+      }),
+      ...(this.insightTablesAvailable()
+        ? this.listIds("coach_ai_issued_reviews_v3", scope, activeAccountId, {
+            ...input,
+            reviewKinds,
+            limit,
+          })
+        : []),
+    ].sort((left, right) => right.periodEndDate.localeCompare(left.periodEndDate) ||
+      right.issuedAtUtc.localeCompare(left.issuedAtUtc) ||
+      left.issuedReviewId.localeCompare(right.issuedReviewId))
+      .slice(0, limit);
+    return Object.freeze(rows.map((row) =>
+      this.readIssuedReviewOutput(scope, row.issuedReviewId)));
   }
 
   private listIds(
@@ -259,6 +371,8 @@ WHERE coach_ai_issued_review_id = ? AND user_id = ?
     issuedReviewId: string;
     requestId: string;
     generationContractVersion: "openai_direct_v2" | "insight_selection_v3";
+    periodEndDate: string;
+    issuedAtUtc: string;
   }>[] {
     const lower = input.atOrAfterPeriodEndDate ? "AND request.period_end_date >= ?" : "";
     const parameters: (string | number)[] = [
@@ -271,7 +385,8 @@ WHERE coach_ai_issued_review_id = ? AND user_id = ?
       input.limit,
     ];
     const rows = this.database.prepare(`SELECT review.coach_ai_issued_review_id,
-  request.coach_ai_review_period_request_id
+  request.coach_ai_review_period_request_id, request.period_end_date,
+  review.issued_at_utc
 FROM ${table} review
 JOIN coach_ai_review_period_requests_v2 request
   ON request.coach_ai_review_period_request_id = review.coach_ai_review_period_request_id
@@ -282,10 +397,14 @@ ORDER BY request.period_end_date DESC, review.issued_at_utc DESC
 LIMIT ?`).all(...parameters) as readonly Readonly<{
       coach_ai_issued_review_id: string;
       coach_ai_review_period_request_id: string;
+      period_end_date: string;
+      issued_at_utc: string;
     }>[];
     return Object.freeze(rows.map((row) => Object.freeze({
       issuedReviewId: row.coach_ai_issued_review_id,
       requestId: row.coach_ai_review_period_request_id,
+      periodEndDate: row.period_end_date,
+      issuedAtUtc: row.issued_at_utc,
       generationContractVersion: table === "coach_ai_issued_reviews_v3"
         ? "insight_selection_v3" as const
         : "openai_direct_v2" as const,

@@ -605,6 +605,8 @@ export type CoachAiReviewCalculationSource = Readonly<{
     cadence: CoachAiReviewCadence;
     startDate: string;
     endDate: string;
+    coverageStartDate: string;
+    coverageEndDate: string;
     timezone: "America/New_York";
     currency: string;
   }>;

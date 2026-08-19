@@ -256,6 +256,12 @@ export function validateCoachAiReviewInsightSnapshotArtifact(
   invariant(value.request.reviewKind === value.sourceSnapshot.source.period.cadence &&
     value.request.periodStartDate === value.sourceSnapshot.source.period.startDate &&
     value.request.periodEndDate === value.sourceSnapshot.source.period.endDate &&
+    value.sourceSnapshot.source.period.coverageStartDate >=
+      value.sourceSnapshot.source.period.startDate &&
+    value.sourceSnapshot.source.period.coverageEndDate ===
+      value.sourceSnapshot.source.period.endDate &&
+    value.sourceSnapshot.source.period.coverageStartDate <=
+      value.sourceSnapshot.source.period.coverageEndDate &&
     ((value.request.reviewKind === "monthly" &&
       value.request.inputContractVersion ===
         "traderlink_coach_monthly_ai_review_input_v2") ||

@@ -14,10 +14,13 @@ import {
 } from "../../dashboard-template";
 import {
   CoachAiReviewRepository,
-  type CoachAiIssuedReviewRecordV2,
   type CoachMonthlyIssuedReviewRecord,
   type CoachWeeklyIssuedReviewRecord,
 } from "@/src/modules/coach/server/coach-ai-review-repository";
+import {
+  CoachAiReviewGenerationCompatibilityRepository,
+  type CoachAiIssuedReviewPresentationRecord,
+} from "@/src/modules/coach/server/coach-ai-review-generation-compatibility";
 import {
   CoachReviewDeliveryScheduleRepository,
   resolveCoachEffectiveAiReviewFrequencyV2,
@@ -101,7 +104,7 @@ function unavailableCopy(gate: CoachAiReviewGenerationGateV2): Readonly<{
   return null;
 }
 
-function v2ReviewTitle(review: CoachAiIssuedReviewRecordV2): string {
+function currentReviewTitle(review: CoachAiIssuedReviewPresentationRecord): string {
   if (review.reviewKind === "monthly") return formatMonth(review.periodStartDate);
   const cadence = review.reviewKind === "two_week" ? "Two-week review" : "Trading-week review";
   return `${cadence}: ${formatDate(review.periodStartDate)} to ${formatDate(review.periodEndDate)}`;
@@ -554,16 +557,17 @@ export default async function AiReviewsPage() {
     marketMonday,
     reviews,
     settings,
-    v2Reviews,
+    currentReviews,
   } = withReadonlyPlatformDatabase({}, (database) => {
     const repository = new CoachAiReviewRepository(database);
+    const currentRepository = new CoachAiReviewGenerationCompatibilityRepository(database);
     const scheduleRepository = new CoachReviewDeliveryScheduleRepository(database);
     const calendar = new CoachUsEquitiesCalendarRepository(database).calendar();
     return Object.freeze({
       reviews: repository.listIssuedWeeklyReviews(scope),
       monthlyReviews: repository.listIssuedMonthlyReviews(scope),
       settings: scheduleRepository.readV2(scope),
-      v2Reviews: repository.listIssuedReviewsV2(scope),
+      currentReviews: currentRepository.listIssuedReviewOutputs(scope),
       availability: new CoachAiReviewAvailabilityService(database).read(scope, now),
       generationGate: new CoachAiReviewGenerationCoordinatorV2(database).readGate(scope),
       marketMonday: calendar.cohortForDate(calendar.marketDateAt(now)).mondayDate,
@@ -572,8 +576,10 @@ export default async function AiReviewsPage() {
   const effectiveFrequency = settings?.isEnabled
     ? resolveCoachEffectiveAiReviewFrequencyV2(settings, marketMonday).frequency
     : null;
-  const periodicV2 = v2Reviews.filter((review) => review.reviewKind !== "monthly");
-  const monthlyV2 = v2Reviews.filter((review) => review.reviewKind === "monthly");
+  const periodicCurrent = currentReviews.filter((review) =>
+    review.reviewKind !== "monthly");
+  const monthlyCurrent = currentReviews.filter((review) =>
+    review.reviewKind === "monthly");
 
   return (
     <DashboardPage>
@@ -628,7 +634,7 @@ export default async function AiReviewsPage() {
       ) : null}
 
       <DashboardPanel title="Weekly and two-week reviews">
-        {periodicV2.length === 0 && reviews.length === 0 ? (
+        {periodicCurrent.length === 0 && reviews.length === 0 ? (
           <Stack spacing={0.75}>
             <Typography sx={{ fontWeight: 800 }}>No weekly reviews yet</Typography>
             <Typography color="text.secondary" variant="body2">
@@ -637,12 +643,12 @@ export default async function AiReviewsPage() {
           </Stack>
         ) : (
           <Stack spacing={1.25}>
-            {periodicV2.map((review) => (
+            {periodicCurrent.map((review) => (
               <ReviewCard
                 href={`/ai-reviews/weekly/${review.issuedReviewId}`}
                 key={review.issuedReviewId}
                 summary={review.output.reviewSummary}
-                title={v2ReviewTitle(review)}
+                title={currentReviewTitle(review)}
               />
             ))}
             {reviews.map((review) => (
@@ -658,7 +664,7 @@ export default async function AiReviewsPage() {
       </DashboardPanel>
 
       <DashboardPanel title="Monthly reviews">
-        {monthlyV2.length === 0 && monthlyReviews.length === 0 ? (
+        {monthlyCurrent.length === 0 && monthlyReviews.length === 0 ? (
           <Stack spacing={0.75}>
             <Typography sx={{ fontWeight: 800 }}>No monthly reviews yet</Typography>
             <Typography color="text.secondary" variant="body2">
@@ -667,12 +673,12 @@ export default async function AiReviewsPage() {
           </Stack>
         ) : (
           <Stack spacing={1.25}>
-            {monthlyV2.map((review) => (
+            {monthlyCurrent.map((review) => (
               <ReviewCard
                 href={`/ai-reviews/monthly/${review.issuedReviewId}`}
                 key={review.issuedReviewId}
                 summary={review.output.reviewSummary}
-                title={v2ReviewTitle(review)}
+                title={currentReviewTitle(review)}
               />
             ))}
             {monthlyReviews.map((review) => (

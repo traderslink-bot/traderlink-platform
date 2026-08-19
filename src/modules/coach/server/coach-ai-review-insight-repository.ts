@@ -149,6 +149,8 @@ export type CoachAiReviewCalculationSourceRequest = Readonly<{
   cadence: CoachAiReviewCadence;
   startDate: string;
   endDate: string;
+  coverageStartDate: string;
+  coverageEndDate: string;
 }>;
 
 type TradingDayNoteRow = Readonly<{
@@ -357,7 +359,13 @@ export class CoachAiReviewInsightRepository {
   ): CoachAiReviewCalculationSourceSnapshot {
     assertDate(request.startDate, "start_date");
     assertDate(request.endDate, "end_date");
-    if (request.endDate < request.startDate) {
+    assertDate(request.coverageStartDate, "coverage_start_date");
+    assertDate(request.coverageEndDate, "coverage_end_date");
+    if (request.endDate < request.startDate ||
+        request.coverageStartDate < request.startDate ||
+        request.coverageEndDate > request.endDate ||
+        request.coverageEndDate < request.coverageStartDate ||
+        request.coverageEndDate !== request.endDate) {
       throw new Error("TRADERLINK_COACH_INSIGHT_INVALID_PERIOD");
     }
     const operation = () => this.buildCalculationSourceSnapshot(scope, request);
@@ -411,8 +419,8 @@ export class CoachAiReviewInsightRepository {
       throw new Error("TRADERLINK_COACH_INSIGHT_ACCOUNT_SCOPE_MISMATCH");
     }
     const closedRows = normalized.realizedRows.filter((row) =>
-      row.closeLocal.localDate >= request.startDate &&
-      row.closeLocal.localDate <= request.endDate)
+      row.closeLocal.localDate >= request.coverageStartDate &&
+      row.closeLocal.localDate <= request.coverageEndDate)
       .sort((left, right) => compareText(
         left.closeLocal.localDate,
         right.closeLocal.localDate,
@@ -438,7 +446,10 @@ export class CoachAiReviewInsightRepository {
     for (const note of new JournalSwingNoteRepository(this.database).listForRoundTrips(
       accountScope,
       roundTripIds,
-      { fromReviewDate: request.startDate, throughReviewDate: request.endDate },
+      {
+        fromReviewDate: request.coverageStartDate,
+        throughReviewDate: request.coverageEndDate,
+      },
     )) {
       swingNotesByRoundTrip.set(note.roundTripId, [
         ...(swingNotesByRoundTrip.get(note.roundTripId) ?? []),
@@ -561,7 +572,10 @@ export class CoachAiReviewInsightRepository {
 
     const dayRows = this.readTradingDayNotes(accountScope, request);
     const dayRowByDate = new Map(dayRows.map((row) => [row.trading_date, row] as const));
-    const openDates = dateRange(request.startDate, request.endDate).filter((date) =>
+    const openDates = dateRange(
+      request.coverageStartDate,
+      request.coverageEndDate,
+    ).filter((date) =>
       this.calendar.session(date).state === "open");
     const dayRefByDate = new Map(openDates.map((marketDate) => {
       const row = dayRowByDate.get(marketDate);
@@ -595,9 +609,12 @@ export class CoachAiReviewInsightRepository {
       });
     });
 
-    const periodStartUtc = this.calendar.easternWallClockAtUtc(request.startDate, "00:00");
+    const periodStartUtc = this.calendar.easternWallClockAtUtc(
+      request.coverageStartDate,
+      "00:00",
+    );
     const periodEndUtc = this.calendar.easternWallClockAtUtc(
-      shiftDate(request.endDate, 1),
+      shiftDate(request.coverageEndDate, 1),
       "00:00",
     );
     const ruleRepository = new JournalRuleRepository(this.database);
@@ -764,17 +781,21 @@ export class CoachAiReviewInsightRepository {
         });
     });
 
-    const allFocusRevisions = this.readFocusRevisions(accountScope, request.endDate);
+    const allFocusRevisions = this.readFocusRevisions(
+      accountScope,
+      request.coverageEndDate,
+    );
     const startingFocus = allFocusRevisions.filter((focus) =>
-      focus.tradingDate < request.startDate).at(-1) ?? null;
+      focus.tradingDate < request.coverageStartDate).at(-1) ?? null;
     const focuses = [
       ...(startingFocus ? [startingFocus] : []),
-      ...allFocusRevisions.filter((focus) => focus.tradingDate >= request.startDate),
+      ...allFocusRevisions.filter((focus) =>
+        focus.tradingDate >= request.coverageStartDate),
     ].map((focus) => Object.freeze({
       focusRef: ref("focus", focus.revisionId, focus.tradingDate,
         focus.revisionNumber, focus.createdAtUtc),
-      effectiveFromDate: focus.tradingDate < request.startDate
-        ? request.startDate
+      effectiveFromDate: focus.tradingDate < request.coverageStartDate
+        ? request.coverageStartDate
         : focus.tradingDate,
       revision: focus.revisionNumber,
       text: focus.currentFocuses,
@@ -782,14 +803,19 @@ export class CoachAiReviewInsightRepository {
 
     const confirmedOpen = factSet.roundTrips.flatMap((roundTrip) => {
       if (roundTrip.projectionState === "needs_decision") return [];
-      const position = positionAtBoundary(roundTrip, account.tradingTimezone, request.endDate);
+      const position = positionAtBoundary(
+        roundTrip,
+        account.tradingTimezone,
+        request.coverageEndDate,
+      );
       if (position === null || position.isZero()) return [];
       const hasReduction = roundTrip.allocations.some((allocation) => {
         const date = journalAnalyticsLocalTimeFact(
           allocation.executedAtUtc,
           account.tradingTimezone,
         ).localDate;
-        return date >= request.startDate && date <= request.endDate &&
+        return date >= request.coverageStartDate &&
+          date <= request.coverageEndDate &&
           ["reducing", "closing", "flip_closing"].includes(allocation.allocationRole);
       });
       return [Object.freeze({
@@ -802,8 +828,8 @@ export class CoachAiReviewInsightRepository {
     const reviews = new CoachAiReviewGenerationCompatibilityRepository(this.database);
     const currentPeriodIssued = request.cadence === "monthly"
       ? this.readIssuedReviews(scope, reviews, {
-            atOrAfterPeriodEndDate: request.startDate,
-            beforePeriodEndDate: shiftDate(request.endDate, 1),
+            atOrAfterPeriodEndDate: request.coverageStartDate,
+            beforePeriodEndDate: shiftDate(request.coverageEndDate, 1),
             reviewKinds: ["weekly", "two_week"],
           })
       : [];
@@ -820,13 +846,13 @@ export class CoachAiReviewInsightRepository {
         });
     const narrativeIssued = [...currentPeriodIssued, ...priorComparable];
     const inPeriodFocusIssued = this.readIssuedReviews(scope, reviews, {
-      atOrAfterPeriodEndDate: request.startDate,
-      beforePeriodEndDate: shiftDate(request.endDate, 1),
+      atOrAfterPeriodEndDate: request.coverageStartDate,
+      beforePeriodEndDate: shiftDate(request.coverageEndDate, 1),
       reviewKinds: ["weekly", "two_week", "monthly"],
       limit: 24,
     });
     const priorFocusIssued = this.readIssuedReviews(scope, reviews, {
-      beforePeriodEndDate: request.startDate,
+      beforePeriodEndDate: request.coverageStartDate,
       reviewKinds: request.cadence === "monthly"
         ? ["monthly"]
         : ["weekly", "two_week", "monthly"],
@@ -894,13 +920,28 @@ export class CoachAiReviewInsightRepository {
         cadence: request.cadence,
         startDate: request.startDate,
         endDate: request.endDate,
+        coverageStartDate: request.coverageStartDate,
+        coverageEndDate: request.coverageEndDate,
         timezone: "America/New_York",
         currency: account.baseCurrency,
       }),
       coverage: Object.freeze({
         readyClosedTradeCount: trades.length,
         moneyCompleteTradeCount: trades.filter((trade) => trade.netPnlDecimal !== null).length,
-        needsDecisionRoundTripCount: normalized.needsDecisionRoundTrips.length,
+        needsDecisionRoundTripCount: normalized.needsDecisionRoundTrips.filter((roundTrip) => {
+          const openedDate = journalAnalyticsLocalTimeFact(
+            roundTrip.openedAtUtc,
+            account.tradingTimezone,
+          ).localDate;
+          const closedDate = roundTrip.closedAtUtc === null
+            ? request.coverageEndDate
+            : journalAnalyticsLocalTimeFact(
+                roundTrip.closedAtUtc,
+                account.tradingTimezone,
+              ).localDate;
+          return openedDate <= request.coverageEndDate &&
+            closedDate >= request.coverageStartDate;
+        }).length,
         periodEndConfirmedOpenPositionCount: confirmedOpen.length,
         periodEndOpenWithInPeriodReductionCount: confirmedOpen.filter((position) =>
           position.hasInPeriodReduction).length,
@@ -966,8 +1007,8 @@ WHERE day.workspace_id = ? AND day.account_id = ?
 ORDER BY day.trading_date, day.trading_day_id`).all(
       scope.workspaceId,
       scope.accountId,
-      request.startDate,
-      request.endDate,
+      request.coverageStartDate,
+      request.coverageEndDate,
     ) as TradingDayNoteRow[]);
   }
 

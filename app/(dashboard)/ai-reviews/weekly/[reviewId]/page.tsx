@@ -7,9 +7,12 @@ import type { Metadata } from "next";
 import { DashboardPage } from "../../../../dashboard-template";
 import {
   CoachAiReviewRepository,
-  type CoachAiIssuedReviewRecordV2,
   type CoachWeeklyIssuedReviewRecord,
 } from "@/src/modules/coach/server/coach-ai-review-repository";
+import {
+  CoachAiReviewGenerationCompatibilityRepository,
+  type CoachAiIssuedReviewPresentationRecord,
+} from "@/src/modules/coach/server/coach-ai-review-generation-compatibility";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
@@ -36,7 +39,7 @@ function formatDate(value: string): string {
   }).format(new Date(`${value}T12:00:00.000Z`));
 }
 
-function v2View(review: CoachAiIssuedReviewRecordV2): AiReviewDocumentView {
+function currentView(review: CoachAiIssuedReviewPresentationRecord): AiReviewDocumentView {
   if (review.reviewKind === "monthly") notFound();
   return Object.freeze({
     reviewTypeLabel: review.reviewKind === "two_week" ? "Two-week AI Review" : "Weekly AI Review",
@@ -75,7 +78,10 @@ export default async function WeeklyAiReviewPage({
   const view = withReadonlyPlatformDatabase({}, (database): AiReviewDocumentView => {
     const repository = new CoachAiReviewRepository(database);
     try {
-      return v2View(repository.readIssuedReviewV2(scope, reviewId));
+      return currentView(
+        new CoachAiReviewGenerationCompatibilityRepository(database)
+          .readIssuedReviewOutput(scope, reviewId),
+      );
     } catch (error) {
       if (!(isTraderLinkPlatformError(error) && error.code === "TRADERLINK_ACCOUNT_ACCESS_DENIED")) {
         throw error;

@@ -40,7 +40,8 @@ import { CoachAiChatProductContextService } from "./coach-ai-chat-product-contex
 import { CoachAiChatTradeAnalyzerToolService } from "./coach-ai-chat-trade-analyzer-tool-service";
 import { CoachAiChatAnnotationContextService } from "./coach-ai-chat-annotation-context-service";
 import { CoachAiChatSavedAnalysisService } from "./coach-ai-chat-saved-analysis-service";
-import { CoachAiReviewRepository } from "./coach-ai-review-repository";
+import { CoachAiReviewGenerationCompatibilityRepository } from
+  "./coach-ai-review-generation-compatibility";
 import { CoachReflectionService } from "./coach-reflection-service";
 import { CoachAiDailyCompanionRepository } from "./coach-ai-daily-companion-repository";
 import { CoachAiManualEntryDraftRepository } from "./coach-ai-manual-entry-draft-repository";
@@ -123,7 +124,7 @@ export async function generateCoachAiChatSavedAnswer(
       annotations,
     );
     const savedReviews = new CoachAiChatSavedReviewService(
-      new CoachAiReviewRepository(database),
+      new CoachAiReviewGenerationCompatibilityRepository(database),
     );
     const analyticsService = new JournalAnalyticsService(
       facts,

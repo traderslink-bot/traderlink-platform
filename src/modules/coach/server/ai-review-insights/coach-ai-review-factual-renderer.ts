@@ -746,6 +746,14 @@ function overlapBurden(sections: readonly CoachAiReviewRenderedSectionPlan[]): n
 
 function incompleteRecord(source: CoachAiReviewCalculationSource): string | null {
   const clauses: string[] = [];
+  if (source.period.coverageStartDate > source.period.startDate) {
+    const displayDate = (marketDate: string) => new Intl.DateTimeFormat("en-US", {
+      month: "long",
+      day: "numeric",
+      timeZone: "UTC",
+    }).format(new Date(`${marketDate}T12:00:00.000Z`));
+    clauses.push(`this monthly review covers ${displayDate(source.period.coverageStartDate)} through ${displayDate(source.period.coverageEndDate)} rather than the full calendar month`);
+  }
   const missingMoney = source.coverage.readyClosedTradeCount - source.coverage.moneyCompleteTradeCount;
   if (missingMoney > 0) clauses.push(`${missingMoney} closed ${missingMoney === 1 ? "trade was" : "trades were"} excluded from combined net P/L because complete money facts were unavailable`);
   if (source.coverage.needsDecisionRoundTripCount > 0) clauses.push(`${source.coverage.needsDecisionRoundTripCount} ${source.coverage.needsDecisionRoundTripCount === 1 ? "record still needs" : "records still need"} your decision and was not used in closed-trade findings`);

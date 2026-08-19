@@ -174,7 +174,7 @@ async function main(): Promise<void> {
           !cron.includes("CoachMonthlyAiReviewRunner"),
         manualUsesGuardedRequestWorkflow:
           manual.includes("new CoachAiReviewGenerationCoordinatorV2(database).readGate(scope)") &&
-          manual.includes("new CoachAiReviewRequestService(database).requestManualV2(scope") &&
+          manual.includes("new CoachAiReviewRequestService(database).requestManual(scope") &&
           !manual.includes(".generateNow(scope"),
         oldestFirst: reviews.includes("ORDER BY eligible_at_utc ASC, created_at_utc ASC"),
         monthlyDoesNotExpire: !monthly.includes("AUTOMATIC_RECOVERY_WINDOW") &&

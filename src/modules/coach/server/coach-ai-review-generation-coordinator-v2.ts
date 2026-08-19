@@ -2,6 +2,8 @@ import type Database from "better-sqlite3";
 
 import type { WorkspaceAccessScope } from
   "@/src/modules/platform/contracts/workspace-access-scope";
+import { loadJournalPrivacyHmacConfiguration } from
+  "@/src/modules/journal/server/imports/journal-import-service";
 import {
   createCanonicalUtcTimestamp,
   createCanonicalUuidV4,
@@ -19,6 +21,12 @@ import {
   CoachAiReviewRequestService,
   type CoachAiReviewManualRequestV2,
 } from "./coach-ai-review-request-service";
+import { CoachAiReviewGenerationContractRepository } from
+  "./coach-ai-review-generation-contract-repository";
+import { CoachAiReviewInsightDispatchRecovery } from
+  "./coach-ai-review-insight-dispatch-recovery";
+import { CoachAiReviewInsightExecutionService } from
+  "./coach-ai-review-insight-execution-service";
 import { CoachAiReviewWhopPaidAccessPolicyV2 } from
   "./coach-ai-review-whop-paid-access-policy";
 import { CoachMonthlyAiReviewIssuanceService } from
@@ -73,6 +81,9 @@ type PendingWork = Readonly<{
   request: CoachAiReviewPeriodRequestRecordV2;
 }>;
 
+const recoveredDatabaseFiles = new Set<string>();
+const recoveredDatabaseConnections = new WeakSet<object>();
+
 function featureReady(
   controls: CoachAiReviewProviderControlsRepository,
   reviewKind: CoachAiReviewKindV2,
@@ -124,7 +135,21 @@ export class CoachAiReviewGenerationCoordinatorV2 {
       calendarReady = false;
     }
     const credentialReady = Boolean(process.env.OPENAI_API_KEY?.trim());
-    if (!weeklyReady || !monthlyReady || !calendarReady || !credentialReady) {
+    const contract = new CoachAiReviewGenerationContractRepository(this.database).read();
+    let insightConfigurationReady = true;
+    if (contract.activeGenerationContractVersion === "insight_selection_v3") {
+      try {
+        const configuration = loadJournalPrivacyHmacConfiguration();
+        const settings = this.#settings.read();
+        insightConfigurationReady = Boolean(
+          configuration.keysBase64[configuration.activeKeyVersion],
+        ) && /^gpt-5\.6(?:-(?:luna|terra|sol))?$/u.test(settings.modelId);
+      } catch {
+        insightConfigurationReady = false;
+      }
+    }
+    if (!weeklyReady || !monthlyReady || !calendarReady || !credentialReady ||
+        !insightConfigurationReady) {
       return Object.freeze({
         state: "platform_unavailable",
         paidAccess: this.paidAccess.read(scope),
@@ -146,8 +171,9 @@ export class CoachAiReviewGenerationCoordinatorV2 {
       return summary;
     }
     try {
+      this.ensureInsightStartupRecovery();
       const requested = new CoachAiReviewRequestService(this.database)
-        .requestAutomaticReadyV2(now);
+        .requestAutomaticReady(now);
       const pending = this.pendingForEnabledAccounts();
       const counts = { issuedCount: 0, inProgressCount: 0, retryingCount: 0,
         paidAccessUnavailableCount: 0 };
@@ -185,8 +211,9 @@ export class CoachAiReviewGenerationCoordinatorV2 {
   ): Promise<CoachAiReviewManualGenerationResultV2> {
     const gate = this.readGate(scope);
     if (gate.state !== "available") return Object.freeze({ state: gate.state });
+    this.ensureInsightStartupRecovery();
     const request = new CoachAiReviewRequestService(this.database)
-      .requestManualV2(scope, input, now);
+      .requestManual(scope, input, now);
     if (request.state === "not_available") return Object.freeze({ state: "not_available" });
     const stored = this.#reviews.readPeriodRequestV2(scope, request.requestId);
     if (stored.state === "issued") {
@@ -212,6 +239,24 @@ export class CoachAiReviewGenerationCoordinatorV2 {
     work: PendingWork,
     now: Date,
   ): Promise<"issued" | "in_progress" | "retrying"> {
+    const generationContractVersion = this.database.prepare<[
+      string, string, string, string
+    ], Readonly<{ generation_contract_version: string }>>(`SELECT
+  generation_contract_version FROM coach_ai_review_period_requests_v2
+WHERE coach_ai_review_period_request_id = ? AND user_id = ?
+  AND workspace_id = ? AND account_id = ?`).get(
+      work.request.requestId,
+      work.scope.userId,
+      work.scope.workspaceId,
+      work.scope.activeAccountId ?? "",
+    )?.generation_contract_version;
+    if (generationContractVersion === "insight_selection_v3") {
+      return new CoachAiReviewInsightExecutionService(this.database)
+        .issue(work.scope, work.request.requestId, now);
+    }
+    if (generationContractVersion !== "openai_direct_v2") {
+      throw new Error("TRADERLINK_COACH_REVIEW_GENERATION_CONTRACT_INVALID");
+    }
     const result = work.request.reviewKind === "monthly"
       ? await new CoachMonthlyAiReviewIssuanceService(
           this.#reviews,
@@ -228,6 +273,21 @@ export class CoachAiReviewGenerationCoordinatorV2 {
     if (result.state === "issued") return "issued";
     if (result.state === "in_progress") return "in_progress";
     return "retrying";
+  }
+
+  private ensureInsightStartupRecovery(): void {
+    const contract = new CoachAiReviewGenerationContractRepository(this.database).read();
+    if (contract.activeGenerationContractVersion !== "insight_selection_v3") return;
+    const databases = this.database.pragma("database_list") as readonly Readonly<{
+      name: string;
+      file: string;
+    }>[];
+    const file = databases.find((database) => database.name === "main")?.file ?? "";
+    if (file ? recoveredDatabaseFiles.has(file) :
+        recoveredDatabaseConnections.has(this.database)) return;
+    new CoachAiReviewInsightDispatchRecovery(this.database).rotateEpochAndReconcile();
+    if (file) recoveredDatabaseFiles.add(file);
+    else recoveredDatabaseConnections.add(this.database);
   }
 
   private beginRun(origin: "scheduled" | "manual", now: Date): string | null {

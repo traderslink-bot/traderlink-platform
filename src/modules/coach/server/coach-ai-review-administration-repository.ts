@@ -70,6 +70,12 @@ const REQUIRED_TABLES = Object.freeze([
   "coach_ai_review_period_requests_v2",
   "coach_ai_review_generation_attempts_v2",
   "coach_ai_issued_reviews_v2",
+  "coach_ai_review_generation_contract_state",
+  "coach_ai_review_dispatch_recovery_state",
+  "coach_ai_review_insight_snapshots",
+  "coach_ai_review_insight_provider_dispatches",
+  "coach_ai_review_insight_selection_audits",
+  "coach_ai_issued_reviews_v3",
   "coach_ai_review_scheduler_runs_v2",
   "coach_ai_review_budget_controls",
 ] as const);
@@ -406,7 +412,8 @@ WHERE attempt.review_kind = ?`).all(reviewKindFor(key));
     )) AS retrying_count,
   (SELECT COUNT(*) FROM coach_ai_review_generation_attempts_v2 WHERE state = 'failed')
     AS failed_attempt_count,
-  (SELECT COUNT(*) FROM coach_ai_issued_reviews_v2) AS issued_review_count`).get();
+  ((SELECT COUNT(*) FROM coach_ai_issued_reviews_v2) +
+    (SELECT COUNT(*) FROM coach_ai_issued_reviews_v3)) AS issued_review_count`).get();
     const lastRun = this.input.database.prepare<[], Readonly<{
       state: "running" | "completed" | "failed";
       started_at_utc: string;

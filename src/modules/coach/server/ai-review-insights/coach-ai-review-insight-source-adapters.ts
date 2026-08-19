@@ -164,7 +164,8 @@ function eventInsidePeriod(
   source: CoachAiReviewCalculationSource,
 ): boolean {
   const marketDate = marketDateForUtc(timestamp);
-  return marketDate >= source.period.startDate && marketDate <= source.period.endDate;
+  return marketDate >= source.period.coverageStartDate &&
+    marketDate <= source.period.coverageEndDate;
 }
 
 function tradeStylePopulation(trade: CoachAiReviewSourceTrade): CoachAiReviewTradeStylePopulation {

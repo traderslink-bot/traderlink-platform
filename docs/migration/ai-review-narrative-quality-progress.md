@@ -950,3 +950,72 @@ Help guide already says reviews are retrospective evidence summaries rather
 than trading signals, predictions or investment advice, and it does not
 describe the removed page action, so no Help update is required. Rendered-route
 inspection remains open; owner wording review remains the acceptance gate.
+
+## Insight v3 implementation checkpoint 10 — 2026-08-19
+
+The inactive insight engine is now connected to a one-way generation-contract
+boundary and the ordinary AI Review request/coordinator/read paths. No cutover
+or provider test was performed.
+
+Implemented in this checkpoint:
+
+- a cutover-readiness repository verifies the required v3 tables/triggers,
+  disabled platform intake, zero pending v2 requests/attempts, zero active
+  reservations, receipt/usage reconciliation, no premature v3 requests,
+  foreign keys and SQLite quick-check before allowing the one-way singleton
+  transition;
+- activation additionally requires explicit confirmation that intake stopped,
+  a verified backup completed, old processes stopped and v2 reads reconciled;
+  the activation method is not called by ordinary runtime code;
+- manual and automatic request creation now route through the singleton, while
+  the database binds every new request and attempt to that active contract;
+- the coordinator routes each pending request by its immutable generation
+  version, performs one fenced startup recovery per database/runtime and leaves
+  legacy v2 issuance reachable only for pre-cutover v2 rows;
+- one immediate transaction now owns v3 attempt creation, spend reservation,
+  provider-start state and dispatch acquisition, closing the pre-provider crash
+  gap; an existing attempt resumes only through its own dispatch fence;
+- missing credentials, frozen provider/model drift, counted context overflow,
+  spend refusal, invalid provider selection and exhausted attempts resolve to
+  the already-rendered deterministic review with truthful provenance;
+- a pre-transport authorization failure is no longer treated as possible billed
+  usage, while any call that may have crossed transport becomes terminal and is
+  never retried automatically;
+- first-partial-month calculation now keeps full calendar-month identity but
+  restricts trades, dated notes, daily rows, rules, Analyzer evidence, focuses,
+  unresolved-record coverage and issued weekly context to the actual enabled
+  coverage dates; the rendered limitation states the exact covered dates;
+- AI Reviews list/detail pages and AI Chat saved-review reads now reopen both
+  v2 and v3 output through one account-scoped compatibility boundary;
+- lightweight presentation reads validate the immutable output without
+  decompressing the full trade/Analyzer artifact for every saved-review card;
+  the calculation engine still uses the full validated artifact when hidden
+  focus lineage is required; and
+- Administration issued-review counts include both v2 and v3. The existing
+  generic account-erasure transaction already discovers all account-scoped v3
+  tables, temporarily removes immutable delete guards, defers foreign keys and
+  verifies no orphan remains, so no separate erasure writer was added.
+
+The older checkpoint note saying a multi-stage extraction path was still
+required is superseded by the accepted bounded-selection architecture. The
+complete raw fact set stays in TraderLink's local immutable calculation source;
+OpenAI receives only a small set of complete server-rendered review choices. If
+that frozen selection envelope cannot fit, TraderLink issues the complete local
+deterministic choice. It does not split one review into separate provider
+judgments or omit evidence.
+
+Focused verification at this checkpoint:
+
+- the focused non-incremental TypeScript project passes for the cutover,
+  execution, compatibility, presentation and AI Chat paths;
+- focused ESLint passes for the same owned files; and
+- source inspection confirms all cutover-required schema object names match
+  migration `0065`.
+
+No Vitest/test suite, migration execution, database write, activation, provider
+call, browser run or deployment was performed. Next acceptance remains the
+disposable migration/cutover and captured one-shot request proof, deterministic
+fixture/holdout execution, recovery and race cases, then the true four-week plus
+monthly live flow. The active Help Center needs no change for this inactive
+server/read-compatibility checkpoint; Help/Privacy wording remains an explicit
+pre-activation owner-review boundary.

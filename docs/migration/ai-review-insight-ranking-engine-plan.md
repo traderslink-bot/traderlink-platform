@@ -4478,6 +4478,30 @@ Cutover verification/activation, follow-through candidate calculation, captured
 request execution and legacy adapter retirement still remain before provider
 testing.
 
+Implementation continuation on 2026-08-19: the one-way cutover repository and
+ordinary request/coordinator routing are now implemented but remain inactive.
+The readiness boundary requires the complete v3 schema and trigger set, both
+platform features off, zero pending v2 requests/attempts, zero active
+reservations, reconciled receipts, no premature v3 row, clean foreign keys and
+SQLite quick-check before the singleton can advance. The coordinator routes by
+the immutable request contract, performs one startup recovery epoch per runtime,
+and cannot return to a v2 writer after activation. Attempt, reservation,
+provider-start and dispatch acquisition share one immediate transaction; an
+existing attempt re-enters only its own fence. Pre-transport failures can use a
+new safe attempt, while any possible transport crossing becomes terminal and
+cannot cause another provider call.
+
+The source snapshot now separates calendar-period identity from actual coverage,
+so a partial first month excludes pre-enable trades, notes, rules, Analyzer
+events and issued weekly context while retaining the calendar-month review
+identity and a direct visible coverage sentence. The shared customer read path
+now reopens both v2 and v3 output on the AI Reviews list/detail routes and in AI
+Chat. Lightweight presentation reads validate output digests without inflating
+every full calculation artifact; hidden focus calculation retains the complete
+validated snapshot path. Cutover activation, migration execution, captured
+request/recovery proof and fixture/provider acceptance remain deliberately
+unperformed.
+
 - Serialize the balanced insight brief ahead of permitted non-Analyzer source
   context, with long-term Analyzer aggregates and bounded representative
   excerpts instead of bulk raw one-minute/five-minute observations.
