@@ -4346,11 +4346,14 @@ bundled into engine code.
 
 Implementation status on 2026-08-18: foundation in progress. The pure
 contracts, measurement, comparison, generic candidate, rate-trend, lane-ranking
-and bounded-shortlist primitives exist. Journal snapshot assembly, concrete
-rule/Analyzer/style/Swing/sequence/concentration family adapters, exact
-representative selection, complete leave-one-bucket rank stability, open-state
-repository reconstruction and fixture execution remain before Slice A can be
-called complete.
+and bounded-shortlist primitives exist. The transactionally consistent,
+account-scoped Journal/Analyzer source snapshot now also exists with versioned
+prompt-safe references, canonical source bytes, current-linkage checks, exact
+historical period-end open-position reconstruction and exact issued-review
+history selection. It is not wired to requests, persistence or the provider.
+Concrete rule/Analyzer/style/Swing/sequence/concentration family adapters,
+exact representative selection, complete leave-one-bucket rank stability and
+fixture execution remain before Slice A can be called complete.
 
 - Correct and reference-verify RSI 14 under the immutable
   `wilder_rsi_14_v1` calculation version before enabling its candidate family;

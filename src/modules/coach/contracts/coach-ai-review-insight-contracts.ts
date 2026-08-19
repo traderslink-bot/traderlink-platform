@@ -1,6 +1,12 @@
 export const COACH_AI_REVIEW_INSIGHT_ENGINE_VERSION =
   "traderlink_coach_ai_review_insight_v3_2026_08_18" as const;
 
+export const COACH_AI_REVIEW_CALCULATION_SOURCE_VERSION =
+  "traderlink_coach_ai_review_calculation_source_v1" as const;
+
+export const COACH_AI_REVIEW_PROMPT_SAFE_REFERENCE_VERSION =
+  "traderlink_coach_ai_review_prompt_safe_hmac_v1" as const;
+
 export type CoachAiReviewCadence = "weekly" | "two_week" | "monthly";
 
 export type CoachAiReviewInsightLane =
@@ -339,4 +345,192 @@ export type CoachAiReviewPeriodOutcomeMeasurements = Readonly<{
   moneyAvailability: "available" | "partial" | "missing" | "mixed_currency";
   moneyCoverageComplete: boolean;
   currency: string | null;
+}>;
+
+export type CoachAiReviewSourceExecutionEvent = Readonly<{
+  eventRef: string;
+  sequence: number;
+  role: "opening" | "adding" | "reducing" | "closing" | "flip_closing" |
+    "flip_opening";
+  executedAtUtc: string;
+  side: "buy" | "sell";
+  priceDecimal: string | null;
+}>;
+
+export type CoachAiReviewSourceTradeStyle = Readonly<{
+  styleRef: string;
+  revision: number;
+  tradeStyle: "day_trade" | "swing" | "other";
+  openStatus: "day_trade_still_open" | "swing" | "unplanned_hold" | "other" |
+    "unclassified" | "closed";
+  plannedFromEntry: boolean;
+  claimedEffectiveAtUtc: string;
+  declaredAtUtc: string;
+  lifecycleState: "active" | "closed" | "needs_relink";
+  linkedRoundTripVersionCurrent: boolean;
+}>;
+
+export type CoachAiReviewSourceNote = Readonly<{
+  noteRef: string;
+  revision: number;
+  noteKind: "trade" | "swing";
+  reviewDate: string | null;
+  text: string;
+  technicalText: string | null;
+  nextSessionPlan: string | null;
+  updatedAtUtc: string;
+}>;
+
+export type CoachAiReviewSourceTrade = Readonly<{
+  tradeRef: string;
+  marketDate: string;
+  entryMarketDate: string;
+  ticker: string;
+  currency: string;
+  direction: "long" | "short";
+  openedAtUtc: string;
+  closedAtUtc: string;
+  holdingDurationMilliseconds: number;
+  objectiveTiming: "same_market_date" | "multi_market_date";
+  grossPnlDecimal: string;
+  netPnlDecimal: string | null;
+  executionEvents: readonly CoachAiReviewSourceExecutionEvent[];
+  tradeStyle: CoachAiReviewSourceTradeStyle | null;
+  tags: readonly string[];
+  tradeNote: CoachAiReviewSourceNote | null;
+  swingNotes: readonly CoachAiReviewSourceNote[];
+  analyzer: Readonly<{
+    analysisRef: string | null;
+    linkedRoundTripVersionCurrent: boolean;
+    analysis: import("./weekly-ai-review-input-contracts").CoachAiReviewTradeAnalysisV2;
+  }>;
+}>;
+
+export type CoachAiReviewSourceRule = Readonly<{
+  ruleRef: string;
+  ruleVersionRef: string;
+  sourceKind: CoachAiReviewRuleSourceKind;
+  templateKey: string | null;
+  title: string;
+  statement: string;
+  category: string;
+  reviewScope: CoachAiReviewRuleReviewScope;
+  isFocus: boolean;
+  configuration: Readonly<Record<string, string>>;
+  versionNumber: number;
+  effectiveFromUtc: string;
+  effectiveUntilUtc: string | null;
+  activeIntervals: readonly Readonly<{ fromUtc: string; untilUtc: string | null }>[];
+  lifecycleStateAtSnapshot: "active" | "paused" | "retired";
+  currentVersionAtSnapshot: boolean;
+}>;
+
+export type CoachAiReviewSourceRuleReview = Readonly<{
+  ruleReviewRef: string;
+  ruleRef: string;
+  ruleVersionRef: string;
+  targetRef: string;
+  targetKind: CoachAiReviewRuleTargetKind;
+  status: "followed" | "broken" | "not_reviewed";
+  noteRef: string | null;
+  note: string;
+  revision: number;
+  updatedAtUtc: string;
+}>;
+
+export type CoachAiReviewSourcePresetEvidenceEvent = Readonly<{
+  evidenceEventRef: string;
+  kind: "trigger" | "violation";
+  occurredAtUtc: string;
+  tradeRef: string;
+  netPnlDecimal: string | null;
+  valueBefore: string | null;
+  valueAfter: string | null;
+}>;
+
+export type CoachAiReviewSourcePresetEvaluation = Readonly<{
+  evaluationRef: string;
+  ruleRef: string;
+  ruleVersionRef: string;
+  targetRef: string;
+  targetKind: CoachAiReviewRuleTargetKind;
+  status: "followed" | "broken" | "n/a";
+  availabilityReason: CoachAiReviewPresetAvailabilityReason | null;
+  feeCoverage: "complete" | "partial" | "unavailable";
+  trigger: CoachAiReviewSourcePresetEvidenceEvent | null;
+  violations: readonly CoachAiReviewSourcePresetEvidenceEvent[];
+}>;
+
+export type CoachAiReviewSourceDay = Readonly<{
+  dayRef: string;
+  marketDate: string;
+  marketSessionKind: "normal" | "scheduled_early_close";
+  tradeRefs: readonly string[];
+  dailyNote: Readonly<{
+    noteRef: string;
+    revision: number;
+    whatWorked: string;
+    whatNeedsWork: string;
+    technicalRecap: string;
+    tomorrowsFocus: string;
+    anythingElse: string;
+    updatedAtUtc: string;
+  }> | null;
+}>;
+
+export type CoachAiReviewIssuedNarrativeContext = Readonly<{
+  reviewRef: string;
+  contextKind: "current_period" | "prior_comparable";
+  reviewKind: CoachAiReviewCadence;
+  periodStartDate: string;
+  periodEndDate: string;
+  issuedAtUtc: string;
+  statisticalUse: "prohibited";
+  reviewSummary: string;
+  whatImproved: string;
+  whatHeldYouBack: string;
+  focusFollowThrough: string;
+  nextPeriodFocuses: readonly string[];
+  incompleteRecord: string | null;
+}>;
+
+export type CoachAiReviewCalculationSource = Readonly<{
+  contractVersion: typeof COACH_AI_REVIEW_CALCULATION_SOURCE_VERSION;
+  engineVersion: typeof COACH_AI_REVIEW_INSIGHT_ENGINE_VERSION;
+  referenceDerivationVersion: typeof COACH_AI_REVIEW_PROMPT_SAFE_REFERENCE_VERSION;
+  frozenAtUtc: string;
+  period: Readonly<{
+    cadence: CoachAiReviewCadence;
+    startDate: string;
+    endDate: string;
+    timezone: "America/New_York";
+    currency: string;
+  }>;
+  coverage: Readonly<{
+    readyClosedTradeCount: number;
+    moneyCompleteTradeCount: number;
+    needsDecisionRoundTripCount: number;
+    periodEndConfirmedOpenPositionCount: number;
+    periodEndOpenWithInPeriodReductionCount: number;
+    unrealizedPnlAvailability: "unavailable";
+  }>;
+  days: readonly CoachAiReviewSourceDay[];
+  trades: readonly CoachAiReviewSourceTrade[];
+  rules: readonly CoachAiReviewSourceRule[];
+  ruleReviews: readonly CoachAiReviewSourceRuleReview[];
+  presetEvaluations: readonly CoachAiReviewSourcePresetEvaluation[];
+  focuses: readonly Readonly<{
+    focusRef: string;
+    effectiveFromDate: string;
+    revision: number;
+    text: string;
+  }>[];
+  periodEndOpenPositionRefs: readonly string[];
+  issuedNarrativeContext: readonly CoachAiReviewIssuedNarrativeContext[];
+}>;
+
+export type CoachAiReviewCalculationSourceSnapshot = Readonly<{
+  source: CoachAiReviewCalculationSource;
+  canonicalSourceByteLength: number;
+  sourceDigestSha256: string;
 }>;

@@ -53,9 +53,47 @@ export type JournalTradeStylePlanRow = Readonly<{
   updatedAtUtc: string;
 }>;
 
+type TradeStylePlanDatabaseRow = Readonly<{
+  trade_style_plan_id: string;
+  round_trip_id: string;
+  round_trip_version_id: string;
+  trade_style: JournalTradeStyle;
+  open_status: JournalOpenPositionStatus;
+  planned_from_entry: number;
+  claimed_effective_at_utc: string;
+  declared_at_utc: string;
+  lifecycle_state: JournalTradeStyleLifecycle;
+  current_revision: number;
+  created_at_utc: string;
+  updated_at_utc: string;
+}>;
+
 function digest(parts: readonly string[]): string {
   return createHash("sha256").update(parts.join("\u001f"), "utf8").digest("hex");
 }
+
+function mapPlan(row: TradeStylePlanDatabaseRow): JournalTradeStylePlanRow {
+  return Object.freeze({
+    stylePlanId: row.trade_style_plan_id,
+    roundTripId: row.round_trip_id,
+    roundTripVersionId: row.round_trip_version_id,
+    tradeStyle: row.trade_style,
+    openStatus: row.open_status,
+    plannedFromEntry: row.planned_from_entry === 1,
+    claimedEffectiveAtUtc: row.claimed_effective_at_utc,
+    declaredAtUtc: row.declared_at_utc,
+    lifecycleState: row.lifecycle_state,
+    revision: row.current_revision,
+    createdAtUtc: row.created_at_utc,
+    updatedAtUtc: row.updated_at_utc,
+  });
+}
+
+const PLAN_SELECT = `SELECT trade_style_plan_id, round_trip_id,
+ round_trip_version_id, trade_style, open_status, planned_from_entry,
+ claimed_effective_at_utc, declared_at_utc, lifecycle_state, current_revision,
+ created_at_utc, updated_at_utc
+FROM journal_trade_style_plans`;
 
 function mapPosition(row: {
   round_trip_id: string;
@@ -193,40 +231,34 @@ WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
   }
 
   findPlan(scope: AccountScope, roundTripId: string): JournalTradeStylePlanRow | null {
-    const row = this.database.prepare<[string, string, string], {
-      trade_style_plan_id: string;
-      round_trip_id: string;
-      round_trip_version_id: string;
-      trade_style: JournalTradeStyle;
-      open_status: JournalOpenPositionStatus;
-      planned_from_entry: number;
-      claimed_effective_at_utc: string;
-      declared_at_utc: string;
-      lifecycle_state: JournalTradeStyleLifecycle;
-      current_revision: number;
-      created_at_utc: string;
-      updated_at_utc: string;
-    }>(`SELECT trade_style_plan_id, round_trip_id, round_trip_version_id,
- trade_style, open_status, planned_from_entry, claimed_effective_at_utc,
- declared_at_utc, lifecycle_state, current_revision, created_at_utc,
- updated_at_utc
-FROM journal_trade_style_plans
+    const row = this.database.prepare<[string, string, string], TradeStylePlanDatabaseRow>(`${PLAN_SELECT}
 WHERE workspace_id = ? AND account_id = ? AND round_trip_id = ?`)
       .get(scope.workspaceId, scope.accountId, roundTripId);
-    return row ? Object.freeze({
-      stylePlanId: row.trade_style_plan_id,
-      roundTripId: row.round_trip_id,
-      roundTripVersionId: row.round_trip_version_id,
-      tradeStyle: row.trade_style,
-      openStatus: row.open_status,
-      plannedFromEntry: row.planned_from_entry === 1,
-      claimedEffectiveAtUtc: row.claimed_effective_at_utc,
-      declaredAtUtc: row.declared_at_utc,
-      lifecycleState: row.lifecycle_state,
-      revision: row.current_revision,
-      createdAtUtc: row.created_at_utc,
-      updatedAtUtc: row.updated_at_utc,
-    }) : null;
+    return row ? mapPlan(row) : null;
+  }
+
+  listPlans(
+    scope: AccountScope,
+    roundTripIds: readonly string[],
+  ): readonly JournalTradeStylePlanRow[] {
+    const unique = [...new Set(roundTripIds)].sort();
+    if (unique.length === 0) return Object.freeze([]);
+    const rows: TradeStylePlanDatabaseRow[] = [];
+    for (let offset = 0; offset < unique.length; offset += 400) {
+      const batch = unique.slice(offset, offset + 400);
+      rows.push(...this.database.prepare(`${PLAN_SELECT}
+WHERE workspace_id = ? AND account_id = ?
+  AND round_trip_id IN (${batch.map(() => "?").join(", ")})
+ORDER BY round_trip_id`).all(
+        scope.workspaceId,
+        scope.accountId,
+        ...batch,
+      ) as TradeStylePlanDatabaseRow[]);
+    }
+    return Object.freeze(rows.map(mapPlan).sort((left, right) =>
+      left.roundTripId < right.roundTripId
+        ? -1
+        : left.roundTripId > right.roundTripId ? 1 : 0));
   }
 
   savePlan(input: Readonly<{

@@ -197,6 +197,62 @@ Provider shortlist serialization, renderer/selection validation, immutable v3
 persistence, OpenAI dispatch, weekly focus metadata and true four-week monthly
 issuance remain later slices. The existing v2 customer path is unchanged.
 
+## Deterministic insight-engine implementation checkpoint 2 - 2026-08-18
+
+The immutable calculation-source boundary is now implemented. It remains
+server-only and is not activated in the existing v2 customer review path.
+
+Implemented in this checkpoint:
+
+- one deferred SQLite read transaction freezes the complete account-scoped
+  Journal, rule, note, style, Analyzer and prior-issued-review source at one
+  timestamp;
+- versioned keyed HMAC references replace private Journal, rule, note, Analyzer,
+  execution, focus and issued-review identities before any later provider
+  serialization, with an exact known-private-identifier leak check;
+- canonical recursively key-sorted JSON bytes, byte length and SHA-256 source
+  digest provide the immutable calculation-source identity;
+- current closed trades use authoritative Eastern close dates and retain exact
+  gross/net results, entry/add/reduction/close roles, saved style linkage, tags,
+  current trade notes and dated Swing notes;
+- complete compact Analyzer evidence remains local, stale round-trip versions
+  fail closed, and event/path reads are batched rather than repeated per trade;
+- saved rule results remain separate from deterministic preset evaluations,
+  including exact trigger/violation members and missing/`n/a` availability;
+- confirmed period-end open positions are reconstructed from accepted execution
+  allocations through the historical boundary, so a position that closed later
+  is still counted as open then; in-period reductions are counted separately and
+  unrealized P/L remains unavailable;
+- a monthly source selects every actually issued weekly/two-week review ending
+  inside the month plus the actual prior monthly comparison. Those narratives
+  are marked context-only and prohibited from supplying calculated statistics;
+  and
+- focus references now include the exact saved daily-note revision identity,
+  preventing two otherwise similar revisions from collapsing together.
+
+Verification at this checkpoint:
+
+- focused ESLint passes for every changed source-snapshot and bounded batch-read
+  file;
+- forced non-incremental TypeScript checking found and corrected the new
+  canonical recursive-value type; the only remaining repository error is the
+  unrelated concurrent `workspace-dashboard.tsx` `sx` prop error; and
+- no Vitest/test suite, verifier execution, provider call, database write,
+  browser change, request issuance or saved-review mutation was performed.
+
+Still required before Slice A is complete:
+
+- concrete adapters for every approved rule, Analyzer, entry, add, exit,
+  sequence, concentration, segment, positive-process and contrast family;
+- deterministic representative selection and complete leave-one-bucket lane
+  winner stability; and
+- permitted execution of the focused verifier plus true-month fixture
+  calibration.
+
+Help Center check: this checkpoint changes no visible behavior or user workflow,
+so no guide update is required. The later owner-approved AI Reviews guide change
+remains at the final activation boundary.
+
 The ninth-pass design retains the eighth pass's single-package/fallback and
 Railway boundaries while tightening the engine that decides what deserves to be
 shown. It now keeps Day and Swing populations explicit, attributes results and

@@ -99,6 +99,37 @@ ORDER BY review_date DESC, swing_daily_note_id`).all(
     return Object.freeze(rows.map(mapNote));
   }
 
+  listForRoundTrips(
+    scope: AccountScope,
+    roundTripIds: readonly string[],
+    input: Readonly<{ fromReviewDate: string; throughReviewDate: string }>,
+  ): readonly JournalSwingNoteRow[] {
+    const unique = [...new Set(roundTripIds)].sort();
+    if (unique.length === 0) return Object.freeze([]);
+    const rows: Parameters<typeof mapNote>[0][] = [];
+    for (let offset = 0; offset < unique.length; offset += 400) {
+      const batch = unique.slice(offset, offset + 400);
+      rows.push(...this.database.prepare(`${NOTE_SELECT}
+WHERE workspace_id = ? AND account_id = ?
+  AND round_trip_id IN (${batch.map(() => "?").join(", ")})
+  AND review_date >= ? AND review_date <= ?
+ORDER BY round_trip_id, review_date, swing_daily_note_id`).all(
+        scope.workspaceId,
+        scope.accountId,
+        ...batch,
+        input.fromReviewDate,
+        input.throughReviewDate,
+      ) as Parameters<typeof mapNote>[0][]);
+    }
+    return Object.freeze(rows.map(mapNote).sort((left, right) =>
+      left.roundTripId < right.roundTripId ? -1 :
+        left.roundTripId > right.roundTripId ? 1 :
+          left.reviewDate < right.reviewDate ? -1 :
+            left.reviewDate > right.reviewDate ? 1 :
+              left.swingDailyNoteId < right.swingDailyNoteId ? -1 :
+                left.swingDailyNoteId > right.swingDailyNoteId ? 1 : 0));
+  }
+
   findLatest(scope: AccountScope, roundTripId: string): JournalSwingNoteRow | null {
     const row = this.database.prepare(`${NOTE_SELECT}
 WHERE workspace_id = ? AND account_id = ? AND round_trip_id = ?

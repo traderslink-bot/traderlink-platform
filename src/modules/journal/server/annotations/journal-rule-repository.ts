@@ -327,6 +327,50 @@ ORDER BY r.target_kind, r.rule_id, r.rule_review_id`).all(
     ) as ReviewRow[]).map(mapReview));
   }
 
+  listReviewsForTargets(input: Readonly<{
+    scope: AccountScope;
+    tradingDayIds: readonly string[];
+    roundTripIds: readonly string[];
+  }>): readonly JournalRuleReviewRecord[] {
+    const tradingDayIds = [...new Set(input.tradingDayIds)].sort();
+    const roundTripIds = [...new Set(input.roundTripIds)].sort();
+    if (tradingDayIds.length === 0 && roundTripIds.length === 0) {
+      return Object.freeze([]);
+    }
+    const rows: ReviewRow[] = [];
+    for (let dayOffset = 0; dayOffset < Math.max(1, tradingDayIds.length); dayOffset += 350) {
+      const dayBatch = tradingDayIds.slice(dayOffset, dayOffset + 350);
+      for (let tradeOffset = 0; tradeOffset < Math.max(1, roundTripIds.length); tradeOffset += 350) {
+        const tradeBatch = roundTripIds.slice(tradeOffset, tradeOffset + 350);
+        const targets = [
+          ...(dayBatch.length > 0
+            ? [`r.trading_day_id IN (${dayBatch.map(() => "?").join(", ")})`]
+            : []),
+          ...(tradeBatch.length > 0
+            ? [`r.round_trip_id IN (${tradeBatch.map(() => "?").join(", ")})`]
+            : []),
+        ];
+        rows.push(...this.database.prepare(`${REVIEW_SELECT}
+WHERE r.workspace_id = ? AND r.account_id = ?
+  AND (${targets.join(" OR ")})
+ORDER BY r.target_kind, r.rule_id, r.rule_review_id`).all(
+          input.scope.workspaceId,
+          input.scope.accountId,
+          ...dayBatch,
+          ...tradeBatch,
+        ) as ReviewRow[]);
+      }
+    }
+    const unique = new Map(rows.map((row) => [row.rule_review_id, row] as const));
+    return Object.freeze([...unique.values()].map(mapReview).sort((left, right) =>
+      left.targetKind < right.targetKind ? -1 :
+        left.targetKind > right.targetKind ? 1 :
+          left.ruleId < right.ruleId ? -1 :
+            left.ruleId > right.ruleId ? 1 :
+              left.ruleReviewId < right.ruleReviewId ? -1 :
+                left.ruleReviewId > right.ruleReviewId ? 1 : 0));
+  }
+
   findReview(input: Readonly<{
     scope: AccountScope;
     ruleId: string;
