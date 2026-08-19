@@ -1,6 +1,6 @@
 # TraderLink Platform PWA Progress
 
-**Status:** PWA 0-2 owner-approved; PWA 3-4 implementation assembled for owner/runtime review
+**Status:** PWA 0-4 owner-approved; migration 0064 verified locally; dynamic browser acceptance remains blocked
 
 **Started:** 2026-08-18
 
@@ -79,7 +79,7 @@ controlled browser acceptance pending
 
 ### PWA 3 - rich offline dashboard
 
-**Status:** Implementation assembled; owner/runtime review pending
+**Status:** Visible treatment owner-approved; dynamic browser acceptance pending
 
 - [x] Add bounded server-issued projection contracts.
 - [x] Cover every route classified as last-synced read-only in the plan.
@@ -95,7 +95,7 @@ caching authenticated HTML.
 
 ### PWA 4 - Web Push
 
-**Status:** Implementation assembled; owner/runtime/hosted review pending
+**Status:** Visible treatment owner-approved; local schema verified; dynamic browser and hosted delivery acceptance pending
 
 - [x] Add encrypted subscription persistence and authenticated endpoints.
 - [x] Add category-specific Web Push preferences.
@@ -105,7 +105,7 @@ caching authenticated HTML.
 
 ### PWA 5 - acceptance and hosted gate
 
-**Status:** Pending
+**Status:** In progress; protected migration gate passed, dynamic local runtime/browser gate blocked
 
 - [ ] Complete focused resource-aware technical checks.
 - [ ] Complete desktop and mobile-browser PWA acceptance.
@@ -115,13 +115,24 @@ caching authenticated HTML.
 
 ## Current exact resume point
 
-PWA 3 is preserved at local commit `09cda0db`. PWA 4 is assembled for the
-owner's notification-settings review at local commit `c82b6559`. A PWA 5
-correction now reopens the approved offline execution form after a full offline
-relaunch. Do not apply migration 0064 to the private database or configure
-local/hosted VAPID and encryption secrets until the visible offline form and
-notification treatment are approved. Then complete the resource-aware runtime
-and browser gate without writing a Journal trade.
+PWA 3 is preserved at local commit `09cda0db`. PWA 4 is preserved at local
+commit `c82b6559`, and the full-offline-relaunch correction is preserved at
+local commit `6d7b07e2`. The owner approved the visible offline execution form
+and Push notifications settings on 2026-08-18. Migration 0064 is now applied
+to the protected local database after a verified online backup and restore
+rehearsal. No VAPID or push-encryption secret is configured and no Journal
+trade or push subscription was written.
+
+The next PWA 5 action is dynamic browser acceptance from a responsive local
+server. Two resource-aware server attempts reached ready with workers disabled,
+but the dynamic manifest compiler returned no bytes; the in-app browser
+connection also did not initialize in the current Codex environment. Static
+service-worker assets returned 200. Do not infer install, authenticated route,
+offline-relaunch or narrow-mobile acceptance from those static results. Fix or
+replace the local acceptance environment, then rerun the browser gate without
+submitting a Journal trade. Real phone installation, real Web Push and
+background delivery remain hosted HTTPS gates after separate deployment and
+secret authorization.
 
 ## 2026-08-18 PWA 1 assembly note
 
@@ -294,3 +305,34 @@ and browser gate without writing a Journal trade.
   in-app preview connection failed its trusted-code setup before navigation.
   The server was stopped and port 3012 has no listener. Desktop/narrow visual
   interaction therefore remains an explicit owner/runtime gate.
+
+## 2026-08-18 approved migration and local runtime gate
+
+- The owner approved both the visible full-offline execution form and the Push
+  notifications settings, authorizing the protected local migration and
+  read-only browser checkpoint.
+- A read-only preflight verified the protected database as the exact
+  63-migration prefix ending at `0063_platform_notification_coverage`, with a
+  matching schema digest and passing foreign-key, quick and integrity checks.
+- Created and restore-verified the pre-migration online backup at
+  `backups/pre-0064-platform-web-push-20260819T034216Z/development.sqlite` and
+  the independent restore at
+  `restore-verification/pre-0064-platform-web-push-20260819T034216Z/development-restored.sqlite`
+  beneath the protected TraderLink Platform private-data root. Registry rows,
+  all table counts, page geometry, backup/restore file identity and retained
+  recovery authority matched.
+- Applied only `0064_platform_web_push`. Read-only post-migration verification
+  found 64 migrations, the expected final schema digest, passing foreign-key,
+  quick and integrity checks, and zero rows in both new Web Push tables.
+- Started the canonical checkout twice on loopback port 3010 with workers
+  disabled: once with the default bundler and once with webpack. `/sw.js` and
+  `/pwa-offline-dashboard.js` returned 200, but the dynamic
+  `/manifest.webmanifest` compile returned no bytes on either attempt and the
+  authenticated `/workspace` request did not complete on the first attempt.
+- The in-app browser connection remained unavailable in the current Codex
+  environment, so no desktop, narrow-mobile, install, offline-relaunch,
+  permission-prompt or authenticated navigation acceptance is claimed.
+- Both exact review processes were stopped and port 3010 was confirmed closed.
+  No Journal entry, outbox entry, push subscription, push delivery, provider
+  call, VAPID/encryption configuration, build, deployment or hosted change was
+  made during this gate.
