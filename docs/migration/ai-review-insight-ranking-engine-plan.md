@@ -5466,10 +5466,13 @@ requirements that are now controlling:
    transport provider failure with unknown usage must still preserve its exact
    failure audit and issue the deterministic plan.
 
-The 80-trade customer-flow proof passed in captured and live modes. The
-remaining scale gate is the same sequence with 420 complete-money trades and
-the required note, rule and Analyzer coverage; it is a performance/context
-stress proof, not permission to send the raw calculation source to OpenAI.
+The 80-trade and 420-trade customer-flow proofs passed in captured and live
+modes. The 420-trade run included complete money, notes and Analyzer evidence on
+every trade. Its private artifact was 17,347,203 bytes uncompressed and
+2,683,111 bytes compressed, while the audited OpenAI request remained 7,916
+bytes and 1,833 actual input tokens. This proves the performance/context stress
+boundary without granting permission to send the raw calculation source to
+OpenAI.
 
 ## Completion boundary
 

@@ -102,6 +102,9 @@ import { runPlatformMigrations } from
 
 const CAPTURED_CONFIRMATION = "--confirm-disposable-insight-true-month";
 const LIVE_CONFIRMATION = "--confirm-disposable-insight-true-month-provider-call";
+const STRESS_CAPTURED_CONFIRMATION = "--confirm-disposable-insight-true-month-420";
+const STRESS_LIVE_CONFIRMATION =
+  "--confirm-disposable-insight-true-month-420-provider-call";
 const MODEL_ID = "gpt-5.6-luna";
 const MONTH_START = "2026-07-01";
 const MONTH_END = "2026-07-31";
@@ -474,17 +477,25 @@ function createRules(
   });
 }
 
-function weekTrades(weekIndex: number): readonly FixtureTrade[] {
+function countsForWeek(weekIndex: number, stress: boolean): readonly number[] {
+  const fixture = WEEK_FIXTURES[weekIndex];
+  if (!fixture) fail("week_count_fixture_missing");
+  return stress ? Object.freeze([21, 21, 21, 21, 21]) : fixture.counts;
+}
+
+function weekTrades(weekIndex: number, stress: boolean): readonly FixtureTrade[] {
   const fixture = WEEK_FIXTURES[weekIndex];
   const dates = TRADING_DATES[weekIndex];
   if (!fixture || !dates) fail("week_fixture_missing");
   const priorCount = WEEK_FIXTURES.slice(0, weekIndex)
-    .reduce((sum, week) => sum + week.counts.reduce((total, count) => total + count, 0), 0);
+    .reduce((sum, _week, priorWeekIndex) => sum + countsForWeek(priorWeekIndex, stress)
+      .reduce((total, count) => total + count, 0), 0);
+  const counts = countsForWeek(weekIndex, stress);
   const trades: FixtureTrade[] = [];
   let weekTradeIndex = 0;
   for (let dayIndex = 0; dayIndex < dates.length; dayIndex += 1) {
     const tradingDate = dates[dayIndex];
-    const count = fixture.counts[dayIndex];
+    const count = counts[dayIndex];
     if (!tradingDate || count === undefined) fail("week_day_fixture_missing");
     for (let dayTradeIndex = 0; dayTradeIndex < count; dayTradeIndex += 1) {
       const globalIndex = priorCount + weekTradeIndex;
@@ -743,12 +754,13 @@ function seedWeek(input: Readonly<{
   rules: FixtureRules;
   scope: Readonly<{ workspace: WorkspaceAccessScope; account: AccountScope }>;
   weekIndex: number;
+  stress: boolean;
   setJournalTime: (value: Date) => void;
 }>): readonly FixtureTrade[] {
   const fixture = WEEK_FIXTURES[input.weekIndex];
   const dates = TRADING_DATES[input.weekIndex];
   if (!fixture || !dates || !input.scope.workspace.activeAccountId) fail("seed_week_missing");
-  const trades = weekTrades(input.weekIndex);
+  const trades = weekTrades(input.weekIndex, input.stress);
   const accountSelectionRef = deriveJournalAccountSelectionRef(
     input.scope.workspace.workspaceId,
     input.scope.workspace.activeAccountId,
@@ -849,7 +861,7 @@ function seedWeek(input: Readonly<{
       presetKeys: Object.freeze(tagKeys),
       now: annotatedAt,
     });
-    if (trade.globalIndex % 7 !== 6) {
+    if (input.stress || trade.globalIndex % 7 !== 6) {
       input.services.annotations.saveRoundTripNote(input.scope.account, {
         roundTripId: position.roundTripId,
         expectedRevision: null,
@@ -894,7 +906,7 @@ function seedWeek(input: Readonly<{
           timestamp: new Date(annotatedAt.getTime() + 3_000).toISOString(),
         }));
     }
-    if (tradeStyle === "day_trade" && trade.globalIndex % 4 !== 3) {
+    if (input.stress || tradeStyle === "day_trade" && trade.globalIndex % 4 !== 3) {
       const target = input.services.analyzer.findEligibleTarget(
         input.scope.account,
         position.roundTripId,
@@ -1092,9 +1104,12 @@ async function issueReview(input: Readonly<{
 
 async function main(): Promise<void> {
   const confirmation = process.argv[2];
-  const live = confirmation === LIVE_CONFIRMATION;
+  const live = confirmation === LIVE_CONFIRMATION || confirmation === STRESS_LIVE_CONFIRMATION;
+  const stress = confirmation === STRESS_CAPTURED_CONFIRMATION ||
+    confirmation === STRESS_LIVE_CONFIRMATION;
   if (process.argv.length !== 3 ||
-      (confirmation !== CAPTURED_CONFIRMATION && confirmation !== LIVE_CONFIRMATION)) {
+      ![CAPTURED_CONFIRMATION, LIVE_CONFIRMATION, STRESS_CAPTURED_CONFIRMATION,
+        STRESS_LIVE_CONFIRMATION].includes(confirmation ?? "")) {
     fail("confirmation_required");
   }
   configureEnvironment(live);
@@ -1144,6 +1159,7 @@ async function main(): Promise<void> {
         rules,
         scope,
         weekIndex,
+        stress,
         setJournalTime: (value) => { journalTime = value; },
       }));
       operationBase = fixture.issueAt.getTime();
@@ -1197,10 +1213,11 @@ async function main(): Promise<void> {
       scope.workspace,
       storedMonthlyRequest.issuedReviewId,
     );
-    const monthlyArtifact = persistence.read(
+    const monthlySnapshot = persistence.read(
       scope.workspace,
       monthlyRequest.requestId,
-    ).artifact;
+    );
+    const monthlyArtifact = monthlySnapshot.artifact;
     const monthlySource = monthlyArtifact.sourceSnapshot.source;
     const styleCounts = Object.fromEntries([
       "day_trade",
@@ -1211,6 +1228,8 @@ async function main(): Promise<void> {
       (trade.tradeStyle?.tradeStyle ?? "unclassified") === style).length]));
     const sourceReadyAnalyzerCount = monthlySource.trades.filter((trade) =>
       trade.analyzer.analysis.availability === "ready").length;
+    const sourceTradeNoteCount = monthlySource.trades.filter((trade) =>
+      trade.tradeNote !== null).length;
     const databaseReadyAnalyzerCount = database.prepare<[], Readonly<{ count: number }>>(
       `SELECT COUNT(*) AS count FROM journal_round_trip_daily_trade_analyses
 WHERE status = 'ready'`,
@@ -1257,16 +1276,27 @@ ORDER BY recorded_at_utc DESC LIMIT 1`).get(monthlyRequest.requestId) ?? null;
       });
     const foreignKeyFailures = database.pragma("foreign_key_check") as readonly unknown[];
     const quickCheck = database.pragma("quick_check", { simple: true });
-    const valid = allTrades.length === 80 &&
-      monthlySource.trades.length === 80 &&
+    const expectedTradeCount = stress ? 420 : 80;
+    const expectedDayTradeCount = expectedTradeCount - 8;
+    const expectedAnalyzerCount = stress
+      ? expectedTradeCount
+      : allTrades.filter((trade) => trade.globalIndex >= 8 && trade.globalIndex % 4 !== 3).length;
+    const expectedTradeNoteCount = stress
+      ? expectedTradeCount
+      : allTrades.filter((trade) => trade.globalIndex % 7 !== 6).length;
+    const valid = allTrades.length === expectedTradeCount &&
+      monthlySource.trades.length === expectedTradeCount &&
+      monthlySource.coverage.moneyCompleteTradeCount === expectedTradeCount &&
       issued.length === 5 &&
       issued.every((review) => review.generationContractVersion === "insight_selection_v3") &&
       weeklyRecords.length === 4 &&
       currentPeriodWeeklyContexts.length === 4 &&
       new Set(currentPeriodWeeklyContexts.map((context) => context.periodEndDate)).size === 4 &&
-      styleCounts.day_trade === 72 && styleCounts.swing === 4 &&
+      styleCounts.day_trade === expectedDayTradeCount && styleCounts.swing === 4 &&
       styleCounts.other === 4 && styleCounts.unclassified === 0 &&
-      sourceReadyAnalyzerCount === 54 && databaseReadyAnalyzerCount === 54 &&
+      sourceReadyAnalyzerCount === expectedAnalyzerCount &&
+      databaseReadyAnalyzerCount === expectedAnalyzerCount &&
+      sourceTradeNoteCount === expectedTradeNoteCount &&
       monthlyArtifact.catalog.completePlans.length > 1 &&
       focusCandidateCount > 0 && namedRuleCandidateCount > 0 &&
       monthlyReview.generationContractVersion === "insight_selection_v3" &&
@@ -1279,6 +1309,7 @@ ORDER BY recorded_at_utc DESC LIMIT 1`).get(monthlyRequest.requestId) ?? null;
     const resultArtifact = Object.freeze({
       fixtureOnly: true,
       liveProvider: live,
+      stressVolume: stress,
       liveDatabaseMutated: false,
       trueMonthlySequence: Object.freeze({
         weeklyReviewsIssuedFirst: weeklyRecords.length,
@@ -1292,6 +1323,7 @@ ORDER BY recorded_at_utc DESC LIMIT 1`).get(monthlyRequest.requestId) ?? null;
         styleCounts,
         sourceReadyAnalyzerCount,
         databaseReadyAnalyzerCount,
+        sourceTradeNoteCount,
         ruleCount: monthlySource.rules.length,
         ruleReviewCount: monthlySource.ruleReviews.length,
         presetEvaluationCount: monthlySource.presetEvaluations.length,
@@ -1304,6 +1336,8 @@ ORDER BY recorded_at_utc DESC LIMIT 1`).get(monthlyRequest.requestId) ?? null;
         capturedProviderCalls: capturedCalls,
         providerHttpDiagnostics,
         monthlySelectionAudit,
+        artifactUncompressedByteLength: monthlySnapshot.artifactUncompressedByteLength,
+        artifactCompressedByteLength: monthlySnapshot.artifactCompressedByteLength,
       }),
       weeklyReviews: weeklyRecords,
       monthlyReview: Object.freeze({
@@ -1319,7 +1353,7 @@ ORDER BY recorded_at_utc DESC LIMIT 1`).get(monthlyRequest.requestId) ?? null;
       }),
       valid,
     });
-    const artifactName = `insight-true-month-${live ? "live" : "captured"}-${new Date()
+    const artifactName = `insight-true-month-${stress ? "420-" : ""}${live ? "live" : "captured"}-${new Date()
       .toISOString().replaceAll(":", "-")}.json`;
     writeFileSync(
       join(process.cwd(), ".local-logs", artifactName),
@@ -1330,11 +1364,15 @@ ORDER BY recorded_at_utc DESC LIMIT 1`).get(monthlyRequest.requestId) ?? null;
       status: valid ? "passed" : "failed",
       artifactName,
       liveProvider: live,
+      stressVolume: stress,
       reviewCount: issued.length,
       monthlyTradeCount: monthlySource.trades.length,
       monthlyWeeklyContextCount: currentPeriodWeeklyContexts.length,
       styleCounts,
       analyzerCoverage: `${sourceReadyAnalyzerCount}/${monthlySource.trades.length}`,
+      tradeNoteCoverage: `${sourceTradeNoteCount}/${monthlySource.trades.length}`,
+      artifactUncompressedByteLength: monthlySnapshot.artifactUncompressedByteLength,
+      artifactCompressedByteLength: monthlySnapshot.artifactCompressedByteLength,
       monthlyCompletePlanCount: monthlyArtifact.catalog.completePlans.length,
       monthlyCandidateCount: monthlyArtifact.candidates.length,
       focusCandidateCount,

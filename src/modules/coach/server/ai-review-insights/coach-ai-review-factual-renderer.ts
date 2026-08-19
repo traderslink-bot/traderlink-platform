@@ -206,10 +206,13 @@ function rateSentence(candidate: CoachAiReviewInsightCandidate): Readonly<{
     const later = availableMeasurement(candidate, "later_affected_rate");
     if (!early?.displayLiteral || !later?.displayLiteral) return null;
     const verb = candidate.polarity === "positive" ? "improved" : "worsened";
+    const subject = candidate.family === "rule_trend"
+      ? `Breaks of ${candidateSubject(candidate)} ${candidate.polarity === "positive"
+          ? "fell"
+          : "rose"}`
+      : `${affectedFindingPhrase(candidate)} ${verb}`;
     return Object.freeze({
-      value: sentence(`${candidate.family === "rule_trend"
-        ? candidateSubject(candidate)
-        : affectedFindingPhrase(candidate)} ${verb} from ${early.displayLiteral} early to ${later.displayLiteral} later`),
+      value: sentence(`${subject} from ${early.displayLiteral} early to ${later.displayLiteral} later`),
       measurements: Object.freeze([early, later]),
     });
   }
@@ -289,10 +292,20 @@ function representativeSentence(
     "typical_comparison",
     "typical_early",
   ] as const;
-  const index = preferredRoles.map((role) => candidate.representativeEvidenceRoles.indexOf(role))
-    .find((value) => value >= 0) ?? -1;
-  if (index < 0) return null;
+  const preferred = preferredRoles.map((role) => Object.freeze({
+    role,
+    index: candidate.representativeEvidenceRoles.indexOf(role),
+  })).find((item) => item.index >= 0) ?? null;
+  if (preferred === null) return null;
+  const { index, role } = preferred;
   const evidenceRef = candidate.representativeEvidenceRefs[index]!;
+  const ruleTrendTiming = candidate.family === "rule_trend"
+    ? role === "typical_later"
+      ? "later"
+      : role === "typical_early"
+        ? "earlier"
+        : null
+    : null;
   const trade = source.trades.find((item) => item.tradeRef === evidenceRef);
   if (trade) {
     const result = trade.netPnlDecimal === null || trade.currency === null
@@ -303,14 +316,18 @@ function representativeSentence(
           ? ` and made ${displayMoneyAmount(trade.netPnlDecimal, trade.currency)} net`
           : " and finished flat";
     return Object.freeze({
-      value: sentence(`A representative example was ${normalizedLabel(trade.ticker)} on ${trade.marketDate}${result}`),
+      value: sentence(ruleTrendTiming === null
+        ? `A representative example was ${normalizedLabel(trade.ticker)} on ${trade.marketDate}${result}`
+        : `For context, one ${ruleTrendTiming} rule break was ${normalizedLabel(trade.ticker)} on ${trade.marketDate}${result}`),
       evidenceRefs: Object.freeze([evidenceRef]),
     });
   }
   const day = source.days.find((item) => item.dayRef === evidenceRef);
   if (!day) return null;
   return Object.freeze({
-    value: sentence(`A representative day was ${day.marketDate}, with ${day.tradeRefs.length} closed ${day.tradeRefs.length === 1 ? "trade" : "trades"}`),
+    value: sentence(ruleTrendTiming === null
+      ? `A representative day was ${day.marketDate}, with ${day.tradeRefs.length} closed ${day.tradeRefs.length === 1 ? "trade" : "trades"}`
+      : `For context, one ${ruleTrendTiming} rule-break day was ${day.marketDate}, with ${day.tradeRefs.length} closed ${day.tradeRefs.length === 1 ? "trade" : "trades"}`),
     evidenceRefs: Object.freeze([evidenceRef]),
   });
 }
@@ -541,7 +558,7 @@ function candidateClaims(
         assessment.cumulativeLaterMemberRefs],
       measurements: Object.freeze([baseline, later]),
       evidenceRefs: assessment.cumulativeLaterMemberRefs,
-      renderedSentence: sentence(`Your earlier review asked: ${assessment.renderedQuestion} From ${span}, it appeared in ${later.affectedCount} of ${later.denominatorMemberRefs.length} later opportunities (${laterRate}), compared with ${baselineRate} in the original review. ${conclusion}`),
+      renderedSentence: sentence(`Your earlier review asked: ${assessment.renderedQuestion} From ${span}, the tracked behavior appeared in ${later.affectedCount} of ${later.denominatorMemberRefs.length} later opportunities (${laterRate}), compared with ${baselineRate} in the original review. ${conclusion}`),
     });
     const representative = representativeSentence(candidate, source);
     return Object.freeze([

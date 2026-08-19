@@ -1078,3 +1078,40 @@ browser run, development-database mutation, production activation or deployment
 was performed. The next bounded acceptance is the same true four-week sequence
 at the earlier 420-trade stress volume. This checkpoint changes no visible UI,
 so no Help guide update is required.
+
+## Insight v3 implementation checkpoint 12 — 2026-08-19
+
+The earlier 420-trade stress target now passes in both captured and live modes
+through the same ordinary-customer sequence. Each of four weeks contains 105
+trades and issues its own weekly review before the monthly request. The monthly
+source reopens all four current-month weekly reviews and contains 420 of 420
+complete-money trades, 420 of 420 trade notes, 420 of 420 ready Analyzer
+records, four declared Swing trades, four declared Other trades and 412 Day
+trades. All rule reviews, daily notes and daily reviews travel through their
+normal Journal services.
+
+This demonstrates the intended context boundary. The immutable private monthly
+artifact was 17,347,203 bytes uncompressed and 2,683,111 bytes compressed. The
+captured outbound Responses request was only 7,916 bytes because OpenAI received
+two complete server-rendered choices, not the 420 raw trades, notes, Analyzer
+events, rules or weekly source artifacts.
+
+The final live request returned HTTP 200 and strict `plan_1` acceptance. OpenAI
+reported 1,833 input tokens, 1,830 cache-write input tokens, 54 output tokens
+and 1,887 total tokens; the recorded estimate was $0.0005229. SQLite foreign-
+key and quick checks passed, and the disposable database was deleted without
+opening or changing the development Journal.
+
+The final trader-facing wording was tightened after reviewing the first stress
+output. The improvement now says that breaks of the named rule fell from 88 of
+210 early opportunities (41.9%) to 39 of 210 later opportunities (18.57%), and
+labels the later losing example as a remaining rule break. The held-back
+section reports 127 breaks across 420 reviews, USD 7,874 net lost and 100% of
+losing-trade P/L. Follow-through now says `the tracked behavior` instead of the
+ambiguous `it`. OpenAI selected this already-rendered review; it did not write
+or recalculate the language or numbers.
+
+The 420-volume extension changes no visible component or route, so the Help
+guide remains aligned and no owner UI approval is required for this checkpoint.
+No Vitest suite, browser run, development-database mutation, hosted activation
+or deployment was performed.
