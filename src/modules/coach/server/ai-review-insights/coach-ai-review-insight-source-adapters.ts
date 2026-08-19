@@ -3,9 +3,9 @@ import Decimal from "decimal.js";
 import type {
   CoachAiReviewBehaviorObservation,
   CoachAiReviewCalculationSource,
+  CoachAiReviewComparableOutcomeObservation,
   CoachAiReviewInsightCandidate,
   CoachAiReviewMeasurement,
-  CoachAiReviewMoneyObservation,
   CoachAiReviewNormalizedRuleOpportunity,
   CoachAiReviewRuleOpportunityInput,
   CoachAiReviewSourceDay,
@@ -125,11 +125,15 @@ function invariant(condition: boolean, code: string): asserts condition {
   if (!condition) throw new CoachAiReviewInsightInvariantError(code);
 }
 
-function periodMoney(source: CoachAiReviewCalculationSource): readonly CoachAiReviewMoneyObservation[] {
+function periodMoney(
+  source: CoachAiReviewCalculationSource,
+): readonly CoachAiReviewComparableOutcomeObservation[] {
   return Object.freeze(source.trades.map((trade) => Object.freeze({
     memberRef: trade.tradeRef,
     netPnlDecimal: trade.netPnlDecimal,
     currency: trade.currency,
+    bucketRef: weekBucket(trade.marketDate),
+    stratumKey: stratumKey(trade),
   })));
 }
 
@@ -175,6 +179,94 @@ function tradeStylePopulation(trade: CoachAiReviewSourceTrade): CoachAiReviewTra
 
 function stratumKey(trade: CoachAiReviewSourceTrade): string {
   return `${tradeStylePopulation(trade)}:${trade.direction}`;
+}
+
+function compareTradesStable(
+  left: CoachAiReviewSourceTrade,
+  right: CoachAiReviewSourceTrade,
+): number {
+  return compareCoachAiReviewText(left.closedAtUtc, right.closedAtUtc) ||
+    compareCoachAiReviewText(left.openedAtUtc, right.openedAtUtc) ||
+    compareCoachAiReviewText(left.ticker, right.ticker) ||
+    compareCoachAiReviewText(left.direction, right.direction) ||
+    compareCoachAiReviewText(left.grossPnlDecimal, right.grossPnlDecimal) ||
+    compareCoachAiReviewText(left.netPnlDecimal ?? "", right.netPnlDecimal ?? "");
+}
+
+function typicalTrade(
+  trades: readonly CoachAiReviewSourceTrade[],
+): CoachAiReviewSourceTrade | null {
+  const eligible = trades.filter((trade) => trade.netPnlDecimal !== null)
+    .sort((left, right) => new ExactDecimal(left.netPnlDecimal!)
+      .comparedTo(right.netPnlDecimal!) || compareTradesStable(left, right));
+  if (eligible.length === 0) return null;
+  const middle = Math.floor(eligible.length / 2);
+  const median = eligible.length % 2 === 1
+    ? new ExactDecimal(eligible[middle]!.netPnlDecimal!)
+    : new ExactDecimal(eligible[middle - 1]!.netPnlDecimal!)
+      .plus(eligible[middle]!.netPnlDecimal!).dividedBy(2);
+  return [...eligible].sort((left, right) =>
+    new ExactDecimal(left.netPnlDecimal!).minus(median).abs().comparedTo(
+      new ExactDecimal(right.netPnlDecimal!).minus(median).abs(),
+    ) || compareTradesStable(left, right))[0]!;
+}
+
+function selectBehaviorRepresentatives(input: Readonly<{
+  source: CoachAiReviewCalculationSource;
+  lane: CoachAiReviewBehaviorCandidateSource["lane"];
+  resultPolarity: CoachAiReviewBehaviorCandidateSource["resultPolarity"];
+  observations: readonly CoachAiReviewBehaviorObservation[];
+}>): CoachAiReviewBehaviorCandidateSource["representativeEvidence"] {
+  const tradeByRef = new Map(input.source.trades.map((trade) =>
+    [trade.tradeRef, trade] as const));
+  const affectedRefs = new Set(input.observations.filter((item) => item.affected)
+    .map((item) => item.memberRef));
+  const affected = [...affectedRefs].flatMap((memberRef) => {
+    const trade = tradeByRef.get(memberRef);
+    return trade ? [trade] : [];
+  });
+  const comparison = input.observations.filter((item) => !item.affected).flatMap((item) => {
+    const trade = tradeByRef.get(item.memberRef);
+    return trade ? [trade] : [];
+  });
+  if (affected.length === 0) return Object.freeze([]);
+  const selected: Array<Readonly<{
+    memberRef: string;
+    role: CoachAiReviewInsightCandidate["representativeEvidenceRoles"][number];
+  }>> = [];
+  const add = (
+    trade: CoachAiReviewSourceTrade | null,
+    role: CoachAiReviewInsightCandidate["representativeEvidenceRoles"][number],
+  ) => {
+    if (!trade || selected.some((item) => item.memberRef === trade.tradeRef)) return;
+    selected.push(Object.freeze({ memberRef: trade.tradeRef, role }));
+  };
+  if (input.lane === "friction") {
+    const material = [...affected].filter((trade) => trade.netPnlDecimal !== null)
+      .sort((left, right) => input.resultPolarity === "negative"
+        ? new ExactDecimal(left.netPnlDecimal!).comparedTo(right.netPnlDecimal!) ||
+          compareTradesStable(left, right)
+        : new ExactDecimal(right.netPnlDecimal!).comparedTo(left.netPnlDecimal!) ||
+          compareTradesStable(left, right))[0] ?? null;
+    add(material, "highest_material_contribution");
+    add(typicalTrade(affected), "typical_affected");
+  } else if (input.lane === "strength") {
+    const typical = typicalTrade(affected);
+    add(typical, "typical_affected");
+    const typicalWeek = typical ? weekBucket(typical.marketDate) : null;
+    const recent = [...affected].sort((left, right) =>
+      compareCoachAiReviewText(right.closedAtUtc, left.closedAtUtc) ||
+      compareTradesStable(left, right)).find((trade) =>
+        typicalWeek === null || weekBucket(trade.marketDate) !== typicalWeek) ??
+      [...affected].sort((left, right) =>
+        compareCoachAiReviewText(right.closedAtUtc, left.closedAtUtc) ||
+        compareTradesStable(left, right))[0] ?? null;
+    add(recent, "most_recent_independent");
+  } else {
+    add(typicalTrade(affected), "typical_affected");
+    add(typicalTrade(comparison), "typical_comparison");
+  }
+  return Object.freeze(selected);
 }
 
 function tradeBehaviorObservations(
@@ -362,7 +454,11 @@ function normalizeRuleBundles(source: CoachAiReviewCalculationSource): readonly 
     }
   }
   return Object.freeze(bundles.sort((left, right) =>
-    compareCoachAiReviewText(left.rule.ruleVersionRef, right.rule.ruleVersionRef) ||
+    compareCoachAiReviewText(left.rule.sourceKind, right.rule.sourceKind) ||
+    compareCoachAiReviewText(left.rule.templateKey ?? "", right.rule.templateKey ?? "") ||
+    compareCoachAiReviewText(left.rule.title, right.rule.title) ||
+    left.rule.versionNumber - right.rule.versionNumber ||
+    compareCoachAiReviewText(left.rule.effectiveFromUtc, right.rule.effectiveFromUtc) ||
     compareCoachAiReviewText(left.targetKind, right.targetKind)));
 }
 
@@ -375,6 +471,44 @@ function comparableRuleState(
   if (opportunity.dispositionState === "reviewed_followed" ||
       opportunity.presetEvaluationState === "evaluated_followed") return "followed";
   return null;
+}
+
+function selectRuleRepresentatives(
+  bundle: RuleOpportunityBundle,
+  source: CoachAiReviewCalculationSource,
+  polarity: "negative" | "positive",
+): readonly Readonly<{
+  memberRef: string;
+  role: CoachAiReviewInsightCandidate["representativeEvidenceRoles"][number];
+}>[] {
+  const desired = polarity === "negative" ? "broken" : "followed";
+  const applicable = bundle.opportunities.filter((item) => item.isReviewOpportunity);
+  const affectedRefs = new Set(applicable.filter((item) => comparableRuleState(item) === desired)
+    .map((item) => item.targetRef));
+  if (bundle.targetKind === "round_trip") {
+    const trades = source.trades.filter((trade) =>
+      applicable.some((item) => item.targetRef === trade.tradeRef));
+    return selectBehaviorRepresentatives({
+      source,
+      lane: polarity === "negative" ? "friction" : "strength",
+      resultPolarity: polarity,
+      observations: tradeBehaviorObservations(trades, (trade) =>
+        affectedRefs.has(trade.tradeRef)),
+    });
+  }
+  const affectedDays = source.days.filter((day) => affectedRefs.has(day.dayRef))
+    .sort((left, right) => compareCoachAiReviewText(left.marketDate, right.marketDate));
+  if (affectedDays.length === 0) return Object.freeze([]);
+  const middle = affectedDays[Math.floor((affectedDays.length - 1) / 2)]!;
+  const recent = [...affectedDays].reverse().find((day) =>
+    weekBucket(day.marketDate) !== weekBucket(middle.marketDate)) ?? affectedDays.at(-1)!;
+  return Object.freeze([
+    Object.freeze({ memberRef: middle.dayRef, role: "typical_affected" as const }),
+    ...(recent.dayRef === middle.dayRef ? [] : [Object.freeze({
+      memberRef: recent.dayRef,
+      role: "most_recent_independent" as const,
+    })]),
+  ]);
 }
 
 function bucketForTarget(
@@ -450,6 +584,7 @@ function behaviorSource(input: Readonly<{
   processClass: CoachAiReviewBehaviorCandidateSource["processClass"];
   resultPolarity: CoachAiReviewBehaviorCandidateSource["resultPolarity"];
   expectedPopulationCount: number;
+  expectedPopulationTrades?: readonly CoachAiReviewSourceTrade[];
   coverageBalance?: CoachAiReviewBehaviorCandidateSource["coverageBalance"];
   structuredSourceConsistency?: number | null;
   exploratorySiblingCount?: number | null;
@@ -459,6 +594,21 @@ function behaviorSource(input: Readonly<{
   relatedRuleRefs?: readonly string[];
   overlapKeys: readonly string[];
 }>): CoachAiReviewBehaviorCandidateSource {
+  const expectedPopulationTrades = input.expectedPopulationTrades ?? input.source.trades.filter(
+    (trade) => input.observations.some((observation) => observation.memberRef === trade.tradeRef),
+  );
+  invariant(expectedPopulationTrades.length === input.expectedPopulationCount,
+    "TRADERLINK_AI_REVIEW_EXPECTED_POPULATION_COUNT_MISMATCH");
+  const moneyObservations = periodMoney(input.source);
+  const representativeInput = Object.freeze({
+    source: input.source,
+    lane: input.lane,
+    resultPolarity: input.resultPolarity,
+  });
+  const sensitivityBucketRefs = [...new Set([
+    ...input.observations.map((observation) => observation.bucketRef),
+    ...moneyObservations.map((observation) => observation.bucketRef),
+  ])].sort(compareCoachAiReviewText);
   return Object.freeze({
     cadence: input.source.period.cadence,
     family: input.family,
@@ -477,18 +627,34 @@ function behaviorSource(input: Readonly<{
     comparisonDefinition: input.comparisonDefinition,
     observations: input.observations,
     additionalMeasurements: input.additionalMeasurements,
-    periodMoneyObservations: periodMoney(input.source),
-    periodOutcomes: measureCoachAiReviewPeriodOutcomes(periodMoney(input.source)),
+    periodMoneyObservations: moneyObservations,
+    periodOutcomes: measureCoachAiReviewPeriodOutcomes(moneyObservations),
     processClass: input.processClass,
     resultPolarity: input.resultPolarity,
     expectedPopulationCount: input.expectedPopulationCount,
+    expectedPopulationCountByBucket: Object.freeze(Object.fromEntries(
+      [...new Set(expectedPopulationTrades.map((trade) => weekBucket(trade.marketDate)))]
+        .sort(compareCoachAiReviewText)
+        .map((bucketRef) => [bucketRef, expectedPopulationTrades.filter((trade) =>
+          weekBucket(trade.marketDate) === bucketRef).length]),
+    )),
     coverageBalance: input.coverageBalance ?? "balanced",
     structuredSourceConsistency: input.structuredSourceConsistency ?? 100,
     exploratorySiblingCount: input.exploratorySiblingCount ?? null,
     recurringEvidenceAllowed: input.recurringEvidenceAllowed,
     allowSpecificExample: input.allowSpecificExample ?? false,
     allowMaterialOutlier: input.allowMaterialOutlier ?? false,
-    representativeEvidence: Object.freeze([]),
+    representativeEvidence: selectBehaviorRepresentatives({
+      ...representativeInput,
+      observations: input.observations,
+    }),
+    representativeEvidenceByOmittedBucket: Object.freeze(Object.fromEntries(
+      sensitivityBucketRefs.map((bucketRef) => [bucketRef, selectBehaviorRepresentatives({
+        ...representativeInput,
+        observations: input.observations.filter((observation) =>
+          observation.bucketRef !== bucketRef),
+      })]),
+    )),
     relatedRuleRefs: Object.freeze([...(input.relatedRuleRefs ?? [])]),
     relatedFocusRefs: Object.freeze([]),
     overlapKeys: Object.freeze([...input.overlapKeys]),
@@ -509,6 +675,66 @@ function analyzerPathTrades(source: CoachAiReviewCalculationSource): readonly Co
     trade.analyzer.analysis.availability === "ready" &&
     trade.analyzer.analysis.greenToRed !== null &&
     trade.analyzer.analysis.greenToRed.status !== "unavailable"));
+}
+
+function typicalTrendMemberRef(
+  memberRefs: readonly string[],
+  source: CoachAiReviewCalculationSource,
+): string | null {
+  if (memberRefs.length === 0) return null;
+  const memberSet = new Set(memberRefs);
+  const trades = source.trades.filter((trade) => memberSet.has(trade.tradeRef));
+  if (trades.length === memberSet.size) return typicalTrade(trades)?.tradeRef ?? null;
+  const days = source.days.filter((day) => memberSet.has(day.dayRef))
+    .sort((left, right) => compareCoachAiReviewText(left.marketDate, right.marketDate) ||
+      compareCoachAiReviewText(left.dayRef, right.dayRef));
+  if (days.length === memberSet.size) return days[Math.floor((days.length - 1) / 2)]!.dayRef;
+  throw new CoachAiReviewInsightInvariantError(
+    "TRADERLINK_AI_REVIEW_TREND_REPRESENTATIVE_MEMBER_KIND_UNKNOWN",
+  );
+}
+
+function selectTrendRepresentatives(
+  buckets: readonly CoachAiReviewRateTrendBucket[],
+  cadence: CoachAiReviewCalculationSource["period"]["cadence"],
+  source: CoachAiReviewCalculationSource,
+): readonly Readonly<{
+  memberRef: string;
+  role: "typical_early" | "typical_later";
+}>[] {
+  const sideBucketCount = cadence === "monthly" && buckets.length >= 4 ? 2 : 1;
+  const sideRepresentative = (
+    side: readonly CoachAiReviewRateTrendBucket[],
+  ): string | null => {
+    const affectedRefs = side.flatMap((bucket) => bucket.affectedMemberRefs);
+    return typicalTrendMemberRef(
+      affectedRefs.length > 0 ? affectedRefs : side.flatMap((bucket) => bucket.memberRefs),
+      source,
+    );
+  };
+  const earlyRef = sideRepresentative(buckets.slice(0, sideBucketCount));
+  const laterRef = sideRepresentative(buckets.slice(-sideBucketCount));
+  return Object.freeze([
+    ...(earlyRef === null ? [] : [{ memberRef: earlyRef, role: "typical_early" as const }]),
+    ...(laterRef === null || laterRef === earlyRef
+      ? []
+      : [{ memberRef: laterRef, role: "typical_later" as const }]),
+  ].map((item) => Object.freeze(item)));
+}
+
+function trendRepresentativeSensitivity(
+  buckets: readonly CoachAiReviewRateTrendBucket[],
+  cadence: CoachAiReviewCalculationSource["period"]["cadence"],
+  source: CoachAiReviewCalculationSource,
+): Readonly<Record<string, ReturnType<typeof selectTrendRepresentatives>>> {
+  return Object.freeze(Object.fromEntries(buckets.map((removedBucket) => [
+    removedBucket.bucketRef,
+    selectTrendRepresentatives(
+      buckets.filter((bucket) => bucket.bucketRef !== removedBucket.bucketRef),
+      cadence,
+      source,
+    ),
+  ])));
 }
 
 function addTradeRateTrends(
@@ -571,6 +797,13 @@ function addTradeRateTrends(
       opportunityDefinition: input.opportunityDefinition,
       cohortDefinition: input.cohortDefinition,
       buckets,
+      representativeEvidence: selectTrendRepresentatives(buckets, source.period.cadence, source),
+      representativeEvidenceByOmittedBucket: trendRepresentativeSensitivity(
+        buckets,
+        source.period.cadence,
+        source,
+      ),
+      representativeMetricName: "trade_net_pnl",
       relatedRuleRefs: [],
       relatedFocusRefs: [],
       overlapKeys: input.overlapKeys,
@@ -590,6 +823,7 @@ function addAnalyzerCandidates(
     source,
     tradeStylePopulation: "objective_same_market_date" as const,
     expectedPopulationCount: expected.length,
+    expectedPopulationTrades: expected,
     coverageBalance: balance,
     structuredSourceConsistency: 100,
     processClass: "analyzer_only" as const,
@@ -609,7 +843,7 @@ function addAnalyzerCandidates(
     const adverse = new ExactDecimal(entry.oneMinute.adverseMoveUntilFlatDecimal!).abs();
     return favorable.gt(0) && (adverse.isZero() || favorable.dividedBy(adverse).gte(2));
   }).sort((left, right) => new ExactDecimal(right.netPnlDecimal!)
-    .comparedTo(left.netPnlDecimal!) || compareCoachAiReviewText(left.tradeRef, right.tradeRef))
+    .comparedTo(left.netPnlDecimal!) || compareTradesStable(left, right))
     .slice(0, 5);
   for (const example of strongEntryExamples) {
     candidate(values, behaviorSource({
@@ -628,6 +862,7 @@ function addAnalyzerCandidates(
       processClass: "analyzer_only",
       resultPolarity: "positive",
       expectedPopulationCount: expected.length,
+      expectedPopulationTrades: expected,
       coverageBalance: coverageBalance(expected, entryEvidenceTrades),
       recurringEvidenceAllowed: false,
       allowSpecificExample: true,
@@ -801,6 +1036,7 @@ function addAnalyzerCandidates(
     processClass: "analyzer_only",
     resultPolarity: "negative",
     expectedPopulationCount: addTrades.length,
+    expectedPopulationTrades: addTrades,
     coverageBalance: coverageBalance(addTrades, addPathTrades),
     allowSpecificExample: true,
     allowMaterialOutlier: true,
@@ -835,6 +1071,7 @@ function addAnalyzerCandidates(
     processClass: "analyzer_only",
     resultPolarity: "positive",
     expectedPopulationCount: expected.length,
+    expectedPopulationTrades: expected,
     coverageBalance: balance,
     allowSpecificExample: true,
     overlapKeys: ["analyzer:path:partial_before_red", "sequence:exit"],
@@ -881,6 +1118,10 @@ function addRuleCandidates(
       opportunity.targetRef,
       bucketForTarget(opportunity.targetRef, source) ?? "calendar_week:unknown",
     ]));
+    const sensitivityBucketRefs = [...new Set([
+      ...Object.values(bucketByTargetRef),
+      ...money.map((observation) => observation.bucketRef),
+    ])].sort(compareCoachAiReviewText);
     values.push(...buildCoachAiReviewNamedRuleCandidates({
       ruleRef: bundle.rule.ruleRef,
       ruleVersionRef: bundle.rule.ruleVersionRef,
@@ -889,12 +1130,25 @@ function addRuleCandidates(
       cadence: source.period.cadence,
       opportunities: bundle.opportunities,
       bucketByTargetRef: Object.freeze(bucketByTargetRef),
-      moneyObservations: money.map((observation) => {
-        const trade = source.trades.find((item) => item.tradeRef === observation.memberRef)!;
-        return Object.freeze({ ...observation, bucketRef: weekBucket(trade.marketDate),
-          stratumKey: stratumKey(trade) });
-      }),
+      moneyObservations: money,
       periodOutcomes: outcomes,
+      representativeEvidence: Object.freeze({
+        negative: selectRuleRepresentatives(bundle, source, "negative"),
+        positive: selectRuleRepresentatives(bundle, source, "positive"),
+      }),
+      representativeEvidenceByOmittedBucket: Object.freeze(Object.fromEntries(
+        sensitivityBucketRefs.map((bucketRef) => {
+          const reducedBundle = Object.freeze({
+            ...bundle,
+            opportunities: Object.freeze(bundle.opportunities.filter((opportunity) =>
+              bucketByTargetRef[opportunity.targetRef] !== bucketRef)),
+          });
+          return [bucketRef, Object.freeze({
+            negative: selectRuleRepresentatives(reducedBundle, source, "negative"),
+            positive: selectRuleRepresentatives(reducedBundle, source, "positive"),
+          })];
+        }),
+      )),
     }));
     const buckets = ruleTrendBuckets(bundle, source);
     for (const trendKind of ["improvement", "deterioration"] as const) {
@@ -914,6 +1168,19 @@ function addRuleCandidates(
         opportunityDefinition: "Active, historically applicable targets for the same rule version.",
         cohortDefinition: "Broken recorded or deterministic preset outcomes, with conflicts excluded.",
         buckets,
+        representativeEvidence: selectTrendRepresentatives(
+          buckets,
+          source.period.cadence,
+          source,
+        ),
+        representativeEvidenceByOmittedBucket: trendRepresentativeSensitivity(
+          buckets,
+          source.period.cadence,
+          source,
+        ),
+        representativeMetricName: bundle.targetKind === "round_trip"
+          ? "trade_net_pnl"
+          : "market_date_chronology",
         relatedRuleRefs: [bundle.rule.ruleRef],
         relatedFocusRefs: [],
         overlapKeys: [`rule:${bundle.rule.ruleVersionRef}:${bundle.targetKind}`],
@@ -967,6 +1234,7 @@ function addRuleSequenceCandidate(
     processClass: "preset_core_rule",
     resultPolarity: "negative",
     expectedPopulationCount: trades.length,
+    expectedPopulationTrades: trades,
     structuredSourceConsistency: 100 * bundle.opportunities.filter((item) =>
       item.sourceConsistency !== "conflict").length / Math.max(1, bundle.opportunities.length),
     allowSpecificExample: true,
@@ -1007,6 +1275,7 @@ function addRuleResultContrasts(
     processClass: "named_rule_or_exact_focus",
     resultPolarity: "positive",
     expectedPopulationCount: opportunities.length,
+    expectedPopulationTrades: trades,
     allowSpecificExample: true,
     relatedRuleRefs: [bundle.rule.ruleRef],
     overlapKeys: [`rule:${bundle.rule.ruleVersionRef}:round_trip`, "contrast:profitable_broken"],
@@ -1031,6 +1300,7 @@ function addRuleResultContrasts(
     processClass: "named_rule_or_exact_focus",
     resultPolarity: "negative",
     expectedPopulationCount: opportunities.length,
+    expectedPopulationTrades: trades,
     allowSpecificExample: true,
     relatedRuleRefs: [bundle.rule.ruleRef],
     overlapKeys: [`rule:${bundle.rule.ruleVersionRef}:round_trip`, "contrast:losing_followed"],
@@ -1075,6 +1345,7 @@ function addSegmentCandidate(
     processClass: "fixed_result_cohort",
     resultPolarity: negative ? "negative" : "positive",
     expectedPopulationCount: input.eligibleTrades.length,
+    expectedPopulationTrades: input.eligibleTrades,
     exploratorySiblingCount: input.siblingCount,
     allowSpecificExample: true,
     overlapKeys: [`segment:${input.dimension}:${input.group}`],
@@ -1129,7 +1400,10 @@ function addSegmentCandidates(
   ];
   for (const dimension of dimensions) {
     const groups = [...new Set(dimension.eligible.flatMap(dimension.group))]
-      .sort(compareCoachAiReviewText);
+      .sort((left, right) => compareCoachAiReviewText(
+        dimension.groupLabel?.(left) ?? left,
+        dimension.groupLabel?.(right) ?? right,
+      ));
     for (const group of groups) {
       addSegmentCandidate(values, source, {
         dimension: dimension.name,
@@ -1189,10 +1463,10 @@ function addConcentrationCandidates(
   const complete = source.trades.filter((trade) => trade.netPnlDecimal !== null);
   const losses = complete.filter((trade) => new ExactDecimal(trade.netPnlDecimal!).lt(0))
     .sort((left, right) => new ExactDecimal(left.netPnlDecimal!).comparedTo(right.netPnlDecimal!) ||
-      compareCoachAiReviewText(left.tradeRef, right.tradeRef));
+      compareTradesStable(left, right));
   const winners = complete.filter((trade) => new ExactDecimal(trade.netPnlDecimal!).gt(0))
     .sort((left, right) => new ExactDecimal(right.netPnlDecimal!).comparedTo(left.netPnlDecimal!) ||
-      compareCoachAiReviewText(left.tradeRef, right.tradeRef));
+      compareTradesStable(left, right));
   for (const input of [
     Object.freeze({ subject: "largest_loser", members: losses.slice(0, 1),
       lane: "friction" as const, polarity: "negative" as const,
@@ -1229,6 +1503,7 @@ function addConcentrationCandidates(
       processClass: "fixed_result_cohort",
       resultPolarity: input.resultPolarity,
       expectedPopulationCount: source.trades.length,
+      expectedPopulationTrades: source.trades,
       recurringEvidenceAllowed: false,
       allowSpecificExample: true,
       allowMaterialOutlier: true,
@@ -1275,6 +1550,7 @@ function addConcentrationCandidates(
       processClass: "fixed_result_cohort",
       resultPolarity: input.resultPolarity,
       expectedPopulationCount: source.trades.length,
+      expectedPopulationTrades: source.trades,
       recurringEvidenceAllowed: false,
       allowSpecificExample: true,
       allowMaterialOutlier: input.day.trades.length === 1,
@@ -1334,6 +1610,7 @@ function addRsiCandidates(
       processClass: "analyzer_only",
       resultPolarity: net.lt(0) ? "negative" : "positive",
       expectedPopulationCount: analyzerEligibleTrades(source).length,
+      expectedPopulationTrades: analyzerEligibleTrades(source),
       exploratorySiblingCount: groups.length,
       allowSpecificExample: true,
       overlapKeys: [`rsi14:${group}`],
@@ -1365,8 +1642,7 @@ export function buildCoachAiReviewInsightCandidatesFromSource(
   const normalizedRuleOpportunities = Object.freeze(bundles.flatMap((bundle) =>
     bundle.opportunities));
   return Object.freeze({
-    candidates: Object.freeze(values.sort((left, right) =>
-      compareCoachAiReviewText(left.findingRef, right.findingRef))),
+    candidates: Object.freeze(values),
     normalizedRuleOpportunities,
   });
 }

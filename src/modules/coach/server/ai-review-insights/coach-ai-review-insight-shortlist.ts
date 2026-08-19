@@ -119,11 +119,25 @@ function actionTargetKey(candidate: CoachAiReviewInsightCandidate): string {
 function rankTieKey(candidate: CoachAiReviewInsightCandidate): string {
   return JSON.stringify([
     candidate.family,
+    candidate.classification,
     candidate.polarity,
-    candidate.subjectRef,
+    candidate.populationDefinition,
+    candidate.opportunityDefinition,
     candidate.cohortDefinition,
     candidate.comparisonDefinition,
+    candidate.measurements.map((measurement) => [
+      measurement.metricName,
+      measurement.exactValue,
+      measurement.unit,
+      measurement.currency,
+      measurement.affectedCount,
+      measurement.expectedCount,
+      measurement.availability,
+      measurement.attributionKind,
+    ]),
+    candidate.weekSeries.map((bucket) => [bucket.numerator, bucket.denominator]),
     candidate.representativeEvidenceRoles,
+    candidate.representativeMetricName,
   ]);
 }
 
@@ -139,8 +153,7 @@ type WorkingEntry = Readonly<{
 function compareWorking(left: WorkingEntry, right: WorkingEntry): number {
   return right.baseScore.postPenaltyScore - left.baseScore.postPenaltyScore ||
     right.confidence - left.confidence ||
-    compareCoachAiReviewText(left.rankTieKey, right.rankTieKey) ||
-    compareCoachAiReviewText(left.candidate.findingRef, right.candidate.findingRef);
+    compareCoachAiReviewText(left.rankTieKey, right.rankTieKey);
 }
 
 function collapseWithinFamilySubject(entries: readonly WorkingEntry[]): readonly WorkingEntry[] {
@@ -191,7 +204,10 @@ class ClusterSet {
   }
 }
 
-function rankable(entry: CoachAiReviewShortlistEntry): CoachAiReviewRankableLaneCandidate {
+function rankable(
+  entry: CoachAiReviewShortlistEntry,
+  leaveOneBucketWinnerStable: boolean | null = null,
+): CoachAiReviewRankableLaneCandidate {
   const financial = dimensionValue(entry.effectiveScore, "financial_materiality");
   const fullFinancial = entry.candidate.consequenceVerdict === "worse_associated_outcome" ||
       entry.candidate.consequenceVerdict === "better_associated_outcome"
@@ -208,7 +224,28 @@ function rankable(entry: CoachAiReviewShortlistEntry): CoachAiReviewRankableLane
     repetition: dimensionValue(entry.effectiveScore, "repetition"),
     processRelevance: dimensionValue(entry.effectiveScore, "process_relevance"),
     specificity: dimensionValue(entry.effectiveScore, "specificity"),
-    leaveOneBucketWinnerStable: null,
+    leaveOneBucketWinnerStable,
+  });
+}
+
+function candidateWithoutBucket(
+  candidate: CoachAiReviewInsightCandidate,
+  bucketRef: string,
+): CoachAiReviewInsightCandidate | null {
+  if (!candidate.weekSeries.some((bucket) => bucket.bucketRef === bucketRef)) return candidate;
+  const sensitivity = candidate.bucketSensitivity.find((item) => item.bucketRef === bucketRef);
+  invariant(sensitivity !== undefined,
+    "TRADERLINK_AI_REVIEW_BUCKET_SENSITIVITY_MISSING");
+  if (!sensitivity.candidateEligible) return null;
+  return Object.freeze({
+    ...candidate,
+    classification: sensitivity.classification,
+    affectedMemberRefs: sensitivity.affectedMemberRefs,
+    consequenceVerdict: sensitivity.consequenceVerdict,
+    scores: sensitivity.scores,
+    weekSeries: Object.freeze(candidate.weekSeries.filter((bucket) =>
+      bucket.bucketRef !== bucketRef)),
+    bucketSensitivity: Object.freeze([]),
   });
 }
 
@@ -232,8 +269,9 @@ function diversifiedAlternatives(
   return Object.freeze(alternatives.slice(0, 2));
 }
 
-export function buildCoachAiReviewBalancedShortlist(
+function buildCoachAiReviewBalancedShortlistInternal(
   candidates: readonly CoachAiReviewInsightCandidate[],
+  computeRankStability: boolean,
 ): CoachAiReviewBalancedShortlist {
   invariant(new Set(candidates.map((candidate) => candidate.findingRef)).size === candidates.length,
     "TRADERLINK_AI_REVIEW_CANDIDATE_REF_DUPLICATE");
@@ -326,12 +364,41 @@ export function buildCoachAiReviewBalancedShortlist(
   };
   const laneSelections: CoachAiReviewLaneSelection[] = [];
   const selectedEntries: CoachAiReviewShortlistEntry[] = [];
+  const stabilityReplayByBucket = new Map<string, CoachAiReviewBalancedShortlist>();
   for (const lane of Object.keys(LANE_QUOTAS) as CoachAiReviewInsightLane[]) {
     const laneEntries = rankedByLane[lane];
     if (laneEntries.length === 0) continue;
+    const provisionalSelection = selectCoachAiReviewLaneDefault({
+      lane,
+      candidates: laneEntries.map((entry) => rankable(entry)),
+    });
+    const provisionalSelected = laneEntries.find((entry) =>
+      entry.candidate.findingRef === provisionalSelection.selected.findingRef)!;
+    const bucketRefs = provisionalSelected.candidate.weekSeries
+      .map((bucket) => bucket.bucketRef).sort(compareCoachAiReviewText);
+    const leaveOneBucketWinnerStable = !computeRankStability || bucketRefs.length === 0
+      ? null
+      : bucketRefs.every((bucketRef) => {
+          let replay = stabilityReplayByBucket.get(bucketRef);
+          if (replay === undefined) {
+            const projectedCandidates = candidates.flatMap((candidate) => {
+              const projected = candidateWithoutBucket(candidate, bucketRef);
+              return projected === null ? [] : [projected];
+            });
+            replay = buildCoachAiReviewBalancedShortlistInternal(projectedCandidates, false);
+            stabilityReplayByBucket.set(bucketRef, replay);
+          }
+          return replay.laneSelections.find((item) => item.lane === lane)?.defaultFindingRef ===
+            provisionalSelected.candidate.findingRef;
+        });
     const selection = selectCoachAiReviewLaneDefault({
       lane,
-      candidates: laneEntries.map(rankable),
+      candidates: laneEntries.map((entry) => rankable(
+        entry,
+        entry.candidate.findingRef === provisionalSelected.candidate.findingRef
+          ? leaveOneBucketWinnerStable
+          : null,
+      )),
     });
     const selected = laneEntries.find((entry) =>
       entry.candidate.findingRef === selection.selected.findingRef)!;
@@ -384,4 +451,10 @@ export function buildCoachAiReviewBalancedShortlist(
     privateAuditedCandidateCount: candidates.length,
     pairwiseCandidateCountByLane,
   });
+}
+
+export function buildCoachAiReviewBalancedShortlist(
+  candidates: readonly CoachAiReviewInsightCandidate[],
+): CoachAiReviewBalancedShortlist {
+  return buildCoachAiReviewBalancedShortlistInternal(candidates, true);
 }

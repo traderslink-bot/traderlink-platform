@@ -366,8 +366,7 @@ export function selectCoachAiReviewLaneDefault(input: Readonly<{
     (right.repetition ?? -1) - (left.repetition ?? -1) ||
     (right.processRelevance ?? -1) - (left.processRelevance ?? -1) ||
     (right.specificity ?? -1) - (left.specificity ?? -1) ||
-    compareCoachAiReviewText(left.rankTieKey, right.rankTieKey) ||
-    compareCoachAiReviewText(left.findingRef, right.findingRef)));
+    compareCoachAiReviewText(left.rankTieKey, right.rankTieKey)));
   const rawLeader = ordered[0]!;
   let selected = rawLeader;
   let selectedByMeasuredConsequenceGuard = false;

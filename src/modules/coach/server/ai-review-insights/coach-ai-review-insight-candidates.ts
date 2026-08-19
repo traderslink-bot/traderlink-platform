@@ -58,6 +58,58 @@ function findingRef(parts: readonly unknown[]): string {
   return `finding_${createHash("sha256").update(JSON.stringify(parts)).digest("hex").slice(0, 24)}`;
 }
 
+function withBucketSensitivity(
+  candidate: CoachAiReviewInsightCandidate,
+  reductions: readonly Readonly<{
+    bucketRef: string;
+    candidate: CoachAiReviewInsightCandidate | null;
+  }>[],
+): CoachAiReviewInsightCandidate {
+  const bucketRefs = freezeSortedUniqueRefs(
+    reductions.map((reduction) => reduction.bucketRef),
+    "CANDIDATE_SENSITIVITY_BUCKET_REF",
+  );
+  invariant(bucketRefs.length === reductions.length,
+    "TRADERLINK_AI_REVIEW_CANDIDATE_SENSITIVITY_BUCKET_DUPLICATE");
+  const candidateBucketRefs = freezeSortedUniqueRefs(
+    candidate.weekSeries.map((bucket) => bucket.bucketRef),
+    "CANDIDATE_WEEK_SERIES_BUCKET_REF",
+  );
+  invariant(candidateBucketRefs.length === bucketRefs.length &&
+    candidateBucketRefs.every((bucketRef, index) => bucketRef === bucketRefs[index]),
+  "TRADERLINK_AI_REVIEW_CANDIDATE_SENSITIVITY_BUCKET_SET_MISMATCH");
+  const populationSet = new Set(candidate.populationMemberRefs);
+  const bucketSensitivity = Object.freeze([...reductions]
+    .sort((left, right) => compareCoachAiReviewText(left.bucketRef, right.bucketRef))
+    .map((reduction) => {
+      const classificationStable = reduction.candidate?.classification === candidate.classification;
+      invariant(!classificationStable || reduction.candidate!.affectedMemberRefs.every((memberRef) =>
+        populationSet.has(memberRef)),
+      "TRADERLINK_AI_REVIEW_CANDIDATE_SENSITIVITY_MEMBER_OUTSIDE_POPULATION");
+      return Object.freeze({
+        bucketRef: reduction.bucketRef,
+        candidateEligible: reduction.candidate !== null && classificationStable,
+        classification: reduction.candidate?.classification ?? candidate.classification,
+        affectedMemberRefs: classificationStable
+          ? reduction.candidate!.affectedMemberRefs
+          : Object.freeze([]),
+        consequenceVerdict: classificationStable
+          ? reduction.candidate!.consequenceVerdict
+          : "comparison_unavailable" as const,
+        scores: classificationStable ? reduction.candidate!.scores : Object.freeze([]),
+      });
+    }));
+  return Object.freeze({
+    ...candidate,
+    bucketSensitivity,
+    sensitivityResults: Object.freeze([
+      ...candidate.sensitivityResults,
+      ...bucketSensitivity.map((reduction) =>
+        `leave_bucket=${reduction.bucketRef};eligible=${reduction.candidateEligible}`),
+    ]),
+  });
+}
+
 function spreadCount(
   memberRefs: readonly string[],
   bucketByMemberRef: Readonly<Record<string, string>>,
@@ -422,6 +474,7 @@ export function buildCoachAiReviewPeriodOutcomeCandidate(input: Readonly<{
     weekSeries: Object.freeze([]),
     representativeEvidenceRefs: Object.freeze([]),
     representativeEvidenceRoles: Object.freeze([]),
+    representativeMetricName: null,
     relatedRuleRefs: Object.freeze([]),
     relatedFocusRefs: Object.freeze([]),
     overlapKeys: Object.freeze([`period:${input.periodStartDate}:${input.periodEndDate}`]),
@@ -435,6 +488,7 @@ export function buildCoachAiReviewPeriodOutcomeCandidate(input: Readonly<{
     scores: Object.freeze([]),
     adjustments: Object.freeze([]),
     penalties: Object.freeze([]),
+    bucketSensitivity: Object.freeze([]),
     sensitivityResults: Object.freeze([]),
     rankExplanation: Object.freeze([
       "Outcome context is opening evidence and is not itself good or bad process.",
@@ -454,6 +508,15 @@ export type CoachAiReviewRuleCandidateSource = Readonly<{
   bucketByTargetRef: Readonly<Record<string, string>>;
   moneyObservations: readonly CoachAiReviewComparableOutcomeObservation[];
   periodOutcomes: ReturnType<typeof measureCoachAiReviewPeriodOutcomes>;
+  representativeEvidence?: Readonly<Record<"negative" | "positive", readonly Readonly<{
+    memberRef: string;
+    role: CoachAiReviewInsightCandidate["representativeEvidenceRoles"][number];
+  }>[]>>;
+  representativeEvidenceByOmittedBucket?: Readonly<Record<string,
+    Readonly<Record<"negative" | "positive", readonly Readonly<{
+      memberRef: string;
+      role: CoachAiReviewInsightCandidate["representativeEvidenceRoles"][number];
+    }>[]>>>>;
 }>;
 
 function ruleCandidate(input: Readonly<{
@@ -512,6 +575,14 @@ function ruleCandidate(input: Readonly<{
     affectedMemberRefs.length,
     expectedRefs.length,
   );
+  const representativeEvidence = source.representativeEvidence?.[input.polarity] ?? [];
+  invariant(representativeEvidence.length <= 3,
+    "TRADERLINK_AI_REVIEW_RULE_REPRESENTATIVE_LIMIT");
+  invariant(new Set(representativeEvidence.map((item) => item.memberRef)).size ===
+      representativeEvidence.length,
+  "TRADERLINK_AI_REVIEW_RULE_REPRESENTATIVE_DUPLICATE");
+  invariant(representativeEvidence.every((item) => expectedRefs.includes(item.memberRef)),
+    "TRADERLINK_AI_REVIEW_RULE_REPRESENTATIVE_OUTSIDE_POPULATION");
   const repetition = scoreCoachAiReviewRepetition({
     affectedCount: affectedMemberRefs.length,
     eligibleCount: expectedRefs.length,
@@ -551,7 +622,7 @@ function ruleCandidate(input: Readonly<{
     exactBehaviorSubject: true,
     fixedResultCohort: false,
     exactDenominator: expectedRefs.length > 0,
-    hasRepresentativeEvidence: false,
+    hasRepresentativeEvidence: representativeEvidence.length > 0,
     exactSequenceOrComparison: false,
     measurableFutureTarget: true,
   });
@@ -753,6 +824,19 @@ function ruleCandidate(input: Readonly<{
       displayLiteral: consequence.comparisonRateDecimal,
     }),
   ]);
+  const weekSeries = Object.freeze([...new Set([
+    ...expectedRefs.map((memberRef) => source.bucketByTargetRef[memberRef]),
+    ...source.moneyObservations.map((observation) => observation.bucketRef),
+  ].filter((bucketRef): bucketRef is string =>
+    typeof bucketRef === "string" && bucketRef.length > 0))]
+    .sort(compareCoachAiReviewText)
+    .map((bucketRef) => Object.freeze({
+      bucketRef,
+      numerator: affectedMemberRefs.filter((memberRef) =>
+        source.bucketByTargetRef[memberRef] === bucketRef).length,
+      denominator: expectedRefs.filter((memberRef) =>
+        source.bucketByTargetRef[memberRef] === bucketRef).length,
+    })));
   const candidate: CoachAiReviewInsightCandidate = Object.freeze({
     findingRef: findingRef([
       "named_rule_association",
@@ -785,9 +869,12 @@ function ruleCandidate(input: Readonly<{
       ? "Same-rule, same-version affected targets versus the opposite recorded/evaluated outcome."
       : null,
     measurements,
-    weekSeries: Object.freeze([]),
-    representativeEvidenceRefs: Object.freeze([]),
-    representativeEvidenceRoles: Object.freeze([]),
+    weekSeries,
+    representativeEvidenceRefs: Object.freeze(representativeEvidence.map((item) => item.memberRef)),
+    representativeEvidenceRoles: Object.freeze(representativeEvidence.map((item) => item.role)),
+    representativeMetricName: source.targetKind === "round_trip"
+      ? "trade_net_pnl"
+      : "market_date_chronology",
     relatedRuleRefs: Object.freeze([source.ruleRef]),
     relatedFocusRefs: Object.freeze([]),
     overlapKeys: Object.freeze([`rule:${source.ruleVersionRef}:${source.targetKind}`]),
@@ -813,6 +900,7 @@ function ruleCandidate(input: Readonly<{
         : []),
     ]),
     penalties: Object.freeze([]),
+    bucketSensitivity: Object.freeze([]),
     sensitivityResults: Object.freeze([]),
     rankExplanation: Object.freeze([
       `${lane}=${score.postPenaltyScore}`,
@@ -824,7 +912,7 @@ function ruleCandidate(input: Readonly<{
   return candidate;
 }
 
-export function buildCoachAiReviewNamedRuleCandidates(
+function buildCoachAiReviewNamedRuleCandidatesCore(
   source: CoachAiReviewRuleCandidateSource,
 ): readonly CoachAiReviewInsightCandidate[] {
   invariant(source.opportunities.every((item) =>
@@ -876,6 +964,40 @@ export function buildCoachAiReviewNamedRuleCandidates(
   ].filter((candidate): candidate is CoachAiReviewInsightCandidate => candidate !== null));
 }
 
+export function buildCoachAiReviewNamedRuleCandidates(
+  source: CoachAiReviewRuleCandidateSource,
+): readonly CoachAiReviewInsightCandidate[] {
+  const candidates = buildCoachAiReviewNamedRuleCandidatesCore(source);
+  return Object.freeze(candidates.map((candidate) => withBucketSensitivity(
+    candidate,
+    candidate.weekSeries.map(({ bucketRef }) => {
+      const opportunities = source.opportunities.filter((opportunity) =>
+        source.bucketByTargetRef[opportunity.targetRef] !== bucketRef);
+      const remainingTargetRefs = new Set(opportunities.map((opportunity) => opportunity.targetRef));
+      const moneyObservations = source.moneyObservations.filter((observation) =>
+        observation.bucketRef !== bucketRef);
+      const reduced = buildCoachAiReviewNamedRuleCandidatesCore({
+        ...source,
+        opportunities: Object.freeze(opportunities),
+        bucketByTargetRef: Object.freeze(Object.fromEntries(opportunities.map((opportunity) => [
+          opportunity.targetRef,
+          source.bucketByTargetRef[opportunity.targetRef]!,
+        ]))),
+        moneyObservations: Object.freeze(moneyObservations),
+        periodOutcomes: measureCoachAiReviewPeriodOutcomes(moneyObservations),
+        representativeEvidence: source.representativeEvidenceByOmittedBucket?.[bucketRef] ??
+          (source.representativeEvidence === undefined ? undefined : Object.freeze({
+              negative: Object.freeze(source.representativeEvidence.negative.filter((item) =>
+                remainingTargetRefs.has(item.memberRef))),
+              positive: Object.freeze(source.representativeEvidence.positive.filter((item) =>
+                remainingTargetRefs.has(item.memberRef))),
+            })),
+      }).find((reducedCandidate) => reducedCandidate.polarity === candidate.polarity) ?? null;
+      return Object.freeze({ bucketRef, candidate: reduced });
+    }),
+  )));
+}
+
 export type CoachAiReviewBehaviorProcessClass =
   | "preset_core_rule"
   | "named_rule_or_exact_focus"
@@ -900,11 +1022,12 @@ export type CoachAiReviewBehaviorCandidateSource = Readonly<{
   comparisonDefinition: string;
   observations: readonly CoachAiReviewBehaviorObservation[];
   additionalMeasurements?: readonly CoachAiReviewInsightCandidate["measurements"][number][];
-  periodMoneyObservations: readonly CoachAiReviewMoneyObservation[];
+  periodMoneyObservations: readonly CoachAiReviewComparableOutcomeObservation[];
   periodOutcomes: ReturnType<typeof measureCoachAiReviewPeriodOutcomes>;
   processClass: CoachAiReviewBehaviorProcessClass;
   resultPolarity: "negative" | "positive";
   expectedPopulationCount: number;
+  expectedPopulationCountByBucket?: Readonly<Record<string, number>>;
   coverageBalance: "balanced" | "materially_skewed" | "balance_unavailable";
   structuredSourceConsistency: number | null;
   exploratorySiblingCount: number | null;
@@ -915,6 +1038,10 @@ export type CoachAiReviewBehaviorCandidateSource = Readonly<{
     memberRef: string;
     role: CoachAiReviewInsightCandidate["representativeEvidenceRoles"][number];
   }>[];
+  representativeEvidenceByOmittedBucket?: Readonly<Record<string, readonly Readonly<{
+    memberRef: string;
+    role: CoachAiReviewInsightCandidate["representativeEvidenceRoles"][number];
+  }>[]>>;
   relatedRuleRefs: readonly string[];
   relatedFocusRefs: readonly string[];
   overlapKeys: readonly string[];
@@ -993,7 +1120,7 @@ function behaviorMoneyAvailability(
   return period.moneyCoverageComplete ? "available" : "partial_display_only";
 }
 
-export function buildCoachAiReviewBehaviorCandidate(
+function buildCoachAiReviewBehaviorCandidateCore(
   source: CoachAiReviewBehaviorCandidateSource,
 ): CoachAiReviewInsightCandidate | null {
   invariant(source.polarity !== "mixed" || source.lane === "contrast",
@@ -1249,7 +1376,10 @@ export function buildCoachAiReviewBehaviorCandidate(
   "TRADERLINK_AI_REVIEW_REPRESENTATIVE_DUPLICATE");
   invariant(source.representativeEvidence.every((item) => memberRefs.includes(item.memberRef)),
     "TRADERLINK_AI_REVIEW_REPRESENTATIVE_OUTSIDE_POPULATION");
-  const weekSeries = Object.freeze([...new Set(source.observations.map((item) => item.bucketRef))]
+  const weekSeries = Object.freeze([...new Set([
+    ...source.observations.map((item) => item.bucketRef),
+    ...source.periodMoneyObservations.map((item) => item.bucketRef),
+  ])]
     .sort().map((bucketRef) => {
       const bucket = source.observations.filter((item) => item.bucketRef === bucketRef);
       return Object.freeze({
@@ -1295,6 +1425,7 @@ export function buildCoachAiReviewBehaviorCandidate(
       item.memberRef)),
     representativeEvidenceRoles: Object.freeze(source.representativeEvidence.map((item) =>
       item.role)),
+    representativeMetricName: "trade_net_pnl",
     relatedRuleRefs: freezeSortedUniqueRefs(source.relatedRuleRefs, "BEHAVIOR_RULE_REF"),
     relatedFocusRefs: freezeSortedUniqueRefs(source.relatedFocusRefs, "BEHAVIOR_FOCUS_REF"),
     overlapKeys: freezeSortedUniqueRefs(source.overlapKeys, "BEHAVIOR_OVERLAP_KEY"),
@@ -1316,6 +1447,7 @@ export function buildCoachAiReviewBehaviorCandidate(
     penalties: Object.freeze(multiplicityPenalty === 0
       ? []
       : [`exploratory_multiplicity=${multiplicityPenalty}`]),
+    bucketSensitivity: Object.freeze([]),
     sensitivityResults: Object.freeze([
       `outlier_resistance=${consequence.outlierResistance ?? "unavailable"}`,
       `composition_shift=${consequence.materialCompositionShift}`,
@@ -1328,6 +1460,40 @@ export function buildCoachAiReviewBehaviorCandidate(
   });
   validateCoachAiReviewCandidateMembership(candidate);
   return candidate;
+}
+
+export function buildCoachAiReviewBehaviorCandidate(
+  source: CoachAiReviewBehaviorCandidateSource,
+): CoachAiReviewInsightCandidate | null {
+  const candidate = buildCoachAiReviewBehaviorCandidateCore(source);
+  if (candidate === null) return null;
+  const bucketRefs = candidate.weekSeries.map((bucket) => bucket.bucketRef);
+  return withBucketSensitivity(candidate, bucketRefs.map((bucketRef) => {
+    const observations = source.observations.filter((observation) =>
+      observation.bucketRef !== bucketRef);
+    const removedObservationCount = source.observations.length - observations.length;
+    const periodMoneyObservations = source.periodMoneyObservations.filter((observation) =>
+      observation.bucketRef !== bucketRef);
+    const populationRefSet = new Set(observations.map((observation) => observation.memberRef));
+    return Object.freeze({
+      bucketRef,
+      candidate: buildCoachAiReviewBehaviorCandidateCore({
+        ...source,
+        observations: Object.freeze(observations),
+        additionalMeasurements: Object.freeze([]),
+        periodMoneyObservations: Object.freeze(periodMoneyObservations),
+        periodOutcomes: measureCoachAiReviewPeriodOutcomes(periodMoneyObservations),
+        expectedPopulationCount: Math.max(
+          observations.length,
+          source.expectedPopulationCount -
+            (source.expectedPopulationCountByBucket?.[bucketRef] ?? removedObservationCount),
+        ),
+        representativeEvidence: source.representativeEvidenceByOmittedBucket?.[bucketRef] ??
+          Object.freeze(source.representativeEvidence.filter((item) =>
+            populationRefSet.has(item.memberRef))),
+      }),
+    });
+  }));
 }
 
 export type CoachAiReviewRateTrendBucket = Readonly<{
@@ -1356,6 +1522,15 @@ export type CoachAiReviewRateTrendCandidateSource = Readonly<{
   relatedRuleRefs: readonly string[];
   relatedFocusRefs: readonly string[];
   overlapKeys: readonly string[];
+  representativeEvidence?: readonly Readonly<{
+    memberRef: string;
+    role: CoachAiReviewInsightCandidate["representativeEvidenceRoles"][number];
+  }>[];
+  representativeEvidenceByOmittedBucket?: Readonly<Record<string, readonly Readonly<{
+    memberRef: string;
+    role: CoachAiReviewInsightCandidate["representativeEvidenceRoles"][number];
+  }>[]>>;
+  representativeMetricName: "trade_net_pnl" | "market_date_chronology";
 }>;
 
 type RateTrendSide = Readonly<{
@@ -1471,7 +1646,7 @@ function standardizedRateTrend(input: Readonly<{
   });
 }
 
-export function buildCoachAiReviewRateTrendCandidate(
+function buildCoachAiReviewRateTrendCandidateCore(
   source: CoachAiReviewRateTrendCandidateSource,
 ): CoachAiReviewInsightCandidate | null {
   const minimumBuckets = source.cadence === "monthly" ? 3 : 2;
@@ -1561,11 +1736,12 @@ export function buildCoachAiReviewRateTrendCandidate(
     value: null,
     explanation: "This rate-trend candidate does not substitute P/L for its primary rate metric.",
   });
+  const representativeEvidence = source.representativeEvidence ?? [];
   const specificity = scoreCoachAiReviewSpecificity({
     exactBehaviorSubject: true,
     fixedResultCohort: false,
     exactDenominator: true,
-    hasRepresentativeEvidence: false,
+    hasRepresentativeEvidence: representativeEvidence.length > 0,
     exactSequenceOrComparison: true,
     measurableFutureTarget: true,
   });
@@ -1617,6 +1793,13 @@ export function buildCoachAiReviewRateTrendCandidate(
   const populationMemberRefs = freezeSortedUniqueRefs(allMembers, "TREND_POPULATION_REF");
   const affectedMemberRefs = freezeSortedUniqueRefs(source.buckets.flatMap((bucket) =>
     bucket.affectedMemberRefs), "TREND_AFFECTED_REF");
+  invariant(representativeEvidence.length <= 2,
+    "TRADERLINK_AI_REVIEW_TREND_REPRESENTATIVE_LIMIT");
+  invariant(new Set(representativeEvidence.map((item) => item.memberRef)).size ===
+      representativeEvidence.length,
+  "TRADERLINK_AI_REVIEW_TREND_REPRESENTATIVE_DUPLICATE");
+  invariant(representativeEvidence.every((item) => populationMemberRefs.includes(item.memberRef)),
+    "TRADERLINK_AI_REVIEW_TREND_REPRESENTATIVE_OUTSIDE_POPULATION");
   const measurements = Object.freeze([
     createCoachAiReviewMeasurement({
       metricName: "early_affected_rate",
@@ -1696,8 +1879,9 @@ export function buildCoachAiReviewRateTrendCandidate(
       numerator: bucket.affectedMemberRefs.length,
       denominator: bucket.memberRefs.length,
     }))),
-    representativeEvidenceRefs: Object.freeze([]),
-    representativeEvidenceRoles: Object.freeze([]),
+    representativeEvidenceRefs: Object.freeze(representativeEvidence.map((item) => item.memberRef)),
+    representativeEvidenceRoles: Object.freeze(representativeEvidence.map((item) => item.role)),
+    representativeMetricName: source.representativeMetricName,
     relatedRuleRefs: freezeSortedUniqueRefs(source.relatedRuleRefs, "TREND_RULE_REF"),
     relatedFocusRefs: freezeSortedUniqueRefs(source.relatedFocusRefs, "TREND_FOCUS_REF"),
     overlapKeys: freezeSortedUniqueRefs(source.overlapKeys, "TREND_OVERLAP_KEY"),
@@ -1717,6 +1901,7 @@ export function buildCoachAiReviewRateTrendCandidate(
         : []),
     ]),
     penalties: Object.freeze([]),
+    bucketSensitivity: Object.freeze([]),
     sensitivityResults: Object.freeze([
       `raw_early_rate=${canonicalDecimal(rawEarlyRate)}`,
       `raw_later_rate=${canonicalDecimal(rawLaterRate)}`,
@@ -1732,4 +1917,26 @@ export function buildCoachAiReviewRateTrendCandidate(
   });
   validateCoachAiReviewCandidateMembership(candidate);
   return candidate;
+}
+
+export function buildCoachAiReviewRateTrendCandidate(
+  source: CoachAiReviewRateTrendCandidateSource,
+): CoachAiReviewInsightCandidate | null {
+  const candidate = buildCoachAiReviewRateTrendCandidateCore(source);
+  if (candidate === null) return null;
+  return withBucketSensitivity(candidate, source.buckets.map((removedBucket) => {
+    const buckets = source.buckets.filter((bucket) => bucket.bucketRef !== removedBucket.bucketRef);
+    const remainingMemberRefs = new Set(buckets.flatMap((bucket) => bucket.memberRefs));
+    return Object.freeze({
+      bucketRef: removedBucket.bucketRef,
+      candidate: buildCoachAiReviewRateTrendCandidateCore({
+        ...source,
+        buckets: Object.freeze(buckets),
+        representativeEvidence: source.representativeEvidenceByOmittedBucket?.[
+          removedBucket.bucketRef
+        ] ?? Object.freeze((source.representativeEvidence ?? []).filter((item) =>
+          remainingMemberRefs.has(item.memberRef))),
+      }),
+    });
+  }));
 }

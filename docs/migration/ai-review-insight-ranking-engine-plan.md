@@ -4391,8 +4391,14 @@ trade/day concentration candidates. Session remains unavailable when absent,
 custom rule titles are not semantically classified, and RSI generation is
 implemented but hard-gated off until its permitted reference-vector check.
 Stable tie keys independent of rotating prompt-safe HMAC references, exact
-representative selection, complete leave-one-bucket winner stability and
-fixture execution remain before Slice A can be called complete.
+role-based representative selection and complete leave-one-calendar-week lane
+replay are now implemented. The replay recalculates family eligibility,
+classification, consequence, confidence and lane score from exact per-week
+expected populations, reselects valid representatives, then reruns overlap,
+diversity and the measured-consequence guard; it also removes result-only weeks
+from period financial denominators for candidates with no opportunity in that
+week. Final family/measurement QA and permitted fixture execution remain before
+Slice A can be called complete.
 
 - Correct and reference-verify RSI 14 under the immutable
   `wilder_rsi_14_v1` calculation version before enabling its candidate family;

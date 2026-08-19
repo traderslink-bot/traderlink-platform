@@ -306,15 +306,63 @@ Verification at this checkpoint:
 
 Still required before Slice A is complete:
 
-- stable rank tie keys that cannot change when the prompt-safe HMAC key rotates;
-- deterministic representative evidence roles and complete leave-one-independent-
-  bucket winner stability;
 - final family/measurement QA, including provider-forbidden unsupported Analyzer
   interpretation; and
 - permitted verifier and true-month fixture calibration.
 
 Help Center check: this remains inactive server-only engine work and requires no
 guide update yet.
+
+## Deterministic insight-engine implementation checkpoint 4 - 2026-08-19
+
+Representative evidence and rank-stability replay are now implemented. This
+remains inactive server-only work and does not change an issued review.
+
+Implemented in this checkpoint:
+
+- rank ties use canonical non-secret candidate meaning and exact measurement
+  semantics rather than prompt-safe HMAC references, so rotating the scoped
+  reference key cannot reorder otherwise unchanged findings;
+- friction selects the highest aligned material contribution plus a closest-to-
+  median affected example, strength selects a typical affected example plus a
+  recent independent example, contrast selects typical affected and remainder
+  examples, and improvement/deterioration trends select typical early and later
+  members;
+- exact median selection uses decimal arithmetic and factual timestamp, ticker,
+  direction and result ordering instead of source-array or rotating-reference
+  order;
+- named rule candidates now carry exact per-week reviewed-opportunity counts and
+  bounded trade/day representatives rather than leaving rule evidence abstract;
+- every behavior, named-rule and rate-trend candidate recalculates its family
+  gate, classification, measurements, consequence, confidence and lane score
+  after omitting each independent calendar-week bucket, using the exact expected
+  population in that week and reselecting valid representative roles from the
+  remaining evidence;
+- the omission projection includes result-only weeks even when a candidate had
+  no opportunity in that week, so changed period loss/profit denominators still
+  change financial materiality correctly; and
+- the shortlist reruns family collapse, cross-family overlap penalties,
+  evidence/action diversity, the measured-consequence guard and final lane
+  selection for every omitted bucket. `dominant` is available only when the
+  same selected default wins every replay and retains the required score margin.
+
+Verification at this checkpoint:
+
+- focused ESLint passes for the changed contracts, candidate builders, ranking,
+  shortlist and source adapters;
+- the focused non-incremental TypeScript project excluding shared generated
+  `.next` state passes; and
+- no test suite, verifier execution, provider call, database write, browser
+  change, request issuance or saved-review mutation was performed.
+
+Still required before Slice A is complete:
+
+- final family/measurement QA, including provider-forbidden unsupported Analyzer
+  interpretation and the still-disabled RSI reference-vector gate; and
+- permitted verifier and true-month fixture calibration.
+
+Help Center check: this checkpoint changes no visible workflow, so no guide
+update is required yet.
 
 The ninth-pass design retains the eighth pass's single-package/fallback and
 Railway boundaries while tightening the engine that decides what deserves to be

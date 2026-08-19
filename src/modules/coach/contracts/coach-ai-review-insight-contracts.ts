@@ -202,6 +202,15 @@ export type CoachAiReviewLaneRankStability = Readonly<{
   selectedByMeasuredConsequenceGuard: boolean;
 }>;
 
+export type CoachAiReviewBucketSensitivity = Readonly<{
+  bucketRef: string;
+  candidateEligible: boolean;
+  classification: CoachAiReviewCandidateClassification;
+  affectedMemberRefs: readonly string[];
+  consequenceVerdict: CoachAiReviewConsequenceVerdict;
+  scores: readonly CoachAiReviewLaneScore[];
+}>;
+
 export type CoachAiReviewInsightCandidate = Readonly<{
   findingRef: string;
   engineVersion: typeof COACH_AI_REVIEW_INSIGHT_ENGINE_VERSION;
@@ -231,8 +240,11 @@ export type CoachAiReviewInsightCandidate = Readonly<{
     | "highest_material_contribution"
     | "typical_affected"
     | "typical_comparison"
+    | "typical_early"
+    | "typical_later"
     | "most_recent_independent"
   )[];
+  representativeMetricName: "trade_net_pnl" | "market_date_chronology" | null;
   relatedRuleRefs: readonly string[];
   relatedFocusRefs: readonly string[];
   overlapKeys: readonly string[];
@@ -246,6 +258,7 @@ export type CoachAiReviewInsightCandidate = Readonly<{
   scores: readonly CoachAiReviewLaneScore[];
   adjustments: readonly string[];
   penalties: readonly string[];
+  bucketSensitivity: readonly CoachAiReviewBucketSensitivity[];
   sensitivityResults: readonly string[];
   rankExplanation: readonly string[];
 }>;
