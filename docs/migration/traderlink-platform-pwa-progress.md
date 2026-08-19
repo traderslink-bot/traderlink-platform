@@ -1,6 +1,6 @@
 # TraderLink Platform PWA Progress
 
-**Status:** PWA 0 complete; PWA 1 owner-approved direction assembled; PWA 2 implementation assembled for owner review
+**Status:** PWA 0-2 owner-approved; PWA 3 implementation assembled for owner/runtime review
 
 **Started:** 2026-08-18
 
@@ -79,12 +79,19 @@ controlled browser acceptance pending
 
 ### PWA 3 - rich offline dashboard
 
-**Status:** Pending
+**Status:** Implementation assembled; owner/runtime review pending
 
-- [ ] Add bounded server-issued projection contracts.
-- [ ] Cover every route classified as last-synced read-only in the plan.
-- [ ] Add shared offline timestamps and online-required explanations.
-- [ ] Add scope switching, storage limits and Remove offline data.
+- [x] Add bounded server-issued projection contracts.
+- [x] Cover every route classified as last-synced read-only in the plan.
+- [x] Add shared offline timestamps and online-required explanations.
+- [x] Add scope switching, storage limits and Remove offline data.
+
+Implementation assembly now uses a shared dashboard capture boundary rather
+than changing each Analytics or Journal page. The server authorizes the route
+and issues the projection envelope; the client stores only bounded visible
+read-only facts under the current opaque user/account partition. The public
+offline shell renders the saved projection and complete navigation without
+caching authenticated HTML.
 
 ### PWA 4 - Web Push
 
@@ -108,10 +115,10 @@ controlled browser acceptance pending
 
 ## Current exact resume point
 
-Present the PWA 2 pending-trade panel and four status labels for owner review.
-After approval, preserve this slice in a narrow local checkpoint, then begin
-PWA 3 bounded dashboard projections. Do not begin broad projection edits before
-this approval.
+PWA 2 owner approval and its narrow local checkpoint are complete at
+`58f62e9d`. Implement PWA 3 with bounded server-rendered page projections and
+the current opaque user/account partition. Preserve private `no-store` network
+headers and do not cache authenticated HTML or raw Journal source records.
 
 ## 2026-08-18 PWA 1 assembly note
 
@@ -187,3 +194,33 @@ this approval.
   under resource pressure before the route list completed. The request and
   exact server were stopped; no Journal mutation was sent, ports 3010/3011 have
   no listener, and no dynamic browser/runtime acceptance is claimed.
+
+## 2026-08-18 PWA 3 assembly note
+
+- Added one versioned projection store beside the existing trade outbox. Each
+  record is partitioned by the opaque Platform user/workspace ref and selected
+  account ref, and the last 50 route projections are retained per partition.
+- A private `no-store` projection-context route authorizes the active scope,
+  exact path and offline route mode. The client then stores at most 24 blocks
+  and 40,000 visible characters from the server-rendered dashboard page. It
+  never stores form values, authenticated HTML, raw statements, source rows,
+  broker/provider credentials, identity values or AI request data.
+- The shared dashboard template captures all approved last-synced pages without
+  editing individual Workspace, Calendar, Rules, Analytics, Trade Analyzer,
+  AI Review, notification, tracker-detail or Help implementations.
+- The public offline shell keeps the complete navigation visible, shows exact
+  last-updated/read-only wording, renders saved values without recalculation and
+  explains why online-only routes need a connection.
+- Account switching replaces the active device partition before reads. Sign-out
+  clears the active device-scope pointer without cross-submitting or deleting a
+  prior user's pending outbox.
+- Account Preferences now shows saved-page count, last update, approximate
+  storage, named limits and **Remove offline data**. The confirmation explicitly
+  warns when unsynced trades exist only on the device.
+- Notifications Help now explains last-synced updates, Offline data controls and
+  the fact that device storage is not a backup.
+- Targeted ESLint, three JavaScript syntax checks, `git diff --check` and the
+  bounded PWA 3 TypeScript project pass. No Vitest, broad suite, database
+  command, Journal write, provider call, deployment or production build ran.
+- Desktop, narrow-mobile and real offline reload acceptance remain open for the
+  controlled browser/hosted gate.

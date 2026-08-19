@@ -45,18 +45,24 @@ export default async function DashboardLayout({
   }
   const notifications = withReadonlyPlatformDatabase({}, (database) =>
     new PlatformNotificationRepository(database).list(scope, 5));
+  const accountSelectionRef = scope.activeAccountId
+    ? currentJournalAccountSelectionRef(scope)
+    : null;
+  const offlineScopeRef = currentPlatformOfflineScopeRef(scope);
   return (
     <Suspense
       fallback={<DashboardFrameFallback>{children}</DashboardFrameFallback>}
     >
-      <TraderLinkPlatformDashboardTemplate notifications={notifications}>
+      <TraderLinkPlatformDashboardTemplate
+        accountSelectionRef={accountSelectionRef}
+        notifications={notifications}
+        offlineScopeRef={offlineScopeRef}
+      >
         {children}
       </TraderLinkPlatformDashboardTemplate>
       <PwaLifecycle
-        accountSelectionRef={scope.activeAccountId
-          ? currentJournalAccountSelectionRef(scope)
-          : null}
-        offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
+        accountSelectionRef={accountSelectionRef}
+        offlineScopeRef={offlineScopeRef}
       />
     </Suspense>
   );

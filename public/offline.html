@@ -8,56 +8,47 @@
     <style>
       * { box-sizing: border-box; }
       html, body { margin: 0; min-height: 100%; }
-      body {
-        align-items: center;
-        background: #f5f7fb;
-        color: #162033;
-        display: flex;
-        font-family: Arial, sans-serif;
-        justify-content: center;
-        min-height: 100vh;
-        padding: 24px;
-      }
-      main {
-        background: #fff;
-        border: 1px solid #dfe4ec;
-        border-radius: 16px;
-        max-width: 520px;
-        padding: 40px;
-        text-align: center;
-        width: 100%;
-      }
-      img { border-radius: 12px; height: 72px; width: 72px; }
-      h1 { font-size: 30px; line-height: 1.2; margin: 22px 0 10px; }
-      p { color: #5d687a; font-size: 16px; line-height: 1.55; margin: 0; }
-      a {
-        background: #011e56;
-        border-radius: 8px;
-        color: #fff;
-        display: inline-block;
-        font-size: 15px;
-        font-weight: 700;
-        margin-top: 28px;
-        min-height: 42px;
-        padding: 11px 20px;
-        text-decoration: none;
-      }
-      @media (max-width: 480px) {
-        body { padding: 16px; }
-        main { padding: 30px 22px; }
-        h1 { font-size: 26px; }
+      body { background: #f5f7fb; color: #162033; font-family: Arial, sans-serif; min-height: 100vh; }
+      .offline-shell { display: grid; grid-template-columns: 260px minmax(0, 1fr); min-height: 100vh; }
+      nav { background: #fff; border-right: 1px solid #dfe4ec; padding: 18px 12px 28px; }
+      .brand { align-items: center; color: #162033; display: flex; font-weight: 800; gap: 10px; padding: 0 8px 14px; text-decoration: none; }
+      .brand img { border-radius: 9px; height: 38px; width: 38px; }
+      .nav-group { margin-top: 14px; }
+      .nav-group h2 { color: #6c7789; font-size: 12px; letter-spacing: .05em; margin: 0 10px 6px; text-transform: uppercase; }
+      .nav-link { border-radius: 8px; color: #354057; display: block; font-size: 14px; font-weight: 650; padding: 9px 10px; text-decoration: none; }
+      .nav-link.active { background: #011e56; color: #fff; }
+      main { padding: 30px clamp(18px, 4vw, 48px) 56px; }
+      .status { background: #e9eef7; border-radius: 999px; color: #011e56; display: inline-block; font-size: 13px; font-weight: 800; padding: 7px 11px; }
+      h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.2; margin: 16px 0 8px; }
+      .lead { color: #5d687a; font-size: 16px; line-height: 1.55; margin: 0; max-width: 760px; }
+      .notice, .projection-card { background: #fff; border: 1px solid #dfe4ec; border-radius: 12px; }
+      .notice { margin-top: 20px; max-width: 760px; padding: 15px 17px; }
+      .notice p { color: #5d687a; line-height: 1.5; margin: 5px 0 0; }
+      .projection-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-top: 26px; }
+      .projection-card { min-width: 0; padding: 18px; }
+      .projection-card h2 { font-size: 18px; margin: 0 0 10px; }
+      .projection-card ul { list-style: none; margin: 0; padding: 0; }
+      .projection-card li { border-top: 1px solid #edf0f4; color: #3f4a5e; font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; padding: 9px 0; }
+      .projection-card li:first-child { border-top: 0; padding-top: 0; }
+      .retry { background: #011e56; border-radius: 8px; color: #fff; display: inline-block; font-size: 15px; font-weight: 700; margin: 28px; min-height: 42px; padding: 11px 20px; text-decoration: none; }
+      @media (max-width: 760px) {
+        .offline-shell { display: block; }
+        nav { border-bottom: 1px solid #dfe4ec; border-right: 0; overflow-x: auto; padding: 12px; white-space: nowrap; }
+        .brand { display: inline-flex; margin-right: 8px; padding: 0 8px; vertical-align: middle; }
+        .brand span { display: none; }
+        .nav-group { display: inline; margin: 0; }
+        .nav-group h2 { display: none; }
+        .nav-link { display: inline-block; margin: 0 2px; vertical-align: middle; }
+        main { padding-top: 24px; }
       }
     </style>
   </head>
   <body>
-    <main>
-      <img alt="" src="/icons/traderlink-192.png" />
-      <h1>TraderLink is offline</h1>
-      <p>
-        Reconnect to update this page. Saved offline information will stay on
-        this device when it is available.
-      </p>
-      <a href="/workspace">Try again</a>
-    </main>
+    <div class="offline-shell">
+      <nav aria-label="TraderLink pages" id="offline-navigation"></nav>
+      <main id="offline-content"></main>
+    </div>
+    <noscript><a class="retry" href="/workspace">Reconnect to TraderLink</a></noscript>
+    <script src="/pwa-offline-dashboard.js"></script>
   </body>
 </html>

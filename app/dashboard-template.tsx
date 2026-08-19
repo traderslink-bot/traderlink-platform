@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { DashboardShell } from "./dashboard-shell";
 import type { PlatformNotification } from "@/src/modules/platform/contracts/platform-notification-contracts";
+import { OfflineProjectionCapture } from "./pwa/offline-projection-capture";
 
 export {
   DashboardDataScopeChip,
@@ -21,15 +22,24 @@ export {
 } from "./dashboard-navigation";
 
 export function TraderLinkPlatformDashboardTemplate({
+  accountSelectionRef,
   children,
   notifications = [],
+  offlineScopeRef,
 }: {
+  accountSelectionRef: string | null;
   children: ReactNode;
   notifications?: readonly PlatformNotification[];
+  offlineScopeRef: string;
 }) {
   return (
     <DashboardShell notifications={notifications}>
-      {children}
+      <OfflineProjectionCapture
+        accountSelectionRef={accountSelectionRef}
+        offlineScopeRef={offlineScopeRef}
+      >
+        {children}
+      </OfflineProjectionCapture>
     </DashboardShell>
   );
 }

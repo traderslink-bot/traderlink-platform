@@ -1,12 +1,55 @@
 importScripts("/pwa-trade-sync.js");
 
-const SHELL_CACHE = "traderlink-pwa-shell-v2";
+const SHELL_CACHE = "traderlink-pwa-shell-v3";
 const SHELL_ASSETS = Object.freeze([
   "/offline.html",
+  "/pwa-offline-dashboard.js",
   "/icons/traderlink-192.png",
   "/icons/traderlink-512.png",
   "/icons/traderlink-maskable-512.png",
 ]);
+
+function clearCurrentOfflineScope() {
+  return new Promise((resolve) => {
+    const request = indexedDB.open("traderlink-pwa-v1", 2);
+    request.addEventListener("upgradeneeded", () => {
+      const database = request.result;
+      const transaction = request.transaction;
+      const outbox = database.objectStoreNames.contains("manualTradeOutbox")
+        ? transaction.objectStore("manualTradeOutbox")
+        : database.createObjectStore("manualTradeOutbox", { keyPath: "ref" });
+      if (!outbox.indexNames.contains("partitionKey")) {
+        outbox.createIndex("partitionKey", "partitionKey", { unique: false });
+      }
+      const projections = database.objectStoreNames.contains("offlineProjections")
+        ? transaction.objectStore("offlineProjections")
+        : database.createObjectStore("offlineProjections", { keyPath: "ref" });
+      if (!projections.indexNames.contains("partitionKey")) {
+        projections.createIndex("partitionKey", "partitionKey", { unique: false });
+      }
+      if (!projections.indexNames.contains("updatedAtUtc")) {
+        projections.createIndex("updatedAtUtc", "lastSyncedAtUtc", { unique: false });
+      }
+      if (!database.objectStoreNames.contains("deviceState")) {
+        database.createObjectStore("deviceState", { keyPath: "key" });
+      }
+    });
+    request.addEventListener("success", () => {
+      const database = request.result;
+      const transaction = database.transaction("deviceState", "readwrite");
+      transaction.objectStore("deviceState").delete("current");
+      transaction.addEventListener("complete", () => {
+        database.close();
+        resolve();
+      });
+      transaction.addEventListener("error", () => {
+        database.close();
+        resolve();
+      });
+    });
+    request.addEventListener("error", () => resolve());
+  });
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -30,10 +73,19 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const request = event.request;
-  if (request.method !== "GET") return;
-
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+
+  if (request.method === "POST" && url.pathname === "/api/auth/logout") {
+    event.respondWith(
+      fetch(request).then(async (response) => {
+        await clearCurrentOfflineScope();
+        return response;
+      }),
+    );
+    return;
+  }
+  if (request.method !== "GET") return;
 
   if (request.mode === "navigate") {
     event.respondWith(

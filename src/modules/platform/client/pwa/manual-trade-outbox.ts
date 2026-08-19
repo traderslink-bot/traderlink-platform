@@ -10,9 +10,11 @@ import type {
 import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
 
 const DATABASE_NAME = "traderlink-pwa-v1";
-const DATABASE_VERSION = 1;
+const DATABASE_VERSION = 2;
 const OUTBOX_STORE = "manualTradeOutbox";
 const PARTITION_INDEX = "partitionKey";
+const PROJECTION_STORE = "offlineProjections";
+const DEVICE_STATE_STORE = "deviceState";
 const OPAQUE_REF_PATTERN = /^[0-9a-f]{64}$/u;
 const RECEIPT_RETENTION_MS = 24 * 60 * 60 * 1_000;
 const STALE_SYNC_MS = 2 * 60 * 1_000;
@@ -145,6 +147,18 @@ function openDatabase(): Promise<IDBDatabase> {
         : database.createObjectStore(OUTBOX_STORE, { keyPath: "ref" });
       if (!store.indexNames.contains(PARTITION_INDEX)) {
         store.createIndex(PARTITION_INDEX, "partitionKey", { unique: false });
+      }
+      const projections = database.objectStoreNames.contains(PROJECTION_STORE)
+        ? request.transaction!.objectStore(PROJECTION_STORE)
+        : database.createObjectStore(PROJECTION_STORE, { keyPath: "ref" });
+      if (!projections.indexNames.contains(PARTITION_INDEX)) {
+        projections.createIndex(PARTITION_INDEX, "partitionKey", { unique: false });
+      }
+      if (!projections.indexNames.contains("updatedAtUtc")) {
+        projections.createIndex("updatedAtUtc", "lastSyncedAtUtc", { unique: false });
+      }
+      if (!database.objectStoreNames.contains(DEVICE_STATE_STORE)) {
+        database.createObjectStore(DEVICE_STATE_STORE, { keyPath: "key" });
       }
     });
     request.addEventListener("success", () => resolve(request.result));
