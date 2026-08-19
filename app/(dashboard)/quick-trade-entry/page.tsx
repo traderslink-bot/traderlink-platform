@@ -9,6 +9,7 @@ import {
   currentJournalAccountSelectionRef,
   requireTraderLinkPlatformPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
 import { ManualExecutionEntry } from "../trade-tracker/manual-execution-entry";
 import { getReplacementTradeTrackerAccount } from "../trade-tracker/trade-tracker-platform-data";
 
@@ -57,6 +58,7 @@ export default async function QuickTradeEntryPage() {
         accountTimezone={account.tradingTimezone}
         defaultSessionDate={currentDateInTimezone(account.tradingTimezone)}
         expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
+        offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
         tracker="quick"
       />
     </DashboardPage>

@@ -2,9 +2,14 @@ import { Suspense, type ReactNode } from "react";
 import { redirect } from "next/navigation";
 
 import { TraderLinkPlatformDashboardTemplate } from "../dashboard-template";
-import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import {
+  currentJournalAccountSelectionRef,
+  requireTraderLinkPlatformPageIdentity,
+} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
+import { PwaLifecycle } from "../pwa/pwa-lifecycle";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -47,6 +52,12 @@ export default async function DashboardLayout({
       <TraderLinkPlatformDashboardTemplate notifications={notifications}>
         {children}
       </TraderLinkPlatformDashboardTemplate>
+      <PwaLifecycle
+        accountSelectionRef={scope.activeAccountId
+          ? currentJournalAccountSelectionRef(scope)
+          : null}
+        offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
+      />
     </Suspense>
   );
 }

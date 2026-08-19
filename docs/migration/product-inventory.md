@@ -20,7 +20,7 @@
 
 | Future owner | Current surfaces and capabilities | Current implementation areas | Phase 1 disposition |
 | --- | --- | --- | --- |
-| Platform | Landing page, shared site shell, shared dashboard shell, navigation, authentication/session, account, access boundaries, private-cache headers, platform readiness | `app/page.tsx`, `app/site-shell.tsx`, `src/components/site`, `app/(dashboard)/layout.tsx`, `app/dashboard-*`, `app/api/auth`, `app/api/me`, `app/(dashboard)/account`, `app/(dashboard)/workspace/readiness`, `next.config.ts` | F5 connects privacy-safe replacement readiness inside the approved shell and intercepts legacy V3 routes. F6 implements Discord-first Platform sessions, current membership evidence, single-node hosted packaging and authorized hosted transfer; external activation remains pending. |
+| Platform | Landing page, shared site shell, shared dashboard shell, navigation, authentication/session, account, access boundaries, private-cache headers, platform readiness, installable PWA shell, offline scope/outbox coordination and Web Push | `app/page.tsx`, `app/site-shell.tsx`, `src/components/site`, `app/(dashboard)/layout.tsx`, `app/dashboard-*`, `app/api/auth`, `app/api/me`, `app/(dashboard)/account`, `app/(dashboard)/workspace/readiness`, `next.config.ts` | F5 connects privacy-safe replacement readiness inside the approved shell and intercepts legacy V3 routes. F6 implements Discord-first Platform sessions, current membership evidence, single-node hosted packaging and authorized hosted transfer; external activation remains pending. The owner-approved [PWA plan](traderlink-platform-pwa-plan.md) preserves the complete dashboard while adding bounded offline access and opt-in push without changing module data authority. |
 | Journal Administration | Private owner overview, users/Journal accounts, import operations, statement-format learning, Data Decision operations, system health and audit | `app/admin/journal`, `app/api/admin/journal`, `src/modules/platform/server/administration`, `src/modules/journal/server/administration` | [QA-corrected detailed plan](journal-admin-dashboard-plan.md) is owner approved. Technical Admin 1-6 authorization, evidence, bounded read models, audited commands/downloads and complete light Material UI are assembled and focused-verified. `/admin/journal` uses fresh Discord-owner evidence plus a distinct Platform operator grant and does not reuse Watchlist/V3/Level Analysis administration. Integrated compile/build/browser acceptance and production activation remain pending. |
 | Journal | Imports, statement preview/commit, mapping templates, Data Decisions/repair, canonical executions, manual entry, Day Trade Tracker, Swing Trade Tracker, round trips, open positions, ticker grouping, calendar, rules, notes, tags, reviews, candle associations | `app/(dashboard)`, `app/api/import-*`, `app/api/csv-*`, `app/api/intelligence`, `app/api/trades`, `src/lib/trader-analytics`, `src/lib/execution-sources`, `src/lib/trader-intelligence-{day-session-journal,rules,tags}`, parts of `src/lib/trader-intelligence-v3` | Preserve capability and URLs where practical; replace V3 authority, import, grouping, and storage dependencies behind explicit Journal services. The two trackers are separate workflows over one Data Decisions-protected canonical execution ledger. |
 | Journal Analytics | Workspace summary, Analytics Overview, Performance, Results, Timing, Execution, Analytics Lab, chart evidence, trade/ticker/session stories, reflection and behavior calculations | `app/(dashboard)/workspace`, `app/(dashboard)/analytics`, `app/analytics-server-page.tsx`, `app/api/analytics`, `app/api/intelligence/dashboard`, `src/lib/trader-analytics`, `src/lib/trader-intelligence-v3/analytics`, behavior/review libraries | Preserve useful supported analytics; replace the ordinary-dashboard dependency on V3 replay/proof/authority. Every metric needs one server-owned calculation contract and visible coverage. |
@@ -38,15 +38,26 @@ This route family uses the owner-approved **light Material UI dashboard** with a
 
 The navigation-visible dashboard is the clearest future route family and contains:
 
-- Workspace: `/workspace`.
-- Trades: `/calendar`, `/trade-tracker` (Day Trade Tracker), `/trade-tracker/swings` (Swing Trade Tracker), `/trades/open`. Retired `/trades/roundtrips` and `/trades/ticker` routes redirect to Execution and Results respectively.
-- Analytics: `/analytics`, `/analytics/performance`, `/analytics/results`, `/analytics/timing`, `/analytics/execution`, `/analytics/lab`.
-- Review tools: `/reflection-loop`, `/rules`, `/charts`.
-- Data: `/imports`, `/manual-entry`, `/data-decisions`.
+- Home: `/workspace`.
+- Trades: `/trade-tracker` (Daily Trade Tracker),
+  `/trade-tracker/swings` (Swing Trade Tracker), `/quick-trade-entry`,
+  `/calendar`, `/analytics/trade-explorer`,
+  `/analytics/trade-explorer/compare`, `/trades/open`, `/rules` and
+  `/rules/results`.
+- Trade Analyzer: `/analytics/trade-analyzer/day`, its Entry & Exit, MFE & MAE,
+  Green-to-Red, Candle Patterns and Analyzed Trades child routes.
+- Analytics: `/analytics`, `/analytics/results`, `/analytics/timing` and
+  `/analytics/execution`.
+- Standalone: `/ai-chat`, `/ai-reviews`, `/account`, `/imports`, `/charts`,
+  `/data-decisions` and `/help`.
 
-There are additional dashboard routes for the date-specific Day Trade Tracker,
-Swing Trade detail, candle review, an Analytics Lab candle-analysis surface and
-compatibility redirects. All are enumerated in [Route Ownership](route-ownership.md).
+Notifications and the date/detail/help/account routes remain contextual parts
+of the dashboard. Analytics Lab remains preserved but intentionally outside the
+current public navigation until a later owner-approved scope restores it.
+Retired compatibility routes do not become separate PWA destinations. The
+complete installed-app and offline behavior matrix is controlled by the
+[PWA plan](traderlink-platform-pwa-plan.md); route ownership remains enumerated
+in [Route Ownership](route-ownership.md).
 
 The complete list above controls preservation. The named visual identifiers do not narrow the target list; they distinguish the approved dashboard from other legacy or experimental dashboards. Any visible replacement change requires owner review against this baseline.
 

@@ -9,6 +9,7 @@ import {
   currentJournalAccountSelectionRef,
   requireTraderLinkPlatformPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
 
 import {
   getReplacementReportingDaySession,
@@ -73,6 +74,7 @@ export default async function TradeTrackerPage({
       defaultSessionDate={currentDate}
       expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
       key="manual-execution-entry"
+      offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
     />
   );
   if (data) {

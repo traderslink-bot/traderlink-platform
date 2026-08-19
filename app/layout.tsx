@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AnalyticsConsent } from "./analytics-consent";
 import { MuiProviders } from "./mui-provider";
@@ -15,13 +15,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  applicationName: "TraderLink Platform",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "TraderLink Platform",
+  },
   metadataBase: new URL("https://traderslink.pro"),
+  manifest: "/manifest.webmanifest",
   title: {
     default: "TradersLink",
     template: "%s",
   },
   description:
     "TradersLink is a beta suite of trading tools with a small cap scanner, AI press release and SEC filing summaries, Discord alerts, generated chart levels, and Trader Intelligence coming soon.",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#011e56",
 };
 
 export default function RootLayout({

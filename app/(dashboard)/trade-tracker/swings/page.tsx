@@ -6,6 +6,7 @@ import {
   currentJournalAccountSelectionRef,
   requireTraderLinkPlatformPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
 import { DashboardPage, DashboardUnavailableState } from "../../../dashboard-template";
 import { ManualExecutionEntry } from "../manual-execution-entry";
 import {
@@ -82,6 +83,7 @@ export default async function SwingTradeTrackerPage({
         initialAction={action}
         initialDirection={direction}
         initialSymbol={initialSymbol(query.symbol)}
+        offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
         tracker="swing"
       />
     </Box>

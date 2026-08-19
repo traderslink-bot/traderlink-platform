@@ -26,8 +26,37 @@ export type JournalManualRoundTripTarget = Readonly<{
   projectionState: "ready_closed" | "legitimate_open" | "needs_decision";
 }>;
 
+export type JournalManualCommittedSubmission = Readonly<{
+  acceptedExecutionCount: number;
+  pendingDecisionCount: number;
+}>;
+
 function sha256(parts: readonly string[]): string {
   return createHash("sha256").update(parts.join("\u001f"), "utf8").digest("hex");
+}
+
+function factKeyFromManualSourceRow(rawFieldsJson: string): string | null {
+  const fields: unknown = JSON.parse(rawFieldsJson);
+  if (
+    !Array.isArray(fields) ||
+    fields.length < 16 ||
+    fields[0] !== "manual_execution_v1"
+  ) {
+    return null;
+  }
+  const values = [
+    fields[1],
+    fields[2],
+    fields[7],
+    fields[14],
+    fields[8],
+    fields[9],
+    fields[10],
+    fields[11],
+  ];
+  return values.every((value) => typeof value === "string")
+    ? JSON.stringify(values)
+    : null;
 }
 
 export class JournalManualTradeCommandRepository {
@@ -35,6 +64,132 @@ export class JournalManualTradeCommandRepository {
 
   immediate<T>(operation: () => T): T {
     return this.database.transaction(operation).immediate();
+  }
+
+  findCommittedSubmission(input: Readonly<{
+    scope: AccountScope;
+    userId: string;
+    idempotencyKey: string;
+    payloadSha256: string;
+  }>): JournalManualCommittedSubmission | null {
+    const batch = this.database.prepare<[
+      string,
+      string,
+      string,
+      string,
+    ], {
+      import_batch_id: string;
+      pending_decision_count: number;
+    }>(`SELECT import_batch_id, pending_decision_count
+FROM journal_import_batches
+WHERE workspace_id = ? AND account_id = ? AND created_by_user_id = ?
+  AND source_kind = 'manual_batch' AND manual_idempotency_key = ?`)
+      .get(
+        input.scope.workspaceId,
+        input.scope.accountId,
+        input.userId,
+        input.idempotencyKey,
+      );
+    if (!batch) return null;
+
+    const assertions = this.database.prepare<[
+      string,
+      string,
+      string,
+      string,
+      string,
+    ], {
+      assertion_count: number;
+      mismatched_count: number;
+    }>(`SELECT COUNT(*) AS assertion_count,
+  SUM(CASE WHEN normalized_payload_sha256 = ? THEN 0 ELSE 1 END) AS mismatched_count
+FROM journal_manual_trade_boundary_assertions
+WHERE workspace_id = ? AND account_id = ? AND user_id = ?
+  AND import_batch_id = ?`)
+      .get(
+        input.payloadSha256,
+        input.scope.workspaceId,
+        input.scope.accountId,
+        input.userId,
+        batch.import_batch_id,
+      );
+    if (
+      !assertions ||
+      assertions.assertion_count < 1 ||
+      assertions.mismatched_count !== 0
+    ) {
+      platformFailure("TRADERLINK_MANUAL_TRADE_COMMIT_CONFLICT", {
+        reason: "offline_idempotency_status_mismatch",
+      });
+    }
+
+    const executions = this.database.prepare<[
+      string,
+      string,
+      string,
+    ], { execution_count: number }>(`SELECT COUNT(DISTINCT execution_id) AS execution_count
+FROM journal_execution_provenance
+WHERE workspace_id = ? AND account_id = ? AND import_batch_id = ?`)
+      .get(
+        input.scope.workspaceId,
+        input.scope.accountId,
+        batch.import_batch_id,
+      );
+    return Object.freeze({
+      acceptedExecutionCount: executions?.execution_count ?? 0,
+      pendingDecisionCount: batch.pending_decision_count,
+    });
+  }
+
+  hasExactManualBatchWithDifferentIdempotency(input: Readonly<{
+    scope: AccountScope;
+    userId: string;
+    idempotencyKey: string;
+    factKeys: readonly string[];
+  }>): boolean {
+    const rows = this.database.prepare<[
+      string,
+      string,
+      string,
+      string,
+      number,
+    ], {
+      import_batch_id: string;
+      raw_fields_json: string;
+    }>(`SELECT batch.import_batch_id, source_row.raw_fields_json
+FROM journal_import_batches AS batch
+JOIN journal_source_rows AS source_row
+  ON source_row.workspace_id = batch.workspace_id
+ AND source_row.account_id = batch.account_id
+ AND source_row.import_batch_id = batch.import_batch_id
+WHERE batch.workspace_id = ? AND batch.account_id = ?
+  AND batch.created_by_user_id = ? AND batch.source_kind = 'manual_batch'
+  AND batch.manual_idempotency_key <> ?
+  AND batch.current_state IN ('accepted', 'accepted_with_decisions')
+  AND batch.mapped_execution_count = ?
+ORDER BY batch.created_at_utc DESC, batch.import_batch_id, source_row.record_ordinal`)
+      .all(
+        input.scope.workspaceId,
+        input.scope.accountId,
+        input.userId,
+        input.idempotencyKey,
+        input.factKeys.length,
+      );
+    const expected = [...input.factKeys].sort();
+    const candidateKeys = new Map<string, string[]>();
+    for (const row of rows) {
+      const key = factKeyFromManualSourceRow(row.raw_fields_json);
+      if (key === null) continue;
+      candidateKeys.set(
+        row.import_batch_id,
+        [...(candidateKeys.get(row.import_batch_id) ?? []), key],
+      );
+    }
+    return [...candidateKeys.values()].some((keys) => {
+      const sorted = keys.sort();
+      return sorted.length === expected.length &&
+        sorted.every((key, index) => key === expected[index]);
+    });
   }
 
   insertBoundaryAssertion(input: Readonly<{

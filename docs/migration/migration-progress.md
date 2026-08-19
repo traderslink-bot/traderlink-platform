@@ -1,5 +1,15 @@
 # TraderLink Platform Migration Progress
 
+**TraderLink Platform PWA:** The owner approved the complete
+[PWA plan](traderlink-platform-pwa-plan.md) and its
+[progress record](traderlink-platform-pwa-progress.md) on 2026-08-18. The
+installed app preserves the full dashboard, including Analytics and Trading
+Rules, while adding offline Daily/Swing/Quick Trade Entry, bounded last-synced
+dashboard access, foreground and best-effort background sync, opt-in
+privacy-safe Web Push and the exact 23-pixel-left/4-pixel-down app-icon
+correction. PWA 1 install-foundation work is active; deployment and production
+push activation remain separate owner-controlled gates.
+
 **Mobile dashboard experience:** The owner approved the complete
 [Mobile Dashboard Experience Plan](mobile-dashboard-experience-plan.md) and its
 [progress record](mobile-dashboard-experience-progress.md) on 2026-08-16.

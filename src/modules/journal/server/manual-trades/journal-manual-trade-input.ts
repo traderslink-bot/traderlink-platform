@@ -1,7 +1,9 @@
 import type { ManualExecutionInput } from "../imports/journal-import-service";
 import type {
   JournalManualTradeCommitRequest,
+  JournalManualTradeCommitStatusRequest,
   JournalManualTradeGroupConfirmation,
+  JournalManualTradeOfflineSync,
   JournalManualTrackerKind,
   JournalManualTradeEntry,
 } from "../../contracts/journal-manual-trade-capture-contracts";
@@ -152,6 +154,22 @@ export function toManualExecutionInput(
   });
 }
 
+export function journalManualTradeFactKey(
+  entry: JournalManualTradeEntry,
+): string {
+  const feeCost = entry.feesDecimal === "0" ? null : entry.feesDecimal;
+  return JSON.stringify([
+    `${entry.localDate}, ${entry.localTime}`,
+    entry.sourceTimezone,
+    entry.normalizedSymbol,
+    entry.tradeCurrency,
+    entry.side,
+    entry.quantityDecimal,
+    entry.priceDecimal,
+    feeCost === null ? "" : `-${feeCost}`,
+  ]);
+}
+
 export function parseJournalManualTradeEntries(
   value: unknown,
 ): readonly JournalManualTradeEntry[] {
@@ -216,6 +234,21 @@ function parseConfirmation(value: unknown): JournalManualTradeGroupConfirmation 
   });
 }
 
+function parseOfflineSync(value: unknown): JournalManualTradeOfflineSync {
+  const input = record(value, "offlineSync");
+  if (
+    input.duplicateResolution !== "review_required" &&
+    input.duplicateResolution !== "save_separately"
+  ) {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+      field: "offlineSync",
+    });
+  }
+  return Object.freeze({
+    duplicateResolution: input.duplicateResolution,
+  });
+}
+
 export function parseJournalManualTradeCommitRequest(
   value: unknown,
 ): JournalManualTradeCommitRequest {
@@ -246,6 +279,35 @@ export function parseJournalManualTradeCommitRequest(
     idempotencyKey,
     confirmations: Object.freeze(input.confirmations.map(parseConfirmation)),
     ...(input.preparedBy === "ai_chat" ? { preparedBy: "ai_chat" as const } : {}),
+    ...(input.offlineSync === undefined
+      ? {}
+      : { offlineSync: parseOfflineSync(input.offlineSync) }),
+  });
+}
+
+export function parseJournalManualTradeCommitStatusRequest(
+  value: unknown,
+): JournalManualTradeCommitStatusRequest {
+  const input = record(value, "manualTradeCommitStatus");
+  const expectedAccountSelectionRef = text(
+    input.expectedAccountSelectionRef,
+    "expectedAccountSelectionRef",
+  );
+  const idempotencyKey = text(input.idempotencyKey, "idempotencyKey");
+  if (
+    !OPAQUE_REF_PATTERN.test(expectedAccountSelectionRef) ||
+    idempotencyKey.length < 16 ||
+    idempotencyKey.length > 128
+  ) {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+      field: "manualTradeCommitStatus",
+    });
+  }
+  return Object.freeze({
+    tracker: parseJournalManualTrackerKind(input.tracker),
+    entries: parseJournalManualTradeEntries(input.entries),
+    expectedAccountSelectionRef,
+    idempotencyKey,
   });
 }
 

@@ -233,6 +233,7 @@ export type ManualExecutionBatchInput = Readonly<{
   sourceDisplayLabel: string;
   entries: readonly ManualExecutionInput[];
   confirmedTraderBoundaries?: boolean;
+  contentResolution?: "automatic" | "trader_confirmed_separate";
   now?: Date;
 }>;
 
@@ -1031,12 +1032,23 @@ export class JournalImportService {
         localEndDate: coverage.localDate,
         sourceTimezone: coverage.sourceTimezone,
       }));
-    const planned = this.planExecutions(
+    const automaticallyPlanned = this.planExecutions(
       scope.workspaceId,
       input.accountId,
       adapterExecutions,
       "manual_batch",
     );
+    const planned = input.contentResolution === "trader_confirmed_separate"
+      ? Object.freeze(automaticallyPlanned.map((plan) => Object.freeze({
+          ...plan,
+          matchedExecutionId: null,
+          ambiguous: false,
+          factConflict: false,
+          enrichFromIncoming: false,
+          attachContentAlias: false,
+          reconciliation: null,
+        })))
+      : automaticallyPlanned;
     const issues: JournalImportIssue[] = adapterExecutions.filter((entry) => entry.priceDecimal === null)
       .map((entry) => Object.freeze({ recordOrdinal: entry.recordOrdinal, issueScope: "execution" as const,
         issueCode: "execution_price_missing", severity: "warning" as const, isBlocking: false,
@@ -1060,7 +1072,13 @@ export class JournalImportService {
       evidenceObjectKey: null, manualIdempotencyKey: input.idempotencyKey,
       adapterId: "manual_execution", adapterVersion: "manual_execution_v1",
       parserVersion: "manual_record_v1", mappingVersion: "manual_execution_mapping_v1",
-      mappingContractJson: JSON.stringify({ contractVersion: "manual_execution_mapping_v1", coverage: "point_only" }),
+      mappingContractJson: JSON.stringify({
+        contractVersion: "manual_execution_mapping_v1",
+        coverage: "point_only",
+        contentResolution: input.contentResolution === "trader_confirmed_separate"
+          ? "trader_confirmed_separate"
+          : "automatic",
+      }),
       statementPeriodStartDate: null, statementPeriodEndDate: null, sourceTimezone: null,
       rows, issues, coverageIntervals, positionFacts: [], plannedExecutions: planned,
       sourceIdentityForRows: `${scope.workspaceId}\u001f${input.accountId}\u001f${input.idempotencyKey}`,

@@ -35,7 +35,7 @@ export type ExecutionDraft = {
 
 export type ExecutionSaveResult =
   Readonly<{
-    status: "saved";
+    status: "queued" | "saved";
     acceptedExecutionCount: number;
     pendingDecisionCount: number;
   }>;
@@ -114,6 +114,7 @@ export function ExecutionEntryCard({
         count: number;
         candleReviewKeys: readonly string[];
         candleReviewMessage: string | null;
+        persistence: "device" | "traderlink";
       }
     | { kind: "error"; message: string }
   >({ kind: "idle" });
@@ -200,6 +201,7 @@ export function ExecutionEntryCard({
           ? `${saveResult.pendingDecisionCount} item${saveResult.pendingDecisionCount === 1 ? "" : "s"} need review in Data Decisions.`
           : null,
         count: recordedCount,
+        persistence: saveResult?.status === "queued" ? "device" : "traderlink",
       });
       onSubmitted(recordedCount, normalizedRows);
       onCollapsedChange(true);
@@ -243,8 +245,15 @@ export function ExecutionEntryCard({
             </Typography>
             <Typography color="text.secondary" variant="body2">
               {submittedCount} execution{submittedCount === 1 ? "" : "s"}{" "}
-              recorded
+              {state.kind === "saved" && state.persistence === "device"
+                ? "saved on this device"
+                : "recorded"}
             </Typography>
+            {state.kind === "saved" && state.persistence === "device" ? (
+              <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="caption">
+                TraderLink will check and add them after you reconnect.
+              </Typography>
+            ) : null}
             {state.kind === "saved" && state.candleReviewMessage ? (
               <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="caption">
                 {state.candleReviewMessage}

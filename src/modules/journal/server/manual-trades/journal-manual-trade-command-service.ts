@@ -8,6 +8,8 @@ import {
 import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
 import type {
   JournalManualTradeCommitRequest,
+  JournalManualTradeCommitStatus,
+  JournalManualTradeCommitStatusRequest,
   JournalManualTradeGroupConfirmation,
   JournalManualTradePreviewGroup,
 } from "../../contracts/journal-manual-trade-capture-contracts";
@@ -27,6 +29,7 @@ import {
 } from "./journal-manual-trade-command-repository";
 import {
   assertJournalManualTrackerEntryDates,
+  journalManualTradeFactKey,
   toManualExecutionInput,
 } from "./journal-manual-trade-input";
 import { JournalManualTradePreviewService } from "./journal-manual-trade-preview-service";
@@ -68,6 +71,35 @@ export class JournalManualTradeCommandService {
     private readonly notifications?: PlatformNotificationRepository,
   ) {}
 
+  committedStatus(
+    scope: WorkspaceAccessScope,
+    accountSelectionRef: string,
+    request: JournalManualTradeCommitStatusRequest,
+  ): JournalManualTradeCommitStatus {
+    const accountId = scope.activeAccountId;
+    if (!accountId) platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
+    assertJournalManualTrackerEntryDates(request.tracker, request.entries);
+    const payloadSha256 = digestJournalManualTradePreviewPayload(
+      canonicalJournalManualTradePreviewPayload({
+        scope,
+        accountSelectionRef,
+        tracker: request.tracker,
+        entries: request.entries,
+      }),
+    );
+    const committed = this.repository.findCommittedSubmission({
+      scope: narrowWorkspaceAccessToAccount(scope, accountId),
+      userId: scope.userId,
+      idempotencyKey: request.idempotencyKey,
+      payloadSha256,
+    });
+    return Object.freeze({
+      committed: committed !== null,
+      acceptedExecutionCount: committed?.acceptedExecutionCount ?? 0,
+      pendingDecisionCount: committed?.pendingDecisionCount ?? 0,
+    });
+  }
+
   commit(
     scope: WorkspaceAccessScope,
     accountSelectionRef: string,
@@ -88,6 +120,28 @@ export class JournalManualTradeCommandService {
     }
 
     const result = this.repository.immediate(() => {
+      const exactOfflineDuplicate = request.offlineSync
+        ? this.repository.hasExactManualBatchWithDifferentIdempotency({
+            scope: accountScope,
+            userId: scope.userId,
+            idempotencyKey: request.idempotencyKey,
+            factKeys: request.entries.map(journalManualTradeFactKey),
+          })
+        : false;
+      if (
+        exactOfflineDuplicate &&
+        request.offlineSync?.duplicateResolution === "review_required"
+      ) {
+        platformFailure("TRADERLINK_MANUAL_TRADE_OFFLINE_DUPLICATE_CONFLICT");
+      }
+      if (
+        !exactOfflineDuplicate &&
+        request.offlineSync?.duplicateResolution === "save_separately"
+      ) {
+        platformFailure("TRADERLINK_MANUAL_TRADE_OFFLINE_DUPLICATE_CONFLICT", {
+          reason: "duplicate_candidate_changed",
+        });
+      }
       const preview = this.previews.preview(scope, {
         accountSelectionRef,
         tracker: request.tracker,
@@ -128,6 +182,10 @@ export class JournalManualTradeCommandService {
             : "Daily Trade Tracker manual executions",
         entries: request.entries.map(toManualExecutionInput),
         confirmedTraderBoundaries: true,
+        contentResolution: exactOfflineDuplicate &&
+          request.offlineSync?.duplicateResolution === "save_separately"
+          ? "trader_confirmed_separate"
+          : "automatic",
         now,
       });
       if (committed.executionIds.length !== request.entries.length) {

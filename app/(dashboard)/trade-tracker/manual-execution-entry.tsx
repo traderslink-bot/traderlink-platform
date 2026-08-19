@@ -5,33 +5,21 @@ import { useRef, useState } from "react";
 
 import type {
   JournalManualTradeEntry,
-  JournalManualTradePreview,
   JournalManualTrackerKind,
 } from "@/src/modules/journal/contracts/journal-manual-trade-capture-contracts";
-import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
 import {
   ExecutionEntryCard,
   type ExecutionDraft,
   type ExecutionSaveResult,
 } from "./execution-entry-card";
 import { useTradeTrackerUnsavedChanges } from "./trade-tracker-unsaved-changes";
-
-type PreviewResponse = Readonly<{
-  status?: string;
-  code?: string;
-  preview?: JournalManualTradePreview;
-}>;
-
-type CommitResponse = Readonly<{
-  status?: string;
-  code?: string;
-  result?: Readonly<{
-    acceptedExecutionCount?: number;
-    affectedDates?: readonly string[];
-    affectedPositionRefs?: readonly string[];
-    pendingDecisionCount?: number;
-  }>;
-}>;
+import { TradeOutboxStatus } from "@/app/pwa/trade-outbox-status";
+import {
+  ManualTradeNeedsReviewError,
+  ManualTradeNetworkError,
+  queueManualTradeSubmission,
+  submitManualTradeOnline,
+} from "@/src/modules/platform/client/pwa/manual-trade-outbox";
 
 function friendlyFailure(
   code: string | undefined,
@@ -85,6 +73,7 @@ export function ManualExecutionEntry({
   initialAction = null,
   initialDirection = "long",
   initialSymbol = "",
+  offlineScopeRef,
   tracker = "day",
 }: {
   accountCurrency: string;
@@ -94,6 +83,7 @@ export function ManualExecutionEntry({
   initialAction?: "add" | "reduce" | "close" | "record" | null;
   initialDirection?: "long" | "short";
   initialSymbol?: string;
+  offlineScopeRef: string;
   tracker?: JournalManualTrackerKind;
 }) {
   const router = useRouter();
@@ -143,75 +133,54 @@ export function ManualExecutionEntry({
     const entryTimezone = tracker === "swing" ? accountTimezone : "America/New_York";
     const entries = executions.map((execution) =>
       tradeEntry(execution, accountCurrency, entryTimezone));
-    const previewResponse = await fetch("/api/platform/journal/manual-trades/preview", {
-      body: JSON.stringify({
-        entries,
-        expectedAccountSelectionRef,
-        tracker,
-      }),
-      headers: {
-        "content-type": "application/json",
-        [JOURNAL_MUTATION_REQUEST_HEADER]: "1",
-      },
-      method: "POST",
+    const submission = Object.freeze({
+      entries,
+      expectedAccountSelectionRef,
+      idempotencyKey: currentIdempotencyKey,
+      tracker,
     });
-    const previewBody = await previewResponse.json() as PreviewResponse;
-    if (
-      !previewResponse.ok ||
-      previewBody.status !== "ready" ||
-      !previewBody.preview
-    ) {
-      throw new Error(friendlyFailure(previewBody.code, tracker));
+    if (!navigator.onLine) {
+      await queueManualTradeSubmission({ offlineScopeRef, submission });
+      idempotencyKey.current = null;
+      return Object.freeze({
+        status: "queued" as const,
+        acceptedExecutionCount: entries.length,
+        pendingDecisionCount: 0,
+      });
     }
-
-    const confirmations = previewBody.preview.groups.map((group) => Object.freeze({
-      groupRef: group.groupRef,
-      relationship: group.allowedRelationships.find((value) => value !== "not_finished") ??
-        "not_finished",
-      style: tracker === "swing"
-        ? "swing" as const
-        : tracker === "quick"
-          ? "other" as const
-          : "day_trade" as const,
-      existingPositionRef: group.existingPosition?.positionRef ?? null,
-      completeExecutionSetConfirmed: true,
-    }));
-    if (confirmations.some((confirmation) => confirmation.relationship === "not_finished")) {
-      throw new Error("One trade needs more information before it can be saved.");
+    try {
+      const result = await submitManualTradeOnline(submission);
+      idempotencyKey.current = null;
+      router.refresh();
+      return Object.freeze({ status: "saved" as const, ...result });
+    } catch (error) {
+      if (error instanceof ManualTradeNetworkError) {
+        await queueManualTradeSubmission({
+          offlineScopeRef,
+          submission,
+          commitAttempted: error.stage === "commit",
+        });
+        idempotencyKey.current = null;
+        return Object.freeze({
+          status: "queued" as const,
+          acceptedExecutionCount: entries.length,
+          pendingDecisionCount: 0,
+        });
+      }
+      if (error instanceof ManualTradeNeedsReviewError) {
+        throw new Error(friendlyFailure(error.code, tracker));
+      }
+      throw error;
     }
-
-    const commitResponse = await fetch("/api/platform/journal/manual-trades/commit", {
-      body: JSON.stringify({
-        confirmations,
-        entries,
-        expectedAccountSelectionRef,
-        idempotencyKey: currentIdempotencyKey,
-        previewRef: previewBody.preview.previewRef,
-        tracker,
-      }),
-      headers: {
-        "content-type": "application/json",
-        [JOURNAL_MUTATION_REQUEST_HEADER]: "1",
-      },
-      method: "POST",
-    });
-    const commitBody = await commitResponse.json() as CommitResponse;
-    if (!commitResponse.ok || commitBody.status !== "ready" || !commitBody.result) {
-      throw new Error(friendlyFailure(commitBody.code, tracker));
-    }
-
-    idempotencyKey.current = null;
-    router.refresh();
-    return Object.freeze({
-      status: "saved" as const,
-      acceptedExecutionCount:
-        commitBody.result.acceptedExecutionCount ?? entries.length,
-      pendingDecisionCount: commitBody.result.pendingDecisionCount ?? 0,
-    });
   }
 
   return (
-    <ExecutionEntryCard
+    <>
+      <TradeOutboxStatus
+        accountSelectionRef={expectedAccountSelectionRef}
+        offlineScopeRef={offlineScopeRef}
+      />
+      <ExecutionEntryCard
       collapsed={collapsed}
       allowMultipleTradingDates={tracker !== "day"}
       entryMode={tracker}
@@ -230,6 +199,7 @@ export function ManualExecutionEntry({
       }}
       sessionDate={defaultSessionDate}
       submittedCount={submittedCount}
-    />
+      />
+    </>
   );
 }

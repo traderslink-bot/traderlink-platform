@@ -80,6 +80,14 @@ export type JournalManualTradeGroupConfirmation = Readonly<{
   completeExecutionSetConfirmed: boolean;
 }>;
 
+export type JournalManualTradeOfflineDuplicateResolution =
+  | "review_required"
+  | "save_separately";
+
+export type JournalManualTradeOfflineSync = Readonly<{
+  duplicateResolution: JournalManualTradeOfflineDuplicateResolution;
+}>;
+
 export type JournalManualTradeCommitRequest = Readonly<{
   tracker: JournalManualTrackerKind;
   entries: readonly JournalManualTradeEntry[];
@@ -88,4 +96,18 @@ export type JournalManualTradeCommitRequest = Readonly<{
   idempotencyKey: string;
   confirmations: readonly JournalManualTradeGroupConfirmation[];
   preparedBy?: "ai_chat";
+  offlineSync?: JournalManualTradeOfflineSync;
+}>;
+
+export type JournalManualTradeCommitStatusRequest = Readonly<{
+  tracker: JournalManualTrackerKind;
+  entries: readonly JournalManualTradeEntry[];
+  expectedAccountSelectionRef: string;
+  idempotencyKey: string;
+}>;
+
+export type JournalManualTradeCommitStatus = Readonly<{
+  committed: boolean;
+  acceptedExecutionCount: number;
+  pendingDecisionCount: number;
 }>;
