@@ -246,6 +246,10 @@ function candidateWithoutBucket(
 ): CoachAiReviewInsightCandidate | null {
   if (!candidate.weekSeries.some((bucket) => bucket.bucketRef === bucketRef)) return candidate;
   const sensitivity = candidate.bucketSensitivity.find((item) => item.bucketRef === bucketRef);
+  // Focus assessments reuse the later candidate's buckets but intentionally do
+  // not claim a leave-one-bucket projection. Exclude that assessment from the
+  // replay so rank stability cannot be overstated.
+  if (sensitivity === undefined && candidate.family === "focus_follow_through") return null;
   invariant(sensitivity !== undefined,
     "TRADERLINK_AI_REVIEW_BUCKET_SENSITIVITY_MISSING");
   if (!sensitivity.candidateEligible) return null;

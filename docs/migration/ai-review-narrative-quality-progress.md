@@ -1019,3 +1019,62 @@ fixture/holdout execution, recovery and race cases, then the true four-week plus
 monthly live flow. The active Help Center needs no change for this inactive
 server/read-compatibility checkpoint; Help/Privacy wording remains an explicit
 pre-activation owner-review boundary.
+
+## Insight v3 implementation checkpoint 11 — 2026-08-19
+
+The first disposable true-month customer flow now passes through the complete
+v3 path. It creates a fresh migrated temporary database and ordinary paid user,
+workspace and account, records 80 exact-fee Manual Trade Tracker trades across
+four July weeks, saves notes, tags, rule reviews, trade styles, Daily Trade
+Analyzer results and daily reviews, issues each weekly review after its week,
+then issues the monthly review with all four issued weekly reviews in current-
+month context. The temporary database is deleted after every run; the local
+development Journal is never opened or changed.
+
+The flow exposed and corrected several defects that smaller fixtures did not:
+
+- empty result/rule replay populations no longer attach numeric values to an
+  unavailable measurement;
+- focus overlap keys are unique and focus leave-one-bucket replay does not
+  invent a projection that the focus-assessment contract cannot reproduce;
+- representative rule-trend claims include their rule subject in the factual-
+  job identity, so different improvement and friction rules do not collide;
+- the renderer now forms a bounded cross-product of compatible near-ranked
+  improvement and friction choices instead of sending OpenAI alternatives that
+  differ only in the opening sentence;
+- each complete alternative carries questions derived from its own selected
+  findings, while the deterministic highest-ranked compatible plan remains the
+  first and safe fallback;
+- follow-through no longer nests a quoted rule name inside another pair of
+  quotation marks;
+- an unknown-usage provider failure now records the rejected selection and
+  still issues the deterministic review instead of failing its reason check;
+  and
+- the frozen Luna selector request uses supported `reasoning.effort: none`.
+  The live provider had rejected the former `minimal` value with HTTP 400.
+
+The final captured run ranked 40 monthly findings, including five follow-through
+and eight named-rule findings, retained two complete review choices and passed
+the exact one-shot request audit. Its serialized Responses request was 7,938
+bytes. The final live run returned HTTP 200, and OpenAI selected `plan_1`; the
+strict request-local choice validation accepted it. OpenAI reported 1,824 input
+tokens, 1,821 cache-write input tokens, 51 output tokens and 1,875 total tokens.
+The recorded estimated cost was $0.00051705.
+
+The issued monthly review reported 80 closed trades, USD 640 net and a 70% win
+rate. Its held-back finding stated that `Exit at planned risk` was broken in 24
+of 80 reviewed opportunities, those trades lost USD 1,488 net, and they
+accounted for 100% of losing-trade P/L. Its improvement stated that `Stop after
+two broken-risk trades` moved from 4 of 9 early opportunities to 0 of 8 later.
+Focus follow-through compared a previously issued question with 38 of 48 later
+opportunities versus the original 33.33% baseline. These statements came from
+server calculations and rendering; OpenAI selected one complete review and did
+not write or recalculate them.
+
+Focused ESLint and the focused non-incremental TypeScript project pass for the
+owned engine, provider, issuance and disposable-flow files. The captured and
+live artifacts are retained only under ignored `.local-logs/`. No Vitest suite,
+browser run, development-database mutation, production activation or deployment
+was performed. The next bounded acceptance is the same true four-week sequence
+at the earlier 420-trade stress volume. This checkpoint changes no visible UI,
+so no Help guide update is required.

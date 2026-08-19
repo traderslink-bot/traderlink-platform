@@ -283,7 +283,7 @@ export function buildCoachAiReviewPeriodOutcomeCandidate(input: Readonly<{
     }),
     createCoachAiReviewMeasurement({
       metricName: "flat_count",
-      exactValue: String(flatRefs.length),
+      exactValue: resultEligibleRefs.length === 0 ? null : String(flatRefs.length),
       unit: "count",
       observationUnit: "trade",
       numeratorMemberRefs: flatRefs,
@@ -291,7 +291,9 @@ export function buildCoachAiReviewPeriodOutcomeCandidate(input: Readonly<{
       expectedCount: outcome.tradeCount,
       availability: resultEligibleRefs.length === 0 ? "unavailable_missing_population" : "available",
       attributionKind: "period_result",
-      displayLiteral: `${flatRefs.length} of ${resultEligibleRefs.length}`,
+      displayLiteral: resultEligibleRefs.length === 0
+        ? null
+        : `${flatRefs.length} of ${resultEligibleRefs.length}`,
     }),
     ...([
       ["winning_trade_pnl", outcome.winningPnlDecimal, moneyWinRefs, winRefs],
@@ -676,7 +678,7 @@ function ruleCandidate(input: Readonly<{
     ...evaluatorMeasurements,
     createCoachAiReviewMeasurement({
       metricName: input.polarity === "negative" ? "rule_affected_count" : "rule_followed_count",
-      exactValue: String(affectedMemberRefs.length),
+      exactValue: expectedRefs.length === 0 ? null : String(affectedMemberRefs.length),
       unit: "count",
       observationUnit: "rule_review_opportunity",
       numeratorMemberRefs: affectedMemberRefs,
@@ -744,7 +746,7 @@ function ruleCandidate(input: Readonly<{
       metricName: input.polarity === "negative"
         ? "adverse_net_contribution"
         : "beneficial_net_contribution",
-      exactValue: poolShare,
+      exactValue: affectedMoneyRefs.length === 0 ? null : poolShare,
       unit: "ratio",
       observationUnit: "trade",
       numeratorMemberRefs: cohortMoney.moneyEligibleMemberRefs,
@@ -763,9 +765,11 @@ function ruleCandidate(input: Readonly<{
     }),
     createCoachAiReviewMeasurement({
       metricName: input.polarity === "negative" ? "loss_share" : "profit_share",
-      exactValue: input.polarity === "negative"
-        ? cohortMoney.lossShareDecimal
-        : cohortMoney.profitShareDecimal,
+      exactValue: affectedMoneyRefs.length === 0
+        ? null
+        : input.polarity === "negative"
+          ? cohortMoney.lossShareDecimal
+          : cohortMoney.profitShareDecimal,
       unit: "ratio",
       observationUnit: "trade",
       numeratorMemberRefs: cohortMoney.moneyEligibleMemberRefs.filter((memberRef) => {
@@ -2213,10 +2217,10 @@ export function buildCoachAiReviewFocusFollowThroughCandidate(input: Readonly<{
     representativeMetricName: input.laterCandidate.representativeMetricName,
     relatedRuleRefs: input.laterCandidate.relatedRuleRefs,
     relatedFocusRefs: Object.freeze([input.target.focusTargetRef]),
-    overlapKeys: freezeSortedUniqueRefs([
+    overlapKeys: freezeSortedUniqueRefs([...new Set([
       ...input.laterCandidate.overlapKeys,
       `focus:${input.target.focusTargetRef}`,
-    ], "FOCUS_OVERLAP_KEY"),
+    ])], "FOCUS_OVERLAP_KEY"),
     coverage: input.laterCandidate.coverage,
     consequenceVerdict: input.laterCandidate.consequenceVerdict,
     futureTrackability: "trackable",

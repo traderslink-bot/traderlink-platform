@@ -66,8 +66,10 @@ function rationale(
   if (plan.totalSpecificity - defaultPlan.totalSpecificity >= 10) {
     benefits.push("uses more specific measured evidence");
   }
-  invariant(benefits.length > 0, "TRADERLINK_AI_REVIEW_PROVIDER_PLAN_WITHOUT_BENEFIT");
-  return `This near-equivalent option ${benefits.join(" and ")} without changing the core period conclusions.`;
+  if (benefits.length === 0) {
+    benefits.push("emphasizes a different qualifying near-ranked finding");
+  }
+  return `This near-ranked option ${benefits.join(" and ")}.`;
 }
 
 function publicChoice(

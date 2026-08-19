@@ -5447,6 +5447,30 @@ values and must pass the same sealed holdouts before activation. The main
 remaining uncertainty is empirical calibration and trader usefulness, not an
 undefined data or attribution contract.
 
+## Runtime acceptance correction — checkpoint 11
+
+The disposable four-week plus monthly acceptance flow established two plan
+requirements that are now controlling:
+
+1. The bounded provider catalog must contain genuinely different compatible
+   whole reviews when near-ranked improvement or friction findings exist. It is
+   not sufficient to rank many candidates and vary only the opening emphasis.
+   The renderer therefore considers up to three non-supporting improvement
+   entries and four non-supporting friction entries, rejects incompatible or
+   duplicate factual jobs, scores the complete combinations and retains at most
+   six choices within 12 points of the deterministic best compatible plan.
+2. Provider capability values are part of the frozen invocation contract and
+   must be proved against the configured model. `gpt-5.6-luna` rejected
+   `reasoning.effort: minimal`; the selector now freezes and audits `none`, which
+   is appropriate for choosing one authorized request-local key. A crossed-
+   transport provider failure with unknown usage must still preserve its exact
+   failure audit and issue the deterministic plan.
+
+The 80-trade customer-flow proof passed in captured and live modes. The
+remaining scale gate is the same sequence with 420 complete-money trades and
+the required note, rule and Analyzer coverage; it is a performance/context
+stress proof, not permission to send the raw calculation source to OpenAI.
+
 ## Completion boundary
 
 This redesign is complete only when:

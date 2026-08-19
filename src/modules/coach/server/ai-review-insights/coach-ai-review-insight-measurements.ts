@@ -287,7 +287,7 @@ export function measureCoachAiReviewRuleDispositions(
     }),
     createCoachAiReviewMeasurement({
       metricName: "review_completion",
-      exactValue: ratio(reviewed.length, expected.length),
+      exactValue: expected.length === 0 ? null : ratio(reviewed.length, expected.length),
       unit: "ratio",
       observationUnit: "rule_review_opportunity",
       numeratorMemberRefs: reviewedRefs,
@@ -299,7 +299,9 @@ export function measureCoachAiReviewRuleDispositions(
     }),
     createCoachAiReviewMeasurement({
       metricName: "recorded_disposition_coverage",
-      exactValue: ratio(dispositionRecorded.length, expected.length),
+      exactValue: expected.length === 0
+        ? null
+        : ratio(dispositionRecorded.length, expected.length),
       unit: "ratio",
       observationUnit: "rule_review_opportunity",
       numeratorMemberRefs: dispositionRefs,
@@ -311,7 +313,7 @@ export function measureCoachAiReviewRuleDispositions(
     }),
     createCoachAiReviewMeasurement({
       metricName: "broken_prevalence",
-      exactValue: ratio(broken.length, expected.length),
+      exactValue: expected.length === 0 ? null : ratio(broken.length, expected.length),
       unit: "ratio",
       observationUnit: "rule_review_opportunity",
       numeratorMemberRefs: brokenRefs,
@@ -323,7 +325,7 @@ export function measureCoachAiReviewRuleDispositions(
     }),
     createCoachAiReviewMeasurement({
       metricName: "reviewed_followed_count",
-      exactValue: String(followed.length),
+      exactValue: expected.length === 0 ? null : String(followed.length),
       unit: "count",
       observationUnit: "rule_review_opportunity",
       numeratorMemberRefs: followedRefs,

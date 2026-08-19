@@ -142,7 +142,7 @@ export type CoachAiReviewOpenAiInvocationManifest = Readonly<{
   conversation: "none";
   previousResponseContinuation: "none";
   redirects: "error";
-  reasoningEffort: "minimal";
+  reasoningEffort: "none";
   reasoningSummary: null;
   reasoningMode: "not_applicable";
   reasoningContext: "not_applicable";
@@ -204,7 +204,7 @@ export function buildCoachAiReviewOpenAiSelectionEnvelope(input: Readonly<{
       conversation: "none",
       previousResponseContinuation: "none",
       redirects: "error",
-      reasoningEffort: "minimal",
+      reasoningEffort: "none",
       reasoningSummary: null,
       reasoningMode: "not_applicable",
       reasoningContext: "not_applicable",
@@ -321,7 +321,7 @@ function createOneShotAuditedFetch(input: Readonly<{
       "TRADERLINK_AI_REVIEW_SELECTOR_BODY_TRUNCATION_INVALID");
     invariant(canonicalEqual(body.include, ["reasoning.encrypted_content"]),
       "TRADERLINK_AI_REVIEW_SELECTOR_BODY_INCLUDE_INVALID");
-    invariant(canonicalEqual(body.reasoning, { effort: "minimal" }),
+    invariant(canonicalEqual(body.reasoning, { effort: "none" }),
       "TRADERLINK_AI_REVIEW_SELECTOR_BODY_REASONING_INVALID");
     invariant(canonicalEqual(body.input, [
       { role: "developer", content: input.envelope.system },
@@ -422,7 +422,7 @@ export async function selectCoachAiReviewPlanWithOpenAi(input: Readonly<{
           store: false,
           strictJsonSchema: true,
           systemMessageMode: "developer",
-          reasoningEffort: "minimal",
+          reasoningEffort: "none",
           reasoningSummary: null,
           serviceTier: "default",
           textVerbosity: "low",

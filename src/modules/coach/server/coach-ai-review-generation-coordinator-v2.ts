@@ -27,6 +27,8 @@ import { CoachAiReviewInsightDispatchRecovery } from
   "./coach-ai-review-insight-dispatch-recovery";
 import { CoachAiReviewInsightExecutionService } from
   "./coach-ai-review-insight-execution-service";
+import type { CoachAiReviewInsightExecutionOptions } from
+  "./coach-ai-review-insight-execution-service";
 import { CoachAiReviewWhopPaidAccessPolicyV2 } from
   "./coach-ai-review-whop-paid-access-policy";
 import { CoachMonthlyAiReviewIssuanceService } from
@@ -118,6 +120,7 @@ export class CoachAiReviewGenerationCoordinatorV2 {
     private readonly database: Database.Database,
     private readonly paidAccess: CoachAiReviewPaidAccessPolicyV2 =
       new CoachAiReviewWhopPaidAccessPolicyV2(database),
+    private readonly insightExecutionOptions: CoachAiReviewInsightExecutionOptions = {},
   ) {
     this.#reviews = new CoachAiReviewRepository(database);
     this.#controls = new CoachAiReviewProviderControlsRepository(database);
@@ -251,7 +254,10 @@ WHERE coach_ai_review_period_request_id = ? AND user_id = ?
       work.scope.activeAccountId ?? "",
     )?.generation_contract_version;
     if (generationContractVersion === "insight_selection_v3") {
-      return new CoachAiReviewInsightExecutionService(this.database)
+      return new CoachAiReviewInsightExecutionService(
+        this.database,
+        this.insightExecutionOptions,
+      )
         .issue(work.scope, work.request.requestId, now);
     }
     if (generationContractVersion !== "openai_direct_v2") {

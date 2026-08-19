@@ -36,6 +36,16 @@ import { CoachAiReviewRepository, type CoachAiGenerationUsage } from
 
 const DISPATCH_LEASE_MILLISECONDS = 90_000;
 
+export type CoachAiReviewInsightExecutionOptions = Readonly<{
+  /**
+   * Acceptance-only transport capture. Ordinary runtime construction omits
+   * this option and therefore uses the real global fetch implementation.
+   */
+  capturedTestFetch?: typeof globalThis.fetch;
+  /** Acceptance clock for transport authorization and provider settlement. */
+  operationClock?: () => Date;
+}>;
+
 function completeUsage(usage: CoachAiGenerationUsage | null): usage is Readonly<{
   inputTokens: number;
   cachedInputTokens: number;
@@ -67,13 +77,20 @@ export class CoachAiReviewInsightExecutionService {
   readonly #settings: CoachAiProviderSettingsRepository;
   readonly #legacyRequestState: CoachAiReviewRepository;
 
-  constructor(private readonly database: Database.Database) {
+  constructor(
+    private readonly database: Database.Database,
+    private readonly options: CoachAiReviewInsightExecutionOptions = {},
+  ) {
     this.#snapshots = new CoachAiReviewInsightPersistenceRepository(database);
     this.#issuance = new CoachAiReviewInsightIssuanceRepository(database);
     this.#dispatches = new CoachAiReviewInsightDispatchRepository(database);
     this.#controls = new CoachAiReviewProviderControlsRepository(database);
     this.#settings = new CoachAiProviderSettingsRepository(database);
     this.#legacyRequestState = new CoachAiReviewRepository(database);
+  }
+
+  private operationTime(): Date {
+    return this.options.operationClock?.() ?? new Date();
   }
 
   async issue(
@@ -274,9 +291,10 @@ WHERE coach_ai_review_period_request_id = ?
             requestId,
             dispatchFence,
             transportAudit,
-            now: new Date(),
+            now: this.operationTime(),
           });
         },
+        capturedTestFetch: this.options.capturedTestFetch,
       });
       this.#issuance.issueProviderSelection({
         scope,
@@ -286,12 +304,12 @@ WHERE coach_ai_review_period_request_id = ?
         selection: generated.selection,
         usage: generated.usage,
         providerResponseId: generated.providerResponseId,
-        now: new Date(),
+        now: this.operationTime(),
       });
       return "issued";
     } catch (error) {
       if (!(error instanceof CoachAiReviewOpenAiSelectionError)) throw error;
-      const failureAt = new Date();
+      const failureAt = this.operationTime();
       if (!error.transportMayHaveStarted) {
         this.#dispatches.settleBeforeTransport(
           scope,

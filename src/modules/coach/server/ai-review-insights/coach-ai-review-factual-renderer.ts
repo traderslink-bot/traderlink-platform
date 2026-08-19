@@ -541,7 +541,7 @@ function candidateClaims(
         assessment.cumulativeLaterMemberRefs],
       measurements: Object.freeze([baseline, later]),
       evidenceRefs: assessment.cumulativeLaterMemberRefs,
-      renderedSentence: sentence(`Your earlier review asked, "${assessment.renderedQuestion}" From ${span}, it appeared in ${later.affectedCount} of ${later.denominatorMemberRefs.length} later opportunities (${laterRate}), compared with ${baselineRate} in the original review. ${conclusion}`),
+      renderedSentence: sentence(`Your earlier review asked: ${assessment.renderedQuestion} From ${span}, it appeared in ${later.affectedCount} of ${later.denominatorMemberRefs.length} later opportunities (${laterRate}), compared with ${baselineRate} in the original review. ${conclusion}`),
     });
     const representative = representativeSentence(candidate, source);
     return Object.freeze([
@@ -550,7 +550,8 @@ function candidateClaims(
         findingRef: candidate.findingRef,
         family: candidate.family,
         kind: "representative_example",
-        factualJobParts: [candidate.family, candidate.representativeMetricName,
+        factualJobParts: [candidate.family, candidate.subjectRef,
+          candidate.representativeMetricName,
           candidate.representativeEvidenceRoles],
         evidenceRefs: representative.evidenceRefs,
         renderedSentence: representative.value,
@@ -600,7 +601,8 @@ function candidateClaims(
     findingRef: candidate.findingRef,
     family: candidate.family,
     kind: "representative_example",
-    factualJobParts: [candidate.family, candidate.representativeMetricName,
+    factualJobParts: [candidate.family, candidate.subjectRef,
+      candidate.representativeMetricName,
       candidate.representativeEvidenceRoles],
     evidenceRefs: representative.evidenceRefs,
     renderedSentence: representative.value,
@@ -811,63 +813,85 @@ export function buildCoachAiReviewRenderedPlanCatalog(input: Readonly<{
     }),
     ...candidateClaims(maintainedStrength, input.source, registry, 1),
   ]);
-  const improvementSection = improvementDefault
-    ? selectedSection({
-        sectionKey: "what_improved",
-        purpose: "directional_change",
-        mode: "primary",
-        entry: improvementDefault,
-        claims: candidateClaims(improvementDefault, input.source, registry, 2),
-        rankState: rankState("improvement"),
-      })
+  const improvementEntries = improvement
+    .filter((entry) => entry.requiredConsideration !== "supporting")
+    .slice(0, 3);
+  const improvementOptions = improvementEntries.length > 0
+    ? Object.freeze(improvementEntries.map((entry) => Object.freeze({
+        entry,
+        section: selectedSection({
+          sectionKey: "what_improved",
+          purpose: "directional_change",
+          mode: "primary",
+          entry,
+          claims: candidateClaims(entry, input.source, registry, 2),
+          rankState: rankState("improvement"),
+        }),
+      })))
     : maintainedStrength
-      ? selectedSection({
-          sectionKey: "what_improved",
-          purpose: "maintained_strength",
-          mode: "maintained_strength",
+      ? Object.freeze([Object.freeze({
           entry: maintainedStrength,
-          claims: maintainedStrengthClaims!,
-          rankState: rankState("strength"),
-        })
-      : unavailableSection({
-          sectionKey: "what_improved",
-          purpose: "no_improvement_comparison",
-          reason: input.candidates.some((candidate) => candidate.classification === "trend")
-            ? "no_qualifying_pattern"
-            : "no_compatible_baseline",
-          text: input.candidates.some((candidate) => candidate.classification === "trend")
-            ? "No improvement pattern passed the minimum change, coverage, and recurrence gates for this period."
-            : "A compatible earlier-versus-later baseline was not available; no improvement claim was made.",
-          registry,
-        });
+          section: selectedSection({
+            sectionKey: "what_improved",
+            purpose: "maintained_strength",
+            mode: "maintained_strength",
+            entry: maintainedStrength,
+            claims: maintainedStrengthClaims!,
+            rankState: rankState("strength"),
+          }),
+        })])
+      : Object.freeze([Object.freeze({
+          entry: null,
+          section: unavailableSection({
+            sectionKey: "what_improved",
+            purpose: "no_improvement_comparison",
+            reason: input.candidates.some((candidate) => candidate.classification === "trend")
+              ? "no_qualifying_pattern"
+              : "no_compatible_baseline",
+            text: input.candidates.some((candidate) => candidate.classification === "trend")
+              ? "No improvement pattern passed the minimum change, coverage, and recurrence gates for this period."
+              : "A compatible earlier-versus-later baseline was not available; no improvement claim was made.",
+            registry,
+          }),
+        })]);
 
-  const frictionDefault = friction.find((entry) =>
-    entry.candidate.findingRef !== improvementSection.findingRef) ?? friction[0] ?? null;
-  const heldSection = frictionDefault
-    ? selectedSection({
-        sectionKey: "what_held_you_back",
-        purpose: "residual_friction",
-        mode: "primary",
-        entry: frictionDefault,
-        claims: candidateClaims(frictionDefault, input.source, registry, 2),
-        rankState: rankState("friction"),
-      })
+  const frictionEntries = friction
+    .filter((entry) => entry.requiredConsideration !== "supporting")
+    .slice(0, 4);
+  const heldOptions = frictionEntries.length > 0
+    ? Object.freeze(frictionEntries.map((entry) => Object.freeze({
+        entry,
+        section: selectedSection({
+          sectionKey: "what_held_you_back",
+          purpose: "residual_friction",
+          mode: "primary",
+          entry,
+          claims: candidateClaims(entry, input.source, registry, 2),
+          rankState: rankState("friction"),
+        }),
+      })))
     : contrast[0]
-      ? selectedSection({
-          sectionKey: "what_held_you_back",
-          purpose: "mixed_result",
-          mode: "mixed_result",
+      ? Object.freeze([Object.freeze({
           entry: contrast[0],
-          claims: candidateClaims(contrast[0], input.source, registry, 2),
-          rankState: rankState("contrast"),
-        })
-      : unavailableSection({
-          sectionKey: "what_held_you_back",
-          purpose: "no_friction_strength",
-          reason: "no_qualifying_pattern",
-          text: "No recurring or financially material held-back pattern passed the evidence gates for this period.",
-          registry,
-        });
+          section: selectedSection({
+            sectionKey: "what_held_you_back",
+            purpose: "mixed_result",
+            mode: "mixed_result",
+            entry: contrast[0],
+            claims: candidateClaims(contrast[0], input.source, registry, 2),
+            rankState: rankState("contrast"),
+          }),
+        })])
+      : Object.freeze([Object.freeze({
+          entry: null,
+          section: unavailableSection({
+            sectionKey: "what_held_you_back",
+            purpose: "no_friction_strength",
+            reason: "no_qualifying_pattern",
+            text: "No recurring or financially material held-back pattern passed the evidence gates for this period.",
+            registry,
+          }),
+        })]);
 
   const followSection = followThrough[0]
     ? selectedSection({
@@ -875,7 +899,11 @@ export function buildCoachAiReviewRenderedPlanCatalog(input: Readonly<{
         purpose: "focus_measurement",
         mode: "primary",
         entry: followThrough[0],
-        claims: candidateClaims(followThrough[0], input.source, registry, 2),
+        // The follow-through section's quantitative assessment is the complete
+        // cross-review job. Repeating its representative trade can duplicate a
+        // factual job already selected for an improvement or friction section,
+        // which made otherwise valid monthly plans impossible to assemble.
+        claims: candidateClaims(followThrough[0], input.source, registry, 1),
         rankState: rankState("focus_follow_through"),
       })
     : unavailableSection({
@@ -912,102 +940,126 @@ export function buildCoachAiReviewRenderedPlanCatalog(input: Readonly<{
     entry ? rankState(entry.lane) : null,
   )));
 
-  const selectedForFocus = [frictionDefault, improvementDefault, strength[0] ?? null]
-    .filter((entry): entry is CoachAiReviewShortlistEntry => entry !== null);
-  const focusQuestions: CoachAiReviewRenderedFocusQuestion[] = [];
-  for (const entry of selectedForFocus) {
-    if (focusQuestions.some((question) => question.actionTargetKey === entry.actionTargetKey)) continue;
-    const question = focusQuestion(entry);
-    if (question) focusQuestions.push(question);
-    if (focusQuestions.length >= 3) break;
-  }
-  if (focusQuestions.length === 0) {
-    const closedTradeCount = measurement(period, "closed_trade_count");
-    invariant(closedTradeCount !== null && closedTradeCount.exactValue !== null,
-      "TRADERLINK_AI_REVIEW_FOCUS_PERIOD_COUNT_MISSING");
-    const renderedQuestion = closedTradeCount.exactValue === "0"
-      ? "With no closed trade evidence in this period, which part of your trading process should the next review assess?"
-      : "Which completed trade best represents this period, and what specific decision most changed its final result?";
-    const focusTargetRef = digestRef("focus_target", [
+  const closedTradeCount = measurement(period, "closed_trade_count");
+  invariant(closedTradeCount !== null && closedTradeCount.exactValue !== null,
+    "TRADERLINK_AI_REVIEW_FOCUS_PERIOD_COUNT_MISSING");
+  const fallbackFocusText = closedTradeCount.exactValue === "0"
+    ? "With no closed trade evidence in this period, which part of your trading process should the next review assess?"
+    : "Which completed trade best represents this period, and what specific decision most changed its final result?";
+  const fallbackFocusTargetRef = digestRef("focus_target", [
+    COACH_AI_REVIEW_RENDERER_VERSION,
+    period.findingRef,
+    "period_review_question",
+    "examination",
+    "non_directional",
+  ]);
+  const fallbackFocusQuestion = Object.freeze({
+    focusTargetRef: fallbackFocusTargetRef,
+    focusQuestionRef: digestRef("focus_question", [
       COACH_AI_REVIEW_RENDERER_VERSION,
-      period.findingRef,
-      "period_review_question",
-      "examination",
-      "non_directional",
-    ]);
-    focusQuestions.push(Object.freeze({
-      focusTargetRef,
-      focusQuestionRef: digestRef("focus_question", [
-        COACH_AI_REVIEW_RENDERER_VERSION,
-        focusTargetRef,
-        renderedQuestion,
-      ]),
-      findingRef: period.findingRef,
-      actionTargetKey: "period_review_question",
-      trackingIntent: "examination",
-      trackingMetricDirection: "non_directional",
-      renderedQuestion,
-    }));
-  }
+      fallbackFocusTargetRef,
+      fallbackFocusText,
+    ]),
+    findingRef: period.findingRef,
+    actionTargetKey: "period_review_question",
+    trackingIntent: "examination" as const,
+    trackingMetricDirection: "non_directional" as const,
+    renderedQuestion: fallbackFocusText,
+  });
+  const focusQuestionRegistry = new Map<string, CoachAiReviewRenderedFocusQuestion>();
+  const focusQuestionsFor = (
+    selectedEntries: readonly (CoachAiReviewShortlistEntry | null)[],
+  ): readonly CoachAiReviewRenderedFocusQuestion[] => {
+    const questions: CoachAiReviewRenderedFocusQuestion[] = [];
+    for (const entry of selectedEntries) {
+      if (entry === null || questions.some((question) =>
+        question.actionTargetKey === entry.actionTargetKey)) continue;
+      const question = focusQuestion(entry);
+      if (question) questions.push(question);
+      if (questions.length >= 3) break;
+    }
+    if (questions.length === 0) questions.push(fallbackFocusQuestion);
+    for (const question of questions) {
+      focusQuestionRegistry.set(question.focusQuestionRef, question);
+    }
+    return Object.freeze(questions);
+  };
   const limitation = incompleteRecord(input.source);
   const completePlans: CoachAiReviewCompletePlan[] = [];
   const sectionPlans: CoachAiReviewRenderedSectionPlan[] = [];
+  const defaultOpeningScore = openingPlans[0]?.laneScore ?? 0;
+  const defaultImprovementScore = improvementOptions[0]?.section.laneScore ?? 0;
+  const defaultHeldScore = heldOptions[0]?.section.laneScore ?? 0;
   for (const opening of openingPlans) {
-    const sections = [opening, improvementSection, heldSection, followSection] as const;
-    if (improvementSection.findingRef !== null &&
-        improvementSection.findingRef === heldSection.findingRef) continue;
-    const factualJobs = sections.flatMap((section) => section.claimRefs.map((claimRef) =>
-      registry.values.get(claimRef)!.factualJobKey));
-    if (new Set(factualJobs).size !== factualJobs.length) continue;
-    if (strengthRequired && maintainedStrength === null && opening.lane !== "strength" &&
-        improvementSection.lane !== "strength") continue;
-    const output = Object.freeze({
-      reviewSummary: opening.renderedText,
-      whatImproved: improvementSection.renderedText,
-      whatHeldYouBack: heldSection.renderedText,
-      focusFollowThrough: followSection.renderedText,
-      nextPeriodFocuses: Object.freeze(focusQuestions.map((question) => question.renderedQuestion)),
-      incompleteRecord: limitation,
-    });
-    assertOutputBounds(output, input.source.period.cadence);
-    const defaultOpeningScore = openingPlans[0]?.laneScore ?? 0;
-    const totalLaneScoreLoss = Math.max(0, defaultOpeningScore - (opening.laneScore ?? 0));
-    const burden = overlapBurden(sections);
-    const totalFocusConnection = sections.reduce((total, section) =>
-      total + (section.focusConnection ?? 0), 0);
-    const totalSpecificity = sections.reduce((total, section) =>
-      total + (section.specificity ?? 0), 0);
-    const structuralTieKey = JSON.stringify(sections.map((section) => [
-      section.sectionKey,
-      section.sectionPurpose,
-      section.selectionMode,
-      section.findingRef,
-      section.claimRefs,
-    ]));
-    const reviewPlanRef = digestRef("review_plan", [
-      COACH_AI_REVIEW_RENDERER_VERSION,
-      sections.map((section) => section.sectionPlanRef),
-      focusQuestions.map((question) => question.focusQuestionRef),
-      output,
-    ]);
-    completePlans.push(Object.freeze({
-      reviewPlanRef,
-      sectionPlanRefs: Object.freeze({
-        opening: opening.sectionPlanRef,
-        what_improved: improvementSection.sectionPlanRef,
-        what_held_you_back: heldSection.sectionPlanRef,
-        focus_follow_through: followSection.sectionPlanRef,
-      }),
-      focusQuestionRefs: Object.freeze(focusQuestions.map((question) =>
-        question.focusQuestionRef)),
-      output,
-      totalLaneScoreLoss,
-      overlapBurden: burden,
-      totalFocusConnection,
-      totalSpecificity,
-      structuralTieKey,
-    }));
-    sectionPlans.push(...sections);
+    for (const improvementOption of improvementOptions) {
+      const improvementSection = improvementOption.section;
+      for (const heldOption of heldOptions) {
+        const heldSection = heldOption.section;
+        const sections = [opening, improvementSection, heldSection, followSection] as const;
+        if (improvementSection.findingRef !== null &&
+            improvementSection.findingRef === heldSection.findingRef) continue;
+        const factualJobs = sections.flatMap((section) => section.claimRefs.map((claimRef) =>
+          registry.values.get(claimRef)!.factualJobKey));
+        if (new Set(factualJobs).size !== factualJobs.length) continue;
+        if (strengthRequired && maintainedStrength === null && opening.lane !== "strength" &&
+            improvementSection.lane !== "strength") continue;
+        const focusQuestions = focusQuestionsFor([
+          heldOption.entry,
+          improvementOption.entry,
+          strength[0] ?? null,
+        ]);
+        const output = Object.freeze({
+          reviewSummary: opening.renderedText,
+          whatImproved: improvementSection.renderedText,
+          whatHeldYouBack: heldSection.renderedText,
+          focusFollowThrough: followSection.renderedText,
+          nextPeriodFocuses: Object.freeze(focusQuestions.map((question) =>
+            question.renderedQuestion)),
+          incompleteRecord: limitation,
+        });
+        assertOutputBounds(output, input.source.period.cadence);
+        const totalLaneScoreLoss =
+          Math.max(0, defaultOpeningScore - (opening.laneScore ?? 0)) +
+          Math.max(0, defaultImprovementScore - (improvementSection.laneScore ?? 0)) +
+          Math.max(0, defaultHeldScore - (heldSection.laneScore ?? 0));
+        const burden = overlapBurden(sections);
+        const totalFocusConnection = sections.reduce((total, section) =>
+          total + (section.focusConnection ?? 0), 0);
+        const totalSpecificity = sections.reduce((total, section) =>
+          total + (section.specificity ?? 0), 0);
+        const structuralTieKey = JSON.stringify(sections.map((section) => [
+          section.sectionKey,
+          section.sectionPurpose,
+          section.selectionMode,
+          section.findingRef,
+          section.claimRefs,
+        ]));
+        const reviewPlanRef = digestRef("review_plan", [
+          COACH_AI_REVIEW_RENDERER_VERSION,
+          sections.map((section) => section.sectionPlanRef),
+          focusQuestions.map((question) => question.focusQuestionRef),
+          output,
+        ]);
+        completePlans.push(Object.freeze({
+          reviewPlanRef,
+          sectionPlanRefs: Object.freeze({
+            opening: opening.sectionPlanRef,
+            what_improved: improvementSection.sectionPlanRef,
+            what_held_you_back: heldSection.sectionPlanRef,
+            focus_follow_through: followSection.sectionPlanRef,
+          }),
+          focusQuestionRefs: Object.freeze(focusQuestions.map((question) =>
+            question.focusQuestionRef)),
+          output,
+          totalLaneScoreLoss,
+          overlapBurden: burden,
+          totalFocusConnection,
+          totalSpecificity,
+          structuralTieKey,
+        }));
+        sectionPlans.push(...sections);
+      }
+    }
   }
   invariant(completePlans.length > 0, "TRADERLINK_AI_REVIEW_NO_COMPLETE_RENDERED_PLAN");
   const ordered = [...completePlans].sort((left, right) =>
@@ -1019,10 +1071,7 @@ export function buildCoachAiReviewRenderedPlanCatalog(input: Readonly<{
   const defaultPlan = ordered[0]!;
   const retained = Object.freeze(ordered.filter((plan, index) => {
     if (index === 0) return true;
-    if (plan.totalLaneScoreLoss > 12) return false;
-    return defaultPlan.overlapBurden - plan.overlapBurden >= 0.20 ||
-      plan.totalFocusConnection - defaultPlan.totalFocusConnection >= 10 ||
-      plan.totalSpecificity - defaultPlan.totalSpecificity >= 10;
+    return plan.totalLaneScoreLoss <= defaultPlan.totalLaneScoreLoss + 12;
   }).slice(0, 6));
   const retainedSectionRefs = new Set(retained.flatMap((plan) =>
     Object.values(plan.sectionPlanRefs)));
@@ -1033,22 +1082,34 @@ export function buildCoachAiReviewRenderedPlanCatalog(input: Readonly<{
   const retainedClaimRefs = new Set(uniqueSections.flatMap((section) => section.claimRefs));
   const claims = [...registry.values.values()].filter((claim) => retainedClaimRefs.has(claim.claimRef))
     .sort((left, right) => compareCoachAiReviewText(left.claimRef, right.claimRef));
+  const retainedFocusRefs = new Set(retained.flatMap((plan) => plan.focusQuestionRefs));
+  const retainedFocusQuestions = [...focusQuestionRegistry.values()]
+    .filter((question) => retainedFocusRefs.has(question.focusQuestionRef))
+    .sort((left, right) => compareCoachAiReviewText(left.focusQuestionRef, right.focusQuestionRef));
+  const defaultImprovementSection = uniqueSections.find((section) =>
+    section.sectionPlanRef === defaultPlan.sectionPlanRefs.what_improved);
+  const defaultHeldSection = uniqueSections.find((section) =>
+    section.sectionPlanRef === defaultPlan.sectionPlanRefs.what_held_you_back);
+  const defaultFollowSection = uniqueSections.find((section) =>
+    section.sectionPlanRef === defaultPlan.sectionPlanRefs.focus_follow_through);
+  invariant(defaultImprovementSection !== undefined && defaultHeldSection !== undefined &&
+    defaultFollowSection !== undefined, "TRADERLINK_AI_REVIEW_DEFAULT_SECTION_MISSING");
   return Object.freeze({
     catalogVersion: COACH_AI_REVIEW_PLAN_CATALOG_VERSION,
     rendererVersion: COACH_AI_REVIEW_RENDERER_VERSION,
     cadence: input.source.period.cadence,
     claims: Object.freeze(claims),
     sectionPlans: Object.freeze(uniqueSections),
-    focusQuestions: Object.freeze(focusQuestions),
+    focusQuestions: Object.freeze(retainedFocusQuestions),
     completePlans: retained,
     decisionCriticalSpine: Object.freeze({
       periodOutcomeFindingRef: period.findingRef,
-      improvementFindingRef: improvementSection.findingRef,
-      improvementUnavailableReason: improvementSection.notAvailableReason,
-      frictionFindingRef: heldSection.findingRef,
-      frictionUnavailableReason: heldSection.notAvailableReason,
-      followThroughFindingRef: followSection.findingRef,
-      followThroughUnavailableReason: followSection.notAvailableReason,
+      improvementFindingRef: defaultImprovementSection.findingRef,
+      improvementUnavailableReason: defaultImprovementSection.notAvailableReason,
+      frictionFindingRef: defaultHeldSection.findingRef,
+      frictionUnavailableReason: defaultHeldSection.notAvailableReason,
+      followThroughFindingRef: defaultFollowSection.findingRef,
+      followThroughUnavailableReason: defaultFollowSection.notAvailableReason,
     }),
   });
 }

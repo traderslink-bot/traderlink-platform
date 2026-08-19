@@ -975,7 +975,6 @@ WHERE coach_ai_review_period_request_id = ? AND user_id = ?
 FROM coach_ai_review_insight_provider_dispatches
 WHERE coach_ai_review_period_request_id = ? AND user_id = ?
   AND workspace_id = ? AND account_id = ?
-  AND failure_code = 'TRADERLINK_COACH_USAGE_UNKNOWN_AFTER_DISPATCH'
   AND usage_settlement_state IN (
     'unknown_after_dispatch', 'reconciled_receipt', 'reconciled_no_usage'
   )`).get(
@@ -1314,7 +1313,6 @@ WHERE coach_ai_review_generation_attempt_id = ?`).get(attemptId);
       AND transport_may_have_started_at_utc IS NOT NULL) AS crossed_count,
   (SELECT COUNT(*) FROM coach_ai_review_insight_provider_dispatches
     WHERE coach_ai_review_period_request_id = ?
-      AND failure_code = 'TRADERLINK_COACH_USAGE_UNKNOWN_AFTER_DISPATCH'
       AND usage_settlement_state IN (
         'unknown_after_dispatch', 'reconciled_receipt', 'reconciled_no_usage'
       )) AS unknown_count`).get(
