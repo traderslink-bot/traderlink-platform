@@ -14,6 +14,8 @@
 - [x] Applied that predicate to the shared long-term aggregates, the available
   reporting-currency lookup and the paginated Analyzed Trades directory.
 - [x] Updated the existing Help text to state the same candle-backed boundary.
+- [x] Replaced the technical empty-state count with the owner-approved
+  subscription-activation explanation.
 - [ ] Run the smallest focused static and read-only data checks after the
   concurrent dashboard changes settle. No test suite, database write, browser
   process, commit or deployment is part of this correction.

@@ -381,7 +381,7 @@ export function TradeAnalysisClient({
     return <Paper sx={{ p: { xs: 2, sm: 3 } }} variant="outlined"><Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">No completed day trades</Typography><Typography color="text.secondary" sx={{ mt: 0.75 }}>Trade Analysis will begin after completed day trades are available in this account.</Typography></Paper>;
   }
   if (model.analyzedTradeCount === 0) {
-    return <Paper sx={{ p: { xs: 2, sm: 3 } }} variant="outlined"><Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">No saved trade analyses</Typography><Typography color="text.secondary" sx={{ mt: 0.75 }}>This date range contains {model.eligibleDayTradeCount} completed day trades, but none has a current saved Daily Trade Tracker analysis.</Typography></Paper>;
+    return <Paper sx={{ p: { xs: 2, sm: 3 } }} variant="outlined"><Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">No trades have been analyzed.</Typography><Typography color="text.secondary" sx={{ mt: 0.75 }}>The analyzer only analyzes trades that occur on or after your subscription activation date.</Typography></Paper>;
   }
   return (
     <Stack spacing={2.5}>
