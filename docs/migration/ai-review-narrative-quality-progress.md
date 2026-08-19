@@ -94,6 +94,11 @@ four actually issued weekly reviews plus all 420 exact-month trades.
   changing opportunity mix, superseded focus baselines and repetitive shortlist
   alternatives, plus bulk one-minute/five-minute Analyzer context masking the
   longer-term signal, unverified RSI calculation and repeated-event weighting.
+- [x] Complete the tenth adversarial QA pass against wrong opportunity
+  denominators, selectively covered Analyzer/rule evidence, tiny polarity-pool
+  financial inflation, non-separated cohort outcomes, latest-week reversals,
+  one-sided examples, historical-prose selection influence, loose openings and
+  next-focus priorities disconnected from the main held-back finding.
 - [x] Implement corrected Wilder RSI 14 calculation and version new saved RSI
   evidence without rewriting legacy Analyzer snapshots.
 - [ ] Run the focused RSI reference-vector and compatibility checks at the next
@@ -116,6 +121,17 @@ accepted Wilder reference-vector proof. The corrected `wilder_rsi_14_v1`
 calculation is implemented and new evidence carries that exact version. RSI can
 influence a period conclusion only after its focused verification passes and it
 then shows a repeated comparable pattern.
+
+The tenth-pass design now keeps full-period prevalence separate from the rate
+among trades that actually reached a management opportunity, checks whether
+optional Analyzer/rule evidence is selectively concentrated, and prevents a
+tiny loss pool from producing a dominant financial score. It also distinguishes
+cohort dollars from worse associated outcomes, exposes a sufficiently populated
+latest-week regression, requires two-sided examples for mixed findings and
+freezes one decision-critical monthly spine before all four weekly narratives
+reach OpenAI. The visible review opens with the exact result, and its first
+next-period question addresses the selected actionable held-back issue when one
+exists.
 
 Help Center check: the active Daily Trade Tracker and Trade Analyzer guides
 describe indicators generally but do not state an RSI formula or legacy-value

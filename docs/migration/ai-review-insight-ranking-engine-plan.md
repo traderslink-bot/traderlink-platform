@@ -2,7 +2,7 @@
 
 ## Status
 
-Design and nine implementation-readiness QA passes complete under the owner's
+Design and ten implementation-readiness QA passes complete under the owner's
 delegated product authority on 2026-08-18. The RSI correctness prerequisite is
 implemented with verification pending; the insight engine itself has not
 started. The owner does not need to approve individual formulas or weight
@@ -56,6 +56,18 @@ associated P/L, share of losses or profits, weekly change and representative
 trades. It should also recognize a strong execution or repeatable strength.
 The review is not complete merely because all four visible sections contain
 grammatical prose.
+
+The opening has a fixed trader-facing job rather than acting as a loose summary.
+Its first sentence reports the period result and activity population. Its second
+sentence identifies the strongest supported positive, contrast or result-
+composition takeaway that is not already doing the `What held you back` job. A
+third sentence is permitted only for a necessary result/process bridge. The
+single review-wide coverage boundary remains in `incompleteRecord`, not the
+opening. It cannot praise data entry, list the evidence supplied to the model,
+preview every later section or turn a profitable
+period into proof of strong execution. When there is no eligible positive or
+contrast, the opening remains an exact outcome summary instead of filling the
+space with generic encouragement.
 
 ## Architecture
 
@@ -129,6 +141,15 @@ claim. Historical prose is delimited as untrusted data and can never act as a
 provider instruction. Accepted hidden focus metadata remains the authority for
 focus follow-through.
 
+Historical prose also cannot decide the review's main conclusions indirectly.
+The monthly plan builder freezes a `decisionCriticalSpine` containing the exact
+period outcome claim, primary improvement subject/verdict, primary held-back
+action target and focus-follow-through target before serializing any weekly
+prose. Every complete plan offered to the provider must retain that spine.
+Provider alternatives may vary a compatible supporting strength/contrast,
+representative example or focus ordering, but not replace a materially ranked
+current-month conclusion because an older review emphasized something else.
+
 The current AI Review input has trader-authored daily and trade notes but no
 separate structured saved-trade-plan object. The Journal also has Swing notes
 and next-session plans, but they are contextual dated text rather than a
@@ -175,7 +196,9 @@ candidate, the provider receives its exact calculated measurements, population,
 coverage, week series and representative references. Full excerpt detail is
 limited to eight unique trades across the whole package and two per candidate,
 selected deterministically by canonical balanced-brief order and then the
-impact/typicality/recency slot order. An excerpt contains only the Analyzer
+section-purpose representative roles below. A mixed/comparison candidate gets
+one supporting and one contradicting/remainder excerpt before another candidate
+gets a second same-side example. An excerpt contains only the Analyzer
 fields needed to support that
 candidate's server-owned clauses. Raw candles, unused indicator fields and
 unselected trades' one-minute/five-minute observations are excluded. The
@@ -351,7 +374,11 @@ The engine builds the following indexes in one bounded pass:
 - issued focuses by source review and source-period end date;
 - eligible later evidence dates for each issued focus;
 - exact positive, negative and flat P/L populations;
-- exact Analyzer-covered populations for every Analyzer-derived rate.
+- exact family-declared opportunity populations as well as affected and full-
+  period prevalence populations;
+- exact Analyzer-covered populations for every Analyzer-derived rate;
+- fixed covered-versus-uncovered balance strata for optional Analyzer and rule-
+  review evidence; and
 - exact dated Swing notes by linked position/trade and note revision.
 
 All monetary calculations use exact decimal strings. Missing money values are
@@ -377,12 +404,22 @@ Every candidate family freezes one observation unit from a closed enum:
 `trade`, `execution_event`, `trading_day`, `rule_review_opportunity`,
 `analyzer_covered_trade`, `calendar_week` or `issued_focus`. It also freezes the
 sorted unique member-reference set for the eligible population, affected
-population, every comparison side and every displayed numerator/denominator.
+population, family-declared opportunity population, every comparison side and
+every displayed numerator/denominator.
 The source validator rejects duplicate members, a numerator outside its
 denominator, incompatible units, a trade counted once per event, an event
 counted once per trade, or a day P/L member set that does not reconcile to its
 exact contributing trades. Counts are derived from the frozen sets rather than
 stored as unrelated arithmetic.
+
+An `eligible population` is not automatically the correct denominator for every
+behavior. Each rate family must define its opportunity before outcomes are
+examined: the members for whom that exact decision or state could be observed.
+The engine stores both (a) period prevalence against the full eligible
+population and (b) the conditional rate against the opportunity population. It
+cannot choose whichever denominator makes a finding look largest. A rate with
+no defensible opportunity definition is context-only and receives no repetition
+or improvement rank.
 
 The review uses separate, explicit time ownership:
 
@@ -507,6 +544,8 @@ observationUnit
 resultOwnership
 populationDefinition
 populationMemberRefs[]
+opportunityDefinition
+opportunityMemberRefs[]
 affectedMemberRefs[]
 tradeStylePopulation
 laneEligibility[]
@@ -515,10 +554,14 @@ comparisonDefinition
 measurements[]
 weekSeries[]
 representativeTradeRefs[]
+representativeEvidenceRoles[]
 relatedRuleRefs[]
 relatedFocusRefs[]
 overlapKeys[]
 coverage
+coverageBalance
+latestState
+consequenceVerdict
 scores
 adjustments[]
 penalties[]
@@ -540,6 +583,12 @@ the literal states the covered subset, for example `among the 4 of 6 affected
 trades with complete P/L`. The provider cannot silently apply that money result
 to all six trades because only the server-owned covered-subset claim is
 selectable. Provider output is never used as a measurement.
+
+Rate measurements additionally identify whether their denominator is the full
+eligible population (`period_prevalence`) or the family-declared members who
+actually reached the observable decision/state (`opportunity_rate`). When both
+are useful, both are stored and rendered with different labels. Neither may be
+substituted for the other in ranking, trend comparisons or prose.
 
 `engineVersion` freezes candidate families, gates, formulas, weights and tie
 breaks, for example `traderlink_ai_review_insights_v1`. `findingRef` is a
@@ -579,6 +628,8 @@ For every unchanged named rule and valid scope:
 
 - followed, broken and not-reviewed counts;
 - followed and broken rates among reviewed outcomes;
+- broken prevalence among every applicable opportunity, kept distinct from the
+  reviewed-only broken rate and exact review coverage;
 - affected trade or day count;
 - P/L for trades or days where the rule was followed;
 - P/L for trades or days where the rule was broken;
@@ -619,7 +670,10 @@ minimum evidence gate.
 From Analyzer-covered trades:
 
 - never-green, green-no-red, ended-red, recovered and ended-flat counts;
-- rates using Analyzer-covered trades as the denominator;
+- period-prevalence rates using every Analyzer-covered eligible trade as the
+  denominator;
+- ended-red rate among trades that first moved green, and recovery rate among
+  trades that actually crossed from green to red;
 - combined final P/L by state;
 - combined measured peak P/L;
 - combined peak-to-final reversal;
@@ -629,6 +683,17 @@ From Analyzer-covered trades:
 - best-profit-opportunity counts and measured windows;
 - weekly count, rate, P/L and reversal series;
 - representative high-impact and representative typical trades.
+
+The conditional denominators are fixed by the state machine rather than chosen
+from the more dramatic percentage. `Moved green and ended red` may therefore be
+reported as both `5 of 100 covered trades` and `5 of 6 covered trades that moved
+green`; only the latter is the management-opportunity rate. Recovery is divided
+by trades that crossed green-to-red, not by every covered trade. An add-after-
+peak decision is divided by trades with an eligible observed add/path
+opportunity, while its prevalence remains against all covered trades. A partial-
+before-red measurement is divided by the exact observed green-to-red transition
+opportunities. These populations are frozen before financial outcomes are
+ranked.
 
 Version one admits only objective same-market-date members with a ready Daily
 Trade Analyzer record linked to the same current round-trip version and no
@@ -747,6 +812,11 @@ Calculate:
 - harmful examples where adds coincide with measured deterioration or a
   broken add/risk rule.
 
+Add prevalence uses every eligible trade, while add quality/sequence rates use
+only trades with at least one observed add and the exact path evidence required
+for that question. A no-add trade cannot dilute an add-after-peak rate merely
+because it was in the period.
+
 An add cohort is not automatically a problem. Positive, negative and mixed
 add candidates are generated separately.
 
@@ -768,6 +838,11 @@ Calculate:
 - post-final-exit favorable paths at 5, 15, 30 and 60 minutes;
 - P/L and peak-to-final reversal for comparable exit cohorts;
 - weekly change in exit-related rule adherence and giveback.
+
+Partial-plan adherence uses the rule's applicable reviewed opportunities.
+Observed post-final-exit path rates use eligible final-exit events. A trade with
+no applicable partial plan is not silently placed in the failed-partial
+denominator, and a missing post-exit window is coverage loss rather than a zero.
 
 Post-exit movement is an observation, not automatic proof that an exit was
 wrong. A negative exit candidate needs supporting saved-plan, rule or repeated
@@ -1012,6 +1087,44 @@ count rises.
 - Price-move decimals from entry and post-exit paths remain per-trade evidence
   and never enter pooled money or percentage calculations.
 
+### Optional-evidence balance gate
+
+Overall coverage percentage does not prove representative coverage. Analyzer
+readiness can be concentrated in winners or one week, and rule reviews can be
+completed mainly after losing trades. Version one therefore checks coverage
+before outcomes are used for a period-level conclusion:
+
+- Analyzer ready versus unavailable is compared across fixed calendar-week,
+  final-result-polarity (positive, negative, flat or money-unavailable) and
+  known-style/unknown-style strata inside the exact
+  objective Analyzer-eligible population;
+- rule followed/broken versus `not_reviewed` is compared across fixed calendar-
+  week and the same four final-result-polarity strata inside the rule's
+  applicable population;
+- a stratum is material only when it has at least five members and represents at
+  least 10% of the expected population; and
+- coverage is `materially_skewed` when a material stratum's observed rate differs
+  from the rest by at least 20 percentage points or its share of observed
+  evidence differs from its share of expected evidence by at least 15 points.
+
+When coverage is materially skewed, the finding may still describe the exact
+covered/reviewed subset, but it cannot generalize to the whole period. The
+required-field confidence component uses the lowest material-stratum coverage,
+not the favorable overall average. A result-polarity-skewed optional source
+cannot supply a main financial-drag or outcome-support headline; its exact money
+remains covered-subset context. Improvement requires a fixed common stratum
+comparison under the existing composition check. Too little evidence to test
+balance is `balance_unavailable`, never assumed balanced.
+
+Coverage skew is a limitation on the finding, not a new trader-performance
+candidate. The review may state the bounded limitation in `incompleteRecord`,
+but it cannot turn `review more trades` or Analyzer availability into `What
+improved`, `What held you back` or a next-period trading focus.
+
+Result polarity follows the candidate's observation unit: exact trade net P/L
+for trade/Analyzer evidence and the reconciled included day P/L for day-rule
+opportunities. The gate never duplicates a day once per contributing trade.
+
 ### Improvement gate
 
 Improvement or deterioration requires one valid comparison shape:
@@ -1037,6 +1150,23 @@ Every shape also requires:
 
 A flat or contradictory series produces an unchanged or mixed candidate, not
 an improvement candidate.
+
+An early-versus-later average also cannot hide the trader's current state. The
+candidate freezes the last sufficiently populated bucket and the immediately
+preceding comparable bucket. A rate improvement becomes
+`improved_then_recently_regressed` rather than clean improvement when the latest
+bucket has at least five eligible observations, moves adversely by at least 10
+percentage points and erases at least half of the earlier-to-later gain. A
+money/path improvement uses the same verdict when the latest median moves
+adversely by at least 20% and erases at least half of the gain. The section
+states both the earlier improvement and the latest reversal. A sparse partial
+bucket that fails the population minimum is shown as preliminary evidence and
+cannot by itself reverse or confirm the monthly verdict.
+
+The relative money/path branch is unavailable when its comparison median is
+zero; it cannot manufacture an infinite reversal. A valid fixed absolute path
+threshold may qualify only when that family already declares one in the engine
+version.
 
 Activity weighting does not by itself make changing denominators comparable.
 For rule rates, each side records reviewed, not-reviewed and applicable counts.
@@ -1105,6 +1235,9 @@ Key definitions:
   P/L. This is a performance population, not the trade's unavailable broker
   gross-P/L field.
 - **Total winning-trade P/L:** sum of all positive included net trade P/L.
+- **Period absolute P/L magnitude:** total winning-trade P/L plus the absolute
+  total losing-trade P/L. It is a scale denominator, not the period's net P/L or
+  a statement of turnover.
 - **Win rate:** positive-P/L trades divided by every included trade with a
   non-null P/L, including flat trades in the denominator, matching the current
   v2 input calculation.
@@ -1124,6 +1257,9 @@ Key definitions:
 - **Broken rate:** broken divided by followed plus broken.
 - **Affected rate:** affected eligible observations divided by the candidate's
   exact eligible population.
+- **Opportunity rate:** affected observations divided by the predeclared members
+  for whom the exact decision/state was observable; it is never interchangeable
+  with period prevalence.
 - **Independent spread:** affected market dates divided by eligible observed
   market dates for a weekly review; affected week buckets divided by eligible
   observed week buckets for a two-week or monthly review.
@@ -1176,6 +1312,35 @@ outweighed by its losses. Gross loss/profit share remains the correct primary
 measure only for an explicitly defined loss/winner concentration or outlier
 candidate.
 
+The engine also distinguishes `money present in the affected cohort` from
+`outcomes that separate from a comparable opportunity population`. Named-rule
+comparisons use broken versus followed outcomes for the same rule/version;
+add/exit/Analyzer behavior uses the family-declared affected opportunity versus
+its eligible remainder; fixed result cohorts use their already-declared
+remainder. With at least five money-eligible observations on each side, a
+friction consequence is `worse_associated_outcome` only when the affected side's
+loss rate is at least 15 percentage points worse or its median net P/L is lower
+by at least 20% of the period median absolute trade P/L. A strength consequence
+uses the mirror `better_associated_outcome` gate: win rate at least 15 points
+higher or median net P/L higher by the same scale. The declared direction must
+survive the candidate's outlier check. Otherwise the verdict is `not_separated`
+or `opposite_associated_outcome`. Smaller comparison populations are
+`comparison_unavailable`.
+
+When period median absolute trade P/L is zero or unavailable, the median-gap
+branch is unavailable and cannot substitute a universal dollar threshold; the
+loss-rate branch may still produce a consequence verdict when its populations
+pass.
+
+This remains descriptive, not causal. A behavioral candidate receives its full
+scale-guarded financial score only for the polarity-aligned worse/better
+associated verdict, half of that score when the comparison is unavailable, and
+zero when outcomes are not separated or run opposite to the candidate; its
+repeated process/rule evidence and exact cohort P/L remain visible. Explicit
+loss/profit concentration and material-outlier families are
+exempt because their stated subject is the composition of results, not a claim
+that a behavior produced the difference.
+
 Analyzer peak-to-final P/L can be described as measured giveback between the
 recorded peak and final result. It is not guaranteed executable profit and must
 not be called money the trader could certainly have captured. The provider
@@ -1202,36 +1367,43 @@ capped.
 
 ### Financial materiality
 
-For negative behavioral candidates, the main component is adverse net
+For negative behavioral candidates, the polarity-pool component is adverse net
 contribution. For positive behavioral candidates, it is beneficial net
 contribution or protected measured profit. Explicit loss/winner concentration
 and outlier families use gross loss/profit share because their subject is the
 composition of losses or winners rather than the net result of a behavior.
 Giveback candidates use measured reversal relative to the Analyzer-covered
-peak-profit population. Exact dollars and gross loss/profit shares remain
-important displayed measurements, but there is no universal absolute-dollar
-scoring threshold across account sizes. A money score is relative to the
-comparable period population; recurrence, coverage and specificity determine
-whether a small low-activity result is a period-wide finding or only an example.
+peak-profit population. Exact dollars and raw gross loss/profit/path shares
+remain important displayed measurements.
+
+A polarity pool can be tiny, so `100% of losses` cannot automatically earn a
+100 money score when the entire loss was trivial beside the month's winners.
+Version one pairs the family-declared pool share with the same exact dollar
+amount divided by period absolute P/L magnitude. Each scoring input is clamped
+to `[0,1]`; the scale-guarded share is their harmonic mean,
+`2 * poolShare * periodMagnitudeShare / (poolShare + periodMagnitudeShare)`, or
+zero when both are zero. The financial-materiality score is that share times
+100 before the behavioral consequence adjustment above. This has no universal
+absolute-dollar threshold and remains comparable across account sizes while
+preventing a nearly empty positive/negative pool from manufacturing dominance.
 
 The component is unavailable, not fabricated as zero, when comparable money is
 unavailable. Other dimensions remain eligible, but the missing financial weight
 does not redistribute and inflate the lane score.
 
-The version-one score is the declared comparable share multiplied by 100:
-adverse/beneficial net contribution for a behavioral cohort, gross loss/profit
-share for an explicit concentration/outlier result, measured reversal divided
-by total positive Analyzer-covered peak P/L for giveback, or retained favorable
-P/L divided by the same covered peak population for path protection. The raw
-share remains visible and the score is clamped under the common rule. A
-candidate cannot choose whichever polarity or denominator produces the largest
-score; its family fixes both in `engineVersion`.
+The family still fixes the exact polarity/path pool and amount in
+`engineVersion`; it cannot choose whichever denominator yields the largest
+score. Both raw shares, the harmonic-mean intermediate and any consequence
+factor remain visible in the audit. When period absolute P/L magnitude is zero
+or unavailable, the money dimension is unavailable rather than replaced by the
+unscaled pool share.
 
 ### Repetition
 
 The default repetition score combines:
 
-- 45% affected rate;
+- 45% family-declared opportunity rate when the behavior has an opportunity
+  state, otherwise period prevalence;
 - 35% count saturation, reaching full credit at the versioned adaptive target
   `max(3, min(20, ceil(eligible population * 0.10)))`;
 - 20% cadence-appropriate independent spread.
@@ -1281,7 +1453,8 @@ cannot move a candidate to a higher row through keyword guessing.
 Version-one confidence combines only applicable deterministic components:
 
 - 30% required-field coverage: observed eligible records divided by the
-  family's expected eligible population;
+  family's expected eligible population, using the lowest material fixed-
+  stratum coverage when the optional-evidence balance gate applies;
 - 25% sample sufficiency: the minimum sufficiency across every population the
   family requires, using `min(100, 50 * actual member count / declared minimum)`
   for each; a just-passing population receives 50 and twice its minimum receives
@@ -1511,19 +1684,27 @@ confidence points of it. This prevents three differently labelled findings on
 the same losing trades from crowding every useful alternative out of the model's
 choice set.
 
-Representative examples are selected for both impact and typicality:
+Representative evidence is selected by an explicit role rather than taking only
+the most dramatic affected trades:
 
 1. highest material contribution;
 2. closest-to-median affected example;
-3. most recent independent example.
+3. closest-to-median comparison or contradicting example; and
+4. most recent independent example.
 
-This prevents every section from citing only the largest loser.
+Friction normally uses impact plus typicality. Improvement uses one typical
+early and one typical later member. Mixed/contrast findings require one typical
+supporting and one typical contradicting/remainder example when both exist.
+Strength uses typicality plus an independent recent example. This prevents every
+section from citing only the largest loser and prevents a mixed result from
+showing only evidence for one side.
 
 The candidate declares the exact representative metric before examples are
 selected. Its median uses sorted exact-decimal values: the middle value for an
 odd population and the exact arithmetic mean of the two middle values for an
-even population. `Closest-to-median` minimizes exact absolute distance. Ties in
-all three representative slots resolve by exact event timestamp, normalized
+even population. `Closest-to-median` minimizes exact absolute distance inside
+the role's own affected/comparison population. Ties in every representative
+slot resolve by exact event timestamp, normalized
 ticker, historical direction and the non-secret structural evidence key; they
 never depend on input array order or a rotating scoped reference.
 
@@ -1556,6 +1737,12 @@ The brief includes lane rank and a `requiredConsideration` tier:
 
 - the engine identifies one default selection for friction, improvement,
   strength and follow-through before the provider call;
+- the held-back default applies a measured-consequence guard: when a full (not
+  comparison-halved) scale-guarded financial/path score of at least 10 exists,
+  passes visible confidence and is within 10 lane points of the raw friction
+  leader, the highest-ranked such candidate becomes the default; a materially
+  grounded problem cannot be displaced by a slightly higher-scoring but
+  consequence-free process count;
 - the engine precomputes each section's bounded alternatives from the top three
   diversified visibly eligible lane candidates using the score, confidence,
   evidence/action-target cluster, overlap, focus and specificity rules; the
@@ -1597,6 +1784,9 @@ Every complete plan must satisfy all of these global checks before the provider
 package exists:
 
 - each section has its distinct required job and minimum evidence role;
+- its exact period outcome, primary improvement subject/verdict, primary held-
+  back action target and follow-through target match the deterministic
+  `decisionCriticalSpine` (including an explicit unavailable value);
 - improvement and held-back cannot select the same finding, purpose and primary
   measurement;
 - repeated evidence and subjects obey the cross-section overlap limits;
@@ -1607,7 +1797,8 @@ package exists:
 - every final visible field fits the output and sentence budgets below.
 
 The default review plan is the first globally valid plan under the section
-defaults and deterministic conflict resolution. Other plans are ordered by
+defaults and deterministic conflict resolution, and it freezes the
+`decisionCriticalSpine`. Other plans are ordered by
 least total lane-score loss from those defaults, then greater overlap reduction,
 stronger focus connection, greater specificity and finally a non-secret
 structural plan tie key. The provider receives the deduplicated section-plan
@@ -1644,6 +1835,13 @@ These version-one thresholds are part of the engine version. A merely different
 but weaker plan is not sent to the provider. This bounds prompt injection or
 provider variability to a set of near-equivalent, independently acceptable
 reviews rather than allowing the sixth-ranked plan to be materially worse.
+
+A non-default plan also cannot change the decision-critical spine. Its
+compensating benefit may change only a supporting strength/contrast,
+representative evidence role, bridge or the ordering of already-authorized
+distinct focus questions. This ensures that sending all four weekly reviews to
+the provider improves continuity without letting stale narrative wording change
+what the current exact month says improved or held the trader back.
 
 After final plan ordering, the package assigns `plan_1` through `plan_6` as its
 only possible `providerChoiceKey` values and freezes the exact key-to-
@@ -2302,6 +2500,15 @@ different primary measurement references and explain change versus remaining
 impact. This is how the validator permits a useful shared subject without
 accepting duplicated sections.
 
+The opening additionally freezes one `openingEmphasis`: `measured_strength`,
+`result_process_contrast`, `result_concentration` or `outcome_only`. It chooses
+the highest-confidence eligible nonduplicative emphasis in that order only when
+the selected claim passes its own lane gate; otherwise it falls through to the
+next eligible form. `Outcome_only` is a complete truthful opening and cannot be
+replaced with a recordkeeping compliment. The outcome sentence always precedes
+the emphasis sentence, so the review does not make the trader search later
+paragraphs to learn the month's actual result.
+
 Selections also have minimum useful content, enforced through referenced
 measurements rather than wording alone:
 
@@ -2331,6 +2538,16 @@ or eligibility date. Focus targets must be distinct, measurable and traceable
 to their source finding. When only one or two distinct targets qualify, the
 review returns fewer than three rather than padding the list. Generic advice or
 rewordings of the same subject fail validation.
+
+Focus ordering is deterministic and tied to the review's conclusions. The first
+question targets the selected residual held-back action target when it has an
+observable next-period opportunity and is not merely a result-only outlier. If
+that target is unavailable, an unresolved measurable earlier focus comes first.
+The next slot may track whether the selected improvement is sustained; the last
+may repeat a selected strength under the same evidence definition. Every
+question names the exact observable situation and what the later review will
+count or compare. A question such as `review your exits` or `compare the trade
+with your plan` is invalid even when it mentions the right broad subject.
 
 An exact prior `focusTargetRef` cannot be emitted again. An unresolved subject
 may be carried forward only through a new current finding with a changed later-
@@ -2376,6 +2593,8 @@ Before persistence, validate that:
 - every population uses its declared observation unit, contains unique sorted
   members, keeps numerator members inside denominator members and reconciles
   day/event/trade counts to the exact contributing source references;
+- every behavioral rate uses its frozen family opportunity denominator and
+  keeps conditional opportunity rate distinct from full-period prevalence;
 - every result/event/note/focus member uses its declared temporal owner; an
   outside-period execution event or Swing note is not counted merely because
   the linked trade closed inside the period;
@@ -2410,11 +2629,20 @@ Before persistence, validate that:
   contribution rather than cherry-picking only losing or winning members, and
   every partial-money measurement remains display-only unless its complete
   numerator and comparable denominator coverage gate passes;
+- every financial score reproduces the polarity/path-pool share, period-
+  magnitude share, harmonic scale guard and applicable descriptive consequence
+  factor; a tiny polarity pool or non-worse comparison cannot manufacture the
+  main financial drag;
+- optional Analyzer/rule evidence reproduces its fixed-stratum coverage-balance
+  state, and materially skewed or balance-unavailable evidence cannot use
+  period-wide or financial-headline language;
 - improvement has a valid earlier/later comparison, while an authorized
   no-improvement fallback has the exact series or maintained-strength evidence
   required by its mode;
 - improvement also passes the declared composition-shift/standardized-rate
   sensitivity or is explicitly mixed/unavailable;
+- improvement reproduces its latest-sufficient-bucket state and uses
+  `improved_then_recently_regressed` when the fixed reversal gate passes;
 - follow-through uses later evidence after the source focus and a current or
   explicitly revised canonical baseline rather than superseded source facts;
 - a recurring claim passes the recurrence gate;
@@ -2426,10 +2654,15 @@ Before persistence, validate that:
 - the global plan satisfies the strength, overlap, nonduplication and section-
   job constraints, evidence/action-target diversity caps and same-cluster
   exception thresholds rather than only validating each section in isolation;
+- every provider-selectable plan preserves the deterministic decision-critical
+  spine, and the opening keeps outcome first plus exactly one eligible emphasis;
 - hidden focus-tracking targets refer to measurable engine families;
 - every next-period focus uses an engine-authorized distinct `focusTargetRef`
   linked to its source finding and is not a cosmetic duplicate of an earlier
   target;
+- the first next-period focus targets the selected actionable residual friction
+  unless the exact documented unavailable/result-only exception applies, and
+  every focus declares its observable opportunity and later metric;
 - every `focusQuestionRef` is authorized for its exact target and supplies the
   complete visible next-focus question;
 - the review-wide coverage limitation is attached exactly once through
@@ -2439,6 +2672,9 @@ Before persistence, validate that:
   coverage registry, including its grammar, currency, attribution,
   availability and partial-coverage variant;
 - the review contains a strength when the brief contains a required strength;
+- mixed/comparison sections with available two-sided evidence use the required
+  supporting and contradicting/remainder representative roles rather than two
+  favorable same-side examples;
 - every visible field fits its cadence-specific character and sentence budget;
 - the final v3 output passes deterministic semantic and existing output-safety
   checks;
@@ -2520,6 +2756,26 @@ expected rank behavior:
 20. Three high-ranked labels on nearly identical evidence plus a slightly lower
     independent problem, proving diversified alternatives retain the distinct
     useful issue.
+21. Five green-to-red failures among 100 covered trades when only six ever moved
+    green, proving 5% period prevalence cannot replace the 5-of-6 opportunity
+    rate or vice versa.
+22. More than 60% Analyzer coverage that is concentrated in winners and early
+    weeks, plus rule reviews concentrated after losses, proving aggregate
+    coverage alone cannot authorize period-wide claims.
+23. A highly profitable month with one trivial loss representing 100% of the
+    losing-trade pool, proving the raw loss share cannot receive dominant
+    financial rank after the period-magnitude scale guard.
+24. A broken-rule cohort with material losses whose followed-rule comparison is
+    equally or more adverse, proving cohort money can remain visible without
+    being ranked or described as a worse associated outcome.
+25. A strong early-to-later improvement followed by one sufficiently populated
+    latest-week reversal that erases most of the gain, plus a separate sparse
+    partial-week wobble that must not reverse the verdict.
+26. A mixed candidate with clear supporting and contradicting trades, proving
+    representative evidence and provider excerpts show both sides.
+27. Four weekly reviews whose visible prose is replaced with stale, generic and
+    instruction-shaped text while the exact current month remains unchanged,
+    proving the decision-critical spine cannot move.
 
 The precise values are fixed before generation. The expected engine ranks are
 asserted before any provider call.
@@ -2544,6 +2800,17 @@ asserted before any provider call.
   count or sample-confidence component.
 - At least one independent action/evidence cluster survives beside the default
   when it is within the documented score/confidence exception limits.
+- Conditional management rates use their planted opportunity populations while
+  full-period prevalence remains separately available.
+- Selectively covered Analyzer/rule evidence is subset-labelled and cannot
+  supply a period-wide or financial-headline conclusion.
+- The tiny 100%-of-losses candidate receives only its scale-guarded money rank.
+- The non-separated broken-rule cohort remains process/contrast evidence and
+  receives no full financial-consequence rank.
+- The sufficiently populated late reversal renders as improved-then-regressed;
+  the sparse partial bucket is preliminary only.
+- The mixed candidate's visible plan and projected excerpts include both a
+  supporting and contradicting/remainder example.
 - Every authorized complete review plan satisfies the four distinct section
   jobs, required-strength and cross-section overlap gates before provider input.
 - The default and every alternative fit the renderer/output budgets, and no
@@ -2551,6 +2818,11 @@ asserted before any provider call.
 - Every retained alternative stays within the whole-plan lane-loss limit and
   proves its exact overlap, focus-connection or specificity benefit; a merely
   different weaker plan is excluded.
+- Every retained alternative preserves the same decision-critical spine, and
+  changing only the four weekly prose bodies cannot change it.
+- The opening reports activity and period result first, then at most one
+  eligible nonduplicative emphasis; its first focus question targets the
+  selected actionable held-back finding when one exists.
 - The month contains four issued weekly narrative contexts, not zero and not
   synthetic summaries created only inside the monthly fixture.
 - Every eligible exact-month Analyzer record is present once in the private
@@ -2596,9 +2868,9 @@ After deterministic acceptance:
 3. Reopen and inspect the saved monthly review.
 4. Replay the exact monthly provider package at least twice without persistence
    to test selection stability.
-5. Require the same primary friction and improvement families across all
-   selected authorized review plans. Representative examples cannot vary
-   inside one frozen `reviewPlanRef`.
+5. Require the same decision-critical spine across all authorized review plans;
+   provider replays may vary only the explicitly permitted supporting context.
+   Representative examples cannot vary inside one frozen `reviewPlanRef`.
 6. In a separate persisted run, exhaust provider selection attempts and require
    the byte-identical frozen default v3 output to issue with deterministic
    provenance and no fabricated provider receipt.
@@ -3063,6 +3335,34 @@ one planted fixture:
   late provider result from recreating or issuing it;
 - an over-context or refused full provider package is never truncated or split
   and issues the same complete-local-source default without a provider call;
+- adding eligible trades that never reached a behavior's declared opportunity
+  changes period prevalence but cannot change the conditional opportunity rate;
+  moving a member into/out of the opportunity set changes only the declared
+  denominator and all affected subset relations remain valid;
+- preserving the same overall optional-source coverage while concentrating it
+  in one week or result polarity triggers the fixed-stratum skew state, weakens
+  confidence and cannot retain period-wide language;
+- equal or better outcomes in a behavioral comparison produce no full adverse-
+  consequence factor even when the affected cohort contains large losses;
+- multiplying every same-currency P/L by one positive constant leaves financial
+  ranks unchanged, while adding only unrelated profitable P/L cannot increase a
+  negative candidate's period-magnitude component;
+- a 100%-of-loss-pool candidate with a tiny period-magnitude share cannot equal
+  the score of a candidate that is material under both denominators;
+- a latest sufficiently populated adverse reversal reproduces the fixed
+  improved-then-regressed verdict, while an otherwise identical sparse latest
+  partial bucket cannot flip it;
+- mixed/comparison representative roles select from both exact sides when both
+  exist, and exhausting the eight-excerpt projection cannot replace the required
+  counterexample with another same-side outlier;
+- replacing only weekly prose cannot change the decision-critical spine or the
+  selected primary conclusions even though the four issued reviews remain in
+  the provider package;
+- a review with an actionable selected held-back finding places its exact
+  retrospective question first; a result-only outlier or unavailable
+  opportunity follows the documented exception instead of producing advice;
+- every opening begins with the exact period activity/result clause and has no
+  more than one eligible emphasis, independent of provider selection;
 - one authorized plan short-circuits provider selection only after normal
   activation/configuration/authorization and records `single_authorized_plan`;
 - a deterministic fallback is impossible after any scope, entitlement,
@@ -4150,6 +4450,66 @@ temporal, net-contribution, partial-money, confidence and sensitivity fixtures
 passing together; a smooth provider-selected review cannot compensate for a
 failed deterministic population or rank.
 
+## Tenth adversarial plan QA pass - 2026-08-18
+
+The tenth pass attacked the remaining product failure mode: a review whose
+arithmetic is valid but whose denominator, coverage, scale, timing or emphasis
+makes the conclusion misleading to a trader. It reviewed the complete engine
+design and acceptance contracts only; it did not run the application, database,
+provider or test suite.
+
+Additional resolved findings:
+
+1. **All Analyzer rates could use the full covered population even when only a
+   few trades reached the decision point:** fixed with frozen opportunity
+   populations plus separate period-prevalence and conditional rates.
+2. **Five green-to-red failures could read as 5% of 100 instead of 5 of the 6
+   trades that ever moved green:** fixed with exact state-machine denominators
+   that cannot be selected after results are known.
+3. **Sixty-percent coverage could still mean Analyzer evidence exists almost
+   only for winners or early weeks:** fixed with fixed-stratum readiness balance,
+   lowest-material-stratum confidence and subset-only language under skew.
+4. **Rule reviews completed mainly after losses could make broken rules look
+   more outcome-linked than they are:** fixed by applying the same optional-
+   evidence balance gate to reviewed versus not-reviewed opportunities.
+5. **A trivial loss could receive a perfect money score merely because it was
+   100% of a tiny loss pool:** fixed with a harmonic scale guard combining the
+   polarity/path-pool share and share of total absolute period P/L.
+6. **Large losses inside a broken-rule cohort could rank as the main financial
+   drag even when followed-rule trades did equally poorly:** fixed with frozen
+   comparable populations, a descriptive consequence verdict and reduced/zero
+   money rank when worse associated outcomes are not established.
+7. **An early-versus-later average could call the month improved after the
+   latest sufficiently populated week gave most of the gain back:** fixed with
+   an exact improved-then-recently-regressed verdict and a separate sparse-
+   partial-week boundary.
+8. **A mixed finding could cite only its supporting trades:** fixed with
+   purpose-specific representative roles and required supporting plus
+   contradicting/remainder evidence in visible plans and bounded excerpts.
+9. **The four required weekly reviews could sway the model to a different main
+   monthly conclusion even though their prose is not factual authority:** fixed
+   with one deterministic decision-critical spine shared by every provider-
+   selectable plan.
+10. **The opening still had enough freedom to become generic or repeat later
+    cards:** fixed with result-first sentence order and one eligible strength,
+    contrast, concentration or outcome-only emphasis.
+11. **A consequence-free repeated process count could narrowly displace a
+    materially grounded held-back finding:** fixed with the bounded measured-
+    consequence guard inside the friction default.
+12. **Next-period questions were traceable but not required to act on the main
+    held-back finding:** fixed with held-back-first focus ordering, explicit
+    observable opportunities and a ban on generic `review your exits` forms.
+13. **The validators and fixtures did not prove these product distinctions:**
+    fixed with opportunity-denominator, selective-coverage, tiny-pool,
+    non-separated-cohort, late-reversal, balanced-example, immutable-spine,
+    opening and focus-priority acceptance cases and metamorphic checks.
+
+No unresolved critical design blocker remains after this pass. Version-one
+calibration must still determine whether the provisional 10-point consequence,
+15/20-point association and 10/20-point recency thresholds produce the intended
+ordering on the sealed holdouts; changing them after calibration requires a new
+engine version and resealed holdout rather than a fixture-specific exception.
+
 ## Completion boundary
 
 This redesign is complete only when:
@@ -4162,6 +4522,11 @@ This redesign is complete only when:
   eligibility without inventing intent;
 - every candidate fixes one observation unit, unique population membership and
   result/event/note/focus temporal ownership before any measurement or score;
+- every conditional behavior fixes its observable opportunity population,
+  retains separate period prevalence and cannot borrow whichever denominator
+  produces the larger percentage;
+- optional Analyzer/rule evidence passes fixed-stratum coverage-balance checks
+  before it can support period-wide or financial-headline language;
 - request, attempt, dispatch and output share one immutable generation contract;
   its singleton advances only after zero pending v2 work and no mixed old/new
   writer, then prevents destructive rollback below the first v3 row;
@@ -4178,7 +4543,7 @@ This redesign is complete only when:
 - the monthly provider package contains the four actually issued weekly
   reviews, every permitted non-Analyzer field and the complete bounded Analyzer
   projection, while historical prose cannot change a current monthly
-  measurement or claim;
+  measurement, claim or decision-critical conclusion;
 - every available visible section identifies a useful finding and does not
   duplicate another section's explanatory job;
 - every authorized whole-review plan passes global compatibility and renderer
@@ -4191,11 +4556,16 @@ This redesign is complete only when:
 - behavioral money rank uses adverse/beneficial complete cohort net contribution
   rather than cherry-picked losing/winning members, and partial covered-subset
   money contributes no version-one score;
+- money rank is guarded by both polarity/path-pool share and total period
+  magnitude, and behavioral financial emphasis reflects its declared comparable
+  consequence verdict rather than affected-cohort dollars alone;
 - every earlier/later comparison uses disjoint evidence and every partial-money
   claim states its exact covered subset;
 - every material composition shift passes the fixed-stratum standardized
   sensitivity, confidence uses its weakest required population and outlier
   resistance reproduces the declared leave-one-unit/bucket result;
+- improvement exposes a materially adverse latest-sufficient-bucket reversal
+  without allowing a sparse partial week to manufacture the verdict;
 - follow-through connects an issued focus only to evidence occurring after its
   actual issuance boundary and never compares a superseded baseline unless a
   complete canonical revised baseline is explicitly available;
@@ -4203,6 +4573,8 @@ This redesign is complete only when:
 - visible candidates pass the family/confidence/actionability floor and the
   alternatives retain distinct evidence/action targets when the exact diversity
   exception does not apply;
+- mixed/comparison findings expose both supporting and contradicting/remainder
+  representative roles when available;
 - the provider must echo the current short `providerPackageKey` and can select
   only one request-local `providerChoiceKey`, which the server resolves to one
   frozen whole `reviewPlanRef`, while every section, semantic claim, focus
@@ -4240,7 +4612,9 @@ This redesign is complete only when:
   explicit safe renderer template and no generic prose fallback;
 - existing v2 and both v3 generation sources reopen through one customer read
   path without changing old output;
-- repeated live monthly generations retain the same main friction and
-  improvement families;
+- every provider-selectable monthly plan and repeated live selection retains the
+  same decision-critical spine;
+- the opening reports period activity/result first and the first next-period
+  question targets the selected actionable held-back issue when one exists;
 - the saved review reopens through the normal customer read path;
 - the owner judges the resulting review materially useful to a trader.
