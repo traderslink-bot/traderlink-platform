@@ -339,9 +339,55 @@ unavailable for the affected target while unrelated findings continue. It never
 silently expands the denominator or fails the entire review into a data-quality
 response.
 
-Applicability reuses the Journal rule evaluator's exact target/timestamp logic;
-the AI engine does not invent a day-level shortcut for a trade-timed rule or
-assume that any active minute makes a whole trading day applicable.
+Rule normalization freezes one mutually exclusive state before calculating a
+rate. An active, applicable opportunity is `reviewed_followed`,
+`reviewed_broken`, `explicit_not_reviewed` or `expected_review_missing`.
+`explicit_not_reviewed` requires the stored status; absence of a row is
+`expected_review_missing` and can never be manufactured into that status.
+Inactive/outside-effective targets and targets proven structurally not
+applicable are not opportunities. When applicability cannot be determined from
+the required facts, the target is `evaluation_unavailable` and cannot enter an
+opportunity denominator.
+
+Preset evaluation is an orthogonal evidence axis, not another stored review
+status. Each preset target also freezes `evaluated_followed`,
+`evaluated_broken`, `not_applicable` or `evaluation_unavailable`. A missing or
+explicit-not-reviewed trader disposition can therefore coexist with an exact
+evaluator result without being rewritten. Stored review adherence and preset
+evaluation rates keep separate populations, measurements, wording and factual-
+job keys.
+
+The preset evaluator's legacy `n/a` is not a fifth review outcome. A bounded
+local adapter maps a typed evaluator reason to either structurally not
+applicable or evaluation unavailable. An unknown/untyped reason takes the
+unavailable path. Free-form evaluator limitations never decide the state and
+never enter the provider package. The engine therefore cannot convert `n/a`, a
+missing result row or an inactive interval into `not_reviewed`.
+
+The version-one typed reason enum is closed:
+`no_applicable_target`, `missing_rule_configuration`, `missing_source_fact`,
+`ambiguous_execution_sequence`, `insufficient_money_coverage` and
+`legacy_untyped`. Only `no_applicable_target` proves structural non-
+applicability; every other reason is evaluation-unavailable. Every new evaluator
+`n/a` branch must supply a typed reason, and adding a reason requires an engine/
+evaluator contract version. Historical untyped evidence maps to
+`legacy_untyped` without parsing its limitation string.
+
+These are internal calculation states, not customer copy. When a coverage
+boundary must be visible, the renderer says that no rule result was recorded
+for an exact count; it never exposes `expected_review_missing`, evaluator codes
+or a claim that the trader was obligated to complete a review.
+
+Preset applicability reuses the Journal rule evaluator's exact target/timestamp
+logic. Custom-rule applicability reuses the Trade Tracker's historical server-
+side projection for that exact target: a day opportunity exists only when the
+exact trading-day target exists and the rule version was projected for that
+day; a trade opportunity exists only when that exact round trip was projected
+under the rule version/scope/entry-time active-interval check. A `both` rule
+creates separate day and trade opportunities, never one pooled row. The AI
+engine does not invent a day-level shortcut for a trade-timed rule, treat a
+missing review row as proof that a target existed or assume that any active
+minute makes a whole trading day applicable.
 
 For preset threshold rules, the triggering trade is not automatically the
 violation. Only an identity-linked evaluator event with `kind = violation` can
@@ -357,6 +403,25 @@ its identity and active opportunity reconcile. Preset evidence adds trigger/
 violation specificity only; it does not silently recategorize that status. A
 status/evaluator conflict lowers structured-source consistency and forces
 status-only language.
+
+When no followed/broken trader disposition exists, a complete same-version
+preset evaluation may still create an objective preset finding. It says `the
+preset rule evaluation found ...`, never `you marked ...`, and it does not raise
+review completion. Repeated evaluated-followed evidence may support a narrow
+preset-rule strength; it cannot prove that every custom or unevaluated process
+rule was followed. The same rule/targets are merged as one evidence cluster so
+recorded and evaluated views cannot appear as two independent problems. If an
+existing followed/broken disposition conflicts with the evaluator, the earlier
+status-only/conflict boundary controls and the objective preset candidate is
+suppressed for those targets.
+
+For an applicable opportunity, `reviewed rule rate` uses only followed plus
+broken outcomes. `Review completion` is followed plus broken divided by every
+expected applicable opportunity. `Recorded disposition coverage` also includes
+explicit not-reviewed rows, while missing expected reviews remain a separate
+count. Broken prevalence uses every expected applicable opportunity and is
+always displayed beside completion coverage. These measures are distinct and
+the renderer cannot label one as another.
 
 ### Prompt-safe evidence references
 
@@ -641,6 +706,7 @@ futureTrackability
 priorAssessmentRef
 newLaterEvidenceRefs[]
 scores
+laneRankStability
 adjustments[]
 penalties[]
 sensitivityResults[]
@@ -695,7 +761,9 @@ Always calculate when the necessary facts exist:
   exists;
 - largest-winner and largest-loser contribution;
 - result excluding the largest winner or loser;
-- factually confirmed position count still open at the period-end boundary; and
+- factually confirmed position count still open at the period-end boundary;
+- count of those still-open lifecycles with accepted in-period position-
+  reducing execution events; and
 - exact availability of unrealized P/L, which is unavailable in version one and
   is never treated as zero.
 
@@ -706,7 +774,13 @@ The renderer says `closed-trade net P/L` or `across trades closed in this
 period`, never that the whole account gained/lost that amount. When at least one
 factually confirmed position remained open at period end, `incompleteRecord`
 states the count and that unrealized P/L is not included; it does not expose the
-positions or guess their value.
+positions or guess their value. If one of those lifecycles had an in-period
+position reduction, version one also states that exact count and excludes the
+still-open lifecycle's partial and eventual result from closed-trade P/L. It
+does not extract a supposedly realized amount from an incomplete lifecycle,
+because the accepted round-trip result contract becomes authoritative only at
+closure. This prevents a reduction from being counted now and the complete
+trade result from being counted again after closure.
 
 Period-end open state is reconstructed from the current canonical accepted
 execution ledger truncated at the exact period boundary. It is not read from a
@@ -715,15 +789,34 @@ may close before the review is generated or retried. Corrections available when
 the immutable source is frozen follow the normal canonical-lineage rules; later
 edits never rewrite an issued count.
 
+The open-position count is a coverage boundary, not an exposure measurement.
+It does not describe quantity, capital at risk, unrealized gain/loss or the
+materiality of those positions and contributes no ranking points.
+
+This engine does not broaden the existing cadence/request eligibility rules.
+If an upstream-eligible period has no trades closed, the opening states exactly
+that and leaves net P/L, win rate and winner/loser metrics unavailable rather
+than zero. Structured in-period rule or execution evidence may still support a
+narrow section if it passes its own gate; reflections or the existence of
+Tracker records cannot. A one- or two-trade period may supply an outcome or
+labelled example/outlier, never a recurring pattern without the applicable
+independent-spread gate. When neither a visible finding nor a measurable focus
+exists, the review uses the exact no-supported-pattern boundary instead of
+inventing a lesson from sparse activity.
+
 ### 2. Named rule association
 
 For every unchanged named rule and valid scope:
 
 - exact active-opportunity count after effective/paused/retired intervals;
-- followed, broken and not-reviewed counts;
+- followed, broken, explicit not-reviewed and expected-missing counts;
 - followed and broken rates among reviewed outcomes;
-- broken prevalence among every applicable opportunity, kept distinct from the
-  reviewed-only broken rate and exact review coverage;
+- review-completion and recorded-disposition coverage;
+- broken prevalence among every expected applicable opportunity, kept distinct
+  from the reviewed-only broken rate and exact completion coverage;
+- for presets, evaluated-followed, evaluated-broken, not-applicable and
+  evaluation-unavailable counts plus the violation rate among evaluation-
+  eligible targets, kept distinct from every stored-review measure;
 - affected trade or day count;
 - P/L for trades or days where the rule was followed;
 - P/L for trades or days where the rule was broken;
@@ -737,9 +830,21 @@ For every unchanged named rule and valid scope:
 - for preset rules only, exact trigger/violation event counts and references
   when the same-version evaluator evidence is available.
 
-Day-rule P/L uses the exact day's included closed-trade P/L. Trade-rule P/L
-uses only the affected trade. Day and trade findings remain separate and are
-never added together.
+Full-day rule P/L is only `day_outcome_context`: the exact included closed-trade
+P/L for that trading day. It can show what happened on days marked followed or
+broken, but it supplies no financial-consequence rank and cannot be described
+as the amount after or caused by a break. Trades completed before a late-day
+violation do not become financially affected by it.
+
+A preset day rule may receive event-bounded financial association only when its
+same-version evaluator contract returns an exact typed affected-execution set
+for that preset's semantics. The engine validates that every member occurs at
+the authorized violation boundary or later as the preset defines; it never
+constructs the set from a timestamp or title alone. The trigger remains outside
+the violation set unless the typed preset contract explicitly says otherwise.
+Without that set, financial consequence is unavailable even when full-day P/L
+is known. Trade-rule P/L uses only the exact affected completed trade. Day and
+trade findings remain separate and are never added together.
 
 A trade can appear in several rule cohorts. Overlapping loss shares are never
 summed as if they were independent damage.
@@ -749,6 +854,11 @@ this rule broken on 4 reviewed opportunities`. `preset_violation_event` may also
 name the exact violating trade/time and distinguish it from the trigger.
 Missing evaluator events, a custom rule, or a lifecycle/status conflict can
 never fall through to an invented execution-level explanation.
+
+An evaluator-only tier instead supports `the preset rule evaluation found 4
+violations among 12 evaluation-eligible opportunities`. It cannot use the
+trader-attributed status wording, count those 12 as completed reviews or run in
+parallel as a duplicate finding for the same rule/target members.
 
 ### 3. Rule adherence improvement or deterioration
 
@@ -1057,11 +1167,18 @@ trade may support positive process when its rules and execution evidence do.
 Absence of a recorded break is not positive process evidence. A `clean
 execution` or `all relevant rules followed` claim freezes the exact applicable
 entry/risk/exit rule set and requires every member to have a followed result for
-every required rule; `not_reviewed`, inactive, unavailable and missing outcomes
-do not count as followed. A narrower strength may truthfully say one named rule
-was followed repeatedly without claiming the rest of the process was clean.
+every required rule; explicit not-reviewed, inactive, unavailable and missing
+outcomes do not count as followed. A narrower strength may truthfully say one
+named rule was followed repeatedly without claiming the rest of the process was
+clean.
 Profitable outcome plus sparse rule review remains an outcome/example, not a
 process strength.
+
+For a preset rule, repeated same-version `evaluated_followed` targets may supply
+that narrow one-rule strength even when the trader did not save dispositions,
+provided evaluator coverage and the normal strength gates pass. The renderer
+attributes it to preset evaluation and does not call it completed review or a
+clean multi-rule process.
 
 The required rule set comes only from preset template keys/scopes or a future
 accepted structured process-set mapping. The engine cannot decide that a custom
@@ -1174,11 +1291,22 @@ specific execution example.
 ### Rule gate
 
 - At least three reviewed outcomes are required for a rule rate.
-- `not_reviewed` is excluded from followed/broken rate denominators and remains
-  visible as coverage.
+- `explicit_not_reviewed` and `expected_review_missing` are excluded from
+  followed/broken rate denominators and remain separately visible; evaluator
+  `n/a`, inactive and structurally not-applicable targets never enter that
+  opportunity population.
+- Reviewed-rule claims require their exact reviewed count plus expected-
+  applicable count. A low-completion cohort cannot use the reviewed-only rate
+  as a period-wide adherence claim or clean-process strength.
+- A preset evaluator rate independently requires at least three evaluation-
+  eligible targets, exact followed/broken counts and its unavailable/not-
+  applicable coverage. It never substitutes for review completion.
 - A recurring broken-rule finding normally requires at least two breaks.
 - One break may qualify as a material outlier when its loss represents at least
   10% of the period's total losing-trade P/L.
+- A day-rule financial finding requires a typed event-bounded affected-
+  execution set. Full-day P/L is context-only and cannot satisfy the material-
+  outlier or financial-consequence gate.
 - Rule improvement follows the cadence-specific improvement gate below rather
   than requiring three current-period week buckets for every cadence.
 
@@ -1230,9 +1358,14 @@ before outcomes are used for a period-level conclusion:
   final-result-polarity (positive, negative, flat or money-unavailable) and
   known-style/unknown-style strata inside the exact
   objective Analyzer-eligible population;
-- rule followed/broken versus `not_reviewed` is compared across fixed calendar-
-  week and the same four final-result-polarity strata inside the rule's
-  applicable population;
+- rule review completion (followed/broken) versus explicit not-reviewed plus
+  expected-missing is compared across fixed calendar-week and the same four
+  final-result-polarity strata inside the rule's expected applicable
+  population; recorded-disposition coverage is audited separately so missing
+  rows cannot look like deliberate non-review;
+- preset evaluated-followed/broken versus evaluation-unavailable is compared
+  across the same fixed strata inside the preset-evaluable target population;
+  structurally not-applicable targets remain outside it;
 - a stratum is material only when it has at least five members and represents at
   least 10% of the expected population; and
 - coverage is `materially_skewed` when a material stratum's observed rate differs
@@ -1309,7 +1442,8 @@ threshold may qualify only when that family already declares one in the engine
 version.
 
 Activity weighting does not by itself make changing denominators comparable.
-For rule rates, each side records reviewed, not-reviewed and applicable counts.
+For rule rates, each side records reviewed, explicit-not-reviewed, expected-
+missing and expected-applicable counts.
 For Analyzer rates, each side records ready and total eligible trades. A
 version-one shift of more than 15 percentage points in review/Analyzer coverage
 forces a mixed or unavailable comparison unless a fixed common eligible cohort
@@ -1403,6 +1537,17 @@ Key definitions:
   the period's total winning-trade P/L. It is zero when the cohort is flat or
   net losing.
 - **Broken rate:** broken divided by followed plus broken.
+- **Review completion:** followed plus broken divided by every expected active,
+  applicable rule-review opportunity.
+- **Recorded disposition coverage:** followed plus broken plus explicit not-
+  reviewed divided by every expected active, applicable opportunity. It never
+  treats a missing row as an explicit disposition.
+- **Broken prevalence:** broken divided by every expected active, applicable
+  opportunity, including explicit not-reviewed and missing expected rows in the
+  denominator.
+- **Preset evaluated violation rate:** evaluated-broken divided by evaluated-
+  followed plus evaluated-broken. It never borrows the stored review denominator
+  or relabels evaluation-unavailable as followed.
 - **Affected rate:** affected eligible observations divided by the candidate's
   exact eligible population.
 - **Opportunity rate:** affected observations divided by the predeclared members
@@ -1419,6 +1564,13 @@ Key definitions:
 Average, median, contribution and profit-factor measurements are unavailable
 when their required population or denominator is empty. The engine does not
 store infinity, substitute zero or invent a display placeholder.
+
+Every visible rate freezes its integer numerator and denominator beside the
+exact decimal. The renderer always shows `x of y` adjacent to a percentage; it
+never presents a percentage alone. When the denominator is below 20, the count
+leads and the percentage is optional. This keeps `2 of 3` from reading like a
+stable period-wide `67%` pattern while preserving the exact measurement for
+ranking and audit.
 
 Every money measurement records both the full affected population and the
 money-eligible subset. A section can say that a pattern appeared on six trades
@@ -1449,6 +1601,21 @@ claiming that all 6 lost when two won, `this rule break cost you USD 2,333`,
 `you would have saved USD 2,333`, or another counterfactual causal claim.
 Overlapping cohorts never divide, assign or sum the same loss as though each
 behavior independently caused it.
+
+For day rules, the whole trading day's result is explicitly outcome context,
+not an affected financial cohort. Only the evaluator's typed event-bounded
+execution members may enter an after-violation association, comparison or
+financial score. A status-only day rule can rank from repetition and process
+relevance, with exact day outcomes shown as context, but cannot receive money
+rank merely because a broken day finished red.
+
+The visible distinction is direct. Status-only copy may say `You marked Maximum
+risk defined broken on 4 of 12 reviewed days; those four days closed with a
+combined net result of ...`. Event-bounded copy may say `The evaluator identified
+6 completed trades at or after the exact violation boundaries; those trades
+finished with a combined net result of ...`. The first is day context, the
+second is a bounded cohort association, and neither may use `cost you` or an
+avoided-loss counterfactual.
 
 For behavioral friction and strength, gross loss share and gross profit share
 are supporting composition facts, not the main money score. A broken-rule
@@ -1504,8 +1671,11 @@ merely because both sides contain trades. Before assigning the consequence
 verdict, version one applies fixed pre-result structural strata: exact rule
 version/scope, trader-declared style where applicable, historical direction and
 calendar-week bucket. Day-rule comparisons use rule version/scope and calendar
-week at the day observation unit. It never searches tags, tickers or new
-intersections after seeing results.
+week at the day observation unit for adherence/process comparisons. Financial
+comparison for a day rule instead uses only its typed event-bounded execution
+members and the exact preset-declared comparison set; it cannot standardize or
+score full-day P/L as the consequence of a late violation. It never searches
+tags, tickers or new intersections after seeing results.
 
 A stratum is material under the same pooled-20% and 15-percentage-point share-
 shift thresholds used by improvement mix sensitivity. The engine recalculates
@@ -1561,6 +1731,11 @@ composition of losses or winners rather than the net result of a behavior.
 Giveback candidates use measured reversal relative to the Analyzer-covered
 peak-profit population. Exact dollars and raw gross loss/profit/path shares
 remain important displayed measurements.
+
+`day_outcome_context` is never an input to this dimension. A day-rule candidate
+can receive financial materiality only from its validated typed affected-
+execution cohort; without one, the money dimension is unavailable rather than
+filled by full-day P/L.
 
 A polarity pool can be tiny, so `100% of losses` cannot automatically earn a
 100 money score when the entire loss was trivial beside the month's winners.
@@ -1809,6 +1984,23 @@ The engine must not subtract the same weakness twice. The order is explicit:
 4. Only exploratory multiplicity and unresolved cross-family duplication use
    an explicit post-lane penalty.
 
+After those steps, each lane records how clearly its selected default separates
+from the next distinct visibly eligible candidate. `dominant` requires the
+selected default to be the post-penalty lane leader by at least five points and
+to remain first in the family-declared leave-one-independent-bucket check.
+`near_tie` applies when the margin is below five, the sensitivity winner
+changes, or the measured-consequence guard deliberately selects a useful
+candidate below the raw leader. `only_eligible` is separate from dominance: one
+available candidate does not prove that it was a uniquely important behavior.
+These provisional boundaries affect certainty wording, never measurements or
+the deterministic winner.
+
+The renderer may use a ranking superlative such as `the biggest issue` only for
+`dominant`. A near tie or sole eligible finding starts directly with the exact
+behavior and impact, without a ranking phrase, and cannot imply the engine
+proved one exclusive cause. Provider alternatives cannot change this rank-
+certainty state.
+
 The version-one exploratory multiplicity schedule is 0 points for at most five
 non-empty sibling groups, 5 points for 6-10 groups, 10 points for 11-25 groups
 and 15 points for more than 25 groups. It applies only to ticker, tag, weekday,
@@ -1946,6 +2138,10 @@ The brief includes lane rank and a `requiredConsideration` tier:
   assessment, then uses the highest-ranked candidate while applying the exact
   within-10-point unassessed-focus preference and consecutive-repeat exception.
 
+The brief also includes the server-computed `laneRankStability` and its exact
+margin/sensitivity inputs. It is not a provider judgment and cannot be upgraded
+by a selection rationale.
+
 Raw notes and compact evidence remain available after the brief for context,
 but the model is not asked to recalculate the ranked measurements.
 
@@ -1981,6 +2177,9 @@ package exists:
 - no two rendered clauses repeat the same factual job;
 - focus questions are distinct and compatible with the selected findings;
 - incomplete-record language matches the exact coverage state; and
+- rank-certainty wording matches the frozen lane stability and never calls a
+  near tie, guard-selected candidate or sole eligible candidate `the main`
+  issue; and
 - every final visible field fits the output and sentence budgets below.
 
 The default review plan is the first globally valid plan under the section
@@ -2107,6 +2306,12 @@ than negative zero, and sign-aware clauses cannot produce forms such as `lost
 -$200` or call a covered-subset result the period total. Every complete plan is
 run through the existing trading-direction/internal-language safety boundary
 and the new semantic reference validator before it can enter the shortlist.
+
+Rate templates always retain their count and denominator. Below 20
+opportunities, the count leads and the percentage may be omitted to prevent a
+small sample from sounding more settled than it is. Rank-language templates
+are separately keyed by `dominant`, `near_tie` and `only_eligible`; there is no
+generic superlative template.
 
 The renderer has a versioned coverage registry, not a generic
 `subject + metric + result` fallback. Every candidate family, section purpose,
@@ -2799,6 +3004,18 @@ Before persistence, validate that:
 - every rule opportunity falls inside the exact version's effective active
   interval; paused/retired/outside-period rows do not become not-reviewed, and
   only same-version preset violation events authorize execution-specific prose;
+- each applicable rule target has exactly one normalized followed/broken/
+  explicit-not-reviewed/expected-missing state; evaluator `n/a`, inactive,
+  structurally not-applicable and evaluation-unavailable states cannot be
+  relabelled or silently enter a reviewed-rate denominator;
+- custom day/trade/both opportunities reproduce the exact historical Trade
+  Tracker projection; a missing result row cannot create a custom-rule target
+  and day/trade scopes never pool;
+- reviewed rate, review completion, recorded-disposition coverage and broken
+  prevalence reproduce their distinct frozen member sets;
+- preset evaluated-followed/broken/not-applicable/unavailable states remain
+  orthogonal to stored review disposition, use their own rate/coverage sets and
+  cannot raise review completion or duplicate one rule/target finding;
 - every projected preset event is claim-selected, prompt-safe and limited to its
   event kind/trade reference/timestamp/authorized values; status-only or
   unrelated events never enter the package;
@@ -2825,6 +3042,8 @@ Before persistence, validate that:
 - every rendered count, percentage and money value exists in that exact claim's
   measurements, matches its server-generated display literal and keeps the
   affected-versus-money-eligible coverage clause;
+- every visible rate retains its integer numerator and denominator, with small-
+  denominator templates leading on counts rather than an isolated percentage;
 - identical display literals belonging to different metrics, subjects or
   denominators cannot satisfy one another's claim reference;
 - every selected `bridgeRef` is authorized for that exact section claim set and
@@ -2844,6 +3063,10 @@ Before persistence, validate that:
   standardization, rate/median conflict handling and the exposure-scale boundary;
   mixed/confounded/opposite results receive no full money rank and no risk-
   normalized wording;
+- a day-rule money score or after-violation claim uses only the exact typed
+  affected-execution members; full-day P/L remains outcome context and a
+  status-only/evaluator-unbounded day rule receives no financial-consequence
+  rank;
 - optional Analyzer/rule evidence reproduces its fixed-stratum coverage-balance
   state, and materially skewed or balance-unavailable evidence cannot use
   period-wide or financial-headline language;
@@ -2869,6 +3092,8 @@ Before persistence, validate that:
   exception thresholds rather than only validating each section in isolation;
 - every provider-selectable plan preserves the deterministic decision-critical
   spine, and the opening keeps outcome first plus exactly one eligible emphasis;
+- every selected lane reproduces its rank margin and leave-one-bucket stability;
+  only a dominant winner can receive `main`/`clearest` wording;
 - hidden focus-tracking targets refer to measurable engine families;
 - a rule/process strength identifies one exact followed rule or proves complete
   followed coverage for its declared applicable rule set; missing/not-reviewed
@@ -2902,6 +3127,9 @@ Before persistence, validate that:
 - the opening labels money as closed-trade result, and every confirmed period-
   end open position contributes its exact count—but no identity or invented
   unrealized value—to the single `incompleteRecord` boundary;
+- open-at-period-end lifecycles with accepted in-period reductions are counted
+  separately, remain outside closed-trade P/L and financial rank, and cannot be
+  represented as exposure or realized/unrealized money;
 - every visible field fits its cadence-specific character and sentence budget;
 - the final v3 output passes deterministic semantic and existing output-safety
   checks;
@@ -3031,6 +3259,26 @@ expected rank behavior:
 36. Several factually confirmed positions open at month end with no accepted
     unrealized P/L, proving the opening remains closed-trade-only and the single
     coverage sentence discloses their count without valuing or identifying them.
+37. One active applicable rule with followed, broken, explicit-not-reviewed and
+    absent result rows, plus preset `n/a` cases for both a proven non-applicable
+    target and missing evaluator facts, and a custom `both` rule projected onto
+    exact historical day/trade targets. Separate preset targets have no saved
+    disposition but exact evaluated-followed/broken evidence, proving every
+    review state, evaluator state, scope and denominator remains distinct.
+38. A late-day preset violation after several earlier profitable and losing
+    trades, with an exact evaluator affected-execution set, beside an identical
+    status-only day rule without that set, proving full-day P/L is context and
+    only bounded post-violation members can receive financial association.
+39. A still-open lifecycle with one in-period position reduction and another
+    with no reduction, both closed only after the immutable month snapshot,
+    proving neither lifecycle enters August closed-trade P/L and later closure
+    cannot rewrite the issued boundary.
+40. Two top friction findings within four post-penalty points whose order flips
+    under one leave-week-out check, plus a separate decisive winner, proving
+    deterministic selection does not overstate rank certainty.
+41. One upstream-eligible period with zero closed trades and one sparse period
+    with two trades, proving unavailable result metrics remain unavailable and
+    sparse evidence cannot become a recurring process conclusion.
 
 The precise values are fixed before generation. The expected engine ranks are
 asserted before any provider call.
@@ -3095,6 +3343,25 @@ asserted before any provider call.
   evidence/material-verdict exception.
 - Open positions contribute only the exact period-end count and closed-trade/
   unrealized boundary, never a guessed mark-to-market result.
+- Open lifecycles with in-period reductions remain excluded from closed-trade
+  P/L, disclose only their exact count and never create a partial-result or
+  exposure rank.
+- Missing rule rows, explicit not-reviewed rows and evaluator `n/a` states do
+  not collapse together; every reviewed rate and coverage measure reproduces
+  its declared denominator.
+- Evaluator-only preset findings retain their own attributed rate and coverage,
+  do not raise review completion and merge with any same-rule/target recorded
+  finding rather than appearing as independent evidence.
+- Custom day/trade/both opportunities match the planted historical Tracker
+  projection, never arise from an absent review row and remain separate by
+  target unit.
+- Full-day rule P/L cannot rank as loss after a late violation. Only the planted
+  typed affected-execution set can support the bounded money association.
+- The near-tied/sensitivity-unstable winner starts directly with its exact facts
+  and no ranking superlative, while only the planted stable five-point-separated
+  winner may use one.
+- Zero-closed-trade and two-trade periods retain truthful unavailable/sparse
+  output and do not manufacture a recurring strength or friction finding.
 - The month contains four issued weekly narrative contexts, not zero and not
   synthetic summaries created only inside the monthly fixture.
 - Every eligible exact-month Analyzer record is present once in the private
@@ -3430,10 +3697,11 @@ one planted fixture:
   candidate's lane score;
 - changing only free-text notes cannot change candidate eligibility,
   measurements, scores or ranks;
-- changing `not_reviewed` to `broken` changes the correct numerator and
-  denominator exactly once;
-- adding `not_reviewed` outcomes leaves the reviewed broken rate unchanged,
-  lowers review coverage and cannot create an improvement;
+- changing `explicit_not_reviewed` to `reviewed_broken` changes the correct
+  reviewed numerator/denominator and completion count exactly once;
+- adding new expected opportunities with `explicit_not_reviewed` leaves the
+  reviewed broken rate unchanged, lowers review completion, raises only the
+  explicit-disposition count and cannot create an improvement;
 - a coverage shift beyond the versioned threshold cannot produce a clean rate
   improvement without a fixed common cohort;
 - a material structural-stratum mix shift reproduces the standardized rate;
@@ -3642,9 +3910,33 @@ one planted fixture:
 - moving a preset `trigger` event without moving its identity-linked
   `violation` cannot change which execution is named as the break; status-only
   custom evidence can never manufacture either event;
-- changing applicable rule outcomes from `not_reviewed` to `followed` can create
-  a complete-rule-set strength only when every declared required member is now
-  followed; merely deleting a broken row cannot create one;
+- changing applicable rule outcomes from `explicit_not_reviewed` to
+  `reviewed_followed` can create a complete-rule-set strength only when every
+  declared required member is now followed; merely deleting a broken row cannot
+  create one;
+- deleting an explicit not-reviewed row creates `expected_review_missing`, not
+  another not-reviewed result; reviewed broken rate is unchanged, recorded-
+  disposition coverage falls and no clean-process strength appears;
+- deleting every review row for a target that the historical custom-rule
+  projection still includes creates expected-missing coverage, while deleting
+  the target/projection removes the opportunity; neither operation can create a
+  day opportunity for a trade-only rule or pool a `both` rule's target units;
+- changing a typed preset `n/a` from proven non-applicable to evaluation-
+  unavailable changes only the availability audit, never the reviewed-rate or
+  expected-opportunity denominator; an unknown free-text limitation cannot
+  change either state;
+- adding an exact preset evaluated-broken result to a target with a missing or
+  explicit-not-reviewed disposition changes only the evaluator candidate/rate;
+  review completion and trader-attributed wording remain unchanged;
+- adding a conflicting followed/broken trader disposition suppresses evaluator-
+  specific interpretation for that target, records the source conflict once
+  and cannot create two same-rule findings;
+- adding profitable trades before a late-day violation changes full-day outcome
+  context but leaves the evaluator-bounded post-violation cohort, financial
+  rank and affected P/L unchanged;
+- removing the typed affected-execution set from an otherwise identical broken
+  day rule preserves status/repetition evidence and full-day context but makes
+  financial consequence unavailable;
 - preserving raw cohort outcomes while shifting fixed style/direction/week mix
   reproduces the standardized consequence result; a direction reversal becomes
   composition-confounded and a material rate/median conflict becomes mixed;
@@ -3663,6 +3955,19 @@ one planted fixture:
   trade P/L measurement unchanged, increments only the confirmed-open count and
   adds the no-unrealized-P/L clause; later closure never rewrites the issued
   review;
+- adding an in-period position reduction to that still-open lifecycle increments
+  only the reduction-boundary count; neither the reduction nor a later closing
+  result can enter the already-issued period P/L;
+- changing only a displayed percentage to its equivalent count/denominator form
+  leaves every score and rank unchanged, while no rate template can omit the
+  underlying `x of y` facts;
+- moving the top two distinct lane candidates inside the five-point margin or
+  changing the leave-one-bucket winner changes certainty to `near_tie` without
+  changing deterministic selection; restoring stable separation permits the
+  dominant wording and no provider choice can upgrade it;
+- removing every closed trade from an otherwise upstream-eligible request makes
+  period P/L/win-rate unavailable and cannot promote reflections, missing rule
+  reviews or recordkeeping into a recurring candidate;
 - one authorized plan short-circuits provider selection only after normal
   activation/configuration/authorization and records `single_authorized_plan`;
 - a deterministic fallback is impossible after any scope, entitlement,
@@ -3839,6 +4144,23 @@ normalized to bounded codes before logging or persistence.
   under the same metric/version; otherwise mark follow-through unavailable.
 - **Raw improvement reverses after declared mix standardization:** emit mixed,
   not improved. Missing required strata makes the comparison unavailable.
+- **Rule outcome row is absent:** record `expected_review_missing` only for a
+  proven active applicable opportunity. Do not synthesize not-reviewed,
+  followed or broken. If applicability itself is unavailable, suppress that
+  target from rate denominators and expose the bounded availability reason.
+- **Preset evaluator reports `n/a`:** use only the typed local reason mapping.
+  Unknown or untyped reasons are evaluation-unavailable; never parse the
+  limitation text or send it to the provider.
+- **Preset evaluator has an exact result but no trader disposition:** retain an
+  evaluator-attributed candidate under its own coverage/rate; do not count it as
+  completed review. A conflicting saved followed/broken disposition instead
+  activates the existing status-only conflict boundary.
+- **Broken day rule lacks a typed affected-execution set:** retain its exact
+  status, repetition and full-day outcome context, but suppress financial-
+  consequence rank and after-violation wording.
+- **Eligible period has zero or sparse closed trades:** preserve the upstream
+  request decision, state exact unavailable/result/example boundaries and do
+  not manufacture a recurring finding from reflections or recordkeeping.
 
 - **No eligible friction:** use the engine-authorized mixed-result or measured-
   strength fallback when one exists. Say that no qualifying held-back pattern
@@ -3978,9 +4300,13 @@ plan must record it before that file is edited.
 - `src/modules/journal/server/trade-style/journal-trade-style-repository.ts`
 - `src/modules/journal/server/swing-notes/journal-swing-note-repository.ts`
 - `src/modules/journal/server/annotations/journal-rule-repository.ts`
+- `src/modules/journal/server/annotations/journal-preset-rule-evaluator.ts`
+- `src/modules/journal/server/annotations/journal-preset-rule-evaluator.test.ts`
+- `src/modules/journal/server/executions/journal-execution-repository.ts`
 - `src/modules/journal/server/round-trips/journal-round-trip-repository.ts`
 - `src/modules/help/ai-reviews-guides.ts` only for the owner-approved final
-  closed-trade/open-position and rule-evidence explanation;
+  closed-trade/open-lifecycle, rule-state/coverage and event-bounded rule-
+  evidence explanation;
 - `src/modules/platform/server/database/platform-migration-manifest.ts`
 - `src/modules/platform/server/privacy/platform-erasure-service.ts`
 - focused AI Review provider/fixture verification scripts already under
@@ -3996,9 +4322,11 @@ plan must record it before that file is edited.
 
 The listed Journal repositories may receive only bounded account-scoped batch-
 read methods for current linked style/Swing-note revisions, rule lifecycle and
-period-end round-trip state. Existing preset evaluator evidence is reused; no
-Journal writer, rule status, evaluator meaning or round-trip authority changes
-in this slice.
+period-end execution/round-trip state. The preset evaluator may add a backward-
+compatible typed availability reason and bounded affected-violation member
+projection without changing any followed/broken/`n/a` result, preset threshold
+or Journal writer. No rule status, evaluator meaning, execution/round-trip
+authority or stored Journal fact changes in this slice.
 
 No dashboard presentation, Trade Tracker editor, Journal fact writer, legacy
 V3 runtime, scheduler activation, hosted configuration or deployment file
@@ -4016,13 +4344,16 @@ bundled into engine code.
   preserve unversioned snapshots, make their RSI ranking-unavailable and do not
   fetch market data for a backfill.
 - Add engine contracts, prompt-safe rule/trade-style/Swing-note identity,
-  rule lifecycle/preset evidence, period-end open-position boundary, temporal
-  ownership, population-membership validation and exact measurement helpers.
+  rule lifecycle/preset evidence, explicit missing/not-reviewed/`n/a` state
+  normalization, event-bounded day-rule members, period-end open-position and
+  open-lifecycle-reduction boundaries, temporal ownership, population-
+  membership validation and exact measurement helpers.
 - Build normalization, style-homogeneous populations, denominators and
   candidate family generators.
 - Add adverse/beneficial net-contribution scoring, partial-money suppression,
   weakest-population confidence, exact outlier/mix/consequence comparability,
-  score explanations, penalties, overlap/diversity handling and lane rankings.
+  score explanations, penalties, overlap/diversity handling, lane rankings and
+  rank-separation/sensitivity certainty.
 - Add a count-only fixture harness with planted expected ranks.
 
 ### Slice B - provider shortlist and structured selections
@@ -4031,6 +4362,8 @@ bundled into engine code.
   context, with long-term Analyzer aggregates and bounded representative
   excerpts instead of bulk raw one-minute/five-minute observations.
 - Add server-owned fact, bridge and focus-question clause catalogs.
+- Add count-and-denominator rate templates, sparse/no-closed-trade forms and
+  dominance-calibrated certainty wording.
 - Build bounded section plans and at most six globally compatible complete
   review plans with frozen rendered output.
 - Enforce the whole-plan alternative quality gate and complete renderer-template
@@ -4894,6 +5227,81 @@ preference are provisional version-one calibration values. They must pass the
 sealed holdouts together; any post-calibration change creates a new engine
 version rather than a fixture-specific exception.
 
+## Twelfth adversarial plan QA pass - 2026-08-18
+
+This documentation-only pass challenged the engine against missing-but-
+applicable rule evidence, the current evaluator's overloaded `n/a` result,
+late-day rule violations, open lifecycles with position reductions, sparse
+periods, small-denominator language and ranking certainty. It inspected the
+current preset evaluator contract and planned data ownership but did not run or
+change the application, database, provider, runtime or test suite.
+
+Additional resolved findings:
+
+1. **An absent rule-result row could be silently treated as an explicit not-
+   reviewed status:** fixed with mutually exclusive followed, broken, explicit-
+   not-reviewed and expected-missing states for proven active applicable
+   opportunities.
+2. **The evaluator's `n/a` could mean either no applicable trade or missing
+   facts, while only free-text limitation described why:** fixed by requiring a
+   backward-compatible typed reason and mapping unknown/untyped cases to
+   evaluation-unavailable rather than parsing prose.
+3. **Reviewed adherence, completion coverage, recorded-disposition coverage and
+   broken prevalence could reuse the wrong denominator:** fixed with four
+   separate frozen member sets and renderer labels.
+4. **A low-review-coverage rule could show a dramatic reviewed-only rate as a
+   period-wide fact:** fixed by attaching reviewed and expected-applicable counts
+   and barring sparse reviewed subsets from clean-process/period-wide language.
+5. **All trades on a broken-rule day could be presented as the financial impact
+   even when the violation occurred late:** fixed by making full-day P/L outcome
+   context only and allowing money rank solely from a same-version typed
+   violation-member set.
+6. **A trigger or simple timestamp could be used to invent which later trades
+   were affected:** fixed by accepting only preset-declared violation members;
+   status-only rules retain process/repetition evidence without financial-
+   consequence wording.
+7. **A still-open trade with a position reduction could be partly counted now
+   and fully counted again after closure:** fixed by keeping the entire open
+   lifecycle outside closed-trade P/L, disclosing only exact open/reduced counts
+   and freezing them at the source snapshot.
+8. **An open-position count could sound like account exposure:** fixed by
+   prohibiting quantity, risk, unrealized-value or materiality inference and
+   giving the boundary no rank.
+9. **A percentage such as 67% could overstate a two-of-three observation:**
+   fixed by requiring the exact count/denominator beside every rate and leading
+   with counts below 20 opportunities.
+10. **A deterministic winner could be called the main problem despite a near
+    tie or leave-one-week rank reversal:** fixed with dominant/near-tie/only-
+    eligible rank certainty and superlatives reserved for a stable five-point
+    separation.
+11. **A sole calculable candidate could be mistaken for a uniquely important
+    behavior:** fixed by separating `only_eligible` from `dominant` and keeping
+    the provider unable to upgrade certainty.
+12. **An upstream-eligible no-trade or two-trade period could manufacture a
+    recurring lesson from reflections or recordkeeping:** fixed with exact
+    unavailable/example boundaries and unchanged family recurrence gates.
+13. **Validation and fixtures did not prove these boundaries:** fixed with new
+    rule-state, late-violation, open-reduction, rank-separation, sparse-period,
+    small-denominator and metamorphic cases.
+14. **The implementation allowlist omitted the sources needed to add typed
+    evaluator availability and reconstruct historical open-lifecycle
+    reductions:** fixed by explicitly adding the evaluator/test and bounded
+    execution repository read, without changing Journal facts or rule meaning.
+15. **Missing custom-rule reviews could not be classified safely because custom
+    rules do not use preset evaluator applicability:** fixed by reusing the exact
+    historical Trade Tracker day/trade projection, keeping `both` scopes
+    separate and forbidding a missing row from creating its own opportunity.
+16. **An exact preset evaluator result with no saved trader disposition could be
+    either lost or incorrectly counted as a completed review:** fixed with an
+    orthogonal evaluator state/rate, attributed evaluator-only findings and
+    same-rule clustering; a saved conflict still forces status-only handling.
+
+No unresolved critical design blocker remains after this pass. The new five-
+point rank-separation boundary joins the existing provisional calibration
+values and must pass the same sealed holdouts before activation. The main
+remaining uncertainty is empirical calibration and trader usefulness, not an
+undefined data or attribution contract.
+
 ## Completion boundary
 
 This redesign is complete only when:
@@ -4911,6 +5319,13 @@ This redesign is complete only when:
   produces the larger percentage;
 - every rule opportunity reconciles to the exact active lifecycle/version, and
   only identity-linked preset violation evidence can name a violating execution;
+- rule normalization keeps explicit not-reviewed, expected-missing, typed not-
+  applicable and evaluation-unavailable states distinct, and every adherence/
+  coverage measure uses its declared denominator;
+- preset evaluation remains an orthogonal attributed evidence axis, never
+  raises review completion and never duplicates the same rule/target finding;
+- custom rule opportunities reproduce the exact historical Trade Tracker
+  projection and keep day/trade units separate;
 - optional Analyzer/rule evidence passes fixed-stratum coverage-balance checks
   before it can support period-wide or financial-headline language;
 - request, attempt, dispatch and output share one immutable generation contract;
@@ -4941,6 +5356,9 @@ This redesign is complete only when:
 - `What held you back` identifies measurable affected behavior and impact;
 - financial wording preserves result/path/association boundaries and never
   presents overlapping cohort P/L as caused or additive loss;
+- whole-day rule P/L remains context-only; a day-rule financial association
+  requires the preset evaluator's exact bounded violation members and excludes
+  every earlier/unaffected trade;
 - behavioral money rank uses adverse/beneficial complete cohort net contribution
   rather than cherry-picked losing/winning members, and partial covered-subset
   money contributes no version-one score;
@@ -4955,6 +5373,8 @@ This redesign is complete only when:
 - every material composition shift passes the fixed-stratum standardized
   sensitivity, confidence uses its weakest required population and outlier
   resistance reproduces the declared leave-one-unit/bucket result;
+- visible certainty reflects exact rank separation and sensitivity, so a near
+  tie or sole eligible candidate cannot be called the exclusive main finding;
 - improvement exposes a materially adverse latest-sufficient-bucket reversal
   without allowing a sparse or one-market-date partial week to manufacture the
   verdict;
@@ -5008,6 +5428,8 @@ This redesign is complete only when:
   and meets the accepted peak-memory, database-growth and backup-size bounds;
 - every activatable finding/section/attribution/coverage combination has an
   explicit safe renderer template and no generic prose fallback;
+- every visible rate includes its count and denominator, with small samples led
+  by counts rather than an isolated percentage;
 - existing v2 and both v3 generation sources reopen through one customer read
   path without changing old output;
 - every provider-selectable monthly plan and repeated live selection retains the
@@ -5015,7 +5437,8 @@ This redesign is complete only when:
 - the opening reports period activity/result first and the first next-period
   question targets the selected actionable held-back issue when one exists;
 - the opening explicitly reports closed-trade P/L, the coverage boundary states
-  the exact count of confirmed period-end open positions without unrealized P/L,
-  and rule-bound future questions require the rule to remain trackable;
+  the exact count of confirmed period-end open positions and those with in-
+  period reductions without partial/unrealized P/L or exposure inference, and
+  rule-bound future questions require the rule to remain trackable;
 - the saved review reopens through the normal customer read path;
 - the owner judges the resulting review materially useful to a trader.

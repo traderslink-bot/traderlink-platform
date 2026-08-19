@@ -28,6 +28,17 @@ delegated the full deterministic redesign recorded in the
   process evidence.
 - Review P/L is explicitly the result of trades closed in the period; confirmed
   positions still open at period end are counted without guessed unrealized P/L.
+- Missing rule rows, explicit not-reviewed statuses and evaluator not-applicable/
+  unavailable results remain distinct and use separate denominators.
+- Exact preset evaluation is attributed separately from the trader's saved rule
+  disposition and never counted as a completed review.
+- Whole-day P/L is context for a broken day rule, not the financial result of a
+  late violation; only exact evaluator-bounded violation members can support an
+  after-break association.
+- Every visible rate retains its count and denominator, and a near-tied ranking
+  cannot be described as the one exclusive main problem.
+- Still-open lifecycles remain outside closed-trade P/L even when they had an
+  in-period position reduction.
 
 ## Progress
 
@@ -109,6 +120,12 @@ four actually issued weekly reviews plus all 420 exact-month trades.
   median results, unavailable exposure normalization, one-day recency reversal,
   ignored exceptional context, repeated-focus starvation and closed-trade
   results that omit the period-end open-position boundary.
+- [x] Complete the twelfth adversarial QA pass against missing-versus-explicit
+  rule results, overloaded evaluator `n/a`, wrong rule-rate denominators, late-
+  day violation P/L attribution, open-lifecycle partial-result double counting,
+  evaluator-only evidence mislabelled as completed review, custom-scope
+  applicability, small-denominator percentages, near-tie certainty and sparse/
+  no-trade output.
 - [x] Implement corrected Wilder RSI 14 calculation and version new saved RSI
   evidence without rewriting legacy Analyzer snapshots.
 - [ ] Run the focused RSI reference-vector and compatibility checks at the next
@@ -153,15 +170,31 @@ paused/retired rules cannot create a future target. The opening is explicitly a
 closed-trade result, with the exact confirmed period-end open-position count and
 no invented unrealized P/L in the single coverage sentence.
 
+The twelfth-pass design now treats followed, broken, explicit not-reviewed,
+missing expected review, not-applicable and evaluation-unavailable as separate
+states. Missing custom-rule results use the exact historical Trade Tracker
+day/trade projection; they do not create their own opportunity. Exact preset
+evaluation without a saved disposition remains separately attributed and does
+not raise review completion. Full-day P/L cannot be ranked as money after a
+late-day rule break;
+only the evaluator's exact violation members can support that association.
+Open trades with position reductions remain outside closed-trade P/L until the
+lifecycle closes, and their count cannot masquerade as exposure. Visible rates
+lead with counts for small samples, while a near tie or sole eligible finding
+starts directly with the exact behavior and impact instead of claiming one main
+cause. Sparse/no-closed-trade periods retain exact unavailable or example-only
+output instead of turning reflections into a recurring pattern.
+
 Help Center check: the active Daily Trade Tracker and Trade Analyzer guides
 describe indicators generally but do not state an RSI formula or legacy-value
 promise, so this correctness change does not require a guide update.
 
-The eleventh-pass review meaning does require a later owner-approved AI Reviews
-guide correction when implemented: it must explain closed-trade P/L, the
-period-end open-position/no-unrealized-P/L boundary and the difference between a
-recorded rule status and exact preset violation-event evidence. No Help copy was
-changed during this documentation-only QA pass.
+The eleventh/twelfth-pass review meaning does require a later owner-approved AI
+Reviews guide correction when implemented: it must explain closed-trade P/L,
+still-open lifecycles including in-period reductions, the no-unrealized-P/L
+boundary, rule review/missing coverage and the difference between a recorded
+rule status, full-day outcome context and exact preset violation-event evidence.
+No Help copy was changed during this documentation-only QA pass.
 
 Once the insight engine is active, TraderLink calculates and renders the
 complete review locally from all exact facts. If the full frozen selection
