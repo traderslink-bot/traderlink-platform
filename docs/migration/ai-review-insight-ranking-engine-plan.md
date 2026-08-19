@@ -4419,6 +4419,18 @@ Slice A can be called complete.
 
 ### Slice B - provider shortlist and structured selections
 
+Implementation status on 2026-08-19: the server-owned fact/focus renderer,
+bounded complete-plan catalog, whole-plan alternative quality gate, canonical
+public package, request-local private mapping, recursive package-key privacy
+checks, strict three-field selection resolver and hardened host-neutral OpenAI
+Responses selector are implemented but inactive. The selector pins the official
+endpoint and Responses family, verifies the exact outbound body in a one-shot
+fetch boundary and explicitly disables storage, telemetry, SDK retries, tools,
+repair, continuation and truncation. Immutable compressed v3 persistence,
+dispatch/recovery fencing, generation-contract migration, deterministic
+issuance/fallback, v2 compatibility hardening, captured-request execution and
+dual reads remain before this slice can be activated or provider-tested.
+
 - Serialize the balanced insight brief ahead of permitted non-Analyzer source
   context, with long-term Analyzer aggregates and bounded representative
   excerpts instead of bulk raw one-minute/five-minute observations.

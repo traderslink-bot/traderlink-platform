@@ -574,6 +574,7 @@ function behaviorSource(input: Readonly<{
   lane: CoachAiReviewBehaviorCandidateSource["lane"];
   polarity: CoachAiReviewBehaviorCandidateSource["polarity"];
   subjectRef: string;
+  subjectLabel?: string | null;
   tradeStylePopulation: CoachAiReviewTradeStylePopulation;
   populationDefinition: string;
   opportunityDefinition: string | null;
@@ -615,6 +616,7 @@ function behaviorSource(input: Readonly<{
     lane: input.lane,
     polarity: input.polarity,
     subjectRef: input.subjectRef,
+    subjectLabel: input.subjectLabel ?? null,
     observationUnit: input.family === "favorable_move_outcome" ||
         input.family === "entry_evidence" || input.family === "exit_sequence"
       ? "analyzer_covered_trade" as const
@@ -1125,6 +1127,7 @@ function addRuleCandidates(
     values.push(...buildCoachAiReviewNamedRuleCandidates({
       ruleRef: bundle.rule.ruleRef,
       ruleVersionRef: bundle.rule.ruleVersionRef,
+      ruleTitle: bundle.rule.title,
       targetKind: bundle.targetKind,
       presetCoreRule: bundle.rule.sourceKind === "template",
       cadence: source.period.cadence,
@@ -1156,6 +1159,7 @@ function addRuleCandidates(
         cadence: source.period.cadence,
         family: "rule_trend",
         subjectRef: bundle.rule.ruleVersionRef,
+        subjectLabel: bundle.rule.title,
         trendKind,
         improvementDirection: "lower_is_better",
         observationUnit: "rule_review_opportunity",
@@ -1225,6 +1229,7 @@ function addRuleSequenceCandidate(
     lane: "friction",
     polarity: "negative",
     subjectRef: `preset_sequence:${templateKey}:${bundle.rule.ruleVersionRef}`,
+    subjectLabel: bundle.rule.title,
     tradeStylePopulation: "objective_same_market_date",
     populationDefinition: "Trades inside exact applicable preset-rule targets.",
     opportunityDefinition: "Trades reached by the same deterministic preset-rule version.",
@@ -1261,6 +1266,7 @@ function addRuleResultContrasts(
     lane: "contrast",
     polarity: "mixed",
     subjectRef: `contrast:profitable_broken:${bundle.rule.ruleVersionRef}`,
+    subjectLabel: bundle.rule.title,
     tradeStylePopulation: "unknown_or_mixed",
     populationDefinition: "Exact trade opportunities for one rule version.",
     opportunityDefinition: "Active, historically applicable trade-rule targets.",
@@ -1286,6 +1292,7 @@ function addRuleResultContrasts(
     lane: "contrast",
     polarity: "mixed",
     subjectRef: `contrast:losing_followed:${bundle.rule.ruleVersionRef}`,
+    subjectLabel: bundle.rule.title,
     tradeStylePopulation: "unknown_or_mixed",
     populationDefinition: "Exact trade opportunities for one rule version.",
     opportunityDefinition: "Active, historically applicable trade-rule targets.",
@@ -1336,6 +1343,7 @@ function addSegmentCandidate(
     lane: negative ? "friction" : "contrast",
     polarity: negative ? "negative" : "mixed",
     subjectRef: `segment:${input.dimension}:${input.group}`,
+    subjectLabel: `${input.dimension.replaceAll("_", " ")}: ${input.groupLabel ?? input.group}`,
     tradeStylePopulation: input.tradeStylePopulation,
     populationDefinition: `All eligible trades for the fixed ${input.dimension} dimension.`,
     opportunityDefinition: null,
@@ -1494,6 +1502,7 @@ function addConcentrationCandidates(
       lane: input.lane,
       polarity: input.polarity,
       subjectRef: `concentration:${input.subject}`,
+      subjectLabel: input.subject.replaceAll("_", " "),
       tradeStylePopulation: "all_closed_trades",
       populationDefinition: "All money-complete closed trades in the period.",
       opportunityDefinition: null,
@@ -1541,6 +1550,7 @@ function addConcentrationCandidates(
       lane: input.lane,
       polarity: input.polarity,
       subjectRef: `concentration:${input.subject}:${input.day.marketDate}`,
+      subjectLabel: `${input.subject.replaceAll("_", " ")} ${input.day.marketDate}`,
       tradeStylePopulation: "all_closed_trades",
       populationDefinition: "All money-complete closed trades in the period.",
       opportunityDefinition: null,

@@ -218,6 +218,7 @@ export type CoachAiReviewInsightCandidate = Readonly<{
   classification: CoachAiReviewCandidateClassification;
   polarity: "positive" | "negative" | "mixed" | "context";
   subjectRef: string;
+  subjectLabel: string | null;
   observationUnit: CoachAiReviewObservationUnit;
   resultOwnership: CoachAiReviewResultOwnership;
   populationDefinition: string;

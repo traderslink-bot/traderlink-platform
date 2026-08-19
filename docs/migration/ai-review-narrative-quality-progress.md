@@ -364,6 +364,73 @@ Still required before Slice A is complete:
 Help Center check: this checkpoint changes no visible workflow, so no guide
 update is required yet.
 
+## Deterministic insight-engine implementation checkpoint 5 - 2026-08-19
+
+The deterministic factual renderer, complete-plan package and hardened provider
+selector are now implemented. They remain inactive and do not change existing
+v2 requests, issued reviews or the customer page.
+
+Implemented in this checkpoint:
+
+- exact closed-trade result sentences lead every review and show closed-trade/
+  trading-day counts, net P/L, winner/loser/flat counts and count-led win rate;
+- server-owned templates render one measured improvement or maintained
+  strength, one residual friction or mixed-result boundary, eligible focus
+  follow-through and up to three distinct retrospective questions;
+- financial findings state the affected count/denominator, exact cohort net
+  P/L, complete-money coverage and gross losing/winning P/L share when that
+  measurement is eligible, followed by a deterministic representative trade or
+  day when available;
+- missing comparisons, insufficient later focus evidence, no qualifying
+  friction and incomplete money/open-position coverage use explicit factual
+  boundaries rather than invented advice or praise for data entry;
+- globally compatible complete reviews preserve one decision-critical spine,
+  prohibit duplicate factual jobs, require a measured strength when eligible,
+  cap alternatives at six and retain only alternatives within the whole-plan
+  quality-loss gate;
+- the provider package exposes only the fully rendered authorized choices,
+  strict section facts and bounded selection rationales. Private source/plan
+  references remain in a request-local mapping, and recursive exact-key plus
+  forbidden-reference checks run before serialization;
+- the provider returns only the exact contract version, 22-character package
+  key and one request-local choice key. Cross-package replay, unknown fields and
+  unauthorized choices fail closed; and
+- the new host-neutral selector explicitly uses the OpenAI Responses API at the
+  official endpoint with a strict structured schema, one non-streaming call,
+  `store: false`, telemetry disabled, `maxRetries: 0`, a frozen timeout,
+  minimal reasoning, default service tier, disabled truncation, no tools,
+  repair or continuation and a 512-token output ceiling. A one-shot fetch gate
+  checks the exact request body before network I/O, forces redirect errors and
+  retains only a bounded canonical request digest/byte count. Provider failures
+  expose a private transport-started boundary without retaining a raw body or
+  error cause.
+
+Verification at this checkpoint:
+
+- focused ESLint passes for the renderer, contracts, candidate/source changes,
+  provider package and Responses selector;
+- a focused non-incremental TypeScript project excluding shared generated
+  `.next` state passes;
+- official OpenAI documentation and the installed provider source confirm the
+  Responses/Structured Outputs boundary and that the installed Responses
+  provider defaults storage to true unless `store: false` is explicit; and
+- no test suite, captured transport execution, provider call, database write,
+  browser change, request issuance or saved-review mutation was performed.
+
+Still required before provider testing resumes:
+
+- verified compressed immutable v3 persistence, dispatch leases/recovery,
+  generation-contract fencing, deterministic fallback and dual v2/v3 reads;
+- harden or make unreachable both legacy free-prose v2 provider adapters;
+- execute the captured-request verifier at the permitted verification boundary;
+  and
+- finish weekly focus metadata, then run the real four-week-plus-month
+  acceptance flow.
+
+Help Center check: this checkpoint is inactive server-only work, so no guide
+update is required yet. The already identified owner-approved AI Reviews guide
+change remains part of the final activation boundary.
+
 The ninth-pass design retains the eighth pass's single-package/fallback and
 Railway boundaries while tightening the engine that decides what deserves to be
 shown. It now keeps Day and Swing populations explicit, attributes results and

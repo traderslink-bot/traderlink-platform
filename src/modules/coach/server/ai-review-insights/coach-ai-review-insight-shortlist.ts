@@ -121,6 +121,7 @@ function rankTieKey(candidate: CoachAiReviewInsightCandidate): string {
     candidate.family,
     candidate.classification,
     candidate.polarity,
+    candidate.subjectLabel,
     candidate.populationDefinition,
     candidate.opportunityDefinition,
     candidate.cohortDefinition,
@@ -256,7 +257,9 @@ function diversifiedAlternatives(
   const alternatives: CoachAiReviewShortlistEntry[] = [];
   const distinct = ordered.filter((entry) => entry.candidate.findingRef !== selected.candidate.findingRef &&
     entry.actionTargetKey !== selected.actionTargetKey &&
-    entry.evidenceClusterRef !== selected.evidenceClusterRef);
+    entry.evidenceClusterRef !== selected.evidenceClusterRef &&
+    selected.effectiveScore.postPenaltyScore - entry.effectiveScore.postPenaltyScore <= 10 &&
+    selected.confidence - entry.confidence <= 5);
   alternatives.push(...distinct.slice(0, 2));
   if (alternatives.length < 2) {
     const fallback = ordered.find((entry) =>

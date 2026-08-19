@@ -261,7 +261,7 @@ export function buildCoachAiReviewPeriodOutcomeCandidate(input: Readonly<{
       attributionKind: "period_result",
       displayLiteral: resultEligibleRefs.length === 0
         ? null
-        : `${winRefs.length} of ${resultEligibleRefs.length}`,
+        : formatCoachAiReviewRateLiteral(winRefs.length, resultEligibleRefs.length),
     }),
     createCoachAiReviewMeasurement({
       metricName: "loss_rate",
@@ -277,7 +277,7 @@ export function buildCoachAiReviewPeriodOutcomeCandidate(input: Readonly<{
       attributionKind: "period_result",
       displayLiteral: resultEligibleRefs.length === 0
         ? null
-        : `${lossRefs.length} of ${resultEligibleRefs.length}`,
+        : formatCoachAiReviewRateLiteral(lossRefs.length, resultEligibleRefs.length),
     }),
     createCoachAiReviewMeasurement({
       metricName: "flat_count",
@@ -459,6 +459,7 @@ export function buildCoachAiReviewPeriodOutcomeCandidate(input: Readonly<{
           ? "negative"
           : "context",
     subjectRef: `period_${input.periodStartDate}_${input.periodEndDate}`,
+    subjectLabel: null,
     observationUnit: "trade",
     resultOwnership: "trade_close_market_date",
     populationDefinition: "Trades authoritatively closed inside the review period.",
@@ -501,6 +502,7 @@ export function buildCoachAiReviewPeriodOutcomeCandidate(input: Readonly<{
 export type CoachAiReviewRuleCandidateSource = Readonly<{
   ruleRef: string;
   ruleVersionRef: string;
+  ruleTitle: string;
   targetKind: "trading_day" | "round_trip";
   presetCoreRule: boolean;
   cadence: CoachAiReviewCadence;
@@ -851,6 +853,7 @@ function ruleCandidate(input: Readonly<{
     classification: "recurring",
     polarity: input.polarity,
     subjectRef: source.ruleRef,
+    subjectLabel: source.ruleTitle,
     observationUnit: "rule_review_opportunity",
     resultOwnership: "rule_target",
     populationDefinition: "Exact historical rule targets for the same rule version and scope.",
@@ -1013,6 +1016,7 @@ export type CoachAiReviewBehaviorCandidateSource = Readonly<{
   lane: "friction" | "strength" | "contrast";
   polarity: "negative" | "positive" | "mixed";
   subjectRef: string;
+  subjectLabel?: string | null;
   observationUnit: CoachAiReviewObservationUnit;
   resultOwnership: CoachAiReviewResultOwnership;
   tradeStylePopulation: CoachAiReviewTradeStylePopulation;
@@ -1408,6 +1412,7 @@ function buildCoachAiReviewBehaviorCandidateCore(
           : "recurring",
     polarity: source.polarity,
     subjectRef: source.subjectRef,
+    subjectLabel: source.subjectLabel ?? null,
     observationUnit: source.observationUnit,
     resultOwnership: source.resultOwnership,
     populationDefinition: source.populationDefinition,
@@ -1509,6 +1514,7 @@ export type CoachAiReviewRateTrendCandidateSource = Readonly<{
   cadence: CoachAiReviewCadence;
   family: CoachAiReviewInsightFamily;
   subjectRef: string;
+  subjectLabel?: string | null;
   trendKind: "improvement" | "deterioration";
   improvementDirection: "lower_is_better" | "higher_is_better";
   observationUnit: CoachAiReviewObservationUnit;
@@ -1862,6 +1868,7 @@ function buildCoachAiReviewRateTrendCandidateCore(
     classification: "trend",
     polarity: source.trendKind === "improvement" ? "positive" : "negative",
     subjectRef: source.subjectRef,
+    subjectLabel: source.subjectLabel ?? null,
     observationUnit: source.observationUnit,
     resultOwnership: source.resultOwnership,
     populationDefinition: source.populationDefinition,
