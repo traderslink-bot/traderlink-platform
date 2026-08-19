@@ -186,6 +186,7 @@ WHERE coach_ai_review_insight_provider_dispatch_id = ?
     const dispatch = this.database.prepare(`UPDATE
   coach_ai_review_insight_provider_dispatches
 SET recovery_epoch = ?, lease_generation = lease_generation + 1,
+  retired_fencing_token_sha256 = fencing_token_sha256,
   fencing_token_sha256 = ?, lease_state = 'selection_terminal',
   selection_terminal_at_utc = ?,
   usage_settlement_state = 'unknown_after_dispatch', failure_code = ?,

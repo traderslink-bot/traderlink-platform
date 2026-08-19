@@ -26,6 +26,7 @@ type DispatchRow = Readonly<{
   recovery_epoch: string;
   lease_generation: number;
   fencing_token_sha256: string;
+  retired_fencing_token_sha256: string | null;
   lease_acquired_at_utc: string;
   lease_expires_at_utc: string;
   transport_may_have_started_at_utc: string | null;
@@ -52,6 +53,7 @@ export type CoachAiReviewInsightDispatchRecord = Readonly<{
   attemptId: string;
   recoveryEpoch: string;
   leaseGeneration: number;
+  hasRetiredFencingToken: boolean;
   leaseAcquiredAtUtc: string;
   leaseExpiresAtUtc: string;
   transportMayHaveStartedAtUtc: string | null;
@@ -84,6 +86,7 @@ const DISPATCH_SELECT = `SELECT
   coach_ai_review_insight_provider_dispatch_id,
   coach_ai_review_period_request_id, coach_ai_review_generation_attempt_id,
   recovery_epoch, lease_generation, fencing_token_sha256,
+  retired_fencing_token_sha256,
   lease_acquired_at_utc, lease_expires_at_utc,
   transport_may_have_started_at_utc, selection_terminal_at_utc,
   request_body_digest_sha256, request_body_byte_length,
@@ -129,6 +132,7 @@ function record(row: DispatchRow): CoachAiReviewInsightDispatchRecord {
     attemptId: row.coach_ai_review_generation_attempt_id,
     recoveryEpoch: row.recovery_epoch,
     leaseGeneration: row.lease_generation,
+    hasRetiredFencingToken: row.retired_fencing_token_sha256 !== null,
     leaseAcquiredAtUtc: row.lease_acquired_at_utc,
     leaseExpiresAtUtc: row.lease_expires_at_utc,
     transportMayHaveStartedAtUtc: row.transport_may_have_started_at_utc,
@@ -289,12 +293,13 @@ WHERE coach_ai_review_period_request_id = ?`).get(requestId)?.maximum ?? 0;
   coach_ai_review_insight_provider_dispatch_id,
   coach_ai_review_period_request_id, coach_ai_review_generation_attempt_id,
   user_id, workspace_id, account_id, recovery_epoch, lease_generation,
-  fencing_token_sha256, lease_acquired_at_utc, lease_expires_at_utc,
+  fencing_token_sha256, retired_fencing_token_sha256,
+  lease_acquired_at_utc, lease_expires_at_utc,
   transport_may_have_started_at_utc, selection_terminal_at_utc,
   request_body_digest_sha256, request_body_byte_length,
   provider_response_id, lease_state, usage_settlement_state, failure_code,
   created_at_utc, updated_at_utc
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL,
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, NULL, NULL, NULL, NULL,
   NULL, 'leased', 'not_dispatched', NULL, ?, ?)`).run(
         dispatchId,
         requestId,
@@ -344,7 +349,12 @@ WHERE coach_ai_review_insight_provider_dispatch_id = ?
   AND user_id = ? AND workspace_id = ? AND account_id = ?
   AND recovery_epoch = ? AND lease_generation = ?
   AND fencing_token_sha256 = ? AND lease_state = 'leased'
-  AND lease_expires_at_utc > ?`).run(
+  AND lease_expires_at_utc > ?
+  AND EXISTS (
+    SELECT 1 FROM coach_ai_review_budget_controls control
+    WHERE control.control_key = 'ai_reviews'
+      AND control.provider_calls_blocked = 0
+  )`).run(
         timestamp,
         audit.requestBodyDigestSha256,
         audit.requestBodyByteLength,
@@ -489,6 +499,131 @@ WHERE coach_ai_review_generation_attempt_id = ?
         { table: "coach_ai_review_generation_attempts_v2" },
       );
       return dispatch;
+    });
+  }
+
+  settleWithRecordedReceipt(
+    scope: WorkspaceAccessScope,
+    fence: CoachAiReviewInsightDispatchFence,
+    providerResponseId: string | null,
+    failureCode: string | null,
+    now = new Date(),
+  ): CoachAiReviewInsightDispatchRecord {
+    if ((providerResponseId !== null &&
+          !/^[A-Za-z0-9_-]{1,160}$/u.test(providerResponseId)) ||
+        (providerResponseId === null && failureCode === null) ||
+        (failureCode !== null && !FAILURE_CODE_PATTERN.test(failureCode))) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+        field: "receiptSettlement",
+      });
+    }
+    return this.transition(scope, fence, now, (timestamp, tokenDigest) =>
+      this.database.prepare(`UPDATE coach_ai_review_insight_provider_dispatches
+SET lease_state = 'settled', selection_terminal_at_utc = ?,
+  provider_response_id = ?, usage_settlement_state = 'receipt_recorded',
+  failure_code = ?, updated_at_utc = ?
+WHERE coach_ai_review_insight_provider_dispatch_id = ?
+  AND coach_ai_review_period_request_id = ?
+  AND coach_ai_review_generation_attempt_id = ?
+  AND user_id = ? AND workspace_id = ? AND account_id = ?
+  AND recovery_epoch = ? AND lease_generation = ?
+  AND fencing_token_sha256 = ? AND lease_state = 'transport_authorized'`).run(
+        timestamp,
+        providerResponseId,
+        failureCode,
+        timestamp,
+        fence.dispatchId,
+        fence.requestId,
+        fence.attemptId,
+        scope.userId,
+        scope.workspaceId,
+        activeAccountId(scope),
+        fence.recoveryEpoch,
+        fence.leaseGeneration,
+        tokenDigest,
+      ));
+  }
+
+  reconcileLateReceipt(
+    scope: WorkspaceAccessScope,
+    fence: CoachAiReviewInsightDispatchFence,
+    providerResponseId: string,
+    now = new Date(),
+  ): CoachAiReviewInsightDispatchRecord {
+    if (!/^[A-Za-z0-9_-]{1,160}$/u.test(providerResponseId)) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+        field: "providerResponseId",
+      });
+    }
+    assertCanonicalUuidV4(fence.dispatchId, "dispatchId");
+    assertCanonicalUuidV4(fence.requestId, "requestId");
+    assertCanonicalUuidV4(fence.attemptId, "attemptId");
+    if (!/^[0-9a-f]{64}$/u.test(fence.recoveryEpoch) ||
+        !Number.isSafeInteger(fence.leaseGeneration) ||
+        fence.leaseGeneration < 1 || fence.fencingToken.length < 32) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+        field: "dispatchFence",
+      });
+    }
+    return this.transaction(() => {
+      const current = this.database.prepare<[
+        string, string, string, string
+      ], DispatchRow>(`${DISPATCH_SELECT}
+WHERE coach_ai_review_insight_provider_dispatch_id = ? AND user_id = ?
+  AND workspace_id = ? AND account_id = ?`).get(
+          fence.dispatchId,
+          scope.userId,
+          scope.workspaceId,
+          activeAccountId(scope),
+        );
+      const tokenDigest = fencingTokenDigest(fence.fencingToken);
+      const sameFence = current?.recovery_epoch === fence.recoveryEpoch &&
+        current.lease_generation === fence.leaseGeneration &&
+        current.fencing_token_sha256 === tokenDigest;
+      const retiredFence = current?.lease_generation === fence.leaseGeneration + 1 &&
+        current.retired_fencing_token_sha256 === tokenDigest;
+      if (!current || current.coach_ai_review_period_request_id !== fence.requestId ||
+          current.coach_ai_review_generation_attempt_id !== fence.attemptId ||
+          (!sameFence && !retiredFence)) {
+        platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
+      }
+      if (current.lease_state === "settled" &&
+          current.usage_settlement_state === "reconciled_receipt" &&
+          current.provider_response_id === providerResponseId) {
+        return record(current);
+      }
+      const timestamp = monotonicTimestamp(now, current.updated_at_utc);
+      const result = this.database.prepare(`UPDATE
+  coach_ai_review_insight_provider_dispatches
+SET lease_state = 'settled', usage_settlement_state = 'reconciled_receipt',
+  provider_response_id = COALESCE(provider_response_id, ?), updated_at_utc = ?
+WHERE coach_ai_review_insight_provider_dispatch_id = ?
+  AND coach_ai_review_period_request_id = ?
+  AND coach_ai_review_generation_attempt_id = ?
+  AND user_id = ? AND workspace_id = ? AND account_id = ?
+  AND lease_state = 'selection_terminal'
+  AND usage_settlement_state = 'unknown_after_dispatch'
+  AND (provider_response_id IS NULL OR provider_response_id = ?)
+  AND EXISTS (
+    SELECT 1 FROM coach_ai_review_generation_attempt_receipts_v2 receipt
+    WHERE receipt.coach_ai_review_generation_attempt_id = ?
+  )`).run(
+        providerResponseId,
+        timestamp,
+        fence.dispatchId,
+        fence.requestId,
+        fence.attemptId,
+        scope.userId,
+        scope.workspaceId,
+        activeAccountId(scope),
+        providerResponseId,
+        fence.attemptId,
+      );
+      if (result.changes !== 1) platformFailure(
+        "TRADERLINK_PLATFORM_INTEGRITY_FAILED",
+        { table: "coach_ai_review_insight_provider_dispatches" },
+      );
+      return this.read(scope, fence.dispatchId);
     });
   }
 

@@ -5,12 +5,12 @@
 Design and twelve implementation-readiness QA passes are complete under the
 owner's delegated product authority on 2026-08-18. The RSI correctness
 prerequisite is implemented with verification pending. Insight-engine
-implementation is now underway. Six inactive server-only checkpoints now cover
+implementation is now underway. Seven inactive server-only checkpoints now cover
 versioned evidence contracts, exact measurements, normalized candidates,
 lane ranking, shortlist stability, factual rendering, whole-plan selection,
-compressed immutable snapshot persistence and fenced dispatch/startup recovery
-primitives. They are not connected to customer request issuance or activated
-provider generation yet. The owner does
+compressed immutable snapshot persistence, fenced dispatch/startup recovery and
+atomic v3 issuance/fallback primitives. They are not connected to customer
+request issuance or activated provider generation yet. The owner does
 not need to approve individual formulas or weight calculations, but
 the completed engine and its generated reviews remain subject to owner
 product-quality review.

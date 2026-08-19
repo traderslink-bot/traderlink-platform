@@ -183,6 +183,8 @@ CREATE TABLE coach_ai_review_insight_provider_dispatches (
   ),
   lease_generation INTEGER NOT NULL CHECK (lease_generation >= 1),
   fencing_token_sha256 TEXT NOT NULL ${digestCheck("fencing_token_sha256")},
+  retired_fencing_token_sha256 TEXT
+    ${digestCheck("retired_fencing_token_sha256", true)},
   lease_acquired_at_utc TEXT NOT NULL ${utcCheck("lease_acquired_at_utc")},
   lease_expires_at_utc TEXT NOT NULL ${utcCheck("lease_expires_at_utc")},
   transport_may_have_started_at_utc TEXT
@@ -220,6 +222,13 @@ CREATE TABLE coach_ai_review_insight_provider_dispatches (
       AND request_body_digest_sha256 IS NULL AND request_body_byte_length IS NULL)
     OR (transport_may_have_started_at_utc IS NOT NULL
       AND request_body_digest_sha256 IS NOT NULL AND request_body_byte_length IS NOT NULL)),
+  CHECK (retired_fencing_token_sha256 IS NULL OR (
+    transport_may_have_started_at_utc IS NOT NULL
+    AND lease_state IN ('selection_terminal', 'settled')
+    AND usage_settlement_state IN (
+      'unknown_after_dispatch', 'reconciled_no_usage', 'reconciled_receipt'
+    )
+  )),
   CHECK ((lease_state = 'leased'
       AND transport_may_have_started_at_utc IS NULL
       AND selection_terminal_at_utc IS NULL
@@ -254,6 +263,10 @@ CREATE TABLE coach_ai_review_insight_provider_dispatches (
 CREATE UNIQUE INDEX coach_ai_review_insight_dispatches_one_active
 ON coach_ai_review_insight_provider_dispatches(coach_ai_review_period_request_id)
 WHERE lease_state IN ('leased', 'transport_authorized');
+
+CREATE UNIQUE INDEX coach_ai_review_insight_dispatches_provider_response
+ON coach_ai_review_insight_provider_dispatches(provider_response_id)
+WHERE provider_response_id IS NOT NULL;
 
 CREATE INDEX coach_ai_review_insight_dispatches_recovery
 ON coach_ai_review_insight_provider_dispatches(
@@ -367,6 +380,13 @@ CREATE TABLE coach_ai_review_insight_selection_audits (
   ),
   structured_selection_digest_sha256 TEXT
     ${digestCheck("structured_selection_digest_sha256", true)},
+  focus_tracking_json TEXT CHECK (
+    focus_tracking_json IS NULL OR (
+      json_valid(focus_tracking_json) AND json_type(focus_tracking_json) = 'array'
+    )
+  ),
+  focus_tracking_digest_sha256 TEXT
+    ${digestCheck("focus_tracking_digest_sha256", true)},
   source_digest_sha256 TEXT NOT NULL ${digestCheck("source_digest_sha256")},
   shortlist_digest_sha256 TEXT NOT NULL ${digestCheck("shortlist_digest_sha256")},
   catalog_digest_sha256 TEXT NOT NULL ${digestCheck("catalog_digest_sha256")},
@@ -382,6 +402,8 @@ CREATE TABLE coach_ai_review_insight_selection_audits (
   recorded_at_utc TEXT NOT NULL ${utcCheck("recorded_at_utc")},
   CHECK ((structured_selection_json IS NULL AND structured_selection_digest_sha256 IS NULL)
     OR (structured_selection_json IS NOT NULL AND structured_selection_digest_sha256 IS NOT NULL)),
+  CHECK ((focus_tracking_json IS NULL AND focus_tracking_digest_sha256 IS NULL)
+    OR (focus_tracking_json IS NOT NULL AND focus_tracking_digest_sha256 IS NOT NULL)),
   CHECK ((selection_source = 'provider_selected'
       AND coach_ai_review_generation_attempt_id IS NOT NULL
       AND coach_ai_review_insight_provider_dispatch_id IS NOT NULL
@@ -408,10 +430,12 @@ CREATE TABLE coach_ai_review_insight_selection_audits (
   CHECK ((validation_state = 'accepted'
       AND failure_code IS NULL AND coach_ai_issued_review_id IS NOT NULL
       AND review_plan_ref IS NOT NULL AND rendered_output_digest_sha256 IS NOT NULL
+      AND focus_tracking_json IS NOT NULL
       AND (selection_source = 'deterministic_default'
         OR (provider_choice_key IS NOT NULL AND structured_selection_json IS NOT NULL)))
     OR (validation_state = 'rejected'
-      AND failure_code IS NOT NULL AND coach_ai_issued_review_id IS NULL)),
+      AND failure_code IS NOT NULL AND coach_ai_issued_review_id IS NULL
+      AND focus_tracking_json IS NULL)),
   FOREIGN KEY (coach_ai_review_period_request_id)
     REFERENCES coach_ai_review_period_requests_v2(coach_ai_review_period_request_id)
     ON UPDATE RESTRICT ON DELETE RESTRICT,
@@ -436,6 +460,11 @@ CREATE TABLE coach_ai_review_insight_selection_audits (
 CREATE UNIQUE INDEX coach_ai_review_insight_selection_one_accepted
 ON coach_ai_review_insight_selection_audits(coach_ai_review_period_request_id)
 WHERE validation_state = 'accepted';
+
+CREATE UNIQUE INDEX coach_ai_review_insight_selection_one_per_attempt
+ON coach_ai_review_insight_selection_audits(
+  coach_ai_review_generation_attempt_id
+) WHERE coach_ai_review_generation_attempt_id IS NOT NULL;
 
 CREATE INDEX coach_ai_review_insight_selection_request_recorded
 ON coach_ai_review_insight_selection_audits(
@@ -677,6 +706,7 @@ WHEN NEW.coach_ai_review_insight_provider_dispatch_id IS NOT OLD.coach_ai_review
       AND NEW.lease_generation = OLD.lease_generation + 1
       AND NEW.recovery_epoch IS OLD.recovery_epoch
       AND NEW.fencing_token_sha256 IS NOT OLD.fencing_token_sha256
+      AND NEW.retired_fencing_token_sha256 IS OLD.retired_fencing_token_sha256
       AND NEW.lease_acquired_at_utc > OLD.lease_acquired_at_utc
       AND NEW.lease_expires_at_utc > OLD.lease_expires_at_utc
       AND NEW.transport_may_have_started_at_utc IS NULL
@@ -689,6 +719,7 @@ WHEN NEW.coach_ai_review_insight_provider_dispatch_id IS NOT OLD.coach_ai_review
       AND NEW.lease_generation = OLD.lease_generation
       AND NEW.recovery_epoch IS OLD.recovery_epoch
       AND NEW.fencing_token_sha256 IS OLD.fencing_token_sha256
+      AND NEW.retired_fencing_token_sha256 IS OLD.retired_fencing_token_sha256
       AND NEW.lease_acquired_at_utc IS OLD.lease_acquired_at_utc
       AND NEW.lease_expires_at_utc IS OLD.lease_expires_at_utc
       AND NEW.transport_may_have_started_at_utc IS NOT NULL
@@ -705,6 +736,7 @@ WHEN NEW.coach_ai_review_insight_provider_dispatch_id IS NOT OLD.coach_ai_review
       AND NEW.lease_generation = OLD.lease_generation
       AND NEW.recovery_epoch IS OLD.recovery_epoch
       AND NEW.fencing_token_sha256 IS OLD.fencing_token_sha256
+      AND NEW.retired_fencing_token_sha256 IS OLD.retired_fencing_token_sha256
       AND NEW.lease_acquired_at_utc IS OLD.lease_acquired_at_utc
       AND NEW.lease_expires_at_utc IS OLD.lease_expires_at_utc
       AND NEW.transport_may_have_started_at_utc IS NULL
@@ -723,6 +755,7 @@ WHEN NEW.coach_ai_review_insight_provider_dispatch_id IS NOT OLD.coach_ai_review
       AND NEW.lease_generation = OLD.lease_generation
       AND NEW.recovery_epoch IS OLD.recovery_epoch
       AND NEW.fencing_token_sha256 IS OLD.fencing_token_sha256
+      AND NEW.retired_fencing_token_sha256 IS OLD.retired_fencing_token_sha256
       AND NEW.lease_acquired_at_utc IS OLD.lease_acquired_at_utc
       AND NEW.lease_expires_at_utc IS OLD.lease_expires_at_utc
       AND NEW.transport_may_have_started_at_utc IS OLD.transport_may_have_started_at_utc
@@ -740,6 +773,7 @@ WHEN NEW.coach_ai_review_insight_provider_dispatch_id IS NOT OLD.coach_ai_review
       AND NEW.lease_generation = OLD.lease_generation
       AND NEW.recovery_epoch IS OLD.recovery_epoch
       AND NEW.fencing_token_sha256 IS OLD.fencing_token_sha256
+      AND NEW.retired_fencing_token_sha256 IS OLD.retired_fencing_token_sha256
       AND NEW.lease_acquired_at_utc IS OLD.lease_acquired_at_utc
       AND NEW.lease_expires_at_utc IS OLD.lease_expires_at_utc
       AND NEW.transport_may_have_started_at_utc IS OLD.transport_may_have_started_at_utc
@@ -757,6 +791,7 @@ WHEN NEW.coach_ai_review_insight_provider_dispatch_id IS NOT OLD.coach_ai_review
       AND NEW.lease_generation = OLD.lease_generation
       AND NEW.recovery_epoch IS OLD.recovery_epoch
       AND NEW.fencing_token_sha256 IS OLD.fencing_token_sha256
+      AND NEW.retired_fencing_token_sha256 IS OLD.retired_fencing_token_sha256
       AND NEW.lease_acquired_at_utc IS OLD.lease_acquired_at_utc
       AND NEW.lease_expires_at_utc IS OLD.lease_expires_at_utc
       AND NEW.transport_may_have_started_at_utc IS OLD.transport_may_have_started_at_utc
@@ -782,6 +817,7 @@ WHEN NEW.coach_ai_review_insight_provider_dispatch_id IS NOT OLD.coach_ai_review
       )
       AND NEW.lease_generation = OLD.lease_generation + 1
       AND NEW.fencing_token_sha256 IS NOT OLD.fencing_token_sha256
+      AND NEW.retired_fencing_token_sha256 IS OLD.retired_fencing_token_sha256
       AND NEW.lease_acquired_at_utc IS OLD.lease_acquired_at_utc
       AND NEW.lease_expires_at_utc IS OLD.lease_expires_at_utc
       AND NEW.transport_may_have_started_at_utc IS NULL
@@ -805,6 +841,7 @@ WHEN NEW.coach_ai_review_insight_provider_dispatch_id IS NOT OLD.coach_ai_review
       )
       AND NEW.lease_generation = OLD.lease_generation + 1
       AND NEW.fencing_token_sha256 IS NOT OLD.fencing_token_sha256
+      AND NEW.retired_fencing_token_sha256 = OLD.fencing_token_sha256
       AND NEW.lease_acquired_at_utc IS OLD.lease_acquired_at_utc
       AND NEW.lease_expires_at_utc IS OLD.lease_expires_at_utc
       AND NEW.transport_may_have_started_at_utc IS
@@ -833,6 +870,8 @@ WHEN NEW.coach_ai_review_insight_provider_dispatch_id IS NOT OLD.coach_ai_review
   OR (OLD.request_body_byte_length IS NOT NULL
     AND NEW.request_body_byte_length IS NOT OLD.request_body_byte_length)
   OR (OLD.failure_code IS NOT NULL AND NEW.failure_code IS NOT OLD.failure_code)
+  OR (OLD.retired_fencing_token_sha256 IS NOT NULL
+    AND NEW.retired_fencing_token_sha256 IS NOT OLD.retired_fencing_token_sha256)
 BEGIN SELECT RAISE(ABORT, 'coach_ai_review_insight_dispatch_transition_invalid'); END;
 
 CREATE TRIGGER coach_ai_review_insight_dispatches_no_delete

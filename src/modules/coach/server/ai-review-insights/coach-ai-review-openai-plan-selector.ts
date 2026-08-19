@@ -247,17 +247,23 @@ export class CoachAiReviewOpenAiSelectionError extends Error {
   readonly failureCode: string;
   readonly transportMayHaveStarted: boolean;
   readonly transportAudit: CoachAiReviewOpenAiTransportAudit | null;
+  readonly usage: CoachAiGenerationUsage | null;
+  readonly providerResponseId: string | null;
 
   constructor(input: Readonly<{
     failureCode: string;
     transportMayHaveStarted: boolean;
     transportAudit: CoachAiReviewOpenAiTransportAudit | null;
+    usage?: CoachAiGenerationUsage | null;
+    providerResponseId?: string | null;
   }>) {
     super(input.failureCode);
     this.name = "CoachAiReviewOpenAiSelectionError";
     this.failureCode = input.failureCode;
     this.transportMayHaveStarted = input.transportMayHaveStarted;
     this.transportAudit = input.transportAudit;
+    this.usage = input.usage ?? null;
+    this.providerResponseId = input.providerResponseId ?? null;
   }
 }
 
@@ -413,25 +419,40 @@ export async function selectCoachAiReviewPlanWithOpenAi(input: Readonly<{
         },
       },
     });
-    invariant(result.output !== undefined && result.output !== null,
-      "TRADERLINK_AI_REVIEW_SELECTOR_NO_OUTPUT");
-    invariant(RESPONSE_ID_PATTERN.test(result.response.id),
-      "TRADERLINK_AI_REVIEW_SELECTOR_RESPONSE_ID_INVALID");
-    invariant(result.response.modelId === input.modelId,
-      "TRADERLINK_AI_REVIEW_SELECTOR_RESPONSE_MODEL_INVALID");
-    const resolved = resolveCoachAiReviewPlanSelection({
-      response: result.output,
-      frozenPackage: input.frozenPackage,
-    });
-    return deepFreezeCoachAiReviewInsight({
-      selection: resolved.selection,
-      selectedPlan: resolved.selectedPlan,
-      usage: completeUsage(result.usage),
-      providerResponseId: result.response.id,
-      providerResponseModelId: result.response.modelId,
-      transportAudit: auditedTransport.audit(),
-      envelope,
-    });
+    const usage = completeUsage(result.usage);
+    try {
+      invariant(result.output !== undefined && result.output !== null,
+        "TRADERLINK_AI_REVIEW_SELECTOR_NO_OUTPUT");
+      invariant(RESPONSE_ID_PATTERN.test(result.response.id),
+        "TRADERLINK_AI_REVIEW_SELECTOR_RESPONSE_ID_INVALID");
+      invariant(result.response.modelId === input.modelId,
+        "TRADERLINK_AI_REVIEW_SELECTOR_RESPONSE_MODEL_INVALID");
+      const resolved = resolveCoachAiReviewPlanSelection({
+        response: result.output,
+        frozenPackage: input.frozenPackage,
+      });
+      return deepFreezeCoachAiReviewInsight({
+        selection: resolved.selection,
+        selectedPlan: resolved.selectedPlan,
+        usage,
+        providerResponseId: result.response.id,
+        providerResponseModelId: result.response.modelId,
+        transportAudit: auditedTransport.audit(),
+        envelope,
+      });
+    } catch (error) {
+      throw new CoachAiReviewOpenAiSelectionError({
+        failureCode: error instanceof CoachAiReviewInsightInvariantError
+          ? error.message
+          : "TRADERLINK_AI_REVIEW_SELECTOR_OUTPUT_INVALID",
+        transportMayHaveStarted: true,
+        transportAudit: auditedTransport.audit(),
+        usage,
+        providerResponseId: RESPONSE_ID_PATTERN.test(result.response.id)
+          ? result.response.id
+          : null,
+      });
+    }
   } catch (error) {
     if (error instanceof CoachAiReviewOpenAiSelectionError) throw error;
     const state = auditedTransport.state();

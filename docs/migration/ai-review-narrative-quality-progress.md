@@ -506,6 +506,82 @@ Still required before provider testing resumes:
 Help Center check: this is still inactive server-only work, so no guide update
 is required yet.
 
+## Deterministic insight-engine implementation checkpoint 7 - 2026-08-19
+
+The fenced v3 issuance, fallback and late-usage repository is now implemented
+but remains unexecuted and disconnected from the active v2 review services. The
+0065 migration is still registered source only; no migration, generation-
+contract transition, provider call, request issuance or database write occurred.
+
+Implemented in this checkpoint:
+
+- one atomic provider-selection transaction covering the exact receipt, settled
+  dispatch, immutable v3 output, accepted selection audit with hidden focus
+  targets, attempt/reservation/request finalization and one ready notification;
+- an atomic rejected-selection path that retains exact trustworthy usage and
+  reservation-overrun facts before issuing the already-frozen deterministic
+  default, while the no-usage path retains unresolved maximum exposure without
+  fabricating a receipt;
+- deterministic issuance with no attempt/provider/model/receipt provenance and
+  guards requiring every provider attempt and active selection lease to be
+  terminal before the fallback can win;
+- exact overrun fields for input, output, total tokens and cost, with the real
+  receipt retained even above the reservation and a monotonic persistent block
+  on later provider calls rather than blocking the current user's local default;
+- post-generation authorization rechecks that settle factual provider usage but
+  fail the pending request without an issued review or fallback when entitlement
+  or account/platform review controls were revoked while the call was in flight;
+- one immutable rejected audit per provider attempt, one accepted audit/output
+  per request and idempotent already-issued reads so a provider/fallback race
+  cannot replace the chosen output or notify twice;
+- a retired-fence digest retained only for a boundary-crossed recovered worker,
+  allowing that exact original secret fence to append one factual late receipt
+  while remaining unable to validate a selection or regain issuance authority;
+- provider-response uniqueness plus idempotent receipt comparison, preventing a
+  late/repeated callback from adding or changing usage for the same attempt;
+- late receipt reconciliation that converts unresolved reserved maximum exposure
+  to actual receipt cost exactly once and finalizes the still-started reservation;
+  and
+- structured-output failures now retain exact usage and a bounded safe provider
+  response identity when available, without persisting raw provider output or
+  error causes.
+
+Implementation QA corrections in this checkpoint:
+
+- a reservation overrun disables only future provider transport; it cannot deny
+  the already-authorized trader the complete frozen local review;
+- startup recovery preserves the old token digest before rotating the live
+  selection fence, closing the prior gap where an exact late receipt could not
+  prove ownership after recovery;
+- a response that arrives after recovery but before fallback is treated as late
+  cost evidence and still receives the deterministic default—it cannot use its
+  expired fence to select the provider plan; and
+- accepted and rejected audit SQL now carries the frozen source, shortlist,
+  catalog, rendered-output and focus-target digests needed for later exact
+  follow-through reads.
+
+Verification at this checkpoint:
+
+- focused ESLint passes for the provider selector, dispatch/recovery, issuance
+  repository and 0065 migration;
+- a focused non-incremental TypeScript project excluding shared generated
+  `.next` state passes; and
+- no Vitest/test suite, migration execution, provider call, database write,
+  browser change, request issuance or saved-review mutation was performed.
+
+Still required before provider testing resumes:
+
+- finish generation-contract activation and dual v2/v3 saved-review reads;
+- connect the captured v3 coordinator to the frozen snapshot, reservation,
+  dispatch, selector and issuance APIs;
+- harden or make unreachable both legacy free-prose v2 provider adapters; and
+- execute the permitted disposable migration/captured-request/recovery-race and
+  true four-week-plus-month acceptance gates.
+
+Help Center check: this remains inactive server-only work, so no guide update is
+required yet. The final activation boundary still owns the previously identified
+AI Reviews guide/privacy wording check.
+
 The ninth-pass design retains the eighth pass's single-package/fallback and
 Railway boundaries while tightening the engine that decides what deserves to be
 shown. It now keeps Day and Swing populations explicit, attributes results and
