@@ -87,15 +87,38 @@ four actually issued weekly reviews plus all 420 exact-month trades.
   old-writer fencing, hidden AI SDK retries/repair, OpenAI storage/telemetry/
   endpoint defaults, post-boundary unknown usage, invocation drift and direct
   Railway runtime portability.
+- [x] Complete the ninth adversarial QA pass against Day/Swing population mixing,
+  day-only Analyzer misuse, missing Swing-note context, result/event/note time
+  ownership, ambiguous observation units, gross-versus-net financial rank,
+  selective partial P/L, weak-side sample confidence, outlier sensitivity,
+  changing opportunity mix, superseded focus baselines and repetitive shortlist
+  alternatives, plus bulk one-minute/five-minute Analyzer context masking the
+  longer-term signal, unverified RSI calculation and repeated-event weighting.
 - [ ] Implement and calibrate the deterministic insight engine.
 - [ ] Run the true-month issuance and provider stability acceptance.
 
-The eighth-pass design supersedes the prompt-only path's proposed multi-stage
-oversize handling. Once the insight engine is active, TraderLink calculates and
-renders the complete review locally from all exact facts. If the full frozen
-selection package cannot fit the configured model envelope, it issues that
-complete-source deterministic default; it does not split one review into two
-independent provider judgments or omit monthly evidence.
+The ninth-pass design retains the eighth pass's single-package/fallback and
+Railway boundaries while tightening the engine that decides what deserves to be
+shown. It now keeps Day and Swing populations explicit, attributes results and
+execution events to their correct dates, scores a behavior from the complete
+cohort's net result, prevents partial P/L from winning financial rank, checks
+trade-mix and outlier sensitivity, and diversifies near-equivalent alternatives.
+Complete Analyzer evidence stays in the immutable local calculation source;
+OpenAI receives exact longer-term aggregates and no more than eight unique
+representative excerpts across the whole package or two for one candidate, not
+every raw one-minute/five-minute observation. The current v1/v2 RSI
+implementation is additionally gated out of ranking because the source audit
+found an incorrect no-loss result and no
+accepted Wilder reference-vector proof. RSI can influence a period conclusion
+only after a corrected immutable Analyzer contract passes the focused verifier
+and then shows a repeated comparable pattern.
+
+Once the insight engine is active, TraderLink calculates and renders the
+complete review locally from all exact facts. If the full frozen selection
+package cannot fit the configured model envelope, it issues the deterministic
+default already calculated from that complete local source; it does not split
+one review into two independent provider judgments or omit required projected
+evidence.
 
 The eighth source audit also pauses further live provider tests through the
 current v2 adapters: their installed AI SDK/OpenAI defaults permit hidden retries

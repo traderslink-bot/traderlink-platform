@@ -2,7 +2,7 @@
 
 ## Status
 
-Design and eight implementation-readiness QA passes complete under the owner's
+Design and nine implementation-readiness QA passes complete under the owner's
 delegated product authority on 2026-08-18. Implementation has not started. The
 owner does not need to approve individual formulas or weight calculations, but
 the completed engine and its generated reviews remain subject to owner
@@ -95,6 +95,25 @@ The current v2 review input remains the factual source for:
 - coverage limitations;
 - prior issued reviews and their next-period focuses.
 
+Two existing Journal authorities must be joined before the engine source is
+frozen because the v2 review projection does not currently carry them:
+
+- the trader-declared trade-style plan and revision for each round trip
+  (`day_trade`, `swing`, `other` or unavailable/unclassified); and
+- exact dated Swing notes and next-session plans linked to the same position.
+
+Trade style is never inferred from duration, timestamps, overnight holding,
+Analyzer availability, tracker route or note wording. A missing, unclassified
+or `needs_relink` style remains unavailable. Swing-note text follows the same
+untrusted-context boundary as daily/trade/rule notes: it can explain an already-
+eligible Swing finding or supply an exact safe excerpt, but cannot create a
+deterministic category, raise a score or be treated as a completed action.
+Only a Swing note whose review date is inside the requested coverage and whose
+exact linked round trip is an included closed-trade fact enters the review
+source. Notes on still-open positions and outside-period Swing notes remain in
+the Journal and do not cross this provider boundary merely because they share a
+ticker or position history.
+
 The engine must not import a legacy V3 analytics runtime or a second trade
 authority. It may reuse accepted exact-decimal utilities and the current
 replacement Journal/Analyzer contracts.
@@ -109,10 +128,12 @@ provider instruction. Accepted hidden focus metadata remains the authority for
 focus follow-through.
 
 The current AI Review input has trader-authored daily and trade notes but no
-separate structured saved-trade-plan object. A candidate may discuss alignment
-with a plan only when a named rule or the trader's own note supplies that plan
-evidence. The engine must not turn a tag or generic Analyzer observation into a
-claim that a saved plan was followed.
+separate structured saved-trade-plan object. The Journal also has Swing notes
+and next-session plans, but they are contextual dated text rather than a
+structured entry/exit/risk plan. A candidate may discuss alignment with a plan
+only when a named rule or the trader's own exact note supplies that plan
+evidence. The engine must not turn a tag, trade-style label or generic Analyzer
+observation into a claim that a saved plan was followed.
 
 Non-empty trader-authored rule-review notes should be added to the internal
 evidence record and shortlisted provider context. They can explain why the
@@ -136,11 +157,28 @@ lane ranks, allowed selection references or server validation.
 
 ### Provider projection privacy allowlist
 
-`Every permitted exact-month fact` means every field in the versioned AI Review
-provider allowlist, not every row or object held by TraderLink. The prompt-safe
-projection may contain the accepted review-period trade facts, dated rule
-outcomes, tags, saved note/reflection text, compact Analyzer evidence, coverage
-state and same-account issued-review context already authorized by this plan.
+The provider projection is deliberately smaller than the private calculation
+source. `Every permitted exact-month provider field` means every field in the
+versioned AI Review provider allowlist, not every row or object held by
+TraderLink. The prompt-safe projection may contain the accepted review-period
+trade facts, dated rule outcomes, prompt-safe trade style, tags, saved daily/
+trade/rule/Swing note and reflection text, deterministic Analyzer aggregates,
+bounded representative Analyzer excerpts, coverage state and same-account
+issued-review context already authorized by this plan.
+
+Complete eligible one-minute and five-minute Analyzer records remain in the
+private immutable calculation source so the engine can detect long-term
+patterns. They are not bulk provider context. For each authorized Analyzer
+candidate, the provider receives its exact calculated measurements, population,
+coverage, week series and representative references. Full excerpt detail is
+limited to eight unique trades across the whole package and two per candidate,
+selected deterministically by canonical balanced-brief order and then the
+impact/typicality/recency slot order. An excerpt contains only the Analyzer
+fields needed to support that
+candidate's server-owned clauses. Raw candles, unused indicator fields and
+unselected trades' one-minute/five-minute observations are excluded. The
+provider projection is complete for this narrower schema; that intentional
+boundary is not runtime truncation or evidence loss.
 It must never contain raw statement/source rows or files, broker-account values,
 private Platform/Journal UUIDs, identity fingerprints, email/Discord/payment
 identity, Data Decisions records or internal issue text, attachment/screenshot
@@ -170,12 +208,12 @@ visible disclosure is a separately owner-reviewed copy change.
 
 All facts used by one request must come from one account-scoped, transactionally
 consistent SQLite read snapshot. The snapshot builder opens a read transaction,
-loads the exact-period Journal facts, rule definitions and outcomes, note
-revisions, Analyzer evidence, coverage state, issued-review metadata and
-accepted hidden focus metadata, and then copies the normalized immutable source
-before closing the transaction. It cannot perform a sequence of unrelated live
-reads that could combine an old note with a new rule result or a revised
-Analyzer record.
+loads the exact-period Journal facts, rule definitions and outcomes, trade-
+style plans/revisions, daily/trade/rule/Swing note revisions, Analyzer evidence,
+coverage state, issued-review metadata and accepted hidden focus metadata, and
+then copies the normalized immutable source before closing the transaction. It
+cannot perform a sequence of unrelated live reads that could combine an old
+note/style with a new rule result or a revised Analyzer record.
 
 No provider call, network work or candidate ranking runs while the read
 transaction is open. If any required scoped row, revision link or identity
@@ -204,11 +242,25 @@ Private rule IDs and versions never enter the provider package.
 The current v2 provider shapes intentionally omit stable trade/rule identities
 and reduce saved trade notes to ticker plus text. Before that projection, the
 snapshot builder needs an engine-only transient evidence manifest containing
-the exact round-trip/version, rule/version, review target and note revision
-links. It converts private identities to prompt-safe references, attaches each
-trade note and rule-review note to that exact reference, and then discards the
-private IDs from the normalized calculation source. The engine must never join
-a note to a trade by ticker, date or array position.
+the exact round-trip/version, rule/version, review target, trade-style plan/
+revision and daily/trade/rule/Swing note revision links. It converts private
+identities to prompt-safe references, attaches each style and note to that exact
+reference, and then discards the private IDs from the normalized calculation
+source. The engine must never join a style or note to a trade by ticker, date or
+array position.
+
+The style projection records its revision, lifecycle state,
+`plannedFromEntry`, claimed-effective timestamp and whether its linked round-
+trip version is still current. Style-sensitive calculation is unavailable when
+that linkage is missing, unclassified or needs relinking. Objective lifecycle
+timing is a separate fact: the engine may derive `same_market_date` versus
+`multi_market_date` from the accepted timestamps/calendar without calling that
+the trader's intent. Version-one Daily Trade Analyzer eligibility requires a
+current ready Analyzer linked to the same round-trip version, objective same-
+market-date timing and no contradictory declared `swing` or `other` style. An
+unknown style does not erase an otherwise eligible historical same-day Analyzer
+record, but the renderer calls it an Analyzer-covered same-day trade rather than
+claiming the trader intended a Day trade.
 
 If a rule changes materially during a month, trend calculations split at the
 version boundary. The engine must not claim improvement across two different
@@ -229,6 +281,7 @@ representative trade record may contain:
 - ticker and historical direction;
 - opening and closing times already permitted by the input;
 - exact P/L;
+- trader-declared trade style when available;
 - applicable named rule outcomes;
 - tags;
 - compact analyzer observations;
@@ -243,8 +296,9 @@ reference. No reference is an array index:
 - `noteRef` is a versioned account/period-scoped HMAC reference over the
   private note identity, exact revision and linked evidence target;
 - `measurementRef` is a canonical digest of the engine version, `findingRef`,
-  metric and unit, population/comparison definition, exact value, numerator,
-  denominator, availability, coverage and attribution kind;
+  metric and unit, observation unit, population/comparison definition, exact
+  numerator/denominator member-set digests, exact value, availability, coverage
+  and attribution kind;
 - `claimRef` is a canonical digest of its finding, ordered measurement
   references, claim kind, subject, attribution, coverage clause and fact-clause
   rendering version;
@@ -286,6 +340,7 @@ The engine builds the following indexes in one bounded pass:
 
 - trades by market date and calendar-week bucket;
 - day records by calendar-week bucket;
+- trades by trader-declared style and style-coverage state;
 - trades and days by rule subject and rule version;
 - trades by exact tag, ticker, session and historical direction;
 - trades by fixed Eastern entry-time, holding-duration and weekday buckets;
@@ -295,6 +350,7 @@ The engine builds the following indexes in one bounded pass:
 - eligible later evidence dates for each issued focus;
 - exact positive, negative and flat P/L populations;
 - exact Analyzer-covered populations for every Analyzer-derived rate.
+- exact dated Swing notes by linked position/trade and note revision.
 
 All monetary calculations use exact decimal strings. Missing money values are
 excluded from monetary denominators but can remain in count-only candidates.
@@ -313,38 +369,89 @@ windows optimized against the current month's winners and losers. A null
 session, holding duration or execution count is unavailable rather than placed
 in an inferred bucket.
 
+### Population membership and temporal ownership
+
+Every candidate family freezes one observation unit from a closed enum:
+`trade`, `execution_event`, `trading_day`, `rule_review_opportunity`,
+`analyzer_covered_trade`, `calendar_week` or `issued_focus`. It also freezes the
+sorted unique member-reference set for the eligible population, affected
+population, every comparison side and every displayed numerator/denominator.
+The source validator rejects duplicate members, a numerator outside its
+denominator, incompatible units, a trade counted once per event, an event
+counted once per trade, or a day P/L member set that does not reconcile to its
+exact contributing trades. Counts are derived from the frozen sets rather than
+stored as unrelated arithmetic.
+
+The review uses separate, explicit time ownership:
+
+- completed-trade outcome and period P/L belong to the trade's authoritative
+  close market date;
+- an entry/add/partial/final-exit observation belongs to its exact event market
+  date;
+- a day-rule outcome belongs to its trading day and a trade-rule outcome to its
+  exact reviewed round-trip version;
+- daily and eligible Swing notes retain their recorded in-period review date and
+  exact linked included target; and
+- a prior issued focus belongs to its actual issuance timestamp and eligible-
+  later-evidence boundary.
+
+A completed trade may carry lifecycle context from before the period, but an
+outside-period execution event cannot be counted as an in-period entry/add/exit
+observation or week trend merely because the trade closed inside the period.
+Renderer clauses say `trades closed in this period` when result ownership is by
+close date and `execution events recorded in this period` when event ownership
+is used. Cross-month Swing trades and notes therefore remain truthful without
+being silently reassigned to the close week.
+
+The outcome headline includes all eligible closed trades regardless of style.
+Style-sensitive process comparisons—entry time, holding duration, session and
+any Day-versus-Swing interpretation—must use one known homogeneous style
+population. Analyzer/add/exit path candidates instead use the exact objective
+same-market-date Analyzer eligibility above and expose declared-style coverage;
+they exclude a contradictory declared Swing/other style but may include unknown
+historical style without re-labelling intent. A process candidate cannot combine
+known Day and known Swing trades unless a later accepted metric explicitly
+defines a comparable cross-style population. `Other`, unclassified and
+unavailable styles remain in the period result but do not enter declared-style
+process ranking. Generic named-rule findings use the rule's exact reviewed
+targets rather than inferring style applicability.
+
 ### Monthly calculation before canonical provider packaging
 
 The current monthly snapshot removes raw Analyzer detail from dates already
 represented by an issued weekly review before serializing the provider package.
-That old token-saving boundary does not apply to the insight engine or its new
-provider-selection package.
+That omission must not remove those records from the insight engine's private
+calculation source. The new provider-selection package follows the separate
+long-term aggregate/representative-excerpt boundary below.
 
 Monthly candidate calculation must run while the local snapshot builder still
-has the complete exact-month weekly snapshots and their Analyzer evidence. It
-then freezes the derived candidate brief, measurements, representative compact
-evidence and source digests into the immutable monthly request. The provider
-serializer then emits one canonical copy of the permitted exact-month source
-rather than inheriting the old omission behavior.
+has the complete exact-month weekly snapshots and every eligible Analyzer
+record. It computes the longer-term Analyzer findings locally, then freezes the
+derived candidate brief, measurements, coverage, week series, representative
+compact evidence and source digests into the immutable monthly request. The
+provider serializer emits one canonical copy of the permitted non-Analyzer
+exact-month source plus the calculated Analyzer projection; it does not inherit
+the old omission behavior and does not bulk-copy raw Analyzer records.
 
-This preserves all-month Analyzer facts without sending the same raw evidence
-twice. A provider retry uses the frozen brief and canonical factual projection;
-it never reopens later Journal state or recalculates against edited evidence.
-Weekly inputs remain an immutable audit source, while the monthly factual
-projection—not weekly prose—supplies the exact-month Analyzer record.
+This preserves every all-month Analyzer fact for calculation without making
+hundreds of individual one-minute/five-minute observations compete for the
+model's attention. A provider retry uses the frozen brief and canonical factual
+projection; it never reopens later Journal state or recalculates against edited
+evidence. Weekly inputs remain an immutable audit source, while the locally
+calculated monthly projection—not weekly prose—supplies the Analyzer findings.
 
-The monthly provider package contains the four actually issued weekly reviews
-and one canonical copy of every permitted exact-month fact: trades, rule
-outcomes, tags, daily/trade/rule notes and reflections, Analyzer evidence and
-coverage state. It may avoid sending the same exact source record twice merely
-because that record also appeared in a weekly input, but it cannot omit,
-summarize, truncate or replace an exact-month fact with weekly prose. Prior
-weekly prose may help the provider understand what was previously communicated,
-but no monthly `claimRef` may cite that prose as its factual source. Replacing a
-weekly review's visible text with stale numbers, generic boilerplate or prompt-
-like instructions while leaving the exact monthly facts unchanged must not
-change monthly candidates, measurements, scores, selection options or server-
-rendered fact clauses.
+The monthly provider package contains the four actually issued weekly reviews,
+one canonical copy of every permitted non-Analyzer exact-month provider field,
+and the exact aggregate/representative Analyzer projection defined above. It
+may avoid sending the same exact source record twice merely because that record
+also appeared in a weekly input, but it cannot omit, summarize or truncate a
+field required by the frozen provider-projection schema or replace it with
+weekly prose. Prior weekly prose may help the provider understand what was
+previously communicated, but no monthly `claimRef` may cite that prose as its
+factual source. Replacing a weekly review's visible text with stale numbers,
+generic boilerplate or prompt-like instructions while leaving the exact monthly
+calculation source unchanged must not change monthly candidates, measurements,
+scores, selection options or server-rendered fact clauses.
 
 ### Calendar-week buckets
 
@@ -394,6 +501,12 @@ engineVersion
 family
 polarity
 subjectRef
+observationUnit
+resultOwnership
+populationDefinition
+populationMemberRefs[]
+affectedMemberRefs[]
+tradeStylePopulation
 laneEligibility[]
 cohortDefinition
 comparisonDefinition
@@ -407,12 +520,17 @@ coverage
 scores
 adjustments[]
 penalties[]
+sensitivityResults[]
+baselineLineageStatus
 rankExplanation[]
 ```
 
 Each measurement contains its `measurementRef`, stable metric name, exact value,
-unit, numerator, denominator, affected count, applicable coverage counts,
-availability state, attribution kind and server-generated `displayLiteral`.
+unit, observation unit, numerator-member references, denominator-member
+references, affected count, applicable coverage counts, availability state,
+attribution kind and server-generated `displayLiteral`. Numerator membership
+must be a duplicate-free subset of denominator membership. A family cannot
+silently count trade events in one component and trades or days in another.
 Money measurements also contain a money-eligible count. The literal uses
 the accepted currency/percentage/count formatter and never guesses a currency
 symbol when the period currency is unavailable. When money coverage is partial,
@@ -450,7 +568,8 @@ Always calculate when the necessary facts exist:
 - result excluding the largest winner or loser.
 
 This family supplies the opening result but is not by itself evidence of good
-or bad process.
+or bad process. Its period membership uses authoritative close market dates and
+does not imply that every entry, add or exit decision occurred in the period.
 
 ### 2. Named rule association
 
@@ -461,6 +580,8 @@ For every unchanged named rule and valid scope:
 - affected trade or day count;
 - P/L for trades or days where the rule was followed;
 - P/L for trades or days where the rule was broken;
+- adverse or beneficial net contribution of each cohort after its winning and
+  losing members are combined;
 - total losing-trade P/L inside the broken cohort;
 - broken-cohort share of the period's total losing-trade P/L;
 - total winning-trade P/L inside the broken cohort;
@@ -507,6 +628,14 @@ From Analyzer-covered trades:
 - weekly count, rate, P/L and reversal series;
 - representative high-impact and representative typical trades.
 
+Version one admits only objective same-market-date members with a ready Daily
+Trade Analyzer record linked to the same current round-trip version and no
+contradictory declared `swing` or `other` style. A declared `day_trade` and an
+unknown historical style can both qualify; the latter remains visibly unknown
+rather than being reclassified. Multi-market-date, style-`needs_relink`, Swing
+and `other` members are Analyzer-unavailable even if a stale or accidentally
+reachable Daily Trade Analyzer row exists.
+
 The engine separately identifies:
 
 - profitable trades with large measured giveback;
@@ -546,6 +675,57 @@ movement, not trade P/L. They can support a representative trade but cannot be
 summed across tickers or ranked as financial impact. Cross-trade percentage
 claims require an accepted percentage field with an explicit denominator; the
 engine will not manufacture a percentage from fields that lack one.
+
+One-minute RSI 14 is the version-one long-term technical-context family, not a
+standalone review finding. Its exact bands are `[0,30)`, `[30,40)`, `[40,50)`,
+`[50,60)`, `[60,70)` and `[70,100]`; thresholds are never optimized after
+seeing results, and an out-of-range value fails source validation. Version one
+uses only the initial-entry and final-exit event, giving each trade at most one
+`analyzer_covered_trade` observation in either role. Add and partial-exit RSI
+may support a selected example but cannot create an RSI cohort or repeat the
+trade's result.
+
+Long and short trades and entry/final-exit roles stay separate. An affected
+band is compared only with the other corrected-contract RSI-eligible trades of
+the same direction and event role in the period. All non-empty direction x role
+x band groups count as siblings under the Segment gate before outcomes are
+inspected. Indicator-by-tag/setup intersections are excluded in version one.
+Five-minute RSI is unavailable in the current Analyzer contract and cannot be
+invented from the one-minute value.
+
+One-minute EMA distance, VWAP distance and relative volume, plus completed
+five-minute EMA distance and relative volume, remain available to the local
+engine and may supply bounded context for a selected representative trade. They
+do not generate recurring technical-context candidates until a later accepted
+engine version defines their fixed cohort boundaries, comparison population and
+multiplicity tests. The provider cannot turn those fields into a new finding.
+
+The source audit found that the current RSI implementation is not eligible for
+AI ranking: it returns unavailable when average loss is zero and has no accepted
+reference-vector proof for its Wilder seed/smoothing. Therefore RSI stored under
+`daily_trade_analyzer_v1` or `daily_trade_analyzer_v2` contributes no candidate,
+score, claim or provider excerpt. Before the family above can activate, a new
+Analyzer contract version must calculate RSI 14 with an explicit 14-change
+initial average followed by Wilder smoothing and define the zero cases exactly:
+gain above zero/loss zero = 100, gain zero/loss above zero = 0, and both zero =
+50. Golden reference vectors, strictly rising/falling/flat sequences, minimum-
+history, missing-candle and ordering cases must pass the focused verifier.
+
+Existing Analyzer versions remain immutable. Corrected RSI is stored only in a
+new current analysis revision produced from available accepted candle evidence;
+the implementation does not rewrite old snapshots, fabricate corrected history
+or make an external market-data call merely to fill AI Review coverage. Mixed
+old/new months expose exact RSI-eligible coverage, and only the corrected
+contract population can enter an RSI comparison.
+
+A single event's RSI or other indicator may appear only as supporting context
+for a selected representative trade. It cannot become a weekly/monthly headline
+or advice by itself. A recurring RSI-context candidate must show the exact
+covered count and denominator, comparable remainder, independent time
+spread and result/path difference. Its language remains associative—for
+example, `8 of 11 comparable long entries with RSI 14 from 60 to 70 were
+profitable`—rather than claiming that RSI caused the outcome or directing a
+future trade.
 
 ### 6. Adds and add sequence
 
@@ -667,6 +847,13 @@ Exact tags are observations, not proof that a setup caused the result.
 Historical long/short direction can be reviewed, but the output cannot become
 a recommendation to favor or avoid a direction.
 
+Entry-time, session and holding-duration comparisons are built separately for
+known Day and known Swing populations. Version one has no Swing Analyzer family
+and cannot use day-trade candle/path thresholds to assess a Swing. A tag/ticker
+outcome may span styles only as a plainly labelled all-closed-trades result; it
+cannot carry an execution-process interpretation unless the style population is
+homogeneous.
+
 ### 12. Positive process and repeatable strengths
 
 Search deliberately for:
@@ -719,6 +906,16 @@ For existing reviews without tracking metadata, the engine may build a lower-
 confidence candidate by matching the focus against exact named rules, tags and
 candidate families. It cannot manufacture a match from general word overlap.
 
+Every tracked baseline also freezes the contributing source-version manifest.
+Before later comparison, the engine checks those round-trip, rule, Analyzer and
+style versions against the current canonical lineage. A corrected, excluded,
+relinked or otherwise superseded baseline is not compared as though it were
+still current. The engine may recompute the old side from currently canonical
+facts only when the complete original period can be reconstructed under the
+same metric/version and the review labels it a revised baseline; otherwise the
+verdict is `not measurable from later evidence` with
+`baseline_source_superseded`. The issued review remains immutable either way.
+
 A follow-through verdict is one of:
 
 - improved;
@@ -747,6 +944,12 @@ A recurring pattern uses the cadence's independent spread axis:
 - a weekly review uses separate market dates;
 - a two-week or monthly review uses separate calendar-week buckets.
 
+Each family also declares the observation unit that must satisfy this gate.
+Three add events on one trade are not three recurring trades; three rule
+reviews on one day are not three independent days. A family that displays both
+event and trade counts names one as its primary repetition unit and keeps the
+other supporting-only.
+
 It normally requires either at least three affected observations across two
 independent spread buckets, or at least two affected observations across
 separate buckets plus a material financial contribution. This allows a weekly
@@ -769,18 +972,31 @@ specific execution example.
 
 ### Segment gate
 
-A ticker, tag, session, direction or time segment normally requires:
+The multiplicity count is the number of non-empty sibling groups with the
+family's required raw fields before result, money or outlier gates are examined.
+This prevents the result itself from deciding how many hypotheses the engine
+claims it tested. Version one uses this exact schedule for ticker, tag, session,
+direction, entry-time, duration and RSI-context families:
 
-- at least five trades; or
-- at least three trades spread across two cadence-appropriate independent
-  buckets;
-- at least five eligible trades in the comparison population;
-- no single trade contributing more than 70% of the segment's absolute P/L,
-  unless the finding is explicitly classified as outlier-dependent.
+| Non-empty sibling groups | Affected cohort | Comparison cohort | Independent spread | Largest absolute P/L contributor |
+| --- | ---: | ---: | ---: | ---: |
+| 1-5 | at least 5, or 3 | at least 5 | 2 buckets when using the 3-trade path | at most 70% |
+| 6-10 | at least 6 | at least 6 | at least 2 buckets | at most 65% |
+| 11-25 | at least 8 | at least 8 | at least 3 buckets | at most 60% |
+| 26 or more | at least 10 | at least 10 | at least 3 buckets | at most 50% |
+
+A cohort failing only the contributor limit may remain as an explicitly
+outlier-dependent example, never a stable segment pattern. The table replaces
+the earlier undefined instruction to merely make gates stricter as sibling
+count rises.
 
 ### Analyzer gate
 
 - Analyzer-derived rates use ready Analyzer trades only.
+- Version-one Daily Trade Analyzer candidates require current ready evidence,
+  objective same-market-date timing and no contradictory declared Swing/other
+  style. Unknown historical style remains eligible but cannot be described as
+  trader-declared Day intent.
 - At least three covered trades are required for a rate.
 - Period-wide Analyzer language requires at least 60% trade coverage.
 - Below 60%, the finding must state the exact covered population and cannot be
@@ -825,6 +1041,20 @@ forces a mixed or unavailable comparison unless a fixed common eligible cohort
 can be calculated. If the affected rate improves while the affected count or
 financial/path effect materially worsens, the candidate is mixed rather than
 an unqualified improvement.
+
+Changing opportunity mix also receives an explicit sensitivity check. Each
+family declares only its pre-result structural strata—such as exact trade style,
+rule version/scope or Analyzer contract/state—and cannot search tags or cohorts
+after seeing outcomes. For a rate comparison, a stratum representing at least
+20% of the pooled eligible population is material when its early-versus-later
+population share moves by at least 15 percentage points. The engine then
+recomputes a pooled-weight standardized rate change from the same within-
+stratum rates. If the standardized direction reverses the raw direction, the
+candidate is mixed; if direction agrees but magnitude differs by more than 50%,
+confidence is reduced and both values remain auditable. If required strata are
+missing or no common opportunity population exists, the comparison is
+unavailable rather than called improvement. This is the version-one defense
+against a Simpson's-paradox result caused by trading a different mix later.
 
 The default meaningful-rate threshold requires at least two fewer/more
 affected observations and either:
@@ -877,6 +1107,15 @@ Key definitions:
   total losing-trade P/L.
 - **Profit share:** positive P/L inside a cohort divided by the period's total
   winning-trade P/L.
+- **Cohort net P/L:** exact sum of every money-eligible positive, negative and
+  flat member in the cohort; winners cannot be dropped from a negative finding
+  and losers cannot be dropped from a positive one.
+- **Adverse net contribution:** absolute value of the negative part of cohort
+  net P/L divided by the period's total losing-trade P/L. It is zero when the
+  cohort is flat or net profitable.
+- **Beneficial net contribution:** positive part of cohort net P/L divided by
+  the period's total winning-trade P/L. It is zero when the cohort is flat or
+  net losing.
 - **Broken rate:** broken divided by followed plus broken.
 - **Affected rate:** affected eligible observations divided by the candidate's
   exact eligible population.
@@ -896,11 +1135,15 @@ Every money measurement records both the full affected population and the
 money-eligible subset. A section can say that a pattern appeared on six trades
 and that the four with complete P/L lost a stated amount; it cannot describe the
 amount as the result of all six. The opening similarly distinguishes completed
-trade count from P/L-eligible trade count whenever they differ. A partial money
-population may contribute only under its declared coverage/confidence rules and
-never supplies an unstated full-population denominator. Net P/L is labeled as
-the period total only when every included trade is money-eligible; otherwise it
-is explicitly the known P/L among the covered subset.
+trade count from P/L-eligible trade count whenever they differ. In version one,
+partial money may be displayed only as exact covered-subset context; it cannot
+contribute financial-materiality, financial-improvement, outcome-support or
+result/process-divergence points unless every member required by both its
+numerator and comparable period denominator has complete same-currency money.
+This prevents one selectively covered loser from receiving a 100-point money
+score. The candidate remains eligible through count/rate/process dimensions.
+Net P/L is labeled as the period total only when every included trade is money-
+eligible; otherwise it is explicitly the known P/L among the covered subset.
 
 Money from different or unavailable currencies is never combined. When the
 period lacks one comparable currency, financial candidate dimensions become
@@ -917,6 +1160,16 @@ claiming that all 6 lost when two won, `this rule break cost you USD 2,333`,
 `you would have saved USD 2,333`, or another counterfactual causal claim.
 Overlapping cohorts never divide, assign or sum the same loss as though each
 behavior independently caused it.
+
+For behavioral friction and strength, gross loss share and gross profit share
+are supporting composition facts, not the main money score. A broken-rule
+cohort containing USD 2,333 of losing trades and USD 5,000 of winners is net
+profitable; it may still rank as repeated process friction, but it receives zero
+adverse net contribution and may create a profitable-rule-break contrast. The
+mirror rule applies to a followed-rule or tagged cohort whose winners are
+outweighed by its losses. Gross loss/profit share remains the correct primary
+measure only for an explicitly defined loss/winner concentration or outlier
+candidate.
 
 Analyzer peak-to-final P/L can be described as measured giveback between the
 recorded peak and final result. It is not guaranteed executable profit and must
@@ -944,26 +1197,30 @@ capped.
 
 ### Financial materiality
 
-For negative candidates, the main component is cohort loss share. For positive
-candidates, it is cohort profit share or protected measured profit. Giveback
-candidates use measured reversal relative to the Analyzer-covered peak-profit
-population. Exact dollars remain an important displayed measurement, but there
-is no universal absolute-dollar scoring threshold across account sizes. A
-money score is relative to the comparable period population; recurrence,
-coverage and specificity determine whether a small low-activity result is a
-period-wide finding or only an example.
+For negative behavioral candidates, the main component is adverse net
+contribution. For positive behavioral candidates, it is beneficial net
+contribution or protected measured profit. Explicit loss/winner concentration
+and outlier families use gross loss/profit share because their subject is the
+composition of losses or winners rather than the net result of a behavior.
+Giveback candidates use measured reversal relative to the Analyzer-covered
+peak-profit population. Exact dollars and gross loss/profit shares remain
+important displayed measurements, but there is no universal absolute-dollar
+scoring threshold across account sizes. A money score is relative to the
+comparable period population; recurrence, coverage and specificity determine
+whether a small low-activity result is a period-wide finding or only an example.
 
 The component is unavailable, not fabricated as zero, when comparable money is
 unavailable. Other dimensions remain eligible, but the missing financial weight
 does not redistribute and inflate the lane score.
 
 The version-one score is the declared comparable share multiplied by 100:
-loss share for a negative result, profit share for a positive result, measured
-reversal divided by total positive Analyzer-covered peak P/L for giveback, or
-retained favorable P/L divided by the same covered peak population for path
-protection. The raw share remains visible and the score is clamped under the
-common rule. A candidate cannot choose whichever denominator produces the
-largest score; its family fixes the denominator in `engineVersion`.
+adverse/beneficial net contribution for a behavioral cohort, gross loss/profit
+share for an explicit concentration/outlier result, measured reversal divided
+by total positive Analyzer-covered peak P/L for giveback, or retained favorable
+P/L divided by the same covered peak population for path protection. The raw
+share remains visible and the score is clamped under the common rule. A
+candidate cannot choose whichever polarity or denominator produces the largest
+score; its family fixes both in `engineVersion`.
 
 ### Repetition
 
@@ -1020,13 +1277,34 @@ Version-one confidence combines only applicable deterministic components:
 
 - 30% required-field coverage: observed eligible records divided by the
   family's expected eligible population;
-- 25% sample sufficiency: `min(100, 50 * eligible count / family minimum)`, so
-  a just-passing population receives 50 and twice the minimum receives 100;
+- 25% sample sufficiency: the minimum sufficiency across every population the
+  family requires, using `min(100, 50 * actual member count / declared minimum)`
+  for each; a just-passing population receives 50 and twice its minimum receives
+  100;
 - 20% cadence-appropriate independent spread;
 - 15% outlier resistance: the share of the candidate effect that remains after
   removing its largest absolute contributor; and
 - 10% structured-source consistency when the family expects two independent
   structured sources.
+
+The family contract names those required populations. A one-cohort pattern uses
+its affected primary-observation population and any required opportunity
+denominator. A cohort comparison uses both cohort and remainder. An improvement
+uses early and later populations, and a rate claim also includes its affected-
+count minimum. The weakest required side controls the component. A five-trade
+tag inside a 420-trade month therefore cannot receive perfect sample confidence
+merely because the overall comparison population is large.
+
+`Outlier resistance` is not a generic phrase. Each family declares one signed
+numeric `effectStatistic` and its contribution unit. The engine recomputes that
+statistic after removing (a) the single primary-observation member with the
+largest absolute contribution and (b) each cadence-appropriate independent
+bucket one at a time. Its resistance score is the smallest direction-preserving
+`100 * abs(reduced effect) / abs(original effect)`, capped at 100. It is zero if
+any required removal reverses direction or makes the family fail its hard gate,
+and unavailable when the original effect is exactly zero. Explicit one-off
+outlier/example candidates retain their separate classification and cannot use
+this component to pretend recurrence or robustness.
 
 Unavailable confidence components reweight under the common weighted formula.
 Currency/fee absence makes a money dimension unavailable and is not also a
@@ -1067,16 +1345,19 @@ Every other named lane component is also deterministic:
 - `baseline recurrence` is the repetition score calculated on the frozen
   baseline population;
 - strength `process relevance` uses the process-relevance table above;
-- strength `outcome support` is positive profit share or measured favorable-
-  path retention. It is unavailable, rather than zero, for a rule-followed
-  losing-trade strength because planned risk is not an accepted input;
+- strength `outcome support` is beneficial complete-cohort net contribution or
+  measured favorable-path retention. It is unavailable, rather than zero, for
+  a rule-followed losing-trade strength because planned risk is not an accepted
+  input;
 - `cross-period consistency` is supporting independent buckets divided by
   eligible independent buckets;
 - `result/process divergence` is the smaller of the result-polarity score and
   process-polarity score, ensuring both sides of a contrast are material. The
-  result side uses financial materiality when available, otherwise the exact
-  win/loss outcome rate; the process side uses the applicable followed/broken
-  rule rate or structured Analyzer behavior rate;
+  result side uses the complete cohort net polarity's adverse/beneficial
+  materiality when available, otherwise the exact win/loss outcome rate; it
+  cannot choose gross winners or losers that contradict cohort net. The process
+  side uses the applicable followed/broken rule rate or structured Analyzer
+  behavior rate;
 - `exact focus measurability` is 100 for hidden tracking metadata, at most 60
   for a structural legacy match and zero for prose similarity;
 - `later-evidence span` reaches 100 at three eligible independent later
@@ -1165,17 +1446,19 @@ The engine must not subtract the same weakness twice. The order is explicit:
    an explicit post-lane penalty.
 
 The version-one exploratory multiplicity schedule is 0 points for at most five
-eligible sibling groups, 5 points for 6-10 groups, 10 points for 11-25 groups
+non-empty sibling groups, 5 points for 6-10 groups, 10 points for 11-25 groups
 and 15 points for more than 25 groups. It applies only to ticker, tag, weekday,
-time and duration cohort candidates. The version-one unresolved-overlap
-schedule is 0 points below 35% evidence overlap, 5 points at 35-49%, 10 points
+time, duration and RSI-context cohort candidates. The version-one
+unresolved-overlap schedule is 0 points below 35% evidence overlap, 5 points at
+35-49%, 10 points
 at 50-64% and 15 points at 65% or more when two cross-family candidates cannot
 be merged without losing a materially distinct finding. The stronger candidate
 keeps its score; the lower-ranked duplicate receives the subtraction.
 
-Exploratory cohort families must record the number of eligible sibling groups
-tested. Their minimum sample, independent-spread and outlier-resistance requirements
-increase as sibling-group count increases. The engine does not claim a stable
+Exploratory cohort families must record the number of non-empty sibling groups
+tested under the Segment gate definition. Their minimum sample, independent-
+spread and largest-contributor limits
+use the exact Segment gate schedule above. The engine does not claim a stable
 pattern from the best-looking member of dozens of tiny tags or tickers merely
 because one happens to have extreme P/L. Every exclusion, unavailable
 dimension, confidence adjustment and post-lane penalty is separately named in
@@ -1210,6 +1493,19 @@ refer to the containment coefficient.
 - The provider shortlist normally uses a trade in no more than two visible
   sections. The opening may reuse the main section finding.
 
+After merge decisions, the remaining candidates form deterministic
+`evidenceClusterRef` components using the 65% containment edge and receive an
+`actionTargetKey` for the exact rule, tracked focus, Analyzer behavior or fixed
+cohort the trader could review. These are diversity controls, not causal labels.
+The ordered shortlist may contain no more than two candidates from one evidence
+cluster or one action target. Section alternatives choose the lane default,
+then scan rank order for a different evidence cluster and action target before
+taking a second candidate from either. A same-cluster alternative is allowed
+only when no distinct candidate is within 10 lane-score points and five
+confidence points of it. This prevents three differently labelled findings on
+the same losing trades from crowding every useful alternative out of the model's
+choice set.
+
 Representative examples are selected for both impact and typicality:
 
 1. highest material contribution;
@@ -1238,16 +1534,27 @@ brief of approximately 15-25 candidates:
 - up to four measurable focus-follow-through candidates.
 
 Unused quota can move to another lane, but friction, improvement and strength
-each retain at least one candidate when an eligible candidate exists.
+each retain at least one candidate when a visibly eligible candidate exists.
+
+`Visibly eligible` is stricter than merely having a calculable score. Recurring,
+trend and contrast candidates require evidence confidence of at least 50 plus
+their complete family gate, one exact actionability anchor and a renderer-
+supported factual job. Single examples and material outliers use their explicit
+narrow classifications instead of bypassing that floor. Follow-through requires
+an exact/structural focus match, eligible later evidence and a measurable verdict.
+If a lane has no visibly eligible candidate, its section plan uses the specific
+server-owned no-pattern/unchanged/mixed form and the best distinct concrete
+example when one exists; it cannot promote a weak candidate merely to fill a
+quota or emit generic advice.
 
 The brief includes lane rank and a `requiredConsideration` tier:
 
 - the engine identifies one default selection for friction, improvement,
   strength and follow-through before the provider call;
 - the engine precomputes each section's bounded alternatives from the top three
-  lane candidates using the score, confidence, overlap, focus and specificity
-  rules; the later review-plan builder cannot nominate another candidate or
-  reason;
+  diversified visibly eligible lane candidates using the score, confidence,
+  evidence/action-target cluster, overlap, focus and specificity rules; the
+  later review-plan builder cannot nominate another candidate or reason;
 - `What held you back` and `What improved` use their default unless one of
   those frozen alternatives appears in an authorized complete review plan;
 - if no improvement qualifies, the engine supplies a specific unchanged or
@@ -1543,7 +1850,8 @@ request and contains:
 
 - request reference and source input/evidence digests;
 - full normalized prompt-safe calculation source JSON and digest, including
-  complete exact-month Analyzer evidence;
+  complete exact-month eligible Analyzer evidence, prompt-safe trade-style
+  revisions and linked dated Swing-note context;
 - prompt-safe reference derivation version, never HMAC key material;
 - insight-engine version;
 - renderer, section-plan, review-plan and provider-selection schema versions;
@@ -1556,6 +1864,12 @@ request and contains:
   continuation settings and every supported behavior/cost-affecting model
   option, never the API key or authorization header;
 - complete eligible candidate JSON and digest;
+- frozen observation-unit membership sets, temporal-ownership decisions,
+  style-coverage state, source-lineage checks and sensitivity results;
+- frozen long-term Analyzer projection with every calculated aggregate,
+  coverage denominator and week series plus only the authorized representative
+  excerpts; bulk raw one-minute/five-minute records remain solely in the
+  calculation source;
 - balanced shortlist and deduplicated section-plan catalog JSON/digest;
 - all authorized fully rendered review-plan outputs, their digests and the
   deterministic-default `reviewPlanRef`;
@@ -1854,8 +2168,9 @@ conservative estimator/reservation otherwise. The package must fit both the
 frozen and currently authoritative safe input/total-context boundaries for that
 same model. It is never silently
 truncated, summarized, split into independently selectable subpackages or
-rebuilt with omitted monthly facts. When an otherwise activated and authorized
-request cannot fit or reserve that complete envelope, the coordinator issues
+rebuilt with omitted required provider-projection fields. When an otherwise
+activated and authorized request cannot fit or reserve that complete envelope,
+the coordinator issues
 the already-frozen deterministic default with `provider_input_limit` or
 `provider_reservation_refused` provenance and makes no partial provider call.
 The local engine has still calculated the review from the complete exact source.
@@ -2053,6 +2368,15 @@ Before persistence, validate that:
 - the selected complete plan, ordered section plans, focus questions, rendered
   output and digests exactly match the immutable snapshot;
 - every selected finding and focus reference exists;
+- every population uses its declared observation unit, contains unique sorted
+  members, keeps numerator members inside denominator members and reconciles
+  day/event/trade counts to the exact contributing source references;
+- every result/event/note/focus member uses its declared temporal owner; an
+  outside-period execution event or Swing note is not counted merely because
+  the linked trade closed inside the period;
+- every declared-style process claim uses one current known homogeneous trade
+  style, while every Daily Trade Analyzer claim uses current ready evidence,
+  objective same-market-date timing and no contradictory Swing/other style;
 - `not_available` appears only with the exact engine-confirmed reason and its
   matching coverage, baseline or later-evidence state;
 - every selection is eligible for its visible lane or the exact engine-
@@ -2062,6 +2386,8 @@ Before persistence, validate that:
 - cited trades belong to the selected finding;
 - cited notes belong to the selected finding/evidence record and note-derived
   prose is explicitly attributed to the trader;
+- every included Swing note has an in-coverage review date and exact identity-
+  linked included closed trade; open/out-of-period notes are absent;
 - every section `claimRef` is an authorized semantic claim for the selected
   finding and its server-rendered fact clause is assembled without provider
   modification;
@@ -2075,16 +2401,26 @@ Before persistence, validate that:
 - every financial claim uses the measurement's period-result, cohort-
   association or Analyzer-path attribution kind and does not convert
   association/giveback into invented causal or guaranteed-profit language;
+- every behavioral financial score uses adverse/beneficial cohort net
+  contribution rather than cherry-picking only losing or winning members, and
+  every partial-money measurement remains display-only unless its complete
+  numerator and comparable denominator coverage gate passes;
 - improvement has a valid earlier/later comparison, while an authorized
   no-improvement fallback has the exact series or maintained-strength evidence
   required by its mode;
-- follow-through uses later evidence after the source focus;
+- improvement also passes the declared composition-shift/standardized-rate
+  sensitivity or is explicitly mixed/unavailable;
+- follow-through uses later evidence after the source focus and a current or
+  explicitly revised canonical baseline rather than superseded source facts;
 - a recurring claim passes the recurrence gate;
+- a visible recurring/trend/contrast selection passes the 50-confidence and
+  actionability floor, while examples/outliers retain their narrow labels;
 - section purposes are valid, and sections cannot repeat the same
   `factualJobKey`, `coverageJobKey` or rendered-clause digest; same-subject
   improvement/friction uses different purposes and primary measurements;
 - the global plan satisfies the strength, overlap, nonduplication and section-
-  job constraints rather than only validating each section in isolation;
+  job constraints, evidence/action-target diversity caps and same-cluster
+  exception thresholds rather than only validating each section in isolation;
 - hidden focus-tracking targets refer to measurable engine families;
 - every next-period focus uses an engine-authorized distinct `focusTargetRef`
   linked to its source finding and is not a cosmetic duplicate of an earlier
@@ -2166,6 +2502,19 @@ expected rank behavior:
 15. Two broken rules on the same losing trades; each association remains
     visible, but their losses must never be added or described as independently
     caused by both rules.
+16. A broken-rule cohort with large gross losing-trade P/L but larger winners,
+    proving it is process friction/contrast with zero adverse net contribution
+    rather than the month's top financial drag.
+17. A smaller known-money subset whose covered members look extreme while
+    affected members or the period denominator have missing P/L, proving its
+    money is display-only and cannot win financial rank.
+18. An apparent early/later rate improvement that reverses after fixed
+    structural-stratum standardization because the later trade mix changed.
+19. Multiple event rows on the same trades/days, proving the family-declared
+    observation unit prevents event count from inflating trade/day recurrence.
+20. Three high-ranked labels on nearly identical evidence plus a slightly lower
+    independent problem, proving diversified alternatives retain the distinct
+    useful issue.
 
 The precise values are fixed before generation. The expected engine ranks are
 asserted before any provider call.
@@ -2182,6 +2531,14 @@ asserted before any provider call.
   partial calendar-week bucket.
 - The coverage-shift trap does not enter the improvement lane as a clean win.
 - The two overlapping rule candidates never produce a combined-loss claim.
+- The net-profitable broken-rule cohort receives no adverse-money rank even
+  though its losing members and process break remain visible.
+- The partial-money trap cannot contribute a financial score.
+- The mix-shift trap becomes mixed rather than clean improvement.
+- Repeated events on the same trade/day do not inflate the primary recurrence
+  count or sample-confidence component.
+- At least one independent action/evidence cluster survives beside the default
+  when it is within the documented score/confidence exception limits.
 - Every authorized complete review plan satisfies the four distinct section
   jobs, required-strength and cross-section overlap gates before provider input.
 - The default and every alternative fit the renderer/output budgets, and no
@@ -2191,9 +2548,11 @@ asserted before any provider call.
   different weaker plan is excluded.
 - The month contains four issued weekly narrative contexts, not zero and not
   synthetic summaries created only inside the monthly fixture.
-- Every permitted exact-month fact, note and Analyzer record is present once in
-  the canonical monthly data, the four weekly reviews are also present, and
-  August 31 facts are included exactly once.
+- Every eligible exact-month Analyzer record is present once in the private
+  calculation source. The canonical provider data contains every required
+  calculated Analyzer measurement/coverage series and only the authorized
+  representative excerpts, alongside all permitted non-Analyzer provider
+  fields, all four weekly reviews and August 31 facts exactly once.
 
 ### Realistic usefulness fixture
 
@@ -2202,18 +2561,26 @@ product acceptance case. A second synthetic true-month fixture uses July 2026:
 16 trades on July 6-10, 21 on July 13-17, 18 on July 20-24 and 25 on July 27-31,
 with four actually issued weekly reviews and one ordinary July 1-31 monthly
 review. July 1-2 contain no trades. It has varied short notes with some blanks,
-a mix of preset and custom rules, ordinary missing/not-reviewed outcomes,
-incomplete-but-usable Analyzer coverage, several modest winners and losers,
-and no repeated boilerplate or 700-character note on every trade.
+a mix of preset and custom rules, known Day trades, known Swing trades, several
+unclassified historical trades, linked dated Swing notes, ordinary missing/not-
+reviewed outcomes, incomplete-but-usable day-trade-only Analyzer coverage,
+several modest winners and losers, and no repeated boilerplate or 700-character
+note on every trade. At least one Swing opens before July and closes inside it;
+its result belongs to July, while its June entry event does not become a July
+entry observation.
 
 Its planted findings are intentionally less dominant: one financially material
 repeated problem, one later-month improvement that remains a residual problem,
 one credible maintained strength, one result/process contrast and one issued
 Week 1 focus with Weeks 2-4 evidence. Expected ranks are asserted before the
-provider call. The four weekly reviews and the complete exact-month facts must
-enter the monthly package through the ordinary persisted flow. This fixture
+provider call. The four weekly reviews, complete exact-month local calculation
+source and bounded provider projection must enter the monthly flow through
+ordinary persistence. This fixture
 fails unless the saved monthly review gives a trader direct, measurable and
-non-repetitive takeaways even when no single pattern overwhelms the month.
+non-repetitive takeaways even when no single pattern overwhelms the month. It
+also fails if a Day/Swing comparison is inferred, a Swing receives Daily Trade
+Analyzer interpretation, a dated Swing note is joined by ticker/date instead of
+identity, or an unclassified trade disappears from the result headline.
 
 ### Provider quality and stability
 
@@ -2236,9 +2603,9 @@ After deterministic acceptance:
    prove exactly one path issues/notifies, the losing path cannot replace the
    review, and any real late usage is still settled to its failed attempt.
 9. Run canonical packages just below and above the configured provider context
-   envelope. Neither package may be truncated or split; the over-limit request
-   must issue the same full-source deterministic default without a provider
-   call.
+   envelope. Neither frozen provider projection may be truncated or split; the
+   over-limit request must issue the same deterministic default calculated from
+   the complete local source without a provider call.
 
 The review fails even when its rendered prose reads smoothly if its plan uses a
 materially weaker candidate, omits an available strength, repeats one issue
@@ -2283,6 +2650,10 @@ In addition to the 420-trade acceptance fixture, cover:
 - mixed or unavailable currency;
 - incomplete P/L where six affected trades include only four money-eligible
   trades;
+- a broken-rule cohort whose losing members represent 25% of period losses but
+  whose complete cohort is net profitable, beside a net-losing repeated cohort;
+- a selectively covered cohort whose only money-eligible member is the largest
+  loss, proving partial covered-subset money cannot affect financial rank;
 - overlapping rule cohorts;
 - overlapping prior/current request periods whose shared trades would otherwise
   appear on both sides of an improvement;
@@ -2313,6 +2684,12 @@ In addition to the 420-trade acceptance fixture, cover:
 - unchanged structured facts with materially different note wording;
 - early/later rate movement caused only by not-reviewed/Analyzer coverage
   changes;
+- a raw early/later improvement caused by a material fixed-stratum population
+  shift, including a planted Simpson reversal and a same-direction magnitude
+  distortion above/below the 50% sensitivity boundary;
+- a prior tracked-focus baseline whose round-trip, rule, Analyzer or trade-style
+  source is later corrected, excluded or relinked, with both reconstructable
+  revised-baseline and non-reconstructable cases;
 - delayed review issuance after some nominal later-period trades already
   occurred;
 - a sparse final partial week;
@@ -2328,6 +2705,26 @@ In addition to the 420-trade acceptance fixture, cover:
   rate and a 25% loss share, to prove semantic claim binding;
 - overlapping high-impact rule and Analyzer candidates whose P/L evidence sets
   are identical;
+- three same-evidence/same-action candidates ahead of a distinct candidate
+  inside and outside the 10-score/five-confidence diversity exception;
+- one trade with three adds, one day with three reviewed rules and repeated
+  execution rows, proving unique primary-observation membership and numerator-
+  subset invariants;
+- a five-member cohort inside a 420-trade comparator, proving confidence uses
+  the weakest required population rather than the large remainder;
+- leave-one-trade and leave-one-independent-bucket sensitivity that preserves,
+  eliminates and reverses the signed candidate effect;
+- a mixed known-Day/known-Swing/other/unclassified month with a Swing opened
+  before the month, dated Swing notes, an intentionally planted Daily Trade
+  Analyzer row on a Swing and a style plan requiring relink;
+- legacy v1/v2 RSI values beside corrected-contract values, proving old RSI is
+  unavailable to ranking, exact eligible coverage is shown, a repeated four-
+  bucket RSI cohort can qualify and an isolated extreme reading cannot;
+- an in-period Swing note on an included closed Swing beside an outside-period
+  note and a note on a still-open Swing, proving only the first enters the
+  calculation/provider source;
+- the same completed trade with a prior-period entry and current-period exit,
+  proving result ownership, event ownership and note dates remain distinct;
 - each distinct `not_available` reason to prove that missing coverage, missing
   baseline and no qualifying pattern produce different truthful clauses;
 - a Journal writer changing a note, rule result and Analyzer revision between
@@ -2380,8 +2777,11 @@ In addition to the 420-trade acceptance fixture, cover:
   its distinct exact-or-maximum exposure and never fabricating a receipt or
   making a second provider call;
 - the exact complete provider envelope immediately below and above its model-
-  specific safe context boundary, proving no source fact is truncated,
-  summarized or split into a second selection call;
+  specific safe context boundary, proving no required projected field is
+  truncated, summarized or split into a second selection call;
+- a large Analyzer-covered month, proving unselected raw one-minute/five-minute
+  observations never enter provider bytes while every aggregate and selected
+  representative excerpt matches the complete private calculation source;
 - a delayed provider success racing deterministic fallback, repeated fallback
   invocation and notification retry, proving one issued row, one accepted
   audit, one ready notification and exact late usage settlement;
@@ -2464,8 +2864,15 @@ one planted fixture:
   measurement/claim/bridge/focus references, measurements, scores or ranks;
 - a duplicate day, trade or rule outcome is rejected rather than double
   counted;
-- increasing a cohort's loss share cannot lower its financial-materiality
-  component when every other input is unchanged;
+- every measurement numerator is a duplicate-free subset of its denominator,
+  and changing the number of events on one trade cannot change a trade-unit
+  candidate's affected count;
+- making a complete behavioral cohort's net P/L more adverse cannot lower its
+  adverse-net financial component when every other input is unchanged;
+- increasing only gross losing-member P/L in a still-net-profitable behavioral
+  cohort can change its displayed loss composition but cannot manufacture an
+  adverse-net money score; explicit loss-concentration families remain monotonic
+  in gross loss share;
 - spreading the same affected observations across more cadence-appropriate
   independent buckets cannot lower repetition;
 - lowering evidence coverage cannot increase confidence;
@@ -2479,8 +2886,12 @@ one planted fixture:
   lowers review coverage and cannot create an improvement;
 - a coverage shift beyond the versioned threshold cannot produce a clean rate
   improvement without a fixed common cohort;
-- removing one outlier produces the documented sensitivity and confidence
-  change;
+- a material structural-stratum mix shift reproduces the standardized rate;
+  reversing the raw direction forces mixed, while same-direction magnitude
+  distortion above 50% lowers confidence;
+- removing the largest primary member or any independent bucket reproduces the
+  documented smallest direction-preserving outlier-resistance score; a sign
+  reversal or hard-gate failure produces zero;
 - a rule-version change prevents a cross-version improvement claim;
 - mixed currency suppresses money dimensions without deleting valid counts;
 - cross-month facts never enter the wrong month's financial measurements;
@@ -2490,11 +2901,29 @@ one planted fixture:
   evidence either creates two gate-passing remainders or makes the comparison
   unavailable;
 - incomplete money coverage always exposes affected and money-eligible counts,
-  cannot render a full-cohort money claim and cannot label covered-subset P/L as
-  the period total;
+  cannot render a full-cohort money claim, cannot label covered-subset P/L as
+  the period total and contributes no money-based ranking dimension;
+- sample confidence uses the weakest declared affected/comparison/early/later
+  population, so enlarging only the unrelated remainder cannot make a tiny
+  affected cohort perfectly sufficient;
+- close-date result ownership, execution-event ownership and dated note
+  ownership remain distinct under cross-month trades and timestamp changes;
+- changing only trade style cannot change the all-closed-trade result headline,
+  but it changes the appropriate declared-style eligibility; an unknown style
+  cannot be relabelled as Day/Swing, while Swing, other, multi-market-date and
+  needs-relink records never enter Daily Trade Analyzer ranking;
+- a Swing note/style is joined only through its exact source identity/revision;
+  ticker/date/array-order collisions cannot reattach it;
 - provider serialization cannot alter the frozen engine snapshot;
 - provider serialization emits only recursively allowlisted prompt-safe fields;
   adding any unknown/private/internal field fails even when context remains;
+- provider serialization never emits an unselected trade's raw one-minute/
+  five-minute Analyzer observations, and every selected excerpt contains only
+  fields referenced by that candidate's server-owned claims;
+- legacy v1/v2 RSI remains ranking-unavailable; changing a repeated corrected-
+  contract RSI 14 cohort changes its deterministic aggregate exactly, while one
+  isolated reading that fails recurrence/comparison gates cannot create a
+  period-level finding;
 - package, provider exception, support and Admin logging contains no raw note,
   historical review, provider prompt or rendered private review text;
 - every normalized source snapshot is transactionally consistent across
@@ -2515,6 +2944,9 @@ one planted fixture:
 - a retry reads the original shortlist after later Journal edits;
 - moving the source review's issuance timestamp later excludes every trade,
   event and day aggregate that occurred before the focus was actually issued;
+- superseding a tracked baseline's source version prevents ordinary follow-
+  through; only a complete same-version canonical reconstruction can create the
+  explicitly revised baseline path;
 - overlapping candidates cannot create an additive or causal combined-loss
   measurement;
 - cohort net P/L, affected losing-trade P/L and affected counts cannot be
@@ -2544,6 +2976,11 @@ one planted fixture:
   lane-loss cap and at least one threshold-level compensating benefit;
 - section/review planning evaluates no more than 81 exact combinations and
   retains no more than six complete plans;
+- shortlist and section alternatives respect evidence-cluster/action-target
+  caps; same-cluster candidates cannot displace a distinct candidate inside the
+  exact 10-score/five-confidence exception;
+- no recurring/trend/contrast candidate below the visible-confidence and
+  actionability floor can be promoted merely to fill a lane quota;
 - every rendered periodic/monthly field stays within its exact character and
   sentence budget without cutting a claim;
 - fixed-order canonical serialization produces byte-identical UTF-8 packages
@@ -2619,7 +3056,7 @@ one planted fixture:
 - account erasure removes the scope and permanently prevents any in-flight or
   late provider result from recreating or issuing it;
 - an over-context or refused full provider package is never truncated or split
-  and issues the same complete-source default without a provider call;
+  and issues the same complete-local-source default without a provider call;
 - one authorized plan short-circuits provider selection only after normal
   activation/configuration/authorization and records `single_authorized_plan`;
 - a deterministic fallback is impossible after any scope, entitlement,
@@ -2634,7 +3071,7 @@ one planted fixture:
   and an older database restore cannot replace the authoritative history.
 
 An independent reference calculation verifies period totals, rule-cohort P/L,
-loss/profit shares, coverage-adjusted comparisons, weekly rates, medians, every
+loss/profit shares, coverage-gated comparisons, weekly rates, medians, every
 applicable component score, normalized lane weights, post-lane penalties,
 allowed alternatives, final ranks, section-plan ordering, bounded global-plan
 retention, default review plan and rendered-output digests without calling the
@@ -2648,7 +3085,15 @@ maps and precomputed denominators. Do not compare every trade with every other
 trade.
 
 - One pass builds indexes and period totals.
+- Trade-style plans and dated Swing notes are batch-read inside the same source
+  snapshot; no per-trade query is permitted.
 - Family generators consume those indexes.
+- Population member sets are canonicalized/interned once by digest and
+  referenced by candidates/measurements rather than copied into every score and
+  claim. Exact members remain reproducible from the private snapshot.
+- Composition and leave-one-out sensitivity uses family preaggregates plus the
+  bounded market-day/week buckets; it cannot rescan every candidate against
+  every trade or invent arbitrary strata.
 - Evidence overlap uses compact reference sets only after semantic clustering
   and the 50-candidate-per-lane bound.
 - The engine emits a bounded shortlist regardless of raw trade count.
@@ -2689,10 +3134,15 @@ For each generated review, retain server-side:
 - active generation-contract singleton, minimum compatible reader contract and
   first-v3 activation/request/issuance identities;
 - candidate counts by family and lane;
+- candidate observation units, result/event ownership, trade-style coverage,
+  population-set digests/counts and source-lineage status;
 - complete shortlisted candidate measurements and ranks;
 - component applicability, raw values, normalized weights and calculation
   traces for every shortlisted score;
 - eligibility gates, confidence adjustments, penalties and sensitivity results;
+- adverse/beneficial net contribution beside gross loss/profit composition,
+  partial-money score availability, weakest required sample population,
+  standardized mix-shift result and outlier-resistance result;
 - provider selections and request-local choice-key resolution;
 - authorized review-plan count, default/selected `reviewPlanRef`, renderer and
   selection-schema versions, frozen provider/model/envelope identities,
@@ -2768,6 +3218,19 @@ normalized to bounded codes before logging or persistence.
   persistent `/data` or single-writer process boundary:** leave hosted AI Review
   generation inactive. The Vercel AI SDK package name is not a reason to add a
   Vercel hosting or gateway dependency.
+- **Population membership is duplicated, crosses its denominator, mixes units
+  or fails source reconciliation:** fail snapshot creation as an engine defect;
+  do not repair counts, silently drop members or call the provider.
+- **Trade style is unknown, unclassified, stale or needs relinking:** retain the
+  trade in close-date outcome facts and suppress only style-sensitive process
+  candidates. Never infer Day/Swing. Unknown historical style may retain an
+  objective same-market-date Analyzer candidate, but it is not called trader-
+  declared Day intent; stale/needs-relink and contradictory Swing/other do not.
+- **A prior focus baseline source was superseded:** use an explicitly revised
+  baseline only when the complete canonical old population can be reconstructed
+  under the same metric/version; otherwise mark follow-through unavailable.
+- **Raw improvement reverses after declared mix standardization:** emit mixed,
+  not improved. Missing required strata makes the comparison unavailable.
 
 - **No eligible friction:** use the engine-authorized mixed-result or measured-
   strength fallback when one exists. Say that no qualifying held-back pattern
@@ -2785,7 +3248,8 @@ normalized to bounded codes before logging or persistence.
 - **Missing reviewed rules:** continue with exact result and Analyzer families.
 - **Insufficient money coverage:** suppress unavailable money scores and use
   counts/rates; when a valid subset remains, state both affected and money-
-  eligible counts in its server-rendered fact clause.
+  eligible counts in its server-rendered fact clause. Version one never ranks
+  from that partial covered-subset amount.
 - **Provider selects an invalid or unknown plan:** reject that attempt. Persist
   its trustworthy exact usage when supplied; otherwise record
   `usage_unknown_after_dispatch`. Issue only the frozen deterministic default
@@ -2802,9 +3266,10 @@ normalized to bounded codes before logging or persistence.
   provider usage or a receipt. This is the same evidence-backed rendered plan,
   not a generic degraded review.
 - **Complete provider package exceeds the configured safe model envelope:** do
-  not truncate, summarize or split it. After the normal activation and
-  authorization gates, issue the complete-source deterministic default with
-  `provider_input_limit` and make no provider call.
+  not truncate, summarize or split the frozen projection. After the normal
+  activation and authorization gates, issue the deterministic default already
+  calculated from the complete local source with `provider_input_limit` and
+  make no provider call.
 - **Pinned provider/model/envelope becomes unavailable after valid request
   creation:** never substitute a new model or rebuild the package. If scope,
   entitlement and both account/platform feature controls still allow issuance,
@@ -2870,6 +3335,7 @@ plan must record it before that file is edited.
 - one next-available forward Coach insight migration under
   `src/modules/coach/server/database/migrations/`
 - `src/scripts/verify-coach-ai-review-insight-engine.ts`
+- `src/scripts/verify-trade-candle-analysis-indicators.ts`
 - one synthetic true-month fixture/helper under `src/scripts/`
 
 ### Existing source permitted to change
@@ -2893,6 +3359,14 @@ plan must record it before that file is edited.
 - `src/modules/coach/server/coach-ai-review-output-safety.ts`
 - `src/modules/coach/server/coach-weekly-ai-review-issuance-service.ts`
 - `src/modules/coach/server/coach-monthly-ai-review-issuance-service.ts`
+- `src/lib/trade-candle-analysis/indicator-context.ts`
+- `src/modules/level-analysis/contracts/daily-trade-analyzer-contracts.ts`
+- `src/modules/level-analysis/server/daily-trade-analyzer.ts`
+- `src/modules/level-analysis/server/daily-trade-analyzer-repository.ts`
+- one next-available forward Analyzer contract-version migration under
+  `src/modules/level-analysis/server/database/migrations/`
+- `src/modules/journal/server/trade-style/journal-trade-style-repository.ts`
+- `src/modules/journal/server/swing-notes/journal-swing-note-repository.ts`
 - `src/modules/platform/server/database/platform-migration-manifest.ts`
 - `src/modules/platform/server/privacy/platform-erasure-service.ts`
 - focused AI Review provider/fixture verification scripts already under
@@ -2906,6 +3380,10 @@ plan must record it before that file is edited.
 - `docs/migration/migration-progress.md` only when the implementation slice is
   complete and concurrent edits can be preserved safely.
 
+The two Journal repositories may receive only bounded account-scoped batch-read
+methods for current linked style revisions and dated Swing-note revisions; no
+Journal write path or contract meaning changes in this slice.
+
 No dashboard presentation, Trade Tracker editor, Journal fact writer, legacy
 V3 runtime, scheduler activation, hosted configuration or deployment file
 belongs to this implementation. A Help/Privacy mismatch found at final review
@@ -2916,15 +3394,24 @@ into engine code.
 
 ### Slice A - deterministic contracts and calculations
 
-- Add engine contracts, prompt-safe rule identity and exact measurement
+- Correct and reference-verify RSI 14 under a new immutable Analyzer contract
+  version before enabling its candidate family; preserve v1/v2 snapshots, make
+  their RSI ranking-unavailable and do not fetch market data for a backfill.
+- Add engine contracts, prompt-safe rule/trade-style/Swing-note identity,
+  temporal ownership, population-membership validation and exact measurement
   helpers.
-- Build normalization, denominators and candidate family generators.
-- Add score explanations, penalties, overlap handling and lane rankings.
+- Build normalization, style-homogeneous populations, denominators and
+  candidate family generators.
+- Add adverse/beneficial net-contribution scoring, partial-money suppression,
+  weakest-population confidence, exact outlier/mix sensitivity, score
+  explanations, penalties, overlap/diversity handling and lane rankings.
 - Add a count-only fixture harness with planted expected ranks.
 
 ### Slice B - provider shortlist and structured selections
 
-- Serialize the balanced insight brief ahead of raw context.
+- Serialize the balanced insight brief ahead of permitted non-Analyzer source
+  context, with long-term Analyzer aggregates and bounded representative
+  excerpts instead of bulk raw one-minute/five-minute observations.
 - Add server-owned fact, bridge and focus-question clause catalogs.
 - Build bounded section plans and at most six globally compatible complete
   review plans with frozen rendered output.
@@ -2948,7 +3435,8 @@ into engine code.
   live provider test; no old call site may retain implicit storage, retry,
   telemetry, endpoint or timeout behavior during the cutover window.
 - Preflight the complete unsplit provider envelope against the configured model
-  budget without omitting exact-month source facts.
+  budget without omitting any required field from the bounded projection. Bulk
+  raw Analyzer records remain in the local calculation source by design.
 - Add v3 output/issued-review persistence, dual v2/v3 reads, exact provenance,
   deterministic fallback, single-winner issuance/notification and immutable
   retry/late-usage behavior.
@@ -2959,6 +3447,8 @@ into engine code.
 - Store hidden target metadata for newly issued weekly and two-week focuses.
 - Use the metadata in later weekly and monthly follow-through candidates.
 - Preserve lower-confidence compatibility for already-issued reviews.
+- Detect corrected/excluded/relinked baseline source versions and permit only
+  an explicit complete canonical revised-baseline path.
 
 ### Slice D - true-month live acceptance
 
@@ -2966,6 +3456,8 @@ into engine code.
   420-trade stress fixture and the 80-trade realistic fixture through the
   ordinary issuance flow.
 - Prove all four issued weekly reviews entered the monthly package.
+- Prove mixed Day/Swing/other/unclassified result coverage while every style-
+  sensitive and Daily Trade Analyzer candidate keeps the correct population.
 - Inspect deterministic ranks before provider generation.
 - Save, reopen and audit the monthly result.
 - Exhaust provider attempts in a separate run and prove the exact frozen
@@ -3367,10 +3859,10 @@ Additional resolved findings:
 7. **An oversized selection package had no exact continuity rule:** fixed with
    a complete-envelope model-context preflight and deterministic-default
    issuance when the unsplit full package cannot fit or reserve.
-8. **Context handling could silently omit evidence:** fixed by freezing one
-   canonical copy of every permitted exact-month fact plus all four issued
-   weekly reviews and forbidding truncation, summarization or independent
-   selection subpackages.
+8. **Context handling could silently omit required evidence:** fixed by freezing
+   the complete local calculation source, one canonical bounded provider
+   projection plus all four issued weekly reviews, and forbidding runtime
+   truncation, summarization or independent selection subpackages.
 9. **Section-level alternative limits still allowed a materially weaker whole
    review:** fixed with a 12-point total lane-loss cap and a required threshold-
    level overlap, focus-connection or specificity benefit.
@@ -3419,7 +3911,7 @@ Additional resolved findings:
 3. **Full notes or review prose could leak through logs and support errors:**
    fixed by retaining only bounded codes, counts, versions, lengths and digests
    outside the private account-scoped snapshot.
-4. **The new full monthly projection/retention behavior lacked a disclosure
+4. **The new monthly projection/retention behavior lacked a disclosure
    checkpoint:** fixed by requiring an exact Help/Privacy comparison and a
    separate owner-approved copy slice if current language is incomplete.
 5. **A retry could recompute its package key with a rotated HMAC secret:** fixed
@@ -3563,22 +4055,120 @@ reasoning/service-tier values and hard timeout remain calibration outputs, while
 Railway secrets, persistent volume, single-worker process and OpenAI data
 controls remain hosted activation gates rather than assumptions of local design.
 
+## Ninth adversarial plan QA pass - 2026-08-18
+
+The ninth pass returned to the core product question: whether correct-looking
+calculations could still rank the wrong trader insight. It audited the current
+v2 review facts against the Journal trade-style and Swing-note authorities, the
+documented day-trade-only Analyzer boundary, and the plan's population,
+financial, confidence, improvement and shortlist formulas. It did not run the
+application, database, provider or test suite.
+
+Additional resolved findings:
+
+1. **The current AI Review trade projection has no Day/Swing identity:** fixed
+   by adding the existing trader-declared style plan/revision to the consistent
+   engine source and prohibiting inference from duration, route or timestamps.
+2. **A ready Daily Trade Analyzer row could be applied to a Swing, while
+   requiring style on every row would discard valid unclassified history:**
+   fixed by requiring current ready evidence, objective same-market-date timing
+   and no contradictory declared Swing/other style, without inventing intent for
+   an unknown historical style.
+3. **Dated Swing notes were outside the claimed all-notes review context:**
+   fixed with identity-linked, revisioned Swing-note/next-session-plan context
+   for in-period notes on included closed trades under the same non-scoring
+   untrusted-text boundary as other notes; open/out-of-period notes stay out.
+4. **A trade closing this month could make a prior-month entry look like a
+   current-month execution:** fixed with separate close-result, execution-event,
+   rule, note and focus temporal ownership plus explicit renderer labels.
+5. **`Affected observation` could mean trades, events, days or rule reviews in
+   different parts of one score:** fixed with a closed observation-unit enum,
+   exact unique member sets and numerator-subset/source-reconciliation gates.
+6. **Gross losing-trade share could make a net-profitable broken-rule cohort
+   rank as the largest financial drag:** fixed by scoring behavioral friction
+   from adverse cohort net contribution while retaining gross loss composition
+   as supporting context and contrast evidence.
+7. **The mirror error could praise a cohort whose winners were outweighed by
+   losses:** fixed with beneficial cohort net contribution for positive
+   behavioral ranking; gross profit share remains primary only for explicit
+   winner-concentration/outlier families.
+8. **Selective partial P/L could create an extreme money score:** fixed by
+   making partial covered-subset money display-only in version one unless the
+   complete numerator and comparable period denominator are available.
+9. **Sample confidence could use the 420-trade remainder instead of a five-
+   trade affected cohort:** fixed by using the weakest declared affected,
+   comparison, early/later and opportunity population.
+10. **Outlier resistance had no reproducible effect/removal formula:** fixed
+    with a family-declared signed effect and the worst leave-one-primary-member/
+    leave-one-independent-bucket direction-preserving retention.
+11. **A changing trade mix could create a Simpson's-paradox improvement:** fixed
+    with pre-result structural strata, pooled-weight standardization and exact
+    mixed/confidence/unavailable outcomes for direction or magnitude distortion.
+12. **A corrected/excluded/relinked source could leave an earlier focus baseline
+    factually stale:** fixed with source-lineage checks and only a complete,
+    explicitly revised canonical baseline path; issued prose remains immutable.
+13. **The top three alternatives could all be labels for the same trades:**
+    fixed with evidence-cluster/action-target caps and a precise exception only
+    when no distinct candidate is within 10 score and five confidence points.
+14. **A weak calculable candidate could be promoted merely to fill a section:**
+    fixed with a visible 50-confidence/actionability/family gate and explicit
+    narrow example/outlier or no-pattern forms when no recurring finding passes.
+15. **The plan said exploratory gates should get stricter without defining how:**
+    fixed with the exact 1-5, 6-10, 11-25 and 26-plus sibling schedules for
+    cohort, comparison, spread and largest-contributor requirements, plus the
+    new mixed-style/temporal/net-P/L/partial-money/mix-shift/baseline/diversity
+    fixtures and bounded batch-read ownership needed to prove them.
+16. **Bulk event-level Analyzer context could bury the durable pattern in
+    hundreds of one-minute/five-minute observations:** fixed by keeping the full
+    Analyzer record in the immutable local calculation source, calculating
+    long-term aggregates before provider packaging and projecting only exact
+    aggregate/coverage series plus at most eight unique whole-package excerpts
+    and two for any candidate. RSI 14 and other technical context cannot become
+    a period finding from one event.
+17. **RSI 14 was present but not trustworthy enough to rank:** fixed by gating
+    all v1/v2 RSI out of candidates/provider excerpts and requiring an immutable
+    corrected Analyzer contract with exact Wilder initialization/zero behavior,
+    golden vectors and new-revision-only persistence before RSI findings can
+    activate.
+18. **Event-level RSI could count one actively managed trade several times:**
+    fixed by limiting version one to one initial-entry and one final-exit
+    observation per trade, separating role/direction, comparing with the exact
+    eligible remainder and counting every tested band as a multiplicity sibling.
+
+No unresolved critical design blocker remains after this pass. The accepted
+version-one behavior now depends on the exact observation-unit, style,
+temporal, net-contribution, partial-money, confidence and sensitivity fixtures
+passing together; a smooth provider-selected review cannot compensate for a
+failed deterministic population or rank.
+
 ## Completion boundary
 
 This redesign is complete only when:
 
 - each request is calculated from one consistent account-scoped source
   snapshot rather than a hybrid of concurrent Journal revisions;
+- the snapshot includes identity-linked current trade-style and dated Swing-
+  note revisions, keeps all closed trades in results and separates declared-
+  style populations from objective same-market-date Daily Trade Analyzer
+  eligibility without inventing intent;
+- every candidate fixes one observation unit, unique population membership and
+  result/event/note/focus temporal ownership before any measurement or score;
 - request, attempt, dispatch and output share one immutable generation contract;
   its singleton advances only after zero pending v2 work and no mixed old/new
   writer, then prevents destructive rollback below the first v3 row;
 - every provider field is explicitly allowlisted and private/internal/cross-
   account data cannot enter packages, logs, Admin or support output;
+- every eligible Analyzer record participates in local calculation, while bulk
+  raw one-minute/five-minute observations stay out of provider context and only
+  exact long-term aggregates plus selected representative excerpts enter it;
+- legacy RSI is excluded and the RSI family remains unavailable until corrected
+  new-contract values pass the reference verifier and normal population gates;
 - deterministic planted findings, independent score calculations and sealed
   holdouts rank correctly before provider involvement;
 - the monthly provider package contains the four actually issued weekly
-  reviews and every permitted exact-month fact, while historical prose cannot
-  change a current monthly measurement or claim;
+  reviews, every permitted non-Analyzer field and the complete bounded Analyzer
+  projection, while historical prose cannot change a current monthly
+  measurement or claim;
 - every available visible section identifies a useful finding and does not
   duplicate another section's explanatory job;
 - every authorized whole-review plan passes global compatibility and renderer
@@ -3588,11 +4178,21 @@ This redesign is complete only when:
 - `What held you back` identifies measurable affected behavior and impact;
 - financial wording preserves result/path/association boundaries and never
   presents overlapping cohort P/L as caused or additive loss;
+- behavioral money rank uses adverse/beneficial complete cohort net contribution
+  rather than cherry-picked losing/winning members, and partial covered-subset
+  money contributes no version-one score;
 - every earlier/later comparison uses disjoint evidence and every partial-money
   claim states its exact covered subset;
+- every material composition shift passes the fixed-stratum standardized
+  sensitivity, confidence uses its weakest required population and outlier
+  resistance reproduces the declared leave-one-unit/bucket result;
 - follow-through connects an issued focus only to evidence occurring after its
-  actual issuance boundary;
+  actual issuance boundary and never compares a superseded baseline unless a
+  complete canonical revised baseline is explicitly available;
 - an available genuine strength is recognized;
+- visible candidates pass the family/confidence/actionability floor and the
+  alternatives retain distinct evidence/action targets when the exact diversity
+  exception does not apply;
 - the provider must echo the current short `providerPackageKey` and can select
   only one request-local `providerChoiceKey`, which the server resolves to one
   frozen whole `reviewPlanRef`, while every section, semantic claim, focus
@@ -3604,7 +4204,7 @@ This redesign is complete only when:
   audit and ready notification, while any real late-call usage remains billed
   to that attempt without replacing the output;
 - complete provider packages are frozen and preflighted without truncating,
-  summarizing or splitting monthly facts;
+  summarizing or splitting any field required by the bounded projection;
 - retries preserve the exact pinned provider/model/instruction/schema envelope
   with no silent model failover, while account/platform disable and entitlement
   revocation still prevent deterministic issuance;
