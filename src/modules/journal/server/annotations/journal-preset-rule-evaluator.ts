@@ -22,8 +22,16 @@ export type JournalPresetRuleEvidenceEvent = Readonly<{
   valueBefore: string | null;
 }>;
 
+export type JournalPresetRuleAvailabilityReason =
+  | "no_applicable_target"
+  | "missing_rule_configuration"
+  | "missing_source_fact"
+  | "ambiguous_execution_sequence"
+  | "insufficient_money_coverage";
+
 export type JournalPresetRuleEvidence = Readonly<{
   feeCoverage: "complete" | "partial" | "unavailable";
+  availabilityReason: JournalPresetRuleAvailabilityReason | null;
   limitation: string | null;
   trigger: JournalPresetRuleEvidenceEvent | null;
   violations: readonly JournalPresetRuleEvidenceEvent[];
@@ -124,13 +132,20 @@ function resultForTrades(
 ): readonly JournalPresetRuleResult[] {
   return Object.freeze(trades.map((trade, index) => {
     const result = evaluate(trade, index);
+    const evidence = result.evidence ?? emptyEvidence();
+    if (result.status === "n/a" && evidence.availabilityReason === null) {
+      throw new Error("TRADERLINK_PRESET_RULE_NA_REASON_REQUIRED");
+    }
+    if (result.status !== "n/a" && evidence.availabilityReason !== null) {
+      throw new Error("TRADERLINK_PRESET_RULE_AVAILABLE_REASON_FORBIDDEN");
+    }
     return Object.freeze({
       ruleId,
       ruleVersionId,
       status: result.status,
       targetKind: "round_trip" as const,
       targetRoundTripId: trade.roundTripId,
-      evidence: result.evidence ?? emptyEvidence(),
+      evidence,
     });
   }));
 }
@@ -141,6 +156,12 @@ function dayResult(
   status: JournalPresetRuleResult["status"],
   evidence: JournalPresetRuleEvidence = emptyEvidence(),
 ): JournalPresetRuleResult {
+  if (status === "n/a" && evidence.availabilityReason === null) {
+    throw new Error("TRADERLINK_PRESET_RULE_NA_REASON_REQUIRED");
+  }
+  if (status !== "n/a" && evidence.availabilityReason !== null) {
+    throw new Error("TRADERLINK_PRESET_RULE_AVAILABLE_REASON_FORBIDDEN");
+  }
   return Object.freeze({
     feeCoverage: "unavailable",
     ruleId,
@@ -152,9 +173,13 @@ function dayResult(
   });
 }
 
-function emptyEvidence(limitation: string | null = null): JournalPresetRuleEvidence {
+function emptyEvidence(
+  limitation: string | null = null,
+  availabilityReason: JournalPresetRuleAvailabilityReason | null = null,
+): JournalPresetRuleEvidence {
   return Object.freeze({
     feeCoverage: "unavailable",
+    availabilityReason,
     limitation,
     trigger: null,
     violations: Object.freeze([]),
@@ -184,18 +209,23 @@ function brokenEvidence(
 ): JournalPresetRuleEvidence {
   return Object.freeze({
     feeCoverage: "unavailable",
+    availabilityReason: null,
     limitation: null,
     trigger,
     violations: Object.freeze([...violations]),
   });
 }
 
-function unavailable(reason: string): Readonly<{
+function unavailable(
+  reason: string,
+  availabilityReason: Exclude<JournalPresetRuleAvailabilityReason, "no_applicable_target"> =
+    "missing_source_fact",
+): Readonly<{
   evidence: JournalPresetRuleEvidence;
   status: "n/a";
 }> {
   return Object.freeze({
-    evidence: emptyEvidence(reason),
+    evidence: emptyEvidence(reason, availabilityReason),
     status: "n/a",
   });
 }
@@ -227,6 +257,7 @@ function evaluateTemplate(
     ) {
       return Object.freeze([dayResult(rule.ruleId, rule.versionId, "n/a", emptyEvidence(
         "No eligible completed Day trades were available for this rule.",
+        "no_applicable_target",
       ))]);
     }
     return resultForTrades(rule.ruleId, rule.versionId, applicable, () => unavailable(
@@ -239,6 +270,7 @@ function evaluateTemplate(
     const upper = configuredDecimal(rule, "upperEntryPrice");
     if (!lower || !upper) return resultForTrades(rule.ruleId, rule.versionId, applicable, () => unavailable(
       "The configured entry-price range was unavailable.",
+      "missing_rule_configuration",
     ));
     return resultForTrades(rule.ruleId, rule.versionId, applicable, (trade) => {
       if (trade.entryPriceDecimal === null) return unavailable(
@@ -267,6 +299,7 @@ function evaluateTemplate(
     if (!cutoff || !/^\d{2}:\d{2}:\d{2}$/u.test(cutoff)) {
       return resultForTrades(rule.ruleId, rule.versionId, applicable, () => unavailable(
         "The configured cutoff time was unavailable.",
+        "missing_rule_configuration",
       ));
     }
     const [hour, minute, second] = cutoff.split(":").map(Number);
@@ -288,6 +321,7 @@ function evaluateTemplate(
     if (cooldownMinutes === null) {
       return resultForTrades(rule.ruleId, rule.versionId, applicable, () => unavailable(
         "The cooldown setting was unavailable.",
+        "missing_rule_configuration",
       ));
     }
     const cooldownMilliseconds = cooldownMinutes * 60 * 1000;
@@ -341,6 +375,7 @@ function evaluateTemplate(
     if (cooldownMinutes === null) {
       return resultForTrades(rule.ruleId, rule.versionId, applicable, () => unavailable(
         "The same-ticker cooldown setting was unavailable.",
+        "missing_rule_configuration",
       ));
     }
     const cooldownMilliseconds = cooldownMinutes * 60 * 1000;
@@ -356,7 +391,10 @@ function evaluateTemplate(
       const prior = sameTickerCompletedTrades.at(-1)!;
       const exitAt = timestampMilliseconds(prior.exitAtUtc);
       if (exitAt === null || exitAt >= entryAt) {
-        return unavailable("The prior same-ticker exit time was unavailable or ambiguous.");
+        return unavailable(
+          "The prior same-ticker exit time was unavailable or ambiguous.",
+          "ambiguous_execution_sequence",
+        );
       }
       if (entryAt >= exitAt + cooldownMilliseconds) return status("followed");
       const allowedAt = new Date(exitAt + cooldownMilliseconds).toISOString();
@@ -373,6 +411,7 @@ function evaluateTemplate(
     const maximum = configuredCount(rule, "maximumAttempts");
     if (maximum === null) return resultForTrades(rule.ruleId, rule.versionId, applicable, () => unavailable(
       "The ticker-attempt limit was unavailable.",
+      "missing_rule_configuration",
     ));
     const byInstrument = new Map<string, number>();
     const limitTrades = new Map<string, EligibleTrade>();
@@ -394,9 +433,16 @@ function evaluateTemplate(
 
   if (rule.templateKey === "stop_after_losing_ticker_attempts") {
     const threshold = configuredCount(rule, "losingAttemptThreshold");
-    if (threshold === null || !sequenceIsUnambiguous(applicable)) {
+    if (threshold === null) {
       return resultForTrades(rule.ruleId, rule.versionId, applicable, () => unavailable(
-        "The losing-attempt limit or exact trade order was unavailable.",
+        "The losing-attempt limit was unavailable.",
+        "missing_rule_configuration",
+      ));
+    }
+    if (!sequenceIsUnambiguous(applicable)) {
+      return resultForTrades(rule.ruleId, rule.versionId, applicable, () => unavailable(
+        "The exact trade order was unavailable.",
+        "ambiguous_execution_sequence",
       ));
     }
     const losses = new Map<string, number>();
@@ -433,7 +479,7 @@ function evaluateTemplate(
       rule.ruleId,
       rule.versionId,
       "n/a",
-      emptyEvidence("The completed-trade limit was unavailable."),
+      emptyEvidence("The completed-trade limit was unavailable.", "missing_rule_configuration"),
     )]);
     if (applicable.length <= maximum) {
       return Object.freeze([dayResult(rule.ruleId, rule.versionId, "followed")]);
@@ -454,10 +500,22 @@ function evaluateTemplate(
 
   if (rule.templateKey === "stop_after_consecutive_losses") {
     const threshold = configuredCount(rule, "consecutiveLossThreshold");
-    if (threshold === null || !sequenceIsUnambiguous(applicable) ||
-        applicable.some((trade) => trade.netPnlDecimal === null)) {
+    if (threshold === null) {
       return Object.freeze([dayResult(rule.ruleId, rule.versionId, "n/a", emptyEvidence(
-        "The loss-streak setting, exact trade order or trade P/L was unavailable.",
+        "The loss-streak setting was unavailable.",
+        "missing_rule_configuration",
+      ))]);
+    }
+    if (!sequenceIsUnambiguous(applicable)) {
+      return Object.freeze([dayResult(rule.ruleId, rule.versionId, "n/a", emptyEvidence(
+        "The exact trade order was unavailable.",
+        "ambiguous_execution_sequence",
+      ))]);
+    }
+    if (applicable.some((trade) => trade.netPnlDecimal === null)) {
+      return Object.freeze([dayResult(rule.ruleId, rule.versionId, "n/a", emptyEvidence(
+        "Trade P/L was unavailable.",
+        "missing_source_fact",
       ))]);
     }
     let streak = 0;
@@ -485,10 +543,22 @@ function evaluateTemplate(
 
   if (rule.templateKey === "stop_after_total_daily_losses") {
     const threshold = configuredCount(rule, "dailyLossCountLimit");
-    if (threshold === null || !sequenceIsUnambiguous(applicable) ||
-        applicable.some((trade) => trade.netPnlDecimal === null)) {
+    if (threshold === null) {
       return Object.freeze([dayResult(rule.ruleId, rule.versionId, "n/a", emptyEvidence(
-        "The daily-loss count, exact trade order or trade P/L was unavailable.",
+        "The daily-loss count was unavailable.",
+        "missing_rule_configuration",
+      ))]);
+    }
+    if (!sequenceIsUnambiguous(applicable)) {
+      return Object.freeze([dayResult(rule.ruleId, rule.versionId, "n/a", emptyEvidence(
+        "The exact trade order was unavailable.",
+        "ambiguous_execution_sequence",
+      ))]);
+    }
+    if (applicable.some((trade) => trade.netPnlDecimal === null)) {
+      return Object.freeze([dayResult(rule.ruleId, rule.versionId, "n/a", emptyEvidence(
+        "Trade P/L was unavailable.",
+        "missing_source_fact",
       ))]);
     }
     let lossCount = 0;
@@ -526,10 +596,22 @@ function evaluateTemplate(
         ? "dailyRealizedGainLimit"
         : "maximumProfitGiveback";
     const limit = configuredDecimal(rule, configurationKey);
-    if (!limit || !sequenceIsUnambiguous(applicable) ||
-        applicable.some((trade) => trade.netPnlDecimal === null)) {
+    if (!limit) {
       return Object.freeze([dayResult(rule.ruleId, rule.versionId, "n/a", emptyEvidence(
-        "The configured threshold, exact trade order or trade P/L was unavailable.",
+        "The configured threshold was unavailable.",
+        "missing_rule_configuration",
+      ))]);
+    }
+    if (!sequenceIsUnambiguous(applicable)) {
+      return Object.freeze([dayResult(rule.ruleId, rule.versionId, "n/a", emptyEvidence(
+        "The exact trade order was unavailable.",
+        "ambiguous_execution_sequence",
+      ))]);
+    }
+    if (applicable.some((trade) => trade.netPnlDecimal === null)) {
+      return Object.freeze([dayResult(rule.ruleId, rule.versionId, "n/a", emptyEvidence(
+        "Trade P/L was unavailable.",
+        "missing_source_fact",
       ))]);
     }
     let realized = new ExactDecimal(0);

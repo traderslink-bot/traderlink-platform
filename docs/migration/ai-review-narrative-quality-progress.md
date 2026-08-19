@@ -133,6 +133,70 @@ four actually issued weekly reviews plus all 420 exact-month trades.
 - [ ] Implement and calibrate the deterministic insight engine.
 - [ ] Run the true-month issuance and provider stability acceptance.
 
+## Deterministic insight-engine implementation checkpoint 1 - 2026-08-18
+
+The owner authorized implementation after the twelve-pass design QA. The first
+server-only checkpoint is now implemented but is deliberately not activated in
+the customer review path.
+
+Implemented in this checkpoint:
+
+- versioned v3 evidence, measurement, candidate, rule-state and lane-score
+  contracts;
+- mutually exclusive stored rule outcomes, orthogonal preset-evaluator states,
+  typed evaluator unavailability, custom historical-opportunity boundaries and
+  conflict-safe violation membership;
+- a backward-compatible typed availability reason on the Journal preset-rule
+  evaluator, including fail-closed enforcement for every new `n/a` result;
+- exact-decimal closed-trade outcomes including winner/loser pools, averages,
+  medians, largest results, contribution, profit factor and results with the
+  largest winner/loser removed;
+- separate period-end confirmed-open and in-period-reduction counts with
+  unrealized P/L explicitly unavailable and no partial open-lifecycle result in
+  closed-trade P/L;
+- exact cohort net P/L, losing-trade P/L, gross loss/profit share, adverse/
+  beneficial net contribution and partial/mixed-currency suppression;
+- compatible affected-versus-remainder consequence comparison with minimum
+  populations, rate/median agreement, exposure-scale guard, fixed structural-
+  mix standardization, composition-confounding and outlier resistance;
+- reusable recurring behavior, material-outlier, specific-example, strength,
+  friction and contrast candidates with general/segment gates, independent
+  spread, exploratory multiplicity and count-led small-denominator literals;
+- early-versus-later rate trend candidates with the four-week monthly split,
+  meaningful-change minimums, coverage guard, fixed-stratum standardization and
+  recent-regression detection;
+- fixed lane weights, scale-guarded financial scoring, deterministic tie breaks,
+  measured-consequence friction guard, rank-certainty states, 50-per-lane
+  pairwise cap, containment/Jaccard overlap audit, family collapse, overlap
+  penalties, evidence/action-target diversity and lane quotas; and
+- a deterministic planted verifier script covering rule-state separation,
+  exact outcome money, open-lifecycle coverage, consequence comparison,
+  behavior candidacy, monthly improvement and sole-eligible rank certainty.
+
+Verification at this checkpoint:
+
+- focused ESLint passes for every new/changed engine and evaluator file;
+- repository TypeScript checking reports no engine error; the remaining check
+  failure is the unrelated concurrent `workspace-dashboard.tsx` `sx` prop error;
+- no Vitest/test suite, verifier execution, provider call, database write,
+  browser change, request issuance or saved-review mutation was performed.
+
+Still required before Slice A is complete:
+
+- one transactionally consistent account-scoped Journal/Analyzer source
+  snapshot and prompt-safe identities;
+- concrete adapters for every approved rule, Analyzer, entry, add, exit,
+  sequence, concentration, segment, positive-process and contrast family;
+- deterministic representative selection and complete leave-one-bucket lane
+  winner stability;
+- exact historical period-end open-position reconstruction from accepted
+  executions; and
+- permitted execution of the focused verifier plus fixture calibration.
+
+Provider shortlist serialization, renderer/selection validation, immutable v3
+persistence, OpenAI dispatch, weekly focus metadata and true four-week monthly
+issuance remain later slices. The existing v2 customer path is unchanged.
+
 The ninth-pass design retains the eighth pass's single-package/fallback and
 Railway boundaries while tightening the engine that decides what deserves to be
 shown. It now keeps Day and Swing populations explicit, attributes results and

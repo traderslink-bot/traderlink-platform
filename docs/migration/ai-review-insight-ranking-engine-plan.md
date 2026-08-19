@@ -2,11 +2,16 @@
 
 ## Status
 
-Design and eleven implementation-readiness QA passes complete under the owner's
-delegated product authority on 2026-08-18. The RSI correctness prerequisite is
-implemented with verification pending; the insight engine itself has not
-started. The owner does not need to approve individual formulas or weight
-calculations, but
+Design and twelve implementation-readiness QA passes are complete under the
+owner's delegated product authority on 2026-08-18. The RSI correctness
+prerequisite is implemented with verification pending. Insight-engine
+implementation is now underway: the first server-only foundation checkpoint
+adds the versioned evidence contracts, exact outcome/rule measurements, typed
+rule/evaluator normalization, event-bounded day-rule membership, compatible
+outcome comparison, behavior/rate-trend candidate primitives, lane scoring,
+overlap/diversity shortlist primitives and an unexecuted deterministic verifier
+harness. It is not connected to request issuance or OpenAI yet. The owner does
+not need to approve individual formulas or weight calculations, but
 the completed engine and its generated reviews remain subject to owner
 product-quality review.
 
@@ -4338,6 +4343,14 @@ bundled into engine code.
 ## Implementation slices
 
 ### Slice A - deterministic contracts and calculations
+
+Implementation status on 2026-08-18: foundation in progress. The pure
+contracts, measurement, comparison, generic candidate, rate-trend, lane-ranking
+and bounded-shortlist primitives exist. Journal snapshot assembly, concrete
+rule/Analyzer/style/Swing/sequence/concentration family adapters, exact
+representative selection, complete leave-one-bucket rank stability, open-state
+repository reconstruction and fixture execution remain before Slice A can be
+called complete.
 
 - Correct and reference-verify RSI 14 under the immutable
   `wilder_rsi_14_v1` calculation version before enabling its candidate family;

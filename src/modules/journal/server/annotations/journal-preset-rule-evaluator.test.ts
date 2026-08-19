@@ -154,6 +154,7 @@ describe("Journal preset rule evaluator", () => {
     ]), new Set());
 
     expect(results.map((item) => item.status)).toEqual(["followed", "n/a"]);
+    expect(results[1]?.evidence.availabilityReason).toBe("ambiguous_execution_sequence");
   });
 
   it("marks the daily rule broken only when an entry follows the configured total loss count", () => {
@@ -207,6 +208,7 @@ describe("Journal preset rule evaluator", () => {
     ]), new Set());
 
     expect(results).toEqual([expect.objectContaining({ status: "n/a" })]);
+    expect(results[0]?.evidence.availabilityReason).toBe("missing_source_fact");
     expect(results[0]?.evidence.limitation).toContain("trade P/L");
   });
 
