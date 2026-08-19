@@ -497,6 +497,66 @@ function candidateClaims(
   maximumClaims: number,
 ): readonly CoachAiReviewRenderedClaim[] {
   const candidate = entry.candidate;
+  if (candidate.focusAssessment !== null) {
+    const assessment = candidate.focusAssessment;
+    const baseline = availableMeasurement(candidate, "focus_baseline_rate");
+    const later = availableMeasurement(candidate, "focus_later_rate");
+    invariant(baseline !== null && later !== null,
+      "TRADERLINK_AI_REVIEW_FOCUS_MEASUREMENT_MISSING");
+    const dates = candidate.opportunityMemberRefs.flatMap((memberRef) => {
+      const trade = source.trades.find((item) => item.tradeRef === memberRef);
+      if (trade) return [trade.marketDate];
+      const day = source.days.find((item) => item.dayRef === memberRef);
+      return day ? [day.marketDate] : [];
+    }).sort(compareCoachAiReviewText);
+    const span = dates.length === 0
+      ? `${assessment.laterEvidenceStartUtc.slice(0, 10)} to ${assessment.laterEvidenceEndUtc.slice(0, 10)}`
+      : `${dates[0]!} to ${dates.at(-1)!}`;
+    const conclusion = Object.freeze({
+      improved: "That is a clear improvement.",
+      improved_but_still_inconsistent:
+        "That is an improvement, but the issue was still present often enough to remain inconsistent.",
+      sustained_strength: "That strength held up.",
+      unchanged: "That was essentially unchanged.",
+      no_clear_change: "That moved, but not enough to establish a clear change.",
+      worsened: "That is a clear setback.",
+      mixed: "The later weeks moved in both directions, so the result was mixed.",
+      measured_without_directional_target:
+        "That records what happened without assuming that a higher or lower rate was better.",
+      not_measurable_from_later_evidence:
+        "The later evidence could not measure the original question.",
+    })[assessment.verdict];
+    const baselineRate = `${displayDecimal(new ExactDecimal(
+      assessment.baselineRateDecimal,
+    ).times(100).toFixed())}%`;
+    const laterRate = `${displayDecimal(new ExactDecimal(
+      assessment.laterRateDecimal,
+    ).times(100).toFixed())}%`;
+    const claim = registry.add({
+      findingRef: candidate.findingRef,
+      family: candidate.family,
+      kind: "focus_assessment",
+      factualJobParts: [assessment.focusTargetRef, assessment.verdict,
+        assessment.baselineRateDecimal, assessment.laterRateDecimal,
+        assessment.cumulativeLaterMemberRefs],
+      measurements: Object.freeze([baseline, later]),
+      evidenceRefs: assessment.cumulativeLaterMemberRefs,
+      renderedSentence: sentence(`Your earlier review asked, "${assessment.renderedQuestion}" From ${span}, it appeared in ${later.affectedCount} of ${later.denominatorMemberRefs.length} later opportunities (${laterRate}), compared with ${baselineRate} in the original review. ${conclusion}`),
+    });
+    const representative = representativeSentence(candidate, source);
+    return Object.freeze([
+      claim,
+      ...(representative && maximumClaims > 1 ? [registry.add({
+        findingRef: candidate.findingRef,
+        family: candidate.family,
+        kind: "representative_example",
+        factualJobParts: [candidate.family, candidate.representativeMetricName,
+          candidate.representativeEvidenceRoles],
+        evidenceRefs: representative.evidenceRefs,
+        renderedSentence: representative.value,
+      })] : []),
+    ]);
+  }
   const values: CoachAiReviewRenderedClaim[] = [];
   const rate = rateSentence(candidate);
   const financial = financialImpactSentence(candidate);
@@ -624,8 +684,7 @@ function focusQuestion(entry: CoachAiReviewShortlistEntry): CoachAiReviewRendere
       renderedQuestion = "Across eligible re-entry opportunities, how often was the saved re-entry rule followed, and what was the result of the breaks?";
       break;
     case "fixed_cohort":
-      renderedQuestion = `Did ${subject} produce a similar result in the next review period, using the same fixed comparison?`;
-      break;
+      return null;
     case "positive_process":
       renderedQuestion = `How often did ${subject} repeat in eligible trades, and did its result remain positive?`;
       break;
@@ -652,6 +711,7 @@ function focusQuestion(entry: CoachAiReviewShortlistEntry): CoachAiReviewRendere
     entry.candidate.findingRef,
     entry.actionTargetKey,
     trackingIntent,
+    entry.candidate.trackingMetricDirection,
   ]);
   return Object.freeze({
     focusTargetRef,
@@ -663,6 +723,7 @@ function focusQuestion(entry: CoachAiReviewShortlistEntry): CoachAiReviewRendere
     findingRef: entry.candidate.findingRef,
     actionTargetKey: entry.actionTargetKey,
     trackingIntent,
+    trackingMetricDirection: entry.candidate.trackingMetricDirection,
     renderedQuestion,
   });
 }
@@ -812,10 +873,18 @@ export function buildCoachAiReviewRenderedPlanCatalog(input: Readonly<{
     : unavailableSection({
         sectionKey: "focus_follow_through",
         purpose: "focus_measurement",
-        reason: input.source.focuses.length === 0 ? "no_compatible_baseline" : "no_later_evidence",
-        text: input.source.focuses.length === 0
+        reason: input.source.issuedFocusTargets.length === 0
+          ? "no_compatible_baseline"
+          : input.source.issuedFocusTargets.every((target) =>
+              target.baselineLineageStatus === "superseded")
+            ? "required_facts_unavailable"
+            : "no_later_evidence",
+        text: input.source.issuedFocusTargets.length === 0
           ? "No earlier issued focus was available for this period."
-          : "The earlier focus did not yet have enough new, later evidence for a fresh assessment.",
+          : input.source.issuedFocusTargets.every((target) =>
+              target.baselineLineageStatus === "superseded")
+            ? "An earlier focus was available, but its original trade, rule, Analyzer, or trade-style version changed, so the saved baseline was not compared as though it were still current."
+            : "The earlier focus did not yet have enough new, later evidence for a fresh assessment.",
         registry,
       });
 
@@ -856,6 +925,7 @@ export function buildCoachAiReviewRenderedPlanCatalog(input: Readonly<{
       period.findingRef,
       "period_review_question",
       "examination",
+      "non_directional",
     ]);
     focusQuestions.push(Object.freeze({
       focusTargetRef,
@@ -867,6 +937,7 @@ export function buildCoachAiReviewRenderedPlanCatalog(input: Readonly<{
       findingRef: period.findingRef,
       actionTargetKey: "period_review_question",
       trackingIntent: "examination",
+      trackingMetricDirection: "non_directional",
       renderedQuestion,
     }));
   }

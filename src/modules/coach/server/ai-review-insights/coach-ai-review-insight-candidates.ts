@@ -10,6 +10,8 @@ import {
   type CoachAiReviewInsightCandidate,
   type CoachAiReviewInsightFamily,
   type CoachAiReviewInsightLane,
+  type CoachAiReviewIssuedFocusTarget,
+  type CoachAiReviewMeasurement,
   type CoachAiReviewMoneyObservation,
   type CoachAiReviewNormalizedRuleOpportunity,
   type CoachAiReviewObservationUnit,
@@ -459,6 +461,8 @@ export function buildCoachAiReviewPeriodOutcomeCandidate(input: Readonly<{
           ? "negative"
           : "context",
     subjectRef: `period_${input.periodStartDate}_${input.periodEndDate}`,
+    trackingSubjectKey: "period_outcome",
+    trackingMetricDirection: "non_directional",
     subjectLabel: null,
     observationUnit: "trade",
     resultOwnership: "trade_close_market_date",
@@ -494,6 +498,7 @@ export function buildCoachAiReviewPeriodOutcomeCandidate(input: Readonly<{
     rankExplanation: Object.freeze([
       "Outcome context is opening evidence and is not itself good or bad process.",
     ]),
+    focusAssessment: null,
   });
   validateCoachAiReviewCandidateMembership(candidate);
   return candidate;
@@ -502,6 +507,7 @@ export function buildCoachAiReviewPeriodOutcomeCandidate(input: Readonly<{
 export type CoachAiReviewRuleCandidateSource = Readonly<{
   ruleRef: string;
   ruleVersionRef: string;
+  trackingSubjectKey: string;
   ruleTitle: string;
   targetKind: "trading_day" | "round_trip";
   presetCoreRule: boolean;
@@ -853,6 +859,10 @@ function ruleCandidate(input: Readonly<{
     classification: "recurring",
     polarity: input.polarity,
     subjectRef: source.ruleRef,
+    trackingSubjectKey: source.trackingSubjectKey,
+    trackingMetricDirection: input.polarity === "negative"
+      ? "lower_is_better"
+      : "higher_is_better",
     subjectLabel: source.ruleTitle,
     observationUnit: "rule_review_opportunity",
     resultOwnership: "rule_target",
@@ -910,6 +920,7 @@ function ruleCandidate(input: Readonly<{
       `evidence_source=${input.evidenceSource}`,
       `consequence=${consequence.verdict}`,
     ]),
+    focusAssessment: null,
   });
   validateCoachAiReviewCandidateMembership(candidate);
   return candidate;
@@ -1016,6 +1027,7 @@ export type CoachAiReviewBehaviorCandidateSource = Readonly<{
   lane: "friction" | "strength" | "contrast";
   polarity: "negative" | "positive" | "mixed";
   subjectRef: string;
+  trackingSubjectKey: string;
   subjectLabel?: string | null;
   observationUnit: CoachAiReviewObservationUnit;
   resultOwnership: CoachAiReviewResultOwnership;
@@ -1412,6 +1424,12 @@ function buildCoachAiReviewBehaviorCandidateCore(
           : "recurring",
     polarity: source.polarity,
     subjectRef: source.subjectRef,
+    trackingSubjectKey: source.trackingSubjectKey,
+    trackingMetricDirection: source.lane === "friction"
+      ? "lower_is_better"
+      : source.lane === "strength"
+        ? "higher_is_better"
+        : "non_directional",
     subjectLabel: source.subjectLabel ?? null,
     observationUnit: source.observationUnit,
     resultOwnership: source.resultOwnership,
@@ -1462,6 +1480,7 @@ function buildCoachAiReviewBehaviorCandidateCore(
       `consequence=${consequence.verdict}`,
       `affected=${affectedRefs.length}/${memberRefs.length}`,
     ]),
+    focusAssessment: null,
   });
   validateCoachAiReviewCandidateMembership(candidate);
   return candidate;
@@ -1514,6 +1533,7 @@ export type CoachAiReviewRateTrendCandidateSource = Readonly<{
   cadence: CoachAiReviewCadence;
   family: CoachAiReviewInsightFamily;
   subjectRef: string;
+  trackingSubjectKey: string;
   subjectLabel?: string | null;
   trendKind: "improvement" | "deterioration";
   improvementDirection: "lower_is_better" | "higher_is_better";
@@ -1868,6 +1888,8 @@ function buildCoachAiReviewRateTrendCandidateCore(
     classification: "trend",
     polarity: source.trendKind === "improvement" ? "positive" : "negative",
     subjectRef: source.subjectRef,
+    trackingSubjectKey: source.trackingSubjectKey,
+    trackingMetricDirection: source.improvementDirection,
     subjectLabel: source.subjectLabel ?? null,
     observationUnit: source.observationUnit,
     resultOwnership: source.resultOwnership,
@@ -1921,6 +1943,7 @@ function buildCoachAiReviewRateTrendCandidateCore(
       `change=${canonicalDecimal(desiredChange)}`,
       `latest_state=${latestState}`,
     ]),
+    focusAssessment: null,
   });
   validateCoachAiReviewCandidateMembership(candidate);
   return candidate;
@@ -1946,4 +1969,386 @@ export function buildCoachAiReviewRateTrendCandidate(
       }),
     });
   }));
+}
+
+type FocusRateMeasurement = Readonly<{
+  measurement: CoachAiReviewMeasurement;
+  rate: Decimal;
+}>;
+
+function focusRateMeasurement(
+  candidate: CoachAiReviewInsightCandidate,
+  intent: CoachAiReviewIssuedFocusTarget["trackingIntent"],
+): FocusRateMeasurement | null {
+  const names = candidate.classification === "trend"
+    ? ["later_affected_rate", "affected_rate", "reviewed_broken_rate"]
+    : intent === "strength_repetition" && candidate.family === "named_rule_association"
+      ? ["reviewed_followed_count", "affected_rate", "later_affected_rate"]
+      : [
+          "affected_rate",
+          "reviewed_broken_rate",
+          "preset_evaluated_violation_rate",
+          "later_affected_rate",
+          "rule_affected_count",
+        ];
+  for (const name of names) {
+    const measurement = candidate.measurements.find((item) => item.metricName === name);
+    if (!measurement || measurement.denominatorMemberRefs.length === 0 ||
+        !["available", "partial_display_only"].includes(measurement.availability)) continue;
+    const rate = measurement.unit === "ratio" && measurement.exactValue !== null
+      ? new ExactDecimal(measurement.exactValue)
+      : new ExactDecimal(measurement.numeratorMemberRefs.length)
+        .dividedBy(measurement.denominatorMemberRefs.length);
+    if (rate.isFinite() && rate.gte(0) && rate.lte(1)) {
+      return Object.freeze({ measurement, rate });
+    }
+  }
+  return null;
+}
+
+function focusDimensionValue(
+  candidate: CoachAiReviewInsightCandidate,
+  name: "financial_materiality" | "evidence_confidence",
+): number | null {
+  const values = candidate.scores.flatMap((score) => score.dimensions
+    .filter((dimension) => dimension.name === name && dimension.value !== null)
+    .map((dimension) => dimension.value as number));
+  return values.length === 0 ? null : Math.max(...values);
+}
+
+function focusVerdict(input: Readonly<{
+  intent: CoachAiReviewIssuedFocusTarget["trackingIntent"];
+  direction: CoachAiReviewIssuedFocusTarget["trackingMetricDirection"];
+  baseline: Decimal;
+  later: Decimal;
+  weekSeries: CoachAiReviewInsightCandidate["weekSeries"];
+}>): import("@/src/modules/coach/contracts/coach-ai-review-insight-contracts")
+  .CoachAiReviewFocusFollowThroughVerdict {
+  if (input.intent === "examination" || input.direction === "non_directional") {
+    return "measured_without_directional_target";
+  }
+  const higherIsBetter = input.direction === "higher_is_better";
+  const aligned = higherIsBetter
+    ? input.later.minus(input.baseline)
+    : input.baseline.minus(input.later);
+  const weekRates = input.weekSeries.filter((bucket) => bucket.denominator > 0)
+    .map((bucket) => new ExactDecimal(bucket.numerator).dividedBy(bucket.denominator));
+  const mixed = weekRates.some((rate) => rate.minus(input.baseline).gte("0.05")) &&
+    weekRates.some((rate) => input.baseline.minus(rate).gte("0.05"));
+  if (mixed) return "mixed";
+  if (aligned.gte("0.10")) {
+    if (input.intent === "strength_repetition") return "sustained_strength";
+    const adverseRate = higherIsBetter
+      ? new ExactDecimal(1).minus(input.later)
+      : input.later;
+    return adverseRate.gte("0.20")
+      ? "improved_but_still_inconsistent"
+      : "improved";
+  }
+  if (aligned.lte("-0.10")) return "worsened";
+  if (input.intent === "strength_repetition" && aligned.gte("-0.05")) {
+    return "sustained_strength";
+  }
+  return aligned.abs().lte("0.05") ? "unchanged" : "no_clear_change";
+}
+
+export function buildCoachAiReviewFocusFollowThroughCandidate(input: Readonly<{
+  target: CoachAiReviewIssuedFocusTarget;
+  laterCandidate: CoachAiReviewInsightCandidate;
+  laterEvidenceStartUtc: string;
+  laterEvidenceEndUtc: string;
+  incrementalLaterMemberRefs?: readonly string[];
+  priorAssessmentReviewRef?: string | null;
+  priorAssessmentEvidenceEndUtc?: string | null;
+  priorAssessmentVerdict?: import("@/src/modules/coach/contracts/coach-ai-review-insight-contracts")
+    .CoachAiReviewFocusFollowThroughVerdict | null;
+}>): CoachAiReviewInsightCandidate | null {
+  const baseline = focusRateMeasurement(
+    Object.freeze({
+      ...input.laterCandidate,
+      family: input.target.originatingFamily,
+      polarity: input.target.originatingPolarity,
+      measurements: input.target.baselineMeasurements,
+      classification: input.target.originatingClassification,
+    }),
+    input.target.trackingIntent,
+  );
+  const later = focusRateMeasurement(input.laterCandidate, input.target.trackingIntent);
+  if (!baseline || !later ||
+      baseline.measurement.observationUnit !== later.measurement.observationUnit ||
+      input.laterEvidenceStartUtc <=
+      input.target.eligibleLaterEvidenceAtUtc ||
+      input.laterEvidenceEndUtc < input.laterEvidenceStartUtc) return null;
+  const cumulativeLaterMemberRefs = freezeSortedUniqueRefs(
+    later.measurement.denominatorMemberRefs,
+    "FOCUS_CUMULATIVE_LATER_MEMBER_REF",
+  );
+  const incrementalLaterMemberRefs = freezeSortedUniqueRefs(
+    input.incrementalLaterMemberRefs ?? cumulativeLaterMemberRefs,
+    "FOCUS_INCREMENTAL_LATER_MEMBER_REF",
+  );
+  if (cumulativeLaterMemberRefs.length === 0 || incrementalLaterMemberRefs.length === 0 ||
+      !incrementalLaterMemberRefs.every((memberRef) =>
+        cumulativeLaterMemberRefs.includes(memberRef))) return null;
+  const rateChange = later.rate.minus(baseline.rate);
+  const verdict = focusVerdict({
+    intent: input.target.trackingIntent,
+    direction: input.target.trackingMetricDirection,
+    baseline: baseline.rate,
+    later: later.rate,
+    weekSeries: input.laterCandidate.weekSeries,
+  });
+  const baselineMeasurement = createCoachAiReviewMeasurement({
+    metricName: "focus_baseline_rate",
+    exactValue: canonicalDecimal(baseline.rate),
+    unit: "ratio",
+    observationUnit: baseline.measurement.observationUnit,
+    numeratorMemberRefs: baseline.measurement.numeratorMemberRefs,
+    denominatorMemberRefs: baseline.measurement.denominatorMemberRefs,
+    expectedCount: baseline.measurement.expectedCount,
+    availability: "available",
+    attributionKind: baseline.measurement.attributionKind,
+    displayLiteral: canonicalDecimal(baseline.rate),
+  });
+  const laterMeasurement = createCoachAiReviewMeasurement({
+    metricName: "focus_later_rate",
+    exactValue: canonicalDecimal(later.rate),
+    unit: "ratio",
+    observationUnit: later.measurement.observationUnit,
+    numeratorMemberRefs: later.measurement.numeratorMemberRefs,
+    denominatorMemberRefs: later.measurement.denominatorMemberRefs,
+    expectedCount: later.measurement.expectedCount,
+    availability: "available",
+    attributionKind: later.measurement.attributionKind,
+    displayLiteral: canonicalDecimal(later.rate),
+  });
+  const changeMeasurement = createCoachAiReviewMeasurement({
+    metricName: "focus_rate_change",
+    exactValue: canonicalDecimal(rateChange),
+    unit: "ratio",
+    observationUnit: later.measurement.observationUnit,
+    numeratorMemberRefs: later.measurement.numeratorMemberRefs,
+    denominatorMemberRefs: later.measurement.denominatorMemberRefs,
+    expectedCount: later.measurement.expectedCount,
+    availability: "available",
+    attributionKind: later.measurement.attributionKind,
+    displayLiteral: canonicalDecimal(rateChange),
+  });
+  const dimensions = Object.freeze([
+    coachAiReviewScoreDimension({
+      name: "exact_focus_measurability",
+      value: 100,
+      explanation: "The accepted hidden focus target matched its exact stable subject key.",
+    }),
+    coachAiReviewScoreDimension({
+      name: "later_evidence_span",
+      value: Math.min(100, Math.max(1, input.laterCandidate.weekSeries
+        .filter((bucket) => bucket.denominator > 0).length) * 50),
+      explanation: "Independent later calendar-week buckets provide the evidence span.",
+    }),
+    coachAiReviewScoreDimension({
+      name: "trend_magnitude",
+      value: Math.min(100, rateChange.abs().dividedBy("0.25").times(100).toNumber()),
+      explanation: "An absolute 25-point later rate change receives full magnitude credit.",
+    }),
+    coachAiReviewScoreDimension({
+      name: "financial_materiality",
+      value: focusDimensionValue(input.laterCandidate, "financial_materiality"),
+      explanation: "Financial relevance is inherited only from the compatible later finding.",
+    }),
+    coachAiReviewScoreDimension({
+      name: "evidence_confidence",
+      value: focusDimensionValue(input.laterCandidate, "evidence_confidence"),
+      explanation: "Confidence is inherited only from the compatible later finding.",
+    }),
+  ]);
+  const score = calculateCoachAiReviewLaneScore({
+    lane: "focus_follow_through",
+    dimensions,
+  });
+  const candidate: CoachAiReviewInsightCandidate = Object.freeze({
+    findingRef: findingRef([
+      "focus_follow_through",
+      input.target.focusTargetRef,
+      verdict,
+      canonicalDecimal(baseline.rate),
+      canonicalDecimal(later.rate),
+      cumulativeLaterMemberRefs,
+      incrementalLaterMemberRefs,
+    ]),
+    engineVersion: COACH_AI_REVIEW_INSIGHT_ENGINE_VERSION,
+    family: "focus_follow_through",
+    classification: "focus_assessment",
+    polarity: verdict === "improved" || verdict === "sustained_strength"
+      ? "positive"
+      : verdict === "worsened" ? "negative" : "mixed",
+    subjectRef: input.target.focusTargetRef,
+    trackingSubjectKey: input.target.originatingTrackingSubjectKey,
+    trackingMetricDirection: input.target.trackingMetricDirection,
+    subjectLabel: input.target.renderedQuestion,
+    observationUnit: input.laterCandidate.observationUnit,
+    resultOwnership: "focus_issuance_time",
+    populationDefinition: "Compatible later evidence after the issued focus boundary.",
+    populationMemberRefs: cumulativeLaterMemberRefs,
+    opportunityDefinition: input.laterCandidate.opportunityDefinition,
+    opportunityMemberRefs: cumulativeLaterMemberRefs,
+    affectedMemberRefs: freezeSortedUniqueRefs(
+      later.measurement.numeratorMemberRefs,
+      "FOCUS_LATER_AFFECTED_MEMBER_REF",
+    ),
+    tradeStylePopulation: input.laterCandidate.tradeStylePopulation,
+    laneEligibility: Object.freeze(["focus_follow_through" as const]),
+    cohortDefinition: `Later evidence for the accepted ${input.target.trackingIntent} target.`,
+    comparisonDefinition: "The compatible frozen baseline rate versus eligible later evidence.",
+    measurements: Object.freeze([
+      baselineMeasurement,
+      laterMeasurement,
+      changeMeasurement,
+      ...input.laterCandidate.measurements.filter((measurement) =>
+        measurement.unit === "money" && measurement.exactValue !== null),
+    ]),
+    weekSeries: input.laterCandidate.weekSeries,
+    representativeEvidenceRefs: input.laterCandidate.representativeEvidenceRefs,
+    representativeEvidenceRoles: input.laterCandidate.representativeEvidenceRoles,
+    representativeMetricName: input.laterCandidate.representativeMetricName,
+    relatedRuleRefs: input.laterCandidate.relatedRuleRefs,
+    relatedFocusRefs: Object.freeze([input.target.focusTargetRef]),
+    overlapKeys: freezeSortedUniqueRefs([
+      ...input.laterCandidate.overlapKeys,
+      `focus:${input.target.focusTargetRef}`,
+    ], "FOCUS_OVERLAP_KEY"),
+    coverage: input.laterCandidate.coverage,
+    consequenceVerdict: input.laterCandidate.consequenceVerdict,
+    futureTrackability: "trackable",
+    scores: Object.freeze([score]),
+    adjustments: Object.freeze([
+      `focus_verdict=${verdict}`,
+      `tracking_intent=${input.target.trackingIntent}`,
+    ]),
+    penalties: Object.freeze([]),
+    bucketSensitivity: Object.freeze([]),
+    sensitivityResults: Object.freeze([
+      `baseline_rate=${canonicalDecimal(baseline.rate)}`,
+      `later_rate=${canonicalDecimal(later.rate)}`,
+      `rate_change=${canonicalDecimal(rateChange)}`,
+    ]),
+    rankExplanation: Object.freeze([
+      `focus_follow_through=${score.postPenaltyScore}`,
+      `verdict=${verdict}`,
+    ]),
+    focusAssessment: Object.freeze({
+      focusTargetRef: input.target.focusTargetRef,
+      sourceReviewRef: input.target.sourceReviewRef,
+      renderedQuestion: input.target.renderedQuestion,
+      trackingIntent: input.target.trackingIntent,
+      trackingMetricDirection: input.target.trackingMetricDirection,
+      verdict,
+      baselineMeasurementRef: baselineMeasurement.measurementRef,
+      laterMeasurementRef: laterMeasurement.measurementRef,
+      baselineRateDecimal: canonicalDecimal(baseline.rate),
+      laterRateDecimal: canonicalDecimal(later.rate),
+      rateChangeDecimal: canonicalDecimal(rateChange),
+      eligibleLaterEvidenceAtUtc: input.target.eligibleLaterEvidenceAtUtc,
+      laterEvidenceStartUtc: input.laterEvidenceStartUtc,
+      laterEvidenceEndUtc: input.laterEvidenceEndUtc,
+      cumulativeLaterMemberRefs,
+      incrementalLaterMemberRefs,
+      priorAssessmentReviewRef: input.priorAssessmentReviewRef ?? null,
+      priorAssessmentEvidenceEndUtc: input.priorAssessmentEvidenceEndUtc ?? null,
+      priorAssessmentVerdict: input.priorAssessmentVerdict ?? null,
+    }),
+  });
+  validateCoachAiReviewCandidateMembership(candidate);
+  return candidate;
+}
+
+export function buildCoachAiReviewFocusMetricProjection(input: Readonly<{
+  target: CoachAiReviewIssuedFocusTarget;
+  observationUnit: CoachAiReviewObservationUnit;
+  resultOwnership: CoachAiReviewResultOwnership;
+  tradeStylePopulation: CoachAiReviewTradeStylePopulation;
+  populationMemberRefs: readonly string[];
+  affectedMemberRefs: readonly string[];
+  expectedCount: number;
+  weekSeries: CoachAiReviewInsightCandidate["weekSeries"];
+  relatedRuleRefs?: readonly string[];
+}>): CoachAiReviewInsightCandidate {
+  const populationMemberRefs = freezeSortedUniqueRefs(
+    input.populationMemberRefs,
+    "FOCUS_PROJECTION_POPULATION_REF",
+  );
+  const affectedMemberRefs = freezeSortedUniqueRefs(
+    input.affectedMemberRefs,
+    "FOCUS_PROJECTION_AFFECTED_REF",
+  );
+  invariant(affectedMemberRefs.every((memberRef) => populationMemberRefs.includes(memberRef)) &&
+    input.expectedCount >= populationMemberRefs.length,
+  "TRADERLINK_AI_REVIEW_FOCUS_PROJECTION_MEMBERS_INVALID");
+  const rate = populationMemberRefs.length === 0
+    ? null
+    : new ExactDecimal(affectedMemberRefs.length).dividedBy(populationMemberRefs.length);
+  const measurement = createCoachAiReviewMeasurement({
+    metricName: "affected_rate",
+    exactValue: rate === null ? null : canonicalDecimal(rate),
+    unit: "ratio",
+    observationUnit: input.observationUnit,
+    numeratorMemberRefs: affectedMemberRefs,
+    denominatorMemberRefs: populationMemberRefs,
+    expectedCount: input.expectedCount,
+    availability: rate === null ? "unavailable_missing_population" : "available",
+    attributionKind: "cohort_association",
+    displayLiteral: rate === null ? null : canonicalDecimal(rate),
+  });
+  const candidate: CoachAiReviewInsightCandidate = Object.freeze({
+    findingRef: findingRef([
+      "focus_metric_projection",
+      input.target.focusTargetRef,
+      populationMemberRefs,
+      affectedMemberRefs,
+    ]),
+    engineVersion: COACH_AI_REVIEW_INSIGHT_ENGINE_VERSION,
+    family: input.target.originatingFamily,
+    classification: "recurring",
+    polarity: input.target.originatingPolarity,
+    subjectRef: input.target.originatingSubjectRef,
+    trackingSubjectKey: input.target.originatingTrackingSubjectKey,
+    trackingMetricDirection: input.target.trackingMetricDirection,
+    subjectLabel: null,
+    observationUnit: input.observationUnit,
+    resultOwnership: input.resultOwnership,
+    populationDefinition: "Eligible later observations for the exact issued focus target.",
+    populationMemberRefs,
+    opportunityDefinition: "Later observations matching the focus's frozen metric definition.",
+    opportunityMemberRefs: populationMemberRefs,
+    affectedMemberRefs,
+    tradeStylePopulation: input.tradeStylePopulation,
+    laneEligibility: Object.freeze([]),
+    cohortDefinition: "Later affected observations under the same focus metric.",
+    comparisonDefinition: null,
+    measurements: Object.freeze([measurement]),
+    weekSeries: input.weekSeries,
+    representativeEvidenceRefs: Object.freeze([]),
+    representativeEvidenceRoles: Object.freeze([]),
+    representativeMetricName: null,
+    relatedRuleRefs: freezeSortedUniqueRefs(input.relatedRuleRefs ?? [],
+      "FOCUS_PROJECTION_RULE_REF"),
+    relatedFocusRefs: Object.freeze([input.target.focusTargetRef]),
+    overlapKeys: Object.freeze([`focus:${input.target.focusTargetRef}`]),
+    coverage: Object.freeze({
+      observedCount: populationMemberRefs.length,
+      expectedCount: input.expectedCount,
+      balanced: "balance_unavailable",
+    }),
+    consequenceVerdict: "comparison_unavailable",
+    futureTrackability: "trackable",
+    scores: Object.freeze([]),
+    adjustments: Object.freeze(["focus_metric_projection_only"]),
+    penalties: Object.freeze([]),
+    bucketSensitivity: Object.freeze([]),
+    sensitivityResults: Object.freeze([]),
+    rankExplanation: Object.freeze([]),
+    focusAssessment: null,
+  });
+  validateCoachAiReviewCandidateMembership(candidate);
+  return candidate;
 }

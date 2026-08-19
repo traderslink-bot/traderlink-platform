@@ -5,11 +5,12 @@
 Design and twelve implementation-readiness QA passes are complete under the
 owner's delegated product authority on 2026-08-18. The RSI correctness
 prerequisite is implemented with verification pending. Insight-engine
-implementation is now underway. Seven inactive server-only checkpoints now cover
+implementation is now underway. Nine inactive server-only checkpoints now cover
 versioned evidence contracts, exact measurements, normalized candidates,
 lane ranking, shortlist stability, factual rendering, whole-plan selection,
 compressed immutable snapshot persistence, fenced dispatch/startup recovery and
-atomic v3 issuance/fallback primitives. They are not connected to customer
+atomic v3 issuance/fallback primitives, mixed v2/v3 reopening and exact
+later-evidence focus assessment. They are not connected to customer
 request issuance or activated provider generation yet. The owner does
 not need to approve individual formulas or weight calculations, but
 the completed engine and its generated reviews remain subject to owner
@@ -24,11 +25,11 @@ reviews remain immutable.
 ## Decision
 
 TraderLink, not the model, will discover and calculate the candidate findings
-for a weekly, two-week or monthly AI Review. The model will receive a short,
-ranked and balanced evidence brief plus the underlying permitted context. Its
-job is to select a coherent combination of supported findings and authorized
-narrative clauses. A deterministic server renderer turns that structured plan
-into normal trader-facing language.
+for a weekly, two-week or monthly AI Review. The server will render and validate
+at most six complete coherent review choices from the ranked findings. The
+model receives only those bounded complete choices and selects one; it cannot
+write, edit, combine or recalculate their facts. The selected server-rendered
+plan is the normal trader-facing review.
 
 The engine will not use one global score to decide the whole review. It will
 rank findings inside five separate lanes:
@@ -149,8 +150,8 @@ authority. It may reuse accepted exact-decimal utilities and the current
 replacement Journal/Analyzer contracts.
 
 Prior issued-review prose is historical narrative context, not measurement
-authority. A monthly request still includes the four actually issued weekly
-reviews, but current-month counts, rates, P/L, trends and claims are always
+authority. A monthly calculation source still includes the four actually
+issued weekly reviews, but current-month counts, rates, P/L, trends and claims are always
 recalculated from the exact current-month source. A stale or inaccurate number
 inside earlier review prose cannot become a monthly measurement, candidate or
 claim. Historical prose is delimited as untrusted data and can never act as a
@@ -160,8 +161,10 @@ focus follow-through.
 Historical prose also cannot decide the review's main conclusions indirectly.
 The monthly plan builder freezes a `decisionCriticalSpine` containing the exact
 period outcome claim, primary improvement subject/verdict, primary held-back
-action target and focus-follow-through target before serializing any weekly
-prose. Every complete plan offered to the provider must retain that spine.
+action target and focus-follow-through target before provider projection.
+Weekly prose remains in the private immutable calculation source and is not
+copied into the v3 provider-selection package. Every complete plan offered to
+the provider must retain that spine.
 Provider alternatives may vary a compatible supporting strength/contrast,
 representative example or focus ordering, but not replace a materially ranked
 current-month conclusion because an older review emphasized something else.
@@ -452,6 +455,14 @@ representative trade record may contain:
 No private round-trip, execution, account or user identifier or HMAC material
 is exposed.
 
+Cross-request focus tracking uses a separate hidden stable-reference contract.
+Its versioned SHA-256 input includes the account/workspace scope and the private
+subject/version identity, but not the request period or rotating HMAC key. The
+result is stored only in immutable local source/audit records, is explicitly
+rejected from every provider package and never replaces prompt-safe evidence
+references. This lets the engine recognize the same rule or Analyzer behavior
+after key rotation without exposing the underlying UUID.
+
 Every other selectable or citable object also receives a deterministic typed
 reference. No reference is an array index:
 
@@ -632,18 +643,15 @@ projection; it never reopens later Journal state or recalculates against edited
 evidence. Weekly inputs remain an immutable audit source, while the locally
 calculated monthly projection—not weekly prose—supplies the Analyzer findings.
 
-The monthly provider package contains the four actually issued weekly reviews,
-one canonical copy of every permitted non-Analyzer exact-month provider field,
-and the exact aggregate/representative Analyzer projection defined above. It
-may avoid sending the same exact source record twice merely because that record
-also appeared in a weekly input, but it cannot omit, summarize or truncate a
-field required by the frozen provider-projection schema or replace it with
-weekly prose. Prior weekly prose may help the provider understand what was
-previously communicated, but no monthly `claimRef` may cite that prose as its
-factual source. Replacing a weekly review's visible text with stale numbers,
-generic boilerplate or prompt-like instructions while leaving the exact monthly
-calculation source unchanged must not change monthly candidates, measurements,
-scores, selection options or server-rendered fact clauses.
+The monthly provider-selection package contains only the bounded complete
+server-rendered review choices and their allowlisted factual selection
+rationales. It does not copy raw monthly facts, raw Analyzer observations or
+the four weekly prose bodies to OpenAI. The local engine already consumed the
+complete exact-month source and the issued reviews' hidden focus metadata before
+freezing those choices. Replacing a weekly review's visible text with stale
+numbers, generic boilerplate or prompt-like instructions while leaving the
+exact monthly calculation source unchanged must not change monthly candidates,
+measurements, scores, selection options or server-rendered fact clauses.
 
 ### Calendar-week buckets
 
@@ -693,6 +701,8 @@ engineVersion
 family
 polarity
 subjectRef
+trackingSubjectKey
+trackingMetricDirection
 observationUnit
 resultOwnership
 populationDefinition
@@ -727,6 +737,7 @@ penalties[]
 sensitivityResults[]
 baselineLineageStatus
 rankExplanation[]
+focusAssessment
 ```
 
 Each measurement contains its `measurementRef`, stable metric name, exact value,
@@ -755,8 +766,8 @@ deterministic prompt-safe digest of engine version, period, family, subject,
 cohort and comparison definition. Input order cannot change it. Existing
 requests always use their frozen engine version even after later calibration.
 
-Every directional metric also declares its interpretation explicitly:
-`lower_is_better`, `higher_is_better` or `context_only`. The engine never
+Every tracked metric also declares its interpretation explicitly:
+`lower_is_better`, `higher_is_better` or `non_directional`. The engine never
 infers improvement direction from a metric name or provider selection.
 
 ## Candidate families
@@ -1247,13 +1258,15 @@ Every newly generated weekly focus must carry hidden tracking metadata:
 The visible focus remains ordinary prose. The tracking metadata is stored with
 the immutable issued review and is not shown as system language.
 
-For existing reviews without tracking metadata, the engine may build a lower-
-confidence candidate by matching the focus against exact named rules, tags and
-candidate families. It cannot manufacture a match from general word overlap.
+Existing v2 reviews without accepted hidden tracking metadata remain
+`legacy_unavailable` for automatic follow-through. Their visible prose remains
+historical context, but the engine does not manufacture a target from word
+overlap, tags or a similarly named rule.
 
 Every tracked baseline also freezes the contributing source-version manifest.
-Before later comparison, the engine checks those round-trip, rule, Analyzer and
-style versions against the current canonical lineage. A corrected, excluded,
+Before later comparison, the engine checks those round-trip, rule, rule-review,
+Analyzer and style versions against the current canonical lineage. A corrected,
+excluded,
 relinked or otherwise superseded baseline is not compared as though it were
 still current. The engine may recompute the old side from currently canonical
 facts only when the complete original period can be reconstructed under the
@@ -1267,6 +1280,7 @@ A follow-through verdict is one of:
 - improved but still inconsistent;
 - sustained strength;
 - unchanged;
+- changed, but not enough to establish a clear change;
 - worsened;
 - mixed;
 - measured without a directional target;
@@ -1279,12 +1293,25 @@ issuance-day aggregate would mix pre- and post-focus activity. A delayed review
 therefore cannot claim follow-through from trades that occurred before the
 trader received its focus. The candidate records the exact later weeks,
 denominators, measurements and contradictory evidence behind the verdict.
+Automatic assessment requires at least five compatible later opportunities
+across at least two later market dates, the same observation unit and a current
+baseline lineage. A hidden measurement projection is allowed only for the exact
+frozen metric, so a problem improving to zero occurrences or a strength falling
+to zero is still measured rather than disappearing from follow-through.
+
+Version-one directional verdicts use percentage-point changes in that exact
+rate: at least 10 points in the intended direction is a clear improvement; at
+least 10 adverse points is a clear setback; at most 5 points is essentially
+unchanged; the 5-to-10-point middle is reported as no clear change. Later weeks
+at least 5 points on both sides of the baseline are mixed. A reduced adverse
+rate that improves by at least 10 points but remains at or above 20% is
+`improved but still inconsistent`. Non-directional examination targets are
+measured without labelling higher or lower as better.
 
 A focus already assessed in an issued review is not measurable again from the
-same later members. It becomes eligible only after at least one new independent
-later bucket/market date enters its declared metric and the incremental members
-pass that family's normal minimum, or a new material outlier changes the
-verdict. The candidate stores cumulative-since-focus and incremental-since-last-
+same later members. It becomes eligible only after at least five new compatible
+opportunities across at least two new later market dates enter its declared
+metric. The candidate stores cumulative-since-focus and incremental-since-last-
 assessment populations separately; visible wording identifies which comparison
 it uses. An unassessed measurable focus is preferred over an already-assessed
 focus within 10 lane points. The same focus may repeat in consecutive reviews
@@ -2256,9 +2283,10 @@ reviews rather than allowing the sixth-ranked plan to be materially worse.
 A non-default plan also cannot change the decision-critical spine. Its
 compensating benefit may change only a supporting strength/contrast,
 representative evidence role, bridge or the ordering of already-authorized
-distinct focus questions. This ensures that sending all four weekly reviews to
-the provider improves continuity without letting stale narrative wording change
-what the current exact month says improved or held the trader back.
+distinct focus questions. This ensures that loading all four weekly reviews into
+the private monthly calculation source improves continuity without letting
+stale narrative wording reach OpenAI or change what the exact month says
+improved or held the trader back.
 
 After final plan ordering, the package assigns `plan_1` through `plan_6` as its
 only possible `providerChoiceKey` values and freezes the exact key-to-
@@ -3368,7 +3396,7 @@ asserted before any provider call.
   proves its exact overlap, focus-connection or specificity benefit; a merely
   different weaker plan is excluded.
 - Every retained alternative preserves the same decision-critical spine, and
-  changing only the four weekly prose bodies cannot change it.
+  changing only the four private weekly prose bodies cannot change it.
 - The opening reports activity and period result first, then at most one
   eligible nonduplicative emphasis; its first focus question targets the
   selected actionable held-back finding when one exists.
@@ -3400,11 +3428,10 @@ asserted before any provider call.
   output and do not manufacture a recurring strength or friction finding.
 - The month contains four issued weekly narrative contexts, not zero and not
   synthetic summaries created only inside the monthly fixture.
-- Every eligible exact-month Analyzer record is present once in the private
-  calculation source. The canonical provider data contains every required
-  calculated Analyzer measurement/coverage series and only the authorized
-  representative excerpts, alongside all permitted non-Analyzer provider
-  fields, all four weekly reviews and August 31 facts exactly once.
+- Every eligible exact-month Analyzer record and all four issued weekly reviews
+  are present once in the private calculation source. The canonical provider
+  data contains only the bounded complete review choices and allowlisted
+  rationales; it contains no raw Analyzer records, weekly prose or private refs.
 
 ### Realistic usefulness fixture
 
@@ -3517,8 +3544,9 @@ In addition to the 420-trade acceptance fixture, cover:
 - first weekly review with no prior measurement baseline;
 - later weekly review using a compatible frozen prior insight snapshot;
 - engine-version change that makes a prior comparison incompatible;
-- a monthly package whose four historical weekly prose blocks contain stale
-  numbers, boilerplate and prompt-like instructions while their exact source
+- a monthly calculation source whose four historical weekly prose blocks
+  contain stale numbers, boilerplate and prompt-like instructions while the
+  provider-selection package contains none of that prose and its exact source
   facts and hidden focus metadata remain unchanged;
 - user-authored note, custom rule title and tag text containing provider prompt
   injection attempts;
@@ -3933,8 +3961,8 @@ one planted fixture:
   exist, and exhausting the eight-excerpt projection cannot replace the required
   counterexample with another same-side outlier;
 - replacing only weekly prose cannot change the decision-critical spine or the
-  selected primary conclusions even though the four issued reviews remain in
-  the provider package;
+  selected primary conclusions; the four issued reviews remain private source
+  context and never enter the provider-selection package;
 - a review with an actionable selected held-back finding places its exact
   retrospective question first; a result-only outlier or unavailable
   opportunity follows the documented exception instead of producing advice;
@@ -4758,8 +4786,9 @@ Additional resolved findings:
    fixed with one account-scoped consistent SQLite read snapshot covering
    Journal, rules, notes, Analyzer revisions and issued-focus metadata.
 2. **Historical weekly prose could contaminate a current monthly conclusion:**
-   fixed by making the four issued reviews untrusted narrative context while
-   recalculating every monthly fact and claim from exact monthly source data.
+   fixed by keeping the four issued reviews as untrusted private narrative
+   context, excluding their prose from provider selection and recalculating
+   every monthly fact and claim from exact monthly source data.
 3. **Overlapping requests could call the same trades both earlier and later:**
    fixed by requiring disjoint comparison evidence or two explicit disjoint
    remainders that independently pass all gates.
@@ -5433,9 +5462,10 @@ This redesign is complete only when:
   population gates;
 - deterministic planted findings, independent score calculations and sealed
   holdouts rank correctly before provider involvement;
-- the monthly provider package contains the four actually issued weekly
-  reviews, every permitted non-Analyzer field and the complete bounded Analyzer
-  projection, while historical prose cannot change a current monthly
+- the monthly private calculation source contains the four actually issued
+  weekly reviews, every exact-month fact and complete Analyzer evidence, while
+  the provider package contains only bounded complete review choices and
+  allowlisted rationales; historical prose cannot change a current monthly
   measurement, claim or decision-critical conclusion;
 - every available visible section identifies a useful finding and does not
   duplicate another section's explanatory job;

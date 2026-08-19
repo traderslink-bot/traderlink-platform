@@ -3,6 +3,8 @@ import "server-only";
 import type Database from "better-sqlite3";
 
 import type {
+  CoachAiReviewCalculationSource,
+  CoachAiReviewFocusAssessment,
   CoachAiReviewInsightCandidate,
 } from "@/src/modules/coach/contracts/coach-ai-review-insight-contracts";
 import type { CoachAiReviewOutputV3 } from
@@ -36,6 +38,7 @@ export type CoachAiReviewTrackedFocusRecordV3 = Readonly<{
   findingRef: string;
   actionTargetKey: string;
   trackingIntent: "reduction" | "consistency" | "examination" | "strength_repetition";
+  trackingMetricDirection: "lower_is_better" | "higher_is_better" | "non_directional";
   renderedQuestion: string;
   baselineCandidate: CoachAiReviewInsightCandidate;
   sourceDigestSha256: string;
@@ -57,6 +60,7 @@ export type CoachAiIssuedReviewRecord = Readonly<{
   modelId: string | null;
   trackedFocusAvailability: "legacy_unavailable" | "tracked_v3";
   trackedFocuses: readonly CoachAiReviewTrackedFocusRecordV3[];
+  followThroughAssessment: CoachAiReviewFocusAssessment | null;
   issuedAtUtc: string;
 }>;
 
@@ -67,6 +71,7 @@ type FocusAuditItem = Readonly<{
   findingRef: string;
   actionTargetKey: string;
   trackingIntent: "reduction" | "consistency" | "examination" | "strength_repetition";
+  trackingMetricDirection: "lower_is_better" | "higher_is_better" | "non_directional";
   renderedQuestion: string;
 }>;
 
@@ -76,6 +81,8 @@ type V3ReadRow = Readonly<{
   review_plan_ref: string;
   focus_tracking_json: string;
   focus_tracking_digest_sha256: string;
+  follow_through_assessment_json: string | null;
+  follow_through_assessment_digest_sha256: string | null;
   source_digest_sha256: string;
   shortlist_digest_sha256: string;
   catalog_digest_sha256: string;
@@ -96,18 +103,37 @@ function exactKeys(value: Record<string, unknown>, expected: readonly string[]):
   return actual.length === wanted.length && actual.every((key, index) => key === wanted[index]);
 }
 
-function sourceVersionRefs(candidate: CoachAiReviewInsightCandidate): readonly string[] {
-  return Object.freeze([...new Set([
+function sourceVersionManifest(
+  candidate: CoachAiReviewInsightCandidate,
+  source: CoachAiReviewCalculationSource,
+): readonly string[] {
+  const memberRefs = new Set([
     ...candidate.populationMemberRefs,
     ...candidate.opportunityMemberRefs,
     ...candidate.affectedMemberRefs,
     ...candidate.representativeEvidenceRefs,
-    ...candidate.relatedRuleRefs,
-    ...candidate.relatedFocusRefs,
-    ...candidate.measurements.flatMap((measurement) => [
-      ...measurement.numeratorMemberRefs,
-      ...measurement.denominatorMemberRefs,
+  ]);
+  const ruleRefs = new Set(candidate.relatedRuleRefs);
+  const analyzerFamily = [
+    "favorable_move_outcome",
+    "entry_evidence",
+    "add_sequence",
+    "exit_sequence",
+    "positive_process",
+  ].includes(candidate.family);
+  return Object.freeze([...new Set([
+    ...source.trades.filter((trade) => memberRefs.has(trade.tradeRef)).flatMap((trade) => [
+      trade.trackingTradeVersionKey,
+      ...(trade.tradeStyle ? [trade.tradeStyle.trackingStyleVersionKey] : []),
+      ...(analyzerFamily && trade.analyzer.trackingAnalysisVersionKey
+        ? [trade.analyzer.trackingAnalysisVersionKey]
+        : []),
     ]),
+    ...source.rules.filter((rule) => ruleRefs.has(rule.ruleRef)).map((rule) =>
+      rule.trackingRuleVersionKey),
+    ...source.ruleReviews.filter((review) => memberRefs.has(review.targetRef) &&
+      ruleRefs.has(review.ruleRef)).map((review) =>
+      review.trackingRuleReviewVersionKey),
   ])].sort((left, right) => left.localeCompare(right)));
 }
 
@@ -163,6 +189,7 @@ WHERE coach_ai_issued_review_id = ? AND user_id = ?
       generationSource: "legacy_provider" as const,
       trackedFocusAvailability: "legacy_unavailable" as const,
       trackedFocuses: Object.freeze([]),
+      followThroughAssessment: null,
     });
   }
 
@@ -275,6 +302,8 @@ LIMIT ?`).all(...parameters) as readonly Readonly<{
   request.input_json, audit.selection_source, audit.review_plan_ref,
   audit.focus_tracking_json,
   audit.focus_tracking_digest_sha256, audit.source_digest_sha256,
+  audit.follow_through_assessment_json,
+  audit.follow_through_assessment_digest_sha256,
   audit.shortlist_digest_sha256, audit.catalog_digest_sha256,
   audit.rendered_output_digest_sha256, audit.recorded_at_utc
 FROM coach_ai_issued_reviews_v3 issued
@@ -303,6 +332,25 @@ WHERE issued.coach_ai_issued_review_id = ? AND issued.user_id = ?
         row.rendered_output_digest_sha256 !== outputDigest ||
         row.recorded_at_utc !== review.issuedAtUtc) {
       this.integrity("acceptedSelectionAuditMismatch");
+    }
+    const followThroughSection = plan.sectionPlanRefs.focus_follow_through;
+    const section = artifact.catalog.sectionPlans.find((candidate) =>
+      candidate.sectionPlanRef === followThroughSection);
+    if (!section) this.integrity("followThroughSectionMissing");
+    const expectedAssessment = section.findingRef === null
+      ? null
+      : artifact.candidates.find((candidate) =>
+          candidate.findingRef === section.findingRef)?.focusAssessment ?? null;
+    const expectedAssessmentJson = expectedAssessment === null
+      ? null
+      : canonicalCoachAiReviewInsightBytes(expectedAssessment).toString("utf8");
+    const expectedAssessmentDigest = expectedAssessment === null
+      ? null
+      : digestCanonicalCoachAiReviewInsight(expectedAssessment).digestSha256;
+    if ((section.findingRef !== null && expectedAssessment === null) ||
+        row.follow_through_assessment_json !== expectedAssessmentJson ||
+        row.follow_through_assessment_digest_sha256 !== expectedAssessmentDigest) {
+      this.integrity("followThroughAssessmentMismatch");
     }
     const focuses = this.parseFocusAudit(row.focus_tracking_json);
     if (canonicalCoachAiReviewInsightBytes(focuses).toString("utf8") !==
@@ -334,6 +382,7 @@ WHERE issued.coach_ai_issued_review_id = ? AND issued.user_id = ?
           catalogFocus.findingRef !== focus.findingRef ||
           catalogFocus.actionTargetKey !== focus.actionTargetKey ||
           catalogFocus.trackingIntent !== focus.trackingIntent ||
+          catalogFocus.trackingMetricDirection !== focus.trackingMetricDirection ||
           catalogFocus.renderedQuestion !== focus.renderedQuestion) {
         this.integrity("focusTrackingLineage");
       }
@@ -343,7 +392,10 @@ WHERE issued.coach_ai_issued_review_id = ? AND issued.user_id = ?
         sourceDigestSha256: artifact.sourceSnapshot.sourceDigestSha256,
         sourcePeriodFinalMarketSealUtc: sourceFinalMarketSealUtc,
         eligibleLaterEvidenceAtUtc,
-        baselineSourceVersionRefs: sourceVersionRefs(candidate),
+        baselineSourceVersionRefs: sourceVersionManifest(
+          candidate,
+          artifact.sourceSnapshot.source,
+        ),
       });
     });
     return Object.freeze({
@@ -359,6 +411,7 @@ WHERE issued.coach_ai_issued_review_id = ? AND issued.user_id = ?
       modelId: review.modelId,
       trackedFocusAvailability: "tracked_v3",
       trackedFocuses: Object.freeze(trackedFocuses),
+      followThroughAssessment: expectedAssessment,
       issuedAtUtc: review.issuedAtUtc,
     });
   }
@@ -374,6 +427,7 @@ WHERE issued.coach_ai_issued_review_id = ? AND issued.user_id = ?
       this.integrity("focusTrackingCount");
     }
     const intents = new Set(["reduction", "consistency", "examination", "strength_repetition"]);
+    const directions = new Set(["lower_is_better", "higher_is_better", "non_directional"]);
     return Object.freeze(parsed.map((item, index) => {
       if (!item || Array.isArray(item) || typeof item !== "object") {
         this.integrity("focusTrackingItem");
@@ -386,6 +440,7 @@ WHERE issued.coach_ai_issued_review_id = ? AND issued.user_id = ?
         "findingRef",
         "actionTargetKey",
         "trackingIntent",
+        "trackingMetricDirection",
         "renderedQuestion",
       ]) || record.ordinal !== index + 1 ||
           typeof record.focusTargetRef !== "string" ||
@@ -394,6 +449,8 @@ WHERE issued.coach_ai_issued_review_id = ? AND issued.user_id = ?
           typeof record.actionTargetKey !== "string" ||
           typeof record.trackingIntent !== "string" ||
           !intents.has(record.trackingIntent) ||
+          typeof record.trackingMetricDirection !== "string" ||
+          !directions.has(record.trackingMetricDirection) ||
           typeof record.renderedQuestion !== "string" ||
           record.renderedQuestion.trim().length === 0) {
         this.integrity("focusTrackingFields");
@@ -405,6 +462,8 @@ WHERE issued.coach_ai_issued_review_id = ? AND issued.user_id = ?
         findingRef: record.findingRef as string,
         actionTargetKey: record.actionTargetKey as string,
         trackingIntent: record.trackingIntent as FocusAuditItem["trackingIntent"],
+        trackingMetricDirection: record.trackingMetricDirection as
+          FocusAuditItem["trackingMetricDirection"],
         renderedQuestion: record.renderedQuestion as string,
       });
     }));

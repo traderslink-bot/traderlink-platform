@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createHmac } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 
 import type Database from "better-sqlite3";
 import Decimal from "decimal.js";
@@ -20,6 +20,7 @@ import {
   COACH_AI_REVIEW_CALCULATION_SOURCE_VERSION,
   COACH_AI_REVIEW_INSIGHT_ENGINE_VERSION,
   COACH_AI_REVIEW_PROMPT_SAFE_REFERENCE_VERSION,
+  COACH_AI_REVIEW_STABLE_TRACKING_REFERENCE_VERSION,
 } from "../contracts/coach-ai-review-insight-contracts";
 import type { WorkspaceAccessScope } from
   "@/src/modules/platform/contracts/workspace-access-scope";
@@ -75,6 +76,8 @@ const ExactDecimal = Decimal.clone({
 
 export type CoachAiReviewPromptSafeReferenceAuthority = Readonly<{
   derivationVersion: typeof COACH_AI_REVIEW_PROMPT_SAFE_REFERENCE_VERSION;
+  stableTrackingDerivationVersion:
+    typeof COACH_AI_REVIEW_STABLE_TRACKING_REFERENCE_VERSION;
   keyVersion: string;
   reference(input: Readonly<{
     kind: string;
@@ -83,6 +86,12 @@ export type CoachAiReviewPromptSafeReferenceAuthority = Readonly<{
     cadence: CoachAiReviewCadence;
     periodStartDate: string;
     periodEndDate: string;
+    privateIdentityParts: readonly (string | number)[];
+  }>): string;
+  stableTrackingReference(input: Readonly<{
+    kind: string;
+    workspaceId: string;
+    accountId: string;
     privateIdentityParts: readonly (string | number)[];
   }>): string;
 }>;
@@ -100,13 +109,14 @@ export function createCoachAiReviewPromptSafeReferenceAuthority(input: Readonly<
   }
   return Object.freeze({
     derivationVersion: COACH_AI_REVIEW_PROMPT_SAFE_REFERENCE_VERSION,
+    stableTrackingDerivationVersion: COACH_AI_REVIEW_STABLE_TRACKING_REFERENCE_VERSION,
     keyVersion: input.keyVersion,
     reference(referenceInput) {
       if (!REFERENCE_KIND_PATTERN.test(referenceInput.kind)) {
         throw new Error("TRADERLINK_COACH_INSIGHT_REFERENCE_KIND_INVALID");
       }
       const digest = createHmac("sha256", key).update(JSON.stringify([
-        COACH_AI_REVIEW_PROMPT_SAFE_REFERENCE_VERSION,
+        COACH_AI_REVIEW_STABLE_TRACKING_REFERENCE_VERSION,
         input.keyVersion,
         referenceInput.kind,
         referenceInput.workspaceId,
@@ -117,6 +127,20 @@ export function createCoachAiReviewPromptSafeReferenceAuthority(input: Readonly<
         referenceInput.privateIdentityParts,
       ]), "utf8").digest("base64url");
       return `${referenceInput.kind}_${input.keyVersion}:${digest}`;
+    },
+    stableTrackingReference(referenceInput) {
+      if (!REFERENCE_KIND_PATTERN.test(referenceInput.kind)) {
+        throw new Error("TRADERLINK_COACH_INSIGHT_REFERENCE_KIND_INVALID");
+      }
+      const digest = createHash("sha256").update(JSON.stringify([
+        COACH_AI_REVIEW_PROMPT_SAFE_REFERENCE_VERSION,
+        "stable_tracking",
+        referenceInput.kind,
+        referenceInput.workspaceId,
+        referenceInput.accountId,
+        referenceInput.privateIdentityParts,
+      ]), "utf8").digest("base64url");
+      return `${referenceInput.kind}_stable:${digest}`;
     },
   });
 }
@@ -155,6 +179,14 @@ type TagRow = Readonly<{
   current_name: string;
   round_trip_id: string;
   tag_id: string;
+}>;
+
+type RuleReviewLineageRow = Readonly<{
+  ruleReviewId: string;
+  revision: number;
+  ruleVersionId: string;
+  targetKind: "trading_day" | "round_trip";
+  targetId: string;
 }>;
 
 type FocusRevisionRow = Readonly<{
@@ -216,11 +248,23 @@ function outputContext(
 function outputFocusTargets(
   review: CoachAiIssuedReviewRecord,
   reviewRef: string,
+  canonicalLineageVersionKeys: ReadonlySet<string>,
+  mostRecentAssessments: ReadonlyMap<string, Readonly<{
+    assessmentReviewRef: string;
+    assessmentIssuedAtUtc: string;
+    assessment: NonNullable<CoachAiIssuedReviewRecord["followThroughAssessment"]>;
+  }>>,
 ): readonly CoachAiReviewIssuedFocusTarget[] {
   if (review.trackedFocusAvailability === "legacy_unavailable") {
     return Object.freeze([]);
   }
-  return Object.freeze(review.trackedFocuses.map((focus) => Object.freeze({
+  return Object.freeze(review.trackedFocuses.map((focus) => {
+    const candidateAssessment = mostRecentAssessments.get(focus.focusTargetRef) ?? null;
+    const recent = candidateAssessment !== null &&
+        candidateAssessment.assessmentIssuedAtUtc > review.issuedAtUtc
+      ? candidateAssessment
+      : null;
+    return Object.freeze({
     focusTargetRef: focus.focusTargetRef,
     sourceReviewRef: reviewRef,
     focusOrdinal: focus.ordinal,
@@ -228,11 +272,16 @@ function outputFocusTargets(
     renderedQuestion: focus.renderedQuestion,
     actionTargetKey: focus.actionTargetKey,
     trackingIntent: focus.trackingIntent,
+    trackingMetricDirection: focus.trackingMetricDirection,
     originatingFindingRef: focus.findingRef,
     originatingFamily: focus.baselineCandidate.family,
     originatingSubjectRef: focus.baselineCandidate.subjectRef,
+    originatingTrackingSubjectKey: focus.baselineCandidate.trackingSubjectKey,
+    originatingClassification: focus.baselineCandidate.classification,
+    originatingPolarity: focus.baselineCandidate.polarity,
     sourceEngineVersion: focus.baselineCandidate.engineVersion,
     sourceDigestSha256: focus.sourceDigestSha256,
+    sourcePeriodStartDate: review.periodStartDate,
     sourcePeriodEndDate: review.periodEndDate,
     sourcePeriodFinalMarketSealUtc: focus.sourcePeriodFinalMarketSealUtc,
     sourceIssuedAtUtc: review.issuedAtUtc,
@@ -248,7 +297,21 @@ function outputFocusTargets(
       ...focus.baselineCandidate.affectedMemberRefs,
     ]),
     baselineSourceVersionRefs: Object.freeze([...focus.baselineSourceVersionRefs]),
-  })));
+    baselineLineageStatus: focus.baselineSourceVersionRefs.every((key) =>
+      canonicalLineageVersionKeys.has(key))
+      ? "current"
+      : "superseded",
+    mostRecentAssessment: recent === null ? null : Object.freeze({
+      assessmentReviewRef: recent.assessmentReviewRef,
+      assessmentIssuedAtUtc: recent.assessmentIssuedAtUtc,
+      verdict: recent.assessment.verdict,
+      evidenceEndUtc: recent.assessment.laterEvidenceEndUtc,
+      cumulativeLaterMemberRefs: Object.freeze([
+        ...recent.assessment.cumulativeLaterMemberRefs,
+      ]),
+    }),
+  });
+  }));
 }
 
 function positionAtBoundary(
@@ -323,6 +386,15 @@ export class CoachAiReviewInsightRepository {
         periodEndDate: request.endDate,
         privateIdentityParts,
       });
+    const trackingRef = (
+      kind: string,
+      ...privateIdentityParts: readonly (string | number)[]
+    ) => this.references.stableTrackingReference({
+      kind,
+      workspaceId: scope.workspaceId,
+      accountId,
+      privateIdentityParts,
+    });
 
     const factSet = new JournalAnalyticsFactSetRepository(
       this.database,
@@ -353,9 +425,13 @@ export class CoachAiReviewInsightRepository {
       ref("trade", row.roundTripId, row.roundTripVersionId),
     ] as const));
     const roundTripIds = closedRows.map((row) => row.roundTripId);
+    const allRoundTripIds = factSet.roundTrips.map((roundTrip) => roundTrip.roundTripId);
 
     const styleRepository = new JournalTradeStyleRepository(this.database);
-    const stylesByRoundTrip = new Map(styleRepository.listPlans(accountScope, roundTripIds)
+    const allStyles = styleRepository.listPlans(accountScope, allRoundTripIds);
+    const currentRoundTripIdSet = new Set(roundTripIds);
+    const stylesByRoundTrip = new Map(allStyles.filter((style) =>
+      currentRoundTripIdSet.has(style.roundTripId))
       .map((style) => [style.roundTripId, style] as const));
     const swingNotesByRoundTrip = new Map<string, ReturnType<
       JournalSwingNoteRepository["listForRoundTrips"]>[number][]>();
@@ -371,7 +447,7 @@ export class CoachAiReviewInsightRepository {
     }
     const supplemental = new CoachAiReviewSupplementalEvidenceRepository(this.database);
     const analyses = supplemental.readTradeAnalyses(accountScope, roundTripIds);
-    const analysisLineage = supplemental.readTradeAnalysisLineage(accountScope, roundTripIds);
+    const analysisLineage = supplemental.readTradeAnalysisLineage(accountScope, allRoundTripIds);
     const roundTripNotes = this.readRoundTripNotes(accountScope, roundTripIds);
     const tags = this.readTags(accountScope, roundTripIds);
 
@@ -404,6 +480,8 @@ export class CoachAiReviewInsightRepository {
       }));
       return Object.freeze({
         tradeRef,
+        trackingTradeVersionKey: trackingRef("tracking_trade_version",
+          row.roundTripId, row.roundTripVersionId, roundTrip.versionNumber),
         instrumentRef: ref("instrument", roundTrip.instrumentId),
         marketDate: row.closeLocal.localDate,
         entryMarketDate: row.entryLocal.localDate,
@@ -432,6 +510,9 @@ export class CoachAiReviewInsightRepository {
         tradeStyle: style ? Object.freeze({
           styleRef: ref("trade_style", style.stylePlanId, style.revision,
             style.roundTripId, style.roundTripVersionId),
+          trackingStyleVersionKey: trackingRef("tracking_trade_style_version",
+            style.stylePlanId, style.revision, style.roundTripId,
+            style.roundTripVersionId),
           revision: style.revision,
           tradeStyle: style.tradeStyle,
           openStatus: style.openStatus,
@@ -458,6 +539,12 @@ export class CoachAiReviewInsightRepository {
         swingNotes: Object.freeze(sourceSwingNotes),
         analyzer: Object.freeze({
           analysisRef,
+          trackingAnalysisVersionKey: lineage?.analysisVersionId
+            ? trackingRef("tracking_analysis_version", row.roundTripId,
+                lineage.analysisVersionId,
+                lineage.analyzedRoundTripVersionId ?? "missing",
+                lineage.analyzerContractVersion ?? "missing")
+            : null,
           linkedRoundTripVersionCurrent:
             lineage?.linkedRoundTripVersionCurrent ?? false,
           analysis: analyses[row.roundTripId] ?? Object.freeze({
@@ -534,6 +621,9 @@ export class CoachAiReviewInsightRepository {
       return Object.freeze({
         ruleRef: ruleRefById.get(rule.ruleId)!,
         ruleVersionRef: ruleVersionRefById.get(rule.versionId)!,
+        trackingRuleKey: trackingRef("tracking_rule", rule.ruleId),
+        trackingRuleVersionKey: trackingRef("tracking_rule_version",
+          rule.ruleId, rule.versionId, rule.versionNumber),
         sourceKind: rule.sourceKind,
         templateKey: rule.templateKey,
         title: rule.title,
@@ -554,6 +644,22 @@ export class CoachAiReviewInsightRepository {
         currentVersionAtSnapshot: current.versionId === rule.versionId,
       });
     });
+    const currentRuleReviewLineage = this.readCurrentRuleReviewLineage(accountScope);
+    const canonicalLineageVersionKeys = Object.freeze([...new Set([
+      ...factSet.roundTrips.map((roundTrip) => trackingRef("tracking_trade_version",
+        roundTrip.roundTripId, roundTrip.roundTripVersionId, roundTrip.versionNumber)),
+      ...allStyles.map((style) => trackingRef("tracking_trade_style_version",
+        style.stylePlanId, style.revision, style.roundTripId, style.roundTripVersionId)),
+      ...Object.values(analysisLineage).flatMap((lineage) => lineage.analysisVersionId
+        ? [trackingRef("tracking_analysis_version", lineage.roundTripId,
+            lineage.analysisVersionId, lineage.analyzedRoundTripVersionId ?? "missing",
+            lineage.analyzerContractVersion ?? "missing")]
+        : []),
+      ...rules.map((rule) => rule.trackingRuleVersionKey),
+      ...currentRuleReviewLineage.map((review) =>
+        trackingRef("tracking_rule_review_version", review.ruleReviewId,
+          review.revision, review.ruleVersionId, review.targetKind, review.targetId)),
+    ])].sort(compareText));
 
     const tradingDayIdToRef = new Map(dayRows.map((row) =>
       [row.trading_day_id, dayRefByDate.get(row.trading_date)!] as const));
@@ -575,6 +681,9 @@ export class CoachAiReviewInsightRepository {
         ruleReviewRef: ref("rule_review", review.ruleReviewId, review.revision,
           review.ruleVersionId, review.targetKind,
           review.tradingDayId ?? review.roundTripId ?? "missing"),
+        trackingRuleReviewVersionKey: trackingRef("tracking_rule_review_version",
+          review.ruleReviewId, review.revision, review.ruleVersionId,
+          review.targetKind, review.tradingDayId ?? review.roundTripId ?? "missing"),
         ruleRef,
         ruleVersionRef,
         targetRef,
@@ -709,7 +818,26 @@ export class CoachAiReviewInsightRepository {
           reviewKinds: ["weekly", "two_week"],
           limit: 1,
         });
-    const issued = [...currentPeriodIssued, ...priorComparable];
+    const narrativeIssued = [...currentPeriodIssued, ...priorComparable];
+    const inPeriodFocusIssued = this.readIssuedReviews(scope, reviews, {
+      atOrAfterPeriodEndDate: request.startDate,
+      beforePeriodEndDate: shiftDate(request.endDate, 1),
+      reviewKinds: ["weekly", "two_week", "monthly"],
+      limit: 24,
+    });
+    const priorFocusIssued = this.readIssuedReviews(scope, reviews, {
+      beforePeriodEndDate: request.startDate,
+      reviewKinds: request.cadence === "monthly"
+        ? ["monthly"]
+        : ["weekly", "two_week", "monthly"],
+      limit: 1,
+    });
+    const focusHistoryIssued = [...new Map([
+      ...inPeriodFocusIssued,
+      ...priorFocusIssued,
+    ].map((review) => [review.issuedReviewId, review] as const)).values()];
+    const allIssued = [...new Map([...narrativeIssued, ...focusHistoryIssued]
+      .map((review) => [review.issuedReviewId, review] as const)).values()];
     const issuedNarrativeContext = [
       ...currentPeriodIssued.map((review) => outputContext(review,
         ref("issued_review", review.issuedReviewId, review.requestId,
@@ -719,15 +847,39 @@ export class CoachAiReviewInsightRepository {
           review.periodStartDate, review.periodEndDate), "prior_comparable")),
     ].sort((left, right) => compareText(left.periodEndDate, right.periodEndDate) ||
       compareText(left.issuedAtUtc, right.issuedAtUtc));
-    const reviewRefById = new Map(issued.map((review) => [
+    const reviewRefById = new Map(allIssued.map((review) => [
       review.issuedReviewId,
       ref("issued_review", review.issuedReviewId, review.requestId,
         review.periodStartDate, review.periodEndDate),
     ] as const));
-    const issuedFocusTargets = issued.flatMap((review) => {
+    const mostRecentAssessments = new Map<string, Readonly<{
+      assessmentReviewRef: string;
+      assessmentIssuedAtUtc: string;
+      assessment: NonNullable<CoachAiIssuedReviewRecord["followThroughAssessment"]>;
+    }>>();
+    for (const review of [...focusHistoryIssued]
+      .sort((left, right) => compareText(left.issuedAtUtc, right.issuedAtUtc))) {
+      if (review.followThroughAssessment === null) continue;
+      const assessmentReviewRef = reviewRefById.get(review.issuedReviewId);
+      if (!assessmentReviewRef) {
+        throw new Error("TRADERLINK_COACH_INSIGHT_ASSESSMENT_REVIEW_REF_MISSING");
+      }
+      mostRecentAssessments.set(review.followThroughAssessment.focusTargetRef, Object.freeze({
+        assessmentReviewRef,
+        assessmentIssuedAtUtc: review.issuedAtUtc,
+        assessment: review.followThroughAssessment,
+      }));
+    }
+    const canonicalLineageVersionKeySet = new Set(canonicalLineageVersionKeys);
+    const issuedFocusTargets = focusHistoryIssued.flatMap((review) => {
       const reviewRef = reviewRefById.get(review.issuedReviewId);
       if (!reviewRef) throw new Error("TRADERLINK_COACH_INSIGHT_REVIEW_REF_MISSING");
-      return outputFocusTargets(review, reviewRef);
+      return outputFocusTargets(
+        review,
+        reviewRef,
+        canonicalLineageVersionKeySet,
+        mostRecentAssessments,
+      );
     }).sort((left, right) => compareText(left.sourcePeriodEndDate, right.sourcePeriodEndDate) ||
       compareText(left.sourceIssuedAtUtc, right.sourceIssuedAtUtc) ||
       left.focusOrdinal - right.focusOrdinal);
@@ -736,6 +888,7 @@ export class CoachAiReviewInsightRepository {
       contractVersion: COACH_AI_REVIEW_CALCULATION_SOURCE_VERSION,
       engineVersion: COACH_AI_REVIEW_INSIGHT_ENGINE_VERSION,
       referenceDerivationVersion: COACH_AI_REVIEW_PROMPT_SAFE_REFERENCE_VERSION,
+      stableTrackingDerivationVersion: COACH_AI_REVIEW_STABLE_TRACKING_REFERENCE_VERSION,
       frozenAtUtc,
       period: Object.freeze({
         cadence: request.cadence,
@@ -766,15 +919,16 @@ export class CoachAiReviewInsightRepository {
         .map((position) => position.positionRef)),
       issuedNarrativeContext: Object.freeze(issuedNarrativeContext),
       issuedFocusTargets: Object.freeze(issuedFocusTargets),
+      canonicalLineageVersionKeys,
     };
     this.assertPromptSafeSource(source, scope, factSet, {
       dayRows,
       ruleVersions,
-      ruleReviewRecords,
+      ruleReviewRecords: currentRuleReviewLineage,
       styles: [...stylesByRoundTrip.values()],
       swingNotes: [...swingNotesByRoundTrip.values()].flat(),
       analysisLineage: Object.values(analysisLineage),
-      issued,
+      issued: allIssued,
       focusRevisions: allFocusRevisions,
       roundTripNotes: [...roundTripNotes.values()],
       tags: [...tags.values()].flat(),
@@ -815,6 +969,37 @@ ORDER BY day.trading_date, day.trading_day_id`).all(
       request.startDate,
       request.endDate,
     ) as TradingDayNoteRow[]);
+  }
+
+  private readCurrentRuleReviewLineage(
+    scope: ReturnType<typeof narrowWorkspaceAccessToAccount>,
+  ): readonly RuleReviewLineageRow[] {
+    return Object.freeze(this.database.prepare(`SELECT review.rule_review_id,
+  review.revision, version.rule_version_id, review.target_kind,
+  COALESCE(review.trading_day_id, review.round_trip_id) AS target_id
+FROM journal_rule_reviews review
+JOIN journal_rule_review_versions version
+  ON version.workspace_id = review.workspace_id
+ AND version.account_id = review.account_id
+ AND version.rule_review_id = review.rule_review_id
+ AND version.rule_review_version_id = review.current_review_version_id
+WHERE review.workspace_id = ? AND review.account_id = ?
+ORDER BY review.rule_review_id`).all(
+      scope.workspaceId,
+      scope.accountId,
+    ).map((row) => row as Readonly<{
+      rule_review_id: string;
+      revision: number;
+      rule_version_id: string;
+      target_kind: "trading_day" | "round_trip";
+      target_id: string;
+    }>).map((row) => Object.freeze({
+      ruleReviewId: row.rule_review_id,
+      revision: Number(row.revision),
+      ruleVersionId: row.rule_version_id,
+      targetKind: row.target_kind,
+      targetId: row.target_id,
+    })));
   }
 
   private readRoundTripNotes(

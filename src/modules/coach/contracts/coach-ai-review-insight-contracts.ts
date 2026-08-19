@@ -7,6 +7,9 @@ export const COACH_AI_REVIEW_CALCULATION_SOURCE_VERSION =
 export const COACH_AI_REVIEW_PROMPT_SAFE_REFERENCE_VERSION =
   "traderlink_coach_ai_review_prompt_safe_hmac_v1" as const;
 
+export const COACH_AI_REVIEW_STABLE_TRACKING_REFERENCE_VERSION =
+  "traderlink_coach_ai_review_stable_tracking_sha256_v1" as const;
+
 export type CoachAiReviewCadence = "weekly" | "two_week" | "monthly";
 
 export type CoachAiReviewInsightLane =
@@ -200,6 +203,40 @@ export type CoachAiReviewLaneRankStability = Readonly<{
   marginToNextDistinct: number | null;
   leaveOneBucketWinnerStable: boolean | null;
   selectedByMeasuredConsequenceGuard: boolean;
+  selectedByFocusNoveltyGuard: boolean;
+}>;
+
+export type CoachAiReviewFocusFollowThroughVerdict =
+  | "improved"
+  | "improved_but_still_inconsistent"
+  | "sustained_strength"
+  | "unchanged"
+  | "no_clear_change"
+  | "worsened"
+  | "mixed"
+  | "measured_without_directional_target"
+  | "not_measurable_from_later_evidence";
+
+export type CoachAiReviewFocusAssessment = Readonly<{
+  focusTargetRef: string;
+  sourceReviewRef: string;
+  renderedQuestion: string;
+  trackingIntent: CoachAiReviewIssuedFocusTarget["trackingIntent"];
+  trackingMetricDirection: CoachAiReviewIssuedFocusTarget["trackingMetricDirection"];
+  verdict: CoachAiReviewFocusFollowThroughVerdict;
+  baselineMeasurementRef: string;
+  laterMeasurementRef: string;
+  baselineRateDecimal: string;
+  laterRateDecimal: string;
+  rateChangeDecimal: string;
+  eligibleLaterEvidenceAtUtc: string;
+  laterEvidenceStartUtc: string;
+  laterEvidenceEndUtc: string;
+  cumulativeLaterMemberRefs: readonly string[];
+  incrementalLaterMemberRefs: readonly string[];
+  priorAssessmentReviewRef: string | null;
+  priorAssessmentEvidenceEndUtc: string | null;
+  priorAssessmentVerdict: CoachAiReviewFocusFollowThroughVerdict | null;
 }>;
 
 export type CoachAiReviewBucketSensitivity = Readonly<{
@@ -218,6 +255,8 @@ export type CoachAiReviewInsightCandidate = Readonly<{
   classification: CoachAiReviewCandidateClassification;
   polarity: "positive" | "negative" | "mixed" | "context";
   subjectRef: string;
+  trackingSubjectKey: string;
+  trackingMetricDirection: "lower_is_better" | "higher_is_better" | "non_directional";
   subjectLabel: string | null;
   observationUnit: CoachAiReviewObservationUnit;
   resultOwnership: CoachAiReviewResultOwnership;
@@ -262,6 +301,7 @@ export type CoachAiReviewInsightCandidate = Readonly<{
   bucketSensitivity: readonly CoachAiReviewBucketSensitivity[];
   sensitivityResults: readonly string[];
   rankExplanation: readonly string[];
+  focusAssessment: CoachAiReviewFocusAssessment | null;
 }>;
 
 export type CoachAiReviewRuleOpportunityInput = Readonly<{
@@ -373,6 +413,7 @@ export type CoachAiReviewSourceExecutionEvent = Readonly<{
 
 export type CoachAiReviewSourceTradeStyle = Readonly<{
   styleRef: string;
+  trackingStyleVersionKey: string;
   revision: number;
   tradeStyle: "day_trade" | "swing" | "other";
   openStatus: "day_trade_still_open" | "swing" | "unplanned_hold" | "other" |
@@ -397,6 +438,7 @@ export type CoachAiReviewSourceNote = Readonly<{
 
 export type CoachAiReviewSourceTrade = Readonly<{
   tradeRef: string;
+  trackingTradeVersionKey: string;
   instrumentRef: string;
   marketDate: string;
   entryMarketDate: string;
@@ -416,6 +458,7 @@ export type CoachAiReviewSourceTrade = Readonly<{
   swingNotes: readonly CoachAiReviewSourceNote[];
   analyzer: Readonly<{
     analysisRef: string | null;
+    trackingAnalysisVersionKey: string | null;
     linkedRoundTripVersionCurrent: boolean;
     analysis: import("./weekly-ai-review-input-contracts").CoachAiReviewTradeAnalysisV2;
   }>;
@@ -424,6 +467,8 @@ export type CoachAiReviewSourceTrade = Readonly<{
 export type CoachAiReviewSourceRule = Readonly<{
   ruleRef: string;
   ruleVersionRef: string;
+  trackingRuleKey: string;
+  trackingRuleVersionKey: string;
   sourceKind: CoachAiReviewRuleSourceKind;
   templateKey: string | null;
   title: string;
@@ -442,6 +487,7 @@ export type CoachAiReviewSourceRule = Readonly<{
 
 export type CoachAiReviewSourceRuleReview = Readonly<{
   ruleReviewRef: string;
+  trackingRuleReviewVersionKey: string;
   ruleRef: string;
   ruleVersionRef: string;
   targetRef: string;
@@ -520,11 +566,16 @@ export type CoachAiReviewIssuedFocusTarget = Readonly<{
   renderedQuestion: string;
   actionTargetKey: string;
   trackingIntent: "reduction" | "consistency" | "examination" | "strength_repetition";
+  trackingMetricDirection: CoachAiReviewInsightCandidate["trackingMetricDirection"];
   originatingFindingRef: string;
   originatingFamily: CoachAiReviewInsightFamily;
   originatingSubjectRef: string;
+  originatingTrackingSubjectKey: string;
+  originatingClassification: CoachAiReviewCandidateClassification;
+  originatingPolarity: CoachAiReviewInsightCandidate["polarity"];
   sourceEngineVersion: typeof COACH_AI_REVIEW_INSIGHT_ENGINE_VERSION;
   sourceDigestSha256: string;
+  sourcePeriodStartDate: string;
   sourcePeriodEndDate: string;
   sourcePeriodFinalMarketSealUtc: string | null;
   sourceIssuedAtUtc: string;
@@ -534,12 +585,21 @@ export type CoachAiReviewIssuedFocusTarget = Readonly<{
   baselineOpportunityMemberRefs: readonly string[];
   baselineAffectedMemberRefs: readonly string[];
   baselineSourceVersionRefs: readonly string[];
+  baselineLineageStatus: "current" | "superseded";
+  mostRecentAssessment: Readonly<{
+    assessmentReviewRef: string;
+    assessmentIssuedAtUtc: string;
+    verdict: CoachAiReviewFocusFollowThroughVerdict;
+    evidenceEndUtc: string;
+    cumulativeLaterMemberRefs: readonly string[];
+  }> | null;
 }>;
 
 export type CoachAiReviewCalculationSource = Readonly<{
   contractVersion: typeof COACH_AI_REVIEW_CALCULATION_SOURCE_VERSION;
   engineVersion: typeof COACH_AI_REVIEW_INSIGHT_ENGINE_VERSION;
   referenceDerivationVersion: typeof COACH_AI_REVIEW_PROMPT_SAFE_REFERENCE_VERSION;
+  stableTrackingDerivationVersion: typeof COACH_AI_REVIEW_STABLE_TRACKING_REFERENCE_VERSION;
   frozenAtUtc: string;
   period: Readonly<{
     cadence: CoachAiReviewCadence;
@@ -571,6 +631,7 @@ export type CoachAiReviewCalculationSource = Readonly<{
   periodEndOpenWithInPeriodReductionRefs: readonly string[];
   issuedNarrativeContext: readonly CoachAiReviewIssuedNarrativeContext[];
   issuedFocusTargets: readonly CoachAiReviewIssuedFocusTarget[];
+  canonicalLineageVersionKeys: readonly string[];
 }>;
 
 export type CoachAiReviewCalculationSourceSnapshot = Readonly<{

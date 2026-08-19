@@ -76,7 +76,7 @@ function visiblyEligible(
   if (candidate.classification === "recurring" || candidate.classification === "trend" ||
       candidate.classification === "contrast") return confidence >= 50;
   if (candidate.classification === "focus_assessment") {
-    return candidate.relatedFocusRefs.length > 0 && candidate.affectedMemberRefs.length > 0;
+    return candidate.relatedFocusRefs.length > 0 && candidate.opportunityMemberRefs.length > 0;
   }
   return candidate.classification === "material_outlier" ||
     candidate.classification === "specific_example";
@@ -111,9 +111,7 @@ function overlapPenalty(coefficient: number): number {
 }
 
 function actionTargetKey(candidate: CoachAiReviewInsightCandidate): string {
-  if (candidate.relatedRuleRefs.length > 0) return `rule:${candidate.relatedRuleRefs[0]!}`;
-  if (candidate.relatedFocusRefs.length > 0) return `focus:${candidate.relatedFocusRefs[0]!}`;
-  return `subject:${candidate.family}:${candidate.subjectRef}`;
+  return candidate.trackingSubjectKey;
 }
 
 function rankTieKey(candidate: CoachAiReviewInsightCandidate): string {
@@ -209,6 +207,12 @@ function rankable(
   entry: CoachAiReviewShortlistEntry,
   leaveOneBucketWinnerStable: boolean | null = null,
 ): CoachAiReviewRankableLaneCandidate {
+  const assessment = entry.candidate.focusAssessment;
+  const materialRepeatVerdicts = new Set([
+    "improved",
+    "improved_but_still_inconsistent",
+    "worsened",
+  ]);
   const financial = dimensionValue(entry.effectiveScore, "financial_materiality");
   const fullFinancial = entry.candidate.consequenceVerdict === "worse_associated_outcome" ||
       entry.candidate.consequenceVerdict === "better_associated_outcome"
@@ -226,6 +230,13 @@ function rankable(
     processRelevance: dimensionValue(entry.effectiveScore, "process_relevance"),
     specificity: dimensionValue(entry.effectiveScore, "specificity"),
     leaveOneBucketWinnerStable,
+    focusPreviouslyAssessed: assessment?.priorAssessmentReviewRef !== null &&
+      assessment?.priorAssessmentReviewRef !== undefined,
+    focusMaterialRepeatException: assessment !== null &&
+      (assessment.verdict === "worsened" ||
+        assessment.priorAssessmentVerdict !== null &&
+        assessment.priorAssessmentVerdict !== assessment.verdict &&
+        materialRepeatVerdicts.has(assessment.verdict)),
   });
 }
 

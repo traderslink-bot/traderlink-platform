@@ -387,6 +387,14 @@ CREATE TABLE coach_ai_review_insight_selection_audits (
   ),
   focus_tracking_digest_sha256 TEXT
     ${digestCheck("focus_tracking_digest_sha256", true)},
+  follow_through_assessment_json TEXT CHECK (
+    follow_through_assessment_json IS NULL OR (
+      json_valid(follow_through_assessment_json)
+      AND json_type(follow_through_assessment_json) = 'object'
+    )
+  ),
+  follow_through_assessment_digest_sha256 TEXT
+    ${digestCheck("follow_through_assessment_digest_sha256", true)},
   source_digest_sha256 TEXT NOT NULL ${digestCheck("source_digest_sha256")},
   shortlist_digest_sha256 TEXT NOT NULL ${digestCheck("shortlist_digest_sha256")},
   catalog_digest_sha256 TEXT NOT NULL ${digestCheck("catalog_digest_sha256")},
@@ -404,6 +412,10 @@ CREATE TABLE coach_ai_review_insight_selection_audits (
     OR (structured_selection_json IS NOT NULL AND structured_selection_digest_sha256 IS NOT NULL)),
   CHECK ((focus_tracking_json IS NULL AND focus_tracking_digest_sha256 IS NULL)
     OR (focus_tracking_json IS NOT NULL AND focus_tracking_digest_sha256 IS NOT NULL)),
+  CHECK ((follow_through_assessment_json IS NULL
+      AND follow_through_assessment_digest_sha256 IS NULL)
+    OR (follow_through_assessment_json IS NOT NULL
+      AND follow_through_assessment_digest_sha256 IS NOT NULL)),
   CHECK ((selection_source = 'provider_selected'
       AND coach_ai_review_generation_attempt_id IS NOT NULL
       AND coach_ai_review_insight_provider_dispatch_id IS NOT NULL
@@ -435,7 +447,8 @@ CREATE TABLE coach_ai_review_insight_selection_audits (
         OR (provider_choice_key IS NOT NULL AND structured_selection_json IS NOT NULL)))
     OR (validation_state = 'rejected'
       AND failure_code IS NOT NULL AND coach_ai_issued_review_id IS NULL
-      AND focus_tracking_json IS NULL)),
+      AND focus_tracking_json IS NULL
+      AND follow_through_assessment_json IS NULL)),
   FOREIGN KEY (coach_ai_review_period_request_id)
     REFERENCES coach_ai_review_period_requests_v2(coach_ai_review_period_request_id)
     ON UPDATE RESTRICT ON DELETE RESTRICT,

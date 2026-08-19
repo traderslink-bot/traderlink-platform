@@ -147,21 +147,32 @@ function assertPublicPackageShape(value: CoachAiReviewProviderPlanPackage): void
 function assertNoPrivateReferences(
   serialized: string,
   sourceSnapshot: CoachAiReviewCalculationSourceSnapshot,
+  catalog: CoachAiReviewRenderedPlanCatalog,
 ): void {
   const privateReferences = [
     ...sourceSnapshot.source.days.map((day) => day.dayRef),
     ...sourceSnapshot.source.trades.flatMap((trade) => [
       trade.tradeRef,
+      trade.trackingTradeVersionKey,
       trade.instrumentRef,
       ...trade.executionEvents.map((event) => event.eventRef),
-      ...(trade.tradeStyle ? [trade.tradeStyle.styleRef] : []),
+      ...(trade.tradeStyle
+        ? [trade.tradeStyle.styleRef, trade.tradeStyle.trackingStyleVersionKey]
+        : []),
       ...(trade.tradeNote ? [trade.tradeNote.noteRef] : []),
       ...trade.swingNotes.map((note) => note.noteRef),
       trade.analyzer.analysisRef,
+      trade.analyzer.trackingAnalysisVersionKey,
     ]),
-    ...sourceSnapshot.source.rules.flatMap((rule) => [rule.ruleRef, rule.ruleVersionRef]),
+    ...sourceSnapshot.source.rules.flatMap((rule) => [
+      rule.ruleRef,
+      rule.ruleVersionRef,
+      rule.trackingRuleKey,
+      rule.trackingRuleVersionKey,
+    ]),
     ...sourceSnapshot.source.ruleReviews.flatMap((review) => [
       review.ruleReviewRef,
+      review.trackingRuleReviewVersionKey,
       ...(review.noteRef ? [review.noteRef] : []),
     ]),
     ...sourceSnapshot.source.presetEvaluations.flatMap((evaluation) => [
@@ -171,12 +182,26 @@ function assertNoPrivateReferences(
     ]),
     ...sourceSnapshot.source.focuses.map((focus) => focus.focusRef),
     ...sourceSnapshot.source.issuedNarrativeContext.map((review) => review.reviewRef),
+    ...sourceSnapshot.source.issuedFocusTargets.flatMap((target) => [
+      target.focusTargetRef,
+      target.sourceReviewRef,
+      target.originatingTrackingSubjectKey,
+      ...target.baselineSourceVersionRefs,
+    ]),
+    ...sourceSnapshot.source.canonicalLineageVersionKeys,
+    ...catalog.focusQuestions.flatMap((focus) => [
+      focus.focusTargetRef,
+      focus.focusQuestionRef,
+      focus.actionTargetKey,
+    ]),
     ...sourceSnapshot.source.periodEndOpenPositionRefs,
     ...sourceSnapshot.source.periodEndOpenWithInPeriodReductionRefs,
   ].filter((reference): reference is string =>
     typeof reference === "string" && reference.length > 0);
   invariant(privateReferences.every((reference) => !serialized.includes(reference)),
     "TRADERLINK_AI_REVIEW_PRIVATE_REFERENCE_IN_PROVIDER_PACKAGE");
+  invariant(!serialized.includes('"tracking:') && !serialized.includes("_stable:"),
+    "TRADERLINK_AI_REVIEW_STABLE_TRACKING_KEY_IN_PROVIDER_PACKAGE");
   invariant(!/["'](?:workspace|account|user|broker|statement|attachment|secret|token|password|api[_ -]?key)(?:Id|Ref|Uuid|Fingerprint)?["']/iu.test(serialized),
     "TRADERLINK_AI_REVIEW_PRIVATE_FIELD_IN_PROVIDER_PACKAGE");
 }
@@ -225,7 +250,7 @@ export function buildCoachAiReviewProviderPlanPackage(input: Readonly<{
   assertPublicPackageShape(providerPackage);
   const bytes = canonicalCoachAiReviewInsightBytes(providerPackage);
   const canonicalProviderPackage = bytes.toString("utf8");
-  assertNoPrivateReferences(canonicalProviderPackage, input.sourceSnapshot);
+  assertNoPrivateReferences(canonicalProviderPackage, input.sourceSnapshot, input.catalog);
   const digest = createHash("sha256").update(bytes).digest("hex");
   const privateChoices: readonly CoachAiReviewPrivatePlanChoice[] = Object.freeze(
     input.catalog.completePlans.map((plan, index) => Object.freeze({

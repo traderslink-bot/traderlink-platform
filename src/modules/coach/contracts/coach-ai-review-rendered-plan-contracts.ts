@@ -1,5 +1,6 @@
 import type {
   CoachAiReviewCadence,
+  CoachAiReviewInsightCandidate,
   CoachAiReviewInsightFamily,
   CoachAiReviewInsightLane,
   CoachAiReviewRankStabilityState,
@@ -47,6 +48,7 @@ export type CoachAiReviewNotAvailableReason =
 export type CoachAiReviewClaimKind =
   | "period_outcome"
   | "affected_rate"
+  | "focus_assessment"
   | "trend_change"
   | "financial_impact"
   | "analyzer_path_impact"
@@ -92,6 +94,7 @@ export type CoachAiReviewRenderedFocusQuestion = Readonly<{
   findingRef: string;
   actionTargetKey: string;
   trackingIntent: "reduction" | "consistency" | "examination" | "strength_repetition";
+  trackingMetricDirection: CoachAiReviewInsightCandidate["trackingMetricDirection"];
   renderedQuestion: string;
 }>;
 

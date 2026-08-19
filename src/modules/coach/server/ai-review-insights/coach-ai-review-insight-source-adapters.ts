@@ -15,6 +15,8 @@ import type {
 } from "@/src/modules/coach/contracts/coach-ai-review-insight-contracts";
 import {
   buildCoachAiReviewBehaviorCandidate,
+  buildCoachAiReviewFocusFollowThroughCandidate,
+  buildCoachAiReviewFocusMetricProjection,
   buildCoachAiReviewNamedRuleCandidates,
   buildCoachAiReviewPeriodOutcomeCandidate,
   buildCoachAiReviewRateTrendCandidate,
@@ -574,6 +576,7 @@ function behaviorSource(input: Readonly<{
   lane: CoachAiReviewBehaviorCandidateSource["lane"];
   polarity: CoachAiReviewBehaviorCandidateSource["polarity"];
   subjectRef: string;
+  trackingSubjectKey?: string;
   subjectLabel?: string | null;
   tradeStylePopulation: CoachAiReviewTradeStylePopulation;
   populationDefinition: string;
@@ -616,6 +619,8 @@ function behaviorSource(input: Readonly<{
     lane: input.lane,
     polarity: input.polarity,
     subjectRef: input.subjectRef,
+    trackingSubjectKey: input.trackingSubjectKey ??
+      `tracking:${input.family}:${input.subjectRef}`,
     subjectLabel: input.subjectLabel ?? null,
     observationUnit: input.family === "favorable_move_outcome" ||
         input.family === "entry_evidence" || input.family === "exit_sequence"
@@ -745,6 +750,7 @@ function addTradeRateTrends(
   input: Readonly<{
     family: CoachAiReviewBehaviorCandidateSource["family"];
     subjectRef: string;
+    trackingSubjectKey?: string;
     opportunityTrades: readonly CoachAiReviewSourceTrade[];
     expectedTrades: readonly CoachAiReviewSourceTrade[];
     affected: (trade: CoachAiReviewSourceTrade) => boolean;
@@ -789,6 +795,8 @@ function addTradeRateTrends(
       cadence: source.period.cadence,
       family: input.family,
       subjectRef: input.subjectRef,
+      trackingSubjectKey: input.trackingSubjectKey ??
+        `tracking:${input.family}:${input.subjectRef}`,
       trendKind,
       improvementDirection: input.improvementDirection,
       observationUnit: "analyzer_covered_trade",
@@ -834,43 +842,30 @@ function addAnalyzerCandidates(
   const entryEvidenceTrades = expected.filter((trade) =>
     trade.analyzer.linkedRoundTripVersionCurrent &&
     trade.analyzer.analysis.availability === "ready" &&
-    trade.analyzer.analysis.events.some((event) => event.kind === "entry" &&
-      event.oneMinute.favorableMoveUntilFlatDecimal !== null &&
-      event.oneMinute.adverseMoveUntilFlatDecimal !== null));
-  const strongEntryExamples = entryEvidenceTrades.filter((trade) => {
-    if (trade.netPnlDecimal === null || new ExactDecimal(trade.netPnlDecimal).lte(0)) return false;
-    const entry = trade.analyzer.analysis.events.filter((event) => event.kind === "entry")
-      .sort((left, right) => left.sequence - right.sequence)[0]!;
-    const favorable = new ExactDecimal(entry.oneMinute.favorableMoveUntilFlatDecimal!);
-    const adverse = new ExactDecimal(entry.oneMinute.adverseMoveUntilFlatDecimal!).abs();
-    return favorable.gt(0) && (adverse.isZero() || favorable.dividedBy(adverse).gte(2));
-  }).sort((left, right) => new ExactDecimal(right.netPnlDecimal!)
-    .comparedTo(left.netPnlDecimal!) || compareTradesStable(left, right))
-    .slice(0, 5);
-  for (const example of strongEntryExamples) {
-    candidate(values, behaviorSource({
-      source,
-      family: "entry_evidence",
-      lane: "strength",
-      polarity: "positive",
-      subjectRef: `entry_example:${example.tradeRef}`,
-      tradeStylePopulation: "objective_same_market_date",
-      populationDefinition: "Current-version same-market-date trades with measured entry excursion.",
-      opportunityDefinition: "Initial-entry events with both favorable and adverse movement available.",
-      cohortDefinition: "One profitable trade whose favorable move was at least twice its adverse move.",
-      comparisonDefinition: "Other current-version trades with measured initial-entry excursion.",
-      observations: tradeBehaviorObservations(entryEvidenceTrades, (trade) =>
-        trade.tradeRef === example.tradeRef),
-      processClass: "analyzer_only",
-      resultPolarity: "positive",
-      expectedPopulationCount: expected.length,
-      expectedPopulationTrades: expected,
-      coverageBalance: coverageBalance(expected, entryEvidenceTrades),
-      recurringEvidenceAllowed: false,
-      allowSpecificExample: true,
-      overlapKeys: [`trade:${example.tradeRef}`, "entry:strong_example"],
-    }));
-  }
+    initialEntryWithMeasuredExcursion(trade) !== null);
+  const strongEntryTrades = entryEvidenceTrades.filter(strongEntryEfficiency);
+  candidate(values, behaviorSource({
+    source,
+    family: "entry_evidence",
+    lane: "strength",
+    polarity: "positive",
+    subjectRef: "entry_evidence:strong_entry_efficiency",
+    trackingSubjectKey: "tracking:entry_evidence:strong_entry_efficiency",
+    tradeStylePopulation: "objective_same_market_date",
+    populationDefinition: "Current-version same-market-date trades with measured entry excursion.",
+    opportunityDefinition: "Initial-entry events with both favorable and adverse movement available.",
+    cohortDefinition: "Profitable trades whose favorable move was at least twice their adverse move.",
+    comparisonDefinition: "Other current-version trades with measured initial-entry excursion.",
+    observations: tradeBehaviorObservations(entryEvidenceTrades, (trade) =>
+      strongEntryTrades.some((example) => example.tradeRef === trade.tradeRef)),
+    processClass: "analyzer_only",
+    resultPolarity: "positive",
+    expectedPopulationCount: expected.length,
+    expectedPopulationTrades: expected,
+    coverageBalance: coverageBalance(expected, entryEvidenceTrades),
+    allowSpecificExample: true,
+    overlapKeys: ["entry:strong_efficiency"],
+  }));
   const movedGreenTrades = observed.filter((trade) =>
     trade.analyzer.analysis.greenToRed?.status !== "never_green");
   const crossedGreenToRedTrades = observed.filter((trade) =>
@@ -1081,6 +1076,8 @@ function addAnalyzerCandidates(
   addTradeRateTrends(values, source, {
     family: "favorable_move_outcome",
     subjectRef: "trend:favorable_move:green_to_red_ended_red",
+    trackingSubjectKey:
+      "tracking:favorable_move_outcome:favorable_move:green_to_red_ended_red",
     opportunityTrades: observed.filter((trade) =>
       trade.analyzer.analysis.greenToRed?.status !== "never_green"),
     expectedTrades: expected,
@@ -1096,6 +1093,7 @@ function addAnalyzerCandidates(
   addTradeRateTrends(values, source, {
     family: "add_sequence",
     subjectRef: "trend:add_sequence:add_after_measured_peak",
+    trackingSubjectKey: "tracking:add_sequence:add_sequence:add_after_measured_peak",
     opportunityTrades: addPathTrades,
     expectedTrades: addTrades,
     affected: (trade) => (trade.analyzer.analysis.greenToRed?.addedAfterPeakCount ?? 0) > 0,
@@ -1127,6 +1125,7 @@ function addRuleCandidates(
     values.push(...buildCoachAiReviewNamedRuleCandidates({
       ruleRef: bundle.rule.ruleRef,
       ruleVersionRef: bundle.rule.ruleVersionRef,
+      trackingSubjectKey: `${bundle.rule.trackingRuleKey}:${bundle.targetKind}`,
       ruleTitle: bundle.rule.title,
       targetKind: bundle.targetKind,
       presetCoreRule: bundle.rule.sourceKind === "template",
@@ -1159,6 +1158,7 @@ function addRuleCandidates(
         cadence: source.period.cadence,
         family: "rule_trend",
         subjectRef: bundle.rule.ruleVersionRef,
+        trackingSubjectKey: `${bundle.rule.trackingRuleKey}:${bundle.targetKind}`,
         subjectLabel: bundle.rule.title,
         trendKind,
         improvementDirection: "lower_is_better",
@@ -1229,6 +1229,8 @@ function addRuleSequenceCandidate(
     lane: "friction",
     polarity: "negative",
     subjectRef: `preset_sequence:${templateKey}:${bundle.rule.ruleVersionRef}`,
+    trackingSubjectKey:
+      `tracking:preset_sequence:${templateKey}:${bundle.rule.trackingRuleKey}:${bundle.targetKind}`,
     subjectLabel: bundle.rule.title,
     tradeStylePopulation: "objective_same_market_date",
     populationDefinition: "Trades inside exact applicable preset-rule targets.",
@@ -1266,6 +1268,8 @@ function addRuleResultContrasts(
     lane: "contrast",
     polarity: "mixed",
     subjectRef: `contrast:profitable_broken:${bundle.rule.ruleVersionRef}`,
+    trackingSubjectKey:
+      `tracking:contrast:profitable_broken:${bundle.rule.trackingRuleKey}:${bundle.targetKind}`,
     subjectLabel: bundle.rule.title,
     tradeStylePopulation: "unknown_or_mixed",
     populationDefinition: "Exact trade opportunities for one rule version.",
@@ -1292,6 +1296,8 @@ function addRuleResultContrasts(
     lane: "contrast",
     polarity: "mixed",
     subjectRef: `contrast:losing_followed:${bundle.rule.ruleVersionRef}`,
+    trackingSubjectKey:
+      `tracking:contrast:losing_followed:${bundle.rule.trackingRuleKey}:${bundle.targetKind}`,
     subjectLabel: bundle.rule.title,
     tradeStylePopulation: "unknown_or_mixed",
     populationDefinition: "Exact trade opportunities for one rule version.",
@@ -1628,9 +1634,480 @@ function addRsiCandidates(
   }
 }
 
-export function buildCoachAiReviewInsightCandidatesFromSource(
+function laterFocusSource(
   source: CoachAiReviewCalculationSource,
-  options: CoachAiReviewSourceAdapterOptions = {},
+  boundaryUtc: string,
+): CoachAiReviewCalculationSource {
+  const trades = source.trades.filter((trade) =>
+    trade.openedAtUtc > boundaryUtc);
+  const tradeRefs = new Set(trades.map((trade) => trade.tradeRef));
+  const days = source.days.filter((day) => day.dayStartUtc > boundaryUtc);
+  const dayRefs = new Set(days.map((day) => day.dayRef));
+  const targetRefs = new Set([...tradeRefs, ...dayRefs]);
+  const ruleReviews = source.ruleReviews.filter((review) => targetRefs.has(review.targetRef));
+  const presetEvaluations = source.presetEvaluations.filter((evaluation) =>
+    targetRefs.has(evaluation.targetRef));
+  return Object.freeze({
+    ...source,
+    coverage: Object.freeze({
+      ...source.coverage,
+      readyClosedTradeCount: trades.length,
+      moneyCompleteTradeCount: trades.filter((trade) => trade.netPnlDecimal !== null).length,
+      periodEndConfirmedOpenPositionCount: 0,
+      periodEndOpenWithInPeriodReductionCount: 0,
+    }),
+    days: Object.freeze(days),
+    trades: Object.freeze(trades),
+    ruleReviews: Object.freeze(ruleReviews),
+    presetEvaluations: Object.freeze(presetEvaluations),
+    periodEndOpenPositionRefs: Object.freeze([]),
+    periodEndOpenWithInPeriodReductionRefs: Object.freeze([]),
+    issuedNarrativeContext: Object.freeze([]),
+    issuedFocusTargets: Object.freeze([]),
+  });
+}
+
+function focusFamilyCompatible(
+  target: CoachAiReviewCalculationSource["issuedFocusTargets"][number],
+  candidate: CoachAiReviewInsightCandidate,
+): boolean {
+  if (target.originatingFamily === candidate.family) return true;
+  return (target.originatingFamily === "rule_trend" &&
+      candidate.family === "named_rule_association") ||
+    (target.originatingFamily === "named_rule_association" &&
+      candidate.family === "rule_trend");
+}
+
+type IssuedFocusTarget = CoachAiReviewCalculationSource["issuedFocusTargets"][number];
+
+function focusProjectionWeekSeries(
+  source: CoachAiReviewCalculationSource,
+  populationMemberRefs: readonly string[],
+  affectedMemberRefs: readonly string[],
+): CoachAiReviewInsightCandidate["weekSeries"] {
+  const affected = new Set(affectedMemberRefs);
+  const buckets = new Map<string, string[]>();
+  for (const memberRef of populationMemberRefs) {
+    const bucketRef = bucketForTarget(memberRef, source);
+    if (bucketRef === null) continue;
+    buckets.set(bucketRef, [...(buckets.get(bucketRef) ?? []), memberRef]);
+  }
+  invariant([...buckets.values()].reduce((total, refs) => total + refs.length, 0) ===
+    populationMemberRefs.length, "TRADERLINK_AI_REVIEW_FOCUS_PROJECTION_BUCKET_MISSING");
+  return Object.freeze([...buckets.entries()]
+    .sort(([left], [right]) => compareCoachAiReviewText(left, right))
+    .map(([bucketRef, memberRefs]) => Object.freeze({
+      bucketRef,
+      numerator: memberRefs.filter((memberRef) => affected.has(memberRef)).length,
+      denominator: memberRefs.length,
+    })));
+}
+
+function focusProjectionFromMembers(input: Readonly<{
+  source: CoachAiReviewCalculationSource;
+  target: IssuedFocusTarget;
+  populationMemberRefs: readonly string[];
+  affectedMemberRefs: readonly string[];
+  expectedCount: number;
+  observationUnit: CoachAiReviewInsightCandidate["observationUnit"];
+  resultOwnership: CoachAiReviewInsightCandidate["resultOwnership"];
+  tradeStylePopulation: CoachAiReviewTradeStylePopulation;
+  relatedRuleRefs?: readonly string[];
+}>): CoachAiReviewInsightCandidate {
+  return buildCoachAiReviewFocusMetricProjection({
+    target: input.target,
+    observationUnit: input.observationUnit,
+    resultOwnership: input.resultOwnership,
+    tradeStylePopulation: input.tradeStylePopulation,
+    populationMemberRefs: input.populationMemberRefs,
+    affectedMemberRefs: input.affectedMemberRefs,
+    expectedCount: input.expectedCount,
+    weekSeries: focusProjectionWeekSeries(
+      input.source,
+      input.populationMemberRefs,
+      input.affectedMemberRefs,
+    ),
+    relatedRuleRefs: input.relatedRuleRefs,
+  });
+}
+
+function initialEntryWithMeasuredExcursion(
+  trade: CoachAiReviewSourceTrade,
+): CoachAiReviewSourceTrade["analyzer"]["analysis"]["events"][number] | null {
+  return trade.analyzer.analysis.events.filter((event) => event.kind === "entry" &&
+    event.oneMinute.favorableMoveUntilFlatDecimal !== null &&
+    event.oneMinute.adverseMoveUntilFlatDecimal !== null)
+    .sort((left, right) => left.sequence - right.sequence)[0] ?? null;
+}
+
+function strongEntryEfficiency(trade: CoachAiReviewSourceTrade): boolean {
+  if (trade.netPnlDecimal === null || new ExactDecimal(trade.netPnlDecimal).lte(0)) return false;
+  const entry = initialEntryWithMeasuredExcursion(trade);
+  if (entry === null) return false;
+  const favorable = new ExactDecimal(entry.oneMinute.favorableMoveUntilFlatDecimal!);
+  const adverse = new ExactDecimal(entry.oneMinute.adverseMoveUntilFlatDecimal!).abs();
+  return favorable.gt(0) && (adverse.isZero() || favorable.dividedBy(adverse).gte(2));
+}
+
+function analyzerFocusProjection(
+  source: CoachAiReviewCalculationSource,
+  target: IssuedFocusTarget,
+  options: CoachAiReviewSourceAdapterOptions,
+): CoachAiReviewInsightCandidate | null {
+  const expected = analyzerEligibleTrades(source);
+  const observed = analyzerPathTrades(source);
+  const movedGreen = observed.filter((trade) =>
+    trade.analyzer.analysis.greenToRed?.status !== "never_green");
+  const crossedGreenToRed = observed.filter((trade) =>
+    trade.analyzer.analysis.greenToRed?.status.startsWith("green_to_red_") === true);
+  const moneyPathObserved = observed.filter((trade) => {
+    const path = trade.analyzer.analysis.greenToRed;
+    return path?.feesComplete === true && path.peakPnlDecimal !== null &&
+      path.finalPnlDecimal !== null && path.peakToFinalReversalDecimal !== null &&
+      new ExactDecimal(path.peakPnlDecimal).gt(0);
+  });
+  const addTrades = expected.filter((trade) => trade.executionEvents.some((event) =>
+    eventInsidePeriod(event.executedAtUtc, source) && event.role === "adding"));
+  const addTradeRefs = new Set(addTrades.map((trade) => trade.tradeRef));
+  const addPathTrades = observed.filter((trade) => addTradeRefs.has(trade.tradeRef));
+  const entryEvidenceTrades = expected.filter((trade) =>
+    trade.analyzer.linkedRoundTripVersionCurrent &&
+    trade.analyzer.analysis.availability === "ready" &&
+    initialEntryWithMeasuredExcursion(trade) !== null);
+  const definitions = new Map<string, Readonly<{
+    population: readonly CoachAiReviewSourceTrade[];
+    affected: (trade: CoachAiReviewSourceTrade) => boolean;
+    expectedCount: number;
+  }>>([
+    ["tracking:entry_evidence:strong_entry_efficiency", Object.freeze({
+      population: entryEvidenceTrades,
+      affected: strongEntryEfficiency,
+      expectedCount: expected.length,
+    })],
+    ["tracking:favorable_move_outcome:favorable_move:green_to_red_ended_red", Object.freeze({
+      population: movedGreen,
+      affected: (trade) =>
+        trade.analyzer.analysis.greenToRed?.status === "green_to_red_ended_red",
+      expectedCount: expected.length,
+    })],
+    ["tracking:positive_process:favorable_move:green_to_red_recovered", Object.freeze({
+      population: crossedGreenToRed,
+      affected: (trade) =>
+        trade.analyzer.analysis.greenToRed?.status === "green_to_red_recovered",
+      expectedCount: expected.length,
+    })],
+    ["tracking:favorable_move_outcome:favorable_move:profitable_large_giveback_50_percent",
+      Object.freeze({
+        population: moneyPathObserved,
+        affected: (trade) => {
+          const path = trade.analyzer.analysis.greenToRed!;
+          const giveback = new ExactDecimal(path.peakToFinalReversalDecimal!).abs()
+            .dividedBy(path.peakPnlDecimal!);
+          return new ExactDecimal(path.finalPnlDecimal!).gt(0) && giveback.gte("0.5");
+        },
+        expectedCount: expected.length,
+      })],
+    ["tracking:positive_process:favorable_move:retained_70_percent_of_peak", Object.freeze({
+      population: moneyPathObserved,
+      affected: (trade) => {
+        const path = trade.analyzer.analysis.greenToRed!;
+        const giveback = new ExactDecimal(path.peakToFinalReversalDecimal!).abs()
+          .dividedBy(path.peakPnlDecimal!);
+        return new ExactDecimal(1).minus(giveback).gte("0.7");
+      },
+      expectedCount: expected.length,
+    })],
+    ["tracking:add_sequence:add_sequence:add_after_measured_peak", Object.freeze({
+      population: addPathTrades,
+      affected: (trade) =>
+        (trade.analyzer.analysis.greenToRed?.addedAfterPeakCount ?? 0) > 0,
+      expectedCount: addTrades.length,
+    })],
+    ["tracking:exit_sequence:exit_sequence:partial_before_red_then_recovered", Object.freeze({
+      population: crossedGreenToRed,
+      affected: (trade) => {
+        const path = trade.analyzer.analysis.greenToRed!;
+        return path.partialExitBeforeRedCount > 0 && path.status === "green_to_red_recovered";
+      },
+      expectedCount: expected.length,
+    })],
+  ]);
+  let definition = definitions.get(target.originatingTrackingSubjectKey) ?? null;
+  if (definition === null) {
+    const match = /^tracking:(entry_evidence|exit_sequence):rsi14:(long|short):(entry|final_exit):([a-z0-9_]+)$/u
+      .exec(target.originatingTrackingSubjectKey);
+    if (match && options.rsiReferenceVectorsAccepted === true) {
+      const [, , direction, role, band] = match;
+      const eventTrades = expected.filter((trade) => {
+        if (trade.direction !== direction || !trade.analyzer.linkedRoundTripVersionCurrent ||
+            trade.analyzer.analysis.availability !== "ready") return false;
+        const events = trade.analyzer.analysis.events.filter((event) => event.kind === role)
+          .sort((left, right) => role === "entry"
+            ? left.sequence - right.sequence
+            : right.sequence - left.sequence);
+        const event = events[0];
+        return event?.oneMinute.rsi14CalculationVersion === "wilder_rsi_14_v1" &&
+          event.oneMinute.rsi14 !== null && rsiBand(event.oneMinute.rsi14) !== null;
+      });
+      definition = Object.freeze({
+        population: eventTrades,
+        affected: (trade: CoachAiReviewSourceTrade) => {
+          const events = trade.analyzer.analysis.events.filter((event) => event.kind === role)
+            .sort((left, right) => role === "entry"
+              ? left.sequence - right.sequence
+              : right.sequence - left.sequence);
+          return rsiBand(events[0]!.oneMinute.rsi14!) === band;
+        },
+        expectedCount: expected.length,
+      });
+    }
+  }
+  if (definition === null) return null;
+  const affected = definition.population.filter(definition.affected);
+  return focusProjectionFromMembers({
+    source,
+    target,
+    populationMemberRefs: definition.population.map((trade) => trade.tradeRef),
+    affectedMemberRefs: affected.map((trade) => trade.tradeRef),
+    expectedCount: definition.expectedCount,
+    observationUnit: "analyzer_covered_trade",
+    resultOwnership: "trade_close_market_date",
+    tradeStylePopulation: "objective_same_market_date",
+  });
+}
+
+function ruleFocusProjection(
+  source: CoachAiReviewCalculationSource,
+  target: IssuedFocusTarget,
+): CoachAiReviewInsightCandidate | null {
+  for (const bundle of normalizeRuleBundles(source)) {
+    const baseKey = `${bundle.rule.trackingRuleKey}:${bundle.targetKind}`;
+    if (target.originatingTrackingSubjectKey === baseKey) {
+      const comparable = bundle.opportunities.filter((opportunity) =>
+        comparableRuleState(opportunity) !== null);
+      const desired = target.trackingMetricDirection === "higher_is_better"
+        ? "followed"
+        : "broken";
+      return focusProjectionFromMembers({
+        source,
+        target,
+        populationMemberRefs: comparable.map((opportunity) => opportunity.targetRef),
+        affectedMemberRefs: comparable.filter((opportunity) =>
+          comparableRuleState(opportunity) === desired).map((opportunity) =>
+          opportunity.targetRef),
+        expectedCount: bundle.opportunities.filter((opportunity) =>
+          opportunity.isReviewOpportunity).length,
+        observationUnit: "rule_review_opportunity",
+        resultOwnership: "rule_target",
+        tradeStylePopulation: "unknown_or_mixed",
+        relatedRuleRefs: [bundle.rule.ruleRef],
+      });
+    }
+    const templateKey = bundle.rule.templateKey;
+    const presetKey = templateKey === null
+      ? null
+      : `tracking:preset_sequence:${templateKey}:${baseKey}`;
+    if (presetKey !== null && target.originatingTrackingSubjectKey === presetKey) {
+      const reviewOpportunities = bundle.opportunities.filter((opportunity) =>
+        opportunity.isReviewOpportunity);
+      const opportunityTradeRefs = new Set(reviewOpportunities.flatMap((opportunity) =>
+        opportunity.targetKind === "round_trip"
+          ? [opportunity.targetRef]
+          : source.days.find((day) => day.dayRef === opportunity.targetRef)?.tradeRefs ?? []));
+      const population = source.trades.filter((trade) => opportunityTradeRefs.has(trade.tradeRef));
+      const affected = new Set(reviewOpportunities.flatMap((opportunity) =>
+        comparableRuleState(opportunity) === "broken"
+          ? opportunity.authorizedViolationTradeRefs
+          : []));
+      return focusProjectionFromMembers({
+        source,
+        target,
+        populationMemberRefs: population.map((trade) => trade.tradeRef),
+        affectedMemberRefs: population.filter((trade) => affected.has(trade.tradeRef))
+          .map((trade) => trade.tradeRef),
+        expectedCount: population.length,
+        observationUnit: "trade",
+        resultOwnership: "trade_close_market_date",
+        tradeStylePopulation: "objective_same_market_date",
+        relatedRuleRefs: [bundle.rule.ruleRef],
+      });
+    }
+    if (bundle.targetKind !== "round_trip") continue;
+    const comparable = bundle.opportunities.filter((opportunity) =>
+      comparableRuleState(opportunity) !== null);
+    const population = source.trades.filter((trade) => comparable.some((opportunity) =>
+      opportunity.targetRef === trade.tradeRef));
+    for (const contrast of [
+      Object.freeze({ key: `tracking:contrast:profitable_broken:${baseKey}`,
+        affected: (trade: CoachAiReviewSourceTrade) =>
+          comparableRuleState(comparable.find((opportunity) =>
+            opportunity.targetRef === trade.tradeRef)!) === "broken" &&
+          trade.netPnlDecimal !== null && new ExactDecimal(trade.netPnlDecimal).gt(0) }),
+      Object.freeze({ key: `tracking:contrast:losing_followed:${baseKey}`,
+        affected: (trade: CoachAiReviewSourceTrade) =>
+          comparableRuleState(comparable.find((opportunity) =>
+            opportunity.targetRef === trade.tradeRef)!) === "followed" &&
+          trade.netPnlDecimal !== null && new ExactDecimal(trade.netPnlDecimal).lt(0) }),
+    ]) {
+      if (target.originatingTrackingSubjectKey !== contrast.key) continue;
+      return focusProjectionFromMembers({
+        source,
+        target,
+        populationMemberRefs: population.map((trade) => trade.tradeRef),
+        affectedMemberRefs: population.filter(contrast.affected).map((trade) => trade.tradeRef),
+        expectedCount: comparable.length,
+        observationUnit: "trade",
+        resultOwnership: "trade_close_market_date",
+        tradeStylePopulation: "unknown_or_mixed",
+        relatedRuleRefs: [bundle.rule.ruleRef],
+      });
+    }
+  }
+  return null;
+}
+
+function focusMetricProjection(
+  source: CoachAiReviewCalculationSource,
+  target: IssuedFocusTarget,
+  options: CoachAiReviewSourceAdapterOptions,
+): CoachAiReviewInsightCandidate | null {
+  return analyzerFocusProjection(source, target, options) ?? ruleFocusProjection(source, target);
+}
+
+function candidateBestLaneScore(candidate: CoachAiReviewInsightCandidate): number {
+  return candidate.scores.reduce((best, score) => Math.max(best, score.postPenaltyScore), 0);
+}
+
+function focusCandidatePolarityRank(
+  target: CoachAiReviewCalculationSource["issuedFocusTargets"][number],
+  candidate: CoachAiReviewInsightCandidate,
+): number {
+  const desired = target.trackingIntent === "reduction"
+    ? "negative"
+    : target.trackingIntent === "strength_repetition"
+      ? "positive"
+      : target.originatingPolarity;
+  return candidate.polarity === desired ? 0 : candidate.polarity === "mixed" ? 1 : 2;
+}
+
+function focusEvidenceBounds(
+  source: CoachAiReviewCalculationSource,
+  candidate: CoachAiReviewInsightCandidate,
+): Readonly<{ startUtc: string; endUtc: string }> | null {
+  const timestamps = candidate.opportunityMemberRefs.flatMap((memberRef) => {
+    const trade = source.trades.find((item) => item.tradeRef === memberRef);
+    if (trade) return [trade.closedAtUtc];
+    const day = source.days.find((item) => item.dayRef === memberRef);
+    return day ? [day.dayEndUtc] : [];
+  }).sort(compareCoachAiReviewText);
+  if (timestamps.length === 0) return null;
+  return Object.freeze({ startUtc: timestamps[0]!, endUtc: timestamps.at(-1)! });
+}
+
+function focusEvidenceAdequate(
+  source: CoachAiReviewCalculationSource,
+  candidate: CoachAiReviewInsightCandidate,
+): boolean {
+  if (candidate.opportunityMemberRefs.length < 5) return false;
+  const marketDates = new Set(candidate.opportunityMemberRefs.flatMap((memberRef) => {
+    const trade = source.trades.find((item) => item.tradeRef === memberRef);
+    if (trade) return [trade.marketDate];
+    const day = source.days.find((item) => item.dayRef === memberRef);
+    return day ? [day.marketDate] : [];
+  }));
+  return marketDates.size >= 2;
+}
+
+function matchingLaterFocusCandidate(
+  source: CoachAiReviewCalculationSource,
+  baseCandidates: readonly CoachAiReviewInsightCandidate[],
+  target: CoachAiReviewCalculationSource["issuedFocusTargets"][number],
+  options: CoachAiReviewSourceAdapterOptions,
+): CoachAiReviewInsightCandidate | null {
+  const projection = focusMetricProjection(source, target, options);
+  return [...baseCandidates, ...(projection === null ? [] : [projection])]
+    .filter((candidate) => candidate.family !== "period_outcome" &&
+      candidate.trackingSubjectKey === target.originatingTrackingSubjectKey &&
+      focusFamilyCompatible(target, candidate) &&
+      focusEvidenceAdequate(source, candidate))
+    .sort((left, right) =>
+      focusCandidatePolarityRank(target, left) - focusCandidatePolarityRank(target, right) ||
+      Number(left.classification === "trend") - Number(right.classification === "trend") ||
+      candidateBestLaneScore(right) - candidateBestLaneScore(left) ||
+      compareCoachAiReviewText(left.findingRef, right.findingRef))[0] ?? null;
+}
+
+function addFocusFollowThroughCandidates(
+  values: CoachAiReviewInsightCandidate[],
+  source: CoachAiReviewCalculationSource,
+  options: CoachAiReviewSourceAdapterOptions,
+): void {
+  const windows = new Map<string, Readonly<{
+    source: CoachAiReviewCalculationSource;
+    candidates: readonly CoachAiReviewInsightCandidate[];
+  }>>();
+  const windowAfter = (boundaryUtc: string) => {
+    const existing = windows.get(boundaryUtc);
+    if (existing) return existing;
+    const laterSource = laterFocusSource(source, boundaryUtc);
+    const value = Object.freeze({
+      source: laterSource,
+      candidates: buildBaseCandidates(laterSource, options).candidates,
+    });
+    windows.set(boundaryUtc, value);
+    return value;
+  };
+  for (const target of source.issuedFocusTargets) {
+    if (target.baselineLineageStatus === "superseded") continue;
+    const laterWindow = windowAfter(target.eligibleLaterEvidenceAtUtc);
+    const laterSource = laterWindow.source;
+    if (laterSource.trades.length === 0 && laterSource.days.length === 0) continue;
+    const later = matchingLaterFocusCandidate(
+      laterSource,
+      laterWindow.candidates,
+      target,
+      options,
+    );
+    if (!later) continue;
+    const bounds = focusEvidenceBounds(laterSource, later);
+    if (!bounds || bounds.startUtc <= target.eligibleLaterEvidenceAtUtc) continue;
+    const prior = target.mostRecentAssessment;
+    const incrementalLaterMemberRefs = prior === null
+      ? later.opportunityMemberRefs
+      : (() => {
+          const incrementalWindow = windowAfter(prior.evidenceEndUtc);
+          const incrementalSource = incrementalWindow.source;
+          const incremental = matchingLaterFocusCandidate(
+            incrementalSource,
+            incrementalWindow.candidates,
+            target,
+            options,
+          );
+          if (!incremental) return Object.freeze([]);
+          const incrementalBounds = focusEvidenceBounds(incrementalSource, incremental);
+          if (!incrementalBounds || incrementalBounds.startUtc <= prior.evidenceEndUtc) {
+            return Object.freeze([]);
+          }
+          return incremental.opportunityMemberRefs;
+        })();
+    if (incrementalLaterMemberRefs.length === 0) continue;
+    const candidate = buildCoachAiReviewFocusFollowThroughCandidate({
+      target,
+      laterCandidate: later,
+      laterEvidenceStartUtc: bounds.startUtc,
+      laterEvidenceEndUtc: bounds.endUtc,
+      incrementalLaterMemberRefs,
+      priorAssessmentReviewRef: prior?.assessmentReviewRef ?? null,
+      priorAssessmentEvidenceEndUtc: prior?.evidenceEndUtc ?? null,
+      priorAssessmentVerdict: prior?.verdict ?? null,
+    });
+    if (candidate) values.push(candidate);
+  }
+}
+
+function buildBaseCandidates(
+  source: CoachAiReviewCalculationSource,
+  options: CoachAiReviewSourceAdapterOptions,
 ): CoachAiReviewSourceAdapterResult {
   const values: CoachAiReviewInsightCandidate[] = [];
   const money = periodMoney(source);
@@ -1649,10 +2126,22 @@ export function buildCoachAiReviewInsightCandidatesFromSource(
   addSegmentCandidates(values, source);
   addConcentrationCandidates(values, source);
   addRsiCandidates(values, source, options.rsiReferenceVectorsAccepted === true);
-  const normalizedRuleOpportunities = Object.freeze(bundles.flatMap((bundle) =>
-    bundle.opportunities));
   return Object.freeze({
     candidates: Object.freeze(values),
-    normalizedRuleOpportunities,
+    normalizedRuleOpportunities: Object.freeze(bundles.flatMap((bundle) =>
+      bundle.opportunities)),
+  });
+}
+
+export function buildCoachAiReviewInsightCandidatesFromSource(
+  source: CoachAiReviewCalculationSource,
+  options: CoachAiReviewSourceAdapterOptions = {},
+): CoachAiReviewSourceAdapterResult {
+  const base = buildBaseCandidates(source, options);
+  const values = [...base.candidates];
+  addFocusFollowThroughCandidates(values, source, options);
+  return Object.freeze({
+    candidates: Object.freeze(values),
+    normalizedRuleOpportunities: base.normalizedRuleOpportunities,
   });
 }

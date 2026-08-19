@@ -348,6 +348,8 @@ export type CoachAiReviewRankableLaneCandidate = Readonly<{
   processRelevance: number | null;
   specificity: number | null;
   leaveOneBucketWinnerStable: boolean | null;
+  focusPreviouslyAssessed: boolean;
+  focusMaterialRepeatException: boolean;
 }>;
 
 export function selectCoachAiReviewLaneDefault(input: Readonly<{
@@ -370,6 +372,7 @@ export function selectCoachAiReviewLaneDefault(input: Readonly<{
   const rawLeader = ordered[0]!;
   let selected = rawLeader;
   let selectedByMeasuredConsequenceGuard = false;
+  let selectedByFocusNoveltyGuard = false;
   if (input.lane === "friction") {
     const guarded = ordered.find((candidate) =>
       candidate.fullFinancialConsequenceScore !== null &&
@@ -379,6 +382,15 @@ export function selectCoachAiReviewLaneDefault(input: Readonly<{
     if (guarded && guarded.findingRef !== rawLeader.findingRef) {
       selected = guarded;
       selectedByMeasuredConsequenceGuard = true;
+    }
+  }
+  if (input.lane === "focus_follow_through" && rawLeader.focusPreviouslyAssessed &&
+      !rawLeader.focusMaterialRepeatException) {
+    const unassessed = ordered.find((candidate) => !candidate.focusPreviouslyAssessed &&
+      rawLeader.score.postPenaltyScore - candidate.score.postPenaltyScore <= 10);
+    if (unassessed) {
+      selected = unassessed;
+      selectedByFocusNoveltyGuard = true;
     }
   }
   const nextDistinct = ordered.find((candidate) =>
@@ -392,6 +404,7 @@ export function selectCoachAiReviewLaneDefault(input: Readonly<{
     ? "only_eligible" as const
     : selected.findingRef === rawLeader.findingRef &&
       !selectedByMeasuredConsequenceGuard &&
+      !selectedByFocusNoveltyGuard &&
       margin !== null && margin >= 5 &&
       selected.leaveOneBucketWinnerStable === true
       ? "dominant" as const
@@ -404,6 +417,7 @@ export function selectCoachAiReviewLaneDefault(input: Readonly<{
       marginToNextDistinct: margin,
       leaveOneBucketWinnerStable: selected.leaveOneBucketWinnerStable,
       selectedByMeasuredConsequenceGuard,
+      selectedByFocusNoveltyGuard,
     }),
   });
 }

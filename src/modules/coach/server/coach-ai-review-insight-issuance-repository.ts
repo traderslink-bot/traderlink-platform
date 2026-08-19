@@ -120,6 +120,12 @@ type CompleteUsage = Readonly<{
   totalTokens: number;
 }>;
 
+type InsightArtifact = ReturnType<CoachAiReviewInsightPersistenceRepository["read"]>["artifact"];
+type InsightCompletePlan = InsightArtifact["catalog"]["completePlans"][number];
+type InsightFocusAssessment = NonNullable<
+  InsightArtifact["candidates"][number]["focusAssessment"]
+>;
+
 function activeAccountId(scope: WorkspaceAccessScope): string {
   if (!scope.activeAccountId || !scope.allowedAccountIds.includes(scope.activeAccountId)) {
     platformFailure("TRADERLINK_ACCOUNT_ACCESS_DENIED");
@@ -1039,6 +1045,10 @@ WHERE coach_ai_review_period_request_id = ? AND user_id = ?
       : null;
     const focusTracking = this.focusTracking(snapshot.artifact, plan.focusQuestionRefs);
     const focusJson = canonicalCoachAiReviewInsightBytes(focusTracking).toString("utf8");
+    const followThroughAssessment = this.followThroughAssessment(snapshot.artifact, plan);
+    const followThroughJson = followThroughAssessment === null
+      ? null
+      : canonicalCoachAiReviewInsightBytes(followThroughAssessment).toString("utf8");
     this.database.prepare(`INSERT INTO coach_ai_review_insight_selection_audits (
   coach_ai_review_insight_selection_audit_id,
   coach_ai_review_period_request_id, coach_ai_review_generation_attempt_id,
@@ -1048,11 +1058,12 @@ WHERE coach_ai_review_period_request_id = ? AND user_id = ?
   provider_package_key, provider_choice_key, review_plan_ref,
   structured_selection_json, structured_selection_digest_sha256,
   focus_tracking_json, focus_tracking_digest_sha256,
+  follow_through_assessment_json, follow_through_assessment_digest_sha256,
   source_digest_sha256, shortlist_digest_sha256, catalog_digest_sha256,
   rendered_output_digest_sha256, recovery_epoch, lease_generation,
   recorded_at_utc
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'accepted', NULL, ?, ?, ?, ?, ?,
-  ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
       createCanonicalUuidV4(),
       input.requestId,
       input.attemptId,
@@ -1072,6 +1083,10 @@ WHERE coach_ai_review_period_request_id = ? AND user_id = ?
         : null,
       focusJson,
       digestCanonicalCoachAiReviewInsight(focusTracking).digestSha256,
+      followThroughJson,
+      followThroughAssessment === null
+        ? null
+        : digestCanonicalCoachAiReviewInsight(followThroughAssessment).digestSha256,
       snapshot.artifact.digests.sourceDigestSha256,
       snapshot.artifact.digests.shortlistDigestSha256,
       snapshot.artifact.digests.catalogDigestSha256,
@@ -1244,6 +1259,7 @@ WHERE coach_ai_review_generation_attempt_id = ?`).get(attemptId);
     findingRef: string;
     actionTargetKey: string;
     trackingIntent: "reduction" | "consistency" | "examination" | "strength_repetition";
+    trackingMetricDirection: "lower_is_better" | "higher_is_better" | "non_directional";
     renderedQuestion: string;
   }>[] {
     return Object.freeze(focusRefs.map((focusRef, index) => {
@@ -1257,9 +1273,28 @@ WHERE coach_ai_review_generation_attempt_id = ?`).get(attemptId);
         findingRef: focus.findingRef,
         actionTargetKey: focus.actionTargetKey,
         trackingIntent: focus.trackingIntent,
+        trackingMetricDirection: focus.trackingMetricDirection,
         renderedQuestion: focus.renderedQuestion,
       });
     }));
+  }
+
+  private followThroughAssessment(
+    artifact: InsightArtifact,
+    plan: InsightCompletePlan,
+  ): InsightFocusAssessment | null {
+    const sectionRef = plan.sectionPlanRefs.focus_follow_through;
+    const section = artifact.catalog.sectionPlans.find((candidate) =>
+      candidate.sectionPlanRef === sectionRef);
+    if (!section) this.integrity("followThroughSection");
+    if (section.findingRef === null) return null;
+    const candidate = artifact.candidates.find((item) =>
+      item.findingRef === section.findingRef);
+    if (!candidate || candidate.family !== "focus_follow_through" ||
+        candidate.focusAssessment === null) {
+      this.integrity("followThroughAssessment");
+    }
+    return candidate.focusAssessment;
   }
 
   private assertDeterministicReason(

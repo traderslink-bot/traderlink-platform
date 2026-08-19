@@ -635,6 +635,81 @@ Still required before provider testing resumes:
 Help Center check: this is still inactive server-only compatibility work, so no
 guide update is required yet.
 
+## Deterministic insight-engine implementation checkpoint 9 - 2026-08-19
+
+Exact later-evidence focus assessment is now implemented but remains
+disconnected from the active v2 request/runner path. No generation-contract
+transition, provider call, database migration or saved-review mutation was
+performed.
+
+Implemented in this checkpoint:
+
+- a separately versioned hidden stable SHA-256 tracking reference, scoped to
+  the exact workspace/account and private subject identity but independent of
+  the rotating prompt-safe HMAC and request period; every stable key and lineage
+  key is rejected from the OpenAI selection package;
+- exact target identity now distinguishes day-rule from trade-rule
+  opportunities, and the entry-quality target measures all profitable entries
+  with at least twice the favorable versus adverse excursion instead of one
+  chosen example;
+- monthly focus history now includes every actually issued weekly/two-week
+  review ending inside the requested month plus the immediately prior monthly
+  review, while ordinary weekly/two-week requests use their immediately prior
+  issued review;
+- later evidence starts strictly after both the source-market seal and review
+  issuance, requires at least five compatible opportunities across two market
+  dates, preserves the original observation unit and never counts pre-focus
+  evidence;
+- exact metric projections allow a prior problem or strength to reach zero
+  occurrences without disappearing from assessment; projections are hidden,
+  cannot enter ordinary ranking and cover the accepted rule, preset-sequence,
+  Analyzer path, entry, add, exit and versioned RSI targets;
+- direct verdict thresholds now distinguish clear 10-point improvement/
+  worsening, five-point unchanged, the middle no-clear-change range, mixed
+  later weeks, sustained strength and improved-but-still-at-least-20-percent
+  inconsistent evidence;
+- accepted follow-through stores its canonical assessment JSON and digest in
+  the fenced selection audit, including cumulative members, genuinely new
+  incremental members and the prior assessment boundary, so unchanged evidence
+  cannot be issued as a fresh assessment;
+- within 10 lane points, a previously unassessed target displaces an already-
+  assessed one unless new evidence produces a material verdict change or a
+  worsened repeat;
+- baseline lineage now covers current round-trip, trade-style, Analyzer, rule,
+  and rule-review revisions across the account, preventing both stale-baseline
+  comparison and false invalidation of an unchanged earlier-period rule review;
+  and
+- the focus sentence now states the original rate, exact later count/rate and a
+  direct human conclusion instead of the vague `same measured rate` wording.
+
+The controlling plan was corrected to match the accepted v3 privacy boundary:
+four issued weekly reviews remain in the private monthly calculation source;
+OpenAI receives only bounded complete server-rendered choices and allowlisted
+selection rationales, not weekly prose, raw monthly facts or raw Analyzer rows.
+
+Verification at this checkpoint:
+
+- focused ESLint passes for every changed follow-through, compatibility,
+  persistence, repository, renderer and privacy-projection file;
+- the focused non-incremental TypeScript project excluding shared generated
+  `.next` state passes; and
+- no Vitest/test suite, browser run, migration execution, provider call,
+  database write, request issuance or customer-visible UI change was performed.
+
+Still required before provider testing resumes:
+
+- implement and inspect the one-way generation-contract cutover verifier;
+- connect the captured v3 coordinator and make the two free-prose v2 adapters
+  unreachable after activation;
+- implement the proper multi-stage extraction-and-synthesis path for a counted
+  package that genuinely exceeds the selected model's safe envelope; and
+- execute the permitted disposable migration/captured-request/recovery-race,
+  zero-case focus and true four-week-plus-month acceptance gates.
+
+Help Center check: this remains inactive server-only engine work, so no guide
+update is required yet. Activation still owns the AI Reviews guide/privacy
+wording check.
+
 The ninth-pass design retains the eighth pass's single-package/fallback and
 Railway boundaries while tightening the engine that decides what deserves to be
 shown. It now keeps Day and Swing populations explicit, attributes results and
