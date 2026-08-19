@@ -86,6 +86,7 @@ export type DaySessionTradeAnalyzer = {
       macdSignal: number | null;
       relativeVolume: number | null;
       rsi14: number | null;
+      rsi14CalculationVersion: "wilder_rsi_14_v1" | null;
       vwap: number | null;
     } | null;
     kind: "entry" | "add" | "partial_exit" | "final_exit";

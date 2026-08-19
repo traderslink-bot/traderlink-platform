@@ -2,6 +2,11 @@ import "server-only";
 
 import Decimal from "decimal.js";
 
+import {
+  acceptedRsi14,
+  isAcceptedRsi14CalculationVersion,
+  RSI_14_CALCULATION_VERSION,
+} from "@/src/lib/trade-candle-analysis/indicator-context";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import type {
   JournalSwingPositionDetail,
@@ -323,18 +328,27 @@ function analyzerSnapshotView(row: AnalyzerSnapshotRow): DaySessionTradeAnalyzer
         typeof snapshot.event.priceDecimal !== "string" || typeof snapshot.event.quantityDecimal !== "string") {
       return null;
     }
-    const indicators = snapshot.indicators && typeof snapshot.indicators === "object"
+    const rawIndicators = snapshot.indicators;
+    const rsi14CalculationVersion =
+      isAcceptedRsi14CalculationVersion(rawIndicators?.rsi14CalculationVersion)
+        ? RSI_14_CALCULATION_VERSION
+        : null;
+    const indicators = rawIndicators && typeof rawIndicators === "object"
       ? {
-          adr20: numberOrNull(snapshot.indicators.adr20),
-          atr14: numberOrNull(snapshot.indicators.atr14),
-          ema9: numberOrNull(snapshot.indicators.ema9),
-          ema20: numberOrNull(snapshot.indicators.ema20),
-          macd: numberOrNull(snapshot.indicators.macd),
-          macdHistogram: numberOrNull(snapshot.indicators.macdHistogram),
-          macdSignal: numberOrNull(snapshot.indicators.macdSignal),
-          relativeVolume: numberOrNull(snapshot.indicators.relativeVolume),
-          rsi14: numberOrNull(snapshot.indicators.rsi14),
-          vwap: numberOrNull(snapshot.indicators.vwap),
+          adr20: numberOrNull(rawIndicators.adr20),
+          atr14: numberOrNull(rawIndicators.atr14),
+          ema9: numberOrNull(rawIndicators.ema9),
+          ema20: numberOrNull(rawIndicators.ema20),
+          macd: numberOrNull(rawIndicators.macd),
+          macdHistogram: numberOrNull(rawIndicators.macdHistogram),
+          macdSignal: numberOrNull(rawIndicators.macdSignal),
+          relativeVolume: numberOrNull(rawIndicators.relativeVolume),
+          rsi14: acceptedRsi14(
+            rawIndicators.rsi14,
+            rsi14CalculationVersion,
+          ),
+          rsi14CalculationVersion,
+          vwap: numberOrNull(rawIndicators.vwap),
         }
       : null;
     return {

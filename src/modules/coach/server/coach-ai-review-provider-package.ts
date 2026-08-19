@@ -1,3 +1,12 @@
+import {
+  acceptedRsi14,
+  isAcceptedRsi14CalculationVersion,
+  RSI_14_CALCULATION_VERSION,
+} from
+  "@/src/lib/trade-candle-analysis/indicator-context";
+import type { CoachAiReviewTradeAnalysisV2 } from
+  "../contracts/weekly-ai-review-input-contracts";
+
 const INTERNAL_COVERAGE_FIELDS = new Set([
   "accountNeedsDecisionCount",
   "accountPendingDataDecisionCount",
@@ -85,7 +94,13 @@ function compactTradeAnalysis(value: CoachAiReviewTradeAnalysisV2): unknown {
       executedAtUtc: event.executedAtUtc,
       oneMinute: Object.freeze({
         relativeVolume: event.oneMinute.relativeVolume,
-        rsi14: event.oneMinute.rsi14,
+        rsi14: acceptedRsi14(
+          event.oneMinute.rsi14,
+          event.oneMinute.rsi14CalculationVersion,
+        ),
+        rsi14CalculationVersion: isAcceptedRsi14CalculationVersion(
+          event.oneMinute.rsi14CalculationVersion,
+        ) ? RSI_14_CALCULATION_VERSION : null,
         ema9DistancePercent: event.oneMinute.ema9DistancePercent,
         vwapDistancePercent: event.oneMinute.vwapDistancePercent,
         favorableMoveUntilFlatDecimal: event.oneMinute.favorableMoveUntilFlatDecimal,
@@ -223,5 +238,3 @@ export function incompleteRecordFromCoachAiReviewProviderPackage(
   }
   return reasons.join(" ");
 }
-import type { CoachAiReviewTradeAnalysisV2 } from
-  "../contracts/weekly-ai-review-input-contracts";

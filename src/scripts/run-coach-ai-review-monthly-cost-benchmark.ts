@@ -190,6 +190,7 @@ function tradeAnalysis(date: string, tradeIndex: number): CoachAiReviewTradeAnal
         candleVolumeDecimal: String(18_000 + tradeIndex * 500 + sequence * 1_100),
         relativeVolume: Number((1.4 + ((tradeIndex + sequence) % 7) * 0.35).toFixed(2)),
         rsi14: Number((42 + ((tradeIndex * 3 + sequence * 5) % 32)).toFixed(2)),
+        rsi14CalculationVersion: "wilder_rsi_14_v1",
         ema9DistancePercent: Number((-1.2 + ((tradeIndex + sequence) % 9) * 0.3).toFixed(2)),
         vwapDistancePercent: Number((-1.5 + ((tradeIndex * 2 + sequence) % 10) * 0.35).toFixed(2)),
         executionEdgeDistanceDecimal: ((tradeIndex + sequence) % 2 === 0 ? "0.04" : "-0.03"),

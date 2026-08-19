@@ -101,6 +101,7 @@ export type CoachAiReviewTradeAnalysisV2 = Readonly<{
       candleVolumeDecimal: string | null;
       relativeVolume: number | null;
       rsi14: number | null;
+      rsi14CalculationVersion: "wilder_rsi_14_v1" | null;
       ema9DistancePercent: number | null;
       vwapDistancePercent: number | null;
       executionEdgeDistanceDecimal: string | null;

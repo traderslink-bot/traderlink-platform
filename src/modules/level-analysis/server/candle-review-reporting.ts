@@ -3,6 +3,12 @@ import "server-only";
 import Decimal from "decimal.js";
 
 import { analyzeTradeCandles } from "@/src/lib/trade-candle-analysis/candle-analysis";
+import {
+  acceptedRsi14,
+  isAcceptedRsi14CalculationVersion,
+  RSI_14_CALCULATION_VERSION,
+} from
+  "@/src/lib/trade-candle-analysis/indicator-context";
 import type {
   CandleReviewPageModel,
   CandleReviewRecord,
@@ -81,17 +87,30 @@ function scaleRecord(
     ...record,
     analysis,
     candles,
-    indicators: Object.freeze(record.indicators.map((indicator) => Object.freeze({
-      ...indicator,
-      adr20: scaleNumber(indicator.adr20, multiplier),
-      atr14: scaleNumber(indicator.atr14, multiplier),
-      ema9: scaleNumber(indicator.ema9, multiplier),
-      ema20: scaleNumber(indicator.ema20, multiplier),
-      macd: scaleNumber(indicator.macd, multiplier),
-      macdHistogram: scaleNumber(indicator.macdHistogram, multiplier),
-      macdSignal: scaleNumber(indicator.macdSignal, multiplier),
-      vwap: scaleNumber(indicator.vwap, multiplier),
-    }))),
+    indicators: Object.freeze(record.indicators.map((indicator) => {
+      const {
+        rsi14CalculationVersion: storedRsi14CalculationVersion,
+        ...indicatorWithoutRsi14CalculationVersion
+      } = indicator;
+      return Object.freeze({
+        ...indicatorWithoutRsi14CalculationVersion,
+        adr20: scaleNumber(indicator.adr20, multiplier),
+        atr14: scaleNumber(indicator.atr14, multiplier),
+        ema9: scaleNumber(indicator.ema9, multiplier),
+        ema20: scaleNumber(indicator.ema20, multiplier),
+        macd: scaleNumber(indicator.macd, multiplier),
+        macdHistogram: scaleNumber(indicator.macdHistogram, multiplier),
+        macdSignal: scaleNumber(indicator.macdSignal, multiplier),
+        rsi14: acceptedRsi14(
+          indicator.rsi14,
+          storedRsi14CalculationVersion,
+        ),
+        ...(isAcceptedRsi14CalculationVersion(storedRsi14CalculationVersion)
+          ? { rsi14CalculationVersion: RSI_14_CALCULATION_VERSION }
+          : {}),
+        vwap: scaleNumber(indicator.vwap, multiplier),
+      });
+    })),
     target,
   });
 }

@@ -415,6 +415,7 @@ function eventSnapshot(
       macdSignal: point.macdSignal,
       relativeVolume: relativeVolume(candles, index),
       rsi14: point.rsi14,
+      rsi14CalculationVersion: point.rsi14CalculationVersion,
       vwap: point.vwap,
     }),
     metrics,

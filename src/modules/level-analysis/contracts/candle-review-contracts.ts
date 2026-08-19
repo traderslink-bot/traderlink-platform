@@ -90,6 +90,7 @@ export type CandleReviewIndicator = Readonly<{
   macdSignal: number | null;
   phase: "entry" | "exit";
   rsi14: number | null;
+  rsi14CalculationVersion?: "wilder_rsi_14_v1";
   vwap: number | null;
 }>;
 

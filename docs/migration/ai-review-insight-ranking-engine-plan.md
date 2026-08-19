@@ -3,8 +3,10 @@
 ## Status
 
 Design and nine implementation-readiness QA passes complete under the owner's
-delegated product authority on 2026-08-18. Implementation has not started. The
-owner does not need to approve individual formulas or weight calculations, but
+delegated product authority on 2026-08-18. The RSI correctness prerequisite is
+implemented with verification pending; the insight engine itself has not
+started. The owner does not need to approve individual formulas or weight
+calculations, but
 the completed engine and its generated reviews remain subject to owner
 product-quality review.
 
@@ -679,14 +681,15 @@ engine will not manufacture a percentage from fields that lack one.
 One-minute RSI 14 is the version-one long-term technical-context family, not a
 standalone review finding. Its exact bands are `[0,30)`, `[30,40)`, `[40,50)`,
 `[50,60)`, `[60,70)` and `[70,100]`; thresholds are never optimized after
-seeing results, and an out-of-range value fails source validation. Version one
-uses only the initial-entry and final-exit event, giving each trade at most one
+seeing results, and an out-of-range value is unavailable as RSI evidence.
+Version one uses only the initial-entry and final-exit event, giving each trade
+at most one
 `analyzer_covered_trade` observation in either role. Add and partial-exit RSI
 may support a selected example but cannot create an RSI cohort or repeat the
 trade's result.
 
 Long and short trades and entry/final-exit roles stay separate. An affected
-band is compared only with the other corrected-contract RSI-eligible trades of
+band is compared only with the other corrected-version RSI-eligible trades of
 the same direction and event role in the period. All non-empty direction x role
 x band groups count as siblings under the Segment gate before outcomes are
 inspected. Indicator-by-tag/setup intersections are excluded in version one.
@@ -700,23 +703,25 @@ do not generate recurring technical-context candidates until a later accepted
 engine version defines their fixed cohort boundaries, comparison population and
 multiplicity tests. The provider cannot turn those fields into a new finding.
 
-The source audit found that the current RSI implementation is not eligible for
-AI ranking: it returns unavailable when average loss is zero and has no accepted
-reference-vector proof for its Wilder seed/smoothing. Therefore RSI stored under
-`daily_trade_analyzer_v1` or `daily_trade_analyzer_v2` contributes no candidate,
-score, claim or provider excerpt. Before the family above can activate, a new
-Analyzer contract version must calculate RSI 14 with an explicit 14-change
-initial average followed by Wilder smoothing and define the zero cases exactly:
+The source audit found that the prior unversioned RSI implementation is not
+eligible for AI ranking: it returns unavailable when average loss is zero and
+has no accepted reference-vector proof for its Wilder seed/smoothing. Therefore
+RSI stored
+without the exact accepted `wilder_rsi_14_v1` calculation version contributes no
+candidate, score, claim or provider excerpt. The immutable corrected version
+uses an exact 14-change initial average followed by Wilder smoothing and defines
+the zero cases exactly:
 gain above zero/loss zero = 100, gain zero/loss above zero = 0, and both zero =
 50. Golden reference vectors, strictly rising/falling/flat sequences, minimum-
 history, missing-candle and ordering cases must pass the focused verifier.
 
-Existing Analyzer versions remain immutable. Corrected RSI is stored only in a
-new current analysis revision produced from available accepted candle evidence;
-the implementation does not rewrite old snapshots, fabricate corrected history
-or make an external market-data call merely to fill AI Review coverage. Mixed
-old/new months expose exact RSI-eligible coverage, and only the corrected
-contract population can enter an RSI comparison.
+Existing Analyzer snapshots remain immutable. Corrected RSI is stored only in a
+new current analysis revision with the calculation-version field, produced from
+available accepted candle evidence. The implementation does not rewrite old
+snapshots, fabricate corrected history or make an external market-data call
+merely to fill AI Review coverage. Mixed old/new months expose exact RSI-
+eligible coverage, and only the corrected-version population can enter an RSI
+comparison.
 
 A single event's RSI or other indicator may appear only as supporting context
 for a selected representative trade. It cannot become a weekly/monthly headline
@@ -2717,9 +2722,10 @@ In addition to the 420-trade acceptance fixture, cover:
 - a mixed known-Day/known-Swing/other/unclassified month with a Swing opened
   before the month, dated Swing notes, an intentionally planted Daily Trade
   Analyzer row on a Swing and a style plan requiring relink;
-- legacy v1/v2 RSI values beside corrected-contract values, proving old RSI is
-  unavailable to ranking, exact eligible coverage is shown, a repeated four-
-  bucket RSI cohort can qualify and an isolated extreme reading cannot;
+- legacy unversioned RSI values beside corrected calculation-version values,
+  proving old RSI is unavailable to ranking, exact eligible coverage is shown,
+  a repeated four-bucket RSI cohort can qualify and an isolated extreme reading
+  cannot;
 - an in-period Swing note on an included closed Swing beside an outside-period
   note and a note on a still-open Swing, proving only the first enters the
   calculation/provider source;
@@ -2920,10 +2926,10 @@ one planted fixture:
 - provider serialization never emits an unselected trade's raw one-minute/
   five-minute Analyzer observations, and every selected excerpt contains only
   fields referenced by that candidate's server-owned claims;
-- legacy v1/v2 RSI remains ranking-unavailable; changing a repeated corrected-
-  contract RSI 14 cohort changes its deterministic aggregate exactly, while one
-  isolated reading that fails recurrence/comparison gates cannot create a
-  period-level finding;
+- legacy unversioned RSI remains ranking-unavailable; changing a repeated
+  corrected calculation-version RSI 14 cohort changes its deterministic
+  aggregate exactly, while one isolated reading that fails recurrence/comparison
+  gates cannot create a period-level finding;
 - package, provider exception, support and Admin logging contains no raw note,
   historical review, provider prompt or rendered private review text;
 - every normalized source snapshot is transactionally consistent across
@@ -3335,7 +3341,7 @@ plan must record it before that file is edited.
 - one next-available forward Coach insight migration under
   `src/modules/coach/server/database/migrations/`
 - `src/scripts/verify-coach-ai-review-insight-engine.ts`
-- `src/scripts/verify-trade-candle-analysis-indicators.ts`
+- `src/lib/trade-candle-analysis/indicator-context.test.ts`
 - one synthetic true-month fixture/helper under `src/scripts/`
 
 ### Existing source permitted to change
@@ -3359,12 +3365,14 @@ plan must record it before that file is edited.
 - `src/modules/coach/server/coach-ai-review-output-safety.ts`
 - `src/modules/coach/server/coach-weekly-ai-review-issuance-service.ts`
 - `src/modules/coach/server/coach-monthly-ai-review-issuance-service.ts`
+- `app/(dashboard)/trade-tracker/[sessionDate]/day-session-types.ts`
+- `app/(dashboard)/trade-tracker/trade-tracker-platform-data.ts`
 - `src/lib/trade-candle-analysis/indicator-context.ts`
+- `src/modules/level-analysis/contracts/candle-review-contracts.ts`
 - `src/modules/level-analysis/contracts/daily-trade-analyzer-contracts.ts`
+- `src/modules/level-analysis/server/candle-review-reporting.ts`
 - `src/modules/level-analysis/server/daily-trade-analyzer.ts`
 - `src/modules/level-analysis/server/daily-trade-analyzer-repository.ts`
-- one next-available forward Analyzer contract-version migration under
-  `src/modules/level-analysis/server/database/migrations/`
 - `src/modules/journal/server/trade-style/journal-trade-style-repository.ts`
 - `src/modules/journal/server/swing-notes/journal-swing-note-repository.ts`
 - `src/modules/platform/server/database/platform-migration-manifest.ts`
@@ -3394,9 +3402,10 @@ into engine code.
 
 ### Slice A - deterministic contracts and calculations
 
-- Correct and reference-verify RSI 14 under a new immutable Analyzer contract
-  version before enabling its candidate family; preserve v1/v2 snapshots, make
-  their RSI ranking-unavailable and do not fetch market data for a backfill.
+- Correct and reference-verify RSI 14 under the immutable
+  `wilder_rsi_14_v1` calculation version before enabling its candidate family;
+  preserve unversioned snapshots, make their RSI ranking-unavailable and do not
+  fetch market data for a backfill.
 - Add engine contracts, prompt-safe rule/trade-style/Swing-note identity,
   temporal ownership, population-membership validation and exact measurement
   helpers.
@@ -4126,10 +4135,10 @@ Additional resolved findings:
     and two for any candidate. RSI 14 and other technical context cannot become
     a period finding from one event.
 17. **RSI 14 was present but not trustworthy enough to rank:** fixed by gating
-    all v1/v2 RSI out of candidates/provider excerpts and requiring an immutable
-    corrected Analyzer contract with exact Wilder initialization/zero behavior,
-    golden vectors and new-revision-only persistence before RSI findings can
-    activate.
+    every unversioned RSI out of candidates/provider excerpts and requiring an
+    immutable calculation version with exact Wilder initialization/zero
+    behavior, golden vectors and new-revision-only persistence before RSI
+    findings can activate.
 18. **Event-level RSI could count one actively managed trade several times:**
     fixed by limiting version one to one initial-entry and one final-exit
     observation per trade, separating role/direction, comparing with the exact
@@ -4161,8 +4170,9 @@ This redesign is complete only when:
 - every eligible Analyzer record participates in local calculation, while bulk
   raw one-minute/five-minute observations stay out of provider context and only
   exact long-term aggregates plus selected representative excerpts enter it;
-- legacy RSI is excluded and the RSI family remains unavailable until corrected
-  new-contract values pass the reference verifier and normal population gates;
+- unversioned RSI is excluded and the RSI family remains unavailable until
+  corrected calculation-version values pass the reference verifier and normal
+  population gates;
 - deterministic planted findings, independent score calculations and sealed
   holdouts rank correctly before provider involvement;
 - the monthly provider package contains the four actually issued weekly

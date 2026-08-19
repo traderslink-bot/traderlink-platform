@@ -1,5 +1,11 @@
 import type Database from "better-sqlite3";
 
+import {
+  acceptedRsi14,
+  isAcceptedRsi14CalculationVersion,
+  RSI_14_CALCULATION_VERSION,
+} from
+  "@/src/lib/trade-candle-analysis/indicator-context";
 import type {
   CoachAiReviewNamedRuleOutcomeV2,
   CoachAiReviewTradeAnalysisV2,
@@ -99,6 +105,12 @@ function compactEvent(snapshot: DailyTradeAnalyzerEventSnapshot) {
   const completed = snapshot.fiveMinuteContext.completedBeforeExecution;
   const containing = snapshot.fiveMinuteContext.containingCandle;
   const partial = snapshot.fiveMinuteContext.preExecutionPartial;
+  const rsi14CalculationVersion =
+    isAcceptedRsi14CalculationVersion(
+      snapshot.indicators?.rsi14CalculationVersion,
+    )
+      ? RSI_14_CALCULATION_VERSION
+      : null;
   return Object.freeze({
     kind: snapshot.event.kind,
     sequence: snapshot.event.sequence,
@@ -108,7 +120,11 @@ function compactEvent(snapshot: DailyTradeAnalyzerEventSnapshot) {
       candleTurnoverDecimal: snapshot.metrics.candleTurnoverDecimal,
       candleVolumeDecimal: snapshot.metrics.candleVolumeDecimal,
       relativeVolume: snapshot.indicators?.relativeVolume ?? null,
-      rsi14: snapshot.indicators?.rsi14 ?? null,
+      rsi14: acceptedRsi14(
+        snapshot.indicators?.rsi14,
+        rsi14CalculationVersion,
+      ),
+      rsi14CalculationVersion,
       ema9DistancePercent: snapshot.metrics.ema9Distance?.signedDistancePercent ?? null,
       vwapDistancePercent: snapshot.metrics.vwapDistance?.signedDistancePercent ?? null,
       executionEdgeDistanceDecimal: snapshot.metrics.executionEdgeDistanceDecimal,

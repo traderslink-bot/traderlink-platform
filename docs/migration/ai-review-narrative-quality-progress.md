@@ -94,6 +94,10 @@ four actually issued weekly reviews plus all 420 exact-month trades.
   changing opportunity mix, superseded focus baselines and repetitive shortlist
   alternatives, plus bulk one-minute/five-minute Analyzer context masking the
   longer-term signal, unverified RSI calculation and repeated-event weighting.
+- [x] Implement corrected Wilder RSI 14 calculation and version new saved RSI
+  evidence without rewriting legacy Analyzer snapshots.
+- [ ] Run the focused RSI reference-vector and compatibility checks at the next
+  permitted verification boundary.
 - [ ] Implement and calibrate the deterministic insight engine.
 - [ ] Run the true-month issuance and provider stability acceptance.
 
@@ -106,12 +110,16 @@ trade-mix and outlier sensitivity, and diversifies near-equivalent alternatives.
 Complete Analyzer evidence stays in the immutable local calculation source;
 OpenAI receives exact longer-term aggregates and no more than eight unique
 representative excerpts across the whole package or two for one candidate, not
-every raw one-minute/five-minute observation. The current v1/v2 RSI
-implementation is additionally gated out of ranking because the source audit
-found an incorrect no-loss result and no
-accepted Wilder reference-vector proof. RSI can influence a period conclusion
-only after a corrected immutable Analyzer contract passes the focused verifier
-and then shows a repeated comparable pattern.
+every raw one-minute/five-minute observation. Unversioned RSI is gated out of
+ranking because the source audit found an incorrect no-loss result and no
+accepted Wilder reference-vector proof. The corrected `wilder_rsi_14_v1`
+calculation is implemented and new evidence carries that exact version. RSI can
+influence a period conclusion only after its focused verification passes and it
+then shows a repeated comparable pattern.
+
+Help Center check: the active Daily Trade Tracker and Trade Analyzer guides
+describe indicators generally but do not state an RSI formula or legacy-value
+promise, so this correctness change does not require a guide update.
 
 Once the insight engine is active, TraderLink calculates and renders the
 complete review locally from all exact facts. If the full frozen selection
