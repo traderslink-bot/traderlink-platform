@@ -507,6 +507,17 @@ function laneEntries(
     }));
 }
 
+function eligiblePrimaryHeldBack(entry: CoachAiReviewShortlistEntry): boolean {
+  const candidate = entry.candidate;
+  if (candidate.family !== "named_rule_association") return true;
+  const cohortNet = availableMeasurement(candidate, "affected_cohort_net_pnl");
+  if (cohortNet === null) return true;
+  const adverseContribution = availableMeasurement(candidate, "adverse_net_contribution");
+  return new ExactDecimal(cohortNet.exactValue!).lte(0) ||
+    (adverseContribution !== null &&
+      new ExactDecimal(adverseContribution.exactValue!).gt(0));
+}
+
 function candidateClaims(
   entry: CoachAiReviewShortlistEntry,
   source: CoachAiReviewCalculationSource,
@@ -873,7 +884,8 @@ export function buildCoachAiReviewRenderedPlanCatalog(input: Readonly<{
         })]);
 
   const frictionEntries = friction
-    .filter((entry) => entry.requiredConsideration !== "supporting")
+    .filter((entry) => entry.requiredConsideration !== "supporting" &&
+      eligiblePrimaryHeldBack(entry))
     .slice(0, 4);
   const heldOptions = frictionEntries.length > 0
     ? Object.freeze(frictionEntries.map((entry) => Object.freeze({

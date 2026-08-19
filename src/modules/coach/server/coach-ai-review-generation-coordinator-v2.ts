@@ -39,6 +39,12 @@ import { CoachReviewDeliveryScheduleRepository } from
   "./coach-weekly-review-schedule-repository";
 import { CoachUsEquitiesCalendarRepository } from
   "./market-calendar/coach-us-equities-calendar-repository";
+import { CoachAiReviewAuthoredPersistenceRepository } from
+  "./coach-ai-review-authored-persistence-repository";
+import { CoachAiReviewAuthoredExecutionService } from
+  "./coach-ai-review-authored-execution-service";
+import { COACH_WEEKLY_AI_REVIEW_EVIDENCE_AUTHORING_MODEL } from
+  "./coach-weekly-ai-review-evidence-authoring";
 
 export type CoachAiReviewPaidAccessStateV2 = "available" | "not_connected";
 
@@ -140,7 +146,16 @@ export class CoachAiReviewGenerationCoordinatorV2 {
     const credentialReady = Boolean(process.env.OPENAI_API_KEY?.trim());
     const contract = new CoachAiReviewGenerationContractRepository(this.database).read();
     let insightConfigurationReady = true;
-    if (contract.activeGenerationContractVersion === "insight_selection_v3") {
+    const authoredOutputReady = new CoachAiReviewAuthoredPersistenceRepository(this.database)
+      .tablesAvailable();
+    if (authoredOutputReady) {
+      try {
+        insightConfigurationReady = this.#settings.read().modelId ===
+          COACH_WEEKLY_AI_REVIEW_EVIDENCE_AUTHORING_MODEL;
+      } catch {
+        insightConfigurationReady = false;
+      }
+    } else if (contract.activeGenerationContractVersion === "insight_selection_v3") {
       try {
         const configuration = loadJournalPrivacyHmacConfiguration();
         const settings = this.#settings.read();
@@ -242,6 +257,12 @@ export class CoachAiReviewGenerationCoordinatorV2 {
     work: PendingWork,
     now: Date,
   ): Promise<"issued" | "in_progress" | "retrying"> {
+    const authored = new CoachAiReviewAuthoredPersistenceRepository(this.database);
+    if (authored.tablesAvailable() &&
+        authored.readSnapshotOrNull(work.scope, work.request.requestId)) {
+      return new CoachAiReviewAuthoredExecutionService(this.database)
+        .issue(work.scope, work.request.requestId, now);
+    }
     const generationContractVersion = this.database.prepare<[
       string, string, string, string
     ], Readonly<{ generation_contract_version: string }>>(`SELECT

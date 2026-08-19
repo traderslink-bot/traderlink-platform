@@ -1,5 +1,13 @@
 # AI Review Insight Ranking Engine Plan
 
+> **Superseded product direction — 2026-08-19:** The owner rejected
+> deterministic review rendering and complete-plan selection after live-data
+> QA showed that useful findings could be calculated and then hidden before AI
+> saw them. This document remains the calculation, lineage, privacy and
+> historical implementation record only. New review authoring work is
+> controlled by
+> [AI Review Evidence Packet and AI Authoring Plan](ai-review-evidence-packet-and-authoring-plan.md).
+
 ## Status
 
 Design and twelve implementation-readiness QA passes are complete under the

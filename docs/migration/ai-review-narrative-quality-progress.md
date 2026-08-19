@@ -1,5 +1,11 @@
 # AI Review Narrative Quality Progress
 
+> **Current direction — 2026-08-19:** Deterministic complete-review rendering
+> and plan selection are superseded. OpenAI must always author the visible
+> review from a compact evidence packet. See
+> [AI Review Evidence Packet and AI Authoring Plan](ai-review-evidence-packet-and-authoring-plan.md)
+> and its linked progress record.
+
 ## Scope
 
 Owner-directed prompt correction for weekly, two-week and monthly AI Reviews.

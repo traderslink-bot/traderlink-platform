@@ -12,7 +12,7 @@ export const AI_REVIEWS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Turn your verified trading activity and saved reflections into focused feedback.",
         keywords: Object.freeze(["AI review", "feedback", "trade tracker", "weekly", "monthly"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "AI Reviews look back at a finished trading period and organize the available evidence into a readable review. The goal is to help you see what improved, what held you back and what to focus on next." }),
+          Object.freeze({ kind: "paragraph", text: "AI Reviews look back at a finished trading period and organize the available evidence into a readable review. The goal is to help you understand the period as a whole, see meaningful patterns and decide what deserves your attention." }),
           Object.freeze({ kind: "bullets", items: Object.freeze([
             "Weekly and two-week reviews focus on complete U.S. trading weeks.",
             "Monthly reviews focus on one exact calendar month.",
@@ -156,15 +156,14 @@ export const AI_REVIEWS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Use compact chart-based context without sending a raw chart history.",
         keywords: Object.freeze(["1 minute", "5 minute", "chart analysis", "green to red", "patterns", "vwap", "ema"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "When supported analysis is available, an AI Review can use compact findings from the 1-minute and 5-minute trade analysis. This can add context around entry and exit timing without replacing the exact execution record." }),
+          Object.freeze({ kind: "paragraph", text: "When supported analysis is available, an AI Review can use compact execution-path findings from the 1-minute and 5-minute trade analysis. This can add context around how a trade moved after entries, adds and exits without replacing the exact execution record." }),
           Object.freeze({ kind: "bullets", items: Object.freeze([
-            "Market activity such as relative volume, turnover and position around Session VWAP or EMA 9.",
-            "Supported candle patterns and whether confirmation was available at the time.",
             "Movement in favor of and against the position while the trade was open.",
             "Green-to-red behavior, recovery and available post-exit movement.",
-            "Entry, exit and combined-trade observations supported by the saved analysis.",
+            "Entry, add, partial-exit and final-exit timing supported by the saved analysis.",
+            "Exact execution-path observations that help explain a pattern in the completed trades.",
           ]) }),
-          Object.freeze({ kind: "callout", title: "Analysis describes recorded market behavior", text: "The AI Review does not receive an unlimited raw candle history and should not invent a chart pattern or price path that the Trade Tracker did not establish." }),
+          Object.freeze({ kind: "callout", title: "Analysis describes recorded market behavior", text: "The AI Review does not receive raw candle-pattern or indicator streams. It should not invent a chart pattern, indicator reading or price path that the Trade Tracker did not establish." }),
         ]),
       }),
       Object.freeze({
@@ -252,7 +251,7 @@ export const AI_REVIEWS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
             "Monthly only does not require weekly reviews to exist.",
             "A trade, tag or rule result outside the month cannot increase an in-month count.",
             "A saved note belongs to the date on which it was recorded for a Monthly only account.",
-            "Any useful weekly context is secondary and cannot change the month's trade totals, P/L, rule counts or tag counts.",
+            "The monthly review rebuilds the month directly from its dated Journal facts; weekly review writing does not change the month's trade totals, P/L, rule counts or tag counts.",
           ]) }),
         ]),
       }),
@@ -292,7 +291,7 @@ export const AI_REVIEWS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   Object.freeze({
     slug: "read-your-review",
     title: "Read and use your review",
-    description: "Understand each saved review section, its coverage note and how to use the next-period focuses.",
+    description: "Understand the saved review, its coverage note and how to use the patterns it identifies.",
     sections: Object.freeze([
       Object.freeze({
         id: "review-header",
@@ -307,30 +306,30 @@ export const AI_REVIEWS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       Object.freeze({
         id: "review-sections",
         title: "What each section means",
-        summary: "Move from the period summary to practical next steps.",
-        keywords: Object.freeze(["review summary", "what improved", "held you back", "focus follow-through", "next review"]),
+        summary: "Read the snapshot, recap and chronology before deciding what matters most.",
+        keywords: Object.freeze(["weekly recap", "monthly recap", "how the week unfolded", "insights", "coverage note"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "table", columns: Object.freeze(["Section", "How to read it"]), rows: Object.freeze([
-            Object.freeze(["Review summary", "The main evidence-backed story of the period."]),
-            Object.freeze(["What improved", "Behaviors or results that were stronger than the available comparison context."]),
-            Object.freeze(["What held you back", "Recorded patterns or decisions that reduced consistency or results."]),
-            Object.freeze(["Focus follow-through", "How the current evidence relates to a focus saved from an earlier review, when available."]),
-            Object.freeze(["Focus until your next review", "A short ordered list of practical review priorities for the next period."]),
+            Object.freeze(["Snapshot", "The exact period measurements, such as result, trade count, win rate or profit factor, that were calculated before the written review."]),
+            Object.freeze(["Weekly or monthly recap", "The main story of the completed period, written from the saved facts."]),
+            Object.freeze(["How the week or month unfolded", "A chronology that connects meaningful changes across the days or calendar weeks without treating every day as equally important."]),
+            Object.freeze(["Additional insights", "Optional observations included only when they add understanding beyond the recap and chronology."]),
             Object.freeze(["Coverage note", "What was missing, incomplete or too limited for a stronger conclusion."]),
           ]) }),
+          Object.freeze({ kind: "paragraph", text: "Earlier saved reviews keep the section layout that was in use when they were issued. Reopening any review shows the same saved result rather than a rewritten version." }),
         ]),
       }),
       Object.freeze({
         id: "use-focuses",
-        title: "Use the focus list",
-        summary: "Carry a small number of review priorities into the next period.",
-        keywords: Object.freeze(["focus list", "next period", "improve", "follow through"]),
+        title: "Use a useful finding",
+        summary: "Turn the most relevant pattern into something you can observe next period.",
+        keywords: Object.freeze(["insight", "next period", "improve", "follow through"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "steps", items: Object.freeze([
-            Object.freeze({ title: "1. Choose the most relevant focus", text: "Start with the item most clearly supported by your own trading evidence." }),
-            Object.freeze({ title: "2. Connect it to your process", text: "Use a Trading Rule, tag or note prompt when that makes the focus easier to observe." }),
+            Object.freeze({ title: "1. Choose the most relevant finding", text: "Start with the pattern most clearly supported by your own trading evidence." }),
+            Object.freeze({ title: "2. Connect it to your process", text: "Use a Trading Rule, tag or note prompt when that makes the pattern easier to observe." }),
             Object.freeze({ title: "3. Record what happened", text: "Save the relevant result in Trade Tracker. Missing tracking cannot become proof later." }),
-            Object.freeze({ title: "4. Compare the next review", text: "Read Focus follow-through to see whether the new period supplied useful evidence." }),
+            Object.freeze({ title: "4. Compare the next review", text: "Use the next recap and chronology to see whether the later period provides a meaningful comparison." }),
           ]) }),
         ]),
       }),

@@ -153,8 +153,14 @@ export function buildCoachMonthlyAiReviewSnapshotV2(
 ): CoachMonthlyAiReviewSnapshotV2 {
   const calendar = request.calendar ?? new CoachUsEquitiesReviewCalendarService();
   const weeklySnapshots: CoachPeriodicAiReviewSnapshotV2[] = [];
+  const verifiedCoverageStartDate = calendar.metadataForRange(
+    request.period.coverageStartDate,
+    request.period.coverageEndDate,
+  ).coverageStartDate;
+  let firstMonday = mondayOfWeek(request.period.coverageStartDate);
+  if (firstMonday < verifiedCoverageStartDate) firstMonday = shiftIsoDate(firstMonday, 7);
   for (
-    let monday = mondayOfWeek(request.period.coverageStartDate);
+    let monday = firstMonday;
     monday <= request.period.coverageEndDate;
     monday = shiftIsoDate(monday, 7)
   ) {

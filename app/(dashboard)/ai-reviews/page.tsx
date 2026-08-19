@@ -2,6 +2,7 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
+import LinearProgress from "@mui/material/LinearProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import type { Metadata } from "next";
@@ -37,6 +38,8 @@ import {
   CoachAiReviewGenerationCoordinatorV2,
   type CoachAiReviewGenerationGateV2,
 } from "@/src/modules/coach/server/coach-ai-review-generation-coordinator-v2";
+import { CoachAiReviewProviderControlsRepository } from
+  "@/src/modules/coach/server/coach-ai-review-provider-controls-repository";
 import { formatCoachAiMoneyForDisplay } from "@/src/modules/coach/presentation/coach-ai-money-formatters";
 import { CoachUsEquitiesCalendarRepository } from "@/src/modules/coach/server/market-calendar/coach-us-equities-calendar-repository";
 import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -47,6 +50,10 @@ import {
 } from "./trade-tracker-review-coverage";
 import { AiReviewRequestButton } from "./ai-review-request-button";
 import { LocalReviewTime } from "./local-review-time";
+import {
+  CoachAiReviewAuthoredPersistenceRepository,
+  type CoachAiReviewAuthoredIssuedRecord,
+} from "@/src/modules/coach/server/coach-ai-review-authored-persistence-repository";
 
 export const metadata: Metadata = {
   title: "AI Reviews | TraderLink Platform",
@@ -108,6 +115,37 @@ function currentReviewTitle(review: CoachAiIssuedReviewPresentationRecord): stri
   if (review.reviewKind === "monthly") return formatMonth(review.periodStartDate);
   const cadence = review.reviewKind === "two_week" ? "Two-week review" : "Trading-week review";
   return `${cadence}: ${formatDate(review.periodStartDate)} to ${formatDate(review.periodEndDate)}`;
+}
+
+function authoredReviewTitle(review: CoachAiReviewAuthoredIssuedRecord): string {
+  if (review.reviewKind === "monthly") return formatMonth(review.periodStartDate);
+  const cadence = review.reviewKind === "two_week" ? "Two-week review" : "Trading-week review";
+  return `${cadence}: ${formatDate(review.periodStartDate)} to ${formatDate(review.periodEndDate)}`;
+}
+
+function authoredReviewSummary(review: CoachAiReviewAuthoredIssuedRecord): string {
+  return review.output.contractVersion ===
+    "traderlink_coach_monthly_ai_review_authored_output_v1"
+    ? review.output.monthlyRecap
+    : review.output.weeklyRecap;
+}
+
+function AiReviewUsageProgress({ percentageUsed }: { percentageUsed: number | null }) {
+  if (percentageUsed === null) return null;
+  return (
+    <Stack spacing={0.5} sx={{ maxWidth: 360, mt: 1.5 }}>
+      <Stack direction="row" sx={{ justifyContent: "space-between" }}>
+        <Typography color="text.secondary" variant="body2">AI Review usage</Typography>
+        <Typography sx={{ fontWeight: 800 }} variant="body2">{percentageUsed}% used</Typography>
+      </Stack>
+      <LinearProgress
+        aria-label={`AI Review usage: ${percentageUsed}% used`}
+        sx={{ borderRadius: 99, height: 8 }}
+        value={percentageUsed}
+        variant="determinate"
+      />
+    </Stack>
+  );
 }
 
 function legacyWeekTitle(review: CoachWeeklyIssuedReviewRecord): string {
@@ -558,9 +596,12 @@ export default async function AiReviewsPage() {
     reviews,
     settings,
     currentReviews,
+    authoredReviews,
+    reviewUsage,
   } = withReadonlyPlatformDatabase({}, (database) => {
     const repository = new CoachAiReviewRepository(database);
     const currentRepository = new CoachAiReviewGenerationCompatibilityRepository(database);
+    const authoredRepository = new CoachAiReviewAuthoredPersistenceRepository(database);
     const scheduleRepository = new CoachReviewDeliveryScheduleRepository(database);
     const calendar = new CoachUsEquitiesCalendarRepository(database).calendar();
     return Object.freeze({
@@ -568,8 +609,13 @@ export default async function AiReviewsPage() {
       monthlyReviews: repository.listIssuedMonthlyReviews(scope),
       settings: scheduleRepository.readV2(scope),
       currentReviews: currentRepository.listIssuedReviewOutputs(scope),
+      authoredReviews: authoredRepository.tablesAvailable()
+        ? authoredRepository.listIssued(scope)
+        : Object.freeze([]),
       availability: new CoachAiReviewAvailabilityService(database).read(scope, now),
       generationGate: new CoachAiReviewGenerationCoordinatorV2(database).readGate(scope),
+      reviewUsage: new CoachAiReviewProviderControlsRepository(database)
+        .readSubscriberUsage(scope, now),
       marketMonday: calendar.cohortForDate(calendar.marketDateAt(now)).mondayDate,
     });
   });
@@ -580,13 +626,16 @@ export default async function AiReviewsPage() {
     review.reviewKind !== "monthly");
   const monthlyCurrent = currentReviews.filter((review) =>
     review.reviewKind === "monthly");
+  const periodicAuthored = authoredReviews.filter((review) => review.reviewKind !== "monthly");
+  const monthlyAuthored = authoredReviews.filter((review) => review.reviewKind === "monthly");
 
   return (
     <DashboardPage>
       <Box>
         <Typography component="h1" variant="h1">AI Reviews</Typography>
+        <AiReviewUsageProgress percentageUsed={reviewUsage?.percentageUsed ?? null} />
         <Typography color="text.secondary" sx={{ maxWidth: 760, mt: 1 }} variant="body2">
-          Turn verified trading results and anything you choose to save in Trade Tracker into a clear view of what improved, what held you back and what to focus on next.
+          Turn verified trading results and anything you choose to save in Trade Tracker into a clear review of your week or month.
         </Typography>
         {identity.mode === "local_development" || identity.discord?.guildOwner ? (
           <Button
@@ -634,7 +683,7 @@ export default async function AiReviewsPage() {
       ) : null}
 
       <DashboardPanel title="Weekly and two-week reviews">
-        {periodicCurrent.length === 0 && reviews.length === 0 ? (
+        {periodicAuthored.length === 0 && periodicCurrent.length === 0 && reviews.length === 0 ? (
           <Stack spacing={0.75}>
             <Typography sx={{ fontWeight: 800 }}>No weekly reviews yet</Typography>
             <Typography color="text.secondary" variant="body2">
@@ -643,6 +692,14 @@ export default async function AiReviewsPage() {
           </Stack>
         ) : (
           <Stack spacing={1.25}>
+            {periodicAuthored.map((review) => (
+              <ReviewCard
+                href={`/ai-reviews/weekly/${review.issuedReviewId}`}
+                key={review.issuedReviewId}
+                summary={authoredReviewSummary(review)}
+                title={authoredReviewTitle(review)}
+              />
+            ))}
             {periodicCurrent.map((review) => (
               <ReviewCard
                 href={`/ai-reviews/weekly/${review.issuedReviewId}`}
@@ -664,7 +721,7 @@ export default async function AiReviewsPage() {
       </DashboardPanel>
 
       <DashboardPanel title="Monthly reviews">
-        {monthlyCurrent.length === 0 && monthlyReviews.length === 0 ? (
+        {monthlyAuthored.length === 0 && monthlyCurrent.length === 0 && monthlyReviews.length === 0 ? (
           <Stack spacing={0.75}>
             <Typography sx={{ fontWeight: 800 }}>No monthly reviews yet</Typography>
             <Typography color="text.secondary" variant="body2">
@@ -673,6 +730,14 @@ export default async function AiReviewsPage() {
           </Stack>
         ) : (
           <Stack spacing={1.25}>
+            {monthlyAuthored.map((review) => (
+              <ReviewCard
+                href={`/ai-reviews/monthly/${review.issuedReviewId}`}
+                key={review.issuedReviewId}
+                summary={authoredReviewSummary(review)}
+                title={authoredReviewTitle(review)}
+              />
+            ))}
             {monthlyCurrent.map((review) => (
               <ReviewCard
                 href={`/ai-reviews/monthly/${review.issuedReviewId}`}

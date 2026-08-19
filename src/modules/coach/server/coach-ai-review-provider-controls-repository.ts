@@ -26,6 +26,10 @@ import {
 } from "./coach-ai-review-model-limits";
 
 const ExactDecimal = Decimal.clone({ precision: 80, toExpNeg: -1000, toExpPos: 1000 });
+// A monthly review can require a staged authoring run, so weekly reviews only
+// draw from the remaining 40% of a subscriber's cycle allowance. The monthly
+// review may still use any unused weekly capacity when it is generated.
+const PROTECTED_MONTH_END_ALLOWANCE_SHARE = new ExactDecimal("0.60");
 const REVIEW_FEATURES = Object.freeze({
   weekly: "weekly_reviews",
   two_week: "weekly_reviews",
@@ -35,6 +39,10 @@ const MAX_OUTPUT_TOKENS = 16_384;
 const FAILURE_CODE_PATTERN = /^[A-Z][A-Z0-9_]{0,95}$/u;
 
 export type CoachAiReviewKind = keyof typeof REVIEW_FEATURES;
+
+export type CoachAiReviewSubscriberUsage = Readonly<{
+  percentageUsed: number;
+}>;
 
 export type CoachAiReviewGenerationControlReservation = Readonly<{
   reservationId: string;
@@ -257,6 +265,23 @@ FROM coach_ai_provider_settings WHERE settings_key = 'coach_reviews'`).get();
     });
   }
 
+  /** A trader-facing percentage only; spend and allowance values stay private. */
+  readSubscriberUsage(
+    scope: WorkspaceAccessScope,
+    now = new Date(),
+  ): CoachAiReviewSubscriberUsage | null {
+    this.accountId(scope);
+    const policy = this.budgetPolicy();
+    if (!policy) return null;
+    const allowance = new ExactDecimal(policy.per_subscriber_paid_cycle_estimated_spend_cap_usd);
+    if (!allowance.gt(0)) return null;
+    const spend = this.subscriberSpend(scope.userId, this.subscriberBudgetWindow(scope.userId, now));
+    if (spend === null) return null;
+    const percentageUsed = spend.dividedBy(allowance).times(100)
+      .toDecimalPlaces(0, ExactDecimal.ROUND_HALF_UP).toNumber();
+    return Object.freeze({ percentageUsed: Math.max(0, Math.min(100, percentageUsed)) });
+  }
+
   reserveReviewGeneration(
     scope: WorkspaceAccessScope,
     input: Readonly<{
@@ -385,6 +410,8 @@ FROM coach_ai_provider_settings WHERE settings_key = 'coach_reviews'`).get();
         ? null : this.subscriberBudgetWindow(scope.userId, now);
       const subscriberSpend = subscriberWindow === null
         ? null : this.subscriberSpend(scope.userId, subscriberWindow);
+      const weeklySpend = subscriberWindow === null
+        ? null : this.subscriberSpend(scope.userId, subscriberWindow, "weekly_reviews");
       const emergencyRollingSpend = budgetPolicy?.emergency_trailing_30_day_estimated_spend_cap_usd
         ? this.rollingSpend(now)
         : new ExactDecimal(0);
@@ -393,6 +420,7 @@ FROM coach_ai_provider_settings WHERE settings_key = 'coach_reviews'`).get();
       const controls = accountControl === null ? [platformControl] : [platformControl, accountControl];
       const available = completePricing && controls.every(hasCompleteCaps) &&
         budgetPolicy !== null && subscriberSpend !== null &&
+        weeklySpend !== null &&
         emergencyRollingSpend !== null;
       const maximumTotalTokens = maximumInputTokens + maxOutputTokens;
       const maximumCostUsd = inputCost !== null && cacheWriteInputCost !== null &&
@@ -424,14 +452,22 @@ FROM coach_ai_provider_settings WHERE settings_key = 'coach_reviews'`).get();
         const subscriberCapReached = subscriberSpend!
           .plus(maximumCostUsd!)
           .gt(budgetPolicy!.per_subscriber_paid_cycle_estimated_spend_cap_usd);
+        const weeklyAllowance = new ExactDecimal(
+          budgetPolicy!.per_subscriber_paid_cycle_estimated_spend_cap_usd,
+        ).times(new ExactDecimal(1).minus(PROTECTED_MONTH_END_ALLOWANCE_SHARE));
+        const monthEndAllowanceProtected = featureKey === "weekly_reviews" &&
+          weeklySpend!.plus(maximumCostUsd!).gt(weeklyAllowance);
         const emergencyCap = budgetPolicy!
           .emergency_trailing_30_day_estimated_spend_cap_usd;
         const emergencyCapReached = emergencyCap !== null &&
           emergencyRollingSpend!.plus(maximumCostUsd!).gt(emergencyCap);
-        blocked = dailyCapReached || subscriberCapReached || emergencyCapReached;
+        blocked = dailyCapReached || monthEndAllowanceProtected || subscriberCapReached ||
+          emergencyCapReached;
         blockFailureCode = dailyCapReached
           ? "TRADERLINK_COACH_REVIEW_DAILY_CAP_REACHED"
-          : subscriberCapReached
+          : monthEndAllowanceProtected
+            ? "TRADERLINK_COACH_REVIEW_MONTH_END_ALLOWANCE_PROTECTED"
+            : subscriberCapReached
             ? "TRADERLINK_COACH_REVIEW_SUBSCRIBER_CYCLE_CAP_REACHED"
             : emergencyCapReached
               ? "TRADERLINK_COACH_REVIEW_EMERGENCY_GLOBAL_CAP_REACHED"
@@ -735,13 +771,18 @@ FROM coach_ai_review_budget_controls WHERE control_key = 'ai_reviews'`).get();
     });
   }
 
-  private subscriberSpend(userId: string, window: SubscriberBudgetWindow): Decimal | null {
+  private subscriberSpend(
+    userId: string,
+    window: SubscriberBudgetWindow,
+    featureKey: "weekly_reviews" | null = null,
+  ): Decimal | null {
     const values = [this.spendForTable(
       "coach_ai_review_generation_control_reservations",
       "coach_ai_review_generation_attempt_receipts",
       window.startUtc,
       window.endUtc,
       userId,
+      featureKey,
     )];
     const hasV2 = this.database.prepare<[], Readonly<{ present: number }>>(`SELECT 1 AS present
 FROM sqlite_master
@@ -752,6 +793,7 @@ WHERE type = 'table' AND name = 'coach_ai_review_generation_control_reservations
       window.startUtc,
       window.endUtc,
       userId,
+      featureKey,
     ));
     let total: Decimal = new ExactDecimal(0);
     for (const value of values) {
@@ -798,8 +840,12 @@ WHERE type = 'table' AND name = 'coach_ai_review_generation_control_reservations
     sinceUtc: string,
     untilUtc: string,
     userId: string | null,
+    featureKey: "weekly_reviews" | null = null,
   ): Decimal | null {
     const userClause = userId === null ? "" : " AND reservation.user_id = ?";
+    const featureClause = featureKey === null
+      ? "reservation.feature_key IN ('weekly_reviews', 'monthly_reviews')"
+      : "reservation.feature_key = 'weekly_reviews'";
     const statement = this.database.prepare<[string, string, string?], RollingSpendRow>(`SELECT
   reservation.state, reservation.reserved_maximum_cost_usd,
   receipt.estimated_cost_usd
@@ -807,7 +853,7 @@ FROM ${reservationTable} reservation
 LEFT JOIN ${receiptTable} receipt
   ON receipt.coach_ai_review_generation_attempt_id =
     reservation.coach_ai_review_generation_attempt_id
-WHERE reservation.feature_key IN ('weekly_reviews', 'monthly_reviews')
+WHERE ${featureClause}
   AND (
     reservation.state IN ('reserved', 'started')
     OR (

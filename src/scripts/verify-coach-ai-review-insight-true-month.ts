@@ -105,7 +105,12 @@ const LIVE_CONFIRMATION = "--confirm-disposable-insight-true-month-provider-call
 const STRESS_CAPTURED_CONFIRMATION = "--confirm-disposable-insight-true-month-420";
 const STRESS_LIVE_CONFIRMATION =
   "--confirm-disposable-insight-true-month-420-provider-call";
+const CHALLENGING_CAPTURED_CONFIRMATION =
+  "--confirm-disposable-insight-challenging-month";
+const CHALLENGING_LIVE_CONFIRMATION =
+  "--confirm-disposable-insight-challenging-month-provider-call";
 const MODEL_ID = "gpt-5.6-luna";
+const MODEL_REASONING_EFFORT = "none";
 const MONTH_START = "2026-07-01";
 const MONTH_END = "2026-07-31";
 const FIXTURE_KEY_VERSION = "true_month_fixture_v1";
@@ -151,6 +156,7 @@ const TRADING_DATES = Object.freeze([
 ]);
 
 type FixtureTrade = Readonly<{
+  challenging: boolean;
   globalIndex: number;
   weekIndex: number;
   weekTradeIndex: number;
@@ -158,6 +164,8 @@ type FixtureTrade = Readonly<{
   symbol: string;
   brokeExitRule: boolean;
   lateEntry: boolean;
+  greenToRed: boolean;
+  strongEntry: boolean;
   pnlDecimal: string;
 }>;
 
@@ -477,20 +485,83 @@ function createRules(
   });
 }
 
-function countsForWeek(weekIndex: number, stress: boolean): readonly number[] {
+function countsForWeek(
+  weekIndex: number,
+  stress: boolean,
+  challenging: boolean,
+): readonly number[] {
   const fixture = WEEK_FIXTURES[weekIndex];
   if (!fixture) fail("week_count_fixture_missing");
+  if (challenging) return Object.freeze([6, 6, 6, 6, 6]);
   return stress ? Object.freeze([21, 21, 21, 21, 21]) : fixture.counts;
 }
 
-function weekTrades(weekIndex: number, stress: boolean): readonly FixtureTrade[] {
+function challengingProfile(
+  weekIndex: number,
+  weekTradeIndex: number,
+): Readonly<{
+  brokeExitRule: boolean;
+  lateEntry: boolean;
+  greenToRed: boolean;
+  strongEntry: boolean;
+  pnlDecimal: string;
+}> {
+  const exitBreaks = [
+    new Set([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22]),
+    new Set([0, 3, 6, 9, 12, 15, 18, 21]),
+    new Set([1, 7, 13, 19, 25]),
+    new Set([0, 3, 6, 9, 12, 15, 18, 21, 24]),
+  ];
+  const lateEntries = [
+    new Set([1, 7, 13, 19, 25]),
+    new Set([2, 5, 8, 11, 14, 17, 20, 23]),
+    new Set([0, 2, 5, 8, 11, 14, 17, 20, 23, 26, 29]),
+    new Set([1, 4, 7, 10, 13, 16, 19, 22, 25, 26, 27, 28]),
+  ];
+  const greenToRedTrades = [
+    new Set([4, 10, 16, 22]),
+    new Set([3, 12, 21]),
+    new Set([7, 19]),
+    new Set([6, 15, 24]),
+  ];
+  const brokeExitRule = exitBreaks[weekIndex]?.has(weekTradeIndex) ?? false;
+  const lateEntry = lateEntries[weekIndex]?.has(weekTradeIndex) ?? false;
+  const greenToRed = greenToRedTrades[weekIndex]?.has(weekTradeIndex) ?? false;
+  const strongEntry = !lateEntry && !brokeExitRule && weekTradeIndex % 3 === 1;
+  let pnlDecimal: string;
+  if (weekIndex === 1 && weekTradeIndex === 29) pnlDecimal = "-720";
+  else if (weekIndex === 3 && weekTradeIndex === 29) pnlDecimal = "880";
+  else if (greenToRed) pnlDecimal = String(-110 - ((weekTradeIndex % 4) * 25));
+  else if (brokeExitRule && lateEntry) pnlDecimal = weekTradeIndex % 2 === 0 ? "-125" : "95";
+  else if (brokeExitRule) pnlDecimal = weekTradeIndex % 6 === 0 ? "135" : "-80";
+  else if (lateEntry) pnlDecimal = weekTradeIndex % 4 === 0 ? "110" : "-55";
+  else if (strongEntry) pnlDecimal = String(70 + ((weekTradeIndex % 5) * 15));
+  else pnlDecimal = weekTradeIndex % 5 === 0 ? "-40" : "45";
+  return Object.freeze({
+    brokeExitRule,
+    lateEntry,
+    greenToRed,
+    strongEntry,
+    pnlDecimal,
+  });
+}
+
+function weekTrades(
+  weekIndex: number,
+  stress: boolean,
+  challenging: boolean,
+): readonly FixtureTrade[] {
   const fixture = WEEK_FIXTURES[weekIndex];
   const dates = TRADING_DATES[weekIndex];
   if (!fixture || !dates) fail("week_fixture_missing");
   const priorCount = WEEK_FIXTURES.slice(0, weekIndex)
-    .reduce((sum, _week, priorWeekIndex) => sum + countsForWeek(priorWeekIndex, stress)
+    .reduce((sum, _week, priorWeekIndex) => sum + countsForWeek(
+      priorWeekIndex,
+      stress,
+      challenging,
+    )
       .reduce((total, count) => total + count, 0), 0);
-  const counts = countsForWeek(weekIndex, stress);
+  const counts = countsForWeek(weekIndex, stress, challenging);
   const trades: FixtureTrade[] = [];
   let weekTradeIndex = 0;
   for (let dayIndex = 0; dayIndex < dates.length; dayIndex += 1) {
@@ -499,24 +570,36 @@ function weekTrades(weekIndex: number, stress: boolean): readonly FixtureTrade[]
     if (!tradingDate || count === undefined) fail("week_day_fixture_missing");
     for (let dayTradeIndex = 0; dayTradeIndex < count; dayTradeIndex += 1) {
       const globalIndex = priorCount + weekTradeIndex;
-      const brokeExitRule = weekIndex === 0
+      const baselineBrokeExitRule = weekIndex === 0
         ? weekTradeIndex % 2 === 0
         : weekIndex === 1
           ? weekTradeIndex % 3 === 0
           : weekIndex === 2
             ? weekTradeIndex % 5 === 0
             : weekTradeIndex % 6 === 0;
+      const profile = challenging
+        ? challengingProfile(weekIndex, weekTradeIndex)
+        : Object.freeze({
+            brokeExitRule: baselineBrokeExitRule,
+            lateEntry: globalIndex % 7 === 0,
+            greenToRed: baselineBrokeExitRule,
+            strongEntry: !baselineBrokeExitRule,
+            pnlDecimal: baselineBrokeExitRule ? "-62" : "38",
+          });
       trades.push(Object.freeze({
+        challenging,
         globalIndex,
         weekIndex,
         weekTradeIndex,
         tradingDate,
-        symbol: `TM${String(globalIndex + 1).padStart(3, "0")}`,
-        brokeExitRule,
-        lateEntry: globalIndex % 7 === 0,
+        symbol: `${challenging ? "CM" : "TM"}${String(globalIndex + 1).padStart(3, "0")}`,
+        brokeExitRule: profile.brokeExitRule,
+        lateEntry: profile.lateEntry,
+        greenToRed: profile.greenToRed,
+        strongEntry: profile.strongEntry,
         // Both executions carry a reported USD 1 fee, so these values match
         // the exact net result materialized by the Journal round trip.
-        pnlDecimal: brokeExitRule ? "-62" : "38",
+        pnlDecimal: profile.pnlDecimal,
       }));
       weekTradeIndex += 1;
     }
@@ -524,12 +607,41 @@ function weekTrades(weekIndex: number, stress: boolean): readonly FixtureTrade[]
   return Object.freeze(trades);
 }
 
-function reflectionForWeek(weekIndex: number): Readonly<{
+function reflectionForWeek(weekIndex: number, challenging: boolean): Readonly<{
   whatWorked: string;
   whatNeedsWork: string;
   technicalRecap: string;
   focus: string;
 }> {
+  if (challenging) {
+    const challengingReflections = [
+      Object.freeze({
+        whatWorked: "Patient pullback entries produced several clean winners even when the day was busy.",
+        whatNeedsWork: "Some planned-risk breaks were profitable, but the green-to-red failures erased more than those exceptions added.",
+        technicalRecap: "Entry quality and final outcomes were mixed; the worst reversals were not the same set as every rule break.",
+        focus: "Separate profitable rule exceptions from the green-to-red trades that actually damaged the week.",
+      }),
+      Object.freeze({
+        whatWorked: "Planned-risk compliance improved and fewer favorable trades crossed below breakeven.",
+        whatNeedsWork: "Late entries increased, while one large rule-followed loss made the weekly total look worse than the recurring mistakes alone.",
+        technicalRecap: "The stop process improved, but entry timing and one isolated loser competed as explanations for the result.",
+        focus: "Track whether late entries keep underperforming without treating the isolated large loss as a repeated behavior.",
+      }),
+      Object.freeze({
+        whatWorked: "The strongest entries had much more favorable than adverse movement and planned exits were usually respected.",
+        whatNeedsWork: "Late-entry frequency kept rising even though several late entries still finished profitable.",
+        technicalRecap: "Good exit discipline and strong entry examples coexisted with worsening entry patience, so outcome alone did not settle the process question.",
+        focus: "Measure late-entry results separately from the clean-entry cohort and keep the improved exit discipline.",
+      }),
+      Object.freeze({
+        whatWorked: "A large clean winner and several controlled trades kept the month profitable.",
+        whatNeedsWork: "Planned-risk breaks and green-to-red losses both returned, but they overlapped only partly and should not be counted as two separate causes.",
+        technicalRecap: "The latest week weakened an earlier exit improvement while the large winner concentrated part of the monthly gain.",
+        focus: "Determine whether the exit relapse or the growing late-entry pattern has the larger repeatable financial effect next month.",
+      }),
+    ] as const;
+    return challengingReflections[weekIndex] ?? fail("challenging_reflection_fixture_missing");
+  }
   const reflections = [
     Object.freeze({
       whatWorked: "My first-pullback entries with strong volume were usually profitable.",
@@ -564,7 +676,9 @@ function manualEntries(trades: readonly FixtureTrade[]): readonly JournalManualT
     const entryDate = trade.tradingDate;
     const entryMinute = 35 + (index % 10);
     const exitMinute = 5 + (index % 10);
-    const exitPrice = trade.brokeExitRule ? "9.4" : "10.4";
+    const exitPrice = (10 + ((Number(trade.pnlDecimal) + 2) / 100)).toFixed(2)
+      .replace(/\.0+$/u, "")
+      .replace(/(\.\d*[1-9])0+$/u, "$1");
     return [
       Object.freeze({
         clientRowRef: `true-month-${trade.globalIndex + 1}-entry`,
@@ -612,7 +726,9 @@ function analyzerResult(
     minutesAfterEvent: minutes as 5 | 15 | 30 | 60,
     observedAtCandleTime: exitSeconds + minutes * 60,
     oppositeDirectionMoveDecimal: "0.05",
-    tradeDirectionMoveDecimal: trade.brokeExitRule ? "0.20" : "0.10",
+    tradeDirectionMoveDecimal: trade.challenging
+      ? trade.greenToRed ? "0.30" : "0.10"
+      : trade.brokeExitRule ? "0.20" : "0.10",
   })));
   const eventSnapshots = Object.freeze(target.events.map((event) => {
     const eventSeconds = Math.floor(Date.parse(event.executedAtUtc) / 1_000);
@@ -668,16 +784,24 @@ function analyzerResult(
         ema9Distance: referenceDistance("9.95", isEntry ? "0.05" : "-0.05", isEntry ? 0.5 : -0.5),
         executionEdgeDistanceDecimal: isEntry ? "0.03" : "0.08",
         excursionUntilFlat: isEntry ? Object.freeze({
-          adverseMoveDecimal: trade.brokeExitRule ? "0.60" : "0.15",
-          favorableMoveDecimal: trade.brokeExitRule ? "0.80" : "0.50",
+          adverseMoveDecimal: trade.challenging
+            ? trade.greenToRed ? "0.95" : trade.strongEntry ? "0.18" : "0.42"
+            : trade.brokeExitRule ? "0.60" : "0.15",
+          favorableMoveDecimal: trade.challenging
+            ? trade.greenToRed ? "1.20" : trade.strongEntry ? "0.85" : "0.55"
+            : trade.brokeExitRule ? "0.80" : "0.50",
           minutesUntilFlat: Math.max(1, Math.round((exitSeconds - entrySeconds) / 60)),
           observedThroughCandleTime: exitSeconds,
         }) : null,
         positionQuantityAfterDecimal: isEntry ? "100" : "0",
         positionQuantityBeforeDecimal: isEntry ? "0" : "100",
         postEventPaths: paths,
-        priorFavorableExtremePriceDecimal: isEntry ? null : trade.brokeExitRule ? "10.80" : "10.50",
-        givebackFromPriorFavorableExtremeDecimal: isEntry ? null : trade.brokeExitRule ? "1.40" : "0.10",
+        priorFavorableExtremePriceDecimal: isEntry ? null : trade.challenging
+          ? trade.greenToRed ? "11.20" : "10.55"
+          : trade.brokeExitRule ? "10.80" : "10.50",
+        givebackFromPriorFavorableExtremeDecimal: isEntry ? null : trade.challenging
+          ? trade.greenToRed ? "1.35" : "0.10"
+          : trade.brokeExitRule ? "1.40" : "0.10",
         vwapDistance: referenceDistance("9.90", isEntry ? "0.10" : "-0.10", isEntry ? 1.01 : -1.01),
       }),
       patterns: Object.freeze([
@@ -703,7 +827,23 @@ function analyzerResult(
     });
   }));
   const peakSeconds = entrySeconds + 120;
-  const firstRedSeconds = trade.brokeExitRule ? entrySeconds + 240 : null;
+  const firstRedSeconds = trade.greenToRed ? entrySeconds + 240 : null;
+  const finishedPositive = Number(trade.pnlDecimal) > 0;
+  const status = trade.challenging
+    ? trade.greenToRed
+      ? "green_to_red_ended_red" as const
+      : finishedPositive ? "green_no_red" as const : "never_green" as const
+    : trade.brokeExitRule ? "green_to_red_ended_red" as const : "green_no_red" as const;
+  const peakPnlDecimal = trade.challenging
+    ? trade.greenToRed
+      ? "120"
+      : finishedPositive ? String(Math.max(50, Number(trade.pnlDecimal) + 25)) : null
+    : trade.brokeExitRule ? "80" : "50";
+  const peakToFinalReversalDecimal = trade.challenging
+    ? peakPnlDecimal === null
+      ? null
+      : String(Math.max(0, Number(peakPnlDecimal) - Number(trade.pnlDecimal)))
+    : trade.brokeExitRule ? "140" : "10";
   return Object.freeze({
     eventSnapshots,
     finalExitPaths: Object.freeze([5, 15, 30, 60].map((minutes) => Object.freeze({
@@ -713,37 +853,39 @@ function analyzerResult(
     }))),
     greenToRed: Object.freeze({
       addedAfterPeakCount: 0,
-      bestProfitOpportunityIndex: trade.brokeExitRule ? 0 : null,
-      completedClosePeakAtUtcSeconds: peakSeconds,
-      completedClosePeakPnlDecimal: trade.brokeExitRule ? "80" : "50",
+      bestProfitOpportunityIndex: trade.greenToRed ? 0 : null,
+      completedClosePeakAtUtcSeconds: peakPnlDecimal === null ? null : peakSeconds,
+      completedClosePeakPnlDecimal: peakPnlDecimal,
       feesComplete: true,
       finalPnlDecimal: trade.pnlDecimal,
-      firstGreenAtUtcSeconds: entrySeconds + 60,
+      firstGreenAtUtcSeconds: peakPnlDecimal === null ? null : entrySeconds + 60,
       firstRedAtUtcSeconds: firstRedSeconds,
-      firstRedPnlDecimal: trade.brokeExitRule ? "-5" : null,
+      firstRedPnlDecimal: trade.greenToRed ? "-5" : null,
       firstRecoveryAtUtcSeconds: null,
-      minutesFromPeakToRed: trade.brokeExitRule ? 2 : null,
+      minutesFromPeakToRed: trade.greenToRed ? 2 : null,
       partialExitBeforeRedCount: 0,
-      peakAtUtcSeconds: peakSeconds,
-      peakPnlDecimal: trade.brokeExitRule ? "80" : "50",
-      peakToFinalReversalDecimal: trade.brokeExitRule ? "140" : "10",
-      peakToRedReversalDecimal: trade.brokeExitRule ? "85" : null,
-      positionQuantityAtPeakDecimal: "100",
-      positionQuantityAtRedDecimal: trade.brokeExitRule ? "100" : null,
-      profitOpportunities: trade.brokeExitRule ? Object.freeze([Object.freeze({
+      peakAtUtcSeconds: peakPnlDecimal === null ? null : peakSeconds,
+      peakPnlDecimal,
+      peakToFinalReversalDecimal,
+      peakToRedReversalDecimal: trade.greenToRed
+        ? trade.challenging ? "125" : "85"
+        : null,
+      positionQuantityAtPeakDecimal: peakPnlDecimal === null ? null : "100",
+      positionQuantityAtRedDecimal: trade.greenToRed ? "100" : null,
+      profitOpportunities: trade.greenToRed ? Object.freeze([Object.freeze({
         closesAtOrAboveStrongThresholdCount: 2,
         completedCloseCount: 3,
         durationMinutes: 3,
         endedAtUtcSeconds: firstRedSeconds!,
         lowestPnlDecimal: "25",
         peakAtUtcSeconds: peakSeconds,
-        peakPnlDecimal: "80",
-        peakToFinalReversalDecimal: "140",
+        peakPnlDecimal: trade.challenging ? "120" : "80",
+        peakToFinalReversalDecimal: peakToFinalReversalDecimal!,
         startedAtUtcSeconds: entrySeconds + 60,
       })]) : Object.freeze([]),
-      profitOpportunityThresholdDecimal: "20",
-      status: trade.brokeExitRule ? "green_to_red_ended_red" as const : "green_no_red" as const,
-      strongOpportunityThresholdDecimal: "50",
+      profitOpportunityThresholdDecimal: peakPnlDecimal === null ? null : "20",
+      status,
+      strongOpportunityThresholdDecimal: peakPnlDecimal === null ? null : "50",
     }),
   });
 }
@@ -755,12 +897,13 @@ function seedWeek(input: Readonly<{
   scope: Readonly<{ workspace: WorkspaceAccessScope; account: AccountScope }>;
   weekIndex: number;
   stress: boolean;
+  challenging: boolean;
   setJournalTime: (value: Date) => void;
 }>): readonly FixtureTrade[] {
   const fixture = WEEK_FIXTURES[input.weekIndex];
   const dates = TRADING_DATES[input.weekIndex];
   if (!fixture || !dates || !input.scope.workspace.activeAccountId) fail("seed_week_missing");
-  const trades = weekTrades(input.weekIndex, input.stress);
+  const trades = weekTrades(input.weekIndex, input.stress, input.challenging);
   const accountSelectionRef = deriveJournalAccountSelectionRef(
     input.scope.workspace.workspaceId,
     input.scope.workspace.activeAccountId,
@@ -818,7 +961,7 @@ function seedWeek(input: Readonly<{
   if (createdExecutionCount !== trades.length * 2) fail(`manual_commit_${fixture.label}`);
   const positions = new Map(input.services.styles.listCurrentPositions(input.scope.account)
     .map((position) => [position.symbol, position] as const));
-  const reflection = reflectionForWeek(input.weekIndex);
+  const reflection = reflectionForWeek(input.weekIndex, input.challenging);
   for (let dayIndex = 0; dayIndex < dates.length; dayIndex += 1) {
     const tradingDate = dates[dayIndex];
     if (!tradingDate) fail("trading_date_missing");
@@ -861,16 +1004,24 @@ function seedWeek(input: Readonly<{
       presetKeys: Object.freeze(tagKeys),
       now: annotatedAt,
     });
-    if (input.stress || trade.globalIndex % 7 !== 6) {
+    if (input.stress || input.challenging || trade.globalIndex % 7 !== 6) {
       input.services.annotations.saveRoundTripNote(input.scope.account, {
         roundTripId: position.roundTripId,
         expectedRevision: null,
-        technicalNote: trade.brokeExitRule
-          ? "The trade moved in my favor before reversing through the planned stop."
-          : "The first pullback held and the exit stayed within the plan.",
-        tradeNote: trade.brokeExitRule
-          ? "I held after the stop instead of exiting."
-          : "Patient entry and controlled exit.",
+        technicalNote: trade.greenToRed
+          ? "The trade moved green before crossing below breakeven and closing red."
+          : trade.strongEntry
+            ? "The entry had substantially more favorable than adverse movement."
+            : trade.brokeExitRule
+              ? "The planned-risk rule was broken, but this trade did not follow the main green-to-red pattern."
+              : "The trade followed its recorded entry and exit process.",
+        tradeNote: trade.greenToRed
+          ? "I let a favorable move reverse into a loss."
+          : trade.lateEntry
+            ? "The entry was later than planned; the final result should not be used alone to judge it."
+            : trade.brokeExitRule
+              ? "I broke the planned-risk rule on this trade."
+              : "Patient entry and controlled exit.",
         now: annotatedAt,
       });
     }
@@ -906,7 +1057,8 @@ function seedWeek(input: Readonly<{
           timestamp: new Date(annotatedAt.getTime() + 3_000).toISOString(),
         }));
     }
-    if (input.stress || tradeStyle === "day_trade" && trade.globalIndex % 4 !== 3) {
+    if (input.stress || input.challenging ||
+        tradeStyle === "day_trade" && trade.globalIndex % 4 !== 3) {
       const target = input.services.analyzer.findEligibleTarget(
         input.scope.account,
         position.roundTripId,
@@ -1104,12 +1256,16 @@ async function issueReview(input: Readonly<{
 
 async function main(): Promise<void> {
   const confirmation = process.argv[2];
-  const live = confirmation === LIVE_CONFIRMATION || confirmation === STRESS_LIVE_CONFIRMATION;
+  const live = confirmation === LIVE_CONFIRMATION || confirmation === STRESS_LIVE_CONFIRMATION ||
+    confirmation === CHALLENGING_LIVE_CONFIRMATION;
   const stress = confirmation === STRESS_CAPTURED_CONFIRMATION ||
     confirmation === STRESS_LIVE_CONFIRMATION;
+  const challenging = confirmation === CHALLENGING_CAPTURED_CONFIRMATION ||
+    confirmation === CHALLENGING_LIVE_CONFIRMATION;
   if (process.argv.length !== 3 ||
       ![CAPTURED_CONFIRMATION, LIVE_CONFIRMATION, STRESS_CAPTURED_CONFIRMATION,
-        STRESS_LIVE_CONFIRMATION].includes(confirmation ?? "")) {
+        STRESS_LIVE_CONFIRMATION, CHALLENGING_CAPTURED_CONFIRMATION,
+        CHALLENGING_LIVE_CONFIRMATION].includes(confirmation ?? "")) {
     fail("confirmation_required");
   }
   configureEnvironment(live);
@@ -1160,6 +1316,7 @@ async function main(): Promise<void> {
         scope,
         weekIndex,
         stress,
+        challenging,
         setJournalTime: (value) => { journalTime = value; },
       }));
       operationBase = fixture.issueAt.getTime();
@@ -1263,12 +1420,19 @@ ORDER BY recorded_at_utc DESC LIMIT 1`).get(monthlyRequest.requestId) ?? null;
         }
         const reopened = compatibility.readIssuedReview(scope.workspace, stored.issuedReviewId);
         const snapshot = persistence.read(scope.workspace, request.requestId).artifact;
+        const priorComparableWeeklyContexts = snapshot.sourceSnapshot.source
+          .issuedNarrativeContext.filter((context) =>
+            context.contextKind === "prior_comparable" && context.reviewKind === "weekly");
         return Object.freeze({
           label: request.label,
           periodStartDate: reopened.periodStartDate,
           periodEndDate: reopened.periodEndDate,
           sourceTradeCount: snapshot.sourceSnapshot.source.trades.length,
           completePlanCount: snapshot.catalog.completePlans.length,
+          priorComparableWeeklyContextCount: priorComparableWeeklyContexts.length,
+          priorComparableWeeklyPeriodEnds: Object.freeze(priorComparableWeeklyContexts.map(
+            (context) => context.periodEndDate,
+          )),
           generationSource: reopened.generationSource,
           output: reopened.output,
           receipt: receipt(database, request.requestId),
@@ -1276,20 +1440,30 @@ ORDER BY recorded_at_utc DESC LIMIT 1`).get(monthlyRequest.requestId) ?? null;
       });
     const foreignKeyFailures = database.pragma("foreign_key_check") as readonly unknown[];
     const quickCheck = database.pragma("quick_check", { simple: true });
-    const expectedTradeCount = stress ? 420 : 80;
+    const expectedTradeCount = challenging ? 120 : stress ? 420 : 80;
     const expectedDayTradeCount = expectedTradeCount - 8;
-    const expectedAnalyzerCount = stress
+    const expectedAnalyzerCount = stress || challenging
       ? expectedTradeCount
       : allTrades.filter((trade) => trade.globalIndex >= 8 && trade.globalIndex % 4 !== 3).length;
-    const expectedTradeNoteCount = stress
+    const expectedTradeNoteCount = stress || challenging
       ? expectedTradeCount
       : allTrades.filter((trade) => trade.globalIndex % 7 !== 6).length;
+    const monthlyRequiresProvider = monthlyArtifact.catalog.completePlans.length > 1;
+    const monthlySelectionValid = live
+      ? monthlyRequiresProvider
+        ? monthlyReview.generationSource === "provider_selected" &&
+          monthlyReceipt.input_tokens !== null && monthlyReceipt.output_tokens !== null
+        : monthlyReview.generationSource === "deterministic_default" &&
+          monthlyReceipt.input_tokens === null && monthlyReceipt.output_tokens === null
+      : monthlyCapturedCalls.length === (monthlyRequiresProvider ? 1 : 0);
     const valid = allTrades.length === expectedTradeCount &&
       monthlySource.trades.length === expectedTradeCount &&
       monthlySource.coverage.moneyCompleteTradeCount === expectedTradeCount &&
       issued.length === 5 &&
       issued.every((review) => review.generationContractVersion === "insight_selection_v3") &&
       weeklyRecords.length === 4 &&
+      weeklyRecords.every((record, index) =>
+        record.priorComparableWeeklyContextCount === (index === 0 ? 0 : 1)) &&
       currentPeriodWeeklyContexts.length === 4 &&
       new Set(currentPeriodWeeklyContexts.map((context) => context.periodEndDate)).size === 4 &&
       styleCounts.day_trade === expectedDayTradeCount && styleCounts.swing === 4 &&
@@ -1297,24 +1471,26 @@ ORDER BY recorded_at_utc DESC LIMIT 1`).get(monthlyRequest.requestId) ?? null;
       sourceReadyAnalyzerCount === expectedAnalyzerCount &&
       databaseReadyAnalyzerCount === expectedAnalyzerCount &&
       sourceTradeNoteCount === expectedTradeNoteCount &&
-      monthlyArtifact.catalog.completePlans.length > 1 &&
+      monthlyArtifact.catalog.completePlans.length >= 1 &&
       focusCandidateCount > 0 && namedRuleCandidateCount > 0 &&
       monthlyReview.generationContractVersion === "insight_selection_v3" &&
       monthlyPresentation.output.contractVersion === monthlyReview.output.contractVersion &&
-      (live
-        ? monthlyReview.generationSource === "provider_selected" &&
-          monthlyReceipt.input_tokens !== null && monthlyReceipt.output_tokens !== null
-        : monthlyCapturedCalls.length === 1) &&
+      monthlySelectionValid &&
       foreignKeyFailures.length === 0 && quickCheck === "ok";
     const resultArtifact = Object.freeze({
       fixtureOnly: true,
       liveProvider: live,
       stressVolume: stress,
+      scenario: challenging ? "challenging_sequential_month" : "baseline_true_month",
+      modelId: MODEL_ID,
+      reasoningEffort: MODEL_REASONING_EFFORT,
       liveDatabaseMutated: false,
       trueMonthlySequence: Object.freeze({
         weeklyReviewsIssuedFirst: weeklyRecords.length,
         monthlyReviewIssuedAfter: true,
         monthlyCurrentPeriodWeeklyContextCount: currentPeriodWeeklyContexts.length,
+        weeklyPriorComparableContextCounts: Object.freeze(weeklyRecords.map((record) =>
+          record.priorComparableWeeklyContextCount)),
       }),
       sourceCoverage: Object.freeze({
         tradeCount: monthlySource.trades.length,
@@ -1338,6 +1514,69 @@ ORDER BY recorded_at_utc DESC LIMIT 1`).get(monthlyRequest.requestId) ?? null;
         monthlySelectionAudit,
         artifactUncompressedByteLength: monthlySnapshot.artifactUncompressedByteLength,
         artifactCompressedByteLength: monthlySnapshot.artifactCompressedByteLength,
+        authorizedPlans: Object.freeze(monthlyArtifact.catalog.completePlans.map(
+          (plan, index) => Object.freeze({
+            choiceKey: `plan_${index + 1}`,
+            reviewPlanRef: plan.reviewPlanRef,
+            output: plan.output,
+          }),
+        )),
+        monthlyShortlist: Object.freeze(monthlyArtifact.shortlist.entries.map((entry) =>
+          Object.freeze({
+            lane: entry.lane,
+            requiredConsideration: entry.requiredConsideration,
+            family: entry.candidate.family,
+            subjectLabel: entry.candidate.subjectLabel,
+            subjectRef: entry.candidate.subjectRef,
+            polarity: entry.candidate.polarity,
+            classification: entry.candidate.classification,
+            postPenaltyScore: entry.effectiveScore.postPenaltyScore,
+            consequenceVerdict: entry.candidate.consequenceVerdict,
+            measurements: Object.freeze(entry.candidate.measurements.filter((measurement) =>
+              [
+                "affected_cohort_net_pnl",
+                "adverse_net_contribution",
+                "affected_rate",
+                "rule_affected_count",
+                "peak_to_final_reversal_total",
+              ].includes(measurement.metricName)).map((measurement) => Object.freeze({
+                metricName: measurement.metricName,
+                exactValue: measurement.exactValue,
+                availability: measurement.availability,
+                displayLiteral: measurement.displayLiteral,
+              }))),
+          }))),
+        monthlyCandidateAudit: Object.freeze(monthlyArtifact.candidates.map((candidate) =>
+          Object.freeze({
+            family: candidate.family,
+            subjectLabel: candidate.subjectLabel,
+            subjectRef: candidate.subjectRef,
+            polarity: candidate.polarity,
+            classification: candidate.classification,
+            consequenceVerdict: candidate.consequenceVerdict,
+            scores: Object.freeze(candidate.scores.map((score) => Object.freeze({
+              lane: score.lane,
+              postPenaltyScore: score.postPenaltyScore,
+              dimensions: Object.freeze(score.dimensions.map((dimension) => Object.freeze({
+                name: dimension.name,
+                value: dimension.value,
+              }))),
+            }))),
+            measurements: Object.freeze(candidate.measurements.filter((measurement) =>
+              [
+                "affected_cohort_net_pnl",
+                "adverse_net_contribution",
+                "affected_rate",
+                "rule_affected_count",
+                "peak_to_final_reversal_total",
+                "period_prevalence",
+              ].includes(measurement.metricName)).map((measurement) => Object.freeze({
+                metricName: measurement.metricName,
+                exactValue: measurement.exactValue,
+                availability: measurement.availability,
+                displayLiteral: measurement.displayLiteral,
+              }))),
+          }))),
       }),
       weeklyReviews: weeklyRecords,
       monthlyReview: Object.freeze({
@@ -1353,7 +1592,8 @@ ORDER BY recorded_at_utc DESC LIMIT 1`).get(monthlyRequest.requestId) ?? null;
       }),
       valid,
     });
-    const artifactName = `insight-true-month-${stress ? "420-" : ""}${live ? "live" : "captured"}-${new Date()
+    const artifactName = `insight-${challenging ? "challenging-month-" :
+      `true-month-${stress ? "420-" : ""}`}${live ? "live" : "captured"}-${MODEL_ID}-${MODEL_REASONING_EFFORT}-${new Date()
       .toISOString().replaceAll(":", "-")}.json`;
     writeFileSync(
       join(process.cwd(), ".local-logs", artifactName),
@@ -1365,9 +1605,14 @@ ORDER BY recorded_at_utc DESC LIMIT 1`).get(monthlyRequest.requestId) ?? null;
       artifactName,
       liveProvider: live,
       stressVolume: stress,
+      scenario: challenging ? "challenging_sequential_month" : "baseline_true_month",
+      modelId: MODEL_ID,
+      reasoningEffort: MODEL_REASONING_EFFORT,
       reviewCount: issued.length,
       monthlyTradeCount: monthlySource.trades.length,
       monthlyWeeklyContextCount: currentPeriodWeeklyContexts.length,
+      weeklyPriorComparableContextCounts: weeklyRecords.map((record) =>
+        record.priorComparableWeeklyContextCount),
       styleCounts,
       analyzerCoverage: `${sourceReadyAnalyzerCount}/${monthlySource.trades.length}`,
       tradeNoteCoverage: `${sourceTradeNoteCount}/${monthlySource.trades.length}`,
@@ -1379,6 +1624,7 @@ ORDER BY recorded_at_utc DESC LIMIT 1`).get(monthlyRequest.requestId) ?? null;
       namedRuleCandidateCount,
       monthlyGenerationSource: monthlyReview.generationSource,
       monthlySelectionAudit,
+      providerCallCount: live ? providerHttpDiagnostics.length : capturedCalls.length,
       providerHttpDiagnostics,
       monthlyReceipt,
       output: monthlyReview.output,

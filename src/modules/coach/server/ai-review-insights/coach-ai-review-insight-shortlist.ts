@@ -1,3 +1,5 @@
+import Decimal from "decimal.js";
+
 import type {
   CoachAiReviewInsightCandidate,
   CoachAiReviewInsightLane,
@@ -13,6 +15,8 @@ import {
   selectCoachAiReviewLaneDefault,
   type CoachAiReviewRankableLaneCandidate,
 } from "./coach-ai-review-insight-ranking";
+
+const ExactDecimal = Decimal.clone({ precision: 160, rounding: Decimal.ROUND_HALF_UP });
 
 function invariant(condition: boolean, code: string): asserts condition {
   if (!condition) throw new CoachAiReviewInsightInvariantError(code);
@@ -72,6 +76,17 @@ function visiblyEligible(
   score: CoachAiReviewLaneScore,
 ): boolean {
   if (candidate.subjectRef.length === 0 || candidate.overlapKeys.length === 0) return false;
+  if (score.lane === "friction" && candidate.family === "named_rule_association") {
+    const cohortNet = candidate.measurements.find((measurement) =>
+      measurement.metricName === "affected_cohort_net_pnl" &&
+      measurement.availability === "available" && measurement.exactValue !== null);
+    const adverseContribution = candidate.measurements.find((measurement) =>
+      measurement.metricName === "adverse_net_contribution" &&
+      measurement.availability === "available" && measurement.exactValue !== null);
+    if (cohortNet !== undefined && new ExactDecimal(cohortNet.exactValue!).gt(0) &&
+        (adverseContribution === undefined ||
+          new ExactDecimal(adverseContribution.exactValue!).lte(0))) return false;
+  }
   const confidence = dimensionValue(score, "evidence_confidence") ?? 0;
   if (candidate.classification === "recurring" || candidate.classification === "trend" ||
       candidate.classification === "contrast") return confidence >= 50;

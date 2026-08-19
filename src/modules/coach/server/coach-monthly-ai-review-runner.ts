@@ -135,8 +135,18 @@ function narrativePeriods(
   calendar: CoachUsEquitiesReviewCalendarService,
 ): readonly CoachMonthlyNarrativePeriodV2[] {
   const result = new Map<string, CoachMonthlyNarrativePeriodV2>();
+  const verifiedCoverageStartDate = calendar.metadataForRange(
+    period.coverageStartDate,
+    period.coverageEndDate,
+  ).coverageStartDate;
+  let firstMonday = mondayDate(period.coverageStartDate);
+  // A calendar snapshot may begin mid-week. There is no verified complete
+  // weekly period before its first Monday, so exclude that partial boundary
+  // from monthly narrative context rather than asking the calendar for
+  // unavailable earlier sessions.
+  if (firstMonday < verifiedCoverageStartDate) firstMonday = shiftDate(firstMonday, 7);
   for (
-    let monday = mondayDate(period.coverageStartDate);
+    let monday = firstMonday;
     monday <= period.coverageEndDate;
     monday = shiftDate(monday, 7)
   ) {

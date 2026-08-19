@@ -6,7 +6,9 @@ const ExactDecimal = Decimal.clone({
   toExpPos: 1000,
 });
 
-export const COACH_AI_REVIEW_LARGE_INPUT_THRESHOLD_BYTES = 900_000;
+// Above this size, a byte-for-token reservation becomes needlessly punitive
+// for JSON evidence packets. Obtain the provider's exact count instead.
+export const COACH_AI_REVIEW_LARGE_INPUT_THRESHOLD_BYTES = 65_536;
 export const COACH_AI_REVIEW_MAX_SERIALIZED_INPUT_BYTES = 8_000_000;
 export const COACH_AI_REVIEW_INPUT_TOKEN_HEADROOM = 8_192;
 export const COACH_AI_REVIEW_CONTEXT_SAFETY_TOKENS = 8_192;

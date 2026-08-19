@@ -20,6 +20,12 @@ import {
   AiReviewDocument,
   type AiReviewDocumentView,
 } from "../../ai-review-document";
+import {
+  AiReviewAuthoredDocument,
+  type AiReviewAuthoredDocumentView,
+} from "../../ai-review-authored-document";
+import { CoachAiReviewAuthoredPersistenceRepository } from
+  "@/src/modules/coach/server/coach-ai-review-authored-persistence-repository";
 
 export const metadata: Metadata = {
   title: "Monthly AI Review | TraderLink Platform",
@@ -85,20 +91,41 @@ export default async function MonthlyAiReviewPage({
   if (!UUID_V4_PATTERN.test(reviewId)) notFound();
 
   const scope = await requireTraderLinkPlatformPageScope();
-  const view = withReadonlyPlatformDatabase({}, (database): AiReviewDocumentView => {
+  const view = withReadonlyPlatformDatabase({}, (database):
+    | Readonly<{ kind: "authored"; view: AiReviewAuthoredDocumentView }>
+    | Readonly<{ kind: "legacy"; view: AiReviewDocumentView }> => {
+    const authored = new CoachAiReviewAuthoredPersistenceRepository(database);
+    if (authored.tablesAvailable()) {
+      try {
+        const issued = authored.readIssued(scope, reviewId);
+        if (issued.reviewKind !== "monthly") notFound();
+        return Object.freeze({
+          kind: "authored" as const,
+          view: Object.freeze({
+            reviewTypeLabel: "Monthly AI Review",
+            periodLabel: formatMonth(issued.periodStartDate),
+            output: issued.output,
+            packet: authored.readSnapshot(scope, issued.requestId).packet,
+          }),
+        });
+      } catch (error) {
+        if (!(isTraderLinkPlatformError(error) && error.code === "TRADERLINK_ACCOUNT_ACCESS_DENIED")) {
+          throw error;
+        }
+      }
+    }
     const repository = new CoachAiReviewRepository(database);
     try {
-      return currentView(
-        new CoachAiReviewGenerationCompatibilityRepository(database)
-          .readIssuedReviewOutput(scope, reviewId),
-      );
+      return Object.freeze({ kind: "legacy" as const, view: currentView(
+        new CoachAiReviewGenerationCompatibilityRepository(database).readIssuedReviewOutput(scope, reviewId),
+      ) });
     } catch (error) {
       if (!(isTraderLinkPlatformError(error) && error.code === "TRADERLINK_ACCOUNT_ACCESS_DENIED")) {
         throw error;
       }
     }
     try {
-      return legacyView(repository.readIssuedMonthlyReview(scope, reviewId));
+      return Object.freeze({ kind: "legacy" as const, view: legacyView(repository.readIssuedMonthlyReview(scope, reviewId)) });
     } catch (error) {
       if (isTraderLinkPlatformError(error) && error.code === "TRADERLINK_ACCOUNT_ACCESS_DENIED") {
         notFound();
@@ -114,7 +141,9 @@ export default async function MonthlyAiReviewPage({
           Back to AI Reviews
         </Button>
       </Box>
-      <AiReviewDocument view={view} />
+      {view.kind === "authored"
+        ? <AiReviewAuthoredDocument view={view.view} />
+        : <AiReviewDocument view={view.view} />}
     </DashboardPage>
   );
 }

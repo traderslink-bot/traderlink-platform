@@ -130,7 +130,9 @@ UNION ALL
 SELECT CASE request.review_kind WHEN 'monthly' THEN 'monthly_reviews' ELSE 'weekly_reviews' END AS feature_key,
   attempt.model_id, attempt.account_id, COUNT(*) AS request_count,
   0 AS blocked_request_count,
-  SUM(CASE WHEN attempt.state = 'failed' THEN 1 ELSE 0 END) AS failed_request_count,
+  SUM(CASE WHEN attempt.state = 'failed'
+    AND attempt.failure_code <> 'TRADERLINK_COACH_AUTHORING_CALL_RECORDED'
+    THEN 1 ELSE 0 END) AS failed_request_count,
   COALESCE(SUM(receipt.total_tokens), 0) AS total_tokens,
   receipt.estimated_cost_usd
 FROM coach_ai_review_generation_attempts_v2 attempt

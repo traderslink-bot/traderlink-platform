@@ -13,6 +13,10 @@ import { CoachAiReviewGenerationContractRepository } from
   "./coach-ai-review-generation-contract-repository";
 import { CoachAiReviewInsightRequestService } from
   "./coach-ai-review-insight-request-service";
+import { CoachAiReviewAuthoredPersistenceRepository } from
+  "./coach-ai-review-authored-persistence-repository";
+import { CoachAiReviewAuthoredRequestService } from
+  "./coach-ai-review-authored-request-service";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
 
@@ -50,6 +54,9 @@ export class CoachAiReviewRequestService {
     input: CoachAiReviewManualRequestV2,
     now = new Date(),
   ): CoachAiReviewManualRequestResultV2 {
+    if (new CoachAiReviewAuthoredPersistenceRepository(this.database).tablesAvailable()) {
+      return this.requestManualV4(scope, input, now);
+    }
     const contract = new CoachAiReviewGenerationContractRepository(this.database).read();
     return contract.activeGenerationContractVersion === "insight_selection_v3"
       ? this.requestManualV3(scope, input, now)
@@ -57,6 +64,9 @@ export class CoachAiReviewRequestService {
   }
 
   requestAutomaticReady(now = new Date()): CoachAiReviewAutomaticRequestSummaryV2 {
+    if (new CoachAiReviewAuthoredPersistenceRepository(this.database).tablesAvailable()) {
+      return this.requestAutomaticReadyV4(now);
+    }
     const contract = new CoachAiReviewGenerationContractRepository(this.database).read();
     return contract.activeGenerationContractVersion === "insight_selection_v3"
       ? this.requestAutomaticReadyV3(now)
@@ -148,6 +158,32 @@ export class CoachAiReviewRequestService {
     });
   }
 
+  private requestManualV4(
+    scope: WorkspaceAccessScope,
+    input: CoachAiReviewManualRequestV2,
+    now: Date,
+  ): CoachAiReviewManualRequestResultV2 {
+    if (!validIdentity(input)) return Object.freeze({ state: "not_available" });
+    const plan = input.reviewKind === "monthly"
+      ? new CoachMonthlyAiReviewRunner(this.database).planAccountV2(scope, now)
+          .find((candidate) => candidate.period.calendarMonthStartDate === input.periodStartDate &&
+            candidate.period.calendarMonthEndDate === input.periodEndDate)
+      : new CoachWeeklyAiReviewRunner(this.database).planAccountV2(scope, now)
+          .find((candidate) => candidate.period.cadence === input.reviewKind &&
+            candidate.period.startDate === input.periodStartDate &&
+            candidate.period.endDate === input.periodEndDate);
+    if (!plan || !plan.snapshot ||
+        (plan.state !== "manual_available" && plan.state !== "automatic_ready")) {
+      return Object.freeze({ state: "not_available" });
+    }
+    const created = new CoachAiReviewAuthoredRequestService(this.database)
+      .createFromEligiblePlan(plan, "manual", now);
+    return Object.freeze({
+      state: created.state === "created" ? "requested" : "already_requested",
+      requestId: created.requestId,
+    });
+  }
+
   /**
    * Creates pending requests only for sealed periods whose facts/reflections
    * satisfy the meaningful-evidence gate. This is deliberately not scheduled
@@ -206,6 +242,28 @@ export class CoachAiReviewRequestService {
     let reusedCount = 0;
     for (const plan of plans) {
       const result = insightRequests.createFromEligiblePlan(plan, "automatic", now);
+      if (result.state === "created") requestedCount += 1;
+      else reusedCount += 1;
+    }
+    return Object.freeze({
+      eligibleCount: plans.length,
+      requestedCount,
+      reusedCount,
+    });
+  }
+
+  private requestAutomaticReadyV4(
+    now: Date,
+  ): CoachAiReviewAutomaticRequestSummaryV2 {
+    const plans = [
+      ...new CoachWeeklyAiReviewRunner(this.database).planV2(now),
+      ...new CoachMonthlyAiReviewRunner(this.database).planV2(now),
+    ].filter((plan) => plan.state === "automatic_ready" && plan.snapshot !== null);
+    const requests = new CoachAiReviewAuthoredRequestService(this.database);
+    let requestedCount = 0;
+    let reusedCount = 0;
+    for (const plan of plans) {
+      const result = requests.createFromEligiblePlan(plan, "automatic", now);
       if (result.state === "created") requestedCount += 1;
       else reusedCount += 1;
     }

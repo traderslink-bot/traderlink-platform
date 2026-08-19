@@ -41,6 +41,7 @@ import { coachAiReviewSubscriberBudgetSafeguardsMigration } from "@/src/modules/
 import { coachAiReviewCacheWriteAccountingMigration } from "@/src/modules/coach/server/database/migrations/0051_coach_ai_review_cache_write_accounting";
 import { coachAiReviewLunaPricingRefreshMigration } from "@/src/modules/coach/server/database/migrations/0062_coach_ai_review_luna_pricing_refresh";
 import { coachAiReviewInsightPersistenceMigration } from "@/src/modules/coach/server/database/migrations/0065_coach_ai_review_insight_persistence";
+import { coachAiReviewAuthoredOutputMigration } from "@/src/modules/coach/server/database/migrations/0066_coach_ai_review_authored_output";
 import { coachAiChatActionDraftsMigration } from "@/src/modules/coach/server/database/migrations/0055_coach_ai_chat_action_drafts";
 import { coachAiChatActionExpansionMigration } from "@/src/modules/coach/server/database/migrations/0056_coach_ai_chat_action_expansion";
 import { coachAiChatCacheAccountingMigration } from "@/src/modules/coach/server/database/migrations/0058_coach_ai_chat_cache_accounting";
@@ -336,6 +337,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/coach/server/database/migrations/0065_coach_ai_review_insight_persistence.ts",
       migration: coachAiReviewInsightPersistenceMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/coach/server/database/migrations/0066_coach_ai_review_authored_output.ts",
+      migration: coachAiReviewAuthoredOutputMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -616,6 +621,11 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "coach_ai_review_insight_provider_dispatches",
       "coach_ai_issued_reviews_v3",
       "coach_ai_review_insight_selection_audits",
+    ]),
+    "0066_coach_ai_review_authored_output": Object.freeze([
+      "coach_ai_review_authored_snapshots_v4",
+      "coach_ai_review_authored_provider_calls_v4",
+      "coach_ai_issued_reviews_v4",
     ]),
   });
 

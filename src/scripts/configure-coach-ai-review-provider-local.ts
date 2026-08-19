@@ -9,8 +9,13 @@ import { CoachAiChatProviderControlsRepository } from
 import { createCanonicalUtcTimestamp } from
   "@/src/modules/platform/server/database/platform-migration-contract";
 
-const CONFIRMATION = "--confirm-local-disabled-provider-configuration";
+const CONFIRMATION = "--confirm-local-sol-review-provider-configuration";
 const CLEAR_UNAPPROVED_LIMITS = "--clear-unapproved-limits";
+const ENABLE_LOCAL_REVIEW_CONTROLS = "--enable-local-review-controls";
+const LOCAL_DAILY_REQUEST_CAP = 20;
+const LOCAL_DAILY_TOKEN_CAP = 400_000;
+const LOCAL_DAILY_SPEND_CAP_USD = "10.00";
+const LOCAL_TRAILING_30_DAY_SPEND_CAP_USD = "10.00";
 
 type ControlRow = Readonly<{
   feature_key: "weekly_reviews" | "monthly_reviews";
@@ -30,11 +35,11 @@ function main(): void {
   const database = openPlatformDatabase({ mode: "runtime" });
   try {
     const settings = new CoachAiProviderSettingsRepository(database).save({
-      modelId: "gpt-5.6-luna",
-      inputCostUsdPerMillionTokens: "0.20",
-      cachedInputCostUsdPerMillionTokens: "0.02",
-      cacheWriteInputCostUsdPerMillionTokens: "0.25",
-      outputCostUsdPerMillionTokens: "1.20",
+      modelId: "gpt-5.6-sol",
+      inputCostUsdPerMillionTokens: "5.00",
+      cachedInputCostUsdPerMillionTokens: "0.50",
+      cacheWriteInputCostUsdPerMillionTokens: "6.25",
+      outputCostUsdPerMillionTokens: "30.00",
     });
     const budgetAvailable = Boolean(database.prepare<[], Readonly<{ found: number }>>(
       "SELECT 1 AS found FROM sqlite_schema WHERE type = 'table' AND name = 'coach_ai_review_budget_controls'",
@@ -54,6 +59,26 @@ function main(): void {
         database.prepare(`UPDATE coach_ai_review_budget_controls SET
   trailing_30_day_estimated_spend_cap_usd = NULL, updated_at_utc = ?
 WHERE control_key = 'ai_reviews'`).run(createCanonicalUtcTimestamp());
+      }
+    }
+    if (process.argv.includes(ENABLE_LOCAL_REVIEW_CONTROLS)) {
+      if (budgetAvailable) {
+        database.prepare(`UPDATE coach_ai_review_budget_controls SET
+  trailing_30_day_estimated_spend_cap_usd = ?, updated_at_utc = ?
+WHERE control_key = 'ai_reviews'`).run(
+          LOCAL_TRAILING_30_DAY_SPEND_CAP_USD,
+          createCanonicalUtcTimestamp(),
+        );
+      }
+      const controlsRepository = new CoachAiChatProviderControlsRepository(database);
+      for (const featureKey of ["weekly_reviews", "monthly_reviews"] as const) {
+        controlsRepository.savePlatformFeatureControl({
+          featureKey,
+          enabled: true,
+          dailyRequestCap: LOCAL_DAILY_REQUEST_CAP,
+          dailyTokenCap: LOCAL_DAILY_TOKEN_CAP,
+          dailyEstimatedSpendCapUsd: LOCAL_DAILY_SPEND_CAP_USD,
+        });
       }
     }
     const controls = database.prepare<[], ControlRow>(`SELECT feature_key, enabled,

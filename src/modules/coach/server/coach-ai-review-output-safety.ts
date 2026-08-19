@@ -60,6 +60,12 @@ const FOCUS_UNAVAILABLE_PATTERN =
 const EXPLICIT_TICKER_REFERENCE_PATTERN =
   /(?:\b(?:ticker|symbol|traded?|trade in|position in|shares? of|stock)\s+\$?([A-Z][A-Z0-9.-]{1,9})\b|(?:^|\s)\$([A-Z][A-Z0-9.-]{1,9})\b)/gu;
 
+const DisplayDecimal = Decimal.clone({
+  precision: 80,
+  toExpNeg: -1000,
+  toExpPos: 1000,
+});
+
 class CoachAiReviewUnsafeOutputError extends Error {
   readonly usage: CoachAiReviewOutputSafetyUsage;
 
@@ -77,6 +83,23 @@ function normalizedDecimal(value: string): string | null {
   const fraction = (match[3] ?? "").replace(/0+$/u, "");
   const sign = match[1] === "-" && (integer !== "0" || fraction !== "") ? "-" : "";
   return `${sign}${integer}${fraction ? `.${fraction}` : ""}`;
+}
+
+/**
+ * This is presentation-only normalization after the model has authored its
+ * prose. It enforces the dashboard's two-decimal financial display contract
+ * without adding a conclusion, changing references or constructing review
+ * language on the model's behalf.
+ */
+export function formatCoachAiReviewFinancialPresentation(value: string): string {
+  const decimal = (raw: string): string => new DisplayDecimal(raw.replaceAll(",", ""))
+    .toDecimalPlaces(2, DisplayDecimal.ROUND_HALF_UP).toFixed(2);
+  return value
+    .replace(/([+-]?)([$€£])\s*(\d[\d,]*(?:\.\d+)?)/gu, (_whole, sign: string, symbol: string, raw: string) =>
+      `${sign}${symbol}${decimal(raw)}`)
+    .replace(/\b(USD)\s+(-?\d[\d,]*(?:\.\d+)?)/gu, (_whole, currency: string, raw: string) =>
+      `${currency} ${decimal(raw)}`)
+    .replace(/\b(-?\d[\d,]*(?:\.\d+)?)%/gu, (_whole, raw: string) => `${decimal(raw)}%`);
 }
 
 type ProviderFacts = Readonly<{
@@ -280,3 +303,4 @@ export function assertCoachAiReviewOutputGrounded(
     }
   }
 }
+import Decimal from "decimal.js";
