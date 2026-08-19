@@ -1239,9 +1239,11 @@ WHERE coach_ai_review_generation_attempt_id = ?`).get(attemptId);
     focusRefs: readonly string[],
   ): readonly Readonly<{
     ordinal: number;
+    focusTargetRef: string;
     focusQuestionRef: string;
     findingRef: string;
     actionTargetKey: string;
+    trackingIntent: "reduction" | "consistency" | "examination" | "strength_repetition";
     renderedQuestion: string;
   }>[] {
     return Object.freeze(focusRefs.map((focusRef, index) => {
@@ -1250,9 +1252,11 @@ WHERE coach_ai_review_generation_attempt_id = ?`).get(attemptId);
       if (!focus) this.integrity("focusTracking");
       return Object.freeze({
         ordinal: index + 1,
+        focusTargetRef: focus.focusTargetRef,
         focusQuestionRef: focus.focusQuestionRef,
         findingRef: focus.findingRef,
         actionTargetKey: focus.actionTargetKey,
+        trackingIntent: focus.trackingIntent,
         renderedQuestion: focus.renderedQuestion,
       });
     }));

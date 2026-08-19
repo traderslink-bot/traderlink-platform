@@ -9,6 +9,7 @@ import type {
   CoachAiReviewCadence,
   CoachAiReviewCalculationSource,
   CoachAiReviewCalculationSourceSnapshot,
+  CoachAiReviewIssuedFocusTarget,
   CoachAiReviewIssuedNarrativeContext,
   CoachAiReviewSourceNote,
   CoachAiReviewSourcePresetEvidenceEvent,
@@ -53,9 +54,9 @@ import {
   type CoachAiReviewTradeAnalysisLineage,
 } from "./coach-ai-review-supplemental-evidence-repository";
 import {
-  CoachAiReviewRepository,
-  type CoachAiIssuedReviewRecordV2,
-} from "./coach-ai-review-repository";
+  CoachAiReviewGenerationCompatibilityRepository,
+  type CoachAiIssuedReviewRecord,
+} from "./coach-ai-review-generation-compatibility";
 import {
   deepFreezeCoachAiReviewInsight,
   digestCanonicalCoachAiReviewInsight,
@@ -190,7 +191,7 @@ function dateRange(startDate: string, endDate: string): readonly string[] {
 }
 
 function outputContext(
-  review: ReturnType<CoachAiReviewRepository["listIssuedReviewsV2"]>[number],
+  review: CoachAiIssuedReviewRecord,
   reviewRef: string,
   contextKind: CoachAiReviewIssuedNarrativeContext["contextKind"],
 ): CoachAiReviewIssuedNarrativeContext {
@@ -202,6 +203,7 @@ function outputContext(
     periodEndDate: review.periodEndDate,
     issuedAtUtc: review.issuedAtUtc,
     statisticalUse: "prohibited",
+    focusTrackingAvailability: review.trackedFocusAvailability,
     reviewSummary: review.output.reviewSummary,
     whatImproved: review.output.whatImproved,
     whatHeldYouBack: review.output.whatHeldYouBack,
@@ -209,6 +211,44 @@ function outputContext(
     nextPeriodFocuses: Object.freeze([...review.output.nextPeriodFocuses]),
     incompleteRecord: review.output.incompleteRecord,
   });
+}
+
+function outputFocusTargets(
+  review: CoachAiIssuedReviewRecord,
+  reviewRef: string,
+): readonly CoachAiReviewIssuedFocusTarget[] {
+  if (review.trackedFocusAvailability === "legacy_unavailable") {
+    return Object.freeze([]);
+  }
+  return Object.freeze(review.trackedFocuses.map((focus) => Object.freeze({
+    focusTargetRef: focus.focusTargetRef,
+    sourceReviewRef: reviewRef,
+    focusOrdinal: focus.ordinal,
+    focusQuestionRef: focus.focusQuestionRef,
+    renderedQuestion: focus.renderedQuestion,
+    actionTargetKey: focus.actionTargetKey,
+    trackingIntent: focus.trackingIntent,
+    originatingFindingRef: focus.findingRef,
+    originatingFamily: focus.baselineCandidate.family,
+    originatingSubjectRef: focus.baselineCandidate.subjectRef,
+    sourceEngineVersion: focus.baselineCandidate.engineVersion,
+    sourceDigestSha256: focus.sourceDigestSha256,
+    sourcePeriodEndDate: review.periodEndDate,
+    sourcePeriodFinalMarketSealUtc: focus.sourcePeriodFinalMarketSealUtc,
+    sourceIssuedAtUtc: review.issuedAtUtc,
+    eligibleLaterEvidenceAtUtc: focus.eligibleLaterEvidenceAtUtc,
+    baselineMeasurements: Object.freeze([...focus.baselineCandidate.measurements]),
+    baselinePopulationMemberRefs: Object.freeze([
+      ...focus.baselineCandidate.populationMemberRefs,
+    ]),
+    baselineOpportunityMemberRefs: Object.freeze([
+      ...focus.baselineCandidate.opportunityMemberRefs,
+    ]),
+    baselineAffectedMemberRefs: Object.freeze([
+      ...focus.baselineCandidate.affectedMemberRefs,
+    ]),
+    baselineSourceVersionRefs: Object.freeze([...focus.baselineSourceVersionRefs]),
+  })));
 }
 
 function positionAtBoundary(
@@ -650,21 +690,21 @@ export class CoachAiReviewInsightRepository {
       })];
     }).sort((left, right) => compareText(left.positionRef, right.positionRef));
 
-    const reviews = new CoachAiReviewRepository(this.database);
+    const reviews = new CoachAiReviewGenerationCompatibilityRepository(this.database);
     const currentPeriodIssued = request.cadence === "monthly"
-      ? this.readIssuedReviewsV2(scope, reviews, {
+      ? this.readIssuedReviews(scope, reviews, {
             atOrAfterPeriodEndDate: request.startDate,
             beforePeriodEndDate: shiftDate(request.endDate, 1),
             reviewKinds: ["weekly", "two_week"],
           })
       : [];
     const priorComparable = request.cadence === "monthly"
-      ? this.readIssuedReviewsV2(scope, reviews, {
+      ? this.readIssuedReviews(scope, reviews, {
             beforePeriodEndDate: request.startDate,
             reviewKinds: ["monthly"],
             limit: 1,
           })
-      : this.readIssuedReviewsV2(scope, reviews, {
+      : this.readIssuedReviews(scope, reviews, {
           beforePeriodEndDate: request.startDate,
           reviewKinds: ["weekly", "two_week"],
           limit: 1,
@@ -679,6 +719,18 @@ export class CoachAiReviewInsightRepository {
           review.periodStartDate, review.periodEndDate), "prior_comparable")),
     ].sort((left, right) => compareText(left.periodEndDate, right.periodEndDate) ||
       compareText(left.issuedAtUtc, right.issuedAtUtc));
+    const reviewRefById = new Map(issued.map((review) => [
+      review.issuedReviewId,
+      ref("issued_review", review.issuedReviewId, review.requestId,
+        review.periodStartDate, review.periodEndDate),
+    ] as const));
+    const issuedFocusTargets = issued.flatMap((review) => {
+      const reviewRef = reviewRefById.get(review.issuedReviewId);
+      if (!reviewRef) throw new Error("TRADERLINK_COACH_INSIGHT_REVIEW_REF_MISSING");
+      return outputFocusTargets(review, reviewRef);
+    }).sort((left, right) => compareText(left.sourcePeriodEndDate, right.sourcePeriodEndDate) ||
+      compareText(left.sourceIssuedAtUtc, right.sourceIssuedAtUtc) ||
+      left.focusOrdinal - right.focusOrdinal);
 
     const source: CoachAiReviewCalculationSource = {
       contractVersion: COACH_AI_REVIEW_CALCULATION_SOURCE_VERSION,
@@ -713,6 +765,7 @@ export class CoachAiReviewInsightRepository {
         .filter((position) => position.hasInPeriodReduction)
         .map((position) => position.positionRef)),
       issuedNarrativeContext: Object.freeze(issuedNarrativeContext),
+      issuedFocusTargets: Object.freeze(issuedFocusTargets),
     };
     this.assertPromptSafeSource(source, scope, factSet, {
       dayRows,
@@ -863,48 +916,17 @@ ORDER BY day.trading_date, revision.revision_number,
     })));
   }
 
-  private readIssuedReviewsV2(
+  private readIssuedReviews(
     scope: WorkspaceAccessScope,
-    reviews: CoachAiReviewRepository,
+    reviews: CoachAiReviewGenerationCompatibilityRepository,
     input: Readonly<{
       atOrAfterPeriodEndDate?: string;
       beforePeriodEndDate: string;
-      reviewKinds: readonly CoachAiIssuedReviewRecordV2["reviewKind"][];
+      reviewKinds: readonly CoachAiIssuedReviewRecord["reviewKind"][];
       limit?: number;
     }>,
-  ): readonly CoachAiIssuedReviewRecordV2[] {
-    if (input.reviewKinds.length === 0) return Object.freeze([]);
-    if (!scope.activeAccountId || !scope.allowedAccountIds.includes(scope.activeAccountId)) {
-      throw new Error("TRADERLINK_ACCOUNT_ACCESS_DENIED");
-    }
-    const lowerBoundClause = input.atOrAfterPeriodEndDate
-      ? "AND request.period_end_date >= ?"
-      : "";
-    const limitClause = input.limit === undefined ? "" : "LIMIT ?";
-    const parameters: (string | number)[] = [
-      scope.userId,
-      scope.workspaceId,
-      scope.activeAccountId,
-      input.beforePeriodEndDate,
-      ...(input.atOrAfterPeriodEndDate ? [input.atOrAfterPeriodEndDate] : []),
-      ...input.reviewKinds,
-      ...(input.limit === undefined ? [] : [input.limit]),
-    ];
-    const rows = this.database.prepare(`SELECT review.coach_ai_issued_review_id
-FROM coach_ai_issued_reviews_v2 review
-JOIN coach_ai_review_period_requests_v2 request
-  ON request.coach_ai_review_period_request_id = review.coach_ai_review_period_request_id
-WHERE request.user_id = ? AND request.workspace_id = ? AND request.account_id = ?
-  AND request.period_end_date < ? ${lowerBoundClause}
-  AND request.review_kind IN (${input.reviewKinds.map(() => "?").join(", ")})
-ORDER BY request.period_end_date DESC, review.issued_at_utc DESC
-${limitClause}`).all(...parameters) as readonly Readonly<{
-      coach_ai_issued_review_id: string;
-    }>[];
-    return Object.freeze(rows.map((row) => reviews.readIssuedReviewV2(
-      scope,
-      row.coach_ai_issued_review_id,
-    )));
+  ): readonly CoachAiIssuedReviewRecord[] {
+    return reviews.listIssuedReviews(scope, input);
   }
 
   private assertPromptSafeSource(

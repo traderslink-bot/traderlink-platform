@@ -503,12 +503,37 @@ export type CoachAiReviewIssuedNarrativeContext = Readonly<{
   periodEndDate: string;
   issuedAtUtc: string;
   statisticalUse: "prohibited";
+  focusTrackingAvailability: "legacy_unavailable" | "tracked_v3";
   reviewSummary: string;
   whatImproved: string;
   whatHeldYouBack: string;
   focusFollowThrough: string;
   nextPeriodFocuses: readonly string[];
   incompleteRecord: string | null;
+}>;
+
+export type CoachAiReviewIssuedFocusTarget = Readonly<{
+  focusTargetRef: string;
+  sourceReviewRef: string;
+  focusOrdinal: number;
+  focusQuestionRef: string;
+  renderedQuestion: string;
+  actionTargetKey: string;
+  trackingIntent: "reduction" | "consistency" | "examination" | "strength_repetition";
+  originatingFindingRef: string;
+  originatingFamily: CoachAiReviewInsightFamily;
+  originatingSubjectRef: string;
+  sourceEngineVersion: typeof COACH_AI_REVIEW_INSIGHT_ENGINE_VERSION;
+  sourceDigestSha256: string;
+  sourcePeriodEndDate: string;
+  sourcePeriodFinalMarketSealUtc: string | null;
+  sourceIssuedAtUtc: string;
+  eligibleLaterEvidenceAtUtc: string;
+  baselineMeasurements: readonly CoachAiReviewMeasurement[];
+  baselinePopulationMemberRefs: readonly string[];
+  baselineOpportunityMemberRefs: readonly string[];
+  baselineAffectedMemberRefs: readonly string[];
+  baselineSourceVersionRefs: readonly string[];
 }>;
 
 export type CoachAiReviewCalculationSource = Readonly<{
@@ -545,6 +570,7 @@ export type CoachAiReviewCalculationSource = Readonly<{
   periodEndOpenPositionRefs: readonly string[];
   periodEndOpenWithInPeriodReductionRefs: readonly string[];
   issuedNarrativeContext: readonly CoachAiReviewIssuedNarrativeContext[];
+  issuedFocusTargets: readonly CoachAiReviewIssuedFocusTarget[];
 }>;
 
 export type CoachAiReviewCalculationSourceSnapshot = Readonly<{

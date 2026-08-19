@@ -640,15 +640,29 @@ function focusQuestion(entry: CoachAiReviewShortlistEntry): CoachAiReviewRendere
       return null;
   }
   renderedQuestion = sentence(renderedQuestion);
+  const trackingIntent = entry.lane === "friction"
+    ? "reduction" as const
+    : entry.lane === "improvement"
+      ? "consistency" as const
+      : entry.lane === "strength"
+        ? "strength_repetition" as const
+        : "examination" as const;
+  const focusTargetRef = digestRef("focus_target", [
+    COACH_AI_REVIEW_RENDERER_VERSION,
+    entry.candidate.findingRef,
+    entry.actionTargetKey,
+    trackingIntent,
+  ]);
   return Object.freeze({
+    focusTargetRef,
     focusQuestionRef: digestRef("focus_question", [
       COACH_AI_REVIEW_RENDERER_VERSION,
-      entry.candidate.findingRef,
-      entry.actionTargetKey,
+      focusTargetRef,
       renderedQuestion,
     ]),
     findingRef: entry.candidate.findingRef,
     actionTargetKey: entry.actionTargetKey,
+    trackingIntent,
     renderedQuestion,
   });
 }
@@ -837,15 +851,22 @@ export function buildCoachAiReviewRenderedPlanCatalog(input: Readonly<{
     const renderedQuestion = closedTradeCount.exactValue === "0"
       ? "With no closed trade evidence in this period, which part of your trading process should the next review assess?"
       : "Which completed trade best represents this period, and what specific decision most changed its final result?";
+    const focusTargetRef = digestRef("focus_target", [
+      COACH_AI_REVIEW_RENDERER_VERSION,
+      period.findingRef,
+      "period_review_question",
+      "examination",
+    ]);
     focusQuestions.push(Object.freeze({
+      focusTargetRef,
       focusQuestionRef: digestRef("focus_question", [
         COACH_AI_REVIEW_RENDERER_VERSION,
-        period.findingRef,
-        "period_review_question",
+        focusTargetRef,
         renderedQuestion,
       ]),
       findingRef: period.findingRef,
       actionTargetKey: "period_review_question",
+      trackingIntent: "examination",
       renderedQuestion,
     }));
   }

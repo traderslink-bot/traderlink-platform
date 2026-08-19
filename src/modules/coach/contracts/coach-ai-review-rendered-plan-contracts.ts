@@ -87,9 +87,11 @@ export type CoachAiReviewRenderedSectionPlan = Readonly<{
 }>;
 
 export type CoachAiReviewRenderedFocusQuestion = Readonly<{
+  focusTargetRef: string;
   focusQuestionRef: string;
   findingRef: string;
   actionTargetKey: string;
+  trackingIntent: "reduction" | "consistency" | "examination" | "strength_repetition";
   renderedQuestion: string;
 }>;
 

@@ -4437,6 +4437,19 @@ dispatch/recovery fencing, generation-contract migration, deterministic
 issuance/fallback, v2 compatibility hardening, captured-request execution and
 dual reads remain before this slice can be activated or provider-tested.
 
+Implementation continuation on 2026-08-19: compressed snapshot persistence,
+fenced dispatch/recovery, single-winner v3 issuance, exact/unknown usage
+settlement, deterministic fallback and mixed v2/v3 issued-review reads are now
+implemented but inactive. The mixed reader preserves every v2 narrative with
+an explicit `legacy_unavailable` focus-tracking state, validates every v3
+output/audit/snapshot digest and exposes only accepted v3 focus targets to the
+calculation source. Each v3 target now has a stable `focusTargetRef`, explicit
+tracking intent, baseline measurements, exact contributing source-version refs
+and an evidence boundary later than both the source market seal and issuance.
+Cutover verification/activation, follow-through candidate calculation, captured
+request execution and legacy adapter retirement still remain before provider
+testing.
+
 - Serialize the balanced insight brief ahead of permitted non-Analyzer source
   context, with long-term Analyzer aggregates and bounded representative
   excerpts instead of bulk raw one-minute/five-minute observations.

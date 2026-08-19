@@ -582,6 +582,59 @@ Help Center check: this remains inactive server-only work, so no guide update is
 required yet. The final activation boundary still owns the previously identified
 AI Reviews guide/privacy wording check.
 
+## Deterministic insight-engine implementation checkpoint 8 - 2026-08-19
+
+Mixed-generation review compatibility and immutable focus-target recovery are
+now implemented but remain disconnected from the active v2 request/runner path.
+No generation-contract transition or database migration was executed.
+
+Implemented in this checkpoint:
+
+- one unified account-scoped saved-review reader that works before the v3 tables
+  exist and, after migration, returns v2 and v3 reviews in one stable period/
+  issuance order without upgrading or rewriting either history;
+- collision and partial-schema integrity checks so one request cannot appear as
+  both generations and a partly installed insight schema cannot be treated as a
+  harmless absence;
+- strict v3 reopening through the immutable issued row, accepted selection
+  audit and compressed source snapshot, including canonical focus JSON plus
+  focus/output/source digest and selected-plan lineage checks;
+- explicit `legacy_unavailable` focus tracking on v2 rows, preserving their
+  visible narrative for a true mixed first month without inventing hidden
+  baseline metadata;
+- stable hidden v3 `focusTargetRef` values separate from the visible question,
+  with the server-owned intent to reduce, test consistency, examine or repeat a
+  strength persisted in the accepted audit;
+- v3 target recovery of the originating candidate family/subject, exact
+  baseline measurements, population/opportunity/affected members, source-
+  version refs, final source-market seal and issuance-time evidence boundary;
+  and
+- the monthly calculation source now loads all actually issued weekly/two-week
+  v2 and v3 reviews in the month, while only accepted v3 targets enter the
+  hidden follow-through source.
+
+Verification at this checkpoint:
+
+- focused ESLint passes for the seven changed compatibility, contract,
+  renderer, issuance and repository files;
+- a focused non-incremental TypeScript project excluding shared generated
+  `.next` state passes; and
+- no Vitest/test suite, migration execution, provider call, database write,
+  browser change, request issuance or saved-review mutation was performed.
+
+Still required before provider testing resumes:
+
+- implement exact later-evidence follow-through candidates and immutable
+  already-assessed member boundaries;
+- implement and inspect the one-way generation-contract cutover verifier;
+- connect the captured v3 coordinator and make the two free-prose v2 adapters
+  unreachable after activation; and
+- execute the permitted disposable migration/captured-request/recovery-race and
+  true four-week-plus-month acceptance gates.
+
+Help Center check: this is still inactive server-only compatibility work, so no
+guide update is required yet.
+
 The ninth-pass design retains the eighth pass's single-package/fallback and
 Railway boundaries while tightening the engine that decides what deserves to be
 shown. It now keeps Day and Swing populations explicit, attributes results and

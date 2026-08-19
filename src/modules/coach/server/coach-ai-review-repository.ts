@@ -345,7 +345,9 @@ function periodRequestRecordV2(row: PeriodRequestRowV2): CoachAiReviewPeriodRequ
   });
 }
 
-function representedEvidenceRefs(inputJson: string): readonly string[] {
+export function coachAiReviewRepresentedEvidenceRefs(
+  inputJson: string,
+): readonly string[] {
   const input = JSON.parse(inputJson) as CoachAiReviewInputV2;
   const refs = input.contractVersion === COACH_PERIODIC_AI_REVIEW_INPUT_CONTRACT_VERSION
     ? [
@@ -1607,7 +1609,7 @@ WHERE review.coach_ai_issued_review_id = ? AND request.user_id = ?
       periodStartDate: row.period_start_date,
       periodEndDate: row.period_end_date,
       output: parseOutputV2(row.review_kind, row.output_json),
-      representedEvidenceRefs: representedEvidenceRefs(row.input_json),
+      representedEvidenceRefs: coachAiReviewRepresentedEvidenceRefs(row.input_json),
       modelId: row.model_id,
       issuedAtUtc: row.issued_at_utc,
     });
@@ -1664,7 +1666,7 @@ LIMIT ?`).all(
         periodStartDate: row.period_start_date,
         periodEndDate: row.period_end_date,
         output: parseOutputV2(row.review_kind, row.output_json),
-        representedEvidenceRefs: representedEvidenceRefs(row.input_json),
+        representedEvidenceRefs: coachAiReviewRepresentedEvidenceRefs(row.input_json),
         modelId: row.model_id,
         issuedAtUtc: row.issued_at_utc,
       })));
