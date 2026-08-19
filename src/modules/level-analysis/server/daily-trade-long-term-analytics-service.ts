@@ -204,6 +204,14 @@ JOIN journal_round_trip_versions round_trip_version
   ON round_trip_version.round_trip_version_id = analysis.round_trip_version_id
 WHERE analysis.workspace_id = ? AND analysis.account_id = ?
   AND analysis.status = 'ready' AND version.status = 'ready'
+  AND EXISTS (
+    SELECT 1
+    FROM journal_round_trip_daily_trade_analysis_event_snapshots snapshot
+    JOIN level_analysis_market_session_candles candle
+      ON candle.market_session_set_version_id = version.market_session_set_version_id
+      AND candle.candle_time_utc_seconds = snapshot.candle_time_utc_seconds
+    WHERE snapshot.daily_trade_analysis_version_id = version.daily_trade_analysis_version_id
+  )
 ORDER BY round_trip_version.trade_currency`).all(scope.workspaceId, accountId);
   return Object.freeze(rows.map((row) => row.trade_currency));
 }
@@ -297,6 +305,14 @@ JOIN journal_round_trip_daily_trade_analysis_path_summaries summary
   AND summary.round_trip_version_id = analysis.round_trip_version_id
 WHERE analysis.workspace_id = ? AND analysis.account_id = ?
   AND analysis.status = 'ready' AND version.status = 'ready'
+  AND EXISTS (
+    SELECT 1
+    FROM journal_round_trip_daily_trade_analysis_event_snapshots snapshot
+    JOIN level_analysis_market_session_candles candle
+      ON candle.market_session_set_version_id = version.market_session_set_version_id
+      AND candle.candle_time_utc_seconds = snapshot.candle_time_utc_seconds
+    WHERE snapshot.daily_trade_analysis_version_id = version.daily_trade_analysis_version_id
+  )
 ORDER BY analysis.round_trip_id`).all(scope.workspaceId, accountId);
   const snapshots = database.prepare<[string], SnapshotRow>(`SELECT event_kind, snapshot_json
 FROM journal_round_trip_daily_trade_analysis_event_snapshots

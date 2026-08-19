@@ -407,7 +407,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "See the saved analyzed trades that support the current results.",
         keywords: ["analyzed trades", "supporting trades", "paid plan", "historical imports"],
         blocks: [
-          { kind: "paragraph", text: "The Analyzed trades card shows how many saved trade analyses support the results on the current page. Select it to inspect the exact trade replays behind the summaries." },
+          { kind: "paragraph", text: "The Analyzed trades card counts only current saved results with an execution snapshot linked to its saved market candle. Select it to inspect the exact trade replays behind the summaries." },
           { kind: "paragraph", text: "An active paid plan is required to create new analysis. Analysis completed while paid remains readable after cancellation." },
         ],
       },
@@ -418,8 +418,8 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: ["win rate", "average return", "average result", "analyzed executions"],
         blocks: [
           { kind: "table", columns: ["Card", "Meaning"], rows: [
-            ["Analyzed trades", "Eligible trades with a current saved Analyzer result in the selected range."],
-            ["Analyzed executions", "Saved buy and sell analysis snapshots across those trades."],
+            ["Analyzed trades", "Eligible trades with a current saved Analyzer result and an execution snapshot linked to its saved market candle in the selected range."],
+            ["Analyzed executions", "Saved buy and sell analysis snapshots from those candle-backed trades."],
             ["Win rate", "Percentage of analyzed trades with positive actual result."],
             ["Average return", "Mean percentage return across analyzed trades with a supported return denominator."],
             ["Average gross/net result", "Mean actual Trade Tracker result under the selected money basis."],
@@ -468,7 +468,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   {
     slug: "analyzed-trades",
     title: "Analyzed trades",
-    description: "Find every current saved trade analysis and open its exact Daily Trade Tracker review.",
+    description: "Find every current candle-backed trade analysis and open its exact Daily Trade Tracker review.",
     sections: [
       {
         id: "filters",

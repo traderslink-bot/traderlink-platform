@@ -4,6 +4,8 @@
 
 **Progress:** [Trade Analyzer Analysis Pages Progress](trade-analyzer-analysis-pages-progress.md)
 
+**Evidence population correction:** [Trade Analyzer Candle-backed Population Progress](trade-analyzer-candle-backed-population-progress.md)
+
 **Related plans:**
 
 - [Daily Trade Analyzer Long-Term Analytics Plan](daily-trade-analyzer-long-term-analytics-plan.md)
