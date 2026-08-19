@@ -24,7 +24,7 @@ export const COACH_AI_REVIEW_OPENAI_SELECTOR_ADAPTER_VERSION =
   "traderlink_coach_ai_review_openai_selector_v1" as const;
 export const COACH_AI_REVIEW_OPENAI_INVOCATION_MANIFEST_VERSION =
   "traderlink_coach_ai_review_openai_invocation_manifest_v1" as const;
-export const COACH_AI_REVIEW_OPENAI_PROVIDER_KEY = "openai_direct_v2" as const;
+export const COACH_AI_REVIEW_OPENAI_PROVIDER_KEY = "openai_direct" as const;
 export const COACH_AI_REVIEW_OPENAI_RESPONSES_BASE_URL =
   "https://api.openai.com/v1" as const;
 export const COACH_AI_REVIEW_OPENAI_RESPONSES_URL =
@@ -45,7 +45,7 @@ const CHOICE_KEYS = Object.freeze([
   "plan_6",
 ] as const);
 
-const SELECTION_SYSTEM_INSTRUCTION = `Choose the clearest and most useful complete review as a whole. Every choice is already calculated and fully written by TraderLink. Do not write, edit, combine, summarize, or recalculate any review text. Return only the strict selection object with the supplied package key and one authorized choice key.`;
+export const COACH_AI_REVIEW_SELECTION_SYSTEM_INSTRUCTION = `Choose the clearest and most useful complete review as a whole. Every choice is already calculated and fully written by TraderLink. Do not write, edit, combine, summarize, or recalculate any review text. Return only the strict selection object with the supplied package key and one authorized choice key.`;
 
 function invariant(condition: boolean, code: string): asserts condition {
   if (!condition) throw new CoachAiReviewInsightInvariantError(code);
@@ -156,7 +156,7 @@ export type CoachAiReviewOpenAiInvocationManifest = Readonly<{
 }>;
 
 export type CoachAiReviewOpenAiSelectionEnvelope = Readonly<{
-  system: typeof SELECTION_SYSTEM_INSTRUCTION;
+  system: typeof COACH_AI_REVIEW_SELECTION_SYSTEM_INSTRUCTION;
   prompt: string;
   maximumOutputTokens: typeof COACH_AI_REVIEW_PLAN_SELECTION_MAX_OUTPUT_TOKENS;
   selectionSchema: unknown;
@@ -183,7 +183,9 @@ export async function buildCoachAiReviewOpenAiSelectionEnvelope(input: Readonly<
   invariant(responseFormat?.type === "json" && responseFormat.schema !== undefined,
     "TRADERLINK_AI_REVIEW_SELECTOR_SCHEMA_UNAVAILABLE");
   const selectionSchemaDigest = digestCanonicalCoachAiReviewInsight(responseFormat.schema);
-  const instructionDigest = digestCanonicalCoachAiReviewInsight(SELECTION_SYSTEM_INSTRUCTION);
+  const instructionDigest = digestCanonicalCoachAiReviewInsight(
+    COACH_AI_REVIEW_SELECTION_SYSTEM_INSTRUCTION,
+  );
   const invocationManifest: CoachAiReviewOpenAiInvocationManifest =
     deepFreezeCoachAiReviewInsight({
       manifestVersion: COACH_AI_REVIEW_OPENAI_INVOCATION_MANIFEST_VERSION,
@@ -219,12 +221,12 @@ export async function buildCoachAiReviewOpenAiSelectionEnvelope(input: Readonly<
     });
   const invocationManifestDigest = digestCanonicalCoachAiReviewInsight(invocationManifest);
   const reservationText = canonicalCoachAiReviewInsightBytes(Object.freeze({
-    system: SELECTION_SYSTEM_INSTRUCTION,
+    system: COACH_AI_REVIEW_SELECTION_SYSTEM_INSTRUCTION,
     prompt: input.frozenPackage.canonicalProviderPackage,
     schema: responseFormat.schema,
   })).toString("utf8");
   return deepFreezeCoachAiReviewInsight({
-    system: SELECTION_SYSTEM_INSTRUCTION,
+    system: COACH_AI_REVIEW_SELECTION_SYSTEM_INSTRUCTION,
     prompt: input.frozenPackage.canonicalProviderPackage,
     maximumOutputTokens: COACH_AI_REVIEW_PLAN_SELECTION_MAX_OUTPUT_TOKENS,
     selectionSchema: responseFormat.schema,
@@ -262,6 +264,7 @@ export class CoachAiReviewOpenAiSelectionError extends Error {
 function createOneShotAuditedFetch(input: Readonly<{
   envelope: CoachAiReviewOpenAiSelectionEnvelope;
   underlyingFetch: typeof globalThis.fetch;
+  authorizeTransport: (audit: CoachAiReviewOpenAiTransportAudit) => Promise<void>;
 }>): Readonly<{
   fetch: typeof globalThis.fetch;
   audit: () => CoachAiReviewOpenAiTransportAudit;
@@ -337,6 +340,7 @@ function createOneShotAuditedFetch(input: Readonly<{
       requestBodyByteLength: bytes.byteLength,
       requestBodyDigestSha256: digestCanonicalCoachAiReviewInsight(parsed).digestSha256,
     });
+    await input.authorizeTransport(transportAudit);
     return input.underlyingFetch(resource, { ...init, redirect: "error" });
   };
   return Object.freeze({
@@ -365,13 +369,17 @@ export async function selectCoachAiReviewPlanWithOpenAi(input: Readonly<{
   apiKey: string;
   modelId: string;
   timeoutMs: number;
+  authorizeTransport: (audit: CoachAiReviewOpenAiTransportAudit) => Promise<void>;
   capturedTestFetch?: typeof globalThis.fetch;
 }>): Promise<CoachAiReviewOpenAiPlanSelectionGeneration> {
   invariant(input.apiKey.trim().length > 0, "TRADERLINK_AI_REVIEW_SELECTOR_API_KEY_MISSING");
+  invariant(typeof input.authorizeTransport === "function",
+    "TRADERLINK_AI_REVIEW_SELECTOR_TRANSPORT_AUTHORITY_MISSING");
   const envelope = await buildCoachAiReviewOpenAiSelectionEnvelope(input);
   const auditedTransport = createOneShotAuditedFetch({
     envelope,
     underlyingFetch: input.capturedTestFetch ?? globalThis.fetch,
+    authorizeTransport: input.authorizeTransport,
   });
   const openai = createOpenAI({
     apiKey: input.apiKey.trim(),

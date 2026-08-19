@@ -431,6 +431,81 @@ Help Center check: this checkpoint is inactive server-only work, so no guide
 update is required yet. The already identified owner-approved AI Reviews guide
 change remains part of the final activation boundary.
 
+## Deterministic insight-engine implementation checkpoint 6 - 2026-08-19
+
+The immutable snapshot and provider-dispatch persistence foundation is now
+implemented but remains unexecuted and disconnected from the active v2 review
+services. No migration, generation-contract transition or local database write
+has occurred.
+
+Implemented in this checkpoint:
+
+- additive generation-contract ownership for existing requests and attempts,
+  with historical/pre-cutover rows remaining v2 and a singleton guard that
+  rejects an omitted old-writer v2 value after verified v3 activation;
+- new account-scoped snapshot, dispatch, v3 issued-review and selection-audit
+  tables plus database-wide generation-contract and recovery-epoch singletons;
+- one-way activation guards, feature re-enable fencing, cross-generation
+  request/attempt/output rejection, immutable snapshot/output/audit rows and
+  tightly enumerated dispatch lease/transport/settlement transitions;
+- an atomic v3 request-and-snapshot insert primitive that returns an existing
+  v2 period identity unchanged, discards a losing concurrent calculation and
+  preserves periodic carry-consumption ownership;
+- a single canonical compressed snapshot artifact containing the complete
+  prompt-safe calculation source, candidates, shortlist, catalog, fully
+  rendered plans, exact provider bytes, private choice map, strict schema,
+  system instruction and invocation manifest without duplicating the large
+  provider package as a second raw text column;
+- bounded decompression using the recorded exact output length, followed by
+  compressed/uncompressed length, SHA-256, canonical-JSON and trailing-byte
+  verification before any snapshot is trusted;
+- request/snapshot metadata reconciliation on every read, including source,
+  candidate, shortlist, catalog, package, invocation, model, default-plan and
+  historical v2 input/evidence digests;
+- random dispatch fencing tokens retained only by the active worker, monotonic
+  lease generations, a persisted pre-network transport authorization callback
+  and one-provider-call-per-request enforcement after any transport crossing;
+- exclusive startup recovery that rotates the database epoch, permanently
+  fences copied workers, classifies pre-transport work as no usage and
+  post-transport work as unknown usage without inventing a receipt; and
+- exact receipt-overrun fields and a persistent provider-call block boundary so
+  later issuance can retain factual usage/cost instead of clipping an overrun
+  to its reservation.
+
+Implementation QA corrections in this checkpoint:
+
+- the migration drops the former v2-only request-issued trigger before adding
+  the v2/v3 generation-aware replacement;
+- accepted provider selection requires a settled dispatch, exact receipt and
+  provider response identity; deterministic issuance requires no fabricated
+  attempt, dispatch, provider or receipt;
+- selection audits reconcile their source/shortlist/catalog/output digests to
+  the immutable snapshot and issued row; and
+- the provider selector cannot reach its underlying fetch until the caller has
+  committed the exact outbound request digest and byte count to the current
+  dispatch fence.
+
+Verification at this checkpoint:
+
+- focused ESLint passes for the new storage, codec, snapshot, dispatch,
+  recovery, migration and provider-selector files;
+- a focused non-incremental TypeScript project excluding shared generated
+  `.next` state passes; and
+- no Vitest/test suite, migration execution, provider call, database write,
+  browser change, request issuance or saved-review mutation was performed.
+
+Still required before provider testing resumes:
+
+- implement the one-winner v3 issuance transaction, exact receipt/overrun
+  accounting, rejected-selection audit and deterministic-default fallback;
+- finish the verified activation/read-compatibility path and dual v2/v3 saved
+  review reads;
+- harden or make unreachable both legacy free-prose v2 provider adapters; and
+- execute the permitted migration/captured-request/true-month acceptance gates.
+
+Help Center check: this is still inactive server-only work, so no guide update
+is required yet.
+
 The ninth-pass design retains the eighth pass's single-package/fallback and
 Railway boundaries while tightening the engine that decides what deserves to be
 shown. It now keeps Day and Swing populations explicit, attributes results and

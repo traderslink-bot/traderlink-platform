@@ -688,8 +688,9 @@ function assertOutputBounds(
   for (const value of [output.whatImproved, output.whatHeldYouBack, output.focusFollowThrough]) {
     invariant(value.length <= limits.section, "TRADERLINK_AI_REVIEW_RENDER_SECTION_TOO_LONG");
   }
-  invariant(output.nextPeriodFocuses.length <= 3 && output.nextPeriodFocuses.every((focus) =>
-    focus.length <= limits.focus), "TRADERLINK_AI_REVIEW_RENDER_FOCUS_TOO_LONG");
+  invariant(output.nextPeriodFocuses.length >= 1 && output.nextPeriodFocuses.length <= 3 &&
+    output.nextPeriodFocuses.every((focus) => focus.length <= limits.focus),
+  "TRADERLINK_AI_REVIEW_RENDER_FOCUS_TOO_LONG");
   invariant((output.incompleteRecord?.length ?? 0) <= limits.incomplete,
     "TRADERLINK_AI_REVIEW_RENDER_INCOMPLETE_TOO_LONG");
   assertCoachAiReviewOutputSafe({
@@ -828,6 +829,25 @@ export function buildCoachAiReviewRenderedPlanCatalog(input: Readonly<{
     const question = focusQuestion(entry);
     if (question) focusQuestions.push(question);
     if (focusQuestions.length >= 3) break;
+  }
+  if (focusQuestions.length === 0) {
+    const closedTradeCount = measurement(period, "closed_trade_count");
+    invariant(closedTradeCount !== null && closedTradeCount.exactValue !== null,
+      "TRADERLINK_AI_REVIEW_FOCUS_PERIOD_COUNT_MISSING");
+    const renderedQuestion = closedTradeCount.exactValue === "0"
+      ? "With no closed trade evidence in this period, which part of your trading process should the next review assess?"
+      : "Which completed trade best represents this period, and what specific decision most changed its final result?";
+    focusQuestions.push(Object.freeze({
+      focusQuestionRef: digestRef("focus_question", [
+        COACH_AI_REVIEW_RENDERER_VERSION,
+        period.findingRef,
+        "period_review_question",
+        renderedQuestion,
+      ]),
+      findingRef: period.findingRef,
+      actionTargetKey: "period_review_question",
+      renderedQuestion,
+    }));
   }
   const limitation = incompleteRecord(input.source);
   const completePlans: CoachAiReviewCompletePlan[] = [];

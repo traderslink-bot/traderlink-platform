@@ -5,12 +5,12 @@
 Design and twelve implementation-readiness QA passes are complete under the
 owner's delegated product authority on 2026-08-18. The RSI correctness
 prerequisite is implemented with verification pending. Insight-engine
-implementation is now underway: the first server-only foundation checkpoint
-adds the versioned evidence contracts, exact outcome/rule measurements, typed
-rule/evaluator normalization, event-bounded day-rule membership, compatible
-outcome comparison, behavior/rate-trend candidate primitives, lane scoring,
-overlap/diversity shortlist primitives and an unexecuted deterministic verifier
-harness. It is not connected to request issuance or OpenAI yet. The owner does
+implementation is now underway. Six inactive server-only checkpoints now cover
+versioned evidence contracts, exact measurements, normalized candidates,
+lane ranking, shortlist stability, factual rendering, whole-plan selection,
+compressed immutable snapshot persistence and fenced dispatch/startup recovery
+primitives. They are not connected to customer request issuance or activated
+provider generation yet. The owner does
 not need to approve individual formulas or weight calculations, but
 the completed engine and its generated reviews remain subject to owner
 product-quality review.
@@ -2417,11 +2417,15 @@ The existing request table name remains
 `coach_ai_review_period_requests_v2`, but its current
 `input_contract_version` permits only the existing v2 input contracts and does
 not tell a worker which generation/output path owns the request. The forward
-migration therefore rebuilds that table and
-`coach_ai_review_generation_attempts_v2` with required, immutable
-`generation_contract_version` columns that have no insert default. Existing
-rows are backfilled as `openai_direct_v2`; new insight requests and attempts use
-`insight_selection_v3`. The historical input contract may remain v2 because
+migration adds required, immutable `generation_contract_version` columns to
+that table and `coach_ai_review_generation_attempts_v2`. Existing rows and
+pre-cutover v2 writers receive the compatibility default `openai_direct_v2`;
+new insight requests and attempts explicitly use `insight_selection_v3`. This
+additive implementation preserves the existing foreign-key graph and
+byte-identical v2 rows without a destructive table rebuild. The singleton-
+scoped insert guard accepts that default only while v2 is active, so an old
+binary that omits the column fails immediately after v3 activation instead of
+creating new v2 work. The historical input contract may remain v2 because
 the new private insight snapshot carries the additional normalized calculation
 source, but generation ownership is never inferred merely from snapshot
 presence or current code.
@@ -2440,8 +2444,9 @@ Rebuilt scope/transition triggers enforce all of the following:
 - a v3 request can create only a v3 attempt/dispatch and exactly one v3 issued
   row;
 - neither output family can be attached to the other generation contract;
-- an old binary that omits the required no-default contract column fails before
-  it can create a request or attempt; and
+- an old binary that omits the contract column receives the compatibility v2
+  value and fails the singleton insert guard before it can create a request or
+  attempt after v3 activation; and
 - one account/period identity still owns one immutable request. If that identity
   already exists as v2—pending, issued, failed or stopped—request creation
   returns it unchanged and never grafts on a v3 snapshot or upgrades history.
@@ -2819,9 +2824,9 @@ implementation time because concurrent platform work may claim an earlier
 number. The migration manifest, initialization digest, administration counts
 and backup/restore verification must include all six new tables. Account-
 erasure ordering includes the four scoped tables but never deletes the database-
-wide singletons. The same migration's request/attempt table rebuilds
-must preserve every existing row and JSON byte, foreign key, unique identity,
-index and immutable transition trigger; backfill counts/digests and
+wide singletons. The same migration's additive request/attempt contract
+backfill must preserve every existing row and JSON byte, foreign key, unique
+identity, index and immutable transition trigger; backfill counts/digests and
 `PRAGMA foreign_key_check` must reconcile independently before activation.
 
 ## Provider selection contract
@@ -3608,9 +3613,10 @@ In addition to the 420-trade acceptance fixture, cover:
 - a planted pending v2 request/attempt/reservation or billable attempt without
   reconciled receipt/no-usage evidence at the cutover gate, each blocking
   activation rather than being silently upgraded;
-- an old-writer request/attempt insert that omits the required no-default
-  generation contract, a v2 attempt against a v3 request and each crossed v2/v3
-  output insertion, all rejected before a provider call or issuance;
+- an old-writer request/attempt insert that omits the contract field after
+  activation, receives the compatibility v2 value and fails the singleton
+  guard; a v2 attempt against a v3 request and each crossed v2/v3 output
+  insertion are also rejected before a provider call or issuance;
 - an existing v2 account/period identity requested after activation, proving it
   is returned unchanged without a v3 snapshot, second request or history
   upgrade;
