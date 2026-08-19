@@ -24,6 +24,10 @@ delegated the full deterministic redesign recorded in the
   issued review. A focus first saved in the reviewed period is not follow-through.
 - Next-period focuses must be distinct, retrospective review questions; they
   cannot repeat generic instructions to compare a trade with its plan.
+- Missing/not-reviewed rules and absence of a recorded break are not positive
+  process evidence.
+- Review P/L is explicitly the result of trades closed in the period; confirmed
+  positions still open at period end are counted without guessed unrealized P/L.
 
 ## Progress
 
@@ -99,6 +103,12 @@ four actually issued weekly reviews plus all 420 exact-month trades.
   financial inflation, non-separated cohort outcomes, latest-week reversals,
   one-sided examples, historical-prose selection influence, loose openings and
   next-focus priorities disconnected from the main held-back finding.
+- [x] Complete the eleventh adversarial QA pass against inactive rule
+  opportunities, lost preset trigger/violation evidence, sparse-review strength
+  praise, structurally incomparable consequence cohorts, conflicting rate/
+  median results, unavailable exposure normalization, one-day recency reversal,
+  ignored exceptional context, repeated-focus starvation and closed-trade
+  results that omit the period-end open-position boundary.
 - [x] Implement corrected Wilder RSI 14 calculation and version new saved RSI
   evidence without rewriting legacy Analyzer snapshots.
 - [ ] Run the focused RSI reference-vector and compatibility checks at the next
@@ -133,9 +143,25 @@ reach OpenAI. The visible review opens with the exact result, and its first
 next-period question addresses the selected actionable held-back issue when one
 exists.
 
+The eleventh-pass design now reconstructs exact rule active intervals and
+retains preset trigger-versus-violation evidence before ranking. It cannot call
+sparse `no break recorded` evidence clean execution, compare unlike cohorts as
+though rule status explained the outcome, or let one high-volume date reverse a
+monthly trend. Trader notes qualify the objective finding without becoming an
+inferred excuse or motive; unchanged focus evidence cannot be reassessed again;
+paused/retired rules cannot create a future target. The opening is explicitly a
+closed-trade result, with the exact confirmed period-end open-position count and
+no invented unrealized P/L in the single coverage sentence.
+
 Help Center check: the active Daily Trade Tracker and Trade Analyzer guides
 describe indicators generally but do not state an RSI formula or legacy-value
 promise, so this correctness change does not require a guide update.
+
+The eleventh-pass review meaning does require a later owner-approved AI Reviews
+guide correction when implemented: it must explain closed-trade P/L, the
+period-end open-position/no-unrealized-P/L boundary and the difference between a
+recorded rule status and exact preset violation-event evidence. No Help copy was
+changed during this documentation-only QA pass.
 
 Once the insight engine is active, TraderLink calculates and renders the
 complete review locally from all exact facts. If the full frozen selection

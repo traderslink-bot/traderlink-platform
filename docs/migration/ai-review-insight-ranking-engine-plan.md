@@ -2,7 +2,7 @@
 
 ## Status
 
-Design and ten implementation-readiness QA passes complete under the owner's
+Design and eleven implementation-readiness QA passes complete under the owner's
 delegated product authority on 2026-08-18. The RSI correctness prerequisite is
 implemented with verification pending; the insight engine itself has not
 started. The owner does not need to approve individual formulas or weight
@@ -46,7 +46,8 @@ process problems.
 
 A useful review must answer four different questions:
 
-- What happened financially during the period?
+- What happened financially among trades closed during the period, and were
+  confirmed positions still open at the boundary?
 - What behavior or result improved?
 - What specific pattern most held the trader back?
 - What happened after an earlier review asked the trader to examine something?
@@ -101,6 +102,8 @@ also produce the same section plans, complete review plans and visible bytes.
 The current v2 review input remains the factual source for:
 
 - closed-trade P/L;
+- factually reconstructable positions still open at the period end, as a count
+  and coverage boundary only; no unrealized P/L is invented;
 - trading dates and exact review periods;
 - named trade and day rule outcomes;
 - tags;
@@ -115,6 +118,14 @@ frozen because the v2 review projection does not currently carry them:
 - the trader-declared trade-style plan and revision for each round trip
   (`day_trade`, `swing`, `other` or unavailable/unclassified); and
 - exact dated Swing notes and next-session plans linked to the same position.
+
+The v2 projection also reduces rule evidence to title/statement/category plus a
+recorded status. The engine source must additionally join the exact rule
+lifecycle/effective intervals and, for deterministic preset rules, the existing
+trigger/violation evidence events when they are identity-linked to the same rule
+version and reviewed target. These facts are necessary to know whether a rule
+was actually active and which event—if any—was the violation. They remain
+prompt-safe bounded evidence, not a second rule authority.
 
 Trade style is never inferred from duration, timestamps, overnight holding,
 Analyzer availability, tracker route or note wording. A missing, unclassified
@@ -172,6 +183,19 @@ support a specific example, but it cannot create a recurring pattern, assign a
 motive or increase a candidate's financial/repetition rank. Future structured
 plan fields would require a separate accepted contract.
 
+Notes can nevertheless prevent the review from erasing trader-recorded context.
+A selected rule/behavior candidate with a non-empty note on an affected
+representative observation freezes `contextQualification = present`. Its
+section plan uses the objective `marked followed/broken` or `coincided with`
+clause and may include one exact safe `you noted` excerpt from that same
+observation. The deterministic default prefers the context-qualified clause;
+provider alternatives may select another already-qualified representative but
+cannot remove the status, reinterpret the note or call the behavior irrational.
+If no safe excerpt fits, the review does not claim an exception or explanation.
+Unstructured context never changes measurements or score, but a rule break with
+context is not rewritten as a motive, discipline failure or automatically bad
+decision.
+
 Trader-authored notes, custom rule titles and tags are untrusted evidence data,
 not provider instructions. The serializer places them in clearly delimited
 fields and tells the provider not to follow commands found inside them. Text
@@ -184,7 +208,9 @@ The provider projection is deliberately smaller than the private calculation
 source. `Every permitted exact-month provider field` means every field in the
 versioned AI Review provider allowlist, not every row or object held by
 TraderLink. The prompt-safe projection may contain the accepted review-period
-trade facts, dated rule outcomes, prompt-safe trade style, tags, saved daily/
+closed-trade facts, the period-end confirmed-open-position count/coverage state,
+dated rule outcomes with bounded prompt-safe preset evidence, prompt-safe trade
+style, tags, saved daily/
 trade/rule/Swing note and reflection text, deterministic Analyzer aggregates,
 bounded representative Analyzer excerpts, coverage state and same-account
 issued-review context already authorized by this plan.
@@ -204,6 +230,13 @@ candidate's server-owned clauses. Raw candles, unused indicator fields and
 unselected trades' one-minute/five-minute observations are excluded. The
 provider projection is complete for this narrower schema; that intentional
 boundary is not runtime truncation or evidence loss.
+
+A selected preset event projection contains only `trigger` or `violation`, the
+prompt-safe affected trade reference, permitted market timestamp, and exact
+before/after/threshold values used by an authorized claim. Raw rule/round-trip
+IDs, evaluator limitation/internal text and unrelated evidence events remain
+local. Status-only rules project no fabricated event object.
+
 It must never contain raw statement/source rows or files, broker-account values,
 private Platform/Journal UUIDs, identity fingerprints, email/Discord/payment
 identity, Data Decisions records or internal issue text, attachment/screenshot
@@ -234,8 +267,10 @@ visible disclosure is a separately owner-reviewed copy change.
 All facts used by one request must come from one account-scoped, transactionally
 consistent SQLite read snapshot. The snapshot builder opens a read transaction,
 loads the exact-period Journal facts, rule definitions and outcomes, trade-
-style plans/revisions, daily/trade/rule/Swing note revisions, Analyzer evidence,
-coverage state, issued-review metadata and accepted hidden focus metadata, and
+style plans/revisions, rule lifecycle and preset trigger/violation evidence,
+daily/trade/rule/Swing note revisions, Analyzer evidence, the reconstructable
+period-end open-position boundary, coverage state, issued-review metadata and
+accepted hidden focus metadata, and
 then copies the normalized immutable source before closing the transaction. It
 cannot perform a sequence of unrelated live reads that could combine an old
 note/style with a new rule result or a revised Analyzer record.
@@ -258,7 +293,12 @@ not only a title:
 - template key when one exists;
 - review scope;
 - custom category;
-- whether the rule was saved as a focus.
+- whether the rule was saved as a focus;
+- effective-from/effective-until timestamps and exact active/paused intervals;
+- lifecycle state at the reviewed opportunity and immutable source-snapshot
+  timestamp; and
+- preset-evidence availability plus identity-linked trigger and violation
+  events when the deterministic evaluator supplies them.
 
 These fields let the engine distinguish a preset risk rule from an unrelated
 custom review rule and detect a rule definition that changed mid-period.
@@ -290,6 +330,33 @@ claiming the trader intended a Day trade.
 If a rule changes materially during a month, trend calculations split at the
 version boundary. The engine must not claim improvement across two different
 thresholds or statements merely because they share a stable rule identity.
+
+A `rule_review_opportunity` exists only while that exact rule version is
+effective and active for the reviewed target. Paused, not-yet-active, expired or
+retired intervals are not `not_reviewed` opportunities. A recorded review that
+cannot reconcile with lifecycle/version identity makes that rule family
+unavailable for the affected target while unrelated findings continue. It never
+silently expands the denominator or fails the entire review into a data-quality
+response.
+
+Applicability reuses the Journal rule evaluator's exact target/timestamp logic;
+the AI engine does not invent a day-level shortcut for a trade-timed rule or
+assume that any active minute makes a whole trading day applicable.
+
+For preset threshold rules, the triggering trade is not automatically the
+violation. Only an identity-linked evaluator event with `kind = violation` can
+support execution-specific wording. A status-only custom/manual review may say
+that the trader recorded the rule as followed or broken, but cannot name the
+execution or threshold-crossing moment that caused it. If recorded status and
+current reconstructable preset evidence conflict, neither silently overrides
+the other; execution-specific rule interpretation is unavailable and the
+conflict remains a bounded local limitation.
+
+The trader's recorded followed/broken status remains the rule-rate fact when
+its identity and active opportunity reconcile. Preset evidence adds trigger/
+violation specificity only; it does not silently recategorize that status. A
+status/evaluator conflict lowers structured-source consistency and forces
+status-only language.
 
 ### Prompt-safe evidence references
 
@@ -367,19 +434,25 @@ The engine builds the following indexes in one bounded pass:
 - day records by calendar-week bucket;
 - trades by trader-declared style and style-coverage state;
 - trades and days by rule subject and rule version;
+- reviewed rule opportunities by exact active interval, plus preset trigger and
+  violation evidence state;
 - trades by exact tag, ticker, session and historical direction;
 - trades by fixed Eastern entry-time, holding-duration and weekday buckets;
 - trades by Analyzer availability and green-to-red state;
 - trades by presence of entry, add, partial-exit and final-exit events;
 - issued focuses by source review and source-period end date;
 - eligible later evidence dates for each issued focus;
+- prior follow-through assessments and evidence boundaries for each issued
+  focus;
 - exact positive, negative and flat P/L populations;
 - exact family-declared opportunity populations as well as affected and full-
   period prevalence populations;
 - exact Analyzer-covered populations for every Analyzer-derived rate;
 - fixed covered-versus-uncovered balance strata for optional Analyzer and rule-
-  review evidence; and
-- exact dated Swing notes by linked position/trade and note revision.
+  review evidence;
+- exact dated Swing notes by linked position/trade and note revision; and
+- factually confirmed positions open at the period end, without mark-to-market
+  or unrealized-P/L values.
 
 All monetary calculations use exact decimal strings. Missing money values are
 excluded from monetary denominators but can remain in count-only candidates.
@@ -562,6 +635,11 @@ coverage
 coverageBalance
 latestState
 consequenceVerdict
+comparisonComparability
+contextQualification
+futureTrackability
+priorAssessmentRef
+newLaterEvidenceRefs[]
 scores
 adjustments[]
 penalties[]
@@ -616,16 +694,32 @@ Always calculate when the necessary facts exist:
 - profit factor from those net-trade outcome populations when its denominator
   exists;
 - largest-winner and largest-loser contribution;
-- result excluding the largest winner or loser.
+- result excluding the largest winner or loser;
+- factually confirmed position count still open at the period-end boundary; and
+- exact availability of unrealized P/L, which is unavailable in version one and
+  is never treated as zero.
 
 This family supplies the opening result but is not by itself evidence of good
 or bad process. Its period membership uses authoritative close market dates and
 does not imply that every entry, add or exit decision occurred in the period.
+The renderer says `closed-trade net P/L` or `across trades closed in this
+period`, never that the whole account gained/lost that amount. When at least one
+factually confirmed position remained open at period end, `incompleteRecord`
+states the count and that unrealized P/L is not included; it does not expose the
+positions or guess their value.
+
+Period-end open state is reconstructed from the current canonical accepted
+execution ledger truncated at the exact period boundary. It is not read from a
+round trip's present-day open/closed flag, because a position open on month-end
+may close before the review is generated or retried. Corrections available when
+the immutable source is frozen follow the normal canonical-lineage rules; later
+edits never rewrite an issued count.
 
 ### 2. Named rule association
 
 For every unchanged named rule and valid scope:
 
+- exact active-opportunity count after effective/paused/retired intervals;
 - followed, broken and not-reviewed counts;
 - followed and broken rates among reviewed outcomes;
 - broken prevalence among every applicable opportunity, kept distinct from the
@@ -639,7 +733,9 @@ For every unchanged named rule and valid scope:
 - broken-cohort share of the period's total losing-trade P/L;
 - total winning-trade P/L inside the broken cohort;
 - week-by-week counts, rates and associated P/L;
-- up to three representative affected trades or days.
+- up to three representative affected trades or days; and
+- for preset rules only, exact trigger/violation event counts and references
+  when the same-version evaluator evidence is available.
 
 Day-rule P/L uses the exact day's included closed-trade P/L. Trade-rule P/L
 uses only the affected trade. Day and trade findings remain separate and are
@@ -647,6 +743,12 @@ never added together.
 
 A trade can appear in several rule cohorts. Overlapping loss shares are never
 summed as if they were independent damage.
+
+Rule-level prose reflects the evidence tier. `status_only` supports `you marked
+this rule broken on 4 reviewed opportunities`. `preset_violation_event` may also
+name the exact violating trade/time and distinguish it from the trigger.
+Missing evaluator events, a custom rule, or a lifecycle/status conflict can
+never fall through to an invented execution-level explanation.
 
 ### 3. Rule adherence improvement or deterioration
 
@@ -938,8 +1040,9 @@ homogeneous.
 
 Search deliberately for:
 
-- profitable trades with no broken reviewed trade rules;
-- losses where all reviewed process rules were followed;
+- profitable trades that followed one exact repeated named process rule;
+- losses where every rule required for the claimed process set was reviewed and
+  followed;
 - trades that followed entry, risk and exit rules together;
 - controlled favorable-move giveback;
 - effective stop response;
@@ -950,6 +1053,20 @@ Search deliberately for:
 
 The engine distinguishes a repeatable strength from a single example. A losing
 trade may support positive process when its rules and execution evidence do.
+
+Absence of a recorded break is not positive process evidence. A `clean
+execution` or `all relevant rules followed` claim freezes the exact applicable
+entry/risk/exit rule set and requires every member to have a followed result for
+every required rule; `not_reviewed`, inactive, unavailable and missing outcomes
+do not count as followed. A narrower strength may truthfully say one named rule
+was followed repeatedly without claiming the rest of the process was clean.
+Profitable outcome plus sparse rule review remains an outcome/example, not a
+process strength.
+
+The required rule set comes only from preset template keys/scopes or a future
+accepted structured process-set mapping. The engine cannot decide that a custom
+title belongs to entry, risk or exit by reading its words. Without a complete
+structured set, only the one-rule strength form is eligible.
 
 ### 13. Result/process contrasts
 
@@ -976,6 +1093,8 @@ Every newly generated weekly focus must carry hidden tracking metadata:
 - originating finding family and subject reference;
 - later metrics capable of evaluating it;
 - baseline values and exact eligible-later-evidence timestamp;
+- most recent review that already assessed this focus, its evidence boundary and
+  exact later members used; and
 - whether the focus concerns reduction, consistency, examination or strength
   repetition.
 
@@ -1014,6 +1133,19 @@ issuance-day aggregate would mix pre- and post-focus activity. A delayed review
 therefore cannot claim follow-through from trades that occurred before the
 trader received its focus. The candidate records the exact later weeks,
 denominators, measurements and contradictory evidence behind the verdict.
+
+A focus already assessed in an issued review is not measurable again from the
+same later members. It becomes eligible only after at least one new independent
+later bucket/market date enters its declared metric and the incremental members
+pass that family's normal minimum, or a new material outlier changes the
+verdict. The candidate stores cumulative-since-focus and incremental-since-last-
+assessment populations separately; visible wording identifies which comparison
+it uses. An unassessed measurable focus is preferred over an already-assessed
+focus within 10 lane points. The same focus may repeat in consecutive reviews
+only when new evidence causes a material verdict change/worsening or no
+unassessed measurable focus exists within that range. This prevents the oldest
+focus from winning every monthly review merely because it has the longest
+evidence span.
 
 ## Evidence gates
 
@@ -1155,13 +1287,21 @@ An early-versus-later average also cannot hide the trader's current state. The
 candidate freezes the last sufficiently populated bucket and the immediately
 preceding comparable bucket. A rate improvement becomes
 `improved_then_recently_regressed` rather than clean improvement when the latest
-bucket has at least five eligible observations, moves adversely by at least 10
-percentage points and erases at least half of the earlier-to-later gain. A
+bucket has at least five eligible observations across at least two independent
+market dates, moves adversely by at least 10 percentage points and erases at
+least half of the earlier-to-later gain. Day-unit metrics require at least two
+eligible days. A
 money/path improvement uses the same verdict when the latest median moves
 adversely by at least 20% and erases at least half of the gain. The section
 states both the earlier improvement and the latest reversal. A sparse partial
-bucket that fails the population minimum is shown as preliminary evidence and
+bucket that fails either population or independent-date minimum is shown as
+preliminary evidence and
 cannot by itself reverse or confirm the monthly verdict.
+
+One high-volume market date therefore cannot reverse a monthly trend verdict
+merely by containing many trades or events. It may appear as a material recent
+outlier with its exact date and impact, but recurrence and latest-state language
+remain separate.
 
 The relative money/path branch is unavailable when its comparison median is
 zero; it cannot manufacture an infinite reversal. A valid fixed absolute path
@@ -1224,6 +1364,12 @@ calendar-week buckets for a two-week or monthly review. One trade can be a
 strength example when its process evidence is unusually clear, but the review
 must not generalize it to the period.
 
+Rule-based strength additionally requires either one exact named followed rule
+as its bounded subject or complete review coverage for the family-declared
+multi-rule process set. `No broken rules found` is not an eligible strength
+template. Analyzer-only strength still requires its own ready-evidence and
+coverage gates rather than borrowing missing rule coverage.
+
 ## Exact measurements
 
 All divisions expose the exact numerator and denominator and use the accepted
@@ -1241,6 +1387,8 @@ Key definitions:
 - **Win rate:** positive-P/L trades divided by every included trade with a
   non-null P/L, including flat trades in the denominator, matching the current
   v2 input calculation.
+- **Loss rate:** negative-P/L trades divided by every included trade with a
+  non-null P/L, also including flat trades in the denominator.
 - **Loss share:** absolute negative P/L inside a cohort divided by the period's
   total losing-trade P/L.
 - **Profit share:** positive P/L inside a cohort divided by the period's total
@@ -1334,8 +1482,9 @@ pass.
 
 This remains descriptive, not causal. A behavioral candidate receives its full
 scale-guarded financial score only for the polarity-aligned worse/better
-associated verdict, half of that score when the comparison is unavailable, and
-zero when outcomes are not separated or run opposite to the candidate; its
+associated verdict after the comparability gate, half of that score when the
+comparison is unavailable, and zero when outcomes are not separated, mixed,
+composition-confounded or run opposite to the candidate; its
 repeated process/rule evidence and exact cohort P/L remain visible. Explicit
 loss/profit concentration and material-outlier families are
 exempt because their stated subject is the composition of results, not a claim
@@ -1347,6 +1496,43 @@ not be called money the trader could certainly have captured. The provider
 brief labels every financial measurement as period result, cohort association
 or Analyzer path measurement, and server validation rejects incompatible
 causal/counterfactual wording.
+
+### Consequence-comparison comparability
+
+A broken-versus-followed or affected-versus-remainder comparison is not valid
+merely because both sides contain trades. Before assigning the consequence
+verdict, version one applies fixed pre-result structural strata: exact rule
+version/scope, trader-declared style where applicable, historical direction and
+calendar-week bucket. Day-rule comparisons use rule version/scope and calendar
+week at the day observation unit. It never searches tags, tickers or new
+intersections after seeing results.
+
+A stratum is material under the same pooled-20% and 15-percentage-point share-
+shift thresholds used by improvement mix sensitivity. The engine recalculates
+loss/win rates and eligible median direction under pooled stratum weights. If
+the standardized direction reverses, the verdict is `composition_confounded`
+and supplies no financial-consequence rank. If direction remains but magnitude
+changes by more than 50%, confidence is reduced and both raw/standardized values
+remain auditable.
+
+Only strata represented on both comparison sides enter standardization. If no
+common material population remains or either standardized side fails its family
+minimum, consequence comparison is unavailable rather than extrapolated across
+disjoint styles, directions or weeks.
+
+When both rate and median-P/L branches are available, a material direction
+conflict produces `mixed_outcome_separation`, not the more favorable branch. If
+one is neutral and the other qualifies, the qualifying branch may control. A
+dollar-median comparison also records median absolute P/L on both sides. When
+their ratio is above 2 or below 0.5 and no exact comparable risk/notional/size
+fact exists, the dollar branch is `exposure_scale_unavailable`; a valid loss/
+win-rate or Analyzer-path branch may still qualify. The review can always show
+exact cohort dollars, but it cannot call the result risk-adjusted, size-
+normalized, return-on-capital or measured in R without those source facts.
+
+If exactly one median absolute P/L is zero, the scale ratio is treated as
+unbounded and the dollar branch is unavailable. If both are zero, the dollar
+branch is neutral rather than comparable evidence.
 
 ## Scoring dimensions
 
@@ -1756,8 +1942,9 @@ The brief includes lane rank and a `requiredConsideration` tier:
 - a genuine strength must appear in the opening or improvement section when a
   high-confidence strength exists; placing it only in a future focus does not
   count as recognizing it;
-- follow-through must use the highest-ranked measurable earlier focus unless a
-  higher-confidence later focus covers materially more evidence.
+- follow-through removes candidates with no new evidence since their last
+  assessment, then uses the highest-ranked candidate while applying the exact
+  within-10-point unassessed-focus preference and consecutive-repeat exception.
 
 Raw notes and compact evidence remain available after the brief for context,
 but the model is not asked to recalculate the ranked measurements.
@@ -1876,6 +2063,12 @@ covered subsets, such as `among 4 of 6 affected trades`, but cannot repeat the
 generic record limitation in another section. A versioned `coverageJobKey`
 participates in global nonduplication so the limitation is rendered exactly
 once without suppressing necessary local denominator language.
+
+Confirmed positions open at period end use the same job: the sentence states
+that the displayed result is from closed trades and excludes unrealized P/L on
+the exact open-position count. When Analyzer/rule/money limitations also exist,
+the renderer combines the bounded clauses into that one ordered sentence rather
+than omitting the open-position boundary or creating multiple generic warnings.
 
 ### Renderer and visible-output boundaries
 
@@ -2549,6 +2742,14 @@ question names the exact observable situation and what the later review will
 count or compare. A question such as `review your exits` or `compare the trade
 with your plan` is invalid even when it mentions the right broad subject.
 
+`futureTrackability` is frozen with the immutable source snapshot. A focus tied
+to a rule that is then
+paused, retired or outside its effective interval is not emitted as though the
+trader will have a normal opportunity to follow it. The historical finding may
+remain in `What held you back`; a future question requires either the same rule
+currently active or a separately valid observable behavior target. The engine
+never recommends reactivating a rule.
+
 An exact prior `focusTargetRef` cannot be emitted again. An unresolved subject
 may be carried forward only through a new current finding with a changed later-
 evidence measurement or a more specific measurable boundary; the selection
@@ -2595,6 +2796,12 @@ Before persistence, validate that:
   day/event/trade counts to the exact contributing source references;
 - every behavioral rate uses its frozen family opportunity denominator and
   keeps conditional opportunity rate distinct from full-period prevalence;
+- every rule opportunity falls inside the exact version's effective active
+  interval; paused/retired/outside-period rows do not become not-reviewed, and
+  only same-version preset violation events authorize execution-specific prose;
+- every projected preset event is claim-selected, prompt-safe and limited to its
+  event kind/trade reference/timestamp/authorized values; status-only or
+  unrelated events never enter the package;
 - every result/event/note/focus member uses its declared temporal owner; an
   outside-period execution event or Swing note is not counted merely because
   the linked trade closed inside the period;
@@ -2633,6 +2840,10 @@ Before persistence, validate that:
   magnitude share, harmonic scale guard and applicable descriptive consequence
   factor; a tiny polarity pool or non-worse comparison cannot manufacture the
   main financial drag;
+- every behavioral consequence verdict passes fixed structural-stratum
+  standardization, rate/median conflict handling and the exposure-scale boundary;
+  mixed/confounded/opposite results receive no full money rank and no risk-
+  normalized wording;
 - optional Analyzer/rule evidence reproduces its fixed-stratum coverage-balance
   state, and materially skewed or balance-unavailable evidence cannot use
   period-wide or financial-headline language;
@@ -2643,6 +2854,8 @@ Before persistence, validate that:
   sensitivity or is explicitly mixed/unavailable;
 - improvement reproduces its latest-sufficient-bucket state and uses
   `improved_then_recently_regressed` when the fixed reversal gate passes;
+- a latest-state reversal has both its observation minimum and two independent
+  market dates/days; one high-volume date remains a recent outlier only;
 - follow-through uses later evidence after the source focus and a current or
   explicitly revised canonical baseline rather than superseded source facts;
 - a recurring claim passes the recurrence gate;
@@ -2657,12 +2870,20 @@ Before persistence, validate that:
 - every provider-selectable plan preserves the deterministic decision-critical
   spine, and the opening keeps outcome first plus exactly one eligible emphasis;
 - hidden focus-tracking targets refer to measurable engine families;
+- a rule/process strength identifies one exact followed rule or proves complete
+  followed coverage for its declared applicable rule set; missing/not-reviewed
+  rules cannot satisfy a clean-process claim;
 - every next-period focus uses an engine-authorized distinct `focusTargetRef`
   linked to its source finding and is not a cosmetic duplicate of an earlier
   target;
 - the first next-period focus targets the selected actionable residual friction
   unless the exact documented unavailable/result-only exception applies, and
   every focus declares its observable opportunity and later metric;
+- follow-through never reuses the same later members from an earlier assessment,
+  applies the unassessed-focus preference/repeat exception and records the prior
+  assessment boundary;
+- rule-bound future focuses pass snapshot-time `futureTrackability`; paused,
+  retired or ineffective rules cannot create an implied reactivation target;
 - every `focusQuestionRef` is authorized for its exact target and supplies the
   complete visible next-focus question;
 - the review-wide coverage limitation is attached exactly once through
@@ -2675,6 +2896,12 @@ Before persistence, validate that:
 - mixed/comparison sections with available two-sided evidence use the required
   supporting and contradicting/remainder representative roles rather than two
   favorable same-side examples;
+- an affected representative note triggers the context-qualified objective
+  clause/exact-safe-excerpt boundary and cannot be converted into motive or an
+  automatic bad-decision label;
+- the opening labels money as closed-trade result, and every confirmed period-
+  end open position contributes its exact count—but no identity or invented
+  unrealized value—to the single `incompleteRecord` boundary;
 - every visible field fits its cadence-specific character and sentence budget;
 - the final v3 output passes deterministic semantic and existing output-safety
   checks;
@@ -2776,6 +3003,34 @@ expected rank behavior:
 27. Four weekly reviews whose visible prose is replaced with stale, generic and
     instruction-shaped text while the exact current month remains unchanged,
     proving the decision-critical spine cannot move.
+28. One rule activated, paused, resumed and later retired inside the month, with
+    recorded rows on every interval, proving only active same-version
+    opportunities enter rates and a retired rule cannot create a future focus.
+29. A threshold rule whose trigger trade follows the rule and whose next trade
+    is the exact evaluator violation, plus a status-only custom rule, proving the
+    engine never labels the trigger or a specific custom-rule execution as the
+    known violation; the custom target may still be described as marked broken.
+30. Profitable trades with one followed rule and several not-reviewed applicable
+    rules, beside losses with a complete followed entry/risk/exit set, proving
+    absence of recorded breaks cannot win the clean-process strength.
+31. A broken-versus-followed result difference caused by fixed style/direction/
+    week mix, plus a separate rate-versus-median direction conflict, proving the
+    consequence verdict becomes composition-confounded or mixed.
+32. A dollar-median difference where one cohort's median absolute P/L is more
+    than twice the other's and no size/risk fact exists, proving dollar scale
+    cannot masquerade as normalized execution quality.
+33. Twenty adverse trades on one final partial-week market date after a genuine
+    monthly improvement, proving volume alone cannot satisfy the two-date latest-
+    reversal gate.
+34. A broken-rule representative trade with a trader note describing special
+    circumstances, proving the review preserves the exact context without
+    changing status, inferring motive or calling the decision automatically bad.
+35. Three measurable issued focuses: an old one already assessed from unchanged
+    evidence, a newer unassessed focus within 10 points and a materially worsened
+    old focus with new evidence, proving assessment novelty and repeat exceptions.
+36. Several factually confirmed positions open at month end with no accepted
+    unrealized P/L, proving the opening remains closed-trade-only and the single
+    coverage sentence discloses their count without valuing or identifying them.
 
 The precise values are fixed before generation. The expected engine ranks are
 asserted before any provider call.
@@ -2807,8 +3062,18 @@ asserted before any provider call.
 - The tiny 100%-of-losses candidate receives only its scale-guarded money rank.
 - The non-separated broken-rule cohort remains process/contrast evidence and
   receives no full financial-consequence rank.
+- Paused/retired/outside-effective rule intervals do not change reviewed or not-
+  reviewed denominators, and only the planted violation event can support the
+  threshold execution claim.
+- Sparse `no break recorded` trades do not become process strengths; the
+  complete followed rule set does.
+- Structurally confounded, rate/median-conflicting and exposure-scale-unavailable
+  comparisons receive their exact mixed/unavailable consequence states and no
+  full financial emphasis.
 - The sufficiently populated late reversal renders as improved-then-regressed;
   the sparse partial bucket is preliminary only.
+- The one-date 20-trade partial bucket remains a recent outlier and cannot flip
+  the trend verdict.
 - The mixed candidate's visible plan and projected excerpts include both a
   supporting and contradicting/remainder example.
 - Every authorized complete review plan satisfies the four distinct section
@@ -2823,6 +3088,13 @@ asserted before any provider call.
 - The opening reports activity and period result first, then at most one
   eligible nonduplicative emphasis; its first focus question targets the
   selected actionable held-back finding when one exists.
+- The context-qualified rule clause retains the safe attributed note without
+  inferring an exception, motive or discipline failure.
+- Follow-through ignores unchanged reused evidence, prefers the unassessed focus
+  inside the exact range and permits the worsened repeat only through its new
+  evidence/material-verdict exception.
+- Open positions contribute only the exact period-end count and closed-trade/
+  unrealized boundary, never a guessed mark-to-market result.
 - The month contains four issued weekly narrative contexts, not zero and not
   synthetic summaries created only inside the monthly fixture.
 - Every eligible exact-month Analyzer record is present once in the private
@@ -3363,6 +3635,34 @@ one planted fixture:
   opportunity follows the documented exception instead of producing advice;
 - every opening begins with the exact period activity/result clause and has no
   more than one eligible emphasis, independent of provider selection;
+- inserting a paused interval removes only the exact rule opportunities inside
+  it, leaves unrelated candidates unchanged and cannot convert those targets to
+  `not_reviewed`; retirement at issuance makes the rule-bound future target
+  untrackable without rewriting the historical finding;
+- moving a preset `trigger` event without moving its identity-linked
+  `violation` cannot change which execution is named as the break; status-only
+  custom evidence can never manufacture either event;
+- changing applicable rule outcomes from `not_reviewed` to `followed` can create
+  a complete-rule-set strength only when every declared required member is now
+  followed; merely deleting a broken row cannot create one;
+- preserving raw cohort outcomes while shifting fixed style/direction/week mix
+  reproduces the standardized consequence result; a direction reversal becomes
+  composition-confounded and a material rate/median conflict becomes mixed;
+- changing only relative dollar scale beyond the 0.5-2 boundary disables the
+  median-P/L consequence branch when risk/size facts remain unavailable, while
+  exact cohort dollars and a valid rate branch remain unchanged;
+- duplicating trades/events on one latest market date cannot satisfy the two-
+  date recency gate or turn a recent outlier into a monthly regression;
+- adding or changing an affected note cannot change rank/status/spine, but a
+  selected representative with safe context deterministically activates the
+  attributed context-qualified clause and never creates inferred motive;
+- once a follow-through assessment freezes its later-member set, reusing only
+  those members produces no new candidate; adding a new independent member
+  restores eligibility and the exact unassessed/repeat selection rule applies;
+- adding an open-at-period-end lifecycle without a close leaves every closed-
+  trade P/L measurement unchanged, increments only the confirmed-open count and
+  adds the no-unrealized-P/L clause; later closure never rewrites the issued
+  review;
 - one authorized plan short-circuits provider selection only after normal
   activation/configuration/authorization and records `single_authorized_plan`;
 - a deterministic fallback is impossible after any scope, entitlement,
@@ -3376,9 +3676,11 @@ one planted fixture:
 - after the first v3 row, a v2-only runtime cannot pass the compatibility gate
   and an older database restore cannot replace the authoritative history.
 
-An independent reference calculation verifies period totals, rule-cohort P/L,
-loss/profit shares, coverage-gated comparisons, weekly rates, medians, every
-applicable component score, normalized lane weights, post-lane penalties,
+An independent reference calculation verifies closed-period totals, period-end
+open-position count, active-interval rule opportunities, preset event identity,
+rule-cohort P/L, loss/profit shares, coverage/comparability-gated comparisons,
+weekly rates, medians, every applicable component score, normalized lane
+weights, post-lane penalties,
 allowed alternatives, final ranks, section-plan ordering, bounded global-plan
 retention, default review plan and rendered-output digests without calling the
 implementation's aggregation, scoring, plan-builder or renderer helpers.
@@ -3675,6 +3977,10 @@ plan must record it before that file is edited.
 - `src/modules/level-analysis/server/daily-trade-analyzer-repository.ts`
 - `src/modules/journal/server/trade-style/journal-trade-style-repository.ts`
 - `src/modules/journal/server/swing-notes/journal-swing-note-repository.ts`
+- `src/modules/journal/server/annotations/journal-rule-repository.ts`
+- `src/modules/journal/server/round-trips/journal-round-trip-repository.ts`
+- `src/modules/help/ai-reviews-guides.ts` only for the owner-approved final
+  closed-trade/open-position and rule-evidence explanation;
 - `src/modules/platform/server/database/platform-migration-manifest.ts`
 - `src/modules/platform/server/privacy/platform-erasure-service.ts`
 - focused AI Review provider/fixture verification scripts already under
@@ -3688,15 +3994,18 @@ plan must record it before that file is edited.
 - `docs/migration/migration-progress.md` only when the implementation slice is
   complete and concurrent edits can be preserved safely.
 
-The two Journal repositories may receive only bounded account-scoped batch-read
-methods for current linked style revisions and dated Swing-note revisions; no
-Journal write path or contract meaning changes in this slice.
+The listed Journal repositories may receive only bounded account-scoped batch-
+read methods for current linked style/Swing-note revisions, rule lifecycle and
+period-end round-trip state. Existing preset evaluator evidence is reused; no
+Journal writer, rule status, evaluator meaning or round-trip authority changes
+in this slice.
 
 No dashboard presentation, Trade Tracker editor, Journal fact writer, legacy
 V3 runtime, scheduler activation, hosted configuration or deployment file
-belongs to this implementation. A Help/Privacy mismatch found at final review
-becomes a separate owner-approved copy slice rather than being silently bundled
-into engine code.
+belongs to this implementation. The explicitly listed AI Reviews guide remains
+an owner-approved final copy boundary; any Privacy mismatch found at final
+review becomes a separate owner-approved copy slice rather than being silently
+bundled into engine code.
 
 ## Implementation slices
 
@@ -3707,13 +4016,13 @@ into engine code.
   preserve unversioned snapshots, make their RSI ranking-unavailable and do not
   fetch market data for a backfill.
 - Add engine contracts, prompt-safe rule/trade-style/Swing-note identity,
-  temporal ownership, population-membership validation and exact measurement
-  helpers.
+  rule lifecycle/preset evidence, period-end open-position boundary, temporal
+  ownership, population-membership validation and exact measurement helpers.
 - Build normalization, style-homogeneous populations, denominators and
   candidate family generators.
 - Add adverse/beneficial net-contribution scoring, partial-money suppression,
-  weakest-population confidence, exact outlier/mix sensitivity, score
-  explanations, penalties, overlap/diversity handling and lane rankings.
+  weakest-population confidence, exact outlier/mix/consequence comparability,
+  score explanations, penalties, overlap/diversity handling and lane rankings.
 - Add a count-only fixture harness with planted expected ranks.
 
 ### Slice B - provider shortlist and structured selections
@@ -3755,6 +4064,8 @@ into engine code.
 
 - Store hidden target metadata for newly issued weekly and two-week focuses.
 - Use the metadata in later weekly and monthly follow-through candidates.
+- Store each accepted follow-through assessment's exact later-member boundary so
+  unchanged evidence cannot be reviewed repeatedly.
 - Preserve lower-confidence compatibility for already-issued reviews.
 - Detect corrected/excluded/relinked baseline source versions and permit only
   an explicit complete canonical revised-baseline path.
@@ -3805,6 +4116,11 @@ into engine code.
   with AI Reviews Help and Privacy language. Any visible correction requires
   owner copy approval; do not assume internal ranking alone makes the expanded
   monthly factual projection disclosure-neutral.
+- Update the AI Reviews Help guide, subject to owner copy approval, to explain
+  that displayed P/L is from trades closed in the review period and that the
+  review discloses confirmed period-end open-position count without estimating
+  unrealized P/L. The guide must not promise execution-level rule evidence when
+  only a recorded status exists.
 
 ## Plan QA pass - 2026-08-18
 
@@ -4510,6 +4826,74 @@ calibration must still determine whether the provisional 10-point consequence,
 ordering on the sealed holdouts; changing them after calibration requires a new
 engine version and resealed holdout rather than a fixture-specific exception.
 
+## Eleventh adversarial plan QA pass - 2026-08-18
+
+The eleventh pass attacked source semantics and comparison fairness after the
+tenth pass's denominator/scale corrections. It checked the proposed engine
+against the current rule lifecycle/evaluator contracts, the reduced v2 rule
+projection, sparse review coverage, mixed cohort composition, repeated focus
+assessment and the closed-trade-only result boundary. It did not run the
+application, database, provider or test suite.
+
+Additional resolved findings:
+
+1. **The plan treated every recorded rule row as an opportunity without proving
+   the rule was active:** fixed by joining effective and active/paused/retired
+   intervals and excluding non-active targets rather than calling them not-
+   reviewed.
+2. **The v2 AI Review input drops preset trigger/violation evidence:** fixed by
+   joining the existing same-version evaluator evidence before projection.
+3. **A threshold-reaching trade could be named as the rule break even when only
+   a later trade violated it:** fixed by allowing execution-specific wording
+   only from an exact `violation` event; status-only custom rules remain status-
+   only.
+4. **Lifecycle/identity disagreement could corrupt a rule denominator, while an
+   evaluator disagreement could overwrite the trader's status:** fixed with
+   target-level unavailability for identity defects and status-only language/
+   lower source consistency—without recategorization—for evaluator conflict;
+   unrelated findings continue under the ordinary review.
+5. **Profitable trades with no recorded break could be praised despite most
+   applicable rules being unreviewed:** fixed by making absence of a break
+   ineligible as strength and requiring one exact followed-rule subject or a
+   complete followed multi-rule set.
+6. **Broken-versus-followed cohorts could differ mainly because one side was
+   Day trades, shorts or a different week:** fixed with pre-result structural-
+   stratum standardization before any financial consequence verdict.
+7. **A worse loss rate but better median P/L could be cherry-picked as whichever
+   story ranked higher:** fixed with a mixed verdict when the two available
+   consequence branches materially disagree.
+8. **Different position/risk scale could make raw dollar medians look like
+   execution-quality separation:** fixed by disabling the dollar branch across
+   the provisional 0.5-2 median-absolute-P/L scale boundary when exact risk/
+   notional/size facts are unavailable.
+9. **One high-volume final day could satisfy the observation count and reverse a
+   monthly trend:** fixed by requiring at least two independent market dates/
+   days for latest-state reversal; the one-day result remains an outlier.
+10. **Free-text context became unable to qualify a main conclusion after the
+    deterministic spine was frozen:** fixed with an objective context-qualified
+    clause and exact safe attributed excerpt that cannot alter status/rank or
+    infer motive.
+11. **The oldest focus could win every later review by accumulating the longest
+    evidence span:** fixed by freezing prior assessment members, rejecting
+    unchanged reuse and preferring an unassessed focus within 10 points unless a
+    material new-evidence repeat exception applies.
+12. **A historical rule could create a next-period question after it was paused
+    or retired:** fixed with source-snapshot-time future trackability and no
+    implied recommendation to reactivate it.
+13. **A profitable closed-trade month could read as the whole account result
+    while positions remained open:** fixed with closed-trade wording, exact
+    period-end open-position count and an explicit no-unrealized-P/L boundary.
+14. **Validation, fixtures and implementation ownership did not prove these
+    distinctions:** fixed with active-interval, trigger-versus-violation, sparse-
+    strength, composition/conflict/exposure, one-day recency, context, focus-
+    novelty and open-position cases plus the required bounded Journal reads.
+
+No unresolved critical design blocker remains after this pass. The 15-point
+outcome separation, 20% median, 0.5-2 exposure-scale and within-10-point focus
+preference are provisional version-one calibration values. They must pass the
+sealed holdouts together; any post-calibration change creates a new engine
+version rather than a fixture-specific exception.
+
 ## Completion boundary
 
 This redesign is complete only when:
@@ -4525,6 +4909,8 @@ This redesign is complete only when:
 - every conditional behavior fixes its observable opportunity population,
   retains separate period prevalence and cannot borrow whichever denominator
   produces the larger percentage;
+- every rule opportunity reconciles to the exact active lifecycle/version, and
+  only identity-linked preset violation evidence can name a violating execution;
 - optional Analyzer/rule evidence passes fixed-stratum coverage-balance checks
   before it can support period-wide or financial-headline language;
 - request, attempt, dispatch and output share one immutable generation contract;
@@ -4546,6 +4932,8 @@ This redesign is complete only when:
   measurement, claim or decision-critical conclusion;
 - every available visible section identifies a useful finding and does not
   duplicate another section's explanatory job;
+- clean-process strengths require positive rule evidence rather than absence of
+  recorded breaks or missing/not-reviewed applicable rules;
 - every authorized whole-review plan passes global compatibility and renderer
   limits before the provider can select it;
 - `What improved` uses a real comparison or the exact engine-authorized no-
@@ -4559,22 +4947,32 @@ This redesign is complete only when:
 - money rank is guarded by both polarity/path-pool share and total period
   magnitude, and behavioral financial emphasis reflects its declared comparable
   consequence verdict rather than affected-cohort dollars alone;
+- consequence comparisons survive fixed structural-mix standardization, reject
+  material rate/median conflict and never claim size/risk normalization from raw
+  dollar differences when exposure facts are unavailable;
 - every earlier/later comparison uses disjoint evidence and every partial-money
   claim states its exact covered subset;
 - every material composition shift passes the fixed-stratum standardized
   sensitivity, confidence uses its weakest required population and outlier
   resistance reproduces the declared leave-one-unit/bucket result;
 - improvement exposes a materially adverse latest-sufficient-bucket reversal
-  without allowing a sparse partial week to manufacture the verdict;
+  without allowing a sparse or one-market-date partial week to manufacture the
+  verdict;
 - follow-through connects an issued focus only to evidence occurring after its
   actual issuance boundary and never compares a superseded baseline unless a
   complete canonical revised baseline is explicitly available;
+- follow-through records prior assessment members, requires new independent
+  evidence before reassessment and does not let the oldest unchanged focus crowd
+  out a comparable unassessed one;
 - an available genuine strength is recognized;
 - visible candidates pass the family/confidence/actionability floor and the
   alternatives retain distinct evidence/action targets when the exact diversity
   exception does not apply;
 - mixed/comparison findings expose both supporting and contradicting/remainder
   representative roles when available;
+- affected trader notes qualify the objective selected clause without changing
+  measurements/status or becoming an inferred excuse, motive or discipline
+  judgment;
 - the provider must echo the current short `providerPackageKey` and can select
   only one request-local `providerChoiceKey`, which the server resolves to one
   frozen whole `reviewPlanRef`, while every section, semantic claim, focus
@@ -4616,5 +5014,8 @@ This redesign is complete only when:
   same decision-critical spine;
 - the opening reports period activity/result first and the first next-period
   question targets the selected actionable held-back issue when one exists;
+- the opening explicitly reports closed-trade P/L, the coverage boundary states
+  the exact count of confirmed period-end open positions without unrealized P/L,
+  and rule-bound future questions require the rule to remain trackable;
 - the saved review reopens through the normal customer read path;
 - the owner judges the resulting review materially useful to a trader.
