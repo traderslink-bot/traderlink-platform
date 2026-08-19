@@ -364,6 +364,7 @@ export class CoachAiReviewInsightRepository {
       }));
       return Object.freeze({
         tradeRef,
+        instrumentRef: ref("instrument", roundTrip.instrumentId),
         marketDate: row.closeLocal.localDate,
         entryMarketDate: row.entryLocal.localDate,
         ticker: row.displayedSymbol,
@@ -447,6 +448,8 @@ export class CoachAiReviewInsightRepository {
       return Object.freeze({
         dayRef: dayRefByDate.get(marketDate)!,
         marketDate,
+        dayStartUtc: this.calendar.easternWallClockAtUtc(marketDate, "00:00"),
+        dayEndUtc: this.calendar.easternWallClockAtUtc(shiftDate(marketDate, 1), "00:00"),
         marketSessionKind: session.sessionKind as "normal" | "scheduled_early_close",
         tradeRefs: Object.freeze(tradeRefs),
         dailyNote: row?.daily_note_id && row.current_revision_id && row.revision !== null
@@ -471,9 +474,11 @@ export class CoachAiReviewInsightRepository {
       "00:00",
     );
     const ruleRepository = new JournalRuleRepository(this.database);
+    const earliestRelevantRuleUtc = closedRows.reduce((earliest, row) =>
+      row.openedAtUtc < earliest ? row.openedAtUtc : earliest, periodStartUtc);
     const ruleVersions = ruleRepository.listForEvaluation(
       accountScope,
-      periodStartUtc,
+      earliestRelevantRuleUtc,
       periodEndUtc,
     );
     const currentRuleById = new Map(ruleRepository.list(accountScope).map((rule) =>
@@ -704,6 +709,9 @@ export class CoachAiReviewInsightRepository {
       focuses: Object.freeze(focuses),
       periodEndOpenPositionRefs: Object.freeze(confirmedOpen.map((position) =>
         position.positionRef)),
+      periodEndOpenWithInPeriodReductionRefs: Object.freeze(confirmedOpen
+        .filter((position) => position.hasInPeriodReduction)
+        .map((position) => position.positionRef)),
       issuedNarrativeContext: Object.freeze(issuedNarrativeContext),
     };
     this.assertPromptSafeSource(source, scope, factSet, {

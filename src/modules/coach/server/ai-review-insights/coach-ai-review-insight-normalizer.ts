@@ -25,6 +25,10 @@ function nonEmptyRef(value: string, field: string): string {
   return value;
 }
 
+export function compareCoachAiReviewText(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
 export function freezeSortedUniqueRefs(
   values: readonly string[],
   field = "MEMBER_REF",
@@ -32,7 +36,7 @@ export function freezeSortedUniqueRefs(
   const normalized = values.map((value) => nonEmptyRef(value, field));
   const unique = new Set(normalized);
   invariant(unique.size === normalized.length, `TRADERLINK_AI_REVIEW_${field}_DUPLICATE`);
-  return Object.freeze([...unique].sort((left, right) => left.localeCompare(right)));
+  return Object.freeze([...unique].sort(compareCoachAiReviewText));
 }
 
 export function assertMemberSubset(
@@ -173,9 +177,9 @@ export function normalizeCoachAiReviewRuleOpportunities(
     "TRADERLINK_AI_REVIEW_RULE_OPPORTUNITY_DUPLICATE",
   );
   return Object.freeze(normalized.sort((left, right) =>
-    left.ruleVersionRef.localeCompare(right.ruleVersionRef) ||
-    left.targetKind.localeCompare(right.targetKind) ||
-    left.targetRef.localeCompare(right.targetRef)));
+    compareCoachAiReviewText(left.ruleVersionRef, right.ruleVersionRef) ||
+    compareCoachAiReviewText(left.targetKind, right.targetKind) ||
+    compareCoachAiReviewText(left.targetRef, right.targetRef)));
 }
 
 export function validateCoachAiReviewCandidateMembership(

@@ -253,6 +253,69 @@ Help Center check: this checkpoint changes no visible behavior or user workflow,
 so no guide update is required. The later owner-approved AI Reviews guide change
 remains at the final activation boundary.
 
+## Deterministic insight-engine implementation checkpoint 3 - 2026-08-19
+
+The source-to-candidate adapter layer is now implemented but remains disconnected
+from requests, persistence, the provider and the visible AI Review page.
+
+Implemented in this checkpoint:
+
+- the immutable source now preserves exact open-position reduction references,
+  Eastern day boundaries and a prompt-safe stable instrument reference, so
+  counts, historical rule applicability and same-symbol instruments reconcile;
+- trade-scoped rules are checked at actual entry time, day-scoped rules use the
+  exact Eastern day interval, and rule history reaches back to the earliest
+  entry of a trade that closed in the reviewed period without counting that old
+  event as current-period behavior;
+- saved dispositions, deterministic preset results, missing expected reviews,
+  explicit not-reviewed, not-applicable, unavailable and source-conflict states
+  are normalized separately for the exact rule version and target;
+- the engine generates competing negative and positive named-rule findings,
+  rule improvement/deterioration, exact event-bounded preset sequence findings
+  and profitable-broken/losing-followed result-process contrasts;
+- Analyzer candidates cover green-to-red ended-red, recovery, profitable 50%
+  peak giveback, 70% peak retention, add-after-peak, partial-before-red recovery
+  and weekly trend changes, with exact Analyzer-path peak/reversal/event-count
+  measurements kept separate from Journal net P/L;
+- a genuinely strong completed entry can compete as a specific example when
+  favorable movement is at least twice adverse movement and net P/L is positive;
+  it cannot become a recurring entry-strength claim without the structured rule
+  gate required by the plan;
+- one-dimension-at-a-time ticker, tag, direction, weekday, fixed Eastern entry-
+  time, declared-Day/objective-same-date duration and declared-Swing duration
+  cohorts use the predeclared Segment gates and multiplicity penalties;
+- largest one/three/five loss and winner concentrations plus worst/best day
+  reliance enter as result concentration/examples rather than invented repeated
+  behavior;
+- corrected-version RSI cohort generation exists but defaults off until the
+  prohibited-for-now reference-vector verification is accepted; and
+- locale-dependent ordering was removed from all engine comparisons, and lane
+  defaults are reserved before global alternative/supporting diversity caps so
+  a recorded default cannot disappear from the provider shortlist.
+
+Verification at this checkpoint:
+
+- focused ESLint passes for all changed source, candidate, measurement, ranking
+  and shortlist files;
+- a focused TypeScript project excluding shared generated `.next` state passes;
+- the repository-wide TypeScript command is currently blocked before source
+  checking by concurrent corruption in `.next/dev/types/routes.d.ts`; shared
+  generated runtime state was not deleted or regenerated; and
+- no test suite, verifier execution, provider call, database write, browser
+  change, request issuance or saved-review mutation was performed.
+
+Still required before Slice A is complete:
+
+- stable rank tie keys that cannot change when the prompt-safe HMAC key rotates;
+- deterministic representative evidence roles and complete leave-one-independent-
+  bucket winner stability;
+- final family/measurement QA, including provider-forbidden unsupported Analyzer
+  interpretation; and
+- permitted verifier and true-month fixture calibration.
+
+Help Center check: this remains inactive server-only engine work and requires no
+guide update yet.
+
 The ninth-pass design retains the eighth pass's single-package/fallback and
 Railway boundaries while tightening the engine that decides what deserves to be
 shown. It now keeps Day and Swing populations explicit, attributes results and

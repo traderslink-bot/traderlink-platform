@@ -17,6 +17,7 @@ import type {
 import {
   CoachAiReviewInsightInvariantError,
   assertMemberSubset,
+  compareCoachAiReviewText,
   freezeSortedUniqueRefs,
 } from "./coach-ai-review-insight-normalizer";
 
@@ -206,7 +207,7 @@ export function measureCoachAiReviewPeriodOutcomes(
     memberRefs,
     moneyEligibleMemberRefs: Object.freeze(moneyEligible
       .map((observation) => observation.memberRef)
-      .sort((left, right) => left.localeCompare(right))),
+      .sort(compareCoachAiReviewText)),
     tradeCount: observations.length,
     winCount: wins.length,
     lossCount: losses.length,
@@ -447,7 +448,7 @@ export function measureCoachAiReviewCohortMoney(input: Readonly<{
       : null,
     moneyEligibleMemberRefs: Object.freeze(comparable
       .map((observation) => observation.memberRef)
-      .sort((left, right) => left.localeCompare(right))),
+      .sort(compareCoachAiReviewText)),
     currency: input.period.currency,
     coverageComplete,
   });
@@ -497,7 +498,8 @@ function weightedMedian(
 ): Decimal | null {
   if (observations.length === 0) return null;
   const ordered = [...observations].sort((left, right) =>
-    left.value.comparedTo(right.value) || left.memberRef.localeCompare(right.memberRef));
+    left.value.comparedTo(right.value) ||
+      compareCoachAiReviewText(left.memberRef, right.memberRef));
   const total = ordered.reduce((current, observation) => current.plus(observation.weight),
     new ExactDecimal(0));
   if (total.lte(0)) return null;
@@ -703,7 +705,7 @@ function outlierResistance(
   const combined = [...sides.affected, ...sides.comparison];
   const largest = [...combined].sort((left, right) =>
     decimal(right.netPnlDecimal!).abs().comparedTo(decimal(left.netPnlDecimal!).abs()) ||
-    left.memberRef.localeCompare(right.memberRef))[0]!;
+    compareCoachAiReviewText(left.memberRef, right.memberRef))[0]!;
   const removals = [
     Object.freeze(new Set([largest.memberRef])),
     ...[...new Set(combined.map((item) => item.bucketRef))].sort().map((bucketRef) =>

@@ -7,7 +7,10 @@ import type {
   CoachAiReviewScoreDimension,
   CoachAiReviewScoreDimensionName,
 } from "@/src/modules/coach/contracts/coach-ai-review-insight-contracts";
-import { CoachAiReviewInsightInvariantError } from "./coach-ai-review-insight-normalizer";
+import {
+  CoachAiReviewInsightInvariantError,
+  compareCoachAiReviewText,
+} from "./coach-ai-review-insight-normalizer";
 
 const ExactDecimal = Decimal.clone({
   precision: 160,
@@ -363,8 +366,8 @@ export function selectCoachAiReviewLaneDefault(input: Readonly<{
     (right.repetition ?? -1) - (left.repetition ?? -1) ||
     (right.processRelevance ?? -1) - (left.processRelevance ?? -1) ||
     (right.specificity ?? -1) - (left.specificity ?? -1) ||
-    left.rankTieKey.localeCompare(right.rankTieKey) ||
-    left.findingRef.localeCompare(right.findingRef)));
+    compareCoachAiReviewText(left.rankTieKey, right.rankTieKey) ||
+    compareCoachAiReviewText(left.findingRef, right.findingRef)));
   const rawLeader = ordered[0]!;
   let selected = rawLeader;
   let selectedByMeasuredConsequenceGuard = false;

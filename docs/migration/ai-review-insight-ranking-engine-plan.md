@@ -541,6 +541,16 @@ windows optimized against the current month's winners and losers. A null
 session, holding duration or execution count is unavailable rather than placed
 in an inferred bucket.
 
+Version-one fixed Eastern entry-time buckets are: before 09:30, 09:30 to before
+10:00, 10:00 to before 11:30, 11:30 to before 14:00, 14:00 to before 15:30,
+15:30 to before 16:00 and 16:00 or later. Version-one same-date/declared-Day
+holding buckets are: under 1 minute, 1 to under 5, 5 to under 15, 15 to under
+30, 30 to under 60, 1 to under 4 hours and 4 hours or more. Declared Day,
+objective same-market-date and declared Swing members remain separate
+populations. Declared-Swing holding buckets are: under 1 day, 1 to under 3,
+3 to under 7, 7 to under 30 and 30 days or more. A stale style link is unknown
+rather than silently reclassified.
+
 ### Population membership and temporal ownership
 
 Every candidate family freezes one observation unit from a closed enum:
@@ -928,6 +938,12 @@ The engine separately identifies:
 - trades that protected most of their measured favorable result;
 - improving or worsening giveback rates across weeks.
 
+The version-one non-optimized path thresholds are fixed before results are
+seen: a profitable large-giveback member has a fee-complete positive peak and
+gives back at least 50% of it by the final result; a high-retention member keeps
+at least 70% of the measured peak. These thresholds classify the Analyzer path
+only. Journal net P/L remains the financial ranking fact.
+
 Rates are suppressed when Analyzer coverage is too low. Count and money totals
 remain available with an explicit covered-population denominator.
 
@@ -950,6 +966,14 @@ comparable examples. A trader-authored note can add context to a specific
 example but cannot replace the structured rule gate for a recurring plan-
 alignment claim. A single especially clear trade may be offered as an example
 candidate but not as a recurring pattern.
+
+The version-one specific strong-entry example requires current-linked Analyzer
+evidence, both initial-entry favorable and adverse movement, favorable movement
+at least twice the absolute adverse movement and a positive completed Journal
+net result. At most five such examples enter private ranking, ordered by exact
+net result and the prompt-safe trade reference. Without the structured entry/
+setup rule gate above, this path is forced to `specific_example` and cannot be
+promoted to a recurring strength.
 
 The engine must not combine one-minute and five-minute observations into an
 invented signal or infer a strategy edge from a small sample.
@@ -2058,14 +2082,16 @@ After merge decisions, the remaining candidates form deterministic
 `evidenceClusterRef` components using the 65% containment edge and receive an
 `actionTargetKey` for the exact rule, tracked focus, Analyzer behavior or fixed
 cohort the trader could review. These are diversity controls, not causal labels.
-The ordered shortlist may contain no more than two candidates from one evidence
-cluster or one action target. Section alternatives choose the lane default,
-then scan rank order for a different evidence cluster and action target before
-taking a second candidate from either. A same-cluster alternative is allowed
-only when no distinct candidate is within 10 lane-score points and five
-confidence points of it. This prevents three differently labelled findings on
-the same losing trades from crowding every useful alternative out of the model's
-choice set.
+The ordered shortlist reserves every eligible lane default first. The two-per-
+cluster and two-per-action-target caps then apply to alternatives and supporting
+candidates; they cannot silently remove an already recorded lane default. A
+default collision is retained for audit and resolved by the later complete-plan
+overlap rules rather than falsifying the lane selection. Section alternatives
+scan rank order for a different evidence cluster and action target before taking
+a second candidate from either. A same-cluster alternative is allowed only when
+no distinct candidate is within 10 lane-score points and five confidence points
+of it. This prevents differently labelled findings on the same losing trades
+from crowding every useful alternative out of the model's choice set.
 
 Representative evidence is selected by an explicit role rather than taking only
 the most dramatic affected trades:
@@ -4258,6 +4284,7 @@ plan must record it before that file is edited.
 - `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-normalizer.ts`
 - `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-measurements.ts`
 - `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-candidates.ts`
+- `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-source-adapters.ts`
 - `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-ranking.ts`
 - `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-shortlist.ts`
 - `src/modules/coach/server/ai-review-insights/coach-ai-review-insight-canonical.ts`
@@ -4351,8 +4378,20 @@ account-scoped Journal/Analyzer source snapshot now also exists with versioned
 prompt-safe references, canonical source bytes, current-linkage checks, exact
 historical period-end open-position reconstruction and exact issued-review
 history selection. It is not wired to requests, persistence or the provider.
-Concrete rule/Analyzer/style/Swing/sequence/concentration family adapters,
-exact representative selection, complete leave-one-bucket rank stability and
+Candidate-family boundary QA, exact representative selection, complete leave-
+one-bucket rank stability and fixture execution remain before Slice A can be
+called complete.
+
+Implementation continuation on 2026-08-19: concrete adapters now generate the
+period result, exact named-rule associations and trends, event-bounded preset
+sequence findings, green-to-red/giveback/recovery paths, add-after-peak and
+partial-exit sequences, specific strong-entry examples, result/process
+contrasts, fixed ticker/tag/direction/weekday/time/duration cohorts and exact
+trade/day concentration candidates. Session remains unavailable when absent,
+custom rule titles are not semantically classified, and RSI generation is
+implemented but hard-gated off until its permitted reference-vector check.
+Stable tie keys independent of rotating prompt-safe HMAC references, exact
+representative selection, complete leave-one-bucket winner stability and
 fixture execution remain before Slice A can be called complete.
 
 - Correct and reference-verify RSI 14 under the immutable

@@ -29,6 +29,7 @@ import {
 } from "./coach-ai-review-insight-measurements";
 import {
   CoachAiReviewInsightInvariantError,
+  compareCoachAiReviewText,
   freezeSortedUniqueRefs,
   validateCoachAiReviewCandidateMembership,
 } from "./coach-ai-review-insight-normalizer";
@@ -135,11 +136,11 @@ export function buildCoachAiReviewPeriodOutcomeCandidate(input: Readonly<{
   const largestWinnerRef = [...moneyWinRefs].sort((left, right) =>
     new ExactDecimal(observationByRef.get(right)!.netPnlDecimal!).comparedTo(
       new ExactDecimal(observationByRef.get(left)!.netPnlDecimal!),
-    ) || left.localeCompare(right))[0] ?? null;
+    ) || compareCoachAiReviewText(left, right))[0] ?? null;
   const largestLoserRef = [...moneyLossRefs].sort((left, right) =>
     new ExactDecimal(observationByRef.get(left)!.netPnlDecimal!).comparedTo(
       new ExactDecimal(observationByRef.get(right)!.netPnlDecimal!),
-    ) || left.localeCompare(right))[0] ?? null;
+    ) || compareCoachAiReviewText(left, right))[0] ?? null;
   const moneyAvailability = (exactValue: string | null) => exactValue === null
     ? outcome.moneyAvailability === "mixed_currency"
       ? "unavailable_mixed_currency" as const
@@ -898,6 +899,7 @@ export type CoachAiReviewBehaviorCandidateSource = Readonly<{
   cohortDefinition: string;
   comparisonDefinition: string;
   observations: readonly CoachAiReviewBehaviorObservation[];
+  additionalMeasurements?: readonly CoachAiReviewInsightCandidate["measurements"][number][];
   periodMoneyObservations: readonly CoachAiReviewMoneyObservation[];
   periodOutcomes: ReturnType<typeof measureCoachAiReviewPeriodOutcomes>;
   processClass: CoachAiReviewBehaviorProcessClass;
@@ -906,6 +908,7 @@ export type CoachAiReviewBehaviorCandidateSource = Readonly<{
   coverageBalance: "balanced" | "materially_skewed" | "balance_unavailable";
   structuredSourceConsistency: number | null;
   exploratorySiblingCount: number | null;
+  recurringEvidenceAllowed?: boolean;
   allowSpecificExample: boolean;
   allowMaterialOutlier: boolean;
   representativeEvidence: readonly Readonly<{
@@ -1038,7 +1041,7 @@ export function buildCoachAiReviewBehaviorCandidate(
   });
   const materialFinancial = financial.value !== null && financial.value >= 10;
   let classification: "recurring" | "outlier" | "example" = "recurring";
-  const generalRecurring = affectedSpreadCount >= 2 &&
+  const generalRecurring = source.recurringEvidenceAllowed !== false && affectedSpreadCount >= 2 &&
     (affectedRefs.length >= 3 || affectedRefs.length >= 2 && materialFinancial);
   if (!generalRecurring) {
     const materialShare = comparisonPolarity === "negative"
@@ -1237,6 +1240,7 @@ export function buildCoachAiReviewBehaviorCandidate(
       attributionKind: "cohort_association",
       displayLiteral: poolShare,
     }),
+    ...(source.additionalMeasurements ?? []),
   ]);
   invariant(source.representativeEvidence.length <= 3,
     "TRADERLINK_AI_REVIEW_REPRESENTATIVE_LIMIT");

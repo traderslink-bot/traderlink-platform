@@ -5,7 +5,10 @@ import type {
   CoachAiReviewLaneScore,
   CoachAiReviewScoreDimensionName,
 } from "@/src/modules/coach/contracts/coach-ai-review-insight-contracts";
-import { CoachAiReviewInsightInvariantError } from "./coach-ai-review-insight-normalizer";
+import {
+  CoachAiReviewInsightInvariantError,
+  compareCoachAiReviewText,
+} from "./coach-ai-review-insight-normalizer";
 import {
   selectCoachAiReviewLaneDefault,
   type CoachAiReviewRankableLaneCandidate,
@@ -136,8 +139,8 @@ type WorkingEntry = Readonly<{
 function compareWorking(left: WorkingEntry, right: WorkingEntry): number {
   return right.baseScore.postPenaltyScore - left.baseScore.postPenaltyScore ||
     right.confidence - left.confidence ||
-    left.rankTieKey.localeCompare(right.rankTieKey) ||
-    left.candidate.findingRef.localeCompare(right.candidate.findingRef);
+    compareCoachAiReviewText(left.rankTieKey, right.rankTieKey) ||
+    compareCoachAiReviewText(left.candidate.findingRef, right.candidate.findingRef);
 }
 
 function collapseWithinFamilySubject(entries: readonly WorkingEntry[]): readonly WorkingEntry[] {
@@ -311,7 +314,7 @@ export function buildCoachAiReviewBalancedShortlist(
       }).sort((left, right) =>
         right.effectiveScore.postPenaltyScore - left.effectiveScore.postPenaltyScore ||
         right.confidence - left.confidence ||
-        left.rankTieKey.localeCompare(right.rankTieKey));
+        compareCoachAiReviewText(left.rankTieKey, right.rankTieKey));
       return Object.freeze(entries);
   };
   const rankedByLane: Record<CoachAiReviewInsightLane, readonly CoachAiReviewShortlistEntry[]> = {
@@ -356,16 +359,25 @@ export function buildCoachAiReviewBalancedShortlist(
   const distinctEntries: CoachAiReviewShortlistEntry[] = [];
   const clusterCounts = new Map<string, number>();
   const actionCounts = new Map<string, number>();
-  for (const entry of selectedEntries) {
+  const admissionOrder = [
+    ...selectedEntries.filter((entry) => entry.requiredConsideration === "default"),
+    ...selectedEntries.filter((entry) => entry.requiredConsideration !== "default"),
+  ];
+  for (const entry of admissionOrder) {
     if (distinctEntries.some((item) => item.candidate.findingRef === entry.candidate.findingRef &&
         item.lane === entry.lane)) continue;
-    if ((clusterCounts.get(entry.evidenceClusterRef) ?? 0) >= 2 ||
-        (actionCounts.get(entry.actionTargetKey) ?? 0) >= 2) continue;
+    if (entry.requiredConsideration !== "default" &&
+        ((clusterCounts.get(entry.evidenceClusterRef) ?? 0) >= 2 ||
+        (actionCounts.get(entry.actionTargetKey) ?? 0) >= 2)) continue;
     distinctEntries.push(entry);
     clusterCounts.set(entry.evidenceClusterRef, (clusterCounts.get(entry.evidenceClusterRef) ?? 0) + 1);
     actionCounts.set(entry.actionTargetKey, (actionCounts.get(entry.actionTargetKey) ?? 0) + 1);
     if (distinctEntries.length >= 25) break;
   }
+  invariant(laneSelections.every((selection) => distinctEntries.some((entry) =>
+    entry.lane === selection.lane &&
+    entry.candidate.findingRef === selection.defaultFindingRef)),
+  "TRADERLINK_AI_REVIEW_LANE_DEFAULT_MISSING_FROM_SHORTLIST");
   return Object.freeze({
     entries: Object.freeze(distinctEntries),
     laneSelections: Object.freeze(laneSelections),

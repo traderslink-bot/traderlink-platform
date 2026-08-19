@@ -383,6 +383,7 @@ export type CoachAiReviewSourceNote = Readonly<{
 
 export type CoachAiReviewSourceTrade = Readonly<{
   tradeRef: string;
+  instrumentRef: string;
   marketDate: string;
   entryMarketDate: string;
   ticker: string;
@@ -464,6 +465,8 @@ export type CoachAiReviewSourcePresetEvaluation = Readonly<{
 export type CoachAiReviewSourceDay = Readonly<{
   dayRef: string;
   marketDate: string;
+  dayStartUtc: string;
+  dayEndUtc: string;
   marketSessionKind: "normal" | "scheduled_early_close";
   tradeRefs: readonly string[];
   dailyNote: Readonly<{
@@ -526,6 +529,7 @@ export type CoachAiReviewCalculationSource = Readonly<{
     text: string;
   }>[];
   periodEndOpenPositionRefs: readonly string[];
+  periodEndOpenWithInPeriodReductionRefs: readonly string[];
   issuedNarrativeContext: readonly CoachAiReviewIssuedNarrativeContext[];
 }>;
 
