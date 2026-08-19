@@ -336,3 +336,17 @@ secret authorization.
   No Journal entry, outbox entry, push subscription, push delivery, provider
   call, VAPID/encryption configuration, build, deployment or hosted change was
   made during this gate.
+
+## 2026-08-19 resource-aware browser retry
+
+- The owner confirmed that the earlier dynamic compilation delay was caused by
+  low system resources and requested one new attempt.
+- The canonical checkout again reached ready on loopback port 3010 with webpack
+  and all background workers disabled.
+- `/manifest.webmanifest` produced no bytes within 55 seconds and remained at
+  `Compiling /manifest.webmanifest` after roughly two minutes. Browser
+  interaction did not start because the first dynamic route boundary was not
+  responsive.
+- The exact review process was stopped and port 3010 was confirmed closed. No
+  application source, Journal data, outbox record, push state, configuration,
+  dependency, deployment or hosted service changed during the retry.
