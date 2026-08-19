@@ -116,9 +116,11 @@ caching authenticated HTML.
 ## Current exact resume point
 
 PWA 3 is preserved at local commit `09cda0db`. PWA 4 is assembled for the
-owner's notification-settings review. Do not apply migration 0064 to the
-private database or configure local/hosted VAPID and encryption secrets until
-that visible treatment is approved. Then complete the resource-aware runtime
+owner's notification-settings review at local commit `c82b6559`. A PWA 5
+correction now reopens the approved offline execution form after a full offline
+relaunch. Do not apply migration 0064 to the private database or configure
+local/hosted VAPID and encryption secrets until the visible offline form and
+notification treatment are approved. Then complete the resource-aware runtime
 and browser gate without writing a Journal trade.
 
 ## 2026-08-18 PWA 1 assembly note
@@ -264,3 +266,31 @@ and browser gate without writing a Journal trade.
   the current Next.js/PostCSS/Sharp dependency line. None names `web-push` or
   its added dependency chain. This remains a separate release-readiness gate;
   no broad framework or image-library upgrade was folded into PWA 4.
+
+## 2026-08-18 full offline relaunch correction
+
+- Replaced the earlier keep-the-app-open limitation with a safe public-shell
+  execution form for Daily Trade Tracker, Swing Trade Tracker and Quick Trade
+  Entry. It is available after reopening an installed app with no connection,
+  once that selected account was opened online on the device.
+- The shell writes the same version-1 manual-trade outbox record used by the
+  approved React entry form. It keeps related fills in one ordered batch with
+  one stable idempotency key; reconnect still uses the canonical Journal
+  status, preview, duplicate check and commit routes.
+- Device state version 2 adds only the selected account's three-letter currency
+  and IANA timezone, which are necessary to prepare a factual entry. Account
+  names, internal IDs, broker/provider identity and credentials are not stored;
+  the existing opaque user/account partition remains authoritative.
+- The form supports multiple executions, actual dates and times, Buy/Sell,
+  ticker, quantity, price and optional reported fees. Daily entries remain one
+  trading day, future times are rejected, and related saved batches sync oldest
+  first.
+- Daily, Swing and Quick Trade Entry Help now explains full offline relaunch and
+  keeping related fills together.
+- Targeted ESLint, three public JavaScript syntax checks, bounded TypeScript and
+  `git diff --check` pass. No test runner, Journal write, database migration,
+  provider call, build, deployment or push activation ran.
+- A temporary static server served the public shell on port 3012, but the
+  in-app preview connection failed its trusted-code setup before navigation.
+  The server was stopped and port 3012 has no listener. Desktop/narrow visual
+  interaction therefore remains an explicit owner/runtime gate.

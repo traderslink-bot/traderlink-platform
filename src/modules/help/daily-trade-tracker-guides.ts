@@ -128,6 +128,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
             "TradersLink checks the complete set before saving. If the save cannot finish, the form remains available so you can correct it.",
             "After a successful save, the recorded-execution count confirms how many fills were accepted.",
             "If an offline save later matches the same executions entered on the website, TradersLink stops before adding them again. Choose Already entered to remove only the device copy, or Save as separate only when both sets of executions really happened.",
+            "After you open Daily Trade Tracker online once, the installed app can reopen a safe execution form after a full offline relaunch. The form uses the selected account's saved currency and timezone but does not keep an account name or broker identity.",
             "Use the available follow-up link to View candle review when you want to open the saved day immediately.",
             "A manual execution can be edited later. If it is being compared with possible broker data, resolve that Data Decision first so the same fill is not silently counted twice.",
             "When one position has returned to zero, use Start another trade if you need to record a later trade in the same ticker.",

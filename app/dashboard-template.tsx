@@ -22,12 +22,16 @@ export {
 } from "./dashboard-navigation";
 
 export function TraderLinkPlatformDashboardTemplate({
+  accountCurrency,
   accountSelectionRef,
+  accountTimezone,
   children,
   notifications = [],
   offlineScopeRef,
 }: {
+  accountCurrency: string | null;
   accountSelectionRef: string | null;
+  accountTimezone: string | null;
   children: ReactNode;
   notifications?: readonly PlatformNotification[];
   offlineScopeRef: string;
@@ -35,7 +39,9 @@ export function TraderLinkPlatformDashboardTemplate({
   return (
     <DashboardShell notifications={notifications}>
       <OfflineProjectionCapture
+        accountCurrency={accountCurrency}
         accountSelectionRef={accountSelectionRef}
+        accountTimezone={accountTimezone}
         offlineScopeRef={offlineScopeRef}
       >
         {children}

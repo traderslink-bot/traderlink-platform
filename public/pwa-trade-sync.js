@@ -80,7 +80,8 @@
         transaction.objectStore(OUTBOX_STORE).index(PARTITION_INDEX).getAll(partitionKey),
       );
       await transactionComplete(transaction);
-      return records;
+      return records.sort((left, right) =>
+        left.createdAtUtc.localeCompare(right.createdAtUtc));
     } finally {
       database.close();
     }

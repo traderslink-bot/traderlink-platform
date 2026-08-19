@@ -1,6 +1,6 @@
 importScripts("/pwa-trade-sync.js");
 
-const SHELL_CACHE = "traderlink-pwa-shell-v3";
+const SHELL_CACHE = "traderlink-pwa-shell-v4";
 const SHELL_ASSETS = Object.freeze([
   "/offline.html",
   "/pwa-offline-dashboard.js",

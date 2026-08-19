@@ -45,6 +45,7 @@ export const QUICK_TRADE_ENTRY_HELP_GUIDES: readonly HelpGuide[] = Object.freeze
     section("manual-and-imported-fills", "Manual and imported fills share one Trade Tracker", "A later broker statement is checked rather than silently counted twice.", ["duplicate", "statement import", "manual fill", "broker import"], [
       paragraph("Quick Trade Entry and statement imports both add to the same Trade Tracker history. When an imported fill might be the same as a manual fill, TradersLink asks for a decision instead of deleting either source or double-counting the trade."),
       callout("Offline and website copies", "If a Quick Trade Entry remains saved on your device and you later enter the same executions on the website, sync stops before adding them again. Choose Already entered to remove the device copy, or Save as separate only when both sets really happened."),
+      paragraph("After you open Quick Trade Entry online once, the installed app can reopen its execution form after a full offline relaunch. Enter all related fills in one saved batch so TraderLink can check the complete trade in order after you reconnect."),
       link("/help/data-decisions/getting-started", "Read Data Decisions help", "See how to answer a factual question from your broker evidence."),
     ]),
   ]),

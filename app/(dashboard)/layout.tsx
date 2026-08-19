@@ -9,6 +9,8 @@ import {
 import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
+import { JournalAccountRepository } from "@/src/modules/journal/server/accounts/journal-account-repository";
+import { JournalAccountService } from "@/src/modules/journal/server/accounts/journal-account-service";
 import { PwaLifecycle } from "../pwa/pwa-lifecycle";
 
 export const dynamic = "force-dynamic";
@@ -43,8 +45,16 @@ export default async function DashboardLayout({
     }
     throw error;
   }
-  const notifications = withReadonlyPlatformDatabase({}, (database) =>
-    new PlatformNotificationRepository(database).list(scope, 5));
+  const dashboardContext = withReadonlyPlatformDatabase({}, (database) => {
+    const activeAccount = scope.activeAccountId
+      ? new JournalAccountService(new JournalAccountRepository(database))
+        .requireAccountRecord(scope, scope.activeAccountId)
+      : null;
+    return Object.freeze({
+      activeAccount,
+      notifications: new PlatformNotificationRepository(database).list(scope, 5),
+    });
+  });
   const accountSelectionRef = scope.activeAccountId
     ? currentJournalAccountSelectionRef(scope)
     : null;
@@ -54,8 +64,10 @@ export default async function DashboardLayout({
       fallback={<DashboardFrameFallback>{children}</DashboardFrameFallback>}
     >
       <TraderLinkPlatformDashboardTemplate
+        accountCurrency={dashboardContext.activeAccount?.baseCurrency ?? null}
         accountSelectionRef={accountSelectionRef}
-        notifications={notifications}
+        accountTimezone={dashboardContext.activeAccount?.tradingTimezone ?? null}
+        notifications={dashboardContext.notifications}
         offlineScopeRef={offlineScopeRef}
       >
         {children}

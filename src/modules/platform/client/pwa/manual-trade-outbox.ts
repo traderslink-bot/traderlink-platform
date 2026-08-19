@@ -560,7 +560,8 @@ export async function syncManualTradeOutbox(input: Readonly<{
   offlineScopeRef: string;
   accountSelectionRef: string;
 }>): Promise<readonly ManualTradeOutboxRecord[]> {
-  const records = await listManualTradeOutbox(input);
+  const records = [...await listManualTradeOutbox(input)]
+    .sort((left, right) => left.createdAtUtc.localeCompare(right.createdAtUtc));
   const results: ManualTradeOutboxRecord[] = [];
   for (const record of records) {
     if (record.state === "saved_to_traderlink" || record.state === "needs_review") {

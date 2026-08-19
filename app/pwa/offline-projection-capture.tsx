@@ -162,11 +162,15 @@ async function readContext(pathname: string): Promise<ProjectionContextResponse 
 }
 
 export function OfflineProjectionCapture({
+  accountCurrency,
   accountSelectionRef,
+  accountTimezone,
   children,
   offlineScopeRef,
 }: {
+  accountCurrency: string | null;
   accountSelectionRef: string | null;
+  accountTimezone: string | null;
   children: ReactNode;
   offlineScopeRef: string;
 }) {
@@ -180,15 +184,17 @@ export function OfflineProjectionCapture({
 
   useEffect(() => {
     void recordPlatformOfflineDeviceState(Object.freeze({
+      accountCurrency,
       accountSelectionRef,
+      accountTimezone,
       key: "current" as const,
       navigation: navigationSnapshot,
       offlineScopeRef,
       partitionKey,
       updatedAtUtc: new Date().toISOString(),
-      version: 1 as const,
+      version: 2 as const,
     }));
-  }, [accountSelectionRef, navigationSnapshot, offlineScopeRef, partitionKey]);
+  }, [accountCurrency, accountSelectionRef, accountTimezone, navigationSnapshot, offlineScopeRef, partitionKey]);
 
   const capture = useCallback(async () => {
     const root = rootRef.current;

@@ -124,11 +124,13 @@ export type PlatformOfflineNavigationGroup = Readonly<{
 }>;
 
 export type PlatformOfflineDeviceState = Readonly<{
+  accountCurrency: string | null;
   accountSelectionRef: string | null;
+  accountTimezone: string | null;
   key: "current";
   navigation: readonly PlatformOfflineNavigationGroup[];
   offlineScopeRef: string;
   partitionKey: string;
   updatedAtUtc: string;
-  version: 1;
+  version: 2;
 }>;

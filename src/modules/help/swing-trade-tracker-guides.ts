@@ -27,6 +27,7 @@ export const SWING_TRADE_TRACKER_HELP_GUIDES: readonly HelpGuide[] = Object.free
         Object.freeze({ title: "3. Review the result", text: "A fill can add to the position, reduce it or return it to zero. The execution remains on its actual date." }),
       ]),
       callout("Offline and website copies", "If an offline Swing entry later matches the same executions entered on the website, sync stops before adding them again. Choose Already entered to remove the device copy, or Save as separate only when both sets really happened."),
+      paragraph("After you open Swing Trade Tracker online once, the installed app can reopen its execution form after a full offline relaunch. Enter related opening, add, reduce and closing fills together when they belong to the same update."),
     ]),
     section("when-a-swing-closes", "When a swing closes", "A position that returns to zero moves from the active list to recently completed swings.", ["completed swing", "close position", "history", "flat"], [
       paragraph("When the remaining position returns to zero, the swing is complete. Its saved execution history and dated notes remain available in recently completed swings. Opening the ticker again later begins a new position history."),
