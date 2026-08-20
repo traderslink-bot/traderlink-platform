@@ -73,6 +73,33 @@ setups are added only once their facts are complete and useful.
 
 Results replaces the retired standalone Trades by Ticker page.
 
+The all-time ticker view must return every supported ticker in the selected
+range. It may use a bounded client table for searching, sorting, and visible
+pages, but it must not reject a valid trader history merely because it contains
+more than 500 ticker groups. The current table paginates visible rows locally;
+it does not place a group-count cutoff on the trader's history. A later
+server-side paging improvement may reduce payload and calculation time, but it
+must preserve access to every ticker and never silently shorten results.
+
+## Timing
+
+Timing answers: **Which entry and exit windows have repeatable results?**
+
+The existing charts remain the factual view of Net P/L, average P/L, win rate
+or trade count by entry time, exit time, weekday and trading session. Their
+raw summary must name the selected fact, such as **Highest total P/L**, rather
+than call a total-dollar bucket the best time.
+
+Entry and exit charts also show a separate **Most reliable** time only when a
+30-minute range has at least 10 complete completed trades, a positive median
+P/L, a win rate above 50%, and remains profitable after removing its single
+largest winning trade. Qualifying ranges are ranked by a sample-adjusted
+average P/L, then median P/L, win rate and trade count. This is historical
+evidence, not a trade recommendation or a claim that timing caused the result.
+
+The active implementation and owner-review record is
+[Timing reliability progress](analytics-timing-reliability-progress.md).
+
 ## Execution
 
 Execution answers: **How did I construct and manage my trades?**
@@ -117,4 +144,5 @@ pagination, eligibility and Help-link contract is defined in the
 
 - [Overview progress](analytics-overview-progress.md)
 - [Results progress](analytics-results-progress.md)
+- [Timing reliability progress](analytics-timing-reliability-progress.md)
 - [Execution progress](analytics-execution-progress.md)
