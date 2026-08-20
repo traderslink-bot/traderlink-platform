@@ -1,7 +1,9 @@
 # TraderLink Platform PWA Professional Redesign Progress
 
 **Status:** PWA-R0 owner approved; PWA-R1 shared desktop sidebar correction
-owner approved on 2026-08-20 and locally checkpointed
+owner approved and locally checkpointed; React offline-shell foundation is
+implemented and focused-review verified, with the production manifest build
+deferred for the owner's resource-heavy press-release runtime
 
 **Started:** 2026-08-20
 
@@ -159,16 +161,46 @@ condensed rail state is offered.
 - [x] Receive owner visual approval on 2026-08-20.
 - [x] Create the required narrow local checkpoint commit after visual approval.
 
+## PWA-R1 React offline-shell foundation
+
+- [x] Add the public React offline route using the real shared dashboard shell,
+  grouped navigation, semantic icons and Material theme.
+- [x] Add a compact header-level **Offline** state and a native
+  connection-required page state without generic projection cards.
+- [x] Keep AI Chat visibly in place but disabled while offline; preserve the
+  normal Notifications control and complete navigation inventory.
+- [x] Make offline-shell navigation use full document requests so the service
+  worker can handle genuine network failures safely.
+- [x] Add Serwist as the Webpack build-manifest layer with an explicit public
+  asset allowlist and no broad runtime response cache.
+- [x] Move the maintained worker source to `app/sw.ts`; preserve Push,
+  notification-click, logout cleanup and background outbox-sync behavior.
+- [x] Configure the next worker to wait for a close/reopen rather than forcing a
+  reload over unfinished work.
+- [x] Focused ESLint and explicit-file diff checks pass.
+- [x] Full TypeScript reached only unrelated concurrent Workspace and AI Review
+  errors; it reported no PWA-R1 file error.
+- [x] Desktop and 390-pixel mobile route review passed, including the real
+  mobile drawer open/closed states.
+- [x] Stop the exact loopback review server and close review tabs before the
+  owner's 03:55 press-release runtime; port 3010 is free with no orphaned
+  TraderLink server process.
+- [ ] Run the one required low-resource Webpack production build later to prove
+  the generated manifest and worker bundle; do not start it while the
+  press-release runtime needs the computer.
+
 ## Current exact resume point
 
-The revised global-header placement is implemented, browser-verified and owner
-approved. It does not change Journal data, IndexedDB, the service worker, Push
-state, hosted configuration or mobile navigation. The canonical low-resource
-review server remains on loopback port 3010; no test runner or production build
-was started. The shared worktree remains dirty with concurrent work that is not
-part of this checkpoint.
+The real React offline shell and maintained worker source are implemented.
+Focused lint, explicit diff checks, desktop review and 390-pixel mobile drawer
+review pass. The full TypeScript command reported only unrelated concurrent
+Workspace and AI Review errors. No Journal data, IndexedDB record, Push state,
+hosted configuration or deployed state changed.
 
-This implementation and progress update are the required narrow local
-checkpoint. The shell staging excludes the concurrent Trade Analyzer hierarchy
-hunks already present in the same working file. The exact next PWA-R1 slice is
-the real offline React shell and build-versioned update foundation.
+The owner asked to prioritize computer resources before the 03:55
+press-release runtime. The exact 3010 review server and review tabs were stopped
+and the port was confirmed free. No production build or broad test was started.
+The exact resume point is one low-resource `build:webpack` checkpoint to verify
+the generated public-shell manifest and worker bundle, followed by the narrow
+PWA-R1 commit. Preserve the concurrent navigation hierarchy and other dirty
+checkout work when staging that checkpoint.

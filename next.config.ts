@@ -1,6 +1,33 @@
 import type { NextConfig } from "next";
+import { randomUUID } from "node:crypto";
+import withSerwistInit from "@serwist/next";
 
 import { legacyIntelligenceRedirects } from "./src/modules/platform/contracts/legacy-intelligence-route-disposition";
+
+const publicShellRevision =
+  process.env.VERCEL_GIT_COMMIT_SHA ??
+  process.env.RAILWAY_GIT_COMMIT_SHA ??
+  randomUUID();
+
+const withSerwist = withSerwistInit({
+  additionalPrecacheEntries: [
+    { url: "/offline", revision: publicShellRevision },
+    { url: "/manifest.webmanifest", revision: publicShellRevision },
+    { url: "/logo-horizontal-main.png", revision: publicShellRevision },
+    { url: "/icons/traderlink-192.png", revision: publicShellRevision },
+    { url: "/icons/traderlink-512.png", revision: publicShellRevision },
+    { url: "/icons/traderlink-maskable-512.png", revision: publicShellRevision },
+    { url: "/pwa-trade-sync.js", revision: publicShellRevision },
+  ],
+  cacheOnNavigation: false,
+  chunks: ["app/offline/page"],
+  disable: process.env.NODE_ENV !== "production",
+  globPublicPatterns: [],
+  register: false,
+  reloadOnOnline: false,
+  swDest: "public/sw.js",
+  swSrc: "app/sw.ts",
+});
 
 const privateNoStoreHeaders: { key: string; value: string }[] = [
   {
@@ -251,4 +278,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSerwist(nextConfig);

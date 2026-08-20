@@ -31,8 +31,10 @@ import TimelineRoundedIcon from "@mui/icons-material/TimelineRounded";
 import TodayIcon from "@mui/icons-material/Today";
 import TravelExploreRoundedIcon from "@mui/icons-material/TravelExploreRounded";
 import ViewDayRoundedIcon from "@mui/icons-material/ViewDayRounded";
+import WifiOffRoundedIcon from "@mui/icons-material/WifiOffRounded";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
 import Collapse from "@mui/material/Collapse";
 import Divider from "@mui/material/Divider";
 import Drawer from "@mui/material/Drawer";
@@ -47,6 +49,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
@@ -61,7 +64,6 @@ import {
   type DashboardNavigationIconKey,
   type DashboardNavigationItem,
 } from "./dashboard-navigation";
-import { AiChatClient } from "./(dashboard)/ai-chat/ai-chat-client";
 import { NotificationCenter } from "./(dashboard)/notifications/notification-center";
 import {
   TRADERLINK_OPEN_AI_CHAT_EVENT,
@@ -72,6 +74,8 @@ import type { CoachAiDailyCompanionContextSelector } from "@/src/modules/coach/c
 const expandedWidth = 272;
 const collapsedWidth = 76;
 const desktopNavigationPreferenceKey = "traderlink:dashboard-navigation-collapsed";
+const AiChatClient = dynamic(() =>
+  import("./(dashboard)/ai-chat/ai-chat-client").then((module) => module.AiChatClient));
 
 function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
   const icons: Record<DashboardNavigationIconKey, ReactNode> = {
@@ -116,24 +120,32 @@ function isActive(pathname: string, href: string): boolean {
 
 function NavigationLink({
   collapsed,
+  offline,
   item,
   onNavigate,
   onOpenAiChat,
   pathname,
 }: {
   collapsed: boolean;
+  offline: boolean;
   item: DashboardNavigationItem;
   onNavigate: () => void;
   onOpenAiChat: () => void;
   pathname: string;
 }) {
-  const opensAiChat = item.href === "/ai-chat";
+  const opensAiChat = !offline && item.href === "/ai-chat";
   const link = (
     <ListItemButton
       aria-current={isActive(pathname, item.href) ? "page" : undefined}
       component={Link}
       href={item.href}
       onClick={(event) => {
+        if (offline) {
+          event.preventDefault();
+          onNavigate();
+          window.location.assign(item.href);
+          return;
+        }
         if (opensAiChat) {
           event.preventDefault();
           onOpenAiChat();
@@ -189,12 +201,14 @@ function NavigationLink({
 export function DashboardShell({
   children,
   notifications = [],
+  offline = false,
 }: {
   children: ReactNode;
   notifications?: readonly PlatformNotification[];
+  offline?: boolean;
 }) {
   const pathname = usePathname();
-  const pageHelpTarget = dashboardHelpTarget(pathname);
+  const pageHelpTarget = offline ? null : dashboardHelpTarget(pathname);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [aiChatOpen, setAiChatOpen] = useState(false);
@@ -224,6 +238,7 @@ export function DashboardShell({
   };
   const openAiChat = () => {
     closeMobile();
+    if (offline) return;
     setAiChatContext(null);
     setAiChatSuggestedQuestion(null);
     setAiChatContextRequestId((current) => current + 1);
@@ -315,6 +330,7 @@ export function DashboardShell({
           <List disablePadding>
             <NavigationLink
               collapsed={compact}
+              offline={offline}
               item={DASHBOARD_HOME_ITEM}
               onNavigate={closeMobile}
               onOpenAiChat={openAiChat}
@@ -362,6 +378,7 @@ export function DashboardShell({
                       {group.items.map((item) => (
                         <NavigationLink
                           collapsed={compact}
+                          offline={offline}
                           item={item}
                           key={item.href}
                           onNavigate={closeMobile}
@@ -378,6 +395,7 @@ export function DashboardShell({
             {DASHBOARD_STANDALONE_ITEMS.map((item) => (
               <NavigationLink
                 collapsed={compact}
+                offline={offline}
                 item={item}
                 key={item.href}
                 onNavigate={closeMobile}
@@ -465,12 +483,22 @@ export function DashboardShell({
               />
             </Link>
           </Box>
+          {offline ? (
+            <Chip
+              icon={<WifiOffRoundedIcon />}
+              label="Offline"
+              size="small"
+              sx={{ flexShrink: 0 }}
+              variant="outlined"
+            />
+          ) : null}
           <Box sx={{ flexGrow: 1 }} />
           <Button
             aria-controls={aiChatOpen ? "ai-chat-drawer" : undefined}
             aria-expanded={aiChatOpen}
             aria-haspopup="dialog"
-            aria-label="Open AI Chat"
+            aria-label={offline ? "AI Chat requires an internet connection" : "Open AI Chat"}
+            disabled={offline}
             onClick={openAiChat}
             startIcon={(
               <Box
@@ -606,49 +634,51 @@ export function DashboardShell({
           {children}
         </Box>
       </Box>
-      <Drawer
-        anchor="right"
-        ModalProps={{ keepMounted: true }}
-        onClose={() => {
-          setAiChatContext(null);
-          setAiChatSuggestedQuestion(null);
-          setAiChatContextRequestId((current) => current + 1);
-          setAiChatOpen(false);
-        }}
-        open={aiChatOpen}
-        sx={{ overflowX: "hidden" }}
-        slotProps={{
-          paper: {
-            id: "ai-chat-drawer",
-            sx: {
-              boxSizing: "border-box",
-              height: "100dvh",
-              maxWidth: "100%",
-              pb: { xs: "env(safe-area-inset-bottom)", md: 0 },
-              pt: { xs: "env(safe-area-inset-top)", md: 0 },
-              width: {
-                xs: "100%",
-                md: "min(860px, calc(100vw - 80px))",
-                xl: 960,
-              },
-            },
-          },
-        }}
-        variant="temporary"
-      >
-        <AiChatClient
-          contextRequestId={aiChatContextRequestId}
-          initialContext={aiChatContext}
-          initialQuestion={aiChatSuggestedQuestion}
+      {offline ? null : (
+        <Drawer
+          anchor="right"
+          ModalProps={{ keepMounted: true }}
           onClose={() => {
             setAiChatContext(null);
             setAiChatSuggestedQuestion(null);
             setAiChatContextRequestId((current) => current + 1);
             setAiChatOpen(false);
           }}
-          presentation="drawer"
-        />
-      </Drawer>
+          open={aiChatOpen}
+          sx={{ overflowX: "hidden" }}
+          slotProps={{
+            paper: {
+              id: "ai-chat-drawer",
+              sx: {
+                boxSizing: "border-box",
+                height: "100dvh",
+                maxWidth: "100%",
+                pb: { xs: "env(safe-area-inset-bottom)", md: 0 },
+                pt: { xs: "env(safe-area-inset-top)", md: 0 },
+                width: {
+                  xs: "100%",
+                  md: "min(860px, calc(100vw - 80px))",
+                  xl: 960,
+                },
+              },
+            },
+          }}
+          variant="temporary"
+        >
+          <AiChatClient
+            contextRequestId={aiChatContextRequestId}
+            initialContext={aiChatContext}
+            initialQuestion={aiChatSuggestedQuestion}
+            onClose={() => {
+              setAiChatContext(null);
+              setAiChatSuggestedQuestion(null);
+              setAiChatContextRequestId((current) => current + 1);
+              setAiChatOpen(false);
+            }}
+            presentation="drawer"
+          />
+        </Drawer>
+      )}
     </Box>
   );
 }
