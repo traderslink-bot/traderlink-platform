@@ -77,6 +77,13 @@ function calendarDate(value: string): string {
   });
 }
 
+function savedViewTime(value: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
 function ruleOutcomeColor(status: "followed" | "broken"): "success" | "error" {
   return status === "followed" ? "success" : "error";
 }
@@ -124,10 +131,12 @@ function ruleOutcomeLabel(input: Readonly<{
 export function WorkspaceDashboard({
   analyticsMetrics,
   calendarData,
+  offlineSavedAtUtc,
   reviewSummary,
 }: {
   analyticsMetrics?: readonly WorkspaceMetric[];
   calendarData?: JournalCalendarReadModel;
+  offlineSavedAtUtc?: string;
   reviewSummary?: WorkspaceReviewSummary;
 }) {
   const metrics = analyticsMetrics ?? unavailableMetrics;
@@ -153,7 +162,17 @@ export function WorkspaceDashboard({
           justifyContent: "space-between",
         }}
       >
-        <DashboardDataScopeChip />
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center", minWidth: 0 }}>
+          <DashboardDataScopeChip />
+          {offlineSavedAtUtc ? (
+            <Chip
+              color="primary"
+              label={`Offline · Last updated ${savedViewTime(offlineSavedAtUtc)}`}
+              size="small"
+              variant="outlined"
+            />
+          ) : null}
+        </Stack>
         <Button
           disabled
           startIcon={<DateRangeRoundedIcon />}
@@ -192,7 +211,7 @@ export function WorkspaceDashboard({
         }}
       >
         {currentFocuses ? (
-          <DashboardPanel sx={{ minWidth: 0 }} title="Current Focuses">
+          <DashboardPanel title="Current Focuses">
             <CurrentFocusContent content={currentFocuses} />
           </DashboardPanel>
         ) : null}
@@ -220,9 +239,18 @@ export function WorkspaceDashboard({
 
         <DashboardPanel title="Add Trades">
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-            <DashboardPrimaryAction href="/imports">Import trades</DashboardPrimaryAction>
+            {offlineSavedAtUtc ? (
+              <DashboardPrimaryAction disabled>Import trades</DashboardPrimaryAction>
+            ) : (
+              <DashboardPrimaryAction href="/imports">Import trades</DashboardPrimaryAction>
+            )}
             <DashboardSecondaryAction href="/quick-trade-entry">Quick trade entry</DashboardSecondaryAction>
           </Stack>
+          {offlineSavedAtUtc ? (
+            <Typography color="text.secondary" sx={{ mt: 1 }} variant="caption">
+              Reconnect to import trades. Quick Trade Entry remains available offline.
+            </Typography>
+          ) : null}
         </DashboardPanel>
       </Box>
 

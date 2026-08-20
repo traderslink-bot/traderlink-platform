@@ -15,6 +15,7 @@ import {
 
 import { ManualExecutionEntry } from "../(dashboard)/trade-tracker/manual-execution-entry";
 import { DashboardPage } from "../dashboard-ui";
+import { OfflineWorkspaceSurface } from "./offline-workspace-surface";
 import {
   normalizePlatformOfflinePathname,
   type PlatformOfflineDeviceState,
@@ -218,6 +219,19 @@ export function OfflineRouteContent() {
       window.removeEventListener(PLATFORM_OFFLINE_DATA_CHANGED_EVENT, onChanged);
     };
   }, [refreshDeviceState]);
+
+  if (
+    pathname === "/workspace" &&
+    stateLoaded &&
+    readyOfflineDeviceState(deviceState)
+  ) {
+    return (
+      <>
+        <OfflineWorkspaceSurface partitionKey={deviceState.partitionKey} />
+        <OfflineTradeOutboxSync state={deviceState} />
+      </>
+    );
+  }
 
   if (tracker && stateLoaded && readyOfflineDeviceState(deviceState)) {
     return (

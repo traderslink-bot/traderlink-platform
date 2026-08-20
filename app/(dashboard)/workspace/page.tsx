@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { WorkspaceOfflineViewCapture } from "@/app/pwa/workspace-offline-view-capture";
 import { WorkspaceDashboard } from "./workspace-dashboard";
 import { readWorkspaceReviewSummary } from "./workspace-review-summary";
 import { formatJournalAnalyticsPartitionedMetric } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
@@ -11,6 +12,10 @@ import {
   requireTraderLinkPlatformPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
+import {
+  createPlatformWorkspaceOfflineViewModel,
+  platformWorkspaceOfflineCoverage,
+} from "@/src/modules/platform/contracts/platform-workspace-offline-view-contracts";
 
 export const metadata: Metadata = {
   title: "Workspace | TraderLink Platform",
@@ -51,15 +56,31 @@ export default async function WorkspacePage() {
         readWorkspaceReviewSummary(database, scope, new Date(), dashboard)),
     }),
   );
+  const analyticsMetrics = WORKSPACE_METRICS.map(([label, metricId, caption]) => ({
+    label,
+    caption,
+    value: formatJournalAnalyticsPartitionedMetric(response, metricId),
+  }));
+  const offlineModel = createPlatformWorkspaceOfflineViewModel({
+    analyticsMetrics,
+    calendarData: calendar,
+    reviewSummary,
+  });
   return (
-    <WorkspaceDashboard
-      analyticsMetrics={WORKSPACE_METRICS.map(([label, metricId, caption]) => ({
-        label,
-        caption,
-        value: formatJournalAnalyticsPartitionedMetric(response, metricId),
-      }))}
-      calendarData={calendar}
-      reviewSummary={reviewSummary}
-    />
+    <>
+      <WorkspaceOfflineViewCapture
+        accountTimezone={calendar.timezone}
+        calculationVersion={`${response.resultVersion}:${response.registryVersion}`}
+        coverage={platformWorkspaceOfflineCoverage(offlineModel)}
+        generatedAtUtc={response.generatedAtUtc}
+        model={offlineModel}
+        reportingCurrency={calendar.currency}
+      />
+      <WorkspaceDashboard
+        analyticsMetrics={analyticsMetrics}
+        calendarData={calendar}
+        reviewSummary={reviewSummary}
+      />
+    </>
   );
 }

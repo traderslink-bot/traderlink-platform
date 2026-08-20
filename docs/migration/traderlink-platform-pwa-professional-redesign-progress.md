@@ -2,8 +2,8 @@
 
 **Status:** PWA-R0 and PWA-R1 are locally checkpointed; PWA-R2 tracker parity
 is technically accepted after the owner waived further visual review and the
-scoped production client/worker compilation passed; PWA-R3 saved-view work is
-the next active boundary
+scoped production client/worker compilation passed; PWA-R3 now has its saved
+view foundation and first Platform-owned Workspace model/renderer implemented
 
 **Started:** 2026-08-20
 
@@ -254,7 +254,29 @@ condensed rail state is offered.
   pass. No Vitest, server, browser, provider, hosted mutation or deployment ran.
 - [x] Preserve the foundation in narrow local commit `20bc6fe3` without staging
   any concurrent dashboard feature work.
-- [ ] Add the first Platform-owned Workspace saved-view model and renderer.
+- [x] Add the first Platform-owned Workspace saved-view model, bounded to the
+  five displayed metrics, the active five-day calendar week, current
+  focuses/rules and the latest completed review.
+- [x] Capture the model only from the authenticated online Workspace using the
+  existing private `no-store` context endpoint for opaque user/account scope.
+- [x] Render the saved model through the shared `WorkspaceDashboard`, real
+  dashboard shell and current responsive calendar instead of projection cards.
+- [x] Show one compact **Offline · Last updated ...** status, keep Quick Trade
+  Entry available and disable Import Trades with a reconnect explanation.
+- [x] Reject incompatible or malformed Workspace models and show a factual
+  reconnect-once empty state without deleting the saved-view store or outbox.
+- [x] Preserve the ongoing AI Chat task's two professional-agent remediation
+  documents and every unrelated dirty checkout file. The PWA work does not
+  stage or edit those records.
+- [x] Review Help Center impact. No guide update is required in this source
+  slice because capture is automatic and introduces no new online control;
+  final PWA guidance remains part of release acceptance.
+- [x] Focused ESLint and explicit-file diff checks pass with a 512 MB Node
+  ceiling. No Vitest, broad TypeScript run, server, browser, build, provider,
+  hosted mutation or deployment ran.
+- [ ] Preserve the Workspace saved-view slice in a narrow local commit after
+  staging only its explicit files and PWA-owned hunks from the dirty shared
+  Workspace component.
 - [ ] Add Journal-owned Trades saved-view models and renderers.
 - [ ] Add Journal Analytics-owned Trade Analyzer and Analytics saved-view
   models and renderers.
@@ -272,9 +294,9 @@ separate memory-bounded TypeScript stage.
 The owner explicitly waived further visual review and directed work to
 continue without waiting for the 16-hour press-release runtime. PWA-R2 is
 therefore accepted. PWA-R3 now has its non-destructive version-3 saved-view
-store and validated base envelope. The next source slice is the first
-Platform-owned Workspace view model and normal-layout renderer, followed by
-Journal Trades and then Journal Analytics. Keep source work lightweight until
-the final full-site build can run without threatening protected processes. No
-Journal data, IndexedDB record, Push state, hosted configuration or deployed
-state changed during this acceptance run.
+store plus the first Platform-owned Workspace model and normal-layout offline
+renderer. The next source slice is Journal Trades, followed by Journal
+Analytics. Keep source work lightweight until the final full-site build can
+run without threatening protected processes. No Journal data, IndexedDB
+record, Push state, hosted configuration or deployed state changed during this
+acceptance run.
