@@ -363,8 +363,30 @@ condensed rail state is offered.
 - [x] Focused React best-practices review, 512 MB ESLint, capability-boundary
   search and explicit-file diff checks pass. No Vitest, broad TypeScript run,
   server, browser, build, provider, hosted mutation or deployment ran.
-- [ ] Add Journal Analytics-owned Trade Analyzer and Analytics saved-view
-  models and renderers.
+- [x] Add Journal Analytics-owned saved-view models for Analytics Overview,
+  Ticker, Timing and Trade Breakdown plus Day Trade Analysis, Entry & Exit,
+  MFE & MAE, Green-to-Red, Candle Patterns and Analyzed Trades.
+- [x] Reuse the normal Overview metric cards/monthly chart, Ticker table,
+  Timing charts, Trade Breakdown charts/table and shared Trade Analyzer
+  renderer in the installed app instead of creating offline projection cards.
+- [x] Preserve the exact server-issued values, coverage populations, selected
+  date range, money basis, reporting currency and timezone. Do not recalculate
+  or invent analytics in the browser.
+- [x] Replace real round-trip and execution identifiers with local display
+  keys before saving Analyzer and Trade Breakdown models. Save only the first
+  reported Analyzed Trades page and remove its server continuation cursor.
+- [x] Keep saved chart controls, local filters, sorting and paging available.
+  Disable live ticker/trade drawers and Candle Pattern occurrence requests,
+  and open saved Daily Tracker dates without replay identifiers offline.
+- [x] Review Help Center impact. The online Analytics and Trade Analyzer
+  workflows remain unchanged and the shared offline status explains that
+  date changes, details and updates require reconnection. Existing feature
+  guides therefore need no source change in this checkpoint; complete PWA
+  offline guidance remains a release-acceptance item.
+- [x] Complete the React best-practices review, focused 512 MB ESLint,
+  capability-boundary search and explicit-file diff checks. No Vitest, broad
+  TypeScript run, server, browser, build, provider, hosted mutation or
+  deployment ran.
 
 ## Current exact resume point
 
@@ -380,9 +402,10 @@ The owner explicitly waived further visual review and directed work to
 continue without waiting for the 16-hour press-release runtime. PWA-R2 is
 therefore accepted. PWA-R3 now has its non-destructive version-3 saved-view
 store plus normal-layout Workspace, Open Positions, Swing Tracker, Daily
-Tracker, Calendar, Trade Explorer, Compare Trades, Trading Rules, Rule Results
-and Candle Review offline renderers. The next source boundary is the
-Journal Analytics-owned Trade Analyzer and Analytics saved views. Keep source
-work lightweight until the final full-site build can run without threatening
+Tracker, Calendar, Trade Explorer, Compare Trades, Trading Rules, Rule Results,
+Candle Review, Core Analytics and Trade Analyzer offline renderers. The next
+boundary is a complete remaining-route inventory and final integrated PWA
+acceptance when system resources permit. Keep source work lightweight until
+the full-site build and installed-app relaunch can run without threatening
 protected processes. No Journal data, IndexedDB record, Push state, hosted
-configuration or deployed state changed during this acceptance run.
+configuration or deployed state changed during this source checkpoint.

@@ -180,7 +180,7 @@ function sortValue(row: TradeAnalysisTradeRow, column: SortColumn): string | num
   }
 }
 
-function TradeTable({ model }: { model: DailyTradeLongTermAnalyticsModel }) {
+function TradeTable({ model, offline = false }: { model: DailyTradeLongTermAnalyticsModel; offline?: boolean }) {
   const [ticker, setTicker] = useState("");
   const [outcome, setOutcome] = useState<"all" | TradeAnalysisTradeRow["greenToRedStatus"]>("all");
   const [page, setPage] = useState(1);
@@ -212,7 +212,9 @@ function TradeTable({ model }: { model: DailyTradeLongTermAnalyticsModel }) {
     <TableSortLabel active={sortColumn === column} direction={sortColumn === column ? sortDirection : "asc"} onClick={() => changeSort(column)}>{label}</TableSortLabel>
   );
   const trackerHref = (row: TradeAnalysisTradeRow) =>
-    `/trade-tracker/${row.trackerDate}?${new URLSearchParams({ interval: "1m", trade: row.roundTripId }).toString()}`;
+    offline
+      ? `/trade-tracker/${row.trackerDate}`
+      : `/trade-tracker/${row.trackerDate}?${new URLSearchParams({ interval: "1m", trade: row.roundTripId }).toString()}`;
   return (
     <Stack spacing={1.5}>
       <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
@@ -276,7 +278,7 @@ function TradeTable({ model }: { model: DailyTradeLongTermAnalyticsModel }) {
                   <TableCell align="right">{money(row.sustainedOpportunityDecimal, model.currency)}</TableCell><TableCell align="right">{money(row.additionalOpportunityDecimal, model.currency)}</TableCell>
                   <TableCell align="right">{percent(row.capturedPercent)}</TableCell><TableCell align="right">{row.peakToExitMinutes === null ? "Unavailable" : `${row.peakToExitMinutes} min`}</TableCell>
                   <TableCell>{greenToRedLabel(row.greenToRedStatus)}</TableCell><TableCell align="right">{row.executionCount}</TableCell>
-                  <TableCell><Button endIcon={<OpenInNewIcon fontSize="small" />} href={trackerHref(row)} size="small" variant="outlined">View full analysis</Button></TableCell>
+                  <TableCell><Button endIcon={<OpenInNewIcon fontSize="small" />} href={trackerHref(row)} size="small" variant="outlined">{offline ? "Open saved day" : "View full analysis"}</Button></TableCell>
                 </TableRow>
               ))}</TableBody>
             </Table>
@@ -301,7 +303,7 @@ function ExcursionBreakdownTable({
     </TableRow>)}</TableBody></Table></HorizontalScrollRegion>;
 }
 
-function MfeMaeTable({ model }: { model: DailyTradeLongTermAnalyticsModel }) {
+function MfeMaeTable({ model, offline = false }: { model: DailyTradeLongTermAnalyticsModel; offline?: boolean }) {
   const [ticker, setTicker] = useState("");
   const [entryType, setEntryType] = useState<"all" | TradeAnalysisExcursionRow["eventKind"]>("all");
   const [page, setPage] = useState(1);
@@ -323,7 +325,7 @@ function MfeMaeTable({ model }: { model: DailyTradeLongTermAnalyticsModel }) {
       <HorizontalScrollRegion label="Measured entries and adds table" minTableWidth={1420} stickyFirstColumn><Table size="small"><TableHead><TableRow>
         <TableCell>Ticker</TableCell><TableCell>Type</TableCell><TableCell>Direction</TableCell><TableCell>Closed</TableCell><TableCell align="right">Entry price</TableCell><TableCell align="right">MFE</TableCell><TableCell align="right">MAE</TableCell><TableCell align="right">MFE %</TableCell><TableCell align="right">MAE %</TableCell><TableCell align="right">Until flat</TableCell><TableCell align="right">Actual P/L</TableCell><TableCell />
       </TableRow></TableHead><TableBody>{visibleRows.map((row) => <TableRow hover key={`${row.roundTripId}-${row.executionSequence}`}>
-        <TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell><TableCell>{row.eventKind}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.closeDate}</TableCell><TableCell align="right">{money(row.entryPriceDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: "success.main", fontWeight: 750 }}>{money(row.favorableMoveDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: "error.main", fontWeight: 750 }}>{money(row.adverseMoveDecimal, model.currency)}</TableCell><TableCell align="right">{percent(row.favorableMovePercent)}</TableCell><TableCell align="right">{percent(row.adverseMovePercent)}</TableCell><TableCell align="right">{row.minutesUntilFlat} min</TableCell><TableCell align="right" sx={{ color: Number(row.actualPnlDecimal) < 0 ? "error.main" : "success.main", fontWeight: 750 }}>{money(row.actualPnlDecimal, model.currency)}</TableCell><TableCell><Button endIcon={<OpenInNewIcon fontSize="small" />} href={`/trade-tracker/${row.trackerDate}?${new URLSearchParams({ interval: "1m", trade: row.roundTripId }).toString()}`} size="small" variant="outlined">View full analysis</Button></TableCell>
+        <TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell><TableCell>{row.eventKind}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.closeDate}</TableCell><TableCell align="right">{money(row.entryPriceDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: "success.main", fontWeight: 750 }}>{money(row.favorableMoveDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: "error.main", fontWeight: 750 }}>{money(row.adverseMoveDecimal, model.currency)}</TableCell><TableCell align="right">{percent(row.favorableMovePercent)}</TableCell><TableCell align="right">{percent(row.adverseMovePercent)}</TableCell><TableCell align="right">{row.minutesUntilFlat} min</TableCell><TableCell align="right" sx={{ color: Number(row.actualPnlDecimal) < 0 ? "error.main" : "success.main", fontWeight: 750 }}>{money(row.actualPnlDecimal, model.currency)}</TableCell><TableCell><Button endIcon={<OpenInNewIcon fontSize="small" />} href={offline ? `/trade-tracker/${row.trackerDate}` : `/trade-tracker/${row.trackerDate}?${new URLSearchParams({ interval: "1m", trade: row.roundTripId }).toString()}`} size="small" variant="outlined">{offline ? "Open saved day" : "View full analysis"}</Button></TableCell>
       </TableRow>)}</TableBody></Table></HorizontalScrollRegion>}
   </Stack>;
 }
@@ -360,6 +362,7 @@ const CAPABILITIES = Object.freeze([
 export function TradeAnalysisClient({
   evidenceQuery,
   model,
+  offline = false,
   showMoomooConnectionGuidance = false,
   view,
 }: {
@@ -370,6 +373,7 @@ export function TradeAnalysisClient({
     startDate: string | null;
   }>;
   model: DailyTradeLongTermAnalyticsModel;
+  offline?: boolean;
   showMoomooConnectionGuidance?: boolean;
   view: TradeAnalysisView;
 }) {
@@ -469,7 +473,7 @@ export function TradeAnalysisClient({
       </Section> : null}
 
       {view === "green-to-red" ? <Section description="The analyzed trades behind the profit-capture and Green-to-red comparisons." helpHref="/help/trade-analyzer/green-to-red-analysis#supporting-trades" title="Supporting trades">
-        <TradeTable model={model} />
+        <TradeTable model={model} offline={offline} />
       </Section> : null}
 
       {view === "entry-exit" ? <Section defaultExpanded description="How far price moved in favor of and against each entry or add before the position became flat." helpHref="/help/trade-analyzer/entry-exit-analysis#entry-opportunity-risk" title="Entry opportunity and risk">
@@ -500,7 +504,7 @@ export function TradeAnalysisClient({
       </Section> : null}
 
       {view === "mfe-mae" ? <Section description="The individual saved Moomoo-candle observations behind the long-term MFE and MAE results. Ticker and execution filters apply before pagination." helpHref="/help/trade-analyzer/mfe-mae#measured-executions" title="Measured executions">
-        <MfeMaeTable model={model} />
+        <MfeMaeTable model={model} offline={offline} />
       </Section> : null}
 
       {view === "entry-exit" ? <Section description={`Results grouped by entry time and total holding duration in ${model.timezone}.`} helpHref="/help/trade-analyzer/entry-exit-analysis#timing-holding" title="Timing and holding">
@@ -545,11 +549,12 @@ export function TradeAnalysisClient({
                   </Box>
                   <Button
                     aria-label={`View ${group.occurrenceCount} ${friendlyPattern(group.pattern)} occurrences`}
+                    disabled={offline}
                     onClick={() => setSelectedPattern(group.pattern)}
                     size="small"
                     variant={selectedPattern === group.pattern ? "contained" : "outlined"}
                   >
-                    View occurrences ({group.occurrenceCount})
+                    {offline ? "Reconnect for occurrences" : `View occurrences (${group.occurrenceCount})`}
                   </Button>
                 </Box>
                 <HorizontalScrollRegion label={`${friendlyPattern(group.pattern)} breakdown table`} minTableWidth={860} stickyFirstColumn>
@@ -564,7 +569,7 @@ export function TradeAnalysisClient({
         )}
       </Section> : null}
 
-      {view === "candle-patterns" ? (
+      {view === "candle-patterns" && !offline ? (
         <Drawer
           anchor="right"
           onClose={() => setSelectedPattern(null)}

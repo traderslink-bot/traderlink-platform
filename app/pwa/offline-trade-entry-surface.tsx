@@ -17,6 +17,10 @@ import { ManualExecutionEntry } from "../(dashboard)/trade-tracker/manual-execut
 import { DashboardPage } from "../dashboard-ui";
 import { OfflineDailyTrackerSurface } from "./offline-daily-tracker-surface";
 import {
+  journalAnalyticsOfflineRouteKind,
+  OfflineAnalyticsRouteSurface,
+} from "./offline-analytics-route-surface";
+import {
   journalOfflineRouteKind,
   OfflineJournalRouteSurface,
 } from "./offline-journal-route-surface";
@@ -208,6 +212,7 @@ export function OfflineRouteContent() {
     serverPathnameSnapshot,
   );
   const tracker = trackerForPathname(pathname);
+  const analyticsRouteKind = journalAnalyticsOfflineRouteKind(pathname);
   const journalRouteKind = journalOfflineRouteKind(pathname);
   const [deviceState, setDeviceState] =
     useState<PlatformOfflineDeviceState | null>(null);
@@ -254,6 +259,23 @@ export function OfflineRouteContent() {
     return (
       <>
         <OfflineOpenPositionsSurface partitionKey={deviceState.partitionKey} />
+        <OfflineTradeOutboxSync state={deviceState} />
+      </>
+    );
+  }
+
+  if (
+    analyticsRouteKind &&
+    stateLoaded &&
+    readyOfflineDeviceState(deviceState)
+  ) {
+    return (
+      <>
+        <OfflineAnalyticsRouteSurface
+          kind={analyticsRouteKind}
+          partitionKey={deviceState.partitionKey}
+          pathname={pathname}
+        />
         <OfflineTradeOutboxSync state={deviceState} />
       </>
     );

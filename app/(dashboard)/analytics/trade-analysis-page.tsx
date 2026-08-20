@@ -6,7 +6,15 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { DashboardPage } from "@/app/dashboard-template";
+import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
 import type { JournalAnalyticsClosingDateRange } from "@/src/modules/journal/contracts/journal-analytics-fact-set";
+import {
+  createJournalAnalyzedTradesOfflineViewModel,
+  createJournalTradeAnalyzerOfflineViewModel,
+  JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS,
+  JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION,
+  journalAnalyticsOfflineRouteCoverage,
+} from "@/src/modules/journal-analytics/contracts/journal-analytics-offline-view-contracts";
 import {
   buildJournalAnalyticsDashboardQuery,
   withJournalAnalyticsReportingDashboardRuntime,
@@ -16,6 +24,8 @@ import {
   buildDailyTradeLongTermAnalytics,
   readDailyTradeAnalysisCurrencies,
 } from "@/src/modules/level-analysis/server/daily-trade-long-term-analytics-service";
+import { readDailyTradeAnalyzedTrades } from "@/src/modules/level-analysis/server/daily-trade-analysis-evidence-service";
+import { reportDailyTradeAnalyzedTrades } from "@/src/modules/level-analysis/server/daily-trade-analysis-reporting";
 import { readMoomooMarketDataAccess } from "@/src/modules/level-analysis/server/moomoo-market-data-access";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
@@ -108,16 +118,49 @@ export async function TradeAnalysisPage({
     readMoomooMarketDataAccess(database, scope));
 
   if (view === "trades") {
-    const tradeIndex = withReadonlyPlatformDatabase({}, (database) => {
-      const availableCurrencies = readDailyTradeAnalysisCurrencies(database, scope);
-      return Object.freeze({
-        currency: availableCurrencies.length > 0
+    const tradeIndex = await withJournalAnalyticsReportingDashboardRuntime(
+      scope,
+      ({ reportingContext }) => withReadonlyPlatformDatabase({}, (database) => {
+        const availableCurrencies = readDailyTradeAnalysisCurrencies(database, scope);
+        const currency = availableCurrencies.length > 0
           ? new PlatformUserPreferenceRepository(database)
               .getActiveUserReportingCurrency(scope.userId)
-          : null,
-      });
+          : null;
+        const page = currency === null ? null : reportDailyTradeAnalyzedTrades(
+          readDailyTradeAnalyzedTrades(database, scope, {
+            afterCursor: null,
+            currency,
+            endDate: dateRange.endDate,
+            moneyBasis,
+            pageSize: 25,
+            startDate: dateRange.startDate,
+            ticker: "",
+          }),
+          reportingContext,
+        );
+        return Object.freeze({ currency, page });
+      }),
+    );
+    const offlineModel = createJournalAnalyzedTradesOfflineViewModel({
+      currency: tradeIndex.currency,
+      dateRange,
+      moneyBasis,
+      page: tradeIndex.page,
     });
     return (
+      <>
+      <OfflineSavedViewCapture
+        accountTimezone={tradeIndex.page?.timezone ?? null}
+        calculationVersion="daily-trade-analyzed-trades-v1"
+        coverage={journalAnalyticsOfflineRouteCoverage("trade-analyzer-trades")}
+        generatedAtUtc={new Date().toISOString()}
+        model={offlineModel}
+        pathname={baseHref}
+        queryIdentity={`range:${dateRange.kind}:${dateRange.startDate ?? "all"}:${dateRange.endDate ?? "all"}:basis:${moneyBasis}`}
+        reportingCurrency={tradeIndex.currency}
+        routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION}
+        viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS["trade-analyzer-trades"]}
+      />
       <DashboardPage>
         <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
           <Box>
@@ -140,10 +183,12 @@ export async function TradeAnalysisPage({
         <AnalyzedTradesIndex
           currency={tradeIndex.currency}
           endDate={dateRange.endDate}
+          initialPage={tradeIndex.page}
           moneyBasis={moneyBasis}
           startDate={dateRange.startDate}
         />
       </DashboardPage>
+      </>
     );
   }
 
@@ -189,6 +234,8 @@ export async function TradeAnalysisPage({
         : [];
     }));
     return Object.freeze({
+      generatedAtUtc: overview.generatedAtUtc,
+      calculationVersion: overview.registryVersion,
       model: buildDailyTradeLongTermAnalytics(
         database,
         scope,
@@ -200,7 +247,32 @@ export async function TradeAnalysisPage({
       ),
     });
   }));
+  const evidenceQuery = Object.freeze({
+    currency: result.model.currency,
+    endDate: dateRange.endDate,
+    moneyBasis,
+    startDate: dateRange.startDate,
+  });
+  const offlineModel = createJournalTradeAnalyzerOfflineViewModel({
+    dateRange,
+    evidenceQuery,
+    model: result.model,
+    view,
+  });
   return (
+    <>
+    <OfflineSavedViewCapture
+      accountTimezone={result.model.timezone}
+      calculationVersion={`daily-trade-analysis-${result.calculationVersion}`}
+      coverage={journalAnalyticsOfflineRouteCoverage(offlineModel.kind)}
+      generatedAtUtc={result.generatedAtUtc}
+      model={offlineModel}
+      pathname={baseHref}
+      queryIdentity={`range:${dateRange.kind}:${dateRange.startDate ?? "all"}:${dateRange.endDate ?? "all"}:basis:${moneyBasis}`}
+      reportingCurrency={result.model.currency}
+      routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION}
+      viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS[offlineModel.kind]}
+    />
     <DashboardPage>
       <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
         <Box>
@@ -226,16 +298,12 @@ export async function TradeAnalysisPage({
         </Stack>
       </Stack>
       <TradeAnalysisClient
-        evidenceQuery={{
-          currency: result.model.currency,
-          endDate: dateRange.endDate,
-          moneyBasis,
-          startDate: dateRange.startDate,
-        }}
+        evidenceQuery={evidenceQuery}
         model={result.model}
         showMoomooConnectionGuidance={moomooMarketDataAccess.shouldShowConnectionGuidance}
         view={view}
       />
     </DashboardPage>
+    </>
   );
 }

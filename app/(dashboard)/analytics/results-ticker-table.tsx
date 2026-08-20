@@ -78,10 +78,12 @@ function sortableValue(
 
 export function ResultsTickerTable({
   endDate,
+  offline = false,
   rows,
   startDate,
 }: {
   endDate: string | null;
+  offline?: boolean;
   rows: readonly ResultsTickerRow[];
   startDate: string | null;
 }) {
@@ -209,19 +211,20 @@ export function ResultsTickerTable({
             <TableBody>
               {paginatedRows.map((row) => (
                 <TableRow
-                  aria-label={`View ${row.ticker} completed trades`}
+                  aria-label={offline ? undefined : `View ${row.ticker} completed trades`}
                   hover
                   key={row.ticker}
-                  onClick={() => setSelectedTicker(row.ticker)}
+                  onClick={offline ? undefined : () => setSelectedTicker(row.ticker)}
                   onKeyDown={(event) => {
+                    if (offline) return;
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
                       setSelectedTicker(row.ticker);
                     }
                   }}
-                  role="button"
-                  sx={{ cursor: "pointer" }}
-                  tabIndex={0}
+                  role={offline ? undefined : "button"}
+                  sx={{ cursor: offline ? "default" : "pointer" }}
+                  tabIndex={offline ? undefined : 0}
                 >
                   <TableCell sx={{ fontWeight: 850 }}>{row.ticker}</TableCell>
                   <TableCell
@@ -267,13 +270,13 @@ export function ResultsTickerTable({
           }}
         />
       </Box>
-      <TickerTradeDetailDrawer
+      {offline ? null : <TickerTradeDetailDrawer
         endDate={endDate}
         onClose={() => setSelectedTicker(null)}
         open={selectedTicker !== null}
         startDate={startDate}
         ticker={selectedTicker}
-      />
+      />}
     </Paper>
   );
 }

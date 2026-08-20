@@ -4,7 +4,14 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
 import { DashboardPage } from "@/app/dashboard-template";
+import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
 import type { JournalAnalyticsExactValue, JournalAnalyticsMetricResult } from "@/src/modules/journal-analytics/contracts/analytics-result";
+import {
+  JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS,
+  JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION,
+  journalAnalyticsOfflineRouteCoverage,
+  type JournalAnalyticsResultsOfflineViewModel,
+} from "@/src/modules/journal-analytics/contracts/journal-analytics-offline-view-contracts";
 import { formatJournalAnalyticsMetric } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import { buildJournalAnalyticsDashboardQuery, withJournalAnalyticsReportingDashboardService } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -13,8 +20,99 @@ import { OverviewDateRangeControl, type OverviewDateRange } from "./overview-dat
 import { ResultsTickerTable, type ResultsTickerRow } from "./results-ticker-table";
 
 const METRICS = ["net_pnl", "win_rate", "profit_factor", "total_trades", "trading_day_count", "average_pnl"] as const;
-function metricFor(metrics: readonly JournalAnalyticsMetricResult[], id: string) { return metrics.find((metric) => metric.metricId === id) ?? null; }
-function numberValue(value: JournalAnalyticsExactValue | null) { if (!value || value.kind === "text" || value.kind === "duration") return 0; return value.kind === "integer" ? value.value : Number(value.kind === "decimal" ? value.valueDecimal : value.roundedDecimal); }
-function today(): string { const parts = new Intl.DateTimeFormat("en-US", { day: "2-digit", month: "2-digit", timeZone: "America/New_York", year: "numeric" }).formatToParts(new Date()); const read = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? ""; return `${read("year")}-${read("month")}-${read("day")}`; }
-function range(input: Readonly<Record<string, string | string[] | undefined>>): OverviewDateRange { const kind = typeof input.range === "string" ? input.range : "all"; const endDate = today(); const addMonths = (count: number) => { const date = new Date(`${endDate}T12:00:00Z`); date.setUTCMonth(date.getUTCMonth() - count); return date.toISOString().slice(0, 10); }; if (kind === "3m" || kind === "6m" || kind === "12m") return { endDate, kind, startDate: addMonths(Number(kind.slice(0, -1))) }; if (kind === "ytd") return { endDate, kind: "ytd", startDate: `${endDate.slice(0, 4)}-01-01` }; const start = typeof input.start === "string" ? input.start : ""; const end = typeof input.end === "string" ? input.end : ""; return kind === "custom" && /^\d{4}-\d{2}-\d{2}$/u.test(start) && /^\d{4}-\d{2}-\d{2}$/u.test(end) && start <= end ? { endDate: end, kind: "custom", startDate: start } : { endDate: null, kind: "all", startDate: null }; }
-export async function ResultsAnalyticsPage({ searchParams }: { searchParams: Readonly<Record<string, string | string[] | undefined>> }) { const scope = await requireTraderLinkPlatformPageScope(); const selectedRange = range(searchParams); const query = buildJournalAnalyticsDashboardQuery(scope, { closingDateRange: selectedRange.startDate && selectedRange.endDate ? { endDate: selectedRange.endDate, kind: "inclusive_closing_date", startDate: selectedRange.startDate } : { kind: "all_available" }, groupings: ["instrument"], metricIds: METRICS }); const response = await withJournalAnalyticsReportingDashboardService(scope, (service) => service.getResultAnalytics(scope, query)); const rows: readonly ResultsTickerRow[] = response.partitions.flatMap((partition) => partition.groups.filter((group) => group.grouping === "instrument").map((group) => { const read = (id: (typeof METRICS)[number]) => metricFor(group.metrics, id); return { averagePnl: formatJournalAnalyticsMetric(read("average_pnl")!), averagePnlValue: numberValue(read("average_pnl")?.value ?? null), netPnl: formatJournalAnalyticsMetric(read("net_pnl")!), netPnlValue: numberValue(read("net_pnl")?.value ?? null), profitFactor: formatJournalAnalyticsMetric(read("profit_factor")!), profitFactorValue: numberValue(read("profit_factor")?.value ?? null), ticker: group.label, trades: formatJournalAnalyticsMetric(read("total_trades")!), tradesValue: numberValue(read("total_trades")?.value ?? null), tradingDays: formatJournalAnalyticsMetric(read("trading_day_count")!), tradingDaysValue: numberValue(read("trading_day_count")?.value ?? null), winRate: formatJournalAnalyticsMetric(read("win_rate")!), winRateValue: numberValue(read("win_rate")?.value ?? null) }; })); return <DashboardPage><Box><Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">Analytics</Typography><Typography component="h1" sx={{ mt: 0.5 }} variant="h1">Ticker</Typography></Box><Box sx={{ alignItems: { sm: "center" }, display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 0.5 }}><OverviewDateRangeControl href="/analytics/results" value={selectedRange} /></Box><ResultsTickerTable endDate={selectedRange.endDate} rows={rows} startDate={selectedRange.startDate} /></DashboardPage>; }
+
+function metricFor(metrics: readonly JournalAnalyticsMetricResult[], id: string) {
+  return metrics.find((metric) => metric.metricId === id) ?? null;
+}
+
+function numberValue(value: JournalAnalyticsExactValue | null) {
+  if (!value || value.kind === "text" || value.kind === "duration") return 0;
+  return value.kind === "integer" ? value.value : Number(value.kind === "decimal" ? value.valueDecimal : value.roundedDecimal);
+}
+
+function today(): string {
+  const parts = new Intl.DateTimeFormat("en-US", { day: "2-digit", month: "2-digit", timeZone: "America/New_York", year: "numeric" }).formatToParts(new Date());
+  const read = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "";
+  return `${read("year")}-${read("month")}-${read("day")}`;
+}
+
+function range(input: Readonly<Record<string, string | string[] | undefined>>): OverviewDateRange {
+  const kind = typeof input.range === "string" ? input.range : "all";
+  const endDate = today();
+  const addMonths = (count: number) => {
+    const date = new Date(`${endDate}T12:00:00Z`);
+    date.setUTCMonth(date.getUTCMonth() - count);
+    return date.toISOString().slice(0, 10);
+  };
+  if (kind === "3m" || kind === "6m" || kind === "12m") return { endDate, kind, startDate: addMonths(Number(kind.slice(0, -1))) };
+  if (kind === "ytd") return { endDate, kind: "ytd", startDate: `${endDate.slice(0, 4)}-01-01` };
+  const start = typeof input.start === "string" ? input.start : "";
+  const end = typeof input.end === "string" ? input.end : "";
+  return kind === "custom" && /^\d{4}-\d{2}-\d{2}$/u.test(start) && /^\d{4}-\d{2}-\d{2}$/u.test(end) && start <= end
+    ? { endDate: end, kind: "custom", startDate: start }
+    : { endDate: null, kind: "all", startDate: null };
+}
+
+export async function ResultsAnalyticsPage({ searchParams }: { searchParams: Readonly<Record<string, string | string[] | undefined>> }) {
+  const scope = await requireTraderLinkPlatformPageScope();
+  const selectedRange = range(searchParams);
+  const query = buildJournalAnalyticsDashboardQuery(scope, {
+    closingDateRange: selectedRange.startDate && selectedRange.endDate
+      ? { endDate: selectedRange.endDate, kind: "inclusive_closing_date", startDate: selectedRange.startDate }
+      : { kind: "all_available" },
+    groupings: ["instrument"],
+    metricIds: METRICS,
+  });
+  const response = await withJournalAnalyticsReportingDashboardService(scope, (service) => service.getResultAnalytics(scope, query));
+  const rows: readonly ResultsTickerRow[] = response.partitions.flatMap((partition) =>
+    partition.groups.filter((group) => group.grouping === "instrument").map((group) => {
+      const read = (id: (typeof METRICS)[number]) => metricFor(group.metrics, id);
+      return {
+        averagePnl: formatJournalAnalyticsMetric(read("average_pnl")!),
+        averagePnlValue: numberValue(read("average_pnl")?.value ?? null),
+        netPnl: formatJournalAnalyticsMetric(read("net_pnl")!),
+        netPnlValue: numberValue(read("net_pnl")?.value ?? null),
+        profitFactor: formatJournalAnalyticsMetric(read("profit_factor")!),
+        profitFactorValue: numberValue(read("profit_factor")?.value ?? null),
+        ticker: group.label,
+        trades: formatJournalAnalyticsMetric(read("total_trades")!),
+        tradesValue: numberValue(read("total_trades")?.value ?? null),
+        tradingDays: formatJournalAnalyticsMetric(read("trading_day_count")!),
+        tradingDaysValue: numberValue(read("trading_day_count")?.value ?? null),
+        winRate: formatJournalAnalyticsMetric(read("win_rate")!),
+        winRateValue: numberValue(read("win_rate")?.value ?? null),
+      };
+    }));
+  const offlineModel: JournalAnalyticsResultsOfflineViewModel = Object.freeze({
+    dateRange: Object.freeze({ ...selectedRange }),
+    kind: "analytics-results",
+    rows,
+    version: 1,
+  });
+  return (
+    <>
+      <OfflineSavedViewCapture
+        accountTimezone={response.partitions[0]?.timezone ?? null}
+        calculationVersion={`journal-analytics-${response.registryVersion}`}
+        coverage={journalAnalyticsOfflineRouteCoverage("analytics-results")}
+        generatedAtUtc={response.generatedAtUtc}
+        model={offlineModel}
+        pathname="/analytics/results"
+        queryIdentity={`range:${selectedRange.kind}:${selectedRange.startDate ?? "all"}:${selectedRange.endDate ?? "all"}`}
+        reportingCurrency={response.partitions[0]?.currency ?? null}
+        routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION}
+        viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS["analytics-results"]}
+      />
+      <DashboardPage>
+        <Box>
+          <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">Analytics</Typography>
+          <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">Ticker</Typography>
+        </Box>
+        <Box sx={{ alignItems: { sm: "center" }, display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 0.5 }}>
+          <OverviewDateRangeControl href="/analytics/results" value={selectedRange} />
+        </Box>
+        <ResultsTickerTable endDate={selectedRange.endDate} rows={rows} startDate={selectedRange.startDate} />
+      </DashboardPage>
+    </>
+  );
+}

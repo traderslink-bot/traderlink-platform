@@ -72,12 +72,16 @@ function trackerHref(row: DailyTradeAnalyzedTradePage["rows"][number]): string {
 export function AnalyzedTradesIndex({
   currency,
   endDate,
+  initialPage = null,
   moneyBasis,
+  offline = false,
   startDate,
 }: {
   currency: string | null;
   endDate: string | null;
+  initialPage?: DailyTradeAnalyzedTradePage | null;
   moneyBasis: "gross" | "net";
+  offline?: boolean;
   startDate: string | null;
 }) {
   const [draftTicker, setDraftTicker] = useState("");
@@ -85,21 +89,23 @@ export function AnalyzedTradesIndex({
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [cursors, setCursors] = useState<Record<number, string | null>>({ 1: null });
-  const [result, setResult] = useState<DailyTradeAnalyzedTradePage | null>(null);
-  const [state, setState] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [result, setResult] = useState<DailyTradeAnalyzedTradePage | null>(initialPage);
+  const [state, setState] = useState<"idle" | "loading" | "ready" | "error">(initialPage ? "ready" : "idle");
 
   useEffect(() => {
+    if (offline) return;
     const timeout = window.setTimeout(() => {
       setTicker(draftTicker.trim());
       setPage(1);
       setCursors({ 1: null });
     }, 250);
     return () => window.clearTimeout(timeout);
-  }, [draftTicker]);
+  }, [draftTicker, offline]);
 
   const cursor = cursors[page] ?? null;
 
   useEffect(() => {
+    if (offline) return;
     if (!currency) return;
     const controller = new AbortController();
     const params = new URLSearchParams({
@@ -137,10 +143,12 @@ export function AnalyzedTradesIndex({
       setState("error");
     });
     return () => controller.abort();
-  }, [currency, cursor, endDate, moneyBasis, page, pageSize, startDate, ticker]);
+  }, [currency, cursor, endDate, moneyBasis, offline, page, pageSize, startDate, ticker]);
 
   const resolvedState = currency ? state : "ready";
-  const rows = currency ? result?.rows ?? [] : [];
+  const rows = currency
+    ? (result?.rows ?? []).filter((row) => !offline || row.symbol.toUpperCase().includes(draftTicker.trim().toUpperCase()))
+    : [];
   return (
     <Stack spacing={1.5}>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
@@ -152,7 +160,7 @@ export function AnalyzedTradesIndex({
           value={draftTicker}
         />
       </Stack>
-      {currency ? (
+      {currency && !offline ? (
         <TradeAnalyzerTablePagination
           onPageChange={(nextPage) => {
             if (nextPage < page || (cursors[nextPage] ?? null) !== null) setPage(nextPage);
@@ -216,8 +224,8 @@ export function AnalyzedTradesIndex({
                       <TableCell align="right">{percent(row.returnPercentDecimal)}</TableCell>
                       <TableCell align="right">{row.executionCount}</TableCell>
                       <TableCell align="right">
-                        <Button endIcon={<OpenInNewIcon />} href={trackerHref(row)} size="small" variant="outlined">
-                          View full analysis
+                        <Button endIcon={<OpenInNewIcon />} href={offline ? `/trade-tracker/${row.trackerDate}` : trackerHref(row)} size="small" variant="outlined">
+                          {offline ? "Open saved day" : "View full analysis"}
                         </Button>
                       </TableCell>
                     </TableRow>

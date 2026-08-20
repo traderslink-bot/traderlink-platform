@@ -1,9 +1,16 @@
 import "server-only";
 
 import { DashboardPage } from "@/app/dashboard-template";
+import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import type { JournalAnalyticsGrouping } from "@/src/modules/journal-analytics/contracts/analytics-query";
 import type { JournalAnalyticsExactValue, JournalAnalyticsMetricResult } from "@/src/modules/journal-analytics/contracts/analytics-result";
+import {
+  JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS,
+  JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION,
+  journalAnalyticsOfflineRouteCoverage,
+  type JournalAnalyticsTimingOfflineViewModel,
+} from "@/src/modules/journal-analytics/contracts/journal-analytics-offline-view-contracts";
 import { formatJournalAnalyticsMetric } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import { buildJournalAnalyticsDashboardQuery, withJournalAnalyticsReportingDashboardService } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import Box from "@mui/material/Box";
@@ -83,8 +90,29 @@ export async function TimingAnalyticsPage() {
         })),
     ]),
   )) as TimingChartData;
+  const timezone = response.partitions[0]?.timezone ?? "America/New_York";
+  const offlineModel: JournalAnalyticsTimingOfflineViewModel = Object.freeze({
+    chartData,
+    completedTradeCount: response.crossPartitionCounts.readyClosedCount,
+    kind: "analytics-timing",
+    timezone,
+    version: 1,
+  });
 
   return (
+    <>
+    <OfflineSavedViewCapture
+      accountTimezone={timezone}
+      calculationVersion={`journal-analytics-${response.registryVersion}`}
+      coverage={journalAnalyticsOfflineRouteCoverage("analytics-timing")}
+      generatedAtUtc={response.generatedAtUtc}
+      model={offlineModel}
+      pathname="/analytics/timing"
+      queryIdentity="all-available"
+      reportingCurrency={response.partitions[0]?.currency ?? null}
+      routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION}
+      viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS["analytics-timing"]}
+    />
     <DashboardPage>
       <Box sx={{ alignItems: "flex-start", display: "flex", gap: 1, justifyContent: "space-between" }}>
         <Box>
@@ -101,8 +129,9 @@ export async function TimingAnalyticsPage() {
       <TimingAnalyticsClient
         chartData={chartData}
         completedTradeCount={response.crossPartitionCounts.readyClosedCount}
-        timezone={response.partitions[0]?.timezone ?? "America/New_York"}
+        timezone={timezone}
       />
     </DashboardPage>
+    </>
   );
 }
