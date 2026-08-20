@@ -274,9 +274,9 @@ condensed rail state is offered.
 - [x] Focused ESLint and explicit-file diff checks pass with a 512 MB Node
   ceiling. No Vitest, broad TypeScript run, server, browser, build, provider,
   hosted mutation or deployment ran.
-- [ ] Preserve the Workspace saved-view slice in a narrow local commit after
-  staging only its explicit files and PWA-owned hunks from the dirty shared
-  Workspace component.
+- [x] Preserve the Workspace saved-view slice in narrow local commit
+  `0e7935f7` after staging only its explicit files and PWA-owned hunks from the
+  dirty shared Workspace component.
 - [ ] Add Journal-owned Trades saved-view models and renderers.
 - [ ] Add Journal Analytics-owned Trade Analyzer and Analytics saved-view
   models and renderers.
