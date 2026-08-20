@@ -46,6 +46,7 @@ export type CoachAiChatMessageIntent =
   | "prepare_manual_execution_draft";
 
 export type CoachAiChatAnalysisScope =
+  | Readonly<{ kind: "all" }>
   | Readonly<{ kind: "recent" }>
   | Readonly<{ kind: "day"; date: string }>
   | Readonly<{ kind: "week"; anchorDate: string }>

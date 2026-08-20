@@ -920,7 +920,7 @@ export function AiChatClient({
   const [dailyContext, setDailyContext] = useState(initialContext);
   const initialScopeDate = initialContext?.tradingDate ?? currentEasternDate();
   const [analysisKind, setAnalysisKind] = useState<CoachAiChatAnalysisScope["kind"]>(
-    initialContext ? "day" : "recent",
+    initialContext ? "day" : "all",
   );
   const [scopeDate, setScopeDate] = useState(initialScopeDate);
   const [scopeMonth, setScopeMonth] = useState(initialScopeDate.slice(0, 7));
@@ -929,6 +929,7 @@ export function AiChatClient({
   const [scopeTicker, setScopeTicker] = useState("");
 
   const analysisScope = useMemo<CoachAiChatAnalysisScope | null>(() => {
+    if (analysisKind === "all") return Object.freeze({ kind: "all" });
     if (analysisKind === "recent") return Object.freeze({ kind: "recent" });
     if (analysisKind === "day") return Object.freeze({ kind: "day", date: scopeDate });
     if (analysisKind === "week") return Object.freeze({ kind: "week", anchorDate: scopeDate });
@@ -1576,6 +1577,7 @@ export function AiChatClient({
             size="small"
             value={analysisKind}
           >
+              <MenuItem value="all">All trading history</MenuItem>
               <MenuItem value="recent">Recent 90 days</MenuItem>
             <MenuItem value="day">One day</MenuItem>
             <MenuItem value="week">One week</MenuItem>
@@ -1671,7 +1673,9 @@ export function AiChatClient({
                   <Box sx={{ alignSelf: user ? "flex-end" : "flex-start", bgcolor: user ? "primary.main" : "#EEF4FF", borderRadius: 2, color: user ? "primary.contrastText" : "text.primary", px: 2, py: 1.5 }}>
                     {!user ? <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: message.generationState === "completed" ? 0.75 : 0 }}><LinksAvatar size={24} /><Typography sx={{ fontWeight: 800 }} variant="caption">Links</Typography></Stack> : null}
                     {message.generationState === "pending" ? <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}><CircularProgress size={16} /><Typography variant="body2">Links is thinking…</Typography></Stack>
-                      : message.generationState === "failed" ? <Typography variant="body2">Links couldn’t finish that answer. Your question is saved, and you can try again.</Typography>
+                      : message.generationState === "failed" ? <Typography variant="body2">{message.failureCode === "TRADERLINK_COACH_CHAT_DAILY_CAP_REACHED"
+                        ? "Today’s Links AI Chat limit has been reached. Your question is saved, and you can return later."
+                        : "Links couldn’t finish that answer. Your question is saved, and you can try again."}</Typography>
                         : <Typography sx={{ overflowWrap: "anywhere", whiteSpace: "pre-wrap" }} variant="body2">{text}</Typography>}
                   </Box>
                   {!user && message.generationState === "completed" ? (

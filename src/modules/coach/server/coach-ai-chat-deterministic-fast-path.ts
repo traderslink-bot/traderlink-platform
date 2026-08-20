@@ -7,6 +7,7 @@ import {
   type CoachAiChatFactualToolMetricId,
   type CoachAiChatFactualToolRequest,
 } from "../contracts/coach-ai-chat-factual-tool-contracts";
+import type { CoachAiChatAnalysisScope } from "../contracts/ai-chat-contracts";
 import type {
   JournalAnalyticsGroupResult,
   JournalAnalyticsMetricResult,
@@ -45,6 +46,7 @@ type RankedRouteKey =
 export type CoachAiChatDeterministicFastPathRoute = Readonly<{
   routeKey: SummaryRouteKey | RankedRouteKey;
   request: CoachAiChatFactualToolRequest;
+  analysisScopeOverride?: CoachAiChatAnalysisScope;
 }>;
 
 export type CoachAiChatDeterministicFastPathResult = Readonly<{
@@ -118,10 +120,41 @@ function phraseRoute<T extends string>(
   return null;
 }
 
+const MONTH_NUMBER_BY_NAME = Object.freeze({
+  january: "01", february: "02", march: "03", april: "04", may: "05", june: "06",
+  july: "07", august: "08", september: "09", october: "10", november: "11", december: "12",
+} as const);
+
+function monthScopeFromQuestion(question: string): CoachAiChatAnalysisScope | null {
+  const match = /\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+(20\d{2})\b/u.exec(question);
+  if (!match) return null;
+  const name = match[1] as keyof typeof MONTH_NUMBER_BY_NAME;
+  return Object.freeze({ kind: "month", month: `${match[2]}-${MONTH_NUMBER_BY_NAME[name]}` });
+}
+
+function datedTradeCountRoute(question: string): CoachAiChatDeterministicFastPathRoute | null {
+  const scope = monthScopeFromQuestion(question);
+  if (!scope || !/^how many (?:completed )?trades (?:did|have|were) i (?:do|take|taken|make)\b/u.test(question)) {
+    return null;
+  }
+  return Object.freeze({
+    routeKey: "total_trades",
+    request: Object.freeze({
+      contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
+      toolName: "summarize_closed_trades",
+      metricIds: Object.freeze(["total_trades"]),
+      moneyBasis: "net",
+    }),
+    analysisScopeOverride: scope,
+  });
+}
+
 export function selectCoachAiChatDeterministicFastPath(
   question: string,
 ): CoachAiChatDeterministicFastPathRoute | null {
   const normalized = normalizeQuestion(question);
+  const datedTradeCount = datedTradeCountRoute(normalized);
+  if (datedTradeCount) return datedTradeCount;
   const summary = phraseRoute(normalized, SUMMARY_PHRASES);
   if (summary) {
     const moneyBasis = summary === "gross_pnl" ? "gross" : "net";

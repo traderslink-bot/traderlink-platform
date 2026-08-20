@@ -267,11 +267,12 @@ export class CoachAiChatGenerationService {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "question" });
     }
     const intent = input.intent ?? "answer_question";
-    const analysisScope = input.analysisScope ?? Object.freeze({ kind: "recent" as const });
+    const requestedAnalysisScope = input.analysisScope ?? Object.freeze({ kind: "all" as const });
     const pageContext = input.pageContext ?? null;
     const deterministicRoute = intent === "answer_question"
       ? selectCoachAiChatDeterministicFastPath(input.question)
       : null;
+    const analysisScope = deterministicRoute?.analysisScopeOverride ?? requestedAnalysisScope;
     new CoachAiChatGenerationRecoveryService(this.chat, this.controls).reconcile(
       scope,
       { conversationId: input.conversationId },

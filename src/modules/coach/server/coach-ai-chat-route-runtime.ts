@@ -266,8 +266,11 @@ export function parseGenerateChatMessageBody(body: Record<string, unknown>): Gen
 }
 
 function parseAnalysisScope(value: unknown): CoachAiChatAnalysisScope {
-  if (value === undefined) return Object.freeze({ kind: "recent" });
+  if (value === undefined) return Object.freeze({ kind: "all" });
   if (!isRecord(value) || typeof value.kind !== "string") invalidRequest("analysisScope");
+  if (value.kind === "all" && hasExactKeys(value, ["kind"])) {
+    return Object.freeze({ kind: "all" });
+  }
   if (value.kind === "recent" && hasExactKeys(value, ["kind"])) {
     return Object.freeze({ kind: "recent" });
   }
