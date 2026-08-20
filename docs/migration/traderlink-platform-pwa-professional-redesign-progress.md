@@ -230,6 +230,33 @@ condensed rail state is offered.
 - [x] Create narrow local source checkpoint `4384f572` after auditing and
   staging only the five PWA-R2 files from the shared dirty checkout.
 
+## PWA-R3 saved-view foundation
+
+- [x] Introduce IndexedDB schema version 3 with a new `savedViews` store rather
+  than rewriting the accepted `manualTradeOutbox` or legacy
+  `offlineProjections` stores.
+- [x] Update every maintained page, worker and rollback-path database opener to
+  install the same schema and indexes so no current client opens the upgraded
+  database with the obsolete version.
+- [x] Add a versioned saved-view envelope containing opaque scope, selected
+  account, route/query identity, generation/save times, reporting context,
+  calculation version, explicit coverage and module-owned JSON data.
+- [x] Enforce account partition agreement, bounded identities, valid timestamps,
+  currency/timezone validity, explicit unavailable reasons and a two-megabyte
+  per-view size ceiling before storing a model.
+- [x] Add account-partitioned save/read APIs, a 75-view retention ceiling,
+  storage-summary counts and exact partition deletion covering the new store.
+- [x] Preserve the old text projection store for rollback; no migration deletes,
+  rewrites or promotes those records.
+- [x] Review Help Center impact. No guide change is required for this internal
+  storage foundation because no trader-facing workflow or control changed.
+- [x] Focused ESLint, JavaScript syntax checks and explicit-file Git diff checks
+  pass. No Vitest, server, browser, provider, hosted mutation or deployment ran.
+- [ ] Add the first Platform-owned Workspace saved-view model and renderer.
+- [ ] Add Journal-owned Trades saved-view models and renderers.
+- [ ] Add Journal Analytics-owned Trade Analyzer and Analytics saved-view
+  models and renderers.
+
 ## Current exact resume point
 
 PWA-R1 is preserved at local commit `30954abf`; PWA-R2 source is preserved at
@@ -242,7 +269,10 @@ separate memory-bounded TypeScript stage.
 
 The owner explicitly waived further visual review and directed work to
 continue without waiting for the 16-hour press-release runtime. PWA-R2 is
-therefore accepted. Continue with PWA-R3 module-owned saved-view contracts and
-keep source work lightweight until the final full-site build can run without
-threatening protected processes. No Journal data, IndexedDB record, Push state,
-hosted configuration or deployed state changed during this acceptance run.
+therefore accepted. PWA-R3 now has its non-destructive version-3 saved-view
+store and validated base envelope. The next source slice is the first
+Platform-owned Workspace view model and normal-layout renderer, followed by
+Journal Trades and then Journal Analytics. Keep source work lightweight until
+the final full-site build can run without threatening protected processes. No
+Journal data, IndexedDB record, Push state, hosted configuration or deployed
+state changed during this acceptance run.

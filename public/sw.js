@@ -27,7 +27,7 @@ function safeDestinationPath(value) {
 
 function clearCurrentOfflineScope() {
   return new Promise((resolve) => {
-    const request = indexedDB.open("traderlink-pwa-v1", 2);
+    const request = indexedDB.open("traderlink-pwa-v1", 3);
     request.addEventListener("upgradeneeded", () => {
       const database = request.result;
       const transaction = request.transaction;
@@ -48,6 +48,15 @@ function clearCurrentOfflineScope() {
       }
       if (!database.objectStoreNames.contains("deviceState")) {
         database.createObjectStore("deviceState", { keyPath: "key" });
+      }
+      const savedViews = database.objectStoreNames.contains("savedViews")
+        ? transaction.objectStore("savedViews")
+        : database.createObjectStore("savedViews", { keyPath: "ref" });
+      if (!savedViews.indexNames.contains("partitionKey")) {
+        savedViews.createIndex("partitionKey", "partitionKey", { unique: false });
+      }
+      if (!savedViews.indexNames.contains("updatedAtUtc")) {
+        savedViews.createIndex("updatedAtUtc", "savedAtUtc", { unique: false });
       }
     });
     request.addEventListener("success", () => {

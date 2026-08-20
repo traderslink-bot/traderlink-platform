@@ -34,7 +34,7 @@ function safeDestinationPath(value: unknown): string {
 
 function clearCurrentOfflineScope(): Promise<void> {
   return new Promise((resolve) => {
-    const request = indexedDB.open("traderlink-pwa-v1", 2);
+    const request = indexedDB.open("traderlink-pwa-v1", 3);
     request.addEventListener("upgradeneeded", () => {
       const database = request.result;
       const transaction = request.transaction;
@@ -55,6 +55,17 @@ function clearCurrentOfflineScope(): Promise<void> {
       }
       if (!database.objectStoreNames.contains("deviceState")) {
         database.createObjectStore("deviceState", { keyPath: "key" });
+      }
+      const savedViews = database.objectStoreNames.contains("savedViews")
+        ? transaction?.objectStore("savedViews")
+        : database.createObjectStore("savedViews", { keyPath: "ref" });
+      if (savedViews && !savedViews.indexNames.contains("partitionKey")) {
+        savedViews.createIndex("partitionKey", "partitionKey", {
+          unique: false,
+        });
+      }
+      if (savedViews && !savedViews.indexNames.contains("updatedAtUtc")) {
+        savedViews.createIndex("updatedAtUtc", "savedAtUtc", { unique: false });
       }
     });
     request.addEventListener("success", () => {

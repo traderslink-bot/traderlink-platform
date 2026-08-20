@@ -1,5 +1,5 @@
 export const PLATFORM_OFFLINE_DATABASE_NAME = "traderlink-pwa-v1" as const;
-export const PLATFORM_OFFLINE_DATABASE_VERSION = 2 as const;
+export const PLATFORM_OFFLINE_DATABASE_VERSION = 3 as const;
 export const PLATFORM_OFFLINE_OUTBOX_STORE = "manualTradeOutbox" as const;
 export const PLATFORM_OFFLINE_PROJECTION_STORE = "offlineProjections" as const;
 export const PLATFORM_OFFLINE_DEVICE_STATE_STORE = "deviceState" as const;

@@ -1,8 +1,9 @@
 (function renderTraderLinkOfflineDashboard() {
   const DATABASE_NAME = "traderlink-pwa-v1";
-  const DATABASE_VERSION = 2;
+  const DATABASE_VERSION = 3;
   const OUTBOX_STORE = "manualTradeOutbox";
   const PROJECTION_STORE = "offlineProjections";
+  const SAVED_VIEW_STORE = "savedViews";
   const DEVICE_STATE_STORE = "deviceState";
   const PARTITION_INDEX = "partitionKey";
 
@@ -29,6 +30,15 @@
         }
         if (!database.objectStoreNames.contains(DEVICE_STATE_STORE)) {
           database.createObjectStore(DEVICE_STATE_STORE, { keyPath: "key" });
+        }
+        const savedViews = database.objectStoreNames.contains(SAVED_VIEW_STORE)
+          ? transaction.objectStore(SAVED_VIEW_STORE)
+          : database.createObjectStore(SAVED_VIEW_STORE, { keyPath: "ref" });
+        if (!savedViews.indexNames.contains(PARTITION_INDEX)) {
+          savedViews.createIndex(PARTITION_INDEX, "partitionKey", { unique: false });
+        }
+        if (!savedViews.indexNames.contains("updatedAtUtc")) {
+          savedViews.createIndex("updatedAtUtc", "savedAtUtc", { unique: false });
         }
       });
       request.addEventListener("success", () => resolve(request.result));
