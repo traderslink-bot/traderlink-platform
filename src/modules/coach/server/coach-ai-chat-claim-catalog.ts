@@ -12,10 +12,24 @@ export type CoachAiChatClaim = Readonly<{
   context: Readonly<Record<string, string | number | boolean | null>>;
 }>;
 
+export type CoachAiChatProviderToolResult<TResult = unknown> = Readonly<{
+  toolCallId: string;
+  result: TResult;
+}>;
+
 const MAX_CLAIMS = 2_048;
 const MAX_STRING_CLAIM_LENGTH = 256;
 const CONTEXT_KEY = /(?:currency|timezone|time_zone|population|coverage|unit|scope|as_of|asof)/iu;
-const FACT_TOKEN = /(?:[-+]?\$?\d[\d,]*(?:\.\d+)?%?|\b\d{4}-\d{2}-\d{2}\b|\b(?:USD|CAD|EUR|GBP|JPY|AUD|NZD|CHF|CNY|HKD)\b)/gu;
+const ISO_DATE_TIME = /\b(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?Z?)?\b/gu;
+const MONTH_DATE = /\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(\d{1,2})(?:st|nd|rd|th)?(?:,\s*|\s+)(\d{4})\b/giu;
+const CLOCK_TIME = /\b(1[0-2]|0?[1-9])(?::([0-5]\d))?\s*(a\.?m\.?|p\.?m\.?)\b|\b([01]?\d|2[0-3]):([0-5]\d)\b/giu;
+const SIMPLE_FACT_TOKEN = /(?:[-+]?\$?\d[\d,]*(?:\.\d+)?%?|\b(?:USD|CAD|EUR|GBP|JPY|AUD|NZD|CHF|CNY|HKD)\b)/gu;
+const MONTH_NUMBERS: Readonly<Record<string, string>> = Object.freeze({
+  jan: "01", january: "01", feb: "02", february: "02", mar: "03", march: "03",
+  apr: "04", april: "04", may: "05", jun: "06", june: "06", jul: "07", july: "07",
+  aug: "08", august: "08", sep: "09", sept: "09", september: "09", oct: "10",
+  october: "10", nov: "11", november: "11", dec: "12", december: "12",
+});
 
 function pointerPart(value: string): string {
   return value.replace(/~/gu, "~0").replace(/\//gu, "~1");
@@ -77,21 +91,72 @@ export function buildCoachAiChatClaimCatalog(
   toolCalls: readonly CoachAiChatFactualToolCallSnapshot[],
 ): readonly CoachAiChatClaim[] {
   const claims: CoachAiChatClaim[] = [];
-  for (const call of toolCalls) walk(call.toolCallId, call.result, "", Object.freeze({}), claims);
+  for (const call of toolCalls) {
+    const wrapper = call.result && typeof call.result === "object" &&
+        !Array.isArray(call.result)
+      ? call.result as Record<string, unknown>
+      : null;
+    const claimRoot = wrapper && Object.hasOwn(wrapper, "contractVersion") &&
+        Object.hasOwn(wrapper, "toolName") && Object.hasOwn(wrapper, "result")
+      ? wrapper.result
+      : call.result;
+    walk(call.toolCallId, claimRoot, "", Object.freeze({}), claims);
+  }
   return Object.freeze(claims);
 }
 
-function normalizedToken(value: string): string {
+/**
+ * Gives the provider the exact payload used as the claim-path root. Contract
+ * metadata stays server-authored and does not need to be echoed inside every
+ * tool result.
+ */
+export function buildCoachAiChatProviderToolResult<TResult>(
+  toolCallId: string,
+  response: Readonly<{ result: TResult }>,
+): CoachAiChatProviderToolResult<TResult> {
+  return Object.freeze({ toolCallId, result: response.result });
+}
+
+function normalizedSimpleToken(value: string): string {
   const upper = value.toUpperCase();
   if (/^[A-Z]{3}$/u.test(upper)) return upper;
-  if (/^\d{4}-\d{2}-\d{2}$/u.test(value)) return value;
   const numeric = value.replace(/[$,%]/gu, "").replace(/,/gu, "");
   const parsed = Number(numeric);
   return Number.isFinite(parsed) ? String(parsed) : value;
 }
 
 function tokens(value: string): readonly string[] {
-  return Object.freeze((value.match(FACT_TOKEN) ?? []).map(normalizedToken));
+  const output: string[] = [];
+  const masked = [...value];
+  const consume = (match: RegExpExecArray): void => {
+    for (let index = match.index; index < match.index + match[0].length; index += 1) {
+      masked[index] = " ";
+    }
+  };
+  for (const match of value.matchAll(ISO_DATE_TIME)) {
+    output.push(`date:${match[1]}-${match[2]}-${match[3]}`);
+    if (match[4] && match[5]) output.push(`time:${match[4]}:${match[5]}`);
+    consume(match);
+  }
+  for (const match of value.matchAll(MONTH_DATE)) {
+    const month = MONTH_NUMBERS[match[1]!.replace(".", "").toLowerCase()];
+    if (month) output.push(`date:${match[3]}-${month}-${match[2]!.padStart(2, "0")}`);
+    consume(match);
+  }
+  for (const match of masked.join("").matchAll(CLOCK_TIME)) {
+    if (match[1]) {
+      const meridiem = match[3]!.replaceAll(".", "").toLowerCase();
+      let hour = Number(match[1]) % 12;
+      if (meridiem === "pm") hour += 12;
+      output.push(`time:${String(hour).padStart(2, "0")}:${match[2] ?? "00"}`);
+    } else {
+      output.push(`time:${match[4]!.padStart(2, "0")}:${match[5]}`);
+    }
+    consume(match);
+  }
+  output.push(...(masked.join("").match(SIMPLE_FACT_TOKEN) ?? [])
+    .map(normalizedSimpleToken));
+  return Object.freeze(output);
 }
 
 function serializedEvidenceTokens(value: unknown): ReadonlySet<string> {

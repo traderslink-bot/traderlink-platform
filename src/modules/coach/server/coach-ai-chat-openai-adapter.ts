@@ -21,6 +21,7 @@ import type { CoachAiChatConversationState } from
   "../contracts/ai-chat-conversation-state-contracts";
 import {
   buildCoachAiChatClaimCatalog,
+  buildCoachAiChatProviderToolResult,
   validateCoachAiChatExactFactTokens,
 } from
   "./coach-ai-chat-claim-catalog";
@@ -61,6 +62,7 @@ import { CoachAiChatFactualToolDispatcher } from "./coach-ai-chat-factual-tool-d
 import { coachAiChatRuntimeCapabilityRegistry } from "./coach-ai-chat-capability-registry";
 import { coachAiChatFactualToolRegistry } from "./coach-ai-chat-factual-tool-registry";
 import { validateCoachAiChatResponseSafety } from "./coach-ai-chat-response-safety";
+import { completeCoachAiChatProviderUsage } from "./coach-ai-chat-provider-usage";
 
 // Two bounded sequential lookup steps precede the structured answer. Any
 // expansion remains gated on provider latency, usage, and cost evaluation.
@@ -447,7 +449,7 @@ The trader may select an analysis scope. It is an enforced data boundary, not a 
 
 A currentPageHint may be present so you can understand phrases such as "this page." It is a navigation and conversation hint only. It is never factual evidence and cannot establish an account, filter, date fact, trade state, result, or permission. Use deterministic tools for every factual claim. Do not repeat internal route paths unless the trader asks where to find a feature.
 
-Return the requested answer structure. Start with a direct answer and add supporting observations only when they make the answer more useful. Use evidenceReferences only for factual tools actually called in this generation. Every evidence reference must list the exact JSON Pointer claimPaths in that tool's result that support its statement, such as /population/includedCount or /rows/0/netPnlDecimal. Select only paths you actually use. The server rejects unknown paths, values from unselected paths, and evidence attached to a different tool call. A no-tool answer must have no evidence references and must be honest about why a factual answer is unavailable.`;
+Return the requested answer structure. Start with a direct answer and add supporting observations only when they make the answer more useful. Use evidenceReferences only for factual tools actually called in this generation. Every evidence reference must list the exact JSON Pointer claimPaths that support its statement, relative to the value inside that tool's returned result field, such as /population/includedCount or /rows/0/netPnlDecimal. Do not prefix a claim path with /result. Select only paths you actually use. You may present an exact returned ISO date or 24-hour time in an equivalent natural form, such as September 1, 2026 or 6:00 PM, while still citing its exact returned claim path. The server rejects unknown paths, values from unselected paths, and evidence attached to a different tool call. A no-tool answer must have no evidence references and must be honest about why a factual answer is unavailable.`;
 
 export type CoachAiChatOpenAiAdapterInput = Readonly<{
   scope: WorkspaceAccessScope;
@@ -504,32 +506,6 @@ function requireOpenAiKey(environment: NodeJS.ProcessEnv): string {
   return key;
 }
 
-function completeUsage(value: Readonly<{
-  inputTokens?: number;
-  inputTokenDetails?: Readonly<{
-    cacheReadTokens?: number;
-    cacheWriteTokens?: number;
-  }>;
-  outputTokens?: number;
-  totalTokens?: number;
-}>): CoachAiChatGenerationUsage {
-  const cachedInputTokens = value.inputTokenDetails?.cacheReadTokens;
-  const cacheWriteInputTokens = value.inputTokenDetails?.cacheWriteTokens;
-  if (![value.inputTokens, cachedInputTokens, cacheWriteInputTokens, value.outputTokens, value.totalTokens]
-      .every((item) => Number.isSafeInteger(item) && (item as number) >= 0) ||
-      (cachedInputTokens as number) + (cacheWriteInputTokens as number) > (value.inputTokens as number) ||
-      value.totalTokens !== (value.inputTokens as number) + (value.outputTokens as number)) {
-    return unavailableUsage();
-  }
-  return Object.freeze({
-    inputTokens: value.inputTokens!,
-    cachedInputTokens: cachedInputTokens!,
-    cacheWriteInputTokens: cacheWriteInputTokens!,
-    outputTokens: value.outputTokens!,
-    totalTokens: value.totalTokens!,
-  });
-}
-
 function answer(
   value: z.infer<typeof answerSchema>,
   dispatcher: CoachAiChatFactualToolDispatcher,
@@ -552,7 +528,7 @@ function answer(
     if (claims.some((claim) => !claim)) {
       throw new CoachAiChatProviderGenerationError(
         usage,
-        "TRADERLINK_COACH_UNGROUNDED_ANSWER",
+        "TRADERLINK_COACH_UNKNOWN_CLAIM_PATH",
       );
     }
     return Object.freeze({
@@ -568,10 +544,17 @@ function answer(
       toolCalls,
       additionalEvidence,
     });
-  } catch {
+  } catch (error) {
+    const diagnosticCode = error instanceof Error && new Set<string>([
+      "TRADERLINK_COACH_UNGROUNDED_EXACT_FACT",
+      "TRADERLINK_COACH_UNUSED_EXACT_CLAIM",
+      "TRADERLINK_COACH_UNUSED_TEXT_CLAIM",
+    ]).has(error.message)
+      ? error.message
+      : "TRADERLINK_COACH_UNGROUNDED_ANSWER";
     throw new CoachAiChatProviderGenerationError(
       usage,
-      "TRADERLINK_COACH_UNGROUNDED_ANSWER",
+      diagnosticCode,
     );
   }
   try {
@@ -699,7 +682,7 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
         ...value,
       } as CoachAiChatFactualToolRequest;
       const result = input.dispatcher.dispatch(toolCallId, request);
-      return Object.freeze({ toolCallId, result });
+      return buildCoachAiChatProviderToolResult(toolCallId, result);
     };
     const agentTools = [
         tool({
@@ -1079,7 +1062,7 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
         toolExecution: { maxFunctionToolConcurrency: 1 },
       },
     );
-    const usage = completeUsage(result.state.usage);
+    const usage = completeCoachAiChatProviderUsage(result.state.usage);
     if (!result.finalOutput) {
       throw new CoachAiChatProviderGenerationError(
         usage,

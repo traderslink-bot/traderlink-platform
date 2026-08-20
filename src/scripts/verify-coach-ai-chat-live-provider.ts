@@ -5,6 +5,12 @@ import type {
   CoachAiChatMessage,
   CoachAiChatMessageIntent,
 } from "@/src/modules/coach/contracts/ai-chat-contracts";
+import {
+  COACH_AI_CHAT_CONVERSATION_STATE_CONTRACT_VERSION,
+  type CoachAiChatConversationState,
+} from "@/src/modules/coach/contracts/ai-chat-conversation-state-contracts";
+import type { CoachAiRelationshipMemory } from
+  "@/src/modules/coach/contracts/ai-relationship-memory-contracts";
 import type { CoachAiChatGenerationAttempt } from
   "@/src/modules/coach/contracts/ai-provider-controls-contracts";
 import { COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION } from
@@ -14,6 +20,8 @@ import type { WorkspaceAccessScope } from
 import { CoachAiChatFactualToolDispatcher } from
   "@/src/modules/coach/server/coach-ai-chat-factual-tool-dispatcher";
 import { generateCoachAiChatOpenAiAnswer } from
+  "@/src/modules/coach/server/coach-ai-chat-openai-adapter";
+import { CoachAiChatProviderGenerationError } from
   "@/src/modules/coach/server/coach-ai-chat-openai-adapter";
 
 const CONFIRMATION = "--confirm-live-openai-requests";
@@ -26,6 +34,7 @@ const UUIDS = Object.freeze({
   attemptId: "10000000-0000-4000-8000-000000000006",
 });
 const AS_OF_UTC = "2026-08-15T20:00:00.000Z";
+const caseLatenciesMilliseconds = new Map<string, number>();
 
 function argument(name: string): string {
   const index = process.argv.indexOf(name);
@@ -64,6 +73,40 @@ function completedMessage(
     finalizedAtUtc: role === "assistant" ? AS_OF_UTC : null,
   });
 }
+
+function conversationState(question: string): CoachAiChatConversationState {
+  return Object.freeze({
+    contractVersion: COACH_AI_CHAT_CONVERSATION_STATE_CONTRACT_VERSION,
+    stateSequence: 1,
+    activeQuestion: question,
+    analysisScope: Object.freeze({ kind: "recent" }),
+    currentPageHint: null,
+    unresolvedQuestions: Object.freeze([]),
+    conversationNotes: Object.freeze([]),
+    pendingDrafts: Object.freeze([]),
+    olderContextSummary: null,
+    summarizedThroughSequence: 0,
+    sourceMessageSequenceThrough: 0,
+  });
+}
+
+const RELATIONSHIP_MEMORIES: readonly CoachAiRelationshipMemory[] = Object.freeze([
+  Object.freeze({
+    memoryId: "10000000-0000-4000-8000-000000000021",
+    scope: Object.freeze({ kind: "user" as const }),
+    scopeLabel: "Across TradersLink",
+    category: "current_focus" as const,
+    text: "I am working on avoiding late entries and staying patient for my setup.",
+    versionSequence: 1,
+    sourceKind: "direct_request" as const,
+    sourceConversationId: UUIDS.conversationId,
+    sourceConversationTitle: "Synthetic provider evaluation",
+    rememberedAtUtc: "2026-08-10T15:00:00.000Z",
+    reviewDueAtUtc: "2026-11-08T15:00:00.000Z",
+    needsReview: false,
+    updatedAtUtc: "2026-08-10T15:00:00.000Z",
+  }),
+]);
 
 function dispatcher(scope: WorkspaceAccessScope): CoachAiChatFactualToolDispatcher {
   const unavailable = (toolName: string) => Object.freeze({
@@ -161,14 +204,20 @@ async function runCase(input: Readonly<{
   scope: WorkspaceAccessScope;
   attempt: CoachAiChatGenerationAttempt;
   recentMessages?: readonly CoachAiChatMessage[];
+  conversationState?: CoachAiChatConversationState;
+  relationshipMemories?: readonly CoachAiRelationshipMemory[];
   intent?: CoachAiChatMessageIntent;
 }>): Promise<CoachAiChatGenerationResult> {
-  const result = await generateCoachAiChatOpenAiAnswer({
+  const startedAt = performance.now();
+  try {
+    const result = await generateCoachAiChatOpenAiAnswer({
     scope: input.scope,
     selectedAccountId: UUIDS.accountId,
     asOfUtc: AS_OF_UTC,
     attempt: input.attempt,
     recentMessages: input.recentMessages ?? Object.freeze([]),
+    conversationState: input.conversationState ?? conversationState(input.question),
+    relationshipMemories: input.relationshipMemories ?? Object.freeze([]),
     question: input.question,
     intent: input.intent ?? "answer_question",
     trustedContext: null,
@@ -180,10 +229,21 @@ async function runCase(input: Readonly<{
     }),
     analysisScope: Object.freeze({ kind: "recent" }),
     dispatcher: dispatcher(input.scope),
-  });
-  requireCondition(result.answer.directAnswer.trim().length > 0,
-    `${input.name}: empty direct answer`);
-  return result;
+    });
+    requireCondition(result.answer.directAnswer.trim().length > 0,
+      `${input.name}: empty direct answer`);
+    return result;
+  } catch (error) {
+    console.error(JSON.stringify({
+      status: "failed",
+      case: input.name,
+      latencyMilliseconds: Math.round(performance.now() - startedAt),
+      usage: error instanceof CoachAiChatProviderGenerationError ? error.usage : null,
+    }));
+    throw error;
+  } finally {
+    caseLatenciesMilliseconds.set(input.name, Math.round(performance.now() - startedAt));
+  }
 }
 
 export async function verifyCoachAiChatLiveProvider(): Promise<void> {
@@ -251,6 +311,33 @@ export async function verifyCoachAiChatLiveProvider(): Promise<void> {
   requireCondition(followUp.factualToolCalls.some((call) => call.toolName === "get_account_ai_plan"),
     "grounded follow-up did not refresh account facts");
 
+  const crossFeature = await runCase({
+    name: "complex cross-feature read",
+    question: "Is my paid AI Review access active, when is the weekly review delivered, and which currency are my results shown in?",
+    scope,
+    attempt,
+  });
+  const crossFeatureTools = new Set(crossFeature.factualToolCalls.map((call) => call.toolName));
+  requireCondition(crossFeatureTools.has("get_account_ai_plan") &&
+    crossFeatureTools.has("get_account_preferences"),
+  "complex cross-feature read did not complete both required factual lookups");
+  requireCondition(crossFeature.answer.evidenceReferences.length >= 2,
+    "complex cross-feature read did not ground both factual families");
+
+  const relationship = await runCase({
+    name: "relationship-memory response",
+    question: "What do you remember I am working on, and how can you support me today without making the decision for me?",
+    scope,
+    attempt,
+    relationshipMemories: RELATIONSHIP_MEMORIES,
+  });
+  const relationshipText = [relationship.answer.directAnswer,
+    ...relationship.answer.supportingObservations].join(" ").toLowerCase();
+  requireCondition(relationship.factualToolCalls.length === 0,
+    "relationship-memory response treated personal context as a factual lookup");
+  requireCondition(relationshipText.includes("late entr") && relationshipText.includes("patient"),
+    "relationship-memory response did not retain the supplied personal context");
+
   const manual = await runCase({
     name: "manual execution draft",
     question: "Enter these executions: on 2026-08-14 at 09:35 Eastern I bought 100 TEST at 1.25, then at 10:05 Eastern I sold 100 TEST at 1.50.",
@@ -291,7 +378,15 @@ export async function verifyCoachAiChatLiveProvider(): Promise<void> {
     (refusal.actionDraftExtraction ?? null) === null,
   "unsupported advice request used a factual or mutation path");
 
-  const results = Object.freeze([read, followUp, manual, draft, refusal]);
+  const results = Object.freeze([
+    read,
+    followUp,
+    crossFeature,
+    relationship,
+    manual,
+    draft,
+    refusal,
+  ]);
   const costs = results.map((result) => cost(
     result, inputRate, cachedInputRate, cacheWriteInputRate, outputRate,
   ));
@@ -303,11 +398,22 @@ export async function verifyCoachAiChatLiveProvider(): Promise<void> {
     modelId,
     caseCount: results.length,
     totalInputTokens: results.reduce((sum, result) => sum + (result.usage.inputTokens ?? 0), 0),
+    totalCachedInputTokens: results.reduce((sum, result) =>
+      sum + (result.usage.cachedInputTokens ?? 0), 0),
+    totalCacheWriteInputTokens: results.reduce((sum, result) =>
+      sum + (result.usage.cacheWriteInputTokens ?? 0), 0),
     totalOutputTokens: results.reduce((sum, result) => sum + (result.usage.outputTokens ?? 0), 0),
     estimatedCostUsd: estimatedCostUsd.toFixed(6),
+    totalLatencyMilliseconds: [...caseLatenciesMilliseconds.values()]
+      .reduce((sum, value) => sum + value, 0),
+    maximumCaseLatencyMilliseconds: Math.max(...caseLatenciesMilliseconds.values()),
     cases: Object.freeze([
       Object.freeze({ name: "grounded account read", tools: read.factualToolCalls.map((call) => call.toolName) }),
       Object.freeze({ name: "grounded follow-up", tools: followUp.factualToolCalls.map((call) => call.toolName) }),
+      Object.freeze({ name: "complex cross-feature read",
+        tools: crossFeature.factualToolCalls.map((call) => call.toolName) }),
+      Object.freeze({ name: "relationship-memory response",
+        toolCount: relationship.factualToolCalls.length }),
       Object.freeze({ name: "manual execution draft", state: manual.manualEntryExtraction?.state }),
       Object.freeze({ name: "confirmed-action draft", kind: draft.actionDraftExtraction?.kind }),
       Object.freeze({ name: "unsupported advice refusal", toolCount: refusal.factualToolCalls.length }),

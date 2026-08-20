@@ -6,8 +6,9 @@
 the required feature name. The first professional-agent implementation slice is
 complete in source: relationship memory and Meet Links, adaptive context,
 versioned durable conversation state, exact-value grounding, readiness,
-owner-approved Chat presentation and aligned Help. The protected database
-remains unchanged. A disposable automated browser pass is complete. The owner
+owner-approved Chat presentation and aligned Help. Migration `0067` is applied
+to the protected local database under a separately verified PWA-owned
+backup/restore checkpoint. A disposable automated browser pass is complete. The owner
 waived routine visual checkpoints while the approved drawer/card design remains
 materially unchanged.**
 
@@ -234,12 +235,21 @@ The parent product contract remains the
 - [ ] Complete final operational, static, browser, Help, and owner acceptance.
 - [ ] Obtain separate authorization for activation, deployment, and publication.
 
-## Current non-actions
+## Current checkpoint boundaries
 
-- No protected or private database was opened or changed. Migration `0067`
-  remains unapplied there; the complete 67-migration chain was instead verified
-  against a disposable empty database that was removed after the check.
-- No provider request was made.
+- The Links implementation task did not open or change the protected database.
+  After explicit ownership handoff, the PWA acceptance task stopped its writers,
+  created and independently verified the fresh
+  `pre-0067-coach-ai-chat-relationship-memory-20260820T160941Z` backup/restore
+  checkpoint, applied only `0067`, and verified 67 migrations, schema SHA-256
+  `f6abd205e6840524263c14f6def7f5c029a4942023225866f6bbc2aea7535405`,
+  `quick_check`, full integrity, zero foreign-key issues, unchanged pre-existing
+  table counts and zero rows in all four new memory tables. The fresh
+  `post-0067-coach-ai-chat-relationship-memory-20260820T161155Z` backup and
+  independent restore also passed.
+- The earlier implementation checkpoint made no provider request. The later
+  professional provider-evaluation checkpoint below made three bounded
+  synthetic requests and stopped before completing its first case.
 - No Journal fact or existing message was changed.
 - No test runner, build, deployment, push, merge, or publication occurred.
 - No concurrent dirty file was staged, committed, overwritten, or discarded.
@@ -412,3 +422,47 @@ The parent product contract remains the
   responses, rejected five unsafe responses and rejected one false draft-
   completion claim. The focused no-emit TypeScript project, focused ESLint and
   whitespace check passed after integration.
+
+## 2026-08-20 professional provider-evaluation repair checkpoint
+
+- The synthetic-only live verifier now supplies the current durable
+  conversation-state and relationship-memory contracts. Its planned seven-case
+  population adds one two-tool cross-feature account question and one
+  relationship-memory response to the previously accepted grounded read,
+  refreshed follow-up, manual execution, confirmation-draft and unsupported-
+  advice cases. It also records per-case latency and complete ordinary-input,
+  cached-input, cache-write-input, output-token and estimated-cost evidence.
+- The standalone verifier initially stopped before any provider request because
+  Node could not resolve Next's compile-time `server-only` marker. The accepted
+  harness command now resolves Next's compiled marker under the `react-server`
+  condition without installing a dependency or using `.next`.
+- Three paid synthetic requests then reached `gpt-5.6-sol`; each stopped on the
+  first grounded account-read case and no later case ran. The first two exposed
+  the former generic grounding failure and incomplete current-SDK usage
+  projection. Their exact token receipts cannot be reconstructed locally, so
+  no exact combined cost is claimed.
+- The third rejected request retained complete evidence: 24,021 input tokens,
+  including 23,854 cached and 161 cache-write tokens, 353 output tokens, and
+  10.5 seconds. At the current official Sol rates of $5 ordinary input, $0.50
+  cached input, $6.25 cache-write input and $30 output per million tokens, that
+  request cost approximately $0.023553. Official model reference:
+  `https://developers.openai.com/api/docs/models/gpt-5.6-sol`.
+- The failed gate exposed three deterministic integration defects. Exact ISO
+  dates and 24-hour times could reject equivalent plain-language formatting;
+  provider-visible tool results and server claim paths disagreed about their
+  JSON Pointer root; and Agents SDK `0.16.0` now aggregates cache details in
+  `inputTokensDetails` arrays while the adapter still read the former singular
+  shape. The source now canonicalizes equivalent date/time tokens, defines
+  claim paths relative to the factual payload, sends that same payload to the
+  provider, reads both current and accepted legacy usage shapes, and retains
+  privacy-safe grounding reason codes.
+- Seven deterministic Links verifiers pass after the repair: adaptive context,
+  durable conversation state, capability inventory, orchestration budgets,
+  response safety, claim grounding/provider-payload alignment and current-SDK
+  usage accounting. The focused Links no-emit TypeScript project, focused
+  ESLint and whitespace check also pass.
+- Professional live-provider acceptance remains open. The final payload-root
+  repair has not been sent to the provider, and no further paid retry was made
+  in this checkpoint. No private Journal data, protected database access,
+  product mutation, `.next` use, server, build, deployment, push or publication
+  occurred.

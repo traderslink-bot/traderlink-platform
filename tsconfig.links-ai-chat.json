@@ -20,6 +20,7 @@
     "src/modules/coach/server/database/migrations/0067_coach_ai_chat_relationship_memory.ts",
     "src/modules/help/ai-chat-guides.ts",
     "src/modules/help/help-content-registry.ts",
+    "src/scripts/verify-coach-ai-chat-live-provider.ts",
     "src/scripts/verify-links-ai-chat-*.ts"
   ],
   "exclude": [

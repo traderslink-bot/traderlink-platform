@@ -128,9 +128,12 @@ The private persistence API checkpoint is tracked in
 - The implementation provides explicit save, versioned edit/reconfirmation,
   enable/disable, secure forget/forget-all, Meet Links skip and atomic Meet Links
   completion. It does not silently infer or save a memory.
-- The migration has not been applied to the protected database. The approved
-  first-impression and **What Links remembers** interface remains the next
-  owner-visible implementation checkpoint.
+- Migration `0067` was later applied to the protected local database by the PWA
+  acceptance owner after fresh pre-apply backup/restore verification. The exact
+  67-migration schema, integrity, unchanged pre-existing table counts, four
+  empty new memory tables and fresh post-apply backup/restore all passed. The
+  approved first-impression and **What Links remembers** interface is now
+  implemented under the professional-agent progress record.
 
 ## Completed foundation: Agents SDK and global Links AI Chat companion
 
