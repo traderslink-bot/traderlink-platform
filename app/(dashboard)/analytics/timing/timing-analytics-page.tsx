@@ -24,6 +24,8 @@ const METRIC_IDS: readonly TimingMetricId[] = [
   "average_pnl",
   "win_rate",
   "included_count",
+  "median_pnl",
+  "best_trade",
 ];
 
 function valueAsNumber(value: JournalAnalyticsExactValue | null): number | null {
@@ -37,6 +39,7 @@ function valueAsNumber(value: JournalAnalyticsExactValue | null): number | null 
 function metricValue(metric: JournalAnalyticsMetricResult | null) {
   return Object.freeze({
     display: metric ? formatJournalAnalyticsMetric(metric) : "N/A",
+    state: metric?.state ?? "unavailable",
     value: metric ? valueAsNumber(metric.value) : null,
   });
 }

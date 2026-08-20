@@ -11,15 +11,23 @@ import { useMemo, useState } from "react";
 import { FeatureHelpLink } from "../../feature-help-link";
 import { HorizontalScrollHint } from "../../horizontal-scroll-region";
 
-export type TimingMetricId = "net_pnl" | "average_pnl" | "win_rate" | "included_count";
+export type TimingMetricId = "net_pnl" | "average_pnl" | "win_rate" | "included_count" | "median_pnl" | "best_trade";
 type TimingChartId = "entry_time_bucket" | "exit_time_bucket" | "entry_weekday" | "entry_session";
 type TimingChartStyle = "columns" | "line" | "horizontal_bars";
+type TimingMetricValue = Readonly<{
+  display: string;
+  state: "complete" | "partial" | "empty" | "unavailable";
+  value: number | null;
+}>;
 type TimingPoint = Readonly<{
   key: string;
   label: string;
-  metrics: Readonly<Record<TimingMetricId, Readonly<{ display: string; value: number | null }>>>;
+  metrics: Readonly<Record<TimingMetricId, TimingMetricValue>>;
 }>;
 export type TimingChartData = Readonly<Record<TimingChartId, readonly TimingPoint[]>>;
+
+const RELIABLE_TIME_MINIMUM_TRADES = 10;
+const RELIABLE_TIME_SAMPLE_WEIGHT = 10;
 
 const MEASURES: readonly Readonly<{ id: TimingMetricId; label: string }>[] = [
   { id: "net_pnl", label: "Net P/L" },
@@ -28,11 +36,11 @@ const MEASURES: readonly Readonly<{ id: TimingMetricId; label: string }>[] = [
   { id: "included_count", label: "Trade count" },
 ];
 
-const CHARTS: readonly Readonly<{ id: TimingChartId; title: string; bestLabel: string; showTimezone?: boolean }>[] = [
-  { id: "entry_time_bucket", title: "Entry time", bestLabel: "Best entry time", showTimezone: true },
-  { id: "exit_time_bucket", title: "Exit time", bestLabel: "Best exit time", showTimezone: true },
-  { id: "entry_weekday", title: "Day of week", bestLabel: "Best day" },
-  { id: "entry_session", title: "Trading session", bestLabel: "Best session" },
+const CHARTS: readonly Readonly<{ id: TimingChartId; title: string; showTimezone?: boolean }>[] = [
+  { id: "entry_time_bucket", title: "Entry time", showTimezone: true },
+  { id: "exit_time_bucket", title: "Exit time", showTimezone: true },
+  { id: "entry_weekday", title: "Day of week" },
+  { id: "entry_session", title: "Trading session" },
 ];
 
 const CHART_STYLES: readonly Readonly<{ id: TimingChartStyle; label: string }>[] = [
@@ -52,8 +60,19 @@ function timeLabel(value: string): string {
   return `${hour % 12 || 12}:${String(minute).padStart(2, "0")} ${hour >= 12 ? "PM" : "AM"}`;
 }
 
+function timeRangeLabel(value: string): string {
+  const [hourText, minuteText] = value.split(":");
+  const hour = Number(hourText);
+  const minute = Number(minuteText);
+  if (!Number.isInteger(hour) || !Number.isInteger(minute)) return value;
+  const endMinuteOfDay = (hour * 60 + minute + 30) % (24 * 60);
+  const endHour = Math.floor(endMinuteOfDay / 60);
+  const endMinute = endMinuteOfDay % 60;
+  return `${timeLabel(value)}–${endHour % 12 || 12}:${String(endMinute).padStart(2, "0")} ${endHour >= 12 ? "PM" : "AM"}`;
+}
+
 function labelFor(chartId: TimingChartId, point: TimingPoint): string {
-  return chartId === "entry_time_bucket" || chartId === "exit_time_bucket" ? timeLabel(point.label) : point.label;
+  return chartId === "entry_time_bucket" || chartId === "exit_time_bucket" ? timeRangeLabel(point.label) : point.label;
 }
 
 function valuesFor(points: readonly TimingPoint[], metricId: TimingMetricId): readonly number[] {
@@ -71,15 +90,88 @@ function yFor(value: number, range: Readonly<{ min: number; max: number }>, heig
   return 16 + ((range.max - value) / (range.max - range.min)) * height;
 }
 
-function BestLabel({ chart, points, metricId }: { chart: (typeof CHARTS)[number]; points: readonly TimingPoint[]; metricId: TimingMetricId }) {
-  const best = useMemo(() => points
+function highestLabel(metricId: TimingMetricId): string {
+  switch (metricId) {
+    case "net_pnl": return "Highest total P/L";
+    case "average_pnl": return "Highest average P/L";
+    case "win_rate": return "Highest win rate";
+    case "included_count": return "Most trades";
+    default: return "Highest value";
+  }
+}
+
+function HighestLabel({ chart, points, metricId }: { chart: (typeof CHARTS)[number]; points: readonly TimingPoint[]; metricId: TimingMetricId }) {
+  const highest = useMemo(() => points
     .filter((point) => point.metrics[metricId].value !== null)
     .sort((left, right) => (right.metrics[metricId].value ?? Number.NEGATIVE_INFINITY) - (left.metrics[metricId].value ?? Number.NEGATIVE_INFINITY))[0] ?? null, [metricId, points]);
-  return best ? (
+  return highest ? (
     <Typography color="text.secondary" sx={{ fontSize: 12 }}>
-      {chart.bestLabel}: <Box component="span" sx={{ color: "text.primary", fontWeight: 800 }}>{labelFor(chart.id, best)}</Box>
+      {highestLabel(metricId)}: <Box component="span" sx={{ color: "text.primary", fontWeight: 800 }}>{labelFor(chart.id, highest)}</Box>
+      {" · "}{highest.metrics[metricId].display}
     </Typography>
   ) : null;
+}
+
+type ReliableTimeCandidate = Readonly<{
+  adjustedAveragePnl: number;
+  point: TimingPoint;
+}>;
+
+function reliableTimeCandidate(point: TimingPoint): ReliableTimeCandidate | null {
+  const count = point.metrics.included_count;
+  const average = point.metrics.average_pnl;
+  const median = point.metrics.median_pnl;
+  const netPnl = point.metrics.net_pnl;
+  const bestTrade = point.metrics.best_trade;
+  const winRate = point.metrics.win_rate;
+  if (
+    count.state !== "complete" ||
+    average.state !== "complete" ||
+    median.state !== "complete" ||
+    netPnl.state !== "complete" ||
+    bestTrade.state !== "complete" ||
+    winRate.state !== "complete" ||
+    count.value === null ||
+    average.value === null ||
+    median.value === null ||
+    netPnl.value === null ||
+    bestTrade.value === null ||
+    winRate.value === null ||
+    count.value < RELIABLE_TIME_MINIMUM_TRADES ||
+    median.value <= 0 ||
+    winRate.value <= 50 ||
+    netPnl.value - bestTrade.value <= 0
+  ) return null;
+
+  return Object.freeze({
+    adjustedAveragePnl: average.value * (count.value / (count.value + RELIABLE_TIME_SAMPLE_WEIGHT)),
+    point,
+  });
+}
+
+function ReliableTimeLabel({ chart, points }: { chart: (typeof CHARTS)[number]; points: readonly TimingPoint[] }) {
+  const reliable = useMemo(() => points
+    .map(reliableTimeCandidate)
+    .filter((candidate): candidate is ReliableTimeCandidate => candidate !== null)
+    .sort((left, right) => {
+      if (right.adjustedAveragePnl !== left.adjustedAveragePnl) return right.adjustedAveragePnl - left.adjustedAveragePnl;
+      const medianDifference = (right.point.metrics.median_pnl.value ?? 0) - (left.point.metrics.median_pnl.value ?? 0);
+      if (medianDifference !== 0) return medianDifference;
+      const winRateDifference = (right.point.metrics.win_rate.value ?? 0) - (left.point.metrics.win_rate.value ?? 0);
+      if (winRateDifference !== 0) return winRateDifference;
+      return (right.point.metrics.included_count.value ?? 0) - (left.point.metrics.included_count.value ?? 0);
+    })[0] ?? null, [points]);
+  const noun = chart.id === "entry_time_bucket" ? "entry" : "exit";
+  if (!reliable) {
+    return <Typography color="text.secondary" sx={{ fontSize: 12 }}>Most reliable {noun} time: more repeated trades are needed.</Typography>;
+  }
+  const { point } = reliable;
+  return (
+    <Typography color="text.secondary" sx={{ fontSize: 12 }}>
+      Most reliable {noun} time: <Box component="span" sx={{ color: "text.primary", fontWeight: 800 }}>{labelFor(chart.id, point)}</Box>
+      {" · "}{point.metrics.included_count.display} trades · {point.metrics.win_rate.display} winners · {point.metrics.median_pnl.display} typical P/L
+    </Typography>
+  );
 }
 
 function EmptyChart() {
@@ -160,7 +252,7 @@ function HorizontalBarChart({ points, metricId }: { points: readonly TimingPoint
         const value = point.metrics[metricId].value ?? 0;
         return (
           <Stack direction="row" key={point.key} spacing={1} sx={{ alignItems: "center" }} title={`${point.label}: ${point.metrics[metricId].display}`}>
-            <Typography color="text.secondary" sx={{ flex: "0 0 92px", fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{labelFor("entry_time_bucket", point)}</Typography>
+            <Typography color="text.secondary" sx={{ flex: "0 0 150px", fontSize: 11, lineHeight: 1.2, whiteSpace: "normal" }}>{labelFor("entry_time_bucket", point)}</Typography>
             <Box sx={{ bgcolor: "#edf1f6", borderRadius: 99, flex: 1, height: 14, overflow: "hidden" }}>
               <Box sx={{ bgcolor: value < 0 ? "error.main" : "success.main", borderRadius: 99, height: "100%", width: `${Math.max(3, (Math.abs(value) / max) * 100)}%` }} />
             </Box>
@@ -210,9 +302,12 @@ function ChartPanel({ chart, points, metricId, timezone, styles }: { chart: (typ
             {chart.title}{chart.showTimezone ? ` (${timezone === "America/New_York" ? "Eastern Time" : timezone})` : ""}
           </Typography>
           <Typography color="text.secondary" variant="body2">{MEASURES.find((measure) => measure.id === metricId)?.label}</Typography>
+          <Stack spacing={0.25} sx={{ mt: 0.75 }}>
+            <HighestLabel chart={chart} metricId={metricId} points={points} />
+            {chart.id === "entry_time_bucket" || chart.id === "exit_time_bucket" ? <ReliableTimeLabel chart={chart} points={points} /> : null}
+          </Stack>
         </Box>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" } }}>
-          <BestLabel chart={chart} metricId={metricId} points={points} />
           <TextField
             aria-label={`${chart.title} chart type`}
             onChange={(event) => setChartStyle(event.target.value as TimingChartStyle)}
