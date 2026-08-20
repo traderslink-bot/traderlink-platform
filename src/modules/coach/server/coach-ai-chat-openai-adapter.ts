@@ -60,6 +60,7 @@ import {
 import { CoachAiChatFactualToolDispatcher } from "./coach-ai-chat-factual-tool-dispatcher";
 import { coachAiChatRuntimeCapabilityRegistry } from "./coach-ai-chat-capability-registry";
 import { coachAiChatFactualToolRegistry } from "./coach-ai-chat-factual-tool-registry";
+import { validateCoachAiChatResponseSafety } from "./coach-ai-chat-response-safety";
 
 // Two bounded sequential lookup steps precede the structured answer. Any
 // expansion remains gated on provider latency, usage, and cost evaluation.
@@ -533,11 +534,13 @@ function answer(
   value: z.infer<typeof answerSchema>,
   dispatcher: CoachAiChatFactualToolDispatcher,
   additionalEvidence: readonly unknown[],
+  usage: CoachAiChatGenerationUsage,
+  hasConfirmationDraft: boolean,
 ): CoachAiChatAnswer {
   const toolCalls = dispatcher.snapshotsForPersistence();
   const callIds = new Set(toolCalls.map((item) => item.toolCallId));
   if (value.evidenceReferences.some((reference) => !callIds.has(reference.toolCallId))) {
-    throw new CoachAiChatProviderGenerationError(unavailableUsage(), "TRADERLINK_COACH_UNGROUNDED_ANSWER");
+    throw new CoachAiChatProviderGenerationError(usage, "TRADERLINK_COACH_UNGROUNDED_ANSWER");
   }
   const claimsByToolAndPath = new Map(buildCoachAiChatClaimCatalog(toolCalls).map((claim) => [
     `${claim.toolCallId}\n${claim.path}`,
@@ -548,7 +551,7 @@ function answer(
       claimsByToolAndPath.get(`${reference.toolCallId}\n${path}`));
     if (claims.some((claim) => !claim)) {
       throw new CoachAiChatProviderGenerationError(
-        unavailableUsage(),
+        usage,
         "TRADERLINK_COACH_UNGROUNDED_ANSWER",
       );
     }
@@ -567,8 +570,20 @@ function answer(
     });
   } catch {
     throw new CoachAiChatProviderGenerationError(
-      unavailableUsage(),
+      usage,
       "TRADERLINK_COACH_UNGROUNDED_ANSWER",
+    );
+  }
+  try {
+    validateCoachAiChatResponseSafety({
+      text: [value.directAnswer, ...value.supportingObservations,
+        value.limitation ?? "", value.nextQuestion ?? ""].join("\n"),
+      hasConfirmationDraft,
+    });
+  } catch {
+    throw new CoachAiChatProviderGenerationError(
+      usage,
+      "TRADERLINK_COACH_UNSAFE_RELATIONSHIP_RESPONSE",
     );
   }
   return Object.freeze({ contractVersion: COACH_AI_CHAT_ANSWER_CONTRACT_VERSION,
@@ -1078,7 +1093,12 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
         input.existingManualEntryDraft,
         input.currentReviewDelivery,
         input.analysisScope,
-      ]),
+      ], usage, Boolean(
+        result.finalOutput.manualExecutionDraft ||
+        result.finalOutput.dailyCompanionDraft ||
+        result.finalOutput.reviewDeliveryChangeDraft ||
+        result.finalOutput.actionDraft,
+      )),
       usage,
       factualToolCalls: input.dispatcher.snapshotsForPersistence(),
       manualEntryExtraction: result.finalOutput.manualExecutionDraft

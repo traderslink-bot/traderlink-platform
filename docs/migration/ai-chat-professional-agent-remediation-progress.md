@@ -154,7 +154,7 @@ The parent product contract remains the
   exact copy, controls and mobile/accessibility boundary for owner review.
 - [x] Obtain owner approval for every applicable item in the design checklist,
   including the general-helpfulness and **remember this** comments.
-- [ ] Enforce supportive, encouraging, non-pressuring relationship behavior and
+- [x] Enforce supportive, encouraging, non-pressuring relationship behavior and
   reject hidden psychological or financial profiling.
 - [ ] Prove long follow-ups, corrections, account changes, stale references, and
   exact current-fact re-reads, including at least 50 consecutive short messages.
@@ -394,3 +394,21 @@ The parent product contract remains the
   file was rebuilt from its maintained source and was not hand-edited.
 - No provider request, protected database read/write, migration, test runner,
   full build, browser process, deployment, push or publication occurred.
+
+## 2026-08-20 implementation checkpoint: relationship-response backstop
+
+- The provider contract remains the primary Links voice and behavior boundary.
+  A deterministic post-generation backstop now rejects coercive dependency,
+  forced urgency, shame/status pressure, fake lived trading experience,
+  diagnosis-style profiling, vulnerability-plus-upgrade targeting and false
+  claims that a confirmation draft already changed product data.
+- The backstop does not score sentiment, diagnose the trader or require praise.
+  Supportive factual language, gentle acknowledgment and honest references to
+  explicitly shared goals remain accepted.
+- Provider output validation errors now carry the provider's complete measured
+  usage into the existing terminal failure/receipt path. Rejected grounding or
+  relationship-safety output therefore cannot lose the paid usage record.
+- The deterministic response-safety verifier accepted three normal supportive
+  responses, rejected five unsafe responses and rejected one false draft-
+  completion claim. The focused no-emit TypeScript project, focused ESLint and
+  whitespace check passed after integration.
