@@ -1,12 +1,5 @@
 import type { Metadata } from "next";
 
-import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
-import {
-  createJournalCandleReviewOfflineViewModel,
-  JOURNAL_OFFLINE_ROUTE_VIEW_KEYS,
-  JOURNAL_OFFLINE_ROUTE_VIEW_VERSION,
-  journalOfflineRouteCoverage,
-} from "@/src/modules/journal/contracts/journal-offline-route-view-contracts";
 import Alert from "@mui/material/Alert";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -54,25 +47,8 @@ export default async function TradeCandleReviewPage({
       </DashboardPage>
     );
   }
-  const offlineModel = createJournalCandleReviewOfflineViewModel({
-    currency: model.currency,
-    initialReview: model.review,
-    trade: model.target,
-  });
   return (
     <DashboardPage>
-      <OfflineSavedViewCapture
-        accountTimezone={null}
-        calculationVersion="journal-candle-review-v1"
-        coverage={journalOfflineRouteCoverage("candle-review")}
-        generatedAtUtc={new Date().toISOString()}
-        model={offlineModel}
-        pathname="/trades/candle-review"
-        queryIdentity="latest-reviewed-trade"
-        reportingCurrency={model.currency}
-        routeViewVersion={JOURNAL_OFFLINE_ROUTE_VIEW_VERSION}
-        viewKey={JOURNAL_OFFLINE_ROUTE_VIEW_KEYS["candle-review"]}
-      />
       <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
         <div>
           <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">Trades</Typography>

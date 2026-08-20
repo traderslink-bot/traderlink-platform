@@ -1,13 +1,6 @@
 import type { Metadata } from "next";
 import Typography from "@mui/material/Typography";
 
-import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
-import {
-  createJournalDailyTrackerOfflineViewModel,
-  journalDailyTrackerOfflineCoverage,
-  journalDailyTrackerOfflineViewKey,
-  JOURNAL_DAILY_TRACKER_OFFLINE_ROUTE_VIEW_VERSION,
-} from "@/src/modules/journal/contracts/journal-daily-tracker-offline-view-contracts";
 import {
   DashboardPage,
   DashboardUnavailableState,
@@ -85,22 +78,12 @@ export default async function TradeTrackerPage({
     />
   );
   if (data) {
-    const generatedAtUtc = new Date().toISOString();
     return (
       <TradeTrackerUnsavedChangesProvider>
-        <OfflineSavedViewCapture
-          accountTimezone={data.timezone}
-          calculationVersion="journal-daily-tracker-v1"
-          coverage={journalDailyTrackerOfflineCoverage()}
-          generatedAtUtc={generatedAtUtc}
-          model={createJournalDailyTrackerOfflineViewModel(data)}
-          pathname="/trade-tracker"
-          queryIdentity={`date:${data.date}`}
-          reportingCurrency={data.currency}
-          routeViewVersion={JOURNAL_DAILY_TRACKER_OFFLINE_ROUTE_VIEW_VERSION}
-          viewKey={journalDailyTrackerOfflineViewKey(data.date)}
+        <DaySessionView
+          data={data}
+          topContent={topContent}
         />
-        <DaySessionView data={data} topContent={topContent} />
       </TradeTrackerUnsavedChangesProvider>
     );
   }

@@ -1,13 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
-import {
-  createJournalDailyTrackerOfflineViewModel,
-  journalDailyTrackerOfflineCoverage,
-  journalDailyTrackerOfflineViewKey,
-  JOURNAL_DAILY_TRACKER_OFFLINE_ROUTE_VIEW_VERSION,
-} from "@/src/modules/journal/contracts/journal-daily-tracker-offline-view-contracts";
 import {
   DashboardPage,
   DashboardUnavailableState,
@@ -76,18 +69,6 @@ export default async function TradeTrackerDayPage({
       : null;
     return (
       <TradeTrackerUnsavedChangesProvider>
-        <OfflineSavedViewCapture
-          accountTimezone={data.timezone}
-          calculationVersion="journal-daily-tracker-v1"
-          coverage={journalDailyTrackerOfflineCoverage()}
-          generatedAtUtc={new Date().toISOString()}
-          model={createJournalDailyTrackerOfflineViewModel(data)}
-          pathname={`/trade-tracker/${data.date}`}
-          queryIdentity={`date:${data.date}`}
-          reportingCurrency={data.currency}
-          routeViewVersion={JOURNAL_DAILY_TRACKER_OFFLINE_ROUTE_VIEW_VERSION}
-          viewKey={journalDailyTrackerOfflineViewKey(data.date)}
-        />
         <DaySessionView
           data={data}
           initialAnalyzerFocus={initialAnalyzerFocus}

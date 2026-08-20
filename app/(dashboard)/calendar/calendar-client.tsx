@@ -31,7 +31,6 @@ import {
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 
-import { OfflineSavedViewStatus } from "@/app/pwa/offline-saved-view-status";
 import {
   formatJournalAnalyticsDecimal,
   formatJournalAnalyticsMoney,
@@ -665,7 +664,6 @@ export function CalendarClient({
   initialData,
   initialFilters,
   initialView,
-  offlineSavedAtUtc,
   selectedMonth,
   selectedWeek,
 }: {
@@ -675,7 +673,6 @@ export function CalendarClient({
   initialData: CalendarData;
   initialFilters: CalendarFilterInput;
   initialView: CalendarView;
-  offlineSavedAtUtc?: string;
   selectedMonth: string;
   selectedWeek: string;
 }) {
@@ -709,7 +706,7 @@ export function CalendarClient({
     : null;
 
   useEffect(() => {
-    if (offlineSavedAtUtc || !detailsOpen || !expandedTickerRequestKey) return;
+    if (!detailsOpen || !expandedTickerRequestKey) return;
     const controller = new AbortController();
     void fetch(`/api/platform/journal/calendar/ticker-details?roundTripIds=${encodeURIComponent(expandedTickerRoundTripIds)}`, {
       cache: "no-store",
@@ -724,7 +721,7 @@ export function CalendarClient({
       setTickerDetailState({ requestKey: expandedTickerRequestKey, status: "error", trades: [] });
     });
     return () => controller.abort();
-  }, [detailsOpen, expandedTickerRequestKey, expandedTickerRoundTripIds, offlineSavedAtUtc]);
+  }, [detailsOpen, expandedTickerRequestKey, expandedTickerRoundTripIds]);
 
   const visibleTickerDetailState = tickerDetailState.requestKey === expandedTickerRequestKey
     ? tickerDetailState
@@ -770,7 +767,6 @@ export function CalendarClient({
   });
 
   const navigatePeriod = (nextView: CalendarView, period: string) => {
-    if (offlineSavedAtUtc) return;
     const query = new URLSearchParams({ view: nextView });
     query.set(nextView === "month" ? "month" : "week", period);
     router.push(`/calendar?${query.toString()}`);
@@ -791,7 +787,6 @@ export function CalendarClient({
       >
         Trading Calendar
       </Typography>
-      {offlineSavedAtUtc ? <OfflineSavedViewStatus savedAtUtc={offlineSavedAtUtc} /> : null}
       <Stack direction={{ xs: "column", lg: "row" }} spacing={1} sx={{ alignItems: { lg: "center" }, justifyContent: "space-between" }}>
         <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
           <ToggleButtonGroup exclusive onChange={(_, value: CalendarView | null) => {

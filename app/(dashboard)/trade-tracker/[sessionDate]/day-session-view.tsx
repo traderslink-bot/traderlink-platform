@@ -760,13 +760,6 @@ function timeLabel(value: string, timezone: string, includeSeconds = false): str
     timeZone: timezone,
   });
 }
-
-function savedViewTime(value: string): string {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
 function analyzerPatternName(kind: string): string {
   const name = candlePatternName(kind);
   return `${/^[AEIOU]/u.test(name) ? "an" : "a"} ${name}`;
@@ -1706,12 +1699,10 @@ function TradeReview({
               </Button>
             ) : null;
           })()}
-          {readOnly ? null : (
-            <ManualExecutionEditDialog
-              execution={execution}
-              expectedAccountSelectionRef={expectedAccountSelectionRef}
-            />
-          )}
+          <ManualExecutionEditDialog
+            execution={execution}
+            expectedAccountSelectionRef={expectedAccountSelectionRef}
+          />
         </Box>
       ))}
     </Stack>
@@ -2214,7 +2205,6 @@ export function DaySessionView({
   data,
   designPreview = false,
   initialAnalyzerFocus = null,
-  offlineSavedAtUtc,
   pendingExecutions = false,
   readOnly = false,
   showMoomooConnectionGuidance = false,
@@ -2227,7 +2217,6 @@ export function DaySessionView({
     interval: DailyTradeChartInterval;
     roundTripId: string;
   }> | null;
-  offlineSavedAtUtc?: string;
   pendingExecutions?: boolean;
   readOnly?: boolean;
   showMoomooConnectionGuidance?: boolean;
@@ -2808,7 +2797,6 @@ export function DaySessionView({
         <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", justifySelf: { md: "end" } }}>
           <FeatureHelpLink href="/help/daily-trade-tracker" label="Daily Trade Tracker" size="medium" />
           <Button
-            disabled={Boolean(offlineSavedAtUtc)}
             onClick={() => openTraderLinkAiChat({
               dailyContext: Object.freeze({
                 kind: "daily_review",
@@ -2823,21 +2811,10 @@ export function DaySessionView({
           </Button>
         </Stack>
       </Box>
-      {offlineSavedAtUtc ? (
-        <Chip
-          color="primary"
-          label={`Offline · Last updated ${savedViewTime(offlineSavedAtUtc)}`}
-          size="small"
-          sx={{ alignSelf: "flex-start" }}
-          variant="outlined"
-        />
-      ) : null}
       {topContent}
       {readOnly ? (
         <Alert severity="info">
-          {offlineSavedAtUtc
-            ? "Offline trade entry is available. Reconnect to change saved notes, rules, tags, reviews or executions, and to load Trade Analyzer market data."
-            : "This historical trading day is read-only. Its saved Trade Tracker rules, tags, and notes are shown without allowing retrospective edits."}
+          This historical trading day is read-only. Its saved Trade Tracker rules, tags, and notes are shown without allowing retrospective edits.
         </Alert>
       ) : null}
       <DashboardPanel action={<FeatureHelpLink href="/help/daily-trade-tracker/getting-started#open-and-navigate" label="week navigation" />} title="This week">
@@ -3317,12 +3294,10 @@ export function DaySessionView({
                                 <Typography sx={{ fontFamily: "var(--font-geist-mono)" }} variant="body2">
                                   {price(execution.price, data.currency)}
                                 </Typography>
-                                {readOnly ? null : (
-                                  <ManualExecutionEditDialog
-                                    execution={execution}
-                                    expectedAccountSelectionRef={data.expectedAccountSelectionRef}
-                                  />
-                                )}
+                                <ManualExecutionEditDialog
+                                  execution={execution}
+                                  expectedAccountSelectionRef={data.expectedAccountSelectionRef}
+                                />
                               </Box>
                             ))}
                           </Stack>
@@ -3831,7 +3806,7 @@ export function DaySessionView({
           ) : null}
         </Stack>
       </DashboardPanel>
-      {readOnly ? null : <ManageTagsDialog
+      <ManageTagsDialog
         expectedAccountSelectionRef={data.expectedAccountSelectionRef}
         onChange={(tags) => {
           const validIds = new Set(tags.map((tag) => tag.tagId));
@@ -3850,8 +3825,8 @@ export function DaySessionView({
         onClose={() => setManageTagsOpen(false)}
         open={manageTagsOpen}
         tags={availableTags}
-      />}
-      {readOnly ? null : <Dialog
+      />
+      <Dialog
         aria-labelledby="review-with-unsaved-changes-title"
         fullWidth
         maxWidth="sm"
@@ -3886,7 +3861,7 @@ export function DaySessionView({
             Mark reviewed anyway
           </DashboardPrimaryAction>
         </DialogActions>
-      </Dialog>}
+      </Dialog>
     </DashboardPage>
   );
 }

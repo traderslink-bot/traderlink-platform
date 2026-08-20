@@ -1,12 +1,5 @@
 import type { Metadata } from "next";
 
-import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
-import {
-  createJournalTradingRulesOfflineViewModel,
-  JOURNAL_OFFLINE_ROUTE_VIEW_KEYS,
-  JOURNAL_OFFLINE_ROUTE_VIEW_VERSION,
-  journalOfflineRouteCoverage,
-} from "@/src/modules/journal/contracts/journal-offline-route-view-contracts";
 import { withReadonlyJournalAnnotations } from "@/src/modules/journal/server/annotations/journal-annotation-runtime";
 import { readJournalTradingRulesDashboard } from "@/src/modules/journal/server/annotations/journal-trading-rules-dashboard";
 import {
@@ -61,25 +54,6 @@ export default async function TradingRulesPage() {
     },
   );
   return (
-    <>
-    <OfflineSavedViewCapture
-      accountTimezone={account?.tradingTimezone ?? null}
-      calculationVersion="journal-trading-rules-v1"
-      coverage={journalOfflineRouteCoverage("trading-rules")}
-      generatedAtUtc={new Date().toISOString()}
-      model={createJournalTradingRulesOfflineViewModel({
-        initialRuleIdeas,
-        initialView,
-        monetaryMultiplier: reporting.monetaryMultiplier,
-        reportingCurrency: reporting.reportingCurrency,
-        sourceCurrency: reporting.sourceCurrency,
-      })}
-      pathname="/rules"
-      queryIdentity="current"
-      reportingCurrency={reporting.reportingCurrency}
-      routeViewVersion={JOURNAL_OFFLINE_ROUTE_VIEW_VERSION}
-      viewKey={JOURNAL_OFFLINE_ROUTE_VIEW_KEYS["trading-rules"]}
-    />
     <RulesClient
       initialView={initialView}
       initialRuleIdeas={initialRuleIdeas}
@@ -87,6 +61,5 @@ export default async function TradingRulesPage() {
       reportingCurrency={reporting.reportingCurrency}
       sourceCurrency={reporting.sourceCurrency}
     />
-    </>
   );
 }

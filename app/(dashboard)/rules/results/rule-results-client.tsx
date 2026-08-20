@@ -6,7 +6,6 @@ import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import { Box, Button, Chip, InputAdornment, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import Link from "next/link";
 
-import { OfflineSavedViewStatus } from "@/app/pwa/offline-saved-view-status";
 import { DashboardMetricCard, DashboardPage, DashboardPanel } from "../../../dashboard-template";
 import { FeatureHelpLink } from "../../feature-help-link";
 import { formatJournalAnalyticsMoney } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
@@ -33,13 +32,7 @@ function factSentence(summary: RuleResultsView["summaries"][number], currency: s
   return `${parts.join(" · ")}.`;
 }
 
-export function RuleResultsClient({
-  initialView,
-  offlineSavedAtUtc,
-}: {
-  initialView: RuleResultsView;
-  offlineSavedAtUtc?: string;
-}) {
+export function RuleResultsClient({ initialView }: { initialView: RuleResultsView }) {
   const [search, setSearch] = useState("");
   const [source, setSource] = useState("All");
   const [result, setResult] = useState("All");
@@ -74,12 +67,6 @@ export function RuleResultsClient({
         </Box>
         <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}><FeatureHelpLink href="/help/trading-rules/results-history" label="Rule Results" size="medium" /><Button component={Link} href="/rules" startIcon={<ArrowBackRoundedIcon />} variant="outlined">Trading Rules</Button></Stack>
       </Stack>
-      {offlineSavedAtUtc ? (
-        <OfflineSavedViewStatus
-          message="This saved result history is available offline. Search, filters and paging still work on the saved results."
-          savedAtUtc={offlineSavedAtUtc}
-        />
-      ) : null}
 
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", sm: "repeat(2,1fr)", lg: "repeat(4,1fr)" } }}>
         <DashboardMetricCard caption="Distinct rules" label="Rules broken" value={String(uniqueBrokenRules)} />

@@ -3,8 +3,8 @@
 **Status:** PWA-R0 and PWA-R1 are locally checkpointed; PWA-R2 tracker parity
 is technically accepted after the owner waived further visual review and the
 scoped production client/worker compilation passed; PWA-R3 now has its saved
-view foundation plus Workspace and all planned Journal Trades saved-view
-models/renderers implemented; Journal Analytics remains next
+view foundation, Platform-owned Workspace model/renderer and first
+Journal-owned Open Positions model/renderer implemented
 
 **Started:** 2026-08-20
 
@@ -325,44 +325,12 @@ condensed rail state is offered.
 - [x] Preserve the Swing Tracker saved-view slice in narrow local commit
   `a1265506` without staging the concurrent AI Chat, Daily Tracker, Analytics,
   Calendar, Rules, notification, shell or other dashboard work.
-- [x] Add the Journal-owned Daily Tracker saved-view model and renderer,
+- [ ] Add the Journal-owned Daily Tracker saved-view model and renderer,
   preserving saved empty-day notes/reviews and disabling every
   server-authoritative mutation except the accepted offline execution outbox.
-- [x] Save current and visited Daily Tracker dates separately, reuse the real
-  `DaySessionView`, retain the normal current-day execution entry placement and
-  show dated routes read-only without an invented local-date policy.
-- [x] Remove real execution edit references, account mutation references,
-  server revisions, tag IDs, rule IDs and analyzer candle payloads from the
-  Daily saved model. Generate local display keys and state exactly that Trade
-  Analyzer market data requires reconnection.
-- [x] Prevent the Daily read-only renderer from mounting execution editors,
-  tag management or the unsaved-review confirmation dialog. Disable AI Chat
-  from the saved Daily view and keep notes, rules, tags and review facts visible.
-- [x] Add the remaining Journal Trades saved-view models and renderers for
+- [ ] Add the remaining Journal Trades saved-view models and renderers for
   Calendar, Trade Explorer, Compare Trades, Trading Rules, Rule Results and
   Candle Review.
-- [x] Reuse the real Calendar, Trade Explorer, Compare Trades, Trading Rules,
-  Rule Results and Candle Review components. Do not reintroduce projection
-  cards or a second visual system.
-- [x] Keep saved Calendar day inspection and saved Rule Results search,
-  filters and paging available locally. Block Calendar requests for other
-  periods and live ticker execution details until reconnection.
-- [x] Place Trade Explorer and Trading Rules behind native disabled interaction
-  boundaries offline; remove the Trade Explorer review editor. Keep Compare
-  Trades saved-study inspection/local group drafting available while guarding
-  compare/save/update/remove server actions in both handlers and buttons.
-- [x] Preserve saved Candle Review charts and factual feedback while removing
-  analyze/refresh actions and replacing real trade/review identifiers with
-  local display identifiers in the saved model.
-- [x] Show the shared **Offline · Last updated ...** treatment and a concise
-  reconnect explanation on every new saved Journal route.
-- [x] Review Help Center impact. The online feature workflows are unchanged and
-  each offline page explains its unavailable actions in place, so no existing
-  feature guide requires a source update in this checkpoint. Complete PWA
-  offline guidance remains part of release acceptance.
-- [x] Focused React best-practices review, 512 MB ESLint, capability-boundary
-  search and explicit-file diff checks pass. No Vitest, broad TypeScript run,
-  server, browser, build, provider, hosted mutation or deployment ran.
 - [ ] Add Journal Analytics-owned Trade Analyzer and Analytics saved-view
   models and renderers.
 
@@ -379,10 +347,10 @@ separate memory-bounded TypeScript stage.
 The owner explicitly waived further visual review and directed work to
 continue without waiting for the 16-hour press-release runtime. PWA-R2 is
 therefore accepted. PWA-R3 now has its non-destructive version-3 saved-view
-store plus normal-layout Workspace, Open Positions, Swing Tracker, Daily
-Tracker, Calendar, Trade Explorer, Compare Trades, Trading Rules, Rule Results
-and Candle Review offline renderers. The next source boundary is the
-Journal Analytics-owned Trade Analyzer and Analytics saved views. Keep source
-work lightweight until the final full-site build can run without threatening
-protected processes. No Journal data, IndexedDB record, Push state, hosted
-configuration or deployed state changed during this acceptance run.
+store, the first Platform-owned Workspace model and the first Journal-owned
+Open Positions model and Swing Tracker model with normal-layout offline
+renderers. The next source slice is the Daily Tracker saved-view boundary,
+followed by the remaining Journal Trades surfaces and Journal Analytics. Keep
+source work lightweight until the final full-site build can run without
+threatening protected processes. No Journal data, IndexedDB record, Push state,
+hosted configuration or deployed state changed during this acceptance run.

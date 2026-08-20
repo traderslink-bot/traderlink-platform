@@ -14,7 +14,6 @@ import {
 } from "lightweight-charts";
 import { useEffect, useRef, useState } from "react";
 
-import { OfflineSavedViewStatus } from "@/app/pwa/offline-saved-view-status";
 import type {
   CandleReviewRecord,
   CandleReviewTarget,
@@ -107,13 +106,11 @@ function CandleChart({ currency, review }: { currency: string; review: CandleRev
 export function TradeCandleReviewClient({
   currency,
   initialReview,
-  offlineSavedAtUtc,
   selectionRef,
   trade,
 }: {
   currency: string;
   initialReview: CandleReviewRecord | null;
-  offlineSavedAtUtc?: string;
   selectionRef: string;
   trade: CandleReviewTarget;
 }) {
@@ -155,17 +152,11 @@ export function TradeCandleReviewClient({
 
   return (
     <Stack spacing={2.5}>
-      {offlineSavedAtUtc ? (
-        <OfflineSavedViewStatus
-          message="This saved candle review is available offline. Reconnect to analyze another trade or refresh market data."
-          savedAtUtc={offlineSavedAtUtc}
-        />
-      ) : null}
       <DashboardPanel
         action={(
           <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
             <FeatureHelpLink href="/help/candle-review/run-and-read-review#analyze-on-demand" label="candle review action" />
-            {offlineSavedAtUtc ? null : review === null ? (
+            {review === null ? (
           <DashboardPrimaryAction disabled={loading} onClick={analyze}>
             {loading ? "Analyzing trade…" : "Analyze this trade"}
           </DashboardPrimaryAction>
