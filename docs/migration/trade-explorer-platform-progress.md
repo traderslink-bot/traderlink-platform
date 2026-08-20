@@ -421,3 +421,20 @@ actions. A trade card expanded its exact two executions. The grouped Ticker
 view defaulted to 25 bounded rows, changed to 10, and advanced from `1-10 of
 135` to `11-20 of 135`. No duplicate IDs, console errors or runtime error
 surface appeared. Owner visual approval remains the next checkpoint.
+
+## Dashboard owner-review correction - 2026-08-17
+
+- The current Journal was inspected read-only for the reported DSY/DSDY result.
+  It contains three active `ready_closed` DSY trades, all with incomplete
+  trading-cost facts, and no DSDY trades.
+- Net P/L correctly excludes all three DSY trades because their Net result is
+  not factual. Trade Explorer now explains that condition and provides a
+  **View Gross P/L** action instead of presenting an unexplained empty table.
+- The visible introduction now explains that traders can manage notes, tags and
+  rules here instead of Daily Trade Tracker. The Review panel also states that
+  saved annotations can be used in future AI Reviews.
+- Source review confirmed the panel already uses the same Journal annotation
+  actions and reads as Daily Trade Tracker and AI Review inputs; no duplicate
+  note, tag or rule store was added.
+- Targeted ESLint, project TypeScript and diff-whitespace checks pass. No test
+  suite, build, browser server, database write, commit or deployment ran.

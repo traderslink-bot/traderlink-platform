@@ -409,6 +409,9 @@ export function TradeExplorerReviewEditor({
             {success ? <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert> : null}
             {model && draft ? (
               <Stack spacing={3}>
+                <Typography color="text.secondary" variant="body2">
+                  Saved notes, tags and rule results can be used in future AI Reviews.
+                </Typography>
                 <Box>
                   <Typography sx={{ fontWeight: 800 }} variant="subtitle1">Trade notes</Typography>
                   <Typography color="text.secondary" sx={{ mb: 1 }} variant="body2">

@@ -2,7 +2,7 @@ export const JOURNAL_ANALYTICS_QUERY_VERSION =
   "journal_analytics_query_v1" as const;
 export const JOURNAL_ANALYTICS_MAX_METRICS_PER_QUERY = 256 as const;
 export const JOURNAL_ANALYTICS_MAX_SYMBOLS_PER_QUERY = 100 as const;
-export const JOURNAL_ANALYTICS_MAX_GROUP_ROWS = 500 as const;
+export const JOURNAL_ANALYTICS_MAX_GROUP_ROWS = 2_000 as const;
 export const JOURNAL_ANALYTICS_MAX_TABLE_PAGE_SIZE = 200 as const;
 export const JOURNAL_ANALYTICS_TIME_BUCKET_MINUTES = Object.freeze([
   5,

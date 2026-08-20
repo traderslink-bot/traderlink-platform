@@ -82,7 +82,7 @@ export function RuleResultsClient({ initialView }: { initialView: RuleResultsVie
               <Box key={`${summary.ruleId}:${summary.ruleVersion}`} sx={{ border: 1, borderColor: "divider", borderRadius: 2, p: 1.75 }}>
                 <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}>
                   <Typography sx={{ fontWeight: 800 }}>{summary.label}</Typography>
-                  <Stack direction="row" spacing={0.5}><Chip label={summary.source} size="small" /><Chip label={`v${summary.ruleVersion}`} size="small" variant="outlined" /></Stack>
+                  <Chip label={summary.source} size="small" />
                 </Stack>
                 <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">{factSentence(summary, initialView.currency)}</Typography>
               </Box>
@@ -103,7 +103,7 @@ export function RuleResultsClient({ initialView }: { initialView: RuleResultsVie
           {visible.map((event: RuleResultEvent, index) => (
             <Box key={`${event.ruleId}:${event.date}:${event.target}:${index}`} sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "110px minmax(220px,1fr) 100px 110px 120px" }, py: 1.25 }}>
               <Typography variant="body2">{event.date}</Typography>
-              <Box><Typography sx={{ fontWeight: 700 }} variant="body2">{event.label}</Typography><Typography color="text.secondary" variant="caption">{event.source} · v{event.ruleVersion} · {event.target}{event.ticker ? ` · ${event.ticker}` : ""}{event.note ? ` · Note: ${event.note}` : ""}</Typography></Box>
+              <Box><Typography sx={{ fontWeight: 700 }} variant="body2">{event.label}</Typography><Typography color="text.secondary" variant="caption">{event.source} · {event.target}{event.ticker ? ` · ${event.ticker}` : ""}{event.note ? ` · Note: ${event.note}` : ""}</Typography></Box>
               <Chip label={event.result} size="small" sx={{ justifySelf: "start" }} />
               <Typography variant="body2">{formatJournalAnalyticsMoney(event.netPnl, initialView.currency)}</Typography>
               <Button component={Link} href={`/trade-tracker/${event.date}`} size="small">View day</Button>

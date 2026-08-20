@@ -15,7 +15,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
           { kind: "paragraph", text: "The Trade Analyzer combines your exact Trade Tracker executions with supported Moomoo candles. Inside Daily Trade Tracker it replays one selected trade and explains its entries, exits, price path and completed candle patterns. Day Trade Analysis compares saved Analyzer results across eligible day trades." },
           { kind: "table", columns: ["Area", "Purpose"], rows: [
             ["Daily Trade Tracker", "Review one trading day, select a ticker and trade, replay the chart, inspect executions and save notes, tags and rules."],
-            ["Trade Analyzer", "The reusable chart, execution analysis, Green-to-red analysis and candle-pattern capability."],
+            ["Trade Analyzer", "The reusable chart, exact execution details, Green-to-Red review and candle-pattern capability."],
             ["Day Trade Analysis", "Long-term comparisons over eligible day trades that already have saved Analyzer results."],
             ["Analytics", "Regular Trade Tracker analytics over supported historical trading facts. It does not share the Analyzer eligibility population."],
           ] },
@@ -133,11 +133,11 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     sections: [
       {
         id: "individual-executions",
-        title: "Individual execution analysis",
-        summary: "Select View analysis beside any execution to examine that exact fill.",
-        keywords: ["view analysis", "execution analysis", "entry analysis", "exit analysis", "fill"],
+        title: "Highlight one execution",
+        summary: "Select Show on chart beside any execution to highlight that exact fill without replacing the complete-trade analysis.",
+        keywords: ["show on chart", "execution analysis", "entry analysis", "exit analysis", "fill"],
         blocks: [
-          { kind: "paragraph", text: "View analysis opens the saved analysis for that buy or sell. Long positions normally treat buys as entries/adds and sells as partial/final exits; Short positions reverse those roles." },
+          { kind: "paragraph", text: "Show on chart highlights the saved buy or sell and moves its marker into view. The combined entry, combined exit, outcome and Green-to-Red analysis stay visible for the complete trade." },
           { kind: "table", columns: ["Result", "What it tells you"], rows: [
             ["Execution", "Exact time including seconds, quantity and price."],
             ["Candle location and precision", "Where the fill sat inside the candle range and how far it was from the favorable edge."],
@@ -156,7 +156,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: ["combined entry", "combined exit", "weighted price", "mfe", "mae", "holding time"],
         blocks: [
           { kind: "paragraph", text: "Combined entry and exit use share-weighted fill prices. The complete trade runs from its first entry until the position returns to zero. It can report actual Trade Tracker result, holding time, maximum favorable excursion (MFE), maximum adverse excursion (MAE), partial exits and giveback." },
-          { kind: "paragraph", text: "A combined result answers how the complete trade behaved. Individual execution analysis answers what followed one particular fill. Both views are useful and their populations should not be mixed." },
+          { kind: "paragraph", text: "A combined result answers how the complete trade behaved. Exact execution details show what followed one particular fill. Both views are useful and their populations should not be mixed." },
         ],
       },
       {

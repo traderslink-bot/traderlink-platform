@@ -26,6 +26,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { DashboardMetricCard } from "@/app/dashboard-template";
+import { candlePatternName } from "@/src/lib/trade-candle-analysis/pattern-presentation";
 import type {
   DailyTradeLongTermAnalyticsModel,
   TradeAnalysisExcursionBreakdownRow,
@@ -61,8 +62,7 @@ function percent(value: number | null): string {
 }
 
 function friendlyPattern(value: string): string {
-  return value.replaceAll("_", " ").replaceAll("-", " ")
-    .replace(/\b\w/gu, (character) => character.toUpperCase());
+  return candlePatternName(value);
 }
 
 type PatternGroup = Readonly<{

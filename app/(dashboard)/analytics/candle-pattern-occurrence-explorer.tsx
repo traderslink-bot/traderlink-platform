@@ -34,6 +34,7 @@ import type {
 } from "@/src/modules/level-analysis/server/daily-trade-analysis-evidence-service";
 import type { DaySessionTradeAnalyzer } from
   "@/app/(dashboard)/trade-tracker/[sessionDate]/day-session-types";
+import { candlePatternName } from "@/src/lib/trade-candle-analysis/pattern-presentation";
 import type { DailyTradeChartInterval } from
   "@/app/(dashboard)/trade-tracker/[sessionDate]/daily-trade-analyzer-chart";
 
@@ -67,7 +68,7 @@ type ReplayResponse = Readonly<{
 }>;
 
 function friendlyPattern(value: string): string {
-  return value.replaceAll("_", " ").replace(/\b\w/gu, (character) => character.toUpperCase());
+  return candlePatternName(value);
 }
 
 function eventLabel(value: DailyTradePatternOccurrenceRow["eventKind"]): string {

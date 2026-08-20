@@ -45,6 +45,8 @@ export function NotificationList({
   );
   const [items, setItems] = useState(notifications);
   useEffect(() => {
+    // Dismissal preferences live in browser storage, so this must reconcile after hydration.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setItems(notifications.filter((notification) => !isNotificationDismissed(notification.notificationRef)));
   }, [notifications]);
 

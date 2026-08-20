@@ -16,6 +16,7 @@ import Typography from "@mui/material/Typography";
 import { useMemo, useState } from "react";
 
 import { HorizontalScrollRegion } from "../horizontal-scroll-region";
+import { TickerTradeDetailDrawer } from "./trade-detail-drawer";
 
 export type ResultsTickerRow = Readonly<{
   ticker: string;
@@ -76,15 +77,20 @@ function sortableValue(
 }
 
 export function ResultsTickerTable({
+  endDate,
   rows,
+  startDate,
 }: {
+  endDate: string | null;
   rows: readonly ResultsTickerRow[];
+  startDate: string | null;
 }) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [search, setSearch] = useState("");
   const [sortColumn, setSortColumn] = useState<SortColumn>("netPnl");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
   const visibleRows = useMemo(
     () => rows
       .filter((row) => row.ticker.toUpperCase().includes(search.trim().toUpperCase()))
@@ -202,7 +208,21 @@ export function ResultsTickerTable({
             </TableHead>
             <TableBody>
               {paginatedRows.map((row) => (
-                <TableRow hover key={row.ticker}>
+                <TableRow
+                  aria-label={`View ${row.ticker} completed trades`}
+                  hover
+                  key={row.ticker}
+                  onClick={() => setSelectedTicker(row.ticker)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      setSelectedTicker(row.ticker);
+                    }
+                  }}
+                  role="button"
+                  sx={{ cursor: "pointer" }}
+                  tabIndex={0}
+                >
                   <TableCell sx={{ fontWeight: 850 }}>{row.ticker}</TableCell>
                   <TableCell
                     sx={{
@@ -247,6 +267,13 @@ export function ResultsTickerTable({
           }}
         />
       </Box>
+      <TickerTradeDetailDrawer
+        endDate={endDate}
+        onClose={() => setSelectedTicker(null)}
+        open={selectedTicker !== null}
+        startDate={startDate}
+        ticker={selectedTicker}
+      />
     </Paper>
   );
 }

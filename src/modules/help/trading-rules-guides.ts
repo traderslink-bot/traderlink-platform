@@ -27,6 +27,7 @@ export const TRADING_RULES_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
             Object.freeze(["Custom", "Write the rule in your own words, choose whether to review it by trade or by day, and select the result yourself in Daily Trade Tracker."]),
           ]) }),
           Object.freeze({ kind: "paragraph", text: "Preset rules do not ask for a daily explanation or confirmation. A custom rule stays Not selected until you explicitly choose Followed or Broken." }),
+          Object.freeze({ kind: "paragraph", text: "Trading Rules shows both types together under Your trading rules. Every card is labelled Preset or Custom, and Rule Results remains available directly from the left navigation." }),
         ]),
       }),
       Object.freeze({
@@ -487,7 +488,7 @@ export const TRADING_RULES_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "A changed setting has its own results and active time.",
         keywords: Object.freeze(["rule version", "earlier setting", "current setting", "effective date"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "Each result card shows its rule version. If you change a $300 daily loss rule to $500, the earlier $300 results stay with the earlier version and the $500 setting begins its own history." }),
+          Object.freeze({ kind: "paragraph", text: "Each result card keeps the results for one saved setting together. If you change a $300 daily loss rule to $500, the earlier $300 results stay together and the $500 setting begins its own history." }),
           Object.freeze({ kind: "paragraph", text: "Paused time is not silently included in either version. Retired rules keep their completed history even though they no longer receive new checks." }),
         ]),
       }),
@@ -499,7 +500,7 @@ export const TRADING_RULES_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         blocks: Object.freeze([
           Object.freeze({ kind: "bullets", items: Object.freeze([
             "Search by rule name, date, ticker or custom note.",
-            "Filter by Preset or Manual, by result, and by Day or Trade target.",
+            "Filter by Preset or Custom, by result, and by Day or Trade target.",
             "Sort by newest date, oldest date or highest available P/L.",
             "Use Previous and Next to move through longer histories. Filters and search apply before the page is divided.",
             "Choose View day to open the matching Daily Trade Tracker date.",

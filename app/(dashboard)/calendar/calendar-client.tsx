@@ -485,6 +485,68 @@ function MobileWeekCard({
   );
 }
 
+export function CalendarWeekView({
+  activeDate,
+  currency,
+  days,
+  onSelect,
+  onTickerClick,
+  selectedDate,
+  showReviewStatus,
+}: {
+  activeDate: string;
+  currency: string | null;
+  days: readonly CalendarDay[];
+  onSelect: (day: CalendarDay) => void;
+  onTickerClick: (day: CalendarDay, ticker: CalendarTickerResult) => void;
+  selectedDate: string;
+  showReviewStatus: boolean;
+}) {
+  const weekDays = buildWeek(activeDate, days);
+  return (
+    <>
+      <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" } }}>
+        {weekDays.map((day) => (
+          <MobileWeekCard
+            currency={currency}
+            day={day}
+            key={day.date}
+            onSelect={() => onSelect(day)}
+            onTickerClick={(ticker) => onTickerClick(day, ticker)}
+            selected={selectedDate === day.date}
+            showReviewStatus={showReviewStatus}
+          />
+        ))}
+      </Stack>
+      <Box sx={{ display: { xs: "none", md: "block" }, overflowX: "auto" }}>
+        <Box sx={{ minWidth: 1000 }}>
+          <Box sx={{ borderColor: "divider", borderLeft: 1, display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))" }}>
+            {weekDays.map((day) => (
+              <Box key={`${day.date}-label`} sx={{ borderBottom: 1, borderColor: "divider", borderRight: 1, px: 2.25, py: 1.25 }}>
+                <Typography color="text.secondary" sx={{ fontWeight: 800 }} variant="caption">
+                  {new Date(`${day.date}T12:00:00.000Z`).toLocaleDateString("en-US", { day: "numeric", month: "short", weekday: "long" })}
+                </Typography>
+              </Box>
+            ))}
+            {weekDays.map((day) => (
+              <DayCell
+                currency={currency}
+                day={day}
+                key={day.date}
+                mode="week"
+                onSelect={() => onSelect(day)}
+                onTickerClick={(ticker) => onTickerClick(day, ticker)}
+                selected={selectedDate === day.date}
+                showReviewStatus={showReviewStatus}
+              />
+            ))}
+          </Box>
+        </Box>
+      </Box>
+    </>
+  );
+}
+
 function CalendarPeriodNavigation({
   availableMonths,
   availableWeeks,
@@ -824,19 +886,15 @@ export function CalendarClient({
             </Box>
           </>
         ) : (
-          <>
-            <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" } }}>
-              {weekDays.map((day) => <MobileWeekCard currency={initialData.currency} day={day} key={day.date} onSelect={() => { setSelectedDate(day.date); setExpandedTickerId(null); setDetailsOpen(true); }} onTickerClick={(ticker) => { setSelectedDate(day.date); setExpandedTickerId(ticker.instrumentId); setDetailsOpen(true); }} selected={selectedDate === day.date} showReviewStatus={showingCurrentWeek} />)}
-            </Stack>
-            <Box sx={{ display: { xs: "none", md: "block" }, overflowX: "auto" }}>
-              <Box sx={{ minWidth: 1000 }}>
-                <Box sx={{ borderColor: "divider", borderLeft: 1, display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))" }}>
-                  {weekDays.map((day) => <Box key={`${day.date}-label`} sx={{ borderBottom: 1, borderColor: "divider", borderRight: 1, px: 2.25, py: 1.25 }}><Typography color="text.secondary" sx={{ fontWeight: 800 }} variant="caption">{new Date(`${day.date}T12:00:00.000Z`).toLocaleDateString("en-US", { day: "numeric", month: "short", weekday: "long" })}</Typography></Box>)}
-                  {weekDays.map((day) => <DayCell currency={initialData.currency} day={day} key={day.date} mode="week" onSelect={() => { setSelectedDate(day.date); setExpandedTickerId(null); setDetailsOpen(true); }} onTickerClick={(ticker) => { setSelectedDate(day.date); setExpandedTickerId(ticker.instrumentId); setDetailsOpen(true); }} selected={selectedDate === day.date} showReviewStatus={showingCurrentWeek} />)}
-                </Box>
-              </Box>
-            </Box>
-          </>
+          <CalendarWeekView
+            activeDate={selectedWeek}
+            currency={initialData.currency}
+            days={weekDays}
+            onSelect={(day) => { setSelectedDate(day.date); setExpandedTickerId(null); setDetailsOpen(true); }}
+            onTickerClick={(day, ticker) => { setSelectedDate(day.date); setExpandedTickerId(ticker.instrumentId); setDetailsOpen(true); }}
+            selectedDate={selectedDate}
+            showReviewStatus={showingCurrentWeek}
+          />
         )}
       </DashboardPanel>
 

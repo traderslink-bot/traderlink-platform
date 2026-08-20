@@ -56,7 +56,7 @@ const pageAreas = Object.freeze([
 ]);
 
 const analysisAreas = Object.freeze([
-  Object.freeze({ title: "Entries and exits", description: "Open View analysis beside any execution or use the Combined overview for the complete trade." }),
+  Object.freeze({ title: "Entries and exits", description: "Use Show on chart beside an execution while the complete-trade analysis stays visible." }),
   Object.freeze({ title: "Charts", description: "Switch between 1-minute, 5-minute, 15-minute and 1-hour candles without changing saved executions." }),
   Object.freeze({ title: "Market context", description: "Review volume, turnover, Session VWAP, EMA 9 and supported candle patterns." }),
   Object.freeze({ title: "Trade path", description: "See favorable and adverse movement, holding time, Green-to-red behavior and profit opportunities." }),

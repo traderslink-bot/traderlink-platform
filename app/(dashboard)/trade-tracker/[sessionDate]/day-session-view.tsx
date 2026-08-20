@@ -44,6 +44,7 @@ import {
 import { FeatureHelpLink } from "../../feature-help-link";
 import { HorizontalScrollHint } from "../../horizontal-scroll-region";
 import { openTraderLinkAiChat } from "@/app/ai-chat-drawer-events";
+import { MoomooMarketDataConnectionPrompt } from "../../moomoo-market-data-connection-prompt";
 import { candlePatternName } from "@/src/lib/trade-candle-analysis/pattern-presentation";
 import {
   formatJournalAnalyticsDecimal,
@@ -759,27 +760,6 @@ function timeLabel(value: string, timezone: string, includeSeconds = false): str
     timeZone: timezone,
   });
 }
-function eventName(kind: DaySessionTradeAnalyzer["events"][number]["kind"]): string {
-  if (kind === "entry") return "First entry";
-  if (kind === "add") return "Add";
-  if (kind === "partial_exit") return "Partial exit";
-  return "Final exit";
-}
-
-function relativeAnchorText(
-  executionPrice: number,
-  anchor: number | null,
-  anchorName: string,
-  currency: string,
-): string | null {
-  if (anchor === null || !Number.isFinite(anchor) || anchor === 0) return null;
-  const difference = executionPrice - anchor;
-  const relation = difference > 0 ? "above" : difference < 0 ? "below" : "at";
-  if (relation === "at") return `at ${anchorName} (${price(String(anchor), currency)})`;
-  const percentageDistance = Math.abs(difference / anchor) * 100;
-  return `${price(String(Math.abs(difference)), currency)} ${relation} ${anchorName} (${price(String(anchor), currency)}), or ${percentageDistance.toFixed(2)}%`;
-}
-
 function analyzerPatternName(kind: string): string {
   const name = candlePatternName(kind);
   return `${/^[AEIOU]/u.test(name) ? "an" : "a"} ${name}`;
@@ -816,17 +796,6 @@ function executionPatternText(
     return `${patternName} formed on the ${timestamp} ${pattern.timeframe} candle, ${candleLabel}. That candle was still forming at the fill, so this is retrospective context.`;
   }
   return `${patternName} appeared on the ${timestamp} ${pattern.timeframe} candle, ${candleLabel}, but its required following-candle confirmation was not complete at the fill.`;
-}
-
-function patternLines(
-  event: DaySessionTradeAnalyzer["events"][number],
-  timeframe: AnalyzerPattern["timeframe"],
-  timezone: string,
-): readonly string[] {
-  return event.patterns
-    .filter((pattern) => pattern.timeframe === timeframe)
-    .sort((left, right) => right.candlesBeforeExecution - left.candlesBeforeExecution)
-    .map((pattern) => executionPatternText(pattern, event.kind, timezone));
 }
 
 function closestPatternLine(
@@ -1055,93 +1024,6 @@ function combinedTradeAnalysisSections(
   ].filter((section) => section.lines.length > 0);
 }
 
-function executionAnalysisSections(
-  roundTrip: DaySessionRoundTrip,
-  event: DaySessionTradeAnalyzer["events"][number],
-  currency: string,
-  timeframe: TradeAnalysisTimeframe,
-): TradeAnalysisSection[] {
-  const opening = event.kind === "entry" || event.kind === "add";
-  const completedFiveMinute = event.fiveMinuteContext.completedBeforeExecution;
-  const containingFiveMinute = event.fiveMinuteContext.containingCandle;
-  const references = [
-    event.metrics.vwapDistance
-      ? relativeAnchorText(Number(event.price), Number(event.metrics.vwapDistance.anchor), "session VWAP through the execution minute", currency)
-      : null,
-    timeframe === "5m"
-      ? completedFiveMinute?.ema9Distance
-        ? relativeAnchorText(Number(event.price), Number(completedFiveMinute.ema9Distance.anchor), "5-minute EMA 9 from the last completed candle", currency)
-        : null
-      : event.metrics.ema9Distance
-        ? relativeAnchorText(Number(event.price), Number(event.metrics.ema9Distance.anchor), "1-minute EMA 9", currency)
-        : null,
-  ].filter((line): line is string => line !== null);
-  const location = timeframe === "5m"
-    ? containingFiveMinute?.candleLocationRatio ?? null
-    : event.metrics.candleLocationRatio;
-  const locationText = location === null
-    ? null
-    : location >= 0.8 ? "near the top" : location <= 0.2 ? "near the bottom" : "inside the middle";
-  const edgeDistance = timeframe === "5m"
-    ? containingFiveMinute?.executionEdgeDistance ?? null
-    : event.metrics.executionEdgeDistance;
-  const latestPath = [...event.metrics.postEventPaths]
-    .reverse()
-    .find((path) => path.observedAt !== null && path.tradeDirectionMove !== null && path.oppositeDirectionMove !== null) ?? null;
-  const executionContext = [
-    `${eventName(event.kind)} at ${timeLabel(event.executedAt, roundTrip.timezone)}: ${event.quantity} shares at ${price(event.price, currency)}${references.length > 0 ? `, ${references.join(" and ")}` : ""}.`,
-    edgeDistance === null || !locationText
-      ? null
-      : timeframe === "5m"
-        ? `After the containing 5-minute candle closed, the execution was ${price(edgeDistance, currency)} from its favorable edge and ${locationText} of its range. This is retrospective context; the candle was still forming at the fill.`
-        : `${opening ? "Entry" : "Exit"} precision: ${price(edgeDistance, currency)} from the favorable edge of its 1-minute candle; the execution was ${locationText} of that candle's range. The candle location does not establish whether its high or low formed before or after the fill.`,
-  ].filter((line): line is string => line !== null);
-  const oneMinuteMarketActivity = [
-    event.indicators?.relativeVolume === null || event.indicators?.relativeVolume === undefined
-      ? null
-      : `Execution-candle volume was ${event.indicators.relativeVolume.toFixed(2)}× its recent 1-minute average (${compactNumber(Number(event.metrics.candleVolume ?? 0))} shares${event.metrics.candleTurnover === null ? "" : `, ${price(event.metrics.candleTurnover, currency)} turnover`}).`,
-    event.metrics.cumulativeSessionVolume === null
-      ? null
-      : `By the end of that candle, the session had traded ${compactNumber(Number(event.metrics.cumulativeSessionVolume))} shares${event.metrics.cumulativeSessionTurnover === null ? "" : ` and ${price(event.metrics.cumulativeSessionTurnover, currency)} in turnover`}.`,
-  ].filter((line): line is string => line !== null);
-  const fiveMinuteMarketActivity = [
-    completedFiveMinute
-      ? `Before the fill, the last completed 5-minute candle (${timeLabel(new Date(completedFiveMinute.candleTime * 1000).toISOString(), roundTrip.timezone)}) traded ${compactNumber(Number(completedFiveMinute.volume))} shares${completedFiveMinute.turnover === null ? "" : ` and ${price(completedFiveMinute.turnover, currency)} in turnover`}${completedFiveMinute.relativeVolume === null ? "" : `, or ${completedFiveMinute.relativeVolume.toFixed(2)}× its recent 5-minute volume average`}.`
-      : null,
-    event.fiveMinuteContext.preExecutionPartial
-      ? `Before the execution minute, ${event.fiveMinuteContext.preExecutionPartial.completedMinuteCount} completed minute${event.fiveMinuteContext.preExecutionPartial.completedMinuteCount === 1 ? "" : "s"} inside the active 5-minute window had traded ${compactNumber(Number(event.fiveMinuteContext.preExecutionPartial.volume))} shares${event.fiveMinuteContext.preExecutionPartial.turnover === null ? "" : ` and ${price(event.fiveMinuteContext.preExecutionPartial.turnover, currency)} in turnover`}.`
-      : "The execution occurred before another full 1-minute candle had completed inside its active 5-minute window.",
-    containingFiveMinute
-      ? `After the containing 5-minute candle closed, it had traded ${compactNumber(Number(containingFiveMinute.volume))} shares${containingFiveMinute.turnover === null ? "" : ` and ${price(containingFiveMinute.turnover, currency)} in turnover`}${containingFiveMinute.relativeVolume === null ? "" : `, or ${containingFiveMinute.relativeVolume.toFixed(2)}× its recent 5-minute volume average`}. This final candle activity was not fully known at the fill.`
-      : null,
-    containingFiveMinute?.ema9Distance
-      ? `After that candle closed, the execution price was ${relativeAnchorText(Number(event.price), Number(containingFiveMinute.ema9Distance.anchor), "resulting 5-minute EMA 9", currency)}. This comparison is retrospective.`
-      : null,
-  ].filter((line): line is string => line !== null);
-  const marketActivity = timeframe === "5m" ? fiveMinuteMarketActivity : oneMinuteMarketActivity;
-  const priceResponse = [
-    event.metrics.excursionUntilFlat
-      ? `After this execution and before the position became flat, price moved as much as ${price(event.metrics.excursionUntilFlat.favorableMove, currency)} in the trade's favor and ${price(event.metrics.excursionUntilFlat.adverseMove, currency)} against it over ${event.metrics.excursionUntilFlat.minutesUntilFlat} minutes. Same-minute extremes are excluded because their order around the fill is unknown.`
-      : null,
-    !opening && event.metrics.priorFavorableExtremePrice !== null && event.metrics.givebackFromPriorFavorableExtreme !== null
-      ? `Before this exit, the most favorable earlier completed-candle price was ${price(event.metrics.priorFavorableExtremePrice, currency)}; this fill was ${price(event.metrics.givebackFromPriorFavorableExtreme, currency)} per share away from that price.`
-      : null,
-    latestPath
-      ? opening
-        ? `Within ${latestPath.minutesAfterEvent} minutes after this entry, price moved up to ${price(latestPath.tradeDirectionMove!, currency)} in the trade's direction and ${price(latestPath.oppositeDirectionMove!, currency)} against it.`
-        : `Within ${latestPath.minutesAfterEvent} minutes after this exit, price continued up to ${price(latestPath.tradeDirectionMove!, currency)} in the former trade direction and reversed up to ${price(latestPath.oppositeDirectionMove!, currency)} the other way.`
-      : null,
-  ].filter((line): line is string => line !== null);
-  const oneMinutePatterns = patternLines(event, "1m", roundTrip.timezone);
-  const fiveMinutePatterns = patternLines(event, "5m", roundTrip.timezone);
-  return [
-    { lines: executionContext, title: "Execution context" },
-    { lines: marketActivity, title: "Market activity" },
-    { lines: timeframe === "5m" ? fiveMinutePatterns : oneMinutePatterns, title: `${timeframe === "5m" ? "5-minute" : "1-minute"} candle patterns` },
-    { lines: priceResponse, title: timeframe === "5m" ? "Price response (1-minute path)" : "Price response" },
-  ].filter((section) => section.lines.length > 0);
-}
-
 function TradeAnalysisSectionBlock({ section }: { section: TradeAnalysisSection }) {
   return (
     <Box>
@@ -1225,7 +1107,7 @@ const UNAVAILABLE_GREEN_TO_RED_ANALYSIS: DaySessionTradeAnalyzer["greenToRed"] =
   strongOpportunityThresholdDecimal: null,
 });
 
-function ProfitOpportunityWindowSummary({
+function ProfitOpportunityPeriodSummary({
   currency,
   label,
   opportunity,
@@ -1241,13 +1123,8 @@ function ProfitOpportunityWindowSummary({
   const peakAt = analysisTimestamp(opportunity.peakAtUtcSeconds, timezone);
   const closeLabel = `${opportunity.completedCloseCount} completed close${opportunity.completedCloseCount === 1 ? "" : "s"}`;
   const durationLabel = opportunity.durationMinutes === 0
-    ? `One qualifying completed close${startedAt ? ` at ${startedAt}` : ""}.`
-    : `${startedAt ?? "Start unavailable"}–${endedAt ?? "end unavailable"} · ${opportunity.durationMinutes} minute${opportunity.durationMinutes === 1 ? "" : "s"} · ${closeLabel}.`;
-  const strongRetentionLabel = opportunity.completedCloseCount === 1
-    ? opportunity.closesAtOrAboveStrongThresholdCount === 1
-      ? "This close retained at least 75% of the trade's best completed-close P/L."
-      : "This close retained between 50% and 75% of the trade's best completed-close P/L."
-    : `${opportunity.closesAtOrAboveStrongThresholdCount} of ${closeLabel} retained at least 75% of the trade's best completed-close P/L.`;
+    ? `This period contains one completed close${startedAt ? ` at ${startedAt}` : ""}.`
+    : `This period ran from ${startedAt ?? "an unavailable start time"} to ${endedAt ?? "an unavailable end time"} and covered ${opportunity.durationMinutes} minute${opportunity.durationMinutes === 1 ? "" : "s"} (${closeLabel}).`;
 
   return (
     <Box>
@@ -1258,10 +1135,9 @@ function ProfitOpportunityWindowSummary({
         lines={[
           durationLabel,
           opportunity.completedCloseCount === 1
-            ? `Calculated P/L at that close was ${money(opportunity.peakPnlDecimal, currency)}.`
-            : `Calculated P/L stayed between ${money(opportunity.lowestPnlDecimal, currency)} and ${money(opportunity.peakPnlDecimal, currency)}${peakAt ? `, with the local peak at ${peakAt}` : ""}.`,
-          strongRetentionLabel,
-          `From this window's local peak to the final calculated path result, ${price(opportunity.peakToFinalReversalDecimal, currency)} reversed.`,
+            ? `Calculated P/L at that completed close was ${money(opportunity.peakPnlDecimal, currency)}.`
+            : `During this period, calculated P/L stayed between ${money(opportunity.lowestPnlDecimal, currency)} and ${money(opportunity.peakPnlDecimal, currency)}${peakAt ? `, reaching its highest level at ${peakAt}` : ""}.`,
+          `From the highest calculated P/L in this period to the final calculated result, ${price(opportunity.peakToFinalReversalDecimal, currency)} was given back.`,
         ]}
       />
     </Box>
@@ -1343,7 +1219,7 @@ function GreenToRedAnalysis({
             </Box>
             {bestOpportunity ? (
               <Box>
-                <ProfitOpportunityWindowSummary
+                <ProfitOpportunityPeriodSummary
                   currency={currency}
                   label="Best sustained profit opportunity"
                   opportunity={bestOpportunity}
@@ -1365,7 +1241,7 @@ function GreenToRedAnalysis({
                     <Collapse in={showOtherOpportunities} timeout="auto" unmountOnExit>
                       <Stack spacing={1.25} sx={{ borderLeft: 2, borderColor: "divider", mt: 0.5, pl: 1.25 }}>
                         {otherOpportunities.map((opportunity, index) => (
-                          <ProfitOpportunityWindowSummary
+                          <ProfitOpportunityPeriodSummary
                             currency={currency}
                             key={`${opportunity.startedAtUtcSeconds}-${opportunity.endedAtUtcSeconds}`}
                             label={`Other opportunity ${index + 1}`}
@@ -1376,15 +1252,6 @@ function GreenToRedAnalysis({
                       </Stack>
                     </Collapse>
                   </>
-                ) : null}
-                {analysis.profitOpportunityThresholdDecimal !== null ? (
-                  <Box sx={{ mt: 0.6 }}>
-                    <AnalysisBulletList
-                      color="text.secondary"
-                      lines={[`Windows contain consecutive completed closes with calculated P/L of at least ${money(analysis.profitOpportunityThresholdDecimal, currency)}. Missing minutes split the windows.`]}
-                      variant="caption"
-                    />
-                  </Box>
                 ) : null}
               </Box>
             ) : null}
@@ -1603,6 +1470,7 @@ function TradeReview({
   ruleSaveError,
   sessionDate,
   selectedAnalysisEventId,
+  showMoomooConnectionGuidance,
   tags,
   tradeNumber,
   tradeRules,
@@ -1636,6 +1504,7 @@ function TradeReview({
   ruleSaveError: string | null;
   sessionDate: string;
   selectedAnalysisEventId: string | null;
+  showMoomooConnectionGuidance: boolean;
   tags: DaySessionTradeTag[];
   tradeNumber: number;
   tradeRules: DaySessionRule[];
@@ -1657,20 +1526,10 @@ function TradeReview({
     customRuleNote !== (selectedCustomRule?.note ?? ""),
   );
   const finalExit = { patterns: analyzer?.events.find((event) => event.kind === "final_exit")?.patterns ?? [] };
-  const selectedAnalysisEvent = selectedAnalysisEventId
-    ? analyzer?.events.find((event) => event.eventId === selectedAnalysisEventId) ?? null
-    : null;
   const analysisTimeframe = analysisInterval === "5m" ? "5m" : "1m";
   const analysisSections = analyzer
-    ? selectedAnalysisEvent
-      ? executionAnalysisSections(roundTrip, selectedAnalysisEvent, currency, analysisTimeframe)
-      : combinedTradeAnalysisSections(roundTrip, analyzer, currency, analysisTimeframe)
+    ? combinedTradeAnalysisSections(roundTrip, analyzer, currency, analysisTimeframe)
     : [];
-  const selectedAnalysisTitle = selectedAnalysisEvent
-    ? selectedAnalysisEvent.kind === "entry" || selectedAnalysisEvent.kind === "add"
-      ? "Entry analysis"
-      : "Exit analysis"
-    : null;
   const analysisBaseTitle = analyzer?.status === "pending"
     ? "Live trade analysis"
     : analyzer?.status === "ready"
@@ -1836,7 +1695,7 @@ function TradeReview({
                 sx={{ lineHeight: 1.2, minHeight: { xs: 44, sm: 36 }, minWidth: 96, px: 1, py: 0.5 }}
                 variant={selectedAnalysisEventId === analysisEvent.eventId ? "contained" : "outlined"}
               >
-                View analysis
+                Show on chart
               </Button>
             ) : null;
           })()}
@@ -2200,6 +2059,12 @@ function TradeReview({
         >
           {hasVisibleAnalysis(analyzer) ? (
             <Stack spacing={1}>
+              {showMoomooConnectionGuidance ? (
+                <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" } }}>
+                  <MoomooMarketDataConnectionPrompt compact surface="entry-exit" />
+                  <MoomooMarketDataConnectionPrompt compact surface="green-to-red" />
+                </Box>
+              ) : null}
               {analyzer.status === "pending" ? (
                 <Typography color="text.secondary" variant="caption">
                   {postExitMinutesAvailable(analyzer) ?? 0} of 60 post-exit minutes are available. The final update is added once 60 minutes have formed.
@@ -2210,39 +2075,18 @@ function TradeReview({
                   The candles available so far are shown. The final post-exit update could not be retrieved.
                 </Typography>
               ) : null}
-              {selectedAnalysisTitle ? (
-                <>
-                  <Typography sx={{ fontWeight: 900 }} variant="body1">
-                    {analysisBaseTitle} ({analysisTimeframe === "5m" ? "5-minute" : "1-minute"})
-                  </Typography>
-                  <Button
-                    onClick={() => onSelectAnalysisEvent(null)}
-                    size="small"
-                    sx={{ alignSelf: "flex-start" }}
-                    variant="outlined"
-                  >
-                    Combined overview
-                  </Button>
-                  <Typography sx={{ fontWeight: 900 }} variant="body1">
-                    {selectedAnalysisTitle}
-                  </Typography>
-                  <Stack spacing={1.25}>
-                    {analysisSections.map((section) => (
-                      <TradeAnalysisSectionBlock
-                        key={section.title}
-                        section={section}
-                      />
-                    ))}
-                  </Stack>
-                </>
-              ) : (
-                <Box
-                  sx={{
-                    display: "grid",
-                    gap: { xs: 2, md: 0 },
-                    gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" },
-                  }}
-                >
+              {selectedAnalysisEventId ? (
+                <Typography color="text.secondary" variant="caption">
+                  The selected execution is highlighted on the complete trade chart.
+                </Typography>
+              ) : null}
+              <Box
+                sx={{
+                  display: "grid",
+                  gap: { xs: 2, md: 0 },
+                  gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" },
+                }}
+              >
                   <Stack spacing={1.25} sx={{ minWidth: 0, pr: { xs: 0, md: 2 } }}>
                     <Typography sx={{ fontWeight: 900 }} variant="body1">
                       {analysisBaseTitle} ({analysisTimeframe === "5m" ? "5-minute" : "1-minute"})
@@ -2260,8 +2104,7 @@ function TradeReview({
                     currency={currency}
                     timezone={roundTrip.timezone}
                   />
-                </Box>
-              )}
+              </Box>
               {finalExit && false ? (
                 <Typography color="text.secondary" variant="caption">
                   {finalExit.patterns.map((pattern) => pattern.kind.replaceAll("_", " ")).join(" · ")}
@@ -2277,14 +2120,21 @@ function TradeReview({
             </Stack>
           ) : (
             <Stack spacing={0.75}>
-              <Typography sx={{ fontWeight: 900 }} variant="body1">
-                {analysisBaseTitle} ({analysisTimeframe === "5m" ? "5-minute" : "1-minute"})
-              </Typography>
-              <Typography color="text.secondary" variant="body2">
-                {analyzer.status === "pending"
-                  ? "Updating analysis with the latest executions."
-                  : "Analysis data is not available for this trade yet."}
-              </Typography>
+              {showMoomooConnectionGuidance ? (
+                <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" } }}>
+                  <MoomooMarketDataConnectionPrompt compact surface="entry-exit" />
+                  <MoomooMarketDataConnectionPrompt compact surface="green-to-red" />
+                </Box>
+              ) : <>
+                <Typography sx={{ fontWeight: 900 }} variant="body1">
+                  {analysisBaseTitle} ({analysisTimeframe === "5m" ? "5-minute" : "1-minute"})
+                </Typography>
+                <Typography color="text.secondary" variant="body2">
+                  {analyzer.status === "pending"
+                    ? "Updating analysis with the latest executions."
+                    : "Analysis data is not available for this trade yet."}
+                </Typography>
+              </>}
             </Stack>
           )}
         </Box>
@@ -2357,6 +2207,7 @@ export function DaySessionView({
   initialAnalyzerFocus = null,
   pendingExecutions = false,
   readOnly = false,
+  showMoomooConnectionGuidance = false,
   topContent,
 }: {
   data: DaySessionData;
@@ -2368,6 +2219,7 @@ export function DaySessionView({
   }> | null;
   pendingExecutions?: boolean;
   readOnly?: boolean;
+  showMoomooConnectionGuidance?: boolean;
   topContent?: ReactNode;
 }) {
   const router = useRouter();
@@ -3089,7 +2941,7 @@ export function DaySessionView({
         </Box>
       </DashboardPanel>
 
-      <Stack spacing={2}>
+      <Stack spacing={3}>
         {data.tickers.map((ticker) => {
           const readyTrade = ticker.roundTrips.find((roundTrip) =>
             roundTrip.analyzer && hasVisibleAnalysis(roundTrip.analyzer),
@@ -3113,7 +2965,7 @@ export function DaySessionView({
           return (
           <Card
             key={ticker.stableInstrumentKey}
-            sx={{ borderBottom: "2px solid #000" }}
+            sx={{ border: "2px solid #000", overflow: "hidden" }}
             variant="outlined"
           >
             {selectedTrade?.analyzer && hasVisibleAnalysis(selectedTrade.analyzer) ? (
@@ -3136,6 +2988,11 @@ export function DaySessionView({
                   roundTrip.roundTripKey === selectedTrade.roundTripKey,
                 ) + 1}
               />
+            ) : null}
+            {showMoomooConnectionGuidance ? (
+              <Box sx={{ p: { xs: 1.5, sm: 2 } }}>
+                <MoomooMarketDataConnectionPrompt surface="chart" />
+              </Box>
             ) : null}
             <Box
               sx={{
@@ -3274,6 +3131,7 @@ export function DaySessionView({
                     ruleSaveError={ruleSaveErrors[`trade:${roundTrip.roundTripKey}`] ?? null}
                     sessionDate={data.date}
                     selectedAnalysisEventId={selectedAnalysisEventIds[roundTrip.roundTripKey] ?? null}
+                    showMoomooConnectionGuidance={showMoomooConnectionGuidance}
                     tags={tradeTags[roundTrip.roundTripKey] ?? []}
                     tradeNumber={index + 1}
                     tradeRules={rules.filter(

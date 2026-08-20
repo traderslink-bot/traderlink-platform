@@ -76,11 +76,11 @@ function ChartZoomControls({
     cursor: "pointer",
     fontSize: "1rem",
     fontWeight: 900,
-    height: 44,
+    height: mobile ? 44 : 32,
     lineHeight: 1,
     p: 0,
     touchAction: "manipulation",
-    width: 44,
+    width: mobile ? 44 : 32,
     "&:hover": {
       bgcolor: "#0b3475",
       borderColor: "#0b3475",

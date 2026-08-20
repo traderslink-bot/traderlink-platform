@@ -18,7 +18,7 @@ describe("Journal Analytics contracts", () => {
     );
     expect(JOURNAL_ANALYTICS_MAX_METRICS_PER_QUERY).toBe(256);
     expect(JOURNAL_ANALYTICS_MAX_SYMBOLS_PER_QUERY).toBe(100);
-    expect(JOURNAL_ANALYTICS_MAX_GROUP_ROWS).toBe(500);
+    expect(JOURNAL_ANALYTICS_MAX_GROUP_ROWS).toBe(2_000);
     expect(JOURNAL_ANALYTICS_MAX_TABLE_PAGE_SIZE).toBe(200);
     expect(JOURNAL_ANALYTICS_TIME_BUCKET_MINUTES).toEqual([5, 15, 30, 60]);
     expect(Object.isFrozen(JOURNAL_ANALYTICS_TIME_BUCKET_MINUTES)).toBe(true);

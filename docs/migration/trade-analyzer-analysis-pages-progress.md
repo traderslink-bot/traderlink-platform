@@ -51,3 +51,17 @@
   stalled at roughly 1.5 GB working set. Every process created by those starts
   was stopped and port 3010 was confirmed released. The owner subsequently
   accepted the completed design and explicitly waived another browser review.
+
+## Dashboard owner-review correction - 2026-08-17
+
+- Trade Analyzer now appears before Analytics in the left navigation.
+- Day Trade Analysis is visually the parent of Entry & Exit, MFE & MAE,
+  Green-to-Red, Candle Patterns and Analyzed Trades.
+- One shared presentation catalog now uses retail-facing directional names,
+  including **Bullish Hammer**, **Bearish Shooting Star**, **Bullish
+  Engulfing**, and **Bearish Engulfing**, without changing any detector.
+- Daily Trade Tracker uses **Show on chart** for an execution. The complete
+  trade analysis and Green-to-Red review remain visible while its chart marker
+  is selected.
+- Targeted ESLint and project TypeScript pass. Owner visual review remains; no
+  test suite, build, browser server, commit or deployment ran.

@@ -798,6 +798,9 @@ export function RulesClient({
           Active rules apply prospectively. Paused intervals are excluded from
           adherence, and retired rules keep their history.
         </Typography>
+        <Typography component="h3" sx={{ mb: 1.25 }} variant="h3">
+          Preset rules
+        </Typography>
         {view.packet.rules.length === 0 ? (
           <Box
             sx={{
@@ -808,7 +811,7 @@ export function RulesClient({
               p: { xs: 2, sm: 3 },
             }}
           >
-            <Typography variant="h3">No trading rules yet</Typography>
+            <Typography variant="h3">No preset rules yet</Typography>
             <Typography color="text.secondary" sx={{ mt: 0.75 }}>
               Pick one or two presets from the library below. Rules are
               commitments you choose, not requirements imposed by the app.
@@ -833,7 +836,7 @@ export function RulesClient({
               const expanded = expandedRuleIds.has(rule.ruleInstanceId);
               const detailsId = `rule-details-${rule.ruleInstanceId}`;
               return (
-                <Card key={rule.ruleInstanceId} variant="outlined">
+                <Card key={rule.ruleInstanceId} sx={{ border: "2px solid #000" }} variant="outlined">
                   <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
                     <Stack
                       direction="row"
@@ -850,6 +853,7 @@ export function RulesClient({
                             label={rule.status}
                             size="small"
                           />
+                          <Chip label="Preset" size="small" variant="outlined" />
                           <Chip
                             label={categoryLabels[rule.template.category]}
                             size="small"
@@ -870,9 +874,6 @@ export function RulesClient({
                           {rule.template.label}
                         </Typography>
                       </Box>
-                      <Typography color="text.secondary" variant="caption">
-                        v{rule.currentVersion.versionOrdinal}
-                      </Typography>
                     </Stack>
                     <Box
                       sx={{
@@ -989,23 +990,11 @@ export function RulesClient({
             })}
           </Box>
         )}
-      </DashboardPanel>
-
-      <DashboardPanel
-        action={
-          <Button
-            onClick={openCreateManual}
-            size="small"
-            startIcon={<AddRoundedIcon />}
-            sx={{ display: { xs: "none", md: "inline-flex" } }}
-          >
-            Create custom rule
-          </Button>
-        }
-        eyebrow="CUSTOM COMMITMENTS"
-        title="Rules you track yourself"
-      >
-        <Typography color="text.secondary" sx={{ mb: 2 }} variant="body2">
+        <Divider sx={{ my: 2.5 }} />
+        <Typography component="h3" variant="h3">
+          Custom rules
+        </Typography>
+        <Typography color="text.secondary" sx={{ mb: 2, mt: 0.75 }} variant="body2">
           Use this for a rule that matters to you but cannot be confirmed from
           trade data alone.
         </Typography>
@@ -1058,7 +1047,7 @@ export function RulesClient({
                 const expanded = expandedManualRuleIds.has(rule.ruleId);
                 const detailsId = `manual-rule-details-${rule.ruleId}`;
                 return (
-                <Card key={rule.ruleId} variant="outlined">
+                <Card key={rule.ruleId} sx={{ border: "2px solid #000" }} variant="outlined">
                   <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
                     <Stack
                       direction="row"
@@ -1075,16 +1064,13 @@ export function RulesClient({
                             label={rule.status}
                             size="small"
                           />
-                          <Chip label="Manual" size="small" variant="outlined" />
+                          <Chip label="Custom" size="small" variant="outlined" />
                           {rule.isFocus ? <Chip color="primary" label="Focus" size="small" /> : null}
                         </Box>
                         <Typography component="h3" variant="h3">
                           {rule.title}
                         </Typography>
                       </Box>
-                      <Typography color="text.secondary" variant="caption">
-                        v{rule.versionOrdinal}
-                      </Typography>
                     </Stack>
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 1.5 }}>
                       <Chip label={manualCategoryLabels[rule.category]} size="small" />

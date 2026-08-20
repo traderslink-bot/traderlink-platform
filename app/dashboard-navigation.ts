@@ -31,6 +31,7 @@ export type DashboardNavigationItem = Readonly<{
   href: string;
   label: string;
   icon: DashboardNavigationIconKey;
+  depth?: 1 | 2;
 }>;
 
 export type DashboardNavigationGroup = Readonly<{
@@ -101,6 +102,49 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
       ]),
     }),
     Object.freeze({
+      id: "tradeAnalyzer" as const,
+      label: "Trade Analyzer",
+      icon: "tradeAnalysis" as const,
+      items: Object.freeze([
+        Object.freeze({
+          href: "/analytics/trade-analyzer/day",
+          label: "Day Trade Analysis",
+          icon: "overview" as const,
+          depth: 1 as const,
+        }),
+        Object.freeze({
+          href: "/analytics/trade-analyzer/day/entry-exit",
+          label: "Entry & Exit",
+          icon: "execution" as const,
+          depth: 2 as const,
+        }),
+        Object.freeze({
+          href: "/analytics/trade-analyzer/day/mfe-mae",
+          label: "MFE & MAE",
+          icon: "tradeAnalysis" as const,
+          depth: 2 as const,
+        }),
+        Object.freeze({
+          href: "/analytics/trade-analyzer/day/green-to-red",
+          label: "Green-to-Red",
+          icon: "tradeAnalysis" as const,
+          depth: 2 as const,
+        }),
+        Object.freeze({
+          href: "/analytics/trade-analyzer/day/candle-patterns",
+          label: "Candle Patterns",
+          icon: "marketCharts" as const,
+          depth: 2 as const,
+        }),
+        Object.freeze({
+          href: "/analytics/trade-analyzer/day/trades",
+          label: "Analyzed Trades",
+          icon: "trades" as const,
+          depth: 2 as const,
+        }),
+      ]),
+    }),
+    Object.freeze({
       id: "analytics" as const,
       label: "Analytics",
       icon: "analytics" as const,
@@ -122,45 +166,8 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
         }),
         Object.freeze({
           href: "/analytics/execution",
-          label: "Execution",
+          label: "Trade Breakdown",
           icon: "execution" as const,
-        }),
-      ]),
-    }),
-    Object.freeze({
-      id: "tradeAnalyzer" as const,
-      label: "Trade Analyzer",
-      icon: "tradeAnalysis" as const,
-      items: Object.freeze([
-        Object.freeze({
-          href: "/analytics/trade-analyzer/day",
-          label: "Day Trade Analysis",
-          icon: "overview" as const,
-        }),
-        Object.freeze({
-          href: "/analytics/trade-analyzer/day/entry-exit",
-          label: "Entry & Exit",
-          icon: "execution" as const,
-        }),
-        Object.freeze({
-          href: "/analytics/trade-analyzer/day/mfe-mae",
-          label: "MFE & MAE",
-          icon: "tradeAnalysis" as const,
-        }),
-        Object.freeze({
-          href: "/analytics/trade-analyzer/day/green-to-red",
-          label: "Green-to-Red",
-          icon: "tradeAnalysis" as const,
-        }),
-        Object.freeze({
-          href: "/analytics/trade-analyzer/day/candle-patterns",
-          label: "Candle Patterns",
-          icon: "marketCharts" as const,
-        }),
-        Object.freeze({
-          href: "/analytics/trade-analyzer/day/trades",
-          label: "Analyzed Trades",
-          icon: "trades" as const,
         }),
       ]),
     }),
@@ -217,7 +224,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/analytics": "Analytics Overview",
     "/analytics/results": "Ticker",
     "/analytics/timing": "Timing",
-    "/analytics/execution": "Execution",
+    "/analytics/execution": "Trade Breakdown",
     "/analytics/trade-analysis": "Day Trade Analysis",
     "/analytics/trade-analyzer/day": "Day Trade Analysis",
     "/analytics/trade-analyzer/day/entry-exit": "Entry & Exit",
@@ -264,7 +271,7 @@ const DASHBOARD_HELP_TARGETS: readonly Readonly<DashboardHelpTarget & { route: s
     Object.freeze({ route: "/analytics/trade-explorer", href: "/help/core-analytics", label: "Trade Explorer" }),
     Object.freeze({ route: "/analytics/results", href: "/help/core-analytics/compare-results-by-ticker", label: "Ticker" }),
     Object.freeze({ route: "/analytics/timing", href: "/help/core-analytics/timing-and-execution", label: "Timing" }),
-    Object.freeze({ route: "/analytics/execution", href: "/help/core-analytics/timing-and-execution", label: "Execution" }),
+    Object.freeze({ route: "/analytics/execution", href: "/help/core-analytics/timing-and-execution", label: "Trade Breakdown" }),
     Object.freeze({ route: "/analytics", href: "/help/core-analytics/overview-and-date-range", label: "Analytics Overview" }),
     Object.freeze({ route: "/charts", href: "/help", label: "Market Charts" }),
     Object.freeze({ route: "/trade-tracker/swings", href: "/help/swing-trade-tracker", label: "Swing Trade Tracker" }),

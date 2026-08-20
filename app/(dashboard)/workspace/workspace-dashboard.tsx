@@ -1,15 +1,14 @@
 "use client";
 
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
-import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import DateRangeRoundedIcon from "@mui/icons-material/DateRangeRounded";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import ButtonGroup from "@mui/material/ButtonGroup";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import {
   DashboardDataScopeChip,
@@ -23,6 +22,7 @@ import {
 import type { JournalCalendarReadModel } from "@/src/modules/journal-analytics/contracts/journal-dashboard-read-models";
 import { formatJournalAnalyticsMoney } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import type { WorkspaceReviewSummary } from "./workspace-review-summary";
+import { CalendarWeekView } from "../calendar/calendar-client";
 
 export type WorkspaceMetric = Readonly<{
   label: string;
@@ -66,15 +66,6 @@ const unavailableMetrics: readonly WorkspaceMetric[] = [
 function calendarMoney(value: string | null, currency: string | null): string {
   if (value === null || currency === null) return "Unavailable";
   return formatJournalAnalyticsMoney(value, currency, { showPositiveSign: true });
-}
-
-function calendarDate(value: string): string {
-  return new Date(`${value}T12:00:00.000Z`).toLocaleDateString("en-US", {
-    day: "numeric",
-    month: "short",
-    timeZone: "UTC",
-    weekday: "short",
-  });
 }
 
 function savedViewTime(value: string): string {
@@ -139,6 +130,7 @@ export function WorkspaceDashboard({
   offlineSavedAtUtc?: string;
   reviewSummary?: WorkspaceReviewSummary;
 }) {
+  const router = useRouter();
   const metrics = analyticsMetrics ?? unavailableMetrics;
   const currentFocuses = reviewSummary?.currentFocuses?.trim() || null;
   const focusRules = reviewSummary?.focusRules.filter((rule) =>
@@ -148,9 +140,17 @@ export function WorkspaceDashboard({
   const hasPreviousReviewContent = previousReview !== null && (
     previousReview.trades.length > 0 || previousReview.dayRuleOutcomes.length > 0
   );
-  const recentTradingDays = calendarData?.days
-    .filter((day) => day.tradeCount > 0)
-    .slice(-7) ?? [];
+  const workspaceCalendarDays = calendarData?.days.map((day) => ({
+    ...day,
+    hasDailyTracker: day.tradeCount > 0,
+  })) ?? [];
+  const openWorkspacePath = (pathname: string) => {
+    if (offlineSavedAtUtc) {
+      window.location.assign(pathname);
+      return;
+    }
+    router.push(pathname);
+  };
   return (
     <DashboardPage>
       <Typography component="h1" variant="h1">Workspace</Typography>
@@ -335,129 +335,26 @@ export function WorkspaceDashboard({
           </Stack>
         </DashboardPanel>
       ) : null}
-      <Box
-        sx={{
-          display: "grid",
-          gap: 2,
-          gridTemplateColumns: {
-            xs: "minmax(0, 1fr)",
-            lg: "minmax(0, 2fr) minmax(300px, 0.8fr)",
-          },
-        }}
-      >
-        <DashboardPanel
-          action={
-            <Button
-              endIcon={<ArrowForwardRoundedIcon />}
-              href="/analytics/trade-explorer"
-              size="small"
-            >
-              Explore performance
-            </Button>
-          }
-          eyebrow="Account performance"
-          title="Performance over time"
-        >
-          {analyticsMetrics ? (
-            <Stack spacing={1}>
-              <Typography color="success.main" sx={{ fontWeight: 700 }}>
-                Trade Tracker analytics are connected.
-              </Typography>
-              <Typography color="text.secondary" variant="body2">
-                Compare daily P/L, drawdown, recovery, giveback, and other
-                available performance groupings.
-              </Typography>
-            </Stack>
-          ) : (
-            <DashboardUnavailableState
-              actionHref="/imports"
-              actionLabel="Import trades"
-              description="Performance will appear when the selected account period has complete, verified execution authority. No legacy or estimated values are substituted."
-            />
-          )}
-        </DashboardPanel>
-
-      </Box>
 
       <DashboardPanel
         action={
-          <ButtonGroup aria-label="Day session view" size="small">
-            <Button variant="contained">Calendar</Button>
-            <Button href="/trade-tracker" variant="outlined">
-              List
-            </Button>
-          </ButtonGroup>
+          <Button endIcon={<ArrowForwardRoundedIcon />} href="/calendar" size="small">
+            View full calendar
+          </Button>
         }
         eyebrow="Day sessions"
         title="Trading Calendar"
       >
-        <Stack spacing={1.5}>
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={1}
-            sx={{ alignItems: { xs: "stretch", sm: "center" }, justifyContent: "space-between" }}
-          >
-            <Button disabled size="small" sx={{ order: { xs: 2, sm: 1 } }}>
-              Previous
-            </Button>
-            <Stack
-              direction="row"
-              spacing={1}
-              sx={{ alignItems: "center", justifyContent: "center", order: { xs: 1, sm: 2 } }}
-            >
-              <CalendarMonthRoundedIcon color="primary" fontSize="small" />
-              <Typography sx={{ fontWeight: 700 }}>Available trading history</Typography>
-            </Stack>
-            <Button disabled size="small" sx={{ order: 3 }}>
-              Next
-            </Button>
-          </Stack>
-          {recentTradingDays.length > 0 ? (
-            <Box
-              sx={{
-                display: "grid",
-                gap: 1,
-                gridTemplateColumns: {
-                  xs: "repeat(2, minmax(0, 1fr))",
-                  sm: "repeat(4, minmax(0, 1fr))",
-                  xl: "repeat(7, minmax(0, 1fr))",
-                },
-              }}
-            >
-              {recentTradingDays.map((day) => (
-                <Box
-                  key={day.date}
-                  sx={{
-                    backgroundColor: day.pnlSign === -1
-                      ? "rgba(216, 91, 106, 0.07)"
-                      : day.pnlSign === 1
-                        ? "rgba(67, 184, 131, 0.075)"
-                        : "background.paper",
-                    border: 1,
-                    borderColor: "divider",
-                    borderRadius: 1.5,
-                    p: 1.5,
-                  }}
-                >
-                  <Typography color="text.secondary" variant="caption">
-                    {calendarDate(day.date)}
-                  </Typography>
-                  <Typography
-                    color={day.pnlSign === -1 ? "error.main" : "success.main"}
-                    sx={{ fontWeight: 850, mt: 0.5 }}
-                    variant="body2"
-                  >
-                    {calendarMoney(day.pnlDecimal, calendarData?.currency ?? null)}
-                  </Typography>
-                  <Typography color="text.secondary" variant="caption">
-                    {day.tradeCount} completed trade{day.tradeCount === 1 ? "" : "s"}
-                  </Typography>
-                  <Button href={`/trade-tracker/${day.date}`} size="small" sx={{ mt: 1 }}>
-                    Review day
-                  </Button>
-                </Box>
-              ))}
-            </Box>
+          {calendarData && workspaceCalendarDays.length > 0 ? (
+            <CalendarWeekView
+              activeDate={calendarData.activeDate}
+              currency={calendarData.currency}
+              days={workspaceCalendarDays}
+              onSelect={(day) => openWorkspacePath(`/trade-tracker/${day.date}`)}
+              onTickerClick={(day) => openWorkspacePath(`/calendar?view=week&week=${day.date}`)}
+              selectedDate={calendarData.activeDate}
+              showReviewStatus={false}
+            />
           ) : (
             <DashboardUnavailableState
               actionHref="/imports"
@@ -467,7 +364,6 @@ export function WorkspaceDashboard({
               title="No completed trading days available"
             />
           )}
-        </Stack>
       </DashboardPanel>
     </DashboardPage>
   );

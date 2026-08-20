@@ -152,7 +152,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
   Object.freeze({
     slug: "review-trades",
     title: "Review trades and executions",
-    description: "Use ticker cards, trade selection, tags and individual execution analysis without losing the complete-trade view.",
+    description: "Use ticker cards, trade selection, tags and exact execution details without losing the complete-trade view.",
     sections: Object.freeze([
       Object.freeze({
         id: "ticker-and-trade-cards",
@@ -187,25 +187,24 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
       }),
       Object.freeze({
         id: "view-analysis",
-        title: "View analysis for one execution",
-        summary: "Select any buy or sell to inspect the exact fill and its market context.",
-        keywords: Object.freeze(["view analysis", "execution analysis", "entry analysis", "exit analysis", "combined overview", "fill"]),
+        title: "Highlight one execution on the chart",
+        summary: "Select any buy or sell to highlight its exact fill while keeping the complete-trade analysis visible.",
+        keywords: Object.freeze(["show on chart", "execution analysis", "entry analysis", "exit analysis", "combined overview", "fill"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "steps", items: Object.freeze([
             Object.freeze({ title: "1. Open Executions", text: "Expand the selected trade's execution list." }),
-            Object.freeze({ title: "2. Select View analysis", text: "Use the button beside the exact buy or sell you want to study." }),
+            Object.freeze({ title: "2. Select Show on chart", text: "Use the button beside the exact buy or sell you want to locate." }),
             Object.freeze({ title: "3. Review the highlighted fill", text: "The chart highlights that execution and moves it into view. The saved execution does not change." }),
-            Object.freeze({ title: "4. Read the sections", text: "Review Execution context, Market activity, candle patterns and Price response for that fill." }),
-            Object.freeze({ title: "5. Return to the trade", text: "Select Combined overview to restore the complete-trade analysis and Green-to-red column." }),
+            Object.freeze({ title: "4. Keep the complete trade in view", text: "Combined entry, combined exit, trade outcome and Green-to-Red remain visible while the marker is selected." }),
           ]) }),
-          Object.freeze({ kind: "paragraph", text: "For a Long trade, a buy that opens or adds is Entry analysis and a sell that reduces or closes is Exit analysis. For a Short trade, the opening sell is an entry and a covering buy is an exit." }),
-          Object.freeze({ kind: "callout", title: "View analysis changes the review only", text: "It does not edit, split or reclassify the execution." }),
-          Object.freeze({ kind: "link", href: "/help/trade-analyzer/entry-exit-analysis#individual-executions", label: "Read individual execution analysis help", text: "For every fill-level measure, definition and unavailable state, use the reusable Trade Analyzer guide." }),
+          Object.freeze({ kind: "paragraph", text: "For a Long trade, a buy that opens or adds is an entry and a sell that reduces or closes is an exit. For a Short trade, the opening sell is an entry and a covering buy is an exit." }),
+          Object.freeze({ kind: "callout", title: "Show on chart changes the view only", text: "It does not edit, split or reclassify the execution." }),
+          Object.freeze({ kind: "link", href: "/help/trade-analyzer/entry-exit-analysis#individual-executions", label: "Read exact execution details help", text: "For every fill-level measure, definition and unavailable state, use the reusable Trade Analyzer guide." }),
         ]),
       }),
       Object.freeze({
         id: "execution-sections",
-        title: "What individual execution analysis contains",
+        title: "What exact execution details contain",
         summary: "Understand execution context, market activity, patterns and price response.",
         keywords: Object.freeze(["execution context", "market activity", "price response", "relative volume", "turnover", "vwap", "ema"]),
         blocks: Object.freeze([
@@ -225,7 +224,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
         keywords: Object.freeze(["combined entry", "combined exit", "trade outcome", "mfe", "mae", "green to red"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph", text: "Individual analysis explains one fill. Combined analysis weights entries and exits by quantity and explains the complete trade, including actual P/L, holding time, MFE, MAE and profit-opportunity results." }),
-          Object.freeze({ kind: "paragraph", text: "Green-to-red analysis is trade-level because it follows the changing quantity and calculated P/L across the full position. It appears with Combined overview, not with one isolated fill." }),
+          Object.freeze({ kind: "paragraph", text: "Green-to-Red analysis is trade-level because it follows the changing quantity and calculated P/L across the full position. It stays visible with the complete-trade analysis even when one execution is highlighted on the chart." }),
           Object.freeze({ kind: "link", href: "/help/trade-analyzer/entry-exit-analysis#combined-trade", label: "Read combined trade analysis help", text: "See how quantity-weighted entries, exits, MFE, MAE and holding time describe the complete trade." }),
           Object.freeze({ kind: "link", href: "/help/trade-analyzer/green-to-red-analysis", label: "Read Green-to-red analysis help", text: "See every Green-to-red status, profit-capture result and recovery measurement." }),
         ]),
@@ -320,7 +319,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
         summary: "Open the combined trade view to see the complete path around breakeven.",
         keywords: Object.freeze(["green to red", "never green", "stayed green", "recovered", "breakeven", "peak profit", "left on table"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "Combined overview can show whether the saved path never moved green, stayed above breakeven, ended red after first moving green, recovered, or ended approximately flat. Supporting facts can include the profit peak, reversal, recovery, later adds and partial exits." }),
+          Object.freeze({ kind: "paragraph", text: "The complete-trade view can show whether the saved path never moved green, stayed above breakeven, ended red after first moving green, recovered, or ended approximately flat. Supporting facts can include the profit peak, reversal, recovery, later adds and partial exits." }),
           Object.freeze({ kind: "paragraph", text: "Transitions use exact fills and completed one-minute closes because the order of a one-minute candle's high and low is unknown. Calculated final path P/L may differ from actual net P/L when executions or reported fees make the real result different." }),
           Object.freeze({ kind: "link", href: "/help/trade-analyzer/green-to-red-analysis", label: "Open the complete Green-to-red guide", text: "Use the Trade Analyzer reference for every status, recovery, profit-capture and risk-management comparison." }),
           Object.freeze({ kind: "link", href: "/help/trade-analyzer/day-trade-analysis", label: "Open Day Trade Analysis help", text: "Long-term entry, exit, Green-to-red and pattern comparisons live in the separate Trade Analyzer collection." }),

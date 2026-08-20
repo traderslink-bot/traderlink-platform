@@ -465,6 +465,12 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
   const emptyTradeMessage = appliedQuery.moneyBasis === "net"
     ? "No fee-covered trades match these filters."
     : "No completed trades match these filters.";
+  const onlyTradingCostsAreMissing = appliedQuery.moneyBasis === "net" &&
+    appliedQuery.symbol !== null &&
+    preview.response.crossPartitionCounts.readyClosedCount > 0 &&
+    preview.response.crossPartitionCounts.includedCount === 0 &&
+    preview.response.crossPartitionCounts.feeIncompleteCount ===
+      preview.response.crossPartitionCounts.readyClosedCount;
   const tradeSummary = tradeSummaryPartition === null
     ? Object.freeze([
         Object.freeze({
@@ -646,6 +652,33 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
       moneyBasis,
       metricId: tradeExplorerMetricForMoneyBasis(current.metricId, moneyBasis),
     }));
+  }
+
+  function viewGrossResults(): void {
+    const nextQuery = Object.freeze({
+      ...query,
+      moneyBasis: "gross" as const,
+      metricId: tradeExplorerMetricForMoneyBasis(query.metricId, "gross"),
+    });
+    setQuery(nextQuery);
+    run(nextQuery);
+  }
+
+  function emptyResults() {
+    if (!onlyTradingCostsAreMissing) {
+      return <Typography color="text.secondary">{emptyTradeMessage}</Typography>;
+    }
+    const count = preview.response.crossPartitionCounts.readyClosedCount;
+    return (
+      <Stack spacing={1} sx={{ alignItems: "flex-start" }}>
+        <Typography color="text.secondary">
+          {appliedQuery.symbol} has {count} completed trade{count === 1 ? "" : "s"}, but Net P/L is unavailable because trading costs are incomplete.
+        </Typography>
+        <Button onClick={viewGrossResults} variant="outlined">
+          View Gross P/L
+        </Button>
+      </Stack>
+    );
   }
 
   function chooseOutcome(outcome: "win" | "loss" | "flat" | null): void {
@@ -860,7 +893,9 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
     <DashboardPage>
       <Box>
         <Typography component="h1" variant="h1">Trade Explorer</Typography>
-        <Typography color="text.secondary" sx={{ mt: 0.5 }}>Explore completed trades, narrow the results and find the details that matter to you.</Typography>
+        <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+          Explore your trades, narrow the results, and find the details that matter to you. Add or edit notes, tags, and rules in one place if you prefer not to use the Daily Trade Tracker.
+        </Typography>
       </Box>
       <DashboardPanel
         action={
@@ -966,7 +1001,7 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
                 </SelectField>
               </Box>
               {visibleGroups.length === 0 ? (
-                <Typography color="text.secondary">{emptyTradeMessage}</Typography>
+                emptyResults()
               ) : (
                 <HorizontalScrollRegion
                   label={`${activeView.label} results table`}
@@ -1018,13 +1053,11 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
               ) : null}
             </>
           ) : preview.evidence === null ? (
-            <Typography color="text.secondary">
-              {preview.response.crossPartitionCounts.includedCount === 0
-                ? emptyTradeMessage
-                : preview.evidenceUnavailableReason ?? "Choose one currency to view individual trades."}
-            </Typography>
+            preview.response.crossPartitionCounts.includedCount === 0
+              ? emptyResults()
+              : <Typography color="text.secondary">{preview.evidenceUnavailableReason ?? "Choose one currency to view individual trades."}</Typography>
           ) : preview.evidence.rows.length === 0 ? (
-            <Typography color="text.secondary">{emptyTradeMessage}</Typography>
+            emptyResults()
           ) : (
             <>
               <HorizontalScrollRegion label="Individual trades table" maxHeight={560} minTableWidth={1360} stickyFirstColumn>

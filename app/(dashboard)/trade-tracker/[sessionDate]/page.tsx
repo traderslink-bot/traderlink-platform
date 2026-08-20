@@ -6,6 +6,8 @@ import {
   DashboardUnavailableState,
 } from "../../../dashboard-template";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
+import { readMoomooMarketDataAccess } from "@/src/modules/level-analysis/server/moomoo-market-data-access";
 
 import { getReplacementReportingDaySession } from "../trade-tracker-platform-data";
 import { getDaySessionDesignPreview } from "./day-session-preview-data";
@@ -48,6 +50,8 @@ export default async function TradeTrackerDayPage({
   }
 
   const scope = await requireTraderLinkPlatformPageScope();
+  const moomooMarketDataAccess = withReadonlyPlatformDatabase({}, (database) =>
+    readMoomooMarketDataAccess(database, scope));
   const data = await getReplacementReportingDaySession(scope, {
     date: sessionDate,
   });
@@ -65,7 +69,11 @@ export default async function TradeTrackerDayPage({
       : null;
     return (
       <TradeTrackerUnsavedChangesProvider>
-        <DaySessionView data={data} initialAnalyzerFocus={initialAnalyzerFocus} />
+        <DaySessionView
+          data={data}
+          initialAnalyzerFocus={initialAnalyzerFocus}
+          showMoomooConnectionGuidance={moomooMarketDataAccess.shouldShowConnectionGuidance}
+        />
       </TradeTrackerUnsavedChangesProvider>
     );
   }

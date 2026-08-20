@@ -26,19 +26,7 @@ import {
 import { FeatureHelpLink } from "../../feature-help-link";
 import { formatJournalAnalyticsMoney } from
   "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
-
-const PATTERN_LABELS: Record<string, string> = {
-  compression: "Compression",
-  compression_break_bearish: "Compression break lower",
-  compression_break_bullish: "Compression break higher",
-  engulfing_bearish: "Bearish engulfing",
-  engulfing_bullish: "Bullish engulfing",
-  expansion_bearish: "Bearish expansion",
-  expansion_bullish: "Bullish expansion",
-  high_volume_exhaustion: "High-volume exhaustion",
-  rejection_lower: "Lower-wick rejection",
-  rejection_upper: "Upper-wick rejection",
-};
+import { candlePatternName } from "@/src/lib/trade-candle-analysis/pattern-presentation";
 
 function decimal(value: string | number): string {
   const number = typeof value === "number" ? value : Number(value);
@@ -236,7 +224,7 @@ export function TradeCandleReviewClient({
             {review.observations.map((observation) => (
               <Chip
                 key={`${observation.zone}-${observation.kind}-${observation.time}`}
-                label={`${observation.zone.replace("_", " ")} · ${PATTERN_LABELS[observation.kind] ?? observation.kind} · ${easternTime(observation.time)}`}
+                label={`${observation.zone.replace("_", " ")} · ${candlePatternName(observation.kind)} · ${easternTime(observation.time)}`}
                 size="small"
                 variant="outlined"
               />

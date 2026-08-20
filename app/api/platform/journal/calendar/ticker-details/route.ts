@@ -19,6 +19,7 @@ type TradeDetailRow = Readonly<{
 }>;
 
 type TradeExecutionRow = Readonly<{
+  execution_id: string;
   executed_at_utc: string;
   price_decimal: string | null;
   quantity_decimal: string;
@@ -83,6 +84,7 @@ WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
   AND round_trip.round_trip_id IN (${placeholders})`).all(scope.workspaceId, accountId, ...roundTripIds),
       executions: database.prepare<unknown[], TradeExecutionRow>(`SELECT
  version.round_trip_id,
+ execution.execution_id,
  execution.executed_at_utc,
  execution.side,
  allocation.quantity_decimal,

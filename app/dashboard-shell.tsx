@@ -159,7 +159,8 @@ function NavigationLink({
         minHeight: 44,
         mx: 1,
         my: 0.25,
-        px: collapsed ? 1.25 : 1.5,
+        pl: collapsed ? 1.25 : item.depth === 2 ? 4.75 : item.depth === 1 ? 2.25 : 1.5,
+        pr: collapsed ? 1.25 : 1.5,
         justifyContent: collapsed ? "center" : "initial",
         "&.Mui-selected": {
           bgcolor: "primary.main",
@@ -182,7 +183,12 @@ function NavigationLink({
         <ListItemText
           primary={item.label}
           slotProps={{
-            primary: { sx: { fontSize: 14, fontWeight: 620 } },
+            primary: {
+              sx: {
+                fontSize: item.depth === 2 ? 13 : 14,
+                fontWeight: item.depth === 1 ? 760 : 620,
+              },
+            },
           }}
         />
       )}

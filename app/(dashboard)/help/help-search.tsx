@@ -40,7 +40,7 @@ export function HelpSearch({ records }: { records: readonly HelpSearchRecord[] }
         fullWidth
         label="Search help"
         onChange={(event) => setQuery(event.target.value)}
-        placeholder="Try ‘View analysis’, ‘candle patterns’ or ‘daily rules’"
+        placeholder="Try ‘Show on chart’, ‘candle patterns’ or ‘daily rules’"
         slotProps={{
           input: {
             startAdornment: (
