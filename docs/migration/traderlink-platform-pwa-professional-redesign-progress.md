@@ -307,8 +307,24 @@ condensed rail state is offered.
 - [x] Preserve the Open Positions saved-view slice in narrow local commit
   `6e6a1ba2` without staging the concurrent AI Chat, Analytics, Calendar,
   Rules, notification, shell or other dashboard work.
-- [ ] Add Journal-owned Daily and Swing Tracker saved-view models and
-  renderers, preserving saved empty-day notes/reviews and disabling every
+- [x] Add the Journal-owned Swing Tracker saved model and reuse the normal
+  `SwingTrackerView` for its active/completed hierarchy, metrics, tags, saved
+  notes and execution history.
+- [x] Exclude real position/note/manual-edit references, available-tag IDs,
+  rule mutation data and editor payloads from the saved Swing model. Generate
+  local display-only keys when rendering offline.
+- [x] Keep the accepted offline execution outbox in the normal Swing entry
+  location. Replace classification, tag, note and execution-edit controls with
+  read-only facts plus concise reconnect guidance.
+- [x] Move the four online Swing mutation editors to conditional chunks so the
+  offline shell does not request their dialogs or POST behavior.
+- [x] Focused React best-practices review, ESLint, capability-boundary audit
+  and explicit-file diff checks pass with a 512 MB Node ceiling. No Vitest,
+  broad TypeScript run, server, browser, build, provider, hosted mutation or
+  deployment ran.
+- [ ] Preserve the Swing Tracker saved-view slice in a narrow local commit.
+- [ ] Add the Journal-owned Daily Tracker saved-view model and renderer,
+  preserving saved empty-day notes/reviews and disabling every
   server-authoritative mutation except the accepted offline execution outbox.
 - [ ] Add the remaining Journal Trades saved-view models and renderers for
   Calendar, Trade Explorer, Compare Trades, Trading Rules, Rule Results and
@@ -330,9 +346,9 @@ The owner explicitly waived further visual review and directed work to
 continue without waiting for the 16-hour press-release runtime. PWA-R2 is
 therefore accepted. PWA-R3 now has its non-destructive version-3 saved-view
 store, the first Platform-owned Workspace model and the first Journal-owned
-Open Positions model with normal-layout offline renderers. The next source
-slice is the Daily and Swing Tracker saved-view boundary, followed by the
-remaining Journal Trades surfaces and Journal Analytics. Keep source work
-lightweight until the final full-site build can run without threatening
-protected processes. No Journal data, IndexedDB record, Push state, hosted
-configuration or deployed state changed during this acceptance run.
+Open Positions model and Swing Tracker model with normal-layout offline
+renderers. The next source slice is the Daily Tracker saved-view boundary,
+followed by the remaining Journal Trades surfaces and Journal Analytics. Keep
+source work lightweight until the final full-site build can run without
+threatening protected processes. No Journal data, IndexedDB record, Push state,
+hosted configuration or deployed state changed during this acceptance run.

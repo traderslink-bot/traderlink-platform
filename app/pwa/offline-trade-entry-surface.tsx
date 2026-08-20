@@ -16,6 +16,7 @@ import {
 import { ManualExecutionEntry } from "../(dashboard)/trade-tracker/manual-execution-entry";
 import { DashboardPage } from "../dashboard-ui";
 import { OfflineOpenPositionsSurface } from "./offline-open-positions-surface";
+import { OfflineSwingTrackerSurface } from "./offline-swing-tracker-surface";
 import { OfflineWorkspaceSurface } from "./offline-workspace-surface";
 import {
   normalizePlatformOfflinePathname,
@@ -242,6 +243,25 @@ export function OfflineRouteContent() {
     return (
       <>
         <OfflineOpenPositionsSurface partitionKey={deviceState.partitionKey} />
+        <OfflineTradeOutboxSync state={deviceState} />
+      </>
+    );
+  }
+
+  if (
+    pathname === "/trade-tracker/swings" &&
+    stateLoaded &&
+    readyOfflineDeviceState(deviceState)
+  ) {
+    return (
+      <>
+        <OfflineSwingTrackerSurface
+          accountCurrency={deviceState.accountCurrency}
+          accountSelectionRef={deviceState.accountSelectionRef}
+          accountTimezone={deviceState.accountTimezone}
+          offlineScopeRef={deviceState.offlineScopeRef}
+          partitionKey={deviceState.partitionKey}
+        />
         <OfflineTradeOutboxSync state={deviceState} />
       </>
     );

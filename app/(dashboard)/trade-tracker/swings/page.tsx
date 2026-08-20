@@ -2,6 +2,13 @@ import type { Metadata } from "next";
 
 import { Box } from "@mui/material";
 
+import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
+import {
+  createJournalSwingTrackerOfflineViewModel,
+  JOURNAL_SWING_TRACKER_OFFLINE_ROUTE_VIEW_VERSION,
+  JOURNAL_SWING_TRACKER_OFFLINE_VIEW_KEY,
+  journalSwingTrackerOfflineCoverage,
+} from "@/src/modules/journal/contracts/journal-swing-tracker-offline-view-contracts";
 import {
   currentJournalAccountSelectionRef,
   requireTraderLinkPlatformPageScope,
@@ -88,13 +95,39 @@ export default async function SwingTradeTrackerPage({
       />
     </Box>
   );
+  const active = await Promise.all(
+    positions.active.map((position) => detail(position.positionRef)),
+  );
+  const completed = await Promise.all(
+    positions.completed.map((position) => detail(position.positionRef)),
+  );
+  const offlineModel = createJournalSwingTrackerOfflineViewModel({
+    active,
+    completed,
+    reviewDate,
+  });
+  const generatedAtUtc = new Date().toISOString();
   return (
-    <SwingTrackerView
-      active={await Promise.all(positions.active.map((position) => detail(position.positionRef)))}
-      completed={await Promise.all(positions.completed.map((position) => detail(position.positionRef)))}
-      expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
-      reviewDate={reviewDate}
-      topContent={entry}
-    />
+    <>
+      <OfflineSavedViewCapture
+        accountTimezone={account.tradingTimezone}
+        calculationVersion="journal-swing-tracker-v1"
+        coverage={journalSwingTrackerOfflineCoverage()}
+        generatedAtUtc={generatedAtUtc}
+        model={offlineModel}
+        pathname="/trade-tracker/swings"
+        queryIdentity={`current:${reviewDate}`}
+        reportingCurrency={account.baseCurrency}
+        routeViewVersion={JOURNAL_SWING_TRACKER_OFFLINE_ROUTE_VIEW_VERSION}
+        viewKey={JOURNAL_SWING_TRACKER_OFFLINE_VIEW_KEY}
+      />
+      <SwingTrackerView
+        active={active}
+        completed={completed}
+        expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
+        reviewDate={reviewDate}
+        topContent={entry}
+      />
+    </>
   );
 }

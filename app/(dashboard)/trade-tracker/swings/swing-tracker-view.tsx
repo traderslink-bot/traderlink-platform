@@ -10,6 +10,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import dynamic from "next/dynamic";
 import { useState, type ReactNode } from "react";
 
 import type { ReplacementSwingPositionDetail } from "../trade-tracker-platform-data";
@@ -23,10 +24,15 @@ import {
   DashboardSecondaryAction,
 } from "../../../dashboard-template";
 import { FeatureHelpLink } from "../../feature-help-link";
-import { ManualExecutionEditDialog } from "../manual-execution-edit-dialog";
-import { PositionStyleControl } from "../position-style-control";
-import { SwingAnnotationEditor } from "./swing-annotation-editor";
-import { SwingNoteEditor } from "./swing-note-editor";
+
+const ManualExecutionEditDialog = dynamic(() =>
+  import("../manual-execution-edit-dialog").then((module) => module.ManualExecutionEditDialog));
+const PositionStyleControl = dynamic(() =>
+  import("../position-style-control").then((module) => module.PositionStyleControl));
+const SwingAnnotationEditor = dynamic(() =>
+  import("./swing-annotation-editor").then((module) => module.SwingAnnotationEditor));
+const SwingNoteEditor = dynamic(() =>
+  import("./swing-note-editor").then((module) => module.SwingNoteEditor));
 
 function localDate(value: string, timezone: string): string {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -59,6 +65,13 @@ function timestamp(value: string, timezone: string): string {
   });
 }
 
+function savedViewTime(value: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
 function decimal(value: string | null): string {
   return value === null ? "N/A" : formatJournalAnalyticsDecimal(value);
 }
@@ -77,10 +90,12 @@ function actionHref(
 
 function SwingCard({
   expectedAccountSelectionRef,
+  offline,
   position,
   reviewDate,
 }: {
   expectedAccountSelectionRef: string;
+  offline: boolean;
   position: ReplacementSwingPositionDetail;
   reviewDate: string;
 }) {
@@ -152,7 +167,7 @@ function SwingCard({
             </Box>
           </Box>
 
-          {active ? (
+          {active && !offline ? (
             <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mt: 2 }}>
               <DashboardSecondaryAction href={actionHref(position, "record")}>Add execution</DashboardSecondaryAction>
               <PositionStyleControl
@@ -164,23 +179,39 @@ function SwingCard({
                 style={position.style}
               />
             </Stack>
+          ) : active ? (
+            <Typography color="text.secondary" sx={{ mt: 2 }} variant="body2">
+              Use the offline execution form above to record activity. Reconnect to change this swing classification.
+            </Typography>
           ) : null}
 
           <Divider sx={{ my: 2.5 }} />
           <Typography sx={{ fontWeight: 850 }} variant="subtitle2">Tags</Typography>
-          <SwingAnnotationEditor
-            availableTags={position.availableTags}
-            expectedAccountSelectionRef={expectedAccountSelectionRef}
-            positionRef={position.positionRef}
-            rules={position.rules}
-            showRules={false}
-            tags={position.tags}
-          />
+          {offline ? (
+            position.tags.length > 0 ? (
+              <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.75, mt: 1 }}>
+                {position.tags.map((tag) => (
+                  <Chip key={tag.tagId} label={tag.name} size="small" variant="outlined" />
+                ))}
+              </Stack>
+            ) : (
+              <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">No tags saved.</Typography>
+            )
+          ) : (
+            <SwingAnnotationEditor
+              availableTags={position.availableTags}
+              expectedAccountSelectionRef={expectedAccountSelectionRef}
+              positionRef={position.positionRef}
+              rules={position.rules}
+              showRules={false}
+              tags={position.tags}
+            />
+          )}
 
           <Divider sx={{ my: 2.5 }} />
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}>
             <Typography sx={{ fontWeight: 850 }} variant="subtitle2">Saved notes</Typography>
-            {active ? (
+            {active && !offline ? (
               <Button onClick={() => setEditingNoteDate(reviewDate)} size="small" sx={{ minHeight: { xs: 44, sm: 36 } }} variant="outlined">
                 Add additional note
               </Button>
@@ -188,6 +219,20 @@ function SwingCard({
           </Stack>
           {position.notes.length === 0 ? (
             <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">No notes saved yet.</Typography>
+          ) : offline ? (
+            <Stack spacing={1} sx={{ mt: 1 }}>
+              {position.notes.map((note) => (
+                <Box key={`${note.reviewDate}:${note.revision}`} sx={{ border: 1, borderColor: "divider", borderRadius: 1, p: 1.5 }}>
+                  <Typography sx={{ fontWeight: 800 }} variant="body2">{note.reviewDate}</Typography>
+                  <Typography sx={{ mt: 0.75, whiteSpace: "pre-wrap" }} variant="body2">{note.note}</Typography>
+                  {note.nextSessionPlan ? (
+                    <Typography color="text.secondary" sx={{ mt: 0.75, whiteSpace: "pre-wrap" }} variant="body2">
+                      Next session: {note.nextSessionPlan}
+                    </Typography>
+                  ) : null}
+                </Box>
+              ))}
+            </Stack>
           ) : (
             <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.75, mt: 1 }}>
               {position.notes.map((note) => (
@@ -197,7 +242,7 @@ function SwingCard({
               ))}
             </Stack>
           )}
-          {editingNoteDate ? (
+          {!offline && editingNoteDate ? (
             <Box sx={{ mt: 1.5 }}>
               <SwingNoteEditor
                 expectedAccountSelectionRef={expectedAccountSelectionRef}
@@ -221,16 +266,18 @@ function SwingCard({
                 <Typography variant="body2">{decimal(execution.quantityDecimal)} shares</Typography>
                 <Typography sx={{ fontFamily: "var(--font-geist-mono)" }} variant="body2">{formatJournalAnalyticsMoney(execution.reportingPriceDecimal, position.currency)}</Typography>
                 <Typography color="text.secondary" variant="body2">{execution.reportingFeesDecimal === null ? "No fees" : formatJournalAnalyticsMoney(execution.reportingFeesDecimal, position.currency)}</Typography>
-                <ManualExecutionEditDialog
-                  execution={{
-                    manualEdit: execution.manualEdit,
-                    price: execution.priceDecimal,
-                    quantity: execution.quantityDecimal,
-                    side: execution.side,
-                    symbol: position.symbol,
-                  }}
-                  expectedAccountSelectionRef={expectedAccountSelectionRef}
-                />
+                {!offline ? (
+                  <ManualExecutionEditDialog
+                    execution={{
+                      manualEdit: execution.manualEdit,
+                      price: execution.priceDecimal,
+                      quantity: execution.quantityDecimal,
+                      side: execution.side,
+                      symbol: position.symbol,
+                    }}
+                    expectedAccountSelectionRef={expectedAccountSelectionRef}
+                  />
+                ) : null}
               </Box>
             ))}
           </Stack>
@@ -246,12 +293,14 @@ export function SwingTrackerView({
   active,
   completed,
   expectedAccountSelectionRef,
+  offlineSavedAtUtc,
   reviewDate,
   topContent,
 }: {
   active: readonly ReplacementSwingPositionDetail[];
   completed: readonly ReplacementSwingPositionDetail[];
   expectedAccountSelectionRef: string;
+  offlineSavedAtUtc?: string;
   reviewDate: string;
   topContent: ReactNode;
 }) {
@@ -274,6 +323,9 @@ export function SwingTrackerView({
       </Alert>
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+        {offlineSavedAtUtc ? (
+          <Chip color="primary" label={`Offline · Last updated ${savedViewTime(offlineSavedAtUtc)}`} size="small" variant="outlined" />
+        ) : null}
         <Chip label={`${active.length} active swing${active.length === 1 ? "" : "s"}`} size="small" variant="outlined" />
         <Chip label={`${completed.length} recently completed`} size="small" variant="outlined" />
       </Stack>
@@ -287,7 +339,7 @@ export function SwingTrackerView({
           </Typography>
         ) : (
           <Stack spacing={2}>
-            {active.map((position) => <SwingCard expectedAccountSelectionRef={expectedAccountSelectionRef} key={position.positionRef} position={position} reviewDate={reviewDate} />)}
+            {active.map((position) => <SwingCard expectedAccountSelectionRef={expectedAccountSelectionRef} key={position.positionRef} offline={Boolean(offlineSavedAtUtc)} position={position} reviewDate={reviewDate} />)}
           </Stack>
         )}
       </DashboardPanel>
@@ -297,7 +349,7 @@ export function SwingTrackerView({
           <Typography color="text.secondary" variant="body2">Completed swing trades will remain here with their notes and execution history.</Typography>
         ) : (
           <Stack spacing={2}>
-            {completed.map((position) => <SwingCard expectedAccountSelectionRef={expectedAccountSelectionRef} key={position.positionRef} position={position} reviewDate={reviewDate} />)}
+            {completed.map((position) => <SwingCard expectedAccountSelectionRef={expectedAccountSelectionRef} key={position.positionRef} offline={Boolean(offlineSavedAtUtc)} position={position} reviewDate={reviewDate} />)}
           </Stack>
         )}
       </DashboardPanel>
