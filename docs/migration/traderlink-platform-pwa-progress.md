@@ -442,3 +442,16 @@ after separate deployment and secret authorization.
   offline shell. Real installed-app/device acceptance remains required for
   that one PWA 5 item. Hosted HTTPS phone install, real Web Push and
   background-delivery checks remain separately deferred.
+
+## 2026-08-19 local Web Push configuration
+
+- After explicit owner authorization, generated a fresh local-only VAPID pair
+  and a versioned 32-byte subscription-encryption key. They are stored only in
+  the Git-ignored `.env.development.local` file; neither values nor derived
+  subscription data were printed, committed or deployed.
+- The current loopback process started before the local configuration existed,
+  so it still correctly reports Web Push as unavailable. Its owner must stop
+  and restart that exact local process before Chrome can request permission or
+  create a local-device subscription.
+- Hosted VAPID/encryption configuration and a real hosted delivery worker
+  remain separate deployment and production-secret gates.
