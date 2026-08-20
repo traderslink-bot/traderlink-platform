@@ -4,6 +4,13 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import type { Metadata } from "next";
 
+import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
+import {
+  COACH_AI_REVIEW_OFFLINE_COVERAGE,
+  COACH_AI_REVIEW_OFFLINE_VIEW_VERSION,
+  coachAiReviewOfflineDetailViewKey,
+  createCoachAiReviewOfflineDetailViewModel,
+} from "@/src/modules/coach/contracts/coach-ai-review-offline-view-contracts";
 import { DashboardPage } from "../../../../dashboard-template";
 import {
   CoachAiReviewRepository,
@@ -123,8 +130,25 @@ export default async function WeeklyAiReviewPage({
       throw error;
     }
   });
+  const pathname = `/ai-reviews/weekly/${reviewId}`;
+  const offlineModel = createCoachAiReviewOfflineDetailViewModel(view.kind === "authored"
+    ? { documentKind: "authored", view: view.view }
+    : { documentKind: "legacy", view: view.view });
 
   return (
+    <>
+    <OfflineSavedViewCapture
+      accountTimezone={null}
+      calculationVersion="coach-issued-ai-review-document-v1"
+      coverage={COACH_AI_REVIEW_OFFLINE_COVERAGE}
+      generatedAtUtc={new Date().toISOString()}
+      model={offlineModel}
+      pathname={pathname}
+      queryIdentity="issued-review"
+      reportingCurrency={null}
+      routeViewVersion={COACH_AI_REVIEW_OFFLINE_VIEW_VERSION}
+      viewKey={coachAiReviewOfflineDetailViewKey(pathname)}
+    />
     <DashboardPage>
       <Box sx={{ mb: -0.75 }}>
         <Button href="/ai-reviews" size="small" variant="text">
@@ -135,5 +159,6 @@ export default async function WeeklyAiReviewPage({
         ? <AiReviewAuthoredDocument view={view.view} />
         : <AiReviewDocument view={view.view} />}
     </DashboardPage>
+    </>
   );
 }

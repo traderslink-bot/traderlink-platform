@@ -11,10 +11,11 @@ import type {
 } from "@/src/modules/coach/server/coach-ai-review-authored-persistence-repository";
 
 export type AiReviewAuthoredDocumentView = Readonly<{
+  metricLabels?: readonly string[];
+  packet?: CoachAiReviewAuthoredPacket;
   reviewTypeLabel: "Weekly AI Review" | "Two-week AI Review" | "Monthly AI Review";
   periodLabel: string;
   output: CoachAiReviewAuthoredOutput;
-  packet: CoachAiReviewAuthoredPacket;
 }>;
 
 function ReviewSection({ children, title }: Readonly<{
@@ -42,10 +43,10 @@ function ReviewText({ children }: Readonly<{ children: string }>) {
 export function AiReviewAuthoredDocument({ view }: Readonly<{ view: AiReviewAuthoredDocumentView }>) {
   const monthly = view.output.contractVersion ===
     "traderlink_coach_monthly_ai_review_authored_output_v1";
-  const metrics = view.packet.packetVersion ===
+  const metricLabels = view.metricLabels ?? (view.packet?.packetVersion ===
     "traderlink_coach_monthly_ai_review_evidence_packet_v1"
-    ? view.packet.monthSnapshot.metrics
-    : view.packet.weekSnapshot.metrics;
+    ? view.packet.monthSnapshot.metrics.map((metric) => metric.displayValue)
+    : view.packet?.weekSnapshot.metrics.map((metric) => metric.displayValue) ?? []);
   const recap = monthly ? view.output.monthlyRecap : view.output.weeklyRecap;
   const narrative = monthly ? view.output.monthNarrative : view.output.weekNarrative;
   const insights = view.output.additionalInsights;
@@ -67,8 +68,8 @@ export function AiReviewAuthoredDocument({ view }: Readonly<{ view: AiReviewAuth
             {view.periodLabel}
           </Typography>
           <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.75 }}>
-            {metrics.map((metric) => (
-              <Chip key={metric.name} label={metric.displayValue} size="small" variant="outlined" />
+            {metricLabels.map((metric) => (
+              <Chip key={metric} label={metric} size="small" variant="outlined" />
             ))}
           </Stack>
         </Stack>

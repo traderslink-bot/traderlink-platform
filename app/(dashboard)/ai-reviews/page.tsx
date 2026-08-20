@@ -8,6 +8,7 @@ import Typography from "@mui/material/Typography";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
+import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
 import {
   DashboardPage,
   DashboardPanel,
@@ -40,7 +41,12 @@ import {
 } from "@/src/modules/coach/server/coach-ai-review-generation-coordinator-v2";
 import { CoachAiReviewProviderControlsRepository } from
   "@/src/modules/coach/server/coach-ai-review-provider-controls-repository";
-import { formatCoachAiMoneyForDisplay } from "@/src/modules/coach/presentation/coach-ai-money-formatters";
+import {
+  COACH_AI_REVIEW_OFFLINE_COVERAGE,
+  COACH_AI_REVIEW_OFFLINE_LIST_VIEW_KEY,
+  COACH_AI_REVIEW_OFFLINE_VIEW_VERSION,
+  createCoachAiReviewOfflineListViewModel,
+} from "@/src/modules/coach/contracts/coach-ai-review-offline-view-contracts";
 import { CoachUsEquitiesCalendarRepository } from "@/src/modules/coach/server/market-calendar/coach-us-equities-calendar-repository";
 import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
@@ -54,6 +60,7 @@ import {
   CoachAiReviewAuthoredPersistenceRepository,
   type CoachAiReviewAuthoredIssuedRecord,
 } from "@/src/modules/coach/server/coach-ai-review-authored-persistence-repository";
+import { AiReviewsIssuedList, type AiReviewListItem } from "./ai-reviews-issued-list";
 
 export const metadata: Metadata = {
   title: "AI Reviews | TraderLink Platform",
@@ -156,43 +163,6 @@ function legacyMonthTitle(review: CoachMonthlyIssuedReviewRecord): string {
   return review.periodCoverage === "partial_month"
     ? `First month: ${formatDate(review.monthStartDate)} to ${formatDate(review.monthEndDate)}`
     : formatMonth(review.monthStartDate);
-}
-
-function ReviewCard({
-  href,
-  summary,
-  title,
-}: {
-  href: string;
-  summary: string;
-  title: string;
-}) {
-  return (
-    <Box
-      component="article"
-      sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 2 }}
-    >
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        spacing={1.5}
-        sx={{ alignItems: { sm: "flex-start" }, justifyContent: "space-between" }}
-      >
-        <Box sx={{ minWidth: 0 }}>
-          <Typography sx={{ fontWeight: 800 }} variant="h3">{title}</Typography>
-          <Typography
-            color="text.secondary"
-            sx={{ mt: 0.75, whiteSpace: "pre-wrap" }}
-            variant="body2"
-          >
-            {formatCoachAiMoneyForDisplay(summary)}
-          </Typography>
-        </Box>
-        <Button href={href} size="small" variant="outlined">
-          Open review
-        </Button>
-      </Stack>
-    </Box>
-  );
 }
 
 function ReviewSchedule({
@@ -628,8 +598,32 @@ export default async function AiReviewsPage() {
     review.reviewKind === "monthly");
   const periodicAuthored = authoredReviews.filter((review) => review.reviewKind !== "monthly");
   const monthlyAuthored = authoredReviews.filter((review) => review.reviewKind === "monthly");
+  const periodicItems: readonly AiReviewListItem[] = Object.freeze([
+    ...periodicAuthored.map((review) => Object.freeze({ href: `/ai-reviews/weekly/${review.issuedReviewId}`, summary: authoredReviewSummary(review), title: authoredReviewTitle(review) })),
+    ...periodicCurrent.map((review) => Object.freeze({ href: `/ai-reviews/weekly/${review.issuedReviewId}`, summary: review.output.reviewSummary, title: currentReviewTitle(review) })),
+    ...reviews.map((review) => Object.freeze({ href: `/ai-reviews/weekly/${review.issuedReviewId}`, summary: review.output.weeklyReview, title: legacyWeekTitle(review) })),
+  ]);
+  const monthlyItems: readonly AiReviewListItem[] = Object.freeze([
+    ...monthlyAuthored.map((review) => Object.freeze({ href: `/ai-reviews/monthly/${review.issuedReviewId}`, summary: authoredReviewSummary(review), title: authoredReviewTitle(review) })),
+    ...monthlyCurrent.map((review) => Object.freeze({ href: `/ai-reviews/monthly/${review.issuedReviewId}`, summary: review.output.reviewSummary, title: currentReviewTitle(review) })),
+    ...monthlyReviews.map((review) => Object.freeze({ href: `/ai-reviews/monthly/${review.issuedReviewId}`, summary: review.output.monthlyReview, title: legacyMonthTitle(review) })),
+  ]);
+  const offlineModel = createCoachAiReviewOfflineListViewModel({ monthly: monthlyItems, periodic: periodicItems });
 
   return (
+    <>
+    <OfflineSavedViewCapture
+      accountTimezone={null}
+      calculationVersion="coach-issued-ai-reviews-v1"
+      coverage={COACH_AI_REVIEW_OFFLINE_COVERAGE}
+      generatedAtUtc={new Date().toISOString()}
+      model={offlineModel}
+      pathname="/ai-reviews"
+      queryIdentity="issued-reviews"
+      reportingCurrency={null}
+      routeViewVersion={COACH_AI_REVIEW_OFFLINE_VIEW_VERSION}
+      viewKey={COACH_AI_REVIEW_OFFLINE_LIST_VIEW_KEY}
+    />
     <DashboardPage>
       <Box>
         <Typography component="h1" variant="h1">AI Reviews</Typography>
@@ -682,81 +676,8 @@ export default async function AiReviewsPage() {
         </DashboardPanel>
       ) : null}
 
-      <DashboardPanel title="Weekly and two-week reviews">
-        {periodicAuthored.length === 0 && periodicCurrent.length === 0 && reviews.length === 0 ? (
-          <Stack spacing={0.75}>
-            <Typography sx={{ fontWeight: 800 }}>No weekly reviews yet</Typography>
-            <Typography color="text.secondary" variant="body2">
-              Saved weekly and two-week reviews will appear here for this Trade Tracker account.
-            </Typography>
-          </Stack>
-        ) : (
-          <Stack spacing={1.25}>
-            {periodicAuthored.map((review) => (
-              <ReviewCard
-                href={`/ai-reviews/weekly/${review.issuedReviewId}`}
-                key={review.issuedReviewId}
-                summary={authoredReviewSummary(review)}
-                title={authoredReviewTitle(review)}
-              />
-            ))}
-            {periodicCurrent.map((review) => (
-              <ReviewCard
-                href={`/ai-reviews/weekly/${review.issuedReviewId}`}
-                key={review.issuedReviewId}
-                summary={review.output.reviewSummary}
-                title={currentReviewTitle(review)}
-              />
-            ))}
-            {reviews.map((review) => (
-              <ReviewCard
-                href={`/ai-reviews/weekly/${review.issuedReviewId}`}
-                key={review.issuedReviewId}
-                summary={review.output.weeklyReview}
-                title={legacyWeekTitle(review)}
-              />
-            ))}
-          </Stack>
-        )}
-      </DashboardPanel>
-
-      <DashboardPanel title="Monthly reviews">
-        {monthlyAuthored.length === 0 && monthlyCurrent.length === 0 && monthlyReviews.length === 0 ? (
-          <Stack spacing={0.75}>
-            <Typography sx={{ fontWeight: 800 }}>No monthly reviews yet</Typography>
-            <Typography color="text.secondary" variant="body2">
-              Saved calendar-month reviews will appear here for this Trade Tracker account.
-            </Typography>
-          </Stack>
-        ) : (
-          <Stack spacing={1.25}>
-            {monthlyAuthored.map((review) => (
-              <ReviewCard
-                href={`/ai-reviews/monthly/${review.issuedReviewId}`}
-                key={review.issuedReviewId}
-                summary={authoredReviewSummary(review)}
-                title={authoredReviewTitle(review)}
-              />
-            ))}
-            {monthlyCurrent.map((review) => (
-              <ReviewCard
-                href={`/ai-reviews/monthly/${review.issuedReviewId}`}
-                key={review.issuedReviewId}
-                summary={review.output.reviewSummary}
-                title={currentReviewTitle(review)}
-              />
-            ))}
-            {monthlyReviews.map((review) => (
-              <ReviewCard
-                href={`/ai-reviews/monthly/${review.issuedReviewId}`}
-                key={review.issuedReviewId}
-                summary={review.output.monthlyReview}
-                title={legacyMonthTitle(review)}
-              />
-            ))}
-          </Stack>
-        )}
-      </DashboardPanel>
+      <AiReviewsIssuedList monthly={monthlyItems} periodic={periodicItems} />
     </DashboardPage>
+    </>
   );
 }

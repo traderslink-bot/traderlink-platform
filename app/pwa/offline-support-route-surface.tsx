@@ -44,6 +44,7 @@ import {
 import { PLATFORM_OFFLINE_SAVED_VIEW_SCHEMA_VERSION } from "@/src/modules/platform/contracts/platform-offline-saved-view-contracts";
 
 import { OfflineSavedViewStatus } from "./offline-saved-view-status";
+import { OfflineAiReviewsSurface } from "./offline-ai-reviews-surface";
 
 export type OfflineSupportRouteKind =
   | "account"
@@ -81,9 +82,8 @@ const HELP_COLLECTIONS: readonly HelpCollection[] = Object.freeze([
   { description: "Choose rules and understand the evidence behind each result.", guides: TRADING_RULES_HELP_GUIDES, href: "/help/trading-rules", title: "Trading Rules" },
 ]);
 
-const ONLINE_REQUIRED: Readonly<Record<Exclude<OfflineSupportRouteKind, "account" | "help" | "notifications">, Readonly<{ description: string; title: string }>>> = Object.freeze({
+const ONLINE_REQUIRED: Readonly<Record<Exclude<OfflineSupportRouteKind, "account" | "ai-reviews" | "help" | "notifications">, Readonly<{ description: string; title: string }>>> = Object.freeze({
   "ai-chat": { description: "Your conversations stay account-scoped. Reconnect to load saved chats, ask Links a question, or prepare a Journal draft.", title: "Connect to use Links AI Chat" },
-  "ai-reviews": { description: "Reconnect to load issued AI Reviews or request a new review. TraderLink will never invent review text while offline.", title: "Connect to load AI Reviews" },
   charts: { description: "Market Charts needs a live market-data connection and does not save provider charts to this device.", title: "Connect to load Market Charts" },
   "data-decisions": { description: "Data Decisions can change official Journal facts. Reconnect so every choice is checked against the latest broker evidence.", title: "Connect to review Data Decisions" },
   imports: { description: "Trade imports require the current account, source evidence and server duplicate checks. No statement or broker file is staged while offline.", title: "Connect to import trades" },
@@ -197,6 +197,7 @@ export function OfflineSupportRouteSurface({ accountSelectionRef, kind, offlineS
   pathname: string;
 }) {
   if (kind === "account") return <OfflineAccount accountSelectionRef={accountSelectionRef} offlineScopeRef={offlineScopeRef} pathname={pathname} />;
+  if (kind === "ai-reviews") return <OfflineAiReviewsSurface partitionKey={partitionKey} pathname={pathname} />;
   if (kind === "help") return <OfflineHelp pathname={pathname} />;
   if (kind === "notifications") return <OfflineNotifications partitionKey={partitionKey} />;
   const copy = ONLINE_REQUIRED[kind];

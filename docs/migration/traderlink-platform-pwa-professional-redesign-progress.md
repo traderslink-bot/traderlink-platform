@@ -409,8 +409,16 @@ condensed rail state is offered.
 - [x] Review Help Center impact. The existing Notifications and imports guide
   already explains saved offline updates and removal behavior; the source
   guides themselves remain current. No guide text change is required.
-- [ ] Add issued AI Review list/detail saved models after the concurrent AI
-  Review and Links AI Chat task checkpoints its active shared-page changes.
+- [x] Add Coach-owned issued AI Review list and weekly/two-week/monthly detail
+  saved models. Reuse the normal issued-review cards and document renderers;
+  do not expose generation, benchmark or schedule controls offline.
+- [x] Keep only issued prose and displayed authored metric labels in the
+  offline document. Do not save the authored evidence packet, request data,
+  round-trip identifiers or provider-generation material.
+- [x] Finish the PWA-R4 source gate with the React best-practices review,
+  focused 512 MB ESLint, no-write capability search and explicit-file diff
+  checks. No Vitest, broad TypeScript run, server, browser, build, provider,
+  hosted mutation or deployment ran.
 - [ ] Verify Web Push destination routing, safe application update activation
   and outbox preservation at the final installed-app checkpoint.
 
@@ -430,12 +438,11 @@ therefore accepted. PWA-R3 now has its non-destructive version-3 saved-view
 store plus normal-layout Workspace, Open Positions, Swing Tracker, Daily
 Tracker, Calendar, Trade Explorer, Compare Trades, Trading Rules, Rule Results,
 Candle Review, Core Analytics, Trade Analyzer, Notifications, Account device
-controls and all first-party Help guides offline renderers. Links AI Chat,
+controls, all first-party Help guides and issued AI Review list/detail offline
+renderers. Links AI Chat,
 Imports, Market Charts and Data Decisions now have deliberate native
-connection-required states. The only remaining source item in PWA-R4 is issued
-AI Review list/detail capture, which currently shares actively edited files
-with the concurrent AI task. After that safe integration, the next boundary is
-final installed-app acceptance when system resources permit. Keep source work lightweight until
+connection-required states. PWA-R4 source implementation is complete. The next
+boundary is final installed-app acceptance when system resources permit. Keep source work lightweight until
 the full-site build and installed-app relaunch can run without threatening
 protected processes. No Journal data, IndexedDB record, Push state, hosted
 configuration or deployed state changed during this source checkpoint.
