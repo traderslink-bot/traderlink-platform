@@ -437,12 +437,12 @@ condensed rail state is offered.
 - [x] Remove only the oldest read-only page copies when the budget is exceeded;
   never automatically remove a pending, syncing or review-required trade.
 - [x] Make Account Preferences include both saved-view stores and offline trade
-  records in its local estimate, and show the browser's available origin-level
+  records in its local estimate, and show the browser's origin-level
   usage estimate when supported.
 - [x] Update Notifications Help with the exact storage and non-eviction
   behavior.
-- [ ] Complete focused static checks and preserve the slice in a narrow local
-  commit without staging concurrent AI Chat or Journal-plan work.
+- [x] Complete focused static checks and preserve the slice in narrow local
+  commit `422bfe92` without staging concurrent AI Chat or Journal-plan work.
 
 The storage write path first preserves each store's existing per-account count
 limit, then checks the browser's origin-level usage estimate. When the estimate
