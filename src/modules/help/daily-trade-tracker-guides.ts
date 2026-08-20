@@ -292,7 +292,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
         id: "candle-patterns",
         title: "Detected candle patterns",
         summary: "Use the chart labels and open the reusable pattern reference for detector details.",
-        keywords: Object.freeze(["compression", "engulfing", "expansion", "hammer", "shooting star", "wick rejection", "exhaustion"]),
+        keywords: Object.freeze(["compression", "doji", "engulfing", "evening star", "expansion", "hammer", "harami", "morning star", "shooting star", "three black crows", "three white soldiers", "wick rejection", "exhaustion"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph", text: "The selected trade chart can label supported 1-minute and 5-minute patterns on or before executions. The short chart key expands on mobile. Confirmation-sensitive patterns appear only after their required completed candle exists." }),
           Object.freeze({ kind: "callout", title: "Observation, not prediction", text: "A label describes completed candle facts; it is not a trading signal." }),

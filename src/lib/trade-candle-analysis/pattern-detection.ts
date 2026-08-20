@@ -4,15 +4,22 @@ export type CandlePatternKind =
   | "compression"
   | "compression_break_bearish"
   | "compression_break_bullish"
+  | "doji"
   | "engulfing_bearish"
   | "engulfing_bullish"
+  | "evening_star_bearish"
   | "expansion_bearish"
   | "expansion_bullish"
   | "hammer_bullish"
+  | "harami_bearish"
+  | "harami_bullish"
   | "high_volume_exhaustion"
+  | "morning_star_bullish"
   | "rejection_lower"
   | "rejection_upper"
-  | "shooting_star_bearish";
+  | "shooting_star_bearish"
+  | "three_black_crows_bearish"
+  | "three_white_soldiers_bullish";
 
 export type CandlePatternEvent = { kind: CandlePatternKind; time: number };
 
@@ -20,30 +27,44 @@ export const MICRO_CAP_PATTERN_DEFINITIONS: Readonly<Record<CandlePatternKind, s
   compression: "A materially smaller inside bar with contracting volume relative to recent active candles.",
   compression_break_bearish: "A decisive, active close below a confirmed compressed range.",
   compression_break_bullish: "A decisive, active close above a confirmed compressed range.",
+  doji: "A meaningful-range candle closed with an exceptionally small real body, showing temporary balance between buyers and sellers.",
   engulfing_bearish: "A meaningful bearish real body fully engulfed the preceding bullish body.",
   engulfing_bullish: "A meaningful bullish real body fully engulfed the preceding bearish body.",
+  evening_star_bearish: "After an advance, a small middle body was followed by a meaningful bearish close through the first candle's midpoint.",
   expansion_bearish: "A wide, active bearish body closed near its low relative to recent candles.",
   expansion_bullish: "A wide, active bullish body closed near its high relative to recent candles.",
   hammer_bullish: "After a meaningful decline, a small body rejected a local low with a dominant lower wick and the following candle confirmed recovery.",
+  harami_bearish: "After an advance, a smaller bearish body formed fully inside the preceding meaningful bullish body.",
+  harami_bullish: "After a decline, a smaller bullish body formed fully inside the preceding meaningful bearish body.",
   high_volume_exhaustion: "A locally extended move printed exceptional volume, stalled at an extreme, and was confirmed by the following candle.",
+  morning_star_bullish: "After a decline, a small middle body was followed by a meaningful bullish close through the first candle's midpoint.",
   rejection_lower: "A significant candle tested a local low, left a dominant lower wick, and closed back in its upper portion.",
   rejection_upper: "A significant candle tested a local high, left a dominant upper wick, and closed back in its lower portion.",
   shooting_star_bearish: "After a meaningful advance, a small body rejected a local high with a dominant upper wick and the following candle confirmed weakness.",
+  three_black_crows_bearish: "After an advance, three meaningful bearish candles opened inside the prior body and closed progressively lower.",
+  three_white_soldiers_bullish: "After a decline, three meaningful bullish candles opened inside the prior body and closed progressively higher.",
 };
 
 const PATTERN_PRIORITY: Readonly<Record<CandlePatternKind, number>> = {
   compression: 1,
+  doji: 1,
   expansion_bearish: 2,
   expansion_bullish: 2,
   engulfing_bearish: 3,
   engulfing_bullish: 3,
   rejection_lower: 4,
   rejection_upper: 4,
+  harami_bearish: 5,
+  harami_bullish: 5,
   hammer_bullish: 5,
   shooting_star_bearish: 5,
   compression_break_bearish: 5,
   compression_break_bullish: 5,
-  high_volume_exhaustion: 6,
+  high_volume_exhaustion: 7,
+  evening_star_bearish: 7,
+  morning_star_bullish: 7,
+  three_black_crows_bearish: 7,
+  three_white_soldiers_bullish: 7,
 };
 
 function body(candle: TradeCandle): number {
@@ -87,6 +108,22 @@ function isConfirmedCompression(
     compressed.volume <= medianVolume * 0.85;
 }
 
+function bodyLow(candle: TradeCandle): number {
+  return Math.min(candle.open, candle.close);
+}
+
+function bodyHigh(candle: TradeCandle): number {
+  return Math.max(candle.open, candle.close);
+}
+
+function bodyIsInside(inner: TradeCandle, outer: TradeCandle): boolean {
+  return bodyLow(inner) >= bodyLow(outer) && bodyHigh(inner) <= bodyHigh(outer);
+}
+
+function opensInsideBody(candle: TradeCandle, prior: TradeCandle): boolean {
+  return candle.open >= bodyLow(prior) && candle.open <= bodyHigh(prior);
+}
+
 function selectOnePatternPerCandle(candidates: readonly CandlePatternEvent[]): readonly CandlePatternEvent[] {
   const strongestByTime = new Map<number, CandlePatternEvent>();
   for (const candidate of candidates) {
@@ -116,6 +153,10 @@ export function detectMicroCapCandlePatterns(candles: readonly TradeCandle[]): r
     const medianVolume = median(lookback10.map((item) => item.volume));
     const positiveBodies = lookback10.map(body).filter((value) => value > 0);
     const bodyBaseline = Math.max(median(positiveBodies), medianRange * 0.15);
+
+    const isDoji = candleRange >= medianRange * 0.65 &&
+      candle.volume >= medianVolume * 0.6 && bodyShare <= 0.1;
+    if (isDoji) candidates.push({ kind: "doji", time: candle.time });
 
     const isExpansion = medianRange > 0 && medianVolume > 0 &&
       candleBody >= bodyBaseline * 1.8 && candleRange >= medianRange * 1.4 &&
@@ -151,6 +192,13 @@ export function detectMicroCapCandlePatterns(candles: readonly TradeCandle[]): r
     const recentDirectionalMove = recentThree.length >= 2
       ? previous.close - recentThree[0]!.open
       : 0;
+    const isHarami = previousBody >= bodyBaseline && candleBody >= bodyBaseline * 0.15 &&
+      candleBody <= previousBody * 0.6 && bodyIsInside(candle, previous);
+    if (isHarami && !previousBullish && bullish && recentDirectionalMove <= -medianRange) {
+      candidates.push({ kind: "harami_bullish", time: candle.time });
+    } else if (isHarami && previousBullish && !bullish && recentDirectionalMove >= medianRange) {
+      candidates.push({ kind: "harami_bearish", time: candle.time });
+    }
     const confirmedHammer = significantRejection && hasActiveConfirmation && testedLocalLow &&
       recentDirectionalMove <= -medianRange * 1.25 && bodyShare <= 0.35 &&
       lowerWick / candleRange >= 0.55 && upperWick / candleRange <= 0.2 &&
@@ -175,6 +223,43 @@ export function detectMicroCapCandlePatterns(candles: readonly TradeCandle[]): r
     }
 
     if (index >= 2) {
+      const first = candles[index - 2]!;
+      const middle = previous;
+      const firstBody = body(first);
+      const middleBody = body(middle);
+      const firstBullish = first.close > first.open;
+      const firstIsActive = active(first);
+      const middleSmall = firstIsActive && firstBody >= bodyBaseline && middleBody <= firstBody * 0.45;
+      const preFirstCandles = recentActive(candles, index - 2, 3);
+      const moveBeforeFirst = preFirstCandles.length >= 2
+        ? first.close - preFirstCandles[0]!.open
+        : 0;
+      const closesThroughFirstMidpoint = candle.close > (first.open + first.close) / 2;
+      const closesBelowFirstMidpoint = candle.close < (first.open + first.close) / 2;
+      if (middleSmall && !firstBullish && bullish &&
+          candleBody >= Math.max(firstBody * 0.55, bodyBaseline * 0.8) &&
+          moveBeforeFirst <= -medianRange && closesThroughFirstMidpoint) {
+        candidates.push({ kind: "morning_star_bullish", time: candle.time });
+      } else if (middleSmall && firstBullish && !bullish &&
+          candleBody >= Math.max(firstBody * 0.55, bodyBaseline * 0.8) &&
+          moveBeforeFirst >= medianRange && closesBelowFirstMidpoint) {
+        candidates.push({ kind: "evening_star_bearish", time: candle.time });
+      }
+
+      const threeStrongBodies = firstIsActive && [first, middle, candle].every((candidate) =>
+        body(candidate) >= bodyBaseline * 0.7 && body(candidate) / range(candidate) >= 0.55);
+      const progressiveBullishCloses = firstBullish && middle.close > middle.open && bullish &&
+        middle.close > first.close && candle.close > middle.close &&
+        opensInsideBody(middle, first) && opensInsideBody(candle, middle);
+      const progressiveBearishCloses = !firstBullish && middle.close < middle.open && !bullish &&
+        middle.close < first.close && candle.close < middle.close &&
+        opensInsideBody(middle, first) && opensInsideBody(candle, middle);
+      if (threeStrongBodies && progressiveBullishCloses && moveBeforeFirst <= -medianRange) {
+        candidates.push({ kind: "three_white_soldiers_bullish", time: candle.time });
+      } else if (threeStrongBodies && progressiveBearishCloses && moveBeforeFirst >= medianRange) {
+        candidates.push({ kind: "three_black_crows_bearish", time: candle.time });
+      }
+
       const compressed = candles[index - 1]!;
       const container = candles[index - 2]!;
       const baseline = recentActive(candles, index - 1, 6);

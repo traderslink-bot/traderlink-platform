@@ -44,6 +44,7 @@ import {
 import { FeatureHelpLink } from "../../feature-help-link";
 import { HorizontalScrollHint } from "../../horizontal-scroll-region";
 import { openTraderLinkAiChat } from "@/app/ai-chat-drawer-events";
+import { candlePatternName } from "@/src/lib/trade-candle-analysis/pattern-presentation";
 import {
   formatJournalAnalyticsDecimal,
   formatJournalAnalyticsMoney,
@@ -780,21 +781,8 @@ function relativeAnchorText(
 }
 
 function analyzerPatternName(kind: string): string {
-  const labels: Record<string, string> = {
-    compression: "compression",
-    compression_break_bearish: "a bearish compression break",
-    compression_break_bullish: "a bullish compression break",
-    engulfing_bearish: "a bearish engulfing shift",
-    engulfing_bullish: "a bullish engulfing shift",
-    expansion_bearish: "bearish expansion",
-    expansion_bullish: "bullish expansion",
-    hammer_bullish: "a confirmed Hammer",
-    high_volume_exhaustion: "possible high-volume exhaustion",
-    rejection_lower: "lower-wick rejection",
-    rejection_upper: "upper-wick rejection",
-    shooting_star_bearish: "a confirmed Shooting Star",
-  };
-  return labels[kind] ?? kind.replaceAll("_", " ");
+  const name = candlePatternName(kind);
+  return `${/^[AEIOU]/u.test(name) ? "an" : "a"} ${name}`;
 }
 
 type TradeAnalysisSection = Readonly<{

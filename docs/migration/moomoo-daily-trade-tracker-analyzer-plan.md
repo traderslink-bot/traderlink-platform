@@ -7,6 +7,9 @@
 **Long-term analytics:** [Daily Trade Analyzer Long-Term Analytics Plan](daily-trade-analyzer-long-term-analytics-plan.md)
 and [progress](daily-trade-analyzer-long-term-analytics-progress.md).
 
+**Pattern expansion:** [Micro-cap Candle Pattern Expansion Plan](microcap-candle-pattern-expansion-plan.md)
+and [progress](microcap-candle-pattern-expansion-progress.md).
+
 ## Purpose
 
 Restore the Daily Trade Tracker chart, replay and analysis with

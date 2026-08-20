@@ -14,6 +14,10 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { calculateIndicatorPoints } from "@/src/lib/trade-candle-analysis/indicator-context";
+import {
+  candlePatternName,
+  candlePatternShortName,
+} from "@/src/lib/trade-candle-analysis/pattern-presentation";
 
 import { TradeAnalyzerAnnotationPrimitive } from "./trade-analyzer-annotation-primitive";
 
@@ -221,47 +225,25 @@ const PATTERN_EXPLANATIONS: Readonly<Record<string, string>> = {
   compression: "Range and volume contracted materially inside the preceding candle.",
   compression_break_bearish: "Price closed decisively below a confirmed compressed range on increased activity.",
   compression_break_bullish: "Price closed decisively above a confirmed compressed range on increased activity.",
+  doji: "A meaningful-range candle closed with an exceptionally small body, showing temporary balance between buyers and sellers.",
   engulfing_bearish: "A meaningful bearish body fully engulfed the preceding bullish body.",
   engulfing_bullish: "A meaningful bullish body fully engulfed the preceding bearish body.",
+  evening_star_bearish: "After an advance, a small middle body was followed by a meaningful bearish close through the first candle's midpoint.",
   expansion_bearish: "The candle's range and body expanded materially and closed near its low.",
   expansion_bullish: "The candle's range and body expanded materially and closed near its high.",
   hammer_bullish: "After a meaningful decline, a dominant lower wick rejected a local low and the next candle confirmed recovery.",
+  harami_bearish: "After an advance, a smaller bearish body formed inside the preceding meaningful bullish body.",
+  harami_bullish: "After a decline, a smaller bullish body formed inside the preceding meaningful bearish body.",
   high_volume_exhaustion: "An extended move stalled at a local extreme on exceptional volume, then the following candle confirmed the failure.",
+  morning_star_bullish: "After a decline, a small middle body was followed by a meaningful bullish close through the first candle's midpoint.",
   rejection_lower: "Price tested a local low, left a dominant lower wick, and closed back in the candle's upper portion.",
   rejection_upper: "Price tested a local high, left a dominant upper wick, and closed back in the candle's lower portion.",
   shooting_star_bearish: "After a meaningful advance, a dominant upper wick rejected a local high and the next candle confirmed weakness.",
+  three_black_crows_bearish: "After an advance, three meaningful bearish candles opened inside the prior body and closed progressively lower.",
+  three_white_soldiers_bullish: "After a decline, three meaningful bullish candles opened inside the prior body and closed progressively higher.",
 };
-const PATTERN_FULL_NAMES: Readonly<Record<string, string>> = {
-  compression: "Compression",
-  compression_break_bearish: "Bearish compression break",
-  compression_break_bullish: "Bullish compression break",
-  engulfing_bearish: "Bearish engulfing shift",
-  engulfing_bullish: "Bullish engulfing shift",
-  expansion_bearish: "Bearish expansion",
-  expansion_bullish: "Bullish expansion",
-  hammer_bullish: "Confirmed Hammer",
-  high_volume_exhaustion: "Possible high-volume exhaustion",
-  rejection_lower: "Lower-wick rejection",
-  rejection_upper: "Upper-wick rejection",
-  shooting_star_bearish: "Confirmed Shooting Star",
-};
-
 function patternLabel(kind: string): string {
-  const labels: Readonly<Record<string, string>> = {
-    compression: "Compress",
-    compression_break_bearish: "Bear Break",
-    compression_break_bullish: "Bull Break",
-    engulfing_bearish: "Bear Engulf",
-    engulfing_bullish: "Bull Engulf",
-    expansion_bearish: "Bear Exp",
-    expansion_bullish: "Bull Exp",
-    hammer_bullish: "Hammer",
-    high_volume_exhaustion: "Poss Exhaust",
-    rejection_lower: "Low Reject",
-    rejection_upper: "Upper Reject",
-    shooting_star_bearish: "Shoot Star",
-  };
-  return labels[kind] ?? kind.replaceAll("_", " ");
+  return candlePatternShortName(kind);
 }
 
 function patternColor(kind: string): string {
@@ -269,15 +251,22 @@ function patternColor(kind: string): string {
     compression: "#455a64",
     compression_break_bearish: "#d84315",
     compression_break_bullish: "#0277bd",
+    doji: "#546e7a",
     engulfing_bearish: "#ad1457",
     engulfing_bullish: "#00897b",
+    evening_star_bearish: "#8e24aa",
     expansion_bearish: "#c62828",
     expansion_bullish: "#2e7d32",
     hammer_bullish: "#1565c0",
+    harami_bearish: "#c62828",
+    harami_bullish: "#00897b",
     high_volume_exhaustion: "#7b1fa2",
+    morning_star_bullish: "#1565c0",
     rejection_lower: "#6a1b9a",
     rejection_upper: "#ef6c00",
     shooting_star_bearish: "#c62828",
+    three_black_crows_bearish: "#b71c1c",
+    three_white_soldiers_bullish: "#1b5e20",
   };
   return colors[kind] ?? "#455a64";
 }
@@ -542,7 +531,7 @@ export function DailyTradeAnalyzerChart({
         event: null,
         priceAction: {
           explanation: PATTERN_EXPLANATIONS[model.kind] ?? "Observed price action at this candle.",
-          title: PATTERN_FULL_NAMES[model.kind] ?? patternLabel(model.kind),
+          title: candlePatternName(model.kind),
         },
         rules: [],
       });
@@ -803,7 +792,7 @@ export function DailyTradeAnalyzerChart({
               <Stack direction="row" key={kind} spacing={0.45} sx={{ alignItems: "center" }}>
                 <Box sx={{ bgcolor: patternColor(kind), borderRadius: "50%", height: 8, width: 8 }} />
                 <Typography sx={{ fontSize: "0.66rem", fontWeight: 750, whiteSpace: "nowrap" }}>
-                  {PATTERN_FULL_NAMES[kind] ?? patternLabel(kind)}
+                  {candlePatternName(kind)}
                 </Typography>
               </Stack>
             ))}
@@ -860,7 +849,7 @@ export function DailyTradeAnalyzerChart({
                   <Stack direction="row" key={kind} spacing={0.65} sx={{ alignItems: "center" }}>
                     <Box sx={{ bgcolor: patternColor(kind), borderRadius: "50%", height: 9, width: 9 }} />
                     <Typography sx={{ fontSize: 12, fontWeight: 750 }}>
-                      {PATTERN_FULL_NAMES[kind] ?? patternLabel(kind)}
+                      {candlePatternName(kind)}
                     </Typography>
                   </Stack>
                 ))}
