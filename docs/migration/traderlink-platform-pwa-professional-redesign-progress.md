@@ -322,7 +322,9 @@ condensed rail state is offered.
   and explicit-file diff checks pass with a 512 MB Node ceiling. No Vitest,
   broad TypeScript run, server, browser, build, provider, hosted mutation or
   deployment ran.
-- [ ] Preserve the Swing Tracker saved-view slice in a narrow local commit.
+- [x] Preserve the Swing Tracker saved-view slice in narrow local commit
+  `a1265506` without staging the concurrent AI Chat, Daily Tracker, Analytics,
+  Calendar, Rules, notification, shell or other dashboard work.
 - [ ] Add the Journal-owned Daily Tracker saved-view model and renderer,
   preserving saved empty-day notes/reviews and disabling every
   server-authoritative mutation except the accepted offline execution outbox.
