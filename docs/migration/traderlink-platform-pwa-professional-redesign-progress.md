@@ -455,6 +455,21 @@ the browser provides it. Focused 512 MB ESLint, a temporary PWA-only TypeScript
 configuration and `git diff --check` pass. No Vitest, broad suite, server,
 browser, IndexedDB mutation, Journal write, provider call or deployment ran.
 
+### PWA-R5 installed-app acceptance preflight
+
+The canonical loopback port was free while the protected press-release runner
+remained live. A worker-disabled Webpack development server started with a
+768 MB Node heap and returned `/manifest.webmanifest` with HTTP 200 in 2.8
+seconds. The authenticated `/workspace` request then failed closed with
+`TRADERLINK_PLATFORM_MIGRATIONS_PENDING`: the shared source requires 67
+migrations while the protected database has 66. Migration 0067 belongs to the
+concurrent Links AI Chat task, so this PWA checkpoint did not apply or bypass
+it. The exact PWA review server was stopped and port 3010 was confirmed free.
+No production build, browser interaction, IndexedDB mutation, Journal write,
+database migration, provider call, Push change, deployment or protected
+press-release process change occurred. Final installed-app acceptance resumes
+only after the concurrent migration owner completes that database boundary.
+
 ## Current exact resume point
 
 PWA-R1 is preserved at local commit `30954abf`; PWA-R2 source is preserved at
