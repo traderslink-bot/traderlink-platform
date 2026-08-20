@@ -2,15 +2,22 @@
 
 ## Status
 
+The expanded professional-agent acceptance target is now designed in the
+[Links AI Chat Professional Agent Remediation Plan](ai-chat-professional-agent-remediation-plan.md)
+and tracked in its
+[progress record](ai-chat-professional-agent-remediation-progress.md). That
+plan is owner approved; remediation implementation is beginning with the
+concurrent-file audit and explicit implementation allowlist.
+
 The current-plan technical implementation and local acceptance are complete.
 Production provider enablement, final caps and launch operations remain owner
 launch decisions. The parent plan is [TraderLink AI Companion Plan](ai-chat-plan.md).
 The complete current-product target is the
-[AI Chat Current Dashboard Capability Matrix](ai-chat-current-dashboard-capability-matrix.md).
+[Links AI Chat Current Dashboard Capability Matrix](ai-chat-current-dashboard-capability-matrix.md).
 The completed whole-feature audit is recorded in the
-[AI Chat Complete QA Report](ai-chat-complete-qa-report.md).
+[Links AI Chat Complete QA Report](ai-chat-complete-qa-report.md).
 The private persistence API checkpoint is tracked in
-[AI Chat Persistence API Progress](ai-chat-api-progress.md).
+[Links AI Chat Persistence API Progress](ai-chat-api-progress.md).
 
 ## Accepted existing foundation
 
@@ -20,7 +27,7 @@ The private persistence API checkpoint is tracked in
   generation-cost tracking for review work.
 - Current Focuses carry dated revisions for later review context.
 - The complete language/query contract is finalized in the
-  [AI Chatbot Complete Language Plan](traderslink_ai_chatbot_complete_language_plan.md).
+  [Links AI Chatbot Complete Language Plan](traderslink_ai_chatbot_complete_language_plan.md).
 - The category-by-category language delivery program is governed by the
   [AI Language Inventory Master](traderslink_ai_language_inventory_master.md)
   and its [required category template](category_completion_template_example.md).
@@ -31,9 +38,13 @@ The private persistence API checkpoint is tracked in
 
 ## Planned work
 
+- [ ] Complete the owner-approved professional-agent remediation covering exact
+  server-authored factual claims, durable conversation state, professional
+  availability/failure UX, evaluated complex orchestration, current inventory
+  reconciliation, and accepted new deterministic data/action tools.
 - [x] Complete and link the AI Companion product plan and language/query plan.
 - [x] Approve the complete integrated AI Companion direction for implementation.
-- [x] Add the schema-only, account-scoped AI Chat foundation migration.
+- [x] Add the schema-only, account-scoped Links AI Chat foundation migration.
 - [x] Implement and verify the AI Reviews schedule/list/detail foundation.
 - [x] Implement account-scoped Chat persistence, ordered-message history,
   immutable factual snapshots, and generation-receipt contracts over migration
@@ -45,7 +56,7 @@ The private persistence API checkpoint is tracked in
 - [x] Replace the transitional four-tool Vercel AI SDK Chat loop with the
   official OpenAI Agents SDK/Responses orchestration layer while preserving all
   existing TraderLink persistence, cost, scope and confirmation authorities.
-- [x] Implement the first supportable private AI Chat question families through
+- [x] Implement the first supportable private Links AI Chat question families through
   a machine-readable capability registry and eight deterministic factual
   tools.
 - [x] Replace navigation-away Chat as the primary experience with the shared
@@ -104,7 +115,7 @@ The private persistence API checkpoint is tracked in
 - [ ] Implement production entitlement, scheduled-delivery, operational, and
   privacy-deletion decisions at their separate launch boundaries.
 
-## Completed foundation: Agents SDK and global AI Chat companion
+## Completed foundation: Agents SDK and global Links AI Chat companion
 
 ### 2026-08-18 Trade Explorer capability reconciliation
 
@@ -131,7 +142,7 @@ The private persistence API checkpoint is tracked in
   the Trade Explorer editor retains one explicit atomic Save, stale-state
   rejection and read-only preset results. Existing tag proposals still require
   their exact before/after confirmation card.
-- The maintained AI Chat Help guide and current-dashboard capability matrix now
+- The maintained Links AI Chat Help guide and current-dashboard capability matrix now
   describe this boundary. Advanced comparison studies remain unavailable.
 - Repository instructions prohibited Vitest and other test-runner execution
   for this slice. Verification used targeted lint, no-emit TypeScript and
@@ -206,7 +217,7 @@ The private persistence API checkpoint is tracked in
   no-emit TypeScript check also passed. The final diff and browser results are
   recorded in the complete QA report and runtime progress record.
 - Controlled no-worker browser acceptance passed on `/workspace` and
-  `/ai-chat`. On desktop and a 390 by 844 mobile viewport, AI Chat opened from
+  `/ai-chat`. On desktop and a 390 by 844 mobile viewport, Links AI Chat opened from
   navigation without changing `/workspace`, exposed a visible close action,
   closed without trapping the trader, and reported no browser console errors.
   The direct page loaded the same saved-conversation surface.
@@ -219,7 +230,7 @@ The private persistence API checkpoint is tracked in
 ### 2026-08-15 checkpoint
 
 - The owner set the target as a best-in-market trading-journal companion and
-  approved continuing the complete AI Chat program without narrowing the
+  approved continuing the complete Links AI Chat program without narrowing the
   language or product plan.
 - The current protected foundation is reusable: migrations `0029`-`0031`,
   account-scoped conversations/messages/snapshots, cost reservations and
@@ -261,15 +272,15 @@ The private persistence API checkpoint is tracked in
   custom dates, or one ticker before asking. The server intersects or replaces
   tool filters with that selection and applies it to trade details as well as
   summaries, so the model cannot silently broaden the chosen population.
-- The maintained Help Center now includes AI Chat getting-started, scope,
+- The maintained Help Center now includes Links AI Chat getting-started, scope,
   manual-entry, answer-boundary, and privacy guidance. Chat product-help
   answers search the same registry rather than relying on model memory.
 - The current working tree contains unrelated active changes in shared shell,
   layout and Daily Tracker files. Drawer integration must preserve those edits
-  and stage only an explicit AI Chat allowlist at a coherent checkpoint.
+  and stage only an explicit Links AI Chat allowlist at a coherent checkpoint.
 - Focused lint and the full no-emit TypeScript check passed after the Agents SDK,
   deterministic tools, selected-scope, saved-review and Help integrations. Six
-  focused AI Chat suites passed with one worker: 46 persistence, route, factual
+  focused Links AI Chat suites passed with one worker: 46 persistence, route, factual
   scope, trade-detail, generation-budget and language-registry tests.
 - Controlled no-worker browser verification passed on 2026-08-15. The direct
   `/ai-chat` surface, maintained Help Center guides, global drawer, saved-review
@@ -344,7 +355,7 @@ The private persistence API checkpoint is tracked in
 
 ### Completed: first confirmed product actions
 
-- AI Chat can now prepare three expiring product changes: reporting currency,
+- Links AI Chat can now prepare three expiring product changes: reporting currency,
   marking one exact notification read, and switching to one existing Journal
   account. Each proposal is built from the current account-scoped value or
   target and shown as a plain before/after confirmation card.
@@ -438,7 +449,7 @@ The private persistence API checkpoint is tracked in
 - Focused ESLint, the full no-emit TypeScript check and two one-worker test files
   pass. Nine tests cover the read boundary, no-write preview, confirmed
   replacement and selected-account isolation. This action reused the accepted
-  AI Chat action registry; it required no migration or protected-database
+  Links AI Chat action registry; it required no migration or protected-database
   change and performed no provider request, push or deployment.
 
 ### Completed: confirmed Trading Rule changes
@@ -557,7 +568,7 @@ The private persistence API checkpoint is tracked in
   `389e481a012ff6fb4cd6a3052c6209886662b711964871a33a036349140ac43c`.
   Quick check, full integrity check and foreign-key verification pass. Journal
   facts remain exactly 1,172 execution versions and 372 round trips, and the
-  expanded AI Chat action-draft table remains empty.
+  expanded Links AI Chat action-draft table remains empty.
 - The post-apply checkpoint
   `ai-chat-actions-0056-0057-post-20260816T004914Z` created an online backup and
   independent restore that are byte-identical at SHA-256
@@ -605,7 +616,7 @@ The private persistence API checkpoint is tracked in
   automatic-review opt-out remains distinct from owner enablement/entitlement
   and will be added only through an explicit durable preference contract.
 
-## Completed: schema-only AI Chat foundation
+## Completed: schema-only Links AI Chat foundation
 
 - Migration `0029_coach_ai_chat_foundation` adds the seven planned private,
   account-scoped records for conversations, ordered messages, factual answer
@@ -687,12 +698,12 @@ The private persistence API checkpoint is tracked in
 - [x] Added focused route coverage for validation, pagination, archive/restore,
   scope denial, and privacy-safe errors.
 - [x] Recorded the API boundary in
-  [AI Chat Persistence API Progress](ai-chat-api-progress.md).
+  [Links AI Chat Persistence API Progress](ai-chat-api-progress.md).
 
 ## Completed: saved-question generation orchestration
 
 The server-only saved-question runtime is recorded in
-[AI Chat Runtime Progress](ai-chat-runtime-progress.md). It adds no route or
+[Links AI Chat Runtime Progress](ai-chat-runtime-progress.md). It adds no route or
 visible surface, does not call a provider during tests, and retains the
 existing migration, Journal, and account boundaries.
 
@@ -726,7 +737,7 @@ existing migration, Journal, and account boundaries.
 
 ## Completed: trusted Daily Trade Tracker companion context
 
-- The Daily Trade Tracker now opens AI Chat with an explicit trading-date and
+- The Daily Trade Tracker now opens Links AI Chat with an explicit trading-date and
   currency selector. The browser never supplies Journal facts: the message
   route resolves the selected day from the current user, workspace and Journal
   account before generation.
@@ -845,7 +856,9 @@ existing migration, Journal, and account boundaries.
   account-selection, preview-integrity, duplicate reconciliation and Data
   Decisions behavior. The AI never calls the Journal command. The committed
   draft retains the canonical import-batch reference, while the Journal source
-  label records `AI Chat manual executions` without changing execution facts.
+  historical provenance label records `AI Chat manual executions` without
+  changing execution facts. That exact stored technical value remains unchanged
+  by the visible **Links AI Chat** naming decision.
 - Stable request identifiers make generation and Journal commit retries
   idempotent. A concurrent follow-up archives every older active draft inside
   the final persistence transaction so one conversation retains one current

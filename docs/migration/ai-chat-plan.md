@@ -1,5 +1,14 @@
 # TraderLink AI Companion Plan
 
+The owner-directed professional-agent quality and capability expansion is
+controlled by the
+[Links AI Chat Professional Agent Remediation Plan](ai-chat-professional-agent-remediation-plan.md)
+and its
+[progress record](ai-chat-professional-agent-remediation-progress.md). That
+plan and its first-impression/relationship-memory design are owner approved;
+implementation follows its exact grounding, conversation-state, availability,
+deterministic-data, evaluation, and visible experience contracts.
+
 The owner-approved implementation of Trade Explorer comparison reads and saved
 deterministic Rule-idea evidence is controlled by the [Trade Explorer
 Comparison And Rule Ideas Plan](trade-explorer-comparison-and-rule-ideas-plan.md).
@@ -8,14 +17,14 @@ Comparison And Rule Ideas Plan](trade-explorer-comparison-and-rule-ideas-plan.md
 
 **Current-plan technical implementation complete; production activation remains
 an owner launch boundary.** This is the main, end-state plan for the TraderLink
-AI Companion: AI Chat, the Daily Trade Tracker companion, saved weekly and
+AI Companion: Links AI Chat, the Daily Trade Tracker companion, saved weekly and
 monthly reviews, conversational manual execution entry, account settings, and
 Journal Administration controls. The owner accepted the integrated direction
 and delegated technical sequencing on 2026-08-05. Each remaining release,
 provider-enable, entitlement and irreversible Journal action still follows its
 own protected boundary.
 
-On 2026-08-15 the owner expanded the quality target: AI Chat must be built as a
+On 2026-08-15 the owner expanded the quality target: Links AI Chat must be built as a
 best-in-market trading-journal companion, not as a narrow demonstration. The
 complete locked language inventory, truthful factual coverage, conversational
 continuity, useful Journal actions, responsive global drawer and evaluation
@@ -36,7 +45,7 @@ coordinates that work with the broader AI product; it does not revive the V3
 Coach or depend on a V3 route, database, analytics engine, or prompt.
 
 The complete natural-language interpretation, deterministic-query and response
-contract is maintained separately in the [AI Chatbot Complete Language
+contract is maintained separately in the [Links AI Chatbot Complete Language
 Plan](traderslink_ai_chatbot_complete_language_plan.md). The two plans are
 jointly controlling: this document governs product behavior and protected
 actions; the language plan governs what Chat understands, validates and can
@@ -44,11 +53,11 @@ truthfully answer.
 
 Implementation status is tracked in [AI Companion Progress](ai-chat-progress.md),
 and the completed whole-feature audit is recorded in the
-[AI Chat Complete QA Report](ai-chat-complete-qa-report.md). The 2026-08-16
+[Links AI Chat Complete QA Report](ai-chat-complete-qa-report.md). The 2026-08-16
 cache-accounting and responsive-drawer corrections are recorded in the
-[AI Chat QA Findings Remediation](ai-chat-qa-findings-remediation-progress.md).
+[Links AI Chat QA Findings Remediation](ai-chat-qa-findings-remediation-progress.md).
 
-The [AI Chat Current Dashboard Capability Matrix](ai-chat-current-dashboard-capability-matrix.md)
+The [Links AI Chat Current Dashboard Capability Matrix](ai-chat-current-dashboard-capability-matrix.md)
 is the controlling implementation inventory. It was rebuilt on 2026-08-15 from
 the current navigation, dashboard routes, Help Center, deterministic read
 services and canonical command routes because several product features were
@@ -77,7 +86,7 @@ The complete product has four connected experiences:
 | Experience | Where it appears | Purpose |
 | --- | --- | --- |
 | Daily Review Companion | Daily Trade Tracker | Helps the trader turn the day's facts and their own observations into a completed review. |
-| AI Chat | Global dashboard drawer, with `/ai-chat` as a direct-link fallback | Lets the trader ask questions, examine their record, and enter a draft of manual executions without leaving their current dashboard page. |
+| Links AI Chat | Global dashboard drawer, with `/ai-chat` as a direct-link fallback | Lets the trader ask questions, examine their record, and enter a draft of manual executions without leaving their current dashboard page. |
 | AI Reviews | `/ai-reviews` | Delivers and saves scheduled weekly and calendar-month reviews. |
 | AI controls | Account Settings and Journal Administration | Lets the trader choose a review schedule and lets the owner manage availability, models, spending, and delivery health. |
 
@@ -175,7 +184,7 @@ without taking ownership of it.
 
 ## Conversational manual execution entry
 
-AI Chat must let a trader enter manual executions naturally while retaining the
+Links AI Chat must let a trader enter manual executions naturally while retaining the
 same financial safeguards as every other entry surface.
 
 ### Natural trade-entry recognition and confirmation
@@ -210,7 +219,7 @@ same financial safeguards as every other entry surface.
 4. Only an explicit final **Save executions** action invokes the existing
    canonical Journal commit command. The resulting facts are indistinguishable
    from manual facts entered in Quick Trade Entry or a tracker, except for
-   truthful entry provenance showing that the trader used AI Chat to prepare
+   truthful entry provenance showing that the trader used Links AI Chat to prepare
    the draft.
 5. The chat displays the saved result and offers the appropriate next step:
    Daily Trade Tracker for a one-day review, Swing Trade Tracker for an
@@ -232,11 +241,11 @@ same financial safeguards as every other entry surface.
   reconciliation workflow asks the trader to decide rather than silently
   deleting the manual record or admitting a duplicate.
 
-## AI Chat experience
+## Links AI Chat experience
 
 ### Route and layout
 
-- **AI Chat** in dashboard navigation opens a persistent, closable companion;
+- **Links AI Chat** in dashboard navigation opens a persistent, closable companion;
   it does not navigate the trader away from the page they are using.
 - Desktop uses a right overlay drawer with enough room for conversation history
   and the active thread, bounded by the viewport. It contains a compact header,
@@ -312,7 +321,7 @@ analysis.
 
 Weekly and calendar-month reviews are not chat transcripts. They are saved,
 dated coaching records generated from an immutable input package after the
-selected review schedule. AI Chat can start a follow-up conversation from a
+selected review schedule. Links AI Chat can start a follow-up conversation from a
 saved review, but it must identify the review as prior context rather than new
 proof.
 
@@ -430,10 +439,10 @@ through bounded snapshots.
 - Weekly delivery day (Friday, Saturday, or Sunday) and Eastern delivery time.
 - Clear history/status for saved reviews and any current availability state.
 - Future entitlement/allowance display in plain language. Pricing, subscription,
-  and credit-pack design are product decisions before public launch; AI Chat
+  and credit-pack design are product decisions before public launch; Links AI Chat
   and automatic reviews should be gated by entitlement rather than made
   unbounded by default.
-- AI Chat may prepare an allowlisted Account Settings change, such as a weekly
+- Links AI Chat may prepare an allowlisted Account Settings change, such as a weekly
   review delivery day/time, as a visible proposed change. The trader confirms
   it and the normal Account Settings command saves it; Chat never changes any
   setting invisibly or changes login, billing, ownership, privacy, or admin
@@ -495,7 +504,7 @@ once. The following sequence controls safe delivery:
    controls, and immutable snapshots.
 2. **AI Reviews completion:** saved review list/detail, scheduler, weekly and
    monthly issuance, account settings, and owner controls.
-3. **AI Chat core:** private conversations, factual question families, saved
+3. **Links AI Chat core:** private conversations, factual question families, saved
    answers, review follow-up, and responsive UI.
 4. **Daily companion:** tracker entry point, factual reflection support,
    editable AI drafts for notes/focuses, and review-completion guardrails.
@@ -572,7 +581,7 @@ manual-entry draft, daily companion prompt, or scheduled review is never
 considered complete merely because it renders: it must preserve factual
 boundaries, trader control, privacy, and truthful availability.
 
-For AI Chat specifically, completion also requires every row in the current
+For Links AI Chat specifically, completion also requires every row in the current
 dashboard capability matrix to reach its planned Read, Draft, Confirm or
 deliberately Unavailable state; its representative agent evaluations and live
 provider checks must pass; and the language registry, Help Center and visible
