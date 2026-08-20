@@ -1,11 +1,21 @@
 # TraderLink Platform PWA Progress
 
-**Status:** PWA 0-4 owner-approved; migration 0064 verified locally; local browser acceptance passed except for real installed-app offline relaunch and Web Push delivery
+**Status:** PWA 0-4 functional foundation preserved; the owner rejected the
+visible offline shell on 2026-08-20, so product acceptance now follows the
+[Professional Redesign Plan](traderlink-platform-pwa-professional-redesign-plan.md)
 
 **Started:** 2026-08-18
 
 **Controlling plan:**
 [TraderLink Platform PWA Plan](traderlink-platform-pwa-plan.md)
+
+**Professional redesign:**
+[TraderLink Platform PWA Professional Redesign Progress](traderlink-platform-pwa-professional-redesign-progress.md)
+
+Earlier visual-approval statements below are historical. They do not approve
+the current standalone offline renderer, generic projection cards, simplified
+navigation or detached tracker form. The icon, functional boundary, data-safety
+contract and Push-settings decisions remain preserved.
 
 ## Repository boundary
 

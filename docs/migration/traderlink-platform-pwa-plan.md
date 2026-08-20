@@ -1,6 +1,8 @@
 # TraderLink Platform PWA Plan
 
-**Status:** Owner approved; implementation authorized
+**Status:** Original functional contract preserved; the visible offline PWA was
+owner-rejected on 2026-08-20 and is superseded for presentation/acceptance by
+the [Professional Redesign Plan](traderlink-platform-pwa-professional-redesign-plan.md)
 
 **Approved:** 2026-08-18
 
@@ -12,6 +14,15 @@
 
 **Implementation progress:**
 [TraderLink Platform PWA Progress](traderlink-platform-pwa-progress.md)
+
+**Professional redesign:**
+[TraderLink Platform PWA Professional Redesign Plan](traderlink-platform-pwa-professional-redesign-plan.md)
+with its [progress record](traderlink-platform-pwa-professional-redesign-progress.md)
+
+The icon, install, offline-outbox, duplicate-protection, Web Push, privacy and
+complete-product decisions in this document remain approved. The separate
+static offline shell, text-projection cards, simplified navigation and detached
+tracker form are not accepted product UI and must not pass PWA acceptance.
 
 ## 1. Outcome
 

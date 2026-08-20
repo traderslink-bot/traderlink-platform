@@ -4,8 +4,6 @@ import AnalyticsRoundedIcon from "@mui/icons-material/AnalyticsRounded";
 import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import CandlestickChartIcon from "@mui/icons-material/CandlestickChart";
-import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
-import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
 import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
@@ -17,6 +15,7 @@ import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
 import GavelRoundedIcon from "@mui/icons-material/GavelRounded";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
+import MenuOpenRoundedIcon from "@mui/icons-material/MenuOpenRounded";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import NoteAltRoundedIcon from "@mui/icons-material/NoteAltRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
@@ -72,6 +71,7 @@ import type { CoachAiDailyCompanionContextSelector } from "@/src/modules/coach/c
 
 const expandedWidth = 272;
 const collapsedWidth = 76;
+const desktopNavigationPreferenceKey = "traderlink:dashboard-navigation-collapsed";
 
 function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
   const icons: Record<DashboardNavigationIconKey, ReactNode> = {
@@ -211,6 +211,17 @@ export function DashboardShell({
 
   const desktopWidth = collapsed ? collapsedWidth : expandedWidth;
   const closeMobile = () => setMobileOpen(false);
+  const setDesktopNavigationCollapsed = (nextCollapsed: boolean) => {
+    setCollapsed(nextCollapsed);
+    try {
+      window.localStorage.setItem(
+        desktopNavigationPreferenceKey,
+        nextCollapsed ? "true" : "false",
+      );
+    } catch {
+      // The navigation still works when device storage is unavailable.
+    }
+  };
   const openAiChat = () => {
     closeMobile();
     setAiChatContext(null);
@@ -218,6 +229,22 @@ export function DashboardShell({
     setAiChatContextRequestId((current) => current + 1);
     setAiChatOpen(true);
   };
+
+  useEffect(() => {
+    let restoreFrame: number | undefined;
+    try {
+      if (window.localStorage.getItem(desktopNavigationPreferenceKey) === "true") {
+        restoreFrame = window.requestAnimationFrame(() => setCollapsed(true));
+      }
+    } catch {
+      // Keep the default expanded state when device storage is unavailable.
+    }
+    return () => {
+      if (restoreFrame !== undefined) {
+        window.cancelAnimationFrame(restoreFrame);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const openFromDashboard = (event: Event) => {
@@ -236,57 +263,55 @@ export function DashboardShell({
     const compact = mobile ? false : collapsed;
     return (
       <Stack sx={{ height: "100%" }}>
-        <Toolbar
-          disableGutters
-          sx={{
-            minHeight: 72,
-            px: compact ? 1.5 : 2,
-            justifyContent: compact ? "center" : "space-between",
-          }}
-        >
-          <Link
-            aria-label="TradersLink workspace"
-            href="/workspace"
-            onClick={closeMobile}
-          >
-            <Image
-              alt="TradersLink"
-              height={compact ? 44 : 35}
-              priority
-              src={compact ? "/icon.png" : "/logo-horizontal-main.png"}
-              style={{
-                display: "block",
-                height: compact ? 44 : 35,
-                objectFit: "contain",
-                width: compact ? 44 : 170,
+        {mobile ? (
+          <>
+            <Toolbar
+              disableGutters
+              sx={{
+                justifyContent: "space-between",
+                minHeight: 72,
+                px: 2,
               }}
-              width={compact ? 44 : 170}
-            />
-          </Link>
-          {mobile ? (
-            <Tooltip title="Close navigation">
-              <IconButton
-                aria-label="Close navigation"
+            >
+              <Link
+                aria-label="TradersLink workspace"
+                href="/workspace"
                 onClick={closeMobile}
-                sx={{ minHeight: 44, minWidth: 44 }}
               >
-                <CloseRoundedIcon />
-              </IconButton>
-            </Tooltip>
-          ) : compact ? null : (
-            <Tooltip title="Collapse navigation">
-              <IconButton
-                aria-label="Collapse navigation"
-                onClick={() => setCollapsed(true)}
-                size="small"
-              >
-                <ChevronLeftRoundedIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Toolbar>
-        <Divider />
-        <Box component="nav" sx={{ flexGrow: 1, overflowY: "auto", py: 1.25 }}>
+                <Image
+                  alt="TradersLink"
+                  height={35}
+                  priority
+                  src="/logo-horizontal-main.png"
+                  style={{
+                    display: "block",
+                    height: 35,
+                    objectFit: "contain",
+                    width: "auto",
+                  }}
+                  width={170}
+                />
+              </Link>
+              <Tooltip title="Close navigation">
+                <IconButton
+                  aria-label="Close navigation"
+                  onClick={closeMobile}
+                  sx={{ minHeight: 44, minWidth: 44 }}
+                >
+                  <CloseRoundedIcon />
+                </IconButton>
+              </Tooltip>
+            </Toolbar>
+            <Divider />
+          </>
+        ) : null}
+        <Box
+          component="nav"
+          id={
+            mobile ? "dashboard-mobile-navigation" : "dashboard-desktop-navigation"
+          }
+          sx={{ flexGrow: 1, overflowY: "auto", py: 1.25 }}
+        >
           <List disablePadding>
             <NavigationLink
               collapsed={compact}
@@ -295,11 +320,14 @@ export function DashboardShell({
               onOpenAiChat={openAiChat}
               pathname={pathname}
             />
-            {DASHBOARD_MAIN_NAVIGATION_GROUPS.map((group) => {
+            {DASHBOARD_MAIN_NAVIGATION_GROUPS.map((group, groupIndex) => {
               const open = expandedGroups[group.id] || group.items.some((item) =>
                 isActive(pathname, item.href));
               return (
                 <Box key={group.id}>
+                  {compact && groupIndex > 0 ? (
+                    <Divider sx={{ mx: 2, my: 0.75 }} />
+                  ) : null}
                   {compact ? null : (
                     <ListItemButton
                       aria-expanded={open}
@@ -359,19 +387,7 @@ export function DashboardShell({
             ))}
           </List>
         </Box>
-        {compact ? (
-          <Box sx={{ p: 1.25 }}>
-            <Tooltip arrow placement="right" title="Expand navigation">
-              <IconButton
-                aria-label="Expand navigation"
-                onClick={() => setCollapsed(false)}
-                sx={{ width: "100%" }}
-              >
-                <ChevronRightRoundedIcon />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        ) : (
+        {compact ? null : (
           <Box sx={{ px: 2, py: 1.5 }}>
             <Typography color="text.secondary" variant="caption">
               Trade Tracker
@@ -384,6 +400,121 @@ export function DashboardShell({
 
   return (
     <Box sx={{ bgcolor: "background.default", minHeight: "100vh" }}>
+      <Box
+        component="header"
+        sx={{
+          bgcolor: "background.paper",
+          borderBottom: 1,
+          borderColor: "divider",
+          left: 0,
+          position: "fixed",
+          right: 0,
+          top: 0,
+          zIndex: (theme) => theme.zIndex.appBar,
+        }}
+      >
+        <Toolbar
+          sx={{
+            gap: { xs: 0.5, sm: 1.5 },
+            minHeight: {
+              xs: "calc(64px + env(safe-area-inset-top))",
+              sm: 64,
+            },
+            pt: { xs: "env(safe-area-inset-top)", sm: 0 },
+            px: { xs: 1.5, sm: 2.5 },
+            "& .MuiIconButton-root": {
+              flexShrink: 0,
+              minHeight: 44,
+              minWidth: 44,
+            },
+            "& .MuiInputBase-root": { minHeight: 44 },
+          }}
+        >
+          <IconButton
+            aria-label="Open navigation"
+            onClick={() => setMobileOpen(true)}
+            sx={{ display: { lg: "none" } }}
+          >
+            <MenuRoundedIcon />
+          </IconButton>
+          <Tooltip title="Toggle sidebar">
+            <IconButton
+              aria-controls="dashboard-desktop-navigation"
+              aria-expanded={!collapsed}
+              aria-label="Toggle sidebar"
+              onClick={() => setDesktopNavigationCollapsed(!collapsed)}
+              sx={{ display: { xs: "none", lg: "inline-flex" } }}
+            >
+              {collapsed ? <MenuRoundedIcon /> : <MenuOpenRoundedIcon />}
+            </IconButton>
+          </Tooltip>
+          <Box sx={{ display: { xs: "none", lg: "block" }, flexShrink: 0 }}>
+            <Link aria-label="TradersLink workspace" href="/workspace">
+              <Image
+                alt="TradersLink"
+                height={35}
+                priority
+                src="/logo-horizontal-main.png"
+                style={{
+                  display: "block",
+                  height: 35,
+                  objectFit: "contain",
+                  width: "auto",
+                }}
+                width={170}
+              />
+            </Link>
+          </Box>
+          <Box sx={{ flexGrow: 1 }} />
+          <Button
+            aria-controls={aiChatOpen ? "ai-chat-drawer" : undefined}
+            aria-expanded={aiChatOpen}
+            aria-haspopup="dialog"
+            aria-label="Open AI Chat"
+            onClick={openAiChat}
+            startIcon={(
+              <Box
+                component="span"
+                sx={{
+                  alignItems: "center",
+                  bgcolor: "primary.main",
+                  borderRadius: 1,
+                  color: "primary.contrastText",
+                  display: "inline-flex",
+                  height: 24,
+                  justifyContent: "center",
+                  width: 24,
+                }}
+              >
+                <SmartToyOutlinedIcon sx={{ fontSize: 18 }} />
+              </Box>
+            )}
+            sx={{
+              bgcolor: "background.paper",
+              borderColor: "primary.main",
+              color: "primary.main",
+              flexShrink: 0,
+              fontWeight: 800,
+              minHeight: 44,
+              minWidth: 56,
+              px: 0.5,
+              whiteSpace: "nowrap",
+              "& .MuiButton-startIcon": {
+                ml: 0,
+                mr: 0.25,
+              },
+              "&:hover": {
+                bgcolor: "rgba(1, 30, 86, 0.04)",
+                borderColor: "primary.dark",
+              },
+            }}
+            variant="outlined"
+          >
+            AI
+          </Button>
+          <NotificationCenter notifications={notifications} />
+        </Toolbar>
+      </Box>
       <Drawer
         ModalProps={{ keepMounted: true }}
         onClose={closeMobile}
@@ -410,7 +541,9 @@ export function DashboardShell({
           "& .MuiDrawer-paper": {
             borderRightColor: "divider",
             boxSizing: "border-box",
+            height: "calc(100% - 64px)",
             overflowX: "hidden",
+            top: 64,
             transition: (theme) =>
               theme.transitions.create("width", {
                 duration: theme.transitions.duration.shorter,
@@ -426,97 +559,16 @@ export function DashboardShell({
         sx={{
           ml: { xs: 0, lg: `${desktopWidth}px` },
           minWidth: 0,
+          pt: {
+            xs: "calc(64px + env(safe-area-inset-top))",
+            sm: "64px",
+          },
           transition: (theme) =>
             theme.transitions.create("margin-left", {
               duration: theme.transitions.duration.shorter,
             }),
         }}
       >
-        <Box
-          component="header"
-          sx={{
-            bgcolor: "background.paper",
-            borderBottom: 1,
-            borderColor: "divider",
-            position: "sticky",
-            top: 0,
-            zIndex: (theme) => theme.zIndex.appBar,
-          }}
-        >
-          <Toolbar
-            sx={{
-              gap: { xs: 0.5, sm: 1.5 },
-              minHeight: {
-                xs: "calc(64px + env(safe-area-inset-top))",
-                sm: 64,
-              },
-              pt: { xs: "env(safe-area-inset-top)", sm: 0 },
-              px: { xs: 1.5, sm: 2.5 },
-              "& .MuiIconButton-root": {
-                flexShrink: 0,
-                minHeight: 44,
-                minWidth: 44,
-              },
-              "& .MuiInputBase-root": { minHeight: 44 },
-            }}
-          >
-            <IconButton
-              aria-label="Open navigation"
-              onClick={() => setMobileOpen(true)}
-              sx={{ display: { lg: "none" } }}
-            >
-              <MenuRoundedIcon />
-            </IconButton>
-            <Box sx={{ flexGrow: 1 }} />
-            <Button
-              aria-controls={aiChatOpen ? "ai-chat-drawer" : undefined}
-              aria-expanded={aiChatOpen}
-              aria-haspopup="dialog"
-              aria-label="Open AI Chat"
-              onClick={openAiChat}
-              startIcon={(
-                <Box
-                  component="span"
-                  sx={{
-                    alignItems: "center",
-                    bgcolor: "primary.main",
-                    borderRadius: 1,
-                    color: "primary.contrastText",
-                    display: "inline-flex",
-                    height: 24,
-                    justifyContent: "center",
-                    width: 24,
-                  }}
-                >
-                  <SmartToyOutlinedIcon sx={{ fontSize: 18 }} />
-                </Box>
-              )}
-              sx={{
-                bgcolor: "background.paper",
-                borderColor: "primary.main",
-                color: "primary.main",
-                flexShrink: 0,
-                fontWeight: 800,
-                minHeight: 44,
-                minWidth: 56,
-                px: 0.5,
-                whiteSpace: "nowrap",
-                "& .MuiButton-startIcon": {
-                  ml: 0,
-                  mr: 0.25,
-                },
-                "&:hover": {
-                  bgcolor: "rgba(1, 30, 86, 0.04)",
-                  borderColor: "primary.dark",
-                },
-              }}
-              variant="outlined"
-            >
-              AI
-            </Button>
-            <NotificationCenter notifications={notifications} />
-          </Toolbar>
-        </Box>
         <Box
           component="main"
           sx={{
