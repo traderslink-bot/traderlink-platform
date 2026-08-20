@@ -1,9 +1,9 @@
 # TraderLink Platform PWA Professional Redesign Progress
 
-**Status:** PWA-R0 owner approved; PWA-R1 shared shell and React offline-shell
-foundation are locally checkpointed; PWA-R2 tracker-parity source work is
-active, with browser/build acceptance deferred for the owner's resource-heavy
-press-release runtime
+**Status:** PWA-R0 and PWA-R1 are locally checkpointed; PWA-R2 tracker parity
+is technically accepted after the owner waived further visual review and the
+scoped production client/worker compilation passed; PWA-R3 saved-view work is
+the next active boundary
 
 **Started:** 2026-08-20
 
@@ -189,9 +189,14 @@ condensed rail state is offered.
   TraderLink server process.
 - [x] Create narrow local commit `30954abf` without staging the concurrent
   navigation, shell-depth, Analytics, Rules, Calendar or AI work.
-- [ ] Run the one required low-resource Webpack production build later to prove
-  the generated manifest and worker bundle; do not start it while the
-  press-release runtime needs the computer.
+- [x] Complete the route-scoped Webpack production client compilation and
+  prove the generated manifest/worker bundle. Next.js 16.2.6 required a
+  command-scoped Windows path workaround because its documented debug-path
+  filter compared `/offline/page.tsx` with `\offline\page.tsx`.
+- [ ] Obtain a complete zero-exit full-site production build at a later final
+  checkpoint. The client/worker compilation passed, but the separate
+  TypeScript worker exhausted a 1.28 GB safety ceiling while concurrent
+  application work and the protected press-release runtime shared the machine.
 
 ## PWA-R2 tracker parity
 
@@ -215,26 +220,29 @@ condensed rail state is offered.
 - [x] Focused ESLint and explicit-file diff checks pass with a 512 MB Node
   memory ceiling. No server, browser, test suite, TypeScript-wide check or
   build was started.
-- [ ] Present Daily, Swing and Quick Entry online/offline at desktop and narrow
-  mobile for owner approval when a review server can run without competing
-  with the press-release runtime.
-- [ ] Prove the generated production worker includes every client chunk needed
-  by the shared offline entry component at the deferred Webpack build gate.
+- [x] Close the screenshot/installed-app review gate by explicit owner waiver
+  on 2026-08-20; no additional visual review is required for this checkpoint.
+- [x] Prove the generated production worker includes the shared offline-entry
+  route chunk and its two hashed dependencies. The emitted allowlist contained
+  only three hashed shell chunks plus `/offline`, the manifest, logo, icon
+  family and `pwa-trade-sync.js`; it did not include authenticated HTML,
+  Journal responses or a broad runtime cache.
 - [x] Create narrow local source checkpoint `4384f572` after auditing and
   staging only the five PWA-R2 files from the shared dirty checkout.
 
 ## Current exact resume point
 
-PWA-R1 is preserved at local commit `30954abf`. PWA-R2 source checkpoint
-`4384f572` renders the real shared manual-execution component in the React
-offline fallback for the three exact tracker-entry routes and uses a compact
-Trade sync disclosure. Focused lint and explicit diff checks pass. No Journal
-data, IndexedDB record, Push state, hosted configuration or deployed state
-changed.
+PWA-R1 is preserved at local commit `30954abf`; PWA-R2 source is preserved at
+`4384f572` with its checkpoint record at `70b21428`. The focused production
+client compilation emitted `app/offline/page-06c2f3551ed5f579.js` (52,361
+bytes) and a 34,042-byte generated worker containing exactly the narrow shell
+allowlist. The generated worker was inspected and the tracked legacy worker
+was then restored byte-for-byte because the overall command stopped at the
+separate memory-bounded TypeScript stage.
 
-The owner explicitly directed work to continue without waiting for the
-16-hour press-release runtime to stop. Continue only lightweight source work
-until resources permit the deferred worker build and visual acceptance. The
-The next product gate remains desktop and 390-pixel online/offline screenshots
-for Daily, Swing and Quick Entry; do not claim PWA-R2 accepted before that owner
-review and the production worker-chunk proof both pass.
+The owner explicitly waived further visual review and directed work to
+continue without waiting for the 16-hour press-release runtime. PWA-R2 is
+therefore accepted. Continue with PWA-R3 module-owned saved-view contracts and
+keep source work lightweight until the final full-site build can run without
+threatening protected processes. No Journal data, IndexedDB record, Push state,
+hosted configuration or deployed state changed during this acceptance run.
