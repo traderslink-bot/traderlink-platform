@@ -383,3 +383,28 @@ after separate deployment and secret authorization.
   push subscription, secret, provider call, deployment or hosted state changed.
   The scheduled server process exited itself; the pre-existing process was
   preserved.
+
+## 2026-08-19 resumed browser acceptance
+
+- Fixed the Notifications hydration mismatch without changing the trader's
+  local timestamp: the server and first browser render leave the dynamic time
+  empty, then the device formats it after hydration. Targeted ESLint and
+  whitespace checks passed.
+- Desktop and 390-pixel narrow-mobile checks passed for Workspace, complete
+  navigation, Notifications Center, notification timestamps, Push notifications
+  settings and Offline data controls. No browser warnings or errors were
+  present after the fix.
+- Install readiness passed: the page exposes `/manifest.webmanifest` and is
+  controlled by the registered service worker. The browser had Push permission
+  blocked, so the settings correctly showed the non-interactive explanation;
+  no permission prompt or subscription was requested.
+- Daily Trade Tracker, Swing Trade Tracker and Quick Trade Entry each rendered
+  online with their manual-entry controls. No field was changed and no save was
+  sent.
+- Full offline relaunch remains unverified in this in-app browser. Its provided
+  offline toggle continued to fetch the live page, and tab-only request blocking
+  retained the existing live document rather than yielding a clean service-worker
+  navigation. All temporary network, cache and viewport overrides were restored.
+- The pre-existing no-workers loopback server was preserved. No Journal trade,
+  device outbox record, notification mutation, push permission/subscription,
+  secret, provider call, deployment or hosted state changed during this run.

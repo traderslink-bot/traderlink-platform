@@ -9,11 +9,15 @@ import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 import type { PlatformNotification } from "@/src/modules/platform/contracts/platform-notification-contracts";
 import { markNotificationRead } from "./notification-actions";
 import { dismissNotification, isNotificationDismissed } from "./notification-dismissal";
+
+function subscribeToHydration(): () => void {
+  return () => undefined;
+}
 
 function formatNotificationTime(occurredAtUtc: string) {
   const date = new Date(occurredAtUtc);
@@ -34,6 +38,11 @@ export function NotificationList({
   onNotificationDismissed?: (notificationRef: string) => void;
   notifications: readonly PlatformNotification[];
 }) {
+  const localTimeReady = useSyncExternalStore(
+    subscribeToHydration,
+    () => true,
+    () => false,
+  );
   const [items, setItems] = useState(notifications);
   useEffect(() => {
     setItems(notifications.filter((notification) => !isNotificationDismissed(notification.notificationRef)));
@@ -81,7 +90,7 @@ export function NotificationList({
                 {notification.summary}
               </Typography>
               <Typography color="text.secondary" sx={{ display: "block", mt: 0.75 }} variant="caption">
-                {formatNotificationTime(notification.occurredAtUtc)}
+                {localTimeReady ? formatNotificationTime(notification.occurredAtUtc) : null}
               </Typography>
             </Box>
             {notification.destinationPath ? <ArrowForwardRoundedIcon color="action" sx={{ fontSize: 18, mt: 0.35 }} /> : null}
