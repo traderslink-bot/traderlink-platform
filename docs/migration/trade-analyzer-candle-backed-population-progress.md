@@ -1,6 +1,6 @@
 # Trade Analyzer Candle-backed Population Progress
 
-**Status:** Implemented locally; focused verification pending.
+**Status:** Implemented locally; focused static and read-only verification complete.
 
 **Controlling plan:** [Trade Analyzer Analysis Pages Plan](trade-analyzer-analysis-pages-plan.md)
 
@@ -12,13 +12,17 @@
 - [x] Defined an analyzed trade as a current ready result containing at least
   one saved execution snapshot anchored to its exact saved market candle.
 - [x] Applied that predicate to the shared long-term aggregates, the available
-  reporting-currency lookup and the paginated Analyzed Trades directory.
+  reporting-currency lookup and the paginated Analyzed Trades directory. The
+  directory also keeps its server-derived selected-account predicate and now
+  honors the selected currency partition.
 - [x] Updated the existing Help text to state the same candle-backed boundary.
 - [x] Replaced the technical empty-state count with the owner-approved
   subscription-activation explanation.
-- [ ] Run the smallest focused static and read-only data checks after the
-  concurrent dashboard changes settle. No test suite, database write, browser
-  process, commit or deployment is part of this correction.
+- [x] Ran targeted ESLint and a read-only per-account table check. The
+  corrected directory returns zero candle-backed trades for one account and
+  eleven for the other, with no Journal write, browser process, commit or
+  deployment. The shared account selector's persistent instructional tooltip
+  was removed because it obscured the account choices.
 
 ## Live-data observation
 

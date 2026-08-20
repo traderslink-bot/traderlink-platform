@@ -821,6 +821,14 @@ JOIN journal_instruments instrument
   AND instrument.instrument_id = round_trip_version.instrument_id
 WHERE analysis.workspace_id = ? AND analysis.account_id = ?
   AND analysis.status = 'ready' AND version.status = 'ready'
+  AND EXISTS (
+    SELECT 1
+    FROM journal_round_trip_daily_trade_analysis_event_snapshots snapshot
+    JOIN level_analysis_market_session_candles candle
+      ON candle.market_session_set_version_id = version.market_session_set_version_id
+      AND candle.candle_time_utc_seconds = snapshot.candle_time_utc_seconds
+    WHERE snapshot.daily_trade_analysis_version_id = version.daily_trade_analysis_version_id
+  )
   AND round_trip_version.projection_state = 'ready_closed'
   AND round_trip_version.closed_at_utc IS NOT NULL
 )`;

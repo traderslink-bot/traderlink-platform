@@ -3,7 +3,6 @@
 import FormControl from "@mui/material/FormControl";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
-import Tooltip from "@mui/material/Tooltip";
 import { useState } from "react";
 
 import {
@@ -57,32 +56,30 @@ export function DashboardAccountSwitcher({
   }
 
   return (
-    <Tooltip arrow title={error ?? "Choose the trading account shown across this dashboard"}>
-      <FormControl
-        error={Boolean(error)}
-        size="small"
-        sx={{ minWidth: 0, width: { xs: "100%", sm: 240 } }}
+    <FormControl
+      error={Boolean(error)}
+      size="small"
+      sx={{ minWidth: 0, width: { xs: "100%", sm: 240 } }}
+    >
+      <Select
+        aria-label="Active Trade Tracker account"
+        disabled={working}
+        onChange={(event) => void select(event.target.value)}
+        sx={{
+          "& .MuiSelect-select": {
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          },
+        }}
+        value={activeSelectionRef}
       >
-        <Select
-          aria-label="Active Trade Tracker account"
-          disabled={working}
-          onChange={(event) => void select(event.target.value)}
-          sx={{
-            "& .MuiSelect-select": {
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            },
-          }}
-          value={activeSelectionRef}
-        >
-          {accounts.map((account) => (
-            <MenuItem key={account.selectionRef} value={account.selectionRef}>
-              {account.displayName}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    </Tooltip>
+        {accounts.map((account) => (
+          <MenuItem key={account.selectionRef} value={account.selectionRef}>
+            {account.displayName}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
   );
 }

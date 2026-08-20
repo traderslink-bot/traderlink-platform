@@ -28,7 +28,7 @@ export async function GET(request: Request): Promise<Response> {
         reportDailyTradeAnalyzedTrades(
           readDailyTradeAnalyzedTrades(database, scope, {
             afterCursor: url.searchParams.get("cursor"),
-            currency: null,
+            currency: optionalDate(url.searchParams.get("currency")),
             endDate: optionalDate(url.searchParams.get("end")),
             moneyBasis: url.searchParams.get("basis") === "net" ? "net" : "gross",
             pageSize: Number(url.searchParams.get("pageSize") ?? 25),
