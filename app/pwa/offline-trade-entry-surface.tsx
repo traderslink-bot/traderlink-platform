@@ -15,6 +15,7 @@ import {
 
 import { ManualExecutionEntry } from "../(dashboard)/trade-tracker/manual-execution-entry";
 import { DashboardPage } from "../dashboard-ui";
+import { OfflineOpenPositionsSurface } from "./offline-open-positions-surface";
 import { OfflineWorkspaceSurface } from "./offline-workspace-surface";
 import {
   normalizePlatformOfflinePathname,
@@ -228,6 +229,19 @@ export function OfflineRouteContent() {
     return (
       <>
         <OfflineWorkspaceSurface partitionKey={deviceState.partitionKey} />
+        <OfflineTradeOutboxSync state={deviceState} />
+      </>
+    );
+  }
+
+  if (
+    pathname === "/trades/open" &&
+    stateLoaded &&
+    readyOfflineDeviceState(deviceState)
+  ) {
+    return (
+      <>
+        <OfflineOpenPositionsSurface partitionKey={deviceState.partitionKey} />
         <OfflineTradeOutboxSync state={deviceState} />
       </>
     );

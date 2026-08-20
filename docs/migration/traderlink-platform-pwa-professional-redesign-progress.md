@@ -3,7 +3,8 @@
 **Status:** PWA-R0 and PWA-R1 are locally checkpointed; PWA-R2 tracker parity
 is technically accepted after the owner waived further visual review and the
 scoped production client/worker compilation passed; PWA-R3 now has its saved
-view foundation and first Platform-owned Workspace model/renderer implemented
+view foundation, Platform-owned Workspace model/renderer and first
+Journal-owned Open Positions model/renderer implemented
 
 **Started:** 2026-08-20
 
@@ -277,7 +278,39 @@ condensed rail state is offered.
 - [x] Preserve the Workspace saved-view slice in narrow local commit
   `0e7935f7` after staging only its explicit files and PWA-owned hunks from the
   dirty shared Workspace component.
-- [ ] Add Journal-owned Trades saved-view models and renderers.
+- [x] Extract Open Positions into one shared responsive renderer without
+  changing the accepted desktop table, mobile cards, classification labels,
+  descriptions or Help links.
+- [x] Add a Journal-owned Open Positions model containing only confirmed
+  displayed position rows and classification labels. Do not store the reusable
+  position reference used by the online classification API or undisplayed
+  Data Decision rows.
+- [x] Keep classification changes online-only by supplying their existing
+  controls as online-only React content. The offline renderer does not import
+  `PositionStyleControl`, its confirmation dialog or POST behavior.
+- [x] Add one reusable authorized saved-view capture component and migrate the
+  Workspace capture to it without changing the Workspace contract or storage
+  identity.
+- [x] Render saved Open Positions in the real dashboard shell with the normal
+  desktop/mobile presentation, **Offline · Last updated ...** status and a
+  reconnect explanation in the normal classification section.
+- [x] Reject incompatible or malformed Open Positions models and retain a
+  factual reconnect-once state without clearing saved data or the trade outbox.
+- [x] Review Help Center impact. The existing Open Positions and position-type
+  guides remain accurate; offline makes the existing classification control
+  unavailable and explains reconnection in place, so no guide copy changes are
+  required in this slice.
+- [x] Focused React best-practices review, ESLint, capability-boundary search
+  and explicit-file diff checks pass with a 512 MB Node ceiling. No Vitest,
+  broad TypeScript run, server, browser, build, provider, hosted mutation or
+  deployment ran.
+- [ ] Preserve the Open Positions saved-view slice in a narrow local commit.
+- [ ] Add Journal-owned Daily and Swing Tracker saved-view models and
+  renderers, preserving saved empty-day notes/reviews and disabling every
+  server-authoritative mutation except the accepted offline execution outbox.
+- [ ] Add the remaining Journal Trades saved-view models and renderers for
+  Calendar, Trade Explorer, Compare Trades, Trading Rules, Rule Results and
+  Candle Review.
 - [ ] Add Journal Analytics-owned Trade Analyzer and Analytics saved-view
   models and renderers.
 
@@ -294,9 +327,10 @@ separate memory-bounded TypeScript stage.
 The owner explicitly waived further visual review and directed work to
 continue without waiting for the 16-hour press-release runtime. PWA-R2 is
 therefore accepted. PWA-R3 now has its non-destructive version-3 saved-view
-store plus the first Platform-owned Workspace model and normal-layout offline
-renderer. The next source slice is Journal Trades, followed by Journal
-Analytics. Keep source work lightweight until the final full-site build can
-run without threatening protected processes. No Journal data, IndexedDB
-record, Push state, hosted configuration or deployed state changed during this
-acceptance run.
+store, the first Platform-owned Workspace model and the first Journal-owned
+Open Positions model with normal-layout offline renderers. The next source
+slice is the Daily and Swing Tracker saved-view boundary, followed by the
+remaining Journal Trades surfaces and Journal Analytics. Keep source work
+lightweight until the final full-site build can run without threatening
+protected processes. No Journal data, IndexedDB record, Push state, hosted
+configuration or deployed state changed during this acceptance run.

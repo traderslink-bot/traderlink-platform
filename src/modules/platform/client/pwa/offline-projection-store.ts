@@ -192,8 +192,8 @@ export async function savePlatformOfflineProjection(
   notifyChanged();
 }
 
-export async function savePlatformOfflineView(
-  view: PlatformOfflineSavedView,
+export async function savePlatformOfflineView<TModel>(
+  view: PlatformOfflineSavedView<TModel>,
 ): Promise<void> {
   if (
     view.schemaVersion !== PLATFORM_OFFLINE_SAVED_VIEW_SCHEMA_VERSION ||
