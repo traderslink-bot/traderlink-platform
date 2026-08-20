@@ -582,6 +582,29 @@ Vitest, broad suite, production build, deployment or hosted-state change ran.
 The existing Notifications Help already describes permission, category and
 privacy behavior, so no Help copy change is required.
 
+### Installed-app Push setup notice
+
+The installed PWA now shows one top-of-page **Turn on notifications** notice
+when the current device has no Push subscription. It is limited to standalone
+display mode, stays out of the ordinary website and the Account Preferences
+destination itself, and remains hidden while offline or when Push support
+cannot be checked safely. The approved notice text is **Turn on TradersLink
+notifications on this device**. Its setup action opens the exact Push section
+at `/account/preferences#push-notifications`.
+
+The notice disappears as soon as this device has an active Push subscription.
+**Don't show again** records a device-local choice so a trader who does not want
+Push is not repeatedly prompted on later PWA launches. Turning Push off from
+Preferences records the same choice. A blocked browser permission uses
+**Notifications are turned off** and **View setup steps** without attempting to
+open the browser permission prompt automatically. The normal Enable action
+remains the only gesture that requests permission.
+
+Notifications Help now names the installed-app setup path and the optional
+**Don't show again** choice. This keeps the guide aligned with the new visible
+behavior; no Journal, provider, notification category or hosted-state contract
+changed.
+
 ## Current exact resume point
 
 PWA-R1 is preserved at local commit `30954abf`; PWA-R2 source is preserved at

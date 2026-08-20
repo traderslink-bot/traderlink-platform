@@ -520,6 +520,9 @@ During implementation:
 - [x] Private HTML/API/statement/provider data is never broadly cached.
 - [x] Read-only saved pages stay within the 50 MB browser budget without
       automatically removing an unsynced or review-required trade.
+- [x] The installed app offers a top-of-page Push setup notice only when the
+      current device has no subscription, with an exact Preferences link and a
+      persistent **Don't show again** choice.
 - [x] Desktop and narrow-mobile screenshot gates pass throughout or are closed
       by the owner's explicit waiver of further visual review.
 - [ ] Genuine installed-app offline relaunch passes across the complete inventory.

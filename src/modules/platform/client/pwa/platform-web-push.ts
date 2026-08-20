@@ -10,6 +10,10 @@ export type PlatformWebPushBrowserState =
   | "off"
   | "unsupported";
 
+export const PLATFORM_WEB_PUSH_STATE_CHANGED_EVENT = "traderlink:web-push-state-changed";
+const platformWebPushSetupReminderDismissedStorageKey =
+  "traderlink:pwa-push-setup-reminder-dismissed:v1";
+
 type PushConfigResponse = Readonly<{
   applicationServerKey?: string;
   status?: string;
@@ -21,6 +25,26 @@ export type PreparedPlatformWebPush = Readonly<{
 }>;
 
 let preparation: Promise<PreparedPlatformWebPush> | null = null;
+
+function announcePlatformWebPushStateChanged(): void {
+  window.dispatchEvent(new Event(PLATFORM_WEB_PUSH_STATE_CHANGED_EVENT));
+}
+
+export function isPlatformWebPushSetupReminderDismissed(): boolean {
+  try {
+    return window.localStorage.getItem(platformWebPushSetupReminderDismissedStorageKey) === "true";
+  } catch {
+    return false;
+  }
+}
+
+export function dismissPlatformWebPushSetupReminder(): void {
+  try {
+    window.localStorage.setItem(platformWebPushSetupReminderDismissedStorageKey, "true");
+  } catch {
+    // The current banner can still close when persistent device storage is unavailable.
+  }
+}
 
 function applicationServerKey(value: string): Uint8Array<ArrayBuffer> {
   const padding = "=".repeat((4 - (value.length % 4)) % 4);
@@ -109,12 +133,17 @@ export async function enablePlatformWebPush(
       ? "Push notifications are not available yet."
       : "Push notifications could not be enabled. Try again.");
   }
+  announcePlatformWebPushStateChanged();
 }
 
 export async function disablePlatformWebPush(): Promise<void> {
   if (!supported()) return;
   const subscription = await (await registration()).pushManager.getSubscription();
-  if (!subscription) return;
+  if (!subscription) {
+    dismissPlatformWebPushSetupReminder();
+    announcePlatformWebPushStateChanged();
+    return;
+  }
   let serverRemoved = false;
   try {
     const response = await fetch("/api/platform/pwa/push/subscription", {
@@ -130,6 +159,8 @@ export async function disablePlatformWebPush(): Promise<void> {
   } finally {
     await subscription.unsubscribe();
   }
+  dismissPlatformWebPushSetupReminder();
+  announcePlatformWebPushStateChanged();
   if (!serverRemoved) {
     throw new Error("Push was turned off on this device. TraderLink will finish removing the expired subscription automatically.");
   }

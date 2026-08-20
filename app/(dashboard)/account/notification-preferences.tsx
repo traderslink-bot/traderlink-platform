@@ -167,7 +167,13 @@ export function NotificationPreferences({
         {working ? "Saving..." : "Save Discord preferences"}
       </Button>
       <Divider />
-      <Typography sx={{ fontWeight: 800 }} variant="subtitle2">Push notifications</Typography>
+      <Typography
+        id="push-notifications"
+        sx={{ fontWeight: 800, scrollMarginTop: 96 }}
+        variant="subtitle2"
+      >
+        Push notifications
+      </Typography>
       <Typography color="text.secondary" variant="body2">
         Choose which generic TraderLink alerts may appear on devices where you enable push. Lock-screen alerts never include tickers, P/L, prices, quantities, account details, statement names, notes or AI Review text.
       </Typography>

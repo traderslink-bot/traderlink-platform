@@ -70,6 +70,7 @@ import {
   type TraderLinkOpenAiChatEventDetail,
 } from "./ai-chat-drawer-events";
 import type { CoachAiDailyCompanionContextSelector } from "@/src/modules/coach/contracts/ai-daily-companion-contracts";
+import { PushNotificationSetupBanner } from "./pwa/push-notification-setup-banner";
 
 const expandedWidth = 272;
 const collapsedWidth = 76;
@@ -619,6 +620,12 @@ export function DashboardShell({
               : undefined,
           }}
         >
+          <Box sx={{ pr: pageHelpTarget ? { xs: 6, sm: 6.5 } : 0 }}>
+            <PushNotificationSetupBanner
+              enabled={!offline}
+              pathname={pathname}
+            />
+          </Box>
           {pageHelpTarget ? (
             <Tooltip title={`Help for ${pageHelpTarget.label}`}>
               <IconButton
