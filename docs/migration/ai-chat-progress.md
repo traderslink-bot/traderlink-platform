@@ -982,3 +982,10 @@ existing migration, Journal, and account boundaries.
   before the protected apply. The runtime/admin controls remain an active
   source slice until their own focused verification and local commit are
   recorded.
+
+## Active: Links AI Chat quality feedback
+
+The approved owner-only quality queue, automatic failure capture, bounded
+conversation snapshots and trader-facing **Not helpful** action are tracked in
+[Links AI Chat Quality Feedback Plan](links-ai-chat-quality-feedback-plan.md)
+and its [progress record](links-ai-chat-quality-feedback-progress.md).
