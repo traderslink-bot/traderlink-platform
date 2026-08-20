@@ -252,6 +252,8 @@ condensed rail state is offered.
   storage foundation because no trader-facing workflow or control changed.
 - [x] Focused ESLint, JavaScript syntax checks and explicit-file Git diff checks
   pass. No Vitest, server, browser, provider, hosted mutation or deployment ran.
+- [x] Preserve the foundation in narrow local commit `20bc6fe3` without staging
+  any concurrent dashboard feature work.
 - [ ] Add the first Platform-owned Workspace saved-view model and renderer.
 - [ ] Add Journal-owned Trades saved-view models and renderers.
 - [ ] Add Journal Analytics-owned Trade Analyzer and Analytics saved-view
