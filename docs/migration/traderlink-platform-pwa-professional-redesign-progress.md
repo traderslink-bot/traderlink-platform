@@ -553,6 +553,35 @@ the concurrent AI Chat work and low-resource boundary remained active. This is
 a layout and asset-delivery correction, so no Help Center guide change is
 required.
 
+### Android Push enable correction
+
+Direct Android acceptance found that both Chrome and the installed WebAPK could
+report notification permission as granted while the normal Enable action still
+failed before creating a Push subscription. The client had awaited the remote
+Push configuration before requesting permission and subscribing. On Android,
+that delay detached the browser-sensitive subscription work from the trader's
+button tap. Push configuration and worker readiness are now prepared while the
+page loads. The Enable action receives that prepared state and performs the
+permission/subscription work immediately from the button interaction. A failed
+preparation has a separate Retry Push setup action instead of a dead Enable
+button.
+
+Discord and Push results no longer share one alert location. Discord save
+results stay in the Discord messages section; Push enable, save and disable
+results render inside Push notifications.
+
+The connected Android acceptance used only the `127.0.0.1:3010` review origin
+and proved notification permission granted, an activated service worker, an
+FCM-backed browser subscription, one active encrypted local subscription and
+all six Push categories enabled. The phone UI then showed Save push preferences
+and Turn off push notifications with all six Push checkboxes selected. One
+privacy-safe test update containing no trading facts was enqueued and the Push
+delivery record reached `delivered` with no failure code. Focused ESLint, the
+live low-resource Next development compile and the phone render passed. No
+Vitest, broad suite, production build, deployment or hosted-state change ran.
+The existing Notifications Help already describes permission, category and
+privacy behavior, so no Help copy change is required.
+
 ## Current exact resume point
 
 PWA-R1 is preserved at local commit `30954abf`; PWA-R2 source is preserved at

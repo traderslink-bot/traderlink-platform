@@ -14,9 +14,11 @@ import {
   type PlatformNotificationCategory,
 } from "@/src/modules/platform/contracts/platform-notification-contracts";
 import {
-  enablePlatformWebPush,
   disablePlatformWebPush,
+  enablePlatformWebPush,
+  preparePlatformWebPush,
   readPlatformWebPushBrowserState,
+  type PreparedPlatformWebPush,
   type PlatformWebPushBrowserState,
 } from "@/src/modules/platform/client/pwa/platform-web-push";
 import {
@@ -51,13 +53,22 @@ export function NotificationPreferences({
   const [selected, setSelected] = useState<readonly PlatformNotificationCategory[]>(initialDiscordDmCategories);
   const [pushSelected, setPushSelected] = useState<readonly PlatformNotificationCategory[]>(initialWebPushCategories);
   const [pushState, setPushState] = useState<PlatformWebPushBrowserState>("checking");
-  const [message, setMessage] = useState<string | null>(null);
+  const [discordMessage, setDiscordMessage] = useState<string | null>(null);
+  const [pushMessage, setPushMessage] = useState<string | null>(null);
+  const [pushPreparation, setPushPreparation] = useState<PreparedPlatformWebPush | null>(null);
+  const [pushPreparationUnavailable, setPushPreparationUnavailable] = useState(false);
   const [working, startTransition] = useTransition();
 
   useEffect(() => {
     void readPlatformWebPushBrowserState()
       .then(setPushState)
       .catch(() => setPushState("off"));
+    void preparePlatformWebPush()
+      .then((prepared) => {
+        setPushPreparation(prepared);
+        setPushPreparationUnavailable(false);
+      })
+      .catch(() => setPushPreparationUnavailable(true));
   }, []);
 
   function toggle(category: PlatformNotificationCategory, checked: boolean): void {
@@ -77,25 +88,38 @@ export function NotificationPreferences({
       const result = await saveDiscordDmNotificationCategories(selected);
       if (result.ok) {
         setSelected(result.categories as readonly PlatformNotificationCategory[]);
-        setMessage("Discord notification preferences saved.");
+        setDiscordMessage("Discord notification preferences saved.");
       } else {
-        setMessage(result.message);
+        setDiscordMessage(result.message);
       }
     });
   }
 
   function enablePush(): void {
+    if (!pushPreparation) {
+      setPushMessage(pushPreparationUnavailable
+        ? "Push notifications are not available yet."
+        : "Push notifications are still getting ready. Try again in a moment.");
+      return;
+    }
     startTransition(async () => {
       try {
-        await enablePlatformWebPush(pushSelected);
+        await enablePlatformWebPush(pushSelected, pushPreparation);
         setPushState("enabled");
-        setMessage("Push notifications enabled on this device.");
+        setPushMessage("Push notifications enabled on this device.");
       } catch (error) {
         const nextState = await readPlatformWebPushBrowserState().catch(() => "off" as const);
         setPushState(nextState);
-        setMessage(error instanceof Error ? error.message : "Push notifications could not be enabled.");
+        setPushMessage(error instanceof Error ? error.message : "Push notifications could not be enabled.");
       }
     });
+  }
+
+  function retryPushPreparation(): void {
+    setPushPreparationUnavailable(false);
+    void preparePlatformWebPush()
+      .then((prepared) => setPushPreparation(prepared))
+      .catch(() => setPushPreparationUnavailable(true));
   }
 
   function disablePush(): void {
@@ -103,10 +127,10 @@ export function NotificationPreferences({
       try {
         await disablePlatformWebPush();
         setPushState("off");
-        setMessage("Push notifications turned off on this device.");
+        setPushMessage("Push notifications turned off on this device.");
       } catch (error) {
         setPushState("off");
-        setMessage(error instanceof Error ? error.message : "Push notifications were turned off on this device.");
+        setPushMessage(error instanceof Error ? error.message : "Push notifications were turned off on this device.");
       }
     });
   }
@@ -116,9 +140,9 @@ export function NotificationPreferences({
       const result = await saveWebPushNotificationCategories(pushSelected);
       if (result.ok) {
         setPushSelected(result.categories as readonly PlatformNotificationCategory[]);
-        setMessage("Push notification preferences saved.");
+        setPushMessage("Push notification preferences saved.");
       } else {
-        setMessage(result.message);
+        setPushMessage(result.message);
       }
     });
   }
@@ -129,7 +153,7 @@ export function NotificationPreferences({
       <Typography color="text.secondary" variant="body2">
         Choose which updates may also be sent by Discord DM. Every update stays in your dashboard Notifications page. Discord delivery will remain off until the TraderLink bot is connected.
       </Typography>
-      {message ? <Alert severity={successMessage(message) ? "success" : "error"}>{message}</Alert> : null}
+      {discordMessage ? <Alert severity={successMessage(discordMessage) ? "success" : "error"}>{discordMessage}</Alert> : null}
       <Stack spacing={0.25}>
         {PLATFORM_NOTIFICATION_CATEGORIES.map((category) => (
           <FormControlLabel
@@ -149,6 +173,10 @@ export function NotificationPreferences({
       </Typography>
       {pushState === "unsupported" ? <Alert severity="info">Push notifications are not supported in this browser.</Alert> : null}
       {pushState === "denied" ? <Alert severity="warning">Push notifications are blocked in this browser&apos;s settings. Change this site&apos;s notification permission in your browser settings if you want to enable them.</Alert> : null}
+      {pushPreparationUnavailable && pushState !== "unsupported" && pushState !== "denied" ? (
+        <Alert severity="info">Push notifications are not available yet.</Alert>
+      ) : null}
+      {pushMessage ? <Alert severity={successMessage(pushMessage) ? "success" : "error"}>{pushMessage}</Alert> : null}
       <Stack spacing={0.25}>
         {PLATFORM_NOTIFICATION_CATEGORIES.map((category) => (
           <FormControlLabel
@@ -166,8 +194,20 @@ export function NotificationPreferences({
           </>
         ) : pushState === "checking" ? (
           <Button disabled variant="contained">Checking this device...</Button>
-        ) : pushState === "unsupported" || pushState === "denied" ? null : (
-          <Button disabled={working} onClick={enablePush} variant="contained">Enable push notifications</Button>
+        ) : pushState === "unsupported" || pushState === "denied" ? null : pushPreparationUnavailable ? (
+          <Button disabled={working} onClick={retryPushPreparation} variant="contained">
+            Retry Push setup
+          </Button>
+        ) : (
+          <Button
+            disabled={working || pushPreparation === null}
+            onClick={enablePush}
+            variant="contained"
+          >
+            {pushPreparation === null && !pushPreparationUnavailable
+              ? "Preparing notifications..."
+              : "Enable push notifications"}
+          </Button>
         )}
       </Stack>
     </Stack>

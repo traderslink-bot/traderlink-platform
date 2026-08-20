@@ -15,6 +15,13 @@ type PushConfigResponse = Readonly<{
   status?: string;
 }>;
 
+export type PreparedPlatformWebPush = Readonly<{
+  applicationServerKey: string;
+  workerRegistration: ServiceWorkerRegistration;
+}>;
+
+let preparation: Promise<PreparedPlatformWebPush> | null = null;
+
 function applicationServerKey(value: string): Uint8Array<ArrayBuffer> {
   const padding = "=".repeat((4 - (value.length % 4)) % 4);
   const raw = window.atob((value + padding).replace(/-/gu, "+").replace(/_/gu, "/"));
@@ -51,23 +58,38 @@ async function pushConfiguration(): Promise<string> {
   return body.applicationServerKey;
 }
 
+export async function preparePlatformWebPush(): Promise<PreparedPlatformWebPush> {
+  if (!supported()) throw new Error("Push notifications are not supported in this browser.");
+  preparation ??= Promise.all([pushConfiguration(), registration()]).then(([
+    applicationServerKey,
+    workerRegistration,
+  ]) => Object.freeze({ applicationServerKey, workerRegistration }));
+  try {
+    return await preparation;
+  } catch (error) {
+    preparation = null;
+    throw error;
+  }
+}
+
 export async function enablePlatformWebPush(
   categories: readonly PlatformNotificationCategory[],
+  prepared: PreparedPlatformWebPush,
 ): Promise<void> {
   if (!supported()) throw new Error("Push notifications are not supported in this browser.");
-  const publicKey = await pushConfiguration();
-  const permission = await Notification.requestPermission();
+  const permission = Notification.permission === "granted"
+    ? "granted"
+    : await Notification.requestPermission();
   if (permission !== "granted") {
     throw new Error(permission === "denied"
       ? "Push notifications are blocked in this browser's settings."
       : "Push notifications were not enabled.");
   }
-  const workerRegistration = await registration();
-  let subscription = await workerRegistration.pushManager.getSubscription();
+  let subscription = await prepared.workerRegistration.pushManager.getSubscription();
   let created = false;
   if (!subscription) {
-    subscription = await workerRegistration.pushManager.subscribe({
-      applicationServerKey: applicationServerKey(publicKey),
+    subscription = await prepared.workerRegistration.pushManager.subscribe({
+      applicationServerKey: applicationServerKey(prepared.applicationServerKey),
       userVisibleOnly: true,
     });
     created = true;
