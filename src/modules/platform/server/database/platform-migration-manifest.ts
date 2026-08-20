@@ -43,6 +43,7 @@ import { coachAiReviewLunaPricingRefreshMigration } from "@/src/modules/coach/se
 import { coachAiReviewInsightPersistenceMigration } from "@/src/modules/coach/server/database/migrations/0065_coach_ai_review_insight_persistence";
 import { coachAiReviewAuthoredOutputMigration } from "@/src/modules/coach/server/database/migrations/0066_coach_ai_review_authored_output";
 import { coachAiChatRelationshipMemoryMigration } from "@/src/modules/coach/server/database/migrations/0067_coach_ai_chat_relationship_memory";
+import { coachAiChatDeterministicFastPathMigration } from "@/src/modules/coach/server/database/migrations/0068_coach_ai_chat_deterministic_fast_path";
 import { coachAiChatActionDraftsMigration } from "@/src/modules/coach/server/database/migrations/0055_coach_ai_chat_action_drafts";
 import { coachAiChatActionExpansionMigration } from "@/src/modules/coach/server/database/migrations/0056_coach_ai_chat_action_expansion";
 import { coachAiChatCacheAccountingMigration } from "@/src/modules/coach/server/database/migrations/0058_coach_ai_chat_cache_accounting";
@@ -345,6 +346,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/coach/server/database/migrations/0067_coach_ai_chat_relationship_memory.ts",
       migration: coachAiChatRelationshipMemoryMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/coach/server/database/migrations/0068_coach_ai_chat_deterministic_fast_path.ts",
+      migration: coachAiChatDeterministicFastPathMigration,
     }),
   ]);
 

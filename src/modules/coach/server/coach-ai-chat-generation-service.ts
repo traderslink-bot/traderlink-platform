@@ -68,6 +68,11 @@ import {
   buildCoachAiChatConversationState,
   finalizeCoachAiChatConversationState,
 } from "./coach-ai-chat-conversation-state";
+import {
+  COACH_AI_CHAT_DETERMINISTIC_FAST_PATH_VERSION,
+  runCoachAiChatDeterministicFastPath,
+  selectCoachAiChatDeterministicFastPath,
+} from "./coach-ai-chat-deterministic-fast-path";
 
 export const COACH_AI_CHAT_MAX_HISTORY_BYTES = 16 * 1024;
 export const COACH_AI_CHAT_MAX_OUTPUT_TOKENS = 1_200;
@@ -103,7 +108,7 @@ export type CoachAiChatGenerator = (input: Readonly<{
 export type CoachAiChatGenerationServiceResult = Readonly<{
   state: "pending" | "completed" | "failed" | "blocked";
   assistantMessageId: string;
-  attemptId: string;
+  attemptId: string | null;
   manualEntryDraft: CoachAiManualEntryDraft | null;
   dailyCompanionDraft: CoachAiDailyCompanionDraft | null;
   reviewDeliveryChangeDraft: CoachAiReviewDeliveryChangeDraft | null;
@@ -264,6 +269,9 @@ export class CoachAiChatGenerationService {
     const intent = input.intent ?? "answer_question";
     const analysisScope = input.analysisScope ?? Object.freeze({ kind: "recent" as const });
     const pageContext = input.pageContext ?? null;
+    const deterministicRoute = intent === "answer_question"
+      ? selectCoachAiChatDeterministicFastPath(input.question)
+      : null;
     new CoachAiChatGenerationRecoveryService(this.chat, this.controls).reconcile(
       scope,
       { conversationId: input.conversationId },
@@ -301,6 +309,28 @@ export class CoachAiChatGenerationService {
         assistantMessageId: existing.assistantMessageId, attemptId: existing.attemptId,
         manualEntryDraft, dailyCompanionDraft, reviewDeliveryChangeDraft, actionDraft });
     }
+    const existingDeterministic = this.chat.findDeterministicGenerationByIdempotency(
+      scope,
+      input.idempotencySha256,
+    );
+    if (existingDeterministic) {
+      if (existingDeterministic.conversationId !== input.conversationId ||
+          existingDeterministic.pair.userMessage.originalUserTextPrivate !== input.question) {
+        platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+          field: "idempotencySha256",
+        });
+      }
+      const generationState = existingDeterministic.pair.assistantMessage.generationState;
+      return Object.freeze({
+        state: generationState === "not_applicable" ? "failed" : generationState,
+        assistantMessageId: existingDeterministic.pair.assistantMessage.messageId,
+        attemptId: null,
+        manualEntryDraft: null,
+        dailyCompanionDraft: null,
+        reviewDeliveryChangeDraft: null,
+        actionDraft: null,
+      });
+    }
 
     const resolvedTrustedContext = input.resolveTrustedContext?.() ?? null;
     const trustedContext = resolvedTrustedContext?.context ?? null;
@@ -328,7 +358,15 @@ export class CoachAiChatGenerationService {
     const created = this.chat.runAtomically(() => {
       const pair = this.chat.appendUserMessageAndReserveAssistant(scope, input.conversationId, {
         originalUserTextPrivate: input.question,
-        structuredInterpretation: intent === "prepare_manual_execution_draft"
+        structuredInterpretation: deterministicRoute
+          ? Object.freeze({
+              intent,
+              analysisScope,
+              generationSource: COACH_AI_CHAT_DETERMINISTIC_FAST_PATH_VERSION,
+              deterministicRouteKey: deterministicRoute.routeKey,
+              deterministicIdempotencySha256: input.idempotencySha256,
+            })
+          : intent === "prepare_manual_execution_draft"
           ? Object.freeze({ intent, analysisScope })
           : trustedContext
           ? Object.freeze({ intent: "assist_daily_review", trustedContext, analysisScope })
@@ -353,7 +391,7 @@ export class CoachAiChatGenerationService {
         relationshipMemoryView?.settings.enabled ?? false,
         relationshipMemoryView?.memories ?? Object.freeze([]),
       );
-      const reservation = this.controls.reserveChatGeneration(scope, {
+      const reservation = deterministicRoute ? null : this.controls.reserveChatGeneration(scope, {
         conversationId: input.conversationId,
         assistantMessageId: pair.assistantMessage.messageId,
         idempotencySha256: input.idempotencySha256,
@@ -372,11 +410,95 @@ export class CoachAiChatGenerationService {
         maxOutputTokens: COACH_AI_CHAT_MAX_OUTPUT_TOKENS,
         additionalFeatureKey: trustedContext ? "daily_companion" : undefined,
       }, now);
-      if (reservation.state === "blocked") {
+      if (reservation?.state === "blocked") {
         this.chat.finalizeAssistantFailure(scope, pair.assistantMessage.messageId, "TRADERLINK_COACH_CHAT_DAILY_CAP_REACHED", null, now);
       }
       return Object.freeze({ pair, history, relationshipMemories, conversationState, reservation });
     });
+    if (deterministicRoute) {
+      const dispatcher = new CoachAiChatFactualToolDispatcher(
+        this.factualTools,
+        this.tradeDetails,
+        scope,
+        scope.activeAccountId!,
+        now.toISOString(),
+        this.toolExtensions,
+        analysisScope,
+        this.reportingCurrency,
+      );
+      try {
+        const deterministic = runCoachAiChatDeterministicFastPath(
+          deterministicRoute,
+          dispatcher,
+        );
+        this.chat.runAtomically(() => {
+          const conversationState = finalizeCoachAiChatConversationState({
+            state: created.conversationState,
+            assistantMessageSequence: created.pair.assistantMessage.sequence,
+            nextQuestion: deterministic.answer.nextQuestion,
+            drafts: Object.freeze([]),
+          });
+          this.chat.finalizeDeterministicAssistantSuccess(
+            scope,
+            created.pair.assistantMessage.messageId,
+            {
+              assistantTextPrivate: [
+                deterministic.answer.directAnswer,
+                ...deterministic.answer.supportingObservations,
+                deterministic.answer.limitation,
+              ].filter((part): part is string =>
+                typeof part === "string" && part.length > 0).join("\n\n"),
+              snapshotContractVersion: "traderlink_coach_ai_chat_generation_v1",
+              factualSnapshot: Object.freeze({
+                generationSource: COACH_AI_CHAT_DETERMINISTIC_FAST_PATH_VERSION,
+                deterministicRouteKey: deterministic.routeKey,
+                answer: deterministic.answer,
+                factualToolCalls: dispatcher.snapshotsForPersistence(),
+                claimCatalog: buildCoachAiChatClaimCatalog(
+                  dispatcher.snapshotsForPersistence(),
+                ),
+                conversationState,
+                totalFactualResultBytes: dispatcher.totalSerializedResultBytes(),
+                cumulativePromptFactualResultBytes: 0,
+                trustedContext,
+              }),
+            },
+            now,
+          );
+        });
+        return Object.freeze({
+          state: "completed",
+          assistantMessageId: created.pair.assistantMessage.messageId,
+          attemptId: null,
+          manualEntryDraft: null,
+          dailyCompanionDraft: null,
+          reviewDeliveryChangeDraft: null,
+          actionDraft: null,
+        });
+      } catch {
+        this.chat.finalizeAssistantFailure(
+          scope,
+          created.pair.assistantMessage.messageId,
+          "TRADERLINK_COACH_DETERMINISTIC_FAST_PATH_FAILED",
+          null,
+          now,
+        );
+        return Object.freeze({
+          state: "failed",
+          assistantMessageId: created.pair.assistantMessage.messageId,
+          attemptId: null,
+          manualEntryDraft: null,
+          dailyCompanionDraft: null,
+          reviewDeliveryChangeDraft: null,
+          actionDraft: null,
+        });
+      }
+    }
+    if (!created.reservation) {
+      platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+        state: "missing_reservation",
+      });
+    }
     if (created.reservation.state === "blocked") {
       return Object.freeze({ state: "blocked", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: created.reservation.attempt.attemptId, manualEntryDraft: null, dailyCompanionDraft: null, reviewDeliveryChangeDraft: null, actionDraft: null });
     }

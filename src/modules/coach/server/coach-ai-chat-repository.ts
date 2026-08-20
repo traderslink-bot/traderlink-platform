@@ -37,6 +37,7 @@ const CONVERSATION_SEARCH_MAX_LENGTH = 120;
 const MODEL_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u;
 const FAILURE_CODE_PATTERN = /^[A-Z][A-Z0-9_]{0,95}$/u;
 const MONEY_RATE_PATTERN = /^(?:0|[1-9]\d*)(?:\.\d{1,6})?$/u;
+const SHA256_PATTERN = /^[0-9a-f]{64}$/u;
 
 type ScopeRecord = Readonly<{ accountId: string }>;
 
@@ -61,6 +62,11 @@ type MessageRow = Readonly<{
   failure_code: string | null;
   created_at_utc: string;
   finalized_at_utc: string | null;
+}>;
+
+type DeterministicGenerationRow = Readonly<{
+  coach_ai_chat_conversation_id: string;
+  assistant_message_id: string;
 }>;
 
 function canonicalize(value: unknown): unknown {
@@ -578,6 +584,224 @@ WHERE coach_ai_chat_message_id = ? AND user_id = ? AND workspace_id = ?
       });
     }
     return messageRecord(this.message(scope, assistantMessageId, verifiedAccountId));
+  }
+
+  findDeterministicGenerationByIdempotency(
+    scope: WorkspaceAccessScope,
+    idempotencySha256: unknown,
+  ): Readonly<{
+    conversationId: string;
+    pair: CoachAiChatGenerationPair;
+  }> | null {
+    const verifiedAccountId = this.verifiedAccountId(scope);
+    if (typeof idempotencySha256 !== "string" ||
+        !SHA256_PATTERN.test(idempotencySha256)) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+        field: "idempotencySha256",
+      });
+    }
+    const row = this.database.prepare<[
+      string,
+      string,
+      string,
+      string,
+    ], DeterministicGenerationRow>(`SELECT
+  user_message.coach_ai_chat_conversation_id,
+  assistant_message.coach_ai_chat_message_id AS assistant_message_id
+FROM coach_ai_chat_messages user_message
+JOIN coach_ai_chat_messages assistant_message
+  ON assistant_message.coach_ai_chat_conversation_id =
+    user_message.coach_ai_chat_conversation_id
+  AND assistant_message.message_sequence = user_message.message_sequence + 1
+  AND assistant_message.role = 'assistant'
+WHERE user_message.user_id = ? AND user_message.workspace_id = ?
+  AND user_message.account_id = ? AND user_message.role = 'user'
+  AND json_extract(
+    user_message.structured_interpretation_json,
+    '$.deterministicIdempotencySha256'
+  ) = ?`).get(
+      scope.userId,
+      scope.workspaceId,
+      verifiedAccountId,
+      idempotencySha256,
+    );
+    if (!row) return null;
+    return Object.freeze({
+      conversationId: row.coach_ai_chat_conversation_id,
+      pair: this.readGenerationPair(
+        scope,
+        row.coach_ai_chat_conversation_id,
+        row.assistant_message_id,
+      ),
+    });
+  }
+
+  listExpiredDeterministicGenerations(
+    scope: WorkspaceAccessScope,
+    input: Readonly<{
+      olderThanUtc: string;
+      conversationId?: string | null;
+    }>,
+  ): readonly Readonly<{
+    conversationId: string;
+    assistantMessageId: string;
+  }>[] {
+    const verifiedAccountId = this.verifiedAccountId(scope);
+    const conversationId = input.conversationId ?? null;
+    if (conversationId !== null) {
+      this.conversation(scope, conversationId, verifiedAccountId);
+    }
+    const rows = this.database.prepare<[
+      string,
+      string,
+      string,
+      string,
+      string | null,
+      string | null,
+    ], DeterministicGenerationRow>(`SELECT
+  user_message.coach_ai_chat_conversation_id,
+  assistant_message.coach_ai_chat_message_id AS assistant_message_id
+FROM coach_ai_chat_messages user_message
+JOIN coach_ai_chat_messages assistant_message
+  ON assistant_message.coach_ai_chat_conversation_id =
+    user_message.coach_ai_chat_conversation_id
+  AND assistant_message.message_sequence = user_message.message_sequence + 1
+WHERE user_message.user_id = ? AND user_message.workspace_id = ?
+  AND user_message.account_id = ? AND user_message.role = 'user'
+  AND json_extract(
+    user_message.structured_interpretation_json,
+    '$.generationSource'
+  ) = 'links_deterministic_fast_path_v1'
+  AND assistant_message.role = 'assistant'
+  AND assistant_message.generation_state = 'pending'
+  AND assistant_message.created_at_utc <= ?
+  AND (? IS NULL OR user_message.coach_ai_chat_conversation_id = ?)
+ORDER BY assistant_message.created_at_utc, assistant_message.coach_ai_chat_message_id`).all(
+      scope.userId,
+      scope.workspaceId,
+      verifiedAccountId,
+      input.olderThanUtc,
+      conversationId,
+      conversationId,
+    );
+    return Object.freeze(rows.map((row) => Object.freeze({
+      conversationId: row.coach_ai_chat_conversation_id,
+      assistantMessageId: row.assistant_message_id,
+    })));
+  }
+
+  failExpiredDeterministicGeneration(
+    scope: WorkspaceAccessScope,
+    input: Readonly<{
+      assistantMessageId: string;
+      olderThanUtc: string;
+      failureCode: string;
+    }>,
+    now = new Date(),
+  ): boolean {
+    const verifiedAccountId = this.verifiedAccountId(scope);
+    assertCanonicalUuidV4(input.assistantMessageId, "assistantMessageId");
+    if (!FAILURE_CODE_PATTERN.test(input.failureCode)) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+        field: "failureCode",
+      });
+    }
+    const finalizedAtUtc = createCanonicalUtcTimestamp(now);
+    const result = this.database.prepare(`UPDATE coach_ai_chat_messages
+SET assistant_text_private = NULL, generation_state = 'failed', failure_code = ?,
+  finalized_at_utc = ?
+WHERE coach_ai_chat_message_id = ? AND user_id = ? AND workspace_id = ?
+  AND account_id = ? AND role = 'assistant' AND generation_state = 'pending'
+  AND created_at_utc <= ?
+  AND EXISTS (
+    SELECT 1 FROM coach_ai_chat_messages user_message
+    WHERE user_message.coach_ai_chat_conversation_id =
+      coach_ai_chat_messages.coach_ai_chat_conversation_id
+      AND user_message.message_sequence = coach_ai_chat_messages.message_sequence - 1
+      AND user_message.role = 'user'
+      AND json_extract(
+        user_message.structured_interpretation_json,
+        '$.generationSource'
+      ) = 'links_deterministic_fast_path_v1'
+  )`).run(
+      input.failureCode,
+      finalizedAtUtc,
+      input.assistantMessageId,
+      scope.userId,
+      scope.workspaceId,
+      verifiedAccountId,
+      input.olderThanUtc,
+    );
+    return result.changes === 1;
+  }
+
+  finalizeDeterministicAssistantSuccess(
+    scope: WorkspaceAccessScope,
+    assistantMessageId: string,
+    input: Readonly<{
+      assistantTextPrivate: unknown;
+      snapshotContractVersion: unknown;
+      factualSnapshot: unknown;
+    }>,
+    now = new Date(),
+  ): CoachAiChatMessage {
+    const verifiedAccountId = this.verifiedAccountId(scope);
+    const assistantText = assertText(
+      input.assistantTextPrivate,
+      "assistantTextPrivate",
+      ASSISTANT_MESSAGE_MAX_LENGTH,
+    );
+    const snapshotContractVersion = assertText(
+      input.snapshotContractVersion,
+      "snapshotContractVersion",
+      SNAPSHOT_CONTRACT_VERSION_MAX_LENGTH,
+    );
+    const snapshot = immutableSnapshot(input.factualSnapshot);
+    const finalizedAtUtc = createCanonicalUtcTimestamp(now);
+    return this.transaction(() => {
+      const pending = this.message(scope, assistantMessageId, verifiedAccountId);
+      if (pending.role !== "assistant" || pending.generation_state !== "pending") {
+        platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+          state: "assistant_not_pending",
+        });
+      }
+      const result = this.database.prepare(`UPDATE coach_ai_chat_messages
+SET assistant_text_private = ?, generation_state = 'completed', failure_code = NULL,
+  finalized_at_utc = ?
+WHERE coach_ai_chat_message_id = ? AND user_id = ? AND workspace_id = ?
+  AND account_id = ? AND role = 'assistant' AND generation_state = 'pending'`).run(
+        assistantText,
+        finalizedAtUtc,
+        assistantMessageId,
+        scope.userId,
+        scope.workspaceId,
+        verifiedAccountId,
+      );
+      if (result.changes !== 1) {
+        platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+          state: "assistant_not_pending",
+        });
+      }
+      const snapshotId = createCanonicalUuidV4();
+      this.database.prepare(`INSERT INTO coach_ai_chat_answer_snapshots (
+  coach_ai_chat_answer_snapshot_id, coach_ai_chat_message_id, coach_ai_chat_conversation_id,
+  user_id, workspace_id, account_id, snapshot_contract_version, factual_snapshot_json,
+  factual_snapshot_sha256, created_at_utc
+) VALUES (?, ?, (SELECT coach_ai_chat_conversation_id FROM coach_ai_chat_messages WHERE coach_ai_chat_message_id = ?),
+  ?, ?, ?, ?, ?, ?, ?)`).run(
+        snapshotId,
+        assistantMessageId,
+        assistantMessageId,
+        scope.userId,
+        scope.workspaceId,
+        verifiedAccountId,
+        snapshotContractVersion,
+        snapshot.json,
+        snapshot.sha256,
+        finalizedAtUtc,
+      );
+      return messageRecord(this.message(scope, assistantMessageId, verifiedAccountId));
+    });
   }
 
   finalizeAssistantSuccess(

@@ -48,6 +48,18 @@ export class CoachAiChatGenerationRecoveryService {
       });
       if (finalized) recovered += 1;
     }
+    const deterministic = this.chat.listExpiredDeterministicGenerations(scope, {
+      olderThanUtc,
+      conversationId: input.conversationId,
+    });
+    for (const generation of deterministic) {
+      const changed = this.chat.failExpiredDeterministicGeneration(scope, {
+        assistantMessageId: generation.assistantMessageId,
+        olderThanUtc,
+        failureCode: COACH_AI_CHAT_GENERATION_INTERRUPTED_FAILURE_CODE,
+      }, now);
+      if (changed) recovered += 1;
+    }
     return recovered;
   }
 }

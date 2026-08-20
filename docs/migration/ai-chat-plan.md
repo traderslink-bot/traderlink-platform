@@ -396,6 +396,16 @@ through bounded snapshots.
   perform explicitly confirmed changes. The agent receives no arbitrary SQL,
   database, statement-file, browser, network, shell, code-interpreter or MCP
   access.
+- The manager receives a compact searchable capability catalog. Full factual-
+  tool schemas are deferred and loaded only after Links selects the relevant
+  tool through the Responses API tool-search capability. Adding a tool must not
+  silently restore an all-schemas-on-every-turn provider envelope.
+- A strictly allowlisted exact-question route may answer from one deterministic
+  account-scoped tool without contacting a model. It must use the same enforced
+  analysis scope, reporting currency, claim catalog, response-safety checks,
+  immutable factual snapshot, idempotency and interrupted-generation recovery
+  as a provider answer. Any ambiguous, causal, advisory, drafting or broader
+  question remains model-routed.
 - TraderLink's database remains the authoritative conversation and action
   history. Provider-managed conversation state is not the permanent source of
   truth. Each run receives bounded recent messages plus server-built structured
@@ -468,6 +478,9 @@ The owner-only AI area should include:
 ### Cost and abuse protections
 
 - One active generation per conversation; server idempotency keys for retries.
+- Zero-provider deterministic answers create no provider attempt or receipt and
+  count as zero provider cost. Their saved message interpretation and immutable
+  answer snapshot identify the deterministic route and make retries auditable.
 - Question and answer length limits before provider work begins.
 - Per-account request rate limits and feature-specific daily/period caps.
 - Before every provider request, enforce the tighter of allowance, request cap,

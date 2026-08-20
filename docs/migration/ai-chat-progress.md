@@ -16,7 +16,9 @@ approved drawer/card design remains intact. Representative production cost
 optimization remains a launch blocker; the seven-case Sol average is not an
 accepted default per-answer cost. Eligible exact questions now require a
 zero-provider deterministic response path before any default model route is
-accepted.
+accepted. That source path and deferred autonomous tool discovery are now
+implemented and deterministically verified; migration `0068` is source-only
+until its protected-database checkpoint is separately coordinated.
 
 The current-plan technical implementation and local acceptance are complete.
 Production provider enablement, final caps and launch operations remain owner
@@ -121,6 +123,13 @@ The private persistence API checkpoint is tracked in
   confirmation-only reporting-currency draft and unsupported-advice refusal.
   The complete suite cost $0.345109, not the caller-supplied $3 maximum safety
   parameter. It reads no private Journal data and performs no product mutation.
+- [x] Replace eager transmission of all 36 factual-tool schemas with native
+  Responses API tool search and deferred loading. Links still chooses the tool;
+  only its selected full schema enters the provider context.
+- [x] Implement the first strict zero-provider exact-question routes for common
+  P/L, count, win-rate, best/worst trade, trading-day and ticker rankings. The
+  deterministic verifier proves saved evidence, retry idempotency, interrupted
+  recovery and zero attempts, receipts and provider cost.
 - [ ] Implement production entitlement, scheduled-delivery, operational, and
   privacy-deletion decisions at their separate launch boundaries.
 

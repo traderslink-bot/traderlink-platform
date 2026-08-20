@@ -213,6 +213,8 @@ The parent product contract remains the
   timeout ceilings.
 - [ ] Establish the owner-approved representative production cost target and
   accepted simple/complex model routes.
+- [x] Replace eager factual-tool schemas with autonomous deferred tool search
+  and an explicit prompt-cache boundary.
 - [x] Reconcile the current 36-tool/12-action matrix, Help, language, runtime,
   QA, and progress records.
 - [x] Add a static inventory-drift guard.
@@ -234,8 +236,9 @@ The parent product contract remains the
 - [ ] Prove representative cold/warm and simple/complex per-answer cost against
   an owner-approved production target. The seven-case Sol average is not an
   accepted production average.
-- [ ] Implement and evaluate the zero-provider deterministic fast path for
-  eligible exact questions before accepting any default model route.
+- [x] Implement and deterministically evaluate the zero-provider fast path for
+  eligible exact questions. Protected migration `0068` and model-route provider
+  cost acceptance remain separate gates.
 - [ ] Record official ordinary-input, cached-input, cache-write-input, and output
   prices.
 - [ ] Configure entitlement and request/token/spend caps.
@@ -518,3 +521,39 @@ The parent product contract remains the
 - No private Journal data, protected database access, product write, migration,
   server, build, `.next` access, test runner, deployment, push or publication
   occurred. No additional paid provider request followed the seven-case run.
+
+## 2026-08-20 implementation checkpoint: tool discovery and zero-provider answers
+
+- The installed Agents SDK `0.16.0` and Responses API support native tool
+  search and deferred function loading. Links still discovers and selects from
+  the complete ordered 36-tool inventory, but no full factual-tool schema is
+  eagerly included. Only a selected tool's full schema is loaded. The adapter
+  also uses an explicit 30-minute prompt-cache boundary.
+- A static drift verifier requires tool search, all factual tools marked
+  deferred, explicit caching and zero eager factual schemas. It passed with all
+  36 tools discoverable. Focused ESLint and the focused no-emit TypeScript
+  project passed.
+- The first strict local exact-question classifier covers common net/gross P/L,
+  trade count, win rate, best/worst trade, highest/lowest trading-day P/L and
+  highest/lowest ticker P/L wording. Phrase matching is intentionally exact: a
+  broader question such as **What was my most profitable day and why?** remains
+  model-routed rather than receiving a shallow template answer.
+- Exact answers run through the same account-scoped factual dispatcher,
+  selected analysis scope, reporting currency, claim catalog, exact-token
+  validation and response-safety backstop. They save the normal assistant
+  message, structured conversation state and immutable factual snapshot without
+  creating a provider reservation, attempt or receipt.
+- Migration `0068_coach_ai_chat_deterministic_fast_path` validates the saved
+  deterministic source/idempotency contract and adds one account-scoped unique
+  retry index. A process-interrupted deterministic answer fails closed after
+  the existing ten-minute generation lease rather than remaining pending.
+- The disposable full-migration verifier asked **What was my most profitable
+  day?** and saved **Your most profitable trading day was Tuesday, with $800.00
+  net P/L. You took 3 trades that day.** It reused the original answer on retry,
+  recovered a simulated interrupted generation, retained one immutable factual
+  snapshot and recorded zero provider calls, attempts, receipts and cost.
+- All 68 migrations applied to the disposable in-memory database. The protected
+  database remains at migration `0067`; applying `0068` requires the normal
+  exclusive writer, fresh backup/restore and integrity checkpoint. No test
+  runner, browser, server, build, `.next`, protected-database write, provider
+  request, deployment, push or publication occurred in this checkpoint.
