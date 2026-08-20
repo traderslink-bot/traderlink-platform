@@ -67,9 +67,6 @@ export function NotificationList({
         sx={{ alignItems: "center", minHeight: compact ? 150 : 220, justifyContent: "center", px: 2, textAlign: "center" }}
       >
         <Typography sx={{ fontWeight: 800 }}>You&apos;re all caught up</Typography>
-        <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
-          Updates about your imports, charts and reviews will appear here.
-        </Typography>
       </Stack>
     );
   }
