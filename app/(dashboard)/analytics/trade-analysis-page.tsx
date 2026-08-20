@@ -16,6 +16,7 @@ import {
   buildDailyTradeLongTermAnalytics,
   readDailyTradeAnalysisCurrencies,
 } from "@/src/modules/level-analysis/server/daily-trade-long-term-analytics-service";
+import { readMoomooMarketDataAccess } from "@/src/modules/level-analysis/server/moomoo-market-data-access";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformUserPreferenceRepository } from "@/src/modules/platform/server/identity/platform-user-preference-repository";
@@ -24,6 +25,7 @@ import { OverviewDateRangeControl, type OverviewDateRange } from "./overview-dat
 import { AnalyzedTradesIndex } from "./analyzed-trades-index";
 import { TradeAnalysisClient, type TradeAnalysisView } from "./trade-analysis-client";
 import { TradeAnalyzerHelpLink } from "./trade-analyzer-help-link";
+import { MoomooMarketDataConnectionPrompt } from "../moomoo-market-data-connection-prompt";
 
 const VIEW_DETAILS: Readonly<Record<TradeAnalysisView, Readonly<{
   helpHref: string;
@@ -102,6 +104,8 @@ export async function TradeAnalysisPage({
   const dateRange = selectedDateRange(searchParams);
   const moneyBasis = searchParams.basis === "net" ? "net" as const : "gross" as const;
   const details = VIEW_DETAILS[view];
+  const moomooMarketDataAccess = withReadonlyPlatformDatabase({}, (database) =>
+    readMoomooMarketDataAccess(database, scope));
 
   if (view === "trades") {
     const tradeIndex = withReadonlyPlatformDatabase({}, (database) => {
@@ -122,6 +126,7 @@ export async function TradeAnalysisPage({
           </Box>
           <TradeAnalyzerHelpLink href={details.helpHref} label={details.title} size="medium" />
         </Stack>
+        {moomooMarketDataAccess.shouldShowConnectionGuidance ? <MoomooMarketDataConnectionPrompt surface="analyzer" /> : null}
         <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} sx={{ alignItems: { md: "center" }, justifyContent: "space-between" }}>
           <OverviewDateRangeControl href={baseHref} value={dateRange} />
           <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap" }}>
@@ -204,6 +209,7 @@ export async function TradeAnalysisPage({
         </Box>
         <TradeAnalyzerHelpLink href={details.helpHref} label={details.title} size="medium" />
       </Stack>
+      {moomooMarketDataAccess.shouldShowConnectionGuidance ? <MoomooMarketDataConnectionPrompt surface="analyzer" /> : null}
       <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} sx={{ alignItems: { md: "center" }, justifyContent: "space-between" }}>
         <OverviewDateRangeControl href={baseHref} value={dateRange} />
         <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap" }}>
@@ -227,6 +233,7 @@ export async function TradeAnalysisPage({
           startDate: dateRange.startDate,
         }}
         model={result.model}
+        showMoomooConnectionGuidance={moomooMarketDataAccess.shouldShowConnectionGuidance}
         view={view}
       />
     </DashboardPage>
