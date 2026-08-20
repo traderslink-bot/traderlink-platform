@@ -70,6 +70,7 @@ import {
 } from "./coach-ai-chat-conversation-state";
 import {
   COACH_AI_CHAT_DETERMINISTIC_FAST_PATH_VERSION,
+  resolveCoachAiChatQuestionAnalysisScope,
   runCoachAiChatDeterministicFastPath,
   selectCoachAiChatDeterministicFastPath,
 } from "./coach-ai-chat-deterministic-fast-path";
@@ -270,9 +271,13 @@ export class CoachAiChatGenerationService {
     const requestedAnalysisScope = input.analysisScope ?? Object.freeze({ kind: "all" as const });
     const pageContext = input.pageContext ?? null;
     const deterministicRoute = intent === "answer_question"
-      ? selectCoachAiChatDeterministicFastPath(input.question)
+      ? selectCoachAiChatDeterministicFastPath(input.question, now)
       : null;
-    const analysisScope = deterministicRoute?.analysisScopeOverride ?? requestedAnalysisScope;
+    const explicitQuestionScope = intent === "answer_question"
+      ? resolveCoachAiChatQuestionAnalysisScope(input.question, now)
+      : null;
+    const analysisScope = deterministicRoute?.analysisScopeOverride ??
+      explicitQuestionScope ?? requestedAnalysisScope;
     new CoachAiChatGenerationRecoveryService(this.chat, this.controls).reconcile(
       scope,
       { conversationId: input.conversationId },

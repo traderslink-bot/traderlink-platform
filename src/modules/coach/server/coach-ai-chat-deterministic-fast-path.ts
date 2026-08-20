@@ -66,7 +66,8 @@ const SUMMARY_PHRASES: Readonly<Record<SummaryRouteKey, readonly string[]>> = Ob
   total_trades: Object.freeze([
     "how many trades have i taken", "how many completed trades do i have",
     "how many completed trades have i taken", "what is my total trade count",
-    "whats my total trade count",
+    "whats my total trade count", "how many trades did i do",
+    "how many trades did i take",
   ]),
   win_rate: Object.freeze([
     "what is my win rate", "whats my win rate", "show me my win rate",
@@ -110,6 +111,16 @@ function normalizeQuestion(value: string): string {
     .replace(/\s+/gu, " ");
 }
 
+function normalizeScopeQuestion(value: string): string {
+  return value
+    .normalize("NFKC")
+    .toLocaleLowerCase("en-US")
+    .replace(/[’']/gu, "")
+    .replace(/[^a-z0-9-]+/gu, " ")
+    .trim()
+    .replace(/\s+/gu, " ");
+}
+
 function phraseRoute<T extends string>(
   question: string,
   phrases: Readonly<Record<T, readonly string[]>>,
@@ -121,41 +132,101 @@ function phraseRoute<T extends string>(
 }
 
 const MONTH_NUMBER_BY_NAME = Object.freeze({
-  january: "01", february: "02", march: "03", april: "04", may: "05", june: "06",
-  july: "07", august: "08", september: "09", october: "10", november: "11", december: "12",
+  january: "01", jan: "01", february: "02", feb: "02", march: "03", mar: "03",
+  april: "04", apr: "04", may: "05", june: "06", jun: "06", july: "07", jul: "07",
+  august: "08", aug: "08", september: "09", sep: "09", sept: "09", october: "10",
+  oct: "10", november: "11", nov: "11", december: "12", dec: "12",
 } as const);
 
-function monthScopeFromQuestion(question: string): CoachAiChatAnalysisScope | null {
-  const match = /\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+(20\d{2})\b/u.exec(question);
-  if (!match) return null;
-  const name = match[1] as keyof typeof MONTH_NUMBER_BY_NAME;
-  return Object.freeze({ kind: "month", month: `${match[2]}-${MONTH_NUMBER_BY_NAME[name]}` });
+const MONTH_NAME_PATTERN = Object.keys(MONTH_NUMBER_BY_NAME).join("|");
+
+type QuestionScopeMatch = Readonly<{
+  scope: CoachAiChatAnalysisScope;
+  phrase: string;
+}>;
+
+function calendarDate(year: string, month: string, day: string): string | null {
+  const parsedDay = Number(day);
+  const parsedMonth = Number(month);
+  const parsedYear = Number(year);
+  const candidate = new Date(Date.UTC(parsedYear, parsedMonth - 1, parsedDay));
+  if (candidate.getUTCFullYear() !== parsedYear || candidate.getUTCMonth() !== parsedMonth - 1 ||
+      candidate.getUTCDate() !== parsedDay) return null;
+  return `${year}-${month}-${String(parsedDay).padStart(2, "0")}`;
 }
 
-function datedTradeCountRoute(question: string): CoachAiChatDeterministicFastPathRoute | null {
-  const scope = monthScopeFromQuestion(question);
-  if (!scope || !/^how many (?:completed )?trades (?:did|have|were) i (?:do|take|taken|make)\b/u.test(question)) {
-    return null;
+function easternDate(now: Date): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit",
+  }).formatToParts(now);
+  const value = (type: Intl.DateTimeFormatPartTypes): string =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  return `${value("year")}-${value("month")}-${value("day")}`;
+}
+
+function explicitQuestionScope(question: string, now: Date): QuestionScopeMatch | null {
+  const relative = /\b(?:last|past) ([1-9][0-9]{0,2}) days\b/u.exec(question);
+  if (relative) {
+    const days = Number(relative[1]);
+    if (days <= 365) {
+      const endDate = easternDate(now);
+      const start = new Date(`${endDate}T12:00:00.000Z`);
+      start.setUTCDate(start.getUTCDate() - (days - 1));
+      return Object.freeze({
+        scope: Object.freeze({ kind: "custom", startDate: start.toISOString().slice(0, 10), endDate }),
+        phrase: relative[0],
+      });
+    }
   }
+  const isoDay = /\b((?:19|20)\d{2})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])\b/u.exec(question);
+  if (isoDay) {
+    const date = calendarDate(isoDay[1], isoDay[2], isoDay[3]);
+    if (date) return Object.freeze({ scope: Object.freeze({ kind: "day", date }), phrase: isoDay[0] });
+  }
+  const namedDay = new RegExp(`\\b(${MONTH_NAME_PATTERN})\\s+([1-9]|[12]\\d|3[01])(?:st|nd|rd|th)?(?:,)?\\s+((?:19|20)\\d{2})\\b`, "u").exec(question);
+  if (namedDay) {
+    const month = MONTH_NUMBER_BY_NAME[namedDay[1] as keyof typeof MONTH_NUMBER_BY_NAME];
+    const date = calendarDate(namedDay[3], month, namedDay[2]);
+    if (date) return Object.freeze({ scope: Object.freeze({ kind: "day", date }), phrase: namedDay[0] });
+  }
+  const namedMonth = new RegExp(`\\b(${MONTH_NAME_PATTERN})\\s+((?:19|20)\\d{2})\\b`, "u").exec(question);
+  if (namedMonth) {
+    const month = MONTH_NUMBER_BY_NAME[namedMonth[1] as keyof typeof MONTH_NUMBER_BY_NAME];
+    return Object.freeze({
+      scope: Object.freeze({ kind: "month", month: `${namedMonth[2]}-${month}` }),
+      phrase: namedMonth[0],
+    });
+  }
+  const year = /\bin ((?:19|20)\d{2})\b/u.exec(question);
+  if (!year) return null;
   return Object.freeze({
-    routeKey: "total_trades",
-    request: Object.freeze({
-      contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
-      toolName: "summarize_closed_trades",
-      metricIds: Object.freeze(["total_trades"]),
-      moneyBasis: "net",
-    }),
-    analysisScopeOverride: scope,
+    scope: Object.freeze({ kind: "custom", startDate: `${year[1]}-01-01`, endDate: `${year[1]}-12-31` }),
+    phrase: year[0],
   });
+}
+
+export function resolveCoachAiChatQuestionAnalysisScope(
+  question: string,
+  now = new Date(),
+): CoachAiChatAnalysisScope | null {
+  return explicitQuestionScope(normalizeScopeQuestion(question), now)?.scope ?? null;
+}
+
+function removeExplicitQuestionScope(question: string, match: QuestionScopeMatch | null): string {
+  if (!match) return question;
+  return normalizeQuestion(question
+    .replace(normalizeQuestion(match.phrase), " ")
+    .replace(/\b(?:in|on|during)(?: the)?\s*$/u, ""));
 }
 
 export function selectCoachAiChatDeterministicFastPath(
   question: string,
+  now = new Date(),
 ): CoachAiChatDeterministicFastPathRoute | null {
   const normalized = normalizeQuestion(question);
-  const datedTradeCount = datedTradeCountRoute(normalized);
-  if (datedTradeCount) return datedTradeCount;
-  const summary = phraseRoute(normalized, SUMMARY_PHRASES);
+  const scopeMatch = explicitQuestionScope(normalizeScopeQuestion(question), now);
+  const scopedQuestion = removeExplicitQuestionScope(normalized, scopeMatch);
+  const summary = phraseRoute(scopedQuestion, SUMMARY_PHRASES);
   if (summary) {
     const moneyBasis = summary === "gross_pnl" ? "gross" : "net";
     return Object.freeze({
@@ -166,9 +237,10 @@ export function selectCoachAiChatDeterministicFastPath(
         metricIds: Object.freeze([summary]),
         moneyBasis,
       }),
+      ...(scopeMatch ? { analysisScopeOverride: scopeMatch.scope } : {}),
     });
   }
-  const ranked = phraseRoute(normalized, RANKED_PHRASES);
+  const ranked = phraseRoute(scopedQuestion, RANKED_PHRASES);
   if (!ranked) return null;
   const ticker = ranked.endsWith("ticker");
   return Object.freeze({
@@ -182,6 +254,7 @@ export function selectCoachAiChatDeterministicFastPath(
       rankDirection: ranked.startsWith("most_") ? "descending" : "ascending",
       moneyBasis: "net",
     }),
+    ...(scopeMatch ? { analysisScopeOverride: scopeMatch.scope } : {}),
   });
 }
 

@@ -18,7 +18,10 @@ import { CoachAiChatRepository } from
   "@/src/modules/coach/server/coach-ai-chat-repository";
 import { CoachAiChatGenerationRecoveryService } from
   "@/src/modules/coach/server/coach-ai-chat-generation-recovery-service";
-import { selectCoachAiChatDeterministicFastPath } from
+import {
+  resolveCoachAiChatQuestionAnalysisScope,
+  selectCoachAiChatDeterministicFastPath,
+} from
   "@/src/modules/coach/server/coach-ai-chat-deterministic-fast-path";
 
 const NOW = new Date("2026-08-20T16:30:00.000Z");
@@ -157,6 +160,37 @@ async function main(): Promise<void> {
   invariant(selectCoachAiChatDeterministicFastPath(
     "What was my most profitable day and why?",
   ) === null, "A broader causal question must remain model-routed.");
+  const scopedQuestions = Object.freeze([
+    Object.freeze({
+      question: "What was my most profitable trade on April 15, 2026?",
+      expected: Object.freeze({ kind: "day", date: "2026-04-15" }),
+    }),
+    Object.freeze({
+      question: "What was my most profitable trade on 2026-04-15?",
+      expected: Object.freeze({ kind: "day", date: "2026-04-15" }),
+    }),
+    Object.freeze({
+      question: "How many trades did I do in April 2026?",
+      expected: Object.freeze({ kind: "month", month: "2026-04" }),
+    }),
+    Object.freeze({
+      question: "What was my best trade in 2026?",
+      expected: Object.freeze({ kind: "custom", startDate: "2026-01-01", endDate: "2026-12-31" }),
+    }),
+    Object.freeze({
+      question: "What was my best trade in the last 90 days?",
+      expected: Object.freeze({ kind: "custom", startDate: "2026-05-23", endDate: "2026-08-20" }),
+    }),
+  ]);
+  for (const item of scopedQuestions) {
+    invariant(JSON.stringify(resolveCoachAiChatQuestionAnalysisScope(item.question, NOW)) ===
+      JSON.stringify(item.expected),
+    `The explicit calendar scope must be resolved for: ${item.question}`);
+  }
+  invariant(selectCoachAiChatDeterministicFastPath(
+    "What was my most profitable trade in April 2026?", NOW,
+  )?.analysisScopeOverride?.kind === "month",
+  "A scoped common factual question must stay deterministic.");
 
   const configuredOverrideDatabase = new Database(":memory:");
   try {
