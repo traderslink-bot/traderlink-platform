@@ -2,7 +2,7 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 
-import { Agent, OpenAIProvider, Runner, tool } from "@openai/agents";
+import { Agent, OpenAIProvider, Runner, tool, toolSearchTool } from "@openai/agents";
 import { z } from "zod";
 
 import {
@@ -1022,6 +1022,14 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
       ];
     const exposedToolNames = agentTools.map(({ name }) => name);
     verifyCoachAiChatFactualToolInventory(exposedToolNames);
+    // Links can discover every registered factual capability, while the model
+    // receives a full JSON schema only for tools it selects through tool search.
+    // This preserves autonomous tool choice without resending all schemas on
+    // every turn.
+    const deferredFactualTools = agentTools.map((factualTool) => Object.freeze({
+      ...factualTool,
+      deferLoading: true,
+    }));
     const agent = new Agent({
       name: "TraderLink Journal Companion",
       instructions: SYSTEM_INSTRUCTION,
@@ -1031,13 +1039,19 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
         parallelToolCalls: false,
         store: false,
         preserveRawUsage: true,
+        promptCacheOptions: { mode: "explicit", ttl: "30m" },
         providerData: {
           safety_identifier: privacySafeSafetyIdentifier(input.scope),
         },
         retry: { maxRetries: 0 },
       },
       outputType: agentAnswerSchema,
-      tools: agentTools,
+      tools: [
+        toolSearchTool({
+          description: "Find the smallest relevant TraderLink factual tool for the trader's request.",
+        }),
+        ...deferredFactualTools,
+      ],
     });
     const result = await runner.run(
       agent,
