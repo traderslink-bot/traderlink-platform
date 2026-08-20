@@ -1,6 +1,6 @@
 # TraderLink Platform PWA Progress
 
-**Status:** PWA 0-4 owner-approved; migration 0064 verified locally; dynamic browser acceptance remains blocked
+**Status:** PWA 0-4 owner-approved; migration 0064 verified locally; desktop browser acceptance found a Notifications hydration blocker
 
 **Started:** 2026-08-18
 
@@ -105,7 +105,7 @@ caching authenticated HTML.
 
 ### PWA 5 - acceptance and hosted gate
 
-**Status:** In progress; protected migration gate passed, dynamic local runtime/browser gate blocked
+**Status:** In progress; protected migration gate passed, desktop browser pass stopped at Notifications hydration
 
 - [ ] Complete focused resource-aware technical checks.
 - [ ] Complete desktop and mobile-browser PWA acceptance.
@@ -123,16 +123,19 @@ to the protected local database after a verified online backup and restore
 rehearsal. No VAPID or push-encryption secret is configured and no Journal
 trade or push subscription was written.
 
-The next PWA 5 action is dynamic browser acceptance from a responsive local
-server. Two resource-aware server attempts reached ready with workers disabled,
-but the dynamic manifest compiler returned no bytes; the in-app browser
-connection also did not initialize in the current Codex environment. Static
-service-worker assets returned 200. Do not infer install, authenticated route,
-offline-relaunch or narrow-mobile acceptance from those static results. Fix or
-replace the local acceptance environment, then rerun the browser gate without
-submitting a Journal trade. Real phone installation, real Web Push and
-background delivery remain hosted HTTPS gates after separate deployment and
-secret authorization.
+The scheduled 2026-08-19 browser run reached a responsive manifest and
+authenticated Workspace. Desktop Workspace, the complete navigation,
+Notifications Center, Push notifications settings and Offline data settings
+rendered. The first confirmed application defect is a Notifications hydration
+mismatch: the server renders localized times with `p.m.` while the browser
+renders `PM`. `notification-list.tsx` uses the environment-default locale in
+both server and client rendering, so the same timestamp is not deterministic.
+Fix that formatter through one explicit locale/time-zone contract or a
+server-issued display value, then restart the browser gate at Notifications.
+Do not infer narrow-mobile, install, offline-relaunch or permission-prompt
+acceptance; those checks correctly stopped at the first defect. Real phone
+installation, real Web Push and background delivery remain hosted HTTPS gates
+after separate deployment and secret authorization.
 
 ## 2026-08-18 PWA 1 assembly note
 
@@ -350,3 +353,33 @@ secret authorization.
 - The exact review process was stopped and port 3010 was confirmed closed. No
   application source, Journal data, outbox record, push state, configuration,
   dependency, deployment or hosted service changed during the retry.
+
+## 2026-08-19 scheduled 8:01 PM browser acceptance
+
+- The scheduled webpack launcher exited without starting because an existing
+  canonical no-workers development process already owned the checkout's Next
+  development lock. That process started at 6:40 PM under a different process
+  tree and was not terminated or otherwise changed.
+- The existing server returned `/manifest.webmanifest` with HTTP 200 and then
+  returned the authenticated `/workspace` HTML with HTTP 200 in 6.4 seconds.
+- The in-app browser connected successfully. Desktop Workspace rendered with
+  its factual cards, complete Trades, Trade Analyzer and Analytics navigation,
+  standalone destinations and five-unread Notifications control. No browser
+  warnings or errors were present on the initial Workspace render.
+- The Notifications Center rendered current notification cards. Account
+  Preferences rendered separate Discord and Push notifications controls plus
+  Offline data showing three saved pages, a last-updated time, 6.4 KB device
+  storage, bounded limits and **Remove offline data**.
+- Browser console evidence then found the first application defect: React
+  hydration failed because the server formatted a notification timestamp as
+  `p.m.` while the browser formatted the same timestamp as `PM`.
+  `app/(dashboard)/notifications/notification-list.tsx` uses
+  `Intl.DateTimeFormat(undefined, ...)`, allowing server and browser locales to
+  produce different initial markup.
+- Per the acceptance stop rule, narrow-mobile, install, offline-relaunch,
+  Daily/Swing/Quick offline forms and notification-permission behavior were not
+  tested past that confirmed boundary. The QA tab was closed.
+- No Journal trade, outbox entry, notification read/dismissal, push permission,
+  push subscription, secret, provider call, deployment or hosted state changed.
+  The scheduled server process exited itself; the pre-existing process was
+  preserved.
