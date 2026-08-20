@@ -41,6 +41,7 @@ import {
   canonicalTradeExplorerDecimalInput,
   canonicalTradeExplorerTimeInput,
 } from "@/src/modules/journal-analytics/presentation/trade-explorer-ordering";
+import { OfflineSavedViewStatus } from "@/app/pwa/offline-saved-view-status";
 import {
   DashboardPage,
   DashboardPanel,
@@ -377,9 +378,11 @@ function EvidenceTable({
 export default function TradeExplorerComparisonClient({
   initialStudies,
   model,
+  offlineSavedAtUtc,
 }: Readonly<{
   initialStudies: readonly TradeExplorerComparisonStudy[];
   model: TradeExplorerPageModel;
+  offlineSavedAtUtc?: string;
 }>) {
   const [groups, setGroups] = useState<readonly GroupDraft[]>(() => initialGroups(model));
   const [comparison, setComparison] = useState<TradeExplorerComparisonResult | null>(null);
@@ -449,7 +452,7 @@ export default function TradeExplorerComparisonClient({
   }
 
   function saveNewStudy(): void {
-    if (!canCompare || studyName.trim().length === 0) return;
+    if (offlineSavedAtUtc || !canCompare || studyName.trim().length === 0) return;
     setError(null);
     startTransition(async () => {
       const result = await createTradeExplorerComparisonStudy({
@@ -463,7 +466,7 @@ export default function TradeExplorerComparisonClient({
   }
 
   function updateStudy(): void {
-    if (!selectedStudy || !canCompare || studyName.trim().length === 0) return;
+    if (offlineSavedAtUtc || !selectedStudy || !canCompare || studyName.trim().length === 0) return;
     setError(null);
     startTransition(async () => {
       const result = await updateTradeExplorerComparisonStudy({
@@ -479,7 +482,7 @@ export default function TradeExplorerComparisonClient({
   }
 
   function removeStudy(): void {
-    if (!selectedStudy || !window.confirm(`Remove saved comparison “${selectedStudy.name}”?`)) return;
+    if (offlineSavedAtUtc || !selectedStudy || !window.confirm(`Remove saved comparison “${selectedStudy.name}”?`)) return;
     setError(null);
     startTransition(async () => {
       const result = await retireTradeExplorerComparisonStudy({
@@ -495,7 +498,7 @@ export default function TradeExplorerComparisonClient({
   }
 
   function runComparison(): void {
-    if (!canCompare) return;
+    if (offlineSavedAtUtc || !canCompare) return;
     setError(null);
     startTransition(async () => {
       const result = await compareTradeExplorerGroups(comparisonInput());
@@ -522,6 +525,7 @@ export default function TradeExplorerComparisonClient({
           Compare results across two to four groups of your completed trades.
         </Typography>
       </Box>
+      {offlineSavedAtUtc ? <OfflineSavedViewStatus savedAtUtc={offlineSavedAtUtc} /> : null}
 
       <DashboardPanel title="Saved comparisons">
         <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "minmax(220px, 0.8fr) minmax(240px, 1.2fr)" } }}>
@@ -532,13 +536,13 @@ export default function TradeExplorerComparisonClient({
           <TextField fullWidth label="Comparison name" onChange={(event) => setStudyName(event.target.value)} size="small" value={studyName} />
         </Box>
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25} sx={{ mt: 1.5 }}>
-          <DashboardSecondaryAction disabled={!canCompare || isPending || studyName.trim().length === 0} onClick={saveNewStudy} startIcon={<SaveRoundedIcon />}>
+          <DashboardSecondaryAction disabled={Boolean(offlineSavedAtUtc) || !canCompare || isPending || studyName.trim().length === 0} onClick={saveNewStudy} startIcon={<SaveRoundedIcon />}>
             Save as new
           </DashboardSecondaryAction>
-          <DashboardSecondaryAction disabled={!selectedStudy || !canCompare || isPending || studyName.trim().length === 0} onClick={updateStudy}>
+          <DashboardSecondaryAction disabled={Boolean(offlineSavedAtUtc) || !selectedStudy || !canCompare || isPending || studyName.trim().length === 0} onClick={updateStudy}>
             Update saved comparison
           </DashboardSecondaryAction>
-          <DashboardSecondaryAction disabled={!selectedStudy || isPending} onClick={removeStudy} startIcon={<DeleteOutlineRoundedIcon />}>
+          <DashboardSecondaryAction disabled={Boolean(offlineSavedAtUtc) || !selectedStudy || isPending} onClick={removeStudy} startIcon={<DeleteOutlineRoundedIcon />}>
             Remove saved comparison
           </DashboardSecondaryAction>
         </Stack>
@@ -568,7 +572,7 @@ export default function TradeExplorerComparisonClient({
       {error ? <Alert severity="error">{error}</Alert> : null}
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25}>
-        <DashboardPrimaryAction disabled={!canCompare || isPending} onClick={runComparison} startIcon={<CompareArrowsRoundedIcon />}>
+        <DashboardPrimaryAction disabled={Boolean(offlineSavedAtUtc) || !canCompare || isPending} onClick={runComparison} startIcon={<CompareArrowsRoundedIcon />}>
           {isPending ? "Comparing…" : "Compare groups"}
         </DashboardPrimaryAction>
       </Stack>

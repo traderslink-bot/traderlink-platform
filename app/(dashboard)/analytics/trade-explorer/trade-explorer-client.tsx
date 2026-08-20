@@ -55,6 +55,7 @@ import {
   tradeExplorerTradeSortForOutcome,
   type TradeExplorerTradeSort,
 } from "@/src/modules/journal-analytics/presentation/trade-explorer-ordering";
+import { OfflineSavedViewStatus } from "@/app/pwa/offline-saved-view-status";
 import {
   DashboardPage,
   DashboardPanel,
@@ -381,7 +382,13 @@ function tradeExplorerQueriesMatch(
     leftKeys.every((key) => left[key] === right[key]);
 }
 
-export default function TradeExplorerClient({ model }: Readonly<{ model: TradeExplorerPageModel }>) {
+export default function TradeExplorerClient({
+  model,
+  offlineSavedAtUtc,
+}: Readonly<{
+  model: TradeExplorerPageModel;
+  offlineSavedAtUtc?: string;
+}>) {
   const [query, setQuery] = useState(model.initialQuery);
   const [appliedQuery, setAppliedQuery] = useState(model.initialQuery);
   const [preview, setPreview] = useState<AnalyticsLabPlatformPreview>(model.initialPreview);
@@ -890,6 +897,7 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
   }
 
   return (
+    <Box component="fieldset" disabled={Boolean(offlineSavedAtUtc)} sx={{ border: 0, m: 0, minWidth: 0, p: 0 }}>
     <DashboardPage>
       <Box>
         <Typography component="h1" variant="h1">Trade Explorer</Typography>
@@ -897,6 +905,7 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
           Explore your trades, narrow the results, and find the details that matter to you. Add or edit notes, tags, and rules in one place if you prefer not to use the Daily Trade Tracker.
         </Typography>
       </Box>
+      {offlineSavedAtUtc ? <OfflineSavedViewStatus savedAtUtc={offlineSavedAtUtc} /> : null}
       <DashboardPanel
         action={
           <>
@@ -1238,16 +1247,17 @@ export default function TradeExplorerClient({ model }: Readonly<{ model: TradeEx
           </Box>
       </Drawer>
 
-      <TradeExplorerReviewEditor
+      {offlineSavedAtUtc ? null : <TradeExplorerReviewEditor
         expectedAccountSelectionRef={model.expectedAccountSelectionRef}
         onClose={() => setReviewRoundTripId(null)}
         onSelectTrade={setReviewRoundTripId}
         open={reviewOpen}
         selectedRoundTripId={reviewRoundTripId}
         trades={reviewTargets}
-      />
+      />}
 
       {error ? <Alert severity="error">{error}</Alert> : null}
     </DashboardPage>
+    </Box>
   );
 }

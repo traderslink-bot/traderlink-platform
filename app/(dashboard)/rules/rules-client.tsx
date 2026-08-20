@@ -38,6 +38,7 @@ import { useTheme } from "@mui/material/styles";
 import Link from "next/link";
 import Decimal from "decimal.js";
 
+import { OfflineSavedViewStatus } from "@/app/pwa/offline-saved-view-status";
 import {
   DashboardMetricCard,
   DashboardPage,
@@ -209,12 +210,14 @@ export function RulesClient({
   initialView,
   initialRuleIdeas,
   monetaryMultiplier,
+  offlineSavedAtUtc,
   reportingCurrency,
   sourceCurrency,
 }: {
   initialView: TradingRulesDashboardView;
   initialRuleIdeas: readonly JournalRuleIdeaRecord[];
   monetaryMultiplier: string;
+  offlineSavedAtUtc?: string;
   reportingCurrency: string;
   sourceCurrency: string;
 }) {
@@ -617,6 +620,7 @@ export function RulesClient({
     : null;
 
   return (
+    <Box component="fieldset" disabled={Boolean(offlineSavedAtUtc)} sx={{ border: 0, m: 0, minWidth: 0, p: 0 }}>
     <DashboardPage>
       <Stack
         direction={{ xs: "column", sm: "row" }}
@@ -670,6 +674,7 @@ export function RulesClient({
           </Button>
         </Stack>
       </Stack>
+      {offlineSavedAtUtc ? <OfflineSavedViewStatus savedAtUtc={offlineSavedAtUtc} /> : null}
 
       {error ? (
         <Alert onClose={() => setError(null)} severity="error">
@@ -1505,5 +1510,6 @@ export function RulesClient({
         </DialogActions>
       </Dialog>
     </DashboardPage>
+    </Box>
   );
 }

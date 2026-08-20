@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
 
+import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
+import {
+  createJournalCompareTradesOfflineViewModel,
+  JOURNAL_OFFLINE_ROUTE_VIEW_KEYS,
+  JOURNAL_OFFLINE_ROUTE_VIEW_VERSION,
+  journalOfflineRouteCoverage,
+} from "@/src/modules/journal/contracts/journal-offline-route-view-contracts";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
 import { readTradeExplorerPageModel } from "../trade-explorer-service";
@@ -20,5 +27,21 @@ export default async function TradeExplorerComparisonPage() {
     readTradeExplorerPageModel(scope),
     Promise.resolve(listTradeExplorerComparisonStudies(scope)),
   ]);
-  return <TradeExplorerComparisonClient initialStudies={studies} model={model} />;
+  return (
+    <>
+      <OfflineSavedViewCapture
+        accountTimezone={null}
+        calculationVersion="journal-compare-trades-v1"
+        coverage={journalOfflineRouteCoverage("compare-trades")}
+        generatedAtUtc={new Date().toISOString()}
+        model={createJournalCompareTradesOfflineViewModel(model, studies)}
+        pathname="/analytics/trade-explorer/compare"
+        queryIdentity="current"
+        reportingCurrency={model.initialQuery.currency ?? null}
+        routeViewVersion={JOURNAL_OFFLINE_ROUTE_VIEW_VERSION}
+        viewKey={JOURNAL_OFFLINE_ROUTE_VIEW_KEYS["compare-trades"]}
+      />
+      <TradeExplorerComparisonClient initialStudies={studies} model={model} />
+    </>
+  );
 }
