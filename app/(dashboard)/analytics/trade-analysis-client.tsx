@@ -360,6 +360,7 @@ const CAPABILITIES = Object.freeze([
 export function TradeAnalysisClient({
   evidenceQuery,
   model,
+  showMoomooConnectionGuidance = false,
   view,
 }: {
   evidenceQuery: Readonly<{
@@ -369,6 +370,7 @@ export function TradeAnalysisClient({
     startDate: string | null;
   }>;
   model: DailyTradeLongTermAnalyticsModel;
+  showMoomooConnectionGuidance?: boolean;
   view: TradeAnalysisView;
 }) {
   const [patternPage, setPatternPage] = useState(1);
@@ -577,6 +579,7 @@ export function TradeAnalysisClient({
               moneyBasis={evidenceQuery.moneyBasis}
               onClose={() => setSelectedPattern(null)}
               pattern={selectedPattern}
+              showMoomooConnectionGuidance={showMoomooConnectionGuidance}
               startDate={evidenceQuery.startDate}
             />
           ) : null}

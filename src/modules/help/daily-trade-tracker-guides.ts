@@ -411,7 +411,8 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
         summary: "Understand the current Moomoo chart-data requirement and shared candle reuse.",
         keywords: Object.freeze(["moomoo", "market data", "broker connection", "candle cache", "shared candles"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "Current Daily Trade Tracker charts use the configured Moomoo market-data connection. TradersLink checks its saved server-side candles first and requests only missing data. Users do not manage or see this shared storage." }),
+          Object.freeze({ kind: "paragraph", text: "Current Daily Trade Tracker charts use the configured Moomoo market-data connection. A free Moomoo account can be created in minutes; no Moomoo trading or brokerage account is required for this chart data. TradersLink checks its saved server-side candles first and requests only missing data. Users do not manage or see this shared storage." }),
+          Object.freeze({ kind: "link", href: "https://www.moomoo.com/us/", label: "Create a free Moomoo account", text: "After you create the free account, return to Account settings in TradersLink and select Connect Moomoo." }),
           Object.freeze({ kind: "callout", title: "Market data and execution imports are separate", text: "A Moomoo market-data connection can supply chart candles even when that account has no trading history. Importing a user's broker executions is a separate permission and workflow." }),
           Object.freeze({ kind: "link", href: "/help/trade-analyzer/data-availability#market-data-and-imports", label: "Read Analyzer data availability help", text: "See the reusable Moomoo, paid eligibility, same-day timing and unavailable-state explanation." }),
         ]),

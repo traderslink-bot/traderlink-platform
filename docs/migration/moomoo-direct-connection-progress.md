@@ -2,6 +2,8 @@
 
 **Plan:** [Moomoo Direct Connection Plan](moomoo-direct-connection-plan.md)
 
+**Market-data guidance:** [Moomoo Market-Data Connection Guidance Progress](moomoo-market-data-connection-guidance-progress.md)
+
 ## Current checkpoint — 2026-08-09
 
 - [x] Confirmed direct Moomoo OAuth 2.1 + PKCE is the appropriate
