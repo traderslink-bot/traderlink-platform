@@ -419,6 +419,14 @@ condensed rail state is offered.
   focused 512 MB ESLint, no-write capability search and explicit-file diff
   checks. No Vitest, broad TypeScript run, server, browser, build, provider,
   hosted mutation or deployment ran.
+- [x] Complete the static route inventory against the real navigation. Every
+  visible destination plus Notifications, dated Daily Tracker pages, Account
+  subsections, Candle Review, Help articles and issued AI Review details now
+  resolves to a deliberate offline renderer.
+- [x] Canonicalize the safe compatibility destinations used by Manual Entry,
+  Reflection Loop/Coach, old Analyzer, old Import, Repair Wizard and the former
+  Trader Intelligence entry point without restoring hidden Analytics Lab,
+  readiness, debug or Admin routes offline.
 - [ ] Verify Web Push destination routing, safe application update activation
   and outbox preservation at the final installed-app checkpoint.
 

@@ -56,7 +56,14 @@ function subscribeToLocation(onStoreChange: () => void): () => void {
 }
 
 function browserPathnameSnapshot(): string {
-  return normalizePlatformOfflinePathname(window.location.pathname);
+  const pathname = normalizePlatformOfflinePathname(window.location.pathname);
+  if (pathname === "/manual-entry") return "/trade-tracker";
+  if (pathname === "/reflection-loop" || pathname === "/review" || pathname === "/progress" || pathname === "/coaching" || pathname.startsWith("/coach/")) return "/ai-reviews";
+  if (pathname === "/analytics/trade-analysis") return "/analytics/trade-analyzer/day";
+  if (pathname === "/upload-csv" || pathname === "/import-dry-run" || pathname === "/import-health" || pathname === "/onboarding" || pathname === "/first-run" || pathname === "/admin/broker-mappings") return "/imports";
+  if (pathname === "/repair-wizard") return "/data-decisions";
+  if (pathname === "/trader-intelligence") return "/workspace";
+  return pathname;
 }
 
 function serverPathnameSnapshot(): string {
