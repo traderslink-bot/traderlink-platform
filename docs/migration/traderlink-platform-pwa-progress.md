@@ -1,6 +1,6 @@
 # TraderLink Platform PWA Progress
 
-**Status:** PWA 0-4 owner-approved; migration 0064 verified locally; desktop browser acceptance found a Notifications hydration blocker
+**Status:** PWA 0-4 owner-approved; migration 0064 verified locally; local browser acceptance passed except for real installed-app offline relaunch and Web Push delivery
 
 **Started:** 2026-08-18
 
@@ -408,3 +408,37 @@ after separate deployment and secret authorization.
 - The pre-existing no-workers loopback server was preserved. No Journal trade,
   device outbox record, notification mutation, push permission/subscription,
   secret, provider call, deployment or hosted state changed during this run.
+
+## 2026-08-19 expanded local PWA acceptance
+
+- Reused a responsive canonical loopback server already owned by another
+  process; it was neither started nor stopped by this run. The manifest and
+  authenticated Workspace both returned HTTP 200. The page exposed
+  `/manifest.webmanifest`, and the browser confirmed it was service-worker
+  controlled.
+- Desktop Workspace, notification access and Account Preferences rendered
+  without browser warnings or errors. The Push section correctly reported that
+  this browser has notifications blocked and kept its controls disabled; no
+  permission prompt, subscription, key, provider call or notification delivery
+  was attempted.
+- At a 390 by 844 viewport, Workspace rendered with the responsive menu. The
+  menu opened as a dialog containing the complete navigation, and the
+  Notifications Center showed current cards and device-local timestamps with
+  no browser warnings or errors.
+- With only the manual-trade API deliberately blocked, one clearly synthetic
+  Quick, Daily and Swing batch each saved as **Saved on this device**. They
+  stayed outside the displayed server facts while queued. After network access
+  returned, the visible foreground sync completed each batch as **Saved to
+  TraderLink**; the run therefore intentionally created three local Journal
+  test executions under the owner's expanded QA authorization.
+- A second exact Quick batch became **Needs your review** with the visible
+  statement that nothing was added again, plus **Already entered** and
+  **Save as separate** actions. No second Journal execution was created. That
+  one device-only duplicate remains pending so its deletion is an explicit
+  trader choice.
+- A genuine closed-app offline relaunch is still unverified. This in-app
+  browser's network emulation left `navigator.onLine` true, and full request
+  blocking retained the live React page instead of producing the public
+  offline shell. Real installed-app/device acceptance remains required for
+  that one PWA 5 item. Hosted HTTPS phone install, real Web Push and
+  background-delivery checks remain separately deferred.
