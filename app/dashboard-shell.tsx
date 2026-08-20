@@ -503,7 +503,7 @@ export function DashboardShell({
             aria-controls={aiChatOpen ? "ai-chat-drawer" : undefined}
             aria-expanded={aiChatOpen}
             aria-haspopup="dialog"
-            aria-label={offline ? "AI Chat requires an internet connection" : "Open AI Chat"}
+            aria-label={offline ? "Links AI Chat requires an internet connection" : "Open Links AI Chat"}
             disabled={offline}
             onClick={openAiChat}
             startIcon={(

@@ -261,12 +261,12 @@ export default async function JournalAdminAiReviewsPage() {
         </Stack>
       </JournalAdminPanel>
 
-      <JournalAdminPanel title="AI Chat">
+      <JournalAdminPanel title="Links AI Chat">
         <Stack spacing={1.25}>
           <Stack direction="row" sx={{ justifyContent: "space-between" }}><Typography>Server credential</Typography><JournalAdminStatus state={credentialConfigured ? "active" : "unavailable"} /></Stack>
           <Typography color="text.secondary" variant="body2">Chat uses a separate model, verified pricing, enablement and caps. The server credential itself is never stored or shown.</Typography>
           {state.chat && !chatPricingConfigured ? (
-            <Alert severity="warning">AI Chat stays unavailable until all four token prices are configured.</Alert>
+            <Alert severity="warning">Links AI Chat stays unavailable until all four token prices are configured.</Alert>
           ) : null}
           {state.chat ? (
             <>
@@ -279,7 +279,7 @@ export default async function JournalAdminAiReviewsPage() {
                 initialOutputRate={state.chat.settings.outputCostUsdPerMillionTokens}
               />
             </>
-          ) : <Alert severity="info">AI Chat administration is unavailable until the accepted Chat schema migrations are applied. AI Review settings remain available above.</Alert>}
+          ) : <Alert severity="info">Links AI Chat administration is unavailable until the accepted Chat schema migrations are applied. AI Review settings remain available above.</Alert>}
         </Stack>
       </JournalAdminPanel>
 

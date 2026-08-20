@@ -241,6 +241,26 @@ FROM coach_ai_feature_controls WHERE scope_kind = 'platform' OR (scope_kind = 'a
 ORDER BY feature_key, scope_kind`).all(scope.workspaceId, accountId).map(controlRecord));
   }
 
+  /** Privacy-safe projection for the trader-facing Links AI Chat surface. */
+  readChatReadiness(
+    scope: WorkspaceAccessScope,
+  ): Readonly<{ state: "ready" | "unavailable" }> {
+    this.accountId(scope);
+    const settings = this.readChatSettings();
+    const controls = this.readFeatureControls(scope).filter((control) =>
+      control.featureKey === "ai_chat");
+    const platform = controls.find((control) => control.scopeKind === "platform") ?? null;
+    const account = controls.find((control) => control.scopeKind === "account") ?? null;
+    const configured = [platform, account].every((control) =>
+      control !== null && control.enabled && control.caps.dailyRequestCap !== null &&
+      control.caps.dailyTokenCap !== null && control.caps.dailyEstimatedSpendCapUsd !== null) &&
+      settings.inputCostUsdPerMillionTokens !== null &&
+      settings.cachedInputCostUsdPerMillionTokens !== null &&
+      settings.cacheWriteInputCostUsdPerMillionTokens !== null &&
+      settings.outputCostUsdPerMillionTokens !== null;
+    return Object.freeze({ state: configured ? "ready" : "unavailable" });
+  }
+
   findChatGenerationByIdempotency(
     scope: WorkspaceAccessScope,
     idempotencySha256: unknown,

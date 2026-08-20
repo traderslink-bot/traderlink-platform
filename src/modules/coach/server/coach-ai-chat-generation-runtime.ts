@@ -47,6 +47,8 @@ import { CoachAiDailyCompanionRepository } from "./coach-ai-daily-companion-repo
 import { CoachAiManualEntryDraftRepository } from "./coach-ai-manual-entry-draft-repository";
 import { CoachAiReviewDeliveryChangeRepository } from "./coach-ai-review-delivery-change-repository";
 import { CoachAiChatActionDraftService } from "./coach-ai-chat-action-draft-service";
+import { CoachAiRelationshipMemoryRepository } from
+  "./coach-ai-relationship-memory-repository";
 import type { CoachAiDailyCompanionResolvedContext } from "../contracts/ai-daily-companion-contracts";
 import type {
   CoachAiChatAnalysisScope,
@@ -186,6 +188,7 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
       }),
       new CoachAiChatActionDraftService(database),
       input.reportingContext.reportingCurrency,
+      new CoachAiRelationshipMemoryRepository(database),
     ).generateSavedAnswer(scope, input);
   } finally {
     database.close();

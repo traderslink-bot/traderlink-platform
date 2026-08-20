@@ -77,16 +77,16 @@ function ControlEditor({
       const result = await onSave({ enabled, dailyRequestCap: requestCap, dailyTokenCap: tokenCap, dailyEstimatedSpendCapUsd: spendCap });
       if (result.ok) {
         setSaved(current);
-        setMessage("AI Chat control saved.");
+        setMessage("Links AI Chat control saved.");
       } else setMessage(result.message);
     });
   }
 
   return (
     <Stack spacing={1.5}>
-      <FormControlLabel control={<Switch checked={enabled} onChange={(event) => setEnabled(event.target.checked)} />} label={enabled ? "AI Chat enabled" : "AI Chat disabled"} />
+      <FormControlLabel control={<Switch checked={enabled} onChange={(event) => setEnabled(event.target.checked)} />} label={enabled ? "Links AI Chat enabled" : "Links AI Chat disabled"} />
       <CapFields requestCap={requestCap} setRequestCap={setRequestCap} setSpendCap={setSpendCap} setTokenCap={setTokenCap} spendCap={spendCap} tokenCap={tokenCap} />
-      {message ? <Alert severity={message === "AI Chat control saved." ? "success" : "error"}>{message}</Alert> : null}
+      {message ? <Alert severity={message === "Links AI Chat control saved." ? "success" : "error"}>{message}</Alert> : null}
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25} sx={{ alignItems: { sm: "center" } }}>
         <Button disabled={working || current === saved} onClick={save} variant="contained">{working ? "Saving..." : saveLabel}</Button>
         <Typography color="text.secondary" variant="caption">Enabled controls require all three caps. The platform and account limits are both enforced.</Typography>
@@ -129,24 +129,24 @@ export function AiChatProviderSettings({
       });
       if (result.ok) {
         setSaved(current);
-        setMessage("AI Chat provider settings saved.");
+        setMessage("Links AI Chat provider settings saved.");
       } else setMessage(result.message);
     });
   }
 
   return (
     <Stack spacing={1.5}>
-      <Typography color="text.secondary" variant="body2">Choose the separate model used for future AI Chat requests. Prices are saved with each request reservation and must be verified before Chat can be enabled.</Typography>
-      {message ? <Alert severity={message === "AI Chat provider settings saved." ? "success" : "error"}>{message}</Alert> : null}
+      <Typography color="text.secondary" variant="body2">Choose the separate model used for future Links AI Chat requests. Prices are saved with each request reservation and must be verified before Chat can be enabled.</Typography>
+      {message ? <Alert severity={message === "Links AI Chat provider settings saved." ? "success" : "error"}>{message}</Alert> : null}
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))", xl: "repeat(5, minmax(0, 1fr))" } }}>
-        <TextField fullWidth label="OpenAI Chat model ID" onChange={(event) => setModelId(event.target.value.trim())} value={modelId} />
+        <TextField fullWidth label="OpenAI model ID for Links AI Chat" onChange={(event) => setModelId(event.target.value.trim())} value={modelId} />
         <TextField fullWidth inputMode="decimal" label="Uncached input price per million (USD)" onChange={(event) => setInputRate(event.target.value.trim())} value={inputRate} />
         <TextField fullWidth inputMode="decimal" label="Cached input price per million (USD)" onChange={(event) => setCachedInputRate(event.target.value.trim())} value={cachedInputRate} />
         <TextField fullWidth inputMode="decimal" label="Cache write price per million (USD)" onChange={(event) => setCacheWriteInputRate(event.target.value.trim())} value={cacheWriteInputRate} />
         <TextField fullWidth inputMode="decimal" label="Output price per million (USD)" onChange={(event) => setOutputRate(event.target.value.trim())} value={outputRate} />
       </Box>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25} sx={{ alignItems: { sm: "center" } }}>
-        <Button disabled={working || current === saved} onClick={save} variant="contained">{working ? "Saving..." : "Save AI Chat settings"}</Button>
+        <Button disabled={working || current === saved} onClick={save} variant="contained">{working ? "Saving..." : "Save Links AI Chat settings"}</Button>
         <Typography color="text.secondary" variant="caption">Leave all four prices blank until the model&apos;s uncached input, cached input, cache write and output prices are confirmed.</Typography>
       </Stack>
     </Stack>

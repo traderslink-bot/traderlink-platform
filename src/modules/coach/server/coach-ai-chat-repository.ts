@@ -546,6 +546,40 @@ WHERE coach_ai_chat_conversation_id = ?`).run(createdAtUtc, conversationId);
     });
   }
 
+  /** Completes a server-authored non-provider response, such as an explicit memory command. */
+  finalizeDeterministicAssistant(
+    scope: WorkspaceAccessScope,
+    assistantMessageId: string,
+    assistantTextPrivate: unknown,
+    now = new Date(),
+  ): CoachAiChatMessage {
+    const verifiedAccountId = this.verifiedAccountId(scope);
+    const text = assertText(
+      assistantTextPrivate,
+      "assistantTextPrivate",
+      ASSISTANT_MESSAGE_MAX_LENGTH,
+    );
+    const finalizedAtUtc = createCanonicalUtcTimestamp(now);
+    const result = this.database.prepare(`UPDATE coach_ai_chat_messages
+SET assistant_text_private = ?, generation_state = 'completed', failure_code = NULL,
+  finalized_at_utc = ?
+WHERE coach_ai_chat_message_id = ? AND user_id = ? AND workspace_id = ?
+  AND account_id = ? AND role = 'assistant' AND generation_state = 'pending'`).run(
+      text,
+      finalizedAtUtc,
+      assistantMessageId,
+      scope.userId,
+      scope.workspaceId,
+      verifiedAccountId,
+    );
+    if (result.changes !== 1) {
+      platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+        state: "assistant_not_pending",
+      });
+    }
+    return messageRecord(this.message(scope, assistantMessageId, verifiedAccountId));
+  }
+
   finalizeAssistantSuccess(
     scope: WorkspaceAccessScope,
     assistantMessageId: string,

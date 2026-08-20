@@ -183,7 +183,6 @@ CREATE TRIGGER coach_ai_relationship_memories_update_guard
 BEFORE UPDATE ON coach_ai_relationship_memories
 WHEN NEW.coach_ai_relationship_memory_id IS NOT OLD.coach_ai_relationship_memory_id
   OR NEW.user_id IS NOT OLD.user_id OR NEW.workspace_id IS NOT OLD.workspace_id
-  OR NEW.account_id IS NOT OLD.account_id OR NEW.scope_kind IS NOT OLD.scope_kind
   OR NEW.category IS NOT OLD.category OR NEW.created_at_utc IS NOT OLD.created_at_utc
   OR OLD.state = 'forgotten' OR NEW.updated_at_utc <= OLD.updated_at_utc
   OR NOT ((NEW.state = 'active' AND NEW.current_version_sequence > OLD.current_version_sequence)

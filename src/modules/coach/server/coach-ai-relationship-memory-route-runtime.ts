@@ -94,7 +94,9 @@ export function parseCreateRelationshipMemoryBody(
     sourceKind: parseSourceKind(body.sourceKind),
     sourceConversationId: parseOptionalUuid(body.sourceConversationId, "sourceConversationId"),
     sourceMessageId: parseOptionalUuid(body.sourceMessageId, "sourceMessageId"),
-    reviewDueAtUtc: parseOptionalTimestamp(body.reviewDueAtUtc, "reviewDueAtUtc"),
+    ...(body.reviewDueAtUtc === undefined
+      ? {}
+      : { reviewDueAtUtc: parseOptionalTimestamp(body.reviewDueAtUtc, "reviewDueAtUtc") }),
   });
 }
 
@@ -114,9 +116,10 @@ export function parseRelationshipMemorySettingsBody(
 
 export function parseRelationshipMemoryPatchBody(
   body: Record<string, unknown>,
-): Readonly<{ text: string; reviewDueAtUtc: string | null; reconfirm: boolean }> {
+): Readonly<{ text: string; scope?: CoachAiRelationshipMemoryScope; reviewDueAtUtc?: string | null; reconfirm: boolean }> {
   const expected = [
     "text",
+    ...(body.scope === undefined ? [] : ["scope"]),
     ...(body.reviewDueAtUtc === undefined ? [] : ["reviewDueAtUtc"]),
     ...(body.reconfirm === undefined ? [] : ["reconfirm"]),
   ];
@@ -126,7 +129,10 @@ export function parseRelationshipMemoryPatchBody(
   }
   return Object.freeze({
     text: body.text,
-    reviewDueAtUtc: parseOptionalTimestamp(body.reviewDueAtUtc, "reviewDueAtUtc"),
+    ...(body.scope === undefined ? {} : { scope: parseScope(body.scope) }),
+    ...(body.reviewDueAtUtc === undefined
+      ? {}
+      : { reviewDueAtUtc: parseOptionalTimestamp(body.reviewDueAtUtc, "reviewDueAtUtc") }),
     reconfirm: body.reconfirm === true,
   });
 }
@@ -155,7 +161,9 @@ export function parseMeetLinksBody(
       scope: parseScope(item.scope),
       category: parseCategory(item.category),
       text: item.text,
-      reviewDueAtUtc: parseOptionalTimestamp(item.reviewDueAtUtc, "reviewDueAtUtc"),
+      ...(item.reviewDueAtUtc === undefined
+        ? {}
+        : { reviewDueAtUtc: parseOptionalTimestamp(item.reviewDueAtUtc, "reviewDueAtUtc") }),
     });
   });
   return Object.freeze({ action: "complete", memories: Object.freeze(memories) });

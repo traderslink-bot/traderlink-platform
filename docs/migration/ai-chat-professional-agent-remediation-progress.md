@@ -3,9 +3,11 @@
 ## Status
 
 **Plan and visible experience owner-approved on 2026-08-20 with Links AI Chat as
-the required feature name. The relationship-memory persistence/API foundation
-is implemented in source. It remains unapplied to the protected database and
-the visible experience has not yet been changed.**
+the required feature name. The first professional-agent implementation slice is
+complete in source: relationship memory and Meet Links, adaptive context,
+exact-value grounding, readiness, owner-approved Chat presentation and aligned
+Help. The protected database remains unchanged. A disposable automated browser
+pass is complete; final owner visual/product acceptance is still required.**
 
 The controlling plan is the
 [Links AI Chat Professional Agent Remediation Plan](ai-chat-professional-agent-remediation-plan.md).
@@ -131,14 +133,14 @@ The parent product contract remains the
 
 ### Grounding and continuity
 
-- [ ] Implement the server-authored factual-claim catalog.
+- [x] Implement the server-authored factual-claim catalog.
 - [ ] Implement structured answer composition and strict claim validation.
 - [ ] Persist immutable claim catalogs and exact selected claims with answers.
 - [ ] Implement versioned private conversation state and bounded older-context
   summary.
-- [ ] Replace the fixed latest-12-message context boundary with an evaluated
+- [x] Replace the fixed latest-12-message context boundary with an evaluated
   token- and task-aware context package plus bounded same-conversation retrieval.
-- [ ] Implement separately scoped user-wide and Journal-account relationship
+- [x] Implement separately scoped user-wide and Journal-account relationship
   memory with explicit save, reconfirm, correct, forget, and disable controls.
 - [x] Design and obtain owner approval for **What Links remembers** before
   implementing its visible controls.
@@ -153,11 +155,11 @@ The parent product contract remains the
 
 ### Professional experience
 
-- [ ] Implement privacy-safe Chat readiness projection.
-- [ ] Implement the owner-approved unavailable/failure/limit/pending/retry UI.
-- [ ] Prevent empty conversation/message/attempt creation when Chat is not ready.
+- [x] Implement privacy-safe Chat readiness projection.
+- [x] Implement the owner-approved unavailable/failure/limit/pending/retry UI.
+- [x] Prevent empty conversation/message/attempt creation when Chat is not ready.
 - [ ] Render server-authored evidence and exact owning-product links.
-- [ ] Correct Chat-path browser warnings.
+- [x] Correct Chat-path browser warnings.
 - [ ] Complete iterative desktop/mobile/direct-page owner review.
 
 ### Relationship and return engagement
@@ -227,9 +229,9 @@ The parent product contract remains the
 
 ## Current non-actions
 
-- No protected or private database was opened or changed; migration `0067`
-  exists only in source pending a later disposable-database verifier and the
-  explicit protected-database migration boundary.
+- No protected or private database was opened or changed. Migration `0067`
+  remains unapplied there; the complete 67-migration chain was instead verified
+  against a disposable empty database that was removed after the check.
 - No provider request was made.
 - No Journal fact or existing message was changed.
 - No test runner, build, deployment, push, merge, or publication occurred.
@@ -263,3 +265,62 @@ The parent product contract remains the
   as incomplete, not passed. A static manifest import then failed before project
   code loaded because the operating system returned `ENOMEM`; no retry storm,
   test runner, protected-database write or provider call was used.
+
+## 2026-08-20 implementation checkpoint: professional Chat slice
+
+- The fixed latest-12-message provider boundary is replaced by a private
+  adaptive context package. It considers up to 400 source messages, keeps the
+  recent conversation inside a 12-kilobyte budget and uses a separate bounded
+  older-message retrieval channel for relevant corrections, remember requests
+  and topic returns. A deterministic verifier retained 60 consecutive short
+  messages and retrieved an older correction after intervening discussion.
+- Relationship memories are injected through a separate bounded channel rather
+  than being counted as recent conversation. Disabled memories are not injected;
+  overdue memories are identified as needing confirmation rather than current.
+- Time-sensitive setup, focus, emotional-pattern, routine and learning-goal
+  memories receive a 90-day review boundary. The visible review actions are
+  **Keep it**, **Update** and **Forget**.
+- A server-authored opaque claim catalog now records typed scalar values and
+  their exact deterministic tool-result paths, scope, coverage, currency,
+  timezone, population and as-of context when available. Answer validation
+  rejects unsupported exact money, percentage, date, currency and numeric
+  tokens. The catalog is persisted with the generation snapshot. Broader
+  semantic-entailment evaluation remains open.
+- The provider prompt now fixes one Links personality and explicitly enforces
+  evidence-led, supportive, non-pressuring behavior, no fake lived experience,
+  no mechanical extra-insight quota and no use of memories as financial fact.
+- A privacy-safe readiness endpoint blocks ordinary generation before creating
+  a conversation when entitlement, provider control, caps or any of the four
+  price classes is unavailable. Explicit **remember this** requests use one
+  local transaction before any provider generation; a failed memory write
+  leaves no empty conversation. The approved unavailable state still disables
+  the composer and therefore does not expose new direct-memory commands until
+  Links AI Chat is ready.
+- The owner-approved visible source now includes the Links avatar and identity,
+  **Links is thinking…**, first-impression suggestions, full-width **What Links
+  remembers**, explicit edit/scope/forget/disable controls, stale-memory review,
+  and the optional atomic Meet Links introduction. Visible current feature
+  labels use **Links AI Chat**. The Help Center now explains Meet Links,
+  relationship-memory scope, review and secret boundaries.
+- The focused Links TypeScript project passed with a 1,024-megabyte heap after
+  Material UI API corrections. Focused ESLint, adaptive-context verification,
+  exact-value grounding verification and `git diff --check` passed. The full
+  repository TypeScript check was attempted earlier but exhausted the low-
+  resource environment without diagnostics and is not claimed as passed.
+- All 67 migrations, including the final relationship-memory trigger, applied
+  successfully to a disposable empty database with schema SHA-256
+  `f6abd205e6840524263c14f6def7f5c029a4942023225866f6bbc2aea7535405`.
+- A worker-disabled local review server used only a disposable seeded database.
+  Desktop and 390-by-844 browser checks passed for the direct page, Meet Links,
+  the unavailable state, first impression, **What Links remembers**, the memory
+  edit dialog and persistence, the non-destructive forget confirmation and the
+  new Help guide. The live pass exposed and corrected mechanical proposed-memory
+  wording, missing memory textbox labels and the memory-screen heading level.
+  Browser console inspection reported no warnings or errors.
+- The low-resource first compilation took 66 seconds and later route compilation
+  took up to 49 seconds, but every exercised route returned HTTP 200. The exact
+  review process tree and its validated temporary database/log folder were
+  removed after acceptance.
+- No test runner, full build, provider request, protected-database migration,
+  deployment, push or publication occurred. Owner visual/product acceptance
+  remains the next visible gate.

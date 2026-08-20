@@ -6,8 +6,12 @@ The expanded professional-agent acceptance target is now designed in the
 [Links AI Chat Professional Agent Remediation Plan](ai-chat-professional-agent-remediation-plan.md)
 and tracked in its
 [progress record](ai-chat-professional-agent-remediation-progress.md). That
-plan is owner approved; remediation implementation is beginning with the
-concurrent-file audit and explicit implementation allowlist.
+plan is owner approved. The first source implementation checkpoint now includes
+relationship memory, Meet Links, adaptive context beyond the former 12-message
+window, exact-value claim validation, readiness-aware Chat states, the approved
+Links presentation and aligned Help. Disposable migration, focused static
+verification and a disposable desktop/mobile browser pass succeed; owner visual
+acceptance remains open.
 
 The current-plan technical implementation and local acceptance are complete.
 Production provider enablement, final caps and launch operations remain owner

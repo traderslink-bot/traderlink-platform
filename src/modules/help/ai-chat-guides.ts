@@ -4,16 +4,16 @@ export const AI_CHAT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   Object.freeze({
     slug: "getting-started",
     title: "Getting started",
-    description: "Open AI Chat from anywhere in the dashboard and ask about the trading record saved to your selected Trade Tracker account.",
+    description: "Open Links AI Chat from anywhere in the dashboard and ask about the trading record saved to your selected Trade Tracker account.",
     sections: Object.freeze([
       Object.freeze({
         id: "open-and-close-chat",
-        title: "Open and close AI Chat",
-        summary: "Use the AI Chat link without leaving the dashboard page you are reviewing.",
+        title: "Open and close Links AI Chat",
+        summary: "Use the Links AI Chat link without leaving the dashboard page you are reviewing.",
         keywords: Object.freeze(["open chat", "close chat", "drawer", "conversation"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph" as const, text: "AI Chat opens beside the page you are using on a larger screen and fills the screen on mobile. Close it whenever you want to return to the page underneath." }),
-          Object.freeze({ kind: "paragraph" as const, text: "You can refer to the supported dashboard page you are viewing as “this page.” AI Chat uses that only to understand the conversation; it still checks your selected account’s saved facts before giving a factual answer." }),
+          Object.freeze({ kind: "paragraph" as const, text: "Links AI Chat opens beside the page you are using on a larger screen and fills the screen on mobile. Close it whenever you want to return to the page underneath." }),
+          Object.freeze({ kind: "paragraph" as const, text: "You can refer to the supported dashboard page you are viewing as “this page.” Links AI Chat uses that only to understand the conversation; it still checks your selected account’s saved facts before giving a factual answer." }),
           Object.freeze({ kind: "paragraph" as const, text: "Your conversations are saved to the selected Trade Tracker account. You can start a new conversation, rename one, search your history, or archive a conversation you no longer need in the main list." }),
         ]),
       }),
@@ -23,10 +23,40 @@ export const AI_CHAT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Ask about results, patterns, notes, rules, focuses, saved AI Reviews or TraderLink features.",
         keywords: Object.freeze(["questions", "results", "patterns", "notes", "rules", "focuses"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph" as const, text: "You can ask about completed-trade results, timing, tickers and repeated patterns. AI Chat can also help you reflect on saved notes, rules and Current Focuses, or discuss a saved weekly, two-week or monthly AI Review." }),
-          Object.freeze({ kind: "paragraph" as const, text: "Ask which Trading Rules are active, what settings they use, which preset checks were Followed, Broken or unavailable, or which tags and trade note you saved on one completed trade. AI Chat reads those saved results; it does not decide a rule outcome or treat a tag as proof." }),
+          Object.freeze({ kind: "paragraph" as const, text: "You can ask about completed-trade results, timing, tickers and repeated patterns. Links AI Chat can also help you reflect on saved notes, rules and Current Focuses, or discuss a saved weekly, two-week or monthly AI Review." }),
+          Object.freeze({ kind: "paragraph" as const, text: "Ask which Trading Rules are active, what settings they use, which preset checks were Followed, Broken or unavailable, or which tags and trade note you saved on one completed trade. Links AI Chat reads those saved results; it does not decide a rule outcome or treat a tag as proof." }),
           Object.freeze({ kind: "paragraph" as const, text: "You can also ask about saved Trade Analyzer results, an existing Candle Review, recent imports, Data Decisions, notifications, account preferences and whether a Moomoo connection or automatic import is set up." }),
           Object.freeze({ kind: "paragraph" as const, text: "A specific question usually gives a more useful answer. Include the result or behavior you want to understand, then use the Explore control to choose the matching period or ticker." }),
+        ]),
+      }),
+    ]),
+  }),
+  Object.freeze({
+    slug: "meet-links-and-memory",
+    title: "Meet Links and memory",
+    description: "Introduce yourself once, then decide exactly what Links can carry into future conversations.",
+    sections: Object.freeze([
+      Object.freeze({
+        id: "meet-links",
+        title: "Meet Links",
+        summary: "Share useful trading context when you first open Links AI Chat, or skip every question.",
+        keywords: Object.freeze(["meet Links", "onboarding", "experience", "setups", "emotions", "routine"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph" as const, text: "Meet Links is an optional introduction for a new account. You can share what Links should call you, your experience, trading approach, markets, setups, current focus, emotional patterns and review routine. Every question can be skipped." }),
+          Object.freeze({ kind: "paragraph" as const, text: "Before anything is saved, Links shows the proposed memories and where each one will be used. You can change the wording, change its scope, remove it, start without saving or leave the introduction." }),
+          Object.freeze({ kind: "paragraph" as const, text: "You can also say “remember this” during a conversation when something would make future conversations more useful. Links confirms what was saved; it does not quietly turn ordinary conversation into relationship memory." }),
+        ]),
+      }),
+      Object.freeze({
+        id: "control-memory",
+        title: "Control what Links remembers",
+        summary: "Review, update, confirm or forget relationship memories at any time.",
+        keywords: Object.freeze(["relationship memory", "remember this", "forget", "privacy", "turn off memory"]),
+        blocks: Object.freeze([
+          Object.freeze({ kind: "paragraph" as const, text: "Open What Links remembers from Links AI Chat to see every active relationship memory. A memory can apply across TradersLink or only to the selected Trade Tracker account." }),
+          Object.freeze({ kind: "paragraph" as const, text: "You can edit or forget one memory, forget all memories, or turn relationship memory off. Turning it off keeps the saved memories available for you to review but stops Links from using them in answers." }),
+          Object.freeze({ kind: "paragraph" as const, text: "Time-sensitive memories are periodically marked for review. Choose Keep it if the memory is still true, Update if it changed, or Forget when it is no longer useful. Links does not treat an overdue memory as current until you confirm it." }),
+          Object.freeze({ kind: "paragraph" as const, text: "Do not save passwords, broker login details, account numbers, security codes or API keys as relationship memories. Links rejects common secret-like details if they are submitted." }),
         ]),
       }),
     ]),
@@ -52,7 +82,7 @@ export const AI_CHAT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Open Chat from a trading day to use that day's saved trades and review details.",
         keywords: Object.freeze(["daily tracker", "trading day", "daily notes", "trade note"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph" as const, text: "When you open AI Chat from Daily Trade Tracker, that trading day is shown at the top of Chat. You can ask about its saved trades, notes, tags, rules and Current Focuses or ask for an editable note draft." }),
+          Object.freeze({ kind: "paragraph" as const, text: "When you open Links AI Chat from Daily Trade Tracker, that trading day is shown at the top of Chat. You can ask about its saved trades, notes, tags, rules and Current Focuses or ask for an editable note draft." }),
           Object.freeze({ kind: "paragraph" as const, text: "A draft never changes the trading day by itself. Read and edit the proposed wording, then use the normal save action if you want to keep it." }),
         ]),
       }),
@@ -62,10 +92,10 @@ export const AI_CHAT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Sort completed trades by trade facts, rank grouped results, or review one exact completed trade.",
         keywords: Object.freeze(["trade explorer", "sort trades", "rank by", "result", "review", "tags", "rules"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph" as const, text: "For individual completed trades, ask AI Chat to use one of the factual Sort trades choices, such as newest, P/L, return, holding time, shares or entry value. Winning, losing and flat trades remain an explicit Result choice. Profit factor, win rate, averages, medians and expectancy describe a group of trades; they do not sort individual trade rows." }),
-          Object.freeze({ kind: "paragraph" as const, text: "For Trading Days, Tickers, Entry Times, Holding Time, Position Size or Periods, ask AI Chat to Rank by one supported result and say whether you want the highest or lowest groups first. Results stay separate by currency and trading timezone when they cannot be combined truthfully." }),
-          Object.freeze({ kind: "paragraph" as const, text: "AI Chat can explain the saved note, tags and rule results for one exact completed trade. To change the complete Review, open that trade in Trade Explorer, edit its note, tags and custom-rule results, then choose Save once. Preset rule results remain read-only. A tag change prepared in Chat still shows an exact preview and changes nothing until you confirm it." }),
-          Object.freeze({ kind: "paragraph" as const, text: "AI Chat can read the validated groups in saved Compare Trades studies and saved deterministic Rule-idea evidence for the selected Trade Tracker account. It cannot save or recalculate a comparison, generate or dismiss a Rule idea, or activate a rule through those reads." }),
+          Object.freeze({ kind: "paragraph" as const, text: "For individual completed trades, ask Links AI Chat to use one of the factual Sort trades choices, such as newest, P/L, return, holding time, shares or entry value. Winning, losing and flat trades remain an explicit Result choice. Profit factor, win rate, averages, medians and expectancy describe a group of trades; they do not sort individual trade rows." }),
+          Object.freeze({ kind: "paragraph" as const, text: "For Trading Days, Tickers, Entry Times, Holding Time, Position Size or Periods, ask Links AI Chat to Rank by one supported result and say whether you want the highest or lowest groups first. Results stay separate by currency and trading timezone when they cannot be combined truthfully." }),
+          Object.freeze({ kind: "paragraph" as const, text: "Links AI Chat can explain the saved note, tags and rule results for one exact completed trade. To change the complete Review, open that trade in Trade Explorer, edit its note, tags and custom-rule results, then choose Save once. Preset rule results remain read-only. A tag change prepared in Chat still shows an exact preview and changes nothing until you confirm it." }),
+          Object.freeze({ kind: "paragraph" as const, text: "Links AI Chat can read the validated groups in saved Compare Trades studies and saved deterministic Rule-idea evidence for the selected Trade Tracker account. It cannot save or recalculate a comparison, generate or dismiss a Rule idea, or activate a rule through those reads." }),
         ]),
       }),
     ]),
@@ -81,8 +111,8 @@ export const AI_CHAT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Include the actual Eastern date, time, ticker, side, quantity and price for every execution.",
         keywords: Object.freeze(["manual entry", "executions", "buy", "sell", "draft"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph" as const, text: "You do not need to choose a special mode. Tell AI Chat that you want to enter executions and include the actual Eastern trading date and time, ticker, buy or sell side, quantity and price. Fees are optional." }),
-          Object.freeze({ kind: "paragraph" as const, text: "Missing details stay missing. AI Chat asks for the required fact instead of guessing it, and every digit you provide remains available in the editable draft." }),
+          Object.freeze({ kind: "paragraph" as const, text: "You do not need to choose a special mode. Tell Links AI Chat that you want to enter executions and include the actual Eastern trading date and time, ticker, buy or sell side, quantity and price. Fees are optional." }),
+          Object.freeze({ kind: "paragraph" as const, text: "Missing details stay missing. Links AI Chat asks for the required fact instead of guessing it, and every digit you provide remains available in the editable draft." }),
         ]),
       }),
       Object.freeze({
@@ -122,7 +152,7 @@ export const AI_CHAT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: Object.freeze(["privacy", "history", "archive", "account"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph" as const, text: "Your conversation text and the trading details used for an answer are kept with your selected Trade Tracker account. Normal operating reports use request counts, status, timing and cost information rather than displaying private messages." }),
-          Object.freeze({ kind: "paragraph" as const, text: "AI Chat can explain import and connection status without receiving your uploaded statement rows, broker account number, connection credentials, access tokens or payment identifiers." }),
+          Object.freeze({ kind: "paragraph" as const, text: "Links AI Chat can explain import and connection status without receiving your uploaded statement rows, broker account number, connection credentials, access tokens or payment identifiers." }),
           Object.freeze({ kind: "paragraph" as const, text: "Archiving removes a conversation from the active list but keeps its history available to restore. Permanent account-data deletion follows the account deletion policy rather than the archive action." }),
         ]),
       }),
@@ -131,7 +161,7 @@ export const AI_CHAT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   Object.freeze({
     slug: "confirm-changes",
     title: "Confirm changes",
-    description: "Review a clear before-and-after preview when AI Chat prepares a supported account change.",
+    description: "Review a clear before-and-after preview when Links AI Chat prepares a supported account change.",
     sections: Object.freeze([
       Object.freeze({
         id: "supported-changes",
@@ -139,7 +169,7 @@ export const AI_CHAT_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Change supported preferences, Swing details, trade tags, or Trading Rules through a clear confirmation preview.",
         keywords: Object.freeze(["reporting currency", "notification", "Discord", "AI Reviews", "switch account", "Swing note", "position type", "trade tags", "trading rules", "confirm"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph" as const, text: "Ask AI Chat to change your reporting currency, mark one exact notification read, choose which updates go to Discord, turn existing AI Reviews on or off, request an available AI Review, switch to an existing Trade Tracker account, create a new Trade Tracker account, save a dated Swing note, change an open position's type, change the tags on one exact trade or Swing, or add and manage a Trading Rule. Chat checks the current value or target before it prepares anything." }),
+          Object.freeze({ kind: "paragraph" as const, text: "Ask Links AI Chat to change your reporting currency, mark one exact notification read, choose which updates go to Discord, turn existing AI Reviews on or off, request an available AI Review, switch to an existing Trade Tracker account, create a new Trade Tracker account, save a dated Swing note, change an open position's type, change the tags on one exact trade or Swing, or add and manage a Trading Rule. Chat checks the current value or target before it prepares anything." }),
           Object.freeze({ kind: "paragraph" as const, text: "For an AI Review request, Chat shows the exact available review type and date range. Confirmation saves the request; the completed review appears after the separate review process finishes." }),
           Object.freeze({ kind: "paragraph" as const, text: "Before creating a Trade Tracker account, Chat shows the exact account name, base currency and trading timezone. The new account is created and becomes active only after you confirm the preview." }),
           Object.freeze({ kind: "paragraph" as const, text: "For Swing notes, Chat keeps the exact review date and complete note wording you provide. For an open position, it changes the type only when you explicitly choose active swing, day trade still open, bag hold, or long-term hold." }),

@@ -26,7 +26,16 @@ import {
 
 const MEMORY_TEXT_MAX_LENGTH = 500;
 const MAX_MEET_LINKS_MEMORIES = 16;
+const TIME_SENSITIVE_MEMORY_REVIEW_MILLISECONDS = 90 * 24 * 60 * 60 * 1_000;
+const TIME_SENSITIVE_MEMORY_CATEGORIES = new Set<CoachAiRelationshipMemoryCategory>([
+  "setups",
+  "current_focus",
+  "emotional_pattern",
+  "routine",
+  "learning_goal",
+]);
 const FORBIDDEN_CONTROL_CHARACTERS = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/u;
+const PROHIBITED_SECRET_PATTERN = /\b(?:password|passcode|api[ -]?key|secret[ -]?key|broker login|account number|routing number|social security|mfa code|2fa code)\b/iu;
 
 type VerifiedScopeRow = Readonly<{
   account_id: string;
@@ -72,10 +81,19 @@ function normalizeMemoryText(value: unknown): string {
   }
   const text = value.trim();
   if (text.length < 1 || text.length > MEMORY_TEXT_MAX_LENGTH ||
-      FORBIDDEN_CONTROL_CHARACTERS.test(text)) {
+      FORBIDDEN_CONTROL_CHARACTERS.test(text) || PROHIBITED_SECRET_PATTERN.test(text)) {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "memoryText" });
   }
   return text;
+}
+
+function defaultReviewDueAt(
+  category: CoachAiRelationshipMemoryCategory,
+  now: Date,
+): string | null {
+  return TIME_SENSITIVE_MEMORY_CATEGORIES.has(category)
+    ? createCanonicalUtcTimestamp(new Date(now.getTime() + TIME_SENSITIVE_MEMORY_REVIEW_MILLISECONDS))
+    : null;
 }
 
 function assertCategory(value: unknown): CoachAiRelationshipMemoryCategory {
@@ -285,7 +303,14 @@ ON CONFLICT(user_id, workspace_id) DO UPDATE SET
     }
     assertCanonicalUuidV4(conversationId, "sourceConversationId");
     if (messageId !== null) assertCanonicalUuidV4(messageId, "sourceMessageId");
-    const row = this.database.prepare<[string, string, string, string, string, string], SourceRow>(`SELECT conversation.title
+    const row = this.database.prepare<[
+      string | null,
+      string,
+      string,
+      string,
+      string,
+      string | null,
+    ], SourceRow>(`SELECT conversation.title
 FROM coach_ai_chat_conversations conversation
 LEFT JOIN coach_ai_chat_messages message
   ON message.coach_ai_chat_message_id = ?
@@ -317,7 +342,9 @@ WHERE conversation.coach_ai_chat_conversation_id = ?
     const category = assertCategory(input.category);
     const sourceKind = assertSourceKind(input.sourceKind);
     const text = normalizeMemoryText(input.text);
-    const reviewDueAt = input.reviewDueAtUtc ?? null;
+    const reviewDueAt = input.reviewDueAtUtc === undefined
+      ? defaultReviewDueAt(category, now)
+      : input.reviewDueAtUtc;
     if (reviewDueAt !== null) assertCanonicalUtcTimestamp(reviewDueAt, "reviewDueAtUtc");
     const sourceConversationId = input.sourceConversationId ?? null;
     const sourceMessageId = input.sourceMessageId ?? null;
@@ -461,16 +488,22 @@ WHERE coach_ai_relationship_memory_id = ? AND user_id = ? AND workspace_id = ?
     memoryId: string,
     input: Readonly<{
       text: string;
+      scope?: CoachAiRelationshipMemoryScope;
       reviewDueAtUtc?: string | null;
       reconfirm?: boolean;
     }>,
     now = new Date(),
   ): CoachAiRelationshipMemoryView {
     return this.transaction(() => {
-      this.verifiedScope(scope);
+      const verified = this.verifiedScope(scope);
       const existing = this.existingMemory(scope, memoryId);
+      const normalizedScope = input.scope
+        ? this.normalizeScope(scope, input.scope, verified)
+        : Object.freeze({ kind: existing.scope_kind, accountId: existing.account_id });
       const text = normalizeMemoryText(input.text);
-      const reviewDueAt = input.reviewDueAtUtc ?? null;
+      const reviewDueAt = input.reviewDueAtUtc === undefined
+        ? (input.reconfirm ? defaultReviewDueAt(existing.category, now) : null)
+        : input.reviewDueAtUtc;
       if (reviewDueAt !== null) assertCanonicalUtcTimestamp(reviewDueAt, "reviewDueAtUtc");
       const timestamp = createCanonicalUtcTimestamp(timestampAfter(now, existing.updated_at_utc));
       const nextSequence = existing.current_version_sequence + 1;
@@ -478,8 +511,10 @@ WHERE coach_ai_relationship_memory_id = ? AND user_id = ? AND workspace_id = ?
 SET state = 'superseded', superseded_at_utc = ?
 WHERE coach_ai_relationship_memory_id = ? AND state = 'current'`).run(timestamp, memoryId);
       this.database.prepare(`UPDATE coach_ai_relationship_memories
-SET current_version_sequence = ?, updated_at_utc = ?
+SET account_id = ?, scope_kind = ?, current_version_sequence = ?, updated_at_utc = ?
 WHERE coach_ai_relationship_memory_id = ? AND state = 'active'`).run(
+        normalizedScope.accountId,
+        normalizedScope.kind,
         nextSequence,
         timestamp,
         memoryId,
@@ -502,7 +537,7 @@ WHERE coach_ai_relationship_memory_id = ? AND state = 'active'`).run(
       this.insertEvent(
         scope,
         memoryId,
-        existing.account_id,
+        normalizedScope.accountId,
         input.reconfirm ? "reconfirmed" : "updated",
         nextSequence,
         timestamp,

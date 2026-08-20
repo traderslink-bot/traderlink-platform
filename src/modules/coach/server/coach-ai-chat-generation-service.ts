@@ -43,13 +43,22 @@ import type { CoachAiChatTradeAnalyzerToolService } from "./coach-ai-chat-trade-
 import type { CoachAiChatAnnotationContextService } from "./coach-ai-chat-annotation-context-service";
 import type { CoachAiChatActionDraftService } from "./coach-ai-chat-action-draft-service";
 import { coachAiChatFactualToolRegistry } from "./coach-ai-chat-factual-tool-registry";
+import {
+  buildCoachAiChatAdaptiveHistory,
+  COACH_AI_CHAT_MAX_CONTEXT_SOURCE_MESSAGES,
+} from "./coach-ai-chat-adaptive-context";
+import type { CoachAiRelationshipMemoryRepository } from
+  "./coach-ai-relationship-memory-repository";
+import type { CoachAiRelationshipMemory } from
+  "../contracts/ai-relationship-memory-contracts";
+import { buildCoachAiChatClaimCatalog } from "./coach-ai-chat-claim-catalog";
 
-export const COACH_AI_CHAT_MAX_RECENT_MESSAGES = 12;
 export const COACH_AI_CHAT_MAX_HISTORY_BYTES = 16 * 1024;
 export const COACH_AI_CHAT_MAX_OUTPUT_TOKENS = 1_200;
 export const COACH_AI_CHAT_MAX_QUESTION_BYTES = 4 * 1024;
 export const COACH_AI_CHAT_MAX_TRUSTED_CONTEXT_BYTES = 20 * 1024;
 export const COACH_AI_CHAT_MAX_MANUAL_DRAFT_CONTEXT_BYTES = 16 * 1024;
+export const COACH_AI_CHAT_MAX_RELATIONSHIP_MEMORY_BYTES = 8 * 1024;
 export const COACH_AI_CHAT_DERIVED_CONTENT_FAILURE_CODE =
   "TRADERLINK_COACH_CHAT_DERIVED_CONTENT_INVALID";
 // Covers the full current system contract, all registered tool schemas,
@@ -62,6 +71,7 @@ export type CoachAiChatGenerator = (input: Readonly<{
   asOfUtc: string;
   attempt: CoachAiChatGenerationAttempt;
   recentMessages: readonly CoachAiChatMessage[];
+  relationshipMemories: readonly CoachAiRelationshipMemory[];
   question: string;
   intent: CoachAiChatMessageIntent;
   trustedContext: CoachAiChatTrustedContext | null;
@@ -107,19 +117,39 @@ function safeAssistantText(result: CoachAiChatGenerationResult): string {
     .join("\n\n");
 }
 
-function boundedHistory(messages: readonly CoachAiChatMessage[]): readonly CoachAiChatMessage[] {
-  const newest = messages.filter((message) => message.role === "user" || message.generationState === "completed")
-    .slice(-COACH_AI_CHAT_MAX_RECENT_MESSAGES);
-  let bytes = 0;
-  const accepted: CoachAiChatMessage[] = [];
-  for (const message of [...newest].reverse()) {
-    const text = message.role === "user" ? message.originalUserTextPrivate : message.assistantTextPrivate;
-    const size = Buffer.byteLength(text ?? "", "utf8");
-    if (bytes + size > COACH_AI_CHAT_MAX_HISTORY_BYTES) continue;
-    bytes += size;
-    accepted.push(message);
+function loadContextMessages(
+  chat: CoachAiChatRepository,
+  scope: WorkspaceAccessScope,
+  conversationId: string,
+): readonly CoachAiChatMessage[] {
+  const pages: CoachAiChatMessage[] = [];
+  let cursor: Readonly<{ beforeSequence: number }> | null = null;
+  while (pages.length < COACH_AI_CHAT_MAX_CONTEXT_SOURCE_MESSAGES) {
+    const page = chat.listMessages(scope, conversationId, { limit: 100, cursor });
+    pages.unshift(...page.messages);
+    if (!page.nextCursor) break;
+    cursor = page.nextCursor;
   }
-  return Object.freeze(accepted.reverse());
+  return Object.freeze(pages.slice(-COACH_AI_CHAT_MAX_CONTEXT_SOURCE_MESSAGES));
+}
+
+function boundedRelationshipMemories(
+  memories: readonly CoachAiRelationshipMemory[],
+): readonly CoachAiRelationshipMemory[] {
+  let bytes = 0;
+  const accepted: CoachAiRelationshipMemory[] = [];
+  for (const memory of memories) {
+    const size = Buffer.byteLength(JSON.stringify({
+      category: memory.category,
+      text: memory.text,
+      scope: memory.scopeLabel,
+      needsReview: memory.needsReview,
+    }), "utf8");
+    if (bytes + size > COACH_AI_CHAT_MAX_RELATIONSHIP_MEMORY_BYTES) continue;
+    bytes += size;
+    accepted.push(memory);
+  }
+  return Object.freeze(accepted);
 }
 
 export function createCoachAiChatReservationEnvelope(
@@ -131,6 +161,7 @@ export function createCoachAiChatReservationEnvelope(
   currentReviewDelivery: CoachAiReviewDeliveryScheduleSnapshot | null = null,
   analysisScope: CoachAiChatAnalysisScope = Object.freeze({ kind: "recent" }),
   pageContext: CoachAiChatPageContext | null = null,
+  relationshipMemories: readonly CoachAiRelationshipMemory[] = Object.freeze([]),
 ): string {
   const trustedContextBytes = Buffer.byteLength(JSON.stringify(trustedContext), "utf8");
   const manualDraftBytes = Buffer.byteLength(JSON.stringify(existingManualEntryDraft), "utf8");
@@ -148,6 +179,12 @@ export function createCoachAiChatReservationEnvelope(
     currentReviewDelivery,
     analysisScope,
     currentPageHint: pageContext,
+    relationshipMemories: relationshipMemories.map((memory) => ({
+      category: memory.category,
+      text: memory.text,
+      scope: memory.scopeLabel,
+      status: memory.needsReview ? "previously_shared_needs_review" : "current",
+    })),
     manualEntryShortcutSelected: intent === "prepare_manual_execution_draft",
     toolDefinitions: coachAiChatFactualToolRegistry.map((definition) => definition.name),
     maximumFactualResultsBytes: COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES,
@@ -201,6 +238,7 @@ export class CoachAiChatGenerationService {
     private readonly actionDrafts: Pick<CoachAiChatActionDraftService,
       "create" | "list" | "readForSourceMessage"> | null = null,
     private readonly reportingCurrency: string | null = null,
+    private readonly relationshipMemory: Pick<CoachAiRelationshipMemoryRepository, "read"> | null = null,
   ) {}
 
   async generateSavedAnswer(
@@ -297,8 +335,16 @@ export class CoachAiChatGenerationService {
           ? Object.freeze({ intent: "assist_daily_review", trustedContext, analysisScope })
           : Object.freeze({ intent, analysisScope }),
       }, now);
-      const history = boundedHistory(this.chat.listMessages(scope, input.conversationId, { limit: COACH_AI_CHAT_MAX_RECENT_MESSAGES }).messages
-        .filter((message) => message.messageId !== pair.userMessage.messageId && message.messageId !== pair.assistantMessage.messageId));
+      const history = buildCoachAiChatAdaptiveHistory(
+        input.question,
+        loadContextMessages(this.chat, scope, input.conversationId)
+          .filter((message) => message.messageId !== pair.userMessage.messageId &&
+            message.messageId !== pair.assistantMessage.messageId),
+      );
+      const relationshipMemoryView = this.relationshipMemory?.read(scope, now) ?? null;
+      const relationshipMemories = relationshipMemoryView?.settings.enabled
+        ? boundedRelationshipMemories(relationshipMemoryView.memories)
+        : Object.freeze([]);
       const reservation = this.controls.reserveChatGeneration(scope, {
         conversationId: input.conversationId,
         assistantMessageId: pair.assistantMessage.messageId,
@@ -312,6 +358,7 @@ export class CoachAiChatGenerationService {
           currentReviewDelivery,
           analysisScope,
           pageContext,
+          relationshipMemories,
         ),
         maxOutputTokens: COACH_AI_CHAT_MAX_OUTPUT_TOKENS,
         additionalFeatureKey: trustedContext ? "daily_companion" : undefined,
@@ -319,7 +366,7 @@ export class CoachAiChatGenerationService {
       if (reservation.state === "blocked") {
         this.chat.finalizeAssistantFailure(scope, pair.assistantMessage.messageId, "TRADERLINK_COACH_CHAT_DAILY_CAP_REACHED", null, now);
       }
-      return Object.freeze({ pair, history, reservation });
+      return Object.freeze({ pair, history, relationshipMemories, reservation });
     });
     if (created.reservation.state === "blocked") {
       return Object.freeze({ state: "blocked", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: created.reservation.attempt.attemptId, manualEntryDraft: null, dailyCompanionDraft: null, reviewDeliveryChangeDraft: null, actionDraft: null });
@@ -342,7 +389,8 @@ export class CoachAiChatGenerationService {
     let result: CoachAiChatGenerationResult;
     try {
       result = await this.generator({ scope, selectedAccountId: scope.activeAccountId!, asOfUtc: now.toISOString(), attempt,
-        recentMessages: created.history, question: input.question, intent, trustedContext,
+        recentMessages: created.history, relationshipMemories: created.relationshipMemories,
+        question: input.question, intent, trustedContext,
         existingManualEntryDraft: boundedExistingManualEntryDraft, currentReviewDelivery,
         analysisScope, pageContext, dispatcher });
       if (result.manualEntryExtraction && (!manualEntryDefaults || !this.manualDrafts)) {
@@ -463,6 +511,7 @@ export class CoachAiChatGenerationService {
           assistantTextPrivate: safeAssistantText(result),
           snapshotContractVersion: "traderlink_coach_ai_chat_generation_v1",
           factualSnapshot: Object.freeze({ answer: result.answer, factualToolCalls: result.factualToolCalls,
+            claimCatalog: buildCoachAiChatClaimCatalog(result.factualToolCalls),
             totalFactualResultBytes: dispatcher.totalSerializedResultBytes(), trustedContext,
             manualEntryExtraction: result.manualEntryExtraction,
             dailyCompanionDraftExtraction: result.dailyCompanionDraftExtraction,

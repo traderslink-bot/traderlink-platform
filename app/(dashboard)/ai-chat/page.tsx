@@ -7,7 +7,7 @@ import { AiChatClient } from "./ai-chat-client";
 import type { CoachAiDailyCompanionContextSelector } from "@/src/modules/coach/contracts/ai-daily-companion-contracts";
 
 export const metadata: Metadata = {
-  title: "AI Chat | TraderLink Platform",
+  title: "Links AI Chat | TraderLink Platform",
   description: "Ask questions about your saved trading record.",
 };
 
@@ -35,9 +35,9 @@ export default async function AiChatPage({ searchParams }: AiChatPageProps) {
   return (
     <DashboardPage>
       <Box>
-        <Typography component="h1" variant="h1">AI Chat</Typography>
+        <Typography component="h1" variant="h1">Links AI Chat</Typography>
         <Typography color="text.secondary" sx={{ maxWidth: 760, mt: 1 }} variant="body2">
-          Ask questions about your completed trades, explore what has been working, and keep each conversation saved with the Trade Tracker account you are viewing.
+          Ask Links about your completed trades, explore what has been working, and keep each conversation saved with the Trade Tracker account you are viewing.
         </Typography>
       </Box>
       <AiChatClient initialContext={initialContext} />

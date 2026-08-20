@@ -141,7 +141,7 @@ export const HELP_NAVIGATION_ITEMS: readonly HelpNavigationItem[] = Object.freez
   Object.freeze({
     href: "/help/ai-chat",
     icon: "ai_reviews",
-    label: "AI Chat",
+    label: "Links AI Chat",
     summary: "Ask about your trading, continue saved reviews and prepare editable drafts.",
   }),
   ...guideNavigationItems("/help/ai-chat", AI_CHAT_HELP_GUIDES, "ai_reviews"),
@@ -327,11 +327,11 @@ export const HELP_SEARCH_RECORDS: readonly HelpSearchRecord[] = Object.freeze([
     href: "/help/ai-chat",
     id: "ai-chat-overview",
     keywords: Object.freeze(["ai chat", "trading questions", "conversation", "execution draft"]),
-    section: "AI Chat",
+    section: "Links AI Chat",
     summary: "Ask about your trading, choose what to explore and prepare editable drafts.",
-    title: "AI Chat overview",
+    title: "Links AI Chat overview",
   }),
-  ...guideSearchRecords("ai-chat", "AI Chat", "/help/ai-chat", AI_CHAT_HELP_GUIDES),
+  ...guideSearchRecords("ai-chat", "Links AI Chat", "/help/ai-chat", AI_CHAT_HELP_GUIDES),
   Object.freeze({
     href: "/help/ai-reviews",
     id: "ai-reviews-overview",

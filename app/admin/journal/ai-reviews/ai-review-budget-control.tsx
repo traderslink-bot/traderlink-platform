@@ -87,7 +87,7 @@ export function AiReviewBudgetControl(input: Readonly<{
           value={draft.subscriberCap}
         />
         <Typography color="text.secondary" variant="body2">
-          Default: $2.00. This covers weekly, two-week and monthly AI Reviews across all of one subscriber&apos;s Trade Tracker accounts. AI Chat usage is separate.
+          Default: $2.00. This covers weekly, two-week and monthly AI Reviews across all of one subscriber&apos;s Trade Tracker accounts. Links AI Chat usage is separate.
         </Typography>
       </Stack>
 

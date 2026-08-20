@@ -730,7 +730,7 @@ remains a final acceptance or merge-readiness boundary.
 - [x] Owner approves this complete plan.
 - [x] Owner approves the exact availability/failure copy and drawer behavior with
   **Links AI Chat** as the required visible feature name.
-- [ ] Audit concurrent working-tree ownership and establish explicit file
+- [x] Audit concurrent working-tree ownership and establish explicit file
   allowlists before implementation.
 
 ### Checkpoint 1 — grounding and conversation-state contracts

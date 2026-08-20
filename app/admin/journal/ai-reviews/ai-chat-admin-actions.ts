@@ -52,7 +52,7 @@ function resultFor(error: unknown, invalidMessage: string): ActionResult {
   if (isTraderLinkPlatformError(error) && error.code === "TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED") {
     return Object.freeze({ ok: false as const, message: invalidMessage });
   }
-  return Object.freeze({ ok: false as const, message: "AI Chat administration is unavailable right now. Try again later." });
+  return Object.freeze({ ok: false as const, message: "Links AI Chat administration is unavailable right now. Try again later." });
 }
 
 export async function saveAiChatProviderSettings(input: Readonly<{
@@ -85,7 +85,7 @@ export async function saveAiChatPlatformControl(input: Readonly<{
     revalidatePath("/admin/journal/ai-reviews");
     return Object.freeze({ ok: true as const });
   } catch (error) {
-    return resultFor(error, "Enter all three positive daily caps before enabling AI Chat.");
+    return resultFor(error, "Enter all three positive daily caps before enabling Links AI Chat.");
   }
 }
 
@@ -104,6 +104,6 @@ export async function saveAiChatAccountControl(input: Readonly<{
     revalidatePath("/admin/journal/ai-reviews");
     return Object.freeze({ ok: true as const });
   } catch (error) {
-    return resultFor(error, "Select a Journal account and enter all three positive daily caps before enabling AI Chat.");
+    return resultFor(error, "Select a Journal account and enter all three positive daily caps before enabling Links AI Chat.");
   }
 }

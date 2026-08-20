@@ -177,7 +177,7 @@ export const DASHBOARD_STANDALONE_ITEMS: readonly DashboardNavigationItem[] =
   Object.freeze([
     Object.freeze({
       href: "/ai-chat",
-      label: "AI Chat",
+      label: "Links AI Chat",
       icon: "aiChat" as const,
     }),
     Object.freeze({
@@ -237,7 +237,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/charts": "Market Charts",
     "/help": "Help Center",
     "/ai-reviews": "AI Reviews",
-    "/ai-chat": "AI Chat",
+    "/ai-chat": "Links AI Chat",
     "/rules": "Trading Rules",
     "/rules/results": "Rule Results",
     "/imports": "Import Trades",
@@ -285,7 +285,7 @@ const DASHBOARD_HELP_TARGETS: readonly Readonly<DashboardHelpTarget & { route: s
     Object.freeze({ route: "/imports", href: "/help/notifications-and-imports", label: "Import Trades" }),
     Object.freeze({ route: "/notifications", href: "/help/notifications-and-imports/notifications", label: "Notifications" }),
     Object.freeze({ route: "/data-decisions", href: "/help/data-decisions", label: "Data Decisions" }),
-    Object.freeze({ route: "/ai-chat", href: "/help/ai-chat", label: "AI Chat" }),
+    Object.freeze({ route: "/ai-chat", href: "/help/ai-chat", label: "Links AI Chat" }),
     Object.freeze({ route: "/ai-reviews", href: "/help/ai-reviews", label: "AI Reviews" }),
     Object.freeze({ route: "/trade-tags", href: "/help/trade-tags", label: "Trade Tags" }),
   ]);
