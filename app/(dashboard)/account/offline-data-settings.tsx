@@ -11,9 +11,9 @@ import Typography from "@mui/material/Typography";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
-  PLATFORM_OFFLINE_MAX_PROJECTIONS_PER_PARTITION,
-  PLATFORM_OFFLINE_MAX_TOTAL_CHARACTERS,
-} from "@/src/modules/platform/contracts/platform-offline-projection-contracts";
+  PLATFORM_OFFLINE_MAX_PAGE_DATA_BYTES,
+  PLATFORM_OFFLINE_MAX_SAVED_VIEW_BYTES,
+} from "@/src/modules/platform/contracts/platform-offline-saved-view-contracts";
 import {
   PLATFORM_OFFLINE_DATA_CHANGED_EVENT,
   platformOfflinePartitionKey,
@@ -27,6 +27,10 @@ function formatBytes(bytes: number): string {
   if (bytes < 1_024) return `${bytes} bytes`;
   if (bytes < 1_048_576) return `${(bytes / 1_024).toFixed(1)} KB`;
   return `${(bytes / 1_048_576).toFixed(1)} MB`;
+}
+
+function formatStorageLimit(bytes: number): string {
+  return `${bytes / 1_000_000} MB`;
 }
 
 function formatTime(value: string | null): string {
@@ -84,6 +88,13 @@ export function OfflineDataSettings({
   }
 
   const pendingTradeCount = summary?.pendingTradeCount ?? 0;
+  const savedPageCount = summary
+    ? summary.savedViewCount > 0
+      ? summary.savedViewCount
+      : summary.projectionCount
+    : 0;
+  const deviceStorageBytes = summary?.browserUsageBytes ??
+    summary?.approximateBytes ?? 0;
   return (
     <Stack spacing={1.5}>
       <Typography color="text.secondary" variant="body2">
@@ -93,7 +104,7 @@ export function OfflineDataSettings({
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
         <Stack spacing={0.25} sx={{ minWidth: 150 }}>
           <Typography color="text.secondary" variant="caption">Saved pages</Typography>
-          <Typography sx={{ fontWeight: 800 }}>{summary?.projectionCount ?? 0}</Typography>
+          <Typography sx={{ fontWeight: 800 }}>{savedPageCount}</Typography>
         </Stack>
         <Stack spacing={0.25} sx={{ minWidth: 170 }}>
           <Typography color="text.secondary" variant="caption">Last updated</Typography>
@@ -101,11 +112,18 @@ export function OfflineDataSettings({
         </Stack>
         <Stack spacing={0.25} sx={{ minWidth: 130 }}>
           <Typography color="text.secondary" variant="caption">Device storage</Typography>
-          <Typography sx={{ fontWeight: 800 }}>{formatBytes(summary?.approximateBytes ?? 0)}</Typography>
+          <Typography sx={{ fontWeight: 800 }}>{formatBytes(deviceStorageBytes)}</Typography>
+        </Stack>
+        <Stack spacing={0.25} sx={{ minWidth: 130 }}>
+          <Typography color="text.secondary" variant="caption">Unsynced trades</Typography>
+          <Typography sx={{ fontWeight: 800 }}>{pendingTradeCount}</Typography>
         </Stack>
       </Stack>
       <Typography color="text.secondary" variant="caption">
-        Limit: {PLATFORM_OFFLINE_MAX_PROJECTIONS_PER_PARTITION} recent pages per account and {PLATFORM_OFFLINE_MAX_TOTAL_CHARACTERS.toLocaleString()} characters per page. Raw statements, broker credentials, provider identities and AI request data are never included.
+        TraderLink keeps up to {formatStorageLimit(PLATFORM_OFFLINE_MAX_PAGE_DATA_BYTES)} of read-only page copies in this browser and removes the oldest copies first. Each saved page is limited to {formatStorageLimit(PLATFORM_OFFLINE_MAX_SAVED_VIEW_BYTES)}. Unsynced trades are never removed automatically.
+      </Typography>
+      <Typography color="text.secondary" variant="caption">
+        Device storage is the browser&apos;s estimate for the installed app and offline data when available. Raw statements, broker credentials, provider identities and AI request data are never included in saved page copies.
       </Typography>
       <Button color="error" onClick={() => setConfirmOpen(true)} sx={{ alignSelf: "flex-start" }} variant="outlined">
         Remove offline data

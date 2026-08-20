@@ -2,6 +2,7 @@ export const PLATFORM_OFFLINE_SAVED_VIEW_SCHEMA_VERSION = 1 as const;
 export const PLATFORM_OFFLINE_SAVED_VIEW_STORE = "savedViews" as const;
 export const PLATFORM_OFFLINE_MAX_SAVED_VIEWS_PER_PARTITION = 75 as const;
 export const PLATFORM_OFFLINE_MAX_SAVED_VIEW_BYTES = 2_000_000 as const;
+export const PLATFORM_OFFLINE_MAX_PAGE_DATA_BYTES = 50_000_000 as const;
 
 export type PlatformOfflineJsonValue =
   | boolean

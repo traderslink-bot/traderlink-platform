@@ -128,10 +128,10 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
           Object.freeze({ kind: "paragraph", text: "When you open Notifications while online, TraderLink can keep a bounded read-only copy for the selected Trade Tracker account. Offline pages clearly show when that copy was last updated. Reading the copy does not mark an update as read or change any Journal fact." }),
           Object.freeze({ kind: "steps", items: Object.freeze([
             Object.freeze({ title: "1. Open Preferences", text: "Open Account, choose Preferences and find Offline data." }),
-            Object.freeze({ title: "2. Review what is saved", text: "See how many pages are saved, when they were last updated and the approximate device storage used." }),
+            Object.freeze({ title: "2. Review what is saved", text: "See how many pages are saved, whether an unsynced trade is waiting, when pages were last updated and the browser's estimated app storage." }),
             Object.freeze({ title: "3. Remove it deliberately", text: "Choose Remove offline data when you want to clear the current account's saved pages and offline trade entries from this device. TraderLink warns you first when an unsynced trade exists only on the device." }),
           ]) }),
-          Object.freeze({ kind: "callout", title: "Saved pages are not a backup", text: "Device storage can be removed by the browser or operating system. Pending trades count only after TraderLink accepts them into the Journal." }),
+          Object.freeze({ kind: "callout", title: "Saved pages are not a backup", text: "TraderLink keeps up to 50 MB of read-only page copies in the browser and removes the oldest copies first. It never automatically removes an unsynced trade. Device storage can still be removed by the browser or operating system, and a pending trade counts only after TraderLink accepts it into the Journal." }),
         ]),
       }),
       Object.freeze({

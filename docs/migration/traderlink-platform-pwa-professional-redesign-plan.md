@@ -448,6 +448,11 @@ The user does not reinstall the PWA for normal website content or UI releases.
 
 ### PWA-R5 - complete acceptance
 
+- cap read-only offline page data at 50 MB across the browser, remove the
+  oldest saved page copies first and never automatically remove an unsynced
+  or review-required trade;
+- report the browser's estimated app storage together with the current
+  account's saved-page and pending-trade state;
 - resource-aware focused static and contract checks;
 - real installed Chrome/Edge desktop acceptance;
 - genuine offline close/relaunch across the complete inventory;
@@ -511,6 +516,8 @@ During implementation:
 - [ ] Service-worker updates are build-versioned and preserve unsynced entries.
 - [ ] Normal website UI/content releases reach installed apps without reinstall.
 - [ ] Private HTML/API/statement/provider data is never broadly cached.
+- [ ] Read-only saved pages stay within the 50 MB browser budget without
+      automatically removing an unsynced or review-required trade.
 - [ ] Desktop and narrow-mobile screenshot gates pass throughout.
 - [ ] Genuine installed-app offline relaunch passes across the complete inventory.
 - [ ] Hosted phone, Push and background-delivery gates pass when authorized.

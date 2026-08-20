@@ -430,6 +430,31 @@ condensed rail state is offered.
 - [ ] Verify Web Push destination routing, safe application update activation
   and outbox preservation at the final installed-app checkpoint.
 
+## PWA-R5 storage hardening
+
+- [x] Add one 50 MB browser-wide budget covering the read-only legacy
+  projections and explicit saved-view stores.
+- [x] Remove only the oldest read-only page copies when the budget is exceeded;
+  never automatically remove a pending, syncing or review-required trade.
+- [x] Make Account Preferences include both saved-view stores and offline trade
+  records in its local estimate, and show the browser's available origin-level
+  usage estimate when supported.
+- [x] Update Notifications Help with the exact storage and non-eviction
+  behavior.
+- [ ] Complete focused static checks and preserve the slice in a narrow local
+  commit without staging concurrent AI Chat or Journal-plan work.
+
+The storage write path first preserves each store's existing per-account count
+limit, then checks the browser's origin-level usage estimate. When the estimate
+could cross the budget, one transaction measures both read-only page stores and
+deletes their oldest records until no more than 50,000,000 serialized bytes
+remain. That transaction cannot access `manualTradeOutbox`. The Account summary
+now includes outbox records in its local byte estimate and uses
+`navigator.storage.estimate()` for the installed app's origin-level usage when
+the browser provides it. Focused 512 MB ESLint, a temporary PWA-only TypeScript
+configuration and `git diff --check` pass. No Vitest, broad suite, server,
+browser, IndexedDB mutation, Journal write, provider call or deployment ran.
+
 ## Current exact resume point
 
 PWA-R1 is preserved at local commit `30954abf`; PWA-R2 source is preserved at
@@ -449,8 +474,10 @@ Candle Review, Core Analytics, Trade Analyzer, Notifications, Account device
 controls, all first-party Help guides and issued AI Review list/detail offline
 renderers. Links AI Chat,
 Imports, Market Charts and Data Decisions now have deliberate native
-connection-required states. PWA-R4 source implementation is complete. The next
-boundary is final installed-app acceptance when system resources permit. Keep source work lightweight until
+connection-required states. PWA-R4 source implementation is complete. PWA-R5
+first closes the approved 50 MB device-storage hardening slice, then moves to
+final installed-app acceptance when system resources permit. Keep source work
+lightweight until
 the full-site build and installed-app relaunch can run without threatening
 protected processes. No Journal data, IndexedDB record, Push state, hosted
 configuration or deployed state changed during this source checkpoint.

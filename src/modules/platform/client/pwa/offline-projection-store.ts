@@ -12,6 +12,7 @@ import {
   type PlatformOfflineProjection,
 } from "@/src/modules/platform/contracts/platform-offline-projection-contracts";
 import {
+  PLATFORM_OFFLINE_MAX_PAGE_DATA_BYTES,
   PLATFORM_OFFLINE_MAX_SAVED_VIEWS_PER_PARTITION,
   PLATFORM_OFFLINE_MAX_SAVED_VIEW_BYTES,
   PLATFORM_OFFLINE_SAVED_VIEW_SCHEMA_VERSION,
@@ -133,6 +134,135 @@ function notifyChanged(): void {
   window.dispatchEvent(new Event(PLATFORM_OFFLINE_DATA_CHANGED_EVENT));
 }
 
+function serializedBytes(value: unknown): number {
+  const serialized = JSON.stringify(value);
+  return typeof serialized === "string" ? new Blob([serialized]).size : 0;
+}
+
+function refsPastPartitionLimit<T extends Readonly<{
+  partitionKey: string;
+  ref: string;
+}>>(
+  records: readonly T[],
+  partitionKey: string,
+  limit: number,
+  updatedAt: (record: T) => string,
+): ReadonlySet<string> {
+  return new Set(
+    records
+      .filter((record) => record.partitionKey === partitionKey)
+      .sort((left, right) => updatedAt(right).localeCompare(updatedAt(left)))
+      .slice(limit)
+      .map((record) => record.ref),
+  );
+}
+
+async function writeAndPrunePlatformOfflinePageData(
+  database: IDBDatabase,
+  input:
+    | Readonly<{ projection: PlatformOfflineProjection }>
+    | Readonly<{ savedView: PlatformOfflineSavedView<unknown> }>,
+): Promise<void> {
+  const record = "projection" in input ? input.projection : input.savedView;
+  const estimatedUsage = await browserStorageUsageBytes();
+  const shouldCheckPageBudget = estimatedUsage === null ||
+    estimatedUsage + serializedBytes(record) >
+      PLATFORM_OFFLINE_MAX_PAGE_DATA_BYTES;
+  if ("projection" in input) {
+    const transaction = database.transaction(
+      PLATFORM_OFFLINE_PROJECTION_STORE,
+      "readwrite",
+    );
+    const store = transaction.objectStore(PLATFORM_OFFLINE_PROJECTION_STORE);
+    store.put(input.projection);
+    const partitionRecords = await requestResult(
+      store.index(PLATFORM_OFFLINE_PARTITION_INDEX).getAll(
+        input.projection.partitionKey,
+      ),
+    ) as PlatformOfflineProjection[];
+    refsPastPartitionLimit(
+      partitionRecords,
+      input.projection.partitionKey,
+      PLATFORM_OFFLINE_MAX_PROJECTIONS_PER_PARTITION,
+      (candidate) => candidate.lastSyncedAtUtc,
+    ).forEach((ref) => store.delete(ref));
+    await transactionComplete(transaction);
+  } else {
+    const transaction = database.transaction(
+      PLATFORM_OFFLINE_SAVED_VIEW_STORE,
+      "readwrite",
+    );
+    const store = transaction.objectStore(PLATFORM_OFFLINE_SAVED_VIEW_STORE);
+    store.put(input.savedView);
+    const partitionViews = await requestResult(
+      store.index(PLATFORM_OFFLINE_PARTITION_INDEX).getAll(
+        input.savedView.partitionKey,
+      ),
+    ) as PlatformOfflineSavedView<unknown>[];
+    refsPastPartitionLimit(
+      partitionViews,
+      input.savedView.partitionKey,
+      PLATFORM_OFFLINE_MAX_SAVED_VIEWS_PER_PARTITION,
+      (candidate) => candidate.savedAtUtc,
+    ).forEach((ref) => store.delete(ref));
+    await transactionComplete(transaction);
+  }
+  if (!shouldCheckPageBudget) return;
+
+  const transaction = database.transaction(
+    [PLATFORM_OFFLINE_PROJECTION_STORE, PLATFORM_OFFLINE_SAVED_VIEW_STORE],
+    "readwrite",
+  );
+  const projectionStore = transaction.objectStore(
+    PLATFORM_OFFLINE_PROJECTION_STORE,
+  );
+  const savedViewStore = transaction.objectStore(
+    PLATFORM_OFFLINE_SAVED_VIEW_STORE,
+  );
+  const [projections, savedViews] = await Promise.all([
+    requestResult(projectionStore.getAll()),
+    requestResult(savedViewStore.getAll()),
+  ]) as [PlatformOfflineProjection[], PlatformOfflineSavedView<unknown>[]];
+
+  const retainedRecords = [
+    ...projections.map((record) => ({
+      bytes: serializedBytes(record),
+      ref: record.ref,
+      store: projectionStore,
+      updatedAtUtc: record.lastSyncedAtUtc,
+    })),
+    ...savedViews.map((record) => ({
+      bytes: serializedBytes(record),
+      ref: record.ref,
+      store: savedViewStore,
+      updatedAtUtc: record.savedAtUtc,
+    })),
+  ].sort((left, right) =>
+    left.updatedAtUtc.localeCompare(right.updatedAtUtc) ||
+    left.ref.localeCompare(right.ref));
+  let retainedBytes = retainedRecords.reduce(
+    (total, record) => total + record.bytes,
+    0,
+  );
+  for (const record of retainedRecords) {
+    if (retainedBytes <= PLATFORM_OFFLINE_MAX_PAGE_DATA_BYTES) break;
+    record.store.delete(record.ref);
+    retainedBytes -= record.bytes;
+  }
+  await transactionComplete(transaction);
+}
+
+async function browserStorageUsageBytes(): Promise<number | null> {
+  try {
+    const usage = (await navigator.storage?.estimate())?.usage;
+    return typeof usage === "number" && Number.isFinite(usage)
+      ? Math.max(0, Math.round(usage))
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function recordPlatformOfflineDeviceState(
   state: PlatformOfflineDeviceState,
 ): Promise<void> {
@@ -171,21 +301,7 @@ export async function savePlatformOfflineProjection(
 ): Promise<void> {
   const database = await openDatabase();
   try {
-    const readTransaction = database.transaction(PLATFORM_OFFLINE_PROJECTION_STORE, "readonly");
-    const partitionRecords = await requestResult(
-      readTransaction.objectStore(PLATFORM_OFFLINE_PROJECTION_STORE)
-        .index(PLATFORM_OFFLINE_PARTITION_INDEX).getAll(projection.partitionKey),
-    ) as PlatformOfflineProjection[];
-    await transactionComplete(readTransaction);
-    const transaction = database.transaction(PLATFORM_OFFLINE_PROJECTION_STORE, "readwrite");
-    const store = transaction.objectStore(PLATFORM_OFFLINE_PROJECTION_STORE);
-    store.put(projection);
-    partitionRecords
-      .filter((record) => record.ref !== projection.ref)
-      .sort((left, right) => right.lastSyncedAtUtc.localeCompare(left.lastSyncedAtUtc))
-      .slice(PLATFORM_OFFLINE_MAX_PROJECTIONS_PER_PARTITION - 1)
-      .forEach((record) => store.delete(record.ref));
-    await transactionComplete(transaction);
+    await writeAndPrunePlatformOfflinePageData(database, { projection });
   } finally {
     database.close();
   }
@@ -248,27 +364,7 @@ export async function savePlatformOfflineView<TModel>(
   }
   const database = await openDatabase();
   try {
-    const readTransaction = database.transaction(
-      PLATFORM_OFFLINE_SAVED_VIEW_STORE,
-      "readonly",
-    );
-    const partitionViews = await requestResult(
-      readTransaction.objectStore(PLATFORM_OFFLINE_SAVED_VIEW_STORE)
-        .index(PLATFORM_OFFLINE_PARTITION_INDEX).getAll(view.partitionKey),
-    ) as PlatformOfflineSavedView[];
-    await transactionComplete(readTransaction);
-    const transaction = database.transaction(
-      PLATFORM_OFFLINE_SAVED_VIEW_STORE,
-      "readwrite",
-    );
-    const store = transaction.objectStore(PLATFORM_OFFLINE_SAVED_VIEW_STORE);
-    store.put(view);
-    partitionViews
-      .filter((candidate) => candidate.ref !== view.ref)
-      .sort((left, right) => right.savedAtUtc.localeCompare(left.savedAtUtc))
-      .slice(PLATFORM_OFFLINE_MAX_SAVED_VIEWS_PER_PARTITION - 1)
-      .forEach((candidate) => store.delete(candidate.ref));
-    await transactionComplete(transaction);
+    await writeAndPrunePlatformOfflinePageData(database, { savedView: view });
   } finally {
     database.close();
   }
@@ -299,6 +395,7 @@ export async function readPlatformOfflineView(
 
 export type PlatformOfflineStorageSummary = Readonly<{
   approximateBytes: number;
+  browserUsageBytes: number | null;
   lastSyncedAtUtc: string | null;
   pendingTradeCount: number;
   projectionCount: number;
@@ -346,9 +443,8 @@ export async function readPlatformOfflineStorageSummary(
     ]
       .sort((left, right) => right.localeCompare(left))[0] ?? null;
     return Object.freeze({
-      approximateBytes: new Blob([
-        JSON.stringify({ projections, savedViews }),
-      ]).size,
+      approximateBytes: serializedBytes({ outbox, projections, savedViews }),
+      browserUsageBytes: await browserStorageUsageBytes(),
       lastSyncedAtUtc,
       pendingTradeCount: outbox.filter((record) =>
         record.entries && record.state !== "saved_to_traderlink").length,
