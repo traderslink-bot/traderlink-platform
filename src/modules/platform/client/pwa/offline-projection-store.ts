@@ -104,6 +104,25 @@ export async function recordPlatformOfflineDeviceState(
   notifyChanged();
 }
 
+export async function readPlatformOfflineDeviceState(): Promise<
+  PlatformOfflineDeviceState | null
+> {
+  const database = await openDatabase();
+  try {
+    const transaction = database.transaction(
+      PLATFORM_OFFLINE_DEVICE_STATE_STORE,
+      "readonly",
+    );
+    const state = await requestResult(
+      transaction.objectStore(PLATFORM_OFFLINE_DEVICE_STATE_STORE).get("current"),
+    ) as PlatformOfflineDeviceState | undefined;
+    await transactionComplete(transaction);
+    return state ?? null;
+  } finally {
+    database.close();
+  }
+}
+
 export async function savePlatformOfflineProjection(
   projection: PlatformOfflineProjection,
 ): Promise<void> {

@@ -6,8 +6,8 @@ import ExpandLessRoundedIcon from "@mui/icons-material/ExpandLessRounded";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import SyncRoundedIcon from "@mui/icons-material/SyncRounded";
 import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
 import Chip from "@mui/material/Chip";
+import Collapse from "@mui/material/Collapse";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import {
   useCallback,
   useEffect,
+  useId,
   useState,
   useSyncExternalStore,
 } from "react";
@@ -85,6 +86,7 @@ export function TradeOutboxStatus({
   offlineScopeRef: string;
 }) {
   const router = useRouter();
+  const detailsId = useId();
   const online = useSyncExternalStore(
     subscribeToConnectionChange,
     browserOnlineSnapshot,
@@ -92,6 +94,7 @@ export function TradeOutboxStatus({
   );
   const [expandedRef, setExpandedRef] = useState<string | null>(null);
   const [records, setRecords] = useState<readonly ManualTradeOutboxRecord[]>([]);
+  const [statusOpen, setStatusOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -172,134 +175,225 @@ export function TradeOutboxStatus({
 
   if (records.length === 0) return null;
 
+  const waitingCount = records.filter(
+    (record) => record.state !== "saved_to_traderlink",
+  ).length;
+  const reviewCount = records.filter(
+    (record) => record.state === "needs_review",
+  ).length;
+  const syncingCount = records.filter(
+    (record) => record.state === "syncing",
+  ).length;
+  const statusLabel = reviewCount > 0
+    ? `${reviewCount} to review`
+    : syncingCount > 0
+      ? `${syncingCount} syncing`
+      : waitingCount > 0
+        ? `${waitingCount} waiting`
+        : "Up to date";
+  const statusDescription = reviewCount > 0
+    ? `${reviewCount} saved trade ${reviewCount === 1 ? "batch needs" : "batches need"} your decision before TraderLink can add ${reviewCount === 1 ? "it" : "them"}.`
+    : waitingCount > 0
+      ? online
+        ? `${waitingCount} saved trade ${waitingCount === 1 ? "batch is" : "batches are"} waiting for TraderLink confirmation.`
+        : `${waitingCount} saved trade ${waitingCount === 1 ? "batch will" : "batches will"} sync automatically after you reconnect.`
+      : "Recent device saves are confirmed in TraderLink.";
+
   return (
-    <Card sx={{ mb: 2 }} variant="outlined">
-      <Box sx={{ p: 2 }}>
-        <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">
-          Saved trades on this device
-        </Typography>
-        <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
-          Entries stay separate from positions, P/L and Analytics until
-          TraderLink confirms the save.
-        </Typography>
-      </Box>
-      <Divider />
-      <Stack divider={<Divider flexItem />}>
-        {records.map((record) => {
-          const expanded = expandedRef === record.ref;
-          return (
-            <Box key={record.ref} sx={{ p: 2 }}>
-              <Stack
-                direction={{ xs: "column", sm: "row" }}
-                spacing={1.5}
-                sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}
-              >
-                <Box>
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    sx={{ alignItems: "center", flexWrap: "wrap" }}
-                  >
-                    <Chip
-                      color={stateColor(record.state)}
-                      label={stateLabel(record.state)}
-                      size="small"
-                      variant={record.state === "saved_on_device" ? "outlined" : "filled"}
-                    />
-                    <Typography sx={{ fontWeight: 750 }} variant="body2">
-                      {trackerLabel(record)}
-                    </Typography>
-                  </Stack>
-                  <Typography color="text.secondary" sx={{ mt: 0.75 }} variant="caption">
-                    {executionCount(record)} execution{executionCount(record) === 1 ? "" : "s"}
-                    {" · "}{savedTime(record.updatedAtUtc)}
-                  </Typography>
-                  {record.state === "needs_review" ? (
-                    <Typography color="warning.dark" sx={{ display: "block", mt: 0.75 }} variant="caption">
-                      {manualTradeOutboxIssueMessage(record.issue)}
-                    </Typography>
-                  ) : null}
-                </Box>
-                <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
-                  {record.entries ? (
-                    <DashboardSecondaryAction
-                      onClick={() => setExpandedRef(expanded ? null : record.ref)}
-                      startIcon={expanded
-                        ? <ExpandLessRoundedIcon />
-                        : <ExpandMoreRoundedIcon />}
+    <Box
+      aria-label="Trade sync"
+      component="section"
+      sx={{
+        bgcolor: "background.paper",
+        border: 1,
+        borderColor: reviewCount > 0 ? "warning.light" : "divider",
+        borderRadius: 1.5,
+        mb: 2,
+        px: { xs: 1.5, sm: 2 },
+        py: 1.25,
+      }}
+    >
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={1.25}
+        sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}
+      >
+        <Box sx={{ minWidth: 0 }}>
+          <Typography component="h2" sx={{ fontWeight: 850 }} variant="body2">
+            Trade sync
+          </Typography>
+          <Typography color="text.secondary" sx={{ mt: 0.25 }} variant="caption">
+            {statusDescription}
+          </Typography>
+        </Box>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexShrink: 0 }}>
+          <Chip
+            color={reviewCount > 0
+              ? "warning"
+              : waitingCount > 0
+                ? "default"
+                : "success"}
+            label={statusLabel}
+            size="small"
+            variant={waitingCount > 0 && reviewCount === 0 ? "outlined" : "filled"}
+          />
+          <DashboardSecondaryAction
+            aria-controls={detailsId}
+            aria-expanded={statusOpen}
+            onClick={() => setStatusOpen((current) => !current)}
+            startIcon={statusOpen
+              ? <ExpandLessRoundedIcon />
+              : <ExpandMoreRoundedIcon />}
+          >
+            {statusOpen
+              ? "Hide"
+              : reviewCount > 0
+                ? "Review saved trades"
+                : "View saved trades"}
+          </DashboardSecondaryAction>
+        </Stack>
+      </Stack>
+      <Collapse in={statusOpen}>
+        <Divider sx={{ mt: 1.25 }} />
+        <Stack divider={<Divider flexItem />} id={detailsId}>
+          {records.map((record) => {
+            const expanded = expandedRef === record.ref;
+            return (
+              <Box key={record.ref} sx={{ py: 1.5 }}>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1.5}
+                  sx={{
+                    alignItems: { sm: "center" },
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Box>
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      sx={{ alignItems: "center", flexWrap: "wrap" }}
                     >
-                      {expanded ? "Hide details" : "Review"}
-                    </DashboardSecondaryAction>
-                  ) : null}
-                  {record.issue === "possible_duplicate" ? (
-                    <>
-                      <DashboardSecondaryAction
-                        onClick={() => void alreadyEntered(record)}
-                        startIcon={<DoneRoundedIcon />}
+                      <Chip
+                        color={stateColor(record.state)}
+                        label={stateLabel(record.state)}
+                        size="small"
+                        variant={record.state === "saved_on_device"
+                          ? "outlined"
+                          : "filled"}
+                      />
+                      <Typography sx={{ fontWeight: 750 }} variant="body2">
+                        {trackerLabel(record)}
+                      </Typography>
+                    </Stack>
+                    <Typography
+                      color="text.secondary"
+                      sx={{ mt: 0.75 }}
+                      variant="caption"
+                    >
+                      {executionCount(record)} execution
+                      {executionCount(record) === 1 ? "" : "s"}
+                      {" · "}{savedTime(record.updatedAtUtc)}
+                    </Typography>
+                    {record.state === "needs_review" ? (
+                      <Typography
+                        color="warning.dark"
+                        sx={{ display: "block", mt: 0.75 }}
+                        variant="caption"
                       >
-                        Already entered
+                        {manualTradeOutboxIssueMessage(record.issue)}
+                      </Typography>
+                    ) : null}
+                  </Box>
+                  <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
+                    {record.entries ? (
+                      <DashboardSecondaryAction
+                        onClick={() => setExpandedRef(
+                          expanded ? null : record.ref,
+                        )}
+                        startIcon={expanded
+                          ? <ExpandLessRoundedIcon />
+                          : <ExpandMoreRoundedIcon />}
+                      >
+                        {expanded ? "Hide details" : "Review"}
                       </DashboardSecondaryAction>
+                    ) : null}
+                    {record.issue === "possible_duplicate" ? (
+                      <>
+                        <DashboardSecondaryAction
+                          onClick={() => void alreadyEntered(record)}
+                          startIcon={<DoneRoundedIcon />}
+                        >
+                          Already entered
+                        </DashboardSecondaryAction>
+                        <DashboardSecondaryAction
+                          disabled={!online}
+                          onClick={() => void saveSeparately(record)}
+                          startIcon={<SyncRoundedIcon />}
+                        >
+                          Save as separate
+                        </DashboardSecondaryAction>
+                      </>
+                    ) : record.state === "saved_on_device" ||
+                      record.state === "needs_review" ? (
                       <DashboardSecondaryAction
                         disabled={!online}
-                        onClick={() => void saveSeparately(record)}
+                        onClick={() => void retry(record)}
                         startIcon={<SyncRoundedIcon />}
                       >
-                        Save as separate
+                        Sync now
                       </DashboardSecondaryAction>
-                    </>
-                  ) : record.state === "saved_on_device" || record.state === "needs_review" ? (
-                    <DashboardSecondaryAction
-                      disabled={!online}
-                      onClick={() => void retry(record)}
-                      startIcon={<SyncRoundedIcon />}
-                    >
-                      Sync now
-                    </DashboardSecondaryAction>
-                  ) : null}
-                  {record.state !== "syncing" && record.issue !== "possible_duplicate" ? (
-                    <DashboardSecondaryAction
-                      onClick={() => void remove(record)}
-                      startIcon={<DeleteOutlineRoundedIcon />}
-                    >
-                      Remove
-                    </DashboardSecondaryAction>
-                  ) : null}
+                    ) : null}
+                    {record.state !== "syncing" &&
+                    record.issue !== "possible_duplicate" ? (
+                      <DashboardSecondaryAction
+                        onClick={() => void remove(record)}
+                        startIcon={<DeleteOutlineRoundedIcon />}
+                      >
+                        Remove
+                      </DashboardSecondaryAction>
+                    ) : null}
+                  </Stack>
                 </Stack>
-              </Stack>
-              {expanded && record.entries ? (
-                <Stack spacing={1} sx={{ mt: 2 }}>
-                  {record.entries.map((entry) => (
-                    <Box
-                      key={entry.clientRowRef}
-                      sx={{
-                        bgcolor: "action.hover",
-                        borderRadius: 1,
-                        display: "grid",
-                        gap: 0.5,
-                        gridTemplateColumns: { xs: "1fr", sm: "repeat(4, 1fr)" },
-                        p: 1.25,
-                      }}
-                    >
-                      <Typography sx={{ fontWeight: 750 }} variant="body2">
-                        {entry.normalizedSymbol} · {entry.side === "buy" ? "Buy" : "Sell"}
-                      </Typography>
-                      <Typography color="text.secondary" variant="body2">
-                        {entry.localDate} · {entry.localTime.slice(0, 5)}
-                      </Typography>
-                      <Typography color="text.secondary" variant="body2">
-                        Quantity {entry.quantityDecimal}
-                      </Typography>
-                      <Typography color="text.secondary" variant="body2">
-                        Price {entry.priceDecimal} {entry.tradeCurrency}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Stack>
-              ) : null}
-            </Box>
-          );
-        })}
-      </Stack>
-    </Card>
+                {expanded && record.entries ? (
+                  <Stack spacing={1} sx={{ mt: 2 }}>
+                    {record.entries.map((entry) => (
+                      <Box
+                        key={entry.clientRowRef}
+                        sx={{
+                          bgcolor: "action.hover",
+                          borderRadius: 1,
+                          display: "grid",
+                          gap: 0.5,
+                          gridTemplateColumns: {
+                            xs: "1fr",
+                            sm: "repeat(4, 1fr)",
+                          },
+                          p: 1.25,
+                        }}
+                      >
+                        <Typography sx={{ fontWeight: 750 }} variant="body2">
+                          {entry.normalizedSymbol} ·{" "}
+                          {entry.side === "buy" ? "Buy" : "Sell"}
+                        </Typography>
+                        <Typography color="text.secondary" variant="body2">
+                          {entry.localDate} · {entry.localTime.slice(0, 5)}
+                        </Typography>
+                        <Typography color="text.secondary" variant="body2">
+                          Quantity {entry.quantityDecimal}
+                        </Typography>
+                        <Typography color="text.secondary" variant="body2">
+                          Price {entry.priceDecimal} {entry.tradeCurrency}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Stack>
+                ) : null}
+              </Box>
+            );
+          })}
+        </Stack>
+      </Collapse>
+    </Box>
   );
 }

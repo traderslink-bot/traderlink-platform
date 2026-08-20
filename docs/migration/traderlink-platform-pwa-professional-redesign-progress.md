@@ -1,9 +1,9 @@
 # TraderLink Platform PWA Professional Redesign Progress
 
-**Status:** PWA-R0 owner approved; PWA-R1 shared desktop sidebar correction
-owner approved and locally checkpointed; React offline-shell foundation is
-implemented and focused-review verified, with the production manifest build
-deferred for the owner's resource-heavy press-release runtime
+**Status:** PWA-R0 owner approved; PWA-R1 shared shell and React offline-shell
+foundation are locally checkpointed; PWA-R2 tracker-parity source work is
+active, with browser/build acceptance deferred for the owner's resource-heavy
+press-release runtime
 
 **Started:** 2026-08-20
 
@@ -25,6 +25,8 @@ deferred for the owner's resource-heavy press-release runtime
   hosted configuration or activate production Push.
 - The PWA-R1 shell checkpoint stages only its audited shell hunks and PWA
   documents. Concurrent navigation hierarchy work remains outside this slice.
+- The accepted PWA-R1 source checkpoint is local commit `30954abf`. The earlier
+  owner-approved shared-shell checkpoint is local commit `08434c78`.
 
 ## Owner decision that opened the redesign
 
@@ -185,22 +187,55 @@ condensed rail state is offered.
 - [x] Stop the exact loopback review server and close review tabs before the
   owner's 03:55 press-release runtime; port 3010 is free with no orphaned
   TraderLink server process.
+- [x] Create narrow local commit `30954abf` without staging the concurrent
+  navigation, shell-depth, Analytics, Rules, Calendar or AI work.
 - [ ] Run the one required low-resource Webpack production build later to prove
   the generated manifest and worker bundle; do not start it while the
   press-release runtime needs the computer.
 
+## PWA-R2 tracker parity
+
+- [x] Audit Daily Trade Tracker, Swing Trade Tracker and Quick Trade Entry and
+  confirm all three website routes already share `ManualExecutionEntry` and
+  the exact Journal outbox behavior.
+- [x] Replace the large **Saved trades on this device** card stack with a slim
+  **Trade sync** row, waiting/review count and on-demand saved-batch
+  disclosure.
+- [x] Keep tracker, saved time, execution count and the four exact status names
+  in each disclosed batch.
+- [x] Preserve the exact **Already entered**, **Save as separate**, **Sync now**
+  and removal confirmations without changing the outbox or Journal contracts.
+- [x] Connect the React offline fallback to the same `ManualExecutionEntry`
+  component used by the online Daily, Swing and Quick Entry routes.
+- [x] Read only the validated account-partitioned device state; when that safe
+  state is absent, require one online account visit instead of inventing an
+  account, currency, timezone or date context.
+- [x] Preserve automatic reconnect, foreground and resume syncing inside the
+  offline React shell in addition to the existing background-sync request.
+- [x] Focused ESLint and explicit-file diff checks pass with a 512 MB Node
+  memory ceiling. No server, browser, test suite, TypeScript-wide check or
+  build was started.
+- [ ] Present Daily, Swing and Quick Entry online/offline at desktop and narrow
+  mobile for owner approval when a review server can run without competing
+  with the press-release runtime.
+- [ ] Prove the generated production worker includes every client chunk needed
+  by the shared offline entry component at the deferred Webpack build gate.
+- [ ] Create the narrow PWA-R2 source checkpoint commit after auditing the
+  shared dirty checkout.
+
 ## Current exact resume point
 
-The real React offline shell and maintained worker source are implemented.
-Focused lint, explicit diff checks, desktop review and 390-pixel mobile drawer
-review pass. The full TypeScript command reported only unrelated concurrent
-Workspace and AI Review errors. No Journal data, IndexedDB record, Push state,
-hosted configuration or deployed state changed.
+PWA-R1 is preserved at local commit `30954abf`. PWA-R2 now renders the real
+shared manual-execution component in the React offline fallback for the three
+exact tracker-entry routes and uses a compact Trade sync disclosure. Focused
+lint and explicit diff checks pass. No Journal data, IndexedDB record, Push
+state, hosted configuration or deployed state changed.
 
-The owner asked to prioritize computer resources before the 03:55
-press-release runtime. The exact 3010 review server and review tabs were stopped
-and the port was confirmed free. No production build or broad test was started.
-The exact resume point is one low-resource `build:webpack` checkpoint to verify
-the generated public-shell manifest and worker bundle, followed by the narrow
-PWA-R1 commit. Preserve the concurrent navigation hierarchy and other dirty
-checkout work when staging that checkpoint.
+The owner explicitly directed work to continue without waiting for the
+16-hour press-release runtime to stop. Continue only lightweight source work
+until resources permit the deferred worker build and visual acceptance. The
+next safe checkpoint is the narrow PWA-R2 source commit, staging only the exact
+PWA files and this progress record. The next product gate remains desktop and
+390-pixel online/offline screenshots for Daily, Swing and Quick Entry; do not
+claim PWA-R2 accepted before that owner review and the production worker-chunk
+proof both pass.
