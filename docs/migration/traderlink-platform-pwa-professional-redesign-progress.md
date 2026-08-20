@@ -220,22 +220,21 @@ condensed rail state is offered.
   with the press-release runtime.
 - [ ] Prove the generated production worker includes every client chunk needed
   by the shared offline entry component at the deferred Webpack build gate.
-- [ ] Create the narrow PWA-R2 source checkpoint commit after auditing the
-  shared dirty checkout.
+- [x] Create narrow local source checkpoint `4384f572` after auditing and
+  staging only the five PWA-R2 files from the shared dirty checkout.
 
 ## Current exact resume point
 
-PWA-R1 is preserved at local commit `30954abf`. PWA-R2 now renders the real
-shared manual-execution component in the React offline fallback for the three
-exact tracker-entry routes and uses a compact Trade sync disclosure. Focused
-lint and explicit diff checks pass. No Journal data, IndexedDB record, Push
-state, hosted configuration or deployed state changed.
+PWA-R1 is preserved at local commit `30954abf`. PWA-R2 source checkpoint
+`4384f572` renders the real shared manual-execution component in the React
+offline fallback for the three exact tracker-entry routes and uses a compact
+Trade sync disclosure. Focused lint and explicit diff checks pass. No Journal
+data, IndexedDB record, Push state, hosted configuration or deployed state
+changed.
 
 The owner explicitly directed work to continue without waiting for the
 16-hour press-release runtime to stop. Continue only lightweight source work
 until resources permit the deferred worker build and visual acceptance. The
-next safe checkpoint is the narrow PWA-R2 source commit, staging only the exact
-PWA files and this progress record. The next product gate remains desktop and
-390-pixel online/offline screenshots for Daily, Swing and Quick Entry; do not
-claim PWA-R2 accepted before that owner review and the production worker-chunk
-proof both pass.
+The next product gate remains desktop and 390-pixel online/offline screenshots
+for Daily, Swing and Quick Entry; do not claim PWA-R2 accepted before that owner
+review and the production worker-chunk proof both pass.
