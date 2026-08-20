@@ -145,8 +145,8 @@ describe("Coach AI Chat language inventory", () => {
     }
 
     const registryToolNames = coachAiChatFactualToolRegistry.map(({ name }) => name).sort();
-    expect(registryToolNames).toHaveLength(34);
-    expect(fixtureToolNames.size).toBe(34);
+    expect(registryToolNames).toHaveLength(36);
+    expect(fixtureToolNames.size).toBe(36);
     expect([...fixtureToolNames].sort()).toEqual(registryToolNames);
 
     const actionContract = readFileSync(path.join(

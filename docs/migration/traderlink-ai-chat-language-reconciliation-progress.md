@@ -45,7 +45,7 @@ they are under concurrent QA repair.
 
 | Step | Status | Evidence required |
 | --- | --- | --- |
-| Inventory all live capability families and existing canonical mappings | Complete | 417 generated entries across all 20 category files audited against 34 factual tools, 12 action-draft kinds, and the current dashboard matrix |
+| Inventory all live capability families and existing canonical mappings | Complete | 417 generated entries across all 20 category files audited against 36 factual tools, 12 action-draft kinds, and the current dashboard matrix |
 | Reconcile every canonical entry and representative language evaluation | Complete | Every entry has an exact mapped-live, current-runtime-missing, source-unavailable, or evaluation-only disposition; all 13 live capability families have non-empty mappings and 24 contract-validated representative fixture records |
 | Strengthen generator and test guardrails | Complete | The focused test fails for count/disposition drift, an unmapped or duplicate live family, a missing canonical route, an invalid fixture kind, a missing/unknown factual tool, or an action-kind mismatch with the canonical contract |
 | Synchronize language-plan, master, and category status claims | Complete | All 20 category files carry a bounded reconciliation note; source statuses and product-excluded boundaries remain unchanged |
@@ -77,7 +77,7 @@ unchanged. The compact runtime registry groups each canonical term once by its
 exact family set instead of repeating common language under every family.
 
 The nine factual-read fixture records identify exact factual-tool names. Their deduped
-union must equal the 34 names in `coachAiChatFactualToolRegistry`, with neither
+union must equal the 36 names in `coachAiChatFactualToolRegistry`, with neither
 missing nor unknown names. The action-draft contract intentionally exposes its
 12 top-level extraction kinds as a discriminated TypeScript union rather than a
 runtime list; the focused test reads that union's top-level branches and
@@ -154,7 +154,7 @@ provided here rather than editing that record:
 > maps 239 entries (235 distinct canonical names) to all 13 current bounded
 > factual-read and confirmation-draft families and leaves 178 exact entries
 > explicitly unavailable, not exposed by current contracts, or evaluation-only.
-> The 24 contract-validated fixture records identify all 34 factual tools and
+> The 24 contract-validated fixture records identify all 36 factual tools and
 > all 12 confirmed action kinds. This does not claim execution of a language
 > router or provider, promote future concepts, or weaken raw-statement,
 > privacy, market-data, advice, account-scope, or confirmation boundaries.

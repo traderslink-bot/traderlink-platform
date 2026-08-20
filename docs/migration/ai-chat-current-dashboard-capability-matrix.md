@@ -78,14 +78,14 @@ historical foundation description, are the current implementation truth.
 
 | Product area | Current routes | Deterministic source of truth | Required Chat behavior | Current state |
 | --- | --- | --- | --- | --- |
-| AI Chat | Global drawer and `/ai-chat` | Account-scoped conversation, message, snapshot and receipt repositories | Create, rename, search, archive and restore private conversations; preserve bounded follow-ups and exact selected context; show factual/action cards from the same reusable Chat surface. | Implemented foundation; matrix capabilities expanding |
+| Links AI Chat | Global drawer and `/ai-chat` | Account-scoped conversation, message, versioned state, snapshot and receipt repositories | Create, rename, search, archive and restore private conversations; preserve adaptive follow-ups, bounded older context and exact selected claims; show factual/action cards from the same reusable Chat surface. | Implemented |
 | Workspace | `/workspace` | Journal analytics/calendar, `readWorkspaceReviewSummary` for Current Focuses and the latest completed trading-day review, plus `CoachAiReviewRepository` for the latest saved AI Review | Explain the current workspace summary and open the exact related feature. No invented readiness statement. | Read implemented |
 | Daily Trade Tracker | `/trade-tracker`, `/trade-tracker/[date]` | Trading-day read model, annotations, rules and review service | Read one day, trades, executions, notes, tags, rule results and review state. Draft notes/focuses. Confirm only the existing allowlisted note/focus save path. | Read and note/focus confirm implemented |
 | Swing Trade Tracker | `/trade-tracker/swings` | `JournalTradeTrackerReadService`, Swing note, tag and trade-style services | List/detail active swings and their executions, notes, tags and status. Draft notes/tags/status changes; require confirmation through canonical commands. | Read and draft/confirm actions implemented |
 | Quick Trade Entry | `/quick-trade-entry` | Manual trade preview and command services | Convert supplied facts into an editable preview and save only after explicit confirmation. Explain duplicate/reconciliation outcomes without bypassing Data Decisions. | Confirm implemented |
 | Calendar | `/calendar` | `JournalDashboardReadModelService.getCalendar`, Calendar annotation evidence in `calendar-data.ts`, trading-day review state and ticker/day detail reads | Answer month/week/day questions, list exact daily trades, annotations and review state, and open the selected day. | Read implemented |
-| Trading Rules | `/rules`, `/rules/results` | Rule dashboard, deterministic preset evaluator and saved custom-rule reviews. Rule recommendation evidence requires the separate planned deterministic recommendation service and does not exist yet. | List saved presets/custom rules, settings, applicable scope and exact results for a bounded period. Add/revise a preset or custom rule and pause/resume/retire an exact rule only through preview and trader confirmation. Never mark a result by model judgment or activate a rule autonomously. | Read and draft/confirm implemented; recommendation read not implemented yet |
-| Trade Explorer | `/analytics/trade-explorer` | Bounded current Trade Explorer query, canonical row-order contract, completed-trade annotation read and bounded rule-result read | For Trades, apply one factual `Sort trades` choice to the complete filtered population before bounded pagination; Result remains an explicit filter. For grouped views, apply one supported `Rank by` metric and highest/lowest direction, keeping currencies and trading timezones separate where required. Read one exact confirmed completed trade's saved note, tags and custom-rule reviews through the annotation service. Explain a preset result only when the bounded rule-result read returns its exact applicable event; otherwise direct the trader to Review. The combined note/tag/custom-rule Review remains one explicit Save in Trade Explorer; preset results are read-only and Chat never invents an outcome. Advanced comparison studies remain unavailable. | Truthful Sort/Rank read and Review read/handoff implemented; advanced studies unavailable |
+| Trading Rules | `/rules`, `/rules/results` | Rule dashboard, deterministic preset evaluator, saved custom-rule reviews and saved deterministic Rule-idea evidence | List saved presets/custom rules, settings, applicable scope, exact bounded results and saved Rule ideas. Add/revise a preset or custom rule and pause/resume/retire an exact rule only through preview and trader confirmation. Never generate or dismiss a Rule idea, mark a result by model judgment, or activate a rule autonomously. | Read and draft/confirm implemented; saved Rule-idea read implemented |
+| Trade Explorer | `/analytics/trade-explorer` | Bounded current Trade Explorer query, canonical row-order contract, saved Compare Trades studies, completed-trade annotation read and bounded rule-result read | For Trades, apply one factual `Sort trades` choice to the complete filtered population before bounded pagination; Result remains an explicit filter. For grouped views, apply one supported `Rank by` metric and highest/lowest direction, keeping currencies and trading timezones separate where required. Read validated groups from saved Compare Trades studies without creating or recalculating them. Read one exact confirmed completed trade's saved note, tags and custom-rule reviews through the annotation service. Explain a preset result only when the bounded rule-result read returns its exact applicable event; otherwise direct the trader to Review. The combined note/tag/custom-rule Review remains one explicit Save in Trade Explorer; preset results are read-only and Links never invents an outcome. | Truthful Sort/Rank, saved comparison and Review read/handoff implemented |
 | Open Positions | `/trades/open` | Open-position dashboard read model and trade-style service | List/detail factual open positions and current trader-defined type. Draft a type/status change and require confirmation. Never infer swing, long-term hold or bag holding. | Read and explicit type/status draft/confirm implemented |
 | Analytics Overview | `/analytics` | `JournalAnalyticsService.getAnalyticsOverview` | Return exact overview cards and supported date/currency scope with coverage. | Dedicated read implemented |
 | Results by Ticker | `/analytics/results` | `getResultAnalytics` | Return exact ticker results, sortable fields and supporting completed trades. | Dedicated read implemented |
@@ -153,12 +153,11 @@ coverage state and representative evaluation cases.
 
 - `list_trading_rules`
 - `get_trading_rule_results`
-- `list_saved_rule_recommendations` — blocked on the separately planned
-  deterministic rule-recommendation evidence service; it must not be exposed
-  before that source exists.
+- `list_rule_ideas` — bounded read-only access to saved deterministic Rule-idea
+  evidence; it cannot generate, dismiss, or activate a rule.
 - `get_trade_annotations`
 
-The three implemented reads above are selected-account scoped. Rule-result
+The four implemented reads above are selected-account scoped. Rule-result
 requests cover at most 62 days and return no more than 50 individual events;
 their exact summaries remain complete for the requested period. Preset
 outcomes come only from the deterministic evaluator, custom outcomes come only
@@ -171,6 +170,7 @@ from saved trader reviews, and unavailable evidence remains unavailable.
 - `get_timing_analytics`
 - `get_execution_analytics`
 - `query_trade_explorer`
+- `list_saved_trade_comparisons`
 
 `query_trade_explorer` is a versioned adapter to the currently implemented
 Explorer. Its Trades form accepts only factual per-trade ordering: close time,
@@ -192,6 +192,10 @@ explicit Save writes the note, tags and changed custom-rule results atomically,
 rejects stale or cross-account state and keeps preset results read-only.
 Existing Chat tag proposals retain their separate exact preview and explicit
 confirmation boundary.
+
+`list_saved_trade_comparisons` returns only validated saved group definitions
+for the selected account. It does not create, update, retire, or recalculate a
+study.
 
 The existing completed-trade summary/group/list/detail tools remain the shared
 lower-level factual primitives. Dedicated page-aligned tools must not duplicate
@@ -347,6 +351,7 @@ routes, factual-tool registry, action contract, Help and locked-language
 mapping. No new product family was found outside the matrix. The 2026-08-18
 Trade Explorer reconciliation then replaced the older generic metric/grouping
 shape with the accepted truthful Trades Sort/Result and grouped Rank by
-contract, plus the completed-trade Review read/handoff boundary. Future
-advanced comparison studies remain unavailable until their own deterministic
-product contract is accepted.
+contract, plus the completed-trade Review read/handoff boundary. The saved
+Compare Trades and Rule-idea reads added on 2026-08-18 are bounded,
+selected-account scoped and read-only. They do not authorize study creation,
+recalculation, Rule-idea generation/dismissal, or rule activation.

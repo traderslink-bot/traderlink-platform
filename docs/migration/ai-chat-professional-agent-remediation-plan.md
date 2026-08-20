@@ -569,7 +569,9 @@ into marketing pressure.
   claim remains deterministic and supported.
 - The name, descriptor, icon treatment, introduction, message avatar, working
   state, evidence state, confirmation state, unavailable state, and small-size
-  accessibility must receive iterative owner visual approval before acceptance.
+  accessibility follow the approved Links drawer/card baseline. Routine visual
+  checkpoints are waived while that design remains materially unchanged; a
+  materially different drawer or card design requires owner approval.
 
 ### Owner-controlled Links personality
 
@@ -749,8 +751,9 @@ remains a final acceptance or merge-readiness boundary.
 
 - Implement owner-approved readiness/failure states and server-authored evidence
   presentation in the shared Chat surface.
-- Complete iterative owner review on desktop drawer, mobile drawer, direct page,
-  conversation history, answer, evidence, and confirmation states.
+- Preserve the accepted desktop drawer, mobile drawer, direct page,
+  conversation history, answer, evidence, and confirmation baseline. Repeat
+  owner review only if the drawer or card design changes materially.
 - Present the optional relationship setup, welcome-back card, routine controls,
   stable Links identity, progress recognition, and contextual feature suggestion
   states for separate owner approval before implementing each visible
@@ -770,8 +773,9 @@ remains a final acceptance or merge-readiness boundary.
 
 - Review and approve candidates individually in value/risk order.
 - Implement only accepted source and action contracts.
-- Obtain separate owner visual approval for every new visible source, evidence,
-  proposal, or confirmation state.
+- Keep new visible source, evidence, proposal, and confirmation states inside
+  the approved Links drawer/card design. Obtain separate owner approval for a
+  materially different drawer or card design.
 
 ### Checkpoint 5 — controlled launch acceptance
 

@@ -122,6 +122,31 @@ export type CoachAiChatActionDraftExtraction =
           }>;
     }>;
 
+export type CoachAiChatActionDraftKind = CoachAiChatActionDraftExtraction["kind"];
+
+export const COACH_AI_CHAT_ACTION_DRAFT_KINDS = Object.freeze([
+  "reporting_currency",
+  "mark_notification_read",
+  "select_journal_account",
+  "create_journal_account",
+  "swing_note",
+  "trade_style",
+  "notification_preferences",
+  "ai_review_account_setting",
+  "ai_review_request",
+  "trade_tags",
+  "rule_change",
+  "data_decision",
+] as const satisfies readonly CoachAiChatActionDraftKind[]);
+
+type MissingCoachAiChatActionDraftKind = Exclude<
+  CoachAiChatActionDraftKind,
+  (typeof COACH_AI_CHAT_ACTION_DRAFT_KINDS)[number]
+>;
+
+export const COACH_AI_CHAT_ACTION_DRAFT_KIND_INVENTORY_COMPLETE:
+  MissingCoachAiChatActionDraftKind extends never ? true : never = true;
+
 export type CoachAiChatActionDraftPreview =
   | Readonly<{
       kind: "reporting_currency";

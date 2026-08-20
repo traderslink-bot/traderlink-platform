@@ -24,6 +24,11 @@ const catalog = buildCoachAiChatClaimCatalog(toolCalls);
 invariant(catalog.some((claim) => claim.exactValue === "800" &&
   claim.context.currency === "USD"),
 "The claim catalog must retain exact values with currency context.");
+const claimRef = (path: string): string => {
+  const claim = catalog.find((item) => item.path === path);
+  invariant(Boolean(claim), `Missing expected claim at ${path}.`);
+  return claim!.claimRef;
+};
 
 validateCoachAiChatExactFactTokens({
   directAnswer: "Your strongest day was 2026-08-19 at $800 USD.",
@@ -31,6 +36,11 @@ validateCoachAiChatExactFactTokens({
   limitation: null,
   evidenceReferences: Object.freeze([Object.freeze({
     toolCallId: "factual-1",
+    claimRefs: Object.freeze([
+      claimRef("/bestTradingDay/date"),
+      claimRef("/bestTradingDay/pnlDecimal"),
+      claimRef("/population/includedCount"),
+    ]),
     statement: "The saved result reports $800 USD on 2026-08-19 across 3 trades.",
   })]),
   toolCalls,
@@ -44,6 +54,7 @@ try {
     limitation: null,
     evidenceReferences: Object.freeze([Object.freeze({
       toolCallId: "factual-1",
+      claimRefs: Object.freeze([claimRef("/bestTradingDay/pnlDecimal")]),
       statement: "The saved result reports $800 USD.",
     })]),
     toolCalls,
@@ -53,8 +64,71 @@ try {
 }
 invariant(rejected, "An exact value absent from cited deterministic evidence must be rejected.");
 
+let unselectedRejected = false;
+try {
+  validateCoachAiChatExactFactTokens({
+    directAnswer: "The population included 3 trades.",
+    supportingObservations: Object.freeze([]),
+    limitation: null,
+    evidenceReferences: Object.freeze([Object.freeze({
+      toolCallId: "factual-1",
+      claimRefs: Object.freeze([claimRef("/bestTradingDay/pnlDecimal")]),
+      statement: "The result reports $800 USD across 3 trades.",
+    })]),
+    toolCalls,
+  });
+} catch {
+  unselectedRejected = true;
+}
+invariant(unselectedRejected,
+  "A value from an unselected deterministic claim must be rejected.");
+
+let crossCallRejected = false;
+try {
+  validateCoachAiChatExactFactTokens({
+    directAnswer: "The result reports $800 USD.",
+    supportingObservations: Object.freeze([]),
+    limitation: null,
+    evidenceReferences: Object.freeze([Object.freeze({
+      toolCallId: "factual-2",
+      claimRefs: Object.freeze([claimRef("/bestTradingDay/pnlDecimal")]),
+      statement: "The result reports $800 USD.",
+    })]),
+    toolCalls,
+  });
+} catch {
+  crossCallRejected = true;
+}
+invariant(crossCallRejected,
+  "A claim selected under a different tool call must be rejected.");
+
+let unusedClaimRejected = false;
+try {
+  validateCoachAiChatExactFactTokens({
+    directAnswer: "The result reports $800 USD.",
+    supportingObservations: Object.freeze([]),
+    limitation: null,
+    evidenceReferences: Object.freeze([Object.freeze({
+      toolCallId: "factual-1",
+      claimRefs: Object.freeze([
+        claimRef("/bestTradingDay/pnlDecimal"),
+        claimRef("/population/includedCount"),
+      ]),
+      statement: "The result reports $800 USD.",
+    })]),
+    toolCalls,
+  });
+} catch {
+  unusedClaimRejected = true;
+}
+invariant(unusedClaimRejected,
+  "An exact claim selected but unused by its evidence statement must be rejected.");
+
 console.log(JSON.stringify({
   status: "verified",
   catalogClaims: catalog.length,
   unsupportedExactValueRejected: rejected,
+  unselectedClaimValueRejected: unselectedRejected,
+  crossToolClaimRejected: crossCallRejected,
+  unusedSelectedClaimRejected: unusedClaimRejected,
 }));

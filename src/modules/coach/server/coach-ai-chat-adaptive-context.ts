@@ -7,6 +7,11 @@ export const COACH_AI_CHAT_MAX_CONTEXT_SOURCE_MESSAGES = 400;
 export const COACH_AI_CHAT_RECENT_CONTEXT_BYTES = 12 * 1024;
 export const COACH_AI_CHAT_RETRIEVED_CONTEXT_BYTES = 4 * 1024;
 
+export type CoachAiChatAdaptiveContext = Readonly<{
+  messages: readonly CoachAiChatMessage[];
+  recentFloorSequence: number | null;
+}>;
+
 const WORD_PATTERN = /[\p{L}\p{N}][\p{L}\p{N}._-]*/gu;
 const STOP_WORDS = new Set([
   "a", "about", "and", "are", "as", "at", "be", "but", "by", "can",
@@ -42,10 +47,10 @@ function relevance(message: CoachAiChatMessage, queryTerms: ReadonlySet<string>)
  * is selected by bytes rather than message count, so many short turns remain
  * available. Older messages compete for a separate relevance budget.
  */
-export function buildCoachAiChatAdaptiveHistory(
+export function buildCoachAiChatAdaptiveContext(
   question: string,
   messages: readonly CoachAiChatMessage[],
-): readonly CoachAiChatMessage[] {
+): CoachAiChatAdaptiveContext {
   const eligible = messages.filter((message) =>
     message.role === "user" || message.generationState === "completed");
   const recentIds = new Set<string>();
@@ -76,6 +81,19 @@ export function buildCoachAiChatAdaptiveHistory(
     retrievedBytes += bytes;
     retrievedIds.add(message.messageId);
   }
-  return Object.freeze(eligible.filter((message) =>
+  const selected = Object.freeze(eligible.filter((message) =>
     recentIds.has(message.messageId) || retrievedIds.has(message.messageId)));
+  return Object.freeze({
+    messages: selected,
+    recentFloorSequence: recent.length > 0
+      ? Math.min(...recent.map((message) => message.sequence))
+      : null,
+  });
+}
+
+export function buildCoachAiChatAdaptiveHistory(
+  question: string,
+  messages: readonly CoachAiChatMessage[],
+): readonly CoachAiChatMessage[] {
+  return buildCoachAiChatAdaptiveContext(question, messages).messages;
 }

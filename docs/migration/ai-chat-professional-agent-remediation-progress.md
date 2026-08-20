@@ -5,9 +5,11 @@
 **Plan and visible experience owner-approved on 2026-08-20 with Links AI Chat as
 the required feature name. The first professional-agent implementation slice is
 complete in source: relationship memory and Meet Links, adaptive context,
-exact-value grounding, readiness, owner-approved Chat presentation and aligned
-Help. The protected database remains unchanged. A disposable automated browser
-pass is complete; final owner visual/product acceptance is still required.**
+versioned durable conversation state, exact-value grounding, readiness,
+owner-approved Chat presentation and aligned Help. The protected database
+remains unchanged. A disposable automated browser pass is complete. The owner
+waived routine visual checkpoints while the approved drawer/card design remains
+materially unchanged.**
 
 The controlling plan is the
 [Links AI Chat Professional Agent Remediation Plan](ai-chat-professional-agent-remediation-plan.md).
@@ -60,6 +62,9 @@ The parent product contract remains the
   design, especially when a conversation contains many short messages.
 - Financial accuracy, account isolation, privacy, cost controls, explicit
   confirmation, and visible owner approval remain mandatory.
+- Routine visual approval is not required while implementation preserves the
+  approved Links AI Chat drawer and card design. A materially different drawer
+  or card design must return to the owner for approval before implementation.
 
 ## 2026-08-20 QA evidence
 
@@ -86,8 +91,9 @@ The parent product contract remains the
   required by the parent plan was not found in the current implementation.
 - The current three-turn/four-tool sequential budget is not yet proven against
   complex cross-feature questions.
-- Controlling documentation still contains stale 34-tool and unavailable
-  Compare Trades/Rule-idea claims despite current v3/v4 runtime coverage.
+- The QA pass found a stale two-tool inventory count and unavailable
+  Compare Trades/Rule-idea claims despite current v3/v4 runtime coverage; the
+  later capability-inventory checkpoint reconciled them.
 
 ## 2026-08-20 owner-approved Links identity direction
 
@@ -135,8 +141,8 @@ The parent product contract remains the
 
 - [x] Implement the server-authored factual-claim catalog.
 - [ ] Implement structured answer composition and strict claim validation.
-- [ ] Persist immutable claim catalogs and exact selected claims with answers.
-- [ ] Implement versioned private conversation state and bounded older-context
+- [x] Persist immutable claim catalogs and exact selected claims with answers.
+- [x] Implement versioned private conversation state and bounded older-context
   summary.
 - [x] Replace the fixed latest-12-message context boundary with an evaluated
   token- and task-aware context package plus bounded same-conversation retrieval.
@@ -160,7 +166,8 @@ The parent product contract remains the
 - [x] Prevent empty conversation/message/attempt creation when Chat is not ready.
 - [ ] Render server-authored evidence and exact owning-product links.
 - [x] Correct Chat-path browser warnings.
-- [ ] Complete iterative desktop/mobile/direct-page owner review.
+- [x] Complete the currently required desktop/mobile/direct-page review. Repeat
+  owner review only for a materially different drawer or card design.
 
 ### Relationship and return engagement
 
@@ -202,9 +209,9 @@ The parent product contract remains the
 ### Orchestration and coverage
 
 - [ ] Establish evaluated turn, tool, byte, token, latency, and cost budgets.
-- [ ] Reconcile the current 36-tool/12-action matrix, Help, language, runtime,
+- [x] Reconcile the current 36-tool/12-action matrix, Help, language, runtime,
   QA, and progress records.
-- [ ] Add a static inventory-drift guard.
+- [x] Add a static inventory-drift guard.
 - [ ] Complete the professional synthetic live-provider evaluation.
 
 ### New deterministic capabilities
@@ -322,5 +329,68 @@ The parent product contract remains the
   review process tree and its validated temporary database/log folder were
   removed after acceptance.
 - No test runner, full build, provider request, protected-database migration,
-  deployment, push or publication occurred. Owner visual/product acceptance
-  remains the next visible gate.
+  deployment, push or publication occurred. Routine visual review is no longer
+  a gate while the approved Links drawer/card design remains materially intact.
+
+## 2026-08-20 implementation checkpoint: durable state and selected claims
+
+- Each completed provider answer now persists a structured conversation state
+  inside its immutable answer snapshot. The latest valid state is loaded under
+  the same user, workspace and Journal-account boundary before the next answer,
+  so every successful answer forms a version without a mutable summary row.
+- Conversation state carries the current question, enforced analysis scope,
+  safe page hint, explicit conversation corrections/goals, unresolved follow-up,
+  opaque pending-draft references and a bounded older-context transcript. It is
+  separately identified as continuity context and cannot establish current
+  financial facts or current draft status.
+- The older-context summary is capped at 8 kilobytes and the complete state at
+  16 kilobytes. Ordinary old transcript lines yield first when the bound is
+  reached, preserving explicit corrections and goals in both the summary and a
+  structured 12-note channel. Draft UUIDs are hashed to bounded opaque refs
+  before state enters the provider envelope or snapshot.
+- The structured provider answer now cites exact JSON Pointer paths inside each
+  deterministic tool result. The server resolves those paths to its own opaque
+  claim references, rejects unknown paths, cross-tool claims, unselected exact
+  values and selected exact claims that the evidence statement does not use,
+  then stores the selected claim refs with answer contract v2.
+- Deterministic verification passed for an 80-message conversation: the explicit
+  older correction remained, the summary was 8,151 bytes, total state was 9,017
+  bytes, internal draft IDs were absent, malformed state was rejected, the
+  latest snapshot restored successfully and a different active Journal account
+  could not read it.
+  Claim verification rejected unsupported, unselected, cross-tool and unused
+  exact claims. The focused Links TypeScript project and focused ESLint passed.
+- No provider request, protected database read/write, migration, test runner,
+  full build, browser process, deployment, push or publication occurred.
+
+## 2026-08-20 implementation checkpoint: capability and budget drift guards
+
+- The factual-tool contract now exports one ordered runtime inventory. Its 36
+  names must exactly match the factual-tool registry, and every definition must
+  retain its contract version, description and limitation boundary.
+- The action-draft contract now exports one unique 12-kind inventory with a
+  compile-time exhaustive check against the discriminated extraction union.
+  The generated 417-entry language coverage fixtures now include the saved
+  Compare Trades and saved Rule-idea reads, so their tool union again equals
+  the runtime registry.
+- Current QA, capability-matrix, language-progress and professional-agent
+  records now agree that saved Compare Trades and Rule-idea evidence are
+  bounded read-only sources. Links cannot create or recalculate a comparison,
+  generate or dismiss a Rule idea, or activate a rule through those reads.
+- A deterministic inventory verifier passed with 36 factual tools, 12 action
+  kinds, 13 runtime capability families, 417 language entries and four current
+  controlling documents free of the retired tool count.
+- The runtime keeps three agent turns: at most two sequential lookup steps and
+  one structured answer turn. The dispatcher retains a four-snapshot hard cap,
+  48-kilobyte total factual-result cap and a 96-kilobyte cumulative cross-turn
+  result cap. A deterministic budget verifier accepted four small result
+  packages and rejected a sequence beyond either byte ceiling.
+- Raising the live turn/tool budget remains intentionally open until the
+  synthetic provider evaluation measures complex cross-feature completion,
+  latency, actual token usage and cost. No unevaluated cost boundary was
+  widened in this checkpoint.
+- All five deterministic Links verifiers, the focused no-emit TypeScript
+  project and focused ESLint passed after integration. The generated language
+  file was rebuilt from its maintained source and was not hand-edited.
+- No provider request, protected database read/write, migration, test runner,
+  full build, browser process, deployment, push or publication occurred.

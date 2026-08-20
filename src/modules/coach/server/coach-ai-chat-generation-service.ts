@@ -23,7 +23,11 @@ import type { CoachAiChatActionDraft } from "../contracts/ai-chat-action-draft-c
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
 
-import { CoachAiChatFactualToolDispatcher, COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES } from "./coach-ai-chat-factual-tool-dispatcher";
+import {
+  CoachAiChatFactualToolDispatcher,
+  COACH_AI_CHAT_FACTUAL_RESULTS_CUMULATIVE_PROMPT_MAX_BYTES,
+  COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES,
+} from "./coach-ai-chat-factual-tool-dispatcher";
 import { CoachAiChatProviderGenerationError, generateCoachAiChatOpenAiAnswer } from "./coach-ai-chat-openai-adapter";
 import { CoachAiChatProviderControlsRepository } from "./coach-ai-chat-provider-controls-repository";
 import { CoachAiChatGenerationRecoveryService } from "./coach-ai-chat-generation-recovery-service";
@@ -44,7 +48,7 @@ import type { CoachAiChatAnnotationContextService } from "./coach-ai-chat-annota
 import type { CoachAiChatActionDraftService } from "./coach-ai-chat-action-draft-service";
 import { coachAiChatFactualToolRegistry } from "./coach-ai-chat-factual-tool-registry";
 import {
-  buildCoachAiChatAdaptiveHistory,
+  buildCoachAiChatAdaptiveContext,
   COACH_AI_CHAT_MAX_CONTEXT_SOURCE_MESSAGES,
 } from "./coach-ai-chat-adaptive-context";
 import type { CoachAiRelationshipMemoryRepository } from
@@ -52,6 +56,14 @@ import type { CoachAiRelationshipMemoryRepository } from
 import type { CoachAiRelationshipMemory } from
   "../contracts/ai-relationship-memory-contracts";
 import { buildCoachAiChatClaimCatalog } from "./coach-ai-chat-claim-catalog";
+import type { CoachAiChatConversationState } from
+  "../contracts/ai-chat-conversation-state-contracts";
+import type { CoachAiChatConversationStateRepository } from
+  "./coach-ai-chat-conversation-state-repository";
+import {
+  buildCoachAiChatConversationState,
+  finalizeCoachAiChatConversationState,
+} from "./coach-ai-chat-conversation-state";
 
 export const COACH_AI_CHAT_MAX_HISTORY_BYTES = 16 * 1024;
 export const COACH_AI_CHAT_MAX_OUTPUT_TOKENS = 1_200;
@@ -71,6 +83,7 @@ export type CoachAiChatGenerator = (input: Readonly<{
   asOfUtc: string;
   attempt: CoachAiChatGenerationAttempt;
   recentMessages: readonly CoachAiChatMessage[];
+  conversationState: CoachAiChatConversationState;
   relationshipMemories: readonly CoachAiRelationshipMemory[];
   question: string;
   intent: CoachAiChatMessageIntent;
@@ -162,6 +175,7 @@ export function createCoachAiChatReservationEnvelope(
   analysisScope: CoachAiChatAnalysisScope = Object.freeze({ kind: "recent" }),
   pageContext: CoachAiChatPageContext | null = null,
   relationshipMemories: readonly CoachAiRelationshipMemory[] = Object.freeze([]),
+  conversationState: CoachAiChatConversationState | null = null,
 ): string {
   const trustedContextBytes = Buffer.byteLength(JSON.stringify(trustedContext), "utf8");
   const manualDraftBytes = Buffer.byteLength(JSON.stringify(existingManualEntryDraft), "utf8");
@@ -173,6 +187,7 @@ export function createCoachAiChatReservationEnvelope(
   return JSON.stringify({
     systemInstruction: "grounded Journal answers only; no advice; evidence references must resolve to deterministic factual tools",
     recentConversation: context,
+    conversationState,
     currentQuestion: question,
     trustedContext,
     existingManualEntryDraft,
@@ -189,9 +204,11 @@ export function createCoachAiChatReservationEnvelope(
     toolDefinitions: coachAiChatFactualToolRegistry.map((definition) => definition.name),
     maximumFactualResultsBytes: COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES,
     maximumOutputTokens: COACH_AI_CHAT_MAX_OUTPUT_TOKENS,
-    // A first and second tool result may both be included in the final model step;
-    // their total bounded package can also be included in the second step.
-    repeatedFactualResultsReservation: "x".repeat(COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES * 2),
+    // Later model turns receive the growing result package. The dispatcher
+    // enforces this same cumulative cross-turn byte ceiling.
+    repeatedFactualResultsReservation: "x".repeat(
+      COACH_AI_CHAT_FACTUAL_RESULTS_CUMULATIVE_PROMPT_MAX_BYTES,
+    ),
     repeatedHistoryReservation: "x".repeat(COACH_AI_CHAT_MAX_HISTORY_BYTES * 2),
     repeatedQuestionReservation: "x".repeat(COACH_AI_CHAT_MAX_QUESTION_BYTES * 2),
     trustedContextReservation: "x".repeat(Math.max(
@@ -239,6 +256,7 @@ export class CoachAiChatGenerationService {
       "create" | "list" | "readForSourceMessage"> | null = null,
     private readonly reportingCurrency: string | null = null,
     private readonly relationshipMemory: Pick<CoachAiRelationshipMemoryRepository, "read"> | null = null,
+    private readonly conversationState: Pick<CoachAiChatConversationStateRepository, "readLatest"> | null = null,
   ) {}
 
   async generateSavedAnswer(
@@ -335,12 +353,20 @@ export class CoachAiChatGenerationService {
           ? Object.freeze({ intent: "assist_daily_review", trustedContext, analysisScope })
           : Object.freeze({ intent, analysisScope }),
       }, now);
-      const history = buildCoachAiChatAdaptiveHistory(
-        input.question,
-        loadContextMessages(this.chat, scope, input.conversationId)
-          .filter((message) => message.messageId !== pair.userMessage.messageId &&
-            message.messageId !== pair.assistantMessage.messageId),
-      );
+      const sourceMessages = loadContextMessages(this.chat, scope, input.conversationId)
+        .filter((message) => message.messageId !== pair.userMessage.messageId &&
+          message.messageId !== pair.assistantMessage.messageId);
+      const adaptiveContext = buildCoachAiChatAdaptiveContext(input.question, sourceMessages);
+      const conversationState = buildCoachAiChatConversationState({
+        previous: this.conversationState?.readLatest(scope, input.conversationId) ?? null,
+        sourceMessages,
+        recentFloorSequence: adaptiveContext.recentFloorSequence,
+        currentQuestion: input.question,
+        currentUserMessageSequence: pair.userMessage.sequence,
+        analysisScope,
+        pageContext,
+      });
+      const history = adaptiveContext.messages;
       const relationshipMemoryView = this.relationshipMemory?.read(scope, now) ?? null;
       const relationshipMemories = relationshipMemoryView?.settings.enabled
         ? boundedRelationshipMemories(relationshipMemoryView.memories)
@@ -359,6 +385,7 @@ export class CoachAiChatGenerationService {
           analysisScope,
           pageContext,
           relationshipMemories,
+          conversationState,
         ),
         maxOutputTokens: COACH_AI_CHAT_MAX_OUTPUT_TOKENS,
         additionalFeatureKey: trustedContext ? "daily_companion" : undefined,
@@ -366,7 +393,7 @@ export class CoachAiChatGenerationService {
       if (reservation.state === "blocked") {
         this.chat.finalizeAssistantFailure(scope, pair.assistantMessage.messageId, "TRADERLINK_COACH_CHAT_DAILY_CAP_REACHED", null, now);
       }
-      return Object.freeze({ pair, history, relationshipMemories, reservation });
+      return Object.freeze({ pair, history, relationshipMemories, conversationState, reservation });
     });
     if (created.reservation.state === "blocked") {
       return Object.freeze({ state: "blocked", assistantMessageId: created.pair.assistantMessage.messageId, attemptId: created.reservation.attempt.attemptId, manualEntryDraft: null, dailyCompanionDraft: null, reviewDeliveryChangeDraft: null, actionDraft: null });
@@ -390,6 +417,7 @@ export class CoachAiChatGenerationService {
     try {
       result = await this.generator({ scope, selectedAccountId: scope.activeAccountId!, asOfUtc: now.toISOString(), attempt,
         recentMessages: created.history, relationshipMemories: created.relationshipMemories,
+        conversationState: created.conversationState,
         question: input.question, intent, trustedContext,
         existingManualEntryDraft: boundedExistingManualEntryDraft, currentReviewDelivery,
         analysisScope, pageContext, dispatcher });
@@ -507,12 +535,43 @@ export class CoachAiChatGenerationService {
             extraction: result.actionDraftExtraction,
           }, now);
         }
+        const conversationState = finalizeCoachAiChatConversationState({
+          state: created.conversationState,
+          assistantMessageSequence: created.pair.assistantMessage.sequence,
+          nextQuestion: result.answer.nextQuestion,
+          drafts: Object.freeze([
+            ...(manualEntryDraft ? [Object.freeze({
+              kind: "manual_execution" as const,
+              internalId: manualEntryDraft.draftId,
+              state: manualEntryDraft.state,
+            })] : []),
+            ...(dailyCompanionDraft ? [Object.freeze({
+              kind: "daily_note" as const,
+              internalId: dailyCompanionDraft.interactionId,
+              state: dailyCompanionDraft.disposition,
+            })] : []),
+            ...(reviewDeliveryChangeDraft ? [Object.freeze({
+              kind: "review_delivery" as const,
+              internalId: reviewDeliveryChangeDraft.draftId,
+              state: reviewDeliveryChangeDraft.disposition,
+            })] : []),
+            ...(actionDraft ? [Object.freeze({
+              kind: "account_action" as const,
+              internalId: actionDraft.draftId,
+              state: actionDraft.disposition,
+            })] : []),
+          ]),
+        });
         this.chat.finalizeAssistantSuccess(scope, created.pair.assistantMessage.messageId, {
           assistantTextPrivate: safeAssistantText(result),
           snapshotContractVersion: "traderlink_coach_ai_chat_generation_v1",
           factualSnapshot: Object.freeze({ answer: result.answer, factualToolCalls: result.factualToolCalls,
             claimCatalog: buildCoachAiChatClaimCatalog(result.factualToolCalls),
-            totalFactualResultBytes: dispatcher.totalSerializedResultBytes(), trustedContext,
+            conversationState,
+            totalFactualResultBytes: dispatcher.totalSerializedResultBytes(),
+            cumulativePromptFactualResultBytes:
+              dispatcher.cumulativePromptResultBytesForPersistence(),
+            trustedContext,
             manualEntryExtraction: result.manualEntryExtraction,
             dailyCompanionDraftExtraction: result.dailyCompanionDraftExtraction,
             reviewDeliveryChangeExtraction: result.reviewDeliveryChangeExtraction,

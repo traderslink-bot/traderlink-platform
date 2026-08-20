@@ -98,6 +98,13 @@ function serializedEvidenceTokens(value: unknown): ReadonlySet<string> {
   return new Set(tokens(JSON.stringify(value)));
 }
 
+function claimEvidenceTokens(claim: CoachAiChatClaim): ReadonlySet<string> {
+  return new Set([
+    ...tokens(String(claim.exactValue ?? "")),
+    ...tokens(JSON.stringify(claim.context)),
+  ]);
+}
+
 /**
  * Rejects exact-value prose that is absent from the deterministic tool result
  * it cites. This is intentionally stricter than tool-call identity checking.
@@ -106,23 +113,54 @@ export function validateCoachAiChatExactFactTokens(input: Readonly<{
   directAnswer: string;
   supportingObservations: readonly string[];
   limitation: string | null;
-  evidenceReferences: readonly Readonly<{ toolCallId: string; statement: string }>[];
+  evidenceReferences: readonly Readonly<{
+    toolCallId: string;
+    claimRefs: readonly string[];
+    statement: string;
+  }>[];
   toolCalls: readonly CoachAiChatFactualToolCallSnapshot[];
   additionalEvidence?: readonly unknown[];
 }>): void {
-  const evidenceByCall = new Map(input.toolCalls.map((call) => [
-    call.toolCallId,
-    serializedEvidenceTokens(call.result),
-  ]));
+  const catalog = buildCoachAiChatClaimCatalog(input.toolCalls);
+  const claimsByRef = new Map(catalog.map((claim) => [claim.claimRef, claim]));
   for (const reference of input.evidenceReferences) {
-    const available = evidenceByCall.get(reference.toolCallId);
-    if (!available || tokens(reference.statement).some((token) => !available.has(token))) {
+    if (reference.claimRefs.length < 1 ||
+        new Set(reference.claimRefs).size !== reference.claimRefs.length) {
       throw new Error("TRADERLINK_COACH_UNGROUNDED_EXACT_FACT");
+    }
+    const selectedClaims = reference.claimRefs.map((claimReference) =>
+      claimsByRef.get(claimReference));
+    if (selectedClaims.some((claim) => !claim || claim.toolCallId !== reference.toolCallId)) {
+      throw new Error("TRADERLINK_COACH_UNGROUNDED_EXACT_FACT");
+    }
+    const available = new Set<string>();
+    for (const claim of selectedClaims as readonly CoachAiChatClaim[]) {
+      for (const token of claimEvidenceTokens(claim)) available.add(token);
+    }
+    const statementTokens = new Set(tokens(reference.statement));
+    if ([...statementTokens].some((token) => !available.has(token))) {
+      throw new Error("TRADERLINK_COACH_UNGROUNDED_EXACT_FACT");
+    }
+    for (const claim of selectedClaims as readonly CoachAiChatClaim[]) {
+      const exactTokens = tokens(String(claim.exactValue ?? ""));
+      if (exactTokens.length > 0 &&
+          exactTokens.every((token) => !statementTokens.has(token))) {
+        throw new Error("TRADERLINK_COACH_UNUSED_EXACT_CLAIM");
+      }
+      if (exactTokens.length === 0 && typeof claim.exactValue === "string" &&
+          /^[\p{L}][\p{L} .'-]{0,79}$/u.test(claim.exactValue) &&
+          !reference.statement.toLocaleLowerCase()
+            .includes(claim.exactValue.toLocaleLowerCase())) {
+        throw new Error("TRADERLINK_COACH_UNUSED_TEXT_CLAIM");
+      }
     }
   }
   const selected = new Set<string>();
   for (const reference of input.evidenceReferences) {
-    for (const token of evidenceByCall.get(reference.toolCallId) ?? []) selected.add(token);
+    for (const claimRef of reference.claimRefs) {
+      const claim = claimsByRef.get(claimRef)!;
+      for (const token of claimEvidenceTokens(claim)) selected.add(token);
+    }
   }
   for (const item of input.additionalEvidence ?? []) {
     for (const token of serializedEvidenceTokens(item)) selected.add(token);

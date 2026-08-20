@@ -400,7 +400,7 @@ const runtimeCapabilityCoverage = Object.freeze([
         "normal_size_ambiguity",
       ],
     ),
-    representativeFixtures: [{ id: "runtime-dashboard-analytics-reads", surface: "Analytics and Trade Explorer", input: "Compare ready-closed gross P and L by ticker in the selected period and show bounded supporting trades.", expectedRoute: "canonical analytics page read or bounded versioned Trade Explorer query", expectedKind: "factual_read", expectedFactualToolNames: ["get_analytics_overview", "get_results_by_ticker", "get_timing_analytics", "get_execution_analytics", "query_trade_explorer"] }],
+    representativeFixtures: [{ id: "runtime-dashboard-analytics-reads", surface: "Analytics and Trade Explorer", input: "Compare ready-closed gross P and L by ticker, show bounded supporting trades, and read my saved Compare Trades studies.", expectedRoute: "canonical analytics page read, bounded versioned Trade Explorer query, or validated saved comparison read", expectedKind: "factual_read", expectedFactualToolNames: ["get_analytics_overview", "get_results_by_ticker", "get_timing_analytics", "get_execution_analytics", "query_trade_explorer", "list_saved_trade_comparisons"] }],
   },
   {
     runtimeCapabilityId: "current_product_status_reads",
@@ -519,7 +519,7 @@ const runtimeCapabilityCoverage = Object.freeze([
       "later_trades_ambiguity",
       "overtrading_ambiguity",
     ]),
-    representativeFixtures: [{ id: "runtime-rules-tags", surface: "Trading Rules and Trade Tags", input: "Show the exact saved rule results, tags, and note for this completed trade without inferring why it happened.", expectedRoute: "saved rule, annotation, and review evidence read", expectedKind: "factual_read", expectedFactualToolNames: ["list_trading_rules", "get_trading_rule_results", "get_trade_annotations"] }],
+    representativeFixtures: [{ id: "runtime-rules-tags", surface: "Trading Rules and Trade Tags", input: "Show the exact saved rule results, saved Rule ideas, tags, and note for this completed trade without inferring why it happened.", expectedRoute: "saved rule, Rule-idea, annotation, and review evidence read", expectedKind: "factual_read", expectedFactualToolNames: ["list_rule_ideas", "list_trading_rules", "get_trading_rule_results", "get_trade_annotations"] }],
   },
   {
     runtimeCapabilityId: "confirmed_product_changes",

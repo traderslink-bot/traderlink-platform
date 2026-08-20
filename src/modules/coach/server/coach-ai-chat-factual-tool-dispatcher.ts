@@ -25,12 +25,27 @@ import type { CoachAiChatAnnotationContextService } from "./coach-ai-chat-annota
 import type { CoachAiChatSavedAnalysisService } from "./coach-ai-chat-saved-analysis-service";
 
 /** A generation has one shared factual-result budget. Results are never shortened to fit it. */
-/** Across at most two tool steps; later model calls can receive this package twice. */
 // Keep the complete, cumulative result set large enough for bounded trade and
 // analytics rows while leaving room for Chat's expanded tool inventory,
 // structured output, trusted page context, and repeated model steps inside the
 // immutable 256 KB provider-input ceiling.
 export const COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES = 48 * 1024;
+export const COACH_AI_CHAT_FACTUAL_TOOL_CALL_MAX_COUNT = 4;
+export const COACH_AI_CHAT_FACTUAL_RESULTS_CUMULATIVE_PROMPT_MAX_BYTES =
+  COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES * 2;
+
+export function nextCoachAiChatCumulativeResultBytes(input: Readonly<{
+  currentCumulativeBytes: number;
+  currentTotalBytes: number;
+  nextResultBytes: number;
+}>): number | null {
+  const nextTotalBytes = input.currentTotalBytes + input.nextResultBytes;
+  const nextCumulativeBytes = input.currentCumulativeBytes + nextTotalBytes;
+  return nextTotalBytes <= COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES &&
+    nextCumulativeBytes <= COACH_AI_CHAT_FACTUAL_RESULTS_CUMULATIVE_PROMPT_MAX_BYTES
+    ? nextCumulativeBytes
+    : null;
+}
 
 function isoDate(value: Date): string {
   return value.toISOString().slice(0, 10);
@@ -270,6 +285,7 @@ function unsupportedTool(request: never): never {
 export class CoachAiChatFactualToolDispatcher {
   private readonly snapshots: CoachAiChatFactualToolCallSnapshot[] = [];
   private totalBytes = 0;
+  private cumulativePromptResultBytes = 0;
 
   constructor(
     private readonly tools: Pick<CoachAiChatFactualToolService,
@@ -301,7 +317,9 @@ export class CoachAiChatFactualToolDispatcher {
   ) {}
 
   dispatch(toolCallId: string, request: CoachAiChatFactualToolRequest): CoachAiChatFactualToolResponse {
-    if (this.snapshots.length >= 4) throw new CoachAiChatFactualToolError("result_too_large");
+    if (this.snapshots.length >= COACH_AI_CHAT_FACTUAL_TOOL_CALL_MAX_COUNT) {
+      throw new CoachAiChatFactualToolError("result_too_large");
+    }
     const enforcedAnalysisScope = resolveRecentScope(this.analysisScope, this.asOfUtc);
     request = applyScope(request, enforcedAnalysisScope);
     request = applyReportingCurrency(request, this.reportingCurrency);
@@ -530,10 +548,16 @@ export class CoachAiChatFactualToolDispatcher {
         return unsupportedTool(request);
     }
     const serializedResultBytes = Buffer.byteLength(JSON.stringify(result), "utf8");
-    if (this.totalBytes + serializedResultBytes > COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES) {
+    const cumulativePromptResultBytes = nextCoachAiChatCumulativeResultBytes({
+      currentCumulativeBytes: this.cumulativePromptResultBytes,
+      currentTotalBytes: this.totalBytes,
+      nextResultBytes: serializedResultBytes,
+    });
+    if (cumulativePromptResultBytes === null) {
       throw new CoachAiChatFactualToolError("result_too_large");
     }
     this.totalBytes += serializedResultBytes;
+    this.cumulativePromptResultBytes = cumulativePromptResultBytes;
     this.snapshots.push(Object.freeze({
       toolCallId,
       toolName: request.toolName,
@@ -550,5 +574,9 @@ export class CoachAiChatFactualToolDispatcher {
 
   totalSerializedResultBytes(): number {
     return this.totalBytes;
+  }
+
+  cumulativePromptResultBytesForPersistence(): number {
+    return this.cumulativePromptResultBytes;
   }
 }

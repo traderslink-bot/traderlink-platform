@@ -47,7 +47,7 @@ the [runtime progress record](ai-chat-runtime-progress.md), and the
   desktop/mobile drawer and the `/ai-chat` page.
 - The 13 current bounded factual-read or confirmation-draft capability
   families in the runtime registry.
-- All 34 deterministic factual tools and all 12 confirmed action-draft kinds.
+- All 36 deterministic factual tools and all 12 confirmed action-draft kinds.
 - Daily Tracker assistance, natural-language manual execution drafts, saved AI
   Review follow-up, review scheduling changes, Journal reads, Analytics,
   Imports, Data Decisions, Notifications, Account settings, privacy-safe
@@ -119,7 +119,7 @@ context cannot return an answer created for another population.
 The locked 417-entry language inventory is reconciled to every current live
 capability family. Representative fixtures now name their exact expected
 factual tools or action-draft kind. Focused guards require the fixture-tool
-union to equal all 34 names in the factual-tool registry and require the action
+union to equal all 36 names in the factual-tool registry and require the action
 fixtures to equal all 12 top-level kinds in the canonical action contract.
 Future, unavailable, product-excluded, and safety-protected language was not
 promoted to live support.
@@ -140,7 +140,7 @@ promoted to live support.
 - Moomoo coverage is privacy-safe status and Help only. Sign-in, OAuth,
   disconnect, linking, backfill, scheduling, and import-run changes stay in
   their guarded product UI.
-- The complete 34-tool catalog remains available because Chat is a global
+- The complete 36-tool catalog remains available because Chat is a global
   companion and a trader may ask about another feature without navigating
   away. Tools are bounded and deterministic; current-page context is only a
   relevance hint.
@@ -151,8 +151,9 @@ promoted to live support.
 ## Verification record
 
 - The language generator produced all 417 locked entries.
-- The focused language inventory suite passed three tests with one worker and
-  proved exact 34-tool and 12-action coverage.
+- The earlier focused language inventory suite passed three tests with one
+  worker for the then-current inventory. The current deterministic inventory
+  guard proves exact 36-tool and 12-action coverage.
 - The page-context suite passed 28 tests with one worker.
 - The evidence and message-route suites passed 28 tests with one worker.
 - The interrupted-generation recovery suite passed two tests with one worker.
@@ -162,7 +163,8 @@ promoted to live support.
   26 files. The opt-in live-provider file and test were the only skipped
   checks. Targeted lint and the full no-emit TypeScript check passed.
 - A second independent whole-feature audit on 2026-08-16 rechecked all 13 live
-  capability families, all 34 factual tools, all 12 confirmation-draft kinds,
+  capability families and the then-current factual-tool inventory, all 12
+  confirmation-draft kinds,
   current routes and compatibility redirects, Moomoo privacy-safe status,
   account erasure coverage, provider privacy/cost controls, recovery, evidence,
   Help and the locked language mapping. Its final one-worker regression passed
@@ -224,10 +226,9 @@ or errors. The no-worker review server was stopped afterward.
 - Select and enable the production model, all four token prices (ordinary
   input, cached input, cache-write input and output), request/token/spend caps,
   entitlement, support, and monitoring settings.
-- Keep Trade Explorer advanced comparison studies unavailable until their own
-  deterministic query, factual coverage and evaluation contract is accepted.
-- Implement the separately planned deterministic rule-recommendation service
-  before Chat can read or explain saved recommendation evidence.
+- Saved Compare Trades studies and saved deterministic Rule-idea evidence are
+  now bounded read-only Links AI Chat sources. Links cannot create, recalculate,
+  dismiss, or activate anything through those reads.
 - Keep raw statement review opt-in and outside ordinary Chat context.
 
 No deployment or push is authorized by this QA acceptance.

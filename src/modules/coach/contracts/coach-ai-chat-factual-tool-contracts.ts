@@ -139,43 +139,47 @@ export type CoachAiChatTradeExplorerGrouping =
   (typeof COACH_AI_CHAT_TRADE_EXPLORER_GROUPINGS)[number];
 export type CoachAiChatTradeExplorerMetricId =
   (typeof COACH_AI_CHAT_TRADE_EXPLORER_METRIC_IDS)[number];
+export const COACH_AI_CHAT_FACTUAL_TOOL_NAMES = Object.freeze([
+  "summarize_closed_trades",
+  "group_closed_trades",
+  "list_closed_trades",
+  "get_closed_trade_details",
+  "summarize_journal_period",
+  "list_saved_ai_reviews",
+  "get_saved_ai_review",
+  "search_product_help",
+  "get_workspace_summary",
+  "get_trading_day_details",
+  "get_calendar_period",
+  "list_open_positions",
+  "get_open_position_details",
+  "list_swing_positions",
+  "get_swing_position_details",
+  "get_analytics_overview",
+  "get_results_by_ticker",
+  "get_timing_analytics",
+  "get_execution_analytics",
+  "query_trade_explorer",
+  "list_saved_trade_comparisons",
+  "list_rule_ideas",
+  "list_imports",
+  "list_data_decisions",
+  "get_data_decision_details",
+  "list_notifications",
+  "get_account_profile",
+  "get_account_trading",
+  "get_account_preferences",
+  "get_account_ai_plan",
+  "get_trade_analyzer_results",
+  "list_analyzed_trades",
+  "get_saved_candle_review",
+  "list_trading_rules",
+  "get_trading_rule_results",
+  "get_trade_annotations",
+] as const);
+
 export type CoachAiChatFactualToolName =
-  | "summarize_closed_trades"
-  | "group_closed_trades"
-  | "list_closed_trades"
-  | "get_closed_trade_details"
-  | "summarize_journal_period"
-  | "list_saved_ai_reviews"
-  | "get_saved_ai_review"
-  | "search_product_help"
-  | "get_workspace_summary"
-  | "get_trading_day_details"
-  | "get_calendar_period"
-  | "list_open_positions"
-  | "get_open_position_details"
-  | "list_swing_positions"
-  | "get_swing_position_details"
-  | "get_analytics_overview"
-  | "get_results_by_ticker"
-  | "get_timing_analytics"
-  | "get_execution_analytics"
-  | "query_trade_explorer"
-  | "list_saved_trade_comparisons"
-  | "list_rule_ideas"
-  | "list_imports"
-  | "list_data_decisions"
-  | "get_data_decision_details"
-  | "list_notifications"
-  | "get_account_profile"
-  | "get_account_trading"
-  | "get_account_preferences"
-  | "get_account_ai_plan"
-  | "get_trade_analyzer_results"
-  | "list_analyzed_trades"
-  | "get_saved_candle_review"
-  | "list_trading_rules"
-  | "get_trading_rule_results"
-  | "get_trade_annotations";
+  (typeof COACH_AI_CHAT_FACTUAL_TOOL_NAMES)[number];
 
 export type CoachAiChatFactualToolFilters = Readonly<{
   closingDateRange?: Readonly<{

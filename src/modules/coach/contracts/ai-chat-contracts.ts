@@ -7,7 +7,7 @@ export const COACH_AI_CHAT_SNAPSHOT_CONTRACT_VERSION =
   "traderlink_coach_ai_chat_snapshot_v1" as const;
 
 export const COACH_AI_CHAT_ANSWER_CONTRACT_VERSION =
-  "traderlink_coach_ai_chat_answer_v1" as const;
+  "traderlink_coach_ai_chat_answer_v2" as const;
 
 /** The stored answer shape. UI code renders these fields without exposing runtime labels. */
 export type CoachAiChatAnswer = Readonly<{
@@ -18,6 +18,7 @@ export type CoachAiChatAnswer = Readonly<{
   nextQuestion: string | null;
   evidenceReferences: readonly Readonly<{
     toolCallId: string;
+    claimRefs: readonly string[];
     statement: string;
   }>[];
 }>;

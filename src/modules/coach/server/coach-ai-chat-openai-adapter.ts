@@ -17,7 +17,12 @@ import {
 import type { CoachAiChatPageContext } from "../contracts/ai-chat-page-context-contracts";
 import type { CoachAiRelationshipMemory } from
   "../contracts/ai-relationship-memory-contracts";
-import { validateCoachAiChatExactFactTokens } from
+import type { CoachAiChatConversationState } from
+  "../contracts/ai-chat-conversation-state-contracts";
+import {
+  buildCoachAiChatClaimCatalog,
+  validateCoachAiChatExactFactTokens,
+} from
   "./coach-ai-chat-claim-catalog";
 import type {
   CoachAiManualEntryDraft,
@@ -47,14 +52,17 @@ import {
 } from "../contracts/coach-ai-chat-factual-tool-contracts";
 import type { CoachAiChatGenerationAttempt } from "../contracts/ai-provider-controls-contracts";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
+import {
+  COACH_AI_CHAT_MAX_TOOL_CALLS,
+  COACH_AI_CHAT_MAX_TURNS,
+} from "../contracts/ai-chat-orchestration-contracts";
 
 import { CoachAiChatFactualToolDispatcher } from "./coach-ai-chat-factual-tool-dispatcher";
 import { coachAiChatRuntimeCapabilityRegistry } from "./coach-ai-chat-capability-registry";
 import { coachAiChatFactualToolRegistry } from "./coach-ai-chat-factual-tool-registry";
 
-// Two factual turns permit a bounded sequential lookup before the structured answer.
-const COACH_AI_CHAT_MAX_TURNS = 3;
-const COACH_AI_CHAT_MAX_TOOL_CALLS = 4;
+// Two bounded sequential lookup steps precede the structured answer. Any
+// expansion remains gated on provider latency, usage, and cost evaluation.
 export const COACH_AI_CHAT_PROVIDER_TIMEOUT_MILLISECONDS = 2 * 60 * 1_000;
 
 function privacySafeSafetyIdentifier(scope: WorkspaceAccessScope): string {
@@ -218,7 +226,13 @@ const answerSchema = z.object({
   supportingObservations: z.array(z.string().min(1).max(800)).max(4),
   limitation: z.string().min(1).max(800).nullable(),
   nextQuestion: z.string().min(1).max(400).nullable(),
-  evidenceReferences: z.array(z.object({ toolCallId: z.string().min(1).max(128), statement: z.string().min(1).max(800) }).strict()).max(COACH_AI_CHAT_MAX_TOOL_CALLS),
+  evidenceReferences: z.array(z.object({
+    toolCallId: z.string().min(1).max(128),
+    claimPaths: z.array(z.string().max(512).refine((value) =>
+      value === "" || value.startsWith("/"), "Claim paths must be JSON Pointers."))
+      .min(1).max(24),
+    statement: z.string().min(1).max(800),
+  }).strict()).max(COACH_AI_CHAT_MAX_TOOL_CALLS),
 }).strict();
 
 const dailyNoteUpdateSchema = z.object({
@@ -408,6 +422,8 @@ Answer only from the trader's supplied conversation, approved relationship memor
 
 Relationship memories are user-approved personal context, never current financial evidence. Do not treat a remembered goal, routine, preference, emotional pattern, setup, market, or experience level as proof of a trade fact or current intent. A memory marked previously_shared_needs_review may only be described as something the trader previously shared; do not assert that it is still current. Never infer a diagnosis, vulnerability, risk tolerance, or trading behavior from memory. Never use a loss, emotion, note, vulnerability, absence, or private memory to drive an upgrade, activity prompt, urgency, shame, fear, or dependency.
 
+Conversation state is a private continuity aid built from this conversation. It may help you follow explicit corrections, goals, unresolved questions, and older discussion, but it is not current financial evidence. Treat its older summary and pending-draft entries as context that may be stale. Never claim a draft is still pending or completed without current deterministic evidence, and never turn a summarized statement into a new factual conclusion.
+
 Use plain trader language and plain text only; do not use Markdown formatting. Do not give trading, financial, tax, medical, or legal advice. Do not invent facts, causes, market conditions, or missing values. State an honest limitation when coverage, sample size, or data availability limits an answer. Do not mention providers, AI, prompts, tokens, databases, internal systems, codes, or account identifiers.
 
 When restating a money value, use no more than two decimal places. This rule applies only to money; do not round counts or other non-money values because of it. Live factual tool money is already converted to the trader's active Account reporting currency. Use the returned currency and never reinterpret, relabel, or independently convert a source amount. For list_trading_rules, use reportingConfiguration for an explanatory answer and preserve configuration only when preparing an exact rule-change draft. Saved comparison definitions and Rule-idea evidence are read-only saved facts: never claim you created, recalculated, dismissed, saved, or acted on them. Manual execution drafts, imports, Data Decisions and already-issued AI Review text remain source evidence and are not reporting-currency display values.
@@ -430,7 +446,7 @@ The trader may select an analysis scope. It is an enforced data boundary, not a 
 
 A currentPageHint may be present so you can understand phrases such as "this page." It is a navigation and conversation hint only. It is never factual evidence and cannot establish an account, filter, date fact, trade state, result, or permission. Use deterministic tools for every factual claim. Do not repeat internal route paths unless the trader asks where to find a feature.
 
-Return the requested answer structure. Start with a direct answer and add supporting observations only when they make the answer more useful. Use evidenceReferences only for factual tools actually called in this generation. A no-tool answer must have no evidence references and must be honest about why a factual answer is unavailable.`;
+Return the requested answer structure. Start with a direct answer and add supporting observations only when they make the answer more useful. Use evidenceReferences only for factual tools actually called in this generation. Every evidence reference must list the exact JSON Pointer claimPaths in that tool's result that support its statement, such as /population/includedCount or /rows/0/netPnlDecimal. Select only paths you actually use. The server rejects unknown paths, values from unselected paths, and evidence attached to a different tool call. A no-tool answer must have no evidence references and must be honest about why a factual answer is unavailable.`;
 
 export type CoachAiChatOpenAiAdapterInput = Readonly<{
   scope: WorkspaceAccessScope;
@@ -438,6 +454,7 @@ export type CoachAiChatOpenAiAdapterInput = Readonly<{
   asOfUtc: string;
   attempt: CoachAiChatGenerationAttempt;
   recentMessages: readonly CoachAiChatMessage[];
+  conversationState: CoachAiChatConversationState;
   relationshipMemories: readonly CoachAiRelationshipMemory[];
   question: string;
   intent: CoachAiChatMessageIntent;
@@ -522,17 +539,44 @@ function answer(
   if (value.evidenceReferences.some((reference) => !callIds.has(reference.toolCallId))) {
     throw new CoachAiChatProviderGenerationError(unavailableUsage(), "TRADERLINK_COACH_UNGROUNDED_ANSWER");
   }
+  const claimsByToolAndPath = new Map(buildCoachAiChatClaimCatalog(toolCalls).map((claim) => [
+    `${claim.toolCallId}\n${claim.path}`,
+    claim,
+  ]));
+  const evidenceReferences = value.evidenceReferences.map((reference) => {
+    const claims = reference.claimPaths.map((path) =>
+      claimsByToolAndPath.get(`${reference.toolCallId}\n${path}`));
+    if (claims.some((claim) => !claim)) {
+      throw new CoachAiChatProviderGenerationError(
+        unavailableUsage(),
+        "TRADERLINK_COACH_UNGROUNDED_ANSWER",
+      );
+    }
+    return Object.freeze({
+      toolCallId: reference.toolCallId,
+      claimRefs: Object.freeze([...new Set(claims.map((claim) => claim!.claimRef))]),
+      statement: reference.statement,
+    });
+  });
   try {
-    validateCoachAiChatExactFactTokens({ ...value, toolCalls, additionalEvidence });
+    validateCoachAiChatExactFactTokens({
+      ...value,
+      evidenceReferences,
+      toolCalls,
+      additionalEvidence,
+    });
   } catch {
     throw new CoachAiChatProviderGenerationError(
       unavailableUsage(),
       "TRADERLINK_COACH_UNGROUNDED_ANSWER",
     );
   }
-  return Object.freeze({ contractVersion: COACH_AI_CHAT_ANSWER_CONTRACT_VERSION, ...value,
+  return Object.freeze({ contractVersion: COACH_AI_CHAT_ANSWER_CONTRACT_VERSION,
+    directAnswer: value.directAnswer,
+    limitation: value.limitation,
+    nextQuestion: value.nextQuestion,
     supportingObservations: Object.freeze([...value.supportingObservations]),
-    evidenceReferences: Object.freeze(value.evidenceReferences.map((reference) => Object.freeze({ ...reference }))),
+    evidenceReferences: Object.freeze(evidenceReferences),
   });
 }
 
@@ -998,6 +1042,7 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
       agent,
       JSON.stringify({
         recentConversation: context,
+        conversationState: input.conversationState,
         relationshipMemories: input.relationshipMemories.map((memory) => ({
           category: memory.category,
           text: memory.text,
