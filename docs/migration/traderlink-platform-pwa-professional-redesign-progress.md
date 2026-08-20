@@ -304,7 +304,9 @@ condensed rail state is offered.
   and explicit-file diff checks pass with a 512 MB Node ceiling. No Vitest,
   broad TypeScript run, server, browser, build, provider, hosted mutation or
   deployment ran.
-- [ ] Preserve the Open Positions saved-view slice in a narrow local commit.
+- [x] Preserve the Open Positions saved-view slice in narrow local commit
+  `6e6a1ba2` without staging the concurrent AI Chat, Analytics, Calendar,
+  Rules, notification, shell or other dashboard work.
 - [ ] Add Journal-owned Daily and Swing Tracker saved-view models and
   renderers, preserving saved empty-day notes/reviews and disabling every
   server-authoritative mutation except the accepted offline execution outbox.
