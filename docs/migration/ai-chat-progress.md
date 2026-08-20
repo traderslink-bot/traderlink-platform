@@ -115,6 +115,19 @@ The private persistence API checkpoint is tracked in
 - [ ] Implement production entitlement, scheduled-delivery, operational, and
   privacy-deletion decisions at their separate launch boundaries.
 
+## 2026-08-20 Links relationship-memory implementation
+
+- The professional-agent work now includes a source-only migration and private
+  API foundation for approved cross-conversation relationship memory. User-wide
+  memory and selected-Journal-account memory are distinct from Chat history and
+  from current financial evidence.
+- The implementation provides explicit save, versioned edit/reconfirmation,
+  enable/disable, secure forget/forget-all, Meet Links skip and atomic Meet Links
+  completion. It does not silently infer or save a memory.
+- The migration has not been applied to the protected database. The approved
+  first-impression and **What Links remembers** interface remains the next
+  owner-visible implementation checkpoint.
+
 ## Completed foundation: Agents SDK and global Links AI Chat companion
 
 ### 2026-08-18 Trade Explorer capability reconciliation

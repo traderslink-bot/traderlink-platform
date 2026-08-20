@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
 
+import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
+import {
+  JOURNAL_OFFLINE_ROUTE_VIEW_KEYS,
+  JOURNAL_OFFLINE_ROUTE_VIEW_VERSION,
+  journalOfflineRouteCoverage,
+  type JournalCalendarOfflineViewModel,
+} from "@/src/modules/journal/contracts/journal-offline-route-view-contracts";
 import { CalendarClient } from "./calendar-client";
 import { emptyCalendarData, getCalendarData } from "./calendar-data";
 import {
@@ -150,8 +157,33 @@ export default async function CalendarPage({
     startDate: initialView === "month" ? monthStart(selectedMonth) : selectedWeek,
   };
   await requireTraderLinkPlatformPageScope();
+  const offlineModel: JournalCalendarOfflineViewModel = Object.freeze({
+    availableMonths,
+    availableWeekOptions,
+    availableWeeks,
+    initialData,
+    initialFilters,
+    initialView,
+    kind: "calendar",
+    selectedMonth,
+    selectedWeek,
+    version: 1,
+  });
 
   return (
+    <>
+    {reviewLayout ? null : <OfflineSavedViewCapture
+      accountTimezone={initialData.timezone}
+      calculationVersion="journal-calendar-v1"
+      coverage={journalOfflineRouteCoverage("calendar")}
+      generatedAtUtc={new Date().toISOString()}
+      model={offlineModel}
+      pathname="/calendar"
+      queryIdentity={`view:${initialView}:${selectedMonth}:${selectedWeek}`}
+      reportingCurrency={initialData.currency}
+      routeViewVersion={JOURNAL_OFFLINE_ROUTE_VIEW_VERSION}
+      viewKey={JOURNAL_OFFLINE_ROUTE_VIEW_KEYS.calendar}
+    />}
     <CalendarClient
       key={`${initialView}:${selectedMonth}:${selectedWeek}:${JSON.stringify(initialFilters)}`}
       availableMonths={availableMonths}
@@ -163,5 +195,6 @@ export default async function CalendarPage({
       selectedMonth={selectedMonth}
       selectedWeek={selectedWeek}
     />
+    </>
   );
 }

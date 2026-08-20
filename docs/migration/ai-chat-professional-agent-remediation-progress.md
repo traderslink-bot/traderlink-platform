@@ -3,8 +3,9 @@
 ## Status
 
 **Plan and visible experience owner-approved on 2026-08-20 with Links AI Chat as
-the required feature name. No implementation has started. The concurrent-file
-audit and first implementation allowlist remain open.**
+the required feature name. The relationship-memory persistence/API foundation
+is implemented in source. It remains unapplied to the protected database and
+the visible experience has not yet been changed.**
 
 The controlling plan is the
 [Links AI Chat Professional Agent Remediation Plan](ai-chat-professional-agent-remediation-plan.md).
@@ -125,7 +126,7 @@ The parent product contract remains the
 - [x] Owner reviews and approves the complete plan.
 - [x] Owner reviews and approves the exact visible state copy and behavior with
   **Links AI Chat** as the required feature name.
-- [ ] Audit concurrent file ownership and publish the first implementation
+- [x] Audit concurrent file ownership and publish the first implementation
   allowlist.
 
 ### Grounding and continuity
@@ -226,8 +227,39 @@ The parent product contract remains the
 
 ## Current non-actions
 
-- No application or database implementation was changed.
+- No protected or private database was opened or changed; migration `0067`
+  exists only in source pending a later disposable-database verifier and the
+  explicit protected-database migration boundary.
 - No provider request was made.
 - No Journal fact or existing message was changed.
 - No test runner, build, deployment, push, merge, or publication occurred.
 - No concurrent dirty file was staged, committed, overwritten, or discarded.
+
+## 2026-08-20 implementation checkpoint: relationship-memory foundation
+
+- The concurrent working tree was re-audited before implementation. The first
+  allowlist was limited to the new Coach relationship-memory contract,
+  repository, route parser, migration `0067`, four private route handlers, the
+  central migration manifest and these two Links progress records. Concurrent
+  Tracker, PWA, Analytics, Calendar, Rules, Candle Review and unrelated planning
+  work remained outside the slice.
+- Migration `0067_coach_ai_chat_relationship_memory` defines separately scoped
+  user-wide and current-Journal-account memories, versioned private wording,
+  content-free lifecycle events, memory enablement and Meet Links completion.
+- Forgetting a memory marks its content-free parent record forgotten and deletes
+  every private text version in the same transaction. The remaining event does
+  not retain the forgotten wording. Forget-all can affect only the current
+  user's user-wide and selected-account memories returned by the scoped read.
+- The repository supports read, explicit create, versioned edit, reconfirm,
+  forget, forget-all, enable/disable, Meet Links skip and atomic Meet Links
+  completion. A Meet Links request retains no partial answers: its selected
+  memories and completion setting are written together or not at all.
+- New private endpoints expose only authenticated server-derived scope:
+  `/api/coach/chat/memories`, `/api/coach/chat/memories/settings`,
+  `/api/coach/chat/memories/[memoryId]`, and `/api/coach/chat/meet-links`.
+- Focused ESLint passed for all new relationship-memory and changed manifest
+  files. `git diff --check` passed. The full no-emit TypeScript process exceeded
+  its 60-second low-resource window without reporting an error and is recorded
+  as incomplete, not passed. A static manifest import then failed before project
+  code loaded because the operating system returned `ENOMEM`; no retry storm,
+  test runner, protected-database write or provider call was used.

@@ -15,6 +15,11 @@ import {
 
 import { ManualExecutionEntry } from "../(dashboard)/trade-tracker/manual-execution-entry";
 import { DashboardPage } from "../dashboard-ui";
+import { OfflineDailyTrackerSurface } from "./offline-daily-tracker-surface";
+import {
+  journalOfflineRouteKind,
+  OfflineJournalRouteSurface,
+} from "./offline-journal-route-surface";
 import { OfflineOpenPositionsSurface } from "./offline-open-positions-surface";
 import { OfflineSwingTrackerSurface } from "./offline-swing-tracker-surface";
 import { OfflineWorkspaceSurface } from "./offline-workspace-surface";
@@ -55,6 +60,11 @@ function trackerForPathname(pathname: string): JournalManualTrackerKind | null {
   if (pathname === "/trade-tracker/swings") return "swing";
   if (pathname === "/trade-tracker") return "day";
   return null;
+}
+
+function isDailyTrackerPathname(pathname: string): boolean {
+  return pathname === "/trade-tracker" ||
+    /^\/trade-tracker\/\d{4}-\d{2}-\d{2}$/u.test(pathname);
 }
 
 function trackerTitle(tracker: JournalManualTrackerKind): string {
@@ -198,6 +208,7 @@ export function OfflineRouteContent() {
     serverPathnameSnapshot,
   );
   const tracker = trackerForPathname(pathname);
+  const journalRouteKind = journalOfflineRouteKind(pathname);
   const [deviceState, setDeviceState] =
     useState<PlatformOfflineDeviceState | null>(null);
   const [stateLoaded, setStateLoaded] = useState(false);
@@ -243,6 +254,44 @@ export function OfflineRouteContent() {
     return (
       <>
         <OfflineOpenPositionsSurface partitionKey={deviceState.partitionKey} />
+        <OfflineTradeOutboxSync state={deviceState} />
+      </>
+    );
+  }
+
+  if (
+    journalRouteKind &&
+    stateLoaded &&
+    readyOfflineDeviceState(deviceState)
+  ) {
+    return (
+      <>
+        <OfflineJournalRouteSurface
+          accountSelectionRef={deviceState.accountSelectionRef}
+          kind={journalRouteKind}
+          partitionKey={deviceState.partitionKey}
+          pathname={pathname}
+        />
+        <OfflineTradeOutboxSync state={deviceState} />
+      </>
+    );
+  }
+
+  if (
+    isDailyTrackerPathname(pathname) &&
+    stateLoaded &&
+    readyOfflineDeviceState(deviceState)
+  ) {
+    return (
+      <>
+        <OfflineDailyTrackerSurface
+          accountCurrency={deviceState.accountCurrency}
+          accountSelectionRef={deviceState.accountSelectionRef}
+          accountTimezone={deviceState.accountTimezone}
+          offlineScopeRef={deviceState.offlineScopeRef}
+          partitionKey={deviceState.partitionKey}
+          pathname={pathname}
+        />
         <OfflineTradeOutboxSync state={deviceState} />
       </>
     );

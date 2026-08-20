@@ -42,6 +42,7 @@ import { coachAiReviewCacheWriteAccountingMigration } from "@/src/modules/coach/
 import { coachAiReviewLunaPricingRefreshMigration } from "@/src/modules/coach/server/database/migrations/0062_coach_ai_review_luna_pricing_refresh";
 import { coachAiReviewInsightPersistenceMigration } from "@/src/modules/coach/server/database/migrations/0065_coach_ai_review_insight_persistence";
 import { coachAiReviewAuthoredOutputMigration } from "@/src/modules/coach/server/database/migrations/0066_coach_ai_review_authored_output";
+import { coachAiChatRelationshipMemoryMigration } from "@/src/modules/coach/server/database/migrations/0067_coach_ai_chat_relationship_memory";
 import { coachAiChatActionDraftsMigration } from "@/src/modules/coach/server/database/migrations/0055_coach_ai_chat_action_drafts";
 import { coachAiChatActionExpansionMigration } from "@/src/modules/coach/server/database/migrations/0056_coach_ai_chat_action_expansion";
 import { coachAiChatCacheAccountingMigration } from "@/src/modules/coach/server/database/migrations/0058_coach_ai_chat_cache_accounting";
@@ -341,6 +342,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/coach/server/database/migrations/0066_coach_ai_review_authored_output.ts",
       migration: coachAiReviewAuthoredOutputMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/coach/server/database/migrations/0067_coach_ai_chat_relationship_memory.ts",
+      migration: coachAiChatRelationshipMemoryMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -626,6 +631,12 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "coach_ai_review_authored_snapshots_v4",
       "coach_ai_review_authored_provider_calls_v4",
       "coach_ai_issued_reviews_v4",
+    ]),
+    "0067_coach_ai_chat_relationship_memory": Object.freeze([
+      "coach_ai_relationship_memory_settings",
+      "coach_ai_relationship_memories",
+      "coach_ai_relationship_memory_versions",
+      "coach_ai_relationship_memory_events",
     ]),
   });
 
