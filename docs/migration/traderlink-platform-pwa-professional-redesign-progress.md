@@ -1,10 +1,8 @@
 # TraderLink Platform PWA Professional Redesign Progress
 
-**Status:** PWA-R0 and PWA-R1 are locally checkpointed; PWA-R2 tracker parity
-is technically accepted after the owner waived further visual review and the
-scoped production client/worker compilation passed; PWA-R3 now has its saved
-view foundation plus Workspace and all planned Journal Trades saved-view
-models/renderers implemented; Journal Analytics remains next
+**Status:** PWA-R1 through PWA-R5 source work and local installed-Windows
+acceptance are complete. Hosted phone installation, hosted Web Push and real
+background-delivery acceptance remain separate deployment-authorized gates.
 
 **Started:** 2026-08-20
 
@@ -427,7 +425,7 @@ condensed rail state is offered.
   Reflection Loop/Coach, old Analyzer, old Import, Repair Wizard and the former
   Trader Intelligence entry point without restoring hidden Analytics Lab,
   readiness, debug or Admin routes offline.
-- [ ] Verify Web Push destination routing, safe application update activation
+- [x] Verify Web Push destination routing, safe application update activation
   and outbox preservation at the final installed-app checkpoint.
 
 ## PWA-R5 storage hardening
@@ -470,29 +468,76 @@ database migration, provider call, Push change, deployment or protected
 press-release process change occurred. Final installed-app acceptance resumes
 only after the concurrent migration owner completes that database boundary.
 
+### PWA-R5 installed Windows acceptance
+
+The concurrent Links AI Chat owner paused its build/server work and explicitly
+handed migration 0067 to this checkpoint. Pre-migration backup and restore,
+canonical application of `0067_coach_ai_chat_relationship_memory`, post-
+migration backup and restore, exact registry/schema verification, SQLite quick
+and integrity checks and foreign-key checks all passed. The four new AI Chat
+memory tables were empty and existing Journal table content remained unchanged.
+
+The first genuine installed-app server-off relaunch found two product defects
+that static checks had not established:
+
+1. the worker returned cached `/offline` HTML while retaining the requested
+   private route URL, preventing the Next App Router document from hydrating;
+2. the narrow worker manifest omitted shared Next bootstrap/layout scripts,
+   and Swing Trade Tracker hid offline entry when no saved swing view existed.
+
+The worker now redirects a failed same-origin navigation to the real static
+`/offline?path=...` route after validating and encoding only the intended
+pathname. The offline route reads that validated pathname after hydration.
+The Serwist build boundary now includes only the Webpack runtime, main App
+Router, root layout and offline-page chunk groups, plus the dynamically named
+Next polyfill asset. A build artifact check proved that all 44 script URLs in
+the generated offline document are present in the worker precache; zero are
+missing. Swing Trade Tracker now renders the normal manual execution form even
+when no saved swing dashboard view exists, matching Daily and Quick Entry.
+
+Focused ESLint and `git diff --check` passed for the changed PWA and build-
+configuration files. The complete low-resource production package completed
+with the official two-stage Next 16 Webpack flow:
+
+- `next build --webpack --experimental-build-mode compile` exited zero;
+- `next build --webpack --experimental-build-mode generate` exited zero and
+  generated all 212 static pages, including static `/offline`.
+
+The installed Chrome PWA was then opened online, closed and reopened to prove
+safe worker activation. Workspace rendered with no console errors. Codex
+stopped only the exact worker-disabled review backend and production-asset
+proxy it started; ports 3010 and 3011 were confirmed free before the decisive
+relaunch. With the origin genuinely unavailable, the installed app proved:
+
+- standalone display mode was true;
+- Workspace hydrated through `/offline?path=%2Fworkspace` and showed its exact
+  no-saved-view state instead of a dead fallback heading;
+- Daily Trade Tracker, Swing Trade Tracker and Quick Trade Entry each opened
+  through its encoded offline destination, displayed its correct page title,
+  complete `Enter trades` form and Trade sync status, with zero console errors;
+- Notifications opened through `/offline?path=%2Fnotifications` and displayed
+  its exact no-saved-notifications state with zero console errors;
+- the shared navigation dialog retained Workspace, the Trades, Trade Analyzer
+  and Analytics groups, Links AI Chat, AI Reviews, Account, Import Trades,
+  Market Charts, Data Decisions and Help Center.
+
+No form field was changed and no trade was previewed or submitted. This
+acceptance did not create an outbox record, enable Push, change notification or
+account settings, call a provider, deploy or alter hosted state. The earlier
+owner-observed Windows notification and Notifications Center delivery remain
+the local Web Push evidence; hosted phone Push/background delivery still
+requires the separate hosted gate. The Swing Trade Tracker Help guide already
+states that the installed app can reopen its execution form after a full
+offline relaunch, and Notifications Help already describes its bounded saved
+offline copy. These fixes restore the documented behavior, so no Help copy
+change is required.
+
 ## Current exact resume point
 
 PWA-R1 is preserved at local commit `30954abf`; PWA-R2 source is preserved at
-`4384f572` with its checkpoint record at `70b21428`. The focused production
-client compilation emitted `app/offline/page-06c2f3551ed5f579.js` (52,361
-bytes) and a 34,042-byte generated worker containing exactly the narrow shell
-allowlist. The generated worker was inspected and the tracked legacy worker
-was then restored byte-for-byte because the overall command stopped at the
-separate memory-bounded TypeScript stage.
-
-The owner explicitly waived further visual review and directed work to
-continue without waiting for the 16-hour press-release runtime. PWA-R2 is
-therefore accepted. PWA-R3 now has its non-destructive version-3 saved-view
-store plus normal-layout Workspace, Open Positions, Swing Tracker, Daily
-Tracker, Calendar, Trade Explorer, Compare Trades, Trading Rules, Rule Results,
-Candle Review, Core Analytics, Trade Analyzer, Notifications, Account device
-controls, all first-party Help guides and issued AI Review list/detail offline
-renderers. Links AI Chat,
-Imports, Market Charts and Data Decisions now have deliberate native
-connection-required states. PWA-R4 source implementation is complete. PWA-R5
-first closes the approved 50 MB device-storage hardening slice, then moves to
-final installed-app acceptance when system resources permit. Keep source work
-lightweight until
-the full-site build and installed-app relaunch can run without threatening
-protected processes. No Journal data, IndexedDB record, Push state, hosted
-configuration or deployed state changed during this source checkpoint.
+`4384f572` with its checkpoint record at `70b21428`; PWA-R5 storage hardening is
+preserved at `422bfe92`. The professional local PWA boundary is complete after
+the final installed-app acceptance above. The remaining release work is not
+another local UI slice: it is the explicitly separate hosted HTTPS phone
+installation, hosted Web Push/background-delivery and final deployment gate.
+No local review server remains on port 3010 or 3011.

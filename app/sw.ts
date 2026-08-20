@@ -1,4 +1,8 @@
-import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
+import type {
+  PrecacheEntry,
+  SerwistGlobalConfig,
+  SerwistPlugin,
+} from "serwist";
 import { NetworkOnly, Serwist } from "serwist";
 
 declare global {
@@ -31,6 +35,20 @@ function safeDestinationPath(value: unknown): string {
     ? value
     : "/notifications";
 }
+
+const offlineNavigationPlugin: SerwistPlugin = {
+  async handlerDidError({ request }) {
+    const url = new URL(request.url);
+    if (url.origin !== self.location.origin) return undefined;
+    if (url.pathname === "/offline") {
+      return serwist.matchPrecache("/offline");
+    }
+    const intendedPath = safeDestinationPath(url.pathname);
+    const offlineUrl = new URL("/offline", self.location.origin);
+    offlineUrl.searchParams.set("path", intendedPath);
+    return Response.redirect(offlineUrl.href, 302);
+  },
+};
 
 function clearCurrentOfflineScope(): Promise<void> {
   return new Promise((resolve) => {
@@ -97,17 +115,9 @@ const serwist = new Serwist({
     {
       matcher: ({ request, sameOrigin }) =>
         sameOrigin && request.mode === "navigate",
-      handler: new NetworkOnly(),
+      handler: new NetworkOnly({ plugins: [offlineNavigationPlugin] }),
     },
   ],
-  fallbacks: {
-    entries: [
-      {
-        url: "/offline",
-        matcher: ({ request }) => request.destination === "document",
-      },
-    ],
-  },
   skipWaiting: false,
 });
 

@@ -55,8 +55,25 @@ function subscribeToLocation(onStoreChange: () => void): () => void {
   return () => window.removeEventListener("popstate", onStoreChange);
 }
 
+function intendedOfflinePathname(): string | null {
+  if (window.location.pathname !== "/offline") return null;
+  const candidate = new URLSearchParams(window.location.search).get("path");
+  if (
+    candidate === null ||
+    candidate.length > 512 ||
+    !candidate.startsWith("/") ||
+    candidate.startsWith("//") ||
+    candidate.includes("\\") ||
+    candidate.includes("://")
+  ) {
+    return null;
+  }
+  return normalizePlatformOfflinePathname(candidate);
+}
+
 function browserPathnameSnapshot(): string {
-  const pathname = normalizePlatformOfflinePathname(window.location.pathname);
+  const pathname = intendedOfflinePathname() ??
+    normalizePlatformOfflinePathname(window.location.pathname);
   if (pathname === "/manual-entry") return "/trade-tracker";
   if (pathname === "/reflection-loop" || pathname === "/review" || pathname === "/progress" || pathname === "/coaching" || pathname.startsWith("/coach/")) return "/ai-reviews";
   if (pathname === "/analytics/trade-analysis") return "/analytics/trade-analyzer/day";

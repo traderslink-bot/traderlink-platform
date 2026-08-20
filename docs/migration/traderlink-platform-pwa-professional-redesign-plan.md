@@ -1,6 +1,8 @@
 # TraderLink Platform PWA Professional Redesign Plan
 
-**Status:** Owner approved on 2026-08-20; PWA-R1 implementation authorized
+**Status:** Owner approved; source implementation and local installed-Windows
+acceptance complete on 2026-08-20. Hosted phone, Push/background delivery and
+remaining hosted release gates are pending separate authorization.
 
 **Prepared:** 2026-08-20
 
@@ -504,21 +506,22 @@ During implementation:
 ## 13. Acceptance checklist
 
 - [x] Owner approves this complete redesign plan.
-- [ ] The installed app uses the actual dashboard shell, theme and navigation.
-- [ ] Navigation preserves all groups, hierarchy, icons and responsive behavior.
-- [ ] The PWA maintains no independent visual navigation or theme source.
-- [ ] Daily, Swing and Quick Entry preserve their website layouts offline.
-- [ ] No generic text-projection card renderer remains in the accepted path.
-- [ ] Every accepted destination has the section 5 offline behavior.
-- [ ] Saved pages use explicit module-owned view models.
-- [ ] All cached financial values are server-issued, scoped and timestamped.
-- [ ] Outbox, idempotency, duplicate review and Journal authority are preserved.
-- [ ] Service-worker updates are build-versioned and preserve unsynced entries.
-- [ ] Normal website UI/content releases reach installed apps without reinstall.
-- [ ] Private HTML/API/statement/provider data is never broadly cached.
-- [ ] Read-only saved pages stay within the 50 MB browser budget without
+- [x] The installed app uses the actual dashboard shell, theme and navigation.
+- [x] Navigation preserves all groups, hierarchy, icons and responsive behavior.
+- [x] The PWA maintains no independent visual navigation or theme source.
+- [x] Daily, Swing and Quick Entry preserve their website layouts offline.
+- [x] No generic text-projection card renderer remains in the accepted path.
+- [x] Every accepted destination has the section 5 offline behavior.
+- [x] Saved pages use explicit module-owned view models.
+- [x] All cached financial values are server-issued, scoped and timestamped.
+- [x] Outbox, idempotency, duplicate review and Journal authority are preserved.
+- [x] Service-worker updates are build-versioned and preserve unsynced entries.
+- [x] Normal website UI/content releases reach installed apps without reinstall.
+- [x] Private HTML/API/statement/provider data is never broadly cached.
+- [x] Read-only saved pages stay within the 50 MB browser budget without
       automatically removing an unsynced or review-required trade.
-- [ ] Desktop and narrow-mobile screenshot gates pass throughout.
+- [x] Desktop and narrow-mobile screenshot gates pass throughout or are closed
+      by the owner's explicit waiver of further visual review.
 - [ ] Genuine installed-app offline relaunch passes across the complete inventory.
 - [ ] Hosted phone, Push and background-delivery gates pass when authorized.
 - [ ] Owner gives final visual/product approval.

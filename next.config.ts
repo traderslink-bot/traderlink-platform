@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import { randomUUID } from "node:crypto";
 import withSerwistInit from "@serwist/next";
+import type { Compilation } from "webpack";
 
 import { legacyIntelligenceRedirects } from "./src/modules/platform/contracts/legacy-intelligence-route-disposition";
 
@@ -20,9 +21,40 @@ const withSerwist = withSerwistInit({
     { url: "/pwa-trade-sync.js", revision: publicShellRevision },
   ],
   cacheOnNavigation: false,
-  chunks: ["app/offline/page"],
+  chunks: [
+    "webpack",
+    "main-app",
+    "app/layout",
+    "app/offline/page",
+  ],
   disable: process.env.NODE_ENV !== "production",
   globPublicPatterns: [],
+  manifestTransforms: [
+    async (entries, transformParameter) => {
+      const compilation = transformParameter as Compilation | undefined;
+      const polyfillAssets = compilation?.getAssets().filter((asset) =>
+        /^static\/chunks\/polyfills-[a-z0-9]+\.js$/u.test(asset.name)
+      ) ?? [];
+      const manifest = [...entries];
+      const knownUrls = new Set(manifest.map((entry) => entry.url));
+      for (const asset of polyfillAssets) {
+        const url = `/_next/${asset.name}`;
+        if (knownUrls.has(url)) continue;
+        manifest.push({
+          revision: null,
+          size: asset.source.size(),
+          url,
+        });
+        knownUrls.add(url);
+      }
+      return {
+        manifest,
+        warnings: polyfillAssets.length > 0
+          ? []
+          : ["The production PWA polyfill asset was not found."],
+      };
+    },
+  ],
   register: false,
   reloadOnOnline: false,
   swDest: "public/sw.js",

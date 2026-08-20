@@ -98,10 +98,24 @@ export function OfflineSwingTrackerSurface({
     return () => { active = false; };
   }, [partitionKey]);
 
+  const entry = (
+    <Box id="swing-execution-entry" sx={{ scrollMarginTop: 96 }}>
+      <ManualExecutionEntry
+        accountCurrency={accountCurrency}
+        accountTimezone={accountTimezone}
+        defaultSessionDate={currentDateInTimezone(accountTimezone)}
+        expectedAccountSelectionRef={accountSelectionRef}
+        offlineScopeRef={offlineScopeRef}
+        tracker="swing"
+      />
+    </Box>
+  );
+
   if (savedView.status !== "ready") {
     return (
       <DashboardPage>
         <Typography component="h1" variant="h1">Swing Trade Tracker</Typography>
+        {entry}
         {savedView.status === "loading" ? (
           <Stack role="status" sx={{ alignItems: "center", justifyContent: "center", minHeight: 320 }}>
             <CircularProgress size={28} />
@@ -117,18 +131,6 @@ export function OfflineSwingTrackerSurface({
       </DashboardPage>
     );
   }
-  const entry = (
-    <Box id="swing-execution-entry" sx={{ scrollMarginTop: 96 }}>
-      <ManualExecutionEntry
-        accountCurrency={accountCurrency}
-        accountTimezone={accountTimezone}
-        defaultSessionDate={currentDateInTimezone(accountTimezone)}
-        expectedAccountSelectionRef={accountSelectionRef}
-        offlineScopeRef={offlineScopeRef}
-        tracker="swing"
-      />
-    </Box>
-  );
   return (
     <SwingTrackerView
       active={savedView.model.active.map(presentationPosition)}
