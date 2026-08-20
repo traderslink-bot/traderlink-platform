@@ -1,7 +1,10 @@
 "use client";
 
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import WifiOffRoundedIcon from "@mui/icons-material/WifiOffRounded";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import { useRouter } from "next/navigation";
@@ -47,6 +50,7 @@ export function PwaLifecycle({
 }) {
   const router = useRouter();
   const syncing = useRef(false);
+  const [dismissedNoticeKey, setDismissedNoticeKey] = useState<string | null>(null);
   const [outbox, setOutbox] = useState<readonly ManualTradeOutboxRecord[]>([]);
   const online = useSyncExternalStore(
     subscribeToConnectionChange,
@@ -132,8 +136,10 @@ export function PwaLifecycle({
     record.state === "saved_on_device" || record.state === "syncing").length;
   const reviewCount = outbox.filter((record) =>
     record.state === "needs_review").length;
+  const noticeKey = `${online ? "online" : "offline"}:${waitingCount}:${reviewCount}`;
 
   if (online && waitingCount === 0 && reviewCount === 0) return null;
+  if (dismissedNoticeKey === noticeKey) return null;
 
   const title = !online
     ? "Offline"
@@ -170,8 +176,8 @@ export function PwaLifecycle({
         zIndex: (theme) => theme.zIndex.snackbar,
       }}
     >
-      <WifiOffRoundedIcon color="action" fontSize="small" />
-      <Box>
+      <WifiOffRoundedIcon color="action" fontSize="small" sx={{ flexShrink: 0 }} />
+      <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography sx={{ fontWeight: 700 }} variant="body2">
           {title}
         </Typography>
@@ -179,6 +185,27 @@ export function PwaLifecycle({
           {message}
         </Typography>
       </Box>
+      {online && reviewCount > 0 ? (
+        <Button
+          onClick={() => {
+            setDismissedNoticeKey(noticeKey);
+            router.push("/quick-trade-entry");
+          }}
+          size="small"
+          sx={{ flexShrink: 0, whiteSpace: "nowrap" }}
+          variant="text"
+        >
+          Open Trade Entry
+        </Button>
+      ) : null}
+      <IconButton
+        aria-label="Dismiss notification"
+        onClick={() => setDismissedNoticeKey(noticeKey)}
+        size="small"
+        sx={{ flexShrink: 0 }}
+      >
+        <CloseRoundedIcon fontSize="small" />
+      </IconButton>
     </Paper>
   );
 }

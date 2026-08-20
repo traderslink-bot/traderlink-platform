@@ -163,3 +163,20 @@ in [AI Review Narrative Quality Progress](ai-review-narrative-quality-progress.m
 
 The complete beta state, QA-first resume instructions and exact hosted go-live
 work are consolidated in [AI Reviews Beta Handoff](ai-reviews-beta-handoff.md).
+
+## 2026-08-20 retry-safety QA correction
+
+- Read-only QA found that the authored V4 manual-request path checked for an
+  eligible snapshot before honoring an existing request. A retried submission
+  could therefore return **not available** after the first request had already
+  been saved.
+- The V4 path now matches the accepted V2/V3 behavior: it first returns the
+  existing request identity for an `already_requested` plan, then applies the
+  eligibility and snapshot gate only to a new request.
+- Focused ESLint and whitespace checks pass for the corrected request service.
+  No provider call, review request or protected Journal write was made during
+  this correction.
+- Live browser acceptance is not applicable to this server-only return-state
+  correction. The adjacent AI Reviews list and Trade Entry notice correction
+  passed the 2026-08-20 canonical browser checkpoint described in the PWA
+  progress record.

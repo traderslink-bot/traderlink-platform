@@ -465,3 +465,22 @@ after separate deployment and secret authorization.
   create a local-device subscription.
 - Hosted VAPID/encryption configuration and a real hosted delivery worker
   remain separate deployment and production-secret gates.
+
+## 2026-08-20 pending-review notice correction
+
+- AI Reviews QA confirmed that the device-outbox **Needs your review** notice
+  remained fixed over page content on desktop and occupied almost the full
+  width of the 390-pixel mobile viewport. It offered neither a destination nor
+  a way to dismiss it.
+- The notice now keeps its warning text, adds **Open Trade Entry** to reach the
+  existing device-outbox resolution controls, and adds an accessible dismiss
+  button. Dismissal lasts for the current notice state; a changed waiting or
+  review count can surface a new notice.
+- Focused ESLint and whitespace checks pass. No device outbox record, Journal
+  trade or notification was changed by the implementation work.
+- Canonical browser acceptance passes at 1440 by 900 and 390 by 844. The notice
+  exposed both actions without horizontal overflow or a Next error overlay;
+  **Dismiss notification** removed it immediately at both sizes, and **Open
+  Trade Entry** reached `/quick-trade-entry` without changing a field or saving
+  a trade. The browser logged no application error. Its existing logo aspect-
+  ratio development warning remains outside this notice correction.

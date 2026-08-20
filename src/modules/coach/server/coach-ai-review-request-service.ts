@@ -172,7 +172,14 @@ export class CoachAiReviewRequestService {
           .find((candidate) => candidate.period.cadence === input.reviewKind &&
             candidate.period.startDate === input.periodStartDate &&
             candidate.period.endDate === input.periodEndDate);
-    if (!plan || !plan.snapshot ||
+    if (!plan) return Object.freeze({ state: "not_available" });
+    if (plan.state === "already_requested" && plan.existingRequestId) {
+      return Object.freeze({
+        state: "already_requested",
+        requestId: plan.existingRequestId,
+      });
+    }
+    if (!plan.snapshot ||
         (plan.state !== "manual_available" && plan.state !== "automatic_ready")) {
       return Object.freeze({ state: "not_available" });
     }
