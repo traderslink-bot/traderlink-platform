@@ -31,10 +31,12 @@ function formatNotificationTime(occurredAtUtc: string) {
 
 export function NotificationList({
   compact = false,
+  offline = false,
   onNotificationDismissed,
   notifications,
 }: {
   compact?: boolean;
+  offline?: boolean;
   onNotificationDismissed?: (notificationRef: string) => void;
   notifications: readonly PlatformNotification[];
 }) {
@@ -51,6 +53,7 @@ export function NotificationList({
   }, [notifications]);
 
   function markRead(notificationRef: string): void {
+    if (offline) return;
     setItems((current) => current.map((item) => item.notificationRef === notificationRef
       ? Object.freeze({ ...item, readAtUtc: new Date().toISOString() })
       : item));
@@ -58,6 +61,7 @@ export function NotificationList({
   }
 
   function dismiss(notificationRef: string): void {
+    if (offline) return;
     dismissNotification(notificationRef);
     setItems((current) => current.filter((item) => item.notificationRef !== notificationRef));
     onNotificationDismissed?.(notificationRef);
@@ -111,6 +115,7 @@ export function NotificationList({
             ) : <Box sx={{ flex: 1 }}>{content}</Box>}
             <IconButton
               aria-label="Dismiss notification"
+              disabled={offline}
               onClick={() => dismiss(notification.notificationRef)}
               sx={{ height: 44, mr: compact ? 0.25 : 0.75, mt: compact ? 0.5 : 1, width: 44 }}
             >

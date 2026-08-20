@@ -388,6 +388,32 @@ condensed rail state is offered.
   TypeScript run, server, browser, build, provider, hosted mutation or
   deployment ran.
 
+## PWA-R4 Platform and support
+
+- [x] Add a Platform-owned, account-partitioned Notifications saved view using
+  the real Notifications list and privacy-safe server-issued title, summary,
+  category, time and destination fields.
+- [x] Replace each real notification reference with a local display reference
+  before saving it. Keep destination navigation available while disabling
+  read, dismiss and delivery-preference mutations offline.
+- [x] Render Account subsections through the normal Account navigation. Keep
+  the existing device-local offline-data summary and confirmed removal control
+  available under Preferences; require reconnection for identity, security,
+  reporting, delivery, broker, AI-plan and erasure changes.
+- [x] Include every shipped first-party Help collection and article in the
+  React offline shell, reusing the normal Help search, collection and article
+  typography instead of caching authenticated Help HTML.
+- [x] Add deliberate same-shell connection-required pages for Links AI Chat,
+  Import Trades, Market Charts and Data Decisions. Do not stage files, call
+  providers, create chats or permit stale Journal decisions offline.
+- [x] Review Help Center impact. The existing Notifications and imports guide
+  already explains saved offline updates and removal behavior; the source
+  guides themselves remain current. No guide text change is required.
+- [ ] Add issued AI Review list/detail saved models after the concurrent AI
+  Review and Links AI Chat task checkpoints its active shared-page changes.
+- [ ] Verify Web Push destination routing, safe application update activation
+  and outbox preservation at the final installed-app checkpoint.
+
 ## Current exact resume point
 
 PWA-R1 is preserved at local commit `30954abf`; PWA-R2 source is preserved at
@@ -403,9 +429,13 @@ continue without waiting for the 16-hour press-release runtime. PWA-R2 is
 therefore accepted. PWA-R3 now has its non-destructive version-3 saved-view
 store plus normal-layout Workspace, Open Positions, Swing Tracker, Daily
 Tracker, Calendar, Trade Explorer, Compare Trades, Trading Rules, Rule Results,
-Candle Review, Core Analytics and Trade Analyzer offline renderers. The next
-boundary is a complete remaining-route inventory and final integrated PWA
-acceptance when system resources permit. Keep source work lightweight until
+Candle Review, Core Analytics, Trade Analyzer, Notifications, Account device
+controls and all first-party Help guides offline renderers. Links AI Chat,
+Imports, Market Charts and Data Decisions now have deliberate native
+connection-required states. The only remaining source item in PWA-R4 is issued
+AI Review list/detail capture, which currently shares actively edited files
+with the concurrent AI task. After that safe integration, the next boundary is
+final installed-app acceptance when system resources permit. Keep source work lightweight until
 the full-site build and installed-app relaunch can run without threatening
 protected processes. No Journal data, IndexedDB record, Push state, hosted
 configuration or deployed state changed during this source checkpoint.

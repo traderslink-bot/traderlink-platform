@@ -28,6 +28,10 @@ import { OfflineOpenPositionsSurface } from "./offline-open-positions-surface";
 import { OfflineSwingTrackerSurface } from "./offline-swing-tracker-surface";
 import { OfflineWorkspaceSurface } from "./offline-workspace-surface";
 import {
+  offlineSupportRouteKind,
+  OfflineSupportRouteSurface,
+} from "./offline-support-route-surface";
+import {
   normalizePlatformOfflinePathname,
   type PlatformOfflineDeviceState,
 } from "@/src/modules/platform/contracts/platform-offline-projection-contracts";
@@ -214,6 +218,7 @@ export function OfflineRouteContent() {
   const tracker = trackerForPathname(pathname);
   const analyticsRouteKind = journalAnalyticsOfflineRouteKind(pathname);
   const journalRouteKind = journalOfflineRouteKind(pathname);
+  const supportRouteKind = offlineSupportRouteKind(pathname);
   const [deviceState, setDeviceState] =
     useState<PlatformOfflineDeviceState | null>(null);
   const [stateLoaded, setStateLoaded] = useState(false);
@@ -291,6 +296,25 @@ export function OfflineRouteContent() {
         <OfflineJournalRouteSurface
           accountSelectionRef={deviceState.accountSelectionRef}
           kind={journalRouteKind}
+          partitionKey={deviceState.partitionKey}
+          pathname={pathname}
+        />
+        <OfflineTradeOutboxSync state={deviceState} />
+      </>
+    );
+  }
+
+  if (
+    supportRouteKind &&
+    stateLoaded &&
+    readyOfflineDeviceState(deviceState)
+  ) {
+    return (
+      <>
+        <OfflineSupportRouteSurface
+          accountSelectionRef={deviceState.accountSelectionRef}
+          kind={supportRouteKind}
+          offlineScopeRef={deviceState.offlineScopeRef}
           partitionKey={deviceState.partitionKey}
           pathname={pathname}
         />

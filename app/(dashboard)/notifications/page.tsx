@@ -6,6 +6,13 @@ import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/serve
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
 import { NotificationList } from "./notification-list";
+import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
+import {
+  createPlatformOfflineNotificationsViewModel,
+  PLATFORM_OFFLINE_NOTIFICATIONS_COVERAGE,
+  PLATFORM_OFFLINE_NOTIFICATIONS_VIEW_KEY,
+  PLATFORM_OFFLINE_SUPPORT_VIEW_VERSION,
+} from "@/src/modules/platform/contracts/platform-offline-support-view-contracts";
 
 export const metadata: Metadata = {
   description: "Review updates about your TraderLink Trade Tracker.",
@@ -19,11 +26,25 @@ export default async function NotificationsPage() {
     (database) => new PlatformNotificationRepository(database).list(scope),
   );
   return (
+    <>
+    <OfflineSavedViewCapture
+      accountTimezone={null}
+      calculationVersion="platform-notifications-v1"
+      coverage={PLATFORM_OFFLINE_NOTIFICATIONS_COVERAGE}
+      generatedAtUtc={new Date().toISOString()}
+      model={createPlatformOfflineNotificationsViewModel(notifications)}
+      pathname="/notifications"
+      queryIdentity="current"
+      reportingCurrency={null}
+      routeViewVersion={PLATFORM_OFFLINE_SUPPORT_VIEW_VERSION}
+      viewKey={PLATFORM_OFFLINE_NOTIFICATIONS_VIEW_KEY}
+    />
     <DashboardPage>
       <Typography component="h1" variant="h1">Notifications</Typography>
       <DashboardPanel title="All notifications">
         <NotificationList notifications={notifications} />
       </DashboardPanel>
     </DashboardPage>
+    </>
   );
 }
