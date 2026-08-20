@@ -141,7 +141,7 @@ The parent product contract remains the
 ### Grounding and continuity
 
 - [x] Implement the server-authored factual-claim catalog.
-- [ ] Implement structured answer composition and strict claim validation.
+- [x] Implement structured answer composition and strict claim validation.
 - [x] Persist immutable claim catalogs and exact selected claims with answers.
 - [x] Implement versioned private conversation state and bounded older-context
   summary.
@@ -157,7 +157,7 @@ The parent product contract remains the
   including the general-helpfulness and **remember this** comments.
 - [x] Enforce supportive, encouraging, non-pressuring relationship behavior and
   reject hidden psychological or financial profiling.
-- [ ] Prove long follow-ups, corrections, account changes, stale references, and
+- [x] Prove long follow-ups, corrections, account changes, stale references, and
   exact current-fact re-reads, including at least 50 consecutive short messages.
 
 ### Professional experience
@@ -209,11 +209,14 @@ The parent product contract remains the
 
 ### Orchestration and coverage
 
-- [ ] Establish evaluated turn, tool, byte, token, latency, and cost budgets.
+- [x] Establish the evaluated per-generation turn, tool, byte, token, and
+  timeout ceilings.
+- [ ] Establish the owner-approved representative production cost target and
+  accepted simple/complex model routes.
 - [x] Reconcile the current 36-tool/12-action matrix, Help, language, runtime,
   QA, and progress records.
 - [x] Add a static inventory-drift guard.
-- [ ] Complete the professional synthetic live-provider evaluation.
+- [x] Complete the professional synthetic live-provider evaluation.
 
 ### New deterministic capabilities
 
@@ -228,6 +231,11 @@ The parent product contract remains the
 ### Launch boundary
 
 - [ ] Select the accepted model from evaluation evidence.
+- [ ] Prove representative cold/warm and simple/complex per-answer cost against
+  an owner-approved production target. The seven-case Sol average is not an
+  accepted production average.
+- [ ] Implement and evaluate the zero-provider deterministic fast path for
+  eligible exact questions before accepting any default model route.
 - [ ] Record official ordinary-input, cached-input, cache-write-input, and output
   prices.
 - [ ] Configure entitlement and request/token/spend caps.
@@ -466,3 +474,47 @@ The parent product contract remains the
   in this checkpoint. No private Journal data, protected database access,
   product mutation, `.next` use, server, build, deployment, push or publication
   occurred.
+
+## 2026-08-20 completed acceptance run: provider, budgets, and reliability
+
+- One owner-authorized post-repair evaluation ran through the actual configured
+  `gpt-5.6-sol` Agents/Responses path with seven synthetic, non-private cases.
+  All seven passed: grounded account read, current-fact follow-up, two-tool
+  cross-feature read, relationship-memory response, manual-execution draft,
+  reporting-currency confirmation draft and unsupported-advice refusal.
+- The completed suite used 144,527 input tokens: 106,480 cached, 38,011
+  cache-write and 36 ordinary uncached. It used 1,804 output tokens, completed
+  in 55.664 seconds with an 11.512-second slowest case, and cost an estimated
+  **$0.345109 total for all seven questions** at the current official Sol rates.
+  The caller-supplied `$3` value was a maximum suite safety parameter, not the
+  charge or expected cost.
+- The suite average was about **$0.0493 per question**, which the owner
+  correctly rejected as too high for an assumed normal production average.
+  Cache writes contributed about $0.237569, or 69 percent of the suite cost;
+  cached input contributed about $0.053240, output about $0.054120 and ordinary
+  input about $0.000180. Production cost optimization and representative
+  cold/warm, simple/complex model-route evaluation are now explicit launch
+  blockers. No provider model is accepted as the default from this run alone.
+- The complex case completed both deterministic reads inside three agent turns:
+  two bounded sequential lookup steps and one structured-answer step. The
+  runtime therefore retains `3` maximum turns, the defensive `4`-snapshot
+  dispatcher cap, 48-kilobyte total factual results and 96-kilobyte cumulative
+  cross-turn results. No turn, tool or byte ceiling was widened.
+- A new deterministic professional-reliability verifier passed 60 consecutive
+  short messages and a 120-message long conversation. It proved older topic
+  return, ordered correction retention, 9,706-byte durable state, opaque stale
+  draft references, user-wide memory across account changes, account-memory
+  isolation, 90-day stale-memory review, reconfirmation, secure private-content
+  forgetting, disabled-memory exclusion and two fresh current-account fact
+  reads across an account change.
+- Relationship-memory provider projection now has one shared implementation for
+  the reservation and actual provider payload. A memory requiring review is
+  always labeled `previously_shared_needs_review`; disabling relationship memory
+  produces an empty provider channel.
+- The synthetic verifier now emits per-case latency, all four token classes and
+  estimated cost on future runs so a suite total cannot be mistaken for one
+  question. The completed run predates that output-only improvement, so no
+  unsupported per-case receipt breakdown is claimed for it.
+- No private Journal data, protected database access, product write, migration,
+  server, build, `.next` access, test runner, deployment, push or publication
+  occurred. No additional paid provider request followed the seven-case run.

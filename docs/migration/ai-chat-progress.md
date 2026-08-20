@@ -9,9 +9,14 @@ and tracked in its
 plan is owner approved. The first source implementation checkpoint now includes
 relationship memory, Meet Links, adaptive context beyond the former 12-message
 window, exact-value claim validation, readiness-aware Chat states, the approved
-Links presentation and aligned Help. Disposable migration, focused static
-verification and a disposable desktop/mobile browser pass succeed; owner visual
-acceptance remains open.
+Links presentation and aligned Help. The seven-case synthetic Sol provider gate
+and the professional 60/120-message continuity and relationship-memory
+reliability matrix pass. Routine visual acceptance is complete while the
+approved drawer/card design remains intact. Representative production cost
+optimization remains a launch blocker; the seven-case Sol average is not an
+accepted default per-answer cost. Eligible exact questions now require a
+zero-provider deterministic response path before any default model route is
+accepted.
 
 The current-plan technical implementation and local acceptance are complete.
 Production provider enablement, final caps and launch operations remain owner
@@ -109,13 +114,13 @@ The private persistence API checkpoint is tracked in
   deliberately in their guarded product surfaces.
 - [x] Promote the language registry and Help Center only as each deterministic
   family becomes executable.
-- [x] Complete live OpenAI Agents SDK verification. Five synthetic cases passed
-  through the real configured `gpt-5.6-sol` Responses/Agents runtime: grounded
-  entitlement read, refreshed follow-up, conversational manual executions,
-  confirmation-only reporting-currency draft and unsupported stock-advice
-  refusal. The verifier enforces complete usage accounting and a caller-supplied
-  total cost ceiling. It reads no private Journal data and performs no product
-  mutation.
+- [x] Complete professional live OpenAI Agents SDK verification. Seven synthetic
+  cases passed through the real configured `gpt-5.6-sol` Responses/Agents
+  runtime, adding a two-tool cross-feature read and relationship-memory response
+  to the grounded read, current-fact follow-up, manual-execution draft,
+  confirmation-only reporting-currency draft and unsupported-advice refusal.
+  The complete suite cost $0.345109, not the caller-supplied $3 maximum safety
+  parameter. It reads no private Journal data and performs no product mutation.
 - [ ] Implement production entitlement, scheduled-delivery, operational, and
   privacy-deletion decisions at their separate launch boundaries.
 

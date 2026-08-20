@@ -55,6 +55,10 @@ import type { CoachAiRelationshipMemoryRepository } from
   "./coach-ai-relationship-memory-repository";
 import type { CoachAiRelationshipMemory } from
   "../contracts/ai-relationship-memory-contracts";
+import {
+  projectCoachAiChatRelationshipMemoryContext,
+  selectCoachAiChatRelationshipMemories,
+} from "./coach-ai-chat-relationship-memory-context";
 import { buildCoachAiChatClaimCatalog } from "./coach-ai-chat-claim-catalog";
 import type { CoachAiChatConversationState } from
   "../contracts/ai-chat-conversation-state-contracts";
@@ -70,7 +74,8 @@ export const COACH_AI_CHAT_MAX_OUTPUT_TOKENS = 1_200;
 export const COACH_AI_CHAT_MAX_QUESTION_BYTES = 4 * 1024;
 export const COACH_AI_CHAT_MAX_TRUSTED_CONTEXT_BYTES = 20 * 1024;
 export const COACH_AI_CHAT_MAX_MANUAL_DRAFT_CONTEXT_BYTES = 16 * 1024;
-export const COACH_AI_CHAT_MAX_RELATIONSHIP_MEMORY_BYTES = 8 * 1024;
+export { COACH_AI_CHAT_MAX_RELATIONSHIP_MEMORY_BYTES } from
+  "./coach-ai-chat-relationship-memory-context";
 export const COACH_AI_CHAT_DERIVED_CONTENT_FAILURE_CODE =
   "TRADERLINK_COACH_CHAT_DERIVED_CONTENT_INVALID";
 // Covers the full current system contract, all registered tool schemas,
@@ -146,25 +151,6 @@ function loadContextMessages(
   return Object.freeze(pages.slice(-COACH_AI_CHAT_MAX_CONTEXT_SOURCE_MESSAGES));
 }
 
-function boundedRelationshipMemories(
-  memories: readonly CoachAiRelationshipMemory[],
-): readonly CoachAiRelationshipMemory[] {
-  let bytes = 0;
-  const accepted: CoachAiRelationshipMemory[] = [];
-  for (const memory of memories) {
-    const size = Buffer.byteLength(JSON.stringify({
-      category: memory.category,
-      text: memory.text,
-      scope: memory.scopeLabel,
-      needsReview: memory.needsReview,
-    }), "utf8");
-    if (bytes + size > COACH_AI_CHAT_MAX_RELATIONSHIP_MEMORY_BYTES) continue;
-    bytes += size;
-    accepted.push(memory);
-  }
-  return Object.freeze(accepted);
-}
-
 export function createCoachAiChatReservationEnvelope(
   question: string,
   history: readonly CoachAiChatMessage[],
@@ -194,12 +180,7 @@ export function createCoachAiChatReservationEnvelope(
     currentReviewDelivery,
     analysisScope,
     currentPageHint: pageContext,
-    relationshipMemories: relationshipMemories.map((memory) => ({
-      category: memory.category,
-      text: memory.text,
-      scope: memory.scopeLabel,
-      status: memory.needsReview ? "previously_shared_needs_review" : "current",
-    })),
+    relationshipMemories: projectCoachAiChatRelationshipMemoryContext(relationshipMemories),
     manualEntryShortcutSelected: intent === "prepare_manual_execution_draft",
     toolDefinitions: coachAiChatFactualToolRegistry.map((definition) => definition.name),
     maximumFactualResultsBytes: COACH_AI_CHAT_FACTUAL_RESULTS_MAX_BYTES,
@@ -368,9 +349,10 @@ export class CoachAiChatGenerationService {
       });
       const history = adaptiveContext.messages;
       const relationshipMemoryView = this.relationshipMemory?.read(scope, now) ?? null;
-      const relationshipMemories = relationshipMemoryView?.settings.enabled
-        ? boundedRelationshipMemories(relationshipMemoryView.memories)
-        : Object.freeze([]);
+      const relationshipMemories = selectCoachAiChatRelationshipMemories(
+        relationshipMemoryView?.settings.enabled ?? false,
+        relationshipMemoryView?.memories ?? Object.freeze([]),
+      );
       const reservation = this.controls.reserveChatGeneration(scope, {
         conversationId: input.conversationId,
         assistantMessageId: pair.assistantMessage.messageId,

@@ -63,9 +63,12 @@ import { coachAiChatRuntimeCapabilityRegistry } from "./coach-ai-chat-capability
 import { coachAiChatFactualToolRegistry } from "./coach-ai-chat-factual-tool-registry";
 import { validateCoachAiChatResponseSafety } from "./coach-ai-chat-response-safety";
 import { completeCoachAiChatProviderUsage } from "./coach-ai-chat-provider-usage";
+import { projectCoachAiChatRelationshipMemoryContext } from
+  "./coach-ai-chat-relationship-memory-context";
 
-// Two bounded sequential lookup steps precede the structured answer. Any
-// expansion remains gated on provider latency, usage, and cost evaluation.
+// Two bounded sequential lookup steps precede the structured answer. The
+// seven-case 2026-08-20 provider gate completed a two-tool cross-feature read
+// within this ceiling, so broader and more expensive expansion is not warranted.
 export const COACH_AI_CHAT_PROVIDER_TIMEOUT_MILLISECONDS = 2 * 60 * 1_000;
 
 function privacySafeSafetyIdentifier(scope: WorkspaceAccessScope): string {
@@ -1041,12 +1044,9 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
       JSON.stringify({
         recentConversation: context,
         conversationState: input.conversationState,
-        relationshipMemories: input.relationshipMemories.map((memory) => ({
-          category: memory.category,
-          text: memory.text,
-          scope: memory.scopeLabel,
-          status: memory.needsReview ? "previously_shared_needs_review" : "current",
-        })),
+        relationshipMemories: projectCoachAiChatRelationshipMemoryContext(
+          input.relationshipMemories,
+        ),
         currentQuestion: input.question,
         trustedDailyContext: input.trustedContext,
         existingManualExecutionDraft: input.existingManualEntryDraft?.rows ?? null,

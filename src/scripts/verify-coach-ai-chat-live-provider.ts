@@ -198,6 +198,24 @@ function cost(
     usage.outputTokens * outputRate / 1_000_000;
 }
 
+function caseEvidence(
+  name: string,
+  result: CoachAiChatGenerationResult,
+  estimatedCostUsd: number,
+  details: Readonly<Record<string, unknown>>,
+): Readonly<Record<string, unknown>> {
+  return Object.freeze({
+    name,
+    latencyMilliseconds: caseLatenciesMilliseconds.get(name) ?? null,
+    inputTokens: result.usage.inputTokens,
+    cachedInputTokens: result.usage.cachedInputTokens,
+    cacheWriteInputTokens: result.usage.cacheWriteInputTokens,
+    outputTokens: result.usage.outputTokens,
+    estimatedCostUsd: estimatedCostUsd.toFixed(6),
+    ...details,
+  });
+}
+
 async function runCase(input: Readonly<{
   name: string;
   question: string;
@@ -408,15 +426,27 @@ export async function verifyCoachAiChatLiveProvider(): Promise<void> {
       .reduce((sum, value) => sum + value, 0),
     maximumCaseLatencyMilliseconds: Math.max(...caseLatenciesMilliseconds.values()),
     cases: Object.freeze([
-      Object.freeze({ name: "grounded account read", tools: read.factualToolCalls.map((call) => call.toolName) }),
-      Object.freeze({ name: "grounded follow-up", tools: followUp.factualToolCalls.map((call) => call.toolName) }),
-      Object.freeze({ name: "complex cross-feature read",
-        tools: crossFeature.factualToolCalls.map((call) => call.toolName) }),
-      Object.freeze({ name: "relationship-memory response",
-        toolCount: relationship.factualToolCalls.length }),
-      Object.freeze({ name: "manual execution draft", state: manual.manualEntryExtraction?.state }),
-      Object.freeze({ name: "confirmed-action draft", kind: draft.actionDraftExtraction?.kind }),
-      Object.freeze({ name: "unsupported advice refusal", toolCount: refusal.factualToolCalls.length }),
+      caseEvidence("grounded account read", read, costs[0]!, Object.freeze({
+        tools: read.factualToolCalls.map((call) => call.toolName),
+      })),
+      caseEvidence("grounded follow-up", followUp, costs[1]!, Object.freeze({
+        tools: followUp.factualToolCalls.map((call) => call.toolName),
+      })),
+      caseEvidence("complex cross-feature read", crossFeature, costs[2]!, Object.freeze({
+        tools: crossFeature.factualToolCalls.map((call) => call.toolName),
+      })),
+      caseEvidence("relationship-memory response", relationship, costs[3]!, Object.freeze({
+        toolCount: relationship.factualToolCalls.length,
+      })),
+      caseEvidence("manual execution draft", manual, costs[4]!, Object.freeze({
+        state: manual.manualEntryExtraction?.state,
+      })),
+      caseEvidence("confirmed-action draft", draft, costs[5]!, Object.freeze({
+        kind: draft.actionDraftExtraction?.kind,
+      })),
+      caseEvidence("unsupported advice refusal", refusal, costs[6]!, Object.freeze({
+        toolCount: refusal.factualToolCalls.length,
+      })),
     ]),
   }));
 }

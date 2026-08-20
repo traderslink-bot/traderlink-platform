@@ -501,6 +501,30 @@ update, and owner approval before implementation.
 - Select the launch model only after professional-agent evaluations prove its
   accuracy, instruction following, tool selection, structured-output stability,
   latency, and cost for TraderLink's real contract.
+- Treat cold and warm simple factual reads, relationship responses, drafts, and
+  complex multi-tool questions as separate cost populations. A synthetic-suite
+  average is evidence, not an acceptable production average by itself.
+- Define an owner-approved production cost target before model selection. A
+  launch candidate must prove both answer quality and representative per-answer
+  cost; passing quality does not excuse an uneconomic default route.
+- Keep the one published Links personality while evaluating the least expensive
+  model route that passes each accepted question family. Sol may remain the
+  complex-reasoning route without becoming the automatic route for every simple
+  deterministic read.
+- Build a zero-provider fast path for eligible exact questions before selecting
+  a model route: deterministic intent matching, canonical tool execution,
+  server-owned claim composition and polished Links response templates. Any
+  ambiguity, unsupported combination or need for genuine language judgment must
+  fall through to an evaluated model route instead of guessing.
+- Measure fast-path coverage separately. Eligible fast-path questions must
+  create no provider request or token charge while retaining exact evidence,
+  account scope, current-fact rereads, Links' published voice and truthful
+  limitations.
+- Minimize repeated instruction and tool-schema cache writes through stable,
+  privacy-compatible prompt prefixes and evaluated tool-family selection. Never
+  hide a required factual tool merely to reduce cost.
+- Record latency, ordinary input, cached input, cache-write input, output, and
+  estimated cost for every synthetic case, not only the suite total.
 - Record current official prices for ordinary input, cached input, cache-write
   input, and output at the owner-controlled activation checkpoint. Never guess or
   copy rates from another model.
@@ -765,6 +789,8 @@ remains a final acceptance or merge-readiness boundary.
 
 - Establish the accepted turn/tool/result/token budget from the professional
   evaluation population.
+- Retain the smallest evaluated orchestration ceiling that completes the
+  complex population; do not widen turns or tool calls for hypothetical value.
 - Reconcile the current matrix, language, Help, runtime, QA, and progress
   inventories.
 - Complete synthetic live-provider evaluation without private Journal data.
@@ -779,8 +805,8 @@ remains a final acceptance or merge-readiness boundary.
 
 ### Checkpoint 5 — controlled launch acceptance
 
-- Select model, official four-class prices, entitlement, caps, monitoring, and
-  support boundaries.
+- Select model routes, an owner-approved representative cost target, official
+  four-class prices, entitlement, caps, monitoring, and support boundaries.
 - Complete the approved private-data/provider acceptance, full low-resource
   browser pass, final static/operational verification, and release handoff.
 - Activation, deployment, and publication remain separate explicit owner
@@ -813,6 +839,8 @@ The professional-agent remediation is complete only when:
 - return engagement comes from factual continuity and chosen useful routines,
   never pressure, manufactured urgency, vulnerability targeting, or dependence;
 - complex supported questions complete inside an evaluated cost and tool budget;
+- representative simple and complex conversations meet the owner-approved
+  production cost target without weakening grounding, privacy, or personality;
 - unavailable, blocked, pending, failed, and recovered states are professional
   and unambiguous;
 - accepted new deterministic data and actions preserve source, coverage,

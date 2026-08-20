@@ -14,7 +14,7 @@ function invariant(condition: boolean, message: string): asserts condition {
 }
 
 invariant(COACH_AI_CHAT_MAX_TURNS === 3,
-  "The unevaluated runtime must retain two bounded lookup steps and one answer turn.");
+  "The evaluated runtime must retain two bounded lookup steps and one answer turn.");
 invariant(COACH_AI_CHAT_MAX_TOOL_CALLS === 4 &&
   COACH_AI_CHAT_FACTUAL_TOOL_CALL_MAX_COUNT === 4,
 "Structured evidence and dispatcher limits must agree on four factual calls.");
