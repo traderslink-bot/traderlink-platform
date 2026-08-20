@@ -13,7 +13,7 @@ const adapter = readFileSync(resolve(
   "src/modules/coach/server/coach-ai-chat-openai-adapter.ts",
 ), "utf8");
 
-invariant(adapter.includes("toolSearchTool({"),
+invariant(adapter.includes("toolSearchTool()"),
   "Links must include the Responses API tool-search capability.");
 invariant(adapter.includes("deferLoading: true"),
   "Links factual tools must remain hidden until selected through tool search.");

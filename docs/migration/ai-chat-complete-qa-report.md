@@ -187,6 +187,14 @@ QA pass. Its previously accepted synthetic Agents SDK run remains recorded in
 the runtime progress document. No private Journal data or product mutation is
 required for that verifier.
 
+The later 2026-08-20 cost-remediation acceptance replaced the uneconomic Sol
+default candidate with the evaluated Luna route. Seven synthetic, non-private
+professional cases passed at $0.026692 total, $0.003813 average and $0.006550
+maximum per question. The run retained autonomous deterministic tool selection,
+strict claim grounding, confirmation-only changes, relationship memory and the
+unsupported-advice refusal. Eligible exact common factual questions separately
+prove zero provider calls and zero provider cost.
+
 ## 2026-08-16 post-audit remediation
 
 A follow-up engineering pass corrected two issues found after the original QA
@@ -223,9 +231,10 @@ or errors. The no-worker review server was stopped afterward.
 
 ## Remaining launch and product boundaries
 
-- Select and enable the production model, all four token prices (ordinary
-  input, cached input, cache-write input and output), request/token/spend caps,
-  entitlement, support, and monitoring settings.
+- Apply source migrations `0068` and `0069` through the protected backup,
+  restore and integrity boundary. Luna and its four official token prices are
+  selected for an untouched default; production enablement, request/token/spend
+  caps, entitlement, support, and monitoring settings remain launch controls.
 - Saved Compare Trades studies and saved deterministic Rule-idea evidence are
   now bounded read-only Links AI Chat sources. Links cannot create, recalculate,
   dismiss, or activate anything through those reads.

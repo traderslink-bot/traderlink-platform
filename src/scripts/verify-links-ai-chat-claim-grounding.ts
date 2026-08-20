@@ -24,6 +24,8 @@ const toolCalls = Object.freeze([Object.freeze({
       tradingTimezone: "America/New_York",
       population: Object.freeze({ includedCount: 3 }),
       bestTradingDay: Object.freeze({ date: "2026-08-19", pnlDecimal: "800" }),
+      availableReviews: Object.freeze([]),
+      appliedFilters: Object.freeze({}),
     }),
   }),
   serializedResultBytes: 160,
@@ -41,6 +43,11 @@ invariant(catalog.every((claim) => !claim.path.startsWith("/result/")),
 invariant(catalog.some((claim) => claim.exactValue === "800" &&
   claim.context.currency === "USD"),
 "The claim catalog must retain exact values with currency context.");
+invariant(catalog.some((claim) => claim.path === "/availableReviews" &&
+  claim.valueType === "empty_array") &&
+  catalog.some((claim) => claim.path === "/appliedFilters" &&
+    claim.valueType === "empty_object"),
+"Empty deterministic containers must remain citable factual claims.");
 const claimRef = (path: string): string => {
   const claim = catalog.find((item) => item.path === path);
   invariant(Boolean(claim), `Missing expected claim at ${path}.`);
@@ -59,6 +66,17 @@ validateCoachAiChatExactFactTokens({
       claimRef("/population/includedCount"),
     ]),
     statement: "The saved result reports $800 USD on 2026-08-19 across 3 trades.",
+  })]),
+  toolCalls,
+});
+validateCoachAiChatExactFactTokens({
+  directAnswer: "There are no saved reviews available in this result.",
+  supportingObservations: Object.freeze([]),
+  limitation: null,
+  evidenceReferences: Object.freeze([Object.freeze({
+    toolCallId: "factual-1",
+    claimRefs: Object.freeze([claimRef("/availableReviews")]),
+    statement: "There are no saved reviews available in this result.",
   })]),
   toolCalls,
 });
@@ -184,5 +202,6 @@ console.log(JSON.stringify({
   crossToolClaimRejected: crossCallRejected,
   unusedSelectedClaimRejected: unusedClaimRejected,
   equivalentDateTimeFormattingAccepted: true,
+  emptyContainersGrounded: true,
   providerClaimPathRootAligned: true,
 }));

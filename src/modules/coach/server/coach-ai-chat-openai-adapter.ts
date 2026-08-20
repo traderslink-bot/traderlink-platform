@@ -22,6 +22,7 @@ import type { CoachAiChatConversationState } from
 import {
   buildCoachAiChatClaimCatalog,
   buildCoachAiChatProviderToolResult,
+  coachAiChatClaimSupportsStatement,
   validateCoachAiChatExactFactTokens,
 } from
   "./coach-ai-chat-claim-catalog";
@@ -515,6 +516,7 @@ function answer(
   additionalEvidence: readonly unknown[],
   usage: CoachAiChatGenerationUsage,
   hasConfirmationDraft: boolean,
+  syntheticDiagnostics: boolean,
 ): CoachAiChatAnswer {
   const toolCalls = dispatcher.snapshotsForPersistence();
   const callIds = new Set(toolCalls.map((item) => item.toolCallId));
@@ -526,12 +528,32 @@ function answer(
     claim,
   ]));
   const evidenceReferences = value.evidenceReferences.map((reference) => {
-    const claims = reference.claimPaths.map((path) =>
+    const normalizedClaimPaths = reference.claimPaths.map((path) =>
+      path === "/result" ? "" : path.startsWith("/result/") ? path.slice(7) : path);
+    const resolvedClaims = normalizedClaimPaths.map((path) =>
       claimsByToolAndPath.get(`${reference.toolCallId}\n${path}`));
-    if (claims.some((claim) => !claim)) {
+    if (resolvedClaims.some((claim) => !claim)) {
+      if (syntheticDiagnostics) {
+        console.error(JSON.stringify({
+          diagnostic: "TRADERLINK_COACH_UNKNOWN_CLAIM_PATH",
+          toolCallId: reference.toolCallId,
+          claimPaths: reference.claimPaths,
+          availableClaimPaths: [...claimsByToolAndPath.keys()]
+            .filter((key) => key.startsWith(`${reference.toolCallId}\n`))
+            .map((key) => key.slice(reference.toolCallId.length + 1)),
+        }));
+      }
       throw new CoachAiChatProviderGenerationError(
         usage,
         "TRADERLINK_COACH_UNKNOWN_CLAIM_PATH",
+      );
+    }
+    const claims = resolvedClaims.filter((claim) =>
+      coachAiChatClaimSupportsStatement(claim!, reference.statement));
+    if (claims.length === 0) {
+      throw new CoachAiChatProviderGenerationError(
+        usage,
+        "TRADERLINK_COACH_UNGROUNDED_ANSWER",
       );
     }
     return Object.freeze({
@@ -1047,9 +1069,7 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
       },
       outputType: agentAnswerSchema,
       tools: [
-        toolSearchTool({
-          description: "Find the smallest relevant TraderLink factual tool for the trader's request.",
-        }),
+        toolSearchTool(),
         ...deferredFactualTools,
       ],
     });
@@ -1095,7 +1115,8 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
         result.finalOutput.dailyCompanionDraft ||
         result.finalOutput.reviewDeliveryChangeDraft ||
         result.finalOutput.actionDraft,
-      )),
+      ), (input.environment ?? process.env)
+        .TRADERLINK_LINKS_SYNTHETIC_PROVIDER_DIAGNOSTICS === "1"),
       usage,
       factualToolCalls: input.dispatcher.snapshotsForPersistence(),
       manualEntryExtraction: result.finalOutput.manualExecutionDraft
@@ -1121,6 +1142,9 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
         unavailableUsage(),
         "TRADERLINK_COACH_PROVIDER_TIMEOUT",
       );
+    }
+    if ((input.environment ?? process.env).TRADERLINK_LINKS_SYNTHETIC_PROVIDER_DIAGNOSTICS === "1") {
+      throw error;
     }
     throw new CoachAiChatProviderGenerationError(unavailableUsage());
   } finally {

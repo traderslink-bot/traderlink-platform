@@ -7,7 +7,7 @@ export type CoachAiChatClaim = Readonly<{
   claimRef: string;
   toolCallId: string;
   path: string;
-  valueType: "string" | "number" | "boolean" | "null";
+  valueType: "string" | "number" | "boolean" | "null" | "empty_array" | "empty_object";
   exactValue: string | number | boolean | null;
   context: Readonly<Record<string, string | number | boolean | null>>;
 }>;
@@ -61,6 +61,17 @@ function walk(
     return;
   }
   if (Array.isArray(value)) {
+    if (value.length === 0) {
+      output.push(Object.freeze({
+        claimRef: claimRef(toolCallId, path, []),
+        toolCallId,
+        path,
+        valueType: "empty_array",
+        exactValue: null,
+        context: Object.freeze({ ...inheritedContext }),
+      }));
+      return;
+    }
     value.forEach((item, index) => walk(
       toolCallId,
       item,
@@ -72,6 +83,17 @@ function walk(
   }
   if (typeof value !== "object") return;
   const record = value as Record<string, unknown>;
+  if (Object.keys(record).length === 0) {
+    output.push(Object.freeze({
+      claimRef: claimRef(toolCallId, path, {}),
+      toolCallId,
+      path,
+      valueType: "empty_object",
+      exactValue: null,
+      context: Object.freeze({ ...inheritedContext }),
+    }));
+    return;
+  }
   const localContext: Record<string, string | number | boolean | null> = {
     ...inheritedContext,
   };
@@ -171,6 +193,29 @@ function claimEvidenceTokens(claim: CoachAiChatClaim): ReadonlySet<string> {
 }
 
 /**
+ * Returns whether one selected scalar claim is actually used by an evidence
+ * statement. This lets the server drop harmless over-citation while the final
+ * validator still rejects every unsupported exact token in the answer.
+ */
+export function coachAiChatClaimSupportsStatement(
+  claim: CoachAiChatClaim,
+  statement: string,
+): boolean {
+  const statementTokens = new Set(tokens(statement));
+  const exactTokens = tokens(String(claim.exactValue ?? ""));
+  if (exactTokens.length > 0) {
+    return exactTokens.some((token) => statementTokens.has(token));
+  }
+  if (typeof claim.exactValue === "string" &&
+      /^[\p{L}][\p{L} .'-]{0,79}$/u.test(claim.exactValue)) {
+    return statement.toLocaleLowerCase().includes(
+      claim.exactValue.toLocaleLowerCase(),
+    );
+  }
+  return true;
+}
+
+/**
  * Rejects exact-value prose that is absent from the deterministic tool result
  * it cites. This is intentionally stricter than tool-call identity checking.
  */
@@ -207,15 +252,11 @@ export function validateCoachAiChatExactFactTokens(input: Readonly<{
       throw new Error("TRADERLINK_COACH_UNGROUNDED_EXACT_FACT");
     }
     for (const claim of selectedClaims as readonly CoachAiChatClaim[]) {
-      const exactTokens = tokens(String(claim.exactValue ?? ""));
-      if (exactTokens.length > 0 &&
-          exactTokens.every((token) => !statementTokens.has(token))) {
-        throw new Error("TRADERLINK_COACH_UNUSED_EXACT_CLAIM");
-      }
-      if (exactTokens.length === 0 && typeof claim.exactValue === "string" &&
-          /^[\p{L}][\p{L} .'-]{0,79}$/u.test(claim.exactValue) &&
-          !reference.statement.toLocaleLowerCase()
-            .includes(claim.exactValue.toLocaleLowerCase())) {
+      if (!coachAiChatClaimSupportsStatement(claim, reference.statement)) {
+        const exactTokens = tokens(String(claim.exactValue ?? ""));
+        if (exactTokens.length > 0) {
+          throw new Error("TRADERLINK_COACH_UNUSED_EXACT_CLAIM");
+        }
         throw new Error("TRADERLINK_COACH_UNUSED_TEXT_CLAIM");
       }
     }

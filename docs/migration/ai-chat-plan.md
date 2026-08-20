@@ -406,6 +406,10 @@ through bounded snapshots.
   immutable factual snapshot, idempotency and interrupted-generation recovery
   as a provider answer. Any ambiguous, causal, advisory, drafting or broader
   question remains model-routed.
+- The accepted normal model-needed route is `gpt-5.6-luna`; an untouched Sol
+  placeholder is migrated to Luna with official ordinary-input, cached-input,
+  cache-write-input and output prices. The owner-admin model control remains
+  authoritative and may explicitly select a different route later.
 - TraderLink's database remains the authoritative conversation and action
   history. Provider-managed conversation state is not the permanent source of
   truth. Each run receives bounded recent messages plus server-built structured

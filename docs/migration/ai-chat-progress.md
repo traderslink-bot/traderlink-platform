@@ -12,13 +12,13 @@ window, exact-value claim validation, readiness-aware Chat states, the approved
 Links presentation and aligned Help. The seven-case synthetic Sol provider gate
 and the professional 60/120-message continuity and relationship-memory
 reliability matrix pass. Routine visual acceptance is complete while the
-approved drawer/card design remains intact. Representative production cost
-optimization remains a launch blocker; the seven-case Sol average is not an
-accepted default per-answer cost. Eligible exact questions now require a
-zero-provider deterministic response path before any default model route is
-accepted. That source path and deferred autonomous tool discovery are now
-implemented and deterministically verified; migration `0068` is source-only
-until its protected-database checkpoint is separately coordinated.
+approved drawer/card design remains intact. The owner-approved normal-question
+target is well under $0.01. The accepted seven-case Luna run averaged $0.003813
+and peaked at $0.006550, while eligible exact questions use the verified
+zero-provider deterministic route. Deferred autonomous tool discovery keeps
+all 36 tools available without eagerly sending their schemas. Migrations `0068`
+and `0069` are source-only until their protected-database checkpoint is
+separately coordinated.
 
 The current-plan technical implementation and local acceptance are complete.
 Production provider enablement, final caps and launch operations remain owner
@@ -130,6 +130,10 @@ The private persistence API checkpoint is tracked in
   P/L, count, win-rate, best/worst trade, trading-day and ticker rankings. The
   deterministic verifier proves saved evidence, retry idempotency, interrupted
   recovery and zero attempts, receipts and provider cost.
+- [x] Accept `gpt-5.6-luna` as the normal model-needed route after the complete
+  seven-case synthetic gate passed at $0.026692 total, $0.003813 average and
+  $0.006550 maximum per case. Migration `0069` updates only an untouched,
+  unpriced Sol placeholder and leaves configured owner-admin overrides intact.
 - [ ] Implement production entitlement, scheduled-delivery, operational, and
   privacy-deletion decisions at their separate launch boundaries.
 

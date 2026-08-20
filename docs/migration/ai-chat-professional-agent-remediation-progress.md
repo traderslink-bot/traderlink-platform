@@ -6,7 +6,9 @@
 the required feature name. The first professional-agent implementation slice is
 complete in source: relationship memory and Meet Links, adaptive context,
 versioned durable conversation state, exact-value grounding, readiness,
-owner-approved Chat presentation and aligned Help. Migration `0067` is applied
+owner-approved Chat presentation and aligned Help. The accepted normal
+model-needed route is now `gpt-5.6-luna`, and strict common factual questions
+can use a zero-provider deterministic route. Migration `0067` is applied
 to the protected local database under a separately verified PWA-owned
 backup/restore checkpoint. A disposable automated browser pass is complete. The owner
 waived routine visual checkpoints while the approved drawer/card design remains
@@ -211,8 +213,8 @@ The parent product contract remains the
 
 - [x] Establish the evaluated per-generation turn, tool, byte, token, and
   timeout ceilings.
-- [ ] Establish the owner-approved representative production cost target and
-  accepted simple/complex model routes.
+- [x] Establish the owner-approved target of well under $0.01 for a normal
+  question and accept the deterministic/Luna routes against it.
 - [x] Replace eager factual-tool schemas with autonomous deferred tool search
   and an explicit prompt-cache boundary.
 - [x] Reconcile the current 36-tool/12-action matrix, Help, language, runtime,
@@ -232,15 +234,16 @@ The parent product contract remains the
 
 ### Launch boundary
 
-- [ ] Select the accepted model from evaluation evidence.
-- [ ] Prove representative cold/warm and simple/complex per-answer cost against
-  an owner-approved production target. The seven-case Sol average is not an
-  accepted production average.
+- [x] Select Luna as the accepted normal model-needed route from evaluation
+  evidence while preserving owner-admin model overrides.
+- [x] Prove representative simple/complex per-answer cost against the owner's
+  well-under-$0.01 target. The accepted seven-case Luna average is $0.003813;
+  the highest case is $0.006550.
 - [x] Implement and deterministically evaluate the zero-provider fast path for
   eligible exact questions. Protected migration `0068` and model-route provider
   cost acceptance remain separate gates.
-- [ ] Record official ordinary-input, cached-input, cache-write-input, and output
-  prices.
+- [x] Record official Luna ordinary-input, cached-input, cache-write-input, and
+  output prices.
 - [ ] Configure entitlement and request/token/spend caps.
 - [ ] Complete the explicitly approved private provider-data acceptance run.
 - [ ] Complete final operational, static, browser, Help, and owner acceptance.
@@ -552,8 +555,43 @@ The parent product contract remains the
   net P/L. You took 3 trades that day.** It reused the original answer on retry,
   recovered a simulated interrupted generation, retained one immutable factual
   snapshot and recorded zero provider calls, attempts, receipts and cost.
-- All 68 migrations applied to the disposable in-memory database. The protected
-  database remains at migration `0067`; applying `0068` requires the normal
-  exclusive writer, fresh backup/restore and integrity checkpoint. No test
+- All 69 migrations applied to the disposable in-memory database. The protected
+  database remains at migration `0067`; applying `0068` and `0069` requires the
+  normal exclusive writer, fresh backup/restore and integrity checkpoint. No test
   runner, browser, server, build, `.next`, protected-database write, provider
   request, deployment, push or publication occurred in this checkpoint.
+
+## 2026-08-20 accepted cost route: zero-provider plus Luna
+
+- The owner set the normal-question target at well under $0.01. A fresh
+  seven-case synthetic, non-private Luna run passed the same professional gate
+  used for Sol: grounded account read, current-fact follow-up, two-tool
+  cross-feature read, relationship-memory response, manual-execution draft,
+  reporting-currency confirmation draft and unsupported-advice refusal.
+- The suite used 120,636 ordinary input tokens and 2,137 output tokens. The
+  provider reported no cached-read or cache-write tokens in this cold run. At
+  the official Luna rates of $0.20/M ordinary input, $0.02/M cached input,
+  $0.25/M cache writes and $1.20/M output, the seven cases cost an estimated
+  **$0.026692 total**, or **$0.003813 per question** on average.
+- Every case stayed below the hard $0.01 per-case stop. The lowest case was
+  $0.002270; the complex two-tool case was the highest at $0.006550. Total
+  latency was 36.746 seconds and the slowest case took 7.749 seconds.
+- Deferred tool search remained autonomous: Links chose from all 36 factual
+  tools while zero full factual schemas were eager. Strict exact claim-path,
+  exact-token, account-scope, confirmation and refusal validation remained
+  enabled. Empty deterministic collections now have valid claim paths, and the
+  known provider tool-result wrapper is normalized before exact lookup without
+  accepting an unknown underlying path.
+- Migration `0069_coach_ai_chat_luna_default` changes only an untouched,
+  unpriced Sol placeholder to Luna and the official four-price snapshot.
+  Configured owner-admin model selections remain unchanged, and Sol remains
+  available as an explicit admin override rather than the normal default.
+- The disposable 69-migration verifier proves a fresh database selects Luna,
+  while eligible exact common questions still save a normal immutable answer
+  with zero provider calls, attempts, receipts or cost. Focused ESLint,
+  no-emit TypeScript, tool-discovery, claim-grounding and migration-backed
+  deterministic checks pass.
+- The protected database is still at `0067`; source migrations `0068` and
+  `0069` require the normal exclusive-writer, backup/restore and integrity
+  checkpoint. Feature enablement, entitlement, request/token/spend caps,
+  private-data provider acceptance and deployment remain separate launch gates.

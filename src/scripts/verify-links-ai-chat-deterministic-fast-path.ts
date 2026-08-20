@@ -158,6 +158,34 @@ async function main(): Promise<void> {
     "What was my most profitable day and why?",
   ) === null, "A broader causal question must remain model-routed.");
 
+  const configuredOverrideDatabase = new Database(":memory:");
+  try {
+    configuredOverrideDatabase.pragma("foreign_keys = ON");
+    runPlatformMigrations(configuredOverrideDatabase, {
+      manifest: platformMigrationManifest.slice(0, 68),
+      now: () => NOW,
+    });
+    configuredOverrideDatabase.prepare(`UPDATE coach_ai_chat_provider_settings
+SET model_id = 'gpt-5.6-sol',
+  input_cost_usd_per_million_tokens = '7',
+  cached_input_cost_usd_per_million_tokens = '0.7',
+  cache_write_input_cost_usd_per_million_tokens = '8.75',
+  output_cost_usd_per_million_tokens = '42'
+WHERE settings_key = 'ai_chat'`).run();
+    runPlatformMigrations(configuredOverrideDatabase, {
+      manifest: platformMigrationManifest,
+      now: () => NOW,
+    });
+    const configuredOverride = new CoachAiChatProviderControlsRepository(
+      configuredOverrideDatabase,
+    ).readChatSettings();
+    invariant(configuredOverride.modelId === "gpt-5.6-sol" &&
+      configuredOverride.inputCostUsdPerMillionTokens === "7",
+    "The Luna default migration must preserve a configured owner-admin override.");
+  } finally {
+    configuredOverrideDatabase.close();
+  }
+
   const database = new Database(":memory:");
   try {
     database.pragma("foreign_keys = ON");
@@ -165,6 +193,14 @@ async function main(): Promise<void> {
       manifest: platformMigrationManifest,
       now: () => NOW,
     });
+    const defaultProviderSettings = new CoachAiChatProviderControlsRepository(database)
+      .readChatSettings();
+    invariant(defaultProviderSettings.modelId === "gpt-5.6-luna" &&
+      defaultProviderSettings.inputCostUsdPerMillionTokens === "0.20" &&
+      defaultProviderSettings.cachedInputCostUsdPerMillionTokens === "0.02" &&
+      defaultProviderSettings.cacheWriteInputCostUsdPerMillionTokens === "0.25" &&
+      defaultProviderSettings.outputCostUsdPerMillionTokens === "1.20",
+    "A fresh database must use the accepted Luna model and official price snapshot.");
     const scope = seedScope(database);
     const chat = new CoachAiChatRepository(database);
     const controls = new CoachAiChatProviderControlsRepository(database);
@@ -280,6 +316,8 @@ async function main(): Promise<void> {
       providerAttempts: attempts,
       providerReceipts: receipts,
       providerCostUsd: 0,
+      defaultModelId: defaultProviderSettings.modelId,
+      configuredOwnerModelPreserved: true,
       immutableSnapshots: snapshots,
       idempotentRetryReusedAnswer: true,
       broaderQuestionModelRouted: true,

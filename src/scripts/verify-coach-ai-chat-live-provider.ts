@@ -275,6 +275,23 @@ export async function verifyCoachAiChatLiveProvider(): Promise<void> {
   const cacheWriteInputRate = positiveDecimal("--cache-write-input-cost-usd-per-million");
   const outputRate = positiveDecimal("--output-cost-usd-per-million");
   const maximumCost = positiveDecimal("--maximum-total-cost-usd");
+  const maximumCaseCost = positiveDecimal("--maximum-case-cost-usd");
+  const firstCaseOnly = process.argv.includes("--first-case-only");
+  const enforceCaseCost = (
+    caseName: string,
+    result: CoachAiChatGenerationResult,
+  ): number => {
+    const value = cost(
+      result,
+      inputRate,
+      cachedInputRate,
+      cacheWriteInputRate,
+      outputRate,
+    );
+    requireCondition(value <= maximumCaseCost,
+      `${caseName} cost ${value.toFixed(6)} exceeded ${maximumCaseCost}`);
+    return value;
+  };
   const scope: WorkspaceAccessScope = Object.freeze({
     userId: UUIDS.userId,
     workspaceId: UUIDS.workspaceId,
@@ -313,6 +330,26 @@ export async function verifyCoachAiChatLiveProvider(): Promise<void> {
     "grounded account read did not use get_account_ai_plan");
   requireCondition(read.answer.evidenceReferences.length > 0,
     "grounded account read had no evidence reference");
+  enforceCaseCost("grounded account read", read);
+  if (firstCaseOnly) {
+    const readCost = cost(
+      read,
+      inputRate,
+      cachedInputRate,
+      cacheWriteInputRate,
+      outputRate,
+    );
+    console.log(JSON.stringify({
+      status: "passed",
+      modelId,
+      caseCount: 1,
+      estimatedCostUsd: readCost.toFixed(6),
+      case: caseEvidence("grounded account read", read, readCost, Object.freeze({
+        tools: read.factualToolCalls.map((call) => call.toolName),
+      })),
+    }));
+    return;
+  }
 
   const followUp = await runCase({
     name: "grounded follow-up",
@@ -328,6 +365,7 @@ export async function verifyCoachAiChatLiveProvider(): Promise<void> {
   });
   requireCondition(followUp.factualToolCalls.some((call) => call.toolName === "get_account_ai_plan"),
     "grounded follow-up did not refresh account facts");
+  enforceCaseCost("grounded follow-up", followUp);
 
   const crossFeature = await runCase({
     name: "complex cross-feature read",
@@ -341,6 +379,7 @@ export async function verifyCoachAiChatLiveProvider(): Promise<void> {
   "complex cross-feature read did not complete both required factual lookups");
   requireCondition(crossFeature.answer.evidenceReferences.length >= 2,
     "complex cross-feature read did not ground both factual families");
+  enforceCaseCost("complex cross-feature read", crossFeature);
 
   const relationship = await runCase({
     name: "relationship-memory response",
@@ -355,6 +394,7 @@ export async function verifyCoachAiChatLiveProvider(): Promise<void> {
     "relationship-memory response treated personal context as a factual lookup");
   requireCondition(relationshipText.includes("late entr") && relationshipText.includes("patient"),
     "relationship-memory response did not retain the supplied personal context");
+  enforceCaseCost("relationship-memory response", relationship);
 
   const manual = await runCase({
     name: "manual execution draft",
@@ -369,6 +409,7 @@ export async function verifyCoachAiChatLiveProvider(): Promise<void> {
     manual.manualEntryExtraction.rows[0]?.quantityDecimal === "100" &&
     manual.manualEntryExtraction.rows[1]?.side === "sell",
   "manual entry changed supplied execution facts");
+  enforceCaseCost("manual execution draft", manual);
 
   const draft = await runCase({
     name: "confirmed-action draft",
@@ -382,6 +423,7 @@ export async function verifyCoachAiChatLiveProvider(): Promise<void> {
   requireCondition(draft.actionDraftExtraction?.kind === "reporting_currency" &&
     draft.actionDraftExtraction.reportingCurrency === "CAD",
   "reporting-currency request did not produce the exact confirmation draft");
+  enforceCaseCost("confirmed-action draft", draft);
 
   const refusal = await runCase({
     name: "unsupported advice refusal",
@@ -395,6 +437,7 @@ export async function verifyCoachAiChatLiveProvider(): Promise<void> {
     refusal.reviewDeliveryChangeExtraction === null &&
     (refusal.actionDraftExtraction ?? null) === null,
   "unsupported advice request used a factual or mutation path");
+  enforceCaseCost("unsupported advice refusal", refusal);
 
   const results = Object.freeze([
     read,
@@ -422,6 +465,7 @@ export async function verifyCoachAiChatLiveProvider(): Promise<void> {
       sum + (result.usage.cacheWriteInputTokens ?? 0), 0),
     totalOutputTokens: results.reduce((sum, result) => sum + (result.usage.outputTokens ?? 0), 0),
     estimatedCostUsd: estimatedCostUsd.toFixed(6),
+    maximumCaseCostUsd: maximumCaseCost.toFixed(6),
     totalLatencyMilliseconds: [...caseLatenciesMilliseconds.values()]
       .reduce((sum, value) => sum + value, 0),
     maximumCaseLatencyMilliseconds: Math.max(...caseLatenciesMilliseconds.values()),
