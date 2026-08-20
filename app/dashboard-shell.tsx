@@ -310,6 +310,7 @@ export function DashboardShell({
                     objectFit: "contain",
                     width: "auto",
                   }}
+                  unoptimized
                   width={170}
                 />
               </Link>
@@ -485,6 +486,7 @@ export function DashboardShell({
                   objectFit: "contain",
                   width: "auto",
                 }}
+                unoptimized
                 width={170}
               />
             </Link>

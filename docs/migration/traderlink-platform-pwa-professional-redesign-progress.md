@@ -532,6 +532,27 @@ offline relaunch, and Notifications Help already describes its bounded saved
 offline copy. These fixes restore the documented behavior, so no Help copy
 change is required.
 
+### Mobile Workspace rule and offline-logo polish
+
+The owner-approved mobile correction replaces margin-based spacing on every
+wrapping Workspace rule group with real flex gaps. Wrapped preset-rule badges
+now keep the same left edge and gain consistent horizontal and vertical space.
+The Focus Rules panel also uses a 12 px row gap and explicit full-width rule
+rows so later rules cannot inherit an accidental indent.
+
+Both dashboard-shell logo instances now request the static
+`/logo-horizontal-main.png` asset directly. That exact asset is already part of
+the PWA public-shell precache, so the navigation drawer no longer depends on an
+uncached image-optimization request after the app goes offline. At the 411 px
+mobile viewport, the live Workspace render showed the two trade-rule badges on
+equal left edges with visible space between them and showed the TradersLink
+logo in the open navigation drawer. The served Workspace HTML uses the direct
+logo URL, the served worker contains that asset, focused ESLint and the live
+development compile passed. No broad test suite or production build ran while
+the concurrent AI Chat work and low-resource boundary remained active. This is
+a layout and asset-delivery correction, so no Help Center guide change is
+required.
+
 ## Current exact resume point
 
 PWA-R1 is preserved at local commit `30954abf`; PWA-R2 source is preserved at

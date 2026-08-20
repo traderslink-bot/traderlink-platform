@@ -219,12 +219,25 @@ export function WorkspaceDashboard({
         {focusRules.length > 0 ? (
           <DashboardPanel title="Focus Rules">
             <Stack
-              spacing={1.25}
-              sx={{ "& > :not(:first-of-type)": { borderColor: "divider", borderTop: 1, pt: 1.25 } }}
+              spacing={1.5}
             >
-              {focusRules.map((rule) => (
-                <Box key={rule.ruleId}>
-                  <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+              {focusRules.map((rule, index) => (
+                <Box
+                  key={rule.ruleId}
+                  sx={{
+                    borderColor: "divider",
+                    borderTop: index === 0 ? 0 : 1,
+                    minWidth: 0,
+                    pt: index === 0 ? 0 : 1.5,
+                    width: "100%",
+                  }}
+                >
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    sx={{ alignItems: "center", flexWrap: "wrap" }}
+                    useFlexGap
+                  >
                     <Typography sx={{ fontWeight: 800 }}>{rule.title}</Typography>
                     <Chip label={rule.reviewScope} size="small" variant="outlined" />
                   </Stack>
@@ -278,7 +291,12 @@ export function WorkspaceDashboard({
             {previousReview.dayRuleOutcomes.length > 0 ? (
               <Box>
                 <Typography color="text.secondary" variant="caption">Day rules</Typography>
-                <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", mt: 0.5 }}>
+                <Stack
+                  direction="row"
+                  spacing={0.75}
+                  sx={{ flexWrap: "wrap", mt: 0.5 }}
+                  useFlexGap
+                >
                   {previousReview.dayRuleOutcomes.map((outcome) => (
                     <Chip
                       color={ruleOutcomeColor(outcome.status)}
@@ -315,7 +333,12 @@ export function WorkspaceDashboard({
                   </Typography>
                 </Stack>
                 {trade.ruleOutcomes.length > 0 ? (
-                  <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", mt: 0.75 }}>
+                  <Stack
+                    direction="row"
+                    spacing={0.75}
+                    sx={{ flexWrap: "wrap", mt: 0.75 }}
+                    useFlexGap
+                  >
                     {trade.ruleOutcomes.map((outcome) => (
                       <Chip
                         color={ruleOutcomeColor(outcome.status)}
