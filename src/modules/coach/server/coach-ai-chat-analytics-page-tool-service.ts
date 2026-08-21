@@ -35,6 +35,7 @@ import {
   COACH_AI_CHAT_TRADE_EXPLORER_METRIC_IDS,
   COACH_AI_CHAT_TRADE_EXPLORER_TRADE_SORTS,
   CoachAiChatFactualToolError,
+  type CoachAiChatAnalyticsAggregateSelection,
   type CoachAiChatAnalyticsPageRequest,
   type CoachAiChatAnalyticsPageResponse,
   type CoachAiChatFactualToolFilters,
@@ -175,6 +176,57 @@ function rankTradeExplorerGroups(
   });
 }
 
+const AGGREGATE_SELECTION_GROUPINGS = Object.freeze({
+  get_analytics_overview: Object.freeze(["closing_day"] as const),
+  get_results_by_ticker: Object.freeze(["instrument"] as const),
+  get_timing_analytics: Object.freeze([
+    "entry_weekday", "entry_session", "entry_time_bucket", "exit_time_bucket",
+  ] as const),
+  get_execution_analytics: Object.freeze([] as const),
+});
+
+function aggregateSelection(
+  request: CoachAiChatAnalyticsPageRequest,
+): CoachAiChatAnalyticsAggregateSelection | null {
+  const selection = request.aggregateSelection;
+  if (!selection) return null;
+  const supportedGroupings = AGGREGATE_SELECTION_GROUPINGS[request.toolName];
+  if (!supportedGroupings.includes(selection.grouping as never) ||
+      !["net_pnl", "total_trades", "win_rate"].includes(selection.metricId) ||
+      (selection.rankDirection !== "ascending" && selection.rankDirection !== "descending")) {
+    invalid();
+  }
+  return selection;
+}
+
+function boundedAggregateResponse(
+  response: JournalAnalyticsPartitionedResponse,
+  selection: CoachAiChatAnalyticsAggregateSelection,
+): JournalAnalyticsPartitionedResponse {
+  return Object.freeze({
+    ...response,
+    partitions: Object.freeze(response.partitions.map((partition) => {
+      const ranked = partition.groups.flatMap((group) => {
+        if (group.grouping !== selection.grouping) return [];
+        const metric = groupMetric(group, selection.metricId);
+        if (!metric || metric.value === null || metric.state === "empty" ||
+            metric.state === "unavailable") return [];
+        return [Object.freeze({ group, metric })];
+      }).sort((left, right) => {
+        const comparison = compareTradeExplorerMetricValues(left.metric.value!, right.metric.value!);
+        if (comparison === null || comparison === 0) {
+          return left.group.label.localeCompare(right.group.label);
+        }
+        return selection.rankDirection === "ascending" ? comparison : -comparison;
+      });
+      return Object.freeze({
+        ...partition,
+        groups: Object.freeze(ranked.slice(0, 1).map((item) => item.group)),
+      });
+    })),
+  });
+}
+
 function queryWithFilters(
   scope: WorkspaceAccessScope,
   selectedAccountId: string,
@@ -222,11 +274,12 @@ export class CoachAiChatAnalyticsPageToolService {
     asOfUtc: string,
   ): CoachAiChatAnalyticsPageResponse {
     const definition = PAGE_CONTRACTS[request.toolName];
+    const selection = aggregateSelection(request);
     const query = queryWithFilters(
       scope,
       selectedAccountId,
       definition.metricIds,
-      definition.groupings,
+      selection ? Object.freeze([selection.grouping]) : definition.groupings,
       request.moneyBasis,
       request.filters,
       asOfUtc,
@@ -238,11 +291,12 @@ export class CoachAiChatAnalyticsPageToolService {
         : request.toolName === "get_execution_analytics"
           ? this.analytics.getExecutionAnalytics(scope, query)
           : this.analytics.getAnalyticsOverview(scope, query);
-    const table = request.toolName === "get_execution_analytics" && response.partitions.length === 1
+    const result = selection ? boundedAggregateResponse(response, selection) : response;
+    const table = request.toolName === "get_execution_analytics" && result.partitions.length === 1
       ? this.analytics.getRoundTripAnalyticsTable(scope, Object.freeze({
           ...query,
           metricIds: Object.freeze(["included_count"]),
-          currency: response.partitions[0]?.currency ?? query.currency,
+          currency: result.partitions[0]?.currency ?? query.currency,
           groupings: Object.freeze([]),
           table: Object.freeze({ pageSize: 50, afterCursor: null }),
         }))
@@ -250,7 +304,7 @@ export class CoachAiChatAnalyticsPageToolService {
     return Object.freeze({
       contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
       toolName: request.toolName,
-      result: Object.freeze({ response, table, link: definition.route }),
+      result: Object.freeze({ response: result, table, link: definition.route }),
     });
   }
 

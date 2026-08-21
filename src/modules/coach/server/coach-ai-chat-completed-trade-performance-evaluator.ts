@@ -20,7 +20,8 @@ export type CoachAiChatCompletedTradePerformanceEvaluationComponent =
   | "handler_request"
   | "date_scope"
   | "handler"
-  | "final_state";
+  | "final_state"
+  | "diagnostic";
 
 export type CoachAiChatCompletedTradePerformanceEvaluationResult = Readonly<{
   fixtureId: string;
@@ -74,14 +75,19 @@ function component<T extends CoachAiChatCompletedTradePerformanceEvaluationCompo
   });
 }
 
-function requestFilterProjection(
+function requestProjection(
   plan: CoachAiChatCompletedTradePerformanceLanguageAnalysis["plan"],
-): Readonly<{ outcomes: readonly string[] | null; directions: readonly string[] | null }> {
+): Readonly<{
+  moneyBasis: "gross" | "net" | null;
+  outcomes: readonly string[] | null;
+  directions: readonly string[] | null;
+}> {
   const request = plan?.request;
   const filters = request && "filters" in request ? request.filters : undefined;
   return Object.freeze({
-    outcomes: filters?.outcomes ?? null,
-    directions: filters?.directions ?? null,
+    moneyBasis: request && "moneyBasis" in request ? request.moneyBasis ?? null : null,
+    outcomes: filters && "outcomes" in filters ? filters.outcomes ?? null : null,
+    directions: filters && "directions" in filters ? filters.directions ?? null : null,
   });
 }
 
@@ -116,9 +122,10 @@ export function evaluateCoachAiChatCompletedTradePerformanceFixtures(
         direction: plan?.directionFilter ?? null,
       })),
       component("handler_request", Object.freeze({
+        moneyBasis: fixture.expected.moneyBasis,
         outcomes: fixture.expected.outcomeFilter ? Object.freeze([fixture.expected.outcomeFilter]) : null,
         directions: fixture.expected.directionFilter ? Object.freeze([fixture.expected.directionFilter]) : null,
-      }), requestFilterProjection(plan)),
+      }), requestProjection(plan)),
       component("date_scope", fixture.expected.timeScope, plan?.timeScope),
       component("handler", fixture.expected.handlerId, plan?.handlerId),
       component("final_state", "resolved", actual.state),

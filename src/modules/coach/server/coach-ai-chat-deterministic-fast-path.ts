@@ -17,6 +17,8 @@ import {
   formatJournalAnalyticsMetric,
   formatJournalAnalyticsMoney,
 } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
+import { compareTradeExplorerMetricValues } from
+  "@/src/modules/journal-analytics/presentation/trade-explorer-ordering";
 
 import {
   buildCoachAiChatClaimCatalog,
@@ -30,6 +32,11 @@ import {
   type CoachAiChatCompletedTradePerformanceLanguageAnalysis,
   type CoachAiChatCompletedTradePerformancePlan,
 } from "./coach-ai-chat-completed-trade-performance-language";
+import {
+  analyzeCoachAiChatPerformanceAggregateLanguage,
+  type CoachAiChatPerformanceAggregateLanguageAnalysis,
+  type CoachAiChatPerformanceAggregatePlan,
+} from "./coach-ai-chat-performance-aggregate-language";
 import {
   COACH_AI_CHAT_DEFAULT_TRADING_TIMEZONE,
   matchCoachAiChatQuestionAnalysisScope,
@@ -57,12 +64,20 @@ type RankedRouteKey =
   | "least_profitable_ticker";
 
 export type CoachAiChatDeterministicFastPathRoute = Readonly<{
-  routeKey: SummaryRouteKey | RankedRouteKey | "completed_trade_performance";
+  routeKey:
+    | SummaryRouteKey
+    | RankedRouteKey
+    | "completed_trade_performance"
+    | "performance_aggregate";
   request: CoachAiChatFactualToolRequest;
   analysisScopeOverride?: CoachAiChatAnalysisScope;
   completedTradePerformance?: Readonly<{
     plan: CoachAiChatCompletedTradePerformancePlan;
     diagnostics: CoachAiChatCompletedTradePerformanceLanguageAnalysis["diagnostics"];
+  }>;
+  performanceAggregate?: Readonly<{
+    plan: CoachAiChatPerformanceAggregatePlan;
+    diagnostics: CoachAiChatPerformanceAggregateLanguageAnalysis["diagnostics"];
   }>;
 }>;
 
@@ -70,6 +85,7 @@ export type CoachAiChatDeterministicFastPathResult = Readonly<{
   routeKey: CoachAiChatDeterministicFastPathRoute["routeKey"];
   answer: CoachAiChatAnswer;
   completedTradePerformance?: CoachAiChatDeterministicFastPathRoute["completedTradePerformance"];
+  performanceAggregate?: CoachAiChatDeterministicFastPathRoute["performanceAggregate"];
 }>;
 
 export type CoachAiChatDeterministicFastPathSelectionContext = Readonly<{
@@ -174,6 +190,25 @@ export function selectCoachAiChatDeterministicFastPath(
       completedTradePerformance: Object.freeze({
         plan: completedTradePerformance.plan,
         diagnostics: completedTradePerformance.diagnostics,
+      }),
+    });
+  }
+  const performanceAggregate = analyzeCoachAiChatPerformanceAggregateLanguage(question, {
+    selectedAnalysisScope: context.requestedAnalysisScope ?? Object.freeze({ kind: "all" }),
+    reportingCurrency: context.reportingCurrency ?? null,
+    timezone,
+    referenceTime: now,
+  });
+  if (performanceAggregate.state === "resolved" && performanceAggregate.plan) {
+    return Object.freeze({
+      routeKey: "performance_aggregate",
+      request: performanceAggregate.plan.request,
+      ...(performanceAggregate.plan.timeScopeSource === "question"
+        ? { analysisScopeOverride: performanceAggregate.plan.timeScope }
+        : {}),
+      performanceAggregate: Object.freeze({
+        plan: performanceAggregate.plan,
+        diagnostics: performanceAggregate.diagnostics,
       }),
     });
   }
@@ -449,6 +484,112 @@ function rankedAnswer(
   });
 }
 
+function metricValuePath(metric: JournalAnalyticsMetricResult, metricIndex: number): string {
+  const value = metric.value;
+  const field = value?.kind === "integer"
+    ? "value"
+    : value?.kind === "decimal"
+      ? "valueDecimal"
+      : value?.kind === "rational"
+        ? "roundedDecimal"
+        : value?.kind === "duration"
+          ? "milliseconds"
+          : "value";
+  return `metrics/${metricIndex}/value/${field}`;
+}
+
+type AggregateRankedGroup = Readonly<{
+  group: JournalAnalyticsGroupResult;
+  groupIndex: number;
+  metric: JournalAnalyticsMetricResult;
+  metricIndex: number;
+}>;
+
+function aggregateRankedGroup(
+  response: JournalAnalyticsPartitionedResponse,
+  metricId: string,
+  direction: "ascending" | "descending",
+): AggregateRankedGroup | null {
+  if (response.partitions.length !== 1) return null;
+  const partition = response.partitions[0]!;
+  const candidates = partition.groups.flatMap((group, groupIndex) => {
+    const found = findMetric(group, metricId);
+    if (!found || !found.metric.value || found.metric.state === "empty" ||
+        found.metric.state === "unavailable") return [];
+    return [Object.freeze({ group, groupIndex, metric: found.metric, metricIndex: found.index })];
+  });
+  candidates.sort((left, right) => {
+    const comparison = compareTradeExplorerMetricValues(left.metric.value!, right.metric.value!);
+    if (comparison === null || comparison === 0) return left.group.label.localeCompare(right.group.label);
+    return direction === "ascending" ? comparison : -comparison;
+  });
+  return candidates[0] ?? null;
+}
+
+function aggregateSubject(
+  dimension: CoachAiChatPerformanceAggregatePlan["dimension"],
+): string {
+  if (dimension === "ticker") return "ticker";
+  if (dimension === "trading_day") return "trading day";
+  if (dimension === "entry_weekday") return "weekday";
+  if (dimension === "entry_session") return "session";
+  if (dimension === "entry_time_bucket") return "entry-time window";
+  return "exit-time window";
+}
+
+function performanceAggregateRankAnswer(
+  route: CoachAiChatDeterministicFastPathRoute,
+  dispatcher: CoachAiChatFactualToolDispatcher,
+  toolCallId: string,
+  response: JournalAnalyticsPartitionedResponse,
+): CoachAiChatAnswer {
+  const plan = route.performanceAggregate?.plan;
+  if (!plan) throw new Error("TRADERLINK_COACH_PERFORMANCE_AGGREGATE_PLAN_INVALID");
+  if (response.partitions.length !== 1) {
+    return noFigureAnswer(response.partitions.length === 0
+      ? "I don’t have any completed trades in this scope yet."
+      : "Your results span more than one currency here, so I can’t rank them as one reliable result.");
+  }
+  const partition = response.partitions[0]!;
+  const ranked = aggregateRankedGroup(response, plan.metric, plan.rank.direction);
+  if (!ranked) {
+    return noFigureAnswer("I don’t have a complete ranked result for that question in this scope.");
+  }
+  const subject = aggregateSubject(plan.dimension);
+  const highest = plan.rank.direction === "descending";
+  const rendered = plan.metric === "net_pnl" && ranked.metric.value?.kind === "decimal"
+    ? formatJournalAnalyticsMoney(ranked.metric.value.valueDecimal,
+      ranked.metric.currency ?? partition.currency)
+    : formatJournalAnalyticsMetric(ranked.metric);
+  const directAnswer = plan.metric === "net_pnl"
+    ? `Your ${highest ? "highest" : "lowest"} net P/L ${subject} was ${ranked.group.label}, with ${rendered} net P/L.`
+    : plan.metric === "total_trades"
+      ? `Your most-traded ticker was ${ranked.group.label}, with ${rendered} completed trades.`
+      : `Your ${highest ? "highest" : "lowest"} win-rate ticker was ${ranked.group.label}, at ${rendered}.`;
+  const count = plan.metric === "total_trades" ? null : findMetric(ranked.group, "total_trades");
+  const countValue = count?.metric.value?.kind === "integer" ? count.metric.value.value : null;
+  const supportingObservation = countValue === null
+    ? null
+    : `That result includes ${countValue} ${countValue === 1 ? "completed trade" : "completed trades"}.`;
+  const basePath = `/response/partitions/0/groups/${ranked.groupIndex}`;
+  return answerWithEvidence({
+    dispatcher,
+    toolCallId,
+    directAnswer,
+    directPaths: Object.freeze([
+      `${basePath}/label`,
+      `${basePath}/${metricValuePath(ranked.metric, ranked.metricIndex)}`,
+    ]),
+    supportingObservation,
+    supportingPaths: count && countValue !== null
+      ? Object.freeze([`${basePath}/${metricValuePath(count.metric, count.index)}`])
+      : undefined,
+    limitation: ranked.metric.state === "partial"
+      ? "This ranking uses only trades with the required complete coverage."
+      : null,
+  });
+}
+
 function individualTradeAnswer(
   route: CoachAiChatDeterministicFastPathRoute,
   dispatcher: CoachAiChatFactualToolDispatcher,
@@ -510,13 +651,31 @@ function completedTradePerformanceSummaryAnswer(
         ? "flat"
         : "a net profit"
     : null;
-  const directAnswer = plan.metric === "net_pnl"
-    ? `Your net P/L is ${rendered}${netOutcome ? ` (${netOutcome}).` : "."}`
-    : plan.metric === "total_trades"
-      ? `You completed ${rendered} ${rendered === "1" ? "trade" : "trades"} in this scope.`
-      : plan.metric === "win_count"
-        ? `You had ${rendered} winning ${rendered === "1" ? "trade" : "trades"} in this scope.`
-        : `You had ${rendered} losing ${rendered === "1" ? "trade" : "trades"} in this scope.`;
+  const directAnswer = (() => {
+    switch (plan.metric) {
+      case "net_pnl":
+        return `Your net P/L is ${rendered}${netOutcome ? ` (${netOutcome}).` : "."}`;
+      case "gross_profit": return `Your gross profit is ${rendered}.`;
+      case "gross_loss": return `Your gross loss is ${rendered}.`;
+      case "gross_pnl": return `Your gross P/L is ${rendered}.`;
+      case "win_rate": return `Your win rate is ${rendered}.`;
+      case "loss_rate": return `Your loss rate is ${rendered}.`;
+      case "profit_factor": return `Your profit factor is ${rendered}.`;
+      case "expectancy": return `Your expectancy per completed trade is ${rendered}.`;
+      case "average_pnl": return `Your average net P/L per completed trade is ${rendered}.`;
+      case "average_gross_pnl": return `Your average gross P/L per completed trade is ${rendered}.`;
+      case "average_winning_trade": return `Your average winning trade is ${rendered}.`;
+      case "average_losing_trade": return `Your average losing trade is ${rendered}.`;
+      case "total_trades":
+        return `You completed ${rendered} ${rendered === "1" ? "trade" : "trades"} in this scope.`;
+      case "win_count":
+        return `You had ${rendered} winning ${rendered === "1" ? "trade" : "trades"} in this scope.`;
+      case "loss_count":
+        return `You had ${rendered} losing ${rendered === "1" ? "trade" : "trades"} in this scope.`;
+      default:
+        throw new Error("TRADERLINK_COACH_COMPLETED_TRADE_SUMMARY_METRIC_INVALID");
+    }
+  })();
   const valuePath = `/partitions/0/metrics/${metricIndex}/value/${
     metric.value.kind === "integer" ? "value" :
       metric.value.kind === "decimal" ? "valueDecimal" :
@@ -549,6 +708,7 @@ function completedTradePerformanceRankAnswer(
   if (!evidence || rows.length === 0 || typeof evidence.currency !== "string") {
     return noFigureAnswer("I don’t have a complete ranked result for that question in this scope.");
   }
+  const currency = evidence.currency;
   const renderedRows = rows.map((row, index) => {
     if (typeof row.displayedSymbol !== "string" ||
         (row.direction !== "long" && row.direction !== "short") ||
@@ -557,7 +717,7 @@ function completedTradePerformanceRankAnswer(
     }
     return Object.freeze({
       index,
-      text: `${index + 1}. ${row.displayedSymbol} ${row.direction}, closed on ${row.closeLocalDate}, ${formatJournalAnalyticsMoney(row.selectedPnlDecimal, evidence.currency)} net P/L.`,
+      text: `${row.displayedSymbol} ${row.direction}, closed on ${row.closeLocalDate}, ${formatJournalAnalyticsMoney(row.selectedPnlDecimal, currency)} net P/L.`,
     });
   });
   if (renderedRows.some((row) => row === null)) {
@@ -572,8 +732,8 @@ function completedTradePerformanceRankAnswer(
       ? "losing completed trade"
       : "completed trade";
   const directAnswer = completeRows.length === 1
-    ? `Your ${highest ? "most profitable" : "least profitable"} ${subject} was ${completeRows[0]!.text.slice(3)}`
-    : `Your ${completeRows.length} ${descriptor} ${subject}${completeRows.length === 1 ? " was" : "s were"}:\n${completeRows.map((row) => row.text).join("\n")}`;
+    ? `Your ${highest ? "most profitable" : "least profitable"} ${subject} was ${completeRows[0]!.text}`
+    : `Your ${descriptor} ${subject}s:\n${completeRows.map((row) => `- ${row.text}`).join("\n")}`;
   const directPaths = completeRows.flatMap((row) => Object.freeze([
     `/evidence/rows/${row.index}/displayedSymbol`,
     `/evidence/rows/${row.index}/direction`,
@@ -606,6 +766,15 @@ export function runCoachAiChatDeterministicFastPath(
           ? completedTradePerformanceRankAnswer(route, dispatcher, toolCallId, toolResponse.result)
           : (() => { throw new Error("TRADERLINK_COACH_COMPLETED_TRADE_PLAN_INVALID"); })(),
       completedTradePerformance: route.completedTradePerformance,
+    });
+  }
+  if (route.routeKey === "performance_aggregate") {
+    const response = partitionedResult(toolResponse.result);
+    if (!response) throw new Error("TRADERLINK_COACH_DETERMINISTIC_RESULT_INVALID");
+    return Object.freeze({
+      routeKey: route.routeKey,
+      answer: performanceAggregateRankAnswer(route, dispatcher, toolCallId, response),
+      performanceAggregate: route.performanceAggregate,
     });
   }
   if (route.routeKey === "best_trade" || route.routeKey === "worst_trade") {

@@ -1,8 +1,10 @@
 # Links Beta Performance Language Engine Plan
 
-**Status:** Architecture approved. The first completed-trade performance slice
-is authorized; no later scope, provider fallback, database migration, or
-visible administration change is authorized by this document alone.
+**Status:** Architecture approved. The completed-trade foundation and first
+aggregate routing checkpoint have passed source and saved-answer acceptance.
+The owner has authorized the next direct-performance summary checkpoint; no
+provider fallback, database migration, or visible administration change is
+authorized by this document alone.
 
 **Progress record:** [Links Beta Performance Language Engine Progress](links-beta-performance-language-engine-progress.md)
 
@@ -423,3 +425,8 @@ acceptance.
 
 No slice may claim beta coverage until it appears in the dashboard with its
 component-level evidence.
+
+**Active follow-on record:** [Links Beta Aggregate Routing Progress](links-beta-aggregate-routing-progress.md)
+
+**Current direct-performance record:** [Links Beta Core Performance Summary
+Progress](links-beta-core-performance-summary-progress.md)

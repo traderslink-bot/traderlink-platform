@@ -11,7 +11,9 @@ export const COACH_AI_CHAT_COMPLETED_TRADE_PERFORMANCE_FIXTURE_VERSION =
 type ExpectedPlan = Pick<CoachAiChatCompletedTradePerformancePlan,
   "accountScope" | "reportingCurrency" | "timezone" | "referenceTimeUtc" |
   "entity" | "metric" | "operation" | "rank" | "outcomeFilter" |
-  "directionFilter" | "timeScope" | "timeScopeSource" | "handlerId">;
+  "directionFilter" | "timeScope" | "timeScopeSource" | "handlerId"> & Readonly<{
+  moneyBasis: "gross" | "net";
+}>;
 
 export type CoachAiChatCompletedTradePerformanceFixture = Readonly<{
   id: string;
@@ -26,7 +28,7 @@ export type CoachAiChatCompletedTradePerformanceBoundaryFixture = Readonly<{
   context: CoachAiChatCompletedTradePerformanceLanguageContext;
   expectedState: "unresolved" | "not_applicable";
   expectedDiagnostic: Readonly<{
-    component: "entity" | "metric" | "rank_count";
+    component: "entity" | "metric" | "rank_count" | "filters";
     state: "failed" | "not_applicable";
   }>;
 }>;
@@ -48,6 +50,7 @@ function expected(input: Readonly<{
   directionFilter?: ExpectedPlan["directionFilter"];
   timeScope?: CoachAiChatAnalysisScope;
   timeScopeSource?: ExpectedPlan["timeScopeSource"];
+  moneyBasis?: ExpectedPlan["moneyBasis"];
   handlerId: ExpectedPlan["handlerId"];
 }>): ExpectedPlan {
   return Object.freeze({
@@ -63,6 +66,7 @@ function expected(input: Readonly<{
     directionFilter: input.directionFilter ?? null,
     timeScope: input.timeScope ?? allHistory,
     timeScopeSource: input.timeScopeSource ?? "selected_scope",
+    moneyBasis: input.moneyBasis ?? "net",
     handlerId: input.handlerId,
   });
 }
@@ -131,6 +135,28 @@ export const coachAiChatCompletedTradePerformanceFixtures = Object.freeze([
     expected: expected({ metric: "loss_count", operation: "summary", handlerId: "completed_trade_summary_v1" }) }),
   Object.freeze({ id: "net-pnl", question: "what is my net p/l", context: defaultContext,
     expected: expected({ metric: "net_pnl", operation: "summary", handlerId: "completed_trade_summary_v1" }) }),
+  Object.freeze({ id: "gross-profit", question: "what was my gross profit in march 2026", context: defaultContext,
+    expected: expected({ metric: "gross_profit", operation: "summary", moneyBasis: "gross", timeScope: Object.freeze({ kind: "month", month: "2026-03" }), timeScopeSource: "question", handlerId: "completed_trade_summary_v1" }) }),
+  Object.freeze({ id: "gross-loss", question: "what was my gross loss in march 2026", context: defaultContext,
+    expected: expected({ metric: "gross_loss", operation: "summary", moneyBasis: "gross", timeScope: Object.freeze({ kind: "month", month: "2026-03" }), timeScopeSource: "question", handlerId: "completed_trade_summary_v1" }) }),
+  Object.freeze({ id: "win-rate", question: "what was my win rate in march 2026", context: defaultContext,
+    expected: expected({ metric: "win_rate", operation: "summary", timeScope: Object.freeze({ kind: "month", month: "2026-03" }), timeScopeSource: "question", handlerId: "completed_trade_summary_v1" }) }),
+  Object.freeze({ id: "loss-rate", question: "what was my loss rate in march 2026", context: defaultContext,
+    expected: expected({ metric: "loss_rate", operation: "summary", timeScope: Object.freeze({ kind: "month", month: "2026-03" }), timeScopeSource: "question", handlerId: "completed_trade_summary_v1" }) }),
+  Object.freeze({ id: "profit-factor", question: "what was my profit factor in march 2026", context: defaultContext,
+    expected: expected({ metric: "profit_factor", operation: "summary", timeScope: Object.freeze({ kind: "month", month: "2026-03" }), timeScopeSource: "question", handlerId: "completed_trade_summary_v1" }) }),
+  Object.freeze({ id: "expectancy", question: "what was my expectancy in march 2026", context: defaultContext,
+    expected: expected({ metric: "expectancy", operation: "summary", timeScope: Object.freeze({ kind: "month", month: "2026-03" }), timeScopeSource: "question", handlerId: "completed_trade_summary_v1" }) }),
+  Object.freeze({ id: "average-trade", question: "what was my average trade in march 2026", context: defaultContext,
+    expected: expected({ metric: "average_pnl", operation: "summary", timeScope: Object.freeze({ kind: "month", month: "2026-03" }), timeScopeSource: "question", handlerId: "completed_trade_summary_v1" }) }),
+  Object.freeze({ id: "average-winner", question: "what was my average winning trade in march 2026", context: defaultContext,
+    expected: expected({ metric: "average_winning_trade", operation: "summary", timeScope: Object.freeze({ kind: "month", month: "2026-03" }), timeScopeSource: "question", handlerId: "completed_trade_summary_v1" }) }),
+  Object.freeze({ id: "average-loser", question: "what was my average losing trade in march 2026", context: defaultContext,
+    expected: expected({ metric: "average_losing_trade", operation: "summary", timeScope: Object.freeze({ kind: "month", month: "2026-03" }), timeScopeSource: "question", handlerId: "completed_trade_summary_v1" }) }),
+  Object.freeze({ id: "long-performance", question: "how did my long trades perform in march 2026", context: defaultContext,
+    expected: expected({ metric: "net_pnl", operation: "summary", directionFilter: "long", timeScope: Object.freeze({ kind: "month", month: "2026-03" }), timeScopeSource: "question", handlerId: "completed_trade_summary_v1" }) }),
+  Object.freeze({ id: "short-performance", question: "how did my short trades perform in march 2026", context: defaultContext,
+    expected: expected({ metric: "net_pnl", operation: "summary", directionFilter: "short", timeScope: Object.freeze({ kind: "month", month: "2026-03" }), timeScopeSource: "question", handlerId: "completed_trade_summary_v1" }) }),
   Object.freeze({ id: "profit-loss", question: "what was my profit and loss in march 2026", context: defaultContext,
     expected: expected({ metric: "net_pnl", operation: "summary", timeScope: Object.freeze({ kind: "month", month: "2026-03" }), timeScopeSource: "question", handlerId: "completed_trade_summary_v1" }) }),
   Object.freeze({ id: "made-month", question: "how much did i make in march 2026", context: defaultContext,
@@ -145,7 +171,7 @@ export const coachAiChatCompletedTradePerformanceFixtures = Object.freeze([
 
 /**
  * Static collision and boundary cases. They prove that this first parser does
- * not steal a day/ticker question or silently turn a deferred metric into P/L.
+ * not steal a day/ticker question or silently discard a material modifier.
  */
 export const coachAiChatCompletedTradePerformanceBoundaryFixtures = Object.freeze([
   Object.freeze({
@@ -163,11 +189,11 @@ export const coachAiChatCompletedTradePerformanceBoundaryFixtures = Object.freez
     expectedDiagnostic: Object.freeze({ component: "entity" as const, state: "not_applicable" as const }),
   }),
   Object.freeze({
-    id: "deferred-win-rate",
-    question: "what is my win rate this year",
+    id: "ambiguous-summary-direction",
+    question: "how did my long trades and short trades perform",
     context: defaultContext,
     expectedState: "unresolved" as const,
-    expectedDiagnostic: Object.freeze({ component: "metric" as const, state: "failed" as const }),
+    expectedDiagnostic: Object.freeze({ component: "filters" as const, state: "failed" as const }),
   }),
   Object.freeze({
     id: "rank-count-too-large",
@@ -177,8 +203,8 @@ export const coachAiChatCompletedTradePerformanceBoundaryFixtures = Object.freez
     expectedDiagnostic: Object.freeze({ component: "rank_count" as const, state: "failed" as const }),
   }),
   Object.freeze({
-    id: "deferred-gross-pnl",
-    question: "what is my gross p/l",
+    id: "deferred-average-holding-time",
+    question: "what was my average holding time",
     context: defaultContext,
     expectedState: "unresolved" as const,
     expectedDiagnostic: Object.freeze({ component: "metric" as const, state: "failed" as const }),

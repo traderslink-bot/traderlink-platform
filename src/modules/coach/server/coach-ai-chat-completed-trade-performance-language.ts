@@ -34,7 +34,10 @@ export type CoachAiChatPerformanceLanguageComponentDiagnostic = Readonly<{
 }>;
 
 type CompletedTradePerformanceMetric = Extract<CoachAiChatFactualToolMetricId,
-  "net_pnl" | "total_trades" | "win_count" | "loss_count">;
+  "net_pnl" | "gross_profit" | "gross_loss" | "gross_pnl" |
+  "total_trades" | "win_count" | "loss_count" | "win_rate" | "loss_rate" |
+  "profit_factor" | "expectancy" | "average_pnl" | "average_gross_pnl" |
+  "average_winning_trade" | "average_losing_trade">;
 
 export type CoachAiChatCompletedTradePerformancePlan = Readonly<{
   planVersion: typeof COACH_AI_CHAT_COMPLETED_TRADE_PERFORMANCE_LANGUAGE_VERSION;
@@ -167,6 +170,23 @@ function hasCompletedTradeRankSubject(question: string): boolean {
 }
 
 function summaryMetric(question: string): CompletedTradePerformanceMetric | null {
+  if (/\bgross profit\b/u.test(question)) return "gross_profit";
+  if (/\bgross loss\b/u.test(question)) return "gross_loss";
+  if (/\bgross (?:pnl|profit and loss)\b/u.test(question)) return "gross_pnl";
+  if (/\baverage gross\b/u.test(question)) return "average_gross_pnl";
+  if (/\baverage (?:winning|winner|win) trad(?:e|es)?\b/u.test(question)) {
+    return "average_winning_trade";
+  }
+  if (/\baverage (?:losing|loser|loss) trad(?:e|es)?\b/u.test(question)) {
+    return "average_losing_trade";
+  }
+  if (/\bwin rate\b/u.test(question)) return "win_rate";
+  if (/\bloss rate\b/u.test(question)) return "loss_rate";
+  if (/\bprofit factor\b/u.test(question)) return "profit_factor";
+  if (/\bexpectancy\b/u.test(question)) return "expectancy";
+  if (/\baverage (?:net )?(?:trad(?:e|es)?|pnl|profit and loss)\b/u.test(question)) {
+    return "average_pnl";
+  }
   if (/\b(?:how many|number of|count of|trade count)\b/u.test(question)) {
     if (/\b(?:win|wins|winner|winners|winning|green|positive)\b/u.test(question)) {
       return "win_count";
@@ -176,19 +196,33 @@ function summaryMetric(question: string): CompletedTradePerformanceMetric | null
     }
     if (/\b(?:trad(?:e|es)?|trad)\b/u.test(question)) return "total_trades";
   }
-  if (/\b(?:gross|average|median|win rate|loss rate|profit factor|expectancy)\b/u.test(question)) {
-    return null;
-  }
   if (/\b(?:pnl|profit and loss|net profit|net loss|profit|loss|gain|gains|made|make|lost|lose)\b/u
       .test(question)) {
     return "net_pnl";
   }
+  if (/\b(?:long|short) trades? perform\b/u.test(question)) return "net_pnl";
+  return null;
+}
+
+function summaryMoneyBasis(metric: CompletedTradePerformanceMetric): "gross" | "net" {
+  return metric === "gross_profit" || metric === "gross_loss" || metric === "gross_pnl" ||
+    metric === "average_gross_pnl"
+    ? "gross"
+    : "net";
+}
+
+function summaryDirection(question: string): "long" | "short" | "ambiguous" | null {
+  const long = /\blong trad(?:e|es)?\b/u.test(question);
+  const short = /\bshort trad(?:e|es)?\b/u.test(question);
+  if (long && short) return "ambiguous";
+  if (long) return "long";
+  if (short) return "short";
   return null;
 }
 
 function looksLikeCompletedTradePerformanceQuestion(question: string): boolean {
   if (!/\b(?:my|i|ive|i have|me)\b/u.test(question)) return false;
-  return /\b(?:trad(?:e|es)?|trad|pnl|profit|loss(?:es)?|gain(?:s)?|green|red|win|wins|winning|winner|winners|loser|losers|made|make|lost|lose)\b/u
+  return /\b(?:trad(?:e|es)?|trad|pnl|profit|loss(?:es)?|gain(?:s)?|green|red|win|wins|winning|winner|winners|loser|losers|made|make|lost|lose|gross|average|expectancy|factor|rate|perform)\b/u
     .test(question);
 }
 
@@ -261,7 +295,7 @@ function resolvedDiagnostics(input: Readonly<{
     diagnostic("rank_count", input.rank ? "passed" : "not_applicable",
       input.rank ? `${input.rank.direction}:${input.rank.count}` : null),
     diagnostic("filters", input.outcomeFilter || input.directionFilter ? "passed" : "not_applicable",
-      [input.outcomeFilter, input.directionFilter].filter((value): value is string => value !== null).join(",") || null),
+      [input.outcomeFilter, input.directionFilter].filter((value) => value !== null).join(",") || null),
     diagnostic("date_scope", "passed", input.explicitScope ? "question calendar scope" : "selected scope"),
     diagnostic("handler", "passed", input.handlerId),
   ]);
@@ -381,11 +415,16 @@ export function analyzeCoachAiChatCompletedTradePerformanceLanguage(
   if (!metric) {
     return unresolved(context, "metric", "completed_trade_metric_not_in_first_slice");
   }
+  const directionFilter = summaryDirection(question);
+  if (directionFilter === "ambiguous") {
+    return unresolved(context, "filters", "completed_trade_summary_direction_ambiguous");
+  }
   const request: CoachAiChatFactualToolRequest = Object.freeze({
     contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
     toolName: "summarize_closed_trades",
     metricIds: Object.freeze([metric]),
-    moneyBasis: "net",
+    moneyBasis: summaryMoneyBasis(metric),
+    ...(directionFilter ? { filters: Object.freeze({ directions: Object.freeze([directionFilter]) }) } : {}),
   });
   const handlerId = "completed_trade_summary_v1" as const;
   const plan: CoachAiChatCompletedTradePerformancePlan = Object.freeze({
@@ -400,7 +439,7 @@ export function analyzeCoachAiChatCompletedTradePerformanceLanguage(
     operation: "summary",
     rank: null,
     outcomeFilter: null,
-    directionFilter: null,
+    directionFilter,
     timeScope,
     timeScopeSource,
     handlerId,
@@ -409,7 +448,7 @@ export function analyzeCoachAiChatCompletedTradePerformanceLanguage(
   return Object.freeze({
     state: "resolved",
     diagnostics: resolvedDiagnostics({ context, metric: plan.metric, operation: plan.operation,
-      rank: null, outcomeFilter: null, directionFilter: null, explicitScope: scopeMatch !== null, handlerId }),
+    rank: null, outcomeFilter: null, directionFilter, explicitScope: scopeMatch !== null, handlerId }),
     plan,
     reason: null,
   });

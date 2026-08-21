@@ -154,7 +154,7 @@ export function verifyCoachAiReviewInsightEngine(): void {
     cohortDefinition: "Trades with at least one add after the measured P/L peak.",
     comparisonDefinition: "Affected trades versus the eligible observed remainder.",
     observations: behaviorObservations,
-    periodMoneyObservations: money,
+    periodMoneyObservations: comparable,
     periodOutcomes: period,
     processClass: "analyzer_only",
     expectedPopulationCount: 20,

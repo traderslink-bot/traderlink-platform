@@ -376,6 +376,7 @@ export class CoachAiChatGenerationService {
               generationSource: COACH_AI_CHAT_DETERMINISTIC_FAST_PATH_VERSION,
               deterministicRouteKey: deterministicRoute.routeKey,
               completedTradePerformance: deterministicRoute.completedTradePerformance ?? null,
+              performanceAggregate: deterministicRoute.performanceAggregate ?? null,
               deterministicIdempotencySha256: input.idempotencySha256,
             })
           : intent === "prepare_manual_execution_draft"
@@ -465,6 +466,7 @@ export class CoachAiChatGenerationService {
                 generationSource: COACH_AI_CHAT_DETERMINISTIC_FAST_PATH_VERSION,
                 deterministicRouteKey: deterministic.routeKey,
                 completedTradePerformance: deterministic.completedTradePerformance ?? null,
+                performanceAggregate: deterministic.performanceAggregate ?? null,
                 answer: deterministic.answer,
                 factualToolCalls: dispatcher.snapshotsForPersistence(),
                 claimCatalog: buildCoachAiChatClaimCatalog(

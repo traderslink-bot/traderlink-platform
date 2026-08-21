@@ -76,7 +76,7 @@ function calendarYearScope(year: string): CoachAiChatAnalysisScope {
 export function matchCoachAiChatQuestionAnalysisScope(
   rawQuestion: string,
   now = new Date(),
-  timezone = COACH_AI_CHAT_DEFAULT_TRADING_TIMEZONE,
+  timezone: string = COACH_AI_CHAT_DEFAULT_TRADING_TIMEZONE,
 ): CoachAiChatQuestionScopeMatch | null {
   const question = normalizeCoachAiChatScopeQuestion(rawQuestion);
   const currentDate = calendarDateInTimezone(now, timezone);
@@ -105,12 +105,16 @@ export function matchCoachAiChatQuestionAnalysisScope(
   const slashDay = /\b(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/((?:19|20)\d{2})\b/u.exec(question);
   if (slashDay) {
     const date = calendarDate(slashDay[3], slashDay[1], slashDay[2]);
-    if (date) return Object.freeze({ scope: Object.freeze({ kind: "day", date }), phrase: slashDay[0] });
+    return date
+      ? Object.freeze({ scope: Object.freeze({ kind: "day", date }), phrase: slashDay[0] })
+      : null;
   }
   const isoDay = /\b((?:19|20)\d{2})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])\b/u.exec(question);
   if (isoDay) {
     const date = calendarDate(isoDay[1], isoDay[2], isoDay[3]);
-    if (date) return Object.freeze({ scope: Object.freeze({ kind: "day", date }), phrase: isoDay[0] });
+    return date
+      ? Object.freeze({ scope: Object.freeze({ kind: "day", date }), phrase: isoDay[0] })
+      : null;
   }
   const namedDay = new RegExp(
     `\\b(${MONTH_NAME_PATTERN})\\s+([1-9]|[12]\\d|3[01])(?:st|nd|rd|th)?(?:,)?\\s+((?:19|20)\\d{2})\\b`,
@@ -119,7 +123,9 @@ export function matchCoachAiChatQuestionAnalysisScope(
   if (namedDay) {
     const month = MONTH_NUMBER_BY_NAME[namedDay[1] as keyof typeof MONTH_NUMBER_BY_NAME];
     const date = calendarDate(namedDay[3], month, namedDay[2]);
-    if (date) return Object.freeze({ scope: Object.freeze({ kind: "day", date }), phrase: namedDay[0] });
+    return date
+      ? Object.freeze({ scope: Object.freeze({ kind: "day", date }), phrase: namedDay[0] })
+      : null;
   }
   const dayFirstNamed = new RegExp(
     `\\b([1-9]|[12]\\d|3[01])(?:st|nd|rd|th)?\\s+(${MONTH_NAME_PATTERN})(?:,)?\\s+((?:19|20)\\d{2})\\b`,
@@ -128,7 +134,9 @@ export function matchCoachAiChatQuestionAnalysisScope(
   if (dayFirstNamed) {
     const month = MONTH_NUMBER_BY_NAME[dayFirstNamed[2] as keyof typeof MONTH_NUMBER_BY_NAME];
     const date = calendarDate(dayFirstNamed[3], month, dayFirstNamed[1]);
-    if (date) return Object.freeze({ scope: Object.freeze({ kind: "day", date }), phrase: dayFirstNamed[0] });
+    return date
+      ? Object.freeze({ scope: Object.freeze({ kind: "day", date }), phrase: dayFirstNamed[0] })
+      : null;
   }
   const namedMonth = new RegExp(`\\b(${MONTH_NAME_PATTERN})\\s+((?:19|20)\\d{2})\\b`, "u").exec(question);
   if (namedMonth) {
@@ -191,7 +199,7 @@ export function matchCoachAiChatQuestionAnalysisScope(
 export function resolveCoachAiChatQuestionAnalysisScope(
   question: string,
   now = new Date(),
-  timezone = COACH_AI_CHAT_DEFAULT_TRADING_TIMEZONE,
+  timezone: string = COACH_AI_CHAT_DEFAULT_TRADING_TIMEZONE,
 ): CoachAiChatAnalysisScope | null {
   return matchCoachAiChatQuestionAnalysisScope(question, now, timezone)?.scope ?? null;
 }

@@ -17,6 +17,9 @@ import type { JournalAnalyticsFirstSliceMetricId } from "@/src/modules/journal-a
 import type { DailyTradeGreenToRedStatus } from
   "@/src/modules/level-analysis/contracts/daily-trade-analyzer-contracts";
 
+type CoachAiChatFactualToolSupportedMetricId = JournalAnalyticsFirstSliceMetricId |
+  "average_winning_trade" | "average_losing_trade";
+
 export const COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION =
   "coach_ai_chat_factual_tools_v3" as const;
 export const COACH_AI_CHAT_FACTUAL_TOOL_MAX_PAGE_SIZE = 50 as const;
@@ -108,9 +111,11 @@ export const COACH_AI_CHAT_FACTUAL_TOOL_METRIC_IDS = Object.freeze([
   "median_pnl",
   "best_trade",
   "worst_trade",
+  "average_winning_trade",
+  "average_losing_trade",
   "profit_factor",
   "expectancy",
-] as const satisfies readonly JournalAnalyticsFirstSliceMetricId[]);
+] as const satisfies readonly CoachAiChatFactualToolSupportedMetricId[]);
 
 export const COACH_AI_CHAT_FACTUAL_TOOL_GROUPINGS = Object.freeze([
   "closing_day",
@@ -290,6 +295,18 @@ export type CoachAiChatPositionDetailRequest = Readonly<{
   ticker?: string;
 }>;
 
+export type CoachAiChatAnalyticsAggregateSelection = Readonly<{
+  grouping:
+    | "closing_day"
+    | "instrument"
+    | "entry_weekday"
+    | "entry_session"
+    | "entry_time_bucket"
+    | "exit_time_bucket";
+  metricId: "net_pnl" | "total_trades" | "win_rate";
+  rankDirection: "ascending" | "descending";
+}>;
+
 export type CoachAiChatAnalyticsPageRequest = Readonly<{
   contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
   toolName:
@@ -299,6 +316,8 @@ export type CoachAiChatAnalyticsPageRequest = Readonly<{
     | "get_execution_analytics";
   moneyBasis: JournalAnalyticsMoneyBasis;
   filters?: CoachAiChatFactualToolFilters;
+  /** A deterministic aggregate route receives only its winning Journal group. */
+  aggregateSelection?: CoachAiChatAnalyticsAggregateSelection;
 }>;
 
 export type CoachAiChatTradeExplorerRequest = Readonly<{

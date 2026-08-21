@@ -9,6 +9,19 @@ import {
   type CoachAiChatCompletedTradePerformancePlan,
 } from "./coach-ai-chat-completed-trade-performance-language";
 import {
+  analyzeCoachAiChatPerformanceAggregateLanguage,
+  type CoachAiChatPerformanceAggregateLanguageAnalysis,
+  type CoachAiChatPerformanceAggregatePlan,
+} from "./coach-ai-chat-performance-aggregate-language";
+import {
+  coachAiChatPerformanceAggregateBoundaryFixtures,
+  coachAiChatPerformanceAggregateFixtures,
+} from "./coach-ai-chat-performance-aggregate-language-fixtures";
+import {
+  evaluateCoachAiChatPerformanceAggregateBoundaryFixtures,
+  evaluateCoachAiChatPerformanceAggregateFixtures,
+} from "./coach-ai-chat-performance-aggregate-evaluator";
+import {
   coachAiChatCompletedTradePerformanceBoundaryFixtures,
   coachAiChatCompletedTradePerformanceFixtures,
 } from "./coach-ai-chat-completed-trade-performance-language-fixtures";
@@ -22,7 +35,7 @@ import {
 } from "./coach-ai-chat-question-time-scope-fixtures";
 
 export const COACH_AI_CHAT_COMPLETED_TRADE_MASTER_EVALUATION_VERSION =
-  "links_completed_trade_master_evaluation_v1" as const;
+  "links_performance_master_evaluation_v2" as const;
 
 type MasterDisposition = "resolved" | "deferred" | "unsupported" | "ambiguous";
 type FirstSliceMetric = CoachAiChatCompletedTradePerformancePlan["metric"];
@@ -35,6 +48,7 @@ type ExpectedResolvedPlan = Readonly<{
   rank: CoachAiChatCompletedTradePerformancePlan["rank"];
   outcomeFilter: CoachAiChatCompletedTradePerformancePlan["outcomeFilter"];
   directionFilter: CoachAiChatCompletedTradePerformancePlan["directionFilter"];
+  moneyBasis: "gross" | "net";
   timeScope: CoachAiChatAnalysisScope;
   handlerId: CoachAiChatCompletedTradePerformancePlan["handlerId"];
   toolName: "summarize_closed_trades" | "query_trade_explorer";
@@ -44,6 +58,22 @@ type ExpectedMasterClassification = ExpectedResolvedPlan | Readonly<{
   disposition: Exclude<MasterDisposition, "resolved">;
   reason: string;
 }>;
+
+type ExpectedAggregateResolvedPlan = Readonly<{
+  disposition: "resolved";
+  entity: CoachAiChatPerformanceAggregatePlan["entity"];
+  dimension: CoachAiChatPerformanceAggregatePlan["dimension"];
+  metric: CoachAiChatPerformanceAggregatePlan["metric"];
+  operation: "rank";
+  rank: CoachAiChatPerformanceAggregatePlan["rank"];
+  timeScope: CoachAiChatAnalysisScope;
+  handlerId: CoachAiChatPerformanceAggregatePlan["handlerId"];
+  toolName: CoachAiChatPerformanceAggregatePlan["request"]["toolName"];
+}>;
+
+type ExpectedPerformanceMasterClassification =
+  | ExpectedMasterClassification
+  | ExpectedAggregateResolvedPlan;
 
 export type CoachAiChatCompletedTradeMasterCaseEvaluation = Readonly<{
   caseId: string;
@@ -76,6 +106,8 @@ export type CoachAiChatCompletedTradeMasterEvaluationReport = Readonly<{
     passed: boolean;
     resolvedFixtureCount: number;
     boundaryFixtureCount: number;
+    aggregateResolvedFixtureCount: number;
+    aggregateBoundaryFixtureCount: number;
     dateFixtureCount: number;
     failures: number;
   }>;
@@ -171,30 +203,58 @@ function expectedRanking(item: LinksQuestionBankCase): ExpectedResolvedPlan {
     rank,
     outcomeFilter,
     directionFilter,
+    moneyBasis: "net",
     timeScope,
     handlerId: "completed_trade_rank_v1",
     toolName: "query_trade_explorer",
   });
 }
 
+type SummaryMetric = Exclude<FirstSliceMetric, "net_pnl_rank">;
+
+type ExpectedSummaryDefinition = Readonly<{
+  metric: SummaryMetric;
+  moneyBasis: "gross" | "net";
+  directionFilter?: "long" | "short";
+}>;
+
 function expectedSummary(
   item: LinksQuestionBankCase,
-  metric: Extract<FirstSliceMetric, "net_pnl" | "total_trades" | "win_count" | "loss_count">,
+  definition: ExpectedSummaryDefinition,
 ): ExpectedResolvedPlan {
   const timeScope = scopeForMasterCase(item);
   if (!timeScope) throw new Error(`TRADERLINK_COACH_MASTER_SUMMARY_SCOPE_MISSING:${item.id}`);
   return Object.freeze({
     disposition: "resolved",
-    metric,
+    metric: definition.metric,
     operation: "summary",
     rank: null,
     outcomeFilter: null,
-    directionFilter: null,
+    directionFilter: definition.directionFilter ?? null,
+    moneyBasis: definition.moneyBasis,
     timeScope,
     handlerId: "completed_trade_summary_v1",
     toolName: "summarize_closed_trades",
   });
 }
+
+const SUMMARY_DEFINITIONS = Object.freeze({
+  "net-pnl": Object.freeze({ metric: "net_pnl", moneyBasis: "net" }),
+  "gross-profit": Object.freeze({ metric: "gross_profit", moneyBasis: "gross" }),
+  "gross-loss": Object.freeze({ metric: "gross_loss", moneyBasis: "gross" }),
+  "trade-count": Object.freeze({ metric: "total_trades", moneyBasis: "net" }),
+  "win-rate": Object.freeze({ metric: "win_rate", moneyBasis: "net" }),
+  "loss-rate": Object.freeze({ metric: "loss_rate", moneyBasis: "net" }),
+  "profit-factor": Object.freeze({ metric: "profit_factor", moneyBasis: "net" }),
+  "expectancy": Object.freeze({ metric: "expectancy", moneyBasis: "net" }),
+  "average-trade": Object.freeze({ metric: "average_pnl", moneyBasis: "net" }),
+  "average-winner": Object.freeze({ metric: "average_winning_trade", moneyBasis: "net" }),
+  "average-loser": Object.freeze({ metric: "average_losing_trade", moneyBasis: "net" }),
+  "long-pnl": Object.freeze({ metric: "net_pnl", moneyBasis: "net", directionFilter: "long" }),
+  "short-pnl": Object.freeze({ metric: "net_pnl", moneyBasis: "net", directionFilter: "short" }),
+  "winning-count": Object.freeze({ metric: "win_count", moneyBasis: "net" }),
+  "losing-count": Object.freeze({ metric: "loss_count", moneyBasis: "net" }),
+} satisfies Readonly<Record<string, ExpectedSummaryDefinition>>);
 
 /**
  * This is deliberately an oracle over the independently maintained master
@@ -206,22 +266,118 @@ export function classifyCoachAiChatCompletedTradeMasterCase(
 ): ExpectedMasterClassification {
   if (item.family === "rankings") return expectedRanking(item);
   if (item.id === "links-core-explorer-worst-follow-up") return expectedRanking(item);
-  if (/^links-performance-net-pnl-/u.test(item.id)) return expectedSummary(item, "net_pnl");
-  if (/^links-performance-trade-count-/u.test(item.id)) return expectedSummary(item, "total_trades");
-  if (/^links-performance-winning-count-/u.test(item.id)) return expectedSummary(item, "win_count");
-  if (/^links-performance-losing-count-/u.test(item.id)) return expectedSummary(item, "loss_count");
-  const coreMetrics = Object.freeze({
-    "links-core-march-trade-count": "total_trades",
-    "links-core-march-pnl": "net_pnl",
-    "links-core-march-gross-loss": "net_pnl",
-    "links-core-march-gross-profit": "net_pnl",
+  for (const [templateId, definition] of Object.entries(SUMMARY_DEFINITIONS)) {
+    if (item.id.startsWith(`links-performance-${templateId}-`)) {
+      return expectedSummary(item, definition);
+    }
+  }
+  const coreDefinitions = Object.freeze({
+    "links-core-march-trade-count": SUMMARY_DEFINITIONS["trade-count"],
+    "links-core-march-pnl": SUMMARY_DEFINITIONS["net-pnl"],
+    "links-core-march-gross-loss": SUMMARY_DEFINITIONS["net-pnl"],
+    "links-core-march-gross-profit": SUMMARY_DEFINITIONS["net-pnl"],
+    "links-core-march-win-rate": SUMMARY_DEFINITIONS["win-rate"],
+    "links-core-march-average": SUMMARY_DEFINITIONS["average-trade"],
   } as const);
-  const coreMetric = coreMetrics[item.id as keyof typeof coreMetrics];
-  if (coreMetric) return expectedSummary(item, coreMetric);
+  const coreDefinition = coreDefinitions[item.id as keyof typeof coreDefinitions];
+  if (coreDefinition) return expectedSummary(item, coreDefinition);
   return Object.freeze({
     disposition: "deferred",
     reason: "outside_completed_trade_performance_first_slice",
   });
+}
+
+function aggregateDimensionForMasterCase(
+  item: LinksQuestionBankCase,
+): CoachAiChatPerformanceAggregatePlan["dimension"] | null {
+  const question = item.input.toLocaleLowerCase("en-US");
+  if (item.family === "ticker" || /\b(?:ticker|tickers|symbol|symbols)\b/u.test(question)) {
+    return "ticker";
+  }
+  if (/\b(?:exit time|exit times)\b/u.test(question)) return "exit_time_bucket";
+  if (/\b(?:entry time|entry times|time of day)\b/u.test(question)) return "entry_time_bucket";
+  if (/\b(?:session|sessions)\b/u.test(question)) return "entry_session";
+  if (/\b(?:weekday|weekdays|day of (?:the )?week|days of (?:the )?week)\b/u.test(question)) {
+    return "entry_weekday";
+  }
+  if (/\b(?:best|worst|most profitable|least profitable) trading day\b/u.test(question)) {
+    return "trading_day";
+  }
+  return null;
+}
+
+function aggregateMetricForMasterCase(
+  item: LinksQuestionBankCase,
+  dimension: CoachAiChatPerformanceAggregatePlan["dimension"],
+): CoachAiChatPerformanceAggregatePlan["metric"] {
+  const question = item.input.toLocaleLowerCase("en-US");
+  if (dimension === "ticker") {
+    if (/\b(?:win rate|winning percentage)\b/u.test(question)) return "win_rate";
+    if (/\b(?:most traded|trade(?:d)? the most|most trades|trade count)\b/u.test(question)) {
+      return "total_trades";
+    }
+  }
+  return "net_pnl";
+}
+
+function aggregateRankDirectionForMasterCase(
+  item: LinksQuestionBankCase,
+): "ascending" | "descending" {
+  return /\b(?:worst|lowest|least|lost|loss|avoid|weakest)\b/u.test(item.input.toLocaleLowerCase("en-US"))
+    ? "ascending"
+    : "descending";
+}
+
+function aggregateEntityForDimension(
+  dimension: CoachAiChatPerformanceAggregatePlan["dimension"],
+): CoachAiChatPerformanceAggregatePlan["entity"] {
+  if (dimension === "ticker") return "instrument";
+  if (dimension === "trading_day") return "trading_day";
+  return "time_bucket";
+}
+
+function aggregateHandlerForDimension(
+  dimension: CoachAiChatPerformanceAggregatePlan["dimension"],
+): CoachAiChatPerformanceAggregatePlan["handlerId"] {
+  if (dimension === "ticker") return "instrument_aggregate_rank_v1";
+  if (dimension === "trading_day") return "trading_day_aggregate_rank_v1";
+  return "time_aggregate_rank_v1";
+}
+
+function expectedAggregate(
+  item: LinksQuestionBankCase,
+  dimension: CoachAiChatPerformanceAggregatePlan["dimension"],
+): ExpectedAggregateResolvedPlan | null {
+  const timeScope = scopeForMasterCase(item);
+  if (!timeScope) return null;
+  return Object.freeze({
+    disposition: "resolved",
+    entity: aggregateEntityForDimension(dimension),
+    dimension,
+    metric: aggregateMetricForMasterCase(item, dimension),
+    operation: "rank",
+    rank: Object.freeze({ direction: aggregateRankDirectionForMasterCase(item), count: 1 }),
+    timeScope,
+    handlerId: aggregateHandlerForDimension(dimension),
+    toolName: dimension === "ticker"
+      ? "get_results_by_ticker"
+      : dimension === "trading_day"
+        ? "get_analytics_overview"
+        : "get_timing_analytics",
+  });
+}
+
+/**
+ * Extends the completed-trade master oracle without moving any deferred case
+ * into coverage unless this aggregate batch gives it an explicit plan.
+ */
+export function classifyCoachAiChatPerformanceMasterCase(
+  item: LinksQuestionBankCase,
+): ExpectedPerformanceMasterClassification {
+  const completed = classifyCoachAiChatCompletedTradeMasterCase(item);
+  if (completed.disposition === "resolved") return completed;
+  const dimension = aggregateDimensionForMasterCase(item);
+  return dimension ? expectedAggregate(item, dimension) ?? completed : completed;
 }
 
 function equal(left: unknown, right: unknown): boolean {
@@ -233,24 +389,28 @@ function actualToolName(plan: CoachAiChatCompletedTradePerformancePlan | null): 
 }
 
 function expectedRequestFilters(expected: ExpectedResolvedPlan): Readonly<{
+  moneyBasis: "gross" | "net";
   outcomes: readonly string[] | null;
   directions: readonly string[] | null;
 }> {
   return Object.freeze({
+    moneyBasis: expected.moneyBasis,
     outcomes: expected.outcomeFilter ? Object.freeze([expected.outcomeFilter]) : null,
     directions: expected.directionFilter ? Object.freeze([expected.directionFilter]) : null,
   });
 }
 
 function actualRequestFilters(plan: CoachAiChatCompletedTradePerformancePlan | null): Readonly<{
+  moneyBasis: "gross" | "net" | null;
   outcomes: readonly string[] | null;
   directions: readonly string[] | null;
 }> {
   const request = plan?.request;
   const filters = request && "filters" in request ? request.filters : undefined;
   return Object.freeze({
-    outcomes: filters?.outcomes ?? null,
-    directions: filters?.directions ?? null,
+    moneyBasis: request && "moneyBasis" in request ? request.moneyBasis ?? null : null,
+    outcomes: filters && "outcomes" in filters ? filters.outcomes ?? null : null,
+    directions: filters && "directions" in filters ? filters.directions ?? null : null,
   });
 }
 
@@ -260,6 +420,7 @@ function resolvedEvaluation(
   analysis: CoachAiChatCompletedTradePerformanceLanguageAnalysis,
 ): CoachAiChatCompletedTradeMasterCaseEvaluation {
   const plan = analysis.plan;
+  const actualFilters = actualRequestFilters(plan);
   const comparisons = Object.freeze([
     ["account_scope", "selected_account", plan?.accountScope ?? null],
     ["currency_scope", "USD", plan?.reportingCurrency ?? null],
@@ -274,7 +435,7 @@ function resolvedEvaluation(
     ["date_scope", expected.timeScope, plan?.timeScope ?? null],
     ["handler", expected.handlerId, plan?.handlerId ?? null],
     ["handler_request", Object.freeze({ toolName: expected.toolName, ...expectedRequestFilters(expected) }),
-      Object.freeze({ toolName: actualToolName(plan), ...actualRequestFilters(plan) })],
+      Object.freeze({ toolName: actualToolName(plan), ...actualFilters })],
   ] as const);
   const componentFailures = Object.freeze(comparisons
     .filter(([, expectedValue, actualValue]) => !equal(expectedValue, actualValue))
@@ -283,12 +444,14 @@ function resolvedEvaluation(
     expected.rank?.count !== 1 ? "rank_count" : null,
     expected.outcomeFilter ? "outcome" : null,
     expected.directionFilter ? "direction" : null,
+    expected.moneyBasis === "gross" ? "money_basis" : null,
     item.scopeKind !== "all_history" ? "date_scope" : null,
-  ].filter((value): value is string => value !== null));
+  ].filter((value) => value !== null));
   const silentlyDroppedModifiers = Object.freeze(expectedModifiers.filter((modifier) =>
     (modifier === "rank_count" && !equal(expected.rank, plan?.rank)) ||
     (modifier === "outcome" && expected.outcomeFilter !== plan?.outcomeFilter) ||
     (modifier === "direction" && expected.directionFilter !== plan?.directionFilter) ||
+    (modifier === "money_basis" && expected.moneyBasis !== actualFilters.moneyBasis) ||
     (modifier === "date_scope" && !equal(expected.timeScope, plan?.timeScope)),
   ));
   return Object.freeze({
@@ -303,17 +466,89 @@ function resolvedEvaluation(
   });
 }
 
-function deferredEvaluation(
+function aggregateRequestProjection(
+  plan: CoachAiChatPerformanceAggregatePlan | null,
+): Readonly<{
+  toolName: string | null;
+  aggregateSelection: unknown;
+}> {
+  const request = plan?.request;
+  return Object.freeze({
+    toolName: request?.toolName ?? null,
+    aggregateSelection: request?.aggregateSelection ?? null,
+  });
+}
+
+function aggregateResolvedEvaluation(
   item: LinksQuestionBankCase,
-  expected: Exclude<ExpectedMasterClassification, ExpectedResolvedPlan>,
-  analysis: CoachAiChatCompletedTradePerformanceLanguageAnalysis,
+  expected: ExpectedAggregateResolvedPlan,
+  analysis: CoachAiChatPerformanceAggregateLanguageAnalysis,
 ): CoachAiChatCompletedTradeMasterCaseEvaluation {
-  const resolvedOutsideScope = analysis.state === "resolved";
+  const plan = analysis.plan;
+  const expectedRequest = Object.freeze({
+    toolName: expected.toolName,
+    aggregateSelection: Object.freeze({
+      grouping: expected.dimension === "ticker"
+        ? "instrument"
+        : expected.dimension === "trading_day"
+          ? "closing_day"
+          : expected.dimension,
+      metricId: expected.metric,
+      rankDirection: expected.rank.direction,
+    }),
+  });
+  const comparisons = Object.freeze([
+    ["account_scope", "selected_account", plan?.accountScope ?? null],
+    ["currency_scope", "USD", plan?.reportingCurrency ?? null],
+    ["timezone", "America/New_York", plan?.timezone ?? null],
+    ["reference_time", REFERENCE_TIME.toISOString(), plan?.referenceTimeUtc ?? null],
+    ["entity", expected.entity, plan?.entity ?? null],
+    ["dimension", expected.dimension, plan?.dimension ?? null],
+    ["metric", expected.metric, plan?.metric ?? null],
+    ["operation", expected.operation, plan?.operation ?? null],
+    ["rank", expected.rank, plan?.rank ?? null],
+    ["date_scope", expected.timeScope, plan?.timeScope ?? null],
+    ["handler", expected.handlerId, plan?.handlerId ?? null],
+    ["handler_request", expectedRequest, aggregateRequestProjection(plan)],
+  ] as const);
+  const componentFailures = Object.freeze(comparisons
+    .filter(([, expectedValue, actualValue]) => !equal(expectedValue, actualValue))
+    .map(([component]) => component));
+  const silentlyDroppedModifiers = Object.freeze([
+    !equal(expected.rank, plan?.rank) ? "rank" : null,
+    item.scopeKind !== "all_history" && !equal(expected.timeScope, plan?.timeScope)
+      ? "date_scope"
+      : null,
+  ].filter((value) => value !== null));
   return Object.freeze({
     caseId: item.id,
     question: item.input,
     expectedDisposition: expected.disposition,
     actualParserState: analysis.state,
+    passed: analysis.state === "resolved" && componentFailures.length === 0,
+    wrongPlan: analysis.state !== "resolved" || componentFailures.length > 0,
+    silentlyDroppedModifiers,
+    componentFailures,
+  });
+}
+
+function deferredEvaluation(
+  item: LinksQuestionBankCase,
+  expected: Exclude<ExpectedPerformanceMasterClassification,
+    ExpectedResolvedPlan | ExpectedAggregateResolvedPlan>,
+  analyses: Readonly<{
+    completedTrade: CoachAiChatCompletedTradePerformanceLanguageAnalysis;
+    aggregate: CoachAiChatPerformanceAggregateLanguageAnalysis;
+  }>,
+): CoachAiChatCompletedTradeMasterCaseEvaluation {
+  const resolvedOutsideScope = analyses.completedTrade.state === "resolved" ||
+    analyses.aggregate.state === "resolved";
+  return Object.freeze({
+    caseId: item.id,
+    question: item.input,
+    expectedDisposition: expected.disposition,
+    actualParserState: resolvedOutsideScope ? "resolved" : analyses.completedTrade.state === "unresolved" ||
+      analyses.aggregate.state === "unresolved" ? "unresolved" : "not_applicable",
     passed: !resolvedOutsideScope,
     wrongPlan: resolvedOutsideScope,
     silentlyDroppedModifiers: Object.freeze([]),
@@ -327,11 +562,15 @@ export function evaluateCoachAiChatCompletedTradeMasterInventory(
   inventory: readonly LinksQuestionBankCase[] = linksQuestionBank,
 ): CoachAiChatCompletedTradeMasterEvaluationReport {
   const cases = Object.freeze(inventory.map((item) => {
-    const expected = classifyCoachAiChatCompletedTradeMasterCase(item);
-    const analysis = analyzeCoachAiChatCompletedTradePerformanceLanguage(item.input, DEFAULT_CONTEXT);
-    return expected.disposition === "resolved"
-      ? resolvedEvaluation(item, expected, analysis)
-      : deferredEvaluation(item, expected, analysis);
+    const expected = classifyCoachAiChatPerformanceMasterCase(item);
+    const completedTrade = analyzeCoachAiChatCompletedTradePerformanceLanguage(item.input, DEFAULT_CONTEXT);
+    const aggregate = analyzeCoachAiChatPerformanceAggregateLanguage(item.input, DEFAULT_CONTEXT);
+    if (expected.disposition !== "resolved") {
+      return deferredEvaluation(item, expected, Object.freeze({ completedTrade, aggregate }));
+    }
+    return "dimension" in expected
+      ? aggregateResolvedEvaluation(item, expected, aggregate)
+      : resolvedEvaluation(item, expected, completedTrade);
   }));
   const expectedCounts = (disposition: MasterDisposition): number => cases.filter((item) =>
     item.expectedDisposition === disposition).length;
@@ -342,11 +581,19 @@ export function evaluateCoachAiChatCompletedTradeMasterInventory(
   const boundaryResults = evaluateCoachAiChatCompletedTradePerformanceBoundaryFixtures(
     coachAiChatCompletedTradePerformanceBoundaryFixtures,
   );
+  const aggregateFixtureResults = evaluateCoachAiChatPerformanceAggregateFixtures(
+    coachAiChatPerformanceAggregateFixtures,
+  );
+  const aggregateBoundaryResults = evaluateCoachAiChatPerformanceAggregateBoundaryFixtures(
+    coachAiChatPerformanceAggregateBoundaryFixtures,
+  );
   const dateResults = evaluateCoachAiChatQuestionTimeScopeFixtures(
     coachAiChatQuestionTimeScopeFixtures,
   );
   const fixtureFailures = fixtureResults.filter((item) => !item.passed).length +
     boundaryResults.filter((item) => !item.passed).length +
+    aggregateFixtureResults.filter((item) => !item.passed).length +
+    aggregateBoundaryResults.filter((item) => !item.passed).length +
     dateResults.filter((item) => !item.passed).length;
   return Object.freeze({
     version: COACH_AI_CHAT_COMPLETED_TRADE_MASTER_EVALUATION_VERSION,
@@ -369,6 +616,8 @@ export function evaluateCoachAiChatCompletedTradeMasterInventory(
       passed: fixtureFailures === 0,
       resolvedFixtureCount: fixtureResults.length,
       boundaryFixtureCount: boundaryResults.length,
+      aggregateResolvedFixtureCount: aggregateFixtureResults.length,
+      aggregateBoundaryFixtureCount: aggregateBoundaryResults.length,
       dateFixtureCount: dateResults.length,
       failures: fixtureFailures,
     }),
