@@ -1,9 +1,15 @@
 import type { NextConfig } from "next";
 import { randomUUID } from "node:crypto";
 import withSerwistInit from "@serwist/next";
-import type { Compilation } from "webpack";
 
 import { legacyIntelligenceRedirects } from "./src/modules/platform/contracts/legacy-intelligence-route-disposition";
+
+type WebpackCompilation = Readonly<{
+  getAssets: () => readonly Readonly<{
+    name: string;
+    source: Readonly<{ size: () => number }>;
+  }>;
+}>;
 
 const publicShellRevision =
   process.env.VERCEL_GIT_COMMIT_SHA ??
@@ -31,7 +37,7 @@ const withSerwist = withSerwistInit({
   globPublicPatterns: [],
   manifestTransforms: [
     async (entries, transformParameter) => {
-      const compilation = transformParameter as Compilation | undefined;
+      const compilation = transformParameter as WebpackCompilation | undefined;
       const polyfillAssets = compilation?.getAssets().filter((asset) =>
         /^static\/chunks\/polyfills-[a-z0-9]+\.js$/u.test(asset.name)
       ) ?? [];
