@@ -76,4 +76,3 @@ export const config = {
     "/api/webhooks/whop/:path*",
   ],
 };
-
