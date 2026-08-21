@@ -422,8 +422,8 @@ Only check these after Codex supplies the launch evidence.
 
 ## Private launch record (non-secret values only)
 
-- Railway project name: ______________________________
-- Railway production environment name: ______________________________
+- Railway project name: `TraderLink Platform`
+- Railway production environment name: `production`
 - Final app hostname: `app.traderslink.pro`
 - Discord OAuth application name: ______________________________
 - Whop product name: ______________________________

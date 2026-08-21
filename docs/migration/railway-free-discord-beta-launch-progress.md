@@ -21,7 +21,9 @@
 - [x] Official Railway CLI installed on the owner computer.
 - [x] Railway browser authorization completed and correct account verified.
 - [x] Railway project inventory confirmed empty before launch work.
-- [ ] Railway project, service, environment and volume created.
+- [x] Empty `TraderLink Platform` Railway project created in the `TradersLink`
+  workspace with its default `production` environment.
+- [ ] Railway application service and persistent volume created.
 - [ ] Discord production callback and protected values configured.
 - [ ] DNS record for only `app.traderslink.pro` configured.
 
