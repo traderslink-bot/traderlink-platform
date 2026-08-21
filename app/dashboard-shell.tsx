@@ -58,9 +58,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import type { PlatformNotification } from "@/src/modules/platform/contracts/platform-notification-contracts";
 import {
   DASHBOARD_HOME_ITEM,
-  DASHBOARD_MAIN_NAVIGATION_GROUPS,
   DASHBOARD_NAVIGATION_HREFS,
-  DASHBOARD_STANDALONE_ITEMS,
+  DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS,
   dashboardHelpTarget,
   type DashboardNavigationGroup,
   type DashboardNavigationIconKey,
@@ -263,6 +262,10 @@ export function DashboardShell({
 }) {
   const pathname = usePathname();
   const pageHelpTarget = offline ? null : dashboardHelpTarget(pathname);
+  const helpDestination = pageHelpTarget?.href ?? "/help";
+  const helpLabel = pageHelpTarget
+    ? `Help for ${pageHelpTarget.label}`
+    : "Open Help Center";
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [aiChatOpen, setAiChatOpen] = useState(false);
@@ -270,13 +273,8 @@ export function DashboardShell({
   const [aiChatSuggestedQuestion, setAiChatSuggestedQuestion] = useState<string | null>(null);
   const [aiChatContextRequestId, setAiChatContextRequestId] = useState(0);
   const [expandedGroups, setExpandedGroups] = useState<
-    Readonly<Record<DashboardNavigationGroup["id"], boolean>>
-  >({
-    trades: pathname.startsWith("/trades"),
-    analytics: pathname.startsWith("/analytics") && !pathname.startsWith("/analytics/trade-analyzer"),
-    pressReleases: pathname.startsWith("/press-releases"),
-    tradeAnalyzer: pathname.startsWith("/analytics/trade-analyzer"),
-  });
+    Readonly<Partial<Record<DashboardNavigationGroup["id"], boolean>>>
+  >({});
 
   const desktopWidth = collapsed ? collapsedWidth : expandedWidth;
   const closeMobile = () => setMobileOpen(false);
@@ -392,17 +390,38 @@ export function DashboardShell({
               onOpenAiChat={openAiChat}
               pathname={pathname}
             />
-            {DASHBOARD_MAIN_NAVIGATION_GROUPS.map((group, groupIndex) => {
-              const open = expandedGroups[group.id] || group.items.some((item) =>
+            {DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS.map((section, sectionIndex) => {
+              const divider = section.dividerBefore ? (
+                <Divider sx={{ my: 1.25 }} />
+              ) : compact && sectionIndex > 0 ? (
+                <Divider sx={{ mx: 2, my: 0.75 }} />
+              ) : null;
+
+              if (section.kind === "item") {
+                return (
+                  <Box key={section.item.href}>
+                    {divider}
+                    <NavigationLink
+                      collapsed={compact}
+                      offline={offline}
+                      item={section.item}
+                      onNavigate={closeMobile}
+                      onOpenAiChat={openAiChat}
+                      pathname={pathname}
+                    />
+                  </Box>
+                );
+              }
+
+              const { group } = section;
+              const open = expandedGroups[group.id] ?? group.items.some((item) =>
                 isActive(pathname, item.href));
               const groupUnreadCount = group.id === "pressReleases"
                 ? pressReleaseUnreadCounts?.all ?? 0
                 : 0;
               return (
                 <Box key={group.id}>
-                  {compact && groupIndex > 0 ? (
-                    <Divider sx={{ mx: 2, my: 0.75 }} />
-                  ) : null}
+                  {divider}
                   {compact ? null : (
                     <ListItemButton
                       aria-expanded={open}
@@ -476,18 +495,6 @@ export function DashboardShell({
                 </Box>
               );
             })}
-            <Divider sx={{ my: 1.25 }} />
-            {DASHBOARD_STANDALONE_ITEMS.map((item) => (
-              <NavigationLink
-                collapsed={compact}
-                offline={offline}
-                item={item}
-                key={item.href}
-                onNavigate={closeMobile}
-                onOpenAiChat={openAiChat}
-                pathname={pathname}
-              />
-            ))}
           </List>
         </Box>
         {compact ? null : (
@@ -627,6 +634,32 @@ export function DashboardShell({
             AI
           </Button>
           <NotificationCenter notifications={notifications} />
+          <Tooltip title={helpLabel}>
+            <IconButton
+              aria-label={helpLabel}
+              component={Link}
+              href={helpDestination}
+              sx={{
+                color: "primary.main",
+                "&:hover": { bgcolor: "rgba(1, 30, 86, 0.04)" },
+              }}
+            >
+              <HelpOutlineRoundedIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Account">
+            <IconButton
+              aria-label="Open Account"
+              component={Link}
+              href="/account"
+              sx={{
+                color: "primary.main",
+                "&:hover": { bgcolor: "rgba(1, 30, 86, 0.04)" },
+              }}
+            >
+              <PersonRoundedIcon />
+            </IconButton>
+          </Tooltip>
         </Toolbar>
       </Box>
       <Drawer
@@ -692,37 +725,12 @@ export function DashboardShell({
             px: { xs: 1.5, sm: 2.5, xl: 3 },
             pt: { xs: 2, sm: 2.5 },
             width: "100%",
-            "& [data-traderlink-platform-dashboard-page] > :first-child": pageHelpTarget
-              ? { pr: { xs: 6, sm: 6.5 } }
-              : undefined,
           }}
         >
-          <Box sx={{ pr: pageHelpTarget ? { xs: 6, sm: 6.5 } : 0 }}>
-            <PushNotificationSetupBanner
-              enabled={!offline}
-              pathname={pathname}
-            />
-          </Box>
-          {pageHelpTarget ? (
-            <Tooltip title={`Help for ${pageHelpTarget.label}`}>
-              <IconButton
-                aria-label={`Help for ${pageHelpTarget.label}`}
-                component={Link}
-                href={pageHelpTarget.href}
-                sx={{
-                  bgcolor: "background.default",
-                  minHeight: 44,
-                  minWidth: 44,
-                  position: "absolute",
-                  right: { xs: 1.5, sm: 2.5, xl: 3 },
-                  top: { xs: 2, sm: 2.5 },
-                  zIndex: 1,
-                }}
-              >
-                <HelpOutlineRoundedIcon />
-              </IconButton>
-            </Tooltip>
-          ) : null}
+          <PushNotificationSetupBanner
+            enabled={!offline}
+            pathname={pathname}
+          />
           {children}
         </Box>
       </Box>

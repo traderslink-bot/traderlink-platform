@@ -29,7 +29,7 @@ export const AI_REVIEWS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         blocks: Object.freeze([
           Object.freeze({ kind: "steps", items: Object.freeze([
             Object.freeze({ title: "1. Choose a Trade Tracker account", text: "Each account keeps its own AI Review On/Off, frequency and timing choices." }),
-            Object.freeze({ title: "2. Confirm paid access", text: "Open Account, select AI & plan and check the subscription status. If needed, connect the Whop account used for the subscription." }),
+            Object.freeze({ title: "2. Confirm paid access", text: "Select Account in the top bar, choose AI & plan and check the subscription status. If needed, connect the Whop account used for the subscription." }),
             Object.freeze({ title: "3. Turn on AI Reviews", text: "In Account Settings, select AI & plan, switch AI Reviews on and choose how often you want a review." }),
             Object.freeze({ title: "4. Keep using Trade Tracker", text: "Verified executions can be reviewed even when you do not write notes or mark every daily review complete." }),
           ]) }),
@@ -74,7 +74,7 @@ export const AI_REVIEWS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         summary: "Control new reviews without removing Trade Tracker data or saved reviews.",
         keywords: Object.freeze(["turn on", "turn off", "switch", "saved reviews", "account setting"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "Open Account, select AI & plan and use the On/Off switch for the selected Trade Tracker account. Turning the feature off stops new reviews for that account. It does not delete Trade Tracker data or reviews already issued." }),
+          Object.freeze({ kind: "paragraph", text: "Select Account in the top bar, choose AI & plan and use the On/Off switch for the selected Trade Tracker account. Turning the feature off stops new reviews for that account. It does not delete Trade Tracker data or reviews already issued." }),
           Object.freeze({ kind: "callout", title: "Paid access and the On/Off switch are different", text: "A paid plan can make AI Reviews available, but the account switch still controls whether that Trade Tracker account receives new reviews." }),
         ]),
       }),
@@ -397,7 +397,7 @@ export const AI_REVIEWS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: Object.freeze(["AI Reviews off", "paid access unavailable", "platform unavailable", "subscription", "account"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "table", columns: Object.freeze(["Message", "Next step"]), rows: Object.freeze([
-            Object.freeze(["AI Reviews are off", "Open Account, select AI & plan and turn AI Reviews on for the selected Trade Tracker account if you want future reviews."]),
+            Object.freeze(["AI Reviews are off", "Select Account in the top bar, choose AI & plan and turn AI Reviews on for the selected Trade Tracker account if you want future reviews."]),
             Object.freeze(["Paid access unavailable", "Open the Paid plan and billing Help guide, then check the Whop connection and subscription status in Account."]),
             Object.freeze(["Platform unavailable", "Your evidence remains saved. Try again later; do not recreate the Trade Tracker data."]),
           ]) }),

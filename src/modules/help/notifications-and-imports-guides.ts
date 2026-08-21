@@ -127,7 +127,7 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph", text: "When you open Notifications while online, TraderLink can keep a bounded read-only copy for the selected Trade Tracker account. Offline pages clearly show when that copy was last updated. Reading the copy does not mark an update as read or change any Journal fact." }),
           Object.freeze({ kind: "steps", items: Object.freeze([
-            Object.freeze({ title: "1. Open Preferences", text: "Open Account, choose Preferences and find Offline data." }),
+            Object.freeze({ title: "1. Open Preferences", text: "Select Account in the top bar, choose Preferences and find Offline data." }),
             Object.freeze({ title: "2. Review what is saved", text: "See how many pages are saved, whether an unsynced trade is waiting, when pages were last updated and the browser's estimated app storage." }),
             Object.freeze({ title: "3. Remove it deliberately", text: "Choose Remove offline data when you want to clear the current account's saved pages and offline trade entries from this device. TraderLink warns you first when an unsynced trade exists only on the device." }),
           ]) }),
@@ -141,7 +141,7 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
         keywords: Object.freeze(["push notifications", "press releases", "news filtered", "market cap", "lock screen", "permission", "phone alerts"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "steps", items: Object.freeze([
-            Object.freeze({ title: "1. Open Notifications settings", text: "In the installed app, select Set up notifications in the notice at the top of the page. You can also open Account, choose Preferences and find Push notifications." }),
+            Object.freeze({ title: "1. Open Notifications settings", text: "In the installed app, select Set up notifications in the notice at the top of the page. You can also select Account in the top bar, choose Preferences and find Push notifications." }),
             Object.freeze({ title: "2. Choose alerts", text: "Choose account and trading updates, then choose the News Filtered and market-cap Press Releases channels you want on this device." }),
             Object.freeze({ title: "3. Enable this device", text: "Select Enable push notifications. TraderLink asks the browser for permission only after you select this button." }),
           ]) }),
@@ -165,7 +165,7 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
         keywords: Object.freeze(["Discord", "DM", "account settings", "broker imports", "statement imports"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "steps", items: Object.freeze([
-            Object.freeze({ title: "1. Open Account settings", text: "Open Account from the main menu, then choose Preferences and find Notifications." }),
+            Object.freeze({ title: "1. Open Account settings", text: "Select Account in the top bar, then choose Preferences and find Notifications." }),
             Object.freeze({ title: "2. Choose the updates you want", text: "Choose AI Reviews, broker connection, broker imports, Data Decisions, chart updates, statement imports, or any combination that helps you." }),
             Object.freeze({ title: "3. Save your choices", text: "You can change these choices whenever you want." }),
           ]) }),

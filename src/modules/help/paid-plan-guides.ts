@@ -26,7 +26,7 @@ export const PAID_PLAN_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
             Object.freeze({ title: "1. Open the paid-plan action", text: "Use the paid access or subscription action shown in TraderLink." }),
             Object.freeze({ title: "2. Review the plan in Whop", text: "Confirm the current price, billing period, included features and trial if one is offered." }),
             Object.freeze({ title: "3. Complete checkout", text: "Enter and manage payment information on Whop. TraderLink does not ask you to copy card details into the app." }),
-            Object.freeze({ title: "4. Return to TraderLink", text: "Open Account to connect the Whop account and confirm access." }),
+            Object.freeze({ title: "4. Return to TraderLink", text: "Select Account in the top bar to connect the Whop account and confirm access." }),
           ]) }),
         ]),
       }),
@@ -79,7 +79,7 @@ export const PAID_PLAN_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         keywords: Object.freeze(["payment method", "card", "billing", "manage subscription", "change plan"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "steps", items: Object.freeze([
-            Object.freeze({ title: "1. Open Account", text: "Find the paid-plan or subscription status." }),
+            Object.freeze({ title: "1. Select Account", text: "Use the top-bar Account icon to find the paid-plan or subscription status." }),
             Object.freeze({ title: "2. Select Manage subscription in Whop", text: "The action opens Whop in a new page when it is available." }),
             Object.freeze({ title: "3. Make the billing change", text: "Update the payment method, review the plan or use the available cancellation controls in Whop." }),
             Object.freeze({ title: "4. Return to TraderLink", text: "Refresh Account so the latest confirmed access status can appear." }),

@@ -26,6 +26,9 @@
 - [x] Add PWA payload content and exact drawer destination support.
 - [x] Add the Account Preferences alert link to every channel page.
 - [x] Add Help coverage and contextual Help link.
+- [x] Group AI and Trade Data links, keep Market Charts standalone, and move Press Releases below it.
+- [x] Move Account and context-aware Help to the top bar.
+- [x] Fix an active Press Releases route forcing its navigation group open.
 - [x] Complete focused static verification.
 - [ ] Complete owner visual/product review.
 
@@ -53,10 +56,10 @@
   pass. The initial whole-project check exhausted its 2 GB Node heap, and the
   first scoped attempt inherited the repository-wide include pattern and hit
   a 1 GB cap. The corrected scope passed without increasing that cap.
-- The complete navigation inspection reports the group order `Trades -> Press
-  Releases -> Trade Analyzer -> Analytics`, all six exact Press Releases
-  destinations, zero duplicate hrefs and the preserved standalone tail
-  `Market Charts -> Data Decisions -> Help Center`.
+- The owner-approved navigation refinement orders the sidebar as `Trades ->
+  Trade Analyzer -> Analytics -> AI -> Trade Data -> Market Charts -> Press
+  Releases`. Account and context-aware Help move to the top bar. All six exact
+  Press Releases destinations remain unique.
 
 ## 2026-08-20 protected migration and runtime checkpoint
 

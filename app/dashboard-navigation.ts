@@ -36,7 +36,7 @@ export type DashboardNavigationItem = Readonly<{
 }>;
 
 export type DashboardNavigationGroup = Readonly<{
-  id: "trades" | "pressReleases" | "analytics" | "tradeAnalyzer";
+  id: "trades" | "pressReleases" | "analytics" | "tradeAnalyzer" | "ai" | "tradeData";
   label: string;
   icon: DashboardNavigationIconKey;
   items: readonly DashboardNavigationItem[];
@@ -100,19 +100,6 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
           label: "Rule Results",
           icon: "results" as const,
         }),
-      ]),
-    }),
-    Object.freeze({
-      id: "pressReleases" as const,
-      label: "Press Releases",
-      icon: "newspaper" as const,
-      items: Object.freeze([
-        Object.freeze({ href: "/press-releases", label: "All Press Releases", icon: "newspaper" as const }),
-        Object.freeze({ href: "/press-releases/news-filtered", label: "News Filtered", icon: "newspaper" as const }),
-        Object.freeze({ href: "/press-releases/market-cap", label: "All Market Cap", icon: "newspaper" as const }),
-        Object.freeze({ href: "/press-releases/market-cap/under-30m", label: "Under $30M", icon: "newspaper" as const }),
-        Object.freeze({ href: "/press-releases/market-cap/30m-50m", label: "$30M–$50M", icon: "newspaper" as const }),
-        Object.freeze({ href: "/press-releases/market-cap/50m-100m", label: "$50M–$100M", icon: "newspaper" as const }),
       ]),
     }),
     Object.freeze({
@@ -185,45 +172,70 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
         }),
       ]),
     }),
+    Object.freeze({
+      id: "ai" as const,
+      label: "AI",
+      icon: "aiChat" as const,
+      items: Object.freeze([
+        Object.freeze({ href: "/ai-chat", label: "Links AI Chat", icon: "aiChat" as const }),
+        Object.freeze({ href: "/ai-reviews", label: "AI Reviews", icon: "aiReviews" as const }),
+      ]),
+    }),
+    Object.freeze({
+      id: "tradeData" as const,
+      label: "Trade Data",
+      icon: "data" as const,
+      items: Object.freeze([
+        Object.freeze({ href: "/imports", label: "Import Trades", icon: "import" as const }),
+        Object.freeze({ href: "/data-decisions", label: "Data Decisions", icon: "data" as const }),
+      ]),
+    }),
+    Object.freeze({
+      id: "pressReleases" as const,
+      label: "Press Releases",
+      icon: "newspaper" as const,
+      items: Object.freeze([
+        Object.freeze({ href: "/press-releases", label: "All Press Releases", icon: "newspaper" as const }),
+        Object.freeze({ href: "/press-releases/news-filtered", label: "News Filtered", icon: "newspaper" as const }),
+        Object.freeze({ href: "/press-releases/market-cap", label: "All Market Cap", icon: "newspaper" as const }),
+        Object.freeze({ href: "/press-releases/market-cap/under-30m", label: "Under $30M", icon: "newspaper" as const }),
+        Object.freeze({ href: "/press-releases/market-cap/30m-50m", label: "$30M–$50M", icon: "newspaper" as const }),
+        Object.freeze({ href: "/press-releases/market-cap/50m-100m", label: "$50M–$100M", icon: "newspaper" as const }),
+      ]),
+    }),
   ]);
 
 export const DASHBOARD_STANDALONE_ITEMS: readonly DashboardNavigationItem[] =
   Object.freeze([
     Object.freeze({
-      href: "/ai-chat",
-      label: "Links AI Chat",
-      icon: "aiChat" as const,
-    }),
-    Object.freeze({
-      href: "/ai-reviews",
-      label: "AI Reviews",
-      icon: "aiReviews" as const,
-    }),
-    Object.freeze({
-      href: "/account",
-      label: "Account",
-      icon: "account" as const,
-    }),
-    Object.freeze({
-      href: "/imports",
-      label: "Import Trades",
-      icon: "import" as const,
-    }),
-    Object.freeze({
       href: "/charts",
       label: "Market Charts",
       icon: "marketCharts" as const,
     }),
-    Object.freeze({
-      href: "/data-decisions",
-      label: "Data Decisions",
-      icon: "data" as const,
-    }),
-    Object.freeze({
-      href: "/help",
-      label: "Help Center",
-      icon: "help" as const,
-    }),
+  ]);
+
+export type DashboardSidebarNavigationSection = Readonly<
+  | {
+    kind: "group";
+    group: DashboardNavigationGroup;
+    dividerBefore?: boolean;
+  }
+  | {
+    kind: "item";
+    item: DashboardNavigationItem;
+    dividerBefore?: boolean;
+  }
+>;
+
+export const DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS: readonly DashboardSidebarNavigationSection[] =
+  Object.freeze([
+    Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[0] }),
+    Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[1] }),
+    Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[2] }),
+    Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[3] }),
+    Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[4] }),
+    Object.freeze({ kind: "item" as const, item: DASHBOARD_STANDALONE_ITEMS[0], dividerBefore: true }),
+    Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[5], dividerBefore: true }),
   ]);
 
 export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
