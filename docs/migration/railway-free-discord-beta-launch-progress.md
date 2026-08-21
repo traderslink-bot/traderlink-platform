@@ -72,6 +72,14 @@ work for later activation. This launch slice does not edit its performance
 language, question-bank, evaluator or progress files. Shared navigation and AI
 route availability are coordinated through the explicit launch-state contract.
 
+## Initial Railway build manager
+
+- [x] Enable the scoped three-minute Railway build manager for the initial
+  beta build: [plan](railway-beta-build-manager-plan.md) and
+  [progress](railway-beta-build-manager-progress.md).
+- [ ] Pause/remove the build manager after a healthy beta deployment and owner
+  acceptance.
+
 ## Verification evidence — 2026-08-21
 
 - Scoped ESLint passed for the launch-state contract, proxy, navigation,

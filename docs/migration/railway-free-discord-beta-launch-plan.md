@@ -4,6 +4,8 @@
 
 **Progress:** [Railway Free Discord Beta Launch Progress](railway-free-discord-beta-launch-progress.md)
 
+**Initial build manager:** [Railway Beta Build Manager Plan](railway-beta-build-manager-plan.md)
+
 **Controlling runtime:** [TraderLink Platform Hosted Beta Runbook](traderlink-platform-hosted-beta-runbook.md)
 
 ## Owner-approved outcome
