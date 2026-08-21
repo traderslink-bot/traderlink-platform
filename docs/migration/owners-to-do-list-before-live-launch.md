@@ -149,14 +149,16 @@ Helpful Discord reference:
 
 ### Railway layout Codex will configure
 
-- [ ] Codex creates one Railway project and one `production` environment.
+- [x] Codex created one `TraderLink Platform` Railway project and one
+  `production` environment.
 - [ ] Codex connects only the official
   [TraderLink Platform repository](https://github.com/traderslink-bot/traderlink-platform).
-- [ ] Codex creates one long-running application service from the approved clean
+- [x] Codex created one empty `traderlink-platform-web` application service;
+  it will be connected to the approved clean
   `main` release commit.
-- [ ] Codex sets the service to **exactly one replica**. Never enable horizontal
+- [ ] Codex sets the deployment to **exactly one replica**. Never enable horizontal
   scaling while SQLite is the database.
-- [ ] Codex attaches exactly one persistent volume at `/data`.
+- [x] Codex attached exactly one ready persistent 50 GB volume at `/data`.
 - [ ] Codex disables app sleeping.
 - [ ] Codex keeps deployment overlap at zero and the drain window at 30 seconds.
 - [ ] Codex confirms the health-check path is `/api/platform/health`.

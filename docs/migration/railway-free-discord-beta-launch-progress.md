@@ -23,7 +23,11 @@
 - [x] Railway project inventory confirmed empty before launch work.
 - [x] Empty `TraderLink Platform` Railway project created in the `TradersLink`
   workspace with its default `production` environment.
-- [ ] Railway application service and persistent volume created.
+- [x] One empty `traderlink-platform-web` application service created. It has
+  no source repository and no deployment yet.
+- [x] One ready 50 GB `traderlink-platform-web-volume` attached at `/data`.
+- [x] Non-secret production storage, production mode, AI Coming soon, and
+  Discord callback values entered without triggering a deployment.
 - [ ] Discord production callback and protected values configured.
 - [ ] DNS record for only `app.traderslink.pro` configured.
 
