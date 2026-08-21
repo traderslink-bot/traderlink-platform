@@ -8,7 +8,7 @@ type WebpackCompilation = Readonly<{
   getAssets: () => readonly Readonly<{
     name: string;
     source: Readonly<{ size: () => number }>;
-  }>;
+  }>[];
 }>;
 
 const publicShellRevision =
