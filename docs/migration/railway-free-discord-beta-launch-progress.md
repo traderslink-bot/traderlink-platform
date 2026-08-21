@@ -42,7 +42,8 @@
 - [x] Align AI and paid-plan Help destinations with Coming soon.
 - [x] Complete focused static verification.
 - [ ] Complete desktop and mobile owner visual review.
-- [ ] Create a narrow local commit without concurrent Links work.
+- [x] Create a narrow local commit without concurrent Links work
+  (`c6415665`).
 
 ## Railway and acceptance
 
