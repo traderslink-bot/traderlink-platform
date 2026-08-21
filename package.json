@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "tsx src/scripts/run-traderlink-platform-local-server.ts --dev --hostname 127.0.0.1",
     "dev:review": "tsx src/scripts/run-traderlink-platform-local-server.ts --dev --hostname 127.0.0.1 --no-workers",
-    "build": "npm run validate:academy-registry && next build",
+    "build": "npm run validate:academy-registry && next build --webpack",
     "build:webpack": "npm run validate:academy-registry && next build --webpack",
     "deploy:prod": "node scripts/guard-production-deploy.cjs",
     "deploy:prod:check": "node scripts/guard-production-deploy.cjs --preflight-only",
