@@ -15,13 +15,17 @@ paid entitlement. Links AI Chat and AI Reviews remain visible as **Coming soon**
 and cannot call a provider or accept AI mutations.
 
 The current Vercel/Neon release remains online throughout this beta. The root
-`traderslink.pro` and `www.traderslink.pro` records, public Press Release article
-pages, existing Discord delivery and current Press Release access rules are not
-cut over, replaced or loosened by this launch.
+`traderslink.pro` and `www.traderslink.pro` records remain unchanged and its
+existing public Press Release article pages stay accessible as history. New
+canonical Press Release articles move to Railway: the computer-run publisher
+posts to `app.traderslink.pro`, and its returned Railway article URL becomes
+the Discord destination. Existing Discord delivery and current Press Release
+access rules are not loosened by this launch.
 
 ## Complete beta target list
 
-1. Preserve the current Vercel/Neon public site and public Press Release URLs.
+1. Preserve the current Vercel/Neon public site and existing public Press
+   Release URLs as historical pages.
 2. Deploy the complete dashboard only to Railway as one long-running Next.js
    service with one replica and one persistent `/data` volume.
 3. Use `app.traderslink.pro` for owner testing and the later Discord beta.
@@ -35,8 +39,9 @@ cut over, replaced or loosened by this launch.
    plain Coming soon presentation.
 8. Fail closed for AI Chat APIs, AI Review generation routes, AI Review
    schedules, Whop AI billing routes and stale AI Server Action requests.
-9. Do not configure OpenAI, Whop, AI Review scheduler or customer-generation
-   credentials for this release.
+9. Do not configure Railway-hosted OpenAI, Whop, AI Review scheduler or
+   customer-generation credentials for this release. The separate computer-run
+   Press Release publisher retains its local OpenAI configuration.
 10. Keep local development AI enabled by default so the separate Links task can
     continue toward a later owner-approved activation.
 11. Create the Railway project only from the official TraderLink Platform
@@ -46,6 +51,29 @@ cut over, replaced or loosened by this launch.
 13. Complete database integrity, one-writer, backup/restore, authentication,
     account-isolation, desktop/mobile and PWA checks before owner acceptance.
 14. Invite no Discord users until the owner accepts the exact Railway release.
+
+## Press Release publication cutover
+
+After `app.traderslink.pro` has passed its HTTPS, health and owner review
+checks, configure the computer-run Press Release publisher with:
+
+```text
+NEWS_ARTICLE_API_URL=https://app.traderslink.pro/api/news/articles
+NEWS_PUBLISH_TOKEN=<matching Railway protected value>
+```
+
+Railway sets `NEWS_PUBLIC_BASE_URL=https://app.traderslink.pro`. The publisher
+uses its existing local OpenAI key to create an article, posts that completed
+canonical article to Railway, then uses the `articleUrl` returned by Railway in
+the appropriate Discord channel. It must not construct, retain, or substitute
+a Vercel article URL after the cutover.
+
+Before enabling ordinary Discord delivery, run one controlled publication that
+verifies the accepted article, returned Railway public URL, dashboard channel
+appearance and exact intended Discord-link payload without sending an
+unapproved public channel message. Keep the existing Vercel pages available
+for historical URLs; they no longer receive new published articles after this
+cutover.
 
 ## Visible Coming soon contract
 
@@ -92,10 +120,12 @@ and an explicit Railway variable change.
    `www` or public News records.
 10. Configure the exact Discord callback for `app.traderslink.pro` and complete
     owner sign-in, Admin denial/allowance and account-isolation checks.
-11. Verify Coming soon UI and blocked AI/Whop routes on desktop and mobile.
-12. Prove backup/restore, monitoring and rollback.
-13. Obtain final owner acceptance on the exact hosted release.
-14. Announce the free beta to the TradersLink Discord only after acceptance.
+11. Configure the Press Release publisher endpoint, matching publisher token
+    and Railway public-base URL; complete the controlled publication proof.
+12. Verify Coming soon UI and blocked AI/Whop routes on desktop and mobile.
+13. Prove backup/restore, monitoring and rollback.
+14. Obtain final owner acceptance on the exact hosted release.
+15. Announce the free beta to the TradersLink Discord only after acceptance.
 
 ## Stop conditions
 
@@ -103,8 +133,9 @@ Stop before traffic if Railway would run more than one writer, `/data` is
 missing or ephemeral, startup would initialize or adopt an unknown database,
 the release commit is dirty or ambiguous, Discord membership is not verified,
 ordinary users can reach owner data, any AI/Whop route remains active, the
-current Vercel/Neon Press Release site changes, backup/restore cannot be proven,
-or private values appear in Git, logs, build output or chat.
+historical Vercel/Neon Press Release pages become unavailable, the Railway
+publisher response does not supply the exact Discord article URL, backup/restore
+cannot be proven, or private values appear in Git, logs, build output or chat.
 
 ## Acceptance evidence
 
@@ -115,8 +146,9 @@ or private values appear in Git, logs, build output or chat.
 - Discord owner sign-in plus separate normal-member account isolation;
 - desktop and mobile Coming soon presentation;
 - AI Chat, AI Review, AI cron and Whop route denial;
-- root/`www`/public Press Release pages unchanged on Vercel/Neon;
+- root/`www` and historical Vercel/Neon Press Release pages remain available;
+- a controlled local publisher run stores one canonical article on Railway and
+  returns the exact `app.traderslink.pro` URL intended for Discord;
 - `app.traderslink.pro` TLS, cookies, redirects and PWA behavior;
 - current backup plus independent restore proof;
 - final owner approval before the Discord announcement.
-
