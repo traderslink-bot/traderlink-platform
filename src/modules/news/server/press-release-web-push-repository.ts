@@ -6,7 +6,7 @@ import {
   pressReleaseChannelDefinition,
   type PressReleasePushChannel,
 } from "../contracts/press-release-dashboard-contracts";
-import { hasPlatformDiscordPremiumAccess } from "../../watchlist/server/access/platform-discord-watchlist-entitlement";
+import { hasPressReleaseDashboardDiscordAccess } from "./press-release-dashboard-access";
 import { resolveTraderLinkDiscordGuildId } from "../../platform/server/authentication/platform-discord-configuration";
 import {
   assertCanonicalUtcTimestamp,
@@ -92,7 +92,7 @@ WHERE user_id = ? AND guild_id = ?`).get(
         userId,
         resolveTraderLinkDiscordGuildId(this.environment),
       );
-      return membership ? hasPlatformDiscordPremiumAccess({
+      return membership ? hasPressReleaseDashboardDiscordAccess({
         guildOwner: membership.guild_owner === 1,
         roleIds: parsedRoleIds(membership.role_ids_json),
       }, this.environment) : false;

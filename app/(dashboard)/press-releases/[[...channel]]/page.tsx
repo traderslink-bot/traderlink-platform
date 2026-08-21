@@ -4,7 +4,10 @@ import {
   pressReleaseChannelDefinition,
   type PressReleaseChannel,
 } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
-import { hasPressReleaseDashboardAccess } from "@/src/modules/news/server/press-release-dashboard-access";
+import {
+  hasPressReleaseDashboardAccess,
+  resolveTraderLinkPlatformPressReleaseAccess,
+} from "@/src/modules/news/server/press-release-dashboard-access";
 import { PressReleaseDashboardRepository } from "@/src/modules/news/server/press-release-dashboard-repository";
 import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
@@ -65,8 +68,12 @@ export default async function PressReleaseChannelPage({ params, searchParams }: 
           <DashboardUnavailableState
             actionHref="/account"
             actionLabel="View account"
-            description="Press Releases are available to TradersLink Premium members."
-            title="Premium access required"
+            description={resolveTraderLinkPlatformPressReleaseAccess() === "all_discord_members"
+              ? "Sign in with a verified TradersLink Discord account to read Press Releases."
+              : "Press Releases are available to TradersLink Premium members."}
+            title={resolveTraderLinkPlatformPressReleaseAccess() === "all_discord_members"
+              ? "Discord access required"
+              : "Premium access required"}
           />
         </DashboardPanel>
       </DashboardPage>

@@ -32,8 +32,8 @@ access rules are not loosened by this launch.
 4. Admit any current member of the configured TradersLink Discord server; do
    not require a Whop product, monthly plan or Premium role for ordinary
    Trade Tracker dashboard access.
-5. Preserve existing feature-specific Premium rules for Press Releases and
-   Watchlist. This beta decision does not make those existing products free.
+5. Open Press Releases to every authenticated TradersLink Discord member for
+   this beta. Preserve the existing Watchlist Premium rule.
 6. Show Links AI Chat and AI Reviews in navigation with a **Coming soon** badge.
 7. Replace their hosted pages, top-bar drawer and Account billing controls with
    plain Coming soon presentation.
@@ -97,6 +97,7 @@ Railway sets:
 
 ```text
 NEXT_PUBLIC_TRADERLINK_PLATFORM_AI_LAUNCH_STATE=coming_soon
+TRADERLINK_PLATFORM_PRESS_RELEASE_ACCESS=all_discord_members
 ```
 
 `enabled` is the only value that exposes AI behavior. Production defaults to
@@ -104,6 +105,10 @@ NEXT_PUBLIC_TRADERLINK_PLATFORM_AI_LAUNCH_STATE=coming_soon
 `enabled` so the concurrent Links implementation is not blocked. Activating AI
 later requires a separate owner-approved release, provider/security acceptance
 and an explicit Railway variable change.
+
+The Press Release access value is explicit and fail-closed: any value other
+than `all_discord_members` retains the existing Premium gate. It does not
+change Watchlist access.
 
 ## Railway release order
 

@@ -13,8 +13,9 @@
 > hosted OpenAI, and AI Review scheduled-job sections below are deferred
 > future-activation work, not launch blockers. The separate computer-run Press
 > Release publisher continues to require its local OpenAI configuration to
-> create article content. Existing Press Release and Watchlist product access
-> rules remain unchanged.
+> create article content. Press Releases are open to all authenticated
+> TradersLink Discord members for this beta; the Watchlist Premium rule remains
+> unchanged.
 
 ## Current owner-only checklist for the free Discord beta
 
@@ -23,18 +24,22 @@ The longer sections below remain the detailed reference for this launch and
 later feature activation.
 
 - [x] Activate Railway Pro and authorize Codex through Railway OAuth.
-- [ ] Enable Railway multi-factor authentication and privately save the
+- [x] Enable Railway multi-factor authentication and privately save the
   recovery codes.
 - [ ] Enable multi-factor authentication on the Discord account that owns the
   TradersLink server and privately save the recovery codes.
-- [ ] Create or select the TraderLink Platform Discord OAuth application and
+- [x] Create or select the TraderLink Platform Discord OAuth application and
   register `https://app.traderslink.pro/api/auth/discord/callback`.
-- [ ] Enter the Discord Client ID and Client Secret directly in Railway when
+- [x] Enter the Discord Client ID and Client Secret directly in Railway when
   Codex identifies the protected variable fields. Never paste the secret in
   chat.
-- [ ] Privately provide or enter the owner Discord User ID, TradersLink Server
-  ID, permanent server invite, and Premium Role ID if the existing
-  Press Release or Watchlist access rule needs it.
+- [x] Enter the existing TradersLink Server ID as `DISCORD_GUILD_ID` in
+  Railway.
+- [ ] Enter the owner Discord User ID as
+  `TRADERLINK_PLATFORM_INITIAL_OWNER_DISCORD_SUBJECT` and the permanent server
+  invite as `DISCORD_INVITE_URL`.
+- [ ] Enter `TRADERSLINK_PREMIUM_DISCORD_ROLE_ID` only if the Watchlist keeps
+  its existing Premium-role access rule. Do not add it for Press Releases.
 - [ ] Choose the support and deployment-alert recipient.
 - [ ] Review the Privacy Policy, Terms of Service, data-retention statement,
   account-deletion instructions, and support contact before Discord members

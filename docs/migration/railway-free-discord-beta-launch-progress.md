@@ -13,7 +13,8 @@
 - [x] Open the accepted beta to all current TradersLink Discord members.
 - [x] Keep Links AI Chat and AI Reviews visible as Coming soon.
 - [x] Preserve the separate AI Chat task for later activation.
-- [x] Preserve existing Press Release and Watchlist product access rules.
+- [x] Open Press Releases to all authenticated TradersLink Discord members for
+  the beta while preserving the Watchlist Premium rule.
 
 ## Access and provider setup
 
@@ -32,7 +33,9 @@
   `app.traderslink.pro`; root-domain Vercel pages remain accessible as history.
 - [ ] Configure and controlled-test the local publisher's Railway endpoint,
   matching publisher token and returned Discord article link.
-- [ ] Discord production callback and protected values configured.
+- [x] Discord OAuth Client ID, Client Secret, redirect callback and TradersLink
+  Server ID configured in Railway.
+- [ ] Owner Discord User ID and permanent Discord invite configured in Railway.
 - [ ] DNS record for only `app.traderslink.pro` configured.
 
 ## Release implementation
