@@ -146,6 +146,7 @@ export function verifyCoachAiReviewInsightEngine(): void {
     polarity: "negative",
     resultPolarity: "negative",
     subjectRef: "adds_after_measured_peak",
+    trackingSubjectKey: "tracking:add_sequence:adds_after_measured_peak",
     observationUnit: "trade",
     resultOwnership: "trade_close_market_date",
     tradeStylePopulation: "declared_day",
