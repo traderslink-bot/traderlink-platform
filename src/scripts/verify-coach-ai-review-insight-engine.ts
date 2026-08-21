@@ -180,6 +180,7 @@ export function verifyCoachAiReviewInsightEngine(): void {
     cadence: "monthly",
     family: "rule_trend",
     subjectRef: "rule_maximum_trades",
+    trackingSubjectKey: "tracking:rule_trend:rule_maximum_trades",
     trendKind: "improvement",
     improvementDirection: "lower_is_better",
     observationUnit: "rule_review_opportunity",
@@ -206,6 +207,7 @@ export function verifyCoachAiReviewInsightEngine(): void {
     })),
     relatedRuleRefs: Object.freeze(["rule_maximum_trades"]),
     relatedFocusRefs: Object.freeze([]),
+    representativeMetricName: "market_date_chronology",
     overlapKeys: Object.freeze(["rule:rule_version_1:trading_day"]),
   });
   assert.notEqual(trend, null);
