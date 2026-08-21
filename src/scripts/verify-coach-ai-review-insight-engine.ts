@@ -231,6 +231,8 @@ export function verifyCoachAiReviewInsightEngine(): void {
           item.name === "process_relevance")?.value ?? null,
         specificity: frictionScore.dimensions.find((item) => item.name === "specificity")?.value ?? null,
         leaveOneBucketWinnerStable: true,
+        focusPreviouslyAssessed: false,
+        focusMaterialRepeatException: false,
       }),
     ]),
   });
