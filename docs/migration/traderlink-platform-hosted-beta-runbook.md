@@ -106,8 +106,11 @@ Railway supplies `PORT` and `RAILWAY_VOLUME_MOUNT_PATH`. The application
 requires the latter to resolve to `/data`.
 
 The 2026-08-21 free Discord beta sets the AI launch state to `coming_soon`.
-OpenAI, Whop and AI Review schedule variables are deliberately absent until a
-later owner-approved activation.
+Railway-hosted OpenAI, Whop and AI Review schedule variables are deliberately
+absent until a later owner-approved activation. This does not disable the
+separate computer-run Press Release publisher: it uses its own local OpenAI
+configuration and posts completed canonical articles through the protected
+News publisher endpoint.
 
 The protected-roots JSON contains only the absolute `/data/backups` path for
 this topology. The evidence vault may share the `/data` volume but must not

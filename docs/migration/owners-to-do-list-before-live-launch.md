@@ -9,9 +9,11 @@
 > **2026-08-21 free beta decision:** The owner approved
 > [the Railway free Discord beta plan](railway-free-discord-beta-launch-plan.md).
 > `app.traderslink.pro` is approved for owner testing and the later Discord
-> beta. The dashboard has no monthly plan during this launch. Whop, OpenAI and
-> AI Review scheduled-job sections below are deferred future-activation work,
-> not launch blockers. Existing Press Release and Watchlist product access
+> beta. The dashboard has no monthly plan during this launch. Whop, Railway-
+> hosted OpenAI, and AI Review scheduled-job sections below are deferred
+> future-activation work, not launch blockers. The separate computer-run Press
+> Release publisher continues to require its local OpenAI configuration to
+> create article content. Existing Press Release and Watchlist product access
 > rules remain unchanged.
 
 ## Current owner-only checklist for the free Discord beta
@@ -47,8 +49,10 @@ later feature activation.
 Codex owns the code release, Railway project and service, one `/data` volume,
 protected values it can generate, database preparation, migrations, health
 checks, backups and restore proof, browser verification, and rollback record.
-Whop, OpenAI, AI Review schedules, and monthly dashboard-plan setup are not
-part of this free-beta launch.
+Whop, Railway-hosted OpenAI, AI Review schedules, and monthly dashboard-plan
+setup are not part of this free-beta launch. The computer-run Press Release
+publisher is separate: it retains its local OpenAI key and needs the matching
+Railway `NEWS_PUBLISH_TOKEN` only when its article endpoint moves to Railway.
 
 This is the single checklist for the account, billing, identity, provider, and
 approval work that only the owner can complete before TraderLink Platform goes

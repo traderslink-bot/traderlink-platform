@@ -28,6 +28,10 @@
 - [x] One ready 50 GB `traderlink-platform-web-volume` attached at `/data`.
 - [x] Non-secret production storage, production mode, AI Coming soon, and
   Discord callback values entered without triggering a deployment.
+- [ ] Decide the Press Release publication cutover: retain new public article
+  URLs on `traderslink.pro` with an explicit bridge, or publish new canonical
+  articles and Discord links at `app.traderslink.pro`. The computer-run
+  publisher retains its local OpenAI key in either case.
 - [ ] Discord production callback and protected values configured.
 - [ ] DNS record for only `app.traderslink.pro` configured.
 
