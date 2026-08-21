@@ -20,7 +20,6 @@ import {
   type JournalOfflineRouteViewModel,
 } from "@/src/modules/journal/contracts/journal-offline-route-view-contracts";
 import { readPlatformOfflineView } from "@/src/modules/platform/client/pwa/offline-projection-store";
-import type { JournalAccountSelectionRef } from "@/src/modules/platform/contracts/journal-account-selection";
 import { PLATFORM_OFFLINE_SAVED_VIEW_SCHEMA_VERSION } from "@/src/modules/platform/contracts/platform-offline-saved-view-contracts";
 
 type SavedRouteState =
@@ -114,10 +113,7 @@ export function OfflineJournalRouteSurface({
         availableWeeks={model.availableWeeks}
         initialData={model.initialData}
         initialFilters={model.initialFilters}
-        initialView={{
-          ...model.initialView,
-          expectedAccountSelectionRef: accountSelectionRef as JournalAccountSelectionRef,
-        }}
+        initialView={model.initialView}
         offlineSavedAtUtc={savedAtUtc}
         selectedMonth={model.selectedMonth}
         selectedWeek={model.selectedWeek}
