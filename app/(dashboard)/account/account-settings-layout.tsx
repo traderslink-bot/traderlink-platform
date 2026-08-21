@@ -8,6 +8,10 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { DashboardPage, DashboardPanel } from "../../dashboard-template";
+import { areTraderLinkPlatformAiFeaturesEnabled } from
+  "@/src/modules/platform/contracts/platform-ai-launch-state";
+
+const aiFeaturesEnabled = areTraderLinkPlatformAiFeaturesEnabled();
 
 export type AccountSettingsSection =
   | "preferences"
@@ -35,10 +39,10 @@ const ACCOUNT_SETTINGS_SECTIONS: readonly Readonly<{
     label: "Trading",
   }),
   Object.freeze({
-    description: "AI Reviews and your plan",
+    description: aiFeaturesEnabled ? "AI Reviews and your plan" : "AI features are coming soon",
     href: "/account/ai",
     id: "ai",
-    label: "AI & plan",
+    label: aiFeaturesEnabled ? "AI & plan" : "AI",
   }),
   Object.freeze({
     description: "Profile, workspace and sign-in",

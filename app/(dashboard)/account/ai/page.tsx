@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { DashboardPanel } from "../../../dashboard-template";
+import { DashboardPanel, DashboardUnavailableState } from "../../../dashboard-template";
 import { CoachReviewDeliveryScheduleRepository } from "@/src/modules/coach/server/coach-weekly-review-schedule-repository";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { readWhopAiReviewConfigurationHealth, readWhopAiReviewCustomerUrls } from "@/src/modules/platform/server/billing/whop-ai-review-configuration";
@@ -9,6 +9,8 @@ import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/data
 import { AccountSettingsLayout } from "../account-settings-layout";
 import { AiReviewFrequencySettings } from "../ai-review-delivery-settings";
 import { AiReviewSubscriptionStatus } from "../ai-review-subscription-status";
+import { areTraderLinkPlatformAiFeaturesEnabled } from
+  "@/src/modules/platform/contracts/platform-ai-launch-state";
 
 export const metadata: Metadata = {
   description: "Manage TraderLink AI Review delivery and plan settings.",
@@ -19,6 +21,22 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function AccountAiPage() {
+  if (!areTraderLinkPlatformAiFeaturesEnabled()) {
+    return (
+      <AccountSettingsLayout
+        activeSection="ai"
+        description="Links AI Chat and AI Reviews are being prepared for a later beta update."
+        title="AI"
+      >
+        <DashboardUnavailableState
+          compact
+          description="There is no AI subscription or AI setup during the free beta. We will let you know when these features are ready."
+          title="Coming soon"
+        />
+      </AccountSettingsLayout>
+    );
+  }
+
   const scope = await requireTraderLinkPlatformPageScope();
   const { aiReviewAccess, aiReviewSettings } = withReadonlyPlatformDatabase({}, (database) =>
     Object.freeze({

@@ -45,6 +45,9 @@ import { PLATFORM_OFFLINE_SAVED_VIEW_SCHEMA_VERSION } from "@/src/modules/platfo
 
 import { OfflineSavedViewStatus } from "./offline-saved-view-status";
 import { OfflineAiReviewsSurface } from "./offline-ai-reviews-surface";
+import { AiComingSoonPage } from "../(dashboard)/ai-coming-soon";
+import { areTraderLinkPlatformAiFeaturesEnabled } from
+  "@/src/modules/platform/contracts/platform-ai-launch-state";
 
 export type OfflineSupportRouteKind =
   | "account"
@@ -196,6 +199,16 @@ export function OfflineSupportRouteSurface({ accountSelectionRef, kind, offlineS
   partitionKey: string;
   pathname: string;
 }) {
+  if (!areTraderLinkPlatformAiFeaturesEnabled() && (kind === "ai-chat" || kind === "ai-reviews")) {
+    return (
+      <AiComingSoonPage
+        description={kind === "ai-chat"
+          ? "Links is being prepared for a later beta update."
+          : "AI Reviews are being prepared for a later beta update."}
+        title={kind === "ai-chat" ? "Links AI Chat" : "AI Reviews"}
+      />
+    );
+  }
   if (kind === "account") return <OfflineAccount accountSelectionRef={accountSelectionRef} offlineScopeRef={offlineScopeRef} pathname={pathname} />;
   if (kind === "ai-reviews") return <OfflineAiReviewsSurface partitionKey={partitionKey} pathname={pathname} />;
   if (kind === "help") return <OfflineHelp pathname={pathname} />;
@@ -205,7 +218,7 @@ export function OfflineSupportRouteSurface({ accountSelectionRef, kind, offlineS
     <DashboardPage>
       <Box>
         <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">TraderLink Platform</Typography>
-        <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">{kind === "ai-chat" ? "Links AI Chat" : kind === "ai-reviews" ? "AI Reviews" : kind === "imports" ? "Import Trades" : kind === "charts" ? "Market Charts" : "Data Decisions"}</Typography>
+        <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">{kind === "ai-chat" ? "Links AI Chat" : kind === "imports" ? "Import Trades" : kind === "charts" ? "Market Charts" : "Data Decisions"}</Typography>
       </Box>
       <DashboardUnavailableState compact description={copy.description} title={copy.title} />
     </DashboardPage>

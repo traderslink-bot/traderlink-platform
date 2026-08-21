@@ -76,10 +76,13 @@ import {
   PRESS_RELEASE_CHANNEL_DEFINITIONS,
   type PressReleaseUnreadCounts,
 } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
+import { areTraderLinkPlatformAiFeaturesEnabled } from
+  "@/src/modules/platform/contracts/platform-ai-launch-state";
 
 const expandedWidth = 272;
 const collapsedWidth = 76;
 const desktopNavigationPreferenceKey = "traderlink:dashboard-navigation-collapsed";
+const aiFeaturesEnabled = areTraderLinkPlatformAiFeaturesEnabled();
 const AiChatClient = dynamic(() =>
   import("./(dashboard)/ai-chat/ai-chat-client").then((module) => module.AiChatClient));
 
@@ -152,7 +155,7 @@ function NavigationLink({
   pathname: string;
   unreadCount?: number;
 }) {
-  const opensAiChat = !offline && item.href === "/ai-chat";
+  const opensAiChat = aiFeaturesEnabled && !offline && item.href === "/ai-chat";
   const link = (
     <ListItemButton
       aria-current={isActive(pathname, item.href) ? "page" : undefined}
@@ -207,6 +210,15 @@ function NavigationLink({
           primary={(
             <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}>
               <span>{item.label}</span>
+              {item.statusLabel ? (
+                <Chip
+                  color="primary"
+                  label={item.statusLabel}
+                  size="small"
+                  sx={{ fontSize: 10, fontWeight: 800, height: 20 }}
+                  variant="outlined"
+                />
+              ) : null}
               {unreadCount > 0 ? (
                 <Box
                   component="span"
@@ -241,7 +253,11 @@ function NavigationLink({
   );
 
   return collapsed ? (
-    <Tooltip arrow placement="right" title={item.label}>
+    <Tooltip
+      arrow
+      placement="right"
+      title={item.statusLabel ? `${item.label} — ${item.statusLabel}` : item.label}
+    >
       {link}
     </Tooltip>
   ) : (
@@ -587,12 +603,16 @@ export function DashboardShell({
           ) : null}
           <Box sx={{ flexGrow: 1 }} />
           <Button
-            aria-controls={aiChatOpen ? "ai-chat-drawer" : undefined}
-            aria-expanded={aiChatOpen}
-            aria-haspopup="dialog"
-            aria-label={offline ? "Links AI Chat requires an internet connection" : "Open Links AI Chat"}
-            disabled={offline}
-            onClick={openAiChat}
+            aria-controls={aiFeaturesEnabled && aiChatOpen ? "ai-chat-drawer" : undefined}
+            aria-expanded={aiFeaturesEnabled ? aiChatOpen : undefined}
+            aria-haspopup={aiFeaturesEnabled ? "dialog" : undefined}
+            aria-label={aiFeaturesEnabled
+              ? offline ? "Links AI Chat requires an internet connection" : "Open Links AI Chat"
+              : "AI features coming soon"}
+            component={aiFeaturesEnabled ? "button" : Link}
+            disabled={aiFeaturesEnabled && offline}
+            href={aiFeaturesEnabled ? undefined : "/ai-chat"}
+            onClick={aiFeaturesEnabled ? openAiChat : undefined}
             startIcon={(
               <Box
                 component="span"
@@ -734,7 +754,7 @@ export function DashboardShell({
           {children}
         </Box>
       </Box>
-      {offline ? null : (
+      {offline || !aiFeaturesEnabled ? null : (
         <Drawer
           anchor="right"
           ModalProps={{ keepMounted: true }}

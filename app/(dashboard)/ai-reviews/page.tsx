@@ -61,6 +61,9 @@ import {
   type CoachAiReviewAuthoredIssuedRecord,
 } from "@/src/modules/coach/server/coach-ai-review-authored-persistence-repository";
 import { AiReviewsIssuedList, type AiReviewListItem } from "./ai-reviews-issued-list";
+import { AiComingSoonPage } from "../ai-coming-soon";
+import { areTraderLinkPlatformAiFeaturesEnabled } from
+  "@/src/modules/platform/contracts/platform-ai-launch-state";
 
 export const metadata: Metadata = {
   title: "AI Reviews | TraderLink Platform",
@@ -555,6 +558,15 @@ function ReviewAvailability({
 }
 
 export default async function AiReviewsPage() {
+  if (!areTraderLinkPlatformAiFeaturesEnabled()) {
+    return (
+      <AiComingSoonPage
+        description="AI Reviews are being prepared for a later beta update. No AI review will be created during this free beta launch."
+        title="AI Reviews"
+      />
+    );
+  }
+
   const identity = await requireTraderLinkPlatformPageIdentity();
   const scope = identity.scope;
   const now = new Date();

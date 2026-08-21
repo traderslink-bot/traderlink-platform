@@ -1,5 +1,7 @@
 # TradersLink Platform Live Launch Readiness
 
+**Current release decision:** [Railway Free Discord Beta Launch Plan](railway-free-discord-beta-launch-plan.md)
+
 ## Purpose
 
 This is the single operational checklist for making the complete TradersLink

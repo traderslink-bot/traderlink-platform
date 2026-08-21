@@ -1,10 +1,54 @@
 # owners to do list before live launch
 
-**Owner checklist status:** not started
+**Owner checklist status:** free-beta setup underway
 
 **Recommended app address:** `https://app.traderslink.pro`
 
 **Last reviewed:** 2026-08-12
+
+> **2026-08-21 free beta decision:** The owner approved
+> [the Railway free Discord beta plan](railway-free-discord-beta-launch-plan.md).
+> `app.traderslink.pro` is approved for owner testing and the later Discord
+> beta. The dashboard has no monthly plan during this launch. Whop, OpenAI and
+> AI Review scheduled-job sections below are deferred future-activation work,
+> not launch blockers. Existing Press Release and Watchlist product access
+> rules remain unchanged.
+
+## Current owner-only checklist for the free Discord beta
+
+These are the only owner actions still required for the approved free beta.
+The longer sections below remain the detailed reference for this launch and
+later feature activation.
+
+- [x] Activate Railway Pro and authorize Codex through Railway OAuth.
+- [ ] Enable Railway multi-factor authentication and privately save the
+  recovery codes.
+- [ ] Enable multi-factor authentication on the Discord account that owns the
+  TradersLink server and privately save the recovery codes.
+- [ ] Create or select the TraderLink Platform Discord OAuth application and
+  register `https://app.traderslink.pro/api/auth/discord/callback`.
+- [ ] Enter the Discord Client ID and Client Secret directly in Railway when
+  Codex identifies the protected variable fields. Never paste the secret in
+  chat.
+- [ ] Privately provide or enter the owner Discord User ID, TradersLink Server
+  ID, permanent server invite, and Premium Role ID if the existing
+  Press Release or Watchlist access rule needs it.
+- [ ] Choose the support and deployment-alert recipient.
+- [ ] Review the Privacy Policy, Terms of Service, data-retention statement,
+  account-deletion instructions, and support contact before Discord members
+  are invited.
+- [ ] Add only the `app.traderslink.pro` DNS record Railway supplies. Do not
+  change the `traderslink.pro` or `www.traderslink.pro` records.
+- [ ] Sign in once after the Railway app is online so Codex can complete the
+  one-time owner link and admin grant verification.
+- [ ] Review the desktop and mobile Railway app, approve the beta opening, and
+  then announce it to the TradersLink Discord.
+
+Codex owns the code release, Railway project and service, one `/data` volume,
+protected values it can generate, database preparation, migrations, health
+checks, backups and restore proof, browser verification, and rollback record.
+Whop, OpenAI, AI Review schedules, and monthly dashboard-plan setup are not
+part of this free-beta launch.
 
 This is the single checklist for the account, billing, identity, provider, and
 approval work that only the owner can complete before TraderLink Platform goes
@@ -23,11 +67,11 @@ production deployment, data transfer, DNS cutover, or paid service purchase.
 
 ## The important decisions
 
-- [ ] Approve `app.traderslink.pro` as the dashboard address. This keeps the
+- [x] Approve `app.traderslink.pro` as the dashboard address. This keeps the
   current public website on `traderslink.pro` and `www.traderslink.pro` while
   the complete app runs on Railway.
-- [ ] Approve an invited beta first, with a small named user group, before a
-  public launch.
+- [x] Approve owner testing first, followed by a free beta for all authenticated
+  members of the TradersLink Discord server.
 - [ ] Include direct Moomoo connection as a priority invited-beta feature for
   selected Moomoo users. The live beta is where provider behavior, corrections,
   larger histories, recovery, and the final sync cadence must be proven.

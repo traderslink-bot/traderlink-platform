@@ -1,3 +1,6 @@
+import { areTraderLinkPlatformAiFeaturesEnabled } from
+  "@/src/modules/platform/contracts/platform-ai-launch-state";
+
 export type DashboardNavigationIconKey =
   | "account"
   | "analytics"
@@ -33,7 +36,12 @@ export type DashboardNavigationItem = Readonly<{
   label: string;
   icon: DashboardNavigationIconKey;
   depth?: 1 | 2;
+  statusLabel?: "Coming soon";
 }>;
+
+const aiStatusLabel = areTraderLinkPlatformAiFeaturesEnabled()
+  ? undefined
+  : "Coming soon" as const;
 
 export type DashboardNavigationGroup = Readonly<{
   id: "trades" | "pressReleases" | "analytics" | "tradeAnalyzer" | "ai" | "tradeData";
@@ -177,8 +185,8 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
       label: "AI",
       icon: "aiChat" as const,
       items: Object.freeze([
-        Object.freeze({ href: "/ai-chat", label: "Links AI Chat", icon: "aiChat" as const }),
-        Object.freeze({ href: "/ai-reviews", label: "AI Reviews", icon: "aiReviews" as const }),
+        Object.freeze({ href: "/ai-chat", label: "Links AI Chat", icon: "aiChat" as const, statusLabel: aiStatusLabel }),
+        Object.freeze({ href: "/ai-reviews", label: "AI Reviews", icon: "aiReviews" as const, statusLabel: aiStatusLabel }),
       ]),
     }),
     Object.freeze({

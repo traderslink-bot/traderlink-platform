@@ -7,6 +7,8 @@ external and unchanged
 
 **Controlling contract:** [Phase 5 Slice F6 - Public Identity And Hosted Transfer](phase-5-slice-f6-public-identity-and-hosted-transfer-plan.md)
 
+**Current release:** [Railway Free Discord Beta Launch Plan](railway-free-discord-beta-launch-plan.md)
+
 **Owner actions:** [owners to do list before live launch](owners-to-do-list-before-live-launch.md)
 
 ## Purpose
@@ -98,9 +100,14 @@ file, secret value, provider subject or connection credential to Git.
 - `TRADERLINK_PLATFORM_HOSTED_BACKUP_ROOT`
 - `TRADERLINK_PLATFORM_JOURNAL_PROTECTED_STORAGE_ROOTS_JSON`
 - `RAILWAY_RUN_UID`
+- `NEXT_PUBLIC_TRADERLINK_PLATFORM_AI_LAUNCH_STATE`
 
 Railway supplies `PORT` and `RAILWAY_VOLUME_MOUNT_PATH`. The application
 requires the latter to resolve to `/data`.
+
+The 2026-08-21 free Discord beta sets the AI launch state to `coming_soon`.
+OpenAI, Whop and AI Review schedule variables are deliberately absent until a
+later owner-approved activation.
 
 The protected-roots JSON contains only the absolute `/data/backups` path for
 this topology. The evidence vault may share the `/data` volume but must not

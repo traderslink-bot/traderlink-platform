@@ -3,8 +3,11 @@ import Typography from "@mui/material/Typography";
 import type { Metadata } from "next";
 
 import { DashboardPage } from "../../dashboard-template";
+import { AiComingSoonPage } from "../ai-coming-soon";
 import { AiChatClient } from "./ai-chat-client";
 import type { CoachAiDailyCompanionContextSelector } from "@/src/modules/coach/contracts/ai-daily-companion-contracts";
+import { areTraderLinkPlatformAiFeaturesEnabled } from
+  "@/src/modules/platform/contracts/platform-ai-launch-state";
 
 export const metadata: Metadata = {
   title: "Links AI Chat | TraderLink Platform",
@@ -31,6 +34,15 @@ function dailyContextFromSearchParams(
 }
 
 export default async function AiChatPage({ searchParams }: AiChatPageProps) {
+  if (!areTraderLinkPlatformAiFeaturesEnabled()) {
+    return (
+      <AiComingSoonPage
+        description="Links is being prepared for a later beta update. Your conversations and trading data will stay private until the feature is ready to use."
+        title="Links AI Chat"
+      />
+    );
+  }
+
   const initialContext = dailyContextFromSearchParams(await searchParams);
   return (
     <DashboardPage>
