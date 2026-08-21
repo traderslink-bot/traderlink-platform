@@ -12,6 +12,7 @@ import {
   PLATFORM_DISCORD_OAUTH_RETURN_TO_COOKIE,
   PLATFORM_DISCORD_OAUTH_STATE_COOKIE,
 } from "@/src/modules/platform/server/authentication/platform-discord-oauth-cookies";
+import { resolvePlatformPublicOrigin } from "@/src/modules/platform/server/authentication/platform-public-origin";
 import { PlatformDiscordSignInService } from "@/src/modules/platform/server/authentication/platform-discord-sign-in-service";
 import {
   TRADERLINK_PLATFORM_SESSION_COOKIE,
@@ -47,7 +48,7 @@ function authRedirect(
 ): NextResponse {
   return NextResponse.redirect(
     buildDiscordAuthResultUrl({
-      origin: request.nextUrl.origin,
+      origin: resolvePlatformPublicOrigin(request),
       returnTo,
       status,
     }),
@@ -75,7 +76,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       const response = NextResponse.redirect(
         new URL(
           `/api/auth/discord/login?prompt=consent&returnTo=${encodeURIComponent(returnTo)}`,
-          request.nextUrl.origin,
+          resolvePlatformPublicOrigin(request),
         ),
       );
       clearDiscordOAuthCookies(response, request);
@@ -94,7 +95,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const config = getDiscordOAuthConfig(request.nextUrl.origin);
+    const config = getDiscordOAuthConfig(resolvePlatformPublicOrigin(request));
     const token = await exchangeDiscordCode({ config, code });
     const [discordUser, guildMember] = await Promise.all([
       fetchDiscordCurrentUser(token.access_token),

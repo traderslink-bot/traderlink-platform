@@ -9,6 +9,7 @@ import {
   PLATFORM_DISCORD_OAUTH_RETURN_TO_COOKIE,
   PLATFORM_DISCORD_OAUTH_STATE_COOKIE,
 } from "@/src/modules/platform/server/authentication/platform-discord-oauth-cookies";
+import { resolvePlatformPublicOrigin } from "@/src/modules/platform/server/authentication/platform-public-origin";
 import {
   requireTraderLinkPlatformRequestIdentity,
   type TraderLinkPlatformRequestIdentity,
@@ -29,7 +30,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  const origin = request.nextUrl.origin;
+  const origin = resolvePlatformPublicOrigin(request);
   const returnTo = normalizeDiscordAuthReturnTo(
     request.nextUrl.searchParams.get("returnTo"),
   );

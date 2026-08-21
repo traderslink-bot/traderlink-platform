@@ -47,8 +47,9 @@
 - [x] Replace hosted Account AI/Whop controls with Coming soon copy.
 - [x] Add centralized denial for AI, AI schedule and Whop routes.
 - [x] Align AI and paid-plan Help destinations with Coming soon.
-- [x] Add an `Open Dashboard` home-page action that begins Discord sign-in and
-  returns an authenticated member to `/workspace`.
+- [x] Make the Railway application root begin Discord sign-in and return an
+  authenticated member to `/workspace`; the marketing landing page remains at
+  `traderslink.pro`.
 - [x] Complete focused static verification.
 - [ ] Complete desktop and mobile owner visual review.
 - [x] Create a narrow local commit without concurrent Links work
