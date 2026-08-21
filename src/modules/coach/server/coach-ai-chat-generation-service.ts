@@ -244,6 +244,7 @@ export class CoachAiChatGenerationService {
     private readonly reportingCurrency: string | null = null,
     private readonly relationshipMemory: Pick<CoachAiRelationshipMemoryRepository, "read"> | null = null,
     private readonly conversationState: Pick<CoachAiChatConversationStateRepository, "readLatest"> | null = null,
+    private readonly tradingTimezone = "America/New_York",
   ) {}
 
   async generateSavedAnswer(
@@ -271,10 +272,14 @@ export class CoachAiChatGenerationService {
     const requestedAnalysisScope = input.analysisScope ?? Object.freeze({ kind: "all" as const });
     const pageContext = input.pageContext ?? null;
     const deterministicRoute = intent === "answer_question"
-      ? selectCoachAiChatDeterministicFastPath(input.question, now)
+      ? selectCoachAiChatDeterministicFastPath(input.question, now, Object.freeze({
+          requestedAnalysisScope,
+          reportingCurrency: this.reportingCurrency,
+          timezone: this.tradingTimezone,
+        }))
       : null;
     const explicitQuestionScope = intent === "answer_question"
-      ? resolveCoachAiChatQuestionAnalysisScope(input.question, now)
+      ? resolveCoachAiChatQuestionAnalysisScope(input.question, now, this.tradingTimezone)
       : null;
     const analysisScope = deterministicRoute?.analysisScopeOverride ??
       explicitQuestionScope ?? requestedAnalysisScope;
@@ -370,6 +375,7 @@ export class CoachAiChatGenerationService {
               analysisScope,
               generationSource: COACH_AI_CHAT_DETERMINISTIC_FAST_PATH_VERSION,
               deterministicRouteKey: deterministicRoute.routeKey,
+              completedTradePerformance: deterministicRoute.completedTradePerformance ?? null,
               deterministicIdempotencySha256: input.idempotencySha256,
             })
           : intent === "prepare_manual_execution_draft"
@@ -458,6 +464,7 @@ export class CoachAiChatGenerationService {
               factualSnapshot: Object.freeze({
                 generationSource: COACH_AI_CHAT_DETERMINISTIC_FAST_PATH_VERSION,
                 deterministicRouteKey: deterministic.routeKey,
+                completedTradePerformance: deterministic.completedTradePerformance ?? null,
                 answer: deterministic.answer,
                 factualToolCalls: dispatcher.snapshotsForPersistence(),
                 claimCatalog: buildCoachAiChatClaimCatalog(

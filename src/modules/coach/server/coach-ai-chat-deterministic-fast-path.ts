@@ -1,13 +1,13 @@
 import {
   COACH_AI_CHAT_ANSWER_CONTRACT_VERSION,
   type CoachAiChatAnswer,
+  type CoachAiChatAnalysisScope,
 } from "../contracts/ai-chat-contracts";
 import {
   COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
   type CoachAiChatFactualToolMetricId,
   type CoachAiChatFactualToolRequest,
 } from "../contracts/coach-ai-chat-factual-tool-contracts";
-import type { CoachAiChatAnalysisScope } from "../contracts/ai-chat-contracts";
 import type {
   JournalAnalyticsGroupResult,
   JournalAnalyticsMetricResult,
@@ -25,6 +25,19 @@ import {
 import { CoachAiChatFactualToolDispatcher } from
   "./coach-ai-chat-factual-tool-dispatcher";
 import { validateCoachAiChatResponseSafety } from "./coach-ai-chat-response-safety";
+import {
+  analyzeCoachAiChatCompletedTradePerformanceLanguage,
+  type CoachAiChatCompletedTradePerformanceLanguageAnalysis,
+  type CoachAiChatCompletedTradePerformancePlan,
+} from "./coach-ai-chat-completed-trade-performance-language";
+import {
+  COACH_AI_CHAT_DEFAULT_TRADING_TIMEZONE,
+  matchCoachAiChatQuestionAnalysisScope,
+  type CoachAiChatQuestionScopeMatch,
+} from "./coach-ai-chat-question-time-scope";
+
+export { resolveCoachAiChatQuestionAnalysisScope } from
+  "./coach-ai-chat-question-time-scope";
 
 export const COACH_AI_CHAT_DETERMINISTIC_FAST_PATH_VERSION =
   "links_deterministic_fast_path_v1" as const;
@@ -44,14 +57,25 @@ type RankedRouteKey =
   | "least_profitable_ticker";
 
 export type CoachAiChatDeterministicFastPathRoute = Readonly<{
-  routeKey: SummaryRouteKey | RankedRouteKey;
+  routeKey: SummaryRouteKey | RankedRouteKey | "completed_trade_performance";
   request: CoachAiChatFactualToolRequest;
   analysisScopeOverride?: CoachAiChatAnalysisScope;
+  completedTradePerformance?: Readonly<{
+    plan: CoachAiChatCompletedTradePerformancePlan;
+    diagnostics: CoachAiChatCompletedTradePerformanceLanguageAnalysis["diagnostics"];
+  }>;
 }>;
 
 export type CoachAiChatDeterministicFastPathResult = Readonly<{
   routeKey: CoachAiChatDeterministicFastPathRoute["routeKey"];
   answer: CoachAiChatAnswer;
+  completedTradePerformance?: CoachAiChatDeterministicFastPathRoute["completedTradePerformance"];
+}>;
+
+export type CoachAiChatDeterministicFastPathSelectionContext = Readonly<{
+  requestedAnalysisScope?: CoachAiChatAnalysisScope;
+  reportingCurrency?: string | null;
+  timezone?: string;
 }>;
 
 const SUMMARY_PHRASES: Readonly<Record<SummaryRouteKey, readonly string[]>> = Object.freeze({
@@ -111,16 +135,6 @@ function normalizeQuestion(value: string): string {
     .replace(/\s+/gu, " ");
 }
 
-function normalizeScopeQuestion(value: string): string {
-  return value
-    .normalize("NFKC")
-    .toLocaleLowerCase("en-US")
-    .replace(/[’']/gu, "")
-    .replace(/[^a-z0-9\/-]+/gu, " ")
-    .trim()
-    .replace(/\s+/gu, " ");
-}
-
 function phraseRoute<T extends string>(
   question: string,
   phrases: Readonly<Record<T, readonly string[]>>,
@@ -131,143 +145,7 @@ function phraseRoute<T extends string>(
   return null;
 }
 
-const MONTH_NUMBER_BY_NAME = Object.freeze({
-  january: "01", jan: "01", february: "02", feb: "02", march: "03", mar: "03",
-  april: "04", apr: "04", may: "05", june: "06", jun: "06", july: "07", jul: "07",
-  august: "08", aug: "08", september: "09", sep: "09", sept: "09", october: "10",
-  oct: "10", november: "11", nov: "11", december: "12", dec: "12",
-} as const);
-
-const MONTH_NAME_PATTERN = Object.keys(MONTH_NUMBER_BY_NAME).join("|");
-
-type QuestionScopeMatch = Readonly<{
-  scope: CoachAiChatAnalysisScope;
-  phrase: string;
-}>;
-
-function calendarDate(year: string, month: string, day: string): string | null {
-  const parsedDay = Number(day);
-  const parsedMonth = Number(month);
-  const parsedYear = Number(year);
-  const candidate = new Date(Date.UTC(parsedYear, parsedMonth - 1, parsedDay));
-  if (candidate.getUTCFullYear() !== parsedYear || candidate.getUTCMonth() !== parsedMonth - 1 ||
-      candidate.getUTCDate() !== parsedDay) return null;
-  return `${year}-${month}-${String(parsedDay).padStart(2, "0")}`;
-}
-
-function easternDate(now: Date): string {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit",
-  }).formatToParts(now);
-  const value = (type: Intl.DateTimeFormatPartTypes): string =>
-    parts.find((part) => part.type === type)?.value ?? "";
-  return `${value("year")}-${value("month")}-${value("day")}`;
-}
-
-function shiftCalendarDate(date: string, input: Readonly<{
-  days?: number;
-  months?: number;
-  years?: number;
-}>): string {
-  const value = new Date(`${date}T12:00:00.000Z`);
-  if (input.days) value.setUTCDate(value.getUTCDate() + input.days);
-  if (input.months) value.setUTCMonth(value.getUTCMonth() + input.months);
-  if (input.years) value.setUTCFullYear(value.getUTCFullYear() + input.years);
-  return value.toISOString().slice(0, 10);
-}
-
-function calendarYearScope(year: string): CoachAiChatAnalysisScope {
-  return Object.freeze({ kind: "custom", startDate: `${year}-01-01`, endDate: `${year}-12-31` });
-}
-
-function explicitQuestionScope(question: string, now: Date): QuestionScopeMatch | null {
-  const currentDate = easternDate(now);
-  const relative = /\b(?:last|past) ([1-9][0-9]{0,2}) days\b/u.exec(question);
-  if (relative) {
-    const days = Number(relative[1]);
-    if (days <= 365) {
-      const endDate = currentDate;
-      const start = new Date(`${endDate}T12:00:00.000Z`);
-      start.setUTCDate(start.getUTCDate() - (days - 1));
-      return Object.freeze({
-        scope: Object.freeze({ kind: "custom", startDate: start.toISOString().slice(0, 10), endDate }),
-        phrase: relative[0],
-      });
-    }
-  }
-  if (/\btoday\b/u.test(question)) {
-    return Object.freeze({ scope: Object.freeze({ kind: "day", date: currentDate }), phrase: "today" });
-  }
-  if (/\byesterday\b/u.test(question)) {
-    return Object.freeze({
-      scope: Object.freeze({ kind: "day", date: shiftCalendarDate(currentDate, { days: -1 }) }),
-      phrase: "yesterday",
-    });
-  }
-  const slashDay = /\b(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/((?:19|20)\d{2})\b/u.exec(question);
-  if (slashDay) {
-    const date = calendarDate(slashDay[3], slashDay[1], slashDay[2]);
-    if (date) return Object.freeze({ scope: Object.freeze({ kind: "day", date }), phrase: slashDay[0] });
-  }
-  const isoDay = /\b((?:19|20)\d{2})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])\b/u.exec(question);
-  if (isoDay) {
-    const date = calendarDate(isoDay[1], isoDay[2], isoDay[3]);
-    if (date) return Object.freeze({ scope: Object.freeze({ kind: "day", date }), phrase: isoDay[0] });
-  }
-  const namedDay = new RegExp(`\\b(${MONTH_NAME_PATTERN})\\s+([1-9]|[12]\\d|3[01])(?:st|nd|rd|th)?(?:,)?\\s+((?:19|20)\\d{2})\\b`, "u").exec(question);
-  if (namedDay) {
-    const month = MONTH_NUMBER_BY_NAME[namedDay[1] as keyof typeof MONTH_NUMBER_BY_NAME];
-    const date = calendarDate(namedDay[3], month, namedDay[2]);
-    if (date) return Object.freeze({ scope: Object.freeze({ kind: "day", date }), phrase: namedDay[0] });
-  }
-  const namedMonth = new RegExp(`\\b(${MONTH_NAME_PATTERN})\\s+((?:19|20)\\d{2})\\b`, "u").exec(question);
-  if (namedMonth) {
-    const month = MONTH_NUMBER_BY_NAME[namedMonth[1] as keyof typeof MONTH_NUMBER_BY_NAME];
-    return Object.freeze({
-      scope: Object.freeze({ kind: "month", month: `${namedMonth[2]}-${month}` }),
-      phrase: namedMonth[0],
-    });
-  }
-  const year = /\b(?:in|year) ((?:19|20)\d{2})\b/u.exec(question);
-  if (year) return Object.freeze({ scope: calendarYearScope(year[1]), phrase: year[0] });
-  if (/\bthis year\b/u.test(question)) {
-    return Object.freeze({ scope: calendarYearScope(currentDate.slice(0, 4)), phrase: "this year" });
-  }
-  if (/\blast year\b/u.test(question)) {
-    return Object.freeze({
-      scope: calendarYearScope(String(Number(currentDate.slice(0, 4)) - 1)),
-      phrase: "last year",
-    });
-  }
-  if (/\bthis month\b/u.test(question)) {
-    return Object.freeze({ scope: Object.freeze({ kind: "month", month: currentDate.slice(0, 7) }), phrase: "this month" });
-  }
-  if (/\blast month\b/u.test(question)) {
-    return Object.freeze({
-      scope: Object.freeze({ kind: "month", month: shiftCalendarDate(currentDate, { months: -1 }).slice(0, 7) }),
-      phrase: "last month",
-    });
-  }
-  if (/\bthis week\b/u.test(question)) {
-    return Object.freeze({ scope: Object.freeze({ kind: "week", anchorDate: currentDate }), phrase: "this week" });
-  }
-  if (/\blast week\b/u.test(question)) {
-    return Object.freeze({
-      scope: Object.freeze({ kind: "week", anchorDate: shiftCalendarDate(currentDate, { days: -7 }) }),
-      phrase: "last week",
-    });
-  }
-  return null;
-}
-
-export function resolveCoachAiChatQuestionAnalysisScope(
-  question: string,
-  now = new Date(),
-): CoachAiChatAnalysisScope | null {
-  return explicitQuestionScope(normalizeScopeQuestion(question), now)?.scope ?? null;
-}
-
-function removeExplicitQuestionScope(question: string, match: QuestionScopeMatch | null): string {
+function removeExplicitQuestionScope(question: string, match: CoachAiChatQuestionScopeMatch | null): string {
   if (!match) return question;
   return normalizeQuestion(question
     .replace(normalizeQuestion(match.phrase), " ")
@@ -277,9 +155,30 @@ function removeExplicitQuestionScope(question: string, match: QuestionScopeMatch
 export function selectCoachAiChatDeterministicFastPath(
   question: string,
   now = new Date(),
+  context: CoachAiChatDeterministicFastPathSelectionContext = Object.freeze({}),
 ): CoachAiChatDeterministicFastPathRoute | null {
+  const timezone = context.timezone ?? COACH_AI_CHAT_DEFAULT_TRADING_TIMEZONE;
+  const completedTradePerformance = analyzeCoachAiChatCompletedTradePerformanceLanguage(question, {
+    selectedAnalysisScope: context.requestedAnalysisScope ?? Object.freeze({ kind: "all" }),
+    reportingCurrency: context.reportingCurrency ?? null,
+    timezone,
+    referenceTime: now,
+  });
+  if (completedTradePerformance.state === "resolved" && completedTradePerformance.plan) {
+    return Object.freeze({
+      routeKey: "completed_trade_performance",
+      request: completedTradePerformance.plan.request,
+      ...(completedTradePerformance.plan.timeScopeSource === "question"
+        ? { analysisScopeOverride: completedTradePerformance.plan.timeScope }
+        : {}),
+      completedTradePerformance: Object.freeze({
+        plan: completedTradePerformance.plan,
+        diagnostics: completedTradePerformance.diagnostics,
+      }),
+    });
+  }
   const normalized = normalizeQuestion(question);
-  const scopeMatch = explicitQuestionScope(normalizeScopeQuestion(question), now);
+  const scopeMatch = matchCoachAiChatQuestionAnalysisScope(question, now, timezone);
   const scopedQuestion = removeExplicitQuestionScope(normalized, scopeMatch);
   const summary = phraseRoute(scopedQuestion, SUMMARY_PHRASES);
   if (summary) {
@@ -580,12 +479,135 @@ function individualTradeAnswer(
   });
 }
 
+function completedTradePerformanceSummaryAnswer(
+  route: CoachAiChatDeterministicFastPathRoute,
+  dispatcher: CoachAiChatFactualToolDispatcher,
+  toolCallId: string,
+  response: JournalAnalyticsPartitionedResponse,
+): CoachAiChatAnswer {
+  const plan = route.completedTradePerformance?.plan;
+  if (!plan || plan.operation !== "summary") {
+    throw new Error("TRADERLINK_COACH_COMPLETED_TRADE_PLAN_INVALID");
+  }
+  if (response.partitions.length !== 1) {
+    return noFigureAnswer(response.partitions.length === 0
+      ? "I don’t have any completed trades in this scope yet."
+      : "Your results span more than one currency here, so I can’t combine them into one reliable figure.");
+  }
+  const partition = response.partitions[0]!;
+  const metricIndex = partition.metrics.findIndex((metric) => metric.metricId === plan.metric);
+  const metric = partition.metrics[metricIndex];
+  if (!metric || metric.value === null || metric.state === "unavailable" || metric.state === "empty") {
+    return noFigureAnswer(metric?.state === "empty"
+      ? "I don’t have any completed trades in this scope yet."
+      : "I can’t give you that figure reliably because the required trade coverage is unavailable.");
+  }
+  const rendered = formatJournalAnalyticsMetric(metric);
+  const netOutcome = metric.value.kind === "decimal"
+    ? metric.value.valueDecimal.startsWith("-")
+      ? "a net loss"
+      : metric.value.valueDecimal === "0"
+        ? "flat"
+        : "a net profit"
+    : null;
+  const directAnswer = plan.metric === "net_pnl"
+    ? `Your net P/L is ${rendered}${netOutcome ? ` (${netOutcome}).` : "."}`
+    : plan.metric === "total_trades"
+      ? `You completed ${rendered} ${rendered === "1" ? "trade" : "trades"} in this scope.`
+      : plan.metric === "win_count"
+        ? `You had ${rendered} winning ${rendered === "1" ? "trade" : "trades"} in this scope.`
+        : `You had ${rendered} losing ${rendered === "1" ? "trade" : "trades"} in this scope.`;
+  const valuePath = `/partitions/0/metrics/${metricIndex}/value/${
+    metric.value.kind === "integer" ? "value" :
+      metric.value.kind === "decimal" ? "valueDecimal" :
+        metric.value.kind === "rational" ? "roundedDecimal" :
+          metric.value.kind === "duration" ? "milliseconds" : "value"
+  }`;
+  return answerWithEvidence({
+    dispatcher,
+    toolCallId,
+    directAnswer,
+    directPaths: Object.freeze([valuePath]),
+    limitation: metric.state === "partial"
+      ? "This figure uses only trades with the required complete coverage."
+      : null,
+  });
+}
+
+function completedTradePerformanceRankAnswer(
+  route: CoachAiChatDeterministicFastPathRoute,
+  dispatcher: CoachAiChatFactualToolDispatcher,
+  toolCallId: string,
+  value: unknown,
+): CoachAiChatAnswer {
+  const plan = route.completedTradePerformance?.plan;
+  if (!plan || plan.operation !== "rank" || !plan.rank) {
+    throw new Error("TRADERLINK_COACH_COMPLETED_TRADE_PLAN_INVALID");
+  }
+  const evidence = tradeExplorerEvidence(value);
+  const rows = evidence?.rows?.slice(0, plan.rank.count) ?? [];
+  if (!evidence || rows.length === 0 || typeof evidence.currency !== "string") {
+    return noFigureAnswer("I don’t have a complete ranked result for that question in this scope.");
+  }
+  const renderedRows = rows.map((row, index) => {
+    if (typeof row.displayedSymbol !== "string" ||
+        (row.direction !== "long" && row.direction !== "short") ||
+        typeof row.closeLocalDate !== "string" || typeof row.selectedPnlDecimal !== "string") {
+      return null;
+    }
+    return Object.freeze({
+      index,
+      text: `${index + 1}. ${row.displayedSymbol} ${row.direction}, closed on ${row.closeLocalDate}, ${formatJournalAnalyticsMoney(row.selectedPnlDecimal, evidence.currency)} net P/L.`,
+    });
+  });
+  if (renderedRows.some((row) => row === null)) {
+    return noFigureAnswer("I don’t have a complete ranked result for that question in this scope.");
+  }
+  const completeRows = renderedRows as readonly Readonly<{ index: number; text: string }>[];
+  const highest = plan.rank.direction === "descending";
+  const descriptor = highest ? "highest-P/L" : "lowest-P/L";
+  const subject = plan.outcomeFilter === "win"
+    ? "winning completed trade"
+    : plan.outcomeFilter === "loss"
+      ? "losing completed trade"
+      : "completed trade";
+  const directAnswer = completeRows.length === 1
+    ? `Your ${highest ? "most profitable" : "least profitable"} ${subject} was ${completeRows[0]!.text.slice(3)}`
+    : `Your ${completeRows.length} ${descriptor} ${subject}${completeRows.length === 1 ? " was" : "s were"}:\n${completeRows.map((row) => row.text).join("\n")}`;
+  const directPaths = completeRows.flatMap((row) => Object.freeze([
+    `/evidence/rows/${row.index}/displayedSymbol`,
+    `/evidence/rows/${row.index}/direction`,
+    `/evidence/rows/${row.index}/closeLocalDate`,
+    `/evidence/rows/${row.index}/selectedPnlDecimal`,
+  ]));
+  return answerWithEvidence({
+    dispatcher,
+    toolCallId,
+    directAnswer,
+    directPaths: Object.freeze([...directPaths, "/evidence/currency"]),
+  });
+}
+
 export function runCoachAiChatDeterministicFastPath(
   route: CoachAiChatDeterministicFastPathRoute,
   dispatcher: CoachAiChatFactualToolDispatcher,
 ): CoachAiChatDeterministicFastPathResult {
   const toolCallId = "deterministic-factual-1";
   const toolResponse = dispatcher.dispatch(toolCallId, route.request);
+  if (route.routeKey === "completed_trade_performance") {
+    const answer = route.completedTradePerformance?.plan.operation === "summary"
+      ? partitionedResult(toolResponse.result)
+      : null;
+    return Object.freeze({
+      routeKey: route.routeKey,
+      answer: answer
+        ? completedTradePerformanceSummaryAnswer(route, dispatcher, toolCallId, answer)
+        : route.completedTradePerformance?.plan.operation === "rank"
+          ? completedTradePerformanceRankAnswer(route, dispatcher, toolCallId, toolResponse.result)
+          : (() => { throw new Error("TRADERLINK_COACH_COMPLETED_TRADE_PLAN_INVALID"); })(),
+      completedTradePerformance: route.completedTradePerformance,
+    });
+  }
   if (route.routeKey === "best_trade" || route.routeKey === "worst_trade") {
     return Object.freeze({
       routeKey: route.routeKey,

@@ -28,6 +28,13 @@ The owner-directed live-Luna recovery is controlled by the
 and tracked in its
 [progress record](links-ai-chat-question-bank-progress.md). The prior
 source-level capability inventory is not a working-product acceptance claim.
+The next architecture checkpoint is the
+[Links Beta Performance Language Engine Plan](links-beta-performance-language-engine-plan.md)
+and its
+[progress record](links-beta-performance-language-engine-progress.md): it
+defines the first beta purpose, executable request-plan routing, component-level
+evaluation and the owner-visible Links readiness evidence needed before another
+beta claim.
 The complete current-product target is the
 [Links AI Chat Current Dashboard Capability Matrix](ai-chat-current-dashboard-capability-matrix.md).
 The completed whole-feature audit is recorded in the

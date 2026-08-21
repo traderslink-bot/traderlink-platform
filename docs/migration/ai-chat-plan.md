@@ -51,6 +51,17 @@ jointly controlling: this document governs product behavior and protected
 actions; the language plan governs what Chat understands, validates and can
 truthfully answer.
 
+The owner-directed beta recovery narrows the first public purpose to
+understanding a trader's own performance and patterns from exact Journal data.
+Its executable language architecture, component-level evaluation and
+owner-visible release-control contract are defined in the
+[Links Beta Performance Language Engine Plan](links-beta-performance-language-engine-plan.md)
+and tracked in its
+[progress record](links-beta-performance-language-engine-progress.md). That
+plan is a design checkpoint: it does not promote the existing language
+inventory or question bank into runtime support before implementation and owner
+review.
+
 Implementation status is tracked in [AI Companion Progress](ai-chat-progress.md),
 and the completed whole-feature audit is recorded in the
 [Links AI Chat Complete QA Report](ai-chat-complete-qa-report.md). The 2026-08-16

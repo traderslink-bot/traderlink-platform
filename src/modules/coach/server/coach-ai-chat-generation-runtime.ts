@@ -137,14 +137,20 @@ export async function generateCoachAiChatSavedAnswer(
     if (!scope.activeAccountId) {
       throw new TypeError("AI Chat requires an active Journal account.");
     }
-    const ruleSourceCurrency = database.prepare<[string, string], Readonly<{
+    const activeAccountProfile = database.prepare<[string, string], Readonly<{
       base_currency: string;
-    }>>(`SELECT base_currency
+      trading_timezone: string;
+    }>>(`SELECT base_currency, trading_timezone
 FROM journal_accounts
 WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
       scope.workspaceId,
       scope.activeAccountId,
-    )?.base_currency;
+    );
+    const ruleSourceCurrency = activeAccountProfile?.base_currency;
+    const tradingTimezone = activeAccountProfile?.trading_timezone;
+    if (!tradingTimezone) {
+      throw new TypeError("AI Chat requires an active Journal account timezone.");
+    }
     return await new CoachAiChatGenerationService(
       new CoachAiChatRepository(database),
       new CoachAiChatProviderControlsRepository(database),
@@ -192,6 +198,7 @@ WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
       input.reportingContext.reportingCurrency,
       new CoachAiRelationshipMemoryRepository(database),
       new CoachAiChatConversationStateRepository(database),
+      tradingTimezone,
     ).generateSavedAnswer(scope, input);
   } finally {
     database.close();
