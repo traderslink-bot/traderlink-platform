@@ -15,6 +15,7 @@ export type DashboardNavigationIconKey =
   | "import"
   | "lab"
   | "manualEntry"
+  | "newspaper"
   | "overview"
   | "reflection"
   | "results"
@@ -35,7 +36,7 @@ export type DashboardNavigationItem = Readonly<{
 }>;
 
 export type DashboardNavigationGroup = Readonly<{
-  id: "trades" | "analytics" | "tradeAnalyzer";
+  id: "trades" | "pressReleases" | "analytics" | "tradeAnalyzer";
   label: string;
   icon: DashboardNavigationIconKey;
   items: readonly DashboardNavigationItem[];
@@ -99,6 +100,19 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
           label: "Rule Results",
           icon: "results" as const,
         }),
+      ]),
+    }),
+    Object.freeze({
+      id: "pressReleases" as const,
+      label: "Press Releases",
+      icon: "newspaper" as const,
+      items: Object.freeze([
+        Object.freeze({ href: "/press-releases", label: "All Press Releases", icon: "newspaper" as const }),
+        Object.freeze({ href: "/press-releases/news-filtered", label: "News Filtered", icon: "newspaper" as const }),
+        Object.freeze({ href: "/press-releases/market-cap", label: "All Market Cap", icon: "newspaper" as const }),
+        Object.freeze({ href: "/press-releases/market-cap/under-30m", label: "Under $30M", icon: "newspaper" as const }),
+        Object.freeze({ href: "/press-releases/market-cap/30m-50m", label: "$30M–$50M", icon: "newspaper" as const }),
+        Object.freeze({ href: "/press-releases/market-cap/50m-100m", label: "$50M–$100M", icon: "newspaper" as const }),
       ]),
     }),
     Object.freeze({
@@ -245,6 +259,12 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/data-decisions": "Data Decisions",
     "/account": "Account",
     "/notifications": "Notifications",
+    "/press-releases": "All Press Releases",
+    "/press-releases/news-filtered": "News Filtered",
+    "/press-releases/market-cap": "All Market Cap",
+    "/press-releases/market-cap/under-30m": "Under $30M Press Releases",
+    "/press-releases/market-cap/30m-50m": "$30M–$50M Press Releases",
+    "/press-releases/market-cap/50m-100m": "$50M–$100M Press Releases",
   });
 
 export const DASHBOARD_NAVIGATION_HREFS: readonly string[] = Object.freeze([
@@ -284,6 +304,7 @@ const DASHBOARD_HELP_TARGETS: readonly Readonly<DashboardHelpTarget & { route: s
     Object.freeze({ route: "/calendar", href: "/help/calendar", label: "Trading Calendar" }),
     Object.freeze({ route: "/imports", href: "/help/notifications-and-imports", label: "Import Trades" }),
     Object.freeze({ route: "/notifications", href: "/help/notifications-and-imports/notifications", label: "Notifications" }),
+    Object.freeze({ route: "/press-releases", href: "/help/notifications-and-imports/notifications", label: "Press Releases" }),
     Object.freeze({ route: "/data-decisions", href: "/help/data-decisions", label: "Data Decisions" }),
     Object.freeze({ route: "/ai-chat", href: "/help/ai-chat", label: "Links AI Chat" }),
     Object.freeze({ route: "/ai-reviews", href: "/help/ai-reviews", label: "AI Reviews" }),

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { DashboardShell } from "./dashboard-shell";
 import type { PlatformNotification } from "@/src/modules/platform/contracts/platform-notification-contracts";
 import { OfflineProjectionCapture } from "./pwa/offline-projection-capture";
+import type { PressReleaseUnreadCounts } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
 
 export {
   DashboardDataScopeChip,
@@ -28,6 +29,7 @@ export function TraderLinkPlatformDashboardTemplate({
   children,
   notifications = [],
   offlineScopeRef,
+  pressReleaseUnreadCounts = null,
 }: {
   accountCurrency: string | null;
   accountSelectionRef: string | null;
@@ -35,9 +37,13 @@ export function TraderLinkPlatformDashboardTemplate({
   children: ReactNode;
   notifications?: readonly PlatformNotification[];
   offlineScopeRef: string;
+  pressReleaseUnreadCounts?: PressReleaseUnreadCounts | null;
 }) {
   return (
-    <DashboardShell notifications={notifications}>
+    <DashboardShell
+      notifications={notifications}
+      pressReleaseUnreadCounts={pressReleaseUnreadCounts}
+    >
       <OfflineProjectionCapture
         accountCurrency={accountCurrency}
         accountSelectionRef={accountSelectionRef}

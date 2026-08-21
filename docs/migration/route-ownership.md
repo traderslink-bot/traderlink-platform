@@ -30,6 +30,9 @@
 | `/news/[ticker]` | News | F4 versioned named storage connected |
 | `/news/[ticker]/[slug]` | News | F4 News storage plus Platform-aware Academy progress connected |
 | `/news/free/[ticker]/[slug]` | News | F4 News storage connected; free access presentation preserved |
+| `/press-releases` | News with Platform Premium access | Authenticated aggregate channel over canonical News articles; no copied content |
+| `/press-releases/news-filtered` | News with Platform Premium access | Authenticated filtered-News channel with global per-user read state |
+| `/press-releases/market-cap/[...band]` | News with Platform Premium access | Authenticated aggregate and exact market-cap channels; stored market cap remains factual or blank |
 | `/watchlist` | Watchlist | F3 explicit storage and Platform access service connected |
 | `/watchlist/[symbol]` | Watchlist | F3 explicit storage and Platform access service connected |
 | `/watchlist/archive` | Watchlist | F3 explicit storage and Platform access service connected |

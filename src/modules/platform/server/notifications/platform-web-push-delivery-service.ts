@@ -4,7 +4,23 @@ import * as webPush from "web-push";
 
 import { createCanonicalUtcTimestamp } from "../database/platform-migration-contract";
 import type { PlatformWebPushConfiguration } from "./platform-web-push-configuration";
-import { PlatformWebPushRepository } from "./platform-web-push-repository";
+import type { PlatformWebPushClaimedDelivery } from "./platform-web-push-repository";
+
+export type PlatformWebPushDeliveryRepository = Readonly<{
+  claimNext(nowUtc: string): PlatformWebPushClaimedDelivery | null;
+  delivered(input: Readonly<{
+    deliveryRef: string;
+    subscriptionRef: string;
+    timestamp: string;
+  }>): void;
+  unavailable(input: Readonly<{
+    deliveryRef: string;
+    expired: boolean;
+    retryAtUtc: string | null;
+    subscriptionRef: string;
+    timestamp: string;
+  }>): void;
+}>;
 
 function statusCode(error: unknown): number | null {
   if (!error || typeof error !== "object") return null;
@@ -14,7 +30,7 @@ function statusCode(error: unknown): number | null {
 
 export class PlatformWebPushDeliveryService {
   constructor(
-    private readonly repository: PlatformWebPushRepository,
+    private readonly repository: PlatformWebPushDeliveryRepository,
     private readonly configuration: PlatformWebPushConfiguration,
   ) {
     webPush.setVapidDetails(
@@ -50,7 +66,10 @@ export class PlatformWebPushDeliveryService {
         },
         JSON.stringify(Object.freeze({
           destinationPath: delivery.destinationPath,
-          version: 1,
+          notificationBody: delivery.notificationBody,
+          notificationTag: delivery.notificationTag,
+          notificationTitle: delivery.notificationTitle,
+          version: 2,
         })),
         {
           TTL: 24 * 60 * 60,

@@ -195,6 +195,13 @@ Current owner: News migration/repository boundary in `src/modules/news` and
 `src/lib/news/news-article-store.ts`.
 
 - `news_articles`, `news_article_versions`.
+- Migration 0070 adds `news_article_read_receipts`,
+  `news_press_release_push_preferences` and
+  `news_press_release_push_deliveries`. These stay News-owned even though the
+  delivery rows reference Platform-owned encrypted device subscriptions. The
+  migration is applied to the protected development database. All three tables
+  began empty, and exact schema digest, foreign keys, quick check, integrity
+  check and post-migration backup/restore verification pass.
 
 F4 local resolution uses the protected `TRADERLINK_PLATFORM_DB_PATH`; the old
 `TRADERSLINK_NEWS_DB_PATH` is test-only isolation. The accepted single-node

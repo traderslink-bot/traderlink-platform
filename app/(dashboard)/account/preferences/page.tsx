@@ -9,6 +9,7 @@ import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/au
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformAccountProfileReadService } from "@/src/modules/platform/server/identity/platform-account-profile-read-service";
 import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
+import { PressReleaseDashboardRepository } from "@/src/modules/news/server/press-release-dashboard-repository";
 import { AccountSettingsLayout } from "../account-settings-layout";
 import { NotificationPreferences } from "../notification-preferences";
 import { OfflineDataSettings } from "../offline-data-settings";
@@ -24,10 +25,11 @@ export const revalidate = 0;
 
 export default async function AccountPreferencesPage() {
   const scope = await requireTraderLinkPlatformPageScope();
-  const { profile, notificationPreferences } = withReadonlyPlatformDatabase({}, (database) =>
+  const { profile, notificationPreferences, pressReleasePushChannels } = withReadonlyPlatformDatabase({}, (database) =>
     Object.freeze({
       profile: new PlatformAccountProfileReadService(database).get(scope),
       notificationPreferences: new PlatformNotificationRepository(database).readPreferences(scope),
+      pressReleasePushChannels: new PressReleaseDashboardRepository(database).readPushPreferences(scope),
     }));
 
   return (
@@ -42,6 +44,7 @@ export default async function AccountPreferencesPage() {
       <DashboardPanel title="Notifications">
         <NotificationPreferences
           initialDiscordDmCategories={notificationPreferences.discordDmCategories}
+          initialPressReleasePushChannels={pressReleasePushChannels}
           initialWebPushCategories={notificationPreferences.webPushCategories}
         />
       </DashboardPanel>

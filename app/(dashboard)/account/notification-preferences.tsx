@@ -23,8 +23,13 @@ import {
 } from "@/src/modules/platform/client/pwa/platform-web-push";
 import {
   saveDiscordDmNotificationCategories,
+  savePressReleasePushChannels,
   saveWebPushNotificationCategories,
 } from "./notification-preferences-actions";
+import {
+  PRESS_RELEASE_PUSH_CHANNELS,
+  type PressReleasePushChannel,
+} from "@/src/modules/news/contracts/press-release-dashboard-contracts";
 
 const labels: Readonly<Record<PlatformNotificationCategory, string>> = Object.freeze({
   ai_review: "AI Reviews",
@@ -33,6 +38,13 @@ const labels: Readonly<Record<PlatformNotificationCategory, string>> = Object.fr
   chart_update: "Chart updates",
   data_decision: "Data Decisions",
   statement_import: "Statement imports",
+});
+
+const pressReleaseLabels: Readonly<Record<PressReleasePushChannel, string>> = Object.freeze({
+  news_filtered: "News Filtered",
+  market_cap_under_30m: "Market cap under $30M",
+  market_cap_30m_to_50m: "Market cap $30M–$50M",
+  market_cap_50m_to_100m: "Market cap $50M–$100M",
 });
 
 function successMessage(message: string): boolean {
@@ -45,13 +57,16 @@ function successMessage(message: string): boolean {
 
 export function NotificationPreferences({
   initialDiscordDmCategories,
+  initialPressReleasePushChannels,
   initialWebPushCategories,
 }: {
   initialDiscordDmCategories: readonly PlatformNotificationCategory[];
+  initialPressReleasePushChannels: readonly PressReleasePushChannel[];
   initialWebPushCategories: readonly PlatformNotificationCategory[];
 }) {
   const [selected, setSelected] = useState<readonly PlatformNotificationCategory[]>(initialDiscordDmCategories);
   const [pushSelected, setPushSelected] = useState<readonly PlatformNotificationCategory[]>(initialWebPushCategories);
+  const [pressReleasePushSelected, setPressReleasePushSelected] = useState<readonly PressReleasePushChannel[]>(initialPressReleasePushChannels);
   const [pushState, setPushState] = useState<PlatformWebPushBrowserState>("checking");
   const [discordMessage, setDiscordMessage] = useState<string | null>(null);
   const [pushMessage, setPushMessage] = useState<string | null>(null);
@@ -83,6 +98,12 @@ export function NotificationPreferences({
       : current.filter((value) => value !== category));
   }
 
+  function togglePressReleasePush(channel: PressReleasePushChannel, checked: boolean): void {
+    setPressReleasePushSelected((current) => checked
+      ? Object.freeze([...current, channel].filter((value, index, values) => values.indexOf(value) === index))
+      : current.filter((value) => value !== channel));
+  }
+
   function save(): void {
     startTransition(async () => {
       const result = await saveDiscordDmNotificationCategories(selected);
@@ -105,6 +126,9 @@ export function NotificationPreferences({
     startTransition(async () => {
       try {
         await enablePlatformWebPush(pushSelected, pushPreparation);
+        const pressReleaseResult = await savePressReleasePushChannels(pressReleasePushSelected);
+        if (!pressReleaseResult.ok) throw new Error(pressReleaseResult.message);
+        setPressReleasePushSelected(pressReleaseResult.channels as readonly PressReleasePushChannel[]);
         setPushState("enabled");
         setPushMessage("Push notifications enabled on this device.");
       } catch (error) {
@@ -137,12 +161,18 @@ export function NotificationPreferences({
 
   function savePush(): void {
     startTransition(async () => {
-      const result = await saveWebPushNotificationCategories(pushSelected);
-      if (result.ok) {
+      const [result, pressReleaseResult] = await Promise.all([
+        saveWebPushNotificationCategories(pushSelected),
+        savePressReleasePushChannels(pressReleasePushSelected),
+      ]);
+      if (result.ok && pressReleaseResult.ok) {
         setPushSelected(result.categories as readonly PlatformNotificationCategory[]);
+        setPressReleasePushSelected(pressReleaseResult.channels as readonly PressReleasePushChannel[]);
         setPushMessage("Push notification preferences saved.");
-      } else {
+      } else if (!result.ok) {
         setPushMessage(result.message);
+      } else if (!pressReleaseResult.ok) {
+        setPushMessage(pressReleaseResult.message);
       }
     });
   }
@@ -175,7 +205,7 @@ export function NotificationPreferences({
         Push notifications
       </Typography>
       <Typography color="text.secondary" variant="body2">
-        Choose which generic TraderLink alerts may appear on devices where you enable push. Lock-screen alerts never include tickers, P/L, prices, quantities, account details, statement names, notes or AI Review text.
+        Choose which TraderLink alerts may appear on devices where you enable push. Account and trading alerts stay private and generic. Press release alerts show the public ticker and headline so you can open the article directly.
       </Typography>
       {pushState === "unsupported" ? <Alert severity="info">Push notifications are not supported in this browser.</Alert> : null}
       {pushState === "denied" ? <Alert severity="warning">Push notifications are blocked in this browser&apos;s settings. Change this site&apos;s notification permission in your browser settings if you want to enable them.</Alert> : null}
@@ -189,6 +219,20 @@ export function NotificationPreferences({
             control={<Checkbox checked={pushSelected.includes(category)} disabled={pushState === "unsupported" || pushState === "denied"} onChange={(event) => togglePush(category, event.target.checked)} />}
             key={`push-${category}`}
             label={labels[category]}
+          />
+        ))}
+      </Stack>
+      <Divider />
+      <Typography sx={{ fontWeight: 800 }} variant="subtitle2">Press release alerts</Typography>
+      <Typography color="text.secondary" variant="body2">
+        These choices match the Press Releases channels in your dashboard. Each alert opens the article directly in its dashboard drawer.
+      </Typography>
+      <Stack spacing={0.25}>
+        {PRESS_RELEASE_PUSH_CHANNELS.map((channel) => (
+          <FormControlLabel
+            control={<Checkbox checked={pressReleasePushSelected.includes(channel)} disabled={pushState === "unsupported" || pushState === "denied"} onChange={(event) => togglePressReleasePush(channel, event.target.checked)} />}
+            key={`press-release-push-${channel}`}
+            label={pressReleaseLabels[channel]}
           />
         ))}
       </Stack>

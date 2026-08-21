@@ -12,6 +12,8 @@ import { PlatformNotificationRepository } from "@/src/modules/platform/server/no
 import { JournalAccountRepository } from "@/src/modules/journal/server/accounts/journal-account-repository";
 import { JournalAccountService } from "@/src/modules/journal/server/accounts/journal-account-service";
 import { PwaLifecycle } from "../pwa/pwa-lifecycle";
+import { PressReleaseDashboardRepository } from "@/src/modules/news/server/press-release-dashboard-repository";
+import { hasPressReleaseDashboardAccess } from "@/src/modules/news/server/press-release-dashboard-access";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -36,15 +38,17 @@ export default async function DashboardLayout({
 }: {
   children: ReactNode;
 }) {
-  let scope;
+  let identity;
   try {
-    scope = (await requireTraderLinkPlatformPageIdentity()).scope;
+    identity = await requireTraderLinkPlatformPageIdentity();
   } catch (error) {
     if (process.env.NODE_ENV === "production") {
       redirect("/api/auth/discord/login?returnTo=%2Fworkspace");
     }
     throw error;
   }
+  const scope = identity.scope;
+  const canReadPressReleases = hasPressReleaseDashboardAccess(identity);
   const dashboardContext = withReadonlyPlatformDatabase({}, (database) => {
     const activeAccount = scope.activeAccountId
       ? new JournalAccountService(new JournalAccountRepository(database))
@@ -53,6 +57,9 @@ export default async function DashboardLayout({
     return Object.freeze({
       activeAccount,
       notifications: new PlatformNotificationRepository(database).list(scope, 5),
+      pressReleaseUnreadCounts: canReadPressReleases
+        ? new PressReleaseDashboardRepository(database).unreadCounts(scope)
+        : null,
     });
   });
   const accountSelectionRef = scope.activeAccountId
@@ -69,6 +76,7 @@ export default async function DashboardLayout({
         accountTimezone={dashboardContext.activeAccount?.tradingTimezone ?? null}
         notifications={dashboardContext.notifications}
         offlineScopeRef={offlineScopeRef}
+        pressReleaseUnreadCounts={dashboardContext.pressReleaseUnreadCounts}
       >
         {children}
       </TraderLinkPlatformDashboardTemplate>

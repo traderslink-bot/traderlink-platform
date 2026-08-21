@@ -18,6 +18,7 @@ import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import MenuOpenRoundedIcon from "@mui/icons-material/MenuOpenRounded";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import NoteAltRoundedIcon from "@mui/icons-material/NoteAltRounded";
+import NewspaperRoundedIcon from "@mui/icons-material/NewspaperRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import QueryStatsRoundedIcon from "@mui/icons-material/QueryStatsRounded";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
@@ -33,6 +34,7 @@ import TravelExploreRoundedIcon from "@mui/icons-material/TravelExploreRounded";
 import ViewDayRoundedIcon from "@mui/icons-material/ViewDayRounded";
 import WifiOffRoundedIcon from "@mui/icons-material/WifiOffRounded";
 import Box from "@mui/material/Box";
+import Badge from "@mui/material/Badge";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Collapse from "@mui/material/Collapse";
@@ -71,6 +73,10 @@ import {
 } from "./ai-chat-drawer-events";
 import type { CoachAiDailyCompanionContextSelector } from "@/src/modules/coach/contracts/ai-daily-companion-contracts";
 import { PushNotificationSetupBanner } from "./pwa/push-notification-setup-banner";
+import {
+  PRESS_RELEASE_CHANNEL_DEFINITIONS,
+  type PressReleaseUnreadCounts,
+} from "@/src/modules/news/contracts/press-release-dashboard-contracts";
 
 const expandedWidth = 272;
 const collapsedWidth = 76;
@@ -96,6 +102,7 @@ function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
     import: <CloudUploadRoundedIcon />,
     lab: <ScienceRoundedIcon />,
     manualEntry: <NoteAltRoundedIcon />,
+    newspaper: <NewspaperRoundedIcon />,
     overview: <SpaceDashboardRoundedIcon />,
     reflection: <NoteAltRoundedIcon />,
     results: <QueryStatsRoundedIcon />,
@@ -119,6 +126,16 @@ function isActive(pathname: string, href: string): boolean {
   return activeHref === href;
 }
 
+function pressReleaseUnreadCount(
+  href: string,
+  counts: PressReleaseUnreadCounts | null,
+): number {
+  const channel = PRESS_RELEASE_CHANNEL_DEFINITIONS.find(
+    (definition) => definition.href === href,
+  )?.channel;
+  return channel ? counts?.[channel] ?? 0 : 0;
+}
+
 function NavigationLink({
   collapsed,
   offline,
@@ -126,6 +143,7 @@ function NavigationLink({
   onNavigate,
   onOpenAiChat,
   pathname,
+  unreadCount = 0,
 }: {
   collapsed: boolean;
   offline: boolean;
@@ -133,6 +151,7 @@ function NavigationLink({
   onNavigate: () => void;
   onOpenAiChat: () => void;
   pathname: string;
+  unreadCount?: number;
 }) {
   const opensAiChat = !offline && item.href === "/ai-chat";
   const link = (
@@ -178,11 +197,37 @@ function NavigationLink({
           justifyContent: "center",
         }}
       >
-        {navigationIcon(item.icon)}
+        {collapsed && unreadCount > 0 ? (
+          <Badge badgeContent={unreadCount} color="error" max={99}>
+            {navigationIcon(item.icon)}
+          </Badge>
+        ) : navigationIcon(item.icon)}
       </ListItemIcon>
       {collapsed ? null : (
         <ListItemText
-          primary={item.label}
+          primary={(
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}>
+              <span>{item.label}</span>
+              {unreadCount > 0 ? (
+                <Box
+                  component="span"
+                  sx={{
+                    bgcolor: "error.main",
+                    borderRadius: 5,
+                    color: "error.contrastText",
+                    fontSize: 11,
+                    fontWeight: 800,
+                    lineHeight: "20px",
+                    minWidth: 20,
+                    px: 0.75,
+                    textAlign: "center",
+                  }}
+                >
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </Box>
+              ) : null}
+            </Stack>
+          )}
           slotProps={{
             primary: {
               sx: {
@@ -209,10 +254,12 @@ export function DashboardShell({
   children,
   notifications = [],
   offline = false,
+  pressReleaseUnreadCounts = null,
 }: {
   children: ReactNode;
   notifications?: readonly PlatformNotification[];
   offline?: boolean;
+  pressReleaseUnreadCounts?: PressReleaseUnreadCounts | null;
 }) {
   const pathname = usePathname();
   const pageHelpTarget = offline ? null : dashboardHelpTarget(pathname);
@@ -227,6 +274,7 @@ export function DashboardShell({
   >({
     trades: pathname.startsWith("/trades"),
     analytics: pathname.startsWith("/analytics") && !pathname.startsWith("/analytics/trade-analyzer"),
+    pressReleases: pathname.startsWith("/press-releases"),
     tradeAnalyzer: pathname.startsWith("/analytics/trade-analyzer"),
   });
 
@@ -347,6 +395,9 @@ export function DashboardShell({
             {DASHBOARD_MAIN_NAVIGATION_GROUPS.map((group, groupIndex) => {
               const open = expandedGroups[group.id] || group.items.some((item) =>
                 isActive(pathname, item.href));
+              const groupUnreadCount = group.id === "pressReleases"
+                ? pressReleaseUnreadCounts?.all ?? 0
+                : 0;
               return (
                 <Box key={group.id}>
                   {compact && groupIndex > 0 ? (
@@ -367,7 +418,29 @@ export function DashboardShell({
                         {navigationIcon(group.icon)}
                       </ListItemIcon>
                       <ListItemText
-                        primary={group.label}
+                        primary={(
+                          <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between" }}>
+                            <span>{group.label}</span>
+                            {groupUnreadCount > 0 ? (
+                              <Box
+                                component="span"
+                                sx={{
+                                  bgcolor: "error.main",
+                                  borderRadius: 5,
+                                  color: "error.contrastText",
+                                  fontSize: 11,
+                                  fontWeight: 800,
+                                  lineHeight: "20px",
+                                  minWidth: 20,
+                                  px: 0.75,
+                                  textAlign: "center",
+                                }}
+                              >
+                                {groupUnreadCount > 99 ? "99+" : groupUnreadCount}
+                              </Box>
+                            ) : null}
+                          </Stack>
+                        )}
                         slotProps={{
                           primary: {
                             sx: { fontSize: 13, fontWeight: 720 },
@@ -392,6 +465,10 @@ export function DashboardShell({
                           onNavigate={closeMobile}
                           onOpenAiChat={openAiChat}
                           pathname={pathname}
+                          unreadCount={pressReleaseUnreadCount(
+                            item.href,
+                            pressReleaseUnreadCounts,
+                          )}
                         />
                       ))}
                     </List>

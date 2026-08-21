@@ -21,6 +21,7 @@ import { dailyTradeYahooAnalyzerMigration } from "@/src/modules/level-analysis/s
 import { academyProgressMigration } from "@/src/modules/academy/server/database/migrations/0013_academy_progress";
 import { watchlistStorageMigration } from "@/src/modules/watchlist/server/database/migrations/0014_watchlist_storage";
 import { newsContentMigration } from "@/src/modules/news/server/database/migrations/0015_news_content";
+import { newsPressReleaseDashboardMigration } from "@/src/modules/news/server/database/migrations/0070_news_press_release_dashboard";
 import { affiliateAttributionMigration } from "@/src/modules/affiliate/server/database/migrations/0016_affiliate_attribution";
 import { coachWeeklyReviewsMigration } from "@/src/modules/coach/server/database/migrations/0025_coach_weekly_reviews";
 import { coachMonthlyReviewsMigration } from "@/src/modules/coach/server/database/migrations/0026_coach_monthly_reviews";
@@ -356,6 +357,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/coach/server/database/migrations/0069_coach_ai_chat_luna_default.ts",
       migration: coachAiChatLunaDefaultMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/news/server/database/migrations/0070_news_press_release_dashboard.ts",
+      migration: newsPressReleaseDashboardMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -647,6 +652,11 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "coach_ai_relationship_memories",
       "coach_ai_relationship_memory_versions",
       "coach_ai_relationship_memory_events",
+    ]),
+    "0070_news_press_release_dashboard": Object.freeze([
+      "news_article_read_receipts",
+      "news_press_release_push_preferences",
+      "news_press_release_push_deliveries",
     ]),
   });
 

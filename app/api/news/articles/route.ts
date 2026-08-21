@@ -5,6 +5,9 @@ import {
   type NewsArticleInput,
   upsertNewsArticle,
 } from "@/src/lib/news/news-article-store";
+import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
+import { loadPlatformWebPushEncryptionConfiguration } from "@/src/modules/platform/server/notifications/platform-web-push-configuration";
+import { PressReleaseWebPushRepository } from "@/src/modules/news/server/press-release-web-push-repository";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -83,6 +86,18 @@ export async function POST(request: Request): Promise<Response> {
     revalidatePath(freeArticlePath);
     revalidatePath(`/news/${article.ticker}`);
     revalidatePath("/news");
+    revalidatePath("/press-releases", "layout");
+
+    try {
+      const encryption = loadPlatformWebPushEncryptionConfiguration();
+      withPlatformDatabase({ mode: "runtime" }, (database) =>
+        new PressReleaseWebPushRepository(database, encryption).enqueueArticle(article));
+    } catch (error) {
+      console.error("News article push delivery could not be queued.", {
+        articleId: article.id,
+        errorName: error instanceof Error ? error.name : "UnknownError",
+      });
+    }
 
     return Response.json({
       ok: true,

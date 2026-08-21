@@ -137,15 +137,16 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
       Object.freeze({
         id: "push-notifications",
         title: "Turn on push notifications",
-        summary: "Choose the update categories that may show a generic alert on this device.",
-        keywords: Object.freeze(["push notifications", "enable push", "lock screen", "permission", "phone alerts"]),
+        summary: "Choose account updates and press release channels that may alert this device.",
+        keywords: Object.freeze(["push notifications", "press releases", "news filtered", "market cap", "lock screen", "permission", "phone alerts"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "steps", items: Object.freeze([
             Object.freeze({ title: "1. Open Notifications settings", text: "In the installed app, select Set up notifications in the notice at the top of the page. You can also open Account, choose Preferences and find Push notifications." }),
-            Object.freeze({ title: "2. Choose categories", text: "Choose AI Reviews, broker connection, broker imports, Data Decisions, chart updates, statement imports, or any combination that helps you." }),
+            Object.freeze({ title: "2. Choose alerts", text: "Choose account and trading updates, then choose the News Filtered and market-cap Press Releases channels you want on this device." }),
             Object.freeze({ title: "3. Enable this device", text: "Select Enable push notifications. TraderLink asks the browser for permission only after you select this button." }),
           ]) }),
-          Object.freeze({ kind: "callout", title: "Lock-screen alerts stay generic", text: "Push alerts never show tickers, P/L, prices, quantities, account details, statement names, broker identity, notes or AI Review text. Select the alert to open the signed-in TraderLink page where normal access checks still apply." }),
+          Object.freeze({ kind: "callout", title: "Private alerts stay generic", text: "Account and trading alerts never show tickers, P/L, prices, quantities, account details, statement names, broker identity, notes or AI Review text. Press release alerts may show the public ticker and headline so you know which public article arrived." }),
+          Object.freeze({ kind: "paragraph", text: "A press release alert opens the signed-in Press Releases page and shows that article in the details drawer. Reading it marks the article as read across every Press Releases channel where it appears." }),
           Object.freeze({ kind: "paragraph", text: "If you do not want push notifications, select Don't show again in the installed-app notice. You can still turn them on later from Account Preferences." }),
           Object.freeze({ kind: "paragraph", text: "Push notifications are separate from the Notifications page and Discord messages. Turning push off on one device does not remove in-app updates or change your Discord choices." }),
         ]),

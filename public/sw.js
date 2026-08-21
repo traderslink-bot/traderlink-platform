@@ -25,6 +25,18 @@ function safeDestinationPath(value) {
     : "/notifications";
 }
 
+function safeNotificationText(value, maximum, fallback) {
+  if (typeof value !== "string") return fallback;
+  const cleaned = value.replace(/\s+/g, " ").trim();
+  return cleaned ? cleaned.slice(0, maximum) : fallback;
+}
+
+function safeNotificationTag(value) {
+  return typeof value === "string" && /^[a-z0-9:_-]{1,120}$/i.test(value)
+    ? value
+    : "traderlink-update";
+}
+
 function clearCurrentOfflineScope() {
   return new Promise((resolve) => {
     const request = indexedDB.open("traderlink-pwa-v1", 3);
@@ -147,19 +159,29 @@ self.addEventListener("sync", (event) => {
 
 self.addEventListener("push", (event) => {
   let path = "/notifications";
+  let title = "TraderLink Platform";
+  let body = "You have a new TraderLink update.";
+  let tag = "traderlink-update";
   try {
     const data = event.data?.json();
-    if (data?.version === 1) path = safeDestinationPath(data.destinationPath);
+    if (data?.version === 1 || data?.version === 2) {
+      path = safeDestinationPath(data.destinationPath);
+    }
+    if (data?.version === 2) {
+      title = safeNotificationText(data.notificationTitle, 80, title);
+      body = safeNotificationText(data.notificationBody, 240, body);
+      tag = safeNotificationTag(data.notificationTag);
+    }
   } catch {
     path = "/notifications";
   }
   event.waitUntil(
-    self.registration.showNotification("TraderLink Platform", {
-      body: "You have a new TraderLink update.",
+    self.registration.showNotification(title, {
+      body,
       icon: "/icons/traderlink-192.png",
       badge: "/icons/traderlink-192.png",
       data: { path },
-      tag: "traderlink-update",
+      tag,
     }),
   );
 });
