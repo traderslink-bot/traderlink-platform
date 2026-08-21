@@ -46,6 +46,7 @@ import { coachAiReviewAuthoredOutputMigration } from "@/src/modules/coach/server
 import { coachAiChatRelationshipMemoryMigration } from "@/src/modules/coach/server/database/migrations/0067_coach_ai_chat_relationship_memory";
 import { coachAiChatDeterministicFastPathMigration } from "@/src/modules/coach/server/database/migrations/0068_coach_ai_chat_deterministic_fast_path";
 import { coachAiChatLunaDefaultMigration } from "@/src/modules/coach/server/database/migrations/0069_coach_ai_chat_luna_default";
+import { coachAiChatQualityFeedbackMigration } from "@/src/modules/coach/server/database/migrations/0071_coach_ai_chat_quality_feedback";
 import { coachAiChatActionDraftsMigration } from "@/src/modules/coach/server/database/migrations/0055_coach_ai_chat_action_drafts";
 import { coachAiChatActionExpansionMigration } from "@/src/modules/coach/server/database/migrations/0056_coach_ai_chat_action_expansion";
 import { coachAiChatCacheAccountingMigration } from "@/src/modules/coach/server/database/migrations/0058_coach_ai_chat_cache_accounting";
@@ -361,6 +362,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/news/server/database/migrations/0070_news_press_release_dashboard.ts",
       migration: newsPressReleaseDashboardMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/coach/server/database/migrations/0071_coach_ai_chat_quality_feedback.ts",
+      migration: coachAiChatQualityFeedbackMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -652,6 +657,10 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "coach_ai_relationship_memories",
       "coach_ai_relationship_memory_versions",
       "coach_ai_relationship_memory_events",
+    ]),
+    "0071_coach_ai_chat_quality_feedback": Object.freeze([
+      "coach_ai_chat_quality_cases",
+      "coach_ai_chat_quality_events",
     ]),
     "0070_news_press_release_dashboard": Object.freeze([
       "news_article_read_receipts",

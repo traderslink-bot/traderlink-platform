@@ -16,6 +16,8 @@ import {
   reconcileStaleCoachAiChatGenerations,
 } from "@/src/modules/coach/server/coach-ai-chat-generation-runtime";
 import { CoachAiChatEvidenceService } from "@/src/modules/coach/server/coach-ai-chat-evidence-service";
+import { CoachAiChatQualityFeedbackRepository } from "@/src/modules/coach/server/coach-ai-chat-quality-feedback-repository";
+import { CoachAiChatRepository } from "@/src/modules/coach/server/coach-ai-chat-repository";
 import type { CoachAiChatPageContext } from "@/src/modules/coach/contracts/ai-chat-page-context-contracts";
 import {
   CoachAiChatPageContextValidationError,
@@ -27,12 +29,41 @@ import {
 } from "@/app/(dashboard)/trade-tracker/trade-tracker-platform-data";
 import { platformFailure } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
+import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { CoachReviewDeliveryScheduleRepository } from "@/src/modules/coach/server/coach-weekly-review-schedule-repository";
 import { withJournalAnalyticsReportingDashboardRuntime } from
   "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+function completedAnswerIsUnavailable(text: string | null): boolean {
+  if (!text) return false;
+  return /(?:i can.t give you that figure reliably|i don.t have any completed trades|i don.t have a complete ranked result)/iu.test(text);
+}
+
+function captureAutomaticQualityCase(
+  scope: ReturnType<typeof requireTraderLinkPlatformRequestScope>,
+  conversationId: string,
+  assistantMessageId: string,
+  state: "completed" | "pending" | "blocked" | "failed",
+): void {
+  if (state === "pending") return;
+  withPlatformDatabase({ mode: "runtime" }, (database) => {
+    const chat = new CoachAiChatRepository(database);
+    const pair = chat.readGenerationPair(scope, conversationId, assistantMessageId);
+    const quality = new CoachAiChatQualityFeedbackRepository(database);
+    if (state === "blocked" || state === "failed" || pair.assistantMessage.generationState === "failed") {
+      quality.capture(scope, {
+        assistantMessageId,
+        eventKind: "automatic_failure",
+        failureCode: pair.assistantMessage.failureCode,
+      });
+    } else if (completedAnswerIsUnavailable(pair.assistantMessage.assistantTextPrivate)) {
+      quality.capture(scope, { assistantMessageId, eventKind: "automatic_unavailable" });
+    }
+  });
+}
 
 type ConversationMessagesRouteContext = Readonly<{
   params: Promise<{ conversationId: string }>;
@@ -153,6 +184,7 @@ export async function POST(
         });
       }),
     });
+    captureAutomaticQualityCase(scope, id, result.assistantMessageId, result.state);
     const status = result.state === "completed" ? 200
       : result.state === "pending" ? 202
       : result.state === "blocked" ? 429

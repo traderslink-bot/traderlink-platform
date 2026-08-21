@@ -6,6 +6,7 @@ import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
 import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
 import FactCheckRoundedIcon from "@mui/icons-material/FactCheckRounded";
+import FlagRoundedIcon from "@mui/icons-material/FlagRounded";
 import GroupRoundedIcon from "@mui/icons-material/GroupRounded";
 import HealthAndSafetyRoundedIcon from "@mui/icons-material/HealthAndSafetyRounded";
 import NotificationsNoneRoundedIcon from "@mui/icons-material/NotificationsNoneRounded";
@@ -40,6 +41,7 @@ const navigation = [
   { href: "/admin/journal/statement-formats", label: "Statement Formats", icon: <SchemaRoundedIcon /> },
   { href: "/admin/journal/data-decisions", label: "Data Decisions", icon: <FactCheckRoundedIcon /> },
   { href: "/admin/journal/ai-reviews", label: "AI Reviews", icon: <AutoAwesomeRoundedIcon /> },
+  { href: "/admin/journal/links-quality", label: "Links AI Chat", icon: <FlagRoundedIcon /> },
   { href: "/admin/journal/notifications", label: "Notifications", icon: <NotificationsNoneRoundedIcon /> },
   { href: "/admin/journal/system", label: "System", icon: <HealthAndSafetyRoundedIcon /> },
   { href: "/admin/journal/errors", label: "Errors", icon: <ReportProblemRoundedIcon /> },

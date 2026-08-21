@@ -90,6 +90,12 @@ type GenerationResponse = Readonly<{
   actionDraft: CoachAiChatActionDraft | null;
 }>;
 
+type QualityFeedbackResponse = Readonly<{
+  status: "ready";
+  caseId: string;
+  eventKinds: readonly string[];
+}>;
+
 type ManualEntryDraftResponse = Readonly<{
   status: "ready";
   conversationId: string;
@@ -917,6 +923,7 @@ export function AiChatClient({
   const [meetLinksDirty, setMeetLinksDirty] = useState(false);
   const [meetLinksLeaveOpen, setMeetLinksLeaveOpen] = useState(false);
   const [retryRequest, setRetryRequest] = useState<RetryRequest | null>(null);
+  const [flaggedAnswerIds, setFlaggedAnswerIds] = useState<ReadonlySet<string>>(() => new Set());
   const [dailyContext, setDailyContext] = useState(initialContext);
   const initialScopeDate = initialContext?.tradingDate ?? currentEasternDate();
   const [analysisKind, setAnalysisKind] = useState<CoachAiChatAnalysisScope["kind"]>(
@@ -1329,6 +1336,19 @@ export function AiChatClient({
     }
   }
 
+  async function flagAnswer(messageId: string): Promise<void> {
+    if (!activeConversation || flaggedAnswerIds.has(messageId)) return;
+    try {
+      await readJson<QualityFeedbackResponse>(await fetch(
+        `${conversationsEndpoint}/${activeConversation.conversationId}/messages/${messageId}/quality-feedback`,
+        { method: "POST", headers: { "content-type": "application/json" }, body: "{}" },
+      ));
+      setFlaggedAnswerIds((current) => new Set([...current, messageId]));
+    } catch {
+      setNotice("That answer could not be flagged right now. Please try again.");
+    }
+  }
+
   function openMemory(): void {
     savedScrollTopRef.current = messageScrollRef.current?.scrollTop ?? 0;
     setMemoryOpen(true);
@@ -1678,6 +1698,16 @@ export function AiChatClient({
                         : "Links couldn’t finish that answer. Your question is saved, and you can try again."}</Typography>
                         : <Typography sx={{ overflowWrap: "anywhere", whiteSpace: "pre-wrap" }} variant="body2">{text}</Typography>}
                   </Box>
+                  {!user && message.generationState === "completed" ? (
+                    <Button
+                      disabled={flaggedAnswerIds.has(message.messageId)}
+                      onClick={() => void flagAnswer(message.messageId)}
+                      size="small"
+                      sx={{ alignSelf: "flex-start", fontSize: 11, minWidth: 0, mt: 0.25, px: 0.5 }}
+                    >
+                      {flaggedAnswerIds.has(message.messageId) ? "Flagged" : "Not helpful"}
+                    </Button>
+                  ) : null}
                   {!user && message.generationState === "completed" ? (
                     <EvidenceCards cards={evidenceByMessageId.get(message.messageId) ?? []} />
                   ) : null}

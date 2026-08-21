@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { JournalAdminOverviewService } from "@/src/modules/journal/server/administration/journal-admin-overview-service";
 import { createJournalAdminReadContext } from "@/src/modules/journal/server/administration/journal-admin-read-helpers";
 import { PlatformAdminErrorService } from "@/src/modules/platform/server/administration/platform-admin-error-service";
+import { isCoachAiChatQualityFeedbackSchemaAvailable } from "@/src/modules/coach/server/coach-ai-chat-quality-feedback-repository";
 import { withJournalAdminPageDatabase } from "@/src/modules/platform/server/administration/require-journal-admin-page";
 import { JournalAdminShell } from "./journal-admin-shell";
 
@@ -37,9 +38,13 @@ export default async function JournalAdminLayout({ children }: { children: React
       const recentMoomooErrors = new PlatformAdminErrorService(
         createJournalAdminReadContext({ database, scope }),
       ).recentFailureCount();
+      const linksQualityAlerts = isCoachAiChatQualityFeedbackSchemaAvailable(database)
+        ? database.prepare<[], { count: number }>(`SELECT COUNT(*) AS count
+FROM coach_ai_chat_quality_cases WHERE case_state = 'open'`).get()!.count
+        : 0;
       return Object.freeze({
         alertCount: overview.imports.systemFailed +
-          overview.formats.privacyReviewRequired + recentMoomooErrors,
+          overview.formats.privacyReviewRequired + recentMoomooErrors + linksQualityAlerts,
         dataAsOfUtc: overview.coverage.dataAsOfUtc,
         operatorRole: scope.role === "journal_owner_admin"
           ? "Owner administrator"
