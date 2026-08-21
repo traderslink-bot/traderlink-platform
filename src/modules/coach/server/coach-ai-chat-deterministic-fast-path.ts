@@ -116,7 +116,7 @@ function normalizeScopeQuestion(value: string): string {
     .normalize("NFKC")
     .toLocaleLowerCase("en-US")
     .replace(/[’']/gu, "")
-    .replace(/[^a-z0-9-]+/gu, " ")
+    .replace(/[^a-z0-9\/-]+/gu, " ")
     .trim()
     .replace(/\s+/gu, " ");
 }
@@ -164,12 +164,29 @@ function easternDate(now: Date): string {
   return `${value("year")}-${value("month")}-${value("day")}`;
 }
 
+function shiftCalendarDate(date: string, input: Readonly<{
+  days?: number;
+  months?: number;
+  years?: number;
+}>): string {
+  const value = new Date(`${date}T12:00:00.000Z`);
+  if (input.days) value.setUTCDate(value.getUTCDate() + input.days);
+  if (input.months) value.setUTCMonth(value.getUTCMonth() + input.months);
+  if (input.years) value.setUTCFullYear(value.getUTCFullYear() + input.years);
+  return value.toISOString().slice(0, 10);
+}
+
+function calendarYearScope(year: string): CoachAiChatAnalysisScope {
+  return Object.freeze({ kind: "custom", startDate: `${year}-01-01`, endDate: `${year}-12-31` });
+}
+
 function explicitQuestionScope(question: string, now: Date): QuestionScopeMatch | null {
+  const currentDate = easternDate(now);
   const relative = /\b(?:last|past) ([1-9][0-9]{0,2}) days\b/u.exec(question);
   if (relative) {
     const days = Number(relative[1]);
     if (days <= 365) {
-      const endDate = easternDate(now);
+      const endDate = currentDate;
       const start = new Date(`${endDate}T12:00:00.000Z`);
       start.setUTCDate(start.getUTCDate() - (days - 1));
       return Object.freeze({
@@ -177,6 +194,20 @@ function explicitQuestionScope(question: string, now: Date): QuestionScopeMatch 
         phrase: relative[0],
       });
     }
+  }
+  if (/\btoday\b/u.test(question)) {
+    return Object.freeze({ scope: Object.freeze({ kind: "day", date: currentDate }), phrase: "today" });
+  }
+  if (/\byesterday\b/u.test(question)) {
+    return Object.freeze({
+      scope: Object.freeze({ kind: "day", date: shiftCalendarDate(currentDate, { days: -1 }) }),
+      phrase: "yesterday",
+    });
+  }
+  const slashDay = /\b(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/((?:19|20)\d{2})\b/u.exec(question);
+  if (slashDay) {
+    const date = calendarDate(slashDay[3], slashDay[1], slashDay[2]);
+    if (date) return Object.freeze({ scope: Object.freeze({ kind: "day", date }), phrase: slashDay[0] });
   }
   const isoDay = /\b((?:19|20)\d{2})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])\b/u.exec(question);
   if (isoDay) {
@@ -197,12 +228,36 @@ function explicitQuestionScope(question: string, now: Date): QuestionScopeMatch 
       phrase: namedMonth[0],
     });
   }
-  const year = /\bin ((?:19|20)\d{2})\b/u.exec(question);
-  if (!year) return null;
-  return Object.freeze({
-    scope: Object.freeze({ kind: "custom", startDate: `${year[1]}-01-01`, endDate: `${year[1]}-12-31` }),
-    phrase: year[0],
-  });
+  const year = /\b(?:in|year) ((?:19|20)\d{2})\b/u.exec(question);
+  if (year) return Object.freeze({ scope: calendarYearScope(year[1]), phrase: year[0] });
+  if (/\bthis year\b/u.test(question)) {
+    return Object.freeze({ scope: calendarYearScope(currentDate.slice(0, 4)), phrase: "this year" });
+  }
+  if (/\blast year\b/u.test(question)) {
+    return Object.freeze({
+      scope: calendarYearScope(String(Number(currentDate.slice(0, 4)) - 1)),
+      phrase: "last year",
+    });
+  }
+  if (/\bthis month\b/u.test(question)) {
+    return Object.freeze({ scope: Object.freeze({ kind: "month", month: currentDate.slice(0, 7) }), phrase: "this month" });
+  }
+  if (/\blast month\b/u.test(question)) {
+    return Object.freeze({
+      scope: Object.freeze({ kind: "month", month: shiftCalendarDate(currentDate, { months: -1 }).slice(0, 7) }),
+      phrase: "last month",
+    });
+  }
+  if (/\bthis week\b/u.test(question)) {
+    return Object.freeze({ scope: Object.freeze({ kind: "week", anchorDate: currentDate }), phrase: "this week" });
+  }
+  if (/\blast week\b/u.test(question)) {
+    return Object.freeze({
+      scope: Object.freeze({ kind: "week", anchorDate: shiftCalendarDate(currentDate, { days: -7 }) }),
+      phrase: "last week",
+    });
+  }
+  return null;
 }
 
 export function resolveCoachAiChatQuestionAnalysisScope(
@@ -228,6 +283,21 @@ export function selectCoachAiChatDeterministicFastPath(
   const scopedQuestion = removeExplicitQuestionScope(normalized, scopeMatch);
   const summary = phraseRoute(scopedQuestion, SUMMARY_PHRASES);
   if (summary) {
+    if (summary === "best_trade" || summary === "worst_trade") {
+      return Object.freeze({
+        routeKey: summary,
+        request: Object.freeze({
+          contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
+          toolName: "query_trade_explorer",
+          resultView: "trades",
+          tradeSort: summary === "best_trade" ? "pnl_desc" : "pnl_asc",
+          pageSize: 1,
+          afterCursor: null,
+          moneyBasis: "net",
+        }),
+        ...(scopeMatch ? { analysisScopeOverride: scopeMatch.scope } : {}),
+      });
+    }
     const moneyBasis = summary === "gross_pnl" ? "gross" : "net";
     return Object.freeze({
       routeKey: summary,
@@ -256,6 +326,28 @@ export function selectCoachAiChatDeterministicFastPath(
     }),
     ...(scopeMatch ? { analysisScopeOverride: scopeMatch.scope } : {}),
   });
+}
+
+type TradeExplorerEvidenceRow = Readonly<{
+  displayedSymbol?: unknown;
+  direction?: unknown;
+  closeLocalDate?: unknown;
+  selectedPnlDecimal?: unknown;
+}>;
+
+type TradeExplorerEvidence = Readonly<{
+  currency?: unknown;
+  rows?: readonly TradeExplorerEvidenceRow[];
+}>;
+
+function tradeExplorerEvidence(value: unknown): TradeExplorerEvidence | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const evidence = (value as Readonly<{ evidence?: unknown }>).evidence;
+  if (!evidence || typeof evidence !== "object" || Array.isArray(evidence)) return null;
+  const record = evidence as Readonly<{ currency?: unknown; rows?: unknown }>;
+  return Array.isArray(record.rows)
+    ? Object.freeze({ currency: record.currency, rows: record.rows })
+    : null;
 }
 
 function partitionedResult(value: unknown): JournalAnalyticsPartitionedResponse | null {
@@ -458,12 +550,48 @@ function rankedAnswer(
   });
 }
 
+function individualTradeAnswer(
+  route: CoachAiChatDeterministicFastPathRoute,
+  dispatcher: CoachAiChatFactualToolDispatcher,
+  toolCallId: string,
+  value: unknown,
+): CoachAiChatAnswer {
+  const evidence = tradeExplorerEvidence(value);
+  const row = evidence?.rows?.[0];
+  if (!evidence || !row || typeof row.displayedSymbol !== "string" ||
+      (row.direction !== "long" && row.direction !== "short") ||
+      typeof row.closeLocalDate !== "string" || typeof row.selectedPnlDecimal !== "string" ||
+      typeof evidence.currency !== "string") {
+    return noFigureAnswer("I don’t have a complete ranked result for that question in this scope.");
+  }
+  const highest = route.routeKey === "best_trade";
+  const money = formatJournalAnalyticsMoney(row.selectedPnlDecimal, evidence.currency);
+  return answerWithEvidence({
+    dispatcher,
+    toolCallId,
+    directAnswer: `Your ${highest ? "most profitable" : "least profitable"} completed trade was ${row.displayedSymbol} ${row.direction}, closed on ${row.closeLocalDate}, with ${money} net P/L.`,
+    directPaths: Object.freeze([
+      "/evidence/rows/0/displayedSymbol",
+      "/evidence/rows/0/direction",
+      "/evidence/rows/0/closeLocalDate",
+      "/evidence/rows/0/selectedPnlDecimal",
+      "/evidence/currency",
+    ]),
+  });
+}
+
 export function runCoachAiChatDeterministicFastPath(
   route: CoachAiChatDeterministicFastPathRoute,
   dispatcher: CoachAiChatFactualToolDispatcher,
 ): CoachAiChatDeterministicFastPathResult {
   const toolCallId = "deterministic-factual-1";
   const toolResponse = dispatcher.dispatch(toolCallId, route.request);
+  if (route.routeKey === "best_trade" || route.routeKey === "worst_trade") {
+    return Object.freeze({
+      routeKey: route.routeKey,
+      answer: individualTradeAnswer(route, dispatcher, toolCallId, toolResponse.result),
+    });
+  }
   const response = partitionedResult(toolResponse.result);
   if (!response) throw new Error("TRADERLINK_COACH_DETERMINISTIC_RESULT_INVALID");
   const answer = route.request.toolName === "summarize_closed_trades"

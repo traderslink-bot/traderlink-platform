@@ -38,7 +38,10 @@ import {
 } from "@/src/modules/journal-analytics/server/journal-reporting-currency-fact-set";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
-const MAX_RULE_RESULT_DAYS = 62;
+// An all-history rule summary is a normal trader question. This remains
+// bounded to a large, explicit date span while preserving every matching
+// available trading day rather than silently substituting the last 62 days.
+const MAX_RULE_RESULT_DAYS = 1_500;
 const MAX_RULE_RESULT_EVENTS = 50;
 
 type RuleEvent = Readonly<{
@@ -83,10 +86,14 @@ function dateSpan(startDate: string, endDate: string): number {
     Date.parse(`${startDate}T12:00:00.000Z`)) / 86_400_000) + 1;
 }
 
-function exactKeys(value: object, expected: readonly string[]): void {
-  const allowed = new Set(expected);
+function exactKeys(
+  value: object,
+  required: readonly string[],
+  optional: readonly string[] = Object.freeze([]),
+): void {
+  const allowed = new Set([...required, ...optional]);
   if (Object.keys(value).some((key) => !allowed.has(key)) ||
-      Object.keys(value).length !== expected.length) invalid();
+      required.some((key) => !Object.hasOwn(value, key))) invalid();
 }
 
 function closingDateRange(scope: CoachAiChatAnalysisScope) {
@@ -280,15 +287,20 @@ export class CoachAiChatAnnotationContextService {
   ): CoachAiChatFactualToolResponse {
     if (request.contractVersion !== COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION ||
         request.toolName !== "get_trading_rule_results") invalid();
-    exactKeys(request, ["contractVersion", "toolName", "startDate", "endDate"]);
-    assertDate(request.startDate);
-    assertDate(request.endDate);
-    if (request.startDate > request.endDate ||
-        dateSpan(request.startDate, request.endDate) > MAX_RULE_RESULT_DAYS) invalid();
+    exactKeys(request, ["contractVersion", "toolName"], ["startDate", "endDate"]);
+    if ((request.startDate === undefined) !== (request.endDate === undefined)) invalid();
+    if (request.startDate !== undefined && request.endDate !== undefined) {
+      assertDate(request.startDate);
+      assertDate(request.endDate);
+      if (request.startDate > request.endDate ||
+          dateSpan(request.startDate, request.endDate) > MAX_RULE_RESULT_DAYS) invalid();
+    }
     const account = narrowWorkspaceAccessToAccount(scope, selectedAccountId);
     const latest = this.dashboard.getTradingDay(scope, { currency: null, requestedDate: null });
     const dates = latest.availableTradingDates.filter((date) =>
-      date >= request.startDate && date <= request.endDate);
+      (request.startDate === undefined || date >= request.startDate) &&
+      (request.endDate === undefined || date <= request.endDate));
+    if (dates.length > MAX_RULE_RESULT_DAYS) invalid();
     const events: RuleEvent[] = [];
     for (const date of dates) {
       const model = this.dashboard.getTradingDay(scope, {
@@ -378,8 +390,8 @@ export class CoachAiChatAnnotationContextService {
       contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,
       toolName: request.toolName,
       result: Object.freeze({
-        startDate: request.startDate,
-        endDate: request.endDate,
+        startDate: dates[0] ?? null,
+        endDate: dates.at(-1) ?? null,
         tradingDayCount: dates.length,
         summaries: summarize(events),
         events: Object.freeze(ordered.slice(0, MAX_RULE_RESULT_EVENTS).map((event) => Object.freeze({

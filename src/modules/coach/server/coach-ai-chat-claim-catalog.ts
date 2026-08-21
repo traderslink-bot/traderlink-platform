@@ -193,6 +193,26 @@ function claimEvidenceTokens(claim: CoachAiChatClaim): ReadonlySet<string> {
 }
 
 /**
+ * Provider pointer syntax is attribution, not the evidence authority. Select
+ * scalar claims from the server-saved tool result that support the text Links
+ * will actually return, so an equivalent wrapper path cannot discard a normal
+ * grounded answer.
+ */
+export function selectCoachAiChatClaimsForText(
+  claims: readonly CoachAiChatClaim[],
+  text: string,
+): readonly CoachAiChatClaim[] {
+  const textTokens = new Set(tokens(text));
+  return Object.freeze(claims.filter((claim) => {
+    const evidenceTokens = claimEvidenceTokens(claim);
+    if ([...evidenceTokens].some((token) => textTokens.has(token))) return true;
+    return typeof claim.exactValue === "string" &&
+      /^[\p{L}][\p{L} .'-]{0,79}$/u.test(claim.exactValue) &&
+      text.toLocaleLowerCase().includes(claim.exactValue.toLocaleLowerCase());
+  }));
+}
+
+/**
  * Returns whether one selected scalar claim is actually used by an evidence
  * statement. This lets the server drop harmless over-citation while the final
  * validator still rejects every unsupported exact token in the answer.
@@ -243,23 +263,10 @@ export function validateCoachAiChatExactFactTokens(input: Readonly<{
     if (selectedClaims.some((claim) => !claim || claim.toolCallId !== reference.toolCallId)) {
       throw new Error("TRADERLINK_COACH_UNGROUNDED_EXACT_FACT");
     }
-    const available = new Set<string>();
-    for (const claim of selectedClaims as readonly CoachAiChatClaim[]) {
-      for (const token of claimEvidenceTokens(claim)) available.add(token);
-    }
-    const statementTokens = new Set(tokens(reference.statement));
-    if ([...statementTokens].some((token) => !available.has(token))) {
-      throw new Error("TRADERLINK_COACH_UNGROUNDED_EXACT_FACT");
-    }
-    for (const claim of selectedClaims as readonly CoachAiChatClaim[]) {
-      if (!coachAiChatClaimSupportsStatement(claim, reference.statement)) {
-        const exactTokens = tokens(String(claim.exactValue ?? ""));
-        if (exactTokens.length > 0) {
-          throw new Error("TRADERLINK_COACH_UNUSED_EXACT_CLAIM");
-        }
-        throw new Error("TRADERLINK_COACH_UNUSED_TEXT_CLAIM");
-      }
-    }
+    // Cited tool-call identity and server-selected scalar claims are still
+    // mandatory. The final complete answer is checked below against their
+    // union; do not reject it merely because the model's short citation
+    // sentence omits a second scalar used in the direct answer.
   }
   const selected = new Set<string>();
   for (const reference of input.evidenceReferences) {

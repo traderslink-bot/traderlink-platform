@@ -299,11 +299,11 @@ export const coachAiChatFactualToolRegistry = Object.freeze([
   }),
   Object.freeze({
     name: "get_trading_rule_results" as const,
-    description: "Returns deterministic preset-rule outcomes and saved custom-rule reviews for a bounded period.",
+    description: "Returns deterministic preset-rule outcomes and saved custom-rule reviews for the selected analysis period or all available history.",
     supportedMetricIds: Object.freeze([]),
     supportedGroupings: Object.freeze([]),
     limitations: Object.freeze([
-      "A request covers at most 62 days and returns at most 50 individual result events.",
+      "A request covers at most 1,500 days and returns at most 50 individual result events; summaries still cover the complete selected range.",
       "Unavailable evidence remains N/A and custom rules without a saved selection remain Not selected.",
     ]),
     contractVersion: COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION,

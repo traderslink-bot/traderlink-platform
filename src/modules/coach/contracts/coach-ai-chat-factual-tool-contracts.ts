@@ -422,8 +422,9 @@ export type CoachAiChatTradingRulesRequest = Readonly<{
 export type CoachAiChatTradingRuleResultsRequest = Readonly<{
   contractVersion: typeof COACH_AI_CHAT_FACTUAL_TOOL_CONTRACT_VERSION;
   toolName: "get_trading_rule_results";
-  startDate: string;
-  endDate: string;
+  /** Omit both dates to use the enforced analysis scope, including all history. */
+  startDate?: string;
+  endDate?: string;
 }>;
 
 export type CoachAiChatTradeAnnotationsRequest = Readonly<{

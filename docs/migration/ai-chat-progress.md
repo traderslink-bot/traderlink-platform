@@ -23,6 +23,11 @@ separately coordinated.
 The current-plan technical implementation and local acceptance are complete.
 Production provider enablement, final caps and launch operations remain owner
 launch decisions. The parent plan is [TraderLink AI Companion Plan](ai-chat-plan.md).
+The owner-directed live-Luna recovery is controlled by the
+[Links AI Chat Question Bank and Live-Batch Recovery Plan](links-ai-chat-question-bank-plan.md)
+and tracked in its
+[progress record](links-ai-chat-question-bank-progress.md). The prior
+source-level capability inventory is not a working-product acceptance claim.
 The complete current-product target is the
 [Links AI Chat Current Dashboard Capability Matrix](ai-chat-current-dashboard-capability-matrix.md).
 The completed whole-feature audit is recorded in the

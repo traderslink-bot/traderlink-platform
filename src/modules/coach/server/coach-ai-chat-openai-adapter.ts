@@ -23,6 +23,7 @@ import {
   buildCoachAiChatClaimCatalog,
   buildCoachAiChatProviderToolResult,
   coachAiChatClaimSupportsStatement,
+  selectCoachAiChatClaimsForText,
   validateCoachAiChatExactFactTokens,
 } from
   "./coach-ai-chat-claim-catalog";
@@ -221,9 +222,11 @@ const tradingRulesInput = z.object({
   state: z.enum(["active", "paused", "retired", "all"]),
 }).strict();
 const tradingRuleResultsInput = z.object({
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/u),
-  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/u),
-}).strict();
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/u).optional(),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/u).optional(),
+}).strict().refine((value) => (value.startDate === undefined) === (value.endDate === undefined), {
+  message: "Provide both rule-result dates or neither.",
+});
 const tradeAnnotationsInput = z.object({
   roundTripId: z.string().uuid(),
 }).strict();
@@ -443,7 +446,7 @@ Create a reviewDeliveryChangeDraft only when the trader explicitly asks to chang
 
 Create an actionDraft only when the trader explicitly asks to change their reporting currency, mark one exact notification read, switch to one exact existing Journal account, create a new Trade Tracker account, save or revise a dated note on one exact Swing, classify one exact open position, change the exact Discord notification categories, turn existing AI Reviews on or off, request one exact eligible AI Review, replace the complete tag set on one exact completed trade or Swing position, add/change/pause/resume/retire one exact Trading Rule, or resolve one exact supported Data Decision. Before proposing it, call get_account_preferences, list_notifications, get_account_trading, get_account_ai_plan, get_trade_annotations, list_trading_rules, get_swing_position_details, get_open_position_details, or get_data_decision_details as appropriate and use only values, tag names, preset definitions, actions, periods, or opaque references returned by that tool in this generation. For a new Trade Tracker account, every final field must be clear: name, three-letter base currency, and IANA trading timezone. When the trader omits currency or timezone, you may reuse the returned active account value, but never invent a different value. State that the new account becomes active only after confirmation. A Swing note requires the exact returned positionRef, one explicit review date, and the complete final note and optional next-session plan; never infer missing note content. An open-position classification must use one exact returned positionRef and only the trader's explicit choice: active swing, day trade still open, unplanned hold (bag hold), or long-term hold. Never classify a position from its age, P/L, ticker, executions, or Chat's opinion. An AI Review request must exactly match a manual_available or automatic_ready period returned by get_account_ai_plan. Never invent or modify its kind or dates, and never claim that confirmation immediately generates the review. For notification preferences, return the complete final category list, including unchanged categories. For trade tags, return the complete final tag list, including unchanged tags; use only names in availableTags, and never add a tag because you inferred a setup, emotion, mistake, cause, or rule outcome. For a completed trade, return its roundTripId and null positionRef. For a Swing position, return its positionRef and null roundTripId. Exactly one target must be non-null. For a preset rule, use only a returned presetKey and provide every required configuration field. For an existing rule, use its returned ruleRef. A custom-rule revision must return every final field, including unchanged fields. Never activate or change a rule merely because analysis or a recommendation suggests it; the trader must explicitly request the exact change. For Data Decisions, use only an allowed action returned by the exact detail tool. You may confirm a supported open position, reconcile grouped fills, accept a source limitation, exclude/restore/keep distinct one returned execution, or merge an exact returned duplicate pair. Never infer a correction, exclusion reason, or duplicate choice. Numeric corrections, missing rows, coverage facts, and any action requiring raw statement comparison stay in Data Decisions. Return null if the target is unclear, already satisfied, absent from the tool result, or concerns any other setting or action. If AI Reviews have never been configured, direct the trader to Account settings instead of inventing a schedule. The trader will see an exact preview and must confirm it separately. Never claim the action was completed during generation.
 
-For Trade Explorer, use resultView trades with one factual tradeSort, pageSize, and afterCursor when ordering individual completed trades. To rank groups, omit pageSize and afterCursor and use the matching named resultView: trading_days, tickers, entry_times, holding_time, position_size, or periods, together with its supported grouping, metricId, and rankDirection. Profit factor, win rate, averages, medians, and expectancy describe a population and must never be presented as an individual-trade sort. Win, loss, and flat stay explicit outcome filters. If the trader asks about one completed trade's Review, call get_trade_annotations for that exact trade. You may explain its saved note, tags, and saved custom-rule reviews. Explain a preset result only when get_trading_rule_results returned the exact applicable event; otherwise say that Review shows the factual preset result. The complete note/tag/custom-rule Review is saved with one explicit Save in Trade Explorer. Never invent or change a custom-rule outcome, and never present a preset result as editable.
+For Trade Explorer, use resultView trades with one factual tradeSort, pageSize, and afterCursor when ordering individual completed trades. To rank groups, omit pageSize and afterCursor and use the matching named resultView: trading_days, tickers, entry_times, holding_time, position_size, or periods, together with its supported grouping, metricId, and rankDirection. Profit factor, win rate, averages, medians, and expectancy describe a population and must never be presented as an individual-trade sort. Win, loss, and flat stay explicit outcome filters. If the trader asks about one completed trade's Review, call get_trade_annotations for that exact trade. You may explain its saved note, tags, and saved custom-rule reviews. Explain a preset result only when get_trading_rule_results returned the exact applicable event; otherwise say that Review shows the factual preset result. When asking about rule performance, omit both dates to use all available history, or provide both dates for an explicit period. A rule-result association is recorded performance evidence, not a claim that the rule caused an outcome. The complete note/tag/custom-rule Review is saved with one explicit Save in Trade Explorer. Never invent or change a custom-rule outcome, and never present a preset result as editable.
 
 Create a manualExecutionDraft when the current message clearly asks to enter, record, add, correct, or continue a set of manual trade executions. The trader does not need to select a special mode first. A shortcut hint may be present, but it is only a hint and never proof of intent. Use only execution facts explicitly supplied in the current message or the existing draft. Never guess a date, Eastern execution time, ticker, side, quantity, price, or fee. Fees are optional and may remain null. Preserve exact decimal digits. Words such as bought, added, sold, reduced, exited, covered, or shorted may establish side only when their meaning is clear. Do not convert relative dates such as today or yesterday into a date; ask for the actual date. Times are Eastern Time. Return the complete proposed rows, including unchanged existing rows when the trader is clarifying a prior draft. If the trader only asks how manual entry works, return null. Never claim an execution was saved; the trader will edit and explicitly confirm the draft through the normal Journal preview.
 
@@ -523,33 +526,36 @@ function answer(
   if (value.evidenceReferences.some((reference) => !callIds.has(reference.toolCallId))) {
     throw new CoachAiChatProviderGenerationError(usage, "TRADERLINK_COACH_UNGROUNDED_ANSWER");
   }
-  const claimsByToolAndPath = new Map(buildCoachAiChatClaimCatalog(toolCalls).map((claim) => [
+  const claimCatalog = buildCoachAiChatClaimCatalog(toolCalls);
+  const claimsByToolAndPath = new Map(claimCatalog.map((claim) => [
     `${claim.toolCallId}\n${claim.path}`,
     claim,
   ]));
+  const answerText = [value.directAnswer, ...value.supportingObservations,
+    value.limitation ?? ""].join("\n");
   const evidenceReferences = value.evidenceReferences.map((reference) => {
     const normalizedClaimPaths = reference.claimPaths.map((path) =>
       path === "/result" ? "" : path.startsWith("/result/") ? path.slice(7) : path);
     const resolvedClaims = normalizedClaimPaths.map((path) =>
       claimsByToolAndPath.get(`${reference.toolCallId}\n${path}`));
-    if (resolvedClaims.some((claim) => !claim)) {
-      if (syntheticDiagnostics) {
-        console.error(JSON.stringify({
-          diagnostic: "TRADERLINK_COACH_UNKNOWN_CLAIM_PATH",
-          toolCallId: reference.toolCallId,
-          claimPaths: reference.claimPaths,
-          availableClaimPaths: [...claimsByToolAndPath.keys()]
-            .filter((key) => key.startsWith(`${reference.toolCallId}\n`))
-            .map((key) => key.slice(reference.toolCallId.length + 1)),
-        }));
-      }
-      throw new CoachAiChatProviderGenerationError(
-        usage,
-        "TRADERLINK_COACH_UNKNOWN_CLAIM_PATH",
-      );
+    const allToolClaims = claimCatalog.filter((claim) =>
+      claim.toolCallId === reference.toolCallId);
+    if (resolvedClaims.some((claim) => !claim) && syntheticDiagnostics) {
+      console.error(JSON.stringify({
+        diagnostic: "TRADERLINK_COACH_UNKNOWN_CLAIM_PATH_FALLBACK",
+        toolCallId: reference.toolCallId,
+        claimPaths: reference.claimPaths,
+      }));
     }
-    const claims = resolvedClaims.filter((claim) =>
-      coachAiChatClaimSupportsStatement(claim!, reference.statement));
+    const citedClaims = resolvedClaims.filter((claim): claim is NonNullable<typeof claim> =>
+      claim !== undefined);
+    const exactTextClaims = selectCoachAiChatClaimsForText(allToolClaims, answerText);
+    const claims = exactTextClaims.length > 0
+      ? exactTextClaims
+      : citedClaims.filter((claim) => coachAiChatClaimSupportsStatement(
+        claim,
+        reference.statement,
+      ));
     if (claims.length === 0) {
       throw new CoachAiChatProviderGenerationError(
         usage,
@@ -558,7 +564,7 @@ function answer(
     }
     return Object.freeze({
       toolCallId: reference.toolCallId,
-      claimRefs: Object.freeze([...new Set(claims.map((claim) => claim!.claimRef))]),
+      claimRefs: Object.freeze([...new Set(claims.map((claim) => claim.claimRef))]),
       statement: reference.statement,
     });
   });
@@ -572,8 +578,6 @@ function answer(
   } catch (error) {
     const diagnosticCode = error instanceof Error && new Set<string>([
       "TRADERLINK_COACH_UNGROUNDED_EXACT_FACT",
-      "TRADERLINK_COACH_UNUSED_EXACT_CLAIM",
-      "TRADERLINK_COACH_UNUSED_TEXT_CLAIM",
     ]).has(error.message)
       ? error.message
       : "TRADERLINK_COACH_UNGROUNDED_ANSWER";
@@ -1023,7 +1027,7 @@ export async function generateCoachAiChatOpenAiAnswer(input: CoachAiChatOpenAiAd
         }),
         tool({
           name: "get_trading_rule_results",
-          description: "Read deterministic preset-rule results and saved custom-rule reviews for up to 62 days.",
+          description: "Read deterministic preset-rule results and saved custom-rule reviews for the selected period or all available history. Omit both dates for all history.",
           parameters: tradingRuleResultsInput,
           execute: (value, _context, details) => dispatch(
             "get_trading_rule_results",

@@ -181,6 +181,26 @@ async function main(): Promise<void> {
       question: "What was my best trade in the last 90 days?",
       expected: Object.freeze({ kind: "custom", startDate: "2026-05-23", endDate: "2026-08-20" }),
     }),
+    Object.freeze({
+      question: "What was my best trade this year?",
+      expected: Object.freeze({ kind: "custom", startDate: "2026-01-01", endDate: "2026-12-31" }),
+    }),
+    Object.freeze({
+      question: "How many trades did I take last year?",
+      expected: Object.freeze({ kind: "custom", startDate: "2025-01-01", endDate: "2025-12-31" }),
+    }),
+    Object.freeze({
+      question: "What was my net P/L this month?",
+      expected: Object.freeze({ kind: "month", month: "2026-08" }),
+    }),
+    Object.freeze({
+      question: "What was my net P/L last month?",
+      expected: Object.freeze({ kind: "month", month: "2026-07" }),
+    }),
+    Object.freeze({
+      question: "How did I trade on 04/15/2026?",
+      expected: Object.freeze({ kind: "day", date: "2026-04-15" }),
+    }),
   ]);
   for (const item of scopedQuestions) {
     invariant(JSON.stringify(resolveCoachAiChatQuestionAnalysisScope(item.question, NOW)) ===

@@ -174,6 +174,9 @@ function applyScope(
   if (request.toolName === "get_trading_rule_results") {
     const selectedRange = scopeDateRange(scope);
     if (!selectedRange) return request;
+    if (request.startDate === undefined || request.endDate === undefined) {
+      return Object.freeze({ ...request, ...selectedRange });
+    }
     const startDate = selectedRange.startDate > request.startDate
       ? selectedRange.startDate : request.startDate;
     const endDate = selectedRange.endDate < request.endDate
