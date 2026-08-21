@@ -179,6 +179,12 @@ export default function Home() {
               />
             </span>
           </Link>
+          <Link
+            href="/api/auth/discord/login?returnTo=%2Fworkspace"
+            className="inline-flex min-h-10 items-center justify-center rounded-md border border-cyan-300 bg-cyan-300 px-4 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200"
+          >
+            Open Dashboard
+          </Link>
         </nav>
 
         <div className="relative z-10 mx-auto grid w-full max-w-7xl gap-10 px-5 pb-12 pt-12 sm:px-8 lg:grid-cols-[minmax(0,0.62fr)_minmax(320px,0.38fr)] lg:pb-16 lg:pt-20">

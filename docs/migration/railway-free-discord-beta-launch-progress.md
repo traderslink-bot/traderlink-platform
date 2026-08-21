@@ -47,6 +47,8 @@
 - [x] Replace hosted Account AI/Whop controls with Coming soon copy.
 - [x] Add centralized denial for AI, AI schedule and Whop routes.
 - [x] Align AI and paid-plan Help destinations with Coming soon.
+- [x] Add an `Open Dashboard` home-page action that begins Discord sign-in and
+  returns an authenticated member to `/workspace`.
 - [x] Complete focused static verification.
 - [ ] Complete desktop and mobile owner visual review.
 - [x] Create a narrow local commit without concurrent Links work
@@ -54,10 +56,10 @@
 
 ## Railway and acceptance
 
-- [ ] Publish the exact accepted release commit.
-- [ ] Provision and prepare the persistent `/data` volume.
-- [ ] Configure beta-required variables and protected secrets.
-- [ ] Create or transfer the production database and verify migrations.
+- [x] Publish the exact accepted release commit.
+- [x] Provision and prepare the persistent `/data` volume.
+- [x] Configure beta-required variables and protected secrets.
+- [x] Create or transfer the production database and verify migrations.
 - [ ] Prove one writer, health, backup and independent restore.
 - [ ] Complete Discord owner link and ordinary-member isolation checks.
 - [ ] Verify Vercel/Neon public pages remain unchanged.
@@ -77,8 +79,7 @@ route availability are coordinated through the explicit launch-state contract.
 - [x] Enable the scoped three-minute Railway build manager for the initial
   beta build: [plan](railway-beta-build-manager-plan.md) and
   [progress](railway-beta-build-manager-progress.md).
-- [ ] Pause/remove the build manager after a healthy beta deployment and owner
-  acceptance.
+- [x] Remove the build manager after the first healthy beta deployment.
 
 ## Verification evidence — 2026-08-21
 
@@ -97,3 +98,6 @@ route availability are coordinated through the explicit launch-state contract.
   launch gate is active.
 - No Vitest, broad test suite, provider call, database migration, or production
   deployment was run during this implementation checkpoint.
+- Railway deployed the beta successfully with one running instance. Its public
+  health route returned HTTP 200 and confirmed the 71-migration
+  `sqlite_single_node` runtime after the persistent volume was prepared.
