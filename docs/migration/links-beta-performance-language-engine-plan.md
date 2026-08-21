@@ -204,6 +204,8 @@ Defined defaults make Links helpful without model guesswork:
 - `How did I do on NVDA?` means a standard NVDA performance summary.
 - `How were my morning trades?` means a standard time-filtered performance
   summary.
+- `How much did I make?` or `How much did I lose?` means net realized P/L
+  unless the trader explicitly asks for a gross measure.
 
 Collision tests have higher precedence than generic word matching. For example:
 
@@ -378,6 +380,35 @@ tool choice, or new analytical claims.
 
 This is the foundation for the beta purpose because every later performance
 question reuses its outcome, metric, rank/count, date, and evidence contracts.
+
+### First-checkpoint remediation gate
+
+The first source checkpoint initially established the typed-plan foundation
+without meeting its acceptance bar. The following remediation gate is now
+complete; its 2026-08-21 executed result is recorded in the linked progress
+record. Before any subsequent slice begins, it must remain true that:
+
+1. Preserve every material first-slice modifier in the validated plan and
+   canonical request. The initial required proof is long/short trade ranking;
+   it must become a direction filter rather than being silently dropped.
+2. Reconcile every row of the fixed 2,985-case master question bank to an
+   explicit first-slice classification. A row may be resolved, deferred,
+   unsupported, or ambiguous, but it cannot be absent from the report or
+   accidentally count as coverage.
+3. Execute the complete local, zero-provider classification/component
+   evaluation. Expected semantics must come from the independently maintained
+   question-bank contract and first-slice expectation rules, not from the
+   router that is being evaluated.
+4. Correct calendar month shifting and prove month-end, leap-year, year-boundary
+   and timezone boundary cases alongside the ordinary date forms.
+
+The remediation report must state the exact master count, first-slice applicable
+count, resolved-correct count, wrong-plan count, silently dropped-modifier
+count, deferred/unsupported/ambiguous counts, collision/date-suite status,
+component-evaluator status, and provider calls. The 2026-08-21 local report
+meets this source gate with zero wrong plans and zero silently dropped material
+modifiers. It remains distinct from live Links AI Chat or beta-readiness
+acceptance.
 
 ### Subsequent slices
 

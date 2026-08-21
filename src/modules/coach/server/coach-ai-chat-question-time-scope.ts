@@ -50,14 +50,18 @@ function calendarDateInTimezone(now: Date, timezone: string): string {
 
 function shiftCalendarDate(date: string, input: Readonly<{
   days?: number;
-  months?: number;
-  years?: number;
 }>): string {
   const value = new Date(`${date}T12:00:00.000Z`);
   if (input.days) value.setUTCDate(value.getUTCDate() + input.days);
-  if (input.months) value.setUTCMonth(value.getUTCMonth() + input.months);
-  if (input.years) value.setUTCFullYear(value.getUTCFullYear() + input.years);
   return value.toISOString().slice(0, 10);
+}
+
+function shiftCalendarMonth(date: string, months: number): string {
+  const [yearText, monthText] = date.split("-");
+  const totalMonths = Number(yearText) * 12 + Number(monthText) - 1 + months;
+  const year = Math.floor(totalMonths / 12);
+  const month = (totalMonths % 12) + 1;
+  return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}`;
 }
 
 function calendarYearScope(year: string): CoachAiChatAnalysisScope {
@@ -168,7 +172,7 @@ export function matchCoachAiChatQuestionAnalysisScope(
   }
   if (/\blast month\b/u.test(question)) {
     return Object.freeze({
-      scope: Object.freeze({ kind: "month", month: shiftCalendarDate(currentDate, { months: -1 }).slice(0, 7) }),
+      scope: Object.freeze({ kind: "month", month: shiftCalendarMonth(currentDate, -1) }),
       phrase: "last month",
     });
   }

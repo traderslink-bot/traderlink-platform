@@ -11,7 +11,7 @@ export const COACH_AI_CHAT_COMPLETED_TRADE_PERFORMANCE_FIXTURE_VERSION =
 type ExpectedPlan = Pick<CoachAiChatCompletedTradePerformancePlan,
   "accountScope" | "reportingCurrency" | "timezone" | "referenceTimeUtc" |
   "entity" | "metric" | "operation" | "rank" | "outcomeFilter" |
-  "timeScope" | "timeScopeSource" | "handlerId">;
+  "directionFilter" | "timeScope" | "timeScopeSource" | "handlerId">;
 
 export type CoachAiChatCompletedTradePerformanceFixture = Readonly<{
   id: string;
@@ -45,6 +45,7 @@ function expected(input: Readonly<{
   operation: ExpectedPlan["operation"];
   rank?: ExpectedPlan["rank"];
   outcomeFilter?: ExpectedPlan["outcomeFilter"];
+  directionFilter?: ExpectedPlan["directionFilter"];
   timeScope?: CoachAiChatAnalysisScope;
   timeScopeSource?: ExpectedPlan["timeScopeSource"];
   handlerId: ExpectedPlan["handlerId"];
@@ -59,6 +60,7 @@ function expected(input: Readonly<{
     operation: input.operation,
     rank: input.rank ?? null,
     outcomeFilter: input.outcomeFilter ?? null,
+    directionFilter: input.directionFilter ?? null,
     timeScope: input.timeScope ?? allHistory,
     timeScopeSource: input.timeScopeSource ?? "selected_scope",
     handlerId: input.handlerId,
@@ -111,6 +113,10 @@ export const coachAiChatCompletedTradePerformanceFixtures = Object.freeze([
     expected: expected({ metric: "net_pnl_rank", operation: "rank", rank: descendingThree, handlerId: "completed_trade_rank_v1" }) }),
   Object.freeze({ id: "worst-three-march", question: "give me the worst three losses in march 2026", context: defaultContext,
     expected: expected({ metric: "net_pnl_rank", operation: "rank", rank: ascendingThree, outcomeFilter: "loss", timeScope: Object.freeze({ kind: "month", month: "2026-03" }), timeScopeSource: "question", handlerId: "completed_trade_rank_v1" }) }),
+  Object.freeze({ id: "best-long-march", question: "what was my best long trade in march 2026", context: defaultContext,
+    expected: expected({ metric: "net_pnl_rank", operation: "rank", rank: descendingOne, directionFilter: "long", timeScope: Object.freeze({ kind: "month", month: "2026-03" }), timeScopeSource: "question", handlerId: "completed_trade_rank_v1" }) }),
+  Object.freeze({ id: "best-short-march", question: "what was my best short trade in march 2026", context: defaultContext,
+    expected: expected({ metric: "net_pnl_rank", operation: "rank", rank: descendingOne, directionFilter: "short", timeScope: Object.freeze({ kind: "month", month: "2026-03" }), timeScopeSource: "question", handlerId: "completed_trade_rank_v1" }) }),
   Object.freeze({ id: "trade-count-all", question: "how many completed trades do i have", context: defaultContext,
     expected: expected({ metric: "total_trades", operation: "summary", handlerId: "completed_trade_summary_v1" }) }),
   Object.freeze({ id: "trade-count-month", question: "how many trades did i do in march 2026", context: defaultContext,

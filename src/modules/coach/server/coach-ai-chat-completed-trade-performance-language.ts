@@ -51,6 +51,7 @@ export type CoachAiChatCompletedTradePerformancePlan = Readonly<{
     count: number;
   }> | null;
   outcomeFilter: "win" | "loss" | null;
+  directionFilter: "long" | "short" | null;
   timeScope: CoachAiChatAnalysisScope;
   timeScopeSource: "question" | "selected_scope";
   handlerId: "completed_trade_summary_v1" | "completed_trade_rank_v1";
@@ -145,6 +146,17 @@ function rankOutcome(question: string): "win" | "loss" | null {
   return null;
 }
 
+function rankDirection(question: string): "long" | "short" | "ambiguous" | null {
+  const long = /\blong\s+(?:trad(?:e|es)?|trad|winner|winners|loser|losers|loss|losses)\b/u
+    .test(question);
+  const short = /\bshort\s+(?:trad(?:e|es)?|trad|winner|winners|loser|losers|loss|losses)\b/u
+    .test(question);
+  if (long && short) return "ambiguous";
+  if (long) return "long";
+  if (short) return "short";
+  return null;
+}
+
 function hasRankLanguage(question: string): boolean {
   return /\b(?:best|worst|top|bottom|highest|lowest|biggest|largest|most profitable|least profitable)\b/u
     .test(question);
@@ -164,7 +176,7 @@ function summaryMetric(question: string): CompletedTradePerformanceMetric | null
     }
     if (/\b(?:trad(?:e|es)?|trad)\b/u.test(question)) return "total_trades";
   }
-  if (/\b(?:gross|average|median|win rate|profit factor|expectancy)\b/u.test(question)) {
+  if (/\b(?:gross|average|median|win rate|loss rate|profit factor|expectancy)\b/u.test(question)) {
     return null;
   }
   if (/\b(?:pnl|profit and loss|net profit|net loss|profit|loss|gain|gains|made|make|lost|lose)\b/u
@@ -176,7 +188,7 @@ function summaryMetric(question: string): CompletedTradePerformanceMetric | null
 
 function looksLikeCompletedTradePerformanceQuestion(question: string): boolean {
   if (!/\b(?:my|i|ive|i have|me)\b/u.test(question)) return false;
-  return /\b(?:trad(?:e|es)?|trad|pnl|profit|loss|gain|green|red|winner|loser|made|make|lost|lose)\b/u
+  return /\b(?:trad(?:e|es)?|trad|pnl|profit|loss(?:es)?|gain(?:s)?|green|red|win|wins|winning|winner|winners|loser|losers|made|make|lost|lose)\b/u
     .test(question);
 }
 
@@ -187,8 +199,16 @@ function looksLikeCompletedTradePerformanceQuestion(question: string): boolean {
  * “most profitable day” could be incorrectly answered as all-trade net P/L.
  */
 function namesDeferredPerformanceEntity(question: string): boolean {
-  return /\b(?:ticker|tickers|symbol|symbols|session|sessions|weekday|weekdays|time of day|hour|hours|setup|setups|tag|tags|rule|rules|day|days)\b/u
+  return /\b(?:ticker|tickers|symbol|symbols|session|sessions|weekday|weekdays|time of day|hour|hours|setup|setups|tag|tags|rule|rules)\b/u
     .test(question);
+}
+
+function namesDeferredCompletedTradeView(question: string): boolean {
+  return /\b(?:green to red|trade (?:explorer|exploer))\b/u.test(question);
+}
+
+function namesUnscopedTradingDay(question: string): boolean {
+  return /\b(?:day|days)\b/u.test(question);
 }
 
 function baseDiagnostics(context: CoachAiChatCompletedTradePerformanceLanguageContext):
@@ -214,7 +234,7 @@ function unresolved(
       diagnostic("metric", component === "metric" ? "failed" : "not_applicable", null),
       diagnostic("operation", component === "operation" ? "failed" : "not_applicable", null),
       diagnostic("rank_count", component === "rank_count" ? "failed" : "not_applicable", null),
-      diagnostic("filters", "not_applicable", null),
+      diagnostic("filters", component === "filters" ? "failed" : "not_applicable", null),
       diagnostic("date_scope", "not_applicable", null),
       diagnostic("handler", "not_applicable", null),
     ]),
@@ -229,6 +249,7 @@ function resolvedDiagnostics(input: Readonly<{
   operation: "summary" | "rank";
   rank: Readonly<{ direction: "ascending" | "descending"; count: number }> | null;
   outcomeFilter: "win" | "loss" | null;
+  directionFilter: "long" | "short" | null;
   explicitScope: boolean;
   handlerId: string;
 }>): readonly CoachAiChatPerformanceLanguageComponentDiagnostic[] {
@@ -239,7 +260,8 @@ function resolvedDiagnostics(input: Readonly<{
     diagnostic("operation", "passed", input.operation),
     diagnostic("rank_count", input.rank ? "passed" : "not_applicable",
       input.rank ? `${input.rank.direction}:${input.rank.count}` : null),
-    diagnostic("filters", input.outcomeFilter ? "passed" : "not_applicable", input.outcomeFilter),
+    diagnostic("filters", input.outcomeFilter || input.directionFilter ? "passed" : "not_applicable",
+      [input.outcomeFilter, input.directionFilter].filter((value): value is string => value !== null).join(",") || null),
     diagnostic("date_scope", "passed", input.explicitScope ? "question calendar scope" : "selected scope"),
     diagnostic("handler", "passed", input.handlerId),
   ]);
@@ -272,7 +294,14 @@ export function analyzeCoachAiChatCompletedTradePerformanceLanguage(
       reason: null,
     });
   }
-  if (namesDeferredPerformanceEntity(question) && !/\btrad(?:e|es)?\b/u.test(question)) {
+  const scopeMatch = matchCoachAiChatQuestionAnalysisScope(
+    rawQuestion,
+    context.referenceTime,
+    context.timezone,
+  );
+  if (namesDeferredCompletedTradeView(question) ||
+      namesDeferredPerformanceEntity(question) ||
+      (namesUnscopedTradingDay(question) && !scopeMatch)) {
     return Object.freeze({
       state: "not_applicable",
       diagnostics: Object.freeze([
@@ -289,15 +318,14 @@ export function analyzeCoachAiChatCompletedTradePerformanceLanguage(
       reason: null,
     });
   }
-  const scopeMatch = matchCoachAiChatQuestionAnalysisScope(
-    rawQuestion,
-    context.referenceTime,
-    context.timezone,
-  );
   const timeScope = scopeMatch?.scope ?? context.selectedAnalysisScope;
   const timeScopeSource = scopeMatch ? "question" as const : "selected_scope" as const;
   if (hasRankLanguage(question) && hasCompletedTradeRankSubject(question)) {
     const outcomeFilter = rankOutcome(question);
+    const directionFilter = rankDirection(question);
+    if (directionFilter === "ambiguous") {
+      return unresolved(context, "filters", "completed_trade_direction_ambiguous");
+    }
     const parsedRankCount = rankCount(question);
     if (parsedRankCount.state === "invalid") {
       return unresolved(context, "rank_count", "completed_trade_rank_count_out_of_range");
@@ -315,7 +343,12 @@ export function analyzeCoachAiChatCompletedTradePerformanceLanguage(
       pageSize: count,
       afterCursor: null,
       moneyBasis: "net",
-      ...(outcomeFilter ? { filters: Object.freeze({ outcomes: Object.freeze([outcomeFilter]) }) } : {}),
+      ...(outcomeFilter || directionFilter
+        ? { filters: Object.freeze({
+            ...(outcomeFilter ? { outcomes: Object.freeze([outcomeFilter]) } : {}),
+            ...(directionFilter ? { directions: Object.freeze([directionFilter]) } : {}),
+          }) }
+        : {}),
     });
     const handlerId = "completed_trade_rank_v1" as const;
     const plan: CoachAiChatCompletedTradePerformancePlan = Object.freeze({
@@ -330,6 +363,7 @@ export function analyzeCoachAiChatCompletedTradePerformanceLanguage(
       operation: "rank",
       rank: Object.freeze({ direction, count }),
       outcomeFilter,
+      directionFilter,
       timeScope,
       timeScopeSource,
       handlerId,
@@ -338,7 +372,7 @@ export function analyzeCoachAiChatCompletedTradePerformanceLanguage(
     return Object.freeze({
       state: "resolved",
       diagnostics: resolvedDiagnostics({ context, metric: plan.metric, operation: plan.operation,
-        rank: plan.rank, outcomeFilter, explicitScope: scopeMatch !== null, handlerId }),
+        rank: plan.rank, outcomeFilter, directionFilter, explicitScope: scopeMatch !== null, handlerId }),
       plan,
       reason: null,
     });
@@ -366,6 +400,7 @@ export function analyzeCoachAiChatCompletedTradePerformanceLanguage(
     operation: "summary",
     rank: null,
     outcomeFilter: null,
+    directionFilter: null,
     timeScope,
     timeScopeSource,
     handlerId,
@@ -374,7 +409,7 @@ export function analyzeCoachAiChatCompletedTradePerformanceLanguage(
   return Object.freeze({
     state: "resolved",
     diagnostics: resolvedDiagnostics({ context, metric: plan.metric, operation: plan.operation,
-      rank: null, outcomeFilter: null, explicitScope: scopeMatch !== null, handlerId }),
+      rank: null, outcomeFilter: null, directionFilter: null, explicitScope: scopeMatch !== null, handlerId }),
     plan,
     reason: null,
   });

@@ -1,7 +1,9 @@
 # Links Beta Performance Language Engine Progress
 
-**Status:** Architecture approved. First completed-trade performance slice is
-in progress; later purpose families remain deferred.
+**Status:** The first completed-trade performance source checkpoint passes its
+local zero-provider inventory, modifier and calendar gate. Later purpose
+families remain deferred; this is not a live Links AI Chat beta-readiness
+claim.
 
 **Controlling plan:** [Links Beta Performance Language Engine Plan](links-beta-performance-language-engine-plan.md)
 
@@ -36,8 +38,8 @@ in progress; later purpose families remain deferred.
 
 ## Planned implementation checkpoints
 
-- [-] Build the local typed-plan contract, vocabulary registry and evaluator.
-- [-] Implement completed-trade performance language with component diagnostics.
+- [x] Build the local typed-plan contract, vocabulary registry and evaluator.
+- [x] Implement completed-trade performance language with component diagnostics.
 - [ ] Add performance aggregates and collision coverage.
 - [ ] Add comparisons, contextual plan patches, and behavior evidence.
 - [ ] Add validated Luna plan fallback and replay records.
@@ -68,9 +70,45 @@ collection of literal phrase checks.
   timezone-aware calendar resolver, deterministic answer rendering, and
   persisted typed-plan diagnostics. It reuses only `summarize_closed_trades`
   and `query_trade_explorer` from the current canonical Journal contracts.
-- The first static evaluation corpus contains 30 independently authored
+- The first static evaluation corpus contains 32 independently authored
   resolved plans plus five boundary cases. The boundary cases explicitly prove
   that a trading-day or ticker question is not misread as all-trade P/L, and
   that a deferred metric or invalid rank count remains visible at its failed
   component. No provider or live-account execution has been run for this
   in-progress checkpoint.
+
+## First-checkpoint remediation outcome
+
+- [x] Carry long/short ranking direction into the typed plan and factual-tool
+      filter; prove no material first-slice modifier is silently discarded.
+- [x] Classify all 2,985 master question-bank rows as resolved, deferred,
+      unsupported, or ambiguous for this first-slice checkpoint.
+- [x] Compare every applicable case with independently maintained expected
+      plan components and emit a real zero-provider evaluation report.
+- [x] Repair month-end calendar shifting and add calendar boundary fixtures.
+- [x] Publish the exact remediation counts and acceptance outcome. No next
+      performance family may begin before this line is accepted.
+
+### Local executed result — 2026-08-21
+
+`npx.cmd tsx src/scripts/evaluate-links-completed-trade-performance-master.ts`
+ran with the repository-local Node user-info fallback only because this Windows
+machine returned `ENOMEM` before `tsx` could resolve the normal OS profile. The
+evaluator does not invoke a provider, Links AI Chat, a database, or a handler.
+
+| Measure | Result |
+| --- | --- |
+| Complete master inventory classified | 2,985 / 2,985 |
+| First-slice applicable cases | 193 |
+| Resolved correctly | 193 / 193 |
+| Wrong-plan cases | 0 |
+| Silently dropped modifiers | 0 |
+| Deferred / unsupported / ambiguous | 2,792 / 0 / 0 |
+| Collision and boundary suite | PASS (5 cases) |
+| Date-edge suite | PASS (12 cases) |
+| Component evaluator | PASS (32 resolved fixtures) |
+| Provider calls during local evaluation | 0 |
+
+This clears only the first-slice local source acceptance gate. It does not
+claim that deferred question-bank families work, and it does not authorize the
+next implementation slice.

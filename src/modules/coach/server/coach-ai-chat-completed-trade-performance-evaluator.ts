@@ -17,6 +17,7 @@ export type CoachAiChatCompletedTradePerformanceEvaluationComponent =
   | "operation"
   | "rank_count"
   | "filters"
+  | "handler_request"
   | "date_scope"
   | "handler"
   | "final_state";
@@ -73,6 +74,17 @@ function component<T extends CoachAiChatCompletedTradePerformanceEvaluationCompo
   });
 }
 
+function requestFilterProjection(
+  plan: CoachAiChatCompletedTradePerformanceLanguageAnalysis["plan"],
+): Readonly<{ outcomes: readonly string[] | null; directions: readonly string[] | null }> {
+  const request = plan?.request;
+  const filters = request && "filters" in request ? request.filters : undefined;
+  return Object.freeze({
+    outcomes: filters?.outcomes ?? null,
+    directions: filters?.directions ?? null,
+  });
+}
+
 /**
  * Cheap local proof for the first slice. Expected plans are static fixture
  * data, so this evaluator cannot make a router defect pass by recreating the
@@ -96,7 +108,17 @@ export function evaluateCoachAiChatCompletedTradePerformanceFixtures(
       component("metric", fixture.expected.metric, plan?.metric),
       component("operation", fixture.expected.operation, plan?.operation),
       component("rank_count", fixture.expected.rank, plan?.rank),
-      component("filters", fixture.expected.outcomeFilter, plan?.outcomeFilter),
+      component("filters", Object.freeze({
+        outcome: fixture.expected.outcomeFilter,
+        direction: fixture.expected.directionFilter,
+      }), Object.freeze({
+        outcome: plan?.outcomeFilter ?? null,
+        direction: plan?.directionFilter ?? null,
+      })),
+      component("handler_request", Object.freeze({
+        outcomes: fixture.expected.outcomeFilter ? Object.freeze([fixture.expected.outcomeFilter]) : null,
+        directions: fixture.expected.directionFilter ? Object.freeze([fixture.expected.directionFilter]) : null,
+      }), requestFilterProjection(plan)),
       component("date_scope", fixture.expected.timeScope, plan?.timeScope),
       component("handler", fixture.expected.handlerId, plan?.handlerId),
       component("final_state", "resolved", actual.state),
