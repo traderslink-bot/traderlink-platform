@@ -1,5 +1,4 @@
 import AccountCircleRoundedIcon from "@mui/icons-material/AccountCircleRounded";
-import LockRoundedIcon from "@mui/icons-material/LockRounded";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
@@ -48,15 +47,6 @@ export default async function AccountProfilePage() {
           <Box><Typography color="text.secondary" variant="caption">Access</Typography><Typography sx={{ fontWeight: 750, textTransform: "capitalize" }}>{profile.workspace.role}</Typography></Box>
           <Box><Typography color="text.secondary" variant="caption">Default timezone</Typography><Typography sx={{ fontWeight: 750 }}>{profile.workspace.defaultTradingTimezone}</Typography></Box>
         </Box>
-      </DashboardPanel>
-
-      <DashboardPanel title="Sign-in">
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ alignItems: { sm: "center" } }}>
-          <LockRoundedIcon color="primary" />
-          <Typography color="text.secondary" variant="body2">
-            Local review remains available only from this computer without Discord. Discord will be the first public sign-in method and will connect to this existing TraderLink ownership before launch.
-          </Typography>
-        </Stack>
       </DashboardPanel>
     </AccountSettingsLayout>
   );
