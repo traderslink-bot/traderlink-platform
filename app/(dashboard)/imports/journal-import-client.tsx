@@ -251,7 +251,7 @@ export function JournalImportClient({
       if (!response.ok) throw new Error("AI review could not be started. Please try again.");
       setAiRepairOpen(false);
       clearUploadState();
-      setNotice({ severity: "success", text: "Your private review request was saved. TraderLink will let you know when this import is ready." });
+      setNotice({ severity: "success", text: "Your private review request was saved. TradersLink will let you know when this import is ready." });
     } catch (error) {
       setNotice({ severity: "error", text: error instanceof Error ? error.message : "AI review could not be started." });
     } finally { setWorking(null); }
@@ -525,6 +525,11 @@ export function JournalImportClient({
               </Button>
             </Stack>
             {notice ? <Alert severity={notice.severity}>{notice.text}</Alert> : null}
+            {mappingSupport && !preview && importRef ? (
+              <Button onClick={() => setAiRepairOpen(true)} variant="outlined">
+                AI map statement
+              </Button>
+            ) : null}
           </Stack>
         </Box>
         </DashboardPanel>
@@ -536,11 +541,6 @@ export function JournalImportClient({
             <Typography color="text.secondary" variant="body2">
               TraderLink could not read this statement automatically. Choose where it can find each trading detail below, then save your mapping.
             </Typography>
-            {importRef ? (
-              <Button onClick={() => setAiRepairOpen(true)} variant="outlined">
-                Ask AI to map this statement
-              </Button>
-            ) : null}
             {!preview && mappingSupport.tables.length > 0 ? (
               <Stack spacing={2}>
                 <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
