@@ -10,7 +10,10 @@ import {
   type TraderLinkPlatformRequestIdentity,
 } from "../authentication/require-platform-request-scope";
 import { PlatformDiscordMembershipRepository } from "../authentication/platform-discord-membership-repository";
-import { resolveTraderLinkDiscordGuildId } from "../authentication/platform-discord-configuration";
+import {
+  readProtectedInitialOwnerDiscordSubject,
+  resolveTraderLinkDiscordGuildId,
+} from "../authentication/platform-discord-configuration";
 import { validateDevelopmentDashboardRequest } from "../authentication/development-dashboard-network-boundary";
 import { withPlatformDatabase } from "../database/open-platform-database";
 import {
@@ -34,6 +37,27 @@ function requestCorrelationDigest(requestHeaders: Headers): string {
     ? supplied
     : randomUUID();
   return digest(`traderlink-admin-request-v1\u001f${value}`);
+}
+
+function hasConfiguredDiscordOwnerIdentity(input: Readonly<{
+  database: Database.Database;
+  userId: string;
+  ownerDiscordSubject: string | undefined;
+}>): boolean {
+  if (!input.ownerDiscordSubject) return false;
+  return input.database.prepare<
+    [string, string],
+    Readonly<{ matches: 0 | 1 }>
+  >(`SELECT EXISTS(
+SELECT 1
+FROM platform_auth_identities
+WHERE user_id = ?
+  AND auth_provider = 'discord'
+  AND auth_subject = ?
+) AS matches`).get(
+    input.userId,
+    input.ownerDiscordSubject,
+  )?.matches === 1;
 }
 
 function deny(input: Readonly<{
@@ -129,14 +153,23 @@ export class PlatformAdminAuthorization {
       ? now.getTime() - Date.parse(membership.lastVerifiedAtUtc)
       : Number.POSITIVE_INFINITY;
     const activeGrant = new PlatformOperatorRepository(this.database).findActive();
+    const configuredOwnerMatched = hasConfiguredDiscordOwnerIdentity({
+      database: this.database,
+      userId: identity.scope.userId,
+      ownerDiscordSubject: readProtectedInitialOwnerDiscordSubject(
+        this.environment,
+      ),
+    });
+    const discordServerOwnerMatched =
+      identity.discord?.guildOwner === true && membership?.guildOwner === true;
     if (
-      !identity.discord?.guildOwner ||
-      !membership?.guildOwner ||
+      !membership ||
       !Number.isFinite(membershipAge) ||
       membershipAge < 0 ||
       membershipAge > JOURNAL_ADMIN_DISCORD_FRESHNESS_MS ||
       !activeGrant ||
-      activeGrant.userId !== identity.scope.userId
+      activeGrant.userId !== identity.scope.userId ||
+      (!configuredOwnerMatched && !discordServerOwnerMatched)
     ) {
       deny({
         audit,
