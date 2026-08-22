@@ -9,6 +9,7 @@ import {
 } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { parseJournalGenericStatementMappingContract, type JournalGenericStatementMappingContract } from "../imports/journal-generic-mapped-statement-adapter";
 import { commitJournalGenericMappedUpload, previewJournalGenericMappedUpload } from "../product/journal-import-product-service";
+import { createJournalMappingSupportPackage } from "../product/journal-mapping-support-package";
 import { resolvePlatformDatabaseConfig } from "@/src/modules/platform/server/database/platform-database-config";
 import { readJournalSupportSource, resolveJournalSupportSourceVault } from "./journal-support-source-vault";
 import { JournalAiImportRepairRepository } from "./journal-ai-import-repair-repository";
@@ -18,6 +19,21 @@ export type JournalAiImportRepairProvider = (input: Readonly<{
   sourceText: string;
   confirmedBrokerName: string;
 }>) => Promise<JournalGenericStatementMappingContract | unknown>;
+
+function selectStatementTable(
+  inspection: ReturnType<typeof createJournalMappingSupportPackage>,
+  mapping: JournalGenericStatementMappingContract,
+): (typeof inspection.tables)[number] {
+  if (inspection.tables.length === 1) return inspection.tables[0]!;
+  const matches = inspection.tables.filter((table) =>
+    table.tableKind === mapping.tableKind &&
+    table.headerRowIndex === mapping.headerRowIndex,
+  );
+  if (matches.length !== 1) {
+    throw new Error("private_statement_table_selection_failed");
+  }
+  return matches[0]!;
+}
 
 export class JournalAiImportRepairWorker {
   constructor(
@@ -47,11 +63,24 @@ export class JournalAiImportRepairWorker {
         sourceText: new TextDecoder("utf-8", { fatal: true }).decode(sourceBytes),
         confirmedBrokerName: claimed.confirmedBrokerName,
       }));
-      // The broker is chosen by the trader before upload. A provider cannot
-      // infer or replace that identity from statement content.
+      const inspection = createJournalMappingSupportPackage({
+        sourceBytes,
+        brokerName: claimed.confirmedBrokerName,
+        failureCode: "none",
+      });
+      const table = selectStatementTable(inspection, providerMapping);
+      // The broker and every structural fact come from the trader and the
+      // uploaded source. AI can choose column meanings but cannot invent a
+      // reusable statement layout.
       const mapping = parseJournalGenericStatementMappingContract({
         ...providerMapping,
         brokerName: claimed.confirmedBrokerName,
+        delimiter: inspection.detectedDelimiter,
+        tableKind: table.tableKind,
+        tableLabel: table.tableLabel,
+        headerRowIndex: table.headerRowIndex,
+        orderedHeaders: table.headerLabels,
+        structuralSignatureSha256: table.structuralSignatureSha256,
       });
       const preview = previewJournalGenericMappedUpload(claimed.scope, {
         sourceBytes, mapping, mappingOrigin: "manual_mapping",
