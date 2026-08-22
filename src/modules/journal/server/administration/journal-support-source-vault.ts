@@ -58,7 +58,10 @@ export function resolveJournalSupportSourceVault(input: Readonly<{
   );
   const forbidden = [
     ACTIVE_TRADERLINK_PLATFORM_REPOSITORY_ROOT,
-    dirname(resolve(input.databasePath)),
+    // A single-node host commonly keeps its SQLite file and purpose-separated
+    // vault folders on one persistent volume.  Reject the database file (and
+    // any enclosing support root), while allowing a sibling vault directory.
+    resolve(input.databasePath),
     environment.TRADERLINK_PLATFORM_JOURNAL_EVIDENCE_VAULT_ROOT,
     environment.TRADERLINK_PLATFORM_JOURNAL_UPLOAD_STAGING_ROOT,
   ].filter((value): value is string => typeof value === "string" && value.length > 0)
