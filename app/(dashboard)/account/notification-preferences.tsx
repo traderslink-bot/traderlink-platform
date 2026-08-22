@@ -1,13 +1,11 @@
 "use client";
 
 import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
 import Divider from "@mui/material/Divider";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useEffect, useState, useTransition } from "react";
 
@@ -25,11 +23,8 @@ import {
 } from "@/src/modules/platform/client/pwa/platform-web-push";
 import {
   saveDiscordDmNotificationCategories,
-  muteMarketHaltTicker,
   savePressReleasePushChannels,
-  saveMarketHaltAlertsEnabled,
   saveWebPushNotificationCategories,
-  unmuteMarketHaltTicker,
 } from "./notification-preferences-actions";
 import {
   PRESS_RELEASE_PUSH_CHANNELS,
@@ -57,8 +52,6 @@ function successMessage(message: string): boolean {
     message === "Push notifications enabled on this device." ||
     message === "Push notifications turned off on this device." ||
     message === "Push notification preferences saved." ||
-    message === "Halt alert ticker muted." ||
-    message.endsWith("halt alerts turned back on.") ||
     message.startsWith("Push was turned off on this device.");
 }
 
@@ -77,23 +70,16 @@ function runsAsInstalledApp(): boolean {
 
 export function NotificationPreferences({
   initialDiscordDmCategories,
-  initialMarketHaltAlertsEnabled,
-  initialMutedHaltTickers,
   initialPressReleasePushChannels,
   initialWebPushCategories,
 }: {
   initialDiscordDmCategories: readonly PlatformNotificationCategory[];
-  initialMarketHaltAlertsEnabled: boolean;
-  initialMutedHaltTickers: readonly string[];
   initialPressReleasePushChannels: readonly PressReleasePushChannel[];
   initialWebPushCategories: readonly PlatformNotificationCategory[];
 }) {
   const [selected, setSelected] = useState<readonly PlatformNotificationCategory[]>(initialDiscordDmCategories);
   const [pushSelected, setPushSelected] = useState<readonly PlatformNotificationCategory[]>(initialWebPushCategories);
   const [pressReleasePushSelected, setPressReleasePushSelected] = useState<readonly PressReleasePushChannel[]>(initialPressReleasePushChannels);
-  const [marketHaltAlertsEnabled, setMarketHaltAlertsEnabled] = useState(initialMarketHaltAlertsEnabled);
-  const [mutedHaltTickers, setMutedHaltTickers] = useState<readonly string[]>(initialMutedHaltTickers);
-  const [haltTickerInput, setHaltTickerInput] = useState("");
   const [pushState, setPushState] = useState<PlatformWebPushBrowserState>("checking");
   const [discordMessage, setDiscordMessage] = useState<string | null>(null);
   const [pushMessage, setPushMessage] = useState<string | null>(null);
@@ -149,7 +135,6 @@ export function NotificationPreferences({
   function toggleAllPush(checked: boolean): void {
     setPushSelected(checked ? PLATFORM_NOTIFICATION_CATEGORIES : Object.freeze([]));
     setPressReleasePushSelected(checked ? PRESS_RELEASE_PUSH_CHANNELS : Object.freeze([]));
-    setMarketHaltAlertsEnabled(checked);
   }
 
   function save(): void {
@@ -173,14 +158,9 @@ export function NotificationPreferences({
     startTransition(async () => {
       try {
         await enablePlatformWebPush(pushSelected, pushPreparation);
-        const [pressReleaseResult, marketHaltResult] = await Promise.all([
-          savePressReleasePushChannels(pressReleasePushSelected),
-          saveMarketHaltAlertsEnabled(marketHaltAlertsEnabled),
-        ]);
+        const pressReleaseResult = await savePressReleasePushChannels(pressReleasePushSelected);
         if (!pressReleaseResult.ok) throw new Error(pressReleaseResult.message);
-        if (!marketHaltResult.ok) throw new Error(marketHaltResult.message);
         setPressReleasePushSelected(pressReleaseResult.channels as readonly PressReleasePushChannel[]);
-        setMarketHaltAlertsEnabled(marketHaltResult.enabled);
         setPushState("enabled");
         setPushMessage("Push notifications enabled on this device.");
       } catch (error) {
@@ -208,50 +188,21 @@ export function NotificationPreferences({
     setPushMessage("Saving your push notification choices...");
     startTransition(async () => {
       try {
-        const [result, pressReleaseResult, marketHaltResult] = await Promise.all([
+        const [result, pressReleaseResult] = await Promise.all([
           saveWebPushNotificationCategories(pushSelected),
           savePressReleasePushChannels(pressReleasePushSelected),
-          saveMarketHaltAlertsEnabled(marketHaltAlertsEnabled),
         ]);
-        if (result.ok && pressReleaseResult.ok && marketHaltResult.ok) {
+        if (result.ok && pressReleaseResult.ok) {
           setPushSelected(result.categories as readonly PlatformNotificationCategory[]);
           setPressReleasePushSelected(pressReleaseResult.channels as readonly PressReleasePushChannel[]);
-          setMarketHaltAlertsEnabled(marketHaltResult.enabled);
           setPushMessage("Push notification preferences saved.");
         } else if (!result.ok) {
           setPushMessage(result.message);
         } else if (!pressReleaseResult.ok) {
           setPushMessage(pressReleaseResult.message);
-        } else if (!marketHaltResult.ok) {
-          setPushMessage(marketHaltResult.message);
         }
       } catch {
         setPushMessage("Your push notification choices could not be saved.");
-      }
-    });
-  }
-
-  function muteHaltTicker(): void {
-    startTransition(async () => {
-      const result = await muteMarketHaltTicker(haltTickerInput);
-      if (result.ok) {
-        setMutedHaltTickers(result.tickers);
-        setHaltTickerInput("");
-        setPushMessage("Halt alert ticker muted.");
-      } else {
-        setPushMessage(result.message);
-      }
-    });
-  }
-
-  function unmuteHaltTicker(ticker: string): void {
-    startTransition(async () => {
-      const result = await unmuteMarketHaltTicker(ticker);
-      if (result.ok) {
-        setMutedHaltTickers(result.tickers);
-        setPushMessage(`${ticker} halt alerts turned back on.`);
-      } else {
-        setPushMessage(result.message);
       }
     });
   }
@@ -307,7 +258,7 @@ export function NotificationPreferences({
       ) : null}
       <Stack spacing={0.25}>
         <FormControlLabel
-          control={<Checkbox checked={pushSelected.length === PLATFORM_NOTIFICATION_CATEGORIES.length && pressReleasePushSelected.length === PRESS_RELEASE_PUSH_CHANNELS.length && marketHaltAlertsEnabled} disabled={pushState === "unsupported" || pushState === "denied"} indeterminate={! (pushSelected.length === PLATFORM_NOTIFICATION_CATEGORIES.length && pressReleasePushSelected.length === PRESS_RELEASE_PUSH_CHANNELS.length && marketHaltAlertsEnabled) && (pushSelected.length > 0 || pressReleasePushSelected.length > 0 || marketHaltAlertsEnabled)} onChange={(event) => toggleAllPush(event.target.checked)} />}
+          control={<Checkbox checked={pushSelected.length === PLATFORM_NOTIFICATION_CATEGORIES.length && pressReleasePushSelected.length === PRESS_RELEASE_PUSH_CHANNELS.length} disabled={pushState === "unsupported" || pushState === "denied"} indeterminate={! (pushSelected.length === PLATFORM_NOTIFICATION_CATEGORIES.length && pressReleasePushSelected.length === PRESS_RELEASE_PUSH_CHANNELS.length) && (pushSelected.length > 0 || pressReleasePushSelected.length > 0)} onChange={(event) => toggleAllPush(event.target.checked)} />}
           label="Select all"
         />
         {PLATFORM_NOTIFICATION_CATEGORIES.map((category) => (
@@ -324,35 +275,7 @@ export function NotificationPreferences({
             label={pressReleaseLabels[channel]}
           />
         ))}
-        <FormControlLabel
-          control={<Checkbox checked={marketHaltAlertsEnabled} disabled={pushState === "unsupported" || pushState === "denied"} onChange={(event) => setMarketHaltAlertsEnabled(event.target.checked)} />}
-          label="Halt alerts"
-        />
       </Stack>
-      <Typography color="text.secondary" variant="body2">
-        Halt alerts cover qualifying Nasdaq and NYSE halts. Each alert shows the exchange reason and any posted time for quotes and trading to resume. Nasdaq T1 halts at 7:50 ET are left out.
-      </Typography>
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" } }}>
-        <TextField
-          label="Ticker to mute"
-          onChange={(event) => setHaltTickerInput(event.target.value.toUpperCase())}
-          size="small"
-          slotProps={{ htmlInput: { maxLength: 24, style: { textTransform: "uppercase" } } }}
-          value={haltTickerInput}
-        />
-        <Button disabled={working || haltTickerInput.trim().length === 0} onClick={muteHaltTicker} variant="outlined">
-          Mute ticker
-        </Button>
-      </Stack>
-      {mutedHaltTickers.length > 0 ? (
-        <Box sx={{ alignItems: "flex-start", display: "flex", flexWrap: "wrap", gap: 1 }}>
-          {mutedHaltTickers.map((ticker) => (
-            <Button disabled={working} key={ticker} onClick={() => unmuteHaltTicker(ticker)} size="small" variant="outlined">
-              Turn on {ticker} alerts
-            </Button>
-          ))}
-        </Box>
-      ) : null}
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" } }}>
         {pushState === "enabled" ? (
           <>

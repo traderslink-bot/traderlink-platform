@@ -27,6 +27,8 @@ export function TraderLinkPlatformDashboardTemplate({
   accountSelectionRef,
   accountTimezone,
   children,
+  initialMarketHaltAlertsEnabled = false,
+  initialMutedMarketHaltTickers = [],
   notifications = [],
   offlineScopeRef,
   pressReleaseUnreadCounts = null,
@@ -35,12 +37,16 @@ export function TraderLinkPlatformDashboardTemplate({
   accountSelectionRef: string | null;
   accountTimezone: string | null;
   children: ReactNode;
+  initialMarketHaltAlertsEnabled?: boolean;
+  initialMutedMarketHaltTickers?: readonly string[];
   notifications?: readonly PlatformNotification[];
   offlineScopeRef: string;
   pressReleaseUnreadCounts?: PressReleaseUnreadCounts | null;
 }) {
   return (
     <DashboardShell
+      initialMarketHaltAlertsEnabled={initialMarketHaltAlertsEnabled}
+      initialMutedMarketHaltTickers={initialMutedMarketHaltTickers}
       notifications={notifications}
       pressReleaseUnreadCounts={pressReleaseUnreadCounts}
     >

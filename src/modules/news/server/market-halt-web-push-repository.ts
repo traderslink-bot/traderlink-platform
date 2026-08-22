@@ -23,6 +23,7 @@ type ClaimedDeliveryRow = SubscriptionRow & Readonly<{
   delivery_id: string;
   notification_body: string;
   notification_title: string;
+  ticker: string;
 }>;
 
 export class MarketHaltWebPushRepository {
@@ -43,7 +44,7 @@ SET state = 'pending', available_at_utc = ?, updated_at_utc = ?
 WHERE state = 'sending' AND last_attempt_at_utc <= ? AND attempt_count < 5`).run(nowUtc, nowUtc, staleBefore);
       this.database.prepare(`UPDATE news_market_halt_push_deliveries
 SET state = 'expired', failure_code = 'alerts_disabled', updated_at_utc = ?
-WHERE state = 'pending' AND (
+    WHERE state = 'pending' AND (
   NOT EXISTS (SELECT 1 FROM news_market_halt_preferences preference
     JOIN platform_web_push_subscriptions subscription ON subscription.user_id = preference.user_id
     WHERE subscription.subscription_id = news_market_halt_push_deliveries.subscription_id
@@ -52,19 +53,22 @@ WHERE state = 'pending' AND (
     JOIN platform_web_push_subscriptions subscription ON subscription.user_id = muted.user_id
     JOIN news_market_halt_events halt ON halt.halt_id = news_market_halt_push_deliveries.halt_id
     WHERE subscription.subscription_id = news_market_halt_push_deliveries.subscription_id
-      AND muted.ticker = halt.ticker)
-)`).run(nowUtc);
+      AND muted.ticker = halt.ticker
+      AND muted.expires_at_utc > ?)
+)`).run(nowUtc, nowUtc);
       const row = this.database.prepare<[string], ClaimedDeliveryRow>(`SELECT
   delivery.delivery_id, delivery.attempt_count, delivery.notification_title, delivery.notification_body,
+  halt.ticker,
   subscription.subscription_id, subscription.user_id, subscription.device_ref,
   subscription.endpoint_hash, subscription.key_version, subscription.initialization_vector,
   subscription.ciphertext, subscription.authentication_tag
 FROM news_market_halt_push_deliveries delivery
 JOIN platform_web_push_subscriptions subscription ON subscription.subscription_id = delivery.subscription_id
+JOIN news_market_halt_events halt ON halt.halt_id = delivery.halt_id
 WHERE delivery.state = 'pending' AND delivery.available_at_utc <= ?
   AND subscription.state = 'active'
 ORDER BY delivery.available_at_utc, delivery.created_at_utc
-LIMIT 1`).get(nowUtc);
+      LIMIT 1`).get(nowUtc);
       if (!row) return null;
       const claimed = this.database.prepare(`UPDATE news_market_halt_push_deliveries
 SET state = 'sending', attempt_count = attempt_count + 1, last_attempt_at_utc = ?, updated_at_utc = ?
@@ -74,6 +78,10 @@ WHERE delivery_id = ? AND state = 'pending'`).run(nowUtc, nowUtc, row.delivery_i
         attemptCount: row.attempt_count + 1,
         deliveryRef: row.delivery_id,
         destinationPath: "/account/preferences#push-notifications",
+        muteHaltTicker: row.ticker,
+        notificationActions: Object.freeze([
+          Object.freeze({ action: "mute-halt-ticker", title: "Mute for today" }),
+        ]),
         notificationBody: row.notification_body,
         notificationTag: `market-halt:${row.delivery_id}`,
         notificationTitle: row.notification_title,

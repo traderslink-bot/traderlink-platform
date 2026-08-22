@@ -21,6 +21,7 @@ import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import NoteAltRoundedIcon from "@mui/icons-material/NoteAltRounded";
 import NewspaperRoundedIcon from "@mui/icons-material/NewspaperRounded";
+import PauseCircleOutlineRoundedIcon from "@mui/icons-material/PauseCircleOutlineRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import QueryStatsRoundedIcon from "@mui/icons-material/QueryStatsRounded";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
@@ -63,9 +64,11 @@ import { useEffect, useState, type ReactNode } from "react";
 import type { PlatformNotification } from "@/src/modules/platform/contracts/platform-notification-contracts";
 import {
   DASHBOARD_HOME_ITEM,
+  DASHBOARD_MARKET_HALT_ALERTS_ITEM,
   DASHBOARD_NAVIGATION_HREFS,
   DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS,
   dashboardHelpTarget,
+  type DashboardNavigationDrawerItem,
   type DashboardNavigationGroup,
   type DashboardNavigationIconKey,
   type DashboardNavigationItem,
@@ -90,6 +93,10 @@ const desktopNavigationPreferenceKey = "traderlink:dashboard-navigation-collapse
 const aiFeaturesEnabled = areTraderLinkPlatformAiFeaturesEnabled();
 const AiChatClient = dynamic(() =>
   import("./(dashboard)/ai-chat/ai-chat-client").then((module) => module.AiChatClient));
+const MarketHaltAlertDrawerContent = dynamic(() =>
+  import("./(dashboard)/market-halts/market-halt-alert-drawer-content").then(
+    (module) => module.MarketHaltAlertDrawerContent,
+  ));
 
 function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
   const icons: Record<DashboardNavigationIconKey, ReactNode> = {
@@ -105,6 +112,7 @@ function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
     marketCharts: <CandlestickChartIcon />,
     data: <ViewDayRoundedIcon />,
     execution: <InsightsRoundedIcon />,
+    halt: <PauseCircleOutlineRoundedIcon />,
     help: <HelpOutlineRoundedIcon />,
     import: <CloudUploadRoundedIcon />,
     lab: <ScienceRoundedIcon />,
@@ -273,13 +281,64 @@ function NavigationLink({
   );
 }
 
+function NavigationDrawerButton({
+  collapsed,
+  item,
+  onOpen,
+}: {
+  collapsed: boolean;
+  item: DashboardNavigationDrawerItem;
+  onOpen: () => void;
+}) {
+  const button = (
+    <ListItemButton
+      onClick={onOpen}
+      sx={{
+        borderRadius: 2,
+        minHeight: 44,
+        mx: 1,
+        my: 0.25,
+        pl: collapsed ? 1.25 : 1.5,
+        pr: collapsed ? 1.25 : 1.5,
+        justifyContent: collapsed ? "center" : "initial",
+      }}
+    >
+      <ListItemIcon
+        sx={{
+          color: "text.secondary",
+          minWidth: collapsed ? 0 : 38,
+          justifyContent: "center",
+        }}
+      >
+        {navigationIcon(item.icon)}
+      </ListItemIcon>
+      {collapsed ? null : (
+        <ListItemText
+          primary={item.label}
+          slotProps={{ primary: { sx: { fontSize: 14, fontWeight: 620 } } }}
+        />
+      )}
+    </ListItemButton>
+  );
+
+  return collapsed ? (
+    <Tooltip arrow placement="right" title={item.label}>
+      {button}
+    </Tooltip>
+  ) : button;
+}
+
 export function DashboardShell({
   children,
+  initialMarketHaltAlertsEnabled = false,
+  initialMutedMarketHaltTickers = [],
   notifications = [],
   offline = false,
   pressReleaseUnreadCounts = null,
 }: {
   children: ReactNode;
+  initialMarketHaltAlertsEnabled?: boolean;
+  initialMutedMarketHaltTickers?: readonly string[];
   notifications?: readonly PlatformNotification[];
   offline?: boolean;
   pressReleaseUnreadCounts?: PressReleaseUnreadCounts | null;
@@ -292,6 +351,10 @@ export function DashboardShell({
     : "Open Help Center";
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [marketHaltAlertsOpen, setMarketHaltAlertsOpen] = useState(false);
+  const [marketHaltAlertsEnabled, setMarketHaltAlertsEnabled] = useState(initialMarketHaltAlertsEnabled);
+  const [mutedMarketHaltTickers, setMutedMarketHaltTickers] = useState(initialMutedMarketHaltTickers);
+  const [notificationMuteHaltTicker, setNotificationMuteHaltTicker] = useState<string | null>(null);
   const [aiChatOpen, setAiChatOpen] = useState(false);
   const [aiChatContext, setAiChatContext] = useState<CoachAiDailyCompanionContextSelector | null>(null);
   const [aiChatSuggestedQuestion, setAiChatSuggestedQuestion] = useState<string | null>(null);
@@ -323,6 +386,11 @@ export function DashboardShell({
     setAiChatContextRequestId((current) => current + 1);
     setAiChatOpen(true);
   };
+  const openMarketHaltAlerts = () => {
+    closeMobile();
+    if (offline) return;
+    setMarketHaltAlertsOpen(true);
+  };
 
   useEffect(() => {
     let restoreFrame: number | undefined;
@@ -339,6 +407,16 @@ export function DashboardShell({
       }
     };
   }, []);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const ticker = url.searchParams.get("muteHaltTicker");
+    if (!ticker || offline) return;
+    url.searchParams.delete("muteHaltTicker");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    setNotificationMuteHaltTicker(ticker);
+    setMarketHaltAlertsOpen(true);
+  }, [offline]);
 
   useEffect(() => {
     const openFromDashboard = (event: Event) => {
@@ -434,6 +512,22 @@ export function DashboardShell({
                       onNavigate={closeMobile}
                       onOpenAiChat={openAiChat}
                       pathname={pathname}
+                    />
+                  </Box>
+                );
+              }
+
+              if (section.kind === "drawer") {
+                if (offline || section.item.id !== DASHBOARD_MARKET_HALT_ALERTS_ITEM.id) {
+                  return null;
+                }
+                return (
+                  <Box key={section.item.id}>
+                    {divider}
+                    <NavigationDrawerButton
+                      collapsed={compact}
+                      item={section.item}
+                      onOpen={openMarketHaltAlerts}
                     />
                   </Box>
                 );
@@ -804,6 +898,39 @@ export function DashboardShell({
           {children}
         </Box>
       </Box>
+      {offline ? null : (
+        <Drawer
+          anchor="right"
+          onClose={() => setMarketHaltAlertsOpen(false)}
+          open={marketHaltAlertsOpen}
+          slotProps={{
+            paper: {
+              id: "market-halt-alert-drawer",
+              sx: {
+                boxSizing: "border-box",
+                height: "100dvh",
+                maxWidth: "100%",
+                pb: { xs: "env(safe-area-inset-bottom)", md: 0 },
+                pt: { xs: "env(safe-area-inset-top)", md: 0 },
+                width: { xs: "100%", sm: 440 },
+              },
+            },
+          }}
+          variant="temporary"
+        >
+          {marketHaltAlertsOpen ? (
+            <MarketHaltAlertDrawerContent
+              enabled={marketHaltAlertsEnabled}
+              mutedTickers={mutedMarketHaltTickers}
+              onClose={() => setMarketHaltAlertsOpen(false)}
+              onEnabledChange={setMarketHaltAlertsEnabled}
+              onNotificationMuteHandled={() => setNotificationMuteHaltTicker(null)}
+              onMutedTickersChange={setMutedMarketHaltTickers}
+              notificationMuteTicker={notificationMuteHaltTicker}
+            />
+          ) : null}
+        </Drawer>
+      )}
       {offline || !aiFeaturesEnabled ? null : (
         <Drawer
           anchor="right"

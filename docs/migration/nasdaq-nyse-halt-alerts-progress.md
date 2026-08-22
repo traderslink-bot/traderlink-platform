@@ -5,10 +5,12 @@
 **Controlling plan:** [Nasdaq and NYSE Halt Alerts Plan](nasdaq-nyse-halt-alerts-plan.md)
 
 - [x] Owner set the included/excluded halt types and 07:50 ET Nasdaq T1 suppression.
-- [x] Owner selected opt-in Halt alerts, individual ticker mutes, Select all controls, and live deployment.
+- [x] Owner selected opt-in Halt alerts, same-day ticker mutes, Select all controls, and live deployment.
 - [x] Add durable event, preference, mute and delivery records.
 - [x] Add official Nasdaq RSS and NYSE CSV polling with normalization.
 - [x] Send exact alert content through the existing Push service worker.
-- [x] Add Account Notifications controls and Help alignment.
+- [x] Add Account Push setup and Help alignment.
+- [x] Replace permanent settings-page ticker mutes with a **Mute for today** notification action and 4:00 PM Eastern expiry.
+- [x] Add the left-navigation Halt Alerts drawer with same-day ticker mutes and mobile close controls.
 - [ ] Complete focused verification and owner visual approval.
 - [ ] Deploy, activate the one-minute hosted schedule, and confirm real device Push.

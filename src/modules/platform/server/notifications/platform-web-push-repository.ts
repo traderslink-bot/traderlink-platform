@@ -40,6 +40,8 @@ export type PlatformWebPushClaimedDelivery = Readonly<{
   attemptCount: number;
   deliveryRef: string;
   destinationPath: string;
+  muteHaltTicker?: string;
+  notificationActions?: readonly Readonly<{ action: string; title: string }>[];
   notificationBody?: string;
   notificationTag?: string;
   notificationTitle?: string;

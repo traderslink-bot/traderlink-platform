@@ -14,6 +14,8 @@ import { JournalAccountService } from "@/src/modules/journal/server/accounts/jou
 import { PwaLifecycle } from "../pwa/pwa-lifecycle";
 import { PressReleaseDashboardRepository } from "@/src/modules/news/server/press-release-dashboard-repository";
 import { hasPressReleaseDashboardAccess } from "@/src/modules/news/server/press-release-dashboard-access";
+import { MarketHaltAlertRepository } from "@/src/modules/news/server/market-halt-alert-repository";
+import { createCanonicalUtcTimestamp } from "@/src/modules/platform/server/database/platform-migration-contract";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -49,13 +51,20 @@ export default async function DashboardLayout({
   }
   const scope = identity.scope;
   const canReadPressReleases = hasPressReleaseDashboardAccess(identity);
+  const readAtUtc = createCanonicalUtcTimestamp();
   const dashboardContext = withReadonlyPlatformDatabase({}, (database) => {
     const activeAccount = scope.activeAccountId
       ? new JournalAccountService(new JournalAccountRepository(database))
         .requireAccountRecord(scope, scope.activeAccountId)
       : null;
+    const marketHaltAlerts = new MarketHaltAlertRepository(database);
     return Object.freeze({
       activeAccount,
+      marketHaltAlerts: marketHaltAlerts.read(scope),
+      mutedMarketHaltTickers: marketHaltAlerts.listMutedTickers({
+        readAtUtc,
+        scope,
+      }),
       notifications: new PlatformNotificationRepository(database).list(scope, 5),
       pressReleaseUnreadCounts: canReadPressReleases
         ? new PressReleaseDashboardRepository(database).unreadCounts(scope)
@@ -74,6 +83,8 @@ export default async function DashboardLayout({
         accountCurrency={dashboardContext.activeAccount?.baseCurrency ?? null}
         accountSelectionRef={accountSelectionRef}
         accountTimezone={dashboardContext.activeAccount?.tradingTimezone ?? null}
+        initialMarketHaltAlertsEnabled={dashboardContext.marketHaltAlerts.enabled}
+        initialMutedMarketHaltTickers={dashboardContext.mutedMarketHaltTickers}
         notifications={dashboardContext.notifications}
         offlineScopeRef={offlineScopeRef}
         pressReleaseUnreadCounts={dashboardContext.pressReleaseUnreadCounts}

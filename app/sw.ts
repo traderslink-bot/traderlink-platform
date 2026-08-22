@@ -42,6 +42,12 @@ function safeNotificationText(value: unknown, fallback: string, maximum: number)
     : fallback;
 }
 
+function safeTicker(value: unknown): string | null {
+  return typeof value === "string" && /^[A-Z0-9.-]{1,24}$/u.test(value)
+    ? value
+    : null;
+}
+
 const offlineNavigationPlugin: SerwistPlugin = {
   async handlerDidError({ request }) {
     const url = new URL(request.url);
@@ -163,13 +169,23 @@ self.addEventListener("push", (event) => {
   let title = "TraderLink Platform";
   let body = "You have a new TraderLink update.";
   let tag = "traderlink-update";
+  let muteHaltTicker: string | null = null;
+  let actions: NotificationAction[] = [];
   try {
     const data = event.data?.json();
-    if (data?.version === 1 || data?.version === 2) {
+    if (data?.version === 1 || data?.version === 2 || data?.version === 3) {
       path = safeDestinationPath(data.destinationPath);
       title = safeNotificationText(data.notificationTitle, title, 120);
       body = safeNotificationText(data.notificationBody, body, 240);
       tag = safeNotificationText(data.notificationTag, tag, 160);
+      muteHaltTicker = safeTicker(data.muteHaltTicker);
+      if (muteHaltTicker && Array.isArray(data.notificationActions)) {
+        actions = data.notificationActions
+          .filter((action: unknown) => action && typeof action === "object" &&
+            (action as { action?: unknown }).action === "mute-halt-ticker")
+          .slice(0, 1)
+          .map(() => ({ action: "mute-halt-ticker", title: "Mute for today" }));
+      }
     }
   } catch {
     path = "/notifications";
@@ -179,7 +195,8 @@ self.addEventListener("push", (event) => {
       body,
       icon: "/icons/traderlink-192.png",
       badge: "/icons/traderlink-192.png",
-      data: { path },
+      actions,
+      data: { muteHaltTicker, path },
       tag,
     }),
   );
@@ -187,7 +204,10 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const path = safeDestinationPath(event.notification.data?.path);
+  const ticker = safeTicker(event.notification.data?.muteHaltTicker);
+  const path = event.action === "mute-halt-ticker" && ticker
+    ? `/workspace?muteHaltTicker=${encodeURIComponent(ticker)}`
+    : safeDestinationPath(event.notification.data?.path);
   event.waitUntil(
     self.clients.matchAll({ includeUncontrolled: true, type: "window" })
       .then(async (clients) => {

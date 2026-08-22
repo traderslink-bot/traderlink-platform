@@ -66,10 +66,12 @@ export class PlatformWebPushDeliveryService {
         },
         JSON.stringify(Object.freeze({
           destinationPath: delivery.destinationPath,
+          muteHaltTicker: delivery.muteHaltTicker,
+          notificationActions: delivery.notificationActions,
           notificationBody: delivery.notificationBody,
           notificationTag: delivery.notificationTag,
           notificationTitle: delivery.notificationTitle,
-          version: 2,
+          version: 3,
         })),
         {
           TTL: 24 * 60 * 60,

@@ -14,6 +14,7 @@ export type DashboardNavigationIconKey =
   | "marketCharts"
   | "data"
   | "execution"
+  | "halt"
   | "help"
   | "import"
   | "lab"
@@ -49,6 +50,12 @@ export type DashboardNavigationGroup = Readonly<{
   label: string;
   icon: DashboardNavigationIconKey;
   items: readonly DashboardNavigationItem[];
+}>;
+
+export type DashboardNavigationDrawerItem = Readonly<{
+  id: "marketHaltAlerts";
+  label: string;
+  icon: DashboardNavigationIconKey;
 }>;
 
 export const DASHBOARD_HOME_ITEM: DashboardNavigationItem = Object.freeze({
@@ -238,6 +245,13 @@ export const DASHBOARD_STANDALONE_ITEMS: readonly DashboardNavigationItem[] =
     }),
   ]);
 
+export const DASHBOARD_MARKET_HALT_ALERTS_ITEM: DashboardNavigationDrawerItem =
+  Object.freeze({
+    id: "marketHaltAlerts",
+    label: "Halt Alerts (Nasdaq/NYSE)",
+    icon: "halt",
+  });
+
 export type DashboardSidebarNavigationSection = Readonly<
   | {
     kind: "group";
@@ -247,6 +261,11 @@ export type DashboardSidebarNavigationSection = Readonly<
   | {
     kind: "item";
     item: DashboardNavigationItem;
+    dividerBefore?: boolean;
+  }
+  | {
+    kind: "drawer";
+    item: DashboardNavigationDrawerItem;
     dividerBefore?: boolean;
   }
 >;
@@ -263,6 +282,7 @@ export const DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS: readonly DashboardSidebarNav
     Object.freeze({ kind: "item" as const, item: DASHBOARD_STANDALONE_ITEMS[0] }),
     Object.freeze({ kind: "item" as const, item: DASHBOARD_STANDALONE_ITEMS[1] }),
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[7] }),
+    Object.freeze({ kind: "drawer" as const, item: DASHBOARD_MARKET_HALT_ALERTS_ITEM }),
   ]);
 
 export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =

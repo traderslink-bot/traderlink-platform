@@ -6,7 +6,7 @@
 
 ## Outcome
 
-Traders who select **Halt alerts** receive Push notifications for qualifying Nasdaq and NYSE halt events. They can mute one ticker without turning the alert stream off.
+Traders who select **Halt Alerts (Nasdaq/NYSE)** receive Push notifications for qualifying Nasdaq and NYSE halt events. They can mute one ticker through the end of that trading day from the Halt Alerts drawer or the notification itself without turning the alert stream off.
 
 ## Approved alert
 
@@ -27,9 +27,11 @@ The alert shows the source exchange, its actual code, and that code's plain-Engl
 
 ## Preferences and delivery
 
-- Users choose **Halt alerts**; it is not automatically enabled.
+- **Halt Alerts (Nasdaq/NYSE)** is a left-navigation drawer. It opens as a full-width mobile card with an X and backdrop close control.
+- Users turn **Halt alerts** on or off in that drawer; it is not automatically enabled.
+- The drawer can mute a ticker for today and lists the currently muted tickers in small type with an X to unmute each one.
 - Both Discord messages and Push notifications get their own **Select all** control while retaining individual choices.
-- Account Notifications lists muted halt tickers and lets the trader turn one back on.
+- A **Mute for today** action on a halt notification mutes that ticker through 4:00 PM Eastern. It automatically returns the ticker's alerts after the current trading day ends.
 - The existing Platform encrypted Web Push transport delivers the alert. The protected `/api/cron/market-halts` endpoint polls Nasdaq and NYSE once a minute after owner UI approval; the Railway scheduler calls it over HTTPS and sends real Push alerts.
 
 ## Source rules

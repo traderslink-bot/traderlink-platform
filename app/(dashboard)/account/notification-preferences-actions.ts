@@ -121,44 +121,49 @@ export async function saveMarketHaltAlertsEnabled(
 
 export async function muteMarketHaltTicker(
   ticker: string,
-): Promise<Readonly<{ ok: true; tickers: readonly string[] }> | Readonly<{ ok: false; message: string }>> {
+): Promise<Readonly<{ ok: true; ticker: string }> | Readonly<{ ok: false; message: string }>> {
   try {
     const scope = await requireTraderLinkPlatformPageScope();
     const saved = withPlatformDatabase(
       { mode: "runtime" },
-      (database) => new MarketHaltAlertRepository(database).mute({
+      (database) => new MarketHaltAlertRepository(database).muteForCurrentTradingDay({
         scope,
         ticker,
         updatedAtUtc: createCanonicalUtcTimestamp(),
       }),
     );
     revalidatePath("/account/preferences");
-    return Object.freeze({ ok: true as const, tickers: saved });
+    return Object.freeze({ ok: true as const, ticker: saved });
   } catch (error) {
     const invalid = isTraderLinkPlatformError(error) &&
       error.code === "TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED";
     return Object.freeze({
       ok: false as const,
-      message: invalid ? "Enter a valid ticker." : "That ticker could not be muted. Try again.",
+      message: invalid ? "That halt alert could not be muted." : "That halt alert could not be muted. Try again.",
     });
   }
 }
 
 export async function unmuteMarketHaltTicker(
   ticker: string,
-): Promise<Readonly<{ ok: true; tickers: readonly string[] }> | Readonly<{ ok: false; message: string }>> {
+): Promise<Readonly<{ ok: true; ticker: string }> | Readonly<{ ok: false; message: string }>> {
   try {
     const scope = await requireTraderLinkPlatformPageScope();
     const saved = withPlatformDatabase(
       { mode: "runtime" },
-      (database) => new MarketHaltAlertRepository(database).unmute({ scope, ticker }),
+      (database) => new MarketHaltAlertRepository(database).unmute({
+        scope,
+        ticker,
+      }),
     );
     revalidatePath("/account/preferences");
-    return Object.freeze({ ok: true as const, tickers: saved });
-  } catch {
+    return Object.freeze({ ok: true as const, ticker: saved });
+  } catch (error) {
+    const invalid = isTraderLinkPlatformError(error) &&
+      error.code === "TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED";
     return Object.freeze({
       ok: false as const,
-      message: "That ticker could not be turned back on. Try again.",
+      message: invalid ? "That halt ticker could not be unmuted." : "That halt ticker could not be unmuted. Try again.",
     });
   }
 }
