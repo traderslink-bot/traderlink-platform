@@ -8,8 +8,8 @@
 
 - [x] Put a dedicated **Install TradersLink PWA App** card on `/workspace` directly below the performance metrics.
 - [x] Preserve the owner-approved install text exactly.
-- [x] Open the native browser install prompt from the card when Chromium makes it available.
-- [x] Give iPhone/iPad users the required Share then Add to Home Screen instruction.
+- [x] Keep a visible **Install TradersLink app** button in both places. It opens Chromium's native prompt when available and otherwise opens exact device-specific installation steps.
+- [x] Give iPhone/iPad users the required Share then Add to Home Screen instruction in the clickable install guide.
 - [x] State when the app is already installed and remove the redundant install action.
 - [x] Put the same native install action and device-specific steps in Account General, with the owner-approved replacement text, device-data controls and browser-install guidance retained.
 - [ ] Owner reviews the desktop and mobile card presentation.

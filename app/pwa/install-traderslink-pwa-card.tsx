@@ -3,6 +3,11 @@
 import DownloadRoundedIcon from "@mui/icons-material/DownloadRounded";
 import NotificationsRoundedIcon from "@mui/icons-material/NotificationsRounded";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import Typography from "@mui/material/Typography";
 import { useEffect, useRef, useState } from "react";
 
@@ -39,6 +44,7 @@ function isIosDevice(): boolean {
 export function InstallTradersLinkPwaMethods() {
   const deferredPrompt = useRef<DeferredInstallPrompt | null>(null);
   const [installState, setInstallState] = useState<InstallState>("checking");
+  const [installHelpOpen, setInstallHelpOpen] = useState(false);
 
   useEffect(() => {
     const refreshInstallationState = () => {
@@ -69,7 +75,10 @@ export function InstallTradersLinkPwaMethods() {
 
   async function requestInstallation(): Promise<void> {
     const prompt = deferredPrompt.current;
-    if (!prompt) return;
+    if (!prompt) {
+      setInstallHelpOpen(true);
+      return;
+    }
 
     setInstallState("prompting");
     try {
@@ -83,33 +92,19 @@ export function InstallTradersLinkPwaMethods() {
 
   return (
     <Box sx={{ display: "grid", gap: 1.25 }}>
-      {installState === "ready" ? (
+      {installState !== "installed" ? (
         <DashboardPrimaryAction
+          disabled={installState === "prompting"}
           onClick={() => void requestInstallation()}
           startIcon={<DownloadRoundedIcon />}
           sx={{ alignSelf: "flex-start" }}
         >
-          Install app
+          {installState === "prompting" ? "Opening install..." : "Install TradersLink app"}
         </DashboardPrimaryAction>
-      ) : null}
-      {installState === "prompting" ? (
-        <Typography color="text.secondary" variant="body2">
-          Your browser is opening the installation prompt.
-        </Typography>
       ) : null}
       {installState === "installing" ? (
         <Typography color="text.secondary" variant="body2">
           Finish installation in your browser. TradersLink will then appear with your other apps.
-        </Typography>
-      ) : null}
-      {installState === "ios" ? (
-        <Typography color="text.secondary" variant="body2">
-          On iPhone or iPad, tap Share in Safari, then choose Add to Home Screen.
-        </Typography>
-      ) : null}
-      {installState === "manual" ? (
-        <Typography color="text.secondary" variant="body2">
-          Open your browser menu and choose Install app. If that option is not available, this browser does not offer app installation yet.
         </Typography>
       ) : null}
       {installState === "installed" ? (
@@ -118,6 +113,23 @@ export function InstallTradersLinkPwaMethods() {
           TradersLink is installed on this device.
         </Typography>
       ) : null}
+      <Dialog fullWidth maxWidth="xs" onClose={() => setInstallHelpOpen(false)} open={installHelpOpen}>
+        <DialogTitle>Install TradersLink app</DialogTitle>
+        <DialogContent>
+          {installState === "ios" ? (
+            <Typography>
+              In Safari, tap the Share button, then choose Add to Home Screen.
+            </Typography>
+          ) : (
+            <Typography>
+              In Chrome or Edge, open the browser menu and choose Install app. If you do not see that option, update your browser or try Chrome or Edge.
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setInstallHelpOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
