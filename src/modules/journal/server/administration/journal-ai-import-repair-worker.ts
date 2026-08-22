@@ -9,11 +9,16 @@ import {
 } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { parseJournalGenericStatementMappingContract, type JournalGenericStatementMappingContract } from "../imports/journal-generic-mapped-statement-adapter";
 import { commitJournalGenericMappedUpload, previewJournalGenericMappedUpload } from "../product/journal-import-product-service";
-import { createJournalMappingSupportPackage } from "../product/journal-mapping-support-package";
+import {
+  createJournalMappingSupportPackage,
+  createJournalMappingSupportPackageV2,
+} from "../product/journal-mapping-support-package";
 import { resolvePlatformDatabaseConfig } from "@/src/modules/platform/server/database/platform-database-config";
 import { readJournalSupportSource, resolveJournalSupportSourceVault } from "./journal-support-source-vault";
 import { JournalAiImportRepairRepository } from "./journal-ai-import-repair-repository";
 import { sendDiscordStatementImportCompletion } from "@/src/modules/platform/server/notifications/platform-discord-direct-message";
+import { JournalImportAttemptRepository } from "./journal-import-attempt-repository";
+import { finishJournalImportPreview } from "./journal-import-attempt-service";
 
 export type JournalAiImportRepairProvider = (input: Readonly<{
   sourceText: string;
@@ -87,6 +92,21 @@ export class JournalAiImportRepairWorker {
         attemptBindingSha256: claimed.requestIdempotencySha256,
       });
       if (!preview.canCommit) throw new Error("private_preview_rejected");
+      const attempt = new JournalImportAttemptRepository(this.database).findById(
+        claimed.scope,
+        claimed.importAttemptId,
+      );
+      if (!attempt) throw new Error("private_attempt_missing");
+      finishJournalImportPreview(claimed.scope, {
+        context: {
+          attempt,
+          attemptBindingSha256: claimed.requestIdempotencySha256,
+          correlationRefSha256: claimed.correlationRefSha256,
+        },
+        package: createJournalMappingSupportPackageV2(inspection),
+        preview,
+        safeMappingContract: preview.mappingContract,
+      });
       const result = commitJournalGenericMappedUpload(claimed.scope, {
         sourceBytes, mapping, previewRef: preview.previewRef,
         attemptBindingSha256: claimed.requestIdempotencySha256,
@@ -95,10 +115,10 @@ export class JournalAiImportRepairWorker {
       const completedAtUtc = createCanonicalUtcTimestamp(this.now());
       // An exact duplicate has no new batch; the original import is already safe.
       if (result.status !== "committed") throw new Error("private_preview_duplicate");
-      const attempt = this.database.prepare<[string], { committed_import_batch_id: string | null }>(`SELECT committed_import_batch_id
+      const committedAttempt = this.database.prepare<[string], { committed_import_batch_id: string | null }>(`SELECT committed_import_batch_id
 FROM journal_import_attempts WHERE import_attempt_id = ?`).get(claimed.importAttemptId);
-      if (!attempt?.committed_import_batch_id) throw new Error("private_commit_missing");
-      repository.complete({ repairJobId: claimed.job.repairJobId, importBatchId: attempt.committed_import_batch_id, timestamp: completedAtUtc });
+      if (!committedAttempt?.committed_import_batch_id) throw new Error("private_commit_missing");
+      repository.complete({ repairJobId: claimed.job.repairJobId, importBatchId: committedAttempt.committed_import_batch_id, timestamp: completedAtUtc });
       new PlatformNotificationRepository(this.database).create({
         category: "statement_import", destinationPath: "/imports", journalAccountId: claimed.scope.activeAccountId,
         kind: "statement_ai_repair_completed", occurredAtUtc: completedAtUtc, scope: claimed.scope,
