@@ -118,15 +118,15 @@ function OfflineAccount({ accountSelectionRef, offlineScopeRef, pathname }: {
   pathname: string;
 }) {
   const activeSection = accountSection(pathname);
-  const title = activeSection === "preferences" ? "Preferences"
-    : activeSection === "trading" ? "Trading"
+  const title = activeSection === "preferences" ? "Notifications"
+    : activeSection === "trading" ? "General"
       : activeSection === "ai" ? "AI & plan"
-        : activeSection === "profile" ? "Profile & access"
-          : "Privacy";
+        : activeSection === "profile" ? "Profile"
+          : "Delete Account";
   return (
     <AccountSettingsLayout activeSection={activeSection} description="Manage this device offline. Reconnect for account, security, broker, reporting and delivery changes." title={title}>
-      {activeSection === "preferences" ? (
-        <DashboardPanel title="Offline data">
+      {activeSection === "trading" ? (
+        <DashboardPanel title="Mobile and Desktop PWA App">
           <OfflineDataSettings accountSelectionRef={accountSelectionRef} offlineScopeRef={offlineScopeRef} />
         </DashboardPanel>
       ) : null}

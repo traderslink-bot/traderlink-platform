@@ -6,6 +6,7 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -96,9 +97,12 @@ export function OfflineDataSettings({
   const deviceStorageBytes = summary?.browserUsageBytes ??
     summary?.approximateBytes ?? 0;
   return (
-    <Stack spacing={1.5}>
+    <Stack id="pwa-app" spacing={1.5} sx={{ scrollMarginTop: 96 }}>
       <Typography color="text.secondary" variant="body2">
-        TraderLink saves bounded, read-only copies of pages you open online. Offline pages show their last update time and never add pending trades to official results.
+        Install TradersLink on your phone or computer for quicker access from your home screen or desktop. The installed app can send push notifications, makes it more convenient to enter trades, and keeps useful pages available when your connection is interrupted. Trades entered while offline can be sent when you reconnect.
+      </Typography>
+      <Typography color="text.secondary" variant="body2">
+        In Chrome or Edge, open the browser menu and choose <strong>Install app</strong>. On iPhone or iPad, open the Share menu and choose <strong>Add to Home Screen</strong>. <Link href="https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/What_is_a_progressive_web_app" rel="noreferrer" target="_blank">Learn what a PWA is</Link>.
       </Typography>
       {message ? <Alert severity={message.startsWith("Offline data was") ? "success" : "error"}>{message}</Alert> : null}
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
@@ -121,9 +125,6 @@ export function OfflineDataSettings({
       </Stack>
       <Typography color="text.secondary" variant="caption">
         TraderLink keeps up to {formatStorageLimit(PLATFORM_OFFLINE_MAX_PAGE_DATA_BYTES)} of read-only page copies in this browser and removes the oldest copies first. Each saved page is limited to {formatStorageLimit(PLATFORM_OFFLINE_MAX_SAVED_VIEW_BYTES)}. Unsynced trades are never removed automatically.
-      </Typography>
-      <Typography color="text.secondary" variant="caption">
-        Device storage is the browser&apos;s estimate for the installed app and offline data when available. Raw statements, broker credentials, provider identities and AI request data are never included in saved page copies.
       </Typography>
       <Button color="error" onClick={() => setConfirmOpen(true)} sx={{ alignSelf: "flex-start" }} variant="outlined">
         Remove offline data

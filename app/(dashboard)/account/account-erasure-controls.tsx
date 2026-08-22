@@ -106,7 +106,7 @@ export function AccountErasureControls({
         </Box>
       ) : (
         <Alert severity="info">
-          You do not currently have a Trade Tracker account. You can create one again from Trading.
+          You do not currently have a Trade Tracker account. You can create one again from General.
         </Alert>
       )}
 

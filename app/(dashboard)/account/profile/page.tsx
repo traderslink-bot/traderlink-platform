@@ -13,8 +13,8 @@ import { PlatformAccountProfileReadService } from "@/src/modules/platform/server
 import { AccountSettingsLayout } from "../account-settings-layout";
 
 export const metadata: Metadata = {
-  description: "Review your TraderLink profile, workspace and sign-in access.",
-  title: "Profile & access | TraderLink Platform",
+  description: "Review your TraderLink profile and sign-in access.",
+  title: "Profile | TraderLink Platform",
 };
 
 export const dynamic = "force-dynamic";
@@ -28,8 +28,8 @@ export default async function AccountProfilePage() {
   return (
     <AccountSettingsLayout
       activeSection="profile"
-      description="Review the profile and workspace that own your TraderLink data."
-      title="Profile & access"
+      description="Review your TraderLink profile and sign-in information."
+      title="Profile"
     >
       <DashboardPanel title="Profile">
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ alignItems: { sm: "center" } }}>

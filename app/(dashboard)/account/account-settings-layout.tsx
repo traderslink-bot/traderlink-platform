@@ -27,16 +27,16 @@ const ACCOUNT_SETTINGS_SECTIONS: readonly Readonly<{
   label: string;
 }>[] = Object.freeze([
   Object.freeze({
-    description: "Currency and delivery choices",
-    href: "/account/preferences",
-    id: "preferences",
-    label: "Preferences",
-  }),
-  Object.freeze({
-    description: "Accounts and broker connections",
+    description: "Accounts, currency, broker connections, PWA app settings",
     href: "/account/trading",
     id: "trading",
-    label: "Trading",
+    label: "General",
+  }),
+  Object.freeze({
+    description: "Push notifications and Discord messages",
+    href: "/account/preferences",
+    id: "preferences",
+    label: "Notifications",
   }),
   Object.freeze({
     description: aiFeaturesEnabled ? "AI Reviews and your plan" : "AI features are coming soon",
@@ -45,16 +45,16 @@ const ACCOUNT_SETTINGS_SECTIONS: readonly Readonly<{
     label: aiFeaturesEnabled ? "AI & plan" : "AI",
   }),
   Object.freeze({
-    description: "Profile, workspace and sign-in",
+    description: "Profile and sign-in",
     href: "/account/profile",
     id: "profile",
-    label: "Profile & access",
+    label: "Profile",
   }),
   Object.freeze({
     description: "Permanent data deletion",
     href: "/account/privacy",
     id: "privacy",
-    label: "Privacy",
+    label: "Delete Account",
   }),
 ]);
 

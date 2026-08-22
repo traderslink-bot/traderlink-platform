@@ -9,7 +9,7 @@ import { AccountSettingsLayout } from "../account-settings-layout";
 
 export const metadata: Metadata = {
   description: "Permanently delete TraderLink data when you choose to leave.",
-  title: "Privacy | TraderLink Platform",
+  title: "Delete Account | TraderLink Platform",
 };
 
 export const dynamic = "force-dynamic";
@@ -25,7 +25,7 @@ export default async function AccountPrivacyPage() {
     <AccountSettingsLayout
       activeSection="privacy"
       description="Control the permanent deletion of a Trade Tracker account or your entire TraderLink account."
-      title="Privacy"
+      title="Delete Account"
     >
       <DashboardPanel title="Delete data">
         <AccountErasureControls activeAccount={activeAccount} />

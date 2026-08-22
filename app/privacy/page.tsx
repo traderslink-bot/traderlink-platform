@@ -191,7 +191,7 @@ export default function PrivacyPolicyPage() {
           information and why it was collected.
         </p>
         <p>
-          Account holders can use the Privacy section of Account Settings to
+          Account holders can use the Delete Account section of Account Settings to
           request deletion of a selected Trade Tracker account or, where
           available, their complete TradersLink account. Information may remain
           for a limited period in protected backups, security records or records

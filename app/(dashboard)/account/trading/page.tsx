@@ -7,7 +7,11 @@ import type { Metadata } from "next";
 
 import { DashboardAccountSwitcher } from "@/app/dashboard-account-switcher";
 import { DashboardPanel } from "../../../dashboard-template";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import {
+  currentJournalAccountSelectionRef,
+  requireTraderLinkPlatformPageScope,
+} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { TraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
@@ -18,10 +22,12 @@ import { AccountSettingsLayout } from "../account-settings-layout";
 import { BrokerConnectionPicker } from "../broker-connection-picker";
 import { MoomooConnectionSettings } from "../moomoo-connection-settings";
 import { MoomooExecutionImportSetup } from "../moomoo-execution-import-setup";
+import { OfflineDataSettings } from "../offline-data-settings";
+import { ReportingCurrencySettings } from "../reporting-currency-settings";
 
 export const metadata: Metadata = {
-  description: "Manage TraderLink Trade Tracker accounts and broker connections.",
-  title: "Trading | TraderLink Platform",
+  description: "Manage TraderLink accounts, currency, broker connections and PWA app settings.",
+  title: "General | TraderLink Platform",
 };
 
 export const dynamic = "force-dynamic";
@@ -71,8 +77,8 @@ export default async function AccountTradingPage({
   return (
     <AccountSettingsLayout
       activeSection="trading"
-      description="Manage separate Trade Tracker accounts and the brokers connected to the selected account."
-      title="Trading"
+      description="Manage your Trade Tracker accounts, reporting currency, broker connections and installed app."
+      title="General"
     >
       <DashboardPanel
         action={<DashboardAccountSwitcher accounts={profile.journalAccounts} />}
@@ -93,6 +99,10 @@ export default async function AccountTradingPage({
 
       <DashboardPanel title="Create a Trade Tracker account">
         <AccountManagementClient activeAccountSelectionRef={activeAccount?.selectionRef ?? null} defaultTradingTimezone={profile.workspace.defaultTradingTimezone} />
+      </DashboardPanel>
+
+      <DashboardPanel title="Reporting currency">
+        <ReportingCurrencySettings reportingCurrency={profile.reportingCurrency} />
       </DashboardPanel>
 
       <DashboardPanel title="Broker connections">
@@ -130,6 +140,15 @@ export default async function AccountTradingPage({
             initialLinkedAccounts={moomooAccountLinks}
           />
         ) : null}
+      </DashboardPanel>
+
+      <DashboardPanel title="Mobile and Desktop PWA App">
+        <OfflineDataSettings
+          accountSelectionRef={scope.activeAccountId
+            ? currentJournalAccountSelectionRef(scope)
+            : null}
+          offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
+        />
       </DashboardPanel>
     </AccountSettingsLayout>
   );

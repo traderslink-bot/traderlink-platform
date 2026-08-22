@@ -7,6 +7,8 @@ import Divider from "@mui/material/Divider";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import MuiLink from "@mui/material/Link";
+import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 
 import {
@@ -119,7 +121,7 @@ export function NotificationPreferences({
   function enablePush(): void {
     if (!pushPreparation) {
       setPushMessage(pushPreparationUnavailable
-        ? "Push notifications are not available yet."
+        ? "Install TradersLink on this device and use General settings to finish notification setup."
         : "Push notifications are still getting ready. Try again in a moment.");
       return;
     }
@@ -194,7 +196,7 @@ export function NotificationPreferences({
         ))}
       </Stack>
       <Button disabled={working} onClick={save} sx={{ alignSelf: "flex-start" }} variant="contained">
-        {working ? "Saving..." : "Save Discord preferences"}
+        {working ? "Saving..." : "Save Preferences"}
       </Button>
       <Divider />
       <Typography
@@ -210,7 +212,9 @@ export function NotificationPreferences({
       {pushState === "unsupported" ? <Alert severity="info">Push notifications are not supported in this browser.</Alert> : null}
       {pushState === "denied" ? <Alert severity="warning">Push notifications are blocked in this browser&apos;s settings. Change this site&apos;s notification permission in your browser settings if you want to enable them.</Alert> : null}
       {pushPreparationUnavailable && pushState !== "unsupported" && pushState !== "denied" ? (
-        <Alert severity="info">Push notifications are not available yet.</Alert>
+        <Alert severity="info">
+          Install TradersLink on your phone or computer to receive push notifications on that device. <MuiLink component={Link} href="/account/trading#pwa-app">Open General for app installation help.</MuiLink>
+        </Alert>
       ) : null}
       {pushMessage ? <Alert severity={successMessage(pushMessage) ? "success" : "error"}>{pushMessage}</Alert> : null}
       <Stack spacing={0.25}>
@@ -221,13 +225,6 @@ export function NotificationPreferences({
             label={labels[category]}
           />
         ))}
-      </Stack>
-      <Divider />
-      <Typography sx={{ fontWeight: 800 }} variant="subtitle2">Press release alerts</Typography>
-      <Typography color="text.secondary" variant="body2">
-        These choices match the Press Releases channels in your dashboard. Each alert opens the article directly in its dashboard drawer.
-      </Typography>
-      <Stack spacing={0.25}>
         {PRESS_RELEASE_PUSH_CHANNELS.map((channel) => (
           <FormControlLabel
             control={<Checkbox checked={pressReleasePushSelected.includes(channel)} disabled={pushState === "unsupported" || pushState === "denied"} onChange={(event) => togglePressReleasePush(channel, event.target.checked)} />}
@@ -239,14 +236,14 @@ export function NotificationPreferences({
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" } }}>
         {pushState === "enabled" ? (
           <>
-            <Button disabled={working} onClick={savePush} variant="contained">Save push preferences</Button>
+            <Button disabled={working} onClick={savePush} variant="contained">{working ? "Saving..." : "Save Preferences"}</Button>
             <Button color="error" disabled={working} onClick={disablePush} variant="outlined">Turn off push notifications</Button>
           </>
         ) : pushState === "checking" ? (
-          <Button disabled variant="contained">Checking this device...</Button>
+          <Button disabled variant="contained">Save Preferences</Button>
         ) : pushState === "unsupported" || pushState === "denied" ? null : pushPreparationUnavailable ? (
           <Button disabled={working} onClick={retryPushPreparation} variant="contained">
-            Retry Push setup
+            Save Preferences
           </Button>
         ) : (
           <Button
@@ -254,9 +251,7 @@ export function NotificationPreferences({
             onClick={enablePush}
             variant="contained"
           >
-            {pushPreparation === null && !pushPreparationUnavailable
-              ? "Preparing notifications..."
-              : "Enable push notifications"}
+            Save Preferences
           </Button>
         )}
       </Stack>
