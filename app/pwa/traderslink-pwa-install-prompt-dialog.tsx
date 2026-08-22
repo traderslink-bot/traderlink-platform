@@ -7,7 +7,7 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Typography from "@mui/material/Typography";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import {
   hasInstalledTradersLinkPwa,
@@ -19,6 +19,24 @@ import {
   tradersLinkPwaInstallPromptReady,
 } from "./traderslink-pwa-install-prompt";
 
+const INSTALL_PROMPT_DISPLAY_COUNT_STORAGE_KEY =
+  "traderlink:pwa-install-prompt-display-count:v1";
+const INSTALL_PROMPT_SUPPRESSED_STORAGE_KEY =
+  "traderlink:pwa-install-prompt-suppressed:v1";
+const INSTALL_PROMPT_DISMISS_LINK_DISPLAY_COUNT = 3;
+
+function readStoredDisplayCount(): number {
+  try {
+    const value = Number.parseInt(
+      window.localStorage.getItem(INSTALL_PROMPT_DISPLAY_COUNT_STORAGE_KEY) ?? "0",
+      10,
+    );
+    return Number.isSafeInteger(value) && value > 0 ? value : 0;
+  } catch {
+    return 0;
+  }
+}
+
 export function TradersLinkPwaInstallPrompt() {
   const installPromptReady = useSyncExternalStore(
     subscribeToTradersLinkPwaInstallPrompt,
@@ -28,6 +46,47 @@ export function TradersLinkPwaInstallPrompt() {
   const [installed, setInstalled] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [openingInstall, setOpeningInstall] = useState(false);
+  const [displayCount, setDisplayCount] = useState(0);
+  const [storageReady, setStorageReady] = useState(false);
+  const [suppressed, setSuppressed] = useState(false);
+  const recordedPromptDisplay = useRef(false);
+
+  useEffect(() => {
+    try {
+      setSuppressed(window.localStorage.getItem(INSTALL_PROMPT_SUPPRESSED_STORAGE_KEY) === "true");
+    } catch {
+      setSuppressed(false);
+    } finally {
+      setDisplayCount(readStoredDisplayCount());
+      setStorageReady(true);
+    }
+  }, []);
+
+  const showPrompt = storageReady && !dismissed && !installed && !suppressed && installPromptReady;
+
+  useEffect(() => {
+    if (!showPrompt || recordedPromptDisplay.current) return;
+    recordedPromptDisplay.current = true;
+
+    setDisplayCount((currentCount) => {
+      const nextCount = currentCount + 1;
+      try {
+        window.localStorage.setItem(INSTALL_PROMPT_DISPLAY_COUNT_STORAGE_KEY, String(nextCount));
+      } catch {
+        // The prompt remains usable when browser storage is unavailable.
+      }
+      return nextCount;
+    });
+  }, [showPrompt]);
+
+  function suppressPrompt(): void {
+    try {
+      window.localStorage.setItem(INSTALL_PROMPT_SUPPRESSED_STORAGE_KEY, "true");
+    } catch {
+      // The current page can still honor the trader's choice.
+    }
+    setSuppressed(true);
+  }
 
   useEffect(() => {
     startTradersLinkPwaInstallPromptCapture();
@@ -64,7 +123,7 @@ export function TradersLinkPwaInstallPrompt() {
     setDismissed(true);
   }
 
-  if (dismissed || installed || !installPromptReady) return null;
+  if (!showPrompt) return null;
 
   return (
     <Dialog fullWidth maxWidth="xs" onClose={() => setDismissed(true)} open>
@@ -75,6 +134,11 @@ export function TradersLinkPwaInstallPrompt() {
         </Typography>
       </DialogContent>
       <DialogActions>
+        {displayCount >= INSTALL_PROMPT_DISMISS_LINK_DISPLAY_COUNT ? (
+          <Button onClick={suppressPrompt} variant="text">
+            Don&apos;t show this again
+          </Button>
+        ) : null}
         <Button disabled={openingInstall} onClick={() => setDismissed(true)}>
           Not now
         </Button>

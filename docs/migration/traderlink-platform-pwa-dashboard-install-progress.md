@@ -10,6 +10,7 @@
 - [x] Preserve the owner-approved install text exactly.
 - [x] Keep a visible **Install TradersLink app** button in both places. It opens Chromium's native prompt when available and otherwise opens exact device-specific installation steps.
 - [x] Capture Chromium's install-ready event once in the shared authenticated dashboard lifecycle and show a dismissible in-app install modal on whichever dashboard page the trader is using. Its primary action immediately opens the native browser install prompt.
+- [x] Count each device-local display of the in-app install modal. On its third display, show **Don't show this again**; choosing it permanently suppresses only this modal on that browser/device, while the Account install action remains available.
 - [x] Give iPhone/iPad users the required Share then Add to Home Screen instruction in the clickable install guide.
 - [x] Hide the Workspace install card when the current app runs standalone. On supported Chrome and Edge website tabs, use the manifest's self-related-app entry to hide it when the exact TradersLink PWA is already installed. Account retains device-data settings without an install action in standalone mode.
 - [x] Put the same native install action and device-specific steps in Account General, with the owner-approved replacement text, device-data controls and browser-install guidance retained.
