@@ -25,6 +25,7 @@ import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import QueryStatsRoundedIcon from "@mui/icons-material/QueryStatsRounded";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import ScienceRoundedIcon from "@mui/icons-material/ScienceRounded";
+import SavedSearchRoundedIcon from "@mui/icons-material/SavedSearchRounded";
 import ShowChartRoundedIcon from "@mui/icons-material/ShowChartRounded";
 import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
 import SpaceDashboardRoundedIcon from "@mui/icons-material/SpaceDashboardRounded";
@@ -113,6 +114,7 @@ function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
     reflection: <NoteAltRoundedIcon />,
     results: <QueryStatsRoundedIcon />,
     rules: <GavelRoundedIcon />,
+    scanner: <SavedSearchRoundedIcon />,
     ticker: <FormatListBulletedIcon />,
     timing: <TimelineRoundedIcon />,
     tradeAnalysis: <ShowChartRoundedIcon />,
@@ -262,7 +264,7 @@ function NavigationLink({
     <Tooltip
       arrow
       placement="right"
-      title={item.statusLabel ? `${item.label} — ${item.statusLabel}` : item.label}
+      title={item.statusLabel ? `${item.label} - ${item.statusLabel}` : item.label}
     >
       {link}
     </Tooltip>

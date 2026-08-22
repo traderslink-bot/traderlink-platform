@@ -1,4 +1,12 @@
 # TraderLink Platform Migration Progress
+**TradersLink Market Scanner:** The owner directed a new
+[TradersLink Market Scanner Plan](traderslink-market-scanner-plan.md) and its
+[progress record](traderslink-market-scanner-progress.md) on 2026-08-22. The
+first focused slice is the visual `/scanner` route: a ready-to-use U.S. stock
+scanner with factual Moomoo result fields, a small useful result table and a
+visible update time. Personal scanners, sharing, TradersLink Watchlists,
+Calendar market events and Sunday notices are recorded as later slices rather
+than being mixed into the first UI.
 
 **TraderLink Platform PWA:** The owner approved the complete
 [PWA plan](traderlink-platform-pwa-plan.md) and its

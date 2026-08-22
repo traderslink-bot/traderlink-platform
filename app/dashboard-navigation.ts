@@ -23,6 +23,7 @@ export type DashboardNavigationIconKey =
   | "reflection"
   | "results"
   | "rules"
+  | "scanner"
   | "ticker"
   | "timing"
   | "tradeAnalysis"
@@ -217,14 +218,19 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
         Object.freeze({ href: "/press-releases/news-filtered", label: "News Filtered", icon: "newspaper" as const }),
         Object.freeze({ href: "/press-releases/market-cap", label: "All Market Cap", icon: "newspaper" as const }),
         Object.freeze({ href: "/press-releases/market-cap/under-30m", label: "Under $30M", icon: "newspaper" as const }),
-        Object.freeze({ href: "/press-releases/market-cap/30m-50m", label: "$30M–$50M", icon: "newspaper" as const }),
-        Object.freeze({ href: "/press-releases/market-cap/50m-100m", label: "$50M–$100M", icon: "newspaper" as const }),
+        Object.freeze({ href: "/press-releases/market-cap/30m-50m", label: "$30M-$50M", icon: "newspaper" as const }),
+        Object.freeze({ href: "/press-releases/market-cap/50m-100m", label: "$50M-$100M", icon: "newspaper" as const }),
       ]),
     }),
   ]);
 
 export const DASHBOARD_STANDALONE_ITEMS: readonly DashboardNavigationItem[] =
   Object.freeze([
+    Object.freeze({
+      href: "/scanner",
+      label: "Scanner",
+      icon: "scanner" as const,
+    }),
     Object.freeze({
       href: "/charts",
       label: "Market Charts",
@@ -255,6 +261,7 @@ export const DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS: readonly DashboardSidebarNav
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[5] }),
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[6] }),
     Object.freeze({ kind: "item" as const, item: DASHBOARD_STANDALONE_ITEMS[0] }),
+    Object.freeze({ kind: "item" as const, item: DASHBOARD_STANDALONE_ITEMS[1] }),
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[7] }),
   ]);
 
@@ -263,6 +270,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/workspace": "Workspace",
     "/workspace/readiness": "Platform Readiness",
     "/calendar": "Calendar",
+    "/scanner": "Scanner",
     "/trade-tracker": "Daily Trade Tracker",
     "/trade-tracker/swings": "Swing Trade Tracker",
     "/quick-trade-entry": "Quick Trade Entry",
@@ -295,8 +303,8 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/press-releases/news-filtered": "News Filtered",
     "/press-releases/market-cap": "All Market Cap",
     "/press-releases/market-cap/under-30m": "Under $30M Press Releases",
-    "/press-releases/market-cap/30m-50m": "$30M–$50M Press Releases",
-    "/press-releases/market-cap/50m-100m": "$50M–$100M Press Releases",
+    "/press-releases/market-cap/30m-50m": "$30M-$50M Press Releases",
+    "/press-releases/market-cap/50m-100m": "$50M-$100M Press Releases",
   });
 
 export const DASHBOARD_NAVIGATION_HREFS: readonly string[] = Object.freeze([
