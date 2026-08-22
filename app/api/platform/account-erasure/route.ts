@@ -28,7 +28,7 @@ import {
 } from "@/src/modules/platform/server/privacy/platform-erasure-service";
 import {
   purgeJournalEvidenceObject,
-  resolveJournalEvidenceVaultBoundary,
+  resolveJournalEvidenceVaultBoundaryForExistingObjects,
   type JournalEvidenceNamespace,
 } from "@/src/modules/journal/server/imports/journal-evidence-vault";
 import {
@@ -75,9 +75,8 @@ function purgePrivateArtifacts(
 ): void {
   const primary = artifacts.filter((artifact) => artifact.kind === "primary_evidence");
   if (primary.length > 0) {
-    const vault = resolveJournalEvidenceVaultBoundary({
+    const vault = resolveJournalEvidenceVaultBoundaryForExistingObjects({
       databasePath,
-      sourcePath: databasePath,
     });
     for (const artifact of primary) {
       purgeJournalEvidenceObject(vault, {

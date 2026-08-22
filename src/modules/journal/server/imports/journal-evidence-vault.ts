@@ -138,14 +138,15 @@ function loadProtectedStorageRoots(
     requireAbsoluteDirectoryPath(value, "protected_storage_root")));
 }
 
-export function resolveJournalEvidenceVaultBoundary(
-  options: Readonly<{
-    sourcePath: string;
-    databasePath: string;
-    environment?: NodeJS.ProcessEnv;
-    additionalForbiddenRepositoryRoots?: readonly string[];
-    protectedStorageRoots?: readonly string[];
-  }>,
+type JournalEvidenceVaultResolutionOptions = Readonly<{
+  databasePath: string;
+  environment?: NodeJS.ProcessEnv;
+  additionalForbiddenRepositoryRoots?: readonly string[];
+  protectedStorageRoots?: readonly string[];
+}>;
+
+function resolveJournalEvidenceVaultBoundaryInternal(
+  options: JournalEvidenceVaultResolutionOptions & Readonly<{ sourcePath?: string }>,
 ): JournalEvidenceVaultBoundary {
   const environment = options.environment ?? process.env;
   const rootPath = requireAbsoluteDirectoryPath(
@@ -177,7 +178,9 @@ export function resolveJournalEvidenceVaultBoundary(
     ...(options.additionalForbiddenRepositoryRoots ?? []).map((value) =>
       requireAbsoluteDirectoryPath(value, "forbidden_repository_root")),
     requireAbsoluteDirectoryPath(options.databasePath, "database_path"),
-    dirname(requireAbsoluteDirectoryPath(options.sourcePath, "source_path")),
+    ...(options.sourcePath
+      ? [dirname(requireAbsoluteDirectoryPath(options.sourcePath, "source_path"))]
+      : []),
     ...protectedStorageRoots,
   ];
   if (forbiddenRoots.some((forbiddenRoot) => pathsOverlap(rootPath, forbiddenRoot))) {
@@ -186,6 +189,19 @@ export function resolveJournalEvidenceVaultBoundary(
     });
   }
   return Object.freeze({ rootPath });
+}
+
+export function resolveJournalEvidenceVaultBoundary(
+  options: JournalEvidenceVaultResolutionOptions & Readonly<{ sourcePath: string }>,
+): JournalEvidenceVaultBoundary {
+  return resolveJournalEvidenceVaultBoundaryInternal(options);
+}
+
+/** Resolves the verified vault when operating on an object already stored in it. */
+export function resolveJournalEvidenceVaultBoundaryForExistingObjects(
+  options: JournalEvidenceVaultResolutionOptions,
+): JournalEvidenceVaultBoundary {
+  return resolveJournalEvidenceVaultBoundaryInternal(options);
 }
 
 function readAndVerifyEvidenceFile(

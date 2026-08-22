@@ -96,7 +96,7 @@ export default async function AccountTradingPage({
       </DashboardPanel>
 
       <DashboardPanel title="Broker connections">
-        <Typography color="error.main" sx={{ fontWeight: 700, mb: 2 }} variant="body2">
+        <Typography sx={{ color: "#b91c1c", fontWeight: 700, mb: 2 }} variant="body2">
           While TradersLink is in beta, you need to connect a free Moomoo account to use the Trade Analyzer and receive market data. You do not need to open a trading or brokerage account with Moomoo. All you need to do is sign up, and your free account is created in seconds. You can then use your Moomoo credentials to connect to its market data API through TradersLink.
         </Typography>
         <Typography color="text.secondary" sx={{ mb: 2.5 }} variant="body2">
