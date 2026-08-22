@@ -10,7 +10,7 @@
 - [x] Preserve the owner-approved install text exactly.
 - [x] Keep a visible **Install TradersLink app** button in both places. It opens Chromium's native prompt when available and otherwise opens exact device-specific installation steps.
 - [x] Give iPhone/iPad users the required Share then Add to Home Screen instruction in the clickable install guide.
-- [x] State when the app is already installed and remove the redundant install action.
+- [x] Keep a visible next action after installation: the card changes from **Install TradersLink app** to **Set up push notifications** when Chrome recognizes the installed app.
 - [x] Put the same native install action and device-specific steps in Account General, with the owner-approved replacement text, device-data controls and browser-install guidance retained.
 - [ ] Owner reviews the desktop and mobile card presentation.
 

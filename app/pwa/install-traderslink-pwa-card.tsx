@@ -92,7 +92,15 @@ export function InstallTradersLinkPwaMethods() {
 
   return (
     <Box sx={{ display: "grid", gap: 1.25 }}>
-      {installState !== "installed" ? (
+      {installState === "installed" ? (
+        <DashboardPrimaryAction
+          href="/account/preferences#push-notifications"
+          startIcon={<NotificationsRoundedIcon />}
+          sx={{ alignSelf: "flex-start" }}
+        >
+          Set up push notifications
+        </DashboardPrimaryAction>
+      ) : (
         <DashboardPrimaryAction
           disabled={installState === "prompting"}
           onClick={() => void requestInstallation()}
@@ -101,7 +109,7 @@ export function InstallTradersLinkPwaMethods() {
         >
           {installState === "prompting" ? "Opening install..." : "Install TradersLink app"}
         </DashboardPrimaryAction>
-      ) : null}
+      )}
       {installState === "installing" ? (
         <Typography color="text.secondary" variant="body2">
           Finish installation in your browser. TradersLink will then appear with your other apps.
