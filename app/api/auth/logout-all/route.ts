@@ -5,7 +5,10 @@ import {
 } from "@/src/modules/platform/server/authentication/platform-auth-cookies";
 import { LEGACY_ACADEMY_SESSION_COOKIE } from "@/src/modules/platform/server/authentication/platform-discord-oauth-cookies";
 import { PlatformSessionRepository } from "@/src/modules/platform/server/authentication/platform-session-repository";
-import { isSameOriginPlatformSignOutRequest } from "@/src/modules/platform/server/authentication/platform-sign-out-request-security";
+import {
+  isSameOriginPlatformSignOutRequest,
+  signOutRedirectUrl,
+} from "@/src/modules/platform/server/authentication/platform-sign-out-request-security";
 import {
   PlatformSessionService,
   TRADERLINK_PLATFORM_SESSION_COOKIE,
@@ -30,14 +33,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
   } catch {
     const response = NextResponse.redirect(
-      new URL("/account/security?sessionAction=unavailable", request.nextUrl.origin),
+      signOutRedirectUrl(request, "/account/security?sessionAction=unavailable"),
     );
     response.headers.set("Cache-Control", "private, no-store");
     return response;
   }
 
   const response = NextResponse.redirect(
-    new URL("/signed-out", request.nextUrl.origin),
+    signOutRedirectUrl(request, "/signed-out"),
   );
   response.headers.set("Cache-Control", "private, no-store");
   deletePlatformAuthCookie(response, request, TRADERLINK_PLATFORM_SESSION_COOKIE);

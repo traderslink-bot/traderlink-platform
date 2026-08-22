@@ -1,8 +1,12 @@
 import "server-only";
 
+function signOutRequestOrigin(request: Request): string | null {
+  return request.headers.get("origin") ?? request.headers.get("referer");
+}
+
 export function isSameOriginPlatformSignOutRequest(request: Request): boolean {
   if (request.method !== "POST") return false;
-  const origin = request.headers.get("origin") ?? request.headers.get("referer");
+  const origin = signOutRequestOrigin(request);
   if (!origin) return false;
   try {
     const originUrl = new URL(origin);
@@ -20,4 +24,16 @@ export function isSameOriginPlatformSignOutRequest(request: Request): boolean {
   } catch {
     return false;
   }
+}
+
+export function signOutRedirectUrl(request: Request, path: string): URL {
+  const origin = signOutRequestOrigin(request);
+  if (origin) {
+    try {
+      return new URL(path, new URL(origin).origin);
+    } catch {
+      // The request authorization path handles malformed browser origins.
+    }
+  }
+  return new URL(path, request.url);
 }
