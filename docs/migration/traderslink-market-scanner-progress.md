@@ -41,6 +41,10 @@ TradersLink Scanner now and not wait for a separate market-data approval process
   Most volume, Above daily EMA 9, Bullish daily MACD crossover and Bullish
   daily chart patterns. Each runs directly through the same protected scanner
   request and leaves the full condition builder available under My Scanner.
+- [x] Replace the top-of-page preset wall with a clear Scanner library action
+  and a closable right-side library drawer. Category headings remain visible
+  with their screen counts; each category expands independently, and a selected
+  screen loads into the builder before the mobile drawer closes.
 - [ ] Owner testing of the live Scanner at market open. Visual approval is
   requested only when the owner explicitly asks for it before a deployment.
 - [x] Record the planned Community Scanner home, My Scanners collection,

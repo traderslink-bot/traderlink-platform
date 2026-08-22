@@ -1,9 +1,16 @@
 "use client";
 
 import FilterAltRoundedIcon from "@mui/icons-material/FilterAltRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
+import Accordion from "@mui/material/Accordion";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import AccordionSummary from "@mui/material/AccordionSummary";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
+import Drawer from "@mui/material/Drawer";
+import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import Tab from "@mui/material/Tab";
@@ -15,6 +22,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import useMediaQuery from "@mui/material/useMediaQuery";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { ScannerFilterId, ScannerRunRequest, ScannerRunResult } from "@/src/modules/scanner/scanner-contract";
@@ -301,6 +309,11 @@ const readyScannerGroups = Object.freeze([
   },
 ] satisfies readonly ReadyScannerGroup[]);
 
+const readyScannerCount = readyScannerGroups.reduce(
+  (count, group) => count + group.scanners.length,
+  0,
+);
+
 export function ScannerClient() {
   const [activeGroup, setActiveGroup] = useState<FilterGroup>("market");
   const [draft, setDraft] = useState<FilterDraft>(initialDraft);
@@ -312,6 +325,9 @@ export function ScannerClient() {
   const [runState, setRunState] = useState<"idle" | "loading" | "error">("idle");
   const [runError, setRunError] = useState<"connection" | "unavailable" | null>(null);
   const [selectedReadyScanner, setSelectedReadyScanner] = useState<string | null>(null);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [expandedReadyGroups, setExpandedReadyGroups] = useState<readonly string[]>(["market-activity"]);
+  const desktopLibrary = useMediaQuery("(min-width:900px)", { noSsr: true });
 
   const availableFilters = useMemo(
     () => filterLibrary.filter((filter) => filter.group === activeGroup),
@@ -393,7 +409,14 @@ export function ScannerClient() {
     setSortBy(scan.sortBy);
     setSelectedReadyScanner(scanner.id);
     setLastRun(scan);
+    if (!desktopLibrary) setLibraryOpen(false);
     void requestScan(scan);
+  }
+
+  function setReadyGroupExpanded(groupId: string, expanded: boolean) {
+    setExpandedReadyGroups((current) => expanded
+      ? [...current, groupId]
+      : current.filter((candidate) => candidate !== groupId));
   }
 
   useEffect(() => {
@@ -404,46 +427,14 @@ export function ScannerClient() {
 
   return (
     <DashboardPage>
-      <DashboardPanel title="TradersLink Scanners">
-        <Stack spacing={2}>
-          {readyScannerGroups.map((group) => (
-            <Stack key={group.id} spacing={1}>
-              <Typography sx={{ fontWeight: 800 }}>{group.label}</Typography>
-              <Box
-                sx={{
-                  display: "grid",
-                  gap: 1,
-                  gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))", lg: "repeat(4, minmax(0, 1fr))" },
-                }}
-              >
-                {group.scanners.map((scanner) => (
-                  <DashboardSecondaryAction
-                    aria-pressed={selectedReadyScanner === scanner.id}
-                    key={scanner.id}
-                    onClick={() => runReadyScanner(scanner)}
-                    sx={{
-                      alignItems: "center",
-                      borderWidth: selectedReadyScanner === scanner.id ? 2 : 1,
-                      justifyContent: "flex-start",
-                      lineHeight: 1.2,
-                      minHeight: 56,
-                      px: 1.25,
-                      py: 0.75,
-                      textAlign: "left",
-                      whiteSpace: "normal",
-                      width: "100%",
-                    }}
-                  >
-                    {scanner.label}
-                  </DashboardSecondaryAction>
-                ))}
-              </Box>
-            </Stack>
-          ))}
-        </Stack>
-      </DashboardPanel>
-
-      <DashboardPanel>
+      <DashboardPanel
+        action={
+          <DashboardSecondaryAction onClick={() => setLibraryOpen(true)}>
+            Scanner library ({readyScannerCount})
+          </DashboardSecondaryAction>
+        }
+        title="Build your scan"
+      >
         <Stack spacing={2.5}>
           <Tabs
             aria-label="Scanner filter categories"
@@ -538,6 +529,72 @@ export function ScannerClient() {
           </Stack>
         </Stack>
       </DashboardPanel>
+
+      <Drawer
+        PaperProps={{
+          component: "aside",
+          sx: {
+            p: { xs: 1.5, sm: 2 },
+            width: { xs: "min(100%, 390px)", sm: 410 },
+          },
+        }}
+        anchor="right"
+        onClose={() => setLibraryOpen(false)}
+        open={libraryOpen}
+        variant={desktopLibrary ? "persistent" : "temporary"}
+      >
+        <Stack spacing={1.5} sx={{ height: "100%" }}>
+          <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+            <Typography component="h2" sx={{ fontWeight: 800 }} variant="h6">Scanner library</Typography>
+            <IconButton aria-label="Close scanner library" onClick={() => setLibraryOpen(false)}>
+              <CloseRoundedIcon />
+            </IconButton>
+          </Stack>
+          <Stack spacing={1} sx={{ overflowY: "auto", pb: 1 }}>
+            {readyScannerGroups.map((group) => (
+              <Accordion
+                disableGutters
+                expanded={expandedReadyGroups.includes(group.id)}
+                key={group.id}
+                onChange={(_, expanded) => setReadyGroupExpanded(group.id, expanded)}
+                sx={{ border: 1, borderColor: "divider", boxShadow: "none", "&:before": { display: "none" } }}
+              >
+                <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />} sx={{ minHeight: 52, px: 1.5 }}>
+                  <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between", pr: 1, width: "100%" }}>
+                    <Typography sx={{ fontWeight: 800 }}>{group.label}</Typography>
+                    <Chip label={group.scanners.length} size="small" />
+                  </Stack>
+                </AccordionSummary>
+                <AccordionDetails sx={{ pt: 0, px: 1.25, pb: 1.25 }}>
+                  <Stack spacing={0.75}>
+                    {group.scanners.map((scanner) => (
+                      <DashboardSecondaryAction
+                        aria-pressed={selectedReadyScanner === scanner.id}
+                        key={scanner.id}
+                        onClick={() => runReadyScanner(scanner)}
+                        sx={{
+                          alignItems: "center",
+                          borderWidth: selectedReadyScanner === scanner.id ? 2 : 1,
+                          justifyContent: "flex-start",
+                          lineHeight: 1.2,
+                          minHeight: 48,
+                          px: 1.25,
+                          py: 0.75,
+                          textAlign: "left",
+                          whiteSpace: "normal",
+                          width: "100%",
+                        }}
+                      >
+                        {scanner.label}
+                      </DashboardSecondaryAction>
+                    ))}
+                  </Stack>
+                </AccordionDetails>
+              </Accordion>
+            ))}
+          </Stack>
+        </Stack>
+      </Drawer>
 
       <DashboardPanel action={
         <Stack direction="row" spacing={1} sx={{ alignItems: "center", width: { xs: "100%", sm: "auto" } }}>

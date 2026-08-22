@@ -65,6 +65,10 @@ creator's credentials or a separate provider request for every subscriber.
   actions, 56px minimum action height and an obvious active screen.
 - [x] Add a phone-specific result-row layout that keeps every current result
   field visible without a tiny or horizontally scrolling comparison table.
+- [x] Move the ready-to-run Scanner library into a closable drawer. Phones keep
+  the builder visible until the trader opens the library, then close that drawer
+  after a screen is selected; categories remain easy to find as expandable
+  headings with counts.
 - [ ] Owner tests Scanner controls and results at 360px and 390px widths with
   live market data before mobile acceptance.
 - [ ] Owner reviews and perfects the alert-trigger choices and community

@@ -37,6 +37,14 @@ The starter library uses two clear choices:
    combine conditions, choose their bounds/timeframes where applicable, remove
    them, and choose a sort order. It does not yet save a scanner.
 
+The ready-to-run library must not fill the top of the Scanner page. The filter
+builder is the main workspace. A clear Scanner library action opens a closable
+right-side drawer on desktop and a closable temporary drawer on phones. Every
+library category stays visible as an expandable heading with its screen count;
+only the selected category exposes its screen actions. Choosing a screen loads
+its conditions into the builder and closes the phone drawer so the trader can
+inspect or adjust it.
+
 When result data is added, the page must show a result count, exact
 last-updated time, a normal Refresh action and a responsive table limited to
 the most useful first 25 matches, with optional 50 and 100 rows. Only factual
