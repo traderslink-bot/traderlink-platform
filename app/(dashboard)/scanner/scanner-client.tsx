@@ -531,16 +531,18 @@ export function ScannerClient() {
       </DashboardPanel>
 
       <Drawer
-        PaperProps={{
-          component: "aside",
-          sx: {
-            p: { xs: 1.5, sm: 2 },
-            width: { xs: "min(100%, 390px)", sm: 410 },
-          },
-        }}
         anchor="right"
         onClose={() => setLibraryOpen(false)}
         open={libraryOpen}
+        slotProps={{
+          paper: {
+            component: "aside",
+            sx: {
+              p: { xs: 1.5, sm: 2 },
+              width: { xs: "min(100%, 390px)", sm: 410 },
+            },
+          },
+        }}
         variant={desktopLibrary ? "persistent" : "temporary"}
       >
         <Stack spacing={1.5} sx={{ height: "100%" }}>
