@@ -60,6 +60,11 @@ export async function POST(request: Request): Promise<Response> {
     }
     return Response.json({ status: "queued", repairJobRef: job.repairJobId });
   } catch (error) {
-    return Response.json({ status: "unavailable", code: isTraderLinkPlatformError(error) ? error.code : "TRADERLINK_JOURNAL_AI_REPAIR_FAILED" }, { status: 409 });
+    const code = isTraderLinkPlatformError(error)
+      ? error.code
+      : "TRADERLINK_JOURNAL_AI_REPAIR_FAILED";
+    // Keep the log free of source data while making hosted configuration failures diagnosable.
+    console.error("TraderLink AI import repair request unavailable", { code });
+    return Response.json({ status: "unavailable", code }, { status: 409 });
   }
 }
