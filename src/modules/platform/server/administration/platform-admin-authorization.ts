@@ -24,8 +24,6 @@ import { PlatformAdminAuditRepository } from "./platform-admin-audit-repository"
 import { consumeJournalAdminRateLimit } from "./platform-admin-request-security";
 import { PlatformOperatorRepository } from "./platform-operator-repository";
 
-export const JOURNAL_ADMIN_DISCORD_FRESHNESS_MS = 5 * 60 * 1000;
-
 function digest(value: string): string {
   return createHash("sha256").update(value, "utf8").digest("hex");
 }
@@ -149,9 +147,6 @@ export class PlatformAdminAuthorization {
         identity.scope.userId,
         resolveTraderLinkDiscordGuildId(this.environment),
       );
-    const membershipAge = membership
-      ? now.getTime() - Date.parse(membership.lastVerifiedAtUtc)
-      : Number.POSITIVE_INFINITY;
     const activeGrant = new PlatformOperatorRepository(this.database).findActive();
     const configuredOwnerMatched = hasConfiguredDiscordOwnerIdentity({
       database: this.database,
@@ -164,9 +159,6 @@ export class PlatformAdminAuthorization {
       identity.discord?.guildOwner === true && membership?.guildOwner === true;
     if (
       !membership ||
-      !Number.isFinite(membershipAge) ||
-      membershipAge < 0 ||
-      membershipAge > JOURNAL_ADMIN_DISCORD_FRESHNESS_MS ||
       !activeGrant ||
       activeGrant.userId !== identity.scope.userId ||
       (!configuredOwnerMatched && !discordServerOwnerMatched)
@@ -178,9 +170,7 @@ export class PlatformAdminAuthorization {
         nowUtc,
         reasonCode: !activeGrant
           ? "active_operator_grant_missing"
-          : membershipAge > JOURNAL_ADMIN_DISCORD_FRESHNESS_MS
-            ? "discord_owner_evidence_stale"
-            : "owner_admin_authorization_failed",
+          : "owner_admin_authorization_failed",
       });
     }
 

@@ -29,6 +29,11 @@ import { hasPlatformDiscordPremiumAccess } from "@/src/modules/watchlist/server/
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+function isJournalAdminReturnTo(returnTo: string): boolean {
+  const pathname = new URL(returnTo, "https://traderslink.pro").pathname;
+  return pathname === "/admin/journal" || pathname.startsWith("/admin/journal/");
+}
+
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const origin = resolvePlatformPublicOrigin(request);
   const returnTo = normalizeDiscordAuthReturnTo(
@@ -44,10 +49,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   if (
     currentIdentity &&
-    (!isWatchlistAuthReturnTo(returnTo) ||
+    (!isJournalAdminReturnTo(returnTo) &&
+      (!isWatchlistAuthReturnTo(returnTo) ||
       currentIdentity.mode === "local_development" ||
       (currentIdentity.discord !== null &&
-        hasPlatformDiscordPremiumAccess(currentIdentity.discord)))
+        hasPlatformDiscordPremiumAccess(currentIdentity.discord))))
   ) {
     return NextResponse.redirect(new URL(returnTo, origin));
   }

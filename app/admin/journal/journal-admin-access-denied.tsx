@@ -19,12 +19,12 @@ export function JournalAdminAccessDenied() {
             </Typography>
           </Box>
           <Typography color="text.secondary" variant="body2">
-            If you are the TradersLink Discord owner, log out and sign in again with that Discord account. This refreshes the current owner check. If you are not the owner, return to your Journal.
+            Refresh your Discord owner access to continue. If you are not the owner, return to your Journal.
           </Typography>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25} sx={{ width: { xs: "100%", sm: "auto" } }}>
-            <Box component="form" action="/api/auth/logout" method="post">
-              <Button fullWidth type="submit" variant="contained">Log out and sign in again</Button>
-            </Box>
+            <Link href="/api/auth/discord/login?returnTo=%2Fadmin%2Fjournal" style={{ textDecoration: "none" }}>
+              <Button fullWidth variant="contained">Refresh owner access</Button>
+            </Link>
             <Link href="/workspace" style={{ textDecoration: "none" }}>
               <Button variant="outlined">Return to Journal</Button>
             </Link>
