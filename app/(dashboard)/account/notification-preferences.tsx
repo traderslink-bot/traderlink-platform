@@ -63,6 +63,11 @@ function pushMessageSeverity(message: string): "error" | "info" | "success" | "w
   return "error";
 }
 
+function runsAsInstalledApp(): boolean {
+  const iosNavigator = navigator as Navigator & { standalone?: boolean };
+  return window.matchMedia("(display-mode: standalone)").matches || iosNavigator.standalone === true;
+}
+
 export function NotificationPreferences({
   initialDiscordDmCategories,
   initialPressReleasePushChannels,
@@ -79,6 +84,8 @@ export function NotificationPreferences({
   const [discordMessage, setDiscordMessage] = useState<string | null>(null);
   const [pushMessage, setPushMessage] = useState<string | null>(null);
   const [pushPreparation, setPushPreparation] = useState<PreparedPlatformWebPush | null>(null);
+  const [pushServiceUnavailable, setPushServiceUnavailable] = useState(false);
+  const [installedApp, setInstalledApp] = useState(false);
   const [working, startTransition] = useTransition();
 
   useEffect(() => {
@@ -89,10 +96,17 @@ export function NotificationPreferences({
     }
 
     refreshPushState();
+    setInstalledApp(runsAsInstalledApp());
     window.addEventListener("focus", refreshPushState);
     void preparePlatformWebPush()
-      .then(setPushPreparation)
-      .catch(() => setPushPreparation(null));
+      .then((prepared) => {
+        setPushPreparation(prepared);
+        setPushServiceUnavailable(false);
+      })
+      .catch(() => {
+        setPushPreparation(null);
+        setPushServiceUnavailable(true);
+      });
     return () => window.removeEventListener("focus", refreshPushState);
   }, []);
 
@@ -214,8 +228,21 @@ export function NotificationPreferences({
       <Typography color="text.secondary" variant="body2">
         Pick the alerts you want, then press Set Preferences. If this device can receive push notifications, it will ask for your permission. Account and trading alerts stay private and generic. Press release alerts show the public ticker and headline so you can open the article directly.
       </Typography>
-      {pushState === "unsupported" ? <Alert severity="info">Push notifications are not supported in this browser.</Alert> : null}
-      {pushState === "denied" ? <Alert severity="warning">Push notifications are turned off in this device&apos;s browser settings. Turn them on there, then return to TradersLink—the page will check again automatically.</Alert> : null}
+      {pushState === "unsupported" ? (
+        <Alert severity="warning">Push notifications are not available in this browser or on this device.</Alert>
+      ) : null}
+      {pushState === "denied" ? (
+        <Alert severity="warning">
+          Push notifications are turned off for TradersLink on this device. {installedApp
+            ? "Open Windows Settings, go to System then Notifications, select TradersLink, and turn notifications on. If your computer lists Chrome instead, allow Chrome notifications. Return to TradersLink when that is done."
+            : "Open this browser&apos;s site notification settings, allow TradersLink notifications, then return here."}
+        </Alert>
+      ) : null}
+      {pushServiceUnavailable && pushState !== "unsupported" && pushState !== "denied" ? (
+        <Alert severity="warning">
+          Push notifications are not available for TradersLink right now. Your alert choices can still be saved, but this is a TradersLink setup issue—not something you can turn on in this app.
+        </Alert>
+      ) : null}
       <Stack spacing={0.25}>
         {PLATFORM_NOTIFICATION_CATEGORIES.map((category) => (
           <FormControlLabel

@@ -6,21 +6,34 @@ import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 import {
   dismissPlatformWebPushSetupReminder,
   isPlatformWebPushSetupReminderDismissed,
   PLATFORM_WEB_PUSH_STATE_CHANGED_EVENT,
+  preparePlatformWebPush,
   readPlatformWebPushBrowserState,
 } from "@/src/modules/platform/client/pwa/platform-web-push";
 
-type BannerState = "denied" | "hidden" | "off";
+type BannerState = "denied" | "hidden" | "off" | "unavailable";
 
 function installedDisplayMode(): boolean {
   const iosNavigator = navigator as Navigator & { standalone?: boolean };
   return window.matchMedia("(display-mode: standalone)").matches ||
     iosNavigator.standalone === true;
+}
+
+function subscribeToDeviceDetails(): () => void {
+  return () => undefined;
+}
+
+function browserRunsOnWindows(): boolean {
+  return /Windows/u.test(navigator.userAgent);
+}
+
+function serverRunsOnWindows(): boolean {
+  return false;
 }
 
 export function PushNotificationSetupBanner({
@@ -31,6 +44,11 @@ export function PushNotificationSetupBanner({
   pathname: string;
 }) {
   const [state, setState] = useState<BannerState>("hidden");
+  const windowsDevice = useSyncExternalStore(
+    subscribeToDeviceDetails,
+    browserRunsOnWindows,
+    serverRunsOnWindows,
+  );
 
   useEffect(() => {
     let active = true;
@@ -49,9 +67,22 @@ export function PushNotificationSetupBanner({
       }
 
       void readPlatformWebPushBrowserState()
-        .then((pushState) => {
+        .then(async (pushState) => {
           if (!active) return;
-          setState(pushState === "off" || pushState === "denied" ? pushState : "hidden");
+          if (pushState === "denied") {
+            setState("denied");
+            return;
+          }
+          if (pushState !== "off") {
+            setState("hidden");
+            return;
+          }
+          try {
+            await preparePlatformWebPush();
+            if (active) setState("off");
+          } catch {
+            if (active) setState("unavailable");
+          }
         })
         .catch(() => {
           if (active) setState("hidden");
@@ -84,32 +115,54 @@ export function PushNotificationSetupBanner({
 
   return (
     <Alert
-      severity={state === "denied" ? "warning" : "info"}
+      severity={state === "denied" || state === "unavailable" ? "warning" : "info"}
       sx={{
         mb: { xs: 1.5, sm: 2 },
         "& .MuiAlert-message": { minWidth: 0, width: "100%" },
       }}
     >
       <AlertTitle sx={{ fontWeight: 800 }}>
-        {state === "denied" ? "Notifications are turned off" : "Turn on notifications"}
+        {state === "denied"
+          ? "Notifications are turned off"
+          : state === "unavailable"
+            ? "Push notifications are unavailable"
+            : "Turn on notifications"}
       </AlertTitle>
       <Typography variant="body2">
-        Turn on TradersLink notifications on this device
+        {state === "denied"
+          ? windowsDevice
+            ? "Open Windows notification settings, turn on notifications for TradersLink (or Chrome if that is what Windows shows), then return to this app."
+            : "Turn on TradersLink notifications in your device settings, then return to this app."
+          : state === "unavailable"
+            ? "TradersLink cannot turn on push notifications right now. This is a TradersLink setup issue, not something you can fix by reinstalling the app."
+            : "Choose the alerts you want, press Set Preferences, then choose Allow when your device asks for notification permission."}
       </Typography>
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={0.5}
         sx={{ alignItems: { xs: "stretch", sm: "center" }, mt: 1 }}
       >
-        <Button
-          component={Link}
-          href="/account/preferences#push-notifications"
-          size="small"
-          sx={{ alignSelf: { xs: "stretch", sm: "flex-start" } }}
-          variant="contained"
-        >
-          {state === "denied" ? "View setup steps" : "Set up notifications"}
-        </Button>
+        {state === "denied" && windowsDevice ? (
+          <Button
+            component="a"
+            href="ms-settings:notifications"
+            size="small"
+            sx={{ alignSelf: { xs: "stretch", sm: "flex-start" } }}
+            variant="contained"
+          >
+            Open Windows notification settings
+          </Button>
+        ) : state !== "unavailable" ? (
+          <Button
+            component={Link}
+            href="/account/preferences#push-notifications"
+            size="small"
+            sx={{ alignSelf: { xs: "stretch", sm: "flex-start" } }}
+            variant="contained"
+          >
+            {state === "denied" ? "View notification settings" : "Choose notification alerts"}
+          </Button>
+        ) : null}
         <Button
           onClick={() => {
             dismissPlatformWebPushSetupReminder();
