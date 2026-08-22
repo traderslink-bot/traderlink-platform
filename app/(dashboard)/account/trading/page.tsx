@@ -1,6 +1,7 @@
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
+import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import type { Metadata } from "next";
@@ -106,9 +107,22 @@ export default async function AccountTradingPage({
       </DashboardPanel>
 
       <DashboardPanel title="Broker connections">
-        <Typography sx={{ color: "#b91c1c", fontWeight: 700, mb: 2 }} variant="body2">
-          While TradersLink is in beta, you need to connect a free Moomoo account to use the Trade Analyzer and receive market data. You do not need to open a trading or brokerage account with Moomoo. All you need to do is sign up, and your free account is created in seconds. You can then use your Moomoo credentials to connect to its market data API through TradersLink.
-        </Typography>
+        <Stack spacing={0.75} sx={{ mb: 2 }}>
+          <Typography color="error.main" sx={{ fontWeight: 800 }} variant="body2">
+            Attention
+          </Typography>
+          <Typography color="text.primary" variant="body2">
+            While TradersLink is in beta, you need to connect a free Moomoo account to use the Trade Analyzer and receive market data. You do not need to open a trading or brokerage account with Moomoo. All you need to do is sign up, and your free account is created in seconds. You can then use your Moomoo credentials to connect to its market data API through TradersLink.
+          </Typography>
+          <Link
+            href="https://open.moomoo.com/api/overview/"
+            rel="noopener noreferrer"
+            sx={{ alignSelf: "flex-start", fontWeight: 700 }}
+            target="_blank"
+          >
+            About Moomoo data
+          </Link>
+        </Stack>
         <Typography color="text.secondary" sx={{ mb: 2.5 }} variant="body2">
           Connect a broker to automatically import your trades.
         </Typography>
