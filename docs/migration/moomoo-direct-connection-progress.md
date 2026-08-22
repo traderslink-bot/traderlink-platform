@@ -11,13 +11,17 @@
 - [x] Corrected the Moomoo start and callback routes so Railway's internal
   `0.0.0.0:8080` bind address is never used as the browser or provider-facing
   production origin.
-- [ ] Configure `TRADERLINK_MOOMOO_OAUTH_CLIENT_ID`,
+- [x] Registered the production TradersLink OAuth client with the exact hosted
+  callback and configured `TRADERLINK_MOOMOO_OAUTH_CLIENT_ID`,
   `TRADERLINK_MOOMOO_CREDENTIAL_ACTIVE_KEY_VERSION` and
   `TRADERLINK_MOOMOO_CREDENTIAL_KEYS_BASE64` on the Railway web service. Never
   place their values in this document or source control.
-- [ ] Deploy the redirect correction, retry Connect Moomoo from
-  `/account/trading`, and confirm the registered provider callback exactly
-  matches `https://app.traderslink.pro/api/connections/moomoo/callback`.
+- [x] Deployed the redirect correction at commit `663683c2`; production health
+  returned HTTP 200 and Moomoo accepted the registered client, exact callback
+  and PKCE request before redirecting to its account authorization host.
+- [ ] Complete the final owner-session acceptance by clicking Connect Moomoo
+  from `/account/trading`, signing in to Moomoo and approving the requested
+  read-only access.
 
 ## Current checkpoint — 2026-08-09
 
