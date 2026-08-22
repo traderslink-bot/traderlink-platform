@@ -333,10 +333,10 @@ export function NotificationPreferences({
       </Typography>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" } }}>
         <TextField
-          inputProps={{ maxLength: 24, style: { textTransform: "uppercase" } }}
           label="Ticker to mute"
           onChange={(event) => setHaltTickerInput(event.target.value.toUpperCase())}
           size="small"
+          slotProps={{ htmlInput: { maxLength: 24, style: { textTransform: "uppercase" } } }}
           value={haltTickerInput}
         />
         <Button disabled={working || haltTickerInput.trim().length === 0} onClick={muteHaltTicker} variant="outlined">
