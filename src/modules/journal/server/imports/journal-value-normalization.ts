@@ -20,7 +20,20 @@ export function normalizeBrokerDecimal(
   if (value.startsWith("(") && value.endsWith(")")) {
     negativeByParentheses = true; value = value.slice(1, -1).trim();
   }
-  if (/^[+-]?(?:[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+)(?:\.[0-9]+)?$/u.test(value)) value = value.replaceAll(",", "");
+  // Brokers commonly export an explicit currency mark. Accept only a leading
+  // recognised mark, not arbitrary prose, so malformed source facts still
+  // enter Data Decisions instead of being silently changed into money.
+  const sign = value.startsWith("-") || value.startsWith("+") ? value[0]! : "";
+  if (sign) value = value.slice(1).trim();
+  value = value.replace(/^(?:(?:USD|CAD|US)\s*)?[$€£¥]\s*/iu, "");
+  if (/^(?:[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+)(?:\.[0-9]+)?$/u.test(value)) {
+    value = value.replaceAll(",", "");
+  } else if (/^[0-9]+,[0-9]{1,8}$/u.test(value)) {
+    // This form cannot be a conventional thousands grouping, so treating its
+    // comma as the decimal separator is unambiguous.
+    value = value.replace(",", ".");
+  }
+  value = `${sign}${value}`;
   if (negativeByParentheses) value = `-${value}`;
   if (!/^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?$/u.test(value)) {
     platformFailure("TRADERLINK_JOURNAL_IMPORT_MAPPING_FAILED", { field });
