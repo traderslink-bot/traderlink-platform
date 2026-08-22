@@ -3,7 +3,10 @@ import "server-only";
 import type Database from "better-sqlite3";
 
 import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
-import { createCanonicalUtcTimestamp } from "@/src/modules/platform/server/database/platform-migration-contract";
+import {
+  createCanonicalUtcTimestamp,
+  isTraderLinkPlatformError,
+} from "@/src/modules/platform/server/database/platform-migration-contract";
 import { parseJournalGenericStatementMappingContract, type JournalGenericStatementMappingContract } from "../imports/journal-generic-mapped-statement-adapter";
 import { commitJournalGenericMappedUpload, previewJournalGenericMappedUpload } from "../product/journal-import-product-service";
 import { resolvePlatformDatabaseConfig } from "@/src/modules/platform/server/database/platform-database-config";
@@ -72,7 +75,18 @@ WHERE user_id = ? AND auth_provider = 'discord' AND status = 'active'`).get(clai
         if (identity) await sendDiscordStatementImportCompletion({ discordSubject: identity.auth_subject });
       }
       return true;
-    } catch {
+    } catch (error) {
+      const providerStatus = typeof error === "object" && error !== null &&
+        "statusCode" in error && typeof error.statusCode === "number"
+        ? error.statusCode
+        : null;
+      console.error("TraderLink AI import repair worker failed", {
+        failure: isTraderLinkPlatformError(error)
+          ? error.code
+          : providerStatus === null
+            ? error instanceof Error ? error.name : "unknown"
+            : `provider_status_${providerStatus}`,
+      });
       const failedAtUtc = createCanonicalUtcTimestamp(this.now());
       repository.fail({ repairJobId: claimed.job.repairJobId, safeFailureCode: "ai_repair_failed", timestamp: failedAtUtc });
       new PlatformNotificationRepository(this.database).create({
