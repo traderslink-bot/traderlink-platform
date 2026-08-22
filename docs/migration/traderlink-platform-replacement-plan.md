@@ -12,6 +12,8 @@
 
 **Approved Press Release dashboard contract:** [Press Release Dashboard Plan](press-release-dashboard-plan.md) with its [implementation progress tracker](press-release-dashboard-progress.md). It preserves the existing Discord/public-article flow, adds authenticated channel feeds, exact unread badges, responsive article drawers and channel-specific PWA Push without duplicating or deleting canonical News articles.
 
+**Approved Journal import simplification:** [Journal Import Simplification And Reliability Plan](journal-import-simplification-and-reliability-plan.md) with its [progress tracker](journal-import-simplification-and-reliability-progress.md). It replaces the technical import-review presentation with verified auto-save, an explicit manual-mapping fallback and clear completed outcomes while preserving the last committed import-engine behavior. The consented AI repair worker remains a separately controlled Railway/OpenAI activation boundary.
+
 **Completed Phase 6 contract:** [Replacement Acceptance Plan](phase-6-replacement-acceptance-plan.md), [progress tracker](phase-6-replacement-acceptance-progress.md), and [acceptance report](phase-6-replacement-acceptance-report.md)
 
 **Phase 7 preservation boundary:** [Legacy Retirement Progress](phase-7-legacy-retirement-progress.md)

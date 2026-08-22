@@ -4,25 +4,25 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
   Object.freeze({
     slug: "import-a-statement",
     title: "Import a statement",
-    description: "Add a broker CSV statement, review its format and save the accepted executions to your Trade Tracker.",
+    description: "Add a broker CSV statement to your Trade Tracker. Known formats save automatically; new formats can be mapped first.",
     sections: Object.freeze([
       Object.freeze({
         id: "choose-a-statement",
         title: "Choose a CSV statement",
-        summary: "Start with the broker statement you want to add to the selected Trade Tracker account.",
+        summary: "Start with the broker statement you want to add to your current Trade Tracker account.",
         keywords: Object.freeze(["import trades", "csv", "broker statement", "choose statement", "upload"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph", text: "Open Import Trades and choose the CSV statement from your broker. Statements can be imported in any order; TradersLink keeps accepted source evidence with the Trade Tracker records it creates." }),
-          Object.freeze({ kind: "callout", title: "Use the selected Trade Tracker account", text: "An import belongs to the Trade Tracker account currently selected in TraderLink. Confirm that account before continuing." }),
+          Object.freeze({ kind: "callout", title: "Your current Trade Tracker", text: "An import is added to the Trade Tracker account you are already using. When a broker profile is new, TraderLink asks once before adding it." }),
         ]),
       }),
       Object.freeze({
         id: "review-the-format",
         title: "Review the statement format",
-        summary: "Use a verified format when it is recognized, or map the columns when the layout is new.",
+        summary: "Known formats save automatically. Map the columns only when the layout is new.",
         keywords: Object.freeze(["verified format", "map columns", "statement format", "broker layout"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "TradersLink recognizes verified statement formats when it can. When a layout is new, map the columns that contain the ticker, date and time, Buy or Sell side, quantity and price. Add fees, currency or an execution reference when the statement includes them." }),
+          Object.freeze({ kind: "paragraph", text: "TradersLink saves a recognized statement after you upload it. When a layout is new, map the columns that contain the ticker, date and time, Buy or Sell side, quantity and price. Add fees, currency or an execution reference when the statement includes them." }),
           Object.freeze({ kind: "callout", title: "Changed layouts are reviewed", text: "A successful mapping can be reused for the same trading account. A changed statement layout returns for your review instead of being guessed." }),
         ]),
       }),
@@ -31,15 +31,15 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
   Object.freeze({
     slug: "review-import-result",
     title: "Review the mapping and import result",
-    description: "Check the preview before saving and understand what happens after an import completes.",
+    description: "Understand what happens after a statement is saved and when a follow-up is needed.",
     sections: Object.freeze([
       Object.freeze({
         id: "mapping-review",
-        title: "Review the mapping",
-        summary: "Check that each required statement column is assigned before you continue.",
+        title: "Map a new format",
+        summary: "Choose the required statement columns only when TraderLink cannot recognize the layout.",
         keywords: Object.freeze(["mapping review", "preview", "ticker", "date", "price", "fees"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "The mapping review is your chance to check that TradersLink read the statement columns as intended before it saves executions. Desktop shows mapping issues in a table and mobile uses readable issue cards. Correct the mapping when a column does not match the broker statement." }),
+          Object.freeze({ kind: "paragraph", text: "For a new format, choose the columns TraderLink should use before saving the statement. Known formats do not need this step. Correct the mapping when a column does not match the broker statement." }),
           Object.freeze({ kind: "callout", title: "Unknown is better than guessed", text: "Leave an unavailable fact unavailable rather than entering an invented value just to complete a field." }),
         ]),
       }),
@@ -66,7 +66,7 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
         summary: "Return to Import Trades to see the statements already added for the selected account.",
         keywords: Object.freeze(["import history", "previous import", "reimport", "trade tracker account"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "Import history keeps the added statements together for the selected Trade Tracker account. Desktop shows a table and mobile uses one card per import with its source, period, status, execution count and any Data Decisions link. Use it to confirm an import outcome before deciding whether you need another statement or a factual follow-up." }),
+          Object.freeze({ kind: "paragraph", text: "Import history keeps the added statements together for your current Trade Tracker account. It shows the statement period, whether it was saved, and a follow-up link only when an item still needs your review. A statement already saved will never add its trades twice." }),
         ]),
       }),
       Object.freeze({
@@ -205,7 +205,7 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
         summary: "Let TraderLink use the statement to prepare a safe import when you choose to do so.",
         keywords: Object.freeze(["allow AI", "private", "review statement", "successful import", "consent"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "Choose Allow AI to review this statement when you want help with a statement TraderLink does not yet recognize. The review is used only to prepare this import. Your statement remains private to your Trade Tracker." }),
+          Object.freeze({ kind: "paragraph", text: "Choose Allow AI to review this statement when you want help with a statement TraderLink does not yet recognize. TraderLink sends it to OpenAI only after you choose this option, asks OpenAI not to store the request, and uses the result only to prepare this import." }),
           Object.freeze({ kind: "bullets", items: Object.freeze([
             "TraderLink checks the statement format and prepares the column choices needed for the import.",
             "It checks the result against the same statement before adding anything to your Trade Tracker.",

@@ -32,7 +32,7 @@ import { FeatureHelpLink } from "../feature-help-link";
 const ENDPOINT = "/api/platform/journal/data-decisions";
 
 const ACTION_LABELS: Readonly<Partial<Record<JournalDecisionAction, string>>> = {
-  correct_execution_fact: "Fix this row",
+  correct_execution_fact: "Correct this execution",
   set_execution_order: "Set execution order",
   exclude_execution: "Do not use this as a trade execution",
   restore_execution: "Restore this execution",
@@ -40,7 +40,7 @@ const ACTION_LABELS: Readonly<Partial<Record<JournalDecisionAction, string>>> = 
   reconcile_grouped_fills: "Match this to the broker fills",
   keep_distinct: "These are separate executions",
   correct_position_fact: "Correct the statement position",
-  add_missing_execution: "Fix this row",
+  add_missing_execution: "Add missing execution",
   supply_opening_inventory: "Add earlier executions",
   supply_position_fact: "Add the statement position",
   supply_coverage_fact: "Confirm the statement period",
@@ -503,7 +503,7 @@ function StatementRows({
                           current === row.recordOrdinal ? null : row.recordOrdinal)}
                         size="small"
                       >
-                        {expanded ? "Hide editor" : "Fix this row"}
+                        {expanded ? "Hide editor" : "Review this row"}
                       </Button>
                     ) : "—"}
                   </TableCell>
@@ -584,7 +584,7 @@ function StatementRows({
                         sx={{ alignSelf: "flex-start" }}
                         variant="outlined"
                       >
-                        {expanded ? "Hide editor" : "Fix this row"}
+                        {expanded ? "Hide editor" : "Review this row"}
                       </Button>
                     ) : null}
                     {expanded && decision ? (

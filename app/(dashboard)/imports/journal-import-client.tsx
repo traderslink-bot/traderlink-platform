@@ -1,7 +1,6 @@
 "use client";
 
 import CloudUploadRoundedIcon from "@mui/icons-material/CloudUploadRounded";
-import DownloadRoundedIcon from "@mui/icons-material/DownloadRounded";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -14,6 +13,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
+import LinearProgress from "@mui/material/LinearProgress";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Stack from "@mui/material/Stack";
@@ -37,7 +37,6 @@ import type { JournalImportMappingPreview } from "@/src/modules/journal/server/p
 import type { JournalMappingSupportPackageV2 } from "@/src/modules/journal/server/product/journal-mapping-support-package";
 import { DashboardPanel } from "../../dashboard-template";
 import { FeatureHelpLink } from "../feature-help-link";
-import { HorizontalScrollRegion } from "../horizontal-scroll-region";
 
 const PREVIEW_ENDPOINT = "/api/platform/journal/imports/preview";
 const COMMIT_ENDPOINT = "/api/platform/journal/imports/commit";
@@ -74,13 +73,33 @@ function period(item: Pick<JournalImportHistoryItem, "statementPeriodStartDate" 
     : `${item.statementPeriodStartDate} to ${item.statementPeriodEndDate}`;
 }
 
+type CompletedImport = Readonly<{
+  status: "committed" | "already_imported";
+  executionCount: number;
+  pendingDecisionCount: number;
+}>;
+
+function blockingImportMessage(preview: JournalImportMappingPreview): string {
+  if (preview.issues.some((issue) => issue.isBlocking)) {
+    return "TraderLink needs a few trading details corrected before this statement can be saved.";
+  }
+  return "TraderLink could not save this statement yet. Check your mapping and try again.";
+}
+
+function importSaveErrorMessage(code: string | undefined): string {
+  if (code === "TRADERLINK_JOURNAL_IMPORT_CONFLICT") {
+    return "This statement is already saved in a different Trade Tracker.";
+  }
+  return code ?? "The statement could not be saved.";
+}
+
 export function JournalImportClient({
   expectedAccountSelectionRef,
 }: {
   expectedAccountSelectionRef: string;
 }) {
-  void expectedAccountSelectionRef;
   const [file, setFile] = useState<File | null>(null);
+  const [filePickerKey, setFilePickerKey] = useState(0);
   const [attemptIdempotencyRef, setAttemptIdempotencyRef] = useState("");
   const [brokerName, setBrokerName] = useState("");
   const [sourceTimezone, setSourceTimezone] = useState("America/New_York");
@@ -95,7 +114,7 @@ export function JournalImportClient({
   const [sellValues, setSellValues] = useState("SELL,S,SOLD");
   const [defaultCurrency, setDefaultCurrency] = useState("USD");
   const [feeSignConvention, setFeeSignConvention] = useState<"cost_positive" | "cash_effect">("cost_positive");
-  const [confirmedAccount, setConfirmedAccount] = useState(false);
+  const [completed, setCompleted] = useState<CompletedImport | null>(null);
   const [history, setHistory] = useState<readonly JournalImportHistoryItem[]>([]);
   const [working, setWorking] = useState<"preview" | "commit" | "ai_repair" | null>(null);
   const [notice, setNotice] = useState<Readonly<{
@@ -103,13 +122,16 @@ export function JournalImportClient({
     text: string;
   }> | null>(null);
 
-  async function refreshHistory() {
+  async function refreshHistory(): Promise<readonly JournalImportHistoryItem[]> {
     const response = await fetch(HISTORY_ENDPOINT, { cache: "no-store" });
-    if (!response.ok) return;
+    if (!response.ok) return [];
     const packet = await response.json() as {
       imports?: readonly JournalImportHistoryItem[];
     };
-    setHistory(packet.imports ?? []);
+    const imports = (packet.imports ?? []).filter((item) =>
+      item.sourceKind === "broker_statement");
+    setHistory(imports);
+    return imports;
   }
 
   useEffect(() => {
@@ -123,15 +145,25 @@ export function JournalImportClient({
     setManualColumns(firstTable ? { ...firstTable.suggestedMapping } : {});
   }
 
+  function clearUploadState() {
+    setFile(null);
+    setFilePickerKey((current) => current + 1);
+    setAttemptIdempotencyRef("");
+    setBrokerName("");
+    setPreview(null);
+    setImportRef(null);
+    acceptMappingSupport(null);
+  }
+
   async function previewStatement(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!file || !attemptIdempotencyRef || working) return;
     setWorking("preview");
     setNotice(null);
+    setCompleted(null);
     setPreview(null);
     setImportRef(null);
     acceptMappingSupport(null);
-    setConfirmedAccount(false);
     try {
       const data = new FormData();
       data.set("statement", file);
@@ -145,6 +177,12 @@ export function JournalImportClient({
       });
       const packet = await response.json() as {
         preview?: JournalImportMappingPreview;
+        result?: Readonly<{
+          status: "committed" | "already_imported";
+          createdExecutionCount: number;
+          matchedExecutionCount: number;
+          pendingDecisionCount: number;
+        }>;
         mappingSupport?: JournalMappingSupportPackageV2;
         importRef?: string;
         status?: string;
@@ -162,17 +200,31 @@ export function JournalImportClient({
       if (!response.ok || !packet.preview) {
         throw new Error(packet.code ?? "The statement could not be mapped.");
       }
+      if (packet.result) {
+        await refreshHistory();
+        setCompleted({
+          status: packet.result.status,
+          executionCount: packet.result.status === "already_imported"
+            ? packet.result.matchedExecutionCount
+            : packet.result.createdExecutionCount,
+          pendingDecisionCount: packet.result.pendingDecisionCount,
+        });
+        clearUploadState();
+        return;
+      }
+      if (
+        packet.preview.canCommit &&
+        packet.preview.mappingOrigin !== "manual_mapping"
+      ) {
+        await commitStatement(packet.preview, true);
+        return;
+      }
       setPreview(packet.preview);
       setImportRef(packet.importRef ?? null);
       acceptMappingSupport(packet.mappingSupport ?? null);
-      setNotice({
-        severity: packet.preview.canCommit ? "success" : "warning",
-        text: packet.preview.canCommit
-          ? packet.preview.mappingOrigin === "saved_exact_template"
-            ? "This account's saved statement template matched exactly. Review it before saving; nothing has been saved yet."
-            : "The statement mapping is ready for your review. Nothing has been saved yet."
-          : "The mapping found blocking issues. Review the summary before trying another file.",
-      });
+      setNotice(packet.preview.canCommit
+        ? null
+        : { severity: "warning", text: blockingImportMessage(packet.preview) });
     } catch (error) {
       setNotice({
         severity: "error",
@@ -196,26 +248,10 @@ export function JournalImportClient({
       });
       if (!response.ok) throw new Error("AI review could not be started. Please try again.");
       setAiRepairOpen(false);
-      setNotice({ severity: "success", text: "AI review has been requested. TraderLink will continue this import when the secure importer is available." });
+      setNotice({ severity: "success", text: "Your private review request was saved. TraderLink will let you know when this import is ready." });
     } catch (error) {
       setNotice({ severity: "error", text: error instanceof Error ? error.message : "AI review could not be started." });
     } finally { setWorking(null); }
-  }
-
-  function downloadMappingSupport() {
-    if (!mappingSupport) return;
-    const slug = mappingSupport.brokerLabel.toLowerCase()
-      .replace(/[^a-z0-9]+/gu, "-")
-      .replace(/^-|-$/gu, "") || "broker";
-    const url = URL.createObjectURL(new Blob(
-      [`${JSON.stringify(mappingSupport, null, 2)}\n`],
-      { type: "application/json" },
-    ));
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `traderlink-${slug}-mapping-support.json`;
-    anchor.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 
   async function previewManualMapping() {
@@ -242,7 +278,6 @@ export function JournalImportClient({
     setWorking("preview");
     setNotice(null);
     setPreview(null);
-    setConfirmedAccount(false);
     try {
       const data = new FormData();
       data.set("statement", file);
@@ -265,12 +300,9 @@ export function JournalImportClient({
       }
       setPreview(packet.preview);
       acceptMappingSupport(packet.mappingSupport ?? mappingSupport);
-      setNotice({
-        severity: packet.preview.canCommit ? "success" : "warning",
-        text: packet.preview.canCommit
-          ? "Your mapping is ready. Saving the statement will also save this exact format as a reusable template for this trading account."
-          : "The selected mapping has blocking issues. Review the fields and try again.",
-      });
+      setNotice(packet.preview.canCommit
+        ? null
+        : { severity: "warning", text: blockingImportMessage(packet.preview) });
     } catch (error) {
       setNotice({
         severity: "error",
@@ -281,32 +313,45 @@ export function JournalImportClient({
     }
   }
 
-  async function commitStatement() {
-    if (!file || !attemptIdempotencyRef || !preview || !confirmedAccount || !preview.canCommit || working) return;
+  async function commitStatement(
+    candidate: JournalImportMappingPreview = preview!,
+    confirmSourceIdentityLink = false,
+  ) {
+    if (
+      !file ||
+      !attemptIdempotencyRef ||
+      !candidate ||
+      !candidate.canCommit ||
+      (candidate.sourceIdentityConfirmationRequired && !confirmSourceIdentityLink)
+    ) return;
     setWorking("commit");
     setNotice(null);
+    setPreview(null);
     try {
       const data = new FormData();
       data.set("statement", file);
       data.set("sourceTimezone", sourceTimezone);
       data.set("attemptIdempotencyRef", attemptIdempotencyRef);
-      data.set("previewRef", preview.previewRef);
-      data.set("expectedAccountSelectionRef", preview.accountSelectionRef);
+      data.set("previewRef", candidate.previewRef);
+      data.set("expectedAccountSelectionRef", candidate.accountSelectionRef || expectedAccountSelectionRef);
       data.set(
         "confirmSourceIdentityLink",
-        preview.sourceIdentityConfirmationRequired ? "yes" : "no",
+        candidate.sourceIdentityConfirmationRequired && confirmSourceIdentityLink
+          ? "yes"
+          : "no",
       );
       data.set("confirmationAction", "commit_statement");
-      data.set("commitKind", preview.commitKind);
-      if (preview.mappingContract) {
-        data.set("mappingContract", JSON.stringify(preview.mappingContract));
+      data.set("commitKind", candidate.commitKind);
+      if (candidate.mappingContract) {
+        data.set("mappingContract", JSON.stringify(candidate.mappingContract));
       }
       const response = await fetch(COMMIT_ENDPOINT, {
         method: "POST",
         headers: { [JOURNAL_MUTATION_REQUEST_HEADER]: "1" },
         body: data,
       });
-      const packet = await response.json() as {
+      const responseText = await response.text();
+      let packet: {
         result?: Readonly<{
           status: "committed" | "already_imported";
           createdExecutionCount: number;
@@ -314,18 +359,26 @@ export function JournalImportClient({
           pendingDecisionCount: number;
         }>;
         code?: string;
-      };
+      } = {};
+      try {
+        packet = JSON.parse(responseText) as typeof packet;
+      } catch {
+        throw new Error("The statement could not be saved. Please try Upload again.");
+      }
       if (!response.ok || !packet.result) {
-        throw new Error(packet.code ?? "The statement could not be saved.");
+        throw new Error(importSaveErrorMessage(packet.code));
       }
       await refreshHistory();
-      setNotice({
-        severity: packet.result.pendingDecisionCount > 0 ? "warning" : "success",
-        text: packet.result.status === "already_imported"
-          ? "This exact statement was already saved. No executions were duplicated."
-          : `${packet.result.createdExecutionCount} new executions saved and ${packet.result.matchedExecutionCount} existing executions matched. ${packet.result.pendingDecisionCount} decisions need review.`,
+      setCompleted({
+        status: packet.result.status,
+        executionCount: packet.result.status === "already_imported"
+          ? packet.result.matchedExecutionCount
+          : packet.result.createdExecutionCount,
+        pendingDecisionCount: packet.result.pendingDecisionCount,
       });
+      clearUploadState();
     } catch (error) {
+      setPreview(candidate);
       setNotice({
         severity: "error",
         text: error instanceof Error ? error.message : "The statement could not be saved.",
@@ -356,38 +409,87 @@ export function JournalImportClient({
     <Stack spacing={2.5}>
       <Stack direction="row" sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
         <Box>
-          <Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">
-            Trade Tracker
-          </Typography>
-          <Typography component="h1" sx={{ mt: 0.5 }} variant="h1">
+          <Typography component="h1" variant="h1">
             Import Trades
           </Typography>
-          <Typography color="text.secondary" sx={{ maxWidth: 820, mt: 1 }} variant="body2">
-            Import historical broker statements in any order. TraderLink detects verified formats, previews the mapping before saving executions, preserves accepted source evidence, and sends uncertain facts to Data Decisions without hiding valid trades.
+          <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">
+            To import your trades you need to upload your broker statements
           </Typography>
+          <Box component="ol" sx={{ color: "text.secondary", mb: 0, mt: 1, pl: 2.5 }}>
+            <li><Typography color="text.secondary" variant="body2">Import your broker statements in CSV format.</Typography></li>
+            <li><Typography color="text.secondary" variant="body2">Your statement will be auto saved if the system detects it.</Typography></li>
+            <li><Typography color="text.secondary" variant="body2">If detection fails you can try to map your statement CSV headings with the app&apos;s import headings.</Typography></li>
+            <li><Typography color="text.secondary" variant="body2">If mapping fails you can select to send your statement to AI for processing.</Typography></li>
+          </Box>
         </Box>
         <FeatureHelpLink href="/help/notifications-and-imports" label="Import Trades" size="medium" />
       </Stack>
 
       {notice ? <Alert severity={notice.severity}>{notice.text}</Alert> : null}
+      {working === "commit" ? (
+        <DashboardPanel title="Importing statement">
+          <Stack spacing={1.5}>
+            <Typography color="text.secondary" variant="body2">
+              Importing your statement into this Trade Tracker. Please keep this page open.
+            </Typography>
+            <LinearProgress />
+          </Stack>
+        </DashboardPanel>
+      ) : null}
 
-      <DashboardPanel action={<FeatureHelpLink href="/help/notifications-and-imports/import-a-statement#choose-a-statement" label="choose a statement" />} title="Choose a statement">
+      {completed ? (
+        <DashboardPanel title={completed.status === "already_imported" ? "Statement already saved" : "Statement saved"}>
+          <Stack spacing={1.5}>
+            <Typography variant="body2">
+              {completed.status === "already_imported"
+                ? "This statement is already in your Trade Tracker. Nothing was added twice."
+                : `${completed.executionCount} execution${completed.executionCount === 1 ? "" : "s"} added to your Trade Tracker.`}
+            </Typography>
+            {completed.pendingDecisionCount > 0 ? (
+              <Alert severity="warning">
+                {completed.pendingDecisionCount} item{completed.pendingDecisionCount === 1 ? " needs" : "s need"} your review before every affected trade result can be complete.
+              </Alert>
+            ) : null}
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+              <Button onClick={() => setCompleted(null)} variant="contained">Upload another statement</Button>
+              <Button href={completed.pendingDecisionCount > 0 ? "/data-decisions" : "/workspace"} variant="outlined">
+                {completed.pendingDecisionCount > 0 ? "Review items" : "View trades"}
+              </Button>
+            </Stack>
+          </Stack>
+        </DashboardPanel>
+      ) : null}
+
+      {!completed && working !== "commit" ? <DashboardPanel hideHeader>
         <Box component="form" onSubmit={(event) => void previewStatement(event)}>
           <Stack spacing={2}>
-            <Alert severity="info">
-              TraderLink recognizes verified statement formats automatically. If a broker format is new, you can map its columns here. A successful mapping becomes an exact reusable template for this trading account; changed layouts return for review instead of being guessed.
-            </Alert>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}>
+              <Typography component="h2" sx={{ fontWeight: 750 }} variant="subtitle1">Select Statement from your device</Typography>
+              <FeatureHelpLink href="/help/notifications-and-imports/import-a-statement#choose-a-statement" label="choose a statement" />
+            </Stack>
             <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
               <Button
                 component="label"
                 startIcon={<CloudUploadRoundedIcon />}
-                sx={{ justifyContent: "flex-start", minHeight: 56, flex: 1 }}
+                sx={{
+                  flex: { md: "0 1 25%" },
+                  justifyContent: "flex-start",
+                  maxWidth: { md: 360 },
+                  minHeight: 56,
+                  minWidth: { md: 260 },
+                  overflow: "hidden",
+                  width: { xs: "100%", md: "25%" },
+                  "& .MuiButton-startIcon": { flexShrink: 0 },
+                }}
                 variant="outlined"
               >
-                {file?.name ?? "Choose CSV statement"}
+                <Box component="span" sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {file ? file.name : "Choose CSV statement"}
+                </Box>
                 <input
                   accept=".csv,text/csv,text/plain"
                   hidden
+                  key={filePickerKey}
                   onChange={(event) => {
                     const nextFile = event.target.files?.[0] ?? null;
                     setFile(nextFile);
@@ -396,56 +498,47 @@ export function JournalImportClient({
                     );
                     setPreview(null);
                     acceptMappingSupport(null);
-                    setConfirmedAccount(false);
+                    setCompleted(null);
                   }}
                   type="file"
                 />
               </Button>
-              <TextField
-                label="Broker name"
-                onChange={(event) => {
-                  setBrokerName(event.target.value);
-                  setPreview(null);
-                }}
-                placeholder="Auto detect or enter broker"
-                sx={{ minWidth: { xs: 0, md: 220 }, width: { xs: "100%", md: "auto" } }}
-                value={brokerName}
-              />
-              <TextField
-                label="Statement timezone"
-                onChange={(event) => {
-                  setSourceTimezone(event.target.value);
-                  setPreview(null);
-                }}
-                sx={{ minWidth: { xs: 0, md: 240 }, width: { xs: "100%", md: "auto" } }}
-                value={sourceTimezone}
-              />
               <Button disabled={!file || working !== null} type="submit" variant="contained">
-                {working === "preview" ? "Mapping..." : "Review mapping"}
+                {working === "preview" ? "Uploading..." : "Upload"}
               </Button>
             </Stack>
           </Stack>
         </Box>
-      </DashboardPanel>
+      </DashboardPanel> : null}
 
-      {mappingSupport ? (
-        <DashboardPanel title={preview ? "Statement format" : "Map statement columns"}>
+      {mappingSupport && !preview && working !== "commit" ? (
+        <DashboardPanel title="Map your statement">
           <Stack spacing={2}>
             <Typography color="text.secondary" variant="body2">
-              This package contains {mappingSupport.tables.length} detected table or section structure{mappingSupport.tables.length === 1 ? "" : "s"} and {mappingSupport.recordFieldCounts.length} distinct field-count pattern{mappingSupport.recordFieldCounts.length === 1 ? "" : "s"}. It excludes statement rows and values, the original filename, file fingerprints, file size and every local path.
+              TraderLink could not read this statement automatically. Choose where it can find each trading detail below, then save your mapping.
             </Typography>
-            {mappingSupport.privacy.privacyReviewRequired ? (
-              <Alert severity="warning">
-                Some headings looked like private data, so TraderLink replaced them with neutral column labels. You can still map this statement for your account, but it will not be added to the shared format library until its structure is reviewed safely.
-              </Alert>
+            {importRef ? (
+              <Button onClick={() => setAiRepairOpen(true)} variant="outlined">
+                Ask AI to map this statement
+              </Button>
             ) : null}
             {!preview && mappingSupport.tables.length > 0 ? (
               <Stack spacing={2}>
-                {importRef ? (
-                  <Button onClick={() => setAiRepairOpen(true)} variant="contained">
-                    Allow AI to review this statement
-                  </Button>
-                ) : null}
+                <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
+                  <TextField
+                    fullWidth
+                    label="Broker name"
+                    onChange={(event) => setBrokerName(event.target.value)}
+                    placeholder="For example, Robinhood"
+                    value={brokerName}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Statement timezone"
+                    onChange={(event) => setSourceTimezone(event.target.value)}
+                    value={sourceTimezone}
+                  />
+                </Stack>
                 <FormControl fullWidth>
                   <InputLabel id="statement-table-label">Statement table or section</InputLabel>
                   <Select
@@ -522,23 +615,17 @@ export function JournalImportClient({
                       onClick={() => void previewManualMapping()}
                       variant="contained"
                     >
-                      {working === "preview" ? "Checking mapping..." : "Review my mapping"}
+                      {working === "preview" ? "Checking mapping..." : "Save mapping"}
                     </Button>
-                    <Typography color="text.secondary" variant="caption">
-                      TraderLink learns only after you review and save. The template is limited to this trading account and this exact statement structure.
-                    </Typography>
                   </>
                 ) : null}
               </Stack>
             ) : null}
             {!preview && mappingSupport.tables.length === 0 ? (
               <Alert severity="warning">
-                No safe table structure could be detected. Download the format package so this broker statement can be added as a tested adapter.
+                TraderLink could not identify a table to map. You can ask AI to review this statement instead.
               </Alert>
             ) : null}
-            <Button onClick={downloadMappingSupport} startIcon={<DownloadRoundedIcon />} variant={preview ? "outlined" : "contained"}>
-              Download mapping support package
-            </Button>
           </Stack>
         </DashboardPanel>
       ) : null}
@@ -548,7 +635,7 @@ export function JournalImportClient({
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
             <Typography>Your statement is not yet supported, so the import failed.</Typography>
-            <Typography>Allow AI to review your statement so TraderLink can configure it for a successful import. Your statement remains private to your Trade Tracker. AI processing is used only to complete this import.</Typography>
+            <Typography>Allow TraderLink to send this statement to OpenAI so it can suggest a mapping. OpenAI is used only for this import and is asked not to store the request. TraderLink checks the suggested mapping before it imports anything.</Typography>
             <FormControlLabel control={<Checkbox checked={discordCompletionRequested} onChange={(event) => setDiscordCompletionRequested(event.target.checked)} />} label="Send me a Discord DM when this import is complete" />
           </Stack>
         </DialogContent>
@@ -560,100 +647,20 @@ export function JournalImportClient({
 
 
       {preview ? (
-        <DashboardPanel action={<FeatureHelpLink href="/help/notifications-and-imports/review-import-result#mapping-review" label="mapping review" />} title="Mapping review">
+        <DashboardPanel title="Save your statement">
           <Stack spacing={2}>
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ flexWrap: "wrap" }}>
-              <Chip label={preview.adapter} size="small" />
-              <Chip label={period(preview)} size="small" variant="outlined" />
-              <Chip label={`${preview.mappedExecutionCount} executions recognized`} size="small" variant="outlined" />
-              <Chip label={`${preview.mappedPositionFactCount} position facts recognized`} size="small" variant="outlined" />
-              <Chip label={`${preview.expectedPendingDecisionCount} expected decisions`} size="small" variant="outlined" />
-            </Stack>
-
-            <Alert severity="info">
-              {preview.mappingOrigin === "verified_adapter"
-                ? "This verified broker adapter mapped the statement automatically. Confirm the recognized fields and trading account before saving."
-                : preview.mappingOrigin === "saved_exact_template"
-                  ? "This account's previously accepted template matched the statement structure exactly. Confirm the fields and trading account before saving."
-                  : "You selected these columns. Confirm the fields and trading account before saving; the accepted mapping will become this account's reusable exact template."}
-            </Alert>
-
-            <HorizontalScrollRegion label="Statement field mapping table" minTableWidth={520} stickyFirstColumn>
-              <Table size="small">
-                <TableHead><TableRow><TableCell>Statement field</TableCell><TableCell>Saved as</TableCell></TableRow></TableHead>
-                <TableBody>{preview.mappedFields.map((field) => (
-                  <TableRow key={`${field.source}-${field.destination}`}>
-                    <TableCell>{field.source}</TableCell>
-                    <TableCell>{field.destination}</TableCell>
-                  </TableRow>
-                ))}</TableBody>
-              </Table>
-            </HorizontalScrollRegion>
-
-            <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", sm: "repeat(3, minmax(0, 1fr))" } }}>
-              <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.5 }}><Typography color="text.secondary" variant="caption">New executions</Typography><Typography sx={{ fontWeight: 800 }} variant="h3">{preview.plannedNewExecutionCount}</Typography></Box>
-              <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.5 }}><Typography color="text.secondary" variant="caption">Matched executions</Typography><Typography sx={{ fontWeight: 800 }} variant="h3">{preview.plannedMatchedExecutionCount}</Typography></Box>
-              <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.5 }}><Typography color="text.secondary" variant="caption">Ambiguous matches</Typography><Typography sx={{ fontWeight: 800 }} variant="h3">{preview.plannedAmbiguousExecutionCount}</Typography></Box>
-            </Box>
-
-            <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(3, minmax(0, 1fr))" } }}>
-              {Object.entries(preview.rowsByClassification).map(([classification, count]) => (
-                <Box key={classification} sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.5 }}>
-                  <Typography color="text.secondary" variant="caption">{humanize(classification)}</Typography>
-                  <Typography sx={{ fontWeight: 800 }} variant="h3">{count}</Typography>
-                </Box>
-              ))}
-            </Box>
-
-            {preview.issues.length > 0 ? (
-              <>
-                <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
-                  <Table size="small">
-                    <TableHead><TableRow><TableCell>Mapping issue</TableCell><TableCell>Severity</TableCell><TableCell align="right">Rows</TableCell><TableCell>Blocks save</TableCell></TableRow></TableHead>
-                    <TableBody>{preview.issues.map((issue) => (
-                      <TableRow key={`${issue.issueCode}-${issue.severity}`}>
-                        <TableCell>{humanize(issue.issueCode)}</TableCell>
-                        <TableCell>{humanize(issue.severity)}</TableCell>
-                        <TableCell align="right">{issue.count}</TableCell>
-                        <TableCell>{issue.isBlocking ? "Yes" : "No - Data Decisions"}</TableCell>
-                      </TableRow>
-                    ))}</TableBody>
-                  </Table>
-                </TableContainer>
-                <Stack spacing={1} sx={{ display: { xs: "flex", md: "none" } }}>
-                  {preview.issues.map((issue) => (
-                    <Box key={`${issue.issueCode}-${issue.severity}`} sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.25 }}>
-                      <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
-                        <Typography sx={{ fontWeight: 800 }} variant="body2">{humanize(issue.issueCode)}</Typography>
-                        <Chip color={issue.isBlocking ? "error" : "warning"} label={humanize(issue.severity)} size="small" />
-                      </Stack>
-                      <Typography color="text.secondary" sx={{ mt: 0.75 }} variant="body2">
-                        {issue.count} affected row{issue.count === 1 ? "" : "s"} · {issue.isBlocking ? "Blocks save" : "Continues in Data Decisions"}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Stack>
-              </>
-            ) : <Alert severity="success">No mapping issues were found.</Alert>}
-
-            <FormControlLabel
-              control={<Checkbox checked={confirmedAccount} onChange={(event) => setConfirmedAccount(event.target.checked)} />}
-              label={preview.sourceIdentityConfirmationRequired
-                ? `Link this newly recognized broker account to ${preview.accountLabel} and save the statement`
-                : `This statement belongs to ${preview.accountLabel}`}
-            />
+            <Typography color="text.secondary" variant="body2">
+              Your mapping is ready. Save this statement to add the trades to your Trade Tracker.
+            </Typography>
+            {!preview.canCommit ? <Alert severity="warning">{blockingImportMessage(preview)}</Alert> : null}
             <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" } }}>
               <Button
-                disabled={!confirmedAccount || !preview.canCommit || working !== null}
-                onClick={() => void commitStatement()}
+                disabled={!preview.canCommit || working !== null}
+                onClick={() => void commitStatement(preview, true)}
                 variant="contained"
               >
-                {working === "commit" ? "Saving..." : preview.exactReimport ? "Confirm existing statement" : "Save statement"}
+                {working === "commit" ? "Saving..." : "Save statement"}
               </Button>
-              <Button href="/data-decisions" variant="outlined">Open Data Decisions</Button>
-              <Typography color="text.secondary" variant="caption">
-                Exact reuploads are idempotent. Earlier and later statements rebuild the same account-wide execution lifecycles.
-              </Typography>
             </Stack>
           </Stack>
         </DashboardPanel>
@@ -661,24 +668,23 @@ export function JournalImportClient({
 
       <DashboardPanel action={<FeatureHelpLink href="/help/notifications-and-imports/import-history-and-follow-up#import-history" label="Import history" />} title="Import history">
         {history.length === 0 ? (
-          <Typography color="text.secondary" variant="body2">No Trade Tracker imports are recorded yet.</Typography>
+          <Typography color="text.secondary" variant="body2">No broker statements are recorded yet.</Typography>
         ) : (
           <>
             <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
               <Table size="small">
-                <TableHead><TableRow><TableCell>Source</TableCell><TableCell>Period</TableCell><TableCell>Status</TableCell><TableCell align="right">Executions</TableCell><TableCell align="right">Decisions</TableCell></TableRow></TableHead>
+                <TableHead><TableRow><TableCell>Statement</TableCell><TableCell>Period</TableCell><TableCell>Status</TableCell><TableCell>Follow-up</TableCell></TableRow></TableHead>
                 <TableBody>{history.map((item) => (
                   <TableRow key={item.importBatchId}>
                     <TableCell>{item.sourceDisplayLabel}</TableCell>
-                    <TableCell>{item.sourceKind === "broker_statement" ? period(item) : "Manual execution batch"}</TableCell>
+                    <TableCell>{period(item)}</TableCell>
                     <TableCell><Chip color={item.pendingDecisionCount > 0 ? "warning" : "success"} label={humanize(item.currentState)} size="small" /></TableCell>
-                    <TableCell align="right">{item.mappedExecutionCount}</TableCell>
-                    <TableCell align="right">
+                    <TableCell>
                       {item.pendingDecisionCount > 0 ? (
-                        <Button href={`/data-decisions?importBatchId=${encodeURIComponent(item.importBatchId)}`} size="small">
-                          {item.pendingDecisionCount}
+                        <Button href={`/data-decisions?importBatchId=${encodeURIComponent(item.importBatchId)}`} size="small" variant="outlined">
+                          Review {item.pendingDecisionCount} item{item.pendingDecisionCount === 1 ? "" : "s"}
                         </Button>
-                      ) : 0}
+                      ) : "Nothing to review"}
                     </TableCell>
                   </TableRow>
                 ))}</TableBody>
@@ -690,13 +696,12 @@ export function JournalImportClient({
                   <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
                     <Box>
                       <Typography sx={{ fontWeight: 850 }} variant="body2">{item.sourceDisplayLabel}</Typography>
-                      <Typography color="text.secondary" variant="caption">{item.sourceKind === "broker_statement" ? period(item) : "Manual execution batch"}</Typography>
+                      <Typography color="text.secondary" variant="caption">{period(item)}</Typography>
                     </Box>
                     <Chip color={item.pendingDecisionCount > 0 ? "warning" : "success"} label={humanize(item.currentState)} size="small" />
                   </Stack>
                   <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "space-between", mt: 1 }}>
-                    <Typography variant="body2">{item.mappedExecutionCount} execution{item.mappedExecutionCount === 1 ? "" : "s"}</Typography>
-                    {item.pendingDecisionCount > 0 ? <Button href={`/data-decisions?importBatchId=${encodeURIComponent(item.importBatchId)}`} size="small" variant="outlined">{item.pendingDecisionCount} decision{item.pendingDecisionCount === 1 ? "" : "s"}</Button> : <Typography color="text.secondary" variant="body2">No decisions</Typography>}
+                    {item.pendingDecisionCount > 0 ? <Button href={`/data-decisions?importBatchId=${encodeURIComponent(item.importBatchId)}`} size="small" variant="outlined">Review {item.pendingDecisionCount} item{item.pendingDecisionCount === 1 ? "" : "s"}</Button> : <Typography color="text.secondary" variant="body2">Nothing to review</Typography>}
                   </Stack>
                 </Box>
               ))}

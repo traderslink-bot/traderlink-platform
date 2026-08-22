@@ -757,7 +757,6 @@ export function DashboardShell({
       {offline || !aiFeaturesEnabled ? null : (
         <Drawer
           anchor="right"
-          ModalProps={{ keepMounted: true }}
           onClose={() => {
             setAiChatContext(null);
             setAiChatSuggestedQuestion(null);
@@ -785,18 +784,20 @@ export function DashboardShell({
           }}
           variant="temporary"
         >
-          <AiChatClient
-            contextRequestId={aiChatContextRequestId}
-            initialContext={aiChatContext}
-            initialQuestion={aiChatSuggestedQuestion}
-            onClose={() => {
-              setAiChatContext(null);
-              setAiChatSuggestedQuestion(null);
-              setAiChatContextRequestId((current) => current + 1);
-              setAiChatOpen(false);
-            }}
-            presentation="drawer"
-          />
+          {aiChatOpen ? (
+            <AiChatClient
+              contextRequestId={aiChatContextRequestId}
+              initialContext={aiChatContext}
+              initialQuestion={aiChatSuggestedQuestion}
+              onClose={() => {
+                setAiChatContext(null);
+                setAiChatSuggestedQuestion(null);
+                setAiChatContextRequestId((current) => current + 1);
+                setAiChatOpen(false);
+              }}
+              presentation="drawer"
+            />
+          ) : null}
         </Drawer>
       )}
     </Box>

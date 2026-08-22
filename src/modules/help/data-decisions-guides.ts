@@ -28,13 +28,13 @@ export const DATA_DECISIONS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       ]),
     ]),
     section("common-decisions", "Common decisions", "The available choices change with the facts in the item.", ["match duplicate", "separate executions", "fix row", "execution order", "exclude execution"], [
-      bullets(["Match this to the broker execution when both sources show the same fill.", "Choose These are separate executions only when the broker record shows both fills occurred.", "Use Fix this row when a shown execution fact is wrong and the source supports the correction.", "Set execution order when more than one fill has the same recorded time and their order matters.", "Keep an item out of trade results only when it is not a trade execution, is a duplicate, correction, reversal or corporate action."]),
+      bullets(["Match this to the broker execution when both sources show the same fill.", "Choose These are separate executions only when the broker record shows both fills occurred.", "Use Correct this execution when a shown execution fact is wrong and the source supports the correction.", "Set execution order when more than one fill has the same recorded time and their order matters.", "Keep an item out of trade results only when it is not a trade execution, is a duplicate, correction, reversal or corporate action."]),
       callout("The source history remains", "Excluding an execution keeps its original source history available. It removes that row from active trade reconstruction only after you save.", "warning"),
     ]),
   ]),
   guide("statement-issues-and-history", "Review statement issues and history", "Use the statement views to inspect what was imported and the history view to revisit a completed decision.", [
-    section("statement-issues", "Statement issues and details", "Choose the matching tab to see rows needing attention or the complete selected statement details.", ["statement issues", "statement details", "broker statement", "fix this row"], [
-      paragraph("Statement issues narrows the view to rows that need attention. Statement details lets you inspect the selected broker statement more broadly. A row can show a Fix this row action when there is a related decision."),
+    section("statement-issues", "Statement issues and details", "Choose the matching tab to see rows needing attention or the complete selected statement details.", ["statement issues", "statement details", "broker statement", "review this row"], [
+      paragraph("Statement issues narrows the view to rows that need attention. Statement details lets you inspect the selected broker statement more broadly. A row can show a Review this row action when there is a related decision."),
       paragraph("On a phone, statement rows and related executions are shown as stacked cards so the imported values and review action remain readable without horizontal scrolling. Larger screens keep the table view."),
       link("/help/notifications-and-imports/statement-will-not-import", "Read statement import help", "Learn how mapping, import review and the follow-up path fit together."),
     ]),
