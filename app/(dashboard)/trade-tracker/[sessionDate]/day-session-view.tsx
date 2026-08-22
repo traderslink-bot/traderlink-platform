@@ -2797,6 +2797,9 @@ export function DaySessionView({
             for each trade. Add notes and track rules that apply to the trading day
             as a whole.
           </Typography>
+          <Typography color="error.main" sx={{ fontWeight: 700, maxWidth: 900, mt: 1 }} variant="body2">
+            Notes, rules, tags and trade information will appear below after you submit your executions.
+          </Typography>
         </Box>
         <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", justifySelf: { md: "end" } }}>
           <FeatureHelpLink href="/help/daily-trade-tracker" label="Daily Trade Tracker" size="medium" />

@@ -30,7 +30,7 @@ function friendlyFailure(
   }
   if (code === "TRADERLINK_MANUAL_TRADE_RECENT_ENTRY_REQUIRED") {
     if (tracker === "day") {
-      return "Enter a trading date from today or the previous six calendar days and make sure the execution time is not in the future. Use Imports for older activity.";
+      return "You can only enter trades or executions that occurred on the same day. You cannot enter future times or dates.";
     }
     if (tracker === "swing") {
       return "Check the execution dates and times. New swing entries must be current or recently closed, and future executions cannot be saved. Use Imports for older completed trades.";

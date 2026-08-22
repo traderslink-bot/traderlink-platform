@@ -10,7 +10,6 @@ import {
 } from "@/src/modules/journal/contracts/journal-daily-tracker-offline-view-contracts";
 import {
   DashboardPage,
-  DashboardUnavailableState,
 } from "../../dashboard-template";
 import {
   currentJournalAccountSelectionRef,
@@ -109,13 +108,13 @@ export default async function TradeTrackerPage({
     <TradeTrackerUnsavedChangesProvider>
       <DashboardPage>
         <Typography component="h1" variant="h1">Daily Trade Tracker</Typography>
+        <Typography color="text.secondary" sx={{ maxWidth: 900 }} variant="body2">
+          The Daily Trade Tracker helps you review one trading day and the trades you took on that particular day. Add tags, notes and track rules for each trade. Add notes and track rules that apply to the trading day as a whole.
+        </Typography>
+        <Typography color="error.main" sx={{ fontWeight: 700, maxWidth: 900 }} variant="body2">
+          Notes, rules, tags and trade information will appear below after you submit your executions.
+        </Typography>
         {topContent}
-        <DashboardUnavailableState
-          actionHref="/imports"
-          actionLabel="Import trades"
-          description="No accepted execution activity is available for Trade Tracker. No V3 or sample rows are substituted."
-          title="No trading day available"
-        />
       </DashboardPage>
     </TradeTrackerUnsavedChangesProvider>
   );
