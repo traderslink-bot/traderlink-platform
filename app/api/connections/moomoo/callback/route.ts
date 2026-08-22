@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { deletePlatformAuthCookie } from "@/src/modules/platform/server/authentication/platform-auth-cookies";
+import { resolvePlatformPublicOrigin } from "@/src/modules/platform/server/authentication/platform-public-origin";
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { encryptMoomooCredentials, loadMoomooCredentialKeyConfiguration } from "@/src/modules/platform/server/broker-connections/moomoo-connection-credentials";
@@ -19,7 +20,9 @@ function finish(
   status: "connected" | "failed" | "invalid-state",
   reportedToAdmin = false,
 ): NextResponse {
-  const origin = process.env.NODE_ENV === "production" ? request.nextUrl.origin : "http://127.0.0.1:3010";
+  const origin = process.env.NODE_ENV === "production"
+    ? resolvePlatformPublicOrigin(request)
+    : "http://127.0.0.1:3010";
   const destination = new URL(`/account?moomoo=${status}`, origin);
   if (reportedToAdmin) destination.searchParams.set("reported", "1");
   const response = NextResponse.redirect(destination);
@@ -50,7 +53,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
   try {
     const identity = requireTraderLinkPlatformRequestIdentity(request.headers);
-    const token = await exchangeMoomooCode({ config: getMoomooOAuthConfig(request.nextUrl.origin), code, verifier });
+    const token = await exchangeMoomooCode({ config: getMoomooOAuthConfig(resolvePlatformPublicOrigin(request)), code, verifier });
     const now = new Date();
     const timestamp = createCanonicalUtcTimestamp(now);
     const expiresAtUtc = createCanonicalUtcTimestamp(new Date(now.getTime() + token.expiresInSeconds * 1000));

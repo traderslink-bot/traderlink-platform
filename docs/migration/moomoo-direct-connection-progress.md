@@ -4,6 +4,21 @@
 
 **Market-data guidance:** [Moomoo Market-Data Connection Guidance Progress](moomoo-market-data-connection-guidance-progress.md)
 
+## Hosted beta follow-up — 2026-08-22
+
+- [x] Traced the failed Connect Moomoo action to
+  `TRADERLINK_BROKER_CONNECTION_CONFIGURATION_INVALID` at `oauth_start`.
+- [x] Corrected the Moomoo start and callback routes so Railway's internal
+  `0.0.0.0:8080` bind address is never used as the browser or provider-facing
+  production origin.
+- [ ] Configure `TRADERLINK_MOOMOO_OAUTH_CLIENT_ID`,
+  `TRADERLINK_MOOMOO_CREDENTIAL_ACTIVE_KEY_VERSION` and
+  `TRADERLINK_MOOMOO_CREDENTIAL_KEYS_BASE64` on the Railway web service. Never
+  place their values in this document or source control.
+- [ ] Deploy the redirect correction, retry Connect Moomoo from
+  `/account/trading`, and confirm the registered provider callback exactly
+  matches `https://app.traderslink.pro/api/connections/moomoo/callback`.
+
 ## Current checkpoint — 2026-08-09
 
 - [x] Confirmed direct Moomoo OAuth 2.1 + PKCE is the appropriate

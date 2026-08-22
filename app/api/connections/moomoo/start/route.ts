@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { setPlatformSessionAuthCookie } from "@/src/modules/platform/server/authentication/platform-auth-cookies";
+import { resolvePlatformPublicOrigin } from "@/src/modules/platform/server/authentication/platform-public-origin";
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { MOOMOO_OAUTH_STATE_COOKIE, MOOMOO_OAUTH_VERIFIER_COOKIE } from "@/src/modules/platform/server/broker-connections/moomoo-oauth-cookies";
 import { buildMoomooAuthorizeUrl, createMoomooPkce, getMoomooOAuthConfig } from "@/src/modules/platform/server/broker-connections/moomoo-oauth";
@@ -17,13 +18,14 @@ function requestHostname(request: NextRequest): string {
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  const publicOrigin = resolvePlatformPublicOrigin(request);
   try {
     requireTraderLinkPlatformRequestIdentity(request.headers);
     if (process.env.NODE_ENV !== "production" && requestHostname(request) !== "127.0.0.1") {
       return NextResponse.redirect("http://127.0.0.1:3010/api/connections/moomoo/start");
     }
     const pkce = createMoomooPkce();
-    const response = NextResponse.redirect(buildMoomooAuthorizeUrl({ config: getMoomooOAuthConfig(request.nextUrl.origin), state: pkce.state, challenge: pkce.challenge }));
+    const response = NextResponse.redirect(buildMoomooAuthorizeUrl({ config: getMoomooOAuthConfig(publicOrigin), state: pkce.state, challenge: pkce.challenge }));
     setPlatformSessionAuthCookie(response, request, MOOMOO_OAUTH_STATE_COOKIE, pkce.state);
     setPlatformSessionAuthCookie(response, request, MOOMOO_OAUTH_VERIFIER_COOKIE, pkce.verifier);
     return response;
@@ -35,7 +37,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     } catch {
       // The user still receives the connection failure when diagnostics cannot open storage.
     }
-    const destination = new URL("/account?moomoo=unavailable", request.nextUrl.origin);
+    const destination = new URL("/account?moomoo=unavailable", publicOrigin);
     if (reportedToAdmin) destination.searchParams.set("reported", "1");
     return NextResponse.redirect(destination);
   }
