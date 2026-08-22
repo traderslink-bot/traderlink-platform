@@ -10,6 +10,7 @@
 - [x] Add official Nasdaq RSS and NYSE CSV polling with normalization.
 - [x] Send exact alert content through the existing Push service worker.
 - [x] Add Account Push setup and Help alignment.
+- [x] Add the detailed Halt Alerts guide under the Tools Help section, linked from Notifications and imports.
 - [x] Replace permanent settings-page ticker mutes with a **Mute for today** notification action and 8:00 PM Eastern expiry.
 - [x] Add the left-navigation Halt Alerts drawer with same-day ticker mutes and mobile close controls.
 - [ ] Refresh the drawer layout with the owner-approved Halt alerts, Muted Tickers and device-install sections.

@@ -1,7 +1,9 @@
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import AccountCircleRoundedIcon from "@mui/icons-material/AccountCircleRounded";
+import BuildRoundedIcon from "@mui/icons-material/BuildRounded";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import NotificationsNoneRoundedIcon from "@mui/icons-material/NotificationsNoneRounded";
+import PhoneIphoneRoundedIcon from "@mui/icons-material/PhoneIphoneRounded";
 import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
 import TodayRoundedIcon from "@mui/icons-material/TodayRounded";
 import ShowChartRoundedIcon from "@mui/icons-material/ShowChartRounded";
@@ -121,6 +123,18 @@ const HELP_COLLECTIONS = Object.freeze([
     href: "/help/paid-plan",
     Icon: WorkspacePremiumOutlinedIcon,
     title: "Paid plan and billing",
+  }),
+  Object.freeze({
+    description: "Install TradersLink, use saved pages and trade entry offline, manage device storage and choose push alerts.",
+    href: "/help/traderslink-app",
+    Icon: PhoneIphoneRoundedIcon,
+    title: "TradersLink app",
+  }),
+  Object.freeze({
+    description: "Learn how to use TraderLink tools such as Halt Alerts.",
+    href: "/help/tools",
+    Icon: BuildRoundedIcon,
+    title: "Tools",
   }),
   Object.freeze({
     description: "Find updates, choose Discord messages and finish a statement that needs help.",

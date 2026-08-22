@@ -4,7 +4,7 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
   Object.freeze({
     slug: "import-a-statement",
     title: "Import a statement",
-    description: "Add a broker CSV statement to your Trade Tracker. Known formats save automatically; new formats can be mapped first.",
+    description: "Add a broker CSV statement to your Trade Tracker. Known layouts import automatically; a new layout can be mapped by you or reviewed privately with AI.",
     sections: Object.freeze([
       Object.freeze({
         id: "choose-a-statement",
@@ -22,7 +22,7 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
         summary: "Known formats save automatically. Map the columns only when the layout is new.",
         keywords: Object.freeze(["verified format", "map columns", "statement format", "broker layout"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "TradersLink saves a recognized statement after you upload it. When a layout is new, map the columns that contain the ticker, date and time, Buy or Sell side, quantity and price. Add fees, currency or an execution reference when the statement includes them." }),
+          Object.freeze({ kind: "paragraph", text: "TradersLink imports a recognized statement after you upload it. When a layout is new, map the columns that contain the ticker, date and time, Buy or Sell side, quantity and price. Add fees, currency or an execution reference when the statement includes them." }),
           Object.freeze({ kind: "callout", title: "Changed layouts are reviewed", text: "A successful mapping can be reused only for the same trading account, broker and statement layout. A changed layout or different broker returns for your review instead of being guessed." }),
         ]),
       }),
@@ -127,10 +127,10 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
         keywords: Object.freeze(["offline notifications", "last updated", "saved pages", "offline data", "remove offline data"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph", text: "When you open Notifications while online, TraderLink can keep a bounded read-only copy for the selected Trade Tracker account. Offline pages clearly show when that copy was last updated. Reading the copy does not mark an update as read or change any Journal fact." }),
+          Object.freeze({ kind: "link", href: "/help/traderslink-app/using-traderslink-app", label: "Read TradersLink app guide", text: "Learn how installation, saved pages, device storage, push alerts and offline trade entry work together." }),
           Object.freeze({ kind: "steps", items: Object.freeze([
-            Object.freeze({ title: "1. Install TradersLink", text: "When Chrome is ready, TradersLink shows an Install TradersLink app message on any signed-in dashboard page. Select Install TradersLink app, then accept Chrome's install prompt. You can also use the Mobile and Desktop PWA App area in Account General." }),
-            Object.freeze({ title: "2. Review what is saved", text: "See how many pages are saved, whether an unsynced trade is waiting, when pages were last updated and the browser's estimated app storage." }),
-            Object.freeze({ title: "3. Remove it deliberately", text: "Choose Remove offline data when you want to clear the current account's saved pages and offline trade entries from this device. TraderLink warns you first when an unsynced trade exists only on the device." }),
+            Object.freeze({ title: "1. Review what is saved", text: "See how many pages are saved, whether an unsynced trade is waiting, when pages were last updated and the browser's estimated app storage." }),
+            Object.freeze({ title: "2. Remove it deliberately", text: "Choose Remove offline data when you want to clear the current account's saved pages and offline trade entries from this device. TraderLink warns you first when an unsynced trade exists only on the device." }),
           ]) }),
           Object.freeze({ kind: "callout", title: "Saved pages are not a backup", text: "TraderLink keeps up to 50 MB of read-only page copies in the browser and removes the oldest copies first. It never automatically removes an unsynced trade. Device storage can still be removed by the browser or operating system, and a pending trade counts only after TraderLink accepts it into the Journal." }),
         ]),
@@ -144,9 +144,10 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
           Object.freeze({ kind: "steps", items: Object.freeze([
             Object.freeze({ title: "1. Open Notifications settings", text: "In the installed app, select Set up notifications in the notice at the top of the page. You can also select Account in the top bar, choose Notifications and find Push notifications." }),
             Object.freeze({ title: "2. Choose alerts", text: "Choose account and trading updates plus the News Filtered and market-cap Press Releases channels. Select all chooses every alert shown here." }),
-            Object.freeze({ title: "3. Set Halt Alerts", text: "Choose Halt Alerts (Nasdaq/NYSE) in the left navigation, then turn Halt alerts on. You can add a ticker to mute it until 8:00 PM ET, or use Mute for today from a halt notification. The muted-ticker list lets you turn one back on early." }),
+            Object.freeze({ title: "3. Set Halt Alerts", text: "Choose Halt Alerts (Nasdaq/NYSE) in the left navigation, then turn Halt alerts on. Read the Halt Alerts guide when you want to know what is included or mute a ticker for the day." }),
             Object.freeze({ title: "4. Save your choices", text: "Select Set Preferences. TraderLink asks the browser for permission only after you select this button." }),
           ]) }),
+          Object.freeze({ kind: "link", href: "/help/tools/halt-alerts", label: "Read Halt Alerts guide", text: "See how halt alerts work, what they show and how to mute a ticker until 8:00 PM ET." }),
           Object.freeze({ kind: "callout", title: "Private alerts stay generic", text: "Account and trading alerts never show tickers, P/L, prices, quantities, account details, statement names, broker identity, notes or AI Review text. Press release alerts may show the public ticker and headline. Halt alerts show the public ticker, exchange halt reason and posted return-to-trading times." }),
           Object.freeze({ kind: "paragraph", text: "A press release alert opens the signed-in Press Releases page and shows that article in the details drawer. Reading it marks the article as read across every Press Releases channel where it appears." }),
           Object.freeze({ kind: "paragraph", text: "If you do not want push notifications, select Don't show again in the installed-app notice. You can still turn them on later from Account Notifications." }),
@@ -212,6 +213,7 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
             "TraderLink checks the statement format and prepares the column choices needed for the import.",
             "It checks the result against the same statement before adding anything to your Trade Tracker.",
             "If the check succeeds, TraderLink continues your original import. It does not replace trades you already have.",
+            "The successful mapping is saved only for this Trade Tracker account, the broker you confirmed and this exact statement layout. A later statement with the same layout can import without another AI review.",
             "You can choose a Discord message for this import if you would like to know when it is ready.",
           ]) }),
         ]),
@@ -232,7 +234,7 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
         summary: "Review the result and handle only the items that still need you.",
         keywords: Object.freeze(["after import", "data decisions", "review", "duplicates", "existing trades"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "A completed import appears in Import Trades. If TraderLink finds a genuine duplicate or unclear match, it keeps the valid imported trades available and shows only the specific items that need your decision." }),
+          Object.freeze({ kind: "paragraph", text: "A completed import appears in Import Trades and creates a private completion update. If TraderLink finds a genuine duplicate or unclear match, it keeps the valid imported trades available and shows only the specific items that need your decision." }),
           Object.freeze({ kind: "link", href: "/imports", label: "Open Import Trades", text: "Use Import Trades to upload another statement, review saved imports and open any follow-up work." }),
         ]),
       }),

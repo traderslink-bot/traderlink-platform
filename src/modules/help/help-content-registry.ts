@@ -16,11 +16,13 @@ import { TRADE_ANALYZER_HELP_GUIDES } from "./trade-analyzer-guides";
 import { TRADE_EXPLORER_HELP_GUIDES } from "./trade-explorer-guides";
 import { TRADING_RULES_HELP_GUIDES } from "./trading-rules-guides";
 import { TRADE_TAGS_HELP_GUIDES } from "./trade-tags-guides";
+import { TRADERSLINK_APP_HELP_GUIDES } from "./traderslink-app-guides";
+import { TOOLS_HELP_GUIDES } from "./tools-guides";
 
 export type HelpNavigationItem = Readonly<{
   depth?: 0 | 1;
   href: string;
-  icon: "home" | "trade_tracker" | "trade_analyzer" | "trading_rules" | "trade_tags" | "ai_reviews" | "paid_plan" | "notifications" | "account";
+  icon: "home" | "trade_tracker" | "trade_analyzer" | "trading_rules" | "trade_tags" | "ai_reviews" | "paid_plan" | "notifications" | "account" | "tools";
   label: string;
   summary: string;
 }>;
@@ -167,6 +169,20 @@ export const HELP_NAVIGATION_ITEMS: readonly HelpNavigationItem[] = Object.freez
     summary: "Connect Whop, manage billing and understand paid access.",
   }),
   ...guideNavigationItems("/help/paid-plan", PAID_PLAN_HELP_GUIDES, "paid_plan"),
+  Object.freeze({
+    href: "/help/tools",
+    icon: "tools",
+    label: "Tools",
+    summary: "Learn how to use TraderLink tools such as Halt Alerts.",
+  }),
+  ...guideNavigationItems("/help/tools", TOOLS_HELP_GUIDES, "tools"),
+  Object.freeze({
+    href: "/help/traderslink-app",
+    icon: "tools",
+    label: "TradersLink app",
+    summary: "Install TradersLink, use saved pages offline and choose device alerts.",
+  }),
+  ...guideNavigationItems("/help/traderslink-app", TRADERSLINK_APP_HELP_GUIDES, "tools"),
   Object.freeze({
     href: "/help/notifications-and-imports",
     icon: "notifications",
@@ -367,6 +383,24 @@ export const HELP_SEARCH_RECORDS: readonly HelpSearchRecord[] = Object.freeze([
     title: "Paid plan and billing overview",
   }),
   ...guideSearchRecords("paid-plan", "Paid plan and billing", "/help/paid-plan", PAID_PLAN_HELP_GUIDES),
+  Object.freeze({
+    href: "/help/tools",
+    id: "tools-overview",
+    keywords: Object.freeze(["tools", "halt alerts", "Nasdaq", "NYSE"]),
+    section: "Tools",
+    summary: "Learn how to use TraderLink tools such as Halt Alerts.",
+    title: "Tools overview",
+  }),
+  ...guideSearchRecords("tools", "Tools", "/help/tools", TOOLS_HELP_GUIDES),
+  Object.freeze({
+    href: "/help/traderslink-app",
+    id: "traderslink-app-overview",
+    keywords: Object.freeze(["TradersLink app", "PWA", "install", "offline", "device storage", "push alerts", "offline trade entry"]),
+    section: "TradersLink app",
+    summary: "Install TradersLink, use saved pages and trade entry offline, manage device storage and choose push alerts.",
+    title: "TradersLink app overview",
+  }),
+  ...guideSearchRecords("traderslink-app", "TradersLink app", "/help/traderslink-app", TRADERSLINK_APP_HELP_GUIDES),
   Object.freeze({
     href: "/help/notifications-and-imports",
     id: "notifications-and-imports-overview",

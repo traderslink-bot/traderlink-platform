@@ -24,7 +24,7 @@ export function HelpCollectionOverview({
   title,
 }: {
   actions: readonly HelpArticleAction[];
-  description: string;
+  description?: string;
   guides: readonly HelpGuide[];
   highlights: readonly string[];
   href: string;
@@ -39,9 +39,11 @@ export function HelpCollectionOverview({
           <Typography color="text.primary">{title}</Typography>
         </Breadcrumbs>
         <Typography component="h1" variant="h1">{title}</Typography>
-        <Typography color="text.secondary" sx={{ maxWidth: 800, mt: 1 }} variant="body1">
-          {description}
-        </Typography>
+        {description ? (
+          <Typography color="text.secondary" sx={{ maxWidth: 800, mt: 1 }} variant="body1">
+            {description}
+          </Typography>
+        ) : null}
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25} sx={{ mt: 2 }}>
           {actions.map((action) => (
             <Link href={action.href} key={action.href} style={{ textDecoration: "none" }}>

@@ -3,6 +3,7 @@
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import AccountCircleRoundedIcon from "@mui/icons-material/AccountCircleRounded";
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
+import BuildRoundedIcon from "@mui/icons-material/BuildRounded";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import NotificationsNoneRoundedIcon from "@mui/icons-material/NotificationsNoneRounded";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
@@ -103,6 +104,8 @@ function HelpNavigation({
               ? WorkspacePremiumOutlinedIcon
               : item.icon === "account"
                 ? AccountCircleRoundedIcon
+              : item.icon === "tools"
+                ? BuildRoundedIcon
               : item.icon === "notifications"
                 ? NotificationsNoneRoundedIcon
                 : TodayRoundedIcon;

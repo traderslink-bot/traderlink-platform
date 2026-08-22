@@ -34,6 +34,8 @@ import { TRADE_ANALYZER_HELP_GUIDES } from "@/src/modules/help/trade-analyzer-gu
 import { TRADE_EXPLORER_HELP_GUIDES } from "@/src/modules/help/trade-explorer-guides";
 import { TRADE_TAGS_HELP_GUIDES } from "@/src/modules/help/trade-tags-guides";
 import { TRADING_RULES_HELP_GUIDES } from "@/src/modules/help/trading-rules-guides";
+import { TRADERSLINK_APP_HELP_GUIDES } from "@/src/modules/help/traderslink-app-guides";
+import { TOOLS_HELP_GUIDES } from "@/src/modules/help/tools-guides";
 import { readPlatformOfflineView } from "@/src/modules/platform/client/pwa/offline-projection-store";
 import {
   isPlatformOfflineNotificationsViewModel,
@@ -75,6 +77,7 @@ const HELP_COLLECTIONS: readonly HelpCollection[] = Object.freeze([
   { description: "Record executions, review trades and complete each trading day.", guides: DAILY_TRADE_TRACKER_HELP_GUIDES, href: "/help/daily-trade-tracker", title: "Daily Trade Tracker" },
   { description: "Answer Journal questions using the broker evidence you trust.", guides: DATA_DECISIONS_HELP_GUIDES, href: "/help/data-decisions", title: "Data Decisions" },
   { description: "Find updates, choose notification delivery and finish imports.", guides: NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES, href: "/help/notifications-and-imports", title: "Notifications and imports" },
+  { description: "Learn how to use TraderLink tools such as Halt Alerts.", guides: TOOLS_HELP_GUIDES, href: "/help/tools", title: "Tools" },
   { description: "See confirmed positions and their trader-defined status.", guides: OPEN_POSITIONS_HELP_GUIDES, href: "/help/open-positions", title: "Open Positions" },
   { description: "Understand paid access, billing and account connection.", guides: PAID_PLAN_HELP_GUIDES, href: "/help/paid-plan", title: "Paid plan and billing" },
   { description: "Enter completed executions across past trading dates.", guides: QUICK_TRADE_ENTRY_HELP_GUIDES, href: "/help/quick-trade-entry", title: "Quick Trade Entry" },
@@ -83,6 +86,7 @@ const HELP_COLLECTIONS: readonly HelpCollection[] = Object.freeze([
   { description: "Inspect individual trades and compare saved result groups.", guides: TRADE_EXPLORER_HELP_GUIDES, href: "/help/trade-explorer", title: "Trade Explorer" },
   { description: "Label trades with preset or custom observations.", guides: TRADE_TAGS_HELP_GUIDES, href: "/help/trade-tags", title: "Trade Tags" },
   { description: "Choose rules and understand the evidence behind each result.", guides: TRADING_RULES_HELP_GUIDES, href: "/help/trading-rules", title: "Trading Rules" },
+  { description: "Install TradersLink, use saved pages and trade entry offline, manage device storage and choose push alerts.", guides: TRADERSLINK_APP_HELP_GUIDES, href: "/help/traderslink-app", title: "TradersLink app" },
 ]);
 
 const ONLINE_REQUIRED: Readonly<Record<Exclude<OfflineSupportRouteKind, "account" | "ai-reviews" | "help" | "notifications">, Readonly<{ description: string; title: string }>>> = Object.freeze({
