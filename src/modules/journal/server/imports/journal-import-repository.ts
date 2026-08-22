@@ -324,7 +324,7 @@ ORDER BY instrument_id`).all(input.workspaceId, input.assetClass, input.normaliz
 
   insertPositionFact(input: Readonly<{
     positionFactId: string; workspaceId: string; accountId: string; importBatchId: string;
-    sourceRowId: string; instrumentId: string; currency: string; factKind: string;
+    sourceRowId: string | null; instrumentId: string; currency: string; factKind: string;
     effectiveLocalDate: string; timePrecision: string; sourceTimezone: string;
     sourceTimeText?: string | null; effectiveAtUtc?: string | null;
     quantityDecimal: string; timestamp: string;
@@ -348,6 +348,60 @@ ORDER BY instrument_id`).all(input.workspaceId, input.assetClass, input.normaliz
         input.supersedesPositionFactId ?? null,
         input.actorUserId ?? null,
         input.timestamp);
+  }
+
+  positionFactAnchor(
+    workspaceId: string,
+    accountId: string,
+    instrumentId: string,
+    currency: string,
+  ): Readonly<{ importBatchId: string; positionFactId: string | null }> | null {
+    const currentFact = this.database.prepare<[string, string, string, string], {
+      import_batch_id: string;
+      position_fact_id: string;
+    }>(`SELECT fact.import_batch_id, fact.position_fact_id
+FROM journal_position_facts fact
+WHERE fact.workspace_id = ? AND fact.account_id = ?
+  AND fact.instrument_id = ? AND fact.currency = ?
+  AND NOT EXISTS (
+    SELECT 1 FROM journal_position_facts successor
+    WHERE successor.workspace_id = fact.workspace_id
+      AND successor.account_id = fact.account_id
+      AND successor.supersedes_position_fact_id = fact.position_fact_id
+  )
+ORDER BY fact.effective_local_date DESC, fact.created_at_utc DESC
+LIMIT 1`).get(workspaceId, accountId, instrumentId, currency);
+    if (currentFact) {
+      return Object.freeze({
+        importBatchId: currentFact.import_batch_id,
+        positionFactId: currentFact.position_fact_id,
+      });
+    }
+    const executionBatch = this.database.prepare<[string, string, string, string], {
+      import_batch_id: string;
+    }>(`SELECT provenance.import_batch_id
+FROM journal_execution_versions version
+JOIN journal_executions execution
+  ON execution.workspace_id = version.workspace_id
+ AND execution.account_id = version.account_id
+ AND execution.current_version_id = version.execution_version_id
+JOIN journal_execution_provenance provenance
+  ON provenance.workspace_id = execution.workspace_id
+ AND provenance.account_id = execution.account_id
+ AND provenance.execution_id = execution.execution_id
+WHERE version.workspace_id = ? AND version.account_id = ?
+  AND version.instrument_id = ? AND version.trade_currency = ?
+ORDER BY version.executed_at_utc DESC, provenance.created_at_utc DESC
+LIMIT 1`).get(workspaceId, accountId, instrumentId, currency);
+    return executionBatch
+      ? Object.freeze({ importBatchId: executionBatch.import_batch_id, positionFactId: null })
+      : null;
+  }
+
+  instrumentAssetClass(workspaceId: string, instrumentId: string): string | null {
+    return this.database.prepare<[string, string], { asset_class: string }>(`
+SELECT asset_class FROM journal_instruments
+WHERE workspace_id = ? AND instrument_id = ?`).get(workspaceId, instrumentId)?.asset_class ?? null;
   }
 
   findPositionFactByBatch(workspaceId: string, accountId: string, importBatchId: string): string | null {

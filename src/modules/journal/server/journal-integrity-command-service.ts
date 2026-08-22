@@ -4,7 +4,11 @@ import {
 } from "@/src/modules/platform/contracts/workspace-access-scope";
 import type { JournalDataDecisionRecord } from "../contracts/journal-decision-contracts";
 import type { JournalChainRebuildResult } from "../contracts/journal-round-trip-contracts";
-import { createCanonicalUuidV4 } from "@/src/modules/platform/server/database/platform-migration-contract";
+import {
+  createCanonicalUtcTimestamp,
+  createCanonicalUuidV4,
+  platformFailure,
+} from "@/src/modules/platform/server/database/platform-migration-contract";
 import { JournalDataDecisionService } from "./decisions/journal-data-decision-service";
 import {
   type IbkrStatementCommitInput,
@@ -15,6 +19,7 @@ import {
 } from "./imports/journal-import-service";
 import { JournalImportRepository } from "./imports/journal-import-repository";
 import { JournalRoundTripService } from "./round-trips/journal-round-trip-service";
+import type { JournalTrackedPositionRow } from "./trade-style/journal-trade-style-repository";
 
 export type JournalIntegrityCommitResult = JournalImportCommitResult & Readonly<{
   relatedDecisionIds: readonly string[];
@@ -51,6 +56,77 @@ export class JournalIntegrityCommandService {
   ): JournalIntegrityCommitResult {
     return this.commit(scope, input.now, () =>
       this.importService.commitManualExecutions(scope, input));
+  }
+
+  confirmPositionFlat(
+    workspaceScope: WorkspaceAccessScope,
+    input: Readonly<{ now?: Date; position: JournalTrackedPositionRow }>,
+  ): Readonly<{ openedDecisionCount: number }> {
+    const accountScope = narrowWorkspaceAccessToAccount(
+      workspaceScope,
+      workspaceScope.activeAccountId ?? "",
+    );
+    const now = input.now ?? new Date();
+    const timestamp = createCanonicalUtcTimestamp(now);
+    const localParts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", {
+      day: "2-digit",
+      month: "2-digit",
+      timeZone: input.position.timezone,
+      year: "numeric",
+    }).formatToParts(now).map((part) => [part.type, part.value]));
+    const effectiveLocalDate = `${localParts.year}-${localParts.month}-${localParts.day}`;
+    return this.imports.immediate(() => {
+      const anchor = this.imports.positionFactAnchor(
+        accountScope.workspaceId,
+        accountScope.accountId,
+        input.position.instrumentId,
+        input.position.currency,
+      );
+      const assetClass = this.imports.instrumentAssetClass(
+        accountScope.workspaceId,
+        input.position.instrumentId,
+      );
+      if (!anchor || !assetClass) {
+        platformFailure("TRADERLINK_TRADE_STYLE_CONFLICT");
+      }
+      const decisionEventId = createCanonicalUuidV4();
+      this.imports.insertPositionFact({
+        accountId: accountScope.accountId,
+        actorUserId: accountScope.userId,
+        currency: input.position.currency,
+        effectiveAtUtc: timestamp,
+        effectiveLocalDate,
+        factKind: "current_position",
+        factSource: "trader_correction",
+        factVersion: "trader_confirmed_flat_v1",
+        importBatchId: anchor.importBatchId,
+        instrumentId: input.position.instrumentId,
+        positionFactId: createCanonicalUuidV4(),
+        quantityDecimal: "0",
+        sourceRowId: null,
+        sourceTimeText: "Trader confirmed position is flat",
+        sourceTimezone: input.position.timezone,
+        supersedesPositionFactId: anchor.positionFactId,
+        timePrecision: "exact",
+        timestamp,
+        workspaceId: accountScope.workspaceId,
+      });
+      const rebuild = this.roundTrips.rebuildChain(accountScope, {
+        assetClass,
+        instrumentId: input.position.instrumentId,
+        tradeCurrency: input.position.currency,
+      }, {
+        kind: "decision_event",
+        now,
+        triggerId: decisionEventId,
+      });
+      const openedDecisions = this.decisions.openRoundTripDecisionFindings(
+        accountScope,
+        [rebuild],
+        now,
+      );
+      return Object.freeze({ openedDecisionCount: openedDecisions.length });
+    });
   }
 
   private commit(

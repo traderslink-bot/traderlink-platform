@@ -65,9 +65,11 @@ function allowedActions(
       "statement_period_missing",
       "statement_period_conflict",
       "source_timezone_differs_from_account",
-      "manual_trading_day_coverage_unconfirmed",
     ].includes(row.issue_code)) {
       return Object.freeze(["supply_coverage_fact", "accept_source_limitation"]);
+    }
+    if (row.issue_code === "manual_trading_day_coverage_unconfirmed") {
+      return Object.freeze(["supply_coverage_fact", "exclude_execution"]);
     }
     if ([
       "execution_required_fact_missing",
@@ -170,6 +172,7 @@ function suggestedCoverage(row: DecisionRow): JournalDataDecisionItem["suggested
 function flaggedStatementRow(
   row: DecisionRow,
 ): JournalDataDecisionItem["flaggedStatementRow"] {
+  if (row.issue_code === "manual_trading_day_coverage_unconfirmed") return null;
   if (!row.source_row_number || !row.source_raw_fields_json) return null;
   try {
     const parsed: unknown = JSON.parse(row.source_raw_fields_json);
@@ -214,7 +217,7 @@ function decisionQuestion(
     manual_broker_possible_duplicate:
       "Does this broker execution match the manual execution you entered?",
     manual_trading_day_coverage_unconfirmed:
-      "Did you enter every stock execution for this trading day?",
+      "Did you enter every stock execution for this date?",
     opening_inventory_required:
       "How many shares did you hold before the first execution shown?",
     overlap_count_ambiguous:
@@ -249,6 +252,9 @@ function decisionImpactSummary(
 ): string {
   if (openPositionConfirmation) {
     return "An earlier completed trade in this ticker remains available. This decision applies only to the later open position.";
+  }
+  if (row.issue_code === "manual_trading_day_coverage_unconfirmed") {
+    return "This question is only about whether your manual entries cover the full trading date. It is separate from correcting the execution itself.";
   }
   const known: Readonly<Record<string, string>> = {
     net_metrics_unavailable:
@@ -472,12 +478,14 @@ LIMIT 400`).all(
     chainImportBatchCache: Map<string, readonly string[]>,
   ): JournalDataDecisionItem {
     const decisionPositionScope = this.openPositionDecisionScope(scope, row);
-    const allExecutions = this.executionEvidence(
-      scope,
-      row.instrument_id,
-      row.trade_currency,
-      row.overlap_key_sha256,
-    );
+    const allExecutions = row.issue_code === "manual_trading_day_coverage_unconfirmed"
+      ? this.executionEvidenceForSourceRow(scope, row.source_row_id)
+      : this.executionEvidence(
+          scope,
+          row.instrument_id,
+          row.trade_currency,
+          row.overlap_key_sha256,
+        );
     const executions = decisionPositionScope
       ? Object.freeze(allExecutions.filter((execution) =>
           decisionPositionScope.executionIds.has(execution.executionId)))
@@ -803,6 +811,68 @@ LIMIT 200`).all(scope.workspaceId, scope.accountId, instrumentId, currency)
         currentState: item.current_state,
         sourceLabel: null,
       })));
+  }
+
+  private executionEvidenceForSourceRow(
+    scope: AccountScope,
+    sourceRowId: string | null,
+  ): readonly JournalDecisionExecutionEvidence[] {
+    if (!sourceRowId) return Object.freeze([]);
+    return Object.freeze(this.database.prepare<[string, string, string], {
+      execution_id: string;
+      current_version_id: string;
+      source_timestamp_text: string;
+      executed_at_utc: string;
+      source_timezone: string;
+      normalized_symbol: string;
+      trade_currency: string;
+      side: "buy" | "sell";
+      quantity_decimal: string;
+      price_decimal: string | null;
+      fees_decimal: string | null;
+      fee_currency: string | null;
+      fee_sign_convention: JournalDecisionExecutionEvidence["feeSignConvention"];
+      current_state: JournalDecisionExecutionEvidence["currentState"];
+    }>(`SELECT execution.execution_id, execution.current_version_id,
+ version.source_timestamp_text, version.executed_at_utc, version.source_timezone,
+ instrument.normalized_symbol, version.trade_currency, version.side,
+ version.quantity_decimal, version.price_decimal, version.fees_decimal,
+ version.fee_currency, version.fee_sign_convention, execution.current_state
+FROM journal_execution_provenance provenance
+JOIN journal_executions execution
+  ON execution.workspace_id = provenance.workspace_id
+ AND execution.account_id = provenance.account_id
+ AND execution.execution_id = provenance.execution_id
+JOIN journal_execution_versions version
+  ON version.workspace_id = execution.workspace_id
+ AND version.account_id = execution.account_id
+ AND version.execution_version_id = execution.current_version_id
+JOIN journal_instruments instrument
+  ON instrument.workspace_id = version.workspace_id
+ AND instrument.instrument_id = version.instrument_id
+WHERE provenance.workspace_id = ? AND provenance.account_id = ?
+  AND provenance.source_row_id = ?
+ORDER BY version.executed_at_utc, execution.execution_id`).all(
+      scope.workspaceId,
+      scope.accountId,
+      sourceRowId,
+    ).map((item) => Object.freeze({
+      executionId: item.execution_id,
+      currentVersionId: item.current_version_id,
+      sourceTimestampText: item.source_timestamp_text,
+      executedAtUtc: item.executed_at_utc,
+      sourceTimezone: item.source_timezone,
+      symbol: item.normalized_symbol,
+      currency: item.trade_currency,
+      side: item.side,
+      quantityDecimal: item.quantity_decimal,
+      priceDecimal: item.price_decimal,
+      feesDecimal: item.fees_decimal,
+      feeCurrency: item.fee_currency,
+      feeSignConvention: item.fee_sign_convention,
+      currentState: item.current_state,
+      sourceLabel: "Manual entry" as const,
+    })));
   }
 
   private positionEvidence(

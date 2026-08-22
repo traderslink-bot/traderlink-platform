@@ -156,7 +156,7 @@ function issueTitle(issueCode: string): string {
     conflicting_position_facts: "The statement contains conflicting position totals",
     position_fact_mismatch: "Executions and the statement position do not agree",
     opening_inventory_required: "An opening position is needed",
-    manual_trading_day_coverage_unconfirmed: "Manual entries do not prove the full trading day",
+    manual_trading_day_coverage_unconfirmed: "Confirm this manual entry's trading date",
     manual_broker_possible_duplicate: "A broker execution may match a manual entry",
     manual_broker_grouped_fill_candidate: "Broker fills may match a manual entry",
   };
@@ -816,7 +816,7 @@ function DecisionCard({
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" } }}>
           <Chip color="warning" label="Needs your decision" size="small" />
           {item.symbol ? <Chip label={`${item.symbol}${item.currency ? ` · ${item.currency}` : ""}`} size="small" variant="outlined" /> : null}
-          {item.sourceRowNumber ? <Chip label={`Statement row ${item.sourceRowNumber}`} size="small" variant="outlined" /> : null}
+          {item.sourceRowNumber ? <Chip label={item.issueCode === "manual_trading_day_coverage_unconfirmed" ? "Manual entry" : `Statement row ${item.sourceRowNumber}`} size="small" variant="outlined" /> : null}
         </Stack>
         <Typography sx={{ fontWeight: 800 }} variant="body1">{item.question}</Typography>
         <Typography color="text.secondary" variant="body2">{item.impactSummary}</Typography>
@@ -849,7 +849,7 @@ function DecisionCard({
 
         {item.executions.length > 0 ? (
           <Box>
-            <Typography sx={{ fontWeight: 800, mb: 1 }} variant="subtitle2">Executions used by this trade</Typography>
+            <Typography sx={{ fontWeight: 800, mb: 1 }} variant="subtitle2">{item.issueCode === "manual_trading_day_coverage_unconfirmed" ? "Manual execution" : "Executions used by this trade"}</Typography>
             <ExecutionEvidence executions={item.executions} />
           </Box>
         ) : null}
@@ -994,10 +994,13 @@ function DecisionCard({
         ) : null}
 
         {draft.action === "supply_coverage_fact" ? (
-          <TextField label="How complete is this trading day?" onChange={(event) => update("coverageKind", event.target.value as Draft["coverageKind"])} select value={draft.coverageKind}>
-            <MenuItem value="partial">These are only some executions from the day</MenuItem>
-            <MenuItem value="complete">These are all stock executions from the day</MenuItem>
-          </TextField>
+          <Stack spacing={1}>
+            <Alert severity="info">This does not change the execution. It tells TraderLink whether other stock executions from this date still need to be added.</Alert>
+            <TextField label="Did you enter every stock execution for this date?" onChange={(event) => update("coverageKind", event.target.value as Draft["coverageKind"])} select value={draft.coverageKind}>
+              <MenuItem value="partial">No, I still need to add other executions</MenuItem>
+              <MenuItem value="complete">Yes, all stock executions for this date are entered</MenuItem>
+            </TextField>
+          </Stack>
         ) : null}
 
         {draft.action === "add_missing_execution" ? (

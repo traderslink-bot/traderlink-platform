@@ -29,7 +29,7 @@ import type { PositionStyleDisplay } from "./position-style-labels";
 import { useTradeTrackerUnsavedChanges } from "./trade-tracker-unsaved-changes";
 
 type OpenClassification = Exclude<JournalOpenPositionStatus, "closed">;
-type Selection = OpenClassification | JournalTradeStyle;
+type Selection = OpenClassification | JournalTradeStyle | "closed";
 type PositionStyleControlProps = Readonly<{
   closed: boolean;
   expectedAccountSelectionRef: string;
@@ -64,6 +64,9 @@ function changeForSelection(
     if (selection === "swing") {
       return { tradeStyle: "swing", openStatus: "swing", reason: "reclassified" };
     }
+    return { tradeStyle: "other", openStatus: "other", reason: "other" };
+  }
+  if (selection === "closed") {
     return { tradeStyle: "other", openStatus: "other", reason: "other" };
   }
   if (selection === "swing") {
@@ -126,12 +129,15 @@ function PositionStyleControlForm({
           tradeStyle: "other" as const,
         }
       : changeForSelection(selection, closed);
+    const confirmingFlat = !closed && selection === "closed";
     try {
       const response = await fetch(
         `/api/platform/journal/trade-style/${encodeURIComponent(positionRef)}`,
         {
           body: JSON.stringify({
             ...change,
+            confirmFlat: confirmingFlat,
+            openStatus: confirmingFlat ? "closed" : change.openStatus,
             claimedEffectiveAtUtc: new Date().toISOString(),
             expectedAccountSelectionRef,
             expectedRevision: style?.revision ?? null,
@@ -268,17 +274,44 @@ function PositionStyleControlForm({
             <MenuItem key="day_trade_still_open" value="day_trade_still_open">Day trade still open</MenuItem>,
             <MenuItem key="unplanned_hold" value="unplanned_hold">Unplanned hold (bag hold)</MenuItem>,
             <MenuItem key="other" value="other">Long-term hold</MenuItem>,
+            sourceUi === "open_positions" ? <MenuItem key="closed" value="closed">Flat / no longer open</MenuItem> : null,
           ]}
         </TextField>
         <DashboardPrimaryAction
           disabled={state.kind === "saving"}
-          onClick={() => void save()}
+          onClick={() => selection === "closed" ? setConfirmationOpen(true) : void save()}
           startIcon={state.kind === "saved" ? <CheckCircleOutlineRoundedIcon /> : undefined}
         >
-          {state.kind === "saving" ? "Saving..." : state.kind === "saved" ? "Saved" : "Save trade type"}
+          {state.kind === "saving" ? "Saving..." : state.kind === "saved" ? "Saved" : selection === "closed" ? "Confirm position is flat" : "Save trade type"}
         </DashboardPrimaryAction>
       </Box>
       {state.kind === "error" ? <Alert severity="error">{state.message}</Alert> : null}
+      <Dialog
+        aria-describedby="confirm-flat-position-description"
+        aria-labelledby="confirm-flat-position-title"
+        fullWidth
+        maxWidth="xs"
+        onClose={() => {
+          if (state.kind !== "saving") setConfirmationOpen(false);
+        }}
+        open={confirmationOpen && selection === "closed"}
+      >
+        <DialogTitle id="confirm-flat-position-title">Confirm this position is flat?</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="confirm-flat-position-description">
+            Confirm that your broker shows a zero position. TraderLink will remove it from Open Positions without inventing a sale or profit and loss.
+          </DialogContentText>
+          {state.kind === "error" ? <Alert severity="error" sx={{ mt: 2 }}>{state.message}</Alert> : null}
+        </DialogContent>
+        <DialogActions>
+          <DashboardSecondaryAction disabled={state.kind === "saving"} onClick={() => setConfirmationOpen(false)}>
+            Keep position open
+          </DashboardSecondaryAction>
+          <DashboardPrimaryAction disabled={state.kind === "saving"} onClick={() => void save()}>
+            {state.kind === "saving" ? "Saving..." : "Confirm flat"}
+          </DashboardPrimaryAction>
+        </DialogActions>
+      </Dialog>
     </Stack>
   );
 }

@@ -53,15 +53,32 @@ export async function POST(
     const body = bodyRecord(await request.json());
     requireExpectedJournalAccountSelection(scope, body.expectedAccountSelectionRef);
     const { positionRef } = await context.params;
+    const requestedOpenStatus = text(body.openStatus);
+    const requestedSourceUi = text(body.sourceUi);
+    const requestedExpectedRevision = expectedRevision(body.expectedRevision);
+    if (requestedOpenStatus === "closed") {
+      if (requestedSourceUi !== "open_positions" || body.confirmFlat !== true) {
+        platformFailure("TRADERLINK_TRADE_STYLE_INVALID");
+      }
+      const result = withWritableJournalIntegrityRuntime(scope, (journal) => {
+        const accountScope = journal.tradeStyles.accountScope(scope);
+        const position = journal.tradeStyles.resolvePosition(accountScope, positionRef);
+        if ((position.styleRevision ?? null) !== requestedExpectedRevision) {
+          platformFailure("TRADERLINK_TRADE_STYLE_CONFLICT");
+        }
+        return journal.command.confirmPositionFlat(scope, { position });
+      });
+      return Response.json({ status: "ready", result });
+    }
     const input: JournalTradeStyleChange = Object.freeze({
       positionRef,
-      expectedRevision: expectedRevision(body.expectedRevision),
+      expectedRevision: requestedExpectedRevision,
       tradeStyle: text(body.tradeStyle) as JournalTradeStyle,
-      openStatus: text(body.openStatus) as Exclude<JournalOpenPositionStatus, "closed">,
+      openStatus: requestedOpenStatus as Exclude<JournalOpenPositionStatus, "closed">,
       plannedFromEntry: body.plannedFromEntry === true,
       claimedEffectiveAtUtc: text(body.claimedEffectiveAtUtc),
       reason: text(body.reason) as JournalTradeStyleChange["reason"],
-      sourceUi: text(body.sourceUi) as JournalTradeStyleChange["sourceUi"],
+      sourceUi: requestedSourceUi as JournalTradeStyleChange["sourceUi"],
       idempotencyKey: text(body.idempotencyKey),
     });
     if (

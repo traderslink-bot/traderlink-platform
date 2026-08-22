@@ -236,9 +236,11 @@ function sourceIssueAllowsAction(
     "statement_period_missing",
     "statement_period_conflict",
     "source_timezone_differs_from_account",
-    "manual_trading_day_coverage_unconfirmed",
   ].includes(sourceIssue.issueCode)) {
     return action === "supply_coverage_fact";
+  }
+  if (sourceIssue.issueCode === "manual_trading_day_coverage_unconfirmed") {
+    return action === "supply_coverage_fact" || action === "exclude_execution";
   }
   if ([
     "execution_required_fact_missing",
