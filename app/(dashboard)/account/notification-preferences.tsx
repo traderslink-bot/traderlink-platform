@@ -57,6 +57,15 @@ function successMessage(message: string): boolean {
     message.startsWith("Push was turned off on this device.");
 }
 
+function pushMessageSeverity(message: string): "error" | "info" | "success" | "warning" {
+  if (successMessage(message)) return "success";
+  if (message.startsWith("Saving") || message.startsWith("Waiting") || message.startsWith("Checking") || message.includes("are ready")) {
+    return "info";
+  }
+  if (message.includes("not ready") || message.includes("Install TradersLink")) return "warning";
+  return "error";
+}
+
 export function NotificationPreferences({
   initialDiscordDmCategories,
   initialPressReleasePushChannels,
@@ -74,18 +83,25 @@ export function NotificationPreferences({
   const [pushMessage, setPushMessage] = useState<string | null>(null);
   const [pushPreparation, setPushPreparation] = useState<PreparedPlatformWebPush | null>(null);
   const [pushPreparationUnavailable, setPushPreparationUnavailable] = useState(false);
+  const [preparingPush, setPreparingPush] = useState(false);
   const [working, startTransition] = useTransition();
 
   useEffect(() => {
-    void readPlatformWebPushBrowserState()
-      .then(setPushState)
-      .catch(() => setPushState("off"));
+    function refreshPushState(): void {
+      void readPlatformWebPushBrowserState()
+        .then(setPushState)
+        .catch(() => setPushState("off"));
+    }
+
+    refreshPushState();
+    window.addEventListener("focus", refreshPushState);
     void preparePlatformWebPush()
       .then((prepared) => {
         setPushPreparation(prepared);
         setPushPreparationUnavailable(false);
       })
       .catch(() => setPushPreparationUnavailable(true));
+    return () => window.removeEventListener("focus", refreshPushState);
   }, []);
 
   function toggle(category: PlatformNotificationCategory, checked: boolean): void {
@@ -121,10 +137,11 @@ export function NotificationPreferences({
   function enablePush(): void {
     if (!pushPreparation) {
       setPushMessage(pushPreparationUnavailable
-        ? "Install TradersLink on this device and use General settings to finish notification setup."
+        ? "Push setup is not ready on this device yet. Try push setup again in a moment."
         : "Push notifications are still getting ready. Try again in a moment.");
       return;
     }
+    setPushMessage("Waiting for your device to approve push notifications...");
     startTransition(async () => {
       try {
         await enablePlatformWebPush(pushSelected, pushPreparation);
@@ -143,9 +160,18 @@ export function NotificationPreferences({
 
   function retryPushPreparation(): void {
     setPushPreparationUnavailable(false);
+    setPreparingPush(true);
+    setPushMessage("Checking whether push notifications can be enabled on this device...");
     void preparePlatformWebPush()
-      .then((prepared) => setPushPreparation(prepared))
-      .catch(() => setPushPreparationUnavailable(true));
+      .then((prepared) => {
+        setPushPreparation(prepared);
+        setPushMessage("Push notifications are ready to enable on this device.");
+      })
+      .catch(() => {
+        setPushPreparationUnavailable(true);
+        setPushMessage("Push notifications are not ready on this device yet. Install TradersLink, then try again.");
+      })
+      .finally(() => setPreparingPush(false));
   }
 
   function disablePush(): void {
@@ -162,19 +188,24 @@ export function NotificationPreferences({
   }
 
   function savePush(): void {
+    setPushMessage("Saving your push notification choices...");
     startTransition(async () => {
-      const [result, pressReleaseResult] = await Promise.all([
-        saveWebPushNotificationCategories(pushSelected),
-        savePressReleasePushChannels(pressReleasePushSelected),
-      ]);
-      if (result.ok && pressReleaseResult.ok) {
-        setPushSelected(result.categories as readonly PlatformNotificationCategory[]);
-        setPressReleasePushSelected(pressReleaseResult.channels as readonly PressReleasePushChannel[]);
-        setPushMessage("Push notification preferences saved.");
-      } else if (!result.ok) {
-        setPushMessage(result.message);
-      } else if (!pressReleaseResult.ok) {
-        setPushMessage(pressReleaseResult.message);
+      try {
+        const [result, pressReleaseResult] = await Promise.all([
+          saveWebPushNotificationCategories(pushSelected),
+          savePressReleasePushChannels(pressReleasePushSelected),
+        ]);
+        if (result.ok && pressReleaseResult.ok) {
+          setPushSelected(result.categories as readonly PlatformNotificationCategory[]);
+          setPressReleasePushSelected(pressReleaseResult.channels as readonly PressReleasePushChannel[]);
+          setPushMessage("Push notification preferences saved.");
+        } else if (!result.ok) {
+          setPushMessage(result.message);
+        } else if (!pressReleaseResult.ok) {
+          setPushMessage(pressReleaseResult.message);
+        }
+      } catch {
+        setPushMessage("Your push notification choices could not be saved. Try again.");
       }
     });
   }
@@ -207,16 +238,15 @@ export function NotificationPreferences({
         Push notifications
       </Typography>
       <Typography color="text.secondary" variant="body2">
-        Choose which TraderLink alerts may appear on devices where you enable push. Account and trading alerts stay private and generic. Press release alerts show the public ticker and headline so you can open the article directly.
+        Pick the alerts you want, then press Enable push notifications and approve your device&apos;s prompt. Account and trading alerts stay private and generic. Press release alerts show the public ticker and headline so you can open the article directly.
       </Typography>
       {pushState === "unsupported" ? <Alert severity="info">Push notifications are not supported in this browser.</Alert> : null}
-      {pushState === "denied" ? <Alert severity="warning">Push notifications are blocked in this browser&apos;s settings. Change this site&apos;s notification permission in your browser settings if you want to enable them.</Alert> : null}
+      {pushState === "denied" ? <Alert severity="warning">Push notifications are turned off in this device&apos;s browser settings. Turn them on there, then return to TradersLink—the page will check again automatically.</Alert> : null}
       {pushPreparationUnavailable && pushState !== "unsupported" && pushState !== "denied" ? (
         <Alert severity="info">
           Install TradersLink on your phone or computer to receive push notifications on that device. <MuiLink component={Link} href="/account/trading#pwa-app">Open General for app installation help.</MuiLink>
         </Alert>
       ) : null}
-      {pushMessage ? <Alert severity={successMessage(pushMessage) ? "success" : "error"}>{pushMessage}</Alert> : null}
       <Stack spacing={0.25}>
         {PLATFORM_NOTIFICATION_CATEGORIES.map((category) => (
           <FormControlLabel
@@ -242,8 +272,8 @@ export function NotificationPreferences({
         ) : pushState === "checking" ? (
           <Button disabled variant="contained">Save Preferences</Button>
         ) : pushState === "unsupported" || pushState === "denied" ? null : pushPreparationUnavailable ? (
-          <Button disabled={working} onClick={retryPushPreparation} variant="contained">
-            Save Preferences
+          <Button disabled={working || preparingPush} onClick={retryPushPreparation} variant="contained">
+            {preparingPush ? "Checking..." : "Try push setup again"}
           </Button>
         ) : (
           <Button
@@ -251,10 +281,15 @@ export function NotificationPreferences({
             onClick={enablePush}
             variant="contained"
           >
-            Save Preferences
+            Enable push notifications
           </Button>
         )}
       </Stack>
+      {pushMessage ? (
+        <Alert aria-live="polite" role="status" severity={pushMessageSeverity(pushMessage)}>
+          {pushMessage}
+        </Alert>
+      ) : null}
     </Stack>
   );
 }
