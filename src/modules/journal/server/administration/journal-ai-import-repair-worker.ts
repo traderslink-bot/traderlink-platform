@@ -74,6 +74,20 @@ export class JournalAiImportRepairWorker {
     const claimed = repository.claimNext(timestamp);
     if (!claimed) return false;
     try {
+      const attempts = new JournalImportAttemptRepository(this.database);
+      const queuedAttempt = attempts.findById(claimed.scope, claimed.importAttemptId);
+      if (!queuedAttempt || queuedAttempt.currentState !== "awaiting_mapping") {
+        throw new Error("private_attempt_not_awaiting_mapping");
+      }
+      const inspectingAttempt = attempts.transition({
+        scope: claimed.scope,
+        importAttemptId: queuedAttempt.importAttemptId,
+        expectedRevision: queuedAttempt.revision,
+        nextState: "inspecting",
+        reasonCode: "ai_repair_started",
+        correlationRefSha256: claimed.correlationRefSha256,
+        timestamp,
+      });
       const vault = resolveJournalSupportSourceVault({
         databasePath: resolvePlatformDatabaseConfig({}).databasePath,
       });
@@ -123,14 +137,9 @@ WHERE workspace_id = ? AND account_id = ?`).get(
         attemptBindingSha256: claimed.requestIdempotencySha256,
       });
       if (!preview.canCommit) throw new Error("private_preview_rejected");
-      const attempt = new JournalImportAttemptRepository(this.database).findById(
-        claimed.scope,
-        claimed.importAttemptId,
-      );
-      if (!attempt) throw new Error("private_attempt_missing");
       finishJournalImportPreview(claimed.scope, {
         context: {
-          attempt,
+          attempt: inspectingAttempt,
           attemptBindingSha256: claimed.requestIdempotencySha256,
           correlationRefSha256: claimed.correlationRefSha256,
         },
