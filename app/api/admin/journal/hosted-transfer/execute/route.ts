@@ -19,7 +19,7 @@ import { prepareHostedTransfer } from "@/src/modules/platform/server/transfer/ho
 import { readHostedSourceSnapshotsFromExportDirectory } from "@/src/modules/platform/server/transfer/hosted-source-export-snapshot-reader";
 import { executeHostedTransfer } from "@/src/modules/platform/server/transfer/hosted-transfer-service";
 
-import { journalAdminJson, journalAdminUnavailable } from "../../../admin-route-runtime";
+import { journalAdminJson, journalAdminUnavailable } from "../../admin-route-runtime";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
