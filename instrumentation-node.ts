@@ -2,6 +2,15 @@ export async function registerTraderLinkHostedNodeRuntime(): Promise<void> {
   if (process.env.NODE_ENV !== "production") return;
 
   try {
+    const { runHostedPlatformMigrationMaintenance } = await import(
+      "./src/modules/platform/server/database/run-hosted-platform-migration-maintenance"
+    );
+    const appliedMigrations = await runHostedPlatformMigrationMaintenance();
+    if (appliedMigrations) {
+      console.info(
+        `TraderLink hosted maintenance applied ${appliedMigrations.length} reviewed migration.`,
+      );
+    }
     const { verifyPlatformHostedRuntimeReadiness } = await import(
       "./src/modules/platform/server/readiness/platform-hosted-runtime-readiness"
     );
