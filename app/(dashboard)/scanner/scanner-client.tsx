@@ -23,6 +23,7 @@ import {
   DashboardPage,
   DashboardPanel,
   DashboardPrimaryAction,
+  DashboardSecondaryAction,
 } from "../../dashboard-template";
 
 const resultColumns = Object.freeze([
@@ -87,7 +88,7 @@ const filterLibrary = Object.freeze([
   { id: "macd", group: "technical", kind: "signal", label: "MACD", detail: "MACD crossover or divergence", choices: ["Bullish crossover", "Bearish crossover", "Top divergence", "Bottom divergence"] },
   { id: "rsi", group: "technical", kind: "signal", label: "RSI", detail: "RSI crossover or divergence", choices: ["Bullish crossover", "Bearish crossover", "Top divergence", "Bottom divergence"] },
   { id: "bollinger", group: "technical", kind: "signal", label: "Bollinger Bands", detail: "Price location or crossover around the bands", choices: ["Breaks above upper band", "Breaks below lower band", "Above middle band", "Below middle band"] },
-  { id: "trend-pattern", group: "technical", kind: "choice", label: "Trend pattern", detail: "Moomoo indicator-pattern conditions", choices: ["MA bullish alignment", "MA bearish alignment", "EMA bullish alignment", "EMA bearish alignment", "Any bullish signal", "Any bearish signal"] },
+  { id: "trend-pattern", group: "technical", kind: "choice", label: "Trend pattern", detail: "Indicator-pattern conditions", choices: ["MA bullish alignment", "MA bearish alignment", "EMA bullish alignment", "EMA bearish alignment", "Any bullish signal", "Any bearish signal"] },
   { id: "bullish-chart-pattern", group: "patterns", kind: "choice", label: "Bullish chart pattern", detail: "Recognized from daily or hourly candles", choices: ["W bottom", "Triple bottom", "Head and shoulders bottom", "Rounding bottom", "Megaphone bottom", "Bull flag", "Bullish symmetrical triangle", "Bullish diamond", "Bullish wedge", "Bullish triangle", "Any bullish pattern"] },
   { id: "bearish-chart-pattern", group: "patterns", kind: "choice", label: "Bearish chart pattern", detail: "Recognized from daily or hourly candles", choices: ["W top", "Triple top", "Head and shoulders top", "Rounding top", "Megaphone top", "Bear flag", "Bearish symmetrical triangle", "Bearish diamond", "Bearish wedge", "Bearish triangle", "Any bearish pattern"] },
   { id: "chip-profit", group: "sentiment", kind: "range", label: "Chip profit ratio", detail: "Estimated profitable-position ratio", unit: "%" },
@@ -155,6 +156,134 @@ function conditionLabel(definition: FilterDefinition, draft: FilterDraft) {
   return `${definition.label}: ${draft.choice || "Choose a condition"}${average}${timeframe}`;
 }
 
+type ReadyScanner = Readonly<{
+  id: string;
+  label: string;
+  request: ScannerRunRequest;
+}>;
+
+type ReadyScannerGroup = Readonly<{
+  id: string;
+  label: string;
+  scanners: readonly ReadyScanner[];
+}>;
+
+function presetFilter(filter: ScannerRunRequest["filters"][number], scannerId: string, index: number): AddedFilter {
+  const definition = filterLibrary.find((candidate) => candidate.id === filter.id);
+  const draft: FilterDraft = {
+    ...initialDraft,
+    ...filter,
+    definitionId: filter.id,
+    lower: filter.lower ?? "",
+    upper: filter.upper ?? "",
+  };
+  return {
+    ...draft,
+    id: `${scannerId}-${index}`,
+    label: definition ? conditionLabel(definition, draft) : filter.id,
+  };
+}
+
+const readyScannerGroups = Object.freeze([
+  {
+    id: "market-activity",
+    label: "Market activity",
+    scanners: [
+      { id: "biggest-percentage-move", label: "Biggest percentage move", request: { filters: [], limit: 25, sortBy: "daily-change" } },
+      { id: "most-volume", label: "Most volume", request: { filters: [], limit: 25, sortBy: "average-volume" } },
+      { id: "highest-trading-heat", label: "Highest trading heat", request: { filters: [], limit: 25, sortBy: "trade-heat" } },
+      { id: "most-option-volume", label: "Most option volume", request: { filters: [], limit: 25, sortBy: "option-volume" } },
+      { id: "largest-market-cap", label: "Largest market cap", request: { filters: [], limit: 25, sortBy: "market-cap" } },
+    ],
+  },
+  {
+    id: "price-volume",
+    label: "Price & volume",
+    scanners: [
+      { id: "under-5-most-volume", label: "Under $5 by volume", request: { filters: [{ id: "price", upper: "5" }], limit: 25, sortBy: "average-volume" } },
+      { id: "under-10-most-volume", label: "Under $10 by volume", request: { filters: [{ id: "price", upper: "10" }], limit: 25, sortBy: "average-volume" } },
+      { id: "under-20-most-volume", label: "Under $20 by volume", request: { filters: [{ id: "price", upper: "20" }], limit: 25, sortBy: "average-volume" } },
+      { id: "million-share-average-volume", label: "1M+ average volume", request: { filters: [{ id: "average-volume", lower: "1000000", period: "20" }], limit: 25, sortBy: "average-volume" } },
+      { id: "ten-million-share-average-volume", label: "10M+ average volume", request: { filters: [{ id: "average-volume", lower: "10000000", period: "20" }], limit: 25, sortBy: "average-volume" } },
+      { id: "high-turnover", label: "High turnover rate", request: { filters: [{ id: "turnover-rate", lower: "5", period: "1" }], limit: 25, sortBy: "daily-change" } },
+      { id: "wide-daily-range", label: "5%+ daily range", request: { filters: [{ id: "amplitude", lower: "5", period: "1" }], limit: 25, sortBy: "daily-change" } },
+      { id: "up-10-percent", label: "Up 10% or more", request: { filters: [{ id: "daily-change", lower: "10", period: "1" }], limit: 25, sortBy: "daily-change" } },
+      { id: "down-10-percent", label: "Down 10% or more", request: { filters: [{ id: "daily-change", upper: "-10", period: "1" }], limit: 25, sortBy: "daily-change" } },
+    ],
+  },
+  {
+    id: "moving-averages",
+    label: "Moving averages",
+    scanners: [
+      { id: "above-daily-ema-9", label: "Above daily EMA 9", request: { filters: [{ id: "price-vs-average", averageLength: "9", averageType: "EMA", choice: "Price above", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "above-daily-ema-20", label: "Above daily EMA 20", request: { filters: [{ id: "price-vs-average", averageLength: "20", averageType: "EMA", choice: "Price above", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "above-daily-ema-50", label: "Above daily EMA 50", request: { filters: [{ id: "price-vs-average", averageLength: "50", averageType: "EMA", choice: "Price above", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "above-daily-ma-200", label: "Above daily MA 200", request: { filters: [{ id: "price-vs-average", averageLength: "200", averageType: "MA", choice: "Price above", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "crosses-daily-ema-9", label: "Crosses above daily EMA 9", request: { filters: [{ id: "price-vs-average", averageLength: "9", averageType: "EMA", choice: "Price crosses above", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "crosses-daily-ema-20", label: "Crosses above daily EMA 20", request: { filters: [{ id: "price-vs-average", averageLength: "20", averageType: "EMA", choice: "Price crosses above", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "ema-bullish-alignment", label: "Daily EMA bullish alignment", request: { filters: [{ id: "trend-pattern", choice: "EMA bullish alignment", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "ma-bullish-alignment", label: "Daily MA bullish alignment", request: { filters: [{ id: "trend-pattern", choice: "MA bullish alignment", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "below-daily-ema-9", label: "Below daily EMA 9", request: { filters: [{ id: "price-vs-average", averageLength: "9", averageType: "EMA", choice: "Price below", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "ema-bearish-alignment", label: "Daily EMA bearish alignment", request: { filters: [{ id: "trend-pattern", choice: "EMA bearish alignment", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+    ],
+  },
+  {
+    id: "momentum",
+    label: "Momentum",
+    scanners: [
+      { id: "bullish-macd-crossover", label: "Bullish daily MACD crossover", request: { filters: [{ id: "macd", choice: "Bullish crossover", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "bullish-rsi-crossover", label: "Bullish daily RSI crossover", request: { filters: [{ id: "rsi", choice: "Bullish crossover", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "bearish-macd-crossover", label: "Bearish daily MACD crossover", request: { filters: [{ id: "macd", choice: "Bearish crossover", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "bearish-rsi-crossover", label: "Bearish daily RSI crossover", request: { filters: [{ id: "rsi", choice: "Bearish crossover", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "kdj-golden-cross", label: "Daily KDJ golden cross", request: { filters: [{ id: "kdj", choice: "Golden cross", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "kdj-death-cross", label: "Daily KDJ death cross", request: { filters: [{ id: "kdj", choice: "Death cross", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "breaks-bollinger-upper", label: "Breaks above daily Bollinger band", request: { filters: [{ id: "bollinger", choice: "Breaks above upper band", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "breaks-bollinger-lower", label: "Breaks below daily Bollinger band", request: { filters: [{ id: "bollinger", choice: "Breaks below lower band", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "any-bullish-signal", label: "Any bullish daily signal", request: { filters: [{ id: "trend-pattern", choice: "Any bullish signal", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "any-bearish-signal", label: "Any bearish daily signal", request: { filters: [{ id: "trend-pattern", choice: "Any bearish signal", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+    ],
+  },
+  {
+    id: "chart-patterns",
+    label: "Chart patterns",
+    scanners: [
+      { id: "bullish-chart-patterns", label: "Bullish daily chart patterns", request: { filters: [{ id: "bullish-chart-pattern", choice: "Any bullish pattern", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "bearish-chart-patterns", label: "Bearish daily chart patterns", request: { filters: [{ id: "bearish-chart-pattern", choice: "Any bearish pattern", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "w-bottom", label: "Daily W bottom", request: { filters: [{ id: "bullish-chart-pattern", choice: "W bottom", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "w-top", label: "Daily W top", request: { filters: [{ id: "bearish-chart-pattern", choice: "W top", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "bull-flag", label: "Daily bull flag", request: { filters: [{ id: "bullish-chart-pattern", choice: "Bull flag", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "bear-flag", label: "Daily bear flag", request: { filters: [{ id: "bearish-chart-pattern", choice: "Bear flag", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "head-shoulders-bottom", label: "Head and shoulders bottom", request: { filters: [{ id: "bullish-chart-pattern", choice: "Head and shoulders bottom", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "head-shoulders-top", label: "Head and shoulders top", request: { filters: [{ id: "bearish-chart-pattern", choice: "Head and shoulders top", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "bullish-triangle", label: "Bullish daily triangle", request: { filters: [{ id: "bullish-chart-pattern", choice: "Bullish triangle", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "bearish-triangle", label: "Bearish daily triangle", request: { filters: [{ id: "bearish-chart-pattern", choice: "Bearish triangle", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+    ],
+  },
+  {
+    id: "fundamentals-options",
+    label: "Fundamentals & options",
+    scanners: [
+      { id: "profitable-companies", label: "Profitable companies", request: { filters: [{ id: "net-profit", lower: "0" }], limit: 25, sortBy: "daily-change" } },
+      { id: "revenue-growth-20", label: "20%+ revenue growth", request: { filters: [{ id: "revenue-growth", lower: "20" }], limit: 25, sortBy: "daily-change" } },
+      { id: "roe-15", label: "15%+ return on equity", request: { filters: [{ id: "roe", lower: "15" }], limit: 25, sortBy: "daily-change" } },
+      { id: "pe-under-15", label: "P/E under 15", request: { filters: [{ id: "pe", lower: "0", upper: "15" }], limit: 25, sortBy: "daily-change" } },
+      { id: "large-cap", label: "$10B+ market cap", request: { filters: [{ id: "market-cap", lower: "10000000000" }], limit: 25, sortBy: "daily-change" } },
+      { id: "high-iv-rank", label: "High IV rank", request: { filters: [{ id: "option-iv-rank", lower: "80" }], limit: 25, sortBy: "option-volume" } },
+      { id: "high-option-open-interest", label: "High option open interest", request: { filters: [{ id: "option-open-interest", lower: "10000" }], limit: 25, sortBy: "option-volume" } },
+    ],
+  },
+  {
+    id: "combined-screens",
+    label: "Combined screens",
+    scanners: [
+      { id: "ema-9-with-volume", label: "Above EMA 9 with 1M+ volume", request: { filters: [{ id: "price-vs-average", averageLength: "9", averageType: "EMA", choice: "Price above", timeframe: "Daily" }, { id: "average-volume", lower: "1000000", period: "20" }], limit: 25, sortBy: "daily-change" } },
+      { id: "macd-above-ema-9", label: "MACD crossover above EMA 9", request: { filters: [{ id: "macd", choice: "Bullish crossover", timeframe: "Daily" }, { id: "price-vs-average", averageLength: "9", averageType: "EMA", choice: "Price above", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "bullish-pattern-with-volume", label: "Bullish pattern with 1M+ volume", request: { filters: [{ id: "bullish-chart-pattern", choice: "Any bullish pattern", timeframe: "Daily" }, { id: "average-volume", lower: "1000000", period: "20" }], limit: 25, sortBy: "daily-change" } },
+      { id: "high-growth-large-cap", label: "20%+ growth with $10B+ market cap", request: { filters: [{ id: "revenue-growth", lower: "20" }, { id: "market-cap", lower: "10000000000" }], limit: 25, sortBy: "daily-change" } },
+    ],
+  },
+] satisfies readonly ReadyScannerGroup[]);
+
 export function ScannerClient() {
   const [activeGroup, setActiveGroup] = useState<FilterGroup>("market");
   const [draft, setDraft] = useState<FilterDraft>(initialDraft);
@@ -165,6 +294,7 @@ export function ScannerClient() {
   const [lastRun, setLastRun] = useState<ScannerRunRequest | null>(null);
   const [runState, setRunState] = useState<"idle" | "loading" | "error">("idle");
   const [runError, setRunError] = useState<"connection" | "unavailable" | null>(null);
+  const [selectedReadyScanner, setSelectedReadyScanner] = useState<string | null>(null);
 
   const availableFilters = useMemo(
     () => filterLibrary.filter((filter) => filter.group === activeGroup),
@@ -192,6 +322,7 @@ export function ScannerClient() {
       },
     ]);
     setDraft((current) => ({ ...current, choice: "", lower: "", upper: "" }));
+    setSelectedReadyScanner(null);
   }
 
   const requestScan = useCallback(async (scan: ScannerRunRequest) => {
@@ -229,6 +360,21 @@ export function ScannerClient() {
 
   function runCurrentScan() {
     const scan = currentScan();
+    setSelectedReadyScanner(null);
+    setLastRun(scan);
+    void requestScan(scan);
+  }
+
+  function runReadyScanner(scanner: ReadyScanner) {
+    const scan: ScannerRunRequest = {
+      filters: scanner.request.filters.map((filter) => ({ ...filter })),
+      limit: scanner.request.limit,
+      sortBy: scanner.request.sortBy,
+    };
+    setFilters(scan.filters.map((filter, index) => presetFilter(filter, scanner.id, index)));
+    setRowLimit(scan.limit);
+    setSortBy(scan.sortBy);
+    setSelectedReadyScanner(scanner.id);
     setLastRun(scan);
     void requestScan(scan);
   }
@@ -241,6 +387,27 @@ export function ScannerClient() {
 
   return (
     <DashboardPage>
+      <DashboardPanel title="TradersLink Scanners">
+        <Stack spacing={2}>
+          {readyScannerGroups.map((group) => (
+            <Stack key={group.id} spacing={1}>
+              <Typography sx={{ fontWeight: 800 }}>{group.label}</Typography>
+              <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", rowGap: 1 }}>
+                {group.scanners.map((scanner) => (
+                  <DashboardSecondaryAction
+                    aria-pressed={selectedReadyScanner === scanner.id}
+                    key={scanner.id}
+                    onClick={() => runReadyScanner(scanner)}
+                  >
+                    {scanner.label}
+                  </DashboardSecondaryAction>
+                ))}
+              </Stack>
+            </Stack>
+          ))}
+        </Stack>
+      </DashboardPanel>
+
       <DashboardPanel>
         <Stack spacing={2.5}>
           <Tabs
@@ -253,65 +420,64 @@ export function ScannerClient() {
           >
             {filterGroups.map((group) => <Tab key={group.id} label={group.label} value={group.id} />)}
           </Tabs>
-
           <Box
-            sx={{
-              alignItems: "start",
-              display: "grid",
-              gap: 1.5,
-              gridTemplateColumns: { xs: "1fr", md: "minmax(220px, 1.4fr) repeat(2, minmax(150px, 1fr)) minmax(150px, 1fr) auto" },
-            }}
-          >
-            <TextField
-              helperText={selectedDefinition?.detail}
-              label="Add a filter"
-              onChange={(event) => setDraft((current) => ({ ...current, choice: "", definitionId: event.target.value, lower: "", upper: "" }))}
-              select
-              size="small"
-              value={draft.definitionId}
-            >
-              {availableFilters.map((filter) => <MenuItem key={filter.id} value={filter.id}>{filter.label}</MenuItem>)}
-            </TextField>
-            {selectedDefinition?.kind === "range" ? (
-              <>
-                <TextField label={selectedDefinition.unit ? `Minimum (${selectedDefinition.unit})` : "Minimum"} onChange={(event) => setDraft((current) => ({ ...current, lower: event.target.value }))} placeholder="No minimum" size="small" type="number" value={draft.lower} />
-                <TextField label={selectedDefinition.unit ? `Maximum (${selectedDefinition.unit})` : "Maximum"} onChange={(event) => setDraft((current) => ({ ...current, upper: event.target.value }))} placeholder="No maximum" size="small" type="number" value={draft.upper} />
-                {["daily-change", "amplitude", "average-volume", "average-turnover", "turnover-rate"].includes(selectedDefinition.id) ? (
-                  <TextField label="Period" onChange={(event) => setDraft((current) => ({ ...current, period: event.target.value as FilterDraft["period"] }))} select size="small" value={draft.period}>
-                    <MenuItem value="1">1 day</MenuItem><MenuItem value="5">5 days</MenuItem><MenuItem value="20">20 days</MenuItem><MenuItem value="60">60 days</MenuItem>
-                  </TextField>
-                ) : <Box />}
-              </>
-            ) : (
-              <>
-                <TextField label="Condition" onChange={(event) => setDraft((current) => ({ ...current, choice: event.target.value }))} select size="small" value={draft.choice}>
-                  <MenuItem value="">Choose a condition</MenuItem>
-                  {selectedDefinition?.choices?.map((choice) => <MenuItem key={choice} value={choice}>{choice}</MenuItem>)}
+                sx={{
+                  alignItems: "start",
+                  display: "grid",
+                  gap: 1.5,
+                  gridTemplateColumns: { xs: "1fr", md: "minmax(220px, 1.4fr) repeat(2, minmax(150px, 1fr)) minmax(150px, 1fr) auto" },
+                }}
+              >
+                <TextField
+                  helperText={selectedDefinition?.detail}
+                  label="Add a filter"
+                  onChange={(event) => setDraft((current) => ({ ...current, choice: "", definitionId: event.target.value, lower: "", upper: "" }))}
+                  select
+                  size="small"
+                  value={draft.definitionId}
+                >
+                  {availableFilters.map((filter) => <MenuItem key={filter.id} value={filter.id}>{filter.label}</MenuItem>)}
                 </TextField>
-                {selectedDefinition?.id === "price-vs-average" ? (
-                  <TextField label="Average" onChange={(event) => setDraft((current) => ({ ...current, averageType: event.target.value as FilterDraft["averageType"] }))} select size="small" value={draft.averageType}>
-                    <MenuItem value="MA">MA</MenuItem><MenuItem value="EMA">EMA</MenuItem>
-                  </TextField>
-                ) : selectedDefinition?.kind === "signal" ? (
-                  <TextField label="Timeframe" onChange={(event) => setDraft((current) => ({ ...current, timeframe: event.target.value as FilterDraft["timeframe"] }))} select size="small" value={draft.timeframe}>
-                    {(["1 minute", "5 minutes", "15 minutes", "1 hour", "Daily", "Weekly", "Monthly"] as const).map((timeframe) => <MenuItem key={timeframe} value={timeframe}>{timeframe}</MenuItem>)}
-                  </TextField>
-                ) : <Box />}
-                {selectedDefinition?.id === "price-vs-average" ? (
-                  <TextField label="Average length" onChange={(event) => setDraft((current) => ({ ...current, averageLength: event.target.value as FilterDraft["averageLength"] }))} select size="small" value={draft.averageLength}>
-                    <MenuItem value="5">5</MenuItem><MenuItem value="9">9</MenuItem><MenuItem value="10">10</MenuItem><MenuItem value="20">20</MenuItem><MenuItem value="50">50</MenuItem><MenuItem value="100">100</MenuItem><MenuItem value="200">200</MenuItem>
-                  </TextField>
-                ) : <Box />}
-                {selectedDefinition?.id === "price-vs-average" ? (
-                  <TextField label="Timeframe" onChange={(event) => setDraft((current) => ({ ...current, timeframe: event.target.value as FilterDraft["timeframe"] }))} select size="small" value={draft.timeframe}>
-                    {(["1 minute", "5 minutes", "15 minutes", "1 hour", "Daily", "Weekly", "Monthly"] as const).map((timeframe) => <MenuItem key={timeframe} value={timeframe}>{timeframe}</MenuItem>)}
-                  </TextField>
-                ) : <Box />}
-              </>
-            )}
-            <DashboardPrimaryAction disabled={(selectedDefinition?.kind === "range" && !draft.lower && !draft.upper) || (selectedDefinition?.kind !== "range" && !draft.choice)} onClick={addFilter} startIcon={<FilterAltRoundedIcon />}>
-              Add filter
-            </DashboardPrimaryAction>
+                {selectedDefinition?.kind === "range" ? (
+                  <>
+                    <TextField label={selectedDefinition.unit ? `Minimum (${selectedDefinition.unit})` : "Minimum"} onChange={(event) => setDraft((current) => ({ ...current, lower: event.target.value }))} placeholder="No minimum" size="small" type="number" value={draft.lower} />
+                    <TextField label={selectedDefinition.unit ? `Maximum (${selectedDefinition.unit})` : "Maximum"} onChange={(event) => setDraft((current) => ({ ...current, upper: event.target.value }))} placeholder="No maximum" size="small" type="number" value={draft.upper} />
+                    {["daily-change", "amplitude", "average-volume", "average-turnover", "turnover-rate"].includes(selectedDefinition.id) ? (
+                      <TextField label="Period" onChange={(event) => setDraft((current) => ({ ...current, period: event.target.value as FilterDraft["period"] }))} select size="small" value={draft.period}>
+                        <MenuItem value="1">1 day</MenuItem><MenuItem value="5">5 days</MenuItem><MenuItem value="20">20 days</MenuItem><MenuItem value="60">60 days</MenuItem>
+                      </TextField>
+                    ) : <Box />}
+                  </>
+                ) : (
+                  <>
+                    <TextField label="Condition" onChange={(event) => setDraft((current) => ({ ...current, choice: event.target.value }))} select size="small" value={draft.choice}>
+                      <MenuItem value="">Choose a condition</MenuItem>
+                      {selectedDefinition?.choices?.map((choice) => <MenuItem key={choice} value={choice}>{choice}</MenuItem>)}
+                    </TextField>
+                    {selectedDefinition?.id === "price-vs-average" ? (
+                      <TextField label="Average" onChange={(event) => setDraft((current) => ({ ...current, averageType: event.target.value as FilterDraft["averageType"] }))} select size="small" value={draft.averageType}>
+                        <MenuItem value="MA">MA</MenuItem><MenuItem value="EMA">EMA</MenuItem>
+                      </TextField>
+                    ) : selectedDefinition?.kind === "signal" ? (
+                      <TextField label="Timeframe" onChange={(event) => setDraft((current) => ({ ...current, timeframe: event.target.value as FilterDraft["timeframe"] }))} select size="small" value={draft.timeframe}>
+                        {(["1 minute", "5 minutes", "15 minutes", "1 hour", "Daily", "Weekly", "Monthly"] as const).map((timeframe) => <MenuItem key={timeframe} value={timeframe}>{timeframe}</MenuItem>)}
+                      </TextField>
+                    ) : <Box />}
+                    {selectedDefinition?.id === "price-vs-average" ? (
+                      <TextField label="Average length" onChange={(event) => setDraft((current) => ({ ...current, averageLength: event.target.value as FilterDraft["averageLength"] }))} select size="small" value={draft.averageLength}>
+                        <MenuItem value="5">5</MenuItem><MenuItem value="9">9</MenuItem><MenuItem value="10">10</MenuItem><MenuItem value="20">20</MenuItem><MenuItem value="50">50</MenuItem><MenuItem value="100">100</MenuItem><MenuItem value="200">200</MenuItem>
+                      </TextField>
+                    ) : <Box />}
+                    {selectedDefinition?.id === "price-vs-average" ? (
+                      <TextField label="Timeframe" onChange={(event) => setDraft((current) => ({ ...current, timeframe: event.target.value as FilterDraft["timeframe"] }))} select size="small" value={draft.timeframe}>
+                        {(["1 minute", "5 minutes", "15 minutes", "1 hour", "Daily", "Weekly", "Monthly"] as const).map((timeframe) => <MenuItem key={timeframe} value={timeframe}>{timeframe}</MenuItem>)}
+                      </TextField>
+                    ) : <Box />}
+                  </>
+                )}
+                <DashboardPrimaryAction disabled={(selectedDefinition?.kind === "range" && !draft.lower && !draft.upper) || (selectedDefinition?.kind !== "range" && !draft.choice)} onClick={addFilter} startIcon={<FilterAltRoundedIcon />}>
+                  Add filter
+                </DashboardPrimaryAction>
           </Box>
 
           <Divider />
@@ -352,7 +518,7 @@ export function ScannerClient() {
             <TableBody>{result ? result.rows.map((row) => <TableRow key={row.symbol}>
               <TableCell sx={{ fontWeight: 700 }}>{row.symbol.replace(/^US\./u, "")}</TableCell><TableCell>{row.company}</TableCell><TableCell>{row.last ?? "—"}</TableCell><TableCell>{row.changePercent === null ? "—" : `${row.changePercent}%`}</TableCell><TableCell>{row.volume ?? "—"}</TableCell><TableCell>{row.marketCap ?? "—"}</TableCell><TableCell>{new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit", second: "2-digit" }).format(new Date(row.updatedAtUtc))}</TableCell>
             </TableRow>) : <TableRow><TableCell colSpan={resultColumns.length} sx={{ py: 5, textAlign: "center" }}>
-              {runState === "loading" ? <Typography sx={{ fontWeight: 700 }}>Running your screen…</Typography> : runError === "connection" ? <Typography sx={{ fontWeight: 700 }}>Connect Moomoo before running this screen.</Typography> : runError === "unavailable" ? <Typography sx={{ fontWeight: 700 }}>Moomoo could not provide results right now. Try again shortly.</Typography> : <Typography sx={{ fontWeight: 700 }}>Add your conditions, then run the screen.</Typography>}
+              {runState === "loading" ? <Typography sx={{ fontWeight: 700 }}>Running your screen…</Typography> : runError === "connection" ? <Typography sx={{ fontWeight: 700 }}>Connect market data before running this screen.</Typography> : runError === "unavailable" ? <Typography sx={{ fontWeight: 700 }}>Market data could not provide results right now. Try again shortly.</Typography> : <Typography sx={{ fontWeight: 700 }}>Add your conditions, then run the screen.</Typography>}
             </TableCell></TableRow>}
             </TableBody>
           </Table>

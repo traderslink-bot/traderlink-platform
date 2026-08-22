@@ -8,25 +8,33 @@ TradersLink will provide two distinct stock-scanning experiences:
    requiring them to understand or choose technical values.
 2. **My Scanners** lets a user later create, save and share their own screens.
 
-This plan begins with the first experience only. Links AI is explicitly out of
-scope for this work.
+This plan delivers the first experience now. The visible builder remains the
+unsaved starting point for the later My Scanners experience. Links AI is
+explicitly out of scope for this work.
 
 ## First visual slice
 
-Add a new `/scanner` dashboard page with an unrestricted Moomoo-shaped filter
-builder. It must cover available market, fundamental, indicator,
-candle/chart-pattern, sentiment/ownership, broker-holding and option
-conditions. Traders may combine conditions, choose their bounds/timeframes
-where applicable, remove them, and choose a sort order.
+Add a new `/scanner` dashboard page with two clear choices:
+
+1. **TradersLink Scanners** are one-click, ready-to-run U.S. screens. They are
+   a growing library across market activity, price and volume, moving averages,
+   momentum, chart patterns, fundamentals and options. Each has an explicit
+   market-data condition/sort mapping and runs through the same protected
+   result path as the custom builder.
+2. **My Scanner** is the unrestricted filter builder. It covers
+   available market, fundamental, indicator, candle/chart-pattern,
+   sentiment/ownership, broker-holding and option conditions. Traders may
+   combine conditions, choose their bounds/timeframes where applicable, remove
+   them, and choose a sort order. It does not yet save a scanner.
 
 When result data is added, the page must show a result count, exact
 last-updated time, a normal Refresh action and a responsive table limited to
 the most useful first 25 matches, with optional 50 and 100 rows. Only factual
-Moomoo-returned values may be presented; no fixture, zero, stale placeholder
+market-data values may be presented; no fixture, zero, stale placeholder
 or inferred financial value is a result.
 
-A trader may adjust the visible screen settings before results run, but those
-settings are not saved as a personal scanner in this slice. It must not
+A trader may adjust a ready-to-run screen in My Scanner before results run,
+but those settings are not saved as a personal scanner in this slice. It must not
 pretend that users have already created scanners, watchlists, shares or
 alerts. The page has no generic title subtitle or introductory scope labels;
 each control explains itself where a trader needs it.
@@ -39,12 +47,12 @@ account; it is removed or expanded deliberately before beta access opens.
 
 ## Data and refresh boundary
 
-The initial data adapter is server-side and uses the existing secure Moomoo
-OAuth connection. Tokens stay server-side. The browser receives only the
-display fields used by the scanner.
+The initial data adapter is server-side and uses the existing secure market
+data connection. Provider credentials stay server-side. The browser receives
+only the display fields used by the scanner.
 
-The screen will use Moomoo's unrestricted market screening capability and
-bound the displayed page to 25 rows. The target experience is fresh scanner
+The screen will use the connected market-data provider's screening capability
+and bound the displayed page to 25 rows. The target experience is fresh scanner
 results every 60 seconds while a user is actively viewing the page, with
 the exact update time always visible. The implementation must use a bounded
 server refresh/result cache for equivalent screens rather than requesting the
@@ -74,7 +82,7 @@ These are controlling scope, not part of the initial UI build:
   focused slice may proceed to the normal release and owner testing boundary.
 - The page must retain the approved light Material dashboard shell and a clear
   Scanner navigation entry.
-- Live values must be clearly unavailable when the Moomoo connection cannot
+- Live values must be clearly unavailable when the market-data connection cannot
   provide results; no financial values are fabricated.
 - A focused TypeScript/lint/static route check may follow the accepted visual
   slice. Broad tests, production deployment and provider configuration changes
