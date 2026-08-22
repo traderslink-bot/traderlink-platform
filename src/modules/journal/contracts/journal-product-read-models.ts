@@ -16,11 +16,6 @@ export type JournalImportHistoryItem = Readonly<{
   acceptedAtUtc: string | null;
 }>;
 
-export type JournalSavedStatementBroker = Readonly<{
-  brokerName: string;
-  savedFormatCount: number;
-}>;
-
 export type JournalDecisionExecutionEvidence = Readonly<{
   executionId: string;
   currentVersionId: string;

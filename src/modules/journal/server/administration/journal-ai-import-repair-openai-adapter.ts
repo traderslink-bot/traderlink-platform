@@ -54,7 +54,7 @@ export function createJournalAiImportRepairOpenAiProvider(
 ): JournalAiImportRepairProvider | null {
   if (!enabled(environment)) return null;
   const openai = createOpenAI({ apiKey: environment.OPENAI_API_KEY!.trim() });
-  const modelId = environment.TRADERLINK_PLATFORM_AI_IMPORT_REPAIR_MODEL?.trim() || "gpt-5.6-terra";
+  const modelId = environment.TRADERLINK_PLATFORM_AI_IMPORT_REPAIR_MODEL?.trim() || "gpt-5.6";
   return async ({ sourceText, confirmedBrokerName }) => {
     const result = await generateText({
       model: openai(modelId),

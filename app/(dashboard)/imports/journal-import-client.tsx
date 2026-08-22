@@ -43,7 +43,6 @@ const PREVIEW_ENDPOINT = "/api/platform/journal/imports/preview";
 const COMMIT_ENDPOINT = "/api/platform/journal/imports/commit";
 const HISTORY_ENDPOINT = "/api/platform/journal/imports/history";
 const AI_REPAIR_ENDPOINT = "/api/platform/journal/imports/ai-repair";
-const SUPPORTED_BROKERS_ENDPOINT = "/api/platform/journal/imports/supported-brokers";
 
 const MAPPING_FIELDS = Object.freeze([
   ["symbol", "Ticker", true],
@@ -79,11 +78,6 @@ type CompletedImport = Readonly<{
   status: "committed" | "already_imported";
   executionCount: number;
   pendingDecisionCount: number;
-}>;
-
-type SavedStatementBroker = Readonly<{
-  brokerName: string;
-  savedFormatCount: number;
 }>;
 
 function blockingImportMessage(preview: JournalImportMappingPreview): string {
@@ -124,7 +118,6 @@ export function JournalImportClient({
   const [feeSignConvention, setFeeSignConvention] = useState<"cost_positive" | "cash_effect">("cost_positive");
   const [completed, setCompleted] = useState<CompletedImport | null>(null);
   const [history, setHistory] = useState<readonly JournalImportHistoryItem[]>([]);
-  const [savedBrokers, setSavedBrokers] = useState<readonly SavedStatementBroker[]>([]);
   const [working, setWorking] = useState<"preview" | "commit" | "ai_repair" | null>(null);
   const [notice, setNotice] = useState<Readonly<{
     severity: "success" | "warning" | "error";
@@ -143,16 +136,8 @@ export function JournalImportClient({
     return imports;
   }
 
-  async function refreshSavedBrokers(): Promise<void> {
-    const response = await fetch(SUPPORTED_BROKERS_ENDPOINT, { cache: "no-store" });
-    if (!response.ok) return;
-    const packet = await response.json() as { savedBrokers?: readonly SavedStatementBroker[] };
-    setSavedBrokers(packet.savedBrokers ?? []);
-  }
-
   useEffect(() => {
     void refreshHistory();
-    void refreshSavedBrokers();
   }, []);
 
   function acceptMappingSupport(support: JournalMappingSupportPackageV2 | null) {
@@ -219,7 +204,6 @@ export function JournalImportClient({
       }
       if (packet.result) {
         await refreshHistory();
-        await refreshSavedBrokers();
         setCompleted({
           status: packet.result.status,
           executionCount: packet.result.status === "already_imported"
@@ -387,7 +371,6 @@ export function JournalImportClient({
         throw new Error(importSaveErrorMessage(packet.code));
       }
       await refreshHistory();
-      await refreshSavedBrokers();
       setCompleted({
         status: packet.result.status,
         executionCount: packet.result.status === "already_imported"
@@ -445,28 +428,6 @@ export function JournalImportClient({
       </Stack>
 
       {notice ? <Alert severity={notice.severity}>{notice.text}</Alert> : null}
-      <DashboardPanel title="Supported brokers">
-        <Stack spacing={1.5}>
-          <Typography color="text.secondary" variant="body2">
-            Interactive Brokers is ready to import. Your saved formats below are private to this Trade Tracker and are reused only when both the broker and statement layout match.
-          </Typography>
-          <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", rowGap: 1 }}>
-            <Chip color="primary" label="Interactive Brokers" variant="outlined" />
-            {savedBrokers.map((broker) => (
-              <Chip
-                key={broker.brokerName.toLowerCase()}
-                label={`${broker.brokerName} · ${broker.savedFormatCount} saved format${broker.savedFormatCount === 1 ? "" : "s"}`}
-                variant="outlined"
-              />
-            ))}
-          </Stack>
-          {savedBrokers.length === 0 ? (
-            <Typography color="text.secondary" variant="caption">
-              When you successfully map another broker&apos;s statement, it will appear here for future imports.
-            </Typography>
-          ) : null}
-        </Stack>
-      </DashboardPanel>
       {working === "commit" ? (
         <DashboardPanel title="Importing statement">
           <Stack spacing={1.5}>
@@ -506,7 +467,8 @@ export function JournalImportClient({
         </DashboardPanel>
       ) : null}
 
-      {!completed && working !== "commit" ? <DashboardPanel hideHeader>
+      {!completed && working !== "commit" ? <Box sx={{ maxWidth: { md: 720 }, width: "100%" }}>
+        <DashboardPanel hideHeader>
         <Box component="form" onSubmit={(event) => void previewStatement(event)}>
           <Stack spacing={2}>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}>
@@ -564,7 +526,8 @@ export function JournalImportClient({
             </Stack>
           </Stack>
         </Box>
-      </DashboardPanel> : null}
+        </DashboardPanel>
+      </Box> : null}
 
       {mappingSupport && !preview && working !== "commit" ? (
         <DashboardPanel title="Map your statement">

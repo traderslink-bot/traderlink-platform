@@ -80,9 +80,9 @@ counted or presented as unfinished work.
   Tracker, confirmed broker and unchanged statement layout. A broker or layout
   mismatch returns the statement for review instead of applying another
   broker's mapping.
-- Import Trades shows the one verified built-in adapter separately from the
-  active account's private saved statement formats. A personal saved format is
-  not described as global broker support.
+- Import Trades does not publish a broker-support list while early mappings
+  are being collected. A personal saved format is never described as global
+  broker support.
 
 ## Implementation order
 
