@@ -39,7 +39,7 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const DELETE_TRADE_TRACKER_ACCOUNT = "DELETE TRADE TRACKER ACCOUNT";
+const DELETE_TRADE_TRACKER_ACCOUNT = "DELETE ACCOUNT";
 const DELETE_TRADERLINK_ACCOUNT = "DELETE MY TRADERLINK ACCOUNT";
 
 type ErasureAction = "trade_tracker_account" | "traderlink_account";

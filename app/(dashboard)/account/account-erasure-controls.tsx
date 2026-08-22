@@ -17,7 +17,7 @@ import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contract
 type ErasureDialog = "trade_tracker_account" | "traderlink_account" | null;
 
 const CONFIRMATION: Readonly<Record<Exclude<ErasureDialog, null>, string>> = Object.freeze({
-  trade_tracker_account: "DELETE TRADE TRACKER ACCOUNT",
+  trade_tracker_account: "DELETE ACCOUNT",
   traderlink_account: "DELETE MY TRADERLINK ACCOUNT",
 });
 
