@@ -88,12 +88,18 @@ WHERE user_id = ? AND auth_provider = 'discord' AND status = 'active'`).get(clai
         "statusCode" in error && typeof error.statusCode === "number"
         ? error.statusCode
         : null;
+      const failureContext = isTraderLinkPlatformError(error)
+        ? error.safeContext
+        : undefined;
       console.error("TraderLink AI import repair worker failed", {
         failure: isTraderLinkPlatformError(error)
           ? error.code
           : providerStatus === null
             ? error instanceof Error ? error.name : "unknown"
             : `provider_status_${providerStatus}`,
+        ...(failureContext && Object.keys(failureContext).length > 0
+          ? { failureContext }
+          : {}),
       });
       const failedAtUtc = createCanonicalUtcTimestamp(this.now());
       repository.fail({ repairJobId: claimed.job.repairJobId, safeFailureCode: "ai_repair_failed", timestamp: failedAtUtc });
