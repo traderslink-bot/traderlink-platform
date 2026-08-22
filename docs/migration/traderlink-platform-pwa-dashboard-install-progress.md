@@ -6,7 +6,7 @@
 
 ## Scope
 
-- [x] Put a dedicated **Install TradersLink PWA App** card on `/workspace` directly below the performance metrics.
+- [x] Put a dedicated **Install TradersLink PWA App** card in the `/workspace` action-card grid, with the same responsive column width as Current Focuses and Add Trades.
 - [x] Preserve the owner-approved install text exactly.
 - [x] Keep a visible **Install TradersLink app** button in both places. It opens Chromium's native prompt when available and otherwise opens exact device-specific installation steps.
 - [x] Give iPhone/iPad users the required Share then Add to Home Screen instruction in the clickable install guide.

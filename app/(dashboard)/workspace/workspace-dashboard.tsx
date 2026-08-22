@@ -191,8 +191,6 @@ export function WorkspaceDashboard({
         ))}
       </Box>
 
-      <InstallTradersLinkPwaCard />
-
       <Box
         sx={{
           display: "grid",
@@ -204,6 +202,8 @@ export function WorkspaceDashboard({
           },
         }}
       >
+        <InstallTradersLinkPwaCard />
+
         {currentFocuses ? (
           <DashboardPanel title="Current Focuses">
             <CurrentFocusContent content={currentFocuses} />
