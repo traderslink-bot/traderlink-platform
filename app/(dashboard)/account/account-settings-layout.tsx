@@ -18,6 +18,7 @@ export type AccountSettingsSection =
   | "trading"
   | "ai"
   | "profile"
+  | "security"
   | "privacy";
 
 const ACCOUNT_SETTINGS_SECTIONS: readonly Readonly<{
@@ -49,6 +50,12 @@ const ACCOUNT_SETTINGS_SECTIONS: readonly Readonly<{
     href: "/account/profile",
     id: "profile",
     label: "Profile",
+  }),
+  Object.freeze({
+    description: "Sign out of this device or every device",
+    href: "/account/security",
+    id: "security",
+    label: "Security",
   }),
   Object.freeze({
     description: "Permanent data deletion",

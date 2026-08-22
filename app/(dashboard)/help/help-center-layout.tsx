@@ -1,6 +1,7 @@
 "use client";
 
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import AccountCircleRoundedIcon from "@mui/icons-material/AccountCircleRounded";
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import NotificationsNoneRoundedIcon from "@mui/icons-material/NotificationsNoneRounded";
@@ -100,6 +101,8 @@ function HelpNavigation({
               ? SmartToyOutlinedIcon
             : item.icon === "paid_plan"
               ? WorkspacePremiumOutlinedIcon
+              : item.icon === "account"
+                ? AccountCircleRoundedIcon
               : item.icon === "notifications"
                 ? NotificationsNoneRoundedIcon
                 : TodayRoundedIcon;

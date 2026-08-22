@@ -172,4 +172,31 @@ WHERE token_sha256 = ? AND revoked_at_utc IS NULL`)
       .run(input.timestamp, input.tokenSha256);
     return result.changes === 1;
   }
+
+  countActiveForUser(userId: string, nowUtc: string): number {
+    assertCanonicalUuidV4(userId, "userId");
+    assertCanonicalUtcTimestamp(nowUtc, "nowUtc");
+    const row = this.database.prepare<[string, string], { count: number }>(`SELECT COUNT(*) AS count
+FROM platform_auth_sessions
+WHERE user_id = ?
+  AND revoked_at_utc IS NULL
+  AND expires_at_utc > ?`)
+      .get(userId, nowUtc);
+    return row?.count ?? 0;
+  }
+
+  revokeActiveForUser(input: Readonly<{
+    userId: string;
+    timestamp: string;
+  }>): number {
+    assertCanonicalUuidV4(input.userId, "userId");
+    assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
+    const result = this.database.prepare(`UPDATE platform_auth_sessions
+SET revoked_at_utc = ?
+WHERE user_id = ?
+  AND revoked_at_utc IS NULL
+  AND expires_at_utc > ?`)
+      .run(input.timestamp, input.userId, input.timestamp);
+    return result.changes;
+  }
 }

@@ -21,12 +21,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
   const token = request.cookies.get(TRADERLINK_PLATFORM_SESSION_COOKIE)?.value;
   try {
-    withPlatformDatabase({ mode: "runtime" }, (database) =>
-      new PlatformSessionService(
+    withPlatformDatabase({ mode: "runtime" }, (database) => {
+      const sessions = new PlatformSessionService(
         new PlatformSessionRepository(database),
-      ).revoke(token));
+      );
+      const currentSession = sessions.resolve(token);
+      if (currentSession) sessions.revokeAllForUser(currentSession.userId);
+    });
   } catch {
-    // Cookie clearing must still complete when storage is unavailable.
+    const response = NextResponse.redirect(
+      new URL("/account/security?sessionAction=unavailable", request.nextUrl.origin),
+    );
+    response.headers.set("Cache-Control", "private, no-store");
+    return response;
   }
 
   const response = NextResponse.redirect(

@@ -106,4 +106,18 @@ export class PlatformSessionService {
       ),
     });
   }
+
+  countActiveForUser(userId: string): number {
+    return this.repository.countActiveForUser(
+      userId,
+      createCanonicalUtcTimestamp(this.dependencies.now?.() ?? new Date()),
+    );
+  }
+
+  revokeAllForUser(userId: string): number {
+    const timestamp = createCanonicalUtcTimestamp(
+      this.dependencies.now?.() ?? new Date(),
+    );
+    return this.repository.revokeActiveForUser({ userId, timestamp });
+  }
 }

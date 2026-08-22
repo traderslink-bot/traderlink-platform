@@ -6,7 +6,11 @@ import { JournalAdminOverviewService } from "@/src/modules/journal/server/admini
 import { createJournalAdminReadContext } from "@/src/modules/journal/server/administration/journal-admin-read-helpers";
 import { PlatformAdminErrorService } from "@/src/modules/platform/server/administration/platform-admin-error-service";
 import { isCoachAiChatQualityFeedbackSchemaAvailable } from "@/src/modules/coach/server/coach-ai-chat-quality-feedback-repository";
+import {
+  isTraderLinkPlatformError,
+} from "@/src/modules/platform/server/database/platform-migration-contract";
 import { withJournalAdminPageDatabase } from "@/src/modules/platform/server/administration/require-journal-admin-page";
+import { JournalAdminAccessDenied } from "./journal-admin-access-denied";
 import { JournalAdminShell } from "./journal-admin-shell";
 
 export const metadata: Metadata = {
@@ -52,8 +56,19 @@ FROM coach_ai_chat_quality_cases WHERE case_state = 'open'`).get()!.count
       });
     });
   } catch (error) {
-    if (process.env.NODE_ENV === "production") {
+    if (
+      process.env.NODE_ENV === "production" &&
+      isTraderLinkPlatformError(error) &&
+      error.code === "TRADERLINK_WORKSPACE_ACCESS_DENIED"
+    ) {
       redirect("/api/auth/discord/login?returnTo=%2Fadmin%2Fjournal");
+    }
+    if (
+      process.env.NODE_ENV === "production" &&
+      isTraderLinkPlatformError(error) &&
+      error.code === "TRADERLINK_JOURNAL_ADMIN_ACCESS_DENIED"
+    ) {
+      return <JournalAdminAccessDenied />;
     }
     throw error;
   }

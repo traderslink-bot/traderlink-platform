@@ -24,6 +24,21 @@ refreshes and small screens work without hiding a form in a wide tab strip.
 The Settings hub may provide compact in-page navigation, but every section
 must also have a stable URL.
 
+## Session management extension — 2026-08-22
+
+Account adds a stable **Security** route and a quick Account menu in the
+dashboard header. The menu provides Account settings, Security and Log out;
+the Security route provides one-device sign-out and an explicit confirmation
+before sign-out everywhere. These operations revoke the stored Platform
+session records server-side and clear the browser cookies. They never unlink
+Discord, alter a Journal account or delete TraderLink data.
+
+The production Journal Administration gate distinguishes a missing session
+from an authenticated-but-not-authorized account. Only a missing session starts
+Discord sign-in; an authorization failure shows a clear owner-access screen
+with an intentional log-out-and-refresh path rather than creating a redirect
+loop.
+
 ## Coverage decisions
 
 - Keep the existing reporting-currency, notification, AI Review, subscription,

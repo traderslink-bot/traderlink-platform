@@ -1,4 +1,5 @@
 import { AI_REVIEWS_HELP_GUIDES } from "./ai-reviews-guides";
+import { ACCOUNT_HELP_GUIDES } from "./account-guides";
 import { AI_CHAT_HELP_GUIDES } from "./ai-chat-guides";
 import { CANDLE_REVIEW_HELP_GUIDES } from "./candle-review-guides";
 import { CORE_ANALYTICS_HELP_GUIDES } from "./core-analytics-guides";
@@ -19,7 +20,7 @@ import { TRADE_TAGS_HELP_GUIDES } from "./trade-tags-guides";
 export type HelpNavigationItem = Readonly<{
   depth?: 0 | 1;
   href: string;
-  icon: "home" | "trade_tracker" | "trade_analyzer" | "trading_rules" | "trade_tags" | "ai_reviews" | "paid_plan" | "notifications";
+  icon: "home" | "trade_tracker" | "trade_analyzer" | "trading_rules" | "trade_tags" | "ai_reviews" | "paid_plan" | "notifications" | "account";
   label: string;
   summary: string;
 }>;
@@ -54,6 +55,13 @@ export const HELP_NAVIGATION_ITEMS: readonly HelpNavigationItem[] = Object.freez
     label: "Help Center",
     summary: "Search TraderLink help and browse available guides.",
   }),
+  Object.freeze({
+    href: "/help/account",
+    icon: "account",
+    label: "Account",
+    summary: "Manage settings and control where your TraderLink account stays signed in.",
+  }),
+  ...guideNavigationItems("/help/account", ACCOUNT_HELP_GUIDES, "account"),
   Object.freeze({
     href: "/help/daily-trade-tracker",
     icon: "trade_tracker",
@@ -195,6 +203,15 @@ function guideSearchRecords(
 }
 
 export const HELP_SEARCH_RECORDS: readonly HelpSearchRecord[] = Object.freeze([
+  Object.freeze({
+    href: "/help/account",
+    id: "account-overview",
+    keywords: Object.freeze(["account", "log out", "logout", "sign out", "security"]),
+    section: "Account",
+    summary: "Manage settings and control where your TraderLink account stays signed in.",
+    title: "Account overview",
+  }),
+  ...guideSearchRecords("account", "Account", "/help/account", ACCOUNT_HELP_GUIDES),
   Object.freeze({
     href: "/help/daily-trade-tracker",
     id: "daily-trade-tracker-overview",

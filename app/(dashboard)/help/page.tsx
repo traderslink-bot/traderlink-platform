@@ -1,4 +1,5 @@
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import AccountCircleRoundedIcon from "@mui/icons-material/AccountCircleRounded";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import NotificationsNoneRoundedIcon from "@mui/icons-material/NotificationsNoneRounded";
 import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
@@ -31,6 +32,12 @@ export const metadata: Metadata = {
 };
 
 const HELP_COLLECTIONS = Object.freeze([
+  Object.freeze({
+    description: "Manage Account settings and keep control of TraderLink sign-ins on every device.",
+    href: "/help/account",
+    Icon: AccountCircleRoundedIcon,
+    title: "Account",
+  }),
   Object.freeze({
     description: "Replay trades and understand entry, exit, Green-to-red, candle-pattern and long-term Analyzer results.",
     href: "/help/trade-analyzer",

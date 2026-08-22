@@ -15,8 +15,10 @@ import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
 import GavelRoundedIcon from "@mui/icons-material/GavelRounded";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
+import LockRoundedIcon from "@mui/icons-material/LockRounded";
 import MenuOpenRoundedIcon from "@mui/icons-material/MenuOpenRounded";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
+import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import NoteAltRoundedIcon from "@mui/icons-material/NoteAltRounded";
 import NewspaperRoundedIcon from "@mui/icons-material/NewspaperRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
@@ -45,6 +47,8 @@ import List from "@mui/material/List";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
@@ -290,11 +294,13 @@ export function DashboardShell({
   const [aiChatContext, setAiChatContext] = useState<CoachAiDailyCompanionContextSelector | null>(null);
   const [aiChatSuggestedQuestion, setAiChatSuggestedQuestion] = useState<string | null>(null);
   const [aiChatContextRequestId, setAiChatContextRequestId] = useState(0);
+  const [accountMenuAnchor, setAccountMenuAnchor] = useState<HTMLElement | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<
     Readonly<Partial<Record<DashboardNavigationGroup["id"], boolean>>>
   >({});
 
   const desktopWidth = collapsed ? collapsedWidth : expandedWidth;
+  const accountMenuOpen = Boolean(accountMenuAnchor);
   const closeMobile = () => setMobileOpen(false);
   const setDesktopNavigationCollapsed = (nextCollapsed: boolean) => {
     setCollapsed(nextCollapsed);
@@ -685,9 +691,11 @@ export function DashboardShell({
           </Tooltip>
           <Tooltip title="Account">
             <IconButton
-              aria-label="Open Account"
-              component={Link}
-              href="/account"
+              aria-controls={accountMenuOpen ? "dashboard-account-menu" : undefined}
+              aria-expanded={accountMenuOpen ? "true" : undefined}
+              aria-haspopup="menu"
+              aria-label="Open Account menu"
+              onClick={(event) => setAccountMenuAnchor(event.currentTarget)}
               sx={{
                 color: "primary.main",
                 "&:hover": { bgcolor: "rgba(1, 30, 86, 0.04)" },
@@ -696,6 +704,30 @@ export function DashboardShell({
               <PersonRoundedIcon />
             </IconButton>
           </Tooltip>
+          <Menu
+            anchorEl={accountMenuAnchor}
+            anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+            id="dashboard-account-menu"
+            onClose={() => setAccountMenuAnchor(null)}
+            open={accountMenuOpen}
+            slotProps={{ paper: { sx: { minWidth: 220 } } }}
+            transformOrigin={{ horizontal: "right", vertical: "top" }}
+          >
+            <MenuItem component={Link} href="/account/trading" onClick={() => setAccountMenuAnchor(null)}>
+              <ListItemIcon><PersonRoundedIcon fontSize="small" /></ListItemIcon>
+              Account settings
+            </MenuItem>
+            <MenuItem component={Link} href="/account/security" onClick={() => setAccountMenuAnchor(null)}>
+              <ListItemIcon><LockRoundedIcon fontSize="small" /></ListItemIcon>
+              Security
+            </MenuItem>
+            <Divider />
+            <MenuItem component="button" form="dashboard-sign-out-form" onClick={() => setAccountMenuAnchor(null)} type="submit">
+              <ListItemIcon><LogoutRoundedIcon fontSize="small" /></ListItemIcon>
+              Log out
+            </MenuItem>
+          </Menu>
+          <Box action="/api/auth/logout" component="form" id="dashboard-sign-out-form" method="post" />
         </Toolbar>
       </Box>
       <Drawer
