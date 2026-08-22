@@ -250,6 +250,7 @@ export function JournalImportClient({
       });
       if (!response.ok) throw new Error("AI review could not be started. Please try again.");
       setAiRepairOpen(false);
+      clearUploadState();
       setNotice({ severity: "success", text: "Your private review request was saved. TraderLink will let you know when this import is ready." });
     } catch (error) {
       setNotice({ severity: "error", text: error instanceof Error ? error.message : "AI review could not be started." });
@@ -427,7 +428,6 @@ export function JournalImportClient({
         <FeatureHelpLink href="/help/notifications-and-imports" label="Import Trades" size="medium" />
       </Stack>
 
-      {notice ? <Alert severity={notice.severity}>{notice.text}</Alert> : null}
       {working === "commit" ? (
         <DashboardPanel title="Importing statement">
           <Stack spacing={1.5}>
@@ -524,6 +524,7 @@ export function JournalImportClient({
                 {working === "preview" ? "Uploading..." : "Upload"}
               </Button>
             </Stack>
+            {notice ? <Alert severity={notice.severity}>{notice.text}</Alert> : null}
           </Stack>
         </Box>
         </DashboardPanel>
