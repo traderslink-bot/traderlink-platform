@@ -10,6 +10,8 @@
 - [x] Added the complete guide inventory to the root-domain sitemap.
 - [x] Redirected dashboard-host Help requests and dashboard Help controls to
   the root-domain public Help Center.
+- [x] Corrected the public Help Server Component boundary so static prerender
+  does not pass Next Link functions into Material UI client components.
 - [ ] Check all generated routes, source inventory, SEO output and responsive
   rendering.
 - [ ] Create the narrow integration commit on the current shared remote base
