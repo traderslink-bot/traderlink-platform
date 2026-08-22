@@ -20,6 +20,15 @@ type DeferredInstallPrompt = Event & {
   prompt: () => Promise<InstallPromptChoice>;
 };
 
+type InstalledRelatedApplication = Readonly<{
+  id?: string;
+  platform: string;
+}>;
+
+type NavigatorWithInstalledRelatedApps = Navigator & {
+  getInstalledRelatedApps?: () => Promise<readonly InstalledRelatedApplication[]>;
+};
+
 type InstallState =
   | "checking"
   | "installed"
@@ -38,6 +47,15 @@ function isInstalledApp(): boolean {
 function isIosDevice(): boolean {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
+async function hasInstalledTradersLinkPwa(): Promise<boolean> {
+  const browserNavigator = navigator as NavigatorWithInstalledRelatedApps;
+  if (!browserNavigator.getInstalledRelatedApps) return false;
+  const relatedApps = await browserNavigator.getInstalledRelatedApps();
+  const absoluteManifestId = new URL("/workspace", window.location.origin).href;
+  return relatedApps.some((app) => app.platform === "webapp" &&
+    (app.id === "/workspace" || app.id === absoluteManifestId));
 }
 
 export function InstallTradersLinkPwaMethods({
@@ -139,11 +157,25 @@ export function InstallTradersLinkPwaCard() {
 
   useEffect(() => {
     const standaloneQuery = window.matchMedia("(display-mode: standalone)");
-    const refresh = () => setInstalled(isInstalledApp());
+    let active = true;
+    const refresh = () => {
+      if (isInstalledApp()) {
+        setInstalled(true);
+        return;
+      }
+      void hasInstalledTradersLinkPwa()
+        .then((isInstalled) => {
+          if (active) setInstalled(isInstalled);
+        })
+        .catch(() => {
+          if (active) setInstalled(false);
+        });
+    };
     refresh();
     standaloneQuery.addEventListener("change", refresh);
     window.addEventListener("appinstalled", refresh);
     return () => {
+      active = false;
       standaloneQuery.removeEventListener("change", refresh);
       window.removeEventListener("appinstalled", refresh);
     };

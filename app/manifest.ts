@@ -14,6 +14,13 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#011e56",
     lang: "en-CA",
     categories: ["finance", "productivity"],
+    related_applications: [
+      {
+        id: "/workspace",
+        platform: "webapp",
+        url: "/manifest.webmanifest",
+      },
+    ],
     icons: [
       {
         src: "/icons/traderlink-192.png",
