@@ -43,11 +43,14 @@ TradersLink Scanner now and not wait for a separate market-data approval process
   request and leaves the full condition builder available under My Scanner.
 - [ ] Owner testing of the live Scanner at market open. Visual approval is
   requested only when the owner explicitly asks for it before a deployment.
+- [x] Record the planned Community Scanner home, My Scanners collection,
+  account-scoped ratings, scanner-alert model and mobile Scanner acceptance
+  boundary in [Scanner alerts and mobile progress](./traderslink-scanner-alerts-and-mobile-progress.md).
 
 ## Not started
 
-- [ ] My Scanners.
-- [ ] Scanner-result sharing.
+- [ ] Community Scanner home, ratings and discovery filters.
+- [ ] My Scanners collection and scanner-result sharing.
 - [ ] TradersLink Watchlists and sharing.
 - [ ] Calendar market-events layer.
 - [ ] Sunday upcoming-week notice and scanner alerts.

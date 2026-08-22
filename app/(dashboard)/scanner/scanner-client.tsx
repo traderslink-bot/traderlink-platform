@@ -36,6 +36,23 @@ const resultColumns = Object.freeze([
   "Updated",
 ]);
 
+function formatUpdatedAt(updatedAtUtc: string) {
+  return new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+  }).format(new Date(updatedAtUtc));
+}
+
+function MobileResultFact({ label, value }: { label: string; value: string }) {
+  return (
+    <Stack spacing={0.25}>
+      <Typography color="text.secondary" variant="caption">{label}</Typography>
+      <Typography sx={{ fontWeight: 700 }} variant="body2">{value}</Typography>
+    </Stack>
+  );
+}
+
 const filterGroups = Object.freeze([
   { id: "market", label: "Market & trading" },
   { id: "fundamentals", label: "Fundamentals" },
@@ -392,17 +409,35 @@ export function ScannerClient() {
           {readyScannerGroups.map((group) => (
             <Stack key={group.id} spacing={1}>
               <Typography sx={{ fontWeight: 800 }}>{group.label}</Typography>
-              <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", rowGap: 1 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gap: 1,
+                  gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))", lg: "repeat(4, minmax(0, 1fr))" },
+                }}
+              >
                 {group.scanners.map((scanner) => (
                   <DashboardSecondaryAction
                     aria-pressed={selectedReadyScanner === scanner.id}
                     key={scanner.id}
                     onClick={() => runReadyScanner(scanner)}
+                    sx={{
+                      alignItems: "center",
+                      borderWidth: selectedReadyScanner === scanner.id ? 2 : 1,
+                      justifyContent: "flex-start",
+                      lineHeight: 1.2,
+                      minHeight: 56,
+                      px: 1.25,
+                      py: 0.75,
+                      textAlign: "left",
+                      whiteSpace: "normal",
+                      width: "100%",
+                    }}
                   >
                     {scanner.label}
                   </DashboardSecondaryAction>
                 ))}
-              </Stack>
+              </Box>
             </Stack>
           ))}
         </Stack>
@@ -505,25 +540,51 @@ export function ScannerClient() {
       </DashboardPanel>
 
       <DashboardPanel action={
-        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-          <TextField label="Show" onChange={(event) => setRowLimit(Number(event.target.value) as 25 | 50 | 100)} select size="small" value={rowLimit}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center", width: { xs: "100%", sm: "auto" } }}>
+          <TextField label="Show" onChange={(event) => setRowLimit(Number(event.target.value) as 25 | 50 | 100)} select size="small" sx={{ flex: { xs: 1, sm: "initial" }, minWidth: 100 }} value={rowLimit}>
             <MenuItem value={25}>25</MenuItem><MenuItem value={50}>50</MenuItem><MenuItem value={100}>100</MenuItem>
           </TextField>
-          <DashboardPrimaryAction disabled={runState === "loading"} onClick={runCurrentScan}>{lastRun ? "Refresh" : "Run scan"}</DashboardPrimaryAction>
+          <DashboardPrimaryAction disabled={runState === "loading"} onClick={runCurrentScan} sx={{ flex: { xs: 1, sm: "initial" } }}>{lastRun ? "Refresh" : "Run scan"}</DashboardPrimaryAction>
         </Stack>
       } title="Matches">
-        <Box sx={{ maxWidth: "100%", overflowX: "auto" }}>
+        <Box sx={{ display: { xs: "block", sm: "none" } }}>
+          {result ? (
+            <Stack divider={<Divider flexItem />} spacing={0}>
+              {result.rows.map((row) => (
+                <Stack key={row.symbol} spacing={1.25} sx={{ py: 1.5 }}>
+                  <Stack direction="row" spacing={1} sx={{ alignItems: "baseline", justifyContent: "space-between" }}>
+                    <Typography sx={{ fontWeight: 800 }}>{row.symbol.replace(/^US\./u, "")}</Typography>
+                    <Typography sx={{ fontWeight: 800 }} variant="body2">{row.changePercent === null ? "—" : `${row.changePercent}%`}</Typography>
+                  </Stack>
+                  <Typography color="text.secondary" variant="body2">{row.company}</Typography>
+                  <Box sx={{ display: "grid", gap: 1.25, gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
+                    <MobileResultFact label="Last" value={row.last ?? "—"} />
+                    <MobileResultFact label="Change" value={row.changePercent === null ? "—" : `${row.changePercent}%`} />
+                    <MobileResultFact label="Volume" value={row.volume ?? "—"} />
+                    <MobileResultFact label="Market cap" value={row.marketCap ?? "—"} />
+                    <Box sx={{ gridColumn: "1 / -1" }}><MobileResultFact label="Updated" value={formatUpdatedAt(row.updatedAtUtc)} /></Box>
+                  </Box>
+                </Stack>
+              ))}
+            </Stack>
+          ) : (
+            <Box sx={{ py: 5, textAlign: "center" }}>
+              {runState === "loading" ? <Typography sx={{ fontWeight: 700 }}>Running your screen…</Typography> : runError === "connection" ? <Typography sx={{ fontWeight: 700 }}>Connect market data before running this screen.</Typography> : runError === "unavailable" ? <Typography sx={{ fontWeight: 700 }}>Market data could not provide results right now. Try again shortly.</Typography> : <Typography sx={{ fontWeight: 700 }}>Add your conditions, then run the screen.</Typography>}
+            </Box>
+          )}
+        </Box>
+        <Box sx={{ display: { xs: "none", sm: "block" }, maxWidth: "100%", overflowX: "auto" }}>
           <Table aria-label="Scanner results" size="small" sx={{ minWidth: 760 }}>
             <TableHead><TableRow>{resultColumns.map((column) => <TableCell key={column}>{column}</TableCell>)}</TableRow></TableHead>
             <TableBody>{result ? result.rows.map((row) => <TableRow key={row.symbol}>
-              <TableCell sx={{ fontWeight: 700 }}>{row.symbol.replace(/^US\./u, "")}</TableCell><TableCell>{row.company}</TableCell><TableCell>{row.last ?? "—"}</TableCell><TableCell>{row.changePercent === null ? "—" : `${row.changePercent}%`}</TableCell><TableCell>{row.volume ?? "—"}</TableCell><TableCell>{row.marketCap ?? "—"}</TableCell><TableCell>{new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit", second: "2-digit" }).format(new Date(row.updatedAtUtc))}</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>{row.symbol.replace(/^US\./u, "")}</TableCell><TableCell>{row.company}</TableCell><TableCell>{row.last ?? "—"}</TableCell><TableCell>{row.changePercent === null ? "—" : `${row.changePercent}%`}</TableCell><TableCell>{row.volume ?? "—"}</TableCell><TableCell>{row.marketCap ?? "—"}</TableCell><TableCell>{formatUpdatedAt(row.updatedAtUtc)}</TableCell>
             </TableRow>) : <TableRow><TableCell colSpan={resultColumns.length} sx={{ py: 5, textAlign: "center" }}>
               {runState === "loading" ? <Typography sx={{ fontWeight: 700 }}>Running your screen…</Typography> : runError === "connection" ? <Typography sx={{ fontWeight: 700 }}>Connect market data before running this screen.</Typography> : runError === "unavailable" ? <Typography sx={{ fontWeight: 700 }}>Market data could not provide results right now. Try again shortly.</Typography> : <Typography sx={{ fontWeight: 700 }}>Add your conditions, then run the screen.</Typography>}
             </TableCell></TableRow>}
             </TableBody>
           </Table>
         </Box>
-        {result ? <Typography color="text.secondary" sx={{ mt: 1.25 }} variant="body2">{result.total.toLocaleString()} matches · Updated {new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit", second: "2-digit" }).format(new Date(result.updatedAtUtc))}{result.cached ? " · Current shared result" : ""}</Typography> : null}
+        {result ? <Typography color="text.secondary" sx={{ mt: 1.25 }} variant="body2">{result.total.toLocaleString()} matches · Updated {formatUpdatedAt(result.updatedAtUtc)}{result.cached ? " · Current shared result" : ""}</Typography> : null}
       </DashboardPanel>
     </DashboardPage>
   );
