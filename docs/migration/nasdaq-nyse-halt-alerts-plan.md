@@ -28,10 +28,11 @@ The alert shows the source exchange, its actual code, and that code's plain-Engl
 ## Preferences and delivery
 
 - **Halt Alerts (Nasdaq/NYSE)** is a left-navigation drawer. It opens as a full-width mobile card with an X and backdrop close control.
+- The drawer keeps the Halt alerts control at the top, followed by Muted Tickers and the existing TradersLink PWA install action.
 - Users turn **Halt alerts** on or off in that drawer; it is not automatically enabled.
 - The drawer can mute a ticker for today and lists the currently muted tickers in small type with an X to unmute each one.
 - Both Discord messages and Push notifications get their own **Select all** control while retaining individual choices.
-- A **Mute for today** action on a halt notification mutes that ticker through 4:00 PM Eastern. It automatically returns the ticker's alerts after the current trading day ends.
+- A **Mute for today** action on a halt notification mutes that ticker through 8:00 PM Eastern. It automatically returns the ticker's alerts that evening.
 - The existing Platform encrypted Web Push transport delivers the alert. The protected `/api/cron/market-halts` endpoint polls Nasdaq and NYSE once a minute after owner UI approval; the Railway scheduler calls it over HTTPS and sends real Push alerts.
 
 ## Source rules
