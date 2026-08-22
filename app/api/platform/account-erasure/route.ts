@@ -108,6 +108,12 @@ function unavailableResponse(error: unknown): NextResponse {
   const code = isTraderLinkPlatformError(error)
     ? error.code
     : "TRADERLINK_ACCOUNT_ERASURE_FAILED";
+  console.error("[account-erasure] request failed", {
+    code,
+    error: error instanceof Error
+      ? { message: error.message, name: error.name, stack: error.stack }
+      : { name: typeof error },
+  });
   const status = code === "TRADERLINK_ACCOUNT_ERASURE_CONFIRMATION_INVALID"
     ? 400
     : code === "TRADERLINK_ACCOUNT_SELECTION_CONFLICT" || code === "TRADERLINK_ACCOUNT_NOT_FOUND"
