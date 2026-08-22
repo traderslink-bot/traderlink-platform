@@ -21,6 +21,10 @@ const CONFIRMATION: Readonly<Record<Exclude<ErasureDialog, null>, string>> = Obj
   traderlink_account: "DELETE MY TRADERLINK ACCOUNT",
 });
 
+function normalizedConfirmation(value: string): string {
+  return value.trim().replace(/\s+/gu, " ").toUpperCase();
+}
+
 export function AccountErasureControls({
   activeAccount,
 }: {
@@ -31,6 +35,7 @@ export function AccountErasureControls({
   const [working, setWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const expectedConfirmation = dialog ? CONFIRMATION[dialog] : "";
+  const confirmationMatches = normalizedConfirmation(confirmation) === expectedConfirmation;
 
   function closeDialog(): void {
     if (working) return;
@@ -46,7 +51,7 @@ export function AccountErasureControls({
   }
 
   async function erase(): Promise<void> {
-    if (!dialog || confirmation !== expectedConfirmation || working) return;
+    if (!dialog || !confirmationMatches || working) return;
     setWorking(true);
     setError(null);
     try {
@@ -59,7 +64,7 @@ export function AccountErasureControls({
         },
         body: JSON.stringify({
           action: dialog,
-          confirmation,
+          confirmation: expectedConfirmation,
           expectedAccountSelectionRef: dialog === "trade_tracker_account"
             ? activeAccount?.selectionRef ?? null
             : null,
@@ -152,7 +157,7 @@ export function AccountErasureControls({
           <Button disabled={working} onClick={closeDialog} sx={{ width: { xs: "100%", sm: "auto" } }}>Cancel</Button>
           <Button
             color="error"
-            disabled={working || confirmation !== expectedConfirmation}
+            disabled={working || !confirmationMatches}
             onClick={() => void erase()}
             sx={{ width: { xs: "100%", sm: "auto" } }}
             variant="contained"
