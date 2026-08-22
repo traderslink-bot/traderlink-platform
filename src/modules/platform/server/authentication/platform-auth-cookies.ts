@@ -1,5 +1,7 @@
 import type { NextRequest, NextResponse } from "next/server";
 
+import { resolvePlatformPublicOrigin } from "./platform-public-origin";
+
 const TRADERSLINK_COOKIE_DOMAIN = ".traderslink.pro";
 
 type CookieOptions = Readonly<{
@@ -9,7 +11,7 @@ type CookieOptions = Readonly<{
 }>;
 
 function cookieOptions(request: NextRequest, maxAge?: number): CookieOptions {
-  const hostname = request.nextUrl.hostname.toLowerCase();
+  const hostname = new URL(resolvePlatformPublicOrigin(request)).hostname.toLowerCase();
   const domain = hostname === "traderslink.pro" ||
       hostname.endsWith(".traderslink.pro")
     ? TRADERSLINK_COOKIE_DOMAIN
