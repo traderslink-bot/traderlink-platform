@@ -106,7 +106,7 @@ function screenQuery(filter: ScannerFilterInput, todaySeconds: number): Record<s
     rsi: { "Bearish crossover": 32, "Bottom divergence": 34, "Bullish crossover": 31, "Top divergence": 33 },
     bollinger: { "Above middle band": 43, "Below middle band": 44, "Breaks above upper band": 41, "Breaks below lower band": 42 },
     "trend-pattern": { "Any bearish signal": 101, "Any bullish signal": 100, "EMA bearish alignment": 4, "EMA bullish alignment": 3, "MA bearish alignment": 2, "MA bullish alignment": 1 },
-  } satisfies Record<string, Record<string, number>>)[filter.id];
+  } as Record<string, Record<string, number>>)[filter.id];
   if (patterns) {
     const name = patterns[filter.choice ?? ""];
     return name ? { indicator_pattern_query: { name, period_type: periodType(filter.timeframe) } } : null;
@@ -114,7 +114,7 @@ function screenQuery(filter: ScannerFilterInput, todaySeconds: number): Record<s
   const shapes = ({
     "bullish-chart-pattern": { "Any bullish pattern": 2000, "Bull flag": 6, "Bullish diamond": 8, "Bullish symmetrical triangle": 7, "Bullish triangle": 10, "Bullish wedge": 9, "Head and shoulders bottom": 3, "Megaphone bottom": 5, "Rounding bottom": 4, "Triple bottom": 2, "W bottom": 1 },
     "bearish-chart-pattern": { "Any bearish pattern": 2001, "Bear flag": 1006, "Bearish diamond": 1008, "Bearish symmetrical triangle": 1007, "Bearish triangle": 1010, "Bearish wedge": 1009, "Head and shoulders top": 1003, "Megaphone top": 1005, "Rounding top": 1004, "Triple top": 1002, "W top": 1001 },
-  } satisfies Record<string, Record<string, number>>)[filter.id];
+  } as Record<string, Record<string, number>>)[filter.id];
   if (shapes) {
     const name = shapes[filter.choice ?? ""];
     return name ? { kline_shape_query: { property: { name, period: periodType(filter.timeframe) } } } : null;
