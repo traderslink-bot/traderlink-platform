@@ -69,13 +69,13 @@ export function createJournalAiImportRepairOpenAiProvider(
 ): JournalAiImportRepairProvider | null {
   if (!enabled(environment)) return null;
   const openai = createOpenAI({ apiKey: environment.OPENAI_API_KEY!.trim() });
-  const modelId = environment.TRADERLINK_PLATFORM_AI_IMPORT_REPAIR_MODEL?.trim() || "gpt-5.6-luna";
+  const modelId = environment.TRADERLINK_PLATFORM_AI_IMPORT_REPAIR_MODEL?.trim() || "gpt-5.6-terra";
   return async ({ sourceText, confirmedBrokerName }) => {
     const result = await generateText({
       model: openai(modelId),
       maxOutputTokens: 2_000,
       output: Output.object({ schema: mappingSchema }),
-      providerOptions: { openai: { reasoningEffort: "low", reasoningSummary: null, store: false } },
+      providerOptions: { openai: { reasoningEffort: "high", reasoningSummary: null, store: false } },
       system: `${SYSTEM}\nThe trader confirmed the broker name as ${JSON.stringify(confirmedBrokerName)}. Set brokerName to that exact value; do not infer or replace it.`,
       prompt: sourceText,
     });
