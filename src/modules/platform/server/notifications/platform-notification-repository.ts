@@ -235,6 +235,20 @@ WHERE notification.notification_id = ? AND notification.workspace_id = ?
     }
   }
 
+  markAllRead(scope: WorkspaceAccessScope, readAtUtc: string): void {
+    this.assertActiveScope(scope);
+    assertCanonicalUtcTimestamp(readAtUtc, "notificationReadAtUtc");
+    this.database.prepare(`UPDATE platform_notification_receipts
+SET read_at_utc = ?
+WHERE recipient_user_id = ? AND read_at_utc IS NULL
+  AND EXISTS (
+    SELECT 1 FROM platform_notifications notification
+    WHERE notification.notification_id = platform_notification_receipts.notification_id
+      AND notification.workspace_id = ?
+      AND notification.recipient_user_id = ?
+  )`).run(readAtUtc, scope.userId, scope.workspaceId, scope.userId);
+  }
+
   readPreferences(scope: WorkspaceAccessScope): PlatformNotificationPreferences {
     this.assertActiveScope(scope);
     const rows = this.database.prepare<[string], PreferenceRow>(`SELECT category, discord_dm_enabled, web_push_enabled

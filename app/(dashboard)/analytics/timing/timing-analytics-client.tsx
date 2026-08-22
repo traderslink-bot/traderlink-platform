@@ -49,7 +49,6 @@ const CHART_STYLES: readonly Readonly<{ id: TimingChartStyle; label: string }>[]
   { id: "horizontal_bars", label: "Horizontal bars" },
 ];
 
-const TIME_CHART_STYLES = CHART_STYLES.filter((style) => style.id === "horizontal_bars" || style.id === "line");
 const CATEGORY_CHART_STYLES = CHART_STYLES.filter((style) => style.id === "horizontal_bars" || style.id === "columns");
 
 function timeLabel(value: string): string {
@@ -163,7 +162,27 @@ function ReliableTimeLabel({ chart, points }: { chart: (typeof CHARTS)[number]; 
     })[0] ?? null, [points]);
   const noun = chart.id === "entry_time_bucket" ? "entry" : "exit";
   if (!reliable) {
-    return <Typography color="text.secondary" sx={{ fontSize: 12 }}>Most reliable {noun} time: more repeated trades are needed.</Typography>;
+    const mostRepeated = [...points]
+      .filter((point) => point.metrics.included_count.value !== null)
+      .sort((left, right) => (right.metrics.included_count.value ?? 0) - (left.metrics.included_count.value ?? 0))[0] ?? null;
+    if (!mostRepeated || (mostRepeated.metrics.included_count.value ?? 0) < RELIABLE_TIME_MINIMUM_TRADES) {
+      return <Typography color="text.secondary" sx={{ fontSize: 12 }}>Most reliable {noun} time: at least 10 completed trades are needed in the same time window.</Typography>;
+    }
+    const reasons = [
+      (mostRepeated.metrics.median_pnl.value ?? 0) <= 0 ? "a profitable typical trade" : null,
+      (mostRepeated.metrics.win_rate.value ?? 0) <= 50 ? "more than half winning trades" : null,
+      (mostRepeated.metrics.net_pnl.value ?? 0) - (mostRepeated.metrics.best_trade.value ?? 0) <= 0
+        ? "profitability without relying on its largest winner"
+        : null,
+    ].filter((reason): reason is string => reason !== null);
+    return (
+      <Typography color="text.secondary" sx={{ fontSize: 12 }}>
+        No {noun} time currently passes every reliability check. The most repeated window is{" "}
+        <Box component="span" sx={{ color: "text.primary", fontWeight: 800 }}>{labelFor(chart.id, mostRepeated)}</Box>
+        {` · ${mostRepeated.metrics.included_count.display} trades`}
+        {reasons.length > 0 ? ` · needs ${reasons.join(", ")}.` : ". Some required results are unavailable."}
+      </Typography>
+    );
   }
   const { point } = reliable;
   return (
@@ -294,6 +313,7 @@ function PieChart({ points, donut }: { points: readonly TimingPoint[]; donut: bo
 
 function ChartPanel({ chart, points, metricId, timezone, styles }: { chart: (typeof CHARTS)[number]; points: readonly TimingPoint[]; metricId: TimingMetricId; timezone: string; styles: readonly Readonly<{ id: TimingChartStyle; label: string }>[] }) {
   const [chartStyle, setChartStyle] = useState<TimingChartStyle>("horizontal_bars");
+  const fixedHorizontalBars = chart.id === "entry_time_bucket" || chart.id === "exit_time_bucket";
   return (
     <Paper sx={{ minWidth: 0, p: { xs: 1.5, sm: 2.25 } }} variant="outlined">
       <Stack direction={{ xs: "column", sm: "row" }} spacing={0.5} sx={{ alignItems: { sm: "baseline" }, justifyContent: "space-between" }}>
@@ -307,7 +327,7 @@ function ChartPanel({ chart, points, metricId, timezone, styles }: { chart: (typ
             {chart.id === "entry_time_bucket" || chart.id === "exit_time_bucket" ? <ReliableTimeLabel chart={chart} points={points} /> : null}
           </Stack>
         </Box>
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" } }}>
+        {!fixedHorizontalBars ? <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" } }}>
           <TextField
             aria-label={`${chart.title} chart type`}
             onChange={(event) => setChartStyle(event.target.value as TimingChartStyle)}
@@ -318,11 +338,11 @@ function ChartPanel({ chart, points, metricId, timezone, styles }: { chart: (typ
           >
             {styles.map((option) => <MenuItem key={option.id} value={option.id}>{option.label}</MenuItem>)}
           </TextField>
-        </Stack>
+        </Stack> : null}
       </Stack>
-      {chartStyle === "columns" ? <ColumnChart metricId={metricId} points={points} /> : null}
-      {chartStyle === "line" ? <TrendChart chartId={chart.id} metricId={metricId} points={points} /> : null}
-      {chartStyle === "horizontal_bars" ? <HorizontalBarChart metricId={metricId} points={points} /> : null}
+      {!fixedHorizontalBars && chartStyle === "columns" ? <ColumnChart metricId={metricId} points={points} /> : null}
+      {!fixedHorizontalBars && chartStyle === "line" ? <TrendChart chartId={chart.id} metricId={metricId} points={points} /> : null}
+      {fixedHorizontalBars || chartStyle === "horizontal_bars" ? <HorizontalBarChart metricId={metricId} points={points} /> : null}
     </Paper>
   );
 }
@@ -348,7 +368,7 @@ export function TimingAnalyticsClient({ chartData, completedTradeCount, timezone
         <FeatureHelpLink href="/help/core-analytics/timing-and-execution#read-timing" label="Timing measures" />
       </Stack>
       <Box sx={{ display: "grid", gap: 2.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", lg: "repeat(2, minmax(0, 1fr))" } }}>
-        {CHARTS.map((chart) => <ChartPanel chart={chart} key={chart.id} metricId={metricId} points={chartData[chart.id]} styles={chart.id === "entry_time_bucket" || chart.id === "exit_time_bucket" ? TIME_CHART_STYLES : CATEGORY_CHART_STYLES} timezone={timezone} />)}
+        {CHARTS.map((chart) => <ChartPanel chart={chart} key={chart.id} metricId={metricId} points={chartData[chart.id]} styles={CATEGORY_CHART_STYLES} timezone={timezone} />)}
       </Box>
       <Box sx={{ display: "grid", gap: 2.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", lg: "repeat(2, minmax(0, 1fr))" } }}>
         <TradeDistributionPanel chart={CHARTS[2]!} points={chartData.entry_weekday} />

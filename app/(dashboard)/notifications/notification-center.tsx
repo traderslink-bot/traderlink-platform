@@ -8,7 +8,8 @@ import Menu from "@mui/material/Menu";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import type { PlatformNotification } from "@/src/modules/platform/contracts/platform-notification-contracts";
 import { isNotificationDismissed } from "./notification-dismissal";
@@ -19,12 +20,23 @@ export function NotificationCenter({
 }: {
   notifications: readonly PlatformNotification[];
 }) {
+  const router = useRouter();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [dismissedNotificationRefs, setDismissedNotificationRefs] = useState<readonly string[]>([]);
-  const visibleNotifications = notifications.filter((notification) =>
+  const [readNotificationRefs, setReadNotificationRefs] = useState<readonly string[]>([]);
+  const visibleNotifications = notifications.map((notification) =>
+    readNotificationRefs.includes(notification.notificationRef)
+      ? Object.freeze({ ...notification, readAtUtc: notification.readAtUtc ?? new Date().toISOString() })
+      : notification).filter((notification) =>
     !dismissedNotificationRefs.includes(notification.notificationRef) &&
     !isNotificationDismissed(notification.notificationRef));
   const unreadCount = visibleNotifications.filter((notification) => notification.readAtUtc === null).length;
+
+  useEffect(() => {
+    const refresh = () => router.refresh();
+    window.addEventListener("focus", refresh);
+    return () => window.removeEventListener("focus", refresh);
+  }, [router]);
 
   return (
     <>
@@ -35,7 +47,7 @@ export function NotificationCenter({
           onClick={(event) => setAnchor(event.currentTarget)}
           sx={{ height: 44, width: 44 }}
         >
-          <Badge badgeContent={unreadCount} color="primary" max={99}>
+          <Badge badgeContent={unreadCount} color="error" max={99}>
             <NotificationsNoneRoundedIcon />
           </Badge>
         </IconButton>
@@ -68,7 +80,12 @@ export function NotificationCenter({
         <NotificationList
           compact
           notifications={visibleNotifications.slice(0, 5)}
+          onAllNotificationsRead={() => setReadNotificationRefs(
+            visibleNotifications.map((notification) => notification.notificationRef),
+          )}
           onNotificationDismissed={(notificationRef) => setDismissedNotificationRefs((current) =>
+            current.includes(notificationRef) ? current : [...current, notificationRef])}
+          onNotificationRead={(notificationRef) => setReadNotificationRefs((current) =>
             current.includes(notificationRef) ? current : [...current, notificationRef])}
         />
       </Menu>

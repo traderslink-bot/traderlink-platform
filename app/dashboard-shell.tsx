@@ -140,6 +140,7 @@ function pressReleaseUnreadCount(
 
 function NavigationLink({
   collapsed,
+  grouped = false,
   offline,
   item,
   onNavigate,
@@ -148,6 +149,7 @@ function NavigationLink({
   unreadCount = 0,
 }: {
   collapsed: boolean;
+  grouped?: boolean;
   offline: boolean;
   item: DashboardNavigationItem;
   onNavigate: () => void;
@@ -181,7 +183,7 @@ function NavigationLink({
         minHeight: 44,
         mx: 1,
         my: 0.25,
-        pl: collapsed ? 1.25 : item.depth === 2 ? 4.75 : item.depth === 1 ? 2.25 : 1.5,
+        pl: collapsed ? 1.25 : item.depth === 2 ? 4.75 : item.depth === 1 ? 3 : grouped ? 2.75 : 1.5,
         pr: collapsed ? 1.25 : 1.5,
         justifyContent: collapsed ? "center" : "initial",
         "&.Mui-selected": {
@@ -242,7 +244,7 @@ function NavigationLink({
           slotProps={{
             primary: {
               sx: {
-                fontSize: item.depth === 2 ? 13 : 14,
+                fontSize: item.depth === 2 ? 12.5 : grouped ? 13 : 14,
                 fontWeight: item.depth === 1 ? 760 : 620,
               },
             },
@@ -436,7 +438,15 @@ export function DashboardShell({
                 ? pressReleaseUnreadCounts?.all ?? 0
                 : 0;
               return (
-                <Box key={group.id}>
+                <Box
+                  key={group.id}
+                  sx={compact ? undefined : {
+                    borderBottom: "1px solid #aeb8c7",
+                    borderTop: "1px solid #aeb8c7",
+                    my: 1,
+                    py: 0.5,
+                  }}
+                >
                   {divider}
                   {compact ? null : (
                     <ListItemButton
@@ -447,7 +457,7 @@ export function DashboardShell({
                           [group.id]: !current[group.id],
                         }))
                       }
-                      sx={{ borderRadius: 2, minHeight: 40, mx: 1, mt: 0.75 }}
+                      sx={{ borderRadius: 2, minHeight: 42, mx: 1, mt: 0.25 }}
                     >
                       <ListItemIcon sx={{ minWidth: 38 }}>
                         {navigationIcon(group.icon)}
@@ -478,7 +488,7 @@ export function DashboardShell({
                         )}
                         slotProps={{
                           primary: {
-                            sx: { fontSize: 13, fontWeight: 720 },
+                            sx: { fontSize: 14.5, fontWeight: 820 },
                           },
                         }}
                       />
@@ -490,10 +500,18 @@ export function DashboardShell({
                     </ListItemButton>
                   )}
                   <Collapse in={compact || open} timeout="auto" unmountOnExit>
-                    <List disablePadding>
+                    <List
+                      disablePadding
+                      sx={compact ? undefined : {
+                        borderLeft: "2px solid #d4dae3",
+                        ml: 2.5,
+                        mr: 0.5,
+                      }}
+                    >
                       {group.items.map((item) => (
                         <NavigationLink
                           collapsed={compact}
+                          grouped
                           offline={offline}
                           item={item}
                           key={item.href}

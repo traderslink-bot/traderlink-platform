@@ -44,7 +44,7 @@ const aiStatusLabel = areTraderLinkPlatformAiFeaturesEnabled()
   : "Coming soon" as const;
 
 export type DashboardNavigationGroup = Readonly<{
-  id: "trades" | "pressReleases" | "analytics" | "tradeAnalyzer" | "ai" | "tradeData";
+  id: "tradeEntry" | "trades" | "rules" | "pressReleases" | "analytics" | "tradeAnalyzer" | "ai" | "tradeRecords";
   label: string;
   icon: DashboardNavigationIconKey;
   items: readonly DashboardNavigationItem[];
@@ -59,9 +59,9 @@ export const DASHBOARD_HOME_ITEM: DashboardNavigationItem = Object.freeze({
 export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup[] =
   Object.freeze([
     Object.freeze({
-      id: "trades" as const,
-      label: "Trades",
-      icon: "tradeGroup" as const,
+      id: "tradeEntry" as const,
+      label: "Trade Entry",
+      icon: "manualEntry" as const,
       items: Object.freeze([
         Object.freeze({
           href: "/trade-tracker",
@@ -78,6 +78,13 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
           label: "Quick Trade Entry",
           icon: "manualEntry" as const,
         }),
+      ]),
+    }),
+    Object.freeze({
+      id: "trades" as const,
+      label: "Trades",
+      icon: "tradeGroup" as const,
+      items: Object.freeze([
         Object.freeze({
           href: "/calendar",
           label: "Calendar",
@@ -93,11 +100,13 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
           label: "Compare Trades",
           icon: "compareArrows" as const,
         }),
-        Object.freeze({
-          href: "/trades/open",
-          label: "Open Positions",
-          icon: "data" as const,
-        }),
+      ]),
+    }),
+    Object.freeze({
+      id: "rules" as const,
+      label: "Rules",
+      icon: "rules" as const,
+      items: Object.freeze([
         Object.freeze({
           href: "/rules",
           label: "Trading Rules",
@@ -190,10 +199,11 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
       ]),
     }),
     Object.freeze({
-      id: "tradeData" as const,
-      label: "Trade Data",
+      id: "tradeRecords" as const,
+      label: "Trade Records",
       icon: "data" as const,
       items: Object.freeze([
+        Object.freeze({ href: "/trades/open", label: "Open Positions", icon: "data" as const }),
         Object.freeze({ href: "/imports", label: "Import Trades", icon: "import" as const }),
         Object.freeze({ href: "/data-decisions", label: "Data Decisions", icon: "data" as const }),
       ]),
@@ -242,8 +252,10 @@ export const DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS: readonly DashboardSidebarNav
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[2] }),
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[3] }),
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[4] }),
+    Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[5] }),
+    Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[6] }),
     Object.freeze({ kind: "item" as const, item: DASHBOARD_STANDALONE_ITEMS[0], dividerBefore: true }),
-    Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[5], dividerBefore: true }),
+    Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[7], dividerBefore: true }),
   ]);
 
 export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =

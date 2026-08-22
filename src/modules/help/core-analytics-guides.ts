@@ -68,9 +68,10 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       bullets([
         "Choose Net P/L, Average P/L per trade, Win rate or Trade count to change the measure in the charts.",
         "Entry time and Exit time show the timezone named in the chart title.",
-        "Charts start with phone-friendly horizontal bars. Use the chart-style control to change how the same recorded groups are displayed.",
+        "Entry time and Exit time use phone-friendly horizontal bars. Day of week and Trading session keep their available chart-style control.",
         "Highest total P/L identifies the time range with the largest recorded result. It is useful history, but it is not automatically the most repeatable time to trade.",
         "Most reliable entry or exit time needs at least 10 completed trades in one time range, a positive typical result, more than half winning, and a positive result after removing that range's single largest winner. It gives more weight to repeated results than a small sample.",
+        "When no time range passes every reliability check, the card identifies the most repeated range and explains which check it did not pass.",
       ]),
     ]),
     section("read-execution", "Read Trade Breakdown", "Trade Breakdown groups completed trades by entry size, maximum position and holding duration.", ["trade breakdown", "execution analytics", "entry size", "maximum position", "holding time", "long short"], [

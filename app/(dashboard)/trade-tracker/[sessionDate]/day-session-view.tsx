@@ -2770,16 +2770,9 @@ export function DaySessionView({
     void saveDayReview("reviewed");
   }
 
-  const activeSwingPositionsForDay = data.openPositions.filter((position) =>
-    position.style?.openStatus === "swing" && data.executionActivity.some((execution) =>
+  const visibleOpenPositions = data.openPositions.filter((position) =>
+    data.executionActivity.some((execution) =>
       execution.roundTripKeys.includes(position.positionKey)));
-  const dayTrackerOpenPositions = data.openPositions.filter(
-    (position) => position.style?.openStatus !== "swing",
-  );
-  const visibleOpenPositions = [
-    ...activeSwingPositionsForDay,
-    ...dayTrackerOpenPositions,
-  ];
 
   return (
     <DashboardPage>

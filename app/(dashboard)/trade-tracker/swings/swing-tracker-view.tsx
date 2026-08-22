@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Alert,
   Box,
   Button,
   Card,
@@ -317,10 +316,6 @@ export function SwingTrackerView({
         </Box>
         <FeatureHelpLink href="/help/swing-trade-tracker" label="Swing Trade Tracker" size="medium" />
       </Stack>
-
-      <Alert severity="info">
-        Swing Trade Tracker is in early beta. Use the available workflow today, and share feature suggestions that would make your review more useful.
-      </Alert>
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
         {offlineSavedAtUtc ? (

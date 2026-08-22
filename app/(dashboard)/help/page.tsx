@@ -50,7 +50,7 @@ const HELP_COLLECTIONS = Object.freeze([
     title: "Quick Trade Entry",
   }),
   Object.freeze({
-    description: "Use the current beta workflow for intentional swing positions, dated notes and completed swing history.",
+    description: "Review intentional swing positions, dated notes and completed swing history.",
     href: "/help/swing-trade-tracker",
     Icon: TodayRoundedIcon,
     title: "Swing Trade Tracker",

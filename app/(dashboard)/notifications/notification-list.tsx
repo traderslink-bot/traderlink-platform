@@ -12,7 +12,7 @@ import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore } from "react";
 
 import type { PlatformNotification } from "@/src/modules/platform/contracts/platform-notification-contracts";
-import { markNotificationRead } from "./notification-actions";
+import { markAllNotificationsRead, markNotificationRead } from "./notification-actions";
 import { dismissNotification, isNotificationDismissed } from "./notification-dismissal";
 
 function subscribeToHydration(): () => void {
@@ -32,12 +32,16 @@ function formatNotificationTime(occurredAtUtc: string) {
 export function NotificationList({
   compact = false,
   offline = false,
+  onAllNotificationsRead,
   onNotificationDismissed,
+  onNotificationRead,
   notifications,
 }: {
   compact?: boolean;
   offline?: boolean;
+  onAllNotificationsRead?: () => void;
   onNotificationDismissed?: (notificationRef: string) => void;
+  onNotificationRead?: (notificationRef: string) => void;
   notifications: readonly PlatformNotification[];
 }) {
   const localTimeReady = useSyncExternalStore(
@@ -57,6 +61,7 @@ export function NotificationList({
     setItems((current) => current.map((item) => item.notificationRef === notificationRef
       ? Object.freeze({ ...item, readAtUtc: new Date().toISOString() })
       : item));
+    onNotificationRead?.(notificationRef);
     void markNotificationRead(notificationRef);
   }
 
@@ -66,6 +71,16 @@ export function NotificationList({
     setItems((current) => current.filter((item) => item.notificationRef !== notificationRef));
     onNotificationDismissed?.(notificationRef);
     void markNotificationRead(notificationRef);
+  }
+
+  function markAllRead(): void {
+    if (offline) return;
+    const readAtUtc = new Date().toISOString();
+    setItems((current) => current.map((item) => item.readAtUtc === null
+      ? Object.freeze({ ...item, readAtUtc })
+      : item));
+    onAllNotificationsRead?.();
+    void markAllNotificationsRead();
   }
   if (items.length === 0) {
     return (
@@ -78,7 +93,13 @@ export function NotificationList({
   }
 
   return (
-    <Stack divider={<Box sx={{ borderTop: 1, borderColor: "divider" }} />} spacing={0}>
+    <Stack spacing={0}>
+      {items.some((item) => item.readAtUtc === null) ? (
+        <Box sx={{ borderBottom: 1, borderColor: "divider", px: compact ? 1.5 : 2, py: 0.75, textAlign: "right" }}>
+          <Button disabled={offline} onClick={markAllRead} size="small">Mark all read</Button>
+        </Box>
+      ) : null}
+      <Stack divider={<Box sx={{ borderTop: 1, borderColor: "divider" }} />} spacing={0}>
       {items.map((notification) => {
         const content = (
           <Stack direction="row" spacing={1.5} sx={{ alignItems: "flex-start", p: compact ? 1.5 : 2 }}>
@@ -124,6 +145,7 @@ export function NotificationList({
           </Stack>
         );
       })}
+      </Stack>
     </Stack>
   );
 }

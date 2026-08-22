@@ -1,7 +1,6 @@
 "use client";
 
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
-import DateRangeRoundedIcon from "@mui/icons-material/DateRangeRounded";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -15,7 +14,6 @@ import {
   DashboardMetricCard,
   DashboardPage,
   DashboardPanel,
-  DashboardPrimaryAction,
   DashboardSecondaryAction,
   DashboardUnavailableState,
 } from "../../dashboard-template";
@@ -57,7 +55,7 @@ const unavailableMetrics: readonly WorkspaceMetric[] = [
     caption: "Gross wins ÷ losses",
   },
   {
-    label: "Round trips",
+    label: "Trades",
     value: "—",
     caption: "Selected period",
   },
@@ -173,13 +171,6 @@ export function WorkspaceDashboard({
             />
           ) : null}
         </Stack>
-        <Button
-          disabled
-          startIcon={<DateRangeRoundedIcon />}
-          variant="outlined"
-        >
-          All available history
-        </Button>
       </Stack>
 
       <Box
@@ -251,14 +242,32 @@ export function WorkspaceDashboard({
         ) : null}
 
         <DashboardPanel title="Add Trades">
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+          <Box
+            sx={{
+              display: "grid",
+              gap: 1,
+              gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" },
+            }}
+          >
+            <DashboardSecondaryAction href="/trade-tracker" sx={{ justifyContent: "flex-start" }}>
+              Daily Trades
+            </DashboardSecondaryAction>
+            <DashboardSecondaryAction href="/trade-tracker/swings" sx={{ justifyContent: "flex-start" }}>
+              Swing Trades
+            </DashboardSecondaryAction>
+            <DashboardSecondaryAction href="/quick-trade-entry" sx={{ justifyContent: "flex-start" }}>
+              Quick Trade Entry
+            </DashboardSecondaryAction>
             {offlineSavedAtUtc ? (
-              <DashboardPrimaryAction disabled>Import trades</DashboardPrimaryAction>
+              <DashboardSecondaryAction disabled sx={{ justifyContent: "flex-start" }}>
+                Import Statements
+              </DashboardSecondaryAction>
             ) : (
-              <DashboardPrimaryAction href="/imports">Import trades</DashboardPrimaryAction>
+              <DashboardSecondaryAction href="/imports" sx={{ justifyContent: "flex-start" }}>
+                Import Statements
+              </DashboardSecondaryAction>
             )}
-            <DashboardSecondaryAction href="/quick-trade-entry">Quick trade entry</DashboardSecondaryAction>
-          </Stack>
+          </Box>
           {offlineSavedAtUtc ? (
             <Typography color="text.secondary" sx={{ mt: 1 }} variant="caption">
               Reconnect to import trades. Quick Trade Entry remains available offline.

@@ -20,3 +20,16 @@ export async function markNotificationRead(notificationRef: string): Promise<voi
   revalidatePath("/notifications");
   revalidatePath("/workspace");
 }
+
+export async function markAllNotificationsRead(): Promise<void> {
+  const scope = await requireTraderLinkPlatformPageScope();
+  withPlatformDatabase(
+    { mode: "runtime" },
+    (database) => new PlatformNotificationRepository(database).markAllRead(
+      scope,
+      createCanonicalUtcTimestamp(),
+    ),
+  );
+  revalidatePath("/notifications");
+  revalidatePath("/workspace");
+}

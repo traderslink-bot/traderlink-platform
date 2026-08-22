@@ -72,7 +72,7 @@ export const HELP_NAVIGATION_ITEMS: readonly HelpNavigationItem[] = Object.freez
     href: "/help/swing-trade-tracker",
     icon: "trade_tracker",
     label: "Swing Trade Tracker",
-    summary: "Use the current beta workflow for intentional swing positions and dated notes.",
+    summary: "Review intentional swing positions and dated notes.",
   }),
   ...guideNavigationItems("/help/swing-trade-tracker", SWING_TRADE_TRACKER_HELP_GUIDES, "trade_tracker"),
   Object.freeze({
@@ -221,9 +221,9 @@ export const HELP_SEARCH_RECORDS: readonly HelpSearchRecord[] = Object.freeze([
   Object.freeze({
     href: "/help/swing-trade-tracker",
     id: "swing-trade-tracker-overview",
-    keywords: Object.freeze(["swing trade", "active swing", "swing notes", "swing beta"]),
+    keywords: Object.freeze(["swing trade", "active swing", "swing notes"]),
     section: "Swing Trade Tracker",
-    summary: "Use the current beta workflow for intentional swing positions and dated notes.",
+    summary: "Review intentional swing positions and dated notes.",
     title: "Swing Trade Tracker overview",
   }),
   ...guideSearchRecords("swing-trade-tracker", "Swing Trade Tracker", "/help/swing-trade-tracker", SWING_TRADE_TRACKER_HELP_GUIDES),

@@ -370,7 +370,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
         summary: "Choose the trader's actual intent for every position that remains open.",
         keywords: Object.freeze(["open position", "active swing", "day trade still open", "bag hold", "long term hold", "not classified"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "An open-position row shows the remaining quantity, average entry and opened time. Choose the description that matches your intent; TradersLink does not change it automatically because of time held." }),
+          Object.freeze({ kind: "paragraph", text: "An open-position row appears on a Daily Trade Tracker date only when that position had execution activity on that date. It shows the remaining quantity, average entry and opened time. Choose the description that matches your intent; TradersLink does not change it automatically because of time held. Other confirmed open positions remain available on Open Positions." }),
           Object.freeze({ kind: "table", columns: Object.freeze(["Choice", "Use it when"]), rows: Object.freeze([
             Object.freeze(["Not classified", "You have not decided or recorded the position type yet. The day cannot be marked reviewed."]),
             Object.freeze(["Active swing", "You intentionally continue the position as a Swing and can open it in Swing Trade Tracker."]),

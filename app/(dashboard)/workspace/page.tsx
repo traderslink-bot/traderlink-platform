@@ -29,7 +29,7 @@ const WORKSPACE_METRICS = [
   ["Expectancy", "expectancy", "Per completed trade"],
   ["Win rate", "win_rate", "Completed round trips"],
   ["Profit factor", "profit_factor", "Gross wins divided by losses"],
-  ["Round trips", "included_count", "All available history"],
+  ["Trades", "included_count", "All available history"],
 ] as const;
 
 export default async function WorkspacePage() {

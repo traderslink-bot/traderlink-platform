@@ -75,7 +75,7 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
         summary: "Use the page that matches the work you need to do next.",
         keywords: Object.freeze(["after import", "daily tracker", "quick entry", "data decisions", "open positions"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "bullets", items: Object.freeze(["Open Data Decisions only for a specific item that needs source evidence.", "Open Daily Trade Tracker to review a current or recent trading day.", "Open Quick Trade Entry to add manual executions across past trading dates.", "Open Open Positions to view confirmed positions that remain open."]) }),
+          Object.freeze({ kind: "bullets", items: Object.freeze(["Upload all available statements for the account before resolving Data Decisions. A later statement may contain the missing executions needed to complete an affected trade automatically.", "Open Data Decisions only for a specific item that still needs source evidence after the available statements are uploaded.", "Open Daily Trade Tracker to review a current or recent trading day.", "Open Quick Trade Entry to add manual executions across past trading dates.", "Open Open Positions to view confirmed positions that remain open."]) }),
         ]),
       }),
     ]),
@@ -92,6 +92,7 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
         keywords: Object.freeze(["bell", "unread", "notifications page", "updates", "import complete"]),
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph", text: "Select the bell at the top of TraderLink to see your most recent updates. A number on the bell means you have unread updates. Select View all notifications to see the full list." }),
+          Object.freeze({ kind: "paragraph", text: "Choose Mark all read in the bell menu or on the Notifications page to clear the unread count while keeping the updates in your notification history." }),
           Object.freeze({ kind: "paragraph", text: "On a phone, the recent-updates menu fits the available screen height, wraps long update text and keeps each dismiss control easy to reach." }),
           Object.freeze({ kind: "bullets", items: Object.freeze([
             "Select an update to open the related page, such as Import Trades, Data Decisions or a chart.",

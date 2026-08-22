@@ -25,6 +25,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 
 import type { JournalImportHistoryItem } from "@/src/modules/journal/contracts/journal-product-read-models";
@@ -98,6 +99,7 @@ export function JournalImportClient({
 }: {
   expectedAccountSelectionRef: string;
 }) {
+  const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [filePickerKey, setFilePickerKey] = useState(0);
   const [attemptIdempotencyRef, setAttemptIdempotencyRef] = useState("");
@@ -377,6 +379,7 @@ export function JournalImportClient({
         pendingDecisionCount: packet.result.pendingDecisionCount,
       });
       clearUploadState();
+      router.refresh();
     } catch (error) {
       setPreview(candidate);
       setNotice({
@@ -446,9 +449,14 @@ export function JournalImportClient({
                 : `${completed.executionCount} execution${completed.executionCount === 1 ? "" : "s"} added to your Trade Tracker.`}
             </Typography>
             {completed.pendingDecisionCount > 0 ? (
-              <Alert severity="warning">
-                {completed.pendingDecisionCount} item{completed.pendingDecisionCount === 1 ? " needs" : "s need"} your review before every affected trade result can be complete.
-              </Alert>
+              <Stack spacing={1}>
+                <Alert severity="warning">
+                  {completed.pendingDecisionCount} item{completed.pendingDecisionCount === 1 ? " needs" : "s need"} your review before every affected trade result can be complete.
+                </Alert>
+                <Alert severity="info">
+                  Upload all available statements for this Trade Tracker account before resolving these items. Another statement may contain the missing executions needed to complete the affected trades automatically.
+                </Alert>
+              </Stack>
             ) : null}
             <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
               <Button onClick={() => setCompleted(null)} variant="contained">Upload another statement</Button>
