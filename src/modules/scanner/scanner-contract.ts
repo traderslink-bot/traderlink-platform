@@ -1,5 +1,5 @@
 export const SCANNER_FILTER_IDS = [
-  "price", "market-cap", "daily-change", "amplitude", "average-volume", "average-turnover", "turnover-rate", "pe", "pe-ttm", "pb", "dividend-yield", "listing-date", "security-type",
+  "price", "market-cap", "relative-volume", "daily-change", "amplitude", "average-volume", "average-turnover", "turnover-rate", "pe", "pe-ttm", "pb", "dividend-yield", "listing-date", "security-type",
   "net-profit", "profit-growth", "revenue", "revenue-growth", "net-margin", "gross-margin", "debt-ratio", "roe", "eps", "float-market-cap", "ps-ttm",
   "price-vs-average", "kdj", "macd", "rsi", "bollinger", "trend-pattern", "bullish-chart-pattern", "bearish-chart-pattern",
   "chip-profit", "chip-overlap", "beta", "trade-heat", "search-heat", "combined-heat", "institutional-holdings", "analyst-rating", "target-price", "morningstar-rating", "broker-concentration", "broker-holding-change",
@@ -11,11 +11,13 @@ export type ScannerFilterId = typeof SCANNER_FILTER_IDS[number];
 export type ScannerFilterInput = Readonly<{
   id: ScannerFilterId;
   lower?: string;
+  lowerInclusive?: boolean;
   upper?: string;
+  upperInclusive?: boolean;
   choice?: string;
   averageType?: "MA" | "EMA";
   averageLength?: "5" | "9" | "10" | "20" | "50" | "100" | "200";
-  period?: "1" | "5" | "20" | "60";
+  period?: "1" | "5" | "20" | "30" | "60";
   timeframe?: "1 minute" | "5 minutes" | "15 minutes" | "1 hour" | "Daily" | "Weekly" | "Monthly";
 }>;
 
@@ -28,8 +30,10 @@ export type ScannerRunRequest = Readonly<{
 }>;
 
 export type ScannerResultRow = Readonly<{
+  changeAmount: string | null;
   changePercent: string | null;
   company: string;
+  filterValues: Readonly<Record<string, string | null>>;
   last: string | null;
   marketCap: string | null;
   symbol: string;

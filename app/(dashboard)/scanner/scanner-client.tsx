@@ -34,14 +34,14 @@ import {
   DashboardSecondaryAction,
 } from "../../dashboard-template";
 
-const resultColumns = Object.freeze([
+const baseResultColumns = Object.freeze([
   "Symbol",
   "Company",
   "Last",
   "Change",
+  "Chg",
   "Volume",
   "Market cap",
-  "Updated",
 ]);
 
 function formatUpdatedAt(updatedAtUtc: string) {
@@ -78,7 +78,7 @@ type FilterDefinition = {
   group: FilterGroup;
   kind: FilterKind;
   label: string;
-  detail: string;
+  detail?: string;
   unit?: string;
   choices?: readonly string[];
 };
@@ -86,6 +86,7 @@ type FilterDefinition = {
 const filterLibrary = Object.freeze([
   { id: "price", group: "market", kind: "range", label: "Price", detail: "Current share price", unit: "$" },
   { id: "market-cap", group: "market", kind: "range", label: "Market cap", detail: "Total company value", unit: "$" },
+  { id: "relative-volume", group: "market", kind: "range", label: "Relative volume", unit: "x" },
   { id: "daily-change", group: "market", kind: "range", label: "Price change", detail: "Move over a selected period", unit: "%" },
   { id: "amplitude", group: "market", kind: "range", label: "Daily range", detail: "High-to-low range over a selected period", unit: "%" },
   { id: "average-volume", group: "market", kind: "range", label: "Average volume", detail: "Average shares traded over a selected period", unit: "shares" },
@@ -111,11 +112,11 @@ const filterLibrary = Object.freeze([
   { id: "price-vs-average", group: "technical", kind: "signal", label: "Price versus MA or EMA", detail: "Position or crossover against a moving average", choices: ["Price above", "Price below", "Price crosses above", "Price crosses below"] },
   { id: "kdj", group: "technical", kind: "signal", label: "KDJ", detail: "KDJ crossover, top/bottom, or divergence", choices: ["Golden cross", "Death cross", "Top divergence", "Bottom divergence"] },
   { id: "macd", group: "technical", kind: "signal", label: "MACD", detail: "MACD crossover or divergence", choices: ["Bullish crossover", "Bearish crossover", "Top divergence", "Bottom divergence"] },
-  { id: "rsi", group: "technical", kind: "signal", label: "RSI", detail: "RSI crossover or divergence", choices: ["Bullish crossover", "Bearish crossover", "Top divergence", "Bottom divergence"] },
+  { id: "rsi", group: "technical", kind: "signal", label: "RSI", detail: "RSI crossover, divergence, or threshold", choices: ["Above 50", "Below 30", "Bullish crossover", "Bearish crossover", "Top divergence", "Bottom divergence"] },
   { id: "bollinger", group: "technical", kind: "signal", label: "Bollinger Bands", detail: "Price location or crossover around the bands", choices: ["Breaks above upper band", "Breaks below lower band", "Above middle band", "Below middle band"] },
   { id: "trend-pattern", group: "technical", kind: "choice", label: "Trend pattern", detail: "Indicator-pattern conditions", choices: ["MA bullish alignment", "MA bearish alignment", "EMA bullish alignment", "EMA bearish alignment", "Any bullish signal", "Any bearish signal"] },
-  { id: "bullish-chart-pattern", group: "patterns", kind: "choice", label: "Bullish chart pattern", detail: "Recognized from daily or hourly candles", choices: ["W bottom", "Triple bottom", "Head and shoulders bottom", "Rounding bottom", "Megaphone bottom", "Bull flag", "Bullish symmetrical triangle", "Bullish diamond", "Bullish wedge", "Bullish triangle", "Any bullish pattern"] },
-  { id: "bearish-chart-pattern", group: "patterns", kind: "choice", label: "Bearish chart pattern", detail: "Recognized from daily or hourly candles", choices: ["W top", "Triple top", "Head and shoulders top", "Rounding top", "Megaphone top", "Bear flag", "Bearish symmetrical triangle", "Bearish diamond", "Bearish wedge", "Bearish triangle", "Any bearish pattern"] },
+  { id: "bullish-chart-pattern", group: "patterns", kind: "choice", label: "Bullish chart pattern", choices: ["W bottom", "Triple bottom", "Head and shoulders bottom", "Rounding bottom", "Megaphone bottom", "Bull flag", "Bullish symmetrical triangle", "Bullish diamond", "Bullish wedge", "Bullish triangle", "Any bullish pattern"] },
+  { id: "bearish-chart-pattern", group: "patterns", kind: "choice", label: "Bearish chart pattern", choices: ["W top", "Triple top", "Head and shoulders top", "Rounding top", "Megaphone top", "Bear flag", "Bearish symmetrical triangle", "Bearish diamond", "Bearish wedge", "Bearish triangle", "Any bearish pattern"] },
   { id: "chip-profit", group: "sentiment", kind: "range", label: "Chip profit ratio", detail: "Estimated profitable-position ratio", unit: "%" },
   { id: "chip-overlap", group: "sentiment", kind: "range", label: "Chip overlap", detail: "How closely market participants’ cost bases cluster", unit: "%" },
   { id: "beta", group: "sentiment", kind: "range", label: "Beta", detail: "Sensitivity to the overall market" },
@@ -140,9 +141,11 @@ const filterLibrary = Object.freeze([
 type FilterDraft = {
   definitionId: string;
   lower: string;
+  lowerInclusive?: boolean;
   upper: string;
+  upperInclusive?: boolean;
   averageType: "MA" | "EMA";
-  period: "1" | "5" | "20" | "60";
+  period: "1" | "5" | "20" | "30" | "60";
   averageLength: "5" | "9" | "10" | "20" | "50" | "100" | "200";
   timeframe: "1 minute" | "5 minutes" | "15 minutes" | "1 hour" | "Daily" | "Weekly" | "Monthly";
   choice: string;
@@ -166,8 +169,8 @@ const initialDraft: FilterDraft = {
 
 function conditionLabel(definition: FilterDefinition, draft: FilterDraft) {
   if (definition.kind === "range") {
-    const lower = draft.lower ? `${definition.unit ? `${definition.unit} ` : ""}${draft.lower} and above` : "no minimum";
-    const upper = draft.upper ? `${definition.unit ? `${definition.unit} ` : ""}${draft.upper} and below` : "no maximum";
+    const lower = draft.lower ? `${definition.unit ? `${definition.unit} ` : ""}${draft.lower}${draft.lowerInclusive === false ? " above" : " and above"}` : "no minimum";
+    const upper = draft.upper ? `${definition.unit ? `${definition.unit} ` : ""}${draft.upper}${draft.upperInclusive === false ? " below" : " and below"}` : "no maximum";
     const period = definition.id === "daily-change" || definition.id === "amplitude" || definition.id === "average-volume" || definition.id === "average-turnover" || definition.id === "turnover-rate"
       ? ` over ${draft.period} day${draft.period === "1" ? "" : "s"}`
       : "";
@@ -179,6 +182,21 @@ function conditionLabel(definition: FilterDefinition, draft: FilterDraft) {
     : "";
   const timeframe = definition.kind === "signal" ? ` on ${draft.timeframe}` : "";
   return `${definition.label}: ${draft.choice || "Choose a condition"}${average}${timeframe}`;
+}
+
+function filterResultLabel(filter: ScannerRunRequest["filters"][number], definition: FilterDefinition) {
+  if (filter.id === "average-volume") return `${filter.period ?? "1"}-day average volume`;
+  if (filter.id === "average-turnover") return `${filter.period ?? "1"}-day average turnover`;
+  if (filter.id === "daily-change") return `${filter.period ?? "1"}-day change`;
+  if (filter.id === "amplitude") return `${filter.period ?? "1"}-day range`;
+  return definition.label;
+}
+
+function formatFilterResult(definition: FilterDefinition, value: string | null | undefined) {
+  if (value === null || value === undefined) return "—";
+  if (definition.unit === "%") return `${value}%`;
+  if (definition.unit === "x") return `${value}x`;
+  return value;
 }
 
 type ReadyScanner = Readonly<{
@@ -209,7 +227,7 @@ function presetFilter(filter: ScannerRunRequest["filters"][number], scannerId: s
   };
 }
 
-const readyScannerGroups = Object.freeze([
+const readyScannerGroupDefinitions = Object.freeze([
   {
     id: "market-activity",
     label: "Market activity",
@@ -299,8 +317,28 @@ const readyScannerGroups = Object.freeze([
   },
   {
     id: "combined-screens",
-    label: "Combined screens",
+    label: "Combinations",
     scanners: [
+      { id: "penny-stocks", label: "Penny stocks", request: { filters: [{ id: "price", upper: "5" }, { id: "market-cap", upper: "300000000" }, { id: "average-volume", lower: "100000", period: "30" }, { id: "revenue-growth", lower: "10" }, { id: "profit-growth", lower: "5", lowerInclusive: false }, { id: "debt-ratio", upper: "40" }], limit: 25, sortBy: "daily-change" } },
+      { id: "high-dividend-stocks", label: "High dividend stocks", request: { filters: [{ id: "dividend-yield", lower: "8" }, { id: "pe-ttm", upper: "12" }, { id: "debt-ratio", upper: "30" }, { id: "market-cap", lower: "2000000000", lowerInclusive: false }, { id: "revenue-growth", lower: "5", lowerInclusive: false }], limit: 25, sortBy: "daily-change" } },
+      { id: "blue-chip-stocks", label: "Blue chip stocks", request: { filters: [{ id: "price", lower: "50" }, { id: "market-cap", lower: "100000000000" }, { id: "debt-ratio", upper: "50" }, { id: "revenue-growth", lower: "5" }], limit: 25, sortBy: "daily-change" } },
+      { id: "undervalued-stocks", label: "Undervalued stocks", request: { filters: [{ id: "pe-ttm", upper: "15" }, { id: "pb", upper: "1.5" }, { id: "dividend-yield", lower: "4" }, { id: "debt-ratio", upper: "30" }, { id: "roe", lower: "15", lowerInclusive: false }, { id: "revenue-growth", lower: "3", lowerInclusive: false }], limit: 25, sortBy: "daily-change" } },
+      { id: "pb-under-one", label: "P/B under 1", request: { filters: [{ id: "pb", upper: "1", upperInclusive: false }], limit: 25, sortBy: "daily-change" } },
+      { id: "long-term-high-dividend", label: "Long-term high dividend", request: { filters: [{ id: "dividend-yield", lower: "4" }, { id: "pe-ttm", upper: "20" }, { id: "pb", upper: "1.5" }, { id: "debt-ratio", upper: "40" }, { id: "revenue-growth", lower: "3" }], limit: 25, sortBy: "daily-change" } },
+      { id: "low-pe-stocks", label: "Low P/E stocks", request: { filters: [{ id: "pe-ttm", upper: "5", upperInclusive: false }, { id: "pb", upper: "3", upperInclusive: false }, { id: "debt-ratio", upper: "60", upperInclusive: false }], limit: 25, sortBy: "daily-change" } },
+      { id: "below-rsi-30", label: "Below RSI 30", request: { filters: [{ id: "rsi", choice: "Below 30", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "junk-stocks", label: "Junk stocks", request: { filters: [{ id: "pe-ttm", lower: "0" }, { id: "price", upper: "5", upperInclusive: false }, { id: "market-cap", upper: "100000000", upperInclusive: false }], limit: 25, sortBy: "daily-change" } },
+      { id: "small-cap-growth", label: "Small-cap growth", request: { filters: [{ id: "price", lower: "1" }, { id: "market-cap", lower: "250000000", upper: "2000000000" }, { id: "revenue-growth", lower: "20" }, { id: "rsi", choice: "Above 50", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "blue-chip-dividend", label: "Blue chip dividend", request: { filters: [{ id: "price", lower: "50" }, { id: "market-cap", lower: "100000000000" }, { id: "debt-ratio", upper: "50" }, { id: "dividend-yield", lower: "4" }], limit: 25, sortBy: "daily-change" } },
+      { id: "high-eps-stocks", label: "High EPS stocks", request: { filters: [{ id: "price", lower: "5" }, { id: "market-cap", lower: "100000000" }, { id: "eps", lower: "10" }, { id: "debt-ratio", upper: "50" }], limit: 25, sortBy: "daily-change" } },
+      { id: "high-return-on-equity", label: "High return on equity", request: { filters: [{ id: "roe", lower: "20" }, { id: "revenue-growth", lower: "5" }, { id: "dividend-yield", lower: "2" }, { id: "pe-ttm", upper: "25" }], limit: 25, sortBy: "daily-change" } },
+      { id: "low-pe-high-dividend", label: "Low P/E high dividend", request: { filters: [{ id: "pe-ttm", upper: "15" }, { id: "dividend-yield", lower: "4" }, { id: "revenue-growth", lower: "3" }, { id: "debt-ratio", upper: "50" }], limit: 25, sortBy: "daily-change" } },
+      { id: "micro-cap-stocks", label: "Micro-cap stocks", request: { filters: [{ id: "market-cap", lower: "50000000", upper: "300000000" }, { id: "average-volume", lower: "100000", period: "30" }], limit: 25, sortBy: "daily-change" } },
+      { id: "micro-cap-growth", label: "Micro-cap growth", request: { filters: [{ id: "price", lower: "1" }, { id: "market-cap", lower: "50000000", upper: "300000000" }, { id: "average-volume", lower: "100000", period: "30" }, { id: "revenue-growth", lower: "20" }, { id: "profit-growth", lower: "5", lowerInclusive: false }, { id: "debt-ratio", upper: "40" }], limit: 25, sortBy: "daily-change" } },
+      { id: "micro-cap-momentum", label: "Micro-cap momentum", request: { filters: [{ id: "price", lower: "1" }, { id: "market-cap", lower: "50000000", upper: "300000000" }, { id: "average-volume", lower: "500000", period: "30" }, { id: "relative-volume", lower: "2" }, { id: "daily-change", lower: "5", period: "1" }], limit: 25, sortBy: "daily-change" } },
+      { id: "low-priced-momentum", label: "Low-priced momentum", request: { filters: [{ id: "price", lower: "1", upper: "5" }, { id: "market-cap", upper: "300000000" }, { id: "average-volume", lower: "500000", period: "30" }, { id: "relative-volume", lower: "2" }, { id: "daily-change", lower: "5", period: "1" }], limit: 25, sortBy: "daily-change" } },
+      { id: "small-cap-breakout", label: "Small-cap breakout", request: { filters: [{ id: "market-cap", lower: "300000000", upper: "2000000000" }, { id: "average-volume", lower: "500000", period: "30" }, { id: "relative-volume", lower: "1.5" }, { id: "price-vs-average", averageLength: "20", averageType: "EMA", choice: "Price above", timeframe: "Daily" }, { id: "macd", choice: "Bullish crossover", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
+      { id: "high-volume-bullish-setup", label: "High-volume bullish setup", request: { filters: [{ id: "price", lower: "1" }, { id: "average-volume", lower: "1000000", period: "30" }, { id: "relative-volume", lower: "2" }, { id: "price-vs-average", averageLength: "9", averageType: "EMA", choice: "Price above", timeframe: "Daily" }, { id: "macd", choice: "Bullish crossover", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
       { id: "ema-9-with-volume", label: "Above EMA 9 with 1M+ volume", request: { filters: [{ id: "price-vs-average", averageLength: "9", averageType: "EMA", choice: "Price above", timeframe: "Daily" }, { id: "average-volume", lower: "1000000", period: "20" }], limit: 25, sortBy: "daily-change" } },
       { id: "macd-above-ema-9", label: "MACD crossover above EMA 9", request: { filters: [{ id: "macd", choice: "Bullish crossover", timeframe: "Daily" }, { id: "price-vs-average", averageLength: "9", averageType: "EMA", choice: "Price above", timeframe: "Daily" }], limit: 25, sortBy: "daily-change" } },
       { id: "bullish-pattern-with-volume", label: "Bullish pattern with 1M+ volume", request: { filters: [{ id: "bullish-chart-pattern", choice: "Any bullish pattern", timeframe: "Daily" }, { id: "average-volume", lower: "1000000", period: "20" }], limit: 25, sortBy: "daily-change" } },
@@ -308,6 +346,11 @@ const readyScannerGroups = Object.freeze([
     ],
   },
 ] satisfies readonly ReadyScannerGroup[]);
+
+const readyScannerGroups = Object.freeze([
+  ...readyScannerGroupDefinitions.filter((group) => group.id === "combined-screens"),
+  ...readyScannerGroupDefinitions.filter((group) => group.id !== "combined-screens"),
+]);
 
 const readyScannerCount = readyScannerGroups.reduce(
   (count, group) => count + group.scanners.length,
@@ -336,6 +379,21 @@ export function ScannerClient() {
   const selectedDefinition = useMemo(
     () => filterLibrary.find((filter) => filter.id === draft.definitionId) ?? filterLibrary[0],
     [draft.definitionId],
+  );
+  const resultFilterColumns = useMemo(() => {
+    if (!lastRun || !result) return [];
+    const seen = new Set<string>();
+    return lastRun.filters.flatMap((filter) => {
+      if (seen.has(filter.id)) return [];
+      seen.add(filter.id);
+      const definition = filterLibrary.find((candidate) => candidate.id === filter.id);
+      if (!definition || !result.rows.some((row) => Object.hasOwn(row.filterValues, filter.id))) return [];
+      return [{ definition, filter, label: filterResultLabel(filter, definition) }];
+    });
+  }, [lastRun, result]);
+  const resultColumns = useMemo(
+    () => [...baseResultColumns, ...resultFilterColumns.map((column) => column.label), "Updated"],
+    [resultFilterColumns],
   );
 
   function selectGroup(group: FilterGroup) {
@@ -383,8 +441,8 @@ export function ScannerClient() {
 
   function currentScan(): ScannerRunRequest {
     return {
-      filters: filters.map(({ averageLength, averageType, choice, definitionId, lower, period, timeframe, upper }) => ({
-        averageLength, averageType, choice, id: definitionId as ScannerFilterId, lower, period, timeframe, upper,
+      filters: filters.map(({ averageLength, averageType, choice, definitionId, lower, lowerInclusive, period, timeframe, upper, upperInclusive }) => ({
+        averageLength, averageType, choice, id: definitionId as ScannerFilterId, lower, lowerInclusive, period, timeframe, upper, upperInclusive,
       })),
       limit: rowLimit,
       sortBy: sortBy as ScannerRunRequest["sortBy"],
@@ -470,7 +528,7 @@ export function ScannerClient() {
                     <TextField label={selectedDefinition.unit ? `Maximum (${selectedDefinition.unit})` : "Maximum"} onChange={(event) => setDraft((current) => ({ ...current, upper: event.target.value }))} placeholder="No maximum" size="small" type="number" value={draft.upper} />
                     {["daily-change", "amplitude", "average-volume", "average-turnover", "turnover-rate"].includes(selectedDefinition.id) ? (
                       <TextField label="Period" onChange={(event) => setDraft((current) => ({ ...current, period: event.target.value as FilterDraft["period"] }))} select size="small" value={draft.period}>
-                        <MenuItem value="1">1 day</MenuItem><MenuItem value="5">5 days</MenuItem><MenuItem value="20">20 days</MenuItem><MenuItem value="60">60 days</MenuItem>
+                        <MenuItem value="1">1 day</MenuItem><MenuItem value="5">5 days</MenuItem><MenuItem value="20">20 days</MenuItem><MenuItem value="30">30 days</MenuItem><MenuItem value="60">60 days</MenuItem>
                       </TextField>
                     ) : <Box />}
                   </>
@@ -621,6 +679,7 @@ export function ScannerClient() {
                     <MobileResultFact label="Change" value={row.changePercent === null ? "—" : `${row.changePercent}%`} />
                     <MobileResultFact label="Volume" value={row.volume ?? "—"} />
                     <MobileResultFact label="Market cap" value={row.marketCap ?? "—"} />
+                    {resultFilterColumns.map((column) => <MobileResultFact key={column.filter.id} label={column.label} value={formatFilterResult(column.definition, row.filterValues[column.filter.id])} />)}
                     <Box sx={{ gridColumn: "1 / -1" }}><MobileResultFact label="Updated" value={formatUpdatedAt(row.updatedAtUtc)} /></Box>
                   </Box>
                 </Stack>
@@ -633,10 +692,10 @@ export function ScannerClient() {
           )}
         </Box>
         <Box sx={{ display: { xs: "none", sm: "block" }, maxWidth: "100%", overflowX: "auto" }}>
-          <Table aria-label="Scanner results" size="small" sx={{ minWidth: 760 }}>
-            <TableHead><TableRow>{resultColumns.map((column) => <TableCell key={column}>{column}</TableCell>)}</TableRow></TableHead>
+          <Table aria-label="Scanner results" size="small" sx={{ minWidth: 760 + resultFilterColumns.length * 120, tableLayout: "fixed" }}>
+            <TableHead><TableRow>{resultColumns.map((column) => <TableCell key={column} sx={column === "Company" ? { width: 170 } : { width: 120 }}><Typography noWrap title={column} variant="body2">{column}</Typography></TableCell>)}</TableRow></TableHead>
             <TableBody>{result ? result.rows.map((row) => <TableRow key={row.symbol}>
-              <TableCell sx={{ fontWeight: 700 }}>{row.symbol.replace(/^US\./u, "")}</TableCell><TableCell>{row.company}</TableCell><TableCell>{row.last ?? "—"}</TableCell><TableCell>{row.changePercent === null ? "—" : `${row.changePercent}%`}</TableCell><TableCell>{row.volume ?? "—"}</TableCell><TableCell>{row.marketCap ?? "—"}</TableCell><TableCell>{formatUpdatedAt(row.updatedAtUtc)}</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>{row.symbol.replace(/^US\./u, "")}</TableCell><TableCell title={row.company}><Typography noWrap variant="body2">{row.company}</Typography></TableCell><TableCell>{row.last ?? "—"}</TableCell><TableCell>{row.changePercent === null ? "—" : `${row.changePercent}%`}</TableCell><TableCell>{row.changeAmount ?? "—"}</TableCell><TableCell>{row.volume ?? "—"}</TableCell><TableCell>{row.marketCap ?? "—"}</TableCell>{resultFilterColumns.map((column) => <TableCell key={column.filter.id}>{formatFilterResult(column.definition, row.filterValues[column.filter.id])}</TableCell>)}<TableCell>{formatUpdatedAt(row.updatedAtUtc)}</TableCell>
             </TableRow>) : <TableRow><TableCell colSpan={resultColumns.length} sx={{ py: 5, textAlign: "center" }}>
               {runState === "loading" ? <Typography sx={{ fontWeight: 700 }}>Running your screen…</Typography> : runError === "connection" ? <Typography sx={{ fontWeight: 700 }}>Connect market data before running this screen.</Typography> : runError === "unavailable" ? <Typography sx={{ fontWeight: 700 }}>Market data could not provide results right now. Try again shortly.</Typography> : <Typography sx={{ fontWeight: 700 }}>Add your conditions, then run the screen.</Typography>}
             </TableCell></TableRow>}

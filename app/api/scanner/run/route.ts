@@ -20,15 +20,17 @@ function parse(body: unknown): ScannerRunRequest | null {
     const filter = candidate as Record<string, unknown>;
     if (!filterIds.has(filter.id as string)) return [];
     const strings = ["lower", "upper", "choice", "averageType", "averageLength", "period", "timeframe"] as const;
-    if (strings.some((key) => filter[key] !== undefined && typeof filter[key] !== "string")) return [];
+    if (strings.some((key) => filter[key] !== undefined && typeof filter[key] !== "string") || ["lowerInclusive", "upperInclusive"].some((key) => filter[key] !== undefined && typeof filter[key] !== "boolean")) return [];
     return [{
       id: filter.id as ScannerFilterId,
       lower: filter.lower as string | undefined,
+      lowerInclusive: filter.lowerInclusive as boolean | undefined,
       upper: filter.upper as string | undefined,
+      upperInclusive: filter.upperInclusive as boolean | undefined,
       choice: filter.choice as string | undefined,
       averageType: filter.averageType as "MA" | "EMA" | undefined,
       averageLength: filter.averageLength as "5" | "9" | "10" | "20" | "50" | "100" | "200" | undefined,
-      period: filter.period as "1" | "5" | "20" | "60" | undefined,
+      period: filter.period as "1" | "5" | "20" | "30" | "60" | undefined,
       timeframe: filter.timeframe as "1 minute" | "5 minutes" | "15 minutes" | "1 hour" | "Daily" | "Weekly" | "Monthly" | undefined,
     }];
   });

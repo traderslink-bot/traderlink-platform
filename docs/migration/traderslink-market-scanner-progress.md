@@ -45,6 +45,25 @@ TradersLink Scanner now and not wait for a separate market-data approval process
   and a closable right-side library drawer. Category headings remain visible
   with their screen counts; each category expands independently, and a selected
   screen loads into the builder before the mobile drawer closes.
+- [x] Add native Relative volume as a Market & trading range condition. It uses
+  the provider's Volume Ratio screening field rather than calculating a partial
+  first-page approximation.
+- [x] Add multi-condition Penny stocks and Small-cap growth starter screens
+  with their documented price, market-cap, volume, growth, debt and RSI
+  conditions; preserve exclusive bounds where the source screen uses them.
+- [x] Add the currently expressible published multi-condition screens for
+  income, valuation, blue-chip, RSI, small-cap, EPS and return-on-equity
+  searches. Screens requiring an unmapped provider factor remain excluded
+  rather than silently dropping that factor.
+- [x] Expand the Combinations library with liquid micro-cap, micro-cap growth,
+  micro-cap momentum, low-priced momentum, small-cap breakout and high-volume
+  bullish setups. Each uses only available price, market-cap, volume, relative
+  volume, growth, trend or momentum conditions; live provider acceptance still
+  requires the owner's connected-account test at market open.
+- [x] Return the numeric market/fundamental factor values used by a screen and
+  display them as compact result-table columns. Company and long factor labels
+  truncate on desktop with their full text available on hover; phones retain
+  the complete values as readable stacked facts.
 - [ ] Owner testing of the live Scanner at market open. Visual approval is
   requested only when the owner explicitly asks for it before a deployment.
 - [x] Record the planned Community Scanner home, My Scanners collection,

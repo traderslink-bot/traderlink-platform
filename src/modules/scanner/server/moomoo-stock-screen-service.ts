@@ -18,11 +18,12 @@ type MoomooScreenPayload = Readonly<{
 }>;
 
 type CacheEntry = Readonly<{ expiresAt: number; result: ScannerRunResult }>;
+type RetrieveValue = Readonly<{ divisor: number; filterId?: ScannerFilterInput["id"]; key: string; query: Record<string, unknown> }>;
 const cache = new Map<string, CacheEntry>();
 const inflight = new Map<string, Promise<ScannerRunResult>>();
 
 const simpleProperties = Object.freeze({
-  price: [2201, 1_000], "market-cap": [2301, 1_000], pe: [2302, 100_000], "pe-ttm": [2303, 100_000], pb: [2304, 100_000], "dividend-yield": [2305, 1_000],
+  price: [2201, 1_000], "relative-volume": [2217, 1_000], "market-cap": [2301, 1_000], pe: [2302, 100_000], "pe-ttm": [2303, 100_000], pb: [2304, 100_000], "dividend-yield": [2305, 1_000],
 } as const);
 const cumulativeProperties = Object.freeze({
   "daily-change": [3102, 1_000], amplitude: [3103, 1_000], "average-volume": [3104, 1], "average-turnover": [3105, 1_000], "turnover-rate": [3106, 1_000],
@@ -36,6 +37,14 @@ const featuredProperties = Object.freeze({
 const optionProperties = Object.freeze({
   "option-iv": [1000, 1_000_000], "option-iv-rank": [1001, 1], "option-iv-percentile": [1002, 1], "option-earnings-iv": [1003, 1], "option-hv": [1006, 1], "option-volume": [1009, 1], "option-open-interest": [1010, 1],
 } as const);
+
+const baseRetrieveValues = Object.freeze([
+  { divisor: 1_000, key: "last", query: { simple_property: { name: 2201 } } },
+  { divisor: 1_000, key: "changePercent", query: { cumulative_property: { days: 1, name: 3102, period_average: false } } },
+  { divisor: 1_000, key: "changeAmount", query: { cumulative_property: { days: 1, name: 3101, period_average: false } } },
+  { divisor: 1, key: "volume", query: { cumulative_property: { days: 1, name: 3104, period_average: false } } },
+  { divisor: 1_000, key: "marketCap", query: { simple_property: { name: 2301 } } },
+] satisfies readonly RetrieveValue[]);
 
 function rawDecimal(value: string | undefined, multiplier: number): number | null {
   if (!value || value.trim() === "") return null;
@@ -51,8 +60,8 @@ function bounds(filter: ScannerFilterInput, multiplier: number): Record<string, 
   const upper = rawDecimal(filter.upper, multiplier);
   if (lower === null && upper === null) return null;
   const result: Record<string, unknown> = {};
-  if (lower !== null) result.lower = { includes: true, value: lower };
-  if (upper !== null) result.upper = { includes: true, value: upper };
+  if (lower !== null) result.lower = { includes: filter.lowerInclusive ?? true, value: lower };
+  if (upper !== null) result.upper = { includes: filter.upperInclusive ?? true, value: upper };
   return result;
 }
 
@@ -100,6 +109,12 @@ function screenQuery(filter: ScannerFilterInput, todaySeconds: number): Record<s
     const comparison = position(filter.choice); if (!comparison) return null;
     return { indicator_positional_query: { first_indicator_name: 1, period_type: periodType(filter.timeframe), position: comparison, second_indicator_name: filter.averageType === "MA" ? 11 : 21, second_indicator_params: [Number(filter.averageLength ?? "9")] } };
   }
+  if (filter.id === "rsi" && filter.choice === "Above 50") {
+    return { indicator_positional_query: { first_indicator_name: 51, first_indicator_params: [14], period_type: periodType(filter.timeframe), position: 1, second_value: 50 } };
+  }
+  if (filter.id === "rsi" && filter.choice === "Below 30") {
+    return { indicator_positional_query: { first_indicator_name: 51, first_indicator_params: [14], period_type: periodType(filter.timeframe), position: 2, second_value: 30 } };
+  }
   const patterns = ({
     kdj: { "Bottom divergence": 14, "Death cross": 12, "Golden cross": 11, "Top divergence": 13 },
     macd: { "Bearish crossover": 22, "Bottom divergence": 24, "Bullish crossover": 21, "Top divergence": 23 },
@@ -134,6 +149,36 @@ function screenQuery(filter: ScannerFilterInput, todaySeconds: number): Record<s
   return null;
 }
 
+function retrieveValue(filter: ScannerFilterInput): RetrieveValue | null {
+  if (filter.id in simpleProperties) {
+    const [name, divisor] = simpleProperties[filter.id as keyof typeof simpleProperties];
+    if (filter.id === "price" || filter.id === "market-cap") return null;
+    return { divisor, filterId: filter.id, key: filter.id, query: { simple_property: { name } } };
+  }
+  if (filter.id in cumulativeProperties) {
+    const [name, divisor] = cumulativeProperties[filter.id as keyof typeof cumulativeProperties];
+    return { divisor, filterId: filter.id, key: filter.id, query: { cumulative_property: { days: Number(filter.period ?? "1"), name, period_average: filter.id.startsWith("average-") } } };
+  }
+  if (filter.id in financialProperties) {
+    const [name, divisor] = financialProperties[filter.id as keyof typeof financialProperties];
+    return { divisor, filterId: filter.id, key: filter.id, query: { financial_property: { name, term: 10 } } };
+  }
+  if (filter.id in featuredProperties) {
+    const [name, divisor] = featuredProperties[filter.id as keyof typeof featuredProperties];
+    return { divisor, filterId: filter.id, key: filter.id, query: { featured_property: { name } } };
+  }
+  if (filter.id in optionProperties) {
+    const [name, divisor] = optionProperties[filter.id as keyof typeof optionProperties];
+    return { divisor, filterId: filter.id, key: filter.id, query: { option_property: { name } } };
+  }
+  return null;
+}
+
+function retrieveValues(filters: readonly ScannerFilterInput[]): readonly RetrieveValue[] {
+  const values = [...baseRetrieveValues, ...filters.map(retrieveValue).filter((value): value is RetrieveValue => value !== null)];
+  return values.filter((value, index) => values.findIndex((candidate) => candidate.key === value.key) === index);
+}
+
 function sort(sortBy: ScannerSort): Record<string, unknown> {
   if (sortBy === "daily-change") return { cumulative_property: { days: 1, name: 3102 }, direction: 2 };
   if (sortBy === "average-volume") return { cumulative_property: { days: 1, name: 3104, period_average: false }, direction: 2 };
@@ -151,7 +196,7 @@ function value(result: unknown, divisor: number): string | null {
   try { return new Decimal(raw).div(divisor).toString(); } catch { return null; }
 }
 
-function normalize(payload: MoomooScreenPayload): ScannerRunResult {
+function normalize(payload: MoomooScreenPayload, retrievedValues: readonly RetrieveValue[]): ScannerRunResult {
   const timestamp = new Date().toISOString();
   const items = Array.isArray(payload.data?.items) ? payload.data.items : [];
   const rows = items.flatMap((candidate) => {
@@ -159,7 +204,9 @@ function normalize(payload: MoomooScreenPayload): ScannerRunResult {
     const item = candidate as Record<string, unknown>;
     if (typeof item.code !== "string" || typeof item.name !== "string") return [];
     const results = Array.isArray(item.results) ? item.results : [];
-    return [{ symbol: item.code, company: item.name, last: value(results[0], 1_000), changePercent: value(results[1], 1_000), volume: value(results[2], 1), marketCap: value(results[3], 1_000), updatedAtUtc: timestamp }];
+    const values = Object.fromEntries(retrievedValues.map((retrieved, index) => [retrieved.key, value(results[index], retrieved.divisor)]));
+    const filterValues = Object.fromEntries(retrievedValues.filter((retrieved) => retrieved.filterId).map((retrieved) => [retrieved.filterId!, values[retrieved.key] as string | null]));
+    return [{ symbol: item.code, company: item.name, last: values.last as string | null, changePercent: values.changePercent as string | null, changeAmount: values.changeAmount as string | null, volume: values.volume as string | null, marketCap: values.marketCap as string | null, filterValues, updatedAtUtc: timestamp }];
   });
   return Object.freeze({ cached: false, rows: Object.freeze(rows), total: Number.isSafeInteger(payload.pagination?.total) ? Number(payload.pagination?.total) : rows.length, updatedAtUtc: timestamp });
 }
@@ -188,14 +235,15 @@ export class MoomooStockScreenService {
 
   private async fetchAndCache(key: string, scope: WorkspaceAccessScope, input: ScannerRunRequest, screenQueries: readonly Record<string, unknown>[]): Promise<ScannerRunResult> {
     const token = await new MoomooConnectionAccessService(this.repository).accessToken(scope);
+    const retrievedValues = retrieveValues(input.filters);
     let response: Response;
     try {
-      response = await fetch(`${MOOMOO_API_ORIGIN}/api/v1.0/quote/stock-screen`, { method: "POST", cache: "no-store", headers: { Accept: "application/json", Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ limit: input.limit, retrieve_queries: [{ simple_property: { name: 2201 } }, { cumulative_property: { days: 1, name: 3102, period_average: false } }, { cumulative_property: { days: 1, name: 3104, period_average: false } }, { simple_property: { name: 2301 } }], screen_queries: screenQueries, sort: sort(input.sortBy) }) });
+      response = await fetch(`${MOOMOO_API_ORIGIN}/api/v1.0/quote/stock-screen`, { method: "POST", cache: "no-store", headers: { Accept: "application/json", Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ limit: input.limit, retrieve_queries: retrievedValues.map((retrieved) => retrieved.query), screen_queries: screenQueries, sort: sort(input.sortBy) }) });
     } catch { throw new Error("scanner_provider_unavailable"); }
     let payload: MoomooScreenPayload;
     try { payload = await response.json() as MoomooScreenPayload; } catch { throw new Error("scanner_provider_unavailable"); }
     if (!response.ok || payload.ret_code !== 0) throw new Error("scanner_provider_unavailable");
-    const result = normalize(payload);
+    const result = normalize(payload, retrievedValues);
     cache.set(key, { expiresAt: Date.now() + CACHE_TTL_MILLISECONDS, result });
     return result;
   }
