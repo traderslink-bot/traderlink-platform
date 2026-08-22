@@ -1,13 +1,7 @@
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { keyframes } from "@mui/system";
 import Image from "next/image";
-
-const linkPulse = keyframes`
-  0%, 100% { opacity: 0.55; transform: scale(0.92) rotate(-5deg); }
-  50% { opacity: 1; transform: scale(1.06) rotate(5deg); }
-`;
 
 export default function DashboardLoading() {
   return (
@@ -19,10 +13,14 @@ export default function DashboardLoading() {
     >
       <Box
         sx={{
-          animation: `${linkPulse} 1.15s ease-in-out infinite`,
+          animation: "traderlink-link-pulse 1.15s ease-in-out infinite",
           borderRadius: 3,
           height: 64,
           overflow: "hidden",
+          "@keyframes traderlink-link-pulse": {
+            "0%, 100%": { opacity: 0.55, transform: "scale(0.92) rotate(-5deg)" },
+            "50%": { opacity: 1, transform: "scale(1.06) rotate(5deg)" },
+          },
           "@media (prefers-reduced-motion: reduce)": { animation: "none", opacity: 1 },
           width: 64,
         }}
