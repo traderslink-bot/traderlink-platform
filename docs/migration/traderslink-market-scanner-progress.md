@@ -27,8 +27,14 @@ TradersLink Scanner now and not wait for a separate Moomoo approval process.
   development owner only.
 - [x] Hide the Scanner navigation entry for every account without that same
   early-access gate.
-- [ ] Add the server-side screen result contract and bounded refresh path.
-- [ ] Obtain owner visual approval of the filter setup surface.
+- [x] Add the server-side screen result contract and bounded refresh path. The
+  browser posts selected conditions to a protected Route Handler; the server
+  obtains the current user's Moomoo `quote:read` token without exposing it,
+  requests Moomoo's U.S. stock-screen endpoint and returns only display values.
+  Equivalent active screens share one bounded in-memory result for 60 seconds;
+  a viewing browser refreshes that result on the same cadence.
+- [ ] Owner testing of the live Scanner at market open. Visual approval is
+  requested only when the owner explicitly asks for it before a deployment.
 
 ## Not started
 

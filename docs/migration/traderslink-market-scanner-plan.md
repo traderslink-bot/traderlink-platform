@@ -45,7 +45,7 @@ display fields used by the scanner.
 
 The screen will use Moomoo's unrestricted market screening capability and
 bound the displayed page to 25 rows. The target experience is fresh scanner
-results every 10 to 30 seconds while a user is actively viewing the page, with
+results every 60 seconds while a user is actively viewing the page, with
 the exact update time always visible. The implementation must use a bounded
 server refresh/result cache for equivalent screens rather than requesting the
 same screen on every browser render.
@@ -69,8 +69,9 @@ These are controlling scope, not part of the initial UI build:
 
 ## Acceptance checkpoints
 
-- Owner visual approval of the first Scanner page before the product is called
-  complete or personal-scanner work begins.
+- Owner visual approval of the first Scanner page is requested only when the
+  owner explicitly asks for it before a deployment. Otherwise, a completed
+  focused slice may proceed to the normal release and owner testing boundary.
 - The page must retain the approved light Material dashboard shell and a clear
   Scanner navigation entry.
 - Live values must be clearly unavailable when the Moomoo connection cannot

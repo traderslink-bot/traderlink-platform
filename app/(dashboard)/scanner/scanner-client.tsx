@@ -15,7 +15,9 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+import type { ScannerRunRequest, ScannerRunResult } from "@/src/modules/scanner/scanner-contract";
 
 import {
   DashboardPage,
@@ -158,6 +160,11 @@ export function ScannerClient() {
   const [draft, setDraft] = useState<FilterDraft>(initialDraft);
   const [filters, setFilters] = useState<AddedFilter[]>([]);
   const [sortBy, setSortBy] = useState("daily-change");
+  const [rowLimit, setRowLimit] = useState<25 | 50 | 100>(25);
+  const [result, setResult] = useState<ScannerRunResult | null>(null);
+  const [lastRun, setLastRun] = useState<ScannerRunRequest | null>(null);
+  const [runState, setRunState] = useState<"idle" | "loading" | "error">("idle");
+  const [runError, setRunError] = useState<"connection" | "unavailable" | null>(null);
 
   const availableFilters = useMemo(
     () => filterLibrary.filter((filter) => filter.group === activeGroup),
@@ -175,7 +182,7 @@ export function ScannerClient() {
   }
 
   function addFilter() {
-    if (!selectedDefinition || (selectedDefinition.kind !== "range" && !draft.choice)) return;
+    if (!selectedDefinition || (selectedDefinition.kind === "range" && !draft.lower && !draft.upper) || (selectedDefinition.kind !== "range" && !draft.choice)) return;
     setFilters((current) => [
       ...current,
       {
@@ -186,6 +193,51 @@ export function ScannerClient() {
     ]);
     setDraft((current) => ({ ...current, choice: "", lower: "", upper: "" }));
   }
+
+  const requestScan = useCallback(async (scan: ScannerRunRequest) => {
+    setRunState("loading");
+    setRunError(null);
+    try {
+      const response = await fetch("/api/scanner/run", {
+        body: JSON.stringify(scan),
+        headers: { "content-type": "application/json" },
+        method: "POST",
+      });
+      const body = await response.json() as ScannerRunResult | { code?: string };
+      if (!response.ok || !("rows" in body)) {
+        setRunError(("code" in body && body.code === "scanner_connection_required") ? "connection" : "unavailable");
+        setRunState("error");
+        return;
+      }
+      setResult(body);
+      setRunState("idle");
+    } catch {
+      setRunError("unavailable");
+      setRunState("error");
+    }
+  }, []);
+
+  function currentScan(): ScannerRunRequest {
+    return {
+      filters: filters.map(({ averageLength, averageType, choice, definitionId, lower, period, timeframe, upper }) => ({
+        averageLength, averageType, choice, id: definitionId, lower, period, timeframe, upper,
+      })),
+      limit: rowLimit,
+      sortBy: sortBy as ScannerRunRequest["sortBy"],
+    };
+  }
+
+  function runCurrentScan() {
+    const scan = currentScan();
+    setLastRun(scan);
+    void requestScan(scan);
+  }
+
+  useEffect(() => {
+    if (!lastRun) return undefined;
+    const refresh = window.setInterval(() => { void requestScan(lastRun); }, 60_000);
+    return () => window.clearInterval(refresh);
+  }, [lastRun, requestScan]);
 
   return (
     <DashboardPage>
@@ -257,7 +309,7 @@ export function ScannerClient() {
                 ) : <Box />}
               </>
             )}
-            <DashboardPrimaryAction disabled={selectedDefinition?.kind !== "range" && !draft.choice} onClick={addFilter} startIcon={<FilterAltRoundedIcon />}>
+            <DashboardPrimaryAction disabled={(selectedDefinition?.kind === "range" && !draft.lower && !draft.upper) || (selectedDefinition?.kind !== "range" && !draft.choice)} onClick={addFilter} startIcon={<FilterAltRoundedIcon />}>
               Add filter
             </DashboardPrimaryAction>
           </Box>
@@ -286,16 +338,26 @@ export function ScannerClient() {
         </Stack>
       </DashboardPanel>
 
-      <DashboardPanel action={<Typography color="text.secondary" variant="body2">No scan has run yet</Typography>} title="Matches">
+      <DashboardPanel action={
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+          <TextField label="Show" onChange={(event) => setRowLimit(Number(event.target.value) as 25 | 50 | 100)} select size="small" value={rowLimit}>
+            <MenuItem value={25}>25</MenuItem><MenuItem value={50}>50</MenuItem><MenuItem value={100}>100</MenuItem>
+          </TextField>
+          <DashboardPrimaryAction disabled={runState === "loading"} onClick={runCurrentScan}>{lastRun ? "Refresh" : "Run scan"}</DashboardPrimaryAction>
+        </Stack>
+      } title="Matches">
         <Box sx={{ maxWidth: "100%", overflowX: "auto" }}>
           <Table aria-label="Scanner results" size="small" sx={{ minWidth: 760 }}>
             <TableHead><TableRow>{resultColumns.map((column) => <TableCell key={column}>{column}</TableCell>)}</TableRow></TableHead>
-            <TableBody><TableRow><TableCell colSpan={resultColumns.length} sx={{ py: 5, textAlign: "center" }}>
-              <Typography sx={{ fontWeight: 700 }}>Scanner results will appear here</Typography>
-              <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">Results will show the strongest matches first, with the exact time they were last updated.</Typography>
-            </TableCell></TableRow></TableBody>
+            <TableBody>{result ? result.rows.map((row) => <TableRow key={row.symbol}>
+              <TableCell sx={{ fontWeight: 700 }}>{row.symbol.replace(/^US\./u, "")}</TableCell><TableCell>{row.company}</TableCell><TableCell>{row.last ?? "—"}</TableCell><TableCell>{row.changePercent === null ? "—" : `${row.changePercent}%`}</TableCell><TableCell>{row.volume ?? "—"}</TableCell><TableCell>{row.marketCap ?? "—"}</TableCell><TableCell>{new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit", second: "2-digit" }).format(new Date(row.updatedAtUtc))}</TableCell>
+            </TableRow>) : <TableRow><TableCell colSpan={resultColumns.length} sx={{ py: 5, textAlign: "center" }}>
+              {runState === "loading" ? <Typography sx={{ fontWeight: 700 }}>Running your screen…</Typography> : runError === "connection" ? <Typography sx={{ fontWeight: 700 }}>Connect Moomoo before running this screen.</Typography> : runError === "unavailable" ? <Typography sx={{ fontWeight: 700 }}>Moomoo could not provide results right now. Try again shortly.</Typography> : <Typography sx={{ fontWeight: 700 }}>Add your conditions, then run the screen.</Typography>}
+            </TableCell></TableRow>}
+            </TableBody>
           </Table>
         </Box>
+        {result ? <Typography color="text.secondary" sx={{ mt: 1.25 }} variant="body2">{result.total.toLocaleString()} matches · Updated {new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit", second: "2-digit" }).format(new Date(result.updatedAtUtc))}{result.cached ? " · Current shared result" : ""}</Typography> : null}
       </DashboardPanel>
     </DashboardPage>
   );
