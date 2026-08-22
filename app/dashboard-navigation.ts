@@ -258,6 +258,11 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
     }),
   ]);
 
+// Kept for dashboard-template compatibility. Scanner and Market Charts now live
+// in Stock Tools, so there are no standalone sidebar links.
+export const DASHBOARD_STANDALONE_ITEMS: readonly DashboardNavigationItem[] =
+  Object.freeze([]);
+
 export type DashboardSidebarNavigationSection = Readonly<
   {
     kind: "group";
