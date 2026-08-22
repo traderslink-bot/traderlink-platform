@@ -108,6 +108,14 @@ export default async function AccountTradingPage({
 
       <DashboardPanel title="Broker connections">
         <Stack spacing={0.75} sx={{ mb: 2 }}>
+          <Typography color="text.primary" variant="body2">
+            Import your trade history and use TradersLink Trade Analyzer.
+          </Typography>
+          <Typography color="text.secondary" variant="body2">
+            Currently, the app only supports connecting to Moomoo. For users with other brokers, you can <Link href="/imports">import</Link> your historical broker statements.
+          </Typography>
+        </Stack>
+        <Stack spacing={0.75} sx={{ mb: 2 }}>
           <Typography color="error.main" sx={{ fontWeight: 800 }} variant="body2">
             Attention
           </Typography>
@@ -123,9 +131,6 @@ export default async function AccountTradingPage({
             About Moomoo data
           </Link>
         </Stack>
-        <Typography color="text.secondary" sx={{ mb: 2.5 }} variant="body2">
-          Connect a broker to automatically import your trades.
-        </Typography>
         {moomooConnectionFailed ? (
           <Alert severity="error" sx={{ mb: 2 }}>
             The Moomoo connection could not be completed. {query.reported === "1"
