@@ -17,16 +17,18 @@ const mappingSchema = z.object({
   headerRowIndex: z.number().int().min(0),
   orderedHeaders: z.array(z.string().min(1).max(120)).min(2).max(4096),
   columns: z.object({
-    symbol: z.string().min(1).max(120).optional(),
-    timestamp: z.string().min(1).max(120).optional(),
-    date: z.string().min(1).max(120).optional(),
-    time: z.string().min(1).max(120).optional(),
-    side: z.string().min(1).max(120).optional(),
-    quantity: z.string().min(1).max(120).optional(),
-    price: z.string().min(1).max(120).optional(),
-    currency: z.string().min(1).max(120).optional(),
-    fees: z.string().min(1).max(120).optional(),
-    executionId: z.string().min(1).max(120).optional(),
+    // OpenAI structured output requires every object key to be present. Null
+    // represents an unmapped column and is removed before Journal validation.
+    symbol: z.string().min(1).max(120).nullable(),
+    timestamp: z.string().min(1).max(120).nullable(),
+    date: z.string().min(1).max(120).nullable(),
+    time: z.string().min(1).max(120).nullable(),
+    side: z.string().min(1).max(120).nullable(),
+    quantity: z.string().min(1).max(120).nullable(),
+    price: z.string().min(1).max(120).nullable(),
+    currency: z.string().min(1).max(120).nullable(),
+    fees: z.string().min(1).max(120).nullable(),
+    executionId: z.string().min(1).max(120).nullable(),
   }),
   sideValues: z.object({
     buy: z.array(z.string().min(1).max(80)).min(1),
@@ -36,6 +38,19 @@ const mappingSchema = z.object({
   feeSignConvention: z.enum(["cost_positive", "cash_effect"]),
   sourceTimezone: z.string().min(1).max(80),
 });
+
+function normalizeOutputMapping(
+  output: z.infer<typeof mappingSchema>,
+): JournalGenericStatementMappingContract {
+  return {
+    ...output,
+    columns: Object.fromEntries(
+      Object.entries(output.columns).filter(
+        (entry): entry is [string, string] => typeof entry[1] === "string",
+      ),
+    ),
+  };
+}
 
 const SYSTEM = `You configure a CSV statement mapping for TraderLink. Return only the mapping object.
 Use only headers and layout actually present in the supplied statement. Do not invent columns,
@@ -54,17 +69,17 @@ export function createJournalAiImportRepairOpenAiProvider(
 ): JournalAiImportRepairProvider | null {
   if (!enabled(environment)) return null;
   const openai = createOpenAI({ apiKey: environment.OPENAI_API_KEY!.trim() });
-  const modelId = environment.TRADERLINK_PLATFORM_AI_IMPORT_REPAIR_MODEL?.trim() || "gpt-5.6";
+  const modelId = environment.TRADERLINK_PLATFORM_AI_IMPORT_REPAIR_MODEL?.trim() || "gpt-5.6-luna";
   return async ({ sourceText, confirmedBrokerName }) => {
     const result = await generateText({
       model: openai(modelId),
       maxOutputTokens: 2_000,
       output: Output.object({ schema: mappingSchema }),
-      providerOptions: { openai: { store: false } },
+      providerOptions: { openai: { reasoningEffort: "low", reasoningSummary: null, store: false } },
       system: `${SYSTEM}\nThe trader confirmed the broker name as ${JSON.stringify(confirmedBrokerName)}. Set brokerName to that exact value; do not infer or replace it.`,
       prompt: sourceText,
     });
     if (!result.output) throw new Error("TRADERLINK_JOURNAL_AI_REPAIR_NO_MAPPING");
-    return result.output as JournalGenericStatementMappingContract;
+    return normalizeOutputMapping(result.output);
   };
 }
