@@ -1,6 +1,7 @@
 "use client";
 
 import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
 import Divider from "@mui/material/Divider";
@@ -344,13 +345,13 @@ export function NotificationPreferences({
         </Button>
       </Stack>
       {mutedHaltTickers.length > 0 ? (
-        <Stack alignItems="flex-start" direction="row" flexWrap="wrap" gap={1}>
+        <Box sx={{ alignItems: "flex-start", display: "flex", flexWrap: "wrap", gap: 1 }}>
           {mutedHaltTickers.map((ticker) => (
             <Button disabled={working} key={ticker} onClick={() => unmuteHaltTicker(ticker)} size="small" variant="outlined">
               Turn on {ticker} alerts
             </Button>
           ))}
-        </Stack>
+        </Box>
       ) : null}
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" } }}>
         {pushState === "enabled" ? (
