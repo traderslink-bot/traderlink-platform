@@ -19,8 +19,8 @@ function easternParts(now: Date): Readonly<{ day: number; month: number; year: n
   return Object.freeze({ day, month, year });
 }
 
-function newYorkOffsetMinutesAtClose(year: number, month: number, day: number): number {
-  const approximate = new Date(Date.UTC(year, month - 1, day, 16, 0, 0));
+function newYorkOffsetMinutesAtExpiry(year: number, month: number, day: number): number {
+  const approximate = new Date(Date.UTC(year, month - 1, day, 20, 0, 0));
   const value = new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
     timeZone: NEW_YORK,
@@ -32,10 +32,10 @@ function newYorkOffsetMinutesAtClose(year: number, month: number, day: number): 
   return match[1] === "+" ? minutes : -minutes;
 }
 
-/** The current regular U.S. trading session ends at 4:00 PM Eastern. */
+/** Daily halt mutes expire at 8:00 PM Eastern. */
 export function marketHaltMuteExpiresAtUtc(now = new Date()): string {
   const { day, month, year } = easternParts(now);
-  const closeUtc = Date.UTC(year, month - 1, day, 16, 0, 0) -
-    newYorkOffsetMinutesAtClose(year, month, day) * 60_000;
-  return new Date(closeUtc).toISOString();
+  const expiryUtc = Date.UTC(year, month - 1, day, 20, 0, 0) -
+    newYorkOffsetMinutesAtExpiry(year, month, day) * 60_000;
+  return new Date(expiryUtc).toISOString();
 }
