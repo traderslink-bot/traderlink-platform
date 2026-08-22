@@ -441,9 +441,7 @@ export function DashboardShell({
                 <Box
                   key={group.id}
                   sx={compact ? undefined : {
-                    borderBottom: "1px solid #aeb8c7",
-                    borderTop: "1px solid #aeb8c7",
-                    my: 1,
+                    my: 0.5,
                     py: 0.5,
                   }}
                 >

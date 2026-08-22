@@ -254,8 +254,8 @@ export const DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS: readonly DashboardSidebarNav
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[4] }),
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[5] }),
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[6] }),
-    Object.freeze({ kind: "item" as const, item: DASHBOARD_STANDALONE_ITEMS[0], dividerBefore: true }),
-    Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[7], dividerBefore: true }),
+    Object.freeze({ kind: "item" as const, item: DASHBOARD_STANDALONE_ITEMS[0] }),
+    Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[7] }),
   ]);
 
 export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
