@@ -40,6 +40,24 @@ function selectStatementTable(
   return matches[0]!;
 }
 
+function retainOnlyPlausibleCurrencyColumn(
+  mapping: JournalGenericStatementMappingContract,
+): JournalGenericStatementMappingContract {
+  const currencyHeader = mapping.columns.currency;
+  // The model may select an unrelated optional column when the statement has
+  // no currency field. In that case the independently validated default is
+  // safer than treating values such as an exchange or trader note as money.
+  if (!currencyHeader || /\b(?:currency|curr|ccy)\b/iu.test(currencyHeader)) {
+    return mapping;
+  }
+  return parseJournalGenericStatementMappingContract({
+    ...mapping,
+    columns: Object.fromEntries(
+      Object.entries(mapping.columns).filter(([field]) => field !== "currency"),
+    ),
+  });
+}
+
 export class JournalAiImportRepairWorker {
   constructor(
     private readonly database: Database.Database,
@@ -77,7 +95,7 @@ export class JournalAiImportRepairWorker {
       // The broker and every structural fact come from the trader and the
       // uploaded source. AI can choose column meanings but cannot invent a
       // reusable statement layout.
-      const mapping = parseJournalGenericStatementMappingContract({
+      const parsedMapping = parseJournalGenericStatementMappingContract({
         ...providerMapping,
         brokerName: claimed.confirmedBrokerName,
         delimiter: inspection.detectedDelimiter,
@@ -87,6 +105,7 @@ export class JournalAiImportRepairWorker {
         orderedHeaders: table.headerLabels,
         structuralSignatureSha256: table.structuralSignatureSha256,
       });
+      const mapping = retainOnlyPlausibleCurrencyColumn(parsedMapping);
       const preview = previewJournalGenericMappedUpload(claimed.scope, {
         sourceBytes, mapping, mappingOrigin: "manual_mapping",
         attemptBindingSha256: claimed.requestIdempotencySha256,

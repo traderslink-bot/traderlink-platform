@@ -56,7 +56,10 @@ const SYSTEM = `You configure a CSV statement mapping for TraderLink. Return onl
 Use only headers and layout actually present in the supplied statement. Do not invent columns,
 orders, broker identity, side values, timezone, dates, prices, quantities, or executions. Map a
 statement only if it contains a coherent stock-execution table. The result is independently
-validated and previewed before any Journal import. Do not include commentary or statement rows.`;
+validated and previewed before any Journal import. Currency is optional: set columns.currency
+to null unless its header clearly identifies a currency field (for example Currency, Curr or
+CCY). Never map an exchange, market center, note, account, venue or other arbitrary column as
+currency. Do not include commentary or statement rows.`;
 
 function enabled(environment: NodeJS.ProcessEnv): boolean {
   return environment.TRADERLINK_PLATFORM_AI_IMPORT_REPAIR_ENABLED === "true" &&
