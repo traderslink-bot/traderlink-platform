@@ -7,8 +7,6 @@ import Divider from "@mui/material/Divider";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import MuiLink from "@mui/material/Link";
-import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 
 import {
@@ -62,7 +60,6 @@ function pushMessageSeverity(message: string): "error" | "info" | "success" | "w
   if (message.startsWith("Saving") || message.startsWith("Waiting") || message.startsWith("Checking") || message.includes("are ready")) {
     return "info";
   }
-  if (message.includes("not ready") || message.includes("Install TradersLink")) return "warning";
   return "error";
 }
 
@@ -82,8 +79,6 @@ export function NotificationPreferences({
   const [discordMessage, setDiscordMessage] = useState<string | null>(null);
   const [pushMessage, setPushMessage] = useState<string | null>(null);
   const [pushPreparation, setPushPreparation] = useState<PreparedPlatformWebPush | null>(null);
-  const [pushPreparationUnavailable, setPushPreparationUnavailable] = useState(false);
-  const [preparingPush, setPreparingPush] = useState(false);
   const [working, startTransition] = useTransition();
 
   useEffect(() => {
@@ -96,11 +91,8 @@ export function NotificationPreferences({
     refreshPushState();
     window.addEventListener("focus", refreshPushState);
     void preparePlatformWebPush()
-      .then((prepared) => {
-        setPushPreparation(prepared);
-        setPushPreparationUnavailable(false);
-      })
-      .catch(() => setPushPreparationUnavailable(true));
+      .then(setPushPreparation)
+      .catch(() => setPushPreparation(null));
     return () => window.removeEventListener("focus", refreshPushState);
   }, []);
 
@@ -136,9 +128,7 @@ export function NotificationPreferences({
 
   function enablePush(): void {
     if (!pushPreparation) {
-      setPushMessage(pushPreparationUnavailable
-        ? "Push setup is not ready on this device yet. Try push setup again in a moment."
-        : "Push notifications are still getting ready. Try again in a moment.");
+      savePush();
       return;
     }
     setPushMessage("Waiting for your device to approve push notifications...");
@@ -156,22 +146,6 @@ export function NotificationPreferences({
         setPushMessage(error instanceof Error ? error.message : "Push notifications could not be enabled.");
       }
     });
-  }
-
-  function retryPushPreparation(): void {
-    setPushPreparationUnavailable(false);
-    setPreparingPush(true);
-    setPushMessage("Checking whether push notifications can be enabled on this device...");
-    void preparePlatformWebPush()
-      .then((prepared) => {
-        setPushPreparation(prepared);
-        setPushMessage("Push notifications are ready to enable on this device.");
-      })
-      .catch(() => {
-        setPushPreparationUnavailable(true);
-        setPushMessage("Push notifications are not ready on this device yet. Install TradersLink, then try again.");
-      })
-      .finally(() => setPreparingPush(false));
   }
 
   function disablePush(): void {
@@ -205,7 +179,7 @@ export function NotificationPreferences({
           setPushMessage(pressReleaseResult.message);
         }
       } catch {
-        setPushMessage("Your push notification choices could not be saved. Try again.");
+        setPushMessage("Your push notification choices could not be saved.");
       }
     });
   }
@@ -238,15 +212,10 @@ export function NotificationPreferences({
         Push notifications
       </Typography>
       <Typography color="text.secondary" variant="body2">
-        Pick the alerts you want, then press Enable push notifications and approve your device&apos;s prompt. Account and trading alerts stay private and generic. Press release alerts show the public ticker and headline so you can open the article directly.
+        Pick the alerts you want, then press Set Preferences. If this device can receive push notifications, it will ask for your permission. Account and trading alerts stay private and generic. Press release alerts show the public ticker and headline so you can open the article directly.
       </Typography>
       {pushState === "unsupported" ? <Alert severity="info">Push notifications are not supported in this browser.</Alert> : null}
       {pushState === "denied" ? <Alert severity="warning">Push notifications are turned off in this device&apos;s browser settings. Turn them on there, then return to TradersLink—the page will check again automatically.</Alert> : null}
-      {pushPreparationUnavailable && pushState !== "unsupported" && pushState !== "denied" ? (
-        <Alert severity="info">
-          Install TradersLink on your phone or computer to receive push notifications on that device. <MuiLink component={Link} href="/account/trading#pwa-app">Open General for app installation help.</MuiLink>
-        </Alert>
-      ) : null}
       <Stack spacing={0.25}>
         {PLATFORM_NOTIFICATION_CATEGORIES.map((category) => (
           <FormControlLabel
@@ -266,22 +235,20 @@ export function NotificationPreferences({
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" } }}>
         {pushState === "enabled" ? (
           <>
-            <Button disabled={working} onClick={savePush} variant="contained">{working ? "Saving..." : "Save Preferences"}</Button>
+            <Button disabled={working} onClick={savePush} variant="contained">{working ? "Saving..." : "Set Preferences"}</Button>
             <Button color="error" disabled={working} onClick={disablePush} variant="outlined">Turn off push notifications</Button>
           </>
         ) : pushState === "checking" ? (
-          <Button disabled variant="contained">Save Preferences</Button>
-        ) : pushState === "unsupported" || pushState === "denied" ? null : pushPreparationUnavailable ? (
-          <Button disabled={working || preparingPush} onClick={retryPushPreparation} variant="contained">
-            {preparingPush ? "Checking..." : "Try push setup again"}
-          </Button>
+          <Button disabled variant="contained">Set Preferences</Button>
+        ) : pushState === "unsupported" || pushState === "denied" ? null : pushPreparation === null ? (
+          <Button disabled={working} onClick={savePush} variant="contained">{working ? "Saving..." : "Set Preferences"}</Button>
         ) : (
           <Button
             disabled={working || pushPreparation === null}
             onClick={enablePush}
             variant="contained"
           >
-            Enable push notifications
+            {working ? "Saving..." : "Set Preferences"}
           </Button>
         )}
       </Stack>
