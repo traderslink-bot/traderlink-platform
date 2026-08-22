@@ -83,11 +83,13 @@ export class JournalAiImportRepairWorker {
         expectedSha256: claimed.supportObject.sourceFileSha256,
         expectedSizeBytes: claimed.supportObject.sourceFileSizeBytes,
       });
+      const accountId = claimed.scope.activeAccountId;
+      if (!accountId) throw new Error("private_account_missing");
       const account = this.database.prepare<[string, string], { trading_timezone: string }>(`SELECT trading_timezone
 FROM journal_accounts
 WHERE workspace_id = ? AND account_id = ?`).get(
         claimed.scope.workspaceId,
-        claimed.scope.activeAccountId,
+        accountId,
       );
       if (!account) throw new Error("private_account_missing");
       const providerMapping = parseJournalGenericStatementMappingContract(await this.provider({
