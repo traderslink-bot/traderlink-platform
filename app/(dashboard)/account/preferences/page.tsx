@@ -5,6 +5,7 @@ import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/serve
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
 import { PressReleaseDashboardRepository } from "@/src/modules/news/server/press-release-dashboard-repository";
+import { MarketHaltAlertRepository } from "@/src/modules/news/server/market-halt-alert-repository";
 import { AccountSettingsLayout } from "../account-settings-layout";
 import { NotificationPreferences } from "../notification-preferences";
 
@@ -18,8 +19,9 @@ export const revalidate = 0;
 
 export default async function AccountPreferencesPage() {
   const scope = await requireTraderLinkPlatformPageScope();
-  const { notificationPreferences, pressReleasePushChannels } = withReadonlyPlatformDatabase({}, (database) =>
+  const { marketHaltAlerts, notificationPreferences, pressReleasePushChannels } = withReadonlyPlatformDatabase({}, (database) =>
     Object.freeze({
+      marketHaltAlerts: new MarketHaltAlertRepository(database).read(scope),
       notificationPreferences: new PlatformNotificationRepository(database).readPreferences(scope),
       pressReleasePushChannels: new PressReleaseDashboardRepository(database).readPushPreferences(scope),
     }));
@@ -33,6 +35,8 @@ export default async function AccountPreferencesPage() {
       <DashboardPanel title="Notifications">
         <NotificationPreferences
           initialDiscordDmCategories={notificationPreferences.discordDmCategories}
+          initialMarketHaltAlertsEnabled={marketHaltAlerts.enabled}
+          initialMutedHaltTickers={marketHaltAlerts.mutedTickers}
           initialPressReleasePushChannels={pressReleasePushChannels}
           initialWebPushCategories={notificationPreferences.webPushCategories}
         />

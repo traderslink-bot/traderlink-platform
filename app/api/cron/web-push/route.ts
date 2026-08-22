@@ -4,6 +4,7 @@ import { openPlatformDatabase } from "@/src/modules/platform/server/database/ope
 import { loadPlatformWebPushConfiguration } from "@/src/modules/platform/server/notifications/platform-web-push-configuration";
 import { PlatformWebPushDeliveryService } from "@/src/modules/platform/server/notifications/platform-web-push-delivery-service";
 import { PlatformWebPushRepository } from "@/src/modules/platform/server/notifications/platform-web-push-repository";
+import { MarketHaltWebPushRepository } from "@/src/modules/news/server/market-halt-web-push-repository";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,11 +25,15 @@ export async function GET(request: Request): Promise<Response> {
   const database = openPlatformDatabase({ mode: "runtime" });
   try {
     const configuration = loadPlatformWebPushConfiguration();
-    const processed = await new PlatformWebPushDeliveryService(
+    const platformProcessed = await new PlatformWebPushDeliveryService(
       new PlatformWebPushRepository(database, configuration.encryption),
       configuration,
     ).runOne();
-    return Response.json({ ok: true, processed });
+    const marketHaltProcessed = await new PlatformWebPushDeliveryService(
+      new MarketHaltWebPushRepository(database, configuration.encryption),
+      configuration,
+    ).runOne();
+    return Response.json({ ok: true, processed: platformProcessed || marketHaltProcessed });
   } catch {
     return Response.json({ ok: false }, { status: 503 });
   } finally {

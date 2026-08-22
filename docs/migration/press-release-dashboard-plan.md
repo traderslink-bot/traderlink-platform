@@ -4,6 +4,8 @@
 
 **Progress:** [Press Release Dashboard Progress](press-release-dashboard-progress.md)
 
+**Halt alerts extension:** [Nasdaq and NYSE Halt Alerts Plan](nasdaq-nyse-halt-alerts-plan.md)
+
 **Prepared:** 2026-08-20
 
 ## Outcome

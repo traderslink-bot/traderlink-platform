@@ -10,6 +10,7 @@ import { loadPlatformWebPushConfiguration } from "@/src/modules/platform/server/
 import { PlatformWebPushDeliveryService } from "@/src/modules/platform/server/notifications/platform-web-push-delivery-service";
 import { PlatformWebPushRepository } from "@/src/modules/platform/server/notifications/platform-web-push-repository";
 import { PressReleaseWebPushRepository } from "@/src/modules/news/server/press-release-web-push-repository";
+import { MarketHaltWebPushRepository } from "@/src/modules/news/server/market-halt-web-push-repository";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,8 +36,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       new PressReleaseWebPushRepository(database, configuration.encryption),
       configuration,
     ).runOne();
+    const marketHaltProcessed = await new PlatformWebPushDeliveryService(
+      new MarketHaltWebPushRepository(database, configuration.encryption),
+      configuration,
+    ).runOne();
     return NextResponse.json({
-      processed: platformProcessed || pressReleaseProcessed,
+      processed: platformProcessed || pressReleaseProcessed || marketHaltProcessed,
+      marketHaltProcessed,
       platformProcessed,
       pressReleaseProcessed,
     });

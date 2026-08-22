@@ -22,6 +22,7 @@ import { academyProgressMigration } from "@/src/modules/academy/server/database/
 import { watchlistStorageMigration } from "@/src/modules/watchlist/server/database/migrations/0014_watchlist_storage";
 import { newsContentMigration } from "@/src/modules/news/server/database/migrations/0015_news_content";
 import { newsPressReleaseDashboardMigration } from "@/src/modules/news/server/database/migrations/0070_news_press_release_dashboard";
+import { newsMarketHaltAlertsMigration } from "@/src/modules/news/server/database/migrations/0072_news_market_halt_alerts";
 import { affiliateAttributionMigration } from "@/src/modules/affiliate/server/database/migrations/0016_affiliate_attribution";
 import { coachWeeklyReviewsMigration } from "@/src/modules/coach/server/database/migrations/0025_coach_weekly_reviews";
 import { coachMonthlyReviewsMigration } from "@/src/modules/coach/server/database/migrations/0026_coach_monthly_reviews";
@@ -366,6 +367,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/coach/server/database/migrations/0071_coach_ai_chat_quality_feedback.ts",
       migration: coachAiChatQualityFeedbackMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/news/server/database/migrations/0072_news_market_halt_alerts.ts",
+      migration: newsMarketHaltAlertsMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -666,6 +671,12 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "news_article_read_receipts",
       "news_press_release_push_preferences",
       "news_press_release_push_deliveries",
+    ]),
+    "0072_news_market_halt_alerts": Object.freeze([
+      "news_market_halt_preferences",
+      "news_market_halt_muted_tickers",
+      "news_market_halt_events",
+      "news_market_halt_push_deliveries",
     ]),
   });
 

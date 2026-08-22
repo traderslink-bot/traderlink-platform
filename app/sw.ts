@@ -36,6 +36,12 @@ function safeDestinationPath(value: unknown): string {
     : "/notifications";
 }
 
+function safeNotificationText(value: unknown, fallback: string, maximum: number): string {
+  return typeof value === "string" && value.trim().length > 0 && value.length <= maximum
+    ? value.trim()
+    : fallback;
+}
+
 const offlineNavigationPlugin: SerwistPlugin = {
   async handlerDidError({ request }) {
     const url = new URL(request.url);
@@ -154,19 +160,27 @@ self.addEventListener("sync", (event) => {
 
 self.addEventListener("push", (event) => {
   let path = "/notifications";
+  let title = "TraderLink Platform";
+  let body = "You have a new TraderLink update.";
+  let tag = "traderlink-update";
   try {
     const data = event.data?.json();
-    if (data?.version === 1) path = safeDestinationPath(data.destinationPath);
+    if (data?.version === 1 || data?.version === 2) {
+      path = safeDestinationPath(data.destinationPath);
+      title = safeNotificationText(data.notificationTitle, title, 120);
+      body = safeNotificationText(data.notificationBody, body, 240);
+      tag = safeNotificationText(data.notificationTag, tag, 160);
+    }
   } catch {
     path = "/notifications";
   }
   event.waitUntil(
-    self.registration.showNotification("TraderLink Platform", {
-      body: "You have a new TraderLink update.",
+    self.registration.showNotification(title, {
+      body,
       icon: "/icons/traderlink-192.png",
       badge: "/icons/traderlink-192.png",
       data: { path },
-      tag: "traderlink-update",
+      tag,
     }),
   );
 });

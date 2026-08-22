@@ -10,6 +10,7 @@ import {
 } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
 import { PressReleaseDashboardRepository } from "@/src/modules/news/server/press-release-dashboard-repository";
+import { MarketHaltAlertRepository } from "@/src/modules/news/server/market-halt-alert-repository";
 
 export async function saveDiscordDmNotificationCategories(
   categories: readonly string[],
@@ -91,6 +92,73 @@ export async function savePressReleasePushChannels(
       message: invalid
         ? "Choose press release alerts from the available channels."
         : "Your press release alert choices could not be saved. Try again.",
+    });
+  }
+}
+
+export async function saveMarketHaltAlertsEnabled(
+  enabled: boolean,
+): Promise<Readonly<{ ok: true; enabled: boolean }> | Readonly<{ ok: false; message: string }>> {
+  try {
+    const scope = await requireTraderLinkPlatformPageScope();
+    const saved = withPlatformDatabase(
+      { mode: "runtime" },
+      (database) => new MarketHaltAlertRepository(database).setEnabled({
+        enabled,
+        scope,
+        updatedAtUtc: createCanonicalUtcTimestamp(),
+      }),
+    );
+    revalidatePath("/account/preferences");
+    return Object.freeze({ enabled: saved, ok: true as const });
+  } catch {
+    return Object.freeze({
+      ok: false as const,
+      message: "Your halt alert choice could not be saved. Try again.",
+    });
+  }
+}
+
+export async function muteMarketHaltTicker(
+  ticker: string,
+): Promise<Readonly<{ ok: true; tickers: readonly string[] }> | Readonly<{ ok: false; message: string }>> {
+  try {
+    const scope = await requireTraderLinkPlatformPageScope();
+    const saved = withPlatformDatabase(
+      { mode: "runtime" },
+      (database) => new MarketHaltAlertRepository(database).mute({
+        scope,
+        ticker,
+        updatedAtUtc: createCanonicalUtcTimestamp(),
+      }),
+    );
+    revalidatePath("/account/preferences");
+    return Object.freeze({ ok: true as const, tickers: saved });
+  } catch (error) {
+    const invalid = isTraderLinkPlatformError(error) &&
+      error.code === "TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED";
+    return Object.freeze({
+      ok: false as const,
+      message: invalid ? "Enter a valid ticker." : "That ticker could not be muted. Try again.",
+    });
+  }
+}
+
+export async function unmuteMarketHaltTicker(
+  ticker: string,
+): Promise<Readonly<{ ok: true; tickers: readonly string[] }> | Readonly<{ ok: false; message: string }>> {
+  try {
+    const scope = await requireTraderLinkPlatformPageScope();
+    const saved = withPlatformDatabase(
+      { mode: "runtime" },
+      (database) => new MarketHaltAlertRepository(database).unmute({ scope, ticker }),
+    );
+    revalidatePath("/account/preferences");
+    return Object.freeze({ ok: true as const, tickers: saved });
+  } catch {
+    return Object.freeze({
+      ok: false as const,
+      message: "That ticker could not be turned back on. Try again.",
     });
   }
 }

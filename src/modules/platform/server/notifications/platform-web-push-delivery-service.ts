@@ -99,4 +99,11 @@ export class PlatformWebPushDeliveryService {
     }
     return true;
   }
+
+  async runAvailable(maximum: number): Promise<number> {
+    const limit = Number.isInteger(maximum) ? Math.min(Math.max(maximum, 0), 100) : 0;
+    let processed = 0;
+    while (processed < limit && await this.runOne()) processed += 1;
+    return processed;
+  }
 }
