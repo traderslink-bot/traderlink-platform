@@ -25,7 +25,9 @@ export function JournalAdminAccessDenied() {
             <Box component="form" action="/api/auth/logout" method="post">
               <Button fullWidth type="submit" variant="contained">Log out and sign in again</Button>
             </Box>
-            <Button component={Link} href="/workspace" variant="outlined">Return to Journal</Button>
+            <Link href="/workspace" style={{ textDecoration: "none" }}>
+              <Button variant="outlined">Return to Journal</Button>
+            </Link>
           </Stack>
         </Stack>
       </Paper>
