@@ -8,7 +8,6 @@ import Checkbox from "@mui/material/Checkbox";
 import Divider from "@mui/material/Divider";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
-import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -116,8 +115,8 @@ export function MarketHaltAlertDrawerContent({
   }
 
   return (
-    <Stack spacing={2} sx={{ height: "100%", px: { xs: 2, sm: 2.5 }, py: { xs: 2, sm: 2.5 } }}>
-      <Stack alignItems="center" direction="row" justifyContent="space-between" spacing={1}>
+    <Box sx={{ display: "grid", gap: 2, height: "100%", px: { xs: 2, sm: 2.5 }, py: { xs: 2, sm: 2.5 } }}>
+      <Box sx={{ alignItems: "center", display: "flex", gap: 1, justifyContent: "space-between" }}>
         <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">
           Halt Alerts (Nasdaq/NYSE)
         </Typography>
@@ -126,16 +125,16 @@ export function MarketHaltAlertDrawerContent({
             <CloseRoundedIcon />
           </IconButton>
         </Tooltip>
-      </Stack>
+      </Box>
       <FormControlLabel
         control={<Checkbox checked={enabled} disabled={working} onChange={(event) => saveEnabled(event.target.checked)} />}
         label="Halt alerts"
       />
       <Divider />
-      <Stack component="form" direction={{ xs: "column", sm: "row" }} onSubmit={(event) => {
+      <Box component="form" onSubmit={(event) => {
         event.preventDefault();
         muteTicker();
-      }} spacing={1}>
+      }} sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 1 }}>
         <TextField
           autoCapitalize="characters"
           disabled={working}
@@ -147,7 +146,7 @@ export function MarketHaltAlertDrawerContent({
         <Button disabled={working} type="submit" variant="outlined">
           Mute for today
         </Button>
-      </Stack>
+      </Box>
       <Box>
         <Typography sx={{ fontWeight: 800 }} variant="subtitle2">Muted tickers</Typography>
         {mutedTickers.length === 0 ? (
@@ -155,9 +154,9 @@ export function MarketHaltAlertDrawerContent({
             No tickers muted today.
           </Typography>
         ) : (
-          <Stack spacing={0.25} sx={{ mt: 0.5 }}>
+          <Box sx={{ display: "grid", gap: 0.25, mt: 0.5 }}>
             {mutedTickers.map((mutedTicker) => (
-              <Stack alignItems="center" direction="row" justifyContent="space-between" key={mutedTicker}>
+              <Box key={mutedTicker} sx={{ alignItems: "center", display: "flex", justifyContent: "space-between" }}>
                 <Typography variant="caption">{mutedTicker}</Typography>
                 <Tooltip title={`Unmute ${mutedTicker}`}>
                   <span>
@@ -171,12 +170,12 @@ export function MarketHaltAlertDrawerContent({
                     </IconButton>
                   </span>
                 </Tooltip>
-              </Stack>
+              </Box>
             ))}
-          </Stack>
+          </Box>
         )}
       </Box>
       {message ? <Alert aria-live="polite" role="status" severity={message.severity}>{message.text}</Alert> : null}
-    </Stack>
+    </Box>
   );
 }
