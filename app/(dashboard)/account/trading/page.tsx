@@ -9,6 +9,7 @@ import { DashboardAccountSwitcher } from "@/app/dashboard-account-switcher";
 import { DashboardPanel } from "../../../dashboard-template";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
+import { TraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
 import { PlatformAccountProfileReadService } from "@/src/modules/platform/server/identity/platform-account-profile-read-service";
 import { MoomooExecutionImportCommandService } from "@/src/modules/journal/server/broker-imports/moomoo-execution-import-command-service";
@@ -33,14 +34,34 @@ export default async function AccountTradingPage({
 }) {
   const query = await searchParams;
   const scope = await requireTraderLinkPlatformPageScope();
-  const { moomooAccountLinks, moomooConnection, profile } = withReadonlyPlatformDatabase({}, (database) => {
+  const { moomooAccountLinks, moomooConnection, moomooImportUnavailable, profile } = withReadonlyPlatformDatabase({}, (database) => {
     const currentProfile = new PlatformAccountProfileReadService(database).get(scope);
     const currentAccount = currentProfile.journalAccounts.find((account) => account.active);
+    const currentMoomooConnection = new MoomooConnectionRepository(database).find(scope);
+    let linkedAccounts: ReturnType<MoomooExecutionImportCommandService["list"]> = [];
+    let importUnavailable = false;
+    if (
+      currentAccount &&
+      currentMoomooConnection?.state === "active" &&
+      currentMoomooConnection.authorizedScopes.includes("trade:read")
+    ) {
+      try {
+        linkedAccounts = new MoomooExecutionImportCommandService(database).list(
+          scope,
+          scope.activeAccountId ?? "",
+        );
+      } catch (error) {
+        if (
+          !(error instanceof TraderLinkPlatformError) ||
+          error.code !== "TRADERLINK_BROKER_CONNECTION_CONFIGURATION_INVALID"
+        ) throw error;
+        importUnavailable = true;
+      }
+    }
     return Object.freeze({
-      moomooAccountLinks: currentAccount
-        ? new MoomooExecutionImportCommandService(database).list(scope, scope.activeAccountId ?? "")
-        : [],
-      moomooConnection: new MoomooConnectionRepository(database).find(scope),
+      moomooAccountLinks: linkedAccounts,
+      moomooConnection: currentMoomooConnection,
+      moomooImportUnavailable: importUnavailable,
       profile: currentProfile,
     });
   });
@@ -85,6 +106,11 @@ export default async function AccountTradingPage({
               : ""}You can try connecting again later.
           </Alert>
         ) : null}
+        {moomooImportUnavailable ? (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            Moomoo trade imports are temporarily unavailable. Your Trade Tracker accounts and saved data are not affected.
+          </Alert>
+        ) : null}
         <BrokerConnectionPicker moomooConnectionState={moomooConnection?.state ?? null} />
         {moomooConnection?.state === "active" ? (
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ alignItems: { sm: "center" }, mt: 2 }}>
@@ -93,7 +119,7 @@ export default async function AccountTradingPage({
             <MoomooConnectionSettings state="active" />
           </Stack>
         ) : null}
-        {moomooConnection?.state === "active" && activeAccount ? (
+        {moomooConnection?.state === "active" && activeAccount && !moomooImportUnavailable ? (
           <MoomooExecutionImportSetup
             activeAccountName={activeAccount.displayName}
             activeAccountSelectionRef={activeAccount.selectionRef}
