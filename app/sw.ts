@@ -16,11 +16,6 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
-type TraderLinkNotificationAction = Readonly<{
-  action: string;
-  title: string;
-}>;
-
 async function unsubscribeCurrentPushDevice(): Promise<void> {
   try {
     const subscription = await self.registration.pushManager.getSubscription();
@@ -175,7 +170,7 @@ self.addEventListener("push", (event) => {
   let body = "You have a new TraderLink update.";
   let tag = "traderlink-update";
   let muteHaltTicker: string | null = null;
-  let actions: TraderLinkNotificationAction[] = [];
+  let actions: NotificationAction[] = [];
   try {
     const data = event.data?.json();
     if (data?.version === 1 || data?.version === 2 || data?.version === 3) {
@@ -195,17 +190,16 @@ self.addEventListener("push", (event) => {
   } catch {
     path = "/notifications";
   }
-  const notificationOptions: NotificationOptions & Readonly<{
-    actions: readonly TraderLinkNotificationAction[];
-  }> = {
-    body,
-    icon: "/icons/traderlink-192.png",
-    badge: "/icons/traderlink-192.png",
-    actions,
-    data: { muteHaltTicker, path },
-    tag,
-  };
-  event.waitUntil(self.registration.showNotification(title, notificationOptions));
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: "/icons/traderlink-192.png",
+      badge: "/icons/traderlink-192.png",
+      actions,
+      data: { muteHaltTicker, path },
+      tag,
+    }),
+  );
 });
 
 self.addEventListener("notificationclick", (event) => {

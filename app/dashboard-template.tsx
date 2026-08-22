@@ -32,6 +32,7 @@ export function TraderLinkPlatformDashboardTemplate({
   notifications = [],
   offlineScopeRef,
   pressReleaseUnreadCounts = null,
+  scannerEarlyAccess = false,
 }: {
   accountCurrency: string | null;
   accountSelectionRef: string | null;
@@ -42,6 +43,7 @@ export function TraderLinkPlatformDashboardTemplate({
   notifications?: readonly PlatformNotification[];
   offlineScopeRef: string;
   pressReleaseUnreadCounts?: PressReleaseUnreadCounts | null;
+  scannerEarlyAccess?: boolean;
 }) {
   return (
     <DashboardShell
@@ -49,6 +51,7 @@ export function TraderLinkPlatformDashboardTemplate({
       initialMutedMarketHaltTickers={initialMutedMarketHaltTickers}
       notifications={notifications}
       pressReleaseUnreadCounts={pressReleaseUnreadCounts}
+      scannerEarlyAccess={scannerEarlyAccess}
     >
       <OfflineProjectionCapture
         accountCurrency={accountCurrency}

@@ -16,6 +16,7 @@ import { PressReleaseDashboardRepository } from "@/src/modules/news/server/press
 import { hasPressReleaseDashboardAccess } from "@/src/modules/news/server/press-release-dashboard-access";
 import { MarketHaltAlertRepository } from "@/src/modules/news/server/market-halt-alert-repository";
 import { createCanonicalUtcTimestamp } from "@/src/modules/platform/server/database/platform-migration-contract";
+import { hasScannerEarlyAccess } from "@/src/modules/scanner/server/scanner-early-access";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -51,6 +52,7 @@ export default async function DashboardLayout({
   }
   const scope = identity.scope;
   const canReadPressReleases = hasPressReleaseDashboardAccess(identity);
+  const scannerEarlyAccess = hasScannerEarlyAccess(identity);
   const readAtUtc = createCanonicalUtcTimestamp();
   const dashboardContext = withReadonlyPlatformDatabase({}, (database) => {
     const activeAccount = scope.activeAccountId
@@ -88,6 +90,7 @@ export default async function DashboardLayout({
         notifications={dashboardContext.notifications}
         offlineScopeRef={offlineScopeRef}
         pressReleaseUnreadCounts={dashboardContext.pressReleaseUnreadCounts}
+        scannerEarlyAccess={scannerEarlyAccess}
       >
         {children}
       </TraderLinkPlatformDashboardTemplate>

@@ -1,14 +1,9 @@
 "use client";
 
-import AutorenewRoundedIcon from "@mui/icons-material/AutorenewRounded";
 import FilterAltRoundedIcon from "@mui/icons-material/FilterAltRounded";
-import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Divider from "@mui/material/Divider";
-import Link from "@mui/material/Link";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import Tab from "@mui/material/Tab";
@@ -26,7 +21,6 @@ import {
   DashboardPage,
   DashboardPanel,
   DashboardPrimaryAction,
-  DashboardSecondaryAction,
 } from "../../dashboard-template";
 
 const resultColumns = Object.freeze([
@@ -86,7 +80,7 @@ const filterLibrary = Object.freeze([
   { id: "eps", group: "fundamentals", kind: "range", label: "Earnings per share", detail: "Latest basic EPS", unit: "$" },
   { id: "float-market-cap", group: "fundamentals", kind: "range", label: "Float market cap", detail: "Value of shares available to trade", unit: "$" },
   { id: "ps-ttm", group: "fundamentals", kind: "range", label: "P/S (TTM)", detail: "Price-to-sales using trailing 12 months" },
-  { id: "price-vs-average", group: "technical", kind: "signal", label: "Price versus MA or EMA", detail: "Position or crossover against a moving average", choices: ["Price above MA", "Price below MA", "Price crosses above MA", "Price crosses below MA", "Price above EMA", "Price below EMA", "Price crosses above EMA", "Price crosses below EMA"] },
+  { id: "price-vs-average", group: "technical", kind: "signal", label: "Price versus MA or EMA", detail: "Position or crossover against a moving average", choices: ["Price above", "Price below", "Price crosses above", "Price crosses below"] },
   { id: "kdj", group: "technical", kind: "signal", label: "KDJ", detail: "KDJ crossover, top/bottom, or divergence", choices: ["Golden cross", "Death cross", "Top divergence", "Bottom divergence"] },
   { id: "macd", group: "technical", kind: "signal", label: "MACD", detail: "MACD crossover or divergence", choices: ["Bullish crossover", "Bearish crossover", "Top divergence", "Bottom divergence"] },
   { id: "rsi", group: "technical", kind: "signal", label: "RSI", detail: "RSI crossover or divergence", choices: ["Bullish crossover", "Bearish crossover", "Top divergence", "Bottom divergence"] },
@@ -119,7 +113,9 @@ type FilterDraft = {
   definitionId: string;
   lower: string;
   upper: string;
+  averageType: "MA" | "EMA";
   period: "1" | "5" | "20" | "60";
+  averageLength: "5" | "9" | "10" | "20" | "50" | "100" | "200";
   timeframe: "1 minute" | "5 minutes" | "15 minutes" | "1 hour" | "Daily" | "Weekly" | "Monthly";
   choice: string;
 };
@@ -130,6 +126,8 @@ type AddedFilter = FilterDraft & {
 };
 
 const initialDraft: FilterDraft = {
+  averageLength: "9",
+  averageType: "EMA",
   choice: "",
   definitionId: "price",
   lower: "",
@@ -148,11 +146,14 @@ function conditionLabel(definition: FilterDefinition, draft: FilterDraft) {
     return `${definition.label}: ${lower}, ${upper}${period}`;
   }
 
+  const average = definition.id === "price-vs-average"
+    ? ` ${draft.averageType} ${draft.averageLength}`
+    : "";
   const timeframe = definition.kind === "signal" ? ` on ${draft.timeframe}` : "";
-  return `${definition.label}: ${draft.choice || "Choose a condition"}${timeframe}`;
+  return `${definition.label}: ${draft.choice || "Choose a condition"}${average}${timeframe}`;
 }
 
-export function ScannerClient({ moomooConnected }: { moomooConnected: boolean }) {
+export function ScannerClient() {
   const [activeGroup, setActiveGroup] = useState<FilterGroup>("market");
   const [draft, setDraft] = useState<FilterDraft>(initialDraft);
   const [filters, setFilters] = useState<AddedFilter[]>([]);
@@ -188,31 +189,8 @@ export function ScannerClient({ moomooConnected }: { moomooConnected: boolean })
 
   return (
     <DashboardPage>
-      <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} sx={{ alignItems: { md: "center" }, justifyContent: "space-between" }}>
-        <Box>
-          <Typography component="h1" variant="h1">Scanner</Typography>
-        </Box>
-        <Stack direction="row" spacing={1}>
-          <DashboardSecondaryAction disabled>My scanners</DashboardSecondaryAction>
-          <DashboardPrimaryAction disabled startIcon={<AutorenewRoundedIcon />}>Refresh</DashboardPrimaryAction>
-        </Stack>
-      </Stack>
-
-      <DashboardPanel title="Build your scan">
+      <DashboardPanel>
         <Stack spacing={2.5}>
-          <Stack direction={{ xs: "column", md: "row" }} spacing={2} sx={{ alignItems: { md: "center" }, justifyContent: "space-between" }}>
-            <Box>
-              <Typography sx={{ fontWeight: 800 }}>U.S. stocks</Typography>
-              <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
-                Add as many conditions as you want. Each one narrows the results.
-              </Typography>
-            </Box>
-            <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", rowGap: 0.75 }}>
-              <Chip label="United States" size="small" />
-              <Chip label="Moomoo filter library" size="small" variant="outlined" />
-            </Stack>
-          </Stack>
-
           <Tabs
             aria-label="Scanner filter categories"
             onChange={(_, value: FilterGroup) => selectGroup(value)}
@@ -258,12 +236,25 @@ export function ScannerClient({ moomooConnected }: { moomooConnected: boolean })
                   <MenuItem value="">Choose a condition</MenuItem>
                   {selectedDefinition?.choices?.map((choice) => <MenuItem key={choice} value={choice}>{choice}</MenuItem>)}
                 </TextField>
-                {selectedDefinition?.kind === "signal" ? (
+                {selectedDefinition?.id === "price-vs-average" ? (
+                  <TextField label="Average" onChange={(event) => setDraft((current) => ({ ...current, averageType: event.target.value as FilterDraft["averageType"] }))} select size="small" value={draft.averageType}>
+                    <MenuItem value="MA">MA</MenuItem><MenuItem value="EMA">EMA</MenuItem>
+                  </TextField>
+                ) : selectedDefinition?.kind === "signal" ? (
                   <TextField label="Timeframe" onChange={(event) => setDraft((current) => ({ ...current, timeframe: event.target.value as FilterDraft["timeframe"] }))} select size="small" value={draft.timeframe}>
                     {(["1 minute", "5 minutes", "15 minutes", "1 hour", "Daily", "Weekly", "Monthly"] as const).map((timeframe) => <MenuItem key={timeframe} value={timeframe}>{timeframe}</MenuItem>)}
                   </TextField>
                 ) : <Box />}
-                <Box />
+                {selectedDefinition?.id === "price-vs-average" ? (
+                  <TextField label="Average length" onChange={(event) => setDraft((current) => ({ ...current, averageLength: event.target.value as FilterDraft["averageLength"] }))} select size="small" value={draft.averageLength}>
+                    <MenuItem value="5">5</MenuItem><MenuItem value="9">9</MenuItem><MenuItem value="10">10</MenuItem><MenuItem value="20">20</MenuItem><MenuItem value="50">50</MenuItem><MenuItem value="100">100</MenuItem><MenuItem value="200">200</MenuItem>
+                  </TextField>
+                ) : <Box />}
+                {selectedDefinition?.id === "price-vs-average" ? (
+                  <TextField label="Timeframe" onChange={(event) => setDraft((current) => ({ ...current, timeframe: event.target.value as FilterDraft["timeframe"] }))} select size="small" value={draft.timeframe}>
+                    {(["1 minute", "5 minutes", "15 minutes", "1 hour", "Daily", "Weekly", "Monthly"] as const).map((timeframe) => <MenuItem key={timeframe} value={timeframe}>{timeframe}</MenuItem>)}
+                  </TextField>
+                ) : <Box />}
               </>
             )}
             <DashboardPrimaryAction disabled={selectedDefinition?.kind !== "range" && !draft.choice} onClick={addFilter} startIcon={<FilterAltRoundedIcon />}>
@@ -285,7 +276,7 @@ export function ScannerClient({ moomooConnected }: { moomooConnected: boolean })
               </TextField>
             </Stack>
             {filters.length === 0 ? (
-              <Alert severity="info">No filters yet. Choose a category above, select a condition, then add it to this scan.</Alert>
+              <Typography color="text.secondary" variant="body2">Choose a category, select a condition, then add it to this scan.</Typography>
             ) : (
               <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", rowGap: 0.75 }}>
                 {filters.map((filter) => <Chip key={filter.id} label={filter.label} onDelete={() => setFilters((current) => current.filter((item) => item.id !== filter.id))} />)}
@@ -294,14 +285,6 @@ export function ScannerClient({ moomooConnected }: { moomooConnected: boolean })
           </Stack>
         </Stack>
       </DashboardPanel>
-
-      {!moomooConnected ? (
-        <Alert action={<Button component={Link} endIcon={<OpenInNewRoundedIcon />} href="/account/trading" size="small">Connect Moomoo</Button>} severity="info">
-          Connect Moomoo to load current scanner results. TradersLink does not show made-up stock results while market data is unavailable.
-        </Alert>
-      ) : (
-        <Alert severity="info">Your Moomoo connection is ready. Results will use the conditions you add once the scanner refresh path is connected.</Alert>
-      )}
 
       <DashboardPanel action={<Typography color="text.secondary" variant="body2">No scan has run yet</Typography>} title="Matches">
         <Box sx={{ maxWidth: "100%", overflowX: "auto" }}>

@@ -272,7 +272,7 @@ function NavigationLink({
     <Tooltip
       arrow
       placement="right"
-      title={item.statusLabel ? `${item.label} - ${item.statusLabel}` : item.label}
+      title={item.statusLabel ? `${item.label} — ${item.statusLabel}` : item.label}
     >
       {link}
     </Tooltip>
@@ -335,6 +335,7 @@ export function DashboardShell({
   notifications = [],
   offline = false,
   pressReleaseUnreadCounts = null,
+  scannerEarlyAccess = false,
 }: {
   children: ReactNode;
   initialMarketHaltAlertsEnabled?: boolean;
@@ -342,6 +343,7 @@ export function DashboardShell({
   notifications?: readonly PlatformNotification[];
   offline?: boolean;
   pressReleaseUnreadCounts?: PressReleaseUnreadCounts | null;
+  scannerEarlyAccess?: boolean;
 }) {
   const pathname = usePathname();
   const pageHelpTarget = offline ? null : dashboardHelpTarget(pathname);
@@ -366,6 +368,10 @@ export function DashboardShell({
 
   const desktopWidth = collapsed ? collapsedWidth : expandedWidth;
   const accountMenuOpen = Boolean(accountMenuAnchor);
+  const sidebarNavigationSections = scannerEarlyAccess
+    ? DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS
+    : DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS.filter((section) =>
+      section.kind !== "item" || section.item.href !== "/scanner");
   const closeMobile = () => setMobileOpen(false);
   const setDesktopNavigationCollapsed = (nextCollapsed: boolean) => {
     setCollapsed(nextCollapsed);
@@ -494,7 +500,7 @@ export function DashboardShell({
               onOpenAiChat={openAiChat}
               pathname={pathname}
             />
-            {DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS.map((section, sectionIndex) => {
+            {sidebarNavigationSections.map((section, sectionIndex) => {
               const divider = section.dividerBefore ? (
                 <Divider sx={{ my: 1.25 }} />
               ) : compact && sectionIndex > 0 ? (

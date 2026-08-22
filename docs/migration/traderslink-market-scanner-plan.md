@@ -13,25 +13,29 @@ scope for this work.
 
 ## First visual slice
 
-Add a new `/scanner` dashboard page titled **Scanner**. It starts with U.S.
-stocks and has one selected ready-to-use TradersLink scanner. The page shows:
+Add a new `/scanner` dashboard page with an unrestricted Moomoo-shaped filter
+builder. It must cover available market, fundamental, indicator,
+candle/chart-pattern, sentiment/ownership, broker-holding and option
+conditions. Traders may combine conditions, choose their bounds/timeframes
+where applicable, remove them, and choose a sort order.
 
-- a clear scanner picker for TradersLink-provided screens;
-- an unrestricted Moomoo filter builder. It must cover available market,
-  fundamental, indicator, candle/chart-pattern, sentiment/ownership, broker
-  holdings and option conditions. Traders may combine conditions, choose their
-  bounds/timeframes where applicable, remove them, and choose a sort order;
-- a result count, the exact last-updated time and a normal Refresh action;
-- a responsive table limited to the most useful first 25 matches, with an
-  optional 50 and 100 rows; and
-- only factual Moomoo-returned values. No fixture, zero, stale placeholder or
-  inferred financial value can be presented as a result.
+When result data is added, the page must show a result count, exact
+last-updated time, a normal Refresh action and a responsive table limited to
+the most useful first 25 matches, with optional 50 and 100 rows. Only factual
+Moomoo-returned values may be presented; no fixture, zero, stale placeholder
+or inferred financial value is a result.
 
-The first UI must make the difference between a selected ready-to-use screen
-and future personal saved screens obvious. A trader may adjust the visible
-screen settings before results run, but those settings are not saved as a
-personal scanner in this slice. It must not pretend that users have already
-created scanners, watchlists, shares or alerts.
+A trader may adjust the visible screen settings before results run, but those
+settings are not saved as a personal scanner in this slice. It must not
+pretend that users have already created scanners, watchlists, shares or
+alerts. The page has no generic title subtitle or introductory scope labels;
+each control explains itself where a trader needs it.
+
+During the owner test period, Scanner access is limited server-side to the
+owner's stable signed-in identity stored in protected hosted configuration.
+The mutable display name is never an access control input. The same gate must
+hide the navigation entry and reject direct route access for every other
+account; it is removed or expanded deliberately before beta access opens.
 
 ## Data and refresh boundary
 
