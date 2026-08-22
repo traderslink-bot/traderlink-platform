@@ -16,6 +16,11 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
+type TraderLinkNotificationAction = Readonly<{
+  action: string;
+  title: string;
+}>;
+
 async function unsubscribeCurrentPushDevice(): Promise<void> {
   try {
     const subscription = await self.registration.pushManager.getSubscription();
@@ -170,7 +175,7 @@ self.addEventListener("push", (event) => {
   let body = "You have a new TraderLink update.";
   let tag = "traderlink-update";
   let muteHaltTicker: string | null = null;
-  let actions: NotificationAction[] = [];
+  let actions: TraderLinkNotificationAction[] = [];
   try {
     const data = event.data?.json();
     if (data?.version === 1 || data?.version === 2 || data?.version === 3) {
