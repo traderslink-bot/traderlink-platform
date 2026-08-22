@@ -21,7 +21,7 @@ TradersLink Scanner now and not wait for a separate market-data approval process
   alert at owner request. Add selectable MA/EMA lengths (5, 9, 10, 20, 50,
   100 and 200) to the indicator filter UI.
 - [x] Deny direct Scanner-route access to every hosted account except the
-  owner-selected Discord identity held in
+  owner-selected Discord identities held as a comma-separated allowlist in
   `TRADERLINK_SCANNER_EARLY_ACCESS_DISCORD_SUBJECT`; no display name or
   identifier is committed. Local loopback development remains available to the
   development owner only.

@@ -50,10 +50,11 @@ or alerts. The page has no generic title subtitle or introductory scope labels;
 each control explains itself where a trader needs it.
 
 During the owner test period, Scanner access is limited server-side to the
-owner's stable signed-in identity stored in protected hosted configuration.
-The mutable display name is never an access control input. The same gate must
-hide the navigation entry and reject direct route access for every other
-account; it is removed or expanded deliberately before beta access opens.
+owner-selected stable signed-in identities stored in protected hosted
+configuration. The mutable display name and Discord server ownership are never
+access-control inputs. The same gate must hide the navigation entry and reject
+direct route access for every other account; it is removed or expanded
+deliberately before beta access opens.
 
 ## Data and refresh boundary
 
