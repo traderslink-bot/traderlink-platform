@@ -350,7 +350,9 @@ export function DashboardShell({
 }) {
   const pathname = usePathname();
   const pageHelpTarget = offline ? null : dashboardHelpTarget(pathname);
-  const helpDestination = pageHelpTarget?.href ?? "/help";
+  const helpDestination = offline
+    ? "/help"
+    : `https://traderslink.pro${pageHelpTarget?.href ?? "/help"}`;
   const helpLabel = pageHelpTarget
     ? `Help for ${pageHelpTarget.label}`
     : "Open Help Center";
