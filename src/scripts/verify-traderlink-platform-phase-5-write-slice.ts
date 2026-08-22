@@ -393,6 +393,7 @@ function main(): void {
     const savedMapping = importService.findSavedGenericMappingForWorkspace(owner.scope, {
       accountId,
       structuralSignatureSha256: mapping.structuralSignatureSha256,
+      brokerName: mapping.brokerName,
     });
     if (
       genericCommit.status !== "committed" ||
@@ -433,6 +434,7 @@ function main(): void {
     if (importService.findSavedGenericMappingForWorkspace(twoAccountScope, {
       accountId: secondAccount.accountId,
       structuralSignatureSha256: mapping.structuralSignatureSha256,
+      brokerName: mapping.brokerName,
     })) fail("generic_mapping_account_isolation");
     const accountASelectionRef = deriveJournalAccountSelectionRef(
       owner.scope.workspaceId,

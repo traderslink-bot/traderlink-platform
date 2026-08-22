@@ -43,6 +43,7 @@ const PREVIEW_ENDPOINT = "/api/platform/journal/imports/preview";
 const COMMIT_ENDPOINT = "/api/platform/journal/imports/commit";
 const HISTORY_ENDPOINT = "/api/platform/journal/imports/history";
 const AI_REPAIR_ENDPOINT = "/api/platform/journal/imports/ai-repair";
+const SUPPORTED_BROKERS_ENDPOINT = "/api/platform/journal/imports/supported-brokers";
 
 const MAPPING_FIELDS = Object.freeze([
   ["symbol", "Ticker", true],
@@ -78,6 +79,11 @@ type CompletedImport = Readonly<{
   status: "committed" | "already_imported";
   executionCount: number;
   pendingDecisionCount: number;
+}>;
+
+type SavedStatementBroker = Readonly<{
+  brokerName: string;
+  savedFormatCount: number;
 }>;
 
 function blockingImportMessage(preview: JournalImportMappingPreview): string {
@@ -118,6 +124,7 @@ export function JournalImportClient({
   const [feeSignConvention, setFeeSignConvention] = useState<"cost_positive" | "cash_effect">("cost_positive");
   const [completed, setCompleted] = useState<CompletedImport | null>(null);
   const [history, setHistory] = useState<readonly JournalImportHistoryItem[]>([]);
+  const [savedBrokers, setSavedBrokers] = useState<readonly SavedStatementBroker[]>([]);
   const [working, setWorking] = useState<"preview" | "commit" | "ai_repair" | null>(null);
   const [notice, setNotice] = useState<Readonly<{
     severity: "success" | "warning" | "error";
@@ -136,8 +143,16 @@ export function JournalImportClient({
     return imports;
   }
 
+  async function refreshSavedBrokers(): Promise<void> {
+    const response = await fetch(SUPPORTED_BROKERS_ENDPOINT, { cache: "no-store" });
+    if (!response.ok) return;
+    const packet = await response.json() as { savedBrokers?: readonly SavedStatementBroker[] };
+    setSavedBrokers(packet.savedBrokers ?? []);
+  }
+
   useEffect(() => {
     void refreshHistory();
+    void refreshSavedBrokers();
   }, []);
 
   function acceptMappingSupport(support: JournalMappingSupportPackageV2 | null) {
@@ -204,6 +219,7 @@ export function JournalImportClient({
       }
       if (packet.result) {
         await refreshHistory();
+        await refreshSavedBrokers();
         setCompleted({
           status: packet.result.status,
           executionCount: packet.result.status === "already_imported"
@@ -371,6 +387,7 @@ export function JournalImportClient({
         throw new Error(importSaveErrorMessage(packet.code));
       }
       await refreshHistory();
+      await refreshSavedBrokers();
       setCompleted({
         status: packet.result.status,
         executionCount: packet.result.status === "already_imported"
@@ -416,19 +433,40 @@ export function JournalImportClient({
             Import Trades
           </Typography>
           <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">
-            To import your trades you need to upload your broker statements
+            Choose the broker first, then upload its CSV statement. A successful mapping is saved for that broker and statement layout in this Trade Tracker.
           </Typography>
           <Box component="ol" sx={{ color: "text.secondary", mb: 0, mt: 1, pl: 2.5 }}>
-            <li><Typography color="text.secondary" variant="body2">Import your broker statements in CSV format.</Typography></li>
-            <li><Typography color="text.secondary" variant="body2">Your statement will be auto saved if the system detects it.</Typography></li>
-            <li><Typography color="text.secondary" variant="body2">If detection fails you can try to map your statement CSV headings with the app&apos;s import headings.</Typography></li>
-            <li><Typography color="text.secondary" variant="body2">If mapping fails you can select to send your statement to AI for processing.</Typography></li>
+            <li><Typography color="text.secondary" variant="body2">Choose the broker that issued the statement, then upload its CSV file.</Typography></li>
+            <li><Typography color="text.secondary" variant="body2">Known statements are saved automatically.</Typography></li>
+            <li><Typography color="text.secondary" variant="body2">For a new layout, map its headings yourself or choose a private AI review.</Typography></li>
           </Box>
         </Box>
         <FeatureHelpLink href="/help/notifications-and-imports" label="Import Trades" size="medium" />
       </Stack>
 
       {notice ? <Alert severity={notice.severity}>{notice.text}</Alert> : null}
+      <DashboardPanel title="Supported brokers">
+        <Stack spacing={1.5}>
+          <Typography color="text.secondary" variant="body2">
+            Interactive Brokers is ready to import. Your saved formats below are private to this Trade Tracker and are reused only when both the broker and statement layout match.
+          </Typography>
+          <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", rowGap: 1 }}>
+            <Chip color="primary" label="Interactive Brokers" variant="outlined" />
+            {savedBrokers.map((broker) => (
+              <Chip
+                key={broker.brokerName.toLowerCase()}
+                label={`${broker.brokerName} · ${broker.savedFormatCount} saved format${broker.savedFormatCount === 1 ? "" : "s"}`}
+                variant="outlined"
+              />
+            ))}
+          </Stack>
+          {savedBrokers.length === 0 ? (
+            <Typography color="text.secondary" variant="caption">
+              When you successfully map another broker&apos;s statement, it will appear here for future imports.
+            </Typography>
+          ) : null}
+        </Stack>
+      </DashboardPanel>
       {working === "commit" ? (
         <DashboardPanel title="Importing statement">
           <Stack spacing={1.5}>
@@ -511,7 +549,16 @@ export function JournalImportClient({
                   type="file"
                 />
               </Button>
-              <Button disabled={!file || working !== null} type="submit" variant="contained">
+              <TextField
+                fullWidth
+                label="Broker"
+                onChange={(event) => setBrokerName(event.target.value)}
+                placeholder="For example, Interactive Brokers"
+                required
+                slotProps={{ htmlInput: { maxLength: 80 } }}
+                value={brokerName}
+              />
+              <Button disabled={!file || !brokerName.trim() || working !== null} type="submit" variant="contained">
                 {working === "preview" ? "Uploading..." : "Upload"}
               </Button>
             </Stack>
@@ -533,13 +580,6 @@ export function JournalImportClient({
             {!preview && mappingSupport.tables.length > 0 ? (
               <Stack spacing={2}>
                 <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
-                  <TextField
-                    fullWidth
-                    label="Broker name"
-                    onChange={(event) => setBrokerName(event.target.value)}
-                    placeholder="For example, Robinhood"
-                    value={brokerName}
-                  />
                   <TextField
                     fullWidth
                     label="Statement timezone"

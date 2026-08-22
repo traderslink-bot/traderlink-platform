@@ -29,6 +29,7 @@ import { previewIbkrActivityStatement } from "./ibkr-activity-statement-adapter"
 import {
   type JournalGenericMappedStatementPreview,
   type JournalGenericStatementMappingContract,
+  normalizeJournalConfirmedBrokerName,
   parseJournalGenericStatementMappingContract,
   previewGenericMappedStatement,
 } from "./journal-generic-mapped-statement-adapter";
@@ -500,6 +501,7 @@ export class JournalImportService {
     input: Readonly<{
       accountId: string;
       structuralSignatureSha256: string;
+      brokerName: string;
     }>,
   ): JournalGenericStatementMappingContract | null {
     this.accounts.requireAccountRecord(scope, input.accountId);
@@ -512,6 +514,7 @@ export class JournalImportService {
       scope.workspaceId,
       input.accountId,
       input.structuralSignatureSha256,
+      normalizeJournalConfirmedBrokerName(input.brokerName),
     );
     if (!encoded) return null;
     try {

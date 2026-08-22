@@ -3,6 +3,7 @@
 **Status:** Owner-approved implementation in progress
 
 **Progress record:** [Journal Import Simplification And Reliability Progress](journal-import-simplification-and-reliability-progress.md)
+**Broker identity follow-on:** [Broker Statement Identity And Saved Formats Progress](broker-statement-identity-and-saved-formats-progress.md)
 **Parent contracts:** [Import Integrity And Data Decisions Contract](import-integrity-and-data-decisions-contract.md) and [Notifications And AI Import Repair Plan](notifications-and-ai-import-repair-plan.md)
 
 ## Outcome
@@ -69,6 +70,19 @@ counted or presented as unfinished work.
   for `/api/cron/journal-ai-import-repair`, a synthetic end-to-end rehearsal,
   and an owner-approved Railway release. No real statement is submitted while
   developing this slice.
+
+## Broker identity and reusable formats
+
+- Every statement upload requires the trader to name the broker that issued it.
+  This is the confirmed broker identity for the attempt; AI and automatic
+  inspection never guess or replace it.
+- A successful generic mapping is reusable only for the same active Trade
+  Tracker, confirmed broker and unchanged statement layout. A broker or layout
+  mismatch returns the statement for review instead of applying another
+  broker's mapping.
+- Import Trades shows the one verified built-in adapter separately from the
+  active account's private saved statement formats. A personal saved format is
+  not described as global broker support.
 
 ## Implementation order
 

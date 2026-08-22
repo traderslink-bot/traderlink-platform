@@ -331,9 +331,15 @@ FROM journal_account_source_identities`).get()).toEqual(identityBefore);
       const saved = context.service.findSavedGenericMappingForWorkspace(context.scope, {
         accountId: context.accountId,
         structuralSignatureSha256: table.structuralSignatureSha256,
+        brokerName: "Example Broker",
       });
       expect(saved).toEqual(mapping);
       if (!saved) throw new Error("expected_saved_mapping");
+      expect(context.service.findSavedGenericMappingForWorkspace(context.scope, {
+        accountId: context.accountId,
+        structuralSignatureSha256: table.structuralSignatureSha256,
+        brokerName: "Different Broker",
+      })).toBeNull();
 
       const laterBytes = new TextEncoder().encode([
         "Trade Date,Trade Time,Ticker,Action,Shares,Fill Price,Commission,Fill ID",
@@ -365,6 +371,7 @@ FROM journal_account_source_identities`).get()).toEqual(identityBefore);
       expect(context.service.findSavedGenericMappingForWorkspace(twoAccountScope, {
         accountId: second.accountId,
         structuralSignatureSha256: table.structuralSignatureSha256,
+        brokerName: "Example Broker",
       })).toBeNull();
 
       const changedSupport = createJournalMappingSupportPackage({
@@ -382,6 +389,7 @@ FROM journal_account_source_identities`).get()).toEqual(identityBefore);
       expect(context.service.findSavedGenericMappingForWorkspace(context.scope, {
         accountId: context.accountId,
         structuralSignatureSha256: changedTable.structuralSignatureSha256,
+        brokerName: "Example Broker",
       })).toBeNull();
     } finally { context.database.close(); }
   });

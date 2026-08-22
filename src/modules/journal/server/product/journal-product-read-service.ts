@@ -9,6 +9,7 @@ import type {
   JournalDecisionExecutionEvidence,
   JournalDecisionPositionEvidence,
   JournalImportHistoryItem,
+  JournalSavedStatementBroker,
 } from "../../contracts/journal-product-read-models";
 
 type StatementSourceRow = Readonly<{
@@ -313,6 +314,33 @@ LIMIT 200`).all(scope.workspaceId, scope.accountId).map((row) => Object.freeze({
       pendingDecisionCount: row.pending_decision_count,
       acceptedAtUtc: row.accepted_at_utc,
     })));
+  }
+
+  listSavedStatementBrokers(scope: AccountScope): readonly JournalSavedStatementBroker[] {
+    const rows = this.database.prepare<[string, string], {
+      broker_name: string;
+      saved_format_count: number;
+    }>(`SELECT json_extract(mapping_contract_json, '$.brokerName') AS broker_name,
+  COUNT(DISTINCT json_extract(mapping_contract_json, '$.structuralSignatureSha256'))
+    AS saved_format_count
+FROM journal_import_batches
+WHERE workspace_id = ? AND account_id = ?
+  AND source_kind = 'broker_statement'
+  AND source_system = 'mapped_csv'
+  AND adapter_id = 'generic_mapped_statement'
+  AND current_state IN ('accepted', 'accepted_with_decisions')
+  AND json_valid(mapping_contract_json)
+  AND json_type(mapping_contract_json, '$.brokerName') = 'text'
+GROUP BY lower(json_extract(mapping_contract_json, '$.brokerName'))
+ORDER BY lower(json_extract(mapping_contract_json, '$.brokerName'))
+LIMIT 50`).all(scope.workspaceId, scope.accountId);
+    return Object.freeze(rows.flatMap((row) => {
+      const brokerName = row.broker_name.trim().replace(/[\u0000-\u001f\u007f]/gu, "");
+      return brokerName.length >= 1 && brokerName.length <= 80 &&
+        Number.isSafeInteger(row.saved_format_count) && row.saved_format_count > 0
+        ? [Object.freeze({ brokerName, savedFormatCount: row.saved_format_count })]
+        : [];
+    }));
   }
 
   listDataDecisionStatement(

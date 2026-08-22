@@ -16,6 +16,7 @@ import { sendDiscordStatementImportCompletion } from "@/src/modules/platform/ser
 
 export type JournalAiImportRepairProvider = (input: Readonly<{
   sourceText: string;
+  confirmedBrokerName: string;
 }>) => Promise<JournalGenericStatementMappingContract | unknown>;
 
 export class JournalAiImportRepairWorker {
@@ -42,9 +43,16 @@ export class JournalAiImportRepairWorker {
         expectedSha256: claimed.supportObject.sourceFileSha256,
         expectedSizeBytes: claimed.supportObject.sourceFileSizeBytes,
       });
-      const mapping = parseJournalGenericStatementMappingContract(await this.provider({
+      const providerMapping = parseJournalGenericStatementMappingContract(await this.provider({
         sourceText: new TextDecoder("utf-8", { fatal: true }).decode(sourceBytes),
+        confirmedBrokerName: claimed.confirmedBrokerName,
       }));
+      // The broker is chosen by the trader before upload. A provider cannot
+      // infer or replace that identity from statement content.
+      const mapping = parseJournalGenericStatementMappingContract({
+        ...providerMapping,
+        brokerName: claimed.confirmedBrokerName,
+      });
       const preview = previewJournalGenericMappedUpload(claimed.scope, {
         sourceBytes, mapping, mappingOrigin: "manual_mapping",
         attemptBindingSha256: claimed.requestIdempotencySha256,

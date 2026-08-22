@@ -63,8 +63,9 @@ WHERE workspace_id = ? AND account_id = ? AND manual_idempotency_key = ?`).get(w
     workspaceId: string,
     accountId: string,
     structuralSignatureSha256: string,
+    brokerName: string,
   ): string | null {
-    const row = this.database.prepare<[string, string, string], {
+    const row = this.database.prepare<[string, string, string, string], {
       mapping_contract_json: string;
     }>(`SELECT mapping_contract_json
 FROM journal_import_batches
@@ -74,8 +75,9 @@ WHERE workspace_id = ? AND account_id = ?
   AND adapter_id = 'generic_mapped_statement'
   AND current_state IN ('accepted', 'accepted_with_decisions')
   AND json_extract(mapping_contract_json, '$.structuralSignatureSha256') = ?
+  AND json_extract(mapping_contract_json, '$.brokerName') = ? COLLATE NOCASE
 ORDER BY accepted_at_utc DESC, import_batch_id DESC
-LIMIT 1`).get(workspaceId, accountId, structuralSignatureSha256);
+LIMIT 1`).get(workspaceId, accountId, structuralSignatureSha256, brokerName);
     return row?.mapping_contract_json ?? null;
   }
 

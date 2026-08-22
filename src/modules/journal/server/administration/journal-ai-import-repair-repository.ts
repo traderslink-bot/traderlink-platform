@@ -19,6 +19,7 @@ export type ClaimedJournalAiImportRepairJob = Readonly<{
   job: JournalAiImportRepairJob;
   scope: WorkspaceAccessScope;
   importAttemptId: string;
+  confirmedBrokerName: string;
   requestIdempotencySha256: string;
   correlationRefSha256: string;
   supportObject: Readonly<{
@@ -112,11 +113,12 @@ WHERE user_id = ? AND workspace_id = ? AND account_id = ? AND support_consent_id
         discord_completion_requested: number; created_at_utc: string;
         user_id: string; workspace_id: string; account_id: string; import_attempt_id: string;
         request_idempotency_sha256: string; correlation_ref_sha256: string;
+        safe_broker_label: string;
         workspace_role: "owner" | "admin" | "member";
         object_key: string; source_file_sha256: string; source_file_size_bytes: number;
       }>>(`SELECT job.repair_job_id, job.job_state, job.discord_completion_requested,
   job.created_at_utc, job.user_id, job.workspace_id, job.account_id,
-  job.import_attempt_id, attempt.request_idempotency_sha256,
+  job.import_attempt_id, attempt.request_idempotency_sha256, attempt.safe_broker_label,
   membership.role AS workspace_role,
   (
     SELECT event.correlation_ref_sha256
@@ -139,6 +141,7 @@ JOIN journal_statement_support_objects object ON object.workspace_id = consent.w
 JOIN platform_workspace_memberships membership ON membership.workspace_id = job.workspace_id
  AND membership.user_id = job.user_id AND membership.status = 'active'
 WHERE job.job_state = 'queued' AND attempt.current_state = 'awaiting_mapping'
+  AND attempt.safe_broker_label IS NOT NULL
   AND consent.consent_state = 'active' AND consent.expires_at_utc > ?
   AND object.purge_state = 'active'
   AND EXISTS (
@@ -159,6 +162,7 @@ WHERE repair_job_id = ? AND job_state = 'queued'`).run(timestamp, row.repair_job
         scope: Object.freeze({ userId: row.user_id, workspaceId: row.workspace_id,
           workspaceRole: row.workspace_role, allowedAccountIds: Object.freeze([row.account_id]), activeAccountId: row.account_id }),
         importAttemptId: row.import_attempt_id, requestIdempotencySha256: row.request_idempotency_sha256,
+        confirmedBrokerName: row.safe_broker_label,
         correlationRefSha256: row.correlation_ref_sha256,
         supportObject: Object.freeze({ objectKey: row.object_key, sourceFileSha256: row.source_file_sha256,
           sourceFileSizeBytes: row.source_file_size_bytes }),

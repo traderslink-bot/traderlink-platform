@@ -329,6 +329,7 @@ export function previewJournalSavedGenericMappingUpload(
   input: Readonly<{
     sourceBytes: Uint8Array;
     structuralSignatures: readonly string[];
+    brokerName: string;
     attemptBindingSha256: string;
   }>,
 ): JournalImportMappingPreview | null {
@@ -339,6 +340,7 @@ export function previewJournalSavedGenericMappingUpload(
       const mapping = runtime.imports.findSavedGenericMappingForWorkspace(scope, {
         accountId,
         structuralSignatureSha256,
+        brokerName: input.brokerName,
       });
       if (!mapping) continue;
       return browserPreview(

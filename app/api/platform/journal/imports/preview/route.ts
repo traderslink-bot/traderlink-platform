@@ -24,6 +24,7 @@ import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/work
 import { requireJournalMutationRequest } from "@/src/modules/platform/server/authentication/journal-mutation-request-security";
 import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
+import { normalizeJournalConfirmedBrokerName } from "@/src/modules/journal/server/imports/journal-generic-mapped-statement-adapter";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -87,6 +88,7 @@ export async function POST(request: Request): Promise<Response> {
     if (
       !(file instanceof File) ||
       typeof sourceTimezone !== "string" ||
+      typeof brokerName !== "string" ||
       typeof attemptIdempotencyRef !== "string"
     ) {
       return Response.json(
@@ -94,6 +96,7 @@ export async function POST(request: Request): Promise<Response> {
         { status: 400 },
       );
     }
+    const confirmedBrokerName = normalizeJournalConfirmedBrokerName(brokerName);
     const allowedMimeTypes = new Set([
       "",
       "text/csv",
@@ -135,11 +138,12 @@ export async function POST(request: Request): Promise<Response> {
     attemptContext = beginJournalImportAttempt(scope, {
       sourceBytes,
       browserIdempotencyRef: attemptIdempotencyRef,
+      safeBrokerLabel: confirmedBrokerName,
     });
     if (mappingContract !== null) {
       const inspection = createJournalMappingSupportPackage({
         sourceBytes,
-        brokerName: typeof brokerName === "string" ? brokerName : "",
+        brokerName: confirmedBrokerName,
         failureCode: "none",
       });
       const mappingSupport = createJournalMappingSupportPackageV2(inspection);
@@ -170,7 +174,7 @@ export async function POST(request: Request): Promise<Response> {
       const mappingSupport = createJournalMappingSupportPackageV2(
         createJournalMappingSupportPackage({
           sourceBytes,
-          brokerName: typeof brokerName === "string" ? brokerName : "",
+          brokerName: confirmedBrokerName,
           failureCode: "none",
         }),
       );
@@ -199,7 +203,7 @@ export async function POST(request: Request): Promise<Response> {
       ) throw error;
       const inspection = createJournalMappingSupportPackage({
         sourceBytes,
-        brokerName: typeof brokerName === "string" ? brokerName : "",
+        brokerName: confirmedBrokerName,
         failureCode: error.code,
       });
       const mappingSupport = createJournalMappingSupportPackageV2(inspection);
@@ -210,6 +214,7 @@ export async function POST(request: Request): Promise<Response> {
           structuralSignatures: inspection.tables.map(
             (table) => table.structuralSignatureSha256,
           ),
+          brokerName: confirmedBrokerName,
           attemptBindingSha256: attemptContext.attemptBindingSha256,
         });
       } catch (savedMappingError) {

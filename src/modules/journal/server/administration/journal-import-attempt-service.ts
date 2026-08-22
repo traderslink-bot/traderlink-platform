@@ -9,6 +9,7 @@ import {
 import type { JournalImportMappingPreview } from "../product/journal-import-product-service";
 import type { JournalMappingSupportPackageV2 } from "../product/journal-mapping-support-package";
 import { loadJournalPrivacyHmacConfiguration } from "../imports/journal-import-service";
+import { normalizeJournalConfirmedBrokerName } from "../imports/journal-generic-mapped-statement-adapter";
 import { deriveJournalImportAttemptDigests } from "./journal-import-attempt-authority";
 import {
   JournalImportAttemptRepository,
@@ -54,6 +55,7 @@ export function beginJournalImportAttempt(
   input: Readonly<{
     sourceBytes: Uint8Array;
     browserIdempotencyRef: string;
+    safeBrokerLabel?: string | null;
     now?: Date;
     environment?: NodeJS.ProcessEnv;
   }>,
@@ -81,7 +83,9 @@ export function beginJournalImportAttempt(
         sourceFileSha256,
         sourceFileSizeBytes: input.sourceBytes.byteLength,
         fileKind: "text_csv",
-        safeBrokerLabel: null,
+        safeBrokerLabel: input.safeBrokerLabel === null || input.safeBrokerLabel === undefined
+          ? null
+          : normalizeJournalConfirmedBrokerName(input.safeBrokerLabel),
         correlationRefSha256: digests.correlationRefSha256,
         timestamp,
       });

@@ -308,9 +308,12 @@ LIMIT ?`).all(updatedBeforeUtc, limit);
       if (existing) {
         if (
           existing.sourceFileSha256 !== input.sourceFileSha256 ||
-          existing.sourceFileSizeBytes !== input.sourceFileSizeBytes
+          existing.sourceFileSizeBytes !== input.sourceFileSizeBytes ||
+          existing.safeBrokerLabel !== input.safeBrokerLabel
         ) platformFailure("TRADERLINK_JOURNAL_IMPORT_CONFLICT", {
-          reason: "attempt_idempotency_reused",
+          reason: existing.safeBrokerLabel !== input.safeBrokerLabel
+            ? "attempt_broker_mismatch"
+            : "attempt_idempotency_reused",
         });
         return existing;
       }

@@ -55,13 +55,13 @@ export function createJournalAiImportRepairOpenAiProvider(
   if (!enabled(environment)) return null;
   const openai = createOpenAI({ apiKey: environment.OPENAI_API_KEY!.trim() });
   const modelId = environment.TRADERLINK_PLATFORM_AI_IMPORT_REPAIR_MODEL?.trim() || "gpt-5.6-terra";
-  return async ({ sourceText }) => {
+  return async ({ sourceText, confirmedBrokerName }) => {
     const result = await generateText({
       model: openai(modelId),
       maxOutputTokens: 2_000,
       output: Output.object({ schema: mappingSchema }),
       providerOptions: { openai: { store: false } },
-      system: SYSTEM,
+      system: `${SYSTEM}\nThe trader confirmed the broker name as ${JSON.stringify(confirmedBrokerName)}. Set brokerName to that exact value; do not infer or replace it.`,
       prompt: sourceText,
     });
     if (!result.output) throw new Error("TRADERLINK_JOURNAL_AI_REPAIR_NO_MAPPING");

@@ -115,6 +115,19 @@ function safeBrokerName(value: string): string {
   return normalized;
 }
 
+/** The broker label is chosen by the trader before the statement is uploaded. */
+export function normalizeJournalConfirmedBrokerName(value: unknown): string {
+  if (typeof value !== "string") {
+    platformFailure("TRADERLINK_JOURNAL_IMPORT_MAPPING_FAILED", { field: "brokerName" });
+  }
+  const normalized = value.trim().normalize("NFKC")
+    .replace(/[\u0000-\u001f\u007f]/gu, "").replace(/\s+/gu, " ");
+  if (normalized.length < 1 || normalized.length > 80) {
+    platformFailure("TRADERLINK_JOURNAL_IMPORT_MAPPING_FAILED", { field: "brokerName" });
+  }
+  return normalized;
+}
+
 function safeHeader(value: string, field: string): string {
   const normalized = value.trim().replace(/[\u0000-\u001f\u007f]/gu, " ")
     .replace(/\s+/gu, " ");
