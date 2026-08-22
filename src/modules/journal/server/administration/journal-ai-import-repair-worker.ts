@@ -23,6 +23,7 @@ import { finishJournalImportPreview } from "./journal-import-attempt-service";
 export type JournalAiImportRepairProvider = (input: Readonly<{
   sourceText: string;
   confirmedBrokerName: string;
+  confirmedSourceTimezone: string;
 }>) => Promise<JournalGenericStatementMappingContract | unknown>;
 
 function selectStatementTable(
@@ -82,9 +83,17 @@ export class JournalAiImportRepairWorker {
         expectedSha256: claimed.supportObject.sourceFileSha256,
         expectedSizeBytes: claimed.supportObject.sourceFileSizeBytes,
       });
+      const account = this.database.prepare<[string, string], { trading_timezone: string }>(`SELECT trading_timezone
+FROM journal_accounts
+WHERE workspace_id = ? AND account_id = ?`).get(
+        claimed.scope.workspaceId,
+        claimed.scope.activeAccountId,
+      );
+      if (!account) throw new Error("private_account_missing");
       const providerMapping = parseJournalGenericStatementMappingContract(await this.provider({
         sourceText: new TextDecoder("utf-8", { fatal: true }).decode(sourceBytes),
         confirmedBrokerName: claimed.confirmedBrokerName,
+        confirmedSourceTimezone: account.trading_timezone,
       }));
       const inspection = createJournalMappingSupportPackage({
         sourceBytes,
@@ -104,6 +113,7 @@ export class JournalAiImportRepairWorker {
         headerRowIndex: table.headerRowIndex,
         orderedHeaders: table.headerLabels,
         structuralSignatureSha256: table.structuralSignatureSha256,
+        sourceTimezone: account.trading_timezone,
       });
       const mapping = retainOnlyPlausibleCurrencyColumn(parsedMapping);
       const preview = previewJournalGenericMappedUpload(claimed.scope, {
