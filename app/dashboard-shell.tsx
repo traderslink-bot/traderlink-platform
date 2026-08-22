@@ -68,6 +68,7 @@ import {
   DASHBOARD_NAVIGATION_HREFS,
   DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS,
   dashboardHelpTarget,
+  isDashboardNavigationItem,
   type DashboardNavigationDrawerItem,
   type DashboardNavigationGroup,
   type DashboardNavigationIconKey,
@@ -283,10 +284,12 @@ function NavigationLink({
 
 function NavigationDrawerButton({
   collapsed,
+  grouped = false,
   item,
   onOpen,
 }: {
   collapsed: boolean;
+  grouped?: boolean;
   item: DashboardNavigationDrawerItem;
   onOpen: () => void;
 }) {
@@ -298,7 +301,7 @@ function NavigationDrawerButton({
         minHeight: 44,
         mx: 1,
         my: 0.25,
-        pl: collapsed ? 1.25 : 1.5,
+        pl: collapsed ? 1.25 : grouped ? 2.75 : 1.5,
         pr: collapsed ? 1.25 : 1.5,
         justifyContent: collapsed ? "center" : "initial",
       }}
@@ -315,7 +318,7 @@ function NavigationDrawerButton({
       {collapsed ? null : (
         <ListItemText
           primary={item.label}
-          slotProps={{ primary: { sx: { fontSize: 14, fontWeight: 620 } } }}
+          slotProps={{ primary: { sx: { fontSize: grouped ? 13 : 14, fontWeight: 620 } } }}
         />
       )}
     </ListItemButton>
@@ -370,8 +373,17 @@ export function DashboardShell({
   const accountMenuOpen = Boolean(accountMenuAnchor);
   const sidebarNavigationSections = scannerEarlyAccess
     ? DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS
-    : DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS.filter((section) =>
-      section.kind !== "item" || section.item.href !== "/scanner");
+    : DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS.map((section) =>
+      section.group.id !== "stockTools"
+        ? section
+        : Object.freeze({
+          ...section,
+          group: Object.freeze({
+            ...section.group,
+            items: Object.freeze(section.group.items.filter((item) =>
+              !isDashboardNavigationItem(item) || item.href !== "/scanner")),
+          }),
+        }));
   const closeMobile = () => setMobileOpen(false);
   const setDesktopNavigationCollapsed = (nextCollapsed: boolean) => {
     setCollapsed(nextCollapsed);
@@ -507,41 +519,9 @@ export function DashboardShell({
                 <Divider sx={{ mx: 2, my: 0.75 }} />
               ) : null;
 
-              if (section.kind === "item") {
-                return (
-                  <Box key={section.item.href}>
-                    {divider}
-                    <NavigationLink
-                      collapsed={compact}
-                      offline={offline}
-                      item={section.item}
-                      onNavigate={closeMobile}
-                      onOpenAiChat={openAiChat}
-                      pathname={pathname}
-                    />
-                  </Box>
-                );
-              }
-
-              if (section.kind === "drawer") {
-                if (offline || section.item.id !== DASHBOARD_MARKET_HALT_ALERTS_ITEM.id) {
-                  return null;
-                }
-                return (
-                  <Box key={section.item.id}>
-                    {divider}
-                    <NavigationDrawerButton
-                      collapsed={compact}
-                      item={section.item}
-                      onOpen={openMarketHaltAlerts}
-                    />
-                  </Box>
-                );
-              }
-
               const { group } = section;
               const open = expandedGroups[group.id] ?? group.items.some((item) =>
-                isActive(pathname, item.href));
+                isDashboardNavigationItem(item) && isActive(pathname, item.href));
               const groupUnreadCount = group.id === "pressReleases"
                 ? pressReleaseUnreadCounts?.all ?? 0
                 : 0;
@@ -614,7 +594,7 @@ export function DashboardShell({
                         mr: 0.5,
                       }}
                     >
-                      {group.items.map((item) => (
+                      {group.items.map((item) => isDashboardNavigationItem(item) ? (
                         <NavigationLink
                           collapsed={compact}
                           grouped
@@ -628,6 +608,14 @@ export function DashboardShell({
                             item.href,
                             pressReleaseUnreadCounts,
                           )}
+                        />
+                      ) : offline || item.id !== DASHBOARD_MARKET_HALT_ALERTS_ITEM.id ? null : (
+                        <NavigationDrawerButton
+                          collapsed={compact}
+                          grouped
+                          item={item}
+                          key={item.id}
+                          onOpen={openMarketHaltAlerts}
                         />
                       ))}
                     </List>

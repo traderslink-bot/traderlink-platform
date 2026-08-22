@@ -45,18 +45,35 @@ const aiStatusLabel = areTraderLinkPlatformAiFeaturesEnabled()
   ? undefined
   : "Coming soon" as const;
 
-export type DashboardNavigationGroup = Readonly<{
-  id: "tradeEntry" | "trades" | "rules" | "pressReleases" | "analytics" | "tradeAnalyzer" | "ai" | "tradeRecords";
-  label: string;
-  icon: DashboardNavigationIconKey;
-  items: readonly DashboardNavigationItem[];
-}>;
-
 export type DashboardNavigationDrawerItem = Readonly<{
   id: "marketHaltAlerts";
   label: string;
   icon: DashboardNavigationIconKey;
 }>;
+
+export type DashboardNavigationGroupItem =
+  | DashboardNavigationDrawerItem
+  | DashboardNavigationItem;
+
+export function isDashboardNavigationItem(
+  item: DashboardNavigationGroupItem,
+): item is DashboardNavigationItem {
+  return "href" in item;
+}
+
+export type DashboardNavigationGroup = Readonly<{
+  id: "tradeEntry" | "trades" | "rules" | "pressReleases" | "analytics" | "tradeAnalyzer" | "ai" | "stockTools" | "tradeRecords";
+  label: string;
+  icon: DashboardNavigationIconKey;
+  items: readonly DashboardNavigationGroupItem[];
+}>;
+
+export const DASHBOARD_MARKET_HALT_ALERTS_ITEM: DashboardNavigationDrawerItem =
+  Object.freeze({
+    id: "marketHaltAlerts",
+    label: "Halt Alerts",
+    icon: "halt",
+  });
 
 export const DASHBOARD_HOME_ITEM: DashboardNavigationItem = Object.freeze({
   href: "/workspace",
@@ -207,13 +224,13 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
       ]),
     }),
     Object.freeze({
-      id: "tradeRecords" as const,
-      label: "Trade Records",
-      icon: "data" as const,
+      id: "stockTools" as const,
+      label: "Stock Tools",
+      icon: "marketCharts" as const,
       items: Object.freeze([
-        Object.freeze({ href: "/trades/open", label: "Open Positions", icon: "data" as const }),
-        Object.freeze({ href: "/imports", label: "Import Trades", icon: "import" as const }),
-        Object.freeze({ href: "/data-decisions", label: "Data Decisions", icon: "data" as const }),
+        Object.freeze({ href: "/scanner", label: "Scanner", icon: "scanner" as const }),
+        Object.freeze({ href: "/charts", label: "Market Charts", icon: "marketCharts" as const }),
+        DASHBOARD_MARKET_HALT_ALERTS_ITEM,
       ]),
     }),
     Object.freeze({
@@ -229,43 +246,22 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
         Object.freeze({ href: "/press-releases/market-cap/50m-100m", label: "$50M-$100M", icon: "newspaper" as const }),
       ]),
     }),
-  ]);
-
-export const DASHBOARD_STANDALONE_ITEMS: readonly DashboardNavigationItem[] =
-  Object.freeze([
     Object.freeze({
-      href: "/scanner",
-      label: "Scanner",
-      icon: "scanner" as const,
-    }),
-    Object.freeze({
-      href: "/charts",
-      label: "Market Charts",
-      icon: "marketCharts" as const,
+      id: "tradeRecords" as const,
+      label: "Trade Records",
+      icon: "data" as const,
+      items: Object.freeze([
+        Object.freeze({ href: "/trades/open", label: "Open Positions", icon: "data" as const }),
+        Object.freeze({ href: "/imports", label: "Import Trades", icon: "import" as const }),
+        Object.freeze({ href: "/data-decisions", label: "Data Decisions", icon: "data" as const }),
+      ]),
     }),
   ]);
-
-export const DASHBOARD_MARKET_HALT_ALERTS_ITEM: DashboardNavigationDrawerItem =
-  Object.freeze({
-    id: "marketHaltAlerts",
-    label: "Halt Alerts (Nasdaq/NYSE)",
-    icon: "halt",
-  });
 
 export type DashboardSidebarNavigationSection = Readonly<
-  | {
+  {
     kind: "group";
     group: DashboardNavigationGroup;
-    dividerBefore?: boolean;
-  }
-  | {
-    kind: "item";
-    item: DashboardNavigationItem;
-    dividerBefore?: boolean;
-  }
-  | {
-    kind: "drawer";
-    item: DashboardNavigationDrawerItem;
     dividerBefore?: boolean;
   }
 >;
@@ -279,10 +275,8 @@ export const DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS: readonly DashboardSidebarNav
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[4] }),
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[5] }),
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[6] }),
-    Object.freeze({ kind: "item" as const, item: DASHBOARD_STANDALONE_ITEMS[0] }),
-    Object.freeze({ kind: "item" as const, item: DASHBOARD_STANDALONE_ITEMS[1] }),
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[7] }),
-    Object.freeze({ kind: "drawer" as const, item: DASHBOARD_MARKET_HALT_ALERTS_ITEM }),
+    Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[8] }),
   ]);
 
 export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
@@ -330,9 +324,8 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
 export const DASHBOARD_NAVIGATION_HREFS: readonly string[] = Object.freeze([
   DASHBOARD_HOME_ITEM.href,
   ...DASHBOARD_MAIN_NAVIGATION_GROUPS.flatMap((group) =>
-    group.items.map((item) => item.href),
+    group.items.filter(isDashboardNavigationItem).map((item) => item.href),
   ),
-  ...DASHBOARD_STANDALONE_ITEMS.map((item) => item.href),
 ]);
 
 export type DashboardHelpTarget = Readonly<{
