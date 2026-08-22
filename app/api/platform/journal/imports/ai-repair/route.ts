@@ -1,9 +1,11 @@
 import { requireJournalMutationRequest } from "@/src/modules/platform/server/authentication/journal-mutation-request-security";
 import { requireTraderLinkPlatformRequestScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
+import { openPlatformDatabase, withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { createCanonicalUtcTimestamp, isTraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { resolveJournalOpaqueReference } from "@/src/modules/journal/server/administration/journal-opaque-reference-authority";
 import { JournalAiImportRepairRepository } from "@/src/modules/journal/server/administration/journal-ai-import-repair-repository";
+import { JournalAiImportRepairWorker } from "@/src/modules/journal/server/administration/journal-ai-import-repair-worker";
+import { createJournalAiImportRepairOpenAiProvider } from "@/src/modules/journal/server/administration/journal-ai-import-repair-openai-adapter";
 import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
 import { grantJournalAttemptSupportConsent } from "@/src/modules/journal/server/administration/journal-support-consent-service";
 import { loadJournalPrivacyHmacConfiguration } from "@/src/modules/journal/server/imports/journal-import-service";
@@ -46,6 +48,16 @@ export async function POST(request: Request): Promise<Response> {
       });
       return job;
     });
+    // Railway runs one persistent application process. Start the consented
+    // request now instead of leaving it dependent on an external cron service.
+    const provider = createJournalAiImportRepairOpenAiProvider(process.env);
+    if (!provider) return Response.json({ status: "unavailable" }, { status: 503 });
+    const database = openPlatformDatabase({ mode: "runtime" });
+    try {
+      await new JournalAiImportRepairWorker(database, provider).runOne();
+    } finally {
+      database.close();
+    }
     return Response.json({ status: "queued", repairJobRef: job.repairJobId });
   } catch (error) {
     return Response.json({ status: "unavailable", code: isTraderLinkPlatformError(error) ? error.code : "TRADERLINK_JOURNAL_AI_REPAIR_FAILED" }, { status: 409 });
