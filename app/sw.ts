@@ -195,16 +195,17 @@ self.addEventListener("push", (event) => {
   } catch {
     path = "/notifications";
   }
-  event.waitUntil(
-    self.registration.showNotification(title, {
-      body,
-      icon: "/icons/traderlink-192.png",
-      badge: "/icons/traderlink-192.png",
-      actions,
-      data: { muteHaltTicker, path },
-      tag,
-    }),
-  );
+  const notificationOptions: NotificationOptions & Readonly<{
+    actions: readonly TraderLinkNotificationAction[];
+  }> = {
+    body,
+    icon: "/icons/traderlink-192.png",
+    badge: "/icons/traderlink-192.png",
+    actions,
+    data: { muteHaltTicker, path },
+    tag,
+  };
+  event.waitUntil(self.registration.showNotification(title, notificationOptions));
 });
 
 self.addEventListener("notificationclick", (event) => {
