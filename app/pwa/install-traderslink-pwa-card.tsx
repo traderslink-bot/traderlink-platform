@@ -1,7 +1,6 @@
 "use client";
 
 import DownloadRoundedIcon from "@mui/icons-material/DownloadRounded";
-import NotificationsRoundedIcon from "@mui/icons-material/NotificationsRounded";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
@@ -9,7 +8,7 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Typography from "@mui/material/Typography";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { DashboardPanel, DashboardPrimaryAction } from "@/app/dashboard-template";
 
@@ -41,7 +40,11 @@ function isIosDevice(): boolean {
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 }
 
-export function InstallTradersLinkPwaMethods() {
+export function InstallTradersLinkPwaMethods({
+  onInstalled,
+}: {
+  onInstalled?: () => void;
+}) {
   const deferredPrompt = useRef<DeferredInstallPrompt | null>(null);
   const [installState, setInstallState] = useState<InstallState>("checking");
   const [installHelpOpen, setInstallHelpOpen] = useState(false);
@@ -50,6 +53,7 @@ export function InstallTradersLinkPwaMethods() {
     const refreshInstallationState = () => {
       if (isInstalledApp()) {
         setInstallState("installed");
+        onInstalled?.();
         return;
       }
       setInstallState(isIosDevice() ? "ios" : "manual");
@@ -62,6 +66,7 @@ export function InstallTradersLinkPwaMethods() {
     const onAppInstalled = () => {
       deferredPrompt.current = null;
       setInstallState("installed");
+      onInstalled?.();
     };
 
     refreshInstallationState();
@@ -71,7 +76,7 @@ export function InstallTradersLinkPwaMethods() {
       window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
       window.removeEventListener("appinstalled", onAppInstalled);
     };
-  }, []);
+  }, [onInstalled]);
 
   async function requestInstallation(): Promise<void> {
     const prompt = deferredPrompt.current;
@@ -92,15 +97,7 @@ export function InstallTradersLinkPwaMethods() {
 
   return (
     <Box sx={{ display: "grid", gap: 1.25 }}>
-      {installState === "installed" ? (
-        <DashboardPrimaryAction
-          href="/account/preferences#push-notifications"
-          startIcon={<NotificationsRoundedIcon />}
-          sx={{ alignSelf: "flex-start" }}
-        >
-          Set up push notifications
-        </DashboardPrimaryAction>
-      ) : (
+      {installState !== "installed" ? (
         <DashboardPrimaryAction
           disabled={installState === "prompting"}
           onClick={() => void requestInstallation()}
@@ -109,16 +106,10 @@ export function InstallTradersLinkPwaMethods() {
         >
           {installState === "prompting" ? "Opening install..." : "Install TradersLink app"}
         </DashboardPrimaryAction>
-      )}
+      ) : null}
       {installState === "installing" ? (
         <Typography color="text.secondary" variant="body2">
           Finish installation in your browser. TradersLink will then appear with your other apps.
-        </Typography>
-      ) : null}
-      {installState === "installed" ? (
-        <Typography color="success.main" sx={{ alignItems: "center", display: "flex", fontWeight: 700, gap: 0.75 }} variant="body2">
-          <NotificationsRoundedIcon fontSize="small" />
-          TradersLink is installed on this device.
         </Typography>
       ) : null}
       <Dialog fullWidth maxWidth="xs" onClose={() => setInstallHelpOpen(false)} open={installHelpOpen}>
@@ -143,6 +134,23 @@ export function InstallTradersLinkPwaMethods() {
 }
 
 export function InstallTradersLinkPwaCard() {
+  const [installed, setInstalled] = useState(false);
+  const hideWhenInstalled = useCallback(() => setInstalled(true), []);
+
+  useEffect(() => {
+    const standaloneQuery = window.matchMedia("(display-mode: standalone)");
+    const refresh = () => setInstalled(isInstalledApp());
+    refresh();
+    standaloneQuery.addEventListener("change", refresh);
+    window.addEventListener("appinstalled", refresh);
+    return () => {
+      standaloneQuery.removeEventListener("change", refresh);
+      window.removeEventListener("appinstalled", refresh);
+    };
+  }, []);
+
+  if (installed) return null;
+
   return (
     <DashboardPanel
       eyebrow="Mobile and desktop"
@@ -152,7 +160,7 @@ export function InstallTradersLinkPwaCard() {
         <Typography color="text.secondary" variant="body2">
           Install TradersLink PWA APP to send push notifications to your devices. Get press release alerts on your phone. Easily enter trades in the app and more.
         </Typography>
-        <InstallTradersLinkPwaMethods />
+        <InstallTradersLinkPwaMethods onInstalled={hideWhenInstalled} />
       </Box>
     </DashboardPanel>
   );
