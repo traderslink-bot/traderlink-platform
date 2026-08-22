@@ -19,6 +19,9 @@ the [Professional Redesign Plan](traderlink-platform-pwa-professional-redesign-p
 [TraderLink Platform PWA Professional Redesign Plan](traderlink-platform-pwa-professional-redesign-plan.md)
 with its [progress record](traderlink-platform-pwa-professional-redesign-progress.md)
 
+**Dashboard install card:**
+[TraderLink Platform dashboard install card progress](traderlink-platform-pwa-dashboard-install-progress.md)
+
 The icon, install, offline-outbox, duplicate-protection, Web Push, privacy and
 complete-product decisions in this document remain approved. The separate
 static offline shell, text-projection cards, simplified navigation and detached

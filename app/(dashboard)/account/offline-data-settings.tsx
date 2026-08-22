@@ -23,6 +23,7 @@ import {
   type PlatformOfflineStorageSummary,
 } from "@/src/modules/platform/client/pwa/offline-projection-store";
 import { disablePlatformWebPush } from "@/src/modules/platform/client/pwa/platform-web-push";
+import { InstallTradersLinkPwaMethods } from "@/app/pwa/install-traderslink-pwa-card";
 
 function formatBytes(bytes: number): string {
   if (bytes < 1_024) return `${bytes} bytes`;
@@ -99,8 +100,9 @@ export function OfflineDataSettings({
   return (
     <Stack id="pwa-app" spacing={1.5} sx={{ scrollMarginTop: 96 }}>
       <Typography color="text.secondary" variant="body2">
-        Install TradersLink on your phone or computer for quicker access from your home screen or desktop. The installed app can send push notifications, makes it more convenient to enter trades, and keeps useful pages available when your connection is interrupted. Trades entered while offline can be sent when you reconnect.
+        Install TradersLink PWA APP to send push notifications to your devices. Get press release alerts on your phone. Easily enter trades in the app and more.
       </Typography>
+      <InstallTradersLinkPwaMethods />
       <Typography color="text.secondary" variant="body2">
         In Chrome or Edge, open the browser menu and choose <strong>Install app</strong>. On iPhone or iPad, open the Share menu and choose <strong>Add to Home Screen</strong>. <Link href="https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/What_is_a_progressive_web_app" rel="noreferrer" target="_blank">Learn what a PWA is</Link>.
       </Typography>

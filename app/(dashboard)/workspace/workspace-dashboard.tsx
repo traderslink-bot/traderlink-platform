@@ -17,6 +17,7 @@ import {
   DashboardSecondaryAction,
   DashboardUnavailableState,
 } from "../../dashboard-template";
+import { InstallTradersLinkPwaCard } from "@/app/pwa/install-traderslink-pwa-card";
 import type { JournalCalendarReadModel } from "@/src/modules/journal-analytics/contracts/journal-dashboard-read-models";
 import { formatJournalAnalyticsMoney } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import type { WorkspaceReviewSummary } from "./workspace-review-summary";
@@ -189,6 +190,8 @@ export function WorkspaceDashboard({
           <DashboardMetricCard key={metric.label} {...metric} />
         ))}
       </Box>
+
+      <InstallTradersLinkPwaCard />
 
       <Box
         sx={{

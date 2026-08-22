@@ -12,6 +12,9 @@ visible offline shell on 2026-08-20, so product acceptance now follows the
 **Professional redesign:**
 [TraderLink Platform PWA Professional Redesign Progress](traderlink-platform-pwa-professional-redesign-progress.md)
 
+**Dashboard install card:**
+[TraderLink Platform dashboard install card progress](traderlink-platform-pwa-dashboard-install-progress.md)
+
 Earlier visual-approval statements below are historical. They do not approve
 the current standalone offline renderer, generic projection cards, simplified
 navigation or detached tracker form. The icon, functional boundary, data-safety
