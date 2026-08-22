@@ -28,6 +28,37 @@ tree organized so it does not become an untraceable collection of local work.
 - AGENTS.md belongs at this repository root. Do not move it into a feature
   folder or duplicate it elsewhere.
 
+## Shared Railway Release Coordination — Required
+
+`app.traderslink.pro` is the private TraderLink Platform dashboard on Railway.
+It is separate from the public Vercel site at `traderslink.pro` and
+`www.traderslink.pro`. Railway runs the GitHub-connected
+`traderlink-platform-web` service as one persistent-volume, single-writer
+Next.js application. Pushing a commit to its configured source branch starts a
+Railway build automatically.
+
+- Never run `railway up`, deploy the current directory, restart the service,
+  change Railway variables, run migrations, or redeploy while another Codex
+  task owns an in-flight Railway release.
+- Before publishing a release, identify the current remote commit, every live
+  Codex task that may publish, and the agreed release order. The next release
+  must be a clean, narrow commit parented to the exact remote commit reported
+  by the preceding release.
+- A release owner must provide the next task: the published commit SHA, its
+  parent SHA, a complete changed-file list, and the Railway deployment result.
+  Do not infer that a Git push is safe merely because a local feature is ready.
+- Build release commits with an explicit file allowlist. In a shared dirty
+  checkout, use a temporary Git index or another equally safe method; never
+  stage, stash, rebase, merge, reset, or publish another task's work.
+- Once a release is published, all other tasks keep Railway actions paused
+  until the owner reports the deployment outcome. Check the deployment and
+  `/api/platform/health` result before handing off the next slot.
+- Keep the one-writer boundary intact: one replica, persistent `/data`, zero
+  deploy overlap and the configured drain period. Do not make a release change
+  that could create concurrent database writers.
+- Do not expose Railway secrets, OAuth tokens, database paths containing
+  private identifiers, or production values in commits, logs, or chat.
+
 ## TraderLink Platform Replacement Direction - 2026-07-31
 
 The active future-product direction is the controlled platform replacement in
@@ -337,6 +368,10 @@ home for all new human-readable project documents.
 - `app/dashboard-template.tsx` is the public dashboard UI contract. Import `DashboardPage`, `DashboardPanel`, `DashboardMetricCard`, `DashboardPrimaryAction`, and `DashboardSecondaryAction` from it instead of creating local page containers, card conventions, or action styles.
 - `app/dashboard-shell.tsx` exclusively owns the header, TradersLink logo, responsive collapsible sidebar, and full-width page container. Dashboard pages must not create or import their own `AppBar`, `Toolbar`, `Drawer`, logo, `<main>`, or `DashboardShell`.
 - `app/dashboard-navigation.ts` exclusively owns dashboard navigation groups, links, icon keys, and route titles. Add or change dashboard navigation there rather than duplicating navigation arrays in pages or the shell.
+- Do not add a descriptive paragraph directly below a web page title. The title
+  already identifies the page. Put only necessary, task-specific guidance,
+  status or help next to the control or card where it is needed; never use a
+  generic page subtitle to explain what the page does.
 - The primary-action contract is deep navy `#011E56`, white text, 8px radius, 40px minimum height, bold sentence-case labels, and no elevation or shadow. Secondary actions use the same navy as an outlined treatment. These styles belong in `app/mui-theme.ts`, not page-level `sx`.
 - Run `npm run verify:ti-v3:dashboard-template` after adding or structurally changing a dashboard page. The architecture test rejects local shell reconstruction and missing configured routes.
 - Read `src/docs/trade-execution-analytics/v3-dashboard-template-contract.md` before creating or redesigning a Trader Intelligence dashboard page.

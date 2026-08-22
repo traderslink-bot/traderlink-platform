@@ -17,8 +17,10 @@ Add a new `/scanner` dashboard page titled **Scanner**. It starts with U.S.
 stocks and has one selected ready-to-use TradersLink scanner. The page shows:
 
 - a clear scanner picker for TradersLink-provided screens;
-- a compact market/filter row that explains the chosen screen in ordinary
-  trader language rather than exposing provider field names;
+- an unrestricted Moomoo filter builder. It must cover available market,
+  fundamental, indicator, candle/chart-pattern, sentiment/ownership, broker
+  holdings and option conditions. Traders may combine conditions, choose their
+  bounds/timeframes where applicable, remove them, and choose a sort order;
 - a result count, the exact last-updated time and a normal Refresh action;
 - a responsive table limited to the most useful first 25 matches, with an
   optional 50 and 100 rows; and
@@ -26,8 +28,10 @@ stocks and has one selected ready-to-use TradersLink scanner. The page shows:
   inferred financial value can be presented as a result.
 
 The first UI must make the difference between a selected ready-to-use screen
-and future personal saved screens obvious. It must not pretend that users have
-already created scanners, watchlists, shares or alerts.
+and future personal saved screens obvious. A trader may adjust the visible
+screen settings before results run, but those settings are not saved as a
+personal scanner in this slice. It must not pretend that users have already
+created scanners, watchlists, shares or alerts.
 
 ## Data and refresh boundary
 
