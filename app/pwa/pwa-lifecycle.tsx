@@ -23,6 +23,7 @@ import {
   syncManualTradeOutbox,
   type ManualTradeOutboxRecord,
 } from "@/src/modules/platform/client/pwa/manual-trade-outbox";
+import { TradersLinkPwaInstallPrompt } from "./traderslink-pwa-install-prompt-dialog";
 
 function subscribeToConnectionChange(onStoreChange: () => void): () => void {
   window.addEventListener("online", onStoreChange);
@@ -138,9 +139,6 @@ export function PwaLifecycle({
     record.state === "needs_review").length;
   const noticeKey = `${online ? "online" : "offline"}:${waitingCount}:${reviewCount}`;
 
-  if (online && waitingCount === 0 && reviewCount === 0) return null;
-  if (dismissedNoticeKey === noticeKey) return null;
-
   const title = !online
     ? "Offline"
     : reviewCount > 0
@@ -154,58 +152,66 @@ export function PwaLifecycle({
       ? `${reviewCount} saved trade${reviewCount === 1 ? " needs" : "s need"} attention in Trade Entry.`
       : `${waitingCount} saved trade${waitingCount === 1 ? " is" : "s are"} being checked.`;
 
+  const showOfflineNotice = !(online && waitingCount === 0 && reviewCount === 0) &&
+    dismissedNoticeKey !== noticeKey;
+
   return (
-    <Paper
-      aria-live="polite"
-      elevation={6}
-      role="status"
-      sx={{
-        alignItems: "center",
-        border: "1px solid",
-        borderColor: "divider",
-        bottom: { xs: "calc(12px + env(safe-area-inset-bottom))", sm: 20 },
-        display: "flex",
-        gap: 1.25,
-        left: "50%",
-        maxWidth: "calc(100vw - 24px)",
-        px: 2,
-        py: 1.25,
-        position: "fixed",
-        transform: "translateX(-50%)",
-        width: { xs: "calc(100vw - 24px)", sm: "auto" },
-        zIndex: (theme) => theme.zIndex.snackbar,
-      }}
-    >
-      <WifiOffRoundedIcon color="action" fontSize="small" sx={{ flexShrink: 0 }} />
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography sx={{ fontWeight: 700 }} variant="body2">
-          {title}
-        </Typography>
-        <Typography color="text.secondary" variant="caption">
-          {message}
-        </Typography>
-      </Box>
-      {online && reviewCount > 0 ? (
-        <Button
-          onClick={() => {
-            setDismissedNoticeKey(noticeKey);
-            router.push("/quick-trade-entry");
+    <>
+      <TradersLinkPwaInstallPrompt />
+      {showOfflineNotice ? (
+        <Paper
+          aria-live="polite"
+          elevation={6}
+          role="status"
+          sx={{
+            alignItems: "center",
+            border: "1px solid",
+            borderColor: "divider",
+            bottom: { xs: "calc(12px + env(safe-area-inset-bottom))", sm: 20 },
+            display: "flex",
+            gap: 1.25,
+            left: "50%",
+            maxWidth: "calc(100vw - 24px)",
+            px: 2,
+            py: 1.25,
+            position: "fixed",
+            transform: "translateX(-50%)",
+            width: { xs: "calc(100vw - 24px)", sm: "auto" },
+            zIndex: (theme) => theme.zIndex.snackbar,
           }}
-          size="small"
-          sx={{ flexShrink: 0, whiteSpace: "nowrap" }}
-          variant="text"
         >
-          Open Trade Entry
-        </Button>
+          <WifiOffRoundedIcon color="action" fontSize="small" sx={{ flexShrink: 0 }} />
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography sx={{ fontWeight: 700 }} variant="body2">
+              {title}
+            </Typography>
+            <Typography color="text.secondary" variant="caption">
+              {message}
+            </Typography>
+          </Box>
+          {online && reviewCount > 0 ? (
+            <Button
+              onClick={() => {
+                setDismissedNoticeKey(noticeKey);
+                router.push("/quick-trade-entry");
+              }}
+              size="small"
+              sx={{ flexShrink: 0, whiteSpace: "nowrap" }}
+              variant="text"
+            >
+              Open Trade Entry
+            </Button>
+          ) : null}
+          <IconButton
+            aria-label="Dismiss notification"
+            onClick={() => setDismissedNoticeKey(noticeKey)}
+            size="small"
+            sx={{ flexShrink: 0 }}
+          >
+            <CloseRoundedIcon fontSize="small" />
+          </IconButton>
+        </Paper>
       ) : null}
-      <IconButton
-        aria-label="Dismiss notification"
-        onClick={() => setDismissedNoticeKey(noticeKey)}
-        size="small"
-        sx={{ flexShrink: 0 }}
-      >
-        <CloseRoundedIcon fontSize="small" />
-      </IconButton>
-    </Paper>
+    </>
   );
 }

@@ -128,7 +128,7 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph", text: "When you open Notifications while online, TraderLink can keep a bounded read-only copy for the selected Trade Tracker account. Offline pages clearly show when that copy was last updated. Reading the copy does not mark an update as read or change any Journal fact." }),
           Object.freeze({ kind: "steps", items: Object.freeze([
-            Object.freeze({ title: "1. Open General", text: "Select Account in the top bar, choose General and find Mobile and Desktop PWA App." }),
+            Object.freeze({ title: "1. Install TradersLink", text: "When Chrome is ready, TradersLink shows an Install TradersLink app message on any signed-in dashboard page. Select Install TradersLink app, then accept Chrome's install prompt. You can also use the Mobile and Desktop PWA App area in Account General." }),
             Object.freeze({ title: "2. Review what is saved", text: "See how many pages are saved, whether an unsynced trade is waiting, when pages were last updated and the browser's estimated app storage." }),
             Object.freeze({ title: "3. Remove it deliberately", text: "Choose Remove offline data when you want to clear the current account's saved pages and offline trade entries from this device. TraderLink warns you first when an unsynced trade exists only on the device." }),
           ]) }),

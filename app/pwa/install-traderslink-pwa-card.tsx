@@ -8,26 +8,19 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Typography from "@mui/material/Typography";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 
 import { DashboardPanel, DashboardPrimaryAction } from "@/app/dashboard-template";
-
-type InstallPromptChoice = Readonly<{
-  outcome: "accepted" | "dismissed";
-}>;
-
-type DeferredInstallPrompt = Event & {
-  prompt: () => Promise<InstallPromptChoice>;
-};
-
-type InstalledRelatedApplication = Readonly<{
-  id?: string;
-  platform: string;
-}>;
-
-type NavigatorWithInstalledRelatedApps = Navigator & {
-  getInstalledRelatedApps?: () => Promise<readonly InstalledRelatedApplication[]>;
-};
+import {
+  hasInstalledTradersLinkPwa,
+  isIosDevice,
+  isTradersLinkPwaRunningStandalone,
+  requestTradersLinkPwaInstallation,
+  serverTradersLinkPwaInstallPromptReady,
+  startTradersLinkPwaInstallPromptCapture,
+  subscribeToTradersLinkPwaInstallPrompt,
+  tradersLinkPwaInstallPromptReady,
+} from "./traderslink-pwa-install-prompt";
 
 type InstallState =
   | "checking"
@@ -38,76 +31,51 @@ type InstallState =
   | "prompting"
   | "installing";
 
-function isInstalledApp(): boolean {
-  const iosNavigator = navigator as Navigator & { standalone?: boolean };
-  return window.matchMedia("(display-mode: standalone)").matches ||
-    iosNavigator.standalone === true;
-}
-
-function isIosDevice(): boolean {
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-}
-
-async function hasInstalledTradersLinkPwa(): Promise<boolean> {
-  const browserNavigator = navigator as NavigatorWithInstalledRelatedApps;
-  if (!browserNavigator.getInstalledRelatedApps) return false;
-  const relatedApps = await browserNavigator.getInstalledRelatedApps();
-  const absoluteManifestId = new URL("/workspace", window.location.origin).href;
-  return relatedApps.some((app) => app.platform === "webapp" &&
-    (app.id === "/workspace" || app.id === absoluteManifestId));
-}
-
 export function InstallTradersLinkPwaMethods({
   onInstalled,
 }: {
   onInstalled?: () => void;
 }) {
-  const deferredPrompt = useRef<DeferredInstallPrompt | null>(null);
   const [installState, setInstallState] = useState<InstallState>("checking");
   const [installHelpOpen, setInstallHelpOpen] = useState(false);
+  const installPromptReady = useSyncExternalStore(
+    subscribeToTradersLinkPwaInstallPrompt,
+    tradersLinkPwaInstallPromptReady,
+    serverTradersLinkPwaInstallPromptReady,
+  );
 
   useEffect(() => {
+    startTradersLinkPwaInstallPromptCapture();
     const refreshInstallationState = () => {
-      if (isInstalledApp()) {
+      if (isTradersLinkPwaRunningStandalone()) {
         setInstallState("installed");
         onInstalled?.();
         return;
       }
-      setInstallState(isIosDevice() ? "ios" : "manual");
-    };
-    const onBeforeInstallPrompt = (event: Event) => {
-      event.preventDefault();
-      deferredPrompt.current = event as DeferredInstallPrompt;
-      setInstallState("ready");
+      setInstallState(installPromptReady ? "ready" : isIosDevice() ? "ios" : "manual");
     };
     const onAppInstalled = () => {
-      deferredPrompt.current = null;
       setInstallState("installed");
       onInstalled?.();
     };
 
     refreshInstallationState();
-    window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
     window.addEventListener("appinstalled", onAppInstalled);
     return () => {
-      window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
       window.removeEventListener("appinstalled", onAppInstalled);
     };
-  }, [onInstalled]);
+  }, [installPromptReady, onInstalled]);
 
   async function requestInstallation(): Promise<void> {
-    const prompt = deferredPrompt.current;
-    if (!prompt) {
+    if (!installPromptReady) {
       setInstallHelpOpen(true);
       return;
     }
 
     setInstallState("prompting");
     try {
-      const choice = await prompt.prompt();
-      deferredPrompt.current = null;
-      setInstallState(choice.outcome === "accepted" ? "installing" : "manual");
+      const choice = await requestTradersLinkPwaInstallation();
+      setInstallState(choice?.outcome === "accepted" ? "installing" : "manual");
     } catch {
       setInstallState("manual");
     }
@@ -159,7 +127,7 @@ export function InstallTradersLinkPwaCard() {
     const standaloneQuery = window.matchMedia("(display-mode: standalone)");
     let active = true;
     const refresh = () => {
-      if (isInstalledApp()) {
+      if (isTradersLinkPwaRunningStandalone()) {
         setInstalled(true);
         return;
       }
