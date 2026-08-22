@@ -15,6 +15,7 @@ import {
 } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { openReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
+import type { HostedTransferModule } from "@/src/modules/platform/server/transfer/hosted-transfer-contract";
 import { prepareHostedTransfer } from "@/src/modules/platform/server/transfer/hosted-transfer-preview-service";
 import { readHostedSourceSnapshotsFromExportDirectory } from "@/src/modules/platform/server/transfer/hosted-source-export-snapshot-reader";
 import { executeHostedTransfer } from "@/src/modules/platform/server/transfer/hosted-transfer-service";
@@ -104,12 +105,12 @@ export async function POST(request: Request): Promise<Response> {
           check: "locked_preview",
         });
       }
-      const sourceSnapshotSha256ByModule = Object.freeze(Object.fromEntries(
+      const sourceSnapshotSha256ByModule: Readonly<Record<HostedTransferModule, string>> = Object.freeze(Object.fromEntries(
         locked.preview.modules.map((module) => [module.module, module.sourceSnapshotSha256]),
-      ));
-      const sourceBackupCompletedAtUtcByModule = Object.freeze(Object.fromEntries(
+      ) as Record<HostedTransferModule, string>);
+      const sourceBackupCompletedAtUtcByModule: Readonly<Record<HostedTransferModule, string>> = Object.freeze(Object.fromEntries(
         locked.preview.modules.map((module) => [module.module, backup.completedAtUtc]),
-      ));
+      ) as Record<HostedTransferModule, string>);
       const result = executeHostedTransfer({
         database,
         databasePath,
