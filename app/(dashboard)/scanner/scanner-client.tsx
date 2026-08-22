@@ -17,7 +17,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import type { ScannerRunRequest, ScannerRunResult } from "@/src/modules/scanner/scanner-contract";
+import type { ScannerFilterId, ScannerRunRequest, ScannerRunResult } from "@/src/modules/scanner/scanner-contract";
 
 import {
   DashboardPage,
@@ -220,7 +220,7 @@ export function ScannerClient() {
   function currentScan(): ScannerRunRequest {
     return {
       filters: filters.map(({ averageLength, averageType, choice, definitionId, lower, period, timeframe, upper }) => ({
-        averageLength, averageType, choice, id: definitionId, lower, period, timeframe, upper,
+        averageLength, averageType, choice, id: definitionId as ScannerFilterId, lower, period, timeframe, upper,
       })),
       limit: rowLimit,
       sortBy: sortBy as ScannerRunRequest["sortBy"],
