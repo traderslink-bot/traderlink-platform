@@ -20,13 +20,6 @@ function tags(values: readonly string[]) {
   return values.map((tag) => <Chip key={tag} label={tag} size="small" variant="outlined" />);
 }
 
-function postedLabel(timestamp: string): string {
-  const date = new Date(timestamp);
-  return Number.isNaN(date.getTime())
-    ? "Posted"
-    : `Posted ${new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "America/New_York" }).format(date)} ET`;
-}
-
 export function CommunityWatchlistSummaryCard({ item }: { item: CommunityWatchlistSummary }) {
   return (
     <DashboardPanel
@@ -55,36 +48,27 @@ function detailCount(ticker: CommunityWatchlistDetail["tickers"][number]): numbe
 
 export function CommunityWatchlistTickerBoard({ detail }: { detail: CommunityWatchlistDetail }) {
   const [selectedSymbol, setSelectedSymbol] = useState(detail.tickers[0]?.symbol ?? "");
-  const selectedTicker = detail.tickers.find((ticker) => ticker.symbol === selectedSymbol);
 
   return <Stack spacing={1.25}>
-    <Stack direction={{ xs: "column", sm: "row" }} spacing={0.75} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}>
-      <Box><Typography sx={{ fontWeight: 850 }} variant="body2">Ticker research</Typography><Typography color="text.secondary" variant="caption">Select a ticker to read the trader&apos;s notes.</Typography></Box>
-      {selectedTicker ? <Typography color="text.secondary" variant="caption">{postedLabel(selectedTicker.postedAtUtc)}</Typography> : null}
-    </Stack>
-    <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1.75, overflow: "hidden" }}>
-      <Box sx={{ bgcolor: "#f7f9fd", borderBottom: 1, borderColor: "divider", display: { xs: "none", sm: "grid" }, gridTemplateColumns: "minmax(118px, .7fr) minmax(0, 1.55fr) minmax(150px, .85fr)", px: 1.5, py: 0.75 }}>
-        <Typography color="text.secondary" sx={{ fontSize: "0.66rem", fontWeight: 800, letterSpacing: ".05em", textTransform: "uppercase" }}>Ticker</Typography><Typography color="text.secondary" sx={{ fontSize: "0.66rem", fontWeight: 800, letterSpacing: ".05em", textTransform: "uppercase" }}>Research focus</Typography><Typography color="text.secondary" sx={{ fontSize: "0.66rem", fontWeight: 800, letterSpacing: ".05em", textTransform: "uppercase" }}>Watch for</Typography>
-      </Box>
-      {detail.tickers.map((ticker, index) => {
-        const active = ticker.symbol === selectedTicker?.symbol;
+    <Stack spacing={0.85}>
+      {detail.tickers.map((ticker) => {
+        const active = ticker.symbol === selectedSymbol;
         const count = detailCount(ticker);
-        const watchFor = ticker.catalystDate || ticker.catalyst || ticker.personalTarget || "Research added";
+        const note = [ticker.whyWatching, ticker.plan].filter(Boolean).join("\n\n");
         const factRows = [
           { label: "Personal target", value: ticker.personalTarget },
-          { label: "Catalyst", value: ticker.catalyst },
-          { label: "Catalyst date", value: ticker.catalystDate },
+          { label: "Catalyst", value: [ticker.catalyst, ticker.catalystDate].filter(Boolean).join(ticker.catalyst && ticker.catalystDate ? " · " : "") },
           { label: "Posted reference", value: ticker.postedReferencePrice },
         ].filter((fact) => Boolean(fact.value));
         return <Box key={ticker.symbol}>
-          <Button aria-expanded={active} onClick={() => setSelectedSymbol((current) => current === ticker.symbol ? "" : ticker.symbol)} sx={{ bgcolor: active ? "#f2f6ff" : "background.paper", borderRadius: 0, borderTop: index ? 1 : 0, borderColor: "divider", boxShadow: active ? "inset 3px 0 0 #082b73" : "none", color: "text.primary", display: "grid", gap: { xs: 0.6, sm: 1.1 }, gridTemplateColumns: { xs: "1fr auto", sm: "minmax(118px, .7fr) minmax(0, 1.55fr) minmax(150px, .85fr)" }, minHeight: { xs: 82, sm: 68 }, px: { xs: 1.25, sm: 1.5 }, py: { xs: 1, sm: 0.85 }, textAlign: "left", textTransform: "none", width: "100%", "&:hover": { bgcolor: "#f5f8ff" } }} variant="text">
-            <Stack spacing={0.35} sx={{ minWidth: 0 }}><Stack direction="row" spacing={0.6} sx={{ alignItems: "center" }}><Typography sx={{ color: "#082b73", fontWeight: 900 }} variant="body2">{ticker.symbol}</Typography><KeyboardArrowDownRoundedIcon sx={{ color: active ? "#082b73" : "text.secondary", fontSize: 18, transform: active ? "rotate(180deg)" : "none", transition: "transform .15s ease" }} /></Stack><Typography color="text.secondary" sx={{ fontSize: "0.69rem" }}>{count ? `${count} research detail${count === 1 ? "" : "s"}` : "No extra details"}</Typography></Stack>
-            <Box sx={{ minWidth: 0 }}><Typography color="text.secondary" sx={{ WebkitBoxOrient: "vertical", WebkitLineClamp: { xs: 2, sm: 1 }, display: "-webkit-box", fontSize: "0.8rem", lineHeight: 1.45, overflow: "hidden" }} variant="body2">{tickerCue(ticker)}</Typography>{ticker.tags.length ? <Stack direction="row" spacing={0.45} sx={{ display: { xs: "flex", sm: "none" }, flexWrap: "wrap", mt: 0.65, rowGap: 0.45 }}>{ticker.tags.slice(0, 3).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: "#eaf1ff", color: "#082b73", fontSize: "0.64rem", fontWeight: 700, height: 20 }} />)}</Stack> : null}</Box>
-            <Stack spacing={0.5} sx={{ alignItems: { xs: "flex-end", sm: "flex-start" }, minWidth: 0 }}><Typography color="text.secondary" sx={{ WebkitBoxOrient: "vertical", WebkitLineClamp: 2, display: "-webkit-box", fontSize: "0.73rem", fontWeight: 700, lineHeight: 1.35, overflow: "hidden" }}>{watchFor}</Typography>{ticker.tags.length ? <Stack direction="row" spacing={0.4} sx={{ display: { xs: "none", sm: "flex" }, flexWrap: "wrap", rowGap: 0.4 }}>{ticker.tags.slice(0, 2).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: "#eaf1ff", color: "#082b73", fontSize: "0.61rem", fontWeight: 700, height: 19 }} />)}</Stack> : null}</Stack>
+          <Button aria-expanded={active} onClick={() => setSelectedSymbol((current) => current === ticker.symbol ? "" : ticker.symbol)} sx={{ bgcolor: "#edf4ff", border: 1, borderColor: active ? "#9fbee9" : "#d5e3fb", borderRadius: 1.75, boxShadow: active ? "inset 3px 0 0 #082b73" : "none", color: "text.primary", display: "grid", gap: { xs: 0.75, sm: 1.2 }, gridTemplateColumns: { xs: "minmax(0, 1fr) auto", sm: "minmax(130px, .7fr) minmax(0, 1.35fr) minmax(126px, .7fr)" }, minHeight: { xs: 88, sm: 76 }, px: { xs: 1.25, sm: 1.5 }, py: 1.05, textAlign: "left", textTransform: "none", width: "100%", "&:hover": { bgcolor: "#e7f0ff" } }} variant="text">
+            <Stack spacing={0.6} sx={{ minWidth: 0 }}><Stack direction="row" spacing={0.6} sx={{ alignItems: "center" }}><Typography sx={{ color: "#082b73", fontWeight: 900 }} variant="body2">{ticker.symbol}</Typography><KeyboardArrowDownRoundedIcon sx={{ color: "#082b73", fontSize: 18, transform: active ? "rotate(180deg)" : "none", transition: "transform .15s ease" }} /></Stack>{ticker.tags.length ? <Stack direction="row" spacing={0.4} sx={{ flexWrap: "wrap", rowGap: 0.4 }}>{ticker.tags.slice(0, 2).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: "#fff", color: "#082b73", fontSize: "0.61rem", fontWeight: 700, height: 19 }} />)}</Stack> : <Typography color="text.secondary" sx={{ fontSize: "0.68rem" }}>{count ? `${count} notes` : "No notes"}</Typography>}</Stack>
+            <Box sx={{ alignSelf: "center", minWidth: 0 }}><Typography color="text.secondary" sx={{ WebkitBoxOrient: "vertical", WebkitLineClamp: { xs: 2, sm: 2 }, display: "-webkit-box", fontSize: "0.8rem", lineHeight: 1.45, overflow: "hidden" }} variant="body2">{tickerCue(ticker)}</Typography></Box>
+            <Stack spacing={0.35} sx={{ alignItems: { xs: "flex-end", sm: "flex-start" }, minWidth: 0 }}><Typography color="text.secondary" sx={{ fontSize: "0.68rem", fontWeight: 800 }}> {ticker.postedReferencePrice ? "Posted reference" : ticker.personalTarget ? "Personal target" : "Research"}</Typography><Typography sx={{ fontSize: "0.8rem", fontWeight: 800, lineHeight: 1.3 }}>{ticker.postedReferencePrice || ticker.personalTarget || (count ? `${count} details added` : "Added to watchlist")}</Typography></Stack>
           </Button>
-          {active ? <Box sx={{ bgcolor: "#f8faff", borderTop: 1, borderColor: "#c9daf7", boxShadow: "inset 3px 0 0 #082b73", p: { xs: 1.25, sm: 1.5 } }}><Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1fr) minmax(0, 1fr) minmax(180px, .8fr)" } }}><Box sx={{ minWidth: 0 }}><Typography color="text.secondary" sx={{ fontWeight: 800 }} variant="caption">Why I&apos;m watching</Typography><Typography sx={{ fontSize: "0.88rem", lineHeight: 1.55, mt: 0.45 }} variant="body2">{ticker.whyWatching || "No notes added yet."}</Typography></Box><Box sx={{ borderColor: "divider", borderLeft: { xs: 0, md: 1 }, borderTop: { xs: 1, md: 0 }, minWidth: 0, pl: { xs: 0, md: 1.5 }, pt: { xs: 1.25, md: 0 } }}><Typography color="text.secondary" sx={{ fontWeight: 800 }} variant="caption">My plan</Typography><Typography sx={{ fontSize: "0.88rem", lineHeight: 1.55, mt: 0.45 }} variant="body2">{ticker.plan || "No plan added yet."}</Typography></Box><Stack spacing={0.95} sx={{ borderColor: "divider", borderLeft: { xs: 0, md: 1 }, borderTop: { xs: 1, md: 0 }, minWidth: 0, pl: { xs: 0, md: 1.5 }, pt: { xs: 1.25, md: 0 } }}>{factRows.length ? factRows.map((fact) => <Box key={fact.label}><Typography color="text.secondary" sx={{ fontWeight: 800 }} variant="caption">{fact.label}</Typography><Typography sx={{ fontSize: "0.86rem", fontWeight: 700, lineHeight: 1.4 }} variant="body2">{fact.value}</Typography></Box>) : <Typography color="text.secondary" variant="body2">No price target, catalyst, or reference was added.</Typography>}</Stack></Box></Box> : null}
+          {active ? <Box sx={{ bgcolor: "#fbfcff", border: 1, borderColor: "#c9daf7", borderRadius: "0 0 10px 10px", borderTop: 0, boxShadow: "inset 3px 0 0 #082b73", mt: -0.85, p: { xs: 1.5, sm: 1.75 }, pt: { xs: 2.2, sm: 2.35 } }}><Box sx={{ display: "grid", gap: { xs: 1.5, md: 2 }, gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1.55fr) minmax(190px, .65fr)" } }}><Box sx={{ minWidth: 0 }}><Typography color="text.secondary" sx={{ fontWeight: 800 }} variant="caption">Notes</Typography><Typography sx={{ fontSize: "0.9rem", lineHeight: 1.65, mt: 0.55, whiteSpace: "pre-wrap" }} variant="body2">{note || "No notes were added for this ticker yet."}</Typography></Box><Stack spacing={1.1} sx={{ alignSelf: "start", borderColor: "divider", borderLeft: { xs: 0, md: 1 }, borderTop: { xs: 1, md: 0 }, minWidth: 0, pl: { xs: 0, md: 1.75 }, pt: { xs: 1.25, md: 0 } }}>{factRows.length ? factRows.map((fact) => <Box key={fact.label}><Typography color="text.secondary" sx={{ fontWeight: 800 }} variant="caption">{fact.label}</Typography><Typography sx={{ fontSize: "0.88rem", fontWeight: 700, lineHeight: 1.45 }} variant="body2">{fact.value}</Typography></Box>) : <Typography color="text.secondary" variant="body2">No target, catalyst, or reference was added.</Typography>}</Stack></Box></Box> : null}
         </Box>;
       })}
-    </Box>
+    </Stack>
   </Stack>;
 }
