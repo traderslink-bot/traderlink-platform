@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -45,7 +44,7 @@ export default async function WeekAheadPage() {
               <Typography sx={{ fontWeight: 800 }} variant="h5">{issue.title}</Typography>
               <Typography color="text.secondary">{issue.excerpt}</Typography>
               <Typography color="text.secondary" variant="caption">Updated {formatDate(issue.updatedAtUtc)} ET</Typography>
-              <Button component={Link} href={issue.sourceUrl} rel="noreferrer" sx={{ alignSelf: "flex-start" }} target="_blank" variant="outlined">
+              <Button href={issue.sourceUrl} rel="noreferrer" sx={{ alignSelf: "flex-start" }} target="_blank" variant="outlined">
                 View original source
               </Button>
             </Stack>
