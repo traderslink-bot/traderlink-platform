@@ -235,7 +235,7 @@ LEFT JOIN community_watchlist_tickers ticker ON ticker.watchlist_id = watchlist.
 WHERE watchlist.owner_user_id = ?
 GROUP BY watchlist.watchlist_id
 ORDER BY watchlist.updated_at_utc DESC`).all(userId);
-    return Object.freeze(rows.map(summary));
+    return Object.freeze(rows.map((row) => summary(row)));
   }
 
   listShared(): readonly CommunityWatchlistSummary[] {
@@ -270,7 +270,7 @@ JOIN community_profiles profile ON profile.user_id = watchlist.owner_user_id
 LEFT JOIN community_watchlist_tickers ticker ON ticker.watchlist_id = watchlist.watchlist_id
 WHERE profile.handle = ? AND watchlist.status = 'published'
 GROUP BY watchlist.watchlist_id ORDER BY watchlist.published_at_utc DESC`).all(handle);
-    return Object.freeze({ handle: profile.handle, tags: parseTags(profile.profile_tags_json), watchlists: Object.freeze(rows.map(summary)) });
+    return Object.freeze({ handle: profile.handle, tags: parseTags(profile.profile_tags_json), watchlists: Object.freeze(rows.map((row) => summary(row))) });
   }
 
   findPublished(handle: string, watchlistSlug: string): CommunityWatchlistDetail | null {
