@@ -82,7 +82,7 @@ export default async function WeekAheadPage() {
                     <Typography color="text.secondary" variant="body2">{event.dateLabel}</Typography>
                     <Typography sx={{ mt: 0.75 }} variant="body2">{event.summary}</Typography>
                     {event.tickers.length > 0 ? (
-                      <Stack direction="row" flexWrap="wrap" spacing={0.75} sx={{ mt: 1 }} useFlexGap>
+                      <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", mt: 1 }} useFlexGap>
                         {event.tickers.map((ticker) => <Chip key={ticker} label={ticker} size="small" />)}
                       </Stack>
                     ) : null}
