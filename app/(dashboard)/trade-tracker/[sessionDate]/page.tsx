@@ -12,13 +12,21 @@ import {
   DashboardPage,
   DashboardUnavailableState,
 } from "../../../dashboard-template";
-import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import {
+  currentJournalAccountSelectionRef,
+  requireTraderLinkPlatformPageScope,
+} from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { readMoomooMarketDataAccess } from "@/src/modules/level-analysis/server/moomoo-market-data-access";
+import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
 
-import { getReplacementReportingDaySession } from "../trade-tracker-platform-data";
+import {
+  getReplacementReportingDaySession,
+  getReplacementTradeTrackerAccount,
+} from "../trade-tracker-platform-data";
 import { getDaySessionDesignPreview } from "./day-session-preview-data";
 import { DaySessionView } from "./day-session-view";
+import { ManualExecutionEntry } from "../manual-execution-entry";
 import { TradeTrackerUnsavedChangesProvider } from "../trade-tracker-unsaved-changes";
 
 export const metadata: Metadata = {
@@ -57,6 +65,7 @@ export default async function TradeTrackerDayPage({
   }
 
   const scope = await requireTraderLinkPlatformPageScope();
+  const account = getReplacementTradeTrackerAccount(scope);
   const moomooMarketDataAccess = withReadonlyPlatformDatabase({}, (database) =>
     readMoomooMarketDataAccess(database, scope));
   const data = await getReplacementReportingDaySession(scope, {
@@ -92,6 +101,16 @@ export default async function TradeTrackerDayPage({
           data={data}
           initialAnalyzerFocus={initialAnalyzerFocus}
           showMoomooConnectionGuidance={moomooMarketDataAccess.shouldShowConnectionGuidance}
+          topContent={
+            <ManualExecutionEntry
+              accountCurrency={account?.baseCurrency ?? data.currency}
+              accountTimezone={account?.tradingTimezone ?? data.timezone}
+              defaultSessionDate={data.date}
+              expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
+              key="manual-execution-entry"
+              offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
+            />
+          }
         />
       </TradeTrackerUnsavedChangesProvider>
     );

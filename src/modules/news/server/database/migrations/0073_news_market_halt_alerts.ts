@@ -52,4 +52,4 @@ CREATE TABLE news_market_halt_push_deliveries (
 
 CREATE INDEX news_market_halt_push_delivery_queue ON news_market_halt_push_deliveries(state, available_at_utc, created_at_utc) WHERE state IN ('pending', 'sending');`;
 
-export const newsMarketHaltAlertsMigration: PlatformMigration = Object.freeze({ moduleNamespace: "news", migrationId: "0072_news_market_halt_alerts", executionOrder: 72, statements: Object.freeze([sql]) });
+export const newsMarketHaltAlertsMigration: PlatformMigration = Object.freeze({ moduleNamespace: "news", migrationId: "0073_news_market_halt_alerts", executionOrder: 73, statements: Object.freeze([sql]) });

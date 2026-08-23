@@ -10,8 +10,8 @@ const guide = (slug: string, title: string, description: string, sections: reado
 
 export const SWING_TRADE_TRACKER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
   guide("getting-started", "Getting started", "Use the current Swing Trade Tracker to view and track intentional swing positions across their actual trading dates.", [
-    section("what-you-can-do-today", "What you can do today", "Review active and recently completed swings, add executions and keep dated swing notes.", ["swing tracker", "active swing", "completed swing", "beta"], [
-      paragraph("Swing Trade Tracker shows confirmed active swings first and recently completed swings below them. Each position keeps its own execution history, notes and current status."),
+    section("what-you-can-do-today", "What you can do today", "Review active and recently completed swings, add executions and keep a position plan with dated swing notes.", ["swing tracker", "active swing", "completed swing", "position plan", "beta"], [
+      paragraph("Swing Trade Tracker shows confirmed active swings first and recently completed swings below them. An Active swing is the same position you chose in Daily Trade Tracker, with one execution history, one position plan and one current status."),
       callout("Currently in beta", "Swing Trade Tracker is in its early form while we learn which tools matter most. Use the available workflow today, and share feature suggestions that would make your review more useful."),
     ]),
     section("what-makes-a-swing", "What makes a position a swing", "A swing is a trader-chosen position type, not a label based on how long it has been open.", ["swing intent", "time held", "position type", "classification"], [
@@ -34,6 +34,10 @@ export const SWING_TRADE_TRACKER_HELP_GUIDES: readonly HelpGuide[] = Object.free
     ]),
   ]),
   guide("review-and-journal", "Review and track a swing", "Use dated notes, tags and the current position view to keep a useful record without changing executions.", [
+    section("position-plan", "Save the original position plan", "Record the reason, catalyst and intended holding time before later reviews blur the original idea.", ["why entered", "catalyst", "planned hold", "trading days", "swing plan"], [
+      paragraph("The Swing plan saves why you entered, whether an upcoming catalyst matters and its details, plus the exact number of trading days you planned to hold. This is your journal context, not a market prediction or a broker fact."),
+      paragraph("The planned-hold selector saves the number you choose rather than a broad bucket. Later analytics can compare that original plan with the actual holding time without guessing your intention."),
+    ]),
     section("dated-notes", "Add dated swing notes", "Record today's observation or next-session plan on the selected Swing position.", ["swing notes", "next session", "daily note", "trade tracker"], [
       paragraph("Swing notes belong to one Swing position and one review date. They do not create a trade, change P/L or add activity to a Daily Trade Tracker day."),
       bullets(["Use Saved notes to revisit an earlier dated entry.", "Use Add additional note on an active Swing when you have a new observation.", "Write a next-session plan only when it is useful to your own review process."]),

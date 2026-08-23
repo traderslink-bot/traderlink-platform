@@ -4,6 +4,7 @@ import type Database from "better-sqlite3";
 
 import type {
   JournalOpenPositionStatus,
+  JournalSwingPositionPlan,
   JournalTradeStyle,
   JournalTradeStyleChange,
   JournalTradeStyleLifecycle,
@@ -36,6 +37,7 @@ export type JournalTrackedPositionRow = Readonly<{
   declaredAtUtc: string | null;
   styleLifecycleState: JournalTradeStyleLifecycle | null;
   styleUpdatedAtUtc: string | null;
+  swingPlan: JournalSwingPositionPlan | null;
 }>;
 
 export type JournalTradeStylePlanRow = Readonly<{
@@ -51,6 +53,7 @@ export type JournalTradeStylePlanRow = Readonly<{
   revision: number;
   createdAtUtc: string;
   updatedAtUtc: string;
+  swingPlan: JournalSwingPositionPlan | null;
 }>;
 
 type TradeStylePlanDatabaseRow = Readonly<{
@@ -66,6 +69,10 @@ type TradeStylePlanDatabaseRow = Readonly<{
   current_revision: number;
   created_at_utc: string;
   updated_at_utc: string;
+  entry_reason_text: string | null;
+  has_upcoming_catalyst: number | null;
+  catalyst_details_text: string | null;
+  planned_hold_trading_days: number | null;
 }>;
 
 function digest(parts: readonly string[]): string {
@@ -86,13 +93,23 @@ function mapPlan(row: TradeStylePlanDatabaseRow): JournalTradeStylePlanRow {
     revision: row.current_revision,
     createdAtUtc: row.created_at_utc,
     updatedAtUtc: row.updated_at_utc,
+    swingPlan: row.entry_reason_text !== null && row.has_upcoming_catalyst !== null &&
+        row.planned_hold_trading_days !== null
+      ? Object.freeze({
+          entryReason: row.entry_reason_text,
+          hasUpcomingCatalyst: row.has_upcoming_catalyst === 1,
+          catalystDetails: row.catalyst_details_text,
+          plannedHoldTradingDays: row.planned_hold_trading_days,
+        })
+      : null,
   });
 }
 
 const PLAN_SELECT = `SELECT trade_style_plan_id, round_trip_id,
  round_trip_version_id, trade_style, open_status, planned_from_entry,
  claimed_effective_at_utc, declared_at_utc, lifecycle_state, current_revision,
- created_at_utc, updated_at_utc
+ created_at_utc, updated_at_utc, entry_reason_text, has_upcoming_catalyst,
+ catalyst_details_text, planned_hold_trading_days
 FROM journal_trade_style_plans`;
 
 function mapPosition(row: {
@@ -117,6 +134,10 @@ function mapPosition(row: {
   declared_at_utc: string | null;
   lifecycle_state: JournalTradeStyleLifecycle | null;
   updated_at_utc: string | null;
+  entry_reason_text: string | null;
+  has_upcoming_catalyst: number | null;
+  catalyst_details_text: string | null;
+  planned_hold_trading_days: number | null;
 }): JournalTrackedPositionRow {
   return Object.freeze({
     roundTripId: row.round_trip_id,
@@ -142,6 +163,15 @@ function mapPosition(row: {
     declaredAtUtc: row.declared_at_utc,
     styleLifecycleState: row.lifecycle_state,
     styleUpdatedAtUtc: row.updated_at_utc,
+    swingPlan: row.entry_reason_text !== null && row.has_upcoming_catalyst !== null &&
+        row.planned_hold_trading_days !== null
+      ? Object.freeze({
+          entryReason: row.entry_reason_text,
+          hasUpcomingCatalyst: row.has_upcoming_catalyst === 1,
+          catalystDetails: row.catalyst_details_text,
+          plannedHoldTradingDays: row.planned_hold_trading_days,
+        })
+      : null,
   });
 }
 
@@ -152,7 +182,9 @@ const POSITION_SELECT = `SELECT round_trip.round_trip_id,
  version.final_position_decimal, version.projection_state,
  plan.trade_style_plan_id, plan.current_revision, plan.trade_style,
  plan.open_status, plan.planned_from_entry, plan.claimed_effective_at_utc,
- plan.declared_at_utc, plan.lifecycle_state, plan.updated_at_utc
+ plan.declared_at_utc, plan.lifecycle_state, plan.updated_at_utc,
+ plan.entry_reason_text, plan.has_upcoming_catalyst,
+ plan.catalyst_details_text, plan.planned_hold_trading_days
 FROM journal_round_trips round_trip
 JOIN journal_round_trip_versions version
   ON version.workspace_id = round_trip.workspace_id
@@ -392,6 +424,105 @@ WHERE workspace_id = ? AND account_id = ? AND trade_style_plan_id = ?
         platformFailure("TRADERLINK_TRADE_STYLE_CONFLICT");
       }
     }
+    const saved = this.findPlan(input.scope, input.position.roundTripId);
+    if (!saved) platformFailure("TRADERLINK_TRADE_STYLE_CONFLICT");
+    return saved;
+  }
+
+  saveSwingPlan(input: Readonly<{
+    scope: AccountScope;
+    position: JournalTrackedPositionRow;
+    expectedRevision: number;
+    entryReason: string;
+    hasUpcomingCatalyst: boolean;
+    catalystDetails: string | null;
+    plannedHoldTradingDays: number;
+    sourceUi: "day_trade_tracker" | "swing_trade_tracker";
+    idempotencyKey: string;
+    timestamp: string;
+  }>): JournalTradeStylePlanRow {
+    const current = this.findPlan(input.scope, input.position.roundTripId);
+    if (!current || current.revision !== input.expectedRevision || current.tradeStyle !== "swing") {
+      platformFailure("TRADERLINK_TRADE_STYLE_CONFLICT");
+    }
+    const nextRevision = current.revision + 1;
+    const eventId = createCanonicalUuidV4();
+    const idempotencySha256 = digest([
+      "journal-swing-position-plan-v1",
+      input.scope.workspaceId,
+      input.scope.accountId,
+      input.scope.userId,
+      input.idempotencyKey,
+      input.position.roundTripId,
+    ]);
+    const existing = this.database.prepare<[
+      string, string, string, string,
+    ], { trade_style_plan_id: string }>(`SELECT trade_style_plan_id
+FROM journal_trade_style_plan_events
+WHERE workspace_id = ? AND account_id = ? AND actor_user_id = ?
+  AND idempotency_sha256 = ?`).get(
+      input.scope.workspaceId,
+      input.scope.accountId,
+      input.scope.userId,
+      idempotencySha256,
+    );
+    if (existing) {
+      if (existing.trade_style_plan_id !== current.stylePlanId) {
+        platformFailure("TRADERLINK_TRADE_STYLE_CONFLICT");
+      }
+      return current;
+    }
+    this.database.prepare(`INSERT INTO journal_trade_style_plan_events (
+ trade_style_plan_event_id, workspace_id, account_id, trade_style_plan_id,
+ event_sequence, event_type, prior_trade_style, new_trade_style,
+ prior_open_status, new_open_status, claimed_effective_at_utc,
+ round_trip_version_id, reason_code, source_ui, expected_revision,
+ idempotency_sha256, actor_user_id, occurred_at_utc, entry_reason_text,
+ has_upcoming_catalyst, catalyst_details_text, planned_hold_trading_days
+) VALUES (?, ?, ?, ?, ?, 'relinked', ?, ?, ?, ?, ?, ?,
+ 'swing_position_plan', ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .run(
+        eventId,
+        input.scope.workspaceId,
+        input.scope.accountId,
+        current.stylePlanId,
+        nextRevision,
+        current.tradeStyle,
+        current.tradeStyle,
+        current.openStatus,
+        current.openStatus,
+        current.claimedEffectiveAtUtc,
+        input.position.roundTripVersionId,
+        input.sourceUi,
+        current.revision,
+        idempotencySha256,
+        input.scope.userId,
+        input.timestamp,
+        input.entryReason,
+        input.hasUpcomingCatalyst ? 1 : 0,
+        input.catalystDetails,
+        input.plannedHoldTradingDays,
+      );
+    const updated = this.database.prepare(`UPDATE journal_trade_style_plans
+SET round_trip_version_id = ?, current_revision = ?, current_event_id = ?,
+ entry_reason_text = ?, has_upcoming_catalyst = ?, catalyst_details_text = ?,
+ planned_hold_trading_days = ?, updated_at_utc = ?
+WHERE workspace_id = ? AND account_id = ? AND trade_style_plan_id = ?
+  AND current_revision = ?`).run(
+      input.position.roundTripVersionId,
+      nextRevision,
+      eventId,
+      input.entryReason,
+      input.hasUpcomingCatalyst ? 1 : 0,
+      input.catalystDetails,
+      input.plannedHoldTradingDays,
+      input.timestamp,
+      input.scope.workspaceId,
+      input.scope.accountId,
+      current.stylePlanId,
+      current.revision,
+    );
+    if (updated.changes !== 1) platformFailure("TRADERLINK_TRADE_STYLE_CONFLICT");
     const saved = this.findPlan(input.scope, input.position.roundTripId);
     if (!saved) platformFailure("TRADERLINK_TRADE_STYLE_CONFLICT");
     return saved;
