@@ -302,6 +302,57 @@ FROM community_watchlist_tickers WHERE watchlist_id = ? ORDER BY ordinal`).all(r
     });
   }
 
+  ownsPublished(userId: string, handle: string, watchlistSlug: string): boolean {
+    assertCanonicalUuidV4(userId, "userId");
+    assertLowercaseToken(handle.replace(/-/gu, "_"), "handle", 48);
+    assertLowercaseToken(watchlistSlug.replace(/-/gu, "_"), "watchlistSlug", 80);
+    return Boolean(this.database.prepare<[string, string, string], Readonly<{ watchlist_id: string }>>(`SELECT watchlist.watchlist_id
+FROM community_watchlists watchlist
+JOIN community_profiles profile ON profile.user_id = watchlist.owner_user_id
+WHERE watchlist.owner_user_id = ? AND profile.handle = ? AND watchlist.slug = ? AND watchlist.status = 'published'`).get(userId, handle, watchlistSlug));
+  }
+
+  replaceTickerSymbol(input: Readonly<{
+    userId: string;
+    handle: string;
+    watchlistSlug: string;
+    currentSymbol: string;
+    nextSymbol: string;
+    timestamp: string;
+  }>): void {
+    assertCanonicalUuidV4(input.userId, "userId");
+    assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
+    assertLowercaseToken(input.handle.replace(/-/gu, "_"), "handle", 48);
+    assertLowercaseToken(input.watchlistSlug.replace(/-/gu, "_"), "watchlistSlug", 80);
+    const currentSymbol = normalizeSymbol(input.currentSymbol);
+    const nextSymbol = normalizeSymbol(input.nextSymbol);
+    const update = () => {
+      const watchlist = this.database.prepare<[string, string, string], Readonly<{ watchlist_id: string }>>(`SELECT watchlist.watchlist_id
+FROM community_watchlists watchlist
+JOIN community_profiles profile ON profile.user_id = watchlist.owner_user_id
+WHERE watchlist.owner_user_id = ? AND profile.handle = ? AND watchlist.slug = ? AND watchlist.status = 'published'`).get(input.userId, input.handle, input.watchlistSlug);
+      if (!watchlist) platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+      const ticker = this.database.prepare<[string, string], Readonly<{ ticker_id: string }>>(
+        "SELECT ticker_id FROM community_watchlist_tickers WHERE watchlist_id = ? AND symbol = ?",
+      ).get(watchlist.watchlist_id, currentSymbol);
+      if (!ticker) platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "currentSymbol" });
+      try {
+        const changed = this.database.prepare(`UPDATE community_watchlist_tickers
+SET symbol = ? WHERE ticker_id = ?`).run(nextSymbol, ticker.ticker_id).changes;
+        if (changed !== 1) platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "nextSymbol" });
+      } catch {
+        platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "nextSymbol" });
+      }
+      this.database.prepare("UPDATE community_watchlists SET updated_at_utc = ? WHERE watchlist_id = ?").run(
+        input.timestamp,
+        watchlist.watchlist_id,
+      );
+    };
+    if (currentSymbol === nextSymbol) return;
+    if (this.database.inTransaction) update();
+    else this.database.transaction(update).immediate();
+  }
+
   claimDiscordPublication(publicationId: string, timestamp: string): PublicationRow | null {
     assertCanonicalUuidV4(publicationId, "publicationId");
     assertCanonicalUtcTimestamp(timestamp, "timestamp");

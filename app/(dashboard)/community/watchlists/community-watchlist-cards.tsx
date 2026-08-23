@@ -8,6 +8,7 @@ import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import type {
@@ -15,6 +16,7 @@ import type {
   CommunityWatchlistSummary,
 } from "@/src/modules/community/contracts/community-watchlist-contracts";
 import { DashboardPanel } from "../../../dashboard-template";
+import { replaceCommunityWatchlistTicker } from "./community-watchlist-actions";
 
 export type CommunityTickerCompanyFacts = {
   country: string | null;
@@ -48,11 +50,19 @@ export function CommunityWatchlistSummaryCard({ item }: { item: CommunityWatchli
 export function CommunityWatchlistTickerBoard({
   detail,
   tickerFacts,
+  editable,
+  watchlistSlug,
 }: {
   detail: CommunityWatchlistDetail;
   tickerFacts: Readonly<Record<string, CommunityTickerCompanyFacts | null>>;
+  editable: boolean;
+  watchlistSlug: string;
 }) {
   const [selectedSymbol, setSelectedSymbol] = useState(detail.tickers[0]?.symbol ?? "");
+  const [tickerEdit, setTickerEdit] = useState("");
+  const [tickerMessage, setTickerMessage] = useState<string | null>(null);
+  const [savingTicker, setSavingTicker] = useState(false);
+  const router = useRouter();
 
   return <Stack spacing={1.25}>
     <Stack spacing={0.85}>
@@ -77,7 +87,7 @@ export function CommunityWatchlistTickerBoard({
             <Box sx={{ alignSelf: "center", display: "grid", gap: 0.75, gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" }, minWidth: 0 }}>{facts.length ? facts.slice(0, 2).map((fact) => <Box key={fact.label} sx={{ minWidth: 0 }}><Typography color="text.secondary" sx={{ fontSize: "0.65rem", fontWeight: 800 }}>{fact.label}</Typography><Typography sx={{ WebkitBoxOrient: "vertical", WebkitLineClamp: 1, display: "-webkit-box", fontSize: "0.76rem", fontWeight: 700, lineHeight: 1.3, overflow: "hidden" }}>{fact.value}</Typography></Box>) : <Typography color="text.secondary" sx={{ fontSize: "0.74rem" }}>Company facts unavailable</Typography>}</Box>
             <Box sx={{ alignSelf: "center", display: "grid", gap: 0.75, gridTemplateColumns: "repeat(2, minmax(0, 1fr))", minWidth: 0 }}>{facts.slice(2).map((fact) => <Box key={fact.label} sx={{ minWidth: 0 }}><Typography color="text.secondary" sx={{ fontSize: "0.65rem", fontWeight: 800 }}>{fact.label}</Typography><Typography sx={{ WebkitBoxOrient: "vertical", WebkitLineClamp: 1, display: "-webkit-box", fontSize: "0.76rem", fontWeight: 700, lineHeight: 1.3, overflow: "hidden" }}>{fact.value}</Typography></Box>)}</Box>
           </Button>
-          {active ? <Box sx={{ bgcolor: "#fbfcff", border: 1, borderColor: "#c9daf7", borderRadius: "0 0 10px 10px", borderTop: 0, boxShadow: "inset 3px 0 0 #082b73", mt: -0.85, p: { xs: 1.5, sm: 1.75 }, pt: { xs: 2.2, sm: 2.35 } }}><Box sx={{ display: "grid", gap: { xs: 1.5, md: 2 }, gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1.55fr) minmax(190px, .65fr)" } }}><Box sx={{ minWidth: 0 }}><Typography color="text.secondary" sx={{ fontWeight: 800 }} variant="caption">Trader&apos;s take</Typography><Typography sx={{ fontSize: "0.9rem", lineHeight: 1.65, mt: 0.55, whiteSpace: "pre-wrap" }} variant="body2">{note || "No trader&apos;s take was added for this ticker yet."}</Typography></Box><Stack spacing={1.1} sx={{ alignSelf: "start", borderColor: "divider", borderLeft: { xs: 0, md: 1 }, borderTop: { xs: 1, md: 0 }, minWidth: 0, pl: { xs: 0, md: 1.75 }, pt: { xs: 1.25, md: 0 } }}>{factRows.length ? factRows.map((fact) => <Box key={fact.label}><Typography color="text.secondary" sx={{ fontWeight: 800 }} variant="caption">{fact.label}</Typography><Typography sx={{ fontSize: "0.88rem", fontWeight: 700, lineHeight: 1.45 }} variant="body2">{fact.value}</Typography></Box>) : <Typography color="text.secondary" variant="body2">No target, catalyst, or reference was added.</Typography>}</Stack></Box></Box> : null}
+          {active ? <Box sx={{ bgcolor: "#fbfcff", border: 1, borderColor: "#c9daf7", borderRadius: "0 0 10px 10px", borderTop: 0, boxShadow: "inset 3px 0 0 #082b73", mt: -0.85, p: { xs: 1.5, sm: 1.75 }, pt: { xs: 2.2, sm: 2.35 } }}><Box sx={{ display: "grid", gap: { xs: 1.5, md: 2 }, gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1.55fr) minmax(190px, .65fr)" } }}><Box sx={{ minWidth: 0 }}><Typography color="text.secondary" sx={{ fontWeight: 800 }} variant="caption">Trader&apos;s take</Typography><Typography sx={{ fontSize: "0.9rem", lineHeight: 1.65, mt: 0.55, whiteSpace: "pre-wrap" }} variant="body2">{note || "No trader&apos;s take was added for this ticker yet."}</Typography>{editable ? <Stack direction={{ xs: "column", sm: "row" }} spacing={0.75} sx={{ alignItems: { sm: "center" }, mt: 1.5 }}><input aria-label={`Replace ${ticker.symbol} with a ticker`} onChange={(event) => setTickerEdit(event.target.value.toUpperCase())} placeholder="New ticker" style={{ border: "1px solid #bac8e0", borderRadius: 6, font: "inherit", minHeight: 34, padding: "6px 9px", textTransform: "uppercase", width: 130 }} value={tickerEdit} /><Button disabled={savingTicker || !tickerEdit.trim()} onClick={async () => { setSavingTicker(true); setTickerMessage(null); const result = await replaceCommunityWatchlistTicker({ handle: detail.authorHandle, watchlistSlug, currentSymbol: ticker.symbol, nextSymbol: tickerEdit }); setSavingTicker(false); setTickerMessage(result.message); if (result.ok) { setTickerEdit(""); router.refresh(); } }} size="small" variant="outlined">{savingTicker ? "Saving..." : "Change ticker"}</Button>{tickerMessage ? <Typography color="text.secondary" variant="caption">{tickerMessage}</Typography> : null}</Stack> : null}</Box><Stack spacing={1.1} sx={{ alignSelf: "start", borderColor: "divider", borderLeft: { xs: 0, md: 1 }, borderTop: { xs: 1, md: 0 }, minWidth: 0, pl: { xs: 0, md: 1.75 }, pt: { xs: 1.25, md: 0 } }}>{factRows.length ? factRows.map((fact) => <Box key={fact.label}><Typography color="text.secondary" sx={{ fontWeight: 800 }} variant="caption">{fact.label}</Typography><Typography sx={{ fontSize: "0.88rem", fontWeight: 700, lineHeight: 1.45 }} variant="body2">{fact.value}</Typography></Box>) : <Typography color="text.secondary" variant="body2">No target, catalyst, or reference was added.</Typography>}</Stack></Box></Box> : null}
         </Box>;
       })}
     </Stack>
