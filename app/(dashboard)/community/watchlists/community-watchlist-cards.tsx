@@ -66,11 +66,11 @@ export function CommunityWatchlistTickerBoard({
 
   const factColumns = {
     xs: "minmax(0, 1fr) auto",
-    sm: "minmax(124px, .9fr) minmax(62px, .44fr) minmax(108px, 1fr) minmax(72px, .5fr) minmax(72px, .5fr) max-content",
+    sm: "124px 62px 116px 76px 78px minmax(0, 1fr)",
   };
 
   return <Stack spacing={1.25}>
-    <Box aria-hidden="true" sx={{ columnGap: 0.65, display: { xs: "none", sm: "grid" }, gridTemplateColumns: factColumns.sm, justifyItems: "start", px: 1.5 }}>
+    <Box aria-hidden="true" sx={{ border: 1, borderColor: "transparent", boxSizing: "border-box", columnGap: 0.65, display: { xs: "none", sm: "grid" }, gridTemplateColumns: factColumns.sm, justifyItems: "start", px: 1.5 }}>
       <Box />
       {['Ctry', 'Ind.', 'M/C', 'O/S'].map((label) => <Typography color="text.secondary" key={label} sx={{ fontSize: "0.72rem", fontWeight: 900, letterSpacing: ".03em" }}>{label}</Typography>)}
       <Box />
@@ -92,7 +92,7 @@ export function CommunityWatchlistTickerBoard({
           { label: "Posted reference", value: ticker.postedReferencePrice },
         ].filter((fact) => Boolean(fact.value));
         return <Box key={ticker.symbol}>
-          <Button aria-expanded={active} onClick={() => setSelectedSymbol((current) => current === ticker.symbol ? "" : ticker.symbol)} sx={{ alignItems: "center", bgcolor: "#edf4ff", border: 1, borderColor: active ? "#9fbee9" : "#d5e3fb", borderRadius: 1.75, boxShadow: "inset 3px 0 0 #082b73", color: "text.primary", columnGap: { xs: 0.75, sm: 0.65 }, display: "grid", gridTemplateColumns: factColumns, justifyItems: "start", minHeight: { xs: 78, sm: 58 }, px: { xs: 1.25, sm: 1.5 }, py: { xs: 1, sm: 0.85 }, textAlign: "left", textTransform: "none", width: "100%", "&:hover": { bgcolor: "#e7f0ff" } }} variant="text">
+          <Button aria-expanded={active} onClick={() => setSelectedSymbol((current) => current === ticker.symbol ? "" : ticker.symbol)} sx={{ alignItems: "center", bgcolor: "#edf4ff", border: 1, borderColor: active ? "#9fbee9" : "#d5e3fb", borderRadius: 1.75, boxShadow: "inset 3px 0 0 #082b73", boxSizing: "border-box", color: "text.primary", columnGap: { xs: 0.75, sm: 0.65 }, display: "grid", gridTemplateColumns: factColumns, justifyItems: "start", minHeight: { xs: 78, sm: 58 }, px: { xs: 1.25, sm: 1.5 }, py: { xs: 1, sm: 0.85 }, textAlign: "left", textTransform: "none", width: "100%", "&:hover": { bgcolor: "#e7f0ff" } }} variant="text">
             <Stack spacing={0.45} sx={{ minWidth: 0 }}>
               <Stack direction="row" spacing={0.55} sx={{ alignItems: "center" }}>
                 <Typography sx={{ color: "#082b73", fontSize: "1rem", fontWeight: 900, letterSpacing: ".01em", lineHeight: 1.1 }}>{ticker.symbol}</Typography>

@@ -18,7 +18,9 @@ facts are being refined into a card/table hybrid: desktop labels appear once
 above a fixed aligned ticker grid, while each ticker remains an independently
 expandable card. The latest refinement uses the same grid definition for
 labels and values, tightens the first fact columns, and labels the expansion
-control as Trader's take. It has not yet received owner visual acceptance.
+control as Trader's take. The desktop grid now uses fixed fact columns and a
+matching transparent header border so label and row coordinates cannot drift.
+It has not yet received owner visual acceptance.
 
 Migration `0076_community_watchlists` was applied to the local Platform
 database on 2026-08-22 after a verified pre-change backup/restore. It creates
