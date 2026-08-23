@@ -26,6 +26,7 @@ import { newsContentMigration } from "@/src/modules/news/server/database/migrati
 import { newsPressReleaseDashboardMigration } from "@/src/modules/news/server/database/migrations/0070_news_press_release_dashboard";
 import { newsMarketHaltAlertsMigration } from "@/src/modules/news/server/database/migrations/0072_news_market_halt_alerts";
 import { newsMarketHaltDailyMutesMigration } from "@/src/modules/news/server/database/migrations/0073_news_market_halt_daily_mutes";
+import { newsWeekAheadMigration } from "@/src/modules/news/server/database/migrations/0079_news_week_ahead";
 import { affiliateAttributionMigration } from "@/src/modules/affiliate/server/database/migrations/0016_affiliate_attribution";
 import { coachWeeklyReviewsMigration } from "@/src/modules/coach/server/database/migrations/0025_coach_weekly_reviews";
 import { coachMonthlyReviewsMigration } from "@/src/modules/coach/server/database/migrations/0026_coach_monthly_reviews";
@@ -401,6 +402,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/platform/server/database/migrations/0078_platform_session_client_labels.ts",
       migration: platformSessionClientLabelsMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/news/server/database/migrations/0079_news_week_ahead.ts",
+      migration: newsWeekAheadMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -722,6 +727,10 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "platform_dashboard_member_access_events",
     ]),
     "0078_platform_session_client_labels": Object.freeze([]),
+    "0079_news_week_ahead": Object.freeze([
+      "news_week_ahead_issues",
+      "news_week_ahead_issue_versions",
+    ]),
   });
 
 export function expectedPlatformTableNamesForPrefix(
