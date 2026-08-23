@@ -31,8 +31,8 @@ card's dimensions or another fact's alignment.
 Ticker tags appear at the bottom of the expanded Trader's take, wrapping only
 when needed. Trader-entered posted reference price is no longer collected or
 shown; the existing stored column is retained solely for schema compatibility.
-The list owner can now add, remove and create ticker tags inside that expanded
-section, including for an already published watchlist.
+The list owner can now add, remove and create ticker tags inside a full-width
+row below that expanded content, including for an already published watchlist.
 
 Migration `0076_community_watchlists` was applied to the local Platform
 database on 2026-08-22 after a verified pre-change backup/restore. It creates
