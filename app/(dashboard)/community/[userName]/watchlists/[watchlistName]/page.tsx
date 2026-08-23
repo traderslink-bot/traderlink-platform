@@ -55,9 +55,9 @@ export default async function CommunityWatchlistDetailPage({
   })));
   return (
     <DashboardPage>
-      <Stack spacing={1.75} sx={{ maxWidth: 1040 }}>
+      <Stack spacing={1.75} sx={{ maxWidth: 790 }}>
         <Paper elevation={0} sx={{ border: 1, borderColor: "divider", borderRadius: 2.5, overflow: "hidden" }}>
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1fr) 250px" } }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1fr) 210px" } }}>
             <Stack spacing={1.5} sx={{ minWidth: 0, p: { xs: 1.75, sm: 2.25 } }}>
               <Box sx={{ minWidth: 0 }}>
                 <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", rowGap: 0.75 }}>
@@ -86,7 +86,7 @@ export default async function CommunityWatchlistDetailPage({
               </Stack> : null}
               <Box sx={{ alignSelf: { xs: "flex-start", lg: "center" } }}><Link href={`/community/${detail.authorHandle}`} style={{ textDecoration: "none" }}><DashboardSecondaryAction component="span">View profile</DashboardSecondaryAction></Link></Box>
             </Stack>
-            <Box sx={{ borderColor: "divider", borderTop: 1, gridColumn: { xs: "auto", lg: "1" }, p: { xs: 1.75, sm: 2.25 } }}>
+            <Box sx={{ borderColor: "divider", borderTop: 1, gridColumn: "1 / -1", p: { xs: 1.75, sm: 2.25 } }}>
               <CommunityWatchlistTickerBoard detail={detail} editable={editable} tickerFacts={tickerFacts} watchlistSlug={watchlistName} />
             </Box>
           </Box>
