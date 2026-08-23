@@ -69,6 +69,7 @@ export class JournalTradeTrackerReadService {
             declaredAtUtc: row.declaredAtUtc,
             lifecycleState: row.styleLifecycleState,
             updatedAtUtc: row.styleUpdatedAtUtc,
+            swingPlan: row.swingPlan,
           })
         : null,
       latestSwingNote: notes[0] ?? null,

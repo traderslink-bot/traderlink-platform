@@ -18,6 +18,9 @@ visual/product review pending
 **Implementation progress:**
 [Day And Swing Trade Tracker Progress](day-and-swing-trade-tracker-progress.md)
 
+**Active follow-on card and planning contract:**
+[Swing Position Journal And Tracker Card Plan](swing-position-journal-plan.md)
+
 **Current Daily Tracker QA:**
 [Daily Trade Tracker QA Progress](daily-trade-tracker-qa-progress.md)
 

@@ -3,6 +3,7 @@ import type {
   JournalTradeStyle,
   JournalTradeStyleChange,
   JournalTradeStyleRecord,
+  JournalSwingPositionPlanChange,
 } from "@/src/modules/journal/contracts/journal-trade-style-contracts";
 import {
   narrowWorkspaceAccessToAccount,
@@ -44,6 +45,7 @@ function record(
     declaredAtUtc: row.declaredAtUtc,
     lifecycleState: row.lifecycleState,
     updatedAtUtc: row.updatedAtUtc,
+    swingPlan: row.swingPlan,
   });
 }
 
@@ -134,6 +136,38 @@ export class JournalTradeStyleService {
       sourceUi: input.sourceUi,
       idempotencyKey: input.idempotencyKey,
       timestamp,
+    }));
+    return record(this.authority, scope, saved);
+  }
+
+  saveSwingPlan(
+    scope: AccountScope,
+    input: JournalSwingPositionPlanChange,
+    now = new Date(),
+  ): JournalTradeStyleRecord {
+    if (
+      !IDEMPOTENCY_PATTERN.test(input.idempotencyKey) ||
+      input.entryReason.trim().length === 0 || input.entryReason.length > 12_000 ||
+      input.plannedHoldTradingDays < 1 || input.plannedHoldTradingDays > 252 ||
+      !Number.isSafeInteger(input.plannedHoldTradingDays) ||
+      (input.hasUpcomingCatalyst && (!input.catalystDetails || input.catalystDetails.trim().length === 0)) ||
+      (input.catalystDetails !== null && input.catalystDetails.length > 12_000)
+    ) platformFailure("TRADERLINK_TRADE_STYLE_INVALID");
+    const position = this.resolvePosition(scope, input.positionRef);
+    if (position.projectionState === "needs_decision" || position.tradeStyle !== "swing") {
+      platformFailure("TRADERLINK_TRADE_STYLE_CONFLICT");
+    }
+    const saved = this.repository.immediate(() => this.repository.saveSwingPlan({
+      scope,
+      position,
+      expectedRevision: input.expectedRevision,
+      entryReason: input.entryReason.trim(),
+      hasUpcomingCatalyst: input.hasUpcomingCatalyst,
+      catalystDetails: input.hasUpcomingCatalyst ? input.catalystDetails?.trim() ?? null : null,
+      plannedHoldTradingDays: input.plannedHoldTradingDays,
+      sourceUi: input.sourceUi,
+      idempotencyKey: input.idempotencyKey,
+      timestamp: createCanonicalUtcTimestamp(now),
     }));
     return record(this.authority, scope, saved);
   }

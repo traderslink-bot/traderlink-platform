@@ -70,6 +70,7 @@ import type {
   DaySessionWeekDay,
 } from "./day-session-types";
 import { PositionStyleControl } from "../position-style-control";
+import { SwingPositionPlanEditor } from "../swing-position-plan-editor";
 import { ManualExecutionEditDialog } from "../manual-execution-edit-dialog";
 import {
   useTradeTrackerHasUnsavedChangesExcept,
@@ -3210,16 +3211,25 @@ export function DaySessionView({
                     sx={{ mt: 1.25 }}
                     variant="outlined"
                   />
+                  <Typography color="text.secondary" sx={{ mt: 2 }} variant="caption">
+                    Average entry
+                  </Typography>
+                  <Typography sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 850, mt: 0.25 }} variant="body1">
+                    {price(position.averageEntryPrice, data.currency)}
+                  </Typography>
+                  <Typography color="text.secondary" sx={{ mt: 1.25 }} variant="caption">
+                    Opened
+                  </Typography>
+                  <Typography sx={{ fontWeight: 750, mt: 0.25 }} variant="body2">
+                    {timeLabel(position.openedAt, position.timezone)}
+                  </Typography>
                 </Box>
                 <Box sx={{ p: { xs: 2, md: 2.5 } }}>
                   <Box
                     sx={{
                       display: "grid",
                       gap: 2,
-                      gridTemplateColumns: {
-                        xs: "repeat(2, minmax(0, 1fr))",
-                        md: "repeat(3, minmax(150px, 1fr))",
-                      },
+                        gridTemplateColumns: "minmax(0, 1fr)",
                     }}
                   >
                     <Box>
@@ -3228,29 +3238,6 @@ export function DaySessionView({
                       </Typography>
                       <Typography sx={{ fontWeight: 850, mt: 0.35 }} variant="h6">
                         {formatJournalAnalyticsDecimal(position.remainingQuantity)} shares
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography color="text.secondary" variant="caption">
-                        Average entry
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontFamily: "var(--font-geist-mono)",
-                          fontWeight: 850,
-                          mt: 0.35,
-                        }}
-                        variant="h6"
-                      >
-                        {price(position.averageEntryPrice, data.currency)}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ gridColumn: { xs: "1 / -1", md: "auto" } }}>
-                      <Typography color="text.secondary" variant="caption">
-                        Opened
-                      </Typography>
-                      <Typography sx={{ fontWeight: 750, mt: 0.35 }} variant="body1">
-                        {timeLabel(position.openedAt, position.timezone)}
                       </Typography>
                     </Box>
                   </Box>
@@ -3341,19 +3328,14 @@ export function DaySessionView({
                       ) : null}
 
                       {activeSwing && position.positionRef ? (
-                        <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                          <DashboardSecondaryAction href={`/trade-tracker/swings#swing-${encodeURIComponent(position.positionRef)}`}>
-                            Open Swing Tracker
-                          </DashboardSecondaryAction>
-                          <PositionStyleControl
+                        <PositionStyleControl
                             closed={false}
                             expectedAccountSelectionRef={data.expectedAccountSelectionRef}
                             mode="mark-failed-swing"
                             positionRef={position.positionRef}
                             sourceUi="day_trade_tracker"
                             style={position.style}
-                          />
-                        </Stack>
+                        />
                       ) : readOnly ? (
                         <Typography color="text.secondary" variant="body2">Position type changes are unavailable in the design preview.</Typography>
                       ) : position.positionRef ? (
@@ -3369,7 +3351,20 @@ export function DaySessionView({
                       )}
                     </Stack>
 
-                    {activeSwing ? null : <Box sx={{ bgcolor: "rgba(1, 30, 86, 0.035)", borderRadius: 1.5, minHeight: { md: 280 }, p: 1.5 }}>
+                    {activeSwing && position.positionRef && position.style ? (
+                      <Box sx={{ bgcolor: "rgba(1, 30, 86, 0.035)", borderRadius: 1.5, minHeight: { md: 280 }, p: 1.5 }}>
+                        <Typography color="text.secondary" variant="caption">Swing plan</Typography>
+                        <Box sx={{ mt: 0.75 }}>
+                          <SwingPositionPlanEditor
+                            expectedAccountSelectionRef={data.expectedAccountSelectionRef}
+                            plan={position.style.swingPlan}
+                            positionRef={position.positionRef}
+                            revision={position.style.revision}
+                            sourceUi="day_trade_tracker"
+                          />
+                        </Box>
+                      </Box>
+                    ) : <Box sx={{ bgcolor: "rgba(1, 30, 86, 0.035)", borderRadius: 1.5, minHeight: { md: 280 }, p: 1.5 }}>
                       <Typography color="text.secondary" variant="caption">Trade notes</Typography>
                       {readOnly ? (
                         <Typography sx={{ mt: 0.5, whiteSpace: "pre-wrap" }} variant="body2">

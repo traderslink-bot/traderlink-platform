@@ -122,6 +122,15 @@ table replacement.
 
 ## Change boundary
 
+### 2026-08-22 dated-day manual-entry correction
+
+The Daily Trade Tracker dated-day route now renders the same manual execution
+entry card as the current-day route. Reopening a saved trading date therefore
+continues to support adding a missed execution as well as editing its existing
+executions. This is independent of Daily Review and AI Review state: marking a
+day reviewed does not lock it, and an already-issued AI Review remains its
+original saved record.
+
 The protected replacement database has received the verified 0021 migration.
 A temporary technical server was used on port 3011 for browser acceptance and
 was stopped afterward; ports 3010 and 3011 are off. No tracker file has been

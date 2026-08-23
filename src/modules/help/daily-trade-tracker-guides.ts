@@ -88,6 +88,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
           Object.freeze({ kind: "paragraph", text: "Open the manual trade form and copy each fill from your broker. Accurate details improve the chart review now and any later statement matching." }),
           Object.freeze({ kind: "bullets", items: Object.freeze([
             "Use the execution date and time shown by the broker. The Day Tracker uses Eastern Time.",
+            "The execution form stays available when you reopen a traded day, so you can add a missed fill as well as edit an earlier one.",
             "Enter the ticker, Buy or Sell side, filled quantity and execution price for every fill.",
             "Enter fees only when the broker reports them. Leaving an unknown fee blank is more accurate than guessing.",
             "Add rows for partial entries, adds and partial exits. Remove an unused row before saving.",
@@ -373,7 +374,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
           Object.freeze({ kind: "paragraph", text: "An open-position row appears on a Daily Trade Tracker date only when that position had execution activity on that date. It shows the remaining quantity, average entry and opened time. Choose the description that matches your intent; TradersLink does not change it automatically because of time held. Other confirmed open positions remain available on Open Positions." }),
           Object.freeze({ kind: "table", columns: Object.freeze(["Choice", "Use it when"]), rows: Object.freeze([
             Object.freeze(["Not classified", "You have not decided or recorded the position type yet. The day cannot be marked reviewed."]),
-            Object.freeze(["Active swing", "You intentionally continue the position as a Swing and can open it in Swing Trade Tracker."]),
+            Object.freeze(["Active swing", "You intentionally continue the position as a Swing. The same position also appears in Swing Trade Tracker; it is not copied into a second trade."]),
             Object.freeze(["Day trade still open", "It remains an active Day trade that has not yet returned to zero."]),
             Object.freeze(["Unplanned hold (bag hold)", "The intended Day trade became an unplanned hold."]),
             Object.freeze(["Long-term hold", "The position is intentionally being treated as a longer-term investment or hold."]),

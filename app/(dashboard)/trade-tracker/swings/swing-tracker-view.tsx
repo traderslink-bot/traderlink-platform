@@ -23,6 +23,7 @@ import {
   DashboardSecondaryAction,
 } from "../../../dashboard-template";
 import { FeatureHelpLink } from "../../feature-help-link";
+import { SwingPositionPlanEditor } from "../swing-position-plan-editor";
 
 const ManualExecutionEditDialog = dynamic(() =>
   import("../manual-execution-edit-dialog").then((module) => module.ManualExecutionEditDialog));
@@ -137,8 +138,13 @@ function SwingCard({
             sx={{ mt: 1 }}
             variant="outlined"
           />
-          <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">
-            Opened {timestamp(position.openedAtUtc, position.timezone)}
+          <Typography color="text.secondary" sx={{ mt: 2 }} variant="caption">Average entry</Typography>
+          <Typography sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 850, mt: 0.25 }} variant="body1">
+            {formatJournalAnalyticsMoney(position.averageEntryPriceDecimal, position.currency)}
+          </Typography>
+          <Typography color="text.secondary" sx={{ mt: 1.25 }} variant="caption">Opened</Typography>
+          <Typography sx={{ fontWeight: 750, mt: 0.25 }} variant="body2">
+            {timestamp(position.openedAtUtc, position.timezone)}
           </Typography>
         </Box>
 
@@ -147,7 +153,7 @@ function SwingCard({
             sx={{
               display: "grid",
               gap: 2,
-              gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(150px, 1fr))" },
+              gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", md: "repeat(2, minmax(150px, 1fr))" },
             }}
           >
             <Box>
@@ -155,16 +161,25 @@ function SwingCard({
               <Typography sx={{ fontWeight: 850 }} variant="h6">{decimal(position.remainingQuantityDecimal)}</Typography>
             </Box>
             <Box>
-              <Typography color="text.secondary" variant="caption">Average entry</Typography>
-              <Typography sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 850 }} variant="h6">
-                {formatJournalAnalyticsMoney(position.averageEntryPriceDecimal, position.currency)}
-              </Typography>
-            </Box>
-            <Box>
               <Typography color="text.secondary" variant="caption">Days held</Typography>
               <Typography sx={{ fontWeight: 850 }} variant="h6">{held}</Typography>
             </Box>
           </Box>
+
+          {active && position.style ? (
+            <Box sx={{ bgcolor: "rgba(1, 30, 86, 0.035)", borderRadius: 1.5, mt: 2, p: 1.5 }}>
+              <Typography color="text.secondary" variant="caption">Swing plan</Typography>
+              <Box sx={{ mt: 0.75 }}>
+                <SwingPositionPlanEditor
+                  expectedAccountSelectionRef={expectedAccountSelectionRef}
+                  plan={position.style.swingPlan}
+                  positionRef={position.positionRef}
+                  revision={position.style.revision}
+                  sourceUi="swing_trade_tracker"
+                />
+              </Box>
+            </Box>
+          ) : null}
 
           {active && !offline ? (
             <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mt: 2 }}>
