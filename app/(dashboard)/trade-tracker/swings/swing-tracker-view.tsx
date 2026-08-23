@@ -119,7 +119,7 @@ function SwingCard({
       >
         <Box
           sx={{
-            bgcolor: active ? "rgba(1, 30, 86, 0.06)" : "action.hover",
+            bgcolor: "rgba(237, 108, 2, 0.09)",
             borderBottom: { xs: 1, md: 0 },
             borderColor: "divider",
             borderRight: { md: 1 },
@@ -153,150 +153,169 @@ function SwingCard({
             sx={{
               display: "grid",
               gap: 2,
-              gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", md: "repeat(2, minmax(150px, 1fr))" },
+              gridTemplateColumns: "minmax(0, 1fr)",
             }}
           >
             <Box>
               <Typography color="text.secondary" variant="caption">Remaining shares</Typography>
               <Typography sx={{ fontWeight: 850 }} variant="h6">{decimal(position.remainingQuantityDecimal)}</Typography>
             </Box>
-            <Box>
-              <Typography color="text.secondary" variant="caption">Days held</Typography>
-              <Typography sx={{ fontWeight: 850 }} variant="h6">{held}</Typography>
-            </Box>
           </Box>
 
-          {active && position.style ? (
-            <Box sx={{ bgcolor: "rgba(1, 30, 86, 0.035)", borderRadius: 1.5, mt: 2, p: 1.5 }}>
-              <Typography color="text.secondary" variant="caption">Swing plan</Typography>
-              <Box sx={{ mt: 0.75 }}>
-                <SwingPositionPlanEditor
-                  expectedAccountSelectionRef={expectedAccountSelectionRef}
-                  plan={position.style.swingPlan}
-                  positionRef={position.positionRef}
-                  revision={position.style.revision}
-                  sourceUi="swing_trade_tracker"
-                />
-              </Box>
-            </Box>
-          ) : null}
-
-          {active && !offline ? (
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mt: 2 }}>
-              <DashboardSecondaryAction href={actionHref(position, "record")}>Add execution</DashboardSecondaryAction>
-              <PositionStyleControl
-                closed={false}
-                expectedAccountSelectionRef={expectedAccountSelectionRef}
-                mode="mark-failed-swing"
-                positionRef={position.positionRef}
-                sourceUi="swing_trade_tracker"
-                style={position.style}
-              />
-            </Stack>
-          ) : active ? (
-            <Typography color="text.secondary" sx={{ mt: 2 }} variant="body2">
-              Use the offline execution form above to record activity. Reconnect to change this swing classification.
-            </Typography>
-          ) : null}
-
-          <Divider sx={{ my: 2.5 }} />
-          <Typography sx={{ fontWeight: 850 }} variant="subtitle2">Tags</Typography>
-          {offline ? (
-            position.tags.length > 0 ? (
-              <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.75, mt: 1 }}>
-                {position.tags.map((tag) => (
-                  <Chip key={tag.tagId} label={tag.name} size="small" variant="outlined" />
-                ))}
-              </Stack>
-            ) : (
-              <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">No tags saved.</Typography>
-            )
-          ) : (
-            <SwingAnnotationEditor
-              availableTags={position.availableTags}
-              expectedAccountSelectionRef={expectedAccountSelectionRef}
-              positionRef={position.positionRef}
-              rules={position.rules}
-              showRules={false}
-              tags={position.tags}
-            />
-          )}
-
-          <Divider sx={{ my: 2.5 }} />
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}>
-            <Typography sx={{ fontWeight: 850 }} variant="subtitle2">Saved notes</Typography>
-            {active && !offline ? (
-              <Button onClick={() => setEditingNoteDate(reviewDate)} size="small" sx={{ minHeight: { xs: 44, sm: 36 } }} variant="outlined">
-                Add additional note
-              </Button>
-            ) : null}
-          </Stack>
-          {position.notes.length === 0 ? (
-            <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">No notes saved yet.</Typography>
-          ) : offline ? (
-            <Stack spacing={1} sx={{ mt: 1 }}>
-              {position.notes.map((note) => (
-                <Box key={`${note.reviewDate}:${note.revision}`} sx={{ border: 1, borderColor: "divider", borderRadius: 1, p: 1.5 }}>
-                  <Typography sx={{ fontWeight: 800 }} variant="body2">{note.reviewDate}</Typography>
-                  <Typography sx={{ mt: 0.75, whiteSpace: "pre-wrap" }} variant="body2">{note.note}</Typography>
-                  {note.nextSessionPlan ? (
-                    <Typography color="text.secondary" sx={{ mt: 0.75, whiteSpace: "pre-wrap" }} variant="body2">
-                      Next session: {note.nextSessionPlan}
-                    </Typography>
-                  ) : null}
-                </Box>
-              ))}
-            </Stack>
-          ) : (
-            <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.75, mt: 1 }}>
-              {position.notes.map((note) => (
-                <Button key={`${note.reviewDate}:${note.revision}`} onClick={() => setEditingNoteDate(note.reviewDate)} size="small" sx={{ minHeight: { xs: 44, sm: 36 } }} variant="outlined">
-                  {note.reviewDate}
-                </Button>
-              ))}
-            </Stack>
-          )}
-          {!offline && editingNoteDate ? (
-            <Box sx={{ mt: 1.5 }}>
-              <SwingNoteEditor
-                expectedAccountSelectionRef={expectedAccountSelectionRef}
-                note={selectedNote}
-                positionRef={position.positionRef}
-                reviewDate={editingNoteDate}
-              />
-            </Box>
-          ) : null}
-
-          <Divider sx={{ my: 2.5 }} />
-          <Typography sx={{ fontWeight: 850 }} variant="subtitle2">Executions</Typography>
-          <Stack divider={<Divider flexItem />} sx={{ mt: 1 }}>
-            {position.executions.map((execution, index) => (
-              <Box
-                key={`${execution.executedAtUtc}:${index}`}
-                sx={{ alignItems: { sm: "center" }, display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr 1fr", sm: "minmax(150px, 1.4fr) 72px 100px 90px 90px auto" }, py: 1.25 }}
-              >
-                <Typography color="text.secondary" variant="body2">{timestamp(execution.executedAtUtc, position.timezone)}</Typography>
-                <Typography sx={{ textTransform: "capitalize" }} variant="body2">{execution.side}</Typography>
-                <Typography variant="body2">{decimal(execution.quantityDecimal)} shares</Typography>
-                <Typography sx={{ fontFamily: "var(--font-geist-mono)" }} variant="body2">{formatJournalAnalyticsMoney(execution.reportingPriceDecimal, position.currency)}</Typography>
-                <Typography color="text.secondary" variant="body2">{execution.reportingFeesDecimal === null ? "No fees" : formatJournalAnalyticsMoney(execution.reportingFeesDecimal, position.currency)}</Typography>
-                {!offline ? (
-                  <ManualExecutionEditDialog
-                    execution={{
-                      manualEdit: execution.manualEdit,
-                      price: execution.priceDecimal,
-                      quantity: execution.quantityDecimal,
-                      side: execution.side,
-                      symbol: position.symbol,
-                    }}
+          <Box
+            sx={{
+              display: "grid",
+              gap: 2,
+              gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1.4fr) minmax(260px, 0.8fr)" },
+              mt: 2,
+            }}
+          >
+            <Stack spacing={1.5}>
+              <Box>
+                <Typography sx={{ fontWeight: 850 }} variant="subtitle2">Tags</Typography>
+                {offline ? (
+                  position.tags.length > 0 ? (
+                    <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.75, mt: 1 }}>
+                      {position.tags.map((tag) => (
+                        <Chip key={tag.tagId} label={tag.name} size="small" variant="outlined" />
+                      ))}
+                    </Stack>
+                  ) : (
+                    <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">No tags saved.</Typography>
+                  )
+                ) : (
+                  <SwingAnnotationEditor
+                    availableTags={position.availableTags}
                     expectedAccountSelectionRef={expectedAccountSelectionRef}
+                    positionRef={position.positionRef}
+                    rules={position.rules}
+                    showRules={false}
+                    tags={position.tags}
                   />
+                )}
+              </Box>
+
+              <Box sx={{ bgcolor: "rgba(1, 30, 86, 0.035)", borderRadius: 1.5, p: 1.5 }}>
+                <Typography color="text.secondary" sx={{ display: "block", mb: 0.5 }} variant="caption">
+                  Executions
+                </Typography>
+                <Stack divider={<Divider flexItem />}>
+                  {position.executions.map((execution, index) => (
+                    <Box
+                      key={`${execution.executedAtUtc}:${index}`}
+                      sx={{ alignItems: { sm: "center" }, display: "grid", gap: 0.75, gridTemplateColumns: { xs: "1fr 1fr", sm: "110px 80px minmax(88px, 1fr) 100px auto" }, py: 0.9 }}
+                    >
+                      <Typography variant="body2">{timestamp(execution.executedAtUtc, position.timezone)}</Typography>
+                      <Typography sx={{ textTransform: "capitalize" }} variant="body2">{execution.side}</Typography>
+                      <Typography sx={{ fontFamily: "var(--font-geist-mono)" }} variant="body2">{decimal(execution.quantityDecimal)} shares</Typography>
+                      <Stack spacing={0.15}>
+                        <Typography sx={{ fontFamily: "var(--font-geist-mono)" }} variant="body2">{formatJournalAnalyticsMoney(execution.reportingPriceDecimal, position.currency)}</Typography>
+                        <Typography color="text.secondary" variant="caption">{execution.reportingFeesDecimal === null ? "No fees" : `Fee ${formatJournalAnalyticsMoney(execution.reportingFeesDecimal, position.currency)}`}</Typography>
+                      </Stack>
+                      {!offline ? (
+                        <ManualExecutionEditDialog
+                          execution={{
+                            manualEdit: execution.manualEdit,
+                            price: execution.priceDecimal,
+                            quantity: execution.quantityDecimal,
+                            side: execution.side,
+                            symbol: position.symbol,
+                          }}
+                          expectedAccountSelectionRef={expectedAccountSelectionRef}
+                        />
+                      ) : null}
+                    </Box>
+                  ))}
+                </Stack>
+              </Box>
+
+              {active && !offline ? (
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                  <DashboardSecondaryAction href={actionHref(position, "record")}>Add execution</DashboardSecondaryAction>
+                  <PositionStyleControl
+                    closed={false}
+                    expectedAccountSelectionRef={expectedAccountSelectionRef}
+                    mode="mark-failed-swing"
+                    positionRef={position.positionRef}
+                    sourceUi="swing_trade_tracker"
+                    style={position.style}
+                  />
+                </Stack>
+              ) : active ? (
+                <Typography color="text.secondary" variant="body2">
+                  Use the offline execution form above to record activity. Reconnect to change this swing classification.
+                </Typography>
+              ) : null}
+            </Stack>
+
+            <Stack spacing={2}>
+              <Box sx={{ bgcolor: "rgba(1, 30, 86, 0.035)", borderRadius: 1.5, p: 1.5 }}>
+                <Typography color="text.secondary" variant="caption">Days held</Typography>
+                <Typography sx={{ fontWeight: 850, mt: 0.25 }} variant="h6">{held}</Typography>
+                {active && position.style ? (
+                  <>
+                    <Divider sx={{ my: 1.5 }} />
+                    <Typography color="text.secondary" variant="caption">Swing plan</Typography>
+                    <Box sx={{ mt: 0.75 }}>
+                      <SwingPositionPlanEditor
+                        expectedAccountSelectionRef={expectedAccountSelectionRef}
+                        plan={position.style.swingPlan}
+                        positionRef={position.positionRef}
+                        revision={position.style.revision}
+                        sourceUi="swing_trade_tracker"
+                      />
+                    </Box>
+                  </>
                 ) : null}
               </Box>
-            ))}
-          </Stack>
 
-          <Divider sx={{ my: 2.5 }} />
+              <Box sx={{ bgcolor: "rgba(1, 30, 86, 0.035)", borderRadius: 1.5, p: 1.5 }}>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}>
+                  <Typography sx={{ fontWeight: 850 }} variant="subtitle2">Saved notes</Typography>
+                  {active && !offline ? (
+                    <Button onClick={() => setEditingNoteDate(reviewDate)} size="small" sx={{ minHeight: { xs: 44, sm: 36 } }} variant="outlined">
+                      Add additional note
+                    </Button>
+                  ) : null}
+                </Stack>
+                {position.notes.length === 0 ? (
+                  <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">No notes saved yet.</Typography>
+                ) : offline ? (
+                  <Stack spacing={1} sx={{ mt: 1 }}>
+                    {position.notes.map((note) => (
+                      <Box key={`${note.reviewDate}:${note.revision}`} sx={{ border: 1, borderColor: "divider", borderRadius: 1, p: 1.5 }}>
+                        <Typography sx={{ fontWeight: 800 }} variant="body2">{note.reviewDate}</Typography>
+                        <Typography sx={{ mt: 0.75, whiteSpace: "pre-wrap" }} variant="body2">{note.note}</Typography>
+                        {note.nextSessionPlan ? (
+                          <Typography color="text.secondary" sx={{ mt: 0.75, whiteSpace: "pre-wrap" }} variant="body2">
+                            Next session: {note.nextSessionPlan}
+                          </Typography>
+                        ) : null}
+                      </Box>
+                    ))}
+                  </Stack>
+                ) : (
+                  <Stack direction="row" sx={{ flexWrap: "wrap", gap: 0.75, mt: 1 }}>
+                    {position.notes.map((note) => (
+                      <Button key={`${note.reviewDate}:${note.revision}`} onClick={() => setEditingNoteDate(note.reviewDate)} size="small" sx={{ minHeight: { xs: 44, sm: 36 } }} variant="outlined">
+                        {note.reviewDate}
+                      </Button>
+                    ))}
+                  </Stack>
+                )}
+                {!offline && editingNoteDate ? (
+                  <Box sx={{ mt: 1.5 }}>
+                    <SwingNoteEditor
+                      expectedAccountSelectionRef={expectedAccountSelectionRef}
+                      note={selectedNote}
+                      positionRef={position.positionRef}
+                      reviewDate={editingNoteDate}
+                    />
+                  </Box>
+                ) : null}
+              </Box>
+            </Stack>
+          </Box>
         </Box>
       </Box>
     </Card>
