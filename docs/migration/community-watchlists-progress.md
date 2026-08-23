@@ -25,8 +25,8 @@ mobile, keeping all four facts visible. It has not yet received owner visual
 acceptance.
 
 The direct-list header now separates the title/description from a labeled
-watchlist-tag row. Its profile detail is attached in the header's top-right
-corner on desktop, while the ticker board remains full-width below the header.
+watchlist-tag row. Its profile detail is a compact top-right card on desktop,
+while the watchlist and ticker board retain their narrower main-column width.
 
 Desktop fact columns remain fixed-width. Long source values, including an
 industry name, show a single-line ellipsis rather than changing a ticker
