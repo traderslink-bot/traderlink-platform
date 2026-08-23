@@ -1,13 +1,18 @@
 import { randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
+import { IBKR_SOURCE_ACCOUNT_CANONICALIZERS } from "@/src/modules/journal/server/accounts/ibkr-source-account-canonicalizer";
 import { readProtectedInitialOwnerDiscordSubject } from "@/src/modules/platform/server/authentication/platform-discord-configuration";
 import { requireJournalAdminScope } from "@/src/modules/platform/server/administration/platform-admin-authorization";
 import {
   consumeJournalAdminRateLimit,
   requireJournalAdminMutationRequest,
 } from "@/src/modules/platform/server/administration/platform-admin-request-security";
-import { createAndRestoreVerifyPlatformDatabaseBackup } from "@/src/modules/platform/server/database/platform-database-backup";
+import {
+  createAndRestoreVerifyPlatformDatabaseBackup,
+  type PlatformDatabaseRecoveryRequirements,
+} from "@/src/modules/platform/server/database/platform-database-backup";
 import { resolvePlatformDatabaseConfig } from "@/src/modules/platform/server/database/platform-database-config";
 import {
   isLowercaseSha256,
@@ -28,6 +33,78 @@ export const dynamic = "force-dynamic";
 const HOSTED_TRANSFER_EXPORT_DIRECTORY_ENV =
   "TRADERLINK_HOSTED_TRANSFER_EXPORT_DIRECTORY" as const;
 const BACKUP_ROOT = "/data/backups/hosted-transfer" as const;
+const JOURNAL_AUTHORITY_PATH_ENV = "TRADERLINK_PLATFORM_JOURNAL_AUTHORITY_PATH" as const;
+
+type AuthoritySection = Readonly<{
+  activeKeyVersion: string;
+  keysBase64: Readonly<Record<string, string>>;
+}>;
+
+function authoritySection(value: unknown): AuthoritySection {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    platformFailure("TRADERLINK_ACCOUNT_IDENTITY_RECOVERY_REQUIRED");
+  }
+  const record = value as Record<string, unknown>;
+  const activeKeyVersion = record.activeKeyVersion;
+  const keysBase64 = record.keysBase64;
+  if (
+    typeof activeKeyVersion !== "string" ||
+    !keysBase64 || typeof keysBase64 !== "object" || Array.isArray(keysBase64)
+  ) {
+    platformFailure("TRADERLINK_ACCOUNT_IDENTITY_RECOVERY_REQUIRED");
+  }
+  const keys = Object.fromEntries(Object.entries(keysBase64).map(([version, encoded]) => {
+    if (typeof encoded !== "string") {
+      platformFailure("TRADERLINK_ACCOUNT_IDENTITY_RECOVERY_REQUIRED");
+    }
+    const decoded = Buffer.from(encoded, "base64");
+    if (decoded.length < 32 || decoded.toString("base64") !== encoded) {
+      platformFailure("TRADERLINK_ACCOUNT_IDENTITY_RECOVERY_REQUIRED");
+    }
+    return [version, encoded];
+  }));
+  if (!(activeKeyVersion in keys)) {
+    platformFailure("TRADERLINK_ACCOUNT_IDENTITY_RECOVERY_REQUIRED");
+  }
+  return Object.freeze({ activeKeyVersion, keysBase64: Object.freeze(keys) });
+}
+
+function verifyRecoveryAuthority(
+  requirements: PlatformDatabaseRecoveryRequirements,
+): Readonly<{
+  verified: true;
+  hmacKeyVersions: readonly string[];
+  sourceAccountCanonicalizationVersions: readonly string[];
+}> {
+  const authorityPath = process.env[JOURNAL_AUTHORITY_PATH_ENV];
+  if (!authorityPath) {
+    platformFailure("TRADERLINK_ACCOUNT_IDENTITY_RECOVERY_REQUIRED");
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(readFileSync(authorityPath, "utf8"));
+  } catch (error) {
+    platformFailure("TRADERLINK_ACCOUNT_IDENTITY_RECOVERY_REQUIRED", {}, error);
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    platformFailure("TRADERLINK_ACCOUNT_IDENTITY_RECOVERY_REQUIRED");
+  }
+  const authority = parsed as Record<string, unknown>;
+  const accountIdentity = authoritySection(authority.accountIdentity);
+  authoritySection(authority.journalPrivacy);
+  const keysAvailable = requirements.hmacKeyVersions.every((version) =>
+    version in accountIdentity.keysBase64);
+  const canonicalizersAvailable = requirements.sourceAccountCanonicalizationVersions
+    .every((version) => version in IBKR_SOURCE_ACCOUNT_CANONICALIZERS);
+  if (!keysAvailable || !canonicalizersAvailable) {
+    platformFailure("TRADERLINK_ACCOUNT_IDENTITY_RECOVERY_REQUIRED");
+  }
+  return Object.freeze({
+    verified: true as const,
+    hmacKeyVersions: requirements.hmacKeyVersions,
+    sourceAccountCanonicalizationVersions: requirements.sourceAccountCanonicalizationVersions,
+  });
+}
 
 function exportDirectory(): string {
   const value = process.env[HOSTED_TRANSFER_EXPORT_DIRECTORY_ENV]?.trim();
@@ -94,6 +171,7 @@ export async function POST(request: Request): Promise<Response> {
       sourcePath: databasePath,
       backupPath: paths.backupPath,
       restoreVerificationPath: paths.restorePath,
+      verifyRecoveryAuthority,
     });
     const database = openPlatformDatabase({ mode: "runtime", databasePath });
     try {
