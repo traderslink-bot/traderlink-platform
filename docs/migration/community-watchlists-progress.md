@@ -35,7 +35,8 @@ The attached profile is now a deliberately wide, short ID-card treatment in
 the watchlist header: avatar, Trader label, handle, selectable profile tags
 and View profile form one compact 360px card anchored to the header's right
 edge. Its blue edge moves with the entire card. It remains inside the existing
-790px watchlist width rather than restoring a separate profile rail.
+790px watchlist width rather than restoring a separate profile rail. Its
+background matches the surrounding watchlist surface.
 
 Desktop fact columns remain fixed-width. Long source values, including an
 industry name, show a single-line ellipsis rather than changing a ticker
