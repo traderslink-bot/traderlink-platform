@@ -50,6 +50,9 @@ function presentationPosition(
     positionRef: localRef,
     reviewDateSwingNote: null,
     rules: [],
+    style: position.style
+      ? { ...position.style, positionRef: localRef }
+      : null,
     tags: position.tags.map((name, index) => ({
       assignmentCount: 1,
       name,
