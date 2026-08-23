@@ -21,6 +21,13 @@ export type DashboardNavigationIconKey =
   | "manualEntry"
   | "newspaper"
   | "overview"
+  | "openPositions"
+  | "tradeAnalyzer"
+  | "tradeBreakdown"
+  | "dayTradeAnalysis"
+  | "entryExit"
+  | "greenToRed"
+  | "mfeMae"
   | "reflection"
   | "results"
   | "rules"
@@ -147,30 +154,30 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
     Object.freeze({
       id: "tradeAnalyzer" as const,
       label: "Trade Analyzer",
-      icon: "tradeAnalysis" as const,
+      icon: "tradeAnalyzer" as const,
       items: Object.freeze([
         Object.freeze({
           href: "/analytics/trade-analyzer/day",
           label: "Day Trade Analysis",
-          icon: "overview" as const,
+          icon: "dayTradeAnalysis" as const,
           depth: 1 as const,
         }),
         Object.freeze({
           href: "/analytics/trade-analyzer/day/entry-exit",
           label: "Entry & Exit",
-          icon: "execution" as const,
+          icon: "entryExit" as const,
           depth: 2 as const,
         }),
         Object.freeze({
           href: "/analytics/trade-analyzer/day/mfe-mae",
           label: "MFE & MAE",
-          icon: "tradeAnalysis" as const,
+          icon: "mfeMae" as const,
           depth: 2 as const,
         }),
         Object.freeze({
           href: "/analytics/trade-analyzer/day/green-to-red",
           label: "Green-to-Red",
-          icon: "tradeAnalysis" as const,
+          icon: "greenToRed" as const,
           depth: 2 as const,
         }),
         Object.freeze({
@@ -210,7 +217,7 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
         Object.freeze({
           href: "/analytics/execution",
           label: "Trade Breakdown",
-          icon: "execution" as const,
+          icon: "tradeBreakdown" as const,
         }),
       ]),
     }),
@@ -238,9 +245,7 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
       label: "Press Releases",
       icon: "newspaper" as const,
       items: Object.freeze([
-        Object.freeze({ href: "/press-releases", label: "All Press Releases", icon: "newspaper" as const }),
-        Object.freeze({ href: "/press-releases/news-filtered", label: "News Filtered", icon: "newspaper" as const }),
-        Object.freeze({ href: "/press-releases/market-cap", label: "All Market Cap", icon: "newspaper" as const }),
+        Object.freeze({ href: "/press-releases/news-filtered", label: "News Scanner", icon: "newspaper" as const }),
         Object.freeze({ href: "/press-releases/market-cap/under-30m", label: "Under $30M", icon: "newspaper" as const }),
         Object.freeze({ href: "/press-releases/market-cap/30m-50m", label: "$30M-$50M", icon: "newspaper" as const }),
         Object.freeze({ href: "/press-releases/market-cap/50m-100m", label: "$50M-$100M", icon: "newspaper" as const }),
@@ -251,7 +256,7 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
       label: "Trade Records",
       icon: "data" as const,
       items: Object.freeze([
-        Object.freeze({ href: "/trades/open", label: "Open Positions", icon: "data" as const }),
+        Object.freeze({ href: "/trades/open", label: "Open Positions", icon: "openPositions" as const }),
         Object.freeze({ href: "/imports", label: "Import Trades", icon: "import" as const }),
         Object.freeze({ href: "/data-decisions", label: "Data Decisions", icon: "data" as const }),
       ]),

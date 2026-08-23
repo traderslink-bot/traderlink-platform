@@ -13,7 +13,6 @@ import Divider from "@mui/material/Divider";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
-import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
@@ -331,14 +330,16 @@ export function PressReleaseFeed({
           <Stack spacing={2.25} sx={{ p: { xs: 2, sm: 3 } }}>
             <Stack direction="row" spacing={1.5} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
               <Box sx={{ minWidth: 0 }}>
-                <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-                  <Chip color="primary" label={selected.ticker} size="small" />
+                <Typography color="primary" sx={{ fontSize: { xs: "1.35rem", sm: "1.5rem" }, fontWeight: 900, lineHeight: 1.15 }}>
+                  {selected.ticker}
+                </Typography>
+                <Stack direction="row" spacing={0.75} sx={{ alignItems: "center", flexWrap: "wrap", mt: 0.75 }}>
                   {selected.marketCap ? <Chip label={selected.marketCap} size="small" variant="outlined" /> : null}
                   <Chip label={releaseType(selected)} size="small" variant="outlined" />
+                  <Typography color="text.secondary" variant="caption">
+                    {easternTime(selected.publishedAt, true)} ET
+                  </Typography>
                 </Stack>
-                <Typography color="text.secondary" sx={{ mt: 1 }} variant="caption">
-                  {easternTime(selected.publishedAt, true)} ET
-                </Typography>
               </Box>
               <Tooltip title="Close article">
                 <IconButton aria-label="Close article" onClick={closeDrawer}><CloseRoundedIcon /></IconButton>
@@ -361,11 +362,6 @@ export function PressReleaseFeed({
               <Button component={NextLink} endIcon={<LaunchRoundedIcon />} href={selected.publicPath} variant="contained">
                 Open article page
               </Button>
-              {selected.sourceUrl ? (
-                <Button component={Link} endIcon={<LaunchRoundedIcon />} href={selected.sourceUrl} rel="noreferrer" target="_blank" variant="outlined">
-                  Original source
-                </Button>
-              ) : null}
             </Stack>
           </Stack>
         ) : null}

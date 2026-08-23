@@ -1,5 +1,6 @@
 "use client";
 
+import AirlineStopsIcon from "@mui/icons-material/AirlineStops";
 import AnalyticsRoundedIcon from "@mui/icons-material/AnalyticsRounded";
 import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
@@ -11,10 +12,12 @@ import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
 import ExpandLessRoundedIcon from "@mui/icons-material/ExpandLessRounded";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import EventRepeatIcon from "@mui/icons-material/EventRepeat";
-import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
+import FileUploadOffIcon from "@mui/icons-material/FileUploadOff";
 import GavelRoundedIcon from "@mui/icons-material/GavelRounded";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
+import LeaderboardIcon from "@mui/icons-material/Leaderboard";
+import LegendToggleIcon from "@mui/icons-material/LegendToggle";
 import LockRoundedIcon from "@mui/icons-material/LockRounded";
 import MenuOpenRoundedIcon from "@mui/icons-material/MenuOpenRounded";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
@@ -22,9 +25,12 @@ import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import NoteAltRoundedIcon from "@mui/icons-material/NoteAltRounded";
 import NewspaperRoundedIcon from "@mui/icons-material/NewspaperRounded";
 import PauseCircleOutlineRoundedIcon from "@mui/icons-material/PauseCircleOutlineRounded";
+import PanoramaFishEyeIcon from "@mui/icons-material/PanoramaFishEye";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
+import QueryBuilderIcon from "@mui/icons-material/QueryBuilder";
 import QueryStatsRoundedIcon from "@mui/icons-material/QueryStatsRounded";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import RttIcon from "@mui/icons-material/Rtt";
 import ScienceRoundedIcon from "@mui/icons-material/ScienceRounded";
 import SavedSearchRoundedIcon from "@mui/icons-material/SavedSearchRounded";
 import ShowChartRoundedIcon from "@mui/icons-material/ShowChartRounded";
@@ -32,8 +38,8 @@ import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
 import SpaceDashboardRoundedIcon from "@mui/icons-material/SpaceDashboardRounded";
 import SwapVertRoundedIcon from "@mui/icons-material/SwapVertRounded";
 import TableRowsRoundedIcon from "@mui/icons-material/TableRowsRounded";
-import TimelineRoundedIcon from "@mui/icons-material/TimelineRounded";
 import TodayIcon from "@mui/icons-material/Today";
+import TroubleshootIcon from "@mui/icons-material/Troubleshoot";
 import TravelExploreRoundedIcon from "@mui/icons-material/TravelExploreRounded";
 import ViewDayRoundedIcon from "@mui/icons-material/ViewDayRounded";
 import WifiOffRoundedIcon from "@mui/icons-material/WifiOffRounded";
@@ -112,7 +118,10 @@ function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
     roundTrips: <RestartAltIcon />,
     marketCharts: <CandlestickChartIcon />,
     data: <ViewDayRoundedIcon />,
+    dayTradeAnalysis: <TodayIcon />,
+    entryExit: <AirlineStopsIcon />,
     execution: <InsightsRoundedIcon />,
+    greenToRed: <FileUploadOffIcon />,
     halt: <PauseCircleOutlineRoundedIcon />,
     help: <HelpOutlineRoundedIcon />,
     import: <CloudUploadRoundedIcon />,
@@ -120,16 +129,20 @@ function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
     manualEntry: <NoteAltRoundedIcon />,
     newspaper: <NewspaperRoundedIcon />,
     overview: <SpaceDashboardRoundedIcon />,
+    openPositions: <PanoramaFishEyeIcon />,
     reflection: <NoteAltRoundedIcon />,
     results: <QueryStatsRoundedIcon />,
     rules: <GavelRoundedIcon />,
     scanner: <SavedSearchRoundedIcon />,
-    ticker: <FormatListBulletedIcon />,
-    timing: <TimelineRoundedIcon />,
+    ticker: <RttIcon />,
+    timing: <QueryBuilderIcon />,
     tradeAnalysis: <ShowChartRoundedIcon />,
+    tradeAnalyzer: <LeaderboardIcon />,
+    tradeBreakdown: <LegendToggleIcon />,
     tradeExplorer: <TravelExploreRoundedIcon />,
     tradeGroup: <SwapVertRoundedIcon />,
     trades: <TableRowsRoundedIcon />,
+    mfeMae: <TroubleshootIcon />,
     workspace: <DashboardRoundedIcon />,
   };
   return icons[icon];
@@ -630,7 +643,7 @@ export function DashboardShell({
         {compact ? null : (
           <Box sx={{ px: 2, py: 1.5 }}>
             <Typography color="text.secondary" variant="caption">
-              Trade Tracker
+              Trade Tracker v1
             </Typography>
           </Box>
         )}
