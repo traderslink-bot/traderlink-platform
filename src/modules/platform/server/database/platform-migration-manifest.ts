@@ -392,6 +392,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/community/server/database/migrations/0076_community_watchlists.ts",
       migration: communityWatchlistsMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0077_platform_dashboard_member_access.ts",
+      migration: platformDashboardMemberAccessMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
