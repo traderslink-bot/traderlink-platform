@@ -101,7 +101,7 @@ function isStyle(value: unknown): value is JournalOfflinePositionStyle | null {
       typeof value.swingPlan.plannedHoldTradingDays === "number" &&
       Number.isSafeInteger(value.swingPlan.plannedHoldTradingDays) &&
       value.swingPlan.plannedHoldTradingDays >= 1 &&
-      value.swingPlan.plannedHoldTradingDays <= 252));
+      value.swingPlan.plannedHoldTradingDays <= 252)));
 }
 
 export function isJournalOpenPositionsOfflineViewModel(
