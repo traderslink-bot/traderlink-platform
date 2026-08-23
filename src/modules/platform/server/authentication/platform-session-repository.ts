@@ -188,7 +188,7 @@ WHERE user_id = ?
   listActiveForUser(userId: string, nowUtc: string): readonly PlatformSessionRecord[] {
     assertCanonicalUuidV4(userId, "userId");
     assertCanonicalUtcTimestamp(nowUtc, "nowUtc");
-    const rows = this.database.prepare<[string, string], SessionRow[]>(`SELECT
+    const rows = this.database.prepare<[string, string], SessionRow>(`SELECT
   session_id, user_id, auth_provider, created_at_utc, expires_at_utc,
   last_seen_at_utc, revoked_at_utc
 FROM platform_auth_sessions
