@@ -28,8 +28,8 @@ CREATE UNIQUE INDEX journal_import_batches_file_identity ON journal_import_batch
 
 export const journalMultiTrackerStatementImportsMigration: PlatformMigration = Object.freeze({
   moduleNamespace: "journal",
-  migrationId: "0072_journal_multi_tracker_statement_imports",
-  executionOrder: 72,
+  migrationId: "0074_journal_multi_tracker_statement_imports",
+  executionOrder: 74,
   requiresForeignKeysDisabled: true,
   statements: Object.freeze([sql]),
 });

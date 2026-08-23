@@ -7,7 +7,7 @@ CREATE INDEX news_market_halt_muted_ticker_expiry
 
 export const newsMarketHaltDailyMutesMigration: PlatformMigration = Object.freeze({
   moduleNamespace: "news",
-  migrationId: "0074_news_market_halt_daily_mutes",
-  executionOrder: 74,
+  migrationId: "0073_news_market_halt_daily_mutes",
+  executionOrder: 73,
   statements: Object.freeze([sql]),
 });

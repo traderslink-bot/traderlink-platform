@@ -13,7 +13,7 @@ import { journalRuleReviewNotesMigration } from "@/src/modules/journal/server/da
 import { journalAiImportRepairMigration } from "@/src/modules/journal/server/database/migrations/0054_journal_ai_import_repair";
 import { journalAiChatTradeStyleSourceMigration } from "@/src/modules/journal/server/database/migrations/0057_journal_ai_chat_trade_style_source";
 import { journalRuleIdeasMigration } from "@/src/modules/journal/server/database/migrations/0061_journal_rule_ideas";
-import { journalMultiTrackerStatementImportsMigration } from "@/src/modules/journal/server/database/migrations/0072_journal_multi_tracker_statement_imports";
+import { journalMultiTrackerStatementImportsMigration } from "@/src/modules/journal/server/database/migrations/0074_journal_multi_tracker_statement_imports";
 import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
 import { tradeExplorerComparisonStudiesMigration } from "@/src/modules/journal-analytics/server/database/migrations/0060_trade_explorer_comparison_studies";
 import { levelAnalysisCandleReviewMigration } from "@/src/modules/level-analysis/server/database/migrations/0009_level_analysis_candle_review";
@@ -21,10 +21,11 @@ import { levelAnalysisDeliveriesMigration } from "@/src/modules/level-analysis/s
 import { dailyTradeYahooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0023_daily_trade_yahoo_analyzer";
 import { academyProgressMigration } from "@/src/modules/academy/server/database/migrations/0013_academy_progress";
 import { watchlistStorageMigration } from "@/src/modules/watchlist/server/database/migrations/0014_watchlist_storage";
+import { communityWatchlistsMigration } from "@/src/modules/community/server/database/migrations/0076_community_watchlists";
 import { newsContentMigration } from "@/src/modules/news/server/database/migrations/0015_news_content";
 import { newsPressReleaseDashboardMigration } from "@/src/modules/news/server/database/migrations/0070_news_press_release_dashboard";
-import { newsMarketHaltAlertsMigration } from "@/src/modules/news/server/database/migrations/0073_news_market_halt_alerts";
-import { newsMarketHaltDailyMutesMigration } from "@/src/modules/news/server/database/migrations/0074_news_market_halt_daily_mutes";
+import { newsMarketHaltAlertsMigration } from "@/src/modules/news/server/database/migrations/0072_news_market_halt_alerts";
+import { newsMarketHaltDailyMutesMigration } from "@/src/modules/news/server/database/migrations/0073_news_market_halt_daily_mutes";
 import { affiliateAttributionMigration } from "@/src/modules/affiliate/server/database/migrations/0016_affiliate_attribution";
 import { coachWeeklyReviewsMigration } from "@/src/modules/coach/server/database/migrations/0025_coach_weekly_reviews";
 import { coachMonthlyReviewsMigration } from "@/src/modules/coach/server/database/migrations/0026_coach_monthly_reviews";
@@ -69,6 +70,7 @@ import { platformWhopAiReviewReconciliationMigration } from "./migrations/0048_p
 import { platformNotificationsMigration } from "./migrations/0053_platform_notifications";
 import { platformNotificationCoverageMigration } from "./migrations/0063_platform_notification_coverage";
 import { platformWebPushMigration } from "./migrations/0064_platform_web_push";
+import { platformDashboardMemberAccessMigration } from "./migrations/0077_platform_dashboard_member_access";
 import { dailyTradeMoomooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer";
 import { dailyTradeExactTurnoverMigration } from "@/src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover";
 import { dailyTradePathMaterializationMigration } from "@/src/modules/level-analysis/server/database/migrations/0040_daily_trade_path_materialization";
@@ -371,15 +373,11 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       migration: coachAiChatQualityFeedbackMigration,
     }),
     Object.freeze({
-      sourcePath: "src/modules/journal/server/database/migrations/0072_journal_multi_tracker_statement_imports.ts",
-      migration: journalMultiTrackerStatementImportsMigration,
-    }),
-    Object.freeze({
-      sourcePath: "src/modules/news/server/database/migrations/0073_news_market_halt_alerts.ts",
+      sourcePath: "src/modules/news/server/database/migrations/0072_news_market_halt_alerts.ts",
       migration: newsMarketHaltAlertsMigration,
     }),
     Object.freeze({
-      sourcePath: "src/modules/news/server/database/migrations/0074_news_market_halt_daily_mutes.ts",
+      sourcePath: "src/modules/news/server/database/migrations/0073_news_market_halt_daily_mutes.ts",
       migration: newsMarketHaltDailyMutesMigration,
     }),
   ]);
@@ -683,14 +681,25 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "news_press_release_push_preferences",
       "news_press_release_push_deliveries",
     ]),
-    "0072_journal_multi_tracker_statement_imports": Object.freeze([]),
-    "0073_news_market_halt_alerts": Object.freeze([
+    "0072_news_market_halt_alerts": Object.freeze([
       "news_market_halt_preferences",
       "news_market_halt_muted_tickers",
       "news_market_halt_events",
       "news_market_halt_push_deliveries",
     ]),
-    "0074_news_market_halt_daily_mutes": Object.freeze([]),
+    "0073_news_market_halt_daily_mutes": Object.freeze([]),
+    "0074_journal_multi_tracker_statement_imports": Object.freeze([]),
+    "0075_journal_swing_position_plans": Object.freeze([]),
+    "0076_community_watchlists": Object.freeze([
+      "community_profiles",
+      "community_watchlists",
+      "community_watchlist_tickers",
+      "community_watchlist_publications",
+    ]),
+    "0077_platform_dashboard_member_access": Object.freeze([
+      "platform_dashboard_member_access_settings",
+      "platform_dashboard_member_access_events",
+    ]),
   });
 
 export function expectedPlatformTableNamesForPrefix(
