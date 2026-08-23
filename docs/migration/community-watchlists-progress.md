@@ -13,8 +13,10 @@ minimal opt-in profile and direct published-list page.
 
 The direct published-list page is being refined with the owner's live private
 beta feedback. The current revision keeps the profile visually attached to the
-watchlist card and replaces large ticker panels with a compact, selectable
-research board; it has not yet received owner visual acceptance.
+watchlist card and uses a compact, selectable research board. Its company
+facts are being refined into a card/table hybrid: desktop labels appear once
+above a fixed aligned ticker grid, while each ticker remains an independently
+expandable card. It has not yet received owner visual acceptance.
 
 Migration `0076_community_watchlists` was applied to the local Platform
 database on 2026-08-22 after a verified pre-change backup/restore. It creates
