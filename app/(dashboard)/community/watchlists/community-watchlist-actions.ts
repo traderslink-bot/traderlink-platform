@@ -161,3 +161,39 @@ export async function replaceCommunityWatchlistTicker(input: Readonly<{
     });
   }
 }
+
+export async function updateCommunityWatchlistTickerTags(input: Readonly<{
+  handle: string;
+  watchlistSlug: string;
+  symbol: string;
+  tags: readonly string[];
+}>): Promise<CommunityWatchlistActionResult> {
+  try {
+    const scope = await requireTraderLinkPlatformPageScope();
+    withPlatformDatabase({ mode: "runtime" }, (database) =>
+      new CommunityWatchlistRepository(database).updateTickerTags({
+        ...input,
+        userId: scope.userId,
+        timestamp: createCanonicalUtcTimestamp(),
+      }),
+    );
+    revalidatePath(`/community/${input.handle}/watchlists/${input.watchlistSlug}`);
+    revalidatePath("/community/watchlists", "layout");
+    return Object.freeze({
+      ok: true as const,
+      href: `/community/${input.handle}/watchlists/${input.watchlistSlug}`,
+      message: "Ticker tags saved.",
+    });
+  } catch (error) {
+    const accessChanged = isTraderLinkPlatformError(error) && [
+      "TRADERLINK_AUTH_SESSION_INVALID",
+      "TRADERLINK_WORKSPACE_ACCESS_DENIED",
+    ].includes(error.code);
+    return Object.freeze({
+      ok: false as const,
+      message: accessChanged
+        ? "Your sign-in changed. Refresh this page and try again."
+        : "Those ticker tags could not be saved. Try again.",
+    });
+  }
+}

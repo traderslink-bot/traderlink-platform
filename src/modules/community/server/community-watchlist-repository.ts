@@ -351,6 +351,40 @@ SET symbol = ? WHERE ticker_id = ?`).run(nextSymbol, ticker.ticker_id).changes;
     else this.database.transaction(update).immediate();
   }
 
+  updateTickerTags(input: Readonly<{
+    userId: string;
+    handle: string;
+    watchlistSlug: string;
+    symbol: string;
+    tags: readonly string[];
+    timestamp: string;
+  }>): void {
+    assertCanonicalUuidV4(input.userId, "userId");
+    assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
+    assertLowercaseToken(input.handle.replace(/-/gu, "_"), "handle", 48);
+    assertLowercaseToken(input.watchlistSlug.replace(/-/gu, "_"), "watchlistSlug", 80);
+    const symbol = normalizeSymbol(input.symbol);
+    const tickerTags = normalizeTags(input.tags, "tickerTags");
+    const update = () => {
+      const watchlist = this.database.prepare<[string, string, string], Readonly<{ watchlist_id: string }>>(`SELECT watchlist.watchlist_id
+FROM community_watchlists watchlist
+JOIN community_profiles profile ON profile.user_id = watchlist.owner_user_id
+WHERE watchlist.owner_user_id = ? AND profile.handle = ? AND watchlist.slug = ? AND watchlist.status = 'published'`).get(input.userId, input.handle, input.watchlistSlug);
+      if (!watchlist) platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+      const changed = this.database.prepare(`UPDATE community_watchlist_tickers
+SET tags_json = ? WHERE watchlist_id = ? AND symbol = ?`).run(
+        JSON.stringify(tickerTags), watchlist.watchlist_id, symbol,
+      ).changes;
+      if (changed !== 1) platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "symbol" });
+      this.database.prepare("UPDATE community_watchlists SET updated_at_utc = ? WHERE watchlist_id = ?").run(
+        input.timestamp,
+        watchlist.watchlist_id,
+      );
+    };
+    if (this.database.inTransaction) update();
+    else this.database.transaction(update).immediate();
+  }
+
   claimDiscordPublication(publicationId: string, timestamp: string): PublicationRow | null {
     assertCanonicalUuidV4(publicationId, "publicationId");
     assertCanonicalUtcTimestamp(timestamp, "timestamp");
