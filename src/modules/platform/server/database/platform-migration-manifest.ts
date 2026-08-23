@@ -21,7 +21,6 @@ import { levelAnalysisDeliveriesMigration } from "@/src/modules/level-analysis/s
 import { dailyTradeYahooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0023_daily_trade_yahoo_analyzer";
 import { academyProgressMigration } from "@/src/modules/academy/server/database/migrations/0013_academy_progress";
 import { watchlistStorageMigration } from "@/src/modules/watchlist/server/database/migrations/0014_watchlist_storage";
-import { communityWatchlistsMigration } from "@/src/modules/community/server/database/migrations/0076_community_watchlists";
 import { newsContentMigration } from "@/src/modules/news/server/database/migrations/0015_news_content";
 import { newsPressReleaseDashboardMigration } from "@/src/modules/news/server/database/migrations/0070_news_press_release_dashboard";
 import { newsMarketHaltAlertsMigration } from "@/src/modules/news/server/database/migrations/0073_news_market_halt_alerts";
@@ -70,7 +69,6 @@ import { platformWhopAiReviewReconciliationMigration } from "./migrations/0048_p
 import { platformNotificationsMigration } from "./migrations/0053_platform_notifications";
 import { platformNotificationCoverageMigration } from "./migrations/0063_platform_notification_coverage";
 import { platformWebPushMigration } from "./migrations/0064_platform_web_push";
-import { platformDashboardMemberAccessMigration } from "./migrations/0077_platform_dashboard_member_access";
 import { dailyTradeMoomooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer";
 import { dailyTradeExactTurnoverMigration } from "@/src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover";
 import { dailyTradePathMaterializationMigration } from "@/src/modules/level-analysis/server/database/migrations/0040_daily_trade_path_materialization";
@@ -384,18 +382,6 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/news/server/database/migrations/0074_news_market_halt_daily_mutes.ts",
       migration: newsMarketHaltDailyMutesMigration,
     }),
-    Object.freeze({
-      sourcePath: "src/modules/journal/server/database/migrations/0075_journal_swing_position_plans.ts",
-      migration: journalSwingPositionPlansMigration,
-    }),
-    Object.freeze({
-      sourcePath: "src/modules/community/server/database/migrations/0076_community_watchlists.ts",
-      migration: communityWatchlistsMigration,
-    }),
-    Object.freeze({
-      sourcePath: "src/modules/platform/server/database/migrations/0077_platform_dashboard_member_access.ts",
-      migration: platformDashboardMemberAccessMigration,
-    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -705,17 +691,6 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "news_market_halt_push_deliveries",
     ]),
     "0074_news_market_halt_daily_mutes": Object.freeze([]),
-    "0075_journal_swing_position_plans": Object.freeze([]),
-    "0076_community_watchlists": Object.freeze([
-      "community_profiles",
-      "community_watchlists",
-      "community_watchlist_tickers",
-      "community_watchlist_publications",
-    ]),
-    "0077_platform_dashboard_member_access": Object.freeze([
-      "platform_dashboard_member_access_settings",
-      "platform_dashboard_member_access_events",
-    ]),
   });
 
 export function expectedPlatformTableNamesForPrefix(
