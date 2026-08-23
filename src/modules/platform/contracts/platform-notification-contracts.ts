@@ -9,6 +9,7 @@ export const PLATFORM_NOTIFICATION_CATEGORIES = [
   "broker_import",
   "chart_update",
   "data_decision",
+  "market_news",
   "statement_import",
 ] as const;
 
@@ -32,6 +33,7 @@ export const PLATFORM_NOTIFICATION_KINDS = [
   "broker_import_failed",
   "chart_update_ready",
   "data_decision_needs_review",
+  "week_ahead_ready",
   "statement_import_completed",
   "statement_import_needs_action",
   "statement_ai_repair_started",

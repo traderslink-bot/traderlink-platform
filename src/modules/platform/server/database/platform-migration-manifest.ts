@@ -73,6 +73,7 @@ import { platformNotificationCoverageMigration } from "./migrations/0063_platfor
 import { platformWebPushMigration } from "./migrations/0064_platform_web_push";
 import { platformDashboardMemberAccessMigration } from "./migrations/0077_platform_dashboard_member_access";
 import { platformSessionClientLabelsMigration } from "./migrations/0078_platform_session_client_labels";
+import { platformMarketNewsNotificationsMigration } from "./migrations/0080_platform_market_news_notifications";
 import { dailyTradeMoomooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer";
 import { dailyTradeExactTurnoverMigration } from "@/src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover";
 import { dailyTradePathMaterializationMigration } from "@/src/modules/level-analysis/server/database/migrations/0040_daily_trade_path_materialization";
@@ -406,6 +407,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/news/server/database/migrations/0079_news_week_ahead.ts",
       migration: newsWeekAheadMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0080_platform_market_news_notifications.ts",
+      migration: platformMarketNewsNotificationsMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -731,6 +736,7 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "news_week_ahead_issues",
       "news_week_ahead_issue_versions",
     ]),
+    "0080_platform_market_news_notifications": Object.freeze([]),
   });
 
 export function expectedPlatformTableNamesForPrefix(

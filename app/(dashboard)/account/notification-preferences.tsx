@@ -37,6 +37,7 @@ const labels: Readonly<Record<PlatformNotificationCategory, string>> = Object.fr
   broker_import: "Broker imports",
   chart_update: "Chart updates",
   data_decision: "Data Decisions",
+  market_news: "The Week Ahead",
   statement_import: "Statement imports",
 });
 

@@ -242,10 +242,11 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
     }),
     Object.freeze({
       id: "pressReleases" as const,
-      label: "Press Releases",
+      label: "Market News",
       icon: "newspaper" as const,
       items: Object.freeze([
         Object.freeze({ href: "/press-releases/news-filtered", label: "News Scanner", icon: "newspaper" as const }),
+        Object.freeze({ href: "/market-news/week-ahead", label: "The Week Ahead", icon: "newspaper" as const }),
         Object.freeze({ href: "/press-releases/market-cap/under-30m", label: "Under $30M", icon: "newspaper" as const }),
         Object.freeze({ href: "/press-releases/market-cap/30m-50m", label: "$30M-$50M", icon: "newspaper" as const }),
         Object.freeze({ href: "/press-releases/market-cap/50m-100m", label: "$50M-$100M", icon: "newspaper" as const }),
@@ -324,7 +325,8 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/account": "Account",
     "/notifications": "Notifications",
     "/press-releases": "All Press Releases",
-    "/press-releases/news-filtered": "News Filtered",
+    "/press-releases/news-filtered": "News Scanner",
+    "/market-news/week-ahead": "The Week Ahead",
     "/press-releases/market-cap": "All Market Cap",
     "/press-releases/market-cap/under-30m": "Under $30M Press Releases",
     "/press-releases/market-cap/30m-50m": "$30M-$50M Press Releases",
