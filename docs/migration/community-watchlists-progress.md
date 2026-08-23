@@ -24,6 +24,10 @@ The desktop board deliberately becomes a compact two-column fact card on
 mobile, keeping all four facts visible. It has not yet received owner visual
 acceptance.
 
+The direct-list header now separates the title/description from a labeled
+watchlist-tag row. Its profile detail is attached in the header's top-right
+corner on desktop, while the ticker board remains full-width below the header.
+
 Desktop fact columns remain fixed-width. Long source values, including an
 industry name, show a single-line ellipsis rather than changing a ticker
 card's dimensions or another fact's alignment.
