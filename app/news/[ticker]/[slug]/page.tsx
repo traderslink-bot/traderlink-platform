@@ -4,7 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache, type ReactNode } from "react";
 
-import { SiteShell } from "@/src/components/site/site-shell";
+import { HelpSiteHeader } from "@/app/help/_components/help-site-header";
+import { PublicSiteFooter } from "@/app/public-site-footer";
 import smokeysLessonsImage from "@/app/news/images/smokeys-lessons/smokeys-lessons-blue-news.png";
 import {
   getCurrentAcademyViewer,
@@ -352,9 +353,11 @@ export async function NewsArticleView({
   );
 
   return (
-    <SiteShell sectionHref="/news" sectionLabel="News">
-      <article className="academy-container news-article-page">
-        <div className="news-article-stack">
+    <>
+      <HelpSiteHeader />
+      <div className="academy-shell">
+        <article className="academy-container news-article-page">
+          <div className="news-article-stack">
           <header className="news-surface-card news-article-header-card">
             <div className="news-article-header-copy">
               <div className="news-chip-row">
@@ -583,9 +586,11 @@ export async function NewsArticleView({
               )}
             </aside>
           </div>
-        </div>
-      </article>
-    </SiteShell>
+          </div>
+        </article>
+      </div>
+      <PublicSiteFooter />
+    </>
   );
 }
 

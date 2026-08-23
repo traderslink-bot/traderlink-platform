@@ -87,6 +87,14 @@ The URL identifies the selected article so PWA Push, refresh and login return
 can reopen the exact drawer. A late Push deep link remains valid even when the
 article is older than the default list window.
 
+## Public article shell alignment — 2026-08-23
+
+The detailed canonical article route (`/news/[ticker]/[slug]`, including its
+free access variant) uses the exact public Help Center header rather than the
+Academy site shell. It retains the News content, canonical article URL and
+public footer. The dashboard and public Help header use the same light
+TradersLink logo asset as the article header.
+
 ## Data ownership and access
 
 - `news_articles` and immutable `news_article_versions` remain canonical.

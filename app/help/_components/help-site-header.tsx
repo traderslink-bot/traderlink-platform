@@ -23,7 +23,7 @@ export function HelpSiteHeader() {
       <Box sx={{ alignItems: "center", display: "flex", gap: { xs: 0.5, sm: 1.5 }, justifyContent: "space-between", margin: "0 auto", maxWidth: 1440, minHeight: 68, px: { xs: 1.25, sm: 2.5 } }}>
         <Stack direction="row" spacing={{ xs: 0.5, sm: 2 }} sx={{ alignItems: "center", minWidth: 0 }}>
           <Link aria-label="TradersLink home" href="https://traderslink.pro">
-            <Image alt="TradersLink" height={30} priority src="/logo-horizontal-main.png" style={{ display: "block", height: "auto", width: "clamp(104px, 16vw, 152px)" }} width={152} />
+            <Image alt="TradersLink" height={30} priority src="/logo-horizontal-light.png" style={{ display: "block", height: "auto", width: "clamp(104px, 16vw, 152px)" }} width={152} />
           </Link>
           <Stack direction="row" spacing={0.25} sx={{ alignItems: "center", display: { xs: "none", sm: "flex" } }}>
             <Button component={Link} href="https://traderslink.pro/academy" size="small" variant="text">Academy</Button>

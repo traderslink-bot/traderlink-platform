@@ -487,7 +487,7 @@ export function DashboardShell({
                   alt="TradersLink"
                   height={35}
                   priority
-                  src="/logo-horizontal-main.png"
+                  src="/logo-horizontal-light.png"
                   style={{
                     display: "block",
                     height: 35,
@@ -707,7 +707,7 @@ export function DashboardShell({
                 alt="TradersLink"
                 height={35}
                 priority
-                src="/logo-horizontal-main.png"
+                src="/logo-horizontal-light.png"
                 style={{
                   display: "block",
                   height: 35,
