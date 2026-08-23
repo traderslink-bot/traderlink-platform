@@ -38,7 +38,8 @@ export default function HostedTransferExecutePage() {
   const [preview, setPreview] = useState<TransferPreview | null>(null);
   const [result, setResult] = useState<TransferResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(true);
+  const [checking, setChecking] = useState(true);
+  const [restoring, setRestoring] = useState(false);
 
   useEffect(() => {
     void fetch("/api/admin/journal/hosted-transfer/preview", { cache: "no-store" })
@@ -53,12 +54,12 @@ export default function HostedTransferExecutePage() {
       .catch((reason: unknown) => {
         setError(reason instanceof Error ? reason.message : "The saved records could not be checked.");
       })
-      .finally(() => setBusy(false));
+      .finally(() => setChecking(false));
   }, []);
 
   async function restore(): Promise<void> {
-    if (!preview || busy) return;
-    setBusy(true);
+    if (!preview || restoring) return;
+    setRestoring(true);
     setError(null);
     try {
       const response = await fetch("/api/admin/journal/hosted-transfer/execute", {
@@ -79,14 +80,14 @@ export default function HostedTransferExecutePage() {
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "The restore could not run.");
     } finally {
-      setBusy(false);
+      setRestoring(false);
     }
   }
 
   return (
     <main style={{ maxWidth: 720, margin: "48px auto", padding: "0 24px" }}>
       <h1>Restore saved records</h1>
-      {busy && !preview ? <p>Checking the saved records…</p> : null}
+      {checking && !preview ? <p>Checking the saved records…</p> : null}
       {error ? <p role="alert">{error}</p> : null}
       {preview ? (
         <>
@@ -98,8 +99,8 @@ export default function HostedTransferExecutePage() {
               </li>
             ))}
           </ul>
-          <button type="button" disabled={busy || result !== null} onClick={() => void restore()}>
-            {result ? "Restored" : busy ? "Restoring…" : "Restore saved records"}
+          <button type="button" disabled={restoring || result !== null} onClick={() => void restore()}>
+            {result ? "Restored" : restoring ? "Restoring…" : "Restore saved records"}
           </button>
         </>
       ) : null}
