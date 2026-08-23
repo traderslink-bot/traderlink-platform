@@ -15,6 +15,7 @@ export type PlatformMigration = Readonly<{
   moduleNamespace: PlatformMigrationModuleNamespace;
   migrationId: string;
   executionOrder: number;
+  requiresForeignKeysDisabled?: boolean;
   statements: readonly string[];
 }>;
 
