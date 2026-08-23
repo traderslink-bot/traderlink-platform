@@ -380,6 +380,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/news/server/database/migrations/0073_news_market_halt_daily_mutes.ts",
       migration: newsMarketHaltDailyMutesMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/journal/server/database/migrations/0074_journal_multi_tracker_statement_imports.ts",
+      migration: journalMultiTrackerStatementImportsMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
