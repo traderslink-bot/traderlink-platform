@@ -16,7 +16,9 @@ beta feedback. The current revision keeps the profile visually attached to the
 watchlist card and uses a compact, selectable research board. Its company
 facts are being refined into a card/table hybrid: desktop labels appear once
 above a fixed aligned ticker grid, while each ticker remains an independently
-expandable card. It has not yet received owner visual acceptance.
+expandable card. The latest refinement uses the same grid definition for
+labels and values, tightens the first fact columns, and labels the expansion
+control as Trader's take. It has not yet received owner visual acceptance.
 
 Migration `0076_community_watchlists` was applied to the local Platform
 database on 2026-08-22 after a verified pre-change backup/restore. It creates
