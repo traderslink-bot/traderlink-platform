@@ -39,6 +39,8 @@ Discord sign-in; an authorization failure shows a clear owner-access screen
 with an intentional log-out-and-refresh path rather than creating a redirect
 loop.
 
+**Session progress:** [Account Session Management Progress](account-session-management-progress.md)
+
 ## Coverage decisions
 
 - Keep the existing reporting-currency, notification, AI Review, subscription,

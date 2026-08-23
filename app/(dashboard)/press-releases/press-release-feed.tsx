@@ -362,6 +362,9 @@ export function PressReleaseFeed({
               <Button component={NextLink} endIcon={<LaunchRoundedIcon />} href={selected.publicPath} variant="contained">
                 Open article page
               </Button>
+              <Button component={NextLink} href="/account/trading#pwa-app" variant="outlined">
+                Set up the TradersLink app
+              </Button>
             </Stack>
           </Stack>
         ) : null}

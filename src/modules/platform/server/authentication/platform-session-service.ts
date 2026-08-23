@@ -114,6 +114,23 @@ export class PlatformSessionService {
     );
   }
 
+  listActiveForUser(userId: string): readonly PlatformSessionRecord[] {
+    return this.repository.listActiveForUser(
+      userId,
+      createCanonicalUtcTimestamp(this.dependencies.now?.() ?? new Date()),
+    );
+  }
+
+  revokeActiveSessionForUser(input: Readonly<{
+    sessionId: string;
+    userId: string;
+  }>): boolean {
+    return this.repository.revokeActiveSessionForUser({
+      ...input,
+      timestamp: createCanonicalUtcTimestamp(this.dependencies.now?.() ?? new Date()),
+    });
+  }
+
   revokeAllForUser(userId: string): number {
     const timestamp = createCanonicalUtcTimestamp(
       this.dependencies.now?.() ?? new Date(),

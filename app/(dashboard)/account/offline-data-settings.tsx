@@ -98,7 +98,7 @@ export function OfflineDataSettings({
   const deviceStorageBytes = summary?.browserUsageBytes ??
     summary?.approximateBytes ?? 0;
   return (
-    <Stack id="pwa-app" spacing={1.5} sx={{ scrollMarginTop: 96 }}>
+    <Stack spacing={1.5}>
       <Typography color="text.secondary" variant="body2">
         Install TradersLink PWA APP to send push notifications to your devices. Get press release alerts on your phone. Easily enter trades in the app and more.
       </Typography>

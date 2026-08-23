@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import Typography from "@mui/material/Typography";
+import Link from "next/link";
 
-import { DashboardPage, DashboardPanel } from "../../dashboard-template";
+import {
+  DashboardPage,
+  DashboardPanel,
+  DashboardSecondaryAction,
+} from "../../dashboard-template";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
@@ -41,7 +46,17 @@ export default async function NotificationsPage() {
     />
     <DashboardPage>
       <Typography component="h1" variant="h1">Notifications</Typography>
-      <DashboardPanel title="All notifications">
+      <DashboardPanel
+        action={(
+          <DashboardSecondaryAction component={Link} href="/account/preferences">
+            Notification settings
+          </DashboardSecondaryAction>
+        )}
+        title="All notifications"
+      >
+        <Typography color="text.secondary" sx={{ mb: 1.5 }} variant="body2">
+          Turn push and Discord notification on and off.
+        </Typography>
         <NotificationList notifications={notifications} />
       </DashboardPanel>
     </DashboardPage>

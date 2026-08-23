@@ -211,7 +211,7 @@ export function NotificationPreferences({
     <Stack spacing={1.5}>
       <Typography sx={{ fontWeight: 800 }} variant="subtitle2">Discord messages</Typography>
       <Typography color="text.secondary" variant="body2">
-        Choose which updates may also be sent by Discord DM. Every update stays in your dashboard Notifications page. Discord delivery will remain off until the TraderLink bot is connected.
+        Choose which updates may also be sent by Discord DM. Every update stays in your dashboard Notifications page.
       </Typography>
       {discordMessage ? <Alert severity={successMessage(discordMessage) ? "success" : "error"}>{discordMessage}</Alert> : null}
       <Stack spacing={0.25}>
@@ -239,7 +239,7 @@ export function NotificationPreferences({
         Push notifications
       </Typography>
       <Typography color="text.secondary" variant="body2">
-        Pick the alerts you want, then press Set Preferences. If this device can receive push notifications, it will ask for your permission. Account and trading alerts stay private and generic. Press release alerts show the public ticker and headline so you can open the article directly.
+        If your device can receive push notifications, it will ask you to accept or decline notifications from TradersLink. Manage your TradersLink notifications outside this page in your device settings. If you are having issues with notifications, check the settings on your device.
       </Typography>
       {pushState === "unsupported" ? (
         <Alert severity="warning">Push notifications are not available in this browser or on this device.</Alert>

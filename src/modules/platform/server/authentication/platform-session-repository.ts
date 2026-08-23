@@ -185,6 +185,42 @@ WHERE user_id = ?
     return row?.count ?? 0;
   }
 
+  listActiveForUser(userId: string, nowUtc: string): readonly PlatformSessionRecord[] {
+    assertCanonicalUuidV4(userId, "userId");
+    assertCanonicalUtcTimestamp(nowUtc, "nowUtc");
+    const rows = this.database.prepare<[string, string], SessionRow[]>(`SELECT
+  session_id, user_id, auth_provider, created_at_utc, expires_at_utc,
+  last_seen_at_utc, revoked_at_utc
+FROM platform_auth_sessions
+WHERE user_id = ?
+  AND revoked_at_utc IS NULL
+  AND expires_at_utc > ?
+ORDER BY last_seen_at_utc DESC, session_id`).all(userId, nowUtc);
+    return Object.freeze(rows.map(mapSession));
+  }
+
+  revokeActiveSessionForUser(input: Readonly<{
+    sessionId: string;
+    userId: string;
+    timestamp: string;
+  }>): boolean {
+    assertCanonicalUuidV4(input.sessionId, "sessionId");
+    assertCanonicalUuidV4(input.userId, "userId");
+    assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
+    const result = this.database.prepare(`UPDATE platform_auth_sessions
+SET revoked_at_utc = ?
+WHERE session_id = ?
+  AND user_id = ?
+  AND revoked_at_utc IS NULL
+  AND expires_at_utc > ?`).run(
+      input.timestamp,
+      input.sessionId,
+      input.userId,
+      input.timestamp,
+    );
+    return result.changes === 1;
+  }
+
   revokeActiveForUser(input: Readonly<{
     userId: string;
     timestamp: string;

@@ -22,6 +22,7 @@ import { hasPlatformDiscordPremiumAccess } from "../../../watchlist/server/acces
 
 export type TraderLinkPlatformRequestIdentity = Readonly<{
   mode: "local_development" | "platform_session";
+  sessionId: string | null;
   scope: WorkspaceAccessScope;
   displayName: string | null;
   discord: Readonly<{
@@ -67,6 +68,7 @@ export function requireTraderLinkPlatformRequestIdentity(
   if (developmentBoundary.ok) {
     return withReadonlyPlatformDatabase(options, (database) => Object.freeze({
       mode: "local_development" as const,
+      sessionId: null,
       scope: deriveDevelopmentOwnerJournalScope(
         database,
         undefined,
@@ -110,6 +112,7 @@ export function requireTraderLinkPlatformRequestIdentity(
       }
       return Object.freeze({
         mode: "platform_session" as const,
+        sessionId: session.sessionId,
         scope: deriveAuthenticatedUserJournalScope(
           database,
           session.userId,
