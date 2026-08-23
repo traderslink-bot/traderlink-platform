@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { IBKR_SOURCE_ACCOUNT_CANONICALIZERS } from "@/src/modules/journal/server/accounts/ibkr-source-account-canonicalizer";
+import { ALL_JOURNAL_SOURCE_ACCOUNT_CANONICALIZERS } from "@/src/modules/journal/server/accounts/journal-source-account-canonicalizers";
 import { readProtectedInitialOwnerDiscordSubject } from "@/src/modules/platform/server/authentication/platform-discord-configuration";
 import { requireJournalAdminScope } from "@/src/modules/platform/server/administration/platform-admin-authorization";
 import {
@@ -129,7 +129,7 @@ function verifyRecoveryAuthority(
   const keysAvailable = requirements.hmacKeyVersions.every((version) =>
     version in accountIdentity.keysBase64);
   const canonicalizersAvailable = requirements.sourceAccountCanonicalizationVersions
-    .every((version) => version in IBKR_SOURCE_ACCOUNT_CANONICALIZERS);
+    .every((version) => version in ALL_JOURNAL_SOURCE_ACCOUNT_CANONICALIZERS);
   if (!keysAvailable || !canonicalizersAvailable) {
     platformFailure("TRADERLINK_ACCOUNT_IDENTITY_RECOVERY_REQUIRED");
   }
