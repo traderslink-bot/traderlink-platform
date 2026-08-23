@@ -32,8 +32,8 @@ Header separation relies on spacing and the profile's soft background rather
 than visible divider lines.
 
 The attached profile is now a deliberately wide, short ID-card treatment in
-the watchlist header: avatar and Trader label at left, with the handle,
-selectable profile tags and View profile stacked at the card's right edge. It
+the watchlist header: avatar, Trader label, handle, selectable profile tags
+and View profile form one compact group against the card's right edge. It
 remains inside the existing 790px watchlist width rather than restoring a
 separate profile rail.
 

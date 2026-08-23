@@ -79,7 +79,7 @@ export default async function CommunityWatchlistDetailPage({
                   <Avatar sx={{ bgcolor: "#102b69", fontWeight: 850, height: 48, width: 48 }}>{avatarLetters(detail.authorHandle)}</Avatar>
                   <Typography color="text.secondary" sx={{ fontSize: "0.63rem", fontWeight: 800, lineHeight: 1 }}>Trader</Typography>
                 </Stack>
-                <Stack spacing={0.7} sx={{ alignItems: { xs: "flex-start", lg: "flex-end" }, flex: 1, minWidth: 0 }}>
+                <Stack spacing={0.7} sx={{ alignItems: { xs: "flex-start", lg: "flex-end" }, flex: { xs: 1, lg: "0 1 290px" }, maxWidth: "calc(100% - 74px)", minWidth: 0 }}>
                   <Box sx={{ minWidth: 0, textAlign: { lg: "right" } }}>
                   <Typography noWrap sx={{ fontSize: "0.94rem", fontWeight: 850, lineHeight: 1.2 }}>@{detail.authorHandle}</Typography>
                   <Typography color="text.secondary" sx={{ fontSize: "0.7rem", lineHeight: 1.2, mt: 0.35 }}>Community watchlist owner</Typography>
