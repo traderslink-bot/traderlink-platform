@@ -28,6 +28,8 @@ The direct-list header now separates the title/description from a labeled
 watchlist-tag row. Its profile detail is inset in the same card's top-right
 corner on desktop; the full card uses the former watchlist-column width, with
 no extra profile rail beside it.
+Header separation relies on spacing and the profile's soft background rather
+than visible divider lines.
 
 Desktop fact columns remain fixed-width. Long source values, including an
 industry name, show a single-line ellipsis rather than changing a ticker

@@ -56,7 +56,7 @@ export default async function CommunityWatchlistDetailPage({
   return (
     <DashboardPage>
       <Stack spacing={1.75} sx={{ maxWidth: 790 }}>
-        <Paper elevation={0} sx={{ border: 1, borderColor: "divider", borderRadius: 2.5, overflow: "hidden" }}>
+        <Paper elevation={0} sx={{ border: 0, borderRadius: 2.5, overflow: "hidden" }}>
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1fr) 210px" } }}>
             <Stack spacing={1.5} sx={{ minWidth: 0, p: { xs: 1.75, sm: 2.25 } }}>
               <Box sx={{ minWidth: 0 }}>
@@ -66,14 +66,14 @@ export default async function CommunityWatchlistDetailPage({
                 </Stack>
                 {detail.description ? <Typography color="text.secondary" sx={{ mt: 0.75 }} variant="body2">{detail.description}</Typography> : null}
               </Box>
-              {detail.tags.length ? <Box sx={{ borderColor: "divider", borderTop: 1, pt: 1.2 }}>
+              {detail.tags.length ? <Box sx={{ pt: 0.35 }}>
                 <Typography color="text.secondary" sx={{ fontWeight: 850 }} variant="caption">Watchlist tags</Typography>
                 <Stack direction="row" spacing={0.65} sx={{ flexWrap: "wrap", mt: 0.65, rowGap: 0.65 }}>
                   {detail.tags.map((tag, index) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: index % 2 ? "#e9f7ef" : "#edf3ff", color: index % 2 ? "#14663c" : "#082b73", fontWeight: 700 }} />)}
                 </Stack>
               </Box> : null}
             </Stack>
-            <Stack spacing={1.1} sx={{ bgcolor: "#f8faff", borderColor: "divider", borderLeft: { xs: 0, lg: 1 }, borderTop: { xs: 1, lg: 0 }, p: { xs: 1.5, sm: 2 }, textAlign: { xs: "left", lg: "center" } }}>
+            <Stack spacing={1.1} sx={{ bgcolor: "#f8faff", p: { xs: 1.5, sm: 2 }, textAlign: { xs: "left", lg: "center" } }}>
               <Stack direction={{ xs: "row", lg: "column" }} spacing={1.05} sx={{ alignItems: { xs: "center", lg: "center" } }}>
                 <Avatar sx={{ bgcolor: "#102b69", fontWeight: 850, height: 56, width: 56 }}>{avatarLetters(detail.authorHandle)}</Avatar>
                 <Box>
@@ -86,7 +86,7 @@ export default async function CommunityWatchlistDetailPage({
               </Stack> : null}
               <Box sx={{ alignSelf: { xs: "flex-start", lg: "center" } }}><Link href={`/community/${detail.authorHandle}`} style={{ textDecoration: "none" }}><DashboardSecondaryAction component="span">View profile</DashboardSecondaryAction></Link></Box>
             </Stack>
-            <Box sx={{ borderColor: "divider", borderTop: 1, gridColumn: "1 / -1", p: { xs: 1.75, sm: 2.25 } }}>
+            <Box sx={{ gridColumn: "1 / -1", p: { xs: 1.75, sm: 2.25 } }}>
               <CommunityWatchlistTickerBoard detail={detail} editable={editable} tickerFacts={tickerFacts} watchlistSlug={watchlistName} />
             </Box>
           </Box>
