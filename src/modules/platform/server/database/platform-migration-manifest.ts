@@ -27,7 +27,6 @@ import { newsPressReleaseDashboardMigration } from "@/src/modules/news/server/da
 import { newsMarketHaltAlertsMigration } from "@/src/modules/news/server/database/migrations/0072_news_market_halt_alerts";
 import { newsMarketHaltDailyMutesMigration } from "@/src/modules/news/server/database/migrations/0073_news_market_halt_daily_mutes";
 import { newsWeekAheadMigration } from "@/src/modules/news/server/database/migrations/0079_news_week_ahead";
-import { newsWeekAheadCurrentIssueMigration } from "@/src/modules/news/server/database/migrations/0081_news_week_ahead_current_issue";
 import { affiliateAttributionMigration } from "@/src/modules/affiliate/server/database/migrations/0016_affiliate_attribution";
 import { coachWeeklyReviewsMigration } from "@/src/modules/coach/server/database/migrations/0025_coach_weekly_reviews";
 import { coachMonthlyReviewsMigration } from "@/src/modules/coach/server/database/migrations/0026_coach_monthly_reviews";
@@ -412,60 +411,11 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/platform/server/database/migrations/0080_platform_market_news_notifications.ts",
       migration: platformMarketNewsNotificationsMigration,
     }),
-    Object.freeze({
-      sourcePath: "src/modules/news/server/database/migrations/0081_news_week_ahead_current_issue.ts",
-      migration: newsWeekAheadCurrentIssueMigration,
-    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
   platformMigrationFileEntries.map((entry) => entry.migration),
 );
-
-// The first local database received the tracker and halt migrations before
-// their later source-file renumbering. Its registry is valid evidence of the
-// schema it has, so preserve that exact, immutable history rather than asking
-// an operator to rewrite applied migration rows.
-const historicalJournalMultiTrackerStatementImportsMigration = Object.freeze({
-  ...journalMultiTrackerStatementImportsMigration,
-  migrationId: "0072_journal_multi_tracker_statement_imports",
-  executionOrder: 72,
-  statements: Object.freeze([
-    journalMultiTrackerStatementImportsMigration.statements.join("\n"),
-  ]),
-});
-
-const historicalNewsMarketHaltAlertsMigration = Object.freeze({
-  ...newsMarketHaltAlertsMigration,
-  migrationId: "0073_news_market_halt_alerts",
-  executionOrder: 73,
-});
-
-const historicalNewsMarketHaltDailyMutesMigration = Object.freeze({
-  ...newsMarketHaltDailyMutesMigration,
-  migrationId: "0074_news_market_halt_daily_mutes",
-  executionOrder: 74,
-});
-
-export const historicalPlatformMigrationManifest = validatePlatformMigrationManifest(
-  [
-    ...platformMigrationManifest.slice(0, 71),
-    historicalJournalMultiTrackerStatementImportsMigration,
-    historicalNewsMarketHaltAlertsMigration,
-    historicalNewsMarketHaltDailyMutesMigration,
-    ...platformMigrationManifest.slice(74),
-  ],
-);
-
-export function resolvePlatformMigrationManifestForAppliedHistory(
-  appliedMigrationIds: readonly string[],
-): readonly PlatformMigration[] {
-  const historicalMigration = appliedMigrationIds[71];
-  return historicalMigration ===
-      historicalJournalMultiTrackerStatementImportsMigration.migrationId
-    ? historicalPlatformMigrationManifest
-    : platformMigrationManifest;
-}
 
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
@@ -762,14 +712,6 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "news_press_release_push_preferences",
       "news_press_release_push_deliveries",
     ]),
-    "0072_journal_multi_tracker_statement_imports": Object.freeze([]),
-    "0073_news_market_halt_alerts": Object.freeze([
-      "news_market_halt_preferences",
-      "news_market_halt_muted_tickers",
-      "news_market_halt_events",
-      "news_market_halt_push_deliveries",
-    ]),
-    "0074_news_market_halt_daily_mutes": Object.freeze([]),
     "0072_news_market_halt_alerts": Object.freeze([
       "news_market_halt_preferences",
       "news_market_halt_muted_tickers",
@@ -795,18 +737,14 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "news_week_ahead_issue_versions",
     ]),
     "0080_platform_market_news_notifications": Object.freeze([]),
-    "0081_news_week_ahead_current_issue": Object.freeze([
-      "news_week_ahead_current_issue",
-    ]),
   });
 
 export function expectedPlatformTableNamesForPrefix(
   appliedMigrationCount: number,
-  manifest: readonly PlatformMigration[] = platformMigrationManifest,
 ): ReadonlySet<string> {
   const names = new Set<string>();
   if (appliedMigrationCount > 0) names.add("platform_schema_migrations");
-  for (const migration of manifest.slice(0, appliedMigrationCount)) {
+  for (const migration of platformMigrationManifest.slice(0, appliedMigrationCount)) {
     for (const tableName of managedTablesByMigrationId[migration.migrationId] ?? []) {
       names.add(tableName);
     }
@@ -816,10 +754,9 @@ export function expectedPlatformTableNamesForPrefix(
 
 export function expectedPlatformDomainTableNamesForPrefix(
   appliedMigrationCount: number,
-  manifest: readonly PlatformMigration[] = platformMigrationManifest,
 ): readonly string[] {
   return Object.freeze(
-    manifest
+    platformMigrationManifest
       .slice(0, appliedMigrationCount)
       .flatMap((migration) => managedTablesByMigrationId[migration.migrationId] ?? []),
   );

@@ -308,9 +308,8 @@ export class WeekAheadRepository {
   source_date_line, source_attribution, tickers_json, catalysts_json,
   risk_notes_json, structured_content_json, published_at_utc, updated_at_utc
 FROM news_week_ahead_issues
-JOIN news_week_ahead_current_issue current_issue
-  ON current_issue.state_id = 1
-  AND current_issue.issue_id = news_week_ahead_issues.issue_id`).get();
+ORDER BY published_at_utc DESC, issue_id DESC
+LIMIT 1`).get();
     return row ? toIssue(row) : null;
   }
 
@@ -356,12 +355,6 @@ ON CONFLICT(issue_id) DO UPDATE SET
 ) VALUES (?, ?, ?, ?, ?, ?)`).run(
         createCanonicalUuidV4(), issueId, revision, next.contentSha256, versionPayload, nowUtc,
       );
-      this.database.prepare(`INSERT INTO news_week_ahead_current_issue (
-  state_id, issue_id, updated_at_utc
-) VALUES (1, ?, ?)
-ON CONFLICT(state_id) DO UPDATE SET
-  issue_id = excluded.issue_id,
-  updated_at_utc = excluded.updated_at_utc`).run(issueId, nowUtc);
       const savedRow = this.database.prepare<[string], WeekAheadIssueRow>(`SELECT
   issue_id, issue_slug, title, excerpt, article_text, source_url, source_name,
   source_date_line, source_attribution, tickers_json, catalysts_json,
