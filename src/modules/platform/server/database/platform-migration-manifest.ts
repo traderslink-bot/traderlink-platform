@@ -384,6 +384,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/journal/server/database/migrations/0074_journal_multi_tracker_statement_imports.ts",
       migration: journalMultiTrackerStatementImportsMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/journal/server/database/migrations/0075_journal_swing_position_plans.ts",
+      migration: journalSwingPositionPlansMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
