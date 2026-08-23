@@ -95,7 +95,11 @@ export function runPlatformMigrations(
   const appliedMigrationIds: string[] = [];
   for (const migration of manifest.slice(appliedRows.length)) {
     let migrationPhase = "transaction";
+    const restoreForeignKeys = migration.requiresForeignKeysDisabled === true &&
+      database.pragma("foreign_keys", { simple: true }) === 1;
     try {
+      migrationPhase = "foreign_keys";
+      if (restoreForeignKeys) database.pragma("foreign_keys = OFF");
       migrationPhase = "begin";
       database.exec("BEGIN IMMEDIATE");
       migrationPhase = "registry";
@@ -133,6 +137,7 @@ export function runPlatformMigrations(
       );
       migrationPhase = "commit";
       database.exec("COMMIT");
+      if (restoreForeignKeys) database.pragma("foreign_keys = ON");
       appliedMigrationIds.push(migration.migrationId);
     } catch (error) {
       if (database.inTransaction) {
@@ -142,6 +147,7 @@ export function runPlatformMigrations(
           // The original migration failure remains authoritative.
         }
       }
+      if (restoreForeignKeys) database.pragma("foreign_keys = ON");
       if (
         isTraderLinkPlatformError(error) &&
         error.code === "TRADERLINK_MIGRATION_FAILED"
