@@ -227,6 +227,7 @@ export function RulesClient({
   const [ruleIdeas, setRuleIdeas] = useState(initialRuleIdeas);
   const [ruleIdeaBusy, setRuleIdeaBusy] = useState(false);
   const [ruleIdeaCheckComplete, setRuleIdeaCheckComplete] = useState(false);
+  const [ruleIdeaCycleComplete, setRuleIdeaCycleComplete] = useState(false);
   const [addingIdeaId, setAddingIdeaId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
@@ -327,7 +328,7 @@ export function RulesClient({
   }
 
   async function mutateRuleIdea(
-    action: "check" | "save_for_later" | "not_for_me" | "added",
+    action: "check" | "save_for_later" | "not_for_me" | "not_for_me_and_next" | "added",
     idea: JournalRuleIdeaRecord | null = null,
   ): Promise<boolean> {
     setRuleIdeaBusy(true);
@@ -352,8 +353,10 @@ export function RulesClient({
         return false;
       }
       setRuleIdeas(result.ideas);
-      setRuleIdeaCheckComplete(action === "check" && !result.ideas.some((candidate) =>
-        candidate.disposition === "available" || candidate.disposition === "saved_for_later"));
+      const hasCurrentIdea = result.ideas.some((candidate) =>
+        candidate.disposition === "available" || candidate.disposition === "saved_for_later");
+      setRuleIdeaCheckComplete(action === "check" && !hasCurrentIdea);
+      setRuleIdeaCycleComplete(action === "not_for_me_and_next" && !hasCurrentIdea);
       return true;
     } catch {
       setError("The Rule idea could not reach the local dashboard server.");
@@ -736,6 +739,9 @@ export function RulesClient({
             <Typography color="text.secondary">
               The {currentRuleIdea.evidence.comparisonTradeCount} other trades on those days had a combined result of {formatJournalAnalyticsMoney(currentRuleIdea.evidence.comparisonPnlDecimal, currentRuleIdea.evidence.currency)} and averaged {formatJournalAnalyticsMoney(currentRuleIdea.evidence.comparisonAveragePnlDecimal, currentRuleIdea.evidence.currency)} per trade. After removing the single worst affected trade, the remaining affected result was still {formatJournalAnalyticsMoney(currentRuleIdea.evidence.affectedPnlWithoutWorstTradeDecimal, currentRuleIdea.evidence.currency)}.
             </Typography>
+            <Typography color="text.secondary">
+              Ideas are shown one at a time based on how broadly the pattern appears in your completed trades. This is not a claim that it is your single best rule.
+            </Typography>
             <Alert severity="info">
               This is a factual pattern in completed trades, not proof that the rule caused the difference or will improve future results.
             </Alert>
@@ -758,15 +764,19 @@ export function RulesClient({
               ) : null}
               <Button
                 disabled={ruleIdeaBusy}
-                onClick={() => void mutateRuleIdea("not_for_me", currentRuleIdea)}
+                onClick={() => void mutateRuleIdea("not_for_me_and_next", currentRuleIdea)}
               >
-                Not for me
+                Not for me — show another
               </Button>
             </Stack>
           </Stack>
         ) : (
           <Stack spacing={1.5} sx={{ alignItems: "flex-start" }}>
-            {ruleIdeaCheckComplete ? (
+            {ruleIdeaCycleComplete ? (
+              <Alert severity="info">
+                You have gone through every other currently supported Rule idea. The one you dismissed will not appear again for 90 days.
+              </Alert>
+            ) : ruleIdeaCheckComplete ? (
               <Alert severity="info">
                 I checked your completed Day trades, but none currently meet all the evidence checks for a Rule idea. Nothing was changed.
               </Alert>

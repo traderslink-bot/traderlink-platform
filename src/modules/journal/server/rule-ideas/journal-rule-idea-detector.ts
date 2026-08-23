@@ -22,6 +22,18 @@ type Candidate = Readonly<{
 
 type TradeWithDate = Readonly<{ date: string; trade: JournalTradingDayRoundTrip }>;
 
+export function compareJournalRuleIdeaSupport(
+  left: JournalRuleIdeaEvidence,
+  right: JournalRuleIdeaEvidence,
+): number {
+  return right.triggerDays - left.triggerDays ||
+    right.affectedTradeCount - left.affectedTradeCount ||
+    right.triggerCount - left.triggerCount ||
+    left.templateId.localeCompare(right.templateId) ||
+    JSON.stringify(left.configuration).localeCompare(JSON.stringify(right.configuration)) ||
+    left.currency.localeCompare(right.currency);
+}
+
 function tradesForDay(model: JournalTradingDayReadModel, swings: ReadonlySet<string>): readonly JournalTradingDayRoundTrip[] {
   return Object.freeze(model.tickers.flatMap((ticker) => ticker.roundTrips).filter((trade) =>
     !swings.has(trade.roundTripId) &&
@@ -221,14 +233,9 @@ export function detectJournalRuleIdeas(input: Readonly<{
   const bestByTemplate = new Map<JournalRuleIdeaTemplateId, JournalRuleIdeaEvidence>();
   for (const item of evidence) {
     const current = bestByTemplate.get(item.templateId);
-    if (!current || item.triggerDays > current.triggerDays ||
-        (item.triggerDays === current.triggerDays && item.affectedTradeCount > current.affectedTradeCount) ||
-        (item.triggerDays === current.triggerDays && item.affectedTradeCount === current.affectedTradeCount &&
-          item.affectedAveragePnlDecimal.localeCompare(current.affectedAveragePnlDecimal) < 0)) {
+    if (!current || compareJournalRuleIdeaSupport(item, current) < 0) {
       bestByTemplate.set(item.templateId, item);
     }
   }
-  return Object.freeze([...bestByTemplate.values()].sort((left, right) =>
-    right.triggerDays - left.triggerDays || right.affectedTradeCount - left.affectedTradeCount ||
-    left.templateId.localeCompare(right.templateId)));
+  return Object.freeze([...bestByTemplate.values()].sort(compareJournalRuleIdeaSupport));
 }

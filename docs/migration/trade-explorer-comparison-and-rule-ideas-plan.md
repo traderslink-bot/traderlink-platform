@@ -10,6 +10,8 @@ activate anything through these tools.
 
 **Progress record:** [Trade Explorer Comparison And Rule Ideas Progress](trade-explorer-comparison-and-rule-ideas-progress.md)
 
+**Follow-on progress:** [Rule ideas review order and cycling](rule-ideas-review-order-and-cycling-progress.md)
+
 ## Outcome
 
 TraderLink will let a trader compare named groups of their own confirmed
@@ -73,9 +75,15 @@ evidence, which remains exploration-only until its range contract is approved.
 - Missing fees, timestamps, chronology or unresolved dependent facts make only
   the affected calculation unavailable. Nothing is guessed or silently
   excluded.
-- At most one new idea is issued in 28 days. `Not for me` suppresses the same
-  preset for at least 90 days. `Save for later` keeps the existing record
-  without repeated alerts.
+- At most one new idea is issued in 28 days from **Check my trades**. When the
+  trader explicitly selects **Not for me — show another**, the same check may
+  move through other qualifying presets without waiting 28 days. `Not for me`
+  suppresses the same preset for at least 90 days. `Save for later` keeps the
+  existing record without repeated alerts.
+- Qualifying ideas are reviewed one at a time in a deterministic support order:
+  supporting trading days, affected completed trades, trigger events, then a
+  stable preset/configuration tie-break. This is a review order, not a claim
+  that the first idea is the best rule or a prediction of future results.
 - Each card shows the exact preset and setting, observation, trigger days,
   affected trades, affected and comparison results, concentration/outlier
   checks, coverage and the historical-not-predictive limitation.

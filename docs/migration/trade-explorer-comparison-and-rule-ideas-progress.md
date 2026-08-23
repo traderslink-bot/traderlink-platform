@@ -15,6 +15,15 @@ Trade Explorer in the left Trades navigation, not in Analytics. Both cross-page
 buttons were removed. Future AI-only analytical tools do not receive dashboard
 pages merely because AI Chat needs their server-side capability.
 
+## Follow-on: Rule ideas review order and cycling
+
+The 2026-08-23 follow-on is tracked in
+[Rule ideas review order and cycling](rule-ideas-review-order-and-cycling-progress.md).
+It keeps the 28-day unsolicited/check cadence and 90-day same-preset
+suppression, while letting the trader explicitly move through other supported
+ideas after dismissing the current one. The order is evidence breadth, not a
+claim that one idea is universally best.
+
 ## Concurrency boundary
 
 The existing uncommitted Trade Explorer Net/Gross explanation, Review copy,

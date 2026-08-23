@@ -14,6 +14,7 @@ import { platformFailure } from "@/src/modules/platform/server/database/platform
 
 import { JournalRuleIdeaRepository } from "./journal-rule-idea-repository";
 import { JournalRuleIdeaService } from "./journal-rule-idea-service";
+import { compareJournalRuleIdeaSupport } from "./journal-rule-idea-detector";
 import { detectJournalRuleIdeasInRepresentativeWindow } from "./journal-rule-idea-window";
 
 function accountScope(scope: WorkspaceAccessScope) {
@@ -49,9 +50,7 @@ export function readJournalRuleIdeaCandidates(scope: WorkspaceAccessScope, asOfU
       }));
       return detectJournalRuleIdeasInRepresentativeWindow({ models, swingRoundTripIds: swings, activeTemplateIds, asOfUtc });
     });
-    return Object.freeze(results.sort((left, right) =>
-      right.triggerDays - left.triggerDays || right.affectedTradeCount - left.affectedTradeCount ||
-      left.templateId.localeCompare(right.templateId) || left.currency.localeCompare(right.currency)));
+    return Object.freeze(results.sort(compareJournalRuleIdeaSupport));
   });
 }
 
@@ -90,4 +89,23 @@ export function setJournalRuleIdeaDisposition(scope: WorkspaceAccessScope, input
       asOfUtc: input.asOfUtc ?? new Date().toISOString(),
     });
   });
+}
+
+export function dismissAndIssueNextJournalRuleIdea(scope: WorkspaceAccessScope, input: Readonly<{
+  ideaId: string;
+  expectedRevision: number;
+  asOfUtc?: string;
+}>): JournalRuleIdeaRecord | null {
+  const asOfUtc = input.asOfUtc ?? new Date().toISOString();
+  const evidence = readJournalRuleIdeaCandidates(scope, asOfUtc);
+  return withWritableJournalIntegrityRuntime(scope, (_runtime, database) =>
+    new JournalRuleIdeaService(new JournalRuleIdeaRepository(database)).dismissAndIssueNext(
+      accountScope(scope),
+      {
+        ideaId: input.ideaId,
+        expectedRevision: input.expectedRevision,
+        evidence,
+        asOfUtc,
+      },
+    ));
 }
