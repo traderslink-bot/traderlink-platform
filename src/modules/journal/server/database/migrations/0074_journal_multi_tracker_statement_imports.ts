@@ -31,5 +31,7 @@ export const journalMultiTrackerStatementImportsMigration: PlatformMigration = O
   migrationId: "0074_journal_multi_tracker_statement_imports",
   executionOrder: 74,
   requiresForeignKeysDisabled: true,
-  statements: Object.freeze([sql]),
+  statements: Object.freeze(
+    sql.split(/(?<=;)\n/gu).filter((statement) => statement.length > 0),
+  ),
 });
