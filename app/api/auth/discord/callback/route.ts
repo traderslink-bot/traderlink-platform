@@ -14,6 +14,7 @@ import {
 } from "@/src/modules/platform/server/authentication/platform-discord-oauth-cookies";
 import { resolvePlatformPublicOrigin } from "@/src/modules/platform/server/authentication/platform-public-origin";
 import { PlatformDiscordSignInService } from "@/src/modules/platform/server/authentication/platform-discord-sign-in-service";
+import { resolvePlatformSessionClientLabel } from "@/src/modules/platform/server/authentication/platform-session-client-label";
 import { PlatformDashboardMemberAccessRepository } from "@/src/modules/platform/server/authentication/platform-dashboard-member-access-repository";
 import {
   TRADERLINK_PLATFORM_SESSION_COOKIE,
@@ -153,6 +154,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         joinedAtUtc: resolvedGuildMember.joined_at ?? null,
         roleIds: resolvedGuildMember.roles ?? [],
         guildOwner: resolvedGuildMember.guild_owner === true,
+        sessionClientLabel: resolvePlatformSessionClientLabel(
+          request.headers.get("user-agent"),
+        ),
       }));
       sessionToken = signIn.session.token;
     } catch (error) {

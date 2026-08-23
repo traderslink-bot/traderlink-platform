@@ -71,6 +71,7 @@ import { platformNotificationsMigration } from "./migrations/0053_platform_notif
 import { platformNotificationCoverageMigration } from "./migrations/0063_platform_notification_coverage";
 import { platformWebPushMigration } from "./migrations/0064_platform_web_push";
 import { platformDashboardMemberAccessMigration } from "./migrations/0077_platform_dashboard_member_access";
+import { platformSessionClientLabelsMigration } from "./migrations/0078_platform_session_client_labels";
 import { dailyTradeMoomooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer";
 import { dailyTradeExactTurnoverMigration } from "@/src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover";
 import { dailyTradePathMaterializationMigration } from "@/src/modules/level-analysis/server/database/migrations/0040_daily_trade_path_materialization";
@@ -396,6 +397,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/platform/server/database/migrations/0077_platform_dashboard_member_access.ts",
       migration: platformDashboardMemberAccessMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0078_platform_session_client_labels.ts",
+      migration: platformSessionClientLabelsMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -716,6 +721,7 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "platform_dashboard_member_access_settings",
       "platform_dashboard_member_access_events",
     ]),
+    "0078_platform_session_client_labels": Object.freeze([]),
   });
 
 export function expectedPlatformTableNamesForPrefix(

@@ -42,6 +42,7 @@ export class PlatformSessionService {
     userId: string;
     authProvider: string;
     authSubject: string;
+    clientLabel?: string | null;
   }>): CreatedPlatformSession {
     const now = this.dependencies.now?.() ?? new Date();
     const createdAtUtc = createCanonicalUtcTimestamp(now);
@@ -58,6 +59,7 @@ export class PlatformSessionService {
       userId: input.userId,
       authProvider: input.authProvider,
       authSubject: input.authSubject,
+      clientLabel: input.clientLabel ?? null,
       tokenSha256: hashPlatformSessionToken(token),
       createdAtUtc,
       expiresAtUtc,

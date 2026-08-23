@@ -41,6 +41,14 @@ loop.
 
 **Session progress:** [Account Session Management Progress](account-session-management-progress.md)
 
+### Privacy-safe browser labels — 2026-08-23
+
+New Discord sign-ins may save one coarse label for the Security page, such as
+`Chrome on Windows` or `Safari on iPhone`. The application derives that label
+from the login request and discards the raw user-agent value. It does not save
+browser versions, IP addresses, precise device identifiers or location. Older
+sessions remain unlabeled and show their real created/last-active dates.
+
 ## Coverage decisions
 
 - Keep the existing reporting-currency, notification, AI Review, subscription,

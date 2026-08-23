@@ -12,6 +12,7 @@ import Typography from "@mui/material/Typography";
 import { useState } from "react";
 
 type ActiveSession = Readonly<{
+  clientLabel: string | null;
   createdAtUtc: string;
   lastSeenAtUtc: string;
   sessionId: string;
@@ -60,7 +61,9 @@ export function AccountSessionControls({
             >
               <Box>
                 <Typography sx={{ fontWeight: 800 }}>
-                  {current ? "This browser" : "Browser sign-in"}
+                  {current
+                    ? `This browser${session.clientLabel ? ` · ${session.clientLabel}` : ""}`
+                    : session.clientLabel ?? "Browser sign-in"}
                 </Typography>
                 <Typography color="text.secondary" variant="body2">
                   Last active {formatSessionTime(session.lastSeenAtUtc)}
@@ -78,20 +81,6 @@ export function AccountSessionControls({
           );
         })}
       </Stack>
-
-      <Box sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 2 }}>
-        <Stack spacing={1.25}>
-          <Box>
-            <Typography sx={{ fontWeight: 800 }}>Sign out of this device</Typography>
-            <Typography color="text.secondary" variant="body2">
-              End TraderLink on this browser only. Your other signed-in browsers and devices stay connected.
-            </Typography>
-          </Box>
-          <Box component="form" action="/api/auth/logout" method="post" sx={{ alignSelf: "flex-start" }}>
-            <Button size="small" type="submit" variant="outlined">Sign out of this device</Button>
-          </Box>
-        </Stack>
-      </Box>
 
       <Box sx={{ border: 1, borderColor: "error.light", borderRadius: 1.5, p: 2 }}>
         <Stack spacing={1.25}>
