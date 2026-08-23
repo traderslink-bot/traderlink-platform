@@ -5,7 +5,6 @@ import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownR
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Link from "next/link";
@@ -56,14 +55,7 @@ function detailCount(ticker: CommunityWatchlistDetail["tickers"][number]): numbe
 
 export function CommunityWatchlistTickerBoard({ detail }: { detail: CommunityWatchlistDetail }) {
   const [selectedSymbol, setSelectedSymbol] = useState(detail.tickers[0]?.symbol ?? "");
-  const selectedTicker = detail.tickers.find((ticker) => ticker.symbol === selectedSymbol) ?? detail.tickers[0];
-  const facts = selectedTicker ? [
-    { label: "Why I&apos;m watching", value: selectedTicker.whyWatching },
-    { label: "My plan", value: selectedTicker.plan },
-    { label: "Personal target", value: selectedTicker.personalTarget },
-    { label: "Catalyst", value: [selectedTicker.catalyst, selectedTicker.catalystDate].filter(Boolean).join(selectedTicker.catalyst && selectedTicker.catalystDate ? " · " : "") },
-    { label: "Posted reference", value: selectedTicker.postedReferencePrice },
-  ].filter((fact) => Boolean(fact.value)) : [];
+  const selectedTicker = detail.tickers.find((ticker) => ticker.symbol === selectedSymbol);
 
   return <Stack spacing={1.25}>
     <Stack direction={{ xs: "column", sm: "row" }} spacing={0.75} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}>
@@ -78,18 +70,21 @@ export function CommunityWatchlistTickerBoard({ detail }: { detail: CommunityWat
         const active = ticker.symbol === selectedTicker?.symbol;
         const count = detailCount(ticker);
         const watchFor = ticker.catalystDate || ticker.catalyst || ticker.personalTarget || "Research added";
-        return <Button key={ticker.symbol} onClick={() => setSelectedSymbol(ticker.symbol)} sx={{ bgcolor: active ? "#f2f6ff" : "background.paper", borderRadius: 0, borderTop: index ? 1 : 0, borderColor: "divider", boxShadow: active ? "inset 3px 0 0 #082b73" : "none", color: "text.primary", display: "grid", gap: { xs: 0.6, sm: 1.1 }, gridTemplateColumns: { xs: "1fr auto", sm: "minmax(118px, .7fr) minmax(0, 1.55fr) minmax(150px, .85fr)" }, minHeight: { xs: 82, sm: 68 }, px: { xs: 1.25, sm: 1.5 }, py: { xs: 1, sm: 0.85 }, textAlign: "left", textTransform: "none", width: "100%", "&:hover": { bgcolor: "#f5f8ff" } }} variant="text">
-          <Stack spacing={0.35} sx={{ minWidth: 0 }}><Stack direction="row" spacing={0.6} sx={{ alignItems: "center" }}><Typography sx={{ color: "#082b73", fontWeight: 900 }} variant="body2">{ticker.symbol}</Typography><KeyboardArrowDownRoundedIcon sx={{ color: active ? "#082b73" : "text.secondary", fontSize: 18, transform: active ? "rotate(180deg)" : "none", transition: "transform .15s ease" }} /></Stack><Typography color="text.secondary" sx={{ fontSize: "0.69rem" }}>{count ? `${count} research detail${count === 1 ? "" : "s"}` : "No extra details"}</Typography></Stack>
-          <Box sx={{ minWidth: 0 }}><Typography color="text.secondary" sx={{ WebkitBoxOrient: "vertical", WebkitLineClamp: { xs: 2, sm: 1 }, display: "-webkit-box", fontSize: "0.8rem", lineHeight: 1.45, overflow: "hidden" }} variant="body2">{tickerCue(ticker)}</Typography>{ticker.tags.length ? <Stack direction="row" spacing={0.45} sx={{ display: { xs: "flex", sm: "none" }, flexWrap: "wrap", mt: 0.65, rowGap: 0.45 }}>{ticker.tags.slice(0, 3).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: "#eaf1ff", color: "#082b73", fontSize: "0.64rem", fontWeight: 700, height: 20 }} />)}</Stack> : null}</Box>
-          <Stack spacing={0.5} sx={{ alignItems: { xs: "flex-end", sm: "flex-start" }, minWidth: 0 }}><Typography color="text.secondary" sx={{ WebkitBoxOrient: "vertical", WebkitLineClamp: 2, display: "-webkit-box", fontSize: "0.73rem", fontWeight: 700, lineHeight: 1.35, overflow: "hidden" }}>{watchFor}</Typography>{ticker.tags.length ? <Stack direction="row" spacing={0.4} sx={{ display: { xs: "none", sm: "flex" }, flexWrap: "wrap", rowGap: 0.4 }}>{ticker.tags.slice(0, 2).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: "#eaf1ff", color: "#082b73", fontSize: "0.61rem", fontWeight: 700, height: 19 }} />)}</Stack> : null}</Stack>
-        </Button>;
+        const factRows = [
+          { label: "Personal target", value: ticker.personalTarget },
+          { label: "Catalyst", value: ticker.catalyst },
+          { label: "Catalyst date", value: ticker.catalystDate },
+          { label: "Posted reference", value: ticker.postedReferencePrice },
+        ].filter((fact) => Boolean(fact.value));
+        return <Box key={ticker.symbol}>
+          <Button aria-expanded={active} onClick={() => setSelectedSymbol((current) => current === ticker.symbol ? "" : ticker.symbol)} sx={{ bgcolor: active ? "#f2f6ff" : "background.paper", borderRadius: 0, borderTop: index ? 1 : 0, borderColor: "divider", boxShadow: active ? "inset 3px 0 0 #082b73" : "none", color: "text.primary", display: "grid", gap: { xs: 0.6, sm: 1.1 }, gridTemplateColumns: { xs: "1fr auto", sm: "minmax(118px, .7fr) minmax(0, 1.55fr) minmax(150px, .85fr)" }, minHeight: { xs: 82, sm: 68 }, px: { xs: 1.25, sm: 1.5 }, py: { xs: 1, sm: 0.85 }, textAlign: "left", textTransform: "none", width: "100%", "&:hover": { bgcolor: "#f5f8ff" } }} variant="text">
+            <Stack spacing={0.35} sx={{ minWidth: 0 }}><Stack direction="row" spacing={0.6} sx={{ alignItems: "center" }}><Typography sx={{ color: "#082b73", fontWeight: 900 }} variant="body2">{ticker.symbol}</Typography><KeyboardArrowDownRoundedIcon sx={{ color: active ? "#082b73" : "text.secondary", fontSize: 18, transform: active ? "rotate(180deg)" : "none", transition: "transform .15s ease" }} /></Stack><Typography color="text.secondary" sx={{ fontSize: "0.69rem" }}>{count ? `${count} research detail${count === 1 ? "" : "s"}` : "No extra details"}</Typography></Stack>
+            <Box sx={{ minWidth: 0 }}><Typography color="text.secondary" sx={{ WebkitBoxOrient: "vertical", WebkitLineClamp: { xs: 2, sm: 1 }, display: "-webkit-box", fontSize: "0.8rem", lineHeight: 1.45, overflow: "hidden" }} variant="body2">{tickerCue(ticker)}</Typography>{ticker.tags.length ? <Stack direction="row" spacing={0.45} sx={{ display: { xs: "flex", sm: "none" }, flexWrap: "wrap", mt: 0.65, rowGap: 0.45 }}>{ticker.tags.slice(0, 3).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: "#eaf1ff", color: "#082b73", fontSize: "0.64rem", fontWeight: 700, height: 20 }} />)}</Stack> : null}</Box>
+            <Stack spacing={0.5} sx={{ alignItems: { xs: "flex-end", sm: "flex-start" }, minWidth: 0 }}><Typography color="text.secondary" sx={{ WebkitBoxOrient: "vertical", WebkitLineClamp: 2, display: "-webkit-box", fontSize: "0.73rem", fontWeight: 700, lineHeight: 1.35, overflow: "hidden" }}>{watchFor}</Typography>{ticker.tags.length ? <Stack direction="row" spacing={0.4} sx={{ display: { xs: "none", sm: "flex" }, flexWrap: "wrap", rowGap: 0.4 }}>{ticker.tags.slice(0, 2).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: "#eaf1ff", color: "#082b73", fontSize: "0.61rem", fontWeight: 700, height: 19 }} />)}</Stack> : null}</Stack>
+          </Button>
+          {active ? <Box sx={{ bgcolor: "#f8faff", borderTop: 1, borderColor: "#c9daf7", boxShadow: "inset 3px 0 0 #082b73", p: { xs: 1.25, sm: 1.5 } }}><Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1fr) minmax(0, 1fr) minmax(180px, .8fr)" } }}><Box sx={{ minWidth: 0 }}><Typography color="text.secondary" sx={{ fontWeight: 800 }} variant="caption">Why I&apos;m watching</Typography><Typography sx={{ fontSize: "0.88rem", lineHeight: 1.55, mt: 0.45 }} variant="body2">{ticker.whyWatching || "No notes added yet."}</Typography></Box><Box sx={{ borderColor: "divider", borderLeft: { xs: 0, md: 1 }, borderTop: { xs: 1, md: 0 }, minWidth: 0, pl: { xs: 0, md: 1.5 }, pt: { xs: 1.25, md: 0 } }}><Typography color="text.secondary" sx={{ fontWeight: 800 }} variant="caption">My plan</Typography><Typography sx={{ fontSize: "0.88rem", lineHeight: 1.55, mt: 0.45 }} variant="body2">{ticker.plan || "No plan added yet."}</Typography></Box><Stack spacing={0.95} sx={{ borderColor: "divider", borderLeft: { xs: 0, md: 1 }, borderTop: { xs: 1, md: 0 }, minWidth: 0, pl: { xs: 0, md: 1.5 }, pt: { xs: 1.25, md: 0 } }}>{factRows.length ? factRows.map((fact) => <Box key={fact.label}><Typography color="text.secondary" sx={{ fontWeight: 800 }} variant="caption">{fact.label}</Typography><Typography sx={{ fontSize: "0.86rem", fontWeight: 700, lineHeight: 1.4 }} variant="body2">{fact.value}</Typography></Box>) : <Typography color="text.secondary" variant="body2">No price target, catalyst, or reference was added.</Typography>}</Stack></Box></Box> : null}
+        </Box>;
       })}
     </Box>
-    {selectedTicker ? <Paper elevation={0} sx={{ bgcolor: "#f8faff", border: 1, borderColor: "#c9daf7", borderRadius: 1.75, p: { xs: 1.25, sm: 1.5 } }}>
-      <Stack spacing={1.1}>
-        <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}><Typography sx={{ color: "#082b73", fontWeight: 900 }} variant="body2">{selectedTicker.symbol}</Typography><Typography color="text.secondary" variant="caption">Research details</Typography></Stack>
-        {facts.length ? <Box sx={{ display: "grid", gap: 0, gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", lg: "1.15fr 1.15fr .8fr 1.1fr .9fr" } }}>{facts.map((fact) => <Box key={fact.label} sx={{ borderColor: "divider", borderLeft: { xs: 0, sm: 1 }, borderTop: { xs: 1, sm: 0 }, minWidth: 0, px: { xs: 0, sm: 1.15 }, py: { xs: 0.9, sm: 0 }, "&:first-of-type": { borderLeft: { sm: 0 }, borderTop: 0, pl: { sm: 0 } } }}><Typography color="text.secondary" sx={{ fontWeight: 750 }} variant="caption">{fact.label}</Typography><Typography sx={{ WebkitBoxOrient: "vertical", WebkitLineClamp: 3, display: "-webkit-box", fontSize: "0.82rem", fontWeight: 650, lineHeight: 1.45, overflow: "hidden" }} variant="body2">{fact.value}</Typography></Box>)}</Box> : <Typography color="text.secondary" variant="body2">No extra notes were added for this ticker yet.</Typography>}
-      </Stack>
-    </Paper> : null}
   </Stack>;
 }
