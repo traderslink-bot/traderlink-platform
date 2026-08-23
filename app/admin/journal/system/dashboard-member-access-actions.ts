@@ -13,13 +13,14 @@ export async function saveDashboardMemberAccess(input: Readonly<{
   allowAllDiscordMembers: unknown;
 }>): Promise<ActionResult> {
   try {
-    if (typeof input.allowAllDiscordMembers !== "boolean") {
+    const allowAllDiscordMembers = input.allowAllDiscordMembers;
+    if (typeof allowAllDiscordMembers !== "boolean") {
       throw new Error("invalid_allowAllDiscordMembers");
     }
     withJournalAdminDatabase(await headers(), (database, scope) =>
       new PlatformDashboardMemberAccessRepository(database).save({
         actorUserId: scope.userId,
-        allowAllDiscordMembers: input.allowAllDiscordMembers,
+        allowAllDiscordMembers,
       }));
     revalidatePath("/admin/journal/system");
     return Object.freeze({ ok: true as const });
