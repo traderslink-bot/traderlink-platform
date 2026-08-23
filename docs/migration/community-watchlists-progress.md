@@ -1,6 +1,6 @@
 # Community Watchlists Progress
 
-**Status:** Private-beta implementation in progress — owner authorization recorded 2026-08-22
+**Status:** Private-beta implementation in progress — visual refinement underway
 
 **Controlling plan:** [Community Watchlists Plan](community-watchlists-plan.md)
 
@@ -10,6 +10,11 @@ The owner approved the dashboard-native direction and then authorized the
 private-beta implementation. The temporary sample-data preview has been
 replaced in source with real signed-in routes: dashboard hub, create form,
 minimal opt-in profile and direct published-list page.
+
+The direct published-list page is being refined with the owner's live private
+beta feedback. The current revision keeps the profile visually attached to the
+watchlist card and replaces large ticker panels with a compact, selectable
+research board; it has not yet received owner visual acceptance.
 
 Migration `0076_community_watchlists` was applied to the local Platform
 database on 2026-08-22 after a verified pre-change backup/restore. It creates
