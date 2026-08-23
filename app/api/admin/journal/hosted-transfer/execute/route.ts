@@ -34,6 +34,14 @@ const HOSTED_TRANSFER_EXPORT_DIRECTORY_ENV =
   "TRADERLINK_HOSTED_TRANSFER_EXPORT_DIRECTORY" as const;
 const BACKUP_ROOT = "/data/backups/hosted-transfer" as const;
 const JOURNAL_AUTHORITY_PATH_ENV = "TRADERLINK_PLATFORM_JOURNAL_AUTHORITY_PATH" as const;
+const ACCOUNT_IDENTITY_ACTIVE_KEY_VERSION_ENV =
+  "TRADERLINK_PLATFORM_ACCOUNT_IDENTITY_ACTIVE_KEY_VERSION" as const;
+const ACCOUNT_IDENTITY_HMAC_KEYS_ENV =
+  "TRADERLINK_PLATFORM_ACCOUNT_IDENTITY_HMAC_KEYS_JSON" as const;
+const JOURNAL_HMAC_ACTIVE_KEY_VERSION_ENV =
+  "TRADERLINK_PLATFORM_JOURNAL_HMAC_ACTIVE_KEY_VERSION" as const;
+const JOURNAL_HMAC_KEYS_ENV =
+  "TRADERLINK_PLATFORM_JOURNAL_HMAC_KEYS_JSON" as const;
 
 type AuthoritySection = Readonly<{
   activeKeyVersion: string;
@@ -69,6 +77,24 @@ function authoritySection(value: unknown): AuthoritySection {
   return Object.freeze({ activeKeyVersion, keysBase64: Object.freeze(keys) });
 }
 
+function configuredAuthoritySection(
+  activeKeyVersionEnv: string,
+  keysEnv: string,
+): AuthoritySection {
+  const activeKeyVersion = process.env[activeKeyVersionEnv];
+  const encodedKeys = process.env[keysEnv];
+  if (!activeKeyVersion || !encodedKeys) {
+    platformFailure("TRADERLINK_ACCOUNT_IDENTITY_RECOVERY_REQUIRED");
+  }
+  let keysBase64: unknown;
+  try {
+    keysBase64 = JSON.parse(encodedKeys);
+  } catch (error) {
+    platformFailure("TRADERLINK_ACCOUNT_IDENTITY_RECOVERY_REQUIRED", {}, error);
+  }
+  return authoritySection({ activeKeyVersion, keysBase64 });
+}
+
 function verifyRecoveryAuthority(
   requirements: PlatformDatabaseRecoveryRequirements,
 ): Readonly<{
@@ -77,21 +103,29 @@ function verifyRecoveryAuthority(
   sourceAccountCanonicalizationVersions: readonly string[];
 }> {
   const authorityPath = process.env[JOURNAL_AUTHORITY_PATH_ENV];
+  let accountIdentity: AuthoritySection;
+  if (authorityPath) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(readFileSync(authorityPath, "utf8"));
+    } catch (error) {
+      platformFailure("TRADERLINK_ACCOUNT_IDENTITY_RECOVERY_REQUIRED", {}, error);
+    }
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      platformFailure("TRADERLINK_ACCOUNT_IDENTITY_RECOVERY_REQUIRED");
+    }
+    const authority = parsed as Record<string, unknown>;
+    authoritySection(authority.journalPrivacy);
+    accountIdentity = authoritySection(authority.accountIdentity);
+  } else {
+    accountIdentity = configuredAuthoritySection(
+      ACCOUNT_IDENTITY_ACTIVE_KEY_VERSION_ENV,
+      ACCOUNT_IDENTITY_HMAC_KEYS_ENV,
+    );
+  }
   if (!authorityPath) {
-    platformFailure("TRADERLINK_ACCOUNT_IDENTITY_RECOVERY_REQUIRED");
+    configuredAuthoritySection(JOURNAL_HMAC_ACTIVE_KEY_VERSION_ENV, JOURNAL_HMAC_KEYS_ENV);
   }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(readFileSync(authorityPath, "utf8"));
-  } catch (error) {
-    platformFailure("TRADERLINK_ACCOUNT_IDENTITY_RECOVERY_REQUIRED", {}, error);
-  }
-  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    platformFailure("TRADERLINK_ACCOUNT_IDENTITY_RECOVERY_REQUIRED");
-  }
-  const authority = parsed as Record<string, unknown>;
-  const accountIdentity = authoritySection(authority.accountIdentity);
-  authoritySection(authority.journalPrivacy);
   const keysAvailable = requirements.hmacKeyVersions.every((version) =>
     version in accountIdentity.keysBase64);
   const canonicalizersAvailable = requirements.sourceAccountCanonicalizationVersions
