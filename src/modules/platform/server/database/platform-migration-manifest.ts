@@ -388,6 +388,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/journal/server/database/migrations/0075_journal_swing_position_plans.ts",
       migration: journalSwingPositionPlansMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/community/server/database/migrations/0076_community_watchlists.ts",
+      migration: communityWatchlistsMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
