@@ -32,9 +32,10 @@ Header separation relies on spacing and the profile's soft background rather
 than visible divider lines.
 
 The attached profile is now a deliberately wide, short ID-card treatment in
-the watchlist header: avatar and Trader label at left, handle and selectable
-profile tags in the middle, and View profile at right. It remains inside the
-existing 790px watchlist width rather than restoring a separate profile rail.
+the watchlist header: avatar and Trader label at left, with the handle,
+selectable profile tags and View profile stacked at the card's right edge. It
+remains inside the existing 790px watchlist width rather than restoring a
+separate profile rail.
 
 Desktop fact columns remain fixed-width. Long source values, including an
 industry name, show a single-line ellipsis rather than changing a ticker

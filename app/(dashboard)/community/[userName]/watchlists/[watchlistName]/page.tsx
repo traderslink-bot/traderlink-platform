@@ -74,19 +74,21 @@ export default async function CommunityWatchlistDetailPage({
               </Box> : null}
             </Stack>
             <Stack sx={{ alignItems: "center", bgcolor: "#f4f7ff", boxShadow: "inset 3px 0 0 #082b73", minHeight: { lg: 96 }, p: { xs: 1.5, sm: 1.75 } }}>
-              <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", width: "100%" }}>
+              <Stack direction="row" spacing={1.5} sx={{ alignItems: "flex-start", justifyContent: "flex-end", width: "100%" }}>
                 <Stack spacing={0.35} sx={{ alignItems: "center", flex: "0 0 62px" }}>
                   <Avatar sx={{ bgcolor: "#102b69", fontWeight: 850, height: 48, width: 48 }}>{avatarLetters(detail.authorHandle)}</Avatar>
                   <Typography color="text.secondary" sx={{ fontSize: "0.63rem", fontWeight: 800, lineHeight: 1 }}>Trader</Typography>
                 </Stack>
-                <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Stack spacing={0.7} sx={{ alignItems: { xs: "flex-start", lg: "flex-end" }, flex: 1, minWidth: 0 }}>
+                  <Box sx={{ minWidth: 0, textAlign: { lg: "right" } }}>
                   <Typography noWrap sx={{ fontSize: "0.94rem", fontWeight: 850, lineHeight: 1.2 }}>@{detail.authorHandle}</Typography>
                   <Typography color="text.secondary" sx={{ fontSize: "0.7rem", lineHeight: 1.2, mt: 0.35 }}>Community watchlist owner</Typography>
-                  {detail.authorTags.length ? <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap", mt: 0.7, rowGap: 0.5 }}>
+                  </Box>
+                  {detail.authorTags.length ? <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap", justifyContent: { lg: "flex-end" }, rowGap: 0.5 }}>
                     {detail.authorTags.map((tag) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: "#e7f6ed", color: "#14663c", fontWeight: 700 }} />)}
                   </Stack> : null}
-                </Box>
-                <Box sx={{ flex: "0 0 auto" }}><Link href={`/community/${detail.authorHandle}`} style={{ textDecoration: "none" }}><DashboardSecondaryAction component="span">View profile</DashboardSecondaryAction></Link></Box>
+                  <Box><Link href={`/community/${detail.authorHandle}`} style={{ textDecoration: "none" }}><DashboardSecondaryAction component="span">View profile</DashboardSecondaryAction></Link></Box>
+                </Stack>
               </Stack>
             </Stack>
             <Box sx={{ gridColumn: "1 / -1", p: { xs: 1.75, sm: 2.25 } }}>
