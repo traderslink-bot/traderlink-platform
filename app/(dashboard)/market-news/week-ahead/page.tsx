@@ -60,12 +60,6 @@ export default async function WeekAheadPage() {
             </Stack>
           </DashboardPanel>
 
-          <DashboardPanel title="This week at a glance">
-            <Typography sx={{ whiteSpace: "pre-line" }}>
-              {issue.articleText}
-            </Typography>
-          </DashboardPanel>
-
           <DashboardPanel title="Catalysts by date">
             <Stack divider={<Divider flexItem />} spacing={0}>
               {issue.structuredContent.companyCatalysts.map((group) => (
