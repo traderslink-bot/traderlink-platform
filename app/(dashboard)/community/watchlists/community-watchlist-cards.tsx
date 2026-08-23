@@ -65,7 +65,7 @@ export function CommunityWatchlistTickerBoard({
   const router = useRouter();
 
   const factColumns = {
-    xs: "minmax(0, 1fr) auto",
+    xs: "repeat(2, minmax(0, 1fr))",
     sm: "124px 62px 116px 76px 78px minmax(0, 1fr)",
   };
 
@@ -93,17 +93,17 @@ export function CommunityWatchlistTickerBoard({
         ].filter((fact) => Boolean(fact.value));
         return <Box key={ticker.symbol}>
           <Button aria-expanded={active} onClick={() => setSelectedSymbol((current) => current === ticker.symbol ? "" : ticker.symbol)} sx={{ alignItems: "center", bgcolor: "#edf4ff", border: 1, borderColor: active ? "#9fbee9" : "#d5e3fb", borderRadius: 1.75, boxShadow: "inset 3px 0 0 #082b73", boxSizing: "border-box", color: "text.primary", columnGap: { xs: 0.75, sm: 0.65 }, display: "grid", gridTemplateColumns: factColumns, justifyItems: "start", minHeight: { xs: 78, sm: 58 }, px: { xs: 1.25, sm: 1.5 }, py: { xs: 1, sm: 0.85 }, textAlign: "left", textTransform: "none", width: "100%", "&:hover": { bgcolor: "#e7f0ff" } }} variant="text">
-            <Stack spacing={0.45} sx={{ minWidth: 0 }}>
+            <Stack spacing={0.45} sx={{ gridColumn: { xs: "1 / -1", sm: "auto" }, minWidth: 0 }}>
               <Stack direction="row" spacing={0.55} sx={{ alignItems: "center" }}>
                 <Typography sx={{ color: "#082b73", fontSize: "1rem", fontWeight: 900, letterSpacing: ".01em", lineHeight: 1.1 }}>{ticker.symbol}</Typography>
                 <KeyboardArrowDownRoundedIcon sx={{ color: "#082b73", display: { xs: "block", sm: "none" }, fontSize: 19, transform: active ? "rotate(180deg)" : "none", transition: "transform .15s ease" }} />
               </Stack>
               {ticker.tags.length ? <Stack direction="row" spacing={0.35} sx={{ flexWrap: "wrap", rowGap: 0.35 }}>{ticker.tags.slice(0, 2).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: "#fff", color: "#082b73", fontSize: "0.59rem", fontWeight: 700, height: 18 }} />)}</Stack> : null}
             </Stack>
-            {facts.length ? facts.map((fact) => <Box key={fact.label} sx={{ display: { xs: fact.label === "Ctry" || fact.label === "Ind." ? "block" : "none", sm: "block" }, minWidth: 0 }}>
+            {facts.length ? facts.map((fact) => <Box key={fact.label} sx={{ minWidth: 0 }}>
               <Typography color="text.secondary" sx={{ display: { xs: "block", sm: "none" }, fontSize: "0.62rem", fontWeight: 900 }}>{fact.label}</Typography>
               <Typography sx={{ WebkitBoxOrient: "vertical", WebkitLineClamp: 1, display: "-webkit-box", fontSize: "0.8rem", fontWeight: 700, lineHeight: 1.3, overflow: "hidden" }}>{fact.value ?? "—"}</Typography>
-            </Box>) : <Typography color="text.secondary" sx={{ fontSize: "0.73rem", gridColumn: { xs: "auto", sm: "2 / span 4" } }}>Company facts not reported</Typography>}
+            </Box>) : <Typography color="text.secondary" sx={{ fontSize: "0.73rem", gridColumn: { xs: "1 / -1", sm: "2 / span 4" } }}>Company facts not reported</Typography>}
             <Stack aria-hidden="true" direction="row" spacing={0.2} sx={{ alignItems: "center", display: { xs: "none", sm: "flex" }, justifySelf: "end", whiteSpace: "nowrap" }}>
               <Typography sx={{ color: "#082b73", fontSize: "0.7rem", fontWeight: 800 }}>Trader&apos;s take</Typography>
               <KeyboardArrowDownRoundedIcon sx={{ color: "#082b73", fontSize: 22, transform: active ? "rotate(180deg)" : "none", transition: "transform .15s ease" }} />
