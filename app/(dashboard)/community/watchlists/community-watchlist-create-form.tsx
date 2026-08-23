@@ -42,7 +42,7 @@ function TagPicker({ available, selected, onChange }: { available: readonly stri
   return <Stack spacing={0.85}>
     <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", rowGap: 0.75 }}>{choices.map((tag) => <Chip color={selected.includes(tag) ? "primary" : "default"} key={tag} label={tag} onClick={() => onChange(selected.includes(tag) ? selected.filter((item) => item !== tag) : [...selected, tag])} variant={selected.includes(tag) ? "filled" : "outlined"} />)}</Stack>
     <Stack direction="row" spacing={0.75} sx={{ alignItems: "center", maxWidth: 330 }}>
-      <TextField inputProps={{ maxLength: 48 }} label="Create a tag" onChange={(event) => setCustomTag(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addCustomTag(); } }} size="small" value={customTag} />
+      <TextField label="Create a tag" onChange={(event) => setCustomTag(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addCustomTag(); } }} size="small" slotProps={{ htmlInput: { maxLength: 48 } }} value={customTag} />
       <IconButton aria-label="Add custom tag" disabled={!customTag.trim() || selected.length >= 20} onClick={addCustomTag} size="small"><AddRoundedIcon /></IconButton>
     </Stack>
   </Stack>;
