@@ -86,7 +86,9 @@ and share view.
 
 ### Create and publish
 
-A watchlist starts as a private draft. The author provides:
+A watchlist starts as a private draft. A title is enough to save an early
+empty draft; publishing requires one or more manually entered ticker symbols.
+The author may then provide:
 
 - a clear title;
 - optional short description;

@@ -109,8 +109,8 @@ export function CommunityWatchlistCreateForm() {
       <DashboardPanel title="Tickers">
         <Stack spacing={1.5}>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-            <TextField fullWidth label="Ticker symbol" onChange={(event) => setTickerText(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addTicker(); } }} placeholder="Enter a ticker" value={tickerText} />
-            <DashboardSecondaryAction onClick={addTicker} startIcon={<AddRoundedIcon />}>Add ticker</DashboardSecondaryAction>
+            <TextField fullWidth label="Ticker symbol" onChange={(event) => setTickerText(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addTicker(); } }} placeholder="Enter a ticker, then press Enter or Add ticker" value={tickerText} />
+            <DashboardSecondaryAction disabled={!tickerText.trim()} onClick={addTicker} startIcon={<AddRoundedIcon />}>Add ticker</DashboardSecondaryAction>
           </Stack>
           {tickers.map((ticker) => <Box key={ticker.id} sx={{ border: 1, borderColor: "divider", borderRadius: 2, p: { xs: 1.5, sm: 2 } }}><Stack spacing={1.25}>
             <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}><Typography sx={{ fontWeight: 820 }}>{ticker.symbol}</Typography><IconButton aria-label={`Remove ${ticker.symbol}`} onClick={() => setTickers((current) => current.filter((item) => item.id !== ticker.id))}><DeleteOutlineRoundedIcon /></IconButton></Stack>
@@ -127,7 +127,8 @@ export function CommunityWatchlistCreateForm() {
           <FormControlLabel control={<Switch checked={sendDiscord} onChange={(event) => setSendDiscord(event.target.checked)} />} label="Send the announcement to the private Discord channel when I publish" />
           <Typography color="text.secondary" variant="body2">The post shows your handle, watchlist title, symbol count and a link back to the app.</Typography>
           {message ? <Alert severity={message.includes("could not") ? "error" : "success"}>{message}</Alert> : null}
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={1}><DashboardSecondaryAction disabled={working || tickerCount === 0 || !title.trim()} onClick={() => save(false)}>{working ? "Saving..." : "Save draft"}</DashboardSecondaryAction><DashboardPrimaryAction disabled={working || tickerCount === 0 || !title.trim()} onClick={() => save(true)} startIcon={<SendRoundedIcon />}>{working ? "Publishing..." : "Publish watchlist"}</DashboardPrimaryAction></Stack>
+          {!title.trim() ? <Typography color="text.secondary" variant="body2">Add a watchlist title to save a draft.</Typography> : tickerCount === 0 ? <Typography color="text.secondary" variant="body2">You can save this as a draft now. Add at least one ticker to publish it.</Typography> : null}
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1}><DashboardSecondaryAction disabled={working || !title.trim()} onClick={() => save(false)}>{working ? "Saving..." : "Save draft"}</DashboardSecondaryAction><DashboardPrimaryAction disabled={working || tickerCount === 0 || !title.trim()} onClick={() => save(true)} startIcon={<SendRoundedIcon />}>{working ? "Publishing..." : "Publish watchlist"}</DashboardPrimaryAction></Stack>
         </Stack>
       </DashboardPanel>
     </DashboardPage>

@@ -165,7 +165,8 @@ SET profile_tags_json = ?, updated_at_utc = ? WHERE user_id = ?`).run(
     const description = normalizeText(input.watchlist.description ?? "", 600, "description");
     const profileTags = normalizeTags(input.watchlist.profileTags, "profileTags");
     const tags = normalizeTags(input.watchlist.tags, "tags");
-    if (!Array.isArray(input.watchlist.tickers) || input.watchlist.tickers.length < 1 || input.watchlist.tickers.length > 50) {
+    if (!Array.isArray(input.watchlist.tickers) || input.watchlist.tickers.length > 50 ||
+      (input.watchlist.publish && input.watchlist.tickers.length < 1)) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "tickers" });
     }
     const tickers = input.watchlist.tickers.map((ticker, ordinal) => Object.freeze({
