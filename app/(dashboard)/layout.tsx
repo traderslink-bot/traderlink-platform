@@ -15,7 +15,10 @@ import { PwaLifecycle } from "../pwa/pwa-lifecycle";
 import { PressReleaseDashboardRepository } from "@/src/modules/news/server/press-release-dashboard-repository";
 import { hasPressReleaseDashboardAccess } from "@/src/modules/news/server/press-release-dashboard-access";
 import { MarketHaltAlertRepository } from "@/src/modules/news/server/market-halt-alert-repository";
-import { createCanonicalUtcTimestamp } from "@/src/modules/platform/server/database/platform-migration-contract";
+import {
+  createCanonicalUtcTimestamp,
+  isTraderLinkPlatformError,
+} from "@/src/modules/platform/server/database/platform-migration-contract";
 import { hasScannerEarlyAccess } from "@/src/modules/scanner/server/scanner-early-access";
 
 export const dynamic = "force-dynamic";
@@ -46,6 +49,9 @@ export default async function DashboardLayout({
     identity = await requireTraderLinkPlatformPageIdentity();
   } catch (error) {
     if (process.env.NODE_ENV === "production") {
+      if (isTraderLinkPlatformError(error) && error.code === "TRADERLINK_DASHBOARD_ACCESS_DENIED") {
+        redirect("/access-required");
+      }
       redirect("/api/auth/discord/login?returnTo=%2Fworkspace");
     }
     throw error;

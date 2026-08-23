@@ -11,6 +11,7 @@ import type { Metadata } from "next";
 
 import { createJournalAdminReadContext } from "@/src/modules/journal/server/administration/journal-admin-read-helpers";
 import { PlatformAdminSystemService } from "@/src/modules/platform/server/administration/platform-admin-system-service";
+import { PlatformDashboardMemberAccessRepository } from "@/src/modules/platform/server/authentication/platform-dashboard-member-access-repository";
 import { withJournalAdminPageDatabase } from "@/src/modules/platform/server/administration/require-journal-admin-page";
 import {
   JournalAdminMetricCard,
@@ -25,6 +26,7 @@ import {
   formatAdminInteger,
   formatAdminUtc,
 } from "../journal-admin-ui";
+import { DashboardMemberAccessControl } from "./dashboard-member-access-control";
 
 export const metadata: Metadata = { title: "System | Journal Administration" };
 export const dynamic = "force-dynamic";
@@ -42,8 +44,11 @@ function formatOperationalDetails(counts: Readonly<Record<string, number>>): str
 }
 
 export default async function JournalAdminSystemPage() {
-  const system = await withJournalAdminPageDatabase((database, scope) =>
-    new PlatformAdminSystemService(createJournalAdminReadContext({ database, scope })).read());
+  const state = await withJournalAdminPageDatabase((database, scope) => Object.freeze({
+    system: new PlatformAdminSystemService(createJournalAdminReadContext({ database, scope })).read(),
+    dashboardMemberAccess: new PlatformDashboardMemberAccessRepository(database).read(),
+  }));
+  const system = state.system;
   return (
     <JournalAdminPage>
       <JournalAdminPageHeader
@@ -88,6 +93,12 @@ export default async function JournalAdminSystemPage() {
           </Stack>
         </JournalAdminPanel>
       </Box>
+
+      <JournalAdminPanel title="Dashboard member access">
+        <DashboardMemberAccessControl
+          initialAllowAllDiscordMembers={state.dashboardMemberAccess.allowAllDiscordMembers}
+        />
+      </JournalAdminPanel>
 
       <JournalAdminPanel title="Operational receipts">
         <JournalAdminTable>

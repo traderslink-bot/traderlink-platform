@@ -14,6 +14,7 @@ import {
 } from "@/src/modules/platform/server/authentication/platform-discord-oauth-cookies";
 import { resolvePlatformPublicOrigin } from "@/src/modules/platform/server/authentication/platform-public-origin";
 import { PlatformDiscordSignInService } from "@/src/modules/platform/server/authentication/platform-discord-sign-in-service";
+import { PlatformDashboardMemberAccessRepository } from "@/src/modules/platform/server/authentication/platform-dashboard-member-access-repository";
 import {
   TRADERLINK_PLATFORM_SESSION_COOKIE,
   TRADERLINK_PLATFORM_SESSION_TTL_MS,
@@ -123,6 +124,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     const watchlistReturn = isWatchlistAuthReturnTo(returnTo);
+    const dashboardAccessAllowed = withPlatformDatabase(
+      { mode: "runtime" },
+      (database) => new PlatformDashboardMemberAccessRepository(database)
+        .read().allowAllDiscordMembers || hasPlatformDiscordPremiumAccess({
+          guildOwner: resolvedGuildMember.guild_owner === true,
+          roleIds: resolvedGuildMember.roles ?? [],
+        }),
+    );
+    if (!dashboardAccessAllowed) {
+      const response = authRedirect(request, "/access-required", "dashboard-access-off");
+      clearDiscordOAuthCookies(response, request);
+      return response;
+    }
     let sessionToken: string;
 
     try {
