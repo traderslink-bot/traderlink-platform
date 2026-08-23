@@ -24,6 +24,10 @@ The desktop board deliberately becomes a compact two-column fact card on
 mobile, keeping all four facts visible. It has not yet received owner visual
 acceptance.
 
+Desktop fact columns remain fixed-width. Long source values, including an
+industry name, show a single-line ellipsis rather than changing a ticker
+card's dimensions or another fact's alignment.
+
 Migration `0076_community_watchlists` was applied to the local Platform
 database on 2026-08-22 after a verified pre-change backup/restore. It creates
 Community-owned profiles, watchlists, ticker research cards and
