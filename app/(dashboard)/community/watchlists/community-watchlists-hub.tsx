@@ -60,7 +60,6 @@ function TickerResearchPreview({ ticker }: { ticker: CommunityWatchlistSummary["
     { label: "My plan", value: ticker.plan },
     { label: "Personal target", value: ticker.personalTarget },
     { label: "Catalyst", value: [ticker.catalyst, ticker.catalystDate].filter(Boolean).join(ticker.catalyst && ticker.catalystDate ? " · " : "") },
-    { label: "Posted price", value: ticker.postedReferencePrice },
   ].filter((fact) => Boolean(fact.value));
   return <Box sx={{ bgcolor: "#fbfcff", border: 1, borderColor: "#d7e2f8", borderRadius: 1.75, px: { xs: 1.25, md: 1.5 }, py: 1.25 }}>
     <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between", mb: facts.length ? 1.25 : 0 }}>
@@ -90,7 +89,7 @@ function TickerBoard({ item }: { item: CommunityWatchlistSummary }) {
     {activeTicker ? <Box sx={{ mb: 1.15 }}><TickerResearchPreview ticker={activeTicker} /></Box> : null}
     <Box sx={{ display: "grid", gap: 0.75, gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" } }}>
       {item.tickerPreviews.map((ticker) => {
-        const detailCount = [ticker.whyWatching, ticker.plan, ticker.personalTarget, ticker.catalyst, ticker.postedReferencePrice].filter(Boolean).length;
+        const detailCount = [ticker.whyWatching, ticker.plan, ticker.personalTarget, ticker.catalyst].filter(Boolean).length;
         const cue = ticker.whyWatching || ticker.plan || ticker.catalyst || "Ticker added to this watchlist.";
         const active = activeTicker?.symbol === ticker.symbol;
         return <Button key={ticker.symbol} onClick={() => setActiveSymbol(ticker.symbol)} sx={{ alignItems: "stretch", border: 1, borderColor: active ? "primary.main" : "divider", borderRadius: 1.5, color: "text.primary", display: "block", minHeight: 68, p: 1, textAlign: "left", textTransform: "none" }} variant="text">

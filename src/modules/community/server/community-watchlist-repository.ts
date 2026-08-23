@@ -102,7 +102,6 @@ function tickerPreview(ticker: TickerRow): CommunityWatchlistTickerPreview {
     personalTarget: ticker.personal_target,
     catalyst: ticker.catalyst,
     catalystDate: ticker.catalyst_date,
-    postedReferencePrice: ticker.posted_reference_price,
   });
 }
 
@@ -178,7 +177,7 @@ SET profile_tags_json = ?, updated_at_utc = ? WHERE user_id = ?`).run(
       personalTarget: normalizeText(ticker.personalTarget ?? "", 100, "personalTarget"),
       catalyst: normalizeText(ticker.catalyst ?? "", 300, "catalyst"),
       catalystDate: ticker.catalystDate ? normalizeText(ticker.catalystDate, 10, "catalystDate") : null,
-      postedReferencePrice: normalizeText(ticker.postedReferencePrice ?? "", 100, "postedReferencePrice"),
+      postedReferencePrice: "",
     }));
     if (new Set(tickers.map((ticker) => ticker.symbol)).size !== tickers.length) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "tickers" });
@@ -296,8 +295,7 @@ FROM community_watchlist_tickers WHERE watchlist_id = ? ORDER BY ordinal`).all(r
       tickers: Object.freeze(tickers.map((ticker) => Object.freeze({
         symbol: ticker.symbol, tags: parseTags(ticker.tags_json), whyWatching: ticker.why_watching,
         plan: ticker.plan, personalTarget: ticker.personal_target, catalyst: ticker.catalyst,
-        catalystDate: ticker.catalyst_date, postedReferencePrice: ticker.posted_reference_price,
-        postedAtUtc: ticker.posted_at_utc,
+        catalystDate: ticker.catalyst_date, postedAtUtc: ticker.posted_at_utc,
       }))),
     });
   }

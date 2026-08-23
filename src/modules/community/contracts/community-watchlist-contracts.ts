@@ -36,7 +36,6 @@ export type CommunityTickerInput = Readonly<{
   personalTarget?: string;
   catalyst?: string;
   catalystDate?: string | null;
-  postedReferencePrice?: string;
 }>;
 
 export type CreateCommunityWatchlistInput = Readonly<{
@@ -57,7 +56,6 @@ export type CommunityWatchlistTickerPreview = Readonly<{
   personalTarget: string;
   catalyst: string;
   catalystDate: string | null;
-  postedReferencePrice: string;
 }>;
 
 export type CommunityWatchlistSummary = Readonly<{
@@ -87,7 +85,6 @@ export type CommunityWatchlistDetail = Readonly<{
     personalTarget: string;
     catalyst: string;
     catalystDate: string | null;
-    postedReferencePrice: string;
     postedAtUtc: string;
   }>[];
   title: string;

@@ -27,7 +27,7 @@ import { createCommunityWatchlist } from "./community-watchlist-actions";
 type DraftTicker = CommunityTickerInput & Readonly<{ id: number }>;
 
 function blankTicker(id: number, symbol = ""): DraftTicker {
-  return { id, symbol, tags: [], whyWatching: "", plan: "", personalTarget: "", catalyst: "", catalystDate: null, postedReferencePrice: "" };
+  return { id, symbol, tags: [], whyWatching: "", plan: "", personalTarget: "", catalyst: "", catalystDate: null };
 }
 
 function TagPicker({ available, selected, onChange }: { available: readonly string[]; selected: readonly string[]; onChange: (next: readonly string[]) => void }) {
@@ -83,7 +83,6 @@ export function CommunityWatchlistCreateForm() {
           personalTarget: ticker.personalTarget,
           catalyst: ticker.catalyst,
           catalystDate: ticker.catalystDate,
-          postedReferencePrice: ticker.postedReferencePrice,
         })), publish, sendDiscord: publish && sendDiscord,
       });
       if (!result.ok) { setMessage(result.message); return; }
@@ -118,7 +117,6 @@ export function CommunityWatchlistCreateForm() {
             <TextField fullWidth label="Why I am watching" minRows={2} multiline onChange={(event) => updateTicker(ticker.id, { whyWatching: event.target.value })} value={ticker.whyWatching ?? ""} />
             <TextField fullWidth label="My plan" minRows={2} multiline onChange={(event) => updateTicker(ticker.id, { plan: event.target.value })} value={ticker.plan ?? ""} />
             <Stack direction={{ xs: "column", sm: "row" }} spacing={1}><TextField fullWidth label="Personal target" onChange={(event) => updateTicker(ticker.id, { personalTarget: event.target.value })} value={ticker.personalTarget ?? ""} /><TextField fullWidth label="Upcoming catalyst" onChange={(event) => updateTicker(ticker.id, { catalyst: event.target.value })} value={ticker.catalyst ?? ""} /><TextField fullWidth label="Catalyst date" onChange={(event) => updateTicker(ticker.id, { catalystDate: event.target.value || null })} slotProps={{ inputLabel: { shrink: true } }} type="date" value={ticker.catalystDate ?? ""} /></Stack>
-            <TextField fullWidth label="Posted reference price" onChange={(event) => updateTicker(ticker.id, { postedReferencePrice: event.target.value })} placeholder="Trader-entered, for example $3.82" value={ticker.postedReferencePrice ?? ""} />
           </Stack></Box>)}
         </Stack>
       </DashboardPanel>

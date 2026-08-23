@@ -28,6 +28,10 @@ Desktop fact columns remain fixed-width. Long source values, including an
 industry name, show a single-line ellipsis rather than changing a ticker
 card's dimensions or another fact's alignment.
 
+Ticker tags appear at the bottom of the expanded Trader's take, wrapping only
+when needed. Trader-entered posted reference price is no longer collected or
+shown; the existing stored column is retained solely for schema compatibility.
+
 Migration `0076_community_watchlists` was applied to the local Platform
 database on 2026-08-22 after a verified pre-change backup/restore. It creates
 Community-owned profiles, watchlists, ticker research cards and
