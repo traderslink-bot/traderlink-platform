@@ -37,10 +37,10 @@ export async function GET(request: Request): Promise<Response> {
     ).runOne();
     const remoteProcessed = await new PlatformRemoteNotificationDeliveryService(
       new PlatformRemoteNotificationDeliveryRepository(database),
-    ).runOne();
+    ).runAvailable(20);
     return Response.json({
       ok: true,
-      processed: platformProcessed || marketHaltProcessed || remoteProcessed,
+      processed: platformProcessed || marketHaltProcessed || remoteProcessed > 0,
     });
   } catch {
     return Response.json({ ok: false }, { status: 503 });
