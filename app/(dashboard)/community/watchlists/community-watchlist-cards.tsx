@@ -98,6 +98,8 @@ export function CommunityWatchlistCard({
   const [following, setFollowing] = useState(initiallyFollowing);
   const [followMessage, setFollowMessage] = useState<string | null>(null);
   const [savingFollow, setSavingFollow] = useState(false);
+  const visibleTickerSymbols = detail.tickers.slice(0, 6);
+  const hiddenTickerCount = detail.tickers.length - visibleTickerSymbols.length;
   const toggle = () => setExpanded((current) => !current);
   const headerClick = (event: MouseEvent<HTMLElement>) => {
     if (!(event.target as HTMLElement).closest("a, button")) toggle();
@@ -128,20 +130,23 @@ export function CommunityWatchlistCard({
               if (result.ok) setFollowing(nextFollowing);
               else setFollowMessage(result.message);
             }} size="small" sx={{ borderColor: "#082b73", borderRadius: "6px", fontSize: "0.74rem", fontWeight: 800, lineHeight: 1.1, minHeight: 28, px: 1, py: 0.3, textTransform: "none", whiteSpace: "nowrap" }} variant="outlined">{savingFollow ? "Saving..." : following ? "Unfollow Watchlist" : "Follow Watchlist"}</Button>
-            <KeyboardArrowDownRoundedIcon aria-hidden="true" sx={{ color: "#082b73", fontSize: 23, transform: expanded ? "rotate(180deg)" : "none", transition: "transform 160ms ease" }} />
           </Stack>
           {detail.description ? <Typography color="text.secondary" sx={{ mt: 0.75 }} variant="body2">{detail.description}</Typography> : null}
           {followMessage ? <Typography color="error" role="status" sx={{ display: "block", mt: 0.6 }} variant="caption">{followMessage}</Typography> : null}
         </Box>
         {detail.tags.length ? <Stack direction="row" spacing={0.65} sx={{ alignItems: "flex-start", flexWrap: "wrap", rowGap: 0.65 }}>{detail.tags.map((tag, index) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: index % 2 ? "#e9f7ef" : "#edf3ff", color: index % 2 ? "#14663c" : "#082b73", fontWeight: 700 }} />)}</Stack> : null}
+        <Stack direction="row" spacing={0.65} sx={{ alignItems: "center", flexWrap: "wrap", rowGap: 0.65 }}>
+          {visibleTickerSymbols.map((ticker) => <Chip key={ticker.symbol} label={ticker.symbol} size="small" sx={{ bgcolor: "#edf4ff", color: "#082b73", fontWeight: 850 }} />)}
+          {hiddenTickerCount > 0 ? <Typography color="text.secondary" sx={{ fontSize: "0.74rem", fontWeight: 800 }}>+{hiddenTickerCount}</Typography> : null}
+          <Button endIcon={<KeyboardArrowDownRoundedIcon sx={{ fontSize: 20, transform: expanded ? "rotate(180deg)" : "none", transition: "transform 160ms ease" }} />} onClick={toggle} size="small" sx={{ fontSize: "0.74rem", fontWeight: 800, minHeight: 28, px: 0.6, textTransform: "none" }} variant="text">View watchlist details</Button>
+        </Stack>
+        <Typography color="text.secondary" sx={{ fontSize: "0.72rem", fontWeight: 750 }} variant="caption">{watchlistUpdateText(detail.updatedAtUtc)}</Typography>
       </Stack>
-      <Stack spacing={0.65} sx={{ alignItems: "center", alignSelf: { xs: "stretch", lg: "stretch" }, boxShadow: "inset 3px 0 0 #082b73", minWidth: 0, p: { xs: 1.25, sm: 1.5 }, textAlign: "center" }}>
+      <Stack spacing={0.65} sx={{ alignItems: "center", alignSelf: { xs: "stretch", lg: "start" }, boxShadow: "inset 3px 0 0 #082b73", minWidth: 0, p: { xs: 1.25, sm: 1.5 }, textAlign: "center" }}>
         <Avatar sx={{ bgcolor: "#102b69", fontWeight: 850, height: 48, width: 48 }}>{avatarLetters(detail.authorHandle)}</Avatar>
         <Typography noWrap sx={{ fontSize: "0.78rem", fontWeight: 850, maxWidth: "100%" }}>@{detail.authorHandle}</Typography>
         <Link href={`/community/${detail.authorHandle}`} style={{ color: "#082b73", fontSize: "0.75rem", fontWeight: 800, textDecoration: "none" }}>View profile</Link>
-        <Typography color="text.secondary" sx={{ alignSelf: "flex-end", display: { xs: "none", lg: "block" }, fontSize: "0.72rem", fontWeight: 750, mt: "auto", whiteSpace: "nowrap" }} variant="caption">{watchlistUpdateText(detail.updatedAtUtc)}</Typography>
       </Stack>
-      <Typography color="text.secondary" sx={{ display: { xs: "block", lg: "none" }, fontSize: "0.72rem", fontWeight: 750, gridColumn: "1 / -1", px: { xs: 1.75, sm: 2.25 }, pb: 1.25, textAlign: "right" }} variant="caption">{watchlistUpdateText(detail.updatedAtUtc, true)}</Typography>
     </Box>
     {expanded ? <Box sx={{ p: { xs: 1.75, sm: 2.25 } }}><CommunityWatchlistTickerBoard detail={detail} editable={editable} tickerFacts={tickerFacts} watchlistSlug={watchlistSlug} /></Box> : null}
   </Paper>;

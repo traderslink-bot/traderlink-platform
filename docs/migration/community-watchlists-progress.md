@@ -45,6 +45,11 @@ is deliberately separate from later profile following. Ticker-add/remove
 notifications remain deferred until the owner ticker editor supplies those
 real events.
 
+The compact header shows watchlist tags followed by up to six actual ticker
+symbols and a `View watchlist details` control. Per-ticker research tags remain
+inside the corresponding expandable ticker card. The last-updated status is in
+the left column below the symbol strip.
+
 Desktop ticker cards keep their fixed outer width. Industry has a hard 150px
 cell before M/C and O/S, giving room for about 20 characters without changing
 the card width; the remaining right-side space belongs to Trader's take. Long

@@ -15,9 +15,12 @@ useful alert when its owner adds or removes a ticker.
    watchlist.
 2. Show **Follow Watchlist** beside the title and symbol count. It changes to
    **Unfollow Watchlist** after the saved relationship is created.
-3. Show the real watchlist update time, not an inferred activity signal.
-4. Keep the compact desktop status at the far right of the card and use the
-   unambiguous mobile wording **Watchlist updated ...** beneath the profile.
+3. Show actual ticker symbols in the compact card, limiting the visible strip
+   to six and showing the remainder as `+N`.
+4. Keep ticker-specific tags inside each expanded ticker card; they are not
+   compact watchlist-card content.
+5. Put the real watchlist update time in the left column beneath the compact
+   ticker-symbol strip, not under the profile.
 
 ## Boundaries
 
