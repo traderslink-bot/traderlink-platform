@@ -73,7 +73,7 @@ export default async function CommunityWatchlistDetailPage({
                 </Stack>
               </Box> : null}
             </Stack>
-            <Stack sx={{ alignItems: "center", boxShadow: "inset 3px 0 0 #082b73", minHeight: { lg: 112 }, p: { xs: 1.5, sm: 1.75 } }}>
+            <Stack sx={{ alignItems: "center", alignSelf: { xs: "stretch", lg: "start" }, boxShadow: "inset 3px 0 0 #082b73", minHeight: { lg: 112 }, p: { xs: 1.5, sm: 1.75 } }}>
               <Stack direction="row" spacing={1.5} sx={{ alignItems: "flex-start", width: "100%" }}>
                 <Stack spacing={0.35} sx={{ alignItems: "center", flex: "0 0 62px" }}>
                   <Avatar sx={{ bgcolor: "#102b69", fontWeight: 850, height: 48, width: 48 }}>{avatarLetters(detail.authorHandle)}</Avatar>

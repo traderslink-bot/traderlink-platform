@@ -38,9 +38,11 @@ edge. Its blue edge moves with the entire card. It remains inside the existing
 790px watchlist width rather than restoring a separate profile rail. Its
 background matches the surrounding watchlist surface.
 
-Desktop fact columns remain fixed-width. Long source values, including an
-industry name, show a single-line ellipsis rather than changing a ticker
-card's dimensions or another fact's alignment.
+Desktop fact columns remain fixed-width, with a 150px Industry column before
+the M/C and O/S facts. Long source values show a single-line ellipsis rather
+than changing a ticker card's dimensions or another fact's alignment. The
+desktop profile card is top-aligned and does not stretch with a taller title
+or watchlist-tag column.
 
 Ticker tags appear at the bottom of the expanded Trader's take, wrapping only
 when needed. Trader-entered posted reference price is no longer collected or

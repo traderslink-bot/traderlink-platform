@@ -74,7 +74,7 @@ export function CommunityWatchlistTickerBoard({
 
   const factColumns = {
     xs: "repeat(2, minmax(0, 1fr))",
-    sm: "124px 62px 116px 76px 78px minmax(0, 1fr)",
+    sm: "124px 62px 150px 76px 78px minmax(0, 1fr)",
   };
 
   function addCustomTickerTag(symbol: string, selectedTags: readonly string[]): void {
