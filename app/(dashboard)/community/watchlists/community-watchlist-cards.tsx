@@ -106,13 +106,8 @@ export function CommunityWatchlistCard({
         <Typography noWrap sx={{ fontSize: "0.78rem", fontWeight: 850, maxWidth: "100%" }}>@{detail.authorHandle}</Typography>
         <Link href={`/community/${detail.authorHandle}`} style={{ color: "#082b73", fontSize: "0.75rem", fontWeight: 800, textDecoration: "none" }}>View profile</Link>
       </Stack>
-      <Box aria-hidden="true" sx={{ columnGap: 0.65, display: { xs: "none", sm: "grid" }, gridColumn: "1 / -1", gridTemplateColumns: communityWatchlistFactColumns.sm, justifyItems: "start", pb: 1.75, px: { xs: 1.75, sm: 2.25 } }}>
-        <Box />
-        {["Ctry", "Ind.", "M/C", "O/S"].map((label) => <Typography color="text.secondary" key={label} sx={{ fontSize: "0.72rem", fontWeight: 900, letterSpacing: ".03em" }}>{label}</Typography>)}
-        <Box />
-      </Box>
     </Box>
-    {expanded ? <Box sx={{ p: { xs: 1.75, sm: 2.25 } }}><CommunityWatchlistTickerBoard detail={detail} editable={editable} showFactLabels={false} tickerFacts={tickerFacts} watchlistSlug={watchlistSlug} /></Box> : null}
+    {expanded ? <Box sx={{ p: { xs: 1.75, sm: 2.25 } }}><CommunityWatchlistTickerBoard detail={detail} editable={editable} tickerFacts={tickerFacts} watchlistSlug={watchlistSlug} /></Box> : null}
   </Paper>;
 }
 
@@ -144,7 +139,7 @@ export function CommunityWatchlistTickerBoard({
     setNewTickerTag("");
   }
 
-  return <Stack spacing={1.25}>
+  return <Stack spacing={0.65}>
     {showFactLabels ? <Box aria-hidden="true" sx={{ border: 1, borderColor: "transparent", boxSizing: "border-box", columnGap: 0.65, display: { xs: "none", sm: "grid" }, gridTemplateColumns: communityWatchlistFactColumns.sm, justifyItems: "start", px: 1.5 }}>
       <Box />
       {['Ctry', 'Ind.', 'M/C', 'O/S'].map((label) => <Typography color="text.secondary" key={label} sx={{ fontSize: "0.72rem", fontWeight: 900, letterSpacing: ".03em" }}>{label}</Typography>)}

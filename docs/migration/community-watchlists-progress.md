@@ -26,8 +26,8 @@ acceptance.
 
 The direct-list header now uses title and description at left, followed by a
 horizontal watchlist-tag row beginning at the left edge. The ticker fact
-labels sit directly below that tag row and align with the light-blue ticker
-rows beneath the header. A widened minimal profile column is anchored at the
+labels remain inside the collapsible ticker section, immediately above the
+light-blue ticker rows. A widened minimal profile column is anchored at the
 far top-right; it shows only avatar, handle and View profile, in that order,
 and its blue left edge moves with the entire column. "Watchlist tags" is not
 rendered as visible copy.
