@@ -72,6 +72,7 @@
     "@types/better-sqlite3": "^7.6.13",
     "ai": "7.0.52",
     "better-sqlite3": "^12.9.0",
+    "crisp-sdk-web": "^1.2.0",
     "decimal.js": "10.6.0",
     "flag-icons": "7.5.0",
     "levels-system-v2": "file:vendor/levels-system-v2",
