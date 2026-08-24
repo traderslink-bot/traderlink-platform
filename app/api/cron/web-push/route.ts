@@ -7,6 +7,7 @@ import { PlatformWebPushRepository } from "@/src/modules/platform/server/notific
 import { PlatformRemoteNotificationDeliveryRepository } from "@/src/modules/platform/server/notifications/platform-remote-notification-delivery-repository";
 import { PlatformRemoteNotificationDeliveryService } from "@/src/modules/platform/server/notifications/platform-remote-notification-delivery-service";
 import { MarketHaltWebPushRepository } from "@/src/modules/news/server/market-halt-web-push-repository";
+import { PressReleaseWebPushRepository } from "@/src/modules/news/server/press-release-web-push-repository";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,12 +36,16 @@ export async function GET(request: Request): Promise<Response> {
       new MarketHaltWebPushRepository(database, configuration.encryption),
       configuration,
     ).runOne();
+    const pressReleaseProcessed = await new PlatformWebPushDeliveryService(
+      new PressReleaseWebPushRepository(database, configuration.encryption),
+      configuration,
+    ).runAvailable(100);
     const remoteProcessed = await new PlatformRemoteNotificationDeliveryService(
       new PlatformRemoteNotificationDeliveryRepository(database),
     ).runAvailable(20);
     return Response.json({
       ok: true,
-      processed: platformProcessed || marketHaltProcessed || remoteProcessed > 0,
+      processed: platformProcessed || marketHaltProcessed || pressReleaseProcessed > 0 || remoteProcessed > 0,
     });
   } catch {
     return Response.json({ ok: false }, { status: 503 });
