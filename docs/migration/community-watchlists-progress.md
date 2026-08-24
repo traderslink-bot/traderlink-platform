@@ -38,12 +38,12 @@ edge. Its blue edge moves with the entire card. It remains inside the existing
 790px watchlist width rather than restoring a separate profile rail. Its
 background matches the surrounding watchlist surface.
 
-Desktop ticker cards keep their fixed outer width. The Industry fact receives
-the available interior space before the fixed M/C, O/S and Trader's take
-columns, moving M/C and O/S right without widening the card. Long source
-values are forced to a single-line ellipsis rather than overflowing. The
-desktop profile card is top-aligned and does not stretch with a taller title
-or watchlist-tag column.
+Desktop ticker cards keep their fixed outer width. Industry has a hard 150px
+cell before M/C and O/S, giving room for about 20 characters without changing
+the card width; the remaining right-side space belongs to Trader's take. Long
+source values are forced to a single-line ellipsis rather than overflowing.
+The desktop profile card is top-aligned and does not stretch with a taller
+title or watchlist-tag column.
 
 Ticker tags appear at the bottom of the expanded Trader's take, wrapping only
 when needed. Trader-entered posted reference price is no longer collected or
