@@ -14,7 +14,6 @@ import { journalAiImportRepairMigration } from "@/src/modules/journal/server/dat
 import { journalAiChatTradeStyleSourceMigration } from "@/src/modules/journal/server/database/migrations/0057_journal_ai_chat_trade_style_source";
 import { journalRuleIdeasMigration } from "@/src/modules/journal/server/database/migrations/0061_journal_rule_ideas";
 import { journalMultiTrackerStatementImportsMigration } from "@/src/modules/journal/server/database/migrations/0074_journal_multi_tracker_statement_imports";
-import { journalManualEntryFailuresMigration } from "@/src/modules/journal/server/database/migrations/0085_journal_manual_entry_failures";
 import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
 import { tradeExplorerComparisonStudiesMigration } from "@/src/modules/journal-analytics/server/database/migrations/0060_trade_explorer_comparison_studies";
 import { levelAnalysisCandleReviewMigration } from "@/src/modules/level-analysis/server/database/migrations/0009_level_analysis_candle_review";
@@ -29,7 +28,6 @@ import { newsPressReleaseDashboardMigration } from "@/src/modules/news/server/da
 import { newsMarketHaltAlertsMigration } from "@/src/modules/news/server/database/migrations/0072_news_market_halt_alerts";
 import { newsMarketHaltDailyMutesMigration } from "@/src/modules/news/server/database/migrations/0073_news_market_halt_daily_mutes";
 import { newsWeekAheadMigration } from "@/src/modules/news/server/database/migrations/0079_news_week_ahead";
-import { newsWeekAheadCurrentIssueMigration } from "@/src/modules/news/server/database/migrations/0081_news_week_ahead_current_issue";
 import { affiliateAttributionMigration } from "@/src/modules/affiliate/server/database/migrations/0016_affiliate_attribution";
 import { coachWeeklyReviewsMigration } from "@/src/modules/coach/server/database/migrations/0025_coach_weekly_reviews";
 import { coachMonthlyReviewsMigration } from "@/src/modules/coach/server/database/migrations/0026_coach_monthly_reviews";
@@ -417,10 +415,6 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       migration: platformMarketNewsNotificationsMigration,
     }),
     Object.freeze({
-      sourcePath: "src/modules/news/server/database/migrations/0081_news_week_ahead_current_issue.ts",
-      migration: newsWeekAheadCurrentIssueMigration,
-    }),
-    Object.freeze({
       sourcePath: "src/modules/community/server/database/migrations/0082_community_watchlist_follows.ts",
       migration: communityWatchlistFollowsMigration,
     }),
@@ -432,60 +426,11 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/platform/server/database/migrations/0084_platform_broker_connection_attempts.ts",
       migration: platformBrokerConnectionAttemptsMigration,
     }),
-    Object.freeze({
-      sourcePath: "src/modules/journal/server/database/migrations/0085_journal_manual_entry_failures.ts",
-      migration: journalManualEntryFailuresMigration,
-    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
   platformMigrationFileEntries.map((entry) => entry.migration),
 );
-
-// The first local database received the tracker and halt migrations before
-// their later source-file renumbering. Its registry is valid evidence of the
-// schema it has, so preserve that exact, immutable history rather than asking
-// an operator to rewrite applied migration rows.
-const historicalJournalMultiTrackerStatementImportsMigration = Object.freeze({
-  ...journalMultiTrackerStatementImportsMigration,
-  migrationId: "0072_journal_multi_tracker_statement_imports",
-  executionOrder: 72,
-  statements: Object.freeze([
-    journalMultiTrackerStatementImportsMigration.statements.join("\n"),
-  ]),
-});
-
-const historicalNewsMarketHaltAlertsMigration = Object.freeze({
-  ...newsMarketHaltAlertsMigration,
-  migrationId: "0073_news_market_halt_alerts",
-  executionOrder: 73,
-});
-
-const historicalNewsMarketHaltDailyMutesMigration = Object.freeze({
-  ...newsMarketHaltDailyMutesMigration,
-  migrationId: "0074_news_market_halt_daily_mutes",
-  executionOrder: 74,
-});
-
-export const historicalPlatformMigrationManifest = validatePlatformMigrationManifest(
-  [
-    ...platformMigrationManifest.slice(0, 71),
-    historicalJournalMultiTrackerStatementImportsMigration,
-    historicalNewsMarketHaltAlertsMigration,
-    historicalNewsMarketHaltDailyMutesMigration,
-    ...platformMigrationManifest.slice(74),
-  ],
-);
-
-export function resolvePlatformMigrationManifestForAppliedHistory(
-  appliedMigrationIds: readonly string[],
-): readonly PlatformMigration[] {
-  const historicalMigration = appliedMigrationIds[71];
-  return historicalMigration ===
-      historicalJournalMultiTrackerStatementImportsMigration.migrationId
-    ? historicalPlatformMigrationManifest
-    : platformMigrationManifest;
-}
 
 const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
@@ -782,14 +727,6 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "news_press_release_push_preferences",
       "news_press_release_push_deliveries",
     ]),
-    "0072_journal_multi_tracker_statement_imports": Object.freeze([]),
-    "0073_news_market_halt_alerts": Object.freeze([
-      "news_market_halt_preferences",
-      "news_market_halt_muted_tickers",
-      "news_market_halt_events",
-      "news_market_halt_push_deliveries",
-    ]),
-    "0074_news_market_halt_daily_mutes": Object.freeze([]),
     "0072_news_market_halt_alerts": Object.freeze([
       "news_market_halt_preferences",
       "news_market_halt_muted_tickers",
@@ -815,9 +752,6 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "news_week_ahead_issue_versions",
     ]),
     "0080_platform_market_news_notifications": Object.freeze([]),
-    "0081_news_week_ahead_current_issue": Object.freeze([
-      "news_week_ahead_current_issue",
-    ]),
     "0082_community_watchlist_follows": Object.freeze([
       "community_watchlist_follows",
     ]),
@@ -829,18 +763,14 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "platform_broker_connection_attempts",
       "platform_user_control_audit_events",
     ]),
-    "0085_journal_manual_entry_failures": Object.freeze([
-      "journal_manual_entry_failures",
-    ]),
   });
 
 export function expectedPlatformTableNamesForPrefix(
   appliedMigrationCount: number,
-  manifest: readonly PlatformMigration[] = platformMigrationManifest,
 ): ReadonlySet<string> {
   const names = new Set<string>();
   if (appliedMigrationCount > 0) names.add("platform_schema_migrations");
-  for (const migration of manifest.slice(0, appliedMigrationCount)) {
+  for (const migration of platformMigrationManifest.slice(0, appliedMigrationCount)) {
     for (const tableName of managedTablesByMigrationId[migration.migrationId] ?? []) {
       names.add(tableName);
     }
@@ -850,10 +780,9 @@ export function expectedPlatformTableNamesForPrefix(
 
 export function expectedPlatformDomainTableNamesForPrefix(
   appliedMigrationCount: number,
-  manifest: readonly PlatformMigration[] = platformMigrationManifest,
 ): readonly string[] {
   return Object.freeze(
-    manifest
+    platformMigrationManifest
       .slice(0, appliedMigrationCount)
       .flatMap((migration) => managedTablesByMigrationId[migration.migrationId] ?? []),
   );
