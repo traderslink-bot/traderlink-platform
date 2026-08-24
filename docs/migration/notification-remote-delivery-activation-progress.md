@@ -31,7 +31,8 @@
 - [x] Queue every new Platform notification for selected Discord and email
       delivery, and remove the statement-import-only Discord sender.
 - [x] Added encrypted notification-email confirmation and email-category
-      controls in Account Notifications.
+      controls in Account Notifications, with a one-click email link and a
+      short-code fallback.
 - [x] Added the authenticated shared Discord/email delivery route with bounded
       queue processing and retry state.
 - [x] Retries use deterministic provider idempotency: Resend delivery keys and

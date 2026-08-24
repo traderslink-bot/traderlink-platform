@@ -19,6 +19,7 @@ import type { PlatformNotificationEmailEncryptionConfiguration } from "./platfor
 import {
   deliverPlatformNotificationEmail,
 } from "./platform-resend-notification-email";
+import { resolvePlatformNotificationPublicOrigin } from "./platform-remote-notification-delivery-contracts";
 import type { PlatformNotificationDeliveryResult } from "./platform-remote-notification-delivery-contracts";
 
 type EmailAddressState = "pending_confirmation" | "confirmed" | "superseded" | "disabled";
@@ -74,6 +75,17 @@ function confirmationTokenHash(input: Readonly<{
     `traderlink:notification-email-confirmation:v1\n${input.userId}\n${input.emailAddressRef}\n${input.code}`,
     "utf8",
   ).digest("hex");
+}
+
+function confirmationDestinationPath(input: Readonly<{
+  code: string;
+  emailAddressRef: string;
+}>): string {
+  const query = new URLSearchParams({
+    email: input.emailAddressRef,
+    token: input.code,
+  });
+  return `/api/platform/notification-email/confirm?${query.toString()}`;
 }
 
 function maskedEmailAddress(value: string): string {
@@ -209,10 +221,14 @@ WHERE user_id = ? AND state = 'pending_confirmation'`).run(
       );
     }).immediate();
 
+    const destinationPath = resolvePlatformNotificationPublicOrigin(process.env)
+      ? confirmationDestinationPath({ code, emailAddressRef })
+      : null;
     const delivery = await this.notificationEmailDelivery({
+      actionLabel: "Verify notification email",
       content: Object.freeze({
-        destinationPath: null,
-        summary: `Use this code to confirm your TradersLink notification email: ${code}`,
+        destinationPath,
+        summary: `Select Verify notification email to confirm this address. If the link does not open, enter this code in TradersLink: ${code}`,
         title: "Confirm your notification email",
       }),
       emailAddress: decryptPlatformNotificationEmailAddress({
@@ -256,18 +272,73 @@ WHERE user_id = ? AND state = 'pending_confirmation'`).run(
     if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) {
       return Object.freeze({ status: "invalid_or_expired" });
     }
+    return this.confirmPendingAddress({
+      confirmedAtUtc: input.confirmedAtUtc,
+      row,
+    });
+  }
+
+  /** Confirms an opaque email-link token without requiring an existing web session. */
+  confirmLink(input: Readonly<{
+    code: unknown;
+    confirmedAtUtc: string;
+    emailAddressRef: unknown;
+  }>): PlatformNotificationEmailConfirmationCodeResult {
+    assertCanonicalUtcTimestamp(input.confirmedAtUtc, "notificationEmailConfirmedAtUtc");
+    if (
+      typeof input.code !== "string" || !confirmationCodePattern.test(input.code) ||
+      typeof input.emailAddressRef !== "string"
+    ) {
+      return Object.freeze({ status: "invalid_or_expired" });
+    }
+    try {
+      assertCanonicalUuidV4(input.emailAddressRef, "notificationEmailAddressRef");
+    } catch {
+      return Object.freeze({ status: "invalid_or_expired" });
+    }
+    const row = this.database.prepare<[string], EmailAddressRow>(`SELECT
+  email_address_id, user_id, address_hash, key_version, initialization_vector,
+  ciphertext, authentication_tag, state, confirmation_token_sha256,
+  confirmation_expires_at_utc
+FROM platform_notification_email_addresses
+WHERE email_address_id = ?`).get(input.emailAddressRef) ?? null;
+    if (
+      !row || row.state !== "pending_confirmation" || !row.confirmation_token_sha256 ||
+      !row.confirmation_expires_at_utc || Date.parse(row.confirmation_expires_at_utc) < Date.parse(input.confirmedAtUtc)
+    ) {
+      return Object.freeze({ status: "invalid_or_expired" });
+    }
+    const actual = Buffer.from(row.confirmation_token_sha256, "hex");
+    const expected = Buffer.from(confirmationTokenHash({
+      code: input.code,
+      emailAddressRef: row.email_address_id,
+      userId: row.user_id,
+    }), "hex");
+    if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) {
+      return Object.freeze({ status: "invalid_or_expired" });
+    }
+    return this.confirmPendingAddress({
+      confirmedAtUtc: input.confirmedAtUtc,
+      row,
+    });
+  }
+
+  private confirmPendingAddress(input: Readonly<{
+    confirmedAtUtc: string;
+    row: EmailAddressRow;
+  }>): PlatformNotificationEmailConfirmationCodeResult {
     const result = this.database.transaction(() => {
       this.database.prepare(`UPDATE platform_notification_email_addresses
 SET state = 'superseded', updated_at_utc = ?
-WHERE user_id = ? AND state = 'confirmed'`).run(input.confirmedAtUtc, input.scope.userId);
+WHERE user_id = ? AND state = 'confirmed'`).run(input.confirmedAtUtc, input.row.user_id);
       return this.database.prepare(`UPDATE platform_notification_email_addresses
 SET state = 'confirmed', confirmation_token_sha256 = NULL,
     confirmation_expires_at_utc = NULL, confirmed_at_utc = ?, updated_at_utc = ?
 WHERE email_address_id = ? AND user_id = ? AND state = 'pending_confirmation'`).run(
         input.confirmedAtUtc,
         input.confirmedAtUtc,
-        row.email_address_id,
-        input.scope.userId,
+        input.row.email_address_id,
+        input.row.user_id,
       );
     })();
     return Object.freeze({ status: result.changes === 1 ? "confirmed" : "invalid_or_expired" });

@@ -34,12 +34,13 @@ function escapeHtml(value: string): string {
 }
 
 function emailHtml(input: Readonly<{
+  actionLabel: string;
   destinationUrl: string | null;
   summary: string;
   title: string;
 }>): string {
   const link = input.destinationUrl
-    ? `<p><a href="${escapeHtml(input.destinationUrl)}">Open TradersLink</a></p>`
+    ? `<p><a href="${escapeHtml(input.destinationUrl)}">${escapeHtml(input.actionLabel)}</a></p>`
     : "";
   return `<!doctype html><html><body><h1>${escapeHtml(input.title)}</h1><p>${escapeHtml(input.summary)}</p>${link}</body></html>`;
 }
@@ -56,6 +57,7 @@ function providerResult(response: Response): PlatformNotificationDeliveryResult 
  * key is owned by the durable delivery worker and prevents retry duplicates.
  */
 export async function deliverPlatformNotificationEmail(input: Readonly<{
+  actionLabel?: string;
   content: PlatformRemoteNotificationContent;
   emailAddress: string;
   environment?: NodeJS.ProcessEnv;
@@ -76,18 +78,22 @@ export async function deliverPlatformNotificationEmail(input: Readonly<{
     publicOrigin: resolvePlatformNotificationPublicOrigin(environment),
   });
   if (!content) return deliveryResult("invalid_destination");
+  const actionLabel = input.actionLabel?.trim() || "Open TradersLink";
+  if (actionLabel.length > 80 || /[\u0000-\u001f\u007f]/u.test(actionLabel)) {
+    return deliveryResult("invalid_destination");
+  }
 
   const text = [
     content.title,
     content.summary,
-    content.destinationUrl ? `Open TradersLink: ${content.destinationUrl}` : null,
+    content.destinationUrl ? `${actionLabel}: ${content.destinationUrl}` : null,
   ].filter((value): value is string => Boolean(value)).join("\n\n");
 
   try {
     const response = await (input.fetcher ?? fetch)(RESEND_EMAILS_API, {
       body: JSON.stringify({
         from: NOTIFICATION_FROM,
-        html: emailHtml(content),
+        html: emailHtml({ ...content, actionLabel }),
         reply_to: NOTIFICATION_REPLY_TO,
         subject: content.title,
         text,

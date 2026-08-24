@@ -305,7 +305,7 @@ export function NotificationPreferences({
         <Alert severity="success">Email confirmed{emailStatus.maskedEmailAddress ? `: ${emailStatus.maskedEmailAddress}` : "."}</Alert>
       ) : null}
       {emailStatus.state === "pending_confirmation" ? (
-        <Alert severity="info">Enter the confirmation code sent to your email.</Alert>
+        <Alert severity="info">Select Verify notification email in the email we sent you.</Alert>
       ) : null}
       {emailMessage ? <Alert severity={emailMessage.includes("saved") || emailMessage.includes("confirmed") || emailMessage.includes("sent") ? "success" : "error"}>{emailMessage}</Alert> : null}
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
@@ -318,20 +318,23 @@ export function NotificationPreferences({
           value={emailAddress}
         />
         <Button disabled={working || !emailAddress.trim()} onClick={requestEmailConfirmation} variant="outlined">
-          {working ? "Sending..." : "Send confirmation"}
+          {working ? "Sending..." : "Send verification email"}
         </Button>
       </Stack>
       {emailStatus.state === "pending_confirmation" ? (
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-          <TextField
-            label="Confirmation code"
-            onChange={(event) => setEmailConfirmationCode(event.target.value)}
-            size="small"
-            value={emailConfirmationCode}
-          />
-          <Button disabled={working || !emailConfirmationCode.trim()} onClick={confirmEmail} variant="contained">
-            {working ? "Checking..." : "Confirm email"}
-          </Button>
+        <Stack spacing={0.5}>
+          <Typography color="text.secondary" variant="body2">Can&apos;t open the link? Enter the code from the email instead.</Typography>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+            <TextField
+              label="Confirmation code"
+              onChange={(event) => setEmailConfirmationCode(event.target.value)}
+              size="small"
+              value={emailConfirmationCode}
+            />
+            <Button disabled={working || !emailConfirmationCode.trim()} onClick={confirmEmail} variant="contained">
+              {working ? "Checking..." : "Confirm email"}
+            </Button>
+          </Stack>
         </Stack>
       ) : null}
       <Stack spacing={0.25}>

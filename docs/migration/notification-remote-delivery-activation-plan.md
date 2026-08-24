@@ -28,7 +28,8 @@ dashboard record.
 - Store an account-owned notification email address separately from Discord
   identity and protect it from other users and ordinary Admin views. The
   address is confirmed from the same Account Notifications settings flow before
-  it can receive app notifications.
+  it can receive app notifications, primarily through a one-click opaque link
+  with a short-code fallback.
 - Use a durable delivery queue with bounded retry, success/failure state and a
   provider-safe error summary. Do not call Discord or Resend directly from an
   event writer.

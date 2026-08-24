@@ -122,8 +122,8 @@ export async function requestNotificationEmailConfirmation(
     })();
     revalidatePath("/account/preferences");
     return result.delivery.ok
-      ? Object.freeze({ ok: true as const, message: "Confirmation email sent." })
-      : Object.freeze({ ok: false as const, message: "The confirmation email could not be sent. Try again." });
+      ? Object.freeze({ ok: true as const, message: "Verification email sent." })
+      : Object.freeze({ ok: false as const, message: "The verification email could not be sent. Try again." });
   } catch (error) {
     const invalid = isTraderLinkPlatformError(error) &&
       error.code === "TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED" &&
