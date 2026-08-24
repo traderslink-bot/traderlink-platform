@@ -1,6 +1,6 @@
 # Journal Administration User Health Plan
 
-**Status:** Complete — deployed and hosted-health verified
+**Status:** Production correction in progress
 
 **Date:** 2026-08-24
 

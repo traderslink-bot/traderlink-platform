@@ -8,7 +8,6 @@ import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { JournalAdminUserService } from "@/src/modules/journal/server/administration/journal-admin-user-service";
 import { withJournalAdminPageDatabase } from "@/src/modules/platform/server/administration/require-journal-admin-page";
@@ -53,16 +52,16 @@ export default async function JournalAdminUsersPage({ searchParams }: { searchPa
         title="Users"
       />
       <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-        <Button component={Link} href="/admin/journal/users?view=new_academy_members" size="small" variant={selectedView === "new_academy_members" ? "contained" : "outlined"}>New Academy members</Button>
-        <Button component={Link} href="/admin/journal/users?view=getting_started" size="small" variant={selectedView === "getting_started" ? "contained" : "outlined"}>Getting started</Button>
-        <Button component={Link} href="/admin/journal/users?view=needs_attention" size="small" variant={selectedView === "needs_attention" ? "contained" : "outlined"}>Needs attention</Button>
-        {selectedView || filter || status ? <Button component={Link} href="/admin/journal/users" size="small" variant="text">Show all</Button> : null}
+        <Button href="/admin/journal/users?view=new_academy_members" size="small" variant={selectedView === "new_academy_members" ? "contained" : "outlined"}>New Academy members</Button>
+        <Button href="/admin/journal/users?view=getting_started" size="small" variant={selectedView === "getting_started" ? "contained" : "outlined"}>Getting started</Button>
+        <Button href="/admin/journal/users?view=needs_attention" size="small" variant={selectedView === "needs_attention" ? "contained" : "outlined"}>Needs attention</Button>
+        {selectedView || filter || status ? <Button href="/admin/journal/users" size="small" variant="text">Show all</Button> : null}
       </Stack>
       <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", rowGap: 0.75 }}>
-        <Button component={Link} href="/admin/journal/users?status=active" size="small" variant={status === "active" ? "contained" : "outlined"}>Enabled</Button>
-        <Button component={Link} href="/admin/journal/users?status=disabled" size="small" variant={status === "disabled" ? "contained" : "outlined"}>Disabled</Button>
+        <Button href="/admin/journal/users?status=active" size="small" variant={status === "active" ? "contained" : "outlined"}>Enabled</Button>
+        <Button href="/admin/journal/users?status=disabled" size="small" variant={status === "disabled" ? "contained" : "outlined"}>Disabled</Button>
         {filterOptions.map(([value, label]) => (
-          <Button component={Link} href={`/admin/journal/users?filter=${value}`} key={value} size="small" variant={filter === value ? "contained" : "outlined"}>{label}</Button>
+          <Button href={`/admin/journal/users?filter=${value}`} key={value} size="small" variant={filter === value ? "contained" : "outlined"}>{label}</Button>
         ))}
       </Stack>
       {users.items.length === 0 ? (

@@ -1,6 +1,6 @@
 # Journal Administration User Health Progress
 
-**Status:** Complete — deployed and hosted-health verified
+**Status:** Production correction in progress
 
 **Started:** 2026-08-24
 
@@ -65,6 +65,11 @@
       deployment plus `/api/platform/health`.
 
 ## Release record
+
+- 2026-08-24 correction: the deployed Users page passed a Next `Link`
+  component function through a server-rendered Material button, which produced
+  a private-page server error. The correction replaces those filter controls
+  with ordinary `href` buttons and is pending narrow release verification.
 
 - Release code tip: `1664f79497fefe590a52a3bd0030480b97411098`.
 - Guarded migration deployment: `a9de6d87-cc33-4d39-9948-b35881d0a47d`
