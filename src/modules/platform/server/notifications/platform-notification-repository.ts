@@ -12,7 +12,6 @@ import {
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { loadPlatformWebPushEncryptionConfiguration } from "./platform-web-push-configuration";
 import { PlatformWebPushRepository } from "./platform-web-push-repository";
-import { PlatformRemoteNotificationDeliveryRepository } from "./platform-remote-notification-delivery-repository";
 import {
   assertCanonicalUtcTimestamp,
   assertCanonicalUuidV4,
@@ -35,7 +34,6 @@ type NotificationRow = Readonly<{
 type PreferenceRow = Readonly<{
   category: string;
   discord_dm_enabled: number;
-  email_enabled: number;
   web_push_enabled: number;
 }>;
 
@@ -202,16 +200,6 @@ WHERE notification.workspace_id = ? AND notification.recipient_user_id = ?
     } catch {
       // In-app notifications remain authoritative when hosted Web Push is not configured.
     }
-    try {
-      new PlatformRemoteNotificationDeliveryRepository(this.database).enqueueNotification({
-        category,
-        notificationRef: notificationId,
-        occurredAtUtc: input.occurredAtUtc,
-        userId: input.scope.userId,
-      });
-    } catch {
-      // In-app notifications remain authoritative until the remote delivery migration is applied.
-    }
     return Object.freeze({
       category,
       destinationPath,
@@ -263,7 +251,7 @@ WHERE recipient_user_id = ? AND read_at_utc IS NULL
 
   readPreferences(scope: WorkspaceAccessScope): PlatformNotificationPreferences {
     this.assertActiveScope(scope);
-    const rows = this.database.prepare<[string], PreferenceRow>(`SELECT category, discord_dm_enabled, email_enabled, web_push_enabled
+    const rows = this.database.prepare<[string], PreferenceRow>(`SELECT category, discord_dm_enabled, web_push_enabled
 FROM platform_notification_delivery_preferences
 WHERE user_id = ?`).all(scope.userId);
     const enabled = new Set(rows
@@ -272,13 +260,9 @@ WHERE user_id = ?`).all(scope.userId);
     const webPushEnabled = new Set(rows
       .filter((row) => row.web_push_enabled === 1)
       .map((row) => parseCategory(row.category)));
-    const emailEnabled = new Set(rows
-      .filter((row) => row.email_enabled === 1)
-      .map((row) => parseCategory(row.category)));
     return Object.freeze({
       ...DEFAULT_PLATFORM_NOTIFICATION_PREFERENCES,
       discordDmCategories: Object.freeze(PLATFORM_NOTIFICATION_CATEGORIES.filter((category) => enabled.has(category))),
-      emailCategories: Object.freeze(PLATFORM_NOTIFICATION_CATEGORIES.filter((category) => emailEnabled.has(category))),
       webPushCategories: Object.freeze(PLATFORM_NOTIFICATION_CATEGORIES.filter((category) => webPushEnabled.has(category))),
     });
   }
@@ -309,7 +293,6 @@ ON CONFLICT(user_id, category) DO UPDATE SET
     save();
     return Object.freeze({
       discordDmCategories: Object.freeze(PLATFORM_NOTIFICATION_CATEGORIES.filter((category) => selected.has(category))),
-      emailCategories: this.readPreferences(input.scope).emailCategories,
       webPushCategories: this.readPreferences(input.scope).webPushCategories,
     });
   }
@@ -340,40 +323,7 @@ ON CONFLICT(user_id, category) DO UPDATE SET
     save();
     return Object.freeze({
       discordDmCategories: this.readPreferences(input.scope).discordDmCategories,
-      emailCategories: this.readPreferences(input.scope).emailCategories,
       webPushCategories: Object.freeze(PLATFORM_NOTIFICATION_CATEGORIES.filter((category) => selected.has(category))),
-    });
-  }
-
-  replaceEmailCategories(input: Readonly<{
-    categories: readonly unknown[];
-    scope: WorkspaceAccessScope;
-    updatedAtUtc: string;
-  }>): PlatformNotificationPreferences {
-    this.assertActiveScope(input.scope);
-    assertCanonicalUtcTimestamp(input.updatedAtUtc, "notificationPreferencesUpdatedAtUtc");
-    const selected = new Set(input.categories.map(parseCategory));
-    const save = this.database.transaction(() => {
-      for (const category of PLATFORM_NOTIFICATION_CATEGORIES) {
-        this.database.prepare(`INSERT INTO platform_notification_delivery_preferences (
-  user_id, category, discord_dm_enabled, web_push_enabled, email_enabled, updated_at_utc
-) VALUES (?, ?, 0, 0, ?, ?)
-ON CONFLICT(user_id, category) DO UPDATE SET
-  email_enabled = excluded.email_enabled,
-  updated_at_utc = excluded.updated_at_utc`).run(
-          input.scope.userId,
-          category,
-          selected.has(category) ? 1 : 0,
-          input.updatedAtUtc,
-        );
-      }
-    });
-    save();
-    const preferences = this.readPreferences(input.scope);
-    return Object.freeze({
-      discordDmCategories: preferences.discordDmCategories,
-      emailCategories: Object.freeze(PLATFORM_NOTIFICATION_CATEGORIES.filter((category) => selected.has(category))),
-      webPushCategories: preferences.webPushCategories,
     });
   }
 }

@@ -4,8 +4,6 @@ import { DashboardPanel } from "../../../dashboard-template";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
-import { loadPlatformNotificationEmailEncryptionConfiguration } from "@/src/modules/platform/server/notifications/platform-notification-email-configuration";
-import { PlatformNotificationEmailAddressRepository } from "@/src/modules/platform/server/notifications/platform-notification-email-address-repository";
 import { PressReleaseDashboardRepository } from "@/src/modules/news/server/press-release-dashboard-repository";
 import { AccountSettingsLayout } from "../account-settings-layout";
 import { NotificationPreferences } from "../notification-preferences";
@@ -20,23 +18,9 @@ export const revalidate = 0;
 
 export default async function AccountPreferencesPage() {
   const scope = await requireTraderLinkPlatformPageScope();
-  const { notificationPreferences, notificationEmailStatus, pressReleasePushChannels } = withReadonlyPlatformDatabase({}, (database) =>
+  const { notificationPreferences, pressReleasePushChannels } = withReadonlyPlatformDatabase({}, (database) =>
     Object.freeze({
       notificationPreferences: new PlatformNotificationRepository(database).readPreferences(scope),
-      notificationEmailStatus: (() => {
-        try {
-          return new PlatformNotificationEmailAddressRepository(
-            database,
-            loadPlatformNotificationEmailEncryptionConfiguration(),
-          ).readStatus(scope);
-        } catch {
-          return Object.freeze({
-            confirmationExpiresAtUtc: null,
-            maskedEmailAddress: null,
-            state: "none" as const,
-          });
-        }
-      })(),
       pressReleasePushChannels: new PressReleaseDashboardRepository(database).readPushPreferences(scope),
     }));
 
@@ -49,8 +33,6 @@ export default async function AccountPreferencesPage() {
       <DashboardPanel title="Notifications">
         <NotificationPreferences
           initialDiscordDmCategories={notificationPreferences.discordDmCategories}
-          initialEmailCategories={notificationPreferences.emailCategories}
-          initialEmailStatus={notificationEmailStatus}
           initialPressReleasePushChannels={pressReleasePushChannels}
           initialWebPushCategories={notificationPreferences.webPushCategories}
         />

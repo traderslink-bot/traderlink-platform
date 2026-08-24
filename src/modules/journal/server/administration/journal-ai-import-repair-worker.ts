@@ -16,6 +16,7 @@ import {
 import { resolvePlatformDatabaseConfig } from "@/src/modules/platform/server/database/platform-database-config";
 import { readJournalSupportSource, resolveJournalSupportSourceVault } from "./journal-support-source-vault";
 import { JournalAiImportRepairRepository } from "./journal-ai-import-repair-repository";
+import { sendDiscordStatementImportCompletion } from "@/src/modules/platform/server/notifications/platform-discord-direct-message";
 import { JournalImportAttemptRepository } from "./journal-import-attempt-repository";
 import { finishJournalImportPreview } from "./journal-import-attempt-service";
 
@@ -164,6 +165,12 @@ FROM journal_import_attempts WHERE import_attempt_id = ?`).get(claimed.importAtt
         sourceEventKey: `statement_ai_repair_completed_${claimed.job.repairJobId}`,
         title: "Statement import complete", summary: "AI finished configuring and importing your statement.",
       });
+      if (claimed.job.discordCompletionRequested) {
+        const identity = this.database.prepare<[string], { auth_subject: string }>(`SELECT auth_subject
+FROM platform_auth_identities
+WHERE user_id = ? AND auth_provider = 'discord' AND status = 'active'`).get(claimed.scope.userId);
+        if (identity) await sendDiscordStatementImportCompletion({ discordSubject: identity.auth_subject });
+      }
       return true;
     } catch (error) {
       const providerStatus = typeof error === "object" && error !== null &&
