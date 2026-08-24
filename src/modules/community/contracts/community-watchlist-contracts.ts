@@ -75,6 +75,7 @@ export type CommunityWatchlistDetail = Readonly<{
   authorTags: readonly string[];
   description: string;
   publishedAtUtc: string;
+  updatedAtUtc: string;
   symbolCount: number;
   tags: readonly string[];
   tickers: readonly Readonly<{

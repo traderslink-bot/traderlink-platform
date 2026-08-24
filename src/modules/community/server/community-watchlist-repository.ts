@@ -25,6 +25,7 @@ type WatchlistRow = Readonly<{
   tags_json: string;
   status: "draft" | "published";
   published_at_utc: string | null;
+  updated_at_utc: string;
   symbol_count: number;
   symbols: string | null;
 }>;
@@ -227,7 +228,7 @@ SET profile_tags_json = ?, updated_at_utc = ? WHERE user_id = ?`).run(
     assertCanonicalUuidV4(userId, "userId");
     const rows = this.database.prepare<[string], WatchlistRow>(`SELECT watchlist.watchlist_id, watchlist.slug, profile.handle,
   profile.profile_tags_json, watchlist.title, watchlist.description, watchlist.tags_json,
-  watchlist.status, watchlist.published_at_utc, COUNT(ticker.ticker_id) AS symbol_count,
+  watchlist.status, watchlist.published_at_utc, watchlist.updated_at_utc, COUNT(ticker.ticker_id) AS symbol_count,
   GROUP_CONCAT(ticker.symbol, ',') AS symbols
 FROM community_watchlists watchlist
 JOIN community_profiles profile ON profile.user_id = watchlist.owner_user_id
@@ -241,7 +242,7 @@ ORDER BY watchlist.updated_at_utc DESC`).all(userId);
   listShared(): readonly CommunityWatchlistSummary[] {
     const rows = this.database.prepare<[], WatchlistRow>(`SELECT watchlist.watchlist_id, watchlist.slug, profile.handle,
   profile.profile_tags_json, watchlist.title, watchlist.description, watchlist.tags_json,
-  watchlist.status, watchlist.published_at_utc, COUNT(ticker.ticker_id) AS symbol_count,
+  watchlist.status, watchlist.published_at_utc, watchlist.updated_at_utc, COUNT(ticker.ticker_id) AS symbol_count,
   GROUP_CONCAT(ticker.symbol, ',') AS symbols
 FROM community_watchlists watchlist
 JOIN community_profiles profile ON profile.user_id = watchlist.owner_user_id
@@ -263,7 +264,7 @@ FROM community_watchlist_tickers WHERE watchlist_id = ? ORDER BY ordinal`);
     if (!profile) return null;
     const rows = this.database.prepare<[string], WatchlistRow>(`SELECT watchlist.watchlist_id, watchlist.slug, profile.handle,
   profile.profile_tags_json, watchlist.title, watchlist.description, watchlist.tags_json,
-  watchlist.status, watchlist.published_at_utc, COUNT(ticker.ticker_id) AS symbol_count,
+  watchlist.status, watchlist.published_at_utc, watchlist.updated_at_utc, COUNT(ticker.ticker_id) AS symbol_count,
   GROUP_CONCAT(ticker.symbol, ',') AS symbols
 FROM community_watchlists watchlist
 JOIN community_profiles profile ON profile.user_id = watchlist.owner_user_id
@@ -278,7 +279,7 @@ GROUP BY watchlist.watchlist_id ORDER BY watchlist.published_at_utc DESC`).all(h
     assertLowercaseToken(watchlistSlug.replace(/-/gu, "_"), "watchlistSlug", 80);
     const row = this.database.prepare<[string, string], WatchlistRow>(`SELECT watchlist.watchlist_id, watchlist.slug, profile.handle,
   profile.profile_tags_json, watchlist.title, watchlist.description, watchlist.tags_json,
-  watchlist.status, watchlist.published_at_utc, COUNT(ticker.ticker_id) AS symbol_count,
+  watchlist.status, watchlist.published_at_utc, watchlist.updated_at_utc, COUNT(ticker.ticker_id) AS symbol_count,
   GROUP_CONCAT(ticker.symbol, ',') AS symbols
 FROM community_watchlists watchlist
 JOIN community_profiles profile ON profile.user_id = watchlist.owner_user_id
@@ -291,7 +292,8 @@ GROUP BY watchlist.watchlist_id`).get(handle, watchlistSlug);
 FROM community_watchlist_tickers WHERE watchlist_id = ? ORDER BY ordinal`).all(row.watchlist_id);
     return Object.freeze({
       authorHandle: row.handle, authorTags: parseTags(row.profile_tags_json), description: row.description,
-      publishedAtUtc: row.published_at_utc, symbolCount: row.symbol_count, tags: parseTags(row.tags_json), title: row.title,
+      publishedAtUtc: row.published_at_utc, updatedAtUtc: row.updated_at_utc,
+      symbolCount: row.symbol_count, tags: parseTags(row.tags_json), title: row.title,
       tickers: Object.freeze(tickers.map((ticker) => Object.freeze({
         symbol: ticker.symbol, tags: parseTags(ticker.tags_json), whyWatching: ticker.why_watching,
         plan: ticker.plan, personalTarget: ticker.personal_target, catalyst: ticker.catalyst,
@@ -308,6 +310,51 @@ FROM community_watchlist_tickers WHERE watchlist_id = ? ORDER BY ordinal`).all(r
 FROM community_watchlists watchlist
 JOIN community_profiles profile ON profile.user_id = watchlist.owner_user_id
 WHERE watchlist.owner_user_id = ? AND profile.handle = ? AND watchlist.slug = ? AND watchlist.status = 'published'`).get(userId, handle, watchlistSlug));
+  }
+
+  isFollowingPublished(userId: string, handle: string, watchlistSlug: string): boolean {
+    assertCanonicalUuidV4(userId, "userId");
+    assertLowercaseToken(handle.replace(/-/gu, "_"), "handle", 48);
+    assertLowercaseToken(watchlistSlug.replace(/-/gu, "_"), "watchlistSlug", 80);
+    return Boolean(this.database.prepare<[string, string, string], Readonly<{ watchlist_id: string }>>(`SELECT follow.watchlist_id
+FROM community_watchlist_follows follow
+JOIN community_watchlists watchlist ON watchlist.watchlist_id = follow.watchlist_id
+JOIN community_profiles profile ON profile.user_id = watchlist.owner_user_id
+WHERE follow.follower_user_id = ? AND profile.handle = ? AND watchlist.slug = ?
+  AND watchlist.status = 'published'`).get(userId, handle, watchlistSlug));
+  }
+
+  setPublishedFollow(input: Readonly<{
+    userId: string;
+    handle: string;
+    watchlistSlug: string;
+    following: boolean;
+    timestamp: string;
+  }>): void {
+    assertCanonicalUuidV4(input.userId, "userId");
+    assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
+    assertLowercaseToken(input.handle.replace(/-/gu, "_"), "handle", 48);
+    assertLowercaseToken(input.watchlistSlug.replace(/-/gu, "_"), "watchlistSlug", 80);
+    const write = () => {
+      const watchlist = this.database.prepare<[string, string], Readonly<{ watchlist_id: string }>>(`SELECT watchlist.watchlist_id
+FROM community_watchlists watchlist
+JOIN community_profiles profile ON profile.user_id = watchlist.owner_user_id
+WHERE profile.handle = ? AND watchlist.slug = ? AND watchlist.status = 'published'`).get(
+        input.handle,
+        input.watchlistSlug,
+      );
+      if (!watchlist) platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+      if (input.following) {
+        this.database.prepare(`INSERT OR IGNORE INTO community_watchlist_follows (
+  watchlist_follow_id, watchlist_id, follower_user_id, created_at_utc
+) VALUES (?, ?, ?, ?)`).run(createCanonicalUuidV4(), watchlist.watchlist_id, input.userId, input.timestamp);
+      } else {
+        this.database.prepare(`DELETE FROM community_watchlist_follows
+WHERE watchlist_id = ? AND follower_user_id = ?`).run(watchlist.watchlist_id, input.userId);
+      }
+    };
+    if (this.database.inTransaction) write();
+    else this.database.transaction(write).immediate();
   }
 
   replaceTickerSymbol(input: Readonly<{

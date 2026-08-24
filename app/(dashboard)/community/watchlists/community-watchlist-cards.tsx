@@ -19,8 +19,12 @@ import type {
   CommunityWatchlistSummary,
 } from "@/src/modules/community/contracts/community-watchlist-contracts";
 import { COMMUNITY_WATCHLIST_TAGS } from "@/src/modules/community/contracts/community-watchlist-contracts";
-import { DashboardPanel, DashboardSecondaryAction } from "../../../dashboard-template";
-import { replaceCommunityWatchlistTicker, updateCommunityWatchlistTickerTags } from "./community-watchlist-actions";
+import { DashboardPanel } from "../../../dashboard-template";
+import {
+  replaceCommunityWatchlistTicker,
+  setCommunityWatchlistFollow,
+  updateCommunityWatchlistTickerTags,
+} from "./community-watchlist-actions";
 
 export type CommunityTickerCompanyFacts = {
   country: string | null;
@@ -46,6 +50,17 @@ function avatarLetters(handle: string): string {
   return handle.replace(/[^a-z0-9]/giu, "").slice(0, 2).toUpperCase() || "TL";
 }
 
+function watchlistUpdateText(updatedAtUtc: string, mobile = false): string {
+  const updatedAt = Date.parse(updatedAtUtc);
+  const elapsedDays = Number.isNaN(updatedAt) ? 0 : Math.max(0, Math.floor((Date.now() - updatedAt) / 86_400_000));
+  const relative = elapsedDays === 0
+    ? "updated today"
+    : elapsedDays === 1
+      ? "updated yesterday"
+      : `updated ${elapsedDays} days ago`;
+  return mobile ? `Watchlist ${relative}` : `${relative.slice(0, 1).toUpperCase()}${relative.slice(1)}`;
+}
+
 export function CommunityWatchlistSummaryCard({ item }: { item: CommunityWatchlistSummary }) {
   return (
     <DashboardPanel
@@ -68,16 +83,21 @@ export function CommunityWatchlistCard({
   detail,
   tickerFacts,
   editable,
+  initiallyFollowing,
   initiallyExpanded = true,
   watchlistSlug,
 }: {
   detail: CommunityWatchlistDetail;
   tickerFacts: Readonly<Record<string, CommunityTickerCompanyFacts | null>>;
   editable: boolean;
+  initiallyFollowing: boolean;
   initiallyExpanded?: boolean;
   watchlistSlug: string;
 }) {
   const [expanded, setExpanded] = useState(initiallyExpanded);
+  const [following, setFollowing] = useState(initiallyFollowing);
+  const [followMessage, setFollowMessage] = useState<string | null>(null);
+  const [savingFollow, setSavingFollow] = useState(false);
   const toggle = () => setExpanded((current) => !current);
   const headerClick = (event: MouseEvent<HTMLElement>) => {
     if (!(event.target as HTMLElement).closest("a, button")) toggle();
@@ -95,17 +115,33 @@ export function CommunityWatchlistCard({
           <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", rowGap: 0.75 }}>
             <Typography component="h1" variant="h1">{detail.title}</Typography>
             <Chip label={`${detail.symbolCount} ${detail.symbolCount === 1 ? "symbol" : "symbols"}`} size="small" sx={{ bgcolor: "#edf3ff", color: "#082b73", fontWeight: 800 }} />
+            <Button disabled={savingFollow} onClick={async () => {
+              const nextFollowing = !following;
+              setSavingFollow(true);
+              setFollowMessage(null);
+              const result = await setCommunityWatchlistFollow({
+                handle: detail.authorHandle,
+                watchlistSlug,
+                following: nextFollowing,
+              });
+              setSavingFollow(false);
+              if (result.ok) setFollowing(nextFollowing);
+              else setFollowMessage(result.message);
+            }} size="small" sx={{ borderColor: "#082b73", borderRadius: "6px", fontSize: "0.74rem", fontWeight: 800, lineHeight: 1.1, minHeight: 28, px: 1, py: 0.3, textTransform: "none", whiteSpace: "nowrap" }} variant="outlined">{savingFollow ? "Saving..." : following ? "Unfollow Watchlist" : "Follow Watchlist"}</Button>
             <KeyboardArrowDownRoundedIcon aria-hidden="true" sx={{ color: "#082b73", fontSize: 23, transform: expanded ? "rotate(180deg)" : "none", transition: "transform 160ms ease" }} />
           </Stack>
           {detail.description ? <Typography color="text.secondary" sx={{ mt: 0.75 }} variant="body2">{detail.description}</Typography> : null}
+          {followMessage ? <Typography color="error" role="status" sx={{ display: "block", mt: 0.6 }} variant="caption">{followMessage}</Typography> : null}
         </Box>
         {detail.tags.length ? <Stack direction="row" spacing={0.65} sx={{ alignItems: "flex-start", flexWrap: "wrap", rowGap: 0.65 }}>{detail.tags.map((tag, index) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: index % 2 ? "#e9f7ef" : "#edf3ff", color: index % 2 ? "#14663c" : "#082b73", fontWeight: 700 }} />)}</Stack> : null}
       </Stack>
-      <Stack spacing={0.65} sx={{ alignItems: "center", alignSelf: { xs: "stretch", lg: "start" }, boxShadow: "inset 3px 0 0 #082b73", minWidth: 0, p: { xs: 1.25, sm: 1.5 }, textAlign: "center" }}>
+      <Stack spacing={0.65} sx={{ alignItems: "center", alignSelf: { xs: "stretch", lg: "stretch" }, boxShadow: "inset 3px 0 0 #082b73", minWidth: 0, p: { xs: 1.25, sm: 1.5 }, textAlign: "center" }}>
         <Avatar sx={{ bgcolor: "#102b69", fontWeight: 850, height: 48, width: 48 }}>{avatarLetters(detail.authorHandle)}</Avatar>
         <Typography noWrap sx={{ fontSize: "0.78rem", fontWeight: 850, maxWidth: "100%" }}>@{detail.authorHandle}</Typography>
         <Link href={`/community/${detail.authorHandle}`} style={{ color: "#082b73", fontSize: "0.75rem", fontWeight: 800, textDecoration: "none" }}>View profile</Link>
+        <Typography color="text.secondary" sx={{ alignSelf: "flex-end", display: { xs: "none", lg: "block" }, fontSize: "0.72rem", fontWeight: 750, mt: "auto", whiteSpace: "nowrap" }} variant="caption">{watchlistUpdateText(detail.updatedAtUtc)}</Typography>
       </Stack>
+      <Typography color="text.secondary" sx={{ display: { xs: "block", lg: "none" }, fontSize: "0.72rem", fontWeight: 750, gridColumn: "1 / -1", px: { xs: 1.75, sm: 2.25 }, pb: 1.25, textAlign: "right" }} variant="caption">{watchlistUpdateText(detail.updatedAtUtc, true)}</Typography>
     </Box>
     {expanded ? <Box sx={{ p: { xs: 1.75, sm: 2.25 } }}><CommunityWatchlistTickerBoard detail={detail} editable={editable} tickerFacts={tickerFacts} watchlistSlug={watchlistSlug} /></Box> : null}
   </Paper>;

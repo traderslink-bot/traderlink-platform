@@ -22,6 +22,7 @@ import { dailyTradeYahooAnalyzerMigration } from "@/src/modules/level-analysis/s
 import { academyProgressMigration } from "@/src/modules/academy/server/database/migrations/0013_academy_progress";
 import { watchlistStorageMigration } from "@/src/modules/watchlist/server/database/migrations/0014_watchlist_storage";
 import { communityWatchlistsMigration } from "@/src/modules/community/server/database/migrations/0076_community_watchlists";
+import { communityWatchlistFollowsMigration } from "@/src/modules/community/server/database/migrations/0082_community_watchlist_follows";
 import { newsContentMigration } from "@/src/modules/news/server/database/migrations/0015_news_content";
 import { newsPressReleaseDashboardMigration } from "@/src/modules/news/server/database/migrations/0070_news_press_release_dashboard";
 import { newsMarketHaltAlertsMigration } from "@/src/modules/news/server/database/migrations/0072_news_market_halt_alerts";
@@ -411,7 +412,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/platform/server/database/migrations/0080_platform_market_news_notifications.ts",
       migration: platformMarketNewsNotificationsMigration,
     }),
-  ]);
+    Object.freeze({
+      sourcePath: "src/modules/community/server/database/migrations/0082_community_watchlist_follows.ts",
+      migration: communityWatchlistFollowsMigration,
+    }),  ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
   platformMigrationFileEntries.map((entry) => entry.migration),
@@ -737,6 +741,9 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "news_week_ahead_issue_versions",
     ]),
     "0080_platform_market_news_notifications": Object.freeze([]),
+    "0082_community_watchlist_follows": Object.freeze([
+      "community_watchlist_follows",
+    ]),
   });
 
 export function expectedPlatformTableNamesForPrefix(

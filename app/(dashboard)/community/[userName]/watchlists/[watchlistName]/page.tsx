@@ -33,6 +33,9 @@ export default async function CommunityWatchlistDetailPage({
   const editable = withReadonlyPlatformDatabase({}, (database) =>
     new CommunityWatchlistRepository(database).ownsPublished(scope.userId, userName, watchlistName),
   );
+  const following = withReadonlyPlatformDatabase({}, (database) =>
+    new CommunityWatchlistRepository(database).isFollowingPublished(scope.userId, userName, watchlistName),
+  );
   const tickerFacts = Object.fromEntries(await Promise.all(detail.tickers.map(async (ticker) => {
     const profile = await getFinnhubCompanyProfile(ticker.symbol);
     const facts: CommunityTickerCompanyFacts | null = profile ? {
@@ -46,7 +49,7 @@ export default async function CommunityWatchlistDetailPage({
   return (
     <DashboardPage>
       <Stack spacing={1.75} sx={{ maxWidth: 790 }}>
-        <CommunityWatchlistCard detail={detail} editable={editable} tickerFacts={tickerFacts} watchlistSlug={watchlistName} />
+        <CommunityWatchlistCard detail={detail} editable={editable} initiallyFollowing={following} tickerFacts={tickerFacts} watchlistSlug={watchlistName} />
       </Stack>
     </DashboardPage>
   );

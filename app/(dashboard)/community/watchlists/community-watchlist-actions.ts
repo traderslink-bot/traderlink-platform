@@ -126,6 +126,42 @@ export async function createCommunityWatchlist(
   }
 }
 
+export async function setCommunityWatchlistFollow(input: Readonly<{
+  handle: string;
+  watchlistSlug: string;
+  following: boolean;
+}>): Promise<CommunityWatchlistActionResult> {
+  try {
+    const scope = await requireTraderLinkPlatformPageScope();
+    withPlatformDatabase({ mode: "runtime" }, (database) =>
+      new CommunityWatchlistRepository(database).setPublishedFollow({
+        ...input,
+        userId: scope.userId,
+        timestamp: createCanonicalUtcTimestamp(),
+      }),
+    );
+    const href = `/community/${input.handle}/watchlists/${input.watchlistSlug}`;
+    revalidatePath(href);
+    revalidatePath("/community/watchlists", "layout");
+    return Object.freeze({
+      ok: true as const,
+      href,
+      message: input.following ? "You are following this watchlist." : "You stopped following this watchlist.",
+    });
+  } catch (error) {
+    const accessChanged = isTraderLinkPlatformError(error) && [
+      "TRADERLINK_AUTH_SESSION_INVALID",
+      "TRADERLINK_WORKSPACE_ACCESS_DENIED",
+    ].includes(error.code);
+    return Object.freeze({
+      ok: false as const,
+      message: accessChanged
+        ? "Your sign-in changed. Refresh this page and try again."
+        : "This watchlist could not be updated. Try again.",
+    });
+  }
+}
+
 export async function replaceCommunityWatchlistTicker(input: Readonly<{
   handle: string;
   watchlistSlug: string;

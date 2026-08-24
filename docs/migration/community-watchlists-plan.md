@@ -185,8 +185,9 @@ in this initial slice.
 
 The following are intentionally outside the first release:
 
-1. Following, mutual connections, direct messages, open comments and live
-   chat.
+1. Profile following, mutual connections, direct messages, open comments and
+   live chat. Watchlist following is now an approved, separate engagement
+   slice; it does not imply following the watchlist owner.
 2. Broad people discovery at `/community`.
 3. Trading-group membership, group pages and group-created lists.
 4. Reactions, saves/remixes, alerts and notification subscriptions.

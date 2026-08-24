@@ -4,6 +4,8 @@
 
 **Controlling plan:** [Community Watchlists Plan](community-watchlists-plan.md)
 
+**Follow slice:** [Community Watchlist Follows Plan](community-watchlist-follows-plan.md)
+
 ## Current checkpoint
 
 The owner approved the dashboard-native direction and then authorized the
@@ -35,6 +37,13 @@ rendered as visible copy.
 The direct card is a reusable client component. Its compact header toggles the
 full light-blue ticker board while the direct route starts expanded; later
 collection pages can use the same component with a collapsed default.
+
+Watchlist follows are now an owner-authorized implementation slice. The compact
+card will store a watcher relationship and offer Follow Watchlist / Unfollow
+Watchlist beside the title, with a real last-updated status. The relationship
+is deliberately separate from later profile following. Ticker-add/remove
+notifications remain deferred until the owner ticker editor supplies those
+real events.
 
 Desktop ticker cards keep their fixed outer width. Industry has a hard 150px
 cell before M/C and O/S, giving room for about 20 characters without changing
