@@ -72,7 +72,7 @@ export default async function JournalAdminUsersPage({ searchParams }: { searchPa
         <Stack spacing={1.25} sx={{ display: { md: "none" } }}>
           {users.items.map((user) => (
             <Box key={user.userRef} sx={{ border: 1, borderColor: "divider", borderRadius: 2, p: 1.5 }}>
-              <Stack alignItems="flex-start" direction="row" justifyContent="space-between" spacing={1}>
+              <Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", justifyContent: "space-between" }}>
                 <Box><strong>{user.displayName}</strong><br /><Chip label={user.status === "active" ? "Enabled" : "Disabled"} color={user.status === "active" ? "success" : "error"} size="small" variant="outlined" /></Box>
                 <Box sx={{ textAlign: "right" }}>{user.needsAttention.length === 0 ? "No attention needed" : user.needsAttention[0]!.replaceAll("_", " ")}<br /><UserDetailButton userRef={user.userRef} /></Box>
               </Stack>
