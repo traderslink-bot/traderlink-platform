@@ -716,7 +716,7 @@ export function RulesClient({
         action={currentRuleIdea?.disposition === "saved_for_later"
           ? <Chip label="Saved for later" size="small" variant="outlined" />
           : undefined}
-        title="Rule idea"
+        title="Rule Discovery"
       >
         {currentRuleIdea && currentRuleIdeaTemplate ? (
           <Stack spacing={2}>
@@ -782,7 +782,7 @@ export function RulesClient({
               </Alert>
             ) : (
               <Typography color="text.secondary">
-                Check your completed Day trades for a repeated, well-supported pattern that matches an available preset rule.
+                If your account has enough trade data we can check your day trades for repeated, well-supported patterns that match an available TradersLink preset rule.
               </Typography>
             )}
             <Button
