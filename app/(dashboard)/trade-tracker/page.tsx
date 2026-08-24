@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import NextLink from "next/link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
@@ -82,7 +81,7 @@ export default async function TradeTrackerPage({
         <Typography color="error.main" sx={{ fontWeight: 700 }} variant="body2">
           You need a data connection if you want your trades analyzed and a chart trade replay.
         </Typography>
-        <DashboardPrimaryAction component={NextLink} href="/account/trading" size="small">
+        <DashboardPrimaryAction href="/account/trading" size="small">
           Connect Data
         </DashboardPrimaryAction>
       </Stack>
