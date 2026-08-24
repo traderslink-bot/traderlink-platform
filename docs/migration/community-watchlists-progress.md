@@ -24,19 +24,17 @@ The desktop board deliberately becomes a compact two-column fact card on
 mobile, keeping all four facts visible. It has not yet received owner visual
 acceptance.
 
-The direct-list header now separates the title/description from its
-watchlist-tag row, without a redundant visible "Watchlist tags" label. Its profile detail is inset in the same card's top-right
-corner on desktop; the full card uses the former watchlist-column width, with
-no extra profile rail beside it.
-Header separation relies on spacing and the profile's soft background rather
-than visible divider lines.
+The direct-list header now uses the approved three-zone arrangement: title and
+description at left, vertically stacked watchlist tags beside them, and a
+minimal profile at the far top-right. The profile shows only avatar, handle
+and View profile, in that order; its blue left edge moves with the entire
+compact profile column. "Watchlist tags" is not rendered as visible copy.
+The ticker fact labels sit below the description and align with the light-blue
+ticker rows beneath the header.
 
-The attached profile is now a deliberately wide, short ID-card treatment in
-the watchlist header: avatar, Trader label, handle, selectable profile tags
-and View profile form one compact 360px card anchored to the header's right
-edge. Its blue edge moves with the entire card. It remains inside the existing
-790px watchlist width rather than restoring a separate profile rail. Its
-background matches the surrounding watchlist surface.
+The direct card is a reusable client component. Its compact header toggles the
+full light-blue ticker board while the direct route starts expanded; later
+collection pages can use the same component with a collapsed default.
 
 Desktop ticker cards keep their fixed outer width. Industry has a hard 150px
 cell before M/C and O/S, giving room for about 20 characters without changing

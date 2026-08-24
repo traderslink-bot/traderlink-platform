@@ -2,22 +2,24 @@
 
 import LaunchRoundedIcon from "@mui/icons-material/LaunchRounded";
 import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
+import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
+import Paper from "@mui/material/Paper";
 import TextField from "@mui/material/TextField";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { type KeyboardEvent, type MouseEvent, useState } from "react";
 
 import type {
   CommunityWatchlistDetail,
   CommunityWatchlistSummary,
 } from "@/src/modules/community/contracts/community-watchlist-contracts";
 import { COMMUNITY_WATCHLIST_TAGS } from "@/src/modules/community/contracts/community-watchlist-contracts";
-import { DashboardPanel } from "../../../dashboard-template";
+import { DashboardPanel, DashboardSecondaryAction } from "../../../dashboard-template";
 import { replaceCommunityWatchlistTicker, updateCommunityWatchlistTickerTags } from "./community-watchlist-actions";
 
 export type CommunityTickerCompanyFacts = {
@@ -27,12 +29,21 @@ export type CommunityTickerCompanyFacts = {
   sharesOutstanding: string | null;
 };
 
+const communityWatchlistFactColumns = {
+  xs: "repeat(2, minmax(0, 1fr))",
+  sm: "124px 62px 150px 76px 78px minmax(0, 1fr)",
+};
+
 function tags(values: readonly string[]) {
   return values.map((tag) => <Chip key={tag} label={tag} size="small" variant="outlined" />);
 }
 
 function sameTags(left: readonly string[], right: readonly string[]): boolean {
   return left.length === right.length && left.every((tag, index) => tag === right[index]);
+}
+
+function avatarLetters(handle: string): string {
+  return handle.replace(/[^a-z0-9]/giu, "").slice(0, 2).toUpperCase() || "TL";
 }
 
 export function CommunityWatchlistSummaryCard({ item }: { item: CommunityWatchlistSummary }) {
@@ -53,15 +64,73 @@ export function CommunityWatchlistSummaryCard({ item }: { item: CommunityWatchli
   );
 }
 
-export function CommunityWatchlistTickerBoard({
+export function CommunityWatchlistCard({
   detail,
   tickerFacts,
   editable,
+  initiallyExpanded = true,
   watchlistSlug,
 }: {
   detail: CommunityWatchlistDetail;
   tickerFacts: Readonly<Record<string, CommunityTickerCompanyFacts | null>>;
   editable: boolean;
+  initiallyExpanded?: boolean;
+  watchlistSlug: string;
+}) {
+  const [expanded, setExpanded] = useState(initiallyExpanded);
+  const toggle = () => setExpanded((current) => !current);
+  const headerClick = (event: MouseEvent<HTMLElement>) => {
+    if (!(event.target as HTMLElement).closest("a, button")) toggle();
+  };
+  const headerKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if ((event.key === "Enter" || event.key === " ") && !(event.target as HTMLElement).closest("a, button")) {
+      event.preventDefault();
+      toggle();
+    }
+  };
+  return <Paper elevation={0} sx={{ border: 0, borderRadius: 2.5, overflow: "hidden" }}>
+    <Box aria-expanded={expanded} onClick={headerClick} onKeyDown={headerKeyDown} role="button" sx={{ cursor: "pointer", display: "grid", gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1fr) 112px" } }} tabIndex={0}>
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1fr) 148px" }, minWidth: 0 }}>
+        <Stack spacing={1.5} sx={{ minWidth: 0, p: { xs: 1.75, sm: 2.25 } }}>
+          <Box sx={{ minWidth: 0 }}>
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", rowGap: 0.75 }}>
+              <Typography component="h1" variant="h1">{detail.title}</Typography>
+              <Chip label={`${detail.symbolCount} ${detail.symbolCount === 1 ? "symbol" : "symbols"}`} size="small" sx={{ bgcolor: "#edf3ff", color: "#082b73", fontWeight: 800 }} />
+              <KeyboardArrowDownRoundedIcon aria-hidden="true" sx={{ color: "#082b73", fontSize: 23, transform: expanded ? "rotate(180deg)" : "none", transition: "transform 160ms ease" }} />
+            </Stack>
+            {detail.description ? <Typography color="text.secondary" sx={{ mt: 0.75 }} variant="body2">{detail.description}</Typography> : null}
+          </Box>
+        </Stack>
+        <Stack spacing={0.65} sx={{ alignItems: "flex-start", minWidth: 0, p: { xs: 1.5, sm: 1.75 } }}>
+          {detail.tags.map((tag, index) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: index % 2 ? "#e9f7ef" : "#edf3ff", color: index % 2 ? "#14663c" : "#082b73", fontWeight: 700 }} />)}
+        </Stack>
+        <Box aria-hidden="true" sx={{ columnGap: 0.65, display: { xs: "none", sm: "grid" }, gridColumn: "1 / -1", gridTemplateColumns: communityWatchlistFactColumns.sm, justifyItems: "start", pb: 1.75, px: { xs: 1.75, sm: 2.25 } }}>
+          <Box />
+          {["Ctry", "Ind.", "M/C", "O/S"].map((label) => <Typography color="text.secondary" key={label} sx={{ fontSize: "0.72rem", fontWeight: 900, letterSpacing: ".03em" }}>{label}</Typography>)}
+          <Box />
+        </Box>
+      </Box>
+      <Stack spacing={0.65} sx={{ alignItems: "center", alignSelf: { xs: "stretch", lg: "start" }, boxShadow: "inset 3px 0 0 #082b73", minWidth: 0, p: { xs: 1.25, sm: 1.5 }, textAlign: "center" }}>
+        <Avatar sx={{ bgcolor: "#102b69", fontWeight: 850, height: 48, width: 48 }}>{avatarLetters(detail.authorHandle)}</Avatar>
+        <Typography noWrap sx={{ fontSize: "0.78rem", fontWeight: 850, maxWidth: "100%" }}>@{detail.authorHandle}</Typography>
+        <Link href={`/community/${detail.authorHandle}`} style={{ color: "#082b73", fontSize: "0.75rem", fontWeight: 800, textDecoration: "none" }}>View profile</Link>
+      </Stack>
+    </Box>
+    {expanded ? <Box sx={{ p: { xs: 1.75, sm: 2.25 } }}><CommunityWatchlistTickerBoard detail={detail} editable={editable} showFactLabels={false} tickerFacts={tickerFacts} watchlistSlug={watchlistSlug} /></Box> : null}
+  </Paper>;
+}
+
+export function CommunityWatchlistTickerBoard({
+  detail,
+  tickerFacts,
+  editable,
+  showFactLabels = true,
+  watchlistSlug,
+}: {
+  detail: CommunityWatchlistDetail;
+  tickerFacts: Readonly<Record<string, CommunityTickerCompanyFacts | null>>;
+  editable: boolean;
+  showFactLabels?: boolean;
   watchlistSlug: string;
 }) {
   const [selectedSymbol, setSelectedSymbol] = useState(detail.tickers[0]?.symbol ?? "");
@@ -72,11 +141,6 @@ export function CommunityWatchlistTickerBoard({
   const [savingTicker, setSavingTicker] = useState(false);
   const router = useRouter();
 
-  const factColumns = {
-    xs: "repeat(2, minmax(0, 1fr))",
-    sm: "124px 62px 150px 76px 78px minmax(0, 1fr)",
-  };
-
   function addCustomTickerTag(symbol: string, selectedTags: readonly string[]): void {
     const tag = newTickerTag.trim().replace(/\s+/gu, " ");
     if (!tag || selectedTags.length >= 4 || selectedTags.some((item) => item.localeCompare(tag, undefined, { sensitivity: "accent" }) === 0)) return;
@@ -85,11 +149,11 @@ export function CommunityWatchlistTickerBoard({
   }
 
   return <Stack spacing={1.25}>
-    <Box aria-hidden="true" sx={{ border: 1, borderColor: "transparent", boxSizing: "border-box", columnGap: 0.65, display: { xs: "none", sm: "grid" }, gridTemplateColumns: factColumns.sm, justifyItems: "start", px: 1.5 }}>
+    {showFactLabels ? <Box aria-hidden="true" sx={{ border: 1, borderColor: "transparent", boxSizing: "border-box", columnGap: 0.65, display: { xs: "none", sm: "grid" }, gridTemplateColumns: communityWatchlistFactColumns.sm, justifyItems: "start", px: 1.5 }}>
       <Box />
       {['Ctry', 'Ind.', 'M/C', 'O/S'].map((label) => <Typography color="text.secondary" key={label} sx={{ fontSize: "0.72rem", fontWeight: 900, letterSpacing: ".03em" }}>{label}</Typography>)}
       <Box />
-    </Box>
+    </Box> : null}
     <Stack spacing={0.7}>
       {detail.tickers.map((ticker) => {
         const active = ticker.symbol === selectedSymbol;
@@ -108,7 +172,7 @@ export function CommunityWatchlistTickerBoard({
           { label: "Catalyst", value: [ticker.catalyst, ticker.catalystDate].filter(Boolean).join(ticker.catalyst && ticker.catalystDate ? " · " : "") },
         ].filter((fact) => Boolean(fact.value));
         return <Box key={ticker.symbol}>
-          <Button aria-expanded={active} onClick={() => setSelectedSymbol((current) => current === ticker.symbol ? "" : ticker.symbol)} sx={{ alignItems: "center", bgcolor: "#edf4ff", border: 1, borderColor: active ? "#9fbee9" : "#d5e3fb", borderRadius: 1.75, boxShadow: "inset 3px 0 0 #082b73", boxSizing: "border-box", color: "text.primary", columnGap: { xs: 0.75, sm: 0.65 }, display: "grid", gridTemplateColumns: factColumns, justifyItems: "start", minHeight: { xs: 78, sm: 58 }, px: { xs: 1.25, sm: 1.5 }, py: { xs: 1, sm: 0.85 }, textAlign: "left", textTransform: "none", width: "100%", "&:hover": { bgcolor: "#e7f0ff" } }} variant="text">
+          <Button aria-expanded={active} onClick={() => setSelectedSymbol((current) => current === ticker.symbol ? "" : ticker.symbol)} sx={{ alignItems: "center", bgcolor: "#edf4ff", border: 1, borderColor: active ? "#9fbee9" : "#d5e3fb", borderRadius: 1.75, boxShadow: "inset 3px 0 0 #082b73", boxSizing: "border-box", color: "text.primary", columnGap: { xs: 0.75, sm: 0.65 }, display: "grid", gridTemplateColumns: communityWatchlistFactColumns, justifyItems: "start", minHeight: { xs: 78, sm: 58 }, px: { xs: 1.25, sm: 1.5 }, py: { xs: 1, sm: 0.85 }, textAlign: "left", textTransform: "none", width: "100%", "&:hover": { bgcolor: "#e7f0ff" } }} variant="text">
             <Stack spacing={0.45} sx={{ gridColumn: { xs: "1 / -1", sm: "auto" }, minWidth: 0 }}>
               <Stack direction="row" spacing={0.55} sx={{ alignItems: "center" }}>
                 <Typography sx={{ color: "#082b73", fontSize: "1rem", fontWeight: 900, letterSpacing: ".01em", lineHeight: 1.1 }}>{ticker.symbol}</Typography>
