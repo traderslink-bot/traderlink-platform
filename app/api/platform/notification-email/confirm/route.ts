@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
+import { resolvePlatformPublicOrigin } from "@/src/modules/platform/server/authentication/platform-public-origin";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { createCanonicalUtcTimestamp } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { loadPlatformNotificationEmailEncryptionConfiguration } from "@/src/modules/platform/server/notifications/platform-notification-email-configuration";
@@ -8,8 +9,8 @@ import { PlatformNotificationEmailAddressRepository } from "@/src/modules/platfo
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-function redirectToPreferences(request: Request, status: "confirmed" | "invalid"): NextResponse {
-  const destination = new URL("/account/preferences", request.url);
+function redirectToPreferences(request: NextRequest, status: "confirmed" | "invalid"): NextResponse {
+  const destination = new URL("/account/preferences", resolvePlatformPublicOrigin(request));
   destination.searchParams.set("emailConfirmation", status);
   return NextResponse.redirect(destination, 303);
 }
@@ -19,9 +20,9 @@ function redirectToPreferences(request: Request, status: "confirmed" | "invalid"
  * confirmation email. This endpoint intentionally has no session requirement
  * so opening the link on a different device still confirms that address.
  */
-export function GET(request: Request): NextResponse {
+export function GET(request: NextRequest): NextResponse {
   try {
-    const searchParams = new URL(request.url).searchParams;
+    const searchParams = request.nextUrl.searchParams;
     const result = withPlatformDatabase(
       { mode: "runtime" },
       (database) => new PlatformNotificationEmailAddressRepository(
