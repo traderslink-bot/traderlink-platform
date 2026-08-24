@@ -19,6 +19,7 @@ export type PlatformNotificationCategory =
 export const PLATFORM_NOTIFICATION_DELIVERY_CHANNELS = [
   "in_app",
   "discord_dm",
+  "email",
   "web_push",
 ] as const;
 
@@ -59,11 +60,13 @@ export type PlatformNotification = Readonly<{
 /** Delivery preferences are opt-in per remote channel; in-app is always kept. */
 export type PlatformNotificationPreferences = Readonly<{
   discordDmCategories: readonly PlatformNotificationCategory[];
+  emailCategories: readonly PlatformNotificationCategory[];
   webPushCategories: readonly PlatformNotificationCategory[];
 }>;
 
 export const DEFAULT_PLATFORM_NOTIFICATION_PREFERENCES: PlatformNotificationPreferences =
   Object.freeze({
-    discordDmCategories: Object.freeze([]),
-    webPushCategories: Object.freeze([]),
+  discordDmCategories: Object.freeze([]),
+  emailCategories: Object.freeze([]),
+  webPushCategories: Object.freeze([]),
   });

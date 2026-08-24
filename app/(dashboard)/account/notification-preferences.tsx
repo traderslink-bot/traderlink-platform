@@ -6,6 +6,7 @@ import Checkbox from "@mui/material/Checkbox";
 import Divider from "@mui/material/Divider";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useEffect, useState, useTransition } from "react";
 
@@ -23,6 +24,9 @@ import {
 } from "@/src/modules/platform/client/pwa/platform-web-push";
 import {
   saveDiscordDmNotificationCategories,
+  confirmNotificationEmailAddress,
+  requestNotificationEmailConfirmation,
+  saveEmailNotificationCategories,
   savePressReleasePushChannels,
   saveWebPushNotificationCategories,
 } from "./notification-preferences-actions";
@@ -71,18 +75,31 @@ function runsAsInstalledApp(): boolean {
 
 export function NotificationPreferences({
   initialDiscordDmCategories,
+  initialEmailCategories,
+  initialEmailStatus,
   initialPressReleasePushChannels,
   initialWebPushCategories,
 }: {
   initialDiscordDmCategories: readonly PlatformNotificationCategory[];
+  initialEmailCategories: readonly PlatformNotificationCategory[];
+  initialEmailStatus: Readonly<{
+    confirmationExpiresAtUtc: string | null;
+    maskedEmailAddress: string | null;
+    state: "none" | "pending_confirmation" | "confirmed";
+  }>;
   initialPressReleasePushChannels: readonly PressReleasePushChannel[];
   initialWebPushCategories: readonly PlatformNotificationCategory[];
 }) {
   const [selected, setSelected] = useState<readonly PlatformNotificationCategory[]>(initialDiscordDmCategories);
+  const [emailSelected, setEmailSelected] = useState<readonly PlatformNotificationCategory[]>(initialEmailCategories);
   const [pushSelected, setPushSelected] = useState<readonly PlatformNotificationCategory[]>(initialWebPushCategories);
   const [pressReleasePushSelected, setPressReleasePushSelected] = useState<readonly PressReleasePushChannel[]>(initialPressReleasePushChannels);
   const [pushState, setPushState] = useState<PlatformWebPushBrowserState>("checking");
   const [discordMessage, setDiscordMessage] = useState<string | null>(null);
+  const [emailAddress, setEmailAddress] = useState("");
+  const [emailConfirmationCode, setEmailConfirmationCode] = useState("");
+  const [emailMessage, setEmailMessage] = useState<string | null>(null);
+  const [emailStatus, setEmailStatus] = useState(initialEmailStatus);
   const [pushMessage, setPushMessage] = useState<string | null>(null);
   const [pushPreparation, setPushPreparation] = useState<PreparedPlatformWebPush | null>(null);
   const [pushServiceUnavailable, setPushServiceUnavailable] = useState(false);
@@ -123,6 +140,12 @@ export function NotificationPreferences({
       : current.filter((value) => value !== category));
   }
 
+  function toggleEmail(category: PlatformNotificationCategory, checked: boolean): void {
+    setEmailSelected((current) => checked
+      ? Object.freeze([...current, category].filter((value, index, values) => values.indexOf(value) === index))
+      : current.filter((value) => value !== category));
+  }
+
   function togglePressReleasePush(channel: PressReleasePushChannel, checked: boolean): void {
     setPressReleasePushSelected((current) => checked
       ? Object.freeze([...current, channel].filter((value, index, values) => values.indexOf(value) === index))
@@ -131,6 +154,10 @@ export function NotificationPreferences({
 
   function toggleAllDiscord(checked: boolean): void {
     setSelected(checked ? PLATFORM_NOTIFICATION_CATEGORIES : Object.freeze([]));
+  }
+
+  function toggleAllEmail(checked: boolean): void {
+    setEmailSelected(checked ? PLATFORM_NOTIFICATION_CATEGORIES : Object.freeze([]));
   }
 
   function toggleAllPush(checked: boolean): void {
@@ -168,6 +195,44 @@ export function NotificationPreferences({
         const nextState = await readPlatformWebPushBrowserState().catch(() => "off" as const);
         setPushState(nextState);
         setPushMessage(error instanceof Error ? error.message : "Push notifications could not be enabled.");
+      }
+    });
+  }
+
+  function requestEmailConfirmation(): void {
+    startTransition(async () => {
+      const result = await requestNotificationEmailConfirmation(emailAddress);
+      setEmailMessage(result.message);
+      if (result.ok) {
+        setEmailStatus({
+          confirmationExpiresAtUtc: null,
+          maskedEmailAddress: null,
+          state: "pending_confirmation",
+        });
+        setEmailConfirmationCode("");
+      }
+    });
+  }
+
+  function confirmEmail(): void {
+    startTransition(async () => {
+      const result = await confirmNotificationEmailAddress(emailConfirmationCode);
+      setEmailMessage(result.message);
+      if (result.ok) {
+        setEmailStatus({ confirmationExpiresAtUtc: null, maskedEmailAddress: null, state: "confirmed" });
+        setEmailConfirmationCode("");
+      }
+    });
+  }
+
+  function saveEmail(): void {
+    startTransition(async () => {
+      const result = await saveEmailNotificationCategories(emailSelected);
+      if (result.ok) {
+        setEmailSelected(result.categories as readonly PlatformNotificationCategory[]);
+        setEmailMessage("Email notification preferences saved.");
+      } else {
+        setEmailMessage(result.message);
       }
     });
   }
@@ -230,6 +295,60 @@ export function NotificationPreferences({
       </Stack>
       <Button disabled={working} onClick={save} sx={{ alignSelf: "flex-start" }} variant="contained">
         {working ? "Saving..." : "Save Preferences"}
+      </Button>
+      <Divider />
+      <Typography sx={{ fontWeight: 800 }} variant="subtitle2">Email notifications</Typography>
+      <Typography color="text.secondary" variant="body2">
+        Choose an email address and the updates you want delivered there.
+      </Typography>
+      {emailStatus.state === "confirmed" ? (
+        <Alert severity="success">Email confirmed{emailStatus.maskedEmailAddress ? `: ${emailStatus.maskedEmailAddress}` : "."}</Alert>
+      ) : null}
+      {emailStatus.state === "pending_confirmation" ? (
+        <Alert severity="info">Enter the confirmation code sent to your email.</Alert>
+      ) : null}
+      {emailMessage ? <Alert severity={emailMessage.includes("saved") || emailMessage.includes("confirmed") || emailMessage.includes("sent") ? "success" : "error"}>{emailMessage}</Alert> : null}
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+        <TextField
+          autoComplete="email"
+          label="Email address"
+          onChange={(event) => setEmailAddress(event.target.value)}
+          size="small"
+          type="email"
+          value={emailAddress}
+        />
+        <Button disabled={working || !emailAddress.trim()} onClick={requestEmailConfirmation} variant="outlined">
+          {working ? "Sending..." : "Send confirmation"}
+        </Button>
+      </Stack>
+      {emailStatus.state === "pending_confirmation" ? (
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+          <TextField
+            label="Confirmation code"
+            onChange={(event) => setEmailConfirmationCode(event.target.value)}
+            size="small"
+            value={emailConfirmationCode}
+          />
+          <Button disabled={working || !emailConfirmationCode.trim()} onClick={confirmEmail} variant="contained">
+            {working ? "Checking..." : "Confirm email"}
+          </Button>
+        </Stack>
+      ) : null}
+      <Stack spacing={0.25}>
+        <FormControlLabel
+          control={<Checkbox checked={emailSelected.length === PLATFORM_NOTIFICATION_CATEGORIES.length} indeterminate={emailSelected.length > 0 && emailSelected.length < PLATFORM_NOTIFICATION_CATEGORIES.length} onChange={(event) => toggleAllEmail(event.target.checked)} />}
+          label="Select all"
+        />
+        {PLATFORM_NOTIFICATION_CATEGORIES.map((category) => (
+          <FormControlLabel
+            control={<Checkbox checked={emailSelected.includes(category)} onChange={(event) => toggleEmail(category, event.target.checked)} />}
+            key={`email-${category}`}
+            label={labels[category]}
+          />
+        ))}
+      </Stack>
+      <Button disabled={working} onClick={saveEmail} sx={{ alignSelf: "flex-start" }} variant="contained">
+        {working ? "Saving..." : "Save Email Preferences"}
       </Button>
       <Divider />
       <Typography

@@ -175,14 +175,25 @@ export const NOTIFICATIONS_AND_IMPORTS_HELP_GUIDES: readonly HelpGuide[] = Objec
           Object.freeze({ kind: "callout", title: "Discord is optional", text: "Every update still appears in the Notifications page. Turning a Discord category off does not hide it from TraderLink." }),
         ]),
       }),
+    ]),
+  }),
+  Object.freeze({
+    slug: "email-notifications",
+    title: "Email notifications",
+    description: "Choose which TradersLink updates you would like by email.",
+    sections: Object.freeze([
       Object.freeze({
-        id: "statement-completion-message",
-        title: "Ask for a message when a statement is ready",
-        summary: "Choose an extra one-time message while asking TraderLink to review an unsupported statement.",
-        keywords: Object.freeze(["statement ready", "import complete", "one-time", "AI review", "Discord message"]),
+        id: "choose-email-updates",
+        title: "Choose your email updates",
+        summary: "Add your email in Account Notifications and select the categories you want.",
+        keywords: Object.freeze(["email", "confirmation code", "Account Notifications", "broker imports", "AI Reviews"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "When a statement needs extra review, you can select Send me a Discord DM when this import is complete. This is optional and applies to that statement import." }),
-          Object.freeze({ kind: "paragraph", text: "The message lets you know the import is ready or needs your attention. It does not include statement details, broker account numbers or trade values." }),
+          Object.freeze({ kind: "steps", items: Object.freeze([
+            Object.freeze({ title: "1. Open Account Notifications", text: "Select Account in the top bar, then choose Notifications." }),
+            Object.freeze({ title: "2. Add your email", text: "Enter the email address you want to use and select Send confirmation." }),
+            Object.freeze({ title: "3. Confirm and choose updates", text: "Enter the confirmation code, select the updates you want, then save your email preferences." }),
+          ]) }),
+          Object.freeze({ kind: "callout", title: "Email is optional", text: "Every update still appears in the Notifications page. Turning an email category off does not hide it from TradersLink." }),
         ]),
       }),
     ]),

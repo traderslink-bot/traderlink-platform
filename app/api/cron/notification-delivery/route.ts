@@ -1,12 +1,8 @@
 import { timingSafeEqual } from "node:crypto";
 
 import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
-import { loadPlatformWebPushConfiguration } from "@/src/modules/platform/server/notifications/platform-web-push-configuration";
-import { PlatformWebPushDeliveryService } from "@/src/modules/platform/server/notifications/platform-web-push-delivery-service";
-import { PlatformWebPushRepository } from "@/src/modules/platform/server/notifications/platform-web-push-repository";
 import { PlatformRemoteNotificationDeliveryRepository } from "@/src/modules/platform/server/notifications/platform-remote-notification-delivery-repository";
 import { PlatformRemoteNotificationDeliveryService } from "@/src/modules/platform/server/notifications/platform-remote-notification-delivery-service";
-import { MarketHaltWebPushRepository } from "@/src/modules/news/server/market-halt-web-push-repository";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,22 +22,10 @@ export async function GET(request: Request): Promise<Response> {
   if (!authorized(request)) return Response.json({ ok: false }, { status: 401 });
   const database = openPlatformDatabase({ mode: "runtime" });
   try {
-    const configuration = loadPlatformWebPushConfiguration();
-    const platformProcessed = await new PlatformWebPushDeliveryService(
-      new PlatformWebPushRepository(database, configuration.encryption),
-      configuration,
-    ).runOne();
-    const marketHaltProcessed = await new PlatformWebPushDeliveryService(
-      new MarketHaltWebPushRepository(database, configuration.encryption),
-      configuration,
-    ).runOne();
-    const remoteProcessed = await new PlatformRemoteNotificationDeliveryService(
+    const processed = await new PlatformRemoteNotificationDeliveryService(
       new PlatformRemoteNotificationDeliveryRepository(database),
-    ).runOne();
-    return Response.json({
-      ok: true,
-      processed: platformProcessed || marketHaltProcessed || remoteProcessed,
-    });
+    ).runAvailable(20);
+    return Response.json({ ok: true, processed });
   } catch {
     return Response.json({ ok: false }, { status: 503 });
   } finally {
