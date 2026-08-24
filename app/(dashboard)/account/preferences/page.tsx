@@ -11,8 +11,8 @@ import { AccountSettingsLayout } from "../account-settings-layout";
 import { NotificationPreferences } from "../notification-preferences";
 
 export const metadata: Metadata = {
-  description: "Choose TraderLink push notifications and Discord messages.",
-  title: "Notifications | TraderLink Platform",
+  description: "Choose TradersLink push notifications and Discord messages.",
+  title: "Notifications | TradersLink Platform",
 };
 
 export const dynamic = "force-dynamic";
@@ -39,15 +39,23 @@ export default async function AccountPreferencesPage() {
       })(),
       pressReleasePushChannels: new PressReleaseDashboardRepository(database).readPushPreferences(scope),
     }));
+  const preferencesKey = JSON.stringify({
+    discord: notificationPreferences.discordDmCategories,
+    email: notificationPreferences.emailCategories,
+    emailState: notificationEmailStatus.state,
+    pressRelease: pressReleasePushChannels,
+    push: notificationPreferences.webPushCategories,
+  });
 
   return (
     <AccountSettingsLayout
       activeSection="preferences"
-      description="Choose which updates TraderLink may send to your devices or through Discord."
+      description="Choose which updates TradersLink may send to your devices or through Discord."
       title="Notifications"
     >
       <DashboardPanel title="Notifications">
         <NotificationPreferences
+          key={preferencesKey}
           initialDiscordDmCategories={notificationPreferences.discordDmCategories}
           initialEmailCategories={notificationPreferences.emailCategories}
           initialEmailStatus={notificationEmailStatus}
