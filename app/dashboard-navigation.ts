@@ -245,8 +245,8 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
       label: "Market News",
       icon: "newspaper" as const,
       items: Object.freeze([
-        Object.freeze({ href: "/press-releases/news-filtered", label: "News Scanner", icon: "newspaper" as const }),
         Object.freeze({ href: "/market-news/week-ahead", label: "The Week Ahead", icon: "newspaper" as const }),
+        Object.freeze({ href: "/press-releases/news-filtered", label: "News Scanner", icon: "newspaper" as const }),
         Object.freeze({ href: "/press-releases/market-cap/under-30m", label: "Under $30M", icon: "newspaper" as const }),
         Object.freeze({ href: "/press-releases/market-cap/30m-50m", label: "$30M-$50M", icon: "newspaper" as const }),
         Object.freeze({ href: "/press-releases/market-cap/50m-100m", label: "$50M-$100M", icon: "newspaper" as const }),
