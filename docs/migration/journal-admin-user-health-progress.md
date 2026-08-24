@@ -1,6 +1,6 @@
 # Journal Administration User Health Progress
 
-**Status:** Implementation complete — Railway release coordination pending
+**Status:** Complete — deployed and hosted-health verified
 
 **Started:** 2026-08-24
 
@@ -56,10 +56,21 @@
 
 ## User Health 5 — Owner review and acceptance
 
-**Status:** Release coordination pending
+**Status:** Complete
 
 - [x] Complete focused one-worker user-service and account-control verification.
 - [x] Complete scoped TypeScript, lint and whitespace checks.
 - [x] Complete responsive desktop/table and narrow-screen/card implementation.
-- [ ] Confirm the Railway release slot, publish the narrow commit and verify
+- [x] Confirm the Railway release slot, publish the narrow commit and verify
       deployment plus `/api/platform/health`.
+
+## Release record
+
+- Release code tip: `1664f79497fefe590a52a3bd0030480b97411098`.
+- Guarded migration deployment: `a9de6d87-cc33-4d39-9948-b35881d0a47d`
+  succeeded after applying exactly
+  `0084_platform_broker_connection_attempts` with the existing hosted
+  backup-and-restore verification path.
+- The one-time maintenance flags were removed immediately after the migration.
+- Public verification: `/api/platform/health` returned
+  `{ status: "ready", migrationCount: 83, storage: "sqlite_single_node" }`.

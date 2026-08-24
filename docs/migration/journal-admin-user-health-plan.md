@@ -1,8 +1,17 @@
 # Journal Administration User Health Plan
 
-**Status:** Implementation complete — narrow release coordination pending
+**Status:** Complete — deployed and hosted-health verified
 
 **Date:** 2026-08-24
+
+**Release record:** Code release `1664f79497fefe590a52a3bd0030480b97411098`
+completed the narrow release chain from hotfix parent
+`a40c7db3d70f686772fb49e1bfd61d065c1d7307`. Railway deployment
+`a9de6d87-cc33-4d39-9948-b35881d0a47d` applied only
+`0084_platform_broker_connection_attempts` through the guarded hosted
+backup-and-migration path, then verified
+`{ status: "ready", migrationCount: 83, storage: "sqlite_single_node" }`
+at `/api/platform/health`.
 
 **Progress tracker:** [Journal Administration User Health Progress](journal-admin-user-health-progress.md)
 
