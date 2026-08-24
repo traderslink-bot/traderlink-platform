@@ -76,6 +76,7 @@ import { platformDashboardMemberAccessMigration } from "./migrations/0077_platfo
 import { platformSessionClientLabelsMigration } from "./migrations/0078_platform_session_client_labels";
 import { platformMarketNewsNotificationsMigration } from "./migrations/0080_platform_market_news_notifications";
 import { platformNotificationRemoteDeliveryMigration } from "./migrations/0083_platform_notification_remote_delivery";
+import { platformBrokerConnectionAttemptsMigration } from "./migrations/0084_platform_broker_connection_attempts";
 import { dailyTradeMoomooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer";
 import { dailyTradeExactTurnoverMigration } from "@/src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover";
 import { dailyTradePathMaterializationMigration } from "@/src/modules/level-analysis/server/database/migrations/0040_daily_trade_path_materialization";
@@ -421,6 +422,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/platform/server/database/migrations/0083_platform_notification_remote_delivery.ts",
       migration: platformNotificationRemoteDeliveryMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0084_platform_broker_connection_attempts.ts",
+      migration: platformBrokerConnectionAttemptsMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -753,6 +758,10 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     "0083_platform_notification_remote_delivery": Object.freeze([
       "platform_notification_email_addresses",
       "platform_notification_remote_deliveries",
+    ]),
+    "0084_platform_broker_connection_attempts": Object.freeze([
+      "platform_broker_connection_attempts",
+      "platform_user_control_audit_events",
     ]),
   });
 

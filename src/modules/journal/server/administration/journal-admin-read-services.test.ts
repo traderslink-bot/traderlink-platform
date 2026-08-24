@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -21,6 +21,7 @@ import { JournalAdminImportService } from "./journal-admin-import-service";
 import { JournalAdminOverviewService } from "./journal-admin-overview-service";
 import { createJournalAdminReadContext } from "./journal-admin-read-helpers";
 import { JournalAdminUserService } from "./journal-admin-user-service";
+import { JournalAdminUserControlService } from "./journal-admin-user-control-service";
 import { JournalStatementFormatService } from "./journal-statement-format-service";
 
 const roots: string[] = [];
@@ -208,5 +209,44 @@ describe("Journal Administration read services", () => {
     } finally {
       database.close();
     }
-  });
+  }, 20_000);
+
+  it("disables another user without changing Journal facts and records the control", () => {
+    const { database, adminScope } = setup();
+    try {
+      const targetUserId = randomUUID();
+      database.prepare(`INSERT INTO platform_users (
+        user_id, auth_provider, auth_subject, display_name, status, created_at_utc, updated_at_utc
+      ) VALUES (?, 'discord', '987654321098765431', 'Academy member', 'active', ?, ?)`)
+        .run(targetUserId, NOW, NOW);
+      const userService = new JournalAdminUserService({
+        database, scope: adminScope, configuration, now: new Date(NOW),
+      });
+      const target = userService.list().items.find((user) => user.displayName === "Academy member");
+      expect(target).toMatchObject({ journalStarted: false, status: "active" });
+      const result = new JournalAdminUserControlService({
+        database, scope: adminScope, configuration, now: new Date(NOW),
+      }).execute({
+        userRef: target!.userRef,
+        action: "disable",
+        confirmation: "DISABLE USER",
+        reasonCode: "owner_support_review",
+        correlationRefSha256: "d".repeat(64),
+      });
+      expect(result).toEqual({ status: "disabled", revokedSessionCount: 0 });
+      expect(new JournalAdminUserControlService({
+        database, scope: adminScope, configuration, now: new Date(NOW),
+      }).execute({
+        userRef: target!.userRef,
+        action: "disable",
+        confirmation: "DISABLE USER",
+        reasonCode: "owner_support_review",
+        correlationRefSha256: "d".repeat(64),
+      })).toEqual(result);
+      expect(database.prepare<[string], { status: string }>("SELECT status FROM platform_users WHERE user_id = ?").get(targetUserId)?.status).toBe("disabled");
+      expect(database.prepare<[], { count: number }>("SELECT COUNT(*) AS count FROM platform_user_control_audit_events WHERE action = 'disable'").get()?.count).toBe(1);
+    } finally {
+      database.close();
+    }
+  }, 20_000);
 });

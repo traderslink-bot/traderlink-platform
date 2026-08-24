@@ -84,12 +84,26 @@ export type JournalAdminUserListItem = Readonly<{
   authenticationProviders: readonly string[];
   productionRegistered: boolean;
   lastSuccessfulAuthenticationAtUtc: string | null;
+  firstSuccessfulAuthenticationAtUtc: string | null;
+  lastSessionAtUtc: string | null;
+  onlineNow: boolean;
   lastJournalActivityAtUtc: string | null;
+  journalStarted: boolean;
+  academyCompletionCount: number;
+  latestAcademyCompletionAtUtc: string | null;
   activeJournalAccountCount: number;
   archivedJournalAccountCount: number;
   committedImportCount: number;
+  failedImportCount: number;
+  pendingImportCount: number;
+  duplicateImportCount: number;
+  latestFailedImportAtUtc: string | null;
   lastImportOutcome: string | null;
   manualExecutionCount: number;
+  brokerStatus: "connected" | "attention_required" | "disconnected" | "statement_source" | "none";
+  brokerSourceCount: number;
+  latestBrokerConnectionAttemptAtUtc: string | null;
+  needsAttention: readonly ("broker_connection" | "recent_import_failure" | "pending_decision" | "getting_started")[];
   tradeStylePlanCount: number;
   swingNoteCount: number;
   hasAnalyticsReadyRoundTrip: boolean;
@@ -102,6 +116,19 @@ export type JournalAdminUserDetail = Readonly<{
   user: JournalAdminUserListItem;
   sessionCount: number;
   activeSessionCount: number;
+  recentImportAttempts: readonly Readonly<{
+    occurredAtUtc: string;
+    brokerLabel: string | null;
+    outcome: string;
+    reason: string;
+    nextStep: string;
+  }>[];
+  recentBrokerConnectionAttempts: readonly Readonly<{
+    occurredAtUtc: string;
+    outcome: "connected" | "failed" | "cancelled";
+    reason: string;
+    nextStep: string | null;
+  }>[];
   accounts: readonly Readonly<{
     accountRef: string;
     displayName: string;

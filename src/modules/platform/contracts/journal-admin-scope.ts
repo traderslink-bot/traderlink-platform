@@ -2,6 +2,7 @@ export type JournalAdminPermission =
   | "read_operations"
   | "read_user_details"
   | "read_import_details"
+  | "manage_users"
   | "manage_statement_formats"
   | "export_developer_packages"
   | "download_consented_sources";
@@ -20,6 +21,7 @@ export const JOURNAL_ADMIN_PERMISSIONS: readonly JournalAdminPermission[] =
     "read_operations",
     "read_user_details",
     "read_import_details",
+    "manage_users",
     "manage_statement_formats",
     "export_developer_packages",
     "download_consented_sources",
