@@ -75,6 +75,7 @@ import { platformWebPushMigration } from "./migrations/0064_platform_web_push";
 import { platformDashboardMemberAccessMigration } from "./migrations/0077_platform_dashboard_member_access";
 import { platformSessionClientLabelsMigration } from "./migrations/0078_platform_session_client_labels";
 import { platformMarketNewsNotificationsMigration } from "./migrations/0080_platform_market_news_notifications";
+import { platformNotificationRemoteDeliveryMigration } from "./migrations/0083_platform_notification_remote_delivery";
 import { dailyTradeMoomooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer";
 import { dailyTradeExactTurnoverMigration } from "@/src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover";
 import { dailyTradePathMaterializationMigration } from "@/src/modules/level-analysis/server/database/migrations/0040_daily_trade_path_materialization";
@@ -415,7 +416,12 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/community/server/database/migrations/0082_community_watchlist_follows.ts",
       migration: communityWatchlistFollowsMigration,
-    }),  ]);
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0083_platform_notification_remote_delivery.ts",
+      migration: platformNotificationRemoteDeliveryMigration,
+    }),
+  ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
   platformMigrationFileEntries.map((entry) => entry.migration),
@@ -743,6 +749,10 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     "0080_platform_market_news_notifications": Object.freeze([]),
     "0082_community_watchlist_follows": Object.freeze([
       "community_watchlist_follows",
+    ]),
+    "0083_platform_notification_remote_delivery": Object.freeze([
+      "platform_notification_email_addresses",
+      "platform_notification_remote_deliveries",
     ]),
   });
 
