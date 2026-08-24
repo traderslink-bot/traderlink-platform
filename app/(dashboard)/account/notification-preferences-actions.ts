@@ -6,6 +6,7 @@ import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/serve
 import { openPlatformDatabase, withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import {
   createCanonicalUtcTimestamp,
+  createCanonicalUuidV4,
   isTraderLinkPlatformError,
 } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
@@ -79,13 +80,25 @@ export async function saveEmailNotificationCategories(
     const scope = await requireTraderLinkPlatformPageScope();
     const preferences = withPlatformDatabase(
       { mode: "runtime" },
-      (database) => new PlatformNotificationRepository(database)
-        .replaceEmailCategories({
+      (database) => {
+        const emailStatus = new PlatformNotificationEmailAddressRepository(
+          database,
+          loadPlatformNotificationEmailEncryptionConfiguration(),
+        ).readStatus(scope);
+        if (emailStatus.state !== "confirmed") return null;
+        return new PlatformNotificationRepository(database).replaceEmailCategories({
           categories,
           scope,
           updatedAtUtc: createCanonicalUtcTimestamp(),
-        }),
+        });
+      },
     );
+    if (!preferences) {
+      return Object.freeze({
+        ok: false as const,
+        message: "Confirm an email address before saving email notification choices.",
+      });
+    }
     revalidatePath("/account/preferences");
     return Object.freeze({ ok: true as const, categories: preferences.emailCategories });
   } catch (error) {
@@ -96,6 +109,59 @@ export async function saveEmailNotificationCategories(
       message: invalid
         ? "Choose notifications from the available categories."
         : "Your email notification choices could not be saved. Try again.",
+    });
+  }
+}
+
+/** Queues one privacy-safe delivery proof for the signed-in user's own selected channels. */
+export async function sendNotificationDeliveryTest(): Promise<
+  Readonly<{ ok: true; message: string }> | Readonly<{ ok: false; message: string }>
+> {
+  try {
+    const scope = await requireTraderLinkPlatformPageScope();
+    const sent = withPlatformDatabase(
+      { mode: "runtime" },
+      (database) => {
+        const notifications = new PlatformNotificationRepository(database);
+        const preferences = notifications.readPreferences(scope);
+        const testCategory = "chart_update" as const;
+        const emailStatus = new PlatformNotificationEmailAddressRepository(
+          database,
+          loadPlatformNotificationEmailEncryptionConfiguration(),
+        ).readStatus(scope);
+        const discordSelected = preferences.discordDmCategories.includes(testCategory);
+        const emailSelected = preferences.emailCategories.includes(testCategory) && emailStatus.state === "confirmed";
+        if (!discordSelected && !emailSelected) return false;
+        notifications.create({
+          category: testCategory,
+          destinationPath: "/account/preferences",
+          journalAccountId: null,
+          kind: "chart_update_ready",
+          occurredAtUtc: createCanonicalUtcTimestamp(),
+          scope,
+          sourceEventKey: `notification_test_${createCanonicalUuidV4()}`,
+          summary: "This is a private test of your selected notification delivery channels.",
+          title: "Notification test",
+        });
+        return true;
+      },
+    );
+    if (!sent) {
+      return Object.freeze({
+        ok: false as const,
+        message: "Select Chart updates for Discord or confirm an email address and select Chart updates for email before sending a test.",
+      });
+    }
+    revalidatePath("/account/preferences");
+    revalidatePath("/notifications");
+    return Object.freeze({
+      ok: true as const,
+      message: "Test notification queued for your selected Discord and email channels.",
+    });
+  } catch {
+    return Object.freeze({
+      ok: false as const,
+      message: "The test notification could not be queued. Try again.",
     });
   }
 }

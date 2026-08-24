@@ -29,6 +29,7 @@ import {
   saveEmailNotificationCategories,
   savePressReleasePushChannels,
   saveWebPushNotificationCategories,
+  sendNotificationDeliveryTest,
 } from "./notification-preferences-actions";
 import {
   PRESS_RELEASE_PUSH_CHANNELS,
@@ -100,6 +101,7 @@ export function NotificationPreferences({
   const [emailConfirmationCode, setEmailConfirmationCode] = useState("");
   const [emailMessage, setEmailMessage] = useState<string | null>(null);
   const [emailStatus, setEmailStatus] = useState(initialEmailStatus);
+  const [deliveryTestMessage, setDeliveryTestMessage] = useState<string | null>(null);
   const [pushMessage, setPushMessage] = useState<string | null>(null);
   const [pushPreparation, setPushPreparation] = useState<PreparedPlatformWebPush | null>(null);
   const [pushServiceUnavailable, setPushServiceUnavailable] = useState(false);
@@ -237,6 +239,13 @@ export function NotificationPreferences({
     });
   }
 
+  function sendDeliveryTest(): void {
+    startTransition(async () => {
+      const result = await sendNotificationDeliveryTest();
+      setDeliveryTestMessage(result.message);
+    });
+  }
+
   function disablePush(): void {
     startTransition(async () => {
       try {
@@ -352,6 +361,15 @@ export function NotificationPreferences({
       </Stack>
       <Button disabled={working} onClick={saveEmail} sx={{ alignSelf: "flex-start" }} variant="contained">
         {working ? "Saving..." : "Save Email Preferences"}
+      </Button>
+      <Divider />
+      <Typography sx={{ fontWeight: 800 }} variant="subtitle2">Test notification delivery</Typography>
+      <Typography color="text.secondary" variant="body2">
+        Send a private test only to your selected Discord and email channels for Chart updates.
+      </Typography>
+      {deliveryTestMessage ? <Alert severity={deliveryTestMessage.startsWith("Test notification queued") ? "success" : "error"}>{deliveryTestMessage}</Alert> : null}
+      <Button disabled={working} onClick={sendDeliveryTest} sx={{ alignSelf: "flex-start" }} variant="outlined">
+        {working ? "Sending..." : "Send test notification"}
       </Button>
       <Divider />
       <Typography

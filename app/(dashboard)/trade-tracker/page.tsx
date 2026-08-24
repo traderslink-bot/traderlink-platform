@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import NextLink from "next/link";
+import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
@@ -10,6 +12,7 @@ import {
 } from "@/src/modules/journal/contracts/journal-daily-tracker-offline-view-contracts";
 import {
   DashboardPage,
+  DashboardPrimaryAction,
 } from "../../dashboard-template";
 import {
   currentJournalAccountSelectionRef,
@@ -28,7 +31,7 @@ import { TradeTrackerUnsavedChangesProvider } from "./trade-tracker-unsaved-chan
 
 export const metadata: Metadata = {
   description: "Enter and review the current trading week's Trade Tracker executions.",
-  title: "Daily Trade Tracker | TraderLink Platform",
+  title: "Daily Trade Tracker | TradersLink Platform",
 };
 
 export const dynamic = "force-dynamic";
@@ -74,14 +77,24 @@ export default async function TradeTrackerPage({
         date: currentDate,
       });
   const topContent = (
-    <ManualExecutionEntry
-      accountCurrency={account?.baseCurrency ?? data?.currency ?? "USD"}
-      accountTimezone={accountTimezone}
-      defaultSessionDate={currentDate}
-      expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
-      key="manual-execution-entry"
-      offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
-    />
+    <>
+      <Stack spacing={0.75} sx={{ alignItems: "flex-start", maxWidth: 900, mt: 1 }}>
+        <Typography color="error.main" sx={{ fontWeight: 700 }} variant="body2">
+          You need a data connection if you want your trades analyzed and a chart trade replay.
+        </Typography>
+        <DashboardPrimaryAction component={NextLink} href="/account/trading" size="small">
+          Connect Data
+        </DashboardPrimaryAction>
+      </Stack>
+      <ManualExecutionEntry
+        accountCurrency={account?.baseCurrency ?? data?.currency ?? "USD"}
+        accountTimezone={accountTimezone}
+        defaultSessionDate={currentDate}
+        expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
+        key="manual-execution-entry"
+        offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
+      />
+    </>
   );
   if (data) {
     const generatedAtUtc = new Date().toISOString();
