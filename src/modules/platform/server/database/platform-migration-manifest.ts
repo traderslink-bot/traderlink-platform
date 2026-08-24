@@ -767,9 +767,9 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     "0084_platform_broker_connection_attempts": Object.freeze([
       "platform_broker_connection_attempts",
       "platform_user_control_audit_events",
+    ]),
     "0085_journal_manual_entry_failures": Object.freeze([
       "journal_manual_entry_failures",
-    ]),
     ]),
   });
 
