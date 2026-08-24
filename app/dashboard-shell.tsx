@@ -610,12 +610,19 @@ export function DashboardShell({
                       }}
                     >
                       {group.items.map((item) => isDashboardNavigationItem(item) ? (
+                        <Box component="li" key={item.href} sx={{ listStyle: "none" }}>
+                          {!compact && item.href === "/press-releases/market-cap/under-30m" ? (
+                            <Box sx={{ pb: 0.25, pl: 1.5, pr: 1.5, pt: 1.25 }}>
+                              <Typography color="text.secondary" variant="caption">
+                                Daily PR sorted by market cap
+                              </Typography>
+                            </Box>
+                          ) : null}
                         <NavigationLink
                           collapsed={compact}
                           grouped
                           offline={offline}
                           item={item}
-                          key={item.href}
                           onNavigate={closeMobile}
                           onOpenAiChat={openAiChat}
                           pathname={pathname}
@@ -624,6 +631,7 @@ export function DashboardShell({
                             pressReleaseUnreadCounts,
                           )}
                         />
+                        </Box>
                       ) : offline || item.id !== DASHBOARD_MARKET_HALT_ALERTS_ITEM.id ? null : (
                         <NavigationDrawerButton
                           collapsed={compact}
@@ -643,7 +651,7 @@ export function DashboardShell({
         {compact ? null : (
           <Box sx={{ px: 2, py: 1.5 }}>
             <Typography color="text.secondary" variant="caption">
-              Trade Tracker v1
+              TradersLink v1
             </Typography>
           </Box>
         )}

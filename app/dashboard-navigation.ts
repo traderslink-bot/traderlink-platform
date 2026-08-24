@@ -292,7 +292,7 @@ export const DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS: readonly DashboardSidebarNav
 
 export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
   Object.freeze({
-    "/workspace": "Workspace",
+    "/workspace": "Welcome to TradersLink Beta App.",
     "/workspace/readiness": "Platform Readiness",
     "/calendar": "Calendar",
     "/scanner": "Scanner",
@@ -328,9 +328,9 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/press-releases/news-filtered": "News Scanner",
     "/market-news/week-ahead": "The Week Ahead",
     "/press-releases/market-cap": "All Market Cap",
-    "/press-releases/market-cap/under-30m": "Under $30M Press Releases",
-    "/press-releases/market-cap/30m-50m": "$30M-$50M Press Releases",
-    "/press-releases/market-cap/50m-100m": "$50M-$100M Press Releases",
+    "/press-releases/market-cap/under-30m": "Under $30M Market Cap",
+    "/press-releases/market-cap/30m-50m": "$30M–$50M Market Cap",
+    "/press-releases/market-cap/50m-100m": "$50M–$100M Market Cap",
   });
 
 export const DASHBOARD_NAVIGATION_HREFS: readonly string[] = Object.freeze([

@@ -29,11 +29,11 @@ export type PressReleaseChannelDefinition = Readonly<{
 export const PRESS_RELEASE_CHANNEL_DEFINITIONS: readonly PressReleaseChannelDefinition[] =
   Object.freeze([
     Object.freeze({ channel: "all", href: "/press-releases", label: "All Press Releases", shortLabel: "All" }),
-    Object.freeze({ channel: "news_filtered", href: "/press-releases/news-filtered", label: "News Filtered", shortLabel: "Filtered" }),
+    Object.freeze({ channel: "news_filtered", href: "/press-releases/news-filtered", label: "News Scanner", shortLabel: "Scanner" }),
     Object.freeze({ channel: "market_cap_all", href: "/press-releases/market-cap", label: "All Market Cap", shortLabel: "All Market Cap" }),
-    Object.freeze({ channel: "market_cap_under_30m", href: "/press-releases/market-cap/under-30m", label: "Under $30M", shortLabel: "Under $30M" }),
-    Object.freeze({ channel: "market_cap_30m_to_50m", href: "/press-releases/market-cap/30m-50m", label: "$30M–$50M", shortLabel: "$30M–$50M" }),
-    Object.freeze({ channel: "market_cap_50m_to_100m", href: "/press-releases/market-cap/50m-100m", label: "$50M–$100M", shortLabel: "$50M–$100M" }),
+    Object.freeze({ channel: "market_cap_under_30m", href: "/press-releases/market-cap/under-30m", label: "Under $30M Market Cap", shortLabel: "Under $30M" }),
+    Object.freeze({ channel: "market_cap_30m_to_50m", href: "/press-releases/market-cap/30m-50m", label: "$30M–$50M Market Cap", shortLabel: "$30M–$50M" }),
+    Object.freeze({ channel: "market_cap_50m_to_100m", href: "/press-releases/market-cap/50m-100m", label: "$50M–$100M Market Cap", shortLabel: "$50M–$100M" }),
   ]);
 
 export type PressReleaseUnreadCounts = Readonly<

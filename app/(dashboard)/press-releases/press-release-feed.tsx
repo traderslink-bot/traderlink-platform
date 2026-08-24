@@ -44,7 +44,7 @@ function easternTime(value: string, includeDate = false): string {
 }
 
 function releaseType(article: PressReleaseArticle): string {
-  if (article.routeTag === "default" || article.routeTag === "spike") return "News Filtered";
+  if (article.routeTag === "default" || article.routeTag === "spike") return "News Scanner";
   if (article.routeTag === "market_cap_under_30m") return "Under $30M";
   if (article.routeTag === "market_cap_30m_to_50m") return "$30M–$50M";
   if (article.routeTag === "market_cap_50m_to_100m") return "$50M–$100M";
@@ -86,6 +86,9 @@ export function PressReleaseFeed({
   const [working, startTransition] = useTransition();
   const initialSelectedArticleId = initialSelectedArticle?.id ?? null;
   const initialSelectedArticleWasRead = initialSelectedArticle?.isRead ?? true;
+  const pageDescription = channel === "news_filtered"
+    ? "Scans the market for small cap stocks with recent press releases, that show signs of momentum."
+    : "AI-summarized press releases help you understand the news fast—so you can look beyond the headline before making a trading decision.";
 
   useEffect(() => {
     if (!initialSelectedArticleId || initialSelectedArticleWasRead) return;
@@ -168,7 +171,7 @@ export function PressReleaseFeed({
         <Box>
           <Typography component="h1" variant="h1">{definition.label}</Typography>
           <Typography color="text.secondary" sx={{ mt: 0.75 }} variant="body2">
-            Press releases and AI summaries from the TradersLink alert feed. Times are shown in ET.
+            {pageDescription}
           </Typography>
         </Box>
         <Button
