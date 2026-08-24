@@ -575,7 +575,10 @@ ORDER BY occurred_at_utc DESC, import_attempt_id DESC LIMIT 5`).all(internalId)
 FROM platform_broker_connection_attempts WHERE user_id = ?
 ORDER BY occurred_at_utc DESC, connection_attempt_id DESC LIMIT 5`).all(internalId)
       .map((attempt) => {
-        const explanation = brokerAttemptExplanation(attempt);
+        const explanation = brokerAttemptExplanation({
+          outcome: attempt.outcome,
+          safeReasonCategory: attempt.safe_reason_category,
+        });
         return Object.freeze({
           occurredAtUtc: attempt.occurred_at_utc,
           outcome: attempt.outcome,
