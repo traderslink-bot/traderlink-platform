@@ -24,8 +24,8 @@ The desktop board deliberately becomes a compact two-column fact card on
 mobile, keeping all four facts visible. It has not yet received owner visual
 acceptance.
 
-The direct-list header now separates the title/description from a labeled
-watchlist-tag row. Its profile detail is inset in the same card's top-right
+The direct-list header now separates the title/description from its
+watchlist-tag row, without a redundant visible "Watchlist tags" label. Its profile detail is inset in the same card's top-right
 corner on desktop; the full card uses the former watchlist-column width, with
 no extra profile rail beside it.
 Header separation relies on spacing and the profile's soft background rather
@@ -45,8 +45,10 @@ source values are forced to a single-line ellipsis rather than overflowing.
 The desktop profile card is top-aligned and does not stretch with a taller
 title or watchlist-tag column.
 
-Ticker tags appear at the bottom of the expanded Trader's take, wrapping only
-when needed. Trader-entered posted reference price is no longer collected or
+Watchlist titles are capped at 25 characters and descriptions at 180
+characters. Watchlist and ticker tags are each capped at four, both in the
+form and server-side validation. Ticker tags appear at the bottom of the
+expanded Trader's take, wrapping only when needed. Trader-entered posted reference price is no longer collected or
 shown; the existing stored column is retained solely for schema compatibility.
 The list owner can now add, remove and create ticker tags inside a full-width
 row below that expanded content, including for an already published watchlist.
@@ -102,7 +104,7 @@ rankings, company pages and Moomoo enrichment remain deferred.
 | Dashboard creation | Ready for local review | Creates drafts with manual ticker research, curated selectable tags and author-created custom tags |
 | Publish/direct pages | Implemented in source | Published lists and profiles remain inside the signed-in dashboard boundary |
 | Discord announcement | Implemented in source | Server-only, mention-safe, one-publication delivery claim; no external message sent |
-| Shared Watchlists hub | Implemented in source | Signed-in My Watchlists and Shared Watchlists queries are separate from official Watchlist |
+| Shared Watchlists hub | Implemented in source | Starts compact; each card opens and closes by clicking its non-interactive surface, while ticker controls remain independently usable |
 | Owner visual review | Pending | Preview server was blocked by the shared migration boundary; no visual acceptance claimed |
 
 ## Next authorized step

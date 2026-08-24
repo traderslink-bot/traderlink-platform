@@ -30,20 +30,20 @@ function blankTicker(id: number, symbol = ""): DraftTicker {
   return { id, symbol, tags: [], whyWatching: "", plan: "", personalTarget: "", catalyst: "", catalystDate: null };
 }
 
-function TagPicker({ available, selected, onChange }: { available: readonly string[]; selected: readonly string[]; onChange: (next: readonly string[]) => void }) {
+function TagPicker({ available, maximum = 20, selected, onChange }: { available: readonly string[]; maximum?: number; selected: readonly string[]; onChange: (next: readonly string[]) => void }) {
   const [customTag, setCustomTag] = useState("");
   const choices = [...new Set([...available, ...selected])];
   function addCustomTag(): void {
     const tag = customTag.trim().replace(/\s+/gu, " ");
-    if (!tag || selected.some((item) => item.localeCompare(tag, undefined, { sensitivity: "accent" }) === 0) || selected.length >= 20) return;
+    if (!tag || selected.some((item) => item.localeCompare(tag, undefined, { sensitivity: "accent" }) === 0) || selected.length >= maximum) return;
     onChange([...selected, tag.slice(0, 48)]);
     setCustomTag("");
   }
   return <Stack spacing={0.85}>
-    <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", rowGap: 0.75 }}>{choices.map((tag) => <Chip color={selected.includes(tag) ? "primary" : "default"} key={tag} label={tag} onClick={() => onChange(selected.includes(tag) ? selected.filter((item) => item !== tag) : [...selected, tag])} variant={selected.includes(tag) ? "filled" : "outlined"} />)}</Stack>
+    <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", rowGap: 0.75 }}>{choices.map((tag) => <Chip color={selected.includes(tag) ? "primary" : "default"} disabled={!selected.includes(tag) && selected.length >= maximum} key={tag} label={tag} onClick={() => { if (selected.includes(tag)) onChange(selected.filter((item) => item !== tag)); else if (selected.length < maximum) onChange([...selected, tag]); }} variant={selected.includes(tag) ? "filled" : "outlined"} />)}</Stack>
     <Stack direction="row" spacing={0.75} sx={{ alignItems: "center", maxWidth: 330 }}>
       <TextField label="Create a tag" onChange={(event) => setCustomTag(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addCustomTag(); } }} size="small" slotProps={{ htmlInput: { maxLength: 48 } }} value={customTag} />
-      <IconButton aria-label="Add custom tag" disabled={!customTag.trim() || selected.length >= 20} onClick={addCustomTag} size="small"><AddRoundedIcon /></IconButton>
+      <IconButton aria-label="Add custom tag" disabled={!customTag.trim() || selected.length >= maximum} onClick={addCustomTag} size="small"><AddRoundedIcon /></IconButton>
     </Stack>
   </Stack>;
 }
@@ -99,9 +99,9 @@ export function CommunityWatchlistCreateForm() {
       </Stack>
       <DashboardPanel title="Watchlist details">
         <Stack spacing={2}>
-          <TextField fullWidth label="Watchlist title" onChange={(event) => setTitle(event.target.value)} required value={title} />
-          <TextField fullWidth label="Short description" minRows={3} multiline onChange={(event) => setDescription(event.target.value)} placeholder="What makes this list worth checking today?" value={description} />
-          <Box><Typography color="text.secondary" variant="caption">Watchlist tags</Typography><Box sx={{ mt: 0.75 }}><TagPicker available={COMMUNITY_WATCHLIST_TAGS} onChange={setWatchlistTags} selected={watchlistTags} /></Box></Box>
+          <TextField fullWidth helperText={`${title.length}/25`} label="Watchlist title" onChange={(event) => setTitle(event.target.value)} required slotProps={{ htmlInput: { maxLength: 25 } }} value={title} />
+          <TextField fullWidth helperText={`${description.length}/180`} label="Short description" minRows={3} multiline onChange={(event) => setDescription(event.target.value)} placeholder="What makes this list worth checking today?" slotProps={{ htmlInput: { maxLength: 180 } }} value={description} />
+          <Box><Typography color="text.secondary" variant="caption">Watchlist tags</Typography><Box sx={{ mt: 0.75 }}><TagPicker available={COMMUNITY_WATCHLIST_TAGS} maximum={4} onChange={setWatchlistTags} selected={watchlistTags} /></Box></Box>
           <Box><Typography color="text.secondary" variant="caption">Your profile tags</Typography><Box sx={{ mt: 0.75 }}><TagPicker available={COMMUNITY_PROFILE_TAGS} onChange={setProfileTags} selected={profileTags} /></Box></Box>
         </Stack>
       </DashboardPanel>
@@ -113,7 +113,7 @@ export function CommunityWatchlistCreateForm() {
           </Stack>
           {tickers.map((ticker) => <Box key={ticker.id} sx={{ border: 1, borderColor: "divider", borderRadius: 2, p: { xs: 1.5, sm: 2 } }}><Stack spacing={1.25}>
             <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}><Typography sx={{ fontWeight: 820 }}>{ticker.symbol}</Typography><IconButton aria-label={`Remove ${ticker.symbol}`} onClick={() => setTickers((current) => current.filter((item) => item.id !== ticker.id))}><DeleteOutlineRoundedIcon /></IconButton></Stack>
-            <Box><Typography color="text.secondary" variant="caption">Ticker tags</Typography><Box sx={{ mt: 0.5 }}><TagPicker available={COMMUNITY_WATCHLIST_TAGS} onChange={(tags) => updateTicker(ticker.id, { tags })} selected={ticker.tags ?? []} /></Box></Box>
+            <Box><Typography color="text.secondary" variant="caption">Ticker tags</Typography><Box sx={{ mt: 0.5 }}><TagPicker available={COMMUNITY_WATCHLIST_TAGS} maximum={4} onChange={(tags) => updateTicker(ticker.id, { tags })} selected={ticker.tags ?? []} /></Box></Box>
             <TextField fullWidth label="Why I am watching" minRows={2} multiline onChange={(event) => updateTicker(ticker.id, { whyWatching: event.target.value })} value={ticker.whyWatching ?? ""} />
             <TextField fullWidth label="My plan" minRows={2} multiline onChange={(event) => updateTicker(ticker.id, { plan: event.target.value })} value={ticker.plan ?? ""} />
             <Stack direction={{ xs: "column", sm: "row" }} spacing={1}><TextField fullWidth label="Personal target" onChange={(event) => updateTicker(ticker.id, { personalTarget: event.target.value })} value={ticker.personalTarget ?? ""} /><TextField fullWidth label="Upcoming catalyst" onChange={(event) => updateTicker(ticker.id, { catalyst: event.target.value })} value={ticker.catalyst ?? ""} /><TextField fullWidth label="Catalyst date" onChange={(event) => updateTicker(ticker.id, { catalystDate: event.target.value || null })} slotProps={{ inputLabel: { shrink: true } }} type="date" value={ticker.catalystDate ?? ""} /></Stack>

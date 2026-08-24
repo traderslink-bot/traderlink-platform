@@ -70,9 +70,9 @@ function normalizeText(value: unknown, maximumLength: number, field: string): st
   return normalized;
 }
 
-function normalizeTags(value: readonly string[] | undefined, field: string): readonly string[] {
+function normalizeTags(value: readonly string[] | undefined, field: string, maximum = 20): readonly string[] {
   if (!value) return Object.freeze([]);
-  if (!Array.isArray(value) || value.length > 20) {
+  if (!Array.isArray(value) || value.length > maximum) {
     platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field });
   }
   const tags = value.map((tag) => normalizeText(tag, 48, field));
@@ -159,11 +159,11 @@ SET profile_tags_json = ?, updated_at_utc = ? WHERE user_id = ?`).run(
   }> {
     assertCanonicalUuidV4(input.userId, "userId");
     assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
-    const title = normalizeText(input.watchlist.title, 120, "title");
+    const title = normalizeText(input.watchlist.title, 25, "title");
     if (!title) platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "title" });
-    const description = normalizeText(input.watchlist.description ?? "", 600, "description");
+    const description = normalizeText(input.watchlist.description ?? "", 180, "description");
     const profileTags = normalizeTags(input.watchlist.profileTags, "profileTags");
-    const tags = normalizeTags(input.watchlist.tags, "tags");
+    const tags = normalizeTags(input.watchlist.tags, "tags", 4);
     if (!Array.isArray(input.watchlist.tickers) || input.watchlist.tickers.length > 50 ||
       (input.watchlist.publish && input.watchlist.tickers.length < 1)) {
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "tickers" });
@@ -171,7 +171,7 @@ SET profile_tags_json = ?, updated_at_utc = ? WHERE user_id = ?`).run(
     const tickers = input.watchlist.tickers.map((ticker, ordinal) => Object.freeze({
       symbol: normalizeSymbol(ticker.symbol),
       ordinal,
-      tags: normalizeTags(ticker.tags, "tickerTags"),
+      tags: normalizeTags(ticker.tags, "tickerTags", 4),
       whyWatching: normalizeText(ticker.whyWatching ?? "", 1200, "whyWatching"),
       plan: normalizeText(ticker.plan ?? "", 1200, "plan"),
       personalTarget: normalizeText(ticker.personalTarget ?? "", 100, "personalTarget"),
@@ -364,7 +364,7 @@ SET symbol = ? WHERE ticker_id = ?`).run(nextSymbol, ticker.ticker_id).changes;
     assertLowercaseToken(input.handle.replace(/-/gu, "_"), "handle", 48);
     assertLowercaseToken(input.watchlistSlug.replace(/-/gu, "_"), "watchlistSlug", 80);
     const symbol = normalizeSymbol(input.symbol);
-    const tickerTags = normalizeTags(input.tags, "tickerTags");
+    const tickerTags = normalizeTags(input.tags, "tickerTags", 4);
     const update = () => {
       const watchlist = this.database.prepare<[string, string, string], Readonly<{ watchlist_id: string }>>(`SELECT watchlist.watchlist_id
 FROM community_watchlists watchlist

@@ -67,8 +67,7 @@ export default async function CommunityWatchlistDetailPage({
                 {detail.description ? <Typography color="text.secondary" sx={{ mt: 0.75 }} variant="body2">{detail.description}</Typography> : null}
               </Box>
               {detail.tags.length ? <Box sx={{ pt: 0.35 }}>
-                <Typography color="text.secondary" sx={{ fontWeight: 850 }} variant="caption">Watchlist tags</Typography>
-                <Stack direction="row" spacing={0.65} sx={{ flexWrap: "wrap", mt: 0.65, rowGap: 0.65 }}>
+                <Stack direction="row" spacing={0.65} sx={{ flexWrap: "wrap", rowGap: 0.65 }}>
                   {detail.tags.map((tag, index) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: index % 2 ? "#e9f7ef" : "#edf3ff", color: index % 2 ? "#14663c" : "#082b73", fontWeight: 700 }} />)}
                 </Stack>
               </Box> : null}

@@ -2,6 +2,7 @@
 
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
+import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import Box from "@mui/material/Box";
 import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
@@ -105,7 +106,8 @@ function TickerBoard({ item }: { item: CommunityWatchlistSummary }) {
 }
 
 function CommunityFeedCard({ item, selected, onOpen, onClose }: { item: CommunityWatchlistSummary; selected: boolean; onOpen: () => void; onClose: () => void }) {
-  return <Paper elevation={0} onClick={() => { if (!selected) onOpen(); }} sx={{ border: 1, borderColor: selected ? "primary.main" : "divider", borderRadius: 2.5, cursor: selected ? "default" : "pointer", overflow: "hidden", transition: "border-color 160ms ease", "&:hover": { borderColor: "primary.main" } }}>
+  const toggle = () => selected ? onClose() : onOpen();
+  return <Paper elevation={0} onClick={(event) => { if (!(event.target as HTMLElement).closest("button, a")) toggle(); }} onKeyDown={(event) => { if ((event.key === "Enter" || event.key === " ") && !(event.target as HTMLElement).closest("button, a")) { event.preventDefault(); toggle(); } }} role="button" sx={{ border: 1, borderColor: selected ? "primary.main" : "divider", borderRadius: 2.5, cursor: "pointer", overflow: "hidden", transition: "border-color 160ms ease", "&:hover": { borderColor: "primary.main" } }} tabIndex={0}>
     <Box sx={{ display: "grid", gap: { xs: 1.5, md: 2 }, gridTemplateColumns: { xs: "1fr", md: "144px minmax(0, 1fr) 150px" }, p: { xs: 1.75, md: 2 } }}>
       <Stack direction={{ xs: "row", md: "column" }} spacing={0.85} sx={{ alignItems: { xs: "center", md: "flex-start" } }}>
         <Avatar sx={{ bgcolor: "#102b69", fontSize: "0.8rem", fontWeight: 850, height: 40, width: 40 }}>{avatarLetters(item.authorHandle)}</Avatar>
@@ -119,7 +121,7 @@ function CommunityFeedCard({ item, selected, onOpen, onClose }: { item: Communit
       <Stack spacing={0.9} sx={{ alignItems: { xs: "flex-start", md: "flex-end" }, justifyContent: "space-between" }}>
         <Typography sx={{ display: { xs: "none", md: "block" }, fontWeight: 800 }} variant="body2">{item.symbolCount} symbols</Typography>
         <Stack direction="row" spacing={0.55} sx={{ flexWrap: "wrap", justifyContent: { md: "flex-end" }, rowGap: 0.55 }}>{item.tags.slice(0, 3).map((tag, index) => <Chip key={tag} label={tag} size="small" sx={{ ...tagTone(index), fontSize: "0.69rem", fontWeight: 700, height: 22 }} />)}</Stack>
-        <Button onClick={(event) => { event.stopPropagation(); if (selected) onClose(); else onOpen(); }} size="small">{selected ? "Hide tickers" : "Open tickers"}</Button>
+        <KeyboardArrowDownRoundedIcon aria-hidden="true" sx={{ color: "#082b73", fontSize: 25, transform: selected ? "rotate(180deg)" : "none", transition: "transform 160ms ease" }} />
       </Stack>
     </Box>
     {selected ? <><Divider /><TickerBoard item={item} key={item.href} /></> : null}
@@ -132,9 +134,9 @@ function SelectedTraderCard({ item }: { item: CommunityWatchlistSummary }) {
 
 export function CommunityWatchlistsHub({ mine, shared }: { mine: readonly CommunityWatchlistSummary[]; shared: readonly CommunityWatchlistSummary[] }) {
   const [tab, setTab] = useState<"mine" | "shared">("mine");
-  const [selectedHref, setSelectedHref] = useState<string | null>(shared[0]?.href ?? null);
+  const [selectedHref, setSelectedHref] = useState<string | null>(null);
   const items = tab === "mine" ? mine : shared;
-  const selected = shared.find((item) => item.href === selectedHref) ?? shared[0] ?? null;
+  const selected = shared.find((item) => item.href === selectedHref) ?? null;
   return (
     <DashboardPage>
       <Box sx={{ display: "flex", gap: 1, alignItems: { sm: "center" }, justifyContent: "space-between", flexDirection: { xs: "column", sm: "row" } }}>
