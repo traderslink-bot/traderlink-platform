@@ -1,6 +1,6 @@
 # Journal Administration User Health Plan
 
-**Status:** Production correction in progress
+**Status:** In progress — owner alert and manual-entry issue extension
 
 **Date:** 2026-08-24
 
@@ -12,6 +12,12 @@ completed the narrow release chain from hotfix parent
 backup-and-migration path, then verified
 `{ status: "ready", migrationCount: 83, storage: "sqlite_single_node" }`
 at `/api/platform/health`.
+
+**Production correction:** `ef291e9b19fe95e272b852c60110cd4cf69c5648`
+replaced server-rendered Material `component={Link}` filter controls with plain
+`href` buttons. Railway deployment `b5a02d3d-68fc-4c1f-8745-4c68e393db4e`
+succeeded; anonymous `/admin/journal/users` now returns its expected `307`
+authentication redirect and hosted health remains ready at 83 migrations.
 
 **Progress tracker:** [Journal Administration User Health Progress](journal-admin-user-health-progress.md)
 
@@ -44,6 +50,22 @@ The completed feature will let the owner see, for each user:
    deliberately distinct;
 8. safe, plain-language explanations for recent failures; and
 9. a short, factual list of items that need attention.
+
+### 1.1 Owner alert and manual-entry issue extension
+
+On 2026-08-24 the owner requested two follow-on corrections:
+
+1. a single email to the confirmed Journal-owner address whenever a broker
+   import reaches a durable final failure; and
+2. a separate **Manual entry issues** fact. **Manual entries** remains the
+   count of accepted executions and must never be relabeled as failures.
+
+The email alert is idempotent per failed import and contains only a safe
+summary and an Administration link. It is sent only for final failures, never
+for retries, previews, duplicates or pending mapping work. Manual entry issues
+record only an authenticated server-side commit failure, its safe category and
+time. They retain no trade values, request body, broker identifiers or raw
+exception text.
 
 It also adds guarded owner controls to disable or re-enable a user and revoke
 their active dashboard sessions. Those controls are for account safety and
@@ -312,6 +334,15 @@ based on an unverified display-name match.
 - Update Help only if a public user-facing account, broker connection or
   recovery flow changes. The private owner UI alone does not require a Help
   Center article.
+
+### User Health 6 — Owner import alert and manual-entry issues
+
+- Add one forward-only migration for private, append-only manual-entry failure
+  receipts.
+- Send one owner-only, confirmed-email alert when a broker import enters its
+  final failed state.
+- Show manual-entry issue count and safe recent reasons separately from
+  accepted Manual entries in the private Users list and detail view.
 
 ## 8. Likely implementation surface
 

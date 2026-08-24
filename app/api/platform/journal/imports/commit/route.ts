@@ -8,6 +8,8 @@ import {
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { requireJournalMutationRequest } from "@/src/modules/platform/server/authentication/journal-mutation-request-security";
 import { resolveJournalImportAttemptDigests } from "@/src/modules/journal/server/administration/journal-import-attempt-service";
+import { failJournalImportCommitAttempt } from "@/src/modules/journal/server/administration/journal-import-attempt-service";
+import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import {
   createJournalMappingSupportPackage,
   createJournalMappingSupportPackageV2,
@@ -19,14 +21,16 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request): Promise<Response> {
+  let scope: WorkspaceAccessScope | null = null;
+  let attemptIdempotencyRef: string | null = null;
   try {
     requireJournalMutationRequest(request);
-    const scope = requireTraderLinkPlatformRequestScope(request.headers);
+    scope = requireTraderLinkPlatformRequestScope(request.headers);
     const data = await request.formData();
     const file = data.get("statement");
     const sourceTimezone = data.get("sourceTimezone");
     const previewRef = data.get("previewRef");
-    const attemptIdempotencyRef = data.get("attemptIdempotencyRef");
+    const rawAttemptIdempotencyRef = data.get("attemptIdempotencyRef");
     const confirmationAction = data.get("confirmationAction");
     const commitKind = data.get("commitKind");
     const mappingContractJson = data.get("mappingContract");
@@ -36,7 +40,7 @@ export async function POST(request: Request): Promise<Response> {
       !(file instanceof File) ||
       typeof sourceTimezone !== "string" ||
       typeof previewRef !== "string" ||
-      typeof attemptIdempotencyRef !== "string" ||
+      typeof rawAttemptIdempotencyRef !== "string" ||
       typeof expectedAccountSelectionRef !== "string" ||
       (confirmSourceIdentityLink !== "yes" && confirmSourceIdentityLink !== "no") ||
       (commitKind !== "ibkr" && commitKind !== "mapped_csv") ||
@@ -47,6 +51,7 @@ export async function POST(request: Request): Promise<Response> {
         { status: 400 },
       );
     }
+    attemptIdempotencyRef = rawAttemptIdempotencyRef;
     const allowedMimeTypes = new Set([
       "",
       "text/csv",
@@ -131,6 +136,13 @@ export async function POST(request: Request): Promise<Response> {
     }
     return Response.json({ status: "ready", result });
   } catch (error) {
+    if (scope && attemptIdempotencyRef) {
+      try {
+        failJournalImportCommitAttempt(scope, attemptIdempotencyRef, "commit_failure");
+      } catch {
+        // Preserve the original import response if terminal-failure recording is unavailable.
+      }
+    }
     const code = isTraderLinkPlatformError(error)
       ? error.code
       : "TRADERLINK_JOURNAL_IMPORT_COMMIT_FAILED";

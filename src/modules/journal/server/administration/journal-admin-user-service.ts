@@ -40,6 +40,8 @@ type UserRow = Readonly<{
   latest_failed_import_at_utc: string | null;
   last_import_outcome: string | null;
   manual_execution_count: number;
+  manual_entry_failure_count: number;
+  latest_manual_entry_failure_at_utc: string | null;
   broker_execution_count: number;
   trade_style_plan_count: number;
   swing_note_count: number;
@@ -151,6 +153,10 @@ const USER_SELECT = `WITH user_activity AS (
   WHERE batch.source_kind = 'broker_statement'
     AND batch.current_state IN ('accepted', 'accepted_with_decisions')
   GROUP BY account.created_by_user_id
+), manual_entry_failure_summary AS (
+  SELECT user_id, COUNT(*) AS manual_entry_failure_count,
+    MAX(occurred_at_utc) AS latest_manual_entry_failure_at_utc
+  FROM journal_manual_entry_failures GROUP BY user_id
 ), round_trip_counts AS (
   SELECT account.created_by_user_id AS user_id, COUNT(*) AS ready_round_trip_count
   FROM journal_round_trips trip
@@ -229,6 +235,8 @@ SELECT user.user_id, user.display_name, user.status, user.created_at_utc,
   attempts.latest_failed_import_at_utc,
   imports.last_import_outcome,
   COALESCE(manual.manual_execution_count, 0) AS manual_execution_count,
+  COALESCE(manual_failures.manual_entry_failure_count, 0) AS manual_entry_failure_count,
+  manual_failures.latest_manual_entry_failure_at_utc,
   COALESCE(broker_executions.broker_execution_count, 0) AS broker_execution_count,
   (SELECT COUNT(*) FROM journal_trade_style_plans plan WHERE plan.user_id = user.user_id) AS trade_style_plan_count,
   (SELECT COUNT(*) FROM journal_swing_daily_notes note WHERE note.user_id = user.user_id) AS swing_note_count,
@@ -251,6 +259,7 @@ LEFT JOIN user_accounts accounts ON accounts.user_id = user.user_id
 LEFT JOIN user_imports imports ON imports.user_id = user.user_id
 LEFT JOIN attempt_summary attempts ON attempts.user_id = user.user_id
 LEFT JOIN manual_executions manual ON manual.user_id = user.user_id
+LEFT JOIN manual_entry_failure_summary manual_failures ON manual_failures.user_id = user.user_id
 LEFT JOIN broker_executions broker_executions ON broker_executions.user_id = user.user_id
 LEFT JOIN round_trip_counts round_trips ON round_trips.user_id = user.user_id
 LEFT JOIN decision_counts decisions ON decisions.user_id = user.user_id
@@ -262,15 +271,24 @@ function isOnlineNow(lastSessionAtUtc: string | null, now: Date): boolean {
 }
 
 function needsAttention(row: UserRow, now: Date): readonly (
-  "broker_connection" | "recent_import_failure" | "pending_decision" | "getting_started"
+  "broker_connection" | "recent_import_failure" | "manual_entry_issue" | "pending_decision" | "getting_started"
 )[] {
-  const items: Array<"broker_connection" | "recent_import_failure" | "pending_decision" | "getting_started"> = [];
+  const items: Array<"broker_connection" | "recent_import_failure" | "manual_entry_issue" | "pending_decision" | "getting_started"> = [];
   if (row.broker_status === "attention_required" || row.broker_status === "disconnected") items.push("broker_connection");
   if (row.latest_failed_import_at_utc !== null && Date.parse(row.latest_failed_import_at_utc) >= now.getTime() - 30 * 86_400_000) items.push("recent_import_failure");
+  if (row.latest_manual_entry_failure_at_utc !== null && Date.parse(row.latest_manual_entry_failure_at_utc) >= now.getTime() - 30 * 86_400_000) items.push("manual_entry_issue");
   if (row.unresolved_decision_count > 0) items.push("pending_decision");
   const journalStarted = row.broker_execution_count > 0 || row.manual_execution_count > 0;
   if (row.last_auth_at_utc !== null && !journalStarted && Date.parse(row.last_auth_at_utc) <= now.getTime() - 14 * 86_400_000) items.push("getting_started");
   return Object.freeze(items);
+}
+
+function manualEntryFailureExplanation(category: string): Readonly<{ reason: string; nextStep: string }> {
+  if (category === "entry_changed") return Object.freeze({ reason: "The entry changed before it could be saved.", nextStep: "Review the details and save it again." });
+  if (category === "duplicate_conflict") return Object.freeze({ reason: "This entry may duplicate a saved trade.", nextStep: "Review the existing trade and choose how to continue." });
+  if (category === "entry_dates_need_review") return Object.freeze({ reason: "The entered dates need review before saving.", nextStep: "Use one trading date for this day-tracker entry." });
+  if (category === "save_conflict") return Object.freeze({ reason: "The entry conflicted with a recent Journal update.", nextStep: "Reload the tracker and try again." });
+  return Object.freeze({ reason: "We could not save that manual entry.", nextStep: "Try again later or contact support if it keeps happening." });
 }
 
 function importAttemptExplanation(input: Readonly<{ state: string; failureCode: string | null }>): Readonly<{ reason: string; nextStep: string }> {
@@ -321,6 +339,8 @@ function mapUser(
     latestFailedImportAtUtc: row.latest_failed_import_at_utc,
     lastImportOutcome: row.last_import_outcome,
     manualExecutionCount: row.manual_execution_count,
+    manualEntryFailureCount: row.manual_entry_failure_count,
+    latestManualEntryFailureAtUtc: row.latest_manual_entry_failure_at_utc,
     brokerStatus: row.broker_status,
     brokerSourceCount: row.broker_source_count,
     latestBrokerConnectionAttemptAtUtc: row.latest_broker_connection_attempt_at_utc,
@@ -345,7 +365,7 @@ export type JournalAdminUserFilters = Readonly<{
   hasUnresolvedDecisions?: boolean;
   multipleAccounts?: boolean;
   signedInSinceUtc?: string;
-  filter?: "academy_progress" | "source_not_recorded" | "never_signed_in" | "online_now" | "journal_started" | "journal_not_started" | "successful_import" | "failed_import" | "pending_import" | "manual_entries" | "broker_connected" | "broker_statement_source" | "no_broker_evidence";
+  filter?: "academy_progress" | "source_not_recorded" | "never_signed_in" | "online_now" | "journal_started" | "journal_not_started" | "successful_import" | "failed_import" | "pending_import" | "manual_entries" | "manual_entry_issues" | "broker_connected" | "broker_statement_source" | "no_broker_evidence";
   view?: "new_academy_members" | "getting_started" | "needs_attention";
 }>;
 
@@ -447,6 +467,7 @@ export class JournalAdminUserService {
     if (filters.filter === "failed_import") clauses.push("COALESCE(attempts.failed_import_count, 0) > 0");
     if (filters.filter === "pending_import") clauses.push("COALESCE(attempts.pending_import_count, 0) > 0");
     if (filters.filter === "manual_entries") clauses.push("COALESCE(manual.manual_execution_count, 0) > 0");
+    if (filters.filter === "manual_entry_issues") clauses.push("COALESCE(manual_failures.manual_entry_failure_count, 0) > 0");
     if (filters.filter === "broker_connected") clauses.push("COALESCE(brokers.has_connected, 0) = 1");
     if (filters.filter === "broker_statement_source") clauses.push("COALESCE(brokers.has_connected, 0) = 0 AND COALESCE(brokers.has_attention, 0) = 0 AND COALESCE(brokers.has_disconnected, 0) = 0 AND COALESCE(brokers.broker_source_count, 0) > 0");
     if (filters.filter === "no_broker_evidence") clauses.push("COALESCE(brokers.broker_source_count, 0) = 0 AND COALESCE(brokers.has_connected, 0) = 0 AND COALESCE(brokers.has_attention, 0) = 0 AND COALESCE(brokers.has_disconnected, 0) = 0 AND COALESCE(attempts_broker.has_failed_connection_attempt, 0) = 0");
@@ -466,9 +487,10 @@ export class JournalAdminUserService {
     } else if (filters.view === "needs_attention") {
       clauses.push(`(COALESCE(decisions.unresolved_decision_count, 0) > 0
         OR (attempts.latest_failed_import_at_utc IS NOT NULL AND attempts.latest_failed_import_at_utc >= ?)
+        OR (manual_failures.latest_manual_entry_failure_at_utc IS NOT NULL AND manual_failures.latest_manual_entry_failure_at_utc >= ?)
         OR COALESCE(brokers.has_attention, 0) = 1 OR COALESCE(brokers.has_disconnected, 0) = 1
         OR COALESCE(attempts_broker.has_failed_connection_attempt, 0) = 1)`);
-      bindings.push(dateThreshold(this.context.now, 30));
+      bindings.push(dateThreshold(this.context.now, 30), dateThreshold(this.context.now, 30));
     }
     const where = clauses.length ? ` WHERE ${clauses.join(" AND ")}` : "";
     const rows = this.context.database.prepare<unknown[], UserRow>(`${USER_SELECT}${where}
@@ -586,12 +608,27 @@ ORDER BY occurred_at_utc DESC, connection_attempt_id DESC LIMIT 5`).all(internal
           nextStep: explanation.nextStep,
         });
       });
+    const recentManualEntryFailures = this.context.database.prepare<[string], {
+      safe_reason_category: string;
+      occurred_at_utc: string;
+    }>(`SELECT safe_reason_category, occurred_at_utc
+FROM journal_manual_entry_failures WHERE user_id = ?
+ORDER BY occurred_at_utc DESC, manual_entry_failure_id DESC LIMIT 5`).all(internalId)
+      .map((failure) => {
+        const explanation = manualEntryFailureExplanation(failure.safe_reason_category);
+        return Object.freeze({
+          occurredAtUtc: failure.occurred_at_utc,
+          reason: explanation.reason,
+          nextStep: explanation.nextStep,
+        });
+      });
     return Object.freeze({
       user: mapUser(this.context, row),
       sessionCount: sessionCounts.total,
       activeSessionCount: sessionCounts.active,
       recentImportAttempts: Object.freeze(recentImportAttempts),
       recentBrokerConnectionAttempts: Object.freeze(recentBrokerConnectionAttempts),
+      recentManualEntryFailures: Object.freeze(recentManualEntryFailures),
       accounts: Object.freeze(accounts),
       privacyRequestState: "not_available" as const,
     });

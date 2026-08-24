@@ -100,10 +100,12 @@ export type JournalAdminUserListItem = Readonly<{
   latestFailedImportAtUtc: string | null;
   lastImportOutcome: string | null;
   manualExecutionCount: number;
+  manualEntryFailureCount: number;
+  latestManualEntryFailureAtUtc: string | null;
   brokerStatus: "connected" | "attention_required" | "disconnected" | "statement_source" | "none";
   brokerSourceCount: number;
   latestBrokerConnectionAttemptAtUtc: string | null;
-  needsAttention: readonly ("broker_connection" | "recent_import_failure" | "pending_decision" | "getting_started")[];
+  needsAttention: readonly ("broker_connection" | "recent_import_failure" | "manual_entry_issue" | "pending_decision" | "getting_started")[];
   tradeStylePlanCount: number;
   swingNoteCount: number;
   hasAnalyticsReadyRoundTrip: boolean;
@@ -128,6 +130,11 @@ export type JournalAdminUserDetail = Readonly<{
     outcome: "connected" | "failed" | "cancelled";
     reason: string;
     nextStep: string | null;
+  }>[];
+  recentManualEntryFailures: readonly Readonly<{
+    occurredAtUtc: string;
+    reason: string;
+    nextStep: string;
   }>[];
   accounts: readonly Readonly<{
     accountRef: string;

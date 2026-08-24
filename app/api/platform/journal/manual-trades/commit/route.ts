@@ -1,5 +1,8 @@
 import { withWritableJournalIntegrityRuntime } from "@/src/modules/journal/server/journal-integrity-runtime";
 import { parseJournalManualTradeCommitRequest } from "@/src/modules/journal/server/manual-trades/journal-manual-trade-input";
+import { recordJournalManualEntryFailure } from "@/src/modules/journal/server/manual-trades/journal-manual-entry-failure-service";
+import type { JournalManualTradeCommitRequest } from "@/src/modules/journal/contracts/journal-manual-trade-capture-contracts";
+import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import {
   requireExpectedJournalAccountSelection,
   requireTraderLinkPlatformRequestScope,
@@ -19,10 +22,12 @@ function responseStatus(code: string): number {
 }
 
 export async function POST(request: Request): Promise<Response> {
+  let scope: WorkspaceAccessScope | null = null;
+  let commitRequest: JournalManualTradeCommitRequest | null = null;
   try {
     requireJournalMutationRequest(request);
-    const scope = requireTraderLinkPlatformRequestScope(request.headers);
-    const commitRequest = parseJournalManualTradeCommitRequest(await request.json());
+    scope = requireTraderLinkPlatformRequestScope(request.headers);
+    commitRequest = parseJournalManualTradeCommitRequest(await request.json());
     const accountSelectionRef = requireExpectedJournalAccountSelection(
       scope,
       commitRequest.expectedAccountSelectionRef,
@@ -44,6 +49,18 @@ export async function POST(request: Request): Promise<Response> {
       },
     });
   } catch (error) {
+    if (scope && commitRequest) {
+      try {
+        recordJournalManualEntryFailure({
+          error,
+          idempotencyKey: commitRequest.idempotencyKey,
+          scope,
+          tracker: commitRequest.tracker,
+        });
+      } catch {
+        // Preserve the original save response if private issue logging is unavailable.
+      }
+    }
     const code = isTraderLinkPlatformError(error)
       ? error.code
       : "TRADERLINK_MANUAL_TRADE_COMMIT_CONFLICT";

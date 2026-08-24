@@ -30,6 +30,7 @@ const filterOptions = [
   ["journal_started", "Journal started"], ["journal_not_started", "Journal not started"],
   ["successful_import", "Successful import"], ["failed_import", "Failed import"],
   ["pending_import", "Pending import"], ["manual_entries", "Manual entries"],
+  ["manual_entry_issues", "Manual entry issues"],
   ["broker_connected", "Broker connected"], ["broker_statement_source", "Statement source"],
   ["no_broker_evidence", "No broker evidence"],
 ] as const;
@@ -77,7 +78,7 @@ export default async function JournalAdminUsersPage({ searchParams }: { searchPa
               </Stack>
               <Box sx={{ color: "text.secondary", fontSize: "0.8125rem", mt: 1.25 }}>
                 {user.journalStarted ? "Journal started" : "Journal not started"} · {user.onlineNow ? "Online now" : user.lastSuccessfulAuthenticationAtUtc ? `Last sign-in ${formatAdminUtc(user.lastSuccessfulAuthenticationAtUtc)}` : "Never signed in"}<br />
-                {formatAdminInteger(user.committedImportCount)} successful imports · {formatAdminInteger(user.manualExecutionCount)} manual entries · {user.brokerStatus === "connected" ? "Broker connected" : user.brokerStatus === "statement_source" ? "Statement source" : user.brokerStatus === "attention_required" ? "Broker needs attention" : "No broker evidence"}
+                {formatAdminInteger(user.committedImportCount)} successful imports · {formatAdminInteger(user.manualExecutionCount)} manual entries{user.manualEntryFailureCount > 0 ? ` · ${formatAdminInteger(user.manualEntryFailureCount)} entry issues` : ""} · {user.brokerStatus === "connected" ? "Broker connected" : user.brokerStatus === "statement_source" ? "Statement source" : user.brokerStatus === "attention_required" ? "Broker needs attention" : "No broker evidence"}
               </Box>
             </Box>
           ))}
@@ -114,7 +115,7 @@ export default async function JournalAdminUsersPage({ searchParams }: { searchPa
                     {user.lastJournalActivityAtUtc ? formatAdminUtc(user.lastJournalActivityAtUtc) : "No Journal activity"}
                   </TableCell>
                   <TableCell>{formatAdminInteger(user.committedImportCount)} successful{user.failedImportCount > 0 ? ` · ${formatAdminInteger(user.failedImportCount)} failed` : ""}{user.pendingImportCount > 0 ? ` · ${formatAdminInteger(user.pendingImportCount)} pending` : ""}</TableCell>
-                  <TableCell>{formatAdminInteger(user.manualExecutionCount)}</TableCell>
+                  <TableCell>{formatAdminInteger(user.manualExecutionCount)} accepted{user.manualEntryFailureCount > 0 ? ` · ${formatAdminInteger(user.manualEntryFailureCount)} issues` : ""}</TableCell>
                   <TableCell>{user.brokerStatus === "connected" ? "Connected" : user.brokerStatus === "attention_required" ? "Connection needs attention" : user.brokerStatus === "disconnected" ? "Disconnected" : user.brokerStatus === "statement_source" ? "Statement source" : "No broker evidence"}</TableCell>
                   <TableCell>{formatAdminInteger(user.unresolvedDecisionCount)}</TableCell>
                   <TableCell>{user.needsAttention.length === 0 ? "None" : user.needsAttention[0]!.replaceAll("_", " ") + (user.needsAttention.length > 1 ? ` +${user.needsAttention.length - 1}` : "")}</TableCell>

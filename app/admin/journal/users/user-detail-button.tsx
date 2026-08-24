@@ -163,6 +163,23 @@ export function UserDetailButton({ userRef }: { userRef: string }) {
                 )}
               </Box>
               <Box>
+                <Typography component="h3" sx={{ fontWeight: 800 }}>Manual entry issues</Typography>
+                {detail.recentManualEntryFailures.length === 0 ? (
+                  <Typography color="text.secondary" variant="body2">No recorded manual-entry save issues.</Typography>
+                ) : (
+                  <Stack spacing={1} sx={{ mt: 1 }}>
+                    {detail.recentManualEntryFailures.map((failure) => (
+                      <Box key={`${failure.occurredAtUtc}-${failure.reason}`} sx={{ border: 1, borderColor: "divider", borderRadius: 1.5, p: 1.5 }}>
+                        <Typography sx={{ fontWeight: 700 }} variant="body2">Manual entry needs attention</Typography>
+                        <Typography color="text.secondary" variant="caption">{formatAdminUtc(failure.occurredAtUtc)}</Typography>
+                        <Typography sx={{ mt: 0.5 }} variant="body2">{failure.reason}</Typography>
+                        <Typography color="text.secondary" variant="body2">{failure.nextStep}</Typography>
+                      </Box>
+                    ))}
+                  </Stack>
+                )}
+              </Box>
+              <Box>
                 <Typography component="h3" sx={{ fontWeight: 800 }}>Broker connection</Typography>
                 <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
                   {detail.user.brokerStatus === "connected" ? "Connected" : detail.user.brokerStatus === "attention_required" ? "Connection needs attention" : detail.user.brokerStatus === "disconnected" ? "Disconnected" : detail.user.brokerStatus === "statement_source" ? "Statement source only" : "No broker evidence"}
