@@ -26,14 +26,15 @@ export async function POST(request: Request): Promise<Response> {
   let commitRequest: JournalManualTradeCommitRequest | null = null;
   try {
     requireJournalMutationRequest(request);
-    scope = requireTraderLinkPlatformRequestScope(request.headers);
+    const requestScope = requireTraderLinkPlatformRequestScope(request.headers);
+    scope = requestScope;
     commitRequest = parseJournalManualTradeCommitRequest(await request.json());
     const accountSelectionRef = requireExpectedJournalAccountSelection(
-      scope,
+      requestScope,
       commitRequest.expectedAccountSelectionRef,
     );
-    const result = withWritableJournalIntegrityRuntime(scope, (journal) =>
-      journal.manualTrades.commit(scope, accountSelectionRef, commitRequest));
+    const result = withWritableJournalIntegrityRuntime(requestScope, (journal) =>
+      journal.manualTrades.commit(requestScope, accountSelectionRef, commitRequest));
     return Response.json({
       status: "ready",
       result: {
