@@ -24,13 +24,13 @@ The desktop board deliberately becomes a compact two-column fact card on
 mobile, keeping all four facts visible. It has not yet received owner visual
 acceptance.
 
-The direct-list header now uses the approved three-zone arrangement: title and
-description at left, vertically stacked watchlist tags beside them, and a
-minimal profile at the far top-right. The profile shows only avatar, handle
-and View profile, in that order; its blue left edge moves with the entire
-compact profile column. "Watchlist tags" is not rendered as visible copy.
-The ticker fact labels sit below the description and align with the light-blue
-ticker rows beneath the header.
+The direct-list header now uses title and description at left, followed by a
+horizontal watchlist-tag row beginning at the left edge. The ticker fact
+labels sit directly below that tag row and align with the light-blue ticker
+rows beneath the header. A widened minimal profile column is anchored at the
+far top-right; it shows only avatar, handle and View profile, in that order,
+and its blue left edge moves with the entire column. "Watchlist tags" is not
+rendered as visible copy.
 
 The direct card is a reusable client component. Its compact header toggles the
 full light-blue ticker board while the direct route starts expanded; later

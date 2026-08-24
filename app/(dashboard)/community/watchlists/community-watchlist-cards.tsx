@@ -89,32 +89,28 @@ export function CommunityWatchlistCard({
     }
   };
   return <Paper elevation={0} sx={{ border: 0, borderRadius: 2.5, overflow: "hidden" }}>
-    <Box aria-expanded={expanded} onClick={headerClick} onKeyDown={headerKeyDown} role="button" sx={{ cursor: "pointer", display: "grid", gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1fr) 112px" } }} tabIndex={0}>
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1fr) 148px" }, minWidth: 0 }}>
-        <Stack spacing={1.5} sx={{ minWidth: 0, p: { xs: 1.75, sm: 2.25 } }}>
-          <Box sx={{ minWidth: 0 }}>
-            <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", rowGap: 0.75 }}>
-              <Typography component="h1" variant="h1">{detail.title}</Typography>
-              <Chip label={`${detail.symbolCount} ${detail.symbolCount === 1 ? "symbol" : "symbols"}`} size="small" sx={{ bgcolor: "#edf3ff", color: "#082b73", fontWeight: 800 }} />
-              <KeyboardArrowDownRoundedIcon aria-hidden="true" sx={{ color: "#082b73", fontSize: 23, transform: expanded ? "rotate(180deg)" : "none", transition: "transform 160ms ease" }} />
-            </Stack>
-            {detail.description ? <Typography color="text.secondary" sx={{ mt: 0.75 }} variant="body2">{detail.description}</Typography> : null}
-          </Box>
-        </Stack>
-        <Stack spacing={0.65} sx={{ alignItems: "flex-start", minWidth: 0, p: { xs: 1.5, sm: 1.75 } }}>
-          {detail.tags.map((tag, index) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: index % 2 ? "#e9f7ef" : "#edf3ff", color: index % 2 ? "#14663c" : "#082b73", fontWeight: 700 }} />)}
-        </Stack>
-        <Box aria-hidden="true" sx={{ columnGap: 0.65, display: { xs: "none", sm: "grid" }, gridColumn: "1 / -1", gridTemplateColumns: communityWatchlistFactColumns.sm, justifyItems: "start", pb: 1.75, px: { xs: 1.75, sm: 2.25 } }}>
-          <Box />
-          {["Ctry", "Ind.", "M/C", "O/S"].map((label) => <Typography color="text.secondary" key={label} sx={{ fontSize: "0.72rem", fontWeight: 900, letterSpacing: ".03em" }}>{label}</Typography>)}
-          <Box />
+    <Box aria-expanded={expanded} onClick={headerClick} onKeyDown={headerKeyDown} role="button" sx={{ cursor: "pointer", display: "grid", gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1fr) 260px" } }} tabIndex={0}>
+      <Stack spacing={1.25} sx={{ minWidth: 0, p: { xs: 1.75, sm: 2.25 } }}>
+        <Box sx={{ minWidth: 0 }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap", rowGap: 0.75 }}>
+            <Typography component="h1" variant="h1">{detail.title}</Typography>
+            <Chip label={`${detail.symbolCount} ${detail.symbolCount === 1 ? "symbol" : "symbols"}`} size="small" sx={{ bgcolor: "#edf3ff", color: "#082b73", fontWeight: 800 }} />
+            <KeyboardArrowDownRoundedIcon aria-hidden="true" sx={{ color: "#082b73", fontSize: 23, transform: expanded ? "rotate(180deg)" : "none", transition: "transform 160ms ease" }} />
+          </Stack>
+          {detail.description ? <Typography color="text.secondary" sx={{ mt: 0.75 }} variant="body2">{detail.description}</Typography> : null}
         </Box>
-      </Box>
+        {detail.tags.length ? <Stack direction="row" spacing={0.65} sx={{ alignItems: "flex-start", flexWrap: "wrap", rowGap: 0.65 }}>{detail.tags.map((tag, index) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: index % 2 ? "#e9f7ef" : "#edf3ff", color: index % 2 ? "#14663c" : "#082b73", fontWeight: 700 }} />)}</Stack> : null}
+      </Stack>
       <Stack spacing={0.65} sx={{ alignItems: "center", alignSelf: { xs: "stretch", lg: "start" }, boxShadow: "inset 3px 0 0 #082b73", minWidth: 0, p: { xs: 1.25, sm: 1.5 }, textAlign: "center" }}>
         <Avatar sx={{ bgcolor: "#102b69", fontWeight: 850, height: 48, width: 48 }}>{avatarLetters(detail.authorHandle)}</Avatar>
         <Typography noWrap sx={{ fontSize: "0.78rem", fontWeight: 850, maxWidth: "100%" }}>@{detail.authorHandle}</Typography>
         <Link href={`/community/${detail.authorHandle}`} style={{ color: "#082b73", fontSize: "0.75rem", fontWeight: 800, textDecoration: "none" }}>View profile</Link>
       </Stack>
+      <Box aria-hidden="true" sx={{ columnGap: 0.65, display: { xs: "none", sm: "grid" }, gridColumn: "1 / -1", gridTemplateColumns: communityWatchlistFactColumns.sm, justifyItems: "start", pb: 1.75, px: { xs: 1.75, sm: 2.25 } }}>
+        <Box />
+        {["Ctry", "Ind.", "M/C", "O/S"].map((label) => <Typography color="text.secondary" key={label} sx={{ fontSize: "0.72rem", fontWeight: 900, letterSpacing: ".03em" }}>{label}</Typography>)}
+        <Box />
+      </Box>
     </Box>
     {expanded ? <Box sx={{ p: { xs: 1.75, sm: 2.25 } }}><CommunityWatchlistTickerBoard detail={detail} editable={editable} showFactLabels={false} tickerFacts={tickerFacts} watchlistSlug={watchlistSlug} /></Box> : null}
   </Paper>;
