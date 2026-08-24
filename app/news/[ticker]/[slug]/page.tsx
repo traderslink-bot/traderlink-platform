@@ -1,21 +1,10 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache, type ReactNode } from "react";
 
 import { HelpSiteHeader } from "@/app/help/_components/help-site-header";
 import { PublicSiteFooter } from "@/app/public-site-footer";
-import smokeysLessonsImage from "@/app/news/images/smokeys-lessons/smokeys-lessons-blue-news.png";
-import {
-  getCurrentAcademyViewer,
-  listCurrentAcademyCompletedLessonSlugs,
-} from "@/app/academy/academy-access";
-import {
-  getAcademyCoursePage,
-  getAcademyCourses,
-  getLaunchAcademyCourseIds,
-} from "@/src/lib/academy/academy-content";
 import {
   getNewsArticle,
   type NewsArticle,
@@ -57,15 +46,42 @@ const getCachedNewsArticle = cache((ticker: string, slug: string) =>
   getNewsArticle(ticker, slug),
 );
 
-const chartReadingCourseId = "chart-reading-market-structure";
-const candlestickModuleIds = new Set([
-  "bullish-candle-patterns",
-  "bearish-candle-patterns",
-  "indecision-neutral-candles",
-  "momentum-continuation-candles",
-  "session-gap-behavior",
-]);
-const chartPatternModuleIds = new Set(["chart-patterns-context"]);
+const TRADERSLINK_BETA_FEATURES = [
+  {
+    description: "Enter the executions you took each day and TradersLink builds the trades for you. Review them by ticker with trade replay charts, then add trade notes, tags, and rules. Finish the day with what went well, what to work on, and your main focus for next time.",
+    icon: "trendUp",
+    title: "Daily Trade Tracker",
+  },
+  {
+    description: "Analyze every trade—not just your totals. Review detailed entry, exit, and complete-trade analysis, then use long-term results to study your execution habits over time. See missed profit opportunities, exits that may have happened too early, and trades that were green before they finished red. Candle-pattern data helps you study the conditions around your entries and exits.",
+    icon: "assessment",
+    title: "Trade Analyzer",
+  },
+  {
+    description: "Use preset trading rules that TradersLink can track from your recorded trades. Review when a rule may have been broken, see your results over time, and create custom rules for your own process.",
+    icon: "rule",
+    title: "Smart Rules",
+  },
+  {
+    description: "Get press-release alerts inside your dashboard, including alerts when a stock is halted, so important news is visible while you track your trades.",
+    icon: "negative",
+    title: "Press Release Alerts",
+  },
+  {
+    description: "Open a completed trade and go deeper. Review its executions, result, notes, tags, rules, and analysis in one place.",
+    icon: "book",
+    title: "Trade Explorer",
+  },
+  {
+    description: "Understand your trading history from more than one angle. Explore results by ticker, time of day, holding time, setups, and other patterns supported by your recorded trades.",
+    icon: "levels",
+    title: "Analytics",
+  },
+] as const satisfies ReadonlyArray<{
+  description: string;
+  icon: NewsSectionIcon;
+  title: string;
+}>;
 
 function asText(value: unknown, fallback = "N/A"): string {
   if (value === null || value === undefined || value === "") return fallback;
@@ -230,6 +246,51 @@ function NewsSectionIconGraphic({ icon }: { icon: NewsSectionIcon }) {
   }
 }
 
+function TradersLinkBetaPromotion() {
+  return (
+    <section aria-labelledby="traderslink-beta-title" className="news-traderslink-beta-promotion">
+      <header className="news-traderslink-beta-intro">
+        <p className="news-traderslink-beta-kicker">Now available</p>
+        <h2 id="traderslink-beta-title">
+          TradersLink <strong>Beta App</strong>
+        </h2>
+        <p className="news-traderslink-beta-access">
+          Free beta access for all TradersLink Discord members
+          <span>(free and premium members)</span>
+        </p>
+      </header>
+
+      <div className="news-traderslink-beta-feature-list">
+        {TRADERSLINK_BETA_FEATURES.map((feature) => (
+          <article className="news-traderslink-beta-feature" key={feature.title}>
+            <span aria-hidden="true" className="news-traderslink-beta-icon">
+              <NewsSectionIconGraphic icon={feature.icon} />
+            </span>
+            <div>
+              <h3>{feature.title}</h3>
+              <p>{feature.description}</p>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <section className="news-traderslink-beta-action">
+        <span className="news-traderslink-beta-action-title">
+          Log in for free<br />
+          with your<br />
+          discord account
+        </span>
+        <Link
+          className="news-traderslink-beta-action-button"
+          href="/api/auth/discord/login?returnTo=%2Fworkspace"
+        >
+          LOG IN NOW!
+        </Link>
+      </section>
+    </section>
+  );
+}
+
 function BulletList({
   empty,
   items,
@@ -338,20 +399,6 @@ export async function NewsArticleView({
     detailRow("Trigger type", asText(metadata.dilutionTriggerType || ai.dilutionTriggerType)),
     detailRow("Trigger date", asText(metadata.dilutionTriggerDate || ai.dilutionTriggerDate)),
   ].filter(([, value]) => value !== "N/A" && value !== "Not specified");
-  const academyCourses = getAcademyCourses();
-  const availableCourses = getLaunchAcademyCourseIds()
-    .map((courseId) => {
-      const course = academyCourses.find((item) => item.course_id === courseId);
-      const coursePage = getAcademyCoursePage(courseId);
-
-      return course && coursePage ? { course, coursePage } : null;
-    })
-    .filter((item) => item !== null);
-  const academyViewer = await getCurrentAcademyViewer();
-  const completedLessonSlugs = new Set(
-    await listCurrentAcademyCompletedLessonSlugs(academyViewer),
-  );
-
   return (
     <>
       <HelpSiteHeader />
@@ -474,79 +521,6 @@ export async function NewsArticleView({
                 </SectionCard>
               ) : null}
 
-              {availableCourses.length > 0 ? (
-                <SectionCard
-                  icon="book"
-                  kicker="Available Now"
-                  title="Begin The Academy Path"
-                >
-                  <div className="academy-module-list news-academy-course-list">
-                    {availableCourses.map(({ course, coursePage }) => {
-                      const lessons = coursePage.modules.flatMap(
-                        ({ lessons }) => lessons,
-                      );
-                      const progress = getCourseProgress(
-                        lessons,
-                        completedLessonSlugs,
-                      );
-                      const lessonGroupProgress = getCourseLessonGroupProgress(
-                        course.course_id,
-                        lessons,
-                        completedLessonSlugs,
-                      );
-
-                      return (
-                        <Link
-                          className="academy-card academy-card-link"
-                          href={course.course_slug}
-                          key={course.course_id}
-                        >
-                          <div className="academy-card-topline">
-                            <p className="academy-kicker">
-                              Course {course.course_order}
-                            </p>
-                            <span className="academy-chip academy-chip-success">
-                              Open now
-                            </span>
-                          </div>
-                          <h3 className="academy-card-title">
-                            {course.course_title}
-                          </h3>
-                          <p className="academy-card-text">
-                            {course.course_outcome || course.display_model}
-                          </p>
-                          <div className="academy-chip-row">
-                            <span className="academy-chip">
-                              {coursePage.totalLessonCount} lessons
-                            </span>
-                          </div>
-                          <div className="academy-course-progress">
-                            <CourseProgressMeter
-                              isAuthenticated={Boolean(academyViewer)}
-                              label={
-                                course.course_id === chartReadingCourseId
-                                  ? "Core lessons"
-                                  : undefined
-                              }
-                              progress={progress}
-                            />
-                            {lessonGroupProgress.map((groupProgress) => (
-                              <CourseProgressMeter
-                                isAuthenticated={Boolean(academyViewer)}
-                                key={groupProgress.label}
-                                label={groupProgress.label}
-                                progress={groupProgress}
-                              />
-                            ))}
-                          </div>
-                          <span className="academy-card-action">Open course</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </SectionCard>
-              ) : null}
-
               {accessMode === "free" ? (
                 <SectionCard
                   icon="trendUp"
@@ -570,20 +544,9 @@ export async function NewsArticleView({
                     </Link>
                   </div>
                 </SectionCard>
-              ) : (
-                <section
-                  aria-label="Learn Market Structure with Smokey"
-                  className="news-surface-card news-smokeys-lessons-card"
-                >
-                  <Image
-                    alt="Learn Market Structure with Smokey. 12 live lessons, 1 lesson per week, saved after each session."
-                    className="news-smokeys-lessons-image"
-                    placeholder="blur"
-                    sizes="(min-width: 1080px) 22rem, calc(100vw - 2rem)"
-                    src={smokeysLessonsImage}
-                  />
-                </section>
-              )}
+              ) : null}
+
+              <TradersLinkBetaPromotion />
             </aside>
           </div>
           </div>
@@ -596,112 +559,4 @@ export async function NewsArticleView({
 
 export default async function NewsArticlePage(props: PageProps) {
   return <NewsArticleView {...props} accessMode="full" />;
-}
-
-function getCourseProgress(
-  lessons: Array<{
-    lesson_slug: string;
-    module_id: string;
-    counts_toward_course_progress: boolean;
-  }>,
-  completedLessonSlugs: Set<string>,
-) {
-  const progressLessons = lessons.filter(
-    (lesson) => lesson.counts_toward_course_progress,
-  );
-  const completed = progressLessons.filter((lesson) =>
-    completedLessonSlugs.has(lesson.lesson_slug),
-  ).length;
-  const total = progressLessons.length;
-
-  return {
-    completed,
-    total,
-    percent: total > 0 ? Math.round((completed / total) * 100) : 0,
-  };
-}
-
-function getCourseLessonGroupProgress(
-  courseId: string,
-  lessons: Array<{
-    lesson_slug: string;
-    module_id: string;
-    counts_toward_course_progress: boolean;
-  }>,
-  completedLessonSlugs: Set<string>,
-) {
-  if (courseId !== chartReadingCourseId) {
-    return [];
-  }
-
-  return [
-    getLessonGroupProgress(
-      "Candlestick lessons",
-      lessons.filter((lesson) => candlestickModuleIds.has(lesson.module_id)),
-      completedLessonSlugs,
-    ),
-    getLessonGroupProgress(
-      "Chart pattern lessons",
-      lessons.filter((lesson) => chartPatternModuleIds.has(lesson.module_id)),
-      completedLessonSlugs,
-    ),
-  ].filter((progress) => progress.total > 0);
-}
-
-function getLessonGroupProgress(
-  label: string,
-  lessons: Array<{
-    lesson_slug: string;
-  }>,
-  completedLessonSlugs: Set<string>,
-) {
-  const completed = lessons.filter((lesson) =>
-    completedLessonSlugs.has(lesson.lesson_slug),
-  ).length;
-  const total = lessons.length;
-
-  return {
-    completed,
-    label,
-    total,
-    percent: total > 0 ? Math.round((completed / total) * 100) : 0,
-  };
-}
-
-function CourseProgressMeter({
-  isAuthenticated,
-  label,
-  progress,
-}: {
-  isAuthenticated: boolean;
-  label?: string;
-  progress: {
-    completed: number;
-    total: number;
-    percent: number;
-  };
-}) {
-  return (
-    <div className="academy-course-progress-row">
-      {label ? (
-        <p className="academy-course-progress-label">{label}</p>
-      ) : null}
-      <div className="academy-course-progress-track">
-        <span
-          className="academy-course-progress-fill"
-          style={{ width: `${progress.percent}%` }}
-        />
-      </div>
-      <div className="academy-course-progress-meta">
-        <span>
-          {isAuthenticated
-            ? `${progress.percent}% complete`
-            : "Log in to track progress"}
-        </span>
-        <span>
-          {progress.completed}/{progress.total}
-        </span>
-      </div>
-    </div>
-  );
 }
