@@ -74,7 +74,7 @@ export function CommunityWatchlistTickerBoard({
 
   const factColumns = {
     xs: "repeat(2, minmax(0, 1fr))",
-    sm: "124px 62px 150px 76px 78px minmax(0, 1fr)",
+    sm: "124px 62px minmax(150px, 1fr) 76px 78px 112px",
   };
 
   function addCustomTickerTag(symbol: string, selectedTags: readonly string[]): void {
@@ -117,7 +117,7 @@ export function CommunityWatchlistTickerBoard({
             </Stack>
             {facts.length ? facts.map((fact) => <Box key={fact.label} sx={{ minWidth: 0 }}>
               <Typography color="text.secondary" sx={{ display: { xs: "block", sm: "none" }, fontSize: "0.62rem", fontWeight: 900 }}>{fact.label}</Typography>
-              <Typography noWrap sx={{ fontSize: "0.8rem", fontWeight: 700, lineHeight: 1.3, maxWidth: "100%" }}>{fact.value ?? "—"}</Typography>
+              <Typography noWrap sx={{ fontSize: "0.8rem", fontWeight: 700, lineHeight: 1.3, maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{fact.value ?? "—"}</Typography>
             </Box>) : <Typography color="text.secondary" sx={{ fontSize: "0.73rem", gridColumn: { xs: "1 / -1", sm: "2 / span 4" } }}>Company facts not reported</Typography>}
             <Stack aria-hidden="true" direction="row" spacing={0.2} sx={{ alignItems: "center", display: { xs: "none", sm: "flex" }, justifySelf: "end", whiteSpace: "nowrap" }}>
               <Typography sx={{ color: "#082b73", fontSize: "0.7rem", fontWeight: 800 }}>Trader&apos;s take</Typography>

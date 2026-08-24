@@ -38,9 +38,10 @@ edge. Its blue edge moves with the entire card. It remains inside the existing
 790px watchlist width rather than restoring a separate profile rail. Its
 background matches the surrounding watchlist surface.
 
-Desktop fact columns remain fixed-width, with a 150px Industry column before
-the M/C and O/S facts. Long source values show a single-line ellipsis rather
-than changing a ticker card's dimensions or another fact's alignment. The
+Desktop ticker cards keep their fixed outer width. The Industry fact receives
+the available interior space before the fixed M/C, O/S and Trader's take
+columns, moving M/C and O/S right without widening the card. Long source
+values are forced to a single-line ellipsis rather than overflowing. The
 desktop profile card is top-aligned and does not stretch with a taller title
 or watchlist-tag column.
 
