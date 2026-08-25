@@ -83,9 +83,13 @@ export default async function BetaLandingPage() {
           </div>
 
           <section className={styles.action}>
-            <p>Log in for free with your Discord account.</p>
+            <span className={styles.actionTitle}>
+              Log in for free<br />
+              with your<br />
+              discord account
+            </span>
             <a className={styles.actionButton} href={`${signInOrigin}/api/auth/discord/login?returnTo=%2Fworkspace`}>
-              Continue with Discord
+              LOG IN NOW!
             </a>
           </section>
         </section>
