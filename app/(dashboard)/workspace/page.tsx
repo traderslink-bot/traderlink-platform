@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 
 import { WorkspaceOfflineViewCapture } from "@/app/pwa/workspace-offline-view-capture";
 import { WorkspaceDashboard } from "./workspace-dashboard";
@@ -18,6 +19,10 @@ import {
   platformWorkspaceOfflineCoverage,
 } from "@/src/modules/platform/contracts/platform-workspace-offline-view-contracts";
 import { readJournalFirstExecutionOnboardingStatus } from "@/src/modules/journal/server/product/journal-first-execution-onboarding";
+import {
+  MOOMOO_OAUTH_ONBOARDING_RETURN_COOKIE,
+  MOOMOO_OAUTH_ONBOARDING_RETURN_VALUE,
+} from "@/src/modules/platform/server/broker-connections/moomoo-oauth-cookies";
 
 export const metadata: Metadata = {
   title: "Welcome to TradersLink Beta App. | TradersLink Platform",
@@ -50,6 +55,9 @@ export default async function WorkspacePage({
   const scope = await requireTraderLinkPlatformPageScope();
   const onboardingStatus = readJournalFirstExecutionOnboardingStatus(scope);
   const showFirstTimeOnboarding = !onboardingStatus.hasAcceptedExecution;
+  const cookieStore = await cookies();
+  const moomooConnectionPending = cookieStore.get(MOOMOO_OAUTH_ONBOARDING_RETURN_COOKIE)?.value
+    === MOOMOO_OAUTH_ONBOARDING_RETURN_VALUE;
   const query = buildJournalAnalyticsDashboardQuery(scope, {
     metricIds: WORKSPACE_METRICS.map(([, metricId]) => metricId),
   });
@@ -95,6 +103,7 @@ export default async function WorkspacePage({
       <WorkspaceDashboard
         analyticsMetrics={analyticsMetrics}
         calendarData={calendar}
+        firstTimeMoomooConnectionPending={showFirstTimeOnboarding ? moomooConnectionPending : undefined}
         firstTimeMoomooConnected={onboardingStatus.hasActiveMoomooConnection}
         firstTimeOnboardingResult={showFirstTimeOnboarding
           ? workspaceFirstTimeOnboardingResult(queryParameters.gettingStarted)

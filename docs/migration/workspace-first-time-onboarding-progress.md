@@ -1,6 +1,6 @@
 # Workspace First-Time Onboarding Progress
 
-**Status:** Complete — deployed from canonical `main` on 2026-08-25.
+**Status:** Implemented — Railway release pending for the owner-approved Moomoo free-account guidance revision.
 
 **Controlling plan:** [Workspace First-Time Onboarding Design Plan](workspace-first-time-onboarding-design-plan.md)
 
@@ -27,6 +27,20 @@
 - [x] Every beta member has Trade Analyzer access. A connected Moomoo account
       supplies market data for chart-based reviews; it is not a paid gate.
 
+## Approved Moomoo free-account revision
+
+- [x] Keep the first Moomoo step simple: existing-account connection, free
+      account creation, or Daily Trade Tracker without Moomoo.
+- [x] Show free-account requirements only after the member selects **Create a
+      free Moomoo account**.
+- [x] Explain the known email path: website signup, stop at website brokerage
+      setup, sign in through the Moomoo mobile app, choose **Do this later** in
+      the app, then return to connect Moomoo in TradersLink.
+- [x] State that Moomoo remains optional and Daily Trade Tracker keeps its
+      normal benefits without Trade Analyzer.
+- [x] Do not show a connection-success state until a verified Moomoo OAuth
+      callback has saved an active connection.
+
 ## Implementation boundary
 
 - [x] Read-only mapping of the existing Moomoo callback and Daily Tracker save
@@ -35,9 +49,12 @@
       including a valid execution that leaves a position open.
 - [x] Confirmed there is no close or dismissal option. The guide remains until
       the first accepted execution is saved.
-- [x] Confirmed that Moomoo authorization is an embedded guide branch: success
-      resumes Daily Tracker guidance and failure resumes the Workspace Moomoo
-      step.
+- [x] Update the embedded Moomoo guide with the owner-approved free-account
+      steps and separate existing-account connection action.
+- [x] Restore the setup state when an authorization is incomplete and the
+      member returns to Workspace; do not imply a connection succeeded.
+- [x] Update Trade Analyzer Help Center Moomoo instructions to match the
+      verified website-to-mobile-app setup path.
 - [x] Add the Workspace guide without altering existing Workspace content.
 - [x] Add the safe Moomoo-to-Daily-Tracker return handoff and tracker callout.
 - [x] Keep Moomoo setup inside the guide, return a successful authorization
@@ -45,8 +62,8 @@
       authorization at the embedded Moomoo step.
 - [x] Keep the final Daily Tracker callout limited to form-specific guidance;
       it does not repeat the execution/trade lesson from Workspace.
-- [x] Run focused ESLint and whitespace checks only; no broad test suite,
-      process, deployment, commit or release action is included in this slice.
+- [x] Run focused ESLint and whitespace checks only; no broad test suite or
+      local server process is included in this revision.
 - [x] Owner approved the desktop and narrow-mobile composition from the
       lightweight static preview. The shared port 3010 was intentionally left
       untouched because it was serving a saved offline view.
@@ -56,15 +73,13 @@
 - [x] Existing accepted executions suppress the guide; a first accepted save
       suppresses the Tracker callout and the next Workspace visit.
 - [x] The Moomoo route reads only the active saved connection fact. OAuth
-      success goes to the Tracker continuation; failed or invalid authorization
-      returns to the embedded Workspace Moomoo step.
+      success goes to the Tracker continuation; failed, invalid or incomplete
+      authorization returns to the embedded Workspace Moomoo step.
 - [x] The Tracker continuation contains only form-specific guidance and hides
       the normal connection prompt while that guide is active.
-- [x] Focused ESLint and whitespace checks pass after removing the obsolete
-      Workspace success-return branch.
-- [x] Canonical-main Railway deployment `cb5e0554` succeeded after the focused
-      external-link type correction, and `/api/platform/health` returned ready
-      with 84 migrations on `sqlite_single_node`.
+- [x] Focused ESLint and whitespace checks pass after the revised free-account
+      path is implemented.
+- [ ] Canonical-main Railway deployment and health evidence recorded.
 - [ ] Browser and external-Moomoo authorization QA remain intentionally
       pending; no local server was started and no external authorization was
       run.

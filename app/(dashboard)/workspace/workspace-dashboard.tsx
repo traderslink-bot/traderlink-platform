@@ -125,6 +125,7 @@ function ruleOutcomeLabel(input: Readonly<{
 export function WorkspaceDashboard({
   analyticsMetrics,
   calendarData,
+  firstTimeMoomooConnectionPending,
   firstTimeMoomooConnected,
   firstTimeOnboardingResult,
   offlineSavedAtUtc,
@@ -132,6 +133,7 @@ export function WorkspaceDashboard({
 }: {
   analyticsMetrics?: readonly WorkspaceMetric[];
   calendarData?: JournalCalendarReadModel;
+  firstTimeMoomooConnectionPending?: boolean;
   firstTimeMoomooConnected?: boolean;
   firstTimeOnboardingResult?: WorkspaceFirstTimeOnboardingResult;
   offlineSavedAtUtc?: string;
@@ -174,6 +176,7 @@ export function WorkspaceDashboard({
       </Stack>
       {firstTimeOnboardingResult !== undefined ? (
         <WorkspaceFirstTimeOnboardingPanel
+          moomooConnectionPending={firstTimeMoomooConnectionPending ?? false}
           moomooConnected={firstTimeMoomooConnected ?? false}
           result={firstTimeOnboardingResult}
         />

@@ -1,6 +1,6 @@
 # Workspace First-Time Onboarding Design Plan
 
-**Status:** Complete — deployed from canonical `main` on 2026-08-25.
+**Status:** Implemented — Railway release pending for the owner-approved Moomoo free-account guidance revision.
 
 **Route:** `/workspace`, with a handoff to `/trade-tracker` and the existing Moomoo connection experience.
 
@@ -127,21 +127,43 @@ Moomoo-setup state. It does not open a second Dashboard shell.
 
 **Title:** `Connect Moomoo for Trade Analyzer`
 
-> Connect your existing Moomoo account, or create a free Moomoo account. You
-> do not need to open a Moomoo trading or brokerage account.
+> If you already have a Moomoo account, connect it now. If not, you can review
+> the free-account steps first. Daily Trade Tracker works either way.
 
 Actions, in order:
 
-1. **I have a Moomoo account — Connect Moomoo**
+1. **I already have a Moomoo account**
 2. **Create a free Moomoo account**
 3. **Continue to Daily Trade Tracker without Trade Analyzer**
 
-The creation action opens Moomoo's public site. It does not claim the user has
-created an account on return. The connection action uses the existing
-authorization experience and must request only the market-data scope required
-for the analyzer.
+The existing-account action starts the existing authorization experience and
+must request only the market-data scope required for the analyzer. The create
+action changes the embedded panel; it does not open Moomoo yet or claim that an
+account exists.
 
-### 4.2 Successful connection handoff
+### 4.2 Free Moomoo account steps
+
+Only after selecting **Create a free Moomoo account**, show this exact
+plain-language path before opening Moomoo:
+
+1. Create a Moomoo login on their website using email or phone.
+2. If the website sends the trader to brokerage-account setup, stop there.
+3. Download the Moomoo mobile app and sign in with the new login.
+4. In the app, choose **Do this later** on the brokerage selection.
+5. Return to TradersLink and connect the signed-in Moomoo account.
+
+Actions in this state:
+
+1. **Go to Moomoo to create your account** — opens Moomoo in a new tab.
+2. **I’m signed in to Moomoo — Connect Moomoo** — starts the existing OAuth
+   connection.
+3. **Continue to Daily Trade Tracker**.
+
+The guide says plainly that Moomoo is not connected until its successful return
+to TradersLink. No user is told that phone/email verification or simply
+returning from Moomoo means the connection succeeded.
+
+### 4.3 Successful connection handoff
 
 After a verified connection, return directly to the Daily Trade Tracker guide:
 
@@ -154,7 +176,7 @@ The Tracker shows this connection confirmation beside its final entry guidance.
 The return target is Daily Trade Tracker, not a generic Account page, Workspace
 success screen, or a new onboarding route.
 
-### 4.3 Cancelled or unsuccessful connection
+### 4.4 Cancelled, incomplete or unsuccessful connection
 
 Never strand a trader in setup. Show a direct, plain-language message and only
 these choices:
@@ -164,6 +186,11 @@ these choices:
 
 No connection failure changes Journal executions, account selection, imports or
 the normal Workspace dashboard.
+
+If the user leaves the authorization experience to finish a Moomoo verification
+step, a short-lived existing onboarding cookie restores the Moomoo setup state
+on return and says **Moomoo is not connected yet**. Only the verified OAuth
+callback can send the user to the Tracker connection confirmation.
 
 ## 5. Daily Trade Tracker handoff
 
@@ -215,8 +242,8 @@ and completed-trade requirements are met.
 
 1. [x] Owner approved the desktop and narrow-mobile visual composition in
        section 3.
-2. [x] Owner approved the exact Moomoo setup, success and failure copy in
-       section 4.
+2. [x] Owner approved the revised Moomoo existing-account, free-account,
+       incomplete-connection, success and failure copy in section 4.
 3. [x] Read-only discovery confirmed that Daily Trade Tracker already refreshes
        after a successful accepted execution batch, while the existing Moomoo
        callback currently returns every trader to Account.
@@ -242,12 +269,13 @@ and completed-trade requirements are met.
    repeating Step 1. Its normal post-save refresh causes the Workspace guide to
    disappear on the next visit because the accepted-execution check is now true.
 5. Leave Moomoo account creation as an external link and retain the existing
-   authorization endpoint and scopes. The connection success view sends the
-   trader to Daily Trade Tracker; an unsuccessful connection offers retry or
-   the same tracker handoff.
-6. No Help Center article changes are required: this introduces no new trade,
-   Moomoo, or Analyzer behavior. The existing Daily Trade Tracker help already
-   documents manual fills, alternative entry paths, and Moomoo chart data.
+   authorization endpoint and scopes. Explain the known website-to-mobile-app
+   path before opening the external site. The connection success view sends the
+   trader to Daily Trade Tracker; an unsuccessful or incomplete connection
+   resumes the embedded setup path.
+6. Update the Trade Analyzer Help Center Moomoo guide in the same release. It
+   must not claim a free email signup can be completed in minutes or without
+   the mobile-app step.
 
 The slice deliberately adds no persistent onboarding table or migration. A
 successful accepted execution is the durable, account-safe completion fact;

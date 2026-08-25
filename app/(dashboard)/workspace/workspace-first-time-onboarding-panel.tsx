@@ -17,7 +17,7 @@ export type WorkspaceFirstTimeOnboardingResult =
   | "moomoo-failed"
   | null;
 
-type GuideState = "overview" | "moomoo-setup" | "moomoo-connected";
+type GuideState = "overview" | "moomoo-setup" | "moomoo-create" | "moomoo-connected";
 
 const DAILY_TRACKER_ONBOARDING_HREF = "/trade-tracker?gettingStarted=daily-entry";
 const MOOMOO_CONNECTION_HREF = "/api/connections/moomoo/start?from=workspace-onboarding";
@@ -48,9 +48,11 @@ function DailyTrackerLink({ children }: { children: ReactNode }) {
 }
 
 export function WorkspaceFirstTimeOnboardingPanel({
+  moomooConnectionPending,
   moomooConnected,
   result,
 }: {
+  moomooConnectionPending: boolean;
   moomooConnected: boolean;
   result: WorkspaceFirstTimeOnboardingResult;
 }) {
@@ -83,28 +85,62 @@ export function WorkspaceFirstTimeOnboardingPanel({
             </Typography>
           ) : null}
           <Typography color="text.secondary" variant="body2">
-            Connect your existing Moomoo account, or create a free Moomoo account. You do not need to open a Moomoo trading or brokerage account.
+            If you already have a Moomoo account, connect it now. If not, you can review the free-account steps first. Daily Trade Tracker works either way.
           </Typography>
+          {moomooConnectionPending && result === null ? (
+            <Typography color="warning.main" sx={{ fontWeight: 700 }} variant="body2">
+              Moomoo is not connected yet. Finish Moomoo&apos;s verification, then return here to connect it.
+            </Typography>
+          ) : null}
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { xs: "stretch", sm: "center" } }}>
             <DashboardPrimaryAction href={MOOMOO_CONNECTION_HREF}>
-              {result === "moomoo-failed"
-                ? "Try connecting Moomoo again"
-                : "I have a Moomoo account — Connect Moomoo"}
+              {result === "moomoo-failed" ? "Try connecting Moomoo again" : "I already have a Moomoo account"}
             </DashboardPrimaryAction>
-            {result === null ? (
-              <Button
-                component="a"
-                href="https://www.moomoo.com/us/"
-                rel="noopener noreferrer"
-                target="_blank"
-                variant="outlined"
-              >
-                Create a free Moomoo account
-              </Button>
-            ) : null}
+            <DashboardSecondaryAction onClick={() => setState("moomoo-create")}>
+              Create a free Moomoo account
+            </DashboardSecondaryAction>
           </Stack>
           <Button href={DAILY_TRACKER_ONBOARDING_HREF} sx={{ px: 0 }} variant="text">
             Continue to Daily Trade Tracker without Trade Analyzer
+          </Button>
+        </Stack>
+      </DashboardPanel>
+    );
+  }
+
+  if (state === "moomoo-create") {
+    return (
+      <DashboardPanel title="Create a free Moomoo account">
+        <Stack spacing={1.5} sx={{ alignItems: "flex-start", maxWidth: 720 }}>
+          <Typography color="text.secondary" variant="body2">
+            Review these steps before you start. Moomoo is optional: you can use Daily Trade Tracker without it.
+          </Typography>
+          <Box component="ol" sx={{ color: "text.secondary", display: "grid", gap: 1, m: 0, pl: 2.5 }}>
+            <li>Create a Moomoo login on their website using email or phone.</li>
+            <li>If the website sends you to brokerage-account setup, stop there.</li>
+            <li>Download the Moomoo mobile app and sign in with the login you just created.</li>
+            <li>In the app, choose “Do this later” on the brokerage selection.</li>
+            <li>Return here and connect your signed-in Moomoo account.</li>
+          </Box>
+          <Typography color="text.secondary" variant="body2">
+            Moomoo is not connected until it returns you to TradersLink after you select the connection option below.
+          </Typography>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { xs: "stretch", sm: "center" } }}>
+            <Button
+              component="a"
+              href="https://www.moomoo.com/us/"
+              rel="noopener noreferrer"
+              target="_blank"
+              variant="contained"
+            >
+              Go to Moomoo to create your account
+            </Button>
+            <DashboardSecondaryAction href={MOOMOO_CONNECTION_HREF}>
+              I&apos;m signed in to Moomoo — Connect Moomoo
+            </DashboardSecondaryAction>
+          </Stack>
+          <Button href={DAILY_TRACKER_ONBOARDING_HREF} sx={{ px: 0 }} variant="text">
+            Continue to Daily Trade Tracker
           </Button>
         </Stack>
       </DashboardPanel>
