@@ -92,14 +92,15 @@ export function WorkspaceFirstTimeOnboardingPanel({
                 : "I have a Moomoo account — Connect Moomoo"}
             </DashboardPrimaryAction>
             {result === null ? (
-              <DashboardSecondaryAction
+              <Button
                 component="a"
                 href="https://www.moomoo.com/us/"
                 rel="noopener noreferrer"
                 target="_blank"
+                variant="outlined"
               >
                 Create a free Moomoo account
-              </DashboardSecondaryAction>
+              </Button>
             ) : null}
           </Stack>
           <Button href={DAILY_TRACKER_ONBOARDING_HREF} sx={{ px: 0 }} variant="text">
