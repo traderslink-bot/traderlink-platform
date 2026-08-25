@@ -13,9 +13,9 @@ Discord, then sends them to the dashboard-host Discord sign-in flow.
 - The existing dark-blue Beta App card inside that white frame.
 - White stacked feature cards inside the dark-blue card.
 - The original News Beta card action block at the bottom, unchanged in visible
-  wording, line breaks, sizing, button treatment, and blue spacing above and
-  below it: **Log in for free / with your / discord account** and **LOG IN
-  NOW!**.
+  wording, line breaks, button treatment, and blue spacing above and below it:
+  **Log in for free / with your / discord account** and **LOG IN NOW!**. Its
+  three-line headline is 50% larger on desktop only.
 
 ## Boundaries
 

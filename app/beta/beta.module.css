@@ -192,6 +192,10 @@
   .panel {
     padding: 42px 48px;
   }
+
+  .actionTitle {
+    font-size: 3.18rem;
+  }
 }
 
 @media (max-width: 480px) {
