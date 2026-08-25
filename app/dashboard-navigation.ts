@@ -345,24 +345,6 @@ export type DashboardHelpTarget = Readonly<{
   label: string;
 }>;
 
-/**
- * These dashboard routes currently have no matching public feature guide, so
- * their page-level question mark deliberately opens the Help Center instead.
- * The paths ending in `/*` cover their dynamic descendants.
- */
-export const DASHBOARD_ROUTES_WITHOUT_FEATURE_GUIDES: readonly string[] = Object.freeze([
-  "/workspace",
-  "/workspace/readiness",
-  "/welcome",
-  "/scanner",
-  "/charts",
-  "/market-news/week-ahead",
-  "/press-releases/*",
-  "/analytics/lab/*",
-  "/reflection-loop",
-  "/community/*",
-]);
-
 const DASHBOARD_HELP_TARGETS: readonly Readonly<DashboardHelpTarget & { route: string }>[] =
   Object.freeze([
     Object.freeze({ route: "/analytics/trade-analyzer/day/candle-patterns", href: "/help/trade-analyzer/candle-patterns", label: "Candle Patterns" }),
@@ -411,5 +393,5 @@ export function dashboardHelpTarget(pathname: string): DashboardHelpTarget | nul
   if (exactOrParent) {
     return Object.freeze({ href: exactOrParent.href, label: exactOrParent.label });
   }
-  return Object.freeze({ href: "/help", label: "Help Center" });
+  return null;
 }

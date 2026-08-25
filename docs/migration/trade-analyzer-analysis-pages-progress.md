@@ -68,10 +68,20 @@
 
 ## Empty-state correction - 2026-08-25
 
-- [x] Replaced the shared **No completed day trades** message across the Daily
-  Trade Analyzer route family with the approved beta Moomoo market-data
-  guidance and a primary **Connect Moomoo** action to `/account/trading`.
-- [x] Kept the distinct **No trades have been analyzed** state unchanged.
+- [x] Restored the shared **No completed day trades** message across the Daily
+  Trade Analyzer route family to the approved completed-trade availability
+  sentence, with no Moomoo connection action.
+- [x] Moved the approved beta Moomoo market-data guidance and primary
+  **Connect Moomoo** action to the distinct **No trades have been analyzed**
+  state, which is shared by every Day Trade Analyzer capability route.
 - [x] Confirmed the published Trade Analyzer Help already explains the free
   Moomoo-account connection path and keeps execution imports separate, so no
   guide revision was needed for this narrowly scoped correction.
+
+## Dashboard contextual Help correction - 2026-08-25
+
+- [x] Kept the global Help Center question-mark behavior unchanged.
+- [x] Removed the DashboardPage page-icon spacer so its contextual Help icon
+  no longer reserves vertical space before page content.
+- [x] Limited contextual page Help icons to routes with an explicit published
+  guide target; Help Center routes continue to render no duplicate icon.

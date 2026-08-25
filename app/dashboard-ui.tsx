@@ -16,7 +16,7 @@ export function DashboardPage({ children }: { children: ReactNode }) {
     <Stack
       data-traderlink-platform-dashboard-page
       spacing={2.5}
-      sx={{ minWidth: 0, position: "relative", pt: 5.5, width: "100%" }}
+      sx={{ minWidth: 0, position: "relative", width: "100%" }}
     >
       <DashboardPageHelpLink />
       {children}

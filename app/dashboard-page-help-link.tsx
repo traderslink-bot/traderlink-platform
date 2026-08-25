@@ -17,9 +17,7 @@ export function DashboardPageHelpLink() {
     return null;
   }
 
-  const label = target.href === "/help"
-    ? "Open Help Center"
-    : `Help for ${target.label}`;
+  const label = `Help for ${target.label}`;
 
   return (
     <Box sx={{ position: "absolute", right: 0, top: 0 }}>
