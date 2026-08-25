@@ -3,13 +3,13 @@ import { dirname } from "node:path";
 
 const STAGING_BOOTSTRAP_MODE = "apply-isolated-migrations";
 
+function isIsolatedStaging(): boolean {
+  return process.env.RAILWAY_ENVIRONMENT_NAME === "staging" &&
+    process.env.TRADERLINK_PLATFORM_STAGING_BOOTSTRAP === STAGING_BOOTSTRAP_MODE;
+}
+
 async function bootstrapIsolatedStagingDatabase(): Promise<void> {
-  if (
-    process.env.RAILWAY_ENVIRONMENT_NAME !== "staging" ||
-    process.env.TRADERLINK_PLATFORM_STAGING_BOOTSTRAP !== STAGING_BOOTSTRAP_MODE
-  ) {
-    return;
-  }
+  if (!isIsolatedStaging()) return;
 
   const databasePath = process.env.TRADERLINK_PLATFORM_DB_PATH;
   if (!databasePath || !databasePath.startsWith("/data/")) {
@@ -32,6 +32,19 @@ async function bootstrapIsolatedStagingDatabase(): Promise<void> {
   console.info(
     `TraderLink staging bootstrap applied ${result.appliedThisRun.length} isolated migrations.`,
   );
+
+  const { default: Database } = await import("better-sqlite3");
+  const database = new Database(databasePath);
+  try {
+    const updated = database.prepare(`UPDATE platform_dashboard_member_access_settings
+SET allow_all_discord_members = 1, updated_at_utc = ?
+WHERE settings_key = 'member_dashboard_access' AND allow_all_discord_members = 0`).run(
+      new Date().toISOString(),
+    );
+    if (updated.changes === 1) console.info("TraderLink staging member dashboard access enabled.");
+  } finally {
+    database.close();
+  }
 }
 
 export async function registerTraderLinkHostedNodeRuntime(): Promise<void> {
