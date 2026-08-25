@@ -103,7 +103,7 @@ export function NewsletterOptInOffer({ canSubscribe, formAction, preview = false
               The Week Ahead
             </Typography>
             <Typography sx={{ color: "#dff4ff", fontSize: { xs: "1.15rem", sm: "1.35rem" }, fontWeight: 650, lineHeight: 1.4, maxWidth: 620 }}>
-              Small-cap stocks and potential catalysts worth researching before the week begins.
+              A list of small-cap stocks with potential catalysts that helps you prepare for the trading week.
             </Typography>
           </Stack>
 
