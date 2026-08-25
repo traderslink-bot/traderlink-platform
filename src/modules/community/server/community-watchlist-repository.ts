@@ -750,6 +750,7 @@ WHERE watchlist.owner_user_id = ? AND profile.handle = ? AND watchlist.slug = ? 
       if (!watchlist) platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
       const position = this.database.prepare<[string], Readonly<{ count: number; maximum: number | null }>>(`SELECT COUNT(*) AS count, MAX(ordinal) AS maximum
 FROM community_watchlist_tickers WHERE watchlist_id = ?`).get(watchlist.watchlist_id);
+      if (!position) platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "tickers" });
       if (position.count >= 50) platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "tickers" });
       try {
         this.database.prepare(`INSERT INTO community_watchlist_tickers (
