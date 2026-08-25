@@ -14,6 +14,8 @@ import {
 } from "@/src/modules/platform/server/authentication/platform-discord-oauth-cookies";
 import { resolvePlatformPublicOrigin } from "@/src/modules/platform/server/authentication/platform-public-origin";
 import { PlatformDiscordSignInService } from "@/src/modules/platform/server/authentication/platform-discord-sign-in-service";
+import { PlatformNewsletterContactRepository } from "@/src/modules/platform/server/newsletter/platform-newsletter-contact-repository";
+import { loadPlatformNotificationEmailEncryptionConfiguration } from "@/src/modules/platform/server/notifications/platform-notification-email-configuration";
 import { resolvePlatformSessionClientLabel } from "@/src/modules/platform/server/authentication/platform-session-client-label";
 import { PlatformDashboardMemberAccessRepository } from "@/src/modules/platform/server/authentication/platform-dashboard-member-access-repository";
 import {
@@ -139,26 +141,67 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return response;
     }
     let sessionToken: string;
+    let provisioned = false;
+    let shouldShowNewsletterWelcome = false;
 
     try {
-      const signIn = withPlatformDatabase({ mode: "runtime" }, (database) =>
-        new PlatformDiscordSignInService(database, {
+      const signInResult = withPlatformDatabase({ mode: "runtime" }, (database) => {
+        let newsletterContacts: PlatformNewsletterContactRepository | null = null;
+        try {
+          newsletterContacts = new PlatformNewsletterContactRepository(
+            database,
+            loadPlatformNotificationEmailEncryptionConfiguration(),
+          );
+        } catch {
+          newsletterContacts = null;
+        }
+        const signIn = new PlatformDiscordSignInService(database, {
           protectedInitialOwnerAuthSubject:
             readProtectedInitialOwnerDiscordSubject(),
+          syncVerifiedDiscordEmail: newsletterContacts
+            ? (input) => {
+              try {
+                newsletterContacts?.syncVerifiedDiscordEmail({
+                  emailAddress: input.emailAddress,
+                  updatedAtUtc: input.timestamp,
+                  userId: input.userId,
+                });
+              } catch {
+                // Newsletter capture is optional and must never deny sign-in.
+              }
+            }
+            : undefined,
         }).signIn({
-        authSubject: discordUser.id,
-        username: discordUser.username,
-        globalDisplayName: discordUser.global_name ?? null,
-        avatarHash: discordUser.avatar ?? null,
-        guildId: config.guildId,
-        joinedAtUtc: resolvedGuildMember.joined_at ?? null,
-        roleIds: resolvedGuildMember.roles ?? [],
-        guildOwner: resolvedGuildMember.guild_owner === true,
-        sessionClientLabel: resolvePlatformSessionClientLabel(
-          request.headers.get("user-agent"),
-        ),
-      }));
-      sessionToken = signIn.session.token;
+          authSubject: discordUser.id,
+          username: discordUser.username,
+          globalDisplayName: discordUser.global_name ?? null,
+          avatarHash: discordUser.avatar ?? null,
+          emailAddress: discordUser.email ?? null,
+          emailVerified: discordUser.verified === true,
+          guildId: config.guildId,
+          joinedAtUtc: resolvedGuildMember.joined_at ?? null,
+          roleIds: resolvedGuildMember.roles ?? [],
+          guildOwner: resolvedGuildMember.guild_owner === true,
+          sessionClientLabel: resolvePlatformSessionClientLabel(
+            request.headers.get("user-agent"),
+          ),
+        });
+        let shouldShowNewsletterWelcome = false;
+        try {
+          shouldShowNewsletterWelcome =
+            newsletterContacts?.readStatus(signIn.userId).newsletterConsentState ===
+            "undecided";
+        } catch {
+          // Newsletter capture is optional and must never deny sign-in.
+        }
+        return Object.freeze({
+          signIn,
+          shouldShowNewsletterWelcome,
+        });
+      });
+      sessionToken = signInResult.signIn.session.token;
+      provisioned = signInResult.signIn.provisioned;
+      shouldShowNewsletterWelcome = signInResult.shouldShowNewsletterWelcome;
     } catch (error) {
       console.error(
         "Discord Platform session failed",
@@ -190,7 +233,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     ) {
       authStatus = "premium-required";
     }
-    const response = authRedirect(request, returnTo, authStatus);
+    const response = provisioned || shouldShowNewsletterWelcome
+      ? newsletterWelcomeRedirect(request, returnTo, authStatus)
+      : authRedirect(request, returnTo, authStatus);
 
     clearDiscordOAuthCookies(response, request);
     setPlatformAuthCookie(
@@ -212,6 +257,24 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     clearDiscordOAuthCookies(response, request);
     return response;
   }
+}
+
+function newsletterWelcomeRedirect(
+  request: NextRequest,
+  returnTo: string,
+  status: string,
+): NextResponse {
+  const destination = buildDiscordAuthResultUrl({
+    origin: resolvePlatformPublicOrigin(request),
+    returnTo,
+    status,
+  });
+  const welcome = new URL("/welcome", resolvePlatformPublicOrigin(request));
+  welcome.searchParams.set(
+    "returnTo",
+    `${destination.pathname}${destination.search}${destination.hash}`,
+  );
+  return NextResponse.redirect(welcome);
 }
 
 function clearDiscordOAuthCookies(

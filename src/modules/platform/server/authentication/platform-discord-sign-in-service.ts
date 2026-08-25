@@ -22,6 +22,8 @@ export type DiscordSignInFacts = Readonly<{
   username: string;
   globalDisplayName: string | null;
   avatarHash: string | null;
+  emailAddress?: string | null;
+  emailVerified?: boolean;
   guildId: string;
   roleIds: readonly string[];
   guildOwner: boolean;
@@ -73,6 +75,11 @@ export class PlatformDiscordSignInService {
       defaultTradingTimezone?: string;
       defaultBaseCurrency?: string;
       protectedInitialOwnerAuthSubject?: string;
+      syncVerifiedDiscordEmail?: (input: Readonly<{
+        emailAddress: string;
+        timestamp: string;
+        userId: string;
+      }>) => void;
     }> = {},
   ) {}
 
@@ -182,6 +189,13 @@ export class PlatformDiscordSignInService {
       joinedAtUtc: canonicalOptionalTimestamp(input.joinedAtUtc),
       verifiedAtUtc: timestamp,
     });
+    if (input.emailVerified === true && typeof input.emailAddress === "string") {
+      this.dependencies.syncVerifiedDiscordEmail?.({
+        emailAddress: input.emailAddress,
+        timestamp,
+        userId,
+      });
+    }
     identities.markAuthenticated({
       authProvider: "discord",
       authSubject: input.authSubject,

@@ -10,6 +10,13 @@
 **Progressive Web App:** The owner-approved [TraderLink Platform PWA Plan](traderlink-platform-pwa-plan.md) and [progress tracker](traderlink-platform-pwa-progress.md) preserve the complete dashboard and add offline Daily/Swing/Quick Trade Entry, bounded last-synced dashboard projections, retry-safe foreground and best-effort background sync, opt-in privacy-safe Web Push and one corrected icon family. PWA 1 is authorized locally; no deployment or production push activation is implied.
 **Rule:** A legacy item cannot be removed until its row is `Owner accepted` and its legacy dependency check is complete.
 
+**Discord newsletter opt-in:** [Discord Newsletter Opt-in Plan](discord-newsletter-opt-in-plan.md)
+and its [progress record](discord-newsletter-opt-in-progress.md) reserve
+additive migration `0088_platform_newsletter_opt_in`. It captures a verified
+Discord email in encrypted Platform storage and an explicit first-account
+choice for **The Week Ahead**. It does not create email login, bulk sending,
+an audience provider, trading-behavior segmentation, or a public profile fact.
+
 **2026-08-09 AI Review cache-write accounting checkpoint:** migration
 `0051_coach_ai_review_cache_write_accounting` is registered, disposable-copy
 verified, recovery-authority backup/restore verified and locally applied. The

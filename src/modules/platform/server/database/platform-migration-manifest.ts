@@ -80,6 +80,7 @@ import { platformSessionClientLabelsMigration } from "./migrations/0078_platform
 import { platformMarketNewsNotificationsMigration } from "./migrations/0080_platform_market_news_notifications";
 import { platformNotificationRemoteDeliveryMigration } from "./migrations/0083_platform_notification_remote_delivery";
 import { platformBrokerConnectionAttemptsMigration } from "./migrations/0084_platform_broker_connection_attempts";
+import { platformNewsletterOptInMigration } from "./migrations/0088_platform_newsletter_opt_in";
 import { dailyTradeMoomooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer";
 import { dailyTradeExactTurnoverMigration } from "@/src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover";
 import { dailyTradePathMaterializationMigration } from "@/src/modules/level-analysis/server/database/migrations/0040_daily_trade_path_materialization";
@@ -441,6 +442,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/community/server/database/migrations/0087_community_ticker_company_facts.ts",
       migration: communityTickerCompanyFactsMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0088_platform_newsletter_opt_in.ts",
+      migration: platformNewsletterOptInMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -786,6 +791,9 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     ]),
     "0087_community_ticker_company_facts": Object.freeze([
       "community_ticker_company_facts",
+    ]),
+    "0088_platform_newsletter_opt_in": Object.freeze([
+      "platform_newsletter_contacts",
     ]),
   });
 
