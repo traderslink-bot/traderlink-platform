@@ -1,6 +1,6 @@
 # Workspace First-Time Onboarding Design Plan
 
-**Status:** Implemented — Railway release pending for the owner-approved Moomoo free-account guidance revision.
+**Status:** Complete — deployed from canonical `main` on 2026-08-25.
 
 **Route:** `/workspace`, with a handoff to `/trade-tracker` and the existing Moomoo connection experience.
 

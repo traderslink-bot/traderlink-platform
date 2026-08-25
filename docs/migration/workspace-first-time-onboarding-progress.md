@@ -1,6 +1,6 @@
 # Workspace First-Time Onboarding Progress
 
-**Status:** Implemented — Railway release pending for the owner-approved Moomoo free-account guidance revision.
+**Status:** Complete — deployed from canonical `main` on 2026-08-25.
 
 **Controlling plan:** [Workspace First-Time Onboarding Design Plan](workspace-first-time-onboarding-design-plan.md)
 
@@ -90,3 +90,16 @@ The guide was first recorded at local commit `c4eb3fc2`, then included in the
 two-parent canonical-main reconciliation `941a9af3`. Follow-up `fa03f604`
 corrected the external Moomoo link's component type. Railway deployment
 `cb5e0554` is the verified live release.
+
+## Free-account guidance release record
+
+- [x] The owner-approved free-account setup path was released at
+      `aa7c606d`: existing Moomoo connection stays separate; the website to
+      mobile-app steps appear only after the free-account choice; Daily Trade
+      Tracker remains available without Moomoo.
+- [x] Incomplete authorization restores Moomoo setup and says Moomoo is not
+      connected; only a verified OAuth callback can show the connected
+      continuation.
+- [x] Railway deployment `e7888c0b` succeeded from `main` at `aa7c606d`.
+- [x] `GET /api/platform/health` returned `200` with `status: ready` and
+      `sqlite_single_node` storage after deployment.
