@@ -24,8 +24,6 @@ import { academyProgressMigration } from "@/src/modules/academy/server/database/
 import { watchlistStorageMigration } from "@/src/modules/watchlist/server/database/migrations/0014_watchlist_storage";
 import { communityWatchlistsMigration } from "@/src/modules/community/server/database/migrations/0076_community_watchlists";
 import { communityWatchlistFollowsMigration } from "@/src/modules/community/server/database/migrations/0082_community_watchlist_follows";
-import { communityProfilesMigration } from "@/src/modules/community/server/database/migrations/0086_community_profiles";
-import { communityTickerCompanyFactsMigration } from "@/src/modules/community/server/database/migrations/0087_community_ticker_company_facts";
 import { newsContentMigration } from "@/src/modules/news/server/database/migrations/0015_news_content";
 import { newsPressReleaseDashboardMigration } from "@/src/modules/news/server/database/migrations/0070_news_press_release_dashboard";
 import { newsMarketHaltAlertsMigration } from "@/src/modules/news/server/database/migrations/0072_news_market_halt_alerts";
@@ -433,14 +431,6 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/journal/server/database/migrations/0085_journal_manual_entry_failures.ts",
       migration: journalManualEntryFailuresMigration,
     }),
-    Object.freeze({
-      sourcePath: "src/modules/community/server/database/migrations/0086_community_profiles.ts",
-      migration: communityProfilesMigration,
-    }),
-    Object.freeze({
-      sourcePath: "src/modules/community/server/database/migrations/0087_community_ticker_company_facts.ts",
-      migration: communityTickerCompanyFactsMigration,
-    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -780,12 +770,6 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     ]),
     "0085_journal_manual_entry_failures": Object.freeze([
       "journal_manual_entry_failures",
-    ]),
-    "0086_community_profiles": Object.freeze([
-      "community_profile_follows",
-    ]),
-    "0087_community_ticker_company_facts": Object.freeze([
-      "community_ticker_company_facts",
     ]),
   });
 
