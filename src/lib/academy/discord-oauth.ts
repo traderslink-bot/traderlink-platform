@@ -11,6 +11,8 @@ export interface DiscordUser {
   username: string;
   global_name?: string | null;
   avatar?: string | null;
+  email?: string | null;
+  verified?: boolean;
 }
 
 export interface DiscordGuildMember {
@@ -37,7 +39,7 @@ interface DiscordTokenResponse {
 export type DiscordOAuthPrompt = "consent" | "none";
 
 const DISCORD_API_BASE = "https://discord.com/api/v10";
-const DISCORD_OAUTH_SCOPES = "identify guilds guilds.members.read";
+const DISCORD_OAUTH_SCOPES = "identify email guilds guilds.members.read";
 const SILENT_OAUTH_RETRY_ERRORS = new Set([
   "account_selection_required",
   "consent_required",
