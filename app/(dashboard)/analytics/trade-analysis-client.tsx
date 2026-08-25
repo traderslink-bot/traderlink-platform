@@ -12,7 +12,6 @@ import CardActionArea from "@mui/material/CardActionArea";
 import CardContent from "@mui/material/CardContent";
 import Drawer from "@mui/material/Drawer";
 import MenuItem from "@mui/material/MenuItem";
-import MuiLink from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Table from "@mui/material/Table";
@@ -388,7 +387,7 @@ export function TradeAnalysisClient({
     return <Paper sx={{ p: { xs: 2, sm: 3 } }} variant="outlined"><Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">No completed day trades</Typography><Typography color="text.secondary" sx={{ mt: 0.75 }}>Trade Analysis will begin after completed day trades are available in this account.</Typography></Paper>;
   }
   if (model.analyzedTradeCount === 0) {
-    return <Paper sx={{ p: { xs: 2, sm: 3 } }} variant="outlined"><Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">No trades have been analyzed.</Typography><Typography color="text.secondary" sx={{ mt: 0.75 }}>TradersLink Trade Analyzer requires a market data connection. <MuiLink component={Link} href="/account/trading">Connect Market Data</MuiLink></Typography></Paper>;
+    return <Paper sx={{ p: { xs: 2, sm: 3 } }} variant="outlined"><Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">No trades have been analyzed.</Typography><Typography color="text.secondary" sx={{ mt: 0.75 }}>TradersLink Trade Analyzer analyzes trades that are manually submitted in the Daily Trade Tracker.</Typography></Paper>;
   }
   return (
     <Stack spacing={2.5}>
