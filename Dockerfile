@@ -26,8 +26,11 @@ RUN groupadd --system --gid 1001 nodejs \
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY docker/staging-runtime-entrypoint.sh /usr/local/bin/staging-runtime-entrypoint
+RUN chmod 755 /usr/local/bin/staging-runtime-entrypoint
 
-USER nextjs
+USER root
 EXPOSE 3000
 
+ENTRYPOINT ["/usr/local/bin/staging-runtime-entrypoint"]
 CMD ["node", "server.js"]
