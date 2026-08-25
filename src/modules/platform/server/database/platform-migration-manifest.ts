@@ -31,6 +31,7 @@ import { newsPressReleaseDashboardMigration } from "@/src/modules/news/server/da
 import { newsMarketHaltAlertsMigration } from "@/src/modules/news/server/database/migrations/0072_news_market_halt_alerts";
 import { newsMarketHaltDailyMutesMigration } from "@/src/modules/news/server/database/migrations/0073_news_market_halt_daily_mutes";
 import { newsWeekAheadMigration } from "@/src/modules/news/server/database/migrations/0079_news_week_ahead";
+import { newsWeekAheadCurrentIssueMigration } from "@/src/modules/news/server/database/migrations/0081_news_week_ahead_current_issue";
 import { affiliateAttributionMigration } from "@/src/modules/affiliate/server/database/migrations/0016_affiliate_attribution";
 import { coachWeeklyReviewsMigration } from "@/src/modules/coach/server/database/migrations/0025_coach_weekly_reviews";
 import { coachMonthlyReviewsMigration } from "@/src/modules/coach/server/database/migrations/0026_coach_monthly_reviews";
@@ -419,6 +420,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       migration: platformMarketNewsNotificationsMigration,
     }),
     Object.freeze({
+      sourcePath: "src/modules/news/server/database/migrations/0081_news_week_ahead_current_issue.ts",
+      migration: newsWeekAheadCurrentIssueMigration,
+    }),
+    Object.freeze({
       sourcePath: "src/modules/community/server/database/migrations/0082_community_watchlist_follows.ts",
       migration: communityWatchlistFollowsMigration,
     }),
@@ -772,6 +777,9 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "news_week_ahead_issue_versions",
     ]),
     "0080_platform_market_news_notifications": Object.freeze([]),
+    "0081_news_week_ahead_current_issue": Object.freeze([
+      "news_week_ahead_current_issue",
+    ]),
     "0082_community_watchlist_follows": Object.freeze([
       "community_watchlist_follows",
     ]),
