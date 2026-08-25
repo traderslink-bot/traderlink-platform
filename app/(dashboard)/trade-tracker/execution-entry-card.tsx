@@ -286,25 +286,39 @@ export function ExecutionEntryCard({
   return (
     <DashboardPanel
       action={<FeatureHelpLink href={entryMode === "quick" ? "/help/quick-trade-entry/enter-executions" : "/help/daily-trade-tracker/add-edit-trades#enter-executions"} label="manual execution entry" />}
-      eyebrow="Manual execution entry"
-      title="Enter trades"
+      eyebrow={entryMode === "day" ? undefined : "Manual execution entry"}
+      title={entryMode === "day" ? "Manual Trade Entry" : "Enter trades"}
     >
-      <Typography sx={{ fontWeight: 800 }} variant="body2">
-        Times use Eastern Time.
-      </Typography>
-      <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
-        Enter the exact execution time shown by your broker. Trade replay and analysis use this time to match each execution to the correct chart candle.
-      </Typography>
-      <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">
-        {entryMode === "quick" ? (
-          <>
-            Enter trade executions for any date. Skip the notes, tags and rules flow of the {" "}
-            <NextLink href="/trade-tracker">Daily Trade Tracker</NextLink>.
-          </>
-        ) : entryMode === "swing"
-          ? "Enter the executions that make up this swing trade. Opening and closing executions can have different trading dates."
-          : "Enter all day trade executions for one trading day and save your executions. All of your trades for the day will display below, organized by ticker."}
-      </Typography>
+      {entryMode === "day" ? (
+        <>
+          <Typography color="text.secondary" variant="body2">
+            Enter all day trade buy and sell executions for one trading day and save your executions. All of your trades for the day will display below, organized by ticker.
+          </Typography>
+          <Typography sx={{ fontWeight: 800, mt: 1.5 }} variant="body2">
+            Times use Eastern Time.
+          </Typography>
+          <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
+            Entering the correct execution time gives TraderLink the detail needed for more complete performance analysis. Some analytics depend on the order your executions occurred, and exact times are required for Trade Analyzer. You can find the exact time in your broker records.
+          </Typography>
+        </>
+      ) : (
+        <>
+          <Typography sx={{ fontWeight: 800 }} variant="body2">
+            Times use Eastern Time.
+          </Typography>
+          <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
+            Enter the exact execution time shown by your broker. Trade replay and analysis use this time to match each execution to the correct chart candle.
+          </Typography>
+          <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">
+            {entryMode === "quick" ? (
+              <>
+                Enter trade executions for any date. Skip the notes, tags and rules flow of the {" "}
+                <NextLink href="/trade-tracker">Daily Trade Tracker</NextLink>.
+              </>
+            ) : "Enter the executions that make up this swing trade. Opening and closing executions can have different trading dates."}
+          </Typography>
+        </>
+      )}
       <Stack spacing={1.5} sx={{ mt: 2.5 }}>
         {rows.map((row, index) => (
           <Box
