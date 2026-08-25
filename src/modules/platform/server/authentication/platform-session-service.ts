@@ -42,6 +42,7 @@ export class PlatformSessionService {
     userId: string;
     authProvider: string;
     authSubject: string;
+    clientLabel?: string | null;
   }>): CreatedPlatformSession {
     const now = this.dependencies.now?.() ?? new Date();
     const createdAtUtc = createCanonicalUtcTimestamp(now);
@@ -58,6 +59,7 @@ export class PlatformSessionService {
       userId: input.userId,
       authProvider: input.authProvider,
       authSubject: input.authSubject,
+      clientLabel: input.clientLabel ?? null,
       tokenSha256: hashPlatformSessionToken(token),
       createdAtUtc,
       expiresAtUtc,
@@ -112,6 +114,23 @@ export class PlatformSessionService {
       userId,
       createCanonicalUtcTimestamp(this.dependencies.now?.() ?? new Date()),
     );
+  }
+
+  listActiveForUser(userId: string): readonly PlatformSessionRecord[] {
+    return this.repository.listActiveForUser(
+      userId,
+      createCanonicalUtcTimestamp(this.dependencies.now?.() ?? new Date()),
+    );
+  }
+
+  revokeActiveSessionForUser(input: Readonly<{
+    sessionId: string;
+    userId: string;
+  }>): boolean {
+    return this.repository.revokeActiveSessionForUser({
+      ...input,
+      timestamp: createCanonicalUtcTimestamp(this.dependencies.now?.() ?? new Date()),
+    });
   }
 
   revokeAllForUser(userId: string): number {

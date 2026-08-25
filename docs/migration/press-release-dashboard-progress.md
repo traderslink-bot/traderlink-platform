@@ -15,6 +15,12 @@
 - [x] Keep article history; do not add automatic deletion.
 - [x] Deep-link PWA Push to the exact authenticated article drawer.
 
+## 2026-08-23 public article shell alignment
+
+- [x] Use the exact public Help Center header on detailed News article pages.
+- [x] Preserve the canonical News content, free-article variant and public footer.
+- [x] Align the dashboard and Help header to the detailed article page's light logo asset.
+
 ## Implementation checklist
 
 - [x] Add the News read-receipt and Push-preference migration.

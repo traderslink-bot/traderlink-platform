@@ -34,3 +34,14 @@
 - Focused ESLint and whole-project TypeScript completed with no reported error.
   No migration, server start, browser interaction, Journal write or deployment
   was performed because migration application remains a shared release boundary.
+
+## 2026-08-23 — owner-requested Swing card alignment correction
+
+- Reworked the Swing Trade Tracker card to match the Daily Trade Tracker
+  open-position structure on desktop: factual summary at left, compact
+  executions in the middle, and the Swing plan plus saved notes at right.
+- Kept swing-only facts in that same layout: days held remains with the plan,
+  dated Swing notes remain intact, and eligible manual execution editing stays
+  beside the compact execution rows.
+- Small screens remain a readable one-column order: summary, executions, then
+  the Swing journal and notes. No trade or journal fact was removed.

@@ -12,6 +12,7 @@ export type PlatformSessionRecord = Readonly<{
   sessionId: string;
   userId: string;
   authProvider: string;
+  clientLabel: string | null;
   createdAtUtc: string;
   expiresAtUtc: string;
   lastSeenAtUtc: string;
@@ -26,6 +27,7 @@ type SessionRow = Readonly<{
   session_id: string;
   user_id: string;
   auth_provider: string;
+  client_label: string | null;
   created_at_utc: string;
   expires_at_utc: string;
   last_seen_at_utc: string;
@@ -40,11 +42,21 @@ function assertTokenDigest(value: string): void {
   }
 }
 
+function assertClientLabel(value: string | null): void {
+  if (
+    value !== null &&
+    (!/^[A-Za-z][A-Za-z ]{1,78}$/u.test(value) || value.length > 80)
+  ) {
+    platformFailure("TRADERLINK_AUTH_SESSION_INVALID");
+  }
+}
+
 function mapSession(row: SessionRow): PlatformSessionRecord {
   return Object.freeze({
     sessionId: row.session_id,
     userId: row.user_id,
     authProvider: row.auth_provider,
+    clientLabel: row.client_label,
     createdAtUtc: row.created_at_utc,
     expiresAtUtc: row.expires_at_utc,
     lastSeenAtUtc: row.last_seen_at_utc,
@@ -67,6 +79,7 @@ export class PlatformSessionRepository {
     userId: string;
     authProvider: string;
     authSubject: string;
+    clientLabel: string | null;
     tokenSha256: string;
     createdAtUtc: string;
     expiresAtUtc: string;
@@ -78,6 +91,7 @@ export class PlatformSessionRepository {
       platformFailure("TRADERLINK_AUTH_SESSION_INVALID");
     }
     assertTokenDigest(input.tokenSha256);
+    assertClientLabel(input.clientLabel);
     assertCanonicalUtcTimestamp(input.createdAtUtc, "createdAtUtc");
     assertCanonicalUtcTimestamp(input.expiresAtUtc, "expiresAtUtc");
     if (input.expiresAtUtc <= input.createdAtUtc) {
@@ -85,14 +99,15 @@ export class PlatformSessionRepository {
     }
     try {
       this.database.prepare(`INSERT INTO platform_auth_sessions (
-  session_id, user_id, auth_provider, auth_subject, token_sha256,
+  session_id, user_id, auth_provider, auth_subject, client_label, token_sha256,
   created_at_utc, expires_at_utc, last_seen_at_utc, revoked_at_utc
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)`)
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`)
         .run(
           input.sessionId,
           input.userId,
           input.authProvider,
           input.authSubject,
+          input.clientLabel,
           input.tokenSha256,
           input.createdAtUtc,
           input.expiresAtUtc,
@@ -102,7 +117,7 @@ export class PlatformSessionRepository {
       platformFailure("TRADERLINK_AUTH_SESSION_INVALID", {}, error);
     }
     const row = this.database.prepare<[string], SessionRow>(`SELECT
-  session_id, user_id, auth_provider, created_at_utc, expires_at_utc,
+  session_id, user_id, auth_provider, client_label, created_at_utc, expires_at_utc,
   last_seen_at_utc, revoked_at_utc
 FROM platform_auth_sessions
 WHERE session_id = ?`)
@@ -118,7 +133,7 @@ WHERE session_id = ?`)
     assertTokenDigest(tokenSha256);
     assertCanonicalUtcTimestamp(nowUtc, "nowUtc");
     const row = this.database.prepare<[string, string], ResolvedSessionRow>(`SELECT
-  session.session_id, session.user_id, session.auth_provider,
+  session.session_id, session.user_id, session.auth_provider, session.client_label,
   session.created_at_utc, session.expires_at_utc,
   session.last_seen_at_utc, session.revoked_at_utc,
   user.display_name
@@ -183,6 +198,42 @@ WHERE user_id = ?
   AND expires_at_utc > ?`)
       .get(userId, nowUtc);
     return row?.count ?? 0;
+  }
+
+  listActiveForUser(userId: string, nowUtc: string): readonly PlatformSessionRecord[] {
+    assertCanonicalUuidV4(userId, "userId");
+    assertCanonicalUtcTimestamp(nowUtc, "nowUtc");
+    const rows = this.database.prepare<[string, string], SessionRow>(`SELECT
+  session_id, user_id, auth_provider, client_label, created_at_utc, expires_at_utc,
+  last_seen_at_utc, revoked_at_utc
+FROM platform_auth_sessions
+WHERE user_id = ?
+  AND revoked_at_utc IS NULL
+  AND expires_at_utc > ?
+ORDER BY last_seen_at_utc DESC, session_id`).all(userId, nowUtc);
+    return Object.freeze(rows.map(mapSession));
+  }
+
+  revokeActiveSessionForUser(input: Readonly<{
+    sessionId: string;
+    userId: string;
+    timestamp: string;
+  }>): boolean {
+    assertCanonicalUuidV4(input.sessionId, "sessionId");
+    assertCanonicalUuidV4(input.userId, "userId");
+    assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
+    const result = this.database.prepare(`UPDATE platform_auth_sessions
+SET revoked_at_utc = ?
+WHERE session_id = ?
+  AND user_id = ?
+  AND revoked_at_utc IS NULL
+  AND expires_at_utc > ?`).run(
+      input.timestamp,
+      input.sessionId,
+      input.userId,
+      input.timestamp,
+    );
+    return result.changes === 1;
   }
 
   revokeActiveForUser(input: Readonly<{

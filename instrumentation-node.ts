@@ -18,8 +18,21 @@ export async function registerTraderLinkHostedNodeRuntime(): Promise<void> {
     console.info(
       `TraderLink hosted runtime verified ${readiness.migrationCount} migrations on ${readiness.storage}.`,
     );
-  } catch {
-    console.error("TraderLink hosted runtime readiness failed.");
+  } catch (error) {
+    const code =
+      typeof error === "object" && error !== null && "code" in error &&
+        typeof error.code === "string"
+        ? error.code
+        : "UNKNOWN";
+    const safeContext =
+      code === "TRADERLINK_MIGRATION_FAILED" &&
+        typeof error === "object" && error !== null && "safeContext" in error &&
+        typeof error.safeContext === "object" && error.safeContext !== null
+        ? JSON.stringify(error.safeContext)
+        : "{}";
+    console.error(
+      `TraderLink hosted runtime readiness failed (${code}; ${safeContext}).`,
+    );
     process.exit(1);
   }
 }

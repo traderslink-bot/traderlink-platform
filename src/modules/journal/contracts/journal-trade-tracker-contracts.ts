@@ -1,7 +1,6 @@
 import type {
-  JournalOpenPositionStatus,
   JournalTradeStyle,
-  JournalTradeStyleLifecycle,
+  JournalTradeStyleRecord,
 } from "./journal-trade-style-contracts";
 import type { JournalSwingDailyNoteRecord } from "./journal-swing-note-contracts";
 
@@ -16,16 +15,7 @@ export type JournalTrackedPosition = Readonly<{
   remainingQuantityDecimal: string;
   averageEntryPriceDecimal: string | null;
   projectionState: "ready_closed" | "legitimate_open" | "needs_decision";
-  style: Readonly<{
-    revision: number;
-    tradeStyle: JournalTradeStyle;
-    openStatus: JournalOpenPositionStatus;
-    plannedFromEntry: boolean;
-    claimedEffectiveAtUtc: string;
-    declaredAtUtc: string;
-    lifecycleState: JournalTradeStyleLifecycle;
-    updatedAtUtc: string;
-  }> | null;
+  style: JournalTradeStyleRecord | null;
   latestSwingNote: JournalSwingDailyNoteRecord | null;
   reviewDateSwingNote: JournalSwingDailyNoteRecord | null;
 }>;

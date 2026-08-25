@@ -6,6 +6,7 @@ import {
   getLaunchAcademyLessonStaticParams,
 } from "@/src/lib/academy/academy-content";
 import { absoluteAcademyUrl } from "@/src/lib/academy/academy-seo";
+import { PUBLIC_HELP_COLLECTIONS } from "@/src/modules/help/public-help-content";
 
 type SitemapEntry = MetadataRoute.Sitemap[number];
 
@@ -25,6 +26,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const lessonEntries = getLaunchAcademyLessonStaticParams().map(({ slug }) =>
     sitemapEntry(`/academy/${slug.join("/")}/`, "monthly", 0.75, now),
   );
+  const helpEntries = PUBLIC_HELP_COLLECTIONS.flatMap<SitemapEntry>((collection) => [
+    sitemapEntry(collection.href, "monthly", 0.7, now),
+    ...collection.guides.map((guide) =>
+      sitemapEntry(`${collection.href}/${guide.slug}`, "monthly", 0.65, now),
+    ),
+  ]);
 
   return [
     sitemapEntry("/", "weekly", 1, now),
@@ -33,6 +40,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     sitemapEntry("/terms", "yearly", 0.3, now),
     ...courseEntries,
     ...lessonEntries,
+    sitemapEntry("/help", "weekly", 0.8, now),
+    ...helpEntries,
   ];
 }
 

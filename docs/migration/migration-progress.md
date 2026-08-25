@@ -1,4 +1,23 @@
 # TraderLink Platform Migration Progress
+
+**Week Ahead Dashboard:** The owner approved the dashboard-only [Week Ahead Dashboard Plan](week-ahead-dashboard-plan.md) and its [progress record](week-ahead-dashboard-progress.md) on 2026-08-23. The BigTime scrape remains on the owner's Windows computer, but its completed weekly issue will post directly to Railway rather than GitHub/Vercel. It will appear as **The Week Ahead** under **Market News**, retain only the current visible issue, and create an in-app notification with optional device Push.
+
+**Community Watchlists:** The owner approved the dashboard-native
+[Community Watchlists Plan](community-watchlists-plan.md) and its
+[progress record](community-watchlists-progress.md) on 2026-08-22. It defines
+opt-in user-created small-cap, micro-cap and nano-cap research watchlists at
+`/community/watchlists`, direct profile/list routes within the normal dashboard
+shell, and one compact Discord-to-exact-watchlist engagement loop. It remains
+strictly separate from the Premium publisher-owned `/watchlist` product.
+The owner then authorized the private-beta source implementation: migration
+0076, stable-user-owned storage, dashboard creation/direct pages and
+server-only mention-safe Discord delivery are now present locally. On local
+application, the shared ordered runner applied 0076 and the concurrently
+registered 0077 immediately after it; the post-run database passed foreign-key
+and quick-check verification. No Discord message/deployment has occurred.
+Connections, groups, comments, rankings, company pages and Moomoo enrichment
+remain deferred.
+
 **TradersLink Market Scanner:** The owner directed a new
 [TradersLink Market Scanner Plan](traderslink-market-scanner-plan.md) and its
 [progress record](traderslink-market-scanner-progress.md) on 2026-08-22. The
@@ -7,6 +26,27 @@ scanner with factual Moomoo result fields, a small useful result table and a
 visible update time. Personal scanners, sharing, TradersLink Watchlists,
 Calendar market events and Sunday notices are recorded as later slices rather
 than being mixed into the first UI.
+
+**Short Interest Toplist:** The owner directed a separate
+[Short Interest Toplist Plan](short-interest-toplist-plan.md) and its
+[progress record](short-interest-toplist-progress.md) on 2026-08-22. It lives
+under Stock Tools at `/short-interest`, remains independent of Scanner filters
+and refreshes only as a verified stored snapshot. The first visual shell has no
+market-wide source attached; a per-symbol Moomoo response is not treated as a
+toplist.
+
+**AI Reviews evidence authoring:** The owner-approved [AI Review Evidence Packet
+and Authoring Plan](ai-review-evidence-packet-and-authoring-plan.md) and its
+[progress record](ai-review-evidence-packet-and-authoring-progress.md) now
+control new weekly and monthly review prose. Migration 0066 adds immutable V4
+evidence snapshots, provider-call receipts and issued output; existing issued
+reviews remain untouched. New V4 reviews receive the compact core trade matrix,
+separate Analyzer execution-path matrix, notes, reflections, saved rules and
+exact period facts, while OpenAI writes all visible prose. The forced old
+review sections are replaced for V4 records by Snapshot, Recap, chronological
+narrative, optional Insights and an optional coverage note. Local Sol-high
+weekly and monthly end-to-end issuance passed; hosted entitlement, scheduler,
+provider and Railway activation remain separate release gates.
 
 **TraderLink Platform PWA:** The owner approved the complete
 [PWA plan](traderlink-platform-pwa-plan.md) and its
@@ -120,6 +160,10 @@ made.
 **Current phase:** Phase 6 local acceptance is complete. Phases 0-6 now pass their local technical/product gates; the owner-approved light Material dashboard is preserved, port 3010 is temporarily active for the owner's integrated review, and the accepted Journal fact counts remain intact with a zero-byte WAL. Local Journal Administration review now appends expected Platform audit events, so the live database file hash is no longer treated as immutable after Admin access begins. The replacement source was published to the new `traderslink-bot/traderlink-platform` repository on 2026-08-03, and the narrow landing/Academy release is live on Vercel. Public owner linking, real hosted-source preview/transfer, Docker execution, Railway persistent-volume deployment and full replacement application/DNS cutover remain external. Phase 7 retirement cannot delete preserved assets without explicit owner approval.
 
 **Focused analytics pages:** The owner-approved [Analytics Page Architecture Plan](analytics-pages-architecture-plan.md) separates Overview, Results, Execution and Timing so they do not become duplicate metric pages. Overview implementation is complete under its [progress record](analytics-overview-progress.md). Results is now in focused local review under its [progress record](analytics-results-progress.md): it begins with a date-filtered, searchable and sortable ticker table using only trader-relevant P/L, win-rate, profit-factor, completed-trade and trading-day calculations and replaces the retired Trades by Ticker page. Execution is now in implementation under its [progress record](analytics-execution-progress.md): its charts and table use factual completed-trade construction data and replaces the retired Round Trips page. Analytics Lab is retained but removed from public navigation and redirects to Analytics until a later owner-approved scope restores it. The owner removed the separate Performance page because its calendar-based P/L views overlapped with Overview and Calendar; it is not a future implementation requirement.
+
+**Dashboard owner-review corrections:** The owner approved the integrated [Dashboard Owner Review Corrections Plan](dashboard-owner-review-corrections-plan.md) on 2026-08-17. Its [progress tracker](dashboard-owner-review-corrections-progress.md) covers the shared Workspace Week calendar, Daily Trade Tracker presentation, consolidated Trading Rules, navigation hierarchy, Trade Explorer correction, exact-trade drawers for Results and the visibly renamed **Trade Breakdown** page, one directional candle-pattern naming catalog, and the small Charts/Notifications corrections. Existing route URLs, Journal authority, account scope and detector facts remain unchanged.
+
+**Left navigation and Workspace follow-up:** The owner-approved [follow-up progress record](left-navigation-and-workspace-follow-up-progress.md) captures the 2026-08-18 navigation ordering and Workspace-card corrections.
 **Historical pre-runtime implementation state:** The [Phase 3 plan](phase-3-journal-integrity-plan.md) and [tracker](phase-3-journal-integrity-progress.md) preserve the complete pre-runtime design and execution history. The accepted state immediately below supersedes former queued/unexecuted and 331/1/1 planning claims.
 **Phase 2 foundation commit:** `fea56307fbd0142ef99b9f13c020451a6a503cc7` (`feat(platform): establish verified database foundation`), preserved locally without push or deployment.
 **Phase 3 implementation commit:** `8f6a4d4e4dec20ef6edcd50f476b14d368bde505` (`feat(journal): complete phase 3 integrity foundation`), preserved locally without push or deployment.
@@ -142,6 +186,8 @@ the returned schema and a later Journal-evidence contract is accepted.
 **Phase 7 boundary:** [Legacy Retirement Progress](phase-7-legacy-retirement-progress.md) makes `traderlink-platform` the canonical local development application and freezes `traderslink.pro` as recovery/reference source. Source publication and the landing/Academy cutover are now recorded operations; no physical cleanup or full replacement hosted cutover is authorized by that classification.
 
 **Journal Administration implementation:** The owner-approved [Journal Administration Dashboard Plan](journal-admin-dashboard-plan.md) and [progress tracker](journal-admin-dashboard-progress.md) define `/admin/journal` as a separate Platform/Journal operations surface and keep Watchlist, V3 and Level Analysis administration out of scope. Technical Admin 1-6 is assembled in the active unstaged package: migrations 0019/0020, fail-closed owner authorization, bounded request security, import attempt/recovery and format evidence, privacy-safe read models, 14 private route handlers, audited format lifecycle/merge/developer-package/consented-source actions and the complete light Material UI. Fifteen focused files/31 tests, full whole-project TypeScript, full lint with zero errors, the 126-page production build, the 83-file Admin verifier, all 21 migration-file checks and the 156-file active replacement guard pass. Live browser acceptance now passes for Overview and all six Admin subsections with clean console/overlay and sidebar-navigation checks; real support-vault configuration, production operator grant, owner visual/product review and production Discord activation remain open. The code-owned supported-format registry is intentionally empty until exact adapter/fixture evidence exists; separately authorized automatic orphan cleanup remains report-only.
+
+**Journal Administration Users extension:** The owner authorized the complete [Journal Administration User Health Plan](journal-admin-user-health-plan.md) on 2026-08-24. Its linked [progress tracker](journal-admin-user-health-progress.md) records the completed and hosted implementation: exact Enabled/Disabled, dashboard-sign-in and Online-now meanings; Academy-versus-Journal-started distinctions; safe import and provider-backed broker-attempt evidence; attention views/filters; responsive private detail; and audited disable, enable and device sign-out controls. The narrow release completed at code tip `1664f79497fefe590a52a3bd0030480b97411098`; guarded Railway deployment `a9de6d87-cc33-4d39-9948-b35881d0a47d` applied migration 0084 and `/api/platform/health` returned ready with 83 migrations on `sqlite_single_node`.
 
 **Day/Swing Tracker implementation:** The owner approved the [Day Trade Tracker And Swing Trade Tracker Plan](day-and-swing-trade-tracker-plan.md) on 2026-08-02 and authorized implementation through one integrated technical/UI review. The [progress tracker](day-and-swing-trade-tracker-progress.md) is active. `/trade-tracker` is the Day Trade Tracker, `/trade-tracker/swings` is the separate Swing Trade Tracker, and both use the same Journal execution ledger. Migrations 0019-0021, manual multi-date preview/confirmation/save, shared style and dated Swing notes, Day/Swing/Open Positions UI integration and manual/broker reconciliation are implemented. The complete five-file tracker/service/route gate passes 75 tests with one worker; shell/navigation, privacy headers, full TypeScript/lint/build and the 156-file active replacement guard also pass. Manual-save responses return affected Day Tracker dates and stable Swing position references. Live browser acceptance passes for Day Tracker, Swing Tracker and Open Positions with meaningful content, expected controls, clean overlays and no browser page errors; only integrated owner visual/product review remains.
 

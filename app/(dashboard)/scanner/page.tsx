@@ -6,7 +6,6 @@ import { hasScannerEarlyAccess } from "@/src/modules/scanner/server/scanner-earl
 import { ScannerClient } from "./scanner-client";
 
 export const metadata: Metadata = {
-  description: "Ready-to-use TradersLink stock screens with live market results.",
   title: "Scanner | TraderLink Platform",
 };
 

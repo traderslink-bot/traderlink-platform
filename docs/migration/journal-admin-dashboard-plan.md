@@ -13,6 +13,8 @@ metric reconciliation.
 
 **Implementation tracker:** [Journal Administration Dashboard Progress](journal-admin-dashboard-progress.md)
 
+**User administration extension:** [Journal Administration User Health Plan](journal-admin-user-health-plan.md) and its [progress tracker](journal-admin-user-health-progress.md). It is complete and deployed with truthful user-state labels, user import/broker support evidence, Academy-to-Journal journey visibility and guarded account controls; hosted health is ready at migration 0084.
+
 **Latest implementation checkpoint:** 2026-08-03. The private shell and all
 planned pages/read APIs are present. Format lifecycle/merge, privacy-safe
 developer packages and consent-gated source downloads use same-origin,

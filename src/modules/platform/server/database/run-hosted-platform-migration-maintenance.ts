@@ -1,9 +1,9 @@
 import { dirname, isAbsolute, join, resolve } from "node:path";
 
 import {
-  IBKR_SOURCE_ACCOUNT_CANONICALIZATION_VERSION,
-  IBKR_SOURCE_ACCOUNT_CANONICALIZERS,
-} from "@/src/modules/journal/server/accounts/ibkr-source-account-canonicalizer";
+  ALL_JOURNAL_SOURCE_ACCOUNT_CANONICALIZERS,
+  DEFAULT_JOURNAL_SOURCE_ACCOUNT_CANONICALIZATION_VERSION,
+} from "@/src/modules/journal/server/accounts/journal-source-account-canonicalizers";
 import { loadAccountIdentityConfiguration } from "@/src/modules/journal/server/accounts/journal-account-service";
 
 import { initializeTraderLinkPlatformDatabase } from "@/src/scripts/initialize-traderlink-platform-database";
@@ -67,8 +67,8 @@ export async function runHostedPlatformMigrationMaintenance(
   const databasePath = resolvePlatformDatabaseConfig({ environment }).databasePath;
   const accountIdentity = loadAccountIdentityConfiguration(
     environment,
-    IBKR_SOURCE_ACCOUNT_CANONICALIZERS,
-    IBKR_SOURCE_ACCOUNT_CANONICALIZATION_VERSION,
+    ALL_JOURNAL_SOURCE_ACCOUNT_CANONICALIZERS,
+    DEFAULT_JOURNAL_SOURCE_ACCOUNT_CANONICALIZATION_VERSION,
   );
   const timestamp = new Date().toISOString().replaceAll(/[-:.]/gu, "");
   const checkpointRoot = join(backupRoot(databasePath, environment), "migrations", migrationId, timestamp);
@@ -84,7 +84,7 @@ export async function runHostedPlatformMigrationMaintenance(
         !requirements.hmacKeyVersions.every((version) =>
           version in accountIdentity.keysBase64) ||
         !requirements.sourceAccountCanonicalizationVersions.every((version) =>
-          version in IBKR_SOURCE_ACCOUNT_CANONICALIZERS)
+          version in ALL_JOURNAL_SOURCE_ACCOUNT_CANONICALIZERS)
       ) {
         platformFailure("TRADERLINK_ACCOUNT_IDENTITY_RECOVERY_REQUIRED");
       }

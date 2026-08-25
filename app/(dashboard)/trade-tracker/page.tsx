@@ -12,14 +12,15 @@ import {
 import {
   DashboardPage,
   DashboardPanel,
+  DashboardPrimaryAction,
 } from "../../dashboard-template";
 import {
   currentJournalAccountSelectionRef,
   requireTraderLinkPlatformPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
-
 import { readJournalFirstExecutionOnboardingStatus } from "@/src/modules/journal/server/product/journal-first-execution-onboarding";
+
 import {
   getReplacementReportingDaySession,
   getReplacementTradeTrackerAccount,
@@ -31,7 +32,7 @@ import { TradeTrackerUnsavedChangesProvider } from "./trade-tracker-unsaved-chan
 
 export const metadata: Metadata = {
   description: "Enter and review the current trading week's Trade Tracker executions.",
-  title: "Daily Trade Tracker | TraderLink Platform",
+  title: "Daily Trade Tracker | TradersLink Platform",
 };
 
 export const dynamic = "force-dynamic";
@@ -69,12 +70,12 @@ export default async function TradeTrackerPage({
   }
 
   const scope = await requireTraderLinkPlatformPageScope();
-  const account = getReplacementTradeTrackerAccount(scope);
   const onboardingStatus = readJournalFirstExecutionOnboardingStatus(scope);
   const showFirstExecutionCallout = query.gettingStarted === "daily-entry" &&
     !onboardingStatus.hasAcceptedExecution;
   const showMoomooConnectedStatus = showFirstExecutionCallout &&
     query.moomoo === "connected" && onboardingStatus.hasActiveMoomooConnection;
+  const account = getReplacementTradeTrackerAccount(scope);
   const utcDate = new Date().toISOString().slice(0, 10);
   const initialData = await getReplacementReportingDaySession(scope, {
     date: utcDate,
@@ -101,6 +102,16 @@ export default async function TradeTrackerPage({
             </Typography>
           </Stack>
         </DashboardPanel>
+      ) : null}
+      {!showFirstExecutionCallout ? (
+        <Stack spacing={0.75} sx={{ alignItems: "flex-start", maxWidth: 900, mt: 1 }}>
+          <Typography color="error.main" sx={{ fontWeight: 700 }} variant="body2">
+            You need a data connection if you want your trades analyzed and a chart trade replay.
+          </Typography>
+          <DashboardPrimaryAction href="/account/trading" size="small">
+            Connect Data
+          </DashboardPrimaryAction>
+        </Stack>
       ) : null}
       <ManualExecutionEntry
         accountCurrency={account?.baseCurrency ?? data?.currency ?? "USD"}

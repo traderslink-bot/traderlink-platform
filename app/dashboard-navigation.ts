@@ -21,6 +21,13 @@ export type DashboardNavigationIconKey =
   | "manualEntry"
   | "newspaper"
   | "overview"
+  | "openPositions"
+  | "tradeAnalyzer"
+  | "tradeBreakdown"
+  | "dayTradeAnalysis"
+  | "entryExit"
+  | "greenToRed"
+  | "mfeMae"
   | "reflection"
   | "results"
   | "rules"
@@ -45,18 +52,35 @@ const aiStatusLabel = areTraderLinkPlatformAiFeaturesEnabled()
   ? undefined
   : "Coming soon" as const;
 
-export type DashboardNavigationGroup = Readonly<{
-  id: "tradeEntry" | "trades" | "rules" | "pressReleases" | "analytics" | "tradeAnalyzer" | "ai" | "tradeRecords";
-  label: string;
-  icon: DashboardNavigationIconKey;
-  items: readonly DashboardNavigationItem[];
-}>;
-
 export type DashboardNavigationDrawerItem = Readonly<{
   id: "marketHaltAlerts";
   label: string;
   icon: DashboardNavigationIconKey;
 }>;
+
+export type DashboardNavigationGroupItem =
+  | DashboardNavigationDrawerItem
+  | DashboardNavigationItem;
+
+export function isDashboardNavigationItem(
+  item: DashboardNavigationGroupItem,
+): item is DashboardNavigationItem {
+  return "href" in item;
+}
+
+export type DashboardNavigationGroup = Readonly<{
+  id: "tradeEntry" | "trades" | "rules" | "pressReleases" | "analytics" | "tradeAnalyzer" | "ai" | "stockTools" | "tradeRecords";
+  label: string;
+  icon: DashboardNavigationIconKey;
+  items: readonly DashboardNavigationGroupItem[];
+}>;
+
+export const DASHBOARD_MARKET_HALT_ALERTS_ITEM: DashboardNavigationDrawerItem =
+  Object.freeze({
+    id: "marketHaltAlerts",
+    label: "Halt Alerts",
+    icon: "halt",
+  });
 
 export const DASHBOARD_HOME_ITEM: DashboardNavigationItem = Object.freeze({
   href: "/workspace",
@@ -130,30 +154,30 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
     Object.freeze({
       id: "tradeAnalyzer" as const,
       label: "Trade Analyzer",
-      icon: "tradeAnalysis" as const,
+      icon: "tradeAnalyzer" as const,
       items: Object.freeze([
         Object.freeze({
           href: "/analytics/trade-analyzer/day",
           label: "Day Trade Analysis",
-          icon: "overview" as const,
+          icon: "dayTradeAnalysis" as const,
           depth: 1 as const,
         }),
         Object.freeze({
           href: "/analytics/trade-analyzer/day/entry-exit",
           label: "Entry & Exit",
-          icon: "execution" as const,
+          icon: "entryExit" as const,
           depth: 2 as const,
         }),
         Object.freeze({
           href: "/analytics/trade-analyzer/day/mfe-mae",
           label: "MFE & MAE",
-          icon: "tradeAnalysis" as const,
+          icon: "mfeMae" as const,
           depth: 2 as const,
         }),
         Object.freeze({
           href: "/analytics/trade-analyzer/day/green-to-red",
           label: "Green-to-Red",
-          icon: "tradeAnalysis" as const,
+          icon: "greenToRed" as const,
           depth: 2 as const,
         }),
         Object.freeze({
@@ -193,7 +217,7 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
         Object.freeze({
           href: "/analytics/execution",
           label: "Trade Breakdown",
-          icon: "execution" as const,
+          icon: "tradeBreakdown" as const,
         }),
       ]),
     }),
@@ -207,65 +231,48 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
       ]),
     }),
     Object.freeze({
-      id: "tradeRecords" as const,
-      label: "Trade Records",
-      icon: "data" as const,
+      id: "stockTools" as const,
+      label: "Stock Tools",
+      icon: "marketCharts" as const,
       items: Object.freeze([
-        Object.freeze({ href: "/trades/open", label: "Open Positions", icon: "data" as const }),
-        Object.freeze({ href: "/imports", label: "Import Trades", icon: "import" as const }),
-        Object.freeze({ href: "/data-decisions", label: "Data Decisions", icon: "data" as const }),
+        Object.freeze({ href: "/scanner", label: "Scanner", icon: "scanner" as const }),
+        Object.freeze({ href: "/charts", label: "Market Charts", icon: "marketCharts" as const }),
+        DASHBOARD_MARKET_HALT_ALERTS_ITEM,
       ]),
     }),
     Object.freeze({
       id: "pressReleases" as const,
-      label: "Press Releases",
+      label: "Market News",
       icon: "newspaper" as const,
       items: Object.freeze([
-        Object.freeze({ href: "/press-releases", label: "All Press Releases", icon: "newspaper" as const }),
-        Object.freeze({ href: "/press-releases/news-filtered", label: "News Filtered", icon: "newspaper" as const }),
-        Object.freeze({ href: "/press-releases/market-cap", label: "All Market Cap", icon: "newspaper" as const }),
+        Object.freeze({ href: "/market-news/week-ahead", label: "The Week Ahead", icon: "newspaper" as const }),
+        Object.freeze({ href: "/press-releases/news-filtered", label: "News Scanner", icon: "newspaper" as const }),
         Object.freeze({ href: "/press-releases/market-cap/under-30m", label: "Under $30M", icon: "newspaper" as const }),
         Object.freeze({ href: "/press-releases/market-cap/30m-50m", label: "$30M-$50M", icon: "newspaper" as const }),
         Object.freeze({ href: "/press-releases/market-cap/50m-100m", label: "$50M-$100M", icon: "newspaper" as const }),
       ]),
     }),
+    Object.freeze({
+      id: "tradeRecords" as const,
+      label: "Trade Records",
+      icon: "data" as const,
+      items: Object.freeze([
+        Object.freeze({ href: "/trades/open", label: "Open Positions", icon: "openPositions" as const }),
+        Object.freeze({ href: "/imports", label: "Import Trades", icon: "import" as const }),
+        Object.freeze({ href: "/data-decisions", label: "Data Decisions", icon: "data" as const }),
+      ]),
+    }),
   ]);
 
+// Kept for dashboard-template compatibility. Scanner and Market Charts now live
+// in Stock Tools, so there are no standalone sidebar links.
 export const DASHBOARD_STANDALONE_ITEMS: readonly DashboardNavigationItem[] =
-  Object.freeze([
-    Object.freeze({
-      href: "/scanner",
-      label: "Scanner",
-      icon: "scanner" as const,
-    }),
-    Object.freeze({
-      href: "/charts",
-      label: "Market Charts",
-      icon: "marketCharts" as const,
-    }),
-  ]);
-
-export const DASHBOARD_MARKET_HALT_ALERTS_ITEM: DashboardNavigationDrawerItem =
-  Object.freeze({
-    id: "marketHaltAlerts",
-    label: "Halt Alerts (Nasdaq/NYSE)",
-    icon: "halt",
-  });
+  Object.freeze([]);
 
 export type DashboardSidebarNavigationSection = Readonly<
-  | {
+  {
     kind: "group";
     group: DashboardNavigationGroup;
-    dividerBefore?: boolean;
-  }
-  | {
-    kind: "item";
-    item: DashboardNavigationItem;
-    dividerBefore?: boolean;
-  }
-  | {
-    kind: "drawer";
-    item: DashboardNavigationDrawerItem;
     dividerBefore?: boolean;
   }
 >;
@@ -279,15 +286,13 @@ export const DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS: readonly DashboardSidebarNav
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[4] }),
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[5] }),
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[6] }),
-    Object.freeze({ kind: "item" as const, item: DASHBOARD_STANDALONE_ITEMS[0] }),
-    Object.freeze({ kind: "item" as const, item: DASHBOARD_STANDALONE_ITEMS[1] }),
     Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[7] }),
-    Object.freeze({ kind: "drawer" as const, item: DASHBOARD_MARKET_HALT_ALERTS_ITEM }),
+    Object.freeze({ kind: "group" as const, group: DASHBOARD_MAIN_NAVIGATION_GROUPS[8] }),
   ]);
 
 export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
   Object.freeze({
-    "/workspace": "Workspace",
+    "/workspace": "Welcome to TradersLink Beta App.",
     "/workspace/readiness": "Platform Readiness",
     "/calendar": "Calendar",
     "/scanner": "Scanner",
@@ -320,19 +325,19 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/account": "Account",
     "/notifications": "Notifications",
     "/press-releases": "All Press Releases",
-    "/press-releases/news-filtered": "News Filtered",
+    "/press-releases/news-filtered": "News Scanner",
+    "/market-news/week-ahead": "The Week Ahead",
     "/press-releases/market-cap": "All Market Cap",
-    "/press-releases/market-cap/under-30m": "Under $30M Press Releases",
-    "/press-releases/market-cap/30m-50m": "$30M-$50M Press Releases",
-    "/press-releases/market-cap/50m-100m": "$50M-$100M Press Releases",
+    "/press-releases/market-cap/under-30m": "Under $30M Market Cap",
+    "/press-releases/market-cap/30m-50m": "$30M–$50M Market Cap",
+    "/press-releases/market-cap/50m-100m": "$50M–$100M Market Cap",
   });
 
 export const DASHBOARD_NAVIGATION_HREFS: readonly string[] = Object.freeze([
   DASHBOARD_HOME_ITEM.href,
   ...DASHBOARD_MAIN_NAVIGATION_GROUPS.flatMap((group) =>
-    group.items.map((item) => item.href),
+    group.items.filter(isDashboardNavigationItem).map((item) => item.href),
   ),
-  ...DASHBOARD_STANDALONE_ITEMS.map((item) => item.href),
 ]);
 
 export type DashboardHelpTarget = Readonly<{

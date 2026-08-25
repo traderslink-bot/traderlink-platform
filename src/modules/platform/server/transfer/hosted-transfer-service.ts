@@ -108,12 +108,6 @@ function requireAuthorization(input: Readonly<{
       check: "independent_restore",
     });
   }
-  const walPath = `${input.databasePath}-wal`;
-  if (existsSync(walPath) && statSync(walPath).size !== 0) {
-    platformFailure("TRADERLINK_HOSTED_TRANSFER_AUTHORIZATION_REQUIRED", {
-      check: "target_wal_not_empty",
-    });
-  }
   for (const modulePreview of prepared.preview.modules) {
     const sourceBackupCompletedAt = Date.parse(
       authorization.sourceBackupCompletedAtUtcByModule[modulePreview.module],

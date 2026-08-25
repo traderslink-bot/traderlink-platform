@@ -61,6 +61,7 @@ export class JournalTradeTrackerReadService {
           row.plannedFromEntry !== null && row.claimedEffectiveAtUtc &&
           row.declaredAtUtc && row.styleLifecycleState && row.styleUpdatedAtUtc
         ? Object.freeze({
+            positionRef,
             revision: row.styleRevision,
             tradeStyle: row.tradeStyle,
             openStatus: row.openStatus,

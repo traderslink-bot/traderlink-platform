@@ -1103,22 +1103,7 @@ function buildReplacementDaySession(
       const positionRef = journal.tradeStyles.positionRef(account, position.roundTripId);
       return [position.roundTripId, {
         positionRef,
-        style: position.tradeStyle && position.openStatus && position.styleRevision &&
-            position.plannedFromEntry !== null && position.claimedEffectiveAtUtc &&
-            position.declaredAtUtc && position.styleLifecycleState &&
-            position.styleUpdatedAtUtc
-          ? Object.freeze({
-              positionRef,
-              revision: position.styleRevision,
-              tradeStyle: position.tradeStyle,
-              openStatus: position.openStatus,
-              plannedFromEntry: position.plannedFromEntry,
-              claimedEffectiveAtUtc: position.claimedEffectiveAtUtc,
-              declaredAtUtc: position.declaredAtUtc,
-              lifecycleState: position.styleLifecycleState,
-              updatedAtUtc: position.styleUpdatedAtUtc,
-            })
-          : null,
+        style: journal.tradeStyles.read(account, positionRef),
       }] as const;
     }));
     const editableManualExecutions = new Map(
@@ -1586,22 +1571,7 @@ export function getReplacementOpenPositionStyles(
     return Object.freeze(Object.fromEntries(
       journal.tradeStyles.listOpenPositionRows(account).map((position) => {
         const positionRef = journal.tradeStyles.positionRef(account, position.roundTripId);
-        const style = position.tradeStyle && position.openStatus &&
-            position.styleRevision && position.plannedFromEntry !== null &&
-            position.claimedEffectiveAtUtc && position.declaredAtUtc &&
-            position.styleLifecycleState && position.styleUpdatedAtUtc
-          ? Object.freeze({
-              positionRef,
-              revision: position.styleRevision,
-              tradeStyle: position.tradeStyle,
-              openStatus: position.openStatus,
-              plannedFromEntry: position.plannedFromEntry,
-              claimedEffectiveAtUtc: position.claimedEffectiveAtUtc,
-              declaredAtUtc: position.declaredAtUtc,
-              lifecycleState: position.styleLifecycleState,
-              updatedAtUtc: position.styleUpdatedAtUtc,
-            })
-          : null;
+        const style = journal.tradeStyles.read(account, positionRef);
         return [position.roundTripId, Object.freeze({ positionRef, style })] as const;
       }),
     ));

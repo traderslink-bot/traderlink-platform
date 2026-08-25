@@ -37,6 +37,7 @@ export function createJournalOpenPositionsOfflineViewModel(input: Readonly<{
             openStatus: tracking.style.openStatus,
             plannedFromEntry: tracking.style.plannedFromEntry,
             revision: tracking.style.revision,
+            swingPlan: tracking.style.swingPlan,
             tradeStyle: tracking.style.tradeStyle,
             updatedAtUtc: tracking.style.updatedAtUtc,
           }),
@@ -92,7 +93,15 @@ function isStyle(value: unknown): value is JournalOfflinePositionStyle | null {
     typeof value.declaredAtUtc === "string" &&
     (value.lifecycleState === "active" || value.lifecycleState === "closed" ||
       value.lifecycleState === "needs_relink") &&
-    typeof value.updatedAtUtc === "string");
+    typeof value.updatedAtUtc === "string" &&
+    (value.swingPlan === null || (isRecord(value.swingPlan) &&
+      typeof value.swingPlan.entryReason === "string" &&
+      typeof value.swingPlan.hasUpcomingCatalyst === "boolean" &&
+      isNullableString(value.swingPlan.catalystDetails) &&
+      typeof value.swingPlan.plannedHoldTradingDays === "number" &&
+      Number.isSafeInteger(value.swingPlan.plannedHoldTradingDays) &&
+      value.swingPlan.plannedHoldTradingDays >= 1 &&
+      value.swingPlan.plannedHoldTradingDays <= 252)));
 }
 
 export function isJournalOpenPositionsOfflineViewModel(

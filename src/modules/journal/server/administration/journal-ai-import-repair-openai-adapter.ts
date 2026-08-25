@@ -54,9 +54,16 @@ function normalizeOutputMapping(
 
 const SYSTEM = `You configure a CSV statement mapping for TraderLink. Return only the mapping object.
 Use only headers and layout actually present in the supplied statement. Do not invent columns,
-orders, broker identity, side values, timezone, dates, prices, quantities, or executions. Map a
+orders, broker identity, side values, dates, prices, quantities, or executions. Map a
 statement only if it contains a coherent stock-execution table. The result is independently
-validated and previewed before any Journal import. Do not include commentary or statement rows.`;
+validated and previewed before any Journal import. Currency is optional: set columns.currency
+to null unless its header clearly identifies a currency field (for example Currency, Curr or
+CCY). Never map an exchange, market center, note, account, venue or other arbitrary column as
+currency. For the chosen side column, inspect its actual distinct values in the supplied rows.
+Put every exact value that opens or adds to a long position in sideValues.buy, and every exact
+value that closes or reduces a long position in sideValues.sell. Preserve the source spelling
+exactly; values such as OPEN_LONG and CLOSE_LONG are valid when they appear in the statement.
+Do not include commentary or statement rows.`;
 
 function enabled(environment: NodeJS.ProcessEnv): boolean {
   return environment.TRADERLINK_PLATFORM_AI_IMPORT_REPAIR_ENABLED === "true" &&
@@ -70,13 +77,13 @@ export function createJournalAiImportRepairOpenAiProvider(
   if (!enabled(environment)) return null;
   const openai = createOpenAI({ apiKey: environment.OPENAI_API_KEY!.trim() });
   const modelId = environment.TRADERLINK_PLATFORM_AI_IMPORT_REPAIR_MODEL?.trim() || "gpt-5.6-terra";
-  return async ({ sourceText, confirmedBrokerName }) => {
+  return async ({ sourceText, confirmedBrokerName, confirmedSourceTimezone }) => {
     const result = await generateText({
       model: openai(modelId),
       maxOutputTokens: 2_000,
       output: Output.object({ schema: mappingSchema }),
       providerOptions: { openai: { reasoningEffort: "high", reasoningSummary: null, store: false } },
-      system: `${SYSTEM}\nThe trader confirmed the broker name as ${JSON.stringify(confirmedBrokerName)}. Set brokerName to that exact value; do not infer or replace it.`,
+      system: `${SYSTEM}\nThe trader confirmed the broker name as ${JSON.stringify(confirmedBrokerName)}. Set brokerName to that exact value; do not infer or replace it. The trader's confirmed statement timezone is ${JSON.stringify(confirmedSourceTimezone)}. Set sourceTimezone to that exact value; do not infer or replace it.`,
       prompt: sourceText,
     });
     if (!result.output) throw new Error("TRADERLINK_JOURNAL_AI_REPAIR_NO_MAPPING");

@@ -8,12 +8,14 @@ export type PlatformMigrationModuleNamespace =
   | "watchlist"
   | "news"
   | "affiliate"
-  | "coach";
+  | "coach"
+  | "community";
 
 export type PlatformMigration = Readonly<{
   moduleNamespace: PlatformMigrationModuleNamespace;
   migrationId: string;
   executionOrder: number;
+  requiresForeignKeysDisabled?: boolean;
   statements: readonly string[];
 }>;
 
@@ -35,6 +37,7 @@ export type TraderLinkPlatformErrorCode =
   | "TRADERLINK_MIGRATION_UNKNOWN_APPLIED"
   | "TRADERLINK_MIGRATION_FAILED"
   | "TRADERLINK_WORKSPACE_ACCESS_DENIED"
+  | "TRADERLINK_DASHBOARD_ACCESS_DENIED"
   | "TRADERLINK_WORKSPACE_NOT_FOUND"
   | "TRADERLINK_AUTH_IDENTITY_CONFLICT"
   | "TRADERLINK_AUTH_SESSION_INVALID"

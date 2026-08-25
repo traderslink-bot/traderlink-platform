@@ -13,7 +13,8 @@ import { journalRuleReviewNotesMigration } from "@/src/modules/journal/server/da
 import { journalAiImportRepairMigration } from "@/src/modules/journal/server/database/migrations/0054_journal_ai_import_repair";
 import { journalAiChatTradeStyleSourceMigration } from "@/src/modules/journal/server/database/migrations/0057_journal_ai_chat_trade_style_source";
 import { journalRuleIdeasMigration } from "@/src/modules/journal/server/database/migrations/0061_journal_rule_ideas";
-import { journalMultiTrackerStatementImportsMigration } from "@/src/modules/journal/server/database/migrations/0072_journal_multi_tracker_statement_imports";
+import { journalMultiTrackerStatementImportsMigration } from "@/src/modules/journal/server/database/migrations/0074_journal_multi_tracker_statement_imports";
+import { journalManualEntryFailuresMigration } from "@/src/modules/journal/server/database/migrations/0085_journal_manual_entry_failures";
 import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
 import { tradeExplorerComparisonStudiesMigration } from "@/src/modules/journal-analytics/server/database/migrations/0060_trade_explorer_comparison_studies";
 import { levelAnalysisCandleReviewMigration } from "@/src/modules/level-analysis/server/database/migrations/0009_level_analysis_candle_review";
@@ -22,10 +23,12 @@ import { dailyTradeYahooAnalyzerMigration } from "@/src/modules/level-analysis/s
 import { academyProgressMigration } from "@/src/modules/academy/server/database/migrations/0013_academy_progress";
 import { watchlistStorageMigration } from "@/src/modules/watchlist/server/database/migrations/0014_watchlist_storage";
 import { communityWatchlistsMigration } from "@/src/modules/community/server/database/migrations/0076_community_watchlists";
+import { communityWatchlistFollowsMigration } from "@/src/modules/community/server/database/migrations/0082_community_watchlist_follows";
 import { newsContentMigration } from "@/src/modules/news/server/database/migrations/0015_news_content";
 import { newsPressReleaseDashboardMigration } from "@/src/modules/news/server/database/migrations/0070_news_press_release_dashboard";
-import { newsMarketHaltAlertsMigration } from "@/src/modules/news/server/database/migrations/0073_news_market_halt_alerts";
-import { newsMarketHaltDailyMutesMigration } from "@/src/modules/news/server/database/migrations/0074_news_market_halt_daily_mutes";
+import { newsMarketHaltAlertsMigration } from "@/src/modules/news/server/database/migrations/0072_news_market_halt_alerts";
+import { newsMarketHaltDailyMutesMigration } from "@/src/modules/news/server/database/migrations/0073_news_market_halt_daily_mutes";
+import { newsWeekAheadMigration } from "@/src/modules/news/server/database/migrations/0079_news_week_ahead";
 import { affiliateAttributionMigration } from "@/src/modules/affiliate/server/database/migrations/0016_affiliate_attribution";
 import { coachWeeklyReviewsMigration } from "@/src/modules/coach/server/database/migrations/0025_coach_weekly_reviews";
 import { coachMonthlyReviewsMigration } from "@/src/modules/coach/server/database/migrations/0026_coach_monthly_reviews";
@@ -71,6 +74,10 @@ import { platformNotificationsMigration } from "./migrations/0053_platform_notif
 import { platformNotificationCoverageMigration } from "./migrations/0063_platform_notification_coverage";
 import { platformWebPushMigration } from "./migrations/0064_platform_web_push";
 import { platformDashboardMemberAccessMigration } from "./migrations/0077_platform_dashboard_member_access";
+import { platformSessionClientLabelsMigration } from "./migrations/0078_platform_session_client_labels";
+import { platformMarketNewsNotificationsMigration } from "./migrations/0080_platform_market_news_notifications";
+import { platformNotificationRemoteDeliveryMigration } from "./migrations/0083_platform_notification_remote_delivery";
+import { platformBrokerConnectionAttemptsMigration } from "./migrations/0084_platform_broker_connection_attempts";
 import { dailyTradeMoomooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer";
 import { dailyTradeExactTurnoverMigration } from "@/src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover";
 import { dailyTradePathMaterializationMigration } from "@/src/modules/level-analysis/server/database/migrations/0040_daily_trade_path_materialization";
@@ -373,16 +380,16 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       migration: coachAiChatQualityFeedbackMigration,
     }),
     Object.freeze({
-      sourcePath: "src/modules/journal/server/database/migrations/0072_journal_multi_tracker_statement_imports.ts",
-      migration: journalMultiTrackerStatementImportsMigration,
-    }),
-    Object.freeze({
-      sourcePath: "src/modules/news/server/database/migrations/0073_news_market_halt_alerts.ts",
+      sourcePath: "src/modules/news/server/database/migrations/0072_news_market_halt_alerts.ts",
       migration: newsMarketHaltAlertsMigration,
     }),
     Object.freeze({
-      sourcePath: "src/modules/news/server/database/migrations/0074_news_market_halt_daily_mutes.ts",
+      sourcePath: "src/modules/news/server/database/migrations/0073_news_market_halt_daily_mutes.ts",
       migration: newsMarketHaltDailyMutesMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/journal/server/database/migrations/0074_journal_multi_tracker_statement_imports.ts",
+      migration: journalMultiTrackerStatementImportsMigration,
     }),
     Object.freeze({
       sourcePath: "src/modules/journal/server/database/migrations/0075_journal_swing_position_plans.ts",
@@ -395,6 +402,34 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/platform/server/database/migrations/0077_platform_dashboard_member_access.ts",
       migration: platformDashboardMemberAccessMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0078_platform_session_client_labels.ts",
+      migration: platformSessionClientLabelsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/news/server/database/migrations/0079_news_week_ahead.ts",
+      migration: newsWeekAheadMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0080_platform_market_news_notifications.ts",
+      migration: platformMarketNewsNotificationsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/community/server/database/migrations/0082_community_watchlist_follows.ts",
+      migration: communityWatchlistFollowsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0083_platform_notification_remote_delivery.ts",
+      migration: platformNotificationRemoteDeliveryMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0084_platform_broker_connection_attempts.ts",
+      migration: platformBrokerConnectionAttemptsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/journal/server/database/migrations/0085_journal_manual_entry_failures.ts",
+      migration: journalManualEntryFailuresMigration,
     }),
   ]);
 
@@ -697,14 +732,14 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "news_press_release_push_preferences",
       "news_press_release_push_deliveries",
     ]),
-    "0072_journal_multi_tracker_statement_imports": Object.freeze([]),
-    "0073_news_market_halt_alerts": Object.freeze([
+    "0072_news_market_halt_alerts": Object.freeze([
       "news_market_halt_preferences",
       "news_market_halt_muted_tickers",
       "news_market_halt_events",
       "news_market_halt_push_deliveries",
     ]),
-    "0074_news_market_halt_daily_mutes": Object.freeze([]),
+    "0073_news_market_halt_daily_mutes": Object.freeze([]),
+    "0074_journal_multi_tracker_statement_imports": Object.freeze([]),
     "0075_journal_swing_position_plans": Object.freeze([]),
     "0076_community_watchlists": Object.freeze([
       "community_profiles",
@@ -715,6 +750,26 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     "0077_platform_dashboard_member_access": Object.freeze([
       "platform_dashboard_member_access_settings",
       "platform_dashboard_member_access_events",
+    ]),
+    "0078_platform_session_client_labels": Object.freeze([]),
+    "0079_news_week_ahead": Object.freeze([
+      "news_week_ahead_issues",
+      "news_week_ahead_issue_versions",
+    ]),
+    "0080_platform_market_news_notifications": Object.freeze([]),
+    "0082_community_watchlist_follows": Object.freeze([
+      "community_watchlist_follows",
+    ]),
+    "0083_platform_notification_remote_delivery": Object.freeze([
+      "platform_notification_email_addresses",
+      "platform_notification_remote_deliveries",
+    ]),
+    "0084_platform_broker_connection_attempts": Object.freeze([
+      "platform_broker_connection_attempts",
+      "platform_user_control_audit_events",
+    ]),
+    "0085_journal_manual_entry_failures": Object.freeze([
+      "journal_manual_entry_failures",
     ]),
   });
 

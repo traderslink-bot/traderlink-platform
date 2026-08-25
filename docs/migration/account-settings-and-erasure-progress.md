@@ -30,9 +30,9 @@
 - [x] Complete focused lint and whitespace verification for the Settings hub.
 - [x] Owner visually approved the Privacy controls and completed focused
   verification for the destructive Privacy slice on 2026-08-10.
-- [ ] Add the owner-requested Security route, quick Account menu, one-device
-  sign-out and confirmed sign-out everywhere; keep the related Help guide
-  aligned (active 2026-08-22).
+- [x] Add the Security route, quick Account menu, current-device sign-out,
+  individual active-session controls and confirmed sign-out everywhere; keep
+  the related Help guide aligned.
 
 ## Guardrails
 

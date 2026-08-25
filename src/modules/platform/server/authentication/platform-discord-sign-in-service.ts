@@ -26,6 +26,7 @@ export type DiscordSignInFacts = Readonly<{
   roleIds: readonly string[];
   guildOwner: boolean;
   joinedAtUtc: string | null;
+  sessionClientLabel?: string | null;
 }>;
 
 export type PlatformDiscordSignInResult = Readonly<{
@@ -194,6 +195,7 @@ export class PlatformDiscordSignInService {
       userId,
       authProvider: "discord",
       authSubject: input.authSubject,
+      clientLabel: input.sessionClientLabel,
     });
     return Object.freeze({
       session,

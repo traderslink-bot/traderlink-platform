@@ -113,4 +113,49 @@ describe("Journal generic mapped statement adapter", () => {
       isBlocking: false,
     }));
   });
+
+  it("keeps broker currency formatting and explicit long-side tokens factual", () => {
+    const sourceBytes = Buffer.from([
+      "Exec Time,Symbol,Side,Qty,Price,Net Comm + Reg Fee",
+      '2026-08-20 09:31:15,AAPL,OPEN_LONG,5,"$1,200.50","($1.25)"',
+      '2026-08-20 09:42:15,AAPL,CLOSE_LONG,5,"$1,201.75","$0.05"',
+    ].join("\n"));
+    const support = createJournalMappingSupportPackage({
+      sourceBytes,
+      brokerName: "Example Broker",
+      failureCode: "format_not_supported",
+    });
+    const mapping = mappingContractFromSupportTable({
+      brokerName: "Example Broker",
+      sourceTimezone: "America/New_York",
+      defaultCurrency: "USD",
+      delimiter: support.detectedDelimiter,
+      table: support.tables[0]!,
+      columns: {
+        timestamp: "Exec Time",
+        symbol: "Symbol",
+        side: "Side",
+        quantity: "Qty",
+        price: "Price",
+        fees: "Net Comm + Reg Fee",
+      },
+      buyValues: ["OPEN_LONG"],
+      sellValues: ["CLOSE_LONG"],
+    });
+
+    const preview = previewGenericMappedStatement({ sourceBytes, mapping });
+
+    expect(preview.executions).toEqual([
+      expect.objectContaining({
+        side: "buy",
+        priceDecimal: "1200.5",
+        feesDecimal: "-1.25",
+      }),
+      expect.objectContaining({
+        side: "sell",
+        priceDecimal: "1201.75",
+        feesDecimal: "-0.05",
+      }),
+    ]);
+  });
 });

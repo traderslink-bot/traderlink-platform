@@ -6,6 +6,7 @@ import Checkbox from "@mui/material/Checkbox";
 import Divider from "@mui/material/Divider";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useEffect, useState, useTransition } from "react";
 
@@ -23,8 +24,12 @@ import {
 } from "@/src/modules/platform/client/pwa/platform-web-push";
 import {
   saveDiscordDmNotificationCategories,
+  confirmNotificationEmailAddress,
+  requestNotificationEmailConfirmation,
+  saveEmailNotificationCategories,
   savePressReleasePushChannels,
   saveWebPushNotificationCategories,
+  sendNotificationDeliveryTest,
 } from "./notification-preferences-actions";
 import {
   PRESS_RELEASE_PUSH_CHANNELS,
@@ -37,6 +42,7 @@ const labels: Readonly<Record<PlatformNotificationCategory, string>> = Object.fr
   broker_import: "Broker imports",
   chart_update: "Chart updates",
   data_decision: "Data Decisions",
+  market_news: "The Week Ahead",
   statement_import: "Statement imports",
 });
 
@@ -70,18 +76,32 @@ function runsAsInstalledApp(): boolean {
 
 export function NotificationPreferences({
   initialDiscordDmCategories,
+  initialEmailCategories,
+  initialEmailStatus,
   initialPressReleasePushChannels,
   initialWebPushCategories,
 }: {
   initialDiscordDmCategories: readonly PlatformNotificationCategory[];
+  initialEmailCategories: readonly PlatformNotificationCategory[];
+  initialEmailStatus: Readonly<{
+    confirmationExpiresAtUtc: string | null;
+    maskedEmailAddress: string | null;
+    state: "none" | "pending_confirmation" | "confirmed";
+  }>;
   initialPressReleasePushChannels: readonly PressReleasePushChannel[];
   initialWebPushCategories: readonly PlatformNotificationCategory[];
 }) {
   const [selected, setSelected] = useState<readonly PlatformNotificationCategory[]>(initialDiscordDmCategories);
+  const [emailSelected, setEmailSelected] = useState<readonly PlatformNotificationCategory[]>(initialEmailCategories);
   const [pushSelected, setPushSelected] = useState<readonly PlatformNotificationCategory[]>(initialWebPushCategories);
   const [pressReleasePushSelected, setPressReleasePushSelected] = useState<readonly PressReleasePushChannel[]>(initialPressReleasePushChannels);
   const [pushState, setPushState] = useState<PlatformWebPushBrowserState>("checking");
   const [discordMessage, setDiscordMessage] = useState<string | null>(null);
+  const [emailAddress, setEmailAddress] = useState("");
+  const [emailConfirmationCode, setEmailConfirmationCode] = useState("");
+  const [emailMessage, setEmailMessage] = useState<string | null>(null);
+  const [emailStatus, setEmailStatus] = useState(initialEmailStatus);
+  const [deliveryTestMessage, setDeliveryTestMessage] = useState<string | null>(null);
   const [pushMessage, setPushMessage] = useState<string | null>(null);
   const [pushPreparation, setPushPreparation] = useState<PreparedPlatformWebPush | null>(null);
   const [pushServiceUnavailable, setPushServiceUnavailable] = useState(false);
@@ -122,6 +142,12 @@ export function NotificationPreferences({
       : current.filter((value) => value !== category));
   }
 
+  function toggleEmail(category: PlatformNotificationCategory, checked: boolean): void {
+    setEmailSelected((current) => checked
+      ? Object.freeze([...current, category].filter((value, index, values) => values.indexOf(value) === index))
+      : current.filter((value) => value !== category));
+  }
+
   function togglePressReleasePush(channel: PressReleasePushChannel, checked: boolean): void {
     setPressReleasePushSelected((current) => checked
       ? Object.freeze([...current, channel].filter((value, index, values) => values.indexOf(value) === index))
@@ -130,6 +156,10 @@ export function NotificationPreferences({
 
   function toggleAllDiscord(checked: boolean): void {
     setSelected(checked ? PLATFORM_NOTIFICATION_CATEGORIES : Object.freeze([]));
+  }
+
+  function toggleAllEmail(checked: boolean): void {
+    setEmailSelected(checked ? PLATFORM_NOTIFICATION_CATEGORIES : Object.freeze([]));
   }
 
   function toggleAllPush(checked: boolean): void {
@@ -168,6 +198,51 @@ export function NotificationPreferences({
         setPushState(nextState);
         setPushMessage(error instanceof Error ? error.message : "Push notifications could not be enabled.");
       }
+    });
+  }
+
+  function requestEmailConfirmation(): void {
+    startTransition(async () => {
+      const result = await requestNotificationEmailConfirmation(emailAddress);
+      setEmailMessage(result.message);
+      if (result.ok) {
+        setEmailStatus({
+          confirmationExpiresAtUtc: null,
+          maskedEmailAddress: null,
+          state: "pending_confirmation",
+        });
+        setEmailConfirmationCode("");
+      }
+    });
+  }
+
+  function confirmEmail(): void {
+    startTransition(async () => {
+      const result = await confirmNotificationEmailAddress(emailConfirmationCode);
+      setEmailMessage(result.message);
+      if (result.ok) {
+        setEmailStatus({ confirmationExpiresAtUtc: null, maskedEmailAddress: null, state: "confirmed" });
+        setEmailConfirmationCode("");
+      }
+    });
+  }
+
+  function saveEmail(): void {
+    startTransition(async () => {
+      const result = await saveEmailNotificationCategories(emailSelected);
+      if (result.ok) {
+        setEmailSelected(result.categories as readonly PlatformNotificationCategory[]);
+        setEmailMessage("Email notification preferences saved.");
+      } else {
+        setEmailMessage(result.message);
+      }
+    });
+  }
+
+  function sendDeliveryTest(): void {
+    startTransition(async () => {
+      const result = await sendNotificationDeliveryTest();
+      setDeliveryTestMessage(result.message);
     });
   }
 
@@ -211,7 +286,7 @@ export function NotificationPreferences({
     <Stack spacing={1.5}>
       <Typography sx={{ fontWeight: 800 }} variant="subtitle2">Discord messages</Typography>
       <Typography color="text.secondary" variant="body2">
-        Choose which updates may also be sent by Discord DM. Every update stays in your dashboard Notifications page. Discord delivery will remain off until the TraderLink bot is connected.
+        Choose which updates may also be sent by Discord DM. Every update stays in your dashboard Notifications page.
       </Typography>
       {discordMessage ? <Alert severity={successMessage(discordMessage) ? "success" : "error"}>{discordMessage}</Alert> : null}
       <Stack spacing={0.25}>
@@ -231,6 +306,72 @@ export function NotificationPreferences({
         {working ? "Saving..." : "Save Preferences"}
       </Button>
       <Divider />
+      <Typography sx={{ fontWeight: 800 }} variant="subtitle2">Email notifications</Typography>
+      <Typography color="text.secondary" variant="body2">
+        Choose an email address and the updates you want delivered there.
+      </Typography>
+      {emailStatus.state === "confirmed" ? (
+        <Alert severity="success">Email confirmed{emailStatus.maskedEmailAddress ? `: ${emailStatus.maskedEmailAddress}` : "."}</Alert>
+      ) : null}
+      {emailStatus.state === "pending_confirmation" ? (
+        <Alert severity="info">Select Verify notification email in the email we sent you.</Alert>
+      ) : null}
+      {emailMessage ? <Alert severity={emailMessage.includes("saved") || emailMessage.includes("confirmed") || emailMessage.includes("sent") ? "success" : "error"}>{emailMessage}</Alert> : null}
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+        <TextField
+          autoComplete="email"
+          label="Email address"
+          onChange={(event) => setEmailAddress(event.target.value)}
+          size="small"
+          type="email"
+          value={emailAddress}
+        />
+        <Button disabled={working || !emailAddress.trim()} onClick={requestEmailConfirmation} variant="outlined">
+          {working ? "Sending..." : "Send verification email"}
+        </Button>
+      </Stack>
+      {emailStatus.state === "pending_confirmation" ? (
+        <Stack spacing={0.5}>
+          <Typography color="text.secondary" variant="body2">Can&apos;t open the link? Enter the code from the email instead.</Typography>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+            <TextField
+              label="Confirmation code"
+              onChange={(event) => setEmailConfirmationCode(event.target.value)}
+              size="small"
+              value={emailConfirmationCode}
+            />
+            <Button disabled={working || !emailConfirmationCode.trim()} onClick={confirmEmail} variant="contained">
+              {working ? "Checking..." : "Confirm email"}
+            </Button>
+          </Stack>
+        </Stack>
+      ) : null}
+      <Stack spacing={0.25}>
+        <FormControlLabel
+          control={<Checkbox checked={emailSelected.length === PLATFORM_NOTIFICATION_CATEGORIES.length} indeterminate={emailSelected.length > 0 && emailSelected.length < PLATFORM_NOTIFICATION_CATEGORIES.length} onChange={(event) => toggleAllEmail(event.target.checked)} />}
+          label="Select all"
+        />
+        {PLATFORM_NOTIFICATION_CATEGORIES.map((category) => (
+          <FormControlLabel
+            control={<Checkbox checked={emailSelected.includes(category)} onChange={(event) => toggleEmail(category, event.target.checked)} />}
+            key={`email-${category}`}
+            label={labels[category]}
+          />
+        ))}
+      </Stack>
+      <Button disabled={working} onClick={saveEmail} sx={{ alignSelf: "flex-start" }} variant="contained">
+        {working ? "Saving..." : "Save Email Preferences"}
+      </Button>
+      <Divider />
+      <Typography sx={{ fontWeight: 800 }} variant="subtitle2">Test notification delivery</Typography>
+      <Typography color="text.secondary" variant="body2">
+        Send a private test only to your selected Discord and email channels for Chart updates.
+      </Typography>
+      {deliveryTestMessage ? <Alert severity={deliveryTestMessage.startsWith("Test notification queued") ? "success" : "error"}>{deliveryTestMessage}</Alert> : null}
+      <Button disabled={working} onClick={sendDeliveryTest} sx={{ alignSelf: "flex-start" }} variant="outlined">
+        {working ? "Sending..." : "Send test notification"}
+      </Button>
+      <Divider />
       <Typography
         id="push-notifications"
         sx={{ fontWeight: 800, scrollMarginTop: 96 }}
@@ -239,7 +380,7 @@ export function NotificationPreferences({
         Push notifications
       </Typography>
       <Typography color="text.secondary" variant="body2">
-        Pick the alerts you want, then press Set Preferences. If this device can receive push notifications, it will ask for your permission. Account and trading alerts stay private and generic. Press release alerts show the public ticker and headline so you can open the article directly.
+        If your device can receive push notifications, it will ask you to accept or decline notifications from TradersLink. Manage your TradersLink notifications outside this page in your device settings. If you are having issues with notifications, check the settings on your device.
       </Typography>
       {pushState === "unsupported" ? (
         <Alert severity="warning">Push notifications are not available in this browser or on this device.</Alert>

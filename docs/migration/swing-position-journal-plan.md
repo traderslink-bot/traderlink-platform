@@ -88,8 +88,10 @@ or dated-note revisions can affect only future evidence gathering.
 
 - [x] Create the migration, scoped contracts, repository/service and route.
 - [x] Add the shared editor and load the saved plan into both tracker reads.
-- [x] Align Daily open-position and Swing Tracker cards; remove the redundant
-      in-card Swing Tracker link.
+- [x] Align the initial Daily open-position and Swing Tracker cards; remove the
+      redundant in-card Swing Tracker link.
+- [x] Apply the owner-requested exact desktop structure correction: left factual
+      summary, compact execution column, and right-side Swing journal/notes.
 - [x] Confirm the normal completed Day-trade note remains in the desktop right
       column without duplicating it.
 - [x] Align Help Center guidance and static checks.

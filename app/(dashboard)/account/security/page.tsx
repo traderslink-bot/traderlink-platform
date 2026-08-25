@@ -22,13 +22,14 @@ export default async function AccountSecurityPage({
 }: {
   searchParams: Promise<Readonly<{ sessionAction?: string }>>;
 }) {
+  const query = await searchParams;
   const identity = await requireTraderLinkPlatformPageIdentity();
   const hasDiscordSession = identity.mode === "platform_session";
-  const activeSessionCount = hasDiscordSession
+  const activeSessions = hasDiscordSession
     ? withReadonlyPlatformDatabase({}, (database) =>
       new PlatformSessionService(new PlatformSessionRepository(database))
-        .countActiveForUser(identity.scope.userId))
-    : 0;
+        .listActiveForUser(identity.scope.userId))
+    : Object.freeze([]);
 
   return (
     <AccountSettingsLayout
@@ -37,12 +38,21 @@ export default async function AccountSecurityPage({
       title="Security"
     >
       <DashboardPanel title="Sessions">
-        {(await searchParams).sessionAction === "unavailable" ? (
+        {query.sessionAction === "unavailable" ? (
           <Alert severity="error" sx={{ mb: 2 }}>
             TraderLink could not end every sign-in right now. Nothing was changed. Please try again.
           </Alert>
         ) : null}
-        <AccountSessionControls activeSessionCount={activeSessionCount} hasDiscordSession={hasDiscordSession} />
+        {query.sessionAction === "ended" ? (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            The selected sign-in was ended.
+          </Alert>
+        ) : null}
+        <AccountSessionControls
+          activeSessions={activeSessions}
+          currentSessionId={identity.sessionId}
+          hasDiscordSession={hasDiscordSession}
+        />
       </DashboardPanel>
     </AccountSettingsLayout>
   );

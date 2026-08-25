@@ -161,14 +161,16 @@ export default async function AccountTradingPage({
         ) : null}
       </DashboardPanel>
 
-      <DashboardPanel title="Mobile and Desktop PWA App">
-        <OfflineDataSettings
-          accountSelectionRef={scope.activeAccountId
-            ? currentJournalAccountSelectionRef(scope)
-            : null}
-          offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
-        />
-      </DashboardPanel>
+      <Box id="pwa-app" sx={{ scrollMarginTop: 96 }}>
+        <DashboardPanel title="Mobile and Desktop PWA App">
+          <OfflineDataSettings
+            accountSelectionRef={scope.activeAccountId
+              ? currentJournalAccountSelectionRef(scope)
+              : null}
+            offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
+          />
+        </DashboardPanel>
+      </Box>
     </AccountSettingsLayout>
   );
 }

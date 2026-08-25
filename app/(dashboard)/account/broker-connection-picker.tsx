@@ -35,7 +35,7 @@ export function BrokerConnectionPicker({
           label="Select broker"
           onChange={(event) => setSelectedBroker(event.target.value)}
           select
-          sx={{ minWidth: { sm: 260 } }}
+          sx={{ minWidth: { sm: 260 }, width: { xs: "100%", sm: "auto" } }}
           value={selectedBroker}
         >
           <MenuItem disabled sx={{ display: "none" }} value="" />

@@ -4,6 +4,8 @@
 
 **Progress record:** [Notifications And AI Import Repair Progress](notifications-and-ai-import-repair-progress.md)
 
+**Remote delivery follow-on:** [Notification Remote Delivery Activation Plan](notification-remote-delivery-activation-plan.md) replaces the deferred Discord-only activation work with one shared Discord-and-email delivery system for existing Platform notifications.
+
 **Follow-on coverage implementation:** [Notification Coverage Expansion Plan](notification-coverage-expansion-plan.md) records the owner-approved 2026-08-18 expansion for AI Review readiness, Data Decisions, Moomoo reauthorization, and quiet automatic-sync behavior. Its progress record names the remaining visual and hosted-activation gates.
 
 ## Goal

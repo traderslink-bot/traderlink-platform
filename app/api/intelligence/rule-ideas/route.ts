@@ -1,4 +1,5 @@
 import {
+  dismissAndIssueNextJournalRuleIdea,
   issueNextJournalRuleIdea,
   listJournalRuleIdeas,
   setJournalRuleIdeaDisposition,
@@ -28,17 +29,25 @@ export async function POST(request: Request): Promise<Response> {
       issueNextJournalRuleIdea(scope);
       return Response.json({ ok: true, ideas: listJournalRuleIdeas(scope) });
     }
-    if (body.action !== "save_for_later" && body.action !== "not_for_me" && body.action !== "added") {
+    if (body.action !== "save_for_later" && body.action !== "not_for_me" &&
+        body.action !== "not_for_me_and_next" && body.action !== "added") {
       platformFailure("TRADERLINK_RULE_IDEA_INVALID");
     }
     if (typeof body.ideaId !== "string" || !Number.isSafeInteger(body.expectedRevision)) {
       platformFailure("TRADERLINK_RULE_IDEA_INVALID");
     }
-    setJournalRuleIdeaDisposition(scope, {
-      ideaId: body.ideaId,
-      expectedRevision: Number(body.expectedRevision),
-      disposition: body.action === "save_for_later" ? "saved_for_later" : body.action,
-    });
+    if (body.action === "not_for_me_and_next") {
+      dismissAndIssueNextJournalRuleIdea(scope, {
+        ideaId: body.ideaId,
+        expectedRevision: Number(body.expectedRevision),
+      });
+    } else {
+      setJournalRuleIdeaDisposition(scope, {
+        ideaId: body.ideaId,
+        expectedRevision: Number(body.expectedRevision),
+        disposition: body.action === "save_for_later" ? "saved_for_later" : body.action,
+      });
+    }
     return Response.json({ ok: true, ideas: listJournalRuleIdeas(scope) });
   } catch (error) {
     const code = isTraderLinkPlatformError(error) ? error.code : "TRADERLINK_RULE_IDEA_INVALID";

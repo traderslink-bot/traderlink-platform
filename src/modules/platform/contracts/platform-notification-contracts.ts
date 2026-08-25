@@ -9,6 +9,7 @@ export const PLATFORM_NOTIFICATION_CATEGORIES = [
   "broker_import",
   "chart_update",
   "data_decision",
+  "market_news",
   "statement_import",
 ] as const;
 
@@ -18,6 +19,7 @@ export type PlatformNotificationCategory =
 export const PLATFORM_NOTIFICATION_DELIVERY_CHANNELS = [
   "in_app",
   "discord_dm",
+  "email",
   "web_push",
 ] as const;
 
@@ -32,6 +34,7 @@ export const PLATFORM_NOTIFICATION_KINDS = [
   "broker_import_failed",
   "chart_update_ready",
   "data_decision_needs_review",
+  "week_ahead_ready",
   "statement_import_completed",
   "statement_import_needs_action",
   "statement_ai_repair_started",
@@ -57,11 +60,13 @@ export type PlatformNotification = Readonly<{
 /** Delivery preferences are opt-in per remote channel; in-app is always kept. */
 export type PlatformNotificationPreferences = Readonly<{
   discordDmCategories: readonly PlatformNotificationCategory[];
+  emailCategories: readonly PlatformNotificationCategory[];
   webPushCategories: readonly PlatformNotificationCategory[];
 }>;
 
 export const DEFAULT_PLATFORM_NOTIFICATION_PREFERENCES: PlatformNotificationPreferences =
   Object.freeze({
-    discordDmCategories: Object.freeze([]),
-    webPushCategories: Object.freeze([]),
+  discordDmCategories: Object.freeze([]),
+  emailCategories: Object.freeze([]),
+  webPushCategories: Object.freeze([]),
   });

@@ -4,6 +4,16 @@ import { areTraderLinkPlatformAiFeaturesEnabled } from
   "@/src/modules/platform/contracts/platform-ai-launch-state";
 
 const AI_PAGE_ROOTS = ["/ai-chat", "/ai-reviews", "/account/ai"] as const;
+const dashboardHostname = "app.traderslink.pro";
+const publicHostname = "traderslink.pro";
+
+function requestHostname(request: NextRequest): string | undefined {
+  return (request.headers.get("x-forwarded-host") ?? request.headers.get("host"))
+    ?.split(",")[0]
+    ?.trim()
+    .split(":")[0]
+    ?.toLowerCase();
+}
 
 function isPageRoot(pathname: string): boolean {
   return AI_PAGE_ROOTS.some((root) => pathname === root || pathname === `${root}/`);
@@ -27,11 +37,22 @@ function comingSoonResponse(): NextResponse {
 }
 
 export function proxy(request: NextRequest): NextResponse {
+  const { pathname } = request.nextUrl;
+
+  if (pathname === "/help" || pathname.startsWith("/help/")) {
+    if (requestHostname(request) === dashboardHostname) {
+      const destination = request.nextUrl.clone();
+      destination.protocol = "https:";
+      destination.host = publicHostname;
+      return NextResponse.redirect(destination, 308);
+    }
+    return NextResponse.next();
+  }
+
   if (areTraderLinkPlatformAiFeaturesEnabled()) {
     return NextResponse.next();
   }
 
-  const { pathname } = request.nextUrl;
   const readRequest = request.method === "GET" || request.method === "HEAD";
 
   if (readRequest && isPageRoot(pathname)) {
@@ -47,15 +68,6 @@ export function proxy(request: NextRequest): NextResponse {
   if (readRequest && pathname.startsWith("/account/ai/")) {
     return NextResponse.redirect(new URL("/account/ai", request.url));
   }
-  if (readRequest && pathname.startsWith("/help/ai-chat")) {
-    return NextResponse.redirect(new URL("/ai-chat", request.url));
-  }
-  if (readRequest && pathname.startsWith("/help/ai-reviews")) {
-    return NextResponse.redirect(new URL("/ai-reviews", request.url));
-  }
-  if (readRequest && pathname.startsWith("/help/paid-plan")) {
-    return NextResponse.redirect(new URL("/account/ai", request.url));
-  }
 
   return comingSoonResponse();
 }
@@ -65,9 +77,7 @@ export const config = {
     "/ai-chat/:path*",
     "/ai-reviews/:path*",
     "/account/ai/:path*",
-    "/help/ai-chat/:path*",
-    "/help/ai-reviews/:path*",
-    "/help/paid-plan/:path*",
+    "/help/:path*",
     "/api/coach/chat/:path*",
     "/api/coach/latest/:path*",
     "/api/cron/ai-reviews/:path*",

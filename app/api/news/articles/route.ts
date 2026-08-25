@@ -5,8 +5,9 @@ import {
   type NewsArticleInput,
   upsertNewsArticle,
 } from "@/src/lib/news/news-article-store";
-import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
-import { loadPlatformWebPushEncryptionConfiguration } from "@/src/modules/platform/server/notifications/platform-web-push-configuration";
+import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
+import { loadPlatformWebPushConfiguration } from "@/src/modules/platform/server/notifications/platform-web-push-configuration";
+import { PlatformWebPushDeliveryService } from "@/src/modules/platform/server/notifications/platform-web-push-delivery-service";
 import { PressReleaseWebPushRepository } from "@/src/modules/news/server/press-release-web-push-repository";
 
 export const runtime = "nodejs";
@@ -89,9 +90,15 @@ export async function POST(request: Request): Promise<Response> {
     revalidatePath("/press-releases", "layout");
 
     try {
-      const encryption = loadPlatformWebPushEncryptionConfiguration();
-      withPlatformDatabase({ mode: "runtime" }, (database) =>
-        new PressReleaseWebPushRepository(database, encryption).enqueueArticle(article));
+      const configuration = loadPlatformWebPushConfiguration();
+      const database = openPlatformDatabase({ mode: "runtime" });
+      try {
+        const repository = new PressReleaseWebPushRepository(database, configuration.encryption);
+        repository.enqueueArticle(article);
+        await new PlatformWebPushDeliveryService(repository, configuration).runAvailable(100);
+      } finally {
+        database.close();
+      }
     } catch (error) {
       console.error("News article push delivery could not be queued.", {
         articleId: article.id,

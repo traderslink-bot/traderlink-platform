@@ -8,6 +8,7 @@ import { MoomooConnectionAccessService } from "@/src/modules/platform/server/bro
 import { loadMoomooCredentialKeyConfiguration } from "@/src/modules/platform/server/broker-connections/moomoo-connection-credentials";
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
 import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
+import { notifyJournalOwnerOfBrokerImportFailure } from "@/src/modules/platform/server/notifications/platform-journal-owner-alert-service";
 import {
   decryptMoomooPrivateData,
   encryptMoomooPrivateData,
@@ -169,6 +170,15 @@ export class MoomooExecutionImportWorker {
           summary: "Your broker import could not be completed. You can review the import and try again.",
           title: "Broker import needs attention",
         });
+        try {
+          notifyJournalOwnerOfBrokerImportFailure({
+            database: this.database,
+            occurredAt: failedAt,
+            sourceEventKey: `broker_import_failed_${claimed.brokerImportJobId}`,
+          });
+        } catch {
+          // A notification configuration problem must not restart or alter a final import result.
+        }
       }
       return true;
     }

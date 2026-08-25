@@ -160,7 +160,18 @@ export function WorkspaceDashboard({
   };
   return (
     <DashboardPage>
-      <Typography component="h1" variant="h1">Workspace</Typography>
+      <Typography component="h1" variant="h1">Welcome to TradersLink Beta App.</Typography>
+      <Stack spacing={1.25} sx={{ maxWidth: 920 }}>
+        <Typography color="text.secondary" variant="body2">
+          TradersLink Platform is currently in beta testing, so you may come across a few bugs or unfinished details as the app continues to improve. Feedback and bug reports are always welcome—they directly help make the platform better for traders. If you need help, support is available with quick responses.
+        </Typography>
+        <Typography color="text.secondary" variant="body2">
+          Use TradersLink Platform to track trades, review your performance, and spot patterns in your own decisions. Start with the Trade Tracker for manual entries and use the Trade Analyzer to better understand your entries, exits, profit taking, and risk management. Import broker statements to see the bigger picture across your trading history. The more accurate your records, the more useful your Journal becomes.
+        </Typography>
+        <Typography color="text.secondary" variant="body2">
+          You can also use trader tools such as Press Release Alerts, the News Scanner, and Halt Alerts to stay informed about market-moving news and trading halts.
+        </Typography>
+      </Stack>
       {firstTimeOnboardingResult !== undefined ? (
         <WorkspaceFirstTimeOnboardingPanel
           moomooConnected={firstTimeMoomooConnected ?? false}

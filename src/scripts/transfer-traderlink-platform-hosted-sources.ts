@@ -11,6 +11,7 @@ import {
   type HostedTransferModule,
 } from "@/src/modules/platform/server/transfer/hosted-transfer-contract";
 import { readHostedSourceSnapshots } from "@/src/modules/platform/server/transfer/hosted-source-snapshot-reader";
+import { readHostedSourceSnapshotsFromExportDirectory } from "@/src/modules/platform/server/transfer/hosted-source-export-snapshot-reader";
 import { prepareHostedTransfer } from "@/src/modules/platform/server/transfer/hosted-transfer-preview-service";
 import {
   executeHostedTransfer,
@@ -132,8 +133,20 @@ async function main(): Promise<void> {
   if (process.argv.includes("--execute") && process.argv.includes("--preview")) {
     platformFailure("TRADERLINK_HOSTED_TRANSFER_INVALID", { field: "mode" });
   }
+  const exportDirectoryFlagIndex = process.argv.indexOf("--source-export-directory");
+  const exportDirectory = exportDirectoryFlagIndex === -1
+    ? null
+    : process.argv[exportDirectoryFlagIndex + 1];
+  if (exportDirectoryFlagIndex !== -1 && (!exportDirectory || !isAbsolute(exportDirectory))) {
+    platformFailure("TRADERLINK_HOSTED_TRANSFER_INVALID", { field: "source_export_directory" });
+  }
+  if (exportDirectory && mode !== "preview") {
+    platformFailure("TRADERLINK_HOSTED_TRANSFER_INVALID", { field: "source_export_preview_only" });
+  }
   const databasePath = resolvePlatformDatabaseConfig().databasePath;
-  const sources = await readHostedSourceSnapshots();
+  const sources = exportDirectory
+    ? readHostedSourceSnapshotsFromExportDirectory(exportDirectory)
+    : await readHostedSourceSnapshots();
   const protectedInitialOwnerAuthSubject = readProtectedInitialOwnerDiscordSubject();
   const database = mode === "execute"
     ? openPlatformDatabase({ mode: "runtime", databasePath })

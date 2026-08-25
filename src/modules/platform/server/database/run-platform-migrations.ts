@@ -94,12 +94,25 @@ export function runPlatformMigrations(
 
   const appliedMigrationIds: string[] = [];
   for (const migration of manifest.slice(appliedRows.length)) {
+    let migrationPhase = "transaction";
+    const restoreForeignKeys = migration.requiresForeignKeysDisabled === true &&
+      database.pragma("foreign_keys", { simple: true }) === 1;
     try {
+      migrationPhase = "foreign_keys";
+      if (restoreForeignKeys) database.pragma("foreign_keys = OFF");
+      migrationPhase = "begin";
       database.exec("BEGIN IMMEDIATE");
+      migrationPhase = "registry";
       if (!platformMigrationRegistryExists(database)) createPlatformMigrationRegistry(database);
-      for (const statement of migration.statements) database.exec(statement);
+      for (const [statementIndex, statement] of migration.statements.entries()) {
+        migrationPhase = `statement_${statementIndex + 1}`;
+        database.exec(statement);
+      }
+      migrationPhase = "foreign_key_check";
       requirePlatformForeignKeyCheck(database);
+      migrationPhase = "schema_digest";
       const postSchemaSha256 = calculatePlatformSchemaDigest(database);
+      migrationPhase = "sqlite_version";
       const sqliteVersion = database
         .prepare<[], { sqlite_version: string }>("SELECT sqlite_version() AS sqlite_version")
         .get()?.sqlite_version;
@@ -121,8 +134,10 @@ export function runPlatformMigrations(
           postSchemaSha256,
           createCanonicalUtcTimestamp(options.now?.() ?? new Date()),
           sqliteVersion,
-        );
+      );
+      migrationPhase = "commit";
       database.exec("COMMIT");
+      if (restoreForeignKeys) database.pragma("foreign_keys = ON");
       appliedMigrationIds.push(migration.migrationId);
     } catch (error) {
       if (database.inTransaction) {
@@ -132,6 +147,7 @@ export function runPlatformMigrations(
           // The original migration failure remains authoritative.
         }
       }
+      if (restoreForeignKeys) database.pragma("foreign_keys = ON");
       if (
         isTraderLinkPlatformError(error) &&
         error.code === "TRADERLINK_MIGRATION_FAILED"
@@ -140,7 +156,7 @@ export function runPlatformMigrations(
       }
       throw new TraderLinkPlatformError(
         "TRADERLINK_MIGRATION_FAILED",
-        { migrationId: migration.migrationId },
+        { migrationId: migration.migrationId, migrationPhase },
         { cause: error },
       );
     }

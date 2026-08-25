@@ -3,12 +3,17 @@
 import { revalidatePath } from "next/cache";
 
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
+import { openPlatformDatabase, withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import {
   createCanonicalUtcTimestamp,
+  createCanonicalUuidV4,
   isTraderLinkPlatformError,
 } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
+import { loadPlatformNotificationEmailEncryptionConfiguration } from "@/src/modules/platform/server/notifications/platform-notification-email-configuration";
+import {
+  PlatformNotificationEmailAddressRepository,
+} from "@/src/modules/platform/server/notifications/platform-notification-email-address-repository";
 import { PressReleaseDashboardRepository } from "@/src/modules/news/server/press-release-dashboard-repository";
 import { MarketHaltAlertRepository } from "@/src/modules/news/server/market-halt-alert-repository";
 
@@ -65,6 +70,159 @@ export async function saveWebPushNotificationCategories(
         ? "Choose notifications from the available categories."
         : "Your push notification choices could not be saved. Try again.",
     });
+  }
+}
+
+export async function saveEmailNotificationCategories(
+  categories: readonly string[],
+): Promise<Readonly<{ ok: true; categories: readonly string[] }> | Readonly<{ ok: false; message: string }>> {
+  try {
+    const scope = await requireTraderLinkPlatformPageScope();
+    const preferences = withPlatformDatabase(
+      { mode: "runtime" },
+      (database) => {
+        const emailStatus = new PlatformNotificationEmailAddressRepository(
+          database,
+          loadPlatformNotificationEmailEncryptionConfiguration(),
+        ).readStatus(scope);
+        if (emailStatus.state !== "confirmed") return null;
+        return new PlatformNotificationRepository(database).replaceEmailCategories({
+          categories,
+          scope,
+          updatedAtUtc: createCanonicalUtcTimestamp(),
+        });
+      },
+    );
+    if (!preferences) {
+      return Object.freeze({
+        ok: false as const,
+        message: "Confirm an email address before saving email notification choices.",
+      });
+    }
+    revalidatePath("/account/preferences");
+    return Object.freeze({ ok: true as const, categories: preferences.emailCategories });
+  } catch (error) {
+    const invalid = isTraderLinkPlatformError(error) &&
+      error.code === "TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED";
+    return Object.freeze({
+      ok: false as const,
+      message: invalid
+        ? "Choose notifications from the available categories."
+        : "Your email notification choices could not be saved. Try again.",
+    });
+  }
+}
+
+/** Queues one privacy-safe delivery proof for the signed-in user's own selected channels. */
+export async function sendNotificationDeliveryTest(): Promise<
+  Readonly<{ ok: true; message: string }> | Readonly<{ ok: false; message: string }>
+> {
+  try {
+    const scope = await requireTraderLinkPlatformPageScope();
+    const sent = withPlatformDatabase(
+      { mode: "runtime" },
+      (database) => {
+        const notifications = new PlatformNotificationRepository(database);
+        const preferences = notifications.readPreferences(scope);
+        const testCategory = "chart_update" as const;
+        const emailStatus = new PlatformNotificationEmailAddressRepository(
+          database,
+          loadPlatformNotificationEmailEncryptionConfiguration(),
+        ).readStatus(scope);
+        const discordSelected = preferences.discordDmCategories.includes(testCategory);
+        const emailSelected = preferences.emailCategories.includes(testCategory) && emailStatus.state === "confirmed";
+        if (!discordSelected && !emailSelected) return false;
+        notifications.create({
+          category: testCategory,
+          destinationPath: "/account/preferences",
+          journalAccountId: null,
+          kind: "chart_update_ready",
+          occurredAtUtc: createCanonicalUtcTimestamp(),
+          scope,
+          sourceEventKey: `notification_test_${createCanonicalUuidV4()}`,
+          summary: "This is a private test of your selected notification delivery channels.",
+          title: "Notification test",
+        });
+        return true;
+      },
+    );
+    if (!sent) {
+      return Object.freeze({
+        ok: false as const,
+        message: "Select Chart updates for Discord or confirm an email address and select Chart updates for email before sending a test.",
+      });
+    }
+    revalidatePath("/account/preferences");
+    revalidatePath("/notifications");
+    return Object.freeze({
+      ok: true as const,
+      message: "Test notification queued for your selected Discord and email channels.",
+    });
+  } catch {
+    return Object.freeze({
+      ok: false as const,
+      message: "The test notification could not be queued. Try again.",
+    });
+  }
+}
+
+export async function requestNotificationEmailConfirmation(
+  emailAddress: string,
+): Promise<Readonly<{ ok: true; message: string }> | Readonly<{ ok: false; message: string }>> {
+  try {
+    const scope = await requireTraderLinkPlatformPageScope();
+    const database = openPlatformDatabase({ mode: "runtime" });
+    const result = await (async () => {
+      try {
+        return await new PlatformNotificationEmailAddressRepository(
+          database,
+          loadPlatformNotificationEmailEncryptionConfiguration(),
+        ).requestConfirmation({
+          emailAddress,
+          requestedAtUtc: createCanonicalUtcTimestamp(),
+          scope,
+        });
+      } finally {
+        database.close();
+      }
+    })();
+    revalidatePath("/account/preferences");
+    return result.delivery.ok
+      ? Object.freeze({ ok: true as const, message: "Verification email sent." })
+      : Object.freeze({ ok: false as const, message: "The verification email could not be sent. Try again." });
+  } catch (error) {
+    const invalid = isTraderLinkPlatformError(error) &&
+      error.code === "TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED" &&
+      error.safeContext.field === "notificationEmailAddress";
+    return Object.freeze({
+      ok: false as const,
+      message: invalid ? "Enter a valid email address." : "The confirmation email could not be sent. Try again.",
+    });
+  }
+}
+
+export async function confirmNotificationEmailAddress(
+  code: string,
+): Promise<Readonly<{ ok: true; message: string }> | Readonly<{ ok: false; message: string }>> {
+  try {
+    const scope = await requireTraderLinkPlatformPageScope();
+    const result = withPlatformDatabase(
+      { mode: "runtime" },
+      (database) => new PlatformNotificationEmailAddressRepository(
+        database,
+        loadPlatformNotificationEmailEncryptionConfiguration(),
+      ).confirmCode({
+        code,
+        confirmedAtUtc: createCanonicalUtcTimestamp(),
+        scope,
+      }),
+    );
+    revalidatePath("/account/preferences");
+    return result.status === "confirmed"
+      ? Object.freeze({ ok: true as const, message: "Email confirmed." })
+      : Object.freeze({ ok: false as const, message: "That confirmation code is invalid or expired." });
+  } catch {
+    return Object.freeze({ ok: false as const, message: "That confirmation code could not be checked. Try again." });
   }
 }
 

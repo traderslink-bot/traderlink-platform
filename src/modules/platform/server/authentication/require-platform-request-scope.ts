@@ -11,15 +11,18 @@ import { deriveAuthenticatedUserJournalScope } from "./authenticated-user-journa
 import { validateDevelopmentDashboardRequest } from "./development-dashboard-network-boundary";
 import { readJournalAccountSelectionCookie } from "./journal-account-selection-cookie";
 import { PlatformDiscordMembershipRepository } from "./platform-discord-membership-repository";
+import { PlatformDashboardMemberAccessRepository } from "./platform-dashboard-member-access-repository";
 import { resolveTraderLinkDiscordGuildId } from "./platform-discord-configuration";
 import { PlatformSessionRepository } from "./platform-session-repository";
 import {
   PlatformSessionService,
   TRADERLINK_PLATFORM_SESSION_COOKIE,
 } from "./platform-session-service";
+import { hasPlatformDiscordPremiumAccess } from "../../../watchlist/server/access/platform-discord-watchlist-entitlement";
 
 export type TraderLinkPlatformRequestIdentity = Readonly<{
   mode: "local_development" | "platform_session";
+  sessionId: string | null;
   scope: WorkspaceAccessScope;
   displayName: string | null;
   discord: Readonly<{
@@ -65,6 +68,7 @@ export function requireTraderLinkPlatformRequestIdentity(
   if (developmentBoundary.ok) {
     return withReadonlyPlatformDatabase(options, (database) => Object.freeze({
       mode: "local_development" as const,
+      sessionId: null,
       scope: deriveDevelopmentOwnerJournalScope(
         database,
         undefined,
@@ -98,8 +102,17 @@ export function requireTraderLinkPlatformRequestIdentity(
           resolveTraderLinkDiscordGuildId(environment),
         );
       if (!membership) platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+      if (!new PlatformDashboardMemberAccessRepository(database)
+        .read().allowAllDiscordMembers &&
+        !hasPlatformDiscordPremiumAccess({
+          guildOwner: membership.guildOwner,
+          roleIds: membership.roleIds,
+        }, environment)) {
+        platformFailure("TRADERLINK_DASHBOARD_ACCESS_DENIED");
+      }
       return Object.freeze({
         mode: "platform_session" as const,
+        sessionId: session.sessionId,
         scope: deriveAuthenticatedUserJournalScope(
           database,
           session.userId,

@@ -21,6 +21,7 @@ import {
 } from "../account/notification-preferences-actions";
 
 type DrawerMessage = Readonly<{
+  placement: "halt" | "muted";
   severity: "error" | "success";
   text: string;
 }>;
@@ -53,13 +54,13 @@ export function MarketHaltAlertDrawerContent({
     startTransition(async () => {
       const result = await muteMarketHaltTicker(notificationMuteTicker);
       if (!result.ok) {
-        setMessage({ severity: "error", text: result.message });
+        setMessage({ placement: "muted", severity: "error", text: result.message });
         return;
       }
       onMutedTickersChange(Object.freeze(
         [...mutedTickers, result.ticker].filter((value, index, values) => values.indexOf(value) === index).sort(),
       ));
-      setMessage({ severity: "success", text: `${result.ticker} is muted until 8:00 PM ET.` });
+      setMessage({ placement: "muted", severity: "success", text: `${result.ticker} is muted until 8:00 PM ET.` });
     });
   }, [mutedTickers, notificationMuteTicker, onMutedTickersChange, onNotificationMuteHandled, startTransition]);
 
@@ -70,11 +71,12 @@ export function MarketHaltAlertDrawerContent({
       const result = await saveMarketHaltAlertsEnabled(nextEnabled);
       if (!result.ok) {
         onEnabledChange(enabled);
-        setMessage({ severity: "error", text: result.message });
+        setMessage({ placement: "halt", severity: "error", text: result.message });
         return;
       }
       onEnabledChange(result.enabled);
       setMessage({
+        placement: "halt",
         severity: "success",
         text: result.enabled ? "Halt alerts are on." : "Halt alerts are off.",
       });
@@ -84,21 +86,21 @@ export function MarketHaltAlertDrawerContent({
   function muteTicker(): void {
     const requestedTicker = ticker.trim().toUpperCase();
     if (!requestedTicker) {
-      setMessage({ severity: "error", text: "Enter a ticker to mute." });
+      setMessage({ placement: "muted", severity: "error", text: "Enter a ticker to mute." });
       return;
     }
     setMessage(null);
     startTransition(async () => {
       const result = await muteMarketHaltTicker(requestedTicker);
       if (!result.ok) {
-        setMessage({ severity: "error", text: result.message });
+        setMessage({ placement: "muted", severity: "error", text: result.message });
         return;
       }
       onMutedTickersChange(Object.freeze(
         [...mutedTickers, result.ticker].filter((value, index, values) => values.indexOf(value) === index).sort(),
       ));
       setTicker("");
-      setMessage({ severity: "success", text: `${result.ticker} is muted until 8:00 PM ET.` });
+      setMessage({ placement: "muted", severity: "success", text: `${result.ticker} is muted until 8:00 PM ET.` });
     });
   }
 
@@ -107,11 +109,11 @@ export function MarketHaltAlertDrawerContent({
     startTransition(async () => {
       const result = await unmuteMarketHaltTicker(tickerToUnmute);
       if (!result.ok) {
-        setMessage({ severity: "error", text: result.message });
+        setMessage({ placement: "muted", severity: "error", text: result.message });
         return;
       }
       onMutedTickersChange(mutedTickers.filter((value) => value !== result.ticker));
-      setMessage({ severity: "success", text: `${result.ticker} will receive halt alerts again.` });
+      setMessage({ placement: "muted", severity: "success", text: `${result.ticker} will receive halt alerts again.` });
     });
   }
 
@@ -139,22 +141,20 @@ export function MarketHaltAlertDrawerContent({
       </Box>
       <Box sx={{ display: "grid", gap: 1.25 }}>
         <Typography color="text.secondary" sx={{ lineHeight: 1.55 }} variant="body2">
-          Stay informed when Nasdaq or NYSE stocks are halted during the trading day. Turn push notifications on to receive alerts for trading halts, including volatility and news-related halts, or switch them off anytime.
+          Stay informed when Nasdaq or NYSE stocks are halted. Turn push notifications on to receive volatility and news-related halt alerts.
         </Typography>
         <FormControlLabel
           control={<Switch checked={enabled} color="primary" disabled={working} onChange={(event) => saveEnabled(event.target.checked)} />}
           label="Halt alerts"
           sx={{ alignSelf: "start", ml: -0.5 }}
         />
+        {message?.placement === "halt" ? <Alert aria-live="polite" role="status" severity={message.severity}>{message.text}</Alert> : null}
       </Box>
       <Divider />
       <Box sx={{ display: "grid", gap: 1.25 }}>
         <Typography component="h3" sx={{ fontWeight: 850 }} variant="subtitle1">Muted Tickers</Typography>
         <Typography color="text.secondary" sx={{ lineHeight: 1.55 }} variant="body2">
-          Stock halting too much? Enter the ticker to mute alerts for that stock and keep your alerts on for other halts.
-        </Typography>
-        <Typography color="text.secondary" sx={{ lineHeight: 1.55 }} variant="body2">
-          You can also mute a ticker directly from a halt notification. Muted tickers automatically reset at <strong>8:00 PM ET each trading day</strong>, so you&apos;ll start the next session with all ticker alerts available again.
+          Stock halting too much? Enter the ticker to mute alerts for that stock. You can also mute a ticker directly from a halt notification. Muted tickers reset at <strong>8:00 PM ET</strong> so you start the next session fresh.
         </Typography>
         <Box component="form" onSubmit={(event) => {
           event.preventDefault();
@@ -177,7 +177,7 @@ export function MarketHaltAlertDrawerContent({
           {mutedTickers.length === 0 ? (
             <>
               <Typography color="text.secondary" variant="body2">
-                Muted tickers will appear here, where you can remove them at any time.
+                Unmute muted tickers
               </Typography>
               <Typography color="text.secondary" variant="caption">
                 No tickers muted today.
@@ -205,16 +205,16 @@ export function MarketHaltAlertDrawerContent({
             </Box>
           )}
         </Box>
+        {message?.placement === "muted" ? <Alert aria-live="polite" role="status" severity={message.severity}>{message.text}</Alert> : null}
       </Box>
       <Divider />
       <Box sx={{ display: "grid", gap: 1.25 }}>
         <Typography component="h3" sx={{ fontWeight: 850 }} variant="subtitle1">Get TradersLink on Your Device</Typography>
         <Typography color="text.secondary" sx={{ lineHeight: 1.55 }} variant="body2">
-          Install the TradersLink PWA to receive stock halt push notifications directly on your device. The app works on supported desktop and mobile devices, giving you quick access to TradersLink and halt alerts without needing to keep the website open.
+          Install the TradersLink PWA to receive stock halt push notifications directly on your device. The app works on supported desktop and mobile devices.
         </Typography>
         <InstallTradersLinkPwaMethods />
       </Box>
-      {message ? <Alert aria-live="polite" role="status" severity={message.severity}>{message.text}</Alert> : null}
     </Box>
   );
 }

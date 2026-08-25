@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
+import { notifyJournalOwnerOfBrokerImportFailure } from "@/src/modules/platform/server/notifications/platform-journal-owner-alert-service";
 import {
   createCanonicalUtcTimestamp,
   platformFailure,
@@ -196,7 +197,7 @@ export function failJournalImportAttempt(
     const attempts = new JournalImportAttemptRepository(database);
     const current = attempts.findById(scope, context.attempt.importAttemptId);
     if (!current || current.currentState !== "inspecting") return;
-    attempts.transition({
+    const failed = attempts.transition({
       scope,
       importAttemptId: current.importAttemptId,
       expectedRevision: current.revision,
@@ -205,6 +206,42 @@ export function failJournalImportAttempt(
       failureCode: reasonCode,
       correlationRefSha256: context.correlationRefSha256,
       timestamp,
+    });
+    notifyJournalOwnerOfBrokerImportFailure({
+      database,
+      occurredAt: now,
+      sourceEventKey: `statement_import_failed_${failed.importAttemptId}`,
+    });
+  });
+}
+
+/** Marks only an already-committing statement attempt as failed. */
+export function failJournalImportCommitAttempt(
+  scope: WorkspaceAccessScope,
+  browserIdempotencyRef: string,
+  reasonCode: string,
+  now: Date = new Date(),
+): void {
+  const timestamp = createCanonicalUtcTimestamp(now);
+  const digests = resolveJournalImportAttemptDigests(scope, browserIdempotencyRef);
+  withPlatformDatabase({ mode: "runtime" }, (database) => {
+    const attempts = new JournalImportAttemptRepository(database);
+    const current = attempts.findByIdempotency(scope, digests.requestIdempotencySha256);
+    if (!current || current.currentState !== "committing") return;
+    const failed = attempts.transition({
+      scope,
+      importAttemptId: current.importAttemptId,
+      expectedRevision: current.revision,
+      nextState: "system_failed",
+      reasonCode: "commit_failed",
+      failureCode: reasonCode,
+      correlationRefSha256: digests.correlationRefSha256,
+      timestamp,
+    });
+    notifyJournalOwnerOfBrokerImportFailure({
+      database,
+      occurredAt: now,
+      sourceEventKey: `statement_import_failed_${failed.importAttemptId}`,
     });
   });
 }

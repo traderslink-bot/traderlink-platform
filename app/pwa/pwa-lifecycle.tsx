@@ -7,7 +7,7 @@ import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   useCallback,
   useEffect,
@@ -49,6 +49,7 @@ export function PwaLifecycle({
   accountSelectionRef: string | null;
   offlineScopeRef: string;
 }) {
+  const pathname = usePathname();
   const router = useRouter();
   const syncing = useRef(false);
   const [dismissedNoticeKey, setDismissedNoticeKey] = useState<string | null>(null);
@@ -123,7 +124,10 @@ export function PwaLifecycle({
 
   useEffect(() => {
     const onResume = () => {
-      if (document.visibilityState === "visible") void runSync();
+      if (document.visibilityState === "visible") {
+        void runSync();
+        if (pathname === "/account/preferences") router.refresh();
+      }
     };
     window.addEventListener("focus", onResume);
     document.addEventListener("visibilitychange", onResume);
@@ -131,7 +135,7 @@ export function PwaLifecycle({
       window.removeEventListener("focus", onResume);
       document.removeEventListener("visibilitychange", onResume);
     };
-  }, [runSync]);
+  }, [pathname, router, runSync]);
 
   const waitingCount = outbox.filter((record) =>
     record.state === "saved_on_device" || record.state === "syncing").length;

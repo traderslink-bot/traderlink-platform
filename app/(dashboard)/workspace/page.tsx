@@ -20,7 +20,7 @@ import {
 import { readJournalFirstExecutionOnboardingStatus } from "@/src/modules/journal/server/product/journal-first-execution-onboarding";
 
 export const metadata: Metadata = {
-  title: "Workspace | TraderLink Platform",
+  title: "Welcome to TradersLink Beta App. | TradersLink Platform",
   description: "Trade Tracker performance, manual entry, and day sessions.",
 };
 

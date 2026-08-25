@@ -11,15 +11,16 @@ export const TRADERLINK_SCANNER_EARLY_ACCESS_DISCORD_SUBJECT_ENV =
 
 const DISCORD_SNOWFLAKE_PATTERN = /^[0-9]{1,32}$/u;
 
-function configuredDiscordSubject(
+function configuredDiscordSubjects(
   environment: NodeJS.ProcessEnv,
-): string | null {
+): readonly string[] | null {
   const value = environment[TRADERLINK_SCANNER_EARLY_ACCESS_DISCORD_SUBJECT_ENV];
   if (value === undefined) return null;
-  if (!DISCORD_SNOWFLAKE_PATTERN.test(value)) {
+  const subjects = value.split(",").map((subject) => subject.trim());
+  if (subjects.length === 0 || subjects.some((subject) => !DISCORD_SNOWFLAKE_PATTERN.test(subject))) {
     platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
   }
-  return value;
+  return Object.freeze(subjects);
 }
 
 function hasActiveDiscordIdentity(
@@ -50,18 +51,15 @@ export function hasScannerEarlyAccess(
 ): boolean {
   if (identity.mode === "local_development") return true;
   const environment = options.environment ?? process.env;
-  const discordSubject = configuredDiscordSubject(environment);
-  if (!discordSubject) return false;
+  const discordSubjects = configuredDiscordSubjects(environment);
+  if (!discordSubjects) return false;
   return withReadonlyPlatformDatabase(
     {
       databasePath: options.databasePath,
       environment,
       forbiddenRepositoryRoots: options.forbiddenRepositoryRoots,
     },
-    (database) => hasActiveDiscordIdentity(
-      database,
-      identity.scope.userId,
-      discordSubject,
-    ),
+    (database) => discordSubjects.some((discordSubject) =>
+      hasActiveDiscordIdentity(database, identity.scope.userId, discordSubject)),
   );
 }

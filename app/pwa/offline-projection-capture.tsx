@@ -13,6 +13,7 @@ import {
   DASHBOARD_HOME_ITEM,
   DASHBOARD_MAIN_NAVIGATION_GROUPS,
   DASHBOARD_STANDALONE_ITEMS,
+  isDashboardNavigationItem,
 } from "@/app/dashboard-navigation";
 import {
   PLATFORM_OFFLINE_MAX_BLOCKS,
@@ -56,7 +57,7 @@ function navigation(): readonly PlatformOfflineNavigationGroup[] {
     Object.freeze({ label: "Home", items: Object.freeze([item(DASHBOARD_HOME_ITEM)]) }),
     ...DASHBOARD_MAIN_NAVIGATION_GROUPS.map((group) => Object.freeze({
       label: group.label,
-      items: Object.freeze(group.items.map(item)),
+      items: Object.freeze(group.items.filter(isDashboardNavigationItem).map(item)),
     })),
     Object.freeze({
       label: "More",

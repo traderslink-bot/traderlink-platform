@@ -251,7 +251,7 @@ export function ExecutionEntryCard({
             </Typography>
             {state.kind === "saved" && state.persistence === "device" ? (
               <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="caption">
-                TraderLink will check and add them after you reconnect.
+                TradersLink will check and add them after you reconnect.
               </Typography>
             ) : null}
             {state.kind === "saved" && state.candleReviewMessage ? (
@@ -305,15 +305,6 @@ export function ExecutionEntryCard({
           ? "Enter the executions that make up this swing trade. Opening and closing executions can have different trading dates."
           : "Enter all day trade executions for one trading day and save your executions. All of your trades for the day will display below, organized by ticker."}
       </Typography>
-      {entryMode === "day" ? (
-        <Typography color="error.main" sx={{ fontWeight: 700, mt: 1 }} variant="body2">
-          You need a data connection if you want your trades analyzed and a chart trade replay. {" "}
-          <NextLink href="/account/trading" style={{ color: "inherit", fontWeight: 800 }}>
-            Connect Data
-          </NextLink>
-        </Typography>
-      ) : null}
-
       <Stack spacing={1.5} sx={{ mt: 2.5 }}>
         {rows.map((row, index) => (
           <Box

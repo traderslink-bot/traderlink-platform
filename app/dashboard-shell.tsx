@@ -1,5 +1,6 @@
 "use client";
 
+import AirlineStopsIcon from "@mui/icons-material/AirlineStops";
 import AnalyticsRoundedIcon from "@mui/icons-material/AnalyticsRounded";
 import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
@@ -11,10 +12,12 @@ import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
 import ExpandLessRoundedIcon from "@mui/icons-material/ExpandLessRounded";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import EventRepeatIcon from "@mui/icons-material/EventRepeat";
-import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
+import FileUploadOffIcon from "@mui/icons-material/FileUploadOff";
 import GavelRoundedIcon from "@mui/icons-material/GavelRounded";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
+import LeaderboardIcon from "@mui/icons-material/Leaderboard";
+import LegendToggleIcon from "@mui/icons-material/LegendToggle";
 import LockRoundedIcon from "@mui/icons-material/LockRounded";
 import MenuOpenRoundedIcon from "@mui/icons-material/MenuOpenRounded";
 import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
@@ -22,9 +25,12 @@ import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import NoteAltRoundedIcon from "@mui/icons-material/NoteAltRounded";
 import NewspaperRoundedIcon from "@mui/icons-material/NewspaperRounded";
 import PauseCircleOutlineRoundedIcon from "@mui/icons-material/PauseCircleOutlineRounded";
+import PanoramaFishEyeIcon from "@mui/icons-material/PanoramaFishEye";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
+import QueryBuilderIcon from "@mui/icons-material/QueryBuilder";
 import QueryStatsRoundedIcon from "@mui/icons-material/QueryStatsRounded";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import RttIcon from "@mui/icons-material/Rtt";
 import ScienceRoundedIcon from "@mui/icons-material/ScienceRounded";
 import SavedSearchRoundedIcon from "@mui/icons-material/SavedSearchRounded";
 import ShowChartRoundedIcon from "@mui/icons-material/ShowChartRounded";
@@ -32,8 +38,8 @@ import SmartToyOutlinedIcon from "@mui/icons-material/SmartToyOutlined";
 import SpaceDashboardRoundedIcon from "@mui/icons-material/SpaceDashboardRounded";
 import SwapVertRoundedIcon from "@mui/icons-material/SwapVertRounded";
 import TableRowsRoundedIcon from "@mui/icons-material/TableRowsRounded";
-import TimelineRoundedIcon from "@mui/icons-material/TimelineRounded";
 import TodayIcon from "@mui/icons-material/Today";
+import TroubleshootIcon from "@mui/icons-material/Troubleshoot";
 import TravelExploreRoundedIcon from "@mui/icons-material/TravelExploreRounded";
 import ViewDayRoundedIcon from "@mui/icons-material/ViewDayRounded";
 import WifiOffRoundedIcon from "@mui/icons-material/WifiOffRounded";
@@ -68,6 +74,7 @@ import {
   DASHBOARD_NAVIGATION_HREFS,
   DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS,
   dashboardHelpTarget,
+  isDashboardNavigationItem,
   type DashboardNavigationDrawerItem,
   type DashboardNavigationGroup,
   type DashboardNavigationIconKey,
@@ -80,6 +87,7 @@ import {
 } from "./ai-chat-drawer-events";
 import type { CoachAiDailyCompanionContextSelector } from "@/src/modules/coach/contracts/ai-daily-companion-contracts";
 import { PushNotificationSetupBanner } from "./pwa/push-notification-setup-banner";
+import { CrispDashboardSupportChat } from "./crisp-dashboard-support-chat";
 import {
   PRESS_RELEASE_CHANNEL_DEFINITIONS,
   type PressReleaseUnreadCounts,
@@ -111,7 +119,10 @@ function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
     roundTrips: <RestartAltIcon />,
     marketCharts: <CandlestickChartIcon />,
     data: <ViewDayRoundedIcon />,
+    dayTradeAnalysis: <TodayIcon />,
+    entryExit: <AirlineStopsIcon />,
     execution: <InsightsRoundedIcon />,
+    greenToRed: <FileUploadOffIcon />,
     halt: <PauseCircleOutlineRoundedIcon />,
     help: <HelpOutlineRoundedIcon />,
     import: <CloudUploadRoundedIcon />,
@@ -119,16 +130,20 @@ function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
     manualEntry: <NoteAltRoundedIcon />,
     newspaper: <NewspaperRoundedIcon />,
     overview: <SpaceDashboardRoundedIcon />,
+    openPositions: <PanoramaFishEyeIcon />,
     reflection: <NoteAltRoundedIcon />,
     results: <QueryStatsRoundedIcon />,
     rules: <GavelRoundedIcon />,
     scanner: <SavedSearchRoundedIcon />,
-    ticker: <FormatListBulletedIcon />,
-    timing: <TimelineRoundedIcon />,
+    ticker: <RttIcon />,
+    timing: <QueryBuilderIcon />,
     tradeAnalysis: <ShowChartRoundedIcon />,
+    tradeAnalyzer: <LeaderboardIcon />,
+    tradeBreakdown: <LegendToggleIcon />,
     tradeExplorer: <TravelExploreRoundedIcon />,
     tradeGroup: <SwapVertRoundedIcon />,
     trades: <TableRowsRoundedIcon />,
+    mfeMae: <TroubleshootIcon />,
     workspace: <DashboardRoundedIcon />,
   };
   return icons[icon];
@@ -283,10 +298,12 @@ function NavigationLink({
 
 function NavigationDrawerButton({
   collapsed,
+  grouped = false,
   item,
   onOpen,
 }: {
   collapsed: boolean;
+  grouped?: boolean;
   item: DashboardNavigationDrawerItem;
   onOpen: () => void;
 }) {
@@ -298,7 +315,7 @@ function NavigationDrawerButton({
         minHeight: 44,
         mx: 1,
         my: 0.25,
-        pl: collapsed ? 1.25 : 1.5,
+        pl: collapsed ? 1.25 : grouped ? 2.75 : 1.5,
         pr: collapsed ? 1.25 : 1.5,
         justifyContent: collapsed ? "center" : "initial",
       }}
@@ -315,7 +332,7 @@ function NavigationDrawerButton({
       {collapsed ? null : (
         <ListItemText
           primary={item.label}
-          slotProps={{ primary: { sx: { fontSize: 14, fontWeight: 620 } } }}
+          slotProps={{ primary: { sx: { fontSize: grouped ? 13 : 14, fontWeight: 620 } } }}
         />
       )}
     </ListItemButton>
@@ -347,7 +364,9 @@ export function DashboardShell({
 }) {
   const pathname = usePathname();
   const pageHelpTarget = offline ? null : dashboardHelpTarget(pathname);
-  const helpDestination = pageHelpTarget?.href ?? "/help";
+  const helpDestination = offline
+    ? "/help"
+    : `https://traderslink.pro${pageHelpTarget?.href ?? "/help"}`;
   const helpLabel = pageHelpTarget
     ? `Help for ${pageHelpTarget.label}`
     : "Open Help Center";
@@ -370,8 +389,17 @@ export function DashboardShell({
   const accountMenuOpen = Boolean(accountMenuAnchor);
   const sidebarNavigationSections = scannerEarlyAccess
     ? DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS
-    : DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS.filter((section) =>
-      section.kind !== "item" || section.item.href !== "/scanner");
+    : DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS.map((section) =>
+      section.group.id !== "stockTools"
+        ? section
+        : Object.freeze({
+          ...section,
+          group: Object.freeze({
+            ...section.group,
+            items: Object.freeze(section.group.items.filter((item) =>
+              !isDashboardNavigationItem(item) || item.href !== "/scanner")),
+          }),
+        }));
   const closeMobile = () => setMobileOpen(false);
   const setDesktopNavigationCollapsed = (nextCollapsed: boolean) => {
     setCollapsed(nextCollapsed);
@@ -460,7 +488,7 @@ export function DashboardShell({
                   alt="TradersLink"
                   height={35}
                   priority
-                  src="/logo-horizontal-main.png"
+                  src="/logo-horizontal-light.png"
                   style={{
                     display: "block",
                     height: 35,
@@ -507,41 +535,9 @@ export function DashboardShell({
                 <Divider sx={{ mx: 2, my: 0.75 }} />
               ) : null;
 
-              if (section.kind === "item") {
-                return (
-                  <Box key={section.item.href}>
-                    {divider}
-                    <NavigationLink
-                      collapsed={compact}
-                      offline={offline}
-                      item={section.item}
-                      onNavigate={closeMobile}
-                      onOpenAiChat={openAiChat}
-                      pathname={pathname}
-                    />
-                  </Box>
-                );
-              }
-
-              if (section.kind === "drawer") {
-                if (offline || section.item.id !== DASHBOARD_MARKET_HALT_ALERTS_ITEM.id) {
-                  return null;
-                }
-                return (
-                  <Box key={section.item.id}>
-                    {divider}
-                    <NavigationDrawerButton
-                      collapsed={compact}
-                      item={section.item}
-                      onOpen={openMarketHaltAlerts}
-                    />
-                  </Box>
-                );
-              }
-
               const { group } = section;
               const open = expandedGroups[group.id] ?? group.items.some((item) =>
-                isActive(pathname, item.href));
+                isDashboardNavigationItem(item) && isActive(pathname, item.href));
               const groupUnreadCount = group.id === "pressReleases"
                 ? pressReleaseUnreadCounts?.all ?? 0
                 : 0;
@@ -614,13 +610,20 @@ export function DashboardShell({
                         mr: 0.5,
                       }}
                     >
-                      {group.items.map((item) => (
+                      {group.items.map((item) => isDashboardNavigationItem(item) ? (
+                        <Box component="li" key={item.href} sx={{ listStyle: "none" }}>
+                          {!compact && item.href === "/press-releases/market-cap/under-30m" ? (
+                            <Box sx={{ pb: 0.25, pl: 1.5, pr: 1.5, pt: 1.25 }}>
+                              <Typography color="text.secondary" variant="caption">
+                                Daily PR sorted by market cap
+                              </Typography>
+                            </Box>
+                          ) : null}
                         <NavigationLink
                           collapsed={compact}
                           grouped
                           offline={offline}
                           item={item}
-                          key={item.href}
                           onNavigate={closeMobile}
                           onOpenAiChat={openAiChat}
                           pathname={pathname}
@@ -628,6 +631,15 @@ export function DashboardShell({
                             item.href,
                             pressReleaseUnreadCounts,
                           )}
+                        />
+                        </Box>
+                      ) : offline || item.id !== DASHBOARD_MARKET_HALT_ALERTS_ITEM.id ? null : (
+                        <NavigationDrawerButton
+                          collapsed={compact}
+                          grouped
+                          item={item}
+                          key={item.id}
+                          onOpen={openMarketHaltAlerts}
                         />
                       ))}
                     </List>
@@ -640,7 +652,7 @@ export function DashboardShell({
         {compact ? null : (
           <Box sx={{ px: 2, py: 1.5 }}>
             <Typography color="text.secondary" variant="caption">
-              Trade Tracker
+              TradersLink v1
             </Typography>
           </Box>
         )}
@@ -704,7 +716,7 @@ export function DashboardShell({
                 alt="TradersLink"
                 height={35}
                 priority
-                src="/logo-horizontal-main.png"
+                src="/logo-horizontal-light.png"
                 style={{
                   display: "block",
                   height: 35,
@@ -726,6 +738,7 @@ export function DashboardShell({
             />
           ) : null}
           <Box sx={{ flexGrow: 1 }} />
+          <CrispDashboardSupportChat />
           <Button
             aria-controls={aiFeaturesEnabled && aiChatOpen ? "ai-chat-drawer" : undefined}
             aria-expanded={aiFeaturesEnabled ? aiChatOpen : undefined}

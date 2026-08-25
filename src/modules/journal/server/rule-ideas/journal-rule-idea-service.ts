@@ -33,14 +33,19 @@ export class JournalRuleIdeaService {
     return this.repository.list(scope);
   }
 
-  issueNext(scope: AccountScope, evidence: readonly JournalRuleIdeaEvidence[], asOfUtc: string): JournalRuleIdeaRecord | null {
+  issueNext(
+    scope: AccountScope,
+    evidence: readonly JournalRuleIdeaEvidence[],
+    asOfUtc: string,
+    options: Readonly<{ allowFollowUpInCurrentCheck?: boolean }> = {},
+  ): JournalRuleIdeaRecord | null {
     const now = timestamp(asOfUtc);
     return this.repository.immediate(() => {
       const current = this.repository.list(scope);
       const retained = current.find((idea) => idea.disposition === "available" || idea.disposition === "saved_for_later");
       if (retained) return retained;
       const latestIssued = this.repository.latestIssuedAt(scope);
-      if (latestIssued && now - timestamp(latestIssued) < 28 * DAY_MS) return null;
+      if (!options.allowFollowUpInCurrentCheck && latestIssued && now - timestamp(latestIssued) < 28 * DAY_MS) return null;
       const selected = evidence.find((candidate) => {
         const prior = current.find((idea) => idea.evidence.templateId === candidate.templateId);
         if (!prior) return true;
@@ -102,6 +107,25 @@ export class JournalRuleIdeaService {
       });
       if (!updated) return platformFailure("TRADERLINK_RULE_IDEA_CONFLICT");
       return this.repository.list(scope).find((idea) => idea.ideaId === input.ideaId)!;
+    });
+  }
+
+  dismissAndIssueNext(scope: AccountScope, input: Readonly<{
+    ideaId: string;
+    expectedRevision: number;
+    evidence: readonly JournalRuleIdeaEvidence[];
+    asOfUtc: string;
+  }>): JournalRuleIdeaRecord | null {
+    return this.repository.immediate(() => {
+      this.setDisposition(scope, {
+        ideaId: input.ideaId,
+        expectedRevision: input.expectedRevision,
+        disposition: "not_for_me",
+        asOfUtc: input.asOfUtc,
+      });
+      return this.issueNext(scope, input.evidence, input.asOfUtc, {
+        allowFollowUpInCurrentCheck: true,
+      });
     });
   }
 }

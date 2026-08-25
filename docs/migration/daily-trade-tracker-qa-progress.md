@@ -16,6 +16,28 @@ warning so it appears only when the trader has user-entered changes that are
 not saved. Additional visible UI changes require owner approval before they are
 implemented.
 
+## 2026-08-24 connection guidance placement
+
+The owner requested that the data-connection guidance move out of the manual
+execution card and directly beneath the existing note/rule/tag guidance at the
+top of the Daily Trade Tracker. The sentence now stands alone, with `Connect
+Data` as a primary button on the following line. This keeps the requirement
+visible before the entry card without burying the connection action in form
+copy. Focused ESLint passed for the two changed Tracker components. The change
+is ready for its narrow Railway release.
+
+## 2026-08-24 hosted Trade Tracker render repair
+
+The live `/trade-tracker` route failed before it rendered the tracker. Railway
+logged that a function had crossed a Server Component-to-Client Component
+boundary. The connection guidance action passed Next's `Link` function through
+the shared Material action component, which React cannot serialize for the
+client-side Tracker view. The action now uses its string `href` directly, so
+only serializable props cross the boundary. This is a render-only repair: it
+does not read or change Journal/account facts. Focused static verification and
+a post-release hosted route check remain required before this record can claim
+the live issue is resolved.
+
 ## QA checklist
 
 - [x] Confirm the canonical repository, branch and concurrent working-tree

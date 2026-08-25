@@ -88,7 +88,7 @@ export function InstallTradersLinkPwaMethods({
           disabled={installState === "prompting"}
           onClick={() => void requestInstallation()}
           startIcon={<DownloadRoundedIcon />}
-          sx={{ alignSelf: "flex-start" }}
+          sx={{ justifySelf: "start", width: "auto" }}
         >
           {installState === "prompting" ? "Opening install..." : "Install TradersLink app"}
         </DashboardPrimaryAction>

@@ -75,7 +75,7 @@ export const TRADING_RULES_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
           Object.freeze({ kind: "steps", items: Object.freeze([
             Object.freeze({ title: "1. Start the check", text: "Open Trading Rules and choose Check my trades in the Rule idea card." }),
             Object.freeze({ title: "2. Read the comparison", text: "If a pattern qualifies, review the suggested preset setting, affected trades, comparison trades and their actual completed results." }),
-            Object.freeze({ title: "3. Make your choice", text: "Choose Add rule, Save for later or Not for me. Add rule still opens the normal rule form so you can review the setting before activating it." }),
+            Object.freeze({ title: "3. Make your choice", text: "Choose Add rule, Save for later or Not for me — show another. That last choice dismisses the current preset and, when another supported idea is available, moves to it. Add rule still opens the normal rule form so you can review the setting before activating it." }),
           ]) }),
           Object.freeze({ kind: "callout", title: "Checking changes nothing", text: "The check cannot activate, adjust, pause or retire a rule. If no pattern passes every evidence check, TraderLink says so and leaves your rules unchanged." }),
         ]),
@@ -120,7 +120,8 @@ export const TRADING_RULES_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
           Object.freeze({ kind: "table", columns: Object.freeze(["Situation", "What happens"]), rows: Object.freeze([
             Object.freeze(["The preset is already active", "TraderLink does not recommend that preset again. It checks for another qualifying idea instead."]),
             Object.freeze(["Save for later", "The idea remains available without activating the rule or changing its setting."]),
-            Object.freeze(["Not for me", "The idea is dismissed and the same preset is suppressed for 90 days."]),
+            Object.freeze(["Not for me — show another", "The idea is dismissed and the same preset is suppressed for 90 days. If another idea meets every evidence check, TradersLink shows it next."]),
+            Object.freeze(["Several ideas qualify", "They are shown one at a time: more supporting trading days first, then more affected completed trades, then more trigger events. This is a consistent review order, not a claim that the first idea is best or will work in future trading."]),
             Object.freeze(["No idea qualifies", "TraderLink confirms that the check finished and that nothing was changed."]),
           ]) }),
         ]),
