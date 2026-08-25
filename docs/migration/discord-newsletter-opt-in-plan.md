@@ -14,8 +14,9 @@ them one clear, optional choice before entering the dashboard:
 > community updates.
 
 The Week Ahead is the lead value proposition. Product, education, and
-Community updates are secondary. The checkbox is unchecked by default and a
-trader can continue without selecting it.
+Community updates are secondary. The offer has two equally explicit choices:
+**Send me The Week Ahead** subscribes; **No thanks, continue to TradersLink**
+declines. Neither choice is preselected.
 
 ## Experience
 
@@ -24,9 +25,8 @@ trader can continue without selecting it.
    membership scopes.
 3. After a newly provisioned account receives its Platform session, the trader
    reaches `/welcome` before their requested dashboard destination.
-4. The Welcome card explains that TraderLink is creating the account from
-   Discord, provides the single unchecked newsletter consent choice, and has a
-   `Continue to TradersLink` action.
+4. The focused The Week Ahead offer presents the weekly research value before
+   the dashboard, with distinct subscribe and decline actions.
 5. Selecting the checkbox records newsletter consent for the email Discord
    supplied only when Discord marked that email verified. A missing or
    unverified Discord email leaves the consent off and clearly explains that

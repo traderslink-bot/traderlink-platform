@@ -9,9 +9,10 @@
 - [x] Discord remains the sole beta login.
 - [x] Ask on the first Platform account visit immediately after Discord login,
       rather than treating Account Notifications as the main signup prompt.
-- [x] The unchecked opt-in is led by **The Week Ahead**, described as a weekly
-      small-cap and upcoming-catalyst research email; product, education and
-      Community updates are secondary.
+- [x] The Week Ahead offer leads with the weekly small-cap and
+      upcoming-catalyst research value. Separate **Send me The Week Ahead**
+      and **No thanks, continue to TradersLink** actions record an explicit
+      choice; product, education, and Community updates are secondary.
 - [x] The email scope and the newsletter checkbox are separate consent
       decisions.
 - [x] This slice captures opt-in only. It does not send bulk email or connect
