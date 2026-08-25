@@ -37,25 +37,20 @@ It is separate from the public Vercel site at `traderslink.pro` and
 Next.js application. Pushing a commit to its configured source branch starts a
 Railway build automatically.
 
-### Railway branch-source invariant — active reconciliation
+### Railway branch-source invariant — canonical main
 
-On 2026-08-24, Railway was verified to deploy
-`codex/traderlink-platform-replacement`, not `main`. That is a temporary
-reconciliation state, not permission to treat every `codex/*` branch as a
-release branch. The recorded repair is
+Since 2026-08-25, Railway deploys `main` for this repository. The historical
+`codex/traderlink-platform-replacement` branch is retained as read-only release
+history; it is not a deployment source. The completed repair is recorded in
 `docs/migration/railway-main-source-reconciliation-plan.md`.
 
 - Before every Railway release, run a read-only deployment metadata check and
-  record the configured branch and its exact remote tip. Never infer the
-  release branch from the local checkout name or assume a `main` push deploys.
-- Until the reconciliation is completed and verified, a `main` push is
-  **not** a Railway release. Do not change Railway's configured source branch
-  or force-push either branch to make it appear aligned.
-- The end state is one canonical `main` branch and Railway configured to deploy
-  only `main`. The switch requires a verified reconciliation commit that has
-  the live source and `main` as parents, preserves every live feature and
-  approved `main`-only change, passes its migration/health checks, and is
-  confirmed in Railway metadata as `branch: main` with that exact commit hash.
+  record that the configured branch is `main` and that its remote tip is the
+  exact release parent. Never infer the release branch from a local checkout.
+- Publish normal, clean, allowlisted fast-forward commits to `main`. Do not
+  push release work to a `codex/*` branch, change Railway's source branch, or
+  force-push history without explicit owner authorization and a new approved
+  reconciliation plan.
 - Release handoffs must state: configured Railway source branch, remote parent
   SHA, published SHA, complete allowlist, Railway deployment ID/status, and
   `/api/platform/health` result. A commit or push alone is never deployment

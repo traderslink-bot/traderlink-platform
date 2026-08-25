@@ -1,6 +1,6 @@
 # Workspace First-Time Onboarding Progress
 
-**Status:** Complete guide implementation finished; release integration pending.
+**Status:** Complete — deployed from canonical `main` on 2026-08-25.
 
 **Controlling plan:** [Workspace First-Time Onboarding Design Plan](workspace-first-time-onboarding-design-plan.md)
 
@@ -62,14 +62,16 @@
       the normal connection prompt while that guide is active.
 - [x] Focused ESLint and whitespace checks pass after removing the obsolete
       Workspace success-return branch.
-- [ ] Browser and deployed-flow QA remain pending a clean release integration;
-      no local server was started and no external Moomoo authorization was run.
+- [x] Canonical-main Railway deployment `cb5e0554` succeeded after the focused
+      external-link type correction, and `/api/platform/health` returned ready
+      with 84 migrations on `sqlite_single_node`.
+- [ ] Browser and external-Moomoo authorization QA remain intentionally
+      pending; no local server was started and no external authorization was
+      run.
 
-## Release boundary
+## Release record
 
-The current checkout is a shared, mixed worktree on
-`codex/traderlink-platform-replacement`, while `origin/main` has a different
-parent. Do not commit or deploy this slice from the current state. The release
-owner must first provide a clean, integrated source-branch slot; then this
-slice can be committed with an explicit file allowlist and deployed for the
-live review.
+The guide was first recorded at local commit `c4eb3fc2`, then included in the
+two-parent canonical-main reconciliation `941a9af3`. Follow-up `fa03f604`
+corrected the external Moomoo link's component type. Railway deployment
+`cb5e0554` is the verified live release.

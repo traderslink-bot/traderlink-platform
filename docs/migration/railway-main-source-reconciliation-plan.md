@@ -1,6 +1,6 @@
 # Railway Main Source Reconciliation Plan
 
-**Status:** Active repair — no Railway source change has occurred.
+**Status:** Complete — Railway deploys canonical `main`.
 
 **Progress:** [Railway Main Source Reconciliation Progress](railway-main-source-reconciliation-progress.md)
 
@@ -8,6 +8,15 @@
 
 Make `main` the one complete, canonical TraderLink Platform source branch and
 configure `traderlink-platform-web` on Railway to deploy only `main`.
+
+## Completed reconciliation — 2026-08-25
+
+The two-parent reconciliation commit `941a9af3` preserved the former live
+source as its second parent and advanced `main` normally. The one-file
+follow-up `fa03f604` corrected the external Moomoo link's TypeScript type.
+Railway was then configured to deploy `main`; deployment `cb5e0554` succeeded
+for `fa03f604`, and `/api/platform/health` returned `ready` with 84 migrations
+on `sqlite_single_node`.
 
 ## Verified starting point — 2026-08-24
 
