@@ -6,7 +6,7 @@ import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/data
 import { CommunityWatchlistsHub } from "./community-watchlists-hub";
 
 export const metadata: Metadata = {
-  title: "Community Watchlists | TraderLink Platform",
+  title: "Community Watchlists | TradersLink Platform",
 };
 
 export const dynamic = "force-dynamic";
@@ -16,7 +16,23 @@ export default async function CommunityWatchlistsPage() {
   const scope = await requireTraderLinkPlatformPageScope();
   const data = withReadonlyPlatformDatabase({}, (database) => {
     const repository = new CommunityWatchlistRepository(database);
-    return Object.freeze({ mine: repository.listMine(scope.userId), shared: repository.listShared() });
+    const mine = repository.listMineDetails(scope.userId);
+    const shared = repository.listSharedDetails();
+    const following = repository.listFollowedDetails(scope.userId);
+    const toItem = (detail: typeof mine[number], editable: boolean, isFollowing: boolean) => Object.freeze({
+      detail,
+      editable,
+      following: isFollowing,
+    });
+    return Object.freeze({
+      mine: Object.freeze(mine.map((detail) => toItem(detail, true, false))),
+      shared: Object.freeze(shared.map((detail) => toItem(
+        detail,
+        repository.ownsPublished(scope.userId, detail.authorHandle, detail.slug),
+        repository.isFollowingPublished(scope.userId, detail.authorHandle, detail.slug),
+      ))),
+      following: Object.freeze(following.map((detail) => toItem(detail, false, true))),
+    });
   });
-  return <CommunityWatchlistsHub mine={data.mine} shared={data.shared} />;
+  return <CommunityWatchlistsHub following={data.following} mine={data.mine} shared={data.shared} />;
 }

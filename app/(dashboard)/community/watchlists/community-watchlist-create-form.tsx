@@ -17,7 +17,6 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 
 import {
-  COMMUNITY_PROFILE_TAGS,
   COMMUNITY_WATCHLIST_TAGS,
   type CommunityTickerInput,
 } from "@/src/modules/community/contracts/community-watchlist-contracts";
@@ -53,7 +52,6 @@ export function CommunityWatchlistCreateForm() {
   const [working, startTransition] = useTransition();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [profileTags, setProfileTags] = useState<readonly string[]>(["Small caps", "Premarket"]);
   const [watchlistTags, setWatchlistTags] = useState<readonly string[]>(["Small cap", "Premarket"]);
   const [tickerText, setTickerText] = useState("");
   const [tickers, setTickers] = useState<readonly DraftTicker[]>([]);
@@ -74,7 +72,7 @@ export function CommunityWatchlistCreateForm() {
     setMessage(null);
     startTransition(async () => {
       const result = await createCommunityWatchlist({
-        title, description, profileTags, tags: watchlistTags,
+        title, description, tags: watchlistTags,
         tickers: tickers.map((ticker) => ({
           symbol: ticker.symbol,
           tags: ticker.tags,
@@ -102,7 +100,6 @@ export function CommunityWatchlistCreateForm() {
           <TextField fullWidth helperText={`${title.length}/25`} label="Watchlist title" onChange={(event) => setTitle(event.target.value)} required slotProps={{ htmlInput: { maxLength: 25 } }} value={title} />
           <TextField fullWidth helperText={`${description.length}/180`} label="Short description" minRows={3} multiline onChange={(event) => setDescription(event.target.value)} placeholder="What makes this list worth checking today?" slotProps={{ htmlInput: { maxLength: 180 } }} value={description} />
           <Box><Typography color="text.secondary" variant="caption">Watchlist tags</Typography><Box sx={{ mt: 0.75 }}><TagPicker available={COMMUNITY_WATCHLIST_TAGS} maximum={4} onChange={setWatchlistTags} selected={watchlistTags} /></Box></Box>
-          <Box><Typography color="text.secondary" variant="caption">Your profile tags</Typography><Box sx={{ mt: 0.75 }}><TagPicker available={COMMUNITY_PROFILE_TAGS} onChange={setProfileTags} selected={profileTags} /></Box></Box>
         </Stack>
       </DashboardPanel>
       <DashboardPanel title="Tickers">
@@ -114,8 +111,7 @@ export function CommunityWatchlistCreateForm() {
           {tickers.map((ticker) => <Box key={ticker.id} sx={{ border: 1, borderColor: "divider", borderRadius: 2, p: { xs: 1.5, sm: 2 } }}><Stack spacing={1.25}>
             <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}><Typography sx={{ fontWeight: 820 }}>{ticker.symbol}</Typography><IconButton aria-label={`Remove ${ticker.symbol}`} onClick={() => setTickers((current) => current.filter((item) => item.id !== ticker.id))}><DeleteOutlineRoundedIcon /></IconButton></Stack>
             <Box><Typography color="text.secondary" variant="caption">Ticker tags</Typography><Box sx={{ mt: 0.5 }}><TagPicker available={COMMUNITY_WATCHLIST_TAGS} maximum={4} onChange={(tags) => updateTicker(ticker.id, { tags })} selected={ticker.tags ?? []} /></Box></Box>
-            <TextField fullWidth label="Why I am watching" minRows={2} multiline onChange={(event) => updateTicker(ticker.id, { whyWatching: event.target.value })} value={ticker.whyWatching ?? ""} />
-            <TextField fullWidth label="My plan" minRows={2} multiline onChange={(event) => updateTicker(ticker.id, { plan: event.target.value })} value={ticker.plan ?? ""} />
+            <TextField fullWidth helperText={`${(ticker.whyWatching ?? "").length}/800`} label="Trader's take" minRows={3} multiline onChange={(event) => updateTicker(ticker.id, { whyWatching: event.target.value, plan: "" })} slotProps={{ htmlInput: { maxLength: 800 } }} value={ticker.whyWatching ?? ""} />
             <Stack direction={{ xs: "column", sm: "row" }} spacing={1}><TextField fullWidth label="Personal target" onChange={(event) => updateTicker(ticker.id, { personalTarget: event.target.value })} value={ticker.personalTarget ?? ""} /><TextField fullWidth label="Upcoming catalyst" onChange={(event) => updateTicker(ticker.id, { catalyst: event.target.value })} value={ticker.catalyst ?? ""} /><TextField fullWidth label="Catalyst date" onChange={(event) => updateTicker(ticker.id, { catalystDate: event.target.value || null })} slotProps={{ inputLabel: { shrink: true } }} type="date" value={ticker.catalystDate ?? ""} /></Stack>
           </Stack></Box>)}
         </Stack>

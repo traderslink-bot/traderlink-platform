@@ -6,6 +6,10 @@
 
 **Follow slice:** [Community Watchlist Follows Plan](community-watchlist-follows-plan.md)
 
+**Profile slice:** [Community Profile Plan](community-profile-plan.md)
+
+**Company facts cache:** [Community Company Facts Cache Plan](community-company-facts-cache-plan.md)
+
 ## Current checkpoint
 
 The owner approved the dashboard-native direction and then authorized the
@@ -45,15 +49,46 @@ is deliberately separate from later profile following. Ticker-add/remove
 notifications remain deferred until the owner ticker editor supplies those
 real events.
 
-The compact header shows watchlist tags followed by up to six actual ticker
-symbols and a `View watchlist details` control. Per-ticker research tags remain
-inside the corresponding expandable ticker card. The last-updated status is in
-the left column below the symbol strip.
+The compact header shows watchlist tags followed by up to five actual ticker
+symbols, then a compact `N more` chip when needed, and a `View watchlist
+details` control. Per-ticker research tags remain inside the corresponding
+expandable ticker card. The last-updated status is in the left column below the
+symbol strip. Each ticker collects one 800-character Trader's take note
+rather than separate reason and plan fields.
 
-Desktop ticker cards keep their fixed outer width. Industry has a hard 150px
-cell before M/C and O/S, giving room for about 20 characters without changing
-the card width; the remaining right-side space belongs to Trader's take. Long
-source values are forced to a single-line ellipsis rather than overflowing.
+The Community Watchlists hub now uses that same compact expandable card for
+My Watchlists, Shared Watchlists and a distinct Following tab. It no longer
+uses a separate feed-card design. Hub cards stay closed initially; opening one
+loads its company facts on demand so a collection page does not make a large
+Finnhub request batch before the trader asks to view a list.
+
+Company Facts are now cached as dated Community ticker records rather than
+being treated as temporary page responses. The cache preserves Finnhub's
+company name, country, industry, exchange, website, market capitalization and
+shares outstanding; the current cards use the four approved visible facts.
+Records are reused for seven days before later background refresh work, and
+the same data will be available to later Community ticker and chat pages.
+
+The published owner can enter a separate Edit watchlist mode from the compact
+profile area. It adds a list-level ticker control below the ticker cards and
+allows editing the watchlist description and each expanded Trader's take;
+public viewers see none of these controls.
+
+The next local slice adds a Community profile editor at `/account/profile`.
+It uses the member's Discord username as the displayed identity while keeping
+the stable Community handle as the route identifier. A trader can save an
+optional 180-character description, select up to six profile tags, choose
+whether their profile is visible, and follow other visible trader profiles.
+Profile tags remain discovery data and do not appear on a watchlist card. The
+description appears in the unused space of the compact watchlist profile area.
+Profile follows are a distinct durable relationship from watchlist follows;
+they record truthful follower/following counts and no notifications are sent.
+
+Desktop ticker cards keep their fixed outer width. Their fact order is M/C,
+O/S, Country, Industry; Industry has a hard 150px cell, giving room for about
+20 characters without changing the card width. The remaining right-side space
+belongs to Trader's take. Long source values are forced to a single-line
+ellipsis rather than overflowing.
 The desktop profile card is top-aligned and does not stretch with a taller
 title or watchlist-tag column.
 

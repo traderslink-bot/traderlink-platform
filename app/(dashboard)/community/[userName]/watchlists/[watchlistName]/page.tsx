@@ -3,16 +3,12 @@ import { notFound } from "next/navigation";
 import Stack from "@mui/material/Stack";
 
 import { CommunityWatchlistRepository } from "@/src/modules/community/server/community-watchlist-repository";
-import {
-  formatFinnhubMarketCap,
-  getFinnhubCompanyProfile,
-} from "@/src/lib/news/finnhub-company-profile";
+import { getCommunityTickerCompanyFacts } from "@/src/modules/community/server/community-ticker-company-facts-service";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { DashboardPage } from "../../../../../dashboard-template";
 import {
   CommunityWatchlistCard,
-  type CommunityTickerCompanyFacts,
 } from "../../../watchlists/community-watchlist-cards";
 
 export const metadata: Metadata = {
@@ -36,16 +32,7 @@ export default async function CommunityWatchlistDetailPage({
   const following = withReadonlyPlatformDatabase({}, (database) =>
     new CommunityWatchlistRepository(database).isFollowingPublished(scope.userId, userName, watchlistName),
   );
-  const tickerFacts = Object.fromEntries(await Promise.all(detail.tickers.map(async (ticker) => {
-    const profile = await getFinnhubCompanyProfile(ticker.symbol);
-    const facts: CommunityTickerCompanyFacts | null = profile ? {
-      country: profile.country,
-      industry: profile.industry,
-      marketCap: formatFinnhubMarketCap(profile.marketCapitalization),
-      sharesOutstanding: formatFinnhubMarketCap(profile.shareOutstanding),
-    } : null;
-    return [ticker.symbol, facts];
-  })));
+  const tickerFacts = await getCommunityTickerCompanyFacts(detail.tickers.map((ticker) => ticker.symbol));
   return (
     <DashboardPage>
       <Stack spacing={1.75} sx={{ maxWidth: 790 }}>

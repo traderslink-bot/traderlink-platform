@@ -233,3 +233,72 @@ export async function updateCommunityWatchlistTickerTags(input: Readonly<{
     });
   }
 }
+
+export async function updateCommunityWatchlistDescription(input: Readonly<{
+  handle: string;
+  watchlistSlug: string;
+  description: string;
+}>): Promise<CommunityWatchlistActionResult> {
+  try {
+    const scope = await requireTraderLinkPlatformPageScope();
+    withPlatformDatabase({ mode: "runtime" }, (database) =>
+      new CommunityWatchlistRepository(database).updateWatchlistDescription({
+        ...input,
+        userId: scope.userId,
+        timestamp: createCanonicalUtcTimestamp(),
+      }),
+    );
+    const href = `/community/${input.handle}/watchlists/${input.watchlistSlug}`;
+    revalidatePath(href);
+    revalidatePath("/community/watchlists", "layout");
+    return Object.freeze({ ok: true as const, href, message: "Description saved." });
+  } catch {
+    return Object.freeze({ ok: false as const, message: "Your description could not be saved. Try again." });
+  }
+}
+
+export async function updateCommunityWatchlistTickerTake(input: Readonly<{
+  handle: string;
+  watchlistSlug: string;
+  symbol: string;
+  take: string;
+}>): Promise<CommunityWatchlistActionResult> {
+  try {
+    const scope = await requireTraderLinkPlatformPageScope();
+    withPlatformDatabase({ mode: "runtime" }, (database) =>
+      new CommunityWatchlistRepository(database).updateTickerTake({
+        ...input,
+        userId: scope.userId,
+        timestamp: createCanonicalUtcTimestamp(),
+      }),
+    );
+    const href = `/community/${input.handle}/watchlists/${input.watchlistSlug}`;
+    revalidatePath(href);
+    return Object.freeze({ ok: true as const, href, message: "Trader's take saved." });
+  } catch {
+    return Object.freeze({ ok: false as const, message: "Trader's take could not be saved. Try again." });
+  }
+}
+
+export async function addCommunityWatchlistTicker(input: Readonly<{
+  handle: string;
+  watchlistSlug: string;
+  symbol: string;
+}>): Promise<CommunityWatchlistActionResult> {
+  try {
+    const scope = await requireTraderLinkPlatformPageScope();
+    withPlatformDatabase({ mode: "runtime" }, (database) =>
+      new CommunityWatchlistRepository(database).addTicker({
+        ...input,
+        userId: scope.userId,
+        timestamp: createCanonicalUtcTimestamp(),
+      }),
+    );
+    const href = `/community/${input.handle}/watchlists/${input.watchlistSlug}`;
+    revalidatePath(href);
+    revalidatePath("/community/watchlists", "layout");
+    return Object.freeze({ ok: true as const, href, message: "Ticker added." });
+  } catch {
+    return Object.freeze({ ok: false as const, message: "That ticker could not be added. Make sure it is unique in this watchlist." });
+  }
+}

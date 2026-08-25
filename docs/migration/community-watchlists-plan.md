@@ -119,14 +119,13 @@ Watching for continued volume after today's news.
 
 Optional expanded fields:
 
-- **Why I am watching**;
-- **My plan**;
+- **Trader's take**;
 - **Personal target**;
 - upcoming catalyst and date;
 - posted reference price and timestamp; and
 - later, key level, invalidation, update and removal reason.
 
-`My plan` and `Personal target` are author context, not investment advice or
+`Trader's take` and `Personal target` are author context, not investment advice or
 TradersLink recommendations. A reference price is either captured from an
 approved market-data source at publish time or visibly marked as
 trader-entered. The application must never infer, backfill or guess it.

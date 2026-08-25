@@ -2,6 +2,8 @@ import type Database from "better-sqlite3";
 
 import type {
   CommunityProfile,
+  CommunityProfileConnection,
+  CommunityProfileSettings,
   CommunityWatchlistDetail,
   CommunityWatchlistSummary,
   CommunityWatchlistTickerPreview,
@@ -30,6 +32,11 @@ type WatchlistRow = Readonly<{
   symbols: string | null;
 }>;
 
+type PublishedWatchlistRow = WatchlistRow & Readonly<{
+  author_display_name: string;
+  author_description: string;
+}>;
+
 type TickerRow = Readonly<{
   symbol: string;
   tags_json: string;
@@ -49,6 +56,17 @@ type PublicationRow = Readonly<{
   watchlist_title: string;
   symbol_count: number;
   discord_state: "pending" | "sending" | "delivered" | "failed" | "not_requested";
+}>;
+
+type CommunityProfileRow = Readonly<{
+  user_id: string;
+  handle: string;
+  description: string;
+  profile_tags_json: string;
+  visibility: "visible" | "hidden";
+  display_name: string;
+  follower_count: number;
+  following_count: number;
 }>;
 
 function parseTags(value: string): readonly string[] {
@@ -123,34 +141,71 @@ function summary(
   });
 }
 
+function detail(
+  row: PublishedWatchlistRow,
+  tickers: readonly TickerRow[],
+): CommunityWatchlistDetail {
+  return Object.freeze({
+    authorHandle: row.handle,
+    authorDisplayName: row.author_display_name,
+    authorDescription: row.author_description,
+    authorTags: parseTags(row.profile_tags_json),
+    description: row.description,
+    publishedAtUtc: row.published_at_utc,
+    slug: row.slug,
+    status: row.status,
+    updatedAtUtc: row.updated_at_utc,
+    symbolCount: row.symbol_count,
+    tags: parseTags(row.tags_json),
+    title: row.title,
+    tickers: Object.freeze(tickers.map((ticker) => Object.freeze({
+      symbol: ticker.symbol,
+      tags: parseTags(ticker.tags_json),
+      whyWatching: ticker.why_watching,
+      plan: ticker.plan,
+      personalTarget: ticker.personal_target,
+      catalyst: ticker.catalyst,
+      catalystDate: ticker.catalyst_date,
+      postedAtUtc: ticker.posted_at_utc,
+    }))),
+  });
+}
+
 export class CommunityWatchlistRepository {
   constructor(private readonly database: Database.Database) {}
 
+  private hydrateDetails(rows: readonly PublishedWatchlistRow[]): readonly CommunityWatchlistDetail[] {
+    const tickerStatement = this.database.prepare<[string], TickerRow>(`SELECT symbol, tags_json,
+  why_watching, plan, personal_target, catalyst, catalyst_date, posted_reference_price, posted_at_utc
+FROM community_watchlist_tickers WHERE watchlist_id = ? ORDER BY ordinal`);
+    return Object.freeze(rows.map((row) => detail(row, tickerStatement.all(row.watchlist_id))));
+  }
+
   private readDisplayName(userId: string): string {
     const row = this.database.prepare<[string], Readonly<{ display_name: string }>>(
-      "SELECT display_name FROM platform_users WHERE user_id = ? AND status = 'active'",
+      `SELECT COALESCE((
+  SELECT username FROM platform_discord_memberships
+  WHERE user_id = user.user_id
+  ORDER BY last_verified_at_utc DESC, guild_id
+  LIMIT 1
+), user.display_name) AS display_name
+FROM platform_users user WHERE user.user_id = ? AND user.status = 'active'`,
     ).get(userId);
     if (!row) platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
     return row.display_name;
   }
 
-  private ensureProfile(userId: string, profileTags: readonly string[], timestamp: string): Readonly<{ handle: string }> {
+  private ensureProfile(userId: string, timestamp: string): Readonly<{ handle: string }> {
     const existing = this.database.prepare<[string], Readonly<{ handle: string }>>(
       "SELECT handle FROM community_profiles WHERE user_id = ?",
     ).get(userId);
-    if (existing) {
-      this.database.prepare(`UPDATE community_profiles
-SET profile_tags_json = ?, updated_at_utc = ? WHERE user_id = ?`).run(
-        JSON.stringify(profileTags), timestamp, userId,
-      );
-      return existing;
-    }
+    if (existing) return existing;
     const base = normalizeSlug(this.readDisplayName(userId), "trader");
     const suffix = userId.slice(0, 6);
     const handle = `${base.slice(0, Math.max(3, 48 - suffix.length - 1))}-${suffix}`;
     this.database.prepare(`INSERT INTO community_profiles (
   user_id, handle, profile_tags_json, created_at_utc, updated_at_utc
-) VALUES (?, ?, ?, ?, ?)`).run(userId, handle, JSON.stringify(profileTags), timestamp, timestamp);
+) VALUES (?, ?, ?, ?, ?)`).run(userId, handle, "[]", timestamp, timestamp);
     return Object.freeze({ handle });
   }
 
@@ -163,7 +218,9 @@ SET profile_tags_json = ?, updated_at_utc = ? WHERE user_id = ?`).run(
     const title = normalizeText(input.watchlist.title, 25, "title");
     if (!title) platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "title" });
     const description = normalizeText(input.watchlist.description ?? "", 180, "description");
-    const profileTags = normalizeTags(input.watchlist.profileTags, "profileTags");
+    const profileTags = input.watchlist.profileTags === undefined
+      ? null
+      : normalizeTags(input.watchlist.profileTags, "profileTags", 6);
     const tags = normalizeTags(input.watchlist.tags, "tags", 4);
     if (!Array.isArray(input.watchlist.tickers) || input.watchlist.tickers.length > 50 ||
       (input.watchlist.publish && input.watchlist.tickers.length < 1)) {
@@ -173,7 +230,7 @@ SET profile_tags_json = ?, updated_at_utc = ? WHERE user_id = ?`).run(
       symbol: normalizeSymbol(ticker.symbol),
       ordinal,
       tags: normalizeTags(ticker.tags, "tickerTags", 4),
-      whyWatching: normalizeText(ticker.whyWatching ?? "", 1200, "whyWatching"),
+      whyWatching: normalizeText(ticker.whyWatching ?? "", 800, "whyWatching"),
       plan: normalizeText(ticker.plan ?? "", 1200, "plan"),
       personalTarget: normalizeText(ticker.personalTarget ?? "", 100, "personalTarget"),
       catalyst: normalizeText(ticker.catalyst ?? "", 300, "catalyst"),
@@ -184,7 +241,13 @@ SET profile_tags_json = ?, updated_at_utc = ? WHERE user_id = ?`).run(
       platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "tickers" });
     }
     const create = () => {
-      const profile = this.ensureProfile(input.userId, profileTags, input.timestamp);
+      const profile = this.ensureProfile(input.userId, input.timestamp);
+      if (profileTags) {
+        this.database.prepare(`UPDATE community_profiles
+SET profile_tags_json = ?, updated_at_utc = ? WHERE user_id = ?`).run(
+          JSON.stringify(profileTags), input.timestamp, input.userId,
+        );
+      }
       const watchlistId = createCanonicalUuidV4();
       const slug = normalizeSlug(title, `watchlist-${watchlistId.slice(0, 6)}`);
       const status = input.watchlist.publish ? "published" : "draft";
@@ -256,12 +319,137 @@ FROM community_watchlist_tickers WHERE watchlist_id = ? ORDER BY ordinal`);
     return Object.freeze(rows.map((row) => summary(row, Object.freeze(tickerStatement.all(row.watchlist_id).map(tickerPreview)))));
   }
 
-  findProfile(handle: string): CommunityProfile | null {
+  listMineDetails(userId: string): readonly CommunityWatchlistDetail[] {
+    assertCanonicalUuidV4(userId, "userId");
+    const rows = this.database.prepare<[string], PublishedWatchlistRow>(`SELECT watchlist.watchlist_id, watchlist.slug, profile.handle,
+  profile.profile_tags_json, watchlist.title, watchlist.description, watchlist.tags_json,
+  watchlist.status, watchlist.published_at_utc, watchlist.updated_at_utc,
+  COALESCE((SELECT username FROM platform_discord_memberships
+    WHERE user_id = profile.user_id ORDER BY last_verified_at_utc DESC, guild_id LIMIT 1), user.display_name) AS author_display_name,
+  CASE WHEN profile.visibility = 'visible' THEN profile.description ELSE '' END AS author_description,
+  COUNT(ticker.ticker_id) AS symbol_count, GROUP_CONCAT(ticker.symbol, ',') AS symbols
+FROM community_watchlists watchlist
+JOIN community_profiles profile ON profile.user_id = watchlist.owner_user_id
+JOIN platform_users user ON user.user_id = profile.user_id
+LEFT JOIN community_watchlist_tickers ticker ON ticker.watchlist_id = watchlist.watchlist_id
+WHERE watchlist.owner_user_id = ?
+GROUP BY watchlist.watchlist_id ORDER BY watchlist.updated_at_utc DESC`).all(userId);
+    return this.hydrateDetails(rows);
+  }
+
+  listSharedDetails(): readonly CommunityWatchlistDetail[] {
+    const rows = this.database.prepare<[], PublishedWatchlistRow>(`SELECT watchlist.watchlist_id, watchlist.slug, profile.handle,
+  profile.profile_tags_json, watchlist.title, watchlist.description, watchlist.tags_json,
+  watchlist.status, watchlist.published_at_utc, watchlist.updated_at_utc,
+  COALESCE((SELECT username FROM platform_discord_memberships
+    WHERE user_id = profile.user_id ORDER BY last_verified_at_utc DESC, guild_id LIMIT 1), user.display_name) AS author_display_name,
+  CASE WHEN profile.visibility = 'visible' THEN profile.description ELSE '' END AS author_description,
+  COUNT(ticker.ticker_id) AS symbol_count, GROUP_CONCAT(ticker.symbol, ',') AS symbols
+FROM community_watchlists watchlist
+JOIN community_profiles profile ON profile.user_id = watchlist.owner_user_id
+JOIN platform_users user ON user.user_id = profile.user_id
+LEFT JOIN community_watchlist_tickers ticker ON ticker.watchlist_id = watchlist.watchlist_id
+WHERE watchlist.status = 'published'
+GROUP BY watchlist.watchlist_id ORDER BY watchlist.published_at_utc DESC LIMIT 50`).all();
+    return this.hydrateDetails(rows);
+  }
+
+  listFollowedDetails(userId: string): readonly CommunityWatchlistDetail[] {
+    assertCanonicalUuidV4(userId, "userId");
+    const rows = this.database.prepare<[string], PublishedWatchlistRow>(`SELECT watchlist.watchlist_id, watchlist.slug, profile.handle,
+  profile.profile_tags_json, watchlist.title, watchlist.description, watchlist.tags_json,
+  watchlist.status, watchlist.published_at_utc, watchlist.updated_at_utc,
+  COALESCE((SELECT username FROM platform_discord_memberships
+    WHERE user_id = profile.user_id ORDER BY last_verified_at_utc DESC, guild_id LIMIT 1), user.display_name) AS author_display_name,
+  CASE WHEN profile.visibility = 'visible' THEN profile.description ELSE '' END AS author_description,
+  COUNT(ticker.ticker_id) AS symbol_count, GROUP_CONCAT(ticker.symbol, ',') AS symbols
+FROM community_watchlist_follows follow
+JOIN community_watchlists watchlist ON watchlist.watchlist_id = follow.watchlist_id
+JOIN community_profiles profile ON profile.user_id = watchlist.owner_user_id
+JOIN platform_users user ON user.user_id = profile.user_id
+LEFT JOIN community_watchlist_tickers ticker ON ticker.watchlist_id = watchlist.watchlist_id
+WHERE follow.follower_user_id = ? AND watchlist.status = 'published'
+GROUP BY watchlist.watchlist_id ORDER BY follow.created_at_utc DESC LIMIT 50`).all(userId);
+    return this.hydrateDetails(rows);
+  }
+
+  getOwnProfileSettings(userId: string): CommunityProfileSettings {
+    assertCanonicalUuidV4(userId, "userId");
+    const profile = this.database.prepare<[string], CommunityProfileRow>(`SELECT profile.user_id, profile.handle,
+  profile.description, profile.profile_tags_json, profile.visibility,
+  COALESCE((SELECT username FROM platform_discord_memberships
+    WHERE user_id = profile.user_id ORDER BY last_verified_at_utc DESC, guild_id LIMIT 1), user.display_name) AS display_name,
+  (SELECT COUNT(*) FROM community_profile_follows WHERE followed_user_id = profile.user_id) AS follower_count,
+  (SELECT COUNT(*) FROM community_profile_follows WHERE follower_user_id = profile.user_id) AS following_count
+FROM community_profiles profile
+JOIN platform_users user ON user.user_id = profile.user_id
+WHERE profile.user_id = ?`).get(userId);
+    if (!profile) return Object.freeze({
+      handle: null,
+      discordUsername: this.readDisplayName(userId),
+      description: "",
+      tags: Object.freeze([]),
+      visible: true,
+      followerCount: 0,
+      followingCount: 0,
+    });
+    return Object.freeze({
+      handle: profile.handle,
+      discordUsername: profile.display_name,
+      description: profile.description,
+      tags: parseTags(profile.profile_tags_json),
+      visible: profile.visibility === "visible",
+      followerCount: profile.follower_count,
+      followingCount: profile.following_count,
+    });
+  }
+
+  saveOwnProfileSettings(input: Readonly<{
+    userId: string;
+    description: string;
+    tags: readonly string[];
+    visible: boolean;
+    timestamp: string;
+  }>): CommunityProfileSettings {
+    assertCanonicalUuidV4(input.userId, "userId");
+    assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
+    const description = normalizeText(input.description, 180, "description");
+    const tags = normalizeTags(input.tags, "profileTags", 6);
+    const save = () => {
+      const profile = this.ensureProfile(input.userId, input.timestamp);
+      this.database.prepare(`UPDATE community_profiles
+SET description = ?, profile_tags_json = ?, visibility = ?, updated_at_utc = ?
+WHERE user_id = ?`).run(
+        description, JSON.stringify(tags), input.visible ? "visible" : "hidden", input.timestamp, input.userId,
+      );
+      return profile;
+    };
+    if (this.database.inTransaction) save();
+    else this.database.transaction(save).immediate();
+    return this.getOwnProfileSettings(input.userId);
+  }
+
+  ownsProfile(userId: string, handle: string): boolean {
+    assertCanonicalUuidV4(userId, "userId");
     assertLowercaseToken(handle.replace(/-/gu, "_"), "handle", 48);
-    const profile = this.database.prepare<[string], Readonly<{ handle: string; profile_tags_json: string }>>(
-      "SELECT handle, profile_tags_json FROM community_profiles WHERE handle = ?",
-    ).get(handle);
-    if (!profile) return null;
+    return Boolean(this.database.prepare<[string, string], Readonly<{ user_id: string }>>(
+      "SELECT user_id FROM community_profiles WHERE user_id = ? AND handle = ?",
+    ).get(userId, handle));
+  }
+
+  findProfile(handle: string, viewerUserId?: string): CommunityProfile | null {
+    assertLowercaseToken(handle.replace(/-/gu, "_"), "handle", 48);
+    if (viewerUserId) assertCanonicalUuidV4(viewerUserId, "viewerUserId");
+    const profile = this.database.prepare<[string], CommunityProfileRow>(`SELECT profile.user_id, profile.handle,
+  profile.description, profile.profile_tags_json, profile.visibility,
+  COALESCE((SELECT username FROM platform_discord_memberships
+    WHERE user_id = profile.user_id ORDER BY last_verified_at_utc DESC, guild_id LIMIT 1), user.display_name) AS display_name,
+  (SELECT COUNT(*) FROM community_profile_follows WHERE followed_user_id = profile.user_id) AS follower_count,
+  (SELECT COUNT(*) FROM community_profile_follows WHERE follower_user_id = profile.user_id) AS following_count
+FROM community_profiles profile
+JOIN platform_users user ON user.user_id = profile.user_id
+WHERE profile.handle = ?`).get(handle);
+    if (!profile || (profile.visibility !== "visible" && profile.user_id !== viewerUserId)) return null;
     const rows = this.database.prepare<[string], WatchlistRow>(`SELECT watchlist.watchlist_id, watchlist.slug, profile.handle,
   profile.profile_tags_json, watchlist.title, watchlist.description, watchlist.tags_json,
   watchlist.status, watchlist.published_at_utc, watchlist.updated_at_utc, COUNT(ticker.ticker_id) AS symbol_count,
@@ -271,18 +459,80 @@ JOIN community_profiles profile ON profile.user_id = watchlist.owner_user_id
 LEFT JOIN community_watchlist_tickers ticker ON ticker.watchlist_id = watchlist.watchlist_id
 WHERE profile.handle = ? AND watchlist.status = 'published'
 GROUP BY watchlist.watchlist_id ORDER BY watchlist.published_at_utc DESC`).all(handle);
-    return Object.freeze({ handle: profile.handle, tags: parseTags(profile.profile_tags_json), watchlists: Object.freeze(rows.map((row) => summary(row))) });
+    const followerRows = this.database.prepare<[string], Readonly<{ handle: string; display_name: string }>>(`SELECT profile.handle,
+  COALESCE((SELECT username FROM platform_discord_memberships
+    WHERE user_id = profile.user_id ORDER BY last_verified_at_utc DESC, guild_id LIMIT 1), user.display_name) AS display_name
+FROM community_profile_follows follow
+JOIN community_profiles profile ON profile.user_id = follow.follower_user_id AND profile.visibility = 'visible'
+JOIN platform_users user ON user.user_id = profile.user_id
+WHERE follow.followed_user_id = ? ORDER BY follow.created_at_utc DESC LIMIT 24`).all(profile.user_id);
+    const followingRows = this.database.prepare<[string], Readonly<{ handle: string; display_name: string }>>(`SELECT profile.handle,
+  COALESCE((SELECT username FROM platform_discord_memberships
+    WHERE user_id = profile.user_id ORDER BY last_verified_at_utc DESC, guild_id LIMIT 1), user.display_name) AS display_name
+FROM community_profile_follows follow
+JOIN community_profiles profile ON profile.user_id = follow.followed_user_id AND profile.visibility = 'visible'
+JOIN platform_users user ON user.user_id = profile.user_id
+WHERE follow.follower_user_id = ? ORDER BY follow.created_at_utc DESC LIMIT 24`).all(profile.user_id);
+    const connections = (items: readonly Readonly<{ handle: string; display_name: string }>[]): readonly CommunityProfileConnection[] =>
+      Object.freeze(items.map((item) => Object.freeze({ handle: item.handle, displayName: item.display_name })));
+    const isFollowing = viewerUserId ? Boolean(this.database.prepare<[string, string], Readonly<{ profile_follow_id: string }>>(
+      "SELECT profile_follow_id FROM community_profile_follows WHERE followed_user_id = ? AND follower_user_id = ?",
+    ).get(profile.user_id, viewerUserId)) : false;
+    return Object.freeze({
+      handle: profile.handle,
+      displayName: profile.display_name,
+      description: profile.description,
+      tags: parseTags(profile.profile_tags_json),
+      followerCount: profile.follower_count,
+      followingCount: profile.following_count,
+      isFollowing,
+      followers: connections(followerRows),
+      following: connections(followingRows),
+      watchlists: Object.freeze(rows.map((row) => summary(row))),
+    });
+  }
+
+  setProfileFollow(input: Readonly<{
+    userId: string;
+    handle: string;
+    following: boolean;
+    timestamp: string;
+  }>): void {
+    assertCanonicalUuidV4(input.userId, "userId");
+    assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
+    assertLowercaseToken(input.handle.replace(/-/gu, "_"), "handle", 48);
+    const change = () => {
+      const target = this.database.prepare<[string], Readonly<{ user_id: string }>>(
+        "SELECT user_id FROM community_profiles WHERE handle = ? AND visibility = 'visible'",
+      ).get(input.handle);
+      if (!target || target.user_id === input.userId) platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+      if (input.following) {
+        this.database.prepare(`INSERT OR IGNORE INTO community_profile_follows (
+  profile_follow_id, followed_user_id, follower_user_id, created_at_utc
+) VALUES (?, ?, ?, ?)`).run(createCanonicalUuidV4(), target.user_id, input.userId, input.timestamp);
+      } else {
+        this.database.prepare(`DELETE FROM community_profile_follows
+WHERE followed_user_id = ? AND follower_user_id = ?`).run(target.user_id, input.userId);
+      }
+    };
+    if (this.database.inTransaction) change();
+    else this.database.transaction(change).immediate();
   }
 
   findPublished(handle: string, watchlistSlug: string): CommunityWatchlistDetail | null {
     assertLowercaseToken(handle.replace(/-/gu, "_"), "handle", 48);
     assertLowercaseToken(watchlistSlug.replace(/-/gu, "_"), "watchlistSlug", 80);
-    const row = this.database.prepare<[string, string], WatchlistRow>(`SELECT watchlist.watchlist_id, watchlist.slug, profile.handle,
+    const row = this.database.prepare<[string, string], PublishedWatchlistRow>(`SELECT watchlist.watchlist_id, watchlist.slug, profile.handle,
   profile.profile_tags_json, watchlist.title, watchlist.description, watchlist.tags_json,
-  watchlist.status, watchlist.published_at_utc, watchlist.updated_at_utc, COUNT(ticker.ticker_id) AS symbol_count,
+  watchlist.status, watchlist.published_at_utc, watchlist.updated_at_utc,
+  COALESCE((SELECT username FROM platform_discord_memberships
+    WHERE user_id = profile.user_id ORDER BY last_verified_at_utc DESC, guild_id LIMIT 1), user.display_name) AS author_display_name,
+  CASE WHEN profile.visibility = 'visible' THEN profile.description ELSE '' END AS author_description,
+  COUNT(ticker.ticker_id) AS symbol_count,
   GROUP_CONCAT(ticker.symbol, ',') AS symbols
 FROM community_watchlists watchlist
 JOIN community_profiles profile ON profile.user_id = watchlist.owner_user_id
+JOIN platform_users user ON user.user_id = profile.user_id
 LEFT JOIN community_watchlist_tickers ticker ON ticker.watchlist_id = watchlist.watchlist_id
 WHERE profile.handle = ? AND watchlist.slug = ? AND watchlist.status = 'published'
 GROUP BY watchlist.watchlist_id`).get(handle, watchlistSlug);
@@ -290,16 +540,7 @@ GROUP BY watchlist.watchlist_id`).get(handle, watchlistSlug);
     const tickers = this.database.prepare<[string], TickerRow>(`SELECT symbol, tags_json, why_watching, plan,
   personal_target, catalyst, catalyst_date, posted_reference_price, posted_at_utc
 FROM community_watchlist_tickers WHERE watchlist_id = ? ORDER BY ordinal`).all(row.watchlist_id);
-    return Object.freeze({
-      authorHandle: row.handle, authorTags: parseTags(row.profile_tags_json), description: row.description,
-      publishedAtUtc: row.published_at_utc, updatedAtUtc: row.updated_at_utc,
-      symbolCount: row.symbol_count, tags: parseTags(row.tags_json), title: row.title,
-      tickers: Object.freeze(tickers.map((ticker) => Object.freeze({
-        symbol: ticker.symbol, tags: parseTags(ticker.tags_json), whyWatching: ticker.why_watching,
-        plan: ticker.plan, personalTarget: ticker.personal_target, catalyst: ticker.catalyst,
-        catalystDate: ticker.catalyst_date, postedAtUtc: ticker.posted_at_utc,
-      }))),
-    });
+    return detail(row, tickers);
   }
 
   ownsPublished(userId: string, handle: string, watchlistSlug: string): boolean {
@@ -430,6 +671,99 @@ SET tags_json = ? WHERE watchlist_id = ? AND symbol = ?`).run(
     };
     if (this.database.inTransaction) update();
     else this.database.transaction(update).immediate();
+  }
+
+  updateWatchlistDescription(input: Readonly<{
+    userId: string;
+    handle: string;
+    watchlistSlug: string;
+    description: string;
+    timestamp: string;
+  }>): void {
+    assertCanonicalUuidV4(input.userId, "userId");
+    assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
+    assertLowercaseToken(input.handle.replace(/-/gu, "_"), "handle", 48);
+    assertLowercaseToken(input.watchlistSlug.replace(/-/gu, "_"), "watchlistSlug", 80);
+    const description = normalizeText(input.description, 180, "description");
+    const update = () => {
+      const changed = this.database.prepare(`UPDATE community_watchlists
+SET description = ?, updated_at_utc = ?
+WHERE watchlist_id = (
+  SELECT watchlist.watchlist_id
+  FROM community_watchlists watchlist
+  JOIN community_profiles profile ON profile.user_id = watchlist.owner_user_id
+  WHERE watchlist.owner_user_id = ? AND profile.handle = ? AND watchlist.slug = ?
+    AND watchlist.status = 'published'
+)`).run(description, input.timestamp, input.userId, input.handle, input.watchlistSlug).changes;
+      if (changed !== 1) platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+    };
+    if (this.database.inTransaction) update();
+    else this.database.transaction(update).immediate();
+  }
+
+  updateTickerTake(input: Readonly<{
+    userId: string;
+    handle: string;
+    watchlistSlug: string;
+    symbol: string;
+    take: string;
+    timestamp: string;
+  }>): void {
+    assertCanonicalUuidV4(input.userId, "userId");
+    assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
+    assertLowercaseToken(input.handle.replace(/-/gu, "_"), "handle", 48);
+    assertLowercaseToken(input.watchlistSlug.replace(/-/gu, "_"), "watchlistSlug", 80);
+    const symbol = normalizeSymbol(input.symbol);
+    const take = normalizeText(input.take, 800, "tradersTake");
+    const update = () => {
+      const watchlist = this.database.prepare<[string, string, string], Readonly<{ watchlist_id: string }>>(`SELECT watchlist.watchlist_id
+FROM community_watchlists watchlist
+JOIN community_profiles profile ON profile.user_id = watchlist.owner_user_id
+WHERE watchlist.owner_user_id = ? AND profile.handle = ? AND watchlist.slug = ? AND watchlist.status = 'published'`).get(input.userId, input.handle, input.watchlistSlug);
+      if (!watchlist) platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+      const changed = this.database.prepare(`UPDATE community_watchlist_tickers
+SET why_watching = ?, plan = '' WHERE watchlist_id = ? AND symbol = ?`).run(take, watchlist.watchlist_id, symbol).changes;
+      if (changed !== 1) platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "symbol" });
+      this.database.prepare("UPDATE community_watchlists SET updated_at_utc = ? WHERE watchlist_id = ?").run(input.timestamp, watchlist.watchlist_id);
+    };
+    if (this.database.inTransaction) update();
+    else this.database.transaction(update).immediate();
+  }
+
+  addTicker(input: Readonly<{
+    userId: string;
+    handle: string;
+    watchlistSlug: string;
+    symbol: string;
+    timestamp: string;
+  }>): void {
+    assertCanonicalUuidV4(input.userId, "userId");
+    assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
+    assertLowercaseToken(input.handle.replace(/-/gu, "_"), "handle", 48);
+    assertLowercaseToken(input.watchlistSlug.replace(/-/gu, "_"), "watchlistSlug", 80);
+    const symbol = normalizeSymbol(input.symbol);
+    const add = () => {
+      const watchlist = this.database.prepare<[string, string, string], Readonly<{ watchlist_id: string }>>(`SELECT watchlist.watchlist_id
+FROM community_watchlists watchlist
+JOIN community_profiles profile ON profile.user_id = watchlist.owner_user_id
+WHERE watchlist.owner_user_id = ? AND profile.handle = ? AND watchlist.slug = ? AND watchlist.status = 'published'`).get(input.userId, input.handle, input.watchlistSlug);
+      if (!watchlist) platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+      const position = this.database.prepare<[string], Readonly<{ count: number; maximum: number | null }>>(`SELECT COUNT(*) AS count, MAX(ordinal) AS maximum
+FROM community_watchlist_tickers WHERE watchlist_id = ?`).get(watchlist.watchlist_id);
+      if (position.count >= 50) platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "tickers" });
+      try {
+        this.database.prepare(`INSERT INTO community_watchlist_tickers (
+  ticker_id, watchlist_id, symbol, ordinal, tags_json, why_watching, plan,
+  personal_target, catalyst, catalyst_date, posted_reference_price, posted_at_utc
+) VALUES (?, ?, ?, ?, '[]', '', '', '', '', NULL, '', ?)`)
+          .run(createCanonicalUuidV4(), watchlist.watchlist_id, symbol, (position.maximum ?? -1) + 1, input.timestamp);
+      } catch {
+        platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", { field: "symbol" });
+      }
+      this.database.prepare("UPDATE community_watchlists SET updated_at_utc = ? WHERE watchlist_id = ?").run(input.timestamp, watchlist.watchlist_id);
+    };
+    if (this.database.inTransaction) add();
+    else this.database.transaction(add).immediate();
   }
 
   claimDiscordPublication(publicationId: string, timestamp: string): PublicationRow | null {
