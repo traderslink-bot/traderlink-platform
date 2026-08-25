@@ -13,6 +13,9 @@
       upcoming-catalyst research value. Separate **Send me The Week Ahead**
       and **No thanks, continue to TradersLink** actions record an explicit
       choice; product, education, and Community updates are secondary.
+- [x] Present the Week Ahead offer as a narrow stacked card composition on
+      desktop and mobile: solid dark-blue page field, lifted white frame, then
+      the dark-blue offer card with vertically stacked benefit cards.
 - [x] The email scope and the newsletter checkbox are separate consent
       decisions.
 - [x] This slice captures opt-in only. It does not send bulk email or connect

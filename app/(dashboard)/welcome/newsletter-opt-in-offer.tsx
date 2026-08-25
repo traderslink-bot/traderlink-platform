@@ -63,99 +63,127 @@ export function NewsletterOptInOffer({ canSubscribe, formAction, preview = false
     <DashboardPage>
       <Box
         sx={{
-          bgcolor: "#011e56",
-          borderRadius: { xs: 3, sm: 4 },
-          boxShadow: "0 24px 56px rgba(1, 30, 86, 0.22)",
-          color: "#fff",
-          overflow: "hidden",
-          position: "relative",
+          bgcolor: "#173b78",
+          minHeight: "100%",
+          p: { xs: 1.25, sm: 2.5 },
         }}
       >
         <Box
           sx={{
-            bgcolor: "rgba(103, 198, 255, 0.2)",
-            borderRadius: "50%",
-            height: { xs: 260, sm: 350 },
-            position: "absolute",
-            right: { xs: -150, sm: -95 },
-            top: { xs: -145, sm: -175 },
-            width: { xs: 260, sm: 350 },
+            bgcolor: "#fff",
+            border: "1px solid rgba(1, 30, 86, 0.1)",
+            borderRadius: { xs: 2.25, sm: 3 },
+            boxShadow: "0 1rem 3rem rgba(0, 0, 0, 0.175)",
+            margin: "0 auto",
+            maxWidth: 810,
+            p: { xs: 1, sm: 2.5 },
           }}
-        />
-        <Stack spacing={{ xs: 3, sm: 4 }} sx={{ p: { xs: 2.5, sm: 5 }, position: "relative" }}>
-          <Stack spacing={2} sx={{ maxWidth: 760 }}>
-            <Chip
-              label="WEEKLY SMALL-CAP RESEARCH EMAIL"
-              sx={{
-                alignSelf: "flex-start",
-                bgcolor: "rgba(164, 222, 255, 0.16)",
-                border: "1px solid rgba(180, 230, 255, 0.48)",
-                color: "#dff4ff",
-                fontWeight: 800,
-                letterSpacing: "0.06em",
-              }}
-              variant="outlined"
-            />
-            <Typography
-              component="h1"
-              sx={{ fontSize: { xs: "2.5rem", sm: "4rem" }, fontWeight: 850, letterSpacing: "-0.055em", lineHeight: 0.98 }}
-            >
-              The Week Ahead
-            </Typography>
-            <Typography sx={{ color: "#dff4ff", fontSize: { xs: "1.15rem", sm: "1.35rem" }, fontWeight: 650, lineHeight: 1.4, maxWidth: 620 }}>
-              A list of small-cap stocks with potential catalysts that helps you prepare for the trading week.
-            </Typography>
-          </Stack>
-
-          <Stack direction={{ xs: "column", md: "row" }} spacing={1.25}>
-            {BENEFITS.map((benefit) => (
-              <Box
-                key={benefit.title}
-                sx={{
-                  bgcolor: "rgba(255, 255, 255, 0.1)",
-                  border: "1px solid rgba(200, 235, 255, 0.2)",
-                  borderRadius: 2,
-                  flex: 1,
-                  minWidth: 0,
-                  p: 2,
-                }}
-              >
-                <Box sx={{ color: "#8ed6ff", display: "inline-flex", mb: 1 }}>{benefit.icon}</Box>
-                <Typography sx={{ fontWeight: 800 }}>{benefit.title}</Typography>
-                <Typography sx={{ color: "rgba(255, 255, 255, 0.78)", fontSize: "0.9rem", lineHeight: 1.5, mt: 0.55 }}>
-                  {benefit.description}
-                </Typography>
-              </Box>
-            ))}
-          </Stack>
-
+        >
           <Box
             sx={{
-              bgcolor: "#fff",
-              borderRadius: 2.5,
-              color: "text.primary",
-              maxWidth: 620,
-              p: { xs: 2.25, sm: 3 },
+              background: "radial-gradient(circle at 100% 0, rgba(80, 157, 219, 0.3), transparent 38%), linear-gradient(155deg, #011e56 0%, #00133f 100%)",
+              border: "1px solid #00133f",
+              borderRadius: { xs: 1.75, sm: 2.25 },
+              color: "#fff",
+              overflow: "hidden",
+              p: { xs: 2.25, sm: 4 },
+              position: "relative",
             }}
           >
-            <Stack spacing={1.25}>
-              <Typography component="h2" sx={{ fontSize: "1.35rem", fontWeight: 850, letterSpacing: "-0.02em" }}>
-                Get it in your inbox each week
-              </Typography>
-              <Typography color="text.secondary" variant="body2">
-                {canSubscribe
-                  ? "Emails will be sent to the email listed in your discord account."
-                  : "Discord did not share a verified email address, so The Week Ahead cannot be sent to this account yet."}
-              </Typography>
-              {formAction ? <form action={formAction}>{choices}</form> : choices}
-              {canSubscribe ? (
-                <Typography color="text.secondary" variant="caption">
-                  Research ideas, not trade recommendations. Occasional TradersLink product, education, and community updates may be included. Unsubscribe anytime.
+            <Stack spacing={{ xs: 3, sm: 4 }}>
+              <Stack spacing={2} sx={{ maxWidth: 680 }}>
+                <Chip
+                  label="WEEKLY SMALL-CAP RESEARCH EMAIL"
+                  sx={{
+                    alignSelf: "flex-start",
+                    bgcolor: "rgba(164, 222, 255, 0.16)",
+                    border: "1px solid rgba(180, 230, 255, 0.48)",
+                    color: "#dff4ff",
+                    fontWeight: 800,
+                    letterSpacing: "0.06em",
+                  }}
+                  variant="outlined"
+                />
+                <Typography
+                  component="h1"
+                  sx={{ fontSize: { xs: "2.5rem", sm: "4rem" }, fontWeight: 850, letterSpacing: "-0.055em", lineHeight: 0.98 }}
+                >
+                  The Week Ahead
                 </Typography>
-              ) : null}
+                <Typography sx={{ color: "#dff4ff", fontSize: { xs: "1.15rem", sm: "1.35rem" }, fontWeight: 650, lineHeight: 1.4, maxWidth: 620 }}>
+                  A list of small-cap stocks with potential catalysts that helps you prepare for the trading week.
+                </Typography>
+              </Stack>
+
+              <Stack spacing={1.25}>
+                {BENEFITS.map((benefit) => (
+                  <Box
+                    key={benefit.title}
+                    sx={{
+                      alignItems: "flex-start",
+                      bgcolor: "#fff",
+                      border: "1px solid rgba(1, 30, 86, 0.12)",
+                      borderRadius: 1.5,
+                      boxShadow: "0 3px 7px rgba(0, 11, 39, 0.2)",
+                      color: "text.primary",
+                      display: "flex",
+                      gap: 1.5,
+                      p: { xs: 1.5, sm: 2 },
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        alignItems: "center",
+                        bgcolor: "#011e56",
+                        borderRadius: "50%",
+                        color: "#fff",
+                        display: "inline-flex",
+                        flex: "0 0 auto",
+                        height: "2rem",
+                        justifyContent: "center",
+                        width: "2rem",
+                      }}
+                    >
+                      {benefit.icon}
+                    </Box>
+                    <Box>
+                      <Typography sx={{ fontWeight: 800 }}>{benefit.title}</Typography>
+                      <Typography color="text.secondary" sx={{ fontSize: "0.9rem", lineHeight: 1.5, mt: 0.35 }}>
+                        {benefit.description}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ))}
+              </Stack>
+
+              <Box
+                sx={{
+                  bgcolor: "#fff",
+                  borderRadius: 1.5,
+                  color: "text.primary",
+                  p: { xs: 2, sm: 2.5 },
+                }}
+              >
+                <Stack spacing={1.25}>
+                  <Typography component="h2" sx={{ fontSize: "1.35rem", fontWeight: 850, letterSpacing: "-0.02em" }}>
+                    Get it in your inbox each week
+                  </Typography>
+                  <Typography color="text.secondary" variant="body2">
+                    {canSubscribe
+                      ? "Emails will be sent to the email listed in your discord account."
+                      : "Discord did not share a verified email address, so The Week Ahead cannot be sent to this account yet."}
+                  </Typography>
+                  {formAction ? <form action={formAction}>{choices}</form> : choices}
+                  {canSubscribe ? (
+                    <Typography color="text.secondary" variant="caption">
+                      Research ideas, not trade recommendations. Occasional TradersLink product, education, and community updates may be included. Unsubscribe anytime.
+                    </Typography>
+                  ) : null}
+                </Stack>
+              </Box>
             </Stack>
           </Box>
-        </Stack>
+        </Box>
       </Box>
     </DashboardPage>
   );
