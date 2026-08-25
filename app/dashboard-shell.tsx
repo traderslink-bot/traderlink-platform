@@ -73,7 +73,6 @@ import {
   DASHBOARD_MARKET_HALT_ALERTS_ITEM,
   DASHBOARD_NAVIGATION_HREFS,
   DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS,
-  dashboardHelpTarget,
   isDashboardNavigationItem,
   type DashboardNavigationDrawerItem,
   type DashboardNavigationGroup,
@@ -363,13 +362,8 @@ export function DashboardShell({
   scannerEarlyAccess?: boolean;
 }) {
   const pathname = usePathname();
-  const pageHelpTarget = offline ? null : dashboardHelpTarget(pathname);
-  const helpDestination = offline
-    ? "/help"
-    : `https://traderslink.pro${pageHelpTarget?.href ?? "/help"}`;
-  const helpLabel = pageHelpTarget
-    ? `Help for ${pageHelpTarget.label}`
-    : "Open Help Center";
+  const helpDestination = offline ? "/help" : "https://traderslink.pro/help";
+  const helpLabel = "Open Help Center";
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [marketHaltAlertsOpen, setMarketHaltAlertsOpen] = useState(false);

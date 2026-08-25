@@ -9,14 +9,16 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import type { ReactNode } from "react";
 import type { ButtonProps } from "@mui/material/Button";
+import { DashboardPageHelpLink } from "./dashboard-page-help-link";
 
 export function DashboardPage({ children }: { children: ReactNode }) {
   return (
     <Stack
       data-traderlink-platform-dashboard-page
       spacing={2.5}
-      sx={{ minWidth: 0, width: "100%" }}
+      sx={{ minWidth: 0, position: "relative", pt: 5.5, width: "100%" }}
     >
+      <DashboardPageHelpLink />
       {children}
     </Stack>
   );

@@ -345,6 +345,24 @@ export type DashboardHelpTarget = Readonly<{
   label: string;
 }>;
 
+/**
+ * These dashboard routes currently have no matching public feature guide, so
+ * their page-level question mark deliberately opens the Help Center instead.
+ * The paths ending in `/*` cover their dynamic descendants.
+ */
+export const DASHBOARD_ROUTES_WITHOUT_FEATURE_GUIDES: readonly string[] = Object.freeze([
+  "/workspace",
+  "/workspace/readiness",
+  "/welcome",
+  "/scanner",
+  "/charts",
+  "/market-news/week-ahead",
+  "/press-releases/*",
+  "/analytics/lab/*",
+  "/reflection-loop",
+  "/community/*",
+]);
+
 const DASHBOARD_HELP_TARGETS: readonly Readonly<DashboardHelpTarget & { route: string }>[] =
   Object.freeze([
     Object.freeze({ route: "/analytics/trade-analyzer/day/candle-patterns", href: "/help/trade-analyzer/candle-patterns", label: "Candle Patterns" }),
@@ -353,17 +371,24 @@ const DASHBOARD_HELP_TARGETS: readonly Readonly<DashboardHelpTarget & { route: s
     Object.freeze({ route: "/analytics/trade-analyzer/day/mfe-mae", href: "/help/trade-analyzer/mfe-mae", label: "MFE & MAE" }),
     Object.freeze({ route: "/analytics/trade-analyzer/day/trades", href: "/help/trade-analyzer/analyzed-trades", label: "Analyzed Trades" }),
     Object.freeze({ route: "/analytics/trade-analyzer/day", href: "/help/trade-analyzer/day-trade-analysis", label: "Day Trade Analysis" }),
-    Object.freeze({ route: "/analytics/trade-explorer", href: "/help/core-analytics", label: "Trade Explorer" }),
+    Object.freeze({ route: "/analytics/trade-analysis", href: "/help/trade-analyzer/day-trade-analysis", label: "Day Trade Analysis" }),
+    Object.freeze({ route: "/analytics/trade-explorer/compare", href: "/help/trade-explorer", label: "Compare Trades" }),
+    Object.freeze({ route: "/analytics/trade-explorer", href: "/help/trade-explorer", label: "Trade Explorer" }),
     Object.freeze({ route: "/analytics/results", href: "/help/core-analytics/compare-results-by-ticker", label: "Ticker" }),
     Object.freeze({ route: "/analytics/timing", href: "/help/core-analytics/timing-and-execution", label: "Timing" }),
     Object.freeze({ route: "/analytics/execution", href: "/help/core-analytics/timing-and-execution", label: "Trade Breakdown" }),
     Object.freeze({ route: "/analytics", href: "/help/core-analytics/overview-and-date-range", label: "Analytics Overview" }),
-    Object.freeze({ route: "/charts", href: "/help", label: "Market Charts" }),
     Object.freeze({ route: "/trade-tracker/swings", href: "/help/swing-trade-tracker", label: "Swing Trade Tracker" }),
     Object.freeze({ route: "/trade-tracker", href: "/help/daily-trade-tracker", label: "Daily Trade Tracker" }),
     Object.freeze({ route: "/quick-trade-entry", href: "/help/quick-trade-entry", label: "Quick Trade Entry" }),
+    Object.freeze({ route: "/manual-entry", href: "/help/quick-trade-entry", label: "Quick Trade Entry" }),
+    Object.freeze({ route: "/trades/ticker", href: "/help/core-analytics/compare-results-by-ticker", label: "Ticker" }),
+    Object.freeze({ route: "/trades/day-session", href: "/help/daily-trade-tracker", label: "Daily Trade Tracker" }),
+    Object.freeze({ route: "/trades/day-sessions", href: "/help/daily-trade-tracker", label: "Daily Trade Tracker" }),
+    Object.freeze({ route: "/trades/roundtrips", href: "/help/daily-trade-tracker", label: "Daily Trade Tracker" }),
     Object.freeze({ route: "/trades/candle-review", href: "/help/candle-review", label: "Candle Review" }),
     Object.freeze({ route: "/trades/open", href: "/help/open-positions", label: "Open Positions" }),
+    Object.freeze({ route: "/trades", href: "/help/daily-trade-tracker", label: "Daily Trade Tracker" }),
     Object.freeze({ route: "/rules/results", href: "/help/trading-rules/results-history", label: "Rule Results" }),
     Object.freeze({ route: "/rules", href: "/help/trading-rules", label: "Trading Rules" }),
     Object.freeze({ route: "/calendar", href: "/help/calendar", label: "Trading Calendar" }),
@@ -374,6 +399,7 @@ const DASHBOARD_HELP_TARGETS: readonly Readonly<DashboardHelpTarget & { route: s
     Object.freeze({ route: "/ai-chat", href: "/help/ai-chat", label: "Links AI Chat" }),
     Object.freeze({ route: "/ai-reviews", href: "/help/ai-reviews", label: "AI Reviews" }),
     Object.freeze({ route: "/trade-tags", href: "/help/trade-tags", label: "Trade Tags" }),
+    Object.freeze({ route: "/account", href: "/help/account", label: "Account" }),
   ]);
 
 export function dashboardHelpTarget(pathname: string): DashboardHelpTarget | null {
@@ -385,8 +411,5 @@ export function dashboardHelpTarget(pathname: string): DashboardHelpTarget | nul
   if (exactOrParent) {
     return Object.freeze({ href: exactOrParent.href, label: exactOrParent.label });
   }
-  const routeTitle = Object.entries(DASHBOARD_ROUTE_TITLES)
-    .sort(([left], [right]) => right.length - left.length)
-    .find(([route]) => pathname === route || pathname.startsWith(`${route}/`))?.[1];
-  return Object.freeze({ href: "/help", label: routeTitle ?? "this page" });
+  return Object.freeze({ href: "/help", label: "Help Center" });
 }
