@@ -122,6 +122,16 @@ table replacement.
 
 ## Change boundary
 
+### 2026-08-25 desktop Ask about this day deferral
+
+The Daily Trade Tracker keeps **Ask about this day** available at the existing
+mobile breakpoint only. It is intentionally hidden at `md` and wider while AI
+features remain inactive, so the desktop contextual Help control stays
+uncovered. Restore the desktop action when the AI feature is live and has its
+separate product acceptance; this placement correction does not activate or
+change AI behavior. No Help guidance update is needed because the help content
+and mobile control remain unchanged.
+
 ### 2026-08-22 dated-day manual-entry correction
 
 The Daily Trade Tracker dated-day route now renders the same manual execution

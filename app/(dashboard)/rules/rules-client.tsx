@@ -626,11 +626,10 @@ export function RulesClient({
     <Box component="fieldset" disabled={Boolean(offlineSavedAtUtc)} sx={{ border: 0, m: 0, minWidth: 0, p: 0 }}>
     <DashboardPage>
       <Stack
-        direction={{ xs: "column", sm: "row" }}
+        direction="column"
         spacing={2}
         sx={{
-          alignItems: { xs: "flex-start", sm: "center" },
-          justifyContent: "space-between",
+          alignItems: "flex-start",
         }}
       >
         <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>

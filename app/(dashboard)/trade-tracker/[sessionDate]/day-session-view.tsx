@@ -2814,6 +2814,7 @@ export function DaySessionView({
               }),
             })}
             startIcon={<ChatBubbleOutlineRoundedIcon />}
+            sx={{ display: { xs: "inline-flex", md: "none" } }}
             variant="outlined"
           >
             Ask about this day

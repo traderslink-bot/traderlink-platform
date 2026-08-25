@@ -178,7 +178,7 @@ export function PressReleaseFeed({
           component={NextLink}
           href="/account/preferences#push-notifications"
           startIcon={<NotificationsActiveRoundedIcon />}
-          sx={{ alignSelf: { xs: "flex-start", md: "center" }, whiteSpace: "nowrap" }}
+          sx={{ alignSelf: "flex-start", display: { xs: "inline-flex", md: "none" }, whiteSpace: "nowrap" }}
           variant="outlined"
         >
           Manage press release alerts
@@ -211,6 +211,15 @@ export function PressReleaseFeed({
             value={query}
           />
           <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+            <Button
+              component={NextLink}
+              href="/account/preferences#push-notifications"
+              startIcon={<NotificationsActiveRoundedIcon />}
+              sx={{ display: { xs: "none", md: "inline-flex" }, whiteSpace: "nowrap" }}
+              variant="outlined"
+            >
+              Manage press release alerts
+            </Button>
             <ToggleButtonGroup
               exclusive
               onChange={(_, value: "all" | "unread" | null) => value && setView(value)}
