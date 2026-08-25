@@ -144,7 +144,7 @@ export function NewsletterOptInOffer({ canSubscribe, formAction, preview = false
               </Typography>
               <Typography color="text.secondary" variant="body2">
                 {canSubscribe
-                  ? "Choose whether to receive it at the verified email linked to your Discord account."
+                  ? "Emails will be sent to the email listed in your discord account."
                   : "Discord did not share a verified email address, so The Week Ahead cannot be sent to this account yet."}
               </Typography>
               {formAction ? <form action={formAction}>{choices}</form> : choices}
