@@ -25,8 +25,7 @@ export async function registerTraderLinkHostedNodeRuntime(): Promise<void> {
         ? error.code
         : "UNKNOWN";
     const safeContext =
-      code === "TRADERLINK_MIGRATION_FAILED" &&
-        typeof error === "object" && error !== null && "safeContext" in error &&
+      typeof error === "object" && error !== null && "safeContext" in error &&
         typeof error.safeContext === "object" && error.safeContext !== null
         ? JSON.stringify(error.safeContext)
         : "{}";
