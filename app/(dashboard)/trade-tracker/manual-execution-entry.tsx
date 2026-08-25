@@ -73,6 +73,7 @@ export function ManualExecutionEntry({
   initialAction = null,
   initialDirection = "long",
   initialSymbol = "",
+  onboarding = false,
   offlineScopeRef,
   tracker = "day",
 }: {
@@ -83,6 +84,7 @@ export function ManualExecutionEntry({
   initialAction?: "add" | "reduce" | "close" | "record" | null;
   initialDirection?: "long" | "short";
   initialSymbol?: string;
+  onboarding?: boolean;
   offlineScopeRef: string;
   tracker?: JournalManualTrackerKind;
 }) {
@@ -151,7 +153,11 @@ export function ManualExecutionEntry({
     try {
       const result = await submitManualTradeOnline(submission);
       idempotencyKey.current = null;
-      router.refresh();
+      if (onboarding) {
+        router.replace("/trade-tracker");
+      } else {
+        router.refresh();
+      }
       return Object.freeze({ status: "saved" as const, ...result });
     } catch (error) {
       if (error instanceof ManualTradeNetworkError) {

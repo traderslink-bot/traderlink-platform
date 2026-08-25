@@ -22,6 +22,10 @@ import type { JournalCalendarReadModel } from "@/src/modules/journal-analytics/c
 import { formatJournalAnalyticsMoney } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import type { WorkspaceReviewSummary } from "./workspace-review-summary";
 import { CalendarWeekView } from "../calendar/calendar-client";
+import {
+  WorkspaceFirstTimeOnboardingPanel,
+  type WorkspaceFirstTimeOnboardingResult,
+} from "./workspace-first-time-onboarding-panel";
 
 export type WorkspaceMetric = Readonly<{
   label: string;
@@ -121,11 +125,15 @@ function ruleOutcomeLabel(input: Readonly<{
 export function WorkspaceDashboard({
   analyticsMetrics,
   calendarData,
+  firstTimeMoomooConnected,
+  firstTimeOnboardingResult,
   offlineSavedAtUtc,
   reviewSummary,
 }: {
   analyticsMetrics?: readonly WorkspaceMetric[];
   calendarData?: JournalCalendarReadModel;
+  firstTimeMoomooConnected?: boolean;
+  firstTimeOnboardingResult?: WorkspaceFirstTimeOnboardingResult;
   offlineSavedAtUtc?: string;
   reviewSummary?: WorkspaceReviewSummary;
 }) {
@@ -153,6 +161,12 @@ export function WorkspaceDashboard({
   return (
     <DashboardPage>
       <Typography component="h1" variant="h1">Workspace</Typography>
+      {firstTimeOnboardingResult !== undefined ? (
+        <WorkspaceFirstTimeOnboardingPanel
+          moomooConnected={firstTimeMoomooConnected ?? false}
+          result={firstTimeOnboardingResult}
+        />
+      ) : null}
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={1}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { WorkspaceOfflineViewCapture } from "@/app/pwa/workspace-offline-view-capture";
 import { WorkspaceDashboard } from "./workspace-dashboard";
+import type { WorkspaceFirstTimeOnboardingResult } from "./workspace-first-time-onboarding-panel";
 import { readWorkspaceReviewSummary } from "./workspace-review-summary";
 import { formatJournalAnalyticsPartitionedMetric } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import {
@@ -16,6 +17,7 @@ import {
   createPlatformWorkspaceOfflineViewModel,
   platformWorkspaceOfflineCoverage,
 } from "@/src/modules/platform/contracts/platform-workspace-offline-view-contracts";
+import { readJournalFirstExecutionOnboardingStatus } from "@/src/modules/journal/server/product/journal-first-execution-onboarding";
 
 export const metadata: Metadata = {
   title: "Workspace | TraderLink Platform",
@@ -32,8 +34,22 @@ const WORKSPACE_METRICS = [
   ["Trades", "included_count", "All available history"],
 ] as const;
 
-export default async function WorkspacePage() {
+function workspaceFirstTimeOnboardingResult(
+  value: string | undefined,
+): WorkspaceFirstTimeOnboardingResult {
+  if (value === "moomoo-failed") return value;
+  return null;
+}
+
+export default async function WorkspacePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ gettingStarted?: string }>;
+}) {
+  const queryParameters = await searchParams;
   const scope = await requireTraderLinkPlatformPageScope();
+  const onboardingStatus = readJournalFirstExecutionOnboardingStatus(scope);
+  const showFirstTimeOnboarding = !onboardingStatus.hasAcceptedExecution;
   const query = buildJournalAnalyticsDashboardQuery(scope, {
     metricIds: WORKSPACE_METRICS.map(([, metricId]) => metricId),
   });
@@ -79,6 +95,10 @@ export default async function WorkspacePage() {
       <WorkspaceDashboard
         analyticsMetrics={analyticsMetrics}
         calendarData={calendar}
+        firstTimeMoomooConnected={onboardingStatus.hasActiveMoomooConnection}
+        firstTimeOnboardingResult={showFirstTimeOnboarding
+          ? workspaceFirstTimeOnboardingResult(queryParameters.gettingStarted)
+          : undefined}
         reviewSummary={reviewSummary}
       />
     </>

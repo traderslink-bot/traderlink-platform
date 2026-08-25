@@ -6,7 +6,12 @@ import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { encryptMoomooCredentials, loadMoomooCredentialKeyConfiguration } from "@/src/modules/platform/server/broker-connections/moomoo-connection-credentials";
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
-import { MOOMOO_OAUTH_STATE_COOKIE, MOOMOO_OAUTH_VERIFIER_COOKIE } from "@/src/modules/platform/server/broker-connections/moomoo-oauth-cookies";
+import {
+  MOOMOO_OAUTH_ONBOARDING_RETURN_COOKIE,
+  MOOMOO_OAUTH_ONBOARDING_RETURN_VALUE,
+  MOOMOO_OAUTH_STATE_COOKIE,
+  MOOMOO_OAUTH_VERIFIER_COOKIE,
+} from "@/src/modules/platform/server/broker-connections/moomoo-oauth-cookies";
 import { exchangeMoomooCode, getMoomooOAuthConfig } from "@/src/modules/platform/server/broker-connections/moomoo-oauth";
 import { recordMoomooOperationFailure } from "@/src/modules/platform/server/broker-connections/moomoo-operation-observability";
 import { MoomooExecutionImportRepository } from "@/src/modules/journal/server/broker-imports/moomoo-execution-import-repository";
@@ -23,11 +28,18 @@ function finish(
   const origin = process.env.NODE_ENV === "production"
     ? resolvePlatformPublicOrigin(request)
     : "http://127.0.0.1:3010";
-  const destination = new URL(`/account?moomoo=${status}`, origin);
+  const onboardingReturn = request.cookies.get(MOOMOO_OAUTH_ONBOARDING_RETURN_COOKIE)?.value
+    === MOOMOO_OAUTH_ONBOARDING_RETURN_VALUE;
+  const destination = onboardingReturn && status === "connected"
+    ? new URL("/trade-tracker?gettingStarted=daily-entry&moomoo=connected", origin)
+    : onboardingReturn
+      ? new URL("/workspace?gettingStarted=moomoo-failed", origin)
+    : new URL(`/account?moomoo=${status}`, origin);
   if (reportedToAdmin) destination.searchParams.set("reported", "1");
   const response = NextResponse.redirect(destination);
   deletePlatformAuthCookie(response, request, MOOMOO_OAUTH_STATE_COOKIE);
   deletePlatformAuthCookie(response, request, MOOMOO_OAUTH_VERIFIER_COOKIE);
+  deletePlatformAuthCookie(response, request, MOOMOO_OAUTH_ONBOARDING_RETURN_COOKIE);
   return response;
 }
 

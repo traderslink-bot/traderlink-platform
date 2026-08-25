@@ -1,9 +1,18 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { setPlatformSessionAuthCookie } from "@/src/modules/platform/server/authentication/platform-auth-cookies";
+import {
+  deletePlatformAuthCookie,
+  setPlatformAuthCookie,
+  setPlatformSessionAuthCookie,
+} from "@/src/modules/platform/server/authentication/platform-auth-cookies";
 import { resolvePlatformPublicOrigin } from "@/src/modules/platform/server/authentication/platform-public-origin";
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { MOOMOO_OAUTH_STATE_COOKIE, MOOMOO_OAUTH_VERIFIER_COOKIE } from "@/src/modules/platform/server/broker-connections/moomoo-oauth-cookies";
+import {
+  MOOMOO_OAUTH_ONBOARDING_RETURN_COOKIE,
+  MOOMOO_OAUTH_ONBOARDING_RETURN_VALUE,
+  MOOMOO_OAUTH_STATE_COOKIE,
+  MOOMOO_OAUTH_VERIFIER_COOKIE,
+} from "@/src/modules/platform/server/broker-connections/moomoo-oauth-cookies";
 import { buildMoomooAuthorizeUrl, createMoomooPkce, getMoomooOAuthConfig } from "@/src/modules/platform/server/broker-connections/moomoo-oauth";
 import { recordMoomooOperationFailure } from "@/src/modules/platform/server/broker-connections/moomoo-operation-observability";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
@@ -19,15 +28,29 @@ function requestHostname(request: NextRequest): string {
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const publicOrigin = resolvePlatformPublicOrigin(request);
+  const isWorkspaceOnboarding = request.nextUrl.searchParams.get("from") === "workspace-onboarding";
   try {
     requireTraderLinkPlatformRequestIdentity(request.headers);
     if (process.env.NODE_ENV !== "production" && requestHostname(request) !== "127.0.0.1") {
-      return NextResponse.redirect("http://127.0.0.1:3010/api/connections/moomoo/start");
+      const destination = new URL("http://127.0.0.1:3010/api/connections/moomoo/start");
+      if (isWorkspaceOnboarding) destination.searchParams.set("from", "workspace-onboarding");
+      return NextResponse.redirect(destination);
     }
     const pkce = createMoomooPkce();
     const response = NextResponse.redirect(buildMoomooAuthorizeUrl({ config: getMoomooOAuthConfig(publicOrigin), state: pkce.state, challenge: pkce.challenge }));
     setPlatformSessionAuthCookie(response, request, MOOMOO_OAUTH_STATE_COOKIE, pkce.state);
     setPlatformSessionAuthCookie(response, request, MOOMOO_OAUTH_VERIFIER_COOKIE, pkce.verifier);
+    if (isWorkspaceOnboarding) {
+      setPlatformAuthCookie(
+        response,
+        request,
+        MOOMOO_OAUTH_ONBOARDING_RETURN_COOKIE,
+        MOOMOO_OAUTH_ONBOARDING_RETURN_VALUE,
+        10 * 60,
+      );
+    } else {
+      deletePlatformAuthCookie(response, request, MOOMOO_OAUTH_ONBOARDING_RETURN_COOKIE);
+    }
     return response;
   } catch (error) {
     let reportedToAdmin = false;

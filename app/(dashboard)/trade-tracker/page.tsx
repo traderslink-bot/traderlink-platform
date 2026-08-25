@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
@@ -10,6 +11,7 @@ import {
 } from "@/src/modules/journal/contracts/journal-daily-tracker-offline-view-contracts";
 import {
   DashboardPage,
+  DashboardPanel,
 } from "../../dashboard-template";
 import {
   currentJournalAccountSelectionRef,
@@ -17,6 +19,7 @@ import {
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
 
+import { readJournalFirstExecutionOnboardingStatus } from "@/src/modules/journal/server/product/journal-first-execution-onboarding";
 import {
   getReplacementReportingDaySession,
   getReplacementTradeTrackerAccount,
@@ -51,7 +54,12 @@ function currentDateInTimezone(timezone: string): string {
 export default async function TradeTrackerPage({
   searchParams,
 }: {
-  searchParams: Promise<{ currency?: string; preview?: string }>;
+  searchParams: Promise<{
+    currency?: string;
+    gettingStarted?: string;
+    moomoo?: string;
+    preview?: string;
+  }>;
 }) {
   const query = await searchParams;
   const designPreview = process.env.NODE_ENV !== "production" &&
@@ -62,6 +70,11 @@ export default async function TradeTrackerPage({
 
   const scope = await requireTraderLinkPlatformPageScope();
   const account = getReplacementTradeTrackerAccount(scope);
+  const onboardingStatus = readJournalFirstExecutionOnboardingStatus(scope);
+  const showFirstExecutionCallout = query.gettingStarted === "daily-entry" &&
+    !onboardingStatus.hasAcceptedExecution;
+  const showMoomooConnectedStatus = showFirstExecutionCallout &&
+    query.moomoo === "connected" && onboardingStatus.hasActiveMoomooConnection;
   const utcDate = new Date().toISOString().slice(0, 10);
   const initialData = await getReplacementReportingDaySession(scope, {
     date: utcDate,
@@ -74,14 +87,31 @@ export default async function TradeTrackerPage({
         date: currentDate,
       });
   const topContent = (
-    <ManualExecutionEntry
-      accountCurrency={account?.baseCurrency ?? data?.currency ?? "USD"}
-      accountTimezone={accountTimezone}
-      defaultSessionDate={currentDate}
-      expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
-      key="manual-execution-entry"
-      offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
-    />
+    <>
+      {showFirstExecutionCallout ? (
+        <DashboardPanel title="Ready to add your first execution">
+          <Stack spacing={0.75} sx={{ maxWidth: 760 }}>
+            {showMoomooConnectedStatus ? (
+              <Typography color="success.main" sx={{ fontWeight: 700 }} variant="body2">
+                Moomoo is connected. Your eligible completed trades can now receive Trade Analyzer reviews.
+              </Typography>
+            ) : null}
+            <Typography color="text.secondary" variant="body2">
+              Use the form below to enter the exact date, time, price, quantity, and Buy or Sell side shown by your broker.
+            </Typography>
+          </Stack>
+        </DashboardPanel>
+      ) : null}
+      <ManualExecutionEntry
+        accountCurrency={account?.baseCurrency ?? data?.currency ?? "USD"}
+        accountTimezone={accountTimezone}
+        defaultSessionDate={currentDate}
+        expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
+        key="manual-execution-entry"
+        onboarding={showFirstExecutionCallout}
+        offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
+      />
+    </>
   );
   if (data) {
     const generatedAtUtc = new Date().toISOString();

@@ -171,6 +171,8 @@ revisions. Migrations `0025_coach_weekly_reviews`,
 applied locally with immutable request/output storage, Friday/Saturday/Sunday
 Eastern delivery settings, calendar-month eligibility records and private
 provider/cost-receipt storage. AI Reviews replaces the retired Reflection Loop
+**Workspace first-time onboarding:** The owner-approved product flow and its [design plan](workspace-first-time-onboarding-design-plan.md) and [progress record](workspace-first-time-onboarding-progress.md) are implemented. Clean release integration and live verification remain pending.
+
 page; the next work
 is the issued-review service, automatic runner and saved review list/detail.
 The complete AI product is now under active implementation through the
