@@ -58,13 +58,6 @@ export type CommunityWatchlistTickerPreview = Readonly<{
   catalystDate: string | null;
 }>;
 
-export type CommunityTickerCompanyFacts = Readonly<{
-  country: string | null;
-  industry: string | null;
-  marketCap: string | null;
-  sharesOutstanding: string | null;
-}>;
-
 export type CommunityWatchlistSummary = Readonly<{
   authorHandle: string;
   description: string;
@@ -79,13 +72,9 @@ export type CommunityWatchlistSummary = Readonly<{
 
 export type CommunityWatchlistDetail = Readonly<{
   authorHandle: string;
-  authorDisplayName: string;
-  authorDescription: string;
   authorTags: readonly string[];
   description: string;
-  publishedAtUtc: string | null;
-  slug: string;
-  status: "draft" | "published";
+  publishedAtUtc: string;
   updatedAtUtc: string;
   symbolCount: number;
   tags: readonly string[];
@@ -104,28 +93,6 @@ export type CommunityWatchlistDetail = Readonly<{
 
 export type CommunityProfile = Readonly<{
   handle: string;
-  displayName: string;
-  description: string;
   tags: readonly string[];
-  followerCount: number;
-  followingCount: number;
-  isFollowing: boolean;
-  followers: readonly CommunityProfileConnection[];
-  following: readonly CommunityProfileConnection[];
   watchlists: readonly CommunityWatchlistSummary[];
-}>;
-
-export type CommunityProfileConnection = Readonly<{
-  handle: string;
-  displayName: string;
-}>;
-
-export type CommunityProfileSettings = Readonly<{
-  handle: string | null;
-  discordUsername: string;
-  description: string;
-  tags: readonly string[];
-  visible: boolean;
-  followerCount: number;
-  followingCount: number;
 }>;
