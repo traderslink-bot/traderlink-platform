@@ -301,8 +301,12 @@ export function PressReleaseFeed({
                     <Typography color="text.secondary" noWrap variant="caption">{easternTime(article.publishedAt)}</Typography>
                     {article.marketCap ? <Typography color="text.secondary" noWrap variant="caption">{article.marketCap}</Typography> : null}
                   </Stack>
-                  <Typography noWrap sx={{ fontWeight: article.isRead ? 500 : 720, mt: 0.35 }} variant="body2">{article.headline}</Typography>
-                  {article.summary ? <Typography color="text.secondary" noWrap sx={{ mt: 0.25 }} variant="caption">{article.summary}</Typography> : null}
+                  <Typography
+                    sx={{ fontWeight: article.isRead ? 500 : 720, mt: 0.35, overflowWrap: "anywhere" }}
+                    variant="body2"
+                  >
+                    {article.headline}
+                  </Typography>
                 </Box>
               </Box>
               <Box aria-hidden sx={{ bgcolor: article.isRead ? "transparent" : "primary.main", borderRadius: "50%", display: { xs: "none", md: "block" }, height: 8, width: 8 }} />
@@ -316,7 +320,6 @@ export function PressReleaseFeed({
                 variant="body2"
               >
                 {article.headline}
-                {article.summary ? <Box component="span" sx={{ color: "text.secondary", fontWeight: 400 }}> — {article.summary}</Box> : null}
               </Typography>
             </Box>
           ))}

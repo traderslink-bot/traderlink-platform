@@ -21,6 +21,13 @@
 - [x] Preserve the canonical News content, free-article variant and public footer.
 - [x] Align the dashboard and Help header to the detailed article page's light logo asset.
 
+## 2026-08-25 feed headline correction
+
+- [x] Render only the article headline in the shared feed headline column; no feed-row snippet or summary preview appears on desktop or mobile.
+- [x] Let mobile feed headlines wrap fully within the available width without a no-wrap, line-clamp, ellipsis or clipping style.
+- [x] Preserve the article drawer's full stored AI summary and every non-snippet feed action, filter, link and data behavior.
+- Help guidance does not need an update: it covers channel browsing, unread badges, Push choices and opening articles, not removed feed-row snippet text.
+
 ## Implementation checklist
 
 - [x] Add the News read-receipt and Push-preference migration.

@@ -57,17 +57,17 @@ not ordinary dashboard alerts.
 Desktop uses a dense newswire-style row, approximately 52-60 pixels high:
 
 ```text
-Unread | Time ET | Ticker | Market cap | Type | Headline - summary preview
+Unread | Time ET | Ticker | Market cap | Type | Headline
 ```
 
 - Each article occupies one line on desktop.
-- The headline/summary column consumes remaining width and truncates cleanly.
+- The headline column consumes remaining width and renders only the article headline; no feed-row snippet or summary preview appears at any width.
 - The All Press Releases page also identifies the article channel.
 - All Market Cap and the three market-cap band pages visibly show the stored
   market-cap fact when it is available.
 - Missing market cap remains blank; the UI does not invent a value or show a
   meaningless `N/A` placeholder.
-- Mobile uses a compact multi-line row and a full-width drawer.
+- Mobile uses a compact multi-line row with a naturally wrapping full headline and a full-width drawer; the headline is not line-clamped, ellipsized or clipped.
 - Newest articles appear first. All/Unread, ticker/headline search and bounded
   date controls remain available without loading the complete history at once.
 
