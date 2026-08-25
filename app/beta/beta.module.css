@@ -104,16 +104,23 @@
   box-shadow: 0 3px 7px rgba(0, 11, 39, 0.2);
 }
 
-.featureNumber {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
+.featureIcon {
+  display: inline-flex;
+  width: 1.8rem;
+  min-width: 1.8rem;
+  height: 1.8rem;
+  align-items: center;
+  justify-content: center;
   border-radius: 50%;
   background: #011e56;
   color: #ffffff;
-  font-size: 0.78rem;
-  font-weight: 800;
+}
+
+.featureIcon svg {
+  display: block;
+  width: 0.82rem;
+  height: 0.82rem;
+  fill: currentColor;
 }
 
 .feature h2,
