@@ -6,6 +6,8 @@
 
 **Parent plan:** [Remaining Modules Plan](phase-5-slice-f-remaining-modules-plan.md)
 
+**Current dashboard integration record:** [Watchlist Dashboard Integration Progress](watchlist-dashboard-integration-progress.md)
+
 ## Outcome
 
 Preserve the existing useful premium Watchlist experience while giving its
@@ -16,6 +18,12 @@ repository-local storage.
 
 This slice does not redesign the Watchlist UI, activate public Platform login,
 change the Premium product policy or deploy anything.
+
+The later Dashboard integration preserves the same Watchlist routes, data,
+access service and publisher contract. It changes only the signed-in shell and
+the owner-only Dashboard navigation visibility; its progress record is kept
+separate so this accepted storage/access plan stays the source of truth for
+the persistent Watchlist boundary.
 
 ## Product boundary
 

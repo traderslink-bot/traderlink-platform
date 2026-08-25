@@ -38,6 +38,7 @@ export type DashboardNavigationIconKey =
   | "tradeExplorer"
   | "tradeGroup"
   | "trades"
+  | "watchlist"
   | "workspace";
 
 export type DashboardNavigationItem = Readonly<{
@@ -236,6 +237,7 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
       icon: "marketCharts" as const,
       items: Object.freeze([
         Object.freeze({ href: "/scanner", label: "Scanner", icon: "scanner" as const }),
+        Object.freeze({ href: "/watchlist", label: "Watchlist", icon: "watchlist" as const }),
         Object.freeze({ href: "/charts", label: "Market Charts", icon: "marketCharts" as const }),
         DASHBOARD_MARKET_HALT_ALERTS_ITEM,
       ]),
@@ -296,6 +298,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/workspace/readiness": "Platform Readiness",
     "/calendar": "Calendar",
     "/scanner": "Scanner",
+    "/watchlist": "Watchlist",
     "/trade-tracker": "Daily Trade Tracker",
     "/trade-tracker/swings": "Swing Trade Tracker",
     "/quick-trade-entry": "Quick Trade Entry",

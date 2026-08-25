@@ -3,6 +3,7 @@
 import AirlineStopsIcon from "@mui/icons-material/AirlineStops";
 import AnalyticsRoundedIcon from "@mui/icons-material/AnalyticsRounded";
 import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
+import BookmarksRoundedIcon from "@mui/icons-material/BookmarksRounded";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import CandlestickChartIcon from "@mui/icons-material/CandlestickChart";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
@@ -144,6 +145,7 @@ function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
     trades: <TableRowsRoundedIcon />,
     mfeMae: <TroubleshootIcon />,
     workspace: <DashboardRoundedIcon />,
+    watchlist: <BookmarksRoundedIcon />,
   };
   return icons[icon];
 }
@@ -352,6 +354,7 @@ export function DashboardShell({
   offline = false,
   pressReleaseUnreadCounts = null,
   scannerEarlyAccess = false,
+  watchlistNavigationAccess = false,
 }: {
   children: ReactNode;
   initialMarketHaltAlertsEnabled?: boolean;
@@ -360,6 +363,7 @@ export function DashboardShell({
   offline?: boolean;
   pressReleaseUnreadCounts?: PressReleaseUnreadCounts | null;
   scannerEarlyAccess?: boolean;
+  watchlistNavigationAccess?: boolean;
 }) {
   const pathname = usePathname();
   const helpDestination = offline ? "/help" : "https://traderslink.pro/help";
@@ -381,19 +385,20 @@ export function DashboardShell({
 
   const desktopWidth = collapsed ? collapsedWidth : expandedWidth;
   const accountMenuOpen = Boolean(accountMenuAnchor);
-  const sidebarNavigationSections = scannerEarlyAccess
-    ? DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS
-    : DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS.map((section) =>
-      section.group.id !== "stockTools"
-        ? section
-        : Object.freeze({
-          ...section,
-          group: Object.freeze({
-            ...section.group,
-            items: Object.freeze(section.group.items.filter((item) =>
-              !isDashboardNavigationItem(item) || item.href !== "/scanner")),
-          }),
-        }));
+  const sidebarNavigationSections = DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS.map((section) =>
+    section.group.id !== "stockTools"
+      ? section
+      : Object.freeze({
+        ...section,
+        group: Object.freeze({
+          ...section.group,
+          items: Object.freeze(section.group.items.filter((item) =>
+            !isDashboardNavigationItem(item) || (
+              (item.href !== "/scanner" || scannerEarlyAccess) &&
+              (item.href !== "/watchlist" || watchlistNavigationAccess)
+            ))),
+        }),
+      }));
   const closeMobile = () => setMobileOpen(false);
   const setDesktopNavigationCollapsed = (nextCollapsed: boolean) => {
     setCollapsed(nextCollapsed);

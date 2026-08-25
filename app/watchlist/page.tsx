@@ -11,6 +11,7 @@ import {
   isWatchlistPreviewCrawlerUserAgent,
 } from "@/src/lib/live-watchlist/watchlist-preview";
 import { LiveWatchlistIndexClient } from "./live-watchlist-client";
+import { WatchlistDashboardFrame } from "./watchlist-dashboard-frame";
 
 export const dynamic = "force-dynamic";
 
@@ -42,11 +43,11 @@ export default async function LiveWatchlistPage({
 
   const state = await new LiveWatchlistStore().listSymbols();
   return (
-    <AcademyShell forcedTheme="light">
+    <WatchlistDashboardFrame>
       <div className="academy-container watchlist-container">
         <LiveWatchlistIndexClient initialState={state} />
       </div>
-    </AcademyShell>
+    </WatchlistDashboardFrame>
   );
 }
 

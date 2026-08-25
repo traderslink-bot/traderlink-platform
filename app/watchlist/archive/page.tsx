@@ -6,6 +6,7 @@ import { AcademyShell } from "@/app/academy/academy-shell";
 import { LiveWatchlistStore } from "@/src/lib/live-watchlist/live-watchlist-store";
 import { authorizeWatchlistPageAccess } from "@/src/modules/watchlist/server/access/watchlist-access-service";
 import { LiveWatchlistArchiveIndex } from "../live-watchlist-client";
+import { WatchlistDashboardFrame } from "../watchlist-dashboard-frame";
 
 export const dynamic = "force-dynamic";
 
@@ -75,7 +76,7 @@ export default async function LiveWatchlistArchivePage({
     offset: (currentPage - 1) * archivePageSize,
   });
   return (
-    <AcademyShell forcedTheme="light">
+    <WatchlistDashboardFrame>
       <div className="academy-container">
         <LiveWatchlistArchiveIndex
           archives={archives}
@@ -84,7 +85,7 @@ export default async function LiveWatchlistArchivePage({
           totalPages={totalPages}
         />
       </div>
-    </AcademyShell>
+    </WatchlistDashboardFrame>
   );
 }
 

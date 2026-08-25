@@ -11,6 +11,7 @@ import {
   isWatchlistPreviewCrawlerUserAgent,
 } from "@/src/lib/live-watchlist/watchlist-preview";
 import { LiveWatchlistDetailClient } from "../live-watchlist-client";
+import { WatchlistDashboardFrame } from "../watchlist-dashboard-frame";
 
 export const dynamic = "force-dynamic";
 
@@ -76,7 +77,7 @@ export default async function LiveWatchlistSymbolPage({
   if (state.status === "deactivated") {
     const latestArchive = await new LiveWatchlistStore().getLatestArchiveForSymbol(symbol);
     return (
-      <AcademyShell forcedTheme="light">
+      <WatchlistDashboardFrame>
         <div className="academy-container">
           <div className="watchlist-page">
             <section className="watchlist-detail-hero">
@@ -108,20 +109,20 @@ export default async function LiveWatchlistSymbolPage({
             </section>
           </div>
         </div>
-      </AcademyShell>
+      </WatchlistDashboardFrame>
     );
   }
   const health = await new LiveWatchlistStore().getHealth();
 
   return (
-    <AcademyShell forcedTheme="light">
+    <WatchlistDashboardFrame>
       <div className="academy-container watchlist-container">
         <LiveWatchlistDetailClient
           initialMarketDataStatus={health.marketDataStatus}
           initialSymbol={state}
         />
       </div>
-    </AcademyShell>
+    </WatchlistDashboardFrame>
   );
 }
 

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { SiteShell } from "@/src/components/site/site-shell";
+import { authorizeWatchlistPageAccess } from "@/src/modules/watchlist/server/access/watchlist-access-service";
+import { WatchlistDashboardFrame } from "../watchlist-dashboard-frame";
 
 export const metadata: Metadata = {
   alternates: {
@@ -62,10 +64,10 @@ const levelSources = [
   },
 ];
 
-export default function PotentialPathHowItWorksPage() {
-  return (
-    <SiteShell forcedTheme="light" shellElement="div">
-      <main className="academy-container-narrow watchlist-guide-page">
+export default async function PotentialPathHowItWorksPage() {
+  const access = await authorizeWatchlistPageAccess();
+  const content = (
+    <main className="academy-container-narrow watchlist-guide-page">
         <section className="academy-hero watchlist-guide-hero">
           <div className="academy-hero-copy">
             <p className="academy-eyebrow">Potential Path</p>
@@ -259,7 +261,16 @@ export default function PotentialPathHowItWorksPage() {
             </p>
           </div>
         </section>
-      </main>
+    </main>
+  );
+
+  if (access.ok) {
+    return <WatchlistDashboardFrame>{content}</WatchlistDashboardFrame>;
+  }
+
+  return (
+    <SiteShell forcedTheme="light" shellElement="div">
+      {content}
     </SiteShell>
   );
 }
