@@ -65,3 +65,13 @@
   is selected.
 - Targeted ESLint and project TypeScript pass. Owner visual review remains; no
   test suite, build, browser server, commit or deployment ran.
+
+## Empty-state correction - 2026-08-25
+
+- [x] Replaced the shared **No completed day trades** message across the Daily
+  Trade Analyzer route family with the approved beta Moomoo market-data
+  guidance and a primary **Connect Moomoo** action to `/account/trading`.
+- [x] Kept the distinct **No trades have been analyzed** state unchanged.
+- [x] Confirmed the published Trade Analyzer Help already explains the free
+  Moomoo-account connection path and keeps execution imports separate, so no
+  guide revision was needed for this narrowly scoped correction.
