@@ -53,6 +53,7 @@ const supportedGroupings = new Set<JournalAnalyticsGrouping>([
   "entered_quantity_bucket",
   "maximum_position_bucket",
   "entry_notional_bucket",
+  "entry_price_bucket",
   "realized_outcome",
 ]);
 
