@@ -237,6 +237,7 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
       icon: "marketCharts" as const,
       items: Object.freeze([
         Object.freeze({ href: "/scanner", label: "Scanner", icon: "scanner" as const }),
+        Object.freeze({ href: "/levels", label: "Stock Levels", icon: "marketCharts" as const }),
         Object.freeze({ href: "/admin/watchlist", label: "Watchlist Admin", icon: "admin" as const }),
         Object.freeze({ href: "/charts", label: "Market Charts", icon: "marketCharts" as const }),
         DASHBOARD_MARKET_HALT_ALERTS_ITEM,
@@ -298,6 +299,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/workspace/readiness": "Platform Readiness",
     "/calendar": "Calendar",
     "/scanner": "Scanner",
+    "/levels": "Stock Levels",
     "/admin/watchlist": "Watchlist Admin",
     "/trade-tracker": "Daily Trade Tracker",
     "/trade-tracker/swings": "Swing Trade Tracker",
@@ -370,6 +372,7 @@ const DASHBOARD_HELP_TARGETS: readonly Readonly<DashboardHelpTarget & { route: s
     Object.freeze({ route: "/rules/results", href: "/help/trading-rules/results-history", label: "Rule Results" }),
     Object.freeze({ route: "/rules", href: "/help/trading-rules", label: "Trading Rules" }),
     Object.freeze({ route: "/calendar", href: "/help/calendar", label: "Trading Calendar" }),
+    Object.freeze({ route: "/levels", href: "/help/stock-levels", label: "Stock Levels" }),
     Object.freeze({ route: "/imports", href: "/help/notifications-and-imports", label: "Import Trades" }),
     Object.freeze({ route: "/notifications", href: "/help/notifications-and-imports/notifications", label: "Notifications" }),
     Object.freeze({ route: "/press-releases", href: "/help/notifications-and-imports/notifications", label: "Press Releases" }),

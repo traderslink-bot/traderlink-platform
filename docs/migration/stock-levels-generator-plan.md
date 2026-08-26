@@ -1,0 +1,197 @@
+# Stock Levels Generator Plan
+
+**Status:** Owner-approved contract recorded; implementation in progress  
+**Progress:** [Stock Levels Generator Progress](stock-levels-generator-progress.md)  
+**Approved feature boundary:** Authenticated Dashboard Stock Levels generator  
+**Route:** `/levels`
+
+## Product contract
+
+This plan records the complete owner-approved first version. It is not a
+Watchlist feature and does not alter Watchlist membership, monitoring,
+Discord publishing, AI generation, Premium access, or live Watchlist state.
+
+1. Add an authenticated Dashboard route at `/levels` and a `Stock Levels`
+   entry under `Stock Tools`.
+2. Accept a Nasdaq or NYSE equity ticker and provide a `Get Levels` action.
+   Invalid, unknown, non-equity, or unsupported-exchange symbols receive a
+   factual unavailable or validation result; the feature never invents a map.
+3. Reuse the existing Watchlist ticker-detail **Potential Path Levels**
+   component and its exact responsive CSS rather than redesigning the card.
+4. Render the ticker, clearly labelled reference price, its calculation/as-of
+   time, nearest support and resistance, complete support and resistance
+   columns, level strength/type/provenance, and a collapsed-by-default
+   expandable Full ladder.
+5. Get the calculation-time reference price through the existing EODHD quote
+   path. It is labelled `Reference price`, not real-time or live. If a
+   trustworthy positive reference price is unavailable, return an honest
+   unavailable state and do not produce a map.
+6. Invoke the canonical Levels runtime for all calculation and use its real
+   market data. The primary map is structural daily/4h evidence. Keep EODHD
+   daily/4h history and use the currently selected same-day provider (Moomoo
+   at this checkpoint; Yahoo remains selectable) only as supplementary
+   current-session context. Platform does not copy or reimplement Levels
+   calculations.
+7. Add a dedicated runtime endpoint protected by a server-only token. Its
+   response is the narrow factual DTO required by the card; it validates the
+   symbol as a Nasdaq/NYSE equity, coalesces concurrent requests, and shares a
+   fifteen-minute result cache.
+8. Enforce Platform account-scoped persistent limits: ten fresh calculations
+   per rolling hour and thirty per New York trading day. A runtime cache hit
+   does not consume a limit. The UI reports factual remaining/reset information
+   and never fabricates availability.
+9. Add a dedicated Help collection/guide and Dashboard contextual Help mapping.
+   Keep useful compact Help on the `/levels` page in trader language.
+10. Preserve the current card's responsive behavior and its existing visual
+    language exactly. The owner reviews the complete UI before the first
+    acceptance checkpoint.
+
+## Page information and trader guidance
+
+The page Help and dedicated guide must explain only product truth:
+
+- The map uses real market data and historical candles.
+- The primary displayed map normally reaches roughly 30 percent around the
+  reference price and can extend farther when structural evidence supports it.
+- Support and resistance are price areas for context, not price targets,
+  predictions, or advice.
+- A trader can request a new map after price moves.
+- `Weak`, `Moderate`, `Strong`, and `Major` describe the available structural
+  evidence; strength is not a probability or trade instruction.
+- Level type, clustering/confluence, role flips when present, and agreement
+  across timeframes explain why a level may matter more.
+- Dates identify when the displayed evidence formed, was last tested, or was
+  last confirmed only when the runtime supplied that provenance. Missing
+  provenance stays visibly unavailable.
+
+## Architecture and complete implementation inventory
+
+### Platform Dashboard
+
+- `app/(dashboard)/levels/page.tsx`: authenticated route, page metadata, and
+  server-side access boundary.
+- `app/(dashboard)/levels/stock-levels-client.tsx`: ticker entry, request
+  lifecycle, remaining/reset feedback, factual unavailable state, compact page
+  Help, and rendering of the shared card.
+- `app/(dashboard)/levels/potential-path-levels-card.tsx`: a refactor of the
+  existing Watchlist Potential Path component into a reusable, DTO-driven card
+  without changing its card layout, Full ladder behavior, level rows, or
+  responsive semantics.
+- `app/watchlist/live-watchlist-client.tsx`: consume that shared component so
+  the existing Watchlist detail remains the visual source of truth.
+- `app/globals.css`: move only the existing Potential Path selectors into a
+  shared/selectable scope if needed; preserve their rendered values and mobile
+  rules exactly.
+- `app/dashboard-navigation.ts`: `Stock Levels` item, route title, and
+  Dashboard contextual Help target under the existing `Stock Tools` group.
+
+### Platform API, account limits, and runtime relay
+
+- `app/api/levels/route.ts`: authenticated, no-store Platform route accepting
+  one symbol and returning the display DTO plus quota feedback. It neither
+  accesses Watchlist data nor performs any publisher, Discord, AI, monitoring,
+  or activation action.
+- `src/modules/stock-levels/server/stock-levels-service.ts`: authenticated
+  orchestration, ticker validation result translation, cache-hit treatment,
+  account-scoped quota reservation/finalization, and DTO validation.
+- `src/modules/stock-levels/server/stock-levels-runtime-client.ts`: server-only
+  bearer-token client for the narrow runtime endpoint. Runtime URL/token remain
+  environment-only and are never sent to the browser or committed.
+- `src/modules/stock-levels/server/stock-levels-contract.ts`: shared narrow
+  request/response types, factual unavailable reasons, level/provenance fields,
+  and quota feedback contract.
+- `src/modules/platform/server/database/migrations/0089_platform_stock_levels_usage.ts`:
+  persistent account-scoped fresh-calculation receipts, New York day identity,
+  and indexes required for atomic quota enforcement. It contains no quote,
+  level, Watchlist, or provider data.
+- `src/modules/platform/server/database/platform-migration-manifest.ts`,
+  `src/modules/platform/server/database/platform-migration-registry.ts`, and
+  the applicable migration contract inventory: register the new migration only;
+  do not execute it during this slice.
+
+### Canonical Levels runtime
+
+- `src/runtime/manual-watchlist-server.ts`: add one separate token-protected
+  `POST /api/runtime/stock-levels` handler. It remains outside every
+  `/api/watchlist/**` lifecycle path.
+- `src/runtime/stock-levels-generator.ts`: request validation, Nasdaq/NYSE
+  common-equity validation using the runtime's existing market-data/security
+  sources, EODHD reference quote retrieval, the canonical engine invocation,
+  selected same-day context, in-flight coalescing, fifteen-minute shared cache,
+  narrow DTO projection, and factual unavailable results.
+- Existing canonical engine, EODHD historical/live providers, selected
+  same-day provider, and Watchlist runtime manager remain reused dependencies;
+  no duplicate calculation implementation, provider change, cache format
+  mutation, Watchlist entry creation, or publisher call is allowed.
+
+### Help
+
+- `src/modules/help/stock-levels-guides.ts`: dedicated `Stock Levels`
+  collection with stable overview and guide/section anchors covering getting a
+  map, reference-price timing, reading support/resistance, Full ladder,
+  strength/type/provenance, freshness and unavailable states.
+- `src/modules/help/help-content-registry.ts`: Help navigation, search records,
+  stable route metadata, breadcrumbs and section discovery for the collection.
+- Existing generic Help routes render the guide; no second Help shell or route
+  family is introduced.
+
+### Documentation
+
+- This plan and its linked progress record remain current throughout the work.
+- `docs/migration/route-ownership.md` gains `/levels` and `/api/levels` only
+  when the implementation checkpoint is complete, keeping legacy Level
+  Analysis and Watchlist ownership separate.
+- The migration register gains `0089` only with the registered migration.
+
+## Data and safety rules
+
+- Reference price must be finite and greater than zero, carry the EODHD source
+  and as-of/calculation time, and be shown as a reference price.
+- DTO fields expose only the card facts: symbol, reference-price provenance,
+  generated time, nearest levels, support/resistance rows, strength/type,
+  runtime-provided provenance, Full ladder, and factual availability/cache
+  status necessary for quota accounting. No account IDs, tokens, configuration,
+  full raw candles, internal scores, provider secrets, Watchlist records, or
+  unpublished runtime state cross the boundary.
+- The runtime cache key is the normalized symbol and calculation contract
+  version. A concurrent matching request joins the in-flight calculation.
+- Platform treats only an explicitly declared runtime cache hit as free. A
+  failed/unavailable request does not falsely claim a completed fresh map or
+  available quota.
+- Quotas are checked and reserved transactionally per authenticated Platform
+  account. A fresh calculation consumes exactly one allowed receipt; repeated
+  cache hits consume none. New York day boundaries are computed centrally, not
+  from a browser clock.
+- The runtime endpoint rejects missing/incorrect bearer tokens before doing
+  market-data or engine work. Platform's outward API requires the normal
+  authenticated Dashboard boundary.
+- Intraday/same-day evidence can supplement structural context but cannot crowd,
+  dilute, replace, or receive equal visual prominence with daily/4h support
+  and resistance. Missing same-day candles cannot make an otherwise
+  trustworthy daily/4h map unavailable.
+
+## Explicit exclusions
+
+- No Watchlist rows, activation, monitoring, scheduling, publisher event,
+  Discord post, AI request, Community Watchlist access, or Premium Watchlist
+  access is created or mutated.
+- No provider switch, EODHD setting change, runtime restart, Railway variable
+  change, deployment, staging request, push, or migration execution is part of
+  implementation.
+- No mocked candles, price, quote timestamp, level, fallback ladder, quota
+  remainder, or unavailable explanation is allowed.
+
+## Acceptance order
+
+1. Record this approved contract and the progress record before product edits.
+2. Implement the runtime DTO/cache/auth isolation and Platform account quota
+   boundary without activating or altering Watchlist state.
+3. Refactor and reuse the existing card/CSS, build `/levels`, add navigation
+   and Help, and keep the written records current.
+4. Perform source/diff-only checks while the owner has prohibited local
+   servers, tests, provider calls, migrations, browser automation and builds.
+5. Send the Coordinator a preview-ready, complete-file allowlist and
+   constraint handoff. Request Railway staging review only after the complete
+   UI slice is ready; do not stage or deploy from this worker.
+6. After owner UI approval and separately authorized checkpoints, perform the
+   focused verification and release preparation required at that time.
