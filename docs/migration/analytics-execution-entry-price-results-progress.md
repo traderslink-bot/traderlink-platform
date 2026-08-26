@@ -26,8 +26,10 @@
 - No chart is added for this first Entry Price Results slice.
 - Do not duplicate the result in Trade Explorer, change routes, modify
   migrations or add a market-data dependency.
-- The table must show Net P/L, trades, wins, losses, win rate, average P/L and
-  return on entry value without inventing unavailable values.
+- The table must show Net P/L, trades, wins, losses, win rate and average P/L
+  without inventing unavailable values. Return on entry value is deliberately
+  omitted because its percentage presentation can overstate a small band's
+  apparent difference from the dollar results.
 - Update Core Analytics Help with the exact weighted-entry-price and
   limited-history meaning.
 

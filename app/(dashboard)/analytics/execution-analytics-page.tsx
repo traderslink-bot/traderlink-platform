@@ -41,7 +41,7 @@ import { FeatureHelpLink } from "../feature-help-link";
 
 const CHART_GROUPINGS = ["entered_quantity_bucket", "maximum_position_bucket", "holding_duration_bucket"] as const satisfies readonly JournalAnalyticsGrouping[];
 const GROUPINGS = [...CHART_GROUPINGS, "entry_price_bucket"] as const satisfies readonly JournalAnalyticsGrouping[];
-const METRICS = ["net_pnl", "win_rate", "included_count", "win_count", "loss_count", "average_pnl", "return_on_entry_notional"] as const;
+const METRICS = ["net_pnl", "win_rate", "included_count", "win_count", "loss_count", "average_pnl"] as const;
 
 function metricFor(metrics: readonly JournalAnalyticsMetricResult[], id: string) {
   return metrics.find((metric) => metric.metricId === id) ?? null;
@@ -73,7 +73,6 @@ function entryPriceResults(
       lossesDisplay: read("loss_count") ? formatJournalAnalyticsMetric(read("loss_count")!) : "N/A",
       netPnl: read("net_pnl") ? formatJournalAnalyticsMetric(read("net_pnl")!) : "N/A",
       netPnlDecimal: metricDecimal(read("net_pnl")?.value ?? null),
-      returnOnEntryValue: read("return_on_entry_notional") ? formatJournalAnalyticsMetric(read("return_on_entry_notional")!) : "N/A",
       tradeCount: metricNumber(read("included_count")?.value ?? null),
       tradeCountDisplay: read("included_count") ? formatJournalAnalyticsMetric(read("included_count")!) : "N/A",
       winRate: read("win_rate") ? formatJournalAnalyticsMetric(read("win_rate")!) : "N/A",
