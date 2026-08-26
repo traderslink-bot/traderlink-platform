@@ -335,7 +335,7 @@ export function WatchlistPotentialPathCardArticle({
             showNearestLevels={showNearestLevels}
             showPrice={showPrice}
           />
-          {showOuterMeta ? (
+          {card && showOuterMeta ? (
             <p className="watchlist-card-meta">
               Updated {formatTime(card.updatedAt)} | Price when posted {formatPrice(card.priceWhenPosted)}
             </p>
