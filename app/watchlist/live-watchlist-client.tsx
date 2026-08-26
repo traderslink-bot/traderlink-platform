@@ -1651,7 +1651,7 @@ export function LiveWatchlistIndexClient({
         </section>
       ) : (
         <div className="watchlist-session-lists">
-          {topRegularWatchlistVisible ? (
+          {topRegularWatchlistVisible && topRegularSymbols.length > 0 ? (
             <section
               className="watchlist-session-list"
               aria-labelledby="watchlist-top-regular-heading"
@@ -1663,61 +1663,65 @@ export function LiveWatchlistIndexClient({
                 </div>
                 <span>{topRegularSymbols.length}</span>
               </div>
-              {topRegularSymbols.length > 0 ? (
-                <WatchlistTickerTable
-                  ariaLabel="Top regular hour watchlist tickers"
-                  symbols={topRegularSymbols}
-                />
-              ) : (
-                <p className="watchlist-session-empty">
-                  No top regular-hour watches are active.
-                </p>
-              )}
+              <WatchlistTickerTable
+                ariaLabel="Top regular hour watchlist tickers"
+                symbols={topRegularSymbols}
+              />
             </section>
           ) : null}
-          <section className="watchlist-session-list" aria-labelledby="watchlist-main-session-heading">
-            <div className="watchlist-session-heading">
-              <div>
-                <p className="academy-eyebrow">Premarket + Regular Hours</p>
-                <h2 id="watchlist-main-session-heading">Main Session</h2>
-              </div>
-              <span>{mainSessionSymbols.length}</span>
-            </div>
-            {mainSessionSymbols.length > 0 ? (
-              <WatchlistTickerTable ariaLabel="Main-session watchlist tickers" symbols={mainSessionSymbols} />
-            ) : <p className="watchlist-session-empty">No main-session tickers are active.</p>}
-            {showReversalWatchlist ? (
-              <div className="watchlist-reversal-list" aria-labelledby="watchlist-reversal-heading">
-                <div className="watchlist-session-heading">
-                  <div>
-                    <p className="academy-eyebrow">Still on Watch</p>
-                    <h2 id="watchlist-reversal-heading">Potential Reversal Watchlist</h2>
+          {mainSessionSymbols.length > 0 || showReversalWatchlist ? (
+            <section
+              className="watchlist-session-list"
+              aria-labelledby={mainSessionSymbols.length > 0 ? "watchlist-main-session-heading" : undefined}
+            >
+              {mainSessionSymbols.length > 0 ? (
+                <>
+                  <div className="watchlist-session-heading">
+                    <div>
+                      <p className="academy-eyebrow">Premarket + Regular Hours</p>
+                      <h2 id="watchlist-main-session-heading">Main Session</h2>
+                    </div>
+                    <span>{mainSessionSymbols.length}</span>
                   </div>
-                  <span>{reversalWatchSymbols.length}</span>
+                  <WatchlistTickerTable
+                    ariaLabel="Main-session watchlist tickers"
+                    symbols={mainSessionSymbols}
+                  />
+                </>
+              ) : null}
+              {showReversalWatchlist ? (
+                <div className="watchlist-reversal-list" aria-labelledby="watchlist-reversal-heading">
+                  <div className="watchlist-session-heading">
+                    <div>
+                      <p className="academy-eyebrow">Still on Watch</p>
+                      <h2 id="watchlist-reversal-heading">Potential Reversal Watchlist</h2>
+                    </div>
+                    <span>{reversalWatchSymbols.length}</span>
+                  </div>
+                  <p className="watchlist-reversal-description">
+                    Strong runners that have pulled back and are still being watched for a possible
+                    reversal. A spot on this list does not mean a reversal has started.
+                  </p>
+                  <WatchlistTickerTable
+                    ariaLabel="Potential reversal watchlist tickers"
+                    symbols={reversalWatchSymbols}
+                  />
                 </div>
-                <p className="watchlist-reversal-description">
-                  Strong runners that have pulled back and are still being watched for a possible
-                  reversal. A spot on this list does not mean a reversal has started.
-                </p>
-                <WatchlistTickerTable
-                  ariaLabel="Potential reversal watchlist tickers"
-                  symbols={reversalWatchSymbols}
-                />
+              ) : null}
+            </section>
+          ) : null}
+          {postmarketSymbols.length > 0 ? (
+            <section className="watchlist-session-list" aria-labelledby="watchlist-postmarket-heading">
+              <div className="watchlist-session-heading">
+                <div>
+                  <p className="academy-eyebrow">Added from 4:00-8:00 PM ET</p>
+                  <h2 id="watchlist-postmarket-heading">Post-Market</h2>
+                </div>
+                <span>{postmarketSymbols.length}</span>
               </div>
-            ) : null}
-          </section>
-          <section className="watchlist-session-list" aria-labelledby="watchlist-postmarket-heading">
-            <div className="watchlist-session-heading">
-              <div>
-                <p className="academy-eyebrow">Added from 4:00-8:00 PM ET</p>
-                <h2 id="watchlist-postmarket-heading">Post-Market</h2>
-              </div>
-              <span>{postmarketSymbols.length}</span>
-            </div>
-            {postmarketSymbols.length > 0 ? (
               <WatchlistTickerTable ariaLabel="Post-market watchlist tickers" symbols={postmarketSymbols} />
-            ) : <p className="watchlist-session-empty">No post-market tickers are active.</p>}
-          </section>
+            </section>
+          ) : null}
         </div>
       )}
       <section className="academy-card watchlist-notice-card" aria-label="Watchlist notice">
