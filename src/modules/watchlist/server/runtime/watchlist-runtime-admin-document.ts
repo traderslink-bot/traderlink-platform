@@ -13,6 +13,9 @@ const CONSOLE_PATHS = Object.freeze({
 const SECTION_NAVIGATION_INJECTION = String.raw`<style id="traderslink-watchlist-admin-section-navigation-style">
   #traderslink-watchlist-admin-summary { display: grid; gap: 12px; margin: 0 0 16px; }
   #traderslink-watchlist-admin-summary > * { margin-top: 0; }
+  #traderslink-watchlist-admin-provider-summary { display: grid; gap: 8px; }
+  #traderslink-watchlist-admin-provider-summary h2 { margin: 0; font-size: 16px; }
+  #traderslink-watchlist-admin-provider-summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
   #traderslink-watchlist-admin-section-navigation { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; padding: 12px; background: inherit; border: 1px solid rgba(148, 163, 184, 0.35); border-radius: 10px; }
   #traderslink-watchlist-admin-section-navigation button { min-height: 38px; padding: 8px 12px; border: 1px solid rgba(148, 163, 184, 0.55); border-radius: 7px; background: transparent; color: inherit; cursor: pointer; font: inherit; }
   #traderslink-watchlist-admin-section-navigation button[aria-current="page"] { border-color: currentColor; font-weight: 700; }
@@ -55,6 +58,14 @@ const SECTION_NAVIGATION_INJECTION = String.raw`<style id="traderslink-watchlist
     const summary = document.createElement("div");
     summary.id = "traderslink-watchlist-admin-summary";
     summary.setAttribute("aria-label", "Watchlist Admin summary");
+    const providerSummary = document.createElement("section");
+    providerSummary.id = "traderslink-watchlist-admin-provider-summary";
+    const providerSummaryHeading = document.createElement("h2");
+    providerSummaryHeading.textContent = "Market Data Connections";
+    const providerSummaryCards = document.createElement("div");
+    providerSummaryCards.id = "traderslink-watchlist-admin-provider-summary-cards";
+    providerSummary.append(providerSummaryHeading, providerSummaryCards);
+    summary.append(providerSummary);
     root.prepend(summary);
 
     const runtimeConfig = directSection(root, "Runtime Config");
@@ -107,14 +118,35 @@ const SECTION_NAVIGATION_INJECTION = String.raw`<style id="traderslink-watchlist
         const grid = document.getElementById(id);
         if (grid && grid.parentElement !== summary) summary.append(grid);
       });
+      const auditConsole = document.getElementById("ai-read-audit-console");
+      if (auditConsole && auditConsole.parentElement !== summary) summary.append(auditConsole);
       hideSkippedAuditCard();
     };
+    const syncProviderSummary = () => {
+      const providerGrid = document.getElementById("provider-health-grid");
+      if (!providerGrid) return;
+      const connectionCards = Array.from(providerGrid.querySelectorAll(":scope > .runtime-card"))
+        .filter((card) => {
+          const label = normalize(card.querySelector(".runtime-label")?.textContent || "");
+          return label === "Watchlist Market Data" || label === "Moomoo Connection";
+        });
+      providerSummaryCards.replaceChildren(...connectionCards.map((card) => card.cloneNode(true)));
+    };
     moveSummaryGrids();
+    syncProviderSummary();
     const auditConsole = document.getElementById("ai-read-audit-console");
+    const providerGrid = document.getElementById("provider-health-grid");
     const summaryObserver = new MutationObserver(moveSummaryGrids);
     summaryObserver.observe(summary, { childList: true, subtree: true, characterData: true });
     if (auditConsole) {
       new MutationObserver(moveSummaryGrids).observe(auditConsole, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+    }
+    if (providerGrid) {
+      new MutationObserver(syncProviderSummary).observe(providerGrid, {
         childList: true,
         subtree: true,
         characterData: true,
