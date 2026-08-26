@@ -59,6 +59,14 @@ Railway staging build and owner visual review pending
   nearest-level summary, and links its top-right question icon to the public
   Watchlist how-it-works guide. The existing Watchlist card remains unchanged
   by default.
+- [x] Corrected the exact-parity boundary after staging visual review: the
+  original Watchlist outer Potential Path article/topline/kicker/guide path is
+  now a single shared component for Watchlist and `/levels`; `/levels` also
+  uses the existing Academy-shell, container, Watchlist-page and card-grid CSS
+  context without importing the public navigation. Removed the entire stale
+  `How to read this map` Dashboard panel and both of its explanatory
+  paragraphs; the approved on-card question-mark link is the remaining Help
+  entry point.
 
 ## In progress
 

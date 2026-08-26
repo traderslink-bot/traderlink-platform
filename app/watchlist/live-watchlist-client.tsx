@@ -38,7 +38,7 @@ import {
   resolveTradersLinkAiPullbackScenarioState,
   type TradersLinkAiPullbackPlan,
 } from "@/src/lib/live-watchlist/traderslink-ai-read";
-import { WatchlistV2PotentialPathCard } from "./potential-path-levels-card";
+import { WatchlistPotentialPathCardArticle } from "./potential-path-levels-card";
 
 const watchlistDateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -83,8 +83,6 @@ const tradingViewExchangePrefixes: Record<string, string> = {
 const detailCardHelpText: Record<string, string> = {
   "Potential Gain":
     "Potential gain compares the ticker's price when tracking began with the highest live price observed afterward. It shows the best observed move, not what every trader captured.",
-  "Potential Path Levels":
-    "These levels are not price targets. They are filtered support and resistance map areas for context, usually mapped roughly 30% from the current price when enough useful levels are available.",
   "Trader Read":
     "This read is generated from live market data, levels, and market structure. It is a planning aid, not a prediction or advice. Small-cap stocks are volatile, and the system can be wrong, delayed, or miss context.",
   "Full Ladder":
@@ -1117,7 +1115,6 @@ function shouldShowCardTitle(label: string, card: LiveWatchlistCardContent): boo
     return false;
   }
   if (
-    label === "Potential Path Levels" ||
     label === "Trader Read" ||
     label === "Market Structure" ||
     label === "Technical Context" ||
@@ -1312,14 +1309,6 @@ function WatchlistDetailCardArticle({
     >
       <div className="academy-card-topline">
         <WatchlistCardKicker label={label} />
-        {label === "Potential Path Levels" ? (
-          <Link
-            href="/watchlist/how-it-works"
-            className="watchlist-card-guide-link"
-          >
-            How it works
-          </Link>
-        ) : null}
       </div>
       {hasContent ? (
         <>
@@ -1328,13 +1317,6 @@ function WatchlistDetailCardArticle({
           ) : null}
           {label === "Known Recent News / SEC Filings" ? (
             card ? <RecentNewsFilingsCard card={card} /> : null
-          ) : label === "Potential Path Levels" ? (
-            card ? (
-              <WatchlistV2PotentialPathCard
-                symbol={symbol}
-                fullLadderCard={symbol.cards.fullLadder}
-              />
-            ) : null
           ) : label === "Trader Read" ? (
             card ? <LiveTraderReadCard card={card} /> : null
           ) : label === "Market Structure" ? (
@@ -1444,9 +1426,9 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
           <p>{highRiskWarning.message}</p>
         </aside>
       ) : null}
-      <WatchlistDetailCardArticle
-        label="Potential Path Levels"
+      <WatchlistPotentialPathCardArticle
         card={closestLevelsCard}
+        fullLadderCard={symbol.cards.fullLadder}
         symbol={symbol}
       />
       {symbol.tradersLinkAiReadCardVisible !== false && tradersLinkAiReadCard ? (

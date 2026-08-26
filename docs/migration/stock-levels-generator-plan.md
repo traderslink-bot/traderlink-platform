@@ -18,7 +18,9 @@ Discord publishing, AI generation, Premium access, or live Watchlist state.
    tickers or requests without sufficient trustworthy reference/candle data
    receive a factual unavailable result; the feature never invents a map.
 3. Reuse the existing Watchlist ticker-detail **Potential Path Levels**
-   component and its exact responsive CSS rather than redesigning the card.
+   component, outer card hierarchy and its exact responsive CSS rather than
+   redesigning or recreating the card. The Dashboard embeds the established
+   Watchlist card CSS context without its public navigation.
 4. Render the ticker, the price when levels were generated, one calculation
    date/time, complete support and resistance columns, level
    strength/type/provenance, and a collapsed-by-default expandable Full ladder.
@@ -40,8 +42,9 @@ Discord publishing, AI generation, Premium access, or live Watchlist state.
    per rolling hour and fifteen per New York trading day. A runtime cache hit
    does not consume a limit. The UI reports factual remaining/reset information
    and never fabricates availability.
-9. Add a dedicated Help collection/guide and Dashboard contextual Help mapping.
-   Keep useful compact Help on the `/levels` page in trader language.
+9. Keep the approved Help mapping and link the on-card question-mark directly
+   to the public Watchlist how-it-works guide. Do not retain a separate Stock
+   Levels Help button or a local `How to read this map` explainer panel.
 10. Preserve the current card's responsive behavior and its existing visual
     language exactly. The owner reviews the complete UI before the first
     acceptance checkpoint.
@@ -73,14 +76,16 @@ The page Help and dedicated guide must explain only product truth:
 - `app/(dashboard)/levels/stock-levels-client.tsx`: ticker entry, request
   lifecycle, remaining/reset feedback, factual unavailable state, compact page
   Help, and rendering of the shared card.
-- `app/watchlist/potential-path-levels-card.tsx`: a refactor of the
-  existing Watchlist Potential Path component into a reusable, DTO-driven card
-  without changing its card layout, Full ladder behavior, level rows, or
-  responsive semantics.
+- `app/watchlist/potential-path-levels-card.tsx`: the single shared Watchlist
+  Potential Path card, including its original outer article/topline/kicker/
+  guide hierarchy and inner Full ladder behavior, level rows and responsive
+  semantics. Generator-only header, price-note and nearest-summary choices are
+  explicit adapters around this component.
 - `app/watchlist/live-watchlist-client.tsx`: consume that shared component so
   the existing Watchlist detail remains the visual source of truth.
-- `app/globals.css`: existing Potential Path selectors remain the shared CSS;
-  preserve their rendered values and mobile rules exactly.
+- `app/globals.css`: existing Academy-shell and Potential Path selectors
+  remain the shared CSS; preserve their rendered values and mobile rules
+  exactly. No Dashboard look-alike card CSS is introduced.
 - `app/dashboard-navigation.ts`: `Stock Levels` item, route title, and
   Dashboard contextual Help target under the existing `Stock Tools` group.
 

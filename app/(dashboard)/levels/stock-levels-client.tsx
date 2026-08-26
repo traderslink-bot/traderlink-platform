@@ -7,7 +7,7 @@ import Typography from "@mui/material/Typography";
 import { useState } from "react";
 
 import type { StockLevelsResult } from "@/src/modules/stock-levels/stock-levels-contract";
-import { WatchlistV2PotentialPathCard } from "../../watchlist/potential-path-levels-card";
+import { WatchlistPotentialPathCardArticle } from "../../watchlist/potential-path-levels-card";
 import {
   DashboardPage,
   DashboardPanel,
@@ -36,33 +36,35 @@ function PotentialPathCard({ result }: { result: Extract<StockLevelsResult, { st
   const { map } = result;
 
   return (
-    <article className="academy-card watchlist-content-card" data-card-label="Potential Path Levels">
-      <div className="academy-card-topline">
-        <p className="academy-kicker watchlist-card-kicker"><span>Potential Path Levels</span></p>
-        <a
-          aria-label="How Potential Path Levels work"
-          className="watchlist-card-guide-link"
-          href="https://traderslink.pro/watchlist/how-it-works"
-        >
-          <HelpOutlineRoundedIcon fontSize="small" />
-        </a>
+    <div className="academy-shell" data-academy-theme="light">
+      <div className="academy-container watchlist-container">
+        <div className="watchlist-page">
+          <section className="watchlist-card-grid">
+            <WatchlistPotentialPathCardArticle
+              card={map.nearestSupportResistanceCard}
+              fullLadderCard={map.fullLadderCard ?? undefined}
+              guideAriaLabel="How Potential Path Levels work"
+              guideContent={<HelpOutlineRoundedIcon fontSize="small" />}
+              guideHref="https://traderslink.pro/watchlist/how-it-works"
+              priceNote={`price was ${formatPrice(map.referencePrice)} when levels were generated on ${generatedAt(map.calculatedAt)}`}
+              priceNoteOwnLine
+              showKickerHelp={false}
+              showMeta={false}
+              showNearestLevels={false}
+              showOuterMeta={false}
+              showPrice={false}
+              symbol={{
+                symbol: map.symbol,
+                latestPrice: map.referencePrice,
+                updatedAt: map.calculatedAt,
+                levelMap: map.levelMap,
+                cards: { nearestSupportResistance: map.nearestSupportResistanceCard ?? undefined },
+              }}
+            />
+          </section>
+        </div>
       </div>
-      <WatchlistV2PotentialPathCard
-        symbol={{
-          symbol: map.symbol,
-          latestPrice: map.referencePrice,
-          updatedAt: map.calculatedAt,
-          levelMap: map.levelMap,
-          cards: { nearestSupportResistance: map.nearestSupportResistanceCard ?? undefined },
-        }}
-        fullLadderCard={map.fullLadderCard ?? undefined}
-        priceNote={`price was ${formatPrice(map.referencePrice)} when levels were generated on ${generatedAt(map.calculatedAt)}`}
-        priceNoteOwnLine
-        showMeta={false}
-        showNearestLevels={false}
-        showPrice={false}
-      />
-    </article>
+    </div>
   );
 }
 
@@ -115,15 +117,6 @@ export function StockLevelsClient() {
           </DashboardPrimaryAction>
         </Box>
         <Typography color="text.secondary" variant="body2">{feedback}</Typography>
-      </DashboardPanel>
-
-      <DashboardPanel title="How to read this map">
-        <Typography color="text.secondary" variant="body2">
-          Real market data and historical candles build this map. It normally reaches roughly 30% around the reference price and can extend farther when structural evidence supports it. Levels are support and resistance areas, not price targets, predictions, or advice. Request a new map after price moves.
-        </Typography>
-        <Typography color="text.secondary" variant="body2">
-          Weak through major describe available structural evidence. Type, clustered/timeframe agreement, role flips and the supplied formed, tested or confirmed dates provide context when available.
-        </Typography>
       </DashboardPanel>
 
       {result?.state === "ready" ? <PotentialPathCard result={result} /> : null}

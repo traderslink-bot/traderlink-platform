@@ -1,5 +1,8 @@
 "use client";
 
+import Link from "next/link";
+import type { ReactNode } from "react";
+
 import type {
   LiveWatchlistCardContent,
   LiveWatchlistLevelMap,
@@ -30,6 +33,9 @@ type PotentialPathSymbol = Pick<
   | "levelMap"
   | "cards"
 >;
+
+const potentialPathHelpText =
+  "These levels are not price targets. They are filtered support and resistance map areas for context, usually mapped roughly 30% from the current price when enough useful levels are available.";
 
 function formatPrice(value: number | null): string {
   if (typeof value !== "number" || !Number.isFinite(value)) {
@@ -170,6 +176,25 @@ function WatchlistV2FallbackLevels({ symbol }: { symbol: PotentialPathSymbol }) 
   );
 }
 
+function WatchlistPotentialPathCardKicker({ showHelp = true }: { showHelp?: boolean }) {
+  return (
+    <p className="academy-kicker watchlist-card-kicker">
+      <span>Potential Path Levels</span>
+      {showHelp ? (
+        <button
+          type="button"
+          className="watchlist-card-help"
+          aria-label="Potential Path Levels help"
+          data-tooltip={potentialPathHelpText}
+          title={potentialPathHelpText}
+        >
+          ?
+        </button>
+      ) : null}
+    </p>
+  );
+}
+
 export function WatchlistV2PotentialPathCard({
   symbol,
   fullLadderCard,
@@ -253,5 +278,77 @@ export function WatchlistV2PotentialPathCard({
         </details>
       ) : null}
     </div>
+  );
+}
+
+export function WatchlistPotentialPathCardArticle({
+  card,
+  fullLadderCard,
+  guideAriaLabel,
+  guideContent = "How it works",
+  guideHref = "/watchlist/how-it-works",
+  priceNote,
+  priceNoteOwnLine,
+  showKickerHelp = true,
+  showMeta,
+  showNearestLevels,
+  showOuterMeta = true,
+  showPrice,
+  symbol,
+}: {
+  card: LiveWatchlistCardContent | null | undefined;
+  fullLadderCard?: LiveWatchlistCardContent;
+  guideAriaLabel?: string;
+  guideContent?: ReactNode;
+  guideHref?: string;
+  priceNote?: string;
+  priceNoteOwnLine?: boolean;
+  showKickerHelp?: boolean;
+  showMeta?: boolean;
+  showNearestLevels?: boolean;
+  showOuterMeta?: boolean;
+  showPrice?: boolean;
+  symbol: PotentialPathSymbol;
+}) {
+  const hasContent = Boolean(card);
+
+  return (
+    <article className="academy-card watchlist-content-card" data-card-label="Potential Path Levels">
+      <div className="academy-card-topline">
+        <WatchlistPotentialPathCardKicker showHelp={showKickerHelp} />
+        <Link
+          aria-label={guideAriaLabel}
+          className="watchlist-card-guide-link"
+          href={guideHref}
+        >
+          {guideContent}
+        </Link>
+      </div>
+      {hasContent ? (
+        <>
+          <WatchlistV2PotentialPathCard
+            symbol={symbol}
+            fullLadderCard={fullLadderCard}
+            priceNote={priceNote}
+            priceNoteOwnLine={priceNoteOwnLine}
+            showMeta={showMeta}
+            showNearestLevels={showNearestLevels}
+            showPrice={showPrice}
+          />
+          {showOuterMeta ? (
+            <p className="watchlist-card-meta">
+              Updated {formatTime(card.updatedAt)} | Price when posted {formatPrice(card.priceWhenPosted)}
+            </p>
+          ) : null}
+        </>
+      ) : (
+        <>
+          <h2 className="academy-card-title">Waiting for content</h2>
+          <p className="academy-card-text">
+            This card will fill in when the runtime publishes the next matching update.
+          </p>
+        </>
+      )}
+    </article>
   );
 }
