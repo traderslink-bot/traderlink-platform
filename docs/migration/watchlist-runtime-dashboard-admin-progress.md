@@ -42,6 +42,16 @@
   five-minute volume confirmation, new-date activation eligibility, and
   Finnhub Company Details resilience. The existing document relay requires no
   Platform application-code change.
+- [x] Apply the current owner-iteration display corrections in the member
+  Watchlist without changing its data contract: remove the repeated
+  non-actionable five-minute note outside mapped decision states, hide
+  `Analysis pending` in both list and detail contexts, show the exact rejected
+  AI-analysis note, and render the catalyst section only for a confirmed
+  source-backed catalyst.
+- [ ] Complete the paired runtime source corrections for canonical
+  TradersLink article precedence, the AI Operations default filter, and a
+  wider evidence-backed initial outer target when the supplied daily history
+  supports one. The requested Potential Path header note awaits owner copy.
 - [ ] Configure the hosted runtime connection and verify the complete page
   without a browser-side fetch failure before release acceptance.
 
@@ -51,3 +61,7 @@ The existing runtime remains the sole publisher. Its URL and token must be
 configured server-side in the relevant Railway environment and must never be
 committed or exposed to the browser. No duplicate publisher or data migration
 is allowed.
+
+The Watchlist correction scope remains in active owner iteration. This record
+does not request a release, deployment, restart, provider call, or hosted
+configuration change.
