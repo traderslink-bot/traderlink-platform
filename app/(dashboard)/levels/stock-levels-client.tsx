@@ -84,7 +84,7 @@ export function StockLevelsClient() {
         <Box sx={{ display: "grid", gap: 1.25, gridTemplateColumns: { xs: "1fr", sm: "minmax(0, 1fr) auto" } }}>
           <TextField
             autoCapitalize="characters"
-            label="Nasdaq or NYSE ticker"
+            label="Ticker"
             onChange={(event) => setSymbol(event.target.value.toUpperCase())}
             onKeyDown={(event) => {
               if (event.key === "Enter" && !loading) {

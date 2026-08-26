@@ -56,8 +56,8 @@ Railway staging build and owner visual review pending
 
 ## In progress
 
-- [x] Add the isolated runtime calculation endpoint, narrow DTO, exact
-  Nasdaq/NYSE equity validation, EODHD reference-price requirement,
+- [x] Add the isolated runtime calculation endpoint, narrow DTO, syntactic
+  ticker validation, EODHD reference-price requirement,
   in-flight deduplication and fifteen-minute shared cache.
 - [x] Add Platform authenticated relay, persistent account quota receipt
   migration and truthful remaining/reset feedback.

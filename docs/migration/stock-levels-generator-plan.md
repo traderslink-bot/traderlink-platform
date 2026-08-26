@@ -13,9 +13,10 @@ Discord publishing, AI generation, Premium access, or live Watchlist state.
 
 1. Add an authenticated Dashboard route at `/levels` and a `Stock Levels`
    entry under `Stock Tools`.
-2. Accept a Nasdaq or NYSE equity ticker and provide a `Get Levels` action.
-   Invalid, unknown, non-equity, or unsupported-exchange symbols receive a
-   factual unavailable or validation result; the feature never invents a map.
+2. Accept a syntactically valid ticker and provide a `Get Levels` action.
+   Missing exchange or security metadata is not a rejection reason. Invalid
+   tickers or requests without sufficient trustworthy reference/candle data
+   receive a factual unavailable result; the feature never invents a map.
 3. Reuse the existing Watchlist ticker-detail **Potential Path Levels**
    component and its exact responsive CSS rather than redesigning the card.
 4. Render the ticker, clearly labelled reference price, its calculation/as-of
@@ -34,7 +35,7 @@ Discord publishing, AI generation, Premium access, or live Watchlist state.
    calculations.
 7. Add a dedicated runtime endpoint protected by a server-only token. Its
    response is the narrow factual DTO required by the card; it validates the
-   symbol as a Nasdaq/NYSE equity, coalesces concurrent requests, and shares a
+   syntactically valid symbol, coalesces concurrent requests, and shares a
    fifteen-minute result cache.
 8. Enforce Platform account-scoped persistent limits: ten fresh calculations
    per rolling hour and thirty per New York trading day. A runtime cache hit
@@ -113,9 +114,8 @@ The page Help and dedicated guide must explain only product truth:
 - `src/runtime/manual-watchlist-server.ts`: add one separate token-protected
   `POST /api/runtime/stock-levels` handler. It remains outside every
   `/api/watchlist/**` lifecycle path.
-- `src/runtime/stock-levels-generator.ts`: request validation, Nasdaq/NYSE
-  common-equity validation using the runtime's existing market-data/security
-  sources, EODHD reference quote retrieval, the canonical engine invocation,
+- `src/runtime/stock-levels-generator.ts`: request validation, EODHD
+  reference quote retrieval, the canonical engine invocation,
   selected same-day context, in-flight coalescing, fifteen-minute shared cache,
   and factual unavailable results. It passes the engine result to the shared
   pure snapshot-to-Potential-Path adapter; it does not construct rows, nearest
