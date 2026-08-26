@@ -469,6 +469,33 @@ function TradersLinkAiLiveVolumeSection({
   );
 }
 
+function shouldShowTradersLinkAiLiveVolumeConfirmation(args: {
+  read: TradersLinkAiReadPayload;
+  livePrice: number;
+  volume: LiveWatchlistVolumeContext;
+}): boolean {
+  if (args.volume.label === "unknown") {
+    return false;
+  }
+  if (
+    args.read.momentumFailure.price !== null &&
+    args.livePrice <= args.read.momentumFailure.price
+  ) {
+    return true;
+  }
+  if (args.read.version === 3 || args.read.version === 4) {
+    const scenarios = [args.read.pullbackPlans.shallow, args.read.pullbackPlans.deep]
+      .filter((scenario): scenario is TradersLinkAiReadPullbackScenario => scenario !== null);
+    if (scenarios.some((scenario) => {
+      const state = resolveTradersLinkAiPullbackScenarioState(scenario, args.livePrice);
+      return state === "Testing" || state === "Reclaim required";
+    })) {
+      return true;
+    }
+  }
+  return args.volume.label === "expanding" || args.volume.label === "strong";
+}
+
 function TradersLinkAiReadCard({
   card,
   symbol,
@@ -524,7 +551,11 @@ function TradersLinkAiReadCard({
         </div>
       </div>
 
-      {liveVolumeContext ? (
+      {liveVolumeContext && shouldShowTradersLinkAiLiveVolumeConfirmation({
+        read,
+        livePrice: currentLivePrice,
+        volume: liveVolumeContext,
+      }) ? (
         <TradersLinkAiLiveVolumeSection
           read={read}
           livePrice={currentLivePrice}
@@ -701,7 +732,8 @@ function TradersLinkAiReadCard({
       ) : null}
 
       <div className="watchlist-ai-read-context-grid">
-        {read.catalystRealityCheck.status !== "none" ? (
+        {read.catalystRealityCheck.status === "confirmed" &&
+        read.catalystRealityCheck.sourceUrls.length > 0 ? (
           <section className="watchlist-ai-read-section">
             <div className="watchlist-ai-read-section-heading">
               <h3>Catalyst / recent news</h3>
@@ -855,6 +887,11 @@ function TradersLinkAiReadStatusCard({
       {symbol && aiReadStatusLabel(symbol, false) ? (
         <p className="watchlist-ai-read-status" data-market-data-status={symbol.marketDataStatus}>
           {aiReadStatusLabel(symbol, false)}
+        </p>
+      ) : null}
+      {status === "failed" ? (
+        <p className="watchlist-ai-read-status">
+          AI analysis contained inaccuracies and was rejected.
         </p>
       ) : null}
     </article>
@@ -1197,6 +1234,9 @@ function WatchlistLifecycleBadge({ symbol }: { symbol: LiveWatchlistSymbolState 
     return null;
   }
   if (symbol.watchlistLifecycleLabelsVisible !== true || !lifecycle) {
+    return null;
+  }
+  if (lifecycle.label === "Analysis Pending") {
     return null;
   }
   return (
