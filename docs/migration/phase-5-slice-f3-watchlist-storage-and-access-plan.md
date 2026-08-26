@@ -8,14 +8,16 @@
 
 ## Outcome
 
-Preserve the existing useful premium Watchlist experience while giving its
+Preserve the existing useful Watchlist experience while giving its
 storage, publisher mutations and access decisions explicit owners. Runtime
 Watchlist code must no longer create or alter schemas as a side effect of a
 page/API request and must never borrow Academy, generic, V3, Journal or
 repository-local storage.
 
 This slice does not redesign the Watchlist UI, activate public Platform login,
-change the Premium product policy or deploy anything.
+change the member-access product policy or deploy anything. The owner later
+set that policy: the Watchlist is free for verified TradersLink Discord server
+members; the owner-only Admin Watchlist remains separate.
 
 ## Product boundary
 
@@ -34,7 +36,7 @@ Watchlist owns:
 Platform owns:
 
 - stable users and authentication identities;
-- the Premium Watchlist access decision;
+- the verified TradersLink Discord-server membership decision;
 - the guarded login-free local-development identity;
 - the future Discord-to-Platform identity activation in Slice F6.
 
@@ -139,19 +141,21 @@ serving or accepting mutations. Existing hosted rows must first pass the Phase
 
 ## Access contract
 
-Premium Watchlist access is a Platform entitlement over a stable Platform
-user. It is global to that user and is never scoped to a workspace or Journal
-account.
+Watchlist access is available to a stable Platform user with a current verified
+membership in the configured TradersLink Discord server. It is global to that
+user and is never scoped to a workspace or Journal account. A Premium role is
+not required.
 
 For local review, only the guarded loopback development boundary may derive
 the seeded development Platform user. No Discord login is required locally.
 
-For production compatibility before F6, the existing Discord session and
-Premium-role check remain behind a named adapter. Pages and Watchlist APIs use
-the Watchlist access service rather than importing Academy session storage
-directly. No display name, email or fuzzy identity match may bind a Platform
-user. Slice F6 replaces the adapter with exact Discord provider/subject
-identity and activates Platform sessions.
+Production pages and Watchlist APIs use the Watchlist access service rather
+than importing Academy session storage directly. That service requires the
+existing exact Discord provider/session identity and current configured-server
+membership evidence; it does not use a display name, email, fuzzy match or
+Premium role. The ordinary Watchlist navigation entry is visible to those
+members. The Admin Watchlist page, its navigation entry and its runtime relay
+remain restricted to the separate stable two-owner Discord-subject allowlist.
 
 Authenticated stream/list/symbol reads use the user access contract. Publisher
 ingest, recap and archive reset continue to require the exact publisher bearer
@@ -183,7 +187,10 @@ authentication subjects are never logged or persisted as evidence.
 - No working database is created inside either repository.
 - A normal request executes no `CREATE`, `ALTER` or migration DDL.
 - Local loopback review works under the seeded Platform user without Discord.
-- Production access behavior remains Premium Discord compatible until F6.
+- Production Watchlist access requires verified TradersLink Discord-server
+  membership and does not require a Premium role.
+- The ordinary Watchlist navigation entry is visible to verified members;
+  Admin Watchlist and its relay remain owner-only.
 - Journal-account switching does not alter Watchlist data or access.
 - Publisher token routes remain separate from user routes.
 - Current/symbol/archive/recap/health/revision behavior remains covered.

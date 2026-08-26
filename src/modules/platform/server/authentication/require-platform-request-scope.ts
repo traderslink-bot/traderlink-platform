@@ -31,6 +31,17 @@ export type TraderLinkPlatformRequestIdentity = Readonly<{
   }> | null;
 }>;
 
+type PlatformRequestIdentityOptions = Readonly<{
+  environment?: NodeJS.ProcessEnv;
+  databasePath?: string;
+  forbiddenRepositoryRoots?: readonly string[];
+  now?: () => Date;
+}>;
+
+type ResolvePlatformRequestIdentityOptions = PlatformRequestIdentityOptions & Readonly<{
+  requireDashboardAccess: boolean;
+}>;
+
 function readSingleCookie(requestHeaders: Headers, name: string): string | null {
   const encoded = requestHeaders.get("cookie");
   if (!encoded) return null;
@@ -50,14 +61,9 @@ function readSingleCookie(requestHeaders: Headers, name: string): string | null 
   }
 }
 
-export function requireTraderLinkPlatformRequestIdentity(
+function resolveTraderLinkPlatformRequestIdentity(
   requestHeaders: Headers,
-  options: Readonly<{
-    environment?: NodeJS.ProcessEnv;
-    databasePath?: string;
-    forbiddenRepositoryRoots?: readonly string[];
-    now?: () => Date;
-  }> = {},
+  options: ResolvePlatformRequestIdentityOptions,
 ): TraderLinkPlatformRequestIdentity {
   const environment = options.environment ?? process.env;
   const selectionRef = readJournalAccountSelectionCookie(requestHeaders);
@@ -102,12 +108,15 @@ export function requireTraderLinkPlatformRequestIdentity(
           resolveTraderLinkDiscordGuildId(environment),
         );
       if (!membership) platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
-      if (!new PlatformDashboardMemberAccessRepository(database)
-        .read().allowAllDiscordMembers &&
+      if (
+        options.requireDashboardAccess &&
+        !new PlatformDashboardMemberAccessRepository(database)
+          .read().allowAllDiscordMembers &&
         !hasPlatformDiscordPremiumAccess({
           guildOwner: membership.guildOwner,
           roleIds: membership.roleIds,
-        }, environment)) {
+        }, environment)
+      ) {
         platformFailure("TRADERLINK_DASHBOARD_ACCESS_DENIED");
       }
       return Object.freeze({
@@ -128,6 +137,26 @@ export function requireTraderLinkPlatformRequestIdentity(
   );
 }
 
+export function requireTraderLinkPlatformRequestIdentity(
+  requestHeaders: Headers,
+  options: PlatformRequestIdentityOptions = {},
+): TraderLinkPlatformRequestIdentity {
+  return resolveTraderLinkPlatformRequestIdentity(requestHeaders, {
+    ...options,
+    requireDashboardAccess: true,
+  });
+}
+
+export function requireTraderLinkPlatformDiscordMemberRequestIdentity(
+  requestHeaders: Headers,
+  options: PlatformRequestIdentityOptions = {},
+): TraderLinkPlatformRequestIdentity {
+  return resolveTraderLinkPlatformRequestIdentity(requestHeaders, {
+    ...options,
+    requireDashboardAccess: false,
+  });
+}
+
 export function requireTraderLinkPlatformRequestScope(
   requestHeaders: Headers,
   options: Parameters<typeof requireTraderLinkPlatformRequestIdentity>[1] = {},
@@ -136,12 +165,18 @@ export function requireTraderLinkPlatformRequestScope(
 }
 
 export async function requireTraderLinkPlatformPageIdentity(
-  options: Omit<
-    Parameters<typeof requireTraderLinkPlatformRequestIdentity>[1],
-    "environment"
-  > = {},
+  options: Omit<PlatformRequestIdentityOptions, "environment"> = {},
 ): Promise<TraderLinkPlatformRequestIdentity> {
   return requireTraderLinkPlatformRequestIdentity(await nextHeaders(), {
+    ...options,
+    environment: process.env,
+  });
+}
+
+export async function requireTraderLinkPlatformDiscordMemberPageIdentity(
+  options: Omit<PlatformRequestIdentityOptions, "environment"> = {},
+): Promise<TraderLinkPlatformRequestIdentity> {
+  return requireTraderLinkPlatformDiscordMemberRequestIdentity(await nextHeaders(), {
     ...options,
     environment: process.env,
   });

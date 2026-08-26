@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Archived Watchlist | TradersLink",
-  description: "Premium TradersLink archive of deactivated watchlist tickers.",
+  description: "TradersLink archive of deactivated watchlist tickers.",
   robots: {
     index: false,
     follow: false,
@@ -41,14 +41,12 @@ export default async function LiveWatchlistArchivePage({
         <div className="academy-container">
           <section className="academy-hero">
             <div className="academy-card watchlist-access-card">
-              <p className="academy-eyebrow">Premium Watchlist</p>
+              <p className="academy-eyebrow">Live Watchlist</p>
               <h1 className="academy-title">
-                {loginRequired ? "Log in to view archived tickers" : "Premium access required"}
+                Log in to view archived tickers
               </h1>
               <p className="academy-lede">
-                {loginRequired
-                  ? "Log in with your TradersLink Discord account to view archived tickers."
-                  : access.error}
+                Log in with your TradersLink Discord account to view archived tickers.
               </p>
               <Link
                 href={`/api/auth/discord/login?returnTo=${encodeURIComponent("/watchlist/archive")}`}

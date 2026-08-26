@@ -3,15 +3,10 @@ import "server-only";
 import type { NextRequest } from "next/server";
 
 import {
-  requireTraderLinkPlatformPageIdentity,
-  requireTraderLinkPlatformRequestIdentity,
+  requireTraderLinkPlatformDiscordMemberPageIdentity,
+  requireTraderLinkPlatformDiscordMemberRequestIdentity,
   type TraderLinkPlatformRequestIdentity,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-
-import {
-  hasPlatformDiscordPremiumAccess,
-  isPremiumWatchlistRoleConfigured,
-} from "./platform-discord-watchlist-entitlement";
 
 export type WatchlistAccessResult =
   | Readonly<{
@@ -23,11 +18,9 @@ export type WatchlistAccessResult =
     }>
   | Readonly<{
       ok: false;
-      status: 401 | 403 | 503;
+      status: 401 | 403;
       reason:
         | "login_required"
-        | "premium_required"
-        | "premium_configuration_unavailable"
         | "local_boundary_denied";
       error: string;
     }>;
@@ -57,27 +50,6 @@ function loginRequired(): WatchlistAccessResult {
 function evaluateIdentity(
   identity: TraderLinkPlatformRequestIdentity,
 ): WatchlistAccessResult {
-  if (identity.mode === "platform_session") {
-    if (!isPremiumWatchlistRoleConfigured()) {
-      return Object.freeze({
-        ok: false as const,
-        status: 503 as const,
-        reason: "premium_configuration_unavailable" as const,
-        error: "Premium watchlist role is not configured.",
-      });
-    }
-    if (
-      identity.discord === null ||
-      !hasPlatformDiscordPremiumAccess(identity.discord)
-    ) {
-      return Object.freeze({
-        ok: false as const,
-        status: 403 as const,
-        reason: "premium_required" as const,
-        error: "Premium TradersLink membership is required to view the live watchlist.",
-      });
-    }
-  }
   return Object.freeze({
     ok: true as const,
     principal: Object.freeze({
@@ -89,7 +61,7 @@ function evaluateIdentity(
 
 export async function authorizeWatchlistPageAccess(): Promise<WatchlistAccessResult> {
   try {
-    return evaluateIdentity(await requireTraderLinkPlatformPageIdentity());
+    return evaluateIdentity(await requireTraderLinkPlatformDiscordMemberPageIdentity());
   } catch {
     return isLocalDevelopmentRuntime() ? localDenied() : loginRequired();
   }
@@ -100,7 +72,7 @@ export async function authorizeWatchlistRequest(
 ): Promise<WatchlistAccessResult> {
   try {
     return evaluateIdentity(
-      requireTraderLinkPlatformRequestIdentity(request.headers),
+      requireTraderLinkPlatformDiscordMemberRequestIdentity(request.headers),
     );
   } catch {
     return isLocalDevelopmentRuntime() ? localDenied() : loginRequired();

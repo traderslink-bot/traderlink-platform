@@ -354,7 +354,8 @@ export function DashboardShell({
   offline = false,
   pressReleaseUnreadCounts = null,
   scannerEarlyAccess = false,
-  watchlistNavigationAccess = false,
+  watchlistMemberNavigationAccess = false,
+  watchlistAdminNavigationAccess = false,
 }: {
   children: ReactNode;
   initialMarketHaltAlertsEnabled?: boolean;
@@ -363,7 +364,8 @@ export function DashboardShell({
   offline?: boolean;
   pressReleaseUnreadCounts?: PressReleaseUnreadCounts | null;
   scannerEarlyAccess?: boolean;
-  watchlistNavigationAccess?: boolean;
+  watchlistMemberNavigationAccess?: boolean;
+  watchlistAdminNavigationAccess?: boolean;
 }) {
   const pathname = usePathname();
   const pageHelpTarget = offline ? null : dashboardHelpTarget(pathname);
@@ -391,17 +393,18 @@ export function DashboardShell({
   const desktopWidth = collapsed ? collapsedWidth : expandedWidth;
   const accountMenuOpen = Boolean(accountMenuAnchor);
   const sidebarNavigationSections = DASHBOARD_SIDEBAR_NAVIGATION_SECTIONS.map((section) =>
-      section.group.id !== "stockTools"
-        ? section
-        : Object.freeze({
-          ...section,
-          group: Object.freeze({
-            ...section.group,
-            items: Object.freeze(section.group.items.filter((item) =>
-              !isDashboardNavigationItem(item) || (
-                (item.href !== "/scanner" || scannerEarlyAccess) &&
-                (item.href !== "/admin/watchlist" || watchlistNavigationAccess)
-              ))),
+    section.group.id !== "stockTools"
+      ? section
+      : Object.freeze({
+        ...section,
+        group: Object.freeze({
+          ...section.group,
+          items: Object.freeze(section.group.items.filter((item) =>
+            !isDashboardNavigationItem(item) || (
+              (item.href !== "/scanner" || scannerEarlyAccess) &&
+              (item.href !== "/watchlist" || watchlistMemberNavigationAccess) &&
+              (item.href !== "/admin/watchlist" || watchlistAdminNavigationAccess)
+            ))),
           }),
         }));
   const closeMobile = () => setMobileOpen(false);

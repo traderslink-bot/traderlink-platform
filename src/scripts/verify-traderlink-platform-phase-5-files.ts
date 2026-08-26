@@ -763,9 +763,9 @@ function main(): void {
     watchlistStore.includes("ACADEMY_DATABASE_URL") ||
     watchlistStore.includes("TRADER_INTELLIGENCE_DB_PATH") ||
     watchlistStore.includes('join(process.cwd(), "data", "live-watchlist.sqlite")') ||
-    !watchlistAccess.includes("requireTraderLinkPlatformPageIdentity") ||
-    !watchlistAccess.includes("requireTraderLinkPlatformRequestIdentity") ||
-    !watchlistAccess.includes("hasPlatformDiscordPremiumAccess") ||
+    !watchlistAccess.includes("requireTraderLinkPlatformDiscordMemberPageIdentity") ||
+    !watchlistAccess.includes("requireTraderLinkPlatformDiscordMemberRequestIdentity") ||
+    watchlistAccess.includes("hasPlatformDiscordPremiumAccess") ||
     watchlistAccess.includes("resolveLegacyDiscordWatchlist") ||
     !watchlistStore.includes("requirePlatformSingleNodeSqliteStorage") ||
     !watchlistLegacyAccess.includes("resolveLegacyDiscordWatchlistPageAccess") ||

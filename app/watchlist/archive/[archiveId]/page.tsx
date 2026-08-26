@@ -45,14 +45,12 @@ export default async function LiveWatchlistArchiveDetailPage({
         <div className="academy-container">
           <section className="academy-hero">
             <div className="academy-card watchlist-access-card">
-              <p className="academy-eyebrow">Premium Watchlist</p>
+              <p className="academy-eyebrow">Live Watchlist</p>
               <h1 className="academy-title">
-                {loginRequired ? "Log in to view archived ticker details" : "Premium access required"}
+                Log in to view archived ticker details
               </h1>
               <p className="academy-lede">
-                {loginRequired
-                  ? "Log in with your TradersLink Discord account to view this archived ticker."
-                  : access.error}
+                Log in with your TradersLink Discord account to view this archived ticker.
               </p>
               <Link
                 href={`/api/auth/discord/login?returnTo=${encodeURIComponent(returnTo)}`}

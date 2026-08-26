@@ -1,10 +1,6 @@
 export {
-  hasPlatformDiscordPremiumAccess,
-  isPremiumWatchlistRoleConfigured,
-} from "@/src/modules/watchlist/server/access/platform-discord-watchlist-entitlement";
-export {
-  authorizeWatchlistRequest as authorizePremiumWatchlistRequest,
+  authorizeWatchlistRequest as authorizeWatchlistMemberRequest,
 } from "@/src/modules/watchlist/server/access/watchlist-access-service";
 export type {
-  WatchlistAccessResult as PremiumWatchlistAuthResult,
+  WatchlistAccessResult as WatchlistMemberAuthResult,
 } from "@/src/modules/watchlist/server/access/watchlist-access-service";

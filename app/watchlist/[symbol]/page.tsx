@@ -47,14 +47,12 @@ export default async function LiveWatchlistSymbolPage({
         <div className="academy-container">
           <section className="academy-hero">
             <div className="academy-card watchlist-access-card">
-              <p className="academy-eyebrow">Premium Watchlist</p>
+              <p className="academy-eyebrow">Live Watchlist</p>
               <h1 className="academy-title">
-                {access.reason === "login_required" ? "Log in to view ticker details" : "Premium access required"}
+                Log in to view ticker details
               </h1>
               <p className="academy-lede">
-                {access.reason === "login_required"
-                  ? "Log in with your TradersLink Discord account to view ticker details."
-                  : access.error}
+                Log in with your TradersLink Discord account to view ticker details.
               </p>
               <Link
                 href={`/api/auth/discord/login?returnTo=${encodeURIComponent(returnTo)}`}

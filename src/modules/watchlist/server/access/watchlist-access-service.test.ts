@@ -9,14 +9,14 @@ vi.mock("server-only", () => ({}));
 vi.mock(
   "@/src/modules/platform/server/authentication/require-platform-request-scope",
   () => ({
-    requireTraderLinkPlatformPageIdentity: localBoundary.requirePage,
-    requireTraderLinkPlatformRequestIdentity: localBoundary.requireRequest,
+    requireTraderLinkPlatformDiscordMemberPageIdentity: localBoundary.requirePage,
+    requireTraderLinkPlatformDiscordMemberRequestIdentity: localBoundary.requireRequest,
   }),
 );
 
 import { authorizeWatchlistPageAccess } from "./watchlist-access-service";
 
-describe("Watchlist access ownership", () => {
+describe("Watchlist member access", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.clearAllMocks();

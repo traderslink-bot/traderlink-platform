@@ -34,7 +34,6 @@ export default async function LiveWatchlistPage({
     return (
       <WatchlistAccessMessage
         authStatus={authStatus}
-        kind={access.reason === "login_required" ? "login" : "premium"}
         returnTo="/watchlist"
       />
     );
@@ -52,11 +51,9 @@ export default async function LiveWatchlistPage({
 
 function WatchlistAccessMessage({
   authStatus,
-  kind,
   returnTo,
 }: {
   authStatus?: string;
-  kind: "login" | "premium";
   returnTo: string;
 }) {
   const notice = getWatchlistAuthNotice(authStatus);
@@ -65,14 +62,10 @@ function WatchlistAccessMessage({
       <div className="academy-container">
         <section className="academy-hero">
           <div className="academy-card watchlist-access-card">
-            <p className="academy-eyebrow">Premium Watchlist</p>
-            <h1 className="academy-title">
-              {kind === "login" ? "Log in to view the live watchlist" : "Premium access required"}
-            </h1>
+            <p className="academy-eyebrow">Live Watchlist</p>
+            <h1 className="academy-title">Log in to view the live watchlist</h1>
             <p className="academy-lede">
-              {kind === "login"
-                ? "Log in with your TradersLink Discord account to view the live watchlist."
-                : "The live watchlist is available to Discord members with the premium role."}
+              Log in with your TradersLink Discord account to view the live watchlist.
             </p>
             {notice ? (
               <div className="academy-auth-alert academy-auth-alert-warning" role="alert">
@@ -115,16 +108,6 @@ function getWatchlistAuthNotice(authStatus: string | undefined) {
       return {
         title: "Discord membership required",
         body: "Join the TradersLink Discord first, then return here and log in again.",
-      };
-    case "premium-required":
-      return {
-        title: "Premium membership required",
-        body: "Your Discord login worked, but this account does not currently have the Premium member role.",
-      };
-    case "premium-config":
-      return {
-        title: "Premium access is temporarily unavailable",
-        body: "The website cannot verify the Premium member role right now. Please try again later.",
       };
     case "invalid-state":
       return {

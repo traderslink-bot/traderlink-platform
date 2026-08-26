@@ -1892,7 +1892,7 @@ export function LiveWatchlistArchiveIndex({
     <div className="watchlist-page">
       <section className="watchlist-hero">
         <div>
-          <p className="academy-eyebrow">Premium Watchlist</p>
+          <p className="academy-eyebrow">Live Watchlist</p>
           <h1 className="academy-title">Archived Tickers</h1>
           <p className="academy-lede">
             Review tickers that were removed from the live watchlist. Archived
