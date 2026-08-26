@@ -8,7 +8,6 @@ import { type CSSProperties, useEffect, useRef, useState } from "react";
 import type {
   LiveWatchlistArchiveSnapshot,
   LiveWatchlistCardContent,
-  LiveWatchlistLevelMap,
   LiveWatchlistMarketDataStatus,
   LiveWatchlistStatePayload,
   LiveWatchlistSymbolState,
@@ -21,13 +20,6 @@ import type {
 import {
   formatMarketDataStatusLabel,
 } from "@/src/lib/live-watchlist/live-watchlist-labels";
-import { formatLevelMarketDataProvenance } from "@/src/lib/live-watchlist/live-watchlist-level-provenance";
-import {
-  buildWatchlistV2LevelRows,
-  formatWatchlistV2LevelDistance,
-  formatWatchlistV2LevelPrice,
-  type WatchlistV2LevelRow,
-} from "@/src/lib/live-watchlist/watchlist-v2-levels";
 import {
   getLiveWatchlistEntryGroup,
   shouldShowReversalWatchlist,
@@ -46,6 +38,7 @@ import {
   resolveTradersLinkAiPullbackScenarioState,
   type TradersLinkAiPullbackPlan,
 } from "@/src/lib/live-watchlist/traderslink-ai-read";
+import { WatchlistPotentialPathCardArticle } from "./potential-path-levels-card";
 
 const watchlistDateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -90,8 +83,6 @@ const tradingViewExchangePrefixes: Record<string, string> = {
 const detailCardHelpText: Record<string, string> = {
   "Potential Gain":
     "Potential gain compares the ticker's price when tracking began with the highest live price observed afterward. It shows the best observed move, not what every trader captured.",
-  "Potential Path Levels":
-    "These levels are not price targets. They are filtered support and resistance map areas for context, usually mapped roughly 30% from the current price when enough useful levels are available.",
   "Trader Read":
     "This read is generated from live market data, levels, and market structure. It is a planning aid, not a prediction or advice. Small-cap stocks are volatile, and the system can be wrong, delayed, or miss context.",
   "Full Ladder":
@@ -217,175 +208,6 @@ function stripInternalAtrLevelWording(value: string): string {
   return value.replace(
     /[ \t]+(?:—|-)[ \t]+(?:inside normal 5m movement|meaningful room|meaningful separation)[ \t]+\(\d+(?:\.\d+)?[ \t]+ATR\)[ \t]*$/gim,
     "",
-  );
-}
-
-function formatLevelMeta(level: WatchlistV2LevelRow): string {
-  return [level.strengthLabel, level.sourceLabel].filter(Boolean).join(" / ") || "level";
-}
-
-function WatchlistV2LevelRowItem({ level }: { level: WatchlistV2LevelRow }) {
-  const provenance = formatLevelMarketDataProvenance(level);
-  return (
-    <li
-      className="watchlist-v2-level-row"
-      data-side={level.side}
-      data-nearest={level.isNearest ? "true" : "false"}
-    >
-      <span className="watchlist-v2-level-price">{formatWatchlistV2LevelPrice(level)}</span>
-      <span className="watchlist-v2-level-distance">
-        {formatWatchlistV2LevelDistance(level)}
-      </span>
-      <span className="watchlist-v2-level-meta">
-        <span>{formatLevelMeta(level)}</span>
-        {provenance ? (
-          <span className="watchlist-level-provenance">{provenance}</span>
-        ) : null}
-      </span>
-    </li>
-  );
-}
-
-function WatchlistV2LevelSection({
-  title,
-  side,
-  levels,
-}: {
-  title: string;
-  side: "support" | "resistance";
-  levels: WatchlistV2LevelRow[];
-}) {
-  return (
-    <section className="watchlist-v2-level-section" data-side={side}>
-      <h3>{title}</h3>
-      {levels.length > 0 ? (
-        <ul className="watchlist-v2-level-list">
-          {levels.map((level) => (
-            <WatchlistV2LevelRowItem
-              key={`${level.side}-${level.price}-${level.distancePct}-${level.label}`}
-              level={level}
-            />
-          ))}
-        </ul>
-      ) : (
-        <p className="watchlist-v2-level-empty">No curated {side} levels yet.</p>
-      )}
-    </section>
-  );
-}
-
-function WatchlistV2NearestLevels({ levelMap }: { levelMap: LiveWatchlistLevelMap }) {
-  return (
-    <div className="watchlist-v2-nearest" aria-label="Nearest levels">
-      <div className="watchlist-v2-nearest-item" data-side="support">
-        <span>Nearest support</span>
-        <strong>
-          {levelMap.nearestSupport
-            ? stripInternalAtrLevelWording(levelMap.nearestSupport.label)
-            : "n/a"}
-        </strong>
-      </div>
-      <div className="watchlist-v2-nearest-item" data-side="resistance">
-        <span>Nearest resistance</span>
-        <strong>
-          {levelMap.nearestResistance
-            ? stripInternalAtrLevelWording(levelMap.nearestResistance.label)
-            : "n/a"}
-        </strong>
-      </div>
-    </div>
-  );
-}
-
-function WatchlistV2FallbackLevels({ symbol }: { symbol: LiveWatchlistSymbolState }) {
-  const card = symbol.cards.nearestSupportResistance;
-  return (
-    <div className="watchlist-v2-fallback-levels">
-      {card ? (
-        <pre>{cleanLevelMapCardBody(card)}</pre>
-      ) : (
-        <p>Closest levels are still loading for this ticker.</p>
-      )}
-    </div>
-  );
-}
-
-function WatchlistV2PotentialPathCard({
-  symbol,
-  fullLadderCard,
-}: {
-  symbol: LiveWatchlistSymbolState;
-  fullLadderCard?: LiveWatchlistCardContent;
-}) {
-  const levelMap = symbol.levelMap ?? null;
-  const levelRows = buildWatchlistV2LevelRows(levelMap);
-  const fullLadderBody = fullLadderCard
-    ? cleanGenericCardBody(fullLadderCard)
-        .replace(/\bheavy\b/gi, "strong")
-        .replace(/\blight\b/gi, "weak")
-    : null;
-
-  return (
-    <div className="watchlist-v2-potential-path-card">
-      <article className="watchlist-v2-card">
-        <header className="watchlist-v2-card-header">
-          <div className="watchlist-v2-card-title">
-            <h2>{symbol.symbol}</h2>
-            {symbol.marketDataStatus === "halted" || symbol.marketDataStatus === "possible_halt" ? (
-              <span
-                className="watchlist-potential-path-status"
-                data-market-data-status={symbol.marketDataStatus}
-                title={symbol.marketDataStatusReason ?? undefined}
-              >
-                {symbol.marketDataStatus === "halted"
-                  ? "HALTED - Nasdaq confirmed"
-                  : "POSSIBLE HALT - confirmation pending"}
-              </span>
-            ) : null}
-            <span>{formatPrice(symbol.latestPrice)}</span>
-            <small className="watchlist-price-delay-note">(delayed 15 sec)</small>
-          </div>
-          <small className="watchlist-potential-path-note">Support and Resistance</small>
-        </header>
-
-        <dl className="watchlist-v2-card-meta">
-          <div>
-            <dt>Updated</dt>
-            <dd>{formatTime(symbol.updatedAt)}</dd>
-          </div>
-        </dl>
-
-        {levelMap ? (
-          <>
-            <WatchlistV2NearestLevels levelMap={levelMap} />
-            <div className="watchlist-v2-level-columns">
-              <WatchlistV2LevelSection
-                title="Support"
-                side="support"
-                levels={levelRows.support}
-              />
-              <WatchlistV2LevelSection
-                title="Resistance"
-                side="resistance"
-                levels={levelRows.resistance}
-              />
-            </div>
-          </>
-        ) : (
-          <WatchlistV2FallbackLevels symbol={symbol} />
-        )}
-      </article>
-
-      {fullLadderBody ? (
-        <details className="watchlist-more-levels">
-          <summary>Full ladder</summary>
-          <div className="watchlist-full-ladder-detail">
-            <h3>Full level ladder</h3>
-            <pre>{fullLadderBody}</pre>
-          </div>
-        </details>
-      ) : null}
-    </div>
   );
 }
 
@@ -1330,7 +1152,6 @@ function shouldShowCardTitle(label: string, card: LiveWatchlistCardContent): boo
     return false;
   }
   if (
-    label === "Potential Path Levels" ||
     label === "Trader Read" ||
     label === "Market Structure" ||
     label === "Technical Context" ||
@@ -1528,14 +1349,6 @@ function WatchlistDetailCardArticle({
     >
       <div className="academy-card-topline">
         <WatchlistCardKicker label={label} />
-        {label === "Potential Path Levels" ? (
-          <Link
-            href="/watchlist/how-it-works"
-            className="watchlist-card-guide-link"
-          >
-            How it works
-          </Link>
-        ) : null}
       </div>
       {hasContent ? (
         <>
@@ -1544,13 +1357,6 @@ function WatchlistDetailCardArticle({
           ) : null}
           {label === "Known Recent News / SEC Filings" ? (
             card ? <RecentNewsFilingsCard card={card} /> : null
-          ) : label === "Potential Path Levels" ? (
-            card ? (
-              <WatchlistV2PotentialPathCard
-                symbol={symbol}
-                fullLadderCard={symbol.cards.fullLadder}
-              />
-            ) : null
           ) : label === "Trader Read" ? (
             card ? <LiveTraderReadCard card={card} /> : null
           ) : label === "Market Structure" ? (
@@ -1660,9 +1466,9 @@ function WatchlistDetailCards({ symbol }: { symbol: LiveWatchlistSymbolState }) 
           <p>{highRiskWarning.message}</p>
         </aside>
       ) : null}
-      <WatchlistDetailCardArticle
-        label="Potential Path Levels"
+      <WatchlistPotentialPathCardArticle
         card={closestLevelsCard}
+        fullLadderCard={symbol.cards.fullLadder}
         symbol={symbol}
       />
       {symbol.tradersLinkAiReadCardVisible !== false && tradersLinkAiReadCard ? (
