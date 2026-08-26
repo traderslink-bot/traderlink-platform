@@ -1,16 +1,7 @@
-export type StockLevelsSide = "support" | "resistance";
-
-export type StockLevelsLevel = Readonly<{
-  side: StockLevelsSide;
-  price: number;
-  distancePct: number;
-  strength: "weak" | "moderate" | "strong" | "major";
-  type: string;
-  timeframeSources: readonly string[];
-  formedAt: number | null;
-  lastTestedAt: number | null;
-  lastConfirmedAt: number | null;
-}>;
+import type {
+  LiveWatchlistCardContent,
+  LiveWatchlistLevelMap,
+} from "@/src/lib/live-watchlist/live-watchlist-types";
 
 export type StockLevelsMap = Readonly<{
   symbol: string;
@@ -18,11 +9,9 @@ export type StockLevelsMap = Readonly<{
   referencePriceAsOf: number;
   calculatedAt: number;
   cacheStatus: "hit" | "fresh";
-  nearestSupport: StockLevelsLevel | null;
-  nearestResistance: StockLevelsLevel | null;
-  support: readonly StockLevelsLevel[];
-  resistance: readonly StockLevelsLevel[];
-  fullLadder: Readonly<{ support: readonly StockLevelsLevel[]; resistance: readonly StockLevelsLevel[] }>;
+  levelMap: LiveWatchlistLevelMap | null;
+  fullLadderCard: LiveWatchlistCardContent | null;
+  nearestSupportResistanceCard: LiveWatchlistCardContent | null;
 }>;
 
 export type StockLevelsResult =
@@ -34,5 +23,8 @@ export function isStockLevelsMap(value: unknown): value is StockLevelsMap {
   const map = value as Record<string, unknown>;
   return typeof map.symbol === "string" && typeof map.referencePrice === "number" &&
     typeof map.referencePriceAsOf === "number" && typeof map.calculatedAt === "number" &&
-    (map.cacheStatus === "hit" || map.cacheStatus === "fresh") && Array.isArray(map.support) && Array.isArray(map.resistance);
+    (map.cacheStatus === "hit" || map.cacheStatus === "fresh") &&
+    (map.levelMap === null || typeof map.levelMap === "object") &&
+    (map.fullLadderCard === null || typeof map.fullLadderCard === "object") &&
+    (map.nearestSupportResistanceCard === null || typeof map.nearestSupportResistanceCard === "object");
 }

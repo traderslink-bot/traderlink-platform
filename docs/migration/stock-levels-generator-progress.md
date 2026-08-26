@@ -1,7 +1,7 @@
 # Stock Levels Generator Progress
 
-**Status:** Source implementation and local commits complete; Railway staging
-build and owner visual review pending
+**Status:** Source correction in progress; Railway staging build and owner
+visual review pending
 **Controlling plan:** [Stock Levels Generator Plan](stock-levels-generator-plan.md)
 **Approved route:** `/levels`
 
@@ -42,6 +42,17 @@ build and owner visual review pending
   unavailable if daily or 4h candles remain usable. Daily/4h are the product's
   main structural context and same-day is supplementary, but this feature does
   not filter, re-rank, or otherwise change the established generator result.
+- [x] Audited the original Stock Levels DTO mapping and removed its independent
+  zone projection, nearest-level selection, and Full ladder formatting. The
+  endpoint now uses the exact pure Watchlist snapshot-to-Potential-Path map,
+  label/provenance, role-flip, ordering, nearest-level, and ladder/card
+  construction; the Dashboard passes that result directly into the shared card.
+- [x] Extracted the existing engine-output-to-`LevelSnapshotPayload`
+  preparation boundary. The Watchlist manager passes its current state/context
+  unchanged; the on-demand endpoint supplies only fresh engine output and
+  factual symbol/reference-price/time, without reading or mutating Watchlist
+  state, monitoring, a publisher instance, Discord, AI, session fallback, or
+  prior-close state.
 
 ## In progress
 
@@ -54,9 +65,11 @@ build and owner visual review pending
   `/levels`, add the Stock Tools navigation item and contextual Help mapping.
 - [x] Add the dedicated Stock Levels Help guide and registry coverage.
 - [x] Update route/migration ownership records at the implementation
-  checkpoint and create narrow local commits in both repositories.
-- [ ] Send the Coordinator the preview-ready handoff; Railway staging build
-  and owner visual review remain external release boundaries.
+  checkpoint.
+- [ ] Complete focused source/diff review and create narrow corrective commits
+  in both repositories.
+- [ ] Send the Coordinator the revised preview-ready handoff; Railway staging
+  build and owner visual review remain external release boundaries.
 
 ## Local commit checkpoint
 

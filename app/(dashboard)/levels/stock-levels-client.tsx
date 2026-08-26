@@ -6,16 +6,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useState } from "react";
 
-import type {
-  LiveWatchlistCardContent,
-  LiveWatchlistLevelMap,
-  LiveWatchlistLevelMapLevel,
-} from "@/src/lib/live-watchlist/live-watchlist-types";
-import type {
-  StockLevelsLevel,
-  StockLevelsMap,
-  StockLevelsResult,
-} from "@/src/modules/stock-levels/stock-levels-contract";
+import type { StockLevelsResult } from "@/src/modules/stock-levels/stock-levels-contract";
 import { WatchlistV2PotentialPathCard } from "../../watchlist/potential-path-levels-card";
 import {
   DashboardPage,
@@ -23,10 +14,6 @@ import {
   DashboardPrimaryAction,
   DashboardSecondaryAction,
 } from "../../dashboard-template";
-
-function formatPrice(value: number): string {
-  return value >= 1 ? value.toFixed(2) : value.toFixed(4);
-}
 
 function eastern(value: number): string {
   return new Intl.DateTimeFormat("en-US", {
@@ -36,76 +23,8 @@ function eastern(value: number): string {
   }).format(new Date(value));
 }
 
-function levelLabel(level: StockLevelsLevel): string {
-  return `${formatPrice(level.price)} (${[level.strength, level.type, level.timeframeSources.join(", ")]
-    .filter(Boolean)
-    .join(" / ")})`;
-}
-
-function asWatchlistLevel(level: StockLevelsLevel): LiveWatchlistLevelMapLevel {
-  const formedAt = level.formedAt;
-  return {
-    side: level.side,
-    price: level.price,
-    distancePct: level.distancePct,
-    strengthLabel: level.strength,
-    sourceLabel: [level.type, level.timeframeSources.join(", ")].filter(Boolean).join(" / "),
-    ...(formedAt === null
-      ? {}
-      : {
-          marketDataProvenance: {
-            formedAt,
-            sourceLastSeenAt:
-              level.lastConfirmedAt ?? level.lastTestedAt ?? formedAt,
-            ...(level.lastTestedAt === null ? {} : { lastTestedAt: level.lastTestedAt }),
-            ...(level.lastConfirmedAt === null ? {} : { lastConfirmedAt: level.lastConfirmedAt }),
-          },
-        }),
-    label: levelLabel(level),
-  };
-}
-
-function asLevelMap(map: StockLevelsMap): LiveWatchlistLevelMap {
-  return {
-    currentPrice: map.referencePrice,
-    rangeState: "normal",
-    nearestSupport: map.nearestSupport ? asWatchlistLevel(map.nearestSupport) : null,
-    nearestResistance: map.nearestResistance ? asWatchlistLevel(map.nearestResistance) : null,
-    nextStrongSupport: null,
-    nextStrongResistance: null,
-    supportLevels: map.support.map(asWatchlistLevel),
-    resistanceLevels: map.resistance.map(asWatchlistLevel),
-  };
-}
-
-function fullLadderBody(map: StockLevelsMap): string {
-  const line = (level: StockLevelsLevel) => {
-    const dates = [
-      level.formedAt === null ? null : `formed ${eastern(level.formedAt)}`,
-      level.lastTestedAt === null ? null : `tested ${eastern(level.lastTestedAt)}`,
-      level.lastConfirmedAt === null ? null : `confirmed ${eastern(level.lastConfirmedAt)}`,
-    ].filter(Boolean);
-    return `- ${levelLabel(level)}${dates.length ? ` — ${dates.join(" · ")}` : ""}`;
-  };
-
-  return [
-    "Support",
-    ...map.fullLadder.support.map(line),
-    "",
-    "Resistance",
-    ...map.fullLadder.resistance.map(line),
-  ].join("\n");
-}
-
 function PotentialPathCard({ result }: { result: Extract<StockLevelsResult, { state: "ready" }> }) {
   const { map } = result;
-  const fullLadderCard: LiveWatchlistCardContent = {
-    title: `${map.symbol} full level ladder`,
-    body: fullLadderBody(map),
-    updatedAt: map.calculatedAt,
-    priceWhenPosted: map.referencePrice,
-    source: "stock_levels_runtime",
-  };
 
   return (
     <WatchlistV2PotentialPathCard
@@ -113,10 +32,10 @@ function PotentialPathCard({ result }: { result: Extract<StockLevelsResult, { st
         symbol: map.symbol,
         latestPrice: map.referencePrice,
         updatedAt: map.calculatedAt,
-        levelMap: asLevelMap(map),
-        cards: {},
+        levelMap: map.levelMap,
+        cards: { nearestSupportResistance: map.nearestSupportResistanceCard },
       }}
-      fullLadderCard={fullLadderCard}
+      fullLadderCard={map.fullLadderCard ?? undefined}
       priceNote="Reference price — not real-time"
       metaLabel="Reference price as of"
       metaValue={`${eastern(map.referencePriceAsOf)} · calculated ${eastern(map.calculatedAt)}`}

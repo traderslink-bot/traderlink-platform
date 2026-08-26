@@ -96,9 +96,9 @@ The page Help and dedicated guide must explain only product truth:
 - `src/modules/stock-levels/server/stock-levels-runtime-client.ts`: server-only
   bearer-token client for the narrow runtime endpoint. Runtime URL/token remain
   environment-only and are never sent to the browser or committed.
-- `src/modules/stock-levels/server/stock-levels-contract.ts`: shared narrow
-  request/response types, factual unavailable reasons, level/provenance fields,
-  and quota feedback contract.
+- `src/modules/stock-levels/stock-levels-contract.ts`: shared narrow
+  request/response types, factual unavailable reasons, the already-mapped
+  Potential Path card facts, and quota feedback contract.
 - `src/modules/platform/server/database/migrations/0089_platform_stock_levels_usage.ts`:
   persistent account-scoped fresh-calculation receipts, New York day identity,
   and indexes required for atomic quota enforcement. It contains no quote,
@@ -117,11 +117,23 @@ The page Help and dedicated guide must explain only product truth:
   common-equity validation using the runtime's existing market-data/security
   sources, EODHD reference quote retrieval, the canonical engine invocation,
   selected same-day context, in-flight coalescing, fifteen-minute shared cache,
-  narrow DTO projection, and factual unavailable results.
+  and factual unavailable results. It passes the engine result to the shared
+  pure snapshot-to-Potential-Path adapter; it does not construct rows, nearest
+  levels, or Full ladder content itself.
+- `src/lib/monitoring/manual-watchlist-runtime-manager.ts`: exposes the pure
+  engine-output-to-`LevelSnapshotPayload` preparation boundary. The existing
+  Watchlist manager supplies its unchanged state/context inputs; on-demand
+  Stock Levels supplies only fresh output plus factual symbol/price/time.
+- `src/lib/live-watchlist/live-watchlist-publisher.ts`: exposes the existing
+  pure Potential Path mapping and Full ladder/card construction. The existing
+  Watchlist snapshot path and Stock Levels endpoint use this same mapping;
+  neither path is allowed to duplicate its selection, nearest-level, label,
+  provenance, ordering, role-flip, or ladder behavior.
 - Existing canonical engine, EODHD historical/live providers, selected
-  same-day provider, and Watchlist runtime manager remain reused dependencies;
-  no duplicate calculation implementation, provider change, cache format
-  mutation, Watchlist entry creation, or publisher call is allowed.
+  same-day provider, Watchlist runtime manager, and pure Watchlist Potential
+  Path presentation remain reused dependencies; no duplicate calculation or
+  display-mapping implementation, provider change, cache format mutation,
+  Watchlist entry creation, state read/write, or publisher event is allowed.
 
 ### Help
 
@@ -146,12 +158,11 @@ The page Help and dedicated guide must explain only product truth:
 
 - Reference price must be finite and greater than zero, carry the EODHD source
   and as-of/calculation time, and be shown as a reference price.
-- DTO fields expose only the card facts: symbol, reference-price provenance,
-  generated time, nearest levels, support/resistance rows, strength/type,
-  runtime-provided provenance, Full ladder, and factual availability/cache
-  status necessary for quota accounting. No account IDs, tokens, configuration,
-  full raw candles, internal scores, provider secrets, Watchlist records, or
-  unpublished runtime state cross the boundary.
+- DTO fields expose only the existing card facts: symbol, reference-price
+  provenance, generated time, shared Potential Path map and Full ladder card,
+  and factual availability/cache status necessary for quota accounting. No
+  account IDs, tokens, configuration, full raw candles, provider secrets,
+  Watchlist records, or unpublished runtime state cross the boundary.
 - The runtime cache key is the normalized symbol and calculation contract
   version. A concurrent matching request joins the in-flight calculation.
 - Platform treats only an explicitly declared runtime cache hit as free. A
