@@ -56,9 +56,9 @@
   live page no longer displays zero-count Top Regular, Main Session, or
   Post-Market headings and empty-state copy.
 - [x] Keep factual Watchlist market-data and Moomoo connection cards at the
-  top of the Admin document, and keep the full AI Read Operations card there
-  so ticker selection and expandable prior-operation history are discoverable
-  without switching to a generic control section.
+  top of the Admin document. AI Read Operations remains in the AI Controls
+  view, where its existing ticker selection exposes expandable prior-operation
+  history.
 - [ ] Complete the paired runtime source corrections for canonical
   TradersLink article precedence, the AI Operations default filter, and a
   wider evidence-backed initial outer target when the supplied daily history
