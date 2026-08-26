@@ -91,6 +91,11 @@ Railway staging build and owner visual review pending
 
 ## In progress
 
+- [x] Add the owner-approved 72-hour private saved-map lifecycle: initial
+  account-scoped load, separate Get Levels snapshots, regenerate-in-place to
+  top, and delete without Watchlist coupling. Migration `0090` is registered
+  only; it has not been run locally or in Railway.
+
 - [x] Add the isolated runtime calculation endpoint, narrow DTO, syntactic
   ticker validation, EODHD reference-price requirement,
   in-flight deduplication and fifteen-minute shared cache.

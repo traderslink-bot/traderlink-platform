@@ -4,9 +4,13 @@ import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
-import type { StockLevelsResult } from "@/src/modules/stock-levels/stock-levels-contract";
+import {
+  isSavedStockLevelsMap,
+  type SavedStockLevelsMap,
+  type StockLevelsResult,
+} from "@/src/modules/stock-levels/stock-levels-contract";
 import { WatchlistPotentialPathCardArticle } from "../../watchlist/potential-path-levels-card";
 import {
   DashboardPage,
@@ -32,21 +36,16 @@ function formatPrice(value: number): string {
   return value >= 1 ? value.toFixed(2) : value.toFixed(4);
 }
 
-type ReadyStockLevelsResult = Extract<StockLevelsResult, { state: "ready" }>;
-
 type GeneratedLevelsResult = Readonly<{
-  id: number;
-  result: ReadyStockLevelsResult;
+  savedMap: SavedStockLevelsMap;
 }>;
 
-function generatedLevelsSummary(result: ReadyStockLevelsResult): string {
-  const { map } = result;
+function generatedLevelsSummary(savedMap: SavedStockLevelsMap): string {
+  const { map } = savedMap;
   return `${map.symbol} levels generated when price was ${formatPrice(map.referencePrice)} on ${generatedAt(map.calculatedAt)}`;
 }
 
-function PotentialPathCard({ result }: { result: ReadyStockLevelsResult }) {
-  const { map } = result;
-
+function PotentialPathCard({ map }: { map: SavedStockLevelsMap["map"] }) {
   return (
     <WatchlistPotentialPathCardArticle
       card={map.nearestSupportResistanceCard}
@@ -73,18 +72,56 @@ function PotentialPathCard({ result }: { result: ReadyStockLevelsResult }) {
   );
 }
 
-function GeneratedLevelsCards({ results }: { results: readonly GeneratedLevelsResult[] }) {
+function GeneratedLevelsCards({
+  actionsDisabled,
+  onDelete,
+  onRegenerate,
+  results,
+}: {
+  actionsDisabled: boolean;
+  onDelete: (savedMapId: string) => void;
+  onRegenerate: (savedMap: SavedStockLevelsMap) => void;
+  results: readonly GeneratedLevelsResult[];
+}) {
   return (
     <div className="academy-shell" data-academy-theme="light">
       <div className="academy-container watchlist-container">
         <div className="watchlist-page">
           <section className="watchlist-card-grid">
-            {results.map(({ id, result }, index) => index === 0 ? (
-              <PotentialPathCard key={id} result={result} />
+            {results.map(({ savedMap }, index) => index === 0 ? (
+              <PotentialPathCard key={savedMap.savedMapId} map={savedMap.map} />
             ) : (
-              <details key={id} className="stock-levels-history-card" data-history-index={index}>
-                <summary>{generatedLevelsSummary(result)}</summary>
-                <PotentialPathCard result={result} />
+              <details key={savedMap.savedMapId} className="stock-levels-history-card" data-history-index={index}>
+                <summary>
+                  <span>{generatedLevelsSummary(savedMap)}</span>
+                  <span className="stock-levels-history-actions" onClick={(event) => event.preventDefault()}>
+                    <button
+                      className="stock-levels-history-action"
+                      disabled={actionsDisabled}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onRegenerate(savedMap);
+                      }}
+                      type="button"
+                    >
+                      Regenerate
+                    </button>
+                    <button
+                      className="stock-levels-history-action"
+                      disabled={actionsDisabled}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onDelete(savedMap.savedMapId);
+                      }}
+                      type="button"
+                    >
+                      Delete
+                    </button>
+                  </span>
+                </summary>
+                <PotentialPathCard map={savedMap.map} />
               </details>
             ))}
           </section>
@@ -100,14 +137,37 @@ export function StockLevelsClient() {
   const [generatedResults, setGeneratedResults] = useState<readonly GeneratedLevelsResult[]>([]);
   const [requestError, setRequestError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const nextGeneratedResultId = useRef(0);
 
-  async function requestLevels() {
+  useEffect(() => {
+    let active = true;
+    void fetch("/api/levels", { cache: "no-store" })
+      .then(async (response) => response.json() as Promise<{ savedMaps?: unknown }>)
+      .then((payload) => {
+        if (!active || !Array.isArray(payload.savedMaps)) return;
+        const loaded = payload.savedMaps.flatMap((savedMap) =>
+          isSavedStockLevelsMap(savedMap) ? [{ savedMap }] : []);
+        setGeneratedResults((current) => [
+          ...current,
+          ...loaded.filter((loadedResult) => !current.some((currentResult) =>
+            currentResult.savedMap.savedMapId === loadedResult.savedMap.savedMapId)),
+        ]);
+      })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, []);
+
+  async function requestLevels({
+    replaceSavedMapId = null,
+    requestedSymbol = symbol,
+  }: Readonly<{
+    replaceSavedMapId?: string | null;
+    requestedSymbol?: string;
+  }> = {}) {
     setLoading(true);
     setRequestError(null);
     try {
       const response = await fetch("/api/levels", {
-        body: JSON.stringify({ symbol }),
+        body: JSON.stringify({ replaceSavedMapId, symbol: requestedSymbol }),
         headers: { "content-type": "application/json" },
         method: "POST",
       });
@@ -115,14 +175,33 @@ export function StockLevelsClient() {
       setResult(nextResult);
       if (nextResult.state === "ready") {
         setGeneratedResults((current) => [
-          { id: nextGeneratedResultId.current++, result: nextResult },
-          ...current,
+          { savedMap: nextResult.savedMap },
+          ...current.filter((item) => item.savedMap.savedMapId !== nextResult.savedMap.savedMapId),
         ]);
       }
     } catch {
       setRequestError("A reliable Stock Levels map is unavailable right now. Try again later.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function deleteSavedMap(savedMapId: string) {
+    setRequestError(null);
+    try {
+      const response = await fetch("/api/levels", {
+        body: JSON.stringify({ savedMapId }),
+        headers: { "content-type": "application/json" },
+        method: "DELETE",
+      });
+      const payload = await response.json() as { deleted?: unknown };
+      if (payload.deleted === true) {
+        setGeneratedResults((current) => current.filter((item) => item.savedMap.savedMapId !== savedMapId));
+      } else {
+        setRequestError("This saved map is unavailable.");
+      }
+    } catch {
+      setRequestError("This saved map is unavailable.");
     }
   }
 
@@ -155,7 +234,17 @@ export function StockLevelsClient() {
         <Typography color="text.secondary" variant="body2">{feedback}</Typography>
       </DashboardPanel>
 
-      {generatedResults.length > 0 ? <GeneratedLevelsCards results={generatedResults} /> : null}
+      {generatedResults.length > 0 ? (
+        <GeneratedLevelsCards
+          actionsDisabled={loading}
+          onDelete={(savedMapId) => void deleteSavedMap(savedMapId)}
+          onRegenerate={(savedMap) => void requestLevels({
+            replaceSavedMapId: savedMap.savedMapId,
+            requestedSymbol: savedMap.map.symbol,
+          })}
+          results={generatedResults}
+        />
+      ) : null}
       {result?.state === "unavailable" ? (
         <DashboardPanel title="Data unavailable">
           <Typography>Data is not available for this ticker right now, try again later.</Typography>

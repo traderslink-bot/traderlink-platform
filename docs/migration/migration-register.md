@@ -17,6 +17,14 @@ Discord email in encrypted Platform storage and an explicit first-account
 choice for **The Week Ahead**. It does not create email login, bulk sending,
 an audience provider, trading-behavior segmentation, or a public profile fact.
 
+**Stock Levels private saved maps:** [Stock Levels Generator Plan](stock-levels-generator-plan.md)
+and its [progress record](stock-levels-generator-progress.md) reserve additive
+migration `0090_platform_stock_levels_saved_maps`. It stores a private,
+account-scoped mapped-card snapshot, timestamps and 72-hour expiry for the
+authenticated `/levels` page. It stores no provider credentials, raw candles,
+Watchlist membership or monitoring state. Migration execution remains a
+separate Railway release boundary.
+
 **2026-08-09 AI Review cache-write accounting checkpoint:** migration
 `0051_coach_ai_review_cache_write_accounting` is registered, disposable-copy
 verified, recovery-authority backup/restore verified and locally applied. The
