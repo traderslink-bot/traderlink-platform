@@ -20,6 +20,7 @@ import {
   isTraderLinkPlatformError,
 } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { hasScannerEarlyAccess } from "@/src/modules/scanner/server/scanner-early-access";
+import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -59,6 +60,7 @@ export default async function DashboardLayout({
   const scope = identity.scope;
   const canReadPressReleases = hasPressReleaseDashboardAccess(identity);
   const scannerEarlyAccess = hasScannerEarlyAccess(identity);
+  const watchlistNavigationAccess = hasWatchlistDashboardNavigationAccess(identity);
   const readAtUtc = createCanonicalUtcTimestamp();
   const dashboardContext = withReadonlyPlatformDatabase({}, (database) => {
     const activeAccount = scope.activeAccountId
@@ -97,6 +99,7 @@ export default async function DashboardLayout({
         offlineScopeRef={offlineScopeRef}
         pressReleaseUnreadCounts={dashboardContext.pressReleaseUnreadCounts}
         scannerEarlyAccess={scannerEarlyAccess}
+        watchlistNavigationAccess={watchlistNavigationAccess}
       >
         {children}
       </TraderLinkPlatformDashboardTemplate>
