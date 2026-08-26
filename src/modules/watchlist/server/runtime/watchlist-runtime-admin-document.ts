@@ -118,8 +118,6 @@ const SECTION_NAVIGATION_INJECTION = String.raw`<style id="traderslink-watchlist
         const grid = document.getElementById(id);
         if (grid && grid.parentElement !== summary) summary.append(grid);
       });
-      const auditConsole = document.getElementById("ai-read-audit-console");
-      if (auditConsole && auditConsole.parentElement !== summary) summary.append(auditConsole);
       hideSkippedAuditCard();
     };
     const syncProviderSummary = () => {
