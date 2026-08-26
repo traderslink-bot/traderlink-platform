@@ -30,6 +30,8 @@
   without inventing unavailable values. Return on entry value is deliberately
   omitted because its percentage presentation can overstate a small band's
   apparent difference from the dollar results.
+- Keep the seven-column table compact and left-aligned on desktop, while
+  retaining horizontal scrolling when a smaller viewport needs it.
 - Update Core Analytics Help with the exact weighted-entry-price and
   limited-history meaning.
 
