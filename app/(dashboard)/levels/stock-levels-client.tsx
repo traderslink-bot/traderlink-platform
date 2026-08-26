@@ -33,7 +33,7 @@ function PotentialPathCard({ result }: { result: Extract<StockLevelsResult, { st
         latestPrice: map.referencePrice,
         updatedAt: map.calculatedAt,
         levelMap: map.levelMap,
-        cards: { nearestSupportResistance: map.nearestSupportResistanceCard },
+        cards: { nearestSupportResistance: map.nearestSupportResistanceCard ?? undefined },
       }}
       fullLadderCard={map.fullLadderCard ?? undefined}
       priceNote="Reference price — not real-time"
