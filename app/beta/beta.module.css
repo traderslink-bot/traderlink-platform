@@ -183,6 +183,20 @@
   outline-offset: 4px;
 }
 
+.actionSecondary {
+  display: grid;
+  justify-items: center;
+  gap: 1.2rem;
+  margin-top: 1.7rem;
+}
+
+.actionPrompt {
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
 @media (min-width: 768px) {
   .page {
     padding-top: 72px;
