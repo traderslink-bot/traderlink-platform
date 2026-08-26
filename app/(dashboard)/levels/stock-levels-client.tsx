@@ -201,8 +201,9 @@ export function StockLevelsClient() {
         method: "DELETE",
       });
       const payload = await response.json() as { deleted?: unknown } & Partial<StockLevelsQuotaFeedback>;
+      const deleted = payload.deleted === true;
       if (isStockLevelsQuotaFeedback(payload)) setQuotaFeedback(payload);
-      if (payload.deleted === true) {
+      if (deleted) {
         setGeneratedResults((current) => current.filter((item) => item.savedMap.savedMapId !== savedMapId));
       } else {
         setRequestError("This saved map is unavailable.");
