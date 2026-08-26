@@ -8,7 +8,9 @@ import { useEffect, useState } from "react";
 
 import {
   isSavedStockLevelsMap,
+  isStockLevelsQuotaFeedback,
   type SavedStockLevelsMap,
+  type StockLevelsQuotaFeedback,
   type StockLevelsResult,
 } from "@/src/modules/stock-levels/stock-levels-contract";
 import { WatchlistPotentialPathCardArticle } from "../../watchlist/potential-path-levels-card";
@@ -134,6 +136,7 @@ function GeneratedLevelsCards({
 export function StockLevelsClient() {
   const [symbol, setSymbol] = useState("");
   const [result, setResult] = useState<StockLevelsResult | null>(null);
+  const [quotaFeedback, setQuotaFeedback] = useState<StockLevelsQuotaFeedback | null>(null);
   const [generatedResults, setGeneratedResults] = useState<readonly GeneratedLevelsResult[]>([]);
   const [requestError, setRequestError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -141,9 +144,11 @@ export function StockLevelsClient() {
   useEffect(() => {
     let active = true;
     void fetch("/api/levels", { cache: "no-store" })
-      .then(async (response) => response.json() as Promise<{ savedMaps?: unknown }>)
+      .then(async (response) => response.json() as Promise<{ savedMaps?: unknown } & Partial<StockLevelsQuotaFeedback>>)
       .then((payload) => {
-        if (!active || !Array.isArray(payload.savedMaps)) return;
+        if (!active) return;
+        if (isStockLevelsQuotaFeedback(payload)) setQuotaFeedback(payload);
+        if (!Array.isArray(payload.savedMaps)) return;
         const loaded = payload.savedMaps.flatMap((savedMap) =>
           isSavedStockLevelsMap(savedMap) ? [{ savedMap }] : []);
         setGeneratedResults((current) => [
@@ -173,6 +178,7 @@ export function StockLevelsClient() {
       });
       const nextResult = await response.json() as StockLevelsResult;
       setResult(nextResult);
+      if (isStockLevelsQuotaFeedback(nextResult)) setQuotaFeedback(nextResult);
       if (nextResult.state === "ready") {
         setGeneratedResults((current) => [
           { savedMap: nextResult.savedMap },
@@ -194,7 +200,8 @@ export function StockLevelsClient() {
         headers: { "content-type": "application/json" },
         method: "DELETE",
       });
-      const payload = await response.json() as { deleted?: unknown };
+      const payload = await response.json() as { deleted?: unknown } & Partial<StockLevelsQuotaFeedback>;
+      if (isStockLevelsQuotaFeedback(payload)) setQuotaFeedback(payload);
       if (payload.deleted === true) {
         setGeneratedResults((current) => current.filter((item) => item.savedMap.savedMapId !== savedMapId));
       } else {
@@ -205,10 +212,12 @@ export function StockLevelsClient() {
     }
   }
 
-  const feedback = result?.remainingHourly === null
+  const hasNoRequestLimit = quotaFeedback?.remainingHourly === null &&
+    quotaFeedback?.remainingNewYorkDay === null && quotaFeedback?.resetAt === null;
+  const feedback = hasNoRequestLimit
     ? "No request limit"
-    : result
-    ? `Your account has ${result.remainingHourly} request${result.remainingHourly === 1 ? "" : "s"} left this hour · ${result.remainingNewYorkDay} left today (New York)`
+    : quotaFeedback
+    ? `Your account has ${quotaFeedback.remainingHourly} request${quotaFeedback.remainingHourly === 1 ? "" : "s"} left this hour · ${quotaFeedback.remainingNewYorkDay} left today (New York)`
     : requestError ?? "Each account has 5 requests per hour and 15 per New York trading day.";
 
   return (

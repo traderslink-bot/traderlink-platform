@@ -44,7 +44,9 @@ Discord publishing, AI generation, Premium access, or live Watchlist state.
    does not consume a limit. The UI reports factual remaining/reset information
    and never fabricates availability. The configured stable owner Discord
    subjects used for Watchlist navigation are exempt: they do not consume or
-   receive quota receipts, and their UI says `No request limit`.
+   receive quota receipts, and every `/levels` response adapter (initial
+   saved-map load, generate/regenerate, and delete) renders their null quota
+   payload exactly as `No request limit`.
 9. Keep the approved Help mapping and link the on-card question-mark directly
    to the public Watchlist how-it-works guide. Do not retain a separate Stock
    Levels Help button or a local `How to read this map` explainer panel.

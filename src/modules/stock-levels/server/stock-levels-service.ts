@@ -7,6 +7,7 @@ import {
   isStockLevelsMap,
   type SavedStockLevelsMap,
   type StockLevelsMap,
+  type StockLevelsQuotaFeedback,
   type StockLevelsResult,
 } from "../stock-levels-contract";
 import { requestStockLevels } from "./stock-levels-runtime-client";
@@ -46,12 +47,24 @@ function readQuota(database: ReturnType<typeof openPlatformDatabase>, scope: Wor
   return { hourly, day };
 }
 
-function feedback(scope: WorkspaceAccessScope, now: number, noRequestLimit: boolean) {
+function feedback(
+  scope: WorkspaceAccessScope,
+  now: number,
+  noRequestLimit: boolean,
+): StockLevelsQuotaFeedback {
   if (noRequestLimit) {
     return { remainingHourly: null, remainingNewYorkDay: null, resetAt: null };
   }
   const used = quota(scope, now);
   return { remainingHourly: Math.max(0, MAX_FRESH_REQUESTS_PER_HOUR - used.hourly), remainingNewYorkDay: Math.max(0, MAX_FRESH_REQUESTS_PER_NEW_YORK_DAY - used.day), resetAt: Math.min(now + HOUR_MS, nextNewYorkDay(now)) };
+}
+
+export function getStockLevelsQuotaFeedback(
+  scope: WorkspaceAccessScope,
+  noRequestLimit: boolean,
+  now = Date.now(),
+): StockLevelsQuotaFeedback {
+  return feedback(scope, now, noRequestLimit);
 }
 
 type SavedMapRow = Readonly<{

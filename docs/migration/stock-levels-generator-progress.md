@@ -76,6 +76,10 @@ Railway staging build and owner visual review pending
   reject against, or create Support and Resistance quota receipts; their page
   feedback is `No request limit`. Ordinary authenticated accounts remain at
   five fresh requests per hour and fifteen per New York day.
+- [x] Corrected the saved-map quota-response adapter: initial load, generation,
+  regeneration and delete now share validated quota feedback, rendering the
+  owner-null response exactly as `No request limit` and never interpolating
+  missing quota values.
 - [x] `/levels` passes the explicit `Support and Resistance` header label into
   the shared card; Watchlist retains its default `Potential Path Levels`
   label. The left Stock Tools navigation label is `Levels Generator`, while
