@@ -25,11 +25,17 @@ Runtime Config and Runtime Status.
 
 The relayed document adds only an owner-approved injected section navigation.
 It moves existing runtime DOM blocks without cloning, renaming or replacing
-controls: persistent API Cost and non-Skipped AI Read Operations summary cards
-remain above the navigation; Watchlist is the default; Runtime, Market Data, AI
-Controls, Live Website Controls and Automatic Low-Float Selection are the
-remaining sections. Existing runtime CSS, IDs, event listeners and API paths
-remain runtime-owned.
+controls. The transformer matches the observed direct `MAIN` sections, their
+exact `h2` text and existing grid IDs rather than inferring sections from broad
+content text. Persistent summary content is limited to `#ai-read-cost-grid` and
+`#ai-read-audit-grid`; the AI Read section, both consoles, their controls,
+toolbars, tables and details stay in AI Controls. Only a direct audit-grid card
+whose text begins `Skipped` is hidden, including after the runtime refreshes
+that grid. Watchlist is the default; Runtime, Market Data, AI Controls, Live
+Website Controls and Automatic Low-Float Selection are the remaining sections.
+The two direct Runtime Config provider controls form Market Data, and only the
+final Live Website provider control forms Automatic Low-Float Selection.
+Existing runtime CSS, IDs, event listeners and API paths remain runtime-owned.
 
 ## Security and data boundary
 
