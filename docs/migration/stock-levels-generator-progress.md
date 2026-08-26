@@ -1,7 +1,7 @@
 # Stock Levels Generator Progress
 
-**Status:** Source correction in progress; Railway staging build and owner
-visual review pending
+**Status:** Source implementation and corrective local commits complete;
+Railway staging build and owner visual review pending
 **Controlling plan:** [Stock Levels Generator Plan](stock-levels-generator-plan.md)
 **Approved route:** `/levels`
 
@@ -66,7 +66,7 @@ visual review pending
 - [x] Add the dedicated Stock Levels Help guide and registry coverage.
 - [x] Update route/migration ownership records at the implementation
   checkpoint.
-- [ ] Complete focused source/diff review and create narrow corrective commits
+- [x] Complete focused source/diff review and create narrow corrective commits
   in both repositories.
 - [ ] Send the Coordinator the revised preview-ready handoff; Railway staging
   build and owner visual review remain external release boundaries.
@@ -79,6 +79,10 @@ visual review pending
   levels surface`).
 - Canonical Levels runtime: `ba2ab19` (`feat(stock-levels): expose canonical
   generator safely`).
+- Runtime presentation correction: `3bf9f26` (`fix(stock-levels): share
+  Watchlist presentation`).
+- Platform card-data correction: `2bc30703` (`fix(stock-levels): share
+  Watchlist card data`).
 - No commit was pushed, and no server, test suite, build, browser automation,
   provider call, migration execution, deployment, restart, or configuration
   change was performed.
