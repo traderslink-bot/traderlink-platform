@@ -3567,6 +3567,14 @@ main.bg-zinc-950 .text-zinc-500 {
   font-weight: 820;
 }
 
+.watchlist-potential-path-note {
+  color: var(--academy-subtle);
+  font-size: 0.72rem;
+  font-weight: 720;
+  line-height: 1.3;
+  text-align: right;
+}
+
 .watchlist-price-delay-note {
   color: var(--academy-subtle);
   font-size: 0.68rem;
@@ -5014,6 +5022,10 @@ main.bg-zinc-950 .text-zinc-500 {
 
   .watchlist-v2-card-title .watchlist-price-delay-note {
     grid-column: 1 / -1;
+  }
+
+  .watchlist-potential-path-note {
+    align-self: start;
   }
 
   .watchlist-v2-nearest,

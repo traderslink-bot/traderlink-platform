@@ -48,10 +48,14 @@
   `Analysis pending` in both list and detail contexts, show the exact rejected
   AI-analysis note, and render the catalyst section only for a confirmed
   source-backed catalyst.
+- [x] Remove the archived-ticker entry point from the live Watchlist, replace
+  the experimental-data disclaimer with the owner-approved code/algorithm/AI
+  and chart-history explanation, and label the Potential Path header `Support
+  and Resistance`.
 - [ ] Complete the paired runtime source corrections for canonical
   TradersLink article precedence, the AI Operations default filter, and a
   wider evidence-backed initial outer target when the supplied daily history
-  supports one. The requested Potential Path header note awaits owner copy.
+  supports one.
 - [ ] Configure the hosted runtime connection and verify the complete page
   without a browser-side fetch failure before release acceptance.
 

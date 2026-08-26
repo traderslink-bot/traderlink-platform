@@ -345,6 +345,7 @@ function WatchlistV2PotentialPathCard({
             <span>{formatPrice(symbol.latestPrice)}</span>
             <small className="watchlist-price-delay-note">(delayed 15 sec)</small>
           </div>
+          <small className="watchlist-potential-path-note">Support and Resistance</small>
         </header>
 
         <dl className="watchlist-v2-card-meta">
@@ -1815,14 +1816,10 @@ export function LiveWatchlistIndexClient({
             row to open that ticker&apos;s detail page.
           </p>
           <p className="watchlist-testing-note">
-            This watchlist is an experimental app. Ticker information is generated
-            from the app&apos;s code and may use real-time market data when connected.
-            During testing, live data may not always be active. When disconnected,
-            ticker details, including support and resistance levels, will not update.
+            The watchlist uses a combination of code, algorithms, and AI. It uses
+            real-time market data and collects chart data, prioritizing recent data
+            while going back as far as needed to build support and resistance levels.
           </p>
-          <Link href="/watchlist/archive" className="academy-card-action watchlist-hero-action">
-            View archived tickers
-          </Link>
         </div>
         <div className="watchlist-summary-panel" aria-label="Watchlist status">
           <span>
