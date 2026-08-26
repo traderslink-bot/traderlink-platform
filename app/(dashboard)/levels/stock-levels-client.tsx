@@ -121,8 +121,8 @@ export function StockLevelsClient() {
 
       {result?.state === "ready" ? <PotentialPathCard result={result} /> : null}
       {result?.state === "unavailable" ? (
-        <DashboardPanel title="Support and Resistance Generator unavailable">
-          <Typography>{result.message}</Typography>
+        <DashboardPanel title="Data unavailable">
+          <Typography>Data is not available for this ticker.</Typography>
         </DashboardPanel>
       ) : null}
     </DashboardPage>

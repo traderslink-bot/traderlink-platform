@@ -16,7 +16,8 @@ Discord publishing, AI generation, Premium access, or live Watchlist state.
 2. Accept a syntactically valid ticker and provide a `Get Levels` action.
    Missing exchange or security metadata is not a rejection reason. Invalid
    tickers or requests without sufficient trustworthy reference/candle data
-   receive a factual unavailable result; the feature never invents a map.
+   receive the factual unavailable result `Data is not available for this
+   ticker.`; the feature never invents a map.
 3. Reuse the existing Watchlist ticker-detail **Potential Path Levels**
    component, outer card hierarchy and its exact responsive CSS rather than
    redesigning or recreating the card. The Dashboard embeds the established

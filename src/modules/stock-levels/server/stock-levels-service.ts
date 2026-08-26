@@ -66,8 +66,10 @@ export async function getStockLevels(scope: WorkspaceAccessScope, input: unknown
   const runtimeReply = await requestStockLevels(symbol);
   if (!runtimeReply) return { state: "unavailable", code: "runtime_unavailable", message: "A reliable Stock Levels map is unavailable right now. Try again later.", ...feedbackBefore };
   if (!("map" in runtimeReply)) {
-    return runtimeReply.code === "unsupported_equity"
-      ? { state: "unavailable", code: "market_data_unavailable", message: "Sufficient trustworthy market data is unavailable for this ticker.", ...feedbackBefore }
+    return runtimeReply.code === "unsupported_equity" ||
+      runtimeReply.code === "reference_price_unavailable" ||
+      runtimeReply.code === "market_data_unavailable"
+      ? { state: "unavailable", code: "market_data_unavailable", message: "Data is not available for this ticker.", ...feedbackBefore }
       : { state: "unavailable", code: runtimeReply.code, message: runtimeReply.message, ...feedbackBefore };
   }
   const { map } = runtimeReply;

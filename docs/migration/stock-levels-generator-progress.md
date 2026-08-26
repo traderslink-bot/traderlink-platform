@@ -67,6 +67,9 @@ Railway staging build and owner visual review pending
   `How to read this map` Dashboard panel and both of its explanatory
   paragraphs; the approved on-card question-mark link is the remaining Help
   entry point.
+- [x] Normalized an on-demand ticker with unavailable reference/candle data to
+  the concise trader-facing result `Data is not available for this ticker.`;
+  provider-specific EODHD wording is not exposed by the Dashboard.
 
 ## In progress
 
