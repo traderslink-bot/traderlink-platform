@@ -19,10 +19,9 @@ Discord publishing, AI generation, Premium access, or live Watchlist state.
    receive a factual unavailable result; the feature never invents a map.
 3. Reuse the existing Watchlist ticker-detail **Potential Path Levels**
    component and its exact responsive CSS rather than redesigning the card.
-4. Render the ticker, clearly labelled reference price, its calculation/as-of
-   time, nearest support and resistance, complete support and resistance
-   columns, level strength/type/provenance, and a collapsed-by-default
-   expandable Full ladder.
+4. Render the ticker, the price when levels were generated, one calculation
+   date/time, complete support and resistance columns, level
+   strength/type/provenance, and a collapsed-by-default expandable Full ladder.
 5. Get the calculation-time reference price through the existing EODHD quote
    path. It is labelled `Reference price`, not real-time or live. If a
    trustworthy positive reference price is unavailable, return an honest

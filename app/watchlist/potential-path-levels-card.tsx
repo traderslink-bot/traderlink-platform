@@ -176,12 +176,20 @@ export function WatchlistV2PotentialPathCard({
   priceNote = "(delayed 15 sec)",
   metaLabel = "Updated",
   metaValue,
+  showNearestLevels = true,
+  showPrice = true,
+  showMeta = true,
+  priceNoteOwnLine = false,
 }: {
   symbol: PotentialPathSymbol;
   fullLadderCard?: LiveWatchlistCardContent;
   priceNote?: string;
   metaLabel?: string;
   metaValue?: string;
+  showNearestLevels?: boolean;
+  showPrice?: boolean;
+  showMeta?: boolean;
+  priceNoteOwnLine?: boolean;
 }) {
   const levelMap = symbol.levelMap ?? null;
   const levelRows = buildWatchlistV2LevelRows(levelMap);
@@ -208,21 +216,23 @@ export function WatchlistV2PotentialPathCard({
                   : "POSSIBLE HALT - confirmation pending"}
               </span>
             ) : null}
-            <span>{formatPrice(symbol.latestPrice)}</span>
-            <small className="watchlist-price-delay-note">{priceNote}</small>
+            {showPrice ? <span>{formatPrice(symbol.latestPrice)}</span> : null}
+            <small className="watchlist-price-delay-note" data-own-line={priceNoteOwnLine ? "true" : undefined}>{priceNote}</small>
           </div>
         </header>
 
-        <dl className="watchlist-v2-card-meta">
-          <div>
-            <dt>{metaLabel}</dt>
-            <dd>{metaValue ?? formatTime(symbol.updatedAt)}</dd>
-          </div>
-        </dl>
+        {showMeta ? (
+          <dl className="watchlist-v2-card-meta">
+            <div>
+              <dt>{metaLabel}</dt>
+              <dd>{metaValue ?? formatTime(symbol.updatedAt)}</dd>
+            </div>
+          </dl>
+        ) : null}
 
         {levelMap ? (
           <>
-            <WatchlistV2NearestLevels levelMap={levelMap} />
+            {showNearestLevels ? <WatchlistV2NearestLevels levelMap={levelMap} /> : null}
             <div className="watchlist-v2-level-columns">
               <WatchlistV2LevelSection title="Support" side="support" levels={levelRows.support} />
               <WatchlistV2LevelSection title="Resistance" side="resistance" levels={levelRows.resistance} />

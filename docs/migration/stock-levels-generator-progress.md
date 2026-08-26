@@ -53,6 +53,12 @@ Railway staging build and owner visual review pending
   factual symbol/reference-price/time, without reading or mutating Watchlist
   state, monitoring, a publisher instance, Discord, AI, session fallback, or
   prior-close state.
+- [x] Applied the owner-approved generator presentation correction: `/levels`
+  now uses the complete existing Potential Path outer and inner class stack,
+  shows only its calculation-time price/date sentence, omits the separate
+  nearest-level summary, and links its top-right question icon to the public
+  Watchlist how-it-works guide. The existing Watchlist card remains unchanged
+  by default.
 
 ## In progress
 
