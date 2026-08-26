@@ -33,6 +33,12 @@
 
 ## Verification and owner review
 
+- [x] Correct the staging-only validation failure: `entry_price_bucket` is now
+  included in the analytics service's explicit supported-grouping allowlist.
+  This preserves validation and permits only the new typed grouping.
+- [x] Remove the misleading generic dashboard error suggestion about reporting
+  currency or temporary services. The fallback now only states that the page
+  could not load when no application-specific error is available.
 - [x] Run permitted focused checks: `git diff --check` passes. Project ESLint
   cannot run in this clean worktree because dependencies are not installed;
   the fallback ESLint package cannot load the repository configuration.

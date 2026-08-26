@@ -9,6 +9,12 @@ The owner-approved Entry Price Results slice is tracked in
 It remains limited to `/analytics/execution` and must not add a Trade Explorer
 view, a market-data dependency or a second calculation path.
 
+The staging correction added the typed `entry_price_bucket` to the analytics
+service's explicit supported-grouping allowlist after staging exposed the
+omission. It also removed an unrelated reporting-currency/service suggestion
+from the shared dashboard error fallback; the fallback now makes no guessed
+claim about a page failure.
+
 ## Approved scope
 
 - `/analytics/execution` keeps its stable URL and uses the owner-approved visible
