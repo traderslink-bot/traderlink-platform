@@ -113,13 +113,27 @@ export default async function BetaLandingPage() {
 
           <section className={styles.action}>
             <span className={styles.actionTitle}>
-              Log in for free<br />
-              with your<br />
-              discord account
+              Free access for<br />
+              TradersLink Discord<br />
+              Members
             </span>
             <a className={styles.actionButton} href={`${signInOrigin}/api/auth/discord/login?returnTo=%2Fworkspace`}>
               LOG IN NOW!
             </a>
+            <div className={styles.actionSecondary}>
+              <span className={styles.actionPrompt}>
+                Not a TradersLink Discord member?<br />
+                Anyone can join for free!
+              </span>
+              <a
+                className={styles.actionButton}
+                href="https://discord.gg/9dmGpfpRDD"
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                Join Free Discord
+              </a>
+            </div>
           </section>
         </section>
       </section>

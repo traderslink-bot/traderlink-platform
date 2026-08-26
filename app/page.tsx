@@ -180,10 +180,10 @@ export default function Home() {
             </span>
           </Link>
           <Link
-            href="/api/auth/discord/login?returnTo=%2Fworkspace"
+            href="https://traderslink.pro/beta"
             className="inline-flex min-h-10 items-center justify-center rounded-md border border-cyan-300 bg-cyan-300 px-4 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200"
           >
-            Open Dashboard
+            Join Free Beta
           </Link>
         </nav>
 
