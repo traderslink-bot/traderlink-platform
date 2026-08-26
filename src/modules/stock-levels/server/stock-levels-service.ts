@@ -7,6 +7,8 @@ import { requestStockLevels } from "./stock-levels-runtime-client";
 
 const HOUR_MS = 60 * 60 * 1000;
 const NEW_YORK = "America/New_York";
+const MAX_FRESH_REQUESTS_PER_HOUR = 5;
+const MAX_FRESH_REQUESTS_PER_NEW_YORK_DAY = 15;
 
 function symbolFrom(input: unknown): string | null {
   const symbol = typeof input === "string" ? input.trim().toUpperCase() : "";
@@ -39,7 +41,7 @@ function readQuota(database: ReturnType<typeof openPlatformDatabase>, scope: Wor
 
 function feedback(scope: WorkspaceAccessScope, now: number) {
   const used = quota(scope, now);
-  return { remainingHourly: Math.max(0, 10 - used.hourly), remainingNewYorkDay: Math.max(0, 30 - used.day), resetAt: Math.min(now + HOUR_MS, nextNewYorkDay(now)) };
+  return { remainingHourly: Math.max(0, MAX_FRESH_REQUESTS_PER_HOUR - used.hourly), remainingNewYorkDay: Math.max(0, MAX_FRESH_REQUESTS_PER_NEW_YORK_DAY - used.day), resetAt: Math.min(now + HOUR_MS, nextNewYorkDay(now)) };
 }
 
 function recordFreshCalculation(scope: WorkspaceAccessScope, symbol: string, now: number): boolean {
@@ -47,7 +49,7 @@ function recordFreshCalculation(scope: WorkspaceAccessScope, symbol: string, now
   try {
     const transaction = database.transaction(() => {
       const used = readQuota(database, scope, now);
-      if (used.hourly >= 10 || used.day >= 30) return false;
+      if (used.hourly >= MAX_FRESH_REQUESTS_PER_HOUR || used.day >= MAX_FRESH_REQUESTS_PER_NEW_YORK_DAY) return false;
       database.prepare("INSERT INTO platform_stock_levels_usage (user_id, symbol, requested_at_ms, new_york_date) VALUES (?, ?, ?, ?)").run(scope.userId, symbol, now, newYorkDate(now));
       return true;
     });

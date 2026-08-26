@@ -91,8 +91,8 @@ export function StockLevelsClient() {
   }
 
   const feedback = result
-    ? `Your account has ${result.remainingHourly} fresh request${result.remainingHourly === 1 ? "" : "s"} left this hour · ${result.remainingNewYorkDay} left today (New York)`
-    : requestError ?? "Each account has 10 fresh requests per hour and 30 per New York trading day. Shared cache hits do not count.";
+    ? `Your account has ${result.remainingHourly} request${result.remainingHourly === 1 ? "" : "s"} left this hour · ${result.remainingNewYorkDay} left today (New York)`
+    : requestError ?? "Each account has 5 requests per hour and 15 per New York trading day.";
 
   return (
     <DashboardPage>

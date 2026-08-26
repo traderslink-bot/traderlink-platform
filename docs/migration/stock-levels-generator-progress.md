@@ -66,7 +66,8 @@ Railway staging build and owner visual review pending
   ticker validation, EODHD reference-price requirement,
   in-flight deduplication and fifteen-minute shared cache.
 - [x] Add Platform authenticated relay, persistent account quota receipt
-  migration and truthful remaining/reset feedback.
+  migration and truthful remaining/reset feedback at five fresh requests per
+  hour and fifteen per New York trading day.
 - [x] Refactor the exact existing card/CSS into a shared renderer, build
   `/levels`, add the Stock Tools navigation item and contextual Help mapping.
 - [x] Add the dedicated Stock Levels Help guide and registry coverage.

@@ -36,8 +36,8 @@ Discord publishing, AI generation, Premium access, or live Watchlist state.
    response is the narrow factual DTO required by the card; it validates the
    syntactically valid symbol, coalesces concurrent requests, and shares a
    fifteen-minute result cache.
-8. Enforce Platform account-scoped persistent limits: ten fresh calculations
-   per rolling hour and thirty per New York trading day. A runtime cache hit
+8. Enforce Platform account-scoped persistent limits: five fresh calculations
+   per rolling hour and fifteen per New York trading day. A runtime cache hit
    does not consume a limit. The UI reports factual remaining/reset information
    and never fabricates availability.
 9. Add a dedicated Help collection/guide and Dashboard contextual Help mapping.
