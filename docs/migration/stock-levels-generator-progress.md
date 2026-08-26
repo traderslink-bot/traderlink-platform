@@ -1,7 +1,7 @@
 # Stock Levels Generator Progress
 
-**Status:** In progress — source implementation complete; static review and
-local commits pending
+**Status:** Source implementation and local commits complete; Railway staging
+build and owner visual review pending
 **Controlling plan:** [Stock Levels Generator Plan](stock-levels-generator-plan.md)  
 **Approved route:** `/levels`
 
@@ -53,9 +53,22 @@ local commits pending
 - [x] Refactor the exact existing card/CSS into a shared renderer, build
   `/levels`, add the Stock Tools navigation item and contextual Help mapping.
 - [x] Add the dedicated Stock Levels Help guide and registry coverage.
-- [ ] Update route/migration ownership records at the implementation
-  checkpoint, create narrow local commits in both repositories, and send the
-  Coordinator the required preview-ready handoff.
+- [x] Update route/migration ownership records at the implementation
+  checkpoint and create narrow local commits in both repositories.
+- [ ] Send the Coordinator the preview-ready handoff; Railway staging build
+  and owner visual review remain external release boundaries.
+
+## Local commit checkpoint
+
+- Platform feature baseline: `cd8b24651758abedbdead5b2e2a960d57182d3bf`
+  (`feat(stock-levels): add dashboard generator boundary`).
+- Platform reuse correction: `3547a059` (`fix(stock-levels): reuse canonical
+  levels surface`).
+- Canonical Levels runtime: `ba2ab19` (`feat(stock-levels): expose canonical
+  generator safely`).
+- No commit was pushed, and no server, test suite, build, browser automation,
+  provider call, migration execution, deployment, restart, or configuration
+  change was performed.
 
 ## Constraints retained
 
