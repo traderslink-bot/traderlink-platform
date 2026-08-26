@@ -39,12 +39,16 @@ function readQuota(database: ReturnType<typeof openPlatformDatabase>, scope: Wor
   return { hourly, day };
 }
 
-function feedback(scope: WorkspaceAccessScope, now: number) {
+function feedback(scope: WorkspaceAccessScope, now: number, noRequestLimit: boolean) {
+  if (noRequestLimit) {
+    return { remainingHourly: null, remainingNewYorkDay: null, resetAt: null };
+  }
   const used = quota(scope, now);
   return { remainingHourly: Math.max(0, MAX_FRESH_REQUESTS_PER_HOUR - used.hourly), remainingNewYorkDay: Math.max(0, MAX_FRESH_REQUESTS_PER_NEW_YORK_DAY - used.day), resetAt: Math.min(now + HOUR_MS, nextNewYorkDay(now)) };
 }
 
-function recordFreshCalculation(scope: WorkspaceAccessScope, symbol: string, now: number): boolean {
+function recordFreshCalculation(scope: WorkspaceAccessScope, symbol: string, now: number, noRequestLimit: boolean): boolean {
+  if (noRequestLimit) return true;
   const database = openPlatformDatabase({ mode: "runtime" });
   try {
     const transaction = database.transaction(() => {
@@ -57,12 +61,16 @@ function recordFreshCalculation(scope: WorkspaceAccessScope, symbol: string, now
   } finally { database.close(); }
 }
 
-export async function getStockLevels(scope: WorkspaceAccessScope, input: unknown): Promise<StockLevelsResult> {
+export async function getStockLevels(
+  scope: WorkspaceAccessScope,
+  input: unknown,
+  { noRequestLimit = false }: Readonly<{ noRequestLimit?: boolean }> = {},
+): Promise<StockLevelsResult> {
   const now = Date.now();
-  const feedbackBefore = feedback(scope, now);
+  const feedbackBefore = feedback(scope, now, noRequestLimit);
   const symbol = symbolFrom(input);
   if (!symbol) return { state: "unavailable", code: "invalid_symbol", message: "Enter a valid ticker.", ...feedbackBefore };
-  if (feedbackBefore.remainingHourly === 0 || feedbackBefore.remainingNewYorkDay === 0) return { state: "unavailable", code: "limit_reached", message: "The Stock Levels request limit has been reached. Use the reset time shown here.", ...feedbackBefore };
+  if (!noRequestLimit && (feedbackBefore.remainingHourly === 0 || feedbackBefore.remainingNewYorkDay === 0)) return { state: "unavailable", code: "limit_reached", message: "The Stock Levels request limit has been reached. Use the reset time shown here.", ...feedbackBefore };
   const runtimeReply = await requestStockLevels(symbol);
   if (!runtimeReply) return { state: "unavailable", code: "runtime_unavailable", message: "A reliable Stock Levels map is unavailable right now. Try again later.", ...feedbackBefore };
   if (!("map" in runtimeReply)) {
@@ -73,9 +81,9 @@ export async function getStockLevels(scope: WorkspaceAccessScope, input: unknown
       : { state: "unavailable", code: runtimeReply.code, message: runtimeReply.message, ...feedbackBefore };
   }
   const { map } = runtimeReply;
-  if (map.cacheStatus === "fresh" && !recordFreshCalculation(scope, symbol, now)) {
-    const feedbackAfterLimit = feedback(scope, now);
+  if (map.cacheStatus === "fresh" && !recordFreshCalculation(scope, symbol, now, noRequestLimit)) {
+    const feedbackAfterLimit = feedback(scope, now, noRequestLimit);
     return { state: "unavailable", code: "limit_reached", message: "The Stock Levels request limit has been reached. Use the reset time shown here.", ...feedbackAfterLimit };
   }
-  return { state: "ready", map, ...feedback(scope, now) };
+  return { state: "ready", map, ...feedback(scope, now, noRequestLimit) };
 }

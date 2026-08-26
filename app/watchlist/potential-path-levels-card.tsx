@@ -176,15 +176,21 @@ function WatchlistV2FallbackLevels({ symbol }: { symbol: PotentialPathSymbol }) 
   );
 }
 
-function WatchlistPotentialPathCardKicker({ showHelp = true }: { showHelp?: boolean }) {
+function WatchlistPotentialPathCardKicker({
+  headerLabel = "Potential Path Levels",
+  showHelp = true,
+}: {
+  headerLabel?: string;
+  showHelp?: boolean;
+}) {
   return (
     <p className="academy-kicker watchlist-card-kicker">
-      <span>Potential Path Levels</span>
+      <span>{headerLabel}</span>
       {showHelp ? (
         <button
           type="button"
           className="watchlist-card-help"
-          aria-label="Potential Path Levels help"
+          aria-label={`${headerLabel} help`}
           data-tooltip={potentialPathHelpText}
           title={potentialPathHelpText}
         >
@@ -285,6 +291,7 @@ export function WatchlistV2PotentialPathCard({
 export function WatchlistPotentialPathCardArticle({
   card,
   fullLadderCard,
+  headerLabel,
   guideAriaLabel,
   guideContent = "How it works",
   guideHref = "/watchlist/how-it-works",
@@ -299,6 +306,7 @@ export function WatchlistPotentialPathCardArticle({
 }: {
   card: LiveWatchlistCardContent | null | undefined;
   fullLadderCard?: LiveWatchlistCardContent;
+  headerLabel?: string;
   guideAriaLabel?: string;
   guideContent?: ReactNode;
   guideHref?: string;
@@ -316,7 +324,7 @@ export function WatchlistPotentialPathCardArticle({
   return (
     <article className="academy-card watchlist-content-card" data-card-label="Potential Path Levels">
       <div className="academy-card-topline">
-        <WatchlistPotentialPathCardKicker showHelp={showKickerHelp} />
+        <WatchlistPotentialPathCardKicker headerLabel={headerLabel} showHelp={showKickerHelp} />
         <Link
           aria-label={guideAriaLabel}
           className="watchlist-card-guide-link"

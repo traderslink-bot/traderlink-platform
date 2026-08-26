@@ -68,8 +68,21 @@ Railway staging build and owner visual review pending
   paragraphs; the approved on-card question-mark link is the remaining Help
   entry point.
 - [x] Normalized an on-demand ticker with unavailable reference/candle data to
-  the concise trader-facing result `Data is not available for this ticker.`;
+  the concise trader-facing result `Data is not available for this ticker right
+  now, try again later.`;
   provider-specific EODHD wording is not exposed by the Dashboard.
+- [x] Reused the stable configured owner Discord-subject boundary from
+  Watchlist navigation for the two owner accounts: they do not read, consume,
+  reject against, or create Support and Resistance quota receipts; their page
+  feedback is `No request limit`. Ordinary authenticated accounts remain at
+  five fresh requests per hour and fifteen per New York day.
+- [x] `/levels` passes the explicit `Support and Resistance` header label into
+  the shared card; Watchlist retains its default `Potential Path Levels`
+  label. The left Stock Tools navigation label is `Levels Generator`, while
+  its href, route title and Help mapping remain unchanged.
+- [x] New maps remain in current-page-session state only. The newest card is
+  open at the top; older maps are retained newest-first as collapsed factual
+  summaries and expand without a fetch, quota receipt or regeneration.
 
 ## In progress
 

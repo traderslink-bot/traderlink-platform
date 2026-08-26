@@ -42,7 +42,9 @@ Discord publishing, AI generation, Premium access, or live Watchlist state.
 8. Enforce Platform account-scoped persistent limits: five fresh calculations
    per rolling hour and fifteen per New York trading day. A runtime cache hit
    does not consume a limit. The UI reports factual remaining/reset information
-   and never fabricates availability.
+   and never fabricates availability. The configured stable owner Discord
+   subjects used for Watchlist navigation are exempt: they do not consume or
+   receive quota receipts, and their UI says `No request limit`.
 9. Keep the approved Help mapping and link the on-card question-mark directly
    to the public Watchlist how-it-works guide. Do not retain a separate Stock
    Levels Help button or a local `How to read this map` explainer panel.
@@ -80,8 +82,9 @@ The page Help and dedicated guide must explain only product truth:
 - `app/watchlist/potential-path-levels-card.tsx`: the single shared Watchlist
   Potential Path card, including its original outer article/topline/kicker/
   guide hierarchy and inner Full ladder behavior, level rows and responsive
-  semantics. Generator-only header, price-note and nearest-summary choices are
-  explicit adapters around this component.
+  semantics. Generator-only `Support and Resistance` header, price-note and
+  nearest-summary choices are explicit adapters around this component; the
+  Watchlist keeps its default `Potential Path Levels` header.
 - `app/watchlist/live-watchlist-client.tsx`: consume that shared component so
   the existing Watchlist detail remains the visual source of truth.
 - `app/globals.css`: existing Academy-shell and Potential Path selectors

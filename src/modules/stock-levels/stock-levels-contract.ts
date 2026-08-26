@@ -15,8 +15,8 @@ export type StockLevelsMap = Readonly<{
 }>;
 
 export type StockLevelsResult =
-  | Readonly<{ state: "ready"; map: StockLevelsMap; remainingHourly: number; remainingNewYorkDay: number; resetAt: number }>
-  | Readonly<{ state: "unavailable"; code: "invalid_symbol" | "unsupported_equity" | "reference_price_unavailable" | "market_data_unavailable" | "runtime_unavailable" | "limit_reached"; message: string; remainingHourly: number; remainingNewYorkDay: number; resetAt: number }>;
+  | Readonly<{ state: "ready"; map: StockLevelsMap; remainingHourly: number | null; remainingNewYorkDay: number | null; resetAt: number | null }>
+  | Readonly<{ state: "unavailable"; code: "invalid_symbol" | "unsupported_equity" | "reference_price_unavailable" | "market_data_unavailable" | "runtime_unavailable" | "limit_reached"; message: string; remainingHourly: number | null; remainingNewYorkDay: number | null; resetAt: number | null }>;
 
 export function isStockLevelsMap(value: unknown): value is StockLevelsMap {
   if (!value || typeof value !== "object") return false;
