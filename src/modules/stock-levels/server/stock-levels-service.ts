@@ -69,7 +69,7 @@ export async function getStockLevels(scope: WorkspaceAccessScope, input: unknown
     return runtimeReply.code === "unsupported_equity" ||
       runtimeReply.code === "reference_price_unavailable" ||
       runtimeReply.code === "market_data_unavailable"
-      ? { state: "unavailable", code: "market_data_unavailable", message: "Data is not available for this ticker.", ...feedbackBefore }
+      ? { state: "unavailable", code: "market_data_unavailable", message: "Data is not available for this ticker right now, try again later.", ...feedbackBefore }
       : { state: "unavailable", code: runtimeReply.code, message: runtimeReply.message, ...feedbackBefore };
   }
   const { map } = runtimeReply;

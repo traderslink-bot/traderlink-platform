@@ -122,7 +122,7 @@ export function StockLevelsClient() {
       {result?.state === "ready" ? <PotentialPathCard result={result} /> : null}
       {result?.state === "unavailable" ? (
         <DashboardPanel title="Data unavailable">
-          <Typography>Data is not available for this ticker.</Typography>
+          <Typography>Data is not available for this ticker right now, try again later.</Typography>
         </DashboardPanel>
       ) : null}
     </DashboardPage>
