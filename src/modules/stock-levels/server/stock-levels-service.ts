@@ -61,8 +61,10 @@ export async function getStockLevels(scope: WorkspaceAccessScope, input: unknown
   const symbol = symbolFrom(input);
   if (!symbol) return { state: "unavailable", code: "invalid_symbol", message: "Enter a Nasdaq or NYSE stock ticker.", ...feedbackBefore };
   if (feedbackBefore.remainingHourly === 0 || feedbackBefore.remainingNewYorkDay === 0) return { state: "unavailable", code: "limit_reached", message: "The Stock Levels request limit has been reached. Use the reset time shown here.", ...feedbackBefore };
-  const map = await requestStockLevels(symbol);
-  if (!map) return { state: "unavailable", code: "runtime_unavailable", message: "A reliable Stock Levels map is unavailable right now. Try again later.", ...feedbackBefore };
+  const runtimeReply = await requestStockLevels(symbol);
+  if (!runtimeReply) return { state: "unavailable", code: "runtime_unavailable", message: "A reliable Stock Levels map is unavailable right now. Try again later.", ...feedbackBefore };
+  if (!("map" in runtimeReply)) return { state: "unavailable", code: runtimeReply.code, message: runtimeReply.message, ...feedbackBefore };
+  const { map } = runtimeReply;
   if (map.cacheStatus === "fresh" && !recordFreshCalculation(scope, symbol, now)) {
     const feedbackAfterLimit = feedback(scope, now);
     return { state: "unavailable", code: "limit_reached", message: "The Stock Levels request limit has been reached. Use the reset time shown here.", ...feedbackAfterLimit };

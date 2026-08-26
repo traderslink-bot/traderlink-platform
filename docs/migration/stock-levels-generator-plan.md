@@ -73,15 +73,14 @@ The page Help and dedicated guide must explain only product truth:
 - `app/(dashboard)/levels/stock-levels-client.tsx`: ticker entry, request
   lifecycle, remaining/reset feedback, factual unavailable state, compact page
   Help, and rendering of the shared card.
-- `app/(dashboard)/levels/potential-path-levels-card.tsx`: a refactor of the
+- `app/watchlist/potential-path-levels-card.tsx`: a refactor of the
   existing Watchlist Potential Path component into a reusable, DTO-driven card
   without changing its card layout, Full ladder behavior, level rows, or
   responsive semantics.
 - `app/watchlist/live-watchlist-client.tsx`: consume that shared component so
   the existing Watchlist detail remains the visual source of truth.
-- `app/globals.css`: move only the existing Potential Path selectors into a
-  shared/selectable scope if needed; preserve their rendered values and mobile
-  rules exactly.
+- `app/globals.css`: existing Potential Path selectors remain the shared CSS;
+  preserve their rendered values and mobile rules exactly.
 - `app/dashboard-navigation.ts`: `Stock Levels` item, route title, and
   Dashboard contextual Help target under the existing `Stock Tools` group.
 
@@ -165,9 +164,10 @@ The page Help and dedicated guide must explain only product truth:
 - The runtime endpoint rejects missing/incorrect bearer tokens before doing
   market-data or engine work. Platform's outward API requires the normal
   authenticated Dashboard boundary.
-- Intraday/same-day evidence can supplement structural context but cannot crowd,
-  dilute, replace, or receive equal visual prominence with daily/4h support
-  and resistance. Missing same-day candles cannot make an otherwise
+- Daily/4h are the product's main structural context and same-day evidence is
+  supplementary. This Dashboard surface must not enforce that hierarchy by
+  filtering, re-ranking, or otherwise changing the established generator's
+  returned result. Missing same-day candles cannot make an otherwise
   trustworthy daily/4h map unavailable.
 
 ## Explicit exclusions

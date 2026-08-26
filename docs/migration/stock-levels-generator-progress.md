@@ -1,6 +1,7 @@
 # Stock Levels Generator Progress
 
-**Status:** In progress — approved contract documented; no product code changed  
+**Status:** In progress — source implementation complete; static review and
+local commits pending
 **Controlling plan:** [Stock Levels Generator Plan](stock-levels-generator-plan.md)  
 **Approved route:** `/levels`
 
@@ -38,20 +39,20 @@
   and Yahoo remains selectable. Same-day candles are supplementary context
   only; no provider selection or setting was changed.
 - [x] Confirmed the canonical engine can produce output when 5-minute data is
-  unavailable if daily or 4h candles remain usable. The generator filters its
-  primary map to structural daily/4h evidence so intraday levels cannot crowd
-  or replace it.
+  unavailable if daily or 4h candles remain usable. Daily/4h are the product's
+  main structural context and same-day is supplementary, but this feature does
+  not filter, re-rank, or otherwise change the established generator result.
 
 ## In progress
 
-- [ ] Add the isolated runtime calculation endpoint, narrow DTO, exact
+- [x] Add the isolated runtime calculation endpoint, narrow DTO, exact
   Nasdaq/NYSE equity validation, EODHD reference-price requirement,
   in-flight deduplication and fifteen-minute shared cache.
-- [ ] Add Platform authenticated relay, persistent account quota receipt
+- [x] Add Platform authenticated relay, persistent account quota receipt
   migration and truthful remaining/reset feedback.
-- [ ] Refactor the exact existing card/CSS into a shared renderer, build
+- [x] Refactor the exact existing card/CSS into a shared renderer, build
   `/levels`, add the Stock Tools navigation item and contextual Help mapping.
-- [ ] Add the dedicated Stock Levels Help guide and registry coverage.
+- [x] Add the dedicated Stock Levels Help guide and registry coverage.
 - [ ] Update route/migration ownership records at the implementation
   checkpoint, create narrow local commits in both repositories, and send the
   Coordinator the required preview-ready handoff.
