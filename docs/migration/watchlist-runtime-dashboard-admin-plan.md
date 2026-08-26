@@ -49,7 +49,9 @@ Existing runtime CSS, IDs, event listeners and API paths remain runtime-owned.
 - Only the exact GET/POST paths used by the existing runtime documents are
   relayed. The existing confirmation-protected bulk clear and Discord clear
   controls are included because the owner explicitly required complete app
-  parity. Service restart, deployment and migration controls are not invented.
+  parity. This includes the runtime-owned same-day Yahoo/Moomoo candle-provider
+  selector endpoint; it does not widen access to any other runtime path.
+  Service restart, deployment and migration controls are not invented.
 
 ## Acceptance boundary
 
