@@ -11,8 +11,9 @@
   analysis area.
 - [x] Stack Maximum Position, Entry Size and Hold Time in the right column, in
   that order.
-- [x] Show direct factual largest-loss and most-profitable entry-price
-  statements above the complete price-band table.
+- [x] Show direct factual highest-win-rate and most-profitable entry-price
+  statements in the left column, with lowest-win-rate and largest-loss
+  statements in the right column above the complete price-band table.
 - [x] Use exact weighted average entry price for one completed-trade band per
   trade: Under $0.50; $0.50 to under $1.00; $1.00 to under $2.00; $2.00 to
   under $3.00; $3.00 to under $5.00; $5.00 to under $10.00; $10.00 to under
@@ -32,8 +33,12 @@
   apparent difference from the dollar results.
 - Keep the seven-column table compact and left-aligned on desktop, while
   retaining horizontal scrolling when a smaller viewport needs it.
-- Update Core Analytics Help with the exact weighted-entry-price and
-  limited-history meaning.
+- Make the price band the larger bold line in every finding; show the dollar
+  result or win rate underneath in regular weight. Apply Limited history only
+  to a finding based on fewer than 10 included closed trades.
+- [x] Keep Core Analytics Help aligned with the weighted-entry-price,
+  highest/lowest win-rate, largest-loss, most-profitable and limited-history
+  meanings.
 
 ## Verification and owner review
 
