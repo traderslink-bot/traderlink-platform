@@ -33,8 +33,8 @@ toolbars, tables and details stay in AI Controls. Only a direct audit-grid card
 whose text begins `Skipped` is hidden, including after the runtime refreshes
 that grid. Watchlist is the default; Runtime, Market Data, AI Controls, Live
 Website Controls and Automatic Low-Float Selection are the remaining sections.
-The two direct Runtime Config provider controls form Market Data, and only the
-final Live Website provider control forms Automatic Low-Float Selection.
+The three direct Runtime Config provider controls form Market Data, and only
+the final Live Website provider control forms Automatic Low-Float Selection.
 Existing runtime CSS, IDs, event listeners and API paths remain runtime-owned.
 
 ## Security and data boundary
