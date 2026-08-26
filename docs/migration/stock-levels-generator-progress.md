@@ -2,7 +2,7 @@
 
 **Status:** Source implementation and local commits complete; Railway staging
 build and owner visual review pending
-**Controlling plan:** [Stock Levels Generator Plan](stock-levels-generator-plan.md)  
+**Controlling plan:** [Stock Levels Generator Plan](stock-levels-generator-plan.md)
 **Approved route:** `/levels`
 
 ## Confirmed workspace and ownership boundary

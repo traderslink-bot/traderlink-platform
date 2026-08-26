@@ -1,8 +1,8 @@
 # Stock Levels Generator Plan
 
-**Status:** Owner-approved contract recorded; implementation in progress  
-**Progress:** [Stock Levels Generator Progress](stock-levels-generator-progress.md)  
-**Approved feature boundary:** Authenticated Dashboard Stock Levels generator  
+**Status:** Owner-approved contract recorded; implementation in progress
+**Progress:** [Stock Levels Generator Progress](stock-levels-generator-progress.md)
+**Approved feature boundary:** Authenticated Dashboard Stock Levels generator
 **Route:** `/levels`
 
 ## Product contract
