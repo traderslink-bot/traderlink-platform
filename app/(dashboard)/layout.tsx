@@ -60,7 +60,7 @@ export default async function DashboardLayout({
   const scope = identity.scope;
   const canReadPressReleases = hasPressReleaseDashboardAccess(identity);
   const scannerEarlyAccess = hasScannerEarlyAccess(identity);
-  const watchlistNavigationAccess = hasWatchlistDashboardNavigationAccess(identity);
+  const watchlistAdminNavigationAccess = hasWatchlistDashboardNavigationAccess(identity);
   const readAtUtc = createCanonicalUtcTimestamp();
   const dashboardContext = withReadonlyPlatformDatabase({}, (database) => {
     const activeAccount = scope.activeAccountId
@@ -99,7 +99,8 @@ export default async function DashboardLayout({
         offlineScopeRef={offlineScopeRef}
         pressReleaseUnreadCounts={dashboardContext.pressReleaseUnreadCounts}
         scannerEarlyAccess={scannerEarlyAccess}
-        watchlistNavigationAccess={watchlistNavigationAccess}
+        watchlistMemberNavigationAccess
+        watchlistAdminNavigationAccess={watchlistAdminNavigationAccess}
       >
         {children}
       </TraderLinkPlatformDashboardTemplate>
