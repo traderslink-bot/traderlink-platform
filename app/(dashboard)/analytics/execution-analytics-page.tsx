@@ -66,19 +66,19 @@ function entryPriceResults(
     const group = groups.find((candidate) => candidate.groupKey === band.key) ?? null;
     const read = (metricId: string) => metricFor(group?.metrics ?? [], metricId);
     return Object.freeze({
-      averagePnl: read("average_pnl") ? formatJournalAnalyticsMetric(read("average_pnl")!) : "Unavailable",
+      averagePnl: read("average_pnl") ? formatJournalAnalyticsMetric(read("average_pnl")!) : "N/A",
       entryPriceBand: band.label,
       key: band.key,
       losses: metricNumber(read("loss_count")?.value ?? null),
-      lossesDisplay: read("loss_count") ? formatJournalAnalyticsMetric(read("loss_count")!) : "Unavailable",
-      netPnl: read("net_pnl") ? formatJournalAnalyticsMetric(read("net_pnl")!) : "Unavailable",
+      lossesDisplay: read("loss_count") ? formatJournalAnalyticsMetric(read("loss_count")!) : "N/A",
+      netPnl: read("net_pnl") ? formatJournalAnalyticsMetric(read("net_pnl")!) : "N/A",
       netPnlDecimal: metricDecimal(read("net_pnl")?.value ?? null),
-      returnOnEntryValue: read("return_on_entry_notional") ? formatJournalAnalyticsMetric(read("return_on_entry_notional")!) : "Unavailable",
+      returnOnEntryValue: read("return_on_entry_notional") ? formatJournalAnalyticsMetric(read("return_on_entry_notional")!) : "N/A",
       tradeCount: metricNumber(read("included_count")?.value ?? null),
-      tradeCountDisplay: read("included_count") ? formatJournalAnalyticsMetric(read("included_count")!) : "Unavailable",
-      winRate: read("win_rate") ? formatJournalAnalyticsMetric(read("win_rate")!) : "Unavailable",
+      tradeCountDisplay: read("included_count") ? formatJournalAnalyticsMetric(read("included_count")!) : "N/A",
+      winRate: read("win_rate") ? formatJournalAnalyticsMetric(read("win_rate")!) : "N/A",
       wins: metricNumber(read("win_count")?.value ?? null),
-      winsDisplay: read("win_count") ? formatJournalAnalyticsMetric(read("win_count")!) : "Unavailable",
+      winsDisplay: read("win_count") ? formatJournalAnalyticsMetric(read("win_count")!) : "N/A",
     });
   }));
 }

@@ -114,7 +114,7 @@ function EntryPriceResults({ insights, results }: { insights: EntryPriceInsights
       <HorizontalScrollRegion label="Entry price results table" minTableWidth={960}>
         <Table size="small"><TableHead><TableRow><TableCell>Entry price</TableCell><TableCell align="right">Net P/L</TableCell><TableCell align="right">Trades</TableCell><TableCell align="right">Wins</TableCell><TableCell align="right">Losses</TableCell><TableCell align="right">Win rate</TableCell><TableCell align="right">Avg P/L</TableCell><TableCell align="right">Return on entry value</TableCell></TableRow></TableHead><TableBody>{results.map((result) => <TableRow key={result.key}><TableCell sx={{ fontWeight: 800 }}>{result.entryPriceBand}</TableCell><TableCell align="right" sx={{ color: result.netPnlDecimal !== null && result.netPnlDecimal.startsWith("-") ? "error.main" : "success.main", fontWeight: 800 }}>{result.netPnl}</TableCell><TableCell align="right">{result.tradeCountDisplay}</TableCell><TableCell align="right">{result.winsDisplay}</TableCell><TableCell align="right">{result.lossesDisplay}</TableCell><TableCell align="right">{result.winRate}</TableCell><TableCell align="right">{result.averagePnl}</TableCell><TableCell align="right">{result.returnOnEntryValue}</TableCell></TableRow>)}</TableBody></Table>
       </HorizontalScrollRegion>
-      <Typography color="text.secondary" variant="body2">Includes completed trades in the selected date range. Net P/L is shown when trading fees are available.</Typography>
+      <Typography color="text.secondary" variant="body2">includes completed trades in the selected date range. Net P/L is shown when trading fees are available.</Typography>
     </Stack>
   </Paper>;
 }
@@ -134,7 +134,7 @@ export function ExecutionAnalyticsClient({ chartData, currency, offline = false,
   const changeSort = (column: SortColumn) => { setPage(0); if (column === sortColumn) setSortDirection((value) => value === "asc" ? "desc" : "asc"); else { setSortColumn(column); setSortDirection(column === "ticker" || column === "direction" || column === "tradeType" ? "asc" : "desc"); } };
   return (
     <Stack spacing={2.5}>
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={0.5} sx={{ alignItems: { sm: "center" }, justifyContent: "flex-end" }}>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={0.5} sx={{ alignItems: { sm: "center" }, justifyContent: "flex-start" }}>
         <TextField label="Measure" onChange={(event) => setMetricId(event.target.value as ExecutionMetricId)} select size="small" sx={{ minWidth: { sm: 180 } }} value={metricId}>
           {MEASURES.map((measure) => <MenuItem key={measure.id} value={measure.id}>{measure.label}</MenuItem>)}
         </TextField>
