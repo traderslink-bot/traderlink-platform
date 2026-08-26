@@ -10,6 +10,13 @@
 **Progressive Web App:** The owner-approved [TraderLink Platform PWA Plan](traderlink-platform-pwa-plan.md) and [progress tracker](traderlink-platform-pwa-progress.md) preserve the complete dashboard and add offline Daily/Swing/Quick Trade Entry, bounded last-synced dashboard projections, retry-safe foreground and best-effort background sync, opt-in privacy-safe Web Push and one corrected icon family. PWA 1 is authorized locally; no deployment or production push activation is implied.
 **Rule:** A legacy item cannot be removed until its row is `Owner accepted` and its legacy dependency check is complete.
 
+**Stock Levels private saved maps:** [Stock Levels Generator Plan](stock-levels-generator-plan.md)
+and its [progress record](stock-levels-generator-progress.md) reserve additive
+migration `0090_platform_stock_levels_saved_maps`. It stores a private,
+account-scoped mapped-card snapshot, timestamps and 72-hour expiry for the
+authenticated `/levels` page. It stores no provider credentials, raw candles,
+Watchlist membership or monitoring state. Migration execution remains a
+separate Railway release boundary.
 **2026-08-09 AI Review cache-write accounting checkpoint:** migration
 `0051_coach_ai_review_cache_write_accounting` is registered, disposable-copy
 verified, recovery-authority backup/restore verified and locally applied. The

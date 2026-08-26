@@ -69,7 +69,7 @@
 | `/analytics/lab` | Journal Analytics | Review, then preserve supported analysis |
 | `/analytics/lab/trade-candle-analysis` | Journal Analytics/Level Analysis | Review and preserve supported behavior |
 | `/charts` | Market tools | Platform target; define module contract |
-| `/levels` | Platform Stock Levels | Authenticated structural daily/4h support and resistance map; isolated from Watchlist, Community, Discord and AI state |
+| `/levels` | Platform Stock Levels | Authenticated support/resistance maps, private 72-hour account snapshots and session history; isolated from Watchlist, Community, Discord and AI state |
 | `/reflection-loop` | Journal/Coach | Replacement F1 connected to published Journal facts and trader-authored annotations; combined visual gate deferred |
 | `/rules` | Journal | Platform target |
 | `/imports` | Journal | Platform target |
@@ -145,7 +145,7 @@ permission to change an endpoint now.
 | `POST` | `/api/level-analysis/deliveries/validate` | Level Analysis integration: preserve |
 | `POST` | `/api/level-analysis/trade-links` | Level Analysis/Journal link: replace internals behind contract |
 | `POST` | `/api/level-analysis/trade-links/resolve` | Level Analysis/Journal link: replace internals behind contract |
-| `POST` | `/api/levels` | Platform Stock Levels: authenticated on-demand runtime relay with account-scoped limits; no Watchlist activation or publisher access |
+| `GET`, `POST`, `DELETE` | `/api/levels` | Platform Stock Levels: authenticated private saved-map read/create-regenerate/delete and on-demand runtime relay with account-scoped limits; no Watchlist activation or publisher access |
 
 ### Journal import, Data Decisions and tracker commands: 29
 

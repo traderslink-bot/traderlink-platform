@@ -76,13 +76,25 @@ Railway staging build and owner visual review pending
   reject against, or create Support and Resistance quota receipts; their page
   feedback is `No request limit`. Ordinary authenticated accounts remain at
   five fresh requests per hour and fifteen per New York day.
+- [x] Corrected the saved-map quota-response adapter: initial load, generation,
+  regeneration and delete now share validated quota feedback, rendering the
+  owner-null response exactly as `No request limit` and never interpolating
+  missing quota values.
+- [x] Corrected the ordinary Get Levels request shape: it omits the optional
+  replacement identifier, while Regenerate alone sends its saved map's valid
+  UUID to the existing replacement boundary.
 - [x] `/levels` passes the explicit `Support and Resistance` header label into
   the shared card; Watchlist retains its default `Potential Path Levels`
   label. The left Stock Tools navigation label is `Levels Generator`, while
   its href, route title and Help mapping remain unchanged.
-- [x] New maps remain in current-page-session state only. The newest card is
-  open at the top; older maps are retained newest-first as collapsed factual
-  summaries and expand without a fetch, quota receipt or regeneration.
+- [x] Verified private 72-hour map persistence: migration `0090` stores each
+  mapped-card snapshot with its authenticated `user_id` and expiry; the
+  account-scoped `/api/levels` read loads unexpired maps newest-first after
+  reload/return. The newest card is open at the top; older maps are collapsed
+  factual summaries and expand without a fetch, quota receipt or regeneration.
+- [x] Added a clear native-details chevron to each collapsed saved-map summary;
+  it rotates open while retaining the approved title, card surface,
+  Regenerate/Delete controls and shared card body.
 - [x] Corrected session-history presentation without changing the shared card
   body: prior-result details span the same full grid width as the current map,
   use the existing card surface/border treatment while collapsed, use the
@@ -90,6 +102,11 @@ Railway staging build and owner visual review pending
   history gap with smaller mobile spacing and responsive text sizing.
 
 ## In progress
+
+- [x] Add the owner-approved 72-hour private saved-map lifecycle: initial
+  account-scoped load, separate Get Levels snapshots, regenerate-in-place to
+  top, and delete without Watchlist coupling. Migration `0090` is registered
+  only; it has not been run locally or in Railway.
 
 - [x] Add the isolated runtime calculation endpoint, narrow DTO, syntactic
   ticker validation, EODHD reference-price requirement,

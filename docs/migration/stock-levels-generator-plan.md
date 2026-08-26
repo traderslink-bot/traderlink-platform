@@ -11,7 +11,7 @@ This plan records the complete owner-approved first version. It is not a
 Watchlist feature and does not alter Watchlist membership, monitoring,
 Discord publishing, AI generation, Premium access, or live Watchlist state.
 
-1. Add an authenticated Dashboard route at `/levels` and a `Stock Levels`
+1. Add an authenticated Dashboard route at `/levels` and a `Levels Generator`
    entry under `Stock Tools`.
 2. Accept a syntactically valid ticker and provide a `Get Levels` action.
    Missing exchange or security metadata is not a rejection reason. Invalid
@@ -44,7 +44,9 @@ Discord publishing, AI generation, Premium access, or live Watchlist state.
    does not consume a limit. The UI reports factual remaining/reset information
    and never fabricates availability. The configured stable owner Discord
    subjects used for Watchlist navigation are exempt: they do not consume or
-   receive quota receipts, and their UI says `No request limit`.
+   receive quota receipts, and every `/levels` response adapter (initial
+   saved-map load, generate/regenerate, and delete) renders their null quota
+   payload exactly as `No request limit`.
 9. Keep the approved Help mapping and link the on-card question-mark directly
    to the public Watchlist how-it-works guide. Do not retain a separate Stock
    Levels Help button or a local `How to read this map` explainer panel.
@@ -54,6 +56,15 @@ Discord publishing, AI generation, Premium access, or live Watchlist state.
     surface treatment and page-title-sized blue summary text; the first prior
     map has a doubled vertical gap. Mobile uses smaller proportional spacing
     and title sizing without overflow or a narrower card.
+11. Save each successfully generated map privately to its authenticated
+    account for 72 hours. Saved maps load newest first after a page reload;
+    they are facts captured at generation time and are never silently
+    refreshed.
+12. `Get Levels` saves a separate new map. `Regenerate` on a saved map uses
+    the normal cache/quota path, replaces that saved map with the newly
+    generated result and moves it to the current top card slot. `Delete`
+    removes only that account's selected saved map immediately and never
+    affects Watchlist state.
 
 ## Page information and trader guidance
 
@@ -80,8 +91,8 @@ The page Help and dedicated guide must explain only product truth:
 - `app/(dashboard)/levels/page.tsx`: authenticated route, page metadata, and
   server-side access boundary.
 - `app/(dashboard)/levels/stock-levels-client.tsx`: ticker entry, request
-  lifecycle, remaining/reset feedback, factual unavailable state, compact page
-  Help, and rendering of the shared card.
+  lifecycle, remaining/reset feedback, factual unavailable state, 72-hour
+  saved-map load/regenerate/delete controls, and rendering of the shared card.
 - `app/watchlist/potential-path-levels-card.tsx`: the single shared Watchlist
   Potential Path card, including its original outer article/topline/kicker/
   guide hierarchy and inner Full ladder behavior, level rows and responsive
@@ -93,7 +104,7 @@ The page Help and dedicated guide must explain only product truth:
 - `app/globals.css`: existing Academy-shell and Potential Path selectors
   remain the shared CSS; preserve their rendered values and mobile rules
   exactly. No Dashboard look-alike card CSS is introduced.
-- `app/dashboard-navigation.ts`: `Stock Levels` item, route title, and
+- `app/dashboard-navigation.ts`: `Levels Generator` item, route title, and
   Dashboard contextual Help target under the existing `Stock Tools` group.
 
 ### Platform API, account limits, and runtime relay
@@ -110,11 +121,15 @@ The page Help and dedicated guide must explain only product truth:
   environment-only and are never sent to the browser or committed.
 - `src/modules/stock-levels/stock-levels-contract.ts`: shared narrow
   request/response types, factual unavailable reasons, the already-mapped
-  Potential Path card facts, and quota feedback contract.
+  Potential Path card facts, saved-map identifiers and quota feedback contract.
 - `src/modules/platform/server/database/migrations/0089_platform_stock_levels_usage.ts`:
   persistent account-scoped fresh-calculation receipts, New York day identity,
   and indexes required for atomic quota enforcement. It contains no quote,
   level, Watchlist, or provider data.
+- `src/modules/platform/server/database/migrations/0090_platform_stock_levels_saved_maps.ts`:
+  private per-user mapped-card snapshots, saved/replaced/expires timestamps and
+  ownership/expiry indexes. It contains no candles, provider secrets or
+  Watchlist data and is registered but not run by this implementation slice.
 - `src/modules/platform/server/database/platform-migration-manifest.ts`,
   `src/modules/platform/server/database/platform-migration-registry.ts`, and
   the applicable migration contract inventory: register the new migration only;
@@ -148,14 +163,12 @@ The page Help and dedicated guide must explain only product truth:
 
 ### Help
 
-- `src/modules/help/stock-levels-guides.ts`: dedicated `Stock Levels`
-  collection with stable overview and guide/section anchors covering getting a
-  map, reference-price timing, reading support/resistance, Full ladder,
-  strength/type/provenance, freshness and unavailable states.
-- `src/modules/help/help-content-registry.ts`: Help navigation, search records,
-  stable route metadata, breadcrumbs and section discovery for the collection.
-- Existing generic Help routes render the guide; no second Help shell or route
-  family is introduced.
+- The shared card's top-right question-mark links directly to the public
+  [Watchlist how-it-works guide](https://traderslink.pro/watchlist/how-it-works).
+  `/levels` has no separate Stock Levels Help button or local explainer panel.
+- `src/modules/help/stock-levels-guides.ts` and
+  `src/modules/help/help-content-registry.ts` remain the existing Dashboard
+  contextual Help mapping; they do not add a second `/levels` help control.
 
 ### Documentation
 
@@ -163,7 +176,9 @@ The page Help and dedicated guide must explain only product truth:
 - `docs/migration/route-ownership.md` gains `/levels` and `/api/levels` only
   when the implementation checkpoint is complete, keeping legacy Level
   Analysis and Watchlist ownership separate.
-- The migration register gains `0089` only with the registered migration.
+- The migration register gains the registered `0089` quota-receipt migration
+  and `0090` private saved-map migration only; neither is executed by this
+  implementation slice.
 
 ## Data and safety rules
 
