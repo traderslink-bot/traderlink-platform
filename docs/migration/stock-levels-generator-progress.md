@@ -80,6 +80,9 @@ Railway staging build and owner visual review pending
   regeneration and delete now share validated quota feedback, rendering the
   owner-null response exactly as `No request limit` and never interpolating
   missing quota values.
+- [x] Corrected the ordinary Get Levels request shape: it omits the optional
+  replacement identifier, while Regenerate alone sends its saved map's valid
+  UUID to the existing replacement boundary.
 - [x] `/levels` passes the explicit `Support and Resistance` header label into
   the shared card; Watchlist retains its default `Potential Path Levels`
   label. The left Stock Tools navigation label is `Levels Generator`, while

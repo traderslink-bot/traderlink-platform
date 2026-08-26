@@ -162,17 +162,19 @@ export function StockLevelsClient() {
   }, []);
 
   async function requestLevels({
-    replaceSavedMapId = null,
+    replaceSavedMapId,
     requestedSymbol = symbol,
   }: Readonly<{
-    replaceSavedMapId?: string | null;
+    replaceSavedMapId?: string;
     requestedSymbol?: string;
   }> = {}) {
     setLoading(true);
     setRequestError(null);
     try {
       const response = await fetch("/api/levels", {
-        body: JSON.stringify({ replaceSavedMapId, symbol: requestedSymbol }),
+        body: JSON.stringify(replaceSavedMapId
+          ? { replaceSavedMapId, symbol: requestedSymbol }
+          : { symbol: requestedSymbol }),
         headers: { "content-type": "application/json" },
         method: "POST",
       });
