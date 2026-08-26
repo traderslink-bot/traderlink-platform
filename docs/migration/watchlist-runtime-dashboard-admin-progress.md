@@ -29,6 +29,10 @@
   the two AI grid IDs to the summary, retain all AI controls and consoles in AI
   Controls, hide only the direct `Skipped` audit card after refresh, and use
   direct section headings/provider controls for each approved section.
+- [x] Allow the exact runtime-owned
+  `POST /api/runtime/same-day-candle-provider` path so the Yahoo/Moomoo selector can
+  operate through the existing owner-authenticated Dashboard relay without
+  opening any additional runtime path.
 - [ ] Configure the hosted runtime connection and verify the complete page
   without a browser-side fetch failure before release acceptance.
 

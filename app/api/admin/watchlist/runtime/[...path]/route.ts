@@ -31,6 +31,7 @@ const POST_PATHS = new Set([
   "/api/runtime/day-trade-adapter/refresh",
   "/api/runtime/historical-provider",
   "/api/runtime/live-provider",
+  "/api/runtime/same-day-candle-provider",
   "/api/runtime/live-trader-read-card",
   "/api/runtime/potential-gain-card",
   "/api/runtime/reversal-watchlist",
