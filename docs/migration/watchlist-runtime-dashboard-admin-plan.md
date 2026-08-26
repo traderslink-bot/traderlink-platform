@@ -23,6 +23,14 @@ lists, every per-ticker action, the full Automatic Low-Float Selection form,
 all AI Read controls and audit details, Live Website controls, Provider Health,
 Runtime Config and Runtime Status.
 
+The relayed document adds only an owner-approved injected section navigation.
+It moves existing runtime DOM blocks without cloning, renaming or replacing
+controls: persistent API Cost and non-Skipped AI Read Operations summary cards
+remain above the navigation; Watchlist is the default; Runtime, Market Data, AI
+Controls, Live Website Controls and Automatic Low-Float Selection are the
+remaining sections. Existing runtime CSS, IDs, event listeners and API paths
+remain runtime-owned.
+
 ## Security and data boundary
 
 - The browser talks only to owner-authorized Platform document and API routes.

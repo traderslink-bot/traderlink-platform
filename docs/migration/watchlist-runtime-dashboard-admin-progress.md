@@ -23,6 +23,10 @@
 - [x] Verify source-document section, control and request-path parity: 34
   representative control/section checks and all 35 API paths across Manual
   Watchlist, AI Clean Read and Trade Plan Review are present with zero misses.
+- [x] Add relay-injected owner section navigation without recreating runtime
+  controls: persistent cost/AI summary cards, Watchlist default, Runtime,
+  Market Data, AI Controls, Live Website Controls and Automatic Low-Float
+  Selection.
 - [ ] Configure the hosted runtime connection and verify the complete page
   without a browser-side fetch failure before release acceptance.
 
