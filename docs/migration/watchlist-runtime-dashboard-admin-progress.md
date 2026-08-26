@@ -14,18 +14,21 @@
 
 ## In progress
 
-- [x] Add the protected Dashboard route, navigation entry and private Platform
-  runtime bridge.
-- [x] Add the approved sections and live summaries, including publishing state
-  and market-data freshness.
-- [x] Run focused ESLint for the new route, client, bridge and navigation
-  record, plus `git diff --check`.
-- [ ] Prepare the Railway staging-review handoff after the private runtime URL
-  and token are configured in that environment.
+- [x] Reject the partial React control recreation after owner review found that
+  it omitted most runtime controls.
+- [x] Replace that recreation with a server-fetched copy of the runtime-owned
+  Manual Watchlist document inside the existing Dashboard page.
+- [x] Add owner-authorized document routes and an exact-path API relay for the
+  complete Manual Watchlist, AI Clean Read and Trade Plan Review controls.
+- [x] Verify source-document section, control and request-path parity: 34
+  representative control/section checks and all 35 API paths across Manual
+  Watchlist, AI Clean Read and Trade Plan Review are present with zero misses.
+- [ ] Configure the hosted runtime connection and verify the complete page
+  without a browser-side fetch failure before release acceptance.
 
 ## Release boundary
 
-No runtime restart, hosted configuration update, deployment, migration, or
-publisher change is part of implementation. Before staging review, configure
-the private runtime URL and token only in the relevant Railway environment.
-They must never be committed or exposed to the browser.
+The existing runtime remains the sole publisher. Its URL and token must be
+configured server-side in the relevant Railway environment and must never be
+committed or exposed to the browser. No duplicate publisher or data migration
+is allowed.
