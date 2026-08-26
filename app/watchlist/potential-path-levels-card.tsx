@@ -244,6 +244,7 @@ export function WatchlistV2PotentialPathCard({
             {showPrice ? <span>{formatPrice(symbol.latestPrice)}</span> : null}
             <small className="watchlist-price-delay-note" data-own-line={priceNoteOwnLine ? "true" : undefined}>{priceNote}</small>
           </div>
+          <small className="watchlist-potential-path-note">Support and Resistance</small>
         </header>
 
         {showMeta ? (
