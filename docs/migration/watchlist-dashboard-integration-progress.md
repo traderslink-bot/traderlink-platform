@@ -1,6 +1,6 @@
 # Watchlist Dashboard Integration Progress
 
-**Status:** Implementation checkpoint complete; staging review and production release pending
+**Status:** Member-access correction complete locally; release pending
 
 **Controlling plan:** [Phase 5 Slice F3 Watchlist Storage And Access Plan](phase-5-slice-f3-watchlist-storage-and-access-plan.md)
 
@@ -13,11 +13,15 @@
   `/watchlist/archive`, `/watchlist/archive/[archiveId]`, and
   `/watchlist/how-it-works`.
 - [x] Add the `Watchlist` item under Dashboard Stock Tools.
-- [x] Keep that navigation item hidden unless the signed-in account has an
-  active Discord identity matching the protected
-  `TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT` allowlist.
-- [x] Preserve the existing Watchlist Premium/member route policy, data,
-  API, stream, archive, Levels and publisher boundaries.
+- [x] Preserve verified Discord-server membership for the ordinary Watchlist
+  route/API boundary; no display-name, email or loose Discord-login fallback
+  may grant access.
+- [x] Keep the Admin Watchlist navigation item and runtime relay behind the
+  protected `TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT` owner
+  allowlist.
+- [x] Make the ordinary `Watchlist` navigation item and `/watchlist` route/API
+  family available to every authenticated TradersLink Discord server member,
+  without a Premium-role requirement.
 - [x] Keep Community Watchlists separate and unchanged.
 
 ## Release configuration boundary
@@ -25,8 +29,9 @@
 Before staging review, configure
 `TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT` with exactly the two
 owner-approved stable Discord subjects for This Guy and TradersLink. Do not
-store or commit those identifiers. A missing variable intentionally hides the
-Dashboard navigation item; it never widens page or API access.
+store or commit those identifiers. A missing variable intentionally hides only
+the owner-only Admin Watchlist navigation entry and never widens Admin page or
+runtime-relay access.
 
 ## Help assessment
 
@@ -39,6 +44,26 @@ for everyone else.
 
 ## Exclusions
 
-No database migration, Watchlist API/publisher/runtime change, Levels change,
+No database migration, Watchlist publisher/runtime change, Levels change,
 EODHD setting, Community Watchlist change, Discord-link setting change, push,
-deployment, or service restart is part of this checkpoint.
+deployment, or service restart is part of this checkpoint. The member read API
+access correction is explicitly in scope.
+
+## 2026-08-26 member-access correction checkpoint
+
+- The existing Platform Discord session boundary still requires a current
+  verified membership row for the configured TradersLink server. The new
+  member-only identity helper bypasses only the unrelated Dashboard/Premium
+  eligibility branch for the Watchlist route family; it does not accept an
+  arbitrary Discord login.
+- `/watchlist`, its ticker/archive routes and the three member read APIs
+  (list, symbol and stream) use that member-only identity. Publisher ingest,
+  recap, archive reset, Moomoo bridge and runtime paths remain untouched.
+- Dashboard navigation now has separate member Watchlist and owner Admin
+  Watchlist flags. The ordinary Watchlist entry is visible to authenticated
+  members; the Admin entry, page and relays retain the exact two-subject
+  allowlist.
+- The Discord callback and already-signed-in Watchlist return path no longer
+  require a Premium role. Anonymous and non-member requests still fail closed.
+- Static verification: `git diff --check` passed. No Vitest, local server,
+  provider call, migration, configuration change, push or deployment was run.

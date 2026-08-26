@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { TraderLinkPlatformDashboardTemplate } from "./dashboard-template";
 import {
+  requireTraderLinkPlatformDiscordMemberPageIdentity,
   currentJournalAccountSelectionRef,
   requireTraderLinkPlatformPageIdentity,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -39,13 +40,17 @@ function DashboardFrameFallback({ children }: { children: ReactNode }) {
 export async function TraderLinkPlatformDashboardFrame({
   children,
   loginReturnTo = "/workspace",
+  watchlistMemberAccess = false,
 }: {
   children: ReactNode;
   loginReturnTo?: string;
+  watchlistMemberAccess?: boolean;
 }) {
   let identity;
   try {
-    identity = await requireTraderLinkPlatformPageIdentity();
+    identity = watchlistMemberAccess
+      ? await requireTraderLinkPlatformDiscordMemberPageIdentity()
+      : await requireTraderLinkPlatformPageIdentity();
   } catch (error) {
     if (process.env.NODE_ENV === "production") {
       if (isTraderLinkPlatformError(error) && error.code === "TRADERLINK_DASHBOARD_ACCESS_DENIED") {
@@ -58,7 +63,7 @@ export async function TraderLinkPlatformDashboardFrame({
   const scope = identity.scope;
   const canReadPressReleases = hasPressReleaseDashboardAccess(identity);
   const scannerEarlyAccess = hasScannerEarlyAccess(identity);
-  const watchlistNavigationAccess = hasWatchlistDashboardNavigationAccess(identity);
+  const watchlistAdminNavigationAccess = hasWatchlistDashboardNavigationAccess(identity);
   const readAtUtc = createCanonicalUtcTimestamp();
   const dashboardContext = withReadonlyPlatformDatabase({}, (database) => {
     const activeAccount = scope.activeAccountId
@@ -97,7 +102,8 @@ export async function TraderLinkPlatformDashboardFrame({
         offlineScopeRef={offlineScopeRef}
         pressReleaseUnreadCounts={dashboardContext.pressReleaseUnreadCounts}
         scannerEarlyAccess={scannerEarlyAccess}
-        watchlistNavigationAccess={watchlistNavigationAccess}
+        watchlistMemberNavigationAccess
+        watchlistAdminNavigationAccess={watchlistAdminNavigationAccess}
       >
         {children}
       </TraderLinkPlatformDashboardTemplate>

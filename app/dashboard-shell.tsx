@@ -356,7 +356,8 @@ export function DashboardShell({
   offline = false,
   pressReleaseUnreadCounts = null,
   scannerEarlyAccess = false,
-  watchlistNavigationAccess = false,
+  watchlistMemberNavigationAccess = false,
+  watchlistAdminNavigationAccess = false,
 }: {
   children: ReactNode;
   initialMarketHaltAlertsEnabled?: boolean;
@@ -365,7 +366,8 @@ export function DashboardShell({
   offline?: boolean;
   pressReleaseUnreadCounts?: PressReleaseUnreadCounts | null;
   scannerEarlyAccess?: boolean;
-  watchlistNavigationAccess?: boolean;
+  watchlistMemberNavigationAccess?: boolean;
+  watchlistAdminNavigationAccess?: boolean;
 }) {
   const pathname = usePathname();
   const helpDestination = offline ? "/help" : "https://traderslink.pro/help";
@@ -397,8 +399,8 @@ export function DashboardShell({
           items: Object.freeze(section.group.items.filter((item) =>
             !isDashboardNavigationItem(item) || (
               (item.href !== "/scanner" || scannerEarlyAccess) &&
-              (item.href !== "/watchlist" || watchlistNavigationAccess) &&
-              (item.href !== "/admin/watchlist" || watchlistNavigationAccess)
+              (item.href !== "/watchlist" || watchlistMemberNavigationAccess) &&
+              (item.href !== "/admin/watchlist" || watchlistAdminNavigationAccess)
             ))),
         }),
       }));

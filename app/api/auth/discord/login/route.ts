@@ -11,6 +11,7 @@ import {
 } from "@/src/modules/platform/server/authentication/platform-discord-oauth-cookies";
 import { resolvePlatformPublicOrigin } from "@/src/modules/platform/server/authentication/platform-public-origin";
 import {
+  requireTraderLinkPlatformDiscordMemberRequestIdentity,
   requireTraderLinkPlatformRequestIdentity,
   type TraderLinkPlatformRequestIdentity,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
@@ -24,7 +25,6 @@ import {
   type DiscordOAuthPrompt,
   getDiscordOAuthConfig,
 } from "@/src/lib/academy/discord-oauth";
-import { hasPlatformDiscordPremiumAccess } from "@/src/modules/watchlist/server/access/platform-discord-watchlist-entitlement";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,32 +42,20 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   let currentIdentity: TraderLinkPlatformRequestIdentity | null = null;
 
   try {
-    currentIdentity = requireTraderLinkPlatformRequestIdentity(request.headers);
+    currentIdentity = isWatchlistAuthReturnTo(returnTo)
+      ? requireTraderLinkPlatformDiscordMemberRequestIdentity(request.headers)
+      : requireTraderLinkPlatformRequestIdentity(request.headers);
   } catch {
     currentIdentity = null;
   }
 
-  if (
-    currentIdentity &&
-    (!isJournalAdminReturnTo(returnTo) &&
-      (!isWatchlistAuthReturnTo(returnTo) ||
-      currentIdentity.mode === "local_development" ||
-      (currentIdentity.discord !== null &&
-        hasPlatformDiscordPremiumAccess(currentIdentity.discord))))
-  ) {
+  if (currentIdentity && !isJournalAdminReturnTo(returnTo)) {
     return NextResponse.redirect(new URL(returnTo, origin));
   }
 
   try {
     const config = getDiscordOAuthConfig(origin);
-    const prompt =
-      currentIdentity &&
-      isWatchlistAuthReturnTo(returnTo) &&
-      currentIdentity.mode === "platform_session" &&
-      (currentIdentity.discord === null ||
-        !hasPlatformDiscordPremiumAccess(currentIdentity.discord))
-        ? "consent"
-        : getDiscordOAuthPrompt(request);
+    const prompt = getDiscordOAuthPrompt(request);
     const state = randomBytes(24).toString("base64url");
     const response = NextResponse.redirect(
       buildDiscordAuthorizeUrl({ config, prompt, state }),

@@ -8,7 +8,8 @@
 
 - [x] Confirmed the existing Watchlist runtime has the required status,
   provider, AI Read, live-website and deterministic Day Trade Adapter endpoints.
-- [x] Confirmed the member-facing Watchlist route family is out of scope.
+- [x] Keep the member-facing Watchlist route family separate from the
+  owner-only runtime Admin document and relay.
 - [x] Confirmed the existing two-owner stable Discord-subject access predicate
   is the correct authorization boundary.
 

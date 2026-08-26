@@ -182,7 +182,7 @@ describe("Discord Academy auth routes", () => {
     );
   });
 
-  it("creates a site session but blocks a non-Premium member from the watchlist", async () => {
+  it("returns a free Discord server member to the requested watchlist page", async () => {
     createPlatformDatabase();
     stubDiscordOAuth({ roles: [] });
     vi.stubEnv("TRADERSLINK_PREMIUM_DISCORD_ROLE_ID", "200");
@@ -190,14 +190,14 @@ describe("Discord Academy auth routes", () => {
     const response = await callbackGET(callbackRequest("/watchlist/ALBT"));
 
     expect(response.headers.get("location")).toBe(
-      "https://traderslink.pro/watchlist/ALBT?auth=premium-required",
+      "https://traderslink.pro/watchlist/ALBT?auth=connected",
     );
     expect(getSetCookieHeaders(response).join("\n")).toContain(
       TRADERLINK_PLATFORM_SESSION_COOKIE,
     );
   });
 
-  it("returns a Premium server member to the requested watchlist page", async () => {
+  it("does not require the Premium role for the requested watchlist page", async () => {
     createPlatformDatabase();
     stubDiscordOAuth({ roles: ["200"] });
     vi.stubEnv("TRADERSLINK_PREMIUM_DISCORD_ROLE_ID", "200");

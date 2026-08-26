@@ -37,10 +37,7 @@ import {
   resolveDiscordCurrentGuildMembership,
   shouldRetryDiscordOAuthWithConsent,
 } from "@/src/lib/academy/discord-oauth";
-import {
-  hasPlatformDiscordPremiumAccess,
-  isPremiumWatchlistRoleConfigured,
-} from "@/src/modules/watchlist/server/access/platform-discord-watchlist-entitlement";
+import { hasPlatformDiscordPremiumAccess } from "@/src/modules/watchlist/server/access/platform-discord-watchlist-entitlement";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -127,7 +124,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     const watchlistReturn = isWatchlistAuthReturnTo(returnTo);
-    const dashboardAccessAllowed = withPlatformDatabase(
+    const dashboardAccessAllowed = watchlistReturn || withPlatformDatabase(
       { mode: "runtime" },
       (database) => new PlatformDashboardMemberAccessRepository(database)
         .read().allowAllDiscordMembers || hasPlatformDiscordPremiumAccess({
@@ -217,25 +214,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return response;
     }
 
-    let authStatus = "connected";
-    if (
-      watchlistReturn &&
-      process.env.NODE_ENV === "production" &&
-      !isPremiumWatchlistRoleConfigured()
-    ) {
-      authStatus = "premium-config";
-    } else if (
-      watchlistReturn &&
-      !hasPlatformDiscordPremiumAccess({
-        guildOwner: resolvedGuildMember.guild_owner === true,
-        roleIds: resolvedGuildMember.roles ?? [],
-      })
-    ) {
-      authStatus = "premium-required";
-    }
     const response = provisioned || shouldShowNewsletterWelcome
-      ? newsletterWelcomeRedirect(request, returnTo, authStatus)
-      : authRedirect(request, returnTo, authStatus);
+      ? newsletterWelcomeRedirect(request, returnTo, "connected")
+      : authRedirect(request, returnTo, "connected");
 
     clearDiscordOAuthCookies(response, request);
     setPlatformAuthCookie(
