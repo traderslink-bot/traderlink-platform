@@ -87,9 +87,14 @@ Railway staging build and owner visual review pending
   the shared card; Watchlist retains its default `Potential Path Levels`
   label. The left Stock Tools navigation label is `Levels Generator`, while
   its href, route title and Help mapping remain unchanged.
-- [x] New maps remain in current-page-session state only. The newest card is
-  open at the top; older maps are retained newest-first as collapsed factual
-  summaries and expand without a fetch, quota receipt or regeneration.
+- [x] Verified private 72-hour map persistence: migration `0090` stores each
+  mapped-card snapshot with its authenticated `user_id` and expiry; the
+  account-scoped `/api/levels` read loads unexpired maps newest-first after
+  reload/return. The newest card is open at the top; older maps are collapsed
+  factual summaries and expand without a fetch, quota receipt or regeneration.
+- [x] Added a clear native-details chevron to each collapsed saved-map summary;
+  it rotates open while retaining the approved title, card surface,
+  Regenerate/Delete controls and shared card body.
 - [x] Corrected session-history presentation without changing the shared card
   body: prior-result details span the same full grid width as the current map,
   use the existing card surface/border treatment while collapsed, use the

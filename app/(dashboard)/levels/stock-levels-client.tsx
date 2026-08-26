@@ -1,5 +1,6 @@
 "use client";
 
+import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
@@ -95,7 +96,10 @@ function GeneratedLevelsCards({
             ) : (
               <details key={savedMap.savedMapId} className="stock-levels-history-card" data-history-index={index}>
                 <summary>
-                  <span>{generatedLevelsSummary(savedMap)}</span>
+                  <span className="stock-levels-history-summary-title">{generatedLevelsSummary(savedMap)}</span>
+                  <span aria-hidden="true" className="stock-levels-history-expand-indicator">
+                    <ExpandMoreRoundedIcon fontSize="small" />
+                  </span>
                   <span className="stock-levels-history-actions" onClick={(event) => event.preventDefault()}>
                     <button
                       className="stock-levels-history-action"

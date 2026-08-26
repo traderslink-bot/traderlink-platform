@@ -4095,12 +4095,36 @@ main.bg-zinc-950 .text-zinc-500 {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  list-style: none;
   cursor: pointer;
   color: var(--academy-primary-strong);
   font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: -0.015em;
   line-height: 1.25;
+}
+
+.stock-levels-history-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.stock-levels-history-card summary::marker {
+  content: "";
+}
+
+.stock-levels-history-summary-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.stock-levels-history-expand-indicator {
+  display: inline-flex;
+  flex: 0 0 auto;
+  transition: transform 160ms ease;
+}
+
+.stock-levels-history-card[open] .stock-levels-history-expand-indicator {
+  transform: rotate(180deg);
 }
 
 .stock-levels-history-actions {
@@ -5090,8 +5114,14 @@ main.bg-zinc-950 .text-zinc-500 {
   }
 
   .stock-levels-history-card summary {
-    align-items: flex-start;
-    flex-direction: column;
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
+
+  .stock-levels-history-actions {
+    flex-basis: 100%;
   }
 
   .watchlist-v2-card {
