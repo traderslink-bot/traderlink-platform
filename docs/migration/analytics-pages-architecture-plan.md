@@ -112,6 +112,15 @@ sortable trade table shows ticker, direction, factual day/multi-day
 classification, opened and closed time, execution count, average entry/exit,
 maximum position, hold time and Net P/L.
 
+Entry Price Results presents the exact weighted average entry-price bands for
+the same completed-trade population. It leads with the largest recorded loss
+band and most profitable band, always includes the completed-trade count and
+qualifies a band with fewer than 10 included trades as limited history. The
+complete price-band table remains visible beneath those statements; each
+completed trade belongs to one band, so its counts and selected-basis Net P/L
+reconcile to the page population. This is observed history, not a future price
+recommendation.
+
 Scale-ins, scale-outs and re-entries are not shown as labels until their exact
 per-trade definitions and read contract are implemented. If that cannot be
 done without guessing, the page keeps the useful confirmed facts rather than

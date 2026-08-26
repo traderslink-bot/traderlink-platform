@@ -25,6 +25,8 @@ type ChartStyle = "columns" | "horizontal_bars";
 type Point = Readonly<{ key: string; label: string; metrics: Readonly<Record<ExecutionMetricId, Readonly<{ display: string; value: number | null }>>> }>;
 export type ExecutionChartData = Readonly<Record<ChartId, readonly Point[]>>;
 export type ExecutionTradeRow = Readonly<{ roundTripId: string; ticker: string; direction: "long" | "short"; tradeType: string; tradeTypeValue: "day_trade" | "multi_day_trade"; opened: string; openedValue: string; closed: string; closedValue: string; executions: number; averageEntry: string; averageEntryValue: number; averageExit: string; averageExitValue: number; maximumPosition: string; maximumPositionValue: number; holdTime: string; holdTimeValue: number; netPnl: string; netPnlDecimal: string | null; netPnlValue: number }>;
+export type EntryPriceResult = Readonly<{ averagePnl: string; entryPriceBand: string; key: string; losses: number | null; lossesDisplay: string; netPnl: string; netPnlDecimal: string | null; returnOnEntryValue: string; tradeCount: number | null; tradeCountDisplay: string; winRate: string; wins: number | null; winsDisplay: string }>;
+export type EntryPriceInsights = Readonly<{ largestLossKey: string | null; mostProfitableKey: string | null }>;
 
 const CHARTS: readonly Readonly<{ id: ChartId; title: string }>[] = [
   { id: "entered_quantity_bucket", title: "Entry size" },
@@ -82,7 +84,42 @@ function ChartPanel({ chart, points, metricId }: { chart: (typeof CHARTS)[number
   return <Paper sx={{ minWidth: 0, p: { xs: 1.5, sm: 2.25 } }} variant="outlined"><Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}><Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">{chart.title}</Typography><TextField aria-label={`${chart.title} chart type`} onChange={(event) => setStyle(event.target.value as ChartStyle)} select size="small" sx={{ minWidth: 150 }} value={style}><MenuItem value="horizontal_bars">Horizontal bars</MenuItem><MenuItem value="columns">Columns</MenuItem></TextField></Stack><Typography color="text.secondary" variant="body2">{MEASURES.find((measure) => measure.id === metricId)?.label}</Typography><Chart metricId={metricId} points={points} style={style} /></Paper>;
 }
 
-export function ExecutionAnalyticsClient({ chartData, currency, offline = false, rows }: { chartData: ExecutionChartData; currency: string | null; offline?: boolean; rows: readonly ExecutionTradeRow[] }) {
+function EntryPriceResults({ insights, results }: { insights: EntryPriceInsights; results: readonly EntryPriceResult[] }) {
+  const largestLoss = results.find((result) => result.key === insights.largestLossKey) ?? null;
+  const mostProfitable = results.find((result) => result.key === insights.mostProfitableKey) ?? null;
+  const statement = (result: EntryPriceResult | null, kind: "loss" | "profit") => {
+    if (result === null) return kind === "loss"
+      ? "No entry-price range has a net loss in these results."
+      : "No entry-price range has a net profit in these results.";
+    const limitedHistory = result.tradeCount !== null && result.tradeCount < 10;
+    const prefix = limitedHistory ? "Limited history: " : "";
+    const message = kind === "loss"
+      ? `your largest recorded losses come from stocks entered ${result.entryPriceBand.toLowerCase()}.`
+      : `you are most profitable when entering stocks ${result.entryPriceBand.toLowerCase()}.`;
+    return `${prefix}${message}`;
+  };
+  return <Paper sx={{ minWidth: 0, p: { xs: 1.5, sm: 2.25 } }} variant="outlined">
+    <Stack spacing={1.5}>
+      <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Entry Price Results</Typography>
+      <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" } }}>
+        <Box sx={{ borderColor: "divider", borderLeft: 3, pl: 1.25 }}>
+          <Typography color="text.secondary" variant="body2">{statement(largestLoss, "loss")}</Typography>
+          {largestLoss ? <Typography color="error.main" sx={{ fontWeight: 850, mt: 0.5 }}>{largestLoss.netPnl} · {largestLoss.tradeCountDisplay}</Typography> : null}
+        </Box>
+        <Box sx={{ borderColor: "divider", borderLeft: 3, pl: 1.25 }}>
+          <Typography color="text.secondary" variant="body2">{statement(mostProfitable, "profit")}</Typography>
+          {mostProfitable ? <Typography color="success.main" sx={{ fontWeight: 850, mt: 0.5 }}>{mostProfitable.netPnl} · {mostProfitable.tradeCountDisplay}</Typography> : null}
+        </Box>
+      </Box>
+      <HorizontalScrollRegion label="Entry price results table" minTableWidth={960}>
+        <Table size="small"><TableHead><TableRow><TableCell>Entry price</TableCell><TableCell align="right">Net P/L</TableCell><TableCell align="right">Trades</TableCell><TableCell align="right">Wins</TableCell><TableCell align="right">Losses</TableCell><TableCell align="right">Win rate</TableCell><TableCell align="right">Avg P/L</TableCell><TableCell align="right">Return on entry value</TableCell></TableRow></TableHead><TableBody>{results.map((result) => <TableRow key={result.key}><TableCell sx={{ fontWeight: 800 }}>{result.entryPriceBand}</TableCell><TableCell align="right" sx={{ color: result.netPnlDecimal !== null && result.netPnlDecimal.startsWith("-") ? "error.main" : "success.main", fontWeight: 800 }}>{result.netPnl}</TableCell><TableCell align="right">{result.tradeCountDisplay}</TableCell><TableCell align="right">{result.winsDisplay}</TableCell><TableCell align="right">{result.lossesDisplay}</TableCell><TableCell align="right">{result.winRate}</TableCell><TableCell align="right">{result.averagePnl}</TableCell><TableCell align="right">{result.returnOnEntryValue}</TableCell></TableRow>)}</TableBody></Table>
+      </HorizontalScrollRegion>
+      <Typography color="text.secondary" variant="body2">Each completed trade is grouped once by its exact weighted average entry price. Results use the current date range and fee-covered Net P/L.</Typography>
+    </Stack>
+  </Paper>;
+}
+
+export function ExecutionAnalyticsClient({ chartData, currency, offline = false, priceInsights, priceResults, rows }: { chartData: ExecutionChartData; currency: string | null; offline?: boolean; priceInsights: EntryPriceInsights; priceResults: readonly EntryPriceResult[]; rows: readonly ExecutionTradeRow[] }) {
   const [metricId, setMetricId] = useState<ExecutionMetricId>("net_pnl");
   const [ticker, setTicker] = useState("");
   const [direction, setDirection] = useState<"all" | "long" | "short">("all");
@@ -103,8 +140,11 @@ export function ExecutionAnalyticsClient({ chartData, currency, offline = false,
         </TextField>
         <FeatureHelpLink href="/help/core-analytics/timing-and-execution#read-execution" label="Trade Breakdown measures" />
       </Stack>
-      <Box sx={{ display: "grid", gap: 2.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", lg: "repeat(2, minmax(0, 1fr))" } }}>
-        {CHARTS.map((chart) => <ChartPanel chart={chart} key={chart.id} metricId={metricId} points={chartData[chart.id]} />)}
+      <Box sx={{ display: "grid", gap: 2.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", lg: "minmax(0, 1.25fr) minmax(0, 0.75fr)" } }}>
+        <EntryPriceResults insights={priceInsights} results={priceResults} />
+        <Stack spacing={2.5}>
+          {[CHARTS[1], CHARTS[0], CHARTS[2]].map((chart) => <ChartPanel chart={chart} key={chart.id} metricId={metricId} points={chartData[chart.id]} />)}
+        </Stack>
       </Box>
       <Paper sx={{ overflow: "hidden" }} variant="outlined">
         <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ p: { xs: 1.5, sm: 2.25 } }}>

@@ -15,7 +15,7 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         ["Overview", "Read key completed-trade measures and their monthly Net P/L history."],
         ["Ticker", "Compare completed-trade results by ticker."],
         ["Timing", "Compare completed-trade results by entry time, exit time, day of week and trading session."],
-        ["Trade Breakdown", "Compare completed trades by entry size, maximum position and holding time, then open exact executions."],
+        ["Trade Breakdown", "Compare completed trades by entry price, entry size, maximum position and holding time, then open exact executions."],
       ]),
     ]),
     section("what-it-does-not-change", "Analytics does not change executions", "Changing a view, range, sort or filter never edits a Trade Tracker execution or review.", ["read only", "change trade", "filters", "sort"], [
@@ -74,8 +74,10 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         "When no time range passes every reliability check, the card identifies the most repeated range and explains which check it did not pass.",
       ]),
     ]),
-    section("read-execution", "Read Trade Breakdown", "Trade Breakdown groups completed trades by entry size, maximum position and holding duration.", ["trade breakdown", "execution analytics", "entry size", "maximum position", "holding time", "long short"], [
+    section("read-execution", "Read Trade Breakdown", "Trade Breakdown groups completed trades by entry price, entry size, maximum position and holding duration.", ["trade breakdown", "execution analytics", "entry price", "entry size", "maximum position", "holding time", "long short"], [
       bullets([
+        "Entry Price Results groups every completed trade once by its weighted average entry price across its recorded entries and adds. The summary identifies the largest recorded loss band and most profitable band, while the complete table shows every price range.",
+        "A price range with fewer than 10 included closed trades says Limited history. Its result is still recorded history, but it is not presented as a repeatable conclusion.",
         "Choose Net P/L, Win rate or Trade count to change the chart measure.",
         "Use the chart-style control to switch between horizontal bars and columns.",
         "Use the ticker, direction and trade-type filters to narrow the completed-trade evidence.",
