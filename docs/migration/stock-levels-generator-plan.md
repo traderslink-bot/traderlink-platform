@@ -49,8 +49,11 @@ Discord publishing, AI generation, Premium access, or live Watchlist state.
    to the public Watchlist how-it-works guide. Do not retain a separate Stock
    Levels Help button or a local `How to read this map` explainer panel.
 10. Preserve the current card's responsive behavior and its existing visual
-    language exactly. The owner reviews the complete UI before the first
-    acceptance checkpoint.
+    language exactly. Session-history details are container-only adapters: on
+    desktop they span the full original card width, use the same closed-card
+    surface treatment and page-title-sized blue summary text; the first prior
+    map has a doubled vertical gap. Mobile uses smaller proportional spacing
+    and title sizing without overflow or a narrower card.
 
 ## Page information and trader guidance
 

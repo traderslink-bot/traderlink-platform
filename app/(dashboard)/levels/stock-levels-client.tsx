@@ -82,7 +82,7 @@ function GeneratedLevelsCards({ results }: { results: readonly GeneratedLevelsRe
             {results.map(({ id, result }, index) => index === 0 ? (
               <PotentialPathCard key={id} result={result} />
             ) : (
-              <details key={id} className="watchlist-more-levels">
+              <details key={id} className="stock-levels-history-card" data-history-index={index}>
                 <summary>{generatedLevelsSummary(result)}</summary>
                 <PotentialPathCard result={result} />
               </details>

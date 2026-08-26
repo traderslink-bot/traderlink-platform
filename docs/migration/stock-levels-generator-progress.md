@@ -83,6 +83,11 @@ Railway staging build and owner visual review pending
 - [x] New maps remain in current-page-session state only. The newest card is
   open at the top; older maps are retained newest-first as collapsed factual
   summaries and expand without a fetch, quota receipt or regeneration.
+- [x] Corrected session-history presentation without changing the shared card
+  body: prior-result details span the same full grid width as the current map,
+  use the existing card surface/border treatment while collapsed, use the
+  page-title-sized blue summary text on desktop, and add the approved first
+  history gap with smaller mobile spacing and responsive text sizing.
 
 ## In progress
 
