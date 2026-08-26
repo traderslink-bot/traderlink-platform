@@ -1,6 +1,13 @@
 # Trade Breakdown Progress
 
-**Status:** Implemented and static-verified; owner visual review remains
+**Status:** Entry Price Results ready for owner visual review; no release action authorized
+
+## Entry Price Results - 2026-08-26
+
+The owner-approved Entry Price Results slice is tracked in
+[Entry Price Results Progress](analytics-execution-entry-price-results-progress.md).
+It remains limited to `/analytics/execution` and must not add a Trade Explorer
+view, a market-data dependency or a second calculation path.
 
 ## Approved scope
 

@@ -74,7 +74,19 @@ export type JournalAnalyticsGrouping =
   | "entered_quantity_bucket"
   | "maximum_position_bucket"
   | "entry_notional_bucket"
+  | "entry_price_bucket"
   | "realized_outcome";
+
+export const JOURNAL_ANALYTICS_ENTRY_PRICE_BANDS = Object.freeze([
+  Object.freeze({ key: "under_0_50", label: "Under $0.50", maximumExclusive: "0.5" }),
+  Object.freeze({ key: "0_50_to_1", label: "$0.50 to under $1.00", maximumExclusive: "1" }),
+  Object.freeze({ key: "1_to_2", label: "$1.00 to under $2.00", maximumExclusive: "2" }),
+  Object.freeze({ key: "2_to_3", label: "$2.00 to under $3.00", maximumExclusive: "3" }),
+  Object.freeze({ key: "3_to_5", label: "$3.00 to under $5.00", maximumExclusive: "5" }),
+  Object.freeze({ key: "5_to_10", label: "$5.00 to under $10.00", maximumExclusive: "10" }),
+  Object.freeze({ key: "10_to_20", label: "$10.00 to under $20.00", maximumExclusive: "20" }),
+  Object.freeze({ key: "20_and_over", label: "$20.00+", maximumExclusive: null }),
+] as const);
 
 export type JournalAnalyticsQuery = Readonly<{
   queryVersion: typeof JOURNAL_ANALYTICS_QUERY_VERSION;

@@ -1,5 +1,5 @@
 import type { OverviewDateRange } from "@/app/(dashboard)/analytics/overview-date-range-control";
-import type { ExecutionChartData, ExecutionTradeRow } from "@/app/(dashboard)/analytics/execution-analytics-client";
+import type { EntryPriceInsights, EntryPriceResult, ExecutionChartData, ExecutionTradeRow } from "@/app/(dashboard)/analytics/execution-analytics-client";
 import type { ResultsTickerRow } from "@/app/(dashboard)/analytics/results-ticker-table";
 import type { TimingChartData } from "@/app/(dashboard)/analytics/timing/timing-analytics-client";
 import type { TradeAnalysisView } from "@/app/(dashboard)/analytics/trade-analysis-client";
@@ -72,6 +72,8 @@ export type JournalAnalyticsExecutionOfflineViewModel = Readonly<{
   currency: string | null;
   dateRange: OverviewDateRange;
   kind: "analytics-execution";
+  priceInsights: EntryPriceInsights;
+  priceResults: readonly EntryPriceResult[];
   rows: readonly ExecutionTradeRow[];
   version: 1;
 }>;
@@ -231,7 +233,8 @@ export function isJournalAnalyticsOfflineViewModel(
       typeof value.timezone === "string";
   }
   if (expectedKind === "analytics-execution") {
-    return isRecord(value.chartData) && Array.isArray(value.rows) && isRecord(value.dateRange);
+    return isRecord(value.chartData) && Array.isArray(value.priceResults) &&
+      isRecord(value.priceInsights) && Array.isArray(value.rows) && isRecord(value.dateRange);
   }
   if (expectedKind === "trade-analyzer-trades") {
     return isRecord(value.dateRange) && (value.page === null || isRecord(value.page));

@@ -4,7 +4,10 @@ import type {
   JournalAnalyticsGrouping,
   JournalAnalyticsMoneyBasis,
 } from "../contracts/analytics-query";
-import { JOURNAL_ANALYTICS_MAX_GROUP_ROWS } from "../contracts/analytics-query";
+import {
+  JOURNAL_ANALYTICS_ENTRY_PRICE_BANDS,
+  JOURNAL_ANALYTICS_MAX_GROUP_ROWS,
+} from "../contracts/analytics-query";
 import type {
   JournalAnalyticsCoverage,
   JournalAnalyticsGroupResult,
@@ -13,6 +16,7 @@ import { accumulateJournalAnalyticsMetrics } from "./analytics-accumulator";
 import type { JournalAnalyticsPopulation } from "./analytics-population";
 import {
   compareExactDecimals,
+  multiplyExactDecimals,
   sumExactDecimals,
 } from "./exact-analytics-math";
 import type { NormalizedJournalAnalyticsRow } from "./normalize-journal-analytics-facts";
@@ -144,6 +148,25 @@ function groupDescriptor(
       return decimalBucket(row.maximumPositionQuantityDecimal);
     case "entry_notional_bucket":
       return decimalBucket(row.entryNotionalDecimal);
+    case "entry_price_bucket": {
+      if (compareExactDecimals(row.enteredQuantityDecimal, "0") <= 0) {
+        platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+          check: "analytics_entry_price_denominator",
+        });
+      }
+      const band = JOURNAL_ANALYTICS_ENTRY_PRICE_BANDS.find((candidate) =>
+        candidate.maximumExclusive === null || compareExactDecimals(
+          row.entryNotionalDecimal,
+          multiplyExactDecimals(row.enteredQuantityDecimal, candidate.maximumExclusive),
+        ) < 0,
+      );
+      if (!band) {
+        platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
+          check: "analytics_entry_price_band",
+        });
+      }
+      return Object.freeze({ key: band.key, label: band.label });
+    }
     case "realized_outcome": {
       const value = moneyBasis === "gross" ? row.grossOutcome : row.netOutcome;
       if (value === null) {
