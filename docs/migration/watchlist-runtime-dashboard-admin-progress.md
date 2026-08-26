@@ -36,6 +36,12 @@
 - [x] Correct the hosted section grouping so the runtime-owned Same-Day Candle
   Provider control moves into Market Data beside Historical Candle Provider
   and Live Price Provider.
+- [x] Record the 2026-08-26 runtime correction slice for staging review: the
+  runtime-owned document now exposes immediate AI model state, factual
+  market-data/Moomoo/fallback health, failed-generation attempts, cached live
+  five-minute volume confirmation, new-date activation eligibility, and
+  Finnhub Company Details resilience. The existing document relay requires no
+  Platform application-code change.
 - [ ] Configure the hosted runtime connection and verify the complete page
   without a browser-side fetch failure before release acceptance.
 
