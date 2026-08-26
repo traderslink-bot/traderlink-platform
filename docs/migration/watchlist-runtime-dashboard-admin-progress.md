@@ -52,6 +52,9 @@
   the experimental-data disclaimer with the owner-approved code/algorithm/AI
   and chart-history explanation, and label the Potential Path header `Support
   and Resistance`.
+- [x] Render a session Watchlist section only when it contains a ticker; the
+  live page no longer displays zero-count Top Regular, Main Session, or
+  Post-Market headings and empty-state copy.
 - [ ] Complete the paired runtime source corrections for canonical
   TradersLink article precedence, the AI Operations default filter, and a
   wider evidence-backed initial outer target when the supplied daily history
