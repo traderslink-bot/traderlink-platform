@@ -1,6 +1,7 @@
 "use client";
 
 import AirlineStopsIcon from "@mui/icons-material/AirlineStops";
+import AdminPanelSettingsRoundedIcon from "@mui/icons-material/AdminPanelSettingsRounded";
 import AnalyticsRoundedIcon from "@mui/icons-material/AnalyticsRounded";
 import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
 import BookmarksRoundedIcon from "@mui/icons-material/BookmarksRounded";
@@ -108,6 +109,7 @@ const MarketHaltAlertDrawerContent = dynamic(() =>
 
 function navigationIcon(icon: DashboardNavigationIconKey): ReactNode {
   const icons: Record<DashboardNavigationIconKey, ReactNode> = {
+    admin: <AdminPanelSettingsRoundedIcon />,
     account: <PersonRoundedIcon />,
     aiChat: <SmartToyOutlinedIcon />,
     aiReviews: <AutoAwesomeRoundedIcon />,
@@ -395,7 +397,8 @@ export function DashboardShell({
           items: Object.freeze(section.group.items.filter((item) =>
             !isDashboardNavigationItem(item) || (
               (item.href !== "/scanner" || scannerEarlyAccess) &&
-              (item.href !== "/watchlist" || watchlistNavigationAccess)
+              (item.href !== "/watchlist" || watchlistNavigationAccess) &&
+              (item.href !== "/admin/watchlist" || watchlistNavigationAccess)
             ))),
         }),
       }));

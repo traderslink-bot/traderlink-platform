@@ -4,6 +4,8 @@
 
 **Controlling plan:** [Phase 5 Slice F3 Watchlist Storage And Access Plan](phase-5-slice-f3-watchlist-storage-and-access-plan.md)
 
+**Owner runtime dashboard:** [Watchlist Runtime Dashboard Admin Plan](watchlist-runtime-dashboard-admin-plan.md) and [progress](watchlist-runtime-dashboard-admin-progress.md)
+
 ## Scope
 
 - [x] Render the official Watchlist route family in the signed-in Dashboard

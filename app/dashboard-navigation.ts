@@ -2,6 +2,7 @@ import { areTraderLinkPlatformAiFeaturesEnabled } from
   "@/src/modules/platform/contracts/platform-ai-launch-state";
 
 export type DashboardNavigationIconKey =
+  | "admin"
   | "account"
   | "analytics"
   | "aiReviews"
@@ -238,6 +239,7 @@ export const DASHBOARD_MAIN_NAVIGATION_GROUPS: readonly DashboardNavigationGroup
       items: Object.freeze([
         Object.freeze({ href: "/scanner", label: "Scanner", icon: "scanner" as const }),
         Object.freeze({ href: "/watchlist", label: "Watchlist", icon: "watchlist" as const }),
+        Object.freeze({ href: "/admin/watchlist", label: "Watchlist Admin", icon: "admin" as const }),
         Object.freeze({ href: "/charts", label: "Market Charts", icon: "marketCharts" as const }),
         DASHBOARD_MARKET_HALT_ALERTS_ITEM,
       ]),
@@ -299,6 +301,7 @@ export const DASHBOARD_ROUTE_TITLES: Readonly<Record<string, string>> =
     "/calendar": "Calendar",
     "/scanner": "Scanner",
     "/watchlist": "Watchlist",
+    "/admin/watchlist": "Watchlist Admin",
     "/trade-tracker": "Daily Trade Tracker",
     "/trade-tracker/swings": "Swing Trade Tracker",
     "/quick-trade-entry": "Quick Trade Entry",
