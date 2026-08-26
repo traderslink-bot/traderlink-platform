@@ -76,8 +76,8 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     ]),
     section("read-execution", "Read Trade Breakdown", "Trade Breakdown groups completed trades by entry price, entry size, maximum position and holding duration.", ["trade breakdown", "execution analytics", "entry price", "entry size", "maximum position", "holding time", "long short"], [
       bullets([
-        "Entry Price Results groups every completed trade once by its weighted average entry price across its recorded entries and adds. The summary identifies the largest recorded loss band and most profitable band, while the complete table shows every price range.",
-        "A price range with fewer than 10 included closed trades says Limited history. Its result is still recorded history, but it is not presented as a repeatable conclusion.",
+        "Entry Price Results groups every completed trade once by its weighted average entry price across its recorded entries and adds. The summary identifies the highest and lowest win-rate bands, the largest recorded loss band and the most profitable band, while the complete table shows every price range.",
+        "A finding based on a price range with fewer than 10 included closed trades says Limited history. Its result is still recorded history, but it is not presented as a repeatable conclusion.",
         "Choose Net P/L, Win rate or Trade count to change the chart measure.",
         "Use the chart-style control to switch between horizontal bars and columns.",
         "Use the ticker, direction and trade-type filters to narrow the completed-trade evidence.",

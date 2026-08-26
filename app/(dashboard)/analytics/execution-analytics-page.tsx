@@ -25,7 +25,7 @@ import {
   formatJournalAnalyticsMetric,
   formatJournalAnalyticsMoney,
 } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
-import { compareExactDecimals } from "@/src/modules/journal-analytics/server/exact-analytics-math";
+import { compareExactDecimals, multiplyExactDecimals } from "@/src/modules/journal-analytics/server/exact-analytics-math";
 import { buildJournalAnalyticsDashboardQuery, withJournalAnalyticsReportingDashboardService } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
@@ -65,6 +65,7 @@ function entryPriceResults(
   return Object.freeze(JOURNAL_ANALYTICS_ENTRY_PRICE_BANDS.map((band) => {
     const group = groups.find((candidate) => candidate.groupKey === band.key) ?? null;
     const read = (metricId: string) => metricFor(group?.metrics ?? [], metricId);
+    const winRateValue = read("win_rate")?.value ?? null;
     return Object.freeze({
       averagePnl: read("average_pnl") ? formatJournalAnalyticsMetric(read("average_pnl")!) : "N/A",
       entryPriceBand: band.label,
@@ -76,6 +77,8 @@ function entryPriceResults(
       tradeCount: metricNumber(read("included_count")?.value ?? null),
       tradeCountDisplay: read("included_count") ? formatJournalAnalyticsMetric(read("included_count")!) : "N/A",
       winRate: read("win_rate") ? formatJournalAnalyticsMetric(read("win_rate")!) : "N/A",
+      winRateDenominatorInteger: winRateValue?.kind === "rational" ? winRateValue.denominatorInteger : null,
+      winRateNumeratorDecimal: winRateValue?.kind === "rational" ? winRateValue.numeratorDecimal : null,
       wins: metricNumber(read("win_count")?.value ?? null),
       winsDisplay: read("win_count") ? formatJournalAnalyticsMetric(read("win_count")!) : "N/A",
     });
@@ -85,24 +88,35 @@ function entryPriceResults(
 function entryPriceInsights(
   results: readonly EntryPriceResult[],
 ): EntryPriceInsights {
-  const ranked = results.filter((result) => result.netPnlDecimal !== null &&
-    result.tradeCount !== null && result.tradeCount > 0);
-  const largestLoss = ranked.filter((result) => compareExactDecimals(
+  const included = results.filter((result) => result.tradeCount !== null &&
+    result.tradeCount > 0);
+  const netPnlRanked = included.filter((result) => result.netPnlDecimal !== null);
+  const winRateRanked = included.filter((result) => result.winRateNumeratorDecimal !== null &&
+    result.winRateDenominatorInteger !== null);
+  const compareWinRates = (left: EntryPriceResult, right: EntryPriceResult) => compareExactDecimals(
+    multiplyExactDecimals(left.winRateNumeratorDecimal!, right.winRateDenominatorInteger!),
+    multiplyExactDecimals(right.winRateNumeratorDecimal!, left.winRateDenominatorInteger!),
+  );
+  const largestLoss = netPnlRanked.filter((result) => compareExactDecimals(
     result.netPnlDecimal!,
     "0",
   ) < 0).sort((left, right) => compareExactDecimals(
     left.netPnlDecimal!,
     right.netPnlDecimal!,
   ))[0] ?? null;
-  const mostProfitable = ranked.filter((result) => compareExactDecimals(
+  const mostProfitable = netPnlRanked.filter((result) => compareExactDecimals(
     result.netPnlDecimal!,
     "0",
   ) > 0).sort((left, right) => compareExactDecimals(
     right.netPnlDecimal!,
     left.netPnlDecimal!,
   ))[0] ?? null;
+  const highestWinRate = winRateRanked.sort((left, right) => compareWinRates(right, left))[0] ?? null;
+  const lowestWinRate = winRateRanked.sort(compareWinRates)[0] ?? null;
   return Object.freeze({
+    highestWinRateKey: highestWinRate?.key ?? null,
     largestLossKey: largestLoss?.key ?? null,
+    lowestWinRateKey: lowestWinRate?.key ?? null,
     mostProfitableKey: mostProfitable?.key ?? null,
   });
 }

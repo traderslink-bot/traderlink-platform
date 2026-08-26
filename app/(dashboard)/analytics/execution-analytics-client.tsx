@@ -25,8 +25,8 @@ type ChartStyle = "columns" | "horizontal_bars";
 type Point = Readonly<{ key: string; label: string; metrics: Readonly<Record<ExecutionMetricId, Readonly<{ display: string; value: number | null }>>> }>;
 export type ExecutionChartData = Readonly<Record<ChartId, readonly Point[]>>;
 export type ExecutionTradeRow = Readonly<{ roundTripId: string; ticker: string; direction: "long" | "short"; tradeType: string; tradeTypeValue: "day_trade" | "multi_day_trade"; opened: string; openedValue: string; closed: string; closedValue: string; executions: number; averageEntry: string; averageEntryValue: number; averageExit: string; averageExitValue: number; maximumPosition: string; maximumPositionValue: number; holdTime: string; holdTimeValue: number; netPnl: string; netPnlDecimal: string | null; netPnlValue: number }>;
-export type EntryPriceResult = Readonly<{ averagePnl: string; entryPriceBand: string; key: string; losses: number | null; lossesDisplay: string; netPnl: string; netPnlDecimal: string | null; tradeCount: number | null; tradeCountDisplay: string; winRate: string; wins: number | null; winsDisplay: string }>;
-export type EntryPriceInsights = Readonly<{ largestLossKey: string | null; mostProfitableKey: string | null }>;
+export type EntryPriceResult = Readonly<{ averagePnl: string; entryPriceBand: string; key: string; losses: number | null; lossesDisplay: string; netPnl: string; netPnlDecimal: string | null; tradeCount: number | null; tradeCountDisplay: string; winRate: string; winRateDenominatorInteger: string | null; winRateNumeratorDecimal: string | null; wins: number | null; winsDisplay: string }>;
+export type EntryPriceInsights = Readonly<{ highestWinRateKey: string | null; largestLossKey: string | null; lowestWinRateKey: string | null; mostProfitableKey: string | null }>;
 
 const CHARTS: readonly Readonly<{ id: ChartId; title: string }>[] = [
   { id: "entered_quantity_bucket", title: "Entry size" },
@@ -84,35 +84,55 @@ function ChartPanel({ chart, points, metricId }: { chart: (typeof CHARTS)[number
   return <Paper sx={{ minWidth: 0, p: { xs: 1.5, sm: 2.25 } }} variant="outlined"><Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}><Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">{chart.title}</Typography><TextField aria-label={`${chart.title} chart type`} onChange={(event) => setStyle(event.target.value as ChartStyle)} select size="small" sx={{ minWidth: 150 }} value={style}><MenuItem value="horizontal_bars">Horizontal bars</MenuItem><MenuItem value="columns">Columns</MenuItem></TextField></Stack><Typography color="text.secondary" variant="body2">{MEASURES.find((measure) => measure.id === metricId)?.label}</Typography><Chart metricId={metricId} points={points} style={style} /></Paper>;
 }
 
-function EntryPriceResults({ insights, results }: { insights: EntryPriceInsights; results: readonly EntryPriceResult[] }) {
-  const largestLoss = results.find((result) => result.key === insights.largestLossKey) ?? null;
-  const mostProfitable = results.find((result) => result.key === insights.mostProfitableKey) ?? null;
-  const statement = (result: EntryPriceResult | null, kind: "loss" | "profit") => {
-    if (result === null) return kind === "loss"
+type EntryPriceInsightKind = "highest_win_rate" | "lowest_win_rate" | "loss" | "profit";
+
+function EntryPriceInsight({ kind, result }: { kind: EntryPriceInsightKind; result: EntryPriceResult | null }) {
+  const isBest = kind === "highest_win_rate" || kind === "profit";
+  const statement = kind === "highest_win_rate"
+    ? "your highest win rate comes from stocks entered:"
+    : kind === "lowest_win_rate"
+      ? "your lowest win rate comes from stocks entered:"
+      : kind === "loss"
+        ? "your largest recorded losses come from stocks entered:"
+        : "you are most profitable when entering stocks:";
+  const unavailable = kind === "highest_win_rate" || kind === "lowest_win_rate"
+    ? "No entry-price range has a recorded win rate in these results."
+    : kind === "loss"
       ? "No entry-price range has a net loss in these results."
       : "No entry-price range has a net profit in these results.";
-    const limitedHistory = result.tradeCount !== null && result.tradeCount < 10;
-    const prefix = limitedHistory ? "Limited history: " : "";
-    const message = kind === "loss"
-      ? `your largest recorded losses come from stocks entered ${result.entryPriceBand.toLowerCase()}.`
-      : `you are most profitable when entering stocks ${result.entryPriceBand.toLowerCase()}.`;
-    return `${prefix}${message}`;
-  };
+  const limitedHistory = result !== null && result.tradeCount !== null && result.tradeCount < 10;
+  const resultLine = result === null
+    ? null
+    : kind === "highest_win_rate" || kind === "lowest_win_rate"
+      ? `${result.winRate} winners from ${result.tradeCountDisplay} trades`
+      : `${result.netPnl} from ${result.tradeCountDisplay} trades`;
+  const resultColor = kind === "profit" ? "success.main" : kind === "loss" ? "error.main" : "text.primary";
+  return <Box sx={{ borderColor: isBest ? "success.main" : "error.main", borderLeft: 3, pl: 1.25 }}>
+    <Typography color="text.secondary" variant="body2">{result === null ? unavailable : `${limitedHistory ? "Limited history: " : ""}${statement}`}</Typography>
+    {result ? <><Typography sx={{ fontSize: { xs: 17, sm: 18 }, fontWeight: 850, lineHeight: 1.35, mt: 0.35 }}>{result.entryPriceBand}.</Typography><Typography color={resultColor} sx={{ mt: 0.25 }} variant="body2">{resultLine}</Typography></> : null}
+  </Box>;
+}
+
+function EntryPriceResults({ insights, results }: { insights: EntryPriceInsights; results: readonly EntryPriceResult[] }) {
+  const highestWinRate = results.find((result) => result.key === insights.highestWinRateKey) ?? null;
+  const largestLoss = results.find((result) => result.key === insights.largestLossKey) ?? null;
+  const lowestWinRate = results.find((result) => result.key === insights.lowestWinRateKey) ?? null;
+  const mostProfitable = results.find((result) => result.key === insights.mostProfitableKey) ?? null;
   return <Paper sx={{ minWidth: 0, p: { xs: 1.5, sm: 2.25 } }} variant="outlined">
     <Stack spacing={1.5}>
       <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Entry Price Results</Typography>
-      <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" } }}>
-        <Box sx={{ borderColor: "divider", borderLeft: 3, pl: 1.25 }}>
-          <Typography color="text.secondary" variant="body2">{statement(largestLoss, "loss")}</Typography>
-          {largestLoss ? <Typography color="error.main" sx={{ fontWeight: 850, mt: 0.5 }}>{largestLoss.netPnl} · {largestLoss.tradeCountDisplay}</Typography> : null}
-        </Box>
-        <Box sx={{ borderColor: "divider", borderLeft: 3, pl: 1.25 }}>
-          <Typography color="text.secondary" variant="body2">{statement(mostProfitable, "profit")}</Typography>
-          {mostProfitable ? <Typography color="success.main" sx={{ fontWeight: 850, mt: 0.5 }}>{mostProfitable.netPnl} · {mostProfitable.tradeCountDisplay}</Typography> : null}
-        </Box>
+      <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" } }}>
+        <Stack spacing={2}>
+          <EntryPriceInsight kind="highest_win_rate" result={highestWinRate} />
+          <EntryPriceInsight kind="profit" result={mostProfitable} />
+        </Stack>
+        <Stack spacing={2}>
+          <EntryPriceInsight kind="lowest_win_rate" result={lowestWinRate} />
+          <EntryPriceInsight kind="loss" result={largestLoss} />
+        </Stack>
       </Box>
-      <HorizontalScrollRegion label="Entry price results table" minTableWidth={960}>
-        <Table size="small"><TableHead><TableRow><TableCell>Entry price</TableCell><TableCell align="right">Net P/L</TableCell><TableCell align="right">Trades</TableCell><TableCell align="right">Wins</TableCell><TableCell align="right">Losses</TableCell><TableCell align="right">Win rate</TableCell><TableCell align="right">Avg P/L</TableCell></TableRow></TableHead><TableBody>{results.map((result) => <TableRow key={result.key}><TableCell sx={{ fontWeight: 800 }}>{result.entryPriceBand}</TableCell><TableCell align="right" sx={{ color: result.netPnlDecimal !== null && result.netPnlDecimal.startsWith("-") ? "error.main" : "success.main", fontWeight: 800 }}>{result.netPnl}</TableCell><TableCell align="right">{result.tradeCountDisplay}</TableCell><TableCell align="right">{result.winsDisplay}</TableCell><TableCell align="right">{result.lossesDisplay}</TableCell><TableCell align="right">{result.winRate}</TableCell><TableCell align="right">{result.averagePnl}</TableCell></TableRow>)}</TableBody></Table>
+      <HorizontalScrollRegion label="Entry price results table" minTableWidth={720}>
+        <Table size="small" sx={{ width: "auto", "& .MuiTableCell-root": { px: 0.875, whiteSpace: "nowrap" }, "& .MuiTableCell-root:first-of-type": { minWidth: 164 } }}><TableHead><TableRow><TableCell>Entry price</TableCell><TableCell align="right">Net P/L</TableCell><TableCell align="right">Trades</TableCell><TableCell align="right">Wins</TableCell><TableCell align="right">Losses</TableCell><TableCell align="right">Win rate</TableCell><TableCell align="right">Avg P/L</TableCell></TableRow></TableHead><TableBody>{results.map((result) => <TableRow key={result.key}><TableCell sx={{ fontWeight: 800 }}>{result.entryPriceBand}</TableCell><TableCell align="right" sx={{ color: result.netPnlDecimal !== null && result.netPnlDecimal.startsWith("-") ? "error.main" : "success.main", fontWeight: 800 }}>{result.netPnl}</TableCell><TableCell align="right">{result.tradeCountDisplay}</TableCell><TableCell align="right">{result.winsDisplay}</TableCell><TableCell align="right">{result.lossesDisplay}</TableCell><TableCell align="right">{result.winRate}</TableCell><TableCell align="right">{result.averagePnl}</TableCell></TableRow>)}</TableBody></Table>
       </HorizontalScrollRegion>
       <Typography color="text.secondary" variant="body2">includes completed trades in the selected date range. Net P/L is shown when trading fees are available.</Typography>
     </Stack>
