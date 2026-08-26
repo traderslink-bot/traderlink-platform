@@ -33,6 +33,9 @@
   `POST /api/runtime/same-day-candle-provider` path so the Yahoo/Moomoo selector can
   operate through the existing owner-authenticated Dashboard relay without
   opening any additional runtime path.
+- [x] Correct the hosted section grouping so the runtime-owned Same-Day Candle
+  Provider control moves into Market Data beside Historical Candle Provider
+  and Live Price Provider.
 - [ ] Configure the hosted runtime connection and verify the complete page
   without a browser-side fetch failure before release acceptance.
 

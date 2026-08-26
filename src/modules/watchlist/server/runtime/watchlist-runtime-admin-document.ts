@@ -68,6 +68,7 @@ const SECTION_NAVIGATION_INJECTION = String.raw`<style id="traderslink-watchlist
     [
       directProviderControl(runtimeConfig, "Historical Candle Provider"),
       directProviderControl(runtimeConfig, "Live Price Provider"),
+      directProviderControl(runtimeConfig, "Same-Day Candle Provider"),
     ].filter(Boolean).forEach((control) => marketData.append(control));
     const lowFloatControl = directProviderControl(liveWebsiteControls, "Automatic Low-Float Selection");
     if (lowFloatControl) automaticLowFloat.append(lowFloatControl);
