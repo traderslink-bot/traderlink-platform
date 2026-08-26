@@ -20,62 +20,105 @@ const SECTION_NAVIGATION_INJECTION = String.raw`<style id="traderslink-watchlist
 </style><script id="traderslink-watchlist-admin-section-navigation-script">
 (() => {
   const sectionDefinitions = [
-    { id: "watchlist", label: "Watchlist", patterns: [/manual watchlist/i, /add.*activate/i, /active.*total/i, /top regular/i, /top main/i, /top post-market/i, /watchlist/i] },
-    { id: "runtime", label: "Runtime", patterns: [/runtime config/i, /runtime status/i, /provider health/i] },
-    { id: "market-data", label: "Market Data", patterns: [/market data/i, /historical.*provider/i, /live.*provider/i, /historical.*candle/i, /live.*candle/i, /moomoo/i, /yahoo/i] },
-    { id: "ai-controls", label: "AI Controls", patterns: [/traderslink ai read/i, /ai read/i, /api cost explorer/i, /api cost/i] },
-    { id: "live-website-controls", label: "Live Website Controls", patterns: [/live website/i, /deterministic day trade adapter/i, /day trade adapter/i] },
-    { id: "automatic-low-float-selection", label: "Automatic Low-Float Selection", patterns: [/automatic low-float/i, /low-float selection/i] },
+    { id: "watchlist", label: "Watchlist" },
+    { id: "runtime", label: "Runtime" },
+    { id: "market-data", label: "Market Data" },
+    { id: "ai-controls", label: "AI Controls" },
+    { id: "live-website-controls", label: "Live Website Controls" },
+    { id: "automatic-low-float-selection", label: "Automatic Low-Float Selection" },
   ];
-  const summaryPatterns = [/api cost/i, /ai read operations/i];
-  const blockSelector = "section, article, form, fieldset, .panel, .card, .section, [data-section]";
-  const headingSelector = "h1, h2, h3, h4, h5, h6, [data-section-title], .section-title, .card-title";
-
   const normalize = (value) => value.replace(/\\s+/g, " ").trim();
-  const sectionFor = (value) => sectionDefinitions.slice(1).find((section) =>
-    section.patterns.some((pattern) => pattern.test(value))) ?? sectionDefinitions[0];
   const rootFor = () => document.querySelector("main") || document.querySelector("#app") || document.body;
-  const blockFor = (element, root) => {
-    const block = element.closest(blockSelector);
-    if (block && block !== root && root.contains(block)) return block;
-    let current = element.parentElement;
-    while (current && current !== root) {
-      if (current.parentElement === root) return current;
-      current = current.parentElement;
-    }
-    return null;
+  const directHeading = (section) => normalize(section.querySelector(":scope > h2")?.textContent || "");
+  const directSection = (root, heading) => Array.from(root.children).find((child) =>
+    child.tagName === "SECTION" && directHeading(child) === heading) || null;
+  const directProviderControl = (section, label) => section
+    ? Array.from(section.querySelectorAll(":scope > .provider-control"))
+      .find((control) => normalize(control.textContent || "").startsWith(label)) || null
+    : null;
+  const wrapperFor = (root, id, title) => {
+    const existing = document.getElementById(id);
+    if (existing) return existing;
+    const wrapper = document.createElement("section");
+    wrapper.id = id;
+    const heading = document.createElement("h2");
+    heading.textContent = title;
+    wrapper.append(heading);
+    root.append(wrapper);
+    return wrapper;
   };
 
   const mount = () => {
     if (document.getElementById("traderslink-watchlist-admin-section-navigation")) return;
     const root = rootFor();
-    const headings = Array.from(root.querySelectorAll(headingSelector));
     const blocks = new Map();
-    headings.forEach((heading) => {
-      const block = blockFor(heading, root);
-      if (!block) return;
-      blocks.set(block, sectionFor(normalize(block.textContent || heading.textContent || "")).id);
-    });
-    if (blocks.size === 0) return;
-
     const summary = document.createElement("div");
     summary.id = "traderslink-watchlist-admin-summary";
     summary.setAttribute("aria-label", "Watchlist Admin summary");
-    const summaryBlocks = Array.from(root.querySelectorAll(blockSelector)).filter((block) => {
-      const text = normalize(block.textContent || "");
-      if (!summaryPatterns.some((pattern) => pattern.test(text)) || /\\bskipped\\b/i.test(text)) {
-        return false;
-      }
-      return !Array.from(block.querySelectorAll(blockSelector)).some((child) => {
-        const childText = normalize(child.textContent || "");
-        return summaryPatterns.some((pattern) => pattern.test(childText)) && !/\\bskipped\\b/i.test(childText);
+    root.prepend(summary);
+
+    const runtimeConfig = directSection(root, "Runtime Config");
+    const liveWebsiteControls = directSection(root, "Live Website Controls");
+    const marketData = wrapperFor(root, "traderslink-watchlist-admin-market-data", "Market Data");
+    const automaticLowFloat = wrapperFor(
+      root,
+      "traderslink-watchlist-admin-automatic-low-float-selection",
+      "Automatic Low-Float Selection",
+    );
+    [
+      directProviderControl(runtimeConfig, "Historical Candle Provider"),
+      directProviderControl(runtimeConfig, "Live Price Provider"),
+    ].filter(Boolean).forEach((control) => marketData.append(control));
+    const lowFloatControl = directProviderControl(liveWebsiteControls, "Automatic Low-Float Selection");
+    if (lowFloatControl) automaticLowFloat.append(lowFloatControl);
+
+    const watchlistForm = root.querySelector(":scope > form#watchlist-form");
+    const activeTickers = directSection(root, "Active Tickers by Watchlist");
+    const deterministicAdapter = directSection(root, "Deterministic Day Trade Adapter");
+    const providerHealth = directSection(root, "Provider Health");
+    const runtimeStatus = directSection(root, "Runtime Status");
+    const aiControls = directSection(root, "TradersLink AI Read");
+    [
+      ["watchlist", watchlistForm],
+      ["watchlist", activeTickers],
+      ["runtime", providerHealth],
+      ["runtime", runtimeConfig],
+      ["runtime", runtimeStatus],
+      ["market-data", marketData],
+      ["ai-controls", aiControls],
+      ["live-website-controls", deterministicAdapter],
+      ["live-website-controls", liveWebsiteControls],
+      ["automatic-low-float-selection", automaticLowFloat],
+    ].forEach(([sectionId, block]) => {
+      if (block) blocks.set(block, sectionId);
+    });
+    if (blocks.size === 0) return;
+
+    const hideSkippedAuditCard = () => {
+      const auditGrid = document.getElementById("ai-read-audit-grid");
+      if (!auditGrid) return;
+      Array.from(auditGrid.children).forEach((child) => {
+        if (normalize(child.textContent || "").startsWith("Skipped")) child.hidden = true;
       });
-    });
-    summaryBlocks.forEach((block) => {
-      blocks.delete(block);
-      summary.append(block);
-    });
-    if (summary.childElementCount > 0) root.prepend(summary);
+    };
+    const moveSummaryGrids = () => {
+      ["ai-read-cost-grid", "ai-read-audit-grid"].forEach((id) => {
+        const grid = document.getElementById(id);
+        if (grid && grid.parentElement !== summary) summary.append(grid);
+      });
+      hideSkippedAuditCard();
+    };
+    moveSummaryGrids();
+    const auditConsole = document.getElementById("ai-read-audit-console");
+    const summaryObserver = new MutationObserver(moveSummaryGrids);
+    summaryObserver.observe(summary, { childList: true, subtree: true, characterData: true });
+    if (auditConsole) {
+      new MutationObserver(moveSummaryGrids).observe(auditConsole, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+    }
 
     const navigation = document.createElement("nav");
     navigation.id = "traderslink-watchlist-admin-section-navigation";
@@ -97,11 +140,7 @@ const SECTION_NAVIGATION_INJECTION = String.raw`<style id="traderslink-watchlist
       buttons.set(section.id, button);
       navigation.append(button);
     });
-    if (summary.parentElement === root) {
-      summary.insertAdjacentElement("afterend", navigation);
-    } else {
-      root.prepend(navigation);
-    }
+    summary.insertAdjacentElement("afterend", navigation);
     blocks.forEach((sectionId, block) => {
       block.dataset.traderslinkWatchlistAdminSection = sectionId;
     });

@@ -23,10 +23,12 @@
 - [x] Verify source-document section, control and request-path parity: 34
   representative control/section checks and all 35 API paths across Manual
   Watchlist, AI Clean Read and Trade Plan Review are present with zero misses.
-- [x] Add relay-injected owner section navigation without recreating runtime
-  controls: persistent cost/AI summary cards, Watchlist default, Runtime,
-  Market Data, AI Controls, Live Website Controls and Automatic Low-Float
-  Selection.
+- [x] Reject the hosted preview's broad content-matching navigation after it
+  moved the full AI Read section into the persistent summary.
+- [x] Correct the relay navigation from the observed runtime DOM: move only
+  the two AI grid IDs to the summary, retain all AI controls and consoles in AI
+  Controls, hide only the direct `Skipped` audit card after refresh, and use
+  direct section headings/provider controls for each approved section.
 - [ ] Configure the hosted runtime connection and verify the complete page
   without a browser-side fetch failure before release acceptance.
 
