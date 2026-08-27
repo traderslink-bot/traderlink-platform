@@ -11,6 +11,7 @@ import {
   isWatchlistPreviewCrawlerUserAgent,
 } from "@/src/lib/live-watchlist/watchlist-preview";
 import { LiveWatchlistIndexClient } from "./live-watchlist-client";
+import { WatchlistPresenceRecorder } from "./watchlist-presence-recorder";
 import { WatchlistVisitRecorder } from "./watchlist-visit-recorder";
 import { WatchlistDashboardFrame } from "./watchlist-dashboard-frame";
 
@@ -46,6 +47,7 @@ export default async function LiveWatchlistPage({
     <WatchlistDashboardFrame>
       <div className="academy-container watchlist-container">
         <WatchlistVisitRecorder pageKey="index" pageKind="index" />
+        <WatchlistPresenceRecorder />
         <LiveWatchlistIndexClient initialState={state} />
       </div>
     </WatchlistDashboardFrame>

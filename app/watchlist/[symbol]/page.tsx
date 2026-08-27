@@ -11,6 +11,7 @@ import {
   isWatchlistPreviewCrawlerUserAgent,
 } from "@/src/lib/live-watchlist/watchlist-preview";
 import { LiveWatchlistDetailClient } from "../live-watchlist-client";
+import { WatchlistPresenceRecorder } from "../watchlist-presence-recorder";
 import { WatchlistVisitRecorder } from "../watchlist-visit-recorder";
 import { WatchlistDashboardFrame } from "../watchlist-dashboard-frame";
 
@@ -117,6 +118,7 @@ export default async function LiveWatchlistSymbolPage({
     <WatchlistDashboardFrame>
       <div className="academy-container watchlist-container">
         <WatchlistVisitRecorder pageKey={state.symbol} pageKind="detail" />
+        <WatchlistPresenceRecorder />
         <LiveWatchlistDetailClient
           initialMarketDataStatus={health.marketDataStatus}
           initialSymbol={state}

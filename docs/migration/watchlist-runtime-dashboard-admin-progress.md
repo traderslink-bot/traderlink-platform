@@ -6,6 +6,8 @@
 
 **Usage-panel record:** [Watchlist Usage Admin Progress](watchlist-usage-admin-progress.md)
 
+**Usage presence record:** [Watchlist Usage Presence Admin Progress](watchlist-usage-presence-admin-progress.md)
+
 ## Completed
 
 - [x] Confirmed the existing Watchlist runtime has the required status,
@@ -71,6 +73,8 @@
 - [x] Implement the Platform-owned Usage section and additive
   `0092_platform_watchlist_usage` ledger without changing the canonical
   Watchlist runtime.
+- [x] Add the separately approved short-lived presence signals and Usage-only
+  background refresh through `0093_platform_watchlist_usage_presence_signals`.
 - [ ] Complete the paired runtime source corrections for canonical
   TradersLink article precedence, the AI Operations default filter, and a
   wider evidence-backed initial outer target when the supplied daily history

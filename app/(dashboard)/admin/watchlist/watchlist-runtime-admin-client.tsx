@@ -1,16 +1,19 @@
 "use client";
 
-import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 
+import { WatchlistUsageAdminPanel } from "./watchlist-usage-admin-panel";
+import type { WatchlistUsageAdminSnapshot } from "@/src/modules/watchlist/server/watchlist-usage-service";
+
 const MINIMUM_FRAME_HEIGHT = 900;
 
 export function WatchlistRuntimeAdminClient({
-  usagePanel,
+  usage,
 }: {
-  usagePanel: ReactNode;
+  usage: WatchlistUsageAdminSnapshot | null;
 }) {
   const frameRef = useRef<HTMLIFrameElement>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
@@ -66,7 +69,7 @@ export function WatchlistRuntimeAdminClient({
   return (
     <>
       <Box hidden={selectedSection !== "usage"}>
-        {usagePanel}
+        <WatchlistUsageAdminPanel active={selectedSection === "usage"} usage={usage} />
         <Button onClick={() => setSelectedSection("runtime")} sx={{ mt: 2 }} variant="outlined">
           Watchlist controls
         </Button>

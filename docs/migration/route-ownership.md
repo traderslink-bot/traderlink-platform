@@ -136,6 +136,8 @@ permission to change an endpoint now.
 | `POST` | `/api/news/articles` | News ingest: preserve and owner-scope |
 | `GET` | `/api/live-watchlist` | Watchlist F3: Platform access service connected |
 | `POST` | `/api/live-watchlist/visits` | Watchlist usage: authenticated-member, client-confirmed index/detail page-view receipt; server-derived identity and owner-event exclusion only |
+| `POST` | `/api/live-watchlist/presence` | Watchlist usage presence: authenticated-member, short-lived open/visible heartbeat; server-derived identity and owner-event exclusion only |
+| `GET` | `/api/admin/watchlist/usage` | Watchlist usage: owner-only no-store usage and short-lived presence snapshot; no runtime authority |
 | `POST` | `/api/live-watchlist/ingest` | Watchlist F3: explicit publisher-token mutation |
 | `GET` | `/api/live-watchlist/stream` | Watchlist F3: Platform access; preserve HTTP stream boundary |
 | `GET` | `/api/live-watchlist/recap` | Watchlist F3: explicit publisher-token read |

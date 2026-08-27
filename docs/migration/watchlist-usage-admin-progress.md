@@ -4,6 +4,8 @@
 
 **Controlling plan:** [Watchlist Runtime Dashboard Admin Plan](watchlist-runtime-dashboard-admin-plan.md)
 
+**Presence follow-up:** [Watchlist Usage Presence Admin Progress](watchlist-usage-presence-admin-progress.md)
+
 ## Scope
 
 Provide a small, Platform-owned usage panel for the existing owner-only
@@ -63,6 +65,13 @@ Platform migration manifest is shared.
   owner accounts before insert.
 - Added owner-only daily and visitor read models. Display names are resolved
   only while rendering the existing owner Admin page.
+
+## Follow-up presence signals
+
+The owner approved a separate, short-lived presence scope on 2026-08-27. It
+is tracked in [Watchlist Usage Presence Admin
+Progress](watchlist-usage-presence-admin-progress.md) so visit events remain
+factual historical page views rather than a presence proxy.
 
 ## Verification boundary
 
