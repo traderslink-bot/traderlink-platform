@@ -5,14 +5,18 @@ import { createHash } from "node:crypto";
 import type { NormalizedMarketCandle } from "@/src/modules/level-analysis/contracts/candle-review-contracts";
 import { newYorkExtendedSession } from "@/src/modules/level-analysis/server/daily-trade-analyzer-session";
 import { MoomooDailyTradeKlineMarketDataProvider } from "@/src/modules/level-analysis/server/providers/moomoo-daily-trade-kline-market-data-provider";
+import { deriveAuthenticatedUserJournalScope } from "@/src/modules/platform/server/authentication/authenticated-user-journal-scope";
 import type { TraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { MoomooConnectionAccessService } from "@/src/modules/platform/server/broker-connections/moomoo-connection-access-service";
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
 import { openReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
+import { PlatformUserRepository } from "@/src/modules/platform/server/identity/platform-user-repository";
+import { TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT_ENV } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 
 const MAX_PAGES = 3;
 const MIN_TOKEN_LIFETIME_MILLISECONDS = 15 * 60 * 1000;
 const SESSION_POLICY = "america_new_york_extended_0400_2000_v1";
+const DISCORD_SNOWFLAKE_PATTERN = /^[0-9]{1,32}$/u;
 
 const ALLOWED_SESSIONS = Object.freeze(new Map<string, ReadonlySet<string>>([
   ["2026-08-25", new Set(["ANF", "BHVN", "BZ", "SEDG", "SMTC", "SMMT"])],
@@ -205,38 +209,18 @@ export type AuthorizedDailyTrackerMarketDataExport = Readonly<{
   close: () => void;
 }>;
 
-type ActiveMoomooConnectionCandidateRow = Readonly<{
-  authorized_scopes: string;
-  connection_id: string;
-  user_id: string;
-  workspace_id: string;
-}>;
-
-function requesterOwnsSingletonActiveQuoteReadConnection(
-  database: ReturnType<typeof openReadonlyPlatformDatabase>,
-  identity: TraderLinkPlatformRequestIdentity,
-  connectionId: string,
-): boolean {
-  const activeConnections = database.prepare<[], ActiveMoomooConnectionCandidateRow>(`SELECT
-  connection_id, user_id, workspace_id, authorized_scopes
-FROM platform_broker_connections
-WHERE provider = 'moomoo' AND connection_state = 'active'`).all();
-  const quoteReadCandidates: ActiveMoomooConnectionCandidateRow[] = [];
-  for (const candidate of activeConnections) {
-    let scopes: unknown;
-    try {
-      scopes = JSON.parse(candidate.authorized_scopes);
-    } catch {
-      return false;
-    }
-    if (!Array.isArray(scopes) || scopes.some((scope) => typeof scope !== "string")) return false;
-    if (scopes.includes("quote:read")) quoteReadCandidates.push(candidate);
+function configuredOwnerSubjects(environment: NodeJS.ProcessEnv): readonly string[] {
+  const subjects = environment[TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT_ENV]
+    ?.split(",")
+    .map((subject) => subject.trim()) ?? [];
+  if (
+    subjects.length !== 2 ||
+    new Set(subjects).size !== 2 ||
+    subjects.some((subject) => !DISCORD_SNOWFLAKE_PATTERN.test(subject))
+  ) {
+    throw new DailyTrackerMarketDataExportUnavailable("requester_connection_cardinality_invalid");
   }
-  const candidate = quoteReadCandidates[0];
-  return quoteReadCandidates.length === 1 && !!candidate &&
-    candidate.connection_id === connectionId &&
-    candidate.user_id === identity.scope.userId &&
-    candidate.workspace_id === identity.scope.workspaceId;
+  return Object.freeze(subjects);
 }
 
 export function authorizeOwnerDailyTrackerMarketDataExport(
@@ -248,17 +232,23 @@ export function authorizeOwnerDailyTrackerMarketDataExport(
       throw new DailyTrackerMarketDataExportDenied();
     }
     const connections = new MoomooConnectionRepository(database);
-    const connection = connections.find(identity.scope);
-    if (
-      !connection || connection.state !== "active" ||
-      !connection.authorizedScopes.includes("quote:read")
-    ) {
-      throw new DailyTrackerMarketDataExportUnavailable("requester_connection_unavailable");
-    }
-    if (!requesterOwnsSingletonActiveQuoteReadConnection(database, identity, connection.connectionId)) {
+    const users = new PlatformUserRepository(database, {
+      allowedAuthProviders: ["discord"],
+    });
+    const candidates = configuredOwnerSubjects(process.env).flatMap((subject) => {
+      const user = users.findActiveByAuthIdentity("discord", subject);
+      if (!user) return [];
+      const scope = deriveAuthenticatedUserJournalScope(database, user.userId);
+      const connection = connections.find(scope);
+      return connection?.state === "active" && connection.authorizedScopes.includes("quote:read")
+        ? [{ connection, scope }]
+        : [];
+    });
+    const selected = candidates[0];
+    if (candidates.length !== 1 || !selected) {
       throw new DailyTrackerMarketDataExportUnavailable("requester_connection_cardinality_invalid");
     }
-    const expiresAt = Date.parse(connection?.accessTokenExpiresAtUtc ?? "");
+    const expiresAt = Date.parse(selected.connection.accessTokenExpiresAtUtc ?? "");
     if (
       !Number.isFinite(expiresAt) || expiresAt - Date.now() <= MIN_TOKEN_LIFETIME_MILLISECONDS
     ) {
@@ -266,7 +256,7 @@ export function authorizeOwnerDailyTrackerMarketDataExport(
     }
     const access = new MoomooConnectionAccessService(connections);
     return Object.freeze({
-      accessToken: () => access.accessToken(identity.scope),
+      accessToken: () => access.accessToken(selected.scope),
       close: () => database.close(),
     });
   } catch (error) {
@@ -356,4 +346,3 @@ export async function exportOwnerDailyTrackerMarketData(input: Readonly<{
 export function serializeDailyTrackerMarketDataExport(value: DailyTrackerMarketDataExport): string {
   return canonicalJson(value);
 }
-
