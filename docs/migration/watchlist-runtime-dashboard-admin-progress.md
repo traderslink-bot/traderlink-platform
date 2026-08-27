@@ -4,6 +4,8 @@
 
 **Controlling plan:** [Watchlist Runtime Dashboard Admin Plan](watchlist-runtime-dashboard-admin-plan.md)
 
+**Usage-panel record:** [Watchlist Usage Admin Progress](watchlist-usage-admin-progress.md)
+
 ## Completed
 
 - [x] Confirmed the existing Watchlist runtime has the required status,
@@ -60,6 +62,12 @@
   top of the Admin document. AI Read Operations remains in the AI Controls
   view, where its existing ticker selection exposes expandable prior-operation
   history.
+- [x] Define the separate Platform-owned owner usage-panel scope for review:
+  client-confirmed active Watchlist index/detail page-view events only, New
+  York daily distinct visitors, factual visit totals, and display-name-only
+  owner rows. Runtime, provider and AI data remain excluded.
+- [ ] Obtain owner approval of the proposed usage-panel layout, ordering and
+  page-view de-duplication semantics before application or migration work.
 - [ ] Complete the paired runtime source corrections for canonical
   TradersLink article precedence, the AI Operations default filter, and a
   wider evidence-backed initial outer target when the supplied daily history
