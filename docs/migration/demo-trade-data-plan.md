@@ -117,7 +117,7 @@ Discord provisioning attempts the isolated demo transaction only after the
 authenticated identity/workspace is committed; an unavailable pack falls back
 to one ordinary Primary Journal without corrupting the valid session.
 
-For staging owner visual review only, an unlinked owner-admin POST can be
+For staging owner visual review only, an unlinked owner-workspace POST can be
 enabled with `TRADERLINK_DEMO_STAGING_REVIEW_ACTIVATION=enabled`. It derives
 only the authenticated owner's current workspace and user server-side,
 revalidates active owner membership, and calls the same checksum-gated
