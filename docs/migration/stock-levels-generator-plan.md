@@ -5,6 +5,8 @@
 **Approved feature boundary:** Authenticated Dashboard Stock Levels generator
 **Route:** `/levels`
 
+**Related owner administration:** [Stock Levels Admin Activity Plan](stock-levels-admin-activity-plan.md)
+
 ## Product contract
 
 This plan records the complete owner-approved first version. It is not a

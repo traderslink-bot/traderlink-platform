@@ -70,6 +70,7 @@
 | `/analytics/lab/trade-candle-analysis` | Journal Analytics/Level Analysis | Review and preserve supported behavior |
 | `/charts` | Market tools | Platform target; define module contract |
 | `/levels` | Platform Stock Levels | Authenticated support/resistance maps, private 72-hour account snapshots and session history; isolated from Watchlist, Community, Discord and AI state |
+| `/admin/journal/levels` | Platform Stock Levels / Journal Administration | Private owner-only today total and per-user successful-generation counts; three-day activity retention and no map or ticker history |
 | `/reflection-loop` | Journal/Coach | Replacement F1 connected to published Journal facts and trader-authored annotations; combined visual gate deferred |
 | `/rules` | Journal | Platform target |
 | `/imports` | Journal | Platform target |

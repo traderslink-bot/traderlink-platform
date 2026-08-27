@@ -17,6 +17,14 @@ account-scoped mapped-card snapshot, timestamps and 72-hour expiry for the
 authenticated `/levels` page. It stores no provider credentials, raw candles,
 Watchlist membership or monitoring state. Migration execution remains a
 separate Railway release boundary.
+
+**Stock Levels owner activity:** [Stock Levels Admin Activity Plan](stock-levels-admin-activity-plan.md)
+and its [progress record](stock-levels-admin-activity-progress.md) register
+additive migration `0091_platform_stock_levels_activity`. It retains only the
+successful generator's Platform user, timestamp and New York date for three
+days, so the private owner page can report today's total and per-user totals.
+It stores no ticker, level map, quote, provider response or user-facing account
+identifier. Migration execution remains a separate Railway release boundary.
 **2026-08-09 AI Review cache-write accounting checkpoint:** migration
 `0051_coach_ai_review_cache_write_accounting` is registered, disposable-copy
 verified, recovery-authority backup/restore verified and locally applied. The
