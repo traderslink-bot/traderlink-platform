@@ -71,6 +71,9 @@ export type DailyTrackerMarketDataExportUnavailableCategory =
   | "requester_connection_unavailable"
   | "requester_token_expired_or_under_15_minutes"
   | "session_coverage_unavailable"
+  | "session_continuity_unavailable"
+  | "session_minute_interval_unavailable"
+  | "session_timezone_unavailable"
   | "token_access_unavailable";
 
 export class DailyTrackerMarketDataExportDenied extends Error {}
@@ -176,6 +179,9 @@ type KlineProviderDiagnosticStage = Exclude<
   | "requester_connection_unavailable"
   | "requester_token_expired_or_under_15_minutes"
   | "session_coverage_unavailable"
+  | "session_continuity_unavailable"
+  | "session_minute_interval_unavailable"
+  | "session_timezone_unavailable"
 >;
 
 function isSuccessfulKlineResponse(value: unknown): boolean {
@@ -234,19 +240,19 @@ function validateSessionCoverageAndContinuity(input: Readonly<{
     input.exchangeTimezone !== "America/New_York" ||
     input.providerUtcOffsetSeconds !== expectedNewYorkUtcOffsetSeconds(input.date, session.startTime)
   ) {
-    throw new DailyTrackerMarketDataExportUnavailable("session_coverage_unavailable");
+    throw new DailyTrackerMarketDataExportUnavailable("session_timezone_unavailable");
   }
   const expectedCount = (session.endTime - session.startTime) / 60;
-  if (input.candles.length !== expectedCount) throw new DailyTrackerMarketDataExportUnavailable("session_coverage_unavailable");
+  if (input.candles.length !== expectedCount) throw new DailyTrackerMarketDataExportUnavailable("session_minute_interval_unavailable");
   let prior: NormalizedMarketCandle | null = null;
   for (const [index, candle] of input.candles.entries()) {
     if (candle.time !== session.startTime + index * 60) {
-      throw new DailyTrackerMarketDataExportUnavailable("session_coverage_unavailable");
+      throw new DailyTrackerMarketDataExportUnavailable("session_minute_interval_unavailable");
     }
     if (prior) {
       const ratio = Number(candle.openDecimal) / Number(prior.closeDecimal);
       if (!Number.isFinite(ratio) || ratio <= 0 || ratio >= 4 || ratio <= 0.25) {
-        throw new DailyTrackerMarketDataExportUnavailable("session_coverage_unavailable");
+        throw new DailyTrackerMarketDataExportUnavailable("session_continuity_unavailable");
       }
     }
     prior = candle;
@@ -389,7 +395,7 @@ export async function exportOwnerDailyTrackerMarketData(input: Readonly<{
     throw new DailyTrackerMarketDataExportUnavailable(observedStage);
   }
   if (!result.exchangeTimezone || result.utcOffsetSeconds === null) {
-    throw new DailyTrackerMarketDataExportUnavailable("session_coverage_unavailable");
+    throw new DailyTrackerMarketDataExportUnavailable("session_timezone_unavailable");
   }
   if (rawPages.length === 0) {
     throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
