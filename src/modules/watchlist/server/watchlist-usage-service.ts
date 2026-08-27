@@ -4,6 +4,12 @@ import { openPlatformDatabase } from "@/src/modules/platform/server/database/ope
 import { isCanonicalUuidV4 } from "@/src/modules/platform/server/database/platform-migration-contract";
 
 const NEW_YORK = "America/New_York";
+export const WATCHLIST_USAGE_PRESENCE_WINDOW_MS = 3 * 60_000;
+
+export type WatchlistUsagePresenceStatus =
+  | "not_currently_open"
+  | "viewing_now"
+  | "watchlist_open";
 
 type WatchlistUsageDailyRow = Readonly<{
   new_york_date: string;
@@ -16,6 +22,8 @@ type WatchlistUsageVisitorRow = Readonly<{
   most_recent_visit_ms: number;
   today_visits: number;
   recorded_visits: number;
+  last_open_heartbeat_ms: number | null;
+  last_visible_heartbeat_ms: number | null;
 }>;
 
 export type WatchlistUsageAdminSnapshot = Readonly<{
@@ -23,6 +31,8 @@ export type WatchlistUsageAdminSnapshot = Readonly<{
   todayVisits: number;
   allRecordedVisits: number;
   dataSinceMs: number | null;
+  viewingNowMembers: number;
+  watchlistOpenMembers: number;
   daily: readonly Readonly<{
     newYorkDate: string;
     distinctVisitors: number;
@@ -33,6 +43,7 @@ export type WatchlistUsageAdminSnapshot = Readonly<{
     mostRecentVisitMs: number;
     todayVisits: number;
     recordedVisits: number;
+    presenceStatus: WatchlistUsagePresenceStatus;
   }>[];
 }>;
 
@@ -78,12 +89,58 @@ ON CONFLICT(event_id) DO NOTHING`).run(
   }
 }
 
+export function recordWatchlistUsagePresence(input: Readonly<{
+  presenceId: string;
+  userId: string;
+  observedAtMs: number;
+  visible: boolean;
+}>): boolean {
+  if (
+    !isCanonicalUuidV4(input.presenceId) ||
+    !Number.isSafeInteger(input.observedAtMs) ||
+    input.observedAtMs <= 0
+  ) return false;
+  const database = openPlatformDatabase({ mode: "runtime" });
+  try {
+    return database.transaction(() => {
+      database.prepare(`DELETE FROM platform_watchlist_usage_presence
+WHERE last_open_heartbeat_ms < ?`).run(
+        input.observedAtMs - WATCHLIST_USAGE_PRESENCE_WINDOW_MS,
+      );
+      return database.prepare(`INSERT INTO platform_watchlist_usage_presence (
+  presence_id, user_id, last_open_heartbeat_ms, last_visible_heartbeat_ms
+) VALUES (?, ?, ?, ?)
+ON CONFLICT(presence_id) DO UPDATE SET
+  last_open_heartbeat_ms = excluded.last_open_heartbeat_ms,
+  last_visible_heartbeat_ms = excluded.last_visible_heartbeat_ms
+WHERE platform_watchlist_usage_presence.user_id = excluded.user_id`).run(
+        input.presenceId,
+        input.userId,
+        input.observedAtMs,
+        input.visible ? input.observedAtMs : null,
+      ).changes === 1;
+    })();
+  } finally {
+    database.close();
+  }
+}
+
+function presenceStatus(
+  row: Pick<WatchlistUsageVisitorRow, "last_open_heartbeat_ms" | "last_visible_heartbeat_ms">,
+  threshold: number,
+): WatchlistUsagePresenceStatus {
+  if ((row.last_visible_heartbeat_ms ?? 0) >= threshold) return "viewing_now";
+  if ((row.last_open_heartbeat_ms ?? 0) >= threshold) return "watchlist_open";
+  return "not_currently_open";
+}
+
 export function readWatchlistUsageAdminSnapshot(
   now = Date.now(),
 ): WatchlistUsageAdminSnapshot {
   const database = openPlatformDatabase({ mode: "runtime" });
   try {
     const today = newYorkDate(now);
+    const presenceThreshold = now - WATCHLIST_USAGE_PRESENCE_WINDOW_MS;
     const totals = database.prepare<[string, string], Readonly<{
       today_distinct_visitors: number;
       today_visits: number | null;
@@ -100,6 +157,17 @@ FROM platform_watchlist_usage_events`).get(today, today) ?? {
       today_distinct_visitors: 0,
       today_visits: 0,
     };
+    const presence = database.prepare<[number, number], Readonly<{
+      viewing_now_members: number;
+      watchlist_open_members: number;
+    }>>(`SELECT
+  COUNT(DISTINCT CASE WHEN last_visible_heartbeat_ms >= ? THEN user_id END) AS viewing_now_members,
+  COUNT(DISTINCT user_id) AS watchlist_open_members
+FROM platform_watchlist_usage_presence
+WHERE last_open_heartbeat_ms >= ?`).get(presenceThreshold, presenceThreshold) ?? {
+      viewing_now_members: 0,
+      watchlist_open_members: 0,
+    };
     const daily = database.prepare<[], WatchlistUsageDailyRow>(`SELECT
   new_york_date,
   COUNT(DISTINCT user_id) AS distinct_visitors,
@@ -111,20 +179,33 @@ ORDER BY new_york_date DESC`).all().map((row) => Object.freeze({
       newYorkDate: row.new_york_date,
       visits: row.visits,
     }));
-    const visitors = database.prepare<[string], WatchlistUsageVisitorRow>(`SELECT
+    const visitors = database.prepare<[number, string], WatchlistUsageVisitorRow>(`WITH presence_summary AS (
+  SELECT
+    user_id,
+    MAX(last_open_heartbeat_ms) AS last_open_heartbeat_ms,
+    MAX(last_visible_heartbeat_ms) AS last_visible_heartbeat_ms
+  FROM platform_watchlist_usage_presence
+  WHERE last_open_heartbeat_ms >= ?
+  GROUP BY user_id
+)
+SELECT
   user.display_name,
   MAX(event.visited_at_ms) AS most_recent_visit_ms,
   SUM(CASE WHEN event.new_york_date = ? THEN 1 ELSE 0 END) AS today_visits,
-  COUNT(*) AS recorded_visits
+  COUNT(*) AS recorded_visits,
+  presence.last_open_heartbeat_ms,
+  presence.last_visible_heartbeat_ms
 FROM platform_watchlist_usage_events event
 JOIN platform_users user ON user.user_id = event.user_id
-GROUP BY event.user_id, user.display_name
-ORDER BY most_recent_visit_ms DESC, user.display_name COLLATE NOCASE ASC, event.user_id ASC`).all(today)
+LEFT JOIN presence_summary presence ON presence.user_id = event.user_id
+GROUP BY event.user_id, user.display_name, presence.last_open_heartbeat_ms, presence.last_visible_heartbeat_ms
+ORDER BY most_recent_visit_ms DESC, user.display_name COLLATE NOCASE ASC, event.user_id ASC`).all(presenceThreshold, today)
       .map((row) => Object.freeze({
         displayName: row.display_name,
         mostRecentVisitMs: row.most_recent_visit_ms,
         recordedVisits: row.recorded_visits,
         todayVisits: row.today_visits,
+        presenceStatus: presenceStatus(row, presenceThreshold),
       }));
     return Object.freeze({
       allRecordedVisits: Number(totals.all_recorded_visits),
@@ -132,7 +213,9 @@ ORDER BY most_recent_visit_ms DESC, user.display_name COLLATE NOCASE ASC, event.
       dataSinceMs: totals.data_since_ms,
       todayDistinctVisitors: Number(totals.today_distinct_visitors),
       todayVisits: Number(totals.today_visits ?? 0),
+      viewingNowMembers: Number(presence.viewing_now_members),
       visitors: Object.freeze(visitors),
+      watchlistOpenMembers: Number(presence.watchlist_open_members),
     });
   } finally {
     database.close();

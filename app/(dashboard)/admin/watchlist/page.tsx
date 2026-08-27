@@ -7,7 +7,6 @@ import { readWatchlistUsageAdminSnapshot } from "@/src/modules/watchlist/server/
 import { requireTraderLinkPlatformPageIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 
 import { WatchlistRuntimeAdminClient } from "./watchlist-runtime-admin-client";
-import { WatchlistUsageAdminPanel } from "./watchlist-usage-admin-panel";
 
 export const metadata: Metadata = {
   description: "Manage the private TradersLink Watchlist runtime.",
@@ -28,7 +27,7 @@ export default async function WatchlistRuntimeAdminPage() {
   }
   return (
     <DashboardPage>
-      <WatchlistRuntimeAdminClient usagePanel={<WatchlistUsageAdminPanel usage={usage} />} />
+      <WatchlistRuntimeAdminClient usage={usage} />
     </DashboardPage>
   );
 }
