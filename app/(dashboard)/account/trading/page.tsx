@@ -19,6 +19,7 @@ import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker
 import { PlatformAccountProfileReadService } from "@/src/modules/platform/server/identity/platform-account-profile-read-service";
 import { readMoomooMarketDataAccess } from "@/src/modules/level-analysis/server/moomoo-market-data-access";
 import { MoomooExecutionImportCommandService } from "@/src/modules/journal/server/broker-imports/moomoo-execution-import-command-service";
+import { JournalDemoAccountRepository } from "@/src/modules/journal/server/demo/journal-demo-account-repository";
 import { AccountManagementClient } from "../account-management-client";
 import { AccountSettingsLayout } from "../account-settings-layout";
 import { BrokerConnectionPicker } from "../broker-connection-picker";
@@ -42,7 +43,7 @@ export default async function AccountTradingPage({
 }) {
   const query = await searchParams;
   const scope = await requireTraderLinkPlatformPageScope();
-  const { marketDataAccess, moomooAccountLinks, moomooConnection, moomooImportUnavailable, profile } = withReadonlyPlatformDatabase({}, (database) => {
+  const { activeAccountIsDemo, marketDataAccess, moomooAccountLinks, moomooConnection, moomooImportUnavailable, profile } = withReadonlyPlatformDatabase({}, (database) => {
     const currentProfile = new PlatformAccountProfileReadService(database).get(scope);
     const currentAccount = currentProfile.journalAccounts.find((account) => account.active);
     const currentMoomooConnection = new MoomooConnectionRepository(database).find(scope);
@@ -67,6 +68,7 @@ export default async function AccountTradingPage({
       }
     }
     return Object.freeze({
+      activeAccountIsDemo: new JournalDemoAccountRepository(database).findActiveAccount(scope) !== null,
       marketDataAccess: readMoomooMarketDataAccess(database, scope),
       moomooAccountLinks: linkedAccounts,
       moomooConnection: currentMoomooConnection,
@@ -94,15 +96,20 @@ export default async function AccountTradingPage({
                 <Typography sx={{ fontWeight: 800 }}>{account.displayName}</Typography>
                 <Typography color="text.secondary" variant="body2">{account.baseCurrency} · {account.tradingTimezone}</Typography>
               </Box>
-              {account.active ? <Chip color="primary" label="Active Trade Tracker account" size="small" /> : null}
+              <Stack direction="row" spacing={0.75} sx={{ alignItems: "center", flexWrap: "wrap" }} useFlexGap>
+                {account.active ? <Chip color="primary" label="Active Trade Tracker account" size="small" /> : null}
+                {account.active && activeAccountIsDemo ? <Chip color="error" label="Demo Trade Tracker" size="small" variant="outlined" /> : null}
+              </Stack>
             </Box>
           ))}
         </Stack>
       </DashboardPanel>
 
-      <DashboardPanel title="Create a Trade Tracker account">
-        <AccountManagementClient activeAccountSelectionRef={activeAccount?.selectionRef ?? null} defaultTradingTimezone={profile.workspace.defaultTradingTimezone} />
-      </DashboardPanel>
+      {!activeAccountIsDemo ? (
+        <DashboardPanel title="Create a Trade Tracker account">
+          <AccountManagementClient activeAccountSelectionRef={activeAccount?.selectionRef ?? null} defaultTradingTimezone={profile.workspace.defaultTradingTimezone} />
+        </DashboardPanel>
+      ) : null}
 
       <DashboardPanel title="Reporting currency">
         <ReportingCurrencySettings reportingCurrency={profile.reportingCurrency} />
@@ -155,7 +162,7 @@ export default async function AccountTradingPage({
             <MoomooConnectionSettings state="active" />
           </Stack>
         ) : null}
-        {marketDataAccess.hasActiveMarketDataConnection && moomooConnection?.state === "active" && activeAccount && !moomooImportUnavailable ? (
+        {marketDataAccess.hasActiveMarketDataConnection && moomooConnection?.state === "active" && activeAccount && !activeAccountIsDemo && !moomooImportUnavailable ? (
           <MoomooExecutionImportSetup
             activeAccountName={activeAccount.displayName}
             activeAccountSelectionRef={activeAccount.selectionRef}

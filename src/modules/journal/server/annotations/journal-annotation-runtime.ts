@@ -8,6 +8,7 @@ import { platformFailure } from "@/src/modules/platform/server/database/platform
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 
+import { JournalDemoAccountRepository } from "../demo/journal-demo-account-repository";
 import { JournalAnnotationRepository } from "./journal-annotation-repository";
 import { JournalAnnotationService } from "./journal-annotation-service";
 import { JournalRuleRepository } from "./journal-rule-repository";
@@ -46,6 +47,9 @@ export function withWritableJournalAnnotations<T>(
     account: ReturnType<typeof accountScope>,
   ) => T,
 ): T {
-  return withPlatformDatabase({ mode: "runtime" }, (database) =>
-    operation(createJournalAnnotationService(database), accountScope(scope)));
+  return withPlatformDatabase({ mode: "runtime" }, (database) => {
+    const account = accountScope(scope);
+    new JournalDemoAccountRepository(database).requireActiveAccountIsNotDemo(scope);
+    return operation(createJournalAnnotationService(database), account);
+  });
 }

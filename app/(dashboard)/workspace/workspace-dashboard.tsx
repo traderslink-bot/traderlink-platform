@@ -18,6 +18,7 @@ import {
   DashboardUnavailableState,
 } from "../../dashboard-template";
 import { InstallTradersLinkPwaCard } from "@/app/pwa/install-traderslink-pwa-card";
+import { DemoDataCallout } from "../demo-data-callout";
 import type { JournalCalendarReadModel } from "@/src/modules/journal-analytics/contracts/journal-dashboard-read-models";
 import { formatJournalAnalyticsMoney } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import type { WorkspaceReviewSummary } from "./workspace-review-summary";
@@ -125,6 +126,7 @@ function ruleOutcomeLabel(input: Readonly<{
 export function WorkspaceDashboard({
   analyticsMetrics,
   calendarData,
+  demoAccountSelectionRef,
   firstTimeMoomooConnectionPending,
   firstTimeMoomooConnected,
   firstTimeOnboardingResult,
@@ -133,6 +135,7 @@ export function WorkspaceDashboard({
 }: {
   analyticsMetrics?: readonly WorkspaceMetric[];
   calendarData?: JournalCalendarReadModel;
+  demoAccountSelectionRef?: string;
   firstTimeMoomooConnectionPending?: boolean;
   firstTimeMoomooConnected?: boolean;
   firstTimeOnboardingResult?: WorkspaceFirstTimeOnboardingResult;
@@ -163,6 +166,9 @@ export function WorkspaceDashboard({
   return (
     <DashboardPage>
       <Typography component="h1" variant="h1">Welcome to TradersLink Beta App.</Typography>
+      {demoAccountSelectionRef ? (
+        <DemoDataCallout expectedAccountSelectionRef={demoAccountSelectionRef} variant="workspace" />
+      ) : null}
       <Stack spacing={1.25} sx={{ maxWidth: 920 }}>
         <Typography color="text.secondary" variant="body2">
           TradersLink Platform is currently in beta testing, so you may come across a few bugs or unfinished details as the app continues to improve. Feedback and bug reports are always welcome—they directly help make the platform better for traders. If you need help, support is available with quick responses.

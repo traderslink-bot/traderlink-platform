@@ -72,7 +72,11 @@ export default async function TradeTrackerPage({
   const scope = await requireTraderLinkPlatformPageScope();
   const onboardingStatus = readJournalFirstExecutionOnboardingStatus(scope);
   const showFirstExecutionCallout = query.gettingStarted === "daily-entry" &&
-    !onboardingStatus.hasAcceptedExecution;
+    !onboardingStatus.activeAccountIsDemo &&
+    !onboardingStatus.hasRealAcceptedExecution;
+  const demoAccountSelectionRef = onboardingStatus.activeAccountIsDemo
+    ? currentJournalAccountSelectionRef(scope)
+    : null;
   const showMoomooConnectedStatus = showFirstExecutionCallout &&
     query.moomoo === "connected" && onboardingStatus.hasActiveMoomooConnection;
   const account = getReplacementTradeTrackerAccount(scope);
@@ -103,7 +107,7 @@ export default async function TradeTrackerPage({
           </Stack>
         </DashboardPanel>
       ) : null}
-      {!showFirstExecutionCallout ? (
+      {!demoAccountSelectionRef && !showFirstExecutionCallout ? (
         <Stack spacing={0.75} sx={{ alignItems: "flex-start", maxWidth: 900, mt: 1 }}>
           <Typography color="error.main" sx={{ fontWeight: 700 }} variant="body2">
             You need a data connection if you want your trades analyzed and a chart trade replay.
@@ -113,15 +117,17 @@ export default async function TradeTrackerPage({
           </DashboardPrimaryAction>
         </Stack>
       ) : null}
-      <ManualExecutionEntry
-        accountCurrency={account?.baseCurrency ?? data?.currency ?? "USD"}
-        accountTimezone={accountTimezone}
-        defaultSessionDate={currentDate}
-        expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
-        key="manual-execution-entry"
-        onboarding={showFirstExecutionCallout}
-        offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
-      />
+      {!demoAccountSelectionRef ? (
+        <ManualExecutionEntry
+          accountCurrency={account?.baseCurrency ?? data?.currency ?? "USD"}
+          accountTimezone={accountTimezone}
+          defaultSessionDate={currentDate}
+          expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
+          key="manual-execution-entry"
+          onboarding={showFirstExecutionCallout}
+          offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
+        />
+      ) : null}
     </>
   );
   if (data) {
@@ -140,7 +146,11 @@ export default async function TradeTrackerPage({
           routeViewVersion={JOURNAL_DAILY_TRACKER_OFFLINE_ROUTE_VIEW_VERSION}
           viewKey={journalDailyTrackerOfflineViewKey(data.date)}
         />
-        <DaySessionView data={data} topContent={topContent} />
+        <DaySessionView
+          data={data}
+          readOnly={demoAccountSelectionRef !== null}
+          topContent={topContent}
+        />
       </TradeTrackerUnsavedChangesProvider>
     );
   }

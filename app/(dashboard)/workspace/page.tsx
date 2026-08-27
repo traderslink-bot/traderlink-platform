@@ -11,6 +11,7 @@ import {
   withJournalAnalyticsReportingDashboardRuntime,
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import {
+  currentJournalAccountSelectionRef,
   requireTraderLinkPlatformPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
@@ -54,7 +55,11 @@ export default async function WorkspacePage({
   const queryParameters = await searchParams;
   const scope = await requireTraderLinkPlatformPageScope();
   const onboardingStatus = readJournalFirstExecutionOnboardingStatus(scope);
-  const showFirstTimeOnboarding = !onboardingStatus.hasAcceptedExecution;
+  const showFirstTimeOnboarding = !onboardingStatus.activeAccountIsDemo &&
+    !onboardingStatus.hasRealAcceptedExecution;
+  const demoAccountSelectionRef = onboardingStatus.activeAccountIsDemo
+    ? currentJournalAccountSelectionRef(scope)
+    : undefined;
   const cookieStore = await cookies();
   const moomooConnectionPending = cookieStore.get(MOOMOO_OAUTH_ONBOARDING_RETURN_COOKIE)?.value
     === MOOMOO_OAUTH_ONBOARDING_RETURN_VALUE;
@@ -103,6 +108,7 @@ export default async function WorkspacePage({
       <WorkspaceDashboard
         analyticsMetrics={analyticsMetrics}
         calendarData={calendar}
+        demoAccountSelectionRef={demoAccountSelectionRef}
         firstTimeMoomooConnectionPending={showFirstTimeOnboarding ? moomooConnectionPending : undefined}
         firstTimeMoomooConnected={onboardingStatus.hasActiveMoomooConnection}
         firstTimeOnboardingResult={showFirstTimeOnboarding

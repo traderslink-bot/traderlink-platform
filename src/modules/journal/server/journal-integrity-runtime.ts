@@ -13,6 +13,7 @@ import {
   DEFAULT_JOURNAL_SOURCE_ACCOUNT_CANONICALIZATION_VERSION,
 } from "./accounts/journal-source-account-canonicalizers";
 import { JournalDataDecisionRepository } from "./decisions/journal-data-decision-repository";
+import { JournalDemoAccountRepository } from "./demo/journal-demo-account-repository";
 import { JournalDataDecisionService } from "./decisions/journal-data-decision-service";
 import { JournalExecutionRepository } from "./executions/journal-execution-repository";
 import { JournalExecutionService } from "./executions/journal-execution-service";
@@ -182,6 +183,7 @@ export function withWritableJournalIntegrityRuntime<T>(
     const runtime = createJournalIntegrityRuntime(database);
     if (!(options.allowNoActiveAccount && scope.allowedAccountIds.length === 0 && scope.activeAccountId === null)) {
       assertScope(runtime, scope);
+      new JournalDemoAccountRepository(database).requireActiveAccountIsNotDemo(scope);
     }
     return operation(runtime, database);
   });

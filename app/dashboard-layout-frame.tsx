@@ -12,6 +12,7 @@ import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/data
 import { PlatformNotificationRepository } from "@/src/modules/platform/server/notifications/platform-notification-repository";
 import { JournalAccountRepository } from "@/src/modules/journal/server/accounts/journal-account-repository";
 import { JournalAccountService } from "@/src/modules/journal/server/accounts/journal-account-service";
+import { JournalDemoAccountRepository } from "@/src/modules/journal/server/demo/journal-demo-account-repository";
 import { PwaLifecycle } from "./pwa/pwa-lifecycle";
 import { PressReleaseDashboardRepository } from "@/src/modules/news/server/press-release-dashboard-repository";
 import { hasPressReleaseDashboardAccess } from "@/src/modules/news/server/press-release-dashboard-access";
@@ -73,6 +74,7 @@ export async function TraderLinkPlatformDashboardFrame({
     const marketHaltAlerts = new MarketHaltAlertRepository(database);
     return Object.freeze({
       activeAccount,
+      activeDemoAccount: new JournalDemoAccountRepository(database).findActiveAccount(scope),
       marketHaltAlerts: marketHaltAlerts.read(scope),
       mutedMarketHaltTickers: marketHaltAlerts.listMutedTickers({
         readAtUtc,
@@ -87,6 +89,9 @@ export async function TraderLinkPlatformDashboardFrame({
   const accountSelectionRef = scope.activeAccountId
     ? currentJournalAccountSelectionRef(scope)
     : null;
+  const demoAccountSelectionRef = dashboardContext.activeDemoAccount
+    ? accountSelectionRef
+    : null;
   const offlineScopeRef = currentPlatformOfflineScopeRef(scope);
   return (
     <Suspense
@@ -96,6 +101,7 @@ export async function TraderLinkPlatformDashboardFrame({
         accountCurrency={dashboardContext.activeAccount?.baseCurrency ?? null}
         accountSelectionRef={accountSelectionRef}
         accountTimezone={dashboardContext.activeAccount?.tradingTimezone ?? null}
+        demoAccountSelectionRef={demoAccountSelectionRef}
         initialMarketHaltAlertsEnabled={dashboardContext.marketHaltAlerts.enabled}
         initialMutedMarketHaltTickers={dashboardContext.mutedMarketHaltTickers}
         notifications={dashboardContext.notifications}
