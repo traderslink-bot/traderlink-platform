@@ -1,4 +1,3 @@
-import { readProtectedInitialOwnerDiscordSubject } from "@/src/modules/platform/server/authentication/platform-discord-configuration";
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { requirePlatformMutationRequest } from "@/src/modules/platform/server/authentication/platform-mutation-request-security";
 import { TraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
@@ -28,7 +27,7 @@ function rejected(): Response {
 
 function unavailable(
   category: DailyTrackerMarketDataExportUnavailableCategory =
-    "configured_owners_unresolved",
+    "requester_connection_cardinality_invalid",
 ): Response {
   return Response.json({ available: false, category }, { headers: PRIVATE_HEADERS, status: 503 });
 }
@@ -64,8 +63,6 @@ export async function POST(request: Request): Promise<Response> {
   let authorized: ReturnType<typeof authorizeOwnerDailyTrackerMarketDataExport> | null = null;
   try {
     requirePlatformMutationRequest(request);
-    const configuredOwnerSubject = readProtectedInitialOwnerDiscordSubject();
-    if (!configuredOwnerSubject) return unavailable("configured_owners_unresolved");
     const identity = requireTraderLinkPlatformRequestIdentity(request.headers);
     const activeAuthorization = authorizeOwnerDailyTrackerMarketDataExport(identity);
     authorized = activeAuthorization;
