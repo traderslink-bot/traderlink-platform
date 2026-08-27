@@ -68,15 +68,6 @@ connection; it does not use SnapTrade or expose a third-party brokerage portal.
 - Revocation removes usable encrypted credentials from the active connection
   record without deleting Journal facts (none are created in this slice).
 
-## OAuth reconnect reliability correction - 2026-08-27
-
-- OAuth start creates a server-only pending attempt before redirecting to Moomoo. The attempt retains only the SHA-256 digest of the opaque state, the initiating authenticated user/workspace/session scope, creation/expiry and a consumed marker. It retains no state value, PKCE verifier, code or token.
-- The callback must match both the existing state/PKCE cookies and the unexpired pending attempt for the same authenticated scope. Saving credentials and consuming that attempt share one immediate transaction, so a scope mismatch or replay cannot save a connection.
-- Pending attempts expire after ten minutes. Each later start deletes up to one hundred rows that have been expired for at least twenty-four hours, bounding retained non-secret metadata without an unbounded background worker.
-- `/account/trading` presents Moomoo as connected only when the existing connection is active and `quote:read` remains usable. An active record without that permission falls back to the established reconnect surface; it is not a second connection card.
-- The normal server-only market-data access service marks an existing active connection as requiring reauthorization when `quote:read` is missing or a refresh cannot maintain access. It reuses the connection-ID deduplicated reconnect notification. A missing record and an explicit in-app disconnect remain silent.
-- Migration `0094_platform_moomoo_oauth_pending_attempts` is additive. If application code is rolled back after it is applied, the table and its non-secret expired/consumed rows remain harmless; no connection record is dropped or altered.
-
 ## Data contract to prove with the owner's inactive Moomoo account
 
 For every authorized account/market combination, inspect a bounded sample of

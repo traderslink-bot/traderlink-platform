@@ -80,13 +80,3 @@
   afterward to avoid unnecessary local resource use.
 - Concurrent AI Reviews and language-inventory working-tree files are outside
   this slice and must not be staged, edited or committed.
-
-## OAuth reconnect reliability checkpoint - 2026-08-27
-
-- [x] Added the pending-attempt migration contract, registered as unapplied `0094_platform_moomoo_oauth_pending_attempts`.
-- [x] Bound OAuth callbacks to the initiating authenticated scope with a state digest only, and paired final consumption with credential persistence in one transaction.
-- [x] Kept callback success/failure visible on Account Trading and made its Connected signal require usable `quote:read` access.
-- [x] Reused the existing active-connection reauthorization notification for missing market-data scope or failed refresh only; explicit disconnect and absent connections remain notification-free.
-- [x] Added bounded expired-attempt cleanup and documented rollback-safe retention of the additive table.
-- [x] Passed focused file-scoped ESLint and `git diff --check`. No provider, migration execution, database write, server or production action occurred.
-- [ ] Commit the allowlisted local slice.

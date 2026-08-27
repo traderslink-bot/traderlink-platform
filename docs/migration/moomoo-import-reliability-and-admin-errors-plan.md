@@ -114,13 +114,6 @@ from the Moomoo connection, account-link and execution-import work.
   therefore reuses its prior coverage and deduplication history.
 - Worker claims remain limited to active links and an active connection.
 
-### OAuth scope binding and market-data loss
-
-- OAuth start stores a short-lived, state-digest-only pending attempt bound to the initiating authenticated user, workspace and session. Callback must consume that exact attempt in the same transaction that saves a newly authorized connection; a session or scope mismatch fails without persisting credentials.
-- The Account Trading connected state requires an active `quote:read` connection. A missing market-data scope uses the existing reconnect flow, not a new status card.
-- Only a previously active connection that loses `quote:read` or cannot refresh into usable market-data access receives the existing connection-ID-deduplicated reconnect notification. An intentionally revoked connection and a never-connected account do not receive it.
-- Pending attempts are non-secret metadata: ten-minute expiry and bounded cleanup after twenty-four hours. The additive pending-attempt table may remain after rollback without changing or removing a broker connection.
-
 ### Verification repair
 
 - Make the migration-0047 disposable verifier rerunnable when the local

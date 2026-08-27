@@ -17,7 +17,6 @@ import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/data
 import { TraderLinkPlatformError } from "@/src/modules/platform/server/database/platform-migration-contract";
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
 import { PlatformAccountProfileReadService } from "@/src/modules/platform/server/identity/platform-account-profile-read-service";
-import { readMoomooMarketDataAccess } from "@/src/modules/level-analysis/server/moomoo-market-data-access";
 import { MoomooExecutionImportCommandService } from "@/src/modules/journal/server/broker-imports/moomoo-execution-import-command-service";
 import { AccountManagementClient } from "../account-management-client";
 import { AccountSettingsLayout } from "../account-settings-layout";
@@ -42,7 +41,7 @@ export default async function AccountTradingPage({
 }) {
   const query = await searchParams;
   const scope = await requireTraderLinkPlatformPageScope();
-  const { marketDataAccess, moomooAccountLinks, moomooConnection, moomooImportUnavailable, profile } = withReadonlyPlatformDatabase({}, (database) => {
+  const { moomooAccountLinks, moomooConnection, moomooImportUnavailable, profile } = withReadonlyPlatformDatabase({}, (database) => {
     const currentProfile = new PlatformAccountProfileReadService(database).get(scope);
     const currentAccount = currentProfile.journalAccounts.find((account) => account.active);
     const currentMoomooConnection = new MoomooConnectionRepository(database).find(scope);
@@ -67,7 +66,6 @@ export default async function AccountTradingPage({
       }
     }
     return Object.freeze({
-      marketDataAccess: readMoomooMarketDataAccess(database, scope),
       moomooAccountLinks: linkedAccounts,
       moomooConnection: currentMoomooConnection,
       moomooImportUnavailable: importUnavailable,
@@ -145,17 +143,15 @@ export default async function AccountTradingPage({
             Moomoo trade imports are temporarily unavailable. Your Trade Tracker accounts and saved data are not affected.
           </Alert>
         ) : null}
-        <BrokerConnectionPicker moomooConnectionState={marketDataAccess.hasActiveMarketDataConnection
-          ? moomooConnection?.state ?? null
-          : null} />
-        {marketDataAccess.hasActiveMarketDataConnection ? (
+        <BrokerConnectionPicker moomooConnectionState={moomooConnection?.state ?? null} />
+        {moomooConnection?.state === "active" ? (
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ alignItems: { sm: "center" }, mt: 2 }}>
             <Typography sx={{ fontWeight: 800 }} variant="body2">Moomoo</Typography>
             <Chip color="success" label="Connected" size="small" />
             <MoomooConnectionSettings state="active" />
           </Stack>
         ) : null}
-        {marketDataAccess.hasActiveMarketDataConnection && moomooConnection?.state === "active" && activeAccount && !moomooImportUnavailable ? (
+        {moomooConnection?.state === "active" && activeAccount && !moomooImportUnavailable ? (
           <MoomooExecutionImportSetup
             activeAccountName={activeAccount.displayName}
             activeAccountSelectionRef={activeAccount.selectionRef}
