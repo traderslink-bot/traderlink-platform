@@ -275,7 +275,7 @@ function validateSessionCoverageAndContinuity(input: Readonly<{
   for (const candle of input.candles) {
     if (
       candle.time < session.startTime ||
-      candle.time >= session.endTime
+      candle.time > session.endTime
     ) {
       throw new DailyTrackerMarketDataExportUnavailable("session_minute_interval_unavailable");
     }
