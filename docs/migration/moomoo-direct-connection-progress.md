@@ -222,3 +222,13 @@ package currently present in the checkout. The execution-import slice will add
 bounded Journal acceptance through the existing evidence and reconciliation
 contracts. It introduces no WebSocket, order placement, order modification or
 order cancellation.
+
+## OAuth reconnect reliability checkpoint - 2026-08-27
+
+- [x] Added the local implementation contract for additive migration `0094_platform_moomoo_oauth_pending_attempts`; it is registered but unapplied.
+- [x] Bound OAuth start to an opaque, state-digest-only pending attempt for the authenticated user/workspace/session and atomically consume it with an authorized connection save.
+- [x] Preserved callback outcome on `/account/trading?moomoo=...` and made the green connection state require usable active `quote:read` access.
+- [x] Routed loss of usable market-data access for an existing active connection through the existing deduplicated reauthorization notification; explicit in-app revocation and never-connected records remain silent.
+- [x] Added bounded pending-attempt retention cleanup at later OAuth starts. No state, verifier, authorization code, token or broker identity is retained in the new table.
+- [x] Passed focused file-scoped ESLint and `git diff --check`. No migration execution, provider call, server, deployment or database write was used.
+- [ ] Create the narrow local commit for the approved allowlist.
