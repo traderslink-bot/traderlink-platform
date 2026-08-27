@@ -19,7 +19,9 @@ function isUsageVisitBody(value: unknown): value is Readonly<{
 }> {
   if (!value || typeof value !== "object") return false;
   const body = value as { eventId?: unknown; pageKind?: unknown };
-  return isCanonicalUuidV4(body.eventId) && (body.pageKind === "detail" || body.pageKind === "index");
+  return typeof body.eventId === "string" &&
+    isCanonicalUuidV4(body.eventId) &&
+    (body.pageKind === "detail" || body.pageKind === "index");
 }
 
 export async function POST(request: Request): Promise<Response> {
