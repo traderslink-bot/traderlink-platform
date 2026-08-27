@@ -75,7 +75,11 @@ export type DailyTrackerMarketDataExportUnavailableCategory =
   | "session_exchange_timezone_invalid"
   | "session_minute_interval_unavailable"
   | "session_provider_offset_absent_or_invalid"
+  | "session_provider_offset_hours_candidate"
+  | "session_provider_offset_minutes_candidate"
   | "session_provider_offset_mismatched"
+  | "session_provider_offset_seconds_candidate"
+  | "session_provider_offset_unit_unrecognized"
   | "session_timezone_unavailable"
   | "token_access_unavailable";
 
@@ -229,6 +233,42 @@ function expectedNewYorkUtcOffsetSeconds(date: string, sessionStartTime: number)
   const month = Number(monthText);
   const day = Number(dayText);
   return Date.UTC(year, month - 1, day, 4, 0, 0) / 1000 - sessionStartTime;
+}
+
+function providerOffsetUnitCandidate(input: Readonly<{
+  expectedUtcOffsetSeconds: number;
+  rawPages: readonly SanitizedRawPage[];
+}>): Extract<DailyTrackerMarketDataExportUnavailableCategory,
+  | "session_provider_offset_hours_candidate"
+  | "session_provider_offset_minutes_candidate"
+  | "session_provider_offset_seconds_candidate"
+  | "session_provider_offset_unit_unrecognized"
+> {
+  const finalPage = input.rawPages.at(-1)?.response;
+  const data = finalPage?.data;
+  const klineList = data && typeof data === "object" && !Array.isArray(data)
+    ? (data as Readonly<Record<string, unknown>>).kline_list
+    : null;
+  const first = Array.isArray(klineList) ? klineList[0] : null;
+  const rawOffset = first && typeof first === "object" && !Array.isArray(first)
+    ? (first as Readonly<Record<string, unknown>>).time_zone
+    : null;
+  const numericOffset = typeof rawOffset === "number"
+    ? rawOffset
+    : typeof rawOffset === "string" && rawOffset.trim() !== ""
+      ? Number(rawOffset)
+      : Number.NaN;
+  if (!Number.isInteger(numericOffset)) return "session_provider_offset_unit_unrecognized";
+  if (numericOffset * 60 * 60 === input.expectedUtcOffsetSeconds) {
+    return "session_provider_offset_hours_candidate";
+  }
+  if (numericOffset * 60 === input.expectedUtcOffsetSeconds) {
+    return "session_provider_offset_minutes_candidate";
+  }
+  if (numericOffset === input.expectedUtcOffsetSeconds) {
+    return "session_provider_offset_seconds_candidate";
+  }
+  return "session_provider_offset_unit_unrecognized";
 }
 
 function validateSessionCoverageAndContinuity(input: Readonly<{
@@ -403,8 +443,12 @@ export async function exportOwnerDailyTrackerMarketData(input: Readonly<{
   if (result.utcOffsetSeconds === null) {
     throw new DailyTrackerMarketDataExportUnavailable("session_provider_offset_absent_or_invalid");
   }
-  if (result.utcOffsetSeconds !== expectedNewYorkUtcOffsetSeconds(input.date, session.startTime)) {
-    throw new DailyTrackerMarketDataExportUnavailable("session_provider_offset_mismatched");
+  const expectedUtcOffsetSeconds = expectedNewYorkUtcOffsetSeconds(input.date, session.startTime);
+  if (result.utcOffsetSeconds !== expectedUtcOffsetSeconds) {
+    throw new DailyTrackerMarketDataExportUnavailable(providerOffsetUnitCandidate({
+      expectedUtcOffsetSeconds,
+      rawPages,
+    }));
   }
   if (rawPages.length === 0) {
     throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
