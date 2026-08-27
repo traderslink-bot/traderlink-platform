@@ -6,19 +6,13 @@ import type { NormalizedMarketCandle } from "@/src/modules/level-analysis/contra
 import { newYorkExtendedSession } from "@/src/modules/level-analysis/server/daily-trade-analyzer-session";
 import { MoomooDailyTradeKlineMarketDataProvider } from "@/src/modules/level-analysis/server/providers/moomoo-daily-trade-kline-market-data-provider";
 import type { TraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { deriveAuthenticatedUserJournalScope } from "@/src/modules/platform/server/authentication/authenticated-user-journal-scope";
-import { readProtectedInitialOwnerDiscordSubject } from "@/src/modules/platform/server/authentication/platform-discord-configuration";
 import { MoomooConnectionAccessService } from "@/src/modules/platform/server/broker-connections/moomoo-connection-access-service";
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
-import { PlatformOperatorRepository } from "@/src/modules/platform/server/administration/platform-operator-repository";
 import { openReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
-import { PlatformUserRepository } from "@/src/modules/platform/server/identity/platform-user-repository";
-import { TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT_ENV } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 
 const MAX_PAGES = 3;
 const MIN_TOKEN_LIFETIME_MILLISECONDS = 15 * 60 * 1000;
 const SESSION_POLICY = "america_new_york_extended_0400_2000_v1";
-const DISCORD_SNOWFLAKE_PATTERN = /^[0-9]{1,32}$/u;
 
 const ALLOWED_SESSIONS = Object.freeze(new Map<string, ReadonlySet<string>>([
   ["2026-08-25", new Set(["ANF", "BHVN", "BZ", "SEDG", "SMTC", "SMMT"])],
@@ -63,10 +57,10 @@ export type DailyTrackerMarketDataExport = Readonly<{
 }>;
 
 export type DailyTrackerMarketDataExportUnavailableCategory =
-  | "configured_owners_unresolved"
-  | "eligible_connection_cardinality_invalid"
   | "provider_or_candle_unavailable"
-  | "selected_token_expired_or_under_15_minutes";
+  | "requester_connection_cardinality_invalid"
+  | "requester_connection_unavailable"
+  | "requester_token_expired_or_under_15_minutes";
 
 export class DailyTrackerMarketDataExportDenied extends Error {}
 export class DailyTrackerMarketDataExportInvalid extends Error {}
@@ -211,36 +205,38 @@ export type AuthorizedDailyTrackerMarketDataExport = Readonly<{
   close: () => void;
 }>;
 
-function configuredOwnerMatches(
-  database: ReturnType<typeof openReadonlyPlatformDatabase>,
-  userId: string,
-): boolean {
-  const ownerSubject = readProtectedInitialOwnerDiscordSubject();
-  if (!ownerSubject) return false;
-  return database.prepare<[string, string], Readonly<{ matches: 0 | 1 }>>(`SELECT EXISTS(
-SELECT 1
-FROM platform_auth_identities
-WHERE user_id = ?
-  AND auth_provider = 'discord'
-  AND auth_subject = ?
-  AND status = 'active'
-) AS matches`).get(userId, ownerSubject)?.matches === 1;
-}
+type ActiveMoomooConnectionCandidateRow = Readonly<{
+  authorized_scopes: string;
+  connection_id: string;
+  user_id: string;
+  workspace_id: string;
+}>;
 
-function configuredSharedMoomooOwnerSubjects(
-  environment: NodeJS.ProcessEnv = process.env,
-): readonly string[] {
-  const subjects = environment[TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT_ENV]
-    ?.split(",")
-    .map((subject) => subject.trim()) ?? [];
-  if (
-    subjects.length !== 2 ||
-    new Set(subjects).size !== 2 ||
-    subjects.some((subject) => !DISCORD_SNOWFLAKE_PATTERN.test(subject))
-  ) {
-    throw new DailyTrackerMarketDataExportUnavailable("configured_owners_unresolved");
+function requesterOwnsSingletonActiveQuoteReadConnection(
+  database: ReturnType<typeof openReadonlyPlatformDatabase>,
+  identity: TraderLinkPlatformRequestIdentity,
+  connectionId: string,
+): boolean {
+  const activeConnections = database.prepare<[], ActiveMoomooConnectionCandidateRow>(`SELECT
+  connection_id, user_id, workspace_id, authorized_scopes
+FROM platform_broker_connections
+WHERE provider = 'moomoo' AND connection_state = 'active'`).all();
+  const quoteReadCandidates: ActiveMoomooConnectionCandidateRow[] = [];
+  for (const candidate of activeConnections) {
+    let scopes: unknown;
+    try {
+      scopes = JSON.parse(candidate.authorized_scopes);
+    } catch {
+      return false;
+    }
+    if (!Array.isArray(scopes) || scopes.some((scope) => typeof scope !== "string")) return false;
+    if (scopes.includes("quote:read")) quoteReadCandidates.push(candidate);
   }
-  return Object.freeze(subjects);
+  const candidate = quoteReadCandidates[0];
+  return quoteReadCandidates.length === 1 && !!candidate &&
+    candidate.connection_id === connectionId &&
+    candidate.user_id === identity.scope.userId &&
+    candidate.workspace_id === identity.scope.workspaceId;
 }
 
 export function authorizeOwnerDailyTrackerMarketDataExport(
@@ -248,47 +244,29 @@ export function authorizeOwnerDailyTrackerMarketDataExport(
 ): AuthorizedDailyTrackerMarketDataExport {
   const database = openReadonlyPlatformDatabase();
   try {
-    const activeGrant = new PlatformOperatorRepository(database).findActive();
-    if (
-      identity.scope.workspaceRole !== "owner" ||
-      !configuredOwnerMatches(database, identity.scope.userId) ||
-      !activeGrant || activeGrant.userId !== identity.scope.userId
-    ) {
+    if (identity.scope.workspaceRole !== "owner") {
       throw new DailyTrackerMarketDataExportDenied();
     }
-    const users = new PlatformUserRepository(database, { allowedAuthProviders: ["discord"] });
     const connections = new MoomooConnectionRepository(database);
-    const ownerSubjects = configuredSharedMoomooOwnerSubjects();
-    const resolvedOwners = ownerSubjects.flatMap((subject) => {
-      const user = users.findActiveByAuthIdentity("discord", subject);
-      return user ? [user] : [];
-    });
-    if (resolvedOwners.length !== ownerSubjects.length) {
-      throw new DailyTrackerMarketDataExportUnavailable("configured_owners_unresolved");
-    }
-    const eligibleScopes = resolvedOwners.flatMap((user) => {
-      const scope = deriveAuthenticatedUserJournalScope(database, user.userId);
-      const connection = connections.find(scope);
-      return connection?.state === "active" && connection.authorizedScopes.includes("quote:read")
-        ? [scope]
-        : [];
-    });
-    const designatedConnectionScope = eligibleScopes[0];
-    if (eligibleScopes.length !== 1 || !designatedConnectionScope) {
-      throw new DailyTrackerMarketDataExportUnavailable("eligible_connection_cardinality_invalid");
-    }
-    const connection = connections.find(designatedConnectionScope);
-    const expiresAt = Date.parse(connection?.accessTokenExpiresAtUtc ?? "");
+    const connection = connections.find(identity.scope);
     if (
       !connection || connection.state !== "active" ||
-      !connection.authorizedScopes.includes("quote:read") ||
+      !connection.authorizedScopes.includes("quote:read")
+    ) {
+      throw new DailyTrackerMarketDataExportUnavailable("requester_connection_unavailable");
+    }
+    if (!requesterOwnsSingletonActiveQuoteReadConnection(database, identity, connection.connectionId)) {
+      throw new DailyTrackerMarketDataExportUnavailable("requester_connection_cardinality_invalid");
+    }
+    const expiresAt = Date.parse(connection?.accessTokenExpiresAtUtc ?? "");
+    if (
       !Number.isFinite(expiresAt) || expiresAt - Date.now() <= MIN_TOKEN_LIFETIME_MILLISECONDS
     ) {
-      throw new DailyTrackerMarketDataExportUnavailable("selected_token_expired_or_under_15_minutes");
+      throw new DailyTrackerMarketDataExportUnavailable("requester_token_expired_or_under_15_minutes");
     }
     const access = new MoomooConnectionAccessService(connections);
     return Object.freeze({
-      accessToken: () => access.accessToken(designatedConnectionScope),
+      accessToken: () => access.accessToken(identity.scope),
       close: () => database.close(),
     });
   } catch (error) {
