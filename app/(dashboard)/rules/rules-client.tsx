@@ -640,16 +640,19 @@ export function RulesClient({
         </Stack>
         <Box sx={{ maxWidth: 960 }}>
           <Typography>
-            TradersLink has 2 rule type.
+            TradersLink has 2 rule types.
           </Typography>
           <Box component="ol" sx={{ mb: 0, mt: 1, pl: 3 }}>
             <Typography component="li">
-              Custom rules you create and track by select if you followed or broke the rule.
+              Custom rules are rules you create and apply the outcome followed or broken to each trade.
             </Typography>
             <Typography component="li" sx={{ mt: 0.75 }}>
-              Preset rules are rules that you select that TradersLinks automatically detects. You select preset rules, enter your executions, submit, the app detects if any where broke and builds long term data.
+              Preset rules are rules that you select and TradersLink automatically detects. You select preset rules, enter your executions, submit and the app detects if any were broken.
             </Typography>
           </Box>
+          <Typography sx={{ mt: 1 }}>
+            Data from both rule types is saved in your dashboard for your review.
+          </Typography>
         </Box>
         <Stack
           direction={{ xs: "column", sm: "row" }}
