@@ -12,13 +12,32 @@ import { getMoomooOAuthConfig, refreshMoomooAccessToken } from "./moomoo-oauth";
 
 const REFRESH_BEFORE_EXPIRY_MILLISECONDS = 60_000;
 
+export type MoomooAccessTokenRequest = Readonly<{
+  minimumLifetimeMilliseconds?: number;
+}>;
+
+function minimumLifetimeMilliseconds(input: MoomooAccessTokenRequest | undefined): number {
+  const requested = input?.minimumLifetimeMilliseconds ?? REFRESH_BEFORE_EXPIRY_MILLISECONDS;
+  if (
+    !Number.isSafeInteger(requested) ||
+    requested < REFRESH_BEFORE_EXPIRY_MILLISECONDS ||
+    requested > 24 * 60 * 60 * 1000
+  ) {
+    platformFailure("TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED");
+  }
+  return requested;
+}
+
 export class MoomooConnectionAccessService {
   constructor(
     private readonly repository: MoomooConnectionRepository,
     private readonly now: () => Date = () => new Date(),
   ) {}
 
-  async accessToken(scope: WorkspaceAccessScope): Promise<string> {
+  async accessToken(
+    scope: WorkspaceAccessScope,
+    request?: MoomooAccessTokenRequest,
+  ): Promise<string> {
     const connection = this.repository.find(scope);
     if (!connection || connection.state !== "active") {
       platformFailure("TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED");
@@ -38,7 +57,7 @@ export class MoomooConnectionAccessService {
       encrypted: connection.encrypted,
     });
     const expiresAt = Date.parse(connection.accessTokenExpiresAtUtc);
-    if (Number.isFinite(expiresAt) && expiresAt - now.getTime() > REFRESH_BEFORE_EXPIRY_MILLISECONDS) {
+    if (Number.isFinite(expiresAt) && expiresAt - now.getTime() > minimumLifetimeMilliseconds(request)) {
       return credentials.accessToken;
     }
     const refreshed = await refreshMoomooAccessToken({

@@ -10,7 +10,7 @@ import { deriveAuthenticatedUserJournalScope } from "@/src/modules/platform/serv
 import type { TraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { MoomooConnectionAccessService } from "@/src/modules/platform/server/broker-connections/moomoo-connection-access-service";
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
-import { openReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
+import { openPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { PlatformUserRepository } from "@/src/modules/platform/server/identity/platform-user-repository";
 import { TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT_ENV } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 
@@ -311,7 +311,7 @@ function configuredOwnerSubjects(environment: NodeJS.ProcessEnv): readonly strin
 export function authorizeOwnerDailyTrackerMarketDataExport(
   identity: TraderLinkPlatformRequestIdentity,
 ): AuthorizedDailyTrackerMarketDataExport {
-  const database = openReadonlyPlatformDatabase();
+  const database = openPlatformDatabase({ mode: "runtime" });
   try {
     if (identity.scope.workspaceRole !== "owner") {
       throw new DailyTrackerMarketDataExportDenied();
@@ -333,15 +333,25 @@ export function authorizeOwnerDailyTrackerMarketDataExport(
     if (candidates.length !== 1 || !selected) {
       throw new DailyTrackerMarketDataExportUnavailable("requester_connection_cardinality_invalid");
     }
-    const expiresAt = Date.parse(selected.connection.accessTokenExpiresAtUtc ?? "");
-    if (
-      !Number.isFinite(expiresAt) || expiresAt - Date.now() <= MIN_TOKEN_LIFETIME_MILLISECONDS
-    ) {
-      throw new DailyTrackerMarketDataExportUnavailable("requester_token_expired_or_under_15_minutes");
-    }
     const access = new MoomooConnectionAccessService(connections);
     return Object.freeze({
-      accessToken: () => access.accessToken(selected.scope),
+      accessToken: async () => {
+        const accessToken = await access.accessToken(selected.scope, {
+          minimumLifetimeMilliseconds: MIN_TOKEN_LIFETIME_MILLISECONDS,
+        });
+        const refreshed = connections.find(selected.scope);
+        const expiresAt = Date.parse(refreshed?.accessTokenExpiresAtUtc ?? "");
+        if (
+          !refreshed ||
+          refreshed.state !== "active" ||
+          !refreshed.authorizedScopes.includes("quote:read") ||
+          !Number.isFinite(expiresAt) ||
+          expiresAt - Date.now() < MIN_TOKEN_LIFETIME_MILLISECONDS
+        ) {
+          throw new DailyTrackerMarketDataExportUnavailable("requester_token_expired_or_under_15_minutes");
+        }
+        return accessToken;
+      },
       close: () => database.close(),
     });
   } catch (error) {
