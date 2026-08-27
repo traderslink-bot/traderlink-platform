@@ -72,7 +72,10 @@ export type DailyTrackerMarketDataExportUnavailableCategory =
   | "requester_token_expired_or_under_15_minutes"
   | "session_coverage_unavailable"
   | "session_continuity_unavailable"
+  | "session_exchange_timezone_invalid"
   | "session_minute_interval_unavailable"
+  | "session_provider_offset_absent_or_invalid"
+  | "session_provider_offset_mismatched"
   | "session_timezone_unavailable"
   | "token_access_unavailable";
 
@@ -394,8 +397,14 @@ export async function exportOwnerDailyTrackerMarketData(input: Readonly<{
   if (observedStage) {
     throw new DailyTrackerMarketDataExportUnavailable(observedStage);
   }
-  if (!result.exchangeTimezone || result.utcOffsetSeconds === null) {
-    throw new DailyTrackerMarketDataExportUnavailable("session_timezone_unavailable");
+  if (!result.exchangeTimezone || result.exchangeTimezone !== "America/New_York") {
+    throw new DailyTrackerMarketDataExportUnavailable("session_exchange_timezone_invalid");
+  }
+  if (result.utcOffsetSeconds === null) {
+    throw new DailyTrackerMarketDataExportUnavailable("session_provider_offset_absent_or_invalid");
+  }
+  if (result.utcOffsetSeconds !== expectedNewYorkUtcOffsetSeconds(input.date, session.startTime)) {
+    throw new DailyTrackerMarketDataExportUnavailable("session_provider_offset_mismatched");
   }
   if (rawPages.length === 0) {
     throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
