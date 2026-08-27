@@ -10,6 +10,7 @@ import {
   exportOwnerDailyTrackerMarketData,
   serializeDailyTrackerMarketDataExport,
 } from "@/src/modules/journal/server/demo/daily-tracker-market-data-export-service";
+import type { DailyTrackerMarketDataExportUnavailableCategory } from "@/src/modules/journal/server/demo/daily-tracker-market-data-export-service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,8 +26,11 @@ function rejected(): Response {
   return new Response(null, { headers: PRIVATE_HEADERS, status: 403 });
 }
 
-function unavailable(): Response {
-  return Response.json({ available: false }, { headers: PRIVATE_HEADERS, status: 503 });
+function unavailable(
+  category: DailyTrackerMarketDataExportUnavailableCategory =
+    "configured_owners_unresolved",
+): Response {
+  return Response.json({ available: false, category }, { headers: PRIVATE_HEADERS, status: 503 });
 }
 
 function invalid(): Response {
@@ -61,7 +65,7 @@ export async function POST(request: Request): Promise<Response> {
   try {
     requirePlatformMutationRequest(request);
     const configuredOwnerSubject = readProtectedInitialOwnerDiscordSubject();
-    if (!configuredOwnerSubject) return unavailable();
+    if (!configuredOwnerSubject) return unavailable("configured_owners_unresolved");
     const identity = requireTraderLinkPlatformRequestIdentity(request.headers);
     const activeAuthorization = authorizeOwnerDailyTrackerMarketDataExport(identity);
     authorized = activeAuthorization;
@@ -78,10 +82,11 @@ export async function POST(request: Request): Promise<Response> {
     });
   } catch (error) {
     if (error instanceof DailyTrackerMarketDataExportInvalid) return invalid();
-    if (error instanceof DailyTrackerMarketDataExportUnavailable) return unavailable();
+    if (error instanceof DailyTrackerMarketDataExportUnavailable) return unavailable(error.category);
     if (error instanceof DailyTrackerMarketDataExportDenied) return rejected();
-    return securityFailure(error) ? rejected() : unavailable();
+    return securityFailure(error) ? rejected() : unavailable("provider_or_candle_unavailable");
   } finally {
     authorized?.close();
   }
 }
+
