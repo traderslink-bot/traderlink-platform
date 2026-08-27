@@ -1,4 +1,5 @@
 import { analyzeDailyTrade } from "./daily-trade-analyzer";
+import { hasEveryExecutionMinute } from "./daily-trade-analyzer-candle-coverage";
 import { UNAVAILABLE_DAILY_TRADE_GREEN_TO_RED_ANALYSIS } from "./daily-trade-green-to-red-analyzer";
 import { DailyTradeAnalyzerRepository } from "./daily-trade-analyzer-repository";
 import {
@@ -10,17 +11,6 @@ import type { MarketDataProvider } from "../contracts/candle-review-contracts";
 import type { AccountScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 
 type ScopedMarketDataProviderFactory = (scope: AccountScope) => MarketDataProvider;
-
-function containsEveryExecutionMinute(
-  candles: readonly { time: number }[],
-  executedAtUtc: readonly { executedAtUtc: string }[],
-): boolean {
-  const candleTimes = new Set(candles.map((candle) => candle.time));
-  return executedAtUtc.every((event) => {
-    const milliseconds = Date.parse(event.executedAtUtc);
-    return Number.isFinite(milliseconds) && candleTimes.has(Math.floor(milliseconds / 60_000) * 60);
-  });
-}
 
 function mergeCandles(
   current: readonly import("../contracts/candle-review-contracts").NormalizedMarketCandle[],
@@ -114,7 +104,7 @@ export class DailyTradeMoomooAnalyzerWorker {
         this.repository.finishJob(job.jobId, result.code === "provider_unavailable" ? "provider_unavailable" : "no_coverage", completedAt);
         return true;
       }
-      if (!containsEveryExecutionMinute(result.candles, job.target.events)) {
+      if (!hasEveryExecutionMinute(result.candles, job.target.events)) {
         if (isPostSessionReconciliation && candles.length > 0 && sessionVersionId) {
           // Do not replace a usable same-day analysis with a finalized response
           // that unexpectedly omits one of its execution minutes.
@@ -162,7 +152,7 @@ export class DailyTradeMoomooAnalyzerWorker {
         sha256: result.normalizedCandleSha256,
       });
     }
-    if (!containsEveryExecutionMinute(candles, job.target.events)) {
+    if (!hasEveryExecutionMinute(candles, job.target.events)) {
       const completedAt = this.now();
       this.repository.persistAnalysis({
         analyzed: { eventSnapshots: [], finalExitPaths: [], greenToRed: UNAVAILABLE_DAILY_TRADE_GREEN_TO_RED_ANALYSIS },

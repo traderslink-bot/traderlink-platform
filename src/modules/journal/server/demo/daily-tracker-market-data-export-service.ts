@@ -3,6 +3,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 
 import type { NormalizedMarketCandle } from "@/src/modules/level-analysis/contracts/candle-review-contracts";
+import { hasStrictlyIncreasingCandleTimes } from "@/src/modules/level-analysis/server/daily-trade-analyzer-candle-coverage";
 import { newYorkExtendedSession } from "@/src/modules/level-analysis/server/daily-trade-analyzer-session";
 import { MoomooDailyTradeKlineMarketDataProvider } from "@/src/modules/level-analysis/server/providers/moomoo-daily-trade-kline-market-data-provider";
 import { deriveAuthenticatedUserJournalScope } from "@/src/modules/platform/server/authentication/authenticated-user-journal-scope";
@@ -161,24 +162,6 @@ function sanitizeRawPayload(value: unknown): Readonly<Record<string, unknown>> {
   });
 }
 
-function recordRawCandleTimes(
-  page: Readonly<Record<string, unknown>>,
-  times: Set<number>,
-): void {
-  const data = page.data as Readonly<Record<string, unknown>>;
-  const klineList = data.kline_list;
-  if (!Array.isArray(klineList)) throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
-  for (const entry of klineList) {
-    const milliseconds = Number((entry as Readonly<Record<string, unknown>>).time_key);
-    if (!Number.isSafeInteger(milliseconds) || milliseconds <= 0 || milliseconds % 1000 !== 0) {
-      throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
-    }
-    const seconds = milliseconds / 1000;
-    if (times.has(seconds)) throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
-    times.add(seconds);
-  }
-}
-
 type KlineProviderDiagnosticStage = Exclude<
   DailyTrackerMarketDataExportUnavailableCategory,
   | "provider_or_candle_unavailable"
@@ -285,12 +268,14 @@ function validateSessionCoverageAndContinuity(input: Readonly<{
   ) {
     throw new DailyTrackerMarketDataExportUnavailable("session_timezone_unavailable");
   }
+  if (!hasStrictlyIncreasingCandleTimes(input.candles)) {
+    throw new DailyTrackerMarketDataExportUnavailable("session_minute_interval_unavailable");
+  }
   let prior: NormalizedMarketCandle | null = null;
   for (const candle of input.candles) {
     if (
       candle.time < session.startTime ||
-      candle.time >= session.endTime ||
-      (prior !== null && candle.time <= prior.time)
+      candle.time >= session.endTime
     ) {
       throw new DailyTrackerMarketDataExportUnavailable("session_minute_interval_unavailable");
     }
@@ -374,7 +359,6 @@ export async function exportOwnerDailyTrackerMarketData(input: Readonly<{
   const session = newYorkExtendedSession(input.date);
   if (!session) throw new DailyTrackerMarketDataExportInvalid();
   const rawPages: SanitizedRawPage[] = [];
-  const rawCandleTimes = new Set<number>();
   let observedStage: KlineProviderDiagnosticStage | null = null;
   const provider = new MoomooDailyTradeKlineMarketDataProvider(input.authorized.accessToken, async (request, init) => {
     if (rawPages.length >= MAX_PAGES) {
@@ -413,7 +397,6 @@ export async function exportOwnerDailyTrackerMarketData(input: Readonly<{
     let sanitizedResponse: Readonly<Record<string, unknown>>;
     try {
       sanitizedResponse = sanitizeRawPayload(parsed);
-      recordRawCandleTimes(sanitizedResponse, rawCandleTimes);
     } catch {
       observedStage = "provider_payload_unavailable";
       return response;
