@@ -25,6 +25,14 @@ successful generator's Platform user, timestamp and New York date for three
 days, so the private owner page can report today's total and per-user totals.
 It stores no ticker, level map, quote, provider response or user-facing account
 identifier. Migration execution remains a separate Railway release boundary.
+
+**Watchlist owner usage:** [Watchlist Runtime Dashboard Admin Plan](watchlist-runtime-dashboard-admin-plan.md)
+and its [usage progress record](watchlist-usage-admin-progress.md) register
+additive migration `0092_platform_watchlist_usage`. It records only opaque,
+retry-safe active Watchlist page-view event IDs, stable Platform user IDs,
+timestamps and New York dates. It stores no Discord subject, IP, user agent,
+path, URL or ticker. The established owner accounts are discarded before
+storage. Migration execution remains a separate Railway release boundary.
 **2026-08-09 AI Review cache-write accounting checkpoint:** migration
 `0051_coach_ai_review_cache_write_accounting` is registered, disposable-copy
 verified, recovery-authority backup/restore verified and locally applied. The

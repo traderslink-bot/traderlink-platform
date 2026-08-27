@@ -23,6 +23,7 @@ const SECTION_NAVIGATION_INJECTION = String.raw`<style id="traderslink-watchlist
 </style><script id="traderslink-watchlist-admin-section-navigation-script">
 (() => {
   const sectionDefinitions = [
+    { id: "usage", label: "Usage" },
     { id: "watchlist", label: "Watchlist" },
     { id: "runtime", label: "Runtime" },
     { id: "market-data", label: "Market Data" },
@@ -156,6 +157,13 @@ const SECTION_NAVIGATION_INJECTION = String.raw`<style id="traderslink-watchlist
     navigation.setAttribute("aria-label", "Watchlist Admin sections");
     const buttons = new Map();
     const activate = (sectionId) => {
+      if (sectionId === "usage") {
+        window.parent.postMessage(
+          { source: "traderslink-watchlist-admin", type: "open-usage" },
+          window.location.origin,
+        );
+        return;
+      }
       blocks.forEach((assignedSection, block) => {
         block.hidden = assignedSection !== sectionId;
       });

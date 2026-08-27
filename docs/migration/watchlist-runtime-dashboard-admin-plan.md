@@ -39,17 +39,18 @@ The three direct Runtime Config provider controls form Market Data, and only
 the final Live Website provider control forms Automatic Low-Float Selection.
 Existing runtime CSS, IDs, event listeners and API paths remain runtime-owned.
 
-## Proposed Watchlist usage panel — owner review required
+## Watchlist usage panel
 
 This is a separate Platform-owned panel above the relayed runtime document. It
 does not alter, inject into, or depend on the canonical Watchlist runtime.
-Implementation may begin only after the owner approves this layout and
-definitions.
+The owner approved this layout and definitions on 2026-08-26.
 
 ### Panel layout
 
-At the top of `/admin/watchlist`, before the existing runtime document, render
-four compact factual cards:
+The existing Platform-owned section navigation adds **Usage**. Selecting it
+opens this panel and hides the retained same-origin runtime iframe without
+unmounting it. **Watchlist controls** returns to the existing runtime document.
+The panel renders four compact factual cards:
 
 1. **Today's distinct visitors** — the count of distinct authorized members
    with a confirmed Watchlist page view on the current America/New_York date.
@@ -84,6 +85,11 @@ surface.
   where applicable. The server derives the Platform user identity from the
   authenticated request; it never accepts, stores, or exposes a Discord
   subject supplied by the browser.
+- The receipt is an established same-origin Platform mutation request. It
+  validates mutation security and the authenticated member identity before it
+  reads a body. Missing or malformed owner-exclusion configuration fails
+  closed with no stored event; an authentication/security rejection is kept
+  distinct from an unavailable storage/configuration response.
 - The two established owner accounts are recognized only by the existing
   server-side owner predicate and their supported-page views are discarded
   before any usage event is written. They therefore cannot affect the cards,
@@ -99,6 +105,24 @@ surface.
   the event timestamp. Counts are page-view events, not inferred sessions.
 - Collection begins at release. Earlier visitor history cannot be
   reconstructed and must not be displayed as though it were complete.
+
+### Usage acceptance checks
+
+- The existing owner-only Admin boundary is unchanged; ordinary members cannot
+  read the panel or its display names.
+- The runtime document's **Usage** control can select only the same-origin
+  parent Usage panel. The parent accepts that message only from the current
+  iframe and same Platform origin; it does not duplicate the panel or its data
+  inside the runtime document.
+- A successful active index/detail mount records one opaque event at most once
+  despite rerenders or retry of the same event ID. A reload or supported-page
+  navigation receives a new event ID and is a separate factual visit.
+- Owner accounts, unsupported routes and failed/unauthenticated views produce
+  no stored event. The durable table contains no Discord subject, IP, user
+  agent, URL, path or ticker.
+- The panel reports zero only when no qualifying events exist; an unavailable
+  read is shown as unavailable rather than fabricated counts. Existing records
+  begin at release and are not backfilled.
 
 ## Security and data boundary
 

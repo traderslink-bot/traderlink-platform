@@ -1,6 +1,6 @@
 # Watchlist Usage Admin Progress
 
-**Status:** Awaiting owner layout approval
+**Status:** Implementation complete; awaiting Coordinator review
 
 **Controlling plan:** [Watchlist Runtime Dashboard Admin Plan](watchlist-runtime-dashboard-admin-plan.md)
 
@@ -24,9 +24,9 @@ server uses its established owner predicate to discard their otherwise valid
 Watchlist page views before storage. Frequent owner checks therefore do not
 alter any displayed member metric or `Data since` value.
 
-## Owner-review checkpoint
+## Owner-approved contract
 
-Pending approval of the following visible structure and terms:
+The owner approved the following visible structure and terms on 2026-08-26:
 
 1. Top cards: **Today's distinct visitors**, **Today's visits**, **All
    recorded visits**, and **Data since**.
@@ -49,6 +49,20 @@ client mount recording for the two allowed routes, and an owner-only read
 model above the existing runtime iframe. The Coordinator assigns the migration
 number and release order because an unrelated local `0092` exists and the
 Platform migration manifest is shared.
+
+## Implemented locally
+
+- Added the owner-only **Usage** section and its same-origin, iframe-source
+  validated navigation control without changing canonical runtime source.
+- Added assigned migration `0092_platform_watchlist_usage` for opaque event
+  IDs, stable Platform user IDs, timestamps and New York dates only.
+- Added a member-authenticated, no-store receipt route plus mount-level index
+  and active-detail recorder. The route validates the established same-origin
+  Platform mutation request, derives identity server-side, fails closed if the
+  owner-exclusion configuration is unavailable, and discards the established
+  owner accounts before insert.
+- Added owner-only daily and visitor read models. Display names are resolved
+  only while rendering the existing owner Admin page.
 
 ## Verification boundary
 

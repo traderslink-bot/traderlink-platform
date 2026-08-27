@@ -135,6 +135,7 @@ permission to change an endpoint now.
 | `GET` | `/api/me` | Platform identity: privacy-safe current Platform account/session contract |
 | `POST` | `/api/news/articles` | News ingest: preserve and owner-scope |
 | `GET` | `/api/live-watchlist` | Watchlist F3: Platform access service connected |
+| `POST` | `/api/live-watchlist/visits` | Watchlist usage: authenticated-member, client-confirmed index/detail page-view receipt; server-derived identity and owner-event exclusion only |
 | `POST` | `/api/live-watchlist/ingest` | Watchlist F3: explicit publisher-token mutation |
 | `GET` | `/api/live-watchlist/stream` | Watchlist F3: Platform access; preserve HTTP stream boundary |
 | `GET` | `/api/live-watchlist/recap` | Watchlist F3: explicit publisher-token read |

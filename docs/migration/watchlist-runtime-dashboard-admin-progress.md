@@ -66,8 +66,11 @@
   client-confirmed active Watchlist index/detail page-view events only, New
   York daily distinct visitors, factual visit totals, and display-name-only
   owner rows. Runtime, provider and AI data remain excluded.
-- [ ] Obtain owner approval of the proposed usage-panel layout, ordering and
+- [x] Obtain owner approval of the proposed usage-panel layout, ordering and
   page-view de-duplication semantics before application or migration work.
+- [x] Implement the Platform-owned Usage section and additive
+  `0092_platform_watchlist_usage` ledger without changing the canonical
+  Watchlist runtime.
 - [ ] Complete the paired runtime source corrections for canonical
   TradersLink article precedence, the AI Operations default filter, and a
   wider evidence-backed initial outer target when the supplied daily history
