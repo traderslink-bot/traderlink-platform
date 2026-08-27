@@ -84,6 +84,7 @@ import { platformNewsletterOptInMigration } from "./migrations/0088_platform_new
 import { platformStockLevelsUsageMigration } from "./migrations/0089_platform_stock_levels_usage";
 import { platformStockLevelsSavedMapsMigration } from "./migrations/0090_platform_stock_levels_saved_maps";
 import { platformStockLevelsActivityMigration } from "./migrations/0091_platform_stock_levels_activity";
+import { platformWatchlistUsageMigration } from "./migrations/0092_platform_watchlist_usage";
 import { dailyTradeMoomooAnalyzerMigration } from "@/src/modules/level-analysis/server/database/migrations/0036_daily_trade_moomoo_analyzer";
 import { dailyTradeExactTurnoverMigration } from "@/src/modules/level-analysis/server/database/migrations/0038_daily_trade_exact_turnover";
 import { dailyTradePathMaterializationMigration } from "@/src/modules/level-analysis/server/database/migrations/0040_daily_trade_path_materialization";
@@ -461,6 +462,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/platform/server/database/migrations/0091_platform_stock_levels_activity.ts",
       migration: platformStockLevelsActivityMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/platform/server/database/migrations/0092_platform_watchlist_usage.ts",
+      migration: platformWatchlistUsageMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -818,6 +823,9 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     ]),
     "0091_platform_stock_levels_activity": Object.freeze([
       "platform_stock_levels_activity",
+    ]),
+    "0092_platform_watchlist_usage": Object.freeze([
+      "platform_watchlist_usage_events",
     ]),
   });
 

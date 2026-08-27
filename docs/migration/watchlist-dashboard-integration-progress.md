@@ -23,6 +23,9 @@
   family available to every authenticated TradersLink Discord server member,
   without a Premium-role requirement.
 - [x] Keep Community Watchlists separate and unchanged.
+- [x] Record only authenticated active Watchlist index/detail page views for
+  the owner-only Usage section; owner views, archive/help/Admin/API/background
+  traffic remain excluded from the durable Platform ledger.
 
 ## Release configuration boundary
 
