@@ -62,9 +62,19 @@ export type DailyTrackerMarketDataExport = Readonly<{
   temporaryExport: true;
 }>;
 
+export type DailyTrackerMarketDataExportUnavailableCategory =
+  | "configured_owners_unresolved"
+  | "eligible_connection_cardinality_invalid"
+  | "provider_or_candle_unavailable"
+  | "selected_token_expired_or_under_15_minutes";
+
 export class DailyTrackerMarketDataExportDenied extends Error {}
 export class DailyTrackerMarketDataExportInvalid extends Error {}
-export class DailyTrackerMarketDataExportUnavailable extends Error {}
+export class DailyTrackerMarketDataExportUnavailable extends Error {
+  constructor(readonly category: DailyTrackerMarketDataExportUnavailableCategory) {
+    super(category);
+  }
+}
 
 function sha256(value: string): string {
   return createHash("sha256").update(value, "utf8").digest("hex");
@@ -98,7 +108,7 @@ function sanitizedScalar(value: unknown): string | number | boolean | null {
 
 function sanitizeRawPayload(value: unknown): Readonly<Record<string, unknown>> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
-    throw new DailyTrackerMarketDataExportUnavailable();
+    throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
   }
   const payload = value as Record<string, unknown>;
   const data = payload.data;
@@ -107,7 +117,7 @@ function sanitizeRawPayload(value: unknown): Readonly<Record<string, unknown>> {
     : null;
   const klineList = dataRecord?.kline_list;
   if (!dataRecord || !Array.isArray(klineList)) {
-    throw new DailyTrackerMarketDataExportUnavailable();
+    throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
   }
   const allowedKlineFields = [
     "close", "close_price", "high", "high_price", "low", "low_price",
@@ -115,7 +125,7 @@ function sanitizeRawPayload(value: unknown): Readonly<Record<string, unknown>> {
   ];
   const safeKlines = klineList.map((entry) => {
     if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
-      throw new DailyTrackerMarketDataExportUnavailable();
+      throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
     }
     const record = entry as Record<string, unknown>;
     return Object.freeze(Object.fromEntries(allowedKlineFields
@@ -142,14 +152,14 @@ function recordRawCandleTimes(
 ): void {
   const data = page.data as Readonly<Record<string, unknown>>;
   const klineList = data.kline_list;
-  if (!Array.isArray(klineList)) throw new DailyTrackerMarketDataExportUnavailable();
+  if (!Array.isArray(klineList)) throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
   for (const entry of klineList) {
     const milliseconds = Number((entry as Readonly<Record<string, unknown>>).time_key);
     if (!Number.isSafeInteger(milliseconds) || milliseconds <= 0 || milliseconds % 1000 !== 0) {
-      throw new DailyTrackerMarketDataExportUnavailable();
+      throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
     }
     const seconds = milliseconds / 1000;
-    if (times.has(seconds)) throw new DailyTrackerMarketDataExportUnavailable();
+    if (times.has(seconds)) throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
     times.add(seconds);
   }
 }
@@ -177,19 +187,19 @@ function validateSessionCoverageAndContinuity(input: Readonly<{
     input.exchangeTimezone !== "America/New_York" ||
     input.providerUtcOffsetSeconds !== expectedNewYorkUtcOffsetSeconds(input.date, session.startTime)
   ) {
-    throw new DailyTrackerMarketDataExportUnavailable();
+    throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
   }
   const expectedCount = (session.endTime - session.startTime) / 60;
-  if (input.candles.length !== expectedCount) throw new DailyTrackerMarketDataExportUnavailable();
+  if (input.candles.length !== expectedCount) throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
   let prior: NormalizedMarketCandle | null = null;
   for (const [index, candle] of input.candles.entries()) {
     if (candle.time !== session.startTime + index * 60) {
-      throw new DailyTrackerMarketDataExportUnavailable();
+      throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
     }
     if (prior) {
       const ratio = Number(candle.openDecimal) / Number(prior.closeDecimal);
       if (!Number.isFinite(ratio) || ratio <= 0 || ratio >= 4 || ratio <= 0.25) {
-        throw new DailyTrackerMarketDataExportUnavailable();
+        throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
       }
     }
     prior = candle;
@@ -228,7 +238,7 @@ function configuredSharedMoomooOwnerSubjects(
     new Set(subjects).size !== 2 ||
     subjects.some((subject) => !DISCORD_SNOWFLAKE_PATTERN.test(subject))
   ) {
-    throw new DailyTrackerMarketDataExportUnavailable();
+    throw new DailyTrackerMarketDataExportUnavailable("configured_owners_unresolved");
   }
   return Object.freeze(subjects);
 }
@@ -248,9 +258,15 @@ export function authorizeOwnerDailyTrackerMarketDataExport(
     }
     const users = new PlatformUserRepository(database, { allowedAuthProviders: ["discord"] });
     const connections = new MoomooConnectionRepository(database);
-    const eligibleScopes = configuredSharedMoomooOwnerSubjects().flatMap((subject) => {
+    const ownerSubjects = configuredSharedMoomooOwnerSubjects();
+    const resolvedOwners = ownerSubjects.flatMap((subject) => {
       const user = users.findActiveByAuthIdentity("discord", subject);
-      if (!user) return [];
+      return user ? [user] : [];
+    });
+    if (resolvedOwners.length !== ownerSubjects.length) {
+      throw new DailyTrackerMarketDataExportUnavailable("configured_owners_unresolved");
+    }
+    const eligibleScopes = resolvedOwners.flatMap((user) => {
       const scope = deriveAuthenticatedUserJournalScope(database, user.userId);
       const connection = connections.find(scope);
       return connection?.state === "active" && connection.authorizedScopes.includes("quote:read")
@@ -259,7 +275,7 @@ export function authorizeOwnerDailyTrackerMarketDataExport(
     });
     const designatedConnectionScope = eligibleScopes[0];
     if (eligibleScopes.length !== 1 || !designatedConnectionScope) {
-      throw new DailyTrackerMarketDataExportUnavailable();
+      throw new DailyTrackerMarketDataExportUnavailable("eligible_connection_cardinality_invalid");
     }
     const connection = connections.find(designatedConnectionScope);
     const expiresAt = Date.parse(connection?.accessTokenExpiresAtUtc ?? "");
@@ -268,7 +284,7 @@ export function authorizeOwnerDailyTrackerMarketDataExport(
       !connection.authorizedScopes.includes("quote:read") ||
       !Number.isFinite(expiresAt) || expiresAt - Date.now() <= MIN_TOKEN_LIFETIME_MILLISECONDS
     ) {
-      throw new DailyTrackerMarketDataExportUnavailable();
+      throw new DailyTrackerMarketDataExportUnavailable("selected_token_expired_or_under_15_minutes");
     }
     const access = new MoomooConnectionAccessService(connections);
     return Object.freeze({
@@ -292,14 +308,14 @@ export async function exportOwnerDailyTrackerMarketData(input: Readonly<{
   const rawPages: SanitizedRawPage[] = [];
   const rawCandleTimes = new Set<number>();
   const provider = new MoomooDailyTradeKlineMarketDataProvider(input.authorized.accessToken, async (request, init) => {
-    if (rawPages.length >= MAX_PAGES) throw new DailyTrackerMarketDataExportUnavailable();
+  if (rawPages.length >= MAX_PAGES) throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
     const response = await fetch(request, init);
     const responseBody = await response.clone().text();
     let parsed: unknown;
     try {
       parsed = JSON.parse(responseBody);
     } catch {
-      throw new DailyTrackerMarketDataExportUnavailable();
+      throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
     }
     const sanitizedResponse = sanitizeRawPayload(parsed);
     recordRawCandleTimes(sanitizedResponse, rawCandleTimes);
@@ -319,7 +335,7 @@ export async function exportOwnerDailyTrackerMarketData(input: Readonly<{
     symbol: input.symbol,
   });
   if (!result.ok || !result.exchangeTimezone || result.utcOffsetSeconds === null || rawPages.length === 0) {
-    throw new DailyTrackerMarketDataExportUnavailable();
+    throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
   }
   validateSessionCoverageAndContinuity({
     candles: result.candles,
@@ -362,3 +378,4 @@ export async function exportOwnerDailyTrackerMarketData(input: Readonly<{
 export function serializeDailyTrackerMarketDataExport(value: DailyTrackerMarketDataExport): string {
   return canonicalJson(value);
 }
+
