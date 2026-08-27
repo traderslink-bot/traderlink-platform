@@ -20,8 +20,8 @@ const SESSION_POLICY = "america_new_york_extended_0400_2000_v1";
 const DISCORD_SNOWFLAKE_PATTERN = /^[0-9]{1,32}$/u;
 
 const ALLOWED_SESSIONS = Object.freeze(new Map<string, ReadonlySet<string>>([
-  ["2026-08-25", new Set(["ANF", "BHVN", "BZ", "SEDG", "SMTC", "SMMT"])],
   ["2026-08-26", new Set(["YYGH", "CRE", "SOAR", "XPON", "WSHP"])],
+  ["2026-08-27", new Set(["CELU", "PPCB", "LGPS", "CHOW"])],
 ]));
 
 type SanitizedRawPage = Readonly<{
@@ -110,7 +110,7 @@ function canonicalJson(value: unknown): string {
 }
 
 function allowedSession(input: Readonly<{ date: string; symbol: string }>): boolean {
-  return /^2026-08-(?:25|26)$/u.test(input.date) &&
+  return /^\d{4}-\d{2}-\d{2}$/u.test(input.date) &&
     /^[A-Z][A-Z0-9.-]{0,15}$/u.test(input.symbol) &&
     ALLOWED_SESSIONS.get(input.date)?.has(input.symbol) === true;
 }
