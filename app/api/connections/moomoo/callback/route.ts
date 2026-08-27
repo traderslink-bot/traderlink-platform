@@ -3,6 +3,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import { deletePlatformAuthCookie } from "@/src/modules/platform/server/authentication/platform-auth-cookies";
 import { resolvePlatformPublicOrigin } from "@/src/modules/platform/server/authentication/platform-public-origin";
 import { requireTraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import {
+  MoomooOAuthPendingAttemptRepository,
+  hashMoomooOAuthState,
+} from "@/src/modules/platform/server/broker-connections/moomoo-oauth-pending-attempt-repository";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 import { encryptMoomooCredentials, loadMoomooCredentialKeyConfiguration } from "@/src/modules/platform/server/broker-connections/moomoo-connection-credentials";
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
@@ -15,7 +19,11 @@ import {
 import { exchangeMoomooCode, getMoomooOAuthConfig } from "@/src/modules/platform/server/broker-connections/moomoo-oauth";
 import { recordMoomooOperationFailure } from "@/src/modules/platform/server/broker-connections/moomoo-operation-observability";
 import { MoomooExecutionImportRepository } from "@/src/modules/journal/server/broker-imports/moomoo-execution-import-repository";
-import { createCanonicalUtcTimestamp } from "@/src/modules/platform/server/database/platform-migration-contract";
+import {
+  createCanonicalUtcTimestamp,
+  platformFailure,
+} from "@/src/modules/platform/server/database/platform-migration-contract";
+import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,7 +42,7 @@ function finish(
     ? new URL("/trade-tracker?gettingStarted=daily-entry&moomoo=connected", origin)
     : onboardingReturn
       ? new URL("/workspace?gettingStarted=moomoo-failed", origin)
-    : new URL(`/account?moomoo=${status}`, origin);
+    : new URL(`/account/trading?moomoo=${status}`, origin);
   if (reportedToAdmin) destination.searchParams.set("reported", "1");
   const response = NextResponse.redirect(destination);
   deletePlatformAuthCookie(response, request, MOOMOO_OAUTH_STATE_COOKIE);
@@ -65,11 +73,31 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
   try {
     const identity = requireTraderLinkPlatformRequestIdentity(request.headers);
-    const token = await exchangeMoomooCode({ config: getMoomooOAuthConfig(resolvePlatformPublicOrigin(request)), code, verifier });
     const now = new Date();
     const timestamp = createCanonicalUtcTimestamp(now);
+    const stateSha256 = hashMoomooOAuthState(state);
+    const pendingAttemptMatchesScope = withReadonlyPlatformDatabase({}, (database) =>
+      new MoomooOAuthPendingAttemptRepository(database).pendingForScope({
+        nowUtc: timestamp,
+        platformSessionId: identity.sessionId,
+        scope: identity.scope,
+        stateSha256,
+      }));
+    if (!pendingAttemptMatchesScope) {
+      platformFailure("TRADERLINK_BROKER_CONNECTION_OAUTH_INVALID", { stage: "pending_attempt" });
+    }
+    const token = await exchangeMoomooCode({ config: getMoomooOAuthConfig(resolvePlatformPublicOrigin(request)), code, verifier });
     const expiresAtUtc = createCanonicalUtcTimestamp(new Date(now.getTime() + token.expiresInSeconds * 1000));
     withPlatformDatabase({ mode: "runtime" }, (database) => database.transaction(() => {
+      const attempts = new MoomooOAuthPendingAttemptRepository(database);
+      if (!attempts.consumeForScope({
+        consumedAtUtc: timestamp,
+        platformSessionId: identity.sessionId,
+        scope: identity.scope,
+        stateSha256,
+      })) {
+        platformFailure("TRADERLINK_BROKER_CONNECTION_OAUTH_INVALID", { stage: "pending_attempt" });
+      }
       const saved = new MoomooConnectionRepository(database).saveAuthorized(identity.scope, {
         encrypted: encryptMoomooCredentials({ configuration: loadMoomooCredentialKeyConfiguration(), credentials: { accessToken: token.accessToken, refreshToken: token.refreshToken } }),
         accessTokenExpiresAtUtc: expiresAtUtc, authorizedScopes: token.scopes, timestamp,
