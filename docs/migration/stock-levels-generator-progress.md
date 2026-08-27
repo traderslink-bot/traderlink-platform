@@ -5,6 +5,8 @@ Railway staging build and owner visual review pending
 **Controlling plan:** [Stock Levels Generator Plan](stock-levels-generator-plan.md)
 **Approved route:** `/levels`
 
+**Related owner administration:** [Stock Levels Admin Activity Progress](stock-levels-admin-activity-progress.md)
+
 ## Confirmed workspace and ownership boundary
 
 - [x] Coordinator confirmed the assigned Platform worktree is

@@ -10,10 +10,11 @@ import {
   type StockLevelsQuotaFeedback,
   type StockLevelsResult,
 } from "../stock-levels-contract";
+import { recordStockLevelsActivity } from "./stock-levels-admin-activity-service";
 import { requestStockLevels } from "./stock-levels-runtime-client";
+import { stockLevelsNewYorkDate } from "./stock-levels-time";
 
 const HOUR_MS = 60 * 60 * 1000;
-const NEW_YORK = "America/New_York";
 const MAX_FRESH_REQUESTS_PER_HOUR = 5;
 const MAX_FRESH_REQUESTS_PER_NEW_YORK_DAY = 15;
 const SAVED_MAP_RETENTION_MS = 72 * HOUR_MS;
@@ -23,12 +24,8 @@ function symbolFrom(input: unknown): string | null {
   return /^[A-Z][A-Z0-9.-]{0,9}$/u.test(symbol) ? symbol : null;
 }
 
-function newYorkDate(timestamp: number): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: NEW_YORK, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(timestamp));
-}
-
 function nextNewYorkDay(timestamp: number): number {
-  const parts = new Intl.DateTimeFormat("en-US", { timeZone: NEW_YORK, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(timestamp));
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(timestamp));
   const value = (kind: string) => Number(parts.find((part) => part.type === kind)?.value ?? 0);
   const nextUtcGuess = Date.UTC(value("year"), value("month") - 1, value("day") + 1, 5);
   return nextUtcGuess;
@@ -43,7 +40,7 @@ function quota(scope: WorkspaceAccessScope, now: number) {
 
 function readQuota(database: ReturnType<typeof openPlatformDatabase>, scope: WorkspaceAccessScope, now: number) {
   const hourly = database.prepare<[string, number], { count: number }>("SELECT COUNT(*) AS count FROM platform_stock_levels_usage WHERE user_id = ? AND requested_at_ms > ?").get(scope.userId, now - HOUR_MS)?.count ?? 0;
-  const day = database.prepare<[string, string], { count: number }>("SELECT COUNT(*) AS count FROM platform_stock_levels_usage WHERE user_id = ? AND new_york_date = ?").get(scope.userId, newYorkDate(now))?.count ?? 0;
+  const day = database.prepare<[string, string], { count: number }>("SELECT COUNT(*) AS count FROM platform_stock_levels_usage WHERE user_id = ? AND new_york_date = ?").get(scope.userId, stockLevelsNewYorkDate(now))?.count ?? 0;
   return { hourly, day };
 }
 
@@ -199,10 +196,14 @@ function recordCalculationAndSaveMap(
           throw new SavedMapPersistenceFailure("limit_reached");
         }
         database.prepare("INSERT INTO platform_stock_levels_usage (user_id, symbol, requested_at_ms, new_york_date) VALUES (?, ?, ?, ?)")
-          .run(scope.userId, map.symbol, now, newYorkDate(now));
+          .run(scope.userId, map.symbol, now, stockLevelsNewYorkDate(now));
       }
       const savedMap = saveMap(database, scope, map, now, replaceSavedMapId);
       if (!savedMap) throw new SavedMapPersistenceFailure("saved_map_unavailable");
+      recordStockLevelsActivity(database, {
+        userId: scope.userId,
+        generatedAtMs: now,
+      });
       return Object.freeze({ state: "ready" as const, savedMap });
     });
     return transaction();
