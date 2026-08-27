@@ -6,16 +6,19 @@ import type { NormalizedMarketCandle } from "@/src/modules/level-analysis/contra
 import { newYorkExtendedSession } from "@/src/modules/level-analysis/server/daily-trade-analyzer-session";
 import { MoomooDailyTradeKlineMarketDataProvider } from "@/src/modules/level-analysis/server/providers/moomoo-daily-trade-kline-market-data-provider";
 import type { TraderLinkPlatformRequestIdentity } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { PlatformDiscordMembershipRepository } from "@/src/modules/platform/server/authentication/platform-discord-membership-repository";
-import { readProtectedInitialOwnerDiscordSubject, resolveTraderLinkDiscordGuildId } from "@/src/modules/platform/server/authentication/platform-discord-configuration";
+import { deriveAuthenticatedUserJournalScope } from "@/src/modules/platform/server/authentication/authenticated-user-journal-scope";
+import { readProtectedInitialOwnerDiscordSubject } from "@/src/modules/platform/server/authentication/platform-discord-configuration";
 import { MoomooConnectionAccessService } from "@/src/modules/platform/server/broker-connections/moomoo-connection-access-service";
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
-import { openReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { PlatformOperatorRepository } from "@/src/modules/platform/server/administration/platform-operator-repository";
+import { openReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
+import { PlatformUserRepository } from "@/src/modules/platform/server/identity/platform-user-repository";
+import { TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT_ENV } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 
 const MAX_PAGES = 3;
 const MIN_TOKEN_LIFETIME_MILLISECONDS = 15 * 60 * 1000;
 const SESSION_POLICY = "america_new_york_extended_0400_2000_v1";
+const DISCORD_SNOWFLAKE_PATTERN = /^[0-9]{1,32}$/u;
 
 const ALLOWED_SESSIONS = Object.freeze(new Map<string, ReadonlySet<string>>([
   ["2026-08-25", new Set(["ANF", "BHVN", "BZ", "SEDG", "SMTC", "SMMT"])],
@@ -210,7 +213,24 @@ FROM platform_auth_identities
 WHERE user_id = ?
   AND auth_provider = 'discord'
   AND auth_subject = ?
+  AND status = 'active'
 ) AS matches`).get(userId, ownerSubject)?.matches === 1;
+}
+
+function configuredSharedMoomooOwnerSubjects(
+  environment: NodeJS.ProcessEnv = process.env,
+): readonly string[] {
+  const subjects = environment[TRADERLINK_WATCHLIST_DASHBOARD_NAV_DISCORD_SUBJECT_ENV]
+    ?.split(",")
+    .map((subject) => subject.trim()) ?? [];
+  if (
+    subjects.length !== 2 ||
+    new Set(subjects).size !== 2 ||
+    subjects.some((subject) => !DISCORD_SNOWFLAKE_PATTERN.test(subject))
+  ) {
+    throw new DailyTrackerMarketDataExportUnavailable();
+  }
+  return Object.freeze(subjects);
 }
 
 export function authorizeOwnerDailyTrackerMarketDataExport(
@@ -218,20 +238,30 @@ export function authorizeOwnerDailyTrackerMarketDataExport(
 ): AuthorizedDailyTrackerMarketDataExport {
   const database = openReadonlyPlatformDatabase();
   try {
-    const membership = new PlatformDiscordMembershipRepository(database).findCurrent(
-      identity.scope.userId,
-      resolveTraderLinkDiscordGuildId(),
-    );
     const activeGrant = new PlatformOperatorRepository(database).findActive();
-    const discordServerOwnerMatched = identity.discord?.guildOwner === true && membership?.guildOwner === true;
     if (
-      !membership || !activeGrant || activeGrant.userId !== identity.scope.userId ||
-      (!configuredOwnerMatches(database, identity.scope.userId) && !discordServerOwnerMatched)
+      identity.scope.workspaceRole !== "owner" ||
+      !configuredOwnerMatches(database, identity.scope.userId) ||
+      !activeGrant || activeGrant.userId !== identity.scope.userId
     ) {
       throw new DailyTrackerMarketDataExportDenied();
     }
+    const users = new PlatformUserRepository(database, { allowedAuthProviders: ["discord"] });
     const connections = new MoomooConnectionRepository(database);
-    const connection = connections.find(identity.scope);
+    const eligibleScopes = configuredSharedMoomooOwnerSubjects().flatMap((subject) => {
+      const user = users.findActiveByAuthIdentity("discord", subject);
+      if (!user) return [];
+      const scope = deriveAuthenticatedUserJournalScope(database, user.userId);
+      const connection = connections.find(scope);
+      return connection?.state === "active" && connection.authorizedScopes.includes("quote:read")
+        ? [scope]
+        : [];
+    });
+    const designatedConnectionScope = eligibleScopes[0];
+    if (eligibleScopes.length !== 1 || !designatedConnectionScope) {
+      throw new DailyTrackerMarketDataExportUnavailable();
+    }
+    const connection = connections.find(designatedConnectionScope);
     const expiresAt = Date.parse(connection?.accessTokenExpiresAtUtc ?? "");
     if (
       !connection || connection.state !== "active" ||
@@ -242,7 +272,7 @@ export function authorizeOwnerDailyTrackerMarketDataExport(
     }
     const access = new MoomooConnectionAccessService(connections);
     return Object.freeze({
-      accessToken: () => access.accessToken(identity.scope),
+      accessToken: () => access.accessToken(designatedConnectionScope),
       close: () => database.close(),
     });
   } catch (error) {
