@@ -285,11 +285,13 @@ function validateSessionCoverageAndContinuity(input: Readonly<{
   ) {
     throw new DailyTrackerMarketDataExportUnavailable("session_timezone_unavailable");
   }
-  const expectedCount = (session.endTime - session.startTime) / 60;
-  if (input.candles.length !== expectedCount) throw new DailyTrackerMarketDataExportUnavailable("session_minute_interval_unavailable");
   let prior: NormalizedMarketCandle | null = null;
-  for (const [index, candle] of input.candles.entries()) {
-    if (candle.time !== session.startTime + index * 60) {
+  for (const candle of input.candles) {
+    if (
+      candle.time < session.startTime ||
+      candle.time >= session.endTime ||
+      (prior !== null && candle.time <= prior.time)
+    ) {
       throw new DailyTrackerMarketDataExportUnavailable("session_minute_interval_unavailable");
     }
     if (prior) {
