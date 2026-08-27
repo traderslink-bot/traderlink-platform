@@ -116,3 +116,13 @@ and Daily Trade Analyzer workers expire such jobs before claiming them. New
 Discord provisioning attempts the isolated demo transaction only after the
 authenticated identity/workspace is committed; an unavailable pack falls back
 to one ordinary Primary Journal without corrupting the valid session.
+
+For staging owner visual review only, an unlinked owner-admin POST can be
+enabled with `TRADERLINK_DEMO_STAGING_REVIEW_ACTIVATION=enabled`. It derives
+only the authenticated owner's current workspace and user server-side,
+revalidates active owner membership, and calls the same checksum-gated
+activation/materializer transaction. The request has no target identifier and
+the response exposes only materialization state; success sets the normal opaque
+account-selection cookie to the isolated Demo Trade Tracker. The route is
+unavailable until that staging gate is explicitly enabled and is not a normal
+onboarding or production activation path.
