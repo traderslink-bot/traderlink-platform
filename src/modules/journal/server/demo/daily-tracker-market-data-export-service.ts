@@ -61,10 +61,17 @@ export type DailyTrackerMarketDataExport = Readonly<{
 }>;
 
 export type DailyTrackerMarketDataExportUnavailableCategory =
+  | "candle_availability_unavailable"
+  | "provider_http_unavailable"
   | "provider_or_candle_unavailable"
+  | "provider_payload_unavailable"
+  | "provider_semantic_unavailable"
+  | "provider_transport_unavailable"
   | "requester_connection_cardinality_invalid"
   | "requester_connection_unavailable"
-  | "requester_token_expired_or_under_15_minutes";
+  | "requester_token_expired_or_under_15_minutes"
+  | "session_coverage_unavailable"
+  | "token_access_unavailable";
 
 export class DailyTrackerMarketDataExportDenied extends Error {}
 export class DailyTrackerMarketDataExportInvalid extends Error {}
@@ -162,6 +169,48 @@ function recordRawCandleTimes(
   }
 }
 
+type KlineProviderDiagnosticStage = Exclude<
+  DailyTrackerMarketDataExportUnavailableCategory,
+  | "provider_or_candle_unavailable"
+  | "requester_connection_cardinality_invalid"
+  | "requester_connection_unavailable"
+  | "requester_token_expired_or_under_15_minutes"
+  | "session_coverage_unavailable"
+>;
+
+function isSuccessfulKlineResponse(value: unknown): boolean {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const payload = value as Record<string, unknown>;
+  const data = payload.data;
+  return payload.ret_code === 0 && !!data && typeof data === "object" && !Array.isArray(data) &&
+    Array.isArray((data as Record<string, unknown>).kline_list);
+}
+
+function providerFailureCategory(
+  failureReasonCode: string,
+  observedStage: KlineProviderDiagnosticStage | null,
+): DailyTrackerMarketDataExportUnavailableCategory {
+  if (observedStage) return observedStage;
+  switch (failureReasonCode) {
+    case "moomoo_connection_unavailable":
+      return "token_access_unavailable";
+    case "moomoo_request_failed":
+      return "provider_transport_unavailable";
+    case "moomoo_http_unavailable":
+      return "provider_http_unavailable";
+    case "moomoo_reported_no_coverage":
+      return "provider_semantic_unavailable";
+    case "moomoo_json_invalid":
+    case "moomoo_candle_invalid":
+    case "moomoo_duplicate_candle_conflict":
+      return "provider_payload_unavailable";
+    case "moomoo_returned_no_candles":
+      return "candle_availability_unavailable";
+    default:
+      return "provider_or_candle_unavailable";
+  }
+}
+
 function expectedNewYorkUtcOffsetSeconds(date: string, sessionStartTime: number): number {
   const [yearText = "", monthText = "", dayText = ""] = date.split("-");
   if (!/^\d{4}$/u.test(yearText) || !/^\d{2}$/u.test(monthText) || !/^\d{2}$/u.test(dayText)) {
@@ -185,19 +234,19 @@ function validateSessionCoverageAndContinuity(input: Readonly<{
     input.exchangeTimezone !== "America/New_York" ||
     input.providerUtcOffsetSeconds !== expectedNewYorkUtcOffsetSeconds(input.date, session.startTime)
   ) {
-    throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
+    throw new DailyTrackerMarketDataExportUnavailable("session_coverage_unavailable");
   }
   const expectedCount = (session.endTime - session.startTime) / 60;
-  if (input.candles.length !== expectedCount) throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
+  if (input.candles.length !== expectedCount) throw new DailyTrackerMarketDataExportUnavailable("session_coverage_unavailable");
   let prior: NormalizedMarketCandle | null = null;
   for (const [index, candle] of input.candles.entries()) {
     if (candle.time !== session.startTime + index * 60) {
-      throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
+      throw new DailyTrackerMarketDataExportUnavailable("session_coverage_unavailable");
     }
     if (prior) {
       const ratio = Number(candle.openDecimal) / Number(prior.closeDecimal);
       if (!Number.isFinite(ratio) || ratio <= 0 || ratio >= 4 || ratio <= 0.25) {
-        throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
+        throw new DailyTrackerMarketDataExportUnavailable("session_coverage_unavailable");
       }
     }
     prior = candle;
@@ -275,18 +324,49 @@ export async function exportOwnerDailyTrackerMarketData(input: Readonly<{
   if (!session) throw new DailyTrackerMarketDataExportInvalid();
   const rawPages: SanitizedRawPage[] = [];
   const rawCandleTimes = new Set<number>();
+  let observedStage: KlineProviderDiagnosticStage | null = null;
   const provider = new MoomooDailyTradeKlineMarketDataProvider(input.authorized.accessToken, async (request, init) => {
-  if (rawPages.length >= MAX_PAGES) throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
-    const response = await fetch(request, init);
-    const responseBody = await response.clone().text();
+    if (rawPages.length >= MAX_PAGES) {
+      observedStage = "candle_availability_unavailable";
+      throw new Error("daily_tracker_market_data_page_cap");
+    }
+    let response: Response;
+    try {
+      response = await fetch(request, init);
+    } catch {
+      observedStage = "provider_transport_unavailable";
+      throw new Error("daily_tracker_market_data_transport");
+    }
+    if (!response.ok) {
+      observedStage = "provider_http_unavailable";
+      return response;
+    }
+    let responseBody: string;
+    try {
+      responseBody = await response.clone().text();
+    } catch {
+      observedStage = "provider_payload_unavailable";
+      return response;
+    }
     let parsed: unknown;
     try {
       parsed = JSON.parse(responseBody);
     } catch {
-      throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
+      observedStage = "provider_payload_unavailable";
+      return response;
     }
-    const sanitizedResponse = sanitizeRawPayload(parsed);
-    recordRawCandleTimes(sanitizedResponse, rawCandleTimes);
+    if (!isSuccessfulKlineResponse(parsed)) {
+      observedStage = "provider_semantic_unavailable";
+      return response;
+    }
+    let sanitizedResponse: Readonly<Record<string, unknown>>;
+    try {
+      sanitizedResponse = sanitizeRawPayload(parsed);
+      recordRawCandleTimes(sanitizedResponse, rawCandleTimes);
+    } catch {
+      observedStage = "provider_payload_unavailable";
+      return response;
+    }
     rawPages.push(Object.freeze({
       httpStatus: response.status,
       page: rawPages.length + 1,
@@ -302,7 +382,16 @@ export async function exportOwnerDailyTrackerMarketData(input: Readonly<{
     startTime: session.startTime,
     symbol: input.symbol,
   });
-  if (!result.ok || !result.exchangeTimezone || result.utcOffsetSeconds === null || rawPages.length === 0) {
+  if (!result.ok) {
+    throw new DailyTrackerMarketDataExportUnavailable(providerFailureCategory(result.failureReasonCode, observedStage));
+  }
+  if (observedStage) {
+    throw new DailyTrackerMarketDataExportUnavailable(observedStage);
+  }
+  if (!result.exchangeTimezone || result.utcOffsetSeconds === null) {
+    throw new DailyTrackerMarketDataExportUnavailable("session_coverage_unavailable");
+  }
+  if (rawPages.length === 0) {
     throw new DailyTrackerMarketDataExportUnavailable("provider_or_candle_unavailable");
   }
   validateSessionCoverageAndContinuity({
