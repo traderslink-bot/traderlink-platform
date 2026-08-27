@@ -6,10 +6,12 @@ export async function registerTraderLinkHostedNodeRuntime(): Promise<void> {
       "./src/modules/platform/server/database/run-hosted-platform-migration-maintenance"
     );
     const appliedMigrations = await runHostedPlatformMigrationMaintenance();
-    if (appliedMigrations) {
+    if (appliedMigrations?.length === 1) {
       console.info(
         `TraderLink hosted maintenance applied ${appliedMigrations.length} reviewed migration.`,
       );
+    } else if (appliedMigrations) {
+      console.info("TraderLink hosted maintenance verified the reviewed migration is already applied.");
     }
     const { verifyPlatformHostedRuntimeReadiness } = await import(
       "./src/modules/platform/server/readiness/platform-hosted-runtime-readiness"

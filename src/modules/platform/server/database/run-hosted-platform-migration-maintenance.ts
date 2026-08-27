@@ -1,5 +1,7 @@
 import { dirname, isAbsolute, join, resolve } from "node:path";
 
+import Database from "better-sqlite3";
+
 import {
   ALL_JOURNAL_SOURCE_ACCOUNT_CANONICALIZERS,
   DEFAULT_JOURNAL_SOURCE_ACCOUNT_CANONICALIZATION_VERSION,
@@ -15,6 +17,11 @@ import {
 } from "./platform-database-config";
 import { platformFailure } from "./platform-migration-contract";
 import { platformMigrationManifest } from "./platform-migration-manifest";
+import {
+  readAppliedPlatformMigrations,
+  validateAppliedPlatformMigrationPrefix,
+} from "./platform-migration-registry";
+import { verifyCompletedPlatformDatabase } from "./run-platform-migrations";
 
 const MAINTENANCE_MIGRATION_ID_ENV =
   "TRADERLINK_PLATFORM_MAINTENANCE_MIGRATION_ID";
@@ -22,6 +29,8 @@ const MAINTENANCE_CONFIRMATION_ENV =
   "TRADERLINK_PLATFORM_MAINTENANCE_CONFIRM";
 const MAINTENANCE_CONFIRMATION = "apply-reviewed-migration";
 const HOSTED_BACKUP_ROOT_ENV = "TRADERLINK_PLATFORM_HOSTED_BACKUP_ROOT";
+
+type MaintenancePreflight = "apply" | "already_applied";
 
 function maintenanceMigrationId(environment: NodeJS.ProcessEnv): string | null {
   const migrationId = environment[MAINTENANCE_MIGRATION_ID_ENV];
@@ -54,6 +63,58 @@ function backupRoot(databasePath: string, environment: NodeJS.ProcessEnv): strin
   return resolved;
 }
 
+function readMaintenancePreflight(
+  databasePath: string,
+  migrationId: string,
+): MaintenancePreflight {
+  const target = platformMigrationManifest.at(-1);
+  const prefixManifest = platformMigrationManifest.slice(0, -1);
+  const predecessor = prefixManifest.at(-1);
+  if (
+    !target ||
+    target.migrationId !== migrationId ||
+    !predecessor
+  ) {
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+      stage: "maintenance_manifest_predecessor",
+    });
+  }
+
+  const database = new Database(databasePath, {
+    fileMustExist: true,
+    readonly: true,
+    timeout: 5_000,
+  });
+  try {
+    database.pragma("foreign_keys = ON");
+    database.pragma("busy_timeout = 5000");
+    database.pragma("query_only = ON");
+    const applied = readAppliedPlatformMigrations(database);
+    validateAppliedPlatformMigrationPrefix(applied, platformMigrationManifest);
+    if (applied.length === platformMigrationManifest.length) {
+      if (applied.at(-1)?.migration_id !== migrationId) {
+        platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+          stage: "maintenance_already_applied_target",
+        });
+      }
+      verifyCompletedPlatformDatabase(database);
+      return "already_applied";
+    }
+    if (
+      applied.length !== prefixManifest.length ||
+      applied.at(-1)?.migration_id !== predecessor.migrationId
+    ) {
+      platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+        stage: "maintenance_exact_predecessor",
+      });
+    }
+    verifyCompletedPlatformDatabase(database, prefixManifest);
+    return "apply";
+  } finally {
+    database.close();
+  }
+}
+
 /**
  * Runs only when both protected maintenance variables are deliberately set.
  * Ordinary startup never calls the initializer and remains read-only.
@@ -65,6 +126,9 @@ export async function runHostedPlatformMigrationMaintenance(
   if (!migrationId) return null;
 
   const databasePath = resolvePlatformDatabaseConfig({ environment }).databasePath;
+  const preflight = readMaintenancePreflight(databasePath, migrationId);
+  if (preflight === "already_applied") return Object.freeze([]);
+
   const accountIdentity = loadAccountIdentityConfiguration(
     environment,
     ALL_JOURNAL_SOURCE_ACCOUNT_CANONICALIZERS,
