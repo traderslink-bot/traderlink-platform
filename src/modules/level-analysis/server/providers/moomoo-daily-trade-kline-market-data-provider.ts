@@ -114,16 +114,16 @@ function providerMetadata(items: readonly unknown[]): Readonly<{
   if (!first || typeof first !== "object" || Array.isArray(first)) {
     return Object.freeze({ exchangeTimezone: "America/New_York", utcOffsetSeconds: null });
   }
-  const offsetMinutes = (first as Record<string, unknown>).time_zone;
-  const numericOffsetMinutes = typeof offsetMinutes === "number"
-    ? offsetMinutes
-    : typeof offsetMinutes === "string" && offsetMinutes.trim() !== ""
-      ? Number(offsetMinutes)
+  const offsetHours = (first as Record<string, unknown>).time_zone;
+  const numericOffsetHours = typeof offsetHours === "number"
+    ? offsetHours
+    : typeof offsetHours === "string" && offsetHours.trim() !== ""
+      ? Number(offsetHours)
       : Number.NaN;
   return Object.freeze({
     exchangeTimezone: "America/New_York",
-    utcOffsetSeconds: Number.isInteger(numericOffsetMinutes) && numericOffsetMinutes >= -840 && numericOffsetMinutes <= 840
-      ? numericOffsetMinutes * 60
+    utcOffsetSeconds: Number.isInteger(numericOffsetHours) && numericOffsetHours >= -14 && numericOffsetHours <= 14
+      ? numericOffsetHours * 60 * 60
       : null,
   });
 }
