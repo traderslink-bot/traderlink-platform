@@ -115,10 +115,15 @@ function providerMetadata(items: readonly unknown[]): Readonly<{
     return Object.freeze({ exchangeTimezone: "America/New_York", utcOffsetSeconds: null });
   }
   const offsetMinutes = (first as Record<string, unknown>).time_zone;
+  const numericOffsetMinutes = typeof offsetMinutes === "number"
+    ? offsetMinutes
+    : typeof offsetMinutes === "string" && offsetMinutes.trim() !== ""
+      ? Number(offsetMinutes)
+      : Number.NaN;
   return Object.freeze({
     exchangeTimezone: "America/New_York",
-    utcOffsetSeconds: Number.isInteger(offsetMinutes) && Number(offsetMinutes) >= -840 && Number(offsetMinutes) <= 840
-      ? Number(offsetMinutes) * 60
+    utcOffsetSeconds: Number.isInteger(numericOffsetMinutes) && numericOffsetMinutes >= -840 && numericOffsetMinutes <= 840
+      ? numericOffsetMinutes * 60
       : null,
   });
 }
