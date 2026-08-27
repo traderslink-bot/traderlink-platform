@@ -97,8 +97,11 @@ export class MoomooConnectionRepository {
     return saved;
   }
 
-  markReauthorizationRequired(scope: WorkspaceAccessScope, timestamp: string): void {
-    assertCanonicalUtcTimestamp(timestamp, "timestamp");
+  markReauthorizationRequired(scope: WorkspaceAccessScope, input: Readonly<{
+    reason: "quote_scope_missing" | "refresh_required";
+    timestamp: string;
+  }>): void {
+    assertCanonicalUtcTimestamp(input.timestamp, "timestamp");
     const transition = () => {
       const current = this.find(scope);
       if (!current || current.state !== "active") {
@@ -107,7 +110,7 @@ export class MoomooConnectionRepository {
       const result = this.database.prepare(`UPDATE platform_broker_connections
 SET connection_state = 'reauthorization_required', updated_at_utc = ?
 WHERE user_id = ? AND workspace_id = ? AND provider = 'moomoo'
-  AND connection_state = 'active'`).run(timestamp, scope.userId, scope.workspaceId);
+  AND connection_state = 'active'`).run(input.timestamp, scope.userId, scope.workspaceId);
       if (result.changes !== 1) {
         platformFailure("TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED");
       }
@@ -115,15 +118,15 @@ WHERE user_id = ? AND workspace_id = ? AND provider = 'moomoo'
         connectionId: current.connectionId,
         channel: "reauthorization",
         outcome: "failed",
-        safeReasonCategory: "refresh_required",
-        timestamp,
+        safeReasonCategory: input.reason,
+        timestamp: input.timestamp,
       });
       new PlatformNotificationRepository(this.database).create({
         category: "broker_connection",
         destinationPath: "/account/trading",
         journalAccountId: scope.activeAccountId,
         kind: "broker_connection_reauthorization_required",
-        occurredAtUtc: timestamp,
+        occurredAtUtc: input.timestamp,
         scope,
         sourceEventKey: `broker_connection_reauthorization_${current.connectionId}`,
         summary: "Your Moomoo connection needs to be reconnected before TraderLink can continue updates.",

@@ -33,6 +33,7 @@ retry-safe active Watchlist page-view event IDs, stable Platform user IDs,
 timestamps and New York dates. It stores no Discord subject, IP, user agent,
 path, URL or ticker. The established owner accounts are discarded before
 storage. Migration execution remains a separate Railway release boundary.
+**Moomoo OAuth reconnect reliability:** [Moomoo Direct Connection Plan](moomoo-direct-connection-plan.md), its [progress record](moomoo-direct-connection-progress.md), and the [Moomoo Import Reliability and Admin Errors Plan](moomoo-import-reliability-and-admin-errors-plan.md) register additive migration `0094_platform_moomoo_oauth_pending_attempts`. It stores only a SHA-256 digest of the OAuth state and the server-resolved initiating user/workspace/session binding, a short expiry and consumed marker; it never stores the state, verifier, authorization code or token. Old rows are boundedly cleaned during a later OAuth start. The additive table is safe to retain if application code is rolled back and does not change existing connection records. Migration execution remains a separate Railway release boundary.
 **2026-08-09 AI Review cache-write accounting checkpoint:** migration
 `0051_coach_ai_review_cache_write_accounting` is registered, disposable-copy
 verified, recovery-authority backup/restore verified and locally applied. The

@@ -23,11 +23,20 @@ export class MoomooConnectionAccessService {
     if (!connection || connection.state !== "active") {
       platformFailure("TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED");
     }
+    const now = this.now();
+    if (!connection.authorizedScopes.includes("quote:read")) {
+      this.repository.markReauthorizationRequired(scope, {
+        reason: "quote_scope_missing",
+        timestamp: now.toISOString(),
+      });
+      platformFailure("TRADERLINK_BROKER_CONNECTION_ACCESS_DENIED", {
+        stage: "quote_scope",
+      });
+    }
     const credentials = decryptMoomooCredentials({
       configuration: loadMoomooCredentialKeyConfiguration(),
       encrypted: connection.encrypted,
     });
-    const now = this.now();
     const expiresAt = Date.parse(connection.accessTokenExpiresAtUtc);
     if (Number.isFinite(expiresAt) && expiresAt - now.getTime() > REFRESH_BEFORE_EXPIRY_MILLISECONDS) {
       return credentials.accessToken;
@@ -37,7 +46,10 @@ export class MoomooConnectionAccessService {
       refreshToken: credentials.refreshToken,
     });
     if (!refreshed) {
-      this.repository.markReauthorizationRequired(scope, now.toISOString());
+      this.repository.markReauthorizationRequired(scope, {
+        reason: "refresh_required",
+        timestamp: now.toISOString(),
+      });
       platformFailure("TRADERLINK_BROKER_CONNECTION_OAUTH_INVALID");
     }
     const expiresAtUtc = new Date(now.getTime() + refreshed.expiresInSeconds * 1000).toISOString();
