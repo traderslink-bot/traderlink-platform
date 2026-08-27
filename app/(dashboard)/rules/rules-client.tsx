@@ -638,6 +638,19 @@ export function RulesClient({
           </Typography>
           <FeatureHelpLink href="/help/trading-rules" label="Trading Rules" size="medium" />
         </Stack>
+        <Box sx={{ maxWidth: 960 }}>
+          <Typography>
+            TradersLink has 2 rule type.
+          </Typography>
+          <Box component="ol" sx={{ mb: 0, mt: 1, pl: 3 }}>
+            <Typography component="li">
+              Custom rules you create and track by select if you followed or broke the rule.
+            </Typography>
+            <Typography component="li" sx={{ mt: 0.75 }}>
+              Preset rules are rules that you select that TradersLinks automatically detects. You select preset rules, enter your executions, submit, the app detects if any where broke and builds long term data.
+            </Typography>
+          </Box>
+        </Box>
         <Stack
           direction={{ xs: "column", sm: "row" }}
           sx={{

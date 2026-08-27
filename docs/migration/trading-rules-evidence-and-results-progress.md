@@ -52,3 +52,19 @@
 
 Technical implementation, final pages and design are owner approved. The
 narrow local feature commit records the completed repository checkpoint.
+
+## Owner-directed page introduction follow-up — 2026-08-27
+
+- [x] Add the owner's exact rule-type explanation directly beneath the
+  `Trading Rules` title with approximately one line of spacing.
+- [x] Present the explanation as an introductory sentence and numbered list
+  without adding a card or subtitle label.
+- [x] Preserve the existing Rules layout, interactions, account boundaries,
+  and data behavior.
+- [x] Review the Trading Rules Help collection for alignment.
+- [x] Run focused static verification and record the narrow local commit.
+
+Focused ESLint for `app/(dashboard)/rules/rules-client.tsx` and
+`git diff --check` both pass. The Trading Rules Help collection already covers
+the preset/custom distinction and automatic preset checks, so this page-only
+introduction does not require a Help copy change.

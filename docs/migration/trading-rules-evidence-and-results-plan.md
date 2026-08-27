@@ -19,6 +19,14 @@ factual `/rules/results` history. Preset rules remain automatic after the
 trader selects and configures one. No daily confirmation, explanation, note or
 exception input is required for a preset.
 
+### Owner-directed page introduction follow-up — 2026-08-27
+
+Add the owner's exact rule-type explanation directly beneath the `Trading Rules`
+page title with approximately one line of vertical separation. Present the
+explanation as one introductory sentence followed by a numbered list. Preserve
+the existing Dashboard layout, rule behavior, data contracts, and all other
+copy; do not add a card or subtitle label.
+
 Manual rules remain trader reviewed. Every applicable manual rule begins as
 **Not selected** without requiring an action. The trader may explicitly choose
 Followed or Broken and may add an optional note.
