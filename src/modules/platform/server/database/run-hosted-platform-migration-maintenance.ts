@@ -41,11 +41,15 @@ function maintenanceMigrationId(environment: NodeJS.ProcessEnv): string | null {
     migrationId.trim() !== migrationId ||
     confirmation !== MAINTENANCE_CONFIRMATION
   ) {
-    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED");
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+      stage: "maintenance_request",
+    });
   }
   const expected = platformMigrationManifest.at(-1)?.migrationId;
   if (!expected || migrationId !== expected) {
-    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED");
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+      stage: "maintenance_target",
+    });
   }
   return migrationId;
 }
@@ -53,12 +57,16 @@ function maintenanceMigrationId(environment: NodeJS.ProcessEnv): string | null {
 function backupRoot(databasePath: string, environment: NodeJS.ProcessEnv): string {
   const configured = environment[HOSTED_BACKUP_ROOT_ENV];
   if (!configured || !isAbsolute(configured)) {
-    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED");
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+      stage: "maintenance_backup_root",
+    });
   }
   const resolved = resolve(configured);
   const databaseRoot = dirname(databasePath);
   if (resolved === databaseRoot || !isPathWithinRoot(resolved, databaseRoot)) {
-    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED");
+    platformFailure("TRADERLINK_PLATFORM_STORAGE_VALIDATION_FAILED", {
+      stage: "maintenance_backup_root_boundary",
+    });
   }
   return resolved;
 }
