@@ -11,7 +11,7 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
 
@@ -126,7 +126,7 @@ function OpenDemoTradeTrackerAction() {
   const [error, setError] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
 
-  async function openDemoTradeTracker(): Promise<void> {
+  const openDemoTradeTracker = useCallback(async (): Promise<void> => {
     if (working) return;
     setWorking(true);
     setError(null);
@@ -146,7 +146,7 @@ function OpenDemoTradeTrackerAction() {
     } finally {
       setWorking(false);
     }
-  }
+  }, [working]);
 
   return (
     <Stack spacing={1} sx={{ alignItems: "flex-start" }}>
@@ -163,6 +163,38 @@ export function DemoTradeTrackerInvitation({
 }: {
   hasRealAcceptedExecution: boolean;
 }) {
+  const [error, setError] = useState<string | null>(null);
+  const [working, setWorking] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const response = await fetch("/api/platform/journal/demo/activate", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { [JOURNAL_MUTATION_REQUEST_HEADER]: "1" },
+        });
+        if (!response.ok) {
+          if (active) {
+            setError("The Demo Trade Tracker is not available right now. Your real trades were not changed.");
+            setWorking(false);
+          }
+          return;
+        }
+        window.location.assign("/workspace");
+      } catch {
+        if (active) {
+          setError("The Demo Trade Tracker is not available right now. Your real trades were not changed.");
+          setWorking(false);
+        }
+      }
+    })();
+    return () => { active = false; };
+  }, []);
+
+  if (working) return null;
+
   return (
     <Box
       sx={{
@@ -183,6 +215,7 @@ export function DemoTradeTrackerInvitation({
             : "Open a separate Demo Trade Tracker to explore populated trades, notes, rules, analytics, and the Trade Analyzer before adding your own trades."}
         </Typography>
         <OpenDemoTradeTrackerAction />
+        {error ? <Alert severity="error">{error}</Alert> : null}
       </Stack>
     </Box>
   );
