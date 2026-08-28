@@ -15,7 +15,6 @@ import { journalAiChatTradeStyleSourceMigration } from "@/src/modules/journal/se
 import { journalRuleIdeasMigration } from "@/src/modules/journal/server/database/migrations/0061_journal_rule_ideas";
 import { journalMultiTrackerStatementImportsMigration } from "@/src/modules/journal/server/database/migrations/0074_journal_multi_tracker_statement_imports";
 import { journalManualEntryFailuresMigration } from "@/src/modules/journal/server/database/migrations/0085_journal_manual_entry_failures";
-import { journalDemoTradeDataMigration } from "@/src/modules/journal/server/database/migrations/0095_journal_demo_trade_data";
 import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
 import { tradeExplorerComparisonStudiesMigration } from "@/src/modules/journal-analytics/server/database/migrations/0060_trade_explorer_comparison_studies";
 import { levelAnalysisCandleReviewMigration } from "@/src/modules/level-analysis/server/database/migrations/0009_level_analysis_candle_review";
@@ -477,10 +476,6 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/platform/server/database/migrations/0094_platform_moomoo_oauth_pending_attempts.ts",
       migration: platformMoomooOAuthPendingAttemptsMigration,
     }),
-    Object.freeze({
-      sourcePath: "src/modules/journal/server/database/migrations/0095_journal_demo_trade_data.ts",
-      migration: journalDemoTradeDataMigration,
-    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -847,12 +842,6 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     ]),
     "0094_platform_moomoo_oauth_pending_attempts": Object.freeze([
       "platform_moomoo_oauth_pending_attempts",
-    ]),
-    "0095_journal_demo_trade_data": Object.freeze([
-      "journal_demo_pack_versions",
-      "journal_demo_accounts",
-      "journal_demo_invitations",
-      "journal_demo_execution_provenance",
     ]),
   });
 

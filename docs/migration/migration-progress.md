@@ -1,15 +1,5 @@
 # TraderLink Platform Migration Progress
 
-## Reserved 0095 demo trade-data contract
-
-- `0095_journal_demo_trade_data` is registered but unapplied. It adds only
-  demo-pack versions, account mappings, invitations, and immutable execution
-  provenance. It does not seed a user, execute provider work, or alter manual
-  or broker provenance semantics.
-- The source-level activation/materializer boundary is transactional and keeps
-  its financial-pack resolver unavailable until canonical Journal facts,
-  annotations, and Analyzer artifacts are implemented and accepted.
-
 **Week Ahead Dashboard:** The owner approved the dashboard-only [Week Ahead Dashboard Plan](week-ahead-dashboard-plan.md) and its [progress record](week-ahead-dashboard-progress.md) on 2026-08-23. The BigTime scrape remains on the owner's Windows computer, but its completed weekly issue will post directly to Railway rather than GitHub/Vercel. It will appear as **The Week Ahead** under **Market News**, retain only the current visible issue, and create an in-app notification with optional device Push.
 
 **Community Watchlists:** The owner approved the dashboard-native

@@ -33,26 +33,6 @@ retry-safe active Watchlist page-view event IDs, stable Platform user IDs,
 timestamps and New York dates. It stores no Discord subject, IP, user agent,
 path, URL or ticker. The established owner accounts are discarded before
 storage. Migration execution remains a separate Railway release boundary.
-
-**Watchlist usage presence:** [Watchlist Usage Presence Admin
-Progress](watchlist-usage-presence-admin-progress.md) registers additive
-migration `0093_platform_watchlist_usage_presence_signals`. It stores only an
-opaque short-lived browser-tab presence ID, Platform user ID and last-open/
-last-visible heartbeat timestamps for the active member Watchlist pages. It
-does not store a Discord subject, IP, user agent, device identifier, path, URL
-or ticker, and owner records are discarded before storage. It is separate from
-the factual historical visit ledger; migration execution remains a separate
-Railway release boundary.
-
-**Moomoo OAuth reconnect reliability:** [Moomoo Direct Connection Plan](moomoo-direct-connection-plan.md), its [progress record](moomoo-direct-connection-progress.md), and the [Moomoo Import Reliability and Admin Errors Plan](moomoo-import-reliability-and-admin-errors-plan.md) register additive migration `0094_platform_moomoo_oauth_pending_attempts`. It stores only a SHA-256 digest of the OAuth state and the server-resolved initiating user/workspace/session binding, a short expiry and consumed marker; it never stores the state, verifier, authorization code or token. Old rows are boundedly cleaned during a later OAuth start. The additive table is safe to retain if application code is rolled back and does not change existing connection records. Migration execution remains a separate Railway release boundary.
-
-**Demo Trade Data:** [Demo Trade Data Plan](demo-trade-data-plan.md) and its
-[progress record](demo-trade-data-progress.md) register additive migration
-`0095_journal_demo_trade_data`. It creates immutable pack-version and
-execution-provenance records plus account-scoped demo-account and invitation
-records. Existing manual and broker provenance enums remain unchanged; the
-migration adds no provider credential, candle, real trade, or user-visible
-identity data. Migration execution remains a separate Railway release boundary.
 **2026-08-09 AI Review cache-write accounting checkpoint:** migration
 `0051_coach_ai_review_cache_write_accounting` is registered, disposable-copy
 verified, recovery-authority backup/restore verified and locally applied. The
