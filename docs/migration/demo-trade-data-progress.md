@@ -53,7 +53,7 @@
       account and returns to ordinary Workspace onboarding. Owner visual review
       remains required before release.
 - [x] Add an unlinked, staging-gated owner-workspace review activation path
-      for an existing empty owner workspace. It uses the normal checksum-gated
+      under the normal Journal API boundary. It uses the normal checksum-gated
       activation/materializer transaction, never accepts a target identity,
       remains idempotent, and selects the resulting demo account only through
       the existing opaque account-selection cookie.
