@@ -1,8 +1,12 @@
 import type Database from "better-sqlite3";
 
+import { JournalAccountRepository, type JournalAccountRecord } from "@/src/modules/journal/server/accounts/journal-account-repository";
+import { JournalDemoAccountRepository } from "@/src/modules/journal/server/demo/journal-demo-account-repository";
 import type { AccountScope, WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import {
   assertCanonicalUuidV4,
+  createCanonicalUtcTimestamp,
+  createCanonicalUuidV4,
   platformFailure,
 } from "../database/platform-migration-contract";
 
@@ -35,6 +39,10 @@ export type PlatformErasureArtifact = PrimaryEvidenceArtifact | SupportSourceArt
 export type PlatformErasureResult = Readonly<{
   erasedAccountIds: readonly string[];
   privateArtifactsPurged: readonly PlatformErasureArtifact[];
+}>;
+
+export type PlatformDemoErasureReplacementResult = PlatformErasureResult & Readonly<{
+  replacementAccount: JournalAccountRecord;
 }>;
 
 export type PlatformErasureOptions = Readonly<{
@@ -274,6 +282,71 @@ export class PlatformErasureService {
       const privateArtifactsPurged = unsharedArtifacts(this.database, artifacts);
       options.purgePrivateArtifacts?.(privateArtifactsPurged);
       return Object.freeze({ erasedAccountIds, privateArtifactsPurged });
+    });
+  }
+
+  eraseDemoTradeTrackerAccount(
+    scope: AccountScope,
+    options: PlatformErasureOptions = {},
+  ): PlatformErasureResult {
+    assertCanonicalUuidV4(scope.userId, "erasureUserId");
+    assertCanonicalUuidV4(scope.workspaceId, "erasureWorkspaceId");
+    assertCanonicalUuidV4(scope.accountId, "erasureAccountId");
+    if (scope.workspaceRole !== "owner") platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+    return withPermanentDeleteTransaction(this.database, () => {
+      const artifacts = readPrivateArtifacts(this.database, [scope.accountId]);
+      const timestamp = createCanonicalUtcTimestamp();
+      const erasedAccountIds = eraseAccountRows(this.database, scope);
+      new JournalDemoAccountRepository(this.database).recordClearedLifecycle({
+        clearedAtUtc: timestamp,
+        clearedDemoAccountId: scope.accountId,
+        userId: scope.userId,
+        workspaceId: scope.workspaceId,
+      });
+      deleteOrphanedForeignKeyRows(this.database);
+      const privateArtifactsPurged = unsharedArtifacts(this.database, artifacts);
+      options.purgePrivateArtifacts?.(privateArtifactsPurged);
+      return Object.freeze({ erasedAccountIds, privateArtifactsPurged });
+    });
+  }
+
+  eraseDemoTradeTrackerAccountAndCreatePrimaryJournal(
+    scope: AccountScope,
+    input: Readonly<{ baseCurrency: string; tradingTimezone: string }>,
+    options: PlatformErasureOptions = {},
+  ): PlatformDemoErasureReplacementResult {
+    assertCanonicalUuidV4(scope.userId, "erasureUserId");
+    assertCanonicalUuidV4(scope.workspaceId, "erasureWorkspaceId");
+    assertCanonicalUuidV4(scope.accountId, "erasureAccountId");
+    if (scope.workspaceRole !== "owner") platformFailure("TRADERLINK_WORKSPACE_ACCESS_DENIED");
+    return withPermanentDeleteTransaction(this.database, () => {
+      const artifacts = readPrivateArtifacts(this.database, [scope.accountId]);
+      const timestamp = createCanonicalUtcTimestamp();
+      const erasedAccountIds = eraseAccountRows(this.database, scope);
+      new JournalDemoAccountRepository(this.database).recordClearedLifecycle({
+        clearedAtUtc: timestamp,
+        clearedDemoAccountId: scope.accountId,
+        userId: scope.userId,
+        workspaceId: scope.workspaceId,
+      });
+      deleteOrphanedForeignKeyRows(this.database);
+      const remaining = this.database.prepare<[string], { count: number }>(`SELECT COUNT(*) AS count
+FROM journal_accounts WHERE workspace_id = ? AND status = 'active'`).get(scope.workspaceId);
+      if (remaining?.count !== 0) platformFailure("TRADERLINK_ACCOUNT_SELECTION_CONFLICT");
+      const replacementAccount = new JournalAccountRepository(this.database).createAccount({
+        accountId: createCanonicalUuidV4(),
+        workspaceId: scope.workspaceId,
+        displayName: "Primary Journal",
+        baseCurrency: input.baseCurrency,
+        tradingTimezone: input.tradingTimezone,
+        status: "active",
+        createdByUserId: scope.userId,
+        createdAtUtc: timestamp,
+        updatedAtUtc: timestamp,
+      });
+      const privateArtifactsPurged = unsharedArtifacts(this.database, artifacts);
+      options.purgePrivateArtifacts?.(privateArtifactsPurged);
+      return Object.freeze({ erasedAccountIds, privateArtifactsPurged, replacementAccount });
     });
   }
 

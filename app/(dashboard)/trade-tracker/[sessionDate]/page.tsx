@@ -19,6 +19,7 @@ import {
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { readMoomooMarketDataAccess } from "@/src/modules/level-analysis/server/moomoo-market-data-access";
 import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
+import { readJournalFirstExecutionOnboardingStatus } from "@/src/modules/journal/server/product/journal-first-execution-onboarding";
 
 import {
   getReplacementReportingDaySession,
@@ -65,6 +66,10 @@ export default async function TradeTrackerDayPage({
   }
 
   const scope = await requireTraderLinkPlatformPageScope();
+  const onboardingStatus = readJournalFirstExecutionOnboardingStatus(scope);
+  const demoAccountSelectionRef = onboardingStatus.activeAccountIsDemo
+    ? currentJournalAccountSelectionRef(scope)
+    : null;
   const account = getReplacementTradeTrackerAccount(scope);
   const moomooMarketDataAccess = withReadonlyPlatformDatabase({}, (database) =>
     readMoomooMarketDataAccess(database, scope));
@@ -99,17 +104,20 @@ export default async function TradeTrackerDayPage({
         />
         <DaySessionView
           data={data}
+          demoAccount={demoAccountSelectionRef !== null}
           initialAnalyzerFocus={initialAnalyzerFocus}
-          showMoomooConnectionGuidance={moomooMarketDataAccess.shouldShowConnectionGuidance}
+          readOnly={demoAccountSelectionRef !== null}
+          showMoomooConnectionGuidance={!demoAccountSelectionRef &&
+            moomooMarketDataAccess.shouldShowConnectionGuidance}
           topContent={
-            <ManualExecutionEntry
+            !demoAccountSelectionRef ? <ManualExecutionEntry
               accountCurrency={account?.baseCurrency ?? data.currency}
               accountTimezone={account?.tradingTimezone ?? data.timezone}
               defaultSessionDate={data.date}
               expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
               key="manual-execution-entry"
               offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
-            />
+            /> : null
           }
         />
       </TradeTrackerUnsavedChangesProvider>

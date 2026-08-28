@@ -4,6 +4,7 @@ import { DashboardShell } from "./dashboard-shell";
 import type { PlatformNotification } from "@/src/modules/platform/contracts/platform-notification-contracts";
 import { OfflineProjectionCapture } from "./pwa/offline-projection-capture";
 import type { PressReleaseUnreadCounts } from "@/src/modules/news/contracts/press-release-dashboard-contracts";
+import { DemoDataAccountIndicator } from "./(dashboard)/demo-data-callout";
 
 export {
   DashboardDataScopeChip,
@@ -27,6 +28,7 @@ export function TraderLinkPlatformDashboardTemplate({
   accountSelectionRef,
   accountTimezone,
   children,
+  demoAccountSelectionRef,
   initialMarketHaltAlertsEnabled = false,
   initialMutedMarketHaltTickers = [],
   notifications = [],
@@ -40,6 +42,7 @@ export function TraderLinkPlatformDashboardTemplate({
   accountSelectionRef: string | null;
   accountTimezone: string | null;
   children: ReactNode;
+  demoAccountSelectionRef: string | null;
   initialMarketHaltAlertsEnabled?: boolean;
   initialMutedMarketHaltTickers?: readonly string[];
   notifications?: readonly PlatformNotification[];
@@ -59,6 +62,9 @@ export function TraderLinkPlatformDashboardTemplate({
       watchlistMemberNavigationAccess={watchlistMemberNavigationAccess}
       watchlistAdminNavigationAccess={watchlistAdminNavigationAccess}
     >
+      <DemoDataAccountIndicator
+        expectedAccountSelectionRef={demoAccountSelectionRef}
+      />
       <OfflineProjectionCapture
         accountCurrency={accountCurrency}
         accountSelectionRef={accountSelectionRef}

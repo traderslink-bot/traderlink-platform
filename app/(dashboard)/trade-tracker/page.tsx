@@ -39,6 +39,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const DESIGN_PREVIEW_SESSION_DATE = "2026-07-28";
+const DEMO_TRADE_TRACKER_LAST_DAY = "2026-08-27";
 
 function currentDateInTimezone(timezone: string): string {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -72,17 +73,22 @@ export default async function TradeTrackerPage({
   const scope = await requireTraderLinkPlatformPageScope();
   const onboardingStatus = readJournalFirstExecutionOnboardingStatus(scope);
   const showFirstExecutionCallout = query.gettingStarted === "daily-entry" &&
-    !onboardingStatus.hasAcceptedExecution;
+    !onboardingStatus.activeAccountIsDemo &&
+    !onboardingStatus.hasRealAcceptedExecution;
+  const demoAccountSelectionRef = onboardingStatus.activeAccountIsDemo
+    ? currentJournalAccountSelectionRef(scope)
+    : null;
   const showMoomooConnectedStatus = showFirstExecutionCallout &&
     query.moomoo === "connected" && onboardingStatus.hasActiveMoomooConnection;
   const account = getReplacementTradeTrackerAccount(scope);
   const utcDate = new Date().toISOString().slice(0, 10);
+  const reportingDate = demoAccountSelectionRef ? DEMO_TRADE_TRACKER_LAST_DAY : utcDate;
   const initialData = await getReplacementReportingDaySession(scope, {
-    date: utcDate,
+    date: reportingDate,
   });
   const accountTimezone = account?.tradingTimezone ?? initialData?.timezone ?? "UTC";
-  const currentDate = currentDateInTimezone(accountTimezone);
-  const data = currentDate === utcDate
+  const currentDate = demoAccountSelectionRef ? DEMO_TRADE_TRACKER_LAST_DAY : currentDateInTimezone(accountTimezone);
+  const data = currentDate === reportingDate
     ? initialData
     : await getReplacementReportingDaySession(scope, {
         date: currentDate,
@@ -103,7 +109,7 @@ export default async function TradeTrackerPage({
           </Stack>
         </DashboardPanel>
       ) : null}
-      {!showFirstExecutionCallout ? (
+      {!demoAccountSelectionRef && !showFirstExecutionCallout ? (
         <Stack spacing={0.75} sx={{ alignItems: "flex-start", maxWidth: 900, mt: 1 }}>
           <Typography color="error.main" sx={{ fontWeight: 700 }} variant="body2">
             You need a data connection if you want your trades analyzed and a chart trade replay.
@@ -113,15 +119,17 @@ export default async function TradeTrackerPage({
           </DashboardPrimaryAction>
         </Stack>
       ) : null}
-      <ManualExecutionEntry
-        accountCurrency={account?.baseCurrency ?? data?.currency ?? "USD"}
-        accountTimezone={accountTimezone}
-        defaultSessionDate={currentDate}
-        expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
-        key="manual-execution-entry"
-        onboarding={showFirstExecutionCallout}
-        offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
-      />
+      {!demoAccountSelectionRef ? (
+        <ManualExecutionEntry
+          accountCurrency={account?.baseCurrency ?? data?.currency ?? "USD"}
+          accountTimezone={accountTimezone}
+          defaultSessionDate={currentDate}
+          expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
+          key="manual-execution-entry"
+          onboarding={showFirstExecutionCallout}
+          offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
+        />
+      ) : null}
     </>
   );
   if (data) {
@@ -140,7 +148,12 @@ export default async function TradeTrackerPage({
           routeViewVersion={JOURNAL_DAILY_TRACKER_OFFLINE_ROUTE_VIEW_VERSION}
           viewKey={journalDailyTrackerOfflineViewKey(data.date)}
         />
-        <DaySessionView data={data} topContent={topContent} />
+        <DaySessionView
+          data={data}
+          demoAccount={demoAccountSelectionRef !== null}
+          readOnly={demoAccountSelectionRef !== null}
+          topContent={topContent}
+        />
       </TradeTrackerUnsavedChangesProvider>
     );
   }

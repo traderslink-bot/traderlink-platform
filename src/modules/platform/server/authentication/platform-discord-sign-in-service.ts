@@ -1,6 +1,7 @@
 import type Database from "better-sqlite3";
 
 import { JournalAccountRepository } from "@/src/modules/journal/server/accounts/journal-account-repository";
+import { JournalDemoAccountActivationService } from "@/src/modules/journal/server/demo/journal-demo-account-activation-service";
 import {
   createCanonicalUtcTimestamp,
   createCanonicalUuidV4,
@@ -37,7 +38,17 @@ export type PlatformDiscordSignInResult = Readonly<{
   workspaceId: string;
   allowedAccountIds: readonly string[];
   displayName: string;
+  demoAccountId: string | null;
+  demoAvailability: "cleared" | "materialized" | "not_applicable" | "unavailable";
   provisioned: boolean;
+}>;
+
+type PlatformDiscordIdentitySignInResult = Readonly<{
+  displayName: string;
+  provisioned: boolean;
+  session: CreatedPlatformSession;
+  userId: string;
+  workspaceId: string;
 }>;
 
 function canonicalOptionalTimestamp(value: string | null): string | null {
@@ -84,16 +95,43 @@ export class PlatformDiscordSignInService {
   ) {}
 
   signIn(input: DiscordSignInFacts): PlatformDiscordSignInResult {
-    const operation = this.database.transaction(() => this.signInLocked(input));
     try {
-      return operation.immediate();
+      const identity = this.database.transaction(() => this.signInIdentityLocked(input)).immediate();
+      const accounts = new JournalAccountRepository(this.database);
+      let activeAccounts = accounts.listActiveAccounts(identity.workspaceId);
+      let demoAvailability: PlatformDiscordSignInResult["demoAvailability"] = "not_applicable";
+      const activation = new JournalDemoAccountActivationService(this.database, {
+        createId: this.dependencies.createId,
+        now: this.dependencies.now,
+      }).activateForWorkspace({
+        baseCurrency: this.dependencies.defaultBaseCurrency ?? "USD",
+        tradingTimezone: this.dependencies.defaultTradingTimezone ?? "America/New_York",
+        userId: identity.userId,
+        workspaceId: identity.workspaceId,
+      });
+      demoAvailability = activation.state;
+      if (activeAccounts.length === 0 && activation.state !== "materialized") {
+        this.createFallbackJournalAccount(identity);
+      }
+      activeAccounts = accounts.listActiveAccounts(identity.workspaceId);
+      if (activeAccounts.length < 1) platformFailure("TRADERLINK_ACCOUNT_NOT_FOUND");
+      return Object.freeze({
+        session: identity.session,
+        userId: identity.userId,
+        workspaceId: identity.workspaceId,
+        allowedAccountIds: Object.freeze(activeAccounts.map((account) => account.accountId)),
+        displayName: identity.displayName,
+        demoAccountId: activation.state === "materialized" ? activation.accountId : null,
+        demoAvailability,
+        provisioned: identity.provisioned,
+      });
     } catch (error) {
       if (isTraderLinkPlatformError(error)) throw error;
       platformFailure("TRADERLINK_PUBLIC_IDENTITY_PROVISIONING_FAILED", {}, error);
     }
   }
 
-  private signInLocked(input: DiscordSignInFacts): PlatformDiscordSignInResult {
+  private signInIdentityLocked(input: DiscordSignInFacts): PlatformDiscordIdentitySignInResult {
     const now = this.dependencies.now?.() ?? new Date();
     const timestamp = createCanonicalUtcTimestamp(now);
     const createId = this.dependencies.createId ?? createCanonicalUuidV4;
@@ -103,7 +141,6 @@ export class PlatformDiscordSignInService {
       allowedAuthProviders: ["discord"],
     });
     const workspaces = new PlatformWorkspaceRepository(this.database);
-    const accounts = new JournalAccountRepository(this.database);
     const memberships = new PlatformDiscordMembershipRepository(this.database);
     const sessions = new PlatformSessionService(
       new PlatformSessionRepository(this.database),
@@ -140,7 +177,6 @@ export class PlatformDiscordSignInService {
       provisioned = true;
       userId = createId();
       workspaceId = createId();
-      const accountId = createId();
       users.createUser({
         userId,
         authProvider: "discord",
@@ -163,18 +199,6 @@ export class PlatformDiscordSignInService {
         defaultTradingTimezone:
           this.dependencies.defaultTradingTimezone ?? "America/New_York",
         createdAtUtc: timestamp,
-      });
-      accounts.createAccount({
-        accountId,
-        workspaceId,
-        displayName: "Primary Journal",
-        baseCurrency: this.dependencies.defaultBaseCurrency ?? "USD",
-        tradingTimezone:
-          this.dependencies.defaultTradingTimezone ?? "America/New_York",
-        status: "active",
-        createdByUserId: userId,
-        createdAtUtc: timestamp,
-        updatedAtUtc: timestamp,
       });
     }
 
@@ -201,10 +225,6 @@ export class PlatformDiscordSignInService {
       authSubject: input.authSubject,
       timestamp,
     });
-    const activeAccounts = accounts.listActiveAccounts(workspaceId);
-    if (activeAccounts.length < 1) {
-      platformFailure("TRADERLINK_ACCOUNT_NOT_FOUND");
-    }
     const session = sessions.createForIdentity({
       userId,
       authProvider: "discord",
@@ -215,11 +235,27 @@ export class PlatformDiscordSignInService {
       session,
       userId,
       workspaceId,
-      allowedAccountIds: Object.freeze(
-        activeAccounts.map((account) => account.accountId),
-      ),
       displayName,
       provisioned,
+    });
+  }
+
+  private createFallbackJournalAccount(identity: PlatformDiscordIdentitySignInResult): void {
+    const accounts = new JournalAccountRepository(this.database);
+    accounts.immediate(() => {
+      if (accounts.listActiveAccounts(identity.workspaceId).length > 0) return;
+      const timestamp = createCanonicalUtcTimestamp(this.dependencies.now?.());
+      accounts.createAccount({
+        accountId: (this.dependencies.createId ?? createCanonicalUuidV4)(),
+        workspaceId: identity.workspaceId,
+        displayName: "Primary Journal",
+        baseCurrency: this.dependencies.defaultBaseCurrency ?? "USD",
+        tradingTimezone: this.dependencies.defaultTradingTimezone ?? "America/New_York",
+        status: "active",
+        createdByUserId: identity.userId,
+        createdAtUtc: timestamp,
+        updatedAtUtc: timestamp,
+      });
     });
   }
 }

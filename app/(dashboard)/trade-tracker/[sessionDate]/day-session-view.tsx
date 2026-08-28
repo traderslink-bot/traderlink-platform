@@ -2213,6 +2213,7 @@ function WeekDayCard({
 
 export function DaySessionView({
   data,
+  demoAccount = false,
   designPreview = false,
   initialAnalyzerFocus = null,
   offlineSavedAtUtc,
@@ -2222,6 +2223,7 @@ export function DaySessionView({
   topContent,
 }: {
   data: DaySessionData;
+  demoAccount?: boolean;
   designPreview?: boolean;
   initialAnalyzerFocus?: Readonly<{
     eventId: string | null;
@@ -2235,6 +2237,8 @@ export function DaySessionView({
   topContent?: ReactNode;
 }) {
   const router = useRouter();
+  const showDemoMarketDataConnectionNotice = demoAccount &&
+    (data.date === "2026-08-24" || data.date === "2026-08-25");
   const initialFocusTarget = useMemo(() => initialAnalyzerFocus
     ? data.tickers.flatMap((ticker) => ticker.roundTrips.map((roundTrip) => ({
         roundTrip,
@@ -2967,6 +2971,8 @@ export function DaySessionView({
           const readyTrade = ticker.roundTrips.find((roundTrip) =>
             roundTrip.analyzer && hasVisibleAnalysis(roundTrip.analyzer),
           ) ?? null;
+          const showDemoCandleDataInsufficientNotice = demoAccount &&
+            ["FABC", "FAMI", "GCTK"].includes(ticker.symbol) && !readyTrade;
           const selectedTrade = ticker.roundTrips.find((roundTrip) =>
             roundTrip.roundTripKey === selectedAnalyzerTradeKeys[ticker.stableInstrumentKey],
           ) ?? readyTrade;
@@ -2989,6 +2995,20 @@ export function DaySessionView({
             sx={{ border: "2px solid #000", overflow: "hidden" }}
             variant="outlined"
           >
+            {showDemoMarketDataConnectionNotice && !readyTrade ? (
+              <Box sx={{ borderBottom: 1, borderColor: "divider", p: { xs: 1.5, sm: 2 } }}>
+                <Typography color="text.secondary" variant="body2">
+                  If your account isn&apos;t connected to market data trades are not analyzed and the chart will not appear. You can still review its executions, profit or loss, notes, tags, rules, and daily performance. The Daily Trade Tracker remains useful for finding patterns in how you planned, managed, and reviewed your trades.
+                </Typography>
+              </Box>
+            ) : null}
+            {showDemoCandleDataInsufficientNotice ? (
+              <Box sx={{ borderBottom: 1, borderColor: "divider", p: { xs: 1.5, sm: 2 } }}>
+                <Typography color="text.secondary" variant="body2">
+                  Candle data was insufficient for this ticker. No trades were analyzed.
+                </Typography>
+              </Box>
+            ) : null}
             {selectedTrade?.analyzer && hasVisibleAnalysis(selectedTrade.analyzer) ? (
               <DailyTradeAnalyzerChart
                 analysis={selectedTrade.analyzer}
@@ -3679,33 +3699,7 @@ export function DaySessionView({
       </DashboardPanel>
 
       <DashboardPanel title="Daily Notes">
-        {readOnly ? (
-          <Stack spacing={1.5} sx={{ mt: 1.5 }}>
-            {[
-              ["What worked", dailyNote.whatWorked],
-              ["What needs work", dailyNote.whatNeedsWork],
-              ["Technical recap", dailyNote.technicalRecap],
-              ["Current Focuses", dailyNote.tomorrowsFocus],
-              ["Anything else", dailyNote.anythingElse],
-            ].some(([, value]) => value.trim().length > 0) ? (
-              [
-                ["What worked", dailyNote.whatWorked],
-                ["What needs work", dailyNote.whatNeedsWork],
-                ["Technical recap", dailyNote.technicalRecap],
-                ["Current Focuses", dailyNote.tomorrowsFocus],
-                ["Anything else", dailyNote.anythingElse],
-              ].filter(([, value]) => value.trim().length > 0).map(([label, value]) => (
-                <Box key={label}>
-                  <Typography color="text.secondary" variant="caption">{label}</Typography>
-                  <Typography sx={{ whiteSpace: "pre-wrap" }} variant="body2">{value}</Typography>
-                </Box>
-              ))
-            ) : (
-              <Typography color="text.secondary" variant="body2">No daily notes saved.</Typography>
-            )}
-          </Stack>
-        ) : (
-          <>
+        <>
         <Box
           sx={{
             display: "grid",
@@ -3781,8 +3775,7 @@ export function DaySessionView({
             </DashboardPrimaryAction>
           </Stack>
         </Box>
-          </>
-        )}
+        </>
       </DashboardPanel>
       <DashboardPanel title="Day review">
         <Stack spacing={1.5} sx={{ mt: 1.5 }}>
@@ -3808,19 +3801,18 @@ export function DaySessionView({
               {dayReviewError ?? "The day review could not be saved. Your Trade Tracker entries are unchanged."}
             </Alert>
           ) : null}
-          {!readOnly ? (
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25}>
-              <DashboardPrimaryAction
-                disabled={
-                  dayReviewState === "saving" ||
-                  dayReview.unclassifiedOpenPositionCount > 0
-                }
-                onClick={requestReviewedStatus}
-              >
-                {dayReviewState === "saving" ? "Saving..." : "Mark day reviewed"}
-              </DashboardPrimaryAction>
-            </Stack>
-          ) : null}
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25}>
+            <DashboardPrimaryAction
+              disabled={
+                readOnly ||
+                dayReviewState === "saving" ||
+                dayReview.unclassifiedOpenPositionCount > 0
+              }
+              onClick={requestReviewedStatus}
+            >
+              {dayReviewState === "saving" ? "Saving..." : "Mark day reviewed"}
+            </DashboardPrimaryAction>
+          </Stack>
         </Stack>
       </DashboardPanel>
       {readOnly ? null : <ManageTagsDialog

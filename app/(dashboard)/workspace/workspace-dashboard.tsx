@@ -18,6 +18,7 @@ import {
   DashboardUnavailableState,
 } from "../../dashboard-template";
 import { InstallTradersLinkPwaCard } from "@/app/pwa/install-traderslink-pwa-card";
+import { DemoDataCallout, DemoTradeTrackerInvitation } from "../demo-data-callout";
 import type { JournalCalendarReadModel } from "@/src/modules/journal-analytics/contracts/journal-dashboard-read-models";
 import { formatJournalAnalyticsMoney } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import type { WorkspaceReviewSummary } from "./workspace-review-summary";
@@ -125,19 +126,25 @@ function ruleOutcomeLabel(input: Readonly<{
 export function WorkspaceDashboard({
   analyticsMetrics,
   calendarData,
+  demoAccountSelectionRef,
+  showDemoTradeTrackerInvitation,
   firstTimeMoomooConnectionPending,
   firstTimeMoomooConnected,
   firstTimeOnboardingResult,
+  hasRealAcceptedExecution,
   offlineSavedAtUtc,
   reviewSummary,
 }: {
   analyticsMetrics?: readonly WorkspaceMetric[];
   calendarData?: JournalCalendarReadModel;
+  demoAccountSelectionRef?: string;
   firstTimeMoomooConnectionPending?: boolean;
   firstTimeMoomooConnected?: boolean;
   firstTimeOnboardingResult?: WorkspaceFirstTimeOnboardingResult;
+  hasRealAcceptedExecution?: boolean;
   offlineSavedAtUtc?: string;
   reviewSummary?: WorkspaceReviewSummary;
+  showDemoTradeTrackerInvitation?: boolean;
 }) {
   const router = useRouter();
   const metrics = analyticsMetrics ?? unavailableMetrics;
@@ -163,6 +170,14 @@ export function WorkspaceDashboard({
   return (
     <DashboardPage>
       <Typography component="h1" variant="h1">Welcome to TradersLink Beta App.</Typography>
+      {demoAccountSelectionRef ? (
+        <DemoDataCallout expectedAccountSelectionRef={demoAccountSelectionRef} variant="workspace" />
+      ) : null}
+      {showDemoTradeTrackerInvitation ? (
+        <DemoTradeTrackerInvitation
+          hasRealAcceptedExecution={hasRealAcceptedExecution ?? false}
+        />
+      ) : null}
       <Stack spacing={1.25} sx={{ maxWidth: 920 }}>
         <Typography color="text.secondary" variant="body2">
           TradersLink Platform is currently in beta testing, so you may come across a few bugs or unfinished details as the app continues to improve. Feedback and bug reports are always welcome—they directly help make the platform better for traders. If you need help, support is available with quick responses.

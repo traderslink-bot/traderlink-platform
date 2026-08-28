@@ -1,9 +1,18 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
+  deriveJournalAccountSelectionRef,
+  resolveJournalAccountSelection,
+} from "@/src/modules/platform/contracts/journal-account-selection";
+import {
   deletePlatformAuthCookie,
   setPlatformAuthCookie,
 } from "@/src/modules/platform/server/authentication/platform-auth-cookies";
+import {
+  readJournalAccountSelectionCookie,
+  serializeJournalAccountSelectionCookie,
+  serializeJournalDemoReturnAccountSelectionCookie,
+} from "@/src/modules/platform/server/authentication/journal-account-selection-cookie";
 import {
   readProtectedInitialOwnerDiscordSubject,
 } from "@/src/modules/platform/server/authentication/platform-discord-configuration";
@@ -138,6 +147,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return response;
     }
     let sessionToken: string;
+    let allowedAccountIds: readonly string[] = Object.freeze([]);
+    let demoAccountId: string | null = null;
+    let workspaceId: string | null = null;
     let provisioned = false;
     let shouldShowNewsletterWelcome = false;
 
@@ -197,6 +209,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         });
       });
       sessionToken = signInResult.signIn.session.token;
+      allowedAccountIds = signInResult.signIn.allowedAccountIds;
+      demoAccountId = signInResult.signIn.demoAccountId;
+      workspaceId = signInResult.signIn.workspaceId;
       provisioned = signInResult.signIn.provisioned;
       shouldShowNewsletterWelcome = signInResult.shouldShowNewsletterWelcome;
     } catch (error) {
@@ -226,6 +241,32 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       sessionToken,
       Math.floor(TRADERLINK_PLATFORM_SESSION_TTL_MS / 1000),
     );
+    if (demoAccountId && workspaceId) {
+      try {
+        const priorSelectionRef = readJournalAccountSelectionCookie(request.headers);
+        if (priorSelectionRef) {
+          const prior = resolveJournalAccountSelection(
+            workspaceId,
+            priorSelectionRef,
+            allowedAccountIds.map((accountId) => Object.freeze({ accountId })),
+          );
+          if (prior.accountId !== demoAccountId) {
+            response.headers.append(
+              "set-cookie",
+              serializeJournalDemoReturnAccountSelectionCookie(prior.selectionRef),
+            );
+          }
+        }
+      } catch {
+        // A stale account selector must never prevent a valid completed sign-in.
+      }
+      response.headers.append(
+        "set-cookie",
+        serializeJournalAccountSelectionCookie(
+          deriveJournalAccountSelectionRef(workspaceId, demoAccountId),
+        ),
+      );
+    }
 
     return response;
   } catch (error) {

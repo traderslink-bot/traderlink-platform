@@ -253,13 +253,79 @@ DO NOTHING`).run(
     );
   }
 
+  /**
+   * Writes an already verified immutable market-session revision without
+   * creating a worker job. This is for callers that own complete
+   * provider-normalized candle evidence before entering this repository.
+   */
+  materializeVerifiedSession(input: Readonly<{
+    candles: readonly NormalizedMarketCandle[];
+    completedAtUtc: string;
+    coverageEndUtc: string;
+    provider: DailyTradeMarketDataProviderIdentity;
+    providerExchangeTimezone: string;
+    providerUtcOffsetSeconds: number;
+    requestedEndUtc: string;
+    requestedStartUtc: string;
+    sha256: string;
+    target: DailyTradeAnalyzerTarget;
+  }>): string {
+    const timestamp = input.completedAtUtc;
+    this.database.prepare(`INSERT INTO level_analysis_market_session_sets (
+  market_session_set_id, provider_key, provider_adapter_version, provider_symbol,
+  exchange_identity, trading_date_new_york, interval, session_policy,
+  current_version_id, current_coverage_end_utc, current_status, lease_expires_at_utc,
+  created_at_utc, updated_at_utc
+) VALUES (?, ?, ?, ?, 'unknown', ?, '1m',
+  'america_new_york_extended_0400_2000_v1', NULL, NULL, 'queued', NULL, ?, ?)
+ON CONFLICT(provider_key, provider_adapter_version, provider_symbol, exchange_identity, trading_date_new_york, interval, session_policy)
+DO NOTHING`).run(
+      createCanonicalUuidV4(), input.provider.key, input.provider.adapterVersion,
+      input.target.providerSymbol, input.target.tradingDateNewYork, timestamp, timestamp,
+    );
+    const session = this.database.prepare<[string, string, string, string], { market_session_set_id: string }>(`SELECT market_session_set_id
+FROM level_analysis_market_session_sets
+WHERE provider_key = ? AND provider_adapter_version = ?
+  AND provider_symbol = ? AND exchange_identity = 'unknown'
+  AND trading_date_new_york = ? AND interval = '1m'
+  AND session_policy = 'america_new_york_extended_0400_2000_v1'`)
+      .get(input.provider.key, input.provider.adapterVersion, input.target.providerSymbol, input.target.tradingDateNewYork);
+    if (!session) throw new Error("daily_trade_verified_session_missing");
+    return this.persistMarketSession({
+      candles: input.candles,
+      completedAtUtc: input.completedAtUtc,
+      coverageEndUtc: input.coverageEndUtc,
+      failureReasonCode: null,
+      marketSessionSetId: session.market_session_set_id,
+      outcome: "ready",
+      providerExchangeTimezone: input.providerExchangeTimezone,
+      providerUtcOffsetSeconds: input.providerUtcOffsetSeconds,
+      requestedStartUtc: input.requestedStartUtc,
+      requestedEndUtc: input.requestedEndUtc,
+      sha256: input.sha256,
+    });
+  }
+
   claimNextJob(now: Date): ClaimedDailyTradeAnalyzerJob | null {
     const timestamp = createCanonicalUtcTimestamp(now);
     const row = this.database.transaction(() => {
+      this.database.prepare(`UPDATE level_analysis_daily_trade_jobs
+SET status = 'expired', completed_at_utc = ?, lease_expires_at_utc = NULL, updated_at_utc = ?
+WHERE (status = 'queued' OR (status = 'leased' AND lease_expires_at_utc < ?))
+  AND EXISTS (
+    SELECT 1 FROM journal_demo_accounts demo
+    WHERE demo.workspace_id = level_analysis_daily_trade_jobs.workspace_id
+      AND demo.account_id = level_analysis_daily_trade_jobs.account_id
+  )`).run(timestamp, timestamp, timestamp);
       const candidate = this.database.prepare<[string, string], JobRow>(`SELECT daily_trade_job_id, user_id,
   workspace_id, account_id, round_trip_id, market_session_set_id, desired_coverage_end_utc
 FROM level_analysis_daily_trade_jobs
 WHERE (status = 'queued' OR (status = 'leased' AND lease_expires_at_utc < ?))
+  AND NOT EXISTS (
+    SELECT 1 FROM journal_demo_accounts demo
+    WHERE demo.workspace_id = level_analysis_daily_trade_jobs.workspace_id
+      AND demo.account_id = level_analysis_daily_trade_jobs.account_id
+  )
   AND next_attempt_at_utc <= ?
 ORDER BY next_attempt_at_utc ASC, created_at_utc ASC
 LIMIT 1`).get(timestamp, timestamp);
