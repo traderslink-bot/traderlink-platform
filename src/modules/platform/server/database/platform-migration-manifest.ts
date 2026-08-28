@@ -18,6 +18,7 @@ import { journalManualEntryFailuresMigration } from "@/src/modules/journal/serve
 import { journalDemoTradeDataMigration } from "@/src/modules/journal/server/database/migrations/0095_journal_demo_trade_data";
 import { journalDemoPackApplicationsMigration } from "@/src/modules/journal/server/database/migrations/0096_journal_demo_pack_applications";
 import { journalDemoMaterializerProvenanceGuardMigration } from "@/src/modules/journal/server/database/migrations/0097_journal_demo_materializer_provenance_guard";
+import { journalDemoLifecycleMigration } from "@/src/modules/journal/server/database/migrations/0098_journal_demo_lifecycle";
 import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
 import { tradeExplorerComparisonStudiesMigration } from "@/src/modules/journal-analytics/server/database/migrations/0060_trade_explorer_comparison_studies";
 import { levelAnalysisCandleReviewMigration } from "@/src/modules/level-analysis/server/database/migrations/0009_level_analysis_candle_review";
@@ -491,6 +492,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/journal/server/database/migrations/0097_journal_demo_materializer_provenance_guard.ts",
       migration: journalDemoMaterializerProvenanceGuardMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/journal/server/database/migrations/0098_journal_demo_lifecycle.ts",
+      migration: journalDemoLifecycleMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -867,6 +872,9 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     "0096_journal_demo_pack_applications": Object.freeze([
       "journal_demo_pack_applications",
       "journal_demo_pack_application_execution_provenance",
+    ]),
+    "0098_journal_demo_lifecycle": Object.freeze([
+      "journal_demo_lifecycle",
     ]),
   });
 
