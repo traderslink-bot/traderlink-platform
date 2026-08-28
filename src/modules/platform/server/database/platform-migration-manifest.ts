@@ -16,6 +16,7 @@ import { journalRuleIdeasMigration } from "@/src/modules/journal/server/database
 import { journalMultiTrackerStatementImportsMigration } from "@/src/modules/journal/server/database/migrations/0074_journal_multi_tracker_statement_imports";
 import { journalManualEntryFailuresMigration } from "@/src/modules/journal/server/database/migrations/0085_journal_manual_entry_failures";
 import { journalDemoTradeDataMigration } from "@/src/modules/journal/server/database/migrations/0095_journal_demo_trade_data";
+import { journalDemoPackApplicationsMigration } from "@/src/modules/journal/server/database/migrations/0096_journal_demo_pack_applications";
 import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
 import { tradeExplorerComparisonStudiesMigration } from "@/src/modules/journal-analytics/server/database/migrations/0060_trade_explorer_comparison_studies";
 import { levelAnalysisCandleReviewMigration } from "@/src/modules/level-analysis/server/database/migrations/0009_level_analysis_candle_review";
@@ -481,6 +482,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/journal/server/database/migrations/0095_journal_demo_trade_data.ts",
       migration: journalDemoTradeDataMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/journal/server/database/migrations/0096_journal_demo_pack_applications.ts",
+      migration: journalDemoPackApplicationsMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -853,6 +858,10 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
       "journal_demo_accounts",
       "journal_demo_invitations",
       "journal_demo_execution_provenance",
+    ]),
+    "0096_journal_demo_pack_applications": Object.freeze([
+      "journal_demo_pack_applications",
+      "journal_demo_pack_application_execution_provenance",
     ]),
   });
 
