@@ -17,6 +17,7 @@ import { journalMultiTrackerStatementImportsMigration } from "@/src/modules/jour
 import { journalManualEntryFailuresMigration } from "@/src/modules/journal/server/database/migrations/0085_journal_manual_entry_failures";
 import { journalDemoTradeDataMigration } from "@/src/modules/journal/server/database/migrations/0095_journal_demo_trade_data";
 import { journalDemoPackApplicationsMigration } from "@/src/modules/journal/server/database/migrations/0096_journal_demo_pack_applications";
+import { journalDemoMaterializerProvenanceGuardMigration } from "@/src/modules/journal/server/database/migrations/0097_journal_demo_materializer_provenance_guard";
 import { journalAnalyticsSavedViewsMigration } from "@/src/modules/journal-analytics/server/database/migrations/0008_journal_analytics_saved_views";
 import { tradeExplorerComparisonStudiesMigration } from "@/src/modules/journal-analytics/server/database/migrations/0060_trade_explorer_comparison_studies";
 import { levelAnalysisCandleReviewMigration } from "@/src/modules/level-analysis/server/database/migrations/0009_level_analysis_candle_review";
@@ -485,6 +486,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
     Object.freeze({
       sourcePath: "src/modules/journal/server/database/migrations/0096_journal_demo_pack_applications.ts",
       migration: journalDemoPackApplicationsMigration,
+    }),
+    Object.freeze({
+      sourcePath: "src/modules/journal/server/database/migrations/0097_journal_demo_materializer_provenance_guard.ts",
+      migration: journalDemoMaterializerProvenanceGuardMigration,
     }),
   ]);
 
