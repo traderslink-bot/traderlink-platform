@@ -150,9 +150,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     let allowedAccountIds: readonly string[] = Object.freeze([]);
     let demoAccountId: string | null = null;
     let workspaceId: string | null = null;
-    let provisioned = false;
-    let shouldShowNewsletterWelcome = false;
-
     try {
       const signInResult = withPlatformDatabase({ mode: "runtime" }, (database) => {
         let newsletterContacts: PlatformNewsletterContactRepository | null = null;
@@ -195,25 +192,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             request.headers.get("user-agent"),
           ),
         });
-        let shouldShowNewsletterWelcome = false;
-        try {
-          shouldShowNewsletterWelcome =
-            newsletterContacts?.readStatus(signIn.userId).newsletterConsentState ===
-            "undecided";
-        } catch {
-          // Newsletter capture is optional and must never deny sign-in.
-        }
-        return Object.freeze({
-          signIn,
-          shouldShowNewsletterWelcome,
-        });
+        return signIn;
       });
-      sessionToken = signInResult.signIn.session.token;
-      allowedAccountIds = signInResult.signIn.allowedAccountIds;
-      demoAccountId = signInResult.signIn.demoAccountId;
-      workspaceId = signInResult.signIn.workspaceId;
-      provisioned = signInResult.signIn.provisioned;
-      shouldShowNewsletterWelcome = signInResult.shouldShowNewsletterWelcome;
+      sessionToken = signInResult.session.token;
+      allowedAccountIds = signInResult.allowedAccountIds;
+      demoAccountId = signInResult.demoAccountId;
+      workspaceId = signInResult.workspaceId;
     } catch (error) {
       console.error(
         "Discord Platform session failed",
@@ -229,9 +213,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return response;
     }
 
-    const response = provisioned || shouldShowNewsletterWelcome
-      ? newsletterWelcomeRedirect(request, returnTo, "connected")
-      : authRedirect(request, returnTo, "connected");
+    const response = authRedirect(request, "/workspace", "connected");
 
     clearDiscordOAuthCookies(response, request);
     setPlatformAuthCookie(
@@ -279,24 +261,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     clearDiscordOAuthCookies(response, request);
     return response;
   }
-}
-
-function newsletterWelcomeRedirect(
-  request: NextRequest,
-  returnTo: string,
-  status: string,
-): NextResponse {
-  const destination = buildDiscordAuthResultUrl({
-    origin: resolvePlatformPublicOrigin(request),
-    returnTo,
-    status,
-  });
-  const welcome = new URL("/welcome", resolvePlatformPublicOrigin(request));
-  welcome.searchParams.set(
-    "returnTo",
-    `${destination.pathname}${destination.search}${destination.hash}`,
-  );
-  return NextResponse.redirect(welcome);
 }
 
 function clearDiscordOAuthCookies(
