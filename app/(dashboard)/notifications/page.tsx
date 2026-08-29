@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Typography from "@mui/material/Typography";
-import Link from "next/link";
 
 import {
   DashboardPage,
@@ -48,7 +47,7 @@ export default async function NotificationsPage() {
       <Typography component="h1" variant="h1">Notifications</Typography>
       <DashboardPanel
         action={(
-          <DashboardSecondaryAction component={Link} href="/account/preferences">
+          <DashboardSecondaryAction href="/account/preferences">
             Notification settings
           </DashboardSecondaryAction>
         )}
