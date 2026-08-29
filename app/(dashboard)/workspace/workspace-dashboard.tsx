@@ -160,6 +160,15 @@ export function WorkspaceDashboard({
     ...day,
     hasDailyTracker: day.tradeCount > 0,
   })) ?? [];
+  if (showDemoTradeTrackerInvitation) {
+    return (
+      <DashboardPage>
+        <DemoTradeTrackerInvitation
+          hasRealAcceptedExecution={hasRealAcceptedExecution ?? false}
+        />
+      </DashboardPage>
+    );
+  }
   const openWorkspacePath = (pathname: string) => {
     if (offlineSavedAtUtc) {
       window.location.assign(pathname);
@@ -172,11 +181,6 @@ export function WorkspaceDashboard({
       <Typography component="h1" variant="h1">Welcome to TradersLink Beta App.</Typography>
       {demoAccountSelectionRef ? (
         <DemoDataCallout expectedAccountSelectionRef={demoAccountSelectionRef} variant="workspace" />
-      ) : null}
-      {showDemoTradeTrackerInvitation ? (
-        <DemoTradeTrackerInvitation
-          hasRealAcceptedExecution={hasRealAcceptedExecution ?? false}
-        />
       ) : null}
       <Stack spacing={1.25} sx={{ maxWidth: 920 }}>
         <Typography color="text.secondary" variant="body2">
