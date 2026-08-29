@@ -4,6 +4,8 @@
 
 **Progress record:** [Railway Public Site Cutover Progress](railway-public-site-cutover-progress.md)
 
+**Static SEO landing-page work:** [Trading Journal Static Landing Page Plan](trading-journal-static-landing-page-plan.md)
+
 ## Complete target inventory
 
 The production Vercel project `vercel-landing` currently owns only the minimal

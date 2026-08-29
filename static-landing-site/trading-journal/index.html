@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trading Journal for Day Traders | TradersLink</title>
+  <meta name="description" content="Journal your full trading day with trades, automatic rule results, notes, tags, weekly calendar views, session reviews, and trade analysis in TradersLink." />
+  <link rel="canonical" href="https://traderslink.pro/trading-journal" />
+  <meta name="robots" content="index,follow,max-image-preview:large" />
+  <meta name="theme-color" content="#07152f" />
+  <link rel="icon" href="/landing-assets/favicon.ico" sizes="any" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="en_CA" />
+  <meta property="og:site_name" content="TradersLink" />
+  <meta property="og:title" content="Trading Journal for Day Traders | TradersLink" />
+  <meta property="og:description" content="Journal the whole trading day with trades, automatic Rule Results, notes, tags, weekly calendar views, and session reviews." />
+  <meta property="og:url" content="https://traderslink.pro/trading-journal" />
+  <meta property="og:image" content="https://traderslink.pro/landing-assets/trading-journal/week-view-calander.png" />
+  <meta property="og:image:alt" content="TradersLink weekly trading journal calendar showing daily results, tickers, notes, rules, and tags." />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Trading Journal for Day Traders | TradersLink" />
+  <meta name="twitter:description" content="Journal trades in the context of the complete trading day, with rules, notes, tags, and weekly review." />
+  <meta name="twitter:image" content="https://traderslink.pro/landing-assets/trading-journal/week-view-calander.png" />
+  <meta name="twitter:image:alt" content="TradersLink weekly trading journal calendar showing daily results, tickers, notes, rules, and tags." />
+
+  <style>
+    :root { color-scheme:light; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; }
+    #traderslink-journal-v1 { background:#fff; color:#172033; font-family:Arial,Helvetica,sans-serif; line-height:1.55; overflow:hidden; }
+    #traderslink-journal-v1 * { box-sizing:border-box; }
+    #traderslink-journal-v1 a:focus-visible,
+    #traderslink-journal-v1 button:focus-visible { outline:3px solid #66a3ff; outline-offset:3px; }
+    #traderslink-journal-v1 h1,
+    #traderslink-journal-v1 h2,
+    #traderslink-journal-v1 h3,
+    #traderslink-journal-v1 p { margin-top:0; }
+    #traderslink-journal-v1 img { max-width:100%; }
+
+    #traderslink-journal-v1 .tj-header { align-items:center; background:#fff; border-bottom:1px solid #dbe4ef; box-shadow:0 9px 25px rgba(14,47,93,.08); display:flex; justify-content:space-between; min-height:76px; padding:0 4.5%; position:relative; z-index:20; }
+    #traderslink-journal-v1 .tj-logo { display:block; text-decoration:none; }
+    #traderslink-journal-v1 .tj-logo img { display:block; height:32px; width:auto; }
+    #traderslink-journal-v1 .tj-nav { align-items:center; display:flex; gap:24px; }
+    #traderslink-journal-v1 .tj-nav a { color:#385376; font-size:14px; font-weight:700; text-decoration:none; }
+    #traderslink-journal-v1 .tj-features { position:relative; }
+    #traderslink-journal-v1 .tj-features-toggle { align-items:center; background:transparent; border:0; color:#385376; cursor:pointer; display:flex; font:inherit; font-size:14px; font-weight:700; gap:6px; padding:8px 0; }
+    #traderslink-journal-v1 .tj-chevron { border:solid currentColor; border-width:0 1.5px 1.5px 0; display:inline-block; height:6px; transform:translateY(-2px) rotate(45deg); transition:transform .2s ease; width:6px; }
+    #traderslink-journal-v1 .tj-features.is-open .tj-chevron { transform:translateY(1px) rotate(225deg); }
+    #traderslink-journal-v1 .tj-features-links { background:#fff; border:1px solid #dbe4ef; border-radius:10px; box-shadow:0 14px 28px rgba(14,47,93,.14); display:none; left:-18px; min-width:196px; padding:8px; position:absolute; top:calc(100% + 11px); z-index:30; }
+    #traderslink-journal-v1 .tj-features.is-open .tj-features-links { display:grid; gap:2px; }
+    #traderslink-journal-v1 .tj-features-links a { border-radius:7px; padding:10px; }
+    #traderslink-journal-v1 .tj-features-links a:hover { background:#edf4fb; color:#062663; }
+    #traderslink-journal-v1 .tj-button { background:#062663; border:1px solid #062663; border-radius:8px; color:#fff; display:inline-block; font-size:16px; font-weight:800; padding:14px 22px; text-decoration:none; transition:box-shadow .2s ease,transform .2s ease; }
+    #traderslink-journal-v1 .tj-button:hover { box-shadow:0 9px 20px rgba(6,38,99,.2); transform:translateY(-1px); }
+    #traderslink-journal-v1 .tj-nav .tj-button { color:#fff; font-size:14px; margin-left:16px; padding:12px 17px; position:relative; }
+    #traderslink-journal-v1 .tj-nav .tj-button::before { background:#dbe4ef; content:""; height:24px; left:-16px; position:absolute; top:50%; transform:translateY(-50%); width:1px; }
+
+    #traderslink-journal-v1 .tj-eyebrow { color:#426594; font-size:12px; font-weight:800; letter-spacing:.14em; margin-bottom:14px; text-transform:uppercase; }
+    #traderslink-journal-v1 .tj-hero { background:#07152f; color:#fff; min-height:760px; overflow:hidden; position:relative; }
+    #traderslink-journal-v1 .tj-hero::before { background-image:linear-gradient(rgba(118,154,211,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(118,154,211,.07) 1px,transparent 1px); background-size:52px 52px; content:""; inset:0; mask-image:linear-gradient(90deg,transparent 0,#000 55%); position:absolute; }
+    #traderslink-journal-v1 .tj-hero::after { border:1px solid rgba(117,154,220,.2); border-radius:50%; content:""; height:620px; position:absolute; right:-180px; top:-270px; transform:rotate(-17deg); width:890px; }
+    #traderslink-journal-v1 .tj-hero-inner { align-items:center; display:grid; gap:68px; grid-template-columns:minmax(360px,.75fr) minmax(580px,1.25fr); margin:0 auto; max-width:1720px; min-height:760px; padding:74px 4.5% 82px; position:relative; z-index:1; }
+    #traderslink-journal-v1 .tj-hero-copy { max-width:610px; }
+    #traderslink-journal-v1 .tj-hero .tj-eyebrow { color:#9cc5ff; }
+    #traderslink-journal-v1 .tj-hero h1 { font-size:clamp(48px,5.4vw,78px); letter-spacing:-.055em; line-height:1.01; margin-bottom:24px; }
+    #traderslink-journal-v1 .tj-hero-copy > p:not(.tj-eyebrow):not(.tj-cta-note) { color:#d9e5f7; font-size:19px; margin-bottom:17px; max-width:570px; }
+    #traderslink-journal-v1 .tj-hero .tj-button { background:#fff; border-color:#fff; color:#062663; margin-top:13px; }
+    #traderslink-journal-v1 .tj-cta-note { color:#aebfda; font-size:13px; margin:10px 0 0; }
+    #traderslink-journal-v1 .tj-hero-art { height:620px; position:relative; }
+    #traderslink-journal-v1 .tj-hero-art::before { background:radial-gradient(circle,rgba(68,126,211,.32),rgba(7,21,47,0) 68%); content:""; inset:4% 0 0 2%; position:absolute; }
+    #traderslink-journal-v1 .tj-float { display:block; height:auto; position:absolute; }
+    #traderslink-journal-v1 .tj-float--week { border:1px solid rgba(182,207,244,.42); border-radius:15px; box-shadow:0 30px 70px rgba(0,0,0,.35); left:0; top:108px; transform:rotate(-1.1deg); width:76%; }
+    #traderslink-journal-v1 .tj-float--drawer { border:1px solid rgba(182,207,244,.5); border-radius:14px; box-shadow:0 25px 55px rgba(0,0,0,.38); right:1%; top:23px; transform:rotate(1.3deg); width:31%; }
+    #traderslink-journal-v1 .tj-float--week-row { border-radius:11px; bottom:47px; box-shadow:0 17px 42px rgba(0,0,0,.38); left:16%; transform:rotate(.6deg); width:56%; }
+    #traderslink-journal-v1 .tj-float--summary { border:1px solid rgba(182,207,244,.4); border-radius:13px; bottom:0; box-shadow:0 22px 50px rgba(0,0,0,.42); right:4%; transform:rotate(-1.4deg); width:29%; }
+
+    #traderslink-journal-v1 .tj-section-head { margin:0 auto 52px; max-width:770px; text-align:center; }
+    #traderslink-journal-v1 .tj-section-head h2 { color:#172033; font-size:clamp(38px,4.7vw,64px); letter-spacing:-.05em; line-height:1.04; margin-bottom:20px; }
+    #traderslink-journal-v1 .tj-section-head > p:not(.tj-eyebrow) { color:#4c5b70; font-size:18px; margin:0 auto; max-width:700px; }
+
+    #traderslink-journal-v1 .tj-calendar { background:#eaf3fc; overflow:hidden; padding:112px 4.5% 122px; position:relative; }
+    #traderslink-journal-v1 .tj-calendar::before { background-image:linear-gradient(rgba(51,94,150,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(51,94,150,.08) 1px,transparent 1px); background-size:46px 46px; content:""; inset:0; mask-image:linear-gradient(#000,transparent 78%); position:absolute; }
+    #traderslink-journal-v1 .tj-calendar-inner { margin:0 auto; max-width:1590px; position:relative; z-index:1; }
+    #traderslink-journal-v1 .tj-calendar-stage { height:780px; margin:0 auto; max-width:1420px; position:relative; }
+    #traderslink-journal-v1 .tj-calendar-stage::after { background:#cfe2f7; border-radius:50%; content:""; filter:blur(1px); height:390px; left:33%; opacity:.7; position:absolute; top:205px; width:390px; z-index:-1; }
+    #traderslink-journal-v1 .tj-calendar-week { border:1px solid #afc9e8; border-radius:16px; box-shadow:0 28px 65px rgba(29,68,118,.16); left:4%; position:absolute; top:115px; transform:rotate(-.35deg); width:78%; }
+    #traderslink-journal-v1 .tj-calendar-drawer { border:1px solid #aec7e4; border-radius:15px; box-shadow:0 24px 56px rgba(29,68,118,.2); position:absolute; right:0; top:12px; transform:rotate(.8deg); width:24%; }
+    #traderslink-journal-v1 .tj-calendar-metrics { border-radius:14px; bottom:8px; box-shadow:0 22px 50px rgba(29,68,118,.18); left:0; position:absolute; transform:rotate(-1deg); width:24%; }
+    #traderslink-journal-v1 .tj-calendar-row { border-radius:13px; bottom:26px; box-shadow:0 18px 42px rgba(29,68,118,.17); left:30%; position:absolute; transform:rotate(.45deg); width:49%; }
+    #traderslink-journal-v1 .tj-callout { background:#fff; border:1px solid #caddef; border-radius:999px; bottom:89px; color:#244f86; font-size:13px; font-weight:800; padding:10px 16px; position:absolute; right:4%; box-shadow:0 13px 30px rgba(29,68,118,.12); }
+
+    #traderslink-journal-v1 .tj-rules { background:#fbf7ef; padding:118px 4.5% 132px; position:relative; }
+    #traderslink-journal-v1 .tj-rules-inner { margin:0 auto; max-width:1590px; }
+    #traderslink-journal-v1 .tj-rules .tj-section-head { margin-bottom:66px; }
+    #traderslink-journal-v1 .tj-rule-steps { display:grid; gap:22px; grid-template-columns:repeat(4,1fr); list-style:none; margin:0; padding:0; position:relative; z-index:1; }
+    #traderslink-journal-v1 .tj-rule-steps::before { background:linear-gradient(90deg,#d8c8ad,#e7d9c1 50%,#d8c8ad); content:""; height:2px; left:20px; position:absolute; right:20px; top:19px; }
+    #traderslink-journal-v1 .tj-rule-step { min-width:0; position:relative; }
+    #traderslink-journal-v1 .tj-step-number { align-items:center; background:#062663; border:4px solid #fbf7ef; border-radius:50%; color:#fff; display:flex; font-size:13px; font-weight:800; height:40px; justify-content:center; left:0; position:absolute; top:0; width:40px; z-index:2; }
+    #traderslink-journal-v1 .tj-rule-frame { align-items:center; display:flex; height:222px; justify-content:flex-start; margin-top:58px; }
+    #traderslink-journal-v1 .tj-rule-frame img { background:#fff; border:1px solid #eadfce; border-radius:12px; box-shadow:0 18px 38px rgba(71,55,31,.12); display:block; height:auto; max-height:100%; max-width:100%; width:auto; }
+    #traderslink-journal-v1 .tj-rule-step:nth-child(2) .tj-rule-frame img { width:92%; }
+    #traderslink-journal-v1 .tj-rule-step:nth-child(3) .tj-rule-frame img { width:100%; }
+    #traderslink-journal-v1 .tj-rule-step:nth-child(4) .tj-rule-frame img { width:100%; }
+    #traderslink-journal-v1 .tj-rule-step h3 { font-size:18px; letter-spacing:-.02em; margin:18px 0 5px; }
+    #traderslink-journal-v1 .tj-rule-step p { color:#677080; font-size:14px; margin-bottom:0; }
+    #traderslink-journal-v1 .tj-rule-results { align-items:center; display:grid; gap:54px; grid-template-columns:minmax(390px,.8fr) minmax(520px,1.2fr); margin-top:92px; }
+    #traderslink-journal-v1 .tj-rule-results-copy { max-width:480px; }
+    #traderslink-journal-v1 .tj-rule-results-copy h3 { font-size:clamp(30px,3.3vw,46px); letter-spacing:-.04em; line-height:1.08; margin-bottom:17px; }
+    #traderslink-journal-v1 .tj-rule-results-copy p { color:#515d6d; font-size:17px; }
+    #traderslink-journal-v1 .tj-rule-pills { display:flex; flex-wrap:wrap; gap:9px; margin-top:22px; }
+    #traderslink-journal-v1 .tj-rule-pills span { background:#fff; border:1px solid #dfd2be; border-radius:999px; color:#4e4333; font-size:13px; font-weight:800; padding:8px 11px; }
+    #traderslink-journal-v1 .tj-rule-results-art { min-height:520px; position:relative; }
+    #traderslink-journal-v1 .tj-results-list { border:1px solid #e0d4c1; border-radius:15px; box-shadow:0 23px 52px rgba(71,55,31,.12); left:0; position:absolute; top:22px; width:75%; }
+    #traderslink-journal-v1 .tj-rule-status { border-radius:10px; box-shadow:0 16px 36px rgba(71,55,31,.12); position:absolute; right:0; top:0; width:39%; }
+    #traderslink-journal-v1 .tj-rule-detail { border:1px solid #e0d4c1; border-radius:13px; bottom:0; box-shadow:0 25px 55px rgba(71,55,31,.16); position:absolute; right:4%; transform:rotate(-.7deg); width:55%; }
+
+    #traderslink-journal-v1 .tj-checkpoint-cta { background:#062663; color:#fff; padding:72px 4.5%; text-align:center; }
+    #traderslink-journal-v1 .tj-checkpoint-cta h2 { font-size:clamp(32px,4vw,50px); letter-spacing:-.045em; line-height:1.08; margin-bottom:13px; }
+    #traderslink-journal-v1 .tj-checkpoint-cta p { color:#d8e4f8; margin:0 auto 25px; max-width:600px; }
+    #traderslink-journal-v1 .tj-checkpoint-cta .tj-button { background:#fff; border-color:#fff; color:#062663; }
+    #traderslink-journal-v1 .tj-legal { align-items:center; background:#062663; color:#d8e4f8; display:flex; flex-wrap:wrap; gap:12px 20px; justify-content:space-between; padding:24px 4.5%; }
+    #traderslink-journal-v1 .tj-legal p { margin:0; }
+    #traderslink-journal-v1 .tj-legal-links { display:flex; flex-wrap:wrap; gap:20px; }
+    #traderslink-journal-v1 .tj-legal a { color:#fff; font-size:14px; font-weight:800; text-decoration:underline; text-underline-offset:3px; }
+
+    #traderslink-journal-v1 .tj-consent { bottom:22px; left:20px; position:fixed; right:20px; z-index:50; }
+    #traderslink-journal-v1 .tj-consent[hidden] { display:none; }
+    #traderslink-journal-v1 .tj-consent-card { background:#fff; border:1px solid #cad8e8; border-radius:12px; box-shadow:0 18px 43px rgba(20,53,99,.2); margin:0 auto; max-width:720px; padding:22px; }
+    #traderslink-journal-v1 .tj-consent h2 { color:#172033; font-size:19px; letter-spacing:-.02em; margin-bottom:8px; }
+    #traderslink-journal-v1 .tj-consent p { color:#4b5563; font-size:14px; margin-bottom:0; }
+    #traderslink-journal-v1 .tj-consent-links { margin-top:9px; }
+    #traderslink-journal-v1 .tj-consent-links a { color:#062663; font-size:13px; font-weight:800; text-decoration:underline; text-underline-offset:3px; }
+    #traderslink-journal-v1 .tj-consent-actions { display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-end; margin-top:17px; }
+    #traderslink-journal-v1 .tj-consent-button { border:1px solid #062663; border-radius:7px; cursor:pointer; font:inherit; font-size:14px; font-weight:800; min-height:42px; padding:10px 16px; }
+    #traderslink-journal-v1 .tj-consent-essential { background:#fff; color:#062663; }
+    #traderslink-journal-v1 .tj-consent-accept { background:#062663; color:#fff; }
+
+    #traderslink-journal-v1 .tj-reveal { opacity:0; transform:translateY(38px); transition:opacity .82s cubic-bezier(.22,1,.36,1),transform .82s cubic-bezier(.22,1,.36,1); }
+    #traderslink-journal-v1 .tj-reveal.is-revealed { opacity:1; transform:translateY(0); }
+
+    @media (max-width:1100px) {
+      #traderslink-journal-v1 .tj-hero-inner { gap:36px; grid-template-columns:minmax(320px,.75fr) minmax(500px,1.25fr); }
+      #traderslink-journal-v1 .tj-rule-steps { grid-template-columns:repeat(2,1fr); row-gap:48px; }
+      #traderslink-journal-v1 .tj-rule-steps::before { display:none; }
+    }
+    @media (max-width:900px) {
+      #traderslink-journal-v1 .tj-hero-inner { grid-template-columns:1fr; padding-top:62px; }
+      #traderslink-journal-v1 .tj-hero-copy { max-width:680px; }
+      #traderslink-journal-v1 .tj-hero-art { height:650px; }
+      #traderslink-journal-v1 .tj-calendar-stage { height:700px; }
+      #traderslink-journal-v1 .tj-calendar-week { left:0; width:84%; }
+      #traderslink-journal-v1 .tj-calendar-drawer { width:29%; }
+      #traderslink-journal-v1 .tj-rule-results { grid-template-columns:1fr; }
+      #traderslink-journal-v1 .tj-rule-results-copy { max-width:690px; }
+      #traderslink-journal-v1 .tj-rule-results-art { min-height:560px; }
+    }
+    @media (max-width:680px) {
+      html { scroll-behavior:auto; }
+      #traderslink-journal-v1 .tj-header { min-height:70px; padding:0 18px; }
+      #traderslink-journal-v1 .tj-logo img { height:27px; }
+      #traderslink-journal-v1 .tj-features,
+      #traderslink-journal-v1 .tj-nav > a[href="/help"] { display:none; }
+      #traderslink-journal-v1 .tj-nav { gap:14px; }
+      #traderslink-journal-v1 .tj-nav .tj-button { margin-left:0; padding:10px 13px; }
+      #traderslink-journal-v1 .tj-nav .tj-button::before { display:none; }
+      #traderslink-journal-v1 .tj-hero { min-height:0; }
+      #traderslink-journal-v1 .tj-hero-inner { min-height:0; padding:56px 20px 50px; }
+      #traderslink-journal-v1 .tj-hero h1 { font-size:45px; }
+      #traderslink-journal-v1 .tj-hero-copy > p:not(.tj-eyebrow):not(.tj-cta-note) { font-size:17px; }
+      #traderslink-journal-v1 .tj-hero-art { height:510px; margin-top:8px; }
+      #traderslink-journal-v1 .tj-float--week { left:-5%; top:82px; width:92%; }
+      #traderslink-journal-v1 .tj-float--drawer { right:-1%; width:37%; }
+      #traderslink-journal-v1 .tj-float--week-row { bottom:58px; left:3%; width:69%; }
+      #traderslink-journal-v1 .tj-float--summary { bottom:0; right:1%; width:38%; }
+      #traderslink-journal-v1 .tj-calendar,
+      #traderslink-journal-v1 .tj-rules { padding:78px 20px 88px; }
+      #traderslink-journal-v1 .tj-section-head { margin-bottom:36px; text-align:left; }
+      #traderslink-journal-v1 .tj-section-head h2 { font-size:40px; }
+      #traderslink-journal-v1 .tj-section-head > p:not(.tj-eyebrow) { font-size:16px; }
+      #traderslink-journal-v1 .tj-calendar-stage { height:660px; }
+      #traderslink-journal-v1 .tj-calendar-week { left:-24%; top:105px; width:126%; }
+      #traderslink-journal-v1 .tj-calendar-drawer { right:-5%; top:18px; width:45%; }
+      #traderslink-journal-v1 .tj-calendar-metrics { bottom:0; left:-2%; width:42%; }
+      #traderslink-journal-v1 .tj-calendar-row { bottom:35px; left:29%; width:78%; }
+      #traderslink-journal-v1 .tj-callout { bottom:112px; right:0; }
+      #traderslink-journal-v1 .tj-rule-steps { grid-template-columns:1fr; }
+      #traderslink-journal-v1 .tj-rule-frame { height:auto; min-height:210px; }
+      #traderslink-journal-v1 .tj-rule-results { gap:28px; margin-top:72px; }
+      #traderslink-journal-v1 .tj-rule-results-art { min-height:600px; }
+      #traderslink-journal-v1 .tj-results-list { width:94%; }
+      #traderslink-journal-v1 .tj-rule-status { right:-4%; top:205px; width:60%; }
+      #traderslink-journal-v1 .tj-rule-detail { bottom:0; right:0; width:76%; }
+      #traderslink-journal-v1 .tj-checkpoint-cta { padding:62px 20px; }
+      #traderslink-journal-v1 .tj-legal { align-items:flex-start; flex-direction:column; padding:24px 20px; }
+      #traderslink-journal-v1 .tj-consent { bottom:12px; left:12px; right:12px; }
+      #traderslink-journal-v1 .tj-consent-card { padding:18px; }
+      #traderslink-journal-v1 .tj-consent-actions { justify-content:stretch; }
+      #traderslink-journal-v1 .tj-consent-button { flex:1 1 150px; }
+    }
+    @media (prefers-reduced-motion:reduce) {
+      #traderslink-journal-v1 *,
+      #traderslink-journal-v1 *::before,
+      #traderslink-journal-v1 *::after { scroll-behavior:auto !important; transition-duration:.01ms !important; }
+      #traderslink-journal-v1 .tj-button:hover { transform:none; }
+      #traderslink-journal-v1 .tj-reveal { opacity:1; transform:none; }
+    }
+  </style>
+  <script type="application/ld+json">
+    {
+      "@context":"https://schema.org",
+      "@graph":[
+        {
+          "@type":"Organization",
+          "@id":"https://traderslink.pro/#organization",
+          "name":"TradersLink",
+          "url":"https://traderslink.pro/"
+        },
+        {
+          "@type":"WebPage",
+          "@id":"https://traderslink.pro/trading-journal#webpage",
+          "url":"https://traderslink.pro/trading-journal",
+          "name":"Trading Journal for Day Traders | TradersLink",
+          "description":"Journal your full trading day with trades, automatic rule results, notes, tags, weekly calendar views, session reviews, and trade analysis in TradersLink.",
+          "publisher":{"@id":"https://traderslink.pro/#organization"},
+          "about":[
+            {"@type":"Thing","name":"Trading journal"},
+            {"@type":"Thing","name":"Day trading journal"},
+            {"@type":"Thing","name":"Trading rules"},
+            {"@type":"Thing","name":"Trading calendar"}
+          ]
+        }
+      ]
+    }
+  </script>
+</head>
+<body>
+<div id="traderslink-journal-v1">
+  <header class="tj-header">
+    <a aria-label="TradersLink home" class="tj-logo" href="/"><img alt="TradersLink" src="/landing-assets/logo-horizontal-light.png" /></a>
+    <nav aria-label="Primary" class="tj-nav">
+      <div class="tj-features">
+        <button aria-controls="journal-feature-links" aria-expanded="false" class="tj-features-toggle" type="button"><span>Features</span><span aria-hidden="true" class="tj-chevron"></span></button>
+        <div class="tj-features-links" id="journal-feature-links">
+          <a href="#calendar">Trading Calendar</a>
+          <a href="#rules">Trading Rules</a>
+        </div>
+      </div>
+      <a href="/help">Help</a>
+      <a href="https://app.traderslink.pro/api/auth/discord/login?returnTo=%2Fworkspace">Log in</a>
+      <a class="tj-button" href="https://traderslink.pro/beta">Sign up free</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="tj-hero" id="journal">
+      <div class="tj-hero-inner">
+        <div class="tj-hero-copy">
+          <p class="tj-eyebrow">TradersLink Trading Journal</p>
+          <h1>A trading journal for the whole trading day.</h1>
+          <p>Keep the trades, rules, notes, tags, and session context that explain how the day actually unfolded.</p>
+          <p>Review the week, open any trading day, and stay close to the details you want to repeat, change, or understand better.</p>
+          <a class="tj-button" href="https://traderslink.pro/beta">Sign up free</a>
+          <p class="tj-cta-note">No credit card required.</p>
+        </div>
+        <div aria-label="TradersLink trading journal views layered together" class="tj-hero-art">
+          <img alt="Weekly trading journal calendar with daily P and L, tickers, notes, rules, and tags" class="tj-float tj-float--week" src="/landing-assets/trading-journal/week-view-calander.png" />
+          <img alt="An opened trading day showing the ticker, trades, notes, tags, rules, and executions" class="tj-float tj-float--drawer" src="/landing-assets/trading-journal/calander-side-card.png" />
+          <img alt="This week summary with four saved trading days" class="tj-float tj-float--week-row" src="/landing-assets/trading-journal/daily-trade-tracker-this-week-card.png" />
+          <img alt="Trading-day summary showing P and L, trades, tickers, and broken rules" class="tj-float tj-float--summary" src="/landing-assets/trading-journal/trade-tracker-trading-day-pl-trades-tickers-rules-broken-cards-mobile-view.png" />
+        </div>
+      </div>
+    </section>
+
+    <section class="tj-calendar" id="calendar">
+      <div class="tj-calendar-inner">
+        <div class="tj-section-head">
+          <p class="tj-eyebrow">Trading Calendar</p>
+          <h2>See the week. Open the story behind any day.</h2>
+          <p>The Calendar turns the days you traded into a week you can read. See P&amp;L, trade count, win rate, and the tickers behind each session—then open a day to revisit the trades, tags, notes, and Rule Results behind the total.</p>
+        </div>
+        <div aria-label="TradersLink Calendar views" class="tj-calendar-stage">
+          <img alt="Week-view trading calendar with each day's P and L and ticker details" class="tj-calendar-week" src="/landing-assets/trading-journal/week-view-calander.png" />
+          <img alt="Selected Calendar day drawer with its tickers, notes, tags, rules, and executions" class="tj-calendar-drawer" src="/landing-assets/trading-journal/calander-side-card.png" />
+          <img alt="Weekly summary cards for P and L, trades, and win rate" class="tj-calendar-metrics" src="/landing-assets/trading-journal/calander-week-view-pl-trades-win-rate-cards.png" />
+          <img alt="Four Daily Trade Tracker records in a This week row" class="tj-calendar-row" src="/landing-assets/trading-journal/daily-trade-tracker-this-week-card.png" />
+          <span class="tj-callout">A week you can open, not just total.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="tj-rules" id="rules">
+      <div class="tj-rules-inner">
+        <div class="tj-section-head">
+          <p class="tj-eyebrow">Trading Rules</p>
+          <h2>Put your trading rules where the results can answer them.</h2>
+          <p>Choose a preset session rule or create your own. TradersLink checks supported rules against the trading day, shows which were followed or broken, and keeps the result beside the trades that produced it.</p>
+        </div>
+
+        <ol aria-label="Create and review a maximum trades per day rule" class="tj-rule-steps">
+          <li class="tj-rule-step">
+            <span class="tj-step-number">01</span>
+            <div class="tj-rule-frame"><img alt="Maximum completed trades per day preset with Add rule action" src="/landing-assets/trading-journal/add-customer-rule-max-trades-per-day.png" /></div>
+            <h3>Choose the rule</h3>
+            <p>Start with a preset built around a decision you want to keep visible during the session.</p>
+          </li>
+          <li class="tj-rule-step">
+            <span class="tj-step-number">02</span>
+            <div class="tj-rule-frame"><img alt="Configure the maximum completed trades per day limit" src="/landing-assets/trading-journal/configure-custom-rule-max-trades-per-day.png" /></div>
+            <h3>Set your limit</h3>
+            <p>Make the rule specific to your trading instead of relying on a note you may not revisit.</p>
+          </li>
+          <li class="tj-rule-step">
+            <span class="tj-step-number">03</span>
+            <div class="tj-rule-frame"><img alt="Active maximum completed trades per day preset rule" src="/landing-assets/trading-journal/preset-rule-create-max-trades-per-day.png" /></div>
+            <h3>Keep it active</h3>
+            <p>The selected rule stays part of the Daily Trade Tracker review from that point forward.</p>
+          </li>
+          <li class="tj-rule-step">
+            <span class="tj-step-number">04</span>
+            <div class="tj-rule-frame"><img alt="Results for the maximum completed trades per day rule" src="/landing-assets/trading-journal/results-by-rule-max-trades-per-day.png" /></div>
+            <h3>See the result</h3>
+            <p>Review followed and broken outcomes across trading days, including the P&amp;L connected to them.</p>
+          </li>
+        </ol>
+
+        <div class="tj-rule-results">
+          <div class="tj-rule-results-copy">
+            <p class="tj-eyebrow">Automatic Rule Results</p>
+            <h3>See the trade behind a broken rule.</h3>
+            <p>A red result is not where the review ends. Open its details to see when the rule triggered, the trade involved, and the result attached to that event.</p>
+            <p>Results by Rule then lets you step back and see whether the same rule is showing up across multiple trading days.</p>
+            <div class="tj-rule-pills"><span>Preset rules</span><span>Session rules</span><span>Followed</span><span>Broken</span><span>Results over time</span></div>
+          </div>
+          <div aria-label="Trading Rule Results and broken-rule detail" class="tj-rule-results-art">
+            <img alt="Results by Rule for three trading rules" class="tj-results-list" src="/landing-assets/trading-journal/results-by-rule-3-results.png" />
+            <img alt="Trading Rule Results showing one broken and one followed rule" class="tj-rule-status" src="/landing-assets/trading-journal/rules-broken-followed-small-.png" />
+            <img alt="Expanded broken-rule detail showing its trigger and violating trade" class="tj-rule-detail" src="/landing-assets/trading-journal/trade-tracker-broken-rule-with-details-expanded.png" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tj-checkpoint-cta">
+      <h2>Create your free TradersLink account.</h2>
+      <p>Start building a trading record that keeps the day, the trades, and the decisions connected.</p>
+      <a class="tj-button" href="https://traderslink.pro/beta">Sign up free</a>
+      <p class="tj-cta-note">No credit card required.</p>
+    </section>
+    <footer aria-label="Legal links" class="tj-legal">
+      <p>TradersLink, living the small cap trading life!</p>
+      <div class="tj-legal-links"><a href="/privacy">Privacy Policy</a><a href="/terms">Terms &amp; Conditions</a></div>
+    </footer>
+  </main>
+
+  <section aria-describedby="journal-analytics-consent-copy" aria-labelledby="journal-analytics-consent-title" aria-live="polite" class="tj-consent" hidden id="journal-analytics-consent" role="dialog">
+    <div class="tj-consent-card">
+      <h2 id="journal-analytics-consent-title">Analytics choices</h2>
+      <p id="journal-analytics-consent-copy">We use necessary storage to remember this choice. Optional analytics help us understand visits and improve TradersLink. They stay off unless you accept.</p>
+      <p class="tj-consent-links"><a href="/privacy">Privacy Policy</a> <span aria-hidden="true">·</span> <a href="/terms">Terms &amp; Conditions</a></p>
+      <div class="tj-consent-actions">
+        <button class="tj-consent-button tj-consent-essential" data-analytics-choice="denied" type="button">Essential only</button>
+        <button class="tj-consent-button tj-consent-accept" data-analytics-choice="granted" type="button">Accept analytics</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  const featuresMenu = document.querySelector('.tj-features');
+  if (featuresMenu) {
+    const featuresToggle = featuresMenu.querySelector('.tj-features-toggle');
+    const closeFeaturesMenu = () => {
+      featuresMenu.classList.remove('is-open');
+      featuresToggle.setAttribute('aria-expanded', 'false');
+    };
+    featuresToggle.addEventListener('click', () => {
+      const isOpen = featuresMenu.classList.toggle('is-open');
+      featuresToggle.setAttribute('aria-expanded', String(isOpen));
+    });
+    featuresMenu.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeFeaturesMenu));
+    document.addEventListener('click', (event) => {
+      if (!featuresMenu.contains(event.target)) closeFeaturesMenu();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeFeaturesMenu();
+    });
+  }
+
+  if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const revealTargets = document.querySelectorAll('.tj-calendar, .tj-rules');
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-revealed');
+        revealObserver.unobserve(entry.target);
+      });
+    }, { threshold:0.08 });
+    revealTargets.forEach((target) => {
+      target.classList.add('tj-reveal');
+      revealObserver.observe(target);
+    });
+  }
+
+  const consentStorageKey = 'traderslink_analytics_consent_v1';
+  const consentDurationMs = 180 * 24 * 60 * 60 * 1000;
+  const consentBanner = document.getElementById('journal-analytics-consent');
+  const readAnalyticsChoice = () => {
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(consentStorageKey) || 'null');
+      if (!stored || !['granted', 'denied'].includes(stored.choice) || typeof stored.expiresAt !== 'number' || stored.expiresAt <= Date.now()) {
+        window.localStorage.removeItem(consentStorageKey);
+        return null;
+      }
+      return stored.choice;
+    } catch {
+      return null;
+    }
+  };
+  if (consentBanner) {
+    if (!readAnalyticsChoice()) consentBanner.hidden = false;
+    consentBanner.querySelectorAll('[data-analytics-choice]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const choice = button.getAttribute('data-analytics-choice');
+        try {
+          window.localStorage.setItem(consentStorageKey, JSON.stringify({ choice, expiresAt:Date.now() + consentDurationMs }));
+        } catch {
+          // Preserve the current-page choice even when browser storage is unavailable.
+        }
+        consentBanner.hidden = true;
+      });
+    });
+  }
+</script>
+</body>
+</html>

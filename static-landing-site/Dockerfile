@@ -7,4 +7,5 @@ ENV NGINX_ENVSUBST_FILTER="PORT|PLATFORM_UPSTREAM"
 
 COPY nginx/default.conf.template /etc/nginx/templates/default.conf.template
 COPY index.html /usr/share/nginx/html/index.html
+COPY trading-journal /usr/share/nginx/html/trading-journal
 COPY landing-assets /usr/share/nginx/html/landing-assets

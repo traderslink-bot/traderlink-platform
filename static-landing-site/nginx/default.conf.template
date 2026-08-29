@@ -25,6 +25,14 @@ server {
         try_files /index.html =404;
     }
 
+    location = /trading-journal {
+        try_files /trading-journal/index.html =404;
+    }
+
+    location = /trading-journal/ {
+        return 301 /trading-journal;
+    }
+
     location = /landing-assets {
         return 301 /landing-assets/;
     }
