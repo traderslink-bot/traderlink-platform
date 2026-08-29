@@ -181,7 +181,9 @@ describe("Trade Explorer visible contract", () => {
     expect(client).not.toContain("Executed (Eastern Time)");
     expect(client).toContain('event.key !== "Enter" && event.key !== " "');
     expect(client).toContain("tabIndex={0}");
-    expect(client).toContain("pnlColor(trade.selectedPnlDecimal)");
+    expect(client).toContain("financialOutcomeColor(trade.selectedPnlDecimal)");
+    expect(client).toContain("financialOutcomeColor(trade.returnPercentDecimal)");
+    expect(client).toContain("financialOutcomeMetricColor(column.metricId");
     expect(client).not.toContain("Currency: {tradeSummaryPartition.currency");
     expect(client).not.toContain('`${result.currency} ${formatted.replace("$", "")}`');
     expect(client).not.toContain('`${currency} ${formatted}`');

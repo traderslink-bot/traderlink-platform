@@ -41,6 +41,10 @@ import {
   formatJournalAnalyticsMoney,
 } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import {
+  financialOutcomeColor,
+  financialOutcomeMetricColor,
+} from "@/src/modules/journal-analytics/presentation/financial-outcome-color";
+import {
   canonicalTradeExplorerDecimalInput,
   canonicalTradeExplorerTimeInput,
   compareTradeExplorerMetricValues,
@@ -305,11 +309,6 @@ function money(valueDecimal: string | null, currency: string | null): string {
   return formatJournalAnalyticsMoney(valueDecimal, currency);
 }
 
-function pnlColor(valueDecimal: string | null): "error.main" | "success.main" | "text.primary" {
-  if (valueDecimal === null || /^-?0(?:\.0+)?$/u.test(valueDecimal)) return "text.primary";
-  return valueDecimal.startsWith("-") ? "error.main" : "success.main";
-}
-
 function executionTime(value: string, timeZone: string): string {
   return new Intl.DateTimeFormat("en-US", {
     day: "numeric",
@@ -483,16 +482,24 @@ export default function TradeExplorerClient({
         Object.freeze({
           label: appliedQuery.moneyBasis === "net" ? "Fee-covered trades" : "Closed trades",
           value: String(preview.response.crossPartitionCounts.includedCount),
+          valueColor: "text.primary" as const,
         }),
       ])
     : Object.freeze([
-        Object.freeze({ label: appliedQuery.moneyBasis === "net" ? "Fee-covered trades" : "Closed trades", value: value(tradeSummaryPartition, "total_trades") }),
-        Object.freeze({ label: appliedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L", value: value(tradeSummaryPartition, appliedQuery.moneyBasis === "gross" ? "gross_pnl" : "net_pnl") }),
+        Object.freeze({ label: appliedQuery.moneyBasis === "net" ? "Fee-covered trades" : "Closed trades", value: value(tradeSummaryPartition, "total_trades"), valueColor: "text.primary" as const }),
+        Object.freeze({
+          label: appliedQuery.moneyBasis === "gross" ? "Gross P/L" : "Net P/L",
+          value: value(tradeSummaryPartition, appliedQuery.moneyBasis === "gross" ? "gross_pnl" : "net_pnl"),
+          valueColor: financialOutcomeMetricColor(
+            appliedQuery.moneyBasis === "gross" ? "gross_pnl" : "net_pnl",
+            metric(tradeSummaryPartition, appliedQuery.moneyBasis === "gross" ? "gross_pnl" : "net_pnl")?.value,
+          ),
+        }),
         ...(appliedQuery.outcome === null
-          ? [Object.freeze({ label: "Win rate", value: value(tradeSummaryPartition, "win_rate") })]
+          ? [Object.freeze({ label: "Win rate", value: value(tradeSummaryPartition, "win_rate"), valueColor: "text.primary" as const })]
           : []),
         ...(appliedQuery.outcome === null
-          ? [Object.freeze({ label: "Profit factor", value: value(tradeSummaryPartition, "profit_factor") })]
+          ? [Object.freeze({ label: "Profit factor", value: value(tradeSummaryPartition, "profit_factor"), valueColor: "text.primary" as const })]
           : []),
       ]);
   const activeViewColumns = activeView?.columns.filter((column) =>
@@ -951,7 +958,7 @@ export default function TradeExplorerClient({
                   <Typography color="text.secondary" variant="body2">
                     {showPartitionColumn
                       ? "Results are ranked separately within each currency and trading timezone."
-                      : <>{selectedStatistic ? `${explorerMetricLabel(selectedStatistic.metricId, selectedStatistic.title)}: ` : ""}{preview.selectedMetric ? formatExplorerMetric(preview.selectedMetric) : "N/A"}</>}
+                      : <>{selectedStatistic ? `${explorerMetricLabel(selectedStatistic.metricId, selectedStatistic.title)}: ` : ""}<Box component="span" sx={{ color: financialOutcomeMetricColor(appliedQuery.metricId, preview.selectedMetric?.value) }}>{preview.selectedMetric ? formatExplorerMetric(preview.selectedMetric) : "N/A"}</Box></>}
                   </Typography>
                   {tradeSummaryPartition ? (
                     <Typography color="text.secondary" variant="body2">
@@ -969,7 +976,7 @@ export default function TradeExplorerClient({
                   <Stack direction="row" sx={{ columnGap: 2, flexWrap: "wrap", rowGap: 0.25 }}>
                     {tradeSummary.map((item) => (
                       <Typography color="text.secondary" key={item.label} variant="body2">
-                        {item.label}: <Box component="span" sx={{ color: "text.primary", fontWeight: 700 }}>{item.value}</Box>
+                        {item.label}: <Box component="span" sx={{ color: item.valueColor ?? "text.primary", fontWeight: 700 }}>{item.value}</Box>
                       </Typography>
                     ))}
                   </Stack>
@@ -1025,7 +1032,7 @@ export default function TradeExplorerClient({
                         <TableRow hover key={item.id}>
                           <TableCell sx={{ fontWeight: 800, textTransform: appliedResultView === "entry_times" ? "none" : "capitalize" }}>{item.label}</TableCell>
                           {showPartitionColumn ? <TableCell>{item.partitionLabel}</TableCell> : null}
-                          {displayedColumns.map((column) => <TableCell key={column.label}>{column.kind === "day_path" ? dayMovement(item.group) : value(item.group, column.metricId)}</TableCell>)}
+                          {displayedColumns.map((column) => <TableCell key={column.label} sx={{ color: column.kind === "day_path" ? "text.primary" : financialOutcomeMetricColor(column.metricId, metric(item.group, column.metricId)?.value) }}>{column.kind === "day_path" ? dayMovement(item.group) : value(item.group, column.metricId)}</TableCell>)}
                         </TableRow>
                       ))}
                     </TableBody>
@@ -1127,8 +1134,8 @@ export default function TradeExplorerClient({
                           <TableCell>{trade.averageEntryPriceDecimal ? money(trade.averageEntryPriceDecimal, preview.evidence?.currency ?? null) : "N/A"}</TableCell>
                           <TableCell>{trade.averageExitPriceDecimal ? money(trade.averageExitPriceDecimal, preview.evidence?.currency ?? null) : "N/A"}</TableCell>
                           <TableCell>{money(trade.entryNotionalDecimal, preview.evidence?.currency ?? null)}</TableCell>
-                          <TableCell sx={{ color: pnlColor(trade.selectedPnlDecimal), fontWeight: 800 }}>{money(trade.selectedPnlDecimal, preview.evidence?.currency ?? null)}</TableCell>
-                          <TableCell>{trade.returnPercentDecimal === null || trade.returnPercentDecimal === undefined ? "N/A" : `${formatJournalAnalyticsDecimal(trade.returnPercentDecimal)}%`}</TableCell>
+                          <TableCell sx={{ color: financialOutcomeColor(trade.selectedPnlDecimal), fontWeight: 800 }}>{money(trade.selectedPnlDecimal, preview.evidence?.currency ?? null)}</TableCell>
+                          <TableCell sx={{ color: financialOutcomeColor(trade.returnPercentDecimal) }}>{trade.returnPercentDecimal === null || trade.returnPercentDecimal === undefined ? "N/A" : `${formatJournalAnalyticsDecimal(trade.returnPercentDecimal)}%`}</TableCell>
                           <TableCell>{formatJournalAnalyticsDuration(trade.holdingDurationMilliseconds)}</TableCell>
                           <TableCell>{trade.uniqueExecutionCount}</TableCell>
                         </TableRow>

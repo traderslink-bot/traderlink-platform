@@ -4,7 +4,6 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
-import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import type { ReactNode } from "react";
@@ -45,10 +44,12 @@ export function DashboardMetricCard({
   caption,
   label,
   value,
+  valueColor = "text.primary",
 }: {
   caption: string;
   label: string;
   value: string;
+  valueColor?: "success.main" | "error.main" | "text.primary";
 }) {
   return (
     <Card data-traderlink-platform-dashboard-card="metric" sx={{ minWidth: 0 }}>
@@ -57,7 +58,7 @@ export function DashboardMetricCard({
           {label}
         </Typography>
         <Typography
-          color="text.primary"
+          color={valueColor}
           component="div"
           noWrap
           sx={{ fontSize: "1.35rem", fontWeight: 720, mt: 0.5 }}

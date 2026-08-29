@@ -438,3 +438,15 @@ surface appeared. Owner visual approval remains the next checkpoint.
   note, tag or rule store was added.
 - Targeted ESLint, project TypeScript and diff-whitespace checks pass. No test
   suite, build, browser server, database write, commit or deployment ran.
+
+## Financial outcome color consistency - 2026-08-29
+
+- [x] Applied the shared outcome convention to the compact Trade Explorer
+  summary, grouped result tables, individual-trade P/L and return, Compare
+  Trades scorecards, differences and supporting-trade tables.
+- [x] Positive P/L and return use green, negative values use red, and zero or
+  unavailable values use standard text. Non-outcome metrics such as win rate,
+  profit factor, holding time and trade counts remain unchanged.
+- [x] Reviewed the Trade Explorer Help guide. The visual-only convention does
+  not change the documented calculations or workflow, so no guide copy changed.
+- [ ] Complete owner desktop/mobile visual review before release acceptance.

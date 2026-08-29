@@ -27,6 +27,8 @@ import { useMemo, useState } from "react";
 
 import { DashboardMetricCard, DashboardPrimaryAction } from "@/app/dashboard-template";
 import { candlePatternName } from "@/src/lib/trade-candle-analysis/pattern-presentation";
+import { financialOutcomeColor } from
+  "@/src/modules/journal-analytics/presentation/financial-outcome-color";
 import type {
   DailyTradeLongTermAnalyticsModel,
   TradeAnalysisExcursionBreakdownRow,
@@ -131,9 +133,9 @@ function BreakdownTable({
               <TableCell align="right">{row.tradeCount}</TableCell>
               <TableCell align="right">{row.opportunityTradeCount}</TableCell>
               <TableCell align="right">{percent(row.winRatePercent)}</TableCell>
-              <TableCell align="right" sx={{ color: row.averageReturnPercent !== null && row.averageReturnPercent < 0 ? "error.main" : undefined }}>{percent(row.averageReturnPercent)}</TableCell>
-              <TableCell align="right">{money(row.averagePnlDecimal, currency)}</TableCell>
-              <TableCell align="right">{money(row.averagePotentialPnlDecimal, currency)}</TableCell>
+              <TableCell align="right" sx={{ color: financialOutcomeColor(row.averageReturnPercent) }}>{percent(row.averageReturnPercent)}</TableCell>
+              <TableCell align="right" sx={{ color: financialOutcomeColor(row.averagePnlDecimal) }}>{money(row.averagePnlDecimal, currency)}</TableCell>
+              <TableCell align="right" sx={{ color: financialOutcomeColor(row.averagePotentialPnlDecimal) }}>{money(row.averagePotentialPnlDecimal, currency)}</TableCell>
               <TableCell align="right">{money(row.averageAdditionalOpportunityDecimal, currency)}</TableCell>
               {valueLabel ? <TableCell align="right">{row.averageValue === null ? "Unavailable" : `${row.averageValue.toFixed(1)}${valueSuffix}`}</TableCell> : null}
             </TableRow>
@@ -273,9 +275,9 @@ function TradeTable({ model, offline = false }: { model: DailyTradeLongTermAnaly
               <TableBody>{visibleRows.map((row) => (
                 <TableRow hover key={row.roundTripId}>
                   <TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.closeDate}</TableCell>
-                  <TableCell align="right" sx={{ color: Number(row.actualPnlDecimal) < 0 ? "error.main" : "success.main", fontWeight: 800 }}>{money(row.actualPnlDecimal, model.currency)}</TableCell>
-                  <TableCell align="right" sx={{ color: row.returnPercent !== null && row.returnPercent < 0 ? "error.main" : undefined }}>{percent(row.returnPercent)}</TableCell>
-                  <TableCell align="right">{money(row.sustainedOpportunityDecimal, model.currency)}</TableCell><TableCell align="right">{money(row.additionalOpportunityDecimal, model.currency)}</TableCell>
+                  <TableCell align="right" sx={{ color: financialOutcomeColor(row.actualPnlDecimal), fontWeight: 800 }}>{money(row.actualPnlDecimal, model.currency)}</TableCell>
+                  <TableCell align="right" sx={{ color: financialOutcomeColor(row.returnPercent) }}>{percent(row.returnPercent)}</TableCell>
+                  <TableCell align="right" sx={{ color: financialOutcomeColor(row.sustainedOpportunityDecimal) }}>{money(row.sustainedOpportunityDecimal, model.currency)}</TableCell><TableCell align="right">{money(row.additionalOpportunityDecimal, model.currency)}</TableCell>
                   <TableCell align="right">{percent(row.capturedPercent)}</TableCell><TableCell align="right">{row.peakToExitMinutes === null ? "Unavailable" : `${row.peakToExitMinutes} min`}</TableCell>
                   <TableCell>{greenToRedLabel(row.greenToRedStatus)}</TableCell><TableCell align="right">{row.executionCount}</TableCell>
                   <TableCell><Button endIcon={<OpenInNewIcon fontSize="small" />} href={trackerHref(row)} size="small" variant="outlined">{offline ? "Open saved day" : "View full analysis"}</Button></TableCell>
@@ -325,7 +327,7 @@ function MfeMaeTable({ model, offline = false }: { model: DailyTradeLongTermAnal
       <HorizontalScrollRegion label="Measured entries and adds table" minTableWidth={1420} stickyFirstColumn><Table size="small"><TableHead><TableRow>
         <TableCell>Ticker</TableCell><TableCell>Type</TableCell><TableCell>Direction</TableCell><TableCell>Closed</TableCell><TableCell align="right">Entry price</TableCell><TableCell align="right">MFE</TableCell><TableCell align="right">MAE</TableCell><TableCell align="right">MFE %</TableCell><TableCell align="right">MAE %</TableCell><TableCell align="right">Until flat</TableCell><TableCell align="right">Actual P/L</TableCell><TableCell />
       </TableRow></TableHead><TableBody>{visibleRows.map((row) => <TableRow hover key={`${row.roundTripId}-${row.executionSequence}`}>
-        <TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell><TableCell>{row.eventKind}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.closeDate}</TableCell><TableCell align="right">{money(row.entryPriceDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: "success.main", fontWeight: 750 }}>{money(row.favorableMoveDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: "error.main", fontWeight: 750 }}>{money(row.adverseMoveDecimal, model.currency)}</TableCell><TableCell align="right">{percent(row.favorableMovePercent)}</TableCell><TableCell align="right">{percent(row.adverseMovePercent)}</TableCell><TableCell align="right">{row.minutesUntilFlat} min</TableCell><TableCell align="right" sx={{ color: Number(row.actualPnlDecimal) < 0 ? "error.main" : "success.main", fontWeight: 750 }}>{money(row.actualPnlDecimal, model.currency)}</TableCell><TableCell><Button endIcon={<OpenInNewIcon fontSize="small" />} href={offline ? `/trade-tracker/${row.trackerDate}` : `/trade-tracker/${row.trackerDate}?${new URLSearchParams({ interval: "1m", trade: row.roundTripId }).toString()}`} size="small" variant="outlined">{offline ? "Open saved day" : "View full analysis"}</Button></TableCell>
+        <TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell><TableCell>{row.eventKind}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.closeDate}</TableCell><TableCell align="right">{money(row.entryPriceDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: "success.main", fontWeight: 750 }}>{money(row.favorableMoveDecimal, model.currency)}</TableCell><TableCell align="right" sx={{ color: "error.main", fontWeight: 750 }}>{money(row.adverseMoveDecimal, model.currency)}</TableCell><TableCell align="right">{percent(row.favorableMovePercent)}</TableCell><TableCell align="right">{percent(row.adverseMovePercent)}</TableCell><TableCell align="right">{row.minutesUntilFlat} min</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.actualPnlDecimal), fontWeight: 750 }}>{money(row.actualPnlDecimal, model.currency)}</TableCell><TableCell><Button endIcon={<OpenInNewIcon fontSize="small" />} href={offline ? `/trade-tracker/${row.trackerDate}` : `/trade-tracker/${row.trackerDate}?${new URLSearchParams({ interval: "1m", trade: row.roundTripId }).toString()}`} size="small" variant="outlined">{offline ? "Open saved day" : "View full analysis"}</Button></TableCell>
       </TableRow>)}</TableBody></Table></HorizontalScrollRegion>}
   </Stack>;
 }
@@ -398,7 +400,7 @@ export function TradeAnalysisClient({
       <Paper sx={{ p: { xs: 2, sm: 3 } }} variant="outlined">
         <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">No trades have been analyzed.</Typography>
         <Typography color="text.secondary" sx={{ mt: 0.75 }}>
-          TradersLink Trade Analyzer analyzes trades that are manually submitted in the Daily Trade Tracker. While the app is in beta the Trade Analyzer uses market data provided by connected Moomoo accounts. A free moomoo account is all that is need to use the analyzer. If you already have a moomoo account TraderLink will connect your account quickly and securely using moomo's official OAuth.
+          TradersLink Trade Analyzer analyzes trades that are manually submitted in the Daily Trade Tracker. While the app is in beta the Trade Analyzer uses market data provided by connected Moomoo accounts. A free moomoo account is all that is need to use the analyzer. If you already have a moomoo account TraderLink will connect your account quickly and securely using moomo&apos;s official OAuth.
         </Typography>
         <DashboardPrimaryAction href="/account/trading" sx={{ mt: 2 }}>
           Connect Moomoo
@@ -413,10 +415,10 @@ export function TradeAnalysisClient({
         <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } }}>
         <DashboardMetricCard caption="Every saved buy and sell snapshot" label="Analyzed executions" value={String(model.analyzedExecutionCount)} />
         <DashboardMetricCard caption="Trades that finished above breakeven" label="Win rate" value={percent(model.winRatePercent)} />
-        <DashboardMetricCard caption="Average percentage return per analyzed trade" label="Average return" value={percent(model.averageReturnPercent)} />
-        <DashboardMetricCard caption={`Trade Tracker ${model.moneyBasis} P/L per analyzed trade`} label={`Average ${model.moneyBasis} result`} value={money(model.averagePnlDecimal, model.currency)} />
-        <DashboardMetricCard caption={`Combined Trade Tracker ${model.moneyBasis} P/L`} label="Total actual result" value={money(model.profitCapture.totalActualPnlDecimal, model.currency)} />
-        <DashboardMetricCard caption="Actual result plus measured additional opportunity" label="Result at sustained opportunities" value={money(model.profitCapture.totalPotentialPnlDecimal, model.currency)} />
+        <DashboardMetricCard caption="Average percentage return per analyzed trade" label="Average return" value={percent(model.averageReturnPercent)} valueColor={financialOutcomeColor(model.averageReturnPercent)} />
+        <DashboardMetricCard caption={`Trade Tracker ${model.moneyBasis} P/L per analyzed trade`} label={`Average ${model.moneyBasis} result`} value={money(model.averagePnlDecimal, model.currency)} valueColor={financialOutcomeColor(model.averagePnlDecimal)} />
+        <DashboardMetricCard caption={`Combined Trade Tracker ${model.moneyBasis} P/L`} label="Total actual result" value={money(model.profitCapture.totalActualPnlDecimal, model.currency)} valueColor={financialOutcomeColor(model.profitCapture.totalActualPnlDecimal)} />
+        <DashboardMetricCard caption="Actual result plus measured additional opportunity" label="Result at sustained opportunities" value={money(model.profitCapture.totalPotentialPnlDecimal, model.currency)} valueColor={financialOutcomeColor(model.profitCapture.totalPotentialPnlDecimal)} />
         <DashboardMetricCard caption="Difference between actual and measured opportunity" label="Total missed opportunity" value={money(model.profitCapture.totalAdditionalOpportunityDecimal, model.currency)} />
         </Box>
       </Stack> : null}
@@ -453,8 +455,8 @@ export function TradeAnalysisClient({
       {view === "green-to-red" ? <Section defaultExpanded description="Actual results compared with the strongest profit opportunities that remained available through completed candle closes." helpHref="/help/trade-analyzer/green-to-red-analysis#profit-capture" title="Profit capture">
         <Stack spacing={2.25}>
           <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } }}>
-            <DashboardMetricCard caption={`Combined Trade Tracker ${model.moneyBasis} P/L`} label="Total actual result" value={money(model.profitCapture.totalActualPnlDecimal, model.currency)} />
-            <DashboardMetricCard caption="Actual result plus the measured additional opportunity" label="Result at best sustained opportunities" value={money(model.profitCapture.totalPotentialPnlDecimal, model.currency)} />
+            <DashboardMetricCard caption={`Combined Trade Tracker ${model.moneyBasis} P/L`} label="Total actual result" value={money(model.profitCapture.totalActualPnlDecimal, model.currency)} valueColor={financialOutcomeColor(model.profitCapture.totalActualPnlDecimal)} />
+            <DashboardMetricCard caption="Actual result plus the measured additional opportunity" label="Result at best sustained opportunities" value={money(model.profitCapture.totalPotentialPnlDecimal, model.currency)} valueColor={financialOutcomeColor(model.profitCapture.totalPotentialPnlDecimal)} />
             <DashboardMetricCard caption={`${model.opportunityTradeCount} trades had a measured sustained opportunity`} label="Total additional opportunity" value={money(model.profitCapture.totalAdditionalOpportunityDecimal, model.currency)} />
             <DashboardMetricCard caption="Mean percentage retained" label="Average peak profit retained" value={percent(model.profitCapture.averageCapturedPercent)} />
             <DashboardMetricCard caption="Middle percentage retained" label="Median peak profit retained" value={percent(model.profitCapture.medianCapturedPercent)} />
@@ -473,8 +475,8 @@ export function TradeAnalysisClient({
             <DashboardMetricCard caption="Average time from first red to first recovery" label="Recovery time" value={model.greenToRedDamage.averageRecoveryMinutes === null ? "Unavailable" : `${model.greenToRedDamage.averageRecoveryMinutes.toFixed(1)} min`} />
             <DashboardMetricCard caption="Average profit reversal before first turning red" label="Peak-to-red damage" value={money(model.greenToRedDamage.averagePeakToRedDamageDecimal, model.currency)} />
             <DashboardMetricCard caption="Average profit reversal from peak to final exit" label="Peak-to-exit damage" value={money(model.greenToRedDamage.averagePeakToFinalDamageDecimal, model.currency)} />
-            <DashboardMetricCard caption={`${model.greenToRedDamage.endedRedTradeCount} trades finished red after first moving green`} label="Ended-red actual result" value={money(model.greenToRedDamage.endedRedActualPnlDecimal, model.currency)} />
-            <DashboardMetricCard caption="Combined result at each trade's best sustained opportunity" label="Ended-red potential result" value={money(model.greenToRedDamage.endedRedPotentialPnlDecimal, model.currency)} />
+            <DashboardMetricCard caption={`${model.greenToRedDamage.endedRedTradeCount} trades finished red after first moving green`} label="Ended-red actual result" value={money(model.greenToRedDamage.endedRedActualPnlDecimal, model.currency)} valueColor={financialOutcomeColor(model.greenToRedDamage.endedRedActualPnlDecimal)} />
+            <DashboardMetricCard caption="Combined result at each trade's best sustained opportunity" label="Ended-red potential result" value={money(model.greenToRedDamage.endedRedPotentialPnlDecimal, model.currency)} valueColor={financialOutcomeColor(model.greenToRedDamage.endedRedPotentialPnlDecimal)} />
             <DashboardMetricCard caption="Difference between the actual and potential results" label="Ended-red missed opportunity" value={money(model.greenToRedDamage.endedRedAdditionalOpportunityDecimal, model.currency)} />
           </Box>
           <BreakdownTable currency={model.currency} rows={model.greenToRed} showOccurrences={false} />
@@ -577,7 +579,7 @@ export function TradeAnalysisClient({
                 <HorizontalScrollRegion label={`${friendlyPattern(group.pattern)} breakdown table`} minTableWidth={860} stickyFirstColumn>
                   <Table aria-label={`${friendlyPattern(group.pattern)} breakdown`} size="small">
                     <TableHead><TableRow><TableCell>Timeframe</TableCell><TableCell>Execution</TableCell><TableCell>Location</TableCell><TableCell align="right">Occurrences</TableCell><TableCell align="right">Trades</TableCell><TableCell align="right">Win rate</TableCell><TableCell align="right">Avg return</TableCell><TableCell align="right">Avg result</TableCell></TableRow></TableHead>
-                    <TableBody>{group.rows.map((row) => <TableRow hover key={`${row.timeframe}-${row.executionSide}-${row.location}`}><TableCell sx={{ fontWeight: 750 }}>{row.timeframe}</TableCell><TableCell>{row.executionSide}</TableCell><TableCell>{row.location}</TableCell><TableCell align="right">{row.occurrenceCount}</TableCell><TableCell align="right">{row.tradeCount}</TableCell><TableCell align="right">{percent(row.winRatePercent)}</TableCell><TableCell align="right" sx={{ color: row.averageReturnPercent !== null && row.averageReturnPercent < 0 ? "error.main" : undefined }}>{percent(row.averageReturnPercent)}</TableCell><TableCell align="right">{money(row.averagePnlDecimal, model.currency)}</TableCell></TableRow>)}</TableBody>
+                    <TableBody>{group.rows.map((row) => <TableRow hover key={`${row.timeframe}-${row.executionSide}-${row.location}`}><TableCell sx={{ fontWeight: 750 }}>{row.timeframe}</TableCell><TableCell>{row.executionSide}</TableCell><TableCell>{row.location}</TableCell><TableCell align="right">{row.occurrenceCount}</TableCell><TableCell align="right">{row.tradeCount}</TableCell><TableCell align="right">{percent(row.winRatePercent)}</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.averageReturnPercent) }}>{percent(row.averageReturnPercent)}</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.averagePnlDecimal) }}>{money(row.averagePnlDecimal, model.currency)}</TableCell></TableRow>)}</TableBody>
                   </Table>
                 </HorizontalScrollRegion>
               </Paper>

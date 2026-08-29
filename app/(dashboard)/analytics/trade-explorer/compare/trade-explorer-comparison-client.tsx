@@ -38,6 +38,10 @@ import {
   formatJournalAnalyticsMoney,
 } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import {
+  financialOutcomeColor,
+  financialOutcomeMetricColor,
+} from "@/src/modules/journal-analytics/presentation/financial-outcome-color";
+import {
   canonicalTradeExplorerDecimalInput,
   canonicalTradeExplorerTimeInput,
 } from "@/src/modules/journal-analytics/presentation/trade-explorer-ordering";
@@ -187,6 +191,20 @@ function differenceText(
     value: difference.value,
   }));
   return exactValueIsPositive(difference.value) ? `+${formatted}` : formatted;
+}
+
+function differenceValue(
+  comparison: TradeExplorerComparisonResult,
+  metricId: string,
+  comparedGroupIndex: number,
+): JournalAnalyticsExactValue | null {
+  const resolvedMetricId = metricId === "selected_pnl"
+    ? comparison.groups[0].query.moneyBasis === "net" ? "net_pnl" : "gross_pnl"
+    : metricId;
+  return comparison.differences.find((candidate) =>
+    candidate.metricId === resolvedMetricId &&
+    candidate.comparedGroupName === comparison.groups[comparedGroupIndex]?.name)
+    ?.value ?? null;
 }
 
 function SelectField({
@@ -365,7 +383,7 @@ function EvidenceTable({
               <TableCell>{new Intl.DateTimeFormat("en-CA", { dateStyle: "medium", timeZone }).format(new Date(row.closedAtUtc))}</TableCell>
               <TableCell sx={{ fontWeight: 750 }}>{row.displayedSymbol}</TableCell>
               <TableCell>{row.direction === "long" ? "Long" : "Short"}</TableCell>
-              <TableCell align="right">{formatJournalAnalyticsMoney(row.selectedPnlDecimal, currency)}</TableCell>
+              <TableCell align="right" sx={{ color: financialOutcomeColor(row.selectedPnlDecimal) }}>{formatJournalAnalyticsMoney(row.selectedPnlDecimal, currency)}</TableCell>
               <TableCell align="right">{formatJournalAnalyticsDuration(row.holdingDurationMilliseconds)}</TableCell>
             </TableRow>
           ))}
@@ -599,12 +617,12 @@ export default function TradeExplorerComparisonClient({
                   {scorecardRows.map((row) => (
                     <TableRow key={row.metricId}>
                       <TableCell sx={{ fontWeight: 750 }}>{row.label}</TableCell>
-                      <TableCell align="right">{metricText(row.left)}</TableCell>
+                      <TableCell align="right" sx={{ color: financialOutcomeMetricColor(row.metricId, row.left?.value) }}>{metricText(row.left)}</TableCell>
                       {comparison.groups.slice(1).flatMap((_group, comparedIndex) => [
-                        <TableCell align="right" key={`${row.metricId}-${comparedIndex}-value`}>
+                        <TableCell align="right" key={`${row.metricId}-${comparedIndex}-value`} sx={{ color: financialOutcomeMetricColor(row.metricId, metric(comparison, comparedIndex + 1, row.metricId)?.value) }}>
                           {metricText(metric(comparison, comparedIndex + 1, row.metricId))}
                         </TableCell>,
-                        <TableCell align="right" key={`${row.metricId}-${comparedIndex}-difference`}>
+                        <TableCell align="right" key={`${row.metricId}-${comparedIndex}-difference`} sx={{ color: financialOutcomeMetricColor(row.metricId, differenceValue(comparison, row.metricId, comparedIndex + 1)) }}>
                           {differenceText(comparison, row.metricId, comparedIndex + 1)}
                         </TableCell>,
                       ])}

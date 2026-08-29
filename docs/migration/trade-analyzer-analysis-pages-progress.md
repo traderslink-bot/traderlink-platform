@@ -85,3 +85,15 @@
   no longer reserves vertical space before page content.
 - [x] Limited contextual page Help icons to routes with an explicit published
   guide target; Help Center routes continue to render no duplicate icon.
+
+## Financial outcome color consistency - 2026-08-29
+
+- [x] Applied the shared outcome convention to Day Trade Analysis summary
+  cards, comparison tables, supporting trades, Analyzed Trades and Candle
+  Pattern occurrence details: positive P/L and return are green, negative are
+  red, and zero or unavailable values use standard text.
+- [x] Preserved MFE/MAE movement colors, win-rate presentation, opportunity-gap
+  values and every calculation and label.
+- [x] Reviewed the Trade Analyzer Help guide. This visual-only convention does
+  not change the documented behavior or require copy updates.
+- [ ] Complete owner desktop/mobile visual review before release acceptance.

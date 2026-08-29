@@ -18,6 +18,8 @@ import { useEffect, useState } from "react";
 
 import type { DailyTradeAnalyzedTradePage } from
   "@/src/modules/level-analysis/server/daily-trade-analysis-evidence-service";
+import { financialOutcomeColor } from
+  "@/src/modules/journal-analytics/presentation/financial-outcome-color";
 
 import { TradeAnalyzerTablePagination } from "./trade-analyzer-table-pagination";
 import { HorizontalScrollRegion } from "../horizontal-scroll-region";
@@ -210,7 +212,6 @@ export function AnalyzedTradesIndex({
                 {rows.map((row) => {
                   const opened = dateTime(row.openedAtUtc, result!.timezone);
                   const closed = dateTime(row.closedAtUtc, result!.timezone);
-                  const negative = row.resultDecimal !== null && Number(row.resultDecimal) < 0;
                   return (
                     <TableRow hover key={row.roundTripId}>
                       <TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell>
@@ -218,10 +219,10 @@ export function AnalyzedTradesIndex({
                       <TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell>
                       <TableCell>{opened.time}</TableCell>
                       <TableCell>{closed.time}</TableCell>
-                      <TableCell align="right" sx={{ color: negative ? "error.main" : "success.main", fontWeight: 800 }}>
+                      <TableCell align="right" sx={{ color: financialOutcomeColor(row.resultDecimal), fontWeight: 800 }}>
                         {money(row.resultDecimal, currency!)}
                       </TableCell>
-                      <TableCell align="right">{percent(row.returnPercentDecimal)}</TableCell>
+                      <TableCell align="right" sx={{ color: financialOutcomeColor(row.returnPercentDecimal) }}>{percent(row.returnPercentDecimal)}</TableCell>
                       <TableCell align="right">{row.executionCount}</TableCell>
                       <TableCell align="right">
                         <Button endIcon={<OpenInNewIcon />} href={offline ? `/trade-tracker/${row.trackerDate}` : trackerHref(row)} size="small" variant="outlined">

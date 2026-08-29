@@ -35,6 +35,8 @@ import type {
 import type { DaySessionTradeAnalyzer } from
   "@/app/(dashboard)/trade-tracker/[sessionDate]/day-session-types";
 import { candlePatternName } from "@/src/lib/trade-candle-analysis/pattern-presentation";
+import { financialOutcomeColor } from
+  "@/src/modules/journal-analytics/presentation/financial-outcome-color";
 import type { DailyTradeChartInterval } from
   "@/app/(dashboard)/trade-tracker/[sessionDate]/daily-trade-analyzer-chart";
 
@@ -127,15 +129,14 @@ function OccurrenceSummary({
   occurrence: DailyTradePatternOccurrenceRow;
   timezone: string;
 }) {
-  const negative = occurrence.resultDecimal !== null && Number(occurrence.resultDecimal) < 0;
   return (
     <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" } }}>
       <Box><Typography color="text.secondary" variant="caption">Execution</Typography><Typography variant="body2">{eventLabel(occurrence.eventKind)}</Typography></Box>
       <Box><Typography color="text.secondary" variant="caption">Timeframe</Typography><Typography variant="body2">{occurrence.timeframe}</Typography></Box>
       <Box><Typography color="text.secondary" variant="caption">Observed</Typography><Typography variant="body2">{dateTime(occurrence.executedAtUtc, timezone)}</Typography></Box>
       <Box><Typography color="text.secondary" variant="caption">Location</Typography><Typography variant="body2">{locationLabel(occurrence.candlesBeforeExecution)}</Typography></Box>
-      <Box><Typography color="text.secondary" variant="caption">Trade result</Typography><Typography color={negative ? "error.main" : "success.main"} sx={{ fontWeight: 800 }} variant="body2">{money(occurrence.resultDecimal, occurrence.currency)}</Typography></Box>
-      <Box><Typography color="text.secondary" variant="caption">Return</Typography><Typography variant="body2">{percent(occurrence.returnPercentDecimal)}</Typography></Box>
+      <Box><Typography color="text.secondary" variant="caption">Trade result</Typography><Typography color={financialOutcomeColor(occurrence.resultDecimal)} sx={{ fontWeight: 800 }} variant="body2">{money(occurrence.resultDecimal, occurrence.currency)}</Typography></Box>
+      <Box><Typography color="text.secondary" variant="caption">Return</Typography><Typography color={financialOutcomeColor(occurrence.returnPercentDecimal)} variant="body2">{percent(occurrence.returnPercentDecimal)}</Typography></Box>
     </Box>
   );
 }
@@ -355,7 +356,7 @@ export function CandlePatternOccurrenceExplorer({
           <HorizontalScrollRegion label={`${friendlyPattern(pattern)} occurrences table`} minTableWidth={1060} stickyFirstColumn>
             <Table aria-label={`${friendlyPattern(pattern)} occurrences`} size="small">
               <TableHead><TableRow><TableCell>Ticker</TableCell><TableCell>Date and time</TableCell><TableCell>Direction</TableCell><TableCell>Timeframe</TableCell><TableCell>Execution</TableCell><TableCell>Location</TableCell><TableCell align="right">Result</TableCell><TableCell /></TableRow></TableHead>
-              <TableBody>{rows.map((row, index) => <TableRow hover key={row.occurrenceRef}><TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell><TableCell>{dateTime(row.executedAtUtc, result!.timezone)}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.timeframe}</TableCell><TableCell>{eventLabel(row.eventKind)}</TableCell><TableCell>{locationLabel(row.candlesBeforeExecution)}</TableCell><TableCell align="right" sx={{ color: row.resultDecimal !== null && Number(row.resultDecimal) < 0 ? "error.main" : "success.main", fontWeight: 800 }}>{money(row.resultDecimal, row.currency)}</TableCell><TableCell align="right"><Button onClick={() => selectOccurrence(index)} size="small" variant="outlined">View chart</Button></TableCell></TableRow>)}</TableBody>
+              <TableBody>{rows.map((row, index) => <TableRow hover key={row.occurrenceRef}><TableCell sx={{ fontWeight: 850 }}>{row.symbol}</TableCell><TableCell>{dateTime(row.executedAtUtc, result!.timezone)}</TableCell><TableCell sx={{ textTransform: "capitalize" }}>{row.direction}</TableCell><TableCell>{row.timeframe}</TableCell><TableCell>{eventLabel(row.eventKind)}</TableCell><TableCell>{locationLabel(row.candlesBeforeExecution)}</TableCell><TableCell align="right" sx={{ color: financialOutcomeColor(row.resultDecimal), fontWeight: 800 }}>{money(row.resultDecimal, row.currency)}</TableCell><TableCell align="right"><Button onClick={() => selectOccurrence(index)} size="small" variant="outlined">View chart</Button></TableCell></TableRow>)}</TableBody>
             </Table>
           </HorizontalScrollRegion> : null}
       </Stack>
