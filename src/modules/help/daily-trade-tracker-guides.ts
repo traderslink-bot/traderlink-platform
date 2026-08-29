@@ -425,7 +425,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
         summary: "See when a newly closed trade is ready for its first completed Analyzer result.",
         keywords: Object.freeze(["same day", "30 minutes", "post exit", "pending", "analysis ready", "notification"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "After a completed trade's final exit, TradersLink collects the 30-minute post-exit market-data window needed for the first complete Analyzer result. The window starts from the final execution's one-minute candle, so seconds do not change the readiness time. The blue collection notice tells you the Eastern Time when that window is expected to be complete." }),
+          Object.freeze({ kind: "paragraph", text: "After a completed trade's final exit, TradersLink collects the 30-minute post-exit market-data window needed for the first complete Analyzer result. The window starts from the final execution's one-minute candle, so seconds do not change the readiness time. The page-level notice identifies all submitted trades still being analyzed and gives the expected Eastern Time. Each pending trade card also keeps a smaller blue status visible while the card is closed." }),
           Object.freeze({ kind: "bullets", items: Object.freeze([
             "You can continue your daily review or leave the page; collection does not depend on keeping the browser open.",
             "Missing future candles are not treated as zeroes or failed analysis.",

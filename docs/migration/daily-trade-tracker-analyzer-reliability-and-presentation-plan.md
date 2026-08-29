@@ -230,6 +230,11 @@ that the card is silently refreshing forever.
       explanatory prompt.
 - [ ] One blue collection card appears above the submitted executions while
       any day trade is pending, with the owner-supplied copy.
+- [ ] A successful day-execution submission lands on the single trading date
+      represented by those executions, never the current calendar date when
+      the submitted date is known.
+- [ ] Every pending trade card keeps a restrained blue analysis status visible
+      while collapsed, including cards backed by one execution.
 - [ ] A ready analysis creates one idempotent trader notification and enters
       the configured remote delivery queue.
 - [ ] A terminal analyzer failure creates an administrator attention alert and

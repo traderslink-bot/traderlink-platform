@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
 import type {
@@ -89,6 +89,7 @@ export function ManualExecutionEntry({
   tracker?: JournalManualTrackerKind;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const idempotencyKey = useRef<string | null>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [draftDirty, setDraftDirty] = useState(false);
@@ -153,7 +154,12 @@ export function ManualExecutionEntry({
     try {
       const result = await submitManualTradeOnline(submission);
       idempotencyKey.current = null;
-      if (onboarding) {
+      const submittedTradingDate = tracker === "day" ? entries[0]?.localDate : null;
+      if (submittedTradingDate) {
+        const submittedDayPath = `/trade-tracker/${encodeURIComponent(submittedTradingDate)}`;
+        if (pathname === submittedDayPath) router.refresh();
+        else router.replace(submittedDayPath);
+      } else if (onboarding) {
         router.replace("/trade-tracker");
       } else {
         router.refresh();

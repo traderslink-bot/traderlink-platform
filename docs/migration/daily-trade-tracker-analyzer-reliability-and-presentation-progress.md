@@ -75,6 +75,17 @@ delivery-configuration claim.
 - [ ] Complete owner visual/product review.
 - [x] Prepare a narrow release handoff after explicit authorization.
 
+## Owner staging UI follow-up — 2026-08-29
+
+- [x] Route a successful day-execution submission to the trading date carried
+      by the submitted executions instead of retaining the calendar-day route.
+- [x] Keep one obvious page-level pending notice above manual execution entry
+      and before the weekly summary whenever one or more submitted trades are
+      pending analysis, even when an expected-ready timestamp is unavailable.
+- [x] Add a restrained, accessible blue pending status to every collapsed
+      pending trade card without depending on expansion or execution count.
+- [ ] Complete owner desktop and mobile visual approval for this follow-up.
+
 ## Verification boundary
 
 No local server, hosted database mutation, migration, publish, deployment or

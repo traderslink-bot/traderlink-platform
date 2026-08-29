@@ -1557,6 +1557,31 @@ function TradeReview({
   const analysisWindowShortenedAtMarketClose = analyzer?.status === "pending" &&
     analyzer.availableAtUtc !== null && analyzer.availableAtUtc !== undefined &&
     currentPolicyReadyAt !== null && Date.parse(analyzer.availableAtUtc) < currentPolicyReadyAt;
+  const collapsedPendingAnalysisNotice = analyzer?.status === "pending" ? (
+    <Box
+      aria-live="polite"
+      role="status"
+      sx={{
+        alignItems: "center",
+        bgcolor: "rgba(25, 118, 210, 0.07)",
+        borderLeft: 3,
+        borderColor: "info.main",
+        display: "flex",
+        gap: 0.75,
+        mx: 1,
+        px: 1,
+        py: 0.55,
+      }}
+    >
+      <Box
+        aria-hidden="true"
+        sx={{ bgcolor: "info.main", borderRadius: "50%", flex: "0 0 auto", height: 7, width: 7 }}
+      />
+      <Typography color="info.dark" sx={{ fontWeight: 750 }} variant="caption">
+        Trade Analyzer is analyzing this trade.
+      </Typography>
+    </Box>
+  ) : null;
   const ruleControls = customRules.length === 0 ? (
     <Typography color="text.secondary" variant="body2">
       You have no custom rules set up.
@@ -1859,6 +1884,7 @@ function TradeReview({
             View More
           </Button>
         </Box>
+        {collapsedPendingAnalysisNotice}
       </Box>
       <Box
         sx={{
@@ -2193,6 +2219,11 @@ function TradeReview({
         >
           {hasVisibleAnalysis(analyzer) ? (
             <Stack spacing={1}>
+              {analyzer.status === "pending" ? (
+                <Typography color="info.dark" sx={{ fontWeight: 800 }} variant="body2">
+                  Trade Analyzer is analyzing this trade.
+                </Typography>
+              ) : null}
               {showMoomooConnectionGuidance ? (
                 <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "repeat(2, minmax(0, 1fr))" } }}>
                   <MoomooMarketDataConnectionPrompt compact surface="entry-exit" />
@@ -2497,11 +2528,13 @@ export function DaySessionView({
     (count, ticker) => count + ticker.roundTrips.length,
     0,
   );
-  const pendingAnalysisTiming = data.tickers
+  const pendingAnalysisRoundTrips = data.tickers
     .flatMap((ticker) => ticker.roundTrips)
+    .filter((roundTrip) => roundTrip.analyzer?.status === "pending");
+  const pendingAnalysisCount = pendingAnalysisRoundTrips.length;
+  const pendingAnalysisTiming = pendingAnalysisRoundTrips
     .map((roundTrip) => {
-      if (roundTrip.analyzer?.status !== "pending") return null;
-      const storedReadyAt = roundTrip.analyzer.availableAtUtc
+      const storedReadyAt = roundTrip.analyzer?.availableAtUtc
         ? Date.parse(roundTrip.analyzer.availableAtUtc)
         : Number.NaN;
       const currentPolicyReadyAt = firstAnalyzerResultAtMilliseconds(roundTrip.exitAt);
@@ -3017,8 +3050,10 @@ export function DaySessionView({
           variant="outlined"
         />
       ) : null}
-      {pendingAnalysisTiming.availableAtUtc ? (
+      {pendingAnalysisCount > 0 ? (
         <Box
+          aria-live="polite"
+          role="status"
           sx={{
             bgcolor: "rgba(25, 118, 210, 0.12)",
             border: 1,
@@ -3029,16 +3064,18 @@ export function DaySessionView({
           }}
         >
           <Typography color="info.dark" sx={{ fontWeight: 850 }} variant="body2">
-            Trade Analyzer is collecting market data.
+            Trade Analyzer is analyzing your submitted {pendingAnalysisCount === 1 ? "trade" : "trades"}.
           </Typography>
-          <Typography color="text.secondary" sx={{ mt: 0.4 }} variant="caption">
-            You can complete your page here or leave the page. A notification will be sent when it is ready.
+          <Typography color="text.secondary" sx={{ display: "block", mt: 0.4 }} variant="caption">
+            You can keep working here or leave the page. A notification will be sent when the analysis is ready.
           </Typography>
-          <Typography color="text.secondary" sx={{ display: "block", mt: 0.35 }} variant="caption">
-            Analysis will begin after {timeLabel(pendingAnalysisTiming.availableAtUtc, "America/New_York")} Eastern Time, when the {pendingAnalysisTiming.marketCloseShortenedWindow
-              ? "available post-exit market-data window"
-              : "30-minute post-exit market-data window"} is complete.
-          </Typography>
+          {pendingAnalysisTiming.availableAtUtc ? (
+            <Typography color="text.secondary" sx={{ display: "block", mt: 0.35 }} variant="caption">
+              Analysis will begin after {timeLabel(pendingAnalysisTiming.availableAtUtc, "America/New_York")} Eastern Time, when the {pendingAnalysisTiming.marketCloseShortenedWindow
+                ? "available post-exit market-data window"
+                : "30-minute post-exit market-data window"} is complete.
+            </Typography>
+          ) : null}
         </Box>
       ) : null}
       {analyzerFailureCount > 0 ? (
