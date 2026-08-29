@@ -109,5 +109,6 @@ export type JournalManualTradeCommitStatusRequest = Readonly<{
 export type JournalManualTradeCommitStatus = Readonly<{
   committed: boolean;
   acceptedExecutionCount: number;
+  affectedDates: readonly string[];
   pendingDecisionCount: number;
 }>;

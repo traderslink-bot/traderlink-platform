@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Alert from "@mui/material/Alert";
 
 import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
 import {
@@ -10,6 +11,7 @@ import {
 } from "@/src/modules/journal/contracts/journal-daily-tracker-offline-view-contracts";
 import {
   DashboardPage,
+  DashboardSecondaryAction,
   DashboardUnavailableState,
 } from "../../../dashboard-template";
 import {
@@ -44,6 +46,7 @@ export default async function TradeTrackerDayPage({
 }: {
   params: Promise<{ sessionDate: string }>;
   searchParams: Promise<{
+    analyzer?: string;
     currency?: string;
     event?: string;
     interval?: string;
@@ -110,14 +113,33 @@ export default async function TradeTrackerDayPage({
           showMoomooConnectionGuidance={!demoAccountSelectionRef &&
             moomooMarketDataAccess.shouldShowConnectionGuidance}
           topContent={
-            !demoAccountSelectionRef ? <ManualExecutionEntry
-              accountCurrency={account?.baseCurrency ?? data.currency}
-              accountTimezone={account?.tradingTimezone ?? data.timezone}
-              defaultSessionDate={data.date}
-              expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
-              key="manual-execution-entry"
-              offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
-            /> : null
+            !demoAccountSelectionRef ? <>
+              {query.analyzer === "connection_required" ? (
+                <Alert
+                  action={(
+                    <DashboardSecondaryAction href="/account/trading" size="small">
+                      Connect Moomoo
+                    </DashboardSecondaryAction>
+                  )}
+                  severity="info"
+                  sx={{ alignItems: "center" }}
+                >
+                  Connect Moomoo to analyze this trade.
+                </Alert>
+              ) : query.analyzer === "not_eligible" ? (
+                <Alert severity="info">
+                  Executions saved. This trade is not currently eligible for Trade Analyzer.
+                </Alert>
+              ) : null}
+              <ManualExecutionEntry
+                accountCurrency={account?.baseCurrency ?? data.currency}
+                accountTimezone={account?.tradingTimezone ?? data.timezone}
+                defaultSessionDate={data.date}
+                expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
+                key="manual-execution-entry"
+                offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
+              />
+            </> : null
           }
         />
       </TradeTrackerUnsavedChangesProvider>

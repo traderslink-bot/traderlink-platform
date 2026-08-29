@@ -7,6 +7,7 @@ import type {
   JournalManualTradePreview,
   JournalManualTrackerKind,
 } from "@/src/modules/journal/contracts/journal-manual-trade-capture-contracts";
+import type { DailyTradeAnalyzerQueueOutcome } from "@/src/modules/level-analysis/contracts/daily-trade-analyzer-contracts";
 import { JOURNAL_MUTATION_REQUEST_HEADER } from "@/src/modules/platform/contracts/journal-request-security";
 
 const DATABASE_NAME = "traderlink-pwa-v1";
@@ -68,6 +69,8 @@ export type ManualTradeOutboxRecord = Readonly<{
 
 export type ManualTradeSubmitResult = Readonly<{
   acceptedExecutionCount: number;
+  affectedDates: readonly string[];
+  analyzerQueueOutcome: DailyTradeAnalyzerQueueOutcome | null;
   pendingDecisionCount: number;
 }>;
 
@@ -82,6 +85,8 @@ type CommitResponse = Readonly<{
   code?: string;
   result?: Readonly<{
     acceptedExecutionCount?: number;
+    affectedDates?: readonly string[];
+    analyzerQueueOutcome?: DailyTradeAnalyzerQueueOutcome | null;
     pendingDecisionCount?: number;
   }>;
 }>;
@@ -273,6 +278,8 @@ export async function submitManualTradeOnline(
     if (statusBody.result.committed) {
       return Object.freeze({
         acceptedExecutionCount: statusBody.result.acceptedExecutionCount,
+        affectedDates: statusBody.result.affectedDates,
+        analyzerQueueOutcome: null,
         pendingDecisionCount: statusBody.result.pendingDecisionCount,
       });
     }
@@ -344,6 +351,8 @@ export async function submitManualTradeOnline(
   return Object.freeze({
     acceptedExecutionCount:
       commitBody.result.acceptedExecutionCount ?? submission.entries.length,
+    affectedDates: Object.freeze(commitBody.result.affectedDates ?? []),
+    analyzerQueueOutcome: commitBody.result.analyzerQueueOutcome ?? null,
     pendingDecisionCount: commitBody.result.pendingDecisionCount ?? 0,
   });
 }

@@ -3,13 +3,23 @@ import "server-only";
 import type Database from "better-sqlite3";
 
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
-import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
+import {
+  MoomooConnectionRepository,
+  type MoomooConnectionRecord,
+} from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
 
 export type MoomooMarketDataAccess = Readonly<{
   hasActiveMarketDataConnection: boolean;
   hasActiveTradeAnalyzerPlan: boolean;
   shouldShowConnectionGuidance: boolean;
 }>;
+
+export function isMoomooMarketDataReady(
+  connection: Pick<MoomooConnectionRecord, "authorizedScopes" | "state"> | null,
+): boolean {
+  return connection?.state === "active" &&
+    connection.authorizedScopes.includes("quote:read");
+}
 
 function hasTradeAnalyzerEntitlementTable(database: Database.Database): boolean {
   return Boolean(database.prepare<[], Readonly<{ found: number }>>(
@@ -35,8 +45,7 @@ export function readMoomooMarketDataAccess(
   scope: WorkspaceAccessScope,
 ): MoomooMarketDataAccess {
   const connection = new MoomooConnectionRepository(database).find(scope);
-  const hasActiveMarketDataConnection = connection?.state === "active" &&
-    connection.authorizedScopes.includes("quote:read");
+  const hasActiveMarketDataConnection = isMoomooMarketDataReady(connection);
   const activePlan = hasActiveTradeAnalyzerPlan(database, scope);
   return Object.freeze({
     hasActiveMarketDataConnection,

@@ -84,6 +84,17 @@ delivery-configuration claim.
       pending analysis, even when an expected-ready timestamp is unavailable.
 - [x] Add a restrained, accessible blue pending status to every collapsed
       pending trade card without depending on expansion or execution count.
+- [x] Return the server-authoritative affected trading date and a sanitized
+      Analyzer queue outcome after manual save. Navigation now uses that date,
+      pending presentation still requires a persisted queued job, disconnected
+      saves show `Connect Moomoo to analyze this trade.` with the existing
+      Account connection action, and an ineligible save is described without
+      implying an Analyzer failure.
+- [x] Use one market-data-ready predicate for Analyzer and Account Settings.
+      Moomoo is labelled `Connected` only when its workspace-owned record is
+      active and includes `quote:read`; a stale active or reauthorization row
+      instead shows a truthful market-data-unavailable reconnect state without
+      changing or sharing OAuth credentials.
 - [ ] Complete owner desktop and mobile visual approval for this follow-up.
 
 ## Verification boundary

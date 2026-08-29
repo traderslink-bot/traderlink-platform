@@ -3,6 +3,11 @@ import type { NormalizedMarketCandle } from "./candle-review-contracts";
 export const DAILY_TRADE_ANALYZER_CONTRACT_VERSION = "daily_trade_analyzer_v2" as const;
 export const DAILY_TRADE_ANALYZER_POST_EXIT_MINUTES = Object.freeze([5, 15, 30, 60] as const);
 
+export type DailyTradeAnalyzerQueueOutcome =
+  | "connection_required"
+  | "not_eligible"
+  | "queued";
+
 export type DailyTradeAnalyzerEventKind = "entry" | "add" | "partial_exit" | "final_exit";
 
 export type DailyTradeAnalyzerEvent = Readonly<{

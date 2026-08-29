@@ -2305,6 +2305,27 @@ function TradeReview({
             </Stack>
           )}
         </Box>
+      ) : showMoomooConnectionGuidance ? (
+        <Box
+          sx={{
+            alignItems: { xs: "flex-start", sm: "center" },
+            bgcolor: "rgba(25, 118, 210, 0.06)",
+            borderRadius: 1.5,
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            gap: 1,
+            justifyContent: "space-between",
+            mt: 1.5,
+            p: 1.5,
+          }}
+        >
+          <Typography color="info.dark" sx={{ fontWeight: 750 }} variant="body2">
+            Connect Moomoo to analyze this trade.
+          </Typography>
+          <DashboardSecondaryAction href="/account/trading" size="small">
+            Connect Moomoo
+          </DashboardSecondaryAction>
+        </Box>
       ) : null}
 
       <Button

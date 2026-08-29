@@ -48,6 +48,7 @@ export async function POST(request: Request): Promise<Response> {
         styledTradeCount: result.styledTradeCount,
         affectedDates: result.affectedDates,
         affectedPositionRefs: result.affectedPositionRefs,
+        analyzerQueueOutcome: result.analyzerQueueOutcome,
       },
     });
   } catch (error) {

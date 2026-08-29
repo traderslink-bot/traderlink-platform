@@ -154,11 +154,15 @@ export function ManualExecutionEntry({
     try {
       const result = await submitManualTradeOnline(submission);
       idempotencyKey.current = null;
-      const submittedTradingDate = tracker === "day" ? entries[0]?.localDate : null;
+      const submittedTradingDate = tracker === "day" ? result.affectedDates[0] : null;
       if (submittedTradingDate) {
         const submittedDayPath = `/trade-tracker/${encodeURIComponent(submittedTradingDate)}`;
-        if (pathname === submittedDayPath) router.refresh();
-        else router.replace(submittedDayPath);
+        const postSaveOutcome = result.analyzerQueueOutcome === "connection_required" ||
+          result.analyzerQueueOutcome === "not_eligible"
+          ? `?analyzer=${result.analyzerQueueOutcome}`
+          : "";
+        if (pathname === submittedDayPath && postSaveOutcome.length === 0) router.refresh();
+        else router.replace(`${submittedDayPath}${postSaveOutcome}`);
       } else if (onboarding) {
         router.replace("/trade-tracker");
       } else {

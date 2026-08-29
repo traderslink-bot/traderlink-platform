@@ -18,6 +18,7 @@ import { TraderLinkPlatformError } from "@/src/modules/platform/server/database/
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
 import { PlatformAccountProfileReadService } from "@/src/modules/platform/server/identity/platform-account-profile-read-service";
 import { MoomooExecutionImportCommandService } from "@/src/modules/journal/server/broker-imports/moomoo-execution-import-command-service";
+import { isMoomooMarketDataReady } from "@/src/modules/level-analysis/server/moomoo-market-data-access";
 import { AccountManagementClient } from "../account-management-client";
 import { AccountSettingsLayout } from "../account-settings-layout";
 import { BrokerConnectionPicker } from "../broker-connection-picker";
@@ -73,6 +74,13 @@ export default async function AccountTradingPage({
     });
   });
   const activeAccount = profile.journalAccounts.find((account) => account.active) ?? null;
+  const moomooMarketDataReady = isMoomooMarketDataReady(moomooConnection);
+  const moomooNeedsReconnect = moomooConnection !== null &&
+    moomooConnection.state !== "revoked" &&
+    !moomooMarketDataReady;
+  const moomooPresentationState = moomooNeedsReconnect
+    ? "reauthorization_required"
+    : moomooConnection?.state ?? null;
   const moomooConnectionFailed = ["failed", "invalid-state", "unavailable"].includes(query.moomoo ?? "");
 
   return (
@@ -143,15 +151,25 @@ export default async function AccountTradingPage({
             Moomoo trade imports are temporarily unavailable. Your Trade Tracker accounts and saved data are not affected.
           </Alert>
         ) : null}
-        <BrokerConnectionPicker moomooConnectionState={moomooConnection?.state ?? null} />
-        {moomooConnection?.state === "active" ? (
+        <BrokerConnectionPicker moomooConnectionState={moomooPresentationState} />
+        {moomooMarketDataReady ? (
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ alignItems: { sm: "center" }, mt: 2 }}>
             <Typography sx={{ fontWeight: 800 }} variant="body2">Moomoo</Typography>
             <Chip color="success" label="Connected" size="small" />
             <MoomooConnectionSettings state="active" />
           </Stack>
         ) : null}
-        {moomooConnection?.state === "active" && activeAccount && !moomooImportUnavailable ? (
+        {moomooNeedsReconnect ? (
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            <Stack spacing={1} sx={{ alignItems: "flex-start" }}>
+              <Typography variant="body2">
+                Moomoo market data is unavailable. Reconnect Moomoo to use Trade Analyzer.
+              </Typography>
+              <MoomooConnectionSettings state="reauthorization_required" />
+            </Stack>
+          </Alert>
+        ) : null}
+        {moomooMarketDataReady && activeAccount && !moomooImportUnavailable ? (
           <MoomooExecutionImportSetup
             activeAccountName={activeAccount.displayName}
             activeAccountSelectionRef={activeAccount.selectionRef}

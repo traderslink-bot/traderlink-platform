@@ -2,6 +2,7 @@ import "server-only";
 
 import type { AccountScope, WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { MoomooConnectionRepository } from "@/src/modules/platform/server/broker-connections/moomoo-connection-repository";
+import type { DailyTradeAnalyzerQueueOutcome } from "../contracts/daily-trade-analyzer-contracts";
 
 import {
   DailyTradeAnalyzerRepository,
@@ -11,12 +12,18 @@ import {
   dailyTradeFirstResultCoverageEnd,
   newYorkExtendedSession,
 } from "./daily-trade-analyzer-session";
+import { isMoomooMarketDataReady } from "./moomoo-market-data-access";
 
 const ONE_MINUTE_RETENTION_MILLISECONDS = 7 * 24 * 60 * 60 * 1000;
 const MOOMOO_DAILY_TRADE_PROVIDER: DailyTradeMarketDataProviderIdentity = Object.freeze({
   key: "moomoo_history_kline",
   adapterVersion: "moomoo_history_kline_v1",
 });
+
+export type DailyTradeAnalyzerQueueResult = Readonly<{
+  outcome: DailyTradeAnalyzerQueueOutcome;
+  queuedRoundTripIds: readonly string[];
+}>;
 
 function workspaceScope(scope: AccountScope): WorkspaceAccessScope {
   return Object.freeze({
@@ -37,13 +44,18 @@ export class DailyTradeMoomooAnalyzerService {
   ) {}
 
   queueAfterJournalRebuild(scope: AccountScope, roundTripIds: readonly string[]): readonly string[] {
-    const connection = this.connections.find(workspaceScope(scope));
-    if (
-      !connection || connection.state !== "active" ||
-      !connection.authorizedScopes.includes("quote:read")
-    ) return Object.freeze([]);
+    return this.queueAfterJournalRebuildWithOutcome(scope, roundTripIds).queuedRoundTripIds;
+  }
+
+  queueAfterJournalRebuildWithOutcome(
+    scope: AccountScope,
+    roundTripIds: readonly string[],
+  ): DailyTradeAnalyzerQueueResult {
     const now = this.now();
-    const queued: string[] = [];
+    const eligibleTargets: Array<Readonly<{
+      desiredCoverageEndUtc: string;
+      target: NonNullable<ReturnType<DailyTradeAnalyzerRepository["findEligibleTarget"]>>;
+    }>> = [];
     for (const roundTripId of [...new Set(roundTripIds)]) {
       if (this.repository.currentAnalysisMatchesProjection(scope, roundTripId)) {
         continue;
@@ -59,6 +71,23 @@ export class DailyTradeMoomooAnalyzerService {
       const desiredCoverageEnd = dailyTradeFirstResultCoverageEnd(session, target.finalExitAtUtc);
       if (desiredCoverageEnd === null) continue;
       const desiredCoverageEndUtc = new Date(desiredCoverageEnd * 1000).toISOString();
+      eligibleTargets.push(Object.freeze({ desiredCoverageEndUtc, target }));
+    }
+    if (eligibleTargets.length === 0) {
+      return Object.freeze({
+        outcome: "not_eligible",
+        queuedRoundTripIds: Object.freeze([]),
+      });
+    }
+    const connection = this.connections.find(workspaceScope(scope));
+    if (!isMoomooMarketDataReady(connection)) {
+      return Object.freeze({
+        outcome: "connection_required",
+        queuedRoundTripIds: Object.freeze([]),
+      });
+    }
+    const queued: string[] = [];
+    for (const { desiredCoverageEndUtc, target } of eligibleTargets) {
       this.repository.queueTarget({
         scope,
         target,
@@ -68,6 +97,10 @@ export class DailyTradeMoomooAnalyzerService {
       });
       queued.push(target.roundTripId);
     }
-    return Object.freeze(queued);
+    const queuedRoundTripIds = Object.freeze(queued);
+    return Object.freeze({
+      outcome: "queued",
+      queuedRoundTripIds,
+    });
   }
 }

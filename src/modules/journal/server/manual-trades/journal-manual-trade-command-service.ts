@@ -1,6 +1,7 @@
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { narrowWorkspaceAccessToAccount } from "@/src/modules/platform/contracts/workspace-access-scope";
 import { DailyTradeMoomooAnalyzerService } from "@/src/modules/level-analysis/server/daily-trade-moomoo-analyzer-service";
+import type { DailyTradeAnalyzerQueueOutcome } from "@/src/modules/level-analysis/contracts/daily-trade-analyzer-contracts";
 import {
   createCanonicalUtcTimestamp,
   platformFailure,
@@ -37,6 +38,7 @@ import { JournalManualTradePreviewService } from "./journal-manual-trade-preview
 export type JournalManualTradeCommitResult = JournalImportCommitResult & Readonly<{
   affectedDates: readonly string[];
   affectedPositionRefs: readonly string[];
+  analyzerQueueOutcome: DailyTradeAnalyzerQueueOutcome | null;
   relatedDecisionIds: readonly string[];
   rebuilds: readonly JournalChainRebuildResult[];
   styledTradeCount: number;
@@ -96,6 +98,9 @@ export class JournalManualTradeCommandService {
     return Object.freeze({
       committed: committed !== null,
       acceptedExecutionCount: committed?.acceptedExecutionCount ?? 0,
+      affectedDates: Object.freeze([
+        ...new Set(request.entries.map((entry) => entry.localDate)),
+      ].sort()),
       pendingDecisionCount: committed?.pendingDecisionCount ?? 0,
     });
   }
@@ -345,12 +350,13 @@ export class JournalManualTradeCommandService {
         styledTradeCount: preview.groups.length,
       });
     });
-    if (result.status !== "already_imported") {
-      this.dailyTradeAnalyzer?.queueAfterJournalRebuild(
+    let analyzerQueueOutcome: DailyTradeAnalyzerQueueOutcome | null = null;
+    if (result.status !== "already_imported" && this.dailyTradeAnalyzer) {
+      analyzerQueueOutcome = this.dailyTradeAnalyzer.queueAfterJournalRebuildWithOutcome(
         accountScope,
         result.rebuilds.flatMap((rebuild) => rebuild.roundTripIds),
-      );
+      ).outcome;
     }
-    return result;
+    return Object.freeze({ ...result, analyzerQueueOutcome });
   }
 }
