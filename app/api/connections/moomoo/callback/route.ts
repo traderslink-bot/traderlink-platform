@@ -14,8 +14,15 @@ import {
 } from "@/src/modules/platform/server/broker-connections/moomoo-oauth-cookies";
 import { exchangeMoomooCode, getMoomooOAuthConfig } from "@/src/modules/platform/server/broker-connections/moomoo-oauth";
 import { recordMoomooOperationFailure } from "@/src/modules/platform/server/broker-connections/moomoo-operation-observability";
+import {
+  MoomooOAuthPendingAttemptService,
+  recordMoomooOAuthPendingOutcome,
+} from "@/src/modules/platform/server/broker-connections/moomoo-oauth-pending-attempt-service";
 import { MoomooExecutionImportRepository } from "@/src/modules/journal/server/broker-imports/moomoo-execution-import-repository";
-import { createCanonicalUtcTimestamp } from "@/src/modules/platform/server/database/platform-migration-contract";
+import {
+  createCanonicalUtcTimestamp,
+  platformFailure,
+} from "@/src/modules/platform/server/database/platform-migration-contract";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -65,6 +72,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
   try {
     const identity = requireTraderLinkPlatformRequestIdentity(request.headers);
+    const consumed = withPlatformDatabase({ mode: "runtime" }, (database) =>
+      database.transaction(() => new MoomooOAuthPendingAttemptService(database).consume({
+        scope: identity.scope,
+        platformSessionId: identity.sessionId,
+        state,
+      })).immediate());
+    if (!consumed) {
+      platformFailure("TRADERLINK_BROKER_CONNECTION_OAUTH_INVALID", {
+        stage: "pending_attempt",
+      });
+    }
+    recordMoomooOAuthPendingOutcome("oauth_callback_consumed");
     const token = await exchangeMoomooCode({ config: getMoomooOAuthConfig(resolvePlatformPublicOrigin(request)), code, verifier });
     const now = new Date();
     const timestamp = createCanonicalUtcTimestamp(now);

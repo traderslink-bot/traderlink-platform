@@ -13,8 +13,12 @@ import {
   MOOMOO_OAUTH_STATE_COOKIE,
   MOOMOO_OAUTH_VERIFIER_COOKIE,
 } from "@/src/modules/platform/server/broker-connections/moomoo-oauth-cookies";
-import { buildMoomooAuthorizeUrl, createMoomooPkce, getMoomooOAuthConfig } from "@/src/modules/platform/server/broker-connections/moomoo-oauth";
+import { buildMoomooAuthorizeUrl, getMoomooOAuthConfig } from "@/src/modules/platform/server/broker-connections/moomoo-oauth";
 import { recordMoomooOperationFailure } from "@/src/modules/platform/server/broker-connections/moomoo-operation-observability";
+import {
+  MoomooOAuthPendingAttemptService,
+  recordMoomooOAuthPendingOutcome,
+} from "@/src/modules/platform/server/broker-connections/moomoo-oauth-pending-attempt-service";
 import { withPlatformDatabase } from "@/src/modules/platform/server/database/open-platform-database";
 
 export const runtime = "nodejs";
@@ -30,13 +34,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const publicOrigin = resolvePlatformPublicOrigin(request);
   const isWorkspaceOnboarding = request.nextUrl.searchParams.get("from") === "workspace-onboarding";
   try {
-    requireTraderLinkPlatformRequestIdentity(request.headers);
+    const identity = requireTraderLinkPlatformRequestIdentity(request.headers);
     if (process.env.NODE_ENV !== "production" && requestHostname(request) !== "127.0.0.1") {
       const destination = new URL("http://127.0.0.1:3010/api/connections/moomoo/start");
       if (isWorkspaceOnboarding) destination.searchParams.set("from", "workspace-onboarding");
       return NextResponse.redirect(destination);
     }
-    const pkce = createMoomooPkce();
+    const pkce = withPlatformDatabase({ mode: "runtime" }, (database) =>
+      database.transaction(() => new MoomooOAuthPendingAttemptService(database).prepare({
+        scope: identity.scope,
+        platformSessionId: identity.sessionId,
+        cookieState: request.cookies.get(MOOMOO_OAUTH_STATE_COOKIE)?.value ?? null,
+        cookieVerifier: request.cookies.get(MOOMOO_OAUTH_VERIFIER_COOKIE)?.value ?? null,
+      })).immediate());
     const response = NextResponse.redirect(buildMoomooAuthorizeUrl({ config: getMoomooOAuthConfig(publicOrigin), state: pkce.state, challenge: pkce.challenge }));
     setPlatformSessionAuthCookie(response, request, MOOMOO_OAUTH_STATE_COOKIE, pkce.state);
     setPlatformSessionAuthCookie(response, request, MOOMOO_OAUTH_VERIFIER_COOKIE, pkce.verifier);
@@ -51,6 +61,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     } else {
       deletePlatformAuthCookie(response, request, MOOMOO_OAUTH_ONBOARDING_RETURN_COOKIE);
     }
+    recordMoomooOAuthPendingOutcome(pkce.outcome);
     return response;
   } catch (error) {
     let reportedToAdmin = false;
