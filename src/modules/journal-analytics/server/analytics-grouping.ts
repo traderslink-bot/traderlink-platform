@@ -5,6 +5,7 @@ import type {
   JournalAnalyticsMoneyBasis,
 } from "../contracts/analytics-query";
 import {
+  JOURNAL_ANALYTICS_ENTRY_PRICE_COMPARISON_BANDS,
   JOURNAL_ANALYTICS_ENTRY_PRICE_BANDS,
   JOURNAL_ANALYTICS_MAX_GROUP_ROWS,
 } from "../contracts/analytics-query";
@@ -148,13 +149,17 @@ function groupDescriptor(
       return decimalBucket(row.maximumPositionQuantityDecimal);
     case "entry_notional_bucket":
       return decimalBucket(row.entryNotionalDecimal);
-    case "entry_price_bucket": {
+    case "entry_price_bucket":
+    case "entry_price_comparison": {
       if (compareExactDecimals(row.enteredQuantityDecimal, "0") <= 0) {
         platformFailure("TRADERLINK_PLATFORM_INTEGRITY_FAILED", {
           check: "analytics_entry_price_denominator",
         });
       }
-      const band = JOURNAL_ANALYTICS_ENTRY_PRICE_BANDS.find((candidate) =>
+      const bands = grouping === "entry_price_bucket"
+        ? JOURNAL_ANALYTICS_ENTRY_PRICE_BANDS
+        : JOURNAL_ANALYTICS_ENTRY_PRICE_COMPARISON_BANDS;
+      const band = bands.find((candidate) =>
         candidate.maximumExclusive === null || compareExactDecimals(
           row.entryNotionalDecimal,
           multiplyExactDecimals(row.enteredQuantityDecimal, candidate.maximumExclusive),

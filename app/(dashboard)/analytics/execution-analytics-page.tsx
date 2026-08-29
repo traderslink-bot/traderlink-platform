@@ -6,6 +6,7 @@ import Typography from "@mui/material/Typography";
 import { DashboardPage } from "@/app/dashboard-template";
 import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
 import {
+  JOURNAL_ANALYTICS_ENTRY_PRICE_COMPARISON_BANDS,
   JOURNAL_ANALYTICS_ENTRY_PRICE_BANDS,
   type JournalAnalyticsGrouping,
 } from "@/src/modules/journal-analytics/contracts/analytics-query";
@@ -31,6 +32,7 @@ import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/serve
 
 import {
   ExecutionAnalyticsClient,
+  type EntryPriceComparison,
   type EntryPriceInsights,
   type EntryPriceResult,
   type ExecutionChartData,
@@ -40,8 +42,10 @@ import { OverviewDateRangeControl, type OverviewDateRange } from "./overview-dat
 import { FeatureHelpLink } from "../feature-help-link";
 
 const CHART_GROUPINGS = ["entered_quantity_bucket", "maximum_position_bucket", "holding_duration_bucket"] as const satisfies readonly JournalAnalyticsGrouping[];
-const GROUPINGS = [...CHART_GROUPINGS, "entry_price_bucket"] as const satisfies readonly JournalAnalyticsGrouping[];
+const GROUPINGS = [...CHART_GROUPINGS, "entry_price_bucket", "entry_price_comparison"] as const satisfies readonly JournalAnalyticsGrouping[];
 const METRICS = ["net_pnl", "win_rate", "included_count", "win_count", "loss_count", "average_pnl"] as const;
+const ENTRY_PRICE_MINIMUM_TOTAL_TRADES = 30;
+const ENTRY_PRICE_MINIMUM_BAND_TRADES = 10;
 
 function metricFor(metrics: readonly JournalAnalyticsMetricResult[], id: string) {
   return metrics.find((metric) => metric.metricId === id) ?? null;
@@ -68,6 +72,7 @@ function entryPriceResults(
     const winRateValue = read("win_rate")?.value ?? null;
     return Object.freeze({
       averagePnl: read("average_pnl") ? formatJournalAnalyticsMetric(read("average_pnl")!) : "N/A",
+      averagePnlDecimal: metricDecimal(read("average_pnl")?.value ?? null),
       entryPriceBand: band.label,
       key: band.key,
       losses: metricNumber(read("loss_count")?.value ?? null),
@@ -85,39 +90,91 @@ function entryPriceResults(
   }));
 }
 
+function entryPriceComparison(
+  charts: JournalAnalyticsPartitionedResponse,
+): EntryPriceComparison {
+  const groups = charts.partitions.flatMap((partition) => partition.groups
+    .filter((group) => group.grouping === "entry_price_comparison"));
+  const results = Object.freeze(JOURNAL_ANALYTICS_ENTRY_PRICE_COMPARISON_BANDS.map((band) => {
+    const group = groups.find((candidate) => candidate.groupKey === band.key) ?? null;
+    const read = (metricId: string) => metricFor(group?.metrics ?? [], metricId);
+    const winRateValue = read("win_rate")?.value ?? null;
+    return Object.freeze({
+      averagePnl: read("average_pnl") ? formatJournalAnalyticsMetric(read("average_pnl")!) : "N/A",
+      averagePnlDecimal: metricDecimal(read("average_pnl")?.value ?? null),
+      entryPriceBand: band.label,
+      key: band.key,
+      tradeCount: metricNumber(read("included_count")?.value ?? null),
+      tradeCountDisplay: read("included_count") ? formatJournalAnalyticsMetric(read("included_count")!) : "N/A",
+      winRate: read("win_rate") ? formatJournalAnalyticsMetric(read("win_rate")!) : "N/A",
+      winRateDenominatorInteger: winRateValue?.kind === "rational" ? winRateValue.denominatorInteger : null,
+      winRateNumeratorDecimal: winRateValue?.kind === "rational" ? winRateValue.numeratorDecimal : null,
+    });
+  }));
+  const underOne = results.find((result) => result.key === "under_1")!;
+  const oneAndAbove = results.find((result) => result.key === "1_and_over")!;
+  const underOneTradeCount = underOne.tradeCount ?? 0;
+  const oneAndAboveTradeCount = oneAndAbove.tradeCount ?? 0;
+  const totalTradeCount = underOneTradeCount + oneAndAboveTradeCount;
+  const underOneTradesNeeded = Math.max(0, ENTRY_PRICE_MINIMUM_BAND_TRADES - underOneTradeCount);
+  const oneAndAboveTradesNeeded = Math.max(0, ENTRY_PRICE_MINIMUM_BAND_TRADES - oneAndAboveTradeCount);
+  const comparisonAvailable = underOneTradesNeeded === 0 && oneAndAboveTradesNeeded === 0;
+  const relation = (value: number | null): "higher" | "lower" | "equal" | null => value === null
+    ? null
+    : value > 0 ? "higher" : value < 0 ? "lower" : "equal";
+  const winRateComparison = !comparisonAvailable || underOne.winRateNumeratorDecimal === null || underOne.winRateDenominatorInteger === null || oneAndAbove.winRateNumeratorDecimal === null || oneAndAbove.winRateDenominatorInteger === null
+    ? null
+    : relation(compareExactDecimals(
+      multiplyExactDecimals(underOne.winRateNumeratorDecimal, oneAndAbove.winRateDenominatorInteger),
+      multiplyExactDecimals(oneAndAbove.winRateNumeratorDecimal, underOne.winRateDenominatorInteger),
+    ));
+  const averagePnlComparison = !comparisonAvailable || underOne.averagePnlDecimal === null || oneAndAbove.averagePnlDecimal === null
+    ? null
+    : relation(compareExactDecimals(underOne.averagePnlDecimal, oneAndAbove.averagePnlDecimal));
+  const evidenceState = totalTradeCount < ENTRY_PRICE_MINIMUM_TOTAL_TRADES
+    ? "needs_overall_history" as const
+    : !comparisonAvailable || winRateComparison === null || averagePnlComparison === null
+      ? "needs_comparison_history" as const
+      : Math.min(underOneTradeCount, oneAndAboveTradeCount) * 2 < Math.max(underOneTradeCount, oneAndAboveTradeCount)
+        ? "uneven_sample" as const
+        : "comparable" as const;
+  return Object.freeze({
+    averagePnlComparison,
+    evidenceState,
+    oneAndAbove,
+    oneAndAboveTradesNeeded,
+    totalTradeCount,
+    underOne,
+    underOneTradesNeeded,
+    winRateComparison,
+  });
+}
+
 function entryPriceInsights(
   results: readonly EntryPriceResult[],
 ): EntryPriceInsights {
-  const included = results.filter((result) => result.tradeCount !== null &&
-    result.tradeCount > 0);
-  const netPnlRanked = included.filter((result) => result.netPnlDecimal !== null);
+  const included = results.filter((result) => ["1_to_2", "2_to_3", "3_to_5"].includes(result.key) &&
+    result.tradeCount !== null && result.tradeCount >= ENTRY_PRICE_MINIMUM_BAND_TRADES);
+  const averagePnlRanked = included.filter((result) => result.averagePnlDecimal !== null);
   const winRateRanked = included.filter((result) => result.winRateNumeratorDecimal !== null &&
     result.winRateDenominatorInteger !== null);
   const compareWinRates = (left: EntryPriceResult, right: EntryPriceResult) => compareExactDecimals(
     multiplyExactDecimals(left.winRateNumeratorDecimal!, right.winRateDenominatorInteger!),
     multiplyExactDecimals(right.winRateNumeratorDecimal!, left.winRateDenominatorInteger!),
   );
-  const largestLoss = netPnlRanked.filter((result) => compareExactDecimals(
-    result.netPnlDecimal!,
-    "0",
-  ) < 0).sort((left, right) => compareExactDecimals(
-    left.netPnlDecimal!,
-    right.netPnlDecimal!,
+  const highestAveragePnl = averagePnlRanked.sort((left, right) => compareExactDecimals(
+    right.averagePnlDecimal!, left.averagePnlDecimal!,
   ))[0] ?? null;
-  const mostProfitable = netPnlRanked.filter((result) => compareExactDecimals(
-    result.netPnlDecimal!,
-    "0",
-  ) > 0).sort((left, right) => compareExactDecimals(
-    right.netPnlDecimal!,
-    left.netPnlDecimal!,
+  const lowestAveragePnl = averagePnlRanked.sort((left, right) => compareExactDecimals(
+    left.averagePnlDecimal!, right.averagePnlDecimal!,
   ))[0] ?? null;
   const highestWinRate = winRateRanked.sort((left, right) => compareWinRates(right, left))[0] ?? null;
   const lowestWinRate = winRateRanked.sort(compareWinRates)[0] ?? null;
   return Object.freeze({
     highestWinRateKey: highestWinRate?.key ?? null,
-    largestLossKey: largestLoss?.key ?? null,
+    highestAveragePnlKey: highestAveragePnl?.key ?? null,
     lowestWinRateKey: lowestWinRate?.key ?? null,
-    mostProfitableKey: mostProfitable?.key ?? null,
+    lowestAveragePnlKey: lowestAveragePnl?.key ?? null,
   });
 }
 
@@ -185,6 +242,7 @@ export async function ExecutionAnalyticsPage({ searchParams }: { searchParams: R
     return [grouping, Object.freeze(points)];
   }))) as ExecutionChartData;
   const priceResults = entryPriceResults(result.charts);
+  const priceComparison = entryPriceComparison(result.charts);
   const priceInsights = entryPriceInsights(priceResults);
   const rows: readonly ExecutionTradeRow[] = result.trades?.rows.map((row) => ({ averageEntry: money(row.averageEntryPriceDecimal ?? null, result.trades?.currency ?? null), averageEntryValue: Number(row.averageEntryPriceDecimal ?? 0), averageExit: money(row.averageExitPriceDecimal ?? null, result.trades?.currency ?? null), averageExitValue: Number(row.averageExitPriceDecimal ?? 0), closed: timestamp(row.closedAtUtc), closedValue: row.closedAtUtc, direction: row.direction, executions: row.uniqueExecutionCount, maximumPosition: formatJournalAnalyticsDecimal(row.maximumPositionQuantityDecimal, 2, true), maximumPositionValue: Number(row.maximumPositionQuantityDecimal), netPnl: money(row.selectedPnlDecimal, result.trades?.currency ?? null), netPnlDecimal: row.selectedPnlDecimal, netPnlValue: Number(row.selectedPnlDecimal ?? 0), opened: timestamp(row.openedAtUtc), openedValue: row.openedAtUtc, roundTripId: row.roundTripId, ticker: row.displayedSymbol, tradeType: row.tradeClassification === "day_trade" ? "Day trade" : "Multi-day trade", tradeTypeValue: row.tradeClassification, holdTime: duration(row.holdingDurationMilliseconds), holdTimeValue: row.holdingDurationMilliseconds })) ?? [];
   const currency = result.trades?.currency ?? result.charts.partitions[0]?.currency ?? null;
@@ -192,9 +250,10 @@ export async function ExecutionAnalyticsPage({ searchParams }: { searchParams: R
     chartData,
     currency,
     dateRange: selectedRange,
+    priceComparison,
     priceInsights,
     priceResults,
     rows,
   });
-  return <><OfflineSavedViewCapture accountTimezone={result.trades?.timezone ?? result.charts.partitions[0]?.timezone ?? null} calculationVersion={`journal-analytics-${result.charts.registryVersion}`} coverage={journalAnalyticsOfflineRouteCoverage("analytics-execution")} generatedAtUtc={result.charts.generatedAtUtc} model={offlineModel} pathname="/analytics/execution" queryIdentity={`range:${selectedRange.kind}:${selectedRange.startDate ?? "all"}:${selectedRange.endDate ?? "all"}`} reportingCurrency={currency} routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION} viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS["analytics-execution"]} /><DashboardPage><Box sx={{ alignItems: "flex-start", display: "flex", gap: 1, justifyContent: "space-between" }}><Box><Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">Analytics</Typography><Typography component="h1" sx={{ mt: 0.5 }} variant="h1">Trade Breakdown</Typography><Typography color="text.secondary" sx={{ mt: 0.5 }}>See how your completed trades were entered, sized, held, and exited.</Typography></Box><FeatureHelpLink href="/help/core-analytics" label="Core Analytics" size="medium" /></Box><Box sx={{ alignItems: { sm: "center" }, display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 0.5 }}><OverviewDateRangeControl href="/analytics/execution" value={selectedRange} /><FeatureHelpLink href="/help/core-analytics/overview-and-date-range#set-a-date-range" label="Analytics date range" /></Box><ExecutionAnalyticsClient chartData={chartData} currency={currency} priceInsights={priceInsights} priceResults={priceResults} rows={rows} /></DashboardPage></>;
+  return <><OfflineSavedViewCapture accountTimezone={result.trades?.timezone ?? result.charts.partitions[0]?.timezone ?? null} calculationVersion={`journal-analytics-${result.charts.registryVersion}`} coverage={journalAnalyticsOfflineRouteCoverage("analytics-execution")} generatedAtUtc={result.charts.generatedAtUtc} model={offlineModel} pathname="/analytics/execution" queryIdentity={`range:${selectedRange.kind}:${selectedRange.startDate ?? "all"}:${selectedRange.endDate ?? "all"}`} reportingCurrency={currency} routeViewVersion={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION} viewKey={JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS["analytics-execution"]} /><DashboardPage><Box sx={{ alignItems: "flex-start", display: "flex", gap: 1, justifyContent: "space-between" }}><Box><Typography color="primary.main" sx={{ fontWeight: 800 }} variant="caption">Analytics</Typography><Typography component="h1" sx={{ mt: 0.5 }} variant="h1">Trade Breakdown</Typography><Typography color="text.secondary" sx={{ mt: 0.5 }}>See how your completed trades were entered, sized, held, and exited.</Typography></Box><FeatureHelpLink href="/help/core-analytics" label="Core Analytics" size="medium" /></Box><Box sx={{ alignItems: { sm: "center" }, display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 0.5 }}><OverviewDateRangeControl href="/analytics/execution" value={selectedRange} /><FeatureHelpLink href="/help/core-analytics/overview-and-date-range#set-a-date-range" label="Analytics date range" /></Box><ExecutionAnalyticsClient chartData={chartData} currency={currency} priceComparison={priceComparison} priceInsights={priceInsights} priceResults={priceResults} rows={rows} /></DashboardPage></>;
 }

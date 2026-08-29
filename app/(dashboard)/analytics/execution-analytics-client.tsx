@@ -25,8 +25,10 @@ type ChartStyle = "columns" | "horizontal_bars";
 type Point = Readonly<{ key: string; label: string; metrics: Readonly<Record<ExecutionMetricId, Readonly<{ display: string; value: number | null }>>> }>;
 export type ExecutionChartData = Readonly<Record<ChartId, readonly Point[]>>;
 export type ExecutionTradeRow = Readonly<{ roundTripId: string; ticker: string; direction: "long" | "short"; tradeType: string; tradeTypeValue: "day_trade" | "multi_day_trade"; opened: string; openedValue: string; closed: string; closedValue: string; executions: number; averageEntry: string; averageEntryValue: number; averageExit: string; averageExitValue: number; maximumPosition: string; maximumPositionValue: number; holdTime: string; holdTimeValue: number; netPnl: string; netPnlDecimal: string | null; netPnlValue: number }>;
-export type EntryPriceResult = Readonly<{ averagePnl: string; entryPriceBand: string; key: string; losses: number | null; lossesDisplay: string; netPnl: string; netPnlDecimal: string | null; tradeCount: number | null; tradeCountDisplay: string; winRate: string; winRateDenominatorInteger: string | null; winRateNumeratorDecimal: string | null; wins: number | null; winsDisplay: string }>;
-export type EntryPriceInsights = Readonly<{ highestWinRateKey: string | null; largestLossKey: string | null; lowestWinRateKey: string | null; mostProfitableKey: string | null }>;
+export type EntryPriceResult = Readonly<{ averagePnl: string; averagePnlDecimal: string | null; entryPriceBand: string; key: string; losses: number | null; lossesDisplay: string; netPnl: string; netPnlDecimal: string | null; tradeCount: number | null; tradeCountDisplay: string; winRate: string; winRateDenominatorInteger: string | null; winRateNumeratorDecimal: string | null; wins: number | null; winsDisplay: string }>;
+export type EntryPriceComparisonResult = Readonly<{ averagePnl: string; averagePnlDecimal: string | null; entryPriceBand: string; key: string; tradeCount: number | null; tradeCountDisplay: string; winRate: string; winRateDenominatorInteger: string | null; winRateNumeratorDecimal: string | null }>;
+export type EntryPriceComparison = Readonly<{ averagePnlComparison: "higher" | "lower" | "equal" | null; evidenceState: "needs_overall_history" | "needs_comparison_history" | "uneven_sample" | "comparable"; oneAndAbove: EntryPriceComparisonResult; oneAndAboveTradesNeeded: number; totalTradeCount: number; underOne: EntryPriceComparisonResult; underOneTradesNeeded: number; winRateComparison: "higher" | "lower" | "equal" | null }>;
+export type EntryPriceInsights = Readonly<{ highestAveragePnlKey: string | null; highestWinRateKey: string | null; lowestAveragePnlKey: string | null; lowestWinRateKey: string | null }>;
 
 const CHARTS: readonly Readonly<{ id: ChartId; title: string }>[] = [
   { id: "entered_quantity_bucket", title: "Entry size" },
@@ -84,53 +86,54 @@ function ChartPanel({ chart, points, metricId }: { chart: (typeof CHARTS)[number
   return <Paper sx={{ minWidth: 0, p: { xs: 1.5, sm: 2.25 } }} variant="outlined"><Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" }, justifyContent: "space-between" }}><Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">{chart.title}</Typography><TextField aria-label={`${chart.title} chart type`} onChange={(event) => setStyle(event.target.value as ChartStyle)} select size="small" sx={{ minWidth: 150 }} value={style}><MenuItem value="horizontal_bars">Horizontal bars</MenuItem><MenuItem value="columns">Columns</MenuItem></TextField></Stack><Typography color="text.secondary" variant="body2">{MEASURES.find((measure) => measure.id === metricId)?.label}</Typography><Chart metricId={metricId} points={points} style={style} /></Paper>;
 }
 
-type EntryPriceInsightKind = "highest_win_rate" | "lowest_win_rate" | "loss" | "profit";
+type EntryPriceInsightKind = "highest_win_rate" | "lowest_win_rate" | "highest_average_pnl" | "lowest_average_pnl";
 
 function EntryPriceInsight({ kind, result }: { kind: EntryPriceInsightKind; result: EntryPriceResult | null }) {
-  const isBest = kind === "highest_win_rate" || kind === "profit";
+  const isBest = kind === "highest_win_rate" || kind === "highest_average_pnl";
   const statement = kind === "highest_win_rate"
-    ? "your highest win rate comes from stocks entered:"
+    ? "Highest recorded win rate for stocks entered:"
     : kind === "lowest_win_rate"
-      ? "your lowest win rate comes from stocks entered:"
-      : kind === "loss"
-        ? "your largest recorded losses come from stocks entered:"
-        : "you are most profitable when entering stocks:";
-  const unavailable = kind === "highest_win_rate" || kind === "lowest_win_rate"
-    ? "No entry-price range has a recorded win rate in these results."
-    : kind === "loss"
-      ? "No entry-price range has a net loss in these results."
-      : "No entry-price range has a net profit in these results.";
-  const limitedHistory = result !== null && result.tradeCount !== null && result.tradeCount < 10;
+      ? "Lowest recorded win rate for stocks entered:"
+      : kind === "highest_average_pnl"
+        ? "Highest average P/L for stocks entered:"
+        : "Lowest average P/L for stocks entered:";
   const resultLine = result === null
     ? null
     : kind === "highest_win_rate" || kind === "lowest_win_rate"
       ? `${result.winRate} winners from ${result.tradeCountDisplay} trades`
-      : `${result.netPnl} from ${result.tradeCountDisplay} trades`;
-  const resultColor = kind === "profit" ? "success.main" : kind === "loss" ? "error.main" : "text.primary";
+      : `${result.averagePnl} average P/L across ${result.tradeCountDisplay} trades`;
+  const resultColor = isBest ? "success.main" : "error.main";
   return <Box sx={{ borderColor: isBest ? "success.main" : "error.main", borderLeft: 3, pl: 1.25 }}>
-    <Typography color="text.secondary" variant="body2">{result === null ? unavailable : `${limitedHistory ? "Limited history: " : ""}${statement}`}</Typography>
+    <Typography color="text.secondary" variant="body2">{statement}</Typography>
     {result ? <><Typography sx={{ fontSize: { xs: 17, sm: 18 }, fontWeight: 850, lineHeight: 1.35, mt: 0.35 }}>{result.entryPriceBand}.</Typography><Typography color={resultColor} sx={{ mt: 0.25 }} variant="body2">{resultLine}</Typography></> : null}
   </Box>;
 }
 
-function EntryPriceResults({ insights, results }: { insights: EntryPriceInsights; results: readonly EntryPriceResult[] }) {
+function EntryPriceComparison({ comparison }: { comparison: EntryPriceComparison }) {
+  if (comparison.evidenceState === "needs_overall_history") {
+    return <Stack spacing={0.75}><Typography component="h3" sx={{ fontWeight: 850 }} variant="subtitle1">Build your entry-price history</Typography><Typography color="text.secondary" variant="body2">Add {30 - comparison.totalTradeCount} more completed {30 - comparison.totalTradeCount === 1 ? "trade" : "trades"} to reach 30. The table shows your recorded results, but there is not enough overall history to identify useful entry-price patterns.</Typography><Typography color="text.secondary" variant="body2">Once enough history is available, this section compares Under $1.00 with $1.00 and above, then highlights well-supported price ranges from $1.00 to under $5.00.</Typography></Stack>;
+  }
+  if (comparison.evidenceState === "needs_comparison_history") {
+    const needs = [comparison.underOneTradesNeeded > 0 ? `Under $1.00 needs ${comparison.underOneTradesNeeded} more` : null, comparison.oneAndAboveTradesNeeded > 0 ? `$1.00 and above needs ${comparison.oneAndAboveTradesNeeded} more` : null].filter((value): value is string => value !== null);
+    return <Stack spacing={0.75}><Typography component="h3" sx={{ fontWeight: 850 }} variant="subtitle1">More comparison history needed</Typography><Typography color="text.secondary" variant="body2">{needs.join(". ")}{needs.length > 0 ? "." : ""} Each side needs at least 10 completed trades before Trade Breakdown compares their results.</Typography></Stack>;
+  }
+  const winRate = comparison.winRateComparison === "higher" ? "higher" : comparison.winRateComparison === "lower" ? "lower" : "the same";
+  const averagePnl = comparison.averagePnlComparison === "higher" ? "higher" : comparison.averagePnlComparison === "lower" ? "lower" : "the same";
+  const sentence = `Under-$1.00 trades had ${winRate === "the same" ? "the same win rate" : `a ${winRate} win rate`} and ${averagePnl === "the same" ? "the same average P/L" : `${averagePnl} average P/L`} than $1.00+ trades.`;
+  return <Stack spacing={0.75}><Typography component="h3" sx={{ fontWeight: 850 }} variant="subtitle1">Under $1.00 compared with $1.00+</Typography><Typography color="text.secondary" variant="body2">{sentence}</Typography><Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" } }}><Box><Typography sx={{ fontWeight: 800 }} variant="body2">Under $1.00</Typography><Typography color="text.secondary" variant="body2">{comparison.underOne.winRate} win rate · {comparison.underOne.averagePnl} avg P/L · {comparison.underOne.tradeCountDisplay} trades</Typography></Box><Box><Typography sx={{ fontWeight: 800 }} variant="body2">$1.00 and above</Typography><Typography color="text.secondary" variant="body2">{comparison.oneAndAbove.winRate} win rate · {comparison.oneAndAbove.averagePnl} avg P/L · {comparison.oneAndAbove.tradeCountDisplay} trades</Typography></Box></Box><Typography color={comparison.evidenceState === "uneven_sample" ? "warning.main" : "text.secondary"} variant="body2">{comparison.evidenceState === "uneven_sample" ? `Uneven sample: ${comparison.underOne.tradeCountDisplay} trades under $1.00 compared with ${comparison.oneAndAbove.tradeCountDisplay} trades at $1.00 and above. Treat this as direction, not a firm conclusion.` : "Comparable sample sizes support this historical comparison."}</Typography></Stack>;
+}
+
+function EntryPriceResults({ comparison, insights, results }: { comparison: EntryPriceComparison; insights: EntryPriceInsights; results: readonly EntryPriceResult[] }) {
   const highestWinRate = results.find((result) => result.key === insights.highestWinRateKey) ?? null;
-  const largestLoss = results.find((result) => result.key === insights.largestLossKey) ?? null;
+  const highestAveragePnl = results.find((result) => result.key === insights.highestAveragePnlKey) ?? null;
   const lowestWinRate = results.find((result) => result.key === insights.lowestWinRateKey) ?? null;
-  const mostProfitable = results.find((result) => result.key === insights.mostProfitableKey) ?? null;
+  const lowestAveragePnl = results.find((result) => result.key === insights.lowestAveragePnlKey) ?? null;
+  const hasRangeInsights = [highestWinRate, highestAveragePnl, lowestWinRate, lowestAveragePnl].some((result) => result !== null);
   return <Paper sx={{ minWidth: 0, p: { xs: 1.5, sm: 2.25 } }} variant="outlined">
     <Stack spacing={1.5}>
       <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Entry Price Results</Typography>
-      <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" } }}>
-        <Stack spacing={2}>
-          <EntryPriceInsight kind="highest_win_rate" result={highestWinRate} />
-          <EntryPriceInsight kind="profit" result={mostProfitable} />
-        </Stack>
-        <Stack spacing={2}>
-          <EntryPriceInsight kind="lowest_win_rate" result={lowestWinRate} />
-          <EntryPriceInsight kind="loss" result={largestLoss} />
-        </Stack>
-      </Box>
+      <EntryPriceComparison comparison={comparison} />
+      {comparison.evidenceState === "needs_overall_history" ? null : hasRangeInsights ? <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))" } }}><Stack spacing={2}><EntryPriceInsight kind="highest_win_rate" result={highestWinRate} /><EntryPriceInsight kind="highest_average_pnl" result={highestAveragePnl} /></Stack><Stack spacing={2}><EntryPriceInsight kind="lowest_win_rate" result={lowestWinRate} /><EntryPriceInsight kind="lowest_average_pnl" result={lowestAveragePnl} /></Stack></Box> : <Typography color="text.secondary" variant="body2">No price range from $1.00 to under $5.00 has 10 completed trades yet. The table remains available while that history builds.</Typography>}
       <HorizontalScrollRegion label="Entry price results table" minTableWidth={720}>
         <Table size="small" sx={{ width: "auto", "& .MuiTableCell-root": { px: 0.875, whiteSpace: "nowrap" }, "& .MuiTableCell-root:first-of-type": { minWidth: 164 } }}><TableHead><TableRow><TableCell>Entry price</TableCell><TableCell align="right">Net P/L</TableCell><TableCell align="right">Trades</TableCell><TableCell align="right">Wins</TableCell><TableCell align="right">Losses</TableCell><TableCell align="right">Win rate</TableCell><TableCell align="right">Avg P/L</TableCell></TableRow></TableHead><TableBody>{results.map((result) => <TableRow key={result.key}><TableCell sx={{ fontWeight: 800 }}>{result.entryPriceBand}</TableCell><TableCell align="right" sx={{ color: result.netPnlDecimal !== null && result.netPnlDecimal.startsWith("-") ? "error.main" : "success.main", fontWeight: 800 }}>{result.netPnl}</TableCell><TableCell align="right">{result.tradeCountDisplay}</TableCell><TableCell align="right">{result.winsDisplay}</TableCell><TableCell align="right">{result.lossesDisplay}</TableCell><TableCell align="right">{result.winRate}</TableCell><TableCell align="right">{result.averagePnl}</TableCell></TableRow>)}</TableBody></Table>
       </HorizontalScrollRegion>
@@ -139,7 +142,7 @@ function EntryPriceResults({ insights, results }: { insights: EntryPriceInsights
   </Paper>;
 }
 
-export function ExecutionAnalyticsClient({ chartData, currency, offline = false, priceInsights, priceResults, rows }: { chartData: ExecutionChartData; currency: string | null; offline?: boolean; priceInsights: EntryPriceInsights; priceResults: readonly EntryPriceResult[]; rows: readonly ExecutionTradeRow[] }) {
+export function ExecutionAnalyticsClient({ chartData, currency, offline = false, priceComparison, priceInsights, priceResults, rows }: { chartData: ExecutionChartData; currency: string | null; offline?: boolean; priceComparison: EntryPriceComparison; priceInsights: EntryPriceInsights; priceResults: readonly EntryPriceResult[]; rows: readonly ExecutionTradeRow[] }) {
   const [metricId, setMetricId] = useState<ExecutionMetricId>("net_pnl");
   const [ticker, setTicker] = useState("");
   const [direction, setDirection] = useState<"all" | "long" | "short">("all");
@@ -161,7 +164,7 @@ export function ExecutionAnalyticsClient({ chartData, currency, offline = false,
         <FeatureHelpLink href="/help/core-analytics/timing-and-execution#read-execution" label="Trade Breakdown measures" />
       </Stack>
       <Box sx={{ display: "grid", gap: 2.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", lg: "minmax(0, 1.25fr) minmax(0, 0.75fr)" } }}>
-        <EntryPriceResults insights={priceInsights} results={priceResults} />
+        <EntryPriceResults comparison={priceComparison} insights={priceInsights} results={priceResults} />
         <Stack spacing={2.5}>
           {[CHARTS[1], CHARTS[0], CHARTS[2]].map((chart) => <ChartPanel chart={chart} key={chart.id} metricId={metricId} points={chartData[chart.id]} />)}
         </Stack>

@@ -112,14 +112,20 @@ sortable trade table shows ticker, direction, factual day/multi-day
 classification, opened and closed time, execution count, average entry/exit,
 maximum position, hold time and Net P/L.
 
-Entry Price Results presents the exact weighted average entry-price bands for
-the same completed-trade population. It leads with the largest recorded loss
-band and most profitable band, always includes the completed-trade count and
-qualifies a band with fewer than 10 included trades as limited history. The
-complete price-band table remains visible beneath those statements; each
-completed trade belongs to one band, so its counts and selected-basis Net P/L
-reconcile to the page population. This is observed history, not a future price
-recommendation.
+Entry Price Results presents exact weighted-average entry-price bands for the
+same completed-trade population: Under $1.00, $1.00 to under $2.00, $2.00 to
+under $3.00, $3.00 to under $5.00 and $5.00+. Its primary question is whether
+the trader's recorded Under-$1.00 results differ from $1.00-and-above results.
+The comparison uses win rate and average P/L rather than total P/L, which would
+favor a group with more trades. It never alters or equalizes trade counts:
+fewer than 30 completed trades suppresses all findings; either comparison side
+with fewer than 10 trades is explicitly incomplete; and a greater-than-2:1
+count difference is called an uneven sample and presented only as direction.
+The supporting $1.00-to-under-$5.00 findings require at least 10 trades in
+their own band and use win rate or average P/L, never total P/L. The factual
+table remains visible in every state; each completed trade belongs to one band,
+so its counts and selected-basis Net P/L reconcile to the page population.
+This is observed history, not a future price recommendation.
 
 Scale-ins, scale-outs and re-entries are not shown as labels until their exact
 per-trade definitions and read contract are implemented. If that cannot be

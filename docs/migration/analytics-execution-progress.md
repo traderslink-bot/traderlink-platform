@@ -41,6 +41,17 @@ claim about a page failure.
   contract can prove them exactly.
 - Generic cards, source/application-maintenance statistics and filler charts.
 
+## Entry-price evidence update - 2026-08-29
+
+Entry Price Results now treats Under $1.00 versus $1.00 and above as the
+primary small-cap evidence question. It preserves exact completed-trade facts,
+does not synthetically balance unequal samples, and uses the governed grouping
+path for every displayed count, win rate and average P/L. The table retains
+five factual ranges through $5.00+; only eligible $1.00-to-under-$5.00 ranges
+can supply supporting findings. The page withholds conclusions before 30
+completed trades, requires 10 trades per compared population and calls a
+greater-than-2:1 population difference directional rather than conclusive.
+
 ## Verification boundary
 
 Targeted ESLint, project TypeScript and diff-whitespace checks pass. No test

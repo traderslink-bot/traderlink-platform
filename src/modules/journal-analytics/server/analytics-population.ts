@@ -54,6 +54,7 @@ const supportedGroupings = new Set<JournalAnalyticsGrouping>([
   "maximum_position_bucket",
   "entry_notional_bucket",
   "entry_price_bucket",
+  "entry_price_comparison",
   "realized_outcome",
 ]);
 

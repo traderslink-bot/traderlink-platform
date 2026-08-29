@@ -1,6 +1,6 @@
 # Entry Price Results Progress
 
-**Status:** Ready for owner visual review
+**Status:** Updated evidence model implemented; owner visual review required
 
 **Controlling records:** [Analytics Page Architecture Plan](analytics-pages-architecture-plan.md), [Trade Breakdown Progress](analytics-execution-progress.md)
 
@@ -11,13 +11,17 @@
   analysis area.
 - [x] Stack Maximum Position, Entry Size and Hold Time in the right column, in
   that order.
-- [x] Show direct factual highest-win-rate and most-profitable entry-price
-  statements in the left column, with lowest-win-rate and largest-loss
-  statements in the right column above the complete price-band table.
+- [x] Make Under $1.00 versus $1.00 and above the primary question, using
+  recorded win rate and average P/L rather than volume-biased total P/L.
 - [x] Use exact weighted average entry price for one completed-trade band per
-  trade: Under $0.50; $0.50 to under $1.00; $1.00 to under $2.00; $2.00 to
-  under $3.00; $3.00 to under $5.00; $5.00 to under $10.00; $10.00 to under
-  $20.00; and $20.00+.
+  trade: Under $1.00; $1.00 to under $2.00; $2.00 to under $3.00; $3.00 to
+  under $5.00; and $5.00+.
+- [x] Withhold every conclusion until the selected range has 30 completed
+  trades. Show the factual table and explain what the page will compare once
+  sufficient history exists.
+- [x] Require 10 completed trades on both sides of the Under-$1.00 comparison
+  and in each supporting $1.00-to-under-$5.00 price band. Flag a more-than-2:1
+  group-count difference as directional, not conclusive.
 - [x] Keep the page's current account/date scope, selected-basis fee coverage,
   exact calculations and offline saved view aligned.
 - [x] Mark bands with fewer than 10 included closed trades as limited history.
@@ -33,9 +37,9 @@
   apparent difference from the dollar results.
 - Keep the seven-column table compact and left-aligned on desktop, while
   retaining horizontal scrolling when a smaller viewport needs it.
-- Make the price band the larger bold line in every finding; show the dollar
-  result or win rate underneath in regular weight. Apply Limited history only
-  to a finding based on fewer than 10 included closed trades.
+- Make the price band the larger bold line in every supporting finding; show
+  its average P/L or win rate underneath in regular weight. Never make a
+  finding from a band with fewer than 10 included closed trades.
 - [x] Keep Core Analytics Help aligned with the weighted-entry-price,
   highest/lowest win-rate, largest-loss, most-profitable and limited-history
   meanings.
@@ -53,4 +57,9 @@
   the fallback ESLint package cannot load the repository configuration.
   Vitest, a local server and broad checks were not run.
 - [x] Inspect the narrow diff and commit only the assigned slice.
+- [x] Preserve exact $1.00 and $5.00 price boundaries in the governed
+  grouping path and cover them with the focused analytics-service test.
+- [x] Run the permitted static check: `git diff --check` passes. The assigned
+  worktree has no installed dependencies, and the current low-resource scope
+  prohibits running the focused test or a local server.
 - [ ] Obtain owner visual/product approval before acceptance or release work.

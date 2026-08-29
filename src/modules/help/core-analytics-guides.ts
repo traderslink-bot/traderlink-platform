@@ -76,8 +76,9 @@ export const CORE_ANALYTICS_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
     ]),
     section("read-execution", "Read Trade Breakdown", "Trade Breakdown groups completed trades by entry price, entry size, maximum position and holding duration.", ["trade breakdown", "execution analytics", "entry price", "entry size", "maximum position", "holding time", "long short"], [
       bullets([
-        "Entry Price Results groups every completed trade once by its weighted average entry price across its recorded entries and adds. The summary identifies the highest and lowest win-rate bands, the largest recorded loss band and the most profitable band, while the complete table shows every price range.",
-        "A finding based on a price range with fewer than 10 included closed trades says Limited history. Its result is still recorded history, but it is not presented as a repeatable conclusion.",
+        "Entry Price Results groups every completed trade once by its weighted average entry price across its recorded entries and adds. Its table shows Under $1.00, $1.00 to under $2.00, $2.00 to under $3.00, $3.00 to under $5.00 and $5.00+.",
+        "The main comparison is Under $1.00 versus $1.00 and above. It uses win rate and average P/L rather than total P/L, because a group with more trades can otherwise appear stronger simply from having more trades.",
+        "Trade Breakdown does not make any entry-price finding until the selected range has 30 completed trades. Each side of the Under-$1.00 comparison needs at least 10 trades, and each $1.00 to under $5.00 range needs at least 10 trades before it can appear in a supporting finding. An uneven count is shown as direction rather than a firm conclusion.",
         "Choose Net P/L, Win rate or Trade count to change the chart measure.",
         "Use the chart-style control to switch between horizontal bars and columns.",
         "Use the ticker, direction and trade-type filters to narrow the completed-trade evidence.",

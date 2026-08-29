@@ -484,6 +484,8 @@ describe("Journal Analytics population, accumulation and grouping", () => {
         "entered_quantity_bucket",
         "maximum_position_bucket",
         "entry_notional_bucket",
+        "entry_price_bucket",
+        "entry_price_comparison",
         "realized_outcome",
       ],
       ["total_trades", "gross_pnl"],
@@ -491,13 +493,41 @@ describe("Journal Analytics population, accumulation and grouping", () => {
       15,
     );
     expect(grouped.reconciliation.status).toBe("reconciled");
-    expect(new Set(grouped.groups.map((group) => group.grouping)).size).toBe(15);
+    expect(new Set(grouped.groups.map((group) => group.grouping)).size).toBe(17);
     const serialized = JSON.stringify(grouped);
     expect(serialized).not.toContain(accountId);
     expect(serialized).not.toContain(instrumentA);
     expect(serialized).not.toContain(instrumentB);
     expect(grouped.groups.find((group) => group.grouping === "account"))
       .toMatchObject({ groupKey: "account_1", label: "Account 1" });
+  });
+
+  it("keeps the small-cap bands and under-$1 comparison exact", () => {
+    const factSet = Object.freeze({
+      ...serviceFactSet(),
+      roundTrips: Object.freeze([
+        factReadyRoundTrip("under-one", "AAA", "2026-01-01", "0.99", "1.99"),
+        factReadyRoundTrip("one", "AAA", "2026-01-02", "1", "2"),
+        factReadyRoundTrip("under-five", "AAA", "2026-01-03", "4.99", "5.99"),
+        factReadyRoundTrip("five", "AAA", "2026-01-04", "5", "6"),
+      ]),
+    });
+    const response = calculateJournalAnalyticsResponse(factSet, query({
+      groupings: Object.freeze(["entry_price_bucket", "entry_price_comparison"]),
+      metricIds: Object.freeze(["included_count"]),
+    }));
+    const groups = response.partitions[0].groups.map((group) => ({
+      grouping: group.grouping,
+      key: group.groupKey,
+    }));
+    expect(groups).toEqual(expect.arrayContaining([
+      { grouping: "entry_price_bucket", key: "under_1" },
+      { grouping: "entry_price_bucket", key: "1_to_2" },
+      { grouping: "entry_price_bucket", key: "3_to_5" },
+      { grouping: "entry_price_bucket", key: "5_and_over" },
+      { grouping: "entry_price_comparison", key: "under_1" },
+      { grouping: "entry_price_comparison", key: "1_and_over" },
+    ]));
   });
 
   it("uses ISO week-year boundaries rather than calendar-year labels", () => {

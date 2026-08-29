@@ -1,5 +1,5 @@
 import type { OverviewDateRange } from "@/app/(dashboard)/analytics/overview-date-range-control";
-import type { EntryPriceInsights, EntryPriceResult, ExecutionChartData, ExecutionTradeRow } from "@/app/(dashboard)/analytics/execution-analytics-client";
+import type { EntryPriceComparison, EntryPriceInsights, EntryPriceResult, ExecutionChartData, ExecutionTradeRow } from "@/app/(dashboard)/analytics/execution-analytics-client";
 import type { ResultsTickerRow } from "@/app/(dashboard)/analytics/results-ticker-table";
 import type { TimingChartData } from "@/app/(dashboard)/analytics/timing/timing-analytics-client";
 import type { TradeAnalysisView } from "@/app/(dashboard)/analytics/trade-analysis-client";
@@ -26,7 +26,7 @@ export const JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_VERSION =
 export const JOURNAL_ANALYTICS_OFFLINE_ROUTE_VIEW_KEYS: Readonly<
   Record<JournalAnalyticsOfflineRouteKind, string>
 > = Object.freeze({
-  "analytics-execution": "journal-analytics:execution:current",
+  "analytics-execution": "journal-analytics:execution:v2",
   "analytics-overview": "journal-analytics:overview:current",
   "analytics-results": "journal-analytics:results:current",
   "analytics-timing": "journal-analytics:timing:current",
@@ -72,6 +72,7 @@ export type JournalAnalyticsExecutionOfflineViewModel = Readonly<{
   currency: string | null;
   dateRange: OverviewDateRange;
   kind: "analytics-execution";
+  priceComparison: EntryPriceComparison;
   priceInsights: EntryPriceInsights;
   priceResults: readonly EntryPriceResult[];
   rows: readonly ExecutionTradeRow[];
@@ -234,7 +235,8 @@ export function isJournalAnalyticsOfflineViewModel(
   }
   if (expectedKind === "analytics-execution") {
     return isRecord(value.chartData) && Array.isArray(value.priceResults) &&
-      isRecord(value.priceInsights) && Array.isArray(value.rows) && isRecord(value.dateRange);
+      isRecord(value.priceComparison) && isRecord(value.priceInsights) &&
+      Array.isArray(value.rows) && isRecord(value.dateRange);
   }
   if (expectedKind === "trade-analyzer-trades") {
     return isRecord(value.dateRange) && (value.page === null || isRecord(value.page));
