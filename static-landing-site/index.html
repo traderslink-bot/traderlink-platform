@@ -77,9 +77,10 @@
     #traderslink-homepage-review-v2 .tl2-signup p { color:#d8e4f8; margin:0 auto 24px; max-width:570px; }
     #traderslink-homepage-review-v2 .tl2-signup .tl2-account-link { background:#fff; border-color:#fff; color:#062663; }
     #traderslink-homepage-review-v2 .tl2-signup .tl2-cta-note { color:#d8e4f8; font-size:13px; margin:11px auto 0; }
-    #traderslink-homepage-review-v2 .tl2-legal { align-items:center; background:#fff; display:flex; flex-wrap:wrap; gap:12px 20px; justify-content:center; padding:24px 4.5%; }
-    #traderslink-homepage-review-v2 .tl2-legal a,#traderslink-homepage-review-v2 .tl2-cookie-choices { color:#385376; font:inherit; font-size:14px; font-weight:700; text-decoration:underline; text-underline-offset:3px; }
-    #traderslink-homepage-review-v2 .tl2-cookie-choices { background:transparent; border:0; cursor:pointer; padding:0; }
+    #traderslink-homepage-review-v2 .tl2-legal { align-items:center; background:#062663; color:#d8e4f8; display:flex; flex-wrap:wrap; gap:12px 20px; justify-content:space-between; padding:24px 4.5%; }
+    #traderslink-homepage-review-v2 .tl2-legal p { margin:0; }
+    #traderslink-homepage-review-v2 .tl2-legal-links { display:flex; flex-wrap:wrap; gap:20px; }
+    #traderslink-homepage-review-v2 .tl2-legal a { color:#fff; font-size:14px; font-weight:700; text-decoration:underline; text-underline-offset:3px; }
     #traderslink-homepage-review-v2 .tl2-consent { bottom:22px; left:20px; position:fixed; right:20px; z-index:10; }
     #traderslink-homepage-review-v2 .tl2-consent[hidden] { display:none; }
     #traderslink-homepage-review-v2 .tl2-consent-card { background:#fff; border:1px solid #cad8e8; border-radius:12px; box-shadow:0 18px 43px rgba(20,53,99,.2); margin:0 auto; max-width:720px; padding:22px; }
@@ -148,6 +149,7 @@
       #traderslink-homepage-review-v2 .tl2-consent-card { padding:18px; }
       #traderslink-homepage-review-v2 .tl2-consent-actions { justify-content:stretch; }
       #traderslink-homepage-review-v2 .tl2-consent-button { flex:1 1 160px; }
+      #traderslink-homepage-review-v2 .tl2-legal { align-items:flex-start; flex-direction:column; }
     }
   </style>
   <script type="application/ld+json">
@@ -361,9 +363,11 @@
       <p class="tl2-cta-note">No credit card required.</p>
     </section>
     <footer aria-label="Legal links" class="tl2-legal">
-      <a href="/privacy">Privacy Policy</a>
-      <a href="/terms">Terms &amp; Conditions</a>
-      <button class="tl2-cookie-choices" data-open-cookie-choices type="button">Cookie choices</button>
+      <p>TradersLink, living the small cap trading life!</p>
+      <div class="tl2-legal-links">
+        <a href="/privacy">Privacy Policy</a>
+        <a href="/terms">Terms &amp; Conditions</a>
+      </div>
     </footer>
   </main>
 </div>

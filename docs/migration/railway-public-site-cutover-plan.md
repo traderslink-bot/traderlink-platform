@@ -67,6 +67,9 @@ The Railway service uses `static-landing-site/Dockerfile` and
   choice under their existing consent contract.
 - The root footer and banner link to proxied `/privacy` and `/terms`. Their
   Platform-rendered page bodies remain unchanged.
+- The approved footer visually continues the final navy signup section. Its
+  left copy is `TradersLink, living the small cap trading life!`; Privacy Policy
+  and Terms & Conditions remain the right-side links.
 
 ## Watchlist EODHD transport audit
 

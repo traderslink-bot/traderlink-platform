@@ -17,6 +17,8 @@
   Privacy Policy and Terms & Conditions links. It stores only the existing
   consent choice locally, loads no analytics itself, and leaves proxied legal
   page bodies unchanged.
+- [x] Applied the owner-finalized static footer: final-section navy background,
+  approved TradersLink text at left, and legal links at right.
 - [ ] Create the Railway static front-door service and set its private
   `PLATFORM_UPSTREAM` only after the release lane is claimed.
 - [ ] Verify Academy and Watchlist public-host behavior from Railway.
