@@ -23,21 +23,61 @@ start Discord login and return to `/workspace`.
 
 ## Implementation order
 
-1. Establish host-aware root routing so the public root does not inherit the
-   dashboard-login redirect after DNS moves to Railway.
-2. Port the current Vercel landing content into the Platform public-host root,
-   retaining its canonical root-domain metadata and public calls to action.
-3. Verify Academy is served from Railway without changing lesson slugs,
+1. Deploy the reviewed static root as a small Railway front-door service. It
+   serves `/` and `landing-assets/` directly, so later landing-page edits do
+   not rebuild the private Platform application.
+2. Configure the front-door service's `PLATFORM_UPSTREAM` only to the existing
+   Railway Platform service over Railway private networking. It proxies every
+   non-static request unchanged, including Help, Academy, Watchlist, News,
+   legal routes, APIs, and Server-Sent Events.
+3. Verify the Platform service accepts the public root host for its existing
+   public routes without changing the private `app.traderslink.pro` Discord
+   login origin.
+4. Verify Academy is served from Railway without changing lesson slugs,
    progress ownership, or the existing Discord callback origin.
-4. Verify Watchlist is served from Railway using its existing persistent
+5. Verify Watchlist is served from Railway using its existing persistent
    Platform storage and entitlement checks; do not expose it publicly without
    its Discord/Premium gate.
-5. Verify the full public route inventory, root/www redirects, Help canonical
+6. Verify the full public route inventory, root/www redirects, Help canonical
    URLs, TLS, Discord return paths, and `/api/platform/health` after DNS
    propagation.
-6. Remove Vercel production aliases only after the Railway public surface has
+7. Remove Vercel production aliases only after the Railway public surface has
    passed the complete live verification. Preserve the separate Vercel preview
-   project unless it is separately retired.
+   project until the owner has accepted the final Vercel account audit.
+
+## Static front-door contract
+
+The Railway service uses `static-landing-site/Dockerfile` and
+`static-landing-site/nginx/default.conf.template`.
+
+- It serves only the approved static marketing root and its local assets.
+- `PLATFORM_UPSTREAM` is a Railway private-network origin with no trailing
+  slash. It must point at the existing `traderlink-platform-web` service; do
+  not use a Vercel URL or public dashboard address as an upstream.
+- It proxies all remaining paths to Platform and disables buffering for that
+  path. This preserves the Watchlist `EventSource` endpoint
+  `/api/live-watchlist/stream` and avoids breaking its continuous event feed.
+- Railway's service health check is `/healthz`; the Platform health check
+  remains `/api/platform/health` on the Platform service.
+
+## Watchlist EODHD transport audit
+
+The EODHD live-price integration is independent of Vercel:
+
+1. `vendor/levels-system-v2/dist/lib/monitoring/eodhd-live-price-provider.js`
+   owns the outbound EODHD WebSocket and reconnect loop.
+2. The Levels runtime publishes its updates by authenticated HTTPS POST to the
+   configured `TRADERSLINK_WATCHLIST_INGEST_URL`, as implemented in
+   `vendor/levels-system-v2/dist/lib/live-watchlist/live-watchlist-publisher.js`.
+3. Platform validates and persists the EODHD quote payload in
+   `app/api/live-watchlist/ingest/route.ts`, then fans updates out in-process.
+4. The Watchlist browser uses same-origin Server-Sent Events, not a browser
+   websocket, through `app/api/live-watchlist/stream/route.ts` and
+   `src/lib/live-watchlist/live-watchlist-events.ts`.
+
+At release, update only the publisher's configured ingest origin to the final
+Railway public root if it is not already there. Do not alter the EODHD token,
+provider settings, or market-data runtime as part of the Vercel retirement.
 
 ## Safety boundaries
 

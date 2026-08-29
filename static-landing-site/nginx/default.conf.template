@@ -1,0 +1,53 @@
+server {
+    listen ${PORT};
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    # The marketing root is deliberately static. Future static landing pages
+    # can be added here without rebuilding the private Platform application.
+    location = / {
+        try_files /index.html =404;
+    }
+
+    location = /index.html {
+        try_files /index.html =404;
+    }
+
+    location = /landing-assets {
+        return 301 /landing-assets/;
+    }
+
+    location ^~ /landing-assets/ {
+        try_files $uri =404;
+        add_header Cache-Control "public, max-age=86400";
+    }
+
+    # Keep every existing public Platform route on Railway: Help, Academy,
+    # Watchlist, News, legal pages, APIs, and the Watchlist SSE stream.
+    # PLATFORM_UPSTREAM must be a Railway private-network origin with no
+    # trailing slash, for example http://traderlink-platform-web.railway.internal.
+    location / {
+        proxy_pass ${PLATFORM_UPSTREAM};
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 3600s;
+    }
+}

@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trading Journal &amp; Trade Tracker for Active Traders | TradersLink</title>
+  <meta name="description" content="Journal your trading day, review trades with chart context and rules, study profit-taking and risk, and uncover patterns across your results. Create a free account." />
+  <link rel="canonical" href="https://traderslink.pro/" />
+  <meta name="robots" content="index,follow,max-image-preview:large" />
+  <meta name="theme-color" content="#062663" />
+  <link rel="icon" href="landing-assets/favicon.ico" sizes="any" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="en_CA" />
+  <meta property="og:site_name" content="TradersLink" />
+  <meta property="og:title" content="Trading Journal &amp; Trade Tracker for Active Traders | TradersLink" />
+  <meta property="og:description" content="Journal your trading day, review trades with chart context and rules, study profit-taking and risk, and uncover patterns across your results." />
+  <meta property="og:url" content="https://traderslink.pro/" />
+  <meta property="og:image" content="https://traderslink.pro/landing-assets/full-dashboard-trade-tracker-with-analyzer.png" />
+  <meta property="og:image:alt" content="TradersLink Daily Trade Tracker dashboard showing a trading day, trade review, rules, and notes." />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Trading Journal &amp; Trade Tracker for Active Traders | TradersLink" />
+  <meta name="twitter:description" content="Journal your trading day, study completed trades, and uncover patterns across your results." />
+  <meta name="twitter:image" content="https://traderslink.pro/landing-assets/full-dashboard-trade-tracker-with-analyzer.png" />
+  <meta name="twitter:image:alt" content="TradersLink Daily Trade Tracker dashboard showing a trading day, trade review, rules, and notes." />
+
+  <style>
+    body { margin:0; }
+    #traderslink-homepage-review-v2 { background:#f4f7fb; color:#172033; font-family:Arial,Helvetica,sans-serif; line-height:1.5; overflow:hidden; }
+    #traderslink-homepage-review-v2 * { box-sizing:border-box; }
+    #traderslink-homepage-review-v2 .tl2-header { align-items:center; background:#fff; border-bottom:1px solid #dbe4ef; box-shadow:0 9px 25px rgba(14,47,93,.08); display:flex; justify-content:space-between; min-height:76px; padding:0 4.5%; position:relative; z-index:1; }
+    #traderslink-homepage-review-v2 .tl2-logo { display:block; text-decoration:none; }
+    #traderslink-homepage-review-v2 .tl2-logo img { display:block; height:32px; width:auto; }
+    #traderslink-homepage-review-v2 .tl2-nav { align-items:center; display:flex; gap:24px; }
+    #traderslink-homepage-review-v2 .tl2-nav a { color:#385376; font-size:14px; font-weight:600; text-decoration:none; }
+    #traderslink-homepage-review-v2 .tl2-features-menu { position:relative; }
+    #traderslink-homepage-review-v2 .tl2-features-toggle { align-items:center; background:transparent; border:0; color:#385376; cursor:pointer; display:flex; font:inherit; font-size:14px; font-weight:600; gap:6px; padding:8px 0; white-space:nowrap; }
+    #traderslink-homepage-review-v2 .tl2-features-chevron { border:solid currentColor; border-width:0 1.5px 1.5px 0; display:inline-block; height:6px; transform:translateY(-2px) rotate(45deg); transition:transform .2s ease; width:6px; }
+    #traderslink-homepage-review-v2 .tl2-features-menu.is-open .tl2-features-chevron { transform:translateY(1px) rotate(225deg); }
+    #traderslink-homepage-review-v2 .tl2-features-links { background:#fff; border:1px solid #dbe4ef; border-radius:10px; box-shadow:0 14px 28px rgba(14,47,93,.14); display:none; left:-18px; min-width:206px; padding:8px; position:absolute; top:calc(100% + 11px); z-index:3; }
+    #traderslink-homepage-review-v2 .tl2-features-menu.is-open .tl2-features-links { display:grid; gap:2px; }
+    #traderslink-homepage-review-v2 .tl2-features-links a { border-radius:7px; padding:10px; }
+    #traderslink-homepage-review-v2 .tl2-features-links a:hover { background:#edf4fb; color:#062663; }
+    #traderslink-homepage-review-v2 .tl2-nav .tl2-account-link { color:#fff; font-size:14px; margin-left:16px; padding:12px 17px; position:relative; transition:box-shadow .2s ease,transform .2s ease; }
+    #traderslink-homepage-review-v2 .tl2-nav .tl2-account-link::before { background:#dbe4ef; content:""; height:24px; left:-16px; position:absolute; top:50%; transform:translateY(-50%); width:1px; }
+    #traderslink-homepage-review-v2 .tl2-nav .tl2-account-link:hover { box-shadow:0 7px 15px rgba(6,38,99,.18); transform:translateY(-1px); }
+    #traderslink-homepage-review-v2 .tl2-account-link,
+    #traderslink-homepage-review-v2 .tl2-section-link { background:#062663; border:1px solid #062663; border-radius:7px; color:#fff; display:inline-block; font-size:16px; font-weight:700; padding:14px 22px; text-decoration:none; }
+    #traderslink-homepage-review-v2 .tl2-intro { margin:0 auto; max-width:1060px; padding:72px 4.5% 59px; text-align:center; }
+    #traderslink-homepage-review-v2 h1,#traderslink-homepage-review-v2 h2,#traderslink-homepage-review-v2 h3,#traderslink-homepage-review-v2 p { margin-top:0; }
+    #traderslink-homepage-review-v2 .tl2-label { color:#426594; font-size:12px; font-weight:700; letter-spacing:.13em; margin-bottom:13px; text-transform:uppercase; }
+    #traderslink-homepage-review-v2 h1 { color:#062663; font-size:clamp(40px,5.8vw,70px); letter-spacing:-.05em; line-height:1.02; margin:0 auto 18px; max-width:840px; }
+    #traderslink-homepage-review-v2 .tl2-intro p:not(.tl2-label) { color:#4b5563; font-size:19px; margin:0 auto; max-width:610px; }
+    #traderslink-homepage-review-v2 .tl2-intro .tl2-account-link { margin-top:28px; }
+    #traderslink-homepage-review-v2 .tl2-intro p.tl2-cta-note { color:#64748b; font-size:13px; margin:10px auto 0; }
+    #traderslink-homepage-review-v2 .tl2-feature { align-items:center; display:flex; min-height:clamp(640px,86vh,900px); padding:88px 4.5%; }
+    #traderslink-homepage-review-v2 .tl2-feature--soft { background:#eaf2fb; }
+    #traderslink-homepage-review-v2 .tl2-feature-inner { align-items:center; display:grid; gap:64px; grid-template-columns:minmax(330px,.55fr) minmax(0,1.45fr); margin:0 auto; max-width:1720px; width:100%; }
+    #traderslink-homepage-review-v2 .tl2-feature-inner--reverse { grid-template-columns:minmax(0,1.45fr) minmax(330px,.55fr); }
+    #traderslink-homepage-review-v2 .tl2-copy { max-width:430px; }
+    #traderslink-homepage-review-v2 .tl2-copy h2 { font-size:clamp(29px,3.7vw,46px); letter-spacing:-.04em; line-height:1.08; margin-bottom:17px; }
+    #traderslink-homepage-review-v2 .tl2-copy p:not(.tl2-label) { color:#4b5563; font-size:16px; margin-bottom:15px; }
+    #traderslink-homepage-review-v2 .tl2-copy p:last-of-type { margin-bottom:26px; }
+    #traderslink-homepage-review-v2 .tl2-shot { background:#fff; border:1px solid #cad8e8; border-radius:12px; box-shadow:0 18px 43px rgba(20,53,99,.13); overflow:hidden; }
+    #traderslink-homepage-review-v2 .tl2-shot picture { display:block; }
+    #traderslink-homepage-review-v2 .tl2-shot img { display:block; height:auto; width:100%; }
+    #traderslink-homepage-review-v2 .tl2-tools { background:#eef5fb; display:flex; flex-direction:column; justify-content:center; min-height:clamp(640px,86vh,900px); padding:88px 4.5%; }
+    #traderslink-homepage-review-v2 .tl2-tools-heading { margin:0; max-width:560px; }
+    #traderslink-homepage-review-v2 .tl2-tools-heading h2 { font-size:clamp(29px,3.7vw,46px); letter-spacing:-.04em; line-height:1.08; margin-bottom:12px; }
+    #traderslink-homepage-review-v2 .tl2-tools-heading p:not(.tl2-label) { color:#4b5563; font-size:17px; margin-bottom:0; max-width:660px; }
+    #traderslink-homepage-review-v2 .tl2-tools-heading .tl2-section-link { margin-top:40px; }
+    #traderslink-homepage-review-v2 .tl2-tools-layout { align-items:stretch; display:grid; gap:30px; grid-template-columns:1fr 1fr; margin:0 auto; max-width:1720px; width:100%; }
+    #traderslink-homepage-review-v2 .tl2-tools-left { display:flex; flex-direction:column; gap:35px; justify-content:space-between; }
+    #traderslink-homepage-review-v2 .tl2-signup { background:#062663; color:#fff; padding:68px 4.5%; text-align:center; }
+    #traderslink-homepage-review-v2 .tl2-signup h2 { font-size:clamp(30px,4vw,48px); letter-spacing:-.04em; line-height:1.08; margin-bottom:12px; }
+    #traderslink-homepage-review-v2 .tl2-signup p { color:#d8e4f8; margin:0 auto 24px; max-width:570px; }
+    #traderslink-homepage-review-v2 .tl2-signup .tl2-account-link { background:#fff; border-color:#fff; color:#062663; }
+    #traderslink-homepage-review-v2 .tl2-signup .tl2-cta-note { color:#d8e4f8; font-size:13px; margin:11px auto 0; }
+    #traderslink-homepage-review-v2 .tl2-detail-tabs { background:#fff; padding:90px 4.5%; }
+    #traderslink-homepage-review-v2 .tl2-detail-tabs-inner { margin:0 auto; max-width:1400px; }
+    #traderslink-homepage-review-v2 .tl2-detail-tabs-intro { margin:0 auto 34px; max-width:700px; text-align:center; }
+    #traderslink-homepage-review-v2 .tl2-detail-tabs h2 { font-size:clamp(29px,3.7vw,46px); letter-spacing:-.04em; line-height:1.08; margin-bottom:12px; }
+    #traderslink-homepage-review-v2 .tl2-detail-tabs-intro p:not(.tl2-label) { color:#4b5563; font-size:17px; margin-bottom:0; }
+    #traderslink-homepage-review-v2 .tl2-tab-list { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px; }
+    #traderslink-homepage-review-v2 .tl2-detail-tabs .tl2-tab-list { justify-content:center; }
+    #traderslink-homepage-review-v2 .tl2-tab { background:#fff; border:1px solid #cbd5e1; border-radius:999px; color:#344054; cursor:pointer; font:inherit; font-size:14px; font-weight:700; padding:10px 15px; transition:background-color .2s ease,border-color .2s ease,color .2s ease,transform .2s ease; }
+    #traderslink-homepage-review-v2 .tl2-tab:hover { transform:translateY(-1px); }
+    #traderslink-homepage-review-v2 .tl2-tab[aria-selected="true"] { background:#062663; border-color:#062663; color:#fff; }
+    #traderslink-homepage-review-v2 .tl2-detail-panel { align-items:center; background:#f4f7fb; border:1px solid #dbe4ef; border-radius:14px; display:none; gap:54px; grid-template-columns:minmax(280px,.7fr) minmax(0,1.3fr); min-height:600px; overflow:hidden; padding:48px; }
+    #traderslink-homepage-review-v2 .tl2-detail-panel.is-active { display:grid; }
+    #traderslink-homepage-review-v2 .tl2-detail-copy { max-width:380px; }
+    #traderslink-homepage-review-v2 .tl2-detail-copy h3 { font-size:29px; letter-spacing:-.035em; line-height:1.12; margin-bottom:13px; }
+    #traderslink-homepage-review-v2 .tl2-detail-copy p { color:#4b5563; margin-bottom:23px; }
+    #traderslink-homepage-review-v2 .tl2-detail-panel .tl2-shot--trade-tags { align-items:center; aspect-ratio:16 / 9; display:flex; justify-content:center; padding:26px; }
+    #traderslink-homepage-review-v2 .tl2-detail-panel .tl2-shot--trade-tags img { height:auto; max-height:100%; max-width:62%; width:auto; }
+    #traderslink-homepage-review-v2 .tl2-import-visual { align-items:center; background:#062663; border-radius:10px; color:#fff; display:flex; flex-direction:column; justify-content:center; min-height:300px; padding:36px; text-align:center; }
+    #traderslink-homepage-review-v2 .tl2-import-visual strong { font-size:23px; letter-spacing:-.02em; }
+    #traderslink-homepage-review-v2 .tl2-import-visual span { color:#d8e4f8; margin-top:9px; max-width:340px; }
+    #traderslink-homepage-review-v2 .tl2-product-tab-list { margin-bottom:28px; }
+    #traderslink-homepage-review-v2 .tl2-product-shell { margin:0 auto; max-width:1720px; width:100%; }
+    #traderslink-homepage-review-v2 .tl2-product-shell--analytics { column-gap:64px; display:grid; grid-template-columns:minmax(330px,.55fr) minmax(0,1.45fr); }
+    #traderslink-homepage-review-v2 .tl2-product-shell--analytics > .tl2-product-tab-list { align-self:end; grid-column:2; grid-row:1; }
+    #traderslink-homepage-review-v2 .tl2-product-shell--analytics > .tl2-product-panel { grid-column:1 / -1; grid-row:2; }
+    #traderslink-homepage-review-v2 .tl2-product-panel { align-items:center; display:none; gap:64px; grid-template-columns:minmax(330px,.55fr) minmax(0,1.45fr); margin:0 auto; max-width:1720px; width:100%; }
+    #traderslink-homepage-review-v2 .tl2-product-panel.is-active { animation:tl2-panel-in .32s ease both; display:grid; }
+    #traderslink-homepage-review-v2 .tl2-product-panel--reverse { grid-template-columns:minmax(0,1.45fr) minmax(330px,.55fr); }
+    #traderslink-homepage-review-v2 .tl2-product-panel--reverse .tl2-shot { grid-column:1; }
+    #traderslink-homepage-review-v2 .tl2-product-panel--reverse .tl2-copy { grid-column:2; }
+    #traderslink-homepage-review-v2 .tl2-subfeature-pills { display:flex; flex-wrap:wrap; gap:8px; margin:21px 0 24px; }
+    #traderslink-homepage-review-v2 .tl2-subfeature-pills span { background:#e8eef6; border-radius:999px; color:#344054; font-size:13px; font-weight:700; padding:7px 10px; }
+    #traderslink-homepage-review-v2 .tl2-reveal { opacity:0; transform:translateY(32px); transition:opacity .72s cubic-bezier(.22,1,.36,1),transform .72s cubic-bezier(.22,1,.36,1); }
+    #traderslink-homepage-review-v2 .tl2-reveal.is-revealed { opacity:1; transform:translateY(0); }
+    @keyframes tl2-panel-in { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    @media (prefers-reduced-motion:reduce) { #traderslink-homepage-review-v2 .tl2-tab,#traderslink-homepage-review-v2 .tl2-nav .tl2-account-link,#traderslink-homepage-review-v2 .tl2-features-chevron,#traderslink-homepage-review-v2 .tl2-reveal { transition:none; } #traderslink-homepage-review-v2 .tl2-tab:hover,#traderslink-homepage-review-v2 .tl2-nav .tl2-account-link:hover { transform:none; } #traderslink-homepage-review-v2 .tl2-product-panel.is-active { animation:none; } #traderslink-homepage-review-v2 .tl2-reveal { opacity:1; transform:none; } }
+    @media (max-width:760px) {
+      #traderslink-homepage-review-v2 .tl2-header { padding:0 20px; }
+      #traderslink-homepage-review-v2 .tl2-logo img { height:27px; }
+      #traderslink-homepage-review-v2 .tl2-nav > a[href="https://traderslink.pro/help"] { display:none; }
+      #traderslink-homepage-review-v2 .tl2-features-menu { display:none; }
+      #traderslink-homepage-review-v2 .tl2-nav .tl2-account-link { margin-left:0; }
+      #traderslink-homepage-review-v2 .tl2-nav .tl2-account-link::before { display:none; }
+      #traderslink-homepage-review-v2 .tl2-feature-inner,#traderslink-homepage-review-v2 .tl2-feature-inner--reverse,#traderslink-homepage-review-v2 .tl2-tools-layout { gap:30px; grid-template-columns:1fr; }
+      #traderslink-homepage-review-v2 .tl2-feature-inner--reverse .tl2-shot { grid-row:2; }
+      #traderslink-homepage-review-v2 .tl2-intro { padding:56px 24px 48px; text-align:left; }
+      #traderslink-homepage-review-v2 .tl2-intro p:not(.tl2-label) { margin-left:0; }
+      #traderslink-homepage-review-v2 .tl2-feature,#traderslink-homepage-review-v2 .tl2-tools { min-height:0; padding:54px 20px; }
+      #traderslink-homepage-review-v2 .tl2-detail-tabs { padding:58px 20px; }
+      #traderslink-homepage-review-v2 .tl2-detail-panel { gap:28px; grid-template-columns:1fr; min-height:0; padding:20px; }
+      #traderslink-homepage-review-v2 .tl2-product-shell--analytics { display:block; }
+      #traderslink-homepage-review-v2 .tl2-product-panel,#traderslink-homepage-review-v2 .tl2-product-panel--reverse { gap:30px; grid-template-columns:1fr; }
+      #traderslink-homepage-review-v2 .tl2-product-panel--reverse .tl2-shot,#traderslink-homepage-review-v2 .tl2-product-panel--reverse .tl2-copy { grid-column:auto; }
+    }
+  </style>
+  <script type="application/ld+json">
+    {
+      "@context":"https://schema.org",
+      "@graph":[
+        {
+          "@type":"Organization",
+          "@id":"https://traderslink.pro/#organization",
+          "name":"TradersLink",
+          "url":"https://traderslink.pro/"
+        },
+        {
+          "@type":"WebSite",
+          "@id":"https://traderslink.pro/#website",
+          "name":"TradersLink",
+          "url":"https://traderslink.pro/",
+          "publisher":{"@id":"https://traderslink.pro/#organization"}
+        },
+        {
+          "@type":"WebPage",
+          "@id":"https://traderslink.pro/#webpage",
+          "url":"https://traderslink.pro/",
+          "name":"Trading Journal & Trade Tracker for Active Traders | TradersLink",
+          "description":"Journal your trading day, review trades with chart context and rules, study profit-taking and risk, and uncover patterns across your results.",
+          "isPartOf":{"@id":"https://traderslink.pro/#website"},
+          "about":[
+            {"@type":"Thing","name":"Trading journal"},
+            {"@type":"Thing","name":"Trade tracker"},
+            {"@type":"Thing","name":"Trade analysis"}
+          ]
+        }
+      ]
+    }
+  </script>
+</head>
+<body>
+<div id="traderslink-homepage-review-v2">
+  <header class="tl2-header">
+    <a aria-label="TradersLink home" class="tl2-logo" href="#home"><img alt="TradersLink" src="landing-assets/logo-horizontal-light.png" /></a>
+    <nav aria-label="Primary" class="tl2-nav">
+      <div class="tl2-features-menu">
+        <button aria-controls="features-links" aria-expanded="false" class="tl2-features-toggle" type="button"><span>Features</span><span aria-hidden="true" class="tl2-features-chevron"></span></button>
+        <div class="tl2-features-links" id="features-links">
+          <a href="#journal">Daily Trade Tracker</a>
+          <a href="#analyzer">Trade Analyzer</a>
+          <a href="#analytics">Trade Analytics</a>
+          <a href="#tools">Trading Tools</a>
+        </div>
+      </div>
+      <a href="https://traderslink.pro/help">Help</a>
+      <a href="https://app.traderslink.pro/api/auth/discord/login?returnTo=%2Fworkspace">Log in</a>
+      <a class="tl2-account-link" href="#free-account">Sign up free</a>
+    </nav>
+  </header>
+
+  <main id="home">
+    <section class="tl2-intro">
+      <p class="tl2-label">TradersLink Dashboard</p>
+      <h1>Journal your day. Understand every trade.</h1>
+      <p>TradersLink brings full-day journaling, trade analysis, performance patterns, and small cap day trader tools into one dashboard.</p>
+      <a class="tl2-account-link" href="#free-account">Sign up free</a>
+      <p class="tl2-cta-note">No credit card required.</p>
+    </section>
+
+    <section class="tl2-feature tl2-feature--soft" id="journal">
+      <div class="tl2-feature-inner">
+        <div class="tl2-copy">
+          <p class="tl2-label">Daily Trade Tracker</p>
+          <h2>Journal the trading day as it actually happened.</h2>
+          <p>The Daily Trade Tracker is where a full trading day comes together. Keep the executions, chart context, notes, tags, and the rules you were following beside the trades themselves.</p>
+          <p>Set your own trading rules, and TradersLink automatically checks recorded trades against them. Your daily review shows which rules were followed and which were broken alongside the trades and decisions behind them.</p>
+          <p>The Daily Trade Tracker keeps a full trading day in one record, so you can review every trade, the decisions behind it, and whether you followed your rules in the context of the day—not as isolated trades.</p>
+          <a class="tl2-section-link" href="#free-account">Sign up free</a>
+        </div>
+        <div class="tl2-shot">
+          <picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/daily-trade-tracker-mobile.png" /><img alt="TradersLink Daily Trade Tracker showing a trading day, chart, completed trade, rules, and notes" src="landing-assets/full-dashboard-trade-tracker-with-analyzer.png" /></picture>
+        </div>
+      </div>
+    </section>
+
+    <section class="tl2-feature" id="analyzer">
+      <div class="tl2-product-shell">
+        <div aria-label="Trade Analyzer views" class="tl2-tab-list tl2-product-tab-list" data-tab-group="analyzer" role="tablist">
+          <button aria-controls="analyzer-overview" aria-selected="true" class="tl2-tab" id="analyzer-overview-tab" role="tab" type="button">Trade overview</button>
+          <button aria-controls="analyzer-entry-exit" aria-selected="false" class="tl2-tab" id="analyzer-entry-exit-tab" role="tab" type="button">Entries &amp; exits</button>
+          <button aria-controls="analyzer-patterns" aria-selected="false" class="tl2-tab" id="analyzer-patterns-tab" role="tab" type="button">Candle patterns</button>
+          <button aria-controls="analyzer-mfe-mae" aria-selected="false" class="tl2-tab" id="analyzer-mfe-mae-tab" role="tab" type="button">MFE &amp; MAE</button>
+          <button aria-controls="analyzer-green-red" aria-selected="false" class="tl2-tab" id="analyzer-green-red-tab" role="tab" type="button">Green to red</button>
+        </div>
+        <div class="tl2-product-panel tl2-product-panel--reverse is-active" id="analyzer-overview" role="tabpanel" tabindex="0">
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/trade-analyzer-overview-mobile.png" /><img alt="TradersLink Trade Analyzer full dashboard overview" src="landing-assets/trade-analyzer-trade-analysis-full-dasboard.png" /></picture></div>
+          <div class="tl2-copy"><p class="tl2-label">Trade Analyzer</p><h2>See what happened inside a completed trade.</h2><p>Open Trade Analyzer from a completed day or use it separately. Study entries, exits, candle context, and the path a trade took between them.</p><p>See how hammer candles and other chart patterns appeared during the trade.</p><a class="tl2-section-link" href="#free-account">Sign up free</a></div>
+        </div>
+        <div class="tl2-product-panel tl2-product-panel--reverse" hidden id="analyzer-entry-exit" role="tabpanel" tabindex="0">
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/trade-analyzer-entry-exit-mobile.png" /><img alt="TradersLink Trade Analyzer entries and exits in the full dashboard" src="landing-assets/trade analyzer/entry and exit/entry-exit-full-dashboard.png" /></picture></div>
+          <div class="tl2-copy"><p class="tl2-label">Trade Analyzer</p><h2>Study how each entry and exit unfolded.</h2><p>Review execution context around the points where a trade began and ended. Use the completed trade to study timing, price action, and the choices made at each point.</p><a class="tl2-section-link" href="#free-account">Sign up free</a></div>
+        </div>
+        <div class="tl2-product-panel tl2-product-panel--reverse" hidden id="analyzer-patterns" role="tabpanel" tabindex="0">
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/trade-analyzer-candle-patterns-mobile.png" /><img alt="TradersLink candle patterns in the full Trade Analyzer dashboard" src="landing-assets/trade analyzer/candle-patterns/candle-patterns-full-dasboard.png" /></picture></div>
+          <div class="tl2-copy"><p class="tl2-label">Trade Analyzer</p><h2>See candle patterns in the trades you actually took.</h2><p>Review detected candlestick patterns—including hammer candles—alongside entry and exit timing, price action, and the trade’s eventual result.</p><p>See how often a pattern appeared in your own completed trades, then open the supporting examples instead of relying on a generic chart setup.</p><a class="tl2-section-link" href="#free-account">Sign up free</a></div>
+        </div>
+        <div class="tl2-product-panel tl2-product-panel--reverse" hidden id="analyzer-mfe-mae" role="tabpanel" tabindex="0">
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/trade-analyzer-mfe-mae-mobile.png" /><img alt="TradersLink MFE and MAE Trade Analyzer full dashboard" src="landing-assets/trade analyzer/mfe-mae/mfe&mae-full-dashboard.png" /></picture></div>
+          <div class="tl2-copy"><p class="tl2-label">Trade Analyzer</p><h2>Measure the opportunity and risk inside a trade.</h2><p>Use MFE and MAE to study favorable and adverse movement during a completed trade, then connect that data to later entry, exit, and risk-management decisions.</p><a class="tl2-section-link" href="#free-account">Sign up free</a></div>
+        </div>
+        <div class="tl2-product-panel tl2-product-panel--reverse" hidden id="analyzer-green-red" role="tabpanel" tabindex="0">
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/trade-analyzer-green-to-red-mobile.png" /><img alt="TradersLink Green-to-Red analysis in the full Trade Analyzer dashboard" src="landing-assets/trade analyzer/green-to-red/green-to-red-full-dashboard.png" /></picture></div>
+          <div class="tl2-copy"><p class="tl2-label">Trade Analyzer</p><h2>Make profit capture and giveback visible.</h2><p>Green-to-red analysis follows a trade after it first moves into profit. See the best sustained opportunity that remained available, how much profit you captured, and how much was given back before the exit.</p><p>Break results down by how long a trade stayed green after its profit peak, then spot whether profit taking, later exits, or risk-management decisions are improving or hurting your results. Use the data to make more informed adjustments to protecting gains, taking partial profits, and managing risk.</p><div class="tl2-subfeature-pills"><span>Profit taking</span><span>Risk management</span><span>Giveback</span></div><a class="tl2-section-link" href="#free-account">Sign up free</a></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tl2-feature tl2-feature--soft" id="analytics">
+      <div class="tl2-product-shell tl2-product-shell--analytics">
+        <div aria-label="Trade Analytics views" class="tl2-tab-list tl2-product-tab-list" data-tab-group="analytics" role="tablist">
+          <button aria-controls="analytics-timing" aria-selected="true" class="tl2-tab" id="analytics-timing-tab" role="tab" type="button">Trade Timing</button>
+          <button aria-controls="analytics-breakdown" aria-selected="false" class="tl2-tab" id="analytics-breakdown-tab" role="tab" type="button">Trade breakdown</button>
+          <button aria-controls="analytics-ticker" aria-selected="false" class="tl2-tab" id="analytics-ticker-tab" role="tab" type="button">Ticker Analytics</button>
+          <button aria-controls="analytics-explorer" aria-selected="false" class="tl2-tab" id="analytics-explorer-tab" role="tab" type="button">Trade Explorer</button>
+          <button aria-controls="analytics-compare" aria-selected="false" class="tl2-tab" id="analytics-compare-tab" role="tab" type="button">Compare trades</button>
+        </div>
+        <div class="tl2-product-panel is-active" id="analytics-timing" role="tabpanel" tabindex="0">
+          <div class="tl2-copy"><p class="tl2-label">Trade Analytics</p><h2>See when your trading has worked best.</h2><p>Review results across sessions and times to find the conditions that deserve more attention in your own trading history.</p><a class="tl2-section-link" href="#free-account">Sign up free</a></div>
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/trade-analytics-timing-mobile.png" /><img alt="TradersLink trade analytics timing dashboard" src="landing-assets/trade-analytics-timing-full-dahboard.png" /></picture></div>
+        </div>
+        <div class="tl2-product-panel" hidden id="analytics-breakdown" role="tabpanel" tabindex="0">
+          <div class="tl2-copy"><p class="tl2-label">Trade Analytics</p><h2>Break down the patterns across your trades.</h2><p>Explore completed trades by ticker, entry price, position size, holding time, session, and more. See which stock price ranges have produced your most profitable trades—and which have not—rather than relying on one total result.</p><p>Find the small-cap price ranges and trade conditions that are working in your own recorded trading.</p><a class="tl2-section-link" href="#free-account">Sign up free</a></div>
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/trade-analytics-breakdown-mobile.png" /><img alt="TradersLink Trade Breakdown analytics in the full dashboard" src="landing-assets/analytics-trade-breakdown-full-dashboard.png" /></picture></div>
+        </div>
+        <div class="tl2-product-panel" hidden id="analytics-ticker" role="tabpanel" tabindex="0">
+          <div class="tl2-copy"><p class="tl2-label">Ticker Analytics</p><h2>See the results behind each ticker.</h2><p>Review the tickers you have traded by their results, win rate, and the individual trades behind them. See which stocks have been worth returning to and which ones have repeatedly worked against your trading.</p><p>Use the ticker view with price-range results to understand whether the issue is the stock, the price you traded it at, or the way the trade was managed.</p><a class="tl2-section-link" href="#free-account">Sign up free</a></div>
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/ticker-analytics-mobile.png" /><img alt="TradersLink Ticker Analytics in the full dashboard" src="landing-assets/analytics/ticker-analytics-full-dashboard.png" /></picture></div>
+        </div>
+        <div class="tl2-product-panel" hidden id="analytics-explorer" role="tabpanel" tabindex="0">
+          <div class="tl2-copy"><p class="tl2-label">Trade Analytics</p><h2>Find the exact trades you want to study.</h2><p>Filter, sort, and move through a detailed view of your recorded results. Start with the trades, dates, tickers, direction, or result that needs attention.</p><a class="tl2-section-link" href="#free-account">Sign up free</a></div>
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/trade-explorer-mobile.png" /><img alt="TradersLink Trade Explorer full dashboard" src="landing-assets/trade-explorer-full-dash-boartd.png" /></picture></div>
+        </div>
+        <div class="tl2-product-panel" hidden id="analytics-compare" role="tabpanel" tabindex="0">
+          <div class="tl2-copy"><p class="tl2-label">Trade Analytics</p><h2>Compare trades that share a setup.</h2><p>Bring similar trades together to see how the entries, exits, and results differed. Move beyond a total result to the choices that separated stronger trades from weaker ones.</p><a class="tl2-section-link" href="#free-account">Sign up free</a></div>
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/trade-comparison-mobile.png" /><img alt="TradersLink trade comparison analytics" src="landing-assets/analytics/trade-comparison.png" /></picture></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tl2-tools" id="tools">
+      <div class="tl2-tools-layout">
+        <div class="tl2-tools-left">
+          <div class="tl2-tools-heading">
+            <p class="tl2-label">Trading Tools</p>
+            <h2>Trading tools for small-cap day traders.</h2>
+            <p>Start the trading day with tools that help you react quickly: generated support and resistance levels, press-release alerts, and halt alerts.</p>
+            <a class="tl2-section-link" href="#free-account">Sign up free</a>
+          </div>
+          <div class="tl2-shot">
+          <picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/stock-levels-mobile.png" /><img alt="TradersLink generated support and resistance levels" src="landing-assets/tools/gernerated-support-and-resistance-levels.png" /></picture>
+          </div>
+        </div>
+        <div class="tl2-shot">
+          <img alt="TradersLink press-release alert with an AI summary" src="landing-assets/tools/press-release-alerts.png" />
+        </div>
+      </div>
+    </section>
+
+    <section class="tl2-detail-tabs" aria-labelledby="journal-details-title">
+      <div class="tl2-detail-tabs-inner">
+        <div class="tl2-detail-tabs-intro">
+          <p class="tl2-label">Trade journaling</p>
+          <h2 id="journal-details-title">Manage your trading record</h2>
+          <p>Build a fuller record of every trading day with rule results, trade notes, session notes, tags, a weekly calendar, and Trade Imports.</p>
+        </div>
+        <div aria-label="Daily Trade Tracker features" class="tl2-tab-list" data-tab-group="journal" role="tablist">
+          <button aria-controls="journal-rules" aria-selected="true" class="tl2-tab" id="journal-rules-tab" role="tab" type="button">Trading rules</button>
+          <button aria-controls="journal-notes" aria-selected="false" class="tl2-tab" id="journal-notes-tab" role="tab" type="button">Trade notes</button>
+          <button aria-controls="journal-session-notes" aria-selected="false" class="tl2-tab" id="journal-session-notes-tab" role="tab" type="button">Session Notes</button>
+          <button aria-controls="journal-tags" aria-selected="false" class="tl2-tab" id="journal-tags-tab" role="tab" type="button">Trade Tags</button>
+          <button aria-controls="journal-calendar" aria-selected="false" class="tl2-tab" id="journal-calendar-tab" role="tab" type="button">Weekly calendar</button>
+          <button aria-controls="journal-imports" aria-selected="false" class="tl2-tab" id="journal-imports-tab" role="tab" type="button">Trade imports</button>
+        </div>
+        <div class="tl2-detail-panel is-active" id="journal-rules" role="tabpanel" tabindex="0">
+          <div class="tl2-detail-copy"><h3>Trading rules are part of the day review.</h3><p>Set the rules that matter to your trading. TradersLink automatically checks the recorded trades, and Rule Results shows which rules were followed and which were broken inside the full-day review.</p><a class="tl2-account-link" href="#free-account">Sign up free</a></div>
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/trading-rules-mobile.png" /><img alt="TradersLink Trading Rules in the dashboard" src="landing-assets/trading-rules-full-dashboard.png" /></picture></div>
+        </div>
+        <div class="tl2-detail-panel" hidden id="journal-notes" role="tabpanel" tabindex="0">
+          <div class="tl2-detail-copy"><h3>Keep the thinking behind a trade.</h3><p>Write down what you saw, why you entered, what changed, and what you would handle differently. Trade notes stay attached to the ticker and its executions, rules, and tags.</p><a class="tl2-account-link" href="#free-account">Sign up free</a></div>
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/trade-notes-mobile.png" /><img alt="TradersLink trade notes, tags, rules, and executions for one ticker" src="landing-assets/ticker-card-executions-tags-trade-note-rules.png" /></picture></div>
+        </div>
+        <div class="tl2-detail-panel" hidden id="journal-session-notes" role="tabpanel" tabindex="0">
+          <div class="tl2-detail-copy"><h3>Close the day with session notes.</h3><p>Capture what worked, what needs work, and the technical recap from the whole session. Keep current focuses visible from one Daily Trade Tracker review to the next, so the habits you are working on stay in view.</p><a class="tl2-account-link" href="#free-account">Sign up free</a></div>
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/session-notes-mobile.png" /><img alt="TradersLink daily session notes for what worked, what needs work, technical recap, and current focuses" src="landing-assets/daily-notes.png" /></picture></div>
+        </div>
+        <div class="tl2-detail-panel" hidden id="journal-tags" role="tabpanel" tabindex="0">
+          <div class="tl2-detail-copy"><h3>Tag the setup, execution, and exit.</h3><p>Use preset tag categories for setups, entry and execution, exits, and emotions—or create your own tags for the patterns you want to study. Tags make it easier to filter, compare, and review the trades that have something in common.</p><a class="tl2-account-link" href="#free-account">Sign up free</a></div>
+          <div class="tl2-shot tl2-shot--trade-tags"><img alt="TradersLink tag selection for trading setups, execution, exits, and emotions" src="landing-assets/tags-selection-popup-card.png" /></div>
+        </div>
+        <div class="tl2-detail-panel" hidden id="journal-calendar" role="tabpanel" tabindex="0">
+          <div class="tl2-detail-copy"><h3>See the trading week, not only one day.</h3><p>Move from a single Daily Trade Tracker record to a weekly calendar view, then open a day drawer to see the trades, notes, rules, and tags behind it.</p><a class="tl2-account-link" href="#free-account">Sign up free</a></div>
+          <div class="tl2-shot"><picture><source media="(max-width: 760px)" srcset="landing-assets/mobile/weekly-calendar-mobile.png" /><img alt="TradersLink weekly trading calendar with an open daily review drawer" src="landing-assets/week-calander-view-with-side-drawer-showing.png" /></picture></div>
+        </div>
+        <div class="tl2-detail-panel" hidden id="journal-imports" role="tabpanel" tabindex="0">
+          <div class="tl2-detail-copy"><h3>Bring in broker statement trades.</h3><p>Trade Imports uses import mapping to bring broker statements into TradersLink. When a statement cannot be mapped normally, it can be sent to AI-assisted mapping for review.</p><a class="tl2-account-link" href="#free-account">Sign up free</a></div>
+          <div class="tl2-import-visual"><strong>Broker statement imports</strong><span>Import mapping first. AI-assisted mapping when a format needs additional help.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tl2-signup" id="free-account">
+      <h2>Create your free account.</h2>
+      <p>Start using the TradersLink Dashboard for journaling, analysis, and trading tools.</p>
+      <a class="tl2-account-link" href="#free-account">Sign up free</a>
+      <p class="tl2-cta-note">No credit card required.</p>
+    </section>
+  </main>
+</div>
+<script>
+  document.querySelectorAll('[data-tab-group]').forEach((tabList) => {
+    const tabs = Array.from(tabList.querySelectorAll('[role="tab"]'));
+    const activate = (tab) => {
+      tabs.forEach((candidate) => {
+        const selected = candidate === tab;
+        const panel = document.getElementById(candidate.getAttribute('aria-controls'));
+        candidate.setAttribute('aria-selected', String(selected));
+        if (panel) {
+          panel.classList.toggle('is-active', selected);
+          panel.hidden = !selected;
+        }
+      });
+    };
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => activate(tab));
+      tab.addEventListener('keydown', (event) => {
+        if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+        event.preventDefault();
+        const nextIndex = (index + (event.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length;
+        tabs[nextIndex].focus();
+        activate(tabs[nextIndex]);
+      });
+    });
+  });
+  const featuresMenu = document.querySelector('.tl2-features-menu');
+  if (featuresMenu) {
+    const featuresToggle = featuresMenu.querySelector('.tl2-features-toggle');
+    const closeFeaturesMenu = () => {
+      featuresMenu.classList.remove('is-open');
+      featuresToggle.setAttribute('aria-expanded', 'false');
+    };
+    featuresToggle.addEventListener('click', () => {
+      const isOpen = featuresMenu.classList.toggle('is-open');
+      featuresToggle.setAttribute('aria-expanded', String(isOpen));
+    });
+    featuresMenu.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeFeaturesMenu));
+    document.addEventListener('click', (event) => {
+      if (!featuresMenu.contains(event.target)) closeFeaturesMenu();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeFeaturesMenu();
+    });
+  }
+  if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const revealTargets = document.querySelectorAll('.tl2-intro, .tl2-feature, .tl2-tools, .tl2-detail-tabs');
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-revealed');
+        revealObserver.unobserve(entry.target);
+      });
+    }, { threshold: 0.12 });
+    revealTargets.forEach((target) => {
+      target.classList.add('tl2-reveal');
+      revealObserver.observe(target);
+    });
+  }
+</script>
+</body>
+</html>
