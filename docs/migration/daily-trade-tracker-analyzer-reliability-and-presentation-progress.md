@@ -97,6 +97,21 @@ delivery-configuration claim.
       changing or sharing OAuth credentials.
 - [ ] Complete owner desktop and mobile visual approval for this follow-up.
 
+## Selected-day trade-card review — 2026-08-29
+
+- [x] Open the first rendered trade card by default, or the explicitly linked
+      trade when the route includes an Analyzer focus.
+- [x] Keep every other trade compact and use one selected-day expansion key so
+      opening another trade closes and unmounts the previous detail and chart.
+- [x] Replace the collapsed action with **Review trade** and provide **Hide
+      trade** at the bottom of the expanded body on desktop and mobile.
+- [x] Keep ordinary expansion free of programmatic scrolling. The existing
+      intentional deep-link focus scroll now keys only to the linked trade, so
+      a data refresh does not unexpectedly repeat it.
+- [x] Preserve pending, mismatch, broker-confirmation, account-selection and
+      saved Analyzer presentation paths without changing calculations or data.
+- [ ] Complete owner desktop and mobile staging review.
+
 ## Verification boundary
 
 No local server, hosted database mutation, migration, publish, deployment or
