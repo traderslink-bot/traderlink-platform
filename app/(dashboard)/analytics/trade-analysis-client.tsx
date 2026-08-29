@@ -63,6 +63,10 @@ function percent(value: number | null): string {
   return value === null ? "Unavailable" : `${value.toFixed(1)}%`;
 }
 
+function adverseMagnitudeColor(value: string | null) {
+  return financialOutcomeColor(value) === "text.primary" ? "text.primary" : "error.main";
+}
+
 function friendlyPattern(value: string): string {
   return candlePatternName(value);
 }
@@ -457,10 +461,10 @@ export function TradeAnalysisClient({
           <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } }}>
             <DashboardMetricCard caption={`Combined Trade Tracker ${model.moneyBasis} P/L`} label="Total actual result" value={money(model.profitCapture.totalActualPnlDecimal, model.currency)} valueColor={financialOutcomeColor(model.profitCapture.totalActualPnlDecimal)} />
             <DashboardMetricCard caption="Actual result plus the measured additional opportunity" label="Result at best sustained opportunities" value={money(model.profitCapture.totalPotentialPnlDecimal, model.currency)} valueColor={financialOutcomeColor(model.profitCapture.totalPotentialPnlDecimal)} />
-            <DashboardMetricCard caption={`${model.opportunityTradeCount} trades had a measured sustained opportunity`} label="Total additional opportunity" value={money(model.profitCapture.totalAdditionalOpportunityDecimal, model.currency)} />
-            <DashboardMetricCard caption="Mean percentage retained" label="Average peak profit retained" value={percent(model.profitCapture.averageCapturedPercent)} />
-            <DashboardMetricCard caption="Middle percentage retained" label="Median peak profit retained" value={percent(model.profitCapture.medianCapturedPercent)} />
-            <DashboardMetricCard caption="Average drop from the measured peak to the final exit" label="Average peak-to-exit giveback" value={money(model.profitCapture.averagePeakToFinalGivebackDecimal, model.currency)} />
+            <DashboardMetricCard caption={`${model.opportunityTradeCount} trades had a measured sustained opportunity`} label="Total additional opportunity" value={money(model.profitCapture.totalAdditionalOpportunityDecimal, model.currency)} valueColor={financialOutcomeColor(model.profitCapture.totalAdditionalOpportunityDecimal)} />
+            <DashboardMetricCard caption="Mean percentage retained" label="Average peak profit retained" value={percent(model.profitCapture.averageCapturedPercent)} valueColor={financialOutcomeColor(model.profitCapture.averageCapturedPercent)} />
+            <DashboardMetricCard caption="Middle percentage retained" label="Median peak profit retained" value={percent(model.profitCapture.medianCapturedPercent)} valueColor={financialOutcomeColor(model.profitCapture.medianCapturedPercent)} />
+            <DashboardMetricCard caption="Average drop from the measured peak to the final exit" label="Average peak-to-exit giveback" value={money(model.profitCapture.averagePeakToFinalGivebackDecimal, model.currency)} valueColor={adverseMagnitudeColor(model.profitCapture.averagePeakToFinalGivebackDecimal)} />
           </Box>
           <Box><Typography sx={{ fontWeight: 800, mb: 0.75 }}>Time held after the profit peak</Typography><BreakdownTable currency={model.currency} rows={model.holding} showOccurrences={false} valueLabel="Avg peak-to-exit" valueSuffix=" min" /></Box>
         </Stack>
@@ -473,11 +477,11 @@ export function TradeAnalysisClient({
             <DashboardMetricCard caption="Average time from first green to first red" label="Time before turning red" value={model.greenToRedDamage.averageGreenToRedMinutes === null ? "Unavailable" : `${model.greenToRedDamage.averageGreenToRedMinutes.toFixed(1)} min`} />
             <DashboardMetricCard caption="Turned positive again after first going red" label="Recovery rate" value={percent(model.greenToRedDamage.recoveryRatePercent)} />
             <DashboardMetricCard caption="Average time from first red to first recovery" label="Recovery time" value={model.greenToRedDamage.averageRecoveryMinutes === null ? "Unavailable" : `${model.greenToRedDamage.averageRecoveryMinutes.toFixed(1)} min`} />
-            <DashboardMetricCard caption="Average profit reversal before first turning red" label="Peak-to-red damage" value={money(model.greenToRedDamage.averagePeakToRedDamageDecimal, model.currency)} />
-            <DashboardMetricCard caption="Average profit reversal from peak to final exit" label="Peak-to-exit damage" value={money(model.greenToRedDamage.averagePeakToFinalDamageDecimal, model.currency)} />
+            <DashboardMetricCard caption="Average profit reversal before first turning red" label="Peak-to-red damage" value={money(model.greenToRedDamage.averagePeakToRedDamageDecimal, model.currency)} valueColor={adverseMagnitudeColor(model.greenToRedDamage.averagePeakToRedDamageDecimal)} />
+            <DashboardMetricCard caption="Average profit reversal from peak to final exit" label="Peak-to-exit damage" value={money(model.greenToRedDamage.averagePeakToFinalDamageDecimal, model.currency)} valueColor={adverseMagnitudeColor(model.greenToRedDamage.averagePeakToFinalDamageDecimal)} />
             <DashboardMetricCard caption={`${model.greenToRedDamage.endedRedTradeCount} trades finished red after first moving green`} label="Ended-red actual result" value={money(model.greenToRedDamage.endedRedActualPnlDecimal, model.currency)} valueColor={financialOutcomeColor(model.greenToRedDamage.endedRedActualPnlDecimal)} />
             <DashboardMetricCard caption="Combined result at each trade's best sustained opportunity" label="Ended-red potential result" value={money(model.greenToRedDamage.endedRedPotentialPnlDecimal, model.currency)} valueColor={financialOutcomeColor(model.greenToRedDamage.endedRedPotentialPnlDecimal)} />
-            <DashboardMetricCard caption="Difference between the actual and potential results" label="Ended-red missed opportunity" value={money(model.greenToRedDamage.endedRedAdditionalOpportunityDecimal, model.currency)} />
+            <DashboardMetricCard caption="Difference between the actual and potential results" label="Ended-red missed opportunity" value={money(model.greenToRedDamage.endedRedAdditionalOpportunityDecimal, model.currency)} valueColor={financialOutcomeColor(model.greenToRedDamage.endedRedAdditionalOpportunityDecimal)} />
           </Box>
           <BreakdownTable currency={model.currency} rows={model.greenToRed} showOccurrences={false} />
         </Stack>
