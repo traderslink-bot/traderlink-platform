@@ -1464,11 +1464,10 @@ function TradeReview({
   availableTags,
   currency,
   designPreview,
-  expandedDesktop,
-  expandedMobile,
+  expanded,
   expectedAccountSelectionRef,
   onCatalogChange,
-  onCloseMobile,
+  onClose,
   onManageTags,
   onOpen,
   onRuleStatusChange,
@@ -1495,11 +1494,10 @@ function TradeReview({
   availableTags: DaySessionTradeTag[];
   currency: string;
   designPreview: boolean;
-  expandedDesktop: boolean;
-  expandedMobile: boolean;
+  expanded: boolean;
   expectedAccountSelectionRef: string;
   onCatalogChange: (tags: DaySessionTradeTag[]) => void;
-  onCloseMobile: () => void;
+  onClose: () => void;
   onManageTags?: () => void;
   onOpen: () => void;
   onRuleStatusChange: (
@@ -1780,10 +1778,7 @@ function TradeReview({
       <Box
         sx={{
           bgcolor: "rgba(1, 30, 86, 0.02)",
-          display: {
-            xs: expandedMobile ? "none" : "block",
-            md: expandedDesktop ? "none" : "block",
-          },
+          display: expanded ? "none" : "block",
           px: { xs: 1, md: 1.5 },
           py: 0.75,
         }}
@@ -1825,7 +1820,7 @@ function TradeReview({
             </Typography>
           </Box>
           <Button aria-expanded={false} onClick={onOpen} size="small" variant="outlined">
-            View More
+            Review trade
           </Button>
         </Box>
         <Box
@@ -1881,17 +1876,14 @@ function TradeReview({
             </Typography>
           </Box>
           <Button aria-expanded={false} onClick={onOpen} size="small" variant="outlined">
-            View More
+            Review trade
           </Button>
         </Box>
         {collapsedPendingAnalysisNotice}
       </Box>
+      {expanded ? (
       <Box
         sx={{
-          display: {
-            xs: expandedMobile ? "block" : "none",
-            md: expandedDesktop ? "block" : "none",
-          },
           px: { xs: 2, md: 2.5 },
           py: 2,
         }}
@@ -2330,15 +2322,17 @@ function TradeReview({
 
       <Button
         endIcon={<RemoveRoundedIcon />}
-        onClick={onCloseMobile}
+        aria-expanded={true}
+        onClick={onClose}
         size="small"
-        sx={{ display: { xs: "inline-flex", md: "none" }, mt: 2 }}
+        sx={{ mt: 2 }}
         variant="outlined"
       >
-        Close Trade
+        Hide trade
       </Button>
 
       </Box>
+      ) : null}
     </Box>
   );
 }
@@ -2433,6 +2427,7 @@ export function DaySessionView({
         stableInstrumentKey: ticker.stableInstrumentKey,
       }))).find(({ roundTrip }) => roundTrip.roundTripKey === initialAnalyzerFocus.roundTripId) ?? null
     : null, [data.tickers, initialAnalyzerFocus]);
+  const initialFocusTradeKey = initialFocusTarget?.roundTrip.roundTripKey ?? null;
   const [availableTags, setAvailableTags] = useState<DaySessionTradeTag[]>(data.availableTags);
   const [tradeTags, setTradeTags] = useState<Record<string, DaySessionTradeTag[]>>(
     () =>
@@ -2523,8 +2518,11 @@ export function DaySessionView({
   const hasOtherUnsavedChanges = useTradeTrackerHasUnsavedChangesExcept(
     DAY_REVIEW_AUTOSAVED_UNSAVED_SOURCES,
   );
-  const [selectedAnalyzerTradeKeys, setSelectedAnalyzerTradeKeys] = useState<Record<string, string>>(() =>
-    initialFocusTarget ? { [initialFocusTarget.stableInstrumentKey]: initialFocusTarget.roundTrip.roundTripKey } : {});
+  const firstRenderedTradeKey = initialFocusTradeKey ??
+    data.tickers[0]?.roundTrips[0]?.roundTripKey ?? null;
+  const [expandedTradeKey, setExpandedTradeKey] = useState<string | null>(
+    () => firstRenderedTradeKey,
+  );
   const [selectedAnalysisEventIds, setSelectedAnalysisEventIds] = useState<Record<string, string | null>>(() =>
     initialFocusTarget ? { [initialFocusTarget.roundTrip.roundTripKey]: initialAnalyzerFocus?.eventId ?? null } : {});
   const [selectedAnalyzerIntervals, setSelectedAnalyzerIntervals] = useState<
@@ -2532,19 +2530,14 @@ export function DaySessionView({
   >(() => initialFocusTarget && initialAnalyzerFocus
     ? { [initialFocusTarget.stableInstrumentKey]: initialAnalyzerFocus.interval }
     : {});
-  const [expandedMobileTradeKeys, setExpandedMobileTradeKeys] = useState<
-    Record<string, string | null>
-  >(() => initialFocusTarget
-    ? { [initialFocusTarget.stableInstrumentKey]: initialFocusTarget.roundTrip.roundTripKey }
-    : {});
   useEffect(() => {
-    if (!initialFocusTarget) return;
+    if (!initialFocusTradeKey) return;
     const frame = window.requestAnimationFrame(() => {
-      document.getElementById(`trade-${initialFocusTarget.roundTrip.roundTripKey}`)
+      document.getElementById(`trade-${initialFocusTradeKey}`)
         ?.scrollIntoView({ behavior: "smooth", block: "center" });
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [initialFocusTarget]);
+  }, [initialFocusTradeKey]);
   const tradeCount = data.tickers.reduce(
     (count, ticker) => count + ticker.roundTrips.length,
     0,
@@ -3244,20 +3237,11 @@ export function DaySessionView({
           const showDemoCandleDataInsufficientNotice = demoAccount &&
             ["FABC", "FAMI", "GCTK"].includes(ticker.symbol) && !readyTrade;
           const selectedTrade = ticker.roundTrips.find((roundTrip) =>
-            roundTrip.roundTripKey === selectedAnalyzerTradeKeys[ticker.stableInstrumentKey],
-          ) ?? readyTrade;
+            roundTrip.roundTripKey === expandedTradeKey,
+          ) ?? null;
           const selectedInterval = selectedAnalyzerIntervals[ticker.stableInstrumentKey] ?? "1m";
-          const selectTrade = (roundTripKey: string, expandOnMobile: boolean) => {
-            setSelectedAnalyzerTradeKeys((current) => ({
-              ...current,
-              [ticker.stableInstrumentKey]: roundTripKey,
-            }));
-            if (expandOnMobile) {
-              setExpandedMobileTradeKeys((current) => ({
-                ...current,
-                [ticker.stableInstrumentKey]: roundTripKey,
-              }));
-            }
+          const selectTrade = (roundTripKey: string) => {
+            setExpandedTradeKey(roundTripKey);
           };
           return (
           <Card
@@ -3378,45 +3362,35 @@ export function DaySessionView({
                     availableTags={availableTags}
                     currency={data.currency}
                     designPreview={designPreview || pendingExecutions}
-                    expandedDesktop={selectedTrade
-                      ? selectedTrade.roundTripKey === roundTrip.roundTripKey
-                      : index === 0}
-                    expandedMobile={
-                      expandedMobileTradeKeys[ticker.stableInstrumentKey] === roundTrip.roundTripKey
-                    }
+                    expanded={expandedTradeKey === roundTrip.roundTripKey}
                     executions={data.executionActivity.filter((execution) =>
                       execution.roundTripKeys.includes(roundTrip.roundTripKey),
                     )}
                     expectedAccountSelectionRef={data.expectedAccountSelectionRef}
                     key={roundTrip.roundTripKey}
                     onCatalogChange={setAvailableTags}
-                    onCloseMobile={() => {
-                      setExpandedMobileTradeKeys((current) => ({
-                        ...current,
-                        [ticker.stableInstrumentKey]: null,
-                      }));
-                    }}
+                    onClose={() => setExpandedTradeKey(null)}
                     onManageTags={
                       designPreview || readOnly
                         ? undefined
                         : () => setManageTagsOpen(true)
                     }
                     noteState={tradeNoteStates[roundTrip.roundTripKey] ?? "idle"}
-                    onOpen={() => selectTrade(roundTrip.roundTripKey, true)}
+                    onOpen={() => selectTrade(roundTrip.roundTripKey)}
                     onRuleStatusChange={saveRuleStatus}
                     onRuleNoteSave={saveRuleNote}
                     onSaveNotes={async () => {
                       await saveTradeNotes(roundTrip.roundTripKey);
                     }}
                     onSelectAnalysisEvent={(eventId) => {
-                      selectTrade(roundTrip.roundTripKey, true);
+                      selectTrade(roundTrip.roundTripKey);
                       setSelectedAnalysisEventIds((current) => ({
                         ...current,
                         [roundTrip.roundTripKey]: eventId,
                       }));
                     }}
                     onSelectForChart={roundTrip.analyzer?.status === "ready"
-                      ? () => selectTrade(roundTrip.roundTripKey, false)
+                      ? () => selectTrade(roundTrip.roundTripKey)
                       : undefined}
                     onTagsChange={(tags) =>
                       setTradeTags((current) => ({
