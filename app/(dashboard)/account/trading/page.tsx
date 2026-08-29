@@ -155,7 +155,7 @@ export default async function AccountTradingPage({
           <MoomooExecutionImportSetup
             activeAccountName={activeAccount.displayName}
             activeAccountSelectionRef={activeAccount.selectionRef}
-            executionReadAuthorized={moomooConnection.authorizedScopes.includes("trade:read")}
+            executionReadAuthorized={moomooConnection?.authorizedScopes.includes("trade:read") ?? false}
             initialLinkedAccounts={moomooAccountLinks}
           />
         ) : null}

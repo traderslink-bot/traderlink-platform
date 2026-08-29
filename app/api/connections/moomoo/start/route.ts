@@ -60,7 +60,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     } catch {
       // The user still receives the connection failure when diagnostics cannot open storage.
     }
-    const destination = new URL("/account?moomoo=unavailable", publicOrigin);
+    const destination = new URL("/account/trading?moomoo=unavailable", publicOrigin);
     if (reportedToAdmin) destination.searchParams.set("reported", "1");
     return NextResponse.redirect(destination);
   }

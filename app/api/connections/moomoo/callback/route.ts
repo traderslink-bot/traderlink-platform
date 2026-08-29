@@ -34,7 +34,7 @@ function finish(
     ? new URL("/trade-tracker?gettingStarted=daily-entry&moomoo=connected", origin)
     : onboardingReturn
       ? new URL("/workspace?gettingStarted=moomoo-failed", origin)
-    : new URL(`/account?moomoo=${status}`, origin);
+    : new URL(`/account/trading?moomoo=${status}`, origin);
   if (reportedToAdmin) destination.searchParams.set("reported", "1");
   const response = NextResponse.redirect(destination);
   deletePlatformAuthCookie(response, request, MOOMOO_OAUTH_STATE_COOKIE);
