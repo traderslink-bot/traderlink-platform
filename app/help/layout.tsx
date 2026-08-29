@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
-import { HelpSiteHeader } from "./_components/help-site-header";
+import { PublicSiteHeader } from "../public-site-header";
 
 export default function PublicHelpLayout({ children }: { children: ReactNode }) {
-  return <><HelpSiteHeader />{children}</>;
+  return <><PublicSiteHeader />{children}</>;
 }

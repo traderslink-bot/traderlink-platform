@@ -3,8 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache, type ReactNode } from "react";
 
-import { HelpSiteHeader } from "@/app/help/_components/help-site-header";
 import { PublicSiteFooter } from "@/app/public-site-footer";
+import { PublicSiteHeader } from "@/app/public-site-header";
 import {
   getNewsArticle,
   type NewsArticle,
@@ -401,7 +401,7 @@ export async function NewsArticleView({
   ].filter(([, value]) => value !== "N/A" && value !== "Not specified");
   return (
     <>
-      <HelpSiteHeader />
+      <PublicSiteHeader />
       <div className="academy-shell">
         <article className="academy-container news-article-page">
           <div className="news-article-stack">
