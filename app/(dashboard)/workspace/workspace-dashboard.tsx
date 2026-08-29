@@ -20,6 +20,7 @@ import {
 import { InstallTradersLinkPwaCard } from "@/app/pwa/install-traderslink-pwa-card";
 import { DemoDataCallout, DemoTradeTrackerInvitation } from "../demo-data-callout";
 import type { JournalCalendarReadModel } from "@/src/modules/journal-analytics/contracts/journal-dashboard-read-models";
+import type { FinancialOutcomeColor } from "@/src/modules/journal-analytics/presentation/financial-outcome-color";
 import { formatJournalAnalyticsMoney } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 import type { WorkspaceReviewSummary } from "./workspace-review-summary";
 import { CalendarWeekView } from "../calendar/calendar-client";
@@ -31,6 +32,7 @@ import {
 export type WorkspaceMetric = Readonly<{
   label: string;
   value: string;
+  valueColor?: FinancialOutcomeColor;
   caption: string;
 }>;
 

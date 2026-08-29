@@ -27,7 +27,7 @@ import { useMemo, useState } from "react";
 
 import { DashboardMetricCard, DashboardPrimaryAction } from "@/app/dashboard-template";
 import { candlePatternName } from "@/src/lib/trade-candle-analysis/pattern-presentation";
-import { financialOutcomeColor } from
+import { financialOutcomeColor, financialThresholdColor } from
   "@/src/modules/journal-analytics/presentation/financial-outcome-color";
 import type {
   DailyTradeLongTermAnalyticsModel,
@@ -63,7 +63,7 @@ function percent(value: number | null): string {
   return value === null ? "Unavailable" : `${value.toFixed(1)}%`;
 }
 
-function adverseMagnitudeColor(value: string | null) {
+function adverseMagnitudeColor(value: string | number | null) {
   return financialOutcomeColor(value) === "text.primary" ? "text.primary" : "error.main";
 }
 
@@ -418,7 +418,7 @@ export function TradeAnalysisClient({
         <Typography component="h2" sx={{ fontWeight: 850 }} variant="h6">Overall results</Typography>
         <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } }}>
         <DashboardMetricCard caption="Every saved buy and sell snapshot" label="Analyzed executions" value={String(model.analyzedExecutionCount)} />
-        <DashboardMetricCard caption="Trades that finished above breakeven" label="Win rate" value={percent(model.winRatePercent)} />
+        <DashboardMetricCard caption="Trades that finished above breakeven" label="Win rate" value={percent(model.winRatePercent)} valueColor={financialThresholdColor(model.winRatePercent, 50)} />
         <DashboardMetricCard caption="Average percentage return per analyzed trade" label="Average return" value={percent(model.averageReturnPercent)} valueColor={financialOutcomeColor(model.averageReturnPercent)} />
         <DashboardMetricCard caption={`Trade Tracker ${model.moneyBasis} P/L per analyzed trade`} label={`Average ${model.moneyBasis} result`} value={money(model.averagePnlDecimal, model.currency)} valueColor={financialOutcomeColor(model.averagePnlDecimal)} />
         <DashboardMetricCard caption={`Combined Trade Tracker ${model.moneyBasis} P/L`} label="Total actual result" value={money(model.profitCapture.totalActualPnlDecimal, model.currency)} valueColor={financialOutcomeColor(model.profitCapture.totalActualPnlDecimal)} />
@@ -501,24 +501,24 @@ export function TradeAnalysisClient({
 
       {view === "entry-exit" ? <Section defaultExpanded description="How far price moved in favor of and against each entry or add before the position became flat." helpHref="/help/trade-analyzer/entry-exit-analysis#entry-opportunity-risk" title="Entry opportunity and risk">
         <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))" } }}>
-          <DashboardMetricCard caption={`${model.entryOpportunityRisk.measuredExecutionCount} measured entry and add executions`} label="Average favorable move per share" value={money(model.entryOpportunityRisk.averageFavorableMoveDecimal, model.currency)} />
-          <DashboardMetricCard caption="Middle favorable movement across measured executions" label="Median favorable move per share" value={money(model.entryOpportunityRisk.medianFavorableMoveDecimal, model.currency)} />
-          <DashboardMetricCard caption="Average movement against the execution" label="Average adverse move per share" value={money(model.entryOpportunityRisk.averageAdverseMoveDecimal, model.currency)} />
-          <DashboardMetricCard caption="Middle adverse movement across measured executions" label="Median adverse move per share" value={money(model.entryOpportunityRisk.medianAdverseMoveDecimal, model.currency)} />
+          <DashboardMetricCard caption={`${model.entryOpportunityRisk.measuredExecutionCount} measured entry and add executions`} label="Average favorable move per share" value={money(model.entryOpportunityRisk.averageFavorableMoveDecimal, model.currency)} valueColor={financialOutcomeColor(model.entryOpportunityRisk.averageFavorableMoveDecimal)} />
+          <DashboardMetricCard caption="Middle favorable movement across measured executions" label="Median favorable move per share" value={money(model.entryOpportunityRisk.medianFavorableMoveDecimal, model.currency)} valueColor={financialOutcomeColor(model.entryOpportunityRisk.medianFavorableMoveDecimal)} />
+          <DashboardMetricCard caption="Average movement against the execution" label="Average adverse move per share" value={money(model.entryOpportunityRisk.averageAdverseMoveDecimal, model.currency)} valueColor={adverseMagnitudeColor(model.entryOpportunityRisk.averageAdverseMoveDecimal)} />
+          <DashboardMetricCard caption="Middle adverse movement across measured executions" label="Median adverse move per share" value={money(model.entryOpportunityRisk.medianAdverseMoveDecimal, model.currency)} valueColor={adverseMagnitudeColor(model.entryOpportunityRisk.medianAdverseMoveDecimal)} />
         </Box>
       </Section> : null}
 
       {view === "mfe-mae" ? <Section defaultExpanded description="Complete-population favorable and adverse movement after each measured entry or add, before the position became flat." helpHref="/help/trade-analyzer/mfe-mae#overview" title="MFE & MAE">
         <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "minmax(0, 1fr)", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))" } }}>
           <DashboardMetricCard caption="Entries and adds with saved one-minute candle coverage" label="Measured executions" value={String(model.entryOpportunityRisk.measuredExecutionCount)} />
-          <DashboardMetricCard caption="Average price movement in the trade's favor per share" label="Average MFE" value={money(model.entryOpportunityRisk.averageFavorableMoveDecimal, model.currency)} />
-          <DashboardMetricCard caption="Middle favorable price movement per share" label="Median MFE" value={money(model.entryOpportunityRisk.medianFavorableMoveDecimal, model.currency)} />
-          <DashboardMetricCard caption="Average price movement against the trade per share" label="Average MAE" value={money(model.entryOpportunityRisk.averageAdverseMoveDecimal, model.currency)} />
-          <DashboardMetricCard caption="Middle adverse price movement per share" label="Median MAE" value={money(model.entryOpportunityRisk.medianAdverseMoveDecimal, model.currency)} />
-          <DashboardMetricCard caption="Average favorable movement relative to the entry price" label="Average MFE %" value={percent(model.mfeMae.averageFavorableMovePercent)} />
-          <DashboardMetricCard caption="Middle favorable movement relative to the entry price" label="Median MFE %" value={percent(model.mfeMae.medianFavorableMovePercent)} />
-          <DashboardMetricCard caption="Average adverse movement relative to the entry price" label="Average MAE %" value={percent(model.mfeMae.averageAdverseMovePercent)} />
-          <DashboardMetricCard caption="Middle adverse movement relative to the entry price" label="Median MAE %" value={percent(model.mfeMae.medianAdverseMovePercent)} />
+          <DashboardMetricCard caption="Average price movement in the trade's favor per share" label="Average MFE" value={money(model.entryOpportunityRisk.averageFavorableMoveDecimal, model.currency)} valueColor={financialOutcomeColor(model.entryOpportunityRisk.averageFavorableMoveDecimal)} />
+          <DashboardMetricCard caption="Middle favorable price movement per share" label="Median MFE" value={money(model.entryOpportunityRisk.medianFavorableMoveDecimal, model.currency)} valueColor={financialOutcomeColor(model.entryOpportunityRisk.medianFavorableMoveDecimal)} />
+          <DashboardMetricCard caption="Average price movement against the trade per share" label="Average MAE" value={money(model.entryOpportunityRisk.averageAdverseMoveDecimal, model.currency)} valueColor={adverseMagnitudeColor(model.entryOpportunityRisk.averageAdverseMoveDecimal)} />
+          <DashboardMetricCard caption="Middle adverse price movement per share" label="Median MAE" value={money(model.entryOpportunityRisk.medianAdverseMoveDecimal, model.currency)} valueColor={adverseMagnitudeColor(model.entryOpportunityRisk.medianAdverseMoveDecimal)} />
+          <DashboardMetricCard caption="Average favorable movement relative to the entry price" label="Average MFE %" value={percent(model.mfeMae.averageFavorableMovePercent)} valueColor={financialOutcomeColor(model.mfeMae.averageFavorableMovePercent)} />
+          <DashboardMetricCard caption="Middle favorable movement relative to the entry price" label="Median MFE %" value={percent(model.mfeMae.medianFavorableMovePercent)} valueColor={financialOutcomeColor(model.mfeMae.medianFavorableMovePercent)} />
+          <DashboardMetricCard caption="Average adverse movement relative to the entry price" label="Average MAE %" value={percent(model.mfeMae.averageAdverseMovePercent)} valueColor={adverseMagnitudeColor(model.mfeMae.averageAdverseMovePercent)} />
+          <DashboardMetricCard caption="Middle adverse movement relative to the entry price" label="Median MAE %" value={percent(model.mfeMae.medianAdverseMovePercent)} valueColor={adverseMagnitudeColor(model.mfeMae.medianAdverseMovePercent)} />
         </Box>
       </Section> : null}
 

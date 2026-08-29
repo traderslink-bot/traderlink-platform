@@ -6,7 +6,11 @@ import { WorkspaceOfflineViewCapture } from "@/app/pwa/workspace-offline-view-ca
 import { WorkspaceDashboard } from "./workspace-dashboard";
 import type { WorkspaceFirstTimeOnboardingResult } from "./workspace-first-time-onboarding-panel";
 import { readWorkspaceReviewSummary } from "./workspace-review-summary";
-import { formatJournalAnalyticsPartitionedMetric } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
+import {
+  findJournalAnalyticsMetric,
+  formatJournalAnalyticsPartitionedMetric,
+} from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
+import { financialSummaryMetricColor } from "@/src/modules/journal-analytics/presentation/financial-outcome-color";
 import {
   buildJournalAnalyticsDashboardQuery,
   withJournalAnalyticsReportingDashboardRuntime,
@@ -92,11 +96,16 @@ export default async function WorkspacePage({
         readWorkspaceReviewSummary(database, scope, new Date(), dashboard)),
     }),
   );
-  const analyticsMetrics = WORKSPACE_METRICS.map(([label, metricId, caption]) => ({
-    label,
-    caption,
-    value: formatJournalAnalyticsPartitionedMetric(response, metricId),
-  }));
+  const analyticsMetrics = WORKSPACE_METRICS.map(([label, metricId, caption]) => {
+    const metrics = findJournalAnalyticsMetric(response, metricId);
+    const metric = metrics.length === 1 ? metrics[0] ?? null : null;
+    return {
+      label,
+      caption,
+      value: formatJournalAnalyticsPartitionedMetric(response, metricId),
+      valueColor: financialSummaryMetricColor(metricId, metric?.value),
+    };
+  });
   const offlineModel = createPlatformWorkspaceOfflineViewModel({
     analyticsMetrics,
     calendarData: calendar,

@@ -37,7 +37,7 @@ import {
   formatJournalAnalyticsMoney,
   journalAnalyticsCurrencySymbol,
 } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
-import { financialOutcomeColor } from "@/src/modules/journal-analytics/presentation/financial-outcome-color";
+import { financialOutcomeColor, financialThresholdColor } from "@/src/modules/journal-analytics/presentation/financial-outcome-color";
 import { FeatureHelpLink } from "../feature-help-link";
 import { HorizontalScrollHint } from "../horizontal-scroll-region";
 
@@ -833,7 +833,7 @@ export function CalendarClient({
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "repeat(1, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))" } }}>
         <DashboardMetricCard caption="Selected period" label="P/L" value={initialData.state === "ready" ? money(initialData.summary.netPnlDecimal, initialData.currency) : "—"} valueColor={initialData.state === "ready" ? financialOutcomeColor(initialData.summary.netPnlDecimal) : "text.primary"} />
         <DashboardMetricCard caption="Selected period" label="Trades" value={initialData.state === "ready" ? String(initialData.summary.tradeCount) : "—"} />
-        <DashboardMetricCard caption="Selected period" label="Win rate" value={initialData.state === "ready" ? percent(initialData.summary.winRatePercentDecimal) : "—"} />
+        <DashboardMetricCard caption="Selected period" label="Win rate" value={initialData.state === "ready" ? percent(initialData.summary.winRatePercentDecimal) : "—"} valueColor={initialData.state === "ready" ? financialThresholdColor(initialData.summary.winRatePercentDecimal, 50) : "text.primary"} />
       </Box>
 
       <DashboardPanel hideHeader>

@@ -65,3 +65,42 @@ export function financialOutcomeMetricColor(
     ? financialOutcomeColor(value)
     : "text.primary";
 }
+
+function numericOutcomeValue(
+  value: JournalAnalyticsExactValue | number | string | null | undefined,
+): number | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  if (typeof value === "string") {
+    return /^-?(?:\d+(?:\.\d*)?|\.\d+)$/u.test(value.trim()) ? Number(value) : null;
+  }
+  if (value.kind === "integer") return value.value;
+  if (value.kind === "decimal") return Number(value.valueDecimal);
+  if (value.kind === "rational") {
+    const denominator = Number(value.denominatorInteger);
+    return Number.isFinite(denominator) && denominator !== 0
+      ? Number(value.numeratorDecimal) / denominator
+      : null;
+  }
+  return null;
+}
+
+export function financialThresholdColor(
+  value: JournalAnalyticsExactValue | number | string | null | undefined,
+  threshold: number,
+): FinancialOutcomeColor {
+  const numericValue = numericOutcomeValue(value);
+  if (numericValue === null || !Number.isFinite(numericValue) || !Number.isFinite(threshold) || numericValue === threshold) {
+    return "text.primary";
+  }
+  return numericValue > threshold ? "success.main" : "error.main";
+}
+
+export function financialSummaryMetricColor(
+  metricId: string,
+  value: JournalAnalyticsExactValue | null | undefined,
+): FinancialOutcomeColor {
+  if (metricId === "win_rate") return financialThresholdColor(value, 50);
+  if (metricId === "profit_factor") return financialThresholdColor(value, 1);
+  return financialOutcomeMetricColor(metricId, value);
+}

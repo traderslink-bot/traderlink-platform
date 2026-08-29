@@ -10,7 +10,7 @@ import type {
   JournalAnalyticsPartitionedResponse,
   JournalAnalyticsResponse,
 } from "@/src/modules/journal-analytics/contracts/analytics-result";
-import { financialOutcomeMetricColor } from "@/src/modules/journal-analytics/presentation/financial-outcome-color";
+import { financialSummaryMetricColor } from "@/src/modules/journal-analytics/presentation/financial-outcome-color";
 import { formatJournalAnalyticsMetric } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
 
 import { FeatureHelpLink } from "../feature-help-link";
@@ -68,7 +68,7 @@ function OverviewPartition({ partition, showCurrency }: { partition: JournalAnal
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", md: "repeat(3, minmax(0, 1fr))" } }}>
         {ANALYTICS_OVERVIEW_METRICS.map((definition) => {
           const metric = metricFor(partition.metrics, definition.id);
-          return <DashboardMetricCard caption={definition.caption} key={definition.id} label={definition.label} value={metric ? formatJournalAnalyticsMetric(metric) : "Unavailable"} valueColor={financialOutcomeMetricColor(definition.id, metric?.value)} />;
+          return <DashboardMetricCard caption={definition.caption} key={definition.id} label={definition.label} value={metric ? formatJournalAnalyticsMetric(metric) : "Unavailable"} valueColor={financialSummaryMetricColor(definition.id, metric?.value)} />;
         })}
       </Box>
       <MonthlyPnlChartForPartition partition={partition} />
