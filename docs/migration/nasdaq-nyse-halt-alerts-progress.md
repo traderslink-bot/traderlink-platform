@@ -16,3 +16,10 @@
 - [ ] Refresh the drawer layout with the owner-approved Halt alerts, Muted Tickers and device-install sections.
 - [ ] Complete focused verification and owner visual approval.
 - [ ] Deploy, activate the one-minute hosted schedule, and confirm real device Push.
+
+## Source-isolation repair — local checkpoint 2026-08-29
+
+- [x] Confirmed that the protected cron previously treated Nasdaq and NYSE as one all-or-nothing fetch: either unavailable source returned `503` before events or Push deliveries could be created.
+- [x] Isolated the two official-source reads. A healthy source now continues through the existing event, recipient, mute and encrypted Web Push flow when the other source is unavailable; both unavailable sources still return `503`.
+- [x] Added safe source-only observability to the protected cron response and warning log: exchange name plus HTTP status, or `null` for a network failure. No user, subscription, endpoint, credential or upstream response content is logged.
+- [ ] Verify the local checkpoint with focused static checks, then obtain Railway log/device-delivery confirmation before release.

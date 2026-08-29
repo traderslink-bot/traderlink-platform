@@ -24,7 +24,17 @@ function authorized(request: Request): boolean {
 export async function GET(request: Request): Promise<Response> {
   if (!authorized(request)) return Response.json({ ok: false }, { status: 401 });
   try {
-    const halts = await fetchOfficialMarketHalts();
+    const fetched = await fetchOfficialMarketHalts();
+    const unavailableSources = fetched.sources.filter((source) => !source.available);
+    for (const source of unavailableSources) {
+      console.warn("market_halt_source_unavailable", {
+        httpStatus: source.httpStatus,
+        source: source.source,
+      });
+    }
+    if (unavailableSources.length === fetched.sources.length) {
+      return Response.json({ ok: false, sources: fetched.sources }, { status: 503 });
+    }
     const database = openPlatformDatabase({ mode: "runtime" });
     try {
       const observedAtUtc = createCanonicalUtcTimestamp();
@@ -32,7 +42,7 @@ export async function GET(request: Request): Promise<Response> {
       let queued = 0;
       database.transaction(() => {
         const repository = new MarketHaltAlertRepository(database);
-        for (const halt of halts) {
+        for (const halt of fetched.halts) {
           const result = repository.upsert({
             halt,
             observedAtUtc,
@@ -48,7 +58,7 @@ export async function GET(request: Request): Promise<Response> {
         new MarketHaltWebPushRepository(database, configuration.encryption),
         configuration,
       ).runAvailable(100);
-      return Response.json({ created, delivered, ok: true, queued });
+      return Response.json({ created, delivered, ok: true, queued, sources: fetched.sources });
     } finally {
       database.close();
     }
