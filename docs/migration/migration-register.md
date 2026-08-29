@@ -53,6 +53,16 @@ execution-provenance records plus account-scoped demo-account and invitation
 records. Existing manual and broker provenance enums remain unchanged; the
 migration adds no provider credential, candle, real trade, or user-visible
 identity data. Migration execution remains a separate Railway release boundary.
+
+**Daily Trade Tracker execution mismatches:** [Daily Trade Tracker Analyzer
+Reliability And Presentation Plan](daily-trade-tracker-analyzer-reliability-and-presentation-plan.md)
+registers `0099_daily_trade_execution_mismatches` after the immutable demo-data
+sequence 0095 -> 0096 -> 0097 -> 0098. It records an honest `execution_mismatch`
+outcome, every affected execution and available one-minute candle range under
+the exact workspace/account/round-trip version, plus an immutable trader
+confirmation when the broker record is correct. It changes no Journal
+execution. Migration 0099 follows the validated 0095 through 0098 demo-data
+lineage. Migration execution remains a separate Railway release boundary.
 **2026-08-09 AI Review cache-write accounting checkpoint:** migration
 `0051_coach_ai_review_cache_write_accounting` is registered, disposable-copy
 verified, recovery-authority backup/restore verified and locally applied. The

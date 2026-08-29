@@ -13,6 +13,8 @@ import {
 import type { NormalizedMarketCandle } from "../contracts/candle-review-contracts";
 import { persistDailyTradePathMaterialization } from "./daily-trade-path-materialization-repository";
 import { persistDailyTradePatternOccurrences } from "./daily-trade-pattern-occurrence-repository";
+import type { DailyTradeExecutionCandleMismatch } from "./daily-trade-execution-candle-validation";
+import { dailyTradeFirstResultAt } from "./daily-trade-analyzer-session";
 
 export type DailyTradeAnalyzerTarget = Readonly<{
   assetClass: "stock";
@@ -27,6 +29,7 @@ export type DailyTradeAnalyzerTarget = Readonly<{
 }>;
 
 export type ClaimedDailyTradeAnalyzerJob = Readonly<{
+  attemptCount: number;
   desiredCoverageEndUtc: string;
   jobId: string;
   marketSessionSetId: string;
@@ -39,14 +42,26 @@ export type DailyTradeMarketDataProviderIdentity = Readonly<{
   key: string;
 }>;
 
+export type DailyTradeExecutionMismatchConfirmation = Readonly<{
+  roundTripId: string;
+  roundTripVersionId: string;
+}>;
+
 type JobRow = Readonly<{
   account_id: string;
+  attempt_count: number;
   daily_trade_job_id: string;
   desired_coverage_end_utc: string;
   market_session_set_id: string;
   round_trip_id: string;
   user_id: string;
   workspace_id: string;
+}>;
+
+type LegacyFirstResultWakeRow = Readonly<{
+  closed_at_utc: string;
+  daily_trade_job_id: string;
+  desired_coverage_end_utc: string;
 }>;
 
 type TargetRow = Readonly<{
@@ -132,6 +147,18 @@ export class DailyTradeAnalyzerRepository {
       matches_projection: 0 | 1;
     }>(`SELECT
   CASE WHEN analyzed_version.projection_fingerprint_sha256 = current_version.projection_fingerprint_sha256
+    OR EXISTS (
+      SELECT 1
+      FROM journal_round_trip_daily_trade_execution_mismatch_sets mismatch_set
+      JOIN journal_round_trip_versions mismatch_version
+        ON mismatch_version.workspace_id = mismatch_set.workspace_id
+        AND mismatch_version.account_id = mismatch_set.account_id
+        AND mismatch_version.round_trip_version_id = mismatch_set.round_trip_version_id
+      WHERE mismatch_set.workspace_id = round_trip.workspace_id
+        AND mismatch_set.account_id = round_trip.account_id
+        AND mismatch_set.round_trip_id = round_trip.round_trip_id
+        AND mismatch_version.projection_fingerprint_sha256 = current_version.projection_fingerprint_sha256
+    )
     THEN 1 ELSE 0 END AS matches_projection
 FROM journal_round_trips round_trip
 JOIN journal_round_trip_versions current_version
@@ -317,8 +344,38 @@ WHERE (status = 'queued' OR (status = 'leased' AND lease_expires_at_utc < ?))
     WHERE demo.workspace_id = level_analysis_daily_trade_jobs.workspace_id
       AND demo.account_id = level_analysis_daily_trade_jobs.account_id
   )`).run(timestamp, timestamp, timestamp);
+      const legacyFirstResultWakes = this.database.prepare<[], LegacyFirstResultWakeRow>(`SELECT
+  job.daily_trade_job_id, job.desired_coverage_end_utc, version.closed_at_utc
+FROM level_analysis_daily_trade_jobs job
+JOIN journal_round_trip_versions version
+  ON version.workspace_id = job.workspace_id
+  AND version.account_id = job.account_id
+  AND version.round_trip_version_id = job.round_trip_version_id
+WHERE job.status = 'queued'
+  AND job.next_attempt_at_utc = job.desired_coverage_end_utc
+  AND version.closed_at_utc IS NOT NULL
+  AND CAST(strftime('%s', job.desired_coverage_end_utc) AS INTEGER) >
+    (CAST(strftime('%s', version.closed_at_utc) AS INTEGER) / 60) * 60 + 1800`).all();
+      const rescheduleLegacyFirstResult = this.database.prepare(`UPDATE level_analysis_daily_trade_jobs
+SET next_attempt_at_utc = ?, updated_at_utc = ?
+WHERE daily_trade_job_id = ? AND status = 'queued'
+  AND next_attempt_at_utc = desired_coverage_end_utc`);
+      for (const legacy of legacyFirstResultWakes) {
+        const currentPolicyWake = dailyTradeFirstResultAt(legacy.closed_at_utc);
+        if (
+          currentPolicyWake !== null &&
+          currentPolicyWake.getTime() < Date.parse(legacy.desired_coverage_end_utc)
+        ) {
+          rescheduleLegacyFirstResult.run(
+            createCanonicalUtcTimestamp(currentPolicyWake),
+            timestamp,
+            legacy.daily_trade_job_id,
+          );
+        }
+      }
       const candidate = this.database.prepare<[string, string], JobRow>(`SELECT daily_trade_job_id, user_id,
-  workspace_id, account_id, round_trip_id, market_session_set_id, desired_coverage_end_utc
+  workspace_id, account_id, round_trip_id, market_session_set_id, desired_coverage_end_utc,
+  attempt_count
 FROM level_analysis_daily_trade_jobs
 WHERE (status = 'queued' OR (status = 'leased' AND lease_expires_at_utc < ?))
   AND NOT EXISTS (
@@ -350,6 +407,7 @@ WHERE daily_trade_job_id = ? AND (status = 'queued' OR (status = 'leased' AND le
       return null;
     }
     return Object.freeze({
+      attemptCount: row.attempt_count + 1,
       desiredCoverageEndUtc: row.desired_coverage_end_utc,
       jobId: row.daily_trade_job_id,
       marketSessionSetId: row.market_session_set_id,
@@ -532,6 +590,78 @@ WHERE daily_trade_analysis_id = ?`).run(input.target.roundTripVersionId,
     }).immediate();
   }
 
+  persistExecutionMismatches(input: Readonly<{
+    jobId: string;
+    marketSessionSetVersionId: string | null;
+    mismatches: readonly DailyTradeExecutionCandleMismatch[];
+    now: Date;
+    scope: AccountScope;
+    target: DailyTradeAnalyzerTarget;
+  }>): string {
+    if (input.mismatches.length === 0) throw new Error("daily_trade_execution_mismatches_required");
+    const timestamp = createCanonicalUtcTimestamp(input.now);
+    return this.database.transaction(() => {
+      const existing = this.database.prepare<[string, string, string], {
+        execution_mismatch_set_id: string;
+      }>(`SELECT execution_mismatch_set_id
+FROM journal_round_trip_daily_trade_execution_mismatch_sets
+WHERE workspace_id = ? AND account_id = ? AND round_trip_version_id = ?`)
+        .get(input.scope.workspaceId, input.scope.accountId, input.target.roundTripVersionId);
+      if (existing) return existing.execution_mismatch_set_id;
+      const mismatchSetId = createCanonicalUuidV4();
+      this.database.prepare(`INSERT INTO journal_round_trip_daily_trade_execution_mismatch_sets (
+  execution_mismatch_set_id, daily_trade_job_id, user_id, workspace_id, account_id,
+  round_trip_id, round_trip_version_id, market_session_set_version_id, outcome,
+  validator_contract_version, created_at_utc
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'execution_mismatch',
+  'daily_trade_execution_candle_match_v1', ?)`)
+        .run(mismatchSetId, input.jobId, input.scope.userId, input.scope.workspaceId,
+          input.scope.accountId, input.target.roundTripId, input.target.roundTripVersionId,
+          input.marketSessionSetVersionId, timestamp);
+      const insert = this.database.prepare(`INSERT INTO journal_round_trip_daily_trade_execution_mismatches (
+  execution_mismatch_set_id, workspace_id, account_id, execution_id,
+  execution_sequence, event_kind, side, executed_at_utc, quantity_decimal,
+  entered_price_decimal, candle_time_utc_seconds, mismatch_kind,
+  candle_low_decimal, candle_high_decimal
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+      for (const mismatch of input.mismatches) {
+        insert.run(mismatchSetId, input.scope.workspaceId, input.scope.accountId,
+          mismatch.event.eventId, mismatch.event.sequence, mismatch.event.kind,
+          mismatch.side, mismatch.event.executedAtUtc, mismatch.event.quantityDecimal,
+          mismatch.enteredPriceDecimal, mismatch.candleTimeUtcSeconds, mismatch.kind,
+          mismatch.candleLowDecimal, mismatch.candleHighDecimal);
+      }
+      return mismatchSetId;
+    }).immediate();
+  }
+
+  confirmExecutionMismatch(input: Readonly<{
+    mismatchSetId: string;
+    now: Date;
+    scope: AccountScope;
+  }>): DailyTradeExecutionMismatchConfirmation {
+    const row = this.database.prepare<[string, string, string, string], {
+      round_trip_id: string;
+      round_trip_version_id: string;
+    }>(`SELECT round_trip_id, round_trip_version_id
+FROM journal_round_trip_daily_trade_execution_mismatch_sets
+WHERE execution_mismatch_set_id = ? AND user_id = ?
+  AND workspace_id = ? AND account_id = ?`)
+      .get(input.mismatchSetId, input.scope.userId, input.scope.workspaceId, input.scope.accountId);
+    if (!row) throw new Error("daily_trade_execution_mismatch_access_denied");
+    this.database.prepare(`INSERT OR IGNORE INTO journal_round_trip_daily_trade_execution_mismatch_confirmations (
+  execution_mismatch_confirmation_id, execution_mismatch_set_id, user_id,
+  workspace_id, account_id, confirmation_kind, confirmed_at_utc
+) VALUES (?, ?, ?, ?, ?, 'broker_record_confirmed', ?)`)
+      .run(createCanonicalUuidV4(), input.mismatchSetId, input.scope.userId,
+        input.scope.workspaceId, input.scope.accountId,
+        createCanonicalUtcTimestamp(input.now));
+    return Object.freeze({
+      roundTripId: row.round_trip_id,
+      roundTripVersionId: row.round_trip_version_id,
+    });
+  }
+
   finishJob(jobId: string, status: "completed" | "no_coverage" | "provider_unavailable" | "expired", now: Date): void {
     const timestamp = createCanonicalUtcTimestamp(now);
     this.database.prepare(`UPDATE level_analysis_daily_trade_jobs
@@ -539,10 +669,22 @@ SET status = ?, completed_at_utc = ?, lease_expires_at_utc = NULL, updated_at_ut
       WHERE daily_trade_job_id = ?`).run(status, timestamp, timestamp, jobId);
   }
 
-  rescheduleJob(jobId: string, nextAttemptAt: Date, now: Date): void {
+  rescheduleJob(
+    jobId: string,
+    nextAttemptAt: Date,
+    now: Date,
+    options: Readonly<{ resetAttempts?: boolean }> = Object.freeze({}),
+  ): void {
     const timestamp = createCanonicalUtcTimestamp(now);
     this.database.prepare(`UPDATE level_analysis_daily_trade_jobs
-SET status = 'queued', next_attempt_at_utc = ?, lease_expires_at_utc = NULL, updated_at_utc = ?
-WHERE daily_trade_job_id = ?`).run(createCanonicalUtcTimestamp(nextAttemptAt), timestamp, jobId);
+SET status = 'queued', next_attempt_at_utc = ?, lease_expires_at_utc = NULL,
+  attempt_count = CASE WHEN ? = 1 THEN 0 ELSE attempt_count END,
+  updated_at_utc = ?
+WHERE daily_trade_job_id = ?`).run(
+      createCanonicalUtcTimestamp(nextAttemptAt),
+      options.resetAttempts === true ? 1 : 0,
+      timestamp,
+      jobId,
+    );
   }
 }

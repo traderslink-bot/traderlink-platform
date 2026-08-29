@@ -87,7 +87,7 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
         blocks: Object.freeze([
           Object.freeze({ kind: "paragraph", text: "Open the manual trade form and copy each fill from your broker. Accurate details improve the chart review now and any later statement matching." }),
           Object.freeze({ kind: "bullets", items: Object.freeze([
-            "Use the execution date and time shown by the broker. The Day Tracker uses Eastern Time.",
+            "Use the execution date and Eastern Time shown by the broker. If you do not have the broker timestamp, use the time of the matching one-minute chart candle.",
             "The execution form stays available when you reopen a traded day, so you can add a missed fill as well as edit an earlier one.",
             "Enter the ticker, Buy or Sell side, filled quantity and execution price for every fill.",
             "Enter fees only when the broker reports them. Leaving an unknown fee blank is more accurate than guessing.",
@@ -132,6 +132,8 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
             "After you open Daily Trade Tracker online once, the installed app can reopen a safe execution form after a full offline relaunch. The form uses the selected account's saved currency and timezone but does not keep an account name or broker identity.",
             "Use the available follow-up link to View candle review when you want to open the saved day immediately.",
             "A manual execution can be edited later. If it is being compared with possible broker data, resolve that Data Decision first so the same fill is not silently counted twice.",
+            "Trade Analyzer ignores seconds when it matches an execution. It checks the Eastern-time minute and confirms that the entered price is within that one-minute candle's low-to-high range.",
+            "If market data does not match, the trade card lists every affected execution. Correct an entry and resubmit to start analysis automatically, or confirm that the broker record is correct so TradersLink can review the market data without changing your fill.",
             "When one position has returned to zero, use Start another trade if you need to record a later trade in the same ticker.",
           ]) }),
           Object.freeze({ kind: "callout", title: "Manual and imported fills share one history", text: "Broker imports do not create a second Trade Tracker. When an imported fill may duplicate a manual one, TradersLink asks for a decision instead of deleting or double-counting it automatically." }),
@@ -419,16 +421,17 @@ export const DAILY_TRADE_TRACKER_HELP_GUIDES: readonly DailyTradeTrackerHelpGuid
       }),
       Object.freeze({
         id: "same-day-timing",
-        title: "Same-day analysis and the final 60 minutes",
-        summary: "See why a newly closed trade can be useful immediately but not yet final.",
-        keywords: Object.freeze(["same day", "60 minutes", "post exit", "pending", "analysis ready"]),
+        title: "Same-day analysis and the final 30 minutes",
+        summary: "See when a newly closed trade is ready for its first completed Analyzer result.",
+        keywords: Object.freeze(["same day", "30 minutes", "post exit", "pending", "analysis ready", "notification"]),
         blocks: Object.freeze([
-          Object.freeze({ kind: "paragraph", text: "TradersLink can analyze the trade as soon as its executions and formed candles are available. If the trade ended less than 60 minutes ago, the chart and most analysis can appear immediately while the remaining post-exit path is still forming." }),
+          Object.freeze({ kind: "paragraph", text: "After a completed trade's final exit, TradersLink collects the 30-minute post-exit market-data window needed for the first complete Analyzer result. The window starts from the final execution's one-minute candle, so seconds do not change the readiness time. The blue collection notice tells you the Eastern Time when that window is expected to be complete." }),
           Object.freeze({ kind: "bullets", items: Object.freeze([
-            "The status shows how many of the 60 post-exit minutes are available.",
+            "You can continue your daily review or leave the page; collection does not depend on keeping the browser open.",
             "Missing future candles are not treated as zeroes or failed analysis.",
-            "After 60 minutes have formed, TradersLink adds the final post-exit result.",
-            "You may leave the page; the update does not depend on keeping the browser open.",
+            "When the Analyzer result is ready, TradersLink adds an in-app notification and sends it through your configured notification channels.",
+            "A later finalized-session update can add the 60-minute observation when that market data is available; you do not have to wait for it before reviewing the first result.",
+            "If the required market data cannot be collected after its bounded retries, the page shows an unavailable state instead of staying on a collecting message.",
           ]) }),
         ]),
       }),

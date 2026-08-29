@@ -4,6 +4,7 @@ import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import {
+  Alert,
   Box,
   Card,
   IconButton,
@@ -114,8 +115,8 @@ export function ExecutionEntryCard({
         count: number;
         candleReviewKeys: readonly string[];
         candleReviewMessage: string | null;
-        persistence: "device" | "traderlink";
       }
+    | { kind: "queued"; count: number }
     | { kind: "error"; message: string }
   >({ kind: "idle" });
   const hasDraftContent = state.kind !== "saved" && rows.some((row) =>
@@ -194,6 +195,13 @@ export function ExecutionEntryCard({
         ? await onSave(normalizedRows)
         : null;
       const recordedCount = saveResult?.acceptedExecutionCount ?? rows.length;
+      if (saveResult?.status === "queued") {
+        setState({
+          kind: "queued",
+          count: recordedCount,
+        });
+        return;
+      }
       setState({
         kind: "saved",
         candleReviewKeys: [],
@@ -201,7 +209,6 @@ export function ExecutionEntryCard({
           ? `${saveResult.pendingDecisionCount} item${saveResult.pendingDecisionCount === 1 ? "" : "s"} need review in Data Decisions.`
           : null,
         count: recordedCount,
-        persistence: saveResult?.status === "queued" ? "device" : "traderlink",
       });
       onSubmitted(recordedCount, normalizedRows);
       onCollapsedChange(true);
@@ -245,15 +252,8 @@ export function ExecutionEntryCard({
             </Typography>
             <Typography color="text.secondary" variant="body2">
               {submittedCount} execution{submittedCount === 1 ? "" : "s"}{" "}
-              {state.kind === "saved" && state.persistence === "device"
-                ? "saved on this device"
-                : "recorded"}
+              saved to TradersLink
             </Typography>
-            {state.kind === "saved" && state.persistence === "device" ? (
-              <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="caption">
-                TradersLink will check and add them after you reconnect.
-              </Typography>
-            ) : null}
             {state.kind === "saved" && state.candleReviewMessage ? (
               <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="caption">
                 {state.candleReviewMessage}
@@ -292,13 +292,17 @@ export function ExecutionEntryCard({
       {entryMode === "day" ? (
         <>
           <Typography color="text.secondary" variant="body2">
-            Enter all day trade buy and sell executions for one trading day and save your executions. All of your trades for the day will display below, organized by ticker.
+            Enter your day’s buy and sell executions. Your trades will appear below, grouped by ticker.
           </Typography>
           <Typography sx={{ fontWeight: 800, mt: 1.5 }} variant="body2">
             Times use Eastern Time.
           </Typography>
-          <Typography color="text.secondary" sx={{ mt: 0.5 }} variant="body2">
-            Entering the correct execution time gives TraderLink the detail needed for more complete performance analysis. Some analytics depend on the order your executions occurred, and exact times are required for Trade Analyzer. You can find the exact time in your broker records.
+          <Typography color="text.secondary" sx={{ maxWidth: { md: 620 } }} variant="body2">
+            Entering the correct execution time keeps your trades in order.{" "}
+            <Box component="span" sx={{ display: { md: "block", xs: "none" } }} />
+            Trade Analyzer uses 1-minute candles, so you can enter the time{" "}
+            <Box component="span" sx={{ display: { md: "block", xs: "none" } }} />
+            from the matching chart candle when you do not have the broker timestamp.
           </Typography>
         </>
       ) : (
@@ -425,10 +429,13 @@ export function ExecutionEntryCard({
       </Stack>
 
       <DashboardSecondaryAction
-        fullWidth
         onClick={addExecution}
         startIcon={<AddRoundedIcon />}
-        sx={{ justifyContent: "flex-start", mt: 1.5 }}
+        sx={{
+          justifyContent: { xs: "flex-start", sm: "center" },
+          mt: 1.5,
+          width: { xs: "100%", sm: "auto" },
+        }}
       >
         Add execution
       </DashboardSecondaryAction>
@@ -450,11 +457,13 @@ export function ExecutionEntryCard({
             </DashboardSecondaryAction>
           ) : null}
           <DashboardPrimaryAction
-            disabled={!savingEnabled || !complete || state.kind === "saving"}
+            disabled={!savingEnabled || !complete || state.kind === "saving" || state.kind === "queued"}
             onClick={() => void saveExecutions()}
           >
             {state.kind === "saving"
               ? "Saving executions..."
+              : state.kind === "queued"
+              ? "Waiting for Trade sync"
               : !savingEnabled
               ? "Saving not connected yet"
               : "Save executions"}
@@ -465,6 +474,11 @@ export function ExecutionEntryCard({
         <Typography color="text.secondary" sx={{ mt: 1.5 }} variant="caption">
           This preview does not save executions.
         </Typography>
+      ) : null}
+      {state.kind === "queued" ? (
+        <Alert severity="warning" sx={{ mt: 1.5 }}>
+          These {state.count} execution{state.count === 1 ? " is" : "s are"} not saved to TradersLink yet. They are saved only on this device and will appear in Trade sync above when they can be sent. Do not enter them again.
+        </Alert>
       ) : null}
       {state.kind === "error" ? (
         <Typography color="error.main" sx={{ mt: 1.5 }} variant="body2">

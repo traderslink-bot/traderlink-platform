@@ -10,6 +10,19 @@
   its financial-pack resolver unavailable until canonical Journal facts,
   annotations, and Analyzer artifacts are implemented and accepted.
 
+**Daily Trade Tracker execution-mismatch correction:** The owner approved
+minute-and-price validation for every Analyzer execution. Seconds are ignored;
+the exact Eastern-time minute and inclusive one-minute candle low/high are the
+validation boundary. Local implementation is active for all mismatches,
+one provider refresh, idempotent trader correction notification, automatic
+reanalysis after edit, broker-record confirmation and a privacy-safe owner
+alert. The Coordinator allocated migration 0099 after demo migrations
+0095 -> 0096 -> 0097 -> 0098. The feature is reconciled onto that manifest
+lineage, registers 0099 and passes focused Analyzer, migration, scoped
+TypeScript and exact-file lint validation. No migration, publish, hosted worker
+change or notification delivery has occurred; owner visual acceptance and the
+authorized staging proof remain pending.
+
 **Week Ahead Dashboard:** The owner approved the dashboard-only [Week Ahead Dashboard Plan](week-ahead-dashboard-plan.md) and its [progress record](week-ahead-dashboard-progress.md) on 2026-08-23. The BigTime scrape remains on the owner's Windows computer, but its completed weekly issue will post directly to Railway rather than GitHub/Vercel. It will appear as **The Week Ahead** under **Market News**, retain only the current visible issue, and create an in-app notification with optional device Push.
 
 **Community Watchlists:** The owner approved the dashboard-native

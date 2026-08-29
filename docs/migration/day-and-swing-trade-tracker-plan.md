@@ -24,6 +24,9 @@ visual/product review pending
 **Current Daily Tracker QA:**
 [Daily Trade Tracker QA Progress](daily-trade-tracker-qa-progress.md)
 
+**Analyzer reliability and presentation follow-on (implementation awaiting owner visual review):**
+[Daily Trade Tracker Analyzer Reliability And Presentation Plan](daily-trade-tracker-analyzer-reliability-and-presentation-plan.md)
+
 **Quick-entry progress:**
 [Quick Trade Entry Progress](quick-trade-entry-progress.md)
 

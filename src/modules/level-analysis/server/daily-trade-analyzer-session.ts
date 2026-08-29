@@ -1,4 +1,5 @@
 const NEW_YORK = "America/New_York";
+const FIRST_RESULT_FOLLOW_UP_SECONDS = 30 * 60;
 
 function dateParts(date: string): readonly [number, number, number] | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/u.exec(date);
@@ -58,6 +59,28 @@ export function availableSessionEnd(
   const currentMinute = Math.floor(now.getTime() / 60_000) * 60;
   if (currentMinute < session.startTime) return null;
   return Math.min(currentMinute, session.endTime);
+}
+
+/**
+ * The Analyzer consumes one-minute candles, so its first-result clock starts
+ * at the beginning of the final execution's containing minute. Seconds never
+ * move the readiness boundary into the following candle.
+ */
+export function dailyTradeFirstResultAt(finalExitAtUtc: string): Date | null {
+  const finalExitMilliseconds = Date.parse(finalExitAtUtc);
+  if (!Number.isFinite(finalExitMilliseconds)) return null;
+  const finalExitMinuteSeconds = Math.floor(finalExitMilliseconds / 60_000) * 60;
+  return new Date((finalExitMinuteSeconds + FIRST_RESULT_FOLLOW_UP_SECONDS) * 1000);
+}
+
+export function dailyTradeFirstResultCoverageEnd(
+  session: NewYorkExtendedSession,
+  finalExitAtUtc: string,
+): number | null {
+  const readyAt = dailyTradeFirstResultAt(finalExitAtUtc);
+  return readyAt === null
+    ? null
+    : Math.min(session.endTime, Math.floor(readyAt.getTime() / 1000));
 }
 
 /**

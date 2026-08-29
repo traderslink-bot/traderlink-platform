@@ -20,6 +20,10 @@ export async function registerTraderLinkHostedNodeRuntime(): Promise<void> {
     console.info(
       `TraderLink hosted runtime verified ${readiness.migrationCount} migrations on ${readiness.storage}.`,
     );
+    const { startTraderLinkHostedBackgroundWorkers } = await import(
+      "./src/modules/platform/server/runtime/traderlink-hosted-background-workers"
+    );
+    startTraderLinkHostedBackgroundWorkers();
   } catch (error) {
     const code =
       typeof error === "object" && error !== null && "code" in error &&

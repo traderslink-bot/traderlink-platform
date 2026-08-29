@@ -1343,7 +1343,14 @@ function postExitMinutesAvailable(analyzer: DaySessionTradeAnalyzer): number | n
   const lastCandle = analyzer.candles.at(-1);
   const exitedAt = finalExit ? Date.parse(finalExit.executedAt) / 1000 : Number.NaN;
   if (!lastCandle || !Number.isFinite(exitedAt)) return null;
-  return Math.max(0, Math.min(60, Math.floor((lastCandle.time - exitedAt) / 60)));
+  return Math.max(0, Math.min(30, Math.floor((lastCandle.time - exitedAt) / 60)));
+}
+
+function firstAnalyzerResultAtMilliseconds(finalExitAtUtc: string): number | null {
+  const finalExitMilliseconds = Date.parse(finalExitAtUtc);
+  return Number.isFinite(finalExitMilliseconds)
+    ? Math.floor(finalExitMilliseconds / 60_000) * 60_000 + 30 * 60_000
+    : null;
 }
 
 function pnlColor(value: string | null): "success.main" | "error.main" | "text.primary" {
@@ -1521,6 +1528,9 @@ function TradeReview({
   const tradeLabelColor = pnlColor(roundTrip.netPnl) === "success.main" ? "success" : "error";
   const [mobileRulesOpen, setMobileRulesOpen] = useState(true);
   const [mobileExecutionsOpen, setMobileExecutionsOpen] = useState(false);
+  const [mismatchConfirmationState, setMismatchConfirmationState] = useState<
+    "idle" | "saving" | "confirmed" | "error"
+  >(analyzer?.mismatchBrokerConfirmed ? "confirmed" : "idle");
   const customRules = tradeRules.filter((rule) => rule.custom);
   const [selectedCustomRuleId, setSelectedCustomRuleId] = useState(
     customRules[0]?.ruleId ?? "",
@@ -1543,6 +1553,10 @@ function TradeReview({
     : analyzer?.status === "ready"
       ? "Trade analysis"
       : "Partial trade analysis";
+  const currentPolicyReadyAt = firstAnalyzerResultAtMilliseconds(roundTrip.exitAt);
+  const analysisWindowShortenedAtMarketClose = analyzer?.status === "pending" &&
+    analyzer.availableAtUtc !== null && analyzer.availableAtUtc !== undefined &&
+    currentPolicyReadyAt !== null && Date.parse(analyzer.availableAtUtc) < currentPolicyReadyAt;
   const ruleControls = customRules.length === 0 ? (
     <Typography color="text.secondary" variant="body2">
       You have no custom rules set up.
@@ -1718,6 +1732,24 @@ function TradeReview({
     </Stack>
   );
 
+  async function confirmBrokerMismatch(): Promise<void> {
+    if (!analyzer?.executionMismatchSetId || readOnly || mismatchConfirmationState === "saving") return;
+    setMismatchConfirmationState("saving");
+    try {
+      await api<{ status: "confirmed" }>(
+        `/api/platform/daily-trade-analyzer/execution-mismatches/${analyzer.executionMismatchSetId}/confirm`,
+        {
+          body: JSON.stringify({ expectedAccountSelectionRef }),
+          headers: { [JOURNAL_MUTATION_REQUEST_HEADER]: "1" },
+          method: "POST",
+        },
+      );
+      setMismatchConfirmationState("confirmed");
+    } catch {
+      setMismatchConfirmationState("error");
+    }
+  }
+
   return (
     <Box id={`trade-${roundTrip.roundTripKey}`} sx={{ scrollMarginTop: 16 }}>
       <Box
@@ -1731,22 +1763,57 @@ function TradeReview({
           py: 0.75,
         }}
       >
-        <Button
-          aria-expanded={false}
-          color="inherit"
-          fullWidth
-          onClick={onOpen}
+        <Box
           sx={{
-            display: "grid",
+            alignItems: "center",
+            display: { xs: "grid", md: "none" },
+            gap: 1,
+            gridTemplateColumns: "auto minmax(0, 1fr) auto",
+            minHeight: 54,
+            px: 1,
+          }}
+        >
+          <Typography
+            component="span"
+            sx={{
+              bgcolor: tradeLabelColor === "success" ? "success.main" : "error.main",
+              borderRadius: 1,
+              color: tradeLabelColor === "success" ? "success.contrastText" : "error.contrastText",
+              fontWeight: 850,
+              px: 0.75,
+              py: 0.35,
+            }}
+            variant="body2"
+          >
+            Trade {tradeNumber}
+          </Typography>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography
+              color={pnlColor(roundTrip.netPnl)}
+              sx={{ display: "block", fontFamily: "var(--font-geist-mono)", fontWeight: 800 }}
+              variant="body2"
+            >
+              {money(roundTrip.netPnl, currency)} · {percentage(roundTrip.gainLossPercent)}
+            </Typography>
+            <Typography color="text.secondary" sx={{ display: "block", mt: 0.15 }} variant="caption">
+              {timeLabel(roundTrip.entryAt, roundTrip.timezone)} – {timeLabel(roundTrip.exitAt, roundTrip.timezone)}
+            </Typography>
+          </Box>
+          <Button aria-expanded={false} onClick={onOpen} size="small" variant="outlined">
+            View More
+          </Button>
+        </Box>
+        <Box
+          sx={{
+            display: { xs: "none", md: "grid" },
             gap: 1,
             gridTemplateColumns: "auto minmax(0, 1fr) auto auto",
             justifyContent: "stretch",
             minHeight: 54,
             px: 1,
             textAlign: "left",
-            textTransform: "none",
+            width: "100%",
           }}
-          variant="text"
         >
           <Typography
             component="span"
@@ -1788,8 +1855,10 @@ function TradeReview({
               {percentage(roundTrip.gainLossPercent)}
             </Typography>
           </Box>
-          <AddRoundedIcon color="action" fontSize="small" />
-        </Button>
+          <Button aria-expanded={false} onClick={onOpen} size="small" variant="outlined">
+            View More
+          </Button>
+        </Box>
       </Box>
       <Box
         sx={{
@@ -1801,15 +1870,6 @@ function TradeReview({
           py: 2,
         }}
       >
-      <Button
-        endIcon={<RemoveRoundedIcon />}
-        onClick={onCloseMobile}
-        size="small"
-        sx={{ display: { xs: "inline-flex", md: "none" }, mb: 1, ml: "auto" }}
-        variant="outlined"
-      >
-        Collapse trade
-      </Button>
       <Box
         sx={{
           display: { md: "grid" },
@@ -2058,7 +2118,71 @@ function TradeReview({
       </Box>
       </Box>
 
-      {analyzer ? (
+      {analyzer?.status === "execution_mismatch" ? (
+        <Alert severity="error" sx={{ mt: 1.5 }}>
+          <Stack spacing={1}>
+            <Typography sx={{ fontWeight: 850 }} variant="body2">
+              Execution did not match market data, so this trade could not be analyzed.
+            </Typography>
+            {analyzer.executionMismatches.map((mismatch) => {
+              const execution = executions.find((candidate) =>
+                candidate.analysisEventKey === mismatch.executionId);
+              return (
+              <Box key={mismatch.executionId}>
+                <Typography variant="body2">
+                  <Box component="span" sx={{ fontWeight: 850 }}>Check this execution:</Box>{" "}
+                  {mismatch.side === "buy" ? "Buy" : "Sell"}{" "}
+                  {formatJournalAnalyticsDecimal(mismatch.quantity)}{" "}
+                  {execution?.symbol ?? "shares"}{" "}
+                  at {timeLabel(mismatch.executedAt, roundTrip.timezone)}, entered at {price(mismatch.enteredPrice, currency)}.
+                </Typography>
+                <Typography color="text.secondary" variant="body2">
+                  {mismatch.kind === "execution_price_outside_candle" && mismatch.candleLow !== null && mismatch.candleHigh !== null
+                    ? `Market data for the ${timeLabel(mismatch.executedAt, roundTrip.timezone)} candle ranged from ${price(mismatch.candleLow, currency)} to ${price(mismatch.candleHigh, currency)}.`
+                    : `Market data did not contain the ${timeLabel(mismatch.executedAt, roundTrip.timezone)} candle.`}
+                </Typography>
+                {!readOnly && execution?.manualEdit ? (
+                  <Box sx={{ mt: 0.5 }}>
+                    <ManualExecutionEditDialog
+                      execution={execution}
+                      expectedAccountSelectionRef={expectedAccountSelectionRef}
+                    />
+                  </Box>
+                ) : null}
+              </Box>
+              );
+            })}
+            <Typography variant="body2">
+              Check the execution time and price, then edit and resubmit the trade.
+            </Typography>
+            {readOnly ? null : (
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ alignItems: { sm: "center" } }}>
+                <Button
+                  disabled={mismatchConfirmationState === "saving" || mismatchConfirmationState === "confirmed"}
+                  onClick={() => void confirmBrokerMismatch()}
+                  size="small"
+                  variant="outlined"
+                >
+                  {mismatchConfirmationState === "saving"
+                    ? "Saving..."
+                    : mismatchConfirmationState === "confirmed"
+                      ? "Broker record confirmed"
+                      : "My broker record is correct"}
+                </Button>
+                {mismatchConfirmationState === "confirmed" ? (
+                  <Typography color="text.secondary" variant="caption">
+                    TradersLink has been notified to review the market data.
+                  </Typography>
+                ) : mismatchConfirmationState === "error" ? (
+                  <Typography color="error.main" variant="caption">
+                    The confirmation could not be saved. Try again.
+                  </Typography>
+                ) : null}
+              </Stack>
+            )}
+          </Stack>
+        </Alert>
+      ) : analyzer ? (
         <Box
           sx={{
             bgcolor: "rgba(25, 118, 210, 0.08)",
@@ -2077,7 +2201,9 @@ function TradeReview({
               ) : null}
               {analyzer.status === "pending" ? (
                 <Typography color="text.secondary" variant="caption">
-                  {postExitMinutesAvailable(analyzer) ?? 0} of 60 post-exit minutes are available. The final update is added once 60 minutes have formed.
+                  {analysisWindowShortenedAtMarketClose
+                    ? `${postExitMinutesAvailable(analyzer) ?? 0} post-exit minutes are available. The first completed update is added when the extended-hours market-data window closes.`
+                    : `${postExitMinutesAvailable(analyzer) ?? 0} of 30 post-exit minutes are available. The first completed update is added once 30 minutes have formed.`}
                 </Typography>
               ) : null}
               {analyzer.status === "provider_unavailable" ? (
@@ -2141,14 +2267,24 @@ function TradeReview({
                 </Typography>
                 <Typography color="text.secondary" variant="body2">
                   {analyzer.status === "pending"
-                    ? "Updating analysis with the latest executions."
-                    : "Analysis data is not available for this trade yet."}
+                    ? "Trade Analyzer is collecting market data."
+                    : "Trade Analyzer could not collect the market data needed for this trade."}
                 </Typography>
               </>}
             </Stack>
           )}
         </Box>
       ) : null}
+
+      <Button
+        endIcon={<RemoveRoundedIcon />}
+        onClick={onCloseMobile}
+        size="small"
+        sx={{ display: { xs: "inline-flex", md: "none" }, mt: 2 }}
+        variant="outlined"
+      >
+        Close Trade
+      </Button>
 
       </Box>
     </Box>
@@ -2361,6 +2497,53 @@ export function DaySessionView({
     (count, ticker) => count + ticker.roundTrips.length,
     0,
   );
+  const pendingAnalysisTiming = data.tickers
+    .flatMap((ticker) => ticker.roundTrips)
+    .map((roundTrip) => {
+      if (roundTrip.analyzer?.status !== "pending") return null;
+      const storedReadyAt = roundTrip.analyzer.availableAtUtc
+        ? Date.parse(roundTrip.analyzer.availableAtUtc)
+        : Number.NaN;
+      const currentPolicyReadyAt = firstAnalyzerResultAtMilliseconds(roundTrip.exitAt);
+      if (!Number.isFinite(storedReadyAt)) {
+        return currentPolicyReadyAt !== null
+          ? Object.freeze({
+              availableAtUtc: new Date(currentPolicyReadyAt).toISOString(),
+              marketCloseShortenedWindow: false,
+            })
+          : null;
+      }
+      // Older queued jobs can retain a one-hour target. The worker honors the
+      // current 30-minute policy, so the page must show the same honest time.
+      return Object.freeze({
+        availableAtUtc: currentPolicyReadyAt !== null
+          ? new Date(Math.min(storedReadyAt, currentPolicyReadyAt)).toISOString()
+          : new Date(storedReadyAt).toISOString(),
+        marketCloseShortenedWindow: currentPolicyReadyAt !== null &&
+          storedReadyAt < currentPolicyReadyAt,
+      });
+    })
+    .filter((timing): timing is Readonly<{
+      availableAtUtc: string;
+      marketCloseShortenedWindow: boolean;
+    }> => timing !== null)
+    .reduce<Readonly<{
+      availableAtUtc: string | null;
+      marketCloseShortenedWindow: boolean;
+    }>>((summary, timing) => Object.freeze({
+      availableAtUtc: summary.availableAtUtc === null ||
+        Date.parse(timing.availableAtUtc) > Date.parse(summary.availableAtUtc)
+        ? timing.availableAtUtc
+        : summary.availableAtUtc,
+      marketCloseShortenedWindow: summary.marketCloseShortenedWindow ||
+        timing.marketCloseShortenedWindow,
+    }), Object.freeze({ availableAtUtc: null, marketCloseShortenedWindow: false }));
+  const analyzerFailureCount = data.tickers
+    .flatMap((ticker) => ticker.roundTrips.map((roundTrip) => roundTrip.analyzer))
+    .filter((analyzer) => analyzer !== null &&
+      analyzer.status !== "ready" && analyzer.status !== "pending" &&
+      analyzer.status !== "execution_mismatch")
+    .length;
   const tickerCount = data.tickers.length;
   const brokenRules = rules.filter((rule) => rule.status === "broken");
   const brokenRuleCount = new Set(brokenRules.map((rule) => `${rule.ruleId}:${rule.ruleVersion}`)).size;
@@ -2833,6 +3016,35 @@ export function DaySessionView({
           sx={{ alignSelf: "flex-start" }}
           variant="outlined"
         />
+      ) : null}
+      {pendingAnalysisTiming.availableAtUtc ? (
+        <Box
+          sx={{
+            bgcolor: "rgba(25, 118, 210, 0.12)",
+            border: 1,
+            borderColor: "info.main",
+            borderRadius: 1.5,
+            px: { xs: 1.5, sm: 2 },
+            py: 1.5,
+          }}
+        >
+          <Typography color="info.dark" sx={{ fontWeight: 850 }} variant="body2">
+            Trade Analyzer is collecting market data.
+          </Typography>
+          <Typography color="text.secondary" sx={{ mt: 0.4 }} variant="caption">
+            You can complete your page here or leave the page. A notification will be sent when it is ready.
+          </Typography>
+          <Typography color="text.secondary" sx={{ display: "block", mt: 0.35 }} variant="caption">
+            Analysis will begin after {timeLabel(pendingAnalysisTiming.availableAtUtc, "America/New_York")} Eastern Time, when the {pendingAnalysisTiming.marketCloseShortenedWindow
+              ? "available post-exit market-data window"
+              : "30-minute post-exit market-data window"} is complete.
+          </Typography>
+        </Box>
+      ) : null}
+      {analyzerFailureCount > 0 ? (
+        <Alert severity="error">
+          Trade Analyzer could not collect the market data needed for {analyzerFailureCount === 1 ? "one trade" : `${analyzerFailureCount} trades`}. We have notified the TradersLink team.
+        </Alert>
       ) : null}
       {topContent}
       {readOnly ? (
@@ -3427,7 +3639,11 @@ export function DaySessionView({
         </Stack>
       ) : null}
 
+      <Box sx={{ mt: { xs: 4, md: 0 } }}>
       <DashboardPanel title="Daily Trading Rules">
+        <Typography color="text.secondary" sx={{ display: "block", mt: 1.25 }} variant="body2">
+          Track rules that apply to your day here. Track rules that apply to your trades in the ticker cards.
+        </Typography>
         {readOnly ? (
           <Stack spacing={1} sx={{ mt: 1.5 }}>
             {rules.filter((rule) => rule.applicability === "day").length === 0 ? (
@@ -3697,6 +3913,7 @@ export function DaySessionView({
           </>
         )}
       </DashboardPanel>
+      </Box>
 
       <DashboardPanel title="Daily Notes">
         <>

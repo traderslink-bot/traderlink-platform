@@ -147,9 +147,24 @@ type AnalyzerRow = Readonly<{
   daily_trade_analysis_version_id: string | null;
   has_pending_job: 0 | 1;
   market_session_set_version_id: string | null;
+  execution_mismatch_set_id: string | null;
+  mismatch_broker_confirmed: 0 | 1;
+  pending_ready_at_utc: string | null;
   round_trip_id: string;
   round_trip_version_id: string | null;
   status: DaySessionTradeAnalyzer["status"] | null;
+}>;
+
+type AnalyzerMismatchRow = Readonly<{
+  candle_high_decimal: string | null;
+  candle_low_decimal: string | null;
+  candle_time_utc_seconds: number;
+  entered_price_decimal: string;
+  executed_at_utc: string;
+  execution_id: string;
+  mismatch_kind: DaySessionTradeAnalyzer["executionMismatches"][number]["kind"];
+  quantity_decimal: string;
+  side: "buy" | "sell";
 }>;
 
 type AnalyzerSnapshotRow = Readonly<{
@@ -429,6 +444,11 @@ function readDailyTradeAnalyzers(
   analysis.status,
   version.daily_trade_analysis_version_id,
   version.market_session_set_version_id,
+  mismatch_set.execution_mismatch_set_id,
+  EXISTS (
+    SELECT 1 FROM journal_round_trip_daily_trade_execution_mismatch_confirmations confirmation
+    WHERE confirmation.execution_mismatch_set_id = mismatch_set.execution_mismatch_set_id
+  ) AS mismatch_broker_confirmed,
   EXISTS (
     SELECT 1
     FROM level_analysis_daily_trade_jobs job
@@ -437,7 +457,18 @@ function readDailyTradeAnalyzers(
       AND job.round_trip_id = round_trip.round_trip_id
       AND job.round_trip_version_id = round_trip.current_version_id
       AND job.status IN ('queued', 'leased')
-  ) AS has_pending_job
+  ) AS has_pending_job,
+  (
+    SELECT job.desired_coverage_end_utc
+    FROM level_analysis_daily_trade_jobs job
+    WHERE job.workspace_id = round_trip.workspace_id
+      AND job.account_id = round_trip.account_id
+      AND job.round_trip_id = round_trip.round_trip_id
+      AND job.round_trip_version_id = round_trip.current_version_id
+      AND job.status IN ('queued', 'leased')
+    ORDER BY job.created_at_utc DESC
+    LIMIT 1
+  ) AS pending_ready_at_utc
 FROM journal_round_trips round_trip
 JOIN journal_round_trip_versions current_version
   ON current_version.workspace_id = round_trip.workspace_id
@@ -454,6 +485,11 @@ LEFT JOIN journal_round_trip_versions analyzed_version
   ON analyzed_version.workspace_id = analysis.workspace_id
   AND analyzed_version.account_id = analysis.account_id
   AND analyzed_version.round_trip_version_id = analysis.round_trip_version_id
+LEFT JOIN journal_round_trip_daily_trade_execution_mismatch_sets mismatch_set
+  ON mismatch_set.workspace_id = round_trip.workspace_id
+  AND mismatch_set.account_id = round_trip.account_id
+  AND mismatch_set.round_trip_id = round_trip.round_trip_id
+  AND mismatch_set.round_trip_version_id = round_trip.current_version_id
 WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
   AND round_trip.round_trip_id = ? AND round_trip.lifecycle_state = 'active'`);
     const snapshots = database.prepare<[string], AnalyzerSnapshotRow>(`SELECT
@@ -461,6 +497,12 @@ WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
 FROM journal_round_trip_daily_trade_analysis_event_snapshots
 WHERE daily_trade_analysis_version_id = ?
 ORDER BY COALESCE(json_extract(snapshot_json, '$.event.sequence'), candle_time_utc_seconds), candle_time_utc_seconds`);
+    const mismatches = database.prepare<[string], AnalyzerMismatchRow>(`SELECT
+  execution_id, side, executed_at_utc, quantity_decimal, entered_price_decimal,
+  candle_time_utc_seconds, mismatch_kind, candle_low_decimal, candle_high_decimal
+FROM journal_round_trip_daily_trade_execution_mismatches
+WHERE execution_mismatch_set_id = ?
+ORDER BY execution_sequence, execution_id`);
     const paths = database.prepare<[string], {
       favorable_move_decimal: string | null;
       minutes_after_exit: 5 | 15 | 30 | 60;
@@ -486,6 +528,30 @@ ORDER BY candle_time_utc_seconds`);
     for (const roundTripId of roundTripIds) {
       const analysis = analysisForRoundTrip.get(scope.workspaceId, activeAccountId, roundTripId);
       if (!analysis) continue;
+      if (analysis.execution_mismatch_set_id) {
+        result.set(roundTripId, {
+          availableAtUtc: null,
+          candles: [],
+          events: [],
+          executionMismatchSetId: analysis.execution_mismatch_set_id,
+          executionMismatches: mismatches.all(analysis.execution_mismatch_set_id).map((mismatch) => ({
+            candleHigh: mismatch.candle_high_decimal,
+            candleLow: mismatch.candle_low_decimal,
+            candleTime: mismatch.candle_time_utc_seconds,
+            enteredPrice: mismatch.entered_price_decimal,
+            executedAt: mismatch.executed_at_utc,
+            executionId: mismatch.execution_id,
+            kind: mismatch.mismatch_kind,
+            quantity: mismatch.quantity_decimal,
+            side: mismatch.side,
+          })),
+          finalExitPaths: [],
+          greenToRed: UNAVAILABLE_DAILY_TRADE_GREEN_TO_RED_ANALYSIS,
+          mismatchBrokerConfirmed: analysis.mismatch_broker_confirmed === 1,
+          status: "execution_mismatch",
+        });
+        continue;
+      }
       if (
         !analysis.daily_trade_analysis_version_id ||
         !analysis.status ||
@@ -497,8 +563,12 @@ ORDER BY candle_time_utc_seconds`);
           result.set(roundTripId, {
             candles: [],
             events: [],
+            executionMismatchSetId: null,
+            executionMismatches: [],
             finalExitPaths: [],
             greenToRed: UNAVAILABLE_DAILY_TRADE_GREEN_TO_RED_ANALYSIS,
+            availableAtUtc: analysis.pending_ready_at_utc,
+            mismatchBrokerConfirmed: false,
             status: "pending",
           });
         }
@@ -539,8 +609,11 @@ ORDER BY candle_time_utc_seconds`);
         analysis.daily_trade_analysis_version_id,
       );
       result.set(roundTripId, {
+        availableAtUtc: analysis.pending_ready_at_utc,
         candles: candleViews,
         events: eventViews,
+        executionMismatchSetId: null,
+        executionMismatches: [],
         finalExitPaths: paths.all(analysis.daily_trade_analysis_version_id).map((path) => ({
           favorableMove: path.favorable_move_decimal,
           minutesAfterExit: path.minutes_after_exit,
@@ -562,6 +635,7 @@ ORDER BY candle_time_utc_seconds`);
             sequence: event.sequence,
           })),
         }),
+        mismatchBrokerConfirmed: false,
         status: analysis.status === "ready" && !hasCompleteExecutionCoverage
           ? "no_coverage"
           : analysis.status,
@@ -745,6 +819,12 @@ export function scaleDaySessionTradeAnalyzer(
         vwapDistance: scaleReferenceDistance(event.metrics.vwapDistance, multiplier),
       }),
       price: scaleReportingDecimal(event.price, multiplier)!,
+    })),
+    executionMismatches: analyzer.executionMismatches.map((mismatch) => Object.freeze({
+      ...mismatch,
+      candleHigh: scaleReportingDecimal(mismatch.candleHigh, multiplier),
+      candleLow: scaleReportingDecimal(mismatch.candleLow, multiplier),
+      enteredPrice: scaleReportingDecimal(mismatch.enteredPrice, multiplier)!,
     })),
     finalExitPaths: analyzer.finalExitPaths.map((path) => Object.freeze({
       ...path,

@@ -64,3 +64,69 @@ export function notifyJournalOwnerOfBrokerImportFailure(input: Readonly<{
     title: "Broker import needs attention",
   });
 }
+
+/**
+ * Keeps the active Journal owner informed when a Trade Analyzer job reaches a
+ * final unavailable state. The notification deliberately contains no ticker,
+ * account or execution values.
+ */
+export function notifyJournalOwnerOfDailyTradeAnalyzerFailure(input: Readonly<{
+  database: Database.Database;
+  occurredAt: Date;
+  sourceEventKey: string;
+}>): void {
+  const scope = activeOwnerScope(input.database);
+  if (!scope) return;
+  const notifications = new PlatformNotificationRepository(input.database);
+  const current = notifications.readPreferences(scope);
+  if (!current.emailCategories.includes("chart_update")) {
+    notifications.replaceEmailCategories({
+      categories: Object.freeze([...current.emailCategories, "chart_update"]),
+      scope,
+      updatedAtUtc: createCanonicalUtcTimestamp(input.occurredAt),
+    });
+  }
+  notifications.create({
+    category: "chart_update",
+    destinationPath: "/admin/journal/notifications",
+    journalAccountId: null,
+    // The durable notification table predates a separate attention kind. The
+    // visible title and summary carry the honest terminal-failure state.
+    kind: "chart_update_ready",
+    occurredAtUtc: createCanonicalUtcTimestamp(input.occurredAt),
+    scope,
+    sourceEventKey: `journal_owner_${input.sourceEventKey}`,
+    summary: "A Trade Analyzer update could not be completed. Review the affected user in Journal Administration.",
+    title: "Trade Analyzer needs attention",
+  });
+}
+
+/** Alerts the owner only after the trader confirms the broker record is exact. */
+export function notifyJournalOwnerOfDailyTradeMarketDataDiscrepancy(input: Readonly<{
+  database: Database.Database;
+  occurredAt: Date;
+  sourceEventKey: string;
+}>): void {
+  const scope = activeOwnerScope(input.database);
+  if (!scope) return;
+  const notifications = new PlatformNotificationRepository(input.database);
+  const current = notifications.readPreferences(scope);
+  if (!current.emailCategories.includes("chart_update")) {
+    notifications.replaceEmailCategories({
+      categories: Object.freeze([...current.emailCategories, "chart_update"]),
+      scope,
+      updatedAtUtc: createCanonicalUtcTimestamp(input.occurredAt),
+    });
+  }
+  notifications.create({
+    category: "chart_update",
+    destinationPath: "/admin/journal/notifications",
+    journalAccountId: null,
+    kind: "chart_update_ready",
+    occurredAtUtc: createCanonicalUtcTimestamp(input.occurredAt),
+    scope,
+    sourceEventKey: `journal_owner_${input.sourceEventKey}`,
+    summary: "A trader confirmed a broker execution that differs from the available market-data candle. Review provider coverage in Journal Administration.",
+    title: "Trade Analyzer market data needs review",
+  });
+}

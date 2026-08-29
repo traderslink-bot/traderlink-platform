@@ -1,3 +1,40 @@
+# 2026-08-27 - Daily Trade Tracker Analyzer reliability and presentation implementation awaiting review
+
+- The owner reported that the connected account's AEMD trade remained on
+  `Updating analysis with the latest executions.` after more than thirty
+  minutes. A read-only live check confirmed the pending card, no `Connect Data`
+  prompt and no browser console error.
+- Source tracing confirmed two causes: the analyzer intentionally collected one
+  hour of post-exit candles, and the repeating analyzer runner existed only in
+  the local development launcher rather than in the hosted standalone runtime.
+- Owner-approved implementation now uses a 30-minute post-exit collection
+  window, a bounded hosted single-process worker, three retry attempts and
+  terminal unavailable outcomes. It writes idempotent Trader-ready updates and
+  private admin attention alerts through the existing notification queue.
+- Follow-up QA aligned first-result readiness to the final execution's
+  containing minute and added pre-claim normalization for legacy queued
+  one-hour wakeups. This keeps seconds from delaying the result and does not
+  disturb later post-session reconciliation work.
+- The Day Tracker now has the approved shared blue collection card, mobile
+  `View More`/`Close Trade` treatments, Daily Trading Rules phone spacing and
+  guidance, and no longer routes first Discord login through the Week Ahead
+  email opt-in form. The affected Help guides were aligned.
+- The controlling
+  [Daily Trade Tracker Analyzer Reliability And Presentation Plan](../../docs/migration/daily-trade-tracker-analyzer-reliability-and-presentation-plan.md)
+  and linked progress record define bounded job outcomes, trader-ready
+  notifications, owner failure alerts, the shared blue collection card, mobile
+  card revisions, Daily Trading Rules mobile copy/spacing and removal of the
+  first-login Week Ahead form.
+- The release candidate is reconciled onto `origin/main` after migrations
+  0095 through 0098 and registers 0099 without applying it. Focused Analyzer
+  and validation checks pass 7/7, focused migration checks pass 12/12, scoped
+  server/UI TypeScript checks pass, exact-file ESLint passes with zero warnings
+  and `git diff --check` passes.
+- **Resume point:** complete owner desktop/mobile acceptance, then use the
+  coordinated staging lane for migration readiness, hosted Analyzer worker and
+  actual remote-notification delivery proof. Do not publish or deploy from the
+  review checkout.
+
 # 2026-08-10 - Account Settings hub approved; scoped erasure remains next
 
 - Replaced the long single-page `/account` view with clear routes for

@@ -31,6 +31,7 @@ export type DaySessionRoundTrip = {
 };
 
 export type DaySessionTradeAnalyzer = {
+  availableAtUtc?: string | null;
   candles: Array<{
     close: string;
     high: string;
@@ -139,13 +140,26 @@ export type DaySessionTradeAnalyzer = {
     quantity: string;
     sequence: number;
   }>;
+  executionMismatchSetId: string | null;
+  executionMismatches: Array<{
+    candleHigh: string | null;
+    candleLow: string | null;
+    candleTime: number;
+    enteredPrice: string;
+    executedAt: string;
+    executionId: string;
+    kind: "execution_minute_unavailable" | "execution_price_outside_candle";
+    quantity: string;
+    side: "buy" | "sell";
+  }>;
+  mismatchBrokerConfirmed: boolean;
   finalExitPaths: Array<{
     favorableMove: string | null;
     minutesAfterExit: 5 | 15 | 30 | 60;
     observedAt: number | null;
   }>;
   greenToRed: import("@/src/modules/level-analysis/contracts/daily-trade-analyzer-contracts").DailyTradeGreenToRedAnalysis;
-  status: "ready" | "no_coverage" | "provider_unavailable" | "expired" | "pending";
+  status: "ready" | "no_coverage" | "provider_unavailable" | "expired" | "pending" | "execution_mismatch";
 };
 
 export type DaySessionExecutionActivity = {

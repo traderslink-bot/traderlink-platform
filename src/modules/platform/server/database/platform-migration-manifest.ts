@@ -96,6 +96,7 @@ import { dailyTradeExactTurnoverMigration } from "@/src/modules/level-analysis/s
 import { dailyTradePathMaterializationMigration } from "@/src/modules/level-analysis/server/database/migrations/0040_daily_trade_path_materialization";
 import { dailyTradePatternContextV2Migration } from "@/src/modules/level-analysis/server/database/migrations/0042_daily_trade_pattern_context_v2";
 import { dailyTradePatternOccurrencesMigration } from "@/src/modules/level-analysis/server/database/migrations/0059_daily_trade_pattern_occurrences";
+import { dailyTradeExecutionMismatchesMigration } from "@/src/modules/level-analysis/server/database/migrations/0099_daily_trade_execution_mismatches";
 import {
   type PlatformMigration,
   validatePlatformMigrationManifest,
@@ -496,6 +497,10 @@ export const platformMigrationFileEntries: readonly PlatformMigrationFileEntry[]
       sourcePath: "src/modules/journal/server/database/migrations/0098_journal_demo_lifecycle.ts",
       migration: journalDemoLifecycleMigration,
     }),
+    Object.freeze({
+      sourcePath: "src/modules/level-analysis/server/database/migrations/0099_daily_trade_execution_mismatches.ts",
+      migration: dailyTradeExecutionMismatchesMigration,
+    }),
   ]);
 
 export const platformMigrationManifest = validatePlatformMigrationManifest(
@@ -875,6 +880,11 @@ const managedTablesByMigrationId: Readonly<Record<string, readonly string[]>> =
     ]),
     "0098_journal_demo_lifecycle": Object.freeze([
       "journal_demo_lifecycle",
+    ]),
+    "0099_daily_trade_execution_mismatches": Object.freeze([
+      "journal_round_trip_daily_trade_execution_mismatch_sets",
+      "journal_round_trip_daily_trade_execution_mismatches",
+      "journal_round_trip_daily_trade_execution_mismatch_confirmations",
     ]),
   });
 

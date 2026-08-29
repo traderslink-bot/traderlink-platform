@@ -25,11 +25,12 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       {
         id: "accurate-executions",
         title: "Accurate executions matter",
-        summary: "Use the exact date, time including seconds, price and quantity shown by the broker.",
+        summary: "Use the correct Eastern-time minute, price and quantity shown by the broker or matching chart candle.",
         keywords: ["execution time", "seconds", "price", "quantity", "manual entry"],
         blocks: [
-          { kind: "paragraph", text: "The chart places each buy and sell at its recorded timestamp and price. A wrong minute can attach the execution to the wrong candle; wrong seconds can change which completed evidence was available before the fill. A wrong price or quantity changes weighted entries, exits, P/L paths and Green-to-red calculations." },
-          { kind: "paragraph", text: "If you correct an execution, TraderLink refreshes the affected trade so the chart and analysis stay aligned with the corrected Trade Tracker facts." },
+          { kind: "paragraph", text: "The Analyzer matches each execution to its Eastern-time one-minute candle. Seconds do not affect that match. The entered price must be within that candle's low-to-high range, including a price exactly at the low or high. A wrong minute can select the wrong candle, while a wrong price or quantity changes entries, exits and P/L calculations." },
+          { kind: "paragraph", text: "If you do not have the broker timestamp, use the time of the matching one-minute chart candle. If an execution minute or price does not match market data, the trade card identifies every affected execution and available candle range. Edit the entry and resubmit; TraderLink automatically analyzes the rebuilt trade again." },
+          { kind: "callout", title: "If the broker record is correct", text: "Choose My broker record is correct instead of changing a factual broker fill. TradersLink preserves the execution and asks its team to review the market data." },
         ],
       },
       {
@@ -139,7 +140,7 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
         blocks: [
           { kind: "paragraph", text: "Show on chart highlights the saved buy or sell and moves its marker into view. The combined entry, combined exit, outcome and Green-to-Red analysis stay visible for the complete trade." },
           { kind: "table", columns: ["Result", "What it tells you"], rows: [
-            ["Execution", "Exact time including seconds, quantity and price."],
+            ["Execution", "Saved time, quantity and price. Seconds may be displayed but do not affect the one-minute candle match."],
             ["Candle location and precision", "Where the fill sat inside the candle range and how far it was from the favorable edge."],
             ["VWAP / EMA 9 distance", "Dollar and percentage distance from the saved Session VWAP and timeframe EMA 9."],
             ["Activity", "Candle and session volume, relative volume and turnover when available."],
@@ -530,10 +531,12 @@ export const TRADE_ANALYZER_HELP_GUIDES: readonly HelpGuide[] = Object.freeze([
       {
         id: "same-day-readiness",
         title: "Same-day readiness",
-        summary: "Use most analysis immediately while the final post-exit hour is still forming.",
-        keywords: ["same day", "60 minutes", "pending", "post exit", "leave page"],
+        summary: "Wait for the 30-minute post-exit market-data window before the first completed result.",
+        keywords: ["same day", "30 minutes", "pending", "post exit", "leave page", "notification"],
         blocks: [
-          { kind: "paragraph", text: "As soon as executions and formed candles are available, the replay and most analysis can be useful. If the final exit was less than 60 minutes ago, the status shows how many post-exit minutes are available. Missing future candles are not zeroes or errors, and the user can leave the page while the remaining window completes." },
+          { kind: "paragraph", text: "For a newly completed same-day trade, Trade Analyzer collects market data through 30 minutes after the final exit's one-minute candle before creating its first completed result. Seconds do not change that readiness time. The blue collection notice gives the expected Eastern Time. You can leave the page while it completes; when the result is ready, TradersLink adds an in-app update and uses the notification channels you have configured." },
+          { kind: "paragraph", text: "A later finalized-session update can add the 60-minute observation when that market data is available. You do not have to wait for it before reviewing the first completed result. When the extended-hours session closes before a full 30 minutes can form, the collection notice identifies the shorter available market-data window." },
+          { kind: "paragraph", text: "If the required market data cannot be collected after its bounded retries, TraderLink records an unavailable state rather than leaving the trade on a collecting message. It never fills missing future candles with zeroes or guesses." },
         ],
       },
       {

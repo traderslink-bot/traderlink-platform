@@ -7,10 +7,12 @@ import {
   DailyTradeAnalyzerRepository,
   type DailyTradeMarketDataProviderIdentity,
 } from "./daily-trade-analyzer-repository";
-import { newYorkExtendedSession } from "./daily-trade-analyzer-session";
+import {
+  dailyTradeFirstResultCoverageEnd,
+  newYorkExtendedSession,
+} from "./daily-trade-analyzer-session";
 
 const ONE_MINUTE_RETENTION_MILLISECONDS = 7 * 24 * 60 * 60 * 1000;
-const FINAL_EXIT_FOLLOW_UP_SECONDS = 60 * 60;
 const MOOMOO_DAILY_TRADE_PROVIDER: DailyTradeMarketDataProviderIdentity = Object.freeze({
   key: "moomoo_history_kline",
   adapterVersion: "moomoo_history_kline_v1",
@@ -54,10 +56,9 @@ export class DailyTradeMoomooAnalyzerService {
       }
       const session = newYorkExtendedSession(target.tradingDateNewYork);
       if (!session) continue;
-      const desiredCoverageEndUtc = new Date(Math.min(
-        session.endTime,
-        Math.floor(finalExitMilliseconds / 1000) + FINAL_EXIT_FOLLOW_UP_SECONDS,
-      ) * 1000).toISOString();
+      const desiredCoverageEnd = dailyTradeFirstResultCoverageEnd(session, target.finalExitAtUtc);
+      if (desiredCoverageEnd === null) continue;
+      const desiredCoverageEndUtc = new Date(desiredCoverageEnd * 1000).toISOString();
       this.repository.queueTarget({
         scope,
         target,

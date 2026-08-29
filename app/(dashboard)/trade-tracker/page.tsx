@@ -19,7 +19,9 @@ import {
   requireTraderLinkPlatformPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
+import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import { readJournalFirstExecutionOnboardingStatus } from "@/src/modules/journal/server/product/journal-first-execution-onboarding";
+import { readMoomooMarketDataAccess } from "@/src/modules/level-analysis/server/moomoo-market-data-access";
 
 import {
   getReplacementReportingDaySession,
@@ -81,6 +83,8 @@ export default async function TradeTrackerPage({
   const showMoomooConnectedStatus = showFirstExecutionCallout &&
     query.moomoo === "connected" && onboardingStatus.hasActiveMoomooConnection;
   const account = getReplacementTradeTrackerAccount(scope);
+  const moomooMarketDataAccess = withReadonlyPlatformDatabase({}, (database) =>
+    readMoomooMarketDataAccess(database, scope));
   const utcDate = new Date().toISOString().slice(0, 10);
   const reportingDate = demoAccountSelectionRef ? DEMO_TRADE_TRACKER_LAST_DAY : utcDate;
   const initialData = await getReplacementReportingDaySession(scope, {
@@ -109,7 +113,7 @@ export default async function TradeTrackerPage({
           </Stack>
         </DashboardPanel>
       ) : null}
-      {!demoAccountSelectionRef && !showFirstExecutionCallout ? (
+      {!demoAccountSelectionRef && moomooMarketDataAccess.shouldShowConnectionGuidance && !showFirstExecutionCallout ? (
         <Stack spacing={0.75} sx={{ alignItems: "flex-start", maxWidth: 900, mt: 1 }}>
           <Typography color="error.main" sx={{ fontWeight: 700 }} variant="body2">
             You need a data connection if you want your trades analyzed and a chart trade replay.

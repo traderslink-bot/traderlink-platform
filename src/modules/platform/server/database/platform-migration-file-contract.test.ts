@@ -15,7 +15,7 @@ describe("static platform migration file contract", () => {
       })),
     );
     expect(platformMigrationFileEntries.at(-1)?.migration.migrationId).toBe(
-      "0057_journal_ai_chat_trade_style_source",
+      "0099_daily_trade_execution_mismatches",
     );
   });
 
