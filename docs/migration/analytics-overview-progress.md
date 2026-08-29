@@ -29,3 +29,15 @@ The slice is complete after the route renders actual selected-account facts,
 the useful cards and monthly chart are visually reviewed, the exact files are
 committed, and the branch is pushed. Broader analytics-page work remains out of
 scope.
+
+## Financial outcome color follow-up - 2026-08-29
+
+- [x] Overview now uses the shared financial-outcome metric convention: only
+  signed P/L and per-trade outcome values become green or red; counts, win
+  rate, profit factor, zero, and unavailable values stay neutral.
+- [x] Calendar selected-period P/L and all visible month/week P/L values use
+  the same signed convention, including neutral zero values. Existing day
+  backgrounds, dates, counts, filters, and layout are unchanged.
+- [x] Reviewed Green-to-Red against the shared convention already on `main`.
+  Its signed actual and potential P/L cards are wired; neutral counts, rates,
+  timing, opportunity, and damage values remain deliberately neutral.

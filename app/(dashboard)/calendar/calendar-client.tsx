@@ -37,6 +37,7 @@ import {
   formatJournalAnalyticsMoney,
   journalAnalyticsCurrencySymbol,
 } from "@/src/modules/journal-analytics/presentation/journal-analytics-formatters";
+import { financialOutcomeColor } from "@/src/modules/journal-analytics/presentation/financial-outcome-color";
 import { FeatureHelpLink } from "../feature-help-link";
 import { HorizontalScrollHint } from "../horizontal-scroll-region";
 
@@ -266,7 +267,7 @@ function DayCell({
             {dayDate.getUTCDate()}
           </Typography>
           {day.tradeCount === 0 || day.pnlDecimal === null ? null : (
-            <Typography color={day.pnlSign === -1 ? "error.main" : "success.main"} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 850 }} variant={mode === "week" ? "h6" : "body2"}>
+            <Typography color={pnlTone(day.pnlSign).color} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 850 }} variant={mode === "week" ? "h6" : "body2"}>
               {money(day.pnlDecimal, currency)}
             </Typography>
           )}
@@ -288,7 +289,7 @@ function DayCell({
                   >
                     <Stack direction="row" sx={{ justifyContent: "space-between", width: "100%" }}>
                       <Typography noWrap sx={{ fontWeight: 750 }} variant={mode === "week" ? "body2" : "caption"}>{ticker.symbol}</Typography>
-                      <Typography color={ticker.pnlSign === -1 ? "error.main" : "success.main"} noWrap sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 750 }} variant="caption">{money(ticker.pnlDecimal, currency)}</Typography>
+                      <Typography color={pnlTone(ticker.pnlSign).color} noWrap sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 750 }} variant="caption">{money(ticker.pnlDecimal, currency)}</Typography>
                     </Stack>
                   </ButtonBase>
                   {mode === "week" ? (
@@ -304,7 +305,7 @@ function DayCell({
                       {ticker.trades.slice(0, 2).map((trade, index) => (
                         <Stack direction="row" key={trade.roundTripId} spacing={0.75} sx={{ alignItems: "baseline" }}>
                           <Typography color="text.secondary" variant="caption">Trade {index + 1}</Typography>
-                          <Typography color={trade.pnlSign === -1 ? "error.main" : "success.main"} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 750 }} variant="caption">
+                          <Typography color={pnlTone(trade.pnlSign).color} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 750 }} variant="caption">
                             {money(trade.pnlDecimal, currency)}
                           </Typography>
                         </Stack>
@@ -385,7 +386,7 @@ function MobileMonthCell({
           <Typography sx={{ fontSize: 16, fontWeight: 850 }}>{Number(day.date.slice(-2))}</Typography>
           {day.pnlDecimal === null ? null : (
             <Typography
-              color={day.pnlSign === -1 ? "error.main" : "success.main"}
+              color={pnlTone(day.pnlSign).color}
               noWrap
               sx={{ fontFamily: "var(--font-geist-mono)", fontSize: 12, fontWeight: 850 }}
             >
@@ -413,7 +414,7 @@ function MobileMonthCell({
               <Stack direction="row" spacing={0.5} sx={{ alignItems: "baseline", justifyContent: "space-between", minWidth: 0 }}>
                 <Typography noWrap sx={{ fontSize: 12, fontWeight: 750, minWidth: 0 }}>{ticker.symbol}</Typography>
                 <Typography
-                  color={ticker.pnlSign === -1 ? "error.main" : "success.main"}
+                  color={pnlTone(ticker.pnlSign).color}
                   noWrap
                   sx={{ flexShrink: 0, fontFamily: "var(--font-geist-mono)", fontSize: 12, fontWeight: 750 }}
                 >
@@ -465,7 +466,7 @@ function MobileWeekCard({
               {day.tradeCount > 0 ? `${day.tradeCount} trade${day.tradeCount === 1 ? "" : "s"} · ${percent(day.winRatePercentDecimal)} win rate` : hasActivity ? "Swing Trade Tracker activity" : "No activity"}
             </Typography>
           </Box>
-          {day.pnlDecimal === null ? null : <Typography color={day.pnlSign === -1 ? "error.main" : "success.main"} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 850 }}>{money(day.pnlDecimal, currency)}</Typography>}
+          {day.pnlDecimal === null ? null : <Typography color={pnlTone(day.pnlSign).color} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 850 }}>{money(day.pnlDecimal, currency)}</Typography>}
         </Stack>
       </ButtonBase>
       {day.tickers.length > 0 ? (
@@ -474,7 +475,7 @@ function MobileWeekCard({
             <ButtonBase key={ticker.instrumentId} onClick={() => onTickerClick(ticker)} sx={{ borderRadius: 1, display: "block", minHeight: 40, px: 0.75, py: 0.5, textAlign: "left", width: "100%" }}>
               <Stack direction="row" spacing={1} sx={{ alignItems: "baseline", justifyContent: "space-between" }}>
                 <Typography sx={{ fontWeight: 750 }} variant="body2">{ticker.symbol}</Typography>
-                <Typography color={ticker.pnlSign === -1 ? "error.main" : "success.main"} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 750 }} variant="body2">{money(ticker.pnlDecimal, currency)}</Typography>
+                <Typography color={pnlTone(ticker.pnlSign).color} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 750 }} variant="body2">{money(ticker.pnlDecimal, currency)}</Typography>
               </Stack>
             </ButtonBase>
           ))}
@@ -830,7 +831,7 @@ export function CalendarClient({
       </Stack>
 
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "repeat(1, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))" } }}>
-        <DashboardMetricCard caption="Selected period" label="P/L" value={initialData.state === "ready" ? money(initialData.summary.netPnlDecimal, initialData.currency) : "—"} />
+        <DashboardMetricCard caption="Selected period" label="P/L" value={initialData.state === "ready" ? money(initialData.summary.netPnlDecimal, initialData.currency) : "—"} valueColor={initialData.state === "ready" ? financialOutcomeColor(initialData.summary.netPnlDecimal) : "text.primary"} />
         <DashboardMetricCard caption="Selected period" label="Trades" value={initialData.state === "ready" ? String(initialData.summary.tradeCount) : "—"} />
         <DashboardMetricCard caption="Selected period" label="Win rate" value={initialData.state === "ready" ? percent(initialData.summary.winRatePercentDecimal) : "—"} />
       </Box>
@@ -949,7 +950,7 @@ export function CalendarClient({
               <Typography color="text.secondary" variant="body2">
                 {selected.tradeCount > 0 ? `${selected.tradeCount} trades · ${percent(selected.winRatePercentDecimal)} win rate` : "Swing Trade Tracker activity"}
               </Typography>
-              <Typography color={selected.pnlSign === -1 ? "error.main" : "success.main"} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 850 }}>
+              <Typography color={pnlTone(selected.pnlSign).color} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 850 }}>
                 {money(selected.pnlDecimal, initialData.currency)}
               </Typography>
             </Stack>
@@ -1015,12 +1016,12 @@ export function CalendarClient({
         <Typography color="text.secondary" sx={{ fontWeight: 750 }} variant="caption">CALENDAR DAY</Typography>
         <Stack direction="row" sx={{ alignItems: "baseline", justifyContent: "space-between", mt: 0.75 }}>
           <Typography component="h2" variant="h5">{new Date(`${selected.date}T12:00:00.000Z`).toLocaleDateString("en-US", { day: "numeric", month: "long", weekday: "long" })}</Typography>
-          {selected.tradeCount > 0 ? <Typography color={selected.pnlSign === -1 ? "error.main" : "success.main"} sx={{ fontWeight: 850 }} variant="h6">{money(selected.pnlDecimal, initialData.currency)}</Typography> : null}
+          {selected.tradeCount > 0 ? <Typography color={pnlTone(selected.pnlSign).color} sx={{ fontWeight: 850 }} variant="h6">{money(selected.pnlDecimal, initialData.currency)}</Typography> : null}
         </Stack>
         <Typography color="text.secondary" sx={{ mt: 1 }} variant="body2">{selected.tradeCount > 0 ? `${selected.tradeCount} trades · ${percent(selected.winRatePercentDecimal)} win rate · Peak giveback ${money(selected.peakGivebackDecimal, initialData.currency)}` : "Swing Trade Tracker activity"}</Typography>
         <Divider sx={{ my: 2.5 }} />
         <Typography sx={{ fontWeight: 800 }} variant="body2">Ticker results</Typography>
-        <Stack divider={<Divider flexItem />} sx={{ mt: 1 }}>{selected.tickers.map((ticker) => <Stack key={ticker.instrumentId} sx={{ py: 1.4 }}><Stack direction="row" sx={{ justifyContent: "space-between" }}><Typography sx={{ fontWeight: 800 }}>{ticker.symbol}</Typography><Typography color={ticker.pnlSign === -1 ? "error.main" : "success.main"} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 800 }}>{money(ticker.pnlDecimal, initialData.currency)}</Typography></Stack><TickerAnnotationChips compact={false} noteCount={ticker.noteCount} ruleReviewCount={ticker.ruleReviewCount} tagCount={ticker.tagCount} /></Stack>)}</Stack>
+        <Stack divider={<Divider flexItem />} sx={{ mt: 1 }}>{selected.tickers.map((ticker) => <Stack key={ticker.instrumentId} sx={{ py: 1.4 }}><Stack direction="row" sx={{ justifyContent: "space-between" }}><Typography sx={{ fontWeight: 800 }}>{ticker.symbol}</Typography><Typography color={pnlTone(ticker.pnlSign).color} sx={{ fontFamily: "var(--font-geist-mono)", fontWeight: 800 }}>{money(ticker.pnlDecimal, initialData.currency)}</Typography></Stack><TickerAnnotationChips compact={false} noteCount={ticker.noteCount} ruleReviewCount={ticker.ruleReviewCount} tagCount={ticker.tagCount} /></Stack>)}</Stack>
       </Drawer>
     </DashboardPage>
   );
