@@ -58,10 +58,9 @@ export function DashboardMetricCard({
           {label}
         </Typography>
         <Typography
-          color={valueColor}
           component="div"
           noWrap
-          sx={{ fontSize: "1.35rem", fontWeight: 720, mt: 0.5 }}
+          sx={{ color: valueColor, fontSize: "1.35rem", fontWeight: 720, mt: 0.5 }}
         >
           {value}
         </Typography>
