@@ -13,6 +13,10 @@
 - [x] Audited the Watchlist EODHD live-price transport: EODHD runs in the
   Levels runtime, publishes by authenticated HTTPS to Platform, and browsers
   receive Platform Server-Sent Events. It has no Vercel websocket dependency.
+- [x] Added the static root's first-visit analytics choice banner and clear
+  Privacy Policy and Terms & Conditions links. It stores only the existing
+  consent choice locally, loads no analytics itself, and leaves proxied legal
+  page bodies unchanged.
 - [ ] Create the Railway static front-door service and set its private
   `PLATFORM_UPSTREAM` only after the release lane is claimed.
 - [ ] Verify Academy and Watchlist public-host behavior from Railway.

@@ -59,6 +59,14 @@ The Railway service uses `static-landing-site/Dockerfile` and
   `/api/live-watchlist/stream` and avoids breaking its continuous event feed.
 - Railway's service health check is `/healthz`; the Platform health check
   remains `/api/platform/health` on the Platform service.
+- The static root presents a first-visit analytics-choice banner. It reuses the
+  Platform consent storage format (`traderslink_analytics_consent_v1`) for 180
+  days and offers **Accept analytics** or **Essential only**. It contains no
+  analytics tag or tracking call; optional analytics stay off until a visitor
+  chooses acceptance, and the existing Platform pages may consume that stored
+  choice under their existing consent contract.
+- The root footer and banner link to proxied `/privacy` and `/terms`. Their
+  Platform-rendered page bodies remain unchanged.
 
 ## Watchlist EODHD transport audit
 

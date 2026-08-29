@@ -77,6 +77,20 @@
     #traderslink-homepage-review-v2 .tl2-signup p { color:#d8e4f8; margin:0 auto 24px; max-width:570px; }
     #traderslink-homepage-review-v2 .tl2-signup .tl2-account-link { background:#fff; border-color:#fff; color:#062663; }
     #traderslink-homepage-review-v2 .tl2-signup .tl2-cta-note { color:#d8e4f8; font-size:13px; margin:11px auto 0; }
+    #traderslink-homepage-review-v2 .tl2-legal { align-items:center; background:#fff; display:flex; flex-wrap:wrap; gap:12px 20px; justify-content:center; padding:24px 4.5%; }
+    #traderslink-homepage-review-v2 .tl2-legal a,#traderslink-homepage-review-v2 .tl2-cookie-choices { color:#385376; font:inherit; font-size:14px; font-weight:700; text-decoration:underline; text-underline-offset:3px; }
+    #traderslink-homepage-review-v2 .tl2-cookie-choices { background:transparent; border:0; cursor:pointer; padding:0; }
+    #traderslink-homepage-review-v2 .tl2-consent { bottom:22px; left:20px; position:fixed; right:20px; z-index:10; }
+    #traderslink-homepage-review-v2 .tl2-consent[hidden] { display:none; }
+    #traderslink-homepage-review-v2 .tl2-consent-card { background:#fff; border:1px solid #cad8e8; border-radius:12px; box-shadow:0 18px 43px rgba(20,53,99,.2); margin:0 auto; max-width:720px; padding:22px; }
+    #traderslink-homepage-review-v2 .tl2-consent h2 { color:#172033; font-size:19px; letter-spacing:-.02em; margin-bottom:8px; }
+    #traderslink-homepage-review-v2 .tl2-consent p { color:#4b5563; font-size:14px; margin-bottom:0; max-width:610px; }
+    #traderslink-homepage-review-v2 .tl2-consent-links { margin-top:9px; }
+    #traderslink-homepage-review-v2 .tl2-consent-links a { color:#062663; font-size:13px; font-weight:700; text-decoration:underline; text-underline-offset:3px; }
+    #traderslink-homepage-review-v2 .tl2-consent-actions { display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-end; margin-top:17px; }
+    #traderslink-homepage-review-v2 .tl2-consent-button { border:1px solid #062663; border-radius:7px; cursor:pointer; font:inherit; font-size:14px; font-weight:700; min-height:42px; padding:10px 15px; }
+    #traderslink-homepage-review-v2 .tl2-consent-button--essential { background:#fff; color:#062663; }
+    #traderslink-homepage-review-v2 .tl2-consent-button--accept { background:#062663; color:#fff; }
     #traderslink-homepage-review-v2 .tl2-detail-tabs { background:#fff; padding:90px 4.5%; }
     #traderslink-homepage-review-v2 .tl2-detail-tabs-inner { margin:0 auto; max-width:1400px; }
     #traderslink-homepage-review-v2 .tl2-detail-tabs-intro { margin:0 auto 34px; max-width:700px; text-align:center; }
@@ -130,6 +144,10 @@
       #traderslink-homepage-review-v2 .tl2-product-shell--analytics { display:block; }
       #traderslink-homepage-review-v2 .tl2-product-panel,#traderslink-homepage-review-v2 .tl2-product-panel--reverse { gap:30px; grid-template-columns:1fr; }
       #traderslink-homepage-review-v2 .tl2-product-panel--reverse .tl2-shot,#traderslink-homepage-review-v2 .tl2-product-panel--reverse .tl2-copy { grid-column:auto; }
+      #traderslink-homepage-review-v2 .tl2-consent { bottom:12px; left:12px; right:12px; }
+      #traderslink-homepage-review-v2 .tl2-consent-card { padding:18px; }
+      #traderslink-homepage-review-v2 .tl2-consent-actions { justify-content:stretch; }
+      #traderslink-homepage-review-v2 .tl2-consent-button { flex:1 1 160px; }
     }
   </style>
   <script type="application/ld+json">
@@ -342,8 +360,24 @@
       <a class="tl2-account-link" href="#free-account">Sign up free</a>
       <p class="tl2-cta-note">No credit card required.</p>
     </section>
+    <footer aria-label="Legal links" class="tl2-legal">
+      <a href="/privacy">Privacy Policy</a>
+      <a href="/terms">Terms &amp; Conditions</a>
+      <button class="tl2-cookie-choices" data-open-cookie-choices type="button">Cookie choices</button>
+    </footer>
   </main>
 </div>
+<section aria-describedby="analytics-consent-copy" aria-labelledby="analytics-consent-title" aria-live="polite" class="tl2-consent" hidden id="analytics-consent" role="dialog">
+  <div class="tl2-consent-card">
+    <h2 id="analytics-consent-title">Analytics choices</h2>
+    <p id="analytics-consent-copy">We use necessary storage to remember this choice. Optional analytics help us understand visits and improve TradersLink. They stay off unless you accept.</p>
+    <p class="tl2-consent-links"><a href="/privacy">Privacy Policy</a> <span aria-hidden="true">·</span> <a href="/terms">Terms &amp; Conditions</a></p>
+    <div class="tl2-consent-actions">
+      <button class="tl2-consent-button tl2-consent-button--essential" data-analytics-choice="denied" type="button">Essential only</button>
+      <button class="tl2-consent-button tl2-consent-button--accept" data-analytics-choice="granted" type="button">Accept analytics</button>
+    </div>
+  </div>
+</section>
 <script>
   document.querySelectorAll('[data-tab-group]').forEach((tabList) => {
     const tabs = Array.from(tabList.querySelectorAll('[role="tab"]'));
@@ -402,6 +436,43 @@
       revealObserver.observe(target);
     });
   }
+  const consentStorageKey = 'traderslink_analytics_consent_v1';
+  const consentDurationMs = 180 * 24 * 60 * 60 * 1000;
+  const consentBanner = document.getElementById('analytics-consent');
+  const readAnalyticsChoice = () => {
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(consentStorageKey) || 'null');
+      if (!stored || !['granted', 'denied'].includes(stored.choice) || typeof stored.expiresAt !== 'number' || stored.expiresAt <= Date.now()) {
+        window.localStorage.removeItem(consentStorageKey);
+        return null;
+      }
+      return stored.choice;
+    } catch {
+      return null;
+    }
+  };
+  const showConsentChoices = () => {
+    if (!consentBanner) return;
+    consentBanner.hidden = false;
+    consentBanner.querySelector('[data-analytics-choice="denied"]').focus();
+  };
+  if (consentBanner) {
+    if (!readAnalyticsChoice()) showConsentChoices();
+    consentBanner.querySelectorAll('[data-analytics-choice]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const choice = button.getAttribute('data-analytics-choice');
+        try {
+          window.localStorage.setItem(consentStorageKey, JSON.stringify({ choice, expiresAt: Date.now() + consentDurationMs }));
+        } catch {
+          // Keep the current-page preference even when browser storage is unavailable.
+        }
+        consentBanner.hidden = true;
+      });
+    });
+  }
+  document.querySelectorAll('[data-open-cookie-choices]').forEach((button) => {
+    button.addEventListener('click', showConsentChoices);
+  });
 </script>
 </body>
 </html>
