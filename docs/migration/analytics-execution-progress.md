@@ -2,6 +2,10 @@
 
 **Status:** Entry Price Results ready for owner visual review; no release action authorized
 
+**2026-08-29 update:** The owner approved the evidence-model revision for
+Entry Price Results. It is ready for Coordinator integration only; no release,
+deployment or production action is authorized by this approval.
+
 ## Entry Price Results - 2026-08-26
 
 The owner-approved Entry Price Results slice is tracked in

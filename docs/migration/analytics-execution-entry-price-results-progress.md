@@ -1,6 +1,6 @@
 # Entry Price Results Progress
 
-**Status:** Updated evidence model implemented; owner visual review required
+**Status:** Owner approved; ready for Coordinator integration
 
 **Controlling records:** [Analytics Page Architecture Plan](analytics-pages-architecture-plan.md), [Trade Breakdown Progress](analytics-execution-progress.md)
 
@@ -62,4 +62,5 @@
 - [x] Run the permitted static check: `git diff --check` passes. The assigned
   worktree has no installed dependencies, and the current low-resource scope
   prohibits running the focused test or a local server.
-- [ ] Obtain owner visual/product approval before acceptance or release work.
+- [x] Owner visual/product approval recorded on 2026-08-29. Coordinator
+  integration remains a separate release boundary.
