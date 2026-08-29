@@ -1,6 +1,6 @@
 # Trading Journal Static Landing Page Progress
 
-**Status:** Checkpoint 1 owner approved; Checkpoint 2 implementation pending
+**Status:** Checkpoint 2 owner approved; Checkpoint 3 implementation pending
 
 **Controlling plan:** [Trading Journal Static Landing Page Plan](trading-journal-static-landing-page-plan.md)
 
@@ -16,8 +16,8 @@
   internal links.
 - [x] Completed Checkpoint 1 locally: Hero, Calendar, and Rules.
 - [x] Received owner visual approval for Checkpoint 1 on 2026-08-29.
-- [ ] Complete Checkpoint 2: Notes, Tags, and Ways to Journal.
-- [ ] Receive owner visual approval for Checkpoint 2.
+- [x] Completed Checkpoint 2 locally: Notes, Tags, and Ways to Journal.
+- [x] Received owner visual approval for Checkpoint 2 on 2026-08-29.
 - [ ] Complete Checkpoint 3: Daily Tracker, Preparation, Analyzer, Session
   Notes, FAQ, and complete desktop flow.
 - [ ] Receive owner visual approval for Checkpoint 3.
@@ -38,6 +38,16 @@
 - All JSON-LD blocks parse successfully.
 - `git diff --check` passes; only Git's existing Windows line-ending notices
   are reported for the static Dockerfile and Nginx template.
+
+### Checkpoint 2 local checks
+
+- Trade Notes, Trade Tags, and Ways to Journal render without horizontal
+  overflow at the desktop review viewport.
+- All Checkpoint 2 screenshots load successfully and retain their intrinsic
+  proportions.
+- The page still has one H1, no missing local assets, valid JSON-LD, and
+  parseable vanilla JavaScript.
+- The browser reports no console warnings or errors during the desktop review.
 
 No Platform production build, broad test suite, deployment, Railway
 configuration, DNS, or public route change is part of the active visual

@@ -116,6 +116,55 @@
     #traderslink-journal-v1 .tj-rule-status { border-radius:10px; box-shadow:0 16px 36px rgba(71,55,31,.12); position:absolute; right:0; top:0; width:39%; }
     #traderslink-journal-v1 .tj-rule-detail { border:1px solid #e0d4c1; border-radius:13px; bottom:0; box-shadow:0 25px 55px rgba(71,55,31,.16); position:absolute; right:4%; transform:rotate(-.7deg); width:55%; }
 
+    #traderslink-journal-v1 .tj-notes { background:#fff; overflow:hidden; padding:132px 4.5%; }
+    #traderslink-journal-v1 .tj-notes-inner,
+    #traderslink-journal-v1 .tj-tags-inner,
+    #traderslink-journal-v1 .tj-ways-inner { margin:0 auto; max-width:1590px; }
+    #traderslink-journal-v1 .tj-feature-split { align-items:center; display:grid; gap:7%; grid-template-columns:minmax(360px,.74fr) minmax(620px,1.26fr); }
+    #traderslink-journal-v1 .tj-feature-copy { max-width:560px; }
+    #traderslink-journal-v1 .tj-feature-copy h2 { font-size:clamp(40px,4.6vw,64px); letter-spacing:-.05em; line-height:1.04; margin-bottom:22px; }
+    #traderslink-journal-v1 .tj-feature-copy > p:not(.tj-eyebrow) { color:#4c5b70; font-size:18px; margin-bottom:17px; }
+    #traderslink-journal-v1 .tj-note-art { min-height:650px; position:relative; }
+    #traderslink-journal-v1 .tj-note-art::before { background:linear-gradient(135deg,#edf4fc,#f7faff); border-radius:52% 48% 44% 56%; content:""; inset:3% 2% 4% 8%; position:absolute; transform:rotate(-3deg); }
+    #traderslink-journal-v1 .tj-note-ticker { border:1px solid #cbd9e9; border-radius:15px; box-shadow:0 27px 58px rgba(24,57,101,.17); left:5%; position:absolute; top:3%; transform:rotate(-1.6deg); width:42%; }
+    #traderslink-journal-v1 .tj-note-trade { border:1px solid #cbd9e9; border-radius:15px; box-shadow:0 27px 58px rgba(24,57,101,.2); position:absolute; right:4%; top:9%; transform:rotate(1.2deg); width:38%; }
+    #traderslink-journal-v1 .tj-note-anchor { border:1px solid #b9cce3; border-radius:14px; bottom:7%; box-shadow:0 28px 58px rgba(24,57,101,.22); left:12%; position:absolute; transform:rotate(-.8deg); width:61%; }
+    #traderslink-journal-v1 .tj-note-marker { background:#062663; border-radius:999px; bottom:18%; color:#fff; font-size:13px; font-weight:800; padding:10px 15px; position:absolute; right:3%; box-shadow:0 13px 29px rgba(6,38,99,.2); }
+
+    #traderslink-journal-v1 .tj-tags { background:#edf7ef; overflow:hidden; padding:126px 4.5% 134px; position:relative; }
+    #traderslink-journal-v1 .tj-tags::before { border:1px solid rgba(55,115,79,.14); border-radius:50%; content:""; height:720px; left:-330px; position:absolute; top:-310px; width:820px; }
+    #traderslink-journal-v1 .tj-tags .tj-feature-split { grid-template-columns:minmax(620px,1.2fr) minmax(360px,.8fr); position:relative; z-index:1; }
+    #traderslink-journal-v1 .tj-tags .tj-feature-copy { justify-self:end; }
+    #traderslink-journal-v1 .tj-tag-art { min-height:660px; position:relative; }
+    #traderslink-journal-v1 .tj-tag-art::before { background:rgba(255,255,255,.72); border:1px solid rgba(70,132,95,.15); border-radius:28px; content:""; inset:4% 10% 3% 3%; position:absolute; transform:rotate(1.2deg); }
+    #traderslink-journal-v1 .tj-tag-trade { border:1px solid #bfd3c4; border-radius:15px; box-shadow:0 28px 61px rgba(38,86,57,.18); left:14%; position:absolute; top:3%; transform:rotate(-1.2deg); width:39%; }
+    #traderslink-journal-v1 .tj-tag-ticker { border:1px solid #bfd3c4; border-radius:15px; bottom:2%; box-shadow:0 25px 55px rgba(38,86,57,.16); left:2%; position:absolute; transform:rotate(1deg); width:37%; }
+    #traderslink-journal-v1 .tj-tag-three { border:1px solid #b4cdbb; border-radius:11px; box-shadow:0 20px 43px rgba(38,86,57,.17); position:absolute; right:4%; top:18%; transform:rotate(1.4deg); width:48%; }
+    #traderslink-journal-v1 .tj-tag-ten { border:1px solid #b4cdbb; border-radius:12px; bottom:12%; box-shadow:0 22px 48px rgba(38,86,57,.2); position:absolute; right:0; transform:rotate(-1deg); width:54%; }
+    #traderslink-journal-v1 .tj-tag-categories { display:grid; gap:9px 18px; grid-template-columns:repeat(2,minmax(0,1fr)); list-style:none; margin:26px 0 0; padding:0; }
+    #traderslink-journal-v1 .tj-tag-categories li { align-items:center; color:#30523d; display:flex; font-size:14px; font-weight:800; gap:9px; }
+    #traderslink-journal-v1 .tj-tag-categories li::before { background:#3a8b5a; border-radius:50%; content:""; height:7px; width:7px; }
+
+    #traderslink-journal-v1 .tj-ways { background:#fff; overflow:hidden; padding:128px 4.5% 142px; }
+    #traderslink-journal-v1 .tj-ways .tj-section-head { margin-bottom:82px; }
+    #traderslink-journal-v1 .tj-way-quick { align-items:center; display:grid; gap:7%; grid-template-columns:minmax(340px,.72fr) minmax(660px,1.28fr); }
+    #traderslink-journal-v1 .tj-way-copy { max-width:520px; }
+    #traderslink-journal-v1 .tj-way-number { color:#5073a2; font-size:13px; font-weight:800; letter-spacing:.12em; margin-bottom:12px; text-transform:uppercase; }
+    #traderslink-journal-v1 .tj-way-copy h3 { font-size:clamp(31px,3.3vw,47px); letter-spacing:-.045em; line-height:1.07; margin-bottom:16px; }
+    #traderslink-journal-v1 .tj-way-copy p { color:#536174; font-size:17px; }
+    #traderslink-journal-v1 .tj-explorer-art { min-height:600px; position:relative; }
+    #traderslink-journal-v1 .tj-explorer-art::before { background:linear-gradient(145deg,#eaf2fb,#f8fbff); border-radius:38px; content:""; inset:9% 3% 4% 0; position:absolute; transform:rotate(-1.2deg); }
+    #traderslink-journal-v1 .tj-explorer-list { border:1px solid #c6d5e7; border-radius:15px; box-shadow:0 26px 59px rgba(24,57,101,.17); left:0; position:absolute; top:20%; transform:rotate(-.7deg); width:79%; }
+    #traderslink-journal-v1 .tj-explorer-drawer { border:1px solid #c6d5e7; border-radius:15px; box-shadow:0 28px 63px rgba(24,57,101,.22); position:absolute; right:1%; top:0; transform:rotate(1.2deg); width:29%; }
+    #traderslink-journal-v1 .tj-ways-secondary { border-top:1px solid #dfe7f0; display:grid; gap:8%; grid-template-columns:1fr 1fr; margin-top:82px; padding-top:96px; }
+    #traderslink-journal-v1 .tj-way-secondary { display:grid; gap:34px; grid-template-columns:minmax(240px,.78fr) minmax(250px,1.22fr); }
+    #traderslink-journal-v1 .tj-way-secondary:nth-child(2) { align-items:end; padding-top:72px; }
+    #traderslink-journal-v1 .tj-way-secondary .tj-way-copy h3 { font-size:clamp(28px,2.6vw,40px); }
+    #traderslink-journal-v1 .tj-way-secondary-art { min-height:470px; position:relative; }
+    #traderslink-journal-v1 .tj-way-secondary-art::before { background:#f2f6fb; border-radius:28px; content:""; inset:5% 2% 3% 4%; position:absolute; transform:rotate(2deg); }
+    #traderslink-journal-v1 .tj-swing-image { border:1px solid #c8d7e8; border-radius:15px; box-shadow:0 24px 52px rgba(24,57,101,.17); position:absolute; right:5%; top:0; transform:rotate(-1.2deg); width:79%; }
+    #traderslink-journal-v1 .tj-execution-image { border:1px solid #c8d7e8; border-radius:14px; box-shadow:0 23px 49px rgba(24,57,101,.16); left:2%; position:absolute; top:21%; transform:rotate(1.1deg); width:94%; }
+
     #traderslink-journal-v1 .tj-checkpoint-cta { background:#062663; color:#fff; padding:72px 4.5%; text-align:center; }
     #traderslink-journal-v1 .tj-checkpoint-cta h2 { font-size:clamp(32px,4vw,50px); letter-spacing:-.045em; line-height:1.08; margin-bottom:13px; }
     #traderslink-journal-v1 .tj-checkpoint-cta p { color:#d8e4f8; margin:0 auto 25px; max-width:600px; }
@@ -155,6 +204,18 @@
       #traderslink-journal-v1 .tj-rule-results { grid-template-columns:1fr; }
       #traderslink-journal-v1 .tj-rule-results-copy { max-width:690px; }
       #traderslink-journal-v1 .tj-rule-results-art { min-height:560px; }
+      #traderslink-journal-v1 .tj-feature-split,
+      #traderslink-journal-v1 .tj-tags .tj-feature-split,
+      #traderslink-journal-v1 .tj-way-quick { grid-template-columns:1fr; }
+      #traderslink-journal-v1 .tj-feature-copy,
+      #traderslink-journal-v1 .tj-tags .tj-feature-copy,
+      #traderslink-journal-v1 .tj-way-copy { justify-self:start; max-width:720px; }
+      #traderslink-journal-v1 .tj-note-art,
+      #traderslink-journal-v1 .tj-tag-art { margin-top:48px; }
+      #traderslink-journal-v1 .tj-way-quick { gap:32px; }
+      #traderslink-journal-v1 .tj-ways-secondary { gap:70px; grid-template-columns:1fr; }
+      #traderslink-journal-v1 .tj-way-secondary { grid-template-columns:minmax(260px,.72fr) minmax(320px,1.28fr); }
+      #traderslink-journal-v1 .tj-way-secondary:nth-child(2) { padding-top:0; }
     }
     @media (max-width:680px) {
       html { scroll-behavior:auto; }
@@ -192,6 +253,30 @@
       #traderslink-journal-v1 .tj-results-list { width:94%; }
       #traderslink-journal-v1 .tj-rule-status { right:-4%; top:205px; width:60%; }
       #traderslink-journal-v1 .tj-rule-detail { bottom:0; right:0; width:76%; }
+      #traderslink-journal-v1 .tj-notes,
+      #traderslink-journal-v1 .tj-tags,
+      #traderslink-journal-v1 .tj-ways { padding:82px 20px 94px; }
+      #traderslink-journal-v1 .tj-feature-copy h2 { font-size:40px; }
+      #traderslink-journal-v1 .tj-feature-copy > p:not(.tj-eyebrow) { font-size:16px; }
+      #traderslink-journal-v1 .tj-note-art { min-height:560px; }
+      #traderslink-journal-v1 .tj-note-ticker { left:-2%; width:50%; }
+      #traderslink-journal-v1 .tj-note-trade { right:-4%; width:44%; }
+      #traderslink-journal-v1 .tj-note-anchor { bottom:4%; left:4%; width:75%; }
+      #traderslink-journal-v1 .tj-note-marker { bottom:17%; right:0; }
+      #traderslink-journal-v1 .tj-tag-art { min-height:600px; }
+      #traderslink-journal-v1 .tj-tag-trade { left:5%; width:46%; }
+      #traderslink-journal-v1 .tj-tag-ticker { width:43%; }
+      #traderslink-journal-v1 .tj-tag-three { right:-4%; width:58%; }
+      #traderslink-journal-v1 .tj-tag-ten { right:-5%; width:63%; }
+      #traderslink-journal-v1 .tj-ways .tj-section-head { margin-bottom:54px; }
+      #traderslink-journal-v1 .tj-explorer-art { min-height:560px; }
+      #traderslink-journal-v1 .tj-explorer-list { top:28%; width:91%; }
+      #traderslink-journal-v1 .tj-explorer-drawer { right:-3%; width:40%; }
+      #traderslink-journal-v1 .tj-ways-secondary { gap:82px; margin-top:54px; padding-top:70px; }
+      #traderslink-journal-v1 .tj-way-secondary { gap:28px; grid-template-columns:1fr; }
+      #traderslink-journal-v1 .tj-way-secondary-art { min-height:450px; }
+      #traderslink-journal-v1 .tj-swing-image { left:10%; right:auto; width:73%; }
+      #traderslink-journal-v1 .tj-execution-image { left:3%; top:17%; width:94%; }
       #traderslink-journal-v1 .tj-checkpoint-cta { padding:62px 20px; }
       #traderslink-journal-v1 .tj-legal { align-items:flex-start; flex-direction:column; padding:24px 20px; }
       #traderslink-journal-v1 .tj-consent { bottom:12px; left:12px; right:12px; }
@@ -245,6 +330,9 @@
         <div class="tj-features-links" id="journal-feature-links">
           <a href="#calendar">Trading Calendar</a>
           <a href="#rules">Trading Rules</a>
+          <a href="#notes">Trade Notes</a>
+          <a href="#tags">Trade Tags</a>
+          <a href="#ways-to-journal">Ways to Journal</a>
         </div>
       </div>
       <a href="/help">Help</a>
@@ -342,6 +430,98 @@
       </div>
     </section>
 
+    <section class="tj-notes" id="notes">
+      <div class="tj-notes-inner">
+        <div class="tj-feature-split">
+          <div class="tj-feature-copy">
+            <p class="tj-eyebrow">Trade Notes</p>
+            <h2>Keep the reason, the decision, and the lesson with the trade.</h2>
+            <p>Write down what you saw, why you acted, and what changed while the trade was open. The note stays attached to that trade instead of becoming a separate entry you have to match up later.</p>
+            <p>When you return to the ticker, its trades and executions are still beside the note. That makes it easier to remember the setup, review a decision in context, and carry a useful lesson into the next session.</p>
+          </div>
+          <div aria-label="Trade note shown with its ticker, trade, and executions" class="tj-note-art">
+            <img alt="Ticker card showing the trades, notes, tags, and rules attached to one ticker" class="tj-note-ticker" src="/landing-assets/trading-journal/daily-trade-tracker-ticker-card-mobile-view.png" />
+            <img alt="Expanded trade inside its ticker card with notes, tags, rules, and executions" class="tj-note-trade" src="/landing-assets/trading-journal/daily-trade-tracker-trade-in-ticker-card-mobile.png" />
+            <img alt="A written note attached to a completed trade" class="tj-note-anchor" src="/landing-assets/trading-journal/single-trade-note.png" />
+            <span class="tj-note-marker">The note stays with the trade.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tj-tags" id="tags">
+      <div class="tj-tags-inner">
+        <div class="tj-feature-split">
+          <div aria-label="Trade tags layered around a saved trade and ticker" class="tj-tag-art">
+            <img alt="Expanded trade showing where tags are saved with the trade" class="tj-tag-trade" src="/landing-assets/trading-journal/daily-trade-tracker-trade-in-ticker-card-mobile.png" />
+            <img alt="Ticker card containing tagged trades" class="tj-tag-ticker" src="/landing-assets/trading-journal/daily-trade-tracker-ticker-card-mobile-view.png" />
+            <img alt="Three selected trade tags" class="tj-tag-three" src="/landing-assets/trading-journal/3-selected-tags-small.png" />
+            <img alt="Ten trade tags showing different tag categories" class="tj-tag-ten" src="/landing-assets/trading-journal/shows-variety-of-tags-10.png" />
+          </div>
+          <div class="tj-feature-copy">
+            <p class="tj-eyebrow">Trade Tags</p>
+            <h2>Turn the details you notice into patterns you can study.</h2>
+            <p>Tag the setup you traded, how you entered and exited, the emotion you noticed, or the mistake you want to track. TradersLink keeps those details consistent enough to find again without limiting you to someone else’s vocabulary.</p>
+            <p>Add custom tags when your process needs its own language. Later, use those tags to filter trades, compare similar situations, and see which behaviours are showing up in Analytics.</p>
+            <ul aria-label="Examples of Trade Tag categories" class="tj-tag-categories">
+              <li>Setups</li>
+              <li>Execution</li>
+              <li>Exits</li>
+              <li>Emotions</li>
+              <li>Mistakes</li>
+              <li>Custom tags</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tj-ways" id="ways-to-journal">
+      <div class="tj-ways-inner">
+        <div class="tj-section-head">
+          <p class="tj-eyebrow">Ways to Journal</p>
+          <h2>Journal the way the trade calls for.</h2>
+          <p>Open a compact review, keep a swing plan over several dates, or enter executions directly. Each workflow adds to the same trading record without forcing every trade through the same screen.</p>
+        </div>
+
+        <div class="tj-way-quick">
+          <div class="tj-way-copy">
+            <p class="tj-way-number">01 · Quick review</p>
+            <h3>Review a trade without leaving the list.</h3>
+            <p>Filter or sort the Trade Explorer, open the review drawer, and add context while the trade you selected is still visible. It is a compact way to journal when you already know which trade needs your attention.</p>
+          </div>
+          <div aria-label="Trade Explorer and its compact review drawer" class="tj-explorer-art">
+            <img alt="Trade Explorer list with completed trades and filtering controls" class="tj-explorer-list" src="/landing-assets/trading-journal/ways-to-enter-trades-trade-explorer.png" />
+            <img alt="Compact Trade Explorer review drawer showing one completed trade" class="tj-explorer-drawer" src="/landing-assets/trading-journal/ways-to-enter-trades-explorer-side-card.png" />
+          </div>
+        </div>
+
+        <div class="tj-ways-secondary">
+          <article class="tj-way-secondary">
+            <div class="tj-way-copy">
+              <p class="tj-way-number">02 · Swing trading</p>
+              <h3>Keep the plan alive across trading days.</h3>
+              <p>Record the swing plan, expected holding period, catalyst, and dated notes as the position develops. The journal keeps the original idea and each later update with the same swing trade.</p>
+            </div>
+            <div aria-label="Swing trade plan and dated notes" class="tj-way-secondary-art">
+              <img alt="Swing Trade Tracker card with a trade plan, catalyst, holding period, and dated notes" class="tj-swing-image" src="/landing-assets/trading-journal/ways-to-enter-trades-swing-tocker-card-notes.png" />
+            </div>
+          </article>
+
+          <article class="tj-way-secondary">
+            <div class="tj-way-copy">
+              <p class="tj-way-number">03 · Execution entry</p>
+              <h3>Enter the fills that make up the trade.</h3>
+              <p>Add a day or swing execution with the broker-shown date, ticker, side, time, quantity, price, and fees. Accurate fills give later trade matching and analysis the details they need.</p>
+            </div>
+            <div aria-label="Manual day or swing execution fields" class="tj-way-secondary-art">
+              <img alt="Manual execution fields for date, ticker, side, time, quantity, price, and fees" class="tj-execution-image" src="/landing-assets/trading-journal/one-execution-entry-mobile-view-small.png" />
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
     <section class="tj-checkpoint-cta">
       <h2>Create your free TradersLink account.</h2>
       <p>Start building a trading record that keeps the day, the trades, and the decisions connected.</p>
@@ -389,7 +569,7 @@
   }
 
   if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    const revealTargets = document.querySelectorAll('.tj-calendar, .tj-rules');
+    const revealTargets = document.querySelectorAll('.tj-calendar, .tj-rules, .tj-notes, .tj-tags, .tj-ways');
     const revealObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (!entry.isIntersecting) return;
