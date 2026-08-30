@@ -235,6 +235,7 @@ function withCalendarAnnotations(
   scope: WorkspaceAccessScope,
   data: JournalCalendarReadModel,
   input: CalendarFilterInput,
+  annotationEvidence?: CalendarAnnotationEvidence,
 ): CalendarData {
   if (!data.timezone) return Object.freeze({
     ...data,
@@ -243,7 +244,7 @@ function withCalendarAnnotations(
       hasDailyTracker: false,
     }))),
   });
-  const evidence = calendarAnnotationEvidence(scope, data.timezone);
+  const evidence = annotationEvidence ?? calendarAnnotationEvidence(scope, data.timezone);
   const index = evidence.annotations;
   const days: MutableCalendarDay[] = data.days.map((day) => ({
     ...day,
@@ -348,19 +349,64 @@ export function emptyCalendarData(): CalendarData {
   });
 }
 
+function readCalendarData(
+  scope: WorkspaceAccessScope,
+  input: CalendarFilterInput,
+  dashboard: Readonly<{
+    getCalendar(
+      scope: WorkspaceAccessScope,
+      input: Readonly<{
+        currency: string | null;
+        startDate: string | null;
+        endDate: string | null;
+        symbol: string | null;
+        direction: "long" | "short" | null;
+        performance: "profitable" | "losing" | null;
+        pnlBand: "loss200" | "flat" | "profit200" | null;
+        tradeCountBand: "1-3" | "4-6" | "7+" | null;
+        session: "premarket" | "regular" | "after_hours" | null;
+      }>,
+    ): JournalCalendarReadModel;
+  }>,
+  annotationEvidenceByTimezone: Map<string, CalendarAnnotationEvidence>,
+): CalendarData {
+  const data = dashboard.getCalendar(scope, {
+    currency: input.currency === "all" ? null : input.currency,
+    startDate: input.startDate || null,
+    endDate: input.endDate || null,
+    symbol: input.symbol === "all" ? null : input.symbol,
+    direction: input.direction === "all" ? null : input.direction,
+    performance: input.performance === "all" ? null : input.performance,
+    pnlBand: input.pnlRange === "all" ? null : input.pnlRange,
+    tradeCountBand: input.tradeCount === "all" ? null : input.tradeCount,
+    session: input.session === "all" ? null : input.session,
+  });
+  const annotationEvidence = data.timezone
+    ? annotationEvidenceByTimezone.get(data.timezone) ??
+      calendarAnnotationEvidence(scope, data.timezone)
+    : undefined;
+  if (data.timezone && annotationEvidence) {
+    annotationEvidenceByTimezone.set(data.timezone, annotationEvidence);
+  }
+  return withCalendarAnnotations(scope, data, input, annotationEvidence);
+}
+
+export async function withCalendarDataRuntime<T>(
+  scope: WorkspaceAccessScope,
+  operation: (read: (input: CalendarFilterInput) => CalendarData) => T | Promise<T>,
+): Promise<T> {
+  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ dashboard }) => {
+    const annotationEvidenceByTimezone = new Map<string, CalendarAnnotationEvidence>();
+    return operation((input) => readCalendarData(
+      scope,
+      input,
+      dashboard,
+      annotationEvidenceByTimezone,
+    ));
+  });
+}
+
 export async function getCalendarData(input: CalendarFilterInput): Promise<CalendarData> {
   const scope = await requireTraderLinkPlatformPageScope();
-  const data = await withJournalAnalyticsReportingDashboardRuntime(scope, ({ dashboard }) =>
-    dashboard.getCalendar(scope, {
-      currency: input.currency === "all" ? null : input.currency,
-      startDate: input.startDate || null,
-      endDate: input.endDate || null,
-      symbol: input.symbol === "all" ? null : input.symbol,
-      direction: input.direction === "all" ? null : input.direction,
-      performance: input.performance === "all" ? null : input.performance,
-      pnlBand: input.pnlRange === "all" ? null : input.pnlRange,
-      tradeCountBand: input.tradeCount === "all" ? null : input.tradeCount,
-      session: input.session === "all" ? null : input.session,
-    }));
-  return withCalendarAnnotations(scope, data, input);
+  return withCalendarDataRuntime(scope, (read) => read(input));
 }

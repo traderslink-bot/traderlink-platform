@@ -38,13 +38,16 @@ import {
 } from "./journal-reporting-currency-fact-set";
 import { journalAnalyticsLocalTimeFact } from "./normalize-journal-analytics-facts";
 
-type ReportingCurrencySourceRow = Readonly<{
+type ReportingCurrencyRoundTripSourceRow = Readonly<{
   round_trip_id: string;
   trade_currency: string;
   closed_at_utc: string | null;
   base_currency: string;
   trading_timezone: string;
-  fee_currency: string | null;
+}>;
+
+type ReportingCurrencyFeeSourceRow = Readonly<{
+  fee_currency: string;
 }>;
 
 type JournalDashboardRuntimeReader = Readonly<{
@@ -183,9 +186,9 @@ export async function withJournalAnalyticsReportingDashboardRuntime<T>(
   const requestedAtUtc = new Date().toISOString();
   const snapshot = withReadonlyPlatformDatabase({}, (database) => {
     const accountId = requireActiveJournalAnalyticsAccountId(scope);
-    const rows = database.prepare<[string, string], ReportingCurrencySourceRow>(`SELECT
+    const rows = database.prepare<[string, string], ReportingCurrencyRoundTripSourceRow>(`SELECT
  round_trip.round_trip_id, version.trade_currency, version.closed_at_utc,
- account.base_currency, account.trading_timezone, execution_version.fee_currency
+ account.base_currency, account.trading_timezone
 FROM journal_round_trips round_trip
 JOIN journal_round_trip_versions version
   ON version.workspace_id = round_trip.workspace_id
@@ -193,20 +196,34 @@ JOIN journal_round_trip_versions version
  AND version.round_trip_id = round_trip.round_trip_id
  AND version.round_trip_version_id = round_trip.current_version_id
 JOIN journal_accounts account
-  ON account.workspace_id = round_trip.workspace_id
+ ON account.workspace_id = round_trip.workspace_id
  AND account.account_id = round_trip.account_id
  AND account.status = 'active'
-LEFT JOIN journal_round_trip_execution_allocations allocation
+WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
+  AND round_trip.lifecycle_state = 'active'
+ORDER BY round_trip.round_trip_id`).all(
+      scope.workspaceId,
+      accountId,
+    );
+    const feeCurrencyRows = database.prepare<[string, string], ReportingCurrencyFeeSourceRow>(`SELECT DISTINCT
+ execution_version.fee_currency
+FROM journal_round_trips round_trip
+JOIN journal_round_trip_versions version
+  ON version.workspace_id = round_trip.workspace_id
+ AND version.account_id = round_trip.account_id
+ AND version.round_trip_id = round_trip.round_trip_id
+ AND version.round_trip_version_id = round_trip.current_version_id
+JOIN journal_round_trip_execution_allocations allocation
   ON allocation.workspace_id = version.workspace_id
  AND allocation.account_id = version.account_id
  AND allocation.round_trip_version_id = version.round_trip_version_id
-LEFT JOIN journal_execution_versions execution_version
+JOIN journal_execution_versions execution_version
   ON execution_version.workspace_id = allocation.workspace_id
  AND execution_version.account_id = allocation.account_id
  AND execution_version.execution_version_id = allocation.execution_version_id
 WHERE round_trip.workspace_id = ? AND round_trip.account_id = ?
   AND round_trip.lifecycle_state = 'active'
-ORDER BY round_trip.round_trip_id, allocation.allocation_sequence`).all(
+  AND execution_version.fee_currency IS NOT NULL`).all(
       scope.workspaceId,
       accountId,
     );
@@ -218,7 +235,6 @@ ORDER BY round_trip.round_trip_id, allocation.allocation_sequence`).all(
       sourceCurrencyByRoundTrip.set(row.round_trip_id, row.trade_currency);
       sourceCurrencies.add(row.base_currency);
       sourceCurrencies.add(row.trade_currency);
-      if (row.fee_currency) sourceCurrencies.add(row.fee_currency);
       const sourceDate = journalAnalyticsLocalTimeFact(
         row.closed_at_utc ?? requestedAtUtc,
         row.trading_timezone,
@@ -226,6 +242,7 @@ ORDER BY round_trip.round_trip_id, allocation.allocation_sequence`).all(
       sourceDateByRoundTrip.set(row.round_trip_id, sourceDate);
       sourceDates.add(sourceDate);
     }
+    for (const row of feeCurrencyRows) sourceCurrencies.add(row.fee_currency);
     return Object.freeze({
       reportingCurrency: new PlatformUserPreferenceRepository(database)
         .getActiveUserReportingCurrency(scope.userId),

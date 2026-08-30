@@ -8,12 +8,13 @@ import {
   type JournalCalendarOfflineViewModel,
 } from "@/src/modules/journal/contracts/journal-offline-route-view-contracts";
 import { CalendarClient } from "./calendar-client";
-import { emptyCalendarData, getCalendarData } from "./calendar-data";
+import { emptyCalendarData, withCalendarDataRuntime } from "./calendar-data";
 import {
   requireTraderLinkPlatformPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import type {
   CalendarDirectionFilter,
+  CalendarData,
   CalendarFilterInput,
   CalendarPerformanceFilter,
   CalendarPnlFilter,
@@ -95,22 +96,16 @@ function filters(search: Record<string, string | string[] | undefined>): Calenda
   };
 }
 
-export default async function CalendarPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const query = await searchParams;
-  const selectedFilters = filters(query);
-  const reviewLayout = process.env.NODE_ENV !== "production" && value(query.review) === "layout";
-  const initialView: CalendarView = value(query.view) === "week" ? "week" : "month";
-  const catalogData = reviewLayout
-    ? emptyCalendarData()
-    : await getCalendarData({
-      ...selectedFilters,
-      endDate: "",
-      startDate: "",
-    });
+function calendarNavigationOptions(
+  catalogData: CalendarData,
+  query: Record<string, string | string[] | undefined>,
+): Readonly<{
+  availableMonths: readonly string[];
+  availableWeekOptions: readonly CalendarWeekOption[];
+  availableWeeks: readonly string[];
+  selectedMonth: string;
+  selectedWeek: string;
+}> {
   const activityDates = catalogData.days
     .filter((day) => day.tradeCount > 0)
     .map((day) => day.date);
@@ -129,25 +124,66 @@ export default async function CalendarPage({
   }));
   const requestedMonth = value(query.month);
   const requestedWeek = validDate(value(query.week));
-  const selectedMonth = requestedMonth && availableMonths.includes(requestedMonth)
-    ? requestedMonth
-    : activityMonths.at(-1) ?? currentWeek.slice(0, 7);
-  const selectedWeek = requestedWeek && availableWeeks.includes(weekStart(requestedWeek))
-    ? weekStart(requestedWeek)
-    : currentWeek;
-  const initialData = reviewLayout
-    ? emptyCalendarData()
-    : initialView === "month"
-      ? await getCalendarData({
-        ...selectedFilters,
-        endDate: monthEnd(selectedMonth),
-        startDate: monthStart(selectedMonth),
-      })
-      : await getCalendarData({
-        ...selectedFilters,
-        endDate: weekEnd(selectedWeek),
-        startDate: selectedWeek,
+  return Object.freeze({
+    availableMonths,
+    availableWeekOptions,
+    availableWeeks,
+    selectedMonth: requestedMonth && availableMonths.includes(requestedMonth)
+      ? requestedMonth
+      : activityMonths.at(-1) ?? currentWeek.slice(0, 7),
+    selectedWeek: requestedWeek && availableWeeks.includes(weekStart(requestedWeek))
+      ? weekStart(requestedWeek)
+      : currentWeek,
+  });
+}
+
+export default async function CalendarPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const query = await searchParams;
+  const selectedFilters = filters(query);
+  const reviewLayout = process.env.NODE_ENV !== "production" && value(query.review) === "layout";
+  const initialView: CalendarView = value(query.view) === "week" ? "week" : "month";
+  const scope = await requireTraderLinkPlatformPageScope();
+  const calendar = reviewLayout
+    ? (() => {
+      const navigation = calendarNavigationOptions(emptyCalendarData(), query);
+      return Object.freeze({
+        ...navigation,
+        initialData: emptyCalendarData(),
       });
+    })()
+    : await withCalendarDataRuntime(scope, (read) => {
+      const navigation = calendarNavigationOptions(read({
+        ...selectedFilters,
+        endDate: "",
+        startDate: "",
+      }), query);
+      return Object.freeze({
+        ...navigation,
+        initialData: read(initialView === "month"
+          ? {
+            ...selectedFilters,
+            endDate: monthEnd(navigation.selectedMonth),
+            startDate: monthStart(navigation.selectedMonth),
+          }
+          : {
+            ...selectedFilters,
+            endDate: weekEnd(navigation.selectedWeek),
+            startDate: navigation.selectedWeek,
+          }),
+      });
+    });
+  const {
+    availableMonths,
+    availableWeekOptions,
+    availableWeeks,
+    initialData,
+    selectedMonth,
+    selectedWeek,
+  } = calendar;
   const initialFilters: CalendarFilterInput = {
     ...selectedFilters,
     currency: selectedFilters.currency === "all"
@@ -156,7 +192,6 @@ export default async function CalendarPage({
     endDate: initialView === "month" ? monthEnd(selectedMonth) : weekEnd(selectedWeek),
     startDate: initialView === "month" ? monthStart(selectedMonth) : selectedWeek,
   };
-  await requireTraderLinkPlatformPageScope();
   const offlineModel: JournalCalendarOfflineViewModel = Object.freeze({
     availableMonths,
     availableWeekOptions,
