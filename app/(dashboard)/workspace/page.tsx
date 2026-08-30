@@ -17,7 +17,7 @@ import {
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import {
   currentJournalAccountSelectionRef,
-  requireTraderLinkPlatformPageScope,
+  requireTraderLinkPlatformServerComponentPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import {
   createPlatformWorkspaceOfflineViewModel,
@@ -60,7 +60,7 @@ export default async function WorkspacePage({
   searchParams: Promise<{ gettingStarted?: string }>;
 }) {
   const queryParameters = await searchParams;
-  const scope = await requireTraderLinkPlatformPageScope();
+  const scope = await requireTraderLinkPlatformServerComponentPageScope();
   if (!scope.activeAccountId) {
     // Preserve the existing read-before-redirect failure boundary.
     readJournalFirstExecutionOnboardingStatus(scope);

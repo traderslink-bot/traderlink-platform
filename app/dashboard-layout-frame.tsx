@@ -5,7 +5,7 @@ import { TraderLinkPlatformDashboardTemplate } from "./dashboard-template";
 import {
   requireTraderLinkPlatformDiscordMemberPageIdentity,
   currentJournalAccountSelectionRef,
-  requireTraderLinkPlatformPageIdentity,
+  requireTraderLinkPlatformServerComponentPageIdentity,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
 import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
 import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
@@ -66,7 +66,7 @@ async function TraderLinkPlatformDashboardFrameContent({
   try {
     identity = watchlistMemberAccess
       ? await requireTraderLinkPlatformDiscordMemberPageIdentity()
-      : await requireTraderLinkPlatformPageIdentity();
+      : await requireTraderLinkPlatformServerComponentPageIdentity();
   } catch (error) {
     if (
       process.env.NODE_ENV === "production" &&

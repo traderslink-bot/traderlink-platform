@@ -1,6 +1,7 @@
 import "server-only";
 
 import { headers as nextHeaders } from "next/headers";
+import { cache } from "react";
 
 import { deriveDevelopmentOwnerJournalScope } from "@/src/modules/journal/server/accounts/journal-development-owner-scope";
 import type { WorkspaceAccessScope } from "../../contracts/workspace-access-scope";
@@ -185,6 +186,30 @@ export function requireTraderLinkPlatformRequestScope(
   options: Parameters<typeof requireTraderLinkPlatformRequestIdentity>[1] = {},
 ): WorkspaceAccessScope {
   return requireTraderLinkPlatformRequestIdentity(requestHeaders, options).scope;
+}
+
+// This is intentionally a zero-argument React Server Component cache. It
+// shares one authenticated identity snapshot only within a single RSC render;
+// React clears it before the next request. Do not use it from Server Actions
+// or route handlers, which must continue through the explicit request/page
+// resolvers below.
+const requireCurrentServerComponentDashboardIdentity = cache(
+  async (): Promise<TraderLinkPlatformRequestIdentity> =>
+    requireTraderLinkPlatformRequestIdentity(await nextHeaders(), {
+      environment: process.env,
+    }),
+);
+
+export async function requireTraderLinkPlatformServerComponentPageIdentity(): Promise<
+  TraderLinkPlatformRequestIdentity
+> {
+  return requireCurrentServerComponentDashboardIdentity();
+}
+
+export async function requireTraderLinkPlatformServerComponentPageScope(): Promise<
+  WorkspaceAccessScope
+> {
+  return (await requireCurrentServerComponentDashboardIdentity()).scope;
 }
 
 export async function requireTraderLinkPlatformPageIdentity(
