@@ -1,6 +1,18 @@
 "use client";
 
-import { Box, Button, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Checkbox,
+  ListItemText,
+  Menu,
+  MenuItem,
+  Stack,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import Decimal from "decimal.js";
 import {
@@ -25,6 +37,9 @@ import { TradeAnalyzerAnnotationPrimitive, type TradeAnalyzerAnnotationAppearanc
 import type { DaySessionTradeAnalyzer } from "./day-session-types";
 
 export type DailyTradeChartInterval = "1m" | "5m" | "15m" | "1h";
+type ChartRangeMode = "all_candles" | "around_trade";
+type ChartLayer = "candlePatterns" | "ema" | "executions" | "rules" | "volume" | "vwap";
+type ChartLayerVisibility = Readonly<Record<ChartLayer, boolean>>;
 
 type ChartCandle = DaySessionTradeAnalyzer["candles"][number];
 type ChartPattern = Readonly<{ kind: string; time: number }>;
@@ -76,6 +91,14 @@ const CHART_INTERVAL_SECONDS: Readonly<Record<DailyTradeChartInterval, number>> 
 const CHART_INTERVALS = Object.freeze(["1m", "5m", "15m", "1h"] as const);
 const CHART_ZOOM_IN_FACTOR = 0.82;
 const CHART_ZOOM_OUT_FACTOR = 1.22;
+const DEFAULT_CHART_LAYERS: ChartLayerVisibility = Object.freeze({
+  candlePatterns: true,
+  ema: true,
+  executions: true,
+  rules: true,
+  volume: true,
+  vwap: true,
+});
 
 function zoomChartTimeScale(
   chart: IChartApi,
@@ -385,6 +408,7 @@ export function DailyTradeAnalyzerChart({
   tradeLabelColor: "success" | "error";
   tradeNumber: number;
 }) {
+  const frameRef = useRef<HTMLDivElement | null>(null);
   const theme = useTheme();
   const chartTheme = theme.palette.mode === "dark"
     ? DARK_ANALYZER_LIGHT_CHART_THEME
@@ -401,6 +425,11 @@ export function DailyTradeAnalyzerChart({
   const pinnedDetailRef = useRef(false);
   const dismissedDetailRef = useRef(false);
   const [detail, setDetail] = useState<ChartDetail | null>(null);
+  const [displayMenuAnchor, setDisplayMenuAnchor] = useState<HTMLElement | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [layers, setLayers] = useState<ChartLayerVisibility>(DEFAULT_CHART_LAYERS);
+  const [rangeMode, setRangeMode] = useState<ChartRangeMode>("around_trade");
+  const [rangeRevision, setRangeRevision] = useState(0);
   const chartInterval = interval;
 
   const [mobilePatternKeyOpen, setMobilePatternKeyOpen] = useState(false);
@@ -415,6 +444,14 @@ export function DailyTradeAnalyzerChart({
     [analysis, chartInterval],
   );
   const visiblePatternKinds = [...new Set(chartPatterns.map((pattern) => pattern.kind))];
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(document.fullscreenElement === frameRef.current);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container || !["pending", "ready", "provider_unavailable"].includes(analysis.status) || analysis.candles.length === 0) return;
@@ -495,7 +532,7 @@ export function DailyTradeAnalyzerChart({
       numericCandles,
       { vwapSource: "turnover" },
     );
-    if (exactTurnoverAvailable) {
+    if (exactTurnoverAvailable && layers.vwap) {
       const vwap = chart.addSeries(LineSeries, {
         color: chartSemanticColors.vwap,
         crosshairMarkerVisible: false,
@@ -508,28 +545,32 @@ export function DailyTradeAnalyzerChart({
         point.vwap === null ? [] : [{ time: point.time as Time, value: point.vwap }],
       ));
     }
-    const ema9 = chart.addSeries(LineSeries, {
-      color: chartSemanticColors.ema,
-      crosshairMarkerVisible: false,
-      lastValueVisible: false,
-      lineWidth: 2,
-      priceLineVisible: false,
-      title: `${chartInterval} EMA 9`,
-    });
-    ema9.setData(indicators.flatMap((point) =>
-      point.ema9 === null ? [] : [{ time: point.time as Time, value: point.ema9 }],
-    ));
+    if (layers.ema) {
+      const ema9 = chart.addSeries(LineSeries, {
+        color: chartSemanticColors.ema,
+        crosshairMarkerVisible: false,
+        lastValueVisible: false,
+        lineWidth: 2,
+        priceLineVisible: false,
+        title: `${chartInterval} EMA 9`,
+      });
+      ema9.setData(indicators.flatMap((point) =>
+        point.ema9 === null ? [] : [{ time: point.time as Time, value: point.ema9 }],
+      ));
+    }
 
-    const volume = chart.addSeries(HistogramSeries, {
-      color: chartSemanticColors.volume,
-      priceFormat: { type: "volume" },
-      priceScaleId: "volume",
-    }, 1);
-    volume.setData(displayedCandles.map((candle) => ({
-      time: candle.time as Time,
-      value: Number(candle.volume),
-    })));
-    chart.panes()[1]?.setHeight(92);
+    if (layers.volume) {
+      const volume = chart.addSeries(HistogramSeries, {
+        color: chartSemanticColors.volume,
+        priceFormat: { type: "volume" },
+        priceScaleId: "volume",
+      }, 1);
+      volume.setData(displayedCandles.map((candle) => ({
+        time: candle.time as Time,
+        value: Number(candle.volume),
+      })));
+      chart.panes()[1]?.setHeight(92);
+    }
 
     const sideSequence = { BUY: 0, SELL: 0 };
     const executionModels = analysis.events.flatMap((event) => {
@@ -631,9 +672,9 @@ export function DailyTradeAnalyzerChart({
       }];
     });
     const annotationPrimitive = new TradeAnalyzerAnnotationPrimitive([
-      ...executionAnnotations,
-      ...ruleAnnotations,
-      ...patternAnnotations,
+      ...(layers.executions ? executionAnnotations : []),
+      ...(layers.rules ? ruleAnnotations : []),
+      ...(layers.candlePatterns ? patternAnnotations : []),
     ], annotationAppearance);
     candles.attachPrimitive(annotationPrimitive);
     annotationPrimitive.setSelectedId(selectedEventIdRef.current ? `execution-${selectedEventIdRef.current}` : null);
@@ -649,8 +690,10 @@ export function DailyTradeAnalyzerChart({
       if (typeof param.time !== "number") return null;
       const candle = candleByTime.get(param.time);
       if (!candle) return null;
-      const candleEvent = analysis.events.find((event) =>
-        event.candleTime !== null && chartBucketTime(event.candleTime, chartInterval) === param.time) ?? null;
+      const candleEvent = layers.executions
+        ? analysis.events.find((event) =>
+          event.candleTime !== null && chartBucketTime(event.candleTime, chartInterval) === param.time) ?? null
+        : null;
       return { candle, event: candleEvent, priceAction: null, rules: [] };
     }
     const handleCrosshairMove = (param: MouseEventParams<Time>) => {
@@ -678,7 +721,7 @@ export function DailyTradeAnalyzerChart({
         : candleIndexByTime.get(chartBucketTime(event.candleTime, chartInterval));
       return index === undefined ? [] : [index];
     });
-    if (numericCandles.length > 1 && executionIndexes.length > 0) {
+    if (rangeMode === "around_trade" && numericCandles.length > 1 && executionIndexes.length > 0) {
       const firstExecutionIndex = Math.min(...executionIndexes);
       const visibleSpan = initialVisibleSpan(
         chartInterval,
@@ -706,7 +749,7 @@ export function DailyTradeAnalyzerChart({
       eventCandleIndexesRef.current = new Map();
       chart.remove();
     };
-  }, [analysis, annotationAppearance, chartInterval, chartPatternColors, chartPatterns, chartSemanticColors, chartTheme, currency, direction, exactTurnoverAvailable, ruleEvidence]);
+  }, [analysis, annotationAppearance, chartInterval, chartPatternColors, chartPatterns, chartSemanticColors, chartTheme, currency, direction, exactTurnoverAvailable, layers, rangeMode, rangeRevision, ruleEvidence]);
 
   useEffect(() => {
     selectedEventIdRef.current = selectedEventId;
@@ -735,8 +778,60 @@ export function DailyTradeAnalyzerChart({
     );
   };
 
+  const toggleLayer = (layer: ChartLayer) => {
+    setLayers((current) => ({ ...current, [layer]: !current[layer] }));
+  };
+
+  const toggleFullscreen = () => {
+    if (document.fullscreenElement === frameRef.current) {
+      void document.exitFullscreen().catch(() => undefined);
+      return;
+    }
+    if (frameRef.current?.requestFullscreen) {
+      void frameRef.current.requestFullscreen().catch(() => undefined);
+    }
+  };
+
+  const displayOptions: readonly Readonly<{
+    available: boolean;
+    layer: ChartLayer;
+    label: string;
+    unavailableReason?: string;
+  }>[] = [
+    { available: true, label: "Volume", layer: "volume" },
+    {
+      available: analysis.events.length > 0,
+      label: "Executions",
+      layer: "executions",
+      unavailableReason: "No execution markers are available for this trade.",
+    },
+    {
+      available: ruleEvidence.length > 0,
+      label: "Rules",
+      layer: "rules",
+      unavailableReason: "No rule markers are available for this trade.",
+    },
+    {
+      available: visiblePatternKinds.length > 0,
+      label: "Candle patterns",
+      layer: "candlePatterns",
+      unavailableReason: "No candle patterns are available for this timeframe.",
+    },
+    {
+      available: exactTurnoverAvailable,
+      label: "VWAP",
+      layer: "vwap",
+      unavailableReason: "Complete turnover data is required for Session VWAP.",
+    },
+    { available: true, label: "EMA", layer: "ema" },
+  ];
+
   return (
-    <Box sx={{ bgcolor: chartTheme.background, borderBottom: 1, borderColor: chartTheme.controlBorder, color: chartTheme.text, position: "relative" }}>
+    <Box
+      ref={frameRef}
+      sx={{ bgcolor: chartTheme.background, borderBottom: 1, borderColor: chartTheme.controlBorder, color: chartTheme.text }}
+    >
+      <Box sx={{ position: "relative" }}>
       <Stack
         direction="row"
         spacing={{ xs: 0.75, md: 1.5 }}
@@ -815,16 +910,18 @@ export function DailyTradeAnalyzerChart({
             </Typography>
           </Tooltip>
         )}
-        {exactTurnoverAvailable ? (
+        {exactTurnoverAvailable && layers.vwap ? (
           <Typography sx={{ color: chartSemanticColors.vwap, display: { xs: "none", md: "block" }, fontWeight: 800 }} variant="caption">
             - Session VWAP
           </Typography>
         ) : null}
-        <Typography sx={{ color: chartSemanticColors.ema, display: { xs: "none", md: "block" }, fontWeight: 800 }} variant="caption">
-          - {chartInterval} EMA 9
-        </Typography>
+        {layers.ema ? (
+          <Typography sx={{ color: chartSemanticColors.ema, display: { xs: "none", md: "block" }, fontWeight: 800 }} variant="caption">
+            - {chartInterval} EMA 9
+          </Typography>
+        ) : null}
       </Stack>
-      {visiblePatternKinds.length > 0 ? (
+      {layers.candlePatterns && visiblePatternKinds.length > 0 ? (
         <>
           <Box
             sx={{
@@ -959,9 +1056,11 @@ export function DailyTradeAnalyzerChart({
           <Typography sx={{ color: chartTheme.controlText, display: "block" }} variant="caption">
             O {formatPrice(Number(detail.candle.open), currency)} | H {formatPrice(Number(detail.candle.high), currency)} | L {formatPrice(Number(detail.candle.low), currency)} | C {formatPrice(Number(detail.candle.close), currency)}
           </Typography>
-          <Typography sx={{ color: chartTheme.controlText, display: "block" }} variant="caption">
-            Volume {formatVolume(Number(detail.candle.volume))}
-          </Typography>
+          {layers.volume ? (
+            <Typography sx={{ color: chartTheme.controlText, display: "block" }} variant="caption">
+              Volume {formatVolume(Number(detail.candle.volume))}
+            </Typography>
+          ) : null}
           {detail.candle.turnover === null ? null : (
             <Typography sx={{ color: chartTheme.controlText, display: "block" }} variant="caption">
               Candle turnover {formatTurnover(Number(detail.candle.turnover), currency)}
@@ -1005,7 +1104,92 @@ export function DailyTradeAnalyzerChart({
           ) : null}
         </Box>
       ) : null}
-      <Box ref={containerRef} sx={{ height: 420, width: "100%" }} />
+      <Box
+        ref={containerRef}
+        sx={{
+          height: isFullscreen
+            ? { xs: "calc(100dvh - 112px)", md: "calc(100dvh - 56px)" }
+            : 420,
+          width: "100%",
+        }}
+      />
+      </Box>
+      <Stack
+        direction="row"
+        spacing={0.75}
+        sx={{
+          alignItems: "center",
+          borderTop: 1,
+          borderColor: "divider",
+          flexWrap: "wrap",
+          justifyContent: { xs: "stretch", md: "flex-end" },
+          p: 0.75,
+          rowGap: 0.75,
+        }}
+      >
+        <ToggleButtonGroup
+          aria-label="Chart range"
+          exclusive
+          onChange={(_event, value: ChartRangeMode | null) => {
+            if (value) setRangeMode(value);
+            setRangeRevision((revision) => revision + 1);
+          }}
+          size="small"
+          sx={{
+            width: { xs: "100%", md: "auto" },
+            "& .MuiToggleButton-root": {
+              flex: { xs: 1, md: "initial" },
+              fontWeight: 800,
+              minHeight: { xs: 44, md: 32 },
+              px: 1.25,
+            },
+          }}
+          value={rangeMode}
+        >
+          <ToggleButton value="around_trade">Around trade</ToggleButton>
+          <ToggleButton value="all_candles">All candles</ToggleButton>
+        </ToggleButtonGroup>
+        <Button
+          aria-controls={displayMenuAnchor ? "trade-analyzer-display-menu" : undefined}
+          aria-expanded={displayMenuAnchor ? "true" : undefined}
+          aria-haspopup="menu"
+          onClick={(event) => setDisplayMenuAnchor(event.currentTarget)}
+          size="small"
+          sx={{ minHeight: { xs: 44, md: 32 } }}
+          variant="outlined"
+        >
+          Display
+        </Button>
+        <Button
+          onClick={toggleFullscreen}
+          size="small"
+          sx={{ minHeight: { xs: 44, md: 32 } }}
+          variant="outlined"
+        >
+          {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+        </Button>
+      </Stack>
+      <Menu
+        anchorEl={displayMenuAnchor}
+        disablePortal
+        id="trade-analyzer-display-menu"
+        onClose={() => setDisplayMenuAnchor(null)}
+        open={Boolean(displayMenuAnchor)}
+      >
+        {displayOptions.map((option) => (
+          <MenuItem
+            disabled={!option.available}
+            key={option.layer}
+            onClick={() => toggleLayer(option.layer)}
+          >
+            <Checkbox checked={layers[option.layer]} disabled={!option.available} />
+            <ListItemText
+              primary={option.label}
+              secondary={option.available ? undefined : option.unavailableReason}
+            />
+          </MenuItem>
+        ))}
+      </Menu>
     </Box>
   );
 }

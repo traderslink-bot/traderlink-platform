@@ -166,6 +166,30 @@ delivery-configuration claim.
       Every actual database open still performs complete migration, schema,
       foreign-key, quick-check and pragma verification; no verifier or fact-set
       behavior changed.
+## Analyzer chart presentation — 2026-08-30
+
+- [x] Preserve the existing saved Analyzer chart dimensions and volume pane.
+- [x] Preserve the established white candlestick presentation and the Dark-mode
+      white chart surface without grid lines.
+- [x] Preserve the existing execution-centered range, zoom behavior and
+      higher-timeframe aggregation.
+- [x] Preserve existing candle and volume facts without changing their data.
+- [x] Preserve Eastern-time labels, VWAP, EMA 9, execution/rule/pattern
+      annotations, lazy chart mounting and the one-expanded-trade page rule.
+- [ ] Complete owner desktop and mobile staging review of the taller chart.
+- [x] Add the separately approved view-only chart controls without duplicating
+      the existing timeframe or zoom controls: **Around trade**, **All
+      candles**, **Display** and **Fullscreen**.
+- [x] Let **Display** show or hide only the existing Volume, Executions, Rules,
+      Candle patterns, VWAP and EMA layers. Keep unavailable layers disabled
+      with factual explanations and retain every current layer as visible by
+      default when its saved facts exist.
+- [x] Keep range, layer and fullscreen state local to the mounted chart. The
+      controls do not persist preferences, request market data, rerun the
+      Analyzer or change its evidence and conclusions.
+- [x] Update the Daily Trade Tracker and Trade Analyzer chart Help guides for
+      the approved controls.
+- [x] Owner approved the chart controls for direct production release.
 
 ## Verification boundary
 
