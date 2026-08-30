@@ -72,9 +72,11 @@ export function ManualExecutionEntry({
   expectedAccountSelectionRef,
   initialAction = null,
   initialDirection = "long",
+  initialRowCount = 2,
   initialSymbol = "",
   onboarding = false,
   offlineScopeRef,
+  onSaved,
   tracker = "day",
 }: {
   accountCurrency: string;
@@ -83,9 +85,11 @@ export function ManualExecutionEntry({
   expectedAccountSelectionRef: string;
   initialAction?: "add" | "reduce" | "close" | "record" | null;
   initialDirection?: "long" | "short";
+  initialRowCount?: 1 | 2;
   initialSymbol?: string;
   onboarding?: boolean;
   offlineScopeRef: string;
+  onSaved?: () => void;
   tracker?: JournalManualTrackerKind;
 }) {
   const router = useRouter();
@@ -121,7 +125,18 @@ export function ManualExecutionEntry({
             time: "",
           },
           ]
-      : [],
+      : initialRowCount === 1
+        ? [{
+            date: defaultSessionDate,
+            fees: "",
+            id: 1,
+            price: "",
+            quantity: "",
+            side: "BUY",
+            symbol: "",
+            time: "",
+          }]
+        : [],
   );
   useTradeTrackerUnsavedChanges(
     `daily-trade-tracker:manual-execution:${tracker}`,
@@ -154,6 +169,10 @@ export function ManualExecutionEntry({
     try {
       const result = await submitManualTradeOnline(submission);
       idempotencyKey.current = null;
+      if (onSaved) {
+        onSaved();
+        return Object.freeze({ status: "saved" as const, ...result });
+      }
       const submittedTradingDate = tracker === "day" ? result.affectedDates[0] : null;
       if (submittedTradingDate) {
         const submittedDayPath = `/trade-tracker/${encodeURIComponent(submittedTradingDate)}`;

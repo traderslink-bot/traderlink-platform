@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { WorkspaceOfflineViewCapture } from "@/app/pwa/workspace-offline-view-capture";
 import { WorkspaceDashboard } from "./workspace-dashboard";
+import { readWorkspaceTradeLibrary } from "./workspace-trade-library";
 import type { WorkspaceFirstTimeOnboardingResult } from "./workspace-first-time-onboarding-panel";
 import { readWorkspaceReviewSummary } from "./workspace-review-summary";
 import {
@@ -19,6 +20,7 @@ import {
   currentJournalAccountSelectionRef,
   requireTraderLinkPlatformServerComponentPageScope,
 } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
+import { currentPlatformOfflineScopeRef } from "@/src/modules/platform/server/authentication/platform-offline-scope-authorization";
 import {
   createPlatformWorkspaceOfflineViewModel,
   platformWorkspaceOfflineCoverage,
@@ -33,8 +35,8 @@ import {
 } from "@/src/modules/platform/server/broker-connections/moomoo-oauth-cookies";
 
 export const metadata: Metadata = {
-  title: "Welcome to TradersLink Beta App. | TradersLink Platform",
-  description: "Trade Tracker performance, manual entry, and day sessions.",
+  title: "Workspace | TradersLink Platform",
+  description: "Trade activity, reviews, and manual trade entry.",
 };
 
 export const dynamic = "force-dynamic";
@@ -70,12 +72,20 @@ export default async function WorkspacePage({
   const query = buildJournalAnalyticsDashboardQuery(scope, {
     metricIds: WORKSPACE_METRICS.map(([, metricId]) => metricId),
   });
-  const { onboardingStatus, response, reviewSummary } = await withJournalAnalyticsReportingDashboardRuntime(
+  const { account, onboardingStatus, response, reviewSummary, tradeLibrary } = await withJournalAnalyticsReportingDashboardRuntime(
     scope,
     ({ database, dashboard, service }) => Object.freeze({
+      account: database.prepare(`
+SELECT base_currency, trading_timezone
+FROM journal_accounts
+WHERE workspace_id = ? AND account_id = ? AND status = 'active'`).get(
+          scope.workspaceId,
+          scope.activeAccountId,
+        ) as Readonly<{ base_currency: string; trading_timezone: string }> | undefined,
       onboardingStatus: readJournalFirstExecutionOnboardingStatusFromDatabase(database, scope),
       response: service.getWorkspaceJournalAnalyticsSummary(scope, query),
       reviewSummary: readWorkspaceReviewSummary(database, scope, new Date(), dashboard),
+      tradeLibrary: readWorkspaceTradeLibrary(database, scope),
     }),
     { prefetchAllFactSet: true },
   );
@@ -117,8 +127,11 @@ export default async function WorkspacePage({
         reportingCurrency={offlinePartition?.currency ?? null}
       />
       <WorkspaceDashboard
+        accountCurrency={account?.base_currency ?? offlinePartition?.currency ?? "USD"}
+        accountTimezone={account?.trading_timezone ?? offlinePartition?.timezone ?? "UTC"}
         analyticsMetrics={analyticsMetrics}
         demoAccountSelectionRef={demoAccountSelectionRef}
+        expectedAccountSelectionRef={currentJournalAccountSelectionRef(scope)}
         showDemoTradeTrackerInvitation={showDemoTradeTrackerInvitation}
         hasRealAcceptedExecution={onboardingStatus.hasRealAcceptedExecution}
         firstTimeMoomooConnectionPending={showFirstTimeOnboarding ? moomooConnectionPending : undefined}
@@ -127,6 +140,8 @@ export default async function WorkspacePage({
           ? workspaceFirstTimeOnboardingResult(queryParameters.gettingStarted)
           : undefined}
         reviewSummary={reviewSummary}
+        offlineScopeRef={currentPlatformOfflineScopeRef(scope)}
+        trades={tradeLibrary}
       />
     </>
   );
