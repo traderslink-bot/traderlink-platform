@@ -386,6 +386,19 @@ DNS/application cutover.
 
 ## Commit record
 
+### 2026-08-29 app-domain availability correction
+
+- The obsolete marketing page at the private app root was removed. `/` now
+  redirects through the existing `/dashboard-entry` identity decision so an
+  authorized session returns to `/workspace` and an unauthorized visitor goes
+  to the public beta page.
+- The dashboard frame's authentication and database reads now execute inside
+  its existing Suspense boundary. The app can send the loading shell before
+  account, notification, alert and navigation context reads complete instead
+  of holding the entire response and risking a Railway gateway timeout.
+- Dashboard data, authorization decisions, account selection and feature
+  behavior are unchanged.
+
 - `266c3455` - approved feature-panel versus application-shell enforcement.
 - `3ac330e4` - primary dashboard route audit record.
 - `6a82a5b8` - Workspace performance action correction.

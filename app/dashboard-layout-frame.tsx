@@ -24,7 +24,7 @@ import {
 import { hasScannerEarlyAccess } from "@/src/modules/scanner/server/scanner-early-access";
 import { hasWatchlistDashboardNavigationAccess } from "@/src/modules/watchlist/server/access/watchlist-dashboard-navigation-access";
 
-function DashboardFrameFallback({ children }: { children: ReactNode }) {
+function DashboardFrameFallback() {
   return (
     <div
       style={{
@@ -33,12 +33,27 @@ function DashboardFrameFallback({ children }: { children: ReactNode }) {
         padding: 24,
       }}
     >
-      {children}
+      <div
+        aria-live="polite"
+        role="status"
+        style={{
+          alignItems: "center",
+          color: "#5d6b82",
+          display: "flex",
+          fontFamily: "Arial, sans-serif",
+          fontSize: 14,
+          fontWeight: 700,
+          justifyContent: "center",
+          minHeight: "55vh",
+        }}
+      >
+        Loading…
+      </div>
     </div>
   );
 }
 
-export async function TraderLinkPlatformDashboardFrame({
+async function TraderLinkPlatformDashboardFrameContent({
   children,
   loginReturnTo = "/workspace",
   watchlistMemberAccess = false,
@@ -94,9 +109,7 @@ export async function TraderLinkPlatformDashboardFrame({
     : null;
   const offlineScopeRef = currentPlatformOfflineScopeRef(scope);
   return (
-    <Suspense
-      fallback={<DashboardFrameFallback>{children}</DashboardFrameFallback>}
-    >
+    <>
       <TraderLinkPlatformDashboardTemplate
         accountCurrency={dashboardContext.activeAccount?.baseCurrency ?? null}
         accountSelectionRef={accountSelectionRef}
@@ -117,6 +130,27 @@ export async function TraderLinkPlatformDashboardFrame({
         accountSelectionRef={accountSelectionRef}
         offlineScopeRef={offlineScopeRef}
       />
+    </>
+  );
+}
+
+export function TraderLinkPlatformDashboardFrame({
+  children,
+  loginReturnTo = "/workspace",
+  watchlistMemberAccess = false,
+}: {
+  children: ReactNode;
+  loginReturnTo?: string;
+  watchlistMemberAccess?: boolean;
+}) {
+  return (
+    <Suspense fallback={<DashboardFrameFallback />}>
+      <TraderLinkPlatformDashboardFrameContent
+        loginReturnTo={loginReturnTo}
+        watchlistMemberAccess={watchlistMemberAccess}
+      >
+        {children}
+      </TraderLinkPlatformDashboardFrameContent>
     </Suspense>
   );
 }
