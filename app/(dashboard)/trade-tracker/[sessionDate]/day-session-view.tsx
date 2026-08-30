@@ -83,6 +83,10 @@ import type {
   ChartRuleEvidence,
   DailyTradeChartInterval,
 } from "./daily-trade-analyzer-chart";
+import {
+  DailyTrackerOfflineSavedViewCapture,
+  type DailyTrackerOfflineCaptureMetadata,
+} from "./daily-tracker-offline-saved-view-capture";
 
 const DailyTradeAnalyzerChart = dynamic(
   () => import("./daily-trade-analyzer-chart").then((module) => module.DailyTradeAnalyzerChart),
@@ -2425,6 +2429,7 @@ export function DaySessionView({
   demoAccount = false,
   designPreview = false,
   initialAnalyzerFocus = null,
+  offlineCapture,
   offlineSavedAtUtc,
   pendingExecutions = false,
   readOnly = false,
@@ -2439,6 +2444,7 @@ export function DaySessionView({
     interval: DailyTradeChartInterval;
     roundTripId: string;
   }> | null;
+  offlineCapture?: DailyTrackerOfflineCaptureMetadata;
   offlineSavedAtUtc?: string;
   pendingExecutions?: boolean;
   readOnly?: boolean;
@@ -3102,6 +3108,12 @@ export function DaySessionView({
 
   return (
     <DashboardPage>
+      {offlineCapture ? (
+        <DailyTrackerOfflineSavedViewCapture
+          data={data}
+          metadata={offlineCapture}
+        />
+      ) : null}
       <Box
         sx={{
           alignItems: { md: "flex-start" },

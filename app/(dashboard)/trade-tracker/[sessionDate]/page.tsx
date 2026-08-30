@@ -2,13 +2,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Alert from "@mui/material/Alert";
 
-import { OfflineSavedViewCapture } from "@/app/pwa/offline-saved-view-capture";
-import {
-  createJournalDailyTrackerOfflineViewModel,
-  journalDailyTrackerOfflineCoverage,
-  journalDailyTrackerOfflineViewKey,
-  JOURNAL_DAILY_TRACKER_OFFLINE_ROUTE_VIEW_VERSION,
-} from "@/src/modules/journal/contracts/journal-daily-tracker-offline-view-contracts";
 import {
   DashboardPage,
   DashboardSecondaryAction,
@@ -93,22 +86,15 @@ export default async function TradeTrackerDayPage({
       : null;
     return (
       <TradeTrackerUnsavedChangesProvider>
-        <OfflineSavedViewCapture
-          accountTimezone={data.timezone}
-          calculationVersion="journal-daily-tracker-v1"
-          coverage={journalDailyTrackerOfflineCoverage()}
-          generatedAtUtc={new Date().toISOString()}
-          model={createJournalDailyTrackerOfflineViewModel(data)}
-          pathname={`/trade-tracker/${data.date}`}
-          queryIdentity={`date:${data.date}`}
-          reportingCurrency={data.currency}
-          routeViewVersion={JOURNAL_DAILY_TRACKER_OFFLINE_ROUTE_VIEW_VERSION}
-          viewKey={journalDailyTrackerOfflineViewKey(data.date)}
-        />
         <DaySessionView
           data={data}
           demoAccount={demoAccountSelectionRef !== null}
           initialAnalyzerFocus={initialAnalyzerFocus}
+          offlineCapture={{
+            generatedAtUtc: new Date().toISOString(),
+            pathname: `/trade-tracker/${data.date}`,
+            queryIdentity: `date:${data.date}`,
+          }}
           readOnly={demoAccountSelectionRef !== null}
           showMoomooConnectionGuidance={!demoAccountSelectionRef &&
             moomooMarketDataAccess.shouldShowConnectionGuidance}
