@@ -68,10 +68,18 @@ async function TraderLinkPlatformDashboardFrameContent({
       ? await requireTraderLinkPlatformDiscordMemberPageIdentity()
       : await requireTraderLinkPlatformPageIdentity();
   } catch (error) {
-    if (process.env.NODE_ENV === "production") {
-      if (isTraderLinkPlatformError(error) && error.code === "TRADERLINK_DASHBOARD_ACCESS_DENIED") {
-        redirect("/access-required");
-      }
+    if (
+      process.env.NODE_ENV === "production" &&
+      isTraderLinkPlatformError(error) &&
+      error.code === "TRADERLINK_DASHBOARD_ACCESS_DENIED"
+    ) {
+      redirect("/access-required");
+    }
+    if (
+      process.env.NODE_ENV === "production" &&
+      isTraderLinkPlatformError(error) &&
+      error.code === "TRADERLINK_WORKSPACE_ACCESS_DENIED"
+    ) {
       redirect(`/api/auth/discord/login?returnTo=${encodeURIComponent(loginReturnTo)}`);
     }
     throw error;

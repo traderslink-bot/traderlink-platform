@@ -9,8 +9,14 @@ vi.mock("server-only", () => ({}));
 import { openPlatformDatabase } from "../database/open-platform-database";
 import { runPlatformMigrations } from "../database/run-platform-migrations";
 import { PlatformDiscordSignInService } from "./platform-discord-sign-in-service";
+import {
+  deriveJournalAccountSelectionRef,
+} from "../../contracts/journal-account-selection";
 import { TRADERLINK_PLATFORM_SESSION_COOKIE } from "./platform-session-service";
-import { requireTraderLinkPlatformRequestIdentity } from "./require-platform-request-scope";
+import {
+  requireExpectedJournalAccountSelection,
+  requireTraderLinkPlatformRequestIdentity,
+} from "./require-platform-request-scope";
 
 const roots: string[] = [];
 const SUBJECT = "123456789012345678";
@@ -95,5 +101,80 @@ describe("unified Platform request scope", () => {
       databasePath: join(tmpdir(), "missing-platform.sqlite"),
       forbiddenRepositoryRoots: [],
     })).toThrowError("TRADERLINK_AUTH_SESSION_INVALID");
+  });
+
+  it("recovers a well-formed stale browser selection for a hosted page scope without relaxing mutation selection checks", () => {
+    const root = mkdtempSync(join(tmpdir(), "traderlink-platform-request-"));
+    roots.push(root);
+    const databasePath = join(root, "test.sqlite");
+    const database = openPlatformDatabase({
+      mode: "initializer",
+      databasePath,
+      forbiddenRepositoryRoots: [],
+    });
+    let token: string;
+    let workspaceId: string;
+    try {
+      runPlatformMigrations(database, {
+        now: () => new Date("2026-08-02T12:00:00.000Z"),
+      });
+      const signIn = new PlatformDiscordSignInService(database, {
+        now: () => new Date("2026-08-02T12:10:00.000Z"),
+      }).signIn({
+        authSubject: SUBJECT,
+        username: "trader",
+        globalDisplayName: "Trader",
+        avatarHash: null,
+        guildId: GUILD,
+        roleIds: ["5", "2"],
+        guildOwner: false,
+        joinedAtUtc: null,
+      });
+      token = signIn.session.token;
+      workspaceId = signIn.workspaceId;
+    } finally {
+      database.close();
+    }
+
+    const staleSelectionRef = deriveJournalAccountSelectionRef(
+      workspaceId!,
+      "44444444-4444-4444-8444-444444444444",
+    );
+    const identity = requireTraderLinkPlatformRequestIdentity(new Headers({
+      cookie: [
+        `${TRADERLINK_PLATFORM_SESSION_COOKIE}=${token!}`,
+        `traderlink_journal_account=${staleSelectionRef}`,
+      ].join("; "),
+      host: "dashboard.traderslink.pro",
+    }), {
+      environment: {
+        NODE_ENV: "production",
+        DISCORD_GUILD_ID: GUILD,
+      },
+      databasePath,
+      forbiddenRepositoryRoots: [],
+      now: () => new Date("2026-08-02T12:20:00.000Z"),
+    });
+
+    expect(identity.scope.activeAccountId).toBe(identity.scope.allowedAccountIds[0]);
+    expect(() => requireExpectedJournalAccountSelection(
+      identity.scope,
+      staleSelectionRef,
+    )).toThrowError("TRADERLINK_ACCOUNT_ACCESS_DENIED");
+    expect(() => requireTraderLinkPlatformRequestIdentity(new Headers({
+      cookie: [
+        `${TRADERLINK_PLATFORM_SESSION_COOKIE}=${token!}`,
+        `traderlink_journal_account=${staleSelectionRef.toUpperCase()}`,
+      ].join("; "),
+      host: "dashboard.traderslink.pro",
+    }), {
+      environment: {
+        NODE_ENV: "production",
+        DISCORD_GUILD_ID: GUILD,
+      },
+      databasePath,
+      forbiddenRepositoryRoots: [],
+      now: () => new Date("2026-08-02T12:20:00.000Z"),
+    })).toThrowError("TRADERLINK_ACCOUNT_ACCESS_DENIED");
   });
 });

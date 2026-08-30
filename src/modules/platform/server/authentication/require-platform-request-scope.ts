@@ -4,7 +4,10 @@ import { headers as nextHeaders } from "next/headers";
 
 import { deriveDevelopmentOwnerJournalScope } from "@/src/modules/journal/server/accounts/journal-development-owner-scope";
 import type { WorkspaceAccessScope } from "../../contracts/workspace-access-scope";
-import { platformFailure } from "../database/platform-migration-contract";
+import {
+  isTraderLinkPlatformError,
+  platformFailure,
+} from "../database/platform-migration-contract";
 import { withPlatformDatabase } from "../database/open-platform-database";
 import { withReadonlyPlatformDatabase } from "../database/open-readonly-platform-database";
 import { deriveAuthenticatedUserJournalScope } from "./authenticated-user-journal-scope";
@@ -58,6 +61,26 @@ function readSingleCookie(requestHeaders: Headers, name: string): string | null 
     return decodeURIComponent(values[0]);
   } catch {
     platformFailure("TRADERLINK_AUTH_SESSION_INVALID");
+  }
+}
+
+function derivePlatformSessionJournalScope(
+  database: Parameters<typeof deriveAuthenticatedUserJournalScope>[0],
+  userId: string,
+  selectionRef: ReturnType<typeof readJournalAccountSelectionCookie>,
+): WorkspaceAccessScope {
+  try {
+    return deriveAuthenticatedUserJournalScope(database, userId, selectionRef);
+  } catch (error) {
+    const staleSelection = selectionRef !== null &&
+      isTraderLinkPlatformError(error) &&
+      error.code === "TRADERLINK_ACCOUNT_ACCESS_DENIED" &&
+      error.safeContext.reason === "journal_account_selection_ref_invalid";
+    if (!staleSelection) throw error;
+
+    // Browser selection is advisory for an authenticated page request. Re-derive
+    // the deterministic active-account fallback from this user's current scope.
+    return deriveAuthenticatedUserJournalScope(database, userId, null);
   }
 }
 
@@ -122,7 +145,7 @@ function resolveTraderLinkPlatformRequestIdentity(
       return Object.freeze({
         mode: "platform_session" as const,
         sessionId: session.sessionId,
-        scope: deriveAuthenticatedUserJournalScope(
+        scope: derivePlatformSessionJournalScope(
           database,
           session.userId,
           selectionRef,

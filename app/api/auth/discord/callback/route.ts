@@ -251,6 +251,32 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           deriveJournalAccountSelectionRef(workspaceId, demoAccountId),
         ),
       );
+    } else if (workspaceId && allowedAccountIds.length > 0) {
+      try {
+        const priorSelectionRef = readJournalAccountSelectionCookie(request.headers);
+        const allowedAccounts = allowedAccountIds.map((accountId) => Object.freeze({ accountId }));
+        let selection: ReturnType<typeof resolveJournalAccountSelection>;
+        try {
+          selection = resolveJournalAccountSelection(
+            workspaceId,
+            priorSelectionRef,
+            allowedAccounts,
+          );
+        } catch {
+          // The cookie was well-formed but no longer matches an active account.
+          selection = resolveJournalAccountSelection(
+            workspaceId,
+            undefined,
+            allowedAccounts,
+          );
+        }
+        response.headers.append(
+          "set-cookie",
+          serializeJournalAccountSelectionCookie(selection.selectionRef),
+        );
+      } catch {
+        // Malformed browser input remains fail-closed and is not rewritten here.
+      }
     }
 
     return response;
