@@ -1,10 +1,11 @@
 import "server-only";
 
+import type Database from "better-sqlite3";
+
 import {
   withJournalAnalyticsReportingDashboardRuntime,
 } from "@/src/modules/journal-analytics/server/journal-analytics-dashboard-runtime";
 import { requireTraderLinkPlatformPageScope } from "@/src/modules/platform/server/authentication/require-platform-request-scope";
-import { withReadonlyPlatformDatabase } from "@/src/modules/platform/server/database/open-readonly-platform-database";
 import type { WorkspaceAccessScope } from "@/src/modules/platform/contracts/workspace-access-scope";
 import type { JournalCalendarReadModel } from "@/src/modules/journal-analytics/contracts/journal-dashboard-read-models";
 
@@ -77,6 +78,7 @@ function localDate(utc: string, timezone: string): string {
 }
 
 function calendarAnnotationEvidence(
+  database: Database.Database,
   scope: WorkspaceAccessScope,
   timezone: string,
 ): CalendarAnnotationEvidence {
@@ -86,7 +88,7 @@ function calendarAnnotationEvidence(
     dailyTrackerDates: new Set<string>(),
     reviewStatusByDate: new Map<string, "reviewed" | "needs_review">(),
   });
-  const evidence = withReadonlyPlatformDatabase({}, (database) => Object.freeze({
+  const evidence = Object.freeze({
     roundTrips: database.prepare<[string, string], AnnotationRow>(`SELECT
  version.round_trip_id,
  version.instrument_id,
@@ -176,7 +178,7 @@ WHERE execution.workspace_id = ? AND execution.account_id = ?
   AND execution.current_state = 'accepted'
   AND alias.alias_type = 'manual_entry'
   AND alias.status = 'active'`).all(scope.workspaceId, accountId),
-  }));
+  });
   const totals = new Map<string, AnnotationTotal>();
   const closedRoundTripDates = new Set<string>();
   for (const row of evidence.roundTrips) {
@@ -237,14 +239,14 @@ function withCalendarAnnotations(
   input: CalendarFilterInput,
   annotationEvidence?: CalendarAnnotationEvidence,
 ): CalendarData {
-  if (!data.timezone) return Object.freeze({
+  if (!data.timezone || !annotationEvidence) return Object.freeze({
     ...data,
     days: Object.freeze(data.days.map((day) => Object.freeze({
       ...day,
       hasDailyTracker: false,
     }))),
   });
-  const evidence = annotationEvidence ?? calendarAnnotationEvidence(scope, data.timezone);
+  const evidence = annotationEvidence;
   const index = evidence.annotations;
   const days: MutableCalendarDay[] = data.days.map((day) => ({
     ...day,
@@ -352,6 +354,7 @@ export function emptyCalendarData(): CalendarData {
 function readCalendarData(
   scope: WorkspaceAccessScope,
   input: CalendarFilterInput,
+  database: Database.Database,
   dashboard: Readonly<{
     getCalendar(
       scope: WorkspaceAccessScope,
@@ -383,7 +386,7 @@ function readCalendarData(
   });
   const annotationEvidence = data.timezone
     ? annotationEvidenceByTimezone.get(data.timezone) ??
-      calendarAnnotationEvidence(scope, data.timezone)
+      calendarAnnotationEvidence(database, scope, data.timezone)
     : undefined;
   if (data.timezone && annotationEvidence) {
     annotationEvidenceByTimezone.set(data.timezone, annotationEvidence);
@@ -395,11 +398,12 @@ export async function withCalendarDataRuntime<T>(
   scope: WorkspaceAccessScope,
   operation: (read: (input: CalendarFilterInput) => CalendarData) => T | Promise<T>,
 ): Promise<T> {
-  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ dashboard }) => {
+  return withJournalAnalyticsReportingDashboardRuntime(scope, ({ database, dashboard }) => {
     const annotationEvidenceByTimezone = new Map<string, CalendarAnnotationEvidence>();
     return operation((input) => readCalendarData(
       scope,
       input,
+      database,
       dashboard,
       annotationEvidenceByTimezone,
     ));

@@ -255,6 +255,7 @@ function reportingDashboardReader(
 export async function withJournalAnalyticsReportingDashboardRuntime<T>(
   scope: WorkspaceAccessScope,
   operation: (runtime: Readonly<{
+    database: ReturnType<typeof openReadonlyPlatformDatabase>;
     dashboard: JournalDashboardRuntimeReader;
     reportingCurrency: PlatformReportingCurrency;
     reportingContext: JournalReportingCurrencyContext;
@@ -320,6 +321,7 @@ export async function withJournalAnalyticsReportingDashboardRuntime<T>(
     const normalizeFacts = createJournalAnalyticsNormalizer();
     const dashboard = new JournalDashboardReadModelService(facts, normalizeFacts);
     return await operation(Object.freeze({
+      database,
       dashboard: reportingDashboardReader(dashboard, snapshot.reportingCurrency),
       reportingCurrency: snapshot.reportingCurrency,
       reportingContext,
