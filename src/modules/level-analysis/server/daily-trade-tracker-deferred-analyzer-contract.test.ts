@@ -19,6 +19,7 @@ describe("Daily Trade Tracker deferred Analyzer contract", () => {
     );
     expect(platformData).toContain("{ includeDetails: false }");
     expect(platformData).toContain("detailLoaded: false");
+    expect(platformData).toContain("{ prefetchAllFactSet: true }");
   });
 
   it("loads version-scoped detail only from an opened or focused trade", () => {

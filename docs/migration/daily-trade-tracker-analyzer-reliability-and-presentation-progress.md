@@ -145,6 +145,17 @@ delivery-configuration claim.
       fact reader and reporting-currency snapshot still each make one
       whole-account pass; those passes are no longer multiplied per tracked or
       open position, but remain the next evidence-gated boundary if needed.
+- [x] After the N+1 repair reduced the authenticated production route from
+      about 14.9 seconds to 6.54 seconds, opt the selected-day Tracker into the
+      accepted all-history fact-set prefetch path. Reporting currencies and
+      dates now derive from that same immutable fact set, and `getTradingDay`
+      reuses it instead of running separate whole-account reporting snapshot
+      scans before the all-history Journal read.
+- [ ] Re-measure production after the fact-set reuse checkpoint. Initial RSC
+      payload construction remains selected-day scoped; its offline-safe model
+      is a second transformed copy of the same day payload and is the next
+      serialization boundary to measure only if server time is no longer the
+      dominant remainder.
 
 ## Verification boundary
 

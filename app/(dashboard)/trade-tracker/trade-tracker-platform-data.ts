@@ -1336,6 +1336,7 @@ export async function getReplacementReportingDaySession(
       }),
       reportingContext,
     ),
+    { prefetchAllFactSet: true },
   );
 }
 
