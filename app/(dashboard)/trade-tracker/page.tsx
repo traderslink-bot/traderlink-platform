@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
@@ -74,6 +75,9 @@ export default async function TradeTrackerPage({
 
   const scope = await requireTraderLinkPlatformPageScope();
   const onboardingStatus = readJournalFirstExecutionOnboardingStatus(scope);
+  if (onboardingStatus.activeAccountIsDemo) {
+    redirect(`/trade-tracker/${DEMO_TRADE_TRACKER_LAST_DAY}`);
+  }
   const showFirstExecutionCallout = query.gettingStarted === "daily-entry" &&
     !onboardingStatus.activeAccountIsDemo &&
     !onboardingStatus.hasRealAcceptedExecution;
