@@ -94,23 +94,30 @@ export class PlatformDiscordSignInService {
     }> = {},
   ) {}
 
-  signIn(input: DiscordSignInFacts): PlatformDiscordSignInResult {
+  signIn(
+    input: DiscordSignInFacts,
+    options: Readonly<{ deferDemoActivation?: boolean }> = {},
+  ): PlatformDiscordSignInResult {
     try {
       const identity = this.database.transaction(() => this.signInIdentityLocked(input)).immediate();
       const accounts = new JournalAccountRepository(this.database);
       let activeAccounts = accounts.listActiveAccounts(identity.workspaceId);
       let demoAvailability: PlatformDiscordSignInResult["demoAvailability"] = "not_applicable";
-      const activation = new JournalDemoAccountActivationService(this.database, {
-        createId: this.dependencies.createId,
-        now: this.dependencies.now,
-      }).activateForWorkspace({
-        baseCurrency: this.dependencies.defaultBaseCurrency ?? "USD",
-        tradingTimezone: this.dependencies.defaultTradingTimezone ?? "America/New_York",
-        userId: identity.userId,
-        workspaceId: identity.workspaceId,
-      });
-      demoAvailability = activation.state;
-      if (activeAccounts.length === 0 && activation.state !== "materialized") {
+      let demoAccountId: string | null = null;
+      if (options.deferDemoActivation !== true) {
+        const activation = new JournalDemoAccountActivationService(this.database, {
+          createId: this.dependencies.createId,
+          now: this.dependencies.now,
+        }).activateForWorkspace({
+          baseCurrency: this.dependencies.defaultBaseCurrency ?? "USD",
+          tradingTimezone: this.dependencies.defaultTradingTimezone ?? "America/New_York",
+          userId: identity.userId,
+          workspaceId: identity.workspaceId,
+        });
+        demoAvailability = activation.state;
+        demoAccountId = activation.state === "materialized" ? activation.accountId : null;
+      }
+      if (activeAccounts.length === 0 && demoAccountId === null) {
         this.createFallbackJournalAccount(identity);
       }
       activeAccounts = accounts.listActiveAccounts(identity.workspaceId);
@@ -121,7 +128,7 @@ export class PlatformDiscordSignInService {
         workspaceId: identity.workspaceId,
         allowedAccountIds: Object.freeze(activeAccounts.map((account) => account.accountId)),
         displayName: identity.displayName,
-        demoAccountId: activation.state === "materialized" ? activation.accountId : null,
+        demoAccountId,
         demoAvailability,
         provisioned: identity.provisioned,
       });

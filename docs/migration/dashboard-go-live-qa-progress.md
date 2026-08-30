@@ -398,6 +398,11 @@ DNS/application cutover.
   of holding the entire response and risking a Railway gateway timeout.
 - Dashboard data, authorization decisions, account selection and feature
   behavior are unchanged.
+- Discord callback completion no longer performs the full demo pack
+  materialization before returning the authenticated session. It creates a
+  fallback Primary Journal only when needed, then the existing automatic
+  Workspace activation boundary materializes/selects the demo while the user
+  sees the loading state. Cleared-demo lifecycle behavior remains unchanged.
 
 - `266c3455` - approved feature-panel versus application-shell enforcement.
 - `3ac330e4` - primary dashboard route audit record.

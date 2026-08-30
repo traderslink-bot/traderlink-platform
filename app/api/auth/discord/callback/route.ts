@@ -177,21 +177,24 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
               }
             }
             : undefined,
-        }).signIn({
-          authSubject: discordUser.id,
-          username: discordUser.username,
-          globalDisplayName: discordUser.global_name ?? null,
-          avatarHash: discordUser.avatar ?? null,
-          emailAddress: discordUser.email ?? null,
-          emailVerified: discordUser.verified === true,
-          guildId: config.guildId,
-          joinedAtUtc: resolvedGuildMember.joined_at ?? null,
-          roleIds: resolvedGuildMember.roles ?? [],
-          guildOwner: resolvedGuildMember.guild_owner === true,
-          sessionClientLabel: resolvePlatformSessionClientLabel(
-            request.headers.get("user-agent"),
-          ),
-        });
+        }).signIn(
+          {
+            authSubject: discordUser.id,
+            username: discordUser.username,
+            globalDisplayName: discordUser.global_name ?? null,
+            avatarHash: discordUser.avatar ?? null,
+            emailAddress: discordUser.email ?? null,
+            emailVerified: discordUser.verified === true,
+            guildId: config.guildId,
+            joinedAtUtc: resolvedGuildMember.joined_at ?? null,
+            roleIds: resolvedGuildMember.roles ?? [],
+            guildOwner: resolvedGuildMember.guild_owner === true,
+            sessionClientLabel: resolvePlatformSessionClientLabel(
+              request.headers.get("user-agent"),
+            ),
+          },
+          { deferDemoActivation: true },
+        );
         return signIn;
       });
       sessionToken = signInResult.session.token;
